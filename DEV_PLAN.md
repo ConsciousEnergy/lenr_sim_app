@@ -11,9 +11,13 @@
 | Results Display               | Completed   | Charts and data visualization impl.  |
 | Data Visualization            | Completed   | Charts implemented with Recharts     |
 | 3D Visualization              | Completed   | Three.js implementation working      |
-| File Export/Import            | In Progress | Basic uploader component complete    |
+| API Integration               | Completed   | All endpoints successfully connected |
+| CSV Data Import               | Completed   | Uploader with preview implemented    |
+| Heatmap Visualization         | Completed   | Interactive parameter exploration    |
+| Multiple Simulation Types     | Completed   | Thermal and impact tunneling modes   |
+| Cluster Visualization         | Completed   | 3D particle visualization            |
+| File Export                   | In Progress | Basic structure implemented          |
 | Documentation                 | In Progress | Ongoing updates                      |
-| API Integration               | In Progress | Connection frontend to backend       |
 
 ## Architecture Overview
 

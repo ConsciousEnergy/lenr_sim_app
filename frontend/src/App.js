@@ -16,7 +16,8 @@ import {
   ListItemIcon, 
   ListItemText, 
   Divider,
-  Chip
+  Chip,
+  Paper
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import './App.css';
@@ -29,9 +30,15 @@ import HelpIcon from '@mui/icons-material/Help';
 import ScienceIcon from '@mui/icons-material/Science';
 import MenuIcon from '@mui/icons-material/Menu';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ThreeDRotationIcon from '@mui/icons-material/ThreeDRotation';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 // Pages
 import Dashboard from './pages/Dashboard';
+import HeatmapPanel from './components/HeatmapPanel';
+import ClusterVisualizationPanel from './components/visualization/ClusterVisualizationPanel';
+import DataUploader from './components/DataUploader';
 
 // Create theme
 const theme = createTheme({
@@ -228,6 +235,18 @@ function App() {
                 </ListItemIcon>
                 <ListItemText primary="Dashboard" />
               </ListItem>
+              <ListItem button component={Link} to="/heatmap">
+                <ListItemIcon>
+                  <TrendingUpIcon />
+                </ListItemIcon>
+                <ListItemText primary="Heatmap" />
+              </ListItem>
+              <ListItem button component={Link} to="/cluster">
+                <ListItemIcon>
+                  <ThreeDRotationIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cluster Viz" />
+              </ListItem>
               <ListItem button component={Link} to="/documentation">
                 <ListItemIcon>
                   <DescriptionIcon />
@@ -246,6 +265,12 @@ function App() {
                 </ListItemIcon>
                 <ListItemText primary="Help" />
               </ListItem>
+              <ListItem button component={Link} to="/upload">
+                <ListItemIcon>
+                  <CloudUploadIcon />
+                </ListItemIcon>
+                <ListItemText primary="Data Upload" />
+              </ListItem>
             </List>
           </Drawer>
 
@@ -254,9 +279,30 @@ function App() {
             <Toolbar /> {/* This creates space below the app bar */}
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/documentation" element={<Documentation />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/help" element={<Help />} />
+              <Route path="/heatmap" element={
+                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <HeatmapPanel />
+                  </Paper>
+                </Container>
+              } />
+              <Route path="/cluster" element={
+                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <ClusterVisualizationPanel />
+                  </Paper>
+                </Container>
+              } />
+              <Route path="/documentation" element={<div>Documentation Page (Coming Soon)</div>} />
+              <Route path="/settings" element={<div>Settings Page (Coming Soon)</div>} />
+              <Route path="/help" element={<div>Help Page (Coming Soon)</div>} />
+              <Route path="/upload" element={
+                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <DataUploader onDataUploaded={(data) => console.log('Data uploaded:', data)} />
+                  </Paper>
+                </Container>
+              } />
             </Routes>
           </Main>
         </Box>

@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { Container, Grid, Paper, Typography, Box } from '@mui/material';
+import { Container, Grid, Paper, Typography, Box, Alert, CircularProgress, ToggleButtonGroup, ToggleButton, Divider } from '@mui/material';
 import LatticeVisualization from '../components/visualization/LatticeVisualization';
 import ParameterPanel from '../components/ParameterPanel';
 import ResultsPanel from '../components/ResultsPanel';
+import { getThermalTunneling, getImpactTunneling } from '../api/api';
 
 function Dashboard() {
   const [simulationData, setSimulationData] = useState(null);
   const [simulationResults, setSimulationResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [simulationType, setSimulationType] = useState('thermal');
 
   const handleParameterChange = (parameters) => {
     console.log('Parameters updated:', parameters);
-    // Simulate fetching data based on parameters
+    // Update the lattice visualization based on parameters
     const mockData = {
       lattice: {
         structure: 'fcc',
@@ -22,27 +26,64 @@ function Dashboard() {
     setSimulationData(mockData);
   };
 
+  const handleSimulationTypeChange = (event, newType) => {
+    if (newType !== null) {
+      setSimulationType(newType);
+    }
+  };
+
   const handleRunSimulation = async (parameters) => {
-    console.log('Running simulation with parameters:', parameters);
+    console.log(`Running ${simulationType} simulation with parameters:`, parameters);
+    setLoading(true);
+    setError(null);
     
     try {
-      // In a real implementation, this would make an API call
-      // For now, let's mock the results
-      setTimeout(() => {
-        const mockResults = {
-          energyLevels: [-2.5, -1.8, -1.2, -0.5, 0.2, 0.8],
-          tunnelingProbability: 0.0023,
-          potentialEnergy: -3.2,
-          metadata: {
-            calculationTime: '0.45s',
-            iterations: 1000,
-            convergence: true
-          }
+      let response;
+      
+      if (simulationType === 'thermal') {
+        // Format parameters for thermal tunneling API
+        const apiParams = {
+          T: parameters.T,
+          lambda: parameters.lambda,
+          r0: parameters.r0,
+          k_spring: parameters.k_spring,
+          potential: parameters.potential
         };
-        setSimulationResults(mockResults);
-      }, 1500);
+        
+        // Call the thermal tunneling API
+        response = await getThermalTunneling(apiParams);
+      } else {
+        // Format parameters for impact tunneling API
+        const apiParams = {
+          T_impact: parameters.T_impact,
+          lambda: parameters.lambda,
+          r0: parameters.r0,
+          k_spring: parameters.k_spring,
+          potential: parameters.potential,
+          impact_duration: parameters.impact_duration
+        };
+        
+        // Call the impact tunneling API
+        response = await getImpactTunneling(apiParams);
+      }
+      
+      // Transform the API response to the format expected by ResultsPanel
+      const formattedResults = {
+        tunnelingProbability: response.probability,
+        energyLevels: response.energy_levels.map(level => level.energy),
+        potentialEnergy: response.energy_levels[0]?.energy || 0,
+        metadata: {
+          ...response.metadata,
+          simulationType: simulationType
+        }
+      };
+      
+      setSimulationResults(formattedResults);
     } catch (error) {
       console.error('Error running simulation:', error);
+      setError('Failed to run simulation. Please try again or check the parameters.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,12 +93,36 @@ function Dashboard() {
         {/* Parameter Panel */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 2, height: '100%' }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Simulation Type
+              </Typography>
+              <ToggleButtonGroup
+                value={simulationType}
+                exclusive
+                onChange={handleSimulationTypeChange}
+                aria-label="simulation type"
+                fullWidth
+                size="small"
+              >
+                <ToggleButton value="thermal">
+                  Thermal Tunneling
+                </ToggleButton>
+                <ToggleButton value="impact">
+                  Impact Tunneling
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            
+            <Divider sx={{ mb: 3 }} />
+            
             <Typography variant="h6" gutterBottom>
               Simulation Parameters
             </Typography>
             <ParameterPanel 
-              onParameterChange={handleParameterChange}
-              onRunSimulation={handleRunSimulation}
+              onParametersChange={handleParameterChange}
+              onCalculate={handleRunSimulation}
+              simulationType={simulationType}
             />
           </Paper>
         </Grid>
@@ -78,9 +143,25 @@ function Dashboard() {
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Simulation Results
+              Simulation Results {simulationResults && `(${simulationType.charAt(0).toUpperCase() + simulationType.slice(1)} Tunneling)`}
             </Typography>
-            <ResultsPanel results={simulationResults} />
+            
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                <CircularProgress />
+                <Typography variant="body1" sx={{ ml: 2 }}>
+                  Running {simulationType} simulation...
+                </Typography>
+              </Box>
+            ) : (
+              <ResultsPanel results={simulationResults} />
+            )}
           </Paper>
         </Grid>
       </Grid>
