@@ -217,6 +217,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
   }, [latticeAtoms]); // Dependencies for the useCallback
   
   // Update visualization when simulation data changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (simulationData) {
       // In the future, we would parse actual simulation data here
@@ -225,7 +226,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
       // Create a placeholder lattice for visualization
       createPlaceholderLattice();
     }
-  }, [simulationData, createPlaceholderLattice]);
+  }, [simulationData]); // Intentionally omitting createPlaceholderLattice to avoid render loop
   
   // Update visualization type
   const handleVisualizationTypeChange = (event) => {
