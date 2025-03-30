@@ -50,6 +50,70 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
   const [visualizationType, setVisualizationType] = useState('lattice'); // lattice, energy, phonon
   const [latticeAtoms, setLatticeAtoms] = useState([]);
   
+  // Create placeholder lattice - fully memoized with useCallback
+  const createPlaceholderLattice = useCallback(() => {
+    setIsLoading(true);
+    
+    if (!sceneRef.current) return;
+    
+    // Clear existing lattice atoms
+    latticeAtoms.forEach(atom => {
+      if (sceneRef.current) {
+        sceneRef.current.remove(atom);
+      }
+    });
+    
+    const newLatticeAtoms = [];
+    
+    // Create a simple cubic lattice structure as placeholder
+    const latticeSize = 3; // 3x3x3 grid
+    const latticeSpacing = 2;
+    
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const materialPd = new THREE.MeshPhongMaterial({ color: 0x909090 }); // Palladium - gray
+    const materialD = new THREE.MeshPhongMaterial({ color: 0x0088ff }); // Deuterium - blue
+    
+    // Create a grid of atoms
+    for (let x = -latticeSize; x <= latticeSize; x++) {
+      for (let y = -latticeSize; y <= latticeSize; y++) {
+        for (let z = -latticeSize; z <= latticeSize; z++) {
+          // Place Palladium atoms at lattice points
+          const pdAtom = new THREE.Mesh(geometry, materialPd);
+          pdAtom.position.set(
+            x * latticeSpacing,
+            y * latticeSpacing,
+            z * latticeSpacing
+          );
+          if (sceneRef.current) {
+            sceneRef.current.add(pdAtom);
+            newLatticeAtoms.push(pdAtom);
+          }
+          
+          // Randomly place some Deuterium atoms
+          if (Math.random() > 0.7) {
+            const dGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const dAtom = new THREE.Mesh(dGeometry, materialD);
+            
+            // Position deuterium between lattice points
+            dAtom.position.set(
+              x * latticeSpacing + (Math.random() - 0.5) * 0.8,
+              y * latticeSpacing + (Math.random() - 0.5) * 0.8,
+              z * latticeSpacing + (Math.random() - 0.5) * 0.8
+            );
+            
+            if (sceneRef.current) {
+              sceneRef.current.add(dAtom);
+              newLatticeAtoms.push(dAtom);
+            }
+          }
+        }
+      }
+    }
+    
+    setLatticeAtoms(newLatticeAtoms);
+    setIsLoading(false);
+  }, [latticeAtoms]);
+  
   // Initialize Three.js scene
   useEffect(() => {
     if (!containerRef.current) return;
@@ -109,8 +173,10 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
     
     animate();
     
-    // Create placeholder lattice
-    createPlaceholderLattice();
+    // Create placeholder lattice initially - executed once after scene setup
+    setTimeout(() => {
+      createPlaceholderLattice();
+    }, 100);
     
     // Handle resize
     const handleResize = () => {
@@ -156,68 +222,9 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
         });
       }
     };
-  }, []);  // Empty dependency array as this should only run once on mount
-  
-  // Create placeholder lattice - memoized with useCallback
-  const createPlaceholderLattice = useCallback(() => {
-    setIsLoading(true);
-    
-    if (!sceneRef.current) return;
-    
-    // Clear existing lattice atoms
-    latticeAtoms.forEach(atom => {
-      sceneRef.current.remove(atom);
-    });
-    
-    const newLatticeAtoms = [];
-    
-    // Create a simple cubic lattice structure as placeholder
-    const latticeSize = 3; // 3x3x3 grid
-    const latticeSpacing = 2;
-    
-    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const materialPd = new THREE.MeshPhongMaterial({ color: 0x909090 }); // Palladium - gray
-    const materialD = new THREE.MeshPhongMaterial({ color: 0x0088ff }); // Deuterium - blue
-    
-    // Create a grid of atoms
-    for (let x = -latticeSize; x <= latticeSize; x++) {
-      for (let y = -latticeSize; y <= latticeSize; y++) {
-        for (let z = -latticeSize; z <= latticeSize; z++) {
-          // Place Palladium atoms at lattice points
-          const pdAtom = new THREE.Mesh(geometry, materialPd);
-          pdAtom.position.set(
-            x * latticeSpacing,
-            y * latticeSpacing,
-            z * latticeSpacing
-          );
-          sceneRef.current.add(pdAtom);
-          newLatticeAtoms.push(pdAtom);
-          
-          // Randomly place some Deuterium atoms
-          if (Math.random() > 0.7) {
-            const dGeometry = new THREE.SphereGeometry(0.25, 16, 16);
-            const dAtom = new THREE.Mesh(dGeometry, materialD);
-            
-            // Position deuterium between lattice points
-            dAtom.position.set(
-              x * latticeSpacing + (Math.random() - 0.5) * 0.8,
-              y * latticeSpacing + (Math.random() - 0.5) * 0.8,
-              z * latticeSpacing + (Math.random() - 0.5) * 0.8
-            );
-            
-            sceneRef.current.add(dAtom);
-            newLatticeAtoms.push(dAtom);
-          }
-        }
-      }
-    }
-    
-    setLatticeAtoms(newLatticeAtoms);
-    setIsLoading(false);
-  }, [latticeAtoms]); // Dependencies for the useCallback
+  }, [createPlaceholderLattice]);  // Add createPlaceholderLattice as dependency
   
   // Update visualization when simulation data changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (simulationData) {
       // In the future, we would parse actual simulation data here
@@ -226,7 +233,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
       // Create a placeholder lattice for visualization
       createPlaceholderLattice();
     }
-  }, [simulationData]); // Intentionally omitting createPlaceholderLattice to avoid render loop
+  }, [simulationData, createPlaceholderLattice]); // Include all dependencies
   
   // Update visualization type
   const handleVisualizationTypeChange = (event) => {
