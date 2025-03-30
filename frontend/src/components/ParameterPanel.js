@@ -16,7 +16,6 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { styled } from '@mui/material/styles';
-import PresetsSelector from './PresetsSelector';
 
 // Custom styled components
 const ParameterBox = styled(Paper)(({ theme }) => ({

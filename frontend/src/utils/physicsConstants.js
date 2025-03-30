@@ -5,6 +5,8 @@
  * representing LENR/CMNS physics in our visualization.
  */
 
+import * as THREE from 'three';
+
 // Physical constants (in SI units)
 export const CONSTANTS = {
   // Fundamental constants
