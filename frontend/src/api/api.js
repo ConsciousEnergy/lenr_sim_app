@@ -128,8 +128,12 @@ export const checkHealth = async () => {
   }
 };
 
-export const runSimulation = async (parameters) => {
+export const runSimulation = async (parameters, useMock = false) => {
   try {
+    if (useMock) {
+      return await mockRunSimulation(parameters);
+    }
+    
     // Determine which API endpoint to use based on parameters
     let endpoint = '/simulation/run';
     if (parameters.simulationType === 'thermal-tunneling') {
@@ -146,8 +150,12 @@ export const runSimulation = async (parameters) => {
   }
 };
 
-export const pauseSimulation = async () => {
+export const pauseSimulation = async (useMock = false) => {
   try {
+    if (useMock) {
+      return await mockPauseSimulation();
+    }
+    
     const response = await api.post('/simulation/pause');
     return response.data;
   } catch (error) {
@@ -156,12 +164,30 @@ export const pauseSimulation = async () => {
   }
 };
 
-export const stopSimulation = async () => {
+export const stopSimulation = async (useMock = false) => {
   try {
+    if (useMock) {
+      return await mockStopSimulation();
+    }
+    
     const response = await api.post('/simulation/stop');
     return response.data;
   } catch (error) {
     console.error('Failed to stop simulation:', error);
+    throw error;
+  }
+};
+
+export const resetSimulation = async (useMock = false) => {
+  try {
+    if (useMock) {
+      return await mockResetSimulation();
+    }
+    
+    const response = await api.post('/simulation/reset');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to reset simulation:', error);
     throw error;
   }
 };
@@ -280,42 +306,36 @@ export const downloadCSV = (csvContent, filename) => {
   URL.revokeObjectURL(url);
 };
 
+// Mock implementations for development testing
 export const mockRunSimulation = async (parameters) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Generate a very small random number for tunneling rate (typically 10^-10 to 10^-5)
-  const tunnelingRate = 1e-10 + (Math.random() * 1e-5);
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
   // Mock response data
   const mockData = {
-    data: {
-      lattice: {
-        structure: 'fcc',
-        elements: ['Pd', 'D'],
-        dimensions: { x: 5, y: 5, z: 5 },
-        energy: Math.random() * 10
-      }
-    },
+    id: "sim_" + Math.random().toString(36).substr(2, 9),
+    status: "completed",
+    parameters: { ...parameters },
     results: {
-      probability: Math.random() * 0.01,
-      energy: -2.5 + Math.random() * 0.5,
-      barrier: 0.2 + Math.random() * 0.1,
-      tunneling_rate: tunnelingRate,
-      metrics: {
-        temperature: parameters.T || 300,
-        time_steps: 1000,
-        convergence: true
-      },
-      charts: {
-        potential_curve: Array.from({ length: 50 }, (_, i) => ({
-          x: i * 0.1,
-          y: 2 * (1 - Math.exp(-0.5 * i * 0.1)) ** 2
-        })),
-        probability_density: Array.from({ length: 50 }, (_, i) => ({
-          x: i * 0.1,
-          y: Math.exp(-((i * 0.1 - 2.5) ** 2) / 0.5)
-        }))
+      temperature: parameters.T || 300,
+      tunneling_rate: Math.random() * 1e-20 * Math.exp(-(300 / (parameters.T || 300))),
+      energy_release: Math.random() * 1e-12 * (parameters.T || 300) / 300,
+      time_steps: Array.from({length: 10}, (_, i) => ({
+        time: i * 0.1,
+        temperature: (parameters.T || 300) + Math.random() * 5,
+        tunneling_rate: Math.random() * 1e-20 * Math.exp(-(300 / (parameters.T || 300))) * (1 + i/10)
+      })),
+      lattice: {
+        structure: "fcc",
+        dimensions: {
+          x: 5,
+          y: 5,
+          z: 5
+        },
+        host_metal: "Pd",
+        fuel: "D",
+        loading: 0.6,
+        energy: Math.random() * 1e-10
       }
     }
   };
@@ -323,6 +343,37 @@ export const mockRunSimulation = async (parameters) => {
   return mockData;
 };
 
+export const mockPauseSimulation = async () => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return {
+    status: "paused",
+    message: "Simulation paused successfully"
+  };
+};
+
+export const mockStopSimulation = async () => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return {
+    status: "stopped",
+    message: "Simulation stopped successfully"
+  };
+};
+
+export const mockResetSimulation = async () => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  return {
+    status: "reset",
+    message: "Simulation reset successfully"
+  };
+};
+
+// Default export with all functions
 export default {
   getThermalTunneling,
   getImpactTunneling,
@@ -333,12 +384,16 @@ export default {
   runSimulation,
   pauseSimulation,
   stopSimulation,
+  resetSimulation,
   getSimulationStatus,
   fitModel,
-  mockRunSimulation,
   exportSimulationResults,
   compareExperimentalData,
   analyzeResults,
   convertToCSV,
-  downloadCSV
+  downloadCSV,
+  mockRunSimulation,
+  mockPauseSimulation,
+  mockStopSimulation,
+  mockResetSimulation
 }; 

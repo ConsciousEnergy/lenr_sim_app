@@ -17,7 +17,7 @@ import ExperimentalDataUploader from '../components/Uploader';
 import LatticeVisualization from '../components/visualization/LatticeVisualization';
 import ExportModule from '../components/data/ExportModule';
 import PresetSelector from '../components/PresetSelector';
-import { runSimulation, getResults, pauseSimulation, stopSimulation, resetSimulation } from '../api/api';
+import * as api from '../api/api';
 
 const USE_MOCK_API = process.env.NODE_ENV === 'development';
 
@@ -83,7 +83,7 @@ const Dashboard = () => {
     setSimulationStatus('running');
     
     try {
-      const data = await runSimulation(parameters, USE_MOCK_API);
+      const data = await api.runSimulation(parameters, USE_MOCK_API);
       setSimulationData(data);
       setResults(data.results);
       setSimulationStatus('completed');
@@ -98,7 +98,7 @@ const Dashboard = () => {
   
   const handlePauseSimulation = async () => {
     try {
-      await pauseSimulation(USE_MOCK_API);
+      await api.pauseSimulation(USE_MOCK_API);
       setSimulationStatus('paused');
     } catch (err) {
       console.error('Failed to pause simulation:', err);
@@ -107,7 +107,7 @@ const Dashboard = () => {
   
   const handleStopSimulation = async () => {
     try {
-      await stopSimulation(USE_MOCK_API);
+      await api.stopSimulation(USE_MOCK_API);
       setSimulationStatus('ready');
     } catch (err) {
       console.error('Failed to stop simulation:', err);
@@ -116,7 +116,12 @@ const Dashboard = () => {
   
   const handleResetSimulation = async () => {
     try {
-      await resetSimulation(USE_MOCK_API);
+      // We can now use the mock function in development mode
+      if (USE_MOCK_API) {
+        await api.mockResetSimulation();
+      } else {
+        await api.resetSimulation();
+      }
       setSimulationData(null);
       setResults(null);
       setSimulationStatus('ready');

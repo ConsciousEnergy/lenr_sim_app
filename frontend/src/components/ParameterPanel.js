@@ -33,31 +33,36 @@ const InfoIconStyled = styled(InfoIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
-  // Default parameter values
-  const [parameters, setParameters] = useState({
+const ParameterPanel = ({ parameters, onParameterChange, onStartSimulation, isLoading }) => {
+  // Define local state for parameters if not provided externally
+  const [localParameters, setLocalParameters] = useState({
     T: 300, // Temperature in Kelvin
     lambda: 1e-10, // Tunneling parameter in meters
     r0: 1e-10, // Equilibrium separation in meters
     k_spring: 1000, // Spring constant in N/m
     potential: 'harmonic', // Potential model type
-    T_impact: 5000, // Impact temperature (for impact tunneling)
-    impact_duration: 1e-12, // Impact duration in seconds
+    impactT: 0, // Impact temperature (for impact tunneling)
+    impactDuration: 0, // Impact duration in seconds
+    nTimeSteps: 1000, // Number of time steps
   });
 
+  // Use external parameters if provided
+  const effectiveParameters = parameters || localParameters;
+  
   // Sliders have different ranges for different parameters
   const sliderRanges = {
     T: { min: 10, max: 1000, step: 10 },
     lambda: { min: 1e-11, max: 1e-9, step: 1e-11 },
     r0: { min: 5e-11, max: 5e-10, step: 5e-11 },
     k_spring: { min: 100, max: 10000, step: 100 },
-    T_impact: { min: 1000, max: 10000, step: 100 },
-    impact_duration: { min: 1e-13, max: 1e-11, step: 1e-13 },
+    impactT: { min: 0, max: 10000, step: 100 },
+    impactDuration: { min: 0, max: 1e-11, step: 1e-13 },
+    nTimeSteps: { min: 100, max: 10000, step: 100 }
   };
   
   // Format slider values to readable form
   const formatSliderValue = (param, value) => {
-    if (param === 'lambda' || param === 'r0' || param === 'impact_duration') {
+    if (param === 'lambda' || param === 'r0' || param === 'impactDuration') {
       return `${value.toExponential(2)}`;
     }
     return value.toString();
@@ -65,54 +70,57 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
 
   // Handle slider changes
   const handleSliderChange = (param) => (event, newValue) => {
-    setParameters({ ...parameters, [param]: newValue });
+    if (parameters) {
+      // If using external parameters, call the callback
+      onParameterChange(param, newValue);
+    } else {
+      // Otherwise update local state
+      setLocalParameters({ ...localParameters, [param]: newValue });
+      // Call the callback with the entire parameter object if needed
+      onParameterChange && onParameterChange(param, newValue);
+    }
   };
 
   // Handle text input changes
   const handleInputChange = (param) => (event) => {
     const value = event.target.value === '' ? '' : Number(event.target.value);
     if (value !== '' && !isNaN(value) && value >= sliderRanges[param].min && value <= sliderRanges[param].max) {
-      setParameters({ ...parameters, [param]: value });
+      if (parameters) {
+        // If using external parameters, call the callback
+        onParameterChange(param, value);
+      } else {
+        // Otherwise update local state
+        setLocalParameters({ ...localParameters, [param]: value });
+        // Call the callback with the entire parameter object if needed
+        onParameterChange && onParameterChange(param, value);
+      }
     }
   };
 
   // Handle potential type change
   const handlePotentialChange = (event) => {
-    setParameters({ ...parameters, potential: event.target.value });
+    const newValue = event.target.value;
+    if (parameters) {
+      // If using external parameters, call the callback
+      onParameterChange('potential', newValue);
+    } else {
+      // Otherwise update local state
+      setLocalParameters({ ...localParameters, potential: newValue });
+      // Call the callback with the entire parameter object if needed
+      onParameterChange && onParameterChange('potential', newValue);
+    }
   };
 
-  // Handle preset selection
-  const handlePresetSelect = (presetParams) => {
-    setParameters(presetParams);
-  };
-
-  // Send parameters to parent when they change
-  useEffect(() => {
-    onParameterChange && onParameterChange(parameters);
-  }, [parameters, onParameterChange]);
-
-  // Handle calculation button click
-  const handleCalculate = () => {
-    // Format parameters for API request
-    const apiParameters = {
-      ...parameters,
-      // Include any special formatting needed for API
-    };
-    
-    onRunSimulation && onRunSimulation(apiParameters);
+  // Handle start simulation button click
+  const handleStartSimulation = () => {
+    onStartSimulation && onStartSimulation();
   };
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h6" gutterBottom>
         Simulation Parameters
       </Typography>
-      
-      {/* Presets Selector */}
-      <PresetsSelector 
-        onPresetSelect={handlePresetSelect}
-        currentParameters={parameters}
-      />
       
       <ParameterBox>
         <Typography variant="h6" gutterBottom>
@@ -123,7 +131,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
           <Select
             labelId="potential-select-label"
             id="potential-select"
-            value={parameters.potential}
+            value={effectiveParameters.potential}
             label="Potential Type"
             onChange={handlePotentialChange}
           >
@@ -151,7 +159,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
             <Grid container spacing={2} alignItems="center">
               <Grid item xs>
                 <Slider
-                  value={parameters.T}
+                  value={effectiveParameters.T}
                   onChange={handleSliderChange('T')}
                   aria-labelledby="T-slider-label"
                   min={sliderRanges.T.min}
@@ -167,7 +175,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  value={parameters.T}
+                  value={effectiveParameters.T}
                   onChange={handleInputChange('T')}
                   inputProps={{
                     step: sliderRanges.T.step,
@@ -195,15 +203,15 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
             <Grid container spacing={2} alignItems="center">
               <Grid item xs>
                 <Slider
-                  value={parameters.lambda}
+                  value={effectiveParameters.lambda}
                   onChange={handleSliderChange('lambda')}
                   aria-labelledby="lambda-slider-label"
                   min={sliderRanges.lambda.min}
                   max={sliderRanges.lambda.max}
                   step={sliderRanges.lambda.step}
                   marks={[
-                    { value: sliderRanges.lambda.min, label: `${sliderRanges.lambda.min.toExponential(0)}` },
-                    { value: sliderRanges.lambda.max, label: `${sliderRanges.lambda.max.toExponential(0)}` }
+                    { value: sliderRanges.lambda.min, label: formatSliderValue('lambda', sliderRanges.lambda.min) },
+                    { value: sliderRanges.lambda.max, label: formatSliderValue('lambda', sliderRanges.lambda.max) }
                   ]}
                   valueLabelDisplay="auto"
                   valueLabelFormat={(value) => formatSliderValue('lambda', value)}
@@ -211,8 +219,15 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  value={parameters.lambda.toExponential(2)}
+                  value={effectiveParameters.lambda.toExponential(2)}
                   onChange={handleInputChange('lambda')}
+                  inputProps={{
+                    step: sliderRanges.lambda.step,
+                    min: sliderRanges.lambda.min,
+                    max: sliderRanges.lambda.max,
+                    type: 'number',
+                    'aria-labelledby': 'lambda-slider-label',
+                  }}
                   size="small"
                   sx={{ width: 120 }}
                 />
@@ -223,24 +238,24 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
           <Grid item xs={12}>
             <Box display="flex" alignItems="center">
               <Typography id="r0-slider-label">
-                Equilibrium Position r₀ (m)
+                Equilibrium Separation r₀ (m)
               </Typography>
-              <Tooltip title="The equilibrium separation distance between nuclei in the potential well">
+              <Tooltip title="The distance between nuclei at equilibrium">
                 <InfoIconStyled />
               </Tooltip>
             </Box>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs>
                 <Slider
-                  value={parameters.r0}
+                  value={effectiveParameters.r0}
                   onChange={handleSliderChange('r0')}
                   aria-labelledby="r0-slider-label"
                   min={sliderRanges.r0.min}
                   max={sliderRanges.r0.max}
                   step={sliderRanges.r0.step}
                   marks={[
-                    { value: sliderRanges.r0.min, label: `${sliderRanges.r0.min.toExponential(0)}` },
-                    { value: sliderRanges.r0.max, label: `${sliderRanges.r0.max.toExponential(0)}` }
+                    { value: sliderRanges.r0.min, label: formatSliderValue('r0', sliderRanges.r0.min) },
+                    { value: sliderRanges.r0.max, label: formatSliderValue('r0', sliderRanges.r0.max) }
                   ]}
                   valueLabelDisplay="auto"
                   valueLabelFormat={(value) => formatSliderValue('r0', value)}
@@ -248,8 +263,15 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  value={parameters.r0.toExponential(2)}
+                  value={effectiveParameters.r0.toExponential(2)}
                   onChange={handleInputChange('r0')}
+                  inputProps={{
+                    step: sliderRanges.r0.step,
+                    min: sliderRanges.r0.min,
+                    max: sliderRanges.r0.max,
+                    type: 'number',
+                    'aria-labelledby': 'r0-slider-label',
+                  }}
                   size="small"
                   sx={{ width: 120 }}
                 />
@@ -259,19 +281,19 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
 
           <Grid item xs={12}>
             <Box display="flex" alignItems="center">
-              <Typography id="k-slider-label">
+              <Typography id="k-spring-slider-label">
                 Spring Constant k (N/m)
               </Typography>
-              <Tooltip title="The spring constant determines the stiffness of the bond between nuclei">
+              <Tooltip title="The spring constant determines the stiffness of the bond">
                 <InfoIconStyled />
               </Tooltip>
             </Box>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs>
                 <Slider
-                  value={parameters.k_spring}
+                  value={effectiveParameters.k_spring}
                   onChange={handleSliderChange('k_spring')}
-                  aria-labelledby="k-slider-label"
+                  aria-labelledby="k-spring-slider-label"
                   min={sliderRanges.k_spring.min}
                   max={sliderRanges.k_spring.max}
                   step={sliderRanges.k_spring.step}
@@ -284,14 +306,14 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  value={parameters.k_spring}
+                  value={effectiveParameters.k_spring}
                   onChange={handleInputChange('k_spring')}
                   inputProps={{
                     step: sliderRanges.k_spring.step,
                     min: sliderRanges.k_spring.min,
                     max: sliderRanges.k_spring.max,
                     type: 'number',
-                    'aria-labelledby': 'k-slider-label',
+                    'aria-labelledby': 'k-spring-slider-label',
                   }}
                   size="small"
                   sx={{ width: 100 }}
@@ -301,105 +323,19 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
           </Grid>
         </Grid>
       </ParameterBox>
-
-      <ParameterBox>
-        <Typography variant="h6" gutterBottom>
-          Impact Tunneling Parameters
-        </Typography>
-        
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12}>
-            <Box display="flex" alignItems="center">
-              <Typography id="impact-t-slider-label">
-                Impact Temperature (K)
-              </Typography>
-              <Tooltip title="Effective temperature during high-energy impact or stimulation events">
-                <InfoIconStyled />
-              </Tooltip>
-            </Box>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs>
-                <Slider
-                  value={parameters.T_impact}
-                  onChange={handleSliderChange('T_impact')}
-                  aria-labelledby="impact-t-slider-label"
-                  min={sliderRanges.T_impact.min}
-                  max={sliderRanges.T_impact.max}
-                  step={sliderRanges.T_impact.step}
-                  marks={[
-                    { value: sliderRanges.T_impact.min, label: sliderRanges.T_impact.min },
-                    { value: sliderRanges.T_impact.max, label: sliderRanges.T_impact.max }
-                  ]}
-                  valueLabelDisplay="auto"
-                />
-              </Grid>
-              <Grid item>
-                <TextField
-                  value={parameters.T_impact}
-                  onChange={handleInputChange('T_impact')}
-                  inputProps={{
-                    step: sliderRanges.T_impact.step,
-                    min: sliderRanges.T_impact.min,
-                    max: sliderRanges.T_impact.max,
-                    type: 'number',
-                    'aria-labelledby': 'impact-t-slider-label',
-                  }}
-                  size="small"
-                  sx={{ width: 100 }}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Box display="flex" alignItems="center">
-              <Typography id="impact-duration-slider-label">
-                Impact Duration (s)
-              </Typography>
-              <Tooltip title="Duration of the high-energy impact or stimulation events">
-                <InfoIconStyled />
-              </Tooltip>
-            </Box>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs>
-                <Slider
-                  value={parameters.impact_duration}
-                  onChange={handleSliderChange('impact_duration')}
-                  aria-labelledby="impact-duration-slider-label"
-                  min={sliderRanges.impact_duration.min}
-                  max={sliderRanges.impact_duration.max}
-                  step={sliderRanges.impact_duration.step}
-                  marks={[
-                    { value: sliderRanges.impact_duration.min, label: `${sliderRanges.impact_duration.min.toExponential(0)}` },
-                    { value: sliderRanges.impact_duration.max, label: `${sliderRanges.impact_duration.max.toExponential(0)}` }
-                  ]}
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(value) => formatSliderValue('impact_duration', value)}
-                />
-              </Grid>
-              <Grid item>
-                <TextField
-                  value={parameters.impact_duration.toExponential(2)}
-                  onChange={handleInputChange('impact_duration')}
-                  size="small"
-                  sx={{ width: 120 }}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      </ParameterBox>
-
-      <Button
-        variant="contained"
-        color="primary"
-        fullWidth
-        size="large"
-        startIcon={<PlayArrowIcon />}
-        onClick={handleCalculate}
-      >
-        Run Simulation
-      </Button>
+      
+      <Box mt={3} display="flex" justifyContent="center">
+        <Button 
+          variant="contained" 
+          color="primary" 
+          size="large"
+          startIcon={<PlayArrowIcon />}
+          onClick={handleStartSimulation}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Running...' : 'Start Simulation'}
+        </Button>
+      </Box>
     </Box>
   );
 };
