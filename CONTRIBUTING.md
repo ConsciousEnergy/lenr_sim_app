@@ -1,165 +1,81 @@
-# Contributing to LENR Simulation Application
+# Contributing to LENR Simulation App
 
-Thank you for considering contributing to the LENR Simulation Application! This document provides guidelines and instructions for contributing to this project.
+Thank you for considering contributing to the LENR Simulation App! This document provides guidelines and instructions for contributing to the project.
 
-## Table of Contents
+## Getting Started
 
-1. [Code of Conduct](#code-of-conduct)
-2. [How to Contribute](#how-to-contribute)
-   - [Reporting Bugs](#reporting-bugs)
-   - [Suggesting Enhancements](#suggesting-enhancements)
-   - [Pull Requests](#pull-requests)
-3. [Development Setup](#development-setup)
-4. [Coding Standards](#coding-standards)
-5. [Commit Guidelines](#commit-guidelines)
-6. [Testing](#testing)
-7. [Documentation](#documentation)
+1. **Fork the repository** on GitHub
+2. **Clone your fork** (`git clone https://github.com/yourusername/LENR_SIM_APP.git`)
+3. **Create a new branch** (`git checkout -b feature/your-feature-name`)
+4. **Set up your environment** using the start scripts provided
 
-## Code of Conduct
+## Development Workflow
 
-This project and everyone participating in it is governed by our Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+### Frontend Development
 
-## How to Contribute
+1. Navigate to the frontend directory
+2. Install dependencies: `npm install`
+3. Start the development server: `npm start`
+4. Make your changes following the established patterns
+5. Ensure your code follows the style guidelines
 
-### Reporting Bugs
+### Backend Development
 
-Before creating bug reports, please check the issue tracker to avoid duplicates. When you create a bug report, include as many details as possible:
+1. Activate the virtual environment
+2. Install requirements: `pip install -r backend/requirements.txt`
+3. Run the backend server: `uvicorn app.main:app --reload`
+4. Make your changes and test thoroughly
 
-- **Use a clear and descriptive title**
-- **Describe the exact steps to reproduce the bug**
-- **Explain what you expected to happen and what actually happened**
-- **Include screenshots if possible**
-- **List your environment details** (OS, browser, Python version, etc.)
+## Code Style Guidelines
 
-### Suggesting Enhancements
+### Python Code
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion:
+- Follow PEP 8 guidelines
+- Use type hints for function signatures
+- Write docstrings for all functions and classes
+- Keep functions small and focused on a single task
+- Prefer functional approaches over classes where appropriate
 
-- **Use a clear and descriptive title**
-- **Provide a detailed description of the suggested enhancement**
-- **Explain why this enhancement would be useful**
-- **Include any relevant academic papers or research if applicable**
+### JavaScript/React Code
 
-### Pull Requests
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests to ensure your changes don't break existing functionality
-5. Commit your changes with clear commit messages
-6. Push to your branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## Development Setup
-
-Please refer to the README.md file for instructions on setting up the development environment.
-
-## Coding Standards
-
-### Python
-
-- Follow PEP 8 style guide
-- Use type hints
-- Write docstrings for all functions, classes, and modules
+- Follow the existing component structure
+- Use functional components with hooks
+- Follow Material-UI patterns for UI components
 - Use descriptive variable names
-- Limit line length to 88 characters (compatible with Black formatter)
-
-```python
-# Example of good Python code
-def calculate_tunneling_probability(
-    potential_barrier: float, 
-    particle_energy: float
-) -> float:
-    """
-    Calculate the quantum tunneling probability.
-    
-    Args:
-        potential_barrier: Height of the potential barrier in eV
-        particle_energy: Energy of the particle in eV
-        
-    Returns:
-        Tunneling probability (value between 0 and 1)
-    """
-    # Implementation
-    return probability
-```
-
-### JavaScript/React
-
-- Use ES6+ features
-- Follow React Hooks patterns
-- Use functional components
-- Import only what you need
-- Use proper PropTypes
-
-```javascript
-// Example of good React code
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { calculateValue } from '../utils/math';
-
-const SimulationControl = ({ initialValue, onChange }) => {
-  const [value, setValue] = useState(initialValue);
-  
-  useEffect(() => {
-    onChange(value);
-  }, [value, onChange]);
-  
-  return (
-    <div className="simulation-control">
-      <input 
-        type="range" 
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-      />
-      <span>{calculateValue(value)}</span>
-    </div>
-  );
-};
-
-SimulationControl.propTypes = {
-  initialValue: PropTypes.number.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
-
-export default SimulationControl;
-```
-
-## Commit Guidelines
-
-- Use clear and descriptive commit messages
-- Use the present tense ("Add feature" not "Added feature")
-- Use the imperative mood ("Fix bug" not "Fixes bug")
-- Reference issues and pull requests where appropriate
 
 ## Testing
 
-- Add tests for all new features and bug fixes
-- Ensure all tests pass before submitting a pull request
-- Write both unit and integration tests when applicable
-- Follow the testing guidelines in TEST_PLAN.md
+- Write tests for all new features
+- Run existing tests with `python run_tests.py all` before submitting PRs
+- Ensure all tests pass before submitting your PR
 
-```python
-# Example of a good test
-def test_tunneling_calculation():
-    """Test that tunneling probability is correct for standard barriers."""
-    # Setup
-    barrier = 10.0  # eV
-    energy = 5.0    # eV
-    
-    # Execute
-    probability = calculate_tunneling_probability(barrier, energy)
-    
-    # Assert
-    assert 0 <= probability <= 1
-    assert round(probability, 6) == 0.012345  # Expected value
-```
+## Pull Request Process
 
-## Documentation
+1. Update the documentation to reflect your changes
+2. Run all tests and ensure they pass
+3. Add your changes to the CHANGELOG.md file
+4. Submit a pull request to the `dev` branch
+5. Include a clear description of the changes and their purpose
+6. Link any relevant issues
 
-- Update documentation for any changes to the API or UI
-- Document complex physics models with references to papers or textbooks
-- Include examples for new features
-- Keep the README.md up to date
+## Commit Message Guidelines
 
-Thank you for contributing to the LENR Simulation Application! 
+- Use clear, descriptive commit messages
+- Start with a verb in the present tense (Add, Fix, Update, Refactor, etc.)
+- Reference issue numbers when applicable
+- Keep commits focused on single changes
+
+## Code Review
+
+All submissions require review. We use GitHub pull requests for this purpose:
+
+1. Push your changes to your fork
+2. Submit a pull request to the repository
+3. Address any review comments promptly
+4. Ensure the CI/CD checks pass
+
+## Licensing
+
+By contributing, you agree that your contributions will be licensed under the project's MIT License.
+
+Thank you for contributing to LENR Simulation App! 

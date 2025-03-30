@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -16,53 +15,87 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.manifest
+*.spec
+
+# Environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.venv
+env/
 venv/
+ENV/
+env.bak/
+venv.bak/
 backend-env/
-backend-venv/
-.pytest_cache/
-htmlcov/
-.coverage
-.coverage.*
-.cache/
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
+frontend-env/
+*-env/
 
-# Node.js
-frontend/node_modules/
-frontend/.pnp
-frontend/.pnp.js
-frontend/coverage/
-frontend/build/
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# IDE-specific
+# React/Node
+node_modules/
+.npm
+.node_repl_history
+coverage/
+.next/
+out/
+.nuxt
+
+# IDEs and editors
 .idea/
 .vscode/
 *.swp
 *.swo
-*.swn
-*.iml
-*.sublime-workspace
-*.sublime-project
-
-# OS-specific
 .DS_Store
-Thumbs.db
-desktop.ini
+.DS_Store?
+._*
 
-# App-specific 
-backend/logs/*.log
-frontend_errors.log
-app_startup_errors.log
-*.log 
+# FastAPI
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VTK and visualization files
+*.vtk
+*.vtu
+static/cluster_fields/*.vtk
+static/cluster_fields/*.json
+
+# Database
+*.sqlite3
+*.db
+
+# Misc
+.directory
+.bashrc
+.dockerignore
+backup/
+todo.txt
+temp/
+test-results.xml
+TODO.md
+NOTES.md
+
+# Keep the placeholder files in static
+!static/cluster_fields/.gitkeep
+
+# Generated files
+backend/static/cluster_fields/*
+!backend/static/cluster_fields/.gitkeep
+frontend/build/ 

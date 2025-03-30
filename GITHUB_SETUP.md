@@ -1,53 +1,75 @@
-# GitHub Setup Instructions
+# GitHub Repository Setup Guide
 
-This document provides instructions for pushing the LENR Simulation App to GitHub.
+This document provides instructions for setting up and managing the GitHub repository for the LENR Simulation Application.
 
-## Initial Setup (Already Completed)
+## Initial Repository Setup
 
-1. Git repository has been initialized
-2. All files have been committed with the message "Initial version of LENR Simulation App v0.1.0"
-3. The repository has been tagged with version "v0.1.0"
+1. Create a new repository on GitHub named "LENR_SIM_APP"
+2. Configure the following repository settings:
+   - Enable "Issues" and "Projects" features
+   - Set default branch to `main`
+   - Setup branch protection rules for `main`
 
-## Pushing to GitHub
+## Branch Protection Rules
 
-To push this repository to GitHub, follow these steps:
+For the `main` branch:
+- Require pull request reviews before merging
+- Require status checks to pass before merging
+- Require branches to be up to date before merging
+- Include administrators in these restrictions
 
-1. Create a new repository on GitHub:
-   - Go to https://github.com/new
-   - Enter "LENR_Simulation_App" as the repository name
-   - Add a description: "A research-grade simulation platform for Low Energy Nuclear Reactions"
-   - Choose whether to make it public or private
-   - Do not initialize with a README, .gitignore, or license (we already have these files)
-   - Click "Create repository"
+## Setting Up GitHub Actions
 
-2. Add the GitHub repository as a remote (replace `YOUR_USERNAME` with your GitHub username):
-   ```powershell
-   git remote add origin https://github.com/YOUR_USERNAME/LENR_Simulation_App.git
-   ```
+1. Create a `.github/workflows` directory
+2. Add CI workflow files for:
+   - Backend tests (`backend-tests.yml`)
+   - Frontend tests (`frontend-tests.yml`)
+   - Integration tests (`integration-tests.yml`)
 
-3. Push the master branch to GitHub:
-   ```powershell
-   git push -u origin master
-   ```
+## GitHub Issues Templates
 
-4. Push the tag to GitHub:
-   ```powershell
-   git push origin v0.1.0
-   ```
+Create issue templates for:
+- Bug reports
+- Feature requests
+- Documentation improvements
 
-## Verifying the Push
+## GitHub Projects Board
 
-After pushing, you can verify that everything was uploaded correctly by:
+Set up a project board with the following columns:
+- To Do
+- In Progress
+- Under Review
+- Done
 
-1. Visiting your GitHub repository at `https://github.com/YOUR_USERNAME/LENR_Simulation_App`
-2. Checking the commit history
-3. Checking the releases/tags section to ensure v0.1.0 is there
+## Repository Documentation
 
-## Next Steps
+Ensure the following documentation is in place:
+- README.md
+- CONTRIBUTING.md
+- LICENSE
+- SECURITY.md
+- CODE_OF_CONDUCT.md
 
-After successfully pushing to GitHub, consider:
+## Branch Strategy
 
-1. Setting up GitHub Actions for CI/CD (as outlined in DEV_PLAN.md)
-2. Creating project boards for tracking development tasks
-3. Adding collaborators to the repository
-4. Setting up branch protection rules for the master branch 
+We follow this branching strategy:
+- `main`: production-ready code
+- `dev`: active development branch
+- `feature/*`: for new features
+- `bugfix/*`: for bug fixes
+- `hotfix/*`: for urgent fixes to production
+
+## Tagging and Releases
+
+We use semantic versioning for releases:
+- Major.Minor.Patch (e.g., 1.0.0)
+- Create a new tag and release for each version
+- Include detailed release notes
+
+## GitHub Actions for CI/CD
+
+The CI/CD pipeline should include:
+- Running all tests
+- Linting and code quality checks
+- Building the application
+- (Future) Deployment to staging/production environments 
