@@ -11,14 +11,13 @@ This application provides a comprehensive suite of tools for simulating and visu
 
 ## Key Features
 
-- **Multiple Simulation Modes**: Choose between thermal tunneling and impact tunneling simulations
-- **Interactive Parameter Control**: Adjust quantum tunneling parameters in real-time with intuitive sliders and inputs
-- **Advanced Visualizations**: 
-  - Explore 3D lattice structures using Three.js with interactive controls
-  - Visualize parameter spaces with heatmaps using Recharts
-  - Examine particle clusters with 3D visualization
-- **Data Analysis**: Import experimental data with CSV preview and validation
-- **Data Export**: Export simulation results, heatmaps, and 3D particle data in CSV, JSON, and Excel formats
+- **Interactive Simulations**: Adjust quantum tunneling parameters in real-time with intuitive sliders and inputs
+- **Advanced Visualizations**: Explore 3D lattice structures using Three.js with multiple visualization modes
+- **Informative Legends**: Detailed legends explaining visualization elements and color codes
+- **Simulation Controls**: Start, pause, stop and reset simulations directly within the visualization
+- **Multiple Visualization Modes**: Toggle between lattice structure, energy distribution, and phonon propagation modes
+- **Data Visualization**: Interactive charts and graphs for simulation results using Recharts
+- **Parameter Exploration**: Test different potential models and configurations
 - **Real-time Feedback**: Immediate visual feedback when changing simulation parameters
 - **Responsive Design**: Fully responsive interface that works on desktop and tablets
 
@@ -29,10 +28,8 @@ LENR_SIM_APP/
 ├── backend/               # FastAPI server and physics engine
 │   ├── app/               # Application code
 │   │   ├── physics/       # Physics models and calculations
-│   │   ├── api/           # API endpoints and routing
-│   │   │   └── routes/    # API route definitions
-│   │   ├── models/        # Pydantic data models
-│   │   ├── visualization/ # Visualization generators
+│   │   ├── routers/       # API endpoints
+│   │   ├── services/      # Business logic
 │   │   └── utils/         # Helper functions
 │   └── tests/             # Backend test suite
 ├── frontend/              # React application
@@ -40,11 +37,9 @@ LENR_SIM_APP/
 │   └── src/               # React components and state management
 │       ├── components/    # Reusable UI components
 │       │   └── visualization/ # Visualization components
-│       ├── api/           # API client and service functions
 │       ├── pages/         # Application pages
 │       └── theme/         # Styling and theming
 ├── start_app.ps1          # Windows PowerShell script to start both servers
-├── start_app.sh           # Unix shell script to start both servers
 └── logs/                  # Application logs
 ```
 
@@ -63,11 +58,6 @@ LENR_SIM_APP/
 .\start_app.ps1
 ```
 
-#### On Unix/macOS:
-```bash
-./start_app.sh
-```
-
 This will:
 1. Create a virtual environment if one doesn't exist
 2. Install backend dependencies
@@ -79,7 +69,7 @@ This will:
 
 ```bash
 cd backend
-python run_tests.py
+pytest
 ```
 
 ## Components
@@ -89,36 +79,35 @@ python run_tests.py
 - **Physics Engine**: Calculate quantum tunneling probabilities, energy levels, and lattice interactions
 - **FastAPI Endpoints**: RESTful API for interacting with the physics engine
 - **Data Processing**: Process and analyze simulation results
-- **Visualization Generators**: Generate 3D visualization data for the frontend
 
 ### Frontend
 
 - **Parameter Panel**: Interactive controls for adjusting simulation parameters
 - **Results Panel**: Display simulation results with interactive charts
-- **Visualization Components**:
-  - Lattice Visualization: 3D visualization of lattice structures
-  - Heatmap Panel: Parameter space exploration through heatmaps
-  - Cluster Visualization: 3D visualization of particle clusters
-- **Data Uploader**: Import and preview experimental data from CSV files
+- **Lattice Visualization**: 3D visualization of lattice structures with different view modes, interactive legend, and simulation controls
+  - **Visualization Modes**: Switch between lattice structure, energy distribution, and phonon propagation
+  - **Interactive Legend**: Explains the meaning of different elements and colors in the visualization
+  - **Simulation Controls**: Start, pause, stop, and reset simulations directly from the visualization
 - **Dashboard**: Main interface combining all components
 
-## API Endpoints
+## 3D Visualization Features
 
-The application exposes the following main API endpoints:
+The 3D visualization component offers:
 
-- `/simulate/thermal` - Calculate thermal tunneling with Boltzmann averaging
-- `/simulate/impact` - Calculate impact energy tunneling
-- `/simulate/heatmap` - Generate 2D heatmap of parameter space
-- `/simulate/cluster` - Generate 3D cluster visualization data
-- `/fit/experimental` - Fit experimental data to theoretical models
-- `/health` - Server health check endpoint
+- **Multiple View Modes**: Toggle between different visualization perspectives
+  - **Lattice Structure**: View the basic crystalline arrangement of atoms
+  - **Energy Distribution**: See how energy is distributed throughout the lattice
+  - **Phonon Propagation**: Visualize phonon wave movements within the structure
+- **Interactive Controls**: Orbit, zoom, and pan to explore the 3D model
+- **Detailed Legend**: Explanatory legend showing what different colors and elements represent
+- **Embedded Simulation Controls**: Control the simulation directly from the visualization panel
+- **Real-time Updates**: See the visualization change as the simulation progresses
 
 ## Documentation
 
 For more information, see:
 - `DEV_PLAN.md`: Development roadmap and implementation status
 - `PROGRESS_SUMMARY.md`: Summary of completed work and next steps
-- `IMPLEMENTATION_SUMMARY.md`: Details of the frontend implementation
 
 ## License
 

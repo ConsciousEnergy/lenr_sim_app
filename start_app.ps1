@@ -1,7 +1,7 @@
 # LENR Simulation App Startup Script for Windows
 # This script starts both the backend and frontend development servers
 
-# Function to display a colorful banner
+# Function to display a banner
 function Show-Banner {
     $banner = @"
 ========================================================
@@ -16,164 +16,122 @@ function Show-Banner {
     Write-Host $banner -ForegroundColor Magenta
 }
 
-# Function to start the backend server
-function Start-Backend {
-    Write-Host "[+] Starting backend server..." -ForegroundColor Blue
+# Kill process using a specific port
+function Stop-ProcessByPort {
+    param(
+        [int]$Port
+    )
     
-    # Check for virtual environment
-    $venvDir = $null
-    if (Test-Path "backend-env") {
-        $venvDir = "backend-env"
-    } elseif (Test-Path "venv") {
-        $venvDir = "venv"
-    } elseif (Test-Path "backend-venv") {
-        $venvDir = "backend-venv"
-    } else {
-        Write-Host "[!] No virtual environment found." -ForegroundColor Red
-        Write-Host "[*] Creating new virtual environment 'backend-env'..." -ForegroundColor Yellow
-        python -m venv backend-env
-        $venvDir = "backend-env"
-    }
-    
-    # Activate virtual environment
-    $activateScript = Join-Path $venvDir "Scripts\activate.ps1"
-    if (Test-Path $activateScript) {
-        & $activateScript
-    } else {
-        Write-Host "[!] Failed to activate virtual environment." -ForegroundColor Red
-        return
-    }
-    
-    # Install requirements if needed
-    if (Test-Path "backend\requirements.txt") {
-        Write-Host "[*] Installing backend requirements..." -ForegroundColor Yellow
-        pip install -r backend\requirements.txt
-    }
-    
-    # Start the backend server
-    Write-Host "[*] Starting FastAPI server..." -ForegroundColor Green
-    Start-Process -FilePath "python" -ArgumentList "-m", "uvicorn", "app.main:app", "--reload", "--port", "8000" -WorkingDirectory "backend" -NoNewWindow
-    
-    Write-Host "[✓] Backend server running" -ForegroundColor Green
-    Write-Host "[✓] API available at http://localhost:8000" -ForegroundColor Green
-}
-
-# Function to start the frontend server
-function Start-Frontend {
-    Write-Host "[+] Starting frontend server..." -ForegroundColor Blue
-    
-    # Check if npm is installed
-    if (-not (Get-Command "npm" -ErrorAction SilentlyContinue)) {
-        Write-Host "[!] npm is not installed. Please install Node.js and npm." -ForegroundColor Red
-        return
-    }
-    
-    # Check if frontend directory exists
-    if (-not (Test-Path "frontend")) {
-        Write-Host "[!] Frontend directory not found." -ForegroundColor Red
-        return
-    }
-    
-    # Check if package.json exists
-    if (-not (Test-Path "frontend\package.json")) {
-        Write-Host "[!] Missing package.json in frontend directory." -ForegroundColor Red
-        Write-Host "[!] Please run the script from the project root directory or ensure your frontend is set up correctly." -ForegroundColor Red
-        
-        # Log error to a file for debugging
-        $errorMessage = "ERROR: package.json not found in frontend directory. Script run at $(Get-Date)"
-        $errorMessage | Out-File -Append -FilePath "frontend_errors.log"
-        return
-    }
-    
-    # Install dependencies if needed
-    if (-not (Test-Path "frontend\node_modules")) {
-        Write-Host "[*] Installing frontend dependencies..." -ForegroundColor Yellow
-        Push-Location "frontend"
-        try {
-            $npmOutput = npm install 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "[!] Error installing dependencies:" -ForegroundColor Red
-                Write-Host $npmOutput -ForegroundColor Red
-                $npmOutput | Out-File -Append -FilePath "..\frontend_errors.log"
-                Pop-Location
-                return
-            }
-        } catch {
-            Write-Host "[!] Exception during npm install: $_" -ForegroundColor Red
-            $_ | Out-File -Append -FilePath "..\frontend_errors.log"
-            Pop-Location
-            return
-        }
-        Pop-Location
-    }
-    
-    # Start the frontend server
-    Write-Host "[*] Starting React development server..." -ForegroundColor Green
-    Push-Location "frontend"
     try {
-        Start-Process -FilePath "npm" -ArgumentList "start" -NoNewWindow
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "[!] Error starting React server" -ForegroundColor Red
-            Pop-Location
-            return
+        $tcpConnections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        if (-not $tcpConnections) {
+            Write-Host "No processes found using port $Port" -ForegroundColor Yellow
+            return $false
         }
+        
+        foreach ($conn in $tcpConnections) {
+            $pid = $conn.OwningProcess
+            # Skip system processes (PID 0, 4) and other critical processes
+            if ($pid -eq 0 -or $pid -eq 4) {
+                Write-Host "Skipping system process with PID $pid" -ForegroundColor Yellow
+                continue
+            }
+            
+            try {
+                $processInfo = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                if ($processInfo -and $processInfo.ProcessName -notin @("System", "Idle", "svchost", "lsass", "winlogon", "services")) {
+                    Write-Host "Stopping process $($processInfo.ProcessName) (PID: $pid) using port $Port" -ForegroundColor Yellow
+                    Stop-Process -Id $pid -Force
+                    Start-Sleep -Seconds 1
+                    return $true
+                } else {
+                    Write-Host "Skipping critical system process $($processInfo.ProcessName) (PID: $pid)" -ForegroundColor Yellow
+                }
+            } catch {
+                Write-Host "Failed to stop process with PID $pid" -ForegroundColor Red
+            }
+        }
+        return $false
     } catch {
-        Write-Host "[!] Exception during npm start: $_" -ForegroundColor Red
-        $_ | Out-File -Append -FilePath "..\frontend_errors.log"
-        Pop-Location
-        return
+        Write-Host "Failed to query processes on port $Port" -ForegroundColor Red
+        return $false
     }
-    Pop-Location
-    
-    Write-Host "[✓] Frontend server running" -ForegroundColor Green
-    Write-Host "[✓] UI available at http://localhost:3000" -ForegroundColor Green
 }
 
-# Function to handle cleanup on exit
-function Cleanup {
-    Write-Host "[*] Shutting down servers..." -ForegroundColor Yellow
+# Check if port is in use
+function Test-PortInUse {
+    param(
+        [int]$Port
+    )
     
-    # Stop all backend processes
-    Get-Process -Name "python" | Where-Object { $_.CommandLine -like "*uvicorn*" } | ForEach-Object { 
-        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue 
-        Write-Host "[✓] Backend server stopped." -ForegroundColor Green
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        return ($connections -ne $null)
+    } catch {
+        return $false
     }
-    
-    # Stop all frontend processes
-    Get-Process -Name "node" | Where-Object { $_.CommandLine -like "*react-scripts*" } | ForEach-Object { 
-        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue 
-        Write-Host "[✓] Frontend server stopped." -ForegroundColor Green
-    }
-    
-    Write-Host "[*] Thank you for using LENR Simulation App!" -ForegroundColor Magenta
 }
 
 # Main execution
 try {
     Show-Banner
     
-    Write-Host "[*] LENR Simulation App Startup" -ForegroundColor Cyan
-    Write-Host "[*] Starting development environment..." -ForegroundColor Cyan
+    Write-Host "LENR Simulation App Startup" -ForegroundColor Cyan
+    Write-Host "Starting development environment..." -ForegroundColor Cyan
     
-    # Start backend and frontend
-    Start-Backend
-    Start-Frontend
-    
-    # Keep script running and handle CTRL+C
-    Write-Host "[*] Both servers are now running." -ForegroundColor Magenta
-    Write-Host "[*] Press Ctrl+C to stop all servers." -ForegroundColor Magenta
-    
-    # Wait for user to press Ctrl+C
-    while ($true) {
-        Start-Sleep -Seconds 1
+    # Free up ports if needed
+    if (Test-PortInUse -Port 8000) {
+        Write-Host "Port 8000 is already in use. Attempting to free up the port..." -ForegroundColor Yellow
+        Stop-ProcessByPort -Port 8000
+        Start-Sleep -Seconds 2
     }
-} 
-catch {
-    # Handle errors
-    Write-Host "An error occurred: $_" -ForegroundColor Red
-    $_ | Out-File -Append -FilePath "app_startup_errors.log"
+    
+    if (Test-PortInUse -Port 3000) {
+        Write-Host "Port 3000 is already in use. Attempting to free up the port..." -ForegroundColor Yellow
+        Stop-ProcessByPort -Port 3000
+        Start-Sleep -Seconds 2
+    }
+    
+    # Start backend server in a new window
+    Write-Host "Starting backend server..." -ForegroundColor Green
+    Start-Process -FilePath "cmd" -ArgumentList "/c cd backend && python -m uvicorn app.main:app --reload --port 8000"
+    
+    # Wait a bit for backend to start
+    Write-Host "Waiting for backend to start..." -ForegroundColor Cyan
+    Start-Sleep -Seconds 5
+    
+    # Check if backend started successfully
+    if (Test-PortInUse -Port 8000) {
+        Write-Host "Backend server is running at http://localhost:8000" -ForegroundColor Green
+    } else {
+        Write-Host "Failed to start backend server. Check if Python and dependencies are installed." -ForegroundColor Red
+        exit 1
+    }
+    
+    # Start frontend server in a new window
+    Write-Host "Starting frontend server..." -ForegroundColor Green
+    Start-Process -FilePath "cmd" -ArgumentList "/c cd frontend && npm start"
+    
+    # Wait for frontend to start
+    Write-Host "Waiting for frontend to start..." -ForegroundColor Cyan
+    Start-Sleep -Seconds 10
+    
+    # Check if frontend started successfully
+    if (Test-PortInUse -Port 3000) {
+        Write-Host "Frontend server is running at http://localhost:3000" -ForegroundColor Green
+        
+        # Open the browser
+        Write-Host "Opening browser to http://localhost:3000" -ForegroundColor Green
+        Start-Process "http://localhost:3000"
+    } else {
+        Write-Host "Failed to start frontend server. Check if Node.js and npm are installed." -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "Both servers are now running in separate windows." -ForegroundColor Magenta
+    Write-Host "Close the command windows to stop the servers." -ForegroundColor Magenta
+    Write-Host "This script will now exit. You can continue working in the separate terminal windows." -ForegroundColor Cyan
 }
-finally {
-    # Cleanup when script exits
-    Cleanup
+catch {
+    Write-Host "An error occurred. Please check the error message and try again." -ForegroundColor Red
 } 

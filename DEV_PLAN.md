@@ -10,14 +10,10 @@
 | Parameter Controls            | Completed   | Sliders and form controls working    |
 | Results Display               | Completed   | Charts and data visualization impl.  |
 | Data Visualization            | Completed   | Charts implemented with Recharts     |
-| 3D Visualization              | Completed   | Three.js implementation working      |
-| API Integration               | Completed   | All endpoints successfully connected |
-| CSV Data Import               | Completed   | Uploader with preview implemented    |
-| Heatmap Visualization         | Completed   | Interactive parameter exploration    |
-| Multiple Simulation Types     | Completed   | Thermal and impact tunneling modes   |
-| Cluster Visualization         | Completed   | 3D particle visualization            |
-| File Export                   | Completed   | Basic structure implemented          |
+| 3D Visualization              | Completed   | Three.js implementation with legend and controls |
+| File Export/Import            | In Progress | Basic uploader component complete    |
 | Documentation                 | In Progress | Ongoing updates                      |
+| API Integration               | Completed   | Frontend connected to backend API    |
 
 ## Architecture Overview
 
@@ -57,7 +53,7 @@
 | utils/               | Utility functions                                 | Completed   |
 | utils/math_helpers.py| Mathematical utilities                            | Completed   |
 | utils/file_io.py     | File operations for data import/export            | Completed   |
-| utils/visualization.py| Helper functions for visualization data          | In Progress |
+| utils/visualization.py| Helper functions for visualization data          | Completed   |
 
 ### Frontend Modules
 
@@ -69,12 +65,12 @@
 | src/components/ResultsPanel.js | Display simulation results              | Completed   |
 | src/components/Uploader.js | Experimental data upload                    | Completed   |
 | src/components/visualization/ | Visualization components                 | Completed   |
-| src/components/visualization/LatticeVisualization.js | 3D lattice visualization | Completed |
+| src/components/visualization/LatticeVisualization.js | 3D lattice visualization with legend | Completed |
 | src/pages/              | Application pages                              | Completed   |
 | src/pages/Dashboard.js  | Main application dashboard                     | Completed   |
-| src/api/                | API client functions                           | In Progress |
-| src/api/simulation.js   | Client for simulation endpoints                | In Progress |
-| src/api/parameters.js   | Client for parameter endpoints                 | In Progress |
+| src/api/                | API client functions                           | Completed   |
+| src/api/simulation.js   | Client for simulation endpoints                | Completed   |
+| src/api/parameters.js   | Client for parameter endpoints                 | Completed   |
 | src/theme/              | Styling and theming                            | Completed   |
 
 ## Testing Framework
@@ -132,6 +128,10 @@ def setup_logging():
 
 #### Windows
 ```
+# Start both backend and frontend with the PowerShell script
+.\start_app.ps1
+
+# Or start manually:
 # Start backend
 cd backend
 python -m app.main
@@ -181,62 +181,59 @@ npm test
 | v0.1     | Basic infrastructure, models                    | Completed   |
 | v0.2     | Core simulation logic, basic UI                 | Completed   |
 | v0.3     | Enhanced visualizations, parameter controls     | Completed   |
-| v0.4     | Complete UI, advanced visualizations            | In Progress |
-| v1.0     | Full functionality, documentation               | Planned     |
+| v0.4     | Complete UI, advanced visualizations            | Completed   |
+| v1.0     | Full functionality, documentation               | In Progress |
 
 ## Advanced Visualization Goals
 
 Our goal is to integrate Three.js on the frontend for enhanced 3D visualizations that can display:
 
-1. Lattice structures with interactive controls
-2. Phonon wave propagation through lattice
-3. Energy distribution within the lattice
-4. Real-time updates during simulation
+1. ✓ Lattice structures with interactive controls
+2. ✓ Phonon wave propagation through lattice
+3. ✓ Energy distribution within the lattice
+4. ✓ Real-time updates during simulation
+5. ✓ Interactive legend with explanation of visualization elements
 
-## Completed Features
+## Next Implementation Steps
 
-- [x] Basic simulation parameters input
-- [x] Simulation results visualization
-- [x] API integration for real-time calculations
-- [x] Support for multiple simulation types
-- [x] CSV data upload functionality
-- [x] 3D visualization of particle clusters
-- [x] Heatmap visualization for parameter spaces
-- [x] Data export functionality (CSV, JSON, Excel)
+1. **Further API Integration**
+   - ✓ Connect all frontend components to API endpoints
+   - ✓ Add proper error handling for API requests
+   - ✓ Implement loading states and feedback
+   - Add authentication for API requests (if needed)
 
-## Next Steps
+2. **Advanced Visualization Enhancements**
+   - ✓ Add interactive manipulation controls
+   - ✓ Implement energy distribution overlays
+   - ✓ Add phonon wave animation
+   - ✓ Create responsive visualization sizes
+   - ✓ Add legend for visualized elements
+   - ✓ Add simulation controls within visualization
 
-1. **Experimental data fitting against simulation results**
-   - Upload experimental data
-   - Implement fitting algorithms
-   - Visualize fit quality
-   - Optimize parameters
+3. **Data Analysis Features**
+   - Complete CSV import/export functionality
+   - Implement comparison tools for experimental vs. simulation data
+   - Add statistical analysis of simulation results
 
-2. **Enhanced 3D Visualization**
-   - Interactive particle properties
-   - Time-evolution visualization
-   - Particle path tracking
-   - Custom coloring by properties
-
-3. **User Authentication and Result Saving**
-   - User account creation and login
-   - Saving simulation configurations
-   - Saved results library
-   - Sharing capabilities
+4. **User Experience Improvements**
+   - ✓ Add tooltips and help documentation
+   - Implement user preference saving
+   - Create preset parameter configurations for common scenarios
+   - Add support for importing/exporting project configurations
 
 ## Technical Improvements
 
 1. **Performance Optimization**
-   - Implement memoization for expensive calculations
+   - ✓ Implement memoization for expensive calculations
    - Add proper virtualization for large datasets
-   - Optimize 3D rendering for complex scenes
+   - ✓ Optimize 3D rendering for complex scenes
    - Implement progressive loading for large models
 
 2. **Error Handling**
-   - Add comprehensive error boundaries in React components
-   - Implement retry logic for failed API requests
-   - Create user-friendly error messages
-   - Add logging for client-side errors
+   - ✓ Add comprehensive error boundaries in React components
+   - ✓ Implement retry logic for failed API requests
+   - ✓ Create user-friendly error messages
+   - ✓ Add logging for client-side errors
 
 3. **Accessibility**
    - Ensure all interactive elements are keyboard accessible
