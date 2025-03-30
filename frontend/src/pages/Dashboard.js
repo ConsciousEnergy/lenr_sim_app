@@ -3,6 +3,7 @@ import { Container, Grid, Paper, Typography, Box, Alert, CircularProgress, Toggl
 import LatticeVisualization from '../components/visualization/LatticeVisualization';
 import ParameterPanel from '../components/ParameterPanel';
 import ResultsPanel from '../components/ResultsPanel';
+import ExperimentalDataPanel from '../components/ExperimentalDataPanel';
 import { getThermalTunneling, getImpactTunneling } from '../api/api';
 
 function Dashboard() {
@@ -11,6 +12,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [simulationType, setSimulationType] = useState('thermal');
+  const [simulationParams, setSimulationParams] = useState(null);
 
   const handleParameterChange = (parameters) => {
     console.log('Parameters updated:', parameters);
@@ -50,6 +52,9 @@ function Dashboard() {
           potential: parameters.potential
         };
         
+        // Store the parameters used for the simulation
+        setSimulationParams(apiParams);
+        
         // Call the thermal tunneling API
         response = await getThermalTunneling(apiParams);
       } else {
@@ -63,6 +68,9 @@ function Dashboard() {
           impact_duration: parameters.impact_duration
         };
         
+        // Store the parameters used for the simulation
+        setSimulationParams(apiParams);
+        
         // Call the impact tunneling API
         response = await getImpactTunneling(apiParams);
       }
@@ -72,6 +80,7 @@ function Dashboard() {
         tunnelingProbability: response.probability,
         energyLevels: response.energy_levels.map(level => level.energy),
         potentialEnergy: response.energy_levels[0]?.energy || 0,
+        energy_levels: response.energy_levels, // Keep the original data for ExperimentalDataPanel
         metadata: {
           ...response.metadata,
           simulationType: simulationType
@@ -163,6 +172,16 @@ function Dashboard() {
               <ResultsPanel results={simulationResults} />
             )}
           </Paper>
+        </Grid>
+        
+        {/* Experimental Data Panel */}
+        <Grid item xs={12}>
+          <ExperimentalDataPanel 
+            simulationResults={simulationResults}
+            simulationParams={simulationParams}
+            simulationType={simulationType}
+            isLoading={loading}
+          />
         </Grid>
       </Grid>
     </Container>

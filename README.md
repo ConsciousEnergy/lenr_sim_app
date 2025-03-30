@@ -17,7 +17,13 @@ This application provides a comprehensive suite of tools for simulating and visu
   - Explore 3D lattice structures using Three.js with interactive controls
   - Visualize parameter spaces with heatmaps using Recharts
   - Examine particle clusters with 3D visualization
-- **Data Analysis**: Import experimental data with CSV preview and validation
+- **Data Analysis**: 
+  - Import experimental data with CSV preview and validation
+  - Fit experimental data against simulation results with automatic parameter optimization
+  - Calculate and display goodness-of-fit metrics (R², RMSE, MAE)
+- **Data Export**:
+  - Export simulation results and visualizations in CSV and JSON formats
+  - Download optimized parameters and fitted data for further analysis
 - **Real-time Feedback**: Immediate visual feedback when changing simulation parameters
 - **Responsive Design**: Fully responsive interface that works on desktop and tablets
 
@@ -99,6 +105,8 @@ python run_tests.py
   - Heatmap Panel: Parameter space exploration through heatmaps
   - Cluster Visualization: 3D visualization of particle clusters
 - **Data Uploader**: Import and preview experimental data from CSV files
+- **Experimental Data Panel**: Upload, visualize, and fit experimental data against simulations
+- **Export Functionality**: Export simulation results and visualizations in various formats
 - **Dashboard**: Main interface combining all components
 
 ## API Endpoints
@@ -110,6 +118,7 @@ The application exposes the following main API endpoints:
 - `/simulate/heatmap` - Generate 2D heatmap of parameter space
 - `/simulate/cluster` - Generate 3D cluster visualization data
 - `/fit/experimental` - Fit experimental data to theoretical models
+- `/fit/{simulation_type}` - Fit experimental data against simulation results
 - `/health` - Server health check endpoint
 
 ## Documentation

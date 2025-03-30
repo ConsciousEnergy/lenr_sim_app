@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, Grid, Divider, Chip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import ExportButton from './common/ExportButton';
 
 // Styled components
 const ResultCard = styled(Paper)(({ theme }) => ({
@@ -74,6 +75,14 @@ const ResultsPanel = ({ results }) => {
 
   return (
     <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <ExportButton 
+          data={results} 
+          buttonText="Export Results" 
+          fileName={`${simulationType}_tunneling_results`}
+        />
+      </Box>
+      
       <Grid container spacing={3}>
         {/* Key Metrics */}
         <Grid item xs={12} md={4}>

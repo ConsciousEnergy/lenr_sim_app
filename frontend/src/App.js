@@ -33,12 +33,14 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import ThreeDRotationIcon from '@mui/icons-material/ThreeDRotation';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 // Pages
 import Dashboard from './pages/Dashboard';
 import HeatmapPanel from './components/HeatmapPanel';
 import ClusterVisualizationPanel from './components/visualization/ClusterVisualizationPanel';
 import DataUploader from './components/DataUploader';
+import ExperimentalDataPanel from './components/ExperimentalDataPanel';
 
 // Create theme
 const theme = createTheme({
@@ -271,6 +273,12 @@ function App() {
                 </ListItemIcon>
                 <ListItemText primary="Data Upload" />
               </ListItem>
+              <ListItem button component={Link} to="/experimental">
+                <ListItemIcon>
+                  <BarChartIcon />
+                </ListItemIcon>
+                <ListItemText primary="Experimental Data" />
+              </ListItem>
             </List>
           </Drawer>
 
@@ -300,6 +308,13 @@ function App() {
                 <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                   <Paper sx={{ p: 2 }}>
                     <DataUploader onDataUploaded={(data) => console.log('Data uploaded:', data)} />
+                  </Paper>
+                </Container>
+              } />
+              <Route path="/experimental" element={
+                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <ExperimentalDataPanel />
                   </Paper>
                 </Container>
               } />

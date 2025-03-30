@@ -16,6 +16,8 @@ import {
 } from '@mui/material';
 import { getHeatmap } from '../api/api';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import ExportButton from './common/ExportButton';
+import { exportHeatmapAsCSV } from '../api/export';
 
 const HeatmapPanel = () => {
   const [loading, setLoading] = useState(false);
@@ -72,13 +74,20 @@ const HeatmapPanel = () => {
         data: formattedData,
         xLabel: response.x_label,
         yLabel: response.y_label,
-        metadata: response.metadata
+        metadata: response.metadata,
+        rawResponse: response // Keep the raw response for CSV export
       });
     } catch (error) {
       console.error('Error generating heatmap:', error);
       setError('Failed to generate heatmap. Please try different parameters.');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleExportCSV = () => {
+    if (heatmapData) {
+      exportHeatmapAsCSV(heatmapData, `heatmap_${params.potential}_${params.resolution}`);
     }
   };
   
@@ -216,6 +225,16 @@ const HeatmapPanel = () => {
       )}
       
       <Paper sx={{ p: 2, height: 500 }}>
+        {heatmapData && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <ExportButton 
+              data={heatmapData} 
+              buttonText="Export Heatmap" 
+              fileName={`heatmap_${params.potential}_${params.resolution}`}
+            />
+          </Box>
+        )}
+        
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
             <CircularProgress />

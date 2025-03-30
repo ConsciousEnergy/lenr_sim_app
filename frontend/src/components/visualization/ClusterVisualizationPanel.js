@@ -20,6 +20,8 @@ import { styled } from '@mui/material/styles';
 import { getClusterVisualization } from '../../api/api';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import ExportButton from '../common/ExportButton';
+import { exportAsJSON } from '../../api/export';
 
 const InfoIconStyled = styled(InfoIcon)(({ theme }) => ({
   fontSize: '1rem',
@@ -351,9 +353,18 @@ const ClusterVisualizationPanel = () => {
             
             {visualizationData && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Metadata:
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle2">
+                    Cluster Metadata
+                  </Typography>
+                  <ExportButton 
+                    data={visualizationData} 
+                    buttonText="Export Data" 
+                    fileName={`cluster_${params.num_particles}_particles`}
+                    showCSV={false} 
+                    showJSON={true}
+                  />
+                </Box>
                 <Typography variant="body2">
                   Grid Resolution: {visualizationData.metadata.grid_resolution}
                 </Typography>
