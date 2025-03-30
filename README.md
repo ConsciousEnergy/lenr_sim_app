@@ -1,162 +1,125 @@
 # LENR Simulation Application
 
-A comprehensive simulation platform for Low Energy Nuclear Reactions based on quantum tunneling models. This application includes a physics engine to simulate LENR processes and a web-based interface for parameter input, visualization, and analysis.
+A comprehensive application for simulating Low Energy Nuclear Reactions (LENR) and Condensed Matter Nuclear Science (CMNS) phenomena, with a focus on quantum tunneling effects in metal hydrides.
 
 ## Features
 
-- **Advanced Physics Engine**: Implementation of quantum tunneling models for LENR simulation
-- **Interactive UI**: Parameter input panels and real-time result visualization
-- **Parameter Presets**: Predefined configurations for common LENR experiment scenarios
-- **3D Visualization**: Three.js-based visualization of lattice structures with interactive legend and controls
-- **Data Analysis**: Import/export experimental data, compare with simulation results, and statistical analysis
-- **Flexible API**: Well-documented FastAPI endpoints for simulation control and data access
-- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Interactive 3D Visualization**: Three.js-based visualization of metal lattice structures with embedded hydrogen isotopes
+- **Physics-Based Visualization Modes**: 
+  - Lattice structure view with accurate atomic representations
+  - Energy distribution visualization showing reaction probability
+  - Phonon propagation visualization for lattice dynamics
+  - Dedicated quantum tunneling visualization for fusion mechanics
+  - Detailed physics information panel with calculations and explanations
+- **Simulation Engine**: Backend physics core for LENR/CMNS simulations
+- **Parameter Configuration**: Fine-tune simulation parameters to explore different conditions
+- **Data Analysis**: Compare simulation results with experimental data
+- **Export/Import**: Save and load simulation data for further analysis
 
 ## Project Structure
 
 ```
-LENR_SIM_APP/
-├── backend/                    # FastAPI server
-│   ├── app/
-│   │   ├── api/                # API endpoints
-│   │   ├── core/               # Core application code
-│   │   ├── models/             # Pydantic models
-│   │   ├── physics/            # Physics simulation engine
-│   │   └── utils/              # Utility functions
-│   └── tests/                  # Automated tests
-├── frontend/                   # React client
-│   ├── public/                 # Static assets
-│   └── src/
-│       ├── api/                # API client functions
-│       ├── components/         # React components
-│       │   ├── data/           # Data analysis components
-│       │   └── visualization/  # Visualization components
-│       ├── data/               # Parameter presets and configs
-│       ├── pages/              # Application pages
-│       └── theme/              # Styling and theming
-├── scripts/                    # Helper scripts
-└── start_app.ps1               # Application launcher
+lenr_sim_app/
+├── backend/              # FastAPI server
+│   ├── app/              # Application code
+│   │   ├── api/          # API endpoints
+│   │   ├── core/         # Core simulation engine
+│   │   ├── models/       # Data models
+│   │   └── utils/        # Utility functions
+│   ├── tests/            # Backend tests
+│   └── main.py           # Entry point
+├── frontend/             # React frontend
+│   ├── public/           # Static files
+│   ├── src/              # Source code
+│   │   ├── api/          # API integration
+│   │   ├── components/   # React components
+│   │   │   ├── data/     # Data-related components
+│   │   │   └── visualization/ # Visualization components
+│   │   ├── pages/        # Application pages
+│   │   ├── utils/        # Utility functions
+│   │   └── App.js        # Main application component
+│   └── package.json      # Dependencies
+├── scripts/              # Utility scripts
+└── README.md             # Project documentation
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- Node.js 14 or higher
+- Python 3.9+
+- Node.js 16+
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/LENR_SIM_APP.git
-   cd LENR_SIM_APP
-   ```
+```
+git clone https://github.com/your-repo/lenr_sim_app.git
+cd lenr_sim_app
+```
 
 2. Set up the backend
-   ```
-   cd backend
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # macOS/Linux
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+```
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
 3. Set up the frontend
-   ```
-   cd frontend
-   npm install
-   ```
+```
+cd frontend
+npm install
+```
 
 ### Running the Application
 
-#### Using the start script (Windows)
+1. Start the backend server
 ```
-.\start_app.ps1
-```
-
-#### Manually
-```
-# Start the backend
 cd backend
-python -m app.main
+uvicorn main:app --reload
+```
 
-# Start the frontend (in a new terminal)
+2. Start the frontend development server
+```
 cd frontend
 npm start
 ```
 
-## Key Features
+3. Open your browser and navigate to `http://localhost:3000`
 
-### 1. Physics Engine
+## Usage
 
-The backend implements several physics models:
-- Quantum tunneling calculation with various potential models
-- Temperature-dependent fusion probability
-- Lattice dynamics simulation
-- Phonon generation and propagation
+### Simulation Parameters
 
-### 2. Interactive Parameter Panel
+Adjust the following parameters to explore different LENR scenarios:
 
-Users can adjust simulation parameters such as:
-- Temperature range
-- Lattice parameters
-- Potential model selection
-- Simulation time steps
+- **Temperature**: System temperature in Kelvin
+- **Tunneling Parameter**: Quantum tunneling coefficient
+- **Equilibrium Separation**: Distance between nuclei at equilibrium
+- **Spring Constant**: Strength of the binding force
+- **Potential Model**: Type of potential energy model (harmonic, Morse, etc.)
 
-### 3. Parameter Presets
+### Visualization Controls
 
-The application includes preset configurations for common LENR scenarios:
-- Room temperature Pd-D (Fleischmann-Pons)
-- High temperature Ni-H (Rossi E-Cat)
-- Ultrasonic Pd-D systems
-- Ti-D fracture experiments
-- Laser-stimulated LENR
-- High-pressure Zr-D systems
+The 3D visualization includes multiple viewing modes:
 
-Users can:
-- Select from predefined parameter sets
-- Save custom parameter configurations
-- Import/export configuration files for sharing or backup
-
-### 4. Real-time Visualization
-
-Results are displayed through:
-- Interactive charts showing temperature vs. tunneling probability
-- 3D visualization of the lattice structure with:
-  - Color coding for energy levels
-  - Interactive legend explaining visualization elements
-  - Controls to start, pause, and reset simulations
-  - Animation of phonon propagation
-
-### 5. Data Analysis
-
-The application supports extensive data analysis features:
-- Import experimental data via CSV upload
-- Compare simulation results with experimental data
-- Statistical analysis including R², RMSE, and correlation coefficients
-- Export combined data sets for further analysis
-
-## API Documentation
-
-The FastAPI backend provides automatic OpenAPI documentation at:
-```
-http://localhost:8000/docs
-```
+1. **Lattice Structure**: View the metal lattice with embedded hydrogen isotopes
+2. **Tunneling Effects**: Visualize quantum tunneling probability
+3. **Physics Information**: Detailed calculations and explanations of LENR physics
 
 ## Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## Acknowledgements
 
-- The LENR research community
-- FastAPI, React, and Three.js communities
-- Contributors to the scientific modules used in this project 
+- Three.js for 3D visualization
+- React and Material-UI for the frontend interface
+- FastAPI for the backend server
+- NumPy and SciPy for scientific calculations 
