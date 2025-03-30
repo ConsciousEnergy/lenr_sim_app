@@ -9,13 +9,22 @@ This application provides a comprehensive suite of tools for simulating and visu
 - **Backend**: FastAPI-based Python server for physics calculations and data processing
 - **Frontend**: React-based user interface for interactive parameter exploration and visualization
 
+## Key Features
+
+- **Interactive Simulations**: Adjust quantum tunneling parameters in real-time with intuitive sliders and inputs
+- **Advanced Visualizations**: Explore 3D lattice structures using Three.js with multiple visualization modes
+- **Data Visualization**: Interactive charts and graphs for simulation results using Recharts
+- **Parameter Exploration**: Test different potential models and configurations
+- **Real-time Feedback**: Immediate visual feedback when changing simulation parameters
+- **Responsive Design**: Fully responsive interface that works on desktop and tablets
+
 ## Project Structure
 
 ```
 LENR_SIM_APP/
 ├── backend/               # FastAPI server and physics engine
 │   ├── app/               # Application code
-│   │   ├── models/        # Physics models and calculations
+│   │   ├── physics/       # Physics models and calculations
 │   │   ├── routers/       # API endpoints
 │   │   ├── services/      # Business logic
 │   │   └── utils/         # Helper functions
@@ -24,11 +33,11 @@ LENR_SIM_APP/
 │   ├── public/            # Static assets
 │   └── src/               # React components and state management
 │       ├── components/    # Reusable UI components
+│       │   └── visualization/ # Visualization components
 │       ├── pages/         # Application pages
 │       └── theme/         # Styling and theming
-├── start_app.sh           # Unix shell script to start both servers
 ├── start_app.ps1          # Windows PowerShell script to start both servers
-└── run_tests.py           # Script to run tests and generate reports
+└── logs/                  # Application logs
 ```
 
 ## Getting Started
@@ -46,12 +55,6 @@ LENR_SIM_APP/
 .\start_app.ps1
 ```
 
-#### On Unix-like systems:
-```bash
-chmod +x start_app.sh
-./start_app.sh
-```
-
 This will:
 1. Create a virtual environment if one doesn't exist
 2. Install backend dependencies
@@ -62,23 +65,30 @@ This will:
 ### Running Tests
 
 ```bash
-python run_tests.py --category all --report
+cd backend
+pytest
 ```
 
-See the `TEST_PLAN.md` for comprehensive testing information.
+## Components
 
-## Features
+### Backend
 
-- **Interactive Simulations**: Adjust quantum tunneling parameters in real-time
-- **Visualization**: Multiple visualization options including heatmaps and 3D renderings
-- **Parameter Exploration**: Test different potential models and configurations
-- **Data Export**: Save simulation results for further analysis
+- **Physics Engine**: Calculate quantum tunneling probabilities, energy levels, and lattice interactions
+- **FastAPI Endpoints**: RESTful API for interacting with the physics engine
+- **Data Processing**: Process and analyze simulation results
+
+### Frontend
+
+- **Parameter Panel**: Interactive controls for adjusting simulation parameters
+- **Results Panel**: Display simulation results with interactive charts
+- **Lattice Visualization**: 3D visualization of lattice structures with different view modes
+- **Dashboard**: Main interface combining all components
 
 ## Documentation
 
-- Frontend UI documentation: See `frontend/README.md`
-- Test plan: See `TEST_PLAN.md`
-- Contributing guidelines: See `CONTRIBUTING.md`
+For more information, see:
+- `DEV_PLAN.md`: Development roadmap and implementation status
+- `PROGRESS_SUMMARY.md`: Summary of completed work and next steps
 
 ## License
 
