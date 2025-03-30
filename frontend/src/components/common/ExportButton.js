@@ -2,123 +2,105 @@ import React, { useState } from 'react';
 import { 
   Button, 
   Menu, 
-  MenuItem, 
-  ListItemIcon, 
+  MenuItem,
+  ListItemIcon,
   ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField
+  Tooltip
 } from '@mui/material';
-import GetAppIcon from '@mui/icons-material/GetApp';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import CodeIcon from '@mui/icons-material/Code';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import { exportAsCSV, exportAsJSON } from '../../api/export';
+import { 
+  FileDownload as FileDownloadIcon,
+  TableChart as TableChartIcon,
+  Code as CodeIcon,
+  Description as DescriptionIcon
+} from '@mui/icons-material';
 
 /**
- * Reusable export button component with dropdown menu for different export formats
+ * Reusable export button component with dropdown menu
+ * @param {Object} props - Component props
+ * @param {Function} props.onExportCSV - Handler for CSV export
+ * @param {Function} props.onExportJSON - Handler for JSON export (optional)
+ * @param {Function} props.onExportExcel - Handler for Excel export (optional)
+ * @param {string} props.label - Button label (optional)
+ * @param {string} props.tooltipTitle - Tooltip title (optional)
+ * @param {Object} props.buttonProps - Additional props for the Button component
  */
 const ExportButton = ({ 
-  data, 
-  disabled = false, 
-  buttonText = "Export", 
-  fileName = "simulation_data",
-  showCSV = true,
-  showJSON = true
+  onExportCSV, 
+  onExportJSON, 
+  onExportExcel,
+  label = 'Export', 
+  tooltipTitle = 'Export data',
+  buttonProps = {}
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [exportFormat, setExportFormat] = useState('');
-  const [customFileName, setCustomFileName] = useState(fileName);
+  const open = Boolean(anchorEl);
   
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
+  
   const handleClose = () => {
     setAnchorEl(null);
   };
-
-  const openExportDialog = (format) => {
-    setExportFormat(format);
-    setCustomFileName(fileName);
-    setOpenDialog(true);
+  
+  const handleExport = (exportFn) => {
+    if (exportFn) {
+      exportFn();
+    }
     handleClose();
   };
-
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
-
-  const handleExport = () => {
-    if (exportFormat === 'csv') {
-      exportAsCSV(data, customFileName);
-    } else if (exportFormat === 'json') {
-      exportAsJSON(data, customFileName);
-    }
-    handleDialogClose();
-  };
-
+  
   return (
     <>
-      <Button
-        variant="outlined"
-        startIcon={<GetAppIcon />}
-        onClick={handleClick}
-        disabled={disabled || !data}
-        size="small"
-      >
-        {buttonText}
-      </Button>
+      <Tooltip title={tooltipTitle}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<FileDownloadIcon />}
+          onClick={handleClick}
+          aria-controls={open ? 'export-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+          {...buttonProps}
+        >
+          {label}
+        </Button>
+      </Tooltip>
       
       <Menu
+        id="export-menu"
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={open}
         onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'export-button',
+        }}
       >
-        {showCSV && (
-          <MenuItem onClick={() => openExportDialog('csv')}>
-            <ListItemIcon>
-              <TableChartIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>CSV</ListItemText>
-          </MenuItem>
-        )}
+        <MenuItem onClick={() => handleExport(onExportCSV)}>
+          <ListItemIcon>
+            <DescriptionIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Export as CSV</ListItemText>
+        </MenuItem>
         
-        {showJSON && (
-          <MenuItem onClick={() => openExportDialog('json')}>
+        {onExportJSON && (
+          <MenuItem onClick={() => handleExport(onExportJSON)}>
             <ListItemIcon>
               <CodeIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>JSON</ListItemText>
+            <ListItemText>Export as JSON</ListItemText>
+          </MenuItem>
+        )}
+        
+        {onExportExcel && (
+          <MenuItem onClick={() => handleExport(onExportExcel)}>
+            <ListItemIcon>
+              <TableChartIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Export as Excel</ListItemText>
           </MenuItem>
         )}
       </Menu>
-      
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>Export as {exportFormat.toUpperCase()}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="filename"
-            label="File Name"
-            fullWidth
-            variant="outlined"
-            value={customFileName}
-            onChange={(e) => setCustomFileName(e.target.value)}
-            helperText={`The file will be saved as ${customFileName}.${exportFormat}`}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleExport} variant="contained" color="primary">
-            Export
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

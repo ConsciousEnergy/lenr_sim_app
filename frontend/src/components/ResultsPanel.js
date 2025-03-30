@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, Divider, Chip } from '@mui/material';
+import { Box, Typography, Paper, Grid, Divider, Chip, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ExportButton from './common/ExportButton';
+import { exportSimulationToCSV, exportSimulationToExcel } from '../utils/exportUtils';
 
 // Styled components
 const ResultCard = styled(Paper)(({ theme }) => ({
@@ -73,16 +74,40 @@ const ResultsPanel = ({ results }) => {
       .join(' ');
   };
 
+  // Handler for CSV export
+  const handleExportCSV = () => {
+    if (results) {
+      exportSimulationToCSV(results, simulationType);
+    }
+  };
+
+  // Handler for JSON export
+  const handleExportJSON = () => {
+    if (results) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `${simulationType}_simulation_${timestamp}.json`;
+      
+      // Create a JSON blob and trigger download
+      const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (results) {
+      exportSimulationToExcel(results, simulationType);
+    }
+  };
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <ExportButton 
-          data={results} 
-          buttonText="Export Results" 
-          fileName={`${simulationType}_tunneling_results`}
-        />
-      </Box>
-      
       <Grid container spacing={3}>
         {/* Key Metrics */}
         <Grid item xs={12} md={4}>
@@ -91,11 +116,20 @@ const ResultsPanel = ({ results }) => {
               <Typography variant="h6">
                 Key Results
               </Typography>
-              <Chip 
-                label={isImpact ? 'Impact Tunneling' : 'Thermal Tunneling'} 
-                color={isImpact ? 'secondary' : 'primary'} 
-                size="small"
-              />
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip 
+                  label={`${simulationType.charAt(0).toUpperCase() + simulationType.slice(1)} Simulation`}
+                  color="primary"
+                  size="small"
+                />
+                <ExportButton 
+                  onExportCSV={handleExportCSV}
+                  onExportJSON={handleExportJSON}
+                  onExportExcel={handleExportExcel}
+                  tooltipTitle="Export simulation results"
+                  buttonProps={{ size: 'small' }}
+                />
+              </Stack>
             </Box>
             <Divider sx={{ mb: 2 }} />
             

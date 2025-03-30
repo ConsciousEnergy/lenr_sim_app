@@ -12,12 +12,13 @@ import {
   Select,
   MenuItem,
   TextField,
-  Slider
+  Slider,
+  Stack
 } from '@mui/material';
 import { getHeatmap } from '../api/api';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ExportButton from './common/ExportButton';
-import { exportHeatmapAsCSV } from '../api/export';
+import { exportHeatmapToCSV, exportHeatmapToExcel } from '../utils/exportUtils';
 
 const HeatmapPanel = () => {
   const [loading, setLoading] = useState(false);
@@ -74,20 +75,13 @@ const HeatmapPanel = () => {
         data: formattedData,
         xLabel: response.x_label,
         yLabel: response.y_label,
-        metadata: response.metadata,
-        rawResponse: response // Keep the raw response for CSV export
+        metadata: response.metadata
       });
     } catch (error) {
       console.error('Error generating heatmap:', error);
       setError('Failed to generate heatmap. Please try different parameters.');
     } finally {
       setLoading(false);
-    }
-  };
-  
-  const handleExportCSV = () => {
-    if (heatmapData) {
-      exportHeatmapAsCSV(heatmapData, `heatmap_${params.potential}_${params.resolution}`);
     }
   };
   
@@ -111,6 +105,39 @@ const HeatmapPanel = () => {
       );
     }
     return null;
+  };
+
+  // Handler for CSV export
+  const handleExportCSV = () => {
+    if (heatmapData) {
+      exportHeatmapToCSV(heatmapData);
+    }
+  };
+
+  // Handler for JSON export
+  const handleExportJSON = () => {
+    if (heatmapData) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `heatmap_data_${timestamp}.json`;
+      
+      // Create a JSON blob and trigger download
+      const blob = new Blob([JSON.stringify(heatmapData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  // Handler for Excel export
+  const handleExportExcel = () => {
+    if (heatmapData) {
+      exportHeatmapToExcel(heatmapData);
+    }
   };
 
   return (
@@ -225,23 +252,25 @@ const HeatmapPanel = () => {
       )}
       
       <Paper sx={{ p: 2, height: 500 }}>
-        {heatmapData && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <ExportButton 
-              data={heatmapData} 
-              buttonText="Export Heatmap" 
-              fileName={`heatmap_${params.potential}_${params.resolution}`}
-            />
-          </Box>
-        )}
-        
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
             <CircularProgress />
           </Box>
         ) : heatmapData ? (
           <Box height="100%">
-            <ResponsiveContainer width="100%" height="100%">
+            <Box display="flex" justifyContent="flex-end" mb={1}>
+              <ExportButton 
+                onExportCSV={handleExportCSV}
+                onExportJSON={handleExportJSON}
+                onExportExcel={handleExportExcel}
+                tooltipTitle="Export heatmap data"
+                buttonProps={{ 
+                  size: 'small',
+                  sx: { mb: 1 }
+                }}
+              />
+            </Box>
+            <ResponsiveContainer width="100%" height="90%">
               <ScatterChart
                 margin={{
                   top: 20,
@@ -299,9 +328,11 @@ const HeatmapPanel = () => {
       
       {heatmapData && (
         <Paper sx={{ p: 2, mt: 2 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Computation Metadata
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography variant="subtitle1">
+              Computation Metadata
+            </Typography>
+          </Box>
           <Grid container spacing={2}>
             {Object.entries(heatmapData.metadata).map(([key, value]) => (
               <Grid item xs={6} md={4} key={key}>

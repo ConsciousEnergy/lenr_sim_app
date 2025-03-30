@@ -121,4 +121,39 @@
    - Component unit tests
    - Performance optimization
    - Browser compatibility testing
-   - Accessibility improvements 
+   - Accessibility improvements
+
+## Data Export Functionality
+
+The application now supports exporting simulation data in multiple formats for further analysis:
+
+### Export Formats
+
+- **CSV:** Comma-separated values format, suitable for spreadsheet applications and data analysis tools.
+- **JSON:** JavaScript Object Notation format, ideal for integration with other applications and services.
+- **Excel:** Microsoft Excel format (.xlsx), offering rich formatting and multiple worksheets.
+
+### Export Components
+
+1. **ExportButton Component**
+   - A reusable component for triggering data exports across the application
+   - Provides a dropdown menu with available export formats
+   - Supports conditional rendering of export options based on available handlers
+
+2. **Export Utilities**
+   - Core utility functions for converting data to various formats
+   - Support for metadata inclusion and rich formatting
+   - Specialized export functions for different data types:
+     - Simulation results
+     - Heatmap data
+     - 3D particle visualization data
+
+### Integration Points
+
+The export functionality has been integrated into multiple components:
+
+- **Results Panel:** Exports simulation results with energy levels and timing data
+- **Heatmap Panel:** Exports parameter space exploration data with metadata
+- **3D Visualization:** Exports particle position and property data
+
+Each export includes relevant metadata, timestamps, and properly formatted data structures to ensure compatibility with common data analysis tools. 
