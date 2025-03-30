@@ -15,8 +15,8 @@ import {
   ListItem, 
   ListItemIcon, 
   ListItemText, 
-  Divider, 
-  CircularProgress 
+  Divider,
+  Chip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import './App.css';
@@ -149,6 +149,16 @@ function App() {
     checkBackendStatus();
   }, []);
 
+  // Get color based on server status
+  const getStatusColor = () => {
+    if (isLoading) return 'default';
+    switch (serverStatus) {
+      case 'Connected': return 'success';
+      case 'Unavailable': return 'error';
+      default: return 'warning';
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -169,6 +179,15 @@ function App() {
               <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                 LENR Simulation App
               </Typography>
+              
+              {/* Server status indicator */}
+              <Chip 
+                label={`API: ${serverStatus}`}
+                color={getStatusColor()}
+                size="small"
+                sx={{ mr: 2 }}
+              />
+              
               <Button 
                 color="inherit" 
                 component="a" 

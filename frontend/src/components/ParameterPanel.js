@@ -11,8 +11,7 @@ import {
   Select, 
   MenuItem,
   Button,
-  Tooltip,
-  Divider
+  Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';

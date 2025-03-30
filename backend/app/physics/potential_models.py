@@ -212,4 +212,77 @@ def find_classical_turning_points(
     x1 = x[idx1] + (x[idx1 + 1] - x[idx1]) * (energy - V[idx1]) / (V[idx1 + 1] - V[idx1])
     x2 = x[idx2] + (x[idx2 + 1] - x[idx2]) * (energy - V[idx2]) / (V[idx2 + 1] - V[idx2])
     
-    return (x1, x2) 
+    return (x1, x2)
+
+class PotentialParameters:
+    """Parameters for potential energy models."""
+    def __init__(
+        self, 
+        model_type: str = "harmonic", 
+        depth: float = 1.0, 
+        width: float = 1.0,
+        equilibrium_position: float = 0.74,
+        spring_constant: float = 15.0,
+        reference_point: float = 0.0,
+        **kwargs
+    ):
+        """
+        Initialize potential parameters.
+        
+        Args:
+            model_type: Type of potential model ("harmonic", "morse", etc.)
+            depth: Depth of the potential well (eV)
+            width: Width parameter (Å)
+            equilibrium_position: Equilibrium separation between atoms (Å)
+            spring_constant: Force constant for harmonic potential (eV/Å²)
+            reference_point: Zero point of the potential (Å)
+            **kwargs: Additional parameters specific to potential models
+        """
+        self.model_type = model_type
+        self.depth = depth
+        self.width = width
+        self.equilibrium_position = equilibrium_position
+        self.spring_constant = spring_constant
+        self.reference_point = reference_point
+        
+        # Additional parameters
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            
+    def copy(self):
+        """Create a copy of the potential parameters."""
+        params_copy = PotentialParameters(
+            model_type=self.model_type,
+            depth=self.depth,
+            width=self.width,
+            equilibrium_position=self.equilibrium_position,
+            spring_constant=self.spring_constant,
+            reference_point=self.reference_point
+        )
+        
+        # Copy any additional attributes
+        for key, value in self.__dict__.items():
+            if key not in ["model_type", "depth", "width", "equilibrium_position", 
+                          "spring_constant", "reference_point"]:
+                setattr(params_copy, key, value)
+                
+        return params_copy
+            
+    def copy(self):
+        """Create a copy of the potential parameters."""
+        params_copy = PotentialParameters(
+            model_type=self.model_type,
+            depth=self.depth,
+            width=self.width,
+            equilibrium_position=self.equilibrium_position,
+            spring_constant=self.spring_constant,
+            reference_point=self.reference_point
+        )
+        
+        # Copy any additional attributes
+        for key, value in self.__dict__.items():
+            if key not in ['model_type', 'depth', 'width', 'equilibrium_position', 
+                          'spring_constant', 'reference_point']:
+                setattr(params_copy, key, value)
+                
+        return params_copy 

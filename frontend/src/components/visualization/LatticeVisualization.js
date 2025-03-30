@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Box, Paper, Typography, CircularProgress, Chip, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
@@ -54,22 +54,25 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
   useEffect(() => {
     if (!containerRef.current) return;
     
+    // Save a reference to the DOM element for cleanup
+    const container = containerRef.current;
+    
     // Create scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
     sceneRef.current = scene;
     
     // Create camera
-    const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+    const aspect = container.clientWidth / container.clientHeight;
     const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
     camera.position.z = 15;
     cameraRef.current = camera;
     
     // Create renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    containerRef.current.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
     // Add controls
@@ -106,14 +109,14 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
     
     animate();
     
-    // Create placeholder lattice visualization
+    // Create placeholder lattice
     createPlaceholderLattice();
     
     // Handle resize
     const handleResize = () => {
-      if (containerRef.current && cameraRef.current && rendererRef.current) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
+      if (container && cameraRef.current && rendererRef.current) {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
         
         cameraRef.current.aspect = width / height;
         cameraRef.current.updateProjectionMatrix();
@@ -132,8 +135,8 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
         cancelAnimationFrame(frameIdRef.current);
       }
       
-      if (rendererRef.current && containerRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      if (rendererRef.current && container) {
+        container.removeChild(rendererRef.current.domElement);
       }
       
       // Dispose resources
@@ -153,10 +156,10 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
         });
       }
     };
-  }, []);
+  }, []);  // Empty dependency array as this should only run once on mount
   
-  // Create placeholder lattice
-  const createPlaceholderLattice = () => {
+  // Create placeholder lattice - memoized with useCallback
+  const createPlaceholderLattice = useCallback(() => {
     setIsLoading(true);
     
     if (!sceneRef.current) return;
@@ -211,16 +214,18 @@ const LatticeVisualization = ({ simulationData, visualizationSettings }) => {
     
     setLatticeAtoms(newLatticeAtoms);
     setIsLoading(false);
-  };
+  }, [latticeAtoms]); // Dependencies for the useCallback
   
   // Update visualization when simulation data changes
   useEffect(() => {
     if (simulationData) {
-      // In a real implementation, we would update the visualization based on real simulation data
-      // For now, just show the placeholder
+      // In the future, we would parse actual simulation data here
+      console.log('Simulation data received:', simulationData);
+    } else {
+      // Create a placeholder lattice for visualization
       createPlaceholderLattice();
     }
-  }, [simulationData]);
+  }, [simulationData, createPlaceholderLattice]);
   
   // Update visualization type
   const handleVisualizationTypeChange = (event) => {
