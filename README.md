@@ -1,197 +1,137 @@
-# 🔬 LENR_Sim_App
+# LENR Simulation Application
 
-**LENR_Sim_App** is a high-performance, research-grade web simulation platform for modeling **Low Energy Nuclear Reactions (LENR)** phenomena. It combines state-of-the-art physics (WKB tunneling, lattice phonon dynamics, cluster effects, Boltzmann state population, impact energy modeling) with a modern, interactive web interface for researchers, engineers, and enthusiasts in Condensed Matter Nuclear Science (CMNS).
+A research-grade simulation platform for exploring Low Energy Nuclear Reactions (LENR), focusing on quantum tunneling phenomena and related energy production mechanisms.
 
----
+![LENR Simulation](https://img.shields.io/badge/Version-0.1.0-blue)
+![Python](https://img.shields.io/badge/Python-3.7+-brightgreen)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0+-green)
+![React](https://img.shields.io/badge/React-18.0.0+-orange)
 
-## 🌐 Live App
+## Overview
 
-🚀 [Run the Web App](https://your-streamlit-cloud-url.streamlit.app)
+The LENR Simulation Application provides an integrated environment for scientists, researchers, and enthusiasts to model and visualize Low Energy Nuclear Reaction phenomena. The platform features a modern React frontend with advanced visualization capabilities and a robust Python FastAPI backend that performs complex physical calculations.
 
----
+## Features
 
-## 📌 Features
+- **Physics-based Simulation**: Accurate mathematical models for potential barriers, tunneling probabilities, and energy calculations
+- **Interactive Visualizations**: Real-time 2D/3D representations of potential wells, tunneling events, and heat generation
+- **Parameter Exploration**: Intuitive interface for adjusting simulation parameters
+- **Heatmap Generation**: Visual representation of energy output under varying conditions
+- **Data Export**: Download simulation results for further analysis
+- **Responsive Design**: Optimized for desktop and tablet devices
 
-- 🔍 **Quantum Tunneling Simulation** (WKB, Boltzmann-averaged)
-- 🎛️ **Adjustable Physical Parameters** (λ, T, T_impact, k_spring, r₀)
-- 🧪 **Experimental Curve Fitting** (Upload T vs Power)
-- 📈 **Interactive Potential Visualizer** (with energy levels)
-- 🔥 **Impact Energy Modeling** (bubble collapse / cavitation hotspots)
-- 🧬 **Multi-body Cluster Viewer** (3D potential landscape via Three.js)
-- 💾 **Export Results** (CSV, PNG)
-- 🗃 **RESTful API** backend via FastAPI
-- 🧠 Built-in physics: ZPE, vibrational tunneling, harmonic & Morse potentials
+## Getting Started
 
----
+### Prerequisites
 
-## 🖥️ Tech Stack
+- Python 3.7+
+- Node.js 16+
+- npm 8+
 
-| Layer      | Tech                 |
-|------------|----------------------|
-| Frontend   | React, HTML, CSS     |
-| Visualization | Plotly.js, Three.js |
-| Backend    | FastAPI (Python)     |
-| Math Engine| NumPy, SciPy, SymPy  |
-| 3D Engine  | VTK (via PyVista) + Three.js |
-| Deployment | Docker, Streamlit Cloud / NGINX |
+### Installation
 
----
+There are two ways to start the application:
 
-## 📦 Installation
+#### Option 1: Using the Startup Scripts
 
-### Quick Start with Start Scripts
-
-Run the entire application (backend and frontend) with a single command:
-
-#### Windows (PowerShell)
+For Windows:
 ```powershell
+# Clone this repository
+git clone https://github.com/YOUR_USERNAME/LENR_Simulation_App.git
+cd LENR_Simulation_App
+
+# Run the startup script
 .\start_app.ps1
 ```
 
-#### Unix/Linux/MacOS
+For Unix-like systems:
 ```bash
+# Clone this repository
+git clone https://github.com/YOUR_USERNAME/LENR_Simulation_App.git
+cd LENR_Simulation_App
+
+# Make the script executable
+chmod +x start_app.sh
+
+# Run the startup script
 ./start_app.sh
 ```
 
-### Manual Setup
+#### Option 2: Manual Setup
 
 ```bash
+# Clone this repository
+git clone https://github.com/YOUR_USERNAME/LENR_Simulation_App.git
+cd LENR_Simulation_App
+
 # Backend setup
-cd backend/
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv backend-env
+source backend-env/bin/activate  # On Windows use: backend-env\Scripts\activate
+cd backend
 pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
 
-# Run API
-uvicorn app.main:app --reload
-
+# In a separate terminal
 # Frontend setup
-cd frontend/
+cd frontend
 npm install
-npm run dev
+npm start
 ```
 
----
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
 
-## 🧪 Testing
+## Testing
 
-Run the comprehensive test suite to verify all components:
+The application includes a comprehensive test suite. To run tests:
 
 ```bash
-python run_tests.py all -v
+python run_tests.py --category all --report
 ```
 
-Run specific test categories:
+See [TEST_PLAN.md](TEST_PLAN.md) for more details about testing.
 
-```bash
-python run_tests.py physics   # Run physics model tests
-python run_tests.py tunneling # Run tunneling engine tests
-python run_tests.py heatmap   # Run heatmap generation tests
-python run_tests.py api       # Test API endpoints
-```
-
-For a detailed test plan and status, see [TEST_PLAN.md](TEST_PLAN.md).
-
----
-
-## 📡 API Endpoints
-
-| Endpoint               | Method | Description                        |
-|------------------------|--------|------------------------------------|
-| `/simulate/thermal`    | POST   | Thermal (Boltzmann-averaged) tunneling |
-| `/simulate/impact`     | POST   | High-energy impact tunneling       |
-| `/simulate/heatmap`    | POST   | Generate 2D heatmap                |
-| `/simulate/cluster`    | POST   | Return 3D cluster potential (VTK)  |
-| `/fit/experimental`    | POST   | Fit to Power vs Temperature        |
-
----
-
-## 🧪 Example Input (JSON)
-
-```json
-{
-  "T": 300,
-  "lambda": 1e-10,
-  "r0": 1e-10,
-  "k_spring": 1000,
-  "potential": "harmonic"
-}
-```
-
----
-
-## 📤 Upload Experimental Data
-
-Upload a CSV file containing:
-
-```csv
-Temperature,Power
-300,0.02
-400,0.04
-...
-```
-
----
-
-## 📊 Outputs
-
-- Tunneling probability (thermal + impact)
-- Energy level table
-- Residuals for experimental fit
-- 3D cluster visualization
-
----
-
-## 🧠 Physics References
-
-- WKB Approximation
-- Boltzmann-weighted quantum state populations
-- Zero-point energy in harmonic wells
-- Anharmonic corrections (Morse potential)
-- Surface cavitation model (impact tunneling)
-- Multi-body electrostatics (D⁺ cluster)
-
----
-
-## 📜 License
-
-MIT License — for educational and non-commercial research purposes.
-
----
-
-## 👩‍🔬 Authors & Contributors
-
-- [Diadon Acs] (Lead Developer)
-- LENR ARA (AI Planning Assistant)
-- Open Source Physics Community
-
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```
-LENR_SIM_APP/
-├── backend/               # FastAPI backend
-│   ├── app/
-│   │   ├── api/           # API routes
-│   │   ├── models/        # Pydantic models
-│   │   ├── physics/       # Physics calculation modules
-│   │   ├── utils/         # Utilities
-│   │   ├── visualization/ # Visualization utilities
-│   │   └── main.py        # Entry point
-│   ├── static/            # Static files
-│   ├── logs/              # Log files
-│   └── tests/             # Test suite
-├── frontend/              # React frontend
-│   ├── src/
-│   │   ├── components/    # UI components
-│   │   ├── api/           # API client
-│   │   ├── theme/         # Theme configuration
-│   │   └── App.js         # Main app
-├── TEST_PLAN.md           # Comprehensive test plan
-├── start_app.sh           # Unix startup script
-├── start_app.ps1          # Windows startup script
-└── run_tests.py           # Test runner
+LENR_Simulation_App/
+├── backend/                 # FastAPI backend
+│   ├── app/                 # Application code
+│   │   ├── api/             # API endpoints
+│   │   ├── core/            # Core functionality
+│   │   ├── models/          # Data models
+│   │   ├── physics/         # Physics calculation modules
+│   │   └── utils/           # Utility functions
+│   ├── tests/               # Backend tests
+│   └── requirements.txt     # Python dependencies
+├── frontend/                # React frontend
+│   ├── public/              # Static files
+│   ├── src/                 # Source code
+│   │   ├── components/      # React components
+│   │   ├── theme/           # UI theming
+│   │   ├── utils/           # Utility functions
+│   │   └── services/        # API client services
+│   └── package.json         # Node.js dependencies
+├── start_app.ps1            # Windows startup script
+├── start_app.sh             # Unix startup script
+├── run_tests.py             # Test runner script
+└── TEST_PLAN.md             # Testing documentation
 ```
 
---- 
+## Development
+
+See [frontend/README.md](frontend/README.md) for information about the frontend UI theme and components.
+
+For contribution guidelines and development workflow, please refer to the [contributing guidelines](CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
+- The scientific community researching LENR phenomena
+- The FastAPI and React communities for their excellent frameworks
+- Contributors and researchers who have provided insights into quantum tunneling models 
