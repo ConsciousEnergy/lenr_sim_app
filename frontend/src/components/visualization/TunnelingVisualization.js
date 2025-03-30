@@ -425,9 +425,76 @@ const TunnelingVisualization = ({ simulationParameters }) => {
         cancelAnimationFrame(frameIdRef.current);
       }
       
-      if (rendererRef.current && containerRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      // Make sure the renderer exists and the DOM element is a child of the container
+      if (rendererRef.current && rendererRef.current.domElement && containerRef.current) {
+        // Only remove if the child is actually a child of the container
+        if (containerRef.current.contains(rendererRef.current.domElement)) {
+          containerRef.current.removeChild(rendererRef.current.domElement);
+        }
       }
+      
+      // Dispose all THREE.js resources
+      if (sceneRef.current) {
+        // Remove and dispose all nuclei objects
+        if (nucleiRef.current.length > 0) {
+          nucleiRef.current.forEach(nucleus => {
+            if (sceneRef.current && nucleus.parent === sceneRef.current) {
+              sceneRef.current.remove(nucleus);
+            }
+            if (nucleus.geometry) nucleus.geometry.dispose();
+            if (nucleus.material) {
+              if (Array.isArray(nucleus.material)) {
+                nucleus.material.forEach(material => material.dispose());
+              } else {
+                nucleus.material.dispose();
+              }
+            }
+          });
+          nucleiRef.current = [];
+        }
+        
+        // Remove and dispose wave function
+        if (waveFunction.current) {
+          if (sceneRef.current && waveFunction.current.parent === sceneRef.current) {
+            sceneRef.current.remove(waveFunction.current);
+          }
+          if (waveFunction.current.geometry) waveFunction.current.geometry.dispose();
+          if (waveFunction.current.material) {
+            if (Array.isArray(waveFunction.current.material)) {
+              waveFunction.current.material.forEach(material => material.dispose());
+            } else {
+              waveFunction.current.material.dispose();
+            }
+          }
+          waveFunction.current = null;
+        }
+        
+        // Traverse the whole scene to dispose of any remaining objects
+        sceneRef.current.traverse((object) => {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        });
+      }
+      
+      // Dispose renderer
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+      
+      // Clear all refs
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      controlsRef.current = null;
     };
   }, [initScene, handleResize, animate]);
   

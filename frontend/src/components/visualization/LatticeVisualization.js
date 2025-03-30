@@ -520,8 +520,160 @@ const LatticeVisualization = ({
     }
   };
 
-  // Rest of the component (initialize, animate, etc.)
-  // ...
+  // Add initialization effect for Three.js
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Save a reference to the DOM element for cleanup
+    const container = containerRef.current;
+    
+    // Create scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    sceneRef.current = scene;
+    
+    // Create camera
+    const aspect = container.clientWidth / container.clientHeight;
+    const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+    camera.position.z = 15;
+    cameraRef.current = camera;
+    
+    // Create renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    
+    // Add controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.7;
+    controlsRef.current = controls;
+    
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    // Add coordinate axes helper
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    
+    // Animation loop
+    const animate = () => {
+      frameIdRef.current = requestAnimationFrame(animate);
+      
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+      
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+    };
+    
+    animate();
+    
+    // Create initial lattice
+    setTimeout(() => {
+      if (simulationData) {
+        createLatticeFromData(simulationData);
+      } else {
+        createPlaceholderLattice();
+      }
+    }, 100);
+    
+    // Handle resize
+    const handleResize = () => {
+      if (container && cameraRef.current && rendererRef.current) {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        cameraRef.current.aspect = width / height;
+        cameraRef.current.updateProjectionMatrix();
+        
+        rendererRef.current.setSize(width, height);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      
+      if (frameIdRef.current) {
+        cancelAnimationFrame(frameIdRef.current);
+      }
+      
+      // Make sure the renderer exists and the DOM element is a child of the container
+      if (rendererRef.current && rendererRef.current.domElement) {
+        // Only remove the child if it's actually a child of the container
+        if (container && container.contains(rendererRef.current.domElement)) {
+          container.removeChild(rendererRef.current.domElement);
+        }
+      }
+      
+      // Dispose resources
+      if (sceneRef.current) {
+        // Clear all atoms from the scene first
+        if (latticeAtoms.length > 0) {
+          latticeAtoms.forEach(atom => {
+            if (sceneRef.current && atom.parent === sceneRef.current) {
+              sceneRef.current.remove(atom);
+            }
+            if (atom.geometry) atom.geometry.dispose();
+            if (atom.material) {
+              if (Array.isArray(atom.material)) {
+                atom.material.forEach(material => material.dispose());
+              } else {
+                atom.material.dispose();
+              }
+            }
+          });
+        }
+        
+        // Then dispose of other objects in the scene
+        sceneRef.current.traverse((object) => {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        });
+      }
+      
+      // Clear refs
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      controlsRef.current = null;
+      
+      // Clear lattice atoms array
+      setLatticeAtoms([]);
+    };
+  }, [createPlaceholderLattice, createLatticeFromData, simulationData, latticeAtoms]);
+  
+  // Update visualization when simulation data changes
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    
+    if (simulationData) {
+      // Use real simulation data to create the visualization
+      createLatticeFromData(simulationData);
+    }
+  }, [simulationData, createLatticeFromData, sceneRef]);
 
   // Simulation control handlers
   const handleStart = () => {
