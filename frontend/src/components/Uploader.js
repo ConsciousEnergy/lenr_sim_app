@@ -19,7 +19,8 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Divider
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -53,7 +54,7 @@ const HiddenInput = styled('input')({
   display: 'none',
 });
 
-const Uploader = ({ onUpload, onDataParsed }) => {
+const ExperimentalDataUploader = ({ onUpload, onDataParsed }) => {
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -110,7 +111,7 @@ const Uploader = ({ onUpload, onDataParsed }) => {
     reader.onload = (event) => {
       try {
         const content = event.target.result;
-        const lines = content.split(/\\r?\\n/).filter(line => line.trim() !== '');
+        const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
         
         if (lines.length < 2) {
           setError('CSV file must contain a header row and at least one data row');
@@ -146,8 +147,18 @@ const Uploader = ({ onUpload, onDataParsed }) => {
           setPreviewHeaders(headers);
           setPreviewData(data.slice(0, 5));
         } else {
-          // For actual processing, use all data
-          onDataParsed && onDataParsed({ headers, data });
+          // For actual processing, use all data and trigger callbacks
+          const parsedData = {
+            headers,
+            data,
+            metadata: {
+              fileName: file.name,
+              fileSize: file.size,
+              rowCount: data.length
+            }
+          };
+          
+          onDataParsed && onDataParsed(parsedData);
         }
       } catch (err) {
         setError(`Error parsing CSV: ${err.message}`);
@@ -186,7 +197,7 @@ const Uploader = ({ onUpload, onDataParsed }) => {
       const formData = new FormData();
       formData.append('file', file);
       
-      // Call the onUpload callback
+      // Call the onUpload callback if provided
       onUpload && await onUpload(formData);
       
       // Ensure progress completes
@@ -210,6 +221,9 @@ const Uploader = ({ onUpload, onDataParsed }) => {
     setFile(null);
     setPreviewData([]);
     setPreviewHeaders([]);
+    
+    // Inform parent component that data has been removed
+    onDataParsed && onDataParsed(null);
   };
 
   const handleOpenPreview = () => {
@@ -221,10 +235,11 @@ const Uploader = ({ onUpload, onDataParsed }) => {
   };
 
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
+    <Paper sx={{ p: 3, mb: 3 }}>
+      <Typography variant="h6" gutterBottom>
         Upload Experimental Data
       </Typography>
+      <Divider sx={{ mb: 2 }} />
       
       <Typography variant="body1" paragraph>
         Upload a CSV file containing experimental temperature and power data.
@@ -254,19 +269,17 @@ const Uploader = ({ onUpload, onDataParsed }) => {
             <ListItem
               secondaryAction={
                 <Box>
-                  <Button 
+                  <Button
                     startIcon={<PreviewIcon />}
                     onClick={handleOpenPreview}
-                    size="small"
                     sx={{ mr: 1 }}
                   >
                     Preview
                   </Button>
-                  <Button 
+                  <Button
+                    color="error"
                     startIcon={<DeleteIcon />}
                     onClick={handleRemoveFile}
-                    color="error"
-                    size="small"
                   >
                     Remove
                   </Button>
@@ -274,7 +287,7 @@ const Uploader = ({ onUpload, onDataParsed }) => {
               }
             >
               <ListItemIcon>
-                <InsertDriveFileIcon />
+                <InsertDriveFileIcon color="primary" />
               </ListItemIcon>
               <ListItemText
                 primary={file.name}
@@ -284,25 +297,30 @@ const Uploader = ({ onUpload, onDataParsed }) => {
           </List>
           
           {uploading && (
-            <Box sx={{ width: '100%', mt: 2 }}>
-              <LinearProgress variant="determinate" value={uploadProgress} />
+            <Box sx={{ mt: 2 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={uploadProgress} 
+                sx={{ height: 8, borderRadius: 4 }}
+              />
               <Typography variant="caption" align="center" display="block" sx={{ mt: 1 }}>
-                Uploading... {uploadProgress}%
+                {uploadProgress < 100 ? 'Uploading...' : 'Upload complete!'}
               </Typography>
             </Box>
           )}
           
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          {!uploading && (
             <Button
               variant="contained"
               color="primary"
               startIcon={<FileUploadIcon />}
               onClick={handleUpload}
-              disabled={uploading}
+              fullWidth
+              sx={{ mt: 2 }}
             >
               Process Data
             </Button>
-          </Box>
+          )}
         </Box>
       )}
       
@@ -312,7 +330,7 @@ const Uploader = ({ onUpload, onDataParsed }) => {
         </Alert>
       )}
       
-      {/* Preview Dialog */}
+      {/* Data Preview Dialog */}
       <Dialog
         open={previewOpen}
         onClose={handleClosePreview}
@@ -322,8 +340,8 @@ const Uploader = ({ onUpload, onDataParsed }) => {
         <DialogTitle>Data Preview</DialogTitle>
         <DialogContent>
           {previewData.length > 0 ? (
-            <TableContainer component={Paper}>
-              <Table size="small">
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table>
                 <TableHead>
                   <TableRow>
                     {previewHeaders.map((header, index) => (
@@ -335,7 +353,9 @@ const Uploader = ({ onUpload, onDataParsed }) => {
                   {previewData.map((row, rowIndex) => (
                     <TableRow key={rowIndex}>
                       {previewHeaders.map((header, cellIndex) => (
-                        <TableCell key={cellIndex}>{row[header]}</TableCell>
+                        <TableCell key={`${rowIndex}-${cellIndex}`}>
+                          {row[header]}
+                        </TableCell>
                       ))}
                     </TableRow>
                   ))}
@@ -343,15 +363,15 @@ const Uploader = ({ onUpload, onDataParsed }) => {
               </Table>
             </TableContainer>
           ) : (
-            <Typography variant="body1">No preview data available</Typography>
+            <Typography>No data to preview</Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClosePreview}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Paper>
   );
 };
 
-export default Uploader; 
+export default ExperimentalDataUploader; 

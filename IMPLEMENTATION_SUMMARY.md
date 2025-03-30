@@ -8,7 +8,6 @@
    - Real-time updates
    - Intuitive sliders with numeric inputs
    - Parameter grouping and organization
-   - Simulation type-specific parameter sections
 
 2. **SimulationControls.js** - Simulation execution controls
    - Start/pause/stop/reset functionality
@@ -19,141 +18,80 @@
 
 3. **ResultsPanel.js** - Simulation results display
    - Tabbed interface (Summary, Data Table, Analysis)
-   - Key metrics display with dynamic coloring
-   - Data visualization with Recharts
-   - Metadata presentation
-   - Simulation type context indication
+   - Key metrics display
+   - Data export functionality
+   - Detailed data tables
+   - Analysis insights
 
-4. **DataUploader.js** - Experimental data file uploader
+4. **Uploader.js** - Experimental data file uploader
    - Drag-and-drop interface
-   - CSV validation and parsing
+   - CSV validation
    - Data preview functionality
-   - Error handling with clear messages
-   - File metadata display
+   - Upload progress indication
+   - Error handling
 
-### Visualization Components
+### Visualization
 1. **LatticeVisualization.js** - 3D lattice visualization
    - Three.js integration
    - Interactive camera controls
    - Basic lattice rendering
    - Different visualization modes
-   - Responsive design with proper cleanup
-
-2. **HeatmapPanel.js** - Interactive parameter space visualization
-   - 2D heatmap of tunneling probability
-   - Configurable parameter ranges
-   - ScatterChart visualization with Recharts
-   - Interactive tooltips with data values
-   - API-connected for real calculations
-
-3. **ClusterVisualizationPanel.js** - 3D cluster visualization
-   - Three.js based 3D rendering
-   - Interactive OrbitControls
-   - Configurable cluster parameters
-   - Proper resource management
-   - API-driven visualization
+   - Responsive design
 
 ### Page Components
 1. **Dashboard.js** - Main application dashboard
    - Responsive grid layout
-   - Multiple component integration
-   - Simulation type selector
-   - API-connected with proper error handling
-   - Loading state management
+   - Component integration
+   - Tab switching for parameter/data input
+   - Simulation state management
 
-## API Integration
-1. **API Client**
-   - Axios-based REST client
-   - Consistent error handling
-   - Environment-aware configuration
-   - Typed API responses
-
-2. **API Endpoints Connected**
-   - Thermal tunneling simulation
-   - Impact tunneling simulation
-   - Heatmap generation
-   - Cluster visualization
-   - Health check for server status
+## App Structure
+1. **App.js** - Main application component
+   - Routing configuration
+   - Navigation drawer
+   - Theme provider
+   - Responsive layout
 
 ## Implementation Details
 
 ### State Management
 - React hooks for local component state
 - Props for component communication
-- Loading and error states for user feedback
-- Data transformation for API integration
+- Callback patterns for parent-child interactions
 
 ### UI/UX Design Principles
 - Material UI component library
 - Consistent styling and theming
 - Responsive layouts for different screen sizes
-- Intuitive user flow with proper loading states
+- Intuitive user flow
 - Error handling and feedback
 
 ### Visualization Approach
 - Three.js for 3D visualization
-- Recharts for 2D data visualization
 - Canvas-based rendering
 - Interactive controls
-- Performance optimizations and memory management
+- Performance optimizations
 
 ## Next Steps
 
-1. **Backend Enhancement**
-   - Optimize calculation performance
-   - Add caching for expensive operations
-   - Implement more detailed physics models
-   - Add support for experimental data fitting
+1. **API Integration**
+   - Connect frontend components to backend API endpoints
+   - Implement real API calls instead of mock data
+   - Add error handling for API communication
 
 2. **Advanced Visualization**
+   - Enhance 3D visualization with real simulation data
    - Add animation for phonon propagation
    - Implement energy distribution visualization
-   - Support for lattice defects visualization
-   - Enhanced colormap options for heatmaps
 
 3. **User Experience Enhancements**
-   - Add export functionality for results
-   - Implement project saving
-   - Add user authentication
+   - Add tooltips and help documentation
+   - Implement user settings
    - Create preset configurations
+   - Add tutorial elements
 
 4. **Testing and Optimization**
    - Component unit tests
    - Performance optimization
    - Browser compatibility testing
-   - Accessibility improvements
-
-## Data Export Functionality
-
-The application now supports exporting simulation data in multiple formats for further analysis:
-
-### Export Formats
-
-- **CSV:** Comma-separated values format, suitable for spreadsheet applications and data analysis tools.
-- **JSON:** JavaScript Object Notation format, ideal for integration with other applications and services.
-- **Excel:** Microsoft Excel format (.xlsx), offering rich formatting and multiple worksheets.
-
-### Export Components
-
-1. **ExportButton Component**
-   - A reusable component for triggering data exports across the application
-   - Provides a dropdown menu with available export formats
-   - Supports conditional rendering of export options based on available handlers
-
-2. **Export Utilities**
-   - Core utility functions for converting data to various formats
-   - Support for metadata inclusion and rich formatting
-   - Specialized export functions for different data types:
-     - Simulation results
-     - Heatmap data
-     - 3D particle visualization data
-
-### Integration Points
-
-The export functionality has been integrated into multiple components:
-
-- **Results Panel:** Exports simulation results with energy levels and timing data
-- **Heatmap Panel:** Exports parameter space exploration data with metadata
-- **3D Visualization:** Exports particle position and property data
-
-Each export includes relevant metadata, timestamps, and properly formatted data structures to ensure compatibility with common data analysis tools. 
+   - Accessibility improvements 

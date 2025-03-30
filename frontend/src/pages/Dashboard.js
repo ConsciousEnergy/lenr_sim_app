@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Container, Grid, Paper, Typography, Box, Alert, CircularProgress, Snackbar } from '@mui/material';
+import { Container, Grid, Paper, Typography, Box, Alert, CircularProgress, Snackbar, Tab, Tabs } from '@mui/material';
 import LatticeVisualization from '../components/visualization/LatticeVisualization';
 import ParameterPanel from '../components/ParameterPanel';
 import ResultsPanel from '../components/ResultsPanel';
+import ExportModule from '../components/data/ExportModule';
+import ExperimentalDataUploader from '../components/Uploader';
 import * as api from '../api/api';
 
 // Set this to true to use mock API for development/testing
@@ -15,6 +17,8 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [simulationStatus, setSimulationStatus] = useState('ready'); // ready, running, paused, completed, error
   const [simulationParameters, setSimulationParameters] = useState(null);
+  const [experimentalData, setExperimentalData] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const handleParameterChange = (parameters) => {
     console.log('Parameters updated:', parameters);
@@ -121,6 +125,23 @@ function Dashboard() {
     setSimulationResults(null);
   };
 
+  // Handle experimental data upload
+  const handleExperimentalDataUpload = (formData) => {
+    // In a real application, this would call an API to upload the file
+    console.log('File upload initiated:', formData);
+  };
+
+  // Handle experimental data parsing
+  const handleExperimentalDataParsed = (data) => {
+    console.log('Experimental data parsed:', data);
+    setExperimentalData(data);
+  };
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {error && (
@@ -137,22 +158,47 @@ function Dashboard() {
       )}
       
       <Grid container spacing={3}>
-        {/* Parameter Panel */}
+        {/* Left Column: Parameters and Data Upload */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>
-              Simulation Parameters
-            </Typography>
-            <ParameterPanel 
-              onParameterChange={handleParameterChange}
-              onRunSimulation={handleRunSimulation}
-            />
+          <Paper sx={{ mb: 3 }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange} 
+              variant="fullWidth"
+              sx={{ borderBottom: 1, borderColor: 'divider' }}
+            >
+              <Tab label="Parameters" />
+              <Tab label="Experimental Data" />
+            </Tabs>
+            
+            <Box sx={{ p: 2 }}>
+              {activeTab === 0 && (
+                <ParameterPanel 
+                  onParameterChange={handleParameterChange}
+                  onRunSimulation={handleRunSimulation}
+                />
+              )}
+              
+              {activeTab === 1 && (
+                <ExperimentalDataUploader 
+                  onUpload={handleExperimentalDataUpload}
+                  onDataParsed={handleExperimentalDataParsed}
+                />
+              )}
+            </Box>
           </Paper>
+          
+          {/* Export Module */}
+          <ExportModule 
+            simulationResults={simulationResults} 
+            experimentalData={experimentalData}
+          />
         </Grid>
 
-        {/* Visualization */}
+        {/* Right Column: Visualization and Results */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 500 }}>
+          {/* Visualization */}
+          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 500, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Lattice Visualization
             </Typography>
@@ -185,10 +231,8 @@ function Dashboard() {
               />
             </Box>
           </Paper>
-        </Grid>
-
-        {/* Results Panel */}
-        <Grid item xs={12}>
+          
+          {/* Results Panel */}
           <ResultsPanel results={simulationResults} />
         </Grid>
       </Grid>

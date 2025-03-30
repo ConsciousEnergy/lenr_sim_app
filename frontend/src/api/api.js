@@ -186,6 +186,100 @@ export const fitModel = async (data, modelType) => {
   }
 };
 
+// New functions for data export and comparison
+
+export const exportSimulationResults = async (simulationData, format = 'csv') => {
+  try {
+    const response = await api.post('/export/simulation', { 
+      data: simulationData,
+      format: format 
+    }, {
+      responseType: 'blob' // Important for file download
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Failed to export simulation results:', error);
+    throw error;
+  }
+};
+
+export const compareExperimentalData = async (experimentalData, simulationData) => {
+  try {
+    const response = await api.post('/analysis/compare', {
+      experimental_data: experimentalData,
+      simulation_data: simulationData
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Data comparison failed:', error);
+    throw error;
+  }
+};
+
+export const analyzeResults = async (simulationData, analysisType) => {
+  try {
+    const response = await api.post('/analysis/results', {
+      data: simulationData,
+      analysis_type: analysisType
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Result analysis failed:', error);
+    throw error;
+  }
+};
+
+// Helper functions for CSV operations
+export const convertToCSV = (data) => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return '';
+  }
+  
+  // Extract headers from the first object
+  const headers = Object.keys(data[0]);
+  
+  // Create CSV header row
+  const headerRow = headers.join(',');
+  
+  // Create data rows
+  const dataRows = data.map(row => {
+    return headers.map(header => {
+      // Handle special cases (null, undefined, objects)
+      const value = row[header];
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'object') return JSON.stringify(value);
+      return value;
+    }).join(',');
+  });
+  
+  // Combine header and data rows
+  return [headerRow, ...dataRows].join('\n');
+};
+
+export const downloadCSV = (csvContent, filename) => {
+  // Create blob from CSV content
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  
+  // Create download link
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename || 'simulation_results.csv');
+  link.style.display = 'none';
+  
+  // Add to document, trigger click, then remove
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Clean up the URL
+  URL.revokeObjectURL(url);
+};
+
 export const mockRunSimulation = async (parameters) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 2000));
@@ -242,4 +336,9 @@ export default {
   getSimulationStatus,
   fitModel,
   mockRunSimulation,
+  exportSimulationResults,
+  compareExperimentalData,
+  analyzeResults,
+  convertToCSV,
+  downloadCSV
 }; 

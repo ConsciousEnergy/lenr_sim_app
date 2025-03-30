@@ -16,11 +16,11 @@ import {
   ListItemIcon, 
   ListItemText, 
   Divider,
-  Chip,
-  Paper
+  Chip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import './App.css';
+import * as api from './api/api';
 
 // Icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -30,17 +30,9 @@ import HelpIcon from '@mui/icons-material/Help';
 import ScienceIcon from '@mui/icons-material/Science';
 import MenuIcon from '@mui/icons-material/Menu';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ThreeDRotationIcon from '@mui/icons-material/ThreeDRotation';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import BarChartIcon from '@mui/icons-material/BarChart';
 
 // Pages
 import Dashboard from './pages/Dashboard';
-import HeatmapPanel from './components/HeatmapPanel';
-import ClusterVisualizationPanel from './components/visualization/ClusterVisualizationPanel';
-import DataUploader from './components/DataUploader';
-import ExperimentalDataPanel from './components/ExperimentalDataPanel';
 
 // Create theme
 const theme = createTheme({
@@ -137,25 +129,30 @@ function App() {
   };
 
   useEffect(() => {
-    // Check if backend is reachable
+    // Check if backend is reachable using the API client
     const checkBackendStatus = async () => {
       try {
-        const response = await fetch('/health');
-        const data = await response.json();
+        const data = await api.checkHealth();
         if (data.status === 'healthy') {
           setServerStatus('Connected');
         } else {
           setServerStatus('Available, but reporting issues');
         }
       } catch (error) {
-        setServerStatus('Unavailable');
         console.error('Failed to connect to backend:', error);
+        setServerStatus('Unavailable');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkBackendStatus();
+
+    // Set up periodic health checks (every 30 seconds)
+    const healthCheckInterval = setInterval(checkBackendStatus, 30000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(healthCheckInterval);
   }, []);
 
   // Get color based on server status
@@ -237,18 +234,6 @@ function App() {
                 </ListItemIcon>
                 <ListItemText primary="Dashboard" />
               </ListItem>
-              <ListItem button component={Link} to="/heatmap">
-                <ListItemIcon>
-                  <TrendingUpIcon />
-                </ListItemIcon>
-                <ListItemText primary="Heatmap" />
-              </ListItem>
-              <ListItem button component={Link} to="/cluster">
-                <ListItemIcon>
-                  <ThreeDRotationIcon />
-                </ListItemIcon>
-                <ListItemText primary="Cluster Viz" />
-              </ListItem>
               <ListItem button component={Link} to="/documentation">
                 <ListItemIcon>
                   <DescriptionIcon />
@@ -267,18 +252,6 @@ function App() {
                 </ListItemIcon>
                 <ListItemText primary="Help" />
               </ListItem>
-              <ListItem button component={Link} to="/upload">
-                <ListItemIcon>
-                  <CloudUploadIcon />
-                </ListItemIcon>
-                <ListItemText primary="Data Upload" />
-              </ListItem>
-              <ListItem button component={Link} to="/experimental">
-                <ListItemIcon>
-                  <BarChartIcon />
-                </ListItemIcon>
-                <ListItemText primary="Experimental Data" />
-              </ListItem>
             </List>
           </Drawer>
 
@@ -287,37 +260,9 @@ function App() {
             <Toolbar /> {/* This creates space below the app bar */}
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/heatmap" element={
-                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-                  <Paper sx={{ p: 2 }}>
-                    <HeatmapPanel />
-                  </Paper>
-                </Container>
-              } />
-              <Route path="/cluster" element={
-                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-                  <Paper sx={{ p: 2 }}>
-                    <ClusterVisualizationPanel />
-                  </Paper>
-                </Container>
-              } />
-              <Route path="/documentation" element={<div>Documentation Page (Coming Soon)</div>} />
-              <Route path="/settings" element={<div>Settings Page (Coming Soon)</div>} />
-              <Route path="/help" element={<div>Help Page (Coming Soon)</div>} />
-              <Route path="/upload" element={
-                <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                  <Paper sx={{ p: 2 }}>
-                    <DataUploader onDataUploaded={(data) => console.log('Data uploaded:', data)} />
-                  </Paper>
-                </Container>
-              } />
-              <Route path="/experimental" element={
-                <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-                  <Paper sx={{ p: 2 }}>
-                    <ExperimentalDataPanel />
-                  </Paper>
-                </Container>
-              } />
+              <Route path="/documentation" element={<Documentation />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/help" element={<Help />} />
             </Routes>
           </Main>
         </Box>

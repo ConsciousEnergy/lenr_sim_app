@@ -1,118 +1,145 @@
 # LENR Simulation Application
 
-An interactive scientific application for simulating Low Energy Nuclear Reaction (LENR) phenomena and quantum tunneling effects.
+A comprehensive simulation platform for Low Energy Nuclear Reactions based on quantum tunneling models. This application includes a physics engine to simulate LENR processes and a web-based interface for parameter input, visualization, and analysis.
 
-## Overview
+## Features
 
-This application provides a comprehensive suite of tools for simulating and visualizing quantum tunneling phenomena related to LENR (Low Energy Nuclear Reactions). The application consists of:
-
-- **Backend**: FastAPI-based Python server for physics calculations and data processing
-- **Frontend**: React-based user interface for interactive parameter exploration and visualization
-
-## Key Features
-
-- **Interactive Simulations**: Adjust quantum tunneling parameters in real-time with intuitive sliders and inputs
-- **Advanced Visualizations**: Explore 3D lattice structures using Three.js with multiple visualization modes
-- **Informative Legends**: Detailed legends explaining visualization elements and color codes
-- **Simulation Controls**: Start, pause, stop and reset simulations directly within the visualization
-- **Multiple Visualization Modes**: Toggle between lattice structure, energy distribution, and phonon propagation modes
-- **Data Visualization**: Interactive charts and graphs for simulation results using Recharts
-- **Parameter Exploration**: Test different potential models and configurations
-- **Real-time Feedback**: Immediate visual feedback when changing simulation parameters
-- **Responsive Design**: Fully responsive interface that works on desktop and tablets
+- **Advanced Physics Engine**: Implementation of quantum tunneling models for LENR simulation
+- **Interactive UI**: Parameter input panels and real-time result visualization
+- **3D Visualization**: Three.js-based visualization of lattice structures with interactive legend and controls
+- **Data Analysis**: Import/export experimental data, compare with simulation results, and statistical analysis
+- **Flexible API**: Well-documented FastAPI endpoints for simulation control and data access
+- **Cross-Platform**: Works on Windows, macOS, and Linux
 
 ## Project Structure
 
 ```
 LENR_SIM_APP/
-├── backend/               # FastAPI server and physics engine
-│   ├── app/               # Application code
-│   │   ├── physics/       # Physics models and calculations
-│   │   ├── routers/       # API endpoints
-│   │   ├── services/      # Business logic
-│   │   └── utils/         # Helper functions
-│   └── tests/             # Backend test suite
-├── frontend/              # React application
-│   ├── public/            # Static assets
-│   └── src/               # React components and state management
-│       ├── components/    # Reusable UI components
-│       │   └── visualization/ # Visualization components
-│       ├── pages/         # Application pages
-│       └── theme/         # Styling and theming
-├── start_app.ps1          # Windows PowerShell script to start both servers
-└── logs/                  # Application logs
+├── backend/                    # FastAPI server
+│   ├── app/
+│   │   ├── api/                # API endpoints
+│   │   ├── core/               # Core application code
+│   │   ├── models/             # Pydantic models
+│   │   ├── physics/            # Physics simulation engine
+│   │   └── utils/              # Utility functions
+│   └── tests/                  # Automated tests
+├── frontend/                   # React client
+│   ├── public/                 # Static assets
+│   └── src/
+│       ├── api/                # API client functions
+│       ├── components/         # React components
+│       │   ├── data/           # Data analysis components
+│       │   └── visualization/  # Visualization components
+│       ├── pages/              # Application pages
+│       └── theme/              # Styling and theming
+├── scripts/                    # Helper scripts
+└── start_app.ps1               # Application launcher
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.8+
-- Node.js 14+
+- Python 3.8 or higher
+- Node.js 14 or higher
 - npm or yarn
 
-### Starting the Application
+### Installation
 
-#### On Windows:
-```powershell
+1. Clone the repository
+   ```
+   git clone https://github.com/yourusername/LENR_SIM_APP.git
+   cd LENR_SIM_APP
+   ```
+
+2. Set up the backend
+   ```
+   cd backend
+   python -m venv venv
+   # Windows
+   venv\Scripts\activate
+   # macOS/Linux
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. Set up the frontend
+   ```
+   cd frontend
+   npm install
+   ```
+
+### Running the Application
+
+#### Using the start script (Windows)
+```
 .\start_app.ps1
 ```
 
-This will:
-1. Create a virtual environment if one doesn't exist
-2. Install backend dependencies
-3. Start the FastAPI backend server
-4. Install frontend dependencies
-5. Start the React development server
-
-### Running Tests
-
-```bash
+#### Manually
+```
+# Start the backend
 cd backend
-pytest
+python -m app.main
+
+# Start the frontend (in a new terminal)
+cd frontend
+npm start
 ```
 
-## Components
+## Key Features
 
-### Backend
+### 1. Physics Engine
 
-- **Physics Engine**: Calculate quantum tunneling probabilities, energy levels, and lattice interactions
-- **FastAPI Endpoints**: RESTful API for interacting with the physics engine
-- **Data Processing**: Process and analyze simulation results
+The backend implements several physics models:
+- Quantum tunneling calculation with various potential models
+- Temperature-dependent fusion probability
+- Lattice dynamics simulation
+- Phonon generation and propagation
 
-### Frontend
+### 2. Interactive Parameter Panel
 
-- **Parameter Panel**: Interactive controls for adjusting simulation parameters
-- **Results Panel**: Display simulation results with interactive charts
-- **Lattice Visualization**: 3D visualization of lattice structures with different view modes, interactive legend, and simulation controls
-  - **Visualization Modes**: Switch between lattice structure, energy distribution, and phonon propagation
-  - **Interactive Legend**: Explains the meaning of different elements and colors in the visualization
-  - **Simulation Controls**: Start, pause, stop, and reset simulations directly from the visualization
-- **Dashboard**: Main interface combining all components
+Users can adjust simulation parameters such as:
+- Temperature range
+- Lattice parameters
+- Potential model selection
+- Simulation time steps
 
-## 3D Visualization Features
+### 3. Real-time Visualization
 
-The 3D visualization component offers:
+Results are displayed through:
+- Interactive charts showing temperature vs. tunneling probability
+- 3D visualization of the lattice structure with:
+  - Color coding for energy levels
+  - Interactive legend explaining visualization elements
+  - Controls to start, pause, and reset simulations
+  - Animation of phonon propagation
 
-- **Multiple View Modes**: Toggle between different visualization perspectives
-  - **Lattice Structure**: View the basic crystalline arrangement of atoms
-  - **Energy Distribution**: See how energy is distributed throughout the lattice
-  - **Phonon Propagation**: Visualize phonon wave movements within the structure
-- **Interactive Controls**: Orbit, zoom, and pan to explore the 3D model
-- **Detailed Legend**: Explanatory legend showing what different colors and elements represent
-- **Embedded Simulation Controls**: Control the simulation directly from the visualization panel
-- **Real-time Updates**: See the visualization change as the simulation progresses
+### 4. Data Analysis
 
-## Documentation
+The application supports extensive data analysis features:
+- Import experimental data via CSV upload
+- Compare simulation results with experimental data
+- Statistical analysis including R², RMSE, and correlation coefficients
+- Export combined data sets for further analysis
 
-For more information, see:
-- `DEV_PLAN.md`: Development roadmap and implementation status
-- `PROGRESS_SUMMARY.md`: Summary of completed work and next steps
+## API Documentation
+
+The FastAPI backend provides automatic OpenAPI documentation at:
+```
+http://localhost:8000/docs
+```
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-See `CONTRIBUTORS.md` for a list of contributors to the project. 
+- The LENR research community
+- FastAPI, React, and Three.js communities
+- Contributors to the scientific modules used in this project 

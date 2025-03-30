@@ -9,6 +9,8 @@ import numpy as np
 from typing import Dict, List, Any, Literal, Optional
 from scipy.optimize import curve_fit
 import time
+from scipy import stats
+from scipy.interpolate import interp1d
 
 from app.physics.tunneling_engine import calculate_thermal_tunneling
 from app.utils.logging import setup_logger
@@ -348,4 +350,169 @@ def fit_experimental_data(
     }
     
     logger.info(f"Fitting completed with R² = {goodness_of_fit['r_squared']:.4f} using {model} model")
-    return result 
+    return result
+
+# Add the new comparison function
+def compare_data_sets(
+    simulation_data: List[Dict[str, float]],
+    experimental_data: List[Dict[str, float]]
+) -> Dict[str, Any]:
+    """
+    Compare simulation results with experimental data and compute statistics
+    
+    Args:
+        simulation_data: List of simulation data points with temperature and power
+        experimental_data: List of experimental data points with temperature and power
+        
+    Returns:
+        Dictionary with comparison metrics and processed data
+    """
+    # Extract temperature and power values
+    sim_temps = np.array([point["temperature"] for point in simulation_data])
+    sim_powers = np.array([point["power"] for point in simulation_data])
+    
+    exp_temps = np.array([point["temperature"] for point in experimental_data])
+    exp_powers = np.array([point["power"] for point in experimental_data])
+    
+    # Start timing
+    start_time = time.time()
+    
+    # Create interpolation function for simulation data
+    # This allows us to compare at the same temperature points
+    try:
+        # Sort data by temperature first (important for interpolation)
+        sim_sort_idx = np.argsort(sim_temps)
+        sim_temps_sorted = sim_temps[sim_sort_idx]
+        sim_powers_sorted = sim_powers[sim_sort_idx]
+        
+        exp_sort_idx = np.argsort(exp_temps)
+        exp_temps_sorted = exp_temps[exp_sort_idx]
+        exp_powers_sorted = exp_powers[exp_sort_idx]
+        
+        # Create interpolation function
+        sim_interp = interp1d(
+            sim_temps_sorted, 
+            sim_powers_sorted, 
+            kind='linear',
+            bounds_error=False,  # Don't raise error outside bounds
+            fill_value=(sim_powers_sorted[0], sim_powers_sorted[-1])  # Extrapolate using endpoints
+        )
+        
+        # Find overlapping temperature range
+        temp_min = max(sim_temps_sorted[0], exp_temps_sorted[0])
+        temp_max = min(sim_temps_sorted[-1], exp_temps_sorted[-1])
+        
+        # If no overlap, create appropriate error message
+        if temp_min >= temp_max:
+            logger.warning("No temperature overlap between simulation and experimental data")
+            return {
+                "metrics": {
+                    "r_squared": None,
+                    "rmse": None,
+                    "mae": None,
+                    "pearson_r": None,
+                    "p_value": None
+                },
+                "overlap_range": {
+                    "min": None,
+                    "max": None,
+                    "overlap_percentage": 0.0
+                },
+                "data_points": {
+                    "experimental": len(experimental_data),
+                    "simulation": len(simulation_data),
+                    "overlap": 0
+                },
+                "metadata": {
+                    "calculation_time_ms": (time.time() - start_time) * 1000,
+                    "error": "No temperature overlap between datasets"
+                }
+            }
+        
+        # Filter experimental data to overlapping range
+        mask = (exp_temps_sorted >= temp_min) & (exp_temps_sorted <= temp_max)
+        filtered_exp_temps = exp_temps_sorted[mask]
+        filtered_exp_powers = exp_powers_sorted[mask]
+        
+        # Generate simulation power values at experimental temperature points
+        interpolated_sim_powers = sim_interp(filtered_exp_temps)
+        
+        # Calculate basic metrics
+        if len(filtered_exp_temps) > 1:
+            # Calculate Pearson correlation coefficient
+            pearson_r, p_value = stats.pearsonr(interpolated_sim_powers, filtered_exp_powers)
+            
+            # Calculate other metrics using our helper function
+            goodness_metrics = calculate_goodness_of_fit(filtered_exp_powers, interpolated_sim_powers)
+            
+            # Add to metrics
+            goodness_metrics["pearson_r"] = float(pearson_r)
+            goodness_metrics["p_value"] = float(p_value)
+        else:
+            # Not enough data points for statistical analysis
+            goodness_metrics = {
+                "r_squared": None,
+                "rmse": None,
+                "mae": None,
+                "pearson_r": None,
+                "p_value": None
+            }
+        
+        # Calculate percent of temperature range that overlaps
+        total_exp_range = exp_temps_sorted[-1] - exp_temps_sorted[0]
+        overlap_range = temp_max - temp_min
+        overlap_percentage = (overlap_range / total_exp_range) * 100 if total_exp_range > 0 else 0
+        
+        # Return results
+        comparison_result = {
+            "metrics": goodness_metrics,
+            "overlap_range": {
+                "min": float(temp_min),
+                "max": float(temp_max),
+                "overlap_percentage": float(overlap_percentage)
+            },
+            "data_points": {
+                "experimental": len(experimental_data),
+                "simulation": len(simulation_data),
+                "overlap": int(np.sum(mask))
+            },
+            "metadata": {
+                "calculation_time_ms": (time.time() - start_time) * 1000,
+            },
+            "processed_data": {
+                "temperature_points": filtered_exp_temps.tolist() if len(filtered_exp_temps) > 0 else [],
+                "experimental_values": filtered_exp_powers.tolist() if len(filtered_exp_powers) > 0 else [],
+                "simulation_values": interpolated_sim_powers.tolist() if len(interpolated_sim_powers) > 0 else []
+            }
+        }
+        
+        # Add residuals for detailed analysis
+        if len(filtered_exp_temps) > 0:
+            residuals = filtered_exp_powers - interpolated_sim_powers
+            comparison_result["processed_data"]["residuals"] = residuals.tolist()
+            
+            # Add some basic statistical analysis of residuals
+            comparison_result["residual_stats"] = {
+                "mean": float(np.mean(residuals)),
+                "std": float(np.std(residuals)),
+                "max": float(np.max(np.abs(residuals))),
+                "median": float(np.median(np.abs(residuals)))
+            }
+        
+        return comparison_result
+        
+    except Exception as e:
+        logger.error(f"Error in data comparison: {str(e)}", exc_info=True)
+        return {
+            "metrics": {
+                "r_squared": None,
+                "rmse": None,
+                "mae": None,
+                "pearson_r": None,
+                "p_value": None
+            },
+            "metadata": {
+                "calculation_time_ms": (time.time() - start_time) * 1000,
+                "error": str(e)
+            }
+        } 

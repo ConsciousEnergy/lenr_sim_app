@@ -11,8 +11,7 @@ import {
   Select, 
   MenuItem,
   Button,
-  Tooltip,
-  Collapse
+  Tooltip
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -33,7 +32,7 @@ const InfoIconStyled = styled(InfoIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const ParameterPanel = ({ onParametersChange, onCalculate, simulationType = 'thermal' }) => {
+const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
   // Default parameter values
   const [parameters, setParameters] = useState({
     T: 300, // Temperature in Kelvin
@@ -83,12 +82,18 @@ const ParameterPanel = ({ onParametersChange, onCalculate, simulationType = 'the
 
   // Send parameters to parent when they change
   useEffect(() => {
-    onParametersChange && onParametersChange(parameters);
-  }, [parameters, onParametersChange]);
+    onParameterChange && onParameterChange(parameters);
+  }, [parameters, onParameterChange]);
 
   // Handle calculation button click
   const handleCalculate = () => {
-    onCalculate && onCalculate(parameters);
+    // Format parameters for API request
+    const apiParameters = {
+      ...parameters,
+      // Include any special formatting needed for API
+    };
+    
+    onRunSimulation && onRunSimulation(apiParameters);
   };
 
   return (
@@ -116,13 +121,56 @@ const ParameterPanel = ({ onParametersChange, onCalculate, simulationType = 'the
         </FormControl>
       </ParameterBox>
 
-      {/* Common parameters for both simulation types */}
       <ParameterBox>
         <Typography variant="h6" gutterBottom>
-          Common Parameters
+          Thermal Tunneling Parameters
         </Typography>
         
         <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center">
+              <Typography id="T-slider-label">
+                Temperature (K)
+              </Typography>
+              <Tooltip title="The system temperature affects the Boltzmann distribution of energy states">
+                <InfoIconStyled />
+              </Tooltip>
+            </Box>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs>
+                <Slider
+                  value={parameters.T}
+                  onChange={handleSliderChange('T')}
+                  aria-labelledby="T-slider-label"
+                  min={sliderRanges.T.min}
+                  max={sliderRanges.T.max}
+                  step={sliderRanges.T.step}
+                  marks={[
+                    { value: sliderRanges.T.min, label: sliderRanges.T.min },
+                    { value: sliderRanges.T.max, label: sliderRanges.T.max }
+                  ]}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(value) => formatSliderValue('T', value)}
+                />
+              </Grid>
+              <Grid item>
+                <TextField
+                  value={parameters.T}
+                  onChange={handleInputChange('T')}
+                  inputProps={{
+                    step: sliderRanges.T.step,
+                    min: sliderRanges.T.min,
+                    max: sliderRanges.T.max,
+                    type: 'number',
+                    'aria-labelledby': 'T-slider-label',
+                  }}
+                  size="small"
+                  sx={{ width: 80 }}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
+
           <Grid item xs={12}>
             <Box display="flex" alignItems="center">
               <Typography id="lambda-slider-label">
@@ -242,161 +290,103 @@ const ParameterPanel = ({ onParametersChange, onCalculate, simulationType = 'the
         </Grid>
       </ParameterBox>
 
-      {/* Thermal Tunneling Parameters */}
-      <Collapse in={simulationType === 'thermal'}>
-        <ParameterBox>
-          <Typography variant="h6" gutterBottom>
-            Thermal Tunneling Parameters
-          </Typography>
-          
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center">
-                <Typography id="T-slider-label">
-                  Temperature (K)
-                </Typography>
-                <Tooltip title="The system temperature affects the Boltzmann distribution of energy states">
-                  <InfoIconStyled />
-                </Tooltip>
-              </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs>
-                  <Slider
-                    value={parameters.T}
-                    onChange={handleSliderChange('T')}
-                    aria-labelledby="T-slider-label"
-                    min={sliderRanges.T.min}
-                    max={sliderRanges.T.max}
-                    step={sliderRanges.T.step}
-                    marks={[
-                      { value: sliderRanges.T.min, label: sliderRanges.T.min },
-                      { value: sliderRanges.T.max, label: sliderRanges.T.max }
-                    ]}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(value) => formatSliderValue('T', value)}
-                  />
-                </Grid>
-                <Grid item>
-                  <TextField
-                    value={parameters.T}
-                    onChange={handleInputChange('T')}
-                    inputProps={{
-                      step: sliderRanges.T.step,
-                      min: sliderRanges.T.min,
-                      max: sliderRanges.T.max,
-                      type: 'number',
-                      'aria-labelledby': 'T-slider-label',
-                    }}
-                    size="small"
-                    sx={{ width: 80 }}
-                  />
-                </Grid>
+      <ParameterBox>
+        <Typography variant="h6" gutterBottom>
+          Impact Tunneling Parameters
+        </Typography>
+        
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center">
+              <Typography id="T-impact-slider-label">
+                Impact Temperature (K)
+              </Typography>
+              <Tooltip title="The effective temperature during high-energy impact events">
+                <InfoIconStyled />
+              </Tooltip>
+            </Box>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs>
+                <Slider
+                  value={parameters.T_impact}
+                  onChange={handleSliderChange('T_impact')}
+                  aria-labelledby="T-impact-slider-label"
+                  min={sliderRanges.T_impact.min}
+                  max={sliderRanges.T_impact.max}
+                  step={sliderRanges.T_impact.step}
+                  marks={[
+                    { value: sliderRanges.T_impact.min, label: sliderRanges.T_impact.min },
+                    { value: sliderRanges.T_impact.max, label: sliderRanges.T_impact.max }
+                  ]}
+                  valueLabelDisplay="auto"
+                />
+              </Grid>
+              <Grid item>
+                <TextField
+                  value={parameters.T_impact}
+                  onChange={handleInputChange('T_impact')}
+                  inputProps={{
+                    step: sliderRanges.T_impact.step,
+                    min: sliderRanges.T_impact.min,
+                    max: sliderRanges.T_impact.max,
+                    type: 'number',
+                    'aria-labelledby': 'T-impact-slider-label',
+                  }}
+                  size="small"
+                  sx={{ width: 80 }}
+                />
               </Grid>
             </Grid>
           </Grid>
-        </ParameterBox>
-      </Collapse>
 
-      {/* Impact Tunneling Parameters */}
-      <Collapse in={simulationType === 'impact'}>
-        <ParameterBox>
-          <Typography variant="h6" gutterBottom>
-            Impact Tunneling Parameters
-          </Typography>
-          
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center">
-                <Typography id="T-impact-slider-label">
-                  Impact Temperature (K)
-                </Typography>
-                <Tooltip title="The effective temperature during high-energy impact events">
-                  <InfoIconStyled />
-                </Tooltip>
-              </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs>
-                  <Slider
-                    value={parameters.T_impact}
-                    onChange={handleSliderChange('T_impact')}
-                    aria-labelledby="T-impact-slider-label"
-                    min={sliderRanges.T_impact.min}
-                    max={sliderRanges.T_impact.max}
-                    step={sliderRanges.T_impact.step}
-                    marks={[
-                      { value: sliderRanges.T_impact.min, label: sliderRanges.T_impact.min },
-                      { value: sliderRanges.T_impact.max, label: sliderRanges.T_impact.max }
-                    ]}
-                    valueLabelDisplay="auto"
-                  />
-                </Grid>
-                <Grid item>
-                  <TextField
-                    value={parameters.T_impact}
-                    onChange={handleInputChange('T_impact')}
-                    inputProps={{
-                      step: sliderRanges.T_impact.step,
-                      min: sliderRanges.T_impact.min,
-                      max: sliderRanges.T_impact.max,
-                      type: 'number',
-                      'aria-labelledby': 'T-impact-slider-label',
-                    }}
-                    size="small"
-                    sx={{ width: 80 }}
-                  />
-                </Grid>
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center">
+              <Typography id="impact-duration-slider-label">
+                Impact Duration (s)
+              </Typography>
+              <Tooltip title="The characteristic timescale of the impact event">
+                <InfoIconStyled />
+              </Tooltip>
+            </Box>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs>
+                <Slider
+                  value={parameters.impact_duration}
+                  onChange={handleSliderChange('impact_duration')}
+                  aria-labelledby="impact-duration-slider-label"
+                  min={sliderRanges.impact_duration.min}
+                  max={sliderRanges.impact_duration.max}
+                  step={sliderRanges.impact_duration.step}
+                  marks={[
+                    { value: sliderRanges.impact_duration.min, label: `${sliderRanges.impact_duration.min.toExponential(0)}` },
+                    { value: sliderRanges.impact_duration.max, label: `${sliderRanges.impact_duration.max.toExponential(0)}` }
+                  ]}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(value) => formatSliderValue('impact_duration', value)}
+                />
               </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center">
-                <Typography id="impact-duration-slider-label">
-                  Impact Duration (s)
-                </Typography>
-                <Tooltip title="The characteristic timescale of the impact event">
-                  <InfoIconStyled />
-                </Tooltip>
-              </Box>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs>
-                  <Slider
-                    value={parameters.impact_duration}
-                    onChange={handleSliderChange('impact_duration')}
-                    aria-labelledby="impact-duration-slider-label"
-                    min={sliderRanges.impact_duration.min}
-                    max={sliderRanges.impact_duration.max}
-                    step={sliderRanges.impact_duration.step}
-                    marks={[
-                      { value: sliderRanges.impact_duration.min, label: `${sliderRanges.impact_duration.min.toExponential(0)}` },
-                      { value: sliderRanges.impact_duration.max, label: `${sliderRanges.impact_duration.max.toExponential(0)}` }
-                    ]}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(value) => formatSliderValue('impact_duration', value)}
-                  />
-                </Grid>
-                <Grid item>
-                  <TextField
-                    value={parameters.impact_duration.toExponential(2)}
-                    onChange={handleInputChange('impact_duration')}
-                    size="small"
-                    sx={{ width: 120 }}
-                  />
-                </Grid>
+              <Grid item>
+                <TextField
+                  value={parameters.impact_duration.toExponential(2)}
+                  onChange={handleInputChange('impact_duration')}
+                  size="small"
+                  sx={{ width: 120 }}
+                />
               </Grid>
             </Grid>
           </Grid>
-        </ParameterBox>
-      </Collapse>
+        </Grid>
+      </ParameterBox>
 
-      <Box sx={{ mt: 3 }}>
+      <Box mt={2} display="flex" justifyContent="center">
         <Button 
-          variant="contained" 
-          color="primary" 
-          fullWidth 
+          variant="contained"
+          color="primary"
           startIcon={<PlayArrowIcon />}
+          size="large"
           onClick={handleCalculate}
         >
-          Run {simulationType === 'thermal' ? 'Thermal' : 'Impact'} Simulation
+          Run Simulation
         </Button>
       </Box>
     </Box>
