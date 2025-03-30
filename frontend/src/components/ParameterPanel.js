@@ -16,6 +16,7 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { styled } from '@mui/material/styles';
+import PresetsSelector from './PresetsSelector';
 
 // Custom styled components
 const ParameterBox = styled(Paper)(({ theme }) => ({
@@ -80,6 +81,11 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
     setParameters({ ...parameters, potential: event.target.value });
   };
 
+  // Handle preset selection
+  const handlePresetSelect = (presetParams) => {
+    setParameters(presetParams);
+  };
+
   // Send parameters to parent when they change
   useEffect(() => {
     onParameterChange && onParameterChange(parameters);
@@ -101,6 +107,12 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
       <Typography variant="h5" gutterBottom>
         Simulation Parameters
       </Typography>
+      
+      {/* Presets Selector */}
+      <PresetsSelector 
+        onPresetSelect={handlePresetSelect}
+        currentParameters={parameters}
+      />
       
       <ParameterBox>
         <Typography variant="h6" gutterBottom>
@@ -248,9 +260,9 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
           <Grid item xs={12}>
             <Box display="flex" alignItems="center">
               <Typography id="k-slider-label">
-                Spring Constant (N/m)
+                Spring Constant k (N/m)
               </Typography>
-              <Tooltip title="Determines the stiffness of the potential well">
+              <Tooltip title="The spring constant determines the stiffness of the bond between nuclei">
                 <InfoIconStyled />
               </Tooltip>
             </Box>
@@ -282,7 +294,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
                     'aria-labelledby': 'k-slider-label',
                   }}
                   size="small"
-                  sx={{ width: 80 }}
+                  sx={{ width: 100 }}
                 />
               </Grid>
             </Grid>
@@ -298,10 +310,10 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12}>
             <Box display="flex" alignItems="center">
-              <Typography id="T-impact-slider-label">
+              <Typography id="impact-t-slider-label">
                 Impact Temperature (K)
               </Typography>
-              <Tooltip title="The effective temperature during high-energy impact events">
+              <Tooltip title="Effective temperature during high-energy impact or stimulation events">
                 <InfoIconStyled />
               </Tooltip>
             </Box>
@@ -310,7 +322,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
                 <Slider
                   value={parameters.T_impact}
                   onChange={handleSliderChange('T_impact')}
-                  aria-labelledby="T-impact-slider-label"
+                  aria-labelledby="impact-t-slider-label"
                   min={sliderRanges.T_impact.min}
                   max={sliderRanges.T_impact.max}
                   step={sliderRanges.T_impact.step}
@@ -330,10 +342,10 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
                     min: sliderRanges.T_impact.min,
                     max: sliderRanges.T_impact.max,
                     type: 'number',
-                    'aria-labelledby': 'T-impact-slider-label',
+                    'aria-labelledby': 'impact-t-slider-label',
                   }}
                   size="small"
-                  sx={{ width: 80 }}
+                  sx={{ width: 100 }}
                 />
               </Grid>
             </Grid>
@@ -344,7 +356,7 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
               <Typography id="impact-duration-slider-label">
                 Impact Duration (s)
               </Typography>
-              <Tooltip title="The characteristic timescale of the impact event">
+              <Tooltip title="Duration of the high-energy impact or stimulation events">
                 <InfoIconStyled />
               </Tooltip>
             </Box>
@@ -378,17 +390,16 @@ const ParameterPanel = ({ onParameterChange, onRunSimulation }) => {
         </Grid>
       </ParameterBox>
 
-      <Box mt={2} display="flex" justifyContent="center">
-        <Button 
-          variant="contained"
-          color="primary"
-          startIcon={<PlayArrowIcon />}
-          size="large"
-          onClick={handleCalculate}
-        >
-          Run Simulation
-        </Button>
-      </Box>
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        size="large"
+        startIcon={<PlayArrowIcon />}
+        onClick={handleCalculate}
+      >
+        Run Simulation
+      </Button>
     </Box>
   );
 };

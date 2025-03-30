@@ -6,6 +6,7 @@ A comprehensive simulation platform for Low Energy Nuclear Reactions based on qu
 
 - **Advanced Physics Engine**: Implementation of quantum tunneling models for LENR simulation
 - **Interactive UI**: Parameter input panels and real-time result visualization
+- **Parameter Presets**: Predefined configurations for common LENR experiment scenarios
 - **3D Visualization**: Three.js-based visualization of lattice structures with interactive legend and controls
 - **Data Analysis**: Import/export experimental data, compare with simulation results, and statistical analysis
 - **Flexible API**: Well-documented FastAPI endpoints for simulation control and data access
@@ -30,6 +31,7 @@ LENR_SIM_APP/
 │       ├── components/         # React components
 │       │   ├── data/           # Data analysis components
 │       │   └── visualization/  # Visualization components
+│       ├── data/               # Parameter presets and configs
 │       ├── pages/              # Application pages
 │       └── theme/              # Styling and theming
 ├── scripts/                    # Helper scripts
@@ -105,7 +107,22 @@ Users can adjust simulation parameters such as:
 - Potential model selection
 - Simulation time steps
 
-### 3. Real-time Visualization
+### 3. Parameter Presets
+
+The application includes preset configurations for common LENR scenarios:
+- Room temperature Pd-D (Fleischmann-Pons)
+- High temperature Ni-H (Rossi E-Cat)
+- Ultrasonic Pd-D systems
+- Ti-D fracture experiments
+- Laser-stimulated LENR
+- High-pressure Zr-D systems
+
+Users can:
+- Select from predefined parameter sets
+- Save custom parameter configurations
+- Import/export configuration files for sharing or backup
+
+### 4. Real-time Visualization
 
 Results are displayed through:
 - Interactive charts showing temperature vs. tunneling probability
@@ -115,7 +132,7 @@ Results are displayed through:
   - Controls to start, pause, and reset simulations
   - Animation of phonon propagation
 
-### 4. Data Analysis
+### 5. Data Analysis
 
 The application supports extensive data analysis features:
 - Import experimental data via CSV upload
