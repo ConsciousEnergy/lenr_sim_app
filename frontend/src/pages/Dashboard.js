@@ -1,243 +1,234 @@
-import React, { useState } from 'react';
-import { Container, Grid, Paper, Typography, Box, Alert, CircularProgress, Snackbar, Tab, Tabs } from '@mui/material';
-import LatticeVisualization from '../components/visualization/LatticeVisualization';
+import React, { useState, useEffect } from 'react';
+import { 
+  Box, 
+  Grid, 
+  Container, 
+  Paper, 
+  Typography, 
+  Tabs, 
+  Tab, 
+  Alert, 
+  useTheme, 
+  useMediaQuery 
+} from '@mui/material';
 import ParameterPanel from '../components/ParameterPanel';
 import ResultsPanel from '../components/ResultsPanel';
-import ExportModule from '../components/data/ExportModule';
 import ExperimentalDataUploader from '../components/Uploader';
-import * as api from '../api/api';
+import LatticeVisualization from '../components/visualization/LatticeVisualization';
+import ExportModule from '../components/data/ExportModule';
+import PresetSelector from '../components/PresetSelector';
+import { runSimulation, getResults, pauseSimulation, stopSimulation, resetSimulation } from '../api/api';
 
-// Set this to true to use mock API for development/testing
-const USE_MOCK_API = true;
+const USE_MOCK_API = process.env.NODE_ENV === 'development';
 
-function Dashboard() {
+const Dashboard = () => {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
+  
+  // Simulation state
   const [simulationData, setSimulationData] = useState(null);
-  const [simulationResults, setSimulationResults] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [simulationStatus, setSimulationStatus] = useState('ready'); // ready, running, paused, completed, error
-  const [simulationParameters, setSimulationParameters] = useState(null);
-  const [experimentalData, setExperimentalData] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-
-  const handleParameterChange = (parameters) => {
-    console.log('Parameters updated:', parameters);
-    setSimulationParameters(parameters);
-    // We still maintain this function, but don't trigger API calls
-    // on every parameter change to avoid excessive API requests
-  };
-
-  const handleRunSimulation = async (parameters) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSimulationStatus('running');
-      
-      // Call the API to run the simulation
-      let response;
-      if (USE_MOCK_API) {
-        response = await api.mockRunSimulation(parameters);
-      } else {
-        response = await api.runSimulation(parameters);
-      }
-      
-      // Update simulation data and results
-      setSimulationData(response.data);
-      setSimulationResults(response.results);
-      
-      setSimulationStatus('completed');
-    } catch (err) {
-      console.error('Error running simulation:', err);
-      setError('Failed to run simulation. Please try again.');
-      setSimulationStatus('error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // New simulation control handlers
-  const handleSimulationStart = async () => {
-    if (!simulationParameters) {
-      setError('Please set simulation parameters first');
-      return;
-    }
-    
-    try {
-      setSimulationStatus('running');
-      setLoading(true);
-      
-      // Call the API to start or resume the simulation
-      let response;
-      if (USE_MOCK_API) {
-        response = await api.mockRunSimulation(simulationParameters);
-      } else {
-        response = await api.runSimulation(simulationParameters);
-      }
-      
-      // Update with initial data
-      setSimulationData(response.data);
-      
-      // In a real application, you might set up a polling mechanism or WebSocket
-      // to receive updates about the simulation progress
-      setLoading(false);
-    } catch (err) {
-      console.error('Error starting simulation:', err);
-      setError('Failed to start simulation. Please try again.');
-      setSimulationStatus('error');
-      setLoading(false);
-    }
+  const [simulationStatus, setSimulationStatus] = useState('ready'); // ready, running, paused, completed, error
+  
+  // Parameter state
+  const [parameters, setParameters] = useState({
+    T: 300,
+    lambda: 1e-10,
+    r0: 1e-10,
+    k_spring: 10000,
+    potential: 'harmonic',
+    nTimeSteps: 1000,
+    impactT: 0,
+    impactDuration: 0
+  });
+  
+  // Experimental data state
+  const [experimentalData, setExperimentalData] = useState(null);
+  
+  // Visual settings state
+  const [visualizationSettings, setVisualizationSettings] = useState({
+    colorMode: 'default',
+    showLabels: true,
+    animationSpeed: 1
+  });
+  
+  // Handle parameter changes
+  const handleParameterChange = (param, value) => {
+    setParameters(prev => ({ ...prev, [param]: value }));
   };
   
-  const handleSimulationPause = async () => {
-    try {
-      setSimulationStatus('paused');
-      
-      // Call API to pause the simulation
-      if (!USE_MOCK_API) {
-        await api.pauseSimulation();
-      }
-      
-    } catch (err) {
-      console.error('Error pausing simulation:', err);
-      setError('Failed to pause simulation. Please try again.');
-    }
+  // Handle preset selection
+  const handlePresetSelect = (presetParams) => {
+    setParameters({...presetParams});
   };
   
-  const handleSimulationStop = async () => {
-    try {
-      setSimulationStatus('ready');
-      
-      // Call API to stop the simulation
-      if (!USE_MOCK_API) {
-        await api.stopSimulation();
-      }
-      
-    } catch (err) {
-      console.error('Error stopping simulation:', err);
-      setError('Failed to stop simulation. Please try again.');
-    }
-  };
-  
-  const handleSimulationReset = () => {
-    // Reset the simulation state
-    setSimulationStatus('ready');
-    setSimulationData(null);
-    setSimulationResults(null);
-  };
-
   // Handle experimental data upload
-  const handleExperimentalDataUpload = (formData) => {
-    // In a real application, this would call an API to upload the file
-    console.log('File upload initiated:', formData);
-  };
-
-  // Handle experimental data parsing
-  const handleExperimentalDataParsed = (data) => {
-    console.log('Experimental data parsed:', data);
+  const handleExperimentalDataUpload = (data) => {
+    console.log('Experimental data uploaded:', data);
     setExperimentalData(data);
   };
-
+  
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
-
+  
+  // Simulation control handlers
+  const handleStartSimulation = async () => {
+    setIsLoading(true);
+    setError(null);
+    setSimulationStatus('running');
+    
+    try {
+      const data = await runSimulation(parameters, USE_MOCK_API);
+      setSimulationData(data);
+      setResults(data.results);
+      setSimulationStatus('completed');
+    } catch (err) {
+      console.error('Simulation error:', err);
+      setError('Failed to run simulation: ' + (err.message || 'Unknown error'));
+      setSimulationStatus('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handlePauseSimulation = async () => {
+    try {
+      await pauseSimulation(USE_MOCK_API);
+      setSimulationStatus('paused');
+    } catch (err) {
+      console.error('Failed to pause simulation:', err);
+    }
+  };
+  
+  const handleStopSimulation = async () => {
+    try {
+      await stopSimulation(USE_MOCK_API);
+      setSimulationStatus('ready');
+    } catch (err) {
+      console.error('Failed to stop simulation:', err);
+    }
+  };
+  
+  const handleResetSimulation = async () => {
+    try {
+      await resetSimulation(USE_MOCK_API);
+      setSimulationData(null);
+      setResults(null);
+      setSimulationStatus('ready');
+    } catch (err) {
+      console.error('Failed to reset simulation:', err);
+    }
+  };
+  
+  // Prepare additional simulation parameters for visualization components
+  const simulationParameters = {
+    ...parameters,
+    lattice: {
+      structure: 'fcc',
+      host_metal: 'Pd',
+      fuel: 'D',
+      loading: 0.6, // D/Pd ratio
+      dimensions: { x: 5, y: 5, z: 5 }
+    }
+  };
+  
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {error && (
-        <Snackbar 
-          open={!!error} 
-          autoHideDuration={6000} 
-          onClose={() => setError(null)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        </Snackbar>
-      )}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       
       <Grid container spacing={3}>
-        {/* Left Column: Parameters and Data Upload */}
+        {/* Left column - Parameters & Experimental Data */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ mb: 3 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={handleTabChange} 
-              variant="fullWidth"
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
-            >
-              <Tab label="Parameters" />
-              <Tab label="Experimental Data" />
-            </Tabs>
+          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={activeTab} onChange={handleTabChange} aria-label="dashboard tabs">
+                <Tab label="Parameters" />
+                <Tab label="Experimental Data" />
+                <Tab label="Presets" />
+              </Tabs>
+            </Box>
             
-            <Box sx={{ p: 2 }}>
-              {activeTab === 0 && (
-                <ParameterPanel 
-                  onParameterChange={handleParameterChange}
-                  onRunSimulation={handleRunSimulation}
-                />
-              )}
-              
-              {activeTab === 1 && (
-                <ExperimentalDataUploader 
-                  onUpload={handleExperimentalDataUpload}
-                  onDataParsed={handleExperimentalDataParsed}
-                />
-              )}
+            <Box hidden={activeTab !== 0} sx={{ flexGrow: 1 }}>
+              <ParameterPanel 
+                parameters={parameters} 
+                onParameterChange={handleParameterChange}
+                onStartSimulation={handleStartSimulation}
+                isLoading={isLoading}
+              />
+            </Box>
+            
+            <Box hidden={activeTab !== 1} sx={{ flexGrow: 1 }}>
+              <ExperimentalDataUploader 
+                onDataParsed={handleExperimentalDataUpload}
+              />
+            </Box>
+            
+            <Box hidden={activeTab !== 2} sx={{ flexGrow: 1 }}>
+              <PresetSelector onPresetSelect={handlePresetSelect} />
             </Box>
           </Paper>
-          
-          {/* Export Module */}
-          <ExportModule 
-            simulationResults={simulationResults} 
-            experimentalData={experimentalData}
-          />
         </Grid>
-
-        {/* Right Column: Visualization and Results */}
+        
+        {/* Center column - Visualization */}
         <Grid item xs={12} md={8}>
-          {/* Visualization */}
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 500, mb: 3 }}>
+          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: isLargeScreen ? 600 : 500 }}>
             <Typography variant="h6" gutterBottom>
-              Lattice Visualization
+              3D Lattice Visualization
             </Typography>
-            <Box sx={{ flexGrow: 1, width: '100%', position: 'relative' }}>
-              {loading && (
-                <Box 
-                  sx={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    bottom: 0, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                    zIndex: 10
-                  }}
-                >
-                  <CircularProgress />
-                </Box>
-              )}
+            
+            <Box sx={{ flexGrow: 1, position: 'relative' }}>
               <LatticeVisualization 
                 simulationData={simulationData}
+                visualizationSettings={visualizationSettings}
+                onSimulationStart={handleStartSimulation}
+                onSimulationPause={handlePauseSimulation}
+                onSimulationStop={handleStopSimulation}
+                onSimulationReset={handleResetSimulation}
                 simulationStatus={simulationStatus}
-                onSimulationStart={handleSimulationStart}
-                onSimulationPause={handleSimulationPause}
-                onSimulationStop={handleSimulationStop}
-                onSimulationReset={handleSimulationReset}
+                simulationParameters={simulationParameters}
               />
             </Box>
           </Paper>
-          
-          {/* Results Panel */}
-          <ResultsPanel results={simulationResults} />
+        </Grid>
+        
+        {/* Results & Export */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>
+                  Simulation Results
+                </Typography>
+                <ResultsPanel 
+                  results={results} 
+                  isLoading={isLoading} 
+                  error={error}
+                />
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>
+                  Data Analysis
+                </Typography>
+                <ExportModule
+                  simulationResults={results}
+                  experimentalData={experimentalData}
+                  simulationParameters={parameters}
+                />
+              </Paper>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </Container>
   );
-}
+};
 
 export default Dashboard;
