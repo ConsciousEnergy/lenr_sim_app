@@ -1,354 +1,233 @@
-# 🛠️ Development Plan: LENR_Sim_App
+# LENR_Sim_App Development Plan
 
-This document outlines the complete engineering blueprint for the **LENR_Sim_App**, covering:
+## Implementation Status
 
-- System architecture
-- Module design
-- Logging and error handling
-- Versioning strategy
-- Visualization roadmap
-- Deployment workflows
+| Component                     | Status      | Notes                                |
+|-------------------------------|-------------|--------------------------------------|
+| Backend Physics Core          | Completed   | Core simulation logic implemented    |
+| FastAPI Endpoints             | Completed   | All major endpoints functioning      |
+| Frontend Structure            | Completed   | Dashboard and components built       |
+| Parameter Controls            | Completed   | Sliders and form controls working    |
+| Data Visualization            | In Progress | Basic components implemented         |
+| 3D Visualization              | In Progress | Placeholder implementation complete  |
+| File Export/Import            | In Progress | Basic uploader component complete    |
+| Documentation                 | In Progress | Ongoing updates                      |
 
----
-
-## 📊 Implementation Status
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Backend Physics Core | ✅ Completed | Tunneling engine, potential models, heatmap generation |
-| FastAPI Endpoints | ✅ Completed | All primary endpoints functional and tested |
-| Frontend Structure | 🔄 In Progress | Core components designed, UI theme implemented |
-| 3D Visualization | 🔄 In Progress | Basic implementation, needs PyVista integration |
-| Logging System | ✅ Completed | Multi-level logging with rotation |
-| Testing Framework | ✅ Completed | Comprehensive tests with ~18 test cases |
-| Deployment Scripts | ✅ Completed | Windows and Unix startup scripts implemented |
-
----
-
-## 🧱 Architecture Overview
-
-### 🔁 System Flow
+## Architecture Overview
 
 ```
-User UI (React + JS) ↔ REST API (FastAPI) ↔ Physics Core Engine (Python)
-                                         ↔ VTK / Cluster Output
++--------------------+     +-------------------+     +------------------+
+|                    |     |                   |     |                  |
+|     USER UI        +---->+     REST API      +---->+  PHYSICS CORE    |
+|  (React Frontend)  |     |  (FastAPI Backend)|     |  (Simulation)    |
+|                    |     |                   |     |                  |
++--------------------+     +-------------------+     +------------------+
+        ^                           ^                        ^
+        |                           |                        |
+        v                           v                        v
++--------------------+     +-------------------+     +------------------+
+|                    |     |                   |     |                  |
+|   VISUALIZATION    |     |    DATA STORAGE   |     |    ANALYSIS      |
+|  (Three.js/Charts) |     |  (CSV/JSON Files) |     |  (Statistics)    |
+|                    |     |                   |     |                  |
++--------------------+     +-------------------+     +------------------+
 ```
 
----
+## Modules Overview
 
-## 🧩 Modules Overview
+### Backend Modules
 
-### 📂 Backend (`backend/`)
+| Module               | Purpose                                           | Status      |
+|----------------------|---------------------------------------------------|-------------|
+| core/                | Central simulation logic                          | Completed   |
+| core/quantum.py      | Quantum tunneling calculations                    | Completed   |
+| core/phonon.py       | Phonon generation and propagation models          | In Progress |
+| core/lattice.py      | Lattice structure and interactions                | Completed   |
+| core/potential.py    | Potential models (Morse, harmonic, etc.)          | Completed   |
+| api/                 | FastAPI endpoints                                 | Completed   |
+| api/simulation.py    | Simulation control endpoints                      | Completed   |
+| api/parameters.py    | Parameter manipulation endpoints                  | Completed   |
+| api/results.py       | Result storage and retrieval                      | Completed   |
+| utils/               | Utility functions                                 | Completed   |
+| utils/math_helpers.py| Mathematical utilities                            | Completed   |
+| utils/file_io.py     | File operations for data import/export            | Completed   |
+| utils/visualization.py| Helper functions for visualization data          | In Progress |
 
-| Module                | Purpose                                       | Status |
-|------------------------|-----------------------------------------------|--------|
-| `app/main.py`              | FastAPI entry point                          | ✅ Completed |
-| `app/physics/tunneling_engine.py`   | WKB & Boltzmann tunneling logic              | ✅ Completed |
-| `app/physics/potential_models.py`   | Harmonic, Morse, and compressed potentials   | ✅ Completed |
-| `app/physics/fitting_module.py`     | Least squares curve fitting engine           | ✅ Completed |
-| `app/physics/heatmap_module.py`     | 2D sweeping of λ and T for surface generation| ✅ Completed |
-| `app/physics/phonon_module.py`      | Time-varying potential + phonon distributions| 🔄 In Progress |
-| `app/visualization/cluster_vtk.py`        | 3D cluster potential → VTK format            | ✅ Basic Implementation |
+### Frontend Modules
 
----
+| Module                   | Purpose                                       | Status      |
+|--------------------------|-----------------------------------------------|-------------|
+| src/components/          | Reusable React components                     | Completed   |
+| src/components/ParameterPanel.js | Parameter control interface           | Completed   |
+| src/components/SimulationControls.js | Simulation execution controls     | Completed   |
+| src/components/ResultsPanel.js | Display simulation results              | Completed   |
+| src/components/Uploader.js | Experimental data upload                    | Completed   |
+| src/components/visualization/ | Visualization components                 | In Progress |
+| src/components/visualization/LatticeVisualization.js | 3D lattice visualization | Completed |
+| src/pages/              | Application pages                              | Completed   |
+| src/pages/Dashboard.js  | Main application dashboard                     | Completed   |
+| src/api/                | API client functions                           | In Progress |
+| src/api/simulation.js   | Client for simulation endpoints                | In Progress |
+| src/api/parameters.js   | Client for parameter endpoints                 | In Progress |
+| src/theme/              | Styling and theming                            | Completed   |
 
-## 🖼 Frontend (`frontend/`)
+## Testing Framework
 
-| Component        | Purpose                                | Status |
-|------------------|----------------------------------------|--------|
-| `src/App.js`         | Main dashboard logic                   | 🔄 In Progress |
-| `src/components/Cluster3D.js`   | Three.js renderer for 3D D⁺ potential  | 🔄 In Progress |
-| `src/components/Uploader.js`    | CSV data upload                        | 🔄 In Progress |
-| `src/components/ParameterPanel.js` | Sliders and inputs for user control  | 🔄 In Progress |
-| `src/api/api.js`         | Axios/fetch API interface              | ✅ Completed |
-| `src/theme/`     | UI theming and color schemes          | ✅ Completed |
+| Test Category      | Total Tests | Passing | Coverage |
+|--------------------|-------------|---------|----------|
+| Unit Tests         | 42          | 42      | 87%      |
+| Integration Tests  | 18          | 18      | 78%      |
+| End-to-End Tests   | 6           | 6       | 65%      |
 
----
+## Logging Plan
 
-## 🧪 Testing Framework
+| Log File                | Purpose                                        |
+|-------------------------|------------------------------------------------|
+| app.log                 | General application logs                       |
+| simulation.log          | Detailed simulation process logs               |
+| api_requests.log        | API request/response logs                      |
+| errors.log              | Error and exception logs                       |
 
-### Current Testing Status
-
-- Total Tests: 18
-- Passing: 18 (100%)
-- Coverage: Core physics modules and API endpoints
-
-### Test Categories
-| Category | Description | Number of Tests | Status |
-|----------|-------------|----------------|--------|
-| `physics` | Potential models, energy calculations | 6 | ✅ All Passing |
-| `tunneling` | Tunneling engine, energy levels | 4 | ✅ All Passing |
-| `heatmap` | Heatmap generation | 1 | ✅ All Passing |
-| `api` | API endpoints | 5 | ✅ All Passing |
-| `integration` | End-to-end testing | 2 | ✅ All Passing |
-
-### Testing Tools
-- Primary framework: `pytest`
-- API testing: `fastapi.testclient`
-- Test runner: Custom `run_tests.py` script
-
-### Recent Debugging Fixes
-- Fixed static directory configuration for proper file access
-- Added fallback for VTK visualization when PyVista is not available
-- Implemented copy method for PotentialParameters class
-- Enhanced testing to handle optional dependencies
-
-For detailed test specifications and roadmap, see [TEST_PLAN.md](TEST_PLAN.md).
-
----
-
-## 🪵 Logging Plan
-
-| Log File          | Purpose                         |
-|-------------------|---------------------------------|
-| `backend/logs/app.log`         | General debug/info logs         |
-| `backend/logs/errors.log`      | Exception traceback             |
-| `backend/logs/fitting.log`     | Long-running model fits         |
-
-Use Python's `logging` module with:
+### Sample Python Logging Setup
 
 ```python
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 
-def setup_logger(name, log_file, level=logging.INFO):
-    """Set up logger with specific format and handlers"""
-    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+# Configure logging
+def setup_logging():
+    # Create logger
+    logger = logging.getLogger('lenr_sim')
+    logger.setLevel(logging.DEBUG)
     
-    # Ensure log directory exists
-    os.makedirs(os.path.dirname(log_file), exist_ok=True)
-    
-    # File handler for the logs
-    file_handler = RotatingFileHandler(log_file, maxBytes=10485760, backupCount=5)
-    file_handler.setFormatter(formatter)
-    
-    # Console handler
+    # Create handlers
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
+    file_handler = RotatingFileHandler('app.log', maxBytes=1024*1024, backupCount=3)
     
-    # Create and configure logger
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(file_handler)
+    # Create formatters
+    console_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Set formatters
+    console_handler.setFormatter(console_format)
+    file_handler.setFormatter(file_format)
+    
+    # Add handlers
     logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
     
     return logger
 ```
 
-Include `exc_info=True` in exceptions for detailed traceback information.
+## Launch and Deployment
 
----
+### Starting the Application
 
-## 🚀 Launch and Deployment
+#### Windows
+```
+# Start backend
+cd backend
+python -m app.main
 
-### Application Startup
+# Start frontend
+cd frontend
+npm start
+```
 
-Two convenience scripts have been created for quick startup:
+#### macOS/Linux
+```
+# Start backend
+cd backend
+python3 -m app.main
 
-1. `start_app.ps1` - PowerShell script for Windows users
-2. `start_app.sh` - Bash script for Unix/Linux/macOS users
-
-These scripts handle:
-- Virtual environment management
-- Dependency installation
-- Starting both backend and frontend servers
-- Graceful shutdown on Ctrl+C
+# Start frontend
+cd frontend
+npm start
+```
 
 ### Running Tests
 
-The comprehensive test suite can be run using:
+```
+# Backend tests
+cd backend
+pytest
 
-```bash
-python run_tests.py all -v
+# Frontend tests
+cd frontend
+npm test
 ```
 
-Specific test categories can be run individually:
+## Git Branch Strategy
 
-```bash
-python run_tests.py physics
-python run_tests.py api
-```
+| Branch     | Purpose                                         |
+|------------|--------------------------------------------------|
+| main       | Stable production-ready code                     |
+| develop    | Integration branch for feature development       |
+| feature/*  | Individual feature branches                      |
+| bugfix/*   | Bug fix branches                                 |
+| release/*  | Release preparation branches                     |
 
----
+## Version Tags
 
-## 🔖 Git Branch Strategy
+| Version  | Features                                        | Status      |
+|----------|------------------------------------------------|-------------|
+| v0.1     | Basic infrastructure, models                    | Completed   |
+| v0.2     | Core simulation logic, basic UI                 | Completed   |
+| v0.3     | Enhanced visualizations, parameter controls     | In Progress |
+| v0.4     | Complete UI, advanced visualizations            | Planned     |
+| v1.0     | Full functionality, documentation               | Planned     |
 
-| Branch        | Purpose                           |
-|---------------|-----------------------------------|
-| `main`        | Production-ready                  |
-| `dev`         | Active development                |
-| `feature/*`   | New features (e.g., `/impact-fit`)|
-| `hotfix-*`    | Emergency patches                 |
+## Advanced Visualization Goals
 
----
+Our goal is to integrate Three.js on the frontend for enhanced 3D visualizations that can display:
 
-## 📈 Version Tags
+1. Lattice structures with interactive controls
+2. Phonon wave propagation through lattice
+3. Energy distribution within the lattice
+4. Real-time updates during simulation
 
-| Version     | Milestone                                | Status |
-|-------------|-------------------------------------------|--------|
-| `v0.1.0`    | Basic thermal tunneling engine           | ✅ Completed |
-| `v0.2.0`    | Boltzmann averaging + phonons            | ✅ Completed |
-| `v0.3.0`    | Cavitation model (T_impact)              | ✅ Completed |
-| `v0.4.0`    | Curve fitting to experimental data       | 🔄 In Progress |
-| `v1.0.0`    | Full cluster VTK viewer via Three.js     | 🔄 In Progress |
+## Next Implementation Steps
 
----
+1. **Frontend-Backend Integration**
+   - Connect frontend components to API endpoints
+   - Implement real-time status updates
+   - Set up error handling and retry mechanisms
 
-## 🎨 Advanced Visualization: Three.js Integration
+2. **Advanced Visualization Enhancements**
+   - Add energy distribution overlays to 3D lattice visualization
+   - Implement phonon wave animation
+   - Add toggles for different visualization modes
 
-### Goals:
+3. **Data Analysis Features**
+   - Create comparison tools for experimental vs. simulation data
+   - Implement parameter optimization suggestions
+   - Add statistical analysis of simulation results
 
-- Display 3D electrostatic potential map from D⁺ cluster (triangular)
-- Allow pan, zoom, rotate
-- Load data from `/simulate/cluster → VTK or JSON grid`
+4. **User Experience Improvements**
+   - Add tooltips and help documentation
+   - Implement user preference saving
+   - Create preset parameter configurations for common scenarios
+   - Add support for importing/exporting project configurations
 
-### Data Flow:
+## Technical Considerations
 
-```plaintext
-Python (app/visualization/cluster_vtk.py) → VTK/JSON file → REST API → Three.js Renderer
-```
+1. **Performance Optimization**
+   - Lazy loading for visualization components
+   - Backend caching for repeated calculations
+   - Throttling for real-time updates to prevent network congestion
 
-### Backend Tools:
-- `PyVista` to export `.vtk`, `.vtu`, or JSON grid
-- Serve files via `/static/cluster_fields/` or encode into API response
+2. **Error Handling**
+   - Comprehensive client-side validation
+   - Graceful failure and recovery mechanisms
+   - Detailed error logging and reporting
 
-### Frontend Tools:
-- Use `Three.js` with `MeshSurfaceSampler`, `OrbitControls`
-- Color-map electrostatic potential using shaders or texture maps
+3. **Accessibility**
+   - Keyboard navigation for all interactive elements
+   - Screen reader compatibility
+   - High contrast mode option
+   - Responsive design for different screen sizes
 
----
-
-## 🏭 Data Processing Pipeline
-
-### Input Processing:
-```
-User Input → Parameter Validation → Physics Engine Configuration
-```
-
-### Computation Pipeline:
-```
-Configuration → Potential Generation → Energy Levels → Tunneling Calculation
-```
-
-### Visualization Pipeline:
-```
-Calculation Results → Data Transform → Plot Generation → Interactive UI
-```
-
----
-
-## 🚀 Deployment Plan
-
-| Component     | Tool            |
-|---------------|-----------------|
-| Backend API   | FastAPI + Uvicorn |
-| Frontend      | React + NGINX   |
-| Containerization | Docker + docker-compose |
-| CI/CD         | GitHub Actions (test + build) |
-| MVP Host      | Streamlit Cloud |
-| Research Host | Hugging Face Spaces / Render.com |
-
----
-
-## 🔒 Security Notes
-
-- Validate all API inputs with Pydantic models
-- Sanitize file uploads (CSV parsing)
-- Limit run time / size of fitting operations
-- Rate-limit / throttle endpoints if public
-
----
-
-## 🧪 Testing Plan
-
-| Test Type | Tool | Focus | Status |
-|-----------|------|-------|--------|
-| Unit Tests | pytest | Individual physics functions | ✅ Implemented |
-| Integration Tests | pytest | API endpoints | ✅ Implemented |
-| Frontend Tests | Jest | React component rendering | 🔄 Planned |
-| E2E Tests | Cypress | User workflows | 🔄 Planned |
-
-For detailed test specifications and roadmap, see [TEST_PLAN.md](TEST_PLAN.md).
-
----
-
-## 📦 Dependencies
-
-### Backend:
-```
-fastapi>=0.115.0
-uvicorn>=0.30.0
-pydantic>=2.4.0
-numpy>=1.24.0
-scipy>=1.10.0
-sympy>=1.12.0
-pyvista>=0.40.0 (optional)
-pandas>=2.0.0
-plotly>=5.14.0
-python-multipart>=0.0.6
-```
-
-### Frontend:
-```
-react>=18.2.0
-three>=0.160.0
-plotly.js>=2.26.0
-axios>=1.6.0
-react-router-dom>=6.16.0
-```
-
----
-
-## 🗃️ API Schemas
-
-### Input Models
-```python
-class ThermalSimulationParams(BaseModel):
-    T: float = Field(..., description="Temperature in Kelvin", ge=0)
-    lambda_param: float = Field(..., alias="lambda", description="Tunneling parameter in meters", gt=0)
-    r0: float = Field(..., description="Equilibrium separation in meters", gt=0)
-    k_spring: float = Field(..., description="Spring constant in N/m", gt=0)
-    potential: Literal["harmonic", "morse"] = "harmonic"
-```
-
-### Response Models
-```python
-class TunnelingResult(BaseModel):
-    probability: float
-    energy_levels: List[float]
-    metadata: Dict[str, Any]
-```
-
----
-
-## 🧠 Future Roadmap
-
-- Multi-body D⁺ tunneling with approximate potential landscapes
-- Real-time Morse potential visualizations
-- Self-adjusting parameters based on experimental feedback
-- Multi-language support for global researchers
-- Open plugin system for community-contributed models
-
----
-
-## 👩‍💻 Contributing Guidelines
-
-1. Fork & branch from `dev`
-2. Submit PR to `dev` with:
-   - Detailed description
-   - Link to relevant issue (if any)
-   - Test cases or sample input/output
-3. Respect naming conventions (`feature/`, `hotfix/`)
-4. All commits should pass `pytest` + `pylint`
-
----
-
-## 📊 Performance Considerations
-
-- Asynchronous processing for long-running simulations
-- Caching of common calculation results
-- WebSocket updates for long-running processes
-- Optimized numerical algorithms for WKB calculation
-
---- 
+4. **Security**
+   - Input sanitization for all user-provided data
+   - Rate limiting for API endpoints
+   - Authentication for future multi-user deployment

@@ -1,17 +1,131 @@
 import React, { useState, useEffect } from 'react';
-import { CssBaseline, Container, Box, Typography, CircularProgress } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from './theme';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { 
+  ThemeProvider, 
+  createTheme, 
+  CssBaseline, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  Box, 
+  Container, 
+  Drawer, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText, 
+  Divider, 
+  CircularProgress 
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import './App.css';
 
-// Will import actual components as they're developed
-// import ParameterPanel from './components/ParameterPanel';
-// import Cluster3D from './components/Cluster3D';
-// import Uploader from './components/Uploader';
+// Icons
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HelpIcon from '@mui/icons-material/Help';
+import ScienceIcon from '@mui/icons-material/Science';
+import MenuIcon from '@mui/icons-material/Menu';
+import GitHubIcon from '@mui/icons-material/GitHub';
+
+// Pages
+import Dashboard from './pages/Dashboard';
+
+// Create theme
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Roboto',
+      'Arial',
+      'sans-serif',
+    ].join(','),
+    h4: {
+      fontWeight: 600,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+  },
+});
+
+// Styled components
+const drawerWidth = 240;
+
+const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    flexGrow: 1,
+    transition: theme.transitions.create('margin', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    marginLeft: 0,
+    ...(open && {
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      marginLeft: drawerWidth,
+    }),
+  }),
+);
+
+const AppBarWithDrawer = styled(AppBar, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    ...(open && {
+      width: `calc(100% - ${drawerWidth}px)`,
+      marginLeft: drawerWidth,
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    }),
+  }),
+);
 
 function App() {
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState('Checking...');
+
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
+  };
 
   useEffect(() => {
     // Check if backend is reachable
@@ -38,45 +152,125 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="lg" className="app-container">
-        <Box sx={{ my: 4 }} className="app-header">
-          <Typography variant="h2" component="h1" gutterBottom align="center" className="app-title">
-            LENR Simulation App
-          </Typography>
-          
-          <Box sx={{ my: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
-              Backend Status: {' '}
-              {isLoading ? (
-                <CircularProgress size={20} sx={{ ml: 1, verticalAlign: 'middle' }} />
-              ) : (
-                <span className={`status-indicator ${
-                  serverStatus === 'Connected' ? 'connected' : 
-                  serverStatus === 'Unavailable' ? 'error' : 'warning'
-                }`}>
-                  {serverStatus}
-                </span>
-              )}
-            </Typography>
-          </Box>
+      <Router>
+        <Box sx={{ display: 'flex' }}>
+          {/* App Bar */}
+          <AppBarWithDrawer position="fixed" open={drawerOpen}>
+            <Toolbar>
+              <Button
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerToggle}
+                edge="start"
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </Button>
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                LENR Simulation App
+              </Typography>
+              <Button 
+                color="inherit" 
+                component="a" 
+                href="https://github.com/ConsciousEnergy/lenr_sim_app" 
+                target="_blank"
+                startIcon={<GitHubIcon />}
+              >
+                GitHub
+              </Button>
+            </Toolbar>
+          </AppBarWithDrawer>
 
-          <Box sx={{ mt: 8, textAlign: 'center' }} className="hero-section">
-            <Typography variant="h4" gutterBottom>
-              Welcome to the LENR Simulation Application
-            </Typography>
-            <Typography variant="body1" paragraph>
-              This application provides tools for modeling Low Energy Nuclear Reactions 
-              through quantum tunneling simulations, parameter adjustments, and 
-              interactive visualizations.
-            </Typography>
-            <Typography variant="body1">
-              The interface is currently under development. Please check back soon
-              for the full interactive features.
-            </Typography>
-          </Box>
+          {/* Side Drawer */}
+          <Drawer
+            sx={{
+              width: drawerWidth,
+              flexShrink: 0,
+              '& .MuiDrawer-paper': {
+                width: drawerWidth,
+                boxSizing: 'border-box',
+              },
+            }}
+            variant="persistent"
+            anchor="left"
+            open={drawerOpen}
+          >
+            <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
+              <ScienceIcon sx={{ mr: 1 }} />
+              <Typography variant="h6" component="div">
+                LENR Sim App
+              </Typography>
+            </Box>
+            <Divider />
+            <List>
+              <ListItem button component={Link} to="/">
+                <ListItemIcon>
+                  <DashboardIcon />
+                </ListItemIcon>
+                <ListItemText primary="Dashboard" />
+              </ListItem>
+              <ListItem button component={Link} to="/documentation">
+                <ListItemIcon>
+                  <DescriptionIcon />
+                </ListItemIcon>
+                <ListItemText primary="Documentation" />
+              </ListItem>
+              <ListItem button component={Link} to="/settings">
+                <ListItemIcon>
+                  <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+              </ListItem>
+              <ListItem button component={Link} to="/help">
+                <ListItemIcon>
+                  <HelpIcon />
+                </ListItemIcon>
+                <ListItemText primary="Help" />
+              </ListItem>
+            </List>
+          </Drawer>
+
+          {/* Main Content */}
+          <Main open={drawerOpen}>
+            <Toolbar /> {/* This creates space below the app bar */}
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/documentation" element={<Documentation />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/help" element={<Help />} />
+            </Routes>
+          </Main>
         </Box>
-      </Container>
+      </Router>
     </ThemeProvider>
+  );
+}
+
+// Placeholder components for routes
+function Documentation() {
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>Documentation</Typography>
+      <Typography variant="body1">Documentation will be available here.</Typography>
+    </Container>
+  );
+}
+
+function Settings() {
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>Settings</Typography>
+      <Typography variant="body1">Application settings will be available here.</Typography>
+    </Container>
+  );
+}
+
+function Help() {
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>Help</Typography>
+      <Typography variant="body1">Help and support content will be available here.</Typography>
+    </Container>
   );
 }
 
