@@ -22,19 +22,27 @@ const createAppTheme = (mode = 'light') => {
         }
   };
   
+  // Dark mode specific background colors
+  const darkBackgrounds = {
+    default: '#0A0A0A', // Darker than before
+    paper: '#181818',  // Darker than before
+    card: '#202020',   // For cards that need more contrast
+    elevated: '#242424' // For elevated components
+  };
+  
   return createTheme({
     palette: {
       mode: mode,
       ...modeSpecificColors,
       secondary: colors.secondary,
       background: {
-        default: isDark ? '#121212' : colors.background.default,
-        paper: isDark ? '#1E1E1E' : colors.background.paper,
+        default: isDark ? darkBackgrounds.default : colors.background.default,
+        paper: isDark ? darkBackgrounds.paper : colors.background.paper,
       },
       text: {
         primary: isDark ? '#FFFFFF' : colors.text.primary,
-        secondary: isDark ? '#CCCCCC' : colors.text.secondary,
-        disabled: isDark ? '#999999' : colors.text.disabled,
+        secondary: isDark ? '#CCCCCC' : colors.text.secondary, // Brightened for better contrast
+        disabled: isDark ? '#888888' : colors.text.disabled,   // Brightened for better contrast
       },
       error: colors.semantic.error,
       warning: colors.semantic.warning,
@@ -217,7 +225,7 @@ const createAppTheme = (mode = 'light') => {
         styleOverrides: {
           root: {
             boxShadow: colors.shadows.medium,
-            backgroundColor: isDark ? '#1A1A1A' : '#1976d2',
+            backgroundColor: isDark ? '#111111' : '#1976d2',
           },
         },
       },
@@ -226,26 +234,32 @@ const createAppTheme = (mode = 'light') => {
           root: {
             borderRadius: colors.border.radius.medium,
             boxShadow: isDark ? 'none' : colors.shadows.medium,
-            backgroundColor: isDark ? '#1E1E1E' : colors.background.paper,
+            backgroundColor: isDark ? darkBackgrounds.card : colors.background.paper,
+            margin: isDark ? theme => theme.spacing(2) : undefined, // Add default margin in dark mode
+            padding: isDark ? theme => theme.spacing(2) : undefined, // Add padding in dark mode
           },
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            backgroundColor: isDark ? '#1E1E1E' : colors.background.paper,
+            backgroundColor: isDark ? darkBackgrounds.paper : colors.background.paper,
           },
           elevation1: {
             boxShadow: isDark ? 'none' : colors.shadows.small,
+            backgroundColor: isDark ? darkBackgrounds.paper : undefined,
           },
           elevation2: {
             boxShadow: isDark ? 'none' : colors.shadows.medium,
+            backgroundColor: isDark ? darkBackgrounds.card : undefined,
           },
           elevation3: {
             boxShadow: isDark ? 'none' : colors.shadows.large,
+            backgroundColor: isDark ? darkBackgrounds.card : undefined,
           },
           elevation4: {
             boxShadow: isDark ? 'none' : colors.shadows.elevated,
+            backgroundColor: isDark ? darkBackgrounds.elevated : undefined,
           },
         },
       },
@@ -266,64 +280,21 @@ const createAppTheme = (mode = 'light') => {
       MuiSlider: {
         styleOverrides: {
           root: {
-            color: isDark ? colors.primary.main : '#1976d2',
-            marginTop: '8px',
-            marginBottom: '8px',
-            padding: '13px 0',
-            '& .MuiSlider-markLabel': {
-              color: isDark ? '#CCCCCC' : colors.text.secondary,
-            },
-          },
-          thumb: {
-            width: 14,
-            height: 14,
-            '&:hover, &.Mui-focusVisible': {
-              boxShadow: isDark 
-                ? `0 0 0 8px rgba(106, 13, 173, 0.16)` 
-                : `0 0 0 8px rgba(25, 118, 210, 0.16)`,
-            },
-          },
-          valueLabel: {
-            backgroundColor: isDark ? colors.primary.main : '#1976d2',
+            marginTop: isDark ? theme => theme.spacing(3) : undefined, // Add margin for sliders in dark mode
+            marginBottom: isDark ? theme => theme.spacing(3) : undefined,
           },
           track: {
-            height: 4,
+            backgroundColor: isDark ? colors.primary.main : undefined,
           },
-          rail: {
-            height: 4,
-            opacity: 0.5,
-            backgroundColor: isDark ? '#666666' : '#b5b5b5',
-          },
-          mark: {
-            backgroundColor: isDark ? '#AAAAAA' : '#888888',
-          },
-        },
-      },
-      MuiTypography: {
-        styleOverrides: {
-          gutterBottom: {
-            marginBottom: '0.75em',
-          },
-        },
-      },
-      MuiDivider: {
-        styleOverrides: {
-          root: {
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-          },
-        },
-      },
-      MuiListItemText: {
-        styleOverrides: {
-          secondary: {
-            color: isDark ? '#CCCCCC' : colors.text.secondary,
+          thumb: {
+            backgroundColor: isDark ? colors.primary.light : undefined,
           },
         },
       },
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            backgroundColor: isDark ? '#121212' : colors.background.default,
+            backgroundColor: isDark ? darkBackgrounds.default : colors.background.default,
             color: isDark ? '#FFFFFF' : colors.text.primary,
           }
         }
@@ -336,4 +307,4 @@ const createAppTheme = (mode = 'light') => {
 const defaultTheme = createAppTheme('light');
 
 export { createAppTheme };
-export default defaultTheme; 
+export default defaultTheme;

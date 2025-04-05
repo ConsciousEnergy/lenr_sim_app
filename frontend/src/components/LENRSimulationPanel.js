@@ -15,44 +15,47 @@ import {
   List,
   ListItem,
   ListItemText,
-  Alert
+  Alert,
+  useTheme
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import RydbergMatterModel from '../models/RydbergMatterModel';
-import { styled as muiStyled } from '@mui/material/styles';
 
 // Extract the function from the imported object
 const { generateRydbergSimulationParams } = RydbergMatterModel;
 
 const SimulationPanel = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
+  padding: theme.spacing(3),
   borderRadius: theme.shape.borderRadius,
   boxShadow: theme.shadows[2],
   height: '100%',
-  overflow: 'auto'
+  overflow: 'auto',
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : theme.palette.background.paper
 }));
 
-// Styled slider component with improved styling for dark mode
-const StyledSlider = muiStyled(Slider)(({ theme }) => ({
-  '& .MuiSlider-markLabel': {
-    color: theme.palette.mode === 'dark' ? '#CCCCCC' : theme.palette.text.secondary,
-  },
-  marginTop: theme.spacing(1.5),
-  marginBottom: theme.spacing(1.5)
-}));
-
-// SliderControl with improved spacing
 const SliderControl = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(3), // More bottom margin
-  '& .MuiTypography-root': {
-    marginBottom: theme.spacing(1), // Add space between label and slider
+  marginBottom: theme.spacing(3),
+  padding: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : undefined,
+  '& .MuiSlider-root': {
+    marginTop: theme.spacing(1.5),
+    marginBottom: theme.spacing(1),
+  },
+  '& .MuiSlider-mark': {
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.primary.light : undefined,
+  },
+  '& .MuiSlider-markLabel': {
+    color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : undefined,
   }
 }));
 
 const ResultsPanel = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
-  marginTop: theme.spacing(2),
-  backgroundColor: theme.palette.grey[50]
+  marginTop: theme.spacing(3),
+  backgroundColor: theme.palette.mode === 'dark' 
+    ? theme.palette.background.paper 
+    : theme.palette.grey[50]
 }));
 
 const formatScientific = (value) => {
@@ -69,6 +72,7 @@ const formatScientific = (value) => {
 };
 
 const LENRSimulationPanel = ({ onSimulationUpdate }) => {
+  const theme = useTheme();
   // State for simulation parameters
   const [params, setParams] = useState({
     principalQuantumNumber: 10,
@@ -156,16 +160,16 @@ const LENRSimulationPanel = ({ onSimulationUpdate }) => {
       <Typography variant="h6" gutterBottom>
         LENR Simulation Parameters
       </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 3 }} />
       
       {/* Display error message if there is one */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
       
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <SliderControl>
             <Typography gutterBottom>
@@ -281,10 +285,13 @@ const LENRSimulationPanel = ({ onSimulationUpdate }) => {
           </SliderControl>
           
           <SliderControl>
-            <Typography gutterBottom>
+            <Typography variant="body1" gutterBottom sx={{ 
+              fontWeight: 'medium',
+              color: theme.palette.mode === 'dark' ? theme.palette.text.primary : undefined 
+            }}>
               Screening Factor: {params.screeningFactor}
             </Typography>
-            <StyledSlider
+            <Slider
               value={params.screeningFactor}
               onChange={handleSliderChange('screeningFactor')}
               min={1}
@@ -294,6 +301,13 @@ const LENRSimulationPanel = ({ onSimulationUpdate }) => {
                 { value: 1, label: 'No screening' },
                 { value: 5, label: 'Enhanced' }
               ]}
+              sx={{
+                '& .MuiSlider-markLabel': {
+                  fontSize: '0.75rem',
+                  mt: 0.5,
+                  color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : undefined
+                }
+              }}
             />
           </SliderControl>
         </Grid>
