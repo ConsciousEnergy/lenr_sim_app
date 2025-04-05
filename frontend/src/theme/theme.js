@@ -10,10 +10,22 @@ import colors from './colors';
 const createAppTheme = (mode = 'light') => {
   const isDark = mode === 'dark';
   
+  // Define mode-specific colors
+  const modeSpecificColors = {
+    primary: isDark 
+      ? colors.primary // Keep purple for dark mode
+      : {
+          main: '#1976d2', // Original blue for light mode
+          light: '#42a5f5',
+          dark: '#1565c0',
+          contrastText: '#FFFFFF'
+        }
+  };
+  
   return createTheme({
     palette: {
       mode: mode,
-      primary: colors.primary,
+      ...modeSpecificColors,
       secondary: colors.secondary,
       background: {
         default: isDark ? '#121212' : colors.background.default,
@@ -186,9 +198,9 @@ const createAppTheme = (mode = 'light') => {
             },
           },
           containedPrimary: {
-            background: colors.gradients.primary,
+            background: isDark ? colors.gradients.primary : 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
             '&:hover': {
-              background: colors.gradients.primary,
+              background: isDark ? colors.gradients.primary : 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
               filter: 'brightness(1.1)',
             },
           },
@@ -205,7 +217,7 @@ const createAppTheme = (mode = 'light') => {
         styleOverrides: {
           root: {
             boxShadow: colors.shadows.medium,
-            backgroundColor: isDark ? '#1A1A1A' : colors.primary.main,
+            backgroundColor: isDark ? '#1A1A1A' : '#1976d2',
           },
         },
       },
