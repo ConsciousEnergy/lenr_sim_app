@@ -1,5 +1,5 @@
-import theme from './theme';
+import defaultTheme, { createAppTheme } from './theme';
 import colors from './colors';
 
-export { colors };
-export default theme; 
+export { colors, createAppTheme };
+export default defaultTheme; 

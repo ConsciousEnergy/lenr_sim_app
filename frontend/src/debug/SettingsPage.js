@@ -342,6 +342,24 @@ const SettingsPage = () => {
               />
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                if (localSettings?.appearance) {
+                  updateCategory('appearance', localSettings.appearance);
+                  setSnackbar({
+                    open: true,
+                    message: 'Appearance settings applied',
+                    severity: 'success'
+                  });
+                }
+              }}
+            >
+              Apply Changes
+            </Button>
+          </Box>
         </TabPanel>
         
         {/* Visualization Settings */}
@@ -499,6 +517,24 @@ const SettingsPage = () => {
               />
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                if (localSettings?.visualization) {
+                  updateCategory('visualization', localSettings.visualization);
+                  setSnackbar({
+                    open: true,
+                    message: 'Visualization settings applied',
+                    severity: 'success'
+                  });
+                }
+              }}
+            >
+              Apply Changes
+            </Button>
+          </Box>
         </TabPanel>
         
         {/* Simulation Settings */}
@@ -668,6 +704,24 @@ const SettingsPage = () => {
               </FormControl>
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                if (localSettings?.simulation) {
+                  updateCategory('simulation', localSettings.simulation);
+                  setSnackbar({
+                    open: true,
+                    message: 'Simulation settings applied',
+                    severity: 'success'
+                  });
+                }
+              }}
+            >
+              Apply Changes
+            </Button>
+          </Box>
         </TabPanel>
         
         {/* LENR Physics Tab */}
@@ -824,6 +878,24 @@ const SettingsPage = () => {
               </Alert>
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                if (localSettings?.lenrPhysics) {
+                  updateCategory('lenrPhysics', localSettings.lenrPhysics);
+                  setSnackbar({
+                    open: true,
+                    message: 'LENR physics settings applied',
+                    severity: 'success'
+                  });
+                }
+              }}
+            >
+              Apply Changes
+            </Button>
+          </Box>
         </TabPanel>
         
         {/* Advanced Settings */}
@@ -967,6 +1039,24 @@ const SettingsPage = () => {
               </Alert>
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                if (localSettings?.advanced) {
+                  updateCategory('advanced', localSettings.advanced);
+                  setSnackbar({
+                    open: true,
+                    message: 'Advanced settings applied',
+                    severity: 'success'
+                  });
+                }
+              }}
+            >
+              Apply Changes
+            </Button>
+          </Box>
         </TabPanel>
 
         {/* Add buttons for importing and exporting settings */}

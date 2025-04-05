@@ -12,36 +12,19 @@ import {
   FormControl, 
   InputLabel,
   IconButton,
+  ButtonGroup,
   Tooltip,
-  Divider,
-  Button,
-  Card,
-  CardContent,
-  Stack,
-  useTheme,
-  Tab,
-  Tabs
+  Button
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
 import StopIcon from '@mui/icons-material/Stop';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import InfoIcon from '@mui/icons-material/Info';
-import CloseIcon from '@mui/icons-material/Close';
-import ScienceIcon from '@mui/icons-material/Science';
-
-// Import our new components and utilities
-import TunnelingVisualization from './TunnelingVisualization';
-import PhysicsInfoPanel from './PhysicsInfoPanel';
-import { 
-  CONSTANTS, 
-  ELEMENT_PROPERTIES, 
-  LATTICE_STRUCTURES,
-  calculateTunnelingProbability,
-  calculateOscillationAmplitude,
-  getElementColorByEnergy
-} from '../../utils/physicsConstants';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { useLogger } from '../../contexts/LogContext';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
+import errorReporter from '../../utils/errorReporter';
+import threeCleanup from '../../utils/threeCleanup';
 
 // Styled components
 const VisualizationContainer = styled(Paper)(({ theme }) => ({
@@ -70,12 +53,34 @@ const SimControlsOverlay = styled(Box)(({ theme }) => ({
   transform: 'translateX(-50%)',
   zIndex: 100,
   display: 'flex',
-  flexDirection: 'row',
-  gap: theme.spacing(1),
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  backgroundColor: 'rgba(255, 255, 255, 0.7)',
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
+}));
+
+const LegendOverlay = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  bottom: theme.spacing(2),
+  left: theme.spacing(2),
+  zIndex: 100,
+  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  padding: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+  maxWidth: '150px',
+}));
+
+const LegendItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: theme.spacing(0.5),
+}));
+
+const LegendColor = styled(Box)(({ color }) => ({
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  backgroundColor: color,
+  marginRight: '8px',
 }));
 
 const LoadingOverlay = styled(Box)(({ theme }) => ({
@@ -92,808 +97,784 @@ const LoadingOverlay = styled(Box)(({ theme }) => ({
   zIndex: 100,
 }));
 
-const LegendOverlay = styled(Card)(({ theme }) => ({
-  position: 'absolute',
-  bottom: theme.spacing(2),
-  left: theme.spacing(2),
-  zIndex: 100,
-  maxWidth: '250px',
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  boxShadow: theme.shadows[2],
-}));
-
-const LegendItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: theme.spacing(1),
-}));
-
-const ColorSwatch = styled(Box)(({ color, theme }) => ({
-  width: '20px',
-  height: '20px',
-  backgroundColor: color,
-  borderRadius: '50%',
-  marginRight: theme.spacing(1),
-  border: `1px solid ${theme.palette.divider}`,
-}));
-
-const PhysicsButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  top: theme.spacing(2),
-  left: theme.spacing(2),
-  zIndex: 100,
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  },
-}));
-
-const EnhancedTabPanel = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
+// Use a ref-based approach to prevent React from managing the canvas
+const ThreeContainer = styled('div')(({ theme }) => ({
+  width: '100%',
   height: '100%',
+  overflow: 'hidden',
+  borderRadius: theme.shape.borderRadius,
 }));
 
-const LatticeVisualization = ({ 
-  simulationData, 
-  visualizationSettings,
-  onSimulationStart, 
-  onSimulationPause, 
-  onSimulationStop, 
-  onSimulationReset,
-  simulationStatus = 'ready', // ready, running, paused, completed, error
-  simulationParameters // Add this prop to accept simulation parameters
-}) => {
-  const theme = useTheme();
+const LatticeVisualization = ({ simulationData, visualizationSettings: propVisualizationSettings, onStartSimulation, onStopSimulation }) => {
+  const logger = useLogger();
+  const { settings } = useAppSettings();
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const controlsRef = useRef(null);
   const frameIdRef = useRef(null);
+  const threeContainerRef = useRef(null);
+  
+  // Merge visualization settings from props with app settings
+  const visualizationSettings = {
+    ...settings?.visualization,
+    ...propVisualizationSettings
+  };
+  
+  // Define element colors for the visualization
+  const elementColors = {
+    palladium: 0xB9B9B9, // silver-gray
+    nickel: 0xA6A6A6,    // darker silver
+    deuterium: 0x2969B0, // blue
+    hydrogen: 0x33A1C9,  // lighter blue
+    energy: 0xFF6347,    // tomato red
+    transition: 0xFFA500 // orange
+  };
   
   const [isLoading, setIsLoading] = useState(true);
-  const [visualizationType, setVisualizationType] = useState('lattice'); // lattice, energy, phonon, tunneling
+  const [visualizationType, setVisualizationType] = useState('lattice'); // lattice, energy, phonon
   const [latticeAtoms, setLatticeAtoms] = useState([]);
-  const [showLegend, setShowLegend] = useState(true);
-  const [showPhysicsInfo, setShowPhysicsInfo] = useState(false);
-  const [viewMode, setViewMode] = useState(0); // 0 = 3D, 1 = Tunneling, 2 = Physics Info
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false);
   
-  // Create placeholder lattice - updated to use our physics constants
+  // Create placeholder lattice for visualization
   const createPlaceholderLattice = useCallback(() => {
-    setIsLoading(true);
-    
-    if (!sceneRef.current) return;
-    
-    // Clear existing lattice atoms
-    latticeAtoms.forEach(atom => {
-      if (sceneRef.current) {
-        sceneRef.current.remove(atom);
+    try {
+      logger.debug('Creating placeholder lattice');
+      setIsLoading(true);
+
+      if (!sceneRef.current) {
+        logger.warn('Scene not initialized');
+        return;
       }
-    });
-    
-    const newLatticeAtoms = [];
-    
-    // Create a simple FCC lattice structure
-    const latticeSize = 3; // 3x3x3 grid
-    const latticeSpacing = CONSTANTS.PD_LATTICE_CONSTANT * CONSTANTS.SCALE_FACTOR;
-    
-    // Use element properties for visualization
-    const pdRadius = ELEMENT_PROPERTIES.Pd.radius * CONSTANTS.SCALE_FACTOR;
-    const dRadius = ELEMENT_PROPERTIES.D.radius * CONSTANTS.SCALE_FACTOR;
-    
-    const pdGeometry = new THREE.SphereGeometry(pdRadius, 32, 32);
-    const pdMaterial = new THREE.MeshPhongMaterial({ 
-      color: ELEMENT_PROPERTIES.Pd.color,
-      shininess: 80
-    });
-    
-    const dGeometry = new THREE.SphereGeometry(dRadius, 16, 16);
-    const dMaterial = new THREE.MeshPhongMaterial({ 
-      color: ELEMENT_PROPERTIES.D.color,
-      shininess: 100,
-      emissive: 0x0044cc,
-      emissiveIntensity: 0.2
-    });
-    
-    // Create FCC lattice structure
-    for (let x = -latticeSize; x <= latticeSize; x++) {
-      for (let y = -latticeSize; y <= latticeSize; y++) {
-        for (let z = -latticeSize; z <= latticeSize; z++) {
-          // Place Palladium atoms at lattice points
-          const pdAtom = new THREE.Mesh(pdGeometry, pdMaterial);
-          pdAtom.position.set(
-            x * latticeSpacing,
-            y * latticeSpacing,
-            z * latticeSpacing
-          );
-          pdAtom.userData = { 
-            element: 'Pd', 
-            position: [x, y, z],
-            properties: ELEMENT_PROPERTIES.Pd
-          };
-          
-          if (sceneRef.current) {
-            sceneRef.current.add(pdAtom);
-            newLatticeAtoms.push(pdAtom);
-          }
-          
-          // Face centers (FCC)
-          if ((x+y+z) % 2 === 0) {
-            const placeFCCAtoms = (fccX, fccY, fccZ) => {
-              if (Math.abs(fccX) <= latticeSize && 
-                  Math.abs(fccY) <= latticeSize && 
-                  Math.abs(fccZ) <= latticeSize) {
-                const fccPd = new THREE.Mesh(pdGeometry, pdMaterial);
-                fccPd.position.set(
-                  fccX * latticeSpacing,
-                  fccY * latticeSpacing,
-                  fccZ * latticeSpacing
-                );
-                fccPd.userData = { 
-                  element: 'Pd', 
-                  position: [fccX, fccY, fccZ],
-                  properties: ELEMENT_PROPERTIES.Pd
-                };
-                
-                if (sceneRef.current) {
-                  sceneRef.current.add(fccPd);
-                  newLatticeAtoms.push(fccPd);
-                }
-              }
-            };
-            
-            // Add face center atoms
-            placeFCCAtoms(x+0.5, y+0.5, z);
-            placeFCCAtoms(x+0.5, y, z+0.5);
-            placeFCCAtoms(x, y+0.5, z+0.5);
-          }
-          
-          // Randomly place some Deuterium atoms in octahedral sites
-          if (Math.random() > 0.7) {
-            // Octahedral sites are at midpoints between nearest neighbors
-            const dAtom = new THREE.Mesh(dGeometry, dMaterial);
-            
-            // Position deuterium at octahedral sites
-            dAtom.position.set(
-              (x + 0.5) * latticeSpacing,
-              y * latticeSpacing,
+
+      // Clear existing lattice atoms
+      latticeAtoms.forEach(atom => {
+        if (sceneRef.current) {
+          sceneRef.current.remove(atom);
+        }
+      });
+
+      const newLatticeAtoms = [];
+
+      // Create a simple palladium-deuterium lattice structure
+      const latticeSize = 3;
+      const latticeSpacing = 2;
+
+      // Create materials for different particles
+      const materialPd = new THREE.MeshPhongMaterial({ 
+        color: elementColors.palladium,
+        transparent: false,
+        opacity: 1.0
+      });
+
+      const materialD = new THREE.MeshPhongMaterial({ 
+        color: elementColors.deuterium,
+        transparent: false,
+        opacity: 1.0
+      });
+
+      // Apply atom scale from settings
+      const atomScale = visualizationSettings?.atomScale || 1.0;
+      
+      // Core lattice geometry
+      const pdGeometry = new THREE.SphereGeometry(0.5 * atomScale, 32, 32);
+      const dGeometry = new THREE.SphereGeometry(0.3 * atomScale, 16, 16);
+
+      // Create a grid of atoms
+      for (let x = -latticeSize; x <= latticeSize; x++) {
+        for (let y = -latticeSize; y <= latticeSize; y++) {
+          for (let z = -latticeSize; z <= latticeSize; z++) {
+            // Place palladium atoms at lattice points
+            const pdAtom = new THREE.Mesh(pdGeometry, materialPd);
+            pdAtom.position.set(
+              x * latticeSpacing, 
+              y * latticeSpacing, 
               z * latticeSpacing
             );
-            
-            dAtom.userData = { 
-              element: 'D', 
-              position: [x+0.5, y, z],
-              properties: ELEMENT_PROPERTIES.D
-            };
-            
+            pdAtom.userData = { type: 'palladium' };
+
             if (sceneRef.current) {
-              sceneRef.current.add(dAtom);
-              newLatticeAtoms.push(dAtom);
+              sceneRef.current.add(pdAtom);
+              newLatticeAtoms.push(pdAtom);
             }
-          }
-        }
-      }
-    }
-    
-    setLatticeAtoms(newLatticeAtoms);
-    setIsLoading(false);
-  }, [latticeAtoms]);
 
-  // Create lattice based on real simulation data - using our physics parameters
-  const createLatticeFromData = useCallback((data) => {
-    setIsLoading(true);
-    
-    if (!sceneRef.current || !data) return;
-    
-    // Clear existing lattice atoms
-    latticeAtoms.forEach(atom => {
-      if (sceneRef.current) {
-        sceneRef.current.remove(atom);
-      }
-    });
-    
-    const newLatticeAtoms = [];
-    
-    // Extract lattice parameters from simulation data
-    const latticeStructure = data.lattice?.structure || 'fcc';
-    const hostMetal = data.lattice?.host_metal || 'Pd';
-    const fuel = data.lattice?.fuel || 'D';
-    
-    // Get appropriate lattice constant
-    let latticeConstant;
-    switch(hostMetal) {
-      case 'Ni':
-        latticeConstant = CONSTANTS.NI_LATTICE_CONSTANT;
-        break;
-      case 'Ti':
-        latticeConstant = CONSTANTS.TI_LATTICE_CONSTANT;
-        break;
-      case 'Zr':
-        latticeConstant = CONSTANTS.ZR_LATTICE_CONSTANT;
-        break;
-      case 'Pd':
-      default:
-        latticeConstant = CONSTANTS.PD_LATTICE_CONSTANT;
-    }
-    
-    // Scale for visualization
-    const latticeSpacing = latticeConstant * CONSTANTS.SCALE_FACTOR;
-    
-    // Dimensions
-    const dimensions = data.lattice?.dimensions || { x: 3, y: 3, z: 3 };
-    
-    // Calculate energy values for visualization
-    const temperature = data.parameters?.T || 300;
-    const lambda = data.parameters?.lambda || 1e-10;
-    const r0 = data.parameters?.r0 || 1e-10;
-    const k_spring = data.parameters?.k_spring || 1000;
-    const potential = data.parameters?.potential || 'harmonic';
-    
-    // Calculate tunneling probability
-    const tunnelingProb = calculateTunnelingProbability(
-      lambda, r0, temperature, k_spring, potential
-    );
-    
-    // Normalize energy for color mapping (logarithmic scale due to small values)
-    // Tunneling probability is extremely small, so we use log scale with a large offset
-    const normalizedEnergy = Math.min(
-      Math.max(0, (Math.log10(tunnelingProb) + 40) / 40), 
-      1
-    );
-    
-    // Create materials based on elements
-    const hostGeometry = new THREE.SphereGeometry(
-      ELEMENT_PROPERTIES[hostMetal].radius * CONSTANTS.SCALE_FACTOR, 32, 32
-    );
-    
-    const fuelGeometry = new THREE.SphereGeometry(
-      ELEMENT_PROPERTIES[fuel].radius * CONSTANTS.SCALE_FACTOR, 16, 16
-    );
-    
-    // Create base materials
-    const hostMaterial = new THREE.MeshPhongMaterial({ 
-      color: ELEMENT_PROPERTIES[hostMetal].color,
-      shininess: 80
-    });
-    
-    // Use the color scaling function for the fuel atoms
-    const fuelColor = getElementColorByEnergy(fuel, normalizedEnergy);
-    const fuelMaterial = new THREE.MeshPhongMaterial({ 
-      color: ELEMENT_PROPERTIES[fuel].color,
-      emissive: fuelColor,
-      emissiveIntensity: normalizedEnergy * 0.5,
-      shininess: 100
-    });
-    
-    // Build the appropriate lattice structure
-    if (latticeStructure.toLowerCase() === 'fcc') {
-      // FCC lattice structure (same as in placeholder, but with real parameters)
-      for (let x = -dimensions.x/2; x <= dimensions.x/2; x++) {
-        for (let y = -dimensions.y/2; y <= dimensions.y/2; y++) {
-          for (let z = -dimensions.z/2; z <= dimensions.z/2; z++) {
-            // Corner atoms
-            addAtomToLattice(
-              hostGeometry, hostMaterial, 
-              x * latticeSpacing, y * latticeSpacing, z * latticeSpacing,
-              hostMetal, [x, y, z], newLatticeAtoms
-            );
+            // Apply settings to control deuterium density
+            const deuteriumLoading = settings?.lenrPhysics?.deuteriumLoading || 0.85;
+            const deuteriumThreshold = 1 - deuteriumLoading;
             
-            // Face centers if within bounds
-            if ((x+y+z) % 2 === 0) {
-              const addFCCAtom = (fccX, fccY, fccZ) => {
-                if (Math.abs(fccX) <= dimensions.x/2 && 
-                    Math.abs(fccY) <= dimensions.y/2 && 
-                    Math.abs(fccZ) <= dimensions.z/2) {
-                  addAtomToLattice(
-                    hostGeometry, hostMaterial, 
-                    fccX * latticeSpacing, fccY * latticeSpacing, fccZ * latticeSpacing,
-                    hostMetal, [fccX, fccY, fccZ], newLatticeAtoms
-                  );
-                }
-              };
+            // Randomly place deuterium atoms at interstitial positions with density based on settings
+            if (Math.random() > deuteriumThreshold) {
+              const dAtom = new THREE.Mesh(dGeometry, materialD);
               
-              // Face centers
-              addFCCAtom(x+0.5, y+0.5, z);
-              addFCCAtom(x+0.5, y, z+0.5);
-              addFCCAtom(x, y+0.5, z+0.5);
-            }
-            
-            // Add fuel atoms in octahedral sites based on loading ratio
-            const loading = data.lattice?.loading || 0.6; // D/Pd ratio
-            if (Math.random() < loading) {
-              // Choose octahedral or tetrahedral site
-              const sites = [
-                [x+0.5, y, z], // octahedral
-                [x, y+0.5, z],
-                [x, y, z+0.5],
-                [x+0.25, y+0.25, z+0.25], // tetrahedral
-                [x+0.75, y+0.25, z+0.25],
-                [x+0.25, y+0.75, z+0.25],
-                [x+0.25, y+0.25, z+0.75]
-              ];
-              
-              // Randomly choose one site
-              const site = sites[Math.floor(Math.random() * sites.length)];
-              
-              addAtomToLattice(
-                fuelGeometry, fuelMaterial,
-                site[0] * latticeSpacing, site[1] * latticeSpacing, site[2] * latticeSpacing,
-                fuel, site, newLatticeAtoms
+              // Position deuterium at random interstitial positions
+              dAtom.position.set(
+                x * latticeSpacing + (Math.random() - 0.5) * 0.8,
+                y * latticeSpacing + (Math.random() - 0.5) * 0.8,
+                z * latticeSpacing + (Math.random() - 0.5) * 0.8
               );
-            }
-          }
-        }
-      }
-    } else if (latticeStructure.toLowerCase() === 'bcc') {
-      // Body-centered cubic structure
-      for (let x = -dimensions.x/2; x <= dimensions.x/2; x++) {
-        for (let y = -dimensions.y/2; y <= dimensions.y/2; y++) {
-          for (let z = -dimensions.z/2; z <= dimensions.z/2; z++) {
-            // Corner atoms
-            addAtomToLattice(
-              hostGeometry, hostMaterial, 
-              x * latticeSpacing, y * latticeSpacing, z * latticeSpacing,
-              hostMetal, [x, y, z], newLatticeAtoms
-            );
-            
-            // Body center
-            if ((x+y+z) % 2 === 0) {
-              addAtomToLattice(
-                hostGeometry, hostMaterial, 
-                (x+0.5) * latticeSpacing, (y+0.5) * latticeSpacing, (z+0.5) * latticeSpacing,
-                hostMetal, [x+0.5, y+0.5, z+0.5], newLatticeAtoms
-              );
-            }
-            
-            // Add fuel atoms in tetrahedral sites
-            const loading = data.lattice?.loading || 0.4; // typical for BCC
-            if (Math.random() < loading) {
-              const site = [
-                x+0.25, y+0.25, z+0.25
-              ];
               
-              addAtomToLattice(
-                fuelGeometry, fuelMaterial,
-                site[0] * latticeSpacing, site[1] * latticeSpacing, site[2] * latticeSpacing,
-                fuel, site, newLatticeAtoms
-              );
-            }
-          }
-        }
-      }
-    }
-    // Add more lattice structures as needed
-    
-    setLatticeAtoms(newLatticeAtoms);
-    setIsLoading(false);
-  }, []);
-  
-  // Helper function to add atoms to the lattice
-  const addAtomToLattice = useCallback((geometry, material, x, y, z, element, position, atomsList) => {
-    const atom = new THREE.Mesh(geometry, material);
-    atom.position.set(x, y, z);
-    atom.userData = { 
-      element, 
-      position,
-      properties: ELEMENT_PROPERTIES[element]
-    };
-    
-    if (sceneRef.current) {
-      sceneRef.current.add(atom);
-      atomsList.push(atom);
-    }
-  }, []);
-
-  // Handle visualization type change
-  const handleVisualizationTypeChange = (event) => {
-    setVisualizationType(event.target.value);
-    
-    // Update visualization based on type
-    if (event.target.value === 'energy') {
-      // Update to energy visualization
-      latticeAtoms.forEach(atom => {
-        if (atom.userData.element === 'D') {
-          // Only change D atoms
-          const normalizedEnergy = Math.random(); // Replace with actual calculation
-          const energyColor = getElementColorByEnergy(atom.userData.element, normalizedEnergy);
-          
-          atom.material.emissive.set(energyColor);
-          atom.material.emissiveIntensity = normalizedEnergy * 0.5;
-        }
-      });
-    } else if (event.target.value === 'phonon') {
-      // Reset for phonon visualization
-      latticeAtoms.forEach(atom => {
-        if (atom.userData.element === 'D') {
-          atom.material.emissive.set(0x0044cc);
-          atom.material.emissiveIntensity = 0.2;
-        }
-      });
-    } else {
-      // Reset for standard lattice visualization
-      latticeAtoms.forEach(atom => {
-        if (atom.userData.element === 'D') {
-          atom.material.emissive.set(0x0044cc);
-          atom.material.emissiveIntensity = 0.2;
-        }
-      });
-    }
-  };
-
-  // Add initialization effect for Three.js
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    // Save a reference to the DOM element for cleanup
-    const container = containerRef.current;
-    
-    // Create scene
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
-    sceneRef.current = scene;
-    
-    // Create camera
-    const aspect = container.clientWidth / container.clientHeight;
-    const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    camera.position.z = 15;
-    cameraRef.current = camera;
-    
-    // Create renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-    
-    // Add controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.7;
-    controlsRef.current = controls;
-    
-    // Add lights
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(1, 1, 1);
-    scene.add(directionalLight);
-    
-    // Add coordinate axes helper
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-    
-    // Animation loop
-    const animate = () => {
-      frameIdRef.current = requestAnimationFrame(animate);
-      
-      if (controlsRef.current) {
-        controlsRef.current.update();
-      }
-      
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
-    };
-    
-    animate();
-    
-    // Create initial lattice
-    setTimeout(() => {
-      if (simulationData) {
-        createLatticeFromData(simulationData);
-      } else {
-        createPlaceholderLattice();
-      }
-    }, 100);
-    
-    // Handle resize
-    const handleResize = () => {
-      if (container && cameraRef.current && rendererRef.current) {
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        
-        cameraRef.current.aspect = width / height;
-        cameraRef.current.updateProjectionMatrix();
-        
-        rendererRef.current.setSize(width, height);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup function
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      
-      if (frameIdRef.current) {
-        cancelAnimationFrame(frameIdRef.current);
-      }
-      
-      // Make sure the renderer exists and the DOM element is a child of the container
-      if (rendererRef.current && rendererRef.current.domElement) {
-        // Only remove the child if it's actually a child of the container
-        if (container && container.contains(rendererRef.current.domElement)) {
-          container.removeChild(rendererRef.current.domElement);
-        }
-      }
-      
-      // Dispose resources
-      if (sceneRef.current) {
-        // Clear all atoms from the scene first
-        if (latticeAtoms.length > 0) {
-          latticeAtoms.forEach(atom => {
-            if (sceneRef.current && atom.parent === sceneRef.current) {
-              sceneRef.current.remove(atom);
-            }
-            if (atom.geometry) atom.geometry.dispose();
-            if (atom.material) {
-              if (Array.isArray(atom.material)) {
-                atom.material.forEach(material => material.dispose());
-              } else {
-                atom.material.dispose();
+              dAtom.userData = { type: 'deuterium' };
+              
+              if (sceneRef.current) {
+                sceneRef.current.add(dAtom);
+                newLatticeAtoms.push(dAtom);
               }
             }
-          });
+          }
         }
-        
-        // Then dispose of other objects in the scene
-        sceneRef.current.traverse((object) => {
-          if (object.geometry) {
-            object.geometry.dispose();
-          }
-          
-          if (object.material) {
-            if (Array.isArray(object.material)) {
-              object.material.forEach(material => material.dispose());
-            } else {
-              object.material.dispose();
-            }
-          }
-        });
       }
       
-      // Clear refs
-      rendererRef.current = null;
-      sceneRef.current = null;
-      cameraRef.current = null;
-      controlsRef.current = null;
-      
-      // Clear lattice atoms array
-      setLatticeAtoms([]);
-    };
-  }, [createPlaceholderLattice, createLatticeFromData, simulationData, latticeAtoms]);
+      setLatticeAtoms(newLatticeAtoms);
+      setIsLoading(false);
+      logger.debug(`Created lattice with ${newLatticeAtoms.length} atoms`);
+    } catch (error) {
+      logger.error('Error creating placeholder lattice', error);
+      errorReporter.report('visualization-error', 'Failed to create lattice', error);
+      setIsLoading(false);
+    }
+  }, [logger, latticeAtoms, visualizationSettings, settings]);
   
-  // Update visualization when simulation data changes
+  // New function to update the visualization based on Rydberg Matter simulation results
+  const updateRydbergVisualization = useCallback((results) => {
+    try {
+      logger.debug('Starting Rydberg visualization update');
+      setIsLoading(true);
+      
+      if (!sceneRef.current) {
+        logger.warn('Scene not initialized yet');
+        return;
+      }
+      
+      // Clear existing lattice atoms
+      latticeAtoms.forEach(atom => {
+        if (sceneRef.current) {
+          sceneRef.current.remove(atom);
+        }
+      });
+      
+      const newLatticeAtoms = [];
+      
+      // Create a Rydberg lattice structure based on simulation parameters
+      const latticeSize = 2; // Smaller grid for better visibility
+      const latticeSpacing = 2.5;
+      
+      // Calculate scaling factors based on simulation results
+      const rydbergRadiusScale = results.rydbergRadius ? (results.rydbergRadius / 5) : 1; // Normalize radius for visualization
+      const overlapScale = results.overlapProbability ? results.overlapProbability : 0.5;
+      
+      // Create materials for different particles
+      const materialCore = new THREE.MeshPhongMaterial({ 
+        color: elementColors.palladium, // Core atoms
+        transparent: false,
+        opacity: 1.0
+      });
+      
+      const materialElectron = new THREE.MeshPhongMaterial({ 
+        color: elementColors.hydrogen, // Electron clouds
+        transparent: true,
+        opacity: 0.6
+      });
+      
+      const materialBridge = new THREE.MeshPhongMaterial({ 
+        color: elementColors.transition, // Bridging states
+        transparent: true,
+        opacity: 0.4
+      });
+      
+      // Geometries
+      const coreGeometry = new THREE.SphereGeometry(0.3, 24, 24);
+      const electronGeometry = new THREE.SphereGeometry(
+        0.8 * rydbergRadiusScale, 
+        16, 
+        16
+      );
+      
+      // Create a grid of Rydberg atoms
+      for (let x = -latticeSize; x <= latticeSize; x++) {
+        for (let y = -latticeSize; y <= latticeSize; y++) {
+          for (let z = -latticeSize; z <= latticeSize; z++) {
+            // Place core atoms at lattice points
+            const coreAtom = new THREE.Mesh(coreGeometry, materialCore);
+            coreAtom.position.set(
+              x * latticeSpacing, 
+              y * latticeSpacing, 
+              z * latticeSpacing
+            );
+            coreAtom.userData = { type: 'core' };
+            
+            if (sceneRef.current) {
+              sceneRef.current.add(coreAtom);
+              newLatticeAtoms.push(coreAtom);
+            }
+            
+            // Add electron cloud
+            const electronCloud = new THREE.Mesh(electronGeometry, materialElectron);
+            electronCloud.position.set(
+              x * latticeSpacing, 
+              y * latticeSpacing, 
+              z * latticeSpacing
+            );
+            electronCloud.userData = { type: 'electron' };
+            
+            if (sceneRef.current) {
+              sceneRef.current.add(electronCloud);
+              newLatticeAtoms.push(electronCloud);
+            }
+            
+            // Add bridges between adjacent atoms based on overlap probability
+            // Only create bridges between nearest neighbors
+            if (Math.random() < overlapScale) {
+              const directions = [
+                [1, 0, 0], [0, 1, 0], [0, 0, 1],
+                [-1, 0, 0], [0, -1, 0], [0, 0, -1]
+              ];
+              
+              // Choose a random direction to create a bridge
+              const randomDir = directions[Math.floor(Math.random() * directions.length)];
+              
+              // Create a cylinder to represent the bridge
+              const bridgeGeometry = new THREE.CylinderGeometry(
+                0.2, 
+                0.2, 
+                latticeSpacing * 0.7, 
+                8, 
+                1
+              );
+              
+              const bridge = new THREE.Mesh(bridgeGeometry, materialBridge);
+              
+              // Position and rotate the bridge
+              bridge.position.set(
+                x * latticeSpacing + (randomDir[0] * latticeSpacing * 0.4), 
+                y * latticeSpacing + (randomDir[1] * latticeSpacing * 0.4), 
+                z * latticeSpacing + (randomDir[2] * latticeSpacing * 0.4)
+              );
+              
+              // Rotate the bridge to align with the direction
+              if (randomDir[0] !== 0) {
+                bridge.rotation.z = Math.PI / 2;
+              } else if (randomDir[2] !== 0) {
+                bridge.rotation.x = Math.PI / 2;
+              }
+              
+              bridge.userData = { type: 'bridge' };
+              
+              if (sceneRef.current) {
+                sceneRef.current.add(bridge);
+                newLatticeAtoms.push(bridge);
+              }
+            }
+          }
+        }
+      }
+      
+      logger.info(`Created Rydberg visualization with ${newLatticeAtoms.length} elements`);
+      setLatticeAtoms(newLatticeAtoms);
+      setIsLoading(false);
+    } catch (error) {
+      logger.error('Error updating Rydberg visualization');
+      errorReporter.report(error, { 
+        component: 'LatticeVisualization',
+        function: 'updateRydbergVisualization',
+        parameters: JSON.stringify(results)
+      });
+      // Fallback to placeholder if something goes wrong
+      createPlaceholderLattice();
+    }
+  }, [latticeAtoms, elementColors, createPlaceholderLattice, logger]);
+  
+  // Initialize Three.js scene
+  useEffect(() => {
+    let isMounted = true;
+    let cleanup = () => {};
+    
+    try {
+      logger.debug('Initializing 3D visualization');
+      
+      // Initialize scene if not already done
+      if (!sceneRef.current) {
+        sceneRef.current = new THREE.Scene();
+        
+        // Apply background color from settings if available
+        if (visualizationSettings?.backgroundColor) {
+          try {
+            sceneRef.current.background = new THREE.Color(visualizationSettings.backgroundColor);
+          } catch (e) {
+            logger.warn('Invalid background color in settings, using default');
+            sceneRef.current.background = new THREE.Color(0xf0f0f0);
+          }
+        } else {
+          sceneRef.current.background = new THREE.Color(0xf0f0f0);
+        }
+      }
+      
+      // Create camera if not already done
+      if (!cameraRef.current) {
+        cameraRef.current = new THREE.PerspectiveCamera(
+          75, // Field of view
+          1, // Aspect ratio (will be updated)
+          0.1, // Near plane
+          1000 // Far plane
+        );
+        cameraRef.current.position.z = 15;
+      }
+
+      // Initialize Three.js only if container is available
+      if (containerRef.current && !rendererRef.current) {
+        // Get container dimensions
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
+
+        // Create renderer with antialiasing based on settings
+        rendererRef.current = new THREE.WebGLRenderer({ 
+          antialias: visualizationSettings?.useAntialiasing !== false, 
+          alpha: true 
+        });
+        
+        // Apply settings to renderer
+        rendererRef.current.setSize(width, height);
+        rendererRef.current.setPixelRatio(window.devicePixelRatio);
+        
+        // Apply quality settings
+        const quality = visualizationSettings?.renderQuality || 'medium';
+        switch (quality) {
+          case 'low':
+            rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+            break;
+          case 'medium':
+            rendererRef.current.setPixelRatio(window.devicePixelRatio);
+            break;
+          case 'high':
+            rendererRef.current.setPixelRatio(Math.max(window.devicePixelRatio, 2));
+            break;
+          default:
+            rendererRef.current.setPixelRatio(window.devicePixelRatio);
+        }
+        
+        // Set shadow properties
+        rendererRef.current.shadowMap.enabled = quality !== 'low';
+        rendererRef.current.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        // Set FPS limit
+        const maxFPS = visualizationSettings?.maxFPS || 60;
+        if (maxFPS < 60) {
+          // For lower FPS, we'll manually control the animation timing
+          rendererRef.current.userData = {
+            ...rendererRef.current.userData,
+            maxFPS: maxFPS,
+            lastRenderTime: 0
+          };
+        }
+        
+        // Create a separate container for Three.js to prevent React issues
+        const threeContainer = document.createElement('div');
+        threeContainer.style.width = '100%';
+        threeContainer.style.height = '100%';
+        threeContainer.style.position = 'absolute';
+        
+        // Append renderer to container
+        threeContainer.appendChild(rendererRef.current.domElement);
+        containerRef.current.appendChild(threeContainer);
+        
+        // Register with cleanup utility
+        const registryId = threeCleanup.registerElement(threeContainer, 'visualization');
+        threeContainerRef.current = threeContainer;
+        
+        // Create orbit controls
+        controlsRef.current = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
+        controlsRef.current.enableDamping = true;
+        controlsRef.current.dampingFactor = 0.25;
+        controlsRef.current.enableZoom = true;
+        
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        sceneRef.current.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(10, 10, 10);
+        sceneRef.current.add(directionalLight);
+
+        // Show grid and axes based on settings
+        if (visualizationSettings?.showGrid) {
+          const gridHelper = new THREE.GridHelper(20, 20);
+          sceneRef.current.add(gridHelper);
+        }
+        
+        if (visualizationSettings?.showAxes) {
+          const axesHelper = new THREE.AxesHelper(5);
+          sceneRef.current.add(axesHelper);
+        }
+        
+        // Prepare cleanup function
+        cleanup = () => {
+          if (isMounted) {
+            logger.debug('Cleaning up 3D visualization');
+            
+            if (frameIdRef.current) {
+              cancelAnimationFrame(frameIdRef.current);
+              frameIdRef.current = null;
+            }
+            
+            if (controlsRef.current) {
+              controlsRef.current.dispose();
+              controlsRef.current = null;
+            }
+            
+            if (rendererRef.current) {
+              rendererRef.current.dispose();
+              rendererRef.current = null;
+            }
+            
+            if (threeContainerRef.current && containerRef.current) {
+              threeCleanup.safeRemoveChild(containerRef.current, threeContainerRef.current);
+              threeContainerRef.current = null;
+            }
+            
+            // Clear scene
+            if (sceneRef.current) {
+              while(sceneRef.current.children.length > 0) { 
+                const object = sceneRef.current.children[0];
+                sceneRef.current.remove(object);
+                
+                if (object.geometry) {
+                  object.geometry.dispose();
+                }
+                
+                if (object.material) {
+                  if (Array.isArray(object.material)) {
+                    object.material.forEach(material => material.dispose());
+                  } else {
+                    object.material.dispose();
+                  }
+                }
+              }
+              sceneRef.current = null;
+            }
+            
+            cameraRef.current = null;
+          }
+        };
+        
+        // Animation loop
+        const animate = () => {
+          if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+          
+          // Apply FPS limiting if configured
+          const now = performance.now();
+          const fps = rendererRef.current.userData?.maxFPS;
+          
+          if (!fps || !rendererRef.current.userData.lastRenderTime || 
+              now - rendererRef.current.userData.lastRenderTime >= 1000 / fps) {
+            
+            if (controlsRef.current) {
+              controlsRef.current.update();
+            }
+            
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+            
+            if (fps) {
+              rendererRef.current.userData.lastRenderTime = now;
+            }
+          }
+          
+          frameIdRef.current = requestAnimationFrame(animate);
+        };
+        
+        // Handle window resize
+        const handleResize = () => {
+          if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
+          
+          const width = containerRef.current.clientWidth;
+          const height = containerRef.current.clientHeight;
+          
+          cameraRef.current.aspect = width / height;
+          cameraRef.current.updateProjectionMatrix();
+          
+          rendererRef.current.setSize(width, height);
+        };
+        
+        // Add resize listener
+        window.addEventListener('resize', handleResize);
+        
+        // Start animation loop
+        animate();
+        
+        // Create initial lattice
+        createPlaceholderLattice();
+        
+        // Update cleanup to include resize listener
+        const originalCleanup = cleanup;
+        cleanup = () => {
+          window.removeEventListener('resize', handleResize);
+          originalCleanup();
+        };
+      }
+    } catch (error) {
+      logger.error('Error initializing 3D visualization', error);
+      errorReporter.report('visualization-error', 'Failed to initialize 3D visualization', error);
+      setIsLoading(false);
+    }
+    
+    return () => {
+      isMounted = false;
+      cleanup();
+    };
+  }, [logger, createPlaceholderLattice, visualizationSettings]);
+  
+  // Update visualization when data or type changes
+  useEffect(() => {
+    if (simulationData && !isLoading) {
+      // Future implementation: update visualization based on simulation data
+      logger.debug('Simulation data updated, visualization would update here');
+    }
+  }, [simulationData, isLoading, logger]);
+
+  // Update scene background when settings change
+  useEffect(() => {
+    if (sceneRef.current && visualizationSettings?.backgroundColor) {
+      try {
+        sceneRef.current.background = new THREE.Color(visualizationSettings.backgroundColor);
+      } catch (e) {
+        logger.warn('Invalid background color in settings');
+      }
+    }
+  }, [visualizationSettings?.backgroundColor, logger]);
+
+  // Update atom scale when settings change
+  useEffect(() => {
+    if (visualizationSettings?.atomScale && latticeAtoms.length > 0) {
+      createPlaceholderLattice();
+    }
+  }, [visualizationSettings?.atomScale, createPlaceholderLattice]);
+
+  // Update axes and grid visibility when settings change
   useEffect(() => {
     if (!sceneRef.current) return;
     
-    if (simulationData) {
-      // Use real simulation data to create the visualization
-      createLatticeFromData(simulationData);
+    // Remove existing grid and axes
+    const existingGrid = sceneRef.current.children.find(child => child instanceof THREE.GridHelper);
+    const existingAxes = sceneRef.current.children.find(child => child instanceof THREE.AxesHelper);
+    
+    if (existingGrid) {
+      sceneRef.current.remove(existingGrid);
     }
-  }, [simulationData, createLatticeFromData, sceneRef]);
+    
+    if (existingAxes) {
+      sceneRef.current.remove(existingAxes);
+    }
+    
+    // Add grid if enabled
+    if (visualizationSettings?.showGrid) {
+      const gridHelper = new THREE.GridHelper(20, 20);
+      sceneRef.current.add(gridHelper);
+    }
+    
+    // Add axes if enabled
+    if (visualizationSettings?.showAxes) {
+      const axesHelper = new THREE.AxesHelper(5);
+      sceneRef.current.add(axesHelper);
+    }
+  }, [visualizationSettings?.showGrid, visualizationSettings?.showAxes]);
 
-  // Simulation control handlers
-  const handleStart = () => {
-    onSimulationStart && onSimulationStart();
+  // Update renderer quality when settings change
+  useEffect(() => {
+    if (!rendererRef.current) return;
+    
+    const quality = visualizationSettings?.renderQuality || 'medium';
+    
+    switch (quality) {
+      case 'low':
+        rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+        rendererRef.current.shadowMap.enabled = false;
+        break;
+      case 'medium':
+        rendererRef.current.setPixelRatio(window.devicePixelRatio);
+        rendererRef.current.shadowMap.enabled = true;
+        rendererRef.current.shadowMap.type = THREE.PCFShadowMap;
+        break;
+      case 'high':
+        rendererRef.current.setPixelRatio(Math.max(window.devicePixelRatio, 2));
+        rendererRef.current.shadowMap.enabled = true;
+        rendererRef.current.shadowMap.type = THREE.PCFSoftShadowMap;
+        break;
+      default:
+        rendererRef.current.setPixelRatio(window.devicePixelRatio);
+    }
+    
+    // Update antialiasing (requires renderer recreation - not possible without a full remount)
+    // We'll log this limitation
+    if (rendererRef.current.antialias !== visualizationSettings?.useAntialiasing) {
+      logger.info('Antialiasing setting change requires reload to take effect');
+    }
+    
+  }, [visualizationSettings?.renderQuality, visualizationSettings?.useAntialiasing, logger]);
+
+  // Handle visualization type changes
+  const handleVisualizationTypeChange = (event) => {
+    const newType = event.target.value;
+    logger.debug('Visualization type changed', { from: visualizationType, to: newType });
+    setVisualizationType(newType);
   };
-  
-  const handlePause = () => {
-    onSimulationPause && onSimulationPause();
+
+  // Handle simulation controls
+  const handleStartSimulation = () => {
+    logger.info('Simulation started by user');
+    setIsSimulationRunning(true);
+    
+    if (onStartSimulation) {
+      onStartSimulation();
+    }
   };
-  
-  const handleStop = () => {
-    onSimulationStop && onSimulationStop();
+
+  const handleStopSimulation = () => {
+    logger.info('Simulation stopped by user');
+    setIsSimulationRunning(false);
+    
+    if (onStopSimulation) {
+      onStopSimulation();
+    }
   };
-  
-  const handleReset = () => {
-    onSimulationReset && onSimulationReset();
+
+  const handleRefreshSimulation = () => {
+    logger.info('Visualization reset by user');
+    createPlaceholderLattice();
   };
-  
-  const toggleLegend = () => {
-    setShowLegend(!showLegend);
+
+  const resetCameraPosition = () => {
+    logger.debug('Camera position reset');
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(0, 0, 15);
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
   };
-  
-  const togglePhysicsInfo = () => {
-    setShowPhysicsInfo(!showPhysicsInfo);
+
+  // Handle taking a screenshot
+  const takeScreenshot = () => {
+    logger.info('Screenshot requested');
+    if (rendererRef.current) {
+      try {
+        // Render the scene
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        
+        // Get the canvas data
+        const dataURL = rendererRef.current.domElement.toDataURL('image/png');
+        
+        // Create a link to download the image
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = `lenr-visualization-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        logger.info('Screenshot saved successfully');
+      } catch (error) {
+        logger.error('Error taking screenshot');
+        errorReporter.report(error, { 
+          component: 'LatticeVisualization',
+          function: 'takeScreenshot'
+        });
+      }
+    }
   };
-  
-  const handleViewModeChange = (event, newValue) => {
-    setViewMode(newValue);
-  };
-  
+
   return (
-    <Box sx={{ height: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs 
-          value={viewMode} 
-          onChange={handleViewModeChange} 
-          aria-label="visualization modes"
-          variant="fullWidth"
-        >
-          <Tab label="3D Lattice" />
-          <Tab label="Tunneling" />
-          <Tab label="Physics Info" />
-        </Tabs>
-      </Box>
+    <VisualizationContainer>
+      {isLoading && (
+        <LoadingOverlay>
+          <CircularProgress />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Loading Visualization...
+          </Typography>
+        </LoadingOverlay>
+      )}
       
-      <EnhancedTabPanel hidden={viewMode !== 0}>
-        <VisualizationContainer ref={containerRef}>
-          {isLoading && (
-            <LoadingOverlay>
-              <CircularProgress />
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                Loading lattice visualization...
-              </Typography>
-            </LoadingOverlay>
-          )}
-          
-          <ControlsOverlay>
-            <FormControl size="small" variant="outlined" sx={{ minWidth: 120, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-              <InputLabel id="visualization-type-label">View Mode</InputLabel>
-              <Select
-                labelId="visualization-type-label"
-                id="visualization-type"
-                value={visualizationType}
-                onChange={handleVisualizationTypeChange}
-                label="View Mode"
-                size="small"
-              >
-                <MenuItem value="lattice">Lattice Structure</MenuItem>
-                <MenuItem value="energy">Energy Distribution</MenuItem>
-                <MenuItem value="phonon">Phonon Propagation</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <Tooltip title={showLegend ? "Hide Legend" : "Show Legend"}>
-              <IconButton
-                onClick={toggleLegend}
-                size="small"
-                sx={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
-              >
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
-          </ControlsOverlay>
-          
-          <SimControlsOverlay>
-            <Tooltip title="Start Simulation">
-              <span>
-                <IconButton
-                  color="primary"
-                  onClick={handleStart}
-                  disabled={simulationStatus === 'running' || simulationStatus === 'completed'}
-                >
-                  <PlayArrowIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            
-            <Tooltip title="Pause Simulation">
-              <span>
-                <IconButton
-                  color="primary"
-                  onClick={handlePause}
-                  disabled={simulationStatus !== 'running'}
-                >
-                  <PauseIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            
-            <Tooltip title="Stop Simulation">
-              <span>
-                <IconButton
-                  color="primary"
-                  onClick={handleStop}
-                  disabled={simulationStatus !== 'running' && simulationStatus !== 'paused'}
-                >
-                  <StopIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            
-            <Tooltip title="Reset Simulation">
-              <span>
-                <IconButton
-                  color="primary"
-                  onClick={handleReset}
-                  disabled={simulationStatus === 'ready'}
-                >
-                  <RestartAltIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </SimControlsOverlay>
-          
-          {showLegend && (
-            <LegendOverlay>
-              <CardContent sx={{ p: 1.5 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    Legend
-                  </Typography>
-                  <IconButton size="small" onClick={toggleLegend}>
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-                
-                <Divider sx={{ mb: 1 }} />
-                
-                <Stack spacing={0.5}>
-                  <LegendItem>
-                    <ColorSwatch color="#909090" />
-                    <Typography variant="body2">Palladium (Host Metal)</Typography>
-                  </LegendItem>
-                  <LegendItem>
-                    <ColorSwatch color="#0088FF" />
-                    <Typography variant="body2">Deuterium (Fuel)</Typography>
-                  </LegendItem>
-                  
-                  {visualizationType === 'energy' && (
-                    <>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Typography variant="caption">Energy Distribution</Typography>
-                      <Box display="flex" mt={0.5}>
-                        <Box 
-                          sx={{ 
-                            width: '100%', 
-                            height: '20px', 
-                            background: 'linear-gradient(to right, #0000FF, #FFFFFF, #FF0000)',
-                            borderRadius: '4px',
-                            my: 0.5
-                          }} 
-                        />
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography variant="caption">Low</Typography>
-                        <Typography variant="caption">High</Typography>
-                      </Box>
-                    </>
-                  )}
-                  
-                  {visualizationType === 'phonon' && (
-                    <>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Typography variant="caption">Phonon Propagation</Typography>
-                      <LegendItem>
-                        <ColorSwatch color="#FF00FF" />
-                        <Typography variant="body2">Wave Direction</Typography>
-                      </LegendItem>
-                    </>
-                  )}
-                  
-                  <Divider sx={{ my: 0.5 }} />
-                  <Chip 
-                    size="small" 
-                    label={`Status: ${simulationStatus.charAt(0).toUpperCase() + simulationStatus.slice(1)}`}
-                    color={
-                      simulationStatus === 'running' ? 'success' :
-                      simulationStatus === 'paused' ? 'warning' :
-                      simulationStatus === 'error' ? 'error' :
-                      'default'
-                    }
-                  />
-                </Stack>
-              </CardContent>
-            </LegendOverlay>
-          )}
-        </VisualizationContainer>
-      </EnhancedTabPanel>
+      <ControlsOverlay>
+        <Paper sx={{ p: 1 }}>
+          <FormControl variant="outlined" size="small" fullWidth>
+            <InputLabel>View Type</InputLabel>
+            <Select
+              value={visualizationType}
+              onChange={handleVisualizationTypeChange}
+              label="View Type"
+            >
+              <MenuItem value="lattice">Lattice</MenuItem>
+              <MenuItem value="energy">Energy Levels</MenuItem>
+              <MenuItem value="phonon">Phonons</MenuItem>
+            </Select>
+          </FormControl>
+        </Paper>
+        
+        <Paper sx={{ p: 0.5 }}>
+          <Tooltip title="Reset Camera">
+            <IconButton size="small" onClick={resetCameraPosition}>
+              <CameraAltIcon />
+            </IconButton>
+          </Tooltip>
+        </Paper>
+        
+        <Paper sx={{ p: 0.5 }}>
+          <Tooltip title="Take Screenshot">
+            <IconButton size="small" onClick={takeScreenshot}>
+              <CameraAltIcon />
+            </IconButton>
+          </Tooltip>
+        </Paper>
+      </ControlsOverlay>
       
-      <EnhancedTabPanel hidden={viewMode !== 1}>
-        <TunnelingVisualization simulationParameters={simulationParameters} />
-      </EnhancedTabPanel>
+      <SimControlsOverlay>
+        <ButtonGroup variant="contained" size="small">
+          <Button 
+            color="primary"
+            startIcon={<PlayArrowIcon />}
+            onClick={handleStartSimulation}
+            disabled={isSimulationRunning}
+          >
+            Start
+          </Button>
+          <Button 
+            color="secondary"
+            startIcon={<StopIcon />}
+            onClick={handleStopSimulation}
+            disabled={!isSimulationRunning}
+          >
+            Stop
+          </Button>
+          <Button 
+            startIcon={<RefreshIcon />}
+            onClick={handleRefreshSimulation}
+          >
+            Reset
+          </Button>
+        </ButtonGroup>
+      </SimControlsOverlay>
       
-      <EnhancedTabPanel hidden={viewMode !== 2}>
-        <PhysicsInfoPanel 
-          simulationData={simulationData} 
-          simulationParameters={simulationParameters}
-        />
-      </EnhancedTabPanel>
-    </Box>
+      <LegendOverlay>
+        <Typography variant="subtitle2" gutterBottom>Legend:</Typography>
+        <LegendItem>
+          <LegendColor color="#B9B9B9" />
+          <Typography variant="caption">Host Metal</Typography>
+        </LegendItem>
+        <LegendItem>
+          <LegendColor color="#2969B0" />
+          <Typography variant="caption">Deuterium/Hydrogen</Typography>
+        </LegendItem>
+        <LegendItem>
+          <LegendColor color="#FFA500" />
+          <Typography variant="caption">Tunneling Bridge</Typography>
+        </LegendItem>
+        <LegendItem>
+          <LegendColor color="#FF6347" />
+          <Typography variant="caption">Energy Release</Typography>
+        </LegendItem>
+      </LegendOverlay>
+      
+      <ThreeContainer
+        ref={containerRef}
+      />
+    </VisualizationContainer>
   );
 };
 
