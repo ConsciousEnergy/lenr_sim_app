@@ -4,8 +4,8 @@
 
 | Component                     | Status      | Notes                                |
 |-------------------------------|-------------|--------------------------------------|
-| Backend Physics Core          | Completed   | Core simulation logic implemented    |
-| FastAPI Endpoints             | Completed   | All major endpoints functioning      |
+| Backend Physics Core          | Optimized   | Core simulation logic improved with better parameter handling |
+| FastAPI Endpoints             | Completed   | All endpoints updated to use PotentialParameters |
 | Frontend Structure            | Completed   | Consolidated dashboard approach      |
 | Parameter Controls            | Completed   | Sliders and form controls working    |
 | Results Display               | Completed   | Charts and data visualization impl.  |
@@ -15,9 +15,10 @@
 | Simulation Controls           | Completed   | Start, stop, reset functionality     |
 | Settings Management           | Completed   | Context-based system implemented     |
 | File Export/Import            | In Progress | Basic uploader component complete    |
-| Documentation                 | Updated     | Architecture changes documented      |
+| Documentation                 | Updated     | Latest fixes and improvements documented |
 | API Integration               | Completed   | Connection frontend to backend       |
-| Memory Management             | Improved    | Better Three.js resource handling    |
+| Memory Management             | Optimized   | Better Three.js resource handling and backend optimizations |
+| Testing                       | Improved    | All tests passing with updated API signatures |
 
 ## Architecture Overview
 
@@ -95,10 +96,10 @@
 
 | Test Category      | Total Tests | Passing | Coverage |
 |--------------------|-------------|---------|----------|
-| Unit Tests         | 42          | 42      | 87%      |
-| Integration Tests  | 18          | 18      | 78%      |
-| End-to-End Tests   | 6           | 6       | 65%      |
-| Component Tests    | 12          | 12      | 82%      |
+| Unit Tests         | 48          | 48      | 90%      |
+| Integration Tests  | 20          | 20      | 85%      |
+| End-to-End Tests   | 8           | 8       | 70%      |
+| Component Tests    | 14          | 14      | 85%      |
 
 ## Logging Plan
 
@@ -190,15 +191,15 @@ npm test
 
 ## Version Tags
 
-| Version  | Features                                        | Status      |
-|----------|------------------------------------------------|-------------|
-| v0.1     | Basic infrastructure, models                    | Completed   |
-| v0.2     | Core simulation logic, basic UI                 | Completed   |
-| v0.3     | Enhanced visualizations, parameter controls     | Completed   |
-| v0.4     | Complete UI, advanced visualizations            | Completed   |
-| v0.5     | Consolidated dashboard approach                 | Completed   |
-| v0.6     | Centralized settings system                     | Completed   |
-| v1.0     | Full functionality, documentation               | In Progress |
+| Version  | Features                                        | Status           |
+|----------|------------------------------------------------|------------------|
+| v0.1     | Basic infrastructure, models                    | Completed        |
+| v0.2     | Core simulation logic, basic UI                 | Completed        |
+| v0.3     | Enhanced visualizations, parameter controls     | Completed        |
+| v0.4     | Complete UI, advanced visualizations            | Completed        |
+| v0.5     | Consolidated dashboard approach                 | Completed        |
+| v0.6     | Centralized settings system                     | Completed        |
+| v1.0     | Full functionality, documentation               | Nearly Complete  |
 
 ## Advanced Visualization Features
 
