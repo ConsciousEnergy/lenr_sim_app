@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
-import { Box, Typography, Paper, Button, CircularProgress, Grid, Alert, List, ListItem, ListItemText, Divider, IconButton, Tooltip, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Switch, FormControlLabel } from '@mui/material';
+import { Box, Typography, Paper, Button, CircularProgress, Grid, Alert, List, ListItem, ListItemText, Divider, IconButton, Tooltip, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Switch, FormControlLabel, LinearProgress } from '@mui/material';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import errorReporter from '../utils/errorReporter';
@@ -10,7 +10,6 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import MemoryIcon from '@mui/icons-material/Memory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SpeedIcon from '@mui/icons-material/Speed';
-import { useLogger } from '../contexts/LogContext';
 
 // Add memory monitoring class at the beginning
 function MemoryMonitor(options = {}) {
@@ -590,7 +589,7 @@ const PerformanceBenchmark = ({ onComplete }) => {
             renderer.dispose();
             
             // Calculate average frame time
-            const avgFrameTime = results.frameTimeMs.reduce((a, b) => a + b, 0) / frameTimeMs.length;
+            const avgFrameTime = results.frameTimeMs.reduce((a, b) => a + b, 0) / results.frameTimeMs.length;
             results.averageFrameTimeMs = avgFrameTime;
             
             resolve(results);
@@ -1140,7 +1139,6 @@ const ThreeJsDebug = () => {
   const cleanupFunctionRef = useRef(null);
   const canvasParentRef = useRef(null);
   const canvasContainerRef = useRef(null);
-  const logger = useLogger();
   
   const [debugInfo, setDebugInfo] = useState({
     hasThree: false,
@@ -1174,7 +1172,7 @@ const ThreeJsDebug = () => {
   // without React lifecycle interference
   useLayoutEffect(() => {
     if (!containerRef.current) {
-      logger.error('ThreeJsDebug: Container ref is not available');
+      console.error('ThreeJsDebug: Container ref is not available');
       setIsLoading(false);
       setDebugInfo(prev => ({ 
         ...prev, 
@@ -1203,9 +1201,9 @@ const ThreeJsDebug = () => {
       canvasContainerRef.current = canvasContainer;
       canvasParentRef.current = containerRef.current;
       
-      logger.info('ThreeJsDebug: Canvas container initialized successfully');
+      console.debug('ThreeJsDebug: Canvas container initialized successfully');
     } catch (error) {
-      logger.error('ThreeJsDebug: Error initializing canvas container', error);
+      console.error('ThreeJsDebug: Error initializing canvas container', error);
       setIsLoading(false);
       setDebugInfo(prev => ({ 
         ...prev, 
@@ -1226,7 +1224,7 @@ const ThreeJsDebug = () => {
           }
           canvasContainerRef.current = null;
         } catch (e) {
-          logger.error("Error cleaning up canvas container:", e);
+          console.error("Error cleaning up canvas container:", e);
           errorReporter.report(e, {
             component: 'ThreeJsDebug',
             function: 'canvasContainerCleanup'
@@ -1234,7 +1232,7 @@ const ThreeJsDebug = () => {
         }
       }
     };
-  }, [logger]);
+  }, []);
   
   const runTests = () => {
     // Clean up any existing three.js instance first
@@ -1278,7 +1276,7 @@ const ThreeJsDebug = () => {
       if (typeof THREE !== 'undefined') {
         info.hasThree = true;
         info.threeVersion = THREE.REVISION;
-        logger.info('THREE is available:', THREE.REVISION);
+        console.log('THREE is available:', THREE.REVISION);
       } else {
         throw new Error('Three.js is not available');
       }
@@ -1286,9 +1284,9 @@ const ThreeJsDebug = () => {
       // Test if OrbitControls is available
       if (typeof OrbitControls !== 'undefined') {
         info.hasOrbitControls = true;
-        logger.info('OrbitControls is available');
+        console.log('OrbitControls is available');
       } else {
-        logger.warn('OrbitControls is not available');
+        console.warn('OrbitControls is not available');
       }
       
       // Check WebGL support
@@ -1314,7 +1312,7 @@ const ThreeJsDebug = () => {
           throw new Error('WebGL is not supported in this browser');
         }
       } catch (webglError) {
-        logger.error('WebGL test error:', webglError);
+        console.error('WebGL test error:', webglError);
         info.error = 'WebGL test failed: ' + (webglError.message || 'Unknown error');
         setDebugInfo(info);
         setIsLoading(false);
@@ -1359,7 +1357,7 @@ const ThreeJsDebug = () => {
       // Handle WebGL context loss
       const handleContextLoss = (event) => {
         event.preventDefault();
-        logger.warn('WebGL context lost. Attempting recovery...');
+        console.warn('WebGL context lost. Attempting recovery...');
         
         // Clear current animation
         if (animationFrameRef.current) {
@@ -1377,7 +1375,7 @@ const ThreeJsDebug = () => {
           try {
             runTests();
           } catch (e) {
-            logger.error("Context recovery failed:", e);
+            console.error("Context recovery failed:", e);
             setDebugInfo(prev => ({
               ...prev,
               error: "WebGL context recovery failed. Please reload the page."
@@ -1388,7 +1386,7 @@ const ThreeJsDebug = () => {
 
       // Handle WebGL context restoration
       const handleContextRestored = () => {
-        logger.info('WebGL context restored');
+        console.log('WebGL context restored');
         
         setDebugInfo(prev => ({
           ...prev,
@@ -1478,7 +1476,7 @@ const ThreeJsDebug = () => {
       const animate = () => {
         // First check if we should continue animating
         if (!rendererRef.current || !sceneRef.current || !controlsRef.current) {
-          logger.debug('Animation stopped - resources were cleaned up');
+          console.debug('Animation stopped - resources were cleaned up');
           return; // Stop animation if resources have been cleaned up
         }
         
@@ -1557,7 +1555,7 @@ const ThreeJsDebug = () => {
 
       // Define cleanup function and store in ref
       const cleanup = () => {
-        logger.info("Starting Three.js cleanup...");
+        console.log("Starting Three.js cleanup...");
         
         // First cancel animation frame to stop any pending renders
         if (animationFrameRef.current) {
@@ -1586,7 +1584,7 @@ const ThreeJsDebug = () => {
         animationFrameRef.current = null;
         cleanupFunctionRef.current = null;
         
-        logger.info("Three.js cleanup complete");
+        console.log("Three.js cleanup complete");
       };
       
       // Store the cleanup function
@@ -1596,7 +1594,7 @@ const ThreeJsDebug = () => {
       setDebugInfo(info);
       setIsLoading(false);
     } catch (error) {
-      logger.error('Three.js error:', error);
+      console.error('Three.js error:', error);
       info.error = error.message || 'Unknown error occurred';
       setDebugInfo(info);
       setIsLoading(false);
@@ -1629,12 +1627,12 @@ const ThreeJsDebug = () => {
     
     // Clean up on unmount
     return () => {
-      logger.info("ThreeJsDebug component unmounting...");
+      console.log("ThreeJsDebug component unmounting...");
       if (cleanupFunctionRef.current) {
         cleanupFunctionRef.current();
       }
     };
-  }, [isExtendedTest, logger]);
+  }, [isExtendedTest]);
 
   // In the useEffect where you set up the component:
   useEffect(() => {
@@ -1715,43 +1713,37 @@ const ThreeJsDebug = () => {
     
     // Adjust quality based on memory pressure thresholds
     if (memoryPressure > 80 && renderQuality !== 'low') {
-      logger.info('Memory pressure high, reducing to low quality');
+      console.log('Memory pressure high, reducing to low quality');
       setRenderQuality('low');
       
       // Apply low quality settings
-      if (rendererRef.current) {
-        rendererRef.current.setPixelRatio(window.devicePixelRatio * 0.5);
-        rendererRef.current.setSize(
-          canvasContainerRef.current?.clientWidth * 0.75 || 300, 
-          canvasContainerRef.current?.clientHeight * 0.75 || 200
-        );
-      }
+      rendererRef.current.setPixelRatio(window.devicePixelRatio * 0.5);
+      rendererRef.current.setSize(
+        canvasContainerRef.current.clientWidth * 0.5, 
+        canvasContainerRef.current.clientHeight * 0.5
+      );
       
     } else if (memoryPressure > 60 && memoryPressure <= 80 && renderQuality !== 'medium') {
-      logger.info('Memory pressure moderate, reducing to medium quality');
+      console.log('Memory pressure moderate, reducing to medium quality');
       setRenderQuality('medium');
       
       // Apply medium quality settings
-      if (rendererRef.current) {
-        rendererRef.current.setPixelRatio(window.devicePixelRatio * 0.75);
-        rendererRef.current.setSize(
-          canvasContainerRef.current?.clientWidth * 0.9 || 300, 
-          canvasContainerRef.current?.clientHeight * 0.9 || 200
-        );
-      }
+      rendererRef.current.setPixelRatio(window.devicePixelRatio * 0.75);
+      rendererRef.current.setSize(
+        canvasContainerRef.current.clientWidth * 0.75, 
+        canvasContainerRef.current.clientHeight * 0.75
+      );
       
     } else if (memoryPressure < 60 && renderQuality !== 'high') {
-      logger.info('Memory pressure low, restoring high quality');
+      console.log('Memory pressure low, restoring high quality');
       setRenderQuality('high');
       
       // Apply high quality settings
-      if (rendererRef.current) {
-        rendererRef.current.setPixelRatio(window.devicePixelRatio);
-        rendererRef.current.setSize(
-          canvasContainerRef.current?.clientWidth || 300, 
-          canvasContainerRef.current?.clientHeight || 200
-        );
-      }
+      rendererRef.current.setPixelRatio(window.devicePixelRatio);
+      rendererRef.current.setSize(
+        canvasContainerRef.current.clientWidth, 
+        canvasContainerRef.current.clientHeight
+      );
     }
   };
 
