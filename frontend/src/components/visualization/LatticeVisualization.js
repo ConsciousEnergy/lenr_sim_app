@@ -1,6 +1,15 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
-import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+// Import OrbitControls safely with a try/catch
+let ThreeOrbitControls = null;
+try {
+  // Dynamic import would be better but not supported in CRA without ejecting
+  const OrbitControlsModule = require('three/examples/jsm/controls/OrbitControls');
+  ThreeOrbitControls = OrbitControlsModule.OrbitControls;
+} catch (e) {
+  console.error('Failed to import OrbitControls:', e);
+  // OrbitControls will be null, component will handle this gracefully
+}
 import { 
   Box, 
   Paper, 
@@ -147,7 +156,10 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
     transition: 0xFFA500 // orange
   }), []);
   
+  // State for component
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [visualizationType, setVisualizationType] = useState('lattice'); // lattice, energy, phonon
   const [latticeAtoms, setLatticeAtoms] = useState([]);
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
@@ -157,9 +169,13 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
     try {
       logger.debug('Creating placeholder lattice');
       setIsLoading(true);
+      setHasError(false);
 
       if (!sceneRef.current) {
         logger.warn('Scene not initialized');
+        setHasError(true);
+        setErrorMessage('Visualization engine not initialized properly. Try refreshing the page.');
+        setIsLoading(false);
         return;
       }
 
@@ -246,6 +262,8 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
     } catch (error) {
       logger.error('Error creating placeholder lattice', error);
       errorReporter.report('visualization-error', 'Failed to create lattice', error);
+      setHasError(true);
+      setErrorMessage('Failed to create visualization. Please try again.');
       setIsLoading(false);
     }
   }, [logger, latticeAtoms, visualizationSettings, settings, elementColors.palladium, elementColors.deuterium]);
@@ -404,232 +422,309 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
     let isMounted = true;
     let cleanup = () => {};
     
-    try {
-      logger.debug('Initializing 3D visualization');
-      
-      // Initialize scene if not already done
-      if (!sceneRef.current) {
-        sceneRef.current = new THREE.Scene();
+    const initializeThreeJsScene = async () => {
+      try {
+        logger.debug('Initializing 3D visualization');
         
-        // Apply background color from settings if available
-        if (visualizationSettings?.backgroundColor) {
-          try {
-            sceneRef.current.background = new THREE.Color(visualizationSettings.backgroundColor);
-          } catch (e) {
-            logger.warn('Invalid background color in settings, using default');
+        // Reset error state at the beginning of initialization
+        if (isMounted) {
+          setHasError(false);
+          setErrorMessage('');
+        }
+        
+        // Initialize scene if not already done
+        if (!sceneRef.current) {
+          sceneRef.current = new THREE.Scene();
+          
+          // Apply background color from settings if available
+          if (visualizationSettings?.backgroundColor) {
+            try {
+              sceneRef.current.background = new THREE.Color(visualizationSettings.backgroundColor);
+            } catch (e) {
+              logger.warn('Invalid background color in settings, using default');
+              sceneRef.current.background = new THREE.Color(0xf0f0f0);
+            }
+          } else {
             sceneRef.current.background = new THREE.Color(0xf0f0f0);
           }
-        } else {
-          sceneRef.current.background = new THREE.Color(0xf0f0f0);
         }
-      }
-      
-      // Create camera if not already done
-      if (!cameraRef.current) {
-        cameraRef.current = new THREE.PerspectiveCamera(
-          75, // Field of view
-          1, // Aspect ratio (will be updated)
-          0.1, // Near plane
-          1000 // Far plane
-        );
-        cameraRef.current.position.z = 15;
-      }
-
-      // Initialize Three.js only if container is available
-      if (containerRef.current && !rendererRef.current) {
-        // Get container dimensions
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
-
-        // Create renderer with antialiasing based on settings
-        rendererRef.current = new THREE.WebGLRenderer({ 
-          antialias: visualizationSettings?.useAntialiasing !== false, 
-          alpha: true 
-        });
         
-        // Apply settings to renderer
-        rendererRef.current.setSize(width, height);
-        rendererRef.current.setPixelRatio(window.devicePixelRatio);
-        
-        // Apply quality settings
-        const quality = visualizationSettings?.renderQuality || 'medium';
-        switch (quality) {
-          case 'low':
-            rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 1));
-            break;
-          case 'medium':
+        // Create camera if not already done
+        if (!cameraRef.current) {
+          cameraRef.current = new THREE.PerspectiveCamera(
+            75, // Field of view
+            1, // Aspect ratio (will be updated)
+            0.1, // Near plane
+            1000 // Far plane
+          );
+          cameraRef.current.position.z = 15;
+        }
+
+        // Initialize Three.js only if container is available
+        if (containerRef.current && !rendererRef.current) {
+          // Get container dimensions
+          const width = containerRef.current.clientWidth || 800;
+          const height = containerRef.current.clientHeight || 600;
+
+          try {
+            // Create renderer with antialiasing based on settings
+            rendererRef.current = new THREE.WebGLRenderer({ 
+              antialias: visualizationSettings?.useAntialiasing !== false, 
+              alpha: true 
+            });
+            
+            // Apply settings to renderer
+            rendererRef.current.setSize(width, height);
             rendererRef.current.setPixelRatio(window.devicePixelRatio);
-            break;
-          case 'high':
-            rendererRef.current.setPixelRatio(Math.max(window.devicePixelRatio, 2));
-            break;
-          default:
-            rendererRef.current.setPixelRatio(window.devicePixelRatio);
-        }
-        
-        // Set shadow properties
-        rendererRef.current.shadowMap.enabled = quality !== 'low';
-        rendererRef.current.shadowMap.type = THREE.PCFSoftShadowMap;
-        
-        // Set FPS limit
-        const maxFPS = visualizationSettings?.maxFPS || 60;
-        if (maxFPS < 60) {
-          // For lower FPS, we'll manually control the animation timing
-          rendererRef.current.userData = {
-            ...rendererRef.current.userData,
-            maxFPS: maxFPS,
-            lastRenderTime: 0
-          };
-        }
-        
-        // Create a separate container for Three.js to prevent React issues
-        const threeContainer = document.createElement('div');
-        threeContainer.style.width = '100%';
-        threeContainer.style.height = '100%';
-        threeContainer.style.position = 'absolute';
-        
-        // Append renderer to container
-        threeContainer.appendChild(rendererRef.current.domElement);
-        containerRef.current.appendChild(threeContainer);
-        
-        // Register with cleanup utility
-        const registryId = threeCleanup.registerElement(threeContainer, 'visualization');
-        threeContainerRef.current = threeContainer;
-        
-        // Create orbit controls
-        controlsRef.current = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
-        controlsRef.current.enableDamping = true;
-        controlsRef.current.dampingFactor = 0.25;
-        controlsRef.current.enableZoom = true;
-        
-        // Add lights
-        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
-        sceneRef.current.add(ambientLight);
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(10, 10, 10);
-        sceneRef.current.add(directionalLight);
+            
+            // Apply quality settings
+            const quality = visualizationSettings?.renderQuality || 'medium';
+            switch (quality) {
+              case 'low':
+                rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+                break;
+              case 'medium':
+                rendererRef.current.setPixelRatio(window.devicePixelRatio);
+                break;
+              case 'high':
+                rendererRef.current.setPixelRatio(Math.max(window.devicePixelRatio, 2));
+                break;
+              default:
+                rendererRef.current.setPixelRatio(window.devicePixelRatio);
+            }
+            
+            // Set shadow properties
+            rendererRef.current.shadowMap.enabled = quality !== 'low';
+            rendererRef.current.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Set FPS limit
+            const maxFPS = visualizationSettings?.maxFPS || 60;
+            if (maxFPS < 60) {
+              // For lower FPS, we'll manually control the animation timing
+              rendererRef.current.userData = {
+                ...rendererRef.current.userData,
+                maxFPS: maxFPS,
+                lastRenderTime: 0
+              };
+            }
+            
+            // Create a separate container for Three.js to prevent React issues
+            const threeContainer = document.createElement('div');
+            threeContainer.style.width = '100%';
+            threeContainer.style.height = '100%';
+            threeContainer.style.position = 'absolute';
+            
+            // Append renderer to container
+            threeContainer.appendChild(rendererRef.current.domElement);
+            containerRef.current.appendChild(threeContainer);
+            
+            // Register with cleanup utility
+            const registryId = threeCleanup.registerElement(threeContainer, 'visualization');
+            threeContainerRef.current = threeContainer;
+            
+            // Create orbit controls
+            try {
+              if (OrbitControls) {
+                controlsRef.current = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
+                controlsRef.current.enableDamping = true;
+                controlsRef.current.dampingFactor = 0.25;
+                controlsRef.current.enableZoom = true;
+                logger.debug('OrbitControls initialized successfully');
+              } else {
+                logger.warn('OrbitControls not available - camera controls will be disabled');
+              }
+            } catch (controlsError) {
+              logger.error('Error creating orbit controls', controlsError);
+              errorReporter.report('visualization-error', 'Failed to create orbit controls', controlsError);
+              // Continue despite orbit controls error - we'll just have static camera
+            }
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+            sceneRef.current.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 10);
+            sceneRef.current.add(directionalLight);
 
-        // Show grid and axes based on settings
-        if (visualizationSettings?.showGrid) {
-          const gridHelper = new THREE.GridHelper(20, 20);
-          sceneRef.current.add(gridHelper);
-        }
-        
-        if (visualizationSettings?.showAxes) {
-          const axesHelper = new THREE.AxesHelper(5);
-          sceneRef.current.add(axesHelper);
-        }
-        
-        // Prepare cleanup function
-        cleanup = () => {
-          if (isMounted) {
-            logger.debug('Cleaning up 3D visualization');
-            
-            if (frameIdRef.current) {
-              cancelAnimationFrame(frameIdRef.current);
-              frameIdRef.current = null;
+            // Show grid and axes based on settings
+            if (visualizationSettings?.showGrid) {
+              const gridHelper = new THREE.GridHelper(20, 20);
+              sceneRef.current.add(gridHelper);
             }
             
-            if (controlsRef.current) {
-              controlsRef.current.dispose();
-              controlsRef.current = null;
+            if (visualizationSettings?.showAxes) {
+              const axesHelper = new THREE.AxesHelper(5);
+              sceneRef.current.add(axesHelper);
             }
             
-            if (rendererRef.current) {
-              rendererRef.current.dispose();
-              rendererRef.current = null;
-            }
-            
-            if (threeContainerRef.current && containerRef.current) {
-              threeCleanup.safeRemoveChild(containerRef.current, threeContainerRef.current);
-              threeContainerRef.current = null;
-            }
-            
-            // Clear scene
-            if (sceneRef.current) {
-              while(sceneRef.current.children.length > 0) { 
-                const object = sceneRef.current.children[0];
-                sceneRef.current.remove(object);
+            // Prepare cleanup function
+            cleanup = () => {
+              if (isMounted) {
+                logger.debug('Cleaning up 3D visualization');
                 
-                if (object.geometry) {
-                  object.geometry.dispose();
+                if (frameIdRef.current) {
+                  cancelAnimationFrame(frameIdRef.current);
+                  frameIdRef.current = null;
                 }
                 
-                if (object.material) {
-                  if (Array.isArray(object.material)) {
-                    object.material.forEach(material => material.dispose());
-                  } else {
-                    object.material.dispose();
+                if (controlsRef.current) {
+                  if (typeof controlsRef.current.dispose === 'function') {
+                    try {
+                      controlsRef.current.dispose();
+                    } catch (e) {
+                      logger.warn('Error disposing orbit controls', e);
+                    }
+                  }
+                  controlsRef.current = null;
+                }
+                
+                if (rendererRef.current) {
+                  rendererRef.current.dispose();
+                  rendererRef.current = null;
+                }
+                
+                if (threeContainerRef.current && containerRef.current) {
+                  try {
+                    threeCleanup.safeRemoveChild(containerRef.current, threeContainerRef.current);
+                  } catch (removeError) {
+                    logger.error('Error removing Three.js container', removeError);
+                  }
+                  threeContainerRef.current = null;
+                }
+                
+                // Clear scene
+                if (sceneRef.current) {
+                  try {
+                    while(sceneRef.current.children.length > 0) { 
+                      const object = sceneRef.current.children[0];
+                      sceneRef.current.remove(object);
+                      
+                      if (object.geometry) {
+                        object.geometry.dispose();
+                      }
+                      
+                      if (object.material) {
+                        if (Array.isArray(object.material)) {
+                          object.material.forEach(material => material.dispose());
+                        } else {
+                          object.material.dispose();
+                        }
+                      }
+                    }
+                  } catch (sceneCleanupError) {
+                    logger.error('Error cleaning up scene', sceneCleanupError);
+                  }
+                  sceneRef.current = null;
+                }
+                
+                cameraRef.current = null;
+              }
+            };
+            
+            // Animation loop
+            const animate = () => {
+              if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+              
+              // Apply FPS limiting if configured
+              const now = performance.now();
+              const fps = rendererRef.current.userData?.maxFPS;
+              
+              if (!fps || !rendererRef.current.userData.lastRenderTime || 
+                  now - rendererRef.current.userData.lastRenderTime >= 1000 / fps) {
+                
+                if (controlsRef.current && typeof controlsRef.current.update === 'function') {
+                  try {
+                    controlsRef.current.update();
+                  } catch (e) {
+                    // Ignore errors in orbit controls update
                   }
                 }
+                
+                try {
+                  rendererRef.current.render(sceneRef.current, cameraRef.current);
+                } catch (renderError) {
+                  logger.error('Error during rendering', renderError);
+                  errorReporter.report('visualization-error', 'Rendering error', renderError);
+                  if (isMounted) {
+                    setHasError(true);
+                    setErrorMessage('Rendering error: ' + (renderError.message || 'Unknown error'));
+                    setIsLoading(false);
+                  }
+                  // Stop animation loop on render error
+                  if (frameIdRef.current) {
+                    cancelAnimationFrame(frameIdRef.current);
+                    frameIdRef.current = null;
+                  }
+                  return;
+                }
+                
+                if (fps) {
+                  rendererRef.current.userData.lastRenderTime = now;
+                }
               }
-              sceneRef.current = null;
-            }
+              
+              frameIdRef.current = requestAnimationFrame(animate);
+            };
             
-            cameraRef.current = null;
+            // Handle window resize
+            const handleResize = () => {
+              if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
+              
+              const width = containerRef.current.clientWidth || 800;
+              const height = containerRef.current.clientHeight || 600;
+              
+              cameraRef.current.aspect = width / height;
+              cameraRef.current.updateProjectionMatrix();
+              
+              rendererRef.current.setSize(width, height);
+            };
+            
+            // Add resize listener
+            window.addEventListener('resize', handleResize);
+            
+            // Start animation loop
+            animate();
+            
+            // Create initial lattice
+            createPlaceholderLattice();
+            
+            // Update cleanup to include resize listener
+            const originalCleanup = cleanup;
+            cleanup = () => {
+              window.removeEventListener('resize', handleResize);
+              originalCleanup();
+            };
+          } catch (rendererError) {
+            logger.error('Error creating WebGL renderer', rendererError);
+            errorReporter.report('visualization-error', 'Failed to create WebGL renderer', rendererError);
+            if (isMounted) {
+              setHasError(true);
+              setErrorMessage(`WebGL error: ${rendererError.message || 'Failed to initialize 3D renderer. Your browser may not support WebGL.'}`);
+              setIsLoading(false);
+            }
           }
-        };
-        
-        // Animation loop
-        const animate = () => {
-          if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
-          
-          // Apply FPS limiting if configured
-          const now = performance.now();
-          const fps = rendererRef.current.userData?.maxFPS;
-          
-          if (!fps || !rendererRef.current.userData.lastRenderTime || 
-              now - rendererRef.current.userData.lastRenderTime >= 1000 / fps) {
-            
-            if (controlsRef.current) {
-              controlsRef.current.update();
-            }
-            
-            rendererRef.current.render(sceneRef.current, cameraRef.current);
-            
-            if (fps) {
-              rendererRef.current.userData.lastRenderTime = now;
-            }
+        } else if (!containerRef.current) {
+          logger.warn('Container ref not available for Three.js initialization');
+          if (isMounted) {
+            setHasError(true);
+            setErrorMessage('Visualization container not available. Please try refreshing the page.');
+            setIsLoading(false);
           }
-          
-          frameIdRef.current = requestAnimationFrame(animate);
-        };
-        
-        // Handle window resize
-        const handleResize = () => {
-          if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
-          
-          const width = containerRef.current.clientWidth;
-          const height = containerRef.current.clientHeight;
-          
-          cameraRef.current.aspect = width / height;
-          cameraRef.current.updateProjectionMatrix();
-          
-          rendererRef.current.setSize(width, height);
-        };
-        
-        // Add resize listener
-        window.addEventListener('resize', handleResize);
-        
-        // Start animation loop
-        animate();
-        
-        // Create initial lattice
-        createPlaceholderLattice();
-        
-        // Update cleanup to include resize listener
-        const originalCleanup = cleanup;
-        cleanup = () => {
-          window.removeEventListener('resize', handleResize);
-          originalCleanup();
-        };
+        }
+      } catch (error) {
+        logger.error('Error initializing 3D visualization', error);
+        errorReporter.report('visualization-error', 'Failed to initialize 3D visualization', error);
+        if (isMounted) {
+          setHasError(true);
+          setErrorMessage(`Initialization error: ${error.message || 'Unknown error occurred during visualization setup.'}`);
+          setIsLoading(false);
+        }
       }
-    } catch (error) {
-      logger.error('Error initializing 3D visualization', error);
-      errorReporter.report('visualization-error', 'Failed to initialize 3D visualization', error);
-      setIsLoading(false);
-    }
+    };
+    
+    // Call the async initialization function
+    initializeThreeJsScene();
     
     return () => {
       isMounted = false;
@@ -803,6 +898,24 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
           <Typography variant="body1" sx={{ mt: 2 }}>
             Loading Visualization...
           </Typography>
+        </LoadingOverlay>
+      )}
+
+      {hasError && (
+        <LoadingOverlay>
+          <Typography variant="h6" color="error" gutterBottom>
+            Visualization Error
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {errorMessage || 'There was a problem loading the visualization.'}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={handleRefreshSimulation}
+            startIcon={<RefreshIcon />}
+          >
+            Retry
+          </Button>
         </LoadingOverlay>
       )}
       
