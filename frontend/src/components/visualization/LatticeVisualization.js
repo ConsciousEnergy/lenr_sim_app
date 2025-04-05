@@ -1,21 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
-// Modify the OrbitControls import to handle testing environment
-const OrbitControls = 
-  typeof window !== 'undefined' && 
-  window.THREE && 
-  window.THREE.OrbitControls ? 
-  window.THREE.OrbitControls : 
-  THREE.OrbitControls || 
-  (typeof jest !== 'undefined' ? 
-    class MockOrbitControls {
-      constructor() {
-        this.enableDamping = true;
-        this.update = () => {};
-        this.dispose = () => {};
-      }
-    } : 
-    require('three/examples/jsm/controls/OrbitControls').OrbitControls);
+import { OrbitControls as ThreeOrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { 
   Box, 
   Paper, 
@@ -39,6 +24,22 @@ import { useLogger } from '../../contexts/LogContext';
 import { useAppSettings } from '../../contexts/AppSettingsContext';
 import errorReporter from '../../utils/errorReporter';
 import threeCleanup from '../../utils/threeCleanup';
+
+// Modified handling for OrbitControls to support testing
+const OrbitControls = 
+  typeof window !== 'undefined' && 
+  window.THREE && 
+  window.THREE.OrbitControls ? 
+  window.THREE.OrbitControls : 
+  (typeof jest !== 'undefined' ? 
+    class MockOrbitControls {
+      constructor() {
+        this.enableDamping = true;
+        this.update = () => {};
+        this.dispose = () => {};
+      }
+    } : 
+    ThreeOrbitControls);
 
 // Styled components
 const VisualizationContainer = styled(Paper)(({ theme }) => ({

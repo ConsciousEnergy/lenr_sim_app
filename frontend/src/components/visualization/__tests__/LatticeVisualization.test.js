@@ -5,6 +5,30 @@ import { createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
 import LatticeVisualization from '../LatticeVisualization';
 
+// Mock the OrbitControls module
+jest.mock('three/examples/jsm/controls/OrbitControls', () => ({
+  OrbitControls: class MockOrbitControls {
+    constructor(camera, domElement) {
+      this.camera = camera;
+      this.domElement = domElement;
+      this.enableDamping = true;
+      this.dampingFactor = 0.05;
+      this.rotateSpeed = 0.5;
+      this.enabled = true;
+      this.enableZoom = true;
+      this.enablePan = true;
+      this.enableRotate = true;
+      this.target = { x: 0, y: 0, z: 0 };
+      this.minDistance = 5;
+      this.maxDistance = 100;
+      
+      // Add mock methods
+      this.update = jest.fn();
+      this.dispose = jest.fn();
+    }
+  }
+}));
+
 // Mock classes for Three.js
 class MockVector3 {
   constructor(x = 0, y = 0, z = 0) {
@@ -333,6 +357,23 @@ beforeEach(() => {
 afterEach(() => {
   // Restore all mocks
   jest.clearAllMocks();
+});
+
+// Define mock theme for tests
+const mockTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+  shape: {
+    borderRadius: 4,
+  },
+  spacing: 8,
+  shadows: Array(25).fill('none'),
 });
 
 describe('LatticeVisualization', () => {
