@@ -824,7 +824,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
         
         <Paper sx={{ p: 0.5 }}>
           <Tooltip title="Reset Camera">
-            <IconButton size="small" onClick={resetCameraPosition}>
+            <IconButton size="small" onClick={resetCameraPosition} aria-label="Reset Camera">
               <CameraAltIcon />
             </IconButton>
           </Tooltip>
@@ -832,7 +832,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
         
         <Paper sx={{ p: 0.5 }}>
           <Tooltip title="Take Screenshot">
-            <IconButton size="small" onClick={takeScreenshot}>
+            <IconButton size="small" onClick={takeScreenshot} aria-label="Take Screenshot">
               <CameraAltIcon />
             </IconButton>
           </Tooltip>
