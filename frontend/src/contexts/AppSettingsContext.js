@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useLogger } from './LogContext';
 
 // Create settings context
@@ -81,10 +81,10 @@ export const AppSettingsProvider = ({ children }) => {
   // Load settings from localStorage on mount
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   // Load settings from localStorage
-  const loadSettings = () => {
+  const loadSettings = useCallback(() => {
     try {
       const storedSettings = localStorage.getItem(STORAGE_KEY);
       if (storedSettings) {
@@ -113,7 +113,7 @@ export const AppSettingsProvider = ({ children }) => {
     } finally {
       setIsLoaded(true);
     }
-  };
+  }, [logger]);
 
   // Save settings to localStorage
   const saveSettings = (newSettings) => {

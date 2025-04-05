@@ -25,10 +25,7 @@ const threeJsRegistry = {
     
     // Set a data attribute to mark this element
     element.setAttribute(`data-threejs-${type}-id`, id);
-    
-    // Use errorReporter instead of direct console call
-    errorReporter.recordEvent('threejs_register', `Registered ${type} with ID ${id} for ${componentName}`);
-    
+    console.debug(`Registered ${type} with ID ${id} for ${componentName}`);
     return id;
   },
   
@@ -40,15 +37,12 @@ const threeJsRegistry = {
       
       if (id && map.has(id)) {
         map.delete(id);
-        errorReporter.recordEvent('threejs_unregister', `Unregistered ${type} with ID ${id}`);
+        console.debug(`Unregistered ${type} with ID ${id}`);
         return true;
       }
       return false;
     } catch (e) {
-      errorReporter.report(e, {
-        component: 'threeJsRegistry',
-        function: 'unregister'
-      });
+      console.error(`Error unregistering element: ${e.message}`);
       return false;
     }
   },
@@ -158,7 +152,7 @@ export const textureManager = texturePool;
 export const safeRemoveElement = (element, componentName = 'Unknown') => {
   try {
     if (!element) {
-      errorReporter.recordEvent('threejs_safeRemoveElement', `No element provided to remove for ${componentName}`);
+      console.debug(`${componentName}: No element provided to remove`);
       return;
     }
     
@@ -174,13 +168,13 @@ export const safeRemoveElement = (element, componentName = 'Unknown') => {
     
     const parent = element.parentNode;
     if (!parent) {
-      errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Element has no parent, already removed`);
+      console.debug(`${componentName}: Element has no parent, already removed`);
       return;
     }
     
     // For Three.js elements, use our safer removal
     if (isProtected) {
-      errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Using protected removal for Three.js element`);
+      console.debug(`${componentName}: Using protected removal for Three.js element`);
       
       // Double detach - helps avoid React conflicts
       try {
@@ -194,10 +188,10 @@ export const safeRemoveElement = (element, componentName = 'Unknown') => {
           detachedDiv.removeChild(detachedDiv.firstChild);
         }
         
-        errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Successfully removed element using protected method`);
+        console.debug(`${componentName}: Successfully removed element using protected method`);
         return;
       } catch (e) {
-        errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Protected removal failed, trying standard removal`);
+        console.debug(`${componentName}: Protected removal failed, trying standard removal`);
       }
     }
     
@@ -226,7 +220,7 @@ export const safeRemoveElement = (element, componentName = 'Unknown') => {
         isElementInParent = true;
       }
     } catch (checkError) {
-      errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Error checking if element is in parent, assuming not`, checkError);
+      console.debug(`${componentName}: Error checking if element is in parent, assuming not`, checkError);
       isElementInParent = false;
     }
     
@@ -235,9 +229,10 @@ export const safeRemoveElement = (element, componentName = 'Unknown') => {
       try {
         // Try through a safe wrapper first
         const removed = parent.removeChild(element);
-        errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Successfully removed element from DOM`);
+        console.debug(`${componentName}: Successfully removed element from DOM`);
         return removed;
       } catch (removeError) {
+        console.error(`${componentName}: Failed to remove child element`, removeError);
         errorReporter.report(removeError, {
           component: componentName,
           function: 'safeRemoveElement:removeChild',
@@ -251,19 +246,17 @@ export const safeRemoveElement = (element, componentName = 'Unknown') => {
             const tempDiv = document.createElement('div');
             tempDiv.appendChild(element);
             // The div is not attached to DOM, so the element is effectively removed
-            errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Used fallback method to detach element from DOM`);
+            console.debug(`${componentName}: Used fallback method to detach element from DOM`);
           }
         } catch (fallbackError) {
-          errorReporter.report(fallbackError, {
-            component: componentName,
-            function: 'safeRemoveElement:fallbackRemoval'
-          });
+          console.error(`${componentName}: Even fallback removal failed`, fallbackError);
         }
       }
     } else {
-      errorReporter.recordEvent('threejs_safeRemoveElement', `${componentName}: Element not in parent, already removed`);
+      console.debug(`${componentName}: Element not in parent, already removed`);
     }
   } catch (error) {
+    console.error(`${componentName}: Error in safeRemoveElement`, error);
     errorReporter.report(error, {
       component: componentName,
       function: 'safeRemoveElement'
@@ -296,6 +289,7 @@ export const disposeScene = (scene, componentName = 'Unknown') => {
       }
     });
   } catch (error) {
+    console.error('Error disposing scene:', error);
     errorReporter.report(error, {
       component: componentName,
       function: 'disposeScene'
@@ -360,10 +354,7 @@ export const forceReleaseWebGLResources = (gl) => {
     
     return false;
   } catch (error) {
-    errorReporter.report(error, {
-      component: 'forceReleaseWebGLResources',
-      function: 'forceReleaseWebGLResources'
-    });
+    console.error('Error releasing WebGL resources:', error);
     return false;
   }
 };
@@ -389,20 +380,14 @@ export const disposeRenderer = (renderer, componentName = 'Unknown') => {
     try {
       safeRemoveElement(renderer.domElement, componentName);
     } catch (canvasError) {
-      errorReporter.report(canvasError, {
-        component: componentName,
-        function: 'disposeRenderer:canvasRemoval'
-      });
+      console.error(`${componentName}: Error removing canvas from DOM`, canvasError);
     }
     
     // Dispose the renderer
     try {
       renderer.dispose();
     } catch (rendererError) {
-      errorReporter.report(rendererError, {
-        component: componentName,
-        function: 'disposeRenderer'
-      });
+      console.error(`${componentName}: Error disposing renderer`, rendererError);
     }
     
     // Force release WebGL resources if we have the context
@@ -410,6 +395,7 @@ export const disposeRenderer = (renderer, componentName = 'Unknown') => {
       forceReleaseWebGLResources(gl);
     }
   } catch (error) {
+    console.error('Error disposing renderer:', error);
     errorReporter.report(error, {
       component: componentName,
       function: 'disposeRenderer'
@@ -444,7 +430,7 @@ export const cleanupThreeJs = ({
   componentName = 'Unknown'
 }) => {
   try {
-    errorReporter.recordEvent('threejs_cleanup', `${componentName}: Starting Three.js cleanup`);
+    console.debug(`${componentName}: Starting Three.js cleanup`);
     
     // Cancel animation frame first
     cancelAnimationFrameSafe(animationFrameId);
@@ -455,7 +441,7 @@ export const cleanupThreeJs = ({
     // Dispose controls
     if (controls && typeof controls.dispose === 'function') {
       controls.dispose();
-      errorReporter.recordEvent('threejs_cleanup', `${componentName}: Controls disposed`);
+      console.debug(`${componentName}: Controls disposed`);
     }
     
     // Dispose renderer and handle canvas removal safely
@@ -466,7 +452,7 @@ export const cleanupThreeJs = ({
         
         // First dispose the renderer and its resources
         renderer.dispose();
-        errorReporter.recordEvent('threejs_cleanup', `${componentName}: Renderer disposed`);
+        console.debug(`${componentName}: Renderer disposed`);
         
         // Then safely attempt to remove the canvas from the DOM
         if (canvas) {
@@ -474,9 +460,10 @@ export const cleanupThreeJs = ({
             const parent = canvas.parentNode;
             if (parent && parent.contains && parent.contains(canvas)) {
               parent.removeChild(canvas);
-              errorReporter.recordEvent('threejs_cleanup', `${componentName}: Canvas element removed from DOM`);
+              console.debug(`${componentName}: Canvas element removed from DOM`);
             }
           } catch (canvasError) {
+            console.error(`${componentName}: Error removing canvas from DOM`, canvasError);
             errorReporter.report(canvasError, {
               component: componentName,
               function: 'cleanupThreeJs:canvasRemoval'
@@ -484,6 +471,7 @@ export const cleanupThreeJs = ({
           }
         }
       } catch (rendererError) {
+        console.error(`${componentName}: Error disposing renderer`, rendererError);
         errorReporter.report(rendererError, {
           component: componentName,
           function: 'cleanupThreeJs:rendererDisposal'
@@ -500,8 +488,9 @@ export const cleanupThreeJs = ({
       }
     }
     
-    errorReporter.recordEvent('threejs_cleanup', `${componentName}: Three.js resources cleaned up`);
+    console.debug(`${componentName}: Three.js resources cleaned up`);
   } catch (error) {
+    console.error(`${componentName}: Error during Three.js cleanup`, error);
     errorReporter.report(error, {
       component: componentName,
       function: 'cleanupThreeJs'
@@ -525,7 +514,7 @@ export const testThreeJsCleanup = ({
   const container = document.createElement('div');
   
   try {
-    errorReporter.recordEvent('threejs_testCleanup', `${componentName}: Starting Three.js cleanup test`);
+    console.debug(`${componentName}: Starting Three.js cleanup test`);
     
     // Add container to DOM
     document.body.appendChild(container);
@@ -572,7 +561,7 @@ export const testThreeJsCleanup = ({
         geometries: testRenderer.info.memory.geometries,
         textures: testRenderer.info.memory.textures
       };
-      errorReporter.recordEvent('threejs_testCleanup', `${componentName}: Memory usage before cleanup:`, memoryUsageBefore);
+      console.debug(`${componentName}: Memory usage before cleanup:`, memoryUsageBefore);
     }
     
     // Set timeout to perform cleanup and check results
@@ -595,7 +584,7 @@ export const testThreeJsCleanup = ({
           geometries: checkRenderer.info.memory.geometries,
           textures: checkRenderer.info.memory.textures
         };
-        errorReporter.recordEvent('threejs_testCleanup', `${componentName}: Memory usage after cleanup:`, memoryUsageAfter);
+        console.debug(`${componentName}: Memory usage after cleanup:`, memoryUsageAfter);
       }
       
       // Force context loss to fully release GPU resources
@@ -603,7 +592,7 @@ export const testThreeJsCleanup = ({
         const gl = checkRenderer.getContext();
         if (gl && gl.getExtension('WEBGL_lose_context')) {
           gl.getExtension('WEBGL_lose_context').loseContext();
-          errorReporter.recordEvent('threejs_testCleanup', `${componentName}: Forced WebGL context loss to release GPU resources`);
+          console.debug(`${componentName}: Forced WebGL context loss to release GPU resources`);
         }
       }
       
@@ -616,10 +605,7 @@ export const testThreeJsCleanup = ({
           document.body.removeChild(container);
         }
       } catch (e) {
-        errorReporter.report(e, {
-          component: componentName,
-          function: 'testThreeJsCleanup:removeTestContainer'
-        });
+        console.error(`${componentName}: Error removing test container`, e);
       }
       
       // Report results
@@ -639,6 +625,7 @@ export const testThreeJsCleanup = ({
     }, 500);
     
   } catch (error) {
+    console.error(`${componentName}: Error in cleanup test`, error);
     errorReporter.report(error, {
       component: componentName,
       function: 'testThreeJsCleanup'
@@ -653,10 +640,7 @@ export const testThreeJsCleanup = ({
         document.body.removeChild(container);
       }
     } catch (cleanupError) {
-      errorReporter.report(cleanupError, {
-        component: componentName,
-        function: 'testThreeJsCleanup:emergencyCleanup'
-      });
+      console.error(`${componentName}: Error in emergency cleanup`, cleanupError);
     }
   }
 };
@@ -670,10 +654,7 @@ export const testThreeJsCleanup = ({
  */
 export const createDetachedThreeContainer = (parentElement, componentName = 'Unknown') => {
   if (!parentElement) {
-    errorReporter.report(new Error(`${componentName}: No parent element provided for Three.js container`), {
-      component: componentName,
-      function: 'createDetachedThreeContainer'
-    });
+    console.error(`${componentName}: No parent element provided for Three.js container`);
     return null;
   }
   
@@ -690,7 +671,7 @@ export const createDetachedThreeContainer = (parentElement, componentName = 'Unk
         const id = container.getAttribute('data-threejs-container-id');
         if (id && threeJsRegistry.containers.has(id)) {
           existingContainer = container;
-          errorReporter.recordEvent('threejs_createDetachedThreeContainer', `Using existing registered container with ID ${id}`);
+          console.debug(`${componentName}: Using existing registered container with ID ${id}`);
           break;
         }
       }
@@ -701,7 +682,7 @@ export const createDetachedThreeContainer = (parentElement, componentName = 'Unk
       const fallbackContainers = parentElement.querySelectorAll('[data-threejs-container="true"]');
       if (fallbackContainers.length > 0) {
         existingContainer = fallbackContainers[0];
-        errorReporter.recordEvent('threejs_createDetachedThreeContainer', `Using existing container with legacy attribute`);
+        console.debug(`${componentName}: Using existing container with legacy attribute`);
         
         // Register this container retroactively
         threeJsRegistry.register(existingContainer, 'container', componentName);
@@ -740,9 +721,10 @@ export const createDetachedThreeContainer = (parentElement, componentName = 'Unk
     // Add to parent element
     parentElement.appendChild(container);
     
-    errorReporter.recordEvent('threejs_createDetachedThreeContainer', `Created and registered new Three.js container with ID ${registryId}`);
+    console.debug(`${componentName}: Created and registered new Three.js container with ID ${registryId}`);
     return container;
   } catch (error) {
+    console.error(`${componentName}: Error creating Three.js container`, error);
     errorReporter.report(error, {
       component: componentName,
       function: 'createDetachedThreeContainer'
@@ -761,7 +743,7 @@ function cleanupExistingThreeElements(parentElement, componentName) {
     // Look for and remove existing canvases
     const existingCanvases = parentElement.querySelectorAll('canvas');
     if (existingCanvases.length > 0) {
-      errorReporter.recordEvent('threejs_cleanupExistingThreeElements', `${componentName}: Found ${existingCanvases.length} existing canvas elements to clean up`);
+      console.debug(`${componentName}: Found ${existingCanvases.length} existing canvas elements to clean up`);
       
       for (let i = 0; i < existingCanvases.length; i++) {
         safeRemoveElement(existingCanvases[i], componentName);
@@ -771,7 +753,7 @@ function cleanupExistingThreeElements(parentElement, componentName) {
     // Look for and remove any containers that might be broken/orphaned
     const existingContainers = parentElement.querySelectorAll('[data-threejs-container="true"]');
     if (existingContainers.length > 0) {
-      errorReporter.recordEvent('threejs_cleanupExistingThreeElements', `${componentName}: Found ${existingContainers.length} existing container elements to clean up`);
+      console.debug(`${componentName}: Found ${existingContainers.length} existing container elements to clean up`);
       
       for (let i = 0; i < existingContainers.length; i++) {
         // Only remove if it doesn't have a registered ID (means it's an orphan)
@@ -792,22 +774,19 @@ function cleanupExistingThreeElements(parentElement, componentName) {
         
         // Check if it's a registered container
         if (containerId && !threeJsRegistry.containers.has(containerId)) {
-          errorReporter.recordEvent('threejs_cleanupExistingThreeElements', `${componentName}: Removing orphaned container with ID ${containerId}`);
+          console.debug(`${componentName}: Removing orphaned container with ID ${containerId}`);
           safeRemoveElement(element, componentName);
         }
         
         // Check if it's a registered canvas
         if (canvasId && !threeJsRegistry.canvases.has(canvasId)) {
-          errorReporter.recordEvent('threejs_cleanupExistingThreeElements', `${componentName}: Removing orphaned canvas with ID ${canvasId}`);
+          console.debug(`${componentName}: Removing orphaned canvas with ID ${canvasId}`);
           safeRemoveElement(element, componentName);
         }
       }
     }
   } catch (error) {
-    errorReporter.report(error, {
-      component: componentName,
-      function: 'cleanupExistingThreeElements'
-    });
+    console.error(`${componentName}: Error cleaning up existing Three.js elements`, error);
   }
 }
 
@@ -823,13 +802,10 @@ export const registerThreeJsCanvas = (canvas, componentName = 'Unknown') => {
   try {
     // Register the canvas in our registry
     const id = threeJsRegistry.register(canvas, 'canvas', componentName);
-    errorReporter.recordEvent('threejs_registerThreeJsCanvas', `${componentName}: Registered Three.js canvas with ID ${id}`);
+    console.debug(`${componentName}: Registered Three.js canvas with ID ${id}`);
     return id;
   } catch (error) {
-    errorReporter.report(error, {
-      component: componentName,
-      function: 'registerThreeJsCanvas'
-    });
+    console.error(`${componentName}: Error registering canvas`, error);
     return null;
   }
 };
@@ -856,7 +832,7 @@ export const reactSafeCleanupThreeJs = ({
   componentName = 'Unknown'
 }) => {
   try {
-    errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Starting React-safe Three.js cleanup`);
+    console.debug(`${componentName}: Starting React-safe Three.js cleanup`);
     
     // Keep track of what we've cleaned up
     const cleanedUp = {
@@ -873,12 +849,9 @@ export const reactSafeCleanupThreeJs = ({
       try {
         cancelAnimationFrame(animationFrameId);
         cleanedUp.animationFrame = true;
-        errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Animation frame cancelled`);
+        console.debug(`${componentName}: Animation frame cancelled`);
       } catch (animError) {
-        errorReporter.report(animError, {
-          component: componentName,
-          function: 'reactSafeCleanupThreeJs:animError'
-        });
+        console.error(`${componentName}: Error cancelling animation frame`, animError);
       }
     }
     
@@ -921,12 +894,9 @@ export const reactSafeCleanupThreeJs = ({
           }
         });
         cleanedUp.scene = true;
-        errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Scene objects disposed`);
+        console.debug(`${componentName}: Scene objects disposed`);
       } catch (sceneError) {
-        errorReporter.report(sceneError, {
-          component: componentName,
-          function: 'reactSafeCleanupThreeJs:sceneError'
-        });
+        console.error(`${componentName}: Error disposing scene objects`, sceneError);
       }
     }
     
@@ -935,12 +905,9 @@ export const reactSafeCleanupThreeJs = ({
       try {
         controls.dispose();
         cleanedUp.controls = true;
-        errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Controls disposed`);
+        console.debug(`${componentName}: Controls disposed`);
       } catch (controlsError) {
-        errorReporter.report(controlsError, {
-          component: componentName,
-          function: 'reactSafeCleanupThreeJs:controlsError'
-        });
+        console.error(`${componentName}: Error disposing controls`, controlsError);
       }
     }
     
@@ -955,11 +922,12 @@ export const reactSafeCleanupThreeJs = ({
         
         renderer.dispose();
         cleanedUp.renderer = true;
-        errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Renderer disposed`);
+        console.debug(`${componentName}: Renderer disposed`);
       } catch (rendererError) {
+        console.error(`${componentName}: Error disposing renderer`, rendererError);
         errorReporter.report(rendererError, {
           component: componentName,
-          function: 'reactSafeCleanupThreeJs:rendererError'
+          function: 'reactSafeCleanupThreeJs:rendererDisposal'
         });
       }
     }
@@ -972,10 +940,7 @@ export const reactSafeCleanupThreeJs = ({
         safeRemoveElement(canvasElement, componentName);
         cleanedUp.canvas = true;
       } catch (canvasError) {
-        errorReporter.report(canvasError, {
-          component: componentName,
-          function: 'reactSafeCleanupThreeJs:canvasError'
-        });
+        console.error(`${componentName}: Error removing canvas element`, canvasError);
       }
     }
     
@@ -989,10 +954,7 @@ export const reactSafeCleanupThreeJs = ({
         safeRemoveElement(container, componentName);
         cleanedUp.container = true;
       } catch (containerError) {
-        errorReporter.report(containerError, {
-          component: componentName,
-          function: 'reactSafeCleanupThreeJs:containerError'
-        });
+        console.error(`${componentName}: Error removing container`, containerError);
       }
       
       // As an extra precaution, also try to clear the container's content
@@ -1001,13 +963,14 @@ export const reactSafeCleanupThreeJs = ({
           container.removeChild(container.firstChild);
         }
       } catch (clearError) {
-        errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: Error clearing container contents`, clearError);
+        console.debug(`${componentName}: Error clearing container contents`, clearError);
       }
     }
     
-    errorReporter.recordEvent('threejs_reactSafeCleanupThreeJs', `${componentName}: React-safe Three.js cleanup completed with results:`, cleanedUp);
+    console.debug(`${componentName}: React-safe Three.js cleanup completed with results:`, cleanedUp);
     return true;
   } catch (error) {
+    console.error(`${componentName}: Error during React-safe Three.js cleanup`, error);
     errorReporter.report(error, {
       component: componentName,
       function: 'reactSafeCleanupThreeJs'
@@ -1030,7 +993,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
   try {
     const rootElement = document.querySelector(rootSelector);
     if (!rootElement) {
-      errorReporter.recordEvent('threejs_initDefensiveDomObserver', `Could not find root element for defensive observer: ${rootSelector}`);
+      console.warn('Could not find root element for defensive observer:', rootSelector);
       return;
     }
     
@@ -1045,13 +1008,13 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
            child.tagName === 'CANVAS' || 
            (child.className && typeof child.className === 'string' && child.className.includes('three-js-container')))) {
         
-        errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Defensive patch: Protected Three.js element from removal');
+        console.debug('Defensive patch: Protected Three.js element from removal');
         
         // Instead of removing, detach from the DOM in a safer way
         try {
           // First check if we're in the correct parent-child relationship
           if (!this.contains(child)) {
-            errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Defensive patch: Element is not a child of the parent trying to remove it');
+            console.debug('Defensive patch: Element is not a child of the parent trying to remove it');
             return null; // Return null to indicate "success" without doing anything
           }
           
@@ -1074,7 +1037,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
           
           return child; // Return the child as if it was successfully removed
         } catch (e) {
-          errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Defensive patch: Error in safe removal', e);
+          console.error('Defensive patch: Error in safe removal', e);
           return null; // Return null to indicate "success" without doing anything
         }
       }
@@ -1085,7 +1048,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
       } catch (e) {
         // If we get the "not a child" error, handle it gracefully
         if (e.message && e.message.includes('child of this node')) {
-          errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Defensive patch: Prevented "not a child" error for regular element');
+          console.debug('Defensive patch: Prevented "not a child" error for regular element');
           return null; // Return null to indicate "success" without doing anything
         }
         throw e; // Re-throw other errors
@@ -1102,7 +1065,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
               // If this is a Three.js element or contains Three.js elements, we need to
               // take protective measures
               if (threeJsRegistry.shouldProtect(removedNode)) {
-                errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Defensive observer: Prevented removal of a Three.js element');
+                console.debug('Defensive observer: Prevented removal of a Three.js element');
                 
                 // Store the element in a detached container to safely remove it later
                 setTimeout(() => {
@@ -1124,7 +1087,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
               );
               
               if (threeJsElements.length > 0) {
-                errorReporter.recordEvent('threejs_initDefensiveDomObserver', `Defensive observer: Found ${threeJsElements.length} Three.js elements in node being removed`);
+                console.debug(`Defensive observer: Found ${threeJsElements.length} Three.js elements in node being removed`);
                 
                 // For each Three.js element found, detach it first
                 for (const element of threeJsElements) {
@@ -1168,7 +1131,7 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
       subtree: true
     });
     
-    errorReporter.recordEvent('threejs_initDefensiveDomObserver', 'Initialized defensive DOM observer and React patch for Three.js elements');
+    console.debug('Initialized defensive DOM observer and React patch for Three.js elements');
     
     return {
       observer,
@@ -1181,15 +1144,13 @@ export const initDefensiveDomObserver = (rootSelector = '#root') => {
       }
     };
   } catch (error) {
-    errorReporter.report(error, {
-      component: 'initDefensiveDomObserver',
-      function: 'initDefensiveDomObserver'
-    });
+    console.error('Error initializing defensive DOM observer:', error);
     return null;
   }
 };
 
-export default {
+// Create the export object
+const threeCleanupUtils = {
   safeRemoveElement,
   disposeScene,
   disposeRenderer,
@@ -1203,4 +1164,6 @@ export default {
   forceReleaseWebGLResources,
   textureManager,
   registry: threeJsRegistry
-}; 
+};
+
+export default threeCleanupUtils; 

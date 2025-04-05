@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { 
@@ -6,7 +6,6 @@ import {
   Paper, 
   Typography, 
   CircularProgress, 
-  Chip, 
   Select, 
   MenuItem, 
   FormControl, 
@@ -116,21 +115,21 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
   const frameIdRef = useRef(null);
   const threeContainerRef = useRef(null);
   
-  // Merge visualization settings from props with app settings
-  const visualizationSettings = {
+  // Merge visualization settings from props with app settings using useMemo
+  const visualizationSettings = useMemo(() => ({
     ...settings?.visualization,
     ...propVisualizationSettings
-  };
+  }), [settings?.visualization, propVisualizationSettings]);
   
-  // Define element colors for the visualization
-  const elementColors = {
+  // Define element colors for the visualization using useMemo
+  const elementColors = useMemo(() => ({
     palladium: 0xB9B9B9, // silver-gray
     nickel: 0xA6A6A6,    // darker silver
     deuterium: 0x2969B0, // blue
     hydrogen: 0x33A1C9,  // lighter blue
     energy: 0xFF6347,    // tomato red
     transition: 0xFFA500 // orange
-  };
+  }), []);
   
   const [isLoading, setIsLoading] = useState(true);
   const [visualizationType, setVisualizationType] = useState('lattice'); // lattice, energy, phonon
@@ -233,7 +232,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
       errorReporter.report('visualization-error', 'Failed to create lattice', error);
       setIsLoading(false);
     }
-  }, [logger, latticeAtoms, visualizationSettings, settings]);
+  }, [logger, latticeAtoms, visualizationSettings, settings, elementColors.palladium, elementColors.deuterium]);
   
   // New function to update the visualization based on Rydberg Matter simulation results
   const updateRydbergVisualization = useCallback((results) => {
@@ -646,7 +645,7 @@ const LatticeVisualization = ({ simulationData, visualizationSettings: propVisua
     if (visualizationSettings?.atomScale && latticeAtoms.length > 0) {
       createPlaceholderLattice();
     }
-  }, [visualizationSettings?.atomScale, createPlaceholderLattice]);
+  }, [visualizationSettings?.atomScale, createPlaceholderLattice, latticeAtoms.length]);
 
   // Update axes and grid visibility when settings change
   useEffect(() => {
