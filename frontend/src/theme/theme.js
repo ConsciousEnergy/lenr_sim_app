@@ -33,8 +33,8 @@ const createAppTheme = (mode = 'light') => {
       },
       text: {
         primary: isDark ? '#FFFFFF' : colors.text.primary,
-        secondary: isDark ? '#AAAAAA' : colors.text.secondary,
-        disabled: isDark ? '#666666' : colors.text.disabled,
+        secondary: isDark ? '#CCCCCC' : colors.text.secondary,
+        disabled: isDark ? '#999999' : colors.text.disabled,
       },
       error: colors.semantic.error,
       warning: colors.semantic.warning,
@@ -260,6 +260,63 @@ const createAppTheme = (mode = 'light') => {
         styleOverrides: {
           root: {
             textTransform: 'none',
+          },
+        },
+      },
+      MuiSlider: {
+        styleOverrides: {
+          root: {
+            color: isDark ? colors.primary.main : '#1976d2',
+            marginTop: '8px',
+            marginBottom: '8px',
+            padding: '13px 0',
+            '& .MuiSlider-markLabel': {
+              color: isDark ? '#CCCCCC' : colors.text.secondary,
+            },
+          },
+          thumb: {
+            width: 14,
+            height: 14,
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: isDark 
+                ? `0 0 0 8px rgba(106, 13, 173, 0.16)` 
+                : `0 0 0 8px rgba(25, 118, 210, 0.16)`,
+            },
+          },
+          valueLabel: {
+            backgroundColor: isDark ? colors.primary.main : '#1976d2',
+          },
+          track: {
+            height: 4,
+          },
+          rail: {
+            height: 4,
+            opacity: 0.5,
+            backgroundColor: isDark ? '#666666' : '#b5b5b5',
+          },
+          mark: {
+            backgroundColor: isDark ? '#AAAAAA' : '#888888',
+          },
+        },
+      },
+      MuiTypography: {
+        styleOverrides: {
+          gutterBottom: {
+            marginBottom: '0.75em',
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          secondary: {
+            color: isDark ? '#CCCCCC' : colors.text.secondary,
           },
         },
       },
