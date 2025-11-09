@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Physics Simulation Guide - LENR Simulation API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #1a73e8;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multi-Physics Simulation Guide</h1>
+    
+    <p>This guide provides information on using the LENR Simulation API for running coupled multi-physics simulations.</p>
+    
+    <h2>Introduction to Multi-Physics Coupling</h2>
+    
+    <p>Multi-physics coupling allows the simulation of complex physical systems where different physical phenomena interact with each other. In LENR (Low Energy Nuclear Reaction) simulations, this typically involves coupling nuclear reactions with thermal effects.</p>
+    
+    <p>The key components of our multi-physics framework are:</p>
+    
+    <ul>
+        <li><strong>Physics Domains</strong>: Self-contained modules that simulate specific physical phenomena</li>
+        <li><strong>Domain Couplers</strong>: Components that manage data exchange between domains</li>
+        <li><strong>Domain Manager</strong>: Coordinates all domains and manages time stepping</li>
+    </ul>
+    
+    <h2>Available Physics Domains</h2>
+    
+    <h3>Thermal Domain</h3>
+    
+    <p>The thermal domain simulates heat transfer using the heat diffusion equation:</p>
+    
+    <p><code>∂T/∂t = α∇²T + Q/(ρc<sub>p</sub>)</code></p>
+    
+    <p>Where:</p>
+    <ul>
+        <li><code>T</code> is temperature</li>
+        <li><code>α</code> is thermal diffusivity (<code>k/(ρc<sub>p</sub>)</code>)</li>
+        <li><code>Q</code> is the heat source from nuclear reactions</li>
+        <li><code>ρ</code> is material density</li>
+        <li><code>c<sub>p</sub></code> is heat capacity</li>
+    </ul>
+    
+    <h3>Nuclear Domain</h3>
+    
+    <p>The nuclear domain simulates nuclear reactions and calculates reaction rates and energy production. It supports various reactions and enhancement mechanisms:</p>
+    
+    <ul>
+        <li><strong>Reactions</strong>: d-d, p-B11, d-t, etc.</li>
+        <li><strong>Enhancement Mechanisms</strong>: electron screening, coherent tunneling, etc.</li>
+    </ul>
+    
+    <h2>Running a Coupled Simulation via the API</h2>
+    
+    <h3>1. Start a Simulation</h3>
+    
+    <p>Send a POST request to start a new simulation:</p>
+    
+    <pre>
+POST /api/multi-physics/simulations
+
+{
+  "domain_size": [0.01, 0.01, 0.01],
+  "resolution": [20, 20, 20],
+  "simulation_time": 0.01,
+  "time_step": 1e-6,
+  "reactions": ["d-d"],
+  "mechanisms": ["electron_screening", "coherent_tunneling"],
+  "initial_temperature": 300.0,
+  "species_densities": {"d": 1.0e28},
+  "thermal_conductivity": 10.0,
+  "heat_capacity": 500.0,
+  "material_density": 1000.0
+}
+    </pre>
+    
+    <p>This will return a simulation ID that you can use to check the status and retrieve results:</p>
+    
+    <pre>
+{
+  "simulation_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "status": "pending",
+  "message": "Simulation started in the background",
+  "estimated_duration": 10.0
+}
+    </pre>
+    
+    <h3>2. Check Simulation Status</h3>
+    
+    <p>Poll the status endpoint to check the progress:</p>
+    
+    <pre>
+GET /api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/status
+    </pre>
+    
+    <h3>3. Retrieve Results</h3>
+    
+    <p>Once the simulation is complete, retrieve the results:</p>
+    
+    <pre>
+GET /api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/results
+    </pre>
+    
+    <h2>Parameter Configuration</h2>
+    
+    <h3>Domain Size and Resolution</h3>
+    
+    <p>The <code>domain_size</code> parameter specifies the physical dimensions of the simulation domain in meters. The <code>resolution</code> parameter specifies the number of grid points in each dimension.</p>
+    
+    <div class="note">
+        <p><strong>Note:</strong> Higher resolution provides more accurate results but requires more computation time. A good starting point is 20×20×20 for quick tests.</p>
+    </div>
+    
+    <h3>Simulation Time and Time Step</h3>
+    
+    <p>The <code>simulation_time</code> parameter specifies the total physical time to simulate in seconds. The <code>time_step</code> parameter specifies the time step size in seconds.</p>
+    
+    <div class="warning">
+        <p><strong>Warning:</strong> Very small time steps can significantly increase computation time. The API automatically adjusts time steps for stability, but starting with a reasonable value is recommended.</p>
+    </div>
+    
+    <h3>Reactions and Mechanisms</h3>
+    
+    <p>The <code>reactions</code> parameter is an array of reaction names to simulate. Supported reactions include:</p>
+    
+    <ul>
+        <li><code>d-d</code>: Deuterium-Deuterium fusion</li>
+        <li><code>d-t</code>: Deuterium-Tritium fusion</li>
+        <li><code>p-B11</code>: Proton-Boron fusion</li>
+    </ul>
+    
+    <p>The <code>mechanisms</code> parameter is an array of enhancement mechanisms to include. Supported mechanisms include:</p>
+    
+    <ul>
+        <li><code>electron_screening</code>: Enhanced tunneling due to electron screening</li>
+        <li><code>coherent_tunneling</code>: Enhanced tunneling due to coherent effects</li>
+        <li><code>lattice_vibration</code>: Enhanced tunneling due to lattice vibrations</li>
+    </ul>
+    
+    <h2>Best Practices</h2>
+    
+    <ul>
+        <li>Start with lower resolutions (10×10×10) for quick tests before running high-resolution simulations</li>
+        <li>Use appropriate physical dimensions (typically mm to cm scale for LENR systems)</li>
+        <li>Choose time steps that balance accuracy and performance</li>
+        <li>Delete completed simulations when they are no longer needed to free up server resources</li>
+    </ul>
+    
+    <h2>Example Workflow</h2>
+    
+    <pre>
+# 1. Start a new simulation
+curl -X POST http://localhost:8000/api/multi-physics/simulations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain_size": [0.01, 0.01, 0.01],
+    "resolution": [20, 20, 20],
+    "simulation_time": 0.01,
+    "time_step": 1e-6,
+    "reactions": ["d-d"],
+    "mechanisms": ["electron_screening"],
+    "initial_temperature": 300.0,
+    "species_densities": {"d": 1.0e28},
+    "thermal_conductivity": 10.0,
+    "heat_capacity": 500.0,
+    "material_density": 1000.0
+  }'
+
+# 2. Check status periodically
+curl -X GET http://localhost:8000/api/multi-physics/simulations/SIMULATION_ID/status
+
+# 3. Retrieve results when complete
+curl -X GET http://localhost:8000/api/multi-physics/simulations/SIMULATION_ID/results
+
+# 4. Clean up when done
+curl -X DELETE http://localhost:8000/api/multi-physics/simulations/SIMULATION_ID
+    </pre>
+    
+    <h2>Troubleshooting</h2>
+    
+    <table>
+        <tr>
+            <th>Issue</th>
+            <th>Possible Cause</th>
+            <th>Solution</th>
+        </tr>
+        <tr>
+            <td>Simulation fails to start</td>
+            <td>Invalid parameters or server resources</td>
+            <td>Check request format and parameter values</td>
+        </tr>
+        <tr>
+            <td>Simulation takes too long</td>
+            <td>Resolution too high or time step too small</td>
+            <td>Reduce resolution or increase time step size</td>
+        </tr>
+        <tr>
+            <td>Results show NaN values</td>
+            <td>Numerical instability</td>
+            <td>Reduce time step or adjust physical parameters</td>
+        </tr>
+    </table>
+    
+    <p>For more information, refer to the <a href="/api/docs">API Documentation</a> or contact support.</p>
+</body>
+</html> 

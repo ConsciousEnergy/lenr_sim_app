@@ -1,11 +1,2 @@
 # Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
-
-
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\node_modules
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\venv
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\__pycache__
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\*.pyc
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\*.pyo
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\*.pyd
-C:\Users\brand\LENR_SIM_APP\SimonStreamlit\*.pyw
-
+C:\Users\brand\LENR_SIM_APP\LENR_SIM_APP_v1, 

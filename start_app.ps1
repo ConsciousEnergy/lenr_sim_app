@@ -1,137 +1,101 @@
-# LENR Simulation App Startup Script for Windows
-# This script starts both the backend and frontend development servers
+Write-Host "Starting LENR Simulation Application..." -ForegroundColor Cyan
 
-# Function to display a banner
-function Show-Banner {
-    $banner = @"
-========================================================
-   _     _____ _   _ ____     ____  _                  
-  | |   | ____| \ | |  _ \   / ___|(_)_ __ ___         
-  | |   |  _| |  \| | |_) |  \___ \| | '_ \` _ \      
-  | |___| |___| |\  |  _ <    ___) | | | | | | |       
-  |_____|_____|_| \_|_| \_\  |____/|_|_| |_| |_|       
-                                                        
-========================================================
-"@
-    Write-Host $banner -ForegroundColor Magenta
-}
+# Define base directory for v2 app components
+$AppBaseDir = ".\LENR_SIM_APP_v2"
+$BackendDir = "$AppBaseDir\backend"
+$FrontendDir = "$AppBaseDir\frontend"
+$RootVenvDir = ".\backend-env" # Check for root venv first
+$BackendVenvDir = "$BackendDir\venv" # Fallback to backend venv
 
-# Kill process using a specific port
-function Stop-ProcessByPort {
-    param(
-        [int]$Port
-    )
-    
-    try {
-        $tcpConnections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-        if (-not $tcpConnections) {
-            Write-Host "No processes found using port $Port" -ForegroundColor Yellow
-            return $false
-        }
-        
-        foreach ($conn in $tcpConnections) {
-            $pid = $conn.OwningProcess
-            # Skip system processes (PID 0, 4) and other critical processes
-            if ($pid -eq 0 -or $pid -eq 4) {
-                Write-Host "Skipping system process with PID $pid" -ForegroundColor Yellow
-                continue
-            }
-            
-            try {
-                $processInfo = Get-Process -Id $pid -ErrorAction SilentlyContinue
-                if ($processInfo -and $processInfo.ProcessName -notin @("System", "Idle", "svchost", "lsass", "winlogon", "services")) {
-                    Write-Host "Stopping process $($processInfo.ProcessName) (PID: $pid) using port $Port" -ForegroundColor Yellow
-                    Stop-Process -Id $pid -Force
-                    Start-Sleep -Seconds 1
-                    return $true
-                } else {
-                    Write-Host "Skipping critical system process $($processInfo.ProcessName) (PID: $pid)" -ForegroundColor Yellow
-                }
-            } catch {
-                Write-Host "Failed to stop process with PID $pid" -ForegroundColor Red
-            }
-        }
-        return $false
-    } catch {
-        Write-Host "Failed to query processes on port $Port" -ForegroundColor Red
-        return $false
-    }
-}
-
-# Check if port is in use
-function Test-PortInUse {
-    param(
-        [int]$Port
-    )
-    
-    try {
-        $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-        return ($connections -ne $null)
-    } catch {
-        return $false
-    }
-}
-
-# Main execution
+# Check if Python is installed
 try {
-    Show-Banner
-    
-    Write-Host "LENR Simulation App Startup" -ForegroundColor Cyan
-    Write-Host "Starting development environment..." -ForegroundColor Cyan
-    
-    # Free up ports if needed
-    if (Test-PortInUse -Port 8000) {
-        Write-Host "Port 8000 is already in use. Attempting to free up the port..." -ForegroundColor Yellow
-        Stop-ProcessByPort -Port 8000
-        Start-Sleep -Seconds 2
-    }
-    
-    if (Test-PortInUse -Port 3000) {
-        Write-Host "Port 3000 is already in use. Attempting to free up the port..." -ForegroundColor Yellow
-        Stop-ProcessByPort -Port 3000
-        Start-Sleep -Seconds 2
-    }
-    
-    # Start backend server in a new window
-    Write-Host "Starting backend server..." -ForegroundColor Green
-    Start-Process -FilePath "cmd" -ArgumentList "/c cd backend && python -m uvicorn app.main:app --reload --port 8000"
-    
-    # Wait a bit for backend to start
-    Write-Host "Waiting for backend to start..." -ForegroundColor Cyan
-    Start-Sleep -Seconds 5
-    
-    # Check if backend started successfully
-    if (Test-PortInUse -Port 8000) {
-        Write-Host "Backend server is running at http://localhost:8000" -ForegroundColor Green
-    } else {
-        Write-Host "Failed to start backend server. Check if Python and dependencies are installed." -ForegroundColor Red
-        exit 1
-    }
-    
-    # Start frontend server in a new window
-    Write-Host "Starting frontend server..." -ForegroundColor Green
-    Start-Process -FilePath "cmd" -ArgumentList "/c cd frontend && npm start"
-    
-    # Wait for frontend to start
-    Write-Host "Waiting for frontend to start..." -ForegroundColor Cyan
-    Start-Sleep -Seconds 10
-    
-    # Check if frontend started successfully
-    if (Test-PortInUse -Port 3000) {
-        Write-Host "Frontend server is running at http://localhost:3000" -ForegroundColor Green
-        
-        # Open the browser
-        Write-Host "Opening browser to http://localhost:3000" -ForegroundColor Green
-        Start-Process "http://localhost:3000"
-    } else {
-        Write-Host "Failed to start frontend server. Check if Node.js and npm are installed." -ForegroundColor Red
-        exit 1
-    }
-    
-    Write-Host "Both servers are now running in separate windows." -ForegroundColor Magenta
-    Write-Host "Close the command windows to stop the servers." -ForegroundColor Magenta
-    Write-Host "This script will now exit. You can continue working in the separate terminal windows." -ForegroundColor Cyan
+    $pythonVersion = python --version
+    Write-Host "Found $pythonVersion" -ForegroundColor Green
 }
 catch {
-    Write-Host "An error occurred. Please check the error message and try again." -ForegroundColor Red
-} 
+    Write-Host "Python is not installed or not in PATH. Please install Python 3.8+." -ForegroundColor Red
+    exit 1
+}
+
+# Check if Node.js is installed
+try {
+    $nodeVersion = node --version
+    Write-Host "Found Node.js $nodeVersion" -ForegroundColor Green
+}
+catch {
+    Write-Host "Node.js is not installed or not in PATH. Please install Node.js 14+." -ForegroundColor Red
+    exit 1
+}
+
+# Ensure necessary directories exist within the v2 structure
+if (-not (Test-Path -Path "$BackendDir\data")) { 
+    New-Item -Path "$BackendDir\data" -ItemType Directory | Out-Null
+    Write-Host "Created directory: $BackendDir\data" -ForegroundColor Yellow
+}
+if (-not (Test-Path -Path "$BackendDir\static")) { 
+    New-Item -Path "$BackendDir\static" -ItemType Directory | Out-Null 
+    Write-Host "Created directory: $BackendDir\static" -ForegroundColor Yellow
+}
+if (-not (Test-Path -Path "$BackendDir\logs")) { 
+    New-Item -Path "$BackendDir\logs" -ItemType Directory | Out-Null 
+    Write-Host "Created directory: $BackendDir\logs" -ForegroundColor Yellow
+}
+
+# Setup and start backend
+Write-Host "Setting up backend..." -ForegroundColor Cyan
+
+# Determine Venv Path and Activation Script
+$VenvPath = $null
+$ActivateScript = $null
+if (Test-Path -Path "$RootVenvDir\Scripts\Activate.ps1") {
+    $VenvPath = $RootVenvDir
+    $ActivateScript = "$RootVenvDir\Scripts\Activate.ps1"
+    Write-Host "Using root virtual environment: $RootVenvDir" -ForegroundColor Yellow
+} elseif (Test-Path -Path "$BackendVenvDir\Scripts\Activate.ps1") {
+    $VenvPath = $BackendVenvDir
+    $ActivateScript = "$BackendVenvDir\Scripts\Activate.ps1"
+    Write-Host "Using backend virtual environment: $BackendVenvDir" -ForegroundColor Yellow
+} else {
+    Write-Host "No suitable virtual environment found. Please run setup or create one in $RootVenvDir or $BackendVenvDir." -ForegroundColor Red
+    exit 1
+}
+
+# Activate virtual environment 
+Write-Host "Activating virtual environment..." -ForegroundColor Yellow
+& $ActivateScript
+
+# Install dependencies (run from backend dir where requirements.txt is)
+Push-Location -Path $BackendDir
+Write-Host "Installing backend dependencies (from $BackendDir)..." -ForegroundColor Yellow
+pip install -r requirements.txt
+Pop-Location
+
+# Start backend server in a new window (from project root, targeting app.main:app in the correct dir)
+Write-Host "Starting backend server on port 8001..." -ForegroundColor Green
+# Ensure the command inside Start-Process knows the backend path and activates venv correctly
+$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8001"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $BackendCommand
+
+# Setup and start frontend
+Write-Host "Setting up frontend..." -ForegroundColor Cyan
+Push-Location -Path $FrontendDir
+
+# Install frontend dependencies if needed
+if (-not (Test-Path -Path ".\node_modules")) {
+    Write-Host "Installing frontend dependencies (from $FrontendDir)..." -ForegroundColor Yellow
+    npm install
+}
+
+# Start frontend server in a new window
+Write-Host "Starting frontend server on default port (likely 3000 or 5173)..." -ForegroundColor Green
+# Use npm run dev as per Vite convention often seen in package.json
+$FrontendCommand = "Set-Location -Path '$FrontendDir'; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $FrontendCommand
+Pop-Location
+
+Write-Host ""
+Write-Host "LENR Simulation Application is starting..." -ForegroundColor Cyan
+Write-Host "Backend API: http://localhost:8001" -ForegroundColor Green
+Write-Host "Frontend: Check console (likely http://localhost:3000 or http://localhost:5173)" -ForegroundColor Green
+Write-Host ""
+Write-Host "Press Ctrl+C in the respective PowerShell windows to stop the servers." -ForegroundColor Yellow 

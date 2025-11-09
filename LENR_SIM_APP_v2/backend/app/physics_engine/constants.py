@@ -1,0 +1,235 @@
+"""
+LENR Physics Engine Constants and Configuration Module
+Contains physical constants, derived parameters, and configuration utilities
+for LENR simulation v2.
+"""
+
+from typing import Dict, Any
+import numpy as np
+from scipy import constants
+import json
+import os
+
+# Fundamental physical constants
+PHYSICAL_CONSTANTS = {
+    # Fundamental constants
+    "hbar": constants.hbar,
+    "e": constants.e,
+    "c": constants.c,
+    "epsilon_0": constants.epsilon_0,
+    "mu_0": constants.mu_0,
+    "k_B": constants.k,
+    "G": constants.G,
+    
+    # Particle masses
+    "m_e": constants.m_e,
+    "m_p": constants.m_p,
+    "m_n": constants.m_n,
+    "m_d": 2.01410177811 * constants.atomic_mass,  # Deuterium mass
+    "m_t": 3.0160492 * constants.atomic_mass,      # Tritium mass
+    "m_He3": 3.0160293 * constants.atomic_mass,    # Helium-3 mass
+    "m_He4": 4.0026032497 * constants.atomic_mass, # Helium-4 mass
+    "m_Li6": 6.0151223 * constants.atomic_mass,    # Lithium-6 mass
+    "m_Li7": 7.0160040 * constants.atomic_mass,    # Lithium-7 mass
+    "m_Pd": 106.42 * constants.atomic_mass,        # Palladium mass (average)
+    "m_Ni": 58.6934 * constants.atomic_mass,       # Nickel mass (average)
+    
+    # Derived constants
+    "alpha": constants.alpha,                      # Fine structure constant
+    "r_bohr": constants.physical_constants["Bohr radius"][0],
+    "rydberg": constants.physical_constants["Rydberg constant"][0],
+    
+    # Unit conversions
+    "eV_to_J": constants.e,
+    "J_to_eV": 1.0 / constants.e
+}
+
+# Default LENR system configuration
+DEFAULT_CONFIG = {
+    # System parameters
+    "temperature": 300.0,         # Temperature in Kelvin
+    "pressure": 101325.0,         # Pressure in Pascal (1 atm)
+    "lattice_constant": 3.89e-10, # Lattice parameter in meters (Pd)
+    "electron_density": 1e28,     # Electron density in m^-3
+    "dimensions": (10, 10, 10),   # Lattice dimensions
+    
+    # Simulation parameters
+    "time_step": 1e-15,           # Simulation time step in seconds
+    "max_steps": 1000,            # Maximum simulation steps
+    "enhancement_factor": 1.0,    # Global enhancement factor
+    
+    # Physics model parameters
+    "spring_constant": 10.0,      # Spring constant for lattice dynamics
+    "debye_temperature": 275.0,   # Debye temperature for Pd
+    "work_function": 5.12,        # Work function for Pd in eV
+    "fermi_energy": 7.0,          # Fermi energy for Pd in eV
+    "screening_length": 5e-11,    # Electron screening length in meters
+    
+    # Advanced model parameters
+    "coherence_factor": 0.5,      # Quantum coherence factor
+    "tunneling_factor": 0.001,    # Base tunneling probability factor
+    "vacancy_concentration": 0.01,# Vacancy concentration in lattice
+    "impurity_concentration": 0.005,  # Impurity concentration
+    
+    # Reaction parameters
+    "reaction_types": ["DD", "DT", "pD", "pLi6"],
+    "branching_ratios": {
+        "DD": {"He3_n": 0.5, "T_p": 0.5},
+        "DT": {"He4_n": 1.0},
+        "pD": {"He3_gamma": 1.0},
+        "pLi6": {"He4_He3": 1.0}
+    },
+    
+    # Visualization parameters
+    "visualization_scale": 1.0,
+    "color_scheme": "standard"
+}
+
+def get_config(user_config: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Create configuration by merging user config with defaults.
+    
+    Args:
+        user_config: User-provided configuration parameters
+        
+    Returns:
+        Complete configuration dictionary
+    """
+    config = DEFAULT_CONFIG.copy()
+    
+    if user_config:
+        # Update with user configuration
+        config.update(user_config)
+    
+    # Add physical constants to config
+    config["constants"] = PHYSICAL_CONSTANTS
+    
+    # Add derived parameters
+    config.update(calculate_derived_parameters(config))
+    
+    return config
+
+def calculate_derived_parameters(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Calculate derived parameters based on configuration.
+    
+    Args:
+        config: Configuration dictionary
+        
+    Returns:
+        Dictionary of derived parameters
+    """
+    derived = {}
+    
+    # Thermal parameters
+    derived["thermal_energy"] = config["constants"]["k_B"] * config["temperature"]  # J
+    derived["thermal_energy_eV"] = derived["thermal_energy"] * config["constants"]["J_to_eV"]
+    
+    # Thermal de Broglie wavelength
+    derived["thermal_wavelength_e"] = np.sqrt(
+        2 * np.pi * config["constants"]["hbar"]**2 / 
+        (config["constants"]["m_e"] * derived["thermal_energy"])
+    )
+    
+    derived["thermal_wavelength_d"] = np.sqrt(
+        2 * np.pi * config["constants"]["hbar"]**2 / 
+        (config["constants"]["m_d"] * derived["thermal_energy"])
+    )
+    
+    # Debye length calculation
+    derived["debye_length"] = np.sqrt(
+        config["constants"]["epsilon_0"] * derived["thermal_energy"] / 
+        (config["electron_density"] * config["constants"]["e"]**2)
+    )
+    
+    # Plasma parameters
+    derived["plasma_frequency"] = np.sqrt(
+        config["electron_density"] * config["constants"]["e"]**2 / 
+        (config["constants"]["m_e"] * config["constants"]["epsilon_0"])
+    )
+    
+    # Classical turning point
+    derived["classical_turning_point"] = (
+        config["constants"]["e"]**2 / (4 * np.pi * config["constants"]["epsilon_0"] * derived["thermal_energy"])
+    )
+    
+    # Screening enhancement
+    derived["screening_energy"] = (
+        config["constants"]["e"]**2 / (4 * np.pi * config["constants"]["epsilon_0"] * config["screening_length"])
+    )
+    derived["screening_energy_eV"] = derived["screening_energy"] * config["constants"]["J_to_eV"]
+    
+    # Coulomb barrier (approximate for D-D)
+    derived["coulomb_barrier_dd"] = (
+        config["constants"]["e"]**2 / (4 * np.pi * config["constants"]["epsilon_0"] * 2e-15)
+    ) * config["constants"]["J_to_eV"]  # Value in eV
+    
+    # Gamow factor for tunneling (approximate for D-D)
+    derived["gamow_factor_dd"] = np.pi * config["constants"]["alpha"] * np.sqrt(
+        config["constants"]["m_d"] * config["constants"]["c"]**2 * 0.5 / 
+        derived["thermal_energy_eV"]
+    )
+    
+    # Phonon-assisted tunneling factor
+    derived["phonon_frequency"] = (
+        config["constants"]["k_B"] * config["debye_temperature"] / config["constants"]["hbar"]
+    )
+    
+    # Lattice parameters
+    derived["lattice_volume"] = config["lattice_constant"]**3
+    derived["atom_density"] = 1.0 / derived["lattice_volume"]
+    
+    # Total number of lattice sites
+    derived["total_sites"] = (
+        config["dimensions"][0] * config["dimensions"][1] * config["dimensions"][2]
+    )
+    
+    return derived
+
+def save_config(config: Dict[str, Any], file_path: str) -> None:
+    """
+    Save configuration to a JSON file.
+    
+    Args:
+        config: Configuration dictionary
+        file_path: Path to save the configuration
+    """
+    # Create a serializable copy of the config
+    serializable_config = {}
+    
+    for key, value in config.items():
+        # Handle numpy arrays and other special types
+        if isinstance(value, np.ndarray):
+            serializable_config[key] = value.tolist()
+        elif key == "constants":
+            # Convert constants to string representations for readability
+            serializable_config[key] = {
+                const_key: str(const_val) for const_key, const_val in value.items()
+            }
+        else:
+            serializable_config[key] = value
+    
+    # Make sure directory exists
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+    # Save to file
+    with open(file_path, 'w') as f:
+        json.dump(serializable_config, f, indent=2)
+
+def load_config(file_path: str) -> Dict[str, Any]:
+    """
+    Load configuration from a JSON file.
+    
+    Args:
+        file_path: Path to the configuration file
+        
+    Returns:
+        Configuration dictionary
+    """
+    with open(file_path, 'r') as f:
+        loaded_config = json.load(f)
+    
+    # Re-add physical constants which were stored as strings
+    config = get_config(loaded_config)
+    
+    return config 

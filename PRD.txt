@@ -1,0 +1,497 @@
+# LENR SIMULATION APPLICATION - PRODUCT REQUIREMENTS DOCUMENT
+
+## 1. PRODUCT OVERVIEW
+
+### 1.1 Product Vision
+The LENR Simulation Application will be a comprehensive scientific tool for simulating and visualizing Low Energy Nuclear Reaction (LENR) phenomena, quantum tunneling effects, and related physics. The application will provide researchers, educators, and enthusiasts with an intuitive interface to explore advanced physics concepts through interactive simulations and visualizations.
+
+### 1.2 Target Audience
+- Physics researchers specializing in LENR and related fields
+- Academic institutions for educational purposes
+- Energy research organizations
+- Scientific enthusiasts interested in quantum phenomena
+- Students learning about nuclear and quantum physics
+
+### 1.3 Key Goals
+- Provide accurate simulations of quantum tunneling and LENR phenomena
+- Offer intuitive visualization of complex physics concepts
+- Enable parameter exploration with real-time feedback
+- Support research by generating reproducible results
+- Enhance understanding of LENR mechanisms through interactive models
+- Establish a branded connection with conscious.energy
+
+## 2. SYSTEM ARCHITECTURE
+
+### 2.1 High-Level Architecture
+The application follows a client-server architecture with three main components:
+- UNIFIED DASHBOARD (React Frontend): User interface for parameter control and visualization
+- REST API (FastAPI Backend): Endpoints for physics calculations and data processing
+- PHYSICS CORE (Simulation): Core simulation logic and mathematical models
+
+These components interact with:
+- VISUALIZATION (Three.js/Charts): 3D and 2D visualization of simulation results
+- DATA STORAGE (CSV/JSON Files): Storage of simulation results and parameters
+- ANALYSIS (Statistics): Statistical analysis of simulation data
+- SETTINGS SYSTEM (AppContext): Centralized settings management for the application
+
+### 2.2 Backend Components
+- FastAPI Server: RESTful API endpoints for physics calculations
+- Physics Engine: Core simulation modules for quantum tunneling, phonon effects, etc.
+- Data Processing: Analysis and transformation of simulation results
+
+### 2.3 Frontend Components
+- React Application: Modern, responsive user interface
+- Three.js Integration: 3D visualization of lattice structures and interactions
+- Recharts: Data visualization for simulation results
+- Material-UI: Component library for consistent UI design
+- Context-based State Management: Centralized settings and app state
+
+### 2.4 Cross-System Requirements
+- Efficient data transfer between frontend and backend
+- Consistent error handling across all components
+- Memory management for 3D visualizations and large datasets
+- Responsive design that works on various screen sizes
+- Centralized logging system for debugging and analytics
+
+## 3. BACKEND REQUIREMENTS
+
+### 3.1 Physics Engine Core
+- Implement quantum tunneling calculations with multiple theoretical models
+- Support various potential models (Morse, Yukawa, Coulomb, harmonic, etc.)
+- Calculate electron screening effects on tunneling probabilities
+- Model phonon-assisted tunneling mechanisms
+- Simulate lattice dynamics with varying parameters
+- Calculate fusion probabilities based on tunneling enhancements
+- Provide energy distribution calculations across simulation space
+
+### 3.2 Advanced Physics Models
+- Quantum coherence and resonance models
+- QED enhancement models
+- Phonon mode calculations and thermal transport models
+- Defect and impurity modeling in lattice structures
+- Stress-strain relationships in loaded lattices
+- Detailed cross-section calculations for nuclear reactions
+- Nuclear reaction pathways and energy distribution models
+- Byproduct tracking for reaction analysis
+
+### 3.3 API Endpoints
+- Quantum tunneling probability calculation endpoints
+- Parameter variation analysis endpoints (temperature, pressure, etc.)
+- Phonon dispersion and density of states calculation endpoints
+- Lattice simulation control endpoints (start, stop, reset, status)
+- Fusion process simulation endpoints
+- Visualization data generation endpoints
+- Health check and diagnostics endpoints
+
+### 3.4 Data Processing and Storage
+- Efficient algorithms for processing large datasets
+- File-based storage system for simulation results (CSV, JSON)
+- Data transformation utilities for visualization formats
+- Caching strategies for frequently accessed data
+- Memory-efficient handling of simulation state
+
+## 4. FRONTEND REQUIREMENTS
+
+### 4.1 Unified Dashboard
+- Single-page application to prevent unmounting issues
+- Tabbed interface for different functionality
+- Responsive grid layout that adapts to screen sizes
+- Persistent 3D visualization to avoid reinitialization
+- Organized parameter controls and result displays
+
+### 4.2 Parameter Controls
+- Interactive sliders with real-time updates
+- Numeric input fields with validation
+- Preset configurations for common scenarios
+- Parameter grouping by category
+- Temperature and pressure range selectors
+- Material and lattice structure selectors
+
+### 4.3 Visualization Components
+- 3D lattice visualization with Three.js
+- Multiple visualization modes (lattice structure, energy distribution, etc.)
+- Interactive camera controls (rotation, zoom, pan)
+- Color-coded representation of elements and energy states
+- Legends and scale indicators
+- Optional high-performance rendering modes
+
+### 4.4 Simulation Controls
+- Start/pause/stop/reset functionality
+- Progress tracking with time estimation
+- Status indication and feedback
+- Recording and playback of simulations
+- Simulation speed controls
+
+### 4.5 Results Display
+- Tabbed interface for different result views
+- Interactive charts for data visualization
+- Key metrics display with clear formatting
+- Data tables with sorting and filtering
+- Analysis tools and insights
+- Export functionality for simulation results
+
+### 4.6 Settings System
+- Context-based settings management
+- Persistent storage with localStorage
+- Categorized settings (appearance, visualization, simulation, physics)
+- Import/export functionality for sharing configurations
+- Default settings presets for different use cases
+
+## 5. VISUALIZATION REQUIREMENTS
+
+### 5.1 3D Lattice Visualization
+- Accurate representation of crystal lattice structures
+- Multiple lattice types (FCC, BCC, etc.)
+- Atom representation with proper scaling
+- Loading atom visualization (deuterium, hydrogen, etc.)
+- Crystal defect and vacancy visualization
+- Interactive manipulation of 3D structures
+
+### 5.2 Energy and Potential Visualization
+- Potential energy surface visualization
+- Tunneling probability distribution heatmaps
+- Cross-sectional views of potential barriers
+- Energy level visualization for quantum states
+- Animated representation of tunneling effects
+
+### 5.3 Data Visualization
+- Time-series charts for dynamically changing values
+- Probability distribution graphs
+- Energy spectrum displays
+- Temperature and pressure dependence plots
+- Comparison charts for different parameter sets
+- Interactive legends and tooltips
+
+### 5.4 Animation and Dynamic Effects
+- Simulation of atomic motion in lattice
+- Visualization of phonon propagation
+- Tunneling event animations
+- Energy transfer representations
+- Reaction rate visualizations
+
+### 5.5 Performance Optimizations
+- Level-of-detail rendering based on view distance
+- Instanced rendering for repetitive structures
+- Proper resource cleanup to prevent memory leaks
+- Canvas reuse strategies for Three.js
+- Efficient update patterns for animation
+
+## 6. USER EXPERIENCE REQUIREMENTS
+
+### 6.1 Interface Design
+- Clean, scientific aesthetic
+- Consistent styling and theming
+- Intuitive layout with logical grouping
+- Responsive design for different screen sizes
+- Accessibility considerations for diverse users
+
+### 6.2 Workflow Optimization
+- Logical progression through simulation steps
+- Quick access to frequently used features
+- Parameter presets for common scenarios
+- Contextual help and tooltips
+- Keyboard shortcuts for power users
+
+### 6.3 Error Handling
+- User-friendly error messages
+- Validation of input parameters
+- Recovery suggestions for invalid inputs
+- Graceful handling of backend errors
+- Clear status feedback for operations
+
+### 6.4 Performance
+- Responsive interface even during heavy calculations
+- Smooth 3D visualization with stable frame rates
+- Progress indicators for long-running operations
+- Optimization for typical user hardware
+- Configurable performance settings for different hardware capabilities
+
+### 6.5 Data Management
+- Import/export of simulation parameters
+- Saving and loading simulation results
+- Comparison tools for multiple simulation runs
+- Export options for charts and visualizations
+- Integration with common scientific data formats
+
+## 7. IMPLEMENTATION PHASES
+
+### 7.1 Phase 1: Initial Setup and Basic Structure
+- Environment configuration
+- Project structure and organization
+- Core physics engine implementation
+- Basic API routes setup
+- Testing framework configuration
+- Create Vite React TypeScript project
+- Configure ESLint, Prettier
+- Set up TailwindCSS
+- Configure basic project structure
+- Implement React Router
+- Create base page components with placeholders
+- Implement navigation layout
+- Create base API client with error handling
+- Implement API endpoints for core functionality
+- Add React Query for data fetching and caching
+- Implement Context providers for global state
+- Create settings persistence with localStorage
+- Set up basic theme switching
+
+### 7.2 Phase 2: Advanced Physics Modeling and Core UI Components
+- Enhanced quantum effects implementation
+- Lattice dynamics enhancements
+- Fusion process modeling
+- Comprehensive physics models integration
+- Validation against theoretical models
+- Create app shell with responsive sidebar/navigation
+- Implement header with user controls
+- Create content containers
+- Build parameter input forms with validation
+- Create sliders and numeric inputs for parameters
+- Implement simulation control buttons (start/stop/reset)
+- Add parameter presets functionality
+- Create tabbed interface for different result views
+- Implement 2D charts with Recharts
+- Build data tables for numerical results
+- Add export functionality for results data
+
+### 7.3 Phase 3: Frontend Implementation and Advanced Visualization
+- React framework setup
+- Core UI components development
+- 3D visualization integration
+- Parameter controls implementation
+- Results display components
+- Set up Three.js scene, camera, and renderer
+- Implement resource management to prevent memory leaks
+- Create camera controls (orbit, pan, zoom)
+- Build lattice structure visualization
+- Create animation for fusion processes
+- Implement visualization modes (wireframe, solid, point cloud)
+- Add legends and scale indicators
+- Create visualization control panel
+- Implement color scheme controls
+- Add camera position presets
+- Create animation speed controls
+
+### 7.4 Phase 4: Integration, Testing, and Custom Reactions
+- Full stack integration
+- API communication
+- Error handling
+- Comprehensive testing suite
+- Performance optimization
+- Create interface for custom reaction definition
+- Implement validation for physics conservation laws
+- Add visual feedback for valid/invalid configurations
+- Build saved reactions list
+- Create import/export functionality
+- Implement reaction comparison tools
+
+### 7.5 Phase 5: Deployment, Documentation, and Settings
+- Environment configuration for production
+- Performance optimization
+- Deployment automation
+- Comprehensive documentation
+- User guides and tutorials
+- Create settings interface
+- Implement theme selection
+- Add unit selection (SI, imperial)
+- Create visualization defaults
+- Add API connection settings
+- Implement logging level controls
+- Create cache management
+
+### 7.6 Phase 6: Testing and Optimization
+- Write unit tests for core components
+- Create integration tests for key workflows
+- Implement visual regression testing
+- Optimize rendering performance
+- Implement data virtualization for large datasets
+- Add memory management for 3D visualizations
+- Test in major browsers (Chrome, Firefox, Safari, Edge)
+- Fix any browser-specific issues
+
+## 8. TESTING STRATEGY
+
+### 8.1 Unit Testing
+- Backend physics calculations
+- API endpoint functionality
+- Frontend component rendering
+- Utility functions
+- State management
+
+### 8.2 Integration Testing
+- Frontend-backend communication
+- Component interaction
+- Data flow through the application
+- Error handling across boundaries
+- State synchronization
+
+### 8.3 End-to-End Testing
+- Complete user workflows
+- Simulation execution and results
+- Visualization functionality
+- Parameter manipulation and feedback
+- Data export and import
+
+### 8.4 Performance Testing
+- Rendering performance for 3D visualization
+- API response times under load
+- Memory usage during long simulations
+- UI responsiveness during calculations
+- Load testing for concurrent users
+
+### 8.5 User Acceptance Testing
+- Usability evaluation
+- Workflow efficiency
+- Error feedback clarity
+- Documentation effectiveness
+- Overall user satisfaction
+
+## 9. TECHNICAL SPECIFICATIONS
+
+### 9.1 Backend Technologies
+- Python 3.8+
+- FastAPI framework
+- NumPy, SciPy, SymPy for calculations
+- PyVista (VTK) for backend visualization processing
+- Pydantic for data validation
+- pytest for testing
+
+### 9.2 Frontend Technologies
+- React.js with TypeScript for UI components
+- Three.js for 3D visualization
+- Recharts for data visualization
+- TailwindCSS with additional component library (MUI or Chakra UI)
+- React Context API and React Query for state management
+- Jest and React Testing Library for testing
+- Vite for build tooling
+
+### 9.3 Development Environment
+- Version control with Git
+- Dependency management with pip and npm
+- Development/staging/production environments
+- Containerization with Docker (optional)
+- CI/CD pipeline for automated testing and deployment
+
+### 9.4 Deployment Requirements
+- Web server (Nginx, Apache)
+- Python environment for backend
+- Node.js environment for frontend
+- Static file serving
+- HTTPS configuration for security
+
+## 10. FUTURE ENHANCEMENTS
+
+### 10.1 Extended Physics Models
+- Additional quantum effects modeling
+- More comprehensive material property database
+- Advanced nuclear reaction pathways
+- Expanded parameter space for exploration
+- Integration of emerging LENR theories
+
+### 10.2 Enhanced Visualization
+- VR/AR integration for immersive visualization
+- Advanced particle interaction visualization
+- Real-time collaboration features
+- Custom visualization script support
+- Export to external visualization tools
+
+### 10.3 Machine Learning Integration
+- Parameter optimization with ML algorithms
+- Anomaly detection in simulation results
+- Predictive modeling for LENR effects
+- Feature extraction from simulation data
+- Model training from experimental data
+
+### 10.4 Community Features
+- User accounts and saved simulations
+- Sharing of simulation configurations
+- Discussion forums for scientific exchange
+- Integration with research publication workflows
+- Collaborative simulation environments
+
+### 10.5 Experimental Data Integration
+- Import tools for experimental datasets
+- Comparison of simulation with real-world data
+- Calibration tools for model parameters
+- Statistical analysis of simulation accuracy
+- Automated report generation
+
+## 11. BRANDING AND INTEGRATION
+
+### 11.1 Conscious.Energy Connection
+- Visual design alignment with conscious.energy
+- Cross-linking between platforms
+- Shared user base (future)
+- Consistent messaging and branding
+- Integrated analytics
+
+### 11.2 Licensing and Distribution
+- MIT License for open-source components
+- Clear attribution requirements
+- Contribution guidelines
+- Version tracking and changelog
+- Distribution channels
+
+## 12. METRICS AND SUCCESS CRITERIA
+
+### 12.1 Technical Performance Metrics
+- API response time < 500ms for standard operations
+- Frontend rendering at 30+ FPS for 3D visualization
+- Memory usage < 2GB for standard simulations
+- Test coverage > 85% for critical components
+- Error rate < 0.1% for typical operations
+
+### 12.2 User Experience Metrics
+- Task completion time for standard workflows
+- User satisfaction ratings
+- Feature utilization metrics
+- Documentation effectiveness
+- Learning curve assessment
+
+### 12.3 Scientific Metrics
+- Accuracy compared to theoretical models
+- Precision and reproducibility of results
+- Parameter space coverage
+- Alignment with experimental data
+- Publication-ready output quality
+
+## 13. IMPLEMENTATION PRIORITIES
+
+### 13.1 Must-Have Features (P0)
+- Core quantum tunneling calculations
+- Basic lattice visualization
+- Parameter controls for essential variables
+- Results display with basic charts
+- Data export functionality
+- API endpoints for core physics calculations
+- Responsive UI that works on desktop and tablet
+- Simulation parameter configuration
+- Backend API integration
+- Real-time visualization updates
+- 2D graph visualization of results
+- 3D model visualization with Three.js
+- Results data tables with filtering
+- Theme switching (light/dark mode)
+- Resource cleanup for Three.js components
+
+### 13.2 High Priority Features (P1)
+- Enhanced physics models (electron screening, phonon modes)
+- Interactive 3D visualization with multiple modes
+- Advanced parameter exploration tools
+- Comprehensive results analysis
+- Simulation controls with playback
+- Error handling and validation
+
+### 13.3 Medium Priority Features (P2)
+- Additional visualization modes
+- Performance optimizations
+- Advanced data export options
+- Preset management
+- Expanded physics model coverage
+- Enhanced UI/UX improvements
+
+### 13.4 Future Considerations (P3)
+- Machine learning integration
+- Community features
+- VR/AR visualization
+- Advanced experimental data integration
+- Collaborative simulation environments 

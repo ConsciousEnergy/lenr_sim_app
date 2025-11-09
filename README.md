@@ -1,158 +1,249 @@
 # LENR Simulation Application
 
-An interactive scientific application for simulating Low Energy Nuclear Reaction (LENR) phenomena and quantum tunneling effects.
+A comprehensive application for simulating Low Energy Nuclear Reaction (LENR) phenomena with advanced physics models, multi-physics coupling, and interactive 3D visualizations.
 
-## Overview
+## Project Organization
 
-This application provides a comprehensive suite of tools for simulating and visualizing quantum tunneling phenomena related to LENR (Low Energy Nuclear Reactions). The application consists of:
+This repository contains multiple versions of the LENR Simulation Application:
 
-- **Backend**: FastAPI-based Python server for physics calculations and data processing
-- **Frontend**: React-based user interface with consolidated dashboard for visualization and simulation
+### 📁 LENR_SIM_APP_v2 (Current Development - **START HERE**)
 
-## Key Features
+**Status**: ✅ Active Development  
+**Recommended for**: All new development and usage
 
-- **Unified Dashboard**: Single-page interface integrating all simulation features to prevent unmounting issues
-- **Interactive Simulations**: Adjust quantum tunneling parameters in real-time with intuitive sliders and inputs
-- **Advanced Visualizations**: Explore 3D lattice structures using Three.js with multiple visualization modes
-- **Memory-Optimized Rendering**: Three.js integration with optimized resource management
-- **Data Visualization**: Interactive charts and graphs for simulation results using Recharts
-- **Parameter Exploration**: Test different potential models and configurations
-- **Real-time Feedback**: Immediate visual feedback when changing simulation parameters
-- **Centralized Settings Management**: Context-based settings system with persistent storage
-- **Responsive Design**: Fully responsive interface that works on desktop and tablets
-- **Conscious.Energy Integration**: Links and branding connection to conscious.energy
+The latest and most comprehensive version with:
+- Advanced multi-physics coupling (thermal, nuclear, electromagnetic)
+- Complete FEM implementation
+- Comprehensive physics models (quantum tunneling, electron screening, phonon interactions)
+- Full-featured React frontend with Three.js 3D visualizations
+- Task management system
+- Extensive API and test suite
 
-## Project Structure
+👉 **[Go to v2 README](LENR_SIM_APP_v2/README.md)** for installation and usage instructions.
 
-```
-LENR_SIM_APP/
-├── backend/               # FastAPI server and physics engine
-│   ├── app/               # Application code
-│   │   ├── physics/       # Physics models and calculations
-│   │   ├── routers/       # API endpoints
-│   │   ├── services/      # Business logic
-│   │   └── utils/         # Helper functions
-│   └── tests/             # Backend test suite
-├── frontend/              # React application
-│   ├── public/            # Static assets
-│   └── src/               # React components and state management
-│       ├── components/    # Reusable UI components
-│       ├── contexts/      # React contexts for state management
-│       │   ├── AppSettingsContext.js  # Centralized settings management
-│       │   ├── LogContext.js          # Logging system
-│       │   └── ThrottleContext.js     # Performance throttling
-│       ├── models/        # Physics models for simulation
-│       ├── utils/         # Utility functions and helpers
-│       │   ├── threeCleanup.js   # Three.js resource management
-│       │   └── errorReporter.js  # Error handling system
-│       ├── pages/         # Application pages
-│       └── debug/         # Debugging tools and testers
-│           └── SettingsPage.js   # Settings interface
-├── start_app.ps1          # Windows PowerShell script to start both servers
-└── logs/                  # Application logs
-```
+### 📁 LENR_SIM_APP_v1 (Legacy/Stable)
 
-## Getting Started
+**Status**: 🔒 Archived  
+**Recommended for**: Reference only
 
-### Prerequisites
+The original stable version, kept for:
+- Historical reference
+- Legacy compatibility
+- Comparison with v2 improvements
 
-- Python 3.8+
-- Node.js 14+
-- npm or yarn
+This version is **not actively maintained** but remains functional.
 
-### Starting the Application
+## Quick Start
 
-#### On Windows:
-```powershell
-.\start_app.ps1
-```
-
-This will:
-1. Create a virtual environment if one doesn't exist
-2. Install backend dependencies
-3. Start the FastAPI backend server
-4. Install frontend dependencies
-5. Start the React development server
-
-### Running Tests
+### For New Users
 
 ```bash
-cd backend
-pytest
+cd LENR_SIM_APP_v2
 ```
 
-## Components
+Then follow the instructions in [LENR_SIM_APP_v2/README.md](LENR_SIM_APP_v2/README.md)
 
-### Backend
+### Windows Quick Start
 
-- **Physics Engine**: Calculate quantum tunneling probabilities, energy levels, and lattice interactions
-- **FastAPI Endpoints**: RESTful API for interacting with the physics engine
-- **Data Processing**: Process and analyze simulation results
+```batch
+cd LENR_SIM_APP_v2
+start_app.bat
+```
 
-### Frontend
+### Linux/Mac Quick Start
 
-- **Unified Dashboard**: Main interface with persistent 3D visualization and tabbed interface
-- **Parameter Panel**: Interactive controls for adjusting simulation parameters
-- **Results Panel**: Display simulation results with interactive charts
-- **Memory-Optimized Visualization**: 3D rendering with proper resource cleanup
-- **Error Handling System**: Comprehensive error capturing and reporting
-- **Settings Management**: Centralized context-based settings with persistence
+```bash
+cd LENR_SIM_APP_v2
+chmod +x start_app.sh  # First time only
+./start_app.sh
+```
 
-## Architecture Improvements
+## Feature Comparison
 
-### Three.js Memory Management
-The application implements robust Three.js resource management to prevent memory leaks:
-- Proper cleanup of geometries, materials, and textures
-- React-safe handling of Three.js DOM elements
-- Detached DOM containers to prevent React-Three.js conflicts
-
-### Consolidated Dashboard
-A single-page dashboard approach with tabs for different features:
-- Simulation controls alongside visualization
-- Results analysis with charts
-- Configuration options
-- Persistent visualization component to avoid unmounting/remounting cycles
-
-### Centralized Settings System
-The application uses a context-based settings management system:
-- Persistent storage using localStorage
-- Categorized settings for appearance, visualization, simulation, and LENR physics
-- Real-time application of settings across components
-- Import/export functionality for sharing configurations
-- Robust error handling and defaults
+| Feature | v1 | v2 |
+|---------|----|----|
+| Basic Physics Models | ✅ | ✅ |
+| Advanced Physics (QED, Rydberg, etc.) | ❌ | ✅ |
+| Multi-Physics Coupling | ❌ | ✅ |
+| FEM Simulation | Basic | Advanced |
+| 3D Visualization | Basic | Advanced (Three.js) |
+| Real-time Data Streaming | ❌ | ✅ |
+| Custom Reactions | ❌ | ✅ |
+| Task Management System | ❌ | ✅ |
+| Comprehensive Test Suite | Partial | Complete |
+| API Documentation | Basic | Extensive |
+| Performance Optimization | Basic | Advanced |
 
 ## Documentation
 
-For more information, see:
-- `DEV_PLAN.md`: Development roadmap and implementation status
-- `PROGRESS_SUMMARY.md`: Summary of completed work and next steps
+### Essential Documentation
 
-## Recent Improvements
+- **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Initial setup guide
+- **[SECURITY.md](SECURITY.md)** - Security practices
+- **[REORGANIZATION_PLAN.md](REORGANIZATION_PLAN.md)** - Project reorganization details
 
-### Backend Optimization
-- **Improved Parameter Handling**: Enhanced the `PotentialParameters` class with proper copy methods to prevent reference errors
-- **Updated API Signatures**: Standardized function signatures in the tunneling engine to use `PotentialParameters` objects
-- **Memory Management**: Optimized memory usage in physics calculations and heatmap generation
-- **Error Handling**: Improved error catching and reporting across backend services
+### Version-Specific Documentation
 
-### Testing Enhancements
-- **Comprehensive Test Coverage**: All tests (unit, integration, and end-to-end) are now passing with 85%+ coverage
-- **Visualization Tests**: Added robust tests for heatmap generation and visualization components
-- **Edge Case Handling**: Improved test cases to handle error conditions and edge cases
+#### v2 Documentation (Recommended)
+- [v2 README](LENR_SIM_APP_v2/README.md) - Complete v2 guide
+- [Development Plan](LENR_SIM_APP_v2/DEV_PLAN.md) - Roadmap and status
+- [Development Status](LENR_SIM_APP_v2/DEVELOPMENT_STATUS.md) - Current progress
+- [Test Plan](LENR_SIM_APP_v2/TEST_PLAN.md) - Testing strategy
+- [API Documentation](LENR_SIM_APP_v2/docs/api/) - API reference
+- [Tutorials](LENR_SIM_APP_v2/docs/tutorials/) - Usage guides
 
-### Documentation
-- **Updated Development Plan**: Revised development plan with current implementation status
-- **Progress Tracking**: Enhanced progress summary with recent achievements
-- **Code Comments**: Improved inline documentation for complex physics calculations
+#### v1 Documentation (Legacy)
+- [v1 README](LENR_SIM_APP_v1/README.md) - v1 guide (archived)
+
+## Architecture Overview
+
+### LENR_SIM_APP_v2 Architecture
+
+```
+┌─────────────────────────────────────────┐
+│     React Frontend (Port 3000)          │
+│  - Parameter Controls                   │
+│  - 3D Visualizations (Three.js)         │
+│  - Real-time Results Display            │
+└──────────────┬──────────────────────────┘
+               │ REST API / WebSocket
+┌──────────────┴──────────────────────────┐
+│    FastAPI Backend (Port 8000)          │
+│  - Physics Engine API                   │
+│  - Multi-Physics Coupling               │
+│  - Data Streaming                       │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────┴──────────────────────────┐
+│         Physics Core                    │
+│  ┌─────────────────────────────────┐   │
+│  │  Unified LENR Solver            │   │
+│  │  - Lattice Dynamics             │   │
+│  │  - Fusion Processor             │   │
+│  │  - Enhancement Calculator       │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  ┌─────────────────────────────────┐   │
+│  │  Multi-Physics Coupling         │   │
+│  │  - Thermal Domain               │   │
+│  │  - Nuclear Domain               │   │
+│  │  - EM Domain                    │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  ┌─────────────────────────────────┐   │
+│  │  Physics Models                 │   │
+│  │  - Quantum Tunneling            │   │
+│  │  - Electron Screening           │   │
+│  │  - Phonon Interactions          │   │
+│  │  - FEM Solver                   │   │
+│  │  - And more...                  │   │
+│  └─────────────────────────────────┘   │
+└─────────────────────────────────────────┘
+```
+
+## Migration from v1 to v2
+
+If you're currently using v1 and want to upgrade:
+
+1. **Back up your v1 data and configuration**
+2. **Set up v2 following the [v2 README](LENR_SIM_APP_v2/README.md)**
+3. **Review the v2 API changes** in the API documentation
+4. **Update your simulation parameters** to use v2's enhanced models
+5. **Test thoroughly** before decommissioning v1
+
+Note: v1 configuration files are not directly compatible with v2. You'll need to manually transfer your settings.
+
+## Requirements
+
+### System Requirements
+- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
+- **RAM**: 8GB minimum, 16GB recommended
+- **CPU**: Multi-core processor recommended for parallel simulations
+- **GPU**: WebGL-capable graphics for 3D visualizations
+
+### Software Requirements
+- **Python**: 3.8 or higher
+- **Node.js**: 14.x or higher  
+- **npm**: 6.x or higher
+
+## Development
+
+### Contributing
+
+1. **Choose the right version**:
+   - All new development should target v2
+   - v1 accepts only critical bug fixes
+
+2. **Follow the development workflow**:
+   ```bash
+   cd LENR_SIM_APP_v2
+   node scripts/dev.js list  # See available tasks
+   node scripts/dev.js next  # Get next task to work on
+   ```
+
+3. **Test your changes**:
+   ```bash
+   # Backend tests
+   cd LENR_SIM_APP_v2/backend
+   pytest
+
+   # Frontend tests
+   cd LENR_SIM_APP_v2/frontend
+   npm test
+   ```
+
+4. **Submit a pull request** with clear description of changes
+
+### Development Tools
+
+v2 includes a comprehensive task management system:
+
+```bash
+cd LENR_SIM_APP_v2
+node scripts/dev.js --help  # See all available commands
+```
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details
 
 ## Acknowledgments
 
-See `CONTRIBUTORS.md` for a list of contributors to the project. 
+- Contributors to the LENR research community
+- FastAPI, React, and Three.js communities
+- All open-source contributors
 
-## Branded Connection
+## Support
 
-This application is associated with [conscious.energy](https://conscious.energy), featuring shared branding and integration. 
+### Getting Help
+
+1. **Check the documentation**:
+   - Start with [v2 README](LENR_SIM_APP_v2/README.md)
+   - Review [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
+   - Check [v2 docs](LENR_SIM_APP_v2/docs/)
+
+2. **Common Issues**:
+   - See troubleshooting section in [v2 README](LENR_SIM_APP_v2/README.md#troubleshooting)
+
+3. **Report Issues**:
+   - Open an issue on GitHub
+   - Include version number, OS, and error logs
+
+## Project Status
+
+- **v2**: ✅ Active Development (55% complete)
+- **v1**: 🔒 Archived (Maintenance only)
+
+Current v2 development focus:
+- Completing 3D visualization components
+- Enhancing custom reaction support
+- Performance optimization
+- Documentation improvements
+
+For detailed status, see [v2 Development Status](LENR_SIM_APP_v2/DEVELOPMENT_STATUS.md)
+
+---
+
+**Recommended Version**: [LENR_SIM_APP_v2](LENR_SIM_APP_v2/)  
+**Last Updated**: November 2025  
+**Maintainers**: See CONTRIBUTORS.md in each version

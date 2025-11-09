@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useLogger } from './LogContext';
 
 // Create settings context
@@ -78,11 +78,6 @@ export const AppSettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(JSON.parse(JSON.stringify(defaultSettings)));
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
-
   // Load settings from localStorage
   const loadSettings = useCallback(() => {
     try {
@@ -114,6 +109,12 @@ export const AppSettingsProvider = ({ children }) => {
       setIsLoaded(true);
     }
   }, [logger]);
+
+  // Load settings from localStorage on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   // Save settings to localStorage
   const saveSettings = (newSettings) => {

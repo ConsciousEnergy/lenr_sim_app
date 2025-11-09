@@ -1,55 +1,42 @@
-/* App.css - LENR Simulation App styling */
+/* App.css - Main application styles */
 
-body {
-  margin: 0;
+/* Global styles are primarily handled by Tailwind CSS */
+/* This file is for any application-specific styles that aren't covered by Tailwind */
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Basic animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Screen reader only utility class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-}
-
-.app-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.app-header {
-  text-align: center;
-  padding: 1.5rem 0;
-}
-
-.app-title {
-  color: #6200EA;
-  font-weight: 700;
-}
-
-.status-indicator {
-  margin: 1rem 0;
-  font-size: 1rem;
-}
-
-.status-indicator.connected {
-  color: #00C853;
-}
-
-.status-indicator.error {
-  color: #D50000;
-}
-
-.status-indicator.warning {
-  color: #FF6D00;
-}
-
-.hero-section {
-  padding: 2rem;
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.content-section {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  margin: 2rem auto;
-  padding: 2rem;
-  max-width: 1200px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 } 

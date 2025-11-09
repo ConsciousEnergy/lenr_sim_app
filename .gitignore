@@ -1,101 +1,64 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-*.manifest
-*.spec
-
-# Environments
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-backend-env/
-frontend-env/
-*-env/
-
 # Logs
-logs/
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+dev-debug.log
 
-# React/Node
+# Dependency directories
 node_modules/
-.npm
-.node_repl_history
-coverage/
-.next/
-out/
-.nuxt
 
-# IDEs and editors
-.idea/
-.vscode/
-*.swp
-*.swo
+# Environment variables
+.env
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
 .DS_Store
-.DS_Store?
-._*
 
-# FastAPI
-.pytest_cache/
+# Task files
+tasks.json
+tasks/
+
+# Python virtual environments
+venv/
+backend-env/
+env/
+ENV/
+*.pyc
+__pycache__/
+
+# Python egg files
+*.egg-info/
+.eggs/
+setup.py
+
+# Distribution / packaging
+dist/
+build/
+
+# Testing
 .coverage
 htmlcov/
+.pytest_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# IDE
+.cursor/
+.cursorindexingignore
+.specstory/
 
-# VTK and visualization files
-*.vtk
-*.vtu
-static/cluster_fields/*.vtk
-static/cluster_fields/*.json
+# Output directories
+output/
+backend/output/
 
-# Database
-*.sqlite3
-*.db
-
-# Misc
-.directory
-.bashrc
-.dockerignore
-backup/
-todo.txt
-temp/
-test-results.xml
-TODO.md
-NOTES.md
-
-# Keep the placeholder files in static
-!static/cluster_fields/.gitkeep
-
-# Generated files
-backend/static/cluster_fields/*
-!backend/static/cluster_fields/.gitkeep
-frontend/build/ 
+# Cache
+.cache/
+*.cache 

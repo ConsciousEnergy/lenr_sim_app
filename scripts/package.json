@@ -1,0 +1,21 @@
+{
+  "name": "task-master-scripts",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Scripts for task-master task management",
+  "main": "dev.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.1.0",
+    "dotenv": "^16.5.0",
+    "figlet": "^1.8.1",
+    "gradient-string": "^3.0.0",
+    "openai": "^4.93.0",
+    "ora": "^8.2.0"
+  }
+}

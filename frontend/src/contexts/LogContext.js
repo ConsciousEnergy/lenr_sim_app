@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import logger from '../utils/logger';
-import api from '../utils/api';
 
 // Create the log context
 const LogContext = createContext(logger);
@@ -71,7 +70,7 @@ export const LogProvider = ({
         const isAvailable = await checkBackendWithoutErrors();
         if (isAvailable !== backendAvailable) {
           setBackendAvailable(isAvailable);
-          console.warn(`Backend availability changed to: ${isAvailable ? 'available' : 'unavailable'}`);
+          console.log(`Backend availability changed to: ${isAvailable ? 'available' : 'unavailable'}`);
         }
       }, 60000); // Check every minute
     }
@@ -84,7 +83,8 @@ export const LogProvider = ({
   }, [enableRemote, backendAvailable]);
   
   // Initialize logger with provided config
-  useEffect(() => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
     const defaultConfig = {
       level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
       enableConsole: true,

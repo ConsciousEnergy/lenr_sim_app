@@ -1,0 +1,305 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Paper,
+  Alert,
+  Grid,
+  Divider,
+  Chip,
+  Button,
+  useTheme,
+  CircularProgress,
+  Snackbar
+} from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import DownloadIcon from '@mui/icons-material/Download';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+
+// Import our custom components
+import BubbleFusionVisualizer from '../components/visualization/BubbleFusionVisualizer';
+import BubbleFusionParameterControls from '../components/controls/BubbleFusionParameterControls';
+
+const BubbleFusionPage = () => {
+  const theme = useTheme();
+  
+  // State for simulation parameters
+  const [parameters, setParameters] = useState({
+    // Bubble parameters
+    initialRadius: 10.0, // μm
+    drivingPressureAmplitude: 1.2, // bar
+    frequency: 20, // kHz
+    ambientPressure: 1.0, // bar
+    ambientTemperature: 298, // K
+    fluidType: 'water',
+    
+    // Gas parameters
+    gasType: 'deuterium',
+    gasFraction: 0.8, // fraction of dissolved gas
+    
+    // Visualization options
+    showPressureField: true,
+    showTemperatureField: true,
+    showCollapse: true,
+    
+    // Simulation parameters
+    timeStepSize: 1.0, // ns
+    totalSimulationTime: 1.0 // μs
+  });
+  
+  // State for calculation results
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('success');
+  
+  // Handle parameter changes
+  const handleParameterChange = useCallback((newParams) => {
+    setParameters(prevParams => ({
+      ...prevParams,
+      ...newParams
+    }));
+  }, []);
+  
+  // Run simulation
+  const runSimulation = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock results - this would come from the backend in a real implementation
+      const mockResults = {
+        maxTemperature: 10000 + Math.random() * 5000, // K
+        maxPressure: 1000 + Math.random() * 500, // bar
+        minRadius: 0.1 + Math.random() * 0.5, // μm
+        collapseTime: 1e-7 + Math.random() * 1e-7, // s
+        energyRelease: 1e-12 + Math.random() * 1e-12, // J
+        fusionProbability: 1e-20 + Math.random() * 1e-20,
+        enhancementFactor: 1e12 + Math.random() * 1e12,
+        neutronYield: Math.random() < 0.5 ? 0 : Math.random() * 100 // neutrons per collapse
+      };
+      
+      setResults(mockResults);
+      setAlertMessage('Simulation completed successfully');
+      setAlertSeverity('success');
+      setAlertOpen(true);
+    } catch (err) {
+      setError(err.message || 'An error occurred during simulation');
+      setAlertMessage('Simulation failed: ' + (err.message || 'Unknown error'));
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [parameters]);
+  
+  // Handle probability calculation from visualizer
+  const handleProbabilityCalculated = useCallback((probability) => {
+    if (!results) {
+      // If we don't have full results yet, create a partial result
+      setResults(prev => ({
+        ...prev,
+        fusionProbability: probability,
+        enhancementFactor: Math.exp(-10 / parameters.drivingPressureAmplitude) * 1e12
+      }));
+    }
+  }, [parameters.drivingPressureAmplitude, results]);
+  
+  // Download results as JSON
+  const handleDownloadResults = () => {
+    if (!results) return;
+    
+    const data = {
+      parameters,
+      results,
+      timestamp: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bubble-fusion-data-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  
+  const handleCloseAlert = () => {
+    setAlertOpen(false);
+  };
+  
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Acoustic Cavitation Fusion Simulation
+        </Typography>
+        <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+          Interactive simulation of sonofusion (bubble fusion) phenomenon
+        </Typography>
+        <Divider sx={{ my: 2 }} />
+      </Box>
+      
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <BubbleFusionParameterControls 
+            initialValues={parameters}
+            onChange={handleParameterChange}
+          />
+          
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
+            onClick={runSimulation}
+            disabled={isLoading}
+            fullWidth
+            sx={{ mt: 2 }}
+          >
+            {isLoading ? 'Running...' : 'Run Simulation'}
+          </Button>
+          
+          {results && (
+            <Paper sx={{ p: 2, mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Simulation Results
+              </Typography>
+              
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Maximum Temperature:
+                </Typography>
+                <Typography variant="h6" color="primary">
+                  {results.maxTemperature?.toLocaleString() || 'N/A'} K
+                </Typography>
+              </Box>
+              
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Maximum Pressure:
+                </Typography>
+                <Typography variant="h6" color="primary">
+                  {results.maxPressure?.toLocaleString() || 'N/A'} bar
+                </Typography>
+              </Box>
+              
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Minimum Radius:
+                </Typography>
+                <Typography variant="h6" color="primary">
+                  {results.minRadius?.toFixed(3) || 'N/A'} μm
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ my: 1 }} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Fusion Parameters:
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                <Chip 
+                  label={`Enhancement: ${results.enhancementFactor?.toExponential(2) || 'N/A'}x`} 
+                  color="primary" 
+                  size="small" 
+                  variant="outlined"
+                />
+                <Chip 
+                  label={`Probability: ${results.fusionProbability?.toExponential(2) || 'N/A'}`} 
+                  color="secondary" 
+                  size="small" 
+                  variant="outlined"
+                />
+                {results.neutronYield !== undefined && (
+                  <Chip 
+                    label={`Neutrons: ${results.neutronYield?.toFixed(2) || '0'}/collapse`} 
+                    color={results.neutronYield > 0 ? "success" : "default"} 
+                    size="small"
+                  />
+                )}
+              </Box>
+              
+              <Button 
+                variant="outlined" 
+                startIcon={<DownloadIcon />} 
+                size="small"
+                onClick={handleDownloadResults}
+                fullWidth
+                sx={{ mt: 2 }}
+              >
+                Download Results
+              </Button>
+            </Paper>
+          )}
+          
+          <Paper sx={{ p: 2, mt: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <InfoOutlinedIcon color="info" sx={{ mr: 1 }} />
+              <Typography variant="subtitle2">
+                About Bubble Fusion
+              </Typography>
+            </Box>
+            <Typography variant="body2" paragraph>
+              Bubble fusion (sonofusion) is a proposed form of nuclear fusion that uses acoustic waves to 
+              induce rapid compression and heating of gas bubbles in a liquid. This creates extreme conditions 
+              inside the collapsing bubbles that may potentially overcome the Coulomb barrier for fusion.
+            </Typography>
+            <Typography variant="body2">
+              When bubbles collapse, temperatures can briefly reach millions of degrees and pressures can 
+              exceed thousands of atmospheres. This phenomena, called sonoluminescence when light is emitted, 
+              might create conditions suitable for nuclear fusion reactions under specific circumstances.
+            </Typography>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <BubbleFusionVisualizer
+              initialRadius={parameters.initialRadius}
+              drivingPressureAmplitude={parameters.drivingPressureAmplitude}
+              frequency={parameters.frequency}
+              showPressureField={parameters.showPressureField}
+              showTemperatureField={parameters.showTemperatureField}
+              showCollapse={parameters.showCollapse}
+              width={800}
+              height={500}
+              onRenderComplete={handleProbabilityCalculated}
+            />
+            
+            <Box sx={{ mt: 2 }}>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  This simulation models acoustic cavitation using the Rayleigh-Plesset equation modified to account
+                  for compressibility effects. The model calculates conditions inside the bubble at the moment of collapse
+                  and estimates fusion probabilities based on the achieved temperatures and pressures.
+                </Typography>
+              </Alert>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+      
+      <Snackbar
+        open={alertOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseAlert} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
+    </Container>
+  );
+};
+
+export default BubbleFusionPage; 

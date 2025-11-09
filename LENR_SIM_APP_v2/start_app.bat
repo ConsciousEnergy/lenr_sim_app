@@ -1,0 +1,41 @@
+@echo off
+echo ========================================
+echo Starting LENR Simulation App v2
+echo ========================================
+echo.
+
+REM Check if backend virtual environment exists
+if not exist "backend\venv" (
+    echo Creating backend virtual environment...
+    cd backend
+    python -m venv venv
+    cd ..
+)
+
+REM Start Backend
+echo Starting Backend Server...
+start cmd /k "cd backend && venv\Scripts\activate && pip install -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+REM Wait a moment for backend to start
+timeout /t 5 /nobreak > nul
+
+REM Start Frontend
+echo Starting Frontend Development Server...
+start cmd /k "cd frontend && npm install --legacy-peer-deps && npm start"
+
+echo.
+echo ========================================
+echo Application is starting...
+echo ========================================
+echo.
+echo Backend will run on: http://localhost:8000
+echo Frontend will run on: http://localhost:3000
+echo.
+echo API Documentation: http://localhost:8000/api/docs
+echo.
+echo Test Pages:
+echo - Visualization Test: http://localhost:3000/visualization-test
+echo - Simulation Dashboard: http://localhost:3000/dashboard
+echo.
+echo Press any key to exit this window (servers will keep running)...
+pause > nul

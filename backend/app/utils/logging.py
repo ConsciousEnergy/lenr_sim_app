@@ -60,4 +60,16 @@ def setup_logger(
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     
-    return logger 
+    return logger
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Get a configured logger by name
+    
+    Args:
+        name: Logger name
+        
+    Returns:
+        Logger instance
+    """
+    return logging.getLogger(name) 
