@@ -383,3 +383,181 @@ async def get_available_reactions():
         })
     return {"reactions": reactions}
 
+
+# ============================================================================
+# LENR ENHANCEMENT ENDPOINTS
+# ============================================================================
+
+class LENREnhancementRequest(BaseModel):
+    """Request for LENR enhancement calculation."""
+    energy_kev: float = Field(default=0.025, description="Collision energy (keV)")
+    temperature_k: float = Field(default=300.0, description="Temperature (K)")
+    loading_ratio: float = Field(default=0.8, description="H/M loading ratio")
+    material: str = Field(default="palladium", description="Host material")
+    defect_density: float = Field(default=0.01, description="Defect density fraction")
+    mechanisms: Optional[List[str]] = Field(default=None, description="Enhancement mechanisms to include")
+
+
+class LENREnhancementResponse(BaseModel):
+    """Response from LENR enhancement calculation."""
+    total_enhancement: float
+    individual_factors: Dict[str, float]
+    dominant_mechanism: str
+    parameters: Dict[str, Any]
+    warnings: List[str]
+
+
+@router.post("/lenr-enhancement", response_model=LENREnhancementResponse)
+async def calculate_lenr_enhancement_endpoint(request: LENREnhancementRequest):
+    """
+    Calculate LENR enhancement factors from multiple mechanisms.
+    
+    Enhancement mechanisms include:
+    - Electron screening
+    - Phonon-assisted tunneling
+    - Heavy electron effects
+    - Coherent multi-body effects
+    - Loading ratio enhancement
+    - Defect enhancement
+    - Electromagnetic field effects
+    """
+    try:
+        from ..physics.lenr_enhancement import calculate_lenr_enhancement
+        
+        result = calculate_lenr_enhancement(
+            energy_kev=request.energy_kev,
+            temperature_k=request.temperature_k,
+            loading_ratio=request.loading_ratio,
+            material=request.material,
+            defect_density=request.defect_density,
+            mechanisms=request.mechanisms
+        )
+        
+        return LENREnhancementResponse(
+            total_enhancement=result["total_enhancement"],
+            individual_factors=result["individual_factors"],
+            dominant_mechanism=result["dominant_mechanism"],
+            parameters=result["parameters"],
+            warnings=result["warnings"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LENR calculation error: {str(e)}")
+
+
+class LENRReactionRateRequest(BaseModel):
+    """Request for LENR reaction rate calculation."""
+    temperature_k: float = Field(default=300.0, description="Temperature (K)")
+    loading_ratio: float = Field(default=0.85, description="H/M loading ratio")
+    material: str = Field(default="palladium", description="Host material")
+    defect_density: float = Field(default=0.01, description="Defect density fraction")
+    volume_cm3: float = Field(default=1.0, description="Sample volume (cm³)")
+    include_enhancements: bool = Field(default=True, description="Include enhancement factors")
+
+
+@router.post("/lenr-reaction-rate")
+async def calculate_lenr_reaction_rate_endpoint(request: LENRReactionRateRequest):
+    """Calculate LENR reaction rate with all enhancements."""
+    try:
+        from ..physics.lenr_enhancement import calculate_lenr_reaction_rate
+        
+        result = calculate_lenr_reaction_rate(
+            temperature_k=request.temperature_k,
+            loading_ratio=request.loading_ratio,
+            material=request.material,
+            defect_density=request.defect_density,
+            volume_cm3=request.volume_cm3,
+            include_enhancements=request.include_enhancements
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LENR rate calculation error: {str(e)}")
+
+
+@router.get("/lenr-enhancement/mechanisms")
+async def get_enhancement_mechanisms():
+    """Get list of available enhancement mechanisms."""
+    return {
+        "mechanisms": [
+            {"id": "electron_screening", "name": "Electron Screening", "description": "Conduction electron screening of nuclear charges"},
+            {"id": "phonon_assisted", "name": "Phonon-Assisted Tunneling", "description": "Lattice phonons provide energy for tunneling"},
+            {"id": "heavy_electron", "name": "Heavy Electron Effects", "description": "Enhanced electron mass in condensed matter"},
+            {"id": "coherent_multi_body", "name": "Coherent Multi-Body", "description": "Coherent effects at high loading"},
+            {"id": "loading_ratio", "name": "Loading Ratio", "description": "Hydrogen concentration effects"},
+            {"id": "defect_enhancement", "name": "Defect Enhancement", "description": "Crystal defects and nanostructure effects"},
+            {"id": "electromagnetic_field", "name": "EM Field Enhancement", "description": "External field effects"}
+        ]
+    }
+
+
+# ============================================================================
+# BUBBLE FUSION ENDPOINTS
+# ============================================================================
+
+class BubbleFusionRequest(BaseModel):
+    """Request for bubble fusion simulation."""
+    initial_radius_um: float = Field(default=10.0, description="Initial bubble radius (μm)")
+    acoustic_pressure_bar: float = Field(default=1.2, description="Acoustic pressure amplitude (bar)")
+    frequency_khz: float = Field(default=20.0, description="Acoustic frequency (kHz)")
+    ambient_pressure_bar: float = Field(default=1.0, description="Ambient pressure (bar)")
+    ambient_temperature_k: float = Field(default=298.0, description="Ambient temperature (K)")
+    fluid_type: str = Field(default="water", description="Working fluid type")
+    gas_type: str = Field(default="deuterium", description="Bubble gas type")
+    gas_fraction: float = Field(default=0.8, description="Fraction of fusible gas")
+
+
+@router.post("/bubble-fusion")
+async def simulate_bubble_fusion_endpoint(request: BubbleFusionRequest):
+    """
+    Simulate acoustic cavitation (bubble) fusion.
+    
+    Calculates bubble dynamics using Rayleigh-Plesset approximation
+    and estimates peak conditions and fusion probability during collapse.
+    """
+    try:
+        from ..physics.bubble_fusion import simulate_bubble_fusion
+        
+        result = simulate_bubble_fusion(
+            initial_radius_um=request.initial_radius_um,
+            acoustic_pressure_bar=request.acoustic_pressure_bar,
+            frequency_khz=request.frequency_khz,
+            ambient_pressure_bar=request.ambient_pressure_bar,
+            ambient_temperature_k=request.ambient_temperature_k,
+            fluid_type=request.fluid_type,
+            gas_type=request.gas_type,
+            gas_fraction=request.gas_fraction
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bubble fusion simulation error: {str(e)}")
+
+
+@router.get("/bubble-fusion/defaults")
+async def get_bubble_fusion_defaults():
+    """Get default parameters and available options for bubble fusion."""
+    return {
+        "defaults": {
+            "initial_radius_um": 10.0,
+            "acoustic_pressure_bar": 1.2,
+            "frequency_khz": 20.0,
+            "ambient_pressure_bar": 1.0,
+            "ambient_temperature_k": 298.0,
+            "fluid_type": "water",
+            "gas_type": "deuterium",
+            "gas_fraction": 0.8
+        },
+        "options": {
+            "fluid_types": ["water", "d2o", "acetone", "d_acetone"],
+            "gas_types": ["air", "argon", "deuterium", "xenon"]
+        },
+        "limits": {
+            "initial_radius_um": {"min": 0.1, "max": 1000},
+            "acoustic_pressure_bar": {"min": 0.1, "max": 100},
+            "frequency_khz": {"min": 1, "max": 1000},
+            "gas_fraction": {"min": 0, "max": 1}
+        }
+    }
