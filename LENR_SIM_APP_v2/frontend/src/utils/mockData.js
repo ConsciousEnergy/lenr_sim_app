@@ -86,15 +86,134 @@ export const mockDelay = (ms = 500) => {
 };
 
 /**
- * Alias for mockSimulationResults (for backwards compatibility)
+ * Generate particles for a single time step
  */
-export const mockFusionSimulation = mockSimulationResults;
+const generateParticles = (count, parameters = {}) => {
+  const particleTypes = ['deuterium', 'tritium', 'helium', 'proton', 'electron'];
+  const particles = [];
+  
+  for (let i = 0; i < count; i++) {
+    const type = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+    particles.push({
+      x: (Math.random() - 0.5) * 8,
+      y: (Math.random() - 0.5) * 8,
+      z: (Math.random() - 0.5) * 8,
+      type: type,
+      energy: Math.random() * 10 + 0.1
+    });
+  }
+  
+  return particles;
+};
+
+/**
+ * Generate hotspots for a single time step
+ */
+const generateHotspots = (count) => {
+  const hotspots = [];
+  
+  for (let i = 0; i < count; i++) {
+    hotspots.push({
+      x: (Math.random() - 0.5) * 6,
+      y: (Math.random() - 0.5) * 6,
+      z: (Math.random() - 0.5) * 6,
+      intensity: Math.random() * 0.8 + 0.2
+    });
+  }
+  
+  return hotspots;
+};
+
+/**
+ * Generate mock fusion simulation data with proper timeSteps format
+ * Compatible with FusionVisualization component
+ */
+export const mockFusionSimulation = async (parameters = {}) => {
+  await mockDelay(1000);
+  
+  const numTimeSteps = 50;
+  const particleCount = parameters?.maxParticleDisplay || 100;
+  
+  const timeSteps = Array.from({ length: numTimeSteps }, (_, i) => ({
+    particles: generateParticles(particleCount, parameters),
+    hotspots: generateHotspots(Math.floor(Math.random() * 5) + 2),
+    time: i * (parameters?.timeStepSize || 0.1)
+  }));
+  
+  return {
+    id: `fusion-sim-${Date.now()}`,
+    status: 'completed',
+    timeSteps: timeSteps,
+    summary: {
+      total_energy: Math.random() * 100 + 50,
+      average_temperature: parameters?.temperature || 300,
+      reaction_rate: Math.random() * 0.1,
+      total_reactions: Math.floor(Math.random() * 1000)
+    }
+  };
+};
+
+/**
+ * Generate mock LENR simulation data with lattice structure
+ * Compatible with LENRVisualization component
+ */
+export const mockLENRSimulation = async (parameters = {}) => {
+  await mockDelay(1000);
+  
+  const dimension = parameters?.latticeDimension || 5;
+  const latticePoints = [];
+  const connections = [];
+  
+  // Generate lattice points
+  let pointIndex = 0;
+  for (let x = 0; x < dimension; x++) {
+    for (let y = 0; y < dimension; y++) {
+      for (let z = 0; z < dimension; z++) {
+        const isHost = (x + y + z) % 2 === 0;
+        latticePoints.push({
+          position: [
+            (x - dimension / 2) * 1.5,
+            (y - dimension / 2) * 1.5,
+            (z - dimension / 2) * 1.5
+          ],
+          element: isHost ? (parameters?.materialType || 'nickel') : (parameters?.secondaryMaterial || 'hydrogen'),
+          reaction_rate: Math.random() * 0.2
+        });
+        
+        // Create connections to neighbors
+        if (x > 0) connections.push([pointIndex, pointIndex - dimension * dimension]);
+        if (y > 0) connections.push([pointIndex, pointIndex - dimension]);
+        if (z > 0) connections.push([pointIndex, pointIndex - 1]);
+        
+        pointIndex++;
+      }
+    }
+  }
+  
+  return {
+    id: `lenr-sim-${Date.now()}`,
+    status: 'completed',
+    time: parameters?.totalSimulationTime || 10,
+    lattice: {
+      points: latticePoints,
+      connections: connections,
+      dimensions: [dimension * 1.5, dimension * 1.5, dimension * 1.5]
+    },
+    summary: {
+      total_energy: Math.random() * 50 + 10,
+      average_temperature: parameters?.temperature || 400,
+      reaction_rate: Math.random() * 0.05,
+      excess_heat: Math.random() * 20
+    }
+  };
+};
 
 export default {
   mockFusionData,
   mockSimulationResults,
   mockFusionSimulation,
   mockLENRData,
+  mockLENRSimulation,
   mockTunnelingData,
   generateMockDataStream,
   mockDelay

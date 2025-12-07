@@ -255,8 +255,9 @@ function FusionVisualization({
       hotspotsRef.current.remove(child);
     }
     
-    // Create particles
-    if (parameters?.showParticles && timeStep.particles) {
+    // Create particles (default to showing if parameter not explicitly false)
+    const showParticles = parameters?.showParticles !== false;
+    if (showParticles && timeStep.particles) {
       // Limit number of particles for performance
       const displayCount = Math.min(
         timeStep.particles.length,
@@ -351,8 +352,9 @@ function FusionVisualization({
       }
     }
     
-    // Create hotspots
-    if (parameters?.showHotspots && timeStep.hotspots) {
+    // Create hotspots (default to showing if parameter not explicitly false)
+    const showHotspots = parameters?.showHotspots !== false;
+    if (showHotspots && timeStep.hotspots) {
       for (const hotspot of timeStep.hotspots) {
         // Create hotspot geometry
         const geometry = new THREE.SphereGeometry(hotspot.intensity * 0.5, 16, 16);

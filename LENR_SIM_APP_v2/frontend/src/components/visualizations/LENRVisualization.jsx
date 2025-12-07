@@ -141,9 +141,37 @@ const LENRVisualization = ({
     };
   }, []);
   
+  // Generate fallback lattice data if none provided
+  const generateFallbackLattice = () => {
+    const dimension = 4;
+    const points = [];
+    const connections = [];
+    let idx = 0;
+    
+    for (let x = 0; x < dimension; x++) {
+      for (let y = 0; y < dimension; y++) {
+        for (let z = 0; z < dimension; z++) {
+          const isHost = (x + y + z) % 2 === 0;
+          points.push({
+            position: [(x - dimension/2) * 1.5, (y - dimension/2) * 1.5, (z - dimension/2) * 1.5],
+            element: isHost ? 'nickel' : 'hydrogen',
+            reaction_rate: Math.random() * 0.1
+          });
+          
+          if (x > 0) connections.push([idx, idx - dimension * dimension]);
+          if (y > 0) connections.push([idx, idx - dimension]);
+          if (z > 0) connections.push([idx, idx - 1]);
+          idx++;
+        }
+      }
+    }
+    
+    return { points, connections, dimensions: [6, 6, 6] };
+  };
+
   // Update visualization when data or options change
   useEffect(() => {
-    if (!sceneRef.current || !timeSeriesData) return;
+    if (!sceneRef.current) return;
     
     const scene = sceneRef.current;
     
@@ -154,8 +182,8 @@ const LENRVisualization = ({
       child.type === 'AxesHelper'
     );
     
-    // Get the current lattice state
-    const latticeData = timeSeriesData.lattice;
+    // Get the current lattice state (use fallback if not available)
+    const latticeData = timeSeriesData?.lattice || generateFallbackLattice();
     
     if (visOptions.showLattice) {
       // Create lattice structure
@@ -377,25 +405,33 @@ const LENRVisualization = ({
   
   // Prepare chart data
   const prepareChartData = () => {
-    if (!timeSeriesData) return [];
+    // Default values for chart generation
+    const defaultSummary = {
+      total_energy: 50,
+      average_temperature: 400,
+      reaction_rate: 0.05
+    };
+    
+    const summary = timeSeriesData?.summary || defaultSummary;
+    const totalTime = timeSeriesData?.time || 10;
     
     // Generate time points
-    const timePoints = Array.from({ length: 50 }, (_, i) => i * (timeSeriesData.time / 49));
+    const timePoints = Array.from({ length: 50 }, (_, i) => i * (totalTime / 49));
     
     // Create chart data with main simulation series
     return timePoints.map((time, index) => {
       // Calculate values based on time progression (this would come from actual simulation data)
       const progress = index / 49;
-      const energyOutput = timeSeriesData.summary.total_energy * progress;
-      const temperature = timeSeriesData.summary.average_temperature + 
+      const energyOutput = (summary.total_energy || 50) * progress;
+      const temperature = (summary.average_temperature || 400) + 
         (Math.random() - 0.5) * 5 * progress;
-      const reactionRate = (timeSeriesData.summary.reaction_rate || 0.05) * progress + 
+      const reactionRate = (summary.reaction_rate || 0.05) * progress + 
         (Math.random() - 0.5) * 0.01;
       
       // Get comparison values if available
       let comparisonEnergy, comparisonTemp, comparisonRate;
       
-      if (comparisonData) {
+      if (comparisonData?.summary) {
         comparisonEnergy = comparisonData.summary.total_energy * progress;
         comparisonTemp = comparisonData.summary.average_temperature + 
           (Math.random() - 0.5) * 5 * progress;
