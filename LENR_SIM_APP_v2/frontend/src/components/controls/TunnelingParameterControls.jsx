@@ -123,6 +123,13 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
         marks={marks}
         valueLabelDisplay="auto"
         valueLabelFormat={valueLabelFormat}
+        sx={{
+          '& .MuiSlider-markLabel': {
+            fontSize: '0.7rem',
+            top: 22
+          },
+          mb: marks ? 1 : 0
+        }}
       />
     </Box>
   );

@@ -256,7 +256,7 @@ const LENRParameterControls = ({
                 { value: 273, label: '273K' },
                 { value: 1273, label: '1273K' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -276,7 +276,7 @@ const LENRParameterControls = ({
                 { value: 0.1, label: '0.1' },
                 { value: 30, label: '30' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -296,7 +296,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0' },
                 { value: 2, label: '2T' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -338,7 +338,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0' },
                 { value: 5, label: '5' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -358,7 +358,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0 (DC)' },
                 { value: 1000, label: '1kHz' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -378,7 +378,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0' },
                 { value: 500, label: '500μs' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -421,7 +421,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0' },
                 { value: 0.3, label: '0.3' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -477,7 +477,7 @@ const LENRParameterControls = ({
                 { value: 5, label: '5nm' },
                 { value: 500, label: '500nm' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -497,7 +497,7 @@ const LENRParameterControls = ({
                 { value: 0, label: '0' },
                 { value: 0.5, label: '0.5' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -568,7 +568,7 @@ const LENRParameterControls = ({
                 { value: 0.01, label: '0.01' },
                 { value: 1, label: '1' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
 
@@ -588,7 +588,7 @@ const LENRParameterControls = ({
                 { value: 1, label: '1s' },
                 { value: 100, label: '100s' }
               ]}
-              sx={{ mb: 1 }}
+              sx={{ '& .MuiSlider-markLabel': { fontSize: '0.65rem' }, mb: 1 }}
             />
           </Grid>
         </Grid>

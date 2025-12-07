@@ -255,9 +255,15 @@ function FusionVisualization({
       hotspotsRef.current.remove(child);
     }
     
+<<<<<<< HEAD
     // Create particles - default to showing particles if parameter not specified
     const showParticles = parameters?.showParticles !== false;
     if (showParticles && timeStep.particles && timeStep.particles.length > 0) {
+=======
+    // Create particles (default to showing if parameter not explicitly false)
+    const showParticles = parameters?.showParticles !== false;
+    if (showParticles && timeStep.particles) {
+>>>>>>> origin/lenr_sim_app_v0.2-beta
       // Limit number of particles for performance
       const displayCount = Math.min(
         timeStep.particles.length,
@@ -352,9 +358,15 @@ function FusionVisualization({
       }
     }
     
+<<<<<<< HEAD
     // Create hotspots - default to showing hotspots if parameter not specified
     const showHotspots = parameters?.showHotspots !== false;
     if (showHotspots && timeStep.hotspots && timeStep.hotspots.length > 0) {
+=======
+    // Create hotspots (default to showing if parameter not explicitly false)
+    const showHotspots = parameters?.showHotspots !== false;
+    if (showHotspots && timeStep.hotspots) {
+>>>>>>> origin/lenr_sim_app_v0.2-beta
       for (const hotspot of timeStep.hotspots) {
         // Create hotspot geometry
         const geometry = new THREE.SphereGeometry(hotspot.intensity * 0.5, 16, 16);
