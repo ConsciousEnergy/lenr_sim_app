@@ -86,6 +86,51 @@ export const mockDelay = (ms = 500) => {
 };
 
 /**
+ * Generate random particles for a time step
+ */
+const generateParticles = (count, latticeSize, temperature) => {
+  const particles = [];
+  const types = ['deuterium', 'tritium', 'helium', 'neutron', 'proton'];
+  
+  for (let i = 0; i < count; i++) {
+    const type = types[Math.floor(Math.random() * types.length)];
+    const energy = Math.random() * (temperature / 300) * 5; // Scale energy with temperature
+    
+    particles.push({
+      x: (Math.random() - 0.5) * latticeSize,
+      y: (Math.random() - 0.5) * latticeSize,
+      z: (Math.random() - 0.5) * latticeSize,
+      type,
+      energy,
+      vx: (Math.random() - 0.5) * 0.1,
+      vy: (Math.random() - 0.5) * 0.1,
+      vz: (Math.random() - 0.5) * 0.1
+    });
+  }
+  
+  return particles;
+};
+
+/**
+ * Generate hotspots for a time step
+ */
+const generateHotspots = (count, latticeSize, defectDensity) => {
+  const hotspots = [];
+  const actualCount = Math.floor(count * defectDensity * 10);
+  
+  for (let i = 0; i < actualCount; i++) {
+    hotspots.push({
+      x: (Math.random() - 0.5) * latticeSize,
+      y: (Math.random() - 0.5) * latticeSize,
+      z: (Math.random() - 0.5) * latticeSize,
+      intensity: 0.2 + Math.random() * 0.8
+    });
+  }
+  
+  return hotspots;
+};
+
+/**
  * Function to generate mock fusion simulation results (for backwards compatibility)
  * @param {object} parameters - Simulation parameters to include in the response
  * @returns {Promise<object>} Mock simulation results
@@ -94,13 +139,51 @@ export const mockFusionSimulation = async (parameters = {}) => {
   // Simulate API delay
   await mockDelay(1000);
   
-  // Return mock data with a unique ID
+  // Extract parameters with defaults
+  const temperature = parameters.temperature || 293;
+  const latticeSize = parameters.latticeDimension || 10;
+  const defectDensity = parameters.defectDensity || 0.1;
+  const timeStepSize = parameters.timeStepSize || 0.1;
+  const totalTime = parameters.totalSimulationTime || 10;
+  const particleCount = Math.min(200, latticeSize * latticeSize); // Scale with lattice size
+  
+  // Generate time steps with particle and hotspot data
+  const numSteps = Math.ceil(totalTime / timeStepSize);
+  const timeSteps = [];
+  
+  for (let i = 0; i < numSteps; i++) {
+    const time = i * timeStepSize;
+    // Temperature varies slightly over time
+    const currentTemp = temperature * (1 + 0.1 * Math.sin(time * 0.5));
+    
+    timeSteps.push({
+      time,
+      temperature: currentTemp,
+      energy: (i / numSteps) * 3.27, // Energy increases over time
+      particles: generateParticles(particleCount, latticeSize, currentTemp),
+      hotspots: generateHotspots(5, latticeSize, defectDensity)
+    });
+  }
+  
+  // Return mock data with visualization data
   return {
-    ...mockSimulationResults,
     id: `fusion-sim-${Date.now()}`,
-    parameters,
+    status: 'completed',
+    progress: 100,
     startTime: Date.now() - 60000,
     endTime: Date.now(),
+    parameters,
+    timeSteps,
+    results: {
+      rate: 1e-12,
+      crossSection: 1e-28,
+      probability: 0.0001,
+      energy: 3.27,
+      efficiency: 0.85,
+      totalReactions: Math.floor(Math.random() * 1000),
+      peakTemperature: temperature * 1.2,
+      averageEnergy: 2.5
+    }
   };
 };
 export default {
