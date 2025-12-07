@@ -19,6 +19,7 @@ from .routers.multi_physics_routes import router as multi_physics_router
 from .routers.visualization_routes import router as visualization_router
 from .routers import result_visualization_routes  # Add this import
 from .routers.mock_simulation_router import router as mock_simulation_router  # Mock simulation router
+from .routers.physics_simulation_router import router as physics_simulation_router  # Real physics calculations
 
 # Import middleware - using relative imports
 from .api.middleware.timeout import TimeoutMiddleware
@@ -243,6 +244,7 @@ app.include_router(multi_physics_router, prefix="/api/multi-physics", tags=["Mul
 app.include_router(visualization_router, prefix="/api/visualization", tags=["Visualization"])
 app.include_router(result_visualization_routes.router, prefix="/api/results", tags=["results"])  # Add this line
 app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations"])  # Mock simulations for testing
+app.include_router(physics_simulation_router)  # Real physics calculation endpoints
 
 @app.get("/")
 async def root():

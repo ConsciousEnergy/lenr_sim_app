@@ -6,8 +6,10 @@
 /**
  * Configuration for API requests
  */
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const API_CONFIG = {
-  baseUrl: '/api',
+  baseUrl: `${API_BASE_URL}/api`,
   timeout: 30000, // 30 seconds default timeout
   retries: 1,     // Number of retries for failed requests
   headers: {
