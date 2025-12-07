@@ -120,7 +120,10 @@ function updateSimulation(id: string) {
   const simulation = simulations[id];
   if (!simulation || simulation.status !== 'running') return;
   
-  simulation.currentStep++;
+  // Process multiple steps per update for faster completion
+  const stepsPerUpdate = Math.max(1, Math.ceil(simulation.totalSteps / 10));
+  simulation.currentStep += stepsPerUpdate;
+  
   const currentTime = Date.now();
   const elapsedSinceStart = currentTime - (simulation.startTime || currentTime);
   simulation.elapsedTime += elapsedSinceStart / 1000;
@@ -226,9 +229,9 @@ export const mockPhysicsServer = {
     simulation.status = 'running';
     simulation.startTime = Date.now();
     
-    // Start periodic updates
+    // Start periodic updates (faster interval for responsive development)
     if (!simulation.updateIntervalId) {
-      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 1000);
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
     }
     
     return {
@@ -276,9 +279,9 @@ export const mockPhysicsServer = {
     simulation.status = 'running';
     simulation.startTime = Date.now();
     
-    // Start periodic updates
+    // Start periodic updates (faster interval for responsive development)
     if (!simulation.updateIntervalId) {
-      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 1000);
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
     }
     
     return {
