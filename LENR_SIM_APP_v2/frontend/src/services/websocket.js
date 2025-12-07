@@ -27,6 +27,8 @@ class SimulationWebSocket {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
     this.reconnectDelay = 1000;
+    // Track if disconnect was explicitly requested
+    this.isExplicitlyDisconnecting = false;
   }
 
   /**
@@ -36,6 +38,16 @@ class SimulationWebSocket {
    * @param {object} callbacks - Event callbacks
    */
   connect(simulationType, simulationId, callbacks = {}) {
+    // Reset the explicit disconnect flag when intentionally connecting
+    // This allows reconnection after a previous explicit disconnect
+    this.isExplicitlyDisconnecting = false;
+    
+    // Prevent connection leak - close existing WebSocket first
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+      console.warn('Closing existing WebSocket before creating new connection');
+      this.ws.close(1000, 'Creating new connection');
+    }
+    
     this.simulationType = simulationType;
     this.simulationId = simulationId;
     this.callbacks = { ...this.callbacks, ...callbacks };
@@ -127,11 +139,20 @@ class SimulationWebSocket {
    * @private
    */
   _attemptReconnect() {
+    // Don't reconnect if explicit disconnect was requested
+    if (this.isExplicitlyDisconnecting) {
+      console.log('Skipping reconnect - explicit disconnect requested');
+      return;
+    }
+    
     this.reconnectAttempts++;
     console.log(`Attempting reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
     
     setTimeout(() => {
-      this.connect(this.simulationType, this.simulationId, this.callbacks);
+      // Double-check before reconnecting
+      if (!this.isExplicitlyDisconnecting) {
+        this.connect(this.simulationType, this.simulationId, this.callbacks);
+      }
     }, this.reconnectDelay * this.reconnectAttempts);
   }
 
@@ -174,10 +195,16 @@ class SimulationWebSocket {
    * Disconnect WebSocket
    */
   disconnect() {
+    // Set flag to prevent reconnection attempts
+    this.isExplicitlyDisconnecting = true;
+    
     if (this.ws) {
       this.ws.close(1000, 'Client disconnected');
       this.ws = null;
     }
+    
+    // Reset reconnect attempts
+    this.reconnectAttempts = 0;
   }
 
   /**

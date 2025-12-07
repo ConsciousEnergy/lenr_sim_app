@@ -240,7 +240,15 @@ class BubbleFusionCalculator:
         # Minimum radius from adiabatic compression
         # P_final / P_initial = (R_initial / R_final)^(3γ)
         # For strong collapse with Pa/P0 >> 1
-        compression_ratio = (Pa / P0 + 1) ** (1 / (3 * gamma - 3))
+        # Guard against division by zero when gamma approaches 1.0
+        gamma_exponent = 3 * gamma - 3
+        if abs(gamma_exponent) < 0.01:
+            # For nearly isothermal processes (gamma ≈ 1), use PV = constant
+            # In isothermal compression: P1*V1 = P2*V2, so V2/V1 = P1/P2
+            # compression_ratio = R_max/R_min, and V ∝ R^3, so R_ratio = (P_ratio)^(1/3)
+            compression_ratio = (Pa / P0 + 1)  # Isothermal approximation
+        else:
+            compression_ratio = (Pa / P0 + 1) ** (1 / gamma_exponent)
         compression_ratio = max(compression_ratio, 10)  # At least 10x compression
         compression_ratio = min(compression_ratio, 1000)  # Physical limit
         
@@ -248,7 +256,14 @@ class BubbleFusionCalculator:
         
         # Peak conditions (adiabatic)
         # T_max = T0 * (R0/R_min)^(3(γ-1))
-        T_max = T0 * (R_max / R_min) ** (3 * (gamma - 1))
+        # Guard against gamma ≈ 1 (isothermal case: no temperature change)
+        gamma_minus_1 = gamma - 1
+        if abs(gamma_minus_1) < 0.01:
+            # Isothermal process: temperature remains constant by definition
+            # Heat is transferred to maintain constant T during compression
+            T_max = T0
+        else:
+            T_max = T0 * (R_max / R_min) ** (3 * gamma_minus_1)
         T_max = min(T_max, 1e8)  # Cap at 100 million K
         
         # P_max = P_gas0 * (R0/R_min)^(3γ)
@@ -402,7 +417,13 @@ class BubbleFusionCalculator:
         R = np.maximum(R, R0 * 0.001)  # Cap compression
         
         # Estimate temperature (adiabatic)
-        T_gas = params.ambient_temperature_k * (R0 / R) ** (3 * (gamma - 1))
+        # Guard against gamma ≈ 1 (isothermal case)
+        gamma_minus_1 = gamma - 1
+        if abs(gamma_minus_1) < 0.01:
+            # Nearly isothermal: minimal temperature change
+            T_gas = np.full_like(R, params.ambient_temperature_k)
+        else:
+            T_gas = params.ambient_temperature_k * (R0 / R) ** (3 * gamma_minus_1)
         T_gas = np.minimum(T_gas, 1e8)
         
         # Estimate internal pressure

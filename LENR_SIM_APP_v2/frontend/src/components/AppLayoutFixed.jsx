@@ -313,9 +313,16 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
       >
         <DrawerHeader>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-              <ScienceIcon />
-            </Avatar>
+            <Box
+              component="img"
+              src="/images/ce-logo.png"
+              alt="CE Logo"
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+              }}
+            />
             <Typography variant="h6" noWrap>
               LENR App
             </Typography>

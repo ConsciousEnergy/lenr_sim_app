@@ -127,8 +127,12 @@ class LENREnhancementCalculator:
                 warnings.append(f"{mechanism.value}: {str(e)}")
                 individual_factors[mechanism.value] = 1.0
         
-        # Find dominant mechanism
-        dominant = max(individual_factors, key=individual_factors.get)
+        # Find dominant mechanism (handle empty case)
+        if individual_factors:
+            dominant = max(individual_factors, key=individual_factors.get)
+        else:
+            dominant = "none"
+            warnings.append("No enhancement mechanisms calculated")
         
         return EnhancementResult(
             total_enhancement=total,
@@ -256,7 +260,11 @@ class LENREnhancementCalculator:
             # Higher Fermi energy typically means less enhancement
             fermi_ev = material_data.fermi_energy
             # Simple model: enhancement inversely related to Fermi energy
-            mass_ratio = max(1.0, 10.0 / fermi_ev)
+            # Guard against division by zero
+            if fermi_ev > 0:
+                mass_ratio = max(1.0, 10.0 / fermi_ev)
+            else:
+                mass_ratio = 1.0
         else:
             mass_ratio = 1.0
         
@@ -317,8 +325,12 @@ class LENREnhancementCalculator:
         """
         loading = conditions.loading_ratio
         
+        # Guard against invalid loading ratios
         if loading <= 0:
-            return 0.0
+            return 0.01  # Minimum enhancement, consistent with max() guard
+        
+        # Cap loading at reasonable maximum
+        loading = min(loading, 2.0)
         
         # Enhancement scales approximately as loading^2 for binary collisions
         # with a critical loading threshold
@@ -522,8 +534,11 @@ def calculate_lenr_reaction_rate(
         total_enhancement = 1.0
         enhancement_result = {"individual_factors": {}}
     
-    # Enhanced tunneling probability
-    p_tunnel = tunneling_result.probability * total_enhancement
+    # Base tunneling probability (before LENR enhancements)
+    base_tunnel_prob = tunneling_result.probability
+    
+    # Enhanced tunneling probability (for reporting only)
+    enhanced_tunnel_prob = base_tunnel_prob * total_enhancement
     
     # Collision rate (rough estimate)
     # σv ≈ σ * sqrt(8kT/πm)
@@ -531,10 +546,12 @@ def calculate_lenr_reaction_rate(
     v_thermal = np.sqrt(8 * kT_kev * KEV_TO_J / (np.pi * M_DEUTERON))
     
     # Nuclear cross section at thermal energy (very small)
-    sigma_cm2 = tunneling_result.probability * 1e-24  # barn to cm²
+    # Note: Enhancement is applied to reaction rate, not cross section directly
+    sigma_cm2 = base_tunnel_prob * 1e-24  # barn to cm²
     
     # Reaction rate per cm³
-    # R = n1 * n2 * <σv>
+    # R = n1 * n2 * <σv> * enhancement
+    # Enhancement applied once here to the total rate
     reaction_rate = 0.5 * n_h**2 * sigma_cm2 * v_thermal * total_enhancement
     
     # Total reactions in volume
@@ -548,7 +565,8 @@ def calculate_lenr_reaction_rate(
         "reaction_rate_per_cm3_s": float(reaction_rate),
         "total_reaction_rate_s": float(total_rate),
         "power_output_w": float(power_w),
-        "tunneling_probability": float(p_tunnel),
+        "base_tunneling_probability": float(base_tunnel_prob),
+        "enhanced_tunneling_probability": float(enhanced_tunnel_prob),
         "total_enhancement": float(total_enhancement),
         "hydrogen_density_per_cm3": float(n_h),
         "thermal_energy_kev": float(kT_kev),

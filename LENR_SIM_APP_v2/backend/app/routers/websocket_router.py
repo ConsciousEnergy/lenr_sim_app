@@ -51,16 +51,19 @@ class ConnectionManager:
         """Send message to all clients connected to a simulation."""
         if simulation_id in self.active_connections:
             dead_connections = set()
-            for connection in self.active_connections[simulation_id]:
+            # Iterate over a copy to avoid race condition during iteration
+            connections_copy = self.active_connections[simulation_id].copy()
+            for connection in connections_copy:
                 try:
                     await connection.send_json(message)
                 except Exception as e:
                     logger.warning(f"Failed to send to client: {e}")
                     dead_connections.add(connection)
             
-            # Clean up dead connections
-            for conn in dead_connections:
-                self.active_connections[simulation_id].discard(conn)
+            # Clean up dead connections (check if set still exists)
+            if simulation_id in self.active_connections:
+                for conn in dead_connections:
+                    self.active_connections[simulation_id].discard(conn)
     
     def get_connection_count(self, simulation_id: str) -> int:
         """Get number of connected clients for a simulation."""
@@ -68,6 +71,18 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+# Response models for API documentation
+class ConnectionCountResponse(BaseModel):
+    """Response model for connection count endpoint."""
+    simulation_id: str
+    connection_count: int
+
+class ActiveSimulationsResponse(BaseModel):
+    """Response model for active simulations endpoint."""
+    active_simulations: List[str]
+    running_tasks: List[str]
 
 
 async def run_quantum_tunneling_simulation(
@@ -333,8 +348,18 @@ async def websocket_simulation(
     await manager.connect(websocket, simulation_id)
     
     try:
-        # Wait for start message with parameters
-        data = await websocket.receive_json()
+        # Wait for start message with parameters (with timeout)
+        try:
+            data = await asyncio.wait_for(
+                websocket.receive_json(), 
+                timeout=30.0  # 30 second timeout for initial message
+            )
+        except asyncio.TimeoutError:
+            await websocket.send_json({
+                'type': 'error',
+                'message': 'Timeout waiting for start message'
+            })
+            return
         
         if data.get('action') == 'start':
             params = data.get('params', {})
@@ -353,6 +378,17 @@ async def websocket_simulation(
                     'message': f'Unknown simulation type: {simulation_type}'
                 })
                 return
+            
+            # Cancel existing task if simulation_id is being reused
+            if simulation_id in manager.simulation_tasks:
+                existing_task = manager.simulation_tasks[simulation_id]
+                if not existing_task.done():
+                    existing_task.cancel()
+                    try:
+                        await existing_task
+                    except asyncio.CancelledError:
+                        pass
+                    logger.info(f"Cancelled existing task for simulation {simulation_id}")
             
             # Start simulation task
             task = asyncio.create_task(
@@ -395,20 +431,20 @@ async def websocket_simulation(
         manager.disconnect(websocket, simulation_id)
 
 
-@router.get("/ws/connections/{simulation_id}")
-async def get_connection_count(simulation_id: str):
+@router.get("/ws/connections/{simulation_id}", response_model=ConnectionCountResponse)
+async def get_connection_count(simulation_id: str) -> ConnectionCountResponse:
     """Get the number of active connections for a simulation."""
-    return {
-        "simulation_id": simulation_id,
-        "connection_count": manager.get_connection_count(simulation_id)
-    }
+    return ConnectionCountResponse(
+        simulation_id=simulation_id,
+        connection_count=manager.get_connection_count(simulation_id)
+    )
 
 
-@router.get("/ws/active")
-async def get_active_simulations():
+@router.get("/ws/active", response_model=ActiveSimulationsResponse)
+async def get_active_simulations() -> ActiveSimulationsResponse:
     """Get list of all active simulation IDs."""
-    return {
-        "active_simulations": list(manager.active_connections.keys()),
-        "running_tasks": list(manager.simulation_tasks.keys())
-    }
+    return ActiveSimulationsResponse(
+        active_simulations=list(manager.active_connections.keys()),
+        running_tasks=list(manager.simulation_tasks.keys())
+    )
 

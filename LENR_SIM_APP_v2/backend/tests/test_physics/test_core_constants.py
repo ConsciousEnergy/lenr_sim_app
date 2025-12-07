@@ -211,8 +211,9 @@ class TestThermalEnergy:
     def test_room_temperature(self):
         """Test thermal energy at room temperature."""
         kT = thermal_energy(300)
-        # kT at 300K should be about 0.026 eV = 26 meV
-        assert 0.020 < kT < 0.030
+        # kT at 300K should be about 0.026 eV = 0.000026 keV
+        # The function returns keV, so expect value around 2.5e-5 keV
+        assert 2.0e-5 < kT < 3.0e-5
     
     def test_scaling_with_temperature(self):
         """Test linear scaling with temperature."""

@@ -233,7 +233,8 @@ class TestConvenienceFunctions:
         )
         assert 'reaction_rate_per_cm3_s' in result
         assert 'power_output_w' in result
-        assert 'tunneling_probability' in result
+        assert 'base_tunneling_probability' in result
+        assert 'enhanced_tunneling_probability' in result
         assert result['reaction_rate_per_cm3_s'] >= 0
     
     def test_enhancement_can_be_disabled(self):

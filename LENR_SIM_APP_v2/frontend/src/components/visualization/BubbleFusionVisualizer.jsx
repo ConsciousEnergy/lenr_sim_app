@@ -66,10 +66,23 @@ const BubbleFusionVisualizer = ({
         console.log('Bubble fusion calculation:', data.collapse_results);
       } catch (err) {
         console.warn('API call failed, using fallback calculations', err);
+        setError(err.message || 'Failed to fetch physics data');
+        
         // Fallback to approximations
         collapseTime.current = 0.5 / frequency;
         maxTemperature.current = (1 + drivingPressureAmplitude) * 1000;
         minRadius.current = initialRadius / (1 + drivingPressureAmplitude * 5);
+        
+        // Create fallback physics data for onRenderComplete
+        const fallbackData = {
+          collapse_results: {
+            max_temperature_k: maxTemperature.current,
+            min_radius_um: minRadius.current,
+            collapse_time_ns: collapseTime.current * 1e9,
+            fusion_probability: 0 // Zero probability for fallback
+          }
+        };
+        setPhysicsData(fallbackData);
       } finally {
         setIsLoading(false);
       }
@@ -341,6 +354,23 @@ const BubbleFusionVisualizer = ({
               Computing bubble dynamics...
             </Typography>
           </Box>
+        ) : null}
+        
+        {error && !isLoading ? (
+          <Typography 
+            variant="caption" 
+            color="warning.main" 
+            sx={{ 
+              position: 'absolute', 
+              top: 8, 
+              left: 8, 
+              backgroundColor: 'rgba(255,255,255,0.8)', 
+              px: 1, 
+              borderRadius: 1 
+            }}
+          >
+            Using approximate calculations
+          </Typography>
         ) : null}
         
         <canvas

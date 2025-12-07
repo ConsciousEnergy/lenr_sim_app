@@ -8,6 +8,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createSimulationSocket, generateSimulationId } from '../services/websocket';
 
+// Maximum history entries to prevent memory issues
+const MAX_HISTORY_LENGTH = 1000;
+
 /**
  * Hook for managing simulation WebSocket connections
  * 
@@ -21,6 +24,7 @@ export function useSimulationWebSocket(simulationType, options = {}) {
     onUpdate = null,
     onComplete = null,
     onError = null,
+    maxHistoryLength = MAX_HISTORY_LENGTH,
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
@@ -32,11 +36,30 @@ export function useSimulationWebSocket(simulationType, options = {}) {
 
   const socketRef = useRef(null);
   const simulationIdRef = useRef(null);
+  // Track if disconnect was explicitly requested
+  const isDisconnectingRef = useRef(false);
+  
+  // Store callbacks in refs to avoid unstable dependencies
+  const onUpdateRef = useRef(onUpdate);
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+    onCompleteRef.current = onComplete;
+    onErrorRef.current = onError;
+  }, [onUpdate, onComplete, onError]);
 
   /**
    * Connect to WebSocket
    */
   const connect = useCallback(() => {
+    // Prevent reconnection if explicitly disconnecting
+    if (isDisconnectingRef.current) {
+      return;
+    }
+    
     if (socketRef.current?.isConnected()) {
       return;
     }
@@ -57,32 +80,45 @@ export function useSimulationWebSocket(simulationType, options = {}) {
       onUpdate: (data) => {
         setProgress(data.progress || 0);
         setCurrentData(data.data);
-        setHistory(prev => [...prev, data.data]);
-        if (onUpdate) onUpdate(data);
+        // Limit history growth to prevent memory issues
+        setHistory(prev => {
+          const newHistory = [...prev, data.data];
+          if (newHistory.length > maxHistoryLength) {
+            // Keep most recent entries
+            return newHistory.slice(-maxHistoryLength);
+          }
+          return newHistory;
+        });
+        if (onUpdateRef.current) onUpdateRef.current(data);
       },
       onComplete: (data) => {
         setIsRunning(false);
         setProgress(1);
-        if (onComplete) onComplete(data);
+        if (onCompleteRef.current) onCompleteRef.current(data);
       },
       onError: (err) => {
         setError(err.message || 'WebSocket error');
         setIsRunning(false);
-        if (onError) onError(err);
+        if (onErrorRef.current) onErrorRef.current(err);
       },
     });
-  }, [simulationType, onUpdate, onComplete, onError]);
+  }, [simulationType, maxHistoryLength]); // Stable dependencies only
 
   /**
    * Disconnect from WebSocket
    */
   const disconnect = useCallback(() => {
+    isDisconnectingRef.current = true;
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
     setIsConnected(false);
     setIsRunning(false);
+    // Reset flag after a short delay to allow cleanup
+    setTimeout(() => {
+      isDisconnectingRef.current = false;
+    }, 100);
   }, []);
 
   /**
@@ -127,11 +163,15 @@ export function useSimulationWebSocket(simulationType, options = {}) {
     if (autoConnect) {
       connect();
     }
-
+    
+    // Cleanup only on unmount, not on every dependency change
+    // Using a ref to store the disconnect function to avoid closure issues
+    const currentDisconnect = disconnect;
     return () => {
-      disconnect();
+      currentDisconnect();
     };
-  }, [autoConnect, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConnect]); // Only re-run when autoConnect changes, not on connect/disconnect changes
 
   return {
     // Connection state
