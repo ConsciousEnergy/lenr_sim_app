@@ -597,8 +597,7 @@ function FusionSimulationPage() {
               {simulationData ? (
                 <FusionVisualization 
                   parameters={parameters}
-                  timeSeriesData={simulationData}
-                  comparisonData={comparisonData}
+                  simulationData={simulationData}
                 />
               ) : (
                 <Box 
