@@ -52,25 +52,39 @@ const QuantumTunnelingPage = () => {
     if (probability === null) return;
     
     // Calculate enhancement factors
-    const baselineProbability = tunnelingUtils.calculateGamowFactor(
-      tunnelingParams.z1,
-      tunnelingParams.z2,
-      tunnelingUtils.DEUTERON_MASS / 2,
-      tunnelingParams.energyKeV
-    );
+    let baselineProbability;
+    try {
+      baselineProbability = tunnelingUtils.calculateGamowFactor(
+        tunnelingParams.z1,
+        tunnelingParams.z2,
+        tunnelingUtils.DEUTERON_MASS / 2,
+        tunnelingParams.energyKeV
+      );
+    } catch (e) {
+      baselineProbability = 0;
+    }
     
     // Rough estimate of electron screening enhancement
-    const screeningEnhancement = tunnelingParams.electronScreeningFactor;
+    const screeningEnhancement = tunnelingParams.electronScreeningFactor || 1.0;
     
     // Rough estimate of temperature enhancement
-    const temperatureEnhancement = Math.sqrt(tunnelingParams.temperature / 300);
+    const temperatureEnhancement = Math.sqrt(Math.max(tunnelingParams.temperature, 1) / 300);
+    
+    // Calculate total enhancement with safety check
+    let totalEnhancement = 1.0;
+    if (baselineProbability && baselineProbability > 0 && !isNaN(baselineProbability)) {
+      totalEnhancement = probability / baselineProbability;
+      if (!isFinite(totalEnhancement) || isNaN(totalEnhancement)) {
+        totalEnhancement = 1.0;
+      }
+    }
     
     // Store the enhancement calculations
     setEnhancements({
-      baseline: baselineProbability,
+      baseline: baselineProbability || 0,
       electronScreening: screeningEnhancement,
       temperature: temperatureEnhancement,
-      total: probability / baselineProbability
+      total: totalEnhancement
     });
     
   }, [probability, tunnelingParams]);
