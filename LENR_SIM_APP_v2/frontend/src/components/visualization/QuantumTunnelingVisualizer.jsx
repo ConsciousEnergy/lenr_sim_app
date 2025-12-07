@@ -201,7 +201,6 @@ const QuantumTunnelingVisualizer = ({
     // Guard against division by zero - use 1 as fallback if no valid max
     const rawMaxPotential = Math.max(...potentialValues);
     const maxPotential = (rawMaxPotential > 0 && isFinite(rawMaxPotential)) ? rawMaxPotential : 1;
-    const normalizedPotential = potentialValues.map(p => p / maxPotential * innerHeight * 0.8);
     
     // Create scales
     const xScale = d3.scaleLinear()
@@ -357,10 +356,8 @@ const QuantumTunnelingVisualizer = ({
     }
     
     // Draw incident energy line
-    const energy = energyKeV * tunnelingUtils.KEV_TO_J;
-    // Guard against division by zero - clamp normalizedEnergy to valid range
-    const normalizedEnergy = Math.min(Math.max(energy / maxPotential, 0), 1);
-    
+    // Normalize energy in keV to match maxPotential units
+    const normalizedEnergy = Math.min(Math.max(energyKeV / maxPotential, 0), 1);    
     g.append('line')
       .attr('x1', 0)
       .attr('y1', yScale(normalizedEnergy))

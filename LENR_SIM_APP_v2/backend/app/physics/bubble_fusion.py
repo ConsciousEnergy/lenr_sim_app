@@ -243,8 +243,10 @@ class BubbleFusionCalculator:
         # Guard against division by zero when gamma approaches 1.0
         gamma_exponent = 3 * gamma - 3
         if abs(gamma_exponent) < 0.01:
-            # For nearly isothermal processes (gamma ≈ 1), use linear approximation
-            compression_ratio = 10.0  # Default to minimum
+            # For nearly isothermal processes (gamma ≈ 1), use PV = constant
+            # In isothermal compression: P1*V1 = P2*V2, so V2/V1 = P1/P2
+            # compression_ratio = R_max/R_min, and V ∝ R^3, so R_ratio = (P_ratio)^(1/3)
+            compression_ratio = (Pa / P0 + 1)  # Isothermal approximation
         else:
             compression_ratio = (Pa / P0 + 1) ** (1 / gamma_exponent)
         compression_ratio = max(compression_ratio, 10)  # At least 10x compression
@@ -257,8 +259,9 @@ class BubbleFusionCalculator:
         # Guard against gamma ≈ 1 (isothermal case: no temperature change)
         gamma_minus_1 = gamma - 1
         if abs(gamma_minus_1) < 0.01:
-            # Nearly isothermal: minimal temperature increase
-            T_max = T0 * 1.1
+            # Isothermal process: temperature remains constant by definition
+            # Heat is transferred to maintain constant T during compression
+            T_max = T0
         else:
             T_max = T0 * (R_max / R_min) ** (3 * gamma_minus_1)
         T_max = min(T_max, 1e8)  # Cap at 100 million K

@@ -87,7 +87,7 @@ export const mockDelay = (ms = 500) => {
 
 /**
  * Function to generate mock fusion simulation results (for backwards compatibility)
- * @param {object} parameters - Simulation parameters (ignored in mock)
+ * @param {object} parameters - Simulation parameters to include in the response
  * @returns {Promise<object>} Mock simulation results
  */
 export const mockFusionSimulation = async (parameters = {}) => {
@@ -98,12 +98,11 @@ export const mockFusionSimulation = async (parameters = {}) => {
   return {
     ...mockSimulationResults,
     id: `fusion-sim-${Date.now()}`,
-    parameters: parameters,
+    parameters,
     startTime: Date.now() - 60000,
     endTime: Date.now(),
   };
 };
-
 export default {
   mockFusionData,
   mockSimulationResults,

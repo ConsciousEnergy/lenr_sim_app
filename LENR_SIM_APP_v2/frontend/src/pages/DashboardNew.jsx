@@ -213,6 +213,8 @@ function DashboardNew() {
                       height: 80,
                       borderRadius: 2,
                       boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      padding: '4px',
                     }}
                   />
                   <Typography 

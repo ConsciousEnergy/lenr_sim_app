@@ -112,8 +112,7 @@ MEV_TO_J = 1.602176634e-13
 J_TO_EV = 1.0 / EV_TO_J
 
 # 1 Joule in keV
-J_TO_KEV = 1.0 / KEV_TO_J
-
+J_TO_KEV = 1.0 / KEV_TO_J  # 1 Joule in keV
 # 1 Joule in MeV
 J_TO_MEV = 1.0 / MEV_TO_J
 
