@@ -18,6 +18,7 @@ from typing import Dict, Any
 
 # Speed of light in vacuum (m/s)
 C_LIGHT = 299792458.0
+C = C_LIGHT  # Alias for convenience
 
 # Planck constant (J·s)
 H_PLANCK = 6.62607015e-34
@@ -110,6 +111,8 @@ MEV_TO_J = 1.602176634e-13
 # 1 Joule in eV
 J_TO_EV = 1.0 / EV_TO_J
 
+# 1 Joule in keV
+J_TO_KEV = 1.0 / KEV_TO_J  # 1 Joule in keV
 # 1 Joule in MeV
 J_TO_MEV = 1.0 / MEV_TO_J
 
@@ -375,13 +378,13 @@ def thermal_energy(temperature_k: float) -> float:
 
 __all__ = [
     # Fundamental constants
-    'C_LIGHT', 'H_PLANCK', 'HBAR', 'E_CHARGE', 'EPSILON_0', 'MU_0',
+    'C', 'C_LIGHT', 'H_PLANCK', 'HBAR', 'E_CHARGE', 'EPSILON_0', 'MU_0',
     'K_BOLTZMANN', 'N_AVOGADRO', 'ALPHA', 'A_BOHR',
     # Particle masses
     'M_ELECTRON', 'M_PROTON', 'M_NEUTRON', 'M_DEUTERON', 'M_TRITON', 
     'M_ALPHA', 'AMU', 'ATOMIC_MASSES',
     # Energy conversions
-    'EV_TO_J', 'KEV_TO_J', 'MEV_TO_J', 'J_TO_EV', 'J_TO_MEV',
+    'EV_TO_J', 'KEV_TO_J', 'MEV_TO_J', 'J_TO_EV', 'J_TO_KEV', 'J_TO_MEV',
     'M_ELECTRON_MEV', 'M_PROTON_MEV', 'M_NEUTRON_MEV',
     # Nuclear parameters  
     'R0_NUCLEAR', 'NUCLEAR_FORCE_RANGE', 'ALPHA_STRONG',

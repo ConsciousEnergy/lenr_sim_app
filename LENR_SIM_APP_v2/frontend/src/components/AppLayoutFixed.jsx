@@ -47,17 +47,19 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
-    transition: theme.transitions.create('margin', {
+    transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    marginLeft: `-${drawerWidth}px`,
+    marginLeft: 0,
+    width: '100%',
     ...(open && {
-      transition: theme.transitions.create('margin', {
+      transition: theme.transitions.create(['margin', 'width'], {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
       }),
-      marginLeft: 0,
+      marginLeft: `${drawerWidth}px`,
+      width: `calc(100% - ${drawerWidth}px)`,
     }),
   }),
 );
@@ -313,9 +315,16 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
       >
         <DrawerHeader>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-              <ScienceIcon />
-            </Avatar>
+            <Box
+              component="img"
+              src="/images/ce-logo.png"
+              alt="CE Logo"
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+              }}
+            />
             <Typography variant="h6" noWrap>
               LENR App
             </Typography>

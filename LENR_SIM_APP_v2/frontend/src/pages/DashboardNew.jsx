@@ -203,14 +203,28 @@ function DashboardNew() {
           <Container maxWidth="lg">
             <Grid container spacing={4} alignItems="center">
               <Grid item xs={12} md={8}>
-                <Typography 
-                  variant="h3" 
-                  component="h1" 
-                  gutterBottom
-                  sx={{ fontWeight: 700, mb: 2 }}
-                >
-                  LENR Simulation Platform
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                  <Box
+                    component="img"
+                    src="/images/ce-logo.png"
+                    alt="Conscious Energy Logo"
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 2,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      padding: '4px',
+                    }}
+                  />
+                  <Typography 
+                    variant="h3" 
+                    component="h1" 
+                    sx={{ fontWeight: 700 }}
+                  >
+                    LENR Simulation Platform
+                  </Typography>
+                </Box>
                 <Typography variant="h6" sx={{ mb: 3, opacity: 0.9 }}>
                   Advanced modeling and visualization of Low Energy Nuclear Reactions
                 </Typography>

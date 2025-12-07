@@ -86,20 +86,25 @@ export const mockDelay = (ms = 500) => {
 };
 
 /**
- * Generate particles for a single time step
+ * Generate random particles for a time step
  */
-const generateParticles = (count, parameters = {}) => {
-  const particleTypes = ['deuterium', 'tritium', 'helium', 'proton', 'electron'];
+const generateParticles = (count, latticeSize, temperature) => {
   const particles = [];
+  const types = ['deuterium', 'tritium', 'helium', 'neutron', 'proton'];
   
   for (let i = 0; i < count; i++) {
-    const type = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const energy = Math.random() * (temperature / 300) * 5;
+    
     particles.push({
-      x: (Math.random() - 0.5) * 8,
-      y: (Math.random() - 0.5) * 8,
-      z: (Math.random() - 0.5) * 8,
-      type: type,
-      energy: Math.random() * 10 + 0.1
+      x: (Math.random() - 0.5) * latticeSize,
+      y: (Math.random() - 0.5) * latticeSize,
+      z: (Math.random() - 0.5) * latticeSize,
+      type,
+      energy,
+      vx: (Math.random() - 0.5) * 0.1,
+      vy: (Math.random() - 0.5) * 0.1,
+      vz: (Math.random() - 0.5) * 0.1
     });
   }
   
@@ -107,17 +112,18 @@ const generateParticles = (count, parameters = {}) => {
 };
 
 /**
- * Generate hotspots for a single time step
+ * Generate hotspots for a time step
  */
-const generateHotspots = (count) => {
+const generateHotspots = (count, latticeSize, defectDensity) => {
   const hotspots = [];
+  const actualCount = Math.floor(count * defectDensity * 10);
   
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < actualCount; i++) {
     hotspots.push({
-      x: (Math.random() - 0.5) * 6,
-      y: (Math.random() - 0.5) * 6,
-      z: (Math.random() - 0.5) * 6,
-      intensity: Math.random() * 0.8 + 0.2
+      x: (Math.random() - 0.5) * latticeSize,
+      y: (Math.random() - 0.5) * latticeSize,
+      z: (Math.random() - 0.5) * latticeSize,
+      intensity: 0.2 + Math.random() * 0.8
     });
   }
   
@@ -125,37 +131,57 @@ const generateHotspots = (count) => {
 };
 
 /**
- * Generate mock fusion simulation data with proper timeSteps format
- * Compatible with FusionVisualization component
+ * Function to generate mock fusion simulation results
  */
 export const mockFusionSimulation = async (parameters = {}) => {
   await mockDelay(1000);
   
-  const numTimeSteps = 50;
-  const particleCount = parameters?.maxParticleDisplay || 100;
+  const temperature = parameters.temperature || 293;
+  const latticeSize = parameters.latticeDimension || 10;
+  const defectDensity = parameters.defectDensity || 0.1;
+  const timeStepSize = parameters.timeStepSize || 0.1;
+  const totalTime = parameters.totalSimulationTime || 10;
+  const particleCount = Math.min(200, latticeSize * latticeSize);
   
-  const timeSteps = Array.from({ length: numTimeSteps }, (_, i) => ({
-    particles: generateParticles(particleCount, parameters),
-    hotspots: generateHotspots(Math.floor(Math.random() * 5) + 2),
-    time: i * (parameters?.timeStepSize || 0.1)
-  }));
+  const numSteps = Math.ceil(totalTime / timeStepSize);
+  const timeSteps = [];
+  
+  for (let i = 0; i < numSteps; i++) {
+    const time = i * timeStepSize;
+    const currentTemp = temperature * (1 + 0.1 * Math.sin(time * 0.5));
+    
+    timeSteps.push({
+      time,
+      temperature: currentTemp,
+      energy: (i / numSteps) * 3.27,
+      particles: generateParticles(particleCount, latticeSize, currentTemp),
+      hotspots: generateHotspots(5, latticeSize, defectDensity)
+    });
+  }
   
   return {
     id: `fusion-sim-${Date.now()}`,
     status: 'completed',
-    timeSteps: timeSteps,
-    summary: {
-      total_energy: Math.random() * 100 + 50,
-      average_temperature: parameters?.temperature || 300,
-      reaction_rate: Math.random() * 0.1,
-      total_reactions: Math.floor(Math.random() * 1000)
+    progress: 100,
+    startTime: Date.now() - 60000,
+    endTime: Date.now(),
+    parameters,
+    timeSteps,
+    results: {
+      rate: 1e-12,
+      crossSection: 1e-28,
+      probability: 0.0001,
+      energy: 3.27,
+      efficiency: 0.85,
+      totalReactions: Math.floor(Math.random() * 1000),
+      peakTemperature: temperature * 1.2,
+      averageEnergy: 2.5
     }
   };
 };
 
 /**
  * Generate mock LENR simulation data with lattice structure
- * Compatible with LENRVisualization component
  */
 export const mockLENRSimulation = async (parameters = {}) => {
   await mockDelay(1000);
@@ -164,7 +190,6 @@ export const mockLENRSimulation = async (parameters = {}) => {
   const latticePoints = [];
   const connections = [];
   
-  // Generate lattice points
   let pointIndex = 0;
   for (let x = 0; x < dimension; x++) {
     for (let y = 0; y < dimension; y++) {
@@ -180,7 +205,6 @@ export const mockLENRSimulation = async (parameters = {}) => {
           reaction_rate: Math.random() * 0.2
         });
         
-        // Create connections to neighbors
         if (x > 0) connections.push([pointIndex, pointIndex - dimension * dimension]);
         if (y > 0) connections.push([pointIndex, pointIndex - dimension]);
         if (z > 0) connections.push([pointIndex, pointIndex - 1]);
@@ -218,4 +242,3 @@ export default {
   generateMockDataStream,
   mockDelay
 };
-

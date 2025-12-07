@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, CircularProgress, Paper } from '@mui/material';
+import api from '../../services/api';
 
-// Simple bubble fusion visualization component
-// In a real implementation, this would use Three.js, D3, or another visualization library
+// Bubble fusion visualization component with real physics calculations
 const BubbleFusionVisualizer = ({
   initialRadius,
   drivingPressureAmplitude,
@@ -13,11 +13,16 @@ const BubbleFusionVisualizer = ({
   showCollapse,
   width = 800,
   height = 600,
-  onRenderComplete
+  onRenderComplete,
+  fluidType = 'water',
+  gasType = 'deuterium',
+  gasFraction = 0.8
 }) => {
   const canvasRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [animationTime, setAnimationTime] = useState(0);
+  const [physicsData, setPhysicsData] = useState(null);
+  const [error, setError] = useState(null);
   const animationRef = useRef(null);
   
   // Calculated values based on parameters
@@ -30,13 +35,60 @@ const BubbleFusionVisualizer = ({
   const animationDuration = 2000; // ms
   const animationPeriod = 1 / frequency * 1000; // ms
   
-  // Calculate derived parameters
+  // Fetch physics calculation from backend
   useEffect(() => {
-    // Calculate collapse parameters based on input parameters
-    // These are simplified approximations for visualization purposes
-    collapseTime.current = 0.5 / frequency; // Approximate collapse time (s)
-    maxTemperature.current = (1 + drivingPressureAmplitude) * 1000; // Rough temperature estimate (K)
-    minRadius.current = initialRadius / (1 + drivingPressureAmplitude * 5); // Simple approximation
+    const fetchPhysicsData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const response = await api.post('/physics/bubble-fusion', {
+          initial_radius_um: initialRadius,
+          acoustic_pressure_bar: drivingPressureAmplitude,
+          frequency_khz: frequency,
+          ambient_pressure_bar: 1.0,
+          ambient_temperature_k: 298.0,
+          fluid_type: fluidType,
+          gas_type: gasType,
+          gas_fraction: gasFraction
+        });
+        
+        const data = response;
+        setPhysicsData(data);
+        
+        // Update refs with real physics values
+        if (data.collapse_results) {
+          collapseTime.current = data.collapse_results.collapse_time_ns / 1e9;
+          maxTemperature.current = data.collapse_results.max_temperature_k;
+          minRadius.current = data.collapse_results.min_radius_um;
+        }
+        
+        console.log('Bubble fusion calculation:', data.collapse_results);
+      } catch (err) {
+        console.warn('API call failed, using fallback calculations', err);
+        setError(err.message || 'Failed to fetch physics data');
+        
+        // Fallback to approximations
+        collapseTime.current = 0.5 / frequency;
+        maxTemperature.current = (1 + drivingPressureAmplitude) * 1000;
+        minRadius.current = initialRadius / (1 + drivingPressureAmplitude * 5);
+        
+        // Create fallback physics data for onRenderComplete
+        const fallbackData = {
+          collapse_results: {
+            max_temperature_k: maxTemperature.current,
+            min_radius_um: minRadius.current,
+            collapse_time_ns: collapseTime.current * 1e9,
+            fusion_probability: 0 // Zero probability for fallback
+          }
+        };
+        setPhysicsData(fallbackData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPhysicsData();
     
     // Reset animation
     setAnimationTime(0);
@@ -44,19 +96,12 @@ const BubbleFusionVisualizer = ({
       cancelAnimationFrame(animationRef.current);
     }
     
-    // Delay to simulate loading
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    
     return () => {
-      clearTimeout(timer);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [initialRadius, drivingPressureAmplitude, frequency]);
+  }, [initialRadius, drivingPressureAmplitude, frequency, fluidType, gasType, gasFraction]);
   
   // Function to render a frame
   const renderFrame = useCallback((time) => {
@@ -257,12 +302,11 @@ const BubbleFusionVisualizer = ({
   
   // Trigger completion callback after rendering is done
   useEffect(() => {
-    if (!isLoading && onRenderComplete) {
-      // Calculate mock fusion probability based on parameters
-      const fusionProbability = Math.exp(-10 / drivingPressureAmplitude) * 1e-20;
+    if (!isLoading && onRenderComplete && physicsData) {
+      const fusionProbability = physicsData.collapse_results?.fusion_probability || 0;
       onRenderComplete(fusionProbability);
     }
-  }, [isLoading, drivingPressureAmplitude, onRenderComplete]);
+  }, [isLoading, physicsData, onRenderComplete]);
   
   return (
     <Box
@@ -307,9 +351,26 @@ const BubbleFusionVisualizer = ({
           >
             <CircularProgress />
             <Typography variant="body2" color="textSecondary">
-              Initializing visualization...
+              Computing bubble dynamics...
             </Typography>
           </Box>
+        ) : null}
+        
+        {error && !isLoading ? (
+          <Typography 
+            variant="caption" 
+            color="warning.main" 
+            sx={{ 
+              position: 'absolute', 
+              top: 8, 
+              left: 8, 
+              backgroundColor: 'rgba(255,255,255,0.8)', 
+              px: 1, 
+              borderRadius: 1 
+            }}
+          >
+            Using approximate calculations
+          </Typography>
         ) : null}
         
         <canvas
@@ -322,13 +383,53 @@ const BubbleFusionVisualizer = ({
         />
       </Box>
       
+      {/* Physics Results Display */}
+      {physicsData && physicsData.collapse_results && (
+        <Paper elevation={2} sx={{ mt: 2, p: 2, width: '100%', maxWidth: 600 }}>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Collapse Results (Real Physics)
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+            <Typography variant="body2">
+              <strong>Max Temperature:</strong> {physicsData.collapse_results.max_temperature_k?.toFixed(0)} K
+            </Typography>
+            <Typography variant="body2">
+              <strong>Max Pressure:</strong> {physicsData.collapse_results.max_pressure_gpa?.toFixed(2)} GPa
+            </Typography>
+            <Typography variant="body2">
+              <strong>Min Radius:</strong> {physicsData.collapse_results.min_radius_um?.toFixed(3)} μm
+            </Typography>
+            <Typography variant="body2">
+              <strong>Compression:</strong> {physicsData.collapse_results.compression_ratio?.toFixed(1)}x
+            </Typography>
+            <Typography variant="body2">
+              <strong>Collapse Time:</strong> {physicsData.collapse_results.collapse_time_ns?.toFixed(1)} ns
+            </Typography>
+            <Typography variant="body2">
+              <strong>Peak Velocity:</strong> {physicsData.collapse_results.peak_velocity_km_s?.toFixed(2)} km/s
+            </Typography>
+          </Box>
+          {physicsData.collapse_results.conditions_met && (
+            <Box sx={{ mt: 1, pt: 1, borderTop: 1, borderColor: 'divider' }}>
+              <Typography variant="caption" color={physicsData.collapse_results.conditions_met.temperature_threshold ? 'success.main' : 'error.main'}>
+                Temperature Threshold: {physicsData.collapse_results.conditions_met.temperature_threshold ? '✓' : '✗'}
+              </Typography>
+              {' | '}
+              <Typography variant="caption" color={physicsData.collapse_results.conditions_met.pressure_threshold ? 'success.main' : 'error.main'}>
+                Pressure Threshold: {physicsData.collapse_results.conditions_met.pressure_threshold ? '✓' : '✗'}
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+      )}
+      
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="caption" color="textSecondary">
           Frequency: {frequency} kHz | Pressure: {drivingPressureAmplitude.toFixed(1)} bar | Initial Radius: {initialRadius.toFixed(1)} μm
         </Typography>
         
         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-          Note: This is a simplified visualization for educational purposes
+          Using WKB approximation with Rayleigh-Plesset dynamics
         </Typography>
       </Box>
     </Box>
@@ -344,7 +445,10 @@ BubbleFusionVisualizer.propTypes = {
   showCollapse: PropTypes.bool,
   width: PropTypes.number,
   height: PropTypes.number,
-  onRenderComplete: PropTypes.func
+  onRenderComplete: PropTypes.func,
+  fluidType: PropTypes.string,
+  gasType: PropTypes.string,
+  gasFraction: PropTypes.number
 };
 
 BubbleFusionVisualizer.defaultProps = {
