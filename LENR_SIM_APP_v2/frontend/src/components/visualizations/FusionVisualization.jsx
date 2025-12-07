@@ -185,12 +185,21 @@ function FusionVisualization({
       }
       if (rendererRef.current && containerRef.current) {
         containerRef.current.removeChild(rendererRef.current.domElement);
+        rendererRef.current.dispose();
       }
+      // Dispose of particles geometry and materials
       if (particlesRef.current) {
-        particlesRef.current.children.forEach(child => child.geometry.dispose());
+        particlesRef.current.children.forEach(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
       }
+      // Dispose of hotspots geometry and materials
       if (hotspotsRef.current) {
-        hotspotsRef.current.children.forEach(child => child.geometry.dispose());
+        hotspotsRef.current.children.forEach(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
       }
     };
   }, []);
@@ -242,16 +251,18 @@ function FusionVisualization({
   const updateVisualization = (timeStep) => {
     if (!particlesRef.current || !hotspotsRef.current || !sceneRef.current) return;
     
-    // Clear existing particles and hotspots
+    // Clear existing particles and hotspots (dispose materials too)
     while (particlesRef.current.children.length > 0) {
       const child = particlesRef.current.children[0];
-      child.geometry.dispose();
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
       particlesRef.current.remove(child);
     }
     
     while (hotspotsRef.current.children.length > 0) {
       const child = hotspotsRef.current.children[0];
-      child.geometry.dispose();
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
       hotspotsRef.current.remove(child);
     }
     

@@ -151,6 +151,7 @@ const TeamPage = () => {
                       startIcon={<GitHubIcon />}
                       href={member.links.github}
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       GitHub
                     </Button>
@@ -161,6 +162,7 @@ const TeamPage = () => {
                       startIcon={<WebsiteIcon />}
                       href={member.links.website}
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       Website
                     </Button>
@@ -238,6 +240,7 @@ const TeamPage = () => {
                 startIcon={<GitHubIcon />}
                 href={projectInfo.repository}
                 target="_blank"
+                rel="noopener noreferrer"
                 fullWidth
               >
                 View on GitHub
@@ -248,6 +251,7 @@ const TeamPage = () => {
                 startIcon={<WebsiteIcon />}
                 href={projectInfo.website}
                 target="_blank"
+                rel="noopener noreferrer"
                 fullWidth
               >
                 Visit Website

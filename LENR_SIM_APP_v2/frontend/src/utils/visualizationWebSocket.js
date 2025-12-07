@@ -19,6 +19,7 @@ class VisualizationWebSocket {
     this.clientId = clientId || `client_${Date.now()}`;
     this.socket = null;
     this.connected = false;
+    this.manualDisconnect = false; // Track if disconnect was intentional
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectDelay = 1000; // 1 second initial delay
@@ -49,6 +50,9 @@ class VisualizationWebSocket {
         if (this.socket) {
           this.disconnect();
         }
+        
+        // Reset manual disconnect flag when connecting
+        this.manualDisconnect = false;
         
         // Create new WebSocket connection
         // Ensure we have a valid base URL
@@ -86,8 +90,10 @@ class VisualizationWebSocket {
           // Notify event handlers
           this._notifyHandlers('onDisconnect');
           
-          // Attempt reconnect if not explicitly disconnected
-          this._attemptReconnect();
+          // Only attempt reconnect if not explicitly disconnected by user
+          if (!this.manualDisconnect) {
+            this._attemptReconnect();
+          }
         };
         
         this.socket.onerror = (error) => {
@@ -150,6 +156,9 @@ class VisualizationWebSocket {
    * Disconnect from the WebSocket server
    */
   disconnect() {
+    // Mark as manual disconnect to prevent auto-reconnect
+    this.manualDisconnect = true;
+    
     if (this.socket) {
       // Stop heartbeat
       this._stopHeartbeat();

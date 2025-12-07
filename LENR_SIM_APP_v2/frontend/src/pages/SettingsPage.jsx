@@ -106,10 +106,13 @@ const SettingsPage = () => {
     loadSettings();
   }, []);
   
-  const checkSystemStatus = async () => {
+  const checkSystemStatus = async (apiUrl = null) => {
+    // Use provided apiUrl or settings value or default
+    const baseUrl = apiUrl || settings.advanced?.apiUrl || 'http://localhost:8000';
+    
     // Check API connection
     try {
-      const response = await fetch('http://localhost:8000/health', { 
+      const response = await fetch(`${baseUrl}/health`, { 
         method: 'GET',
         signal: AbortSignal.timeout(3000)
       });

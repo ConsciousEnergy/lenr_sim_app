@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -63,10 +63,14 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
   // State for advanced panel visibility
   const [showAdvanced, setShowAdvanced] = useState(false);
   
+  // Use ref to track onChange to avoid infinite loops
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  
   // Update parent component when parameters change
   useEffect(() => {
-    onChange(parameters);
-  }, [parameters, onChange]);
+    onChangeRef.current(parameters);
+  }, [parameters]);
   
   // Generic handler for slider changes
   const handleSliderChange = (name) => (event, value) => {
@@ -75,11 +79,22 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
   
   // Generic handler for input changes
   const handleInputChange = (name) => (event) => {
-    const value = event.target.type === 'checkbox' 
-      ? event.target.checked 
-      : (event.target.type === 'number' 
-        ? parseFloat(event.target.value) 
-        : event.target.value);
+    let value;
+    if (event.target.type === 'checkbox') {
+      value = event.target.checked;
+    } else if (event.target.type === 'number') {
+      // Use parseInt for atomic numbers (z1, z2), parseFloat for other numbers
+      if (name === 'z1' || name === 'z2') {
+        value = parseInt(event.target.value, 10);
+        // Validate atomic number range (1-92)
+        if (isNaN(value) || value < 1) value = 1;
+        if (value > 92) value = 92;
+      } else {
+        value = parseFloat(event.target.value);
+      }
+    } else {
+      value = event.target.value;
+    }
     
     setParameters(prev => ({ ...prev, [name]: value }));
   };
@@ -211,7 +226,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
                   label="Z₁ (charge)"
                   value={parameters.z1}
                   onChange={handleInputChange('z1')}
-                  InputProps={{ inputProps: { min: 1, max: 92 } }}
+                  InputProps={{ inputProps: { min: 1, max: 92, step: 1 } }}
                   size="small"
                 />
               </Grid>
@@ -222,7 +237,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
                   label="Z₂ (charge)"
                   value={parameters.z2}
                   onChange={handleInputChange('z2')}
-                  InputProps={{ inputProps: { min: 1, max: 92 } }}
+                  InputProps={{ inputProps: { min: 1, max: 92, step: 1 } }}
                   size="small"
                 />
               </Grid>

@@ -33,6 +33,7 @@ interface SimulationStore {
     startTime?: number;
     pauseTime?: number;
     elapsedTime: number;
+    createdAt?: number; // Timestamp when simulation was created
     snapshots: Array<{
       id: string;
       name?: string;
@@ -77,6 +78,11 @@ function generateMockLattice(config: SimulationInitializeRequest): LatticeState 
   // Spacing between atoms in the lattice
   const spacing = lattice.constants?.[0] || 3.89;
   const centerOffset = [width * spacing / 2, height * spacing / 2, depth * spacing / 2];
+  
+  // Guard against empty elements array
+  if (!lattice.elements || lattice.elements.length === 0) {
+    return { dimensions: lattice.dimensions, points: [], connections: [] };
+  }
   
   // Generate lattice points with proper coordinates
   for (let i = 0; i < width; i++) {
@@ -243,6 +249,7 @@ export const mockPhysicsServer = {
       currentStep: 0,
       totalSteps: request.simulation_parameters.total_steps,
       elapsedTime: 0,
+      createdAt: Date.now(), // Track creation time for wall_time calculation
       snapshots: [],
       currentLattice: latticeState,
       currentSummary: summary,
@@ -542,7 +549,7 @@ export const mockPhysicsServer = {
       current_step: simulation.currentStep,
       total_steps: simulation.totalSteps,
       elapsed_time: elapsedTime,
-      wall_time: Date.now() / 1000 - (simulation.config as any).createdAt || 0
+      wall_time: simulation.createdAt ? (Date.now() - simulation.createdAt) / 1000 : 0
     };
   },
   

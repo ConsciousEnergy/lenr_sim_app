@@ -18,9 +18,9 @@ const LENRVisualization = ({
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [visOptions, setVisOptions] = useState({
-    showLattice: parameters?.showLattice || true,
-    showHotSpots: parameters?.showHotSpots || true,
-    showEnergyFlow: parameters?.showEnergyFlow || true
+    showLattice: parameters?.showLattice ?? true,
+    showHotSpots: parameters?.showHotSpots ?? true,
+    showEnergyFlow: parameters?.showEnergyFlow ?? true
   });
   
   const containerRef = useRef();
@@ -175,6 +175,9 @@ const LENRVisualization = ({
     
     const scene = sceneRef.current;
     
+    // Track animation frame IDs for cleanup
+    const animationFrameIds = [];
+    
     // Clear previous visualization components
     scene.children = scene.children.filter(child => 
       child.type === 'AmbientLight' || 
@@ -204,16 +207,21 @@ const LENRVisualization = ({
         }
       };
       
-      // Add lattice points
+      // Add lattice points - reuse materials by element type to prevent memory leaks
       const pointGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+      const materialCache = {};
       
       latticeData.points.forEach(point => {
-        const material = new THREE.MeshPhongMaterial({ 
-          color: getMaterialColor(point.element),
-          shininess: 100
-        });
+        const elementKey = point.element.toLowerCase();
+        // Reuse material if already created for this element type
+        if (!materialCache[elementKey]) {
+          materialCache[elementKey] = new THREE.MeshPhongMaterial({ 
+            color: getMaterialColor(point.element),
+            shininess: 100
+          });
+        }
         
-        const sphere = new THREE.Mesh(pointGeometry, material);
+        const sphere = new THREE.Mesh(pointGeometry, materialCache[elementKey]);
         sphere.position.set(...point.position);
         latticeGroup.add(sphere);
       });
@@ -250,12 +258,12 @@ const LENRVisualization = ({
         opacity: 0.7 
       });
       
-      // Add hot spots at points with high reaction rates
+      // Add hot spots at points with high reaction rates - clone material for each to allow independent opacity
       latticeData.points.forEach(point => {
         if (point.reaction_rate > 0.05) {
           const scale = 0.5 + (point.reaction_rate * 3); // Scale based on reaction rate
           
-          const hotSpot = new THREE.Mesh(hotSpotGeometry, hotSpotMaterial);
+          const hotSpot = new THREE.Mesh(hotSpotGeometry, hotSpotMaterial.clone());
           hotSpot.position.set(...point.position);
           hotSpot.scale.set(scale, scale, scale);
           
@@ -272,6 +280,7 @@ const LENRVisualization = ({
       scene.add(hotSpotsGroup);
       
       // Animate hot spots with pulsing effect
+      let hotSpotsAnimationId = null;
       const animateHotSpots = () => {
         const hotSpots = scene.getObjectByName('hotSpots');
         if (hotSpots) {
@@ -288,16 +297,11 @@ const LENRVisualization = ({
           });
         }
         
-        hotSpotsAnimationRef.current = requestAnimationFrame(animateHotSpots);
+        hotSpotsAnimationId = requestAnimationFrame(animateHotSpots);
       };
       
-      const hotSpotsAnimationRef = { current: null };
-      hotSpotsAnimationRef.current = requestAnimationFrame(animateHotSpots);
-      
-      // Return cleanup function
-      return () => {
-        cancelAnimationFrame(hotSpotsAnimationRef.current);
-      };
+      hotSpotsAnimationId = requestAnimationFrame(animateHotSpots);
+      animationFrameIds.push({ getId: () => hotSpotsAnimationId });
     }
     
     if (visOptions.showEnergyFlow) {
@@ -368,11 +372,12 @@ const LENRVisualization = ({
       scene.add(energyFlowGroup);
       
       // Animate energy particles
+      let energyFlowAnimationId = null;
       const animateEnergyFlow = () => {
         const energyFlow = scene.getObjectByName('energyFlow');
         if (energyFlow) {
-          const particles = energyFlow.children[0];
-          const positions = particles.geometry.attributes.position.array;
+          const energyParticles = energyFlow.children[0];
+          const positions = energyParticles.geometry.attributes.position.array;
           
           for (let i = 0; i < positions.length; i += 3) {
             // Move particles along small random paths
@@ -387,20 +392,23 @@ const LENRVisualization = ({
             positions[i + 2] = Math.max(-bounds[2], Math.min(bounds[2], positions[i + 2]));
           }
           
-          particles.geometry.attributes.position.needsUpdate = true;
+          energyParticles.geometry.attributes.position.needsUpdate = true;
         }
         
-        energyFlowAnimationRef.current = requestAnimationFrame(animateEnergyFlow);
+        energyFlowAnimationId = requestAnimationFrame(animateEnergyFlow);
       };
       
-      const energyFlowAnimationRef = { current: null };
-      energyFlowAnimationRef.current = requestAnimationFrame(animateEnergyFlow);
-      
-      // Return cleanup function
-      return () => {
-        cancelAnimationFrame(energyFlowAnimationRef.current);
-      };
+      energyFlowAnimationId = requestAnimationFrame(animateEnergyFlow);
+      animationFrameIds.push({ getId: () => energyFlowAnimationId });
     }
+    
+    // Cleanup all animation frames
+    return () => {
+      animationFrameIds.forEach(ref => {
+        const id = ref.getId();
+        if (id) cancelAnimationFrame(id);
+      });
+    };
   }, [timeSeriesData, visOptions]);
   
   // Prepare chart data
