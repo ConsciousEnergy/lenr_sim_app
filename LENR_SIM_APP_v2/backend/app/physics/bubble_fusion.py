@@ -240,7 +240,13 @@ class BubbleFusionCalculator:
         # Minimum radius from adiabatic compression
         # P_final / P_initial = (R_initial / R_final)^(3γ)
         # For strong collapse with Pa/P0 >> 1
-        compression_ratio = (Pa / P0 + 1) ** (1 / (3 * gamma - 3))
+        # Guard against division by zero when gamma approaches 1.0
+        gamma_exponent = 3 * gamma - 3
+        if abs(gamma_exponent) < 0.01:
+            # For nearly isothermal processes (gamma ≈ 1), use linear approximation
+            compression_ratio = 10.0  # Default to minimum
+        else:
+            compression_ratio = (Pa / P0 + 1) ** (1 / gamma_exponent)
         compression_ratio = max(compression_ratio, 10)  # At least 10x compression
         compression_ratio = min(compression_ratio, 1000)  # Physical limit
         
@@ -248,7 +254,13 @@ class BubbleFusionCalculator:
         
         # Peak conditions (adiabatic)
         # T_max = T0 * (R0/R_min)^(3(γ-1))
-        T_max = T0 * (R_max / R_min) ** (3 * (gamma - 1))
+        # Guard against gamma ≈ 1 (isothermal case: no temperature change)
+        gamma_minus_1 = gamma - 1
+        if abs(gamma_minus_1) < 0.01:
+            # Nearly isothermal: minimal temperature increase
+            T_max = T0 * 1.1
+        else:
+            T_max = T0 * (R_max / R_min) ** (3 * gamma_minus_1)
         T_max = min(T_max, 1e8)  # Cap at 100 million K
         
         # P_max = P_gas0 * (R0/R_min)^(3γ)
@@ -402,7 +414,13 @@ class BubbleFusionCalculator:
         R = np.maximum(R, R0 * 0.001)  # Cap compression
         
         # Estimate temperature (adiabatic)
-        T_gas = params.ambient_temperature_k * (R0 / R) ** (3 * (gamma - 1))
+        # Guard against gamma ≈ 1 (isothermal case)
+        gamma_minus_1 = gamma - 1
+        if abs(gamma_minus_1) < 0.01:
+            # Nearly isothermal: minimal temperature change
+            T_gas = np.full_like(R, params.ambient_temperature_k)
+        else:
+            T_gas = params.ambient_temperature_k * (R0 / R) ** (3 * gamma_minus_1)
         T_gas = np.minimum(T_gas, 1e8)
         
         # Estimate internal pressure
