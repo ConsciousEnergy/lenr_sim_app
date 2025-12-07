@@ -133,14 +133,19 @@ const PARAMETER_METADATA = {
  * @param {Object} props.parameters - Current parameter values
  * @param {Function} props.onChange - Callback function for parameter changes
  */
-function FusionParameterControls({ parameters, onChange }) {
+function FusionParameterControls({ 
+  parameters = defaultParameters, 
+  onChange = () => {},
+  savedConfigs: initialSavedConfigs = [],
+  onLoadConfig = null 
+}) {
   const [localParams, setLocalParams] = useState({...defaultParameters, ...parameters});
   const [configName, setConfigName] = useState('');
   const [expandedSection, setExpandedSection] = useState('basic');
   const [loadMenuAnchor, setLoadMenuAnchor] = useState(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const [savedConfigs, setSavedConfigs] = useState([]);
+  const [savedConfigs, setSavedConfigs] = useState(initialSavedConfigs);
   
   // Update local params when parent parameters change
   useEffect(() => {
@@ -165,6 +170,7 @@ function FusionParameterControls({ parameters, onChange }) {
     if (!configName.trim()) return;
     
     const newConfig = {
+      id: `config-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: configName.trim(),
       params: {...localParams},
       timestamp: new Date().toISOString()
@@ -173,6 +179,7 @@ function FusionParameterControls({ parameters, onChange }) {
     const updatedConfigs = [...savedConfigs, newConfig];
     setSavedConfigs(updatedConfigs);
     setConfigName('');
+    setSaveDialogOpen(false); // Close save dialog after saving
     
     // Store in localStorage
     try {
@@ -198,6 +205,8 @@ function FusionParameterControls({ parameters, onChange }) {
   const handleLoadConfig = (config) => {
     setLocalParams(config.params);
     onChange(config.params);
+    setLoadDialogOpen(false); // Close load dialog after loading
+    handleCloseLoadMenu(); // Close menu if open
   };
   
   // Export configuration to JSON file
@@ -270,8 +279,10 @@ function FusionParameterControls({ parameters, onChange }) {
   };
   
   // Handle deleting a configuration
-  const handleDeleteConfig = (configId) => {
-    const updatedConfigs = savedConfigs.filter(config => config.id !== configId);
+  const handleDeleteConfig = (configIdOrName) => {
+    const updatedConfigs = savedConfigs.filter(config => 
+      config.id !== configIdOrName && config.name !== configIdOrName
+    );
     setSavedConfigs(updatedConfigs);
     try {
       localStorage.setItem('fusionConfigs', JSON.stringify(updatedConfigs));
@@ -410,7 +421,7 @@ function FusionParameterControls({ parameters, onChange }) {
         <List sx={{ width: '100%', maxWidth: 360, minWidth: 250 }}>
           {savedConfigs.map((config) => (
             <ListItem 
-              key={config.name}
+              key={config.id || config.name}
               button
               onClick={() => handleLoadConfig(config)}
             >
@@ -460,7 +471,7 @@ function FusionParameterControls({ parameters, onChange }) {
               return renderSelect(paramName);
             } else if (PARAMETER_METADATA[paramName].min !== undefined) {
               return renderSlider(paramName);
-            } else if (typeof PARAMETER_METADATA[paramName].default === 'boolean') {
+            } else if (typeof PARAMETER_METADATA[paramName].defaultValue === 'boolean') {
               return renderToggle(paramName);
             }
             return null;
@@ -482,7 +493,7 @@ function FusionParameterControls({ parameters, onChange }) {
               return renderSelect(paramName);
             } else if (PARAMETER_METADATA[paramName].min !== undefined) {
               return renderSlider(paramName);
-            } else if (typeof PARAMETER_METADATA[paramName].default === 'boolean') {
+            } else if (typeof PARAMETER_METADATA[paramName].defaultValue === 'boolean') {
               return renderToggle(paramName);
             }
             return null;
@@ -521,9 +532,11 @@ function FusionParameterControls({ parameters, onChange }) {
           fullWidth
         />
         <Tooltip title="Save Configuration">
-          <IconButton color="primary" onClick={() => setSaveDialogOpen(true)} disabled={!configName.trim()}>
-            <SaveIcon />
-          </IconButton>
+          <span>
+            <IconButton color="primary" onClick={() => setSaveDialogOpen(true)} disabled={!configName.trim()}>
+              <SaveIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
       
@@ -605,12 +618,12 @@ function FusionParameterControls({ parameters, onChange }) {
             <List>
               {savedConfigs.map((config) => (
                 <ListItem
-                  key={config.id}
+                  key={config.id || config.name}
                   secondaryAction={
                     <IconButton 
                       edge="end" 
                       aria-label="delete"
-                      onClick={() => handleDeleteConfig(config.id)}
+                      onClick={() => handleDeleteConfig(config.id || config.name)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -654,15 +667,9 @@ FusionParameterControls.propTypes = {
     showDiffusion: PropTypes.bool,
     showHotSpots: PropTypes.bool
   }),
-  onChange: PropTypes.func.isRequired,
+  onChange: PropTypes.func,
   savedConfigs: PropTypes.array,
   onLoadConfig: PropTypes.func
-};
-
-FusionParameterControls.defaultProps = {
-  parameters: defaultParameters,
-  savedConfigs: [],
-  onLoadConfig: null
 };
 
 export default FusionParameterControls; 

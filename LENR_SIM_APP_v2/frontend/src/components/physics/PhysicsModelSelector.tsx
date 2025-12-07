@@ -187,7 +187,8 @@ const PhysicsModelSelector: React.FC<PhysicsModelSelectorProps> = ({
                             {ref.url && (
                               <IconButton 
                                 href={ref.url} 
-                                target="_blank" 
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 size="small"
                                 sx={{ ml: 1 }}
                               >

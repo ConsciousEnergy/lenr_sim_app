@@ -82,7 +82,7 @@ const SettingsPage = () => {
       showGrid: false
     },
     advanced: {
-      apiUrl: 'http://localhost:8001',
+      apiUrl: 'http://localhost:8000',
       enableDebugMode: false,
       cacheTTL: 3600,
       experimentalFeatures: false
@@ -106,10 +106,13 @@ const SettingsPage = () => {
     loadSettings();
   }, []);
   
-  const checkSystemStatus = async () => {
+  const checkSystemStatus = async (apiUrl = null) => {
+    // Use provided apiUrl or settings value or default
+    const baseUrl = apiUrl || settings.advanced?.apiUrl || 'http://localhost:8000';
+    
     // Check API connection
     try {
-      const response = await fetch('http://localhost:8001/health', { 
+      const response = await fetch(`${baseUrl}/health`, { 
         method: 'GET',
         signal: AbortSignal.timeout(3000)
       });
@@ -187,7 +190,7 @@ const SettingsPage = () => {
           showGrid: false
         },
         advanced: {
-          apiUrl: 'http://localhost:8001',
+          apiUrl: 'http://localhost:8000',
           enableDebugMode: false,
           cacheTTL: 3600,
           experimentalFeatures: false

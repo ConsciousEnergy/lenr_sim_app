@@ -232,13 +232,88 @@ export const mockLENRSimulation = async (parameters = {}) => {
   };
 };
 
+/**
+ * Generate fusion simulation time steps with particles and hotspots
+ * Used by FusionVisualization component
+ */
+export const generateFusionTimeSteps = (parameters = {}) => {
+  const {
+    latticeDimension = 10,
+    temperature = 300,
+    loadingRatio = 0.85,
+    reactionType = 'd-d',
+    timeStepSize = 0.1,
+    totalSimulationTime = 10
+  } = parameters;
+
+  const numTimeSteps = Math.min(Math.floor(totalSimulationTime / timeStepSize), 50);
+  const numParticles = Math.floor(100 + loadingRatio * 400);
+  const latticeSize = latticeDimension * 0.5;
+
+  const timeSteps = [];
+
+  for (let t = 0; t < numTimeSteps; t++) {
+    const time = t * timeStepSize;
+    const particles = [];
+    const hotspots = [];
+
+    // Generate particles
+    for (let i = 0; i < numParticles; i++) {
+      const baseX = (Math.random() - 0.5) * latticeSize * 2;
+      const baseY = (Math.random() - 0.5) * latticeSize * 2;
+      const baseZ = (Math.random() - 0.5) * latticeSize * 2;
+
+      // Add some time-based movement
+      const drift = Math.sin(time * 0.5 + i * 0.1) * 0.2;
+
+      particles.push({
+        x: baseX + drift,
+        y: baseY + drift * 0.5,
+        z: baseZ + drift * 0.3,
+        type: Math.random() > 0.5 ? 'deuterium' : 'hydrogen',
+        energy: Math.random() * (temperature / 300) * 0.8 + 0.1
+      });
+    }
+
+    // Generate hotspots (fusion events)
+    const numHotspots = Math.floor(3 + Math.random() * 7 * (temperature / 500));
+    for (let h = 0; h < numHotspots; h++) {
+      hotspots.push({
+        x: (Math.random() - 0.5) * latticeSize * 1.5,
+        y: (Math.random() - 0.5) * latticeSize * 1.5,
+        z: (Math.random() - 0.5) * latticeSize * 1.5,
+        intensity: Math.random() * 0.6 + 0.3
+      });
+    }
+
+    timeSteps.push({
+      time,
+      particles,
+      hotspots
+    });
+  }
+
+  return {
+    timeSteps,
+    metadata: {
+      reactionType,
+      temperature,
+      loadingRatio,
+      latticeDimension,
+      totalParticles: numParticles,
+      totalTimeSteps: numTimeSteps
+    }
+  };
+};
+
 export default {
   mockFusionData,
   mockSimulationResults,
   mockFusionSimulation,
-  mockLENRData,
   mockLENRSimulation,
+  mockLENRData,
   mockTunnelingData,
   generateMockDataStream,
+  generateFusionTimeSteps,
   mockDelay
 };

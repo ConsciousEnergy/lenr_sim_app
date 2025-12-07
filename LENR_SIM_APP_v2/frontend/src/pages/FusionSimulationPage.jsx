@@ -27,7 +27,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import InfoIcon from '@mui/icons-material/Info';
 import FusionParameterControls from '../components/controls/FusionParameterControls';
 import FusionVisualization from '../components/visualizations/FusionVisualization';
-import { mockFusionSimulation } from '../utils/mockData';
+import { generateFusionTimeSteps } from '../utils/mockData';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ResultsPanel from '../components/results/ResultsPanel';
@@ -113,9 +113,11 @@ function FusionSimulationPage() {
     setError(null);
     
     try {
-      // In a real implementation, this would be an API call
-      // For now we'll use a mock function that returns simulated data
-      const data = await mockFusionSimulation(parameters);
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate simulation data with proper structure for visualization
+      const data = generateFusionTimeSteps(parameters);
       setSimulationData(data);
       setSuccessMessage('Simulation completed successfully');
       
@@ -265,7 +267,7 @@ function FusionSimulationPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Generate mock comparison data based on the config
-      const compData = await mockFusionSimulation(selectedConfig.parameters);
+      const compData = generateFusionTimeSteps(selectedConfig.parameters);
       
       setComparisonConfig(selectedConfig);
       setComparisonData(compData);

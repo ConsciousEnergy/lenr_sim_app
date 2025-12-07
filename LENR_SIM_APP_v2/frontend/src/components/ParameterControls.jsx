@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Card, 
   Form, 
@@ -49,13 +49,21 @@ const ParameterControls = ({
   const [advancedMode, setAdvancedMode] = useState(mode === 'advanced' || mode === 'expert');
   const [expertMode, setExpertMode] = useState(mode === 'expert');
   
+  // Memoize stringified initialParameters to prevent infinite re-renders
+  const initialParamsString = useMemo(() => JSON.stringify(initialParameters), [initialParameters]);
+  const hasInitialized = useRef(false);
+  
   // Initialize form with initial parameters
   useEffect(() => {
-    if (initialParameters && Object.keys(initialParameters).length > 0) {
-      form.setFieldsValue(initialParameters);
-      setParameters(initialParameters);
-    } else {
-      // Set default values
+    // Only initialize once or when initialParameters actually changes
+    const parsedParams = JSON.parse(initialParamsString);
+    
+    if (parsedParams && Object.keys(parsedParams).length > 0) {
+      form.setFieldsValue(parsedParams);
+      setParameters(parsedParams);
+      hasInitialized.current = true;
+    } else if (!hasInitialized.current) {
+      // Set default values only on first mount
       const defaultValues = {
         // Basic parameters
         latticeType: 'FCC',
@@ -78,8 +86,9 @@ const ParameterControls = ({
       
       form.setFieldsValue(defaultValues);
       setParameters(defaultValues);
+      hasInitialized.current = true;
     }
-  }, [initialParameters]);
+  }, [initialParamsString, form]);
   
   // Handle form value changes
   const handleValuesChange = (changedValues, allValues) => {

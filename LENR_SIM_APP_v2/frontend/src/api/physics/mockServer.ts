@@ -33,6 +33,7 @@ interface SimulationStore {
     startTime?: number;
     pauseTime?: number;
     elapsedTime: number;
+    createdAt?: number; // Timestamp when simulation was created
     snapshots: Array<{
       id: string;
       name?: string;
@@ -65,31 +66,74 @@ function generateMockLattice(config: SimulationInitializeRequest): LatticeState 
   const { lattice } = config;
   const [width, height, depth] = lattice.dimensions;
   
-  const points = [];
-  const connections = [];
+  const points: Array<{
+    position: [number, number, number];
+    element: string;
+    energy: number;
+    temperature: number;
+    reaction_rate: number;
+  }> = [];
+  const connections: Array<[number, number]> = [];
   
-  // Generate points
+  // Spacing between atoms in the lattice
+  const spacing = lattice.constants?.[0] || 3.89;
+  const centerOffset = [width * spacing / 2, height * spacing / 2, depth * spacing / 2];
+  
+  // Guard against empty elements array
+  if (!lattice.elements || lattice.elements.length === 0) {
+    return { dimensions: lattice.dimensions, points: [], connections: [] };
+  }
+  
+  // Generate lattice points with proper coordinates
   for (let i = 0; i < width; i++) {
     for (let j = 0; j < height; j++) {
       for (let k = 0; k < depth; k++) {
-        if (Math.random() > 0.7) { // Only generate some points for performance
-          const element = lattice.elements[Math.floor(Math.random() * lattice.elements.length)];
+        // Generate main lattice points (metal atoms)
+        const element = lattice.elements[0];
+        const x = i * spacing - centerOffset[0];
+        const y = j * spacing - centerOffset[1];
+        const z = k * spacing - centerOffset[2];
+        
+        points.push({
+          position: [x, y, z] as [number, number, number],
+          element: element.symbol,
+          energy: Math.random() * 2,
+          temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
+          reaction_rate: Math.random() * 0.15
+        });
+        
+        // Add some interstitial atoms (hydrogen) at body center positions
+        if (lattice.elements.length > 1 && Math.random() > 0.6) {
+          const interstitialElement = lattice.elements[1];
           points.push({
-            position: [i, j, k] as [number, number, number],
-            element: element.symbol,
-            energy: Math.random() * 2,
-            temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
-            reaction_rate: Math.random() * 0.1
+            position: [
+              x + spacing * 0.5, 
+              y + spacing * 0.5, 
+              z + spacing * 0.5
+            ] as [number, number, number],
+            element: interstitialElement.symbol,
+            energy: Math.random() * 1.5,
+            temperature: config.conditions.temperature * (0.95 + Math.random() * 0.1),
+            reaction_rate: Math.random() * 0.2
           });
         }
       }
     }
   }
   
-  // Generate some random connections between points
+  // Generate connections between nearby points
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
-      if (Math.random() > 0.95) {
+      const p1 = points[i].position;
+      const p2 = points[j].position;
+      const distance = Math.sqrt(
+        Math.pow(p1[0] - p2[0], 2) +
+        Math.pow(p1[1] - p2[1], 2) +
+        Math.pow(p1[2] - p2[2], 2)
+      );
+      
+      // Connect points that are within 1.5 * spacing distance
+      if (distance <= spacing * 1.5) {
         connections.push([i, j] as [number, number]);
       }
     }
@@ -107,6 +151,7 @@ function generateMockSummary(config: SimulationInitializeRequest, step: number):
   return {
     average_temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
     total_energy: 1000 * Math.random() * (1 + step / 100),
+    reaction_rate: 0.05 + Math.random() * 0.1 * (step / 100),
     reaction_counts: {
       'fusion': Math.floor(step / 10),
       'decay': Math.floor(step / 5),
@@ -120,7 +165,10 @@ function updateSimulation(id: string) {
   const simulation = simulations[id];
   if (!simulation || simulation.status !== 'running') return;
   
-  simulation.currentStep++;
+  // Process multiple steps per update for faster completion
+  const stepsPerUpdate = Math.max(1, Math.ceil(simulation.totalSteps / 10));
+  simulation.currentStep += stepsPerUpdate;
+  
   const currentTime = Date.now();
   const elapsedSinceStart = currentTime - (simulation.startTime || currentTime);
   simulation.elapsedTime += elapsedSinceStart / 1000;
@@ -201,6 +249,7 @@ export const mockPhysicsServer = {
       currentStep: 0,
       totalSteps: request.simulation_parameters.total_steps,
       elapsedTime: 0,
+      createdAt: Date.now(), // Track creation time for wall_time calculation
       snapshots: [],
       currentLattice: latticeState,
       currentSummary: summary,
@@ -226,9 +275,9 @@ export const mockPhysicsServer = {
     simulation.status = 'running';
     simulation.startTime = Date.now();
     
-    // Start periodic updates
+    // Start periodic updates (faster interval for responsive development)
     if (!simulation.updateIntervalId) {
-      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 1000);
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
     }
     
     return {
@@ -276,9 +325,9 @@ export const mockPhysicsServer = {
     simulation.status = 'running';
     simulation.startTime = Date.now();
     
-    // Start periodic updates
+    // Start periodic updates (faster interval for responsive development)
     if (!simulation.updateIntervalId) {
-      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 1000);
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
     }
     
     return {
@@ -500,7 +549,7 @@ export const mockPhysicsServer = {
       current_step: simulation.currentStep,
       total_steps: simulation.totalSteps,
       elapsed_time: elapsedTime,
-      wall_time: Date.now() / 1000 - (simulation.config as any).createdAt || 0
+      wall_time: simulation.createdAt ? (Date.now() - simulation.createdAt) / 1000 : 0
     };
   },
   

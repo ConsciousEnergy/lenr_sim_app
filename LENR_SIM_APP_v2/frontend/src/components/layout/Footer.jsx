@@ -29,11 +29,11 @@ const Footer = () => {
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 2, mt: { xs: 2, md: 0 } }}>
-            <Link href="https://www.conscious.energy" target="_blank" rel="noopener" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+            <Link href="https://www.conscious.energy" target="_blank" rel="noopener noreferrer" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
               <LanguageIcon fontSize="small" sx={{ mr: 0.5 }} />
               Website
             </Link>
-            <Link href="https://github.com/ConsciousEnergy/lenr_sim_app" target="_blank" rel="noopener" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+            <Link href="https://github.com/ConsciousEnergy/lenr_sim_app" target="_blank" rel="noopener noreferrer" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
               <GitHubIcon fontSize="small" sx={{ mr: 0.5 }} />
               GitHub
             </Link>

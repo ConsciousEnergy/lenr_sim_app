@@ -25,6 +25,7 @@ import {
   Divider,
   Stack,
   LinearProgress,
+  Checkbox,
   useTheme,
   alpha
 } from '@mui/material';
@@ -174,9 +175,16 @@ const AnalyticsPage = () => {
     
     const completed = simulationHistory.filter(s => s.status === 'completed');
     const totalSimulations = simulationHistory.length;
-    const successRate = (completed.length / totalSimulations * 100).toFixed(1);
-    const avgEnhancement = completed.reduce((acc, s) => acc + s.enhancementFactor, 0) / completed.length;
-    const avgFusionRate = completed.reduce((acc, s) => acc + s.fusionRate, 0) / completed.length;
+    const successRate = totalSimulations > 0 
+      ? (completed.length / totalSimulations * 100).toFixed(1) 
+      : '0.0';
+    // Guard against division by zero when no completed simulations
+    const avgEnhancement = completed.length > 0 
+      ? completed.reduce((acc, s) => acc + s.enhancementFactor, 0) / completed.length 
+      : 0;
+    const avgFusionRate = completed.length > 0 
+      ? completed.reduce((acc, s) => acc + s.fusionRate, 0) / completed.length 
+      : 0;
     const totalEnergy = completed.reduce((acc, s) => acc + s.energyOutput, 0);
     
     // Type distribution
@@ -262,7 +270,9 @@ const AnalyticsPage = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
   
@@ -276,14 +286,21 @@ const AnalyticsPage = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
   
   const handleClearHistory = () => {
     if (window.confirm('Are you sure you want to clear all simulation history?')) {
-      localStorage.removeItem('lenr_simulation_history');
-      setSimulationHistory([]);
+      try {
+        localStorage.removeItem('lenr_simulation_history');
+        setSimulationHistory([]);
+      } catch (error) {
+        console.error('Failed to clear simulation history:', error);
+        alert('Failed to clear history. Please try again.');
+      }
     }
   };
   
@@ -472,8 +489,9 @@ const AnalyticsPage = () => {
               <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">
-                    <input
-                      type="checkbox"
+                    <Checkbox
+                      indeterminate={selectedSimulations.length > 0 && selectedSimulations.length < simulationHistory.length}
+                      checked={simulationHistory.length > 0 && selectedSimulations.length === simulationHistory.length}
                       onChange={(e) => {
                         if (e.target.checked) {
                           setSelectedSimulations(simulationHistory.map(s => s.id));
@@ -499,8 +517,7 @@ const AnalyticsPage = () => {
                   .map((row) => (
                     <TableRow key={row.id} hover selected={selectedSimulations.includes(row.id)}>
                       <TableCell padding="checkbox">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedSimulations.includes(row.id)}
                           onChange={() => handleSelectSimulation(row.id)}
                         />

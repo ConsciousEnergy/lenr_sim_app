@@ -129,7 +129,35 @@ function SimulationDetail() {
     setLoading(true);
     
     setTimeout(() => {
-      const foundSimulation = MOCK_SIMULATIONS[simulationId];
+      let foundSimulation = MOCK_SIMULATIONS[simulationId];
+      
+      // If not found in mock data, create a new simulation entry
+      // This handles dynamically created simulation IDs from NewSimulation page
+      if (!foundSimulation && simulationId) {
+        foundSimulation = {
+          id: simulationId,
+          name: `New Simulation ${simulationId.replace('sim-', '')}`,
+          description: 'Newly created LENR simulation - configure parameters to start',
+          status: 'pending',
+          progress: 0,
+          createdAt: new Date().toISOString(),
+          estimatedCompletion: null,
+          parameters: {
+            latticeType: 'FCC',
+            latticeConstant: 3.89,
+            dimensions: [10, 10, 10],
+            temperature: 300,
+            deuteriumConcentration: 0.8,
+            thermalConductivity: 71.8
+          },
+          resources: {
+            cpuCores: 4,
+            gpuEnabled: true,
+            memory: '8GB',
+            estimatedRuntime: 'TBD'
+          }
+        };
+      }
       
       if (foundSimulation) {
         setSimulation(foundSimulation);

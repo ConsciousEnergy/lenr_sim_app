@@ -367,7 +367,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
 
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
-              Visit <MuiLink href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</MuiLink> for 
+              Visit <MuiLink href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/docs</MuiLink> for 
               the interactive Swagger UI with complete API documentation.
             </Alert>
           </AccordionDetails>
@@ -581,7 +581,7 @@ LOG_LEVEL=info`}
 
             <Alert severity="info" sx={{ mt: 3 }}>
               <AlertTitle><strong>Need More Help?</strong></AlertTitle>
-              Check our <MuiLink href="https://github.com/ConsciousEnergy/lenr_sim_app/issues" target="_blank">
+              Check our <MuiLink href="https://github.com/ConsciousEnergy/lenr_sim_app/issues" target="_blank" rel="noopener noreferrer">
               GitHub Issues</MuiLink> or create a new issue for support.
             </Alert>
           </AccordionDetails>

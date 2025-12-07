@@ -78,7 +78,10 @@ const GAS_TYPES = [
   { value: 'argon', label: 'Argon (Ar)' }
 ];
 
-const BubbleFusionParameterControls = ({ initialValues, onChange }) => {
+const BubbleFusionParameterControls = ({ 
+  initialValues = {}, 
+  onChange = () => {} 
+}) => {
   const [params, setParams] = useState({ ...DEFAULT_VALUES, ...initialValues });
   const [expanded, setExpanded] = useState({
     bubbleParams: true,
@@ -368,11 +371,6 @@ const BubbleFusionParameterControls = ({ initialValues, onChange }) => {
 BubbleFusionParameterControls.propTypes = {
   initialValues: PropTypes.object,
   onChange: PropTypes.func
-};
-
-BubbleFusionParameterControls.defaultProps = {
-  initialValues: {},
-  onChange: () => {}
 };
 
 export default BubbleFusionParameterControls; 

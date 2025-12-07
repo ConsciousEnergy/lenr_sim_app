@@ -5,15 +5,15 @@ import api from '../../services/api';
 
 // Bubble fusion visualization component with real physics calculations
 const BubbleFusionVisualizer = ({
-  initialRadius,
-  drivingPressureAmplitude,
-  frequency,
-  showPressureField,
-  showTemperatureField,
-  showCollapse,
+  initialRadius = 10.0,
+  drivingPressureAmplitude = 1.2,
+  frequency = 20,
+  showPressureField = true,
+  showTemperatureField = true,
+  showCollapse = true,
   width = 800,
   height = 600,
-  onRenderComplete,
+  onRenderComplete = () => {},
   fluidType = 'water',
   gasType = 'deuterium',
   gasFraction = 0.8
@@ -451,16 +451,5 @@ BubbleFusionVisualizer.propTypes = {
   gasFraction: PropTypes.number
 };
 
-BubbleFusionVisualizer.defaultProps = {
-  initialRadius: 10.0,
-  drivingPressureAmplitude: 1.2,
-  frequency: 20,
-  showPressureField: true,
-  showTemperatureField: true,
-  showCollapse: true,
-  width: 800,
-  height: 600,
-  onRenderComplete: () => {}
-};
 
 export default BubbleFusionVisualizer; 
