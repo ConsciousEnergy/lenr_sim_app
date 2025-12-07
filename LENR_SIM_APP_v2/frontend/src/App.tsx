@@ -118,7 +118,7 @@ const AppContent = () => {
             } />
             <Route path="/simulations" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <SimulationDetail />
+                <NewSimulation />
               </AppLayoutFixed>
             } />
             <Route path="/new-simulation" element={
