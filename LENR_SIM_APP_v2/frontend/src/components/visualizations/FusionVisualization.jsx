@@ -245,18 +245,36 @@ function FusionVisualization({
     // Clear existing particles and hotspots
     while (particlesRef.current.children.length > 0) {
       const child = particlesRef.current.children[0];
-      child.geometry.dispose();
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
       particlesRef.current.remove(child);
     }
     
     while (hotspotsRef.current.children.length > 0) {
       const child = hotspotsRef.current.children[0];
-      child.geometry.dispose();
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
       hotspotsRef.current.remove(child);
     }
     
+    // Default to showing particles and hotspots if not specified
+    const showParticles = parameters?.showParticles !== false && parameters?.showLattice !== false;
+    const showHotspots = parameters?.showHotspots !== false && parameters?.showHotSpots !== false;
+    
     // Create particles
-    if (parameters?.showParticles && timeStep.particles) {
+    if (showParticles && timeStep.particles) {
       // Limit number of particles for performance
       const displayCount = Math.min(
         timeStep.particles.length,
@@ -352,7 +370,7 @@ function FusionVisualization({
     }
     
     // Create hotspots
-    if (parameters?.showHotspots && timeStep.hotspots) {
+    if (showHotspots && timeStep.hotspots) {
       for (const hotspot of timeStep.hotspots) {
         // Create hotspot geometry
         const geometry = new THREE.SphereGeometry(hotspot.intensity * 0.5, 16, 16);

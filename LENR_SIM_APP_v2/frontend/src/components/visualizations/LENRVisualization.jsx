@@ -6,6 +6,48 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 /**
+ * Generate default lattice data when none is provided
+ */
+const generateDefaultLattice = () => {
+  const dimensions = [10, 10, 10];
+  const points = [];
+  const connections = [];
+  
+  // Generate lattice points
+  for (let x = 0; x < dimensions[0]; x += 2) {
+    for (let y = 0; y < dimensions[1]; y += 2) {
+      for (let z = 0; z < dimensions[2]; z += 2) {
+        points.push({
+          position: [x - dimensions[0]/2, y - dimensions[1]/2, z - dimensions[2]/2],
+          element: Math.random() > 0.7 ? 'hydrogen' : 'nickel',
+          energy: Math.random() * 2,
+          temperature: 300 + Math.random() * 100,
+          reaction_rate: Math.random() * 0.1
+        });
+      }
+    }
+  }
+  
+  // Generate connections between neighboring points
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const p1 = points[i].position;
+      const p2 = points[j].position;
+      const dist = Math.sqrt(
+        Math.pow(p1[0] - p2[0], 2) + 
+        Math.pow(p1[1] - p2[1], 2) + 
+        Math.pow(p1[2] - p2[2], 2)
+      );
+      if (dist <= 2.5) {
+        connections.push([i, j]);
+      }
+    }
+  }
+  
+  return { dimensions, points, connections };
+};
+
+/**
  * LENR Visualization Component
  * 
  * Renders 3D visualization of the lattice and reaction sites,
@@ -154,8 +196,18 @@ const LENRVisualization = ({
       child.type === 'AxesHelper'
     );
     
-    // Get the current lattice state
-    const latticeData = timeSeriesData.lattice;
+    // Get the current lattice state with fallback
+    const latticeData = timeSeriesData.lattice || generateDefaultLattice();
+    
+    // Validate lattice data
+    if (!latticeData.points || !Array.isArray(latticeData.points)) {
+      console.warn('Invalid lattice data: missing points array');
+      return;
+    }
+    
+    if (!latticeData.dimensions || !Array.isArray(latticeData.dimensions)) {
+      latticeData.dimensions = [10, 10, 10];
+    }
     
     if (visOptions.showLattice) {
       // Create lattice structure
@@ -190,10 +242,11 @@ const LENRVisualization = ({
         latticeGroup.add(sphere);
       });
       
-      // Add connections between points
+      // Add connections between points (if available)
       const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.6, transparent: true });
+      const connections = latticeData.connections || [];
       
-      latticeData.connections.forEach(connection => {
+      connections.forEach(connection => {
         const [i, j] = connection;
         const start = latticeData.points[i].position;
         const end = latticeData.points[j].position;
@@ -379,27 +432,33 @@ const LENRVisualization = ({
   const prepareChartData = () => {
     if (!timeSeriesData) return [];
     
+    // Get summary with fallbacks
+    const summary = timeSeriesData.summary || {};
+    const totalEnergy = summary.total_energy || 1000;
+    const avgTemp = summary.average_temperature || 400;
+    const reactionRateBase = summary.reaction_rate || 0.05;
+    const simulationTime = timeSeriesData.time || 10;
+    
     // Generate time points
-    const timePoints = Array.from({ length: 50 }, (_, i) => i * (timeSeriesData.time / 49));
+    const timePoints = Array.from({ length: 50 }, (_, i) => i * (simulationTime / 49));
     
     // Create chart data with main simulation series
     return timePoints.map((time, index) => {
       // Calculate values based on time progression (this would come from actual simulation data)
       const progress = index / 49;
-      const energyOutput = timeSeriesData.summary.total_energy * progress;
-      const temperature = timeSeriesData.summary.average_temperature + 
-        (Math.random() - 0.5) * 5 * progress;
-      const reactionRate = (timeSeriesData.summary.reaction_rate || 0.05) * progress + 
-        (Math.random() - 0.5) * 0.01;
+      const energyOutput = totalEnergy * progress;
+      const temperature = avgTemp + (Math.random() - 0.5) * 5 * progress;
+      const reactionRate = reactionRateBase * progress + (Math.random() - 0.5) * 0.01;
       
       // Get comparison values if available
       let comparisonEnergy, comparisonTemp, comparisonRate;
       
-      if (comparisonData) {
-        comparisonEnergy = comparisonData.summary.total_energy * progress;
-        comparisonTemp = comparisonData.summary.average_temperature + 
+      if (comparisonData && comparisonData.summary) {
+        const compSummary = comparisonData.summary;
+        comparisonEnergy = (compSummary.total_energy || 1000) * progress;
+        comparisonTemp = (compSummary.average_temperature || 400) + 
           (Math.random() - 0.5) * 5 * progress;
-        comparisonRate = (comparisonData.summary.reaction_rate || 0.05) * progress + 
+        comparisonRate = (compSummary.reaction_rate || 0.05) * progress + 
           (Math.random() - 0.5) * 0.01;
       }
       

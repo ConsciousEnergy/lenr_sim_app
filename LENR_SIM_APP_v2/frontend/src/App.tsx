@@ -24,6 +24,10 @@ import AboutPage from './pages/AboutPage';
 import TheoryPage from './pages/TheoryPage';
 import DocumentationPage from './pages/DocumentationPage';
 
+// Pages - Analytics & Settings
+import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
+
 // Pages - Advanced Visualization & Physics
 import RealTimeVisualizationPage from './pages/RealTimeVisualizationPage';
 import PhysicsSimulationDashboardPage from './pages/PhysicsSimulationDashboardPage';
@@ -206,7 +210,7 @@ const AppContent = () => {
             } />
             <Route path="/analytics" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <AnalyticsPage />
               </AppLayoutFixed>
             } />
             <Route path="/documentation" element={
@@ -221,12 +225,12 @@ const AppContent = () => {
             } />
             <Route path="/team" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <AboutPage />
               </AppLayoutFixed>
             } />
             <Route path="/settings" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <SettingsPage />
               </AppLayoutFixed>
             } />
             

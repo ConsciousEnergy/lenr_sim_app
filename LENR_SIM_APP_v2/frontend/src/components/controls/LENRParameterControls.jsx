@@ -252,10 +252,11 @@ const LENRParameterControls = ({
               step={1}
               disabled={disabled}
               marks={[
-                { value: 273, label: '273K' },
-                { value: 773, label: '773K' },
-                { value: 1273, label: '1273K' }
+                { value: 273, label: '' },
+                { value: 773, label: '' },
+                { value: 1273, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -271,10 +272,11 @@ const LENRParameterControls = ({
               step={0.1}
               disabled={disabled}
               marks={[
-                { value: 0.1, label: '0.1' },
-                { value: 15, label: '15' },
-                { value: 30, label: '30' }
+                { value: 0.1, label: '' },
+                { value: 15, label: '' },
+                { value: 30, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -290,10 +292,11 @@ const LENRParameterControls = ({
               step={0.01}
               disabled={disabled}
               marks={[
-                { value: 0, label: '0' },
-                { value: 1, label: '1T' },
-                { value: 2, label: '2T' }
+                { value: 0, label: '' },
+                { value: 1, label: '' },
+                { value: 2, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -331,10 +334,11 @@ const LENRParameterControls = ({
               step={0.01}
               disabled={disabled}
               marks={[
-                { value: 0, label: '0' },
-                { value: 2.5, label: '2.5' },
-                { value: 5, label: '5' }
+                { value: 0, label: '' },
+                { value: 2.5, label: '' },
+                { value: 5, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -350,10 +354,11 @@ const LENRParameterControls = ({
               step={1}
               disabled={disabled}
               marks={[
-                { value: 0, label: 'DC' },
-                { value: 500, label: '500' },
-                { value: 1000, label: '1k' }
+                { value: 0, label: '' },
+                { value: 500, label: '' },
+                { value: 1000, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -369,10 +374,11 @@ const LENRParameterControls = ({
               step={1}
               disabled={disabled}
               marks={[
-                { value: 0, label: '0' },
-                { value: 250, label: '250' },
-                { value: 500, label: '500' }
+                { value: 0, label: '' },
+                { value: 250, label: '' },
+                { value: 500, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -411,10 +417,11 @@ const LENRParameterControls = ({
               step={0.001}
               disabled={disabled || parameters.catalystType === 'none'}
               marks={[
-                { value: 0, label: '0' },
-                { value: 0.15, label: '0.15' },
-                { value: 0.3, label: '0.3' }
+                { value: 0, label: '' },
+                { value: 0.15, label: '' },
+                { value: 0.3, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -466,10 +473,11 @@ const LENRParameterControls = ({
               step={1}
               disabled={disabled || !parameters.nanostructured}
               marks={[
-                { value: 5, label: '5' },
-                { value: 250, label: '250' },
-                { value: 500, label: '500' }
+                { value: 5, label: '' },
+                { value: 250, label: '' },
+                { value: 500, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -485,10 +493,11 @@ const LENRParameterControls = ({
               step={0.01}
               disabled={disabled}
               marks={[
-                { value: 0, label: '0' },
-                { value: 0.25, label: '0.25' },
-                { value: 0.5, label: '0.5' }
+                { value: 0, label: '' },
+                { value: 0.25, label: '' },
+                { value: 0.5, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -555,10 +564,11 @@ const LENRParameterControls = ({
               step={0.01}
               disabled={disabled}
               marks={[
-                { value: 0.01, label: '0.01' },
-                { value: 0.5, label: '0.5' },
-                { value: 1, label: '1' }
+                { value: 0.01, label: '' },
+                { value: 0.5, label: '' },
+                { value: 1, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -574,10 +584,11 @@ const LENRParameterControls = ({
               step={1}
               disabled={disabled}
               marks={[
-                { value: 1, label: '1' },
-                { value: 50, label: '50' },
-                { value: 100, label: '100' }
+                { value: 1, label: '' },
+                { value: 50, label: '' },
+                { value: 100, label: '' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
