@@ -51,7 +51,14 @@ class VisualizationWebSocket {
         }
         
         // Create new WebSocket connection
-        const url = `${this.baseUrl.replace(/^http/, 'ws')}/api/visualization/ws/${this.clientId}`;
+        // Ensure we have a valid base URL
+        const baseUrl = this.baseUrl || 'http://localhost:8000';
+        // Convert http(s) to ws(s)
+        const wsUrl = baseUrl.replace(/^http/, 'ws');
+        // Remove trailing /api if present to avoid duplication
+        const cleanWsUrl = wsUrl.replace(/\/api$/, '');
+        const url = `${cleanWsUrl}/api/visualization/ws/${this.clientId}`;
+        console.log('Connecting to visualization WebSocket:', url);
         this.socket = new WebSocket(url);
         
         // Set up event handlers
@@ -460,16 +467,33 @@ class VisualizationWebSocket {
   getConnectionStatus() {
     return this.connected;
   }
+
+  /**
+   * Check if the socket is currently connected (alias for getConnectionStatus)
+   * @returns {boolean} True if connected, false otherwise
+   */
+  isConnected() {
+    return this.connected;
+  }
 }
 
 /**
  * Create a singleton instance of VisualizationWebSocket
- * @param {string} baseUrl - API base URL
+ * @param {string} baseUrl - API base URL (defaults to http://localhost:8000 if empty)
  * @returns {VisualizationWebSocket} WebSocket manager instance
  */
 export function createVisualizationWebSocket(baseUrl) {
+  // Use default backend URL if baseUrl is empty or doesn't start with http
+  const effectiveBaseUrl = (baseUrl && baseUrl.startsWith('http')) ? baseUrl : 'http://localhost:8000';
+  
   if (!window.visualizationWebSocket) {
-    window.visualizationWebSocket = new VisualizationWebSocket(baseUrl);
+    window.visualizationWebSocket = new VisualizationWebSocket(effectiveBaseUrl);
+  } else {
+    // Always update baseUrl to ensure it's valid
+    const currentBaseUrl = window.visualizationWebSocket.baseUrl;
+    if (!currentBaseUrl || !currentBaseUrl.startsWith('http')) {
+      window.visualizationWebSocket.baseUrl = effectiveBaseUrl;
+    }
   }
   
   return window.visualizationWebSocket;
