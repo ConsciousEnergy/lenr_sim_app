@@ -163,8 +163,6 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
             valueLabelFormat={v => `${v} keV`}
             marks={[
               { value: 0.01, label: '0.01' },
-              { value: 1, label: '1' },
-              { value: 5, label: '5' },
               { value: 10, label: '10' }
             ]}
           />
@@ -178,7 +176,6 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
             valueLabelFormat={v => `${v} K`}
             marks={[
               { value: 1, label: '1K' },
-              { value: 300, label: '300K' },
               { value: 5000, label: '5000K' }
             ]}
           />
@@ -194,7 +191,6 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
             valueLabelFormat={v => `${v.toFixed(1)}x`}
             marks={[
               { value: 1, label: '1x' },
-              { value: 50, label: '50x' },
               { value: 100, label: '100x' }
             ]}
           />
@@ -235,7 +231,6 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
             valueLabelFormat={v => `${v} atm`}
             marks={[
               { value: 0.1, label: '0.1' },
-              { value: 1, label: '1' },
               { value: 100, label: '100' }
             ]}
           />

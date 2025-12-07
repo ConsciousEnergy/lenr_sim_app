@@ -4,6 +4,108 @@
  */
 
 /**
+ * Generate fusion simulation time steps with particles and hotspots
+ * This provides the proper data structure for FusionVisualization component
+ */
+export const generateFusionTimeSteps = (parameters = {}) => {
+  const {
+    latticeDimension = 10,
+    temperature = 293,
+    loadingRatio = 0.8,
+    reactionType = 'd-d',
+    timeStepSize = 0.1,
+    totalSimulationTime = 10
+  } = parameters;
+  
+  const numTimeSteps = Math.min(50, Math.floor(totalSimulationTime / timeStepSize));
+  const numParticles = Math.min(500, Math.floor(100 + loadingRatio * 400));
+  const boxSize = latticeDimension / 2;
+  
+  // Particle types based on reaction
+  const getParticleTypes = () => {
+    switch (reactionType) {
+      case 'd-d':
+        return ['deuterium', 'deuterium', 'helium', 'proton'];
+      case 'd-t':
+        return ['deuterium', 'tritium', 'helium', 'proton'];
+      case 'p-B11':
+        return ['proton', 'proton', 'helium', 'helium'];
+      case 'p-Li7':
+        return ['proton', 'proton', 'helium', 'helium'];
+      default:
+        return ['deuterium', 'deuterium', 'helium', 'proton'];
+    }
+  };
+  
+  const particleTypes = getParticleTypes();
+  
+  // Generate initial particle positions
+  const generateParticles = (timeIndex) => {
+    const particles = [];
+    const energyScale = (temperature / 300) * (1 + timeIndex / numTimeSteps);
+    
+    for (let i = 0; i < numParticles; i++) {
+      // Random walk with time evolution
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = Math.random() * boxSize * 0.9;
+      
+      // Add some drift based on time
+      const drift = timeIndex * 0.02;
+      
+      particles.push({
+        x: r * Math.sin(phi) * Math.cos(theta) + (Math.random() - 0.5) * drift,
+        y: r * Math.sin(phi) * Math.sin(theta) + (Math.random() - 0.5) * drift,
+        z: r * Math.cos(phi) + (Math.random() - 0.5) * drift,
+        type: particleTypes[i % particleTypes.length],
+        energy: Math.random() * energyScale
+      });
+    }
+    
+    return particles;
+  };
+  
+  // Generate hotspots (reaction sites)
+  const generateHotspots = (timeIndex) => {
+    const hotspots = [];
+    const numHotspots = 3 + Math.floor(Math.random() * 5);
+    const intensityScale = (timeIndex / numTimeSteps) * loadingRatio;
+    
+    for (let i = 0; i < numHotspots; i++) {
+      hotspots.push({
+        x: (Math.random() - 0.5) * boxSize * 1.5,
+        y: (Math.random() - 0.5) * boxSize * 1.5,
+        z: (Math.random() - 0.5) * boxSize * 1.5,
+        intensity: 0.3 + Math.random() * 0.7 * intensityScale
+      });
+    }
+    
+    return hotspots;
+  };
+  
+  // Generate time steps
+  const timeSteps = [];
+  for (let i = 0; i < numTimeSteps; i++) {
+    timeSteps.push({
+      time: i * timeStepSize,
+      particles: generateParticles(i),
+      hotspots: generateHotspots(i)
+    });
+  }
+  
+  return {
+    timeSteps,
+    metadata: {
+      reactionType,
+      temperature,
+      loadingRatio,
+      numParticles,
+      numTimeSteps
+    }
+  };
+};
+
+/**
  * Generate mock fusion simulation data
  */
 export const mockFusionData = {
@@ -86,106 +188,10 @@ export const mockDelay = (ms = 500) => {
 };
 
 /**
- * Generate random particles for a time step
+ * Alias for mockSimulationResults (for backwards compatibility)
  */
-const generateParticles = (count, latticeSize, temperature) => {
-  const particles = [];
-  const types = ['deuterium', 'tritium', 'helium', 'neutron', 'proton'];
-  
-  for (let i = 0; i < count; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const energy = Math.random() * (temperature / 300) * 5; // Scale energy with temperature
-    
-    particles.push({
-      x: (Math.random() - 0.5) * latticeSize,
-      y: (Math.random() - 0.5) * latticeSize,
-      z: (Math.random() - 0.5) * latticeSize,
-      type,
-      energy,
-      vx: (Math.random() - 0.5) * 0.1,
-      vy: (Math.random() - 0.5) * 0.1,
-      vz: (Math.random() - 0.5) * 0.1
-    });
-  }
-  
-  return particles;
-};
+export const mockFusionSimulation = mockSimulationResults;
 
-/**
- * Generate hotspots for a time step
- */
-const generateHotspots = (count, latticeSize, defectDensity) => {
-  const hotspots = [];
-  const actualCount = Math.floor(count * defectDensity * 10);
-  
-  for (let i = 0; i < actualCount; i++) {
-    hotspots.push({
-      x: (Math.random() - 0.5) * latticeSize,
-      y: (Math.random() - 0.5) * latticeSize,
-      z: (Math.random() - 0.5) * latticeSize,
-      intensity: 0.2 + Math.random() * 0.8
-    });
-  }
-  
-  return hotspots;
-};
-
-/**
- * Function to generate mock fusion simulation results (for backwards compatibility)
- * @param {object} parameters - Simulation parameters to include in the response
- * @returns {Promise<object>} Mock simulation results
- */
-export const mockFusionSimulation = async (parameters = {}) => {
-  // Simulate API delay
-  await mockDelay(1000);
-  
-  // Extract parameters with defaults
-  const temperature = parameters.temperature || 293;
-  const latticeSize = parameters.latticeDimension || 10;
-  const defectDensity = parameters.defectDensity || 0.1;
-  const timeStepSize = parameters.timeStepSize || 0.1;
-  const totalTime = parameters.totalSimulationTime || 10;
-  const particleCount = Math.min(200, latticeSize * latticeSize); // Scale with lattice size
-  
-  // Generate time steps with particle and hotspot data
-  const numSteps = Math.ceil(totalTime / timeStepSize);
-  const timeSteps = [];
-  
-  for (let i = 0; i < numSteps; i++) {
-    const time = i * timeStepSize;
-    // Temperature varies slightly over time
-    const currentTemp = temperature * (1 + 0.1 * Math.sin(time * 0.5));
-    
-    timeSteps.push({
-      time,
-      temperature: currentTemp,
-      energy: (i / numSteps) * 3.27, // Energy increases over time
-      particles: generateParticles(particleCount, latticeSize, currentTemp),
-      hotspots: generateHotspots(5, latticeSize, defectDensity)
-    });
-  }
-  
-  // Return mock data with visualization data
-  return {
-    id: `fusion-sim-${Date.now()}`,
-    status: 'completed',
-    progress: 100,
-    startTime: Date.now() - 60000,
-    endTime: Date.now(),
-    parameters,
-    timeSteps,
-    results: {
-      rate: 1e-12,
-      crossSection: 1e-28,
-      probability: 0.0001,
-      energy: 3.27,
-      efficiency: 0.85,
-      totalReactions: Math.floor(Math.random() * 1000),
-      peakTemperature: temperature * 1.2,
-      averageEnergy: 2.5
-    }
-  };
-};
 export default {
   mockFusionData,
   mockSimulationResults,
@@ -193,6 +199,7 @@ export default {
   mockLENRData,
   mockTunnelingData,
   generateMockDataStream,
+  generateFusionTimeSteps,
   mockDelay
 };
 

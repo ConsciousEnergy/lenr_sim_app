@@ -23,6 +23,9 @@ import BubbleFusionPage from './pages/BubbleFusionPage';
 import AboutPage from './pages/AboutPage';
 import TheoryPage from './pages/TheoryPage';
 import DocumentationPage from './pages/DocumentationPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import TeamPage from './pages/TeamPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Pages - Advanced Visualization & Physics
 import RealTimeVisualizationPage from './pages/RealTimeVisualizationPage';
@@ -206,7 +209,7 @@ const AppContent = () => {
             } />
             <Route path="/analytics" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <AnalyticsPage />
               </AppLayoutFixed>
             } />
             <Route path="/documentation" element={
@@ -221,12 +224,12 @@ const AppContent = () => {
             } />
             <Route path="/team" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <TeamPage />
               </AppLayoutFixed>
             } />
             <Route path="/settings" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Dashboard />
+                <SettingsPage />
               </AppLayoutFixed>
             } />
             

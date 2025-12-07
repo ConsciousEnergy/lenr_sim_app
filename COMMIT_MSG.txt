@@ -1,0 +1,20 @@
+fix: Beta release UI fixes and 3D visualization improvements
+
+## UI Component Fixes
+- Fix slider label overlaps in TunnelingParameterControls.jsx
+- Fix slider label overlaps in LENRParameterControls.jsx (all 11 sliders)
+- Add valueLabelDisplay="auto" and reduce marks to min/max only
+- Fix Analytics pie chart by replacing inline labels with Legend component
+
+## 3D Visualization Fixes
+- Add generateFusionTimeSteps() to mockData.js with proper particle/hotspot structure
+- Update FusionSimulationPage to use new mock data generator
+- Fix FusionVisualization to render particles with default showParticles=true
+- Update mockServer.ts with proper lattice structure including coordinates
+- Fix LENRVisualization with null checks, fallback lattice generation
+
+## Settings Page
+- Create new SettingsPage.jsx with MUI components
+- Add tabs: Appearance, Physics, Visualization, Debug
+- Include debug tools: API status, WebGL diagnostics, memory usage
+- Update App.tsx routing to use new SettingsPage

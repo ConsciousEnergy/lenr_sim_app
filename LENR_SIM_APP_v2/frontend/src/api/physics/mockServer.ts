@@ -65,31 +65,69 @@ function generateMockLattice(config: SimulationInitializeRequest): LatticeState 
   const { lattice } = config;
   const [width, height, depth] = lattice.dimensions;
   
-  const points = [];
-  const connections = [];
+  const points: Array<{
+    position: [number, number, number];
+    element: string;
+    energy: number;
+    temperature: number;
+    reaction_rate: number;
+  }> = [];
+  const connections: Array<[number, number]> = [];
   
-  // Generate points
+  // Spacing between atoms in the lattice
+  const spacing = lattice.constants?.[0] || 3.89;
+  const centerOffset = [width * spacing / 2, height * spacing / 2, depth * spacing / 2];
+  
+  // Generate lattice points with proper coordinates
   for (let i = 0; i < width; i++) {
     for (let j = 0; j < height; j++) {
       for (let k = 0; k < depth; k++) {
-        if (Math.random() > 0.7) { // Only generate some points for performance
-          const element = lattice.elements[Math.floor(Math.random() * lattice.elements.length)];
+        // Generate main lattice points (metal atoms)
+        const element = lattice.elements[0];
+        const x = i * spacing - centerOffset[0];
+        const y = j * spacing - centerOffset[1];
+        const z = k * spacing - centerOffset[2];
+        
+        points.push({
+          position: [x, y, z] as [number, number, number],
+          element: element.symbol,
+          energy: Math.random() * 2,
+          temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
+          reaction_rate: Math.random() * 0.15
+        });
+        
+        // Add some interstitial atoms (hydrogen) at body center positions
+        if (lattice.elements.length > 1 && Math.random() > 0.6) {
+          const interstitialElement = lattice.elements[1];
           points.push({
-            position: [i, j, k] as [number, number, number],
-            element: element.symbol,
-            energy: Math.random() * 2,
-            temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
-            reaction_rate: Math.random() * 0.1
+            position: [
+              x + spacing * 0.5, 
+              y + spacing * 0.5, 
+              z + spacing * 0.5
+            ] as [number, number, number],
+            element: interstitialElement.symbol,
+            energy: Math.random() * 1.5,
+            temperature: config.conditions.temperature * (0.95 + Math.random() * 0.1),
+            reaction_rate: Math.random() * 0.2
           });
         }
       }
     }
   }
   
-  // Generate some random connections between points
+  // Generate connections between nearby points
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
-      if (Math.random() > 0.95) {
+      const p1 = points[i].position;
+      const p2 = points[j].position;
+      const distance = Math.sqrt(
+        Math.pow(p1[0] - p2[0], 2) +
+        Math.pow(p1[1] - p2[1], 2) +
+        Math.pow(p1[2] - p2[2], 2)
+      );
+      
+      // Connect points that are within 1.5 * spacing distance
+      if (distance <= spacing * 1.5) {
         connections.push([i, j] as [number, number]);
       }
     }
@@ -107,6 +145,7 @@ function generateMockSummary(config: SimulationInitializeRequest, step: number):
   return {
     average_temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
     total_energy: 1000 * Math.random() * (1 + step / 100),
+    reaction_rate: 0.05 + Math.random() * 0.1 * (step / 100),
     reaction_counts: {
       'fusion': Math.floor(step / 10),
       'decay': Math.floor(step / 5),

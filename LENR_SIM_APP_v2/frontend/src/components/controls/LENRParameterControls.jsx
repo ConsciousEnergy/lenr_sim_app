@@ -251,11 +251,12 @@ const LENRParameterControls = ({
               max={1273}
               step={1}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 273, label: '273K' },
-                { value: 773, label: '773K' },
                 { value: 1273, label: '1273K' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -270,11 +271,12 @@ const LENRParameterControls = ({
               max={30}
               step={0.1}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0.1, label: '0.1' },
-                { value: 15, label: '15' },
                 { value: 30, label: '30' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -289,11 +291,12 @@ const LENRParameterControls = ({
               max={2}
               step={0.01}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: '0' },
-                { value: 1, label: '1T' },
                 { value: 2, label: '2T' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -330,11 +333,12 @@ const LENRParameterControls = ({
               max={5}
               step={0.01}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: '0' },
-                { value: 2.5, label: '2.5' },
                 { value: 5, label: '5' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -349,11 +353,12 @@ const LENRParameterControls = ({
               max={1000}
               step={1}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
-                { value: 0, label: 'DC' },
-                { value: 500, label: '500' },
-                { value: 1000, label: '1k' }
+                { value: 0, label: '0 (DC)' },
+                { value: 1000, label: '1kHz' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -368,11 +373,12 @@ const LENRParameterControls = ({
               max={500}
               step={1}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: '0' },
-                { value: 250, label: '250' },
-                { value: 500, label: '500' }
+                { value: 500, label: '500μs' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -410,11 +416,12 @@ const LENRParameterControls = ({
               max={0.3}
               step={0.001}
               disabled={disabled || parameters.catalystType === 'none'}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: '0' },
-                { value: 0.15, label: '0.15' },
                 { value: 0.3, label: '0.3' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -465,11 +472,12 @@ const LENRParameterControls = ({
               max={500}
               step={1}
               disabled={disabled || !parameters.nanostructured}
+              valueLabelDisplay="auto"
               marks={[
-                { value: 5, label: '5' },
-                { value: 250, label: '250' },
-                { value: 500, label: '500' }
+                { value: 5, label: '5nm' },
+                { value: 500, label: '500nm' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -484,11 +492,12 @@ const LENRParameterControls = ({
               max={0.5}
               step={0.01}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0, label: '0' },
-                { value: 0.25, label: '0.25' },
                 { value: 0.5, label: '0.5' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
@@ -554,11 +563,12 @@ const LENRParameterControls = ({
               max={1}
               step={0.01}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
                 { value: 0.01, label: '0.01' },
-                { value: 0.5, label: '0.5' },
                 { value: 1, label: '1' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
 
@@ -573,11 +583,12 @@ const LENRParameterControls = ({
               max={100}
               step={1}
               disabled={disabled}
+              valueLabelDisplay="auto"
               marks={[
-                { value: 1, label: '1' },
-                { value: 50, label: '50' },
-                { value: 100, label: '100' }
+                { value: 1, label: '1s' },
+                { value: 100, label: '100s' }
               ]}
+              sx={{ mb: 1 }}
             />
           </Grid>
         </Grid>
