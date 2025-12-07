@@ -198,7 +198,9 @@ const QuantumTunnelingVisualizer = ({
     const logPositions = positions.map(p => Math.log10(p));
     
     // Normalize values for visualization
-    const maxPotential = Math.max(...potentialValues);
+    // Guard against division by zero - use 1 as fallback if no valid max
+    const rawMaxPotential = Math.max(...potentialValues);
+    const maxPotential = (rawMaxPotential > 0 && isFinite(rawMaxPotential)) ? rawMaxPotential : 1;
     const normalizedPotential = potentialValues.map(p => p / maxPotential * innerHeight * 0.8);
     
     // Create scales
@@ -356,7 +358,8 @@ const QuantumTunnelingVisualizer = ({
     
     // Draw incident energy line
     const energy = energyKeV * tunnelingUtils.KEV_TO_J;
-    const normalizedEnergy = energy / maxPotential;
+    // Guard against division by zero - clamp normalizedEnergy to valid range
+    const normalizedEnergy = Math.min(Math.max(energy / maxPotential, 0), 1);
     
     g.append('line')
       .attr('x1', 0)

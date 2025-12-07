@@ -94,7 +94,7 @@ class TestWKBTunnelingCalculator:
         result = calculator.calculate_tunneling_probability(
             z1=1, z2=1, a1=2.0, a2=2.0, energy_kev=1.0
         )
-        assert result.barrier_height_kev > 0
+        assert result.barrier_height > 0
     
     def test_screened_potential_enhances(self, calculator):
         """Test screened potential gives higher probability."""
@@ -116,7 +116,7 @@ class TestWKBTunnelingCalculator:
         result = calculator.calculate_tunneling_probability(
             z1=1, z2=1, a1=2.0, a2=2.0, energy_kev=1.0
         )
-        assert result.classical_turning_point_m > 0
+        assert result.classical_turning_point > 0
     
     def test_result_contains_all_fields(self, calculator):
         """Test result contains all expected fields."""
@@ -125,8 +125,8 @@ class TestWKBTunnelingCalculator:
         )
         assert hasattr(result, 'probability')
         assert hasattr(result, 'gamow_factor')
-        assert hasattr(result, 'barrier_height_kev')
-        assert hasattr(result, 'classical_turning_point_m')
+        assert hasattr(result, 'barrier_height')
+        assert hasattr(result, 'classical_turning_point')
         assert hasattr(result, 'method')
 
 
