@@ -297,6 +297,7 @@ const AnalyticsPage = () => {
       try {
         localStorage.removeItem('lenr_simulation_history');
         setSimulationHistory([]);
+        setSelectedSimulations([]); // Reset selected simulations when clearing history
       } catch (error) {
         console.error('Failed to clear simulation history:', error);
         alert('Failed to clear history. Please try again.');

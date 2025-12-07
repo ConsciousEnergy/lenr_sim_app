@@ -183,7 +183,11 @@ const PhysicsModelSelector: React.FC<PhysicsModelSelectorProps> = ({
                       <ListItemText
                         primary={
                           <Typography variant="body2">
-                            {ref.title} {ref.authors?.join(', ')} {ref.year && `(${ref.year})`}
+                            {[
+                              ref.title,
+                              ref.authors?.length > 0 && ref.authors.join(', '),
+                              ref.year && `(${ref.year})`
+                            ].filter(Boolean).join(' ')}
                             {ref.url && (
                               <IconButton 
                                 href={ref.url} 

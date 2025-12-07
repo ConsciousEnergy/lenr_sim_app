@@ -91,6 +91,10 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
         if (value > 92) value = 92;
       } else {
         value = parseFloat(event.target.value);
+        // Add NaN validation - keep previous value if NaN
+        if (isNaN(value)) {
+          return; // Don't update state with NaN
+        }
       }
     } else {
       value = event.target.value;

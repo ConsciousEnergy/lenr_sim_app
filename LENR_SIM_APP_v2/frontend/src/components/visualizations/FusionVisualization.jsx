@@ -251,14 +251,21 @@ function FusionVisualization({
   const updateVisualization = (timeStep) => {
     if (!particlesRef.current || !hotspotsRef.current || !sceneRef.current) return;
     
-    // Clear existing particles and hotspots (dispose materials too)
+    // Dispose shared geometries first (stored in userData)
+    if (particlesRef.current.userData.geometriesToDispose) {
+      particlesRef.current.userData.geometriesToDispose.forEach(geo => geo.dispose());
+      particlesRef.current.userData.geometriesToDispose = [];
+    }
+    
+    // Clear existing particles (only dispose materials, geometries handled above)
     while (particlesRef.current.children.length > 0) {
       const child = particlesRef.current.children[0];
-      if (child.geometry) child.geometry.dispose();
+      // Don't dispose geometry here - it's shared and already disposed above
       if (child.material) child.material.dispose();
       particlesRef.current.remove(child);
     }
     
+    // Clear hotspots (each has unique geometry so dispose both)
     while (hotspotsRef.current.children.length > 0) {
       const child = hotspotsRef.current.children[0];
       if (child.geometry) child.geometry.dispose();
@@ -297,6 +304,9 @@ function FusionVisualization({
       }
       
       // Create geometries and materials for each particle type
+      // Store geometries to dispose later (shared across particles of same type)
+      const geometriesToDispose = [];
+      
       for (const [type, particles] of Object.entries(particleTypes)) {
         // Different sizes for different particle types
         let radius = 0.05;
@@ -320,7 +330,9 @@ function FusionVisualization({
             radius = 0.05;
         }
         
-        particleGeometries[type] = new THREE.SphereGeometry(radius, 8, 8);
+        const geometry = new THREE.SphereGeometry(radius, 8, 8);
+        particleGeometries[type] = geometry;
+        geometriesToDispose.push(geometry);
         
         // Add particles
         for (const particle of particles) {
@@ -361,6 +373,9 @@ function FusionVisualization({
           particlesRef.current.add(sphere);
         }
       }
+      
+      // Store geometries reference for proper disposal
+      particlesRef.current.userData.geometriesToDispose = geometriesToDispose;
     }
     
     // Create hotspots (default to showing if parameter not explicitly false)

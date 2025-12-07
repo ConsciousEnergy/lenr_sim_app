@@ -245,6 +245,7 @@ function FusionParameterControls({
           // Add to saved configs if it has a name
           if (importedConfig.name) {
             const newConfig = {
+              id: `config-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name: importedConfig.name,
               params: importedConfig.parameters,
               timestamp: importedConfig.timestamp || new Date().toISOString()
@@ -280,6 +281,12 @@ function FusionParameterControls({
   
   // Handle deleting a configuration
   const handleDeleteConfig = (configIdOrName) => {
+    // Validate that we have a valid identifier to prevent unintended deletions
+    if (!configIdOrName) {
+      console.warn('Cannot delete config: no id or name provided');
+      return;
+    }
+    
     const updatedConfigs = savedConfigs.filter(config => 
       config.id !== configIdOrName && config.name !== configIdOrName
     );
