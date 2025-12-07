@@ -133,14 +133,19 @@ const PARAMETER_METADATA = {
  * @param {Object} props.parameters - Current parameter values
  * @param {Function} props.onChange - Callback function for parameter changes
  */
-function FusionParameterControls({ parameters, onChange }) {
+function FusionParameterControls({ 
+  parameters = defaultParameters, 
+  onChange = () => {},
+  savedConfigs: initialSavedConfigs = [],
+  onLoadConfig = null 
+}) {
   const [localParams, setLocalParams] = useState({...defaultParameters, ...parameters});
   const [configName, setConfigName] = useState('');
   const [expandedSection, setExpandedSection] = useState('basic');
   const [loadMenuAnchor, setLoadMenuAnchor] = useState(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const [savedConfigs, setSavedConfigs] = useState([]);
+  const [savedConfigs, setSavedConfigs] = useState(initialSavedConfigs);
   
   // Update local params when parent parameters change
   useEffect(() => {
@@ -521,9 +526,11 @@ function FusionParameterControls({ parameters, onChange }) {
           fullWidth
         />
         <Tooltip title="Save Configuration">
-          <IconButton color="primary" onClick={() => setSaveDialogOpen(true)} disabled={!configName.trim()}>
-            <SaveIcon />
-          </IconButton>
+          <span>
+            <IconButton color="primary" onClick={() => setSaveDialogOpen(true)} disabled={!configName.trim()}>
+              <SaveIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
       
@@ -657,12 +664,6 @@ FusionParameterControls.propTypes = {
   onChange: PropTypes.func.isRequired,
   savedConfigs: PropTypes.array,
   onLoadConfig: PropTypes.func
-};
-
-FusionParameterControls.defaultProps = {
-  parameters: defaultParameters,
-  savedConfigs: [],
-  onLoadConfig: null
 };
 
 export default FusionParameterControls; 
