@@ -182,71 +182,16 @@ const LENRVisualization = ({
       child.type === 'AxesHelper'
     );
     
-<<<<<<< HEAD
-    // Get the current lattice state with fallback
-    const latticeData = timeSeriesData.lattice || generateFallbackLattice();
-=======
     // Get the current lattice state (use fallback if not available)
     const latticeData = timeSeriesData?.lattice || generateFallbackLattice();
->>>>>>> origin/lenr_sim_app_v0.2-beta
     
-    // Fallback function if no lattice data
-    function generateFallbackLattice() {
-      const points = [];
-      const connections = [];
-      const size = 5;
-      const spacing = 2;
-      
-      // Generate a simple cubic lattice
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-          for (let k = 0; k < size; k++) {
-            const x = (i - size/2) * spacing;
-            const y = (j - size/2) * spacing;
-            const z = (k - size/2) * spacing;
-            
-            points.push({
-              position: [x, y, z],
-              element: Math.random() > 0.7 ? 'Hydrogen' : 'Nickel',
-              reaction_rate: Math.random() * 0.15
-            });
-          }
-        }
-      }
-      
-      // Generate connections
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const p1 = points[i].position;
-          const p2 = points[j].position;
-          const dist = Math.sqrt(
-            Math.pow(p1[0] - p2[0], 2) +
-            Math.pow(p1[1] - p2[1], 2) +
-            Math.pow(p1[2] - p2[2], 2)
-          );
-          if (dist <= spacing * 1.2) {
-            connections.push([i, j]);
-          }
-        }
-      }
-      
-      return {
-        dimensions: [size, size, size],
-        points,
-        connections
-      };
-    }
-    
-    if (!latticeData.points || latticeData.points.length === 0) return;
-    
-    if (visOptions.showLattice && latticeData.points) {
+    if (visOptions.showLattice) {
       // Create lattice structure
       const latticeGroup = new THREE.Group();
       latticeGroup.name = 'lattice';
       
       // Material for lattice points based on material type
       const getMaterialColor = (element) => {
-        if (!element) return 0xffffff;
         switch(element.toLowerCase()) {
           case 'nickel': return 0x73c2fb; // Light blue
           case 'palladium': return 0xc0c0c0; // Silver
@@ -263,46 +208,37 @@ const LENRVisualization = ({
       const pointGeometry = new THREE.SphereGeometry(0.2, 16, 16);
       
       latticeData.points.forEach(point => {
-        if (!point || !point.position) return;
-        
         const material = new THREE.MeshPhongMaterial({ 
           color: getMaterialColor(point.element),
           shininess: 100
         });
         
         const sphere = new THREE.Mesh(pointGeometry, material);
-        sphere.position.set(point.position[0], point.position[1], point.position[2]);
+        sphere.position.set(...point.position);
         latticeGroup.add(sphere);
       });
       
       // Add connections between points
-      if (latticeData.connections && latticeData.connections.length > 0) {
-        const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.6, transparent: true });
+      const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.6, transparent: true });
+      
+      latticeData.connections.forEach(connection => {
+        const [i, j] = connection;
+        const start = latticeData.points[i].position;
+        const end = latticeData.points[j].position;
         
-        latticeData.connections.forEach(connection => {
-          if (!connection || connection.length < 2) return;
-          const [i, j] = connection;
-          if (!latticeData.points[i] || !latticeData.points[j]) return;
-          
-          const start = latticeData.points[i].position;
-          const end = latticeData.points[j].position;
-          
-          if (!start || !end) return;
-          
-          const geometry = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(start[0], start[1], start[2]),
-            new THREE.Vector3(end[0], end[1], end[2])
-          ]);
-          
-          const line = new THREE.Line(geometry, connectionMaterial);
-          latticeGroup.add(line);
-        });
-      }
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(...start),
+          new THREE.Vector3(...end)
+        ]);
+        
+        const line = new THREE.Line(geometry, connectionMaterial);
+        latticeGroup.add(line);
+      });
       
       scene.add(latticeGroup);
     }
     
-    if (visOptions.showHotSpots && latticeData.points) {
+    if (visOptions.showHotSpots) {
       // Create hot spots based on reaction rates
       const hotSpotsGroup = new THREE.Group();
       hotSpotsGroup.name = 'hotSpots';
@@ -316,14 +252,11 @@ const LENRVisualization = ({
       
       // Add hot spots at points with high reaction rates
       latticeData.points.forEach(point => {
-        if (!point || !point.position) return;
-        const reactionRate = point.reaction_rate || 0;
-        
-        if (reactionRate > 0.05) {
-          const scale = 0.5 + (reactionRate * 3); // Scale based on reaction rate
+        if (point.reaction_rate > 0.05) {
+          const scale = 0.5 + (point.reaction_rate * 3); // Scale based on reaction rate
           
-          const hotSpot = new THREE.Mesh(hotSpotGeometry, hotSpotMaterial.clone());
-          hotSpot.position.set(point.position[0], point.position[1], point.position[2]);
+          const hotSpot = new THREE.Mesh(hotSpotGeometry, hotSpotMaterial);
+          hotSpot.position.set(...point.position);
           hotSpot.scale.set(scale, scale, scale);
           
           // Add pulsing animation data
@@ -367,7 +300,7 @@ const LENRVisualization = ({
       };
     }
     
-    if (visOptions.showEnergyFlow && latticeData.dimensions) {
+    if (visOptions.showEnergyFlow) {
       // Create energy flow visualization
       const energyFlowGroup = new THREE.Group();
       energyFlowGroup.name = 'energyFlow';
@@ -378,17 +311,12 @@ const LENRVisualization = ({
       const particlePositions = new Float32Array(particleCount * 3);
       const particleSizes = new Float32Array(particleCount);
       
-      // Get dimensions with fallback
-      const dims = latticeData.dimensions || [10, 10, 10];
-      const spacing = 2; // Default spacing
-      const halfExtent = [dims[0] * spacing / 2, dims[1] * spacing / 2, dims[2] * spacing / 2];
-      
       // Initialize particles with random positions
       for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
-        particlePositions[i3] = (Math.random() - 0.5) * halfExtent[0] * 2;
-        particlePositions[i3 + 1] = (Math.random() - 0.5) * halfExtent[1] * 2;
-        particlePositions[i3 + 2] = (Math.random() - 0.5) * halfExtent[2] * 2;
+        particlePositions[i3] = (Math.random() - 0.5) * latticeData.dimensions[0];
+        particlePositions[i3 + 1] = (Math.random() - 0.5) * latticeData.dimensions[1];
+        particlePositions[i3 + 2] = (Math.random() - 0.5) * latticeData.dimensions[2];
         
         particleSizes[i] = Math.random() * 2 + 0.5;
       }
@@ -442,12 +370,9 @@ const LENRVisualization = ({
       // Animate energy particles
       const animateEnergyFlow = () => {
         const energyFlow = scene.getObjectByName('energyFlow');
-        if (energyFlow && energyFlow.children[0]) {
+        if (energyFlow) {
           const particles = energyFlow.children[0];
-          if (!particles.geometry || !particles.geometry.attributes || !particles.geometry.attributes.position) return;
-          
           const positions = particles.geometry.attributes.position.array;
-          const bounds = halfExtent;
           
           for (let i = 0; i < positions.length; i += 3) {
             // Move particles along small random paths
@@ -456,6 +381,7 @@ const LENRVisualization = ({
             positions[i + 2] += (Math.random() - 0.5) * 0.1;
             
             // Keep particles within bounds
+            const bounds = latticeData.dimensions.map(d => d / 2);
             positions[i] = Math.max(-bounds[0], Math.min(bounds[0], positions[i]));
             positions[i + 1] = Math.max(-bounds[1], Math.min(bounds[1], positions[i + 1]));
             positions[i + 2] = Math.max(-bounds[2], Math.min(bounds[2], positions[i + 2]));

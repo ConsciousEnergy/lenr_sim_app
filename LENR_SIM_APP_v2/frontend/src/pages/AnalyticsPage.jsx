@@ -412,11 +412,7 @@ const AnalyticsPage = () => {
                   <Pie
                     data={pieData}
                     cx="50%"
-<<<<<<< HEAD
-                    cy="40%"
-=======
                     cy="45%"
->>>>>>> origin/lenr_sim_app_v0.2-beta
                     outerRadius={70}
                     fill="#8884d8"
                     dataKey="value"
@@ -427,13 +423,8 @@ const AnalyticsPage = () => {
                   </Pie>
                   <RechartsTooltip formatter={(value, name) => [`${value} simulations`, name]} />
                   <Legend 
-<<<<<<< HEAD
-                    layout="horizontal" 
-                    verticalAlign="bottom" 
-=======
                     layout="horizontal"
                     verticalAlign="bottom"
->>>>>>> origin/lenr_sim_app_v0.2-beta
                     align="center"
                     wrapperStyle={{ paddingTop: '10px' }}
                   />
