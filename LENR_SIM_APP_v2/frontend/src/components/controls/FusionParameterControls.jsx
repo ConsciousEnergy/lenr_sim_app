@@ -289,7 +289,13 @@ function FusionParameterControls({ parameters, onChange }) {
   };
   
   Object.entries(PARAMETER_METADATA).forEach(([key, meta]) => {
-    parametersBySection[meta.section].push(key);
+    // Default to 'basic' section if not specified
+    const section = meta.section || 'basic';
+    if (parametersBySection[section]) {
+      parametersBySection[section].push(key);
+    } else {
+      parametersBySection.basic.push(key);
+    }
   });
   
   

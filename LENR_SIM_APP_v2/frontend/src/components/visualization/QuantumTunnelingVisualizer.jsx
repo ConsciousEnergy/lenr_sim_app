@@ -36,24 +36,56 @@ const QuantumTunnelingVisualizer = ({
     setError(null);
 
     try {
-      // Try to fetch from API first
+      // Try to fetch from real physics API first
       try {
         const response = await api.post('/physics/quantum-tunneling', {
-          potentialType,
           z1,
           z2,
-          temperature,
-          pressure,
-          energyKeV: energyKeV,
-          electronScreeningFactor,
-          showWaveFunction,
+          a1: z1 === 1 ? 2.0 : z1 * 2,  // Approximate mass number
+          a2: z2 === 1 ? 2.0 : z2 * 2,
+          energy_kev: energyKeV,
+          temperature_k: temperature,
+          potential_type: potentialType === 'coulomb' ? 'coulomb' : 'screened',
+          screening_enhancement: electronScreeningFactor,
+          material: 'palladium',
+          pressure_atm: pressure,
         });
         
-        setTunnelingData(response.data);
-        if (response.data.tunnelingProbability) {
-          setCalculatedProbability(response.data.tunnelingProbability);
-          onProbabilityCalculated(response.data.tunnelingProbability);
+        // Transform API response to visualization format
+        // Note: api.js returns data directly, not wrapped in .data
+        const apiData = response;
+        
+        // Extract potential curve data
+        const positions = apiData.potential_curve?.map(p => p.distance_m) || [];
+        const potentialValues = apiData.potential_curve?.map(p => p.potential_kev) || [];
+        
+        // Extract wave function data
+        const waveFunction = apiData.wave_function?.map(w => w.amplitude) || [];
+        const tunnelingProbabilities = apiData.wave_function?.map(w => w.probability) || [];
+        
+        const transformedData = {
+          positions,
+          potentialValues,
+          waveFunction,
+          tunnelingProbabilities,
+          classicalTurningPoint: apiData.classical_turning_point_m,
+          tunnelingProbability: apiData.tunneling_probability,
+          baselineProbability: apiData.tunneling_probability / apiData.enhancement_factor,
+          temperatureEnhancement: apiData.temperature_enhancement,
+          electronScreeningEnhancement: apiData.electron_screening_enhancement,
+          barrierHeight: apiData.barrier_height_kev,
+          gamowFactor: apiData.gamow_factor,
+          screeningEnergy: apiData.screening_energy_kev,
+          method: apiData.method
+        };
+        
+        setTunnelingData(transformedData);
+        if (apiData.tunneling_probability) {
+          setCalculatedProbability(apiData.tunneling_probability);
+          onProbabilityCalculated(apiData.tunneling_probability);
         }
+        
+        console.log('Real physics calculation:', apiData.method, 'P =', apiData.tunneling_probability);
       } catch (apiError) {
         // Fallback to local calculation if API call fails
         console.warn('API call failed, falling back to local calculation', apiError);
