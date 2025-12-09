@@ -5,12 +5,12 @@ import {
   Box, 
   Paper,
   Alert,
-  Grid,
   Divider,
   Chip,
   Button,
   useTheme
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import QuantumTunnelingVisualizer from '../components/visualization/QuantumTunnelingVisualizer';
 import TunnelingParameterControls from '../components/controls/TunnelingParameterControls';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -135,7 +135,7 @@ const QuantumTunnelingPage = () => {
       </Box>
       
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <TunnelingParameterControls 
             initialValues={tunnelingParams}
             onChange={handleParameterChange}
@@ -215,7 +215,7 @@ const QuantumTunnelingPage = () => {
           </Paper>
         </Grid>
         
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 2 }}>
             <QuantumTunnelingVisualizer
               {...tunnelingParams}

@@ -8,7 +8,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Grid,
   Tooltip,
   Switch,
   FormControlLabel,
@@ -18,6 +17,7 @@ import {
   Collapse,
   useTheme
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import InfoIcon from '@mui/icons-material/Info';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -164,7 +164,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
       
       <Grid container spacing={2}>
         {/* Basic parameters section */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="potential-type-label">Potential Type</InputLabel>
             <Select
@@ -207,7 +207,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
           />
         </Grid>
         
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <ParameterSlider
             name="electronScreeningFactor"
             label="Electron Screening Enhancement"
@@ -223,7 +223,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
           
           <Box sx={{ mb: 2 }}>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <TextField
                   fullWidth
                   type="number"
@@ -234,7 +234,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
                   size="small"
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <TextField
                   fullWidth
                   type="number"
@@ -283,7 +283,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
         <Collapse in={showAdvanced}>
           <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -295,7 +295,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
                   label="Wave Function"
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -307,7 +307,7 @@ const TunnelingParameterControls = ({ initialValues = {}, onChange = () => {} })
                   label="Tunneling Probability"
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <FormControlLabel
                   control={
                     <Switch

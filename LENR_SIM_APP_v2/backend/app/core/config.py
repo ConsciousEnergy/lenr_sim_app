@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: EnvironmentType = EnvironmentType.DEVELOPMENT
     
     # CORS configuration
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]

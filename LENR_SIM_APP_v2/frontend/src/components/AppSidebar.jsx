@@ -28,23 +28,22 @@ function AppSidebar({ collapsed, setCollapsed, toggleSidebar, isMobile }) {
   const getSelectedKey = () => {
     const path = location.pathname;
     if (path === '/' || path === '/dashboard') return 'dashboard';
-    if (path.includes('/simulation')) return 'simulations';
-    if (path === '/settings') return 'settings';
-    if (path === '/analytics') return 'analytics';
-    if (path === '/docs') return 'docs';
-    if (path === '/about') return 'about';
-    if (path === '/theory' || path === '/unified-theory') return 'theory';
-    if (path === '/team') return 'team';
-    if (path === '/quantum-tunneling') return 'quantum-tunneling';
-    if (path === '/fusion-simulation') return 'fusion-simulation';
+    if (path === '/unified-theory') return 'unified-theory';
+    if (path === '/simulations' || path === '/new-simulation') return 'simulations';
     if (path === '/lenr-simulation') return 'lenr-simulation';
+    if (path === '/fusion-simulation') return 'fusion-simulation';
+    if (path === '/quantum-tunneling') return 'quantum-tunneling';
     if (path === '/bubble-fusion') return 'bubble-fusion';
+    if (path === '/analytics') return 'analytics';
     if (path === '/real-time-visualization') return 'real-time-viz';
     if (path === '/physics-dashboard') return 'physics-dashboard';
     if (path === '/physics-visualization') return 'physics-viz';
-    if (path === '/three-test') return 'three-test';
-    if (path === '/visualization-debug') return 'viz-debug';
-    if (path === '/diagnostics') return 'diagnostics';
+    if (path === '/documentation' || path === '/docs') return 'docs';
+    if (path === '/theory') return 'theory-docs';
+    if (path === '/about') return 'about';
+    if (path === '/team') return 'team';
+    if (path === '/settings') return 'settings';
+    if (path.includes('/simulation/')) return 'simulations';
     return 'dashboard';
   };
 
@@ -53,10 +52,11 @@ function AppSidebar({ collapsed, setCollapsed, toggleSidebar, isMobile }) {
   const menuItems = [
     { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard', path: '/' },
     { key: 'divider1', type: 'divider' },
-    { key: 'simulations', icon: <ExperimentOutlined />, label: 'Simulations', path: '/simulations' },
-    { key: 'quantum-tunneling', icon: <ThunderboltOutlined />, label: 'Quantum Tunneling', path: '/quantum-tunneling', indent: true },
-    { key: 'fusion-simulation', icon: <FireOutlined />, label: 'Fusion Simulation', path: '/fusion-simulation', indent: true },
+    { key: 'unified-theory', icon: <FundProjectionScreenOutlined />, label: 'Unified Theory', path: '/unified-theory', highlight: true },
+    { key: 'simulations', icon: <ExperimentOutlined />, label: 'Run Simulations', path: '/simulations' },
     { key: 'lenr-simulation', icon: <ApiOutlined />, label: 'LENR Simulation', path: '/lenr-simulation', indent: true },
+    { key: 'fusion-simulation', icon: <FireOutlined />, label: 'Fusion Simulation', path: '/fusion-simulation', indent: true },
+    { key: 'quantum-tunneling', icon: <ThunderboltOutlined />, label: 'Quantum Tunneling', path: '/quantum-tunneling', indent: true },
     { key: 'bubble-fusion', icon: <BulbOutlined />, label: 'Bubble Fusion', path: '/bubble-fusion', indent: true },
     { key: 'divider2', type: 'divider' },
     { key: 'analytics', icon: <LineChartOutlined />, label: 'Analytics', path: '/analytics' },
@@ -65,13 +65,9 @@ function AppSidebar({ collapsed, setCollapsed, toggleSidebar, isMobile }) {
     { key: 'physics-viz', icon: <RadarChartOutlined />, label: 'Physics Viz', path: '/physics-visualization', indent: true },
     { key: 'divider3', type: 'divider' },
     { key: 'docs', icon: <BookOutlined />, label: 'Documentation', path: '/documentation' },
-    { key: 'theory', icon: <FundProjectionScreenOutlined />, label: 'Unified Theory', path: '/theory', indent: true },
+    { key: 'theory-docs', icon: <BookOutlined />, label: 'Theory Guide', path: '/theory', indent: true },
     { key: 'about', icon: <InfoCircleOutlined />, label: 'About', path: '/about', indent: true },
     { key: 'divider4', type: 'divider' },
-    { key: 'three-test', icon: <EyeOutlined />, label: '3D Tests', path: '/three-test' },
-    { key: 'viz-debug', icon: <BugOutlined />, label: 'Viz Debug', path: '/visualization-debug' },
-    { key: 'diagnostics', icon: <BugOutlined />, label: 'Diagnostics', path: '/diagnostics' },
-    { key: 'divider5', type: 'divider' },
     { key: 'team', icon: <TeamOutlined />, label: 'Team', path: '/team' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Settings', path: '/settings' },
   ];
@@ -122,12 +118,17 @@ function AppSidebar({ collapsed, setCollapsed, toggleSidebar, isMobile }) {
                   } ${
                   selectedKey === item.key 
                     ? 'bg-primary-50 text-primary-700 border-r-4 border-primary-500' 
+                    : item.highlight
+                    ? 'text-primary-600 bg-primary-50/50 hover:bg-primary-100 font-medium'
                     : 'text-neutral-700 hover:bg-neutral-50'
                 }`}
                 onClick={isMobile ? handleToggle : undefined}
               >
                 <span className={`text-lg ${(collapsed && !isMobile) ? 'ml-1' : 'mr-3'}`}>{item.icon}</span>
                 {(!collapsed || isMobile) && <span>{item.label}</span>}
+                {(!collapsed || isMobile) && item.highlight && (
+                  <span className="ml-auto text-xs bg-primary-500 text-white px-2 py-0.5 rounded-full">NEW</span>
+                )}
               </Link>
             </li>
             );

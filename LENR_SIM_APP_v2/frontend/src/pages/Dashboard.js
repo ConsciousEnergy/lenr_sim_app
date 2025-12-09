@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   Container, 
-  Grid, 
   Paper, 
   Typography, 
   Box, 
@@ -22,6 +21,7 @@ import {
   ListItem,
   ListItemText
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -180,7 +180,7 @@ const VisualizationLegend = ({ simulationData, isSimulationRunning, simulationSp
       </Typography>
       
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>Lattice Elements:</Typography>
           <List dense>
             <ListItem>
@@ -230,7 +230,7 @@ const VisualizationLegend = ({ simulationData, isSimulationRunning, simulationSp
             )}
           </List>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>Quantum Effects:</Typography>
           <List dense>
             {simulationType === 'rydberg' && (
@@ -279,25 +279,25 @@ const VisualizationLegend = ({ simulationData, isSimulationRunning, simulationSp
             Current Simulation Parameters:
           </Typography>
           <Grid container spacing={1}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Typography variant="body2" component="div">
                 <Box component="span" sx={{ fontWeight: 'medium' }}>Rydberg Radius:</Box>{' '}
                 {simulationData.results.rydbergRadius?.toFixed(2) || 'N/A'} Å
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Typography variant="body2" component="div">
                 <Box component="span" sx={{ fontWeight: 'medium' }}>Overlap Probability:</Box>{' '}
                 {(simulationData.results.overlapProbability * 100)?.toFixed(2) || 'N/A'}%
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Typography variant="body2" component="div">
                 <Box component="span" sx={{ fontWeight: 'medium' }}>Tunneling Enhancement:</Box>{' '}
                 {simulationData.results.tunnelingEnhancement?.toFixed(2) || 'N/A'}x
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Typography variant="body2" component="div">
                 <Box component="span" sx={{ fontWeight: 'medium' }}>Principal Quantum Number:</Box>{' '}
                 {simulationData.results.config?.principalQuantumNumber || 'N/A'}
@@ -1819,7 +1819,7 @@ function Dashboard() {
       
       <TabPanel value={tabValue} index={0}>
         <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FeatureCard
               title="Unified LENR Theory Explorer"
               description="Interactively explore the Unified LENR Theory with visualizations of enhancement mechanisms and fusion calculations based on the theoretical framework."
@@ -1828,7 +1828,7 @@ function Dashboard() {
               buttonText="Launch Theory Explorer"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <VisualizationContainer>
               {isLoading && (
                 <LoadingOverlay>
@@ -1937,7 +1937,7 @@ function Dashboard() {
           </Grid>
 
           {/* Simulation Controls */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ height: '100%' }}>
               <LENRSimulationPanel onSimulationUpdate={handleSimulationUpdate} />
               <MemoryStatus />
@@ -1949,7 +1949,7 @@ function Dashboard() {
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
           {/* Results Analysis Panel */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
                 Simulation Results Analysis
@@ -1965,12 +1965,12 @@ function Dashboard() {
       <TabPanel value={tabValue} index={2}>
         <Grid container spacing={3}>
           {/* Enhanced Fusion Visualization */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <EnhancedFusionVisualization enhancedFusionData={enhancedFusionData} />
           </Grid>
           
           {/* Enhanced Fusion Configuration */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 2 }}>
               <EnhancedFusionPanel onResultsChange={handleEnhancedFusionResults} />
             </Paper>

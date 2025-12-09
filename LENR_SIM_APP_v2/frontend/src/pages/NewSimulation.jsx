@@ -5,7 +5,6 @@ import {
   Card, 
   Steps, 
   Button, 
-  message,
   Space,
   Row,
   Col,
@@ -44,20 +43,33 @@ const NewSimulation = () => {
       setLoading(true);
       setError(null);
       
-      // In a real application, this would call an API endpoint
-      // For now, we'll simulate an API call with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Store parameters in localStorage for the simulation page to use
+      const simulationConfig = {
+        name: simulationName || 'New Simulation',
+        description: simulationDescription || '',
+        parameters: {
+          ...parameters,
+          latticeType: parameters.latticeType || 'FCC',
+          temperature: parameters.temperature || 300,
+          pressure: parameters.pressure || 1.0,
+          deuteriumLoading: parameters.deuteriumLoading || 0.6,
+          latticeConstant: parameters.latticeConstant || 3.89,
+          dimensions: parameters.dimensions || [10, 10, 10],
+          defectConcentration: parameters.defectConcentration || 0.01,
+          enhancementFactor: parameters.enhancementFactor || 1.0
+        },
+        createdAt: new Date().toISOString()
+      };
       
-      // Simulate a successful response with a new simulation ID
-      const newSimulationId = `sim-${Date.now().toString().substring(6)}`;
+      localStorage.setItem('pendingSimulation', JSON.stringify(simulationConfig));
       
-      // Success message
-      message.success('Simulation started successfully!');
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Navigate to the simulation detail page
-      navigate(`/simulation/${newSimulationId}`);
+      // Navigate to the LENR Simulation page where users can run the actual simulation
+      navigate('/lenr-simulation');
     } catch (err) {
-      setError('Failed to start simulation. Please try again.');
+      setError('Failed to save configuration. Please try again.');
       console.error('Error starting simulation:', err);
     } finally {
       setLoading(false);

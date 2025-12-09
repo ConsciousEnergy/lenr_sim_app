@@ -1,18 +1,52 @@
 # LENR Simulation App v0.2-beta Release Notes
 
-**Release Date**: December 7, 2025  
-**Version**: 0.2.0-beta  
+**Release Date**: December 8, 2025  
+**Version**: 0.2.1-beta  
 **Branch**: lenr_sim_app_v0.2-beta
 
 ---
 
 ## Overview
 
-This beta release focuses on UI improvements, bug fixes, and enhanced 3D visualization capabilities for the LENR Simulation Application. The application is now ready for wider testing and feedback.
+This beta release introduces the **Unified Bubble-Lattice LENR Simulation** - a comprehensive 3D visualization of electrodynamic ionic double-layer bubble collapse onto lattice-loaded materials with proton phase transitions. Additionally includes UI improvements, bug fixes, and enhanced 3D visualization capabilities.
 
 ---
 
 ## What's New
+
+### 🎯 Unified Bubble-Lattice Simulation (NEW)
+
+The flagship feature of this release - a full physics simulation combining bubble dynamics with lattice interactions.
+
+#### Key Features
+- **3D Interactive Visualization** with Three.js
+  - Animated bubble collapse with ionic double-layer shell
+  - Lattice structure with host atoms and loaded hydrogen
+  - Color-coded proton phase transitions (EM → Weak → Strong)
+  - Electric field lines and energy flow particles
+  
+- **Physics Engine Integration**
+  - Modified Rayleigh-Plesset equation with electric field term
+  - Proton phase model with four force regimes
+  - Real-time enhancement factor calculations
+  - Peak condition tracking (temperature, pressure, field strength)
+
+- **Multi-view Dashboard**
+  - 3D Visualization tab with camera controls
+  - Enhancement Timeline chart
+  - Proton Phase distribution chart
+  - Results summary with key metrics
+  - Integrated Theory reference tab
+
+#### Access
+- Sidebar: Click **"Unified Theory"** (marked with NEW badge)
+- Direct URL: `/unified-theory`
+- Theory Documentation: `/theory`
+
+#### Documentation
+See `docs/UNIFIED_BUBBLE_LATTICE_SIMULATION.md` for complete technical details.
+
+---
 
 ### UI/UX Improvements
 
@@ -73,7 +107,21 @@ This beta release focuses on UI improvements, bug fixes, and enhanced 3D visuali
 
 ### Files Modified
 
-#### Frontend Components
+#### Backend Physics Engine (NEW)
+- `backend/app/physics_engine/bubble_lattice_interaction.py` - Rayleigh-Plesset + lattice coupling
+- `backend/app/physics_engine/proton_phase_model.py` - Multi-force state transitions
+- `backend/app/physics_engine/__init__.py` - Module exports
+- `backend/app/api/routes/unified_simulation.py` - Bubble-lattice API endpoints
+
+#### Frontend Visualizations (NEW)
+- `src/components/visualizations/UnifiedBubbleLatticeVisualization.jsx` - Main 3D scene
+- `src/components/visualizations/ProtonPhaseSystem.js` - Proton particle management
+- `src/components/visualizations/DoubleLlayerEffect.js` - Electric field visualization
+- `src/components/visualizations/index.ts` - Component exports
+- `src/pages/UnifiedTheoryPage.jsx` - Complete rewrite with simulation dashboard
+- `src/App.tsx` - UnifiedTheoryPage route
+
+#### Other Frontend Components
 - `src/pages/SettingsPage.jsx` - Complete MUI rebuild
 - `src/pages/FusionSimulationPage.jsx` - Mock data integration
 - `src/pages/AnalyticsPage.jsx` - Pie chart legend fix
@@ -83,7 +131,6 @@ This beta release focuses on UI improvements, bug fixes, and enhanced 3D visuali
 - `src/components/visualizations/LENRVisualization.jsx` - Lattice rendering
 - `src/utils/mockData.js` - New fusion time steps generator
 - `src/api/physics/mockServer.ts` - Lattice structure updates
-- `src/App.tsx` - Settings route update
 
 ### Known Console Warnings
 
@@ -102,7 +149,21 @@ The following warnings are **informational only** and do not affect functionalit
 - [ ] Settings page saves/loads preferences
 - [ ] Debug tab shows correct API status
 
-### Simulations
+### Unified Bubble-Lattice Simulation (NEW)
+- [ ] Page loads at `/unified-theory`
+- [ ] System presets switch correctly (Pd-D, Ni-H, Ti-D)
+- [ ] Parameter sliders function (Loading Ratio, Temperature, Pressure, Frequency)
+- [ ] "Run Physics Simulation" triggers calculation
+- [ ] 3D visualization renders (bubble, lattice, protons)
+- [ ] Bubble collapse animation plays
+- [ ] Protons change color during collapse phases
+- [ ] Enhancement Timeline chart displays data
+- [ ] Proton Phases chart shows distribution
+- [ ] Results tab shows peak conditions
+- [ ] Theory tab links to `/theory` page
+- [ ] "View Theory Paper" button works
+
+### Other Simulations
 - [ ] Quantum Tunneling page renders and accepts parameters
 - [ ] Fusion Simulation shows 3D particles
 - [ ] LENR Simulation shows lattice structure

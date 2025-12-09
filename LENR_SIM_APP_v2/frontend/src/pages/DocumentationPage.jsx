@@ -14,7 +14,6 @@ import {
   ListItemText,
   Card,
   CardContent,
-  Grid,
   Alert,
   AlertTitle,
   Button,
@@ -24,6 +23,7 @@ import {
   useTheme,
   alpha
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
@@ -94,7 +94,7 @@ const DocumentationPage = () => {
 
         {/* Quick Links */}
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ height: '100%', background: alpha(theme.palette.primary.main, 0.05) }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <RocketLaunchIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
@@ -105,7 +105,7 @@ const DocumentationPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ height: '100%', background: alpha(theme.palette.secondary.main, 0.05) }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <ApiIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
@@ -116,7 +116,7 @@ const DocumentationPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ height: '100%', background: alpha(theme.palette.success.main, 0.05) }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <SchoolIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
@@ -127,7 +127,7 @@ const DocumentationPage = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ height: '100%', background: alpha(theme.palette.info.main, 0.05) }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <BugReportIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
@@ -213,7 +213,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
@@ -240,7 +240,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
                   </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'secondary.main' }}>

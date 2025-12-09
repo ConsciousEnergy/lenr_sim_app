@@ -1,9 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Tabs, Tab, Typography, FormGroup, FormControlLabel, Switch, CircularProgress } from '@mui/material';
+import { 
+  Box, Tabs, Tab, Typography, FormGroup, FormControlLabel, Switch, CircularProgress,
+  IconButton, Tooltip as MuiTooltip, Paper, Divider
+} from '@mui/material';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
+import ThreeDRotationIcon from '@mui/icons-material/ThreeDRotation';
+import HomeIcon from '@mui/icons-material/Home';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { EnergyFlowVisualizer } from './FluidDynamicsEffects';
 
 /**
  * LENR Visualization Component
@@ -22,6 +31,7 @@ const LENRVisualization = ({
     showHotSpots: parameters?.showHotSpots ?? true,
     showEnergyFlow: parameters?.showEnergyFlow ?? true
   });
+  const [isSceneReady, setIsSceneReady] = useState(false);
   
   const containerRef = useRef();
   const canvasRef = useRef();
@@ -31,6 +41,8 @@ const LENRVisualization = ({
   const controlsRef = useRef();
   const frameRef = useRef();
   const isInitializedRef = useRef(false);
+  const energyFlowRef = useRef(null);
+  const lastAnimationTimeRef = useRef(0);
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -45,6 +57,50 @@ const LENRVisualization = ({
     });
   };
   
+  // 3D Navigation control handlers
+  const handleZoomIn = () => {
+    if (cameraRef.current && controlsRef.current) {
+      const camera = cameraRef.current;
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      camera.position.add(direction.multiplyScalar(5));
+      controlsRef.current.update();
+    }
+  };
+  
+  const handleZoomOut = () => {
+    if (cameraRef.current && controlsRef.current) {
+      const camera = cameraRef.current;
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      camera.position.sub(direction.multiplyScalar(5));
+      controlsRef.current.update();
+    }
+  };
+  
+  const handleResetView = () => {
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(30, 30, 30);
+      cameraRef.current.lookAt(0, 0, 0);
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
+  };
+  
+  const handleCenterView = () => {
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
+  };
+  
+  const handleAutoRotate = () => {
+    if (controlsRef.current) {
+      controlsRef.current.autoRotate = !controlsRef.current.autoRotate;
+      controlsRef.current.autoRotateSpeed = 2.0;
+    }
+  };
+  
   // Initialize Three.js scene
   useEffect(() => {
     if (!canvasRef.current || isInitializedRef.current) return;
@@ -52,7 +108,7 @@ const LENRVisualization = ({
     // Create scene
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color(0x1a1a2e); // Dark blue-gray background
     
     // Add ambient and directional lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -62,10 +118,10 @@ const LENRVisualization = ({
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
     
-    // Create camera
+    // Create camera - positioned further back to see the full lattice
     const aspectRatio = containerRef.current.clientWidth / containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, aspectRatio, 0.1, 1000);
-    camera.position.set(10, 10, 10);
+    camera.position.set(30, 30, 30);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
     
@@ -88,15 +144,38 @@ const LENRVisualization = ({
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
     
+    // Initialize energy flow visualizer
+    const energyFlow = new EnergyFlowVisualizer({
+      particleCount: 80,
+      speed: 0.015,
+      particleSize: 0.08
+    });
+    scene.add(energyFlow.getGroup());
+    energyFlowRef.current = energyFlow;
+    
     // Animation loop
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
+      
+      // Calculate delta time for smooth animations
+      const now = performance.now();
+      const deltaTime = (now - (lastAnimationTimeRef.current || now)) / 1000;
+      lastAnimationTimeRef.current = now;
+      
       controls.update();
+      
+      // Update energy flow animation
+      if (energyFlowRef.current && visOptions.showEnergyFlow) {
+        energyFlowRef.current.update(deltaTime);
+      }
+      
       renderer.render(scene, camera);
     };
     
+    lastAnimationTimeRef.current = performance.now();
     animate();
     isInitializedRef.current = true;
+    setIsSceneReady(true);
     
     // Handle resize
     const handleResize = () => {
@@ -117,6 +196,11 @@ const LENRVisualization = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(frameRef.current);
+      
+      // Dispose energy flow visualizer
+      if (energyFlowRef.current) {
+        energyFlowRef.current.dispose();
+      }
       
       if (rendererRef.current) {
         rendererRef.current.dispose();
@@ -171,7 +255,7 @@ const LENRVisualization = ({
 
   // Update visualization when data or options change
   useEffect(() => {
-    if (!sceneRef.current) return;
+    if (!sceneRef.current || !isSceneReady) return;
     
     const scene = sceneRef.current;
     
@@ -188,30 +272,54 @@ const LENRVisualization = ({
     // Get the current lattice state (use fallback if not available)
     const latticeData = timeSeriesData?.lattice || generateFallbackLattice();
     
-    if (visOptions.showLattice) {
+    if (visOptions.showLattice && latticeData.points && latticeData.points.length > 0) {
       // Create lattice structure
       const latticeGroup = new THREE.Group();
       latticeGroup.name = 'lattice';
       
+      // Calculate bounding box to scale the lattice appropriately
+      let minX = Infinity, minY = Infinity, minZ = Infinity;
+      let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      
+      latticeData.points.forEach(point => {
+        const [x, y, z] = point.position;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+        minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+      });
+      
+      // Calculate scale factor to fit in a 10-unit box
+      const rangeX = (maxX - minX) || 1;
+      const rangeY = (maxY - minY) || 1;
+      const rangeZ = (maxZ - minZ) || 1;
+      const maxRange = Math.max(rangeX, rangeY, rangeZ);
+      const scaleFactor = maxRange > 0 && isFinite(maxRange) ? 10 / maxRange : 1;
+      
+      // Calculate center offset
+      const centerX = isFinite(minX) && isFinite(maxX) ? (minX + maxX) / 2 : 0;
+      const centerY = isFinite(minY) && isFinite(maxY) ? (minY + maxY) / 2 : 0;
+      const centerZ = isFinite(minZ) && isFinite(maxZ) ? (minZ + maxZ) / 2 : 0;
+      
       // Material for lattice points based on material type
       const getMaterialColor = (element) => {
         switch(element.toLowerCase()) {
-          case 'nickel': return 0x73c2fb; // Light blue
-          case 'palladium': return 0xc0c0c0; // Silver
-          case 'hydrogen': return 0xf5f5f5; // White
-          case 'deuterium': return 0xccf5ff; // Light cyan
-          case 'platinum': return 0xdedede; // Light gray
-          case 'titanium': return 0xa9a9a9; // Dark gray
-          case 'lithium': return 0xafeeee; // Pale turquoise
-          default: return 0xffffff; // White
+          case 'nickel': return 0x4682b4; // Steel blue
+          case 'palladium': return 0x8b8b8b; // Gray
+          case 'hydrogen': return 0x32cd32; // Lime green (visible!)
+          case 'deuterium': return 0x00ced1; // Dark cyan
+          case 'platinum': return 0x808080; // Gray
+          case 'titanium': return 0x696969; // Dim gray
+          case 'lithium': return 0x20b2aa; // Light sea green
+          default: return 0xff6347; // Tomato (visible default)
         }
       };
       
       // Add lattice points - reuse materials by element type to prevent memory leaks
-      const pointGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+      const sphereRadius = 0.3; // Larger radius for visibility
+      const pointGeometry = new THREE.SphereGeometry(sphereRadius, 16, 16);
       const materialCache = {};
       
-      latticeData.points.forEach(point => {
+      latticeData.points.forEach((point) => {
         const elementKey = point.element.toLowerCase();
         // Reuse material if already created for this element type
         if (!materialCache[elementKey]) {
@@ -222,34 +330,62 @@ const LENRVisualization = ({
         }
         
         const sphere = new THREE.Mesh(pointGeometry, materialCache[elementKey]);
-        sphere.position.set(...point.position);
+        // Scale and center the position
+        const scaledX = (point.position[0] - centerX) * scaleFactor;
+        const scaledY = (point.position[1] - centerY) * scaleFactor;
+        const scaledZ = (point.position[2] - centerZ) * scaleFactor;
+        
+        sphere.position.set(scaledX, scaledY, scaledZ);
         latticeGroup.add(sphere);
       });
+      
+      // Store scale info for connections and hotspots
+      latticeGroup.userData = { scaleFactor, centerX, centerY, centerZ };
       
       // Add connections between points
       const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.6, transparent: true });
       
       latticeData.connections.forEach(connection => {
         const [i, j] = connection;
-        const start = latticeData.points[i].position;
-        const end = latticeData.points[j].position;
-        
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(...start),
-          new THREE.Vector3(...end)
-        ]);
-        
-        const line = new THREE.Line(geometry, connectionMaterial);
-        latticeGroup.add(line);
+        if (i < latticeData.points.length && j < latticeData.points.length) {
+          const start = latticeData.points[i].position;
+          const end = latticeData.points[j].position;
+          
+          // Apply the same scaling transformation
+          const scaledStart = new THREE.Vector3(
+            (start[0] - centerX) * scaleFactor,
+            (start[1] - centerY) * scaleFactor,
+            (start[2] - centerZ) * scaleFactor
+          );
+          const scaledEnd = new THREE.Vector3(
+            (end[0] - centerX) * scaleFactor,
+            (end[1] - centerY) * scaleFactor,
+            (end[2] - centerZ) * scaleFactor
+          );
+          
+          const geometry = new THREE.BufferGeometry().setFromPoints([scaledStart, scaledEnd]);
+          const line = new THREE.Line(geometry, connectionMaterial);
+          latticeGroup.add(line);
+        }
       });
       
       scene.add(latticeGroup);
+      
+      // Force a render to ensure the scene updates
+      if (rendererRef.current && cameraRef.current) {
+        rendererRef.current.render(scene, cameraRef.current);
+      }
     }
     
     if (visOptions.showHotSpots) {
       // Create hot spots based on reaction rates
       const hotSpotsGroup = new THREE.Group();
       hotSpotsGroup.name = 'hotSpots';
+      
+      // Get scaling info from lattice group if available
+      const latticeGroupObj = scene.getObjectByName('lattice');
+      const scaleInfo = latticeGroupObj?.userData || { scaleFactor: 1, centerX: 0, centerY: 0, centerZ: 0 };
+      const { scaleFactor: sf, centerX: cx, centerY: cy, centerZ: cz } = scaleInfo;
       
       const hotSpotGeometry = new THREE.SphereGeometry(0.3, 16, 16);
       const hotSpotMaterial = new THREE.MeshBasicMaterial({ 
@@ -264,7 +400,11 @@ const LENRVisualization = ({
           const scale = 0.5 + (point.reaction_rate * 3); // Scale based on reaction rate
           
           const hotSpot = new THREE.Mesh(hotSpotGeometry, hotSpotMaterial.clone());
-          hotSpot.position.set(...point.position);
+          // Apply the same scaling transformation
+          const scaledX = (point.position[0] - cx) * sf;
+          const scaledY = (point.position[1] - cy) * sf;
+          const scaledZ = (point.position[2] - cz) * sf;
+          hotSpot.position.set(scaledX, scaledY, scaledZ);
           hotSpot.scale.set(scale, scale, scale);
           
           // Add pulsing animation data
@@ -315,12 +455,15 @@ const LENRVisualization = ({
       const particlePositions = new Float32Array(particleCount * 3);
       const particleSizes = new Float32Array(particleCount);
       
-      // Initialize particles with random positions
+      // Use scaled bounds (10 units after scaling)
+      const bounds = 5; // half of 10-unit box
+      
+      // Initialize particles with random positions within the scaled bounds
       for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
-        particlePositions[i3] = (Math.random() - 0.5) * latticeData.dimensions[0];
-        particlePositions[i3 + 1] = (Math.random() - 0.5) * latticeData.dimensions[1];
-        particlePositions[i3 + 2] = (Math.random() - 0.5) * latticeData.dimensions[2];
+        particlePositions[i3] = (Math.random() - 0.5) * bounds * 2;
+        particlePositions[i3 + 1] = (Math.random() - 0.5) * bounds * 2;
+        particlePositions[i3 + 2] = (Math.random() - 0.5) * bounds * 2;
         
         particleSizes[i] = Math.random() * 2 + 0.5;
       }
@@ -385,11 +528,11 @@ const LENRVisualization = ({
             positions[i + 1] += (Math.random() - 0.5) * 0.1;
             positions[i + 2] += (Math.random() - 0.5) * 0.1;
             
-            // Keep particles within bounds
-            const bounds = latticeData.dimensions.map(d => d / 2);
-            positions[i] = Math.max(-bounds[0], Math.min(bounds[0], positions[i]));
-            positions[i + 1] = Math.max(-bounds[1], Math.min(bounds[1], positions[i + 1]));
-            positions[i + 2] = Math.max(-bounds[2], Math.min(bounds[2], positions[i + 2]));
+            // Keep particles within scaled bounds (5 units = half of 10-unit box)
+            const bound = 5;
+            positions[i] = Math.max(-bound, Math.min(bound, positions[i]));
+            positions[i + 1] = Math.max(-bound, Math.min(bound, positions[i + 1]));
+            positions[i + 2] = Math.max(-bound, Math.min(bound, positions[i + 2]));
           }
           
           energyParticles.geometry.attributes.position.needsUpdate = true;
@@ -400,6 +543,27 @@ const LENRVisualization = ({
       
       energyFlowAnimationId = requestAnimationFrame(animateEnergyFlow);
       animationFrameIds.push({ getId: () => energyFlowAnimationId });
+      
+      // Create hotspot-based energy flow paths using EnergyFlowVisualizer
+      if (energyFlowRef.current && latticeData.points) {
+        // Get lattice scaling info
+        const latticeGroup = scene.getObjectByName('lattice');
+        const scaleData = latticeGroup?.userData || { scaleFactor: 1, centerX: 0, centerY: 0, centerZ: 0 };
+        
+        // Find high-activity hotspots
+        const hotspots = latticeData.points
+          .filter(point => point.reaction_rate > 0.1)
+          .map(point => ({
+            position: point.position,
+            intensity: point.reaction_rate,
+            x: (point.position[0] - scaleData.centerX) * scaleData.scaleFactor,
+            y: (point.position[1] - scaleData.centerY) * scaleData.scaleFactor,
+            z: (point.position[2] - scaleData.centerZ) * scaleData.scaleFactor
+          }));
+        
+        // Create flow paths from hotspots
+        energyFlowRef.current.createFlowPathsFromHotspots(hotspots, new THREE.Vector3(0, 0, 0));
+      }
     }
     
     // Cleanup all animation frames
@@ -409,7 +573,7 @@ const LENRVisualization = ({
         if (id) cancelAnimationFrame(id);
       });
     };
-  }, [timeSeriesData, visOptions]);
+  }, [timeSeriesData, visOptions, isSceneReady]);
   
   // Prepare chart data
   const prepareChartData = () => {
@@ -478,52 +642,190 @@ const LENRVisualization = ({
   
   const render3DVisualization = () => {
     return (
-      <Box sx={{ position: 'relative', height: '100%' }}>
+      <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Main 3D canvas container */}
         <Box
           ref={containerRef}
           sx={{
             width: '100%',
-            height: 'calc(100% - 50px)',
+            flex: 1,
+            minHeight: 300,
             position: 'relative'
           }}
         >
           <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+          
+          {/* Layer toggles - top right */}
+          <Paper 
+            elevation={3}
+            sx={{ 
+              position: 'absolute', 
+              top: 10, 
+              right: 10, 
+              backgroundColor: 'rgba(30, 30, 50, 0.9)', 
+              padding: 1, 
+              borderRadius: 1 
+            }}
+          >
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={visOptions.showLattice}
+                    onChange={handleVisOptionChange('showLattice')}
+                    size="small"
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="caption" color="white">Lattice</Typography>}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={visOptions.showHotSpots}
+                    onChange={handleVisOptionChange('showHotSpots')}
+                    size="small"
+                    color="warning"
+                  />
+                }
+                label={<Typography variant="caption" color="white">Hot Spots</Typography>}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={visOptions.showEnergyFlow}
+                    onChange={handleVisOptionChange('showEnergyFlow')}
+                    size="small"
+                    color="info"
+                  />
+                }
+                label={<Typography variant="caption" color="white">Energy Flow</Typography>}
+              />
+            </FormGroup>
+          </Paper>
+          
+          {/* 3D Navigation Controls - left side */}
+          <Paper
+            elevation={3}
+            sx={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              backgroundColor: 'rgba(30, 30, 50, 0.9)',
+              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              p: 0.5
+            }}
+          >
+            <MuiTooltip title="Zoom In" placement="right">
+              <IconButton size="small" onClick={handleZoomIn} sx={{ color: 'white' }}>
+                <ZoomInIcon />
+              </IconButton>
+            </MuiTooltip>
+            <MuiTooltip title="Zoom Out" placement="right">
+              <IconButton size="small" onClick={handleZoomOut} sx={{ color: 'white' }}>
+                <ZoomOutIcon />
+              </IconButton>
+            </MuiTooltip>
+            <Divider sx={{ my: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }} />
+            <MuiTooltip title="Reset View" placement="right">
+              <IconButton size="small" onClick={handleResetView} sx={{ color: 'white' }}>
+                <HomeIcon />
+              </IconButton>
+            </MuiTooltip>
+            <MuiTooltip title="Center View" placement="right">
+              <IconButton size="small" onClick={handleCenterView} sx={{ color: 'white' }}>
+                <CenterFocusStrongIcon />
+              </IconButton>
+            </MuiTooltip>
+            <MuiTooltip title="Auto Rotate" placement="right">
+              <IconButton size="small" onClick={handleAutoRotate} sx={{ color: 'white' }}>
+                <ThreeDRotationIcon />
+              </IconButton>
+            </MuiTooltip>
+          </Paper>
+          
+          {/* Navigation hint */}
+          <Typography
+            variant="caption"
+            sx={{
+              position: 'absolute',
+              bottom: 5,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.6)',
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              px: 1,
+              borderRadius: 1
+            }}
+          >
+            Drag to rotate • Scroll to zoom • Right-click to pan
+          </Typography>
         </Box>
         
-        <Box sx={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.7)', padding: 1, borderRadius: 1 }}>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={visOptions.showLattice}
-                  onChange={handleVisOptionChange('showLattice')}
-                  size="small"
-                />
-              }
-              label="Lattice"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={visOptions.showHotSpots}
-                  onChange={handleVisOptionChange('showHotSpots')}
-                  size="small"
-                />
-              }
-              label="Hot Spots"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={visOptions.showEnergyFlow}
-                  onChange={handleVisOptionChange('showEnergyFlow')}
-                  size="small"
-                />
-              }
-              label="Energy Flow"
-            />
-          </FormGroup>
-        </Box>
+        {/* Legend/Key */}
+        <Paper
+          elevation={2}
+          sx={{
+            mt: 1,
+            p: 1.5,
+            backgroundColor: 'rgba(30, 30, 50, 0.95)',
+            borderRadius: 1
+          }}
+        >
+          <Typography variant="subtitle2" color="white" gutterBottom>
+            Visualization Key
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            {/* Host Material */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#4682b4' }} />
+              <Typography variant="caption" color="white">
+                Host Material (Ni/Pd)
+              </Typography>
+            </Box>
+            {/* Hydrogen */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#32cd32' }} />
+              <Typography variant="caption" color="white">
+                Hydrogen/Deuterium
+              </Typography>
+            </Box>
+            {/* Lattice Bonds */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 20, height: 2, bgcolor: '#444444' }} />
+              <Typography variant="caption" color="white">
+                Lattice Bonds
+              </Typography>
+            </Box>
+            {/* Hot Spots */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#ff4500', opacity: 0.7 }} />
+              <Typography variant="caption" color="white">
+                Reaction Hot Spots
+              </Typography>
+            </Box>
+            {/* Energy Flow */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#ffff00', opacity: 0.8 }} />
+              <Typography variant="caption" color="white">
+                Energy Flow Particles
+              </Typography>
+            </Box>
+            {/* Coordinate Axes */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 0.3 }}>
+                <Box sx={{ width: 8, height: 3, bgcolor: '#ff0000' }} />
+                <Box sx={{ width: 8, height: 3, bgcolor: '#00ff00' }} />
+                <Box sx={{ width: 8, height: 3, bgcolor: '#0000ff' }} />
+              </Box>
+              <Typography variant="caption" color="white">
+                Axes (X/Y/Z)
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
       </Box>
     );
   };

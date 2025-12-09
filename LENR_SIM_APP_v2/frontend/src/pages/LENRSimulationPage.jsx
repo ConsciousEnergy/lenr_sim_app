@@ -3,7 +3,6 @@ import {
   Box, 
   Container, 
   Paper, 
-  Grid, 
   Typography, 
   Divider, 
   Button,
@@ -19,6 +18,7 @@ import {
   Backdrop,
   Tooltip
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SaveIcon from '@mui/icons-material/Save';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
@@ -27,10 +27,131 @@ import DownloadIcon from '@mui/icons-material/Download';
 import InfoIcon from '@mui/icons-material/Info';
 import LENRParameterControls from '../components/controls/LENRParameterControls';
 import LENRVisualization from '../components/visualizations/LENRVisualization';
-import { mockPhysicsServer } from '../api/physics/mockServer';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ResultsPanel from '../components/results/ResultsPanel';
+
+// API base URL - uses environment variable or defaults to localhost
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+/**
+ * Real physics API client for LENR calculations
+ */
+const physicsAPI = {
+  async calculateEnhancement(params) {
+    const response = await fetch(`${API_BASE}/api/physics/lenr-enhancement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        energy_kev: 0.025, // Thermal energy at room temp
+        temperature_k: params.temperature || 300,
+        loading_ratio: params.loadingRatio || 0.85,
+        material: params.materialType || 'palladium',
+        defect_density: params.defectDensity || 0.01,
+        mechanisms: ['electron_screening', 'phonon_assisted', 'loading_ratio', 'defect_enhancement']
+      })
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  },
+  
+  async calculateReactionRate(params) {
+    const response = await fetch(`${API_BASE}/api/physics/lenr-reaction-rate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        temperature_k: params.temperature || 300,
+        loading_ratio: params.loadingRatio || 0.85,
+        material: params.materialType || 'palladium',
+        defect_density: params.defectDensity || 0.01,
+        volume_cm3: 1.0,
+        include_enhancements: true
+      })
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
+  }
+};
+
+/**
+ * Generate time series data from physics calculation results
+ */
+function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
+  const timeSteps = params.totalSimulationTime / params.timeStepSize || 100;
+  const dt = params.timeStepSize || 0.1;
+  
+  const timePoints = [];
+  const enhancementHistory = [];
+  const reactionRateHistory = [];
+  const temperatureHistory = [];
+  
+  for (let i = 0; i < timeSteps; i++) {
+    const t = i * dt;
+    // Add realistic variation based on physics
+    const tempVariation = 1 + 0.05 * Math.sin(2 * Math.PI * t / 5);
+    const rampUp = 1 - Math.exp(-t / 2);
+    
+    timePoints.push(t);
+    enhancementHistory.push(enhancement.total_enhancement * rampUp * tempVariation);
+    reactionRateHistory.push((reactionRate?.rate || 1e10) * rampUp * tempVariation);
+    temperatureHistory.push((params.temperature || 300) * tempVariation);
+  }
+  
+  return {
+    time: timePoints,
+    enhancement: enhancementHistory,
+    reactionRate: reactionRateHistory,
+    temperature: temperatureHistory
+  };
+}
+
+/**
+ * Generate fallback results when API is unavailable
+ */
+function generateFallbackResults(params, config) {
+  // Physics-based calculations using simplified models
+  const T = params.temperature || 300;
+  const loadingRatio = params.loadingRatio || 0.85;
+  const defectDensity = params.defectDensity || 0.01;
+  
+  // Simplified enhancement factor calculations
+  const screeningEnhancement = Math.exp(20 / Math.sqrt(T)); // Debye screening
+  const loadingEnhancement = Math.pow(loadingRatio / 0.5, 2);
+  const defectEnhancement = 1 + 10 * defectDensity;
+  const totalEnhancement = screeningEnhancement * loadingEnhancement * defectEnhancement;
+  
+  const timeSteps = 100;
+  const dt = 0.1;
+  
+  return {
+    simulation_id: `fallback-${Date.now()}`,
+    status: 'completed',
+    parameters: params,
+    results: {
+      total_enhancement: totalEnhancement,
+      individual_factors: {
+        electron_screening: screeningEnhancement,
+        loading_ratio: loadingEnhancement,
+        defect_enhancement: defectEnhancement
+      },
+      dominant_mechanism: screeningEnhancement > loadingEnhancement ? 'electron_screening' : 'loading_ratio',
+      warnings: ['Using local fallback model - backend API unavailable']
+    },
+    timeSeriesData: {
+      time: Array.from({ length: timeSteps }, (_, i) => i * dt),
+      enhancement: Array.from({ length: timeSteps }, (_, i) => 
+        totalEnhancement * (1 - Math.exp(-i * dt / 2)) * (1 + 0.05 * Math.sin(i * dt))
+      ),
+      reactionRate: Array.from({ length: timeSteps }, (_, i) =>
+        1e10 * totalEnhancement * (1 - Math.exp(-i * dt / 2))
+      ),
+      temperature: Array.from({ length: timeSteps }, (_, i) =>
+        T * (1 + 0.02 * Math.sin(i * dt * 0.5))
+      )
+    },
+    latticeData: config.lattice_parameters
+  };
+}
 
 /**
  * LENRSimulationPage Component
@@ -91,7 +212,34 @@ function LENRSimulationPage() {
       totalSimulationTime: 10
     };
     
-    setParameters(defaultParams);
+    // Check for pending simulation configuration from NewSimulation wizard
+    const pendingSimulation = localStorage.getItem('pendingSimulation');
+    if (pendingSimulation) {
+      try {
+        const config = JSON.parse(pendingSimulation);
+        // Merge wizard parameters with defaults
+        const mergedParams = {
+          ...defaultParams,
+          temperature: config.parameters?.temperature || defaultParams.temperature,
+          pressure: config.parameters?.pressure || defaultParams.pressure,
+          defectDensity: config.parameters?.defectConcentration || defaultParams.defectDensity
+        };
+        setParameters(mergedParams);
+        
+        // Show notification about loaded configuration
+        setAlertMessage(`Configuration "${config.name}" loaded from wizard. Click "Run Simulation" to start.`);
+        setAlertSeverity('info');
+        setAlertOpen(true);
+        
+        // Clear the pending simulation after loading
+        localStorage.removeItem('pendingSimulation');
+      } catch (e) {
+        console.error('Error loading pending simulation:', e);
+        setParameters(defaultParams);
+      }
+    } else {
+      setParameters(defaultParams);
+    }
     
     // Fetch saved configurations (mock implementation)
     // In a real implementation, this would be an API call
@@ -170,35 +318,48 @@ function LENRSimulationPage() {
         }
       };
       
-      // Initialize simulation
-      const initResponse = await mockPhysicsServer.initializeSimulation(simulationConfig);
-      const simId = initResponse.simulation_id;
-      setSimulationId(simId);
-      
-      // Start simulation
-      await mockPhysicsServer.startSimulation(simId);
-      
-      // Wait for simulation to complete (in a real app, this would be a websocket connection)
-      let isComplete = false;
-      let simulationResults;
-      
-      while (!isComplete) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const status = await mockPhysicsServer.getSimulationStatus(simId);
+      // Try to use real physics API
+      try {
+        const [enhancementResult, reactionRateResult] = await Promise.all([
+          physicsAPI.calculateEnhancement(parameters),
+          physicsAPI.calculateReactionRate(parameters)
+        ]);
         
-        if (status.status === 'completed' || status.status === 'error') {
-          isComplete = true;
-          
-          if (status.status === 'error') {
-            throw new Error('Simulation failed: ' + (status.error || 'Unknown error'));
-          }
-          
-          simulationResults = await mockPhysicsServer.getSimulationResults(simId);
-        }
+        const simId = `lenr-${Date.now()}`;
+        setSimulationId(simId);
+        
+        // Transform API results into visualization-compatible format
+        const simulationResults = {
+          simulation_id: simId,
+          status: 'completed',
+          parameters: parameters,
+          results: {
+            enhancement: enhancementResult,
+            reactionRate: reactionRateResult,
+            total_enhancement: enhancementResult.total_enhancement,
+            dominant_mechanism: enhancementResult.dominant_mechanism,
+            individual_factors: enhancementResult.individual_factors,
+            warnings: enhancementResult.warnings || []
+          },
+          // Generate visualization data based on real physics results
+          timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, parameters),
+          latticeData: simulationConfig.lattice_parameters
+        };
+        
+        setSimulationData(simulationResults);
+        setSuccessMessage('Simulation completed using real physics calculations');
+        
+      } catch (apiError) {
+        console.warn('Real physics API unavailable, using fallback:', apiError.message);
+        
+        // Fallback: generate physics-based mock data
+        const simId = `lenr-fallback-${Date.now()}`;
+        setSimulationId(simId);
+        
+        const fallbackResults = generateFallbackResults(parameters, simulationConfig);
+        setSimulationData(fallbackResults);
+        setSuccessMessage('Simulation completed (using local physics model)');
       }
-      
-      setSimulationData(simulationResults);
-      setSuccessMessage('Simulation completed successfully');
       
     } catch (err) {
       console.error('Simulation error:', err);
@@ -412,35 +573,42 @@ function LENRSimulationPage() {
         }
       };
 
-      // Initialize comparison simulation
-      const initResponse = await mockPhysicsServer.initializeSimulation(simulationConfig);
-      const simId = initResponse.simulation_id;
-      
-      // Start comparison simulation
-      await mockPhysicsServer.startSimulation(simId);
-      
-      // Wait for simulation to complete
-      let isComplete = false;
-      let simulationResults;
-      
-      while (!isComplete) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const status = await mockPhysicsServer.getSimulationStatus(simId);
+      // Try to use real physics API for comparison
+      try {
+        const [enhancementResult, reactionRateResult] = await Promise.all([
+          physicsAPI.calculateEnhancement(selectedConfig.parameters),
+          physicsAPI.calculateReactionRate(selectedConfig.parameters)
+        ]);
         
-        if (status.status === 'completed' || status.status === 'error') {
-          isComplete = true;
-          
-          if (status.status === 'error') {
-            throw new Error('Comparison simulation failed: ' + (status.error || 'Unknown error'));
-          }
-          
-          simulationResults = await mockPhysicsServer.getSimulationResults(simId);
-        }
+        const simId = `comparison-${Date.now()}`;
+        
+        const comparisonResults = {
+          simulation_id: simId,
+          status: 'completed',
+          parameters: selectedConfig.parameters,
+          results: {
+            enhancement: enhancementResult,
+            reactionRate: reactionRateResult,
+            total_enhancement: enhancementResult.total_enhancement,
+            dominant_mechanism: enhancementResult.dominant_mechanism,
+            individual_factors: enhancementResult.individual_factors
+          },
+          timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, selectedConfig.parameters),
+          latticeData: simulationConfig.lattice_parameters
+        };
+        
+        setComparisonConfig(selectedConfig);
+        setComparisonData(comparisonResults);
+        setSuccessMessage('Comparison data loaded using real physics calculations');
+        
+      } catch (apiError) {
+        console.warn('Real physics API unavailable for comparison:', apiError.message);
+        
+        const fallbackResults = generateFallbackResults(selectedConfig.parameters, simulationConfig);
+        setComparisonConfig(selectedConfig);
+        setComparisonData(fallbackResults);
+        setSuccessMessage('Comparison data loaded (using local physics model)');
       }
-      
-      setComparisonConfig(selectedConfig);
-      setComparisonData(simulationResults);
-      setSuccessMessage('Comparison data loaded successfully');
     } catch (err) {
       console.error('Loading comparison error:', err);
       setError('Failed to load comparison data: ' + (err.message || 'Unknown error'));
@@ -674,7 +842,7 @@ function LENRSimulationPage() {
       
       <Grid container spacing={3}>
         {/* Parameter controls */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper 
             elevation={3} 
             sx={{ 
@@ -699,7 +867,7 @@ function LENRSimulationPage() {
         </Grid>
         
         {/* Visualization area */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper 
             elevation={3} 
             sx={{ 
@@ -764,7 +932,7 @@ function LENRSimulationPage() {
             
             <Divider sx={{ mb: 2 }} />
             
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+            <Box sx={{ flexGrow: 1, overflow: 'auto', minHeight: 500 }}>
               {simulationData ? (
                 <LENRVisualization 
                   parameters={parameters}

@@ -4,7 +4,6 @@ import {
   Typography,
   Box,
   Paper,
-  Grid,
   Card,
   CardContent,
   CardMedia,
@@ -17,6 +16,7 @@ import {
   useTheme,
   alpha
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import {
   GitHub as GitHubIcon,
   LinkedIn as LinkedInIcon,
@@ -104,7 +104,7 @@ const TeamPage = () => {
       
       <Grid container spacing={4} sx={{ mb: 6 }}>
         {teamMembers.map((member, index) => (
-          <Grid item xs={12} md={6} key={index}>
+          <Grid size={{ xs: 12, md: 6 }} key={index}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -181,7 +181,7 @@ const TeamPage = () => {
       
       <Grid container spacing={3} sx={{ mb: 6 }}>
         {contributors.map((contributor, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <Avatar 
                 sx={{ 
@@ -213,7 +213,7 @@ const TeamPage = () => {
         <Divider sx={{ mb: 3 }} />
         
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CodeIcon sx={{ mr: 2, color: 'text.secondary' }} />
@@ -233,7 +233,7 @@ const TeamPage = () => {
             </Stack>
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
               <Button
                 variant="outlined"

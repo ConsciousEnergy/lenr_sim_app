@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container,
-  Grid,
   Paper, 
   Typography, 
   Box, 
@@ -21,6 +20,7 @@ import {
   Fade,
   Grow
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
@@ -114,28 +114,19 @@ const quickActions = [
   {
     id: 'unified-theory',
     title: 'Unified LENR Theory',
-    description: 'Explore theoretical framework with interactive visualizations',
+    description: 'Comprehensive simulation with all enhancement mechanisms from the unified framework',
     icon: <MemoryIcon />,
     color: '#2196F3',
     path: '/unified-theory',
-    status: 'ready'
+    status: 'new'
   },
   {
-    id: 'simulations',
-    title: 'Run Simulations',
-    description: 'Configure and execute LENR physics simulations',
+    id: 'lenr-simulation',
+    title: 'LENR Simulation',
+    description: 'Lattice-based low energy nuclear reaction modeling',
     icon: <ScienceIcon />,
     color: '#4CAF50',
-    path: '/simulations',
-    status: 'ready'
-  },
-  {
-    id: 'quantum-tunneling',
-    title: 'Quantum Tunneling',
-    description: 'Analyze quantum mechanical tunneling effects',
-    icon: <TuneIcon />,
-    color: '#FF9800',
-    path: '/quantum-tunneling',
+    path: '/lenr-simulation',
     status: 'ready'
   },
   {
@@ -148,9 +139,18 @@ const quickActions = [
     status: 'ready'
   },
   {
+    id: 'quantum-tunneling',
+    title: 'Quantum Tunneling',
+    description: 'Analyze quantum mechanical tunneling effects',
+    icon: <TuneIcon />,
+    color: '#FF9800',
+    path: '/quantum-tunneling',
+    status: 'ready'
+  },
+  {
     id: 'bubble-fusion',
     title: 'Bubble Fusion',
-    description: 'Simulate sonofusion and cavitation phenomena',
+    description: 'Simulate sonofusion and acoustic cavitation phenomena',
     icon: <BubbleChartIcon />,
     color: '#00BCD4',
     path: '/bubble-fusion',
@@ -202,7 +202,7 @@ function DashboardNew() {
         <HeroSection>
           <Container maxWidth="lg">
             <Grid container spacing={4} alignItems="center">
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
                   <Box
                     component="img"
@@ -247,7 +247,7 @@ function DashboardNew() {
                         background: alpha(theme.palette.common.white, 0.9),
                       }
                     }}
-                    onClick={() => handleActionClick('/simulations')}
+                    onClick={() => handleActionClick('/unified-theory')}
                   >
                     Start Simulation
                   </Button>
@@ -269,7 +269,7 @@ function DashboardNew() {
                   </Button>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <StatusCard elevation={3}>
                   <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                     System Status
@@ -305,7 +305,7 @@ function DashboardNew() {
         <Grid container spacing={3}>
           {quickActions.map((action, index) => (
             <Grow in={true} timeout={300 + index * 100} key={action.id}>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <QuickActionCard 
                   onClick={() => handleActionClick(action.path)}
                   elevation={1}
@@ -327,6 +327,14 @@ function DashboardNew() {
                           size="small" 
                           sx={{ ml: 'auto' }}
                           color="warning"
+                        />
+                      )}
+                      {action.status === 'new' && (
+                        <Chip 
+                          label="NEW" 
+                          size="small" 
+                          sx={{ ml: 'auto' }}
+                          color="primary"
                         />
                       )}
                     </Box>
@@ -355,7 +363,7 @@ function DashboardNew() {
 
       {/* Recent Activity / Info Section */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Getting Started
@@ -363,29 +371,29 @@ function DashboardNew() {
             <Stack spacing={2}>
               <Alert severity="info" icon={<InfoOutlinedIcon />}>
                 <AlertTitle>Welcome to LENR Simulation Platform</AlertTitle>
-                Start by exploring the Unified LENR Theory or run your first simulation.
+                Start by exploring the <strong>Unified LENR Theory</strong> for comprehensive simulations, or choose a specific simulation type below.
               </Alert>
               <Box>
-                <Typography variant="subtitle2" gutterBottom>Quick Tips:</Typography>
+                <Typography variant="subtitle2" gutterBottom>Quick Start Guide:</Typography>
                 <Stack spacing={1} sx={{ ml: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    • Use the Unified Theory Explorer to understand the theoretical framework
+                    <strong>🔬 Unified Theory</strong> - Complete LENR model with all enhancement mechanisms
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    • Configure simulation parameters before running experiments
+                    <strong>⚛️ LENR Simulation</strong> - Focused lattice-based nuclear reactions
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    • Export results for external analysis and sharing
+                    <strong>🔥 Fusion Simulation</strong> - Plasma fusion in metal lattices
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    • Check the documentation for detailed guides and API reference
+                    <strong>💧 Bubble Fusion</strong> - Acoustic cavitation dynamics
                   </Typography>
                 </Stack>
               </Box>
             </Stack>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Resources

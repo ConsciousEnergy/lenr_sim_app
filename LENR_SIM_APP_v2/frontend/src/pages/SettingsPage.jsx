@@ -258,7 +258,7 @@ const SettingsPage = () => {
           <Divider sx={{ mb: 3 }} />
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -274,7 +274,7 @@ const SettingsPage = () => {
               </Typography>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Font Size</InputLabel>
                 <Select
@@ -289,7 +289,7 @@ const SettingsPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -302,7 +302,7 @@ const SettingsPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -325,7 +325,7 @@ const SettingsPage = () => {
           <Divider sx={{ mb: 3 }} />
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Calculation Precision</InputLabel>
                 <Select
@@ -340,7 +340,7 @@ const SettingsPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -351,7 +351,7 @@ const SettingsPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -362,7 +362,7 @@ const SettingsPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography gutterBottom>Calculation Threads: {settings.physics.calculationThreads}</Typography>
               <Slider
                 value={settings.physics.calculationThreads}
@@ -385,7 +385,7 @@ const SettingsPage = () => {
           <Divider sx={{ mb: 3 }} />
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Quality Level</InputLabel>
                 <Select
@@ -400,7 +400,7 @@ const SettingsPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography gutterBottom>Max Particles: {settings.visualization.maxParticles}</Typography>
               <Slider
                 value={settings.visualization.maxParticles}
@@ -415,7 +415,7 @@ const SettingsPage = () => {
               </Typography>
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -427,7 +427,7 @@ const SettingsPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -439,7 +439,7 @@ const SettingsPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -458,7 +458,7 @@ const SettingsPage = () => {
       <TabPanel value={activeTab} index={3}>
         <Grid container spacing={3}>
           {/* System Status */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">System Status</Typography>
@@ -469,7 +469,7 @@ const SettingsPage = () => {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent sx={{ textAlign: 'center' }}>
                       {systemStatus.apiConnected ? (
@@ -490,7 +490,7 @@ const SettingsPage = () => {
                   </Card>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent sx={{ textAlign: 'center' }}>
                       <VisualizationIcon sx={{ fontSize: 40, color: systemStatus.webglSupported ? 'success.main' : 'error.main' }} />
@@ -507,7 +507,7 @@ const SettingsPage = () => {
                   </Card>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent sx={{ textAlign: 'center' }}>
                       <MemoryIcon sx={{ fontSize: 40, color: 'primary.main' }} />
@@ -521,7 +521,7 @@ const SettingsPage = () => {
                   </Card>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent sx={{ textAlign: 'center' }}>
                       <StorageIcon sx={{ fontSize: 40, color: 'primary.main' }} />
@@ -539,7 +539,7 @@ const SettingsPage = () => {
           </Grid>
           
           {/* Advanced Settings */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>Advanced Settings</Typography>
               <Divider sx={{ mb: 2 }} />
@@ -586,7 +586,7 @@ const SettingsPage = () => {
           </Grid>
           
           {/* Danger Zone */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3, borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
               <Typography variant="h6" color="error" gutterBottom>Danger Zone</Typography>
               <Divider sx={{ mb: 2 }} />
@@ -621,7 +621,7 @@ const SettingsPage = () => {
           </Grid>
           
           {/* Quick Links */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>Debug Tools</Typography>
               <Divider sx={{ mb: 2 }} />

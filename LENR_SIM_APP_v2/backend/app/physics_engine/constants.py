@@ -44,6 +44,32 @@ PHYSICAL_CONSTANTS = {
     "J_to_eV": 1.0 / constants.e
 }
 
+# Ultra-Dense Hydrogen (UDH) Constants from arxiv paper 2505.21946
+# "Field-Coupled Quantum Collapse in Ultra-Dense Hydrogen" by Zeiner-Gundersen
+UDH_CONSTANTS = {
+    # UDH structural parameters
+    "udh_bond_length": 2.3e-12,           # UDH interatomic distance (~2.3 pm)
+    "normal_h2_bond": 74e-12,             # Normal H2 bond length (~74 pm)
+    "udh_density_factor": 1e6,            # Density enhancement factor (74/2.3)^3
+    
+    # Bosonic state parameters
+    "bosonic_binding_energy": 0.5,        # Binding energy in eV
+    "metastable_lifetime": 2.2e-6,        # Metastable state lifetime (muon-like)
+    "cluster_size_typical": 6,            # Typical H(0) cluster size
+    
+    # Field-induced collapse parameters
+    "collapse_threshold_field": 1e8,      # Electric field threshold for collapse (V/m)
+    "collapse_rate_constant": 1e12,       # Collapse rate constant (s^-1)
+    
+    # Vacuum squeezing parameters
+    "vacuum_squeeze_coefficient": 0.1,    # Squeeze parameter coefficient
+    "casimir_prefactor": 1.0,             # Casimir effect prefactor
+    
+    # QET (Quantum Energy Teleportation) parameters
+    "qet_correlation_factor": 0.5,        # Entanglement correlation strength
+    "decoherence_rate": 1e9,              # Decoherence rate (Hz)
+}
+
 # Default LENR system configuration
 DEFAULT_CONFIG = {
     # System parameters
@@ -82,7 +108,20 @@ DEFAULT_CONFIG = {
     
     # Visualization parameters
     "visualization_scale": 1.0,
-    "color_scheme": "standard"
+    "color_scheme": "standard",
+    
+    # Ultra-Dense Hydrogen (UDH) Physics Parameters
+    # Based on arxiv paper 2505.21946 by Zeiner-Gundersen
+    "enable_udh_physics": True,           # Enable UDH physics calculations
+    "vacuum_squeezing_enabled": True,     # Enable vacuum squeezing effects
+    "udh_params": {
+        "cluster_size": 6,                # Number of hydrogen atoms in UDH cluster
+        "bond_length": 2.3e-12,           # UDH bond length in meters
+        "binding_energy": 0.5,            # Bosonic binding energy in eV
+        "collapse_threshold": 1e8,        # Field collapse threshold in V/m
+        "squeeze_coefficient": 0.1,       # Vacuum squeeze coefficient
+    },
+    "field_collapse_threshold": 1e8,      # EM field threshold for collapse (V/m)
 }
 
 def get_config(user_config: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -103,6 +142,9 @@ def get_config(user_config: Dict[str, Any] = None) -> Dict[str, Any]:
     
     # Add physical constants to config
     config["constants"] = PHYSICAL_CONSTANTS
+    
+    # Add UDH constants to config
+    config["udh_constants"] = UDH_CONSTANTS
     
     # Add derived parameters
     config.update(calculate_derived_parameters(config))

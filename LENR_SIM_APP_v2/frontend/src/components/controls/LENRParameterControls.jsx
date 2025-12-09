@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Grid,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -20,6 +19,7 @@ import {
   IconButton,
   Collapse
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -170,7 +170,7 @@ const LENRParameterControls = ({
           </Typography>
           <Grid container spacing={1}>
             {savedConfigs.map(config => (
-              <Grid item xs={12} key={config.id}>
+              <Grid size={12} key={config.id}>
                 <Button 
                   variant="outlined" 
                   size="small" 
@@ -203,7 +203,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Material System', 'materials', 'Core materials for the LENR system')}
       <Collapse in={expandedSections.materials}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth disabled={disabled}>
               <InputLabel>Host Material</InputLabel>
               <Select
@@ -219,7 +219,7 @@ const LENRParameterControls = ({
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth disabled={disabled}>
               <InputLabel>Secondary Material</InputLabel>
               <Select
@@ -240,7 +240,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Environmental Conditions', 'conditions', 'Temperature, pressure, and other conditions')}
       <Collapse in={expandedSections.conditions}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography gutterBottom>
               Temperature: {parameters.temperature} K
             </Typography>
@@ -260,7 +260,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography gutterBottom>
               Pressure: {parameters.pressure} atm
             </Typography>
@@ -280,7 +280,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography gutterBottom>
               Magnetic Field Strength: {parameters.magneticFieldStrength} T
             </Typography>
@@ -306,7 +306,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Electrode Configuration', 'electrode', 'Current and pulse parameters')}
       <Collapse in={expandedSections.electrode}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <FormControl fullWidth disabled={disabled}>
               <InputLabel>Electrode Configuration</InputLabel>
               <Select
@@ -322,7 +322,7 @@ const LENRParameterControls = ({
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography gutterBottom>
               Current Density: {parameters.currentDensity} A/cm²
             </Typography>
@@ -342,7 +342,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Pulse Frequency: {parameters.pulseFrequency} Hz
             </Typography>
@@ -362,7 +362,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Pulse Width: {parameters.pulseWidth} μs
             </Typography>
@@ -388,7 +388,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Catalyst Properties', 'catalysts', 'Catalyst materials and concentrations')}
       <Collapse in={expandedSections.catalysts}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth disabled={disabled}>
               <InputLabel>Catalyst Type</InputLabel>
               <Select
@@ -405,7 +405,7 @@ const LENRParameterControls = ({
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Concentration: {parameters.catalystConcentration}
             </Typography>
@@ -425,7 +425,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <FormControl fullWidth disabled={disabled}>
               <InputLabel>Surface Treatment</InputLabel>
               <Select
@@ -448,7 +448,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Material Structure', 'structure', 'Structural properties of the material system')}
       <Collapse in={expandedSections.structure}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -461,7 +461,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Grain Size: {parameters.grainSize} nm
             </Typography>
@@ -481,7 +481,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Typography gutterBottom>
               Defect Density: {parameters.defectDensity}
             </Typography>
@@ -507,7 +507,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Visualization Options', 'visualization', 'Options for visualizing the simulation')}
       <Collapse in={expandedSections.visualization}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -520,7 +520,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -533,7 +533,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -552,7 +552,7 @@ const LENRParameterControls = ({
       {renderSectionHeader('Advanced Settings', 'advanced', 'Advanced simulation parameters')}
       <Collapse in={expandedSections.advanced}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Time Step Size: {parameters.timeStepSize}
             </Typography>
@@ -572,7 +572,7 @@ const LENRParameterControls = ({
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Typography gutterBottom>
               Simulation Time: {parameters.totalSimulationTime}
             </Typography>

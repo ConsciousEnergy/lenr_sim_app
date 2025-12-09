@@ -1,13 +1,14 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Box, Typography, Slider, IconButton, Card, CardContent } from '@mui/material';
+import { Box, Typography, Slider, IconButton, Card, CardContent, Switch, FormControlLabel } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import FastRewindIcon from '@mui/icons-material/FastRewind';
+import { PlasmaVortexEffect, ParticleTrailSystem } from './FluidDynamicsEffects';
 
 // Color palette for particles based on energy
 const energyColorScale = [
@@ -68,11 +69,20 @@ function FusionVisualization({
   const particlesRef = useRef(null);
   const hotspotsRef = useRef(null);
   
+  // Fluid dynamics effects refs
+  const plasmaVortexRef = useRef(null);
+  const trailSystemRef = useRef(null);
+  const lastAnimationTimeRef = useRef(0);
+  
   // Animation state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeIndex, setCurrentTimeIndex] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [lastUpdateTime, setLastUpdateTime] = useState(0);
+  const lastUpdateTimeRef = useRef(0);
+  
+  // Visualization effect toggles
+  const [showVortexEffect, setShowVortexEffect] = useState(true);
+  const [showParticleTrails, setShowParticleTrails] = useState(false);
   
   // Calculated values
   const timeSteps = useMemo(() => {
@@ -136,6 +146,25 @@ function FusionVisualization({
     scene.add(hotspotsContainer);
     hotspotsRef.current = hotspotsContainer;
     
+    // Initialize plasma vortex effect
+    const plasmaVortex = new PlasmaVortexEffect({
+      particleCount: 300,
+      vortexStrength: 0.8,
+      radialSpeed: 0.3,
+      verticalSpeed: 0.2,
+      radius: 4,
+      height: 3
+    });
+    plasmaVortex.initialize();
+    scene.add(plasmaVortex.getGroup());
+    plasmaVortexRef.current = plasmaVortex;
+    
+    // Initialize trail system
+    trailSystemRef.current = new ParticleTrailSystem({
+      trailLength: 15,
+      fadeRate: 0.1
+    });
+    
     // Add bounding box to visualize confinement region
     const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
     const boxMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
@@ -153,13 +182,24 @@ function FusionVisualization({
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate);
       
+      // Calculate delta time for smooth animations
+      const now = performance.now();
+      const deltaTime = (now - (lastAnimationTimeRef.current || now)) / 1000;
+      lastAnimationTimeRef.current = now;
+      
       if (controlsRef.current) {
         controlsRef.current.update();
+      }
+      
+      // Update plasma vortex effect
+      if (plasmaVortexRef.current) {
+        plasmaVortexRef.current.update(deltaTime);
       }
       
       renderer.render(scene, camera);
     };
     
+    lastAnimationTimeRef.current = performance.now();
     animate();
     
     // Handle window resize
@@ -201,6 +241,14 @@ function FusionVisualization({
           if (child.material) child.material.dispose();
         });
       }
+      // Dispose of plasma vortex effect
+      if (plasmaVortexRef.current) {
+        plasmaVortexRef.current.dispose();
+      }
+      // Clear trail system
+      if (trailSystemRef.current) {
+        trailSystemRef.current.clear();
+      }
     };
   }, []);
   
@@ -212,13 +260,25 @@ function FusionVisualization({
     updateVisualization(currentStep);
   }, [timeSteps, currentTimeIndex, parameters]);
   
+  // Toggle vortex effect visibility
+  useEffect(() => {
+    if (plasmaVortexRef.current) {
+      plasmaVortexRef.current.getGroup().visible = showVortexEffect;
+    }
+  }, [showVortexEffect]);
+  
   // Handle animation playback
   useEffect(() => {
     if (!isPlaying || !timeSteps || timeSteps.length === 0) return;
     
+    let animationId = null;
+    let isActive = true;
+    
     const playbackLoop = () => {
+      if (!isActive) return;
+      
       const now = Date.now();
-      const elapsed = now - lastUpdateTime;
+      const elapsed = now - lastUpdateTimeRef.current;
       
       // Update time step based on playback speed (milliseconds per step)
       const updateInterval = 1000 / playbackSpeed;
@@ -231,19 +291,22 @@ function FusionVisualization({
           }
           return prev + 1;
         });
-        setLastUpdateTime(now);
+        lastUpdateTimeRef.current = now;
       }
       
-      if (isPlaying) {
-        requestAnimationFrame(playbackLoop);
-      }
+      animationId = requestAnimationFrame(playbackLoop);
     };
     
-    setLastUpdateTime(Date.now());
-    const animationId = requestAnimationFrame(playbackLoop);
+    lastUpdateTimeRef.current = Date.now();
+    animationId = requestAnimationFrame(playbackLoop);
     
-    return () => cancelAnimationFrame(animationId);
-  }, [isPlaying, timeSteps, lastUpdateTime, playbackSpeed]);
+    return () => {
+      isActive = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isPlaying, timeSteps.length, playbackSpeed]);
   
   /**
    * Updates the visualization with data from the current time step
@@ -407,7 +470,7 @@ function FusionVisualization({
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
     if (!isPlaying) {
-      setLastUpdateTime(Date.now());
+      lastUpdateTimeRef.current = Date.now();
     }
   };
   
@@ -519,6 +582,30 @@ function FusionVisualization({
                 { value: 5, label: '5x' }
               ]}
               sx={{ ml: 2 }}
+            />
+          </Box>
+          
+          {/* Visual Effects Toggles */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showVortexEffect}
+                  onChange={(e) => setShowVortexEffect(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">Plasma Vortex Effect</Typography>}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showParticleTrails}
+                  onChange={(e) => setShowParticleTrails(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">Particle Trails</Typography>}
             />
           </Box>
         </CardContent>

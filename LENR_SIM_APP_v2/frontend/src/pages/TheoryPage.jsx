@@ -12,7 +12,6 @@ import {
   Stack,
   Card,
   CardContent,
-  Grid,
   Alert,
   AlertTitle,
   List,
@@ -24,6 +23,7 @@ import {
   Tab,
   Tabs
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ScienceIcon from '@mui/icons-material/Science';
 import FunctionsIcon from '@mui/icons-material/Functions';
@@ -124,7 +124,7 @@ const TheoryPage = () => {
           {/* Mechanism Cards */}
           <Grid container spacing={3}>
             {/* Rydberg Matter */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: '100%', background: alpha(theme.palette.primary.main, 0.05) }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -184,7 +184,7 @@ const TheoryPage = () => {
             </Grid>
 
             {/* Halo Electrons */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: '100%', background: alpha(theme.palette.secondary.main, 0.05) }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -244,7 +244,7 @@ const TheoryPage = () => {
             </Grid>
 
             {/* Double-Layer QED */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: '100%', background: alpha(theme.palette.info.main, 0.05) }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -293,7 +293,7 @@ const TheoryPage = () => {
             </Grid>
 
             {/* Casimir Effect */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card sx={{ height: '100%', background: alpha(theme.palette.success.main, 0.05) }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -518,7 +518,7 @@ const TheoryPage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
@@ -560,7 +560,7 @@ const TheoryPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
@@ -670,13 +670,13 @@ const TheoryPage = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <SymbolCard symbol="ℏ" name="Reduced Planck's Constant" value="≈ 1.054 × 10⁻³⁴ J·s" />
                       <SymbolCard symbol="c" name="Speed of Light" value="≈ 3 × 10⁸ m/s" />
                       <SymbolCard symbol="k_B" name="Boltzmann's Constant" value="≈ 1.381 × 10⁻²³ J/K" />
                       <SymbolCard symbol="ε₀" name="Vacuum Permittivity" value="≈ 8.854 × 10⁻¹² F/m" />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <SymbolCard symbol="a₀" name="Bohr Radius" value="≈ 0.0529 nm" />
                       <SymbolCard symbol="ψ" name="Wavefunction" value="Describes quantum state" />
                       <SymbolCard symbol="V(r)" name="Potential Energy" value="Function of position" />

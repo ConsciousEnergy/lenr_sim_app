@@ -5,7 +5,7 @@ import { SnackbarProvider } from 'notistack';
 import { useMemo, lazy, Suspense } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-// import AppLayout from './components/AppLayout';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppLayoutFixed from './components/AppLayoutFixed';
 import './App.css';
 
@@ -18,6 +18,7 @@ import QuantumTunnelingPage from './pages/QuantumTunnelingPage';
 import FusionSimulationPage from './pages/FusionSimulationPage';
 import LENRSimulationPage from './pages/LENRSimulationPage';
 import BubbleFusionPage from './pages/BubbleFusionPage';
+import UnifiedTheoryPage from './pages/UnifiedTheoryPage';
 
 // Pages - Information & Theory
 import AboutPage from './pages/AboutPage';
@@ -47,6 +48,21 @@ const LoadingFallback = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
     <CircularProgress size={60} thickness={4} />
   </Box>
+);
+
+// Route wrapper with error boundary
+interface RouteWrapperProps {
+  children: React.ReactNode;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+}
+
+const RouteWrapper: React.FC<RouteWrapperProps> = ({ children, darkMode, toggleDarkMode }) => (
+  <ErrorBoundary>
+    <AppLayoutFixed darkMode={darkMode} toggleDarkMode={toggleDarkMode}>
+      {children}
+    </AppLayoutFixed>
+  </ErrorBoundary>
 );
 
 // App with theme handling
@@ -204,7 +220,7 @@ const AppContent = () => {
             } />
             <Route path="/unified-theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <TheoryPage />
+                <UnifiedTheoryPage />
               </AppLayoutFixed>
             } />
             <Route path="/analytics" element={
@@ -258,9 +274,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

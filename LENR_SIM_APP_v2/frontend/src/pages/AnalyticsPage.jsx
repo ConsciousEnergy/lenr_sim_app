@@ -353,7 +353,7 @@ const AnalyticsPage = () => {
       
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Simulations"
             value={stats?.totalSimulations || 0}
@@ -361,7 +361,7 @@ const AnalyticsPage = () => {
             color={theme.palette.primary.main}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Success Rate"
             value={stats?.successRate || 0}
@@ -370,7 +370,7 @@ const AnalyticsPage = () => {
             color={theme.palette.success.main}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Avg Enhancement"
             value={stats?.avgEnhancement || 0}
@@ -379,7 +379,7 @@ const AnalyticsPage = () => {
             color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Energy Output"
             value={stats?.totalEnergy || 0}
@@ -404,7 +404,7 @@ const AnalyticsPage = () => {
       <TabPanel value={activeTab} index={0}>
         <Grid container spacing={3}>
           {/* Enhancement Factor Chart */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3, height: 400 }}>
               <Typography variant="h6" gutterBottom>Enhancement Factor Over Time</Typography>
               <ResponsiveContainer width="100%" height="85%">
@@ -422,7 +422,7 @@ const AnalyticsPage = () => {
           </Grid>
           
           {/* Type Distribution Pie Chart */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, height: 400 }}>
               <Typography variant="h6" gutterBottom>Simulation Types</Typography>
               <ResponsiveContainer width="100%" height="85%">
@@ -452,7 +452,7 @@ const AnalyticsPage = () => {
           </Grid>
           
           {/* Temperature vs Enhancement Bar Chart */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Paper sx={{ p: 3, height: 350 }}>
               <Typography variant="h6" gutterBottom>Temperature Distribution</Typography>
               <ResponsiveContainer width="100%" height="85%">
@@ -574,7 +574,7 @@ const AnalyticsPage = () => {
               if (!sim) return null;
               
               return (
-                <Grid item xs={12} md={6} lg={3} key={id}>
+                <Grid size={{ xs: 12, md: 6, lg: 3 }} key={id}>
                   <Paper sx={{ p: 2 }}>
                     <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                       {sim.type}
@@ -629,7 +629,7 @@ const AnalyticsPage = () => {
       {/* Export Tab */}
       <TabPanel value={activeTab} index={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>Export as CSV</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -645,7 +645,7 @@ const AnalyticsPage = () => {
             </Paper>
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>Export as JSON</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -662,7 +662,7 @@ const AnalyticsPage = () => {
             </Paper>
           </Grid>
           
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Alert severity="info">
               <AlertTitle>Tip</AlertTitle>
               Select specific simulations from the History tab to export only those results.
