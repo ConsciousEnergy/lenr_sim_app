@@ -498,6 +498,61 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     materials, with proton phase transitions through force regimes.
     """
     try:
+        # Input validation
+        if request.bubble.initial_radius_um <= 0 or request.bubble.initial_radius_um > 1000:
+            raise HTTPException(
+                status_code=400,
+                detail="Initial bubble radius must be between 0 and 1000 μm"
+            )
+        
+        if request.bubble.driving_pressure_bar < 0 or request.bubble.driving_pressure_bar > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Driving pressure must be between 0 and 10 bar"
+            )
+        
+        if request.bubble.frequency_khz < 1 or request.bubble.frequency_khz > 100:
+            raise HTTPException(
+                status_code=400,
+                detail="Frequency must be between 1 and 100 kHz"
+            )
+        
+        if request.bubble.ambient_temperature_k < 0 or request.bubble.ambient_temperature_k > 2000:
+            raise HTTPException(
+                status_code=400,
+                detail="Temperature must be between 0 and 2000 K"
+            )
+        
+        if request.lattice.loading_ratio < 0 or request.lattice.loading_ratio > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Loading ratio must be between 0 and 1"
+            )
+        
+        if request.lattice.defect_density < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Defect density must be non-negative"
+            )
+        
+        if request.lattice.surface_roughness < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Surface roughness must be non-negative"
+            )
+        
+        if request.material.host_material not in ['palladium', 'nickel', 'titanium']:
+            raise HTTPException(
+                status_code=400,
+                detail="Host material must be one of: palladium, nickel, titanium"
+            )
+        
+        if request.material.reactant not in ['deuterium', 'hydrogen', 'proton']:
+            raise HTTPException(
+                status_code=400,
+                detail="Reactant must be one of: deuterium, hydrogen, proton"
+            )
+        
         from app.physics_engine.bubble_lattice_interaction import (
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
@@ -559,9 +614,20 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             }
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors)
+        raise
+    except ValueError as e:
+        # Handle value errors (invalid physics parameters)
+        logger.error(f"Invalid physics parameters: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid physics parameters: {str(e)}")
     except Exception as e:
-        logger.error(f"Bubble-lattice simulation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        logger.error(f"Bubble-lattice simulation error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Simulation failed: {str(e)}. Please check parameters and try again."
+        )
 
 
 @router.get("/bubble-lattice/instant")
@@ -607,6 +673,12 @@ async def get_instant_conditions(
             }
         }
         
+    except ValueError as e:
+        logger.error(f"Invalid parameters for instant conditions: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
     except Exception as e:
-        logger.error(f"Instant conditions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Instant conditions error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to calculate instant conditions: {str(e)}"
+        )

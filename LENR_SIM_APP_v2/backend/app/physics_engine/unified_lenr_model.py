@@ -133,6 +133,7 @@ class SimulationConfig:
     # Simulation parameters
     time_steps: int = 100
     total_time: float = 10.0  # seconds
+    random_seed: Optional[int] = None  # Seed for reproducible results
 
 
 @dataclass
@@ -205,7 +206,40 @@ class UnifiedLENRModel:
     def __init__(self, config: Optional[SimulationConfig] = None):
         """Initialize the unified LENR model."""
         self.config = config or SimulationConfig()
+        
+        # Set random seed for reproducibility if provided
+        if self.config.random_seed is not None:
+            np.random.seed(self.config.random_seed)
+            logger.info(f"Random seed set to {self.config.random_seed} for reproducibility")
+        
+        # Cache for enhancement calculations (keyed by config hash)
+        self._enhancement_cache = {}
+        self._cache_key = None
+        
         logger.info(f"UnifiedLENRModel initialized with {self.config.host_material.name}-{self.config.reactant.name} system")
+    
+    def _get_cache_key(self) -> str:
+        """Generate a cache key from current config values."""
+        if self._cache_key is None:
+            # Create hashable key from important config values
+            key_parts = (
+                self.config.host_material.name,
+                self.config.reactant.name,
+                round(self.config.temperature, 2),
+                round(self.config.pressure, 2),
+                round(self.config.electric_field, 2),
+                round(self.config.loading_ratio, 4),
+                round(self.config.defect_density, 2),
+                round(self.config.surface_roughness, 12),
+                self.config.enable_screening,
+                self.config.enable_qed,
+                self.config.enable_casimir,
+                self.config.enable_coherence,
+                self.config.enable_bubble_dynamics,
+                self.config.enable_rydberg,
+            )
+            self._cache_key = str(hash(key_parts))
+        return self._cache_key
     
     def run_simulation(self) -> UnifiedSimulationResult:
         """Execute full unified LENR simulation."""
@@ -256,7 +290,14 @@ class UnifiedLENRModel:
         )
     
     def _calculate_all_enhancements(self) -> List[EnhancementResult]:
-        """Calculate all enhancement mechanisms."""
+        """Calculate all enhancement mechanisms with caching."""
+        cache_key = self._get_cache_key()
+        
+        # Check cache first
+        if cache_key in self._enhancement_cache:
+            logger.debug("Using cached enhancement results")
+            return self._enhancement_cache[cache_key]
+        
         enhancements = []
         
         # Primary enhancers
@@ -279,6 +320,13 @@ class UnifiedLENRModel:
         if self.config.enable_rydberg:
             enhancements.append(self._calculate_rydberg_enhancement())
         
+        # Cache results (limit cache size to prevent memory issues)
+        if len(self._enhancement_cache) > 100:
+            # Clear oldest entries (simple FIFO)
+            oldest_key = next(iter(self._enhancement_cache))
+            del self._enhancement_cache[oldest_key]
+        
+        self._enhancement_cache[cache_key] = enhancements
         return enhancements
     
     def _calculate_electron_screening(self) -> EnhancementResult:
@@ -291,8 +339,18 @@ class UnifiedLENRModel:
         T = self.config.temperature
         n_e = self.config.host_material.electron_density
         
+        # Validate inputs
+        if T <= 0:
+            raise ValueError(f"Temperature must be positive, got {T} K")
+        if n_e <= 0:
+            raise ValueError(f"Electron density must be positive, got {n_e} m^-3")
+        
         # Debye screening length
         lambda_d = np.sqrt(self.EPS0 * self.KB * T / (n_e * self.E_CHARGE**2))
+        
+        # Check for invalid results
+        if not np.isfinite(lambda_d) or lambda_d <= 0:
+            raise ValueError(f"Invalid Debye screening length: {lambda_d} m")
         
         # Screening potential (simplified model)
         # U_s ≈ Z₁Z₂e²/(4πε₀λ_D)
@@ -305,7 +363,14 @@ class UnifiedLENRModel:
         E_thermal = 1.5 * self.KB * T / self.E_CHARGE  # eV
         eta = Z1 * Z2 * self.ALPHA * np.sqrt(self.MP * self.C**2 / (2 * E_thermal * self.E_CHARGE))
         
-        enhancement = np.exp(np.pi * eta * U_screen_ev / max(E_thermal, 0.01))
+        # Validate E_thermal to avoid division by zero
+        E_thermal = max(E_thermal, 0.01)
+        enhancement = np.exp(np.pi * eta * U_screen_ev / E_thermal)
+        
+        # Validate and cap enhancement
+        if not np.isfinite(enhancement):
+            logger.warning(f"Non-finite enhancement calculated, capping to 1e6")
+            enhancement = 1e6
         enhancement = min(enhancement, 1e6)  # Cap at reasonable value
         
         # Threshold: screening > 10 eV
@@ -615,24 +680,32 @@ class UnifiedLENRModel:
     def _generate_time_series(
         self, base_heat: float, base_enhancement: float
     ) -> Tuple[List[float], List[float], List[float]]:
-        """Generate time series data for visualization."""
-        dt = self.config.total_time / self.config.time_steps
-        time_points = [i * dt for i in range(self.config.time_steps)]
+        """
+        Generate time series data for visualization.
         
-        heat_output = []
-        enhancement_history = []
+        Uses deterministic noise for reproducible results.
+        """
+        # Pre-allocate arrays for better performance
+        time_points = np.linspace(0, self.config.total_time, self.config.time_steps)
         
-        for t in time_points:
-            # Add some realistic variation
-            noise = 1 + 0.1 * np.sin(2 * np.pi * t / 2) + 0.05 * np.random.randn()
-            
-            # Ramp up effect
-            ramp = 1 - np.exp(-t / 2)
-            
-            heat_output.append(base_heat * noise * ramp)
-            enhancement_history.append(base_enhancement * (0.9 + 0.1 * ramp))
+        # Deterministic noise using multiple sine waves (replaces np.random.randn())
+        # This ensures same inputs produce same outputs
+        noise = (
+            1.0 
+            + 0.1 * np.sin(2 * np.pi * time_points / 2)
+            + 0.05 * np.sin(4 * np.pi * time_points / 2)
+            + 0.03 * np.sin(6 * np.pi * time_points / 2)
+            + 0.02 * np.sin(8 * np.pi * time_points / 2)
+        )
         
-        return time_points, heat_output, enhancement_history
+        # Ramp up effect (vectorized)
+        ramp = 1 - np.exp(-time_points / 2)
+        
+        # Vectorized calculations
+        heat_output = (base_heat * noise * ramp).tolist()
+        enhancement_history = (base_enhancement * (0.9 + 0.1 * ramp)).tolist()
+        
+        return time_points.tolist(), heat_output, enhancement_history
     
     def _calculate_confidence(
         self, thresholds: Dict[str, bool], enhancements: List[EnhancementResult]
@@ -651,6 +724,7 @@ class UnifiedLENRModel:
     
     def get_mechanism_summary(self) -> Dict[str, Any]:
         """Get summary of all mechanisms and their current contributions."""
+        # Uses cached enhancements from _calculate_all_enhancements
         enhancements = self._calculate_all_enhancements()
         
         return {
@@ -668,6 +742,12 @@ class UnifiedLENRModel:
             "total_enhancement": self._combine_enhancements(enhancements),
             "thresholds": self._check_thresholds()
         }
+    
+    def clear_cache(self):
+        """Clear the enhancement cache. Useful when config changes."""
+        self._enhancement_cache.clear()
+        self._cache_key = None
+        logger.debug("Enhancement cache cleared")
 
 
 def create_simulation(system_type: str = "pd_d", **kwargs) -> UnifiedLENRModel:
