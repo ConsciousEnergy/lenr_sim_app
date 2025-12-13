@@ -38,6 +38,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 // Import new unified visualization
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // API base URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -115,7 +116,23 @@ function UnifiedTheoryPage() {
   // Run simulation via API
   const runSimulation = useCallback(async () => {
     setIsLoading(true);
+    setAlertOpen(false);
+    
     try {
+      // Validate parameters before sending
+      if (parameters.loadingRatio < 0 || parameters.loadingRatio > 1) {
+        throw new Error('Loading ratio must be between 0 and 1');
+      }
+      if (parameters.temperature < 0 || parameters.temperature > 2000) {
+        throw new Error('Temperature must be between 0 and 2000 K');
+      }
+      if (parameters.drivingPressure < 0 || parameters.drivingPressure > 10) {
+        throw new Error('Driving pressure must be between 0 and 10 bar');
+      }
+      if (parameters.frequency < 1 || parameters.frequency > 100) {
+        throw new Error('Frequency must be between 1 and 100 kHz');
+      }
+      
       // Try real physics API
       const response = await fetch(`${API_BASE}/api/unified/bubble-lattice`, {
         method: 'POST',
@@ -146,15 +163,49 @@ function UnifiedTheoryPage() {
         setAlertMessage('Simulation completed with real physics calculations');
         setAlertSeverity('success');
       } else {
-        throw new Error('API returned error');
+        // Handle specific HTTP status codes
+        let errorMessage;
+        if (response.status === 404) {
+          errorMessage = 'Backend API endpoint not found. Using local calculations.';
+        } else if (response.status === 500) {
+          errorMessage = 'Backend server error. Using local calculations.';
+        } else {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || `API error: ${response.status}`;
+          } catch {
+            errorMessage = `API error: ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      console.warn('API unavailable, using local calculations:', error);
-      // Fallback to local mock
-      const mockData = generateLocalResults(parameters);
-      setSimulationData(mockData);
-      setAlertMessage('Simulation completed (local approximation)');
-      setAlertSeverity('info');
+      // Handle network errors and API failures gracefully
+      const errorMessage = error.message || 'Unknown error occurred';
+      
+      // Only log to console if it's not a 404 (expected when backend is not available)
+      if (!errorMessage.includes('404') && !errorMessage.includes('not found')) {
+        console.warn('Simulation API unavailable:', errorMessage);
+      }
+      
+      // Fallback to local mock calculations (this is expected behavior)
+      try {
+        const mockData = generateLocalResults(parameters);
+        setSimulationData(mockData);
+        
+        // Provide user-friendly message
+        if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+          setAlertMessage('Simulation completed using local calculations (backend API not available)');
+          setAlertSeverity('info');
+        } else {
+          setAlertMessage(`Simulation completed using local calculations. ${errorMessage}`);
+          setAlertSeverity('warning');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback calculation failed:', fallbackError);
+        setAlertMessage(`Simulation failed: ${fallbackError.message || 'Unknown error'}`);
+        setAlertSeverity('error');
+      }
     } finally {
       setIsLoading(false);
       setAlertOpen(true);
@@ -314,7 +365,7 @@ function UnifiedTheoryPage() {
 
       <Grid container spacing={3}>
         {/* Left Column - Parameters */}
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Parameters</Typography>
             
@@ -391,7 +442,7 @@ function UnifiedTheoryPage() {
         </Grid>
 
         {/* Right Column - Visualization */}
-        <Grid item xs={12} md={9}>
+        <Grid size={{ xs: 12, md: 9 }}>
           <Paper sx={{ p: 2 }}>
             {/* Results Summary */}
             {simulationData && (
@@ -425,13 +476,25 @@ function UnifiedTheoryPage() {
 
             <Box sx={{ mt: 2, minHeight: 500 }}>
               {activeTab === 0 && (
-                <UnifiedBubbleLatticeVisualization
-                  parameters={parameters}
-                  simulationData={simulationData}
-                  onPhaseChange={handlePhaseChange}
-                  onCollapseEvent={handleCollapseEvent}
-                  height={550}
-                />
+                <ErrorBoundary
+                  fallback={
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      <Typography variant="h6">Visualization Error</Typography>
+                      <Typography variant="body2">
+                        An error occurred while rendering the 3D visualization. 
+                        Please try refreshing the page or adjusting the parameters.
+                      </Typography>
+                    </Alert>
+                  }
+                >
+                  <UnifiedBubbleLatticeVisualization
+                    parameters={parameters}
+                    simulationData={simulationData}
+                    onPhaseChange={handlePhaseChange}
+                    onCollapseEvent={handleCollapseEvent}
+                    height={550}
+                  />
+                </ErrorBoundary>
               )}
 
               {activeTab === 1 && simulationData && (
@@ -477,7 +540,7 @@ function UnifiedTheoryPage() {
 
               {activeTab === 3 && simulationData && (
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 2 }} variant="outlined">
                       <Typography variant="h6" gutterBottom>Collapse Results</Typography>
                       <Divider sx={{ mb: 2 }} />
@@ -489,7 +552,7 @@ function UnifiedTheoryPage() {
                       </Box>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 2 }} variant="outlined">
                       <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography>
                       <Divider sx={{ mb: 2 }} />
@@ -504,7 +567,7 @@ function UnifiedTheoryPage() {
                       </Box>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Alert severity="info">
                       <Typography variant="body2">
                         The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
@@ -529,7 +592,7 @@ function UnifiedTheoryPage() {
                   </Alert>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Paper sx={{ p: 2 }} variant="outlined">
                         <Typography variant="h6" gutterBottom>Core Mechanisms</Typography>
                         <Divider sx={{ mb: 2 }} />
@@ -542,7 +605,7 @@ function UnifiedTheoryPage() {
                         </Stack>
                       </Paper>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Paper sx={{ p: 2 }} variant="outlined">
                         <Typography variant="h6" gutterBottom>Proton Phase Transitions</Typography>
                         <Divider sx={{ mb: 2 }} />
@@ -566,24 +629,24 @@ function UnifiedTheoryPage() {
                         </Stack>
                       </Paper>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid size={12}>
                       <Paper sx={{ p: 2, bgcolor: 'action.hover' }} variant="outlined">
                         <Typography variant="h6" gutterBottom>Key Equations</Typography>
                         <Divider sx={{ mb: 2 }} />
                         <Grid container spacing={2}>
-                          <Grid item xs={12} md={4}>
+                          <Grid size={{ xs: 12, md: 4 }}>
                             <Typography variant="caption" color="text.secondary">Rayleigh-Plesset (Bubble Collapse)</Typography>
                             <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.75rem' }}>
                               RR̈ + 3/2Ṙ² = (1/ρ)[P_b - P_∞ - 2σ/R + ε₀E²/2]
                             </Box>
                           </Grid>
-                          <Grid item xs={12} md={4}>
+                          <Grid size={{ xs: 12, md: 4 }}>
                             <Typography variant="caption" color="text.secondary">Tunneling Probability</Typography>
                             <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.75rem' }}>
                               P = exp(-2/ℏ ∫√[2m(V-E)]dx)
                             </Box>
                           </Grid>
-                          <Grid item xs={12} md={4}>
+                          <Grid size={{ xs: 12, md: 4 }}>
                             <Typography variant="caption" color="text.secondary">Halo Electron Overlap</Typography>
                             <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.75rem' }}>
                               P_overlap = (1/πa³)exp(-2r₀/a) ≈ 10⁻³
