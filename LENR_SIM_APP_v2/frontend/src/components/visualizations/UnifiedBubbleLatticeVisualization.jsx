@@ -27,6 +27,10 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
+import CycloneIcon from '@mui/icons-material/Cyclone';
+
+// Import fluid dynamics effects for vortex visualization
+import { VortexField, EnergyFlowVisualizer, PlasmaVortexEffect } from './FluidDynamicsEffects';
 
 // Proton state definitions with visual properties
 const PROTON_STATES = {
@@ -44,6 +48,11 @@ const COLLAPSE_PHASES = {
   REBOUND: { name: 'Rebound', duration: 0.1 },
   RECOVERY: { name: 'Recovery', duration: 0.3 }
 };
+
+// UX Time Scale: Slow down the physics animation for user comprehension
+// Physical frequency is in kHz (e.g., 20kHz = 50μs cycles) - way too fast to observe
+// This multiplier makes one visual cycle take ~3-5 seconds at default speed
+const UX_TIME_SCALE = 0.02; // Slow down by 50x for visual comprehension
 
 /**
  * Main unified bubble-lattice visualization component
@@ -73,6 +82,12 @@ const UnifiedBubbleLatticeVisualization = ({
   const fieldGroupRef = useRef(null);
   const effectsGroupRef = useRef(null);
   
+  // Vortex/fluid dynamics refs
+  const vortexGroupRef = useRef(null);
+  const vortexFieldRef = useRef(null);
+  const energyFlowRef = useRef(null);
+  const plasmaVortexRef = useRef(null);
+  
   // Animation state
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
@@ -85,9 +100,10 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   const [showDoubleLayer, setShowDoubleLayer] = useState(true);
+  const [showVortices, setShowVortices] = useState(true);
   
   // Animation parameters
-  const animationSpeedRef = useRef(1.0);
+  const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
   const bubbleRadiusRef = useRef(3.0);
   const normalizedTimeRef = useRef(0);
   
@@ -424,6 +440,162 @@ const UnifiedBubbleLatticeVisualization = ({
     return effectsGroup;
   }, []);
 
+  // Create vortex flow visualization - ions flowing in/out of lattice
+  const createVortexFlow = useCallback((scene) => {
+    const vortexGroup = new THREE.Group();
+    vortexGroup.name = 'VortexFlowGroup';
+    
+    try {
+      // Create plasma vortex effect centered between bubble and lattice
+      const plasmaVortex = new PlasmaVortexEffect({
+        particleCount: 200,
+        vortexStrength: 0.8,
+        radialSpeed: 0.3,
+        verticalSpeed: 0.5,
+        radius: 2.5,
+        height: 6
+      });
+      plasmaVortex.initialize();
+      plasmaVortex.getGroup().position.set(0, -1.5, 0); // Center between bubble and lattice
+      vortexGroup.add(plasmaVortex.getGroup());
+      plasmaVortexRef.current = plasmaVortex;
+    } catch (error) {
+      console.warn('Failed to create plasma vortex effect:', error);
+      // Continue without plasma vortex if it fails
+    }
+    
+    // Create energy flow visualizer for directed particle streams
+    const energyFlow = new EnergyFlowVisualizer({
+      particleCount: 80,
+      speed: 0.015,
+      particleSize: 0.06
+    });
+    
+    // Create flow paths from bubble area down to lattice hotspots
+    const flowPathsData = [
+      // Central downward flow
+      {
+        points: [
+          new THREE.Vector3(0, 2, 0),
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, -3, 0),
+          new THREE.Vector3(0, -5, 0)
+        ],
+        color: 0x00ffff,
+        intensity: 1.0
+      },
+      // Spiral inward flows
+      {
+        points: [
+          new THREE.Vector3(2, 2, 0),
+          new THREE.Vector3(1.5, 0, 1),
+          new THREE.Vector3(0.5, -2, 0.5),
+          new THREE.Vector3(0, -4, 0)
+        ],
+        color: 0x00ff88,
+        intensity: 0.8
+      },
+      {
+        points: [
+          new THREE.Vector3(-2, 2, 0),
+          new THREE.Vector3(-1.5, 0, -1),
+          new THREE.Vector3(-0.5, -2, -0.5),
+          new THREE.Vector3(0, -4, 0)
+        ],
+        color: 0x00ff88,
+        intensity: 0.8
+      },
+      {
+        points: [
+          new THREE.Vector3(0, 2, 2),
+          new THREE.Vector3(1, 0, 1.5),
+          new THREE.Vector3(0.5, -2, 0.5),
+          new THREE.Vector3(0, -4, 0)
+        ],
+        color: 0x88ffff,
+        intensity: 0.7
+      },
+      {
+        points: [
+          new THREE.Vector3(0, 2, -2),
+          new THREE.Vector3(-1, 0, -1.5),
+          new THREE.Vector3(-0.5, -2, -0.5),
+          new THREE.Vector3(0, -4, 0)
+        ],
+        color: 0x88ffff,
+        intensity: 0.7
+      }
+    ];
+    
+    try {
+      flowPathsData.forEach(path => {
+        energyFlow.addFlowPath(path.points, path.color, path.intensity);
+      });
+      
+      energyFlow.initializeParticles();
+      vortexGroup.add(energyFlow.getGroup());
+      energyFlowRef.current = energyFlow;
+    } catch (error) {
+      console.warn('Failed to create energy flow visualizer:', error);
+      // Continue without energy flow if it fails
+    }
+    
+    try {
+      // Create a vortex field for additional swirl effects
+      const vortexField = new VortexField({
+        strength: 1.0,
+        decayRate: 0.3,
+        rotationAxis: new THREE.Vector3(0, 1, 0)
+      });
+      
+      // Add vortex centers at key positions
+      vortexField.addVortex(new THREE.Vector3(0, 2, 0), 1.5, 2.0);  // Bubble center
+      vortexField.addVortex(new THREE.Vector3(0, -4, 0), 2.0, 3.0); // Lattice impact zone
+      vortexFieldRef.current = vortexField;
+    } catch (error) {
+      console.warn('Failed to create vortex field:', error);
+      // Continue without vortex field if it fails
+    }
+    
+    // Create visual representation of vortex swirl lines
+    const swirlLineCount = 8;
+    const swirlMaterial = new THREE.LineBasicMaterial({
+      color: 0x44ffaa,
+      transparent: true,
+      opacity: 0.4
+    });
+    
+    for (let i = 0; i < swirlLineCount; i++) {
+      const points = [];
+      const baseAngle = (i / swirlLineCount) * Math.PI * 2;
+      const spiralTurns = 2;
+      
+      for (let j = 0; j <= 40; j++) {
+        const t = j / 40;
+        const angle = baseAngle + t * spiralTurns * Math.PI * 2;
+        const radius = 2.5 * (1 - t * 0.6);
+        const y = 2 - t * 7; // From bubble to lattice
+        
+        points.push(new THREE.Vector3(
+          radius * Math.cos(angle),
+          y,
+          radius * Math.sin(angle)
+        ));
+      }
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, swirlMaterial.clone());
+      line.name = `SwirlLine${i}`;
+      line.userData = { baseAngle, phase: i / swirlLineCount };
+      vortexGroup.add(line);
+    }
+    
+    scene.add(vortexGroup);
+    vortexGroupRef.current = vortexGroup;
+    
+    return vortexGroup;
+  }, []);
+
   // Calculate bubble radius based on collapse phase
   const calculateBubbleRadius = useCallback((normalizedTime, baseRadius) => {
     let radius;
@@ -501,9 +673,11 @@ const UnifiedBubbleLatticeVisualization = ({
     if (!isPlaying) return;
     
     const speed = animationSpeedRef.current;
-    const cycleDuration = 1 / frequency * 1000; // ms per cycle
+    // Apply UX_TIME_SCALE to slow down the physics for visual observation
+    // cycleDuration is now in seconds, adjusted for human perception
+    const cycleDuration = (1 / frequency) / UX_TIME_SCALE; // seconds per visual cycle
     
-    normalizedTimeRef.current += (deltaTime * 1000 * speed) / cycleDuration;
+    normalizedTimeRef.current += (deltaTime * speed) / cycleDuration;
     if (normalizedTimeRef.current >= 1) {
       normalizedTimeRef.current = 0;
       setCollapseCount(prev => prev + 1);
@@ -639,10 +813,99 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       });
     }
+    
+    // Update vortex flow visualization based on collapse phase
+    if (vortexGroupRef.current && showVortices) {
+      try {
+        // Calculate vortex intensity based on phase
+        // EXPANSION: slow outward flow, COLLAPSE: fast inward, MINIMUM: intense swirl
+        let vortexIntensity = 0.3;
+        let flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
+        let rotationSpeed = 1.0;
+        
+        switch (phase) {
+          case 'EXPANSION':
+            vortexIntensity = 0.3;
+            flowDirection = -0.3; // Slow outward
+            rotationSpeed = 0.5;
+            break;
+          case 'COLLAPSE':
+            vortexIntensity = 1.0;
+            flowDirection = 2.0; // Fast inward
+            rotationSpeed = 2.0;
+            break;
+          case 'MINIMUM':
+            vortexIntensity = 1.5;
+            flowDirection = 0.5; // Swirling at impact
+            rotationSpeed = 3.0;
+            break;
+          case 'REBOUND':
+            vortexIntensity = 0.8;
+            flowDirection = -1.5; // Outward scatter
+            rotationSpeed = 1.5;
+            break;
+          case 'RECOVERY':
+            vortexIntensity = 0.4;
+            flowDirection = 0.2;
+            rotationSpeed = 0.7;
+            break;
+        }
+        
+        // Update plasma vortex effect
+        if (plasmaVortexRef.current && typeof plasmaVortexRef.current.update === 'function') {
+          try {
+            plasmaVortexRef.current.vortexStrength = 0.8 * vortexIntensity;
+            plasmaVortexRef.current.update(deltaTime * rotationSpeed);
+          } catch (err) {
+            // Silently fail if plasma vortex update fails
+          }
+        }
+        
+        // Update energy flow particles
+        if (energyFlowRef.current && typeof energyFlowRef.current.update === 'function') {
+          try {
+            // Adjust particle speed based on phase
+            energyFlowRef.current.speed = 0.015 * Math.abs(flowDirection);
+            energyFlowRef.current.update(deltaTime * vortexIntensity);
+          } catch (err) {
+            // Silently fail if energy flow update fails
+          }
+        }
+        
+        // Animate swirl lines opacity and rotation
+        if (vortexGroupRef.current && vortexGroupRef.current.children) {
+          vortexGroupRef.current.children.forEach((child) => {
+            if (child && child.name && child.name.startsWith('SwirlLine') && child.material) {
+              try {
+                // Pulse opacity based on phase intensity
+                const baseOpacity = 0.2 + vortexIntensity * 0.3;
+                const pulse = Math.sin(Date.now() * 0.003 + (child.userData?.phase || 0) * Math.PI * 2) * 0.15;
+                child.material.opacity = Math.min(0.8, baseOpacity + pulse);
+                
+                // Color shift during intense phases
+                if (phase === 'MINIMUM' || phase === 'COLLAPSE') {
+                  child.material.color.setHex(0xff8844); // Orange during collapse
+                } else {
+                  child.material.color.setHex(0x44ffaa); // Green-cyan normally
+                }
+              } catch (err) {
+                // Skip this child if update fails
+              }
+            }
+          });
+          
+          // Rotate the entire vortex group slowly
+          vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.2;
+        }
+      } catch (error) {
+        // Silently handle vortex update errors to prevent animation loop crashes
+        console.warn('Vortex animation update error (non-critical):', error);
+      }
+    }
   }, [
     isPlaying, frequency, initialBubbleRadius, currentPhase,
     calculateBubbleRadius, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines
+    showBubble, showProtons, showFieldLines, showVortices
   ]);
 
   // Initialize Three.js scene
@@ -695,6 +958,7 @@ const UnifiedBubbleLatticeVisualization = ({
     createProtons(scene);
     createFieldVisualization(scene);
     createEffects(scene);
+    createVortexFlow(scene);
     
     // Animation loop
     const animate = () => {
@@ -741,7 +1005,7 @@ const UnifiedBubbleLatticeVisualization = ({
       
       renderer.dispose();
     };
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, updateAnimation]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, updateAnimation]);
 
   // Update visibility based on toggles
   useEffect(() => {
@@ -749,7 +1013,8 @@ const UnifiedBubbleLatticeVisualization = ({
     if (bubbleGroupRef.current) bubbleGroupRef.current.visible = showBubble;
     if (protonGroupRef.current) protonGroupRef.current.visible = showProtons;
     if (fieldGroupRef.current) fieldGroupRef.current.visible = showFieldLines;
-  }, [showLattice, showBubble, showProtons, showFieldLines]);
+    if (vortexGroupRef.current) vortexGroupRef.current.visible = showVortices;
+  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices]);
 
   // Camera controls
   const handleZoomIn = () => {
@@ -859,6 +1124,10 @@ const UnifiedBubbleLatticeVisualization = ({
               control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
               label={<Typography variant="caption" color="white">Fields</Typography>}
             />
+            <FormControlLabel
+              control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
+              label={<Typography variant="caption" color="white">Vortices</Typography>}
+            />
           </FormGroup>
         </Paper>
         
@@ -901,16 +1170,22 @@ const UnifiedBubbleLatticeVisualization = ({
           
           <Box sx={{ flex: 1, mx: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Animation Speed
+              Animation Speed ({(animationSpeedRef.current * 100).toFixed(0)}%)
             </Typography>
             <Slider
               value={animationSpeedRef.current}
               onChange={(_, val) => { animationSpeedRef.current = val; }}
-              min={0.1}
-              max={3}
-              step={0.1}
+              min={0.01}
+              max={1.0}
+              step={0.01}
+              marks={[
+                { value: 0.1, label: '0.1x' },
+                { value: 0.5, label: '0.5x' },
+                { value: 1.0, label: '1x' }
+              ]}
               size="small"
               valueLabelDisplay="auto"
+              valueLabelFormat={(v) => `${v}x`}
             />
           </Box>
           
