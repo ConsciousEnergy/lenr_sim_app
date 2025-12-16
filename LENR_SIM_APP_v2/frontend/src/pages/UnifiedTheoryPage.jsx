@@ -58,7 +58,7 @@ const SYSTEM_PRESETS = {
   },
   ni_h: {
     name: 'Nickel-Hydrogen',
-    description: 'Rossi E-Cat type system',
+    description: 'Nickel-Hydrogen LENR system (studied by many researchers including Piantelli, Celani, and others)',
     hostMaterial: 'nickel',
     reactant: 'hydrogen',
     temperature: 500,
@@ -134,7 +134,26 @@ function UnifiedTheoryPage() {
       }
       
       // Try real physics API
-      const response = await fetch(`${API_BASE}/api/unified/bubble-lattice`, {
+      // #region agent log
+      const apiUrl = `${API_BASE}/api/unified/bubble-lattice`;
+      console.log('[DEBUG] Making API call to:', apiUrl);
+      console.log('[DEBUG] API_BASE:', API_BASE);
+      
+      // First, test if backend is reachable
+      try {
+        const healthCheck = await fetch(`${API_BASE}/health`);
+        console.log('[DEBUG] Backend health check:', healthCheck.status, healthCheck.statusText);
+        if (!healthCheck.ok) {
+          console.warn('[DEBUG] Backend health check failed:', healthCheck.status);
+        }
+      } catch (healthError) {
+        console.error('[DEBUG] Backend health check error:', healthError);
+        console.error('[DEBUG] Backend may not be running on', API_BASE);
+      }
+      
+      fetch('http://127.0.0.1:7242/ingest/25eed4d9-bda7-4fa1-a967-06c14c0e3ae5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UnifiedTheoryPage.jsx:137',message:'API call attempt',data:{url:apiUrl,method:'POST',apiBase:API_BASE},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -157,6 +176,10 @@ function UnifiedTheoryPage() {
         })
       });
 
+      // #region agent log
+      console.log('[DEBUG] API response:', {status: response.status, statusText: response.statusText, ok: response.ok, url: response.url});
+      fetch('http://127.0.0.1:7242/ingest/25eed4d9-bda7-4fa1-a967-06c14c0e3ae5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UnifiedTheoryPage.jsx:160',message:'API response received',data:{status:response.status,statusText:response.statusText,ok:response.ok,url:response.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       if (response.ok) {
         const data = await response.json();
         setSimulationData(data);
@@ -166,6 +189,9 @@ function UnifiedTheoryPage() {
         // Handle specific HTTP status codes
         let errorMessage;
         if (response.status === 404) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/25eed4d9-bda7-4fa1-a967-06c14c0e3ae5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UnifiedTheoryPage.jsx:168',message:'404 error detected',data:{status:404,url:response.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           errorMessage = 'Backend API endpoint not found. Using local calculations.';
         } else if (response.status === 500) {
           errorMessage = 'Backend server error. Using local calculations.';
@@ -199,7 +225,7 @@ function UnifiedTheoryPage() {
           setAlertSeverity('info');
         } else {
           setAlertMessage(`Simulation completed using local calculations. ${errorMessage}`);
-          setAlertSeverity('warning');
+        setAlertSeverity('warning');
         }
       } catch (fallbackError) {
         console.error('Fallback calculation failed:', fallbackError);
@@ -370,7 +396,12 @@ function UnifiedTheoryPage() {
             <Typography variant="h6" gutterBottom>Parameters</Typography>
             
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>Loading Ratio: {parameters.loadingRatio}</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="subtitle2">Loading Ratio: {parameters.loadingRatio}</Typography>
+                {parameters.loadingRatio > 0.9 && (
+                  <Chip label="High Loading" size="small" color="success" sx={{ fontSize: '0.65rem' }} />
+                )}
+              </Box>
               <Slider
                 value={parameters.loadingRatio}
                 onChange={(_, v) => handleParameterChange('loadingRatio', v)}
@@ -380,10 +411,18 @@ function UnifiedTheoryPage() {
                 marks={[{value: 0.9, label: '0.9'}]}
                 disabled={isLoading}
               />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {parameters.loadingRatio > 0.9 ? '↑ Higher enhancement expected' : 'Loading affects reaction sites'}
+              </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>Temperature: {parameters.temperature} K</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="subtitle2">Temperature: {parameters.temperature} K</Typography>
+                {parameters.temperature > 400 && (
+                  <Chip label="High Temp" size="small" color="warning" sx={{ fontSize: '0.65rem' }} />
+                )}
+              </Box>
               <Slider
                 value={parameters.temperature}
                 onChange={(_, v) => handleParameterChange('temperature', v)}
@@ -392,10 +431,18 @@ function UnifiedTheoryPage() {
                 step={10}
                 disabled={isLoading}
               />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {parameters.temperature > 400 ? '↑ Affects screening length & enhancement' : 'Lower temp = longer screening length'}
+              </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>Driving Pressure: {parameters.drivingPressure} bar</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="subtitle2">Driving Pressure: {parameters.drivingPressure} bar</Typography>
+                {parameters.drivingPressure > 2.0 && (
+                  <Chip label="High Pressure" size="small" color="error" sx={{ fontSize: '0.65rem' }} />
+                )}
+              </Box>
               <Slider
                 value={parameters.drivingPressure}
                 onChange={(_, v) => handleParameterChange('drivingPressure', v)}
@@ -404,10 +451,21 @@ function UnifiedTheoryPage() {
                 step={0.1}
                 disabled={isLoading}
               />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {parameters.drivingPressure > 2.0 ? '↑ Faster collapse, higher compression' : 'Controls bubble collapse rate'}
+              </Typography>
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>Frequency: {parameters.frequency} kHz</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="subtitle2">Frequency: {parameters.frequency} kHz</Typography>
+                <Chip 
+                  label={`~${Math.round((1 / parameters.frequency) / 0.02)}s cycle`} 
+                  size="small" 
+                  color="info" 
+                  sx={{ fontSize: '0.65rem' }} 
+                />
+              </Box>
               <Slider
                 value={parameters.frequency}
                 onChange={(_, v) => handleParameterChange('frequency', v)}
@@ -416,6 +474,9 @@ function UnifiedTheoryPage() {
                 step={1}
                 disabled={isLoading}
               />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                Higher frequency = faster cycles (visualization slowed 50x for observation)
+              </Typography>
             </Box>
 
             <Button

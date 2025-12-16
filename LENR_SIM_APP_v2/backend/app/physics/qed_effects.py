@@ -9,11 +9,18 @@ Key concepts:
 - Modified vacuum energy density at interfaces affects the effective nuclear potential
 - Boundary conditions for electromagnetic fields at interfaces create unique conditions
 - These effects contribute to enhanced tunneling probabilities in LENR
+- QED Lagrangian formulation provides rigorous foundation for field-matter coupling
+
+New in v2 (based on theoretical paper Section 2.3.1):
+- Full QED Lagrangian density calculation
+- Vacuum polarization corrections in strong fields
+- Electron-phonon-photon coupling terms
 """
 
 import numpy as np
 import scipy.constants as const
 from typing import Dict, List, Tuple, Any, Optional, Union
+from dataclasses import dataclass, field
 import math
 import logging
 
@@ -25,10 +32,216 @@ logger = setup_logger("qed_effects", "logs/physics.log")
 # Physical constants
 HBAR = const.hbar  # Reduced Planck constant in J·s
 SPEED_OF_LIGHT = const.c  # Speed of light in m/s
-FINE_STRUCTURE = const.alpha  # Fine structure constant
+FINE_STRUCTURE = const.alpha  # Fine structure constant (~1/137)
 ELECTRON_CHARGE = const.e  # Elementary charge in C
+ELECTRON_MASS = const.m_e  # Electron mass in kg
 VACUUM_PERMITTIVITY = const.epsilon_0  # Vacuum permittivity
 EV_TO_J = const.e  # Conversion from eV to Joules
+
+# Critical field strength (Schwinger limit)
+# E_critical = m_e^2 * c^3 / (e * hbar) ≈ 1.3e18 V/m
+E_CRITICAL = (ELECTRON_MASS**2 * SPEED_OF_LIGHT**3) / (ELECTRON_CHARGE * HBAR)
+
+
+@dataclass
+class QEDLagrangianComponents:
+    """Components of the QED Lagrangian density."""
+    dirac_kinetic: float  # ψ̄(iγᵘDμ - m)ψ term
+    electromagnetic: float  # -1/4 FμνFᵘᵛ term
+    interaction: float  # Additional interaction terms
+    total_density: float  # Total Lagrangian density in J/m³
+    
+    # Derived quantities
+    vacuum_polarization: float  # Vacuum polarization correction
+    effective_dielectric: float  # Effective dielectric constant
+    field_matter_coupling: float  # Coupling strength
+
+
+@dataclass
+class QEDEnhancementResult:
+    """Results from QED enhancement calculations."""
+    lagrangian: QEDLagrangianComponents
+    enhancement_factor: float
+    barrier_modification_eV: float
+    tunneling_enhancement: float
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+def calculate_qed_lagrangian(
+    electric_field: float,
+    magnetic_field: float = 0.0,
+    electron_density: float = 1e29,
+    fermi_energy_eV: float = 5.0
+) -> QEDLagrangianComponents:
+    """
+    Calculate the QED Lagrangian density components.
+    
+    The QED Lagrangian is:
+    L = ψ̄(iγᵘDμ - m)ψ - (1/4)FμνFᵘᵛ + L_int
+    
+    Args:
+        electric_field: Electric field strength in V/m
+        magnetic_field: Magnetic field strength in Tesla
+        electron_density: Electron number density in m⁻³
+        fermi_energy_eV: Fermi energy in eV
+        
+    Returns:
+        QEDLagrangianComponents with all terms calculated
+    """
+    # Convert Fermi energy to Joules
+    fermi_energy_J = fermi_energy_eV * EV_TO_J
+    
+    # Dirac kinetic term (fermion kinetic energy density)
+    # Approximate as electron density times Fermi energy
+    dirac_kinetic = electron_density * fermi_energy_J  # J/m³
+    
+    # Electromagnetic field tensor contribution
+    # -1/4 FμνFᵘᵛ = (1/2)(ε₀E² - B²/μ₀)
+    em_energy_density = 0.5 * (
+        VACUUM_PERMITTIVITY * electric_field**2 - 
+        magnetic_field**2 / const.mu_0
+    )
+    electromagnetic = -em_energy_density  # Note: negative in Lagrangian
+    
+    # Interaction terms (electron-phonon-photon coupling)
+    # L_int = g_e-ph * ψ̄ψφ + g_ph-γ * φAμAᵘ
+    # Simplified: estimate from coupling constants
+    g_e_ph = 0.1  # Electron-phonon coupling (dimensionless)
+    interaction = g_e_ph * electron_density * HBAR * 1e13  # Approximate
+    
+    # Total Lagrangian density
+    total_density = dirac_kinetic + electromagnetic + interaction
+    
+    # Vacuum polarization correction
+    # ε_eff = 1 + (2α/45π)(E/E_cr)²
+    vacuum_polarization = (2 * FINE_STRUCTURE / (45 * np.pi)) * (electric_field / E_CRITICAL)**2
+    
+    # Effective dielectric constant
+    effective_dielectric = 1.0 + vacuum_polarization
+    
+    # Field-matter coupling strength
+    # Proportional to α * (E/E_cr) for weak fields
+    field_matter_coupling = FINE_STRUCTURE * min(1.0, electric_field / E_CRITICAL)
+    
+    logger.debug(f"QED Lagrangian: total={total_density:.2e} J/m³, ε_eff={effective_dielectric:.6f}")
+    
+    return QEDLagrangianComponents(
+        dirac_kinetic=dirac_kinetic,
+        electromagnetic=electromagnetic,
+        interaction=interaction,
+        total_density=total_density,
+        vacuum_polarization=vacuum_polarization,
+        effective_dielectric=effective_dielectric,
+        field_matter_coupling=field_matter_coupling
+    )
+
+
+def vacuum_polarization_correction(
+    electric_field: float,
+    temperature: float = 300.0
+) -> Dict[str, float]:
+    """
+    Calculate vacuum polarization effects in strong electric fields.
+    
+    In strong fields, the vacuum becomes polarized, modifying the effective
+    dielectric constant:
+    ε_eff = 1 + (2α/45π)(E/E_cr)²
+    
+    Args:
+        electric_field: Electric field strength in V/m
+        temperature: Temperature in Kelvin (for thermal corrections)
+        
+    Returns:
+        Dictionary with vacuum polarization results
+    """
+    # Basic vacuum polarization
+    field_ratio = electric_field / E_CRITICAL
+    
+    # Leading order correction (Euler-Heisenberg)
+    correction_factor = (2 * FINE_STRUCTURE / (45 * np.pi)) * field_ratio**2
+    
+    # Thermal correction (small at LENR temperatures)
+    thermal_energy = const.k * temperature
+    electron_rest_energy = ELECTRON_MASS * SPEED_OF_LIGHT**2
+    thermal_correction = (thermal_energy / electron_rest_energy)**2
+    
+    # Total effective dielectric
+    epsilon_effective = 1.0 + correction_factor * (1.0 + thermal_correction)
+    
+    # Refractive index modification
+    n_effective = np.sqrt(epsilon_effective)
+    
+    # Energy density modification
+    vacuum_energy_modification = 0.5 * VACUUM_PERMITTIVITY * electric_field**2 * correction_factor
+    
+    return {
+        "field_ratio": field_ratio,
+        "correction_factor": correction_factor,
+        "thermal_correction": thermal_correction,
+        "epsilon_effective": epsilon_effective,
+        "n_effective": n_effective,
+        "vacuum_energy_modification_J_m3": vacuum_energy_modification,
+        "E_critical_V_m": E_CRITICAL
+    }
+
+
+def field_matter_coupling(
+    electric_field: float,
+    electron_density: float,
+    phonon_frequency: float = 1e13,
+    coupling_g_e_ph: float = 0.1,
+    coupling_g_ph_gamma: float = 0.01
+) -> Dict[str, float]:
+    """
+    Calculate electron-phonon-photon coupling in condensed systems.
+    
+    The coupling Lagrangian is:
+    L_int = g_e-ph * ψ̄ψφ + g_ph-γ * φAμAᵘ
+    
+    Args:
+        electric_field: Electric field strength in V/m
+        electron_density: Electron number density in m⁻³
+        phonon_frequency: Characteristic phonon frequency in rad/s
+        coupling_g_e_ph: Electron-phonon coupling constant
+        coupling_g_ph_gamma: Phonon-photon coupling constant
+        
+    Returns:
+        Dictionary with coupling parameters and rates
+    """
+    # Phonon energy
+    phonon_energy = HBAR * phonon_frequency
+    
+    # Electron-phonon interaction energy density
+    # E_e-ph ~ g_e-ph * n_e * ℏω_ph
+    e_ph_energy_density = coupling_g_e_ph * electron_density * phonon_energy
+    
+    # Photon energy density in field
+    photon_energy_density = 0.5 * VACUUM_PERMITTIVITY * electric_field**2
+    
+    # Phonon-photon coupling contribution
+    # Scaled by the coupling constant and field strength
+    ph_gamma_coupling = coupling_g_ph_gamma * np.sqrt(photon_energy_density * phonon_energy)
+    
+    # Total interaction strength
+    total_coupling = np.sqrt(e_ph_energy_density**2 + ph_gamma_coupling**2)
+    
+    # Energy transfer rate (Fermi's golden rule approximation)
+    # Γ ~ (2π/ℏ) |M|² ρ(E)
+    # Simplified estimate
+    matrix_element_squared = (coupling_g_e_ph * phonon_energy)**2
+    density_of_states = electron_density / (HBAR * phonon_frequency)
+    transfer_rate = (2 * np.pi / HBAR) * matrix_element_squared * density_of_states
+    
+    return {
+        "phonon_energy_eV": phonon_energy / EV_TO_J,
+        "e_ph_energy_density_J_m3": e_ph_energy_density,
+        "photon_energy_density_J_m3": photon_energy_density,
+        "ph_gamma_coupling_J_m3": ph_gamma_coupling,
+        "total_coupling_J_m3": total_coupling,
+        "energy_transfer_rate_Hz": transfer_rate,
+        "coupling_g_e_ph": coupling_g_e_ph,
+        "coupling_g_ph_gamma": coupling_g_ph_gamma
+    }
 
 
 def calculate_interface_function(epsilon1: float, epsilon2: float) -> float:
@@ -293,4 +506,112 @@ def calculate_qed_enhancement(
         }
     }
     
-    return results 
+    return results
+
+
+def calculate_full_qed_enhancement(
+    distance: float,
+    epsilon1: float,
+    epsilon2: float,
+    temperature: float,
+    applied_field: float,
+    electron_density: float = 1e29,
+    phonon_frequency: float = 1e13
+) -> QEDEnhancementResult:
+    """
+    Calculate comprehensive QED enhancement using Lagrangian formulation.
+    
+    This function combines all QED effects:
+    1. QED Lagrangian density calculation
+    2. Vacuum polarization corrections
+    3. Field-matter coupling
+    4. Interface effects
+    
+    Args:
+        distance: Characteristic distance in meters
+        epsilon1: Dielectric constant of first material
+        epsilon2: Dielectric constant of second material
+        temperature: Temperature in Kelvin
+        applied_field: Applied electric field in V/m
+        electron_density: Electron number density in m⁻³
+        phonon_frequency: Characteristic phonon frequency in rad/s
+        
+    Returns:
+        QEDEnhancementResult with full analysis
+    """
+    # Calculate QED Lagrangian components
+    lagrangian = calculate_qed_lagrangian(
+        electric_field=applied_field,
+        magnetic_field=0.0,
+        electron_density=electron_density,
+        fermi_energy_eV=5.0
+    )
+    
+    # Get vacuum polarization effects
+    vac_pol = vacuum_polarization_correction(applied_field, temperature)
+    
+    # Get field-matter coupling
+    coupling = field_matter_coupling(
+        electric_field=applied_field,
+        electron_density=electron_density,
+        phonon_frequency=phonon_frequency
+    )
+    
+    # Calculate interface function
+    f_interface = calculate_interface_function(epsilon1, epsilon2)
+    
+    # Calculate QED potential modification
+    qed_potential = calculate_qed_potential_modification(distance, epsilon1, epsilon2)
+    
+    # Coulomb barrier at this distance
+    coulomb_barrier = ELECTRON_CHARGE**2 / (4 * np.pi * VACUUM_PERMITTIVITY * distance) / EV_TO_J
+    
+    # Barrier modification from all effects
+    barrier_mod_vacuum = qed_potential * lagrangian.vacuum_polarization
+    barrier_mod_interface = qed_potential * f_interface
+    barrier_mod_coupling = coupling["total_coupling_J_m3"] * distance**3 / EV_TO_J
+    
+    total_barrier_modification = qed_potential + barrier_mod_vacuum + barrier_mod_coupling
+    
+    # Enhancement factor calculation
+    if coulomb_barrier > 0:
+        barrier_ratio = total_barrier_modification / coulomb_barrier
+    else:
+        barrier_ratio = 0.0
+    
+    # Tunneling enhancement (WKB-like)
+    # P ~ exp(-2∫√(2m(V-E))/ℏ dx)
+    # Enhancement ≈ exp(barrier_reduction * characteristic_scale)
+    tunneling_enhancement = np.exp(min(50.0, barrier_ratio * 100))
+    
+    # Total enhancement factor
+    field_factor = min(10.0, 1.0 + np.sqrt(applied_field / 1e8))
+    coupling_factor = 1.0 + lagrangian.field_matter_coupling
+    
+    total_enhancement = tunneling_enhancement * field_factor * coupling_factor
+    
+    # Cap to realistic values
+    log_enhancement = min(8.0, np.log10(max(1.0, total_enhancement)))
+    capped_enhancement = 10**log_enhancement
+    
+    logger.info(f"Full QED enhancement: {capped_enhancement:.2e} (log={log_enhancement:.2f})")
+    
+    return QEDEnhancementResult(
+        lagrangian=lagrangian,
+        enhancement_factor=capped_enhancement,
+        barrier_modification_eV=total_barrier_modification,
+        tunneling_enhancement=tunneling_enhancement,
+        metadata={
+            "distance_m": distance,
+            "epsilon1": epsilon1,
+            "epsilon2": epsilon2,
+            "temperature_K": temperature,
+            "applied_field_V_m": applied_field,
+            "electron_density_m3": electron_density,
+            "phonon_frequency_rad_s": phonon_frequency,
+            "vacuum_polarization": vac_pol,
+            "field_matter_coupling": coupling,
+            "interface_function": f_interface,
+            "coulomb_barrier_eV": coulomb_barrier
+        }
+    ) 

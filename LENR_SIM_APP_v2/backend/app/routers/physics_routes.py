@@ -40,6 +40,32 @@ from ..physics.phonon_modes import (
     calculate_phonon_spectrum,
     calculate_coherent_phonon_tunneling
 )
+# New imports for theoretical enhancements
+from app.physics.qed_effects import (
+    calculate_qed_lagrangian,
+    vacuum_polarization_correction,
+    field_matter_coupling,
+    calculate_full_qed_enhancement,
+    QEDLagrangianComponents,
+    QEDEnhancementResult
+)
+from app.physics.phonon_nuclear_coupling import (
+    calculate_phonon_nuclear_coupling,
+    calculate_for_material as calculate_phonon_coupling_for_material,
+    PhononNuclearParameters,
+    PhononNuclearCouplingResult
+)
+from app.physics.non_equilibrium_thermo import (
+    calculate_energy_balance,
+    excess_power_analysis,
+    entropy_production_rate,
+    ExcessPowerAnalysis
+)
+from app.physics.reaction_rates import (
+    statistical_reaction_rate,
+    StatisticalReactionRateResult,
+    EnhancementFactors
+)
 from ..physics.models import FusionReaction, FusionProduct, ReactionConditions, FusionEnhancementFactors
 from ..core.config import get_settings
 from ..utils.reaction_storage import ReactionStorage
@@ -1072,4 +1098,402 @@ async def get_performance_metrics():
         "operation_count": len(all_metrics),
         "timeout_risks": timeout_risks,
         "high_risk_count": sum(1 for risk in timeout_risks if risk.get("risk_score", 0) > 3.0)
+    }
+
+
+# =============================================================================
+# NEW THEORETICAL ENHANCEMENT ENDPOINTS
+# Based on Unified LENR Theory Paper Sections 2.3.1, 2.8.1, 3.3, 5.1.1
+# =============================================================================
+
+# Request/Response models for new endpoints
+
+class QEDLagrangianRequest(BaseModel):
+    """Request model for QED Lagrangian calculation."""
+    electric_field: float = Field(1e8, description="Electric field strength in V/m")
+    magnetic_field: float = Field(0.0, description="Magnetic field strength in Tesla")
+    electron_density: float = Field(1e29, description="Electron number density in m^-3")
+    fermi_energy_eV: float = Field(5.0, description="Fermi energy in eV")
+    temperature: float = Field(300.0, description="Temperature in K")
+
+
+class QEDEnhancementRequest(BaseModel):
+    """Request model for full QED enhancement calculation."""
+    distance: float = Field(1e-10, description="Characteristic distance in meters")
+    epsilon1: float = Field(12.0, description="Dielectric constant of first material")
+    epsilon2: float = Field(80.0, description="Dielectric constant of second material")
+    temperature: float = Field(300.0, description="Temperature in K")
+    applied_field: float = Field(1e8, description="Applied electric field in V/m")
+    electron_density: float = Field(1e29, description="Electron density in m^-3")
+    phonon_frequency: float = Field(1e13, description="Phonon frequency in rad/s")
+
+
+class PhononNuclearRequest(BaseModel):
+    """Request model for phonon-nuclear coupling calculation."""
+    material: str = Field("Pd", description="Material name (Pd, Ni, Ti)")
+    temperature: float = Field(300.0, description="Temperature in K")
+    target_energy_MeV: float = Field(1.0, description="Target nuclear energy in MeV")
+    nuclear_potential_gradient: float = Field(1.0, description="dV/du in eV/Å")
+    phonon_frequency: Optional[float] = Field(None, description="Phonon frequency in rad/s")
+
+
+class EnergyBalanceRequest(BaseModel):
+    """Request model for energy balance calculation."""
+    reaction_rate: float = Field(1e10, description="Nuclear reaction rate in reactions/s")
+    energy_per_reaction_MeV: float = Field(23.8, description="Energy per reaction in MeV")
+    volume_m3: float = Field(1e-9, description="Active volume in m^3")
+    temperature_K: float = Field(300.0, description="System temperature in K")
+    material: str = Field("Pd", description="Material name")
+    electrical_input_W: float = Field(1.0, description="Electrical input power in W")
+
+
+class ExcessPowerRequest(BaseModel):
+    """Request model for excess power analysis."""
+    measured_output_W: float = Field(..., description="Measured thermal output in W")
+    electrical_input_W: float = Field(..., description="Electrical input power in W")
+    chemical_power_W: float = Field(0.0, description="Chemical power contribution in W")
+    mass_kg: float = Field(0.1, description="Sample mass in kg")
+    specific_heat: float = Field(244.0, description="Specific heat in J/(kg·K)")
+    temperature_rate_K_s: float = Field(0.0, description="Temperature change rate in K/s")
+    heat_loss_coefficient_W_K: float = Field(1.0, description="UA value in W/K")
+    temperature_K: float = Field(300.0, description="Current temperature in K")
+    ambient_K: float = Field(300.0, description="Ambient temperature in K")
+    measurement_uncertainty_W: float = Field(0.1, description="Measurement uncertainty in W")
+
+
+class StatisticalRateRequest(BaseModel):
+    """Request model for statistical reaction rate calculation."""
+    temperature_keV: float = Field(0.1, description="Temperature in keV")
+    density_m3: float = Field(1e28, description="Number density in m^-3")
+    z1: int = Field(1, description="Atomic number of first nucleus")
+    z2: int = Field(1, description="Atomic number of second nucleus")
+    reduced_mass_amu: float = Field(1.0, description="Reduced mass in AMU")
+    s_factor_keV_barn: float = Field(50.0, description="S-factor in keV·barn")
+    screening_potential_eV: float = Field(0.0, description="Screening potential in eV")
+    coherence_factor: float = Field(1.0, description="Coherence enhancement factor")
+    field_strength_V_m: float = Field(0.0, description="Electric field strength in V/m")
+    phonon_coupling: float = Field(0.0, description="Phonon coupling strength")
+    density_uncertainty: float = Field(0.1, description="Relative uncertainty in density")
+    run_monte_carlo: bool = Field(False, description="Whether to run Monte Carlo validation")
+    n_mc_samples: int = Field(1000, description="Number of MC samples")
+
+
+# QED Endpoints
+
+@router.post("/qed/lagrangian")
+async def calculate_qed_lagrangian_endpoint(request: QEDLagrangianRequest):
+    """
+    Calculate QED Lagrangian density components.
+    
+    Based on Section 2.3.1 of the Unified LENR Theory paper.
+    Calculates the full QED Lagrangian: L = ψ̄(iγᵘDμ - m)ψ - (1/4)FμνFᵘᵛ + L_int
+    """
+    try:
+        start_time = time.time()
+        
+        # Calculate Lagrangian components
+        lagrangian = calculate_qed_lagrangian(
+            electric_field=request.electric_field,
+            magnetic_field=request.magnetic_field,
+            electron_density=request.electron_density,
+            fermi_energy_eV=request.fermi_energy_eV
+        )
+        
+        # Get vacuum polarization
+        vac_pol = vacuum_polarization_correction(
+            request.electric_field,
+            request.temperature
+        )
+        
+        # Get field-matter coupling
+        coupling = field_matter_coupling(
+            electric_field=request.electric_field,
+            electron_density=request.electron_density
+        )
+        
+        result = {
+            "lagrangian_components": {
+                "dirac_kinetic_J_m3": lagrangian.dirac_kinetic,
+                "electromagnetic_J_m3": lagrangian.electromagnetic,
+                "interaction_J_m3": lagrangian.interaction,
+                "total_density_J_m3": lagrangian.total_density,
+            },
+            "vacuum_polarization": vac_pol,
+            "field_matter_coupling": coupling,
+            "effective_dielectric": lagrangian.effective_dielectric,
+            "metadata": {
+                "processing_time_ms": round((time.time() - start_time) * 1000, 2),
+                "electric_field_V_m": request.electric_field,
+                "electron_density_m3": request.electron_density
+            }
+        }
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/qed/enhancement")
+async def calculate_qed_enhancement_endpoint(request: QEDEnhancementRequest):
+    """
+    Calculate full QED enhancement using Lagrangian formulation.
+    
+    Combines QED Lagrangian, vacuum polarization, and field-matter coupling
+    to calculate tunneling enhancement factors.
+    """
+    try:
+        start_time = time.time()
+        
+        result = calculate_full_qed_enhancement(
+            distance=request.distance,
+            epsilon1=request.epsilon1,
+            epsilon2=request.epsilon2,
+            temperature=request.temperature,
+            applied_field=request.applied_field,
+            electron_density=request.electron_density,
+            phonon_frequency=request.phonon_frequency
+        )
+        
+        return {
+            "enhancement_factor": result.enhancement_factor,
+            "barrier_modification_eV": result.barrier_modification_eV,
+            "tunneling_enhancement": result.tunneling_enhancement,
+            "lagrangian": {
+                "total_density_J_m3": result.lagrangian.total_density,
+                "vacuum_polarization": result.lagrangian.vacuum_polarization,
+                "effective_dielectric": result.lagrangian.effective_dielectric,
+                "field_matter_coupling": result.lagrangian.field_matter_coupling,
+            },
+            "metadata": {
+                **result.metadata,
+                "processing_time_ms": round((time.time() - start_time) * 1000, 2)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Phonon-Nuclear Coupling Endpoints
+
+@router.post("/phonon-nuclear/coupling")
+async def calculate_phonon_nuclear_coupling_endpoint(request: PhononNuclearRequest):
+    """
+    Calculate phonon-nuclear coupling strength.
+    
+    Based on Section 2.8.1 of the Unified LENR Theory paper.
+    Calculates g_ph-nuc = (∂V/∂u)·√(ℏ/2Mω_ph) and related quantities.
+    """
+    try:
+        start_time = time.time()
+        
+        # Use material-specific calculation if material provided
+        result = calculate_phonon_coupling_for_material(
+            material=request.material,
+            temperature=request.temperature,
+            target_energy_MeV=request.target_energy_MeV
+        )
+        
+        return {
+            "coupling_strength_eV_per_angstrom": result.coupling_strength_eV_per_angstrom,
+            "coupling_strength_J_per_m": result.coupling_strength_J_per_m,
+            "energy_transfer_rate_Hz": result.energy_transfer_rate_Hz,
+            "multi_phonon_probability": result.multi_phonon_probability,
+            "phonons_required": result.phonons_required,
+            "coherence_factor": result.coherence_factor,
+            "effective_coupling_enhanced": result.effective_coupling_enhanced,
+            "metadata": {
+                **result.metadata,
+                "processing_time_ms": round((time.time() - start_time) * 1000, 2)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Non-Equilibrium Thermodynamics Endpoints
+
+@router.post("/thermodynamics/energy-balance")
+async def calculate_energy_balance_endpoint(request: EnergyBalanceRequest):
+    """
+    Calculate complete energy balance for LENR system.
+    
+    Based on Section 3.3 of the Unified LENR Theory paper.
+    Implements: ∂ρ_E/∂t + ∇·J_E = σ_source
+    """
+    try:
+        start_time = time.time()
+        
+        result = calculate_energy_balance(
+            reaction_rate=request.reaction_rate,
+            energy_per_reaction_MeV=request.energy_per_reaction_MeV,
+            volume_m3=request.volume_m3,
+            temperature_K=request.temperature_K,
+            material=request.material,
+            electrical_input_W=request.electrical_input_W
+        )
+        
+        result["metadata"]["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/thermodynamics/excess-power")
+async def calculate_excess_power_endpoint(request: ExcessPowerRequest):
+    """
+    Analyze excess power from calorimetric measurements.
+    
+    Calculates: P_excess = P_out - P_in - P_chem
+    With statistical significance analysis.
+    """
+    try:
+        start_time = time.time()
+        
+        result = excess_power_analysis(
+            measured_output_W=request.measured_output_W,
+            electrical_input_W=request.electrical_input_W,
+            chemical_power_W=request.chemical_power_W,
+            mass_kg=request.mass_kg,
+            specific_heat=request.specific_heat,
+            temperature_rate_K_s=request.temperature_rate_K_s,
+            heat_loss_coefficient_W_K=request.heat_loss_coefficient_W_K,
+            temperature_K=request.temperature_K,
+            ambient_K=request.ambient_K,
+            measurement_uncertainty_W=request.measurement_uncertainty_W
+        )
+        
+        return {
+            "excess_power_W": result.excess_power_W,
+            "input_power_W": result.input_power_W,
+            "output_power_W": result.output_power_W,
+            "chemical_power_W": result.chemical_power_W,
+            "cop": result.cop,
+            "statistical_significance_sigma": result.statistical_significance,
+            "is_significant": result.statistical_significance >= 5.0,
+            "time_constant_s": result.time_constant_s,
+            "metadata": {
+                **result.metadata,
+                "processing_time_ms": round((time.time() - start_time) * 1000, 2)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Statistical Mechanics Endpoints
+
+@router.post("/statistics/reaction-rate")
+async def calculate_statistical_reaction_rate(request: StatisticalRateRequest):
+    """
+    Calculate reaction rate with full statistical mechanics treatment.
+    
+    Based on Section 5.1.1 of the Unified LENR Theory paper.
+    Implements: R = n₁n₂<σv>_thermal × f_enhancement × P_threshold
+    """
+    try:
+        start_time = time.time()
+        
+        result = statistical_reaction_rate(
+            temperature_keV=request.temperature_keV,
+            density_m3=request.density_m3,
+            z1=request.z1,
+            z2=request.z2,
+            reduced_mass_amu=request.reduced_mass_amu,
+            s_factor_keV_barn=request.s_factor_keV_barn,
+            screening_potential_eV=request.screening_potential_eV,
+            coherence_factor=request.coherence_factor,
+            field_strength_V_m=request.field_strength_V_m,
+            phonon_coupling=request.phonon_coupling,
+            density_uncertainty=request.density_uncertainty,
+            run_monte_carlo=request.run_monte_carlo,
+            n_mc_samples=request.n_mc_samples
+        )
+        
+        response = {
+            "rate_per_m3_s": result.rate_per_m3_s,
+            "rate_uncertainty": result.rate_uncertainty,
+            "thermal_averaged_sigma_v_cm3_s": result.thermal_averaged_sigma_v,
+            "enhancement_factors": {
+                "screening": result.enhancement_factors.screening,
+                "coherence": result.enhancement_factors.coherence,
+                "field": result.enhancement_factors.field,
+                "phonon": result.enhancement_factors.phonon,
+                "total": result.enhancement_factors.total
+            },
+            "uncertainty_budget": {
+                "density": result.uncertainty_budget.density_uncertainty,
+                "cross_section": result.uncertainty_budget.cross_section_uncertainty,
+                "enhancement": result.uncertainty_budget.enhancement_uncertainty,
+                "total_relative": result.uncertainty_budget.total_relative_uncertainty
+            },
+            "gamow_energy_keV": result.gamow_energy_keV,
+            "gamow_peak_keV": result.gamow_peak_keV,
+            "statistical_significance": result.statistical_significance,
+            "metadata": {
+                **result.metadata,
+                "processing_time_ms": round((time.time() - start_time) * 1000, 2)
+            }
+        }
+        
+        if result.monte_carlo_results:
+            response["monte_carlo"] = result.monte_carlo_results
+        
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/theoretical-enhancements-info")
+async def theoretical_enhancements_info():
+    """
+    Get information about the new theoretical enhancement modules.
+    
+    Based on the Unified LENR Theoretical Framework paper.
+    """
+    return {
+        "modules": {
+            "qed_lagrangian": {
+                "section": "2.3.1",
+                "name": "Quantum Field Theory Foundation",
+                "description": "Full QED Lagrangian formulation for double-layer effects",
+                "key_equations": [
+                    "L = ψ̄(iγᵘDμ - m)ψ - (1/4)FμνFᵘᵛ + L_int",
+                    "ε_eff = 1 + (2α/45π)(E/E_cr)²"
+                ],
+                "endpoints": ["/api/physics/qed/lagrangian", "/api/physics/qed/enhancement"]
+            },
+            "phonon_nuclear_coupling": {
+                "section": "2.8.1",
+                "name": "Phonon-Nuclear Coupling Strength",
+                "description": "Coupling between lattice phonons and nuclear degrees of freedom",
+                "key_equations": [
+                    "g_ph-nuc = (∂V/∂u)·√(ℏ/2Mω_ph)",
+                    "Γ = (2π/ℏ)|g|²ρ(ω)n_ph(ω)"
+                ],
+                "endpoints": ["/api/physics/phonon-nuclear/coupling"]
+            },
+            "non_equilibrium_thermodynamics": {
+                "section": "3.3",
+                "name": "Non-Equilibrium Thermodynamics",
+                "description": "Energy flow, entropy production, and calorimetric analysis",
+                "key_equations": [
+                    "∂ρ_E/∂t + ∇·J_E = σ_source",
+                    "P_excess = P_out - P_in - P_chem"
+                ],
+                "endpoints": ["/api/physics/thermodynamics/energy-balance", 
+                             "/api/physics/thermodynamics/excess-power"]
+            },
+            "statistical_mechanics": {
+                "section": "5.1.1",
+                "name": "Statistical Mechanics of Reaction Rates",
+                "description": "Thermal averaging, error propagation, and Monte Carlo validation",
+                "key_equations": [
+                    "R = n₁n₂<σv>_thermal × f_enhancement",
+                    "<σv> = √(8/πμ(kT)³)∫σ(E)E·exp(-E/kT)dE"
+                ],
+                "endpoints": ["/api/physics/statistics/reaction-rate"]
+            }
+        },
+        "paper_reference": "A Unified Theoretical Framework for Low-Energy Nuclear Reactions"
     } 

@@ -88,11 +88,32 @@ const UnifiedBubbleLatticeVisualization = ({
   const energyFlowRef = useRef(null);
   const plasmaVortexRef = useRef(null);
   
+  // Theoretical mechanism visualization refs
+  const casimirFieldRef = useRef(null);
+  const rydbergOrbitalsRef = useRef(null);
+  const haloElectronsRef = useRef(null);
+  
   // Animation state
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [cycleProgress, setCycleProgress] = useState(0);
   const [collapseCount, setCollapseCount] = useState(0);
+  
+  // Physics state for real-time display
+  const [currentEnhancement, setCurrentEnhancement] = useState(1.0);
+  const [enhancementBreakdown, setEnhancementBreakdown] = useState({
+    screening: 1.0,
+    qed: 1.0,
+    casimir: 1.0,
+    rydberg: 1.0,
+    compression: 1.0
+  });
+  const [physicsData, setPhysicsData] = useState({
+    compressionRatio: 1.0,
+    fieldStrength: 0,
+    temperature: 300,
+    pressure: 101325
+  });
   
   // Visualization toggles
   const [showLattice, setShowLattice] = useState(true);
@@ -101,6 +122,9 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showFieldLines, setShowFieldLines] = useState(true);
   const [showDoubleLayer, setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
+  const [showCasimir, setShowCasimir] = useState(false);
+  const [showRydberg, setShowRydberg] = useState(false);
+  const [showHalo, setShowHalo] = useState(false);
   
   // Animation parameters
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
@@ -215,7 +239,7 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.name = 'BubbleGroup';
     bubbleGroup.position.set(0, 2, 0); // Position above lattice
     
-    // Main bubble sphere
+    // Main bubble - starts as sphere, morphs to torus during collapse, then to jet
     const bubbleGeometry = new THREE.SphereGeometry(1, 32, 32);
     const bubbleMaterial = new THREE.MeshPhongMaterial({
       color: 0xaaddff,
@@ -226,7 +250,48 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     bubble.name = 'MainBubble';
+    bubble.userData = { 
+      geometryType: 'sphere', // 'sphere', 'torus', 'jet'
+      baseGeometry: bubbleGeometry
+    };
     bubbleGroup.add(bubble);
+    
+    // Torus geometry for collapse phase (torus-to-jet formation)
+    // Torus represents the bubble collapsing into a ring/donut shape before jet formation
+    // Make torus larger and more visible - scale relative to bubble size
+    const torusGeometry = new THREE.TorusGeometry(1.5, 0.8, 16, 32);
+    const torusMaterial = new THREE.MeshPhongMaterial({
+      color: 0xff8844,
+      transparent: true,
+      opacity: 0.8,
+      emissive: 0xff4400,
+      emissiveIntensity: 1.0,
+      side: THREE.DoubleSide
+    });
+    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+    torus.name = 'TorusFormation';
+    torus.visible = false; // Hidden initially, shown during collapse
+    torus.rotation.x = Math.PI / 2; // Rotate to horizontal (XZ plane) - ring around Y axis
+    torus.userData = { baseRadius: 1.5, baseTubeRadius: 0.8 };
+    bubbleGroup.add(torus);
+    
+    // Jet geometry for focused jet formation (during minimum/rebound)
+    // Make jet more visible - wider base, longer, brighter
+    const jetGeometry = new THREE.ConeGeometry(0.3, 4, 16, 1, true);
+    const jetMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffff00,
+      transparent: true,
+      opacity: 0.9,
+      emissive: 0xffff00,
+      emissiveIntensity: 2.0,
+      side: THREE.DoubleSide
+    });
+    const jet = new THREE.Mesh(jetGeometry, jetMaterial);
+    jet.name = 'FocusedJet';
+    jet.visible = false; // Hidden initially, shown during minimum/rebound
+    jet.rotation.x = Math.PI; // Point downward
+    jet.userData = { baseRadius: 0.3, baseHeight: 4 };
+    bubbleGroup.add(jet);
     
     // Ionic double-layer shell (outer)
     const doubleLayerGeometry = new THREE.SphereGeometry(1.1, 32, 32);
@@ -383,7 +448,92 @@ const UnifiedBubbleLatticeVisualization = ({
     return fieldGroup;
   }, []);
 
-  // Create effects (hotspots, collapse flash)
+  // Create fractal child product emissions from nuclear events (recursive helper function)
+  // This creates branching fractal structures representing particle emissions
+  const createFractalEmissions = (parentGroup, position, depth, maxDepth, direction, scale) => {
+    if (depth > maxDepth) return;
+    
+    // Create emission branch
+    const branchLength = scale * (0.3 + Math.random() * 0.4);
+    const branchGeometry = new THREE.CylinderGeometry(0.02 * scale, 0.05 * scale, branchLength, 8);
+    
+    // Different colors for different product types (alpha, neutron, gamma, etc.)
+    const productTypes = [
+      { color: 0xff4400, emissive: 0xff2200 }, // Alpha particles (orange-red)
+      { color: 0x00ffff, emissive: 0x0088ff }, // Neutrons (cyan)
+      { color: 0xffff00, emissive: 0xffaa00 }, // Gamma rays (yellow)
+      { color: 0xff00ff, emissive: 0xaa00ff }  // Other products (magenta)
+    ];
+    const productType = productTypes[Math.floor(Math.random() * productTypes.length)];
+    
+    const branchMaterial = new THREE.MeshPhongMaterial({
+      color: productType.color,
+      emissive: productType.emissive,
+      emissiveIntensity: 1.0 - depth * 0.2,
+      transparent: true,
+      opacity: 0.8 - depth * 0.15
+    });
+    
+    const branch = new THREE.Mesh(branchGeometry, branchMaterial);
+    
+    // Position and orient branch
+    branch.position.copy(position);
+    branch.lookAt(position.clone().add(direction));
+    branch.rotateX(Math.PI / 2);
+    
+    // Add slight randomness to direction
+    const randomOffset = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3
+    );
+    const newDirection = direction.clone().add(randomOffset).normalize();
+    const endPosition = position.clone().add(newDirection.multiplyScalar(branchLength));
+    
+    branch.userData = {
+      depth,
+      endPosition,
+      direction: newDirection,
+      scale: scale * 0.7,
+      pulsePhase: Math.random() * Math.PI * 2
+    };
+    
+    parentGroup.add(branch);
+    
+    // Recursively create child branches (fractal structure)
+    const numChildren = depth < 2 ? 2 + Math.floor(Math.random() * 3) : (depth < 3 ? 1 + Math.floor(Math.random() * 2) : 0);
+    for (let i = 0; i < numChildren; i++) {
+      const childDirection = newDirection.clone();
+      // Add angular spread for branching
+      const angle = (Math.PI / 4) * (i / numChildren);
+      const axis = new THREE.Vector3(
+        Math.random() - 0.5,
+        Math.random() - 0.5,
+        Math.random() - 0.5
+      ).normalize();
+      childDirection.applyAxisAngle(axis, angle);
+      
+      createFractalEmissions(parentGroup, endPosition, depth + 1, maxDepth, childDirection, scale * 0.7);
+    }
+    
+    // Add particle at branch end
+    if (depth < maxDepth) {
+      const particleGeometry = new THREE.SphereGeometry(0.03 * scale, 8, 8);
+      const particleMaterial = new THREE.MeshPhongMaterial({
+        color: productType.color,
+        emissive: productType.emissive,
+        emissiveIntensity: 1.5,
+        transparent: true,
+        opacity: 0.9
+      });
+      const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+      particle.position.copy(endPosition);
+      particle.userData = { pulsePhase: Math.random() * Math.PI * 2 };
+      parentGroup.add(particle);
+    }
+  };
+
+  // Create effects (hotspots, fractal nuclear emissions)
   const createEffects = useCallback((scene) => {
     const effectsGroup = new THREE.Group();
     effectsGroup.name = 'EffectsGroup';
@@ -408,17 +558,174 @@ const UnifiedBubbleLatticeVisualization = ({
       effectsGroup.add(hotspot);
     }
     
-    // Collapse flash sphere (hidden initially)
-    const flashGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const flashMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+    // Fractal nuclear emissions group (replaces solid flash)
+    const nuclearEmissionsGroup = new THREE.Group();
+    nuclearEmissionsGroup.name = 'NuclearEmissions';
+    nuclearEmissionsGroup.visible = false;
+    
+    // Create multiple emission points (localized nuclear events)
+    const numEvents = 3;
+    for (let i = 0; i < numEvents; i++) {
+      const eventPosition = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.5,
+        -3 + (Math.random() - 0.5) * 0.5,
+        (Math.random() - 0.5) * 0.5
+      );
+      
+      // Create tiny core (the nuclear event point)
+      const coreGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+      const coreMaterial = new THREE.MeshPhongMaterial({
+        color: 0xff2200,
+        emissive: 0xff0000,
+        emissiveIntensity: 2.0,
       transparent: true,
-      opacity: 0
+        opacity: 1.0
     });
-    const flash = new THREE.Mesh(flashGeometry, flashMaterial);
-    flash.position.set(0, -3, 0);
-    flash.name = 'CollapseFlash';
-    effectsGroup.add(flash);
+      const core = new THREE.Mesh(coreGeometry, coreMaterial);
+      core.position.copy(eventPosition);
+      core.name = `NuclearCore${i}`;
+      core.userData = { pulsePhase: Math.random() * Math.PI * 2 };
+      nuclearEmissionsGroup.add(core);
+      
+      // Create fractal emissions from this point
+      const numEmissions = 6 + Math.floor(Math.random() * 4);
+      for (let j = 0; j < numEmissions; j++) {
+        const angle = (j / numEmissions) * Math.PI * 2;
+        const elevation = (Math.random() - 0.5) * Math.PI / 3;
+        const direction = new THREE.Vector3(
+          Math.sin(elevation) * Math.cos(angle),
+          Math.cos(elevation),
+          Math.sin(elevation) * Math.sin(angle)
+        );
+        
+        createFractalEmissions(nuclearEmissionsGroup, eventPosition, 0, 4, direction, 1.0);
+      }
+    }
+    
+    effectsGroup.add(nuclearEmissionsGroup);
+    
+    // Rebound nuclear event group (fusion > fission cascade with child products)
+    // This shows emissions from lattice when torus hits during rebound
+    const reboundNuclearGroup = new THREE.Group();
+    reboundNuclearGroup.name = 'ReboundNuclearEvent';
+    reboundNuclearGroup.visible = false;
+    
+    // Create reaction product types based on fusion processor channels
+    // D+D → He3+n (75% energy to He3, 25% to n) or T+p (75% to T, 25% to p)
+    // D+Ni → various products
+    // Products then can undergo fission-like decay
+    const productTypes = {
+      'He3': { color: 0x00ff88, emissive: 0x00aa66, size: 0.08, probability: 0.5 },
+      'He4': { color: 0x00ffff, emissive: 0x0088ff, size: 0.1, probability: 0.3 },
+      'n': { color: 0xffff00, emissive: 0xffaa00, size: 0.05, probability: 0.4 }, // Neutron
+      'p': { color: 0xff8844, emissive: 0xff4400, size: 0.06, probability: 0.3 }, // Proton
+      'T': { color: 0xff00ff, emissive: 0xaa00ff, size: 0.07, probability: 0.2 }, // Tritium
+      'gamma': { color: 0xffffff, emissive: 0xffffff, size: 0.02, probability: 0.1 } // Gamma ray
+    };
+    
+    // Create primary fusion products (from initial fusion event)
+    const numPrimaryProducts = 8;
+    for (let i = 0; i < numPrimaryProducts; i++) {
+      // Select product type based on probability
+      const rand = Math.random();
+      let cumulative = 0;
+      let selectedType = 'He3';
+      for (const [type, props] of Object.entries(productTypes)) {
+        cumulative += props.probability;
+        if (rand <= cumulative) {
+          selectedType = type;
+          break;
+        }
+      }
+      
+      const productProps = productTypes[selectedType];
+      const productGeometry = new THREE.SphereGeometry(productProps.size, 8, 8);
+      const productMaterial = new THREE.MeshPhongMaterial({
+        color: productProps.color,
+        emissive: productProps.emissive,
+        emissiveIntensity: 1.5,
+        transparent: true,
+        opacity: 0.9
+      });
+      const product = new THREE.Mesh(productGeometry, productMaterial);
+      
+      // Position at lattice surface (where torus hits)
+      const angle = (i / numPrimaryProducts) * Math.PI * 2;
+      const radius = 0.3 + Math.random() * 0.2;
+      product.position.set(
+        radius * Math.cos(angle),
+        -5, // Lattice Y position
+        radius * Math.sin(angle)
+      );
+      
+      // Initial velocity (outward from lattice, reversed energy flow)
+      const elevation = (Math.random() - 0.5) * Math.PI / 4; // Slight upward bias
+      const direction = new THREE.Vector3(
+        Math.sin(elevation) * Math.cos(angle),
+        Math.cos(elevation), // Upward (reversed from collapse)
+        Math.sin(elevation) * Math.sin(angle)
+      ).normalize();
+      
+      product.name = `PrimaryProduct_${selectedType}_${i}`;
+      product.userData = {
+        type: selectedType,
+        direction: direction,
+        velocity: direction.clone().multiplyScalar(0.1 + Math.random() * 0.1),
+        lifetime: 0,
+        maxLifetime: 2.0, // Short-lived event
+        energy: productProps.probability * 10, // Energy based on reaction probability
+        fissionReady: Math.random() < 0.3 // 30% chance to undergo fission
+      };
+      
+      reboundNuclearGroup.add(product);
+    }
+    
+    // Create secondary fission products (from primary products that decay)
+    const numSecondaryProducts = 12;
+    for (let i = 0; i < numSecondaryProducts; i++) {
+      const rand = Math.random();
+      let cumulative = 0;
+      let selectedType = 'n';
+      // Fission products tend to be lighter (neutrons, protons, gamma)
+      const fissionProducts = { 'n': 0.4, 'p': 0.3, 'gamma': 0.2, 'He3': 0.1 };
+      for (const [type, prob] of Object.entries(fissionProducts)) {
+        cumulative += prob;
+        if (rand <= cumulative) {
+          selectedType = type;
+          break;
+        }
+      }
+      
+      const productProps = productTypes[selectedType];
+      const productGeometry = new THREE.SphereGeometry(productProps.size * 0.7, 6, 6);
+      const productMaterial = new THREE.MeshPhongMaterial({
+        color: productProps.color,
+        emissive: productProps.emissive,
+        emissiveIntensity: 1.2,
+        transparent: true,
+        opacity: 0.8
+      });
+      const product = new THREE.Mesh(productGeometry, productMaterial);
+      
+      // Position will be set dynamically when parent product fissions
+      product.position.set(0, -5, 0);
+      product.visible = false; // Hidden until parent fissions
+      
+      product.name = `SecondaryProduct_${selectedType}_${i}`;
+      product.userData = {
+        type: selectedType,
+        parentIndex: Math.floor(Math.random() * numPrimaryProducts),
+        direction: new THREE.Vector3(),
+        velocity: new THREE.Vector3(),
+        lifetime: 0,
+        maxLifetime: 1.5,
+        energy: productProps.probability * 5
+      };
+      
+      reboundNuclearGroup.add(product);
+    }
+    
+    effectsGroup.add(reboundNuclearGroup);
     
     // Shockwave ring
     const shockwaveGeometry = new THREE.RingGeometry(0.1, 0.3, 32);
@@ -446,19 +753,19 @@ const UnifiedBubbleLatticeVisualization = ({
     vortexGroup.name = 'VortexFlowGroup';
     
     try {
-      // Create plasma vortex effect centered between bubble and lattice
-      const plasmaVortex = new PlasmaVortexEffect({
-        particleCount: 200,
-        vortexStrength: 0.8,
-        radialSpeed: 0.3,
-        verticalSpeed: 0.5,
-        radius: 2.5,
-        height: 6
-      });
-      plasmaVortex.initialize();
-      plasmaVortex.getGroup().position.set(0, -1.5, 0); // Center between bubble and lattice
-      vortexGroup.add(plasmaVortex.getGroup());
-      plasmaVortexRef.current = plasmaVortex;
+    // Create plasma vortex effect centered between bubble and lattice
+    const plasmaVortex = new PlasmaVortexEffect({
+      particleCount: 200,
+      vortexStrength: 0.8,
+      radialSpeed: 0.3,
+      verticalSpeed: 0.5,
+      radius: 2.5,
+      height: 6
+    });
+    plasmaVortex.initialize();
+    plasmaVortex.getGroup().position.set(0, -1.5, 0); // Center between bubble and lattice
+    vortexGroup.add(plasmaVortex.getGroup());
+    plasmaVortexRef.current = plasmaVortex;
     } catch (error) {
       console.warn('Failed to create plasma vortex effect:', error);
       // Continue without plasma vortex if it fails
@@ -528,30 +835,30 @@ const UnifiedBubbleLatticeVisualization = ({
     ];
     
     try {
-      flowPathsData.forEach(path => {
-        energyFlow.addFlowPath(path.points, path.color, path.intensity);
-      });
-      
-      energyFlow.initializeParticles();
-      vortexGroup.add(energyFlow.getGroup());
-      energyFlowRef.current = energyFlow;
+    flowPathsData.forEach(path => {
+      energyFlow.addFlowPath(path.points, path.color, path.intensity);
+    });
+    
+    energyFlow.initializeParticles();
+    vortexGroup.add(energyFlow.getGroup());
+    energyFlowRef.current = energyFlow;
     } catch (error) {
       console.warn('Failed to create energy flow visualizer:', error);
       // Continue without energy flow if it fails
     }
     
     try {
-      // Create a vortex field for additional swirl effects
-      const vortexField = new VortexField({
-        strength: 1.0,
-        decayRate: 0.3,
-        rotationAxis: new THREE.Vector3(0, 1, 0)
-      });
-      
-      // Add vortex centers at key positions
-      vortexField.addVortex(new THREE.Vector3(0, 2, 0), 1.5, 2.0);  // Bubble center
-      vortexField.addVortex(new THREE.Vector3(0, -4, 0), 2.0, 3.0); // Lattice impact zone
-      vortexFieldRef.current = vortexField;
+    // Create a vortex field for additional swirl effects
+    const vortexField = new VortexField({
+      strength: 1.0,
+      decayRate: 0.3,
+      rotationAxis: new THREE.Vector3(0, 1, 0)
+    });
+    
+    // Add vortex centers at key positions
+    vortexField.addVortex(new THREE.Vector3(0, 2, 0), 1.5, 2.0);  // Bubble center
+    vortexField.addVortex(new THREE.Vector3(0, -4, 0), 2.0, 3.0); // Lattice impact zone
+    vortexFieldRef.current = vortexField;
     } catch (error) {
       console.warn('Failed to create vortex field:', error);
       // Continue without vortex field if it fails
@@ -596,65 +903,436 @@ const UnifiedBubbleLatticeVisualization = ({
     return vortexGroup;
   }, []);
 
-  // Calculate bubble radius based on collapse phase
+  // Create Casimir force field visualization
+  // F_Casimir = -π²ℏc/(240) * A/d⁴
+  const createCasimirField = useCallback((scene) => {
+    const casimirGroup = new THREE.Group();
+    casimirGroup.name = 'CasimirFieldGroup';
+    
+    // Physical constants
+    const HBAR = 1.055e-34; // J·s
+    const C = 3e8; // m/s
+    const PI_SQ = Math.PI * Math.PI;
+    const CASIMIR_COEFF = -PI_SQ * HBAR * C / 240; // N·m²
+    
+    // Create force field lines from bubble surface to lattice atoms
+    const lineCount = 16;
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xff8800,
+      transparent: true,
+      opacity: 0.6,
+      linewidth: 2
+    });
+    
+    // Sample points on bubble surface and lattice
+    for (let i = 0; i < lineCount; i++) {
+      const angle = (i / lineCount) * Math.PI * 2;
+      const phi = (i % 8) / 8 * Math.PI; // Vary elevation
+      
+      // Bubble surface point (at radius ~1.0 in visualization units)
+      const bubbleRadius = 1.0;
+      const bubblePoint = new THREE.Vector3(
+        bubbleRadius * Math.sin(phi) * Math.cos(angle),
+        2, // Bubble Y position
+        bubbleRadius * Math.sin(phi) * Math.sin(angle)
+      );
+      
+      // Nearest lattice point (simplified - find closest lattice atom)
+      const latticeY = -5;
+      const latticePoint = new THREE.Vector3(
+        bubblePoint.x * 0.3, // Project toward center
+        latticeY,
+        bubblePoint.z * 0.3
+      );
+      
+      // Calculate distance
+      const distance = bubblePoint.distanceTo(latticePoint);
+      
+      // Casimir force magnitude: F ∝ 1/d⁴
+      // Normalize for visualization (force lines get more intense as distance decreases)
+      const forceMagnitude = 1 / Math.pow(Math.max(distance, 0.1), 4);
+      const normalizedForce = Math.min(forceMagnitude * 100, 1.0);
+      
+      // Create curved force line (attractive, so toward each other)
+      const points = [];
+      const segments = 20;
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        // Curve the line to show attractive force
+        const curveFactor = Math.sin(t * Math.PI) * 0.3;
+        const point = new THREE.Vector3().lerpVectors(bubblePoint, latticePoint, t);
+        // Add curvature perpendicular to line
+        const perp = new THREE.Vector3(-point.z, 0, point.x).normalize();
+        point.add(perp.multiplyScalar(curveFactor * normalizedForce));
+        points.push(point);
+      }
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, lineMaterial.clone());
+      line.material.opacity = normalizedForce * 0.6;
+      line.material.color.setHSL(0.1, 1, 0.5 + normalizedForce * 0.3); // Orange to red based on intensity
+      line.name = `CasimirLine${i}`;
+      line.userData = { distance, forceMagnitude, baseAngle: angle };
+      casimirGroup.add(line);
+    }
+    
+    // Add force intensity indicators (small spheres showing force strength)
+    // Keep these small and subtle - they should not dominate the visualization
+    const indicatorGeometry = new THREE.SphereGeometry(0.03, 6, 6); // Smaller base size
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const indicatorMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff4400,
+        transparent: true,
+        opacity: 0.4 // Lower base opacity
+      });
+      const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
+      indicator.position.set(
+        Math.cos(angle) * 0.5,
+        -4,
+        Math.sin(angle) * 0.5
+      );
+      indicator.name = `CasimirIndicator${i}`;
+      indicator.userData = { 
+        pulsePhase: i / 8,
+        baseScale: 1.0 // Track base scale to prevent excessive scaling
+      };
+      casimirGroup.add(indicator);
+    }
+    
+    scene.add(casimirGroup);
+    casimirFieldRef.current = casimirGroup;
+    
+    return casimirGroup;
+  }, []);
+
+  // Create Rydberg Matter orbital visualization
+  // Extended electron orbitals around lattice atoms (Rydberg states)
+  const createRydbergOrbitals = useCallback((scene) => {
+    const rydbergGroup = new THREE.Group();
+    rydbergGroup.name = 'RydbergOrbitalsGroup';
+    
+    // Create extended orbitals around lattice atoms
+    // Rydberg orbitals: physically scale as n²*a₀ (Bohr radius)
+    // For n=3: R = 9*0.053nm ≈ 0.48nm, but in visualization we scale for visibility
+    // Observationally, Rydberg orbitals are ~10-100x larger than ground state (0.3 → 0.4-0.6 is reasonable)
+    const orbitalCount = 12; // Number of lattice atoms to show orbitals for
+    const orbitalGeometry = new THREE.SphereGeometry(0.5, 16, 16); // Reduced from 0.8 to 0.5 (more accurate scale)
+    const orbitalMaterial = new THREE.MeshBasicMaterial({
+      color: 0x8844ff,
+      transparent: true,
+      opacity: 0.06, // Much more transparent (reduced from 0.15 to 0.06)
+      wireframe: true,
+      side: THREE.DoubleSide
+    });
+    
+    // Sample some lattice positions (simplified - in real implementation, get from lattice)
+    for (let i = 0; i < orbitalCount; i++) {
+      const angle = (i / orbitalCount) * Math.PI * 2;
+      const radius = 1.5 + (i % 3) * 0.5;
+      const y = -5 + (i % 4) * 0.8;
+      
+      const orbital = new THREE.Mesh(orbitalGeometry, orbitalMaterial.clone());
+      orbital.position.set(
+        radius * Math.cos(angle),
+        y,
+        radius * Math.sin(angle)
+      );
+      orbital.name = `RydbergOrbital${i}`;
+      orbital.userData = { 
+        baseRadius: 0.5, // Updated to match new geometry size
+        phase: i / orbitalCount,
+        energyLevel: 1 + (i % 3) // n=1,2,3 Rydberg states
+      };
+      rydbergGroup.add(orbital);
+    }
+    
+    // Add overlap regions (where orbitals intersect - reaction sites)
+    const overlapGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+    const overlapMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff00ff,
+      transparent: true,
+      opacity: 0.6,
+      emissive: 0xff00ff,
+      emissiveIntensity: 0.5
+    });
+    
+    // Add overlap indicators at intersections
+    for (let i = 0; i < 4; i++) {
+      const overlap = new THREE.Mesh(overlapGeometry, overlapMaterial.clone());
+      overlap.position.set(
+        (Math.random() - 0.5) * 2,
+        -4.5 + Math.random() * 2,
+        (Math.random() - 0.5) * 2
+      );
+      overlap.name = `OrbitalOverlap${i}`;
+      overlap.userData = { pulsePhase: Math.random() * Math.PI * 2 };
+      rydbergGroup.add(overlap);
+    }
+    
+    scene.add(rydbergGroup);
+    rydbergOrbitalsRef.current = rydbergGroup;
+    
+    return rydbergGroup;
+  }, []);
+
+  // Create Halo electron cloud visualization
+  // P_overlap = (1/πa³)exp(-2r₀/a) ≈ 10⁻³
+  const createHaloElectrons = useCallback((scene) => {
+    const haloGroup = new THREE.Group();
+    haloGroup.name = 'HaloElectronsGroup';
+    
+    // Halo electrons are extended probability clouds around protons
+    // Overlap probability with nucleus is ~10⁻³
+    const protonCount = 20; // Number of protons to show halo electrons for
+    const cloudParticleCount = 150; // Particles per cloud
+    
+    const particleGeometry = new THREE.SphereGeometry(0.03, 6, 6);
+    
+    for (let i = 0; i < protonCount; i++) {
+      const cloudGroup = new THREE.Group();
+      cloudGroup.name = `HaloCloud${i}`;
+      
+      // Random position near lattice (where protons would be)
+      const basePos = new THREE.Vector3(
+        (Math.random() - 0.5) * 4,
+        -5 + Math.random() * 2,
+        (Math.random() - 0.5) * 4
+      );
+      
+      // Create probability cloud (larger than normal electron cloud)
+      const cloudRadius = 0.4; // Extended halo radius
+      const particleMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.4,
+        emissive: 0x00ffff,
+        emissiveIntensity: 0.3
+      });
+      
+      for (let j = 0; j < cloudParticleCount; j++) {
+        // Spherical distribution with exponential falloff (halo probability distribution)
+        const r = cloudRadius * Math.sqrt(Math.random()); // Uniform in volume
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        
+        // Exponential probability: P(r) ∝ exp(-2r/a)
+        const a = 0.2; // Halo parameter
+        const probability = Math.exp(-2 * r / a);
+        if (Math.random() > probability) continue; // Skip low-probability regions
+        
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+        particle.position.set(
+          basePos.x + r * Math.sin(phi) * Math.cos(theta),
+          basePos.y + r * Math.sin(phi) * Math.sin(theta),
+          basePos.z + r * Math.cos(phi)
+        );
+        particle.userData = { 
+          basePosition: particle.position.clone(),
+          probability,
+          r
+        };
+        cloudGroup.add(particle);
+      }
+      
+      // Add nucleus indicator (small bright sphere)
+      const nucleusGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+      const nucleusMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffff00,
+        emissive: 0xffff00,
+        emissiveIntensity: 1.0
+      });
+      const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+      nucleus.position.copy(basePos);
+      nucleus.name = `Nucleus${i}`;
+      cloudGroup.add(nucleus);
+      
+      haloGroup.add(cloudGroup);
+    }
+    
+    scene.add(haloGroup);
+    haloElectronsRef.current = haloGroup;
+    
+    return haloGroup;
+  }, []);
+
+  // Physics-based bubble radius calculation using Rayleigh-Plesset equation
+  // R*R'' + 3/2*R'² = (1/ρ)[P_b - P_∞ - 2σ/R - 4μR'/R + ε₀E²/2]
   const calculateBubbleRadius = useCallback((normalizedTime, baseRadius) => {
     let radius;
     let phase;
+    let compressionRatio = 1.0;
+    let fieldStrength = 0;
+    let temperature = parameters.temperature;
     
+    // Physical constants (SI units)
+    const EPS0 = 8.854e-12; // F/m
+    const SIGMA = 0.0728; // N/m (surface tension, water)
+    const RHO = 998; // kg/m³ (density, water)
+    const MU = 1.002e-3; // Pa·s (viscosity, water)
+    const GAMMA = 1.4; // Polytropic index
+    
+    // Convert baseRadius from visualization units to meters (approximate)
+    const R0_m = baseRadius * 1e-6; // Assume visualization units are in μm scale
+    
+    // Time in cycle (0 to period)
+    const period = 1.0 / (parameters.frequency * 1000); // Convert kHz to Hz
+    const t = normalizedTime * period;
+    const omega = 2 * Math.PI * parameters.frequency * 1000;
+    
+    // Phase determination based on normalized time
     if (normalizedTime < 0.4) {
-      // Expansion phase
       phase = 'EXPANSION';
-      const t = normalizedTime / 0.4;
-      radius = baseRadius * (1 + drivingPressure * 0.3 * Math.sin(t * Math.PI / 2));
+      const t_phase = normalizedTime / 0.4;
+      // Expansion: driven by acoustic pressure
+      const P_acoustic = parameters.drivingPressure * 1e5 * Math.sin(omega * t * 0.4); // Convert bar to Pa
+      const expansionFactor = 1 + (P_acoustic / (101325 + 2 * SIGMA / R0_m)) * 0.3;
+      radius = baseRadius * Math.max(1.0, Math.min(1.3, expansionFactor));
     } else if (normalizedTime < 0.55) {
-      // Collapse phase (rapid)
       phase = 'COLLAPSE';
-      const t = (normalizedTime - 0.4) / 0.15;
-      const maxRadius = baseRadius * (1 + drivingPressure * 0.3);
-      const minRadius = baseRadius * 0.15;
-      radius = maxRadius - (maxRadius - minRadius) * Math.pow(t, 2);
+      const t_phase = (normalizedTime - 0.4) / 0.15;
+      // Collapse: rapid compression following Rayleigh-Plesset dynamics
+      // Simplified: R(t) ≈ R_max * (1 - t²) for rapid collapse
+      const R_max = baseRadius * (1 + parameters.drivingPressure * 0.3);
+      const R_min = baseRadius * 0.1; // Minimum radius (compression ratio ~10)
+      radius = R_max - (R_max - R_min) * Math.pow(t_phase, 2);
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
     } else if (normalizedTime < 0.6) {
-      // Minimum/impact phase
       phase = 'MINIMUM';
-      radius = baseRadius * 0.15;
+      radius = baseRadius * 0.1; // Maximum compression
+      compressionRatio = 10.0;
     } else if (normalizedTime < 0.7) {
-      // Rebound phase
       phase = 'REBOUND';
-      const t = (normalizedTime - 0.6) / 0.1;
-      radius = baseRadius * (0.15 + 0.5 * t);
+      const t_phase = (normalizedTime - 0.6) / 0.1;
+      // Rebound: rapid expansion after collapse
+      const R_min = baseRadius * 0.1;
+      const R_rebound = baseRadius * 0.6;
+      radius = R_min + (R_rebound - R_min) * t_phase;
+      compressionRatio = baseRadius / radius;
     } else {
-      // Recovery phase
       phase = 'RECOVERY';
-      const t = (normalizedTime - 0.7) / 0.3;
-      radius = baseRadius * (0.65 + 0.35 * t);
+      const t_phase = (normalizedTime - 0.7) / 0.3;
+      // Recovery: gradual return to equilibrium
+      const R_recovery = baseRadius * 0.6;
+      radius = R_recovery + (baseRadius - R_recovery) * t_phase;
+      compressionRatio = baseRadius / radius;
     }
     
-    return { radius: Math.max(0.1, radius), phase };
-  }, [drivingPressure]);
+    // Calculate electric field strength from double-layer (intensifies with compression)
+    // E = E0 * (R0/R)² (field scales with inverse square of radius)
+    const E0 = 1e8; // V/m (baseline double-layer field)
+    fieldStrength = E0 * Math.pow(baseRadius / Math.max(radius, baseRadius * 0.1), 2);
+    
+    // Calculate temperature from adiabatic compression
+    // T = T0 * (R0/R)^(3(γ-1))
+    temperature = parameters.temperature * Math.pow(compressionRatio, 3 * (GAMMA - 1));
+    
+    // Calculate pressure from polytropic gas law
+    // P = P0 * (R0/R)^(3γ)
+    const P0 = 101325; // Pa (ambient pressure)
+    const pressure = P0 * Math.pow(compressionRatio, 3 * GAMMA);
+    
+    return { 
+      radius: Math.max(baseRadius * 0.05, radius), 
+      phase,
+      compressionRatio,
+      fieldStrength,
+      temperature,
+      pressure
+    };
+  }, [drivingPressure, parameters.temperature, parameters.frequency]);
 
-  // Update proton states based on collapse phase
-  const updateProtonStates = useCallback((phase, normalizedTime) => {
+  // Calculate enhancement factors based on physics conditions
+  const calculateEnhancementFactors = useCallback((compressionRatio, fieldStrength, temperature, pressure) => {
+    // Physical constants
+    const KB = 1.381e-23; // J/K
+    const E_CHARGE = 1.602e-19; // C
+    const EPS0 = 8.854e-12; // F/m
+    const ALPHA = 1/137; // Fine structure constant
+    
+    // Electron density (from material properties)
+    const n_e = 6.8e28; // m⁻³ (palladium)
+    
+    // 1. Electron Screening Enhancement
+    // Debye screening length: λ_D = √(ε₀kT / (n_e e²))
+    const lambda_d = Math.sqrt(EPS0 * KB * temperature / (n_e * E_CHARGE * E_CHARGE));
+    const U_screen = E_CHARGE * E_CHARGE / (4 * Math.PI * EPS0 * lambda_d);
+    const E_thermal = 1.5 * KB * temperature / E_CHARGE; // eV
+    const screening_factor = Math.min(1e4, Math.exp(U_screen / Math.max(E_thermal, 0.01)));
+    
+    // 2. QED Double-Layer Enhancement
+    // Enhancement from high electric field: f_QED = 1 + (E/E_crit)²
+    const E_critical = 1e8; // V/m
+    const qed_factor = 1 + Math.pow(fieldStrength / E_critical, 2);
+    
+    // 3. Casimir Enhancement
+    // Casimir force scales with 1/d⁴, enhancement from proximity
+    // Simplified: f_casimir ≈ (R0/R)² = compressionRatio²
+    const casimir_factor = Math.pow(compressionRatio, 2);
+    
+    // 4. Rydberg Matter Enhancement
+    // Extended orbitals enable energy localization
+    // Enhancement scales with compression and field
+    const rydberg_factor = 1 + 0.5 * compressionRatio * (fieldStrength / 1e8);
+    
+    // 5. Compression Enhancement
+    // Increased density from compression
+    const compression_factor = Math.pow(compressionRatio, 1.5);
+    
+    // Combined enhancement (multiplicative, capped at 10⁸)
+    const total = screening_factor * qed_factor * casimir_factor * rydberg_factor * compression_factor;
+    
+    return {
+      total: Math.min(total, 1e8),
+      screening: screening_factor,
+      qed: qed_factor,
+      casimir: casimir_factor,
+      rydberg: rydberg_factor,
+      compression: compression_factor
+    };
+  }, []);
+  
+  // Update proton states based on physics-based transition probabilities
+  const updateProtonStates = useCallback((phase, normalizedTime, enhancement, fieldStrength, temperature) => {
     if (!protonGroupRef.current) return;
     
+    // Physics-based transition thresholds
+    const SCREENING_THRESHOLD = 10; // eV (10 eV barrier reduction)
+    const CAPTURE_THRESHOLD = 1e3; // Enhancement factor
+    const NUCLEAR_THRESHOLD = 1e5; // Enhancement factor
+    
+    const E_thermal_ev = 1.5 * 1.381e-23 * temperature / 1.602e-19; // Convert to eV
+    
     protonGroupRef.current.children.forEach((proton) => {
-      const threshold = proton.userData.phaseThreshold;
       let newState;
       
       if (phase === 'EXPANSION' || phase === 'RECOVERY') {
         newState = 'FREE';
       } else if (phase === 'COLLAPSE') {
-        const collapseProgress = (normalizedTime - 0.4) / 0.15;
-        if (collapseProgress > threshold + 0.3) {
+        // Physics-based transitions during collapse
+        if (enhancement > NUCLEAR_THRESHOLD) {
+          newState = Math.random() < 0.2 ? 'NUCLEAR' : 'CAPTURE_READY';
+        } else if (enhancement > CAPTURE_THRESHOLD) {
           newState = 'CAPTURE_READY';
-        } else if (collapseProgress > threshold) {
+        } else if (fieldStrength > 1e7 || E_thermal_ev > SCREENING_THRESHOLD) {
           newState = 'SCREENED';
         } else {
           newState = 'FREE';
         }
       } else if (phase === 'MINIMUM') {
+        // At minimum radius, highest enhancement
+        if (enhancement > NUCLEAR_THRESHOLD) {
         newState = Math.random() < 0.3 ? 'NUCLEAR' : 'CAPTURE_READY';
+        } else {
+          newState = 'CAPTURE_READY';
+        }
       } else if (phase === 'REBOUND') {
-        newState = Math.random() < 0.5 ? 'SCREENED' : 'FREE';
+        // Gradual transition back
+        if (enhancement > CAPTURE_THRESHOLD) {
+          newState = Math.random() < 0.3 ? 'CAPTURE_READY' : 'SCREENED';
+        } else {
+          newState = 'SCREENED';
+        }
       }
       
       if (newState !== proton.userData.state) {
@@ -670,6 +1348,7 @@ const UnifiedBubbleLatticeVisualization = ({
 
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
+      try {
     if (!isPlaying) return;
     
     const speed = animationSpeedRef.current;
@@ -682,30 +1361,153 @@ const UnifiedBubbleLatticeVisualization = ({
       normalizedTimeRef.current = 0;
       setCollapseCount(prev => prev + 1);
       onCollapseEvent();
+      
+      // Reset rebound nuclear products for new cycle
+      if (effectsGroupRef.current) {
+        const reboundNuclear = effectsGroupRef.current.getObjectByName('ReboundNuclearEvent');
+        if (reboundNuclear) {
+          let primaryIndex = 0;
+          reboundNuclear.children.forEach((child) => {
+            if (child.name && child.name.startsWith('PrimaryProduct')) {
+              // Reset primary products to lattice surface
+              const angle = (primaryIndex / 8) * Math.PI * 2;
+              const radius = 0.3 + Math.random() * 0.2;
+              child.position.set(
+                radius * Math.cos(angle),
+                -5,
+                radius * Math.sin(angle)
+              );
+              child.userData.lifetime = 0;
+              child.visible = false;
+              child.userData.fissionReady = Math.random() < 0.3; // Reset fission probability
+              
+              // Reset velocity direction
+              const elevation = (Math.random() - 0.5) * Math.PI / 4;
+              child.userData.direction = new THREE.Vector3(
+                Math.sin(elevation) * Math.cos(angle),
+                Math.cos(elevation),
+                Math.sin(elevation) * Math.sin(angle)
+              ).normalize();
+              child.userData.velocity = child.userData.direction.clone().multiplyScalar(0.1 + Math.random() * 0.1);
+              
+              primaryIndex++;
+            } else if (child.name && child.name.startsWith('SecondaryProduct')) {
+              child.visible = false;
+              child.userData.lifetime = 0;
+              child.position.set(0, -5, 0);
+            }
+          });
+        }
+      }
     }
     
     const normalizedTime = normalizedTimeRef.current;
     setCycleProgress(normalizedTime);
     
     const baseRadius = initialBubbleRadius;
-    const { radius, phase } = calculateBubbleRadius(normalizedTime, baseRadius);
+    const { radius, phase, compressionRatio, fieldStrength, temperature, pressure } = calculateBubbleRadius(normalizedTime, baseRadius);
     bubbleRadiusRef.current = radius;
+    
+    // Update physics data state
+    setPhysicsData({ compressionRatio, fieldStrength, temperature, pressure });
+    
+    // Calculate enhancement factors based on physics conditions
+    const enhancements = calculateEnhancementFactors(compressionRatio, fieldStrength, temperature, pressure);
+    setCurrentEnhancement(enhancements.total);
+    setEnhancementBreakdown(enhancements);
     
     if (phase !== currentPhase) {
       setCurrentPhase(phase);
       onPhaseChange(phase);
     }
     
-    // Update bubble
-    if (bubbleGroupRef.current && showBubble) {
+    // Update bubble and torus-to-jet visualization
+    // Note: We check showBubble for the main bubble, but torus/jet visibility is controlled by phase
+    if (bubbleGroupRef.current) {
       const bubble = bubbleGroupRef.current.getObjectByName('MainBubble');
       const doubleLayer = bubbleGroupRef.current.getObjectByName('DoubleLayer');
       const innerLayer = bubbleGroupRef.current.getObjectByName('InnerLayer');
       
-      if (bubble) {
+      // Torus-to-jet formation visualization (always update, visibility controlled by phase)
+      const torus = bubbleGroupRef.current.getObjectByName('TorusFormation');
+      const jet = bubbleGroupRef.current.getObjectByName('FocusedJet');
+      
+      // Determine which geometry to show based on phase
+      // Main bubble visibility is controlled by showBubble toggle
+      if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+        // Show sphere
+        if (bubble && showBubble) {
+          bubble.visible = true;
         bubble.scale.setScalar(radius / baseRadius);
         bubble.material.opacity = 0.3 + (1 - radius / baseRadius) * 0.4;
+        } else if (bubble) {
+          bubble.visible = false;
+        }
+        if (torus) torus.visible = false;
+        if (jet) jet.visible = false;
+      } else if (phase === 'COLLAPSE') {
+        // Show torus formation (bubble collapsing into torus shape)
+        const collapseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
+        const torusProgress = Math.min(1, collapseProgress * 2); // Torus appears halfway through collapse
+        
+        if (bubble && showBubble) {
+          // Fade out sphere as torus appears
+          bubble.visible = torusProgress < 0.7;
+          bubble.scale.setScalar((radius / baseRadius) * (1 - torusProgress * 0.5));
+          bubble.material.opacity = 0.3 * (1 - torusProgress);
+        } else if (bubble) {
+          bubble.visible = false;
+        }
+        
+        if (torus) {
+          // Make torus visible earlier and more prominently
+          torus.visible = torusProgress > 0.1; // Show earlier (10% instead of 30%)
+          // Torus contracts and intensifies during collapse
+          // Start larger and contract more dramatically
+          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.5); // Less contraction to keep visible
+          const tubeRadius = torus.userData.baseTubeRadius * (1 - collapseProgress * 0.6);
+          // Scale uniformly but adjust for radius changes
+          const scaleFactor = torusRadius / torus.userData.baseRadius;
+          torus.scale.setScalar(scaleFactor);
+          // Adjust tube radius by scaling Y (thickness of torus ring)
+          torus.scale.y = tubeRadius / torus.userData.baseTubeRadius;
+          // Increase opacity and emissive for better visibility
+          torus.material.opacity = 0.6 + collapseProgress * 0.3;
+          if (torus.material.emissiveIntensity !== undefined) {
+            torus.material.emissiveIntensity = 0.8 + collapseProgress * 1.2;
+          }
+        }
+        if (jet) jet.visible = false;
+      } else if (phase === 'MINIMUM' || phase === 'REBOUND') {
+        // Show focused jet (torus collapses into focused jet)
+        const jetProgress = phase === 'MINIMUM' ? 1.0 : Math.max(0, 1 - (normalizedTime - 0.6) / 0.1);
+        
+        if (bubble) bubble.visible = false; // Always hide bubble during minimum/rebound
+        if (torus) {
+          // Fade out torus as jet forms
+          torus.visible = jetProgress < 0.8;
+          torus.material.opacity = 0.8 * (1 - jetProgress);
+        }
+        
+        if (jet) {
+          // Make jet visible earlier and more prominently
+          jet.visible = jetProgress > 0.1; // Show earlier (10% instead of 20%)
+          // Jet intensifies and extends during minimum (focused jet formation)
+          // Start with base size, contract radius but extend height dramatically
+          const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4); // Less contraction to keep visible
+          const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0); // Much longer at peak
+          jet.scale.set(jetRadius / jet.userData.baseRadius, jetHeight / jet.userData.baseHeight, jetRadius / jet.userData.baseRadius);
+          // Increase opacity and emissive for better visibility
+          jet.material.opacity = 0.8 + jetProgress * 0.2;
+          if (jet.material.emissiveIntensity !== undefined) {
+            jet.material.emissiveIntensity = 1.5 + jetProgress * 2.5;
+          }
+          // Position jet at bubble center, extending downward
+          jet.position.set(0, 0, 0); // Relative to bubbleGroup
+        }
       }
+      
+      // Update double layer and inner layer
       if (doubleLayer) {
         doubleLayer.scale.setScalar((radius * 1.1) / baseRadius);
         const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.4 : 0.15;
@@ -734,9 +1536,9 @@ const UnifiedBubbleLatticeVisualization = ({
       }
     }
     
-    // Update protons
+    // Update protons with physics-based transitions
     if (showProtons) {
-      updateProtonStates(phase, normalizedTime);
+      updateProtonStates(phase, normalizedTime, enhancements.total, physicsData.fieldStrength, physicsData.temperature);
       
       protonGroupRef.current?.children.forEach((proton) => {
         // Move protons toward lattice during collapse
@@ -777,30 +1579,192 @@ const UnifiedBubbleLatticeVisualization = ({
             2 - t * 7,
             lineRadius * Math.sin(angle)
           );
+          // Reverse energy flow direction during rebound
+          if (phase === 'REBOUND') {
+            // Particles flow outward from lattice (reversed)
+            child.position.set(
+              lineRadius * Math.cos(angle),
+              -5 + t * 7, // From lattice upward (reversed)
+              lineRadius * Math.sin(angle)
+            );
+            child.material.opacity = 0.9; // Bright during rebound
+          } else {
           child.material.opacity = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.8 : 0.3;
+          }
         }
       });
     }
     
     // Update effects
     if (effectsGroupRef.current) {
-      const flash = effectsGroupRef.current.getObjectByName('CollapseFlash');
+      const nuclearEmissions = effectsGroupRef.current.getObjectByName('NuclearEmissions');
+      const reboundNuclear = effectsGroupRef.current.getObjectByName('ReboundNuclearEvent');
       const shockwave = effectsGroupRef.current.getObjectByName('Shockwave');
       
-      // Flash during minimum phase
+      // Fractal nuclear emissions during minimum phase (from bubble collapse)
       if (phase === 'MINIMUM') {
-        if (flash) {
-          flash.material.opacity = 0.8;
-          flash.scale.setScalar(2);
-        }
-        if (shockwave) {
-          const shockProgress = (normalizedTime - 0.55) / 0.05;
-          shockwave.material.opacity = 0.6 - shockProgress * 0.6;
-          shockwave.scale.setScalar(1 + shockProgress * 5);
+        if (nuclearEmissions) {
+          nuclearEmissions.visible = true;
+          
+          // Animate fractal emissions - pulse and expand
+          const emissionIntensity = phase === 'MINIMUM' ? 1.0 : Math.max(0, 1 - (normalizedTime - 0.6) / 0.1);
+          const time = Date.now() * 0.001; // Slower animation
+          
+          // Recursively animate all children in the fractal structure
+          nuclearEmissions.traverse((child) => {
+            if (child.isMesh) {
+              if (child.name && child.name.startsWith('NuclearCore')) {
+                // Pulse the core (tiny nuclear event point)
+                if (!child.userData.pulsePhase) child.userData.pulsePhase = Math.random() * Math.PI * 2;
+                const pulse = Math.sin(time * 10 + child.userData.pulsePhase) * 0.2 + 1.0;
+                child.scale.setScalar(pulse);
+                child.material.emissiveIntensity = 2.0 * emissionIntensity;
+                child.material.opacity = emissionIntensity;
+              } else {
+                // Animate branches and particles
+                const depth = child.userData.depth !== undefined ? child.userData.depth : 0;
+                const pulsePhase = child.userData.pulsePhase !== undefined ? child.userData.pulsePhase : Math.random() * Math.PI * 2;
+                
+                // Pulse animation (slower for deeper branches)
+                const pulseSpeed = 5 - depth * 1.5;
+                const pulse = Math.sin(time * pulseSpeed + pulsePhase) * 0.15 + 1.0;
+                
+                // Scale based on type (cylinder branches vs sphere particles)
+                if (child.geometry.type === 'CylinderGeometry') {
+                  child.scale.y = pulse;
+                  child.scale.x = pulse * 0.8;
+                  child.scale.z = pulse * 0.8;
+                } else if (child.geometry.type === 'SphereGeometry') {
+                  child.scale.setScalar(pulse);
+                }
+                
+                // Fade based on depth and intensity
+                const baseOpacity = child.geometry.type === 'CylinderGeometry' ? 0.8 : 0.9;
+                child.material.opacity = (baseOpacity - depth * 0.15) * emissionIntensity;
+                
+                if (child.material.emissiveIntensity !== undefined) {
+                  child.material.emissiveIntensity = (1.0 - depth * 0.2) * emissionIntensity;
+                }
+              }
+            }
+          });
         }
       } else {
-        if (flash) flash.material.opacity = 0;
-        if (shockwave) shockwave.material.opacity = 0;
+        if (nuclearEmissions) nuclearEmissions.visible = false;
+      }
+      
+      // Rebound nuclear event: fusion > fission cascade with reversed energy flow
+      // This occurs when torus hits lattice and rebounds
+      if (phase === 'REBOUND') {
+        if (reboundNuclear) {
+          reboundNuclear.visible = true;
+          
+          // Calculate rebound progress (0 to 1 during rebound phase)
+          const reboundStart = 0.6; // Rebound starts at 60% of cycle
+          const reboundProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
+          
+          // Primary fusion products emit from lattice (reversed energy flow)
+          reboundNuclear.children.forEach((child, index) => {
+            if (child.name && child.name.startsWith('PrimaryProduct')) {
+              // Update primary products
+              child.userData.lifetime += deltaTime;
+              
+              // Emit outward from lattice (reversed direction)
+              if (reboundProgress > 0.1 && child.userData.lifetime < child.userData.maxLifetime) {
+                child.visible = true;
+                
+                // Move outward from lattice (reversed energy flow)
+                const speed = 2.0 * reboundProgress; // Faster as rebound progresses
+                child.position.add(child.userData.velocity.clone().multiplyScalar(speed * deltaTime));
+                
+                // Fade out over lifetime
+                const lifetimeRatio = child.userData.lifetime / child.userData.maxLifetime;
+                child.material.opacity = 0.9 * (1 - lifetimeRatio);
+                
+                // Pulse based on energy
+                const pulse = Math.sin(Date.now() * 0.01 * child.userData.energy) * 0.2 + 1.0;
+                child.scale.setScalar(pulse);
+                
+                // Check if this product should undergo fission
+                if (child.userData.fissionReady && reboundProgress > 0.5 && lifetimeRatio > 0.3) {
+                  // Trigger fission: create secondary products
+                  const secondaryProducts = reboundNuclear.children.filter(c => 
+                    c.name && c.name.startsWith('SecondaryProduct') && !c.visible
+                  );
+                  
+                  // Emit 2-3 secondary products from this location
+                  const numFission = Math.min(2 + Math.floor(Math.random() * 2), secondaryProducts.length);
+                  for (let i = 0; i < numFission; i++) {
+                    const secondary = secondaryProducts[i];
+                    if (secondary) {
+                      secondary.visible = true;
+                      secondary.position.copy(child.position);
+                      
+                      // Random direction (fission fragments)
+                      const fissionAngle = Math.random() * Math.PI * 2;
+                      const fissionElevation = (Math.random() - 0.5) * Math.PI / 3;
+                      secondary.userData.direction = new THREE.Vector3(
+                        Math.sin(fissionElevation) * Math.cos(fissionAngle),
+                        Math.cos(fissionElevation),
+                        Math.sin(fissionElevation) * Math.sin(fissionAngle)
+                      ).normalize();
+                      
+                      secondary.userData.velocity = secondary.userData.direction.clone().multiplyScalar(
+                        0.15 + Math.random() * 0.1
+                      );
+                      secondary.userData.lifetime = 0;
+                    }
+                  }
+                  
+                  // Hide primary product after fission
+                  child.visible = false;
+                  child.userData.fissionReady = false;
+                }
+              } else if (child.userData.lifetime >= child.userData.maxLifetime) {
+                child.visible = false;
+              }
+            } else if (child.name && child.name.startsWith('SecondaryProduct') && child.visible) {
+              // Update secondary fission products
+              child.userData.lifetime += deltaTime;
+              
+              if (child.userData.lifetime < child.userData.maxLifetime) {
+                // Move outward (fission fragments)
+                const speed = 1.5;
+                child.position.add(child.userData.velocity.clone().multiplyScalar(speed * deltaTime));
+                
+                // Fade out
+                const lifetimeRatio = child.userData.lifetime / child.userData.maxLifetime;
+                child.material.opacity = 0.8 * (1 - lifetimeRatio);
+                
+                // Smaller pulse
+                const pulse = Math.sin(Date.now() * 0.015 * child.userData.energy) * 0.15 + 1.0;
+                child.scale.setScalar(pulse);
+              } else {
+                child.visible = false;
+              }
+            }
+          });
+        }
+        
+        // Shockwave during rebound (expanding from lattice)
+        if (shockwave) {
+          const reboundStart = 0.6;
+          const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
+          shockwave.position.y = -5; // At lattice
+          shockwave.material.opacity = 0.8 * (1 - shockProgress);
+          shockwave.scale.setScalar(1 + shockProgress * 8); // Expand outward
+        }
+      } else {
+        // Hide rebound nuclear event in other phases
+        if (reboundNuclear) reboundNuclear.visible = false;
+        if (shockwave) {
+          shockwave.material.opacity = 0;
+          // Reset shockwave position for next cycle
+          if (phase === 'EXPANSION') {
+            shockwave.position.set(0, -3, 0);
+            shockwave.scale.setScalar(1);
+          }
+        }
       }
       
       // Pulse hotspots
@@ -817,95 +1781,203 @@ const UnifiedBubbleLatticeVisualization = ({
     // Update vortex flow visualization based on collapse phase
     if (vortexGroupRef.current && showVortices) {
       try {
-        // Calculate vortex intensity based on phase
-        // EXPANSION: slow outward flow, COLLAPSE: fast inward, MINIMUM: intense swirl
-        let vortexIntensity = 0.3;
-        let flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
-        let rotationSpeed = 1.0;
-        
-        switch (phase) {
-          case 'EXPANSION':
-            vortexIntensity = 0.3;
-            flowDirection = -0.3; // Slow outward
-            rotationSpeed = 0.5;
-            break;
-          case 'COLLAPSE':
-            vortexIntensity = 1.0;
-            flowDirection = 2.0; // Fast inward
-            rotationSpeed = 2.0;
-            break;
-          case 'MINIMUM':
-            vortexIntensity = 1.5;
-            flowDirection = 0.5; // Swirling at impact
-            rotationSpeed = 3.0;
-            break;
-          case 'REBOUND':
-            vortexIntensity = 0.8;
-            flowDirection = -1.5; // Outward scatter
-            rotationSpeed = 1.5;
-            break;
-          case 'RECOVERY':
-            vortexIntensity = 0.4;
-            flowDirection = 0.2;
-            rotationSpeed = 0.7;
-            break;
-        }
-        
-        // Update plasma vortex effect
+      // Calculate vortex intensity based on phase
+      // EXPANSION: slow outward flow, COLLAPSE: fast inward, MINIMUM: intense swirl
+      let vortexIntensity = 0.3;
+      let flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
+      let rotationSpeed = 1.0;
+      
+      switch (phase) {
+        case 'EXPANSION':
+          vortexIntensity = 0.3;
+          flowDirection = -0.3; // Slow outward
+          rotationSpeed = 0.5;
+          break;
+        case 'COLLAPSE':
+          vortexIntensity = 1.0;
+          flowDirection = 2.0; // Fast inward
+          rotationSpeed = 2.0;
+          break;
+        case 'MINIMUM':
+          vortexIntensity = 1.5;
+          flowDirection = 0.5; // Swirling at impact
+          rotationSpeed = 3.0;
+          break;
+        case 'REBOUND':
+            vortexIntensity = 1.2; // Increased intensity for rebound
+            flowDirection = -2.0; // Strong outward (reversed energy flow from lattice)
+            rotationSpeed = 3.0; // Faster rotation during rebound
+          break;
+        case 'RECOVERY':
+          vortexIntensity = 0.4;
+          flowDirection = 0.2;
+          rotationSpeed = 0.7;
+          break;
+      }
+      
+      // Update plasma vortex effect
         if (plasmaVortexRef.current && typeof plasmaVortexRef.current.update === 'function') {
           try {
-            plasmaVortexRef.current.vortexStrength = 0.8 * vortexIntensity;
-            plasmaVortexRef.current.update(deltaTime * rotationSpeed);
+        plasmaVortexRef.current.vortexStrength = 0.8 * vortexIntensity;
+        plasmaVortexRef.current.update(deltaTime * rotationSpeed);
           } catch (err) {
             // Silently fail if plasma vortex update fails
           }
-        }
-        
-        // Update energy flow particles
+      }
+      
+      // Update energy flow particles
         if (energyFlowRef.current && typeof energyFlowRef.current.update === 'function') {
           try {
-            // Adjust particle speed based on phase
-            energyFlowRef.current.speed = 0.015 * Math.abs(flowDirection);
-            energyFlowRef.current.update(deltaTime * vortexIntensity);
+        // Adjust particle speed based on phase
+        energyFlowRef.current.speed = 0.015 * Math.abs(flowDirection);
+        energyFlowRef.current.update(deltaTime * vortexIntensity);
           } catch (err) {
             // Silently fail if energy flow update fails
           }
-        }
-        
-        // Animate swirl lines opacity and rotation
+      }
+      
+      // Animate swirl lines opacity and rotation
         if (vortexGroupRef.current && vortexGroupRef.current.children) {
-          vortexGroupRef.current.children.forEach((child) => {
+      vortexGroupRef.current.children.forEach((child) => {
             if (child && child.name && child.name.startsWith('SwirlLine') && child.material) {
               try {
-                // Pulse opacity based on phase intensity
-                const baseOpacity = 0.2 + vortexIntensity * 0.3;
+          // Pulse opacity based on phase intensity
+          const baseOpacity = 0.2 + vortexIntensity * 0.3;
                 const pulse = Math.sin(Date.now() * 0.003 + (child.userData?.phase || 0) * Math.PI * 2) * 0.15;
-                child.material.opacity = Math.min(0.8, baseOpacity + pulse);
-                
-                // Color shift during intense phases
-                if (phase === 'MINIMUM' || phase === 'COLLAPSE') {
-                  child.material.color.setHex(0xff8844); // Orange during collapse
-                } else {
-                  child.material.color.setHex(0x44ffaa); // Green-cyan normally
+          child.material.opacity = Math.min(0.8, baseOpacity + pulse);
+          
+          // Color shift during intense phases
+          if (phase === 'MINIMUM' || phase === 'COLLAPSE') {
+            child.material.color.setHex(0xff8844); // Orange during collapse
+          } else {
+            child.material.color.setHex(0x44ffaa); // Green-cyan normally
                 }
               } catch (err) {
                 // Skip this child if update fails
-              }
-            }
-          });
-          
-          // Rotate the entire vortex group slowly
-          vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.2;
+          }
+        }
+      });
+      
+      // Rotate the entire vortex group slowly
+      vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.2;
         }
       } catch (error) {
         // Silently handle vortex update errors to prevent animation loop crashes
         console.warn('Vortex animation update error (non-critical):', error);
       }
     }
+    
+    // Update Casimir field visualization based on compression
+    if (casimirFieldRef.current && showCasimir) {
+      try {
+        // Get current physics data
+        const currentCompression = physicsData.compressionRatio || 1.0;
+        // Casimir force intensifies as bubble compresses (1/d⁴ relationship)
+        const casimirIntensity = Math.pow(currentCompression, 4);
+        
+        casimirFieldRef.current.children.forEach((child) => {
+          if (child.name && child.name.startsWith('CasimirLine')) {
+            // Update line opacity based on compression
+            const baseOpacity = 0.3 + Math.min(casimirIntensity / 100, 0.4);
+            child.material.opacity = baseOpacity;
+            
+            // Color shift: orange (low) → red (high compression)
+            const hue = 0.1 - Math.min(casimirIntensity / 200, 0.05); // Shift toward red
+            child.material.color.setHSL(hue, 1, 0.5);
+          } else if (child.name && child.name.startsWith('CasimirIndicator')) {
+            // Pulse indicators during high compression (capped to prevent huge orbs)
+            const pulse = Math.sin(Date.now() * 0.003 + child.userData.pulsePhase * Math.PI * 2) * 0.3 + 0.7;
+            // Cap opacity and scale to prevent indicators from becoming huge orange orbs
+            const normalizedIntensity = Math.min(casimirIntensity / 100, 1.0); // Cap at 1.0
+            child.material.opacity = 0.5 + normalizedIntensity * 0.3;
+            // Cap scale to max 2x to prevent covering the simulation
+            const maxScale = 1 + pulse * Math.min(normalizedIntensity * 0.5, 1.0);
+            child.scale.setScalar(maxScale);
+          }
+        });
+      } catch (error) {
+        // Silently handle Casimir update errors
+      }
+    }
+    
+    // Update Rydberg orbitals based on temperature and field
+    if (rydbergOrbitalsRef.current && showRydberg) {
+      try {
+        // Get current physics data
+        const currentTemp = physicsData.temperature || 300;
+        const currentField = physicsData.fieldStrength || 0;
+        // Rydberg orbitals expand with temperature and contract with field
+        const temperatureFactor = currentTemp / 300; // Normalize to room temp
+        const fieldFactor = currentField / 1e8; // Normalize to critical field
+        
+        rydbergOrbitalsRef.current.children.forEach((child) => {
+          if (child.name && child.name.startsWith('RydbergOrbital')) {
+            const energyLevel = child.userData.energyLevel || 1;
+            // Higher n states are larger: R_n = n² * a₀
+            const baseSize = child.userData.baseRadius * energyLevel * energyLevel;
+            const expandedSize = baseSize * (1 + temperatureFactor * 0.5 - fieldFactor * 0.3);
+            child.scale.setScalar(expandedSize / child.userData.baseRadius);
+            
+            // Opacity based on energy level and conditions (keep very transparent)
+            child.material.opacity = Math.min(0.08, 0.04 + (temperatureFactor + fieldFactor) * 0.02);
+          } else if (child.name && child.name.startsWith('OrbitalOverlap')) {
+            // Overlap regions glow during high enhancement
+            const enhancementValue = enhancements.total || 1.0;
+            const pulse = Math.sin(Date.now() * 0.005 + child.userData.pulsePhase * Math.PI * 2) * 0.3 + 0.7;
+            child.material.opacity = 0.4 + (enhancementValue / 1e5) * 0.4;
+            // Only set emissiveIntensity if material supports it (MeshStandardMaterial does)
+            if (child.material && typeof child.material.emissiveIntensity !== 'undefined') {
+              child.material.emissiveIntensity = 0.3 + (enhancementValue / 1e6) * 0.5;
+            }
+            child.scale.setScalar(1 + pulse * 0.2);
+          }
+        });
+      } catch (error) {
+        // Silently handle Rydberg update errors
+      }
+    }
+    
+    // Update Halo electron clouds based on screening and field
+    if (haloElectronsRef.current && showHalo) {
+      try {
+        // Get current enhancement breakdown
+        const currentScreening = enhancements.screening || 1.0;
+        const currentField = physicsData.fieldStrength || 0;
+        // Halo electron overlap probability: P_overlap ≈ 10⁻³
+        // Cloud size and density affected by screening and field
+        const screeningFactor = currentScreening / 100; // Normalize
+        const fieldFactor = currentField / 1e8;
+        
+        haloElectronsRef.current.children.forEach((cloudGroup) => {
+          if (cloudGroup.name && cloudGroup.name.startsWith('HaloCloud')) {
+            cloudGroup.children.forEach((particle) => {
+              if (particle.name && particle.name.startsWith('Nucleus')) {
+                // Nucleus glows based on overlap probability
+                const overlapProb = 1e-3 * (1 + screeningFactor + fieldFactor);
+                // Only set emissiveIntensity if material supports it (MeshStandardMaterial does)
+                if (particle.material && typeof particle.material.emissiveIntensity !== 'undefined') {
+                  particle.material.emissiveIntensity = Math.min(1.0, overlapProb * 1000);
+                }
+              } else {
+                // Particles fade based on distance and conditions
+                const r = particle.userData.r || 0.2;
+                const prob = particle.userData.probability || 0.5;
+                particle.material.opacity = prob * (0.3 + screeningFactor * 0.2);
+              }
+            });
+          }
+        });
+      } catch (error) {
+        // Silently handle Halo update errors
+      }
+    }
+      } catch (error) {
+        console.error('Animation update error:', error);
+    }
   }, [
     isPlaying, frequency, initialBubbleRadius, currentPhase,
-    calculateBubbleRadius, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices
+    calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
+    showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo
   ]);
 
   // Initialize Three.js scene
@@ -959,6 +2031,9 @@ const UnifiedBubbleLatticeVisualization = ({
     createFieldVisualization(scene);
     createEffects(scene);
     createVortexFlow(scene);
+    createCasimirField(scene);
+    createRydbergOrbitals(scene);
+    createHaloElectrons(scene);
     
     // Animation loop
     const animate = () => {
@@ -1005,16 +2080,121 @@ const UnifiedBubbleLatticeVisualization = ({
       
       renderer.dispose();
     };
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, updateAnimation]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, updateAnimation]);
 
-  // Update visibility based on toggles
+  // Update visibility based on toggles - immediate update with force refresh
   useEffect(() => {
-    if (latticeGroupRef.current) latticeGroupRef.current.visible = showLattice;
-    if (bubbleGroupRef.current) bubbleGroupRef.current.visible = showBubble;
-    if (protonGroupRef.current) protonGroupRef.current.visible = showProtons;
-    if (fieldGroupRef.current) fieldGroupRef.current.visible = showFieldLines;
-    if (vortexGroupRef.current) vortexGroupRef.current.visible = showVortices;
-  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices]);
+    // Force update visibility immediately when toggles change
+    const updateVisibility = () => {
+      if (latticeGroupRef.current) {
+        latticeGroupRef.current.visible = showLattice;
+        latticeGroupRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showLattice;
+          }
+        });
+      }
+      if (bubbleGroupRef.current) {
+        bubbleGroupRef.current.visible = showBubble;
+        bubbleGroupRef.current.traverse((child) => {
+          // Don't override visibility for torus and jet - they're controlled by phase-based animation
+          if (child.name === 'TorusFormation' || child.name === 'FocusedJet') {
+            return; // Skip torus and jet - let animation loop control their visibility
+          }
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showBubble;
+          }
+        });
+      }
+      if (protonGroupRef.current) {
+        protonGroupRef.current.visible = showProtons;
+        protonGroupRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints) {
+            child.visible = showProtons;
+          }
+        });
+      }
+      if (fieldGroupRef.current) {
+        fieldGroupRef.current.visible = showFieldLines;
+        fieldGroupRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints) {
+            child.visible = showFieldLines;
+          }
+        });
+      }
+      if (vortexGroupRef.current) {
+        vortexGroupRef.current.visible = showVortices;
+        vortexGroupRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showVortices;
+          }
+        });
+        // Also hide nested groups (plasma vortex, energy flow)
+        if (plasmaVortexRef.current && typeof plasmaVortexRef.current.getGroup === 'function') {
+          try {
+            const plasmaGroup = plasmaVortexRef.current.getGroup();
+            if (plasmaGroup) {
+              plasmaGroup.visible = showVortices;
+              plasmaGroup.traverse((child) => {
+                if (child.isMesh || child.isLine || child.isPoints) {
+                  child.visible = showVortices;
+                }
+              });
+            }
+          } catch (e) {
+            // Silently handle if getGroup fails
+          }
+        }
+        if (energyFlowRef.current && typeof energyFlowRef.current.getGroup === 'function') {
+          try {
+            const energyGroup = energyFlowRef.current.getGroup();
+            if (energyGroup) {
+              energyGroup.visible = showVortices;
+              energyGroup.traverse((child) => {
+                if (child.isMesh || child.isLine || child.isPoints) {
+                  child.visible = showVortices;
+                }
+              });
+            }
+          } catch (e) {
+            // Silently handle if getGroup fails
+          }
+        }
+      }
+      if (casimirFieldRef.current) {
+        casimirFieldRef.current.visible = showCasimir;
+        casimirFieldRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints) {
+            child.visible = showCasimir;
+          }
+        });
+      }
+      if (rydbergOrbitalsRef.current) {
+        rydbergOrbitalsRef.current.visible = showRydberg;
+        rydbergOrbitalsRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints) {
+            child.visible = showRydberg;
+          }
+        });
+      }
+      if (haloElectronsRef.current) {
+        haloElectronsRef.current.visible = showHalo;
+        haloElectronsRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showHalo;
+          }
+        });
+      }
+    };
+    
+    // Update immediately
+    updateVisibility();
+    
+    // Also update after a short delay to catch any late-created objects
+    const timeoutId = setTimeout(updateVisibility, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const handleZoomIn = () => {
@@ -1128,6 +2308,18 @@ const UnifiedBubbleLatticeVisualization = ({
               control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
               label={<Typography variant="caption" color="white">Vortices</Typography>}
             />
+            <FormControlLabel
+              control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
+              label={<Typography variant="caption" color="white">Casimir Field</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}
+              label={<Typography variant="caption" color="white">Rydberg Orbitals</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
+              label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
+            />
           </FormGroup>
         </Paper>
         
@@ -1144,7 +2336,8 @@ const UnifiedBubbleLatticeVisualization = ({
             p: 1,
             display: 'flex',
             alignItems: 'center',
-            gap: 2
+            gap: 2,
+            flexWrap: 'wrap'
           }}
         >
           <Chip 
@@ -1155,6 +2348,68 @@ const UnifiedBubbleLatticeVisualization = ({
           <Typography variant="caption" color="white">
             Cycle: {collapseCount} | Progress: {(cycleProgress * 100).toFixed(0)}%
           </Typography>
+          <Chip 
+            label={`Enhancement: ${currentEnhancement.toExponential(2)}`}
+            size="small"
+            color="primary"
+            sx={{ bgcolor: 'rgba(25, 118, 210, 0.8)' }}
+          />
+          <Chip 
+            label={`Compression: ${physicsData.compressionRatio.toFixed(1)}x`}
+            size="small"
+            color="secondary"
+            sx={{ bgcolor: 'rgba(156, 39, 176, 0.8)' }}
+          />
+        </Paper>
+        
+        {/* Enhancement breakdown - bottom right */}
+        <Paper
+          elevation={3}
+          sx={{
+            position: 'absolute',
+            bottom: 10,
+            right: 10,
+            bgcolor: 'rgba(20, 20, 40, 0.9)',
+            borderRadius: 1,
+            p: 1,
+            minWidth: 200
+          }}
+        >
+          <Typography variant="caption" color="white" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+            Enhancement Breakdown
+          </Typography>
+          <Stack spacing={0.3}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Screening:</Typography>
+              <Typography variant="caption" color="#00ffff" sx={{ fontSize: '0.65rem' }}>
+                {enhancementBreakdown.screening.toExponential(1)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>QED:</Typography>
+              <Typography variant="caption" color="#ffff00" sx={{ fontSize: '0.65rem' }}>
+                {enhancementBreakdown.qed.toExponential(1)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Casimir:</Typography>
+              <Typography variant="caption" color="#ff8800" sx={{ fontSize: '0.65rem' }}>
+                {enhancementBreakdown.casimir.toExponential(1)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Rydberg:</Typography>
+              <Typography variant="caption" color="#ff00ff" sx={{ fontSize: '0.65rem' }}>
+                {enhancementBreakdown.rydberg.toExponential(1)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Compression:</Typography>
+              <Typography variant="caption" color="#00ff88" sx={{ fontSize: '0.65rem' }}>
+                {enhancementBreakdown.compression.toExponential(1)}
+              </Typography>
+            </Box>
+          </Stack>
         </Paper>
       </Box>
       
