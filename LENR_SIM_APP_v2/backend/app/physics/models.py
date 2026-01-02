@@ -4,7 +4,7 @@ Physics model classes for LENR simulations based on the Unified LENR Theory
 
 from typing import Dict, Any, Optional, List, Tuple, Union
 from dataclasses import dataclass, field
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 import numpy as np
 
 
@@ -196,8 +196,9 @@ class FusionProduct(BaseModel):
     a: int = Field(..., description="Mass number of the product")
     branch_ratio: float = Field(..., description="Branching ratio for this product")
     
-    @validator('branch_ratio')
-    def validate_branch_ratio(cls, v):
+    @field_validator('branch_ratio')
+    @classmethod
+    def validate_branch_ratio(cls, v: float) -> float:
         if v <= 0:
             raise ValueError("Branch ratio must be positive")
         return v
@@ -213,50 +214,53 @@ class FusionReaction(BaseModel):
     products: List[FusionProduct] = Field(..., description="List of reaction products")
     q_value: float = Field(..., description="Energy release in MeV")
     
-    @validator('reactant1_z', 'reactant2_z')
-    def validate_atomic_numbers(cls, v):
+    @field_validator('reactant1_z', 'reactant2_z')
+    @classmethod
+    def validate_atomic_numbers(cls, v: int) -> int:
         if v < 0:
             raise ValueError("Atomic number must be non-negative")
         return v
         
-    @validator('reactant1_a', 'reactant2_a')
-    def validate_mass_numbers(cls, v):
+    @field_validator('reactant1_a', 'reactant2_a')
+    @classmethod
+    def validate_mass_numbers(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("Mass number must be positive")
         return v
         
-    @validator('q_value')
-    def validate_q_value(cls, v):
+    @field_validator('q_value')
+    @classmethod
+    def validate_q_value(cls, v: float) -> float:
         if v <= 0:
             raise ValueError("Q-value must be positive")
         return v
         
-    @validator('products')
-    def validate_products(cls, v, values):
+    @model_validator(mode='after')
+    def validate_products(self) -> 'FusionReaction':
         """Validate conservation laws for the reaction products"""
-        if not v:
+        if not self.products:
             raise ValueError("Must have at least one product")
             
         # Get reactant values
-        reactant1_z = values.get('reactant1_z')
-        reactant1_a = values.get('reactant1_a')
-        reactant2_z = values.get('reactant2_z')
-        reactant2_a = values.get('reactant2_a')
+        reactant1_z = self.reactant1_z
+        reactant1_a = self.reactant1_a
+        reactant2_z = self.reactant2_z
+        reactant2_a = self.reactant2_a
         
         if all(x is not None for x in [reactant1_z, reactant1_a, reactant2_z, reactant2_a]):
             # Check charge conservation
             total_z_in = reactant1_z + reactant2_z
-            total_z_out = sum(p.z * p.branch_ratio for p in v)
+            total_z_out = sum(p.z * p.branch_ratio for p in self.products)
             if abs(total_z_in - total_z_out) > 1e-10:
                 raise ValueError("Charge is not conserved in reaction")
                 
             # Check mass number conservation
             total_a_in = reactant1_a + reactant2_a
-            total_a_out = sum(p.a * p.branch_ratio for p in v)
+            total_a_out = sum(p.a * p.branch_ratio for p in self.products)
             if abs(total_a_in - total_a_out) > 1e-10:
                 raise ValueError("Mass number is not conserved in reaction")
                 
-        return v
+        return self
         
     def to_dict(self) -> Dict[str, Any]:
         """Convert reaction to dictionary format"""

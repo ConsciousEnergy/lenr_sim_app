@@ -6,7 +6,6 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { SimulationUpdateMessage } from './physics/types';
 
 // API base URL configuration
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';

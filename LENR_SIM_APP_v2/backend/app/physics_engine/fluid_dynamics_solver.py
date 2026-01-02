@@ -204,9 +204,12 @@ class FluidDynamicsSolver:
         for i in range(19):
             for d in range(3):
                 # Force contribution to distribution function
+                # Reshape e[i] for proper broadcasting with u (3, nx, ny, nz)
+                e_i_reshaped = self.e[i].reshape(3, 1, 1, 1)
+                ei_dot_u = np.sum(e_i_reshaped * self.u, axis=0)  # Shape: (nx, ny, nz)
                 self.f[i] += (1.0 - 0.5 * omega) * self.w[i] * (
                     3.0 * (self.e[i, d] - self.u[d]) + 
-                    9.0 * np.sum(self.e[i] * self.u, axis=0) * self.e[i, d]
+                    9.0 * ei_dot_u * self.e[i, d]
                 ) * self.force[d]
     
     def _streaming(self):

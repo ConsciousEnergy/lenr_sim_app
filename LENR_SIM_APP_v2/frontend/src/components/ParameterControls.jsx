@@ -23,7 +23,7 @@ import {
   QuestionCircleOutlined
 } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 
 /**
@@ -44,7 +44,7 @@ const ParameterControls = ({
   mode = 'basic'
 }) => {
   const [form] = Form.useForm();
-  const [parameters, setParameters] = useState({});
+  const [, setParameters] = useState({});
   const [formErrors, setFormErrors] = useState({});
   const [advancedMode, setAdvancedMode] = useState(mode === 'advanced' || mode === 'expert');
   const [expertMode, setExpertMode] = useState(mode === 'expert');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormControl,
@@ -6,16 +6,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  TextField,
   Slider,
   Typography,
   Switch,
   Button,
   Box,
-  Divider,
   Tooltip,
-  Card,
-  CardContent,
   IconButton,
   Collapse
 } from '@mui/material';
@@ -24,7 +20,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ReplayIcon from '@mui/icons-material/Replay';
-import SettingsIcon from '@mui/icons-material/Settings';
 
 /**
  * LENR Parameter Controls Component
@@ -63,21 +58,8 @@ const LENRParameterControls = ({
   };
 
   // Handle slider changes
-  const handleSliderChange = (paramName) => (event, newValue) => {
+  const handleSliderChange = (paramName) => (_event, newValue) => {
     handleChange(paramName, newValue);
-  };
-
-  // Handle input changes
-  const handleInputChange = (paramName) => (event) => {
-    const value = event.target.value;
-    
-    // Handle numeric inputs
-    if (!isNaN(value) && value !== '') {
-      handleChange(paramName, Number(value));
-    } else if (typeof value === 'string' || typeof value === 'boolean') {
-      // Handle string and boolean inputs
-      handleChange(paramName, value);
-    }
   };
 
   // Handle select changes
