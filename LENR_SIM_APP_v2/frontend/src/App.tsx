@@ -50,21 +50,6 @@ const LoadingFallback = () => (
   </Box>
 );
 
-// Route wrapper with error boundary
-interface RouteWrapperProps {
-  children: React.ReactNode;
-  darkMode: boolean;
-  toggleDarkMode: () => void;
-}
-
-const RouteWrapper: React.FC<RouteWrapperProps> = ({ children, darkMode, toggleDarkMode }) => (
-  <ErrorBoundary>
-    <AppLayoutFixed darkMode={darkMode} toggleDarkMode={toggleDarkMode}>
-      {children}
-    </AppLayoutFixed>
-  </ErrorBoundary>
-);
-
 // App with theme handling
 const AppContent = () => {
   const { isDarkMode, toggleTheme } = useTheme();
