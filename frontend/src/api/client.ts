@@ -1,7 +1,22 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// In production with subdirectory deployment, API is at /lenr-sim-app/api
+// In development, API is at localhost:8000
+const getApiUrl = (): string => {
+  // Check for Vite env variable first (preferred)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Check for CRA env variable
+  if (typeof process !== 'undefined' && process.env?.REACT_APP_API_BASE_URL) {
+    return process.env.REACT_APP_API_BASE_URL;
+  }
+  // Default for local development
+  return 'http://localhost:8000';
+};
+
+const API_URL = getApiUrl();
 const API_TIMEOUT = 30000; // 30 seconds
 
 // Error types

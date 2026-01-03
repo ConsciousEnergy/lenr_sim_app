@@ -14,6 +14,20 @@ import ThreeJsTestPage from './pages/ThreeJsTestPage';
 import VisualizationDebugPage from './pages/VisualizationDebugPage';
 import { CircularProgress, Box } from '@mui/material';
 
+// Get basename from environment for subdirectory deployment
+// In production: /lenr-sim-app, in development: empty string
+const getBasename = (): string => {
+  // Check for PUBLIC_URL environment variable (set during build)
+  const publicUrl = process.env.PUBLIC_URL || '';
+  // Extract pathname from PUBLIC_URL if it's a full URL, otherwise use as-is
+  try {
+    const url = new URL(publicUrl, window.location.origin);
+    return url.pathname.replace(/\/$/, ''); // Remove trailing slash
+  } catch {
+    return publicUrl.replace(/\/$/, '');
+  }
+};
+
 // Lazy load components that might be causing issues
 const LazyLatticeTest = lazy(() => import('./visualization/components/LatticeTest'));
 
@@ -74,7 +88,7 @@ const AppContent = () => {
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Router>
+        <Router basename={getBasename()}>
           <Navbar />
           <Routes>
             <Route path="/" element={

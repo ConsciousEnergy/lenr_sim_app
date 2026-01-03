@@ -1,0 +1,49 @@
+# LENR Simulation App - Frontend Dockerfile
+# Multi-stage build for optimized production image
+
+# Stage 1: Build the React application
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy source code
+COPY frontend/ ./
+
+# Set build-time environment variables for subdirectory deployment
+ARG PUBLIC_URL=/lenr-sim-app
+ARG REACT_APP_API_BASE_URL
+ARG VITE_API_URL
+
+ENV PUBLIC_URL=$PUBLIC_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve with nginx
+FROM nginx:alpine
+
+# Copy custom nginx config
+COPY deploy/nginx/frontend.conf /etc/nginx/conf.d/default.conf
+
+# Copy built files to nginx
+COPY --from=builder /app/build /usr/share/nginx/html/lenr-sim-app
+
+# Ensure proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost/lenr-sim-app/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
