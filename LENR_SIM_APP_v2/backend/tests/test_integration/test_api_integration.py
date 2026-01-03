@@ -26,7 +26,7 @@ class TestHealthEndpoints:
     
     def test_docs_available(self):
         """Test API documentation is available."""
-        response = client.get("/docs")
+        response = client.get("/api/docs")
         assert response.status_code == 200
 
 

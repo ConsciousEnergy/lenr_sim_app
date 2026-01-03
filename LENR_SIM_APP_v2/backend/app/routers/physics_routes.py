@@ -8,7 +8,7 @@ physics-related quantities using the Unified LENR Theory framework.
 
 from fastapi import APIRouter, HTTPException, Query, Body, Depends, BackgroundTasks
 from typing import List, Dict, Any, Optional, Tuple, Literal
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 import numpy as np
 import json
 import time
@@ -153,23 +153,19 @@ class ParameterSensitivityRequest(BaseModel):
     base_config: Dict[str, Any] = Field(..., description="Base configuration for enhancement calculation")
     mechanisms: Optional[List[str]] = Field(None, description="List of mechanisms to include in calculation")
     
-    @root_validator(skip_on_failure=True)
-    def validate_parameter_in_mechanism(cls, values):
+    @model_validator(mode='after')
+    def validate_parameter_in_mechanism(self) -> 'ParameterSensitivityRequest':
         """Validate that the parameter exists in the mechanism."""
-        if not values.get("base_config") or not values.get("mechanism") or not values.get("parameter_name"):
-            return values
+        if not self.base_config or not self.mechanism or not self.parameter_name:
+            return self
         
-        mechanism = values["mechanism"]
-        parameter = values["parameter_name"]
-        config = values["base_config"]
+        if self.mechanism not in self.base_config:
+            raise ValueError(f"Mechanism '{self.mechanism}' not found in configuration")
         
-        if mechanism not in config:
-            raise ValueError(f"Mechanism '{mechanism}' not found in configuration")
+        if self.parameter_name not in self.base_config[self.mechanism]:
+            raise ValueError(f"Parameter '{self.parameter_name}' not found in mechanism '{self.mechanism}'")
         
-        if parameter not in config[mechanism]:
-            raise ValueError(f"Parameter '{parameter}' not found in mechanism '{mechanism}'")
-        
-        return values
+        return self
 
 
 @router.post("/calculate/rate", response_model=FusionRateResponse)

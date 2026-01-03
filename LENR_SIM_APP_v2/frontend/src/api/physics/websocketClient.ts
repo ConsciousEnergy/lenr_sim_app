@@ -7,7 +7,6 @@
 
 import {
   WebSocketMessage,
-  SimulationUpdateMessage,
   ParameterUpdateMessage,
   ControlCommandMessage,
   ControlCommand

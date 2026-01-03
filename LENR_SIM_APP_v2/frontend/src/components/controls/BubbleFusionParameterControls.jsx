@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Paper,
@@ -11,13 +11,9 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Button,
   Box,
-  Grid,
-  Divider,
   Tooltip,
   IconButton,
-  Stack,
   Accordion,
   AccordionSummary,
   AccordionDetails

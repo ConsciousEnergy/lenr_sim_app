@@ -3,7 +3,6 @@
     "react-app"
   ],
   "rules": {
-    // Warn instead of error for unused variables
     "no-unused-vars": ["warn", {
       "varsIgnorePattern": "^_",
       "argsIgnorePattern": "^_"
@@ -12,11 +11,7 @@
       "varsIgnorePattern": "^_",
       "argsIgnorePattern": "^_"
     }],
-    
-    // Disable exhaustive-deps for complex hooks
     "react-hooks/exhaustive-deps": "warn",
-    
-    // Allow anonymous default exports for utils
     "import/no-anonymous-default-export": ["warn", {
       "allowObject": true,
       "allowArray": true,
@@ -25,11 +20,7 @@
       "allowAnonymousFunction": false,
       "allowLiteral": false
     }],
-    
-    // Warn for ref issues instead of error
     "react-hooks/rules-of-hooks": "error",
-    
-    // Turn off mixed operators warning
     "no-mixed-operators": "off"
   },
   "overrides": [
