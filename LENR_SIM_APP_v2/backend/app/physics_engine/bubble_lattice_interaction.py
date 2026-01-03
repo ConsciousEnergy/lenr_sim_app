@@ -222,6 +222,21 @@ class BubbleLatticeInteraction:
         - QED double-layer field
         - Pressure-induced barrier reduction
         """
+        breakdown = self._calculate_enhancement_breakdown(temperature, pressure, electric_field, compression)
+        return breakdown["total"]
+    
+    def _calculate_enhancement_breakdown(
+        self,
+        temperature: float,
+        pressure: float,
+        electric_field: float,
+        compression: float
+    ) -> Dict[str, float]:
+        """
+        Calculate enhancement factor breakdown by mechanism.
+        
+        Returns dictionary with individual enhancement factors.
+        """
         # Screening enhancement (simplified Debye model)
         n_e = self.lattice.electron_density
         lambda_d = np.sqrt(self.EPS0 * self.KB * temperature / (n_e * self.E_CHARGE ** 2))
@@ -237,12 +252,27 @@ class BubbleLatticeInteraction:
         # Compression enhancement (increased density)
         density_factor = compression ** 2
         
+        # Casimir enhancement (scales with 1/d⁴, simplified as compression²)
+        casimir_factor = compression ** 2
+        
+        # Rydberg Matter enhancement (simplified)
+        rydberg_factor = 1 + 0.5 * compression * (electric_field / 1e8)
+        
         # Loading ratio bonus
         loading_factor = 1 + 10 * (self.lattice.loading_ratio - 0.8) if self.lattice.loading_ratio > 0.8 else 1
         
         # Combined enhancement (multiplicative, capped)
-        total = screening_factor * qed_factor * density_factor * loading_factor
-        return min(total, 1e8)  # Cap at 10^8 per paper
+        total = screening_factor * qed_factor * density_factor * casimir_factor * rydberg_factor * loading_factor
+        
+        return {
+            "total": min(total, 1e8),
+            "screening": float(screening_factor),
+            "qed": float(qed_factor),
+            "casimir": float(casimir_factor),
+            "rydberg": float(rydberg_factor),
+            "compression": float(density_factor),
+            "loading": float(loading_factor)
+        }
     
     def _calculate_proton_phases(
         self,

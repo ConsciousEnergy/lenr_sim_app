@@ -21,6 +21,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { RealTimeDataDashboard, DashboardLatticeVisualization, SimulationStatisticsPanel } from '../visualizations';
 import { simulationApi } from '../../api/simulation';
 
+// Theoretical Enhancement Components (Sections 2.3.1, 2.8.1, 3.3, 5.1.1)
+import QEDVisualization from '../physics/QEDVisualization';
+import PhononNuclearPanel from '../physics/PhononNuclearPanel';
+import ThermodynamicsPanel from '../physics/ThermodynamicsPanel';
+import StatisticalAnalysisPanel from '../physics/StatisticalAnalysisPanel';
+
 // Interface for the TabPanel component
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -224,6 +230,10 @@ const PhysicsSimulationDashboard: React.FC<PhysicsSimulationDashboardProps> = ({
           <Tab label="Lattice" {...a11yProps(2)} />
           <Tab label="Statistics" {...a11yProps(3)} />
           <Tab label="Parameters" {...a11yProps(4)} />
+          <Tab label="QED Theory" {...a11yProps(5)} />
+          <Tab label="Phonon-Nuclear" {...a11yProps(6)} />
+          <Tab label="Thermodynamics" {...a11yProps(7)} />
+          <Tab label="Statistical Analysis" {...a11yProps(8)} />
         </Tabs>
       </Box>
       
@@ -362,6 +372,34 @@ const PhysicsSimulationDashboard: React.FC<PhysicsSimulationDashboardProps> = ({
               </Typography>
             )}
           </Paper>
+        </TabPanel>
+        
+        {/* QED Theory Tab - Section 2.3.1 */}
+        <TabPanel value={tabIndex} index={5}>
+          <Box sx={{ height: '100%', overflow: 'auto' }}>
+            <QEDVisualization />
+          </Box>
+        </TabPanel>
+        
+        {/* Phonon-Nuclear Coupling Tab - Section 2.8.1 */}
+        <TabPanel value={tabIndex} index={6}>
+          <Box sx={{ height: '100%', overflow: 'auto' }}>
+            <PhononNuclearPanel />
+          </Box>
+        </TabPanel>
+        
+        {/* Thermodynamics Tab - Section 3.3 */}
+        <TabPanel value={tabIndex} index={7}>
+          <Box sx={{ height: '100%', overflow: 'auto' }}>
+            <ThermodynamicsPanel />
+          </Box>
+        </TabPanel>
+        
+        {/* Statistical Analysis Tab - Section 5.1.1 */}
+        <TabPanel value={tabIndex} index={8}>
+          <Box sx={{ height: '100%', overflow: 'auto' }}>
+            <StatisticalAnalysisPanel />
+          </Box>
         </TabPanel>
       </Box>
     </Paper>

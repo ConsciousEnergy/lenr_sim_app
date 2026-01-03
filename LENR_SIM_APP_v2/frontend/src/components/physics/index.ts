@@ -16,6 +16,12 @@ export { default as ParameterGroupingDemo } from './ParameterGroupingDemo';
 export { default as ParameterDocumentation } from './ParameterDocumentation';
 export { default as ParameterDocumentationDemo } from './ParameterDocumentationDemo';
 
+// New Theoretical Enhancement Components (Section 2.3.1, 2.8.1, 3.3, 5.1.1)
+export { default as QEDVisualization } from './QEDVisualization';
+export { default as PhononNuclearPanel } from './PhononNuclearPanel';
+export { default as ThermodynamicsPanel } from './ThermodynamicsPanel';
+export { default as StatisticalAnalysisPanel } from './StatisticalAnalysisPanel';
+
 // Types
 export type { PhysicsParameter } from './PhysicsParameterInput';
 export type { PhysicsParameterGroupProps } from './PhysicsParameterGroup';
