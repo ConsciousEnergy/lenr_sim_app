@@ -76,20 +76,25 @@ const UnifiedBubbleLatticeVisualization = ({
   // Animation state
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
-  const [cycleProgress, setCycleProgress] = useState(0);
   const [collapseCount, setCollapseCount] = useState(0);
+  const [animationSpeed, setAnimationSpeed] = useState(0.5); // Default slower for better viewing
   
-  // Visualization toggles
+  // Visualization toggles - all features
   const [showLattice, setShowLattice] = useState(true);
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   const [showDoubleLayer, setShowDoubleLayer] = useState(true);
+  const [showHotspots, setShowHotspots] = useState(true);
+  const [showPressureWaves, setShowPressureWaves] = useState(true);
+  const [showShockwave, setShowShockwave] = useState(true);
   
-  // Animation parameters
-  const animationSpeedRef = useRef(1.0);
+  // Animation parameters - use refs for values that change every frame to avoid re-renders
+  const animationSpeedRef = useRef(0.5); // Slower default
   const bubbleRadiusRef = useRef(3.0);
   const normalizedTimeRef = useRef(0);
+  const cycleProgressRef = useRef(0); // Use ref to avoid re-render on every frame
+  const currentPhaseRef = useRef('EXPANSION');
   
   // Extract parameters with defaults
   const {
@@ -496,7 +501,7 @@ const UnifiedBubbleLatticeVisualization = ({
     });
   }, []);
 
-  // Animation update function
+  // Animation update function - optimized to avoid excessive re-renders
   const updateAnimation = useCallback((deltaTime) => {
     if (!isPlaying) return;
     
@@ -506,18 +511,21 @@ const UnifiedBubbleLatticeVisualization = ({
     normalizedTimeRef.current += (deltaTime * 1000 * speed) / cycleDuration;
     if (normalizedTimeRef.current >= 1) {
       normalizedTimeRef.current = 0;
+      // Use functional update to avoid stale closure
       setCollapseCount(prev => prev + 1);
       onCollapseEvent();
     }
     
     const normalizedTime = normalizedTimeRef.current;
-    setCycleProgress(normalizedTime);
+    cycleProgressRef.current = normalizedTime; // Update ref, not state
     
     const baseRadius = initialBubbleRadius;
     const { radius, phase } = calculateBubbleRadius(normalizedTime, baseRadius);
     bubbleRadiusRef.current = radius;
     
-    if (phase !== currentPhase) {
+    // Only update state when phase actually changes
+    if (phase !== currentPhaseRef.current) {
+      currentPhaseRef.current = phase;
       setCurrentPhase(phase);
       onPhaseChange(phase);
     }
@@ -746,10 +754,36 @@ const UnifiedBubbleLatticeVisualization = ({
   // Update visibility based on toggles
   useEffect(() => {
     if (latticeGroupRef.current) latticeGroupRef.current.visible = showLattice;
-    if (bubbleGroupRef.current) bubbleGroupRef.current.visible = showBubble;
+    if (bubbleGroupRef.current) {
+      bubbleGroupRef.current.visible = showBubble;
+      // Double layer visibility
+      const doubleLayer = bubbleGroupRef.current.getObjectByName('DoubleLayer');
+      const innerLayer = bubbleGroupRef.current.getObjectByName('InnerLayer');
+      if (doubleLayer) doubleLayer.visible = showDoubleLayer;
+      if (innerLayer) innerLayer.visible = showDoubleLayer;
+      // Pressure rings visibility
+      for (let i = 0; i < 3; i++) {
+        const ring = bubbleGroupRef.current.getObjectByName(`PressureRing${i}`);
+        if (ring) ring.visible = showPressureWaves;
+      }
+    }
     if (protonGroupRef.current) protonGroupRef.current.visible = showProtons;
     if (fieldGroupRef.current) fieldGroupRef.current.visible = showFieldLines;
-  }, [showLattice, showBubble, showProtons, showFieldLines]);
+    if (effectsGroupRef.current) {
+      // Hotspots visibility
+      effectsGroupRef.current.children.forEach((child) => {
+        if (child.name.startsWith('Hotspot')) {
+          child.visible = showHotspots;
+        }
+        if (child.name === 'CollapseFlash') {
+          child.visible = showHotspots;
+        }
+        if (child.name === 'Shockwave') {
+          child.visible = showShockwave;
+        }
+      });
+    }
+  }, [showLattice, showBubble, showProtons, showFieldLines, showDoubleLayer, showHotspots, showPressureWaves, showShockwave]);
 
   // Camera controls
   const handleZoomIn = () => {
@@ -839,9 +873,14 @@ const UnifiedBubbleLatticeVisualization = ({
             right: 10,
             bgcolor: 'rgba(20, 20, 40, 0.9)',
             borderRadius: 1,
-            p: 1
+            p: 1,
+            maxHeight: '80%',
+            overflowY: 'auto'
           }}
         >
+          <Typography variant="caption" color="cyan" sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}>
+            Visualization Layers
+          </Typography>
           <FormGroup>
             <FormControlLabel
               control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
@@ -852,12 +891,28 @@ const UnifiedBubbleLatticeVisualization = ({
               label={<Typography variant="caption" color="white">Bubble</Typography>}
             />
             <FormControlLabel
+              control={<Switch checked={showDoubleLayer} onChange={(e) => setShowDoubleLayer(e.target.checked)} size="small" color="info" />}
+              label={<Typography variant="caption" color="white">Double Layer</Typography>}
+            />
+            <FormControlLabel
               control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
               label={<Typography variant="caption" color="white">Protons</Typography>}
             />
             <FormControlLabel
               control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
               label={<Typography variant="caption" color="white">Fields</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showHotspots} onChange={(e) => setShowHotspots(e.target.checked)} size="small" color="error" />}
+              label={<Typography variant="caption" color="white">Hotspots</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showPressureWaves} onChange={(e) => setShowPressureWaves(e.target.checked)} size="small" color="primary" />}
+              label={<Typography variant="caption" color="white">Pressure Waves</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showShockwave} onChange={(e) => setShowShockwave(e.target.checked)} size="small" color="warning" />}
+              label={<Typography variant="caption" color="white">Shockwave</Typography>}
             />
           </FormGroup>
         </Paper>
@@ -884,33 +939,52 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small" 
           />
           <Typography variant="caption" color="white">
-            Cycle: {collapseCount} | Progress: {(cycleProgress * 100).toFixed(0)}%
+            Cycles: {collapseCount}
           </Typography>
         </Paper>
       </Box>
       
       {/* Playback controls */}
       <Paper sx={{ mt: 1, p: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => setIsPlaying(!isPlaying)}>
-            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton onClick={() => { normalizedTimeRef.current = 0; setCollapseCount(0); }}>
-            <RestartAltIcon />
-          </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Tooltip title={isPlaying ? "Pause" : "Play"}>
+            <IconButton onClick={() => setIsPlaying(!isPlaying)} color="primary">
+              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Reset">
+            <IconButton onClick={() => { 
+              normalizedTimeRef.current = 0; 
+              cycleProgressRef.current = 0;
+              currentPhaseRef.current = 'EXPANSION';
+              setCollapseCount(0); 
+              setCurrentPhase('EXPANSION');
+            }} color="secondary">
+              <RestartAltIcon />
+            </IconButton>
+          </Tooltip>
           
-          <Box sx={{ flex: 1, mx: 2 }}>
+          <Box sx={{ flex: 1, minWidth: 200, mx: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Animation Speed
+              Animation Speed: {animationSpeed.toFixed(1)}x (slower ← → faster)
             </Typography>
             <Slider
-              value={animationSpeedRef.current}
-              onChange={(_, val) => { animationSpeedRef.current = val; }}
-              min={0.1}
+              value={animationSpeed}
+              onChange={(_, val) => { 
+                setAnimationSpeed(val);
+                animationSpeedRef.current = val; 
+              }}
+              min={0.05}
               max={3}
-              step={0.1}
+              step={0.05}
               size="small"
               valueLabelDisplay="auto"
+              marks={[
+                { value: 0.1, label: '0.1x' },
+                { value: 0.5, label: '0.5x' },
+                { value: 1, label: '1x' },
+                { value: 2, label: '2x' },
+              ]}
             />
           </Box>
           
