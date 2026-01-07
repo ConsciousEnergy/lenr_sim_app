@@ -498,6 +498,65 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     
     Models electrodynamic ionic double-layer bubble collapse onto lattice-loaded
     materials, with proton phase transitions through force regimes.
+    
+    This endpoint simulates the core LENR mechanism where acoustic cavitation
+    creates extreme conditions at bubble collapse, potentially enabling
+    nuclear reactions through multiple enhancement mechanisms.
+    
+    ## Request Parameters
+    
+    ### Bubble Configuration (bubble)
+    - **initial_radius_um** (float, 0.1-100): Initial bubble radius in micrometers.
+      Typical values: 5-20 μm for sonoluminescence.
+    - **driving_pressure_bar** (float, 0.1-10): Acoustic driving pressure amplitude.
+      Higher values = more violent collapse.
+    - **frequency_khz** (float, 1-100): Acoustic frequency. 20-40 kHz typical for LENR.
+    - **ambient_temperature_k** (float, 200-500): Ambient liquid temperature in Kelvin.
+    
+    ### Material Configuration (material)
+    - **host_material** (str): "palladium", "nickel", or "titanium"
+    - **reactant** (str): "deuterium", "hydrogen", or "proton"
+    
+    ### Lattice Configuration (lattice)
+    - **loading_ratio** (float, 0-1): H/M or D/M atomic ratio. 0.9+ for LENR activity.
+    - **defect_density** (float, ≥0): Defect density in m⁻³. Higher = more reaction sites.
+    - **grain_size** (float, ≥1e-12): Grain size in meters.
+    - **surface_roughness** (float, ≥1e-12): Surface roughness in meters.
+    
+    ### Simulation Parameters
+    - **num_cycles** (int, 1-10): Number of acoustic cycles to simulate.
+    
+    ## Response Format
+    
+    ### collapse_results
+    - **min_radius_um**: Minimum radius achieved during collapse (μm)
+    - **max_temperature_k**: Peak temperature at collapse (K)
+    - **max_pressure_bar**: Peak pressure at collapse (bar)
+    - **compression_ratio**: Ratio of initial to minimum radius
+    - **collapse_time_us**: Time to reach minimum radius (μs)
+    - **peak_field_v_m**: Peak electric field at double layer (V/m)
+    - **peak_enhancement**: Total enhancement factor at collapse
+    
+    ### proton_phases
+    Distribution of protons across phase states:
+    - **FREE**: Electromagnetic force dominant
+    - **SCREENED**: Electron screening active
+    - **CAPTURE_READY**: Strong force becoming significant
+    - **NUCLEAR**: Nuclear reaction conditions met
+    
+    ### enhancement_timeline
+    List of enhancement factors over the bubble cycle, each containing:
+    - **time**: Time in seconds
+    - **phase**: Current collapse phase (EXPANSION, COLLAPSE, MINIMUM, REBOUND, RECOVERY)
+    - **radius**: Current bubble radius (m)
+    - **total_enhancement**: Combined enhancement factor
+    - **screening**, **qed**, **casimir**, **rydberg**, **compression**: Individual factors
+    
+    ### peak_conditions
+    Conditions at the moment of maximum enhancement:
+    - **temperature_k**, **pressure_gpa**, **electric_field_v_m**
+    - **enhancement_factor**: Peak total enhancement
+    - **enhancement_breakdown**: Detailed breakdown of all contributing factors
     """
     # #region agent log
     import time
@@ -776,16 +835,61 @@ async def bubble_lattice_websocket(websocket: WebSocket):
 
 @router.get("/bubble-lattice/instant")
 async def get_instant_conditions(
-    normalized_time: float = Query(default=0.5, ge=0, le=1),
-    initial_radius_um: float = Query(default=10.0),
-    driving_pressure_bar: float = Query(default=1.5),
-    frequency_khz: float = Query(default=20.0),
-    loading_ratio: float = Query(default=0.9)
+    normalized_time: float = Query(default=0.5, ge=0, le=1, description="Normalized time in cycle (0=start, 0.5=collapse, 1=recovery)"),
+    initial_radius_um: float = Query(default=10.0, ge=0.1, le=100, description="Initial bubble radius in micrometers"),
+    driving_pressure_bar: float = Query(default=1.5, ge=0.1, le=10, description="Acoustic driving pressure in bar"),
+    frequency_khz: float = Query(default=20.0, ge=1, le=100, description="Acoustic frequency in kHz"),
+    loading_ratio: float = Query(default=0.9, ge=0, le=1, description="H/M or D/M loading ratio")
 ):
     """
     Get instantaneous conditions at a specific point in the collapse cycle.
     
-    Useful for real-time visualization updates.
+    Useful for real-time visualization updates without running a full simulation.
+    Returns the bubble state, proton distribution, and enhancement factors
+    at any point during the acoustic cycle.
+    
+    ## Query Parameters
+    
+    - **normalized_time** (float, 0-1): Position in the acoustic cycle
+      - 0.0: Start of expansion phase
+      - 0.3: Mid-expansion
+      - 0.5: Peak collapse (minimum radius)
+      - 0.7: Rebound phase
+      - 1.0: Recovery (cycle complete)
+    
+    - **initial_radius_um** (float): Starting bubble radius in micrometers
+    - **driving_pressure_bar** (float): Acoustic pressure amplitude
+    - **frequency_khz** (float): Acoustic driving frequency
+    - **loading_ratio** (float): Hydrogen/deuterium loading in the lattice
+    
+    ## Response Format
+    
+    ```json
+    {
+        "normalized_time": 0.5,
+        "phase": "COLLAPSE",
+        "enhancement": {
+            "total": 1.5e6,
+            "screening": 100,
+            "qed": 15,
+            "casimir": 1.2,
+            "compression": 1000
+        },
+        "proton_distribution": {
+            "FREE": 0.1,
+            "SCREENED": 0.3,
+            "CAPTURE_READY": 0.4,
+            "NUCLEAR": 0.2
+        },
+        "conditions": {
+            "radius_um": 0.5,
+            "compression": 20.0,
+            "electric_field": 1e9,
+            "temperature": 5000,
+            "is_critical": true
+        }
+    }
+    ```
     """
     try:
         from app.physics_engine.bubble_lattice_interaction import (

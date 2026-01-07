@@ -48,11 +48,31 @@ class WKBTunnelingCalculator:
     """
     Calculate quantum tunneling probabilities using the WKB approximation.
     
-    The WKB approximation gives the tunneling probability as:
+    The WKB (Wentzel-Kramers-Brillouin) approximation gives the tunneling 
+    probability through a potential barrier as:
     
-        P = exp(-2 * integral from r1 to r2 of k(r) dr)
+        P = exp(-2γ)
         
-    where k(r) = sqrt(2*mu*(V(r) - E)) / hbar
+    where γ = ∫[r₁ to r₂] k(r) dr is the Gamow factor integral
+    
+    and k(r) = √(2μ(V(r) - E)) / ℏ is the local wave number in the 
+    classically forbidden region where V(r) > E.
+    
+    Boundary Conditions:
+    - r₁ (inner turning point): Nuclear radius, typically ~1-2 fm
+    - r₂ (outer turning point): Where V(r₂) = E (classical turning point)
+    
+    The integration is performed only in the classically forbidden region
+    where V(r) > E, ensuring k(r) is real and positive.
+    
+    For Coulomb barriers:
+    - At r → 0: V(r) → ∞ (pure Coulomb), cutoff at nuclear radius
+    - At r → r₂: V(r₂) = E, k(r₂) = 0 (smooth connection to classical region)
+    
+    References:
+    - Gamow, G. (1928). "Zur Quantentheorie des Atomkernes." Z. Phys. 51, 204
+    - Assenbaum, H.J. et al. (1987). "Effects of electron screening on 
+      low-energy fusion cross sections." Z. Phys. A 327, 461
     """
     
     def __init__(self):
@@ -258,35 +278,72 @@ class WKBTunnelingCalculator:
         """
         Calculate tunneling probability using numerical WKB integration.
         
-        P = exp(-2 * ∫ k(r) dr) where k(r) = sqrt(2*mu*(V(r)-E)) / hbar
+        The WKB tunneling probability is:
+        
+            P = exp(-2γ) where γ = ∫[r_min to r_max] k(r) dr
+            
+        and k(r) = √(2μ(V(r) - E_eff)) / ℏ
+        
+        Boundary Conditions:
+        - r_min: Inner boundary at nuclear radius (~1 fm = 1e-15 m)
+          This is where nuclear forces become important and the
+          Coulomb approximation breaks down.
+        
+        - r_max: Outer classical turning point where V(r_max) = E_eff
+          Beyond this point, the particle is in the classically allowed
+          region and propagates freely.
+        
+        Integration Region:
+        - Only integrates where V(r) > E_eff (classically forbidden)
+        - The integrand k(r) is set to 0 where V(r) ≤ E_eff
+        - Uses adaptive quadrature (scipy.integrate.quad) for accuracy
+        
+        Validity Conditions:
+        - r_max must be greater than r_min (barrier must exist)
+        - r_max < 1e-9 m (sanity check for atomic scales)
+        
+        Args:
+            z1, z2: Nuclear charges
+            mu: Reduced mass (kg)
+            energy_j: Center-of-mass energy (Joules)
+            potential_type: Potential model to use
+            screening_j: Screening energy (Joules)
+            
+        Returns:
+            Tunneling probability (dimensionless, between 0 and 1)
         """
         potential_func = self.potential_models.get(potential_type, self._coulomb_potential)
         
-        # Effective energy
+        # Effective energy (particle energy + screening enhancement)
         E_eff = energy_j + screening_j
         
-        # Find classical turning points
-        r_min = 1e-15  # Nuclear radius scale
+        # Define classical turning points
+        # Inner boundary: nuclear radius where Coulomb potential is cutoff
+        r_min = 1e-15  # ~1 fm (nuclear radius scale)
+        # Outer boundary: classical turning point where V(r) = E
         r_max = self._classical_turning_point(z1, z2, E_eff)
         
+        # Validate turning points
         if r_max <= r_min or r_max > 1e-9:
-            # Invalid turning points
+            # Invalid turning points - barrier doesn't exist or is unphysical
             return 1e-300
         
         def integrand(r):
+            """WKB integrand k(r) = √(2μ(V(r) - E)) / ℏ"""
             V = potential_func(r, z1, z2)
             diff = V - E_eff
             if diff <= 0:
+                # Outside classically forbidden region
                 return 0
             return np.sqrt(2 * mu * diff) / HBAR
         
-        # Numerical integration
+        # Numerical integration using adaptive quadrature
         try:
             integral, _ = integrate.quad(integrand, r_min, r_max, limit=100)
             probability = np.exp(-2 * integral)
-            return max(probability, 1e-300)
+            return max(probability, 1e-300)  # Prevent underflow
         except Exception:
-            # Fall back to Gamow approximation
+            # Fall back to analytic Gamow approximation on numerical failure
             return self._gamow_probability(z1, z2, mu, energy_j/KEV_TO_J, screening_j/KEV_TO_J)
     
     def _calculate_enhancement(

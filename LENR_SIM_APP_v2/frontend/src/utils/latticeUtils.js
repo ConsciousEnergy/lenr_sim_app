@@ -412,7 +412,8 @@ export const calculateLatticeStatistics = (latticeData) => {
     : 0;
   
   const maxQuantumEffect = points.reduce((max, point) => {
-    const effect = point.properties && point.properties.quantumEffect || 0;
+    // Use optional chaining for clarity and correct operator precedence
+    const effect = point.properties?.quantumEffect ?? 0;
     return effect > max ? effect : max;
   }, 0);
   

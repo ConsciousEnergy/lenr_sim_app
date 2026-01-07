@@ -520,7 +520,10 @@ async def mechanism_info(mechanism_name: str):
                          "leading to extended electron orbits, strong polarizability, and energy localization.",
             "key_parameters": ["principal_quantum_number", "temperature", "electric_field", "density"],
             "typical_enhancement": "10^3 - 10^10",
-            "references": ["Holmlid et al. (2015)", "Unified LENR Theory Sec. 2.1"]
+            "references": [
+                "Holmlid, L. & Olafsson, S. (2015). 'Spontaneous ejection of high-energy particles from ultra-dense deuterium D(0).' Int. J. Hydrogen Energy, 40(33), 10559-10567.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.1"
+            ]
         },
         "electron_screening": {
             "name": "Electron Screening Effects",
@@ -528,7 +531,10 @@ async def mechanism_info(mechanism_name: str):
                          "Coulomb barrier between reacting nuclei, effectively reducing the repulsion.",
             "key_parameters": ["atomic_number_1", "atomic_number_2", "electron_density", "temperature"],
             "typical_enhancement": "10^1 - 10^3",
-            "references": ["Assenbaum et al. (1987)", "Unified LENR Theory Sec. 2.2"]
+            "references": [
+                "Assenbaum, H.J., Langanke, K. & Rolfs, C. (1987). 'Effects of electron screening on low-energy fusion cross sections.' Z. Phys. A, 327, 461-468.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.2"
+            ]
         },
         "qed_effects": {
             "name": "Double-Layer QED Effects",
@@ -536,7 +542,10 @@ async def mechanism_info(mechanism_name: str):
                          "including vacuum polarization and modification of vacuum energy states.",
             "key_parameters": ["electric_field", "frequency", "temperature"],
             "typical_enhancement": "10^2 - 10^5",
-            "references": ["Preparata (1991)", "Unified LENR Theory Sec. 2.3"]
+            "references": [
+                "Preparata, G. (1991). 'A New Look at Solid-State Fractures, Particle Emission and Cold Nuclear Fusion.' Il Nuovo Cimento, 104A(8), 1259-1263.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.3"
+            ]
         },
         "casimir_forces": {
             "name": "Casimir Forces",
@@ -544,7 +553,10 @@ async def mechanism_info(mechanism_name: str):
                          "arising from quantum vacuum fluctuations and modifying local energy landscapes.",
             "key_parameters": ["separation", "area", "temperature"],
             "typical_enhancement": "10^1 - 10^3",
-            "references": ["Bordag et al. (2001)", "Unified LENR Theory Sec. 2.4"]
+            "references": [
+                "Bordag, M., Mohideen, U. & Mostepanenko, V.M. (2001). 'New developments in the Casimir effect.' Phys. Reports, 353(1-3), 1-205.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.4"
+            ]
         },
         "quantum_coherence": {
             "name": "Quantum Coherence Effects",
@@ -552,7 +564,10 @@ async def mechanism_info(mechanism_name: str):
                          "coupling and phase coherence across multiple atomic sites.",
             "key_parameters": ["temperature", "lattice_constant", "electric_field"],
             "typical_enhancement": "10^3 - 10^5",
-            "references": ["Preparata & Del Giudice (1993)", "Unified LENR Theory Sec. 2.5"]
+            "references": [
+                "Preparata, G. & Del Giudice, E. (1993). 'Coherent Electrodynamics of Multi-Mode Excitations of Polar Molecules.' Mod. Phys. Lett. B, 7(27), 1779-1788.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.5"
+            ]
         },
         "oppenheimer_phillips": {
             "name": "Oppenheimer-Phillips Process",
@@ -560,7 +575,10 @@ async def mechanism_info(mechanism_name: str):
                          "projectile to the target nucleus, bypassing the full Coulomb barrier.",
             "key_parameters": ["projectile_z", "target_z", "projectile_a", "target_a", "energy_kev"],
             "typical_enhancement": "10^2 - 10^4",
-            "references": ["Oppenheimer & Phillips (1935)", "Unified LENR Theory Sec. 2.6"]
+            "references": [
+                "Oppenheimer, J.R. & Phillips, M. (1935). 'Note on the Transmutation Function for Deuterons.' Phys. Rev., 48, 500-502.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.6"
+            ]
         },
         "bubble_collapse": {
             "name": "Bubble Collapse and Shock Effects",
@@ -568,7 +586,10 @@ async def mechanism_info(mechanism_name: str):
                          "including high temperatures, pressures, and energy focusing.",
             "key_parameters": ["initial_radius", "driving_pressure", "frequency"],
             "typical_enhancement": "10^3 - 10^30",
-            "references": ["Taleyarkhan et al. (2002)", "Unified LENR Theory Sec. 2.7"]
+            "references": [
+                "Taleyarkhan, R.P. et al. (2002). 'Evidence for Nuclear Emissions During Acoustic Cavitation.' Science, 295(5561), 1868-1873.",
+                "Acs, D. et al. (2025). 'A Unified Theoretical Framework for Low-Energy Nuclear Reactions.' Sec. 2.7"
+            ]
         }
     }
     
