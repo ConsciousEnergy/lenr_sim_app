@@ -126,10 +126,12 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   
-  // Animation parameters
+  // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
   const bubbleRadiusRef = useRef(3.0);
   const normalizedTimeRef = useRef(0);
+  const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
+  const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
   
   // Extract parameters with defaults
   const {
@@ -1416,7 +1418,9 @@ const UnifiedBubbleLatticeVisualization = ({
     setCurrentEnhancement(enhancements.total);
     setEnhancementBreakdown(enhancements);
     
-    if (phase !== currentPhase) {
+    // Use ref to track phase changes to avoid stale closure
+    if (phase !== currentPhaseRef.current) {
+      currentPhaseRef.current = phase;
       setCurrentPhase(phase);
       onPhaseChange(phase);
     }
@@ -1975,10 +1979,15 @@ const UnifiedBubbleLatticeVisualization = ({
         console.error('Animation update error:', error);
     }
   }, [
-    isPlaying, frequency, initialBubbleRadius, currentPhase,
+    isPlaying, frequency, initialBubbleRadius,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo
-  ]);
+  ]); // Note: currentPhase removed - using currentPhaseRef to avoid scene re-initialization
+
+  // Store updateAnimation in ref to avoid triggering scene re-initialization
+  useEffect(() => {
+    updateAnimationRef.current = updateAnimation;
+  }, [updateAnimation]);
 
   // Initialize Three.js scene
   useEffect(() => {
@@ -2035,12 +2044,15 @@ const UnifiedBubbleLatticeVisualization = ({
     createRydbergOrbitals(scene);
     createHaloElectrons(scene);
     
-    // Animation loop
+    // Animation loop - uses ref to avoid re-initialization when animation function changes
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate);
       
       const deltaTime = clockRef.current.getDelta();
-      updateAnimation(deltaTime);
+      // Use ref to call latest animation function without causing re-init
+      if (updateAnimationRef.current) {
+        updateAnimationRef.current(deltaTime);
+      }
       
       controls.update();
       renderer.render(scene, camera);
@@ -2080,7 +2092,9 @@ const UnifiedBubbleLatticeVisualization = ({
       
       renderer.dispose();
     };
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, updateAnimation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons]);
+  // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
 
   // Update visibility based on toggles - immediate update with force refresh
   useEffect(() => {

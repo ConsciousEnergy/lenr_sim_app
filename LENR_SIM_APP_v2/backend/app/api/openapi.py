@@ -47,8 +47,8 @@ def custom_openapi(app: FastAPI):
     # Enhanced info with contact and license details
     openapi_schema["info"]["contact"] = {
         "name": "LENR Simulation Team",
-        "url": "https://github.com/your-org/LENR_SIM_APP",
-        "email": "support@lenrsimulation.example.com"
+        "url": "https://github.com/ConsciousEnergy/lenr_sim_app",
+        "email": "support@consciousenergy.io"
     }
     
     openapi_schema["info"]["license"] = {

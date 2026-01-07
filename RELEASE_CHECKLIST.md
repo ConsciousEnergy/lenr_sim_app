@@ -173,8 +173,11 @@ This checklist ensures all requirements are met before the beta launch of LENR S
 
 ### Local Verification
 
+> ⚠️ **WARNING**: The following commands delete directories. Only run these in the project directory, never from root or home directory. Verify your current directory with `pwd` before running.
+
 ```bash
 # 1. Clean install test
+# CAUTION: This removes node_modules and venv directories - ensure you're in the correct project directory
 rm -rf node_modules venv
 # Follow INSTALL.md from scratch
 

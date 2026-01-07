@@ -29,33 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ErrorBoundary now wraps root App component
 - Test configuration updated for better organization
 
-## [0.2.0-beta] - 2025-12-17
-
-### Changed
-- **Codebase Organization**: Reorganized files for Beta v0.2.0 release
-- Moved historical status/report documents to `LENR_SIM_APP_v1(Deprecated)/docs/`
-- Moved deprecated components and temporary files to deprecated folder
-- Removed duplicate nested directories and files
-- Updated `.gitignore` to properly exclude all environment files and sensitive information
-- Organized documentation files into appropriate locations
-
-### Security
-- Enhanced `.gitignore` patterns to exclude all `.env*` files and sensitive patterns
-- Verified no hardcoded secrets in codebase (only placeholders)
-
-### Removed
-- Duplicate startup scripts (`start_app_fixed.bat`, `start.bat`, `start_safe_mode.ps1`)
-- Nested duplicate directory `LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/`
-- Temporary files (`temp_applayoutfix.jsx`, `App_Merged.tsx`)
-- Historical documentation files (moved to deprecated folder)
-
-### Moved to Deprecated
-- Historical status reports (15+ files)
-- Deprecated components (`EnhancedFusionPanel.js`)
-- Historical fix documentation (6+ files)
-- Temporary and merged files
-
-## [0.3.0-beta] - 2025-01-15
+## [0.3.0-beta] - 2026-01-07
 
 ### Added
 - Multi-physics coupling framework
@@ -89,6 +63,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import errors and path issues
 - Test configuration problems
 
+## [0.2.0-beta] - 2025-12-17
+
+### Changed
+- **Codebase Organization**: Reorganized files for Beta v0.2.0 release
+- Moved historical status/report documents to `LENR_SIM_APP_v1(Deprecated)/docs/`
+- Moved deprecated components and temporary files to deprecated folder
+- Removed duplicate nested directories and files
+- Updated `.gitignore` to properly exclude all environment files and sensitive information
+- Organized documentation files into appropriate locations
+
+### Security
+- Enhanced `.gitignore` patterns to exclude all `.env*` files and sensitive patterns
+- Verified no hardcoded secrets in codebase (only placeholders)
+
+### Removed
+- Duplicate startup scripts (`start_app_fixed.bat`, `start.bat`, `start_safe_mode.ps1`)
+- Nested duplicate directory `LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/`
+- Temporary files (`temp_applayoutfix.jsx`, `App_Merged.tsx`)
+- Historical documentation files (moved to deprecated folder)
+
+### Moved to Deprecated
+- Historical status reports (15+ files)
+- Deprecated components (`EnhancedFusionPanel.js`)
+- Historical fix documentation (6+ files)
+- Temporary and merged files
+
 ## [0.2.0] - 2024-12-01
 
 ### Added
@@ -116,6 +116,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Focus**: Beta launch preparation
 - **Key Features**: Multi-physics coupling, comprehensive testing, performance optimization
 - **Status**: Ready for beta testing
+
+### v0.2.0-beta
+- **Focus**: Codebase organization
+- **Key Features**: File reorganization, security enhancements, cleanup
+- **Status**: Stable
 
 ### v0.2.0
 - **Focus**: Core functionality
@@ -231,9 +236,9 @@ See CONTRIBUTORS.md for a list of contributors.
 
 ## Links
 
-- [GitHub Repository](https://github.com/your-org/LENR_SIM_APP)
-- [Documentation](https://github.com/your-org/LENR_SIM_APP/docs)
-- [Issue Tracker](https://github.com/your-org/LENR_SIM_APP/issues)
+- [GitHub Repository](https://github.com/ConsciousEnergy/lenr_sim_app)
+- [Documentation](https://github.com/ConsciousEnergy/lenr_sim_app/tree/main/docs)
+- [Issue Tracker](https://github.com/ConsciousEnergy/lenr_sim_app/issues)
 
 ---
 

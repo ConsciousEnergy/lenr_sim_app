@@ -97,7 +97,7 @@ LENR_ENVIRONMENT=production
 
 ## Security Reporting
 
-If you discover a security vulnerability within LENR_SIM_APP, please send an email to security@example.com. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within LENR_SIM_APP, please report it through our [GitHub Security Advisory](https://github.com/ConsciousEnergy/lenr_sim_app/security/advisories/new). All security vulnerabilities will be promptly addressed.
 
 ## Future Security Roadmap
 

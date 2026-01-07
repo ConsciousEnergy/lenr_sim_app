@@ -728,6 +728,7 @@ function Dashboard() {
   const [tabValue, setTabValue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [latticeAtoms, setLatticeAtoms] = useState([]);
+  const latticeAtomsRef = useRef([]); // Ref to avoid stale closure in animation loop
   
   // New simulation control states
   const [isSimulationRunning, setIsSimulationRunning] = useState(true);
@@ -749,6 +750,7 @@ function Dashboard() {
 
   // Add state for tracking errors
   const [visualizationError, setVisualizationError] = useState(null);
+  const visualizationErrorRef = useRef(null); // Ref to avoid stale closure in setTimeout
 
   // Add state for enhanced fusion data
   const [enhancedFusionData, setEnhancedFusionData] = useState(null);
@@ -803,8 +805,9 @@ function Dashboard() {
         }
         
         // Update lattice atom rotations based on simulation speed
+        // Use ref to avoid stale closure - latticeAtoms may change during animation
         if (rotationEnabled && simulationSpeed > 0) {
-          latticeAtoms.forEach(atom => {
+          latticeAtomsRef.current.forEach(atom => {
             if (atom.userData.type === 'electron') {
               // Rotate electron clouds
               atom.rotation.y += 0.2 * simulationSpeed * deltaTime;
@@ -859,8 +862,8 @@ function Dashboard() {
       stopSimulation();
     }
     
-    // Reset positions and rotations
-    latticeAtoms.forEach(atom => {
+    // Reset positions and rotations - use ref for current atoms
+    latticeAtomsRef.current.forEach(atom => {
       if (atom.userData.originalPosition) {
         atom.position.copy(atom.userData.originalPosition);
       }
@@ -1052,6 +1055,7 @@ function Dashboard() {
 
       logger.info(`Created placeholder lattice with ${newLatticeAtoms.length} atoms`);
       setLatticeAtoms(newLatticeAtoms);
+      latticeAtomsRef.current = newLatticeAtoms; // Keep ref in sync
       setIsLoading(false);
       
       // Start animation if it should be running
@@ -1267,6 +1271,7 @@ function Dashboard() {
       
       logger.info(`Created Rydberg visualization with ${newLatticeAtoms.length} elements`);
       setLatticeAtoms(newLatticeAtoms);
+      latticeAtomsRef.current = newLatticeAtoms; // Keep ref in sync
       setIsLoading(false);
       
       // Start animation if it should be running
@@ -1281,13 +1286,15 @@ function Dashboard() {
       });
       // Fallback to placeholder if something goes wrong
       setIsLoading(false);
-      setVisualizationError('Failed to update 3D visualization: ' + error.message);
+      const errorMsg = 'Failed to update 3D visualization: ' + error.message;
+      setVisualizationError(errorMsg);
+      visualizationErrorRef.current = errorMsg; // Update ref for closure access
       
       // Wait a moment before trying the fallback to avoid potential recursive errors
       setTimeout(() => {
         try {
-          // Only try fallback if we haven't already set visualization error
-          if (!visualizationError) {
+          // Use ref to check current error state (avoids stale closure)
+          if (!visualizationErrorRef.current) {
             createPlaceholderLattice();
           }
         } catch (fallbackError) {
@@ -1344,17 +1351,14 @@ function Dashboard() {
     
     rendererRef.current.setPixelRatio(pixelRatios[quality]);
     
-    // If we've reduced quality significantly, force a garbage collection
+    // If we've reduced quality significantly, cleanup resources
     if (quality === 'low') {
       // Cleanup any resources we can dispose
       if (resourceManagerRef.current) {
         resourceManagerRef.current.cleanup();
       }
-      
-      // Try to force garbage collection by nullifying temporary objects and arrays
-      // This doesn't directly trigger GC but helps the browser recognize unused memory
-      const tempArray = new Array(1000).fill({}).map((_, i) => ({ data: new Array(1000).fill(i) }));
-      tempArray.length = 0;
+      // Note: Removed fake GC trigger - creating and discarding large arrays is counterproductive
+      // and doesn't actually help garbage collection. The browser's GC is automatic.
     }
     
     // Update visualization with new quality settings if needed
@@ -1589,6 +1593,7 @@ function Dashboard() {
         // Force scene recreation by clearing lattice atoms
         clearLatticeAtoms();
         setLatticeAtoms([]);
+        latticeAtomsRef.current = []; // Keep ref in sync
         
         // Reset camera
         if (cameraRef.current) {
@@ -1659,7 +1664,9 @@ function Dashboard() {
         
         // Clear state
         setLatticeAtoms([]);
+        latticeAtomsRef.current = []; // Keep ref in sync
         setVisualizationError(null);
+        visualizationErrorRef.current = null; // Keep ref in sync
         
         // Clear refs
         rendererRef.current = null;
