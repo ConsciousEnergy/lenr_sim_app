@@ -1,4 +1,4 @@
-/**
+﻿/**
  * QEDVisualization Component
  */
 import React from 'react';

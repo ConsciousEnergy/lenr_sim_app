@@ -5,10 +5,12 @@ Provides endpoints for the unified LENR theory simulation,
 implementing all mechanisms from the theoretical framework paper.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
+import asyncio
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -486,7 +488,7 @@ class BubbleLatticeResponse(BaseModel):
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
-    peak_conditions: Dict[str, float]
+    peak_conditions: Dict[str, Any]  # Changed from Dict[str, float] to allow enhancement_breakdown dict
 
 
 @router.post("/bubble-lattice", response_model=BubbleLatticeResponse)
@@ -497,7 +499,71 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     Models electrodynamic ionic double-layer bubble collapse onto lattice-loaded
     materials, with proton phase transitions through force regimes.
     """
+    # #region agent log
+    import time
     try:
+        with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"C","location":"unified_simulation.py:494","message":"Endpoint called","data":{"path":"/bubble-lattice","method":"POST"},"timestamp":int(time.time()*1000)})+"\n")
+            f.flush()
+    except Exception as e:
+        logger.error(f"Failed to write debug log: {e}")
+    # #endregion
+    try:
+        # Input validation
+        if request.bubble.initial_radius_um <= 0 or request.bubble.initial_radius_um > 1000:
+            raise HTTPException(
+                status_code=400,
+                detail="Initial bubble radius must be between 0 and 1000 μm"
+            )
+        
+        if request.bubble.driving_pressure_bar < 0 or request.bubble.driving_pressure_bar > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Driving pressure must be between 0 and 10 bar"
+            )
+        
+        if request.bubble.frequency_khz < 1 or request.bubble.frequency_khz > 100:
+            raise HTTPException(
+                status_code=400,
+                detail="Frequency must be between 1 and 100 kHz"
+            )
+        
+        if request.bubble.ambient_temperature_k < 0 or request.bubble.ambient_temperature_k > 2000:
+            raise HTTPException(
+                status_code=400,
+                detail="Temperature must be between 0 and 2000 K"
+            )
+        
+        if request.lattice.loading_ratio < 0 or request.lattice.loading_ratio > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Loading ratio must be between 0 and 1"
+            )
+        
+        if request.lattice.defect_density < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Defect density must be non-negative"
+            )
+        
+        if request.lattice.surface_roughness < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Surface roughness must be non-negative"
+            )
+        
+        if request.material.host_material not in ['palladium', 'nickel', 'titanium']:
+            raise HTTPException(
+                status_code=400,
+                detail="Host material must be one of: palladium, nickel, titanium"
+            )
+        
+        if request.material.reactant not in ['deuterium', 'hydrogen', 'proton']:
+            raise HTTPException(
+                status_code=400,
+                detail="Reactant must be one of: deuterium, hydrogen, proton"
+            )
+        
         from app.physics_engine.bubble_lattice_interaction import (
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
@@ -523,15 +589,31 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
         
-        # Generate enhancement timeline
+        # Calculate enhancement breakdown at peak conditions
+        peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
+            collapse_result.max_temperature,
+            collapse_result.max_pressure,
+            collapse_result.double_layer_field_peak,
+            collapse_result.compression_ratio
+        )
+        
+        # Generate enhancement timeline with breakdown
         import numpy as np
         timeline = []
         for t in np.linspace(0, 1, 50):
             instant = model.calculate_instantaneous_enhancement(t)
+            # Calculate breakdown for this time point
+            instant_breakdown = model._calculate_enhancement_breakdown(
+                instant["conditions"]["temperature"],
+                request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2,
+                instant["conditions"]["electric_field"],
+                instant["conditions"]["compression"]
+            )
             timeline.append({
                 "normalized_time": float(t),
                 "phase": instant["phase"],
                 "enhancement": float(instant["enhancement"]),
+                "enhancement_breakdown": instant_breakdown,
                 "proton_distribution": instant["proton_distribution"],
                 "radius_factor": float(instant["conditions"]["radius_factor"]),
                 "temperature": float(instant["conditions"]["temperature"]),
@@ -555,13 +637,128 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "temperature_k": collapse_result.max_temperature,
                 "pressure_gpa": collapse_result.max_pressure / 1e9,
                 "electric_field_v_m": collapse_result.double_layer_field_peak,
-                "enhancement_factor": collapse_result.enhancement_factor
+                "enhancement_factor": collapse_result.enhancement_factor,
+                "enhancement_breakdown": peak_enhancement_breakdown
             }
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors)
+        raise
+    except ValueError as e:
+        # Handle value errors (invalid physics parameters)
+        logger.error(f"Invalid physics parameters: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid physics parameters: {str(e)}")
     except Exception as e:
-        logger.error(f"Bubble-lattice simulation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle unexpected errors
+        logger.error(f"Bubble-lattice simulation error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Simulation failed: {str(e)}. Please check parameters and try again."
+        )
+
+
+@router.websocket("/bubble-lattice/stream")
+async def bubble_lattice_websocket(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time bubble-lattice simulation updates.
+    
+    Streams physics data (enhancement factors, phase transitions, field strengths)
+    in real-time as the simulation progresses.
+    
+    Client should send initial parameters as JSON:
+    {
+        "bubble": {...},
+        "material": {...},
+        "lattice": {...},
+        "num_cycles": 2
+    }
+    """
+    await websocket.accept()
+    logger.info("WebSocket connection established for bubble-lattice simulation")
+    
+    try:
+        # Receive initial parameters
+        params = await websocket.receive_json()
+        
+        from app.physics_engine.bubble_lattice_interaction import (
+            BubbleLatticeInteraction, BubbleParameters, LatticeParameters
+        )
+        
+        # Create parameters
+        bubble_params = BubbleParameters(
+            initial_radius=params["bubble"]["initial_radius_um"] * 1e-6,
+            driving_pressure=params["bubble"]["driving_pressure_bar"] * 1e5,
+            frequency=params["bubble"]["frequency_khz"] * 1e3,
+            ambient_temperature=params["bubble"]["ambient_temperature_k"]
+        )
+        
+        lattice_params = LatticeParameters(
+            host_material=params["material"]["host_material"],
+            loading_ratio=params["lattice"]["loading_ratio"],
+            defect_density=params["lattice"].get("defect_density", 1e16),
+            surface_roughness=params["lattice"].get("surface_roughness", 5e-9)
+        )
+        
+        # Create model
+        model = BubbleLatticeInteraction(bubble_params, lattice_params)
+        
+        # Stream real-time updates
+        num_points = 100  # Points per cycle
+        num_cycles = params.get("num_cycles", 2)
+        
+        for cycle in range(num_cycles):
+            for i in range(num_points):
+                normalized_time = (cycle * num_points + i) / (num_cycles * num_points)
+                if normalized_time > 1.0:
+                    normalized_time = normalized_time % 1.0
+                
+                # Calculate instantaneous conditions
+                instant = model.calculate_instantaneous_enhancement(normalized_time)
+                breakdown = model._calculate_enhancement_breakdown(
+                    instant["conditions"]["temperature"],
+                    params["bubble"]["ambient_temperature_k"] * 101325 * instant["conditions"]["compression"] ** 4.2,
+                    instant["conditions"]["electric_field"],
+                    instant["conditions"]["compression"]
+                )
+                
+                # Send update
+                await websocket.send_json({
+                    "type": "physics_update",
+                    "cycle": cycle,
+                    "normalized_time": normalized_time,
+                    "phase": instant["phase"],
+                    "enhancement": float(instant["enhancement"]),
+                    "enhancement_breakdown": breakdown,
+                    "proton_distribution": instant["proton_distribution"],
+                    "conditions": {
+                        "radius_factor": float(instant["conditions"]["radius_factor"]),
+                        "compression": float(instant["conditions"]["compression"]),
+                        "temperature": float(instant["conditions"]["temperature"]),
+                        "electric_field": float(instant["conditions"]["electric_field"])
+                    }
+                })
+                
+                # Small delay to prevent overwhelming the client
+                await asyncio.sleep(0.05)  # ~20 updates per second
+        
+        # Send completion message
+        await websocket.send_json({
+            "type": "simulation_complete",
+            "message": "Simulation finished"
+        })
+        
+    except WebSocketDisconnect:
+        logger.info("WebSocket disconnected for bubble-lattice simulation")
+    except Exception as e:
+        logger.error(f"WebSocket error in bubble-lattice simulation: {e}", exc_info=True)
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "message": str(e)
+            })
+        except:
+            pass
 
 
 @router.get("/bubble-lattice/instant")
@@ -607,6 +804,12 @@ async def get_instant_conditions(
             }
         }
         
+    except ValueError as e:
+        logger.error(f"Invalid parameters for instant conditions: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
     except Exception as e:
-        logger.error(f"Instant conditions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Instant conditions error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to calculate instant conditions: {str(e)}"
+        )

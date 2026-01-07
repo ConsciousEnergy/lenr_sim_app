@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ThermodynamicsPanel Component
  */
 import React from 'react';

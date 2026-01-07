@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StatisticalAnalysisPanel Component
  */
 import React from 'react';

@@ -245,6 +245,11 @@ export class ProtonPhaseSystem {
       attractionStrength = 0.1
     } = conditions;
 
+    // Reuse vector objects to avoid allocations
+    const tempVector = new THREE.Vector3();
+    const isCollapsePhase = collapsePhase === 'COLLAPSE' || collapsePhase === 'MINIMUM';
+    const attractionStep = attractionStrength * deltaTime * 60;
+
     this.protons.forEach((proton) => {
       const data = proton.userData;
       
@@ -254,31 +259,37 @@ export class ProtonPhaseSystem {
       }
       
       // Position behavior based on phase
-      if (collapsePhase === 'COLLAPSE' || collapsePhase === 'MINIMUM') {
-        // Attract protons toward lattice during collapse
-        const towardLattice = latticeCenter.clone().sub(proton.position).normalize();
-        proton.position.add(towardLattice.multiplyScalar(attractionStrength * deltaTime * 60));
+      if (isCollapsePhase) {
+        // Attract protons toward lattice during collapse (reuse temp vector)
+        tempVector.copy(latticeCenter).sub(proton.position).normalize();
+        proton.position.addScaledVector(tempVector, attractionStep);
         
-        // Add turbulence during collapse
-        proton.position.x += Math.sin(this.time * 10 + data.oscillationPhase) * 0.01;
-        proton.position.z += Math.cos(this.time * 10 + data.oscillationPhase) * 0.01;
+        // Add turbulence during collapse (pre-calculate sin/cos)
+        const turbulencePhase = this.time * 10 + data.oscillationPhase;
+        proton.position.x += Math.sin(turbulencePhase) * 0.01;
+        proton.position.z += Math.cos(turbulencePhase) * 0.01;
       } else {
         // Return toward base position during expansion/recovery
         proton.position.lerp(data.basePosition, 0.02);
         
-        // Gentle oscillation
-        proton.position.x += Math.sin(this.time * 2 + data.oscillationPhase) * 0.002;
-        proton.position.y += Math.cos(this.time * 2 + data.oscillationPhase) * 0.002;
+        // Gentle oscillation (pre-calculate phase)
+        const oscillationPhase = this.time * 2 + data.oscillationPhase;
+        proton.position.x += Math.sin(oscillationPhase) * 0.002;
+        proton.position.y += Math.cos(oscillationPhase) * 0.002;
       }
       
       // Apply velocity with damping
       proton.position.add(data.velocity);
       data.velocity.multiplyScalar(0.99);
       
-      // Pulse effect for NUCLEAR state
+      // Pulse effect for NUCLEAR state (only update if state is NUCLEAR)
       if (data.state === 'NUCLEAR') {
         const pulse = Math.sin(this.time * 20) * 0.3 + 1;
-        proton.material.emissiveIntensity = PROTON_STATES.NUCLEAR.emissiveIntensity * pulse;
+        const newIntensity = PROTON_STATES.NUCLEAR.emissiveIntensity * pulse;
+        // Only update if changed significantly (reduce material property updates)
+        if (Math.abs(proton.material.emissiveIntensity - newIntensity) > 0.01) {
+          proton.material.emissiveIntensity = newIntensity;
+        }
       }
     });
   }
