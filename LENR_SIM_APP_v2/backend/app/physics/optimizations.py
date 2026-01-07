@@ -320,4 +320,175 @@ def optimized_integrated_tunneling(
             "include_coherent": include_coherent,
             "include_electron_screening": include_electron_screening
         }
-    } 
+    }
+
+
+@vectorize(['float64(float64, float64, float64)'])
+def vectorized_cross_section(
+    energy_ev: float,
+    s_factor: float,
+    sommerfeld_param: float
+) -> float:
+    """
+    Vectorized implementation of nuclear cross section calculation.
+    
+    σ(E) = S(E)/E * exp(-2πη)
+    
+    Args:
+        energy_ev: Energy in eV
+        s_factor: Astrophysical S-factor in keV·b
+        sommerfeld_param: Sommerfeld parameter
+        
+    Returns:
+        Cross section in barns
+    """
+    if energy_ev <= 0:
+        return 0.0
+    
+    # Convert energy to keV for S-factor
+    energy_kev = energy_ev / 1000.0
+    
+    # Calculate Gamow factor
+    gamow_factor = 2 * np.pi * sommerfeld_param
+    
+    # Limit to prevent overflow
+    if gamow_factor > 700:
+        return 0.0
+    
+    # Cross section: σ = S(E)/E * exp(-2πη)
+    cross_section = (s_factor / energy_kev) * np.exp(-gamow_factor)
+    
+    return cross_section
+
+
+@jit(nopython=True)
+def optimized_maxwell_boltzmann(
+    energy_ev: float,
+    temperature: float
+) -> float:
+    """
+    JIT-compiled Maxwell-Boltzmann distribution calculation.
+    
+    f(E) = 2π/(πkT)^(3/2) * √E * exp(-E/kT)
+    
+    Args:
+        energy_ev: Energy in eV
+        temperature: Temperature in Kelvin
+        
+    Returns:
+        Maxwell-Boltzmann distribution value
+    """
+    # kT in eV
+    kt_ev = 8.617333262e-5 * temperature  # KB in eV/K * T
+    
+    if energy_ev <= 0 or kt_ev <= 0:
+        return 0.0
+    
+    # Exponent limit to prevent overflow
+    exp_arg = -energy_ev / kt_ev
+    if exp_arg < -700:
+        return 0.0
+    
+    # Normalization factor: 2π/(πkT)^(3/2)
+    norm = 2 * np.pi / (np.pi * kt_ev) ** 1.5
+    
+    return norm * np.sqrt(energy_ev) * np.exp(exp_arg)
+
+
+def optimized_reaction_rate(
+    temperature: float,
+    density: float,
+    z1: int,
+    z2: int,
+    a1: int,
+    a2: int,
+    s_factor: float = 5.5e-25,  # keV·b for D-D
+    energy_range_kev: Tuple[float, float] = (0.1, 100.0),
+    n_points: int = 1000,
+    enhancement_factor: float = 1.0
+) -> Dict[str, Any]:
+    """
+    Optimized calculation of thermonuclear reaction rate.
+    
+    R = n1 * n2 * <σv>
+    
+    where <σv> is the thermally averaged cross section times velocity.
+    
+    Args:
+        temperature: Temperature in Kelvin
+        density: Number density in m^-3
+        z1, z2: Atomic numbers
+        a1, a2: Mass numbers
+        s_factor: Astrophysical S-factor in keV·b
+        energy_range_kev: Energy range for integration
+        n_points: Number of integration points
+        enhancement_factor: Enhancement factor from screening etc.
+        
+    Returns:
+        Dictionary with reaction rate and intermediate values
+    """
+    # Calculate reduced mass
+    mass1 = a1 * const.u
+    mass2 = a2 * const.u
+    reduced_mass = (mass1 * mass2) / (mass1 + mass2)
+    
+    # Create energy grid
+    energies_kev = np.logspace(
+        np.log10(energy_range_kev[0]),
+        np.log10(energy_range_kev[1]),
+        n_points
+    )
+    energies_ev = energies_kev * 1000.0
+    
+    # Calculate Sommerfeld parameter array
+    sommerfeld_params = z1 * z2 * 0.157 / np.sqrt(energies_kev)
+    
+    # Vectorized cross section calculation
+    cross_sections = vectorized_cross_section(energies_ev, s_factor, sommerfeld_params)
+    
+    # Maxwell-Boltzmann distribution
+    mb_distribution = np.array([
+        optimized_maxwell_boltzmann(float(e), temperature) 
+        for e in energies_ev
+    ])
+    
+    # Calculate velocity from energy
+    velocities = np.sqrt(2 * energies_ev * EV_TO_J / reduced_mass)
+    
+    # Thermal average of sigma*v using trapezoidal integration
+    integrand = cross_sections * velocities * mb_distribution
+    sigma_v = np.trapz(integrand, energies_ev)
+    
+    # Apply enhancement factor
+    sigma_v_enhanced = sigma_v * enhancement_factor
+    
+    # Calculate reaction rate R = n1 * n2 * <σv> / (1 + δ12)
+    # δ12 = 1 for identical particles, 0 otherwise
+    delta = 1.0 if (z1 == z2 and a1 == a2) else 0.0
+    reaction_rate = density * density * sigma_v_enhanced / (1 + delta)
+    
+    # Calculate Gamow peak energy
+    # E_G = (kT/2)^(2/3) * E_gamow^(1/3)
+    kt_ev = 8.617333262e-5 * temperature
+    gamow_energy_ev = (z1 * z2 * 0.157) ** 2 * 1000  # Approximate
+    gamow_peak_ev = (kt_ev / 2) ** (2/3) * gamow_energy_ev ** (1/3)
+    
+    return {
+        "reaction_rate": float(reaction_rate),
+        "reaction_rate_per_cm3_s": float(reaction_rate * 1e-6),  # Convert to cm^-3 s^-1
+        "sigma_v": float(sigma_v),
+        "sigma_v_enhanced": float(sigma_v_enhanced),
+        "enhancement_factor": float(enhancement_factor),
+        "gamow_peak_ev": float(gamow_peak_ev),
+        "temperature_k": float(temperature),
+        "density_m3": float(density),
+        "metadata": {
+            "z1": z1,
+            "z2": z2,
+            "a1": a1,
+            "a2": a2,
+            "reduced_mass_kg": float(reduced_mass),
+            "s_factor_kevb": float(s_factor),
+            "n_integration_points": n_points
+        }
+    }

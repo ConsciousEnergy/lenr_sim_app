@@ -169,11 +169,12 @@ class BubbleLatticeInteraction:
         
         # Find minimum radius (collapse point)
         min_idx = np.argmin(R)
-        R_min = R[min_idx]
+        R_min = max(R[min_idx], 1e-12)  # Prevent division by zero
         collapse_time = t[min_idx]
         
         # Calculate peak conditions at collapse
-        compression_ratio = self.bubble.initial_radius / R_min
+        # Limit compression ratio to physically reasonable values
+        compression_ratio = min(self.bubble.initial_radius / R_min, 1e6)
         
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
@@ -239,11 +240,13 @@ class BubbleLatticeInteraction:
         """
         # Screening enhancement (simplified Debye model)
         n_e = self.lattice.electron_density
-        lambda_d = np.sqrt(self.EPS0 * self.KB * temperature / (n_e * self.E_CHARGE ** 2))
+        lambda_d = np.sqrt(self.EPS0 * self.KB * max(temperature, 1.0) / (n_e * self.E_CHARGE ** 2))
         U_screen = self.E_CHARGE ** 2 / (4 * np.pi * self.EPS0 * lambda_d)
         
-        E_thermal = 1.5 * self.KB * temperature
-        screening_factor = min(1e4, np.exp(U_screen / E_thermal))
+        E_thermal = max(1.5 * self.KB * temperature, 1e-25)  # Prevent division by zero
+        # Limit exponent to prevent overflow (exp(700) ≈ 10^304)
+        exp_arg = min(U_screen / E_thermal, 9.2)  # exp(9.2) ≈ 10^4
+        screening_factor = np.exp(exp_arg)
         
         # QED field enhancement
         E_critical = 1e8  # V/m

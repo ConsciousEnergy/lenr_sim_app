@@ -599,6 +599,18 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         
         # Generate enhancement timeline with breakdown
         import numpy as np
+        import math
+        
+        def sanitize_float(value, default=0.0):
+            """Sanitize float values to ensure JSON compatibility."""
+            if value is None or (isinstance(value, float) and (math.isnan(value) or math.isinf(value))):
+                return default
+            return float(value)
+        
+        def sanitize_dict(d, default=0.0):
+            """Recursively sanitize a dict of float values."""
+            return {k: sanitize_float(v, default) if isinstance(v, (int, float)) else v for k, v in d.items()}
+        
         timeline = []
         for t in np.linspace(0, 1, 50):
             instant = model.calculate_instantaneous_enhancement(t)
@@ -610,35 +622,36 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["compression"]
             )
             timeline.append({
-                "normalized_time": float(t),
+                "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
-                "enhancement": float(instant["enhancement"]),
-                "enhancement_breakdown": instant_breakdown,
+                "enhancement": sanitize_float(instant["enhancement"], 1.0),
+                "enhancement_breakdown": sanitize_dict(instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],
-                "radius_factor": float(instant["conditions"]["radius_factor"]),
-                "temperature": float(instant["conditions"]["temperature"]),
-                "electric_field": float(instant["conditions"]["electric_field"])
+                "radius_factor": sanitize_float(instant["conditions"]["radius_factor"], 1.0),
+                "temperature": sanitize_float(instant["conditions"]["temperature"], 300.0),
+                "electric_field": sanitize_float(instant["conditions"]["electric_field"], 0.0)
             })
         
+        # Sanitize all float values to ensure JSON compliance
         return BubbleLatticeResponse(
             success=True,
             collapse_results={
-                "min_radius_um": collapse_result.min_radius * 1e6,
-                "max_temperature_k": collapse_result.max_temperature,
-                "max_pressure_bar": collapse_result.max_pressure / 1e5,
-                "compression_ratio": collapse_result.compression_ratio,
-                "collapse_time_us": collapse_result.collapse_time * 1e6,
-                "peak_field_v_m": collapse_result.double_layer_field_peak,
-                "peak_enhancement": collapse_result.enhancement_factor
+                "min_radius_um": sanitize_float(collapse_result.min_radius * 1e6, 0.1),
+                "max_temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
+                "max_pressure_bar": sanitize_float(collapse_result.max_pressure / 1e5, 1.0),
+                "compression_ratio": sanitize_float(collapse_result.compression_ratio, 1.0),
+                "collapse_time_us": sanitize_float(collapse_result.collapse_time * 1e6, 0.0),
+                "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
+                "peak_enhancement": sanitize_float(collapse_result.enhancement_factor, 1.0)
             },
             proton_phases=collapse_result.proton_phase_distribution,
             enhancement_timeline=timeline,
             peak_conditions={
-                "temperature_k": collapse_result.max_temperature,
-                "pressure_gpa": collapse_result.max_pressure / 1e9,
-                "electric_field_v_m": collapse_result.double_layer_field_peak,
-                "enhancement_factor": collapse_result.enhancement_factor,
-                "enhancement_breakdown": peak_enhancement_breakdown
+                "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
+                "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
+                "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
+                "enhancement_factor": sanitize_float(collapse_result.enhancement_factor, 1.0),
+                "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0)
             }
         )
         
