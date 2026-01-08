@@ -35,11 +35,12 @@ export class ApiError extends Error {
  * @param {number} ms - Timeout in milliseconds
  * @returns {Promise} Promise that rejects after specified milliseconds
  */
-const timeoutPromise = (ms) => {
+const _timeoutPromise = (ms) => {
   return new Promise((_, reject) => {
     setTimeout(() => reject(new ApiError('Request timeout', 408)), ms);
   });
 };
+// Note: _timeoutPromise is available for use with Promise.race() for request timeouts
 
 /**
  * Parse response based on content type

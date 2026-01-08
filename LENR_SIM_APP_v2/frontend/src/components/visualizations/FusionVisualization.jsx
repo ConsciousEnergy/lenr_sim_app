@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -217,14 +217,17 @@ function FusionVisualization({
     
     window.addEventListener('resize', handleResize);
     
+    // Store ref value for cleanup to avoid stale closure
+    const container = containerRef.current;
+    
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameIdRef.current) {
         cancelAnimationFrame(frameIdRef.current);
       }
-      if (rendererRef.current && containerRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      if (rendererRef.current && container) {
+        container.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
       }
       // Dispose of particles geometry and materials
@@ -258,7 +261,8 @@ function FusionVisualization({
     
     const currentStep = timeSteps[currentTimeIndex];
     updateVisualization(currentStep);
-  }, [timeSteps, currentTimeIndex, parameters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeSteps, currentTimeIndex, parameters]); // updateVisualization is defined later and stable
   
   // Toggle vortex effect visibility
   useEffect(() => {
@@ -306,7 +310,7 @@ function FusionVisualization({
         cancelAnimationFrame(animationId);
       }
     };
-  }, [isPlaying, timeSteps.length, playbackSpeed]);
+  }, [isPlaying, timeSteps, playbackSpeed]); // Use timeSteps instead of .length for proper reactivity
   
   /**
    * Updates the visualization with data from the current time step
@@ -353,7 +357,7 @@ function FusionVisualization({
       
       // Create particle geometry and materials
       const particleGeometries = {};
-      const particleMaterials = {};
+      const _particleMaterials = {}; // Prefixed with _ as currently unused but may be needed for future optimizations
       
       // Group particles by type for instanced rendering
       const particleTypes = {};

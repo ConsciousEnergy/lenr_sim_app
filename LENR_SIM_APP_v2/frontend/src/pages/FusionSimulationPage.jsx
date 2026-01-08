@@ -28,9 +28,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import FusionParameterControls from '../components/controls/FusionParameterControls';
 import FusionVisualization from '../components/visualizations/FusionVisualization';
 import { generateFusionTimeSteps } from '../utils/mockData';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
-import ResultsPanel from '../components/results/ResultsPanel';
+// Note: These imports are kept for future use in full implementation
+// import { useNavigate } from 'react-router-dom';
+// import { useTheme } from '@mui/material/styles';
+// import ResultsPanel from '../components/results/ResultsPanel';
 
 // API base URL
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -62,13 +63,14 @@ const fusionAPI = {
  * Main page for fusion simulation model with parameter controls and visualization
  */
 function FusionSimulationPage() {
-  const navigate = useNavigate();
-  const theme = useTheme();
+  // Note: These hooks are kept for future use but currently unused
+  // const navigate = useNavigate();
+  // const theme = useTheme();
   
   // Simulation states
   const [parameters, setParameters] = useState(null);
   const [simulationData, setSimulationData] = useState(null);
-  const [comparisonData, setComparisonData] = useState(null);
+  const [_comparisonData, setComparisonData] = useState(null); // Prefixed - for future comparison feature
   const [comparisonConfig, setComparisonConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -81,13 +83,14 @@ function FusionSimulationPage() {
   const [configDescription, setConfigDescription] = useState('');
   const [configsList, setConfigsList] = useState([]);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
-  const [showError, setShowError] = useState(false);
-  const [simulationId, setSimulationId] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState('info');
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [savedSimulations, setSavedSimulations] = useState([]);
+  // Note: These states are prepared for full error handling UI - kept for future use
+  const [_showError, setShowError] = useState(false);
+  const [_simulationId, setSimulationId] = useState(null);
+  const [_isRunning, setIsRunning] = useState(false);
+  const [_alertMessage, setAlertMessage] = useState('');
+  const [_alertSeverity, setAlertSeverity] = useState('info');
+  const [_alertOpen, setAlertOpen] = useState(false);
+  const [_savedSimulations, setSavedSimulations] = useState([]);
   
   // Initialize default parameters
   useEffect(() => {
