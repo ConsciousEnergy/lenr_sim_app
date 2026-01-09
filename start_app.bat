@@ -16,13 +16,13 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 :: Ensure necessary directories exist
-IF NOT EXIST backend\data mkdir backend\data
-IF NOT EXIST backend\static mkdir backend\static
-IF NOT EXIST backend\logs mkdir backend\logs
+IF NOT EXIST LENR_SIM_APP_v2\backend\data mkdir LENR_SIM_APP_v2\backend\data
+IF NOT EXIST LENR_SIM_APP_v2\backend\static mkdir LENR_SIM_APP_v2\backend\static
+IF NOT EXIST LENR_SIM_APP_v2\backend\logs mkdir LENR_SIM_APP_v2\backend\logs
 
 :: Setup and start backend
 ECHO Setting up backend...
-cd backend
+cd LENR_SIM_APP_v2\backend
 
 :: Check for virtual environment
 IF NOT EXIST venv (
@@ -42,11 +42,11 @@ ECHO Starting backend server on port 8001...
 START cmd /c "call venv\Scripts\activate && python -m uvicorn app.main:app --reload --port 8001"
 
 :: Return to root directory
-cd ..
+cd ..\..
 
 :: Setup and start frontend
 ECHO Setting up frontend...
-cd frontend
+cd LENR_SIM_APP_v2\frontend
 
 :: Install frontend dependencies if needed
 IF NOT EXIST node_modules (
@@ -59,7 +59,7 @@ ECHO Starting frontend server...
 START cmd /c "npm start"
 
 :: Return to root directory
-cd ..
+cd ..\..
 
 ECHO.
 ECHO LENR Simulation Application is starting...

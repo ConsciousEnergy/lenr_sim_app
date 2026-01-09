@@ -8,6 +8,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+#### Visualization Enhancements
+- **Visualization Legend**: Interactive, collapsible legend showing particle types, energy scale, scale indicator, and live statistics
+- **Quantum Flux Visualization**: Physics-based visualization with 6 modes:
+  - Electron Screening (Thomas-Fermi model)
+  - Magnetic Dipoles (nuclear/electron spin)
+  - Phonon Modes (Debye model lattice vibrations)
+  - Coulomb Exchange (virtual photon exchange)
+  - Gamow Window (stellar nucleosynthesis)
+  - Combined Enhancement effects
+- **Scale Bar**: 3D scale indicator with automatic unit conversion (pm/Å/nm/μm)
+- **Enhanced 3D Scene**: Grid references, corner markers, axis labels, origin marker
+- **Mode Selector**: Dropdown to switch between quantum field visualization modes
+
+#### New Components
+- `QuantumFluxVisualization.js` - Physics-based quantum effects visualization
+- `VisualizationLegend.jsx` - Interactive legend component with scrolling support
+- `PhysicsErrorBoundary.jsx` - Specialized error handling for physics/WebGL errors
+- `ComparisonView.jsx` - Side-by-side LENR system comparison component
+- `usePhysicsWorker.js` - Web Worker hook for offloading physics calculations
+- `useApiHealth.js` - API health monitoring hook
+- `apiResilience.js` - Retry logic with exponential backoff
+
+#### Backend Improvements
+- Temperature-dependent phonon coupling using Debye model
+- Enhanced `/api/health` endpoint with component status and memory info
+- Unit tests for WKB tunneling, bubble collapse, and enhancement factors
+
+#### Documentation
+- `docs/VISUALIZATION_IMPROVEMENTS.md` - Comprehensive visualization documentation
+
+### Changed
+- Replaced decorative plasma vortex with physics-grounded quantum flux visualization
+- Improved legend scrollability with custom scrollbar styling
+- Brightened visualization color schemes for better visibility
+- Updated `FusionParameterControls.jsx` with plasma/laser fusion parameters
+- Enhanced CSV/JSON export functionality in `FusionSimulationPage.jsx`
+- Fixed `start_app.bat` and `start_app.sh` to use correct v2 directory paths
+
+### Fixed
+- Legend cutoff issue - added proper scrolling support
+- Quantum flux visibility - increased opacity and brightened colors
+- `PlasmaVortexEffect is not defined` error after refactoring
+- Hot reload caching issues with webpack
+
+### Previous Unreleased Items
 - Comprehensive API documentation with all endpoints
 - Quick start guide for new users
 - Physics modules documentation
@@ -17,14 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced CI/CD pipeline with multiple test jobs
 - ErrorBoundary component in frontend root
 - Exception handler registration in backend
-
-### Changed
 - Updated GitHub Actions workflow to support development branch
 - Improved error handling across backend and frontend
 - Enhanced OpenAPI documentation
 - Updated installation guide with detailed instructions
-
-### Fixed
 - Error handlers now properly registered in main.py
 - ErrorBoundary now wraps root App component
 - Test configuration updated for better organization

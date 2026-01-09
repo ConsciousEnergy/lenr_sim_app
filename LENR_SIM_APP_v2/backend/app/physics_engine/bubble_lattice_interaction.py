@@ -52,6 +52,18 @@ class LatticeParameters:
     surface_roughness: float = 5e-9  # m
     lattice_constant: float = 3.89e-10  # m (Pd)
     electron_density: float = 6.8e28  # m⁻³
+    debye_temperature: float = 275.0  # K (Pd)
+    
+    @classmethod
+    def for_material(cls, material: str) -> "LatticeParameters":
+        """Factory method to create parameters for common materials."""
+        material_data = {
+            "palladium": {"lattice_constant": 3.89e-10, "electron_density": 6.8e28, "debye_temperature": 275.0},
+            "nickel": {"lattice_constant": 3.52e-10, "electron_density": 9.1e28, "debye_temperature": 450.0},
+            "titanium": {"lattice_constant": 2.95e-10, "electron_density": 3.8e28, "debye_temperature": 420.0},
+        }
+        data = material_data.get(material.lower(), material_data["palladium"])
+        return cls(host_material=material, **data)
 
 
 @dataclass 
@@ -226,6 +238,90 @@ class BubbleLatticeInteraction:
         breakdown = self._calculate_enhancement_breakdown(temperature, pressure, electric_field, compression)
         return breakdown["total"]
     
+    def _calculate_debye_phonon_coupling(self, temperature: float) -> float:
+        """
+        Calculate temperature-dependent phonon-nuclear coupling using Debye model.
+        
+        The Debye model describes lattice vibrations as a collection of phonons.
+        At temperatures above Debye temperature, classical behavior dominates.
+        Below Debye temperature, quantum effects become significant.
+        
+        Phonon coupling enhances nuclear reaction rates through:
+        1. Momentum transfer during lattice vibrations
+        2. Coherent phonon modes that localize energy
+        3. Dynamic screening from oscillating charge distributions
+        
+        The coupling factor is based on the Debye function:
+        D(x) = 3 * (T/θ_D)^3 * ∫[0 to x] (t^3 * e^t) / (e^t - 1)^2 dt
+        where x = θ_D / T
+        
+        Args:
+            temperature: System temperature in Kelvin
+            
+        Returns:
+            Phonon coupling enhancement factor (dimensionless, >= 1.0)
+        """
+        theta_d = self.lattice.debye_temperature
+        T = max(temperature, 1.0)  # Prevent division by zero
+        
+        x = theta_d / T  # Reduced temperature
+        
+        # Calculate Debye function using numerical integration
+        # For efficiency, use approximations for extreme cases
+        if x < 0.01:
+            # High temperature limit: D(x) ≈ 1
+            debye_value = 1.0
+        elif x > 20:
+            # Low temperature limit: D(x) ≈ 3*(π/x)^4 * 4/15
+            debye_value = 3 * (np.pi / x) ** 4 * 4 / 15
+        else:
+            # Numerical integration for intermediate range
+            # D(x) = 3/x^3 * ∫[0 to x] (t^3 / (e^t - 1)) dt
+            from scipy.integrate import quad
+            
+            def integrand(t):
+                if t < 1e-10:
+                    return t ** 2  # Taylor expansion near zero
+                exp_t = np.exp(t)
+                if exp_t > 1e300:  # Prevent overflow
+                    return 0.0
+                return t ** 3 / (exp_t - 1)
+            
+            integral, _ = quad(integrand, 0, x, limit=100)
+            debye_value = 3 * integral / (x ** 3)
+        
+        # Calculate mean square displacement (proportional to <u²>)
+        # <u²> = (9ℏ²/M*k_B*θ_D) * D(x)
+        # This affects overlap integrals for nuclear reactions
+        
+        # Phonon occupation number (Bose-Einstein)
+        # n_phonon = 1/(exp(ℏω/k_B*T) - 1)
+        # Average over Debye spectrum: <n> ≈ T/θ_D at high T
+        if x < 20:
+            avg_phonon_occupation = 1 / (np.exp(x) - 1) if x > 0.01 else T / theta_d
+        else:
+            avg_phonon_occupation = np.exp(-x)
+        
+        # Enhancement from phonon-assisted processes
+        # Higher temperature -> more phonons -> more scattering events
+        # But also more decoherence, so there's an optimal range
+        
+        # Phonon density of states at Debye cutoff
+        dos_factor = 1 + 0.5 * debye_value
+        
+        # Multi-phonon process enhancement
+        # At T ~ θ_D, coherent multi-phonon processes become significant
+        multi_phonon = 1 + 2.0 * np.exp(-abs(1 - T / theta_d) ** 2 / 0.5)
+        
+        # Lattice softening near phase transitions (simplified)
+        softening_factor = 1 + 0.1 * (T / theta_d) if T < theta_d else 1 + 0.1 * np.exp(-(T / theta_d - 1))
+        
+        # Combined phonon coupling factor
+        phonon_factor = dos_factor * multi_phonon * softening_factor * (1 + avg_phonon_occupation)
+        
+        # Ensure factor is at least 1.0 and cap at reasonable value
+        return float(min(max(phonon_factor, 1.0), 100.0))
+    
     def _calculate_enhancement_breakdown(
         self,
         temperature: float,
@@ -238,7 +334,7 @@ class BubbleLatticeInteraction:
         
         Returns dictionary with individual enhancement factors.
         """
-        # Screening enhancement (simplified Debye model)
+        # Screening enhancement (temperature-dependent Debye model)
         n_e = self.lattice.electron_density
         lambda_d = np.sqrt(self.EPS0 * self.KB * max(temperature, 1.0) / (n_e * self.E_CHARGE ** 2))
         U_screen = self.E_CHARGE ** 2 / (4 * np.pi * self.EPS0 * lambda_d)
@@ -247,6 +343,9 @@ class BubbleLatticeInteraction:
         # Limit exponent to prevent overflow (exp(700) ≈ 10^304)
         exp_arg = min(U_screen / E_thermal, 9.2)  # exp(9.2) ≈ 10^4
         screening_factor = np.exp(exp_arg)
+        
+        # Phonon-nuclear coupling (temperature-dependent)
+        phonon_factor = self._calculate_debye_phonon_coupling(temperature)
         
         # QED field enhancement
         E_critical = 1e8  # V/m
@@ -265,11 +364,13 @@ class BubbleLatticeInteraction:
         loading_factor = 1 + 10 * (self.lattice.loading_ratio - 0.8) if self.lattice.loading_ratio > 0.8 else 1
         
         # Combined enhancement (multiplicative, capped)
-        total = screening_factor * qed_factor * density_factor * casimir_factor * rydberg_factor * loading_factor
+        total = (screening_factor * phonon_factor * qed_factor * 
+                density_factor * casimir_factor * rydberg_factor * loading_factor)
         
         return {
             "total": min(total, 1e8),
             "screening": float(screening_factor),
+            "phonon": float(phonon_factor),
             "qed": float(qed_factor),
             "casimir": float(casimir_factor),
             "rydberg": float(rydberg_factor),

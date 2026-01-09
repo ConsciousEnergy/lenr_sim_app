@@ -16,7 +16,11 @@ import {
   Alert,
   CircularProgress,
   Backdrop,
-  Tooltip
+  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -25,6 +29,8 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import InfoIcon from '@mui/icons-material/Info';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import DataObjectIcon from '@mui/icons-material/DataObject';
 import FusionParameterControls from '../components/controls/FusionParameterControls';
 import FusionVisualization from '../components/visualizations/FusionVisualization';
 import { generateFusionTimeSteps } from '../utils/mockData';
@@ -83,6 +89,7 @@ function FusionSimulationPage() {
   const [configDescription, setConfigDescription] = useState('');
   const [configsList, setConfigsList] = useState([]);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
+  const [downloadMenuAnchor, setDownloadMenuAnchor] = useState(null);
   // Note: These states are prepared for full error handling UI - kept for future use
   const [_showError, setShowError] = useState(false);
   const [_simulationId, setSimulationId] = useState(null);
@@ -327,7 +334,7 @@ function FusionSimulationPage() {
     }
   }, [configsList]);
   
-  // Download simulation results
+  // Download simulation results as JSON
   const downloadResults = useCallback(() => {
     if (!simulationData) return;
     
@@ -348,10 +355,135 @@ function FusionSimulationPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      setSuccessMessage('Results downloaded successfully');
+      setSuccessMessage('Results downloaded as JSON');
     } catch (err) {
       console.error('Download error:', err);
       setError('Failed to download results: ' + (err.message || 'Unknown error'));
+    }
+  }, [simulationData, parameters]);
+
+  // Download simulation results as CSV
+  const downloadResultsAsCSV = useCallback(() => {
+    if (!simulationData) return;
+    
+    try {
+      // Convert simulation data to CSV format
+      const csvLines = [];
+      
+      // Add header with parameters
+      csvLines.push('# Fusion Simulation Results');
+      csvLines.push(`# Date: ${new Date().toISOString()}`);
+      csvLines.push('# Parameters:');
+      Object.entries(parameters).forEach(([key, value]) => {
+        if (typeof value !== 'object') {
+          csvLines.push(`# ${key}: ${value}`);
+        }
+      });
+      csvLines.push('');
+      
+      // Check if we have time series data
+      if (simulationData.timeSteps && simulationData.timeSteps.length > 0) {
+        // Time series header
+        const timeStep = simulationData.timeSteps[0];
+        const hasParticles = timeStep.particles && timeStep.particles.length > 0;
+        const hasHotspots = timeStep.hotspots && timeStep.hotspots.length > 0;
+        
+        // Export time-based aggregated data
+        csvLines.push('Time_Index,Time_ps,Particle_Count,Hotspot_Count,Avg_Energy,Max_Energy,Total_Intensity');
+        
+        simulationData.timeSteps.forEach((step, index) => {
+          const timePicoSeconds = (index * (parameters.timeStepSize || 0.1)).toFixed(2);
+          const particleCount = step.particles?.length || 0;
+          const hotspotCount = step.hotspots?.length || 0;
+          
+          let avgEnergy = 0;
+          let maxEnergy = 0;
+          if (step.particles && step.particles.length > 0) {
+            const energies = step.particles.map(p => p.energy || 0);
+            avgEnergy = energies.reduce((a, b) => a + b, 0) / energies.length;
+            maxEnergy = Math.max(...energies);
+          }
+          
+          let totalIntensity = 0;
+          if (step.hotspots && step.hotspots.length > 0) {
+            totalIntensity = step.hotspots.reduce((sum, h) => sum + (h.intensity || 0), 0);
+          }
+          
+          csvLines.push(`${index},${timePicoSeconds},${particleCount},${hotspotCount},${avgEnergy.toExponential(4)},${maxEnergy.toExponential(4)},${totalIntensity.toExponential(4)}`);
+        });
+        
+        csvLines.push('');
+        csvLines.push('# Detailed Particle Data (First Time Step)');
+        csvLines.push('Particle_ID,Type,X,Y,Z,Energy,Velocity_X,Velocity_Y,Velocity_Z');
+        
+        if (hasParticles) {
+          simulationData.timeSteps[0].particles.slice(0, 1000).forEach((particle, idx) => {
+            csvLines.push([
+              particle.id || idx,
+              particle.type || 'unknown',
+              particle.x?.toFixed(6) || 0,
+              particle.y?.toFixed(6) || 0,
+              particle.z?.toFixed(6) || 0,
+              particle.energy?.toExponential(4) || 0,
+              particle.vx?.toExponential(4) || 0,
+              particle.vy?.toExponential(4) || 0,
+              particle.vz?.toExponential(4) || 0,
+            ].join(','));
+          });
+        }
+        
+        if (hasHotspots) {
+          csvLines.push('');
+          csvLines.push('# Hotspot Data (First Time Step)');
+          csvLines.push('Hotspot_ID,X,Y,Z,Intensity,Radius');
+          
+          simulationData.timeSteps[0].hotspots.forEach((hotspot, idx) => {
+            csvLines.push([
+              idx,
+              hotspot.x?.toFixed(6) || 0,
+              hotspot.y?.toFixed(6) || 0,
+              hotspot.z?.toFixed(6) || 0,
+              hotspot.intensity?.toExponential(4) || 0,
+              hotspot.radius?.toFixed(6) || 0,
+            ].join(','));
+          });
+        }
+      } else if (simulationData.enhancement_factor !== undefined) {
+        // Export enhancement data
+        csvLines.push('Metric,Value');
+        csvLines.push(`Enhancement_Factor,${simulationData.enhancement_factor}`);
+        csvLines.push(`Compression_Ratio,${simulationData.compression_ratio || 'N/A'}`);
+        csvLines.push(`Max_Temperature_K,${simulationData.max_temperature || 'N/A'}`);
+        csvLines.push(`Max_Pressure_Pa,${simulationData.max_pressure || 'N/A'}`);
+        csvLines.push(`Peak_E_Field_V_m,${simulationData.peak_field || 'N/A'}`);
+        
+        if (simulationData.enhancement_breakdown) {
+          csvLines.push('');
+          csvLines.push('# Enhancement Breakdown');
+          csvLines.push('Mechanism,Factor');
+          Object.entries(simulationData.enhancement_breakdown).forEach(([key, value]) => {
+            csvLines.push(`${key},${value}`);
+          });
+        }
+      }
+      
+      // Create and download CSV
+      const csvContent = csvLines.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fusion_simulation_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setSuccessMessage('Results downloaded as CSV');
+    } catch (err) {
+      console.error('CSV Download error:', err);
+      setError('Failed to download CSV: ' + (err.message || 'Unknown error'));
     }
   }, [simulationData, parameters]);
   
@@ -632,11 +764,29 @@ function FusionSimulationPage() {
                 
                 <Button
                   startIcon={<DownloadIcon />}
-                  onClick={downloadResults}
+                  onClick={(e) => setDownloadMenuAnchor(e.currentTarget)}
                   disabled={!simulationData || isLoading}
                 >
                   Download Results
                 </Button>
+                <Menu
+                  anchorEl={downloadMenuAnchor}
+                  open={Boolean(downloadMenuAnchor)}
+                  onClose={() => setDownloadMenuAnchor(null)}
+                >
+                  <MenuItem onClick={() => { downloadResults(); setDownloadMenuAnchor(null); }}>
+                    <ListItemIcon>
+                      <DataObjectIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Download as JSON</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={() => { downloadResultsAsCSV(); setDownloadMenuAnchor(null); }}>
+                    <ListItemIcon>
+                      <TableChartIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Download as CSV</ListItemText>
+                  </MenuItem>
+                </Menu>
               </Box>
             </Box>
             

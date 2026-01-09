@@ -40,42 +40,75 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 // Default parameter values
 const defaultParameters = {
+  // Basic Parameters
   reactionType: 'd-d',
   latticeType: 'palladium',
   temperature: 300,
-  loadingRatio: 0.8,
-  latticeDimension: 3,
+  loadingRatio: 0.85,
+  
+  // Advanced Parameters - Plasma/Laser Fusion
+  plasmaDensity: 1e20,        // particles/m³
+  ionTemperature: 10,         // keV
+  electronTemperature: 10,    // keV
+  magneticField: 5.0,         // Tesla
+  laserPower: 0,              // TW (0 = no laser)
+  laserWavelength: 351,       // nm (typical ICF)
+  confinementTime: 1e-6,      // seconds
+  plasmaRadius: 0.01,         // meters
+  compressionRatio: 1,        // for ICF
+  
+  // Advanced - Lattice Parameters
+  latticeDimension: 10,
   defectDensity: 0.01,
+  screeningEnergy: 310,       // eV
+  phononCoupling: 1.0,        // coupling factor
+  
+  // Simulation Settings
+  timeStepSize: 0.1,          // ps
+  totalSimulationTime: 10,    // ps
+  maxParticles: 1000,
+  
+  // Visualization Options
   showLattice: true,
-  showDiffusion: true,
-  showHotSpots: true
+  showDiffusion: false,
+  showHotSpots: true,
+  showParticles: true,
+  showMagneticField: false,
+  showPlasmaContour: true,
+  showEnergyDistribution: false,
+  colorByEnergy: true,
+  showTrails: false
 };
 
 // Parameter descriptions and limits
 const PARAMETER_METADATA = {
+  // === BASIC PARAMETERS ===
   reactionType: {
     label: 'Reaction Type',
     description: 'Type of fusion reaction being simulated',
+    section: 'basic',
     options: [
-      { value: 'd-d', label: 'Deuterium-Deuterium', description: 'Fusion of two deuterium nuclei' },
-      { value: 'd-t', label: 'Deuterium-Tritium', description: 'Fusion of deuterium and tritium nuclei' },
-      { value: 'p-B11', label: 'Proton-Boron-11', description: 'Fusion of proton and boron-11 nuclei' },
-      { value: 'p-Li7', label: 'Proton-Lithium-7', description: 'Fusion of proton and lithium-7 nuclei' }
+      { value: 'd-d', label: 'Deuterium-Deuterium', description: 'Fusion of two deuterium nuclei (3.27 MeV)' },
+      { value: 'd-t', label: 'Deuterium-Tritium', description: 'Fusion of deuterium and tritium (17.6 MeV)' },
+      { value: 'p-B11', label: 'Proton-Boron-11', description: 'Aneutronic fusion (8.7 MeV)' },
+      { value: 'p-Li7', label: 'Proton-Lithium-7', description: 'Fusion of proton and lithium-7' }
     ]
   },
   latticeType: {
     label: 'Lattice Material',
     description: 'Host lattice material for the fusion reaction',
+    section: 'basic',
     options: [
-      { value: 'palladium', label: 'Palladium', description: 'Palladium metal lattice' },
-      { value: 'nickel', label: 'Nickel', description: 'Nickel metal lattice' },
-      { value: 'titanium', label: 'Titanium', description: 'Titanium metal lattice' },
-      { value: 'platinum', label: 'Platinum', description: 'Platinum metal lattice' }
+      { value: 'palladium', label: 'Palladium (Pd)', description: 'High hydrogen solubility, 275K Debye temp' },
+      { value: 'nickel', label: 'Nickel (Ni)', description: 'Lower cost, 450K Debye temp' },
+      { value: 'titanium', label: 'Titanium (Ti)', description: 'Strong hydride former, 420K Debye temp' },
+      { value: 'platinum', label: 'Platinum (Pt)', description: 'Catalytic properties' }
     ]
   },
   temperature: {
     label: 'Temperature',
     description: 'Operating temperature in Kelvin',
+    section: 'basic',
     min: 77,
     max: 1273,
     defaultValue: 300,
@@ -84,16 +117,132 @@ const PARAMETER_METADATA = {
   },
   loadingRatio: {
     label: 'Loading Ratio',
-    description: 'Ratio of hydrogen isotopes to metal atoms',
+    description: 'Ratio of hydrogen isotopes to metal atoms (H/M)',
+    section: 'basic',
     min: 0.1,
     max: 1.0,
     defaultValue: 0.85,
     unit: 'H/M',
     step: 0.01
   },
+  
+  // === ADVANCED PARAMETERS - PLASMA ===
+  plasmaDensity: {
+    label: 'Plasma Density',
+    description: 'Number density of plasma particles (n_e)',
+    section: 'advanced',
+    min: 1e18,
+    max: 1e25,
+    defaultValue: 1e20,
+    unit: 'm⁻³',
+    step: 1e18,
+    scientific: true
+  },
+  ionTemperature: {
+    label: 'Ion Temperature',
+    description: 'Temperature of plasma ions (T_i)',
+    section: 'advanced',
+    min: 0.1,
+    max: 100,
+    defaultValue: 10,
+    unit: 'keV',
+    step: 0.5
+  },
+  electronTemperature: {
+    label: 'Electron Temperature',
+    description: 'Temperature of plasma electrons (T_e)',
+    section: 'advanced',
+    min: 0.1,
+    max: 100,
+    defaultValue: 10,
+    unit: 'keV',
+    step: 0.5
+  },
+  magneticField: {
+    label: 'Magnetic Field',
+    description: 'External magnetic field strength for confinement',
+    section: 'advanced',
+    min: 0,
+    max: 20,
+    defaultValue: 5.0,
+    unit: 'T',
+    step: 0.1
+  },
+  laserPower: {
+    label: 'Laser Power',
+    description: 'Total laser power for ICF (0 = MCF mode)',
+    section: 'advanced',
+    min: 0,
+    max: 500,
+    defaultValue: 0,
+    unit: 'TW',
+    step: 10
+  },
+  laserWavelength: {
+    label: 'Laser Wavelength',
+    description: 'Laser wavelength for ICF experiments',
+    section: 'advanced',
+    min: 193,
+    max: 1064,
+    defaultValue: 351,
+    unit: 'nm',
+    step: 1
+  },
+  confinementTime: {
+    label: 'Confinement Time',
+    description: 'Energy confinement time (τ_E)',
+    section: 'advanced',
+    min: 1e-12,
+    max: 10,
+    defaultValue: 1e-6,
+    unit: 's',
+    step: 1e-9,
+    scientific: true
+  },
+  plasmaRadius: {
+    label: 'Plasma Radius',
+    description: 'Characteristic plasma radius',
+    section: 'advanced',
+    min: 0.001,
+    max: 10,
+    defaultValue: 0.01,
+    unit: 'm',
+    step: 0.001
+  },
+  compressionRatio: {
+    label: 'Compression Ratio',
+    description: 'Target compression ratio for ICF',
+    section: 'advanced',
+    min: 1,
+    max: 1000,
+    defaultValue: 1,
+    unit: '×',
+    step: 10
+  },
+  screeningEnergy: {
+    label: 'Screening Energy',
+    description: 'Electron screening energy enhancement',
+    section: 'advanced',
+    min: 0,
+    max: 1000,
+    defaultValue: 310,
+    unit: 'eV',
+    step: 10
+  },
+  phononCoupling: {
+    label: 'Phonon Coupling',
+    description: 'Phonon-nuclear coupling factor',
+    section: 'advanced',
+    min: 0,
+    max: 10,
+    defaultValue: 1.0,
+    unit: '',
+    step: 0.1
+  },
   latticeDimension: {
     label: 'Lattice Dimension',
     description: 'Size of the lattice structure (N×N×N)',
+    section: 'advanced',
     min: 5,
     max: 50,
     defaultValue: 10,
@@ -103,26 +252,88 @@ const PARAMETER_METADATA = {
   defectDensity: {
     label: 'Defect Density',
     description: 'Density of defects in the lattice structure',
+    section: 'advanced',
     min: 0,
     max: 0.5,
-    defaultValue: 0.1,
+    defaultValue: 0.01,
     unit: '',
+    step: 0.001
+  },
+  timeStepSize: {
+    label: 'Time Step Size',
+    description: 'Simulation time step',
+    section: 'advanced',
+    min: 0.001,
+    max: 1.0,
+    defaultValue: 0.1,
+    unit: 'ps',
     step: 0.01
   },
+  totalSimulationTime: {
+    label: 'Total Simulation Time',
+    description: 'Total duration of simulation',
+    section: 'advanced',
+    min: 1,
+    max: 1000,
+    defaultValue: 10,
+    unit: 'ps',
+    step: 1
+  },
+  
+  // === VISUALIZATION OPTIONS ===
   showLattice: {
     label: 'Show Lattice',
     description: 'Display the metal lattice structure',
+    section: 'visualization',
     defaultValue: true
   },
   showDiffusion: {
     label: 'Show Diffusion',
     description: 'Display particle diffusion paths',
+    section: 'visualization',
     defaultValue: false
   },
   showHotSpots: {
     label: 'Show Hotspots',
     description: 'Highlight regions of high fusion activity',
+    section: 'visualization',
     defaultValue: true
+  },
+  showParticles: {
+    label: 'Show Particles',
+    description: 'Display individual plasma particles',
+    section: 'visualization',
+    defaultValue: true
+  },
+  showMagneticField: {
+    label: 'Show Magnetic Field',
+    description: 'Display magnetic field lines',
+    section: 'visualization',
+    defaultValue: false
+  },
+  showPlasmaContour: {
+    label: 'Show Plasma Contour',
+    description: 'Display plasma density contours',
+    section: 'visualization',
+    defaultValue: true
+  },
+  showEnergyDistribution: {
+    label: 'Show Energy Distribution',
+    description: 'Display energy distribution heatmap',
+    section: 'visualization',
+    defaultValue: false
+  },
+  colorByEnergy: {
+    label: 'Color by Energy',
+    description: 'Color particles by their energy level',
+    section: 'visualization',
+    defaultValue: true
+  },
+  showTrails: {
+    label: 'Show Particle Trails',
+    description: 'Display particle trajectory trails',
+    section: 'visualization',
+    defaultValue: false
   }
 };
 
@@ -350,22 +561,47 @@ function FusionParameterControls({
 
   const renderSlider = (paramName) => {
     const metadata = PARAMETER_METADATA[paramName];
-    const value = localParams[paramName] || metadata.defaultValue;
+    const value = localParams[paramName] ?? metadata.defaultValue;
+    
+    // For scientific notation parameters, use logarithmic scale
+    const isScientific = metadata.scientific;
+    let displayValue = value;
+    let sliderValue = value;
+    
+    if (isScientific && value > 0) {
+      // Use log scale for slider
+      sliderValue = Math.log10(value);
+    }
+    
+    const formatValue = (val) => {
+      if (isScientific && val > 1000) {
+        return val.toExponential(2);
+      }
+      return typeof val === 'number' && !Number.isInteger(val) ? val.toFixed(3) : val;
+    };
     
     return (
       <Box key={paramName} sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
           <Typography sx={{ flexGrow: 1 }}>
             {metadata.label}
             {metadata.unit && ` (${metadata.unit})`}
           </Typography>
+          <Tooltip title={metadata.description}>
+            <HelpOutlineIcon fontSize="small" color="action" />
+          </Tooltip>
           <TextField
-            value={value}
-            onChange={(e) => handleParamChange(paramName, parseFloat(e.target.value))}
+            value={formatValue(value)}
+            onChange={(e) => {
+              const parsed = parseFloat(e.target.value);
+              if (!isNaN(parsed)) {
+                handleParamChange(paramName, parsed);
+              }
+            }}
             variant="outlined"
             size="small"
-            sx={{ width: '80px' }}
-            type="number"
+            sx={{ width: isScientific ? '120px' : '80px' }}
+            type={isScientific ? 'text' : 'number'}
             inputProps={{
               min: metadata.min,
               max: metadata.max,
@@ -373,14 +609,26 @@ function FusionParameterControls({
             }}
           />
         </Box>
-        <Slider
-          value={value}
-          onChange={(_, newValue) => handleParamChange(paramName, newValue)}
-          min={metadata.min}
-          max={metadata.max}
-          step={metadata.step}
-          valueLabelDisplay="auto"
-        />
+        {isScientific ? (
+          <Slider
+            value={Math.log10(Math.max(value, metadata.min))}
+            onChange={(_, newValue) => handleParamChange(paramName, Math.pow(10, newValue))}
+            min={Math.log10(metadata.min)}
+            max={Math.log10(metadata.max)}
+            step={0.1}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(v) => `10^${v.toFixed(1)}`}
+          />
+        ) : (
+          <Slider
+            value={value}
+            onChange={(_, newValue) => handleParamChange(paramName, newValue)}
+            min={metadata.min}
+            max={metadata.max}
+            step={metadata.step}
+            valueLabelDisplay="auto"
+          />
+        )}
       </Box>
     );
   };
@@ -664,15 +912,40 @@ function FusionParameterControls({
 
 FusionParameterControls.propTypes = {
   parameters: PropTypes.shape({
+    // Basic
     reactionType: PropTypes.string,
     latticeType: PropTypes.string,
     temperature: PropTypes.number,
     loadingRatio: PropTypes.number,
+    // Advanced - Plasma
+    plasmaDensity: PropTypes.number,
+    ionTemperature: PropTypes.number,
+    electronTemperature: PropTypes.number,
+    magneticField: PropTypes.number,
+    laserPower: PropTypes.number,
+    laserWavelength: PropTypes.number,
+    confinementTime: PropTypes.number,
+    plasmaRadius: PropTypes.number,
+    compressionRatio: PropTypes.number,
+    // Advanced - Lattice
     latticeDimension: PropTypes.number,
     defectDensity: PropTypes.number,
+    screeningEnergy: PropTypes.number,
+    phononCoupling: PropTypes.number,
+    // Simulation
+    timeStepSize: PropTypes.number,
+    totalSimulationTime: PropTypes.number,
+    maxParticles: PropTypes.number,
+    // Visualization
     showLattice: PropTypes.bool,
     showDiffusion: PropTypes.bool,
-    showHotSpots: PropTypes.bool
+    showHotSpots: PropTypes.bool,
+    showParticles: PropTypes.bool,
+    showMagneticField: PropTypes.bool,
+    showPlasmaContour: PropTypes.bool,
+    showEnergyDistribution: PropTypes.bool,
+    colorByEnergy: PropTypes.bool,
+    showTrails: PropTypes.bool
   }),
   onChange: PropTypes.func,
   savedConfigs: PropTypes.array,

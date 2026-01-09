@@ -2,13 +2,16 @@ import React, { useRef, useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Box, Typography, Slider, IconButton, Card, CardContent, Switch, FormControlLabel } from '@mui/material';
+import { Box, Typography, Slider, IconButton, Card, CardContent, Switch, FormControlLabel, Tooltip, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import FastForwardIcon from '@mui/icons-material/FastForward';
 import FastRewindIcon from '@mui/icons-material/FastRewind';
-import { PlasmaVortexEffect, ParticleTrailSystem } from './FluidDynamicsEffects';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { ParticleTrailSystem } from './FluidDynamicsEffects';
+import { QuantumFluxEffect, ScaleBar, FluxMode } from './QuantumFluxVisualization';
+import VisualizationLegend from './VisualizationLegend';
 
 // Color palette for particles based on energy
 const energyColorScale = [
@@ -69,8 +72,9 @@ function FusionVisualization({
   const particlesRef = useRef(null);
   const hotspotsRef = useRef(null);
   
-  // Fluid dynamics effects refs
-  const plasmaVortexRef = useRef(null);
+  // Visualization effects refs
+  const quantumFluxRef = useRef(null);
+  const scaleBarRef = useRef(null);
   const trailSystemRef = useRef(null);
   const lastAnimationTimeRef = useRef(0);
   
@@ -81,13 +85,69 @@ function FusionVisualization({
   const lastUpdateTimeRef = useRef(0);
   
   // Visualization effect toggles
-  const [showVortexEffect, setShowVortexEffect] = useState(true);
+  const [showQuantumFlux, setShowQuantumFlux] = useState(true);
   const [showParticleTrails, setShowParticleTrails] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [quantumFluxMode, setQuantumFluxMode] = useState('electron_screening');
+  
+  // Scale settings (can be derived from parameters)
+  const scaleInfo = useMemo(() => {
+    // Default: 10 unit grid = 5 nm (typical lattice scale)
+    const gridSize = 10;
+    const realWorldSize = parameters?.latticeConstant || 5e-9; // Default 5 nm
+    return {
+      gridSize,
+      scaleUnit: 'nm',
+      realWorldSize,
+    };
+  }, [parameters]);
   
   // Calculated values
   const timeSteps = useMemo(() => {
     return simulationData?.timeSteps || [];
   }, [simulationData]);
+  
+  // Calculate statistics for current time step
+  const currentStats = useMemo(() => {
+    if (!timeSteps || timeSteps.length === 0 || currentTimeIndex >= timeSteps.length) {
+      return null;
+    }
+    
+    const timeStep = timeSteps[currentTimeIndex];
+    const particles = timeStep?.particles || [];
+    const hotspots = timeStep?.hotspots || [];
+    
+    // Calculate particle counts by type
+    const particleCounts = {};
+    let totalEnergy = 0;
+    let maxEnergy = 0;
+    
+    particles.forEach(p => {
+      const type = p.type || 'unknown';
+      particleCounts[type] = (particleCounts[type] || 0) + 1;
+      totalEnergy += p.energy || 0;
+      maxEnergy = Math.max(maxEnergy, p.energy || 0);
+    });
+    
+    const avgEnergy = particles.length > 0 ? totalEnergy / particles.length : 0;
+    
+    // Calculate fusion rate estimate (based on hotspot intensities)
+    const totalIntensity = hotspots.reduce((sum, h) => sum + (h.intensity || 0), 0);
+    const fusionRate = totalIntensity * 1e12; // Scaled estimate
+    
+    return {
+      particleCounts,
+      stats: {
+        totalParticles: particles.length,
+        hotspotCount: hotspots.length,
+        avgEnergy,
+        maxEnergy,
+        fusionRate,
+        temperature: parameters?.temperature || 300,
+      }
+    };
+  }, [timeSteps, currentTimeIndex, parameters]);
   
   const timeLabels = useMemo(() => {
     if (!simulationData?.timeSteps) return [];
@@ -146,37 +206,123 @@ function FusionVisualization({
     scene.add(hotspotsContainer);
     hotspotsRef.current = hotspotsContainer;
     
-    // Initialize plasma vortex effect
-    const plasmaVortex = new PlasmaVortexEffect({
-      particleCount: 300,
-      vortexStrength: 0.8,
-      radialSpeed: 0.3,
-      verticalSpeed: 0.2,
-      radius: 4,
-      height: 3
+    // Initialize quantum flux visualization (physics-based)
+    const quantumFlux = new QuantumFluxEffect({
+      mode: FluxMode.ELECTRON_SCREENING,
+      resolution: 12, // Lower resolution for performance but visible
+      size: 8,
+      opacity: 0.6, // Higher opacity for visibility
+      screeningLength: 2.5,
+      temperature: parameters?.temperature || 300,
+      debyeFrequency: 1.0,
     });
-    plasmaVortex.initialize();
-    scene.add(plasmaVortex.getGroup());
-    plasmaVortexRef.current = plasmaVortex;
+    quantumFlux.initialize();
+    scene.add(quantumFlux.getGroup());
+    quantumFluxRef.current = quantumFlux;
+    
+    // Initialize scale bar
+    const scaleBar = new ScaleBar({
+      length: 5,
+      realWorldScale: 1e-9, // 1 nm per unit
+      position: new THREE.Vector3(-4, -4.5, 4),
+    });
+    scaleBar.initialize();
+    scene.add(scaleBar.getGroup());
+    scaleBarRef.current = scaleBar;
     
     // Initialize trail system
     trailSystemRef.current = new ParticleTrailSystem({
-      trailLength: 15,
-      fadeRate: 0.1
+      trailLength: 20,
+      fadeRate: 0.08,
+      trailWidth: 2
     });
     
-    // Add bounding box to visualize confinement region
+    // Create container for particle trails
+    const trailsContainer = new THREE.Group();
+    trailsContainer.name = 'particleTrails';
+    scene.add(trailsContainer);
+    trailSystemRef.current.trailGroup = trailsContainer;
+    
+    // Add grid helper for spatial reference
+    const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+    gridHelper.position.y = -5;
+    scene.add(gridHelper);
+    
+    // Add secondary grid on XZ plane (vertical reference)
+    const gridHelperXZ = new THREE.GridHelper(10, 10, 0x333333, 0x1a1a1a);
+    gridHelperXZ.rotation.x = Math.PI / 2;
+    gridHelperXZ.position.z = -5;
+    scene.add(gridHelperXZ);
+    
+    // Add bounding box to visualize confinement region with gradient effect
     const boxGeometry = new THREE.BoxGeometry(10, 10, 10);
-    const boxMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
+    const boxMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x4488ff,
+      transparent: true,
+      opacity: 0.4
+    });
     const boxWireframe = new THREE.LineSegments(
       new THREE.EdgesGeometry(boxGeometry),
       boxMaterial
     );
     scene.add(boxWireframe);
     
-    // Add coordinate axes
-    const axesHelper = new THREE.AxesHelper(5);
+    // Add glowing corner markers for better depth perception
+    const cornerGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+    const cornerMaterial = new THREE.MeshBasicMaterial({ color: 0x4488ff });
+    const corners = [
+      [-5, -5, -5], [5, -5, -5], [-5, 5, -5], [5, 5, -5],
+      [-5, -5, 5], [5, -5, 5], [-5, 5, 5], [5, 5, 5]
+    ];
+    corners.forEach(([x, y, z]) => {
+      const corner = new THREE.Mesh(cornerGeometry, cornerMaterial);
+      corner.position.set(x, y, z);
+      scene.add(corner);
+    });
+    
+    // Add coordinate axes with custom colors
+    const axesHelper = new THREE.AxesHelper(6);
+    // Customize axis colors (X=red, Y=green, Z=blue)
+    axesHelper.setColors(
+      new THREE.Color(0xff4444),  // X axis - red
+      new THREE.Color(0x44ff44),  // Y axis - green
+      new THREE.Color(0x4444ff)   // Z axis - blue
+    );
     scene.add(axesHelper);
+    
+    // Add axis labels using sprites
+    const createAxisLabel = (text, position, color) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = color;
+      ctx.font = 'Bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 32, 16);
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ 
+        map: texture, 
+        transparent: true,
+        depthTest: false
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.position.set(...position);
+      sprite.scale.set(1, 0.5, 1);
+      return sprite;
+    };
+    
+    scene.add(createAxisLabel('X', [6.5, 0, 0], '#ff4444'));
+    scene.add(createAxisLabel('Y', [0, 6.5, 0], '#44ff44'));
+    scene.add(createAxisLabel('Z', [0, 0, 6.5], '#4444ff'));
+    
+    // Add origin marker
+    const originGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const originMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const origin = new THREE.Mesh(originGeometry, originMaterial);
+    scene.add(origin);
     
     // Animation loop
     const animate = () => {
@@ -191,9 +337,9 @@ function FusionVisualization({
         controlsRef.current.update();
       }
       
-      // Update plasma vortex effect
-      if (plasmaVortexRef.current) {
-        plasmaVortexRef.current.update(deltaTime);
+      // Update quantum flux visualization
+      if (quantumFluxRef.current) {
+        quantumFluxRef.current.update(deltaTime);
       }
       
       renderer.render(scene, camera);
@@ -230,11 +376,23 @@ function FusionVisualization({
         container.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
       }
+      // Dispose of instanced meshes stored in userData
+      if (particlesRef.current?.userData?.instancedMeshes) {
+        particlesRef.current.userData.instancedMeshes.forEach(mesh => {
+          if (mesh.geometry) mesh.geometry.dispose();
+          if (mesh.material) mesh.material.dispose();
+          if (mesh.instanceColor) mesh.instanceColor = null;
+        });
+      }
       // Dispose of particles geometry and materials
       if (particlesRef.current) {
         particlesRef.current.children.forEach(child => {
           if (child.geometry) child.geometry.dispose();
           if (child.material) child.material.dispose();
+          // Handle InstancedMesh specifically
+          if (child.isInstancedMesh && child.instanceColor) {
+            child.instanceColor = null;
+          }
         });
       }
       // Dispose of hotspots geometry and materials
@@ -242,11 +400,18 @@ function FusionVisualization({
         hotspotsRef.current.children.forEach(child => {
           if (child.geometry) child.geometry.dispose();
           if (child.material) child.material.dispose();
+          if (child.isInstancedMesh && child.instanceColor) {
+            child.instanceColor = null;
+          }
         });
       }
-      // Dispose of plasma vortex effect
-      if (plasmaVortexRef.current) {
-        plasmaVortexRef.current.dispose();
+      // Dispose of quantum flux effect
+      if (quantumFluxRef.current) {
+        quantumFluxRef.current.dispose();
+      }
+      // Dispose of scale bar
+      if (scaleBarRef.current) {
+        scaleBarRef.current.dispose();
       }
       // Clear trail system
       if (trailSystemRef.current) {
@@ -264,13 +429,49 @@ function FusionVisualization({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeSteps, currentTimeIndex, parameters]); // updateVisualization is defined later and stable
   
-  // Toggle vortex effect visibility
+  // Toggle quantum flux visibility and update mode
   useEffect(() => {
-    if (plasmaVortexRef.current) {
-      plasmaVortexRef.current.getGroup().visible = showVortexEffect;
+    if (quantumFluxRef.current) {
+      quantumFluxRef.current.getGroup().visible = showQuantumFlux;
     }
-  }, [showVortexEffect]);
+  }, [showQuantumFlux]);
   
+  // Update quantum flux mode
+  useEffect(() => {
+    if (quantumFluxRef.current && quantumFluxMode) {
+      quantumFluxRef.current.setMode(quantumFluxMode);
+    }
+  }, [quantumFluxMode]);
+  
+  // Update quantum flux parameters from simulation
+  useEffect(() => {
+    if (quantumFluxRef.current && parameters) {
+      quantumFluxRef.current.updateParameters({
+        temperature: parameters.temperature || 300,
+        screeningLength: parameters.screeningLength || 2.0,
+      });
+    }
+  }, [parameters]);
+
+  // Control particle trails visibility
+  useEffect(() => {
+    if (trailSystemRef.current?.trailGroup) {
+      trailSystemRef.current.trailGroup.visible = showParticleTrails;
+      
+      // Clear trails when disabled
+      if (!showParticleTrails) {
+        trailSystemRef.current.clear();
+        const trailGroup = trailSystemRef.current.trailGroup;
+        while (trailGroup.children.length > 0) {
+          const child = trailGroup.children[0];
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+          trailGroup.remove(child);
+        }
+      }
+    }
+  }, [showParticleTrails]);
+
   // Handle animation playback
   useEffect(() => {
     if (!isPlaying || !timeSteps || timeSteps.length === 0) return;
@@ -313,26 +514,43 @@ function FusionVisualization({
   }, [isPlaying, timeSteps, playbackSpeed]); // Use timeSteps instead of .length for proper reactivity
   
   /**
+   * Get particle type configuration (radius, color)
+   */
+  const getParticleTypeConfig = (type) => {
+    const configs = {
+      deuterium: { radius: 0.05, color: 0x3498db },   // blue
+      tritium: { radius: 0.06, color: 0x2ecc71 },    // green
+      helium: { radius: 0.08, color: 0xf1c40f },     // yellow
+      proton: { radius: 0.04, color: 0xe74c3c },     // red
+      electron: { radius: 0.02, color: 0x9b59b6 },   // purple
+    };
+    return configs[type] || { radius: 0.05, color: 0xcccccc };
+  };
+
+  /**
    * Updates the visualization with data from the current time step
+   * Uses InstancedMesh for efficient rendering of many particles
    */
   const updateVisualization = (timeStep) => {
     if (!particlesRef.current || !hotspotsRef.current || !sceneRef.current) return;
     
-    // Dispose shared geometries first (stored in userData)
-    if (particlesRef.current.userData.geometriesToDispose) {
-      particlesRef.current.userData.geometriesToDispose.forEach(geo => geo.dispose());
-      particlesRef.current.userData.geometriesToDispose = [];
+    // Dispose existing instanced meshes and their resources
+    if (particlesRef.current.userData.instancedMeshes) {
+      particlesRef.current.userData.instancedMeshes.forEach(mesh => {
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) mesh.material.dispose();
+      });
     }
     
-    // Clear existing particles (only dispose materials, geometries handled above)
+    // Clear existing particles
     while (particlesRef.current.children.length > 0) {
       const child = particlesRef.current.children[0];
-      // Don't dispose geometry here - it's shared and already disposed above
+      if (child.geometry) child.geometry.dispose();
       if (child.material) child.material.dispose();
       particlesRef.current.remove(child);
     }
     
-    // Clear hotspots (each has unique geometry so dispose both)
+    // Clear hotspots
     while (hotspotsRef.current.children.length > 0) {
       const child = hotspotsRef.current.children[0];
       if (child.geometry) child.geometry.dispose();
@@ -340,13 +558,13 @@ function FusionVisualization({
       hotspotsRef.current.remove(child);
     }
     
-    // Create particles (default to showing if parameter not explicitly false)
+    // Create particles using InstancedMesh (default to showing if parameter not explicitly false)
     const showParticles = parameters?.showParticles !== false;
     if (showParticles && timeStep.particles) {
       // Limit number of particles for performance
       const displayCount = Math.min(
         timeStep.particles.length,
-        parameters?.maxParticleDisplay || 1000
+        parameters?.maxParticleDisplay || 5000 // Increased limit due to InstancedMesh efficiency
       );
       
       // Find max energy to normalize color scale
@@ -355,115 +573,218 @@ function FusionVisualization({
         maxEnergy = Math.max(maxEnergy, timeStep.particles[i].energy);
       }
       
-      // Create particle geometry and materials
-      const particleGeometries = {};
-      const _particleMaterials = {}; // Prefixed with _ as currently unused but may be needed for future optimizations
-      
       // Group particles by type for instanced rendering
-      const particleTypes = {};
-      
+      const particlesByType = {};
       for (let i = 0; i < displayCount; i++) {
         const particle = timeStep.particles[i];
-        if (!particleTypes[particle.type]) {
-          particleTypes[particle.type] = [];
+        if (!particlesByType[particle.type]) {
+          particlesByType[particle.type] = [];
         }
-        particleTypes[particle.type].push(particle);
+        particlesByType[particle.type].push(particle);
       }
       
-      // Create geometries and materials for each particle type
-      // Store geometries to dispose later (shared across particles of same type)
-      const geometriesToDispose = [];
+      // Track instanced meshes for cleanup
+      const instancedMeshes = [];
       
-      for (const [type, particles] of Object.entries(particleTypes)) {
-        // Different sizes for different particle types
-        let radius = 0.05;
-        switch (type) {
-          case 'deuterium':
-            radius = 0.05;
-            break;
-          case 'tritium':
-            radius = 0.06;
-            break;
-          case 'helium':
-            radius = 0.08;
-            break;
-          case 'proton':
-            radius = 0.04;
-            break;
-          case 'electron':
-            radius = 0.02;
-            break;
-          default:
-            radius = 0.05;
+      // Create InstancedMesh for each particle type
+      for (const [type, particles] of Object.entries(particlesByType)) {
+        const config = getParticleTypeConfig(type);
+        const particleCount = particles.length;
+        
+        if (particleCount === 0) continue;
+        
+        // Create shared geometry for this particle type (lower poly for performance)
+        const geometry = new THREE.SphereGeometry(config.radius, 6, 6);
+        
+        // Create material - use MeshPhongMaterial for lighting
+        let material;
+        if (parameters?.colorByEnergy) {
+          // For energy-based coloring, we need per-instance colors
+          material = new THREE.MeshPhongMaterial({
+            color: 0xffffff, // Base white, will be tinted by instance color
+            vertexColors: false,
+          });
+        } else {
+          material = new THREE.MeshPhongMaterial({ color: config.color });
         }
         
-        const geometry = new THREE.SphereGeometry(radius, 8, 8);
-        particleGeometries[type] = geometry;
-        geometriesToDispose.push(geometry);
+        // Create InstancedMesh with the number of particles of this type
+        const instancedMesh = new THREE.InstancedMesh(geometry, material, particleCount);
+        instancedMesh.name = `InstancedParticles_${type}`;
         
-        // Add particles
-        for (const particle of particles) {
-          let material;
+        // Create a dummy object for setting transforms
+        const dummy = new THREE.Object3D();
+        
+        // If coloring by energy, create instance colors
+        if (parameters?.colorByEnergy) {
+          const colors = new Float32Array(particleCount * 3);
           
-          if (parameters?.colorByEnergy) {
-            // Color by energy
+          for (let i = 0; i < particleCount; i++) {
+            const particle = particles[i];
+            
+            // Set position
+            dummy.position.set(particle.x, particle.y, particle.z);
+            dummy.updateMatrix();
+            instancedMesh.setMatrixAt(i, dummy.matrix);
+            
+            // Set color based on energy
             const normalizedEnergy = maxEnergy > 0 ? particle.energy / maxEnergy : 0;
             const color = getEnergyColor(normalizedEnergy);
-            material = new THREE.MeshPhongMaterial({ color: color });
-          } else {
-            // Color by particle type
-            let color;
-            switch (particle.type) {
-              case 'deuterium':
-                color = 0x3498db; // blue
-                break;
-              case 'tritium':
-                color = 0x2ecc71; // green
-                break;
-              case 'helium':
-                color = 0xf1c40f; // yellow
-                break;
-              case 'proton':
-                color = 0xe74c3c; // red
-                break;
-              case 'electron':
-                color = 0x9b59b6; // purple
-                break;
-              default:
-                color = 0xcccccc; // gray
-            }
-            material = new THREE.MeshPhongMaterial({ color });
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
           }
           
-          const sphere = new THREE.Mesh(particleGeometries[type], material);
-          sphere.position.set(particle.x, particle.y, particle.z);
-          particlesRef.current.add(sphere);
+          // Add instance colors attribute
+          instancedMesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 3);
+        } else {
+          // Just set positions without individual colors
+          for (let i = 0; i < particleCount; i++) {
+            const particle = particles[i];
+            dummy.position.set(particle.x, particle.y, particle.z);
+            dummy.updateMatrix();
+            instancedMesh.setMatrixAt(i, dummy.matrix);
+          }
         }
+        
+        // Mark matrix as needing update
+        instancedMesh.instanceMatrix.needsUpdate = true;
+        if (instancedMesh.instanceColor) {
+          instancedMesh.instanceColor.needsUpdate = true;
+        }
+        
+        // Enable frustum culling for better performance
+        instancedMesh.frustumCulled = true;
+        
+        particlesRef.current.add(instancedMesh);
+        instancedMeshes.push(instancedMesh);
       }
       
-      // Store geometries reference for proper disposal
-      particlesRef.current.userData.geometriesToDispose = geometriesToDispose;
+      // Store reference for cleanup
+      particlesRef.current.userData.instancedMeshes = instancedMeshes;
     }
     
-    // Create hotspots (default to showing if parameter not explicitly false)
+    // Create hotspots using InstancedMesh if there are many
     const showHotspots = parameters?.showHotspots !== false;
-    if (showHotspots && timeStep.hotspots) {
-      for (const hotspot of timeStep.hotspots) {
-        // Create hotspot geometry
-        const geometry = new THREE.SphereGeometry(hotspot.intensity * 0.5, 16, 16);
-        
-        // Create material with emissive property for glow effect
+    if (showHotspots && timeStep.hotspots && timeStep.hotspots.length > 0) {
+      const hotspotCount = timeStep.hotspots.length;
+      
+      if (hotspotCount > 10) {
+        // Use InstancedMesh for many hotspots
+        const avgIntensity = timeStep.hotspots.reduce((sum, h) => sum + h.intensity, 0) / hotspotCount;
+        const geometry = new THREE.SphereGeometry(avgIntensity * 0.5, 12, 12);
         const material = new THREE.MeshPhongMaterial({
           color: 0xffffff,
           emissive: 0xffaa00,
-          emissiveIntensity: hotspot.intensity,
+          emissiveIntensity: avgIntensity,
           transparent: true,
-          opacity: Math.min(0.7, hotspot.intensity * 0.5)
+          opacity: Math.min(0.7, avgIntensity * 0.5)
         });
         
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(hotspot.x, hotspot.y, hotspot.z);
-        hotspotsRef.current.add(sphere);
+        const instancedHotspots = new THREE.InstancedMesh(geometry, material, hotspotCount);
+        instancedHotspots.name = 'InstancedHotspots';
+        
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < hotspotCount; i++) {
+          const hotspot = timeStep.hotspots[i];
+          dummy.position.set(hotspot.x, hotspot.y, hotspot.z);
+          // Scale based on intensity
+          const scale = hotspot.intensity / avgIntensity;
+          dummy.scale.setScalar(scale);
+          dummy.updateMatrix();
+          instancedHotspots.setMatrixAt(i, dummy.matrix);
+        }
+        
+        instancedHotspots.instanceMatrix.needsUpdate = true;
+        hotspotsRef.current.add(instancedHotspots);
+      } else {
+        // Use individual meshes for few hotspots (more control over appearance)
+        for (const hotspot of timeStep.hotspots) {
+          const geometry = new THREE.SphereGeometry(hotspot.intensity * 0.5, 16, 16);
+          const material = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            emissive: 0xffaa00,
+            emissiveIntensity: hotspot.intensity,
+            transparent: true,
+            opacity: Math.min(0.7, hotspot.intensity * 0.5)
+          });
+          
+          const sphere = new THREE.Mesh(geometry, material);
+          sphere.position.set(hotspot.x, hotspot.y, hotspot.z);
+          hotspotsRef.current.add(sphere);
+        }
+      }
+    }
+    
+    // Update particle trails if enabled
+    if (showParticleTrails && trailSystemRef.current && timeStep.particles) {
+      const trailGroup = trailSystemRef.current.trailGroup;
+      
+      if (trailGroup) {
+        // Clear existing trail meshes from scene (but keep trail history)
+        while (trailGroup.children.length > 0) {
+          const child = trailGroup.children[0];
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+          trailGroup.remove(child);
+        }
+        
+        // Update trail positions for each particle
+        const displayCount = Math.min(
+          timeStep.particles.length,
+          parameters?.maxTrailParticles || 100 // Limit trails for performance
+        );
+        
+        // Find max energy for color scaling
+        let maxEnergy = 0;
+        for (let i = 0; i < timeStep.particles.length; i++) {
+          maxEnergy = Math.max(maxEnergy, timeStep.particles[i].energy);
+        }
+        
+        for (let i = 0; i < displayCount; i++) {
+          const particle = timeStep.particles[i];
+          const particleId = particle.id || `particle_${i}`;
+          const position = new THREE.Vector3(particle.x, particle.y, particle.z);
+          
+          // Update trail history using the correct method name
+          trailSystemRef.current.updateTrail(particleId, position);
+          
+          // Get color based on particle type or energy
+          let trailColor;
+          if (parameters?.colorByEnergy && maxEnergy > 0) {
+            const normalizedEnergy = particle.energy / maxEnergy;
+            const energyColor = getEnergyColor(normalizedEnergy);
+            trailColor = energyColor.getHex();
+          } else {
+            // Color by particle type
+            const typeColors = {
+              deuterium: 0x3498db,
+              tritium: 0x2ecc71,
+              helium: 0xf1c40f,
+              proton: 0xe74c3c,
+              electron: 0x9b59b6
+            };
+            trailColor = typeColors[particle.type] || 0x00ffff;
+          }
+          
+          // Create trail mesh and add to scene
+          const trailMesh = trailSystemRef.current.createTrailMesh(particleId, trailColor);
+          if (trailMesh) {
+            trailGroup.add(trailMesh);
+          }
+        }
+      }
+    } else if (trailSystemRef.current) {
+      // Clear trails when disabled
+      trailSystemRef.current.clear();
+      const trailGroup = trailSystemRef.current.trailGroup;
+      if (trailGroup) {
+        while (trailGroup.children.length > 0) {
+          const child = trailGroup.children[0];
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+          trailGroup.remove(child);
+        }
       }
     }
   };
@@ -526,34 +847,97 @@ function FusionVisualization({
   
   return (
     <Box sx={{ width, height: 'auto' }}>
-      {/* 3D rendering container */}
+      {/* 3D rendering container with legend overlay */}
       <Box
-        ref={containerRef}
         sx={{
+          position: 'relative',
           width: '100%',
           height,
           borderRadius: 1,
           overflow: 'hidden',
           bgcolor: '#000'
         }}
-      />
+      >
+        {/* Three.js canvas container */}
+        <Box
+          ref={containerRef}
+          sx={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
+        
+        {/* Legend overlay */}
+        {showLegend && (
+          <VisualizationLegend
+            particleCounts={currentStats?.particleCounts || {}}
+            stats={currentStats?.stats}
+            showEnergy={parameters?.colorByEnergy !== false}
+            showParticles={parameters?.showParticles !== false}
+            showHotspots={parameters?.showHotspots !== false}
+            showStats={true}
+            showScale={true}
+            showQuantumFlux={showQuantumFlux}
+            scaleInfo={scaleInfo}
+            quantumFluxMode={quantumFluxMode}
+            position="top-right"
+            collapsed={legendCollapsed}
+            onToggleCollapse={setLegendCollapsed}
+            variant="overlay"
+          />
+        )}
+        
+        {/* Quick info badge - bottom left */}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 8,
+            left: 8,
+            bgcolor: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1,
+            fontSize: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <span>⏱️ {timeLabels[currentTimeIndex] || '0.00 ps'}</span>
+          {currentStats?.stats && (
+            <>
+              <span>🔵 {currentStats.stats.totalParticles} particles</span>
+              <span>🔥 {currentStats.stats.hotspotCount} hotspots</span>
+            </>
+          )}
+        </Box>
+      </Box>
       
       {/* Playback controls */}
       <Card sx={{ mt: 2 }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <IconButton onClick={handleRestart}>
-              <RestartAltIcon />
-            </IconButton>
-            <IconButton onClick={handleStepBackward}>
-              <FastRewindIcon />
-            </IconButton>
-            <IconButton onClick={handlePlayPause}>
-              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-            </IconButton>
-            <IconButton onClick={handleStepForward}>
-              <FastForwardIcon />
-            </IconButton>
+            <Tooltip title="Restart">
+              <IconButton onClick={handleRestart}>
+                <RestartAltIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Step Backward">
+              <IconButton onClick={handleStepBackward}>
+                <FastRewindIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={isPlaying ? "Pause" : "Play"}>
+              <IconButton onClick={handlePlayPause} color="primary">
+                {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Step Forward">
+              <IconButton onClick={handleStepForward}>
+                <FastForwardIcon />
+              </IconButton>
+            </Tooltip>
             <Box sx={{ ml: 2, flexGrow: 1 }}>
               <Typography variant="body2" gutterBottom>
                 Time: {timeLabels[currentTimeIndex] || '0.00 ps'}
@@ -562,10 +946,10 @@ function FusionVisualization({
                 value={currentTimeIndex}
                 onChange={handleTimeChange}
                 min={0}
-                max={timeSteps.length - 1}
+                max={Math.max(timeSteps.length - 1, 0)}
                 step={1}
                 valueLabelDisplay="auto"
-                valueLabelFormat={(value) => timeLabels[value]}
+                valueLabelFormat={(value) => timeLabels[value] || '0.00 ps'}
               />
             </Box>
           </Box>
@@ -590,16 +974,16 @@ function FusionVisualization({
           </Box>
           
           {/* Visual Effects Toggles */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', mt: 2, gap: 2 }}>
             <FormControlLabel
               control={
                 <Switch
-                  checked={showVortexEffect}
-                  onChange={(e) => setShowVortexEffect(e.target.checked)}
+                  checked={showQuantumFlux}
+                  onChange={(e) => setShowQuantumFlux(e.target.checked)}
                   size="small"
                 />
               }
-              label={<Typography variant="body2">Plasma Vortex Effect</Typography>}
+              label={<Typography variant="body2">Quantum Field</Typography>}
             />
             <FormControlLabel
               control={
@@ -611,7 +995,68 @@ function FusionVisualization({
               }
               label={<Typography variant="body2">Particle Trails</Typography>}
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showLegend}
+                  onChange={(e) => setShowLegend(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={<Typography variant="body2">Show Legend</Typography>}
+            />
+            <Tooltip title="Information about the visualization">
+              <IconButton size="small" color="info">
+                <InfoOutlinedIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
+          
+          {/* Quantum Flux Mode Selector */}
+          {showQuantumFlux && (
+            <Box sx={{ mt: 2 }}>
+              <FormControl size="small" sx={{ minWidth: 220 }}>
+                <InputLabel id="quantum-flux-mode-label">Quantum Field Mode</InputLabel>
+                <Select
+                  labelId="quantum-flux-mode-label"
+                  value={quantumFluxMode}
+                  label="Quantum Field Mode"
+                  onChange={(e) => setQuantumFluxMode(e.target.value)}
+                >
+                  <MenuItem value="electron_screening">
+                    <Tooltip title="Thomas-Fermi electron density reducing Coulomb barrier" placement="right">
+                      <span>Electron Screening</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value="magnetic_dipoles">
+                    <Tooltip title="Nuclear/electron spin magnetic moments and local fields" placement="right">
+                      <span>Magnetic Dipoles</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value="phonon_modes">
+                    <Tooltip title="Debye model lattice vibrations (acoustic + optical)" placement="right">
+                      <span>Phonon Modes</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value="coulomb_exchange">
+                    <Tooltip title="Virtual photon exchange between charged particles" placement="right">
+                      <span>Coulomb Exchange</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value="gamow_window">
+                    <Tooltip title="Optimal tunneling energy (stellar nucleosynthesis)" placement="right">
+                      <span>Gamow Window</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value="combined">
+                    <Tooltip title="Combined screening, phonon, and tunneling effects" placement="right">
+                      <span>Combined Effects</span>
+                    </Tooltip>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

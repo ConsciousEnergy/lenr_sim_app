@@ -401,32 +401,70 @@ async def root():
     }
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
-    # #region agent log
+    """
+    Comprehensive health check endpoint.
+    
+    Returns system status including:
+    - Memory usage
+    - Physics engine availability
+    - API endpoints status
+    - Uptime information
+    """
     import json
-    import time
-    try:
-        with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"E","location":"main.py:340","message":"Health check called","data":{"endpoint":"/health"},"timestamp":int(time.time()*1000)})+"\n")
-            f.flush()
-    except:
-        pass
-    # #endregion
+    import time as time_module
+    
     # Include memory information in health check
     memory_info = psutil.virtual_memory()
     process = psutil.Process(os.getpid())
     process_memory = process.memory_info().rss / (1024 * 1024)  # MB
     
+    # Check physics engine components
+    physics_status = {
+        "wkb_tunneling": False,
+        "bubble_lattice": False,
+        "unified_enhancement": False,
+    }
+    
+    try:
+        from .physics.wkb_tunneling import WKBTunnelingCalculator
+        physics_status["wkb_tunneling"] = True
+    except ImportError:
+        pass
+    
+    try:
+        from .physics_engine.bubble_lattice_interaction import BubbleLatticeInteraction
+        physics_status["bubble_lattice"] = True
+    except ImportError:
+        pass
+    
+    try:
+        from .physics_engine.unified_enhancement import UnifiedEnhancementCalculator
+        physics_status["unified_enhancement"] = True
+    except ImportError:
+        pass
+    
+    # Calculate overall status
+    all_physics_ok = all(physics_status.values())
+    
     return {
-        "status": "healthy", 
+        "status": "healthy" if all_physics_ok else "degraded",
+        "timestamp": time_module.time(),
+        "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
         "system_memory": {
             "total_gb": round(memory_info.total / (1024**3), 2),
             "available_gb": round(memory_info.available / (1024**3), 2),
             "percent_used": memory_info.percent
         },
-        "process_memory_mb": round(process_memory, 2)
+        "process_memory_mb": round(process_memory, 2),
+        "physics_engine": physics_status,
+        "api_endpoints": {
+            "physics": unified_simulation_router is not None,
+            "visualization": True,
+            "multi_physics": True,
+        }
     }
 
 @app.get("/memory")

@@ -14,6 +14,8 @@ export { default as DataExportPanel } from './DataExportPanel';
 export { default as LENRVisualization } from './LENRVisualization';
 export { default as FusionVisualization } from './FusionVisualization';
 export { default as UnifiedBubbleLatticeVisualization } from './UnifiedBubbleLatticeVisualization';
+export { default as VisualizationLegend } from './VisualizationLegend';
+export { QuantumFluxEffect, ScaleBar, FluxMode } from './QuantumFluxVisualization';
 
 // For better organization, we import and re-export the ReactionConfigurationManager from the reactions directory
 export { default as ReactionConfigurationManager } from '../reactions/ReactionConfigurationManager'; 

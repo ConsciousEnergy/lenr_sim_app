@@ -15,11 +15,11 @@ if ! command -v node &> /dev/null; then
 fi
 
 # Ensure necessary directories exist
-mkdir -p backend/data backend/static backend/logs
+mkdir -p LENR_SIM_APP_v2/backend/data LENR_SIM_APP_v2/backend/static LENR_SIM_APP_v2/backend/logs
 
 # Setup and start backend
 echo "Setting up backend..."
-cd backend
+cd LENR_SIM_APP_v2/backend
 
 # Check for virtual environment
 if [ ! -d "venv" ]; then
@@ -53,11 +53,11 @@ else
 fi
 
 # Return to root directory
-cd ..
+cd ../..
 
 # Setup and start frontend
 echo "Setting up frontend..."
-cd frontend
+cd LENR_SIM_APP_v2/frontend
 
 # Install frontend dependencies if needed
 if [ ! -d "node_modules" ]; then
@@ -84,7 +84,7 @@ else
 fi
 
 # Return to root directory
-cd ..
+cd ../..
 
 echo ""
 echo "LENR Simulation Application is starting..."
