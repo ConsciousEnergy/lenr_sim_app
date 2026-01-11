@@ -1,0 +1,623 @@
+/**
+ * Physics Engine Mock Server
+ * 
+ * This module provides a mock implementation of the Physics Engine API server
+ * for development and testing purposes.
+ */
+
+import {
+  SimulationInitializeRequest,
+  SimulationInitializeResponse,
+  SimulationControlResponse,
+  ParameterUpdateRequest,
+  ParameterUpdateResponse,
+  SnapshotRequest,
+  SnapshotResponse,
+  SnapshotListResponse,
+  SimulationStatusResponse,
+  SimulationResultsResponse,
+  WebSocketMessage,
+  LatticeState,
+  SimulationSummary,
+  SimulationStatus,
+  SimulationSnapshot
+} from './types';
+
+// Store for simulation data
+interface SimulationStore {
+  [id: string]: {
+    config: SimulationInitializeRequest;
+    status: SimulationStatus;
+    currentStep: number;
+    totalSteps: number;
+    startTime?: number;
+    pauseTime?: number;
+    elapsedTime: number;
+    createdAt?: number; // Timestamp when simulation was created
+    snapshots: Array<{
+      id: string;
+      name?: string;
+      description?: string;
+      state: any;
+      createdAt: string;
+    }>;
+    currentLattice: LatticeState;
+    currentSummary: SimulationSummary;
+    webSocketClients: Set<WebSocket>;
+    updateIntervalId?: NodeJS.Timeout;
+  };
+}
+
+// Mock data store
+const simulations: SimulationStore = {};
+
+// Generate a random ID
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// Get current timestamp as ISO string
+function getCurrentTimestamp(): string {
+  return new Date().toISOString();
+}
+
+// Generate mock lattice data based on simulation config
+function generateMockLattice(config: SimulationInitializeRequest): LatticeState {
+  const { lattice } = config;
+  const [width, height, depth] = lattice.dimensions;
+  
+  const points: Array<{
+    position: [number, number, number];
+    element: string;
+    energy: number;
+    temperature: number;
+    reaction_rate: number;
+  }> = [];
+  const connections: Array<[number, number]> = [];
+  
+  // Spacing between atoms in the lattice
+  const spacing = lattice.constants?.[0] || 3.89;
+  const centerOffset = [width * spacing / 2, height * spacing / 2, depth * spacing / 2];
+  
+  // Guard against empty elements array
+  if (!lattice.elements || lattice.elements.length === 0) {
+    return { dimensions: lattice.dimensions, points: [], connections: [] };
+  }
+  
+  // Generate lattice points with proper coordinates
+  for (let i = 0; i < width; i++) {
+    for (let j = 0; j < height; j++) {
+      for (let k = 0; k < depth; k++) {
+        // Generate main lattice points (metal atoms)
+        const element = lattice.elements[0];
+        const x = i * spacing - centerOffset[0];
+        const y = j * spacing - centerOffset[1];
+        const z = k * spacing - centerOffset[2];
+        
+        points.push({
+          position: [x, y, z] as [number, number, number],
+          element: element.symbol,
+          energy: Math.random() * 2,
+          temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
+          reaction_rate: Math.random() * 0.15
+        });
+        
+        // Add some interstitial atoms (hydrogen) at body center positions
+        if (lattice.elements.length > 1 && Math.random() > 0.6) {
+          const interstitialElement = lattice.elements[1];
+          points.push({
+            position: [
+              x + spacing * 0.5, 
+              y + spacing * 0.5, 
+              z + spacing * 0.5
+            ] as [number, number, number],
+            element: interstitialElement.symbol,
+            energy: Math.random() * 1.5,
+            temperature: config.conditions.temperature * (0.95 + Math.random() * 0.1),
+            reaction_rate: Math.random() * 0.2
+          });
+        }
+      }
+    }
+  }
+  
+  // Generate connections between nearby points
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const p1 = points[i].position;
+      const p2 = points[j].position;
+      const distance = Math.sqrt(
+        Math.pow(p1[0] - p2[0], 2) +
+        Math.pow(p1[1] - p2[1], 2) +
+        Math.pow(p1[2] - p2[2], 2)
+      );
+      
+      // Connect points that are within 1.5 * spacing distance
+      if (distance <= spacing * 1.5) {
+        connections.push([i, j] as [number, number]);
+      }
+    }
+  }
+  
+  return {
+    dimensions: lattice.dimensions,
+    points,
+    connections
+  };
+}
+
+// Generate mock simulation summary
+function generateMockSummary(config: SimulationInitializeRequest, step: number): SimulationSummary {
+  return {
+    average_temperature: config.conditions.temperature * (0.9 + Math.random() * 0.2),
+    total_energy: 1000 * Math.random() * (1 + step / 100),
+    reaction_rate: 0.05 + Math.random() * 0.1 * (step / 100),
+    reaction_counts: {
+      'fusion': Math.floor(step / 10),
+      'decay': Math.floor(step / 5),
+      'capture': Math.floor(step / 7)
+    }
+  };
+}
+
+// Update simulation state
+function updateSimulation(id: string) {
+  const simulation = simulations[id];
+  if (!simulation || simulation.status !== 'running') return;
+  
+  // Process multiple steps per update for faster completion
+  const stepsPerUpdate = Math.max(1, Math.ceil(simulation.totalSteps / 10));
+  simulation.currentStep += stepsPerUpdate;
+  
+  const currentTime = Date.now();
+  const elapsedSinceStart = currentTime - (simulation.startTime || currentTime);
+  simulation.elapsedTime += elapsedSinceStart / 1000;
+  simulation.startTime = currentTime;
+  
+  // Update lattice and summary
+  const numPoints = simulation.currentLattice.points.length;
+  // Modify a subset of points to simulate changes
+  for (let i = 0; i < numPoints; i++) {
+    if (Math.random() > 0.9) {
+      const point = simulation.currentLattice.points[i];
+      point.energy += (Math.random() - 0.5) * 0.1;
+      point.temperature += (Math.random() - 0.5) * 2;
+      point.reaction_rate = Math.max(0, point.reaction_rate + (Math.random() - 0.5) * 0.01);
+    }
+  }
+  
+  // Update summary
+  simulation.currentSummary = generateMockSummary(simulation.config, simulation.currentStep);
+  
+  // Check if simulation is complete
+  if (simulation.currentStep >= simulation.totalSteps) {
+    simulation.status = 'completed';
+    clearInterval(simulation.updateIntervalId);
+    simulation.updateIntervalId = undefined;
+  }
+  
+  // Send updates to all connected clients
+  broadcastUpdate(id);
+}
+
+// Broadcast update to all connected WebSocket clients
+function broadcastUpdate(id: string) {
+  const simulation = simulations[id];
+  if (!simulation) return;
+  
+  const message: WebSocketMessage = {
+    type: 'simulation_update',
+    simulation_id: id,
+    step: simulation.currentStep,
+    time: simulation.elapsedTime,
+    lattice: simulation.currentLattice,
+    summary: simulation.currentSummary,
+    timestamp: Date.now(),
+    data: null
+  };
+  
+  const messageString = JSON.stringify(message);
+  
+  simulation.webSocketClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageString);
+    }
+  });
+}
+
+/**
+ * Mock implementation of the Physics API server
+ */
+export const mockPhysicsServer = {
+  /**
+   * Initialize a new simulation
+   */
+  initializeSimulation(request: SimulationInitializeRequest): SimulationInitializeResponse {
+    const id = request.simulation_id || generateId();
+    const initializedAt = getCurrentTimestamp();
+    
+    // Create initial lattice state
+    const latticeState = generateMockLattice(request);
+    
+    // Create initial summary
+    const summary = generateMockSummary(request, 0);
+    
+    // Store the simulation
+    simulations[id] = {
+      config: request,
+      status: 'initialized',
+      currentStep: 0,
+      totalSteps: request.simulation_parameters.total_steps,
+      elapsedTime: 0,
+      createdAt: Date.now(), // Track creation time for wall_time calculation
+      snapshots: [],
+      currentLattice: latticeState,
+      currentSummary: summary,
+      webSocketClients: new Set()
+    };
+    
+    return {
+      simulation_id: id,
+      status: 'initialized',
+      websocket_url: `ws://localhost:8000/api/ws/physics/${id}`,
+      models: request.models.map(m => m.model_type),
+      initialized_at: initializedAt
+    };
+  },
+  
+  /**
+   * Start a simulation
+   */
+  startSimulation(id: string): SimulationControlResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    simulation.status = 'running';
+    simulation.startTime = Date.now();
+    
+    // Start periodic updates (faster interval for responsive development)
+    if (!simulation.updateIntervalId) {
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
+    }
+    
+    return {
+      simulation_id: id,
+      status: 'running',
+      started_at: getCurrentTimestamp()
+    };
+  },
+  
+  /**
+   * Pause a simulation
+   */
+  pauseSimulation(id: string): SimulationControlResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    simulation.status = 'paused';
+    simulation.pauseTime = Date.now();
+    
+    // Update elapsed time
+    if (simulation.startTime) {
+      simulation.elapsedTime += (simulation.pauseTime - simulation.startTime) / 1000;
+    }
+    
+    // Stop periodic updates
+    if (simulation.updateIntervalId) {
+      clearInterval(simulation.updateIntervalId);
+      simulation.updateIntervalId = undefined;
+    }
+    
+    return {
+      simulation_id: id,
+      status: 'paused',
+      paused_at: getCurrentTimestamp()
+    };
+  },
+  
+  /**
+   * Resume a simulation
+   */
+  resumeSimulation(id: string): SimulationControlResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    simulation.status = 'running';
+    simulation.startTime = Date.now();
+    
+    // Start periodic updates (faster interval for responsive development)
+    if (!simulation.updateIntervalId) {
+      simulation.updateIntervalId = setInterval(() => updateSimulation(id), 200);
+    }
+    
+    return {
+      simulation_id: id,
+      status: 'running',
+      resumed_at: getCurrentTimestamp()
+    };
+  },
+  
+  /**
+   * Reset a simulation
+   */
+  resetSimulation(id: string): SimulationControlResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    // Stop updates
+    if (simulation.updateIntervalId) {
+      clearInterval(simulation.updateIntervalId);
+      simulation.updateIntervalId = undefined;
+    }
+    
+    // Reset state
+    simulation.status = 'initialized';
+    simulation.currentStep = 0;
+    simulation.elapsedTime = 0;
+    simulation.startTime = undefined;
+    simulation.pauseTime = undefined;
+    
+    // Reset lattice and summary
+    simulation.currentLattice = generateMockLattice(simulation.config);
+    simulation.currentSummary = generateMockSummary(simulation.config, 0);
+    
+    // Broadcast update
+    broadcastUpdate(id);
+    
+    return {
+      simulation_id: id,
+      status: 'initialized',
+      reset_at: getCurrentTimestamp()
+    };
+  },
+  
+  /**
+   * Update simulation parameters
+   */
+  updateParameters(id: string, params: ParameterUpdateRequest): ParameterUpdateResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    // Update conditions
+    if (params.conditions) {
+      simulation.config.conditions = {
+        ...simulation.config.conditions,
+        ...params.conditions
+      };
+    }
+    
+    // Update models
+    if (params.models) {
+      params.models.forEach((model, index) => {
+        if (index < simulation.config.models.length) {
+          simulation.config.models[index] = {
+            ...simulation.config.models[index],
+            ...model
+          };
+        }
+      });
+    }
+    
+    // Broadcast parameter update
+    const message: WebSocketMessage = {
+      type: 'parameter_update',
+      simulation_id: id,
+      parameters: {
+        conditions: simulation.config.conditions,
+        models: simulation.config.models
+      },
+      timestamp: Date.now(),
+      data: null
+    };
+    
+    const messageString = JSON.stringify(message);
+    
+    simulation.webSocketClients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageString);
+      }
+    });
+    
+    return {
+      success: true,
+      simulation_id: id,
+      status: 'parameters_updated',
+      updated_at: getCurrentTimestamp()
+    };
+  },
+  
+  /**
+   * Take a snapshot of the current simulation state
+   */
+  takeSnapshot(id: string, options?: SnapshotRequest): SnapshotResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    const snapshotId = generateId();
+    const createdAt = getCurrentTimestamp();
+    
+    // Create a deep copy of the current state
+    const stateSnapshot = JSON.parse(JSON.stringify({
+      currentStep: simulation.currentStep,
+      elapsedTime: simulation.elapsedTime,
+      lattice: simulation.currentLattice,
+      summary: simulation.currentSummary
+    }));
+    
+    // Create the snapshot object
+    const snapshot: SimulationSnapshot = {
+      snapshot_id: snapshotId,
+      name: options?.name,
+      description: options?.description,
+      step: simulation.currentStep,
+      timestamp: Date.now(),
+      state: stateSnapshot,
+      data: null,
+      created_at: createdAt
+    };
+    
+    // Save the snapshot
+    simulation.snapshots.push({
+      id: snapshotId,
+      name: options?.name,
+      description: options?.description,
+      state: stateSnapshot,
+      createdAt
+    });
+    
+    return {
+      snapshot,
+      simulation_id: id,
+      snapshot_id: snapshotId,
+      name: options?.name,
+      created_at: createdAt
+    };
+  },
+  
+  /**
+   * List all snapshots for a simulation
+   */
+  listSnapshots(id: string): SnapshotListResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    return {
+      simulation_id: id,
+      snapshots: simulation.snapshots.map(snapshot => ({
+        snapshot_id: snapshot.id,
+        name: snapshot.name,
+        description: snapshot.description,
+        created_at: snapshot.createdAt,
+        step: snapshot.state?.currentStep || 0,
+        timestamp: new Date(snapshot.createdAt).getTime(),
+        state: snapshot.state,
+        data: null
+      }))
+    };
+  },
+  
+  /**
+   * Restore a simulation to a previous snapshot
+   */
+  restoreSnapshot(id: string, snapshotId: string): SimulationControlResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    const snapshot = simulation.snapshots.find(s => s.id === snapshotId);
+    if (!snapshot) throw new Error(`Snapshot ${snapshotId} not found`);
+    
+    // Stop updates if running
+    if (simulation.status === 'running' && simulation.updateIntervalId) {
+      clearInterval(simulation.updateIntervalId);
+      simulation.updateIntervalId = undefined;
+    }
+    
+    // Restore the state
+    simulation.currentStep = snapshot.state.currentStep;
+    simulation.elapsedTime = snapshot.state.elapsedTime;
+    simulation.currentLattice = snapshot.state.lattice;
+    simulation.currentSummary = snapshot.state.summary;
+    simulation.status = 'paused';
+    
+    // Broadcast update
+    broadcastUpdate(id);
+    
+    return {
+      simulation_id: id,
+      status: 'paused',
+      restored_at: getCurrentTimestamp(),
+      snapshot_id: snapshotId
+    };
+  },
+  
+  /**
+   * Get the current status of a simulation
+   */
+  getSimulationStatus(id: string): SimulationStatusResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    // Calculate current elapsed time if running
+    let elapsedTime = simulation.elapsedTime;
+    if (simulation.status === 'running' && simulation.startTime) {
+      elapsedTime += (Date.now() - simulation.startTime) / 1000;
+    }
+    
+    return {
+      simulation_id: id,
+      status: simulation.status,
+      current_step: simulation.currentStep,
+      total_steps: simulation.totalSteps,
+      elapsed_time: elapsedTime,
+      wall_time: simulation.createdAt ? (Date.now() - simulation.createdAt) / 1000 : 0
+    };
+  },
+  
+  /**
+   * Get the results of a simulation
+   */
+  getSimulationResults(id: string, options?: { step?: number }): SimulationResultsResponse {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    return {
+      simulation_id: id,
+      step: simulation.currentStep,
+      time: simulation.elapsedTime,
+      lattice: simulation.currentLattice,
+      summary: simulation.currentSummary
+    };
+  },
+  
+  /**
+   * Register a WebSocket client
+   */
+  registerWebSocketClient(id: string, client: WebSocket): void {
+    const simulation = simulations[id];
+    if (!simulation) throw new Error(`Simulation ${id} not found`);
+    
+    simulation.webSocketClients.add(client);
+    
+    // Send initial update
+    const message: WebSocketMessage = {
+      type: 'simulation_update',
+      simulation_id: id,
+      step: simulation.currentStep,
+      time: simulation.elapsedTime,
+      lattice: simulation.currentLattice,
+      summary: simulation.currentSummary,
+      timestamp: Date.now(),
+      data: null
+    };
+    
+    client.send(JSON.stringify(message));
+    
+    // Handle client disconnect
+    client.addEventListener('close', () => {
+      simulation.webSocketClients.delete(client);
+    });
+  },
+  
+  /**
+   * Clean up resources for a simulation
+   */
+  cleanupSimulation(id: string): void {
+    const simulation = simulations[id];
+    if (!simulation) return;
+    
+    // Stop updates
+    if (simulation.updateIntervalId) {
+      clearInterval(simulation.updateIntervalId);
+    }
+    
+    // Close all WebSocket connections
+    simulation.webSocketClients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.close();
+      }
+    });
+    
+    // Remove the simulation
+    delete simulations[id];
+  }
+}; 

@@ -1,288 +1,276 @@
 """
-Potential models for LENR_Sim_App
+Potential Models Module for LENR_Sim_App
 
-Implements various potential energy functions:
-- Harmonic oscillator
-- Morse potential
-- Coulomb barrier
-
-Used for calculating energy levels and tunneling probabilities.
+This module implements various potential energy models for LENR simulations,
+including Coulomb potentials, nuclear potentials, and composite potentials
+that incorporate quantum and relativistic corrections.
 """
 
 import numpy as np
-from typing import Callable, Literal, Dict, Any, Tuple
-from scipy.constants import e, epsilon_0
+import scipy.constants as const
+from typing import Dict, List, Tuple, Any, Optional, Union
+import math
+import logging
 
-def harmonic_potential(
-    x: np.ndarray,
-    r0: float,
-    k_spring: float
-) -> np.ndarray:
+from app.utils.logging import setup_logger
+
+# Set up logger
+logger = setup_logger("potential_models", "logs/physics.log")
+
+# Physical constants
+HBAR = const.hbar  # Reduced Planck constant
+KB = const.k  # Boltzmann constant
+ELECTRON_MASS = const.m_e  # Electron mass
+ELECTRON_CHARGE = const.e  # Elementary charge
+PROTON_MASS = const.m_p  # Proton mass
+NEUTRON_MASS = const.m_n  # Neutron mass
+VACUUM_PERMITTIVITY = const.epsilon_0  # Vacuum permittivity
+AMU = const.u  # Atomic mass unit
+EV_TO_J = const.e  # Conversion factor from eV to Joules
+KEV_TO_J = 1e3 * EV_TO_J  # Conversion from keV to Joules
+MEV_TO_J = 1e6 * EV_TO_J  # Conversion from MeV to Joules
+FERMI = 1e-15  # 1 Fermi = 1e-15 m
+
+
+def calculate_coulomb_barrier(z1: int, z2: int, distance: Optional[float] = None) -> float:
     """
-    Harmonic oscillator potential
+    Calculate the Coulomb barrier height between two nuclei
     
     Args:
-        x: Position array in meters
-        r0: Equilibrium position in meters
-        k_spring: Spring constant in N/m
+        z1: Atomic number of the first nucleus
+        z2: Atomic number of the second nucleus
+        distance: Distance between nuclei in meters (optional)
         
     Returns:
-        Potential energy in joules
+        Coulomb barrier height in eV
     """
-    return 0.5 * k_spring * (x - r0)**2
+    # If distance not provided, use the approximate nuclear contact distance
+    if distance is None:
+        # Nuclear radius approximation: r ≈ 1.25 fm * A^(1/3)
+        # We don't have mass numbers, so use Z as approximation
+        a1_approx = max(1, 2 * z1)  # Approximate mass number
+        a2_approx = max(1, 2 * z2)  # Approximate mass number
+        
+        r1 = 1.25 * FERMI * (a1_approx**(1/3))
+        r2 = 1.25 * FERMI * (a2_approx**(1/3))
+        
+        # Distance at nuclear contact
+        distance = r1 + r2
+    
+    # Coulomb potential: V(r) = (1/4πε₀) * (Z₁Z₂e²/r)
+    coulomb_energy = (1 / (4 * np.pi * VACUUM_PERMITTIVITY)) * (z1 * z2 * ELECTRON_CHARGE**2 / distance)
+    
+    # Convert to eV
+    coulomb_energy_ev = coulomb_energy / ELECTRON_CHARGE
+    
+    logger.debug(f"Calculated Coulomb barrier: {coulomb_energy_ev:.2f} eV for Z1={z1}, Z2={z2}")
+    
+    return float(coulomb_energy_ev)
 
-def morse_potential(
-    x: np.ndarray,
-    r0: float,
-    k_spring: float,
-    De: float = None
-) -> np.ndarray:
+
+def calculate_yukawa_potential(z1: int, z2: int, distance: float, screening_length: float) -> float:
     """
-    Morse potential for anharmonic oscillator
+    Calculate the screened Coulomb (Yukawa) potential between two nuclei
     
     Args:
-        x: Position array in meters
-        r0: Equilibrium position in meters
-        k_spring: Spring constant in N/m (used to calculate alpha if De is provided)
-        De: Dissociation energy in joules (if None, calculated from k_spring)
+        z1: Atomic number of the first nucleus
+        z2: Atomic number of the second nucleus
+        distance: Distance between nuclei in meters
+        screening_length: Screening length in meters
         
     Returns:
-        Potential energy in joules
+        Yukawa potential in eV
     """
-    # Calculate dissociation energy if not provided
-    if De is None:
-        De = k_spring * r0**2 / 2
+    # Ensure positive distance and screening length
+    distance = max(1e-16, distance)
+    screening_length = max(1e-16, screening_length)
     
-    # Calculate alpha parameter
-    # For small oscillations around r0, the Morse potential approximates harmonic with k_spring
-    alpha = np.sqrt(k_spring / (2 * De))
+    # Yukawa potential: V(r) = (1/4πε₀) * (Z₁Z₂e²/r) * exp(-r/λ)
+    coulomb_factor = (1 / (4 * np.pi * VACUUM_PERMITTIVITY)) * (z1 * z2 * ELECTRON_CHARGE**2 / distance)
+    screening_factor = np.exp(-distance / screening_length)
     
-    # Morse potential formula
-    return De * (1 - np.exp(-alpha * (x - r0)))**2
+    yukawa_energy = coulomb_factor * screening_factor
+    
+    # Convert to eV
+    yukawa_energy_ev = yukawa_energy / ELECTRON_CHARGE
+    
+    return float(yukawa_energy_ev)
 
-def coulomb_barrier(
-    x: np.ndarray,
-    Z1: float,
-    Z2: float
-) -> np.ndarray:
+
+def calculate_nuclear_potential(a1: int, a2: int, distance: float, model: str = "woods-saxon") -> float:
     """
-    Coulomb barrier between two charged nuclei
+    Calculate the nuclear potential between two nuclei
     
     Args:
-        x: Distance array in meters
-        Z1: Atomic number of first nucleus
-        Z2: Atomic number of second nucleus
+        a1: Mass number of the first nucleus
+        a2: Mass number of the second nucleus
+        distance: Distance between nuclei in meters
+        model: Nuclear potential model to use
         
     Returns:
-        Potential energy in joules
+        Nuclear potential in eV
     """
-    # Coulomb's constant
-    k_e = 1 / (4 * np.pi * epsilon_0)
+    # Nuclear radius parameters
+    r0 = 1.25 * FERMI  # Nuclear radius parameter
+    a = 0.65 * FERMI   # Surface diffuseness
     
-    # Calculate potential energy: k_e * (Z1*e) * (Z2*e) / r
-    potential = k_e * Z1 * Z2 * e**2 / x
+    # Calculate nuclear radii
+    r1 = r0 * (a1**(1/3))
+    r2 = r0 * (a2**(1/3))
     
-    # Handle singularity at x=0
-    potential[x < 1e-15] = np.inf
+    # Effective distance for potential
+    effective_r = max(distance - (r1 + r2), -10 * a)  # Limit how negative it can go
     
-    return potential
-
-def combined_potential(
-    x: np.ndarray,
-    r0: float,
-    k_spring: float,
-    Z1: float = 1.0,
-    Z2: float = 1.0,
-    potential_type: Literal["harmonic", "morse"] = "harmonic",
-    include_coulomb: bool = True
-) -> np.ndarray:
-    """
-    Combined potential including oscillator and Coulomb terms
-    
-    Args:
-        x: Position array in meters
-        r0: Equilibrium position in meters
-        k_spring: Spring constant in N/m
-        Z1: Atomic number of first nucleus
-        Z2: Atomic number of second nucleus
-        potential_type: Type of oscillator potential
-        include_coulomb: Whether to include Coulomb barrier
+    # Woods-Saxon potential
+    if model == "woods-saxon":
+        # Woods-Saxon parameters
+        v0 = -50 * MEV_TO_J  # Depth of potential
         
-    Returns:
-        Potential energy in joules
-    """
-    # Calculate oscillator potential
-    if potential_type == "harmonic":
-        osc_potential = harmonic_potential(x, r0, k_spring)
-    elif potential_type == "morse":
-        osc_potential = morse_potential(x, r0, k_spring)
+        # Woods-Saxon form: V(r) = V₀/(1 + exp((r-R)/a))
+        potential = v0 / (1 + np.exp(effective_r / a))
+    
+    # Square well potential
+    elif model == "square-well":
+        v0 = -50 * MEV_TO_J  # Depth of potential
+        
+        if effective_r <= 0:
+            potential = v0
+        else:
+            potential = 0.0
+    
+    # Default to zero if unknown model
     else:
-        raise ValueError(f"Unknown potential type: {potential_type}")
+        potential = 0.0
     
-    # Add Coulomb term if requested
-    if include_coulomb:
-        coul_potential = coulomb_barrier(x, Z1, Z2)
-        return osc_potential + coul_potential
-    else:
-        return osc_potential
+    # Convert to eV
+    potential_ev = potential / ELECTRON_CHARGE
+    
+    return float(potential_ev)
 
-def get_potential_function(
-    potential_type: Literal["harmonic", "morse", "coulomb", "combined"],
-    params: Dict[str, Any]
-) -> Callable[[np.ndarray], np.ndarray]:
+
+def calculate_total_potential(
+    z1: int, 
+    z2: int, 
+    a1: int, 
+    a2: int, 
+    distance: float,
+    include_nuclear: bool = True,
+    include_screening: bool = False,
+    screening_length: Optional[float] = None
+) -> Dict[str, float]:
     """
-    Get a potential function for given type and parameters
+    Calculate the total potential between two nuclei
     
     Args:
-        potential_type: Type of potential function
-        params: Parameters for the potential
+        z1: Atomic number of the first nucleus
+        z2: Atomic number of the second nucleus
+        a1: Mass number of the first nucleus
+        a2: Mass number of the second nucleus
+        distance: Distance between nuclei in meters
+        include_nuclear: Whether to include nuclear potential
+        include_screening: Whether to include electron screening
+        screening_length: Screening length in meters (if None, estimated)
         
     Returns:
-        Callable that takes position array and returns potential energy
+        Dictionary with potential components in eV
     """
-    if potential_type == "harmonic":
-        return lambda x: harmonic_potential(x, params["r0"], params["k_spring"])
-    
-    elif potential_type == "morse":
-        return lambda x: morse_potential(
-            x, 
-            params["r0"], 
-            params["k_spring"], 
-            params.get("De", None)
-        )
-    
-    elif potential_type == "coulomb":
-        return lambda x: coulomb_barrier(
-            x,
-            params.get("Z1", 1.0),
-            params.get("Z2", 1.0)
-        )
-    
-    elif potential_type == "combined":
-        return lambda x: combined_potential(
-            x,
-            params["r0"],
-            params["k_spring"],
-            params.get("Z1", 1.0),
-            params.get("Z2", 1.0),
-            params.get("oscillator_type", "harmonic"),
-            params.get("include_coulomb", True)
-        )
-    
+    # Calculate Coulomb potential
+    if include_screening and screening_length is not None:
+        coulomb_potential = calculate_yukawa_potential(z1, z2, distance, screening_length)
     else:
-        raise ValueError(f"Unknown potential type: {potential_type}")
+        coulomb_potential = calculate_coulomb_barrier(z1, z2, distance)
+    
+    # Calculate nuclear potential if requested
+    nuclear_potential = 0.0
+    if include_nuclear:
+        nuclear_potential = calculate_nuclear_potential(a1, a2, distance)
+    
+    # Calculate total potential
+    total_potential = coulomb_potential + nuclear_potential
+    
+    # Prepare result
+    result = {
+        "distance_m": float(distance),
+        "coulomb_potential_ev": float(coulomb_potential),
+        "nuclear_potential_ev": float(nuclear_potential),
+        "total_potential_ev": float(total_potential)
+    }
+    
+    logger.debug(f"Calculated total potential: {total_potential:.2f} eV at r={distance:.2e} m")
+    
+    return result
 
-def find_classical_turning_points(
-    energy: float,
-    potential_func: Callable[[np.ndarray], np.ndarray],
-    x_min: float,
-    x_max: float,
-    num_points: int = 1000
-) -> Tuple[float, float]:
+def calculate_morse_potential(
+    distance: float, 
+    depth: float = 5.0, 
+    equilibrium_distance: float = 1.5e-10, 
+    width_parameter: float = 2.0
+) -> float:
     """
-    Find classical turning points for a given energy and potential
+    Calculate Morse potential for molecular binding.
     
     Args:
-        energy: Energy level in joules
-        potential_func: Potential energy function
-        x_min: Minimum position to search
-        x_max: Maximum position to search
-        num_points: Number of points for numerical search
+        distance: Inter-atomic distance in meters
+        depth: Potential well depth in eV
+        equilibrium_distance: Equilibrium bond distance in meters
+        width_parameter: Parameter that controls the width of the potential well
         
     Returns:
-        Tuple of (left_turning_point, right_turning_point)
+        Morse potential in eV
     """
-    # Generate position grid
-    x = np.linspace(x_min, x_max, num_points)
+    # Convert depth to Joules
+    depth_J = depth * EV_TO_J
     
-    # Calculate potential
-    V = potential_func(x)
+    # Calculate Morse potential
+    # V(r) = D₀ * [1 - exp(-a(r-r₀))]²
+    exponent = -width_parameter * (distance - equilibrium_distance)
+    morse_potential = depth_J * (1.0 - np.exp(exponent))**2
     
-    # Find indices where V - energy changes sign (crossing points)
-    sign_changes = np.where(np.diff(np.signbit(V - energy)))[0]
+    # Convert back to eV
+    morse_eV = morse_potential / EV_TO_J
     
-    if len(sign_changes) < 2:
-        # Not enough turning points found
-        return (None, None)
-    
-    # Get positions of first two sign changes
-    idx1, idx2 = sign_changes[0], sign_changes[-1]
-    
-    # Linear interpolation to get more precise turning points
-    x1 = x[idx1] + (x[idx1 + 1] - x[idx1]) * (energy - V[idx1]) / (V[idx1 + 1] - V[idx1])
-    x2 = x[idx2] + (x[idx2 + 1] - x[idx2]) * (energy - V[idx2]) / (V[idx2 + 1] - V[idx2])
-    
-    return (x1, x2)
+    return morse_eV
 
-class PotentialParameters:
-    """Parameters for potential energy models."""
-    def __init__(
-        self, 
-        model_type: str = "harmonic", 
-        depth: float = 1.0, 
-        width: float = 1.0,
-        equilibrium_position: float = 0.74,
-        spring_constant: float = 15.0,
-        reference_point: float = 0.0,
-        **kwargs
-    ):
-        """
-        Initialize potential parameters.
+def calculate_lenr_lattice_potential(
+    distance: float,
+    z1: int,
+    z2: int,
+    screening_length: float = 5e-11,
+    binding_energy: float = 0.5,
+    equilibrium_distance: float = 1.5e-10
+) -> Dict[str, float]:
+    """
+    Calculate combined potential for LENR in metal lattice.
+    
+    Args:
+        distance: Distance between nuclei in meters
+        z1: Atomic number of the first nucleus
+        z2: Atomic number of the second nucleus
+        screening_length: Electron screening length in meters
+        binding_energy: Binding energy for Morse potential in eV
+        equilibrium_distance: Equilibrium distance for Morse potential in meters
         
-        Args:
-            model_type: Type of potential model ("harmonic", "morse", etc.)
-            depth: Depth of the potential well (eV)
-            width: Width parameter (Å)
-            equilibrium_position: Equilibrium separation between atoms (Å)
-            spring_constant: Force constant for harmonic potential (eV/Å²)
-            reference_point: Zero point of the potential (Å)
-            **kwargs: Additional parameters specific to potential models
-        """
-        self.model_type = model_type
-        self.depth = depth
-        self.width = width
-        self.equilibrium_position = equilibrium_position
-        self.spring_constant = spring_constant
-        self.reference_point = reference_point
-        
-        # Additional parameters
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-            
-    def copy(self):
-        """Create a copy of the potential parameters."""
-        params_copy = PotentialParameters(
-            model_type=self.model_type,
-            depth=self.depth,
-            width=self.width,
-            equilibrium_position=self.equilibrium_position,
-            spring_constant=self.spring_constant,
-            reference_point=self.reference_point
-        )
-        
-        # Copy any additional attributes
-        for key, value in self.__dict__.items():
-            if key not in ["model_type", "depth", "width", "equilibrium_position", 
-                          "spring_constant", "reference_point"]:
-                setattr(params_copy, key, value)
-                
-        return params_copy
-            
-    def copy(self):
-        """Create a copy of the potential parameters."""
-        params_copy = PotentialParameters(
-            model_type=self.model_type,
-            depth=self.depth,
-            width=self.width,
-            equilibrium_position=self.equilibrium_position,
-            spring_constant=self.spring_constant,
-            reference_point=self.reference_point
-        )
-        
-        # Copy any additional attributes
-        for key, value in self.__dict__.items():
-            if key not in ['model_type', 'depth', 'width', 'equilibrium_position', 
-                          'spring_constant', 'reference_point']:
-                setattr(params_copy, key, value)
-                
-        return params_copy 
+    Returns:
+        Dictionary with component potentials and total potential in eV
+    """
+    # Calculate Coulomb component (repulsive)
+    coulomb = calculate_coulomb_barrier(z1, z2, distance)
+    
+    # Calculate Yukawa component (screened Coulomb)
+    yukawa = calculate_yukawa_potential(z1, z2, distance, screening_length)
+    
+    # Calculate Morse component (attractive)
+    morse = calculate_morse_potential(distance, binding_energy, equilibrium_distance)
+    
+    # Calculate total potential
+    # For LENR, we consider the possibility of attractive components
+    # reducing the effective barrier
+    total = yukawa - morse  # Yukawa already includes Coulomb
+    
+    return {
+        "coulomb_eV": coulomb,
+        "yukawa_eV": yukawa,
+        "morse_eV": morse,
+        "total_eV": total,
+        "reduction_factor": 1.0 - total / coulomb if coulomb > 0 else 0.0
+    } 

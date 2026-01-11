@@ -1,0 +1,48 @@
+PRD: LENR Simulation App Tailwind CSS Migration and Improvement
+
+The LENR Simulation App currently has inconsistent styling with components using a mix of Material UI, Ant Design, and some Tailwind CSS. This PRD outlines the plan to standardize on Tailwind CSS for the frontend to improve design consistency, optimize bundle size, and enable more efficient development.
+
+## Background
+- Current UI uses a mixture of component libraries (MUI, Ant Design) and Tailwind
+- Tailwind config (v4.1.3) exists but is inconsistently applied
+- Design patterns are inconsistent across different parts of the application
+- Some components in /pages use extensive Tailwind while core components don't
+
+## Requirements
+
+1. Standardize Component Styling
+   - Convert existing Material UI and Ant Design components to use Tailwind CSS
+   - Start with shared layout components and core UI elements
+   - Ensure consistent styling based on design system values in tailwind.config.js
+   - Implement dark mode support consistently across all components
+
+2. Optimize Tailwind Configuration 
+   - Update configuration to properly purge unused styles
+   - Configure content paths to correctly identify all style usage
+   - Document custom color palette and design tokens
+   - Set up reasonable defaults for common component patterns
+
+3. Create Reusable Tailwind Components
+   - Build a component library for common UI elements (buttons, cards, inputs)
+   - Implement consistent spacing, typography, and color usage
+   - Document component variants and usage patterns
+   - Ensure accessibility compliance in all components
+
+4. Responsive Design Implementation
+   - Apply responsive design patterns consistently across application 
+   - Use Tailwind's mobile-first approach for all layouts
+   - Ensure visualizations and simulation displays resize appropriately
+   - Test on various device sizes and orientations
+
+5. Transition Strategy
+   - Implement changes incrementally to avoid disrupting development
+   - Create migration guide for developers
+   - Set up appropriate testing for UI components
+   - Document component transition status for tracking progress
+
+## Success Criteria
+- Consistent visual appearance across all application screens
+- Reduced bundle size (target: 15% reduction)
+- Improved developer velocity when creating new UI components
+- Full test coverage for core UI components
+- Simplified codebase with removal of redundant styling approaches 

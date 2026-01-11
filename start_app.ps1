@@ -1,179 +1,101 @@
-# LENR Simulation App Startup Script for Windows
-# This script starts both the backend and frontend development servers
+Write-Host "Starting LENR Simulation Application..." -ForegroundColor Cyan
 
-# Function to display a colorful banner
-function Show-Banner {
-    $banner = @"
-========================================================
-   _     _____ _   _ ____     ____  _                  
-  | |   | ____| \ | |  _ \   / ___|(_)_ __ ___         
-  | |   |  _| |  \| | |_) |  \___ \| | '_ \` _ \      
-  | |___| |___| |\  |  _ <    ___) | | | | | | |       
-  |_____|_____|_| \_|_| \_\  |____/|_|_| |_| |_|       
-                                                        
-========================================================
-"@
-    Write-Host $banner -ForegroundColor Magenta
-}
+# Define base directory for v2 app components
+$AppBaseDir = ".\LENR_SIM_APP_v2"
+$BackendDir = "$AppBaseDir\backend"
+$FrontendDir = "$AppBaseDir\frontend"
+$RootVenvDir = ".\backend-env" # Check for root venv first
+$BackendVenvDir = "$BackendDir\venv" # Fallback to backend venv
 
-# Function to start the backend server
-function Start-Backend {
-    Write-Host "[+] Starting backend server..." -ForegroundColor Blue
-    
-    # Check for virtual environment
-    $venvDir = $null
-    if (Test-Path "backend-env") {
-        $venvDir = "backend-env"
-    } elseif (Test-Path "venv") {
-        $venvDir = "venv"
-    } elseif (Test-Path "backend-venv") {
-        $venvDir = "backend-venv"
-    } else {
-        Write-Host "[!] No virtual environment found." -ForegroundColor Red
-        Write-Host "[*] Creating new virtual environment 'backend-env'..." -ForegroundColor Yellow
-        python -m venv backend-env
-        $venvDir = "backend-env"
-    }
-    
-    # Activate virtual environment
-    $activateScript = Join-Path $venvDir "Scripts\activate.ps1"
-    if (Test-Path $activateScript) {
-        & $activateScript
-    } else {
-        Write-Host "[!] Failed to activate virtual environment." -ForegroundColor Red
-        return
-    }
-    
-    # Install requirements if needed
-    if (Test-Path "backend\requirements.txt") {
-        Write-Host "[*] Installing backend requirements..." -ForegroundColor Yellow
-        pip install -r backend\requirements.txt
-    }
-    
-    # Start the backend server
-    Write-Host "[*] Starting FastAPI server..." -ForegroundColor Green
-    Start-Process -FilePath "python" -ArgumentList "-m", "uvicorn", "app.main:app", "--reload", "--port", "8000" -WorkingDirectory "backend" -NoNewWindow
-    
-    Write-Host "[✓] Backend server running" -ForegroundColor Green
-    Write-Host "[✓] API available at http://localhost:8000" -ForegroundColor Green
-}
-
-# Function to start the frontend server
-function Start-Frontend {
-    Write-Host "[+] Starting frontend server..." -ForegroundColor Blue
-    
-    # Check if npm is installed
-    if (-not (Get-Command "npm" -ErrorAction SilentlyContinue)) {
-        Write-Host "[!] npm is not installed. Please install Node.js and npm." -ForegroundColor Red
-        return
-    }
-    
-    # Check if frontend directory exists
-    if (-not (Test-Path "frontend")) {
-        Write-Host "[!] Frontend directory not found." -ForegroundColor Red
-        return
-    }
-    
-    # Check if package.json exists
-    if (-not (Test-Path "frontend\package.json")) {
-        Write-Host "[!] Missing package.json in frontend directory." -ForegroundColor Red
-        Write-Host "[!] Please run the script from the project root directory or ensure your frontend is set up correctly." -ForegroundColor Red
-        
-        # Log error to a file for debugging
-        $errorMessage = "ERROR: package.json not found in frontend directory. Script run at $(Get-Date)"
-        $errorMessage | Out-File -Append -FilePath "frontend_errors.log"
-        return
-    }
-    
-    # Install dependencies if needed
-    if (-not (Test-Path "frontend\node_modules")) {
-        Write-Host "[*] Installing frontend dependencies..." -ForegroundColor Yellow
-        Push-Location "frontend"
-        try {
-            $npmOutput = npm install 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "[!] Error installing dependencies:" -ForegroundColor Red
-                Write-Host $npmOutput -ForegroundColor Red
-                $npmOutput | Out-File -Append -FilePath "..\frontend_errors.log"
-                Pop-Location
-                return
-            }
-        } catch {
-            Write-Host "[!] Exception during npm install: $_" -ForegroundColor Red
-            $_ | Out-File -Append -FilePath "..\frontend_errors.log"
-            Pop-Location
-            return
-        }
-        Pop-Location
-    }
-    
-    # Start the frontend server
-    Write-Host "[*] Starting React development server..." -ForegroundColor Green
-    Push-Location "frontend"
-    try {
-        Start-Process -FilePath "npm" -ArgumentList "start" -NoNewWindow
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "[!] Error starting React server" -ForegroundColor Red
-            Pop-Location
-            return
-        }
-    } catch {
-        Write-Host "[!] Exception during npm start: $_" -ForegroundColor Red
-        $_ | Out-File -Append -FilePath "..\frontend_errors.log"
-        Pop-Location
-        return
-    }
-    Pop-Location
-    
-    Write-Host "[✓] Frontend server running" -ForegroundColor Green
-    Write-Host "[✓] UI available at http://localhost:3000" -ForegroundColor Green
-}
-
-# Function to handle cleanup on exit
-function Cleanup {
-    Write-Host "[*] Shutting down servers..." -ForegroundColor Yellow
-    
-    # Stop all backend processes
-    Get-Process -Name "python" | Where-Object { $_.CommandLine -like "*uvicorn*" } | ForEach-Object { 
-        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue 
-        Write-Host "[✓] Backend server stopped." -ForegroundColor Green
-    }
-    
-    # Stop all frontend processes
-    Get-Process -Name "node" | Where-Object { $_.CommandLine -like "*react-scripts*" } | ForEach-Object { 
-        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue 
-        Write-Host "[✓] Frontend server stopped." -ForegroundColor Green
-    }
-    
-    Write-Host "[*] Thank you for using LENR Simulation App!" -ForegroundColor Magenta
-}
-
-# Main execution
+# Check if Python is installed
 try {
-    Show-Banner
-    
-    Write-Host "[*] LENR Simulation App Startup" -ForegroundColor Cyan
-    Write-Host "[*] Starting development environment..." -ForegroundColor Cyan
-    
-    # Start backend and frontend
-    Start-Backend
-    Start-Frontend
-    
-    # Keep script running and handle CTRL+C
-    Write-Host "[*] Both servers are now running." -ForegroundColor Magenta
-    Write-Host "[*] Press Ctrl+C to stop all servers." -ForegroundColor Magenta
-    
-    # Wait for user to press Ctrl+C
-    while ($true) {
-        Start-Sleep -Seconds 1
-    }
-} 
-catch {
-    # Handle errors
-    Write-Host "An error occurred: $_" -ForegroundColor Red
-    $_ | Out-File -Append -FilePath "app_startup_errors.log"
+    $pythonVersion = python --version
+    Write-Host "Found $pythonVersion" -ForegroundColor Green
 }
-finally {
-    # Cleanup when script exits
-    Cleanup
-} 
+catch {
+    Write-Host "Python is not installed or not in PATH. Please install Python 3.8+." -ForegroundColor Red
+    exit 1
+}
+
+# Check if Node.js is installed
+try {
+    $nodeVersion = node --version
+    Write-Host "Found Node.js $nodeVersion" -ForegroundColor Green
+}
+catch {
+    Write-Host "Node.js is not installed or not in PATH. Please install Node.js 14+." -ForegroundColor Red
+    exit 1
+}
+
+# Ensure necessary directories exist within the v2 structure
+if (-not (Test-Path -Path "$BackendDir\data")) { 
+    New-Item -Path "$BackendDir\data" -ItemType Directory | Out-Null
+    Write-Host "Created directory: $BackendDir\data" -ForegroundColor Yellow
+}
+if (-not (Test-Path -Path "$BackendDir\static")) { 
+    New-Item -Path "$BackendDir\static" -ItemType Directory | Out-Null 
+    Write-Host "Created directory: $BackendDir\static" -ForegroundColor Yellow
+}
+if (-not (Test-Path -Path "$BackendDir\logs")) { 
+    New-Item -Path "$BackendDir\logs" -ItemType Directory | Out-Null 
+    Write-Host "Created directory: $BackendDir\logs" -ForegroundColor Yellow
+}
+
+# Setup and start backend
+Write-Host "Setting up backend..." -ForegroundColor Cyan
+
+# Determine Venv Path and Activation Script
+$VenvPath = $null
+$ActivateScript = $null
+if (Test-Path -Path "$RootVenvDir\Scripts\Activate.ps1") {
+    $VenvPath = $RootVenvDir
+    $ActivateScript = "$RootVenvDir\Scripts\Activate.ps1"
+    Write-Host "Using root virtual environment: $RootVenvDir" -ForegroundColor Yellow
+} elseif (Test-Path -Path "$BackendVenvDir\Scripts\Activate.ps1") {
+    $VenvPath = $BackendVenvDir
+    $ActivateScript = "$BackendVenvDir\Scripts\Activate.ps1"
+    Write-Host "Using backend virtual environment: $BackendVenvDir" -ForegroundColor Yellow
+} else {
+    Write-Host "No suitable virtual environment found. Please run setup or create one in $RootVenvDir or $BackendVenvDir." -ForegroundColor Red
+    exit 1
+}
+
+# Activate virtual environment 
+Write-Host "Activating virtual environment..." -ForegroundColor Yellow
+& $ActivateScript
+
+# Install dependencies (run from backend dir where requirements.txt is)
+Push-Location -Path $BackendDir
+Write-Host "Installing backend dependencies (from $BackendDir)..." -ForegroundColor Yellow
+pip install -r requirements.txt
+Pop-Location
+
+# Start backend server in a new window (from project root, targeting app.main:app in the correct dir)
+Write-Host "Starting backend server on port 8001..." -ForegroundColor Green
+# Ensure the command inside Start-Process knows the backend path and activates venv correctly
+$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8001"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $BackendCommand
+
+# Setup and start frontend
+Write-Host "Setting up frontend..." -ForegroundColor Cyan
+Push-Location -Path $FrontendDir
+
+# Install frontend dependencies if needed
+if (-not (Test-Path -Path ".\node_modules")) {
+    Write-Host "Installing frontend dependencies (from $FrontendDir)..." -ForegroundColor Yellow
+    npm install
+}
+
+# Start frontend server in a new window
+Write-Host "Starting frontend server on default port (likely 3000 or 5173)..." -ForegroundColor Green
+# Use npm run dev as per Vite convention often seen in package.json
+$FrontendCommand = "Set-Location -Path '$FrontendDir'; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $FrontendCommand
+Pop-Location
+
+Write-Host ""
+Write-Host "LENR Simulation Application is starting..." -ForegroundColor Cyan
+Write-Host "Backend API: http://localhost:8001" -ForegroundColor Green
+Write-Host "Frontend: Check console (likely http://localhost:3000 or http://localhost:5173)" -ForegroundColor Green
+Write-Host ""
+Write-Host "Press Ctrl+C in the respective PowerShell windows to stop the servers." -ForegroundColor Yellow 

@@ -1,51 +1,22 @@
 """
-Physics package for LENR_Sim_App
+Physics Module
 
-Contains modules for quantum calculations, potential models, and data fitting.
+This package provides physics models and calculations for LENR simulations.
 """
 
-from app.physics.tunneling_engine import (
-    calculate_thermal_tunneling,
-    calculate_impact_tunneling,
-    calculate_energy_levels
-)
-
-from app.physics.potential_models import (
-    harmonic_potential,
-    morse_potential,
-    coulomb_barrier,
-    combined_potential,
-    get_potential_function,
-    find_classical_turning_points
-)
-
-from app.physics.heatmap_module import generate_heatmap
-
-from app.physics.fitting_module import (
-    fit_experimental_data,
-    tunneling_model,
-    arrhenius_model
-)
+# Avoid circular imports by not importing everything at module level
+# Individual modules should be imported as needed
 
 __all__ = [
-    # Tunneling engine
-    'calculate_thermal_tunneling',
-    'calculate_impact_tunneling',
-    'calculate_energy_levels',
+    # Core physics
+    "electron_screening",
+    "quantum_tunneling",
+    "casimir_forces",
+    "quantum_coherence",
+    "phonon_modes",
     
-    # Potential models
-    'harmonic_potential',
-    'morse_potential',
-    'coulomb_barrier',
-    'combined_potential',
-    'get_potential_function',
-    'find_classical_turning_points',
-    
-    # Heatmap generation
-    'generate_heatmap',
-    
-    # Fitting
-    'fit_experimental_data',
-    'tunneling_model',
-    'arrhenius_model'
+    # FEM
+    "fem_solver",
+    "fem_mesh",
+    "fem_lenr"
 ] 

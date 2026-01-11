@@ -1,0 +1,1 @@
+{"name":"lenr-sim-app","version":"0.1.0","description":"LENR Simulation Platform","license":"GPL-3.0","scripts":{"dev:frontend":"cd frontend && npm start"}}

@@ -1,0 +1,32 @@
+feat: Add physics-based visualization system and comprehensive legend
+
+Visualization Enhancements:
+- Add VisualizationLegend component with particle types, energy scale, scale indicator, and live statistics
+- Replace decorative plasma vortex with physics-based QuantumFluxVisualization
+- Add 6 quantum field modes: Electron Screening, Magnetic Dipoles, Phonon Modes, Coulomb Exchange, Gamow Window, Combined
+- Add 3D scale bar with automatic unit conversion (pm/A/nm/um)
+- Enhance 3D scene with grid references, axis labels, and corner markers
+
+New Components:
+- QuantumFluxVisualization.js - Thomas-Fermi screening, Debye phonons, Gamow factor
+- VisualizationLegend.jsx - Interactive scrollable legend overlay
+- PhysicsErrorBoundary.jsx - Specialized error handling for physics/WebGL
+- ComparisonView.jsx - Side-by-side LENR system comparison
+- usePhysicsWorker.js - Web Worker hook for physics calculations
+- useApiHealth.js - API health monitoring hook
+- apiResilience.js - Retry logic with exponential backoff
+- physicsWorker.js - Offload heavy calculations from main thread
+
+Backend Improvements:
+- Add temperature-dependent phonon coupling using Debye model
+- Enhance /api/health endpoint with component status and memory info
+- Add comprehensive unit tests for WKB tunneling, bubble collapse, enhancement factors
+
+Documentation:
+- Add docs/VISUALIZATION_IMPROVEMENTS.md with physics explanations
+- Update CHANGELOG.md with all session changes
+
+Bug Fixes:
+- Fix legend cutoff with proper scrolling support
+- Increase quantum flux visibility with brighter colors
+- Fix start_app scripts to use correct v2 directory paths
