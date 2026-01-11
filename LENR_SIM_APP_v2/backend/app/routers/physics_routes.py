@@ -1513,4 +1513,283 @@ async def theoretical_enhancements_info():
             }
         },
         "paper_reference": "A Unified Theoretical Framework for Low-Energy Nuclear Reactions"
-    } 
+    }
+
+
+# =============================================================================
+# PLASMA PHYSICS ENDPOINTS (Plasma-scale Fusion)
+# =============================================================================
+
+class LawsonCriterionRequest(BaseModel):
+    """Request model for Lawson criterion calculation"""
+    plasma_density: float = Field(..., gt=0, description="Plasma density in m^-3")
+    temperature: float = Field(..., gt=0, description="Ion temperature in keV")
+    confinement_time: float = Field(..., gt=0, description="Energy confinement time in seconds")
+    fuel_type: str = Field(default="d-t", description="Fuel type: d-t, d-d, or d-He3")
+
+
+class PlasmaEquilibriumRequest(BaseModel):
+    """Request model for plasma equilibrium calculation"""
+    major_radius: float = Field(..., gt=0, description="Major radius R in meters")
+    minor_radius: float = Field(..., gt=0, description="Minor radius a in meters")
+    magnetic_field: float = Field(..., gt=0, description="Toroidal field B_T in Tesla")
+    plasma_current: float = Field(..., gt=0, description="Plasma current I_p in MA")
+    beta: float = Field(default=0.05, ge=0, le=1, description="Plasma beta (pressure ratio)")
+    elongation: float = Field(default=1.7, ge=1, description="Plasma elongation kappa")
+
+
+class ICFCompressionRequest(BaseModel):
+    """Request model for ICF compression calculation"""
+    laser_power: float = Field(..., gt=0, description="Peak laser power in TW")
+    target_radius: float = Field(..., gt=0, description="Initial target radius in meters")
+    fuel_mass: float = Field(..., gt=0, description="DT fuel mass in kg")
+    pulse_duration: float = Field(..., gt=0, description="Laser pulse duration in ns")
+    wavelength: float = Field(default=351, gt=0, description="Laser wavelength in nm")
+
+
+@router.post("/plasma/lawson-criterion")
+async def calculate_lawson_criterion(request: LawsonCriterionRequest):
+    """
+    Calculate Lawson criterion triple product and ignition proximity.
+    
+    The Lawson criterion is nTτ >= threshold, where:
+    - n: plasma density (m^-3)
+    - T: temperature (keV)
+    - τ: confinement time (s)
+    
+    For D-T: nTτ >= 3×10²¹ m^-3 keV s (approximate ignition threshold)
+    """
+    try:
+        # Lawson thresholds for different fuels (m^-3 keV s)
+        thresholds = {
+            "d-t": 3e21,      # Deuterium-Tritium
+            "d-d": 1e23,      # Deuterium-Deuterium (harder to ignite)
+            "d-He3": 5e22,    # Deuterium-Helium-3
+        }
+        
+        fuel = request.fuel_type.lower()
+        if fuel not in thresholds:
+            fuel = "d-t"
+        
+        threshold = thresholds[fuel]
+        
+        # Calculate triple product
+        triple_product = request.plasma_density * request.temperature * request.confinement_time
+        
+        # Calculate Q (fusion gain) estimate
+        # Simplified: Q ≈ (nTτ / threshold)^2 for nTτ < threshold
+        # Q → infinity at ignition
+        ignition_fraction = triple_product / threshold
+        
+        if ignition_fraction >= 1.0:
+            q_value = float('inf')
+            status = "ignition"
+        elif ignition_fraction > 0.1:
+            # Approaching breakeven
+            q_value = 5 * (ignition_fraction ** 2)
+            status = "approaching_breakeven" if ignition_fraction > 0.5 else "sub_breakeven"
+        else:
+            q_value = 0.1 * ignition_fraction
+            status = "far_from_ignition"
+        
+        # Calculate fusion power density (simplified)
+        # P_fusion ≈ n² <σv> E_fusion / 4 (for 50-50 D-T mix)
+        # Using approximate <σv> at given temperature
+        sigma_v = 1e-22 * np.exp(-20 / np.sqrt(request.temperature))  # Simplified
+        fusion_power_density = 0.25 * (request.plasma_density ** 2) * sigma_v * 17.6e6 * 1.6e-19  # W/m³
+        
+        # Calculate bremsstrahlung losses
+        brem_loss = 5.35e-37 * np.sqrt(request.temperature) * (request.plasma_density ** 2)  # W/m³
+        
+        return {
+            "triple_product": triple_product,
+            "triple_product_formatted": f"{triple_product:.2e} m⁻³ keV s",
+            "ignition_threshold": threshold,
+            "ignition_threshold_formatted": f"{threshold:.2e} m⁻³ keV s",
+            "ignition_fraction": min(ignition_fraction, 10.0),  # Cap for display
+            "ignition_percentage": min(ignition_fraction * 100, 1000.0),
+            "estimated_q_value": q_value if q_value != float('inf') else "Ignition",
+            "status": status,
+            "fusion_power_density_MW_m3": fusion_power_density / 1e6,
+            "bremsstrahlung_loss_MW_m3": brem_loss / 1e6,
+            "net_power_density_MW_m3": (fusion_power_density - brem_loss) / 1e6,
+            "fuel_type": fuel,
+            "input_parameters": {
+                "plasma_density_m3": request.plasma_density,
+                "temperature_keV": request.temperature,
+                "confinement_time_s": request.confinement_time
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lawson calculation error: {str(e)}")
+
+
+@router.post("/plasma/equilibrium")
+async def calculate_plasma_equilibrium(request: PlasmaEquilibriumRequest):
+    """
+    Calculate tokamak plasma equilibrium parameters.
+    
+    Includes safety factor, beta limits, and stability metrics.
+    """
+    try:
+        R = request.major_radius
+        a = request.minor_radius
+        B_T = request.magnetic_field
+        I_p = request.plasma_current
+        kappa = request.elongation
+        
+        # Aspect ratio
+        aspect_ratio = R / a
+        
+        # Safety factor at edge (q_95 approximation)
+        # q = (5 a² B_T κ) / (R I_p) [with I_p in MA, others in SI]
+        q_95 = (5 * a**2 * B_T * kappa) / (R * I_p)
+        
+        # Greenwald density limit (n_G in 10²⁰ m⁻³)
+        n_greenwald = I_p / (np.pi * a**2)  # 10²⁰ m⁻³
+        
+        # Troyon beta limit
+        # β_max = g × I_p / (a × B_T) where g ≈ 2.8-3.5%
+        beta_troyon = 0.028 * I_p / (a * B_T)
+        
+        # Plasma volume and surface area
+        volume = 2 * np.pi**2 * R * a**2 * kappa  # m³
+        surface = 4 * np.pi**2 * R * a * np.sqrt((1 + kappa**2) / 2)  # m² (approx)
+        
+        # Normalized beta
+        beta_N = request.beta * a * B_T / I_p * 100  # %·m·T/MA
+        
+        # Stability assessment
+        stability = "stable"
+        warnings = []
+        
+        if q_95 < 2:
+            stability = "unstable"
+            warnings.append("q_95 < 2: susceptible to major disruptions")
+        elif q_95 < 3:
+            warnings.append("q_95 < 3: edge stability marginal")
+            
+        if request.beta > beta_troyon:
+            stability = "unstable" if stability != "unstable" else stability
+            warnings.append(f"Beta exceeds Troyon limit ({beta_troyon:.3f})")
+            
+        if beta_N > 3.5:
+            warnings.append("High normalized beta: potential instabilities")
+        
+        return {
+            "geometry": {
+                "major_radius_m": R,
+                "minor_radius_m": a,
+                "aspect_ratio": aspect_ratio,
+                "elongation": kappa,
+                "plasma_volume_m3": volume,
+                "plasma_surface_m2": surface
+            },
+            "magnetic_field": {
+                "toroidal_field_T": B_T,
+                "plasma_current_MA": I_p,
+                "safety_factor_q95": q_95
+            },
+            "limits": {
+                "greenwald_density_1e20_m3": n_greenwald,
+                "troyon_beta_limit": beta_troyon,
+                "normalized_beta": beta_N,
+                "current_beta": request.beta
+            },
+            "stability": {
+                "status": stability,
+                "warnings": warnings
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Equilibrium calculation error: {str(e)}")
+
+
+@router.post("/plasma/icf-compression")
+async def calculate_icf_compression(request: ICFCompressionRequest):
+    """
+    Calculate Inertial Confinement Fusion compression parameters.
+    
+    Estimates compression ratio, areal density, and ignition metrics.
+    """
+    try:
+        P_laser = request.laser_power * 1e12  # Convert TW to W
+        r_0 = request.target_radius
+        m_fuel = request.fuel_mass
+        t_pulse = request.pulse_duration * 1e-9  # Convert ns to s
+        
+        # Laser energy
+        E_laser = P_laser * t_pulse  # Joules
+        
+        # Ablation pressure (simplified scaling)
+        # P_abl ≈ 8.6 × (I/10¹⁴)^(2/3) × (λ/0.35)^(-2/3) Mbar
+        # I = intensity in W/cm²
+        intensity = P_laser / (4 * np.pi * r_0**2) / 1e4  # W/cm²
+        wavelength_um = request.wavelength / 1000
+        P_ablation = 8.6 * (intensity / 1e14)**(2/3) * (wavelength_um / 0.35)**(-2/3)  # Mbar
+        
+        # Implosion velocity estimate
+        # v_imp ≈ (2 P_abl t / ρ_shell)^(1/2)
+        rho_DT_solid = 0.25e3  # kg/m³ (DT ice)
+        shell_thickness = r_0 * 0.1  # Assume 10% of radius
+        v_imp = np.sqrt(2 * P_ablation * 1e11 * t_pulse / (rho_DT_solid * shell_thickness))
+        
+        # Compression ratio estimate
+        # For isentropic compression: ρ/ρ₀ ≈ (v_imp / c_s)^3
+        c_s = 3e5  # Sound speed in compressed DT (m/s)
+        compression = min((v_imp / c_s)**3, 1000)  # Cap at 1000x
+        
+        # Final density
+        rho_final = rho_DT_solid * compression
+        
+        # Final radius
+        r_final = r_0 / compression**(1/3)
+        
+        # Areal density (ρR)
+        rho_R = rho_final * r_final
+        
+        # Ignition threshold: ρR > 0.3 g/cm²
+        rho_R_gcm2 = rho_R / 10  # Convert kg/m² to g/cm²
+        ignition_threshold = 0.3  # g/cm²
+        
+        # Confinement time (inertial)
+        tau_conf = r_final / (3 * c_s)
+        
+        # Yield estimate (simplified)
+        # Burn fraction ≈ ρR / (ρR + 6 g/cm²)
+        burn_fraction = rho_R_gcm2 / (rho_R_gcm2 + 6)
+        E_per_DT = 17.6e6 * 1.6e-19  # J per DT reaction
+        n_DT = m_fuel / (5 * 1.67e-27)  # Number of DT pairs
+        yield_energy = burn_fraction * n_DT * E_per_DT  # Joules
+        gain = yield_energy / E_laser
+        
+        return {
+            "input_parameters": {
+                "laser_power_TW": request.laser_power,
+                "laser_energy_MJ": E_laser / 1e6,
+                "target_radius_mm": request.target_radius * 1000,
+                "fuel_mass_mg": request.fuel_mass * 1e6,
+                "pulse_duration_ns": request.pulse_duration
+            },
+            "compression": {
+                "ablation_pressure_Mbar": P_ablation,
+                "implosion_velocity_km_s": v_imp / 1000,
+                "compression_ratio": compression,
+                "final_density_kg_m3": rho_final,
+                "final_radius_um": r_final * 1e6
+            },
+            "ignition_metrics": {
+                "areal_density_g_cm2": rho_R_gcm2,
+                "ignition_threshold_g_cm2": ignition_threshold,
+                "ignition_fraction": rho_R_gcm2 / ignition_threshold,
+                "confinement_time_ps": tau_conf * 1e12,
+                "burn_fraction": burn_fraction
+            },
+            "performance": {
+                "yield_MJ": yield_energy / 1e6,
+                "gain_Q": gain,
+                "status": "ignition" if rho_R_gcm2 >= ignition_threshold else "sub_ignition"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ICF calculation error: {str(e)}") 

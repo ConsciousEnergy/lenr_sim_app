@@ -65,7 +65,16 @@ def calculate_phonon_nuclear_coupling(
     try:
         # Calculate phonon occupation number (Bose-Einstein)
         phonon_energy = HBAR * phonon_frequency * 2 * np.pi
-        n_phonon = 1.0 / (np.exp(phonon_energy / (KB * temperature)) - 1) if temperature > 0 else 0
+        n_phonon = 0.0
+        if temperature > 0:
+            x = phonon_energy / (KB * temperature)
+            if x > 100:
+                # At very low temperature, phonon occupation vanishes
+                n_phonon = np.exp(-x) if x < 700 else 0.0
+            elif x > 0:
+                n_phonon = 1.0 / (np.exp(x) - 1)
+            else:
+                n_phonon = 0.0
         
         # Debye-Waller factor
         # W = <u^2> * q^2 / 2 where <u^2> is mean square displacement

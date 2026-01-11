@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Box, Tabs, Tab, Typography, FormGroup, FormControlLabel, Switch, CircularProgress,
-  IconButton, Tooltip as MuiTooltip, Paper, Divider
+  IconButton, Tooltip as MuiTooltip, Paper, Divider, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
@@ -13,6 +13,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { EnergyFlowVisualizer } from './FluidDynamicsEffects';
+import { QuantumFluxEffect, ScaleBar, FluxMode } from './QuantumFluxVisualization';
+import VisualizationLegend from './VisualizationLegend';
 
 /**
  * LENR Visualization Component
@@ -33,6 +35,12 @@ const LENRVisualization = ({
   });
   const [isSceneReady, setIsSceneReady] = useState(false);
   
+  // Quantum flux visualization state
+  const [showQuantumFlux, setShowQuantumFlux] = useState(true);
+  const [quantumFluxMode, setQuantumFluxMode] = useState(FluxMode.ELECTRON_SCREENING);
+  const [showLegend, setShowLegend] = useState(true);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  
   const containerRef = useRef();
   const canvasRef = useRef();
   const rendererRef = useRef();
@@ -43,6 +51,10 @@ const LENRVisualization = ({
   const isInitializedRef = useRef(false);
   const energyFlowRef = useRef(null);
   const lastAnimationTimeRef = useRef(0);
+  
+  // Quantum flux visualization refs
+  const quantumFluxRef = useRef(null);
+  const scaleBarRef = useRef(null);
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -101,6 +113,51 @@ const LENRVisualization = ({
     }
   };
   
+  // Scale settings for LENR (nanometer lattice scale)
+  const scaleInfo = useMemo(() => {
+    const gridSize = 10; // 10 unit grid
+    const realWorldSize = parameters?.grainSize ? parameters.grainSize * 1e-9 : 50e-9; // Default 50nm grain
+    return {
+      gridSize,
+      scaleUnit: 'nm',
+      realWorldSize,
+    };
+  }, [parameters?.grainSize]);
+  
+  // Calculate LENR-specific statistics for the legend
+  const currentStats = useMemo(() => {
+    const latticeData = timeSeriesData?.lattice || null;
+    const results = timeSeriesData?.results || {};
+    
+    // Count particles by type
+    const particleCounts = {};
+    let hotspotCount = 0;
+    
+    if (latticeData?.points) {
+      latticeData.points.forEach(point => {
+        const element = point.element?.toLowerCase() || 'unknown';
+        particleCounts[element] = (particleCounts[element] || 0) + 1;
+        if (point.reaction_rate > 0.05) {
+          hotspotCount++;
+        }
+      });
+    }
+    
+    return {
+      particleCounts,
+      stats: {
+        totalParticles: latticeData?.points?.length || 0,
+        hotspotCount,
+        loadingRatio: parameters?.loadingRatio || 0.85,
+        enhancementFactor: results?.total_enhancement || 1.0,
+        defectDensity: parameters?.defectDensity || 0.1,
+        temperature: parameters?.temperature || 300,
+        screeningEnhancement: results?.individual_factors?.electron_screening || 1.0,
+        phononCoupling: results?.individual_factors?.phonon_assisted || 1.0,
+      }
+    };
+  }, [timeSeriesData, parameters]);
+  
   // Initialize Three.js scene
   useEffect(() => {
     if (!canvasRef.current || isInitializedRef.current) return;
@@ -153,6 +210,39 @@ const LENRVisualization = ({
     scene.add(energyFlow.getGroup());
     energyFlowRef.current = energyFlow;
     
+    // Initialize QuantumFluxEffect for LENR-specific visualizations
+    const quantumFlux = new QuantumFluxEffect({
+      mode: FluxMode.ELECTRON_SCREENING,
+      resolution: 10,
+      size: 12,
+      opacity: 0.6,
+      screeningLength: 2.5,
+      temperature: parameters?.temperature || 300,
+      latticeConstant: 1.5, // Lattice spacing for visualization
+    });
+    quantumFlux.initialize(); // IMPORTANT: Initialize before adding to scene
+    scene.add(quantumFlux.getGroup());
+    quantumFluxRef.current = quantumFlux;
+    
+    // Initialize ScaleBar for LENR scale reference (nanometer scale)
+    const scaleBar = new ScaleBar({
+      length: 5,
+      realWorldScale: 5e-9, // 5 nm
+      position: new THREE.Vector3(-8, -8, 0),
+      color: 0x88ccff,
+    });
+    scaleBar.initialize(); // IMPORTANT: Initialize before adding to scene
+    scene.add(scaleBar.getGroup());
+    scaleBarRef.current = scaleBar;
+    
+    // Add enhanced grid helpers for LENR lattice context
+    const gridXY = new THREE.GridHelper(20, 10, 0x444466, 0x222244);
+    gridXY.rotation.x = Math.PI / 2;
+    gridXY.position.z = -10;
+    gridXY.material.transparent = true;
+    gridXY.material.opacity = 0.3;
+    scene.add(gridXY);
+    
     // Animation loop
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -167,6 +257,11 @@ const LENRVisualization = ({
       // Update energy flow animation
       if (energyFlowRef.current && visOptions.showEnergyFlow) {
         energyFlowRef.current.update(deltaTime);
+      }
+      
+      // Update quantum flux animation
+      if (quantumFluxRef.current) {
+        quantumFluxRef.current.update(deltaTime);
       }
       
       renderer.render(scene, camera);
@@ -202,6 +297,16 @@ const LENRVisualization = ({
         energyFlowRef.current.dispose();
       }
       
+      // Dispose quantum flux visualizer
+      if (quantumFluxRef.current) {
+        quantumFluxRef.current.dispose();
+      }
+      
+      // Dispose scale bar
+      if (scaleBarRef.current) {
+        scaleBarRef.current.dispose();
+      }
+      
       if (rendererRef.current) {
         rendererRef.current.dispose();
       }
@@ -224,6 +329,31 @@ const LENRVisualization = ({
       }
     };
   }, []);
+  
+  // Toggle quantum flux visibility
+  useEffect(() => {
+    if (quantumFluxRef.current) {
+      quantumFluxRef.current.getGroup().visible = showQuantumFlux;
+    }
+  }, [showQuantumFlux]);
+  
+  // Update quantum flux mode
+  useEffect(() => {
+    if (quantumFluxRef.current) {
+      quantumFluxRef.current.setMode(quantumFluxMode);
+    }
+  }, [quantumFluxMode]);
+  
+  // Update quantum flux parameters when simulation parameters change
+  useEffect(() => {
+    if (quantumFluxRef.current && parameters) {
+      quantumFluxRef.current.updateParameters({
+        temperature: parameters.temperature || 300,
+        screeningLength: 2.5,
+        latticeConstant: 1.5,
+      });
+    }
+  }, [parameters?.temperature]);
   
   // Generate fallback lattice data if none provided
   const generateFallbackLattice = () => {
@@ -664,10 +794,11 @@ const LENRVisualization = ({
               right: 10, 
               backgroundColor: 'rgba(30, 30, 50, 0.9)', 
               padding: 1, 
-              borderRadius: 1 
+              borderRadius: 1,
+              maxWidth: 320
             }}
           >
-            <FormGroup row>
+            <FormGroup row sx={{ flexWrap: 'wrap' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -701,8 +832,85 @@ const LENRVisualization = ({
                 }
                 label={<Typography variant="caption" color="white">Energy Flow</Typography>}
               />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showQuantumFlux}
+                    onChange={(e) => setShowQuantumFlux(e.target.checked)}
+                    size="small"
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="caption" color="white">Quantum Field</Typography>}
+              />
             </FormGroup>
+            
+            {/* Quantum Flux Mode Selector */}
+            {showQuantumFlux && (
+              <FormControl size="small" sx={{ mt: 1, minWidth: 150 }}>
+                <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Quantum Mode</InputLabel>
+                <Select
+                  value={quantumFluxMode}
+                  onChange={(e) => setQuantumFluxMode(e.target.value)}
+                  label="Quantum Mode"
+                  sx={{ 
+                    color: 'white',
+                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.5)' },
+                    '.MuiSvgIcon-root': { color: 'white' }
+                  }}
+                >
+                  <MenuItem value={FluxMode.ELECTRON_SCREENING}>
+                    <MuiTooltip title="Thomas-Fermi screening around nuclei" placement="left">
+                      <span>Electron Screening</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.PHONON_MODES}>
+                    <MuiTooltip title="Lattice vibration modes (H-metal coupling)" placement="left">
+                      <span>Phonon Modes</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.MAGNETIC_DIPOLES}>
+                    <MuiTooltip title="Nuclear and electron spin interactions" placement="left">
+                      <span>Magnetic Dipoles</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.COULOMB_EXCHANGE}>
+                    <MuiTooltip title="Virtual photon exchange at interstitial sites" placement="left">
+                      <span>Coulomb Exchange</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.GAMOW_WINDOW}>
+                    <MuiTooltip title="Optimal tunneling energy region" placement="left">
+                      <span>Gamow Window</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.COMBINED}>
+                    <MuiTooltip title="All quantum effects combined" placement="left">
+                      <span>Combined Effects</span>
+                    </MuiTooltip>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            )}
           </Paper>
+          
+          {/* Visualization Legend - bottom right overlay */}
+          {showLegend && (
+            <Box sx={{ position: 'absolute', bottom: 40, right: 10, zIndex: 10 }}>
+              <VisualizationLegend
+                particleCounts={currentStats?.particleCounts}
+                stats={currentStats?.stats}
+                collapsed={legendCollapsed}
+                onToggleCollapse={() => setLegendCollapsed(!legendCollapsed)}
+                showScale={true}
+                showQuantumFlux={showQuantumFlux}
+                scaleInfo={scaleInfo}
+                quantumFluxMode={quantumFluxMode}
+                simulationType="lenr"
+              />
+            </Box>
+          )}
           
           {/* 3D Navigation Controls - left side */}
           <Paper

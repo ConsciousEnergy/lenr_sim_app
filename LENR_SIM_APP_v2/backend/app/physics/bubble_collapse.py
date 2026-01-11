@@ -247,7 +247,10 @@ def calculate_ionization_fraction(
     # Simplified version of Saha equation for high temperatures
     if kT_eV < ionization_energy / 10:
         # Boltzmann factor for low temperatures
-        ionization_fraction = np.exp(-ionization_energy / kT_eV)
+        # Protect against overflow when kT_eV is very small
+        exponent = -ionization_energy / max(kT_eV, 1e-10)
+        exponent = np.clip(exponent, -700, 0)  # Clip to prevent underflow
+        ionization_fraction = np.exp(exponent)
     else:
         # Approach full ionization at high temperatures
         ionization_fraction = 1.0 - np.exp(-kT_eV / ionization_energy)
@@ -307,7 +310,9 @@ def calculate_compression_enhancement(
     
     # 1. Temperature contribution
     # Simplified Gamow factor for D-D fusion
-    gamow_factor = 0.0 if collapse_temp < 1e4 else 44.0 / np.sqrt(collapse_temp / 1e6)
+    gamow_factor = 0.0 if collapse_temp < 1e4 else 44.0 / np.sqrt(max(collapse_temp / 1e6, 1e-10))
+    # Clip gamow_factor to prevent underflow in exp
+    gamow_factor = min(gamow_factor, 700)
     temp_enhancement = np.exp(-gamow_factor)
     
     # 2. Density contribution

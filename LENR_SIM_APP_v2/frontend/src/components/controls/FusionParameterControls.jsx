@@ -38,49 +38,45 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 
-// Default parameter values
+// Default parameter values - Plasma-scale fusion physics
 const defaultParameters = {
   // Basic Parameters
-  reactionType: 'd-d',
-  latticeType: 'palladium',
-  temperature: 300,
-  loadingRatio: 0.85,
+  reactionType: 'd-t',                // D-T is primary fusion fuel
+  confinementMode: 'tokamak',         // 'tokamak', 'stellarator', 'icf', 'z_pinch'
   
-  // Advanced Parameters - Plasma/Laser Fusion
-  plasmaDensity: 1e20,        // particles/m³
-  ionTemperature: 10,         // keV
-  electronTemperature: 10,    // keV
-  magneticField: 5.0,         // Tesla
-  laserPower: 0,              // TW (0 = no laser)
-  laserWavelength: 351,       // nm (typical ICF)
-  confinementTime: 1e-6,      // seconds
-  plasmaRadius: 0.01,         // meters
-  compressionRatio: 1,        // for ICF
+  // Magnetic Confinement Parameters (Tokamak/Stellarator)
+  plasmaDensity: 1e20,                // m^-3
+  ionTemperature: 10,                 // keV
+  electronTemperature: 10,            // keV
+  magneticField: 5.0,                 // Tesla
+  confinementTime: 1e-3,              // seconds (realistic MCF scale)
+  majorRadius: 6.0,                   // m (tokamak geometry)
+  minorRadius: 2.0,                   // m
+  plasmaCurrent: 15.0,                // MA
   
-  // Advanced - Lattice Parameters
-  latticeDimension: 10,
-  defectDensity: 0.01,
-  screeningEnergy: 310,       // eV
-  phononCoupling: 1.0,        // coupling factor
+  // Inertial Confinement Parameters (ICF/Z-pinch)
+  laserPower: 0,                      // TW (0 = MCF mode)
+  laserWavelength: 351,               // nm (typical ICF)
+  compressionRatio: 30,               // x (ICF compression)
+  implosionVelocity: 3e5,             // m/s
+  targetRadius: 0.001,                // m (1mm capsule)
   
   // Simulation Settings
-  timeStepSize: 0.1,          // ps
-  totalSimulationTime: 10,    // ps
-  maxParticles: 1000,
+  timeStepSize: 1e-9,                 // seconds (ns scale for plasma)
+  totalSimulationTime: 1e-6,          // seconds (microseconds)
+  maxParticles: 10000,
   
   // Visualization Options
-  showLattice: true,
-  showDiffusion: false,
+  showPlasmaContour: true,
+  showMagneticField: true,
   showHotSpots: true,
   showParticles: true,
-  showMagneticField: false,
-  showPlasmaContour: true,
-  showEnergyDistribution: false,
-  colorByEnergy: true,
+  showEnergyDistribution: true,
+  colorByTemperature: true,
   showTrails: false
 };
 
-// Parameter descriptions and limits
+// Parameter descriptions and limits - Plasma-scale fusion
 const PARAMETER_METADATA = {
   // === BASIC PARAMETERS ===
   reactionType: {
@@ -88,51 +84,31 @@ const PARAMETER_METADATA = {
     description: 'Type of fusion reaction being simulated',
     section: 'basic',
     options: [
-      { value: 'd-d', label: 'Deuterium-Deuterium', description: 'Fusion of two deuterium nuclei (3.27 MeV)' },
-      { value: 'd-t', label: 'Deuterium-Tritium', description: 'Fusion of deuterium and tritium (17.6 MeV)' },
-      { value: 'p-B11', label: 'Proton-Boron-11', description: 'Aneutronic fusion (8.7 MeV)' },
-      { value: 'p-Li7', label: 'Proton-Lithium-7', description: 'Fusion of proton and lithium-7' }
+      { value: 'd-t', label: 'Deuterium-Tritium', description: 'Primary fusion fuel (17.6 MeV, highest cross-section)' },
+      { value: 'd-d', label: 'Deuterium-Deuterium', description: 'No tritium needed (3.27 MeV)' },
+      { value: 'd-He3', label: 'Deuterium-Helium-3', description: 'Aneutronic variant (18.3 MeV)' },
+      { value: 'p-B11', label: 'Proton-Boron-11', description: 'Aneutronic fusion (8.7 MeV)' }
     ]
   },
-  latticeType: {
-    label: 'Lattice Material',
-    description: 'Host lattice material for the fusion reaction',
+  confinementMode: {
+    label: 'Confinement Mode',
+    description: 'Plasma confinement approach for achieving fusion conditions',
     section: 'basic',
     options: [
-      { value: 'palladium', label: 'Palladium (Pd)', description: 'High hydrogen solubility, 275K Debye temp' },
-      { value: 'nickel', label: 'Nickel (Ni)', description: 'Lower cost, 450K Debye temp' },
-      { value: 'titanium', label: 'Titanium (Ti)', description: 'Strong hydride former, 420K Debye temp' },
-      { value: 'platinum', label: 'Platinum (Pt)', description: 'Catalytic properties' }
+      { value: 'tokamak', label: 'Tokamak (MCF)', description: 'Toroidal magnetic confinement with plasma current' },
+      { value: 'stellarator', label: 'Stellarator (MCF)', description: 'Twisted coil magnetic confinement, no plasma current' },
+      { value: 'icf', label: 'Inertial Confinement (ICF)', description: 'Laser-driven implosion of fuel capsule' },
+      { value: 'z_pinch', label: 'Z-Pinch', description: 'Electromagnetic compression of plasma column' }
     ]
   },
-  temperature: {
-    label: 'Temperature',
-    description: 'Operating temperature in Kelvin',
-    section: 'basic',
-    min: 77,
-    max: 1273,
-    defaultValue: 300,
-    unit: 'K',
-    step: 10
-  },
-  loadingRatio: {
-    label: 'Loading Ratio',
-    description: 'Ratio of hydrogen isotopes to metal atoms (H/M)',
-    section: 'basic',
-    min: 0.1,
-    max: 1.0,
-    defaultValue: 0.85,
-    unit: 'H/M',
-    step: 0.01
-  },
   
-  // === ADVANCED PARAMETERS - PLASMA ===
+  // === MAGNETIC CONFINEMENT PARAMETERS ===
   plasmaDensity: {
     label: 'Plasma Density',
     description: 'Number density of plasma particles (n_e)',
-    section: 'advanced',
+    section: 'magnetic',
     min: 1e18,
-    max: 1e25,
+    max: 1e22,
     defaultValue: 1e20,
     unit: 'm⁻³',
     step: 1e18,
@@ -140,8 +116,8 @@ const PARAMETER_METADATA = {
   },
   ionTemperature: {
     label: 'Ion Temperature',
-    description: 'Temperature of plasma ions (T_i)',
-    section: 'advanced',
+    description: 'Temperature of plasma ions (T_i) - determines fusion cross-section',
+    section: 'magnetic',
     min: 0.1,
     max: 100,
     defaultValue: 10,
@@ -151,7 +127,7 @@ const PARAMETER_METADATA = {
   electronTemperature: {
     label: 'Electron Temperature',
     description: 'Temperature of plasma electrons (T_e)',
-    section: 'advanced',
+    section: 'magnetic',
     min: 0.1,
     max: 100,
     defaultValue: 10,
@@ -159,19 +135,62 @@ const PARAMETER_METADATA = {
     step: 0.5
   },
   magneticField: {
-    label: 'Magnetic Field',
-    description: 'External magnetic field strength for confinement',
-    section: 'advanced',
-    min: 0,
-    max: 20,
+    label: 'Toroidal Field',
+    description: 'Magnetic field strength at major radius (B_T)',
+    section: 'magnetic',
+    min: 1,
+    max: 15,
     defaultValue: 5.0,
     unit: 'T',
     step: 0.1
   },
+  confinementTime: {
+    label: 'Confinement Time',
+    description: 'Energy confinement time (τ_E) - key to Lawson criterion',
+    section: 'magnetic',
+    min: 1e-6,
+    max: 10,
+    defaultValue: 1e-3,
+    unit: 's',
+    step: 1e-4,
+    scientific: true
+  },
+  majorRadius: {
+    label: 'Major Radius',
+    description: 'Tokamak major radius (R) - distance from center to plasma core',
+    section: 'magnetic',
+    min: 1,
+    max: 15,
+    defaultValue: 6.0,
+    unit: 'm',
+    step: 0.1
+  },
+  minorRadius: {
+    label: 'Minor Radius',
+    description: 'Tokamak minor radius (a) - plasma cross-section radius',
+    section: 'magnetic',
+    min: 0.3,
+    max: 5,
+    defaultValue: 2.0,
+    unit: 'm',
+    step: 0.1
+  },
+  plasmaCurrent: {
+    label: 'Plasma Current',
+    description: 'Toroidal plasma current (I_p) - provides poloidal field',
+    section: 'magnetic',
+    min: 1,
+    max: 30,
+    defaultValue: 15.0,
+    unit: 'MA',
+    step: 0.5
+  },
+  
+  // === INERTIAL CONFINEMENT PARAMETERS ===
   laserPower: {
     label: 'Laser Power',
-    description: 'Total laser power for ICF (0 = MCF mode)',
-    section: 'advanced',
+    description: 'Total laser power delivered to target',
+    section: 'inertial',
     min: 0,
     max: 500,
     defaultValue: 0,
@@ -180,121 +199,95 @@ const PARAMETER_METADATA = {
   },
   laserWavelength: {
     label: 'Laser Wavelength',
-    description: 'Laser wavelength for ICF experiments',
-    section: 'advanced',
+    description: 'Laser wavelength (shorter = better absorption)',
+    section: 'inertial',
     min: 193,
     max: 1064,
     defaultValue: 351,
     unit: 'nm',
     step: 1
   },
-  confinementTime: {
-    label: 'Confinement Time',
-    description: 'Energy confinement time (τ_E)',
-    section: 'advanced',
-    min: 1e-12,
-    max: 10,
-    defaultValue: 1e-6,
-    unit: 's',
-    step: 1e-9,
-    scientific: true
-  },
-  plasmaRadius: {
-    label: 'Plasma Radius',
-    description: 'Characteristic plasma radius',
-    section: 'advanced',
-    min: 0.001,
-    max: 10,
-    defaultValue: 0.01,
-    unit: 'm',
-    step: 0.001
-  },
   compressionRatio: {
     label: 'Compression Ratio',
-    description: 'Target compression ratio for ICF',
-    section: 'advanced',
+    description: 'Target fuel compression ratio (ρ/ρ₀)',
+    section: 'inertial',
     min: 1,
     max: 1000,
-    defaultValue: 1,
+    defaultValue: 30,
     unit: '×',
-    step: 10
+    step: 5
   },
-  screeningEnergy: {
-    label: 'Screening Energy',
-    description: 'Electron screening energy enhancement',
-    section: 'advanced',
-    min: 0,
-    max: 1000,
-    defaultValue: 310,
-    unit: 'eV',
-    step: 10
+  implosionVelocity: {
+    label: 'Implosion Velocity',
+    description: 'Shell implosion velocity',
+    section: 'inertial',
+    min: 1e4,
+    max: 1e7,
+    defaultValue: 3e5,
+    unit: 'm/s',
+    step: 1e4,
+    scientific: true
   },
-  phononCoupling: {
-    label: 'Phonon Coupling',
-    description: 'Phonon-nuclear coupling factor',
-    section: 'advanced',
-    min: 0,
-    max: 10,
-    defaultValue: 1.0,
-    unit: '',
-    step: 0.1
+  targetRadius: {
+    label: 'Target Radius',
+    description: 'Initial fuel capsule radius',
+    section: 'inertial',
+    min: 0.0001,
+    max: 0.01,
+    defaultValue: 0.001,
+    unit: 'm',
+    step: 0.0001
   },
-  latticeDimension: {
-    label: 'Lattice Dimension',
-    description: 'Size of the lattice structure (N×N×N)',
-    section: 'advanced',
-    min: 5,
-    max: 50,
-    defaultValue: 10,
-    unit: 'cells',
-    step: 1
-  },
-  defectDensity: {
-    label: 'Defect Density',
-    description: 'Density of defects in the lattice structure',
-    section: 'advanced',
-    min: 0,
-    max: 0.5,
-    defaultValue: 0.01,
-    unit: '',
-    step: 0.001
-  },
+  
+  // === SIMULATION SETTINGS ===
   timeStepSize: {
-    label: 'Time Step Size',
-    description: 'Simulation time step',
-    section: 'advanced',
-    min: 0.001,
-    max: 1.0,
-    defaultValue: 0.1,
-    unit: 'ps',
-    step: 0.01
+    label: 'Time Step',
+    description: 'Simulation time step size',
+    section: 'simulation',
+    min: 1e-12,
+    max: 1e-6,
+    defaultValue: 1e-9,
+    unit: 's',
+    step: 1e-10,
+    scientific: true
   },
   totalSimulationTime: {
-    label: 'Total Simulation Time',
-    description: 'Total duration of simulation',
-    section: 'advanced',
-    min: 1,
-    max: 1000,
-    defaultValue: 10,
-    unit: 'ps',
-    step: 1
+    label: 'Total Time',
+    description: 'Total simulation duration',
+    section: 'simulation',
+    min: 1e-9,
+    max: 1,
+    defaultValue: 1e-6,
+    unit: 's',
+    step: 1e-7,
+    scientific: true
+  },
+  maxParticles: {
+    label: 'Max Particles',
+    description: 'Maximum number of particles to simulate',
+    section: 'simulation',
+    min: 100,
+    max: 100000,
+    defaultValue: 10000,
+    unit: '',
+    step: 1000
   },
   
   // === VISUALIZATION OPTIONS ===
-  showLattice: {
-    label: 'Show Lattice',
-    description: 'Display the metal lattice structure',
+  showPlasmaContour: {
+    label: 'Show Plasma Contour',
+    description: 'Display plasma density contours',
     section: 'visualization',
     defaultValue: true
   },
-  showDiffusion: {
-    label: 'Show Diffusion',
-    description: 'Display particle diffusion paths',
+  showMagneticField: {
+    label: 'Show B-Field Lines',
+    description: 'Display magnetic field lines',
     section: 'visualization',
-    defaultValue: false
+    defaultValue: true
   },
   showHotSpots: {
-    label: 'Show Hotspots',
+    label: 'Show Fusion Hotspots',
     description: 'Highlight regions of high fusion activity',
     section: 'visualization',
     defaultValue: true
@@ -305,27 +298,15 @@ const PARAMETER_METADATA = {
     section: 'visualization',
     defaultValue: true
   },
-  showMagneticField: {
-    label: 'Show Magnetic Field',
-    description: 'Display magnetic field lines',
-    section: 'visualization',
-    defaultValue: false
-  },
-  showPlasmaContour: {
-    label: 'Show Plasma Contour',
-    description: 'Display plasma density contours',
+  showEnergyDistribution: {
+    label: 'Show Temperature Profile',
+    description: 'Display plasma temperature distribution',
     section: 'visualization',
     defaultValue: true
   },
-  showEnergyDistribution: {
-    label: 'Show Energy Distribution',
-    description: 'Display energy distribution heatmap',
-    section: 'visualization',
-    defaultValue: false
-  },
-  colorByEnergy: {
-    label: 'Color by Energy',
-    description: 'Color particles by their energy level',
+  colorByTemperature: {
+    label: 'Color by Temperature',
+    description: 'Color particles by their temperature (keV)',
     section: 'visualization',
     defaultValue: true
   },
@@ -509,12 +490,13 @@ function FusionParameterControls({
     }
   };
   
-  // Group parameters by section
+  // Group parameters by section - plasma-scale fusion sections
   const parametersBySection = {
     basic: [],
-    advanced: [],
-    visualization: [],
-    simulation: []
+    magnetic: [],      // Magnetic confinement (tokamak/stellarator)
+    inertial: [],      // Inertial confinement (ICF/z-pinch)
+    simulation: [],
+    visualization: []
   };
   
   Object.entries(PARAMETER_METADATA).forEach(([key, meta]) => {
@@ -734,21 +716,71 @@ function FusionParameterControls({
         </AccordionDetails>
       </Accordion>
       
-      {/* Advanced Parameters Section */}
+      {/* Magnetic Confinement Parameters (Tokamak/Stellarator) */}
       <Accordion 
-        expanded={expandedSection === 'advanced'} 
-        onChange={handleAccordionChange('advanced')}
+        expanded={expandedSection === 'magnetic'} 
+        onChange={handleAccordionChange('magnetic')}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">Advanced Parameters</Typography>
+          <Typography variant="subtitle1">Magnetic Confinement (MCF)</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {parametersBySection.advanced.map((paramName) => {
-            if (PARAMETER_METADATA[paramName].options) {
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+            Parameters for tokamak and stellarator confinement
+          </Typography>
+          {parametersBySection.magnetic.map((paramName) => {
+            if (PARAMETER_METADATA[paramName]?.options) {
               return renderSelect(paramName);
-            } else if (PARAMETER_METADATA[paramName].min !== undefined) {
+            } else if (PARAMETER_METADATA[paramName]?.min !== undefined) {
               return renderSlider(paramName);
-            } else if (typeof PARAMETER_METADATA[paramName].defaultValue === 'boolean') {
+            } else if (typeof PARAMETER_METADATA[paramName]?.defaultValue === 'boolean') {
+              return renderToggle(paramName);
+            }
+            return null;
+          })}
+        </AccordionDetails>
+      </Accordion>
+      
+      {/* Inertial Confinement Parameters (ICF/Z-pinch) */}
+      <Accordion 
+        expanded={expandedSection === 'inertial'} 
+        onChange={handleAccordionChange('inertial')}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="subtitle1">Inertial Confinement (ICF)</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+            Parameters for laser-driven and Z-pinch confinement
+          </Typography>
+          {parametersBySection.inertial.map((paramName) => {
+            if (PARAMETER_METADATA[paramName]?.options) {
+              return renderSelect(paramName);
+            } else if (PARAMETER_METADATA[paramName]?.min !== undefined) {
+              return renderSlider(paramName);
+            } else if (typeof PARAMETER_METADATA[paramName]?.defaultValue === 'boolean') {
+              return renderToggle(paramName);
+            }
+            return null;
+          })}
+        </AccordionDetails>
+      </Accordion>
+      
+      {/* Simulation Settings */}
+      <Accordion 
+        expanded={expandedSection === 'simulation'} 
+        onChange={handleAccordionChange('simulation')}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="subtitle1">Simulation Settings</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {parametersBySection.simulation.map((paramName) => {
+            if (PARAMETER_METADATA[paramName]?.options) {
+              return renderSelect(paramName);
+            } else if (PARAMETER_METADATA[paramName]?.min !== undefined) {
+              return renderSlider(paramName);
+            } else if (typeof PARAMETER_METADATA[paramName]?.defaultValue === 'boolean') {
               return renderToggle(paramName);
             }
             return null;

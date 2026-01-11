@@ -117,9 +117,12 @@ def cached_phonon_spectrum(
     densities = frequencies**2 / omega_d**3
     densities *= 9 * temperature**3 / debye_temperature**3
     
-    # Apply Bose-Einstein distribution
+    # Apply Bose-Einstein distribution with overflow protection
     x = HBAR * frequencies / (KB * temperature)
-    occupation = 1 / (np.exp(x) - 1)
+    # Clip to prevent overflow in exp
+    x_safe = np.clip(x, 0, 100)
+    # For large x, use low-temperature approximation (exp(-x))
+    occupation = np.where(x > 100, np.exp(-np.clip(x, 0, 700)), 1 / (np.exp(x_safe) - 1 + 1e-30))
     densities *= occupation
     
     return frequencies, densities

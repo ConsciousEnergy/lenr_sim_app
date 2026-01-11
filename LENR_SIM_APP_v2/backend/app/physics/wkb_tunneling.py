@@ -368,7 +368,10 @@ class WKBTunnelingCalculator:
         if screening_ev > 0 and energy_kev > 0:
             # f = exp(π * η * Ue / E) approximately
             eta = sommerfeld_parameter(z1, z2, energy_kev, mu)
-            screen_factor = np.exp(np.pi * eta * (screening_ev/1000) / energy_kev)
+            # Clip exponent to prevent overflow (max safe exp arg ~700)
+            exponent = np.pi * eta * (screening_ev/1000) / energy_kev
+            exponent = np.clip(exponent, -700, 700)
+            screen_factor = np.exp(exponent)
             enhancement *= min(screen_factor, 1e10)  # Cap enhancement
         
         # Temperature enhancement (phonon effects, very small at low T)

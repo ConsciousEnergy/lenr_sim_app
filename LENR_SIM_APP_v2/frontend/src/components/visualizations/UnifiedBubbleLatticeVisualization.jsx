@@ -31,6 +31,10 @@ import CycloneIcon from '@mui/icons-material/Cyclone';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, EnergyFlowVisualizer, PlasmaVortexEffect } from './FluidDynamicsEffects';
+// Import ScaleBar for physical dimension reference
+import { ScaleBar } from './QuantumFluxVisualization';
+// Import VisualizationLegend for comprehensive display
+import VisualizationLegend from './VisualizationLegend';
 
 // Proton state definitions with visual properties
 const PROTON_STATES = {
@@ -53,6 +57,64 @@ const COLLAPSE_PHASES = {
 // Physical frequency is in kHz (e.g., 20kHz = 50μs cycles) - way too fast to observe
 // This multiplier makes one visual cycle take ~3-5 seconds at default speed
 const UX_TIME_SCALE = 0.02; // Slow down by 50x for visual comprehension
+
+/**
+ * Helper function to interpolate values from API simulation timeline
+ * @param {Array} timeline - API enhancement_timeline array
+ * @param {number} normalizedTime - Current animation time (0-1)
+ * @returns {Object} Interpolated physics values from API data
+ */
+const interpolateFromAPITimeline = (timeline, normalizedTime) => {
+  if (!timeline || !Array.isArray(timeline) || timeline.length === 0) {
+    return null;
+  }
+  
+  // Find the two nearest timeline points for interpolation
+  let lowerIdx = 0;
+  let upperIdx = timeline.length - 1;
+  
+  for (let i = 0; i < timeline.length - 1; i++) {
+    if (timeline[i].normalized_time <= normalizedTime && timeline[i + 1].normalized_time >= normalizedTime) {
+      lowerIdx = i;
+      upperIdx = i + 1;
+      break;
+    }
+  }
+  
+  const lower = timeline[lowerIdx];
+  const upper = timeline[upperIdx];
+  
+  // Calculate interpolation factor
+  const range = upper.normalized_time - lower.normalized_time;
+  const t = range > 0 ? (normalizedTime - lower.normalized_time) / range : 0;
+  
+  // Linear interpolation for numeric values
+  const lerp = (a, b, t) => a + (b - a) * t;
+  
+  return {
+    phase: t < 0.5 ? lower.phase : upper.phase,
+    enhancement: lerp(lower.enhancement, upper.enhancement, t),
+    enhancement_breakdown: {
+      total: lerp(lower.enhancement_breakdown?.total || 1, upper.enhancement_breakdown?.total || 1, t),
+      screening: lerp(lower.enhancement_breakdown?.screening || 1, upper.enhancement_breakdown?.screening || 1, t),
+      phonon: lerp(lower.enhancement_breakdown?.phonon || 1, upper.enhancement_breakdown?.phonon || 1, t),
+      qed: lerp(lower.enhancement_breakdown?.qed || 1, upper.enhancement_breakdown?.qed || 1, t),
+      casimir: lerp(lower.enhancement_breakdown?.casimir || 1, upper.enhancement_breakdown?.casimir || 1, t),
+      rydberg: lerp(lower.enhancement_breakdown?.rydberg || 1, upper.enhancement_breakdown?.rydberg || 1, t),
+      compression: lerp(lower.enhancement_breakdown?.compression || 1, upper.enhancement_breakdown?.compression || 1, t),
+      loading: lerp(lower.enhancement_breakdown?.loading || 1, upper.enhancement_breakdown?.loading || 1, t),
+    },
+    proton_distribution: {
+      FREE: lerp(lower.proton_distribution?.FREE || 0.1, upper.proton_distribution?.FREE || 0.1, t),
+      SCREENED: lerp(lower.proton_distribution?.SCREENED || 0.2, upper.proton_distribution?.SCREENED || 0.2, t),
+      CAPTURE_READY: lerp(lower.proton_distribution?.CAPTURE_READY || 0.4, upper.proton_distribution?.CAPTURE_READY || 0.4, t),
+      NUCLEAR: lerp(lower.proton_distribution?.NUCLEAR || 0.3, upper.proton_distribution?.NUCLEAR || 0.3, t),
+    },
+    radius_factor: lerp(lower.radius_factor || 1, upper.radius_factor || 1, t),
+    temperature: lerp(lower.temperature || 300, upper.temperature || 300, t),
+    electric_field: lerp(lower.electric_field || 1e8, upper.electric_field || 1e8, t),
+  };
+};
 
 /**
  * Main unified bubble-lattice visualization component
@@ -93,11 +155,15 @@ const UnifiedBubbleLatticeVisualization = ({
   const rydbergOrbitalsRef = useRef(null);
   const haloElectronsRef = useRef(null);
   
+  // Scale bar ref
+  const scaleBarRef = useRef(null);
+  
   // Animation state
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [cycleProgress, setCycleProgress] = useState(0);
   const [collapseCount, setCollapseCount] = useState(0);
+  const [usingAPIData, setUsingAPIData] = useState(false); // Tracks if visualization uses API physics data
   
   // Physics state for real-time display
   const [currentEnhancement, setCurrentEnhancement] = useState(1.0);
@@ -125,6 +191,8 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
@@ -1158,6 +1226,31 @@ const UnifiedBubbleLatticeVisualization = ({
     return haloGroup;
   }, []);
 
+  /**
+   * Create 3D scale bar for physical dimension reference
+   * Shows real-world scale (micrometers) for bubble/lattice visualization
+   */
+  const createScaleBar = useCallback((scene) => {
+    // Clean up existing scale bar
+    if (scaleBarRef.current) {
+      scene.remove(scaleBarRef.current.getGroup());
+    }
+    
+    // Create scale bar - bubble radius is typically 1-50 micrometers
+    // Position in bottom-left of the scene
+    const scaleBar = new ScaleBar({
+      length: 4,
+      realWorldScale: 1e-6, // 1 unit = 1 micrometer for bubble visualization
+      position: new THREE.Vector3(-6, -6, 4),
+      color: 0x00ffcc,
+    });
+    scaleBar.initialize();
+    scene.add(scaleBar.getGroup());
+    scaleBarRef.current = scaleBar;
+    
+    return scaleBar;
+  }, []);
+
   // Physics-based bubble radius calculation using Rayleigh-Plesset equation
   // R*R'' + 3/2*R'² = (1/ρ)[P_b - P_∞ - 2σ/R - 4μR'/R + ε₀E²/2]
   const calculateBubbleRadius = useCallback((normalizedTime, baseRadius) => {
@@ -1407,14 +1500,55 @@ const UnifiedBubbleLatticeVisualization = ({
     setCycleProgress(normalizedTime);
     
     const baseRadius = initialBubbleRadius;
-    const { radius, phase, compressionRatio, fieldStrength, temperature, pressure } = calculateBubbleRadius(normalizedTime, baseRadius);
+    
+    // Try to use API simulation data if available, otherwise use local calculations
+    const apiData = simulationData?.enhancement_timeline 
+      ? interpolateFromAPITimeline(simulationData.enhancement_timeline, normalizedTime)
+      : null;
+    
+    // Track whether we're using API data
+    setUsingAPIData(!!apiData);
+    
+    let radius, phase, compressionRatio, fieldStrength, temperature, pressure, enhancements;
+    
+    if (apiData) {
+      // Use API physics data
+      radius = baseRadius * apiData.radius_factor;
+      phase = apiData.phase;
+      fieldStrength = apiData.electric_field;
+      temperature = apiData.temperature;
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
+      pressure = 101325 * Math.pow(compressionRatio, 4.2); // Approximate
+      
+      enhancements = {
+        total: apiData.enhancement_breakdown.total,
+        screening: apiData.enhancement_breakdown.screening,
+        qed: apiData.enhancement_breakdown.qed,
+        casimir: apiData.enhancement_breakdown.casimir,
+        rydberg: apiData.enhancement_breakdown.rydberg,
+        compression: apiData.enhancement_breakdown.compression,
+        phonon: apiData.enhancement_breakdown.phonon,
+        loading: apiData.enhancement_breakdown.loading
+      };
+    } else {
+      // Fall back to local physics calculations
+      const localPhysics = calculateBubbleRadius(normalizedTime, baseRadius);
+      radius = localPhysics.radius;
+      phase = localPhysics.phase;
+      compressionRatio = localPhysics.compressionRatio;
+      fieldStrength = localPhysics.fieldStrength;
+      temperature = localPhysics.temperature;
+      pressure = localPhysics.pressure;
+      
+      enhancements = calculateEnhancementFactors(compressionRatio, fieldStrength, temperature, pressure);
+    }
+    
     bubbleRadiusRef.current = radius;
     
     // Update physics data state
     setPhysicsData({ compressionRatio, fieldStrength, temperature, pressure });
     
-    // Calculate enhancement factors based on physics conditions
-    const enhancements = calculateEnhancementFactors(compressionRatio, fieldStrength, temperature, pressure);
+    // Set enhancement data
     setCurrentEnhancement(enhancements.total);
     setEnhancementBreakdown(enhancements);
     
@@ -1979,7 +2113,7 @@ const UnifiedBubbleLatticeVisualization = ({
         console.error('Animation update error:', error);
     }
   }, [
-    isPlaying, frequency, initialBubbleRadius,
+    isPlaying, frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo
   ]); // Note: currentPhase removed - using currentPhaseRef to avoid scene re-initialization
@@ -2043,6 +2177,7 @@ const UnifiedBubbleLatticeVisualization = ({
     createCasimirField(scene);
     createRydbergOrbitals(scene);
     createHaloElectrons(scene);
+    createScaleBar(scene);
     
     // Animation loop - uses ref to avoid re-initialization when animation function changes
     const animate = () => {
@@ -2093,7 +2228,7 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
 
   // Update visibility based on toggles - immediate update with force refresh
@@ -2334,8 +2469,51 @@ const UnifiedBubbleLatticeVisualization = ({
               control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
               label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
             />
+            <FormControlLabel
+              control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
+              label={<Typography variant="caption" color="white">Legend</Typography>}
+            />
           </FormGroup>
         </Paper>
+        
+        {/* Comprehensive Visualization Legend - middle right */}
+        {showLegend && (
+          <VisualizationLegend
+            particleCounts={{
+              palladium: hostMaterial === 'palladium' ? 27 : 0,
+              nickel: hostMaterial === 'nickel' ? 27 : 0,
+              titanium: hostMaterial === 'titanium' ? 27 : 0,
+              deuterium: Math.round(27 * loadingRatio),
+              hydrogen: hostMaterial !== 'palladium' ? Math.round(27 * loadingRatio * 0.5) : 0,
+            }}
+            stats={{
+              totalParticles: 27 + Math.round(27 * loadingRatio),
+              hotspotCount: currentPhase === 'MINIMUM' || currentPhase === 'REBOUND' ? 3 : 0,
+              loadingRatio: loadingRatio,
+              enhancementFactor: currentEnhancement,
+              temperature: physicsData.temperature,
+              screeningEnhancement: enhancementBreakdown.screening,
+              phononCoupling: enhancementBreakdown.phonon || 1.0,
+            }}
+            showEnergy={true}
+            showParticles={showLattice || showProtons}
+            showHotspots={true}
+            showStats={true}
+            showScale={true}
+            showQuantumFlux={showCasimir || showRydberg}
+            scaleInfo={{
+              gridSize: 5,
+              scaleUnit: 'μm',
+              realWorldSize: parameters.initialBubbleRadius * 1e-6
+            }}
+            quantumFluxMode="electron_screening"
+            position="bottom-left"
+            collapsed={legendCollapsed}
+            onToggleCollapse={setLegendCollapsed}
+            variant="overlay"
+            simulationType="lenr"
+          />
+        )}
         
         {/* Phase indicator - bottom */}
         <Paper
@@ -2354,6 +2532,19 @@ const UnifiedBubbleLatticeVisualization = ({
             flexWrap: 'wrap'
           }}
         >
+          {/* Data source indicator */}
+          <Tooltip title={usingAPIData ? 'Using real physics calculations from backend API' : 'Using local fallback calculations (limited accuracy)'}>
+            <Chip 
+              label={usingAPIData ? 'API Physics' : 'Local Calc'} 
+              size="small"
+              sx={{ 
+                bgcolor: usingAPIData ? 'rgba(46, 125, 50, 0.9)' : 'rgba(237, 108, 2, 0.9)',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '0.65rem'
+              }}
+            />
+          </Tooltip>
           <Chip 
             label={currentPhase} 
             color={getPhaseColor(currentPhase)} 
@@ -2373,6 +2564,19 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small"
             color="secondary"
             sx={{ bgcolor: 'rgba(156, 39, 176, 0.8)' }}
+          />
+          <Chip 
+            label={`T: ${physicsData.temperature.toFixed(0)} K`}
+            size="small"
+            sx={{ 
+              bgcolor: physicsData.temperature > 1000 ? 'rgba(244, 67, 54, 0.8)' : 'rgba(76, 175, 80, 0.8)',
+              color: 'white'
+            }}
+          />
+          <Chip 
+            label={`E: ${(physicsData.fieldStrength / 1e8).toFixed(1)}×10⁸ V/m`}
+            size="small"
+            sx={{ bgcolor: 'rgba(255, 152, 0, 0.8)', color: 'white' }}
           />
         </Paper>
         

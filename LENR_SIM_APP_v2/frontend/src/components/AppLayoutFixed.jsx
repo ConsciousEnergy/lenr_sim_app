@@ -25,6 +25,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 // ChevronRightIcon removed - not needed
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ScienceIcon from '@mui/icons-material/Science';
+import HubIcon from '@mui/icons-material/Hub';
 import BoltIcon from '@mui/icons-material/Bolt';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import MemoryIcon from '@mui/icons-material/Memory';
@@ -117,8 +118,15 @@ const menuItems = [
     type: 'divider'
   },
   {
+    id: 'unified-theory',
+    title: 'Unified Theory',
+    path: '/unified-theory',
+    icon: <HubIcon />,
+    highlight: true
+  },
+  {
     id: 'simulations',
-    title: 'Simulations',
+    title: 'Advanced Tools',
     path: '/simulations',
     icon: <ScienceIcon />,
     children: [
@@ -129,23 +137,12 @@ const menuItems = [
         icon: <BoltIcon />
       },
       {
-        id: 'fusion-simulation',
-        title: 'Fusion Simulation',
-        path: '/fusion-simulation',
-        icon: <LocalFireDepartmentIcon />
-      },
-      {
-        id: 'lenr-simulation',
-        title: 'LENR Simulation',
-        path: '/lenr-simulation',
-        icon: <MemoryIcon />
-      },
-      {
         id: 'bubble-fusion',
         title: 'Bubble Fusion',
         path: '/bubble-fusion',
         icon: <BubbleChartIcon />
       }
+      // Legacy simulations (LENR, Fusion) hidden - routes still work via direct URL
     ]
   },
   {
@@ -259,11 +256,37 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
         component={Link}
         to={item.path}
         selected={isSelected(item.path)}
+        sx={item.highlight ? {
+          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.12),
+          },
+        } : {}}
       >
-        <ListItemIcon sx={{ minWidth: 40 }}>
+        <ListItemIcon sx={{ minWidth: 40, color: item.highlight ? theme.palette.primary.main : 'inherit' }}>
           {item.icon}
         </ListItemIcon>
-        <ListItemText primary={item.title} />
+        <ListItemText 
+          primary={item.title} 
+          sx={item.highlight ? { 
+            '& .MuiTypography-root': { fontWeight: 600, color: theme.palette.primary.main } 
+          } : {}}
+        />
+        {item.highlight && (
+          <Box
+            sx={{
+              bgcolor: theme.palette.primary.main,
+              color: 'white',
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              fontSize: '0.65rem',
+              fontWeight: 'bold',
+            }}
+          >
+            NEW
+          </Box>
+        )}
       </StyledListItemButton>
     );
   };

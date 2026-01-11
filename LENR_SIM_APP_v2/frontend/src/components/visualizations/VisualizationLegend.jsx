@@ -27,8 +27,8 @@ import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import BlurOnIcon from '@mui/icons-material/BlurOn';
 
-// Particle type definitions with colors and descriptions
-const PARTICLE_TYPES = {
+// Particle type definitions for Fusion (plasma-scale)
+const FUSION_PARTICLE_TYPES = {
   deuterium: {
     color: '#3498db',
     label: 'Deuterium (D)',
@@ -72,6 +72,55 @@ const PARTICLE_TYPES = {
     mass: '1.009 u',
   },
 };
+
+// Particle type definitions for LENR (lattice-scale)
+const LENR_PARTICLE_TYPES = {
+  nickel: {
+    color: '#4682b4',
+    label: 'Nickel (Ni)',
+    symbol: 'Ni',
+    description: 'Host metal lattice atom - FCC structure',
+    mass: '58.69 u',
+  },
+  palladium: {
+    color: '#8b8b8b',
+    label: 'Palladium (Pd)',
+    symbol: 'Pd',
+    description: 'Host metal with high H absorption - FCC structure',
+    mass: '106.42 u',
+  },
+  titanium: {
+    color: '#696969',
+    label: 'Titanium (Ti)',
+    symbol: 'Ti',
+    description: 'Alternative host metal - HCP structure',
+    mass: '47.87 u',
+  },
+  hydrogen: {
+    color: '#32cd32',
+    label: 'Hydrogen (H)',
+    symbol: 'H',
+    description: 'Interstitial hydrogen at octahedral/tetrahedral sites',
+    mass: '1.008 u',
+  },
+  deuterium: {
+    color: '#00ced1',
+    label: 'Deuterium (D)',
+    symbol: '²H',
+    description: 'Heavy hydrogen isotope in lattice',
+    mass: '2.014 u',
+  },
+  lithium: {
+    color: '#20b2aa',
+    label: 'Lithium (Li)',
+    symbol: 'Li',
+    description: 'Light element catalyst/dopant',
+    mass: '6.94 u',
+  },
+};
+
+// Combined particle types for backward compatibility
+const PARTICLE_TYPES = FUSION_PARTICLE_TYPES;
 
 // Energy color scale definition
 const ENERGY_SCALE = [
@@ -126,6 +175,28 @@ const QUANTUM_FLUX_MODES = {
     colorLow: '#224444',
     colorHigh: '#aaffee',
     physics: 'η_total = η_screen × η_phonon × P_tunnel',
+  },
+  // Plasma-scale modes (Fusion)
+  plasma_density: {
+    label: 'Plasma Density',
+    description: 'Ion/electron density distribution in confined plasma. Parabolic profile in tokamak geometry.',
+    colorLow: '#001144',
+    colorHigh: '#ff4400',
+    physics: 'n(r) = n₀(1 - r²/a²)^α',
+  },
+  magnetic_confinement: {
+    label: 'Magnetic Confinement',
+    description: 'Tokamak B-field (toroidal + poloidal). Field strength determines plasma confinement quality.',
+    colorLow: '#002244',
+    colorHigh: '#44aaff',
+    physics: 'B_total = √(B_φ² + B_θ²)',
+  },
+  z_pinch: {
+    label: 'Z-Pinch Effect',
+    description: 'Electromagnetic compression of plasma. Bridges LENR (localized) and Fusion (macroscopic) scales.',
+    colorLow: '#440022',
+    colorHigh: '#ffcc00',
+    physics: 'P_mag = B²/2μ₀, B_θ = μ₀I/(2πr)',
   },
 };
 
@@ -203,15 +274,60 @@ ParticleTypeItem.propTypes = {
 
 /**
  * Statistics display for current simulation state
+ * Supports both LENR (lattice-scale) and Fusion (plasma-scale) statistics
  */
-function SimulationStats({ stats }) {
+function SimulationStats({ stats, simulationType = 'fusion' }) {
   if (!stats) return null;
   
+  // Render LENR-specific statistics
+  if (simulationType === 'lenr') {
+    return (
+      <Box sx={{ mt: 1 }}>
+        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <TimelineIcon fontSize="small" />
+          LENR Statistics
+        </Typography>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)', 
+          gap: 1,
+          fontSize: '0.75rem',
+        }}>
+          {stats.totalParticles !== undefined && (
+            <StatItem label="Lattice Sites" value={stats.totalParticles.toLocaleString()} />
+          )}
+          {stats.hotspotCount !== undefined && (
+            <StatItem label="Active Sites" value={stats.hotspotCount} />
+          )}
+          {stats.loadingRatio !== undefined && (
+            <StatItem label="H/M Ratio" value={stats.loadingRatio.toFixed(2)} />
+          )}
+          {stats.enhancementFactor !== undefined && (
+            <StatItem label="Enhancement" value={`${stats.enhancementFactor.toExponential(2)}×`} />
+          )}
+          {stats.defectDensity !== undefined && (
+            <StatItem label="Defects" value={`${(stats.defectDensity * 100).toFixed(1)}%`} />
+          )}
+          {stats.temperature !== undefined && (
+            <StatItem label="Temp" value={`${stats.temperature.toFixed(0)} K`} />
+          )}
+          {stats.screeningEnhancement !== undefined && (
+            <StatItem label="Screening" value={`${stats.screeningEnhancement.toFixed(1)}×`} />
+          )}
+          {stats.phononCoupling !== undefined && (
+            <StatItem label="Phonon" value={`${stats.phononCoupling.toFixed(2)}×`} />
+          )}
+        </Box>
+      </Box>
+    );
+  }
+  
+  // Render Fusion (plasma-scale) statistics
   return (
     <Box sx={{ mt: 1 }}>
       <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <TimelineIcon fontSize="small" />
-        Statistics
+        Fusion Statistics
       </Typography>
       <Box sx={{ 
         display: 'grid', 
@@ -244,6 +360,7 @@ function SimulationStats({ stats }) {
 
 SimulationStats.propTypes = {
   stats: PropTypes.object,
+  simulationType: PropTypes.oneOf(['lenr', 'fusion']),
 };
 
 function StatItem({ label, value }) {
@@ -397,6 +514,7 @@ QuantumFluxIndicator.propTypes = {
 
 /**
  * Main Legend Component
+ * Supports both LENR (lattice-scale) and Fusion (plasma-scale) simulations
  */
 function VisualizationLegend({ 
   particleCounts = {},
@@ -414,7 +532,10 @@ function VisualizationLegend({
   collapsed = false,
   onToggleCollapse,
   variant = 'overlay', // 'overlay' | 'panel'
+  simulationType = 'fusion', // 'lenr' | 'fusion'
 }) {
+  // Select particle types based on simulation type
+  const particleTypes = simulationType === 'lenr' ? LENR_PARTICLE_TYPES : FUSION_PARTICLE_TYPES;
   const [isCollapsed, setIsCollapsed] = React.useState(collapsed);
   
   const handleToggle = () => {
@@ -489,10 +610,10 @@ function VisualizationLegend({
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <CircleIcon fontSize="small" />
-                Particle Types
+                {simulationType === 'lenr' ? 'Lattice Elements' : 'Particle Types'}
               </Typography>
               <Box>
-                {Object.entries(PARTICLE_TYPES).map(([type, info]) => (
+                {Object.entries(particleTypes).map(([type, info]) => (
                   <ParticleTypeItem 
                     key={type} 
                     type={type} 
@@ -525,8 +646,8 @@ function VisualizationLegend({
           {showHotspots && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <FlareIcon fontSize="small" sx={{ color: '#ffaa00' }} />
-                Fusion Hotspots
+                <FlareIcon fontSize="small" sx={{ color: simulationType === 'lenr' ? '#ff4500' : '#ffaa00' }} />
+                {simulationType === 'lenr' ? 'Reaction Sites' : 'Fusion Hotspots'}
               </Typography>
               <Box sx={{ pl: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
@@ -535,14 +656,18 @@ function VisualizationLegend({
                       width: 16, 
                       height: 16, 
                       borderRadius: '50%', 
-                      bgcolor: '#ffaa00',
-                      boxShadow: '0 0 8px #ffaa00',
+                      bgcolor: simulationType === 'lenr' ? '#ff4500' : '#ffaa00',
+                      boxShadow: simulationType === 'lenr' ? '0 0 8px #ff4500' : '0 0 8px #ffaa00',
                     }} 
                   />
-                  <Typography variant="body2">Active fusion region</Typography>
+                  <Typography variant="body2">
+                    {simulationType === 'lenr' ? 'Active reaction site' : 'Active fusion region'}
+                  </Typography>
                 </Box>
                 <Typography variant="caption" color="text.secondary">
-                  Size indicates reaction intensity
+                  {simulationType === 'lenr' 
+                    ? 'Size indicates reaction rate enhancement'
+                    : 'Size indicates reaction intensity'}
                 </Typography>
               </Box>
             </Box>
@@ -629,7 +754,7 @@ function VisualizationLegend({
           {showStats && stats && (
             <>
               <Divider sx={{ my: 1.5 }} />
-              <SimulationStats stats={stats} />
+              <SimulationStats stats={stats} simulationType={simulationType} />
             </>
           )}
           
@@ -652,12 +777,20 @@ function VisualizationLegend({
 VisualizationLegend.propTypes = {
   particleCounts: PropTypes.object,
   stats: PropTypes.shape({
+    // Common stats
     totalParticles: PropTypes.number,
     hotspotCount: PropTypes.number,
+    temperature: PropTypes.number,
+    // Fusion-specific stats
     avgEnergy: PropTypes.number,
     maxEnergy: PropTypes.number,
     fusionRate: PropTypes.number,
-    temperature: PropTypes.number,
+    // LENR-specific stats
+    loadingRatio: PropTypes.number,
+    enhancementFactor: PropTypes.number,
+    defectDensity: PropTypes.number,
+    screeningEnhancement: PropTypes.number,
+    phononCoupling: PropTypes.number,
   }),
   showEnergy: PropTypes.bool,
   showParticles: PropTypes.bool,
@@ -671,18 +804,24 @@ VisualizationLegend.propTypes = {
     realWorldSize: PropTypes.number,
   }),
   quantumFluxMode: PropTypes.oneOf([
+    // Lattice-scale modes (LENR)
     'electron_screening',
     'magnetic_dipoles',
     'phonon_modes',
     'coulomb_exchange',
     'gamow_window',
     'combined',
+    // Plasma-scale modes (Fusion)
+    'plasma_density',
+    'magnetic_confinement',
+    'z_pinch',
   ]),
   quantumFluxIntensity: PropTypes.number,
   position: PropTypes.oneOf(['top-right', 'top-left', 'bottom-right', 'bottom-left']),
   collapsed: PropTypes.bool,
   onToggleCollapse: PropTypes.func,
   variant: PropTypes.oneOf(['overlay', 'panel']),
+  simulationType: PropTypes.oneOf(['lenr', 'fusion']),
 };
 
 export default VisualizationLegend;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Box, 
   Container, 
@@ -21,6 +21,8 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  LinearProgress,
+  Chip,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -60,8 +62,144 @@ const fusionAPI = {
     });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return response.json();
+  },
+  
+  async calculateLawson(params) {
+    const response = await fetch(`${API_BASE}/api/physics/plasma/lawson-criterion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plasma_density: params.plasmaDensity || 1e20,
+        temperature: params.ionTemperature || 10,
+        confinement_time: params.confinementTime || 1e-3,
+        fuel_type: params.reactionType || 'd-t'
+      })
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return response.json();
   }
 };
+
+// Lawson thresholds for different fuels (m^-3 keV s)
+const LAWSON_THRESHOLDS = {
+  'd-t': 3e21,
+  'd-d': 1e23,
+  'd-He3': 5e22,
+  'p-B11': 5e23,
+};
+
+/**
+ * Lawson Criterion Indicator Component
+ * Shows progress toward fusion ignition
+ */
+function LawsonIndicator({ parameters }) {
+  // Calculate triple product locally for immediate UI feedback
+  const lawsonMetrics = useMemo(() => {
+    if (!parameters) return null;
+    
+    const n = parameters.plasmaDensity || 1e20;           // m^-3
+    const T = parameters.ionTemperature || 10;            // keV
+    const tau = parameters.confinementTime || 1e-3;       // seconds
+    const fuel = parameters.reactionType || 'd-t';
+    
+    const tripleProduct = n * T * tau;
+    const threshold = LAWSON_THRESHOLDS[fuel] || LAWSON_THRESHOLDS['d-t'];
+    const ignitionFraction = Math.min(tripleProduct / threshold, 10);  // Cap at 1000%
+    const percentage = Math.min(ignitionFraction * 100, 1000);
+    
+    let status = 'far';
+    let color = 'error';
+    
+    if (ignitionFraction >= 1.0) {
+      status = 'ignition';
+      color = 'success';
+    } else if (ignitionFraction >= 0.5) {
+      status = 'approaching';
+      color = 'warning';
+    } else if (ignitionFraction >= 0.1) {
+      status = 'progressing';
+      color = 'info';
+    }
+    
+    return {
+      tripleProduct,
+      threshold,
+      ignitionFraction,
+      percentage,
+      status,
+      color,
+      fuel
+    };
+  }, [parameters]);
+  
+  if (!lawsonMetrics) return null;
+  
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'ignition': return 'IGNITION ACHIEVED';
+      case 'approaching': return 'Approaching Breakeven';
+      case 'progressing': return 'Sub-Breakeven';
+      default: return 'Far from Ignition';
+    }
+  };
+  
+  return (
+    <Paper 
+      elevation={2} 
+      sx={{ 
+        p: 2, 
+        mb: 2, 
+        background: 'linear-gradient(135deg, rgba(25,35,60,0.9) 0%, rgba(35,45,80,0.9) 100%)',
+        border: '1px solid',
+        borderColor: `${lawsonMetrics.color}.main`
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+          Lawson Criterion (nTτ) — {lawsonMetrics.fuel.toUpperCase()}
+        </Typography>
+        <Chip 
+          label={getStatusLabel(lawsonMetrics.status)} 
+          color={lawsonMetrics.color}
+          size="small"
+        />
+      </Box>
+      
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={Math.min(lawsonMetrics.percentage, 100)} 
+            color={lawsonMetrics.color}
+            sx={{ 
+              height: 10, 
+              borderRadius: 5,
+              backgroundColor: 'rgba(255,255,255,0.1)'
+            }}
+          />
+        </Box>
+        <Typography variant="body2" sx={{ minWidth: 60, textAlign: 'right' }}>
+          {lawsonMetrics.percentage < 100 
+            ? `${lawsonMetrics.percentage.toFixed(1)}%` 
+            : `${lawsonMetrics.percentage.toFixed(0)}%`}
+        </Typography>
+      </Box>
+      
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, gap: 2 }}>
+        <Tooltip title="Triple Product: plasma density × temperature × confinement time">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            nTτ = {lawsonMetrics.tripleProduct.toExponential(2)} m⁻³ keV s
+          </Typography>
+        </Tooltip>
+        <Tooltip title={`Ignition threshold for ${lawsonMetrics.fuel.toUpperCase()} fuel`}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Threshold: {lawsonMetrics.threshold.toExponential(1)} m⁻³ keV s
+          </Typography>
+        </Tooltip>
+      </Box>
+    </Paper>
+  );
+}
 
 /**
  * FusionSimulationPage Component
@@ -556,7 +694,7 @@ function FusionSimulationPage() {
   const renderInfoDialog = () => (
     <Dialog open={showInfoDialog} onClose={() => setShowInfoDialog(false)} maxWidth="md" fullWidth>
       <DialogTitle>
-        About the Fusion Simulation Model
+        About the Plasma Fusion Simulation
         <IconButton
           aria-label="close"
           onClick={() => setShowInfoDialog(false)}
@@ -649,15 +787,37 @@ function FusionSimulationPage() {
   
   return (
     <Container maxWidth="xl" sx={{ pt: 4, pb: 6 }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1">
-          Fusion Simulation
-          <Tooltip title="Show model information">
-            <IconButton onClick={() => setShowInfoDialog(true)} size="small" sx={{ ml: 1 }}>
-              <InfoIcon />
-            </IconButton>
-          </Tooltip>
+      {/* Deprecation Notice */}
+      <Alert 
+        severity="info" 
+        sx={{ mb: 3 }}
+        action={
+          <Button color="inherit" size="small" href="/unified-theory">
+            Try Unified Theory
+          </Button>
+        }
+      >
+        <Typography variant="body2">
+          <strong>Legacy Simulation:</strong> This page is deprecated. Please use the new{' '}
+          <a href="/unified-theory" style={{ color: 'inherit', fontWeight: 600 }}>Unified Theory</a>{' '}
+          simulation for improved physics accuracy and visualization.
         </Typography>
+      </Alert>
+      
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Plasma Fusion Simulation
+            <Tooltip title="Show model information">
+              <IconButton onClick={() => setShowInfoDialog(true)} size="small" sx={{ ml: 1 }}>
+                <InfoIcon />
+              </IconButton>
+            </Tooltip>
+          </Typography>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+            High-temperature plasma physics — Magnetic & Inertial Confinement (scale: meters, temp: keV)
+          </Typography>
+        </Box>
         
         <Box>
           <Button 
@@ -710,11 +870,14 @@ function FusionSimulationPage() {
         
         {/* Visualization area */}
         <Grid size={{ xs: 12, md: 8 }}>
+          {/* Lawson Criterion Indicator */}
+          <LawsonIndicator parameters={parameters} />
+          
           <Paper 
             elevation={3} 
             sx={{ 
               p: 2,
-              height: '75vh',
+              height: 'calc(75vh - 100px)', // Adjust for Lawson indicator
               display: 'flex',
               flexDirection: 'column'
             }}

@@ -120,7 +120,10 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
             from ..physics.core_constants import AMU, sommerfeld_parameter
             mu = (request.a1 * request.a2 * AMU) / (request.a1 + request.a2)
             eta = sommerfeld_parameter(request.z1, request.z2, request.energy_kev, mu)
-            electron_enhancement = np.exp(np.pi * eta * (effective_screening_ev/1000) / request.energy_kev)
+            # Clip exponent to prevent overflow (max safe exp arg ~700)
+            exponent = np.pi * eta * (effective_screening_ev/1000) / request.energy_kev
+            exponent = np.clip(exponent, -700, 700)
+            electron_enhancement = np.exp(exponent)
             electron_enhancement = min(electron_enhancement, 1e10)
         
         temp_enhancement = 1.0 + 0.001 * (request.temperature_k - 300.0) / 300.0
@@ -239,7 +242,10 @@ async def calculate_fusion_rate(request: FusionRateRequest):
         screening_ev = SCREENING_POTENTIALS.get(request.material, 0)
         screening_enhancement = 1.0
         if screening_ev > 0 and mean_energy > 0:
-            screening_enhancement = np.exp(screening_ev / 1000 / mean_energy)
+            # Clip exponent to prevent overflow (max safe exp arg ~700)
+            exponent = screening_ev / 1000 / mean_energy
+            exponent = np.clip(exponent, -700, 700)
+            screening_enhancement = np.exp(exponent)
             screening_enhancement = min(screening_enhancement, 1e6)
         
         # Calculate reaction rate

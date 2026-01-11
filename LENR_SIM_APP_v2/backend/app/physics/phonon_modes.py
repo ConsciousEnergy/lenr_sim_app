@@ -721,8 +721,10 @@ def calculate_comprehensive_phonon_enhancement(
     reduced_mass_ev = reduced_mass * amu_c2
     eta = z1 * z2 * alpha * np.sqrt(reduced_mass_ev / (2.0 * energy * 1000.0))
     
-    # Screening enhancement: exp(πηUe/E)
-    screening_enhancement = np.exp(np.pi * eta * screening_potential / (energy * 1000.0))
+    # Screening enhancement: exp(πηUe/E) - clip exponent to prevent overflow
+    exponent = np.pi * eta * screening_potential / (energy * 1000.0)
+    exponent = np.clip(exponent, -700, 700)
+    screening_enhancement = np.exp(exponent)
     
     # Combine all enhancement factors
     # Note: Multiplying directly would likely overestimate the total effect

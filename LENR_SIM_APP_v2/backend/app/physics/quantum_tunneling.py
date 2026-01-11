@@ -599,8 +599,10 @@ def calculate_enhanced_tunneling(
     # Sommerfeld parameter
     eta = z1 * z2 * alpha * np.sqrt(reduced_mass_ev / (2.0 * energy * 1000.0))
     
-    # Screening enhancement
-    screening_enhancement = np.exp(np.pi * eta * screening_potential / (energy * 1000.0))
+    # Screening enhancement - clip exponent to prevent overflow (max safe exp arg ~700)
+    exponent = np.pi * eta * screening_potential / (energy * 1000.0)
+    exponent = np.clip(exponent, -700, 700)
+    screening_enhancement = np.exp(exponent)
     
     # Calculate final enhanced probability
     enhanced_probability = base_probability * screening_enhancement * enhancement_factor

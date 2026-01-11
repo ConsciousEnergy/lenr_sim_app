@@ -29,6 +29,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import TuneIcon from '@mui/icons-material/Tune';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import HubIcon from '@mui/icons-material/Hub';
 import MemoryIcon from '@mui/icons-material/Memory';
 import DocumentationIcon from '@mui/icons-material/MenuBook';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -109,34 +110,16 @@ const MemoryIndicator = styled(Box)(({ theme }) => ({
   zIndex: 1000,
 }));
 
-// Quick Action data
+// Quick Action data - Unified Theory is now the primary simulation
 const quickActions = [
   {
     id: 'unified-theory',
     title: 'Unified LENR Theory',
     description: 'Comprehensive simulation with all enhancement mechanisms from the unified framework',
-    icon: <MemoryIcon />,
+    icon: <HubIcon />,
     color: '#2196F3',
     path: '/unified-theory',
     status: 'new'
-  },
-  {
-    id: 'lenr-simulation',
-    title: 'LENR Simulation',
-    description: 'Lattice-based low energy nuclear reaction modeling',
-    icon: <ScienceIcon />,
-    color: '#4CAF50',
-    path: '/lenr-simulation',
-    status: 'ready'
-  },
-  {
-    id: 'fusion-simulation',
-    title: 'Fusion Simulation',
-    description: 'Model fusion reactions in metal lattices',
-    icon: <BubbleChartIcon />,
-    color: '#9C27B0',
-    path: '/fusion-simulation',
-    status: 'ready'
   },
   {
     id: 'quantum-tunneling',
@@ -165,6 +148,7 @@ const quickActions = [
     path: '/analytics',
     status: 'ready'
   }
+  // Legacy simulations (LENR, Fusion) hidden from dashboard - access via direct URL if needed
 ];
 
 function DashboardNew() {
@@ -377,16 +361,16 @@ function DashboardNew() {
                 <Typography variant="subtitle2" gutterBottom>Quick Start Guide:</Typography>
                 <Stack spacing={1} sx={{ ml: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>🔬 Unified Theory</strong> - Complete LENR model with all enhancement mechanisms
+                    <strong>🔗 Unified Theory</strong> - Complete LENR model with all enhancement mechanisms (recommended)
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>⚛️ LENR Simulation</strong> - Focused lattice-based nuclear reactions
+                    <strong>⚡ Quantum Tunneling</strong> - Analyze quantum mechanical tunneling effects
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>🔥 Fusion Simulation</strong> - Plasma fusion in metal lattices
+                    <strong>💧 Bubble Fusion</strong> - Acoustic cavitation and sonofusion dynamics
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>💧 Bubble Fusion</strong> - Acoustic cavitation dynamics
+                    <strong>📊 Analytics</strong> - Analyze simulation results and generate reports
                   </Typography>
                 </Stack>
               </Box>

@@ -136,12 +136,13 @@ def calculate_tunneling_enhancement(
     
     # Calculate coherent multi-phonon processes
     coherent_enhancement = 1.0
-    if temperature > 0:
+    if temperature > 0 and params.max_frequency > 0:
         # Simplified model for coherent processes
         thermal_energy = KB * temperature
-        coherent_enhancement = np.exp(
-            params.electron_phonon_coupling * thermal_energy / (HBAR * params.max_frequency)
-        )
+        exponent = params.electron_phonon_coupling * thermal_energy / (HBAR * params.max_frequency)
+        # Clip exponent to prevent overflow
+        exponent = np.clip(exponent, -700, 700)
+        coherent_enhancement = np.exp(exponent)
     
     return {
         "single_phonon_enhancement": float(1.0 + enhancement),

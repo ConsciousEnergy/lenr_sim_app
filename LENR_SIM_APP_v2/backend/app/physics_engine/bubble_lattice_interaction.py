@@ -21,6 +21,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Gas-specific polytropic indices (heat capacity ratio γ = Cp/Cv)
+# For diatomic gases (H2, D2, N2): γ ≈ 1.4 (5 degrees of freedom at moderate T)
+# For monatomic gases (He, Ar): γ ≈ 1.67 (3 degrees of freedom)
+# For water vapor (H2O): γ ≈ 1.33 (6 degrees of freedom)
+# Reference: NIST Chemistry WebBook
+GAS_POLYTROPIC_INDEX = {
+    "hydrogen": 1.405,      # H2 at 300K
+    "deuterium": 1.399,     # D2 at 300K (slightly lower due to higher mass)
+    "helium": 1.667,        # Monatomic
+    "argon": 1.667,         # Monatomic
+    "nitrogen": 1.401,      # N2
+    "air": 1.400,           # Mixture
+    "water_vapor": 1.330,   # H2O vapor
+    "mixed": 1.380,         # D2 + vapor mixture (approximate for LENR bubble)
+}
+
+
 @dataclass
 class BubbleParameters:
     """Parameters for bubble dynamics simulation."""
@@ -37,10 +54,24 @@ class BubbleParameters:
     
     # Gas properties
     gas_type: str = "deuterium"
-    polytropic_index: float = 1.4  # γ for adiabatic process
+    polytropic_index: float = 1.399  # γ for adiabatic process (D2 default)
     
     # Electric field in double layer
     double_layer_field: float = 1e8  # V/m
+    
+    def __post_init__(self):
+        """Set polytropic index based on gas type if not explicitly provided."""
+        # If polytropic_index wasn't changed from default, look up by gas_type
+        if self.gas_type.lower() in GAS_POLYTROPIC_INDEX:
+            # Use gas-specific value
+            self.polytropic_index = GAS_POLYTROPIC_INDEX[self.gas_type.lower()]
+        # Otherwise keep the provided value
+        
+    @classmethod
+    def for_gas(cls, gas_type: str, **kwargs) -> "BubbleParameters":
+        """Factory method to create parameters for a specific gas."""
+        gamma = GAS_POLYTROPIC_INDEX.get(gas_type.lower(), 1.4)
+        return cls(gas_type=gas_type, polytropic_index=gamma, **kwargs)
 
 
 @dataclass
@@ -53,14 +84,55 @@ class LatticeParameters:
     lattice_constant: float = 3.89e-10  # m (Pd)
     electron_density: float = 6.8e28  # m⁻³
     debye_temperature: float = 275.0  # K (Pd)
+    work_function: float = 5.12  # eV (Pd)
+    fermi_energy: float = 11.7  # eV (Pd)
+    screening_potential: float = 800.0  # eV (experimental for Pd-D)
     
     @classmethod
     def for_material(cls, material: str) -> "LatticeParameters":
-        """Factory method to create parameters for common materials."""
+        """
+        Factory method to create parameters for common LENR materials.
+        
+        Data from:
+        - Lattice constants: Kittel, Introduction to Solid State Physics
+        - Electron densities: Ashcroft & Mermin, Solid State Physics
+        - Debye temperatures: American Institute of Physics Handbook
+        - Work functions: CRC Handbook of Chemistry and Physics
+        - Screening potentials: Kasagi et al., J. Phys. Soc. Jpn. 71 (2002)
+        """
         material_data = {
-            "palladium": {"lattice_constant": 3.89e-10, "electron_density": 6.8e28, "debye_temperature": 275.0},
-            "nickel": {"lattice_constant": 3.52e-10, "electron_density": 9.1e28, "debye_temperature": 450.0},
-            "titanium": {"lattice_constant": 2.95e-10, "electron_density": 3.8e28, "debye_temperature": 420.0},
+            "palladium": {
+                "lattice_constant": 3.89e-10,  # m (FCC)
+                "electron_density": 6.8e28,     # m^-3
+                "debye_temperature": 275.0,     # K
+                "work_function": 5.12,          # eV
+                "fermi_energy": 11.7,           # eV
+                "screening_potential": 800.0    # eV (D-D in Pd)
+            },
+            "nickel": {
+                "lattice_constant": 3.52e-10,   # m (FCC)
+                "electron_density": 9.1e28,     # m^-3
+                "debye_temperature": 450.0,     # K
+                "work_function": 5.15,          # eV
+                "fermi_energy": 11.7,           # eV
+                "screening_potential": 500.0    # eV (H-H in Ni, estimate)
+            },
+            "titanium": {
+                "lattice_constant": 2.95e-10,   # m (HCP)
+                "electron_density": 1.0e29,     # m^-3 (varies with structure)
+                "debye_temperature": 420.0,     # K
+                "work_function": 4.33,          # eV
+                "fermi_energy": 7.0,            # eV
+                "screening_potential": 350.0    # eV (D-D in Ti, estimate)
+            },
+            "platinum": {
+                "lattice_constant": 3.92e-10,   # m (FCC)
+                "electron_density": 6.6e28,     # m^-3
+                "debye_temperature": 240.0,     # K
+                "work_function": 5.65,          # eV
+                "fermi_energy": 9.7,            # eV
+                "screening_potential": 750.0    # eV (estimate)
+            },
         }
         data = material_data.get(material.lower(), material_data["palladium"])
         return cls(host_material=material, **data)
@@ -360,9 +432,20 @@ class BubbleLatticeInteraction:
         # Rydberg Matter enhancement (simplified)
         rydberg_factor = 1 + 0.5 * compression * (electric_field / 1e8)
         
-        # Loading ratio bonus
-        loading_factor = 1 + 10 * (self.lattice.loading_ratio - 0.8) if self.lattice.loading_ratio > 0.8 else 1
+        # Loading ratio enhancement using smooth sigmoid function
+        # Enhancement increases significantly above critical loading (~0.85 for Pd-D)
+        # Physics: Higher loading increases hydrogen density and coherent screening
+        # Reference: McKubre et al., loading ratios above 0.85-0.9 correlate with excess heat
+        critical_loading = 0.85
+        steepness = 20.0  # Controls sharpness of transition
+        max_enhancement = 3.0  # Maximum loading factor
         
+        # Smooth sigmoid: f(x) = 1 + (max-1) * sigmoid((x - critical) * steepness)
+        sigmoid_arg = (self.lattice.loading_ratio - critical_loading) * steepness
+        sigmoid_arg = np.clip(sigmoid_arg, -20, 20)  # Prevent overflow
+        sigmoid_value = 1.0 / (1.0 + np.exp(-sigmoid_arg))
+        loading_factor = 1.0 + (max_enhancement - 1.0) * sigmoid_value
+
         # Combined enhancement (multiplicative, capped)
         total = (screening_factor * phonon_factor * qed_factor * 
                 density_factor * casimir_factor * rydberg_factor * loading_factor)

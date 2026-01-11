@@ -29,14 +29,21 @@ const CONSTANTS = {
 
 /**
  * Visualization modes for quantum effects
+ * Supports both LENR (lattice-scale) and Fusion (plasma-scale) physics
  */
 export const FluxMode = {
+  // Lattice-scale modes (LENR)
   ELECTRON_SCREENING: 'electron_screening',
   MAGNETIC_DIPOLES: 'magnetic_dipoles',
   PHONON_MODES: 'phonon_modes',
   COULOMB_EXCHANGE: 'coulomb_exchange',
   GAMOW_WINDOW: 'gamow_window',
   COMBINED: 'combined',
+  
+  // Plasma-scale modes (Fusion)
+  PLASMA_DENSITY: 'plasma_density',
+  MAGNETIC_CONFINEMENT: 'magnetic_confinement',
+  Z_PINCH: 'z_pinch',
 };
 
 /**
@@ -130,6 +137,123 @@ function calculateGamowProbability(position, params) {
 }
 
 /**
+ * Calculates plasma density distribution for fusion visualization
+ * Models ion/electron density in a toroidal or spherical geometry
+ * Based on: n(r) = n₀ * (1 - (r/a)²)^α for parabolic profile
+ */
+function calculatePlasmaDensity(position, params) {
+  const { 
+    majorRadius = 5.0,      // Tokamak major radius
+    minorRadius = 2.0,      // Tokamak minor radius
+    peakDensity = 1.0,      // Normalized peak density
+    profileExponent = 2.0,  // Density profile shape
+    isToroidal = true,      // Toroidal vs spherical geometry
+  } = params;
+  
+  const { x, y, z } = position;
+  
+  if (isToroidal) {
+    // Toroidal geometry (tokamak-like)
+    const R = Math.sqrt(x * x + y * y); // Distance from z-axis
+    const rMinor = Math.sqrt((R - majorRadius) ** 2 + z * z);
+    const normalizedR = rMinor / minorRadius;
+    
+    if (normalizedR > 1.0) return 0;
+    
+    // Parabolic density profile: n(r) = n₀(1 - r²)^α
+    const density = peakDensity * Math.pow(1 - normalizedR * normalizedR, profileExponent);
+    return Math.max(0, Math.min(density, 1.0));
+  } else {
+    // Spherical geometry (ICF-like)
+    const r = Math.sqrt(x * x + y * y + z * z);
+    const normalizedR = r / majorRadius;
+    
+    if (normalizedR > 1.0) return 0;
+    
+    // Gaussian-like profile for compressed fuel
+    const density = peakDensity * Math.exp(-normalizedR * normalizedR * 3);
+    return Math.max(0, Math.min(density, 1.0));
+  }
+}
+
+/**
+ * Calculates magnetic confinement field strength
+ * Models tokamak magnetic field: B_φ (toroidal) + B_θ (poloidal)
+ * B_total = sqrt(B_φ² + B_θ²)
+ */
+function calculateMagneticConfinement(position, params) {
+  const {
+    majorRadius = 5.0,
+    toroidalField = 5.0,    // Tesla at major radius
+    plasmaCurrent = 15.0,   // MA
+    q = 3.0,                // Safety factor
+  } = params;
+  
+  const { x, y, z } = position;
+  const R = Math.sqrt(x * x + y * y);
+  const rMinor = Math.sqrt((R - majorRadius) ** 2 + z * z);
+  
+  if (R < 0.5) return 0;
+  
+  // Toroidal field: B_φ ∝ 1/R
+  const B_toroidal = toroidalField * majorRadius / R;
+  
+  // Poloidal field: B_θ ∝ I_p * r / R (simplified)
+  const B_poloidal = (plasmaCurrent / 15) * (rMinor / majorRadius) * 0.5;
+  
+  // Total field magnitude (normalized)
+  const B_total = Math.sqrt(B_toroidal * B_toroidal + B_poloidal * B_poloidal);
+  const B_normalized = B_total / (toroidalField * 1.5);
+  
+  return Math.max(0, Math.min(B_normalized, 1.0));
+}
+
+/**
+ * Calculates Z-pinch compression effect
+ * Models the electromagnetic compression of plasma in a z-pinch configuration
+ * Both used in ICF (laser-driven) and as a bridge to LENR (localized pinch)
+ * Based on: P_magnetic = B²/2μ₀, B_θ = μ₀I/(2πr)
+ */
+function calculateZPinchEffect(position, time, params) {
+  const {
+    current = 1.0,          // Normalized current (MA scale)
+    pinchRadius = 2.0,      // Characteristic pinch radius
+    compressionRatio = 10,  // Peak compression
+    oscillationFreq = 1.0,  // Instability frequency
+  } = params;
+  
+  const { x, y, z } = position;
+  const r = Math.sqrt(x * x + y * y); // Distance from z-axis
+  
+  // Azimuthal magnetic field: B_θ ∝ I/r (inside pinch)
+  // and B_θ ∝ I/r (outside pinch) but decreasing
+  let B_theta;
+  if (r < pinchRadius) {
+    B_theta = current * r / pinchRadius; // Linear inside
+  } else {
+    B_theta = current * pinchRadius / r; // 1/r falloff outside
+  }
+  
+  // Magnetic pressure peaks at pinch surface
+  const magneticPressure = B_theta * B_theta;
+  
+  // Add sausage instability visualization (m=0 mode)
+  const sausageMode = 1 + 0.3 * Math.sin(z * 2 + time * oscillationFreq);
+  
+  // Add kink instability visualization (m=1 mode)
+  const kinkMode = 1 + 0.2 * Math.cos(z * 1.5 + time * oscillationFreq * 0.7);
+  
+  // Compression effect - higher at pinch boundary
+  const compression = Math.exp(-Math.pow((r - pinchRadius) / 0.5, 2)) * 
+                     compressionRatio / 10 * sausageMode * kinkMode;
+  
+  // Combine field and compression
+  const effect = (magneticPressure * 0.5 + compression * 0.5);
+  
+  return Math.max(0, Math.min(effect, 1.0));
+}
+
+/**
  * QuantumFluxEffect - Main visualization class
  * Creates physically-grounded 3D representations of quantum effects
  */
@@ -193,7 +317,33 @@ export class QuantumFluxEffect {
         name: 'Combined Effects',
         description: 'Total enhancement from quantum coupling',
       },
+      // Plasma-scale modes (Fusion)
+      [FluxMode.PLASMA_DENSITY]: {
+        low: new THREE.Color(0x001144),  // Deep blue
+        high: new THREE.Color(0xff4400), // Hot orange-red
+        name: 'Plasma Density',
+        description: 'Ion/electron density distribution in plasma',
+      },
+      [FluxMode.MAGNETIC_CONFINEMENT]: {
+        low: new THREE.Color(0x002244),  // Dark blue
+        high: new THREE.Color(0x44aaff), // Light blue
+        name: 'Magnetic Confinement',
+        description: 'Tokamak B-field lines (toroidal + poloidal)',
+      },
+      [FluxMode.Z_PINCH]: {
+        low: new THREE.Color(0x440022),  // Dark red
+        high: new THREE.Color(0xffcc00), // Yellow-white (hot core)
+        name: 'Z-Pinch Effect',
+        description: 'Electromagnetic compression (bridges LENR/Fusion scales)',
+      },
     };
+    
+    // Plasma-specific parameters
+    this.majorRadius = options.majorRadius || 5.0;
+    this.minorRadius = options.minorRadius || 2.0;
+    this.toroidalField = options.toroidalField || 5.0;
+    this.plasmaCurrent = options.plasmaCurrent || 15.0;
+    this.pinchRadius = options.pinchRadius || 2.0;
   }
 
   initialize() {
@@ -498,6 +648,31 @@ export class QuantumFluxEffect {
         });
         const gamow = calculateGamowProbability(position, { temperature: this.temperature * 1e5 });
         return (screening * 0.4 + phonon * 0.3 + gamow * 0.3);
+      
+      // Plasma-scale modes
+      case FluxMode.PLASMA_DENSITY:
+        return calculatePlasmaDensity(position, {
+          majorRadius: this.majorRadius,
+          minorRadius: this.minorRadius,
+          peakDensity: 1.0,
+          profileExponent: 2.0,
+          isToroidal: true,
+        });
+      
+      case FluxMode.MAGNETIC_CONFINEMENT:
+        return calculateMagneticConfinement(position, {
+          majorRadius: this.majorRadius,
+          toroidalField: this.toroidalField,
+          plasmaCurrent: this.plasmaCurrent,
+        });
+      
+      case FluxMode.Z_PINCH:
+        return calculateZPinchEffect(position, this.time, {
+          current: 1.0,
+          pinchRadius: this.pinchRadius,
+          compressionRatio: 10,
+          oscillationFreq: 1.0,
+        });
       
       default:
         return 0;

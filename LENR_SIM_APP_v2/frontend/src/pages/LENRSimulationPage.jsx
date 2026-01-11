@@ -714,7 +714,7 @@ function LENRSimulationPage() {
   const renderInfoDialog = () => (
     <Dialog open={showInfoDialog} onClose={() => setShowInfoDialog(false)} maxWidth="md" fullWidth>
       <DialogTitle>
-        About the LENR Simulation Model
+        About the Lattice LENR Simulation
         <IconButton
           aria-label="close"
           onClick={() => setShowInfoDialog(false)}
@@ -807,15 +807,37 @@ function LENRSimulationPage() {
   
   return (
     <Container maxWidth="xl" sx={{ pt: 4, pb: 6 }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1">
-          LENR Simulation
-          <Tooltip title="Show model information">
-            <IconButton onClick={() => setShowInfoDialog(true)} size="small" sx={{ ml: 1 }}>
-              <InfoIcon />
-            </IconButton>
-          </Tooltip>
+      {/* Deprecation Notice */}
+      <Alert 
+        severity="info" 
+        sx={{ mb: 3 }}
+        action={
+          <Button color="inherit" size="small" href="/unified-theory">
+            Try Unified Theory
+          </Button>
+        }
+      >
+        <Typography variant="body2">
+          <strong>Legacy Simulation:</strong> This page is deprecated. Please use the new{' '}
+          <a href="/unified-theory" style={{ color: 'inherit', fontWeight: 600 }}>Unified Theory</a>{' '}
+          simulation for improved physics accuracy and visualization.
         </Typography>
+      </Alert>
+      
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Lattice LENR Simulation
+            <Tooltip title="Show model information">
+              <IconButton onClick={() => setShowInfoDialog(true)} size="small" sx={{ ml: 1 }}>
+                <InfoIcon />
+              </IconButton>
+            </Tooltip>
+          </Typography>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Solid-state lattice physics — Electron Screening & Phonon Coupling (scale: nm, temp: K)
+          </Typography>
+        </Box>
         
         <Box>
           <Button 

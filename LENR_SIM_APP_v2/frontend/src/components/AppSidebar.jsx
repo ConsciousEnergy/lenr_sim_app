@@ -52,12 +52,14 @@ function AppSidebar({ collapsed, setCollapsed, toggleSidebar, isMobile }) {
   const menuItems = [
     { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard', path: '/' },
     { key: 'divider1', type: 'divider' },
+    // Primary simulation - Unified Theory
     { key: 'unified-theory', icon: <FundProjectionScreenOutlined />, label: 'Unified Theory', path: '/unified-theory', highlight: true },
-    { key: 'simulations', icon: <ExperimentOutlined />, label: 'Run Simulations', path: '/simulations' },
-    { key: 'lenr-simulation', icon: <ApiOutlined />, label: 'LENR Simulation', path: '/lenr-simulation', indent: true },
-    { key: 'fusion-simulation', icon: <FireOutlined />, label: 'Fusion Simulation', path: '/fusion-simulation', indent: true },
+    // Advanced simulation tools
+    { key: 'simulations', icon: <ExperimentOutlined />, label: 'Advanced Tools', path: '/simulations' },
     { key: 'quantum-tunneling', icon: <ThunderboltOutlined />, label: 'Quantum Tunneling', path: '/quantum-tunneling', indent: true },
     { key: 'bubble-fusion', icon: <BulbOutlined />, label: 'Bubble Fusion', path: '/bubble-fusion', indent: true },
+    // Legacy simulations hidden from main nav (routes still work)
+    // Access via Settings > Legacy Simulations or direct URL
     { key: 'divider2', type: 'divider' },
     { key: 'analytics', icon: <LineChartOutlined />, label: 'Analytics', path: '/analytics' },
     { key: 'real-time-viz', icon: <DotChartOutlined />, label: 'Real-Time Viz', path: '/real-time-visualization', indent: true },

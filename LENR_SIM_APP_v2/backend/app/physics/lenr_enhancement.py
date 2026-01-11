@@ -183,8 +183,10 @@ class LENREnhancementCalculator:
         # Sommerfeld parameter
         eta = sommerfeld_parameter(z1, z2, energy_kev, mu)
         
-        # Enhancement factor
-        enhancement = np.exp(np.pi * eta * screening_kev / energy_kev)
+        # Enhancement factor - clip exponent to prevent overflow (max safe exp arg ~700)
+        exponent = np.pi * eta * screening_kev / energy_kev
+        exponent = np.clip(exponent, -700, 700)
+        enhancement = np.exp(exponent)
         
         return min(enhancement, 1e15)  # Cap at reasonable value
     

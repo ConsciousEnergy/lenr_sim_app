@@ -10,16 +10,27 @@ from app.physics.quantum_tunneling import (
     TunnelingParameters,
     calculate_advanced_tunneling,
     calculate_temperature_pressure_dependence,
-    electron_screening_enhancement,
-    gamow_factor
+    calculate_gamow_factor,
 )
+from app.physics.electron_screening import (
+    calculate_enhancement_factor as electron_screening_enhancement,
+)
+
+# Alias for backward compatibility
+def gamow_factor(z1, z2, energy_kev, reduced_mass=1.0):
+    """Calculate Gamow penetration factor (wrapper for compatibility)."""
+    return calculate_gamow_factor(z1, z2, reduced_mass, energy_kev)
 
 from app.physics.phonon_modes import (
     LatticeParameters,
     calculate_phonon_dispersion,
-    calculate_density_of_states,
+    calculate_phonon_density_of_states as calculate_density_of_states,
+)
+from app.physics.phonon_interactions import (
     calculate_thermal_properties,
-    calculate_phonon_nuclear_coupling
+)
+from app.physics.phonon_nuclear_coupling import (
+    calculate_phonon_nuclear_coupling,
 )
 
 

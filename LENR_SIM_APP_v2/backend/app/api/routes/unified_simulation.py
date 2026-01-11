@@ -471,7 +471,8 @@ class BubbleConfig(BaseModel):
     initial_radius_um: float = Field(default=10.0, ge=0.1, le=100, description="Initial radius in micrometers")
     driving_pressure_bar: float = Field(default=1.5, ge=0.1, le=10, description="Driving pressure amplitude in bar")
     frequency_khz: float = Field(default=20.0, ge=1, le=100, description="Acoustic frequency in kHz")
-    ambient_temperature_k: float = Field(default=298.0, ge=200, le=500, description="Ambient temperature in Kelvin")
+    # Extended range to 600K to support high-temperature Ni-H experiments (Rossi-type)
+    ambient_temperature_k: float = Field(default=298.0, ge=200, le=600, description="Ambient temperature in Kelvin")
 
 
 class BubbleLatticeRequest(BaseModel):
@@ -558,15 +559,13 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     - **enhancement_factor**: Peak total enhancement
     - **enhancement_breakdown**: Detailed breakdown of all contributing factors
     """
-    # #region agent log
-    import time
-    try:
-        with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"C","location":"unified_simulation.py:494","message":"Endpoint called","data":{"path":"/bubble-lattice","method":"POST"},"timestamp":int(time.time()*1000)})+"\n")
-            f.flush()
-    except Exception as e:
-        logger.error(f"Failed to write debug log: {e}")
-    # #endregion
+    # Log incoming request for debugging
+    logger.info(f"Bubble-lattice request received:")
+    logger.info(f"  Bubble: radius={request.bubble.initial_radius_um}μm, pressure={request.bubble.driving_pressure_bar}bar, freq={request.bubble.frequency_khz}kHz, temp={request.bubble.ambient_temperature_k}K")
+    logger.info(f"  Material: host={request.material.host_material}, reactant={request.material.reactant}")
+    logger.info(f"  Lattice: loading={request.lattice.loading_ratio}, defects={request.lattice.defect_density}, roughness={request.lattice.surface_roughness}")
+    logger.info(f"  Cycles: {request.num_cycles}")
+    
     try:
         # Input validation
         if request.bubble.initial_radius_um <= 0 or request.bubble.initial_radius_um > 1000:

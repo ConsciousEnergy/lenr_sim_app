@@ -1,20 +1,32 @@
-fix: Beta release UI fixes and 3D visualization improvements
+feat: Add physics-based visualization system and comprehensive legend
 
-## UI Component Fixes
-- Fix slider label overlaps in TunnelingParameterControls.jsx
-- Fix slider label overlaps in LENRParameterControls.jsx (all 11 sliders)
-- Add valueLabelDisplay="auto" and reduce marks to min/max only
-- Fix Analytics pie chart by replacing inline labels with Legend component
+Visualization Enhancements:
+- Add VisualizationLegend component with particle types, energy scale, scale indicator, and live statistics
+- Replace decorative plasma vortex with physics-based QuantumFluxVisualization
+- Add 6 quantum field modes: Electron Screening, Magnetic Dipoles, Phonon Modes, Coulomb Exchange, Gamow Window, Combined
+- Add 3D scale bar with automatic unit conversion (pm/A/nm/um)
+- Enhance 3D scene with grid references, axis labels, and corner markers
 
-## 3D Visualization Fixes
-- Add generateFusionTimeSteps() to mockData.js with proper particle/hotspot structure
-- Update FusionSimulationPage to use new mock data generator
-- Fix FusionVisualization to render particles with default showParticles=true
-- Update mockServer.ts with proper lattice structure including coordinates
-- Fix LENRVisualization with null checks, fallback lattice generation
+New Components:
+- QuantumFluxVisualization.js - Thomas-Fermi screening, Debye phonons, Gamow factor
+- VisualizationLegend.jsx - Interactive scrollable legend overlay
+- PhysicsErrorBoundary.jsx - Specialized error handling for physics/WebGL
+- ComparisonView.jsx - Side-by-side LENR system comparison
+- usePhysicsWorker.js - Web Worker hook for physics calculations
+- useApiHealth.js - API health monitoring hook
+- apiResilience.js - Retry logic with exponential backoff
+- physicsWorker.js - Offload heavy calculations from main thread
 
-## Settings Page
-- Create new SettingsPage.jsx with MUI components
-- Add tabs: Appearance, Physics, Visualization, Debug
-- Include debug tools: API status, WebGL diagnostics, memory usage
-- Update App.tsx routing to use new SettingsPage
+Backend Improvements:
+- Add temperature-dependent phonon coupling using Debye model
+- Enhance /api/health endpoint with component status and memory info
+- Add comprehensive unit tests for WKB tunneling, bubble collapse, enhancement factors
+
+Documentation:
+- Add docs/VISUALIZATION_IMPROVEMENTS.md with physics explanations
+- Update CHANGELOG.md with all session changes
+
+Bug Fixes:
+- Fix legend cutoff with proper scrolling support
+- Increase quantum flux visibility with brighter colors
+- Fix start_app scripts to use correct v2 directory paths

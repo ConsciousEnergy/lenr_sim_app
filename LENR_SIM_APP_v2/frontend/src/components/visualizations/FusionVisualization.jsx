@@ -89,16 +89,17 @@ function FusionVisualization({
   const [showParticleTrails, setShowParticleTrails] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
-  const [quantumFluxMode, setQuantumFluxMode] = useState('electron_screening');
+  // Default to plasma-scale mode for Fusion page
+  const [quantumFluxMode, setQuantumFluxMode] = useState(FluxMode.PLASMA_DENSITY);
   
-  // Scale settings (can be derived from parameters)
+  // Scale settings for plasma-scale Fusion (meters)
   const scaleInfo = useMemo(() => {
-    // Default: 10 unit grid = 5 nm (typical lattice scale)
+    // Default: 10 unit grid = 2 meters (tokamak scale)
     const gridSize = 10;
-    const realWorldSize = parameters?.latticeConstant || 5e-9; // Default 5 nm
+    const realWorldSize = parameters?.minorRadius || 2.0; // Default 2m minor radius
     return {
       gridSize,
-      scaleUnit: 'nm',
+      scaleUnit: 'm',
       realWorldSize,
     };
   }, [parameters]);
@@ -206,25 +207,30 @@ function FusionVisualization({
     scene.add(hotspotsContainer);
     hotspotsRef.current = hotspotsContainer;
     
-    // Initialize quantum flux visualization (physics-based)
+    // Initialize plasma flux visualization (physics-based)
     const quantumFlux = new QuantumFluxEffect({
-      mode: FluxMode.ELECTRON_SCREENING,
-      resolution: 12, // Lower resolution for performance but visible
-      size: 8,
-      opacity: 0.6, // Higher opacity for visibility
-      screeningLength: 2.5,
-      temperature: parameters?.temperature || 300,
-      debyeFrequency: 1.0,
+      mode: FluxMode.PLASMA_DENSITY, // Default to plasma density for Fusion page
+      resolution: 12,
+      size: 12, // Larger for plasma-scale visualization
+      opacity: 0.6,
+      // Plasma-scale parameters
+      majorRadius: 5.0,        // Tokamak major radius (meters)
+      minorRadius: 2.0,        // Tokamak minor radius
+      toroidalField: 5.0,      // Tesla
+      plasmaCurrent: 15.0,     // MA
+      pinchRadius: 2.0,        // For Z-pinch mode
+      temperature: parameters?.temperature || 1e7, // keV scale for plasma
     });
     quantumFlux.initialize();
     scene.add(quantumFlux.getGroup());
     quantumFluxRef.current = quantumFlux;
     
-    // Initialize scale bar
+    // Initialize scale bar for plasma-scale (meters)
     const scaleBar = new ScaleBar({
       length: 5,
-      realWorldScale: 1e-9, // 1 nm per unit
+      realWorldScale: 1.0, // 1 meter per unit (plasma scale)
       position: new THREE.Vector3(-4, -4.5, 4),
+      color: 0xff8844, // Orange for plasma scale distinction
     });
     scaleBar.initialize();
     scene.add(scaleBar.getGroup());
@@ -884,6 +890,7 @@ function FusionVisualization({
             collapsed={legendCollapsed}
             onToggleCollapse={setLegendCollapsed}
             variant="overlay"
+            simulationType="fusion"
           />
         )}
         
@@ -1012,45 +1019,48 @@ function FusionVisualization({
             </Tooltip>
           </Box>
           
-          {/* Quantum Flux Mode Selector */}
+          {/* Plasma Field Mode Selector */}
           {showQuantumFlux && (
             <Box sx={{ mt: 2 }}>
               <FormControl size="small" sx={{ minWidth: 220 }}>
-                <InputLabel id="quantum-flux-mode-label">Quantum Field Mode</InputLabel>
+                <InputLabel id="plasma-field-mode-label">Plasma Field Mode</InputLabel>
                 <Select
-                  labelId="quantum-flux-mode-label"
+                  labelId="plasma-field-mode-label"
                   value={quantumFluxMode}
-                  label="Quantum Field Mode"
+                  label="Plasma Field Mode"
                   onChange={(e) => setQuantumFluxMode(e.target.value)}
                 >
-                  <MenuItem value="electron_screening">
-                    <Tooltip title="Thomas-Fermi electron density reducing Coulomb barrier" placement="right">
-                      <span>Electron Screening</span>
+                  {/* Plasma-Scale Modes (Primary for Fusion) */}
+                  <MenuItem value={FluxMode.PLASMA_DENSITY}>
+                    <Tooltip title="Ion/electron density distribution in confined plasma" placement="right">
+                      <span>Plasma Density</span>
                     </Tooltip>
                   </MenuItem>
-                  <MenuItem value="magnetic_dipoles">
-                    <Tooltip title="Nuclear/electron spin magnetic moments and local fields" placement="right">
-                      <span>Magnetic Dipoles</span>
+                  <MenuItem value={FluxMode.MAGNETIC_CONFINEMENT}>
+                    <Tooltip title="Tokamak B-field lines (toroidal + poloidal confinement)" placement="right">
+                      <span>Magnetic Confinement</span>
                     </Tooltip>
                   </MenuItem>
-                  <MenuItem value="phonon_modes">
-                    <Tooltip title="Debye model lattice vibrations (acoustic + optical)" placement="right">
-                      <span>Phonon Modes</span>
+                  <MenuItem value={FluxMode.Z_PINCH}>
+                    <Tooltip title="Electromagnetic compression (ICF/Z-pinch physics)" placement="right">
+                      <span>Z-Pinch Effect</span>
                     </Tooltip>
                   </MenuItem>
-                  <MenuItem value="coulomb_exchange">
-                    <Tooltip title="Virtual photon exchange between charged particles" placement="right">
-                      <span>Coulomb Exchange</span>
-                    </Tooltip>
-                  </MenuItem>
-                  <MenuItem value="gamow_window">
-                    <Tooltip title="Optimal tunneling energy (stellar nucleosynthesis)" placement="right">
+                  
+                  {/* Shared Modes (Bridge between scales) */}
+                  <MenuItem value={FluxMode.GAMOW_WINDOW}>
+                    <Tooltip title="Optimal tunneling energy region (stellar nucleosynthesis)" placement="right">
                       <span>Gamow Window</span>
                     </Tooltip>
                   </MenuItem>
-                  <MenuItem value="combined">
-                    <Tooltip title="Combined screening, phonon, and tunneling effects" placement="right">
-                      <span>Combined Effects</span>
+                  <MenuItem value={FluxMode.ELECTRON_SCREENING}>
+                    <Tooltip title="Thomas-Fermi electron screening (Debye shielding in plasma)" placement="right">
+                      <span>Electron Screening</span>
+                    </Tooltip>
+                  </MenuItem>
+                  <MenuItem value={FluxMode.COULOMB_EXCHANGE}>
+                    <Tooltip title="Coulomb interaction between plasma particles" placement="right">
+                      <span>Coulomb Interaction</span>
                     </Tooltip>
                   </MenuItem>
                 </Select>
