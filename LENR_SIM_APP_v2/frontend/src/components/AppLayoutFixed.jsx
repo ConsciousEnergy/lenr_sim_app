@@ -39,6 +39,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { APP_VERSION } from '../config/version';
 
 const drawerWidth = 260;
 
@@ -370,7 +371,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
         
         <Box sx={{ p: 2 }}>
           <Typography variant="caption" color="text.secondary" display="block">
-            Version 2.0.0
+            Version {APP_VERSION}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             © 2025 LENR Simulation App

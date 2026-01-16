@@ -405,7 +405,7 @@ const TheoryPage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -447,7 +447,7 @@ const TheoryPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -472,7 +472,7 @@ const TheoryPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -602,7 +602,7 @@ const TheoryPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Alert severity="success">
                 <AlertTitle><strong>Computational-Experimental Correlation</strong></AlertTitle>
                 <Typography variant="body2">
@@ -627,7 +627,7 @@ const TheoryPage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Accordion defaultExpanded>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -661,7 +661,7 @@ const TheoryPage = () => {
               </Accordion>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -687,7 +687,7 @@ const TheoryPage = () => {
               </Accordion>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Alert severity="info">
                 <AlertTitle><strong>Thermodynamics & Energy Conservation</strong></AlertTitle>
                 <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mt: 1 }}>

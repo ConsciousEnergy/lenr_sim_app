@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     
     # Base configuration
     APP_NAME: str = "LENR_Sim_App"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.2.1-beta"
     API_PREFIX: str = "/api"
     DEBUG: bool = False
     

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { APP_VERSION } from '../config/version';
 
 function Home() {
   return (
@@ -62,7 +63,7 @@ function Home() {
         </div>
         
         <footer className="mt-16 text-sm text-gray-600 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} LENR Simulation Application | Version 2.0
+          &copy; {new Date().getFullYear()} LENR Simulation Application | Version {APP_VERSION}
         </footer>
       </div>
     </div>

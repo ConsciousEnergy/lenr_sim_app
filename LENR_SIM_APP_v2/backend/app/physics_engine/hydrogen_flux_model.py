@@ -95,6 +95,9 @@ class HydrogenFluxModel:
         # Initialize computational domain
         self.initialize_domain()
         
+        # Update diffusion coefficient with initial temperature (if temperature-dependent)
+        self.update_diffusion_coefficient()
+        
         # Create coefficient matrices for implicit solver
         self.build_coefficient_matrices()
         
@@ -228,15 +231,19 @@ class HydrogenFluxModel:
         desorption[~surface_mask] = 0
         
         # Trapping/detrapping dynamics
-        # Trapping rate proportional to available traps and concentration
-        available_traps = self.params.trap_density * (
-            1.0 - self.trapped_concentration / self.params.trap_density
-        )
-        trapping_rate = 1e-5 * available_traps * self.concentration  # Simplified model
-        
-        # Detrapping rate (temperature dependent)
-        kb = 8.617333262e-5  # Boltzmann constant in eV/K
-        detrapping_rate = 1e13 * np.exp(-self.params.trap_energy / (kb * self.temperature)) * self.trapped_concentration
+        # Only include if trap_density > 0 (allows disabling for conservation tests)
+        trapping_rate = np.zeros(self.grid_size)
+        detrapping_rate = np.zeros(self.grid_size)
+        if self.params.trap_density > 0:
+            # Trapping rate proportional to available traps and concentration
+            available_traps = self.params.trap_density * (
+                1.0 - self.trapped_concentration / (self.params.trap_density + 1e-30)
+            )
+            trapping_rate = 1e-5 * available_traps * self.concentration  # Simplified model
+            
+            # Detrapping rate (temperature dependent)
+            kb = 8.617333262e-5  # Boltzmann constant in eV/K
+            detrapping_rate = 1e13 * np.exp(-self.params.trap_energy / (kb * self.temperature)) * self.trapped_concentration
         
         # Net source term
         source_term = adsorption - desorption - trapping_rate + detrapping_rate
@@ -343,16 +350,18 @@ class HydrogenFluxModel:
         self.concentration += dt * (div_flux + source_term)
         
         # Trap dynamics (update trapped concentration)
-        available_traps = self.params.trap_density * (
-            1.0 - self.trapped_concentration / self.params.trap_density
-        )
-        trapping_rate = 1e-5 * available_traps * self.concentration
-        
-        kb = 8.617333262e-5  # Boltzmann constant in eV/K
-        detrapping_rate = 1e13 * np.exp(-self.params.trap_energy / (kb * self.temperature)) * self.trapped_concentration
-        
-        self.trapped_concentration += dt * (trapping_rate - detrapping_rate)
-        np.clip(self.trapped_concentration, 0, self.params.trap_density, out=self.trapped_concentration)
+        # Only update if trap_density > 0 (allows disabling for conservation tests)
+        if self.params.trap_density > 0:
+            available_traps = self.params.trap_density * (
+                1.0 - self.trapped_concentration / (self.params.trap_density + 1e-30)
+            )
+            trapping_rate = 1e-5 * available_traps * self.concentration
+            
+            kb = 8.617333262e-5  # Boltzmann constant in eV/K
+            detrapping_rate = 1e13 * np.exp(-self.params.trap_energy / (kb * self.temperature)) * self.trapped_concentration
+            
+            self.trapped_concentration += dt * (trapping_rate - detrapping_rate)
+            np.clip(self.trapped_concentration, 0, self.params.trap_density, out=self.trapped_concentration)
         
         # Apply boundary conditions
         self.apply_boundary_conditions()

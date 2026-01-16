@@ -128,6 +128,19 @@ class WKBTunnelingCalculator:
         # Effective energy with screening
         effective_energy_j = energy_j + screening_j
         
+        # Guard against zero or negative energy
+        if energy_kev <= 0:
+            return TunnelingResult(
+                probability=0.0,
+                gamow_factor=float('inf'),
+                classical_turning_point=0.0,
+                barrier_height=coulomb_barrier(z1, z2),
+                enhancement_factor=1.0,
+                screening_energy=screening_energy_ev / 1000,  # Convert to keV
+                method="zero_energy_guard",
+                parameters={"z1": z1, "z2": z2, "a1": a1, "a2": a2, "energy_kev": energy_kev}
+            )
+        
         # Calculate Gamow factor (analytic approximation for Coulomb barrier)
         e_g = gamow_energy(z1, z2, mu)  # Gamow energy in keV
         gamow_factor = np.sqrt(e_g / energy_kev)

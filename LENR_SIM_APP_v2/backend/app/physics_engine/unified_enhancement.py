@@ -319,17 +319,23 @@ class UnifiedEnhancementCalculator:
         # Screening enhancement factor
         # Accounts for nonlinear effects at high temperatures
         if temperature > 0:
-            enhancement = np.exp(-screening_potential / thermal_energy)
+            # Clip exponent to prevent overflow
+            exponent = np.clip(-screening_potential / thermal_energy, -700, 700)
+            enhancement = np.exp(exponent)
             
             # Additional enhancement from dynamic effects
             dynamic_factor = 1 + 0.5 * (self.hbar * plasma_frequency / thermal_energy)**2
+            
+            # Cap individual factors to prevent overflow in multiplication
+            enhancement = min(enhancement, 1e150)
+            dynamic_factor = min(dynamic_factor, 1e150)
             
             # Combined enhancement with saturation
             total_enhancement = enhancement * dynamic_factor
             
             # Apply non-linear scaling for very high values
-            if total_enhancement > 1e5:
-                total_enhancement = 1e5 * np.log10(1 + total_enhancement / 1e5)
+            if not np.isfinite(total_enhancement) or total_enhancement > 1e5:
+                total_enhancement = 1e5 * np.log10(1 + min(total_enhancement, 1e300) / 1e5) if np.isfinite(total_enhancement) else 1e5
         else:
             total_enhancement = 1.0
         
@@ -421,8 +427,9 @@ class UnifiedEnhancementCalculator:
             
         # Calculate enhancement factor
         if temperature > 0:
-            # Relative to thermal energy
-            enhancement = np.exp(abs(casimir_energy) / (self.kb * temperature))
+            # Relative to thermal energy - clip exponent to prevent overflow
+            exponent = np.clip(abs(casimir_energy) / (self.kb * temperature), 0, 700)
+            enhancement = np.exp(exponent)
             
             # Apply temperature-dependent scaling
             casimir_enhancement = 1 + (enhancement - 1) * temp_factor
@@ -620,14 +627,20 @@ class UnifiedEnhancementCalculator:
              enhancement = 1.0
              dynamic_factor = 1.0
              if thermal_energy > 1e-30:
-                  enhancement = np.exp(-screening_potential / thermal_energy) if screening_potential > -np.inf else 1.0
+                  # Clip exponent to prevent overflow
+                  exponent = np.clip(-screening_potential / thermal_energy, -700, 700) if screening_potential > -np.inf else 0.0
+                  enhancement = np.exp(exponent)
                   plasma_frequency_sq = (electron_density * self.e**2 / (self.eps0 * self.me))
                   if plasma_frequency_sq > 0:
                        plasma_frequency = np.sqrt(plasma_frequency_sq)
                        dynamic_factor = 1 + 0.5 * (self.hbar * plasma_frequency / thermal_energy)**2
                   
+             # Cap individual factors to prevent overflow
+             enhancement = min(enhancement, 1e150)
+             dynamic_factor = min(dynamic_factor, 1e150)
              total_enhancement = enhancement * dynamic_factor
-             if total_enhancement > 1e5: total_enhancement = 1e5 * np.log10(1 + total_enhancement / 1e5)
+             if not np.isfinite(total_enhancement) or total_enhancement > 1e5:
+                 total_enhancement = 1e5 * np.log10(1 + min(total_enhancement, 1e300) / 1e5) if np.isfinite(total_enhancement) else 1e5
              
              return max(1.0, total_enhancement)
         except Exception as e:
@@ -660,7 +673,9 @@ class UnifiedEnhancementCalculator:
              if temperature > 0:
                   thermal_wavelength = self.hbar * self.c / (self.kb * temperature)
                   temp_factor = np.tanh(np.pi * casimir_length / thermal_wavelength) if thermal_wavelength > 0 else 1.0
-                  enhancement = np.exp(abs(casimir_energy) / (self.kb * temperature))
+                  # Clip exponent to prevent overflow
+                  exponent = np.clip(abs(casimir_energy) / (self.kb * temperature), 0, 700)
+                  enhancement = np.exp(exponent)
                   casimir_enhancement = 1 + (enhancement - 1) * temp_factor
              
              return min(10.0, max(1.0, casimir_enhancement)) # Cap enhancement

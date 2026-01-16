@@ -24,6 +24,7 @@ import {
   alpha
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import { APP_VERSION } from '../config/version';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
@@ -367,7 +368,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
 
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
-              Visit <MuiLink href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/docs</MuiLink> for 
+              Visit <MuiLink href="http://localhost:8000/api/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/api/docs</MuiLink> for 
               the interactive Swagger UI with complete API documentation.
             </Alert>
           </AccordionDetails>
@@ -591,7 +592,7 @@ LOG_LEVEL=info`}
         <Divider sx={{ my: 4 }} />
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" paragraph>
-            <strong>LENR Simulation Platform</strong> - v0.1.0
+            <strong>LENR Simulation Platform</strong> - v{APP_VERSION}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             Developed by <MuiLink href="https://www.conscious.energy" target="_blank" rel="noopener noreferrer">

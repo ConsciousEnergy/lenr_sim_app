@@ -92,6 +92,25 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
     Uses the WKB approximation with optional electron screening.
     """
     try:
+        # Validate input parameters
+        if request.energy_kev <= 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Energy must be positive. Received: {request.energy_kev} keV"
+            )
+        
+        if request.temperature_k <= 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Temperature must be positive. Received: {request.temperature_k} K"
+            )
+        
+        if request.z1 <= 0 or request.z2 <= 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Atomic numbers must be positive. Received: z1={request.z1}, z2={request.z2}"
+            )
+        
         # Get base screening energy from material
         base_screening_ev = SCREENING_POTENTIALS.get(request.material, 0)
         
