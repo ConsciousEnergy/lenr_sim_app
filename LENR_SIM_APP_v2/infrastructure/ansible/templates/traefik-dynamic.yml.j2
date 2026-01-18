@@ -1,0 +1,65 @@
+# Traefik Dynamic Configuration
+# LENR Simulation App
+
+http:
+  middlewares:
+    # Security headers for all routes
+    security-headers:
+      headers:
+        frameDeny: true
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Robots-Tag: "noindex,nofollow"
+          
+    # Rate limiting for API
+    api-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+        
+    # CORS configuration
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Requested-With
+        accessControlAllowOriginList:
+          - "https://{{ app_domain }}"
+          - "https://www.{{ app_domain }}"
+        accessControlMaxAge: 3600
+        addVaryHeader: true
+        
+    # Compress responses
+    compress:
+      compress: {}
+      
+    # Strip API prefix if needed
+    strip-api-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256

@@ -1,0 +1,25 @@
+---
+# LENR Simulation App - Master Playbook
+# Runs all configuration playbooks in order
+
+- name: Complete LENR Sim Server Setup
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          LENR Simulation App Deployment
+          Environment: {{ environment | default('prod') }}
+          Domain: {{ app_domain }}
+          ==========================================
+    
+    - name: Include Docker setup
+      ansible.builtin.include_playbook: setup-docker.yml
+    
+    - name: Include stack deployment
+      ansible.builtin.include_playbook: deploy-stack.yml
+      vars:
+        postgres_password: "{{ postgres_password | default(omit) }}"

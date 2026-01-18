@@ -1,0 +1,224 @@
+# LENR Simulation App - Hostinger VPS Module
+# Provisions Hostinger VPS with Ubuntu 24.04 LTS
+
+terraform {
+  required_providers {
+    hostinger = {
+      source  = "hostinger/hostinger"
+      version = ">= 0.1.18"
+    }
+  }
+}
+
+# ==============================================================================
+# Variables
+# ==============================================================================
+
+variable "hostinger_api_token" {
+  description = "Hostinger API token"
+  type        = string
+  sensitive   = true
+}
+
+variable "ssh_public_key" {
+  description = "SSH public key for VPS access"
+  type        = string
+}
+
+variable "vps_plan" {
+  description = "Hostinger VPS plan"
+  type        = string
+  # Plans available:
+  # - hostingercom-vps-kvm1-usd-1m: 1 vCPU, 4GB RAM, 50GB NVMe  (~$4.99/mo)
+  # - hostingercom-vps-kvm2-usd-1m: 2 vCPU, 8GB RAM, 100GB NVMe (~$6.99/mo)
+  # - hostingercom-vps-kvm4-usd-1m: 4 vCPU, 16GB RAM, 200GB NVMe (~$12.99/mo)
+}
+
+variable "data_center_id" {
+  description = "Hostinger data center ID"
+  type        = number
+  # Data centers:
+  # 1 = North America
+  # 2 = Europe
+  # 3 = Asia
+}
+
+variable "domain" {
+  description = "Domain name for the application"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (prod, staging)"
+  type        = string
+}
+
+# ==============================================================================
+# Provider Configuration
+# ==============================================================================
+
+provider "hostinger" {
+  api_token = var.hostinger_api_token
+}
+
+# ==============================================================================
+# SSH Key
+# ==============================================================================
+
+resource "hostinger_vps_ssh_key" "deploy" {
+  name = "lenr-sim-deploy-${var.environment}"
+  key  = var.ssh_public_key
+}
+
+# ==============================================================================
+# Post-Install Script
+# ==============================================================================
+
+resource "hostinger_vps_post_install_script" "initial_setup" {
+  name    = "LENR Sim Initial Setup"
+  content = <<-EOT
+    #!/bin/bash
+    set -e
+    
+    # ==========================================================================
+    # LENR Simulation App - VPS Initial Setup Script
+    # Configures firewall, fail2ban, and prepares for Ansible
+    # ==========================================================================
+    
+    echo "Starting LENR Sim VPS initial setup..."
+    
+    # Update system packages
+    apt-get update && apt-get upgrade -y
+    
+    # Install essential packages
+    apt-get install -y \
+      ufw \
+      fail2ban \
+      curl \
+      wget \
+      git \
+      htop \
+      unzip \
+      ca-certificates \
+      gnupg \
+      lsb-release
+    
+    # ==========================================================================
+    # Firewall Configuration (UFW)
+    # ==========================================================================
+    
+    echo "Configuring UFW firewall..."
+    
+    # Reset UFW to default
+    ufw --force reset
+    
+    # Default policies
+    ufw default deny incoming
+    ufw default allow outgoing
+    
+    # Allow SSH (port 22)
+    ufw allow 22/tcp
+    
+    # Allow HTTP (port 80) - for Let's Encrypt challenges
+    ufw allow 80/tcp
+    
+    # Allow HTTPS (port 443)
+    ufw allow 443/tcp
+    
+    # Allow Docker Swarm ports (internal only, restricted later)
+    # 2377/tcp - Cluster management
+    # 7946/tcp+udp - Container network discovery
+    # 4789/udp - Overlay network traffic
+    # These will be restricted to VPN/internal after Ansible setup
+    
+    # Enable UFW
+    ufw --force enable
+    
+    echo "UFW firewall configured and enabled"
+    ufw status verbose
+    
+    # ==========================================================================
+    # Fail2ban Configuration
+    # ==========================================================================
+    
+    echo "Configuring fail2ban..."
+    
+    # Create custom jail.local
+    cat > /etc/fail2ban/jail.local << 'FAIL2BAN'
+    [DEFAULT]
+    bantime = 1h
+    findtime = 10m
+    maxretry = 5
+    backend = systemd
+    
+    [sshd]
+    enabled = true
+    port = ssh
+    filter = sshd
+    logpath = /var/log/auth.log
+    maxretry = 3
+    bantime = 24h
+    
+    FAIL2BAN
+    
+    # Enable and start fail2ban
+    systemctl enable fail2ban
+    systemctl restart fail2ban
+    
+    echo "Fail2ban configured and started"
+    
+    # ==========================================================================
+    # Prepare for Ansible
+    # ==========================================================================
+    
+    echo "Preparing for Ansible configuration..."
+    
+    # Create a marker file to indicate post-install completed
+    touch /root/.lenr-sim-postinstall-complete
+    
+    echo "=========================================="
+    echo "LENR Sim VPS initial setup complete!"
+    echo "Server is ready for Ansible configuration"
+    echo "=========================================="
+  EOT
+}
+
+# ==============================================================================
+# VPS Instance
+# ==============================================================================
+
+resource "hostinger_vps" "app" {
+  plan                   = var.vps_plan
+  data_center_id         = var.data_center_id
+  template_id            = 1002  # Ubuntu 24.04 LTS
+  hostname               = "lenr-sim-${var.environment}"
+  ssh_key_ids            = [hostinger_vps_ssh_key.deploy.id]
+  post_install_script_id = hostinger_vps_post_install_script.initial_setup.id
+  
+  # Note: Hostinger VPS takes a few minutes to provision
+  # Wait for the server to be ready before proceeding with Ansible
+}
+
+# ==============================================================================
+# Outputs
+# ==============================================================================
+
+output "vps_id" {
+  description = "VPS instance ID"
+  value       = hostinger_vps.app.id
+}
+
+output "vps_ipv4" {
+  description = "Public IPv4 address of the VPS"
+  value       = hostinger_vps.app.ipv4_address
+}
+
+output "vps_hostname" {
+  description = "VPS hostname"
+  value       = hostinger_vps.app.hostname
+}
+
+output "ssh_connection" {
+  description = "SSH connection command"
+  value       = "ssh root@${hostinger_vps.app.ipv4_address}"
+}

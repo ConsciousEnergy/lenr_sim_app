@@ -1,0 +1,225 @@
+---
+# LENR Simulation App - Docker + Swarm Setup Playbook
+# Installs Docker, configures Swarm mode, and prepares for deployment
+
+- name: Setup Docker and Docker Swarm
+  hosts: all
+  become: true
+  vars:
+    docker_users:
+      - root
+    swarm_init: true
+    
+  tasks:
+    # ==========================================================================
+    # Pre-flight Checks
+    # ==========================================================================
+    
+    - name: Wait for post-install script to complete
+      ansible.builtin.wait_for:
+        path: /root/.lenr-sim-postinstall-complete
+        state: present
+        timeout: 300
+      
+    - name: Gather facts
+      ansible.builtin.setup:
+        
+    - name: Print OS information
+      ansible.builtin.debug:
+        msg: "Running on {{ ansible_distribution }} {{ ansible_distribution_version }}"
+        
+    # ==========================================================================
+    # Docker Installation
+    # ==========================================================================
+    
+    - name: Remove old Docker packages
+      ansible.builtin.apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+        
+    - name: Install Docker prerequisites
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - python3-pip
+        state: present
+        update_cache: true
+        
+    - name: Add Docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+        keyring: /etc/apt/keyrings/docker.gpg
+        
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+        
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+        
+    - name: Ensure Docker service is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+        
+    - name: Add users to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+      
+    # ==========================================================================
+    # Docker Swarm Initialization
+    # ==========================================================================
+    
+    - name: Check if Swarm is already initialized
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_status
+      changed_when: false
+      
+    - name: Initialize Docker Swarm
+      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address }}
+      when: 
+        - swarm_init
+        - swarm_status.stdout != "active"
+      register: swarm_init_result
+      
+    - name: Get Swarm join token for workers
+      ansible.builtin.command: docker swarm join-token -q worker
+      register: swarm_worker_token
+      when: swarm_status.stdout == "active" or swarm_init_result.changed
+      changed_when: false
+      
+    - name: Store Swarm join token
+      ansible.builtin.set_fact:
+        swarm_token: "{{ swarm_worker_token.stdout }}"
+      when: swarm_worker_token is defined and swarm_worker_token.stdout is defined
+      
+    # ==========================================================================
+    # Docker System Configuration
+    # ==========================================================================
+    
+    - name: Create Docker daemon configuration directory
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+        
+    - name: Configure Docker daemon
+      ansible.builtin.copy:
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            },
+            "live-restore": true,
+            "default-ulimits": {
+              "nofile": {
+                "Name": "nofile",
+                "Hard": 65536,
+                "Soft": 65536
+              }
+            },
+            "metrics-addr": "127.0.0.1:9323"
+          }
+        dest: /etc/docker/daemon.json
+        mode: '0644'
+      notify: Restart Docker
+      
+    # ==========================================================================
+    # Prepare Application Directories
+    # ==========================================================================
+    
+    - name: Create application directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /opt/lenr-sim
+        - /opt/lenr-sim/data
+        - /opt/lenr-sim/logs
+        - /opt/lenr-sim/backups
+        - /opt/lenr-sim/traefik
+        - /opt/lenr-sim/traefik/certs
+        
+    - name: Create Docker network for the application
+      community.docker.docker_network:
+        name: lenr-sim-network
+        driver: overlay
+        attachable: true
+        scope: swarm
+      when: swarm_status.stdout == "active" or swarm_init_result.changed
+      
+    # ==========================================================================
+    # System Tuning
+    # ==========================================================================
+    
+    - name: Set sysctl parameters for Docker
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: true
+      loop:
+        - { name: 'vm.max_map_count', value: '262144' }
+        - { name: 'net.core.somaxconn', value: '65535' }
+        - { name: 'net.ipv4.ip_forward', value: '1' }
+        
+    # ==========================================================================
+    # Verification
+    # ==========================================================================
+    
+    - name: Verify Docker installation
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+      
+    - name: Verify Docker Compose installation
+      ansible.builtin.command: docker compose version
+      register: compose_version
+      changed_when: false
+      
+    - name: Print installation summary
+      ansible.builtin.debug:
+        msg: |
+          Docker Installation Complete!
+          
+          Docker: {{ docker_version.stdout }}
+          Compose: {{ compose_version.stdout }}
+          Swarm Status: {{ swarm_status.stdout }}
+          Server IP: {{ ansible_default_ipv4.address }}
+          
+          Next steps:
+          1. Run deploy-stack.yml to deploy the application
+          2. Configure DNS to point to this server
+          
+  handlers:
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted

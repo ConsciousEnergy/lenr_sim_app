@@ -4,6 +4,8 @@ This document contains known issues identified during the beta release verificat
 
 **Status Updated:** January 15, 2026
 
+*Last comprehensive update: Theory Paper integration completed*
+
 ---
 
 ## Issue 1: [Frontend] Clean up unused variables and imports
@@ -402,19 +404,157 @@ Used `np.clip(exponent, -700, 700)` before all exponential calculations to preve
 
 ---
 
+## Issue 8: [Frontend] Theory Paper Integration and Documentation Enhancements
+
+**Labels:** `documentation`, `enhancement`
+
+**Status:** ✅ Fixed in v0.2.1-beta
+
+### Description
+
+Integration of the unified theoretical framework paper into the application, making the complete theoretical foundation accessible for contributors and researchers on www.conscious.energy.
+
+### Resolution (v0.2.1-beta)
+
+#### ✅ Theory Paper Page Created
+- **New page**: `TheoryPaperPage.jsx` with comprehensive display of unified theory
+  - Three-tab interface: Full Paper, Corrections & Improvements, References
+  - Complete section coverage including Section 4 (Experimental Validation)
+  - Integrated mathematical corrections (Casimir Force, Overlap Probability, BEC Temperature)
+  - Integrated theoretical enhancements (Enhanced Screening, QED Foundation, Phonon-Nuclear Coupling, etc.)
+  - Enhanced references with DOI links, arXiv links, and complete citations (18 references)
+
+#### ✅ Documentation Navigation Improvements
+- Theory card now links to `/theory-paper` route
+- Card styling enhanced for visual consistency (success.main background)
+- Interactive navigation between theory sections
+
+#### ✅ Section Numbering Fixed
+- Added missing Section 4: Experimental Validation (4.1 Electrolytic Reactors, 4.2 Gaseous Reactors)
+- Renamed Section 5 to "Results and Discussion" to match original paper structure
+
+#### ✅ References Enhanced
+- Added 18 comprehensive references with proper citations
+- Included DOI links, arXiv links, and LENR-CANR.org links where available
+- Added links to World Scientific books, NASA technical reports, and GitHub paper repository
+
+### Files Changed
+- `frontend/src/pages/TheoryPaperPage.jsx` - New comprehensive theory paper page
+- `frontend/src/pages/DocumentationPage.jsx` - Updated Theory card navigation and styling
+- `frontend/src/App.tsx` - Added `/theory-paper` route
+- `CHANGELOG.md` - Documented new features
+- `docs/KNOWN_ISSUES_v0.2-beta.md` - This entry
+
+### Impact
+- Complete theoretical framework now accessible within the application
+- Contributors can access full paper with all corrections and enhancements
+- Enhanced academic rigor with proper citation links
+- Improved user experience with consistent navigation and styling
+
+---
+
+## Issue 9: [Infrastructure] Public Deployment Infrastructure
+
+**Labels:** `infrastructure`, `deployment`, `enhancement`
+
+**Status:** ✅ Complete in v0.2.1-beta
+
+### Description
+
+Create complete Infrastructure as Code (IaC) setup for deploying the LENR Simulation App to production on www.conscious.energy.
+
+### Resolution (v0.2.1-beta)
+
+#### ✅ Terraform Infrastructure
+- **Cloudflare Module**: Pages, R2, DNS, WAF rules
+- **Hostinger Module**: VPS provisioning with Ubuntu 24.04, SSH keys, firewall
+- **Root Configuration**: Complete variable and output definitions
+- **Module Structure**: Properly organized with variables.tf and outputs.tf
+
+#### ✅ Ansible Configuration
+- **Docker Setup Playbook**: Installs Docker CE, initializes Swarm, configures daemon
+- **Deploy Stack Playbook**: Deploys Traefik, FastAPI, PostgreSQL stack
+- **Backup Playbook**: Automated database backups
+- **Templates**: Docker stack, Traefik static and dynamic configurations
+- **Group Variables**: Centralized configuration management
+
+#### ✅ Docker Configuration
+- **Multi-stage Dockerfile**: Optimized FastAPI backend build
+- **Docker Swarm Stack**: Production-ready stack with health checks, rolling updates
+- **Traefik Integration**: Automatic SSL, service discovery, rate limiting
+
+#### ✅ Deployment Automation
+- **deploy.sh**: Full deployment script (Terraform + Ansible)
+- **rollback.sh**: Service rollback automation
+- **backup-db.sh**: Database backup script
+- **GitHub Actions**: Automated Docker image builds
+
+#### ✅ Documentation
+- **DEPLOYMENT.md**: Complete deployment guide
+- **DEPLOYMENT_CHECKLIST.md**: Step-by-step checklist
+- **DEPLOYMENT_QUICK_REFERENCE.md**: Quick commands reference
+- **TROUBLESHOOTING.md**: Common issues and solutions
+- **INFRASTRUCTURE_SUMMARY.md**: Architecture overview
+- **WORDPRESS_INTEGRATION.md**: WordPress iframe setup
+
+### Files Created
+
+**Terraform (11 files):**
+- Root: main.tf, variables.tf, outputs.tf, terraform.tfvars.example, .gitignore
+- Cloudflare module: main.tf, variables.tf, outputs.tf
+- Hostinger module: main.tf, variables.tf, outputs.tf
+
+**Ansible (9 files):**
+- ansible.cfg, inventory.yml.example
+- group_vars/all.yml
+- playbooks: site.yml, setup-docker.yml, deploy-stack.yml, backup.yml
+- templates: docker-stack.yml.j2, traefik.yml.j2, traefik-dynamic.yml.j2
+
+**Docker (1 file):**
+- Dockerfile.backend
+
+**Scripts (4 files):**
+- deploy.sh, rollback.sh, backup-db.sh, README.md
+
+**Documentation (6 files):**
+- DEPLOYMENT.md, DEPLOYMENT_CHECKLIST.md, DEPLOYMENT_QUICK_REFERENCE.md
+- TROUBLESHOOTING.md, INFRASTRUCTURE_SUMMARY.md, WORDPRESS_INTEGRATION.md
+
+**GitHub Actions (1 file):**
+- .github/workflows/docker-build.yml
+
+### Impact
+
+- **Cost:** ~$7.50/month (Cloudflare Pages + Hostinger VPS)
+- **Scalability:** Docker Swarm supports horizontal scaling
+- **Security:** Automated SSL, firewall, secrets management
+- **Reliability:** Health checks, rolling updates, automated backups
+- **Maintainability:** Infrastructure as Code, version controlled
+
+### Next Steps
+
+Ready for deployment. User needs to:
+1. Create Cloudflare and Hostinger accounts
+2. Generate API tokens
+3. Configure terraform.tfvars
+4. Run deployment script
+
+---
+
 ## Summary
 
 | Issue | Priority | Difficulty | Status |
 |-------|----------|------------|--------|
 | Unused variables cleanup | Low | Easy | 🟡 Partially Fixed |
-| Bundle size optimization | Medium | Medium | ⬜ Open |
+| Bundle size optimization | Medium | Medium | ✅ Fixed (code splitting) |
 | MUI Grid v2 migration | Low | Easy | ⬜ Open |
-| Duplicate page files cleanup | Low | Easy | ⬜ Open |
-| Backend test failures | Medium | Medium | 🟡 Mostly Fixed (4 remaining) |
+| Duplicate page files cleanup | Low | Easy | ✅ Fixed |
+| Backend test failures | Medium | Medium | ✅ Fixed |
 | Pydantic V2 migration | Low | Easy | ✅ Fixed |
 | Physics overflow warnings | Medium | Medium | ✅ Fixed |
+| Theory Paper Integration | Medium | Medium | ✅ Fixed |
+| Infrastructure Deployment | High | High | ✅ Complete |
 
 ---
 
-*Last updated: January 2, 2026 - v0.2-beta verification*
-*Updated after PR fixes: 121 passed, 4 failed, 2 xfailed backend tests*
+*Last updated: January 18, 2026 - v0.2.1-beta infrastructure complete*

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Infrastructure as Code (IaC)**: Complete deployment infrastructure
+  - Terraform modules for Cloudflare (Pages, R2, DNS) and Hostinger VPS provisioning
+  - Ansible playbooks for Docker Swarm setup and application deployment
+  - Docker Swarm stack definition with Traefik, FastAPI, and PostgreSQL
+  - Deployment automation scripts (deploy.sh, rollback.sh, backup-db.sh)
+  - GitHub Actions workflow for automated Docker image builds
+  - Comprehensive deployment documentation (DEPLOYMENT.md, DEPLOYMENT_CHECKLIST.md, TROUBLESHOOTING.md)
+- **Physics Documentation**: Comprehensive physics equation verification and developer guide
+  - `PHYSICS_EQUATION_VERIFICATION.md` - Catalog of all physics equations with verification status (CODATA 2018)
+  - `PHYSICS_MODULE_GUIDE.md` - Developer guide with module architecture and usage examples
+  - Verified key equations: Gamow factor, Sommerfeld parameter, Casimir force, screening models
+- **Key Equations Quick Reference**: Added interactive equation reference panel to TheoryPaperPage
+  - Six key equations with explanations and simulation links
+  - Direct "Try it" buttons linking to relevant simulation tools
+  - Tooltips explaining equation parameters and units
+- **Theory Paper Page**: Created comprehensive TheoryPaperPage displaying full unified theoretical framework
+  - Three-tab interface: Full Paper, Corrections & Improvements, References
+  - Complete section coverage: Introduction, Theoretical Framework, Computational Methods, Experimental Validation, Results and Discussion
+  - Integrated mathematical corrections and theoretical enhancements
+  - Enhanced references with DOI links, arXiv links, and complete citations
+- **Documentation improvements**: Enhanced Documentation page with interactive navigation and visual consistency
+- **Shared Simulation System**: Database models and API for shared simulation storage
+  - `SharedSimulation` model for saving simulations across users
+  - `MatchResult` model for finding similar experimental conditions
+  - REST API endpoints for CRUD operations and similarity matching
+
+### Changed
+- **Theory card navigation**: Updated Theory card to link to `/theory-paper` with full paper access
+- **Card styling**: Enhanced Theory card background color for better visual consistency with other documentation cards
+- **TheoryPaperPage enhanced**: Added interactive equation quick reference section with simulation links
+
 ## [0.2.1-beta] - 2026-01-15
 
 ### Added

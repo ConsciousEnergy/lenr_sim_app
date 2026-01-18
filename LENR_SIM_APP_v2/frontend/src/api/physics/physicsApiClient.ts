@@ -205,7 +205,7 @@ export const physicsApiClient = {
   /**
    * Create a WebSocket connection for real-time simulation updates
    */
-  createWebSocketConnection(simulationId: string, onMessage: (message: WebSocketMessage) => void): WebSocket {
+  createWebSocketConnection(simulationId: string, onMessage: (_message: WebSocketMessage) => void): WebSocket {
     // Replace http with ws for WebSocket URL
     const wsBase = API_BASE_URL.replace(/^http/, 'ws');
     const socket = new WebSocket(`${wsBase}/api/ws/physics/${simulationId}`);

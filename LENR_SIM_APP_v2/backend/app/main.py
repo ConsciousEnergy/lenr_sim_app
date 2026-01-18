@@ -21,6 +21,7 @@ from .routers import result_visualization_routes  # Add this import
 from .routers.mock_simulation_router import router as mock_simulation_router  # Mock simulation router
 from .routers.physics_simulation_router import router as physics_simulation_router  # Real physics calculations
 from .routers.websocket_router import router as websocket_router  # WebSocket for real-time updates
+from .routers.shared_simulation_router import router as shared_simulation_router  # Shared simulation storage and matching
 # Import unified simulation router
 # #region agent log
 try:
@@ -338,6 +339,7 @@ app.include_router(result_visualization_routes.router, prefix="/api/results", ta
 app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations"])  # Mock simulations for testing
 app.include_router(physics_simulation_router)  # Real physics calculation endpoints
 app.include_router(websocket_router, prefix="/api", tags=["WebSocket"])  # Real-time simulation updates
+app.include_router(shared_simulation_router)  # Shared simulation storage and matching (prefix already in router)
 
 # Include unified simulation router - FIXED: Always include if imported
 # #region agent log

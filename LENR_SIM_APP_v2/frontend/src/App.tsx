@@ -27,6 +27,7 @@ const UnifiedTheoryPage = lazy(() => import('./pages/UnifiedTheoryPage'));
 
 // Pages - Information & Theory (Lazy load documentation-heavy pages)
 const TheoryPage = lazy(() => import('./pages/TheoryPage'));
+const TheoryPaperPage = lazy(() => import('./pages/TheoryPaperPage'));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -227,6 +228,13 @@ const AppContent = () => {
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
                   <TheoryPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/theory-paper" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <TheoryPaperPage />
                 </Suspense>
               </AppLayoutFixed>
             } />

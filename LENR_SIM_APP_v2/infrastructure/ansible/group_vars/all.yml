@@ -1,0 +1,51 @@
+# LENR Simulation App - Ansible Group Variables
+# Shared variables for all hosts
+
+# Application settings
+app_name: lenr-sim
+app_version: "0.2.1-beta"
+app_domain: "conscious.energy"
+api_subdomain: "api"
+
+# Docker settings
+docker_compose_version: "2.24.5"
+docker_users:
+  - root
+
+# Traefik settings
+traefik_version: "v3.0"
+traefik_dashboard_enabled: true
+traefik_dashboard_auth: true
+traefik_acme_email: "diadon@conscious.energy"
+traefik_acme_staging: false  # Set to true for testing
+
+# Database settings
+postgres_version: "16"
+postgres_db: "lenr_sim"
+postgres_user: "lenr_app"
+# postgres_password: Set via environment variable or vault
+
+# FastAPI settings
+fastapi_workers: 4
+fastapi_log_level: "info"
+fastapi_replicas: 2
+
+# Security settings
+ufw_allowed_ports:
+  - 22   # SSH
+  - 80   # HTTP (for Let's Encrypt)
+  - 443  # HTTPS
+
+fail2ban_enabled: true
+fail2ban_sshd_maxretry: 3
+fail2ban_sshd_bantime: 24h
+
+# Backup settings
+backup_enabled: true
+backup_retention_days: 7
+backup_schedule: "0 3 * * *"  # Daily at 3 AM
+
+# Monitoring
+health_check_interval: 30
+health_check_timeout: 10
+health_check_retries: 3

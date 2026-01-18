@@ -1,0 +1,59 @@
+---
+# LENR Simulation App - Database Backup Playbook
+
+- name: Backup PostgreSQL Database
+  hosts: all
+  become: true
+  vars:
+    backup_dir: /opt/lenr-sim/backups
+    timestamp: "{{ ansible_date_time.epoch }}"
+    
+  tasks:
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+        
+    - name: Find PostgreSQL container
+      ansible.builtin.shell: |
+        docker ps -q -f name=lenr-sim_postgres
+      register: postgres_container
+      changed_when: false
+      
+    - name: Create database backup
+      ansible.builtin.shell: |
+        docker exec {{ postgres_container.stdout }} \
+          pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | \
+          gzip > {{ backup_dir }}/lenr_sim_{{ timestamp }}.sql.gz
+      when: postgres_container.stdout is defined and postgres_container.stdout != ""
+      
+    - name: Clean up old backups
+      ansible.builtin.find:
+        paths: "{{ backup_dir }}"
+        patterns: "*.sql.gz"
+        age: "+{{ backup_retention_days | default(7) }}d"
+      register: old_backups
+      
+    - name: Remove old backup files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ old_backups.files }}"
+      when: old_backups.matched > 0
+      
+    - name: List recent backups
+      ansible.builtin.shell: |
+        ls -lh {{ backup_dir }}/*.sql.gz | tail -5
+      register: backup_list
+      changed_when: false
+      
+    - name: Display backup information
+      ansible.builtin.debug:
+        msg: |
+          Backup complete!
+          
+          Recent backups:
+          {{ backup_list.stdout }}
+          
+          Backup location: {{ backup_dir }}

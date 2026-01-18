@@ -32,7 +32,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
   return (
     <Box component="form" onSubmit={handleSubmit} id="simple-simulation-form">
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth>
             <TextField
               label="Temperature (K)"
@@ -53,7 +53,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth>
             <TextField
               label="Pressure (Pa)"
@@ -74,7 +74,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth>
             <InputLabel id="material-label" htmlFor="material-select">Material</InputLabel>
             <Select
@@ -98,7 +98,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth>
             <TextField
               label="Duration (s)"
@@ -119,7 +119,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth>
             <TextField
               label="Time Step (s)"
@@ -140,7 +140,7 @@ const SimpleSimulationForm = ({ onSubmit }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
           <Button 
             type="submit" 
             variant="contained" 

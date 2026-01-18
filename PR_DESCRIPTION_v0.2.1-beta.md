@@ -1,7 +1,55 @@
-# v0.2.1-beta: Version Consistency, Code Quality, and Test Fixes
+# v0.2.1-beta: Physics Documentation, Infrastructure as Code, and Code Quality
 
 ## Overview
-This release focuses on ensuring version consistency across the application, fixing backend test failures, improving code quality, and implementing bundle optimization through code splitting.
+This release includes comprehensive physics equation verification and documentation, complete Infrastructure as Code (IaC) for production deployment, TheoryPaperPage enhancements with interactive equation references, version consistency across the application, backend test fixes, and bundle optimization through code splitting.
+
+## 🔬 Physics Documentation (New)
+
+### Physics Equation Verification
+- **PHYSICS_EQUATION_VERIFICATION.md**: Complete catalog of all physics equations
+  - Verified against CODATA 2018 fundamental constants
+  - Cross-referenced with standard physics literature (Gamow, Casimir, Assenbaum, etc.)
+  - Verification status: ✅ VERIFIED, ⚠️ APPROXIMATION, 🔬 EXPERIMENTAL
+  - Includes dimensional analysis and validity conditions
+
+### Physics Module Guide  
+- **PHYSICS_MODULE_GUIDE.md**: Developer guide for physics modules
+  - Module architecture diagram showing dependencies
+  - Detailed function signatures and usage examples
+  - Instructions for extending physics calculations
+  - Testing guidelines for physics components
+
+### Key Equations Verified
+- Gamow tunneling probability: P = exp(-2πη)
+- Sommerfeld parameter: η = Z₁Z₂e²/(4πε₀ℏv)
+- Gamow energy: E_G = 2μc²(παZ₁Z₂)²
+- Casimir force: F = -π²ℏcA/(240d⁴)
+- Screening enhancement: f = exp(πηUe/E)
+- Rayleigh collapse time: t_R = 0.915r₀√(ρ/P)
+
+## 🏗️ Infrastructure as Code (New)
+
+### Complete Deployment Infrastructure
+- **Terraform Modules**: Cloudflare (Pages, R2, DNS) and Hostinger VPS provisioning
+- **Ansible Playbooks**: Docker Swarm setup, application deployment, database backups
+- **Docker Stack**: Traefik reverse proxy, FastAPI backend, PostgreSQL database
+- **Deployment Scripts**: Automated deployment, rollback, and backup scripts
+- **GitHub Actions**: Automated Docker image builds and pushes to GHCR
+- **Documentation**: 6 comprehensive deployment guides
+
+### Infrastructure Highlights
+- **Cost**: ~$7.50/month (Cloudflare Pages + Hostinger VPS)
+- **Security**: UFW firewall, Fail2ban, Docker secrets, automatic SSL
+- **Scalability**: Docker Swarm horizontal scaling, configurable replicas
+- **Reliability**: Health checks, rolling updates, automated backups
+
+## 📖 TheoryPaperPage Enhancement (New)
+
+### Key Equations Quick Reference Panel
+- Six key equations with explanations and parameter descriptions
+- Interactive "Try it" buttons linking to simulation tools
+- Tooltips explaining units and typical values
+- Direct navigation to relevant simulation pages
 
 ## 🎯 Key Improvements
 
@@ -60,12 +108,22 @@ This release focuses on ensuring version consistency across the application, fix
 - **Frontend**: 20+ files modified
   - `src/App.tsx` - Implemented lazy loading and code splitting
   - `src/config/version.js` - NEW: Centralized version config
+  - `src/pages/TheoryPaperPage.jsx` - Added Key Equations Quick Reference
   - Updated 7 components for version consistency
   - Removed 7 duplicate files
   - Fixed import ordering
 
+- **Infrastructure**: 31 NEW files created
+  - Terraform: 11 files (root + 2 modules)
+  - Ansible: 9 files (playbooks + templates)
+  - Docker: 1 file (Dockerfile.backend)
+  - Scripts: 4 files (deployment automation)
+  - Documentation: 6 files (deployment guides)
+  - GitHub Actions: 1 file (Docker build workflow)
+
 ### Statistics
-- **30+ files changed**
+- **30+ files changed** (application code)
+- **31 files created** (infrastructure)
 - **~125KB removed** (duplicate files)
 - **15+ routes** now lazy-loaded
 - **4 test failures** fixed
@@ -85,10 +143,12 @@ This release focuses on ensuring version consistency across the application, fix
 
 ## 🔗 Related Issues
 
-- Resolves version inconsistency across application
-- Fixes backend test failures in hydrogen_flux_model and api_integration
-- Addresses Unicode encoding issues on Windows
-- Implements bundle optimization for better performance
+- **Physics verification**: Verifies all physics equations against CODATA 2018 and standard references
+- **Documentation**: Creates developer and user documentation for physics modules
+- **Version consistency**: Resolves version inconsistency across application
+- **Test stability**: Fixes backend test failures in hydrogen_flux_model and api_integration
+- **Unicode encoding**: Addresses Unicode encoding issues on Windows
+- **Performance**: Implements bundle optimization through code splitting
 
 ## 📝 Migration Notes
 
@@ -105,14 +165,15 @@ This release focuses on ensuring version consistency across the application, fix
 
 ## 🚀 Next Steps
 
-- Monitor bundle size reduction in production
-- Continue MUI Grid v2 migration for remaining components
-- Consider additional code splitting opportunities
-- Update documentation with new version management approach
+- **Deployment**: ✅ IaC complete - Ready for deployment (Terraform/Ansible infrastructure created)
+- **Database**: Migrate shared simulations from in-memory to PostgreSQL (infrastructure ready)
+- **Performance**: Monitor bundle size reduction in production
+- **Migration**: Continue MUI Grid v2 migration for remaining components
+- **Documentation**: ✅ Complete - All deployment and infrastructure guides created
 
 ---
 
 **Base Branch**: `lenr_sim_app_v0.2-beta`  
 **Target Branch**: `main` (or `lenr_sim_app_v0.2-beta` if preferred)  
 **Version**: `0.2.1-beta`  
-**Date**: 2026-01-15
+**Date**: 2026-01-18
