@@ -40,6 +40,16 @@ variable "environment" {
   type        = string
 }
 
+variable "github_owner" {
+  description = "GitHub repository owner (for Cloudflare Pages)"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+}
+
 # ==============================================================================
 # Provider Configuration
 # ==============================================================================
@@ -159,11 +169,41 @@ resource "cloudflare_ruleset" "rate_limiting" {
   }
 }
 
-# WAF Rule for API protection
+# Managed WAF Ruleset (Cloudflare Managed Ruleset)
+# Note: Using Cloudflare Managed Ruleset (ID: efb7b8c949ac4650a09736fc376e9aee)
+# For OWASP Core Ruleset, use ID: 4814384a9e5d4991b9815dcfc25d2f1f
+locals {
+  # Cloudflare Managed Ruleset ID (default security rules)
+  # Source: https://developers.cloudflare.com/waf/managed-rulesets/
+  managed_waf_ruleset_id = "efb7b8c949ac4650a09736fc376e9aee"
+}
+
+resource "cloudflare_ruleset" "managed_waf" {
+  zone_id     = var.cloudflare_zone_id
+  name        = "LENR Sim Managed WAF"
+  description = "Cloudflare Managed Ruleset (default security rules)"
+  kind        = "zone"
+  phase       = "http_request_firewall_managed"
+  
+  rules {
+    action = "execute"
+    action_parameters {
+      id = local.managed_waf_ruleset_id
+      overrides {
+        enabled = true
+      }
+    }
+    expression  = "true"
+    description = "Enable Cloudflare Managed WAF (default security rules)"
+    enabled     = true
+  }
+}
+
+# Custom WAF Rule for additional protection
 resource "cloudflare_ruleset" "waf" {
   zone_id     = var.cloudflare_zone_id
-  name        = "LENR Sim WAF"
-  description = "Web Application Firewall rules"
+  name        = "LENR Sim Custom WAF"
+  description = "Custom Web Application Firewall rules"
   kind        = "zone"
   phase       = "http_request_firewall_custom"
   

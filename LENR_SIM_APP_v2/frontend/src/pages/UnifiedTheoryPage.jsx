@@ -1068,7 +1068,7 @@ function UnifiedTheoryPage() {
                             value: Math.max(value, 1),
                             logValue: Math.log10(Math.max(value, 1)),
                             color: mechanismColors[key] || '#888',
-                            percentage: breakdown.total > 0 ? ((Math.log10(Math.max(value, 1)) / Math.log10(Math.max(breakdown.total, 1))) * 100).toFixed(1) : 0
+                            displayValue: Math.max(value, 1).toExponential(1) // Use exponential notation instead of misleading percentage
                           }))
                           .sort((a, b) => b.logValue - a.logValue);
                         

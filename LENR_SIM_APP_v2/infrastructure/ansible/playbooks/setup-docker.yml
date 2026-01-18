@@ -83,40 +83,6 @@
         state: started
         enabled: true
         
-    - name: Add users to docker group
-      ansible.builtin.user:
-        name: "{{ item }}"
-        groups: docker
-        append: true
-      loop: "{{ docker_users }}"
-      
-    # ==========================================================================
-    # Docker Swarm Initialization
-    # ==========================================================================
-    
-    - name: Check if Swarm is already initialized
-      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
-      register: swarm_status
-      changed_when: false
-      
-    - name: Initialize Docker Swarm
-      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address }}
-      when: 
-        - swarm_init
-        - swarm_status.stdout != "active"
-      register: swarm_init_result
-      
-    - name: Get Swarm join token for workers
-      ansible.builtin.command: docker swarm join-token -q worker
-      register: swarm_worker_token
-      when: swarm_status.stdout == "active" or swarm_init_result.changed
-      changed_when: false
-      
-    - name: Store Swarm join token
-      ansible.builtin.set_fact:
-        swarm_token: "{{ swarm_worker_token.stdout }}"
-      when: swarm_worker_token is defined and swarm_worker_token.stdout is defined
-      
     # ==========================================================================
     # Docker System Configuration
     # ==========================================================================
@@ -150,6 +116,51 @@
         mode: '0644'
       notify: Restart Docker
       
+    - name: Flush handlers to apply Docker config
+      ansible.builtin.meta: flush_handlers
+        
+    - name: Add users to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+      
+    # ==========================================================================
+    # Docker Swarm Initialization
+    # ==========================================================================
+    
+    - name: Check if Swarm is already initialized
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_status
+      changed_when: false
+      
+    - name: Initialize Docker Swarm
+      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address | default(ansible_host) }}
+      when: 
+        - swarm_init
+        - swarm_status.stdout != "active"
+        - (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) or ansible_host is defined
+      register: swarm_init_result
+      failed_when: >
+        swarm_init_result.rc != 0 and
+        ("already part of a swarm" not in swarm_init_result.stderr | default("") and
+         "already part of a swarm" not in swarm_init_result.stdout | default(""))
+      
+    - name: Get Swarm join token for workers
+      ansible.builtin.command: docker swarm join-token -q worker
+      register: swarm_worker_token
+      when: 
+        - swarm_status.stdout == "active" or (swarm_init_result is defined and swarm_init_result.changed)
+      changed_when: false
+      
+    - name: Store Swarm join token
+      ansible.builtin.set_fact:
+        swarm_token: "{{ swarm_worker_token.stdout }}"
+      when: 
+        - swarm_worker_token is defined
+        - swarm_worker_token.stdout is defined
+      
     # ==========================================================================
     # Prepare Application Directories
     # ==========================================================================
@@ -166,6 +177,14 @@
         - /opt/lenr-sim/backups
         - /opt/lenr-sim/traefik
         - /opt/lenr-sim/traefik/certs
+        
+    - name: Set secure permissions on Traefik certs directory
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/certs
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
         
     - name: Create Docker network for the application
       community.docker.docker_network:

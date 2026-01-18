@@ -1,10 +1,17 @@
 #!/bin/bash
 # LENR Simulation App - Database Backup Script
-# Usage: ./backup-db.sh [production|staging]
+# Usage: ./backup-db.sh [production|staging|development|test]
 
-set -e
+set -euo pipefail
 
 ENVIRONMENT=${1:-production}
+
+# Validate environment variable
+ALLOWED_ENVS=("production" "staging" "development" "test")
+if [[ ! " ${ALLOWED_ENVS[@]} " =~ " ${ENVIRONMENT} " ]]; then
+    echo "Error: Invalid environment '$ENVIRONMENT'. Must be one of: ${ALLOWED_ENVS[*]}" >&2
+    exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ANSIBLE_DIR="$SCRIPT_DIR/../ansible"
@@ -26,11 +33,36 @@ backup_database() {
     
     cd "$ANSIBLE_DIR"
     
-    ansible all -i inventory.yml -m shell \
-        -a "docker exec \$(docker ps -q -f name=lenr-sim_postgres) pg_dump -U lenr_app lenr_sim | gzip" \
-        > "$BACKUP_DIR/lenr_sim_${ENVIRONMENT}_${TIMESTAMP}.sql.gz"
+    # Find container by exact name to avoid multiple matches
+    CONTAINER_NAME="lenr-sim_postgres"
     
-    echo "Backup created: $BACKUP_DIR/lenr_sim_${ENVIRONMENT}_${TIMESTAMP}.sql.gz"
+    # Capture container ID directly (avoid subshell from pipe)
+    container_id=$(ansible all -i inventory.yml -m shell \
+        -a "docker ps --filter 'name=^${CONTAINER_NAME}$' -q" 2>/dev/null | head -1 | tr -d '\n')
+    
+    if [ -z "$container_id" ]; then
+        echo "Error: PostgreSQL container not found" >&2
+        exit 1
+    fi
+    
+    # Create backup with error checking
+    BACKUP_FILE="${BACKUP_DIR}/lenr_sim_${ENVIRONMENT}_${TIMESTAMP}.sql.gz"
+    TEMP_FILE="${BACKUP_FILE}.tmp"
+    
+    # Run pg_dump and pipe to gzip, with error checking
+    if ! ansible all -i inventory.yml -m shell \
+        -a "docker exec '$container_id' pg_dump -U lenr_app lenr_sim" 2>/dev/null | \
+        gzip > "$TEMP_FILE"; then
+        # Remove partial file on failure
+        rm -f "$TEMP_FILE"
+        echo "Error: pg_dump or gzip failed" >&2
+        exit 1
+    fi
+    
+    # Only move temp file to final location on success
+    mv "$TEMP_FILE" "$BACKUP_FILE"
+    
+    echo "Backup created: $BACKUP_FILE"
     
     # List recent backups
     echo ""

@@ -334,10 +334,11 @@ def calculate_adiabatic_limit(z1: int, z2: int) -> float:
         Adiabatic screening limit in eV
         
     Physics:
-        Ue_adiabatic ≈ 27.2 eV * (Z1^0.687 + Z2^0.687)
+        Ue_adiabatic ≈ 13.6 eV * (Z1^0.687 + Z2^0.687)
         This is the absolute minimum screening from static electron clouds.
         Dynamic effects in condensed matter typically increase this by 10-30x.
+        For D-D (Z1=Z2=1), this yields ~25-27 eV as expected.
     """
-    # Adiabatic limit formula (Salpeter, 1954)
-    Ue_adiabatic = 27.2 * (z1**0.687 + z2**0.687)
+    # Adiabatic limit formula (Salpeter, 1954) - Rydberg-based coefficient
+    Ue_adiabatic = 13.6 * (z1**0.687 + z2**0.687)
     return Ue_adiabatic

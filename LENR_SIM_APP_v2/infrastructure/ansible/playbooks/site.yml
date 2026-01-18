@@ -4,10 +4,9 @@
 
 - name: Complete LENR Sim Server Setup
   hosts: all
-  become: true
-  
+  become: false
   tasks:
-    - name: Display deployment information
+    - name: Show deployment info
       ansible.builtin.debug:
         msg: |
           ==========================================
@@ -15,11 +14,7 @@
           Environment: {{ environment | default('prod') }}
           Domain: {{ app_domain }}
           ==========================================
-    
-    - name: Include Docker setup
-      ansible.builtin.include_playbook: setup-docker.yml
-    
-    - name: Include stack deployment
-      ansible.builtin.include_playbook: deploy-stack.yml
-      vars:
-        postgres_password: "{{ postgres_password | default(omit) }}"
+
+- import_playbook: setup-docker.yml
+
+- import_playbook: deploy-stack.yml

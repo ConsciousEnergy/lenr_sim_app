@@ -25,6 +25,11 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your credentials
 ```
 
+**⚠️ SECURITY WARNING:** The `terraform.tfvars` file contains sensitive credentials (API tokens, SSH keys). 
+- **NEVER commit this file to version control**
+- **Verify** that `terraform.tfvars` is listed in `.gitignore`
+- **Protect** this file with appropriate file permissions (`chmod 600 terraform.tfvars`)
+
 ### 3. Configure Ansible
 
 ```bash

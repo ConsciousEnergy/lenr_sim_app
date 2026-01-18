@@ -689,7 +689,7 @@ export class QuantumFluxEffect {
     
     // Update volume colors for time-dependent modes
     if (this.volumeMesh && 
-        (this.mode === FluxMode.PHONON_MODES || this.mode === FluxMode.COMBINED)) {
+        (this.mode === FluxMode.PHONON_MODES || this.mode === FluxMode.COMBINED || this.mode === FluxMode.Z_PINCH)) {
       const positions = this.volumeMesh.geometry.attributes.position.array;
       const colors = this.volumeMesh.geometry.attributes.color.array;
       const scheme = this.colorSchemes[this.mode];
@@ -777,7 +777,8 @@ export class QuantumFluxEffect {
     if (params.particlePositions !== undefined) this.particlePositions = params.particlePositions;
     
     // Re-initialize for non-animated modes
-    if (this.mode !== FluxMode.PHONON_MODES && this.mode !== FluxMode.COMBINED) {
+    // Z_PINCH is animated (time-dependent), so skip re-initialization
+    if (this.mode !== FluxMode.PHONON_MODES && this.mode !== FluxMode.COMBINED && this.mode !== FluxMode.Z_PINCH) {
       this.initialize();
     }
   }

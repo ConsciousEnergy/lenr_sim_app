@@ -159,14 +159,57 @@ ansible-playbook -i inventory.yml playbooks/setup-docker.yml
 
 ### Step 5: Deploy Application Stack
 
-```bash
-# Generate PostgreSQL password (save securely!)
-export POSTGRES_PASSWORD=$(openssl rand -base64 32)
-echo "Save this password: $POSTGRES_PASSWORD"
+**IMPORTANT:** Never pass secrets via command-line arguments as they appear in process lists and shell history.
 
-# Deploy the stack
+**Option A: Use Ansible Vault (Recommended for Production)**
+```bash
+# Create encrypted vault file
+ansible-vault create group_vars/vault.yml
+
+# Add postgres_password to vault file, then deploy:
+ansible-playbook -i inventory.yml playbooks/deploy-stack.yml --ask-vault-pass
+```
+
+**Option B: Use Environment Variable**
+```bash
+# Generate and export password (not visible in process list)
+export POSTGRES_PASSWORD=$(openssl rand -hex 32)
+echo "Save this password securely: $POSTGRES_PASSWORD"
+
+# Deploy (password read from environment, not command line)
+ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
+```
+
+**Option C: Use Secrets File**
+```bash
+# Create .secrets.yml (add to .gitignore!)
+echo "postgres_password: $(openssl rand -hex 32)" > .secrets.yml
+chmod 600 .secrets.yml
+
+# Deploy using secrets file
 ansible-playbook -i inventory.yml playbooks/deploy-stack.yml \
-  -e "postgres_password=$POSTGRES_PASSWORD"
+  --extra-vars "@.secrets.yml"
+```
+
+### Step 5.5: Initialize Database and Run Migrations
+
+After deploying the stack, initialize the database:
+
+```bash
+# Connect to the deployed PostgreSQL container (interactive)
+docker exec -it $(docker ps -q -f name=lenr-sim_postgres) psql -U lenr_app -d lenr_sim
+
+# Or run migrations via backend service (non-interactive, for scripts/CI)
+docker exec -i $(docker ps -q -f name=lenr-sim_backend) python -m alembic upgrade head
+
+# Verify schema exists (non-interactive)
+docker exec -i $(docker ps -q -f name=lenr-sim_postgres) psql -U lenr_app -d lenr_sim -c "\dt"
+
+# Check backend connectivity
+docker service logs lenr-sim_backend --tail 50
+
+# Re-run health check
+curl https://api.conscious.energy/api/health
 ```
 
 ### Step 6: Verify Deployment
@@ -227,14 +270,61 @@ docker service logs lenr-sim_postgres -f
 
 ### Database Backup
 
-Automatic daily backups are configured at 3 AM:
+**Automatic Daily Backups**
 
+Automatic daily backups are configured via cron job at 3 AM:
+
+- **Schedule:** Cron job: `0 3 * * * /opt/lenr-sim/backup.sh >> /opt/lenr-sim/logs/backup.log 2>&1`
+- **Location:** `/opt/lenr-sim/backups/`
+- **Naming:** `lenr_sim_YYYYMMDD_HHMMSS.sql.gz`
+- **Retention:** 7 days (older backups automatically deleted)
+- **Permissions:** Backup files: `0600` (owner read/write only)
+- **Backup Directory:** `0700` (owner access only)
+
+**Manual Backup:**
 ```bash
-# Manual backup
+# Run backup script
 /opt/lenr-sim/backup.sh
 
-# View backups
-ls -la /opt/lenr-sim/backups/
+# View recent backups
+ls -lah /opt/lenr-sim/backups/ | tail -10
+
+# Check backup log
+tail -f /opt/lenr-sim/logs/backup.log
+```
+
+**Backup Script Details:**
+
+The backup script (`/opt/lenr-sim/backup.sh`):
+1. Creates backup directory if missing (`mkdir -p`)
+2. Finds PostgreSQL container by exact name
+3. Runs `pg_dump` with error checking (`set -euo pipefail`)
+4. Compresses output with `gzip`
+5. Writes to temporary file first, then moves to final location on success
+6. Cleans up backups older than 7 days
+7. Sets secure permissions (`0600`) on backup files
+
+**Restore from Backup:**
+
+```bash
+# List available backups
+ls -lah /opt/lenr-sim/backups/
+
+# Restore a specific backup (replace TIMESTAMP with actual timestamp)
+BACKUP_FILE="/opt/lenr-sim/backups/lenr_sim_20260118_030000.sql.gz"
+CONTAINER=$(docker ps -q -f name=lenr-sim_postgres)
+
+# Stop the backend service temporarily (optional, for safety)
+docker service scale lenr-sim_backend=0
+
+# Restore the backup
+gunzip < "$BACKUP_FILE" | docker exec -i "$CONTAINER" psql -U lenr_app -d lenr_sim
+
+# Restart backend service
+docker service scale lenr-sim_backend=2
+
+# Verify restore
+docker exec -it "$CONTAINER" psql -U lenr_app -d lenr_sim -c "\dt"
 ```
 
 ### Scaling

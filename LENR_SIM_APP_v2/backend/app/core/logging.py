@@ -32,17 +32,21 @@ def setup_logger(name: str, log_file: Optional[str] = None, level: int = logging
                 try:
                     msg = self.format(record)
                     # Replace Unicode characters that Windows console can't handle
-                    msg = msg.replace('μ', 'u').replace('μm', 'um').replace('μs', 'us')
+                    # Do specific replacements first, then general
+                    msg = msg.replace('μm', 'um').replace('μs', 'us').replace('μ', 'u')
                     stream = self.stream
                     stream.write(msg + self.terminator)
                     self.flush()
                 except UnicodeEncodeError:
                     # Fallback: replace all non-ASCII characters
-                    msg = self.format(record)
-                    msg = msg.encode('ascii', 'replace').decode('ascii')
-                    stream = self.stream
-                    stream.write(msg + self.terminator)
-                    self.flush()
+                    try:
+                        msg = self.format(record)
+                        msg = msg.encode('ascii', 'replace').decode('ascii')
+                        stream = self.stream
+                        stream.write(msg + self.terminator)
+                        self.flush()
+                    except Exception:
+                        self.handleError(record)
                 except Exception:
                     self.handleError(record)
         

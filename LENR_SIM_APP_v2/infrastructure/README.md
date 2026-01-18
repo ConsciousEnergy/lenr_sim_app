@@ -97,12 +97,14 @@ ansible-playbook -i inventory.yml playbooks/setup-docker.yml
 ### 5. Deploy Application
 
 ```bash
-# Generate PostgreSQL password
-export POSTGRES_PASSWORD=$(openssl rand -base64 32)
+# Generate PostgreSQL password and store securely
+export POSTGRES_PASSWORD=$(openssl rand -hex 32)
+echo "POSTGRES_PASSWORD='$POSTGRES_PASSWORD'" > .secrets.env
+chmod 600 .secrets.env
+# ⚠️ IMPORTANT: Save this password securely! Losing it prevents database access.
 
-# Deploy stack
-ansible-playbook -i inventory.yml playbooks/deploy-stack.yml \
-  -e "postgres_password=$POSTGRES_PASSWORD"
+# Deploy stack (password read from environment, not command line)
+ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
 ```
 
 ---

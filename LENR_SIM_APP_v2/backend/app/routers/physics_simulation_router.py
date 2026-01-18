@@ -91,25 +91,38 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
     
     Uses the WKB approximation with optional electron screening.
     """
+    # Validate input parameters (before try block to avoid HTTPException swallowing)
+    if request.energy_kev <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Energy must be positive. Received: {request.energy_kev} keV"
+        )
+    
+    if request.temperature_k <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Temperature must be positive. Received: {request.temperature_k} K"
+        )
+    
+    if request.z1 <= 0 or request.z2 <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Atomic numbers must be positive. Received: z1={request.z1}, z2={request.z2}"
+        )
+    
+    if request.a1 <= 0 or request.a2 <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Mass numbers must be positive. Received: a1={request.a1}, a2={request.a2}"
+        )
+    
+    if (request.a1 + request.a2) == 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Sum of mass numbers must be positive. Received: a1={request.a1}, a2={request.a2}"
+        )
+    
     try:
-        # Validate input parameters
-        if request.energy_kev <= 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Energy must be positive. Received: {request.energy_kev} keV"
-            )
-        
-        if request.temperature_k <= 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Temperature must be positive. Received: {request.temperature_k} K"
-            )
-        
-        if request.z1 <= 0 or request.z2 <= 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Atomic numbers must be positive. Received: z1={request.z1}, z2={request.z2}"
-            )
         
         # Get base screening energy from material
         base_screening_ev = SCREENING_POTENTIALS.get(request.material, 0)
@@ -133,11 +146,15 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
             material=request.material
         )
         
-        # Calculate individual enhancement factors
+            # Calculate individual enhancement factors
         electron_enhancement = 1.0
         if effective_screening_ev > 0 and request.energy_kev > 0:
             from ..physics.core_constants import AMU, sommerfeld_parameter
-            mu = (request.a1 * request.a2 * AMU) / (request.a1 + request.a2)
+            # Guard against division by zero (already validated above, but double-check)
+            mass_sum = request.a1 + request.a2
+            if mass_sum == 0:
+                raise HTTPException(status_code=422, detail="Sum of mass numbers cannot be zero")
+            mu = (request.a1 * request.a2 * AMU) / mass_sum
             eta = sommerfeld_parameter(request.z1, request.z2, request.energy_kev, mu)
             # Clip exponent to prevent overflow (max safe exp arg ~700)
             exponent = np.pi * eta * (effective_screening_ev/1000) / request.energy_kev
@@ -176,6 +193,9 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
             parameters=result.parameters
         )
         
+    except HTTPException:
+        # Re-raise HTTPException to preserve status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
@@ -220,6 +240,13 @@ async def calculate_fusion_rate(request: FusionRateRequest):
     
     Uses the astrophysical S-factor formulation.
     """
+    # Validate temperature to avoid division by zero
+    if request.temperature_k <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Temperature must be positive. Received: {request.temperature_k} K"
+        )
+    
     try:
         # Get reaction parameters
         q_value = REACTION_Q_VALUES.get(request.reaction_type, 3.27)  # MeV
@@ -306,6 +333,9 @@ async def calculate_fusion_rate(request: FusionRateRequest):
             }
         )
         
+    except HTTPException:
+        # Re-raise HTTPException to preserve status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
@@ -466,6 +496,9 @@ async def calculate_lenr_enhancement_endpoint(request: LENREnhancementRequest):
             warnings=result["warnings"]
         )
         
+    except HTTPException:
+        # Re-raise HTTPException to preserve status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LENR calculation error: {str(e)}")
 
@@ -497,6 +530,9 @@ async def calculate_lenr_reaction_rate_endpoint(request: LENRReactionRateRequest
         
         return result
         
+    except HTTPException:
+        # Re-raise HTTPException to preserve status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LENR rate calculation error: {str(e)}")
 
@@ -557,6 +593,9 @@ async def simulate_bubble_fusion_endpoint(request: BubbleFusionRequest):
         
         return result
         
+    except HTTPException:
+        # Re-raise HTTPException to preserve status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Bubble fusion simulation error: {str(e)}")
 

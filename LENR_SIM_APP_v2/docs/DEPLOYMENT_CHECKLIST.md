@@ -14,7 +14,7 @@
 - [ ] **3.3** Production build successful: `cd frontend && npm ci && npm run build`
 - [ ] **3.4** CHANGELOG.md updated with v0.2.1-beta section
 - [ ] **3.5** PR_DESCRIPTION_v0.2.1-beta.md complete
-- [ ] **3.6** KNOWN_ISSUES_v0.2-beta.md updated with resolved issues
+- [ ] **3.6** KNOWN_ISSUES_v0.2.1-beta.md updated with resolved issues
 - [ ] **3.7** All changes staged: `git add -A`
 - [ ] **3.8** Commit message descriptive and complete
 - [ ] **3.9** Branch pushed: `git push -u origin lenr_sim_app_v0.2.1-beta`
@@ -124,6 +124,17 @@ If deployment fails:
    ```
 
 2. **Infrastructure Rollback:**
+   
+   **⚠️ CRITICAL WARNING: Before running `terraform destroy`:**
+   
+   - [ ] **Backup Database:** Export database snapshot using `/opt/lenr-sim/backup.sh` or manual `pg_dump`
+   - [ ] **Backup Application State:** Export any application data, logs, or configuration files
+   - [ ] **Backup Terraform State:** Export Terraform remote state or backup `terraform.tfstate` file
+   - [ ] **Verify Backups:** Confirm backups are restorable before proceeding
+   - [ ] **Acknowledge Data Loss:** Understand that `terraform destroy` will delete all infrastructure
+   - [ ] **Pause Automated Backups:** Temporarily disable automated backup jobs to prevent conflicts
+   
+   Only after completing all backup and verification steps:
    ```bash
    cd infrastructure/terraform
    terraform destroy  # CAREFUL: Destroys everything

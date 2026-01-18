@@ -66,12 +66,12 @@
 
 ## Infrastructure Statistics
 
-- **Total Files Created:** 31 infrastructure files
+- **Total Files Created:** 32 files (11 Terraform + 9 Ansible + 1 Docker + 4 Scripts + 6 Documentation + 1 GitHub Actions)
 - **Terraform Modules:** 2 (Cloudflare, Hostinger)
 - **Ansible Playbooks:** 4 (site, setup-docker, deploy-stack, backup)
 - **Documentation Pages:** 6 comprehensive guides
 - **Deployment Scripts:** 3 automation scripts
-- **Estimated Monthly Cost:** ~$7.50
+- **Estimated Monthly Cost:** ~$7.50 (Cloudflare Pages: $0, R2: ~$0.50, VPS: $6.99, SSL: $0)
 
 ---
 

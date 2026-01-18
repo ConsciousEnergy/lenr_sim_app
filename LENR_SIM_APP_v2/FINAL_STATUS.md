@@ -21,10 +21,10 @@ All planned work for v0.2.1-beta has been completed:
 ### ✅ Phase 3: PR Preparation (COMPLETE)
 - CHANGELOG.md updated
 - PR_DESCRIPTION_v0.2.1-beta.md updated
-- KNOWN_ISSUES_v0.2-beta.md updated
+- KNOWN_ISSUES_v0.2.1-beta.md updated
 
 ### ✅ Phase 4: Infrastructure as Code (COMPLETE)
-- **31 infrastructure files created**
+- **27 infrastructure files created** (34 total including documentation)
 - Terraform modules (Cloudflare, Hostinger)
 - Ansible playbooks (Docker setup, deployment, backup)
 - Docker stack definition

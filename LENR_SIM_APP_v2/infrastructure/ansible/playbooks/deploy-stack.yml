@@ -28,6 +28,26 @@
       changed_when: false
       
     # ==========================================================================
+    # Create Required Directories
+    # ==========================================================================
+    
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+        
+    - name: Ensure Traefik directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+    
+    # ==========================================================================
     # Copy Stack Files
     # ==========================================================================
     
@@ -64,9 +84,11 @@
       changed_when: false
       
     - name: Create PostgreSQL password secret
-      ansible.builtin.shell: |
-        echo "{{ postgres_password }}" | docker secret create postgres_password -
+      ansible.builtin.command:
+        cmd: docker secret create postgres_password -
+        stdin: "{{ postgres_password }}"
       when: "'postgres_password' not in existing_secrets.stdout"
+      no_log: true
       
     - name: Generate API secret key if not set
       ansible.builtin.set_fact:
@@ -75,8 +97,9 @@
       no_log: true
       
     - name: Create API secret key secret
-      ansible.builtin.shell: |
-        echo "{{ api_secret_key }}" | docker secret create api_secret_key -
+      ansible.builtin.command:
+        cmd: docker secret create api_secret_key -
+        stdin: "{{ api_secret_key }}"
       when: "'api_secret_key' not in existing_secrets.stdout"
       no_log: true
       
@@ -130,30 +153,50 @@
     # Optional: Backup Database
     # ==========================================================================
     
+    - name: Ensure logs directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/logs
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+        
     - name: Create backup script
       ansible.builtin.copy:
         content: |
           #!/bin/bash
           # LENR Sim Database Backup Script
+          set -euo pipefail
           
           BACKUP_DIR="/opt/lenr-sim/backups"
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           
+          # Create backup directory if it doesn't exist
+          mkdir -p "$BACKUP_DIR"
+          
           # Find postgres container
           CONTAINER=$(docker ps -q -f name={{ stack_name }}_postgres)
           
-          if [ -n "$CONTAINER" ]; then
-            docker exec $CONTAINER pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | \
-              gzip > $BACKUP_DIR/lenr_sim_$TIMESTAMP.sql.gz
-            
-            # Keep only last 7 days of backups
-            find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
-            
-            echo "Backup created: $BACKUP_DIR/lenr_sim_$TIMESTAMP.sql.gz"
-          else
-            echo "Error: PostgreSQL container not found"
+          if [ -z "$CONTAINER" ]; then
+            echo "Error: PostgreSQL container not found" >&2
             exit 1
           fi
+          
+          # Create backup with error checking
+          TEMP_FILE="${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz.tmp"
+          if ! docker exec "$CONTAINER" pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | gzip > "$TEMP_FILE"; then
+            echo "Error: pg_dump or gzip failed" >&2
+            rm -f "$TEMP_FILE"
+            exit 1
+          fi
+          
+          # Only move temp file to final location on success
+          mv "$TEMP_FILE" "${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+          
+          # Keep only last 7 days of backups
+          find "$BACKUP_DIR" -name "*.sql.gz" -mtime +7 -delete || true
+          
+          echo "Backup created: ${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
         dest: /opt/lenr-sim/backup.sh
         mode: '0755'
         

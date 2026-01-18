@@ -8,7 +8,7 @@
 
 This release includes **complete Infrastructure as Code (IaC)** for deploying the LENR Simulation App to production:
 
-- ✅ **31 infrastructure files** ready for deployment
+- ✅ **32 infrastructure files** ready for deployment (11 Terraform + 9 Ansible + 1 Docker + 4 Scripts + 6 Docs + 1 GitHub Actions)
 - ✅ **Terraform** modules for Cloudflare and Hostinger
 - ✅ **Ansible** playbooks for server configuration
 - ✅ **Docker Swarm** stack definition
@@ -52,6 +52,8 @@ cd ../scripts
 
 - **Frontend:** Cloudflare Pages (FREE)
 - **Backend:** Hostinger VPS with Docker Swarm ($6.99/mo)
+- **Storage:** Cloudflare R2 (~$0.50/mo)
+- **SSL:** Let's Encrypt (FREE)
 - **Total Cost:** ~$7.50/month
 
 ---

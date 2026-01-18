@@ -19,9 +19,11 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--certificatesresolvers.letsencrypt.acme.email={{ traefik_acme_email }}"
+      - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+      - "--certificatesresolvers.letsencrypt.acme.email={{ traefik_acme_email | quote }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      # Note: HTTP->HTTPS redirect excludes /.well-known/acme-challenge/* via router rules
       - "--api.dashboard=true"
       - "--log.level=INFO"
       - "--accesslog=true"
@@ -54,8 +56,12 @@ services:
         - "traefik.http.routers.dashboard.entrypoints=websecure"
         - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
         - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
-        - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$xxxxx$$xxxxx"  # Change this!
+        - "traefik.http.middlewares.dashboard-auth.basicauth.users={{ traefik_dashboard_basic_auth | default('admin:$apr1$xxxxx$xxxxx') }}"
         - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+        # ACME challenge router (exclude from HTTPS redirect)
+        - "traefik.http.routers.acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.acme.entrypoints=web"
+        - "traefik.http.routers.acme.priority=1000"
 
   # ============================================================================
   # FastAPI Backend
@@ -63,21 +69,26 @@ services:
   backend:
     image: ghcr.io/{{ github_owner | default('ConsciousEnergy') }}/lenr-sim-backend:latest
     environment:
-      - DATABASE_URL=postgresql://{{ postgres_user | default('lenr_app') }}:{{ postgres_password }}@postgres:5432/{{ postgres_db | default('lenr_sim') }}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER={{ postgres_user | default('lenr_app') }}
+      - DB_NAME={{ postgres_db | default('lenr_sim') }}
+      - DB_PASSWORD_FILE=/run/secrets/postgres_password
       - ENVIRONMENT=production
       - LOG_LEVEL={{ fastapi_log_level | default('info') }}
       - CORS_ORIGINS=https://{{ app_domain }},https://www.{{ app_domain }}
-      - SECRET_KEY_FILE=/run/secrets/app_secret_key
+      - SECRET_KEY_FILE=/run/secrets/api_secret_key
     secrets:
-      - postgres_password
-      - api_secret_key
+      - source: postgres_password
+        target: postgres_password
+      - source: api_secret_key
+        target: api_secret_key
     volumes:
       - /opt/lenr-sim/logs:/app/logs
       - /opt/lenr-sim/data:/app/data
     networks:
       - lenr-sim-network
-    depends_on:
-      - postgres
+    # Note: depends_on is ignored in Docker Swarm; backend should implement DB connection retry logic
     deploy:
       mode: replicated
       replicas: 2

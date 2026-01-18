@@ -135,9 +135,9 @@ class TestUnifiedEnhancementCalculator:
         )
         
         # Higher field should lower barrier, increase enhancement
-        # Use tolerance for floating-point comparison
-        assert result_high['enhancement_factor'] >= result_low['enhancement_factor'] * 0.999, \
-            f"High field enhancement {result_high['enhancement_factor']} should be >= low field {result_low['enhancement_factor']}"
+        # Assert strict monotonic increase: high field must produce larger enhancement
+        assert result_high['enhancement_factor'] > result_low['enhancement_factor'], \
+            f"High field enhancement {result_high['enhancement_factor']} must be > low field {result_low['enhancement_factor']}"
     
     def test_tunneling_nonlinear_scaling(self, calculator: UnifiedEnhancementCalculator):
         """Test non-linear scaling kicks in for high enhancement."""
@@ -327,15 +327,15 @@ class TestUnifiedEnhancementCalculator:
         assert 'enhancement_factor' in result
     
     def test_coherence_enhancement_positive(self, calculator: UnifiedEnhancementCalculator):
-        """Test coherence enhancement is positive."""
+        """Test coherence enhancement is >= 1.0 at room temperature."""
         result = calculator.calculate_coherence_enhancement(
             temperature=300.0,
             lattice_constant=3.89e-10
         )
         
-        # Enhancement factor should be positive (may be < 1 at high temperatures)
-        assert result['enhancement_factor'] > 0, \
-            f"Coherence enhancement {result['enhancement_factor']} should be positive"
+        # At room temperature, enhancement factor should be >= 1.0
+        assert result['enhancement_factor'] >= 1.0, \
+            f"Coherence enhancement {result['enhancement_factor']} should be >= 1.0 at room temperature"
     
     def test_coherence_increases_at_low_temperature(self, calculator: UnifiedEnhancementCalculator):
         """Test coherence enhancement increases at lower temperature."""

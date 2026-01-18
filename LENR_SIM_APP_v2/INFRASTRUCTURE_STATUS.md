@@ -11,7 +11,7 @@ All Infrastructure as Code (IaC) files have been created and are ready for produ
 
 ---
 
-## Files Created (31 Total)
+## Files Created (32 Total)
 
 ### Terraform (11 files)
 ✅ Root configuration (main.tf, variables.tf, outputs.tf)  
@@ -59,6 +59,10 @@ Backend: Hostinger VPS ($6.99/mo)
 ```
 
 **Total Cost:** ~$7.50/month
+- Cloudflare Pages: $0
+- Cloudflare R2: ~$0.50
+- Hostinger VPS: $6.99
+- SSL (Let's Encrypt): $0
 
 ---
 

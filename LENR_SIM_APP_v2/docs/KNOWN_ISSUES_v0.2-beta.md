@@ -2,7 +2,7 @@
 
 This document contains known issues identified during the beta release verification. These can be used to create GitHub issues for tracking.
 
-**Status Updated:** January 15, 2026
+**Status Updated:** January 18, 2026
 
 *Last comprehensive update: Theory Paper integration completed*
 
@@ -193,6 +193,8 @@ Key areas likely affected:
 ## Issue 4: [Frontend] Clean up duplicate/legacy page files
 
 **Labels:** `enhancement`, `good first issue`
+
+**Status:** ✅ Fixed in v0.2.1-beta
 
 ### Description
 

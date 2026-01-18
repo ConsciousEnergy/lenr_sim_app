@@ -207,26 +207,28 @@ class TestAPIResponseStructure:
         data = response.json()
         timeline = data["enhancement_timeline"]
         
+        # Explicitly assert timeline is non-empty
+        assert len(timeline) > 0, "Timeline should not be empty"
+        
         # Check first entry has all required fields
-        if len(timeline) > 0:
-            entry = timeline[0]
-            
-            # Required by UnifiedBubbleLatticeVisualization.jsx interpolateFromAPITimeline
-            required_fields = [
-                "normalized_time",
-                "phase",
-                "enhancement",
-                "enhancement_breakdown"
-            ]
-            
-            for field in required_fields:
-                assert field in entry, f"Missing required field: {field}"
-            
-            # Enhancement breakdown should have these sub-fields
-            breakdown = entry["enhancement_breakdown"]
-            expected_breakdown_keys = ["total", "screening", "phonon"]
-            for key in expected_breakdown_keys:
-                assert key in breakdown, f"Missing breakdown key: {key}"
+        entry = timeline[0]
+        
+        # Required by UnifiedBubbleLatticeVisualization.jsx interpolateFromAPITimeline
+        required_fields = [
+            "normalized_time",
+            "phase",
+            "enhancement",
+            "enhancement_breakdown"
+        ]
+        
+        for field in required_fields:
+            assert field in entry, f"Missing required field: {field}"
+        
+        # Enhancement breakdown should have these sub-fields
+        breakdown = entry["enhancement_breakdown"]
+        expected_breakdown_keys = ["total", "screening", "phonon"]
+        for key in expected_breakdown_keys:
+            assert key in breakdown, f"Missing breakdown key: {key}"
     
     def test_response_values_are_json_serializable(self):
         """Verify all response values are proper JSON types (not numpy types)."""

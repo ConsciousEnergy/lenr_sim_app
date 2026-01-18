@@ -26,6 +26,8 @@ choco install terraform ansible  # Windows
 
 # Generate SSH key
 ssh-keygen -t ed25519 -C "lenr-sim-deploy" -f ~/.ssh/lenr-sim-deploy
+# Note: You will be prompted for a passphrase. Choose a strong passphrase to protect your private key.
+# To create a key without a passphrase (less secure, not recommended), use: ssh-keygen -t ed25519 -C "lenr-sim-deploy" -f ~/.ssh/lenr-sim-deploy -N ""
 ```
 
 ### 2. Configure Variables
@@ -81,12 +83,24 @@ ansible-playbook -i inventory.yml playbooks/setup-docker.yml
 ### Step 3: Deploy Stack
 
 ```bash
-# Generate password
-export POSTGRES_PASSWORD=$(openssl rand -base64 32)
+# Generate password and export (required for playbook)
+export POSTGRES_PASSWORD=$(openssl rand -hex 32)
+# Note: PostgreSQL accepts 64-character hex passwords (openssl rand -hex 32)
 
-# Deploy
-ansible-playbook -i inventory.yml playbooks/deploy-stack.yml \
-  -e "postgres_password=$POSTGRES_PASSWORD"
+# Optional: Create backup file for password recovery (add to .gitignore!)
+# This is a backup only - the playbook reads from environment, not this file
+echo "POSTGRES_PASSWORD='$POSTGRES_PASSWORD'" > .secrets.env
+chmod 600 .secrets.env
+# ⚠️ IMPORTANT: 
+# - Save this password to a password manager or secure vault
+# - Move .secrets.env to a secure location outside the repo after deployment
+# - Delete .secrets.env from the repo directory after securely storing the password
+# - Add .secrets.env to .gitignore to prevent accidental commits
+# - Losing this value prevents future database access and recovery
+
+# Deploy using environment variable (not visible in process list)
+ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
+# The playbook reads POSTGRES_PASSWORD from environment variable
 ```
 
 ### Step 4: Verify

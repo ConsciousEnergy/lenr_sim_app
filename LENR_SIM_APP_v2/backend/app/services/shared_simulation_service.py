@@ -66,8 +66,12 @@ class SharedSimulationService:
             if s.session_id == session_id
         ]
         
-        # Sort by created_at (newest first)
-        user_sims.sort(key=lambda x: x.created_at, reverse=True)
+        # Sort by created_at (newest first), with defensive handling for None
+        from datetime import datetime
+        user_sims.sort(
+            key=lambda x: x.created_at if x.created_at is not None else datetime.min,
+            reverse=True
+        )
         
         return user_sims[offset:offset + limit]
     
@@ -81,12 +85,14 @@ class SharedSimulationService:
         simulation = self._simulations.get(simulation_id)
         
         if not simulation:
-            return None
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Simulation not found")
         
         # Verify ownership
         if simulation.session_id != session_id:
+            from fastapi import HTTPException
             logger.warning(f"Access denied: session_id mismatch for simulation {simulation_id}")
-            return None
+            raise HTTPException(status_code=403, detail="Access denied: simulation belongs to different user")
         
         simulation.is_public = is_public
         simulation.updated_at = datetime.utcnow()

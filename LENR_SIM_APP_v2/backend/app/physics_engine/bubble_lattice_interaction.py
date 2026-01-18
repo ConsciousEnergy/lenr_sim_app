@@ -61,16 +61,22 @@ class BubbleParameters:
     
     def __post_init__(self):
         """Set polytropic index based on gas type if not explicitly provided."""
-        # If polytropic_index wasn't changed from default, look up by gas_type
-        if self.gas_type.lower() in GAS_POLYTROPIC_INDEX:
-            # Use gas-specific value
+        # Only set from GAS_POLYTROPIC_INDEX if polytropic_index is still at default
+        # This preserves user-provided values
+        if (self.polytropic_index == 1.399 and 
+            self.gas_type.lower() in GAS_POLYTROPIC_INDEX):
+            # Use gas-specific value only if still at default
             self.polytropic_index = GAS_POLYTROPIC_INDEX[self.gas_type.lower()]
         # Otherwise keep the provided value
         
     @classmethod
     def for_gas(cls, gas_type: str, **kwargs) -> "BubbleParameters":
         """Factory method to create parameters for a specific gas."""
-        gamma = GAS_POLYTROPIC_INDEX.get(gas_type.lower(), 1.4)
+        # Use polytropic_index from kwargs if provided, otherwise lookup by gas_type
+        if 'polytropic_index' in kwargs:
+            gamma = kwargs.pop('polytropic_index')
+        else:
+            gamma = GAS_POLYTROPIC_INDEX.get(gas_type.lower(), 1.4)
         return cls(gas_type=gas_type, polytropic_index=gamma, **kwargs)
 
 

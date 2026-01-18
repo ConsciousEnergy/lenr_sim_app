@@ -87,11 +87,14 @@ resource "hostinger_vps_post_install_script" "initial_setup" {
     
     echo "Starting LENR Sim VPS initial setup..."
     
+    # Set non-interactive mode for apt
+    export DEBIAN_FRONTEND=noninteractive
+    
     # Update system packages
-    apt-get update && apt-get upgrade -y
+    apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
     
     # Install essential packages
-    apt-get install -y \
+    apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
       ufw \
       fail2ban \
       curl \

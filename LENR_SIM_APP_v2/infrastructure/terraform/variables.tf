@@ -1,9 +1,9 @@
 # LENR Simulation App - Terraform Variables
 
 variable "environment" {
-  description = "Environment name (prod, staging)"
+  description = "Environment name (prod, staging, dev)"
   type        = string
-  default     = "prod"
+  default     = "dev"
   
   validation {
     condition     = contains(["prod", "staging", "dev"], var.environment)

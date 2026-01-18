@@ -110,19 +110,29 @@ def cached_phonon_spectrum(
     # Calculate maximum frequency (Debye frequency)
     omega_d = KB * debye_temperature / HBAR
     
-    # Create frequency array
-    frequencies = np.linspace(0, omega_d, 1000)
+    # Create frequency array (bound away from zero to avoid division issues)
+    eps = 1e-8
+    frequencies = np.linspace(eps, omega_d, 1000)
     
     # Calculate density of states (simplified Debye model)
     densities = frequencies**2 / omega_d**3
     densities *= 9 * temperature**3 / debye_temperature**3
     
-    # Apply Bose-Einstein distribution with overflow protection
+    # Apply Bose-Einstein distribution with overflow protection and Taylor expansion
     x = HBAR * frequencies / (KB * temperature)
-    # Clip to prevent overflow in exp
-    x_safe = np.clip(x, 0, 100)
-    # For large x, use low-temperature approximation (exp(-x))
-    occupation = np.where(x > 100, np.exp(-np.clip(x, 0, 700)), 1 / (np.exp(x_safe) - 1 + 1e-30))
+    x_clamped = np.maximum(x, eps)  # Ensure x is bounded away from zero
+    
+    # Use Taylor expansion for small x: 1/(exp(x)-1) ≈ 1/x - 0.5 + x/12
+    x_taylor = 1e-3
+    occupation = np.where(
+        x_clamped < x_taylor,
+        1.0 / x_clamped - 0.5 + x_clamped / 12.0,  # Taylor expansion
+        np.where(
+            x_clamped > 100,
+            np.exp(-np.clip(x_clamped, 0, 700)),  # Low-temperature approximation
+            1.0 / (np.exp(x_clamped) - 1.0)  # Standard formula
+        )
+    )
     densities *= occupation
     
     return frequencies, densities

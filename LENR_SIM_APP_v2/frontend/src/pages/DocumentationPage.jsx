@@ -28,6 +28,9 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { APP_VERSION } from '../config/version';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+// API base URL configuration
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
 import CodeIcon from '@mui/icons-material/Code';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import BookIcon from '@mui/icons-material/Book';
@@ -181,7 +184,7 @@ const DocumentationPage = () => {
                   sx={{ mt: 1 }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open('http://localhost:8000/api/docs', '_blank', 'noopener,noreferrer');
+                    window.open(`${API_BASE_URL}/api/docs`, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   Open Swagger UI
@@ -472,7 +475,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
               <Typography variant="body2" paragraph>
-                Visit <MuiLink href="http://localhost:8000/api/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/api/docs</MuiLink> for 
+                Visit <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink> for 
                 the interactive Swagger UI with complete API documentation.
               </Typography>
               <Typography variant="body2" color="text.secondary">

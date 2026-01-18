@@ -297,10 +297,9 @@ class TestBubbleLatticeInteraction:
         # Use single cycle for more stable simulation
         result = model.simulate_collapse(num_cycles=1)
         
-        # If the simulation produces NaN (numerical instability), that's acceptable
-        # for edge cases, but we check that it's either finite or NaN (not inf)
-        assert np.isfinite(result.enhancement_factor) or np.isnan(result.enhancement_factor), \
-            f"Enhancement factor {result.enhancement_factor} is infinite (not allowed)"
+        # Require finite value only (NaN indicates a bug that should be fixed)
+        assert np.isfinite(result.enhancement_factor), \
+            f"Enhancement factor {result.enhancement_factor} must be finite (not inf or NaN)"
     
     def test_enhancement_capped(self, high_pressure_model: BubbleLatticeInteraction):
         """Test enhancement factor is capped at reasonable value."""

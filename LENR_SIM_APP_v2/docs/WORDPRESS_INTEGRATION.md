@@ -157,7 +157,24 @@ class LENR_Sim_Integration {
         ), $atts);
         
         $base_url = 'https://conscious.energy';
-        $src = $atts['page'] ? $base_url . '/' . $atts['page'] : $base_url;
+        
+        // Sanitize and validate page parameter to prevent path traversal and injection
+        $page = isset($atts['page']) ? sanitize_text_field($atts['page']) : '';
+        
+        // Whitelist allowed page patterns (alphanumeric, hyphens, forward slashes only)
+        // Reject any input containing path traversal patterns, URL schemes, or special characters
+        if (!empty($page)) {
+            // Remove any path traversal attempts
+            $page = str_replace(array('..', '//', '\\'), '', $page);
+            
+            // Validate against safe slug pattern (alphanumeric, hyphens, forward slashes)
+            if (!preg_match('/^[a-zA-Z0-9\-\/]+$/', $page)) {
+                // Invalid input - fall back to base URL
+                $page = '';
+            }
+        }
+        
+        $src = $page ? $base_url . '/' . $page : $base_url;
         
         ob_start();
         ?>
@@ -222,13 +239,16 @@ Add to WordPress `.htaccess` or nginx config:
 </IfModule>
 ```
 
-### X-Frame-Options
+### X-Frame-Options (Legacy - Deprecated)
 
-The app allows embedding from your domain:
+**Note:** The `X-Frame-Options: ALLOW-FROM` directive is deprecated and not supported by modern browsers. Use `Content-Security-Policy: frame-ancestors` instead (see above).
 
+For legacy browser compatibility, you may use:
 ```
-X-Frame-Options: ALLOW-FROM https://conscious.energy
+X-Frame-Options: SAMEORIGIN
 ```
+
+However, the `Content-Security-Policy: frame-ancestors` header (configured above) is the recommended modern approach and provides better control over iframe embedding.
 
 ---
 

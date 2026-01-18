@@ -8,7 +8,7 @@
 ## Active Files (DO NOT DELETE)
 ✅ **DashboardNew.jsx** - Line 14 in App.tsx: `import Dashboard from './pages/DashboardNew';`
 ✅ **SettingsPage.jsx** - Line 29 in App.tsx: `import SettingsPage from './pages/SettingsPage';`
-✅ **Home.tsx** - Updated with version config (used in routing)
+⚠️ **Home.tsx** - Not imported in App.tsx; verify if used in routing config or other files before deleting
 
 ## Files Safe to Delete (NOT imported in active App.tsx)
 
@@ -21,7 +21,7 @@
 ### HomePage Files:
 ❌ `pages/HomePage.js` - Not imported anywhere
 ❌ `pages/HomePage.jsx` - Not imported anywhere
-⚠️  **KEEP:** `pages/Home.tsx` - May be used elsewhere, just updated
+❌ `pages/Home.tsx` - Not imported in App.tsx; verify routing config before deletion
 
 ### Settings Files:
 ❌ `pages/Settings.tsx` - Not imported (SettingsPage.jsx is used instead)

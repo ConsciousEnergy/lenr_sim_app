@@ -529,7 +529,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     - **driving_pressure_bar** (float, 0.1-10): Acoustic driving pressure amplitude.
       Higher values = more violent collapse.
     - **frequency_khz** (float, 1-100): Acoustic frequency. 20-40 kHz typical for LENR.
-    - **ambient_temperature_k** (float, 200-500): Ambient liquid temperature in Kelvin.
+    - **ambient_temperature_k** (float, 200-600): Ambient liquid temperature in Kelvin.
+      Extended range supports high-temperature Ni-H experiments (Rossi-type).
     
     ### Material Configuration (material)
     - **host_material** (str): "palladium", "nickel", or "titanium"

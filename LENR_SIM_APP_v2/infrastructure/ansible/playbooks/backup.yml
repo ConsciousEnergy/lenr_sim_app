@@ -13,7 +13,9 @@
       ansible.builtin.file:
         path: "{{ backup_dir }}"
         state: directory
-        mode: '0755'
+        mode: '0700'
+        owner: root
+        group: root
         
     - name: Find PostgreSQL container
       ansible.builtin.shell: |
@@ -23,10 +25,23 @@
       
     - name: Create database backup
       ansible.builtin.shell: |
-        docker exec {{ postgres_container.stdout }} \
-          pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | \
+        set -o pipefail
+        umask 077
+        docker exec {{ postgres_container.stdout | quote }} \
+          pg_dump -U {{ postgres_user | default('lenr_app') | quote }} {{ postgres_db | default('lenr_sim') | quote }} | \
           gzip > {{ backup_dir }}/lenr_sim_{{ timestamp }}.sql.gz
+      args:
+        executable: /bin/bash
       when: postgres_container.stdout is defined and postgres_container.stdout != ""
+      register: backup_result
+      
+    - name: Set secure permissions on backup file
+      ansible.builtin.file:
+        path: "{{ backup_dir }}/lenr_sim_{{ timestamp }}.sql.gz"
+        mode: '0600'
+        owner: root
+        group: root
+      when: backup_result is defined and backup_result.rc == 0
       
     - name: Clean up old backups
       ansible.builtin.find:
@@ -44,16 +59,22 @@
       
     - name: List recent backups
       ansible.builtin.shell: |
-        ls -lh {{ backup_dir }}/*.sql.gz | tail -5
+        ls -lh {{ backup_dir }}/*.sql.gz 2>/dev/null | tail -5 || true
       register: backup_list
       changed_when: false
+      failed_when: false
       
     - name: Display backup information
       ansible.builtin.debug:
         msg: |
+          {% if backup_result is defined and backup_result.rc == 0 %}
           Backup complete!
           
           Recent backups:
-          {{ backup_list.stdout }}
+          {{ backup_list.stdout if backup_list.stdout else 'No backups found' }}
           
           Backup location: {{ backup_dir }}
+          {% else %}
+          Backup skipped or failed. Check logs for details.
+          Backup location: {{ backup_dir }}
+          {% endif %}

@@ -10,7 +10,8 @@ api_subdomain: "api"
 # Docker settings
 docker_compose_version: "2.24.5"
 docker_users:
-  - root
+  - deploy  # Non-root user for Docker operations
+  # Note: root access should use become: true in playbooks, not persistent group membership
 
 # Traefik settings
 traefik_version: "v3.0"

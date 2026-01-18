@@ -2,11 +2,12 @@
 # LENR Simulation App - Rollback Script
 # Usage: ./rollback.sh [production|staging]
 
-set -e
+set -euo pipefail
 
 ENVIRONMENT=${1:-production}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ANSIBLE_DIR="$PROJECT_ROOT/infrastructure/ansible"
 
 echo "=========================================="
@@ -26,7 +27,13 @@ rollback_backend() {
     
     cd "$ANSIBLE_DIR"
     
-    ansible all -i inventory.yml -m shell \
+    # Use environment-specific inventory if available, otherwise default
+    INVENTORY_FILE="inventory.yml"
+    if [ -f "inventory_${ENVIRONMENT}.yml" ]; then
+        INVENTORY_FILE="inventory_${ENVIRONMENT}.yml"
+    fi
+    
+    ansible all -i "$INVENTORY_FILE" -m shell \
         -a "docker service rollback lenr-sim_backend"
     
     echo -e "${GREEN}Backend service rolled back${NC}"
@@ -38,10 +45,23 @@ verify_rollback() {
     
     cd "$ANSIBLE_DIR"
     
-    # Check service status
-    ansible all -i inventory.yml -m shell \
-        -a "docker service ps lenr-sim_backend --no-trunc" \
-        | head -20
+    # Check service status (capture output and exit code separately)
+    INVENTORY_FILE="inventory.yml"
+    if [ -f "inventory_${ENVIRONMENT}.yml" ]; then
+        INVENTORY_FILE="inventory_${ENVIRONMENT}.yml"
+    fi
+    
+    SERVICE_OUTPUT=$(ansible all -i "$INVENTORY_FILE" -m shell \
+        -a "docker service ps lenr-sim_backend --no-trunc" 2>&1)
+    ANSIBLE_EXIT=$?
+    
+    if [ $ANSIBLE_EXIT -eq 0 ]; then
+        echo "$SERVICE_OUTPUT" | head -20
+    else
+        echo -e "${RED}Error checking service status${NC}"
+        echo "$SERVICE_OUTPUT"
+        return 1
+    fi
     
     echo -e "${GREEN}Rollback verification complete${NC}"
 }

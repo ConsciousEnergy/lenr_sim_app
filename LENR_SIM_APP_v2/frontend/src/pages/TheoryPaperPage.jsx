@@ -323,7 +323,7 @@ const TheoryPaperPage = () => {
         {/* Tab 0: Full Paper */}
         <TabPanel value={tabValue} index={0}>
           {/* Abstract */}
-          <Accordion expanded={expandedSection === 'abstract'} onChange={handleChange('abstract')} defaultExpanded>
+          <Accordion expanded={expandedSection === 'abstract'} onChange={handleChange('abstract')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Abstract

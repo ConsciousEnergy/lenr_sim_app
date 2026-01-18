@@ -79,11 +79,22 @@ All Infrastructure as Code (IaC) files have been created and are ready for deplo
 
 - [ ] Create Cloudflare account and add domain
 - [ ] Generate Cloudflare API token
-- [ ] Note Cloudflare Account ID and Zone ID
+- [ ] **Note Cloudflare Account ID and Zone ID:**
+  - **Account ID:** Found in Cloudflare Dashboard → Right sidebar on Account Home page
+  - **Zone ID:** Found in Cloudflare Dashboard → Select your domain → Overview page → Right sidebar
+  - See: https://developers.cloudflare.com/fundamentals/get-started/basic-tasks/find-account-and-zone-ids/
 - [ ] Create Hostinger account
 - [ ] Purchase Hostinger VPS plan (KVM 2 recommended)
 - [ ] Generate Hostinger API token
-- [ ] Generate SSH key pair: `ssh-keygen -t ed25519`
+- [ ] **Generate SSH key pair:**
+  ```bash
+  ssh-keygen -t ed25519 -C "lenr-sim-deploy" -f ~/.ssh/lenr-sim-deploy
+  ```
+  - **Note:** You will be prompted for a passphrase. Choose a strong passphrase to protect your private key.
+  - **Files created:**
+    - Private key: `~/.ssh/lenr-sim-deploy` (keep secure, never share)
+    - Public key: `~/.ssh/lenr-sim-deploy.pub` (upload to Hostinger VPS or authorized_keys)
+  - **Upload public key:** Copy `~/.ssh/lenr-sim-deploy.pub` content and add to Hostinger VPS control panel or `~/.ssh/authorized_keys` on the server
 
 ### 2. Configure Variables
 
@@ -97,10 +108,16 @@ cp terraform.tfvars.example terraform.tfvars
 
 ```bash
 # Option A: Use automated script
-cd infrastructure/scripts
+cd LENR_SIM_APP_v2/infrastructure/terraform
+# ... terraform commands ...
+cd ../scripts
 ./deploy.sh production
 
 # Option B: Manual deployment (see DEPLOYMENT.md)
+cd LENR_SIM_APP_v2/infrastructure/terraform
+# ... terraform commands ...
+cd ../ansible
+# ... ansible commands ...
 ```
 
 ---
@@ -114,8 +131,14 @@ After deployment, verify:
 - [ ] Docker Swarm is active
 - [ ] All services are running: `docker stack services lenr-sim`
 - [ ] SSL certificate issued (wait 2-5 minutes)
-- [ ] API health check passes: `curl https://api.conscious.energy/api/health`
-- [ ] Frontend loads: `curl -I https://conscious.energy`
+- [ ] API health check passes: `curl https://{API_DOMAIN}/api/health` (replace `{API_DOMAIN}` with your actual API domain)
+- [ ] Frontend loads: `curl -I https://{FRONTEND_DOMAIN}` (replace `{FRONTEND_DOMAIN}` with your actual frontend domain)
+  
+  **Example:** If your domains are `api.conscious.energy` and `conscious.energy`:
+  ```bash
+  curl https://api.conscious.energy/api/health
+  curl -I https://conscious.energy
+  ```
 - [ ] WordPress iframe embed works
 
 ---
