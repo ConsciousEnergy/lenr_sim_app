@@ -454,8 +454,19 @@ Integration of the unified theoretical framework paper into the application, mak
 - Improved user experience with consistent navigation and styling
 
 ---
+## Issue 9 [Database and UI/UX] Analytics Dashboard Page & Saved Simulations
+**Labels:** `UI`, `UX`, `database`
 
-## Issue 9: [Infrastructure] Public Deployment Infrastructure
+### Description
+
+When using our simulations we need to be able to save the simulations in our application with a database
+
+  1. Our simulations are not being saved
+  2. Our Analytics Dashboard page needs to show past user simulations
+  
+---
+
+## Issue 10: [Infrastructure] Public Deployment Infrastructure
 
 **Labels:** `infrastructure`, `deployment`, `enhancement`
 
