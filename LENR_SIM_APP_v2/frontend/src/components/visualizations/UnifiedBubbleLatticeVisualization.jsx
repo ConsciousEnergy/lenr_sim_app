@@ -69,6 +69,37 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
     return null;
   }
   
+  // Handle out-of-range times: clamp to nearest segment
+  if (timeline.length < 2) {
+    return timeline[0];
+  }
+  
+  // If before first point, return first point
+  if (normalizedTime <= timeline[0].normalized_time) {
+    return timeline[0];
+  }
+  
+  // If after last point, use last two points for interpolation
+  if (normalizedTime >= timeline[timeline.length - 1].normalized_time) {
+    const lowerIdx = timeline.length - 2;
+    const upperIdx = timeline.length - 1;
+    const lower = timeline[lowerIdx];
+    const upper = timeline[upperIdx];
+    const range = upper.normalized_time - lower.normalized_time;
+    const t = range > 0 ? (normalizedTime - lower.normalized_time) / range : 1.0;
+    
+    const lerp = (a, b, t) => a + (b - a) * t;
+    return {
+      phase: upper.phase,
+      enhancement: lerp(lower.enhancement, upper.enhancement, t),
+      enhancement_breakdown: {
+        total: lerp(lower.enhancement_breakdown?.total || 1, upper.enhancement_breakdown?.total || 1, t),
+        screening: lerp(lower.enhancement_breakdown?.screening || 1, upper.enhancement_breakdown?.screening || 1, t),
+        phonon: lerp(lower.enhancement_breakdown?.phonon || 1, upper.enhancement_breakdown?.phonon || 1, t),
+      }
+    };
+  }
+  
   // Find the two nearest timeline points for interpolation
   let lowerIdx = 0;
   let upperIdx = timeline.length - 1;
@@ -164,6 +195,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const [cycleProgress, setCycleProgress] = useState(0);
   const [collapseCount, setCollapseCount] = useState(0);
   const [usingAPIData, setUsingAPIData] = useState(false); // Tracks if visualization uses API physics data
+  const usingAPIDataRef = useRef(false); // Ref to track previous value and avoid unnecessary state updates
   
   // Physics state for real-time display
   const [currentEnhancement, setCurrentEnhancement] = useState(1.0);
@@ -1506,8 +1538,12 @@ const UnifiedBubbleLatticeVisualization = ({
       ? interpolateFromAPITimeline(simulationData.enhancement_timeline, normalizedTime)
       : null;
     
-    // Track whether we're using API data
-    setUsingAPIData(!!apiData);
+    // Track whether we're using API data (only update state if changed)
+    const nowUsingAPI = !!apiData;
+    if (nowUsingAPI !== usingAPIDataRef.current) {
+      setUsingAPIData(nowUsingAPI);
+      usingAPIDataRef.current = nowUsingAPI;
+    }
     
     let radius, phase, compressionRatio, fieldStrength, temperature, pressure, enhancements;
     

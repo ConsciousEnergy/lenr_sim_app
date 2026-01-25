@@ -15,8 +15,7 @@ import {
 import {
   ExperimentOutlined,
   SettingOutlined,
-  RocketOutlined,
-  CheckCircleOutlined
+  RocketOutlined
 } from '@ant-design/icons';
 import ParameterControls from '../components/ParameterControls';
 

@@ -1608,7 +1608,8 @@ async def calculate_lawson_criterion(request: LawsonCriterionRequest):
             "ignition_threshold_formatted": f"{threshold:.2e} m⁻³ keV s",
             "ignition_fraction": min(ignition_fraction, 10.0),  # Cap for display
             "ignition_percentage": min(ignition_fraction * 100, 1000.0),
-            "estimated_q_value": q_value if q_value != float('inf') else "Ignition",
+            "estimated_q_value": q_value if np.isfinite(q_value) else None,
+            "is_ignition": q_value == float('inf') or not np.isfinite(q_value),
             "status": status,
             "fusion_power_density_MW_m3": fusion_power_density / 1e6,
             "bremsstrahlung_loss_MW_m3": brem_loss / 1e6,

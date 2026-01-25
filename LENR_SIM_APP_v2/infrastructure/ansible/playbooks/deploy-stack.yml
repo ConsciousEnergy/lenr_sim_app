@@ -1,0 +1,208 @@
+---
+# LENR Simulation App - Deploy Docker Stack Playbook
+# Deploys the application stack to Docker Swarm
+
+- name: Deploy LENR Simulation App Stack
+  hosts: all
+  become: true
+  vars:
+    stack_name: lenr-sim
+    app_domain: "{{ app_domain | default('conscious.energy') }}"
+    api_subdomain: "{{ api_subdomain | default('api') }}"
+    traefik_acme_email: "{{ traefik_acme_email | default('diadon@conscious.energy') }}"
+    
+  tasks:
+    # ==========================================================================
+    # Pre-deployment Validation
+    # ==========================================================================
+    
+    - name: Verify Docker Swarm is active
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_status
+      changed_when: false
+      failed_when: swarm_status.stdout != "active"
+      
+    - name: Check if stack is already deployed
+      ansible.builtin.command: docker stack ls --format '{{ "{{.Name}}" }}'
+      register: existing_stacks
+      changed_when: false
+      
+    # ==========================================================================
+    # Create Required Directories
+    # ==========================================================================
+    
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+        
+    - name: Ensure Traefik directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+    
+    # ==========================================================================
+    # Copy Stack Files
+    # ==========================================================================
+    
+    - name: Copy Docker stack file
+      ansible.builtin.template:
+        src: ../templates/docker-stack.yml.j2
+        dest: /opt/lenr-sim/docker-stack.yml
+        mode: '0644'
+        
+    - name: Copy Traefik configuration
+      ansible.builtin.template:
+        src: ../templates/traefik.yml.j2
+        dest: /opt/lenr-sim/traefik/traefik.yml
+        mode: '0644'
+        
+    - name: Create Traefik dynamic configuration
+      ansible.builtin.template:
+        src: ../templates/traefik-dynamic.yml.j2
+        dest: /opt/lenr-sim/traefik/dynamic.yml
+        mode: '0644'
+        
+    # ==========================================================================
+    # Create Docker Secrets
+    # ==========================================================================
+    
+    - name: Generate PostgreSQL password if not set
+      ansible.builtin.set_fact:
+        postgres_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when: postgres_password is not defined
+      
+    - name: Check if postgres_password secret exists
+      ansible.builtin.command: docker secret ls --format '{{ "{{.Name}}" }}'
+      register: existing_secrets
+      changed_when: false
+      
+    - name: Create PostgreSQL password secret
+      ansible.builtin.command:
+        cmd: docker secret create postgres_password -
+        stdin: "{{ postgres_password }}"
+      when: "'postgres_password' not in existing_secrets.stdout"
+      no_log: true
+      
+    - name: Generate API secret key if not set
+      ansible.builtin.set_fact:
+        api_secret_key: "{{ lookup('password', '/dev/null length=48 chars=ascii_letters,digits') }}"
+      when: api_secret_key is not defined
+      no_log: true
+      
+    - name: Create API secret key secret
+      ansible.builtin.command:
+        cmd: docker secret create api_secret_key -
+        stdin: "{{ api_secret_key }}"
+      when: "'api_secret_key' not in existing_secrets.stdout"
+      no_log: true
+      
+    # ==========================================================================
+    # Deploy Stack
+    # ==========================================================================
+    
+    - name: Deploy Docker stack
+      ansible.builtin.command: >
+        docker stack deploy 
+        --compose-file /opt/lenr-sim/docker-stack.yml 
+        --with-registry-auth
+        {{ stack_name }}
+      register: deploy_result
+      
+    - name: Wait for services to start
+      ansible.builtin.command: docker stack services {{ stack_name }} --format '{{ "{{.Replicas}}" }}'
+      register: services_status
+      until: "'0/' not in services_status.stdout"
+      retries: 30
+      delay: 10
+      changed_when: false
+      
+    # ==========================================================================
+    # Verification
+    # ==========================================================================
+    
+    - name: Get stack services status
+      ansible.builtin.command: docker stack services {{ stack_name }}
+      register: stack_services
+      changed_when: false
+      
+    - name: Print deployment summary
+      ansible.builtin.debug:
+        msg: |
+          Deployment Complete!
+          
+          Stack: {{ stack_name }}
+          Domain: {{ app_domain }}
+          API URL: https://{{ api_subdomain }}.{{ app_domain }}
+          
+          Services:
+          {{ stack_services.stdout }}
+          
+          Next steps:
+          1. Verify DNS records point to this server
+          2. Wait for Let's Encrypt certificates
+          3. Test API endpoints
+          
+    # ==========================================================================
+    # Optional: Backup Database
+    # ==========================================================================
+    
+    - name: Ensure logs directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/logs
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+        
+    - name: Create backup script
+      ansible.builtin.copy:
+        content: |
+          #!/bin/bash
+          # LENR Sim Database Backup Script
+          set -euo pipefail
+          
+          BACKUP_DIR="/opt/lenr-sim/backups"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Create backup directory if it doesn't exist
+          mkdir -p "$BACKUP_DIR"
+          
+          # Find postgres container
+          CONTAINER=$(docker ps -q -f name={{ stack_name }}_postgres)
+          
+          if [ -z "$CONTAINER" ]; then
+            echo "Error: PostgreSQL container not found" >&2
+            exit 1
+          fi
+          
+          # Create backup with error checking
+          TEMP_FILE="${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz.tmp"
+          if ! docker exec "$CONTAINER" pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | gzip > "$TEMP_FILE"; then
+            echo "Error: pg_dump or gzip failed" >&2
+            rm -f "$TEMP_FILE"
+            exit 1
+          fi
+          
+          # Only move temp file to final location on success
+          mv "$TEMP_FILE" "${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+          
+          # Keep only last 7 days of backups
+          find "$BACKUP_DIR" -name "*.sql.gz" -mtime +7 -delete || true
+          
+          echo "Backup created: ${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+        dest: /opt/lenr-sim/backup.sh
+        mode: '0755'
+        
+    - name: Setup daily backup cron job
+      ansible.builtin.cron:
+        name: "LENR Sim Database Backup"
+        minute: "0"
+        hour: "3"
+        job: "/opt/lenr-sim/backup.sh >> /opt/lenr-sim/logs/backup.log 2>&1"

@@ -134,7 +134,7 @@ const VisualizationDebugPage = () => {
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -146,7 +146,7 @@ const VisualizationDebugPage = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Typography variant="body2" sx={{ mr: 2 }}>
                     Rendering Complexity:
@@ -179,7 +179,7 @@ const VisualizationDebugPage = () => {
             </Grid>
             
             <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <Box sx={{ height: 400, border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'hidden' }}>
                   {showErrorHandler ? (
                     <ThreeJsErrorHandler onError={handleError}>
@@ -199,7 +199,7 @@ const VisualizationDebugPage = () => {
                 </Box>
               </Grid>
               
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="subtitle1">
@@ -295,7 +295,7 @@ const VisualizationDebugPage = () => {
             </Typography>
             
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
@@ -315,7 +315,7 @@ const VisualizationDebugPage = () => {
                 </Card>
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
@@ -350,7 +350,7 @@ const VisualizationDebugPage = () => {
             </Typography>
             
             <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
@@ -369,7 +369,7 @@ const VisualizationDebugPage = () => {
                 </Card>
               </Grid>
               
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
@@ -389,7 +389,7 @@ const VisualizationDebugPage = () => {
                 </Card>
               </Grid>
               
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>

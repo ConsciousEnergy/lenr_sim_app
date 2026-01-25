@@ -184,39 +184,42 @@ async def run_unified_simulation(request: SimulationRequest):
         model = UnifiedLENRModel(config)
         result = model.run_simulation()
         
-        # Format response
+        # Format response - ensure all numpy types are converted to Python native types
         enhancement_breakdown = {
             e.name: {
-                "value": e.value,
-                "threshold_met": e.threshold_met,
-                "equation": e.equation,
-                "category": e.category,
-                "parameters": e.parameters
+                "value": float(e.value),
+                "threshold_met": bool(e.threshold_met),
+                "equation": str(e.equation),
+                "category": str(e.category),
+                "parameters": {k: float(v) for k, v in e.parameters.items()}
             }
             for e in result.enhancement_breakdown
         }
         
+        # Convert thresholds to Python bools
+        thresholds = {k: bool(v) for k, v in result.thresholds_met.items()}
+        
         return SimulationResponse(
             success=True,
             enhancement={
-                "total": result.total_enhancement,
+                "total": float(result.total_enhancement),
                 "breakdown": enhancement_breakdown
             },
             observables={
-                "excess_heat_watts": result.excess_heat_watts,
-                "tunneling_probability": result.tunneling_probability,
-                "reaction_rate": result.reaction_rate,
-                "helium4_rate": result.helium4_rate,
-                "neutron_rate": result.neutron_rate
+                "excess_heat_watts": float(result.excess_heat_watts),
+                "tunneling_probability": float(result.tunneling_probability),
+                "reaction_rate": float(result.reaction_rate),
+                "helium4_rate": float(result.helium4_rate),
+                "neutron_rate": float(result.neutron_rate)
             },
-            thresholds=result.thresholds_met,
+            thresholds=thresholds,
             time_series={
-                "time": result.time_points,
-                "heat_output": result.heat_output,
-                "enhancement": result.enhancement_history
+                "time": [float(x) for x in result.time_points],
+                "heat_output": [float(x) for x in result.heat_output],
+                "enhancement": [float(x) for x in result.enhancement_history]
             },
-            confidence=result.confidence,
-            computation_time=result.computation_time
+            confidence=float(result.confidence),
+            computation_time=float(result.computation_time)
         )
         
     except Exception as e:
@@ -264,10 +267,24 @@ async def get_mechanisms(
         model = UnifiedLENRModel(config)
         summary = model.get_mechanism_summary()
         
+        # Convert numpy types to Python native types for JSON serialization
+        mechanisms = [
+            {
+                "name": str(m["name"]),
+                "value": float(m["value"]),
+                "threshold_met": bool(m["threshold_met"]),
+                "equation": str(m["equation"]),
+                "category": str(m["category"]),
+                "parameters": {k: float(v) for k, v in m["parameters"].items()}
+            }
+            for m in summary["mechanisms"]
+        ]
+        thresholds = {k: bool(v) for k, v in summary["thresholds"].items()}
+        
         return MechanismResponse(
-            mechanisms=summary["mechanisms"],
-            total_enhancement=summary["total_enhancement"],
-            thresholds=summary["thresholds"]
+            mechanisms=mechanisms,
+            total_enhancement=float(summary["total_enhancement"]),
+            thresholds=thresholds
         )
         
     except Exception as e:
@@ -512,7 +529,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     - **driving_pressure_bar** (float, 0.1-10): Acoustic driving pressure amplitude.
       Higher values = more violent collapse.
     - **frequency_khz** (float, 1-100): Acoustic frequency. 20-40 kHz typical for LENR.
-    - **ambient_temperature_k** (float, 200-500): Ambient liquid temperature in Kelvin.
+    - **ambient_temperature_k** (float, 200-600): Ambient liquid temperature in Kelvin.
+      Extended range supports high-temperature Ni-H experiments (Rossi-type).
     
     ### Material Configuration (material)
     - **host_material** (str): "palladium", "nickel", or "titanium"

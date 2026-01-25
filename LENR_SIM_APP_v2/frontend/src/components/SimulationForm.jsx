@@ -65,7 +65,7 @@ const SimulationForm = ({ onSubmit }) => {
       
       <Grid container spacing={3}>
         {/* Temperature */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth>
             <TextField
               id="temperature-input"
@@ -93,7 +93,7 @@ const SimulationForm = ({ onSubmit }) => {
         </Grid>
         
         {/* Pressure */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth>
             <TextField
               id="pressure-input"
@@ -121,7 +121,7 @@ const SimulationForm = ({ onSubmit }) => {
         </Grid>
         
         {/* Material */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth>
             <InputLabel id="material-label" htmlFor="material-select">Material</InputLabel>
             <Select
@@ -150,7 +150,7 @@ const SimulationForm = ({ onSubmit }) => {
         </Grid>
         
         {/* Duration */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth>
             <TextField
               id="duration-input"
@@ -178,7 +178,7 @@ const SimulationForm = ({ onSubmit }) => {
         </Grid>
         
         {/* Time Step */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth>
             <TextField
               id="time-step-input"

@@ -112,6 +112,15 @@ def calculate_tunneling_enhancement(
     Returns:
         Dictionary with enhancement factors
     """
+    # Validate temperature to avoid division by zero
+    if temperature <= 0:
+        # Return zero enhancement for invalid temperature
+        return {
+            "single_phonon_enhancement": 1.0,
+            "coherent_enhancement": 1.0,
+            "total_enhancement": 1.0
+        }
+    
     # Convert energy to Joules
     energy_j = energy * EV_TO_J
     

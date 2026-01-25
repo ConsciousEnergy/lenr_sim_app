@@ -288,7 +288,7 @@ function ComparisonView({
         <CardContent>
           <Grid container spacing={3}>
             {/* System 1 Selection */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <FormControl fullWidth>
                 <InputLabel>System 1</InputLabel>
                 <Select
@@ -320,7 +320,7 @@ function ComparisonView({
             </Grid>
             
             {/* System 2 Selection */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <FormControl fullWidth>
                 <InputLabel>System 2</InputLabel>
                 <Select
@@ -352,7 +352,7 @@ function ComparisonView({
             </Grid>
             
             {/* Temperature Control */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Typography gutterBottom>Temperature: {temperature} K</Typography>
               <Slider
                 value={temperature}
@@ -369,7 +369,7 @@ function ComparisonView({
             </Grid>
             
             {/* Driving Pressure Control */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Typography gutterBottom>
                 Driving Pressure: {(drivingPressure / 1e5).toFixed(1)} bar
               </Typography>
@@ -409,14 +409,14 @@ function ComparisonView({
         <>
           {/* Key Metrics */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <SystemSummaryCard
                 systemId={system1}
                 preset={SYSTEM_PRESETS[system1]}
                 data={comparisonData.results?.[system1]}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <SystemSummaryCard
                 systemId={system2}
                 preset={SYSTEM_PRESETS[system2]}
@@ -428,7 +428,7 @@ function ComparisonView({
           {/* Charts */}
           <Grid container spacing={3}>
             {/* Bar Chart Comparison */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardHeader 
                   title="Enhancement Factor Comparison (log₁₀)" 
@@ -451,7 +451,7 @@ function ComparisonView({
             </Grid>
             
             {/* Radar Chart Comparison */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card>
                 <CardHeader 
                   title="Enhancement Mechanism Profile" 
@@ -536,7 +536,7 @@ function SystemSummaryCard({ systemId, preset, data }) {
       />
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="text.secondary">
               Total Enhancement
             </Typography>
@@ -544,7 +544,7 @@ function SystemSummaryCard({ systemId, preset, data }) {
               {formatScientific(data?.total_enhancement)}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="text.secondary">
               Compression Ratio
             </Typography>
@@ -552,7 +552,7 @@ function SystemSummaryCard({ systemId, preset, data }) {
               {data?.compression_ratio?.toFixed(1) || 'N/A'}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="text.secondary">
               Max Temperature
             </Typography>
@@ -560,7 +560,7 @@ function SystemSummaryCard({ systemId, preset, data }) {
               {data?.max_temperature?.toFixed(0) || 'N/A'} K
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="text.secondary">
               Peak Field
             </Typography>

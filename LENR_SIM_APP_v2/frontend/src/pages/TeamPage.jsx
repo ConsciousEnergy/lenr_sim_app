@@ -17,6 +17,7 @@ import {
   alpha
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import { APP_VERSION } from '../config/version';
 import {
   GitHub as GitHubIcon,
   LinkedIn as LinkedInIcon,
@@ -52,7 +53,7 @@ const contributors = [
 // Project info
 const projectInfo = {
   name: 'LENR Simulation Platform',
-  version: '2.1.0-beta',
+  version: APP_VERSION,
   license: 'GPL-3.0',
   repository: 'https://github.com/ConsciousEnergy/lenr_sim_app',
   website: 'https://conscious.energy'
@@ -269,7 +270,7 @@ const TeamPage = () => {
           <Button
             variant="contained"
             startIcon={<EmailIcon />}
-            href="mailto:info@conscious.energy"
+            href="mailto:diadon@conscious.energy"
             sx={{ mt: 2 }}
           >
             Contact Us

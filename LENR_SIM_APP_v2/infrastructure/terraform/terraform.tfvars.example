@@ -1,0 +1,54 @@
+# LENR Simulation App - Terraform Variables
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to version control!
+
+# ==============================================================================
+# Environment Configuration
+# ==============================================================================
+
+environment = "prod"
+domain      = "conscious.energy"
+
+# ==============================================================================
+# Cloudflare Configuration
+# ==============================================================================
+
+# Get these from Cloudflare dashboard:
+# 1. API Token: Account Settings > API Tokens > Create Token
+#    - Needs permissions: Zone:DNS, Zone:Page Rules, Account:R2
+# 2. Account ID: Account Home > Account ID (right sidebar)
+# 3. Zone ID: Domain Overview > Zone ID (right sidebar)
+
+cloudflare_api_token  = "your-cloudflare-api-token"
+cloudflare_account_id = "your-cloudflare-account-id"
+cloudflare_zone_id    = "your-cloudflare-zone-id"
+
+# ==============================================================================
+# Hostinger Configuration
+# ==============================================================================
+
+# Get API token from: https://www.hostinger.com/my-account/api
+hostinger_api_token = "your-hostinger-api-token"
+
+# SSH public key for server access
+# Generate with: ssh-keygen -t ed25519 -C "lenr-sim-deploy"
+ssh_public_key = "ssh-ed25519 AAAA... your@email.com"
+
+# VPS Plan Options:
+# - "hostingercom-vps-kvm1-usd-1m": 1 vCPU, 4GB RAM, 50GB NVMe  (~$4.99/mo)
+# - "hostingercom-vps-kvm2-usd-1m": 2 vCPU, 8GB RAM, 100GB NVMe (~$6.99/mo) [Recommended]
+# - "hostingercom-vps-kvm4-usd-1m": 4 vCPU, 16GB RAM, 200GB NVMe (~$12.99/mo)
+vps_plan = "hostingercom-vps-kvm2-usd-1m"
+
+# Data Center Options:
+# 1 = North America
+# 2 = Europe  
+# 3 = Asia
+data_center_id = 1
+
+# ==============================================================================
+# GitHub Configuration (for Cloudflare Pages)
+# ==============================================================================
+
+github_owner = "ConsciousEnergy"
+github_repo  = "lenr_sim_app"

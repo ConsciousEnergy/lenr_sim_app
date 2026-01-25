@@ -9,36 +9,40 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AppLayoutFixed from './components/AppLayoutFixed';
 import './App.css';
 
-// Pages - Simulation Workflow
-// import Dashboard from './pages/Dashboard';
+// Pages - Simulation Workflow (Eager load for immediate access)
 import Dashboard from './pages/DashboardNew';
 import SimulationDetail from './pages/SimulationDetail';
-import NewSimulation from './pages/NewSimulation';
-import QuantumTunnelingPage from './pages/QuantumTunnelingPage';
-import FusionSimulationPage from './pages/FusionSimulationPage';
-import LENRSimulationPage from './pages/LENRSimulationPage';
-import BubbleFusionPage from './pages/BubbleFusionPage';
-import UnifiedTheoryPage from './pages/UnifiedTheoryPage';
 
-// Pages - Information & Theory
+// Pages - Information & Theory (Eager load for quick access)
 import AboutPage from './pages/AboutPage';
-import TheoryPage from './pages/TheoryPage';
-import DocumentationPage from './pages/DocumentationPage';
-import AnalyticsPage from './pages/AnalyticsPage';
 import TeamPage from './pages/TeamPage';
-import SettingsPage from './pages/SettingsPage';
 
-// Pages - Advanced Visualization & Physics
-import RealTimeVisualizationPage from './pages/RealTimeVisualizationPage';
-import PhysicsSimulationDashboardPage from './pages/PhysicsSimulationDashboardPage';
-import PhysicsVisualizationPage from './pages/PhysicsVisualizationPage';
-import ThreeJsTestPage from './pages/ThreeJsTestPage';
-import VisualizationDebugPage from './pages/VisualizationDebugPage';
-import VisualizationTest from './pages/VisualizationTest';
+// Pages - Simulation Workflow (Lazy load heavy pages)
+const NewSimulation = lazy(() => import('./pages/NewSimulation'));
+const QuantumTunnelingPage = lazy(() => import('./pages/QuantumTunnelingPage'));
+const FusionSimulationPage = lazy(() => import('./pages/FusionSimulationPage'));
+const LENRSimulationPage = lazy(() => import('./pages/LENRSimulationPage'));
+const BubbleFusionPage = lazy(() => import('./pages/BubbleFusionPage'));
+const UnifiedTheoryPage = lazy(() => import('./pages/UnifiedTheoryPage'));
 
-// Components
-import ComponentShowcase from './components/ui/ComponentShowcase';
-import DiagnosticTool from './debug/DiagnosticTool';
+// Pages - Information & Theory (Lazy load documentation-heavy pages)
+const TheoryPage = lazy(() => import('./pages/TheoryPage'));
+const TheoryPaperPage = lazy(() => import('./pages/TheoryPaperPage'));
+const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+
+// Pages - Advanced Visualization & Physics (All lazy - heavy Three.js dependencies)
+const RealTimeVisualizationPage = lazy(() => import('./pages/RealTimeVisualizationPage'));
+const PhysicsSimulationDashboardPage = lazy(() => import('./pages/PhysicsSimulationDashboardPage'));
+const PhysicsVisualizationPage = lazy(() => import('./pages/PhysicsVisualizationPage'));
+const ThreeJsTestPage = lazy(() => import('./pages/ThreeJsTestPage'));
+const VisualizationDebugPage = lazy(() => import('./pages/VisualizationDebugPage'));
+const VisualizationTest = lazy(() => import('./pages/VisualizationTest'));
+
+// Components (Lazy load dev/debug tools)
+const ComponentShowcase = lazy(() => import('./components/ui/ComponentShowcase'));
+const DiagnosticTool = lazy(() => import('./debug/DiagnosticTool'));
 
 // Lazy load heavy visualization components
 const LazyLatticeTest = lazy(() => import('./visualization/components/LatticeTest'));
@@ -122,12 +126,16 @@ const AppContent = () => {
             } />
             <Route path="/simulations" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <NewSimulation />
+                <Suspense fallback={<LoadingFallback />}>
+                  <NewSimulation />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/new-simulation" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <NewSimulation />
+                <Suspense fallback={<LoadingFallback />}>
+                  <NewSimulation />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/simulation/:simulationId" element={
@@ -139,22 +147,30 @@ const AppContent = () => {
             {/* Specific Physics Simulation Pages - Use AppLayoutFixed */}
             <Route path="/quantum-tunneling" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <QuantumTunnelingPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <QuantumTunnelingPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/fusion-simulation" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <FusionSimulationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <FusionSimulationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/lenr-simulation" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <LENRSimulationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <LENRSimulationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/bubble-fusion" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <BubbleFusionPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <BubbleFusionPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             
@@ -168,27 +184,37 @@ const AppContent = () => {
             } />
             <Route path="/real-time-visualization" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <RealTimeVisualizationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <RealTimeVisualizationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/physics-dashboard" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <PhysicsSimulationDashboardPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <PhysicsSimulationDashboardPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/physics-visualization" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <PhysicsVisualizationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <PhysicsVisualizationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/three-test" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <ThreeJsTestPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ThreeJsTestPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/visualization-debug" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <VisualizationDebugPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <VisualizationDebugPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             
@@ -200,27 +226,44 @@ const AppContent = () => {
             } />
             <Route path="/theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <TheoryPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <TheoryPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/theory-paper" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <TheoryPaperPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/unified-theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <UnifiedTheoryPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <UnifiedTheoryPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/analytics" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <AnalyticsPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AnalyticsPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/documentation" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <DocumentationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <DocumentationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/docs" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <DocumentationPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <DocumentationPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/team" element={
@@ -230,24 +273,32 @@ const AppContent = () => {
             } />
             <Route path="/settings" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <SettingsPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <SettingsPage />
+                </Suspense>
               </AppLayoutFixed>
             } />
             
             {/* Development & Testing Pages */}
             <Route path="/diagnostics" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <DiagnosticTool />
+                <Suspense fallback={<LoadingFallback />}>
+                  <DiagnosticTool />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/component-showcase" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <ComponentShowcase />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ComponentShowcase />
+                </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/visualization-test" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <VisualizationTest />
+                <Suspense fallback={<LoadingFallback />}>
+                  <VisualizationTest />
+                </Suspense>
               </AppLayoutFixed>
             } />
           </Routes>

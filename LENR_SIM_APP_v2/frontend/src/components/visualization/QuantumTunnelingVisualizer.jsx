@@ -164,7 +164,7 @@ const QuantumTunnelingVisualizer = ({
       setLoading(false);
     }
   }, [potentialType, z1, z2, temperature, pressure, electronScreeningFactor, 
-      energyKeV, showWaveFunction, onProbabilityCalculated, reducedMass]);
+      energyKeV, onProbabilityCalculated, reducedMass]);
 
   // Calculate data when parameters change
   useEffect(() => {

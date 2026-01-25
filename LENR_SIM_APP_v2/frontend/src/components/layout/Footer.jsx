@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Container, Typography, Link, Divider } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
+import { APP_VERSION } from '../../config/version';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -43,7 +44,7 @@ const Footer = () => {
           </Box>
           
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: { xs: 2, md: 0 } }}>
-            Version 2.0.0
+            Version {APP_VERSION}
           </Typography>
         </Box>
       </Container>

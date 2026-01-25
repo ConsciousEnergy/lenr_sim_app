@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -24,11 +24,12 @@ import {
   alpha
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import { Link, useNavigate } from 'react-router-dom';
+import { APP_VERSION } from '../config/version';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import BookIcon from '@mui/icons-material/Book';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SecurityIcon from '@mui/icons-material/Security';
 import ApiIcon from '@mui/icons-material/Api';
@@ -38,12 +39,48 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
 
+// API base URL configuration
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const DocumentationPage = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState('getting-started');
+  
+  // Refs for scrolling to accordion sections
+  const gettingStartedRef = useRef(null);
+  const apiRef = useRef(null);
+  const troubleshootingRef = useRef(null);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
+  };
+  
+  // Scroll to accordion and expand it
+  const scrollToSection = (sectionId, ref) => {
+    if (ref && ref.current) {
+      setExpanded(sectionId);
+      setTimeout(() => {
+        ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+  
+  // Handle card clicks
+  const handleQuickStartClick = () => {
+    scrollToSection('getting-started', gettingStartedRef);
+  };
+  
+  const handleApiReferenceClick = () => {
+    scrollToSection('api', apiRef);
+  };
+  
+  const handleDebuggingClick = () => {
+    scrollToSection('troubleshooting', troubleshootingRef);
+  };
+
+  const handleTheoryClick = () => {
+    navigate('/theory-paper');
   };
 
   return (
@@ -95,7 +132,20 @@ const DocumentationPage = () => {
         {/* Quick Links */}
         <Grid container spacing={2} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ height: '100%', background: alpha(theme.palette.primary.main, 0.05) }}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                background: alpha(theme.palette.primary.main, 0.05),
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': { 
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                  background: alpha(theme.palette.primary.main, 0.1)
+                }
+              }}
+              onClick={handleQuickStartClick}
+            >
               <CardContent sx={{ textAlign: 'center' }}>
                 <RocketLaunchIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                 <Typography variant="h6" gutterBottom>Quick Start</Typography>
@@ -106,29 +156,83 @@ const DocumentationPage = () => {
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ height: '100%', background: alpha(theme.palette.secondary.main, 0.05) }}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                background: alpha(theme.palette.secondary.main, 0.05),
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                '&:hover': { 
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                  background: alpha(theme.palette.secondary.main, 0.1)
+                }
+              }}
+              onClick={handleApiReferenceClick}
+            >
               <CardContent sx={{ textAlign: 'center' }}>
                 <ApiIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
                 <Typography variant="h6" gutterBottom>API Reference</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Complete API documentation
                 </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{ mt: 1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`${API_BASE_URL}/api/docs`, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  Open Swagger UI
+                </Button>
               </CardContent>
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ height: '100%', background: alpha(theme.palette.success.main, 0.05) }}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                background: alpha(theme.palette.success.main, 0.15),
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': { 
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                  background: alpha(theme.palette.success.main, 0.2)
+                }
+              }}
+              onClick={handleTheoryClick}
+            >
               <CardContent sx={{ textAlign: 'center' }}>
                 <SchoolIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                 <Typography variant="h6" gutterBottom>Theory</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Unified LENR framework
                 </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Full paper with corrections
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ height: '100%', background: alpha(theme.palette.info.main, 0.05) }}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                background: alpha(theme.palette.info.main, 0.05),
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': { 
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                  background: alpha(theme.palette.info.main, 0.1)
+                }
+              }}
+              onClick={handleDebuggingClick}
+            >
               <CardContent sx={{ textAlign: 'center' }}>
                 <BugReportIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
                 <Typography variant="h6" gutterBottom>Debugging</Typography>
@@ -143,6 +247,7 @@ const DocumentationPage = () => {
         {/* Main Documentation Sections */}
         
         {/* Getting Started */}
+        <div ref={gettingStartedRef} />
         <Accordion expanded={expanded === 'getting-started'} onChange={handleChange('getting-started')}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -300,6 +405,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
         </Accordion>
 
         {/* API Reference */}
+        <div ref={apiRef} />
         <Accordion expanded={expanded === 'api'} onChange={handleChange('api')}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -367,8 +473,14 @@ python -m uvicorn app.main:app --reload  # Backend`}
 
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
-              Visit <MuiLink href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer">http://localhost:8000/docs</MuiLink> for 
-              the interactive Swagger UI with complete API documentation.
+              <Typography variant="body2" paragraph>
+                Visit <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink> for 
+                the interactive Swagger UI with complete API documentation.
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Note:</strong> Make sure the backend server is running on port 8000. If you see a blank page, 
+                check that the backend is started and accessible.
+              </Typography>
             </Alert>
           </AccordionDetails>
         </Accordion>
@@ -519,6 +631,7 @@ LOG_LEVEL=info`}
         </Accordion>
 
         {/* Troubleshooting */}
+        <div ref={troubleshootingRef} />
         <Accordion expanded={expanded === 'troubleshooting'} onChange={handleChange('troubleshooting')}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -591,7 +704,7 @@ LOG_LEVEL=info`}
         <Divider sx={{ my: 4 }} />
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" paragraph>
-            <strong>LENR Simulation Platform</strong> - v0.1.0
+            <strong>LENR Simulation Platform</strong> - v{APP_VERSION}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             Developed by <MuiLink href="https://www.conscious.energy" target="_blank" rel="noopener noreferrer">

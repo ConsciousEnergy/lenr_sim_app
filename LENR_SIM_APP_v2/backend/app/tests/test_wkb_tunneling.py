@@ -331,8 +331,10 @@ class TestPhysicalConstantsConsistency:
     def test_coulomb_barrier_formula(self):
         """Verify Coulomb barrier calculation is consistent."""
         # V = Z1*Z2*e^2 / (4*pi*eps0*r)
-        # At nuclear radius r = 2 fm, for D-D:
-        r_nuclear = 2e-15  # meters
+        # coulomb_barrier uses R0_NUCLEAR * (a1^(1/3) + a2^(1/3)) for the radius
+        # For D-D with R0=1.2 fm: r = 1.2 * 2 * 2^(1/3) ≈ 3.02 fm
+        R0_NUCLEAR = 1.2e-15  # meters
+        r_nuclear = R0_NUCLEAR * (2**(1/3) + 2**(1/3))  # ~3.02 fm
         z1, z2 = 1, 1
         
         expected_v_j = (z1 * z2 * E_CHARGE**2) / (4 * np.pi * EPSILON_0 * r_nuclear)

@@ -6,6 +6,7 @@ Contains data models for the application.
 from .simulation_models import (
     SimulationParameters,
     SimulationResult,
+    SimulationResultData,
     SimulationStatus,
     SimulationResponse,
     LatticeType,
@@ -16,6 +17,7 @@ from .simulation_models import (
 __all__ = [
     'SimulationParameters',
     'SimulationResult',
+    'SimulationResultData',
     'SimulationStatus',
     'SimulationResponse',
     'LatticeType',

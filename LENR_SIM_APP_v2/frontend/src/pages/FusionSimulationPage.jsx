@@ -86,6 +86,7 @@ const LAWSON_THRESHOLDS = {
   'd-d': 1e23,
   'd-He3': 5e22,
   'p-B11': 5e23,
+  'p-Li7': 1e24,  // Proton-Lithium-7 reaction threshold
 };
 
 /**

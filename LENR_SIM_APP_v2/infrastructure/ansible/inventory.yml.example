@@ -1,0 +1,32 @@
+# LENR Simulation App - Ansible Inventory
+# Copy to inventory.yml and update with your VPS IP
+
+all:
+  hosts:
+    lenr-sim-prod:
+      ansible_host: YOUR_VPS_IP_HERE  # From Terraform output
+      ansible_user: root
+      ansible_ssh_private_key_file: ~/.ssh/lenr-sim-deploy
+      
+  vars:
+    # Application settings
+    app_domain: "conscious.energy"
+    api_subdomain: "api"
+    environment: "prod"
+    
+    # Docker settings
+    docker_compose_version: "2.24.5"
+    
+    # Traefik settings
+    traefik_dashboard_auth: true
+    traefik_acme_email: "diadon@conscious.energy"
+    
+    # Database settings
+    postgres_version: "16"
+    postgres_db: "lenr_sim"
+    postgres_user: "lenr_app"
+    # postgres_password: Set via environment variable or vault
+    
+    # Application settings
+    fastapi_workers: 4
+    fastapi_log_level: "info"
