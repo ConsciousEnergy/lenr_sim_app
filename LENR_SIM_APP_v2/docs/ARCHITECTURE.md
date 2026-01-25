@@ -853,20 +853,91 @@ graph TB
 - Budget allows **$21+/month**
 - Team has **Kubernetes expertise**
 
-### Hybrid Approach (Best of Both Worlds)
+### Hybrid Approach (Recommended Migration Path)
 
-You could also consider a **gradual migration**:
+**This is the recommended approach for gradual infrastructure evolution:**
 
-1. **Keep Docker Swarm** for main application
-2. **Add Kubernetes** for new services (analytics, queue workers)
-3. **Migrate incrementally** as services mature
-4. **Use Flux** for new services from day one
+```mermaid
+graph TB
+    subgraph Phase1 [Phase 1: Current - Docker Swarm Only]
+        SwarmMain[Docker Swarm<br/>Main Application]
+        BackendMain[FastAPI Backend]
+        PostgresMain[(PostgreSQL)]
+    end
+    
+    subgraph Phase2 [Phase 2: Hybrid - Add K8s for New Services]
+        SwarmHybrid[Docker Swarm<br/>Main Application]
+        K8sNew[Kubernetes Cluster<br/>New Services]
+        BackendHybrid[FastAPI Backend]
+        PostgresHybrid[(PostgreSQL)]
+        Analytics[Analytics Service]
+        QueueWorkers[Queue Workers]
+        RedisQueue[(Redis Queue)]
+    end
+    
+    subgraph Phase3 [Phase 3: Full K8s - Migrate Everything]
+        K8sFull[Kubernetes Cluster<br/>All Services]
+        BackendK8s[FastAPI Backend]
+        PostgresK8s[(PostgreSQL)]
+        AnalyticsK8s[Analytics Service]
+        QueueK8s[Queue Workers]
+    end
+    
+    Phase1 -->|Add K8s Cluster| Phase2
+    Phase2 -->|Migrate Main App| Phase3
+    
+    style Phase1 fill:#c8e6c9
+    style Phase2 fill:#fff9c4
+    style Phase3 fill:#e3f2fd
+```
 
-This allows you to:
-- ✅ Keep current stable setup
-- ✅ Learn Kubernetes gradually
-- ✅ Test GitOps workflow
-- ✅ Migrate when ready
+**Hybrid Strategy Benefits:**
+
+1. **Phase 1 (Current): Docker Swarm Only**
+   - Main application on Docker Swarm
+   - Cost: ~$7.50/month
+   - Simple operations
+
+2. **Phase 2 (Hybrid): Add Kubernetes for New Services**
+   - **Keep Docker Swarm** for stable main application (FastAPI + PostgreSQL)
+   - **Add Kubernetes cluster** (3 VPS nodes) for new services:
+     - Analytics dashboard service
+     - Queue workers (Redis + Celery)
+     - Background job processors
+     - Future microservices
+   - **Use Flux GitOps** for Kubernetes services from day one
+   - Cost: ~$28.50/month ($7.50 Swarm + $21 K8s)
+   - Benefits:
+     - ✅ Keep stable main app unchanged
+     - ✅ Learn Kubernetes gradually
+     - ✅ Test GitOps workflow on new services
+     - ✅ Isolate risk (new services can fail without affecting main app)
+
+3. **Phase 3 (Full K8s): Migrate Everything**
+   - Migrate main application to Kubernetes
+   - Decommission Docker Swarm
+   - Cost: ~$21/month (3 VPS nodes)
+   - Benefits:
+     - ✅ Unified orchestration
+     - ✅ Full GitOps workflow
+     - ✅ Advanced features (HPA, auto-scaling)
+
+**Hybrid Migration Timeline:**
+
+| Phase | When | Cost | Complexity | Main App | New Services |
+|-------|------|------|------------|----------|--------------|
+| Phase 1 | v0.2.1-beta (Current) | $7.50/mo | Low | Docker Swarm | N/A |
+| Phase 2 | v0.3.0-beta (Add analytics) | $28.50/mo | Medium | Docker Swarm | Kubernetes + Flux |
+| Phase 3 | v1.0.0 (Production) | $21/mo | High | Kubernetes | Kubernetes |
+
+**Why Hybrid is Recommended:**
+
+- ✅ **Risk Mitigation**: New services can fail without affecting stable main app
+- ✅ **Gradual Learning**: Team learns Kubernetes on non-critical services first
+- ✅ **Cost Flexibility**: Can scale K8s services independently
+- ✅ **GitOps Testing**: Validate Flux workflow before migrating critical services
+- ✅ **Rollback Safety**: Easy to revert new services without touching main app
+- ✅ **Incremental Migration**: Move services one at a time when ready
 
 ---
 

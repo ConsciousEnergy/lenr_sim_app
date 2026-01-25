@@ -15,6 +15,15 @@ This guide covers deploying the LENR Simulation App using Infrastructure as Code
 
 ---
 
+## 📖 Quick Navigation
+
+- **📋 Detailed Step-by-Step Guide:** See [PHASE4_DOCKER_SWARM_DEPLOYMENT.md](PHASE4_DOCKER_SWARM_DEPLOYMENT.md) for comprehensive instructions
+- **⚡ Quick Reference:** See [DEPLOYMENT_QUICK_REFERENCE.md](DEPLOYMENT_QUICK_REFERENCE.md) for one-command deployment
+- **✅ Checklist:** See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for verification checklist
+- **🏗️ Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for system architecture and future migration plans
+
+---
+
 ## Architecture
 
 ```

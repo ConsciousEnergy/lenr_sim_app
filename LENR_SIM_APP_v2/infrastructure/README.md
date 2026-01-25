@@ -111,9 +111,12 @@ ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
 
 ## Detailed Documentation
 
-- [DEPLOYMENT.md](../docs/DEPLOYMENT.md) - Complete deployment guide
-- [DEPLOYMENT_CHECKLIST.md](../docs/DEPLOYMENT_CHECKLIST.md) - Step-by-step checklist
-- [WORDPRESS_INTEGRATION.md](../docs/WORDPRESS_INTEGRATION.md) - WordPress integration
+- **[PHASE4_DOCKER_SWARM_DEPLOYMENT.md](../docs/PHASE4_DOCKER_SWARM_DEPLOYMENT.md)** - **📋 Comprehensive step-by-step deployment guide (START HERE)**
+- [DEPLOYMENT.md](../docs/DEPLOYMENT.md) - Overview and reference guide
+- [DEPLOYMENT_QUICK_REFERENCE.md](../docs/DEPLOYMENT_QUICK_REFERENCE.md) - Quick commands reference
+- [DEPLOYMENT_CHECKLIST.md](../docs/DEPLOYMENT_CHECKLIST.md) - Step-by-step verification checklist
+- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) - System architecture and Hybrid Kubernetes migration plan
+- [WORDPRESS_INTEGRATION.md](../docs/WORDPRESS_INTEGRATION.md) - WordPress integration guide
 
 ---
 

@@ -35,7 +35,10 @@ This release includes comprehensive physics equation verification and documentat
 - **Docker Stack**: Traefik reverse proxy, FastAPI backend, PostgreSQL database
 - **Deployment Scripts**: Automated deployment, rollback, and backup scripts
 - **GitHub Actions**: Automated Docker image builds and pushes to GHCR
-- **Documentation**: 6 comprehensive deployment guides
+- **Documentation**: 7 comprehensive deployment guides including:
+  - **PHASE4_DOCKER_SWARM_DEPLOYMENT.md**: Detailed 16-step deployment guide
+  - **ARCHITECTURE.md**: System architecture with Hybrid Kubernetes migration strategy
+  - Deployment checklists, quick reference, and troubleshooting guides
 
 ### Infrastructure Highlights
 - **Cost**: ~$7.50/month (Cloudflare Pages + Hostinger VPS)
@@ -113,21 +116,22 @@ This release includes comprehensive physics equation verification and documentat
   - Removed 7 duplicate files
   - Fixed import ordering
 
-- **Infrastructure**: 31 NEW files created
+- **Infrastructure**: 32 NEW files created
   - Terraform: 11 files (root + 2 modules)
   - Ansible: 9 files (playbooks + templates)
   - Docker: 1 file (Dockerfile.backend)
   - Scripts: 4 files (deployment automation)
-  - Documentation: 6 files (deployment guides)
+  - Documentation: 7 files (deployment guides + architecture docs)
   - GitHub Actions: 1 file (Docker build workflow)
 
 ### Statistics
 - **30+ files changed** (application code)
-- **31 files created** (infrastructure)
+- **32 files created** (infrastructure)
 - **~125KB removed** (duplicate files)
 - **15+ routes** now lazy-loaded
 - **4 test failures** fixed
 - **100% test pass rate** for backend tests
+- **Hybrid Kubernetes migration strategy** documented for future scalability
 
 ## ✅ Testing
 
@@ -166,10 +170,12 @@ This release includes comprehensive physics equation verification and documentat
 ## 🚀 Next Steps
 
 - **Deployment**: ✅ IaC complete - Ready for deployment (Terraform/Ansible infrastructure created)
+  - **Detailed deployment guide**: See `docs/PHASE4_DOCKER_SWARM_DEPLOYMENT.md` for step-by-step instructions
+  - **Architecture planning**: See `docs/ARCHITECTURE.md` for Hybrid Kubernetes migration strategy
 - **Database**: Migrate shared simulations from in-memory to PostgreSQL (infrastructure ready)
 - **Performance**: Monitor bundle size reduction in production
 - **Migration**: Continue MUI Grid v2 migration for remaining components
-- **Documentation**: ✅ Complete - All deployment and infrastructure guides created
+- **Documentation**: ✅ Complete - All deployment, infrastructure, and architecture guides created
 
 ---
 
