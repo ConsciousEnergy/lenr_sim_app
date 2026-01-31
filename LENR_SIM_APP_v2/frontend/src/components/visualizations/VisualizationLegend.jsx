@@ -515,6 +515,8 @@ QuantumFluxIndicator.propTypes = {
 /**
  * Main Legend Component
  * Supports both LENR (lattice-scale) and Fusion (plasma-scale) simulations
+ * 
+ * Now supports 'side-drawer' mode that collapses to a thin bar on the left
  */
 function VisualizationLegend({ 
   particleCounts = {},
@@ -531,7 +533,7 @@ function VisualizationLegend({
   position = 'top-right',
   collapsed = false,
   onToggleCollapse,
-  variant = 'overlay', // 'overlay' | 'panel'
+  variant = 'overlay', // 'overlay' | 'panel' | 'side-drawer'
   simulationType = 'fusion', // 'lenr' | 'fusion'
 }) {
   // Select particle types based on simulation type
@@ -543,6 +545,230 @@ function VisualizationLegend({
     setIsCollapsed(newState);
     if (onToggleCollapse) onToggleCollapse(newState);
   };
+  
+  // Side drawer mode - renders as a slim collapsible panel on the left
+  if (variant === 'side-drawer') {
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 60,
+          left: 0,
+          zIndex: 15,
+          display: 'flex',
+          flexDirection: 'row',
+          maxHeight: 'calc(100vh - 200px)',
+          transition: 'all 0.3s ease-in-out',
+        }}
+      >
+        {/* Collapsed tab - always visible */}
+        <Paper
+          elevation={4}
+          onClick={handleToggle}
+          sx={{
+            bgcolor: 'rgba(25, 118, 210, 0.95)',
+            color: 'white',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 2,
+            px: 0.5,
+            borderRadius: '0 8px 8px 0',
+            minHeight: 120,
+            width: 32,
+            '&:hover': {
+              bgcolor: 'rgba(25, 118, 210, 1)',
+            },
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <ScatterPlotIcon sx={{ fontSize: 20, mb: 1 }} />
+          <Typography
+            variant="caption"
+            sx={{
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+              transform: 'rotate(180deg)',
+              fontSize: '0.7rem',
+              fontWeight: 'bold',
+              letterSpacing: 1,
+            }}
+          >
+            LEGEND
+          </Typography>
+          <Box sx={{ mt: 1 }}>
+            {isCollapsed ? <ExpandMoreIcon sx={{ transform: 'rotate(-90deg)', fontSize: 16 }} /> : <ExpandLessIcon sx={{ transform: 'rotate(-90deg)', fontSize: 16 }} />}
+          </Box>
+        </Paper>
+        
+        {/* Expanded content panel */}
+        <Collapse in={!isCollapsed} orientation="horizontal" timeout={300}>
+          <Paper
+            elevation={4}
+            sx={{
+              bgcolor: 'rgba(0, 0, 0, 0.92)',
+              color: 'text.primary',
+              width: 280,
+              maxHeight: 'calc(100vh - 200px)',
+              borderRadius: '0 8px 8px 0',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                p: 1.5,
+                bgcolor: 'primary.dark',
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+              }}
+            >
+              <ScatterPlotIcon sx={{ mr: 1, fontSize: 18 }} />
+              <Typography variant="subtitle2" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+                Visualization Legend
+              </Typography>
+              <Tooltip title="Collapse to side">
+                <IconButton size="small" sx={{ color: 'inherit' }} onClick={handleToggle}>
+                  <ExpandLessIcon sx={{ transform: 'rotate(-90deg)' }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            
+            {/* Scrollable content */}
+            <Box sx={{ 
+              p: 1.5, 
+              flex: 1,
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(255,255,255,0.1)',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(255,255,255,0.3)',
+                borderRadius: '3px',
+              },
+            }}>
+              {/* Particle Types Section */}
+              {showParticles && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CircleIcon fontSize="small" />
+                    {simulationType === 'lenr' ? 'Lattice Elements' : 'Particle Types'}
+                  </Typography>
+                  <Box>
+                    {Object.entries(particleTypes).map(([type, info]) => (
+                      <ParticleTypeItem 
+                        key={type} 
+                        type={type} 
+                        info={info} 
+                        count={particleCounts[type]}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              
+              {showParticles && showEnergy && <Divider sx={{ my: 1.5 }} />}
+              
+              {/* Energy Scale Section */}
+              {showEnergy && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Tooltip title="Particles are colored by their kinetic energy">
+                      <InfoOutlinedIcon fontSize="small" />
+                    </Tooltip>
+                    Energy Scale
+                  </Typography>
+                  <EnergyGradientBar />
+                </Box>
+              )}
+              
+              {(showEnergy || showParticles) && showHotspots && <Divider sx={{ my: 1.5 }} />}
+              
+              {/* Hotspots Section */}
+              {showHotspots && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <FlareIcon fontSize="small" sx={{ color: simulationType === 'lenr' ? '#ff4500' : '#ffaa00' }} />
+                    {simulationType === 'lenr' ? 'Reaction Sites' : 'Fusion Hotspots'}
+                  </Typography>
+                  <Box sx={{ pl: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Box 
+                        sx={{ 
+                          width: 16, 
+                          height: 16, 
+                          borderRadius: '50%', 
+                          bgcolor: simulationType === 'lenr' ? '#ff4500' : '#ffaa00',
+                          boxShadow: simulationType === 'lenr' ? '0 0 8px #ff4500' : '0 0 8px #ffaa00',
+                        }} 
+                      />
+                      <Typography variant="body2">
+                        {simulationType === 'lenr' ? 'Active reaction site' : 'Active fusion region'}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {simulationType === 'lenr' 
+                        ? 'Size indicates reaction rate enhancement'
+                        : 'Size indicates reaction intensity'}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              
+              {/* Scale Section */}
+              {showScale && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <ScaleIndicator 
+                    gridSize={scaleInfo.gridSize}
+                    scaleUnit={scaleInfo.scaleUnit}
+                    realWorldSize={scaleInfo.realWorldSize}
+                  />
+                </>
+              )}
+              
+              {/* Quantum Flux Section */}
+              {showQuantumFlux && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <QuantumFluxIndicator 
+                    mode={quantumFluxMode}
+                    intensity={quantumFluxIntensity}
+                  />
+                </>
+              )}
+              
+              {showStats && stats && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <SimulationStats stats={stats} simulationType={simulationType} />
+                </>
+              )}
+              
+              {/* Interaction Hints */}
+              <Divider sx={{ my: 1.5 }} />
+              <Box sx={{ opacity: 0.7 }}>
+                <Typography variant="caption" display="block">
+                  🖱️ Drag to rotate • Scroll to zoom
+                </Typography>
+                <Typography variant="caption" display="block">
+                  Right-click drag to pan
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Collapse>
+      </Box>
+    );
+  }
   
   // Position styles for overlay variant
   const positionStyles = variant === 'overlay' ? {
@@ -820,7 +1046,7 @@ VisualizationLegend.propTypes = {
   position: PropTypes.oneOf(['top-right', 'top-left', 'bottom-right', 'bottom-left']),
   collapsed: PropTypes.bool,
   onToggleCollapse: PropTypes.func,
-  variant: PropTypes.oneOf(['overlay', 'panel']),
+  variant: PropTypes.oneOf(['overlay', 'panel', 'side-drawer']),
   simulationType: PropTypes.oneOf(['lenr', 'fusion']),
 };
 

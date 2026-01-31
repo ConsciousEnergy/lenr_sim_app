@@ -8,7 +8,36 @@ This document describes the enhanced visualization features implemented for the 
 
 ### 1. Visualization Legend
 
-A comprehensive, collapsible legend overlay providing real-time information about the simulation:
+A comprehensive, collapsible legend overlay providing real-time information about the simulation.
+
+#### Display Variants
+
+The legend supports three display modes via the `variant` prop:
+
+| Variant | Description | Best For |
+|---------|-------------|----------|
+| `overlay` | Fixed position overlay on the visualization | Traditional corner placement |
+| `panel` | Inline panel within the page layout | Dashboard layouts |
+| `side-drawer` | Collapsible drawer from left side | Maximum visualization space |
+
+##### Side-Drawer Mode (New)
+
+The `side-drawer` variant provides an improved UX for full-screen visualizations:
+- **Collapsed State**: Slim vertical tab on the left edge with rotated "LEGEND" text
+- **Expanded State**: Full legend panel slides in horizontally with smooth animation
+- **Click to Toggle**: Click the tab or header to expand/collapse
+- **Scrollable Content**: Handles long content with custom scrollbar styling
+
+Usage:
+```jsx
+<VisualizationLegend
+  variant="side-drawer"
+  collapsed={legendCollapsed}
+  onToggleCollapse={setLegendCollapsed}
+  simulationType="lenr"
+  // ... other props
+/>
+```
 
 #### Particle Types
 - **Deuterium (D)** - ²H - Blue - Heavy hydrogen isotope

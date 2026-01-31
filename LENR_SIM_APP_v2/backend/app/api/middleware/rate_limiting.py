@@ -36,8 +36,8 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         self.rate_limit = rate_limit_per_minute
         self.clients: Dict[str, Tuple[int, float]] = {}  # client_ip -> (request_count, timestamp)
         self.window_size = 60  # 1 minute in seconds
-        self.whitelist_paths = whitelist_paths or ["/api/docs", "/api/redoc", "/api/openapi.json", "/health"]
-        self.whitelist_ips = whitelist_ips or ["127.0.0.1", "::1"]
+        self.whitelist_paths = whitelist_paths if whitelist_paths is not None else ["/api/docs", "/api/redoc", "/api/openapi.json", "/health"]
+        self.whitelist_ips = whitelist_ips if whitelist_ips is not None else ["127.0.0.1", "::1"]
         
         logger.info(f"Rate limiting middleware initialized with {rate_limit_per_minute} requests per minute")
         logger.info(f"Whitelisted paths: {self.whitelist_paths}")
@@ -114,7 +114,13 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
             del self.clients[ip]
     
     def _rate_limit_response(self, request: Request) -> Response:
-        """Create a rate limit exceeded response."""
+        """Create a rate limit exceeded response.
+        
+        Returns a JSONResponse instead of raising HTTPException because
+        HTTPException raised in middleware isn't handled by FastAPI's exception handlers.
+        """
+        from starlette.responses import JSONResponse
+        
         request_id = getattr(request.state, "request_id", "unknown")
         logger.warning(
             f"Rate limit exceeded | "
@@ -122,10 +128,13 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
             f"{request.method} {request.url.path}"
         )
         
-        raise HTTPException(
+        # Calculate retry-after based on when the window will reset
+        client_ip = self._get_client_ip(request)
+        _, timestamp = self.clients.get(client_ip, (0, 0))
+        retry_after = int(self.window_size - (time.time() - timestamp)) if timestamp else self.window_size
+        
+        return JSONResponse(
             status_code=429,
-            detail="Too Many Requests - Rate limit exceeded",
-            headers={
-                "Retry-After": str(self.window_size)
-            }
+            content={"detail": "Too Many Requests - Rate limit exceeded"},
+            headers={"Retry-After": str(max(1, retry_after))}
         ) 

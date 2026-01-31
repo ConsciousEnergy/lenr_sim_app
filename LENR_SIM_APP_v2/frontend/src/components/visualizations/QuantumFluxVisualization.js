@@ -16,8 +16,9 @@
 
 import * as THREE from 'three';
 
-// Physical constants (SI units)
-const CONSTANTS = {
+// Physical constants (SI units) - Reference for physics calculations
+// eslint-disable-next-line no-unused-vars
+const _CONSTANTS = {
   hbar: 1.054571817e-34,        // Reduced Planck constant (J·s)
   electronMass: 9.1093837e-31,  // Electron mass (kg)
   protonMass: 1.6726219e-27,    // Proton mass (kg)
@@ -186,7 +187,7 @@ function calculateMagneticConfinement(position, params) {
     majorRadius = 5.0,
     toroidalField = 5.0,    // Tesla at major radius
     plasmaCurrent = 15.0,   // MA
-    q = 3.0,                // Safety factor
+    _q = 3.0,               // Safety factor (for reference)
   } = params;
   
   const { x, y, z } = position;

@@ -143,12 +143,14 @@ def test_custom_csp_policy():
 
 def test_header_overrides():
     """Test that middleware doesn't override headers already set in the response."""
+    from fastapi import Response
+    
     app = FastAPI()
     
     app.add_middleware(SecureHeadersMiddleware)
     
     @app.get("/custom-headers")
-    def custom_headers_endpoint(response):
+    def custom_headers_endpoint(response: Response):
         # Set custom header before middleware processes
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         return {"status": "ok"}

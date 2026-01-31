@@ -96,13 +96,36 @@ class Settings(BaseSettings):
     # Content-type validation
     ENFORCE_CONTENT_TYPE: bool = True  # Validate Content-Type headers
 
-    # Custom validation for CORS origins
-    @field_validator("CORS_ORIGINS")
+    # Custom validation for CORS origins - must run BEFORE type coercion
+    @field_validator("CORS_ORIGINS", mode='before')
     @classmethod
     def validate_cors_origins(cls, v: Union[List[str], str]) -> List[str]:
-        """Validate and normalize CORS origins."""
-        if isinstance(v, str) and not v.startswith("["):
-            return [origin.strip() for origin in v.split(",")]
+        """Validate and normalize CORS origins from environment variable string."""
+        if isinstance(v, str):
+            # Handle comma-separated string from environment variable
+            if not v.startswith("["):
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+            # Handle JSON array string
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+    
+    # Also validate RATE_LIMIT_WHITELIST_IPS
+    @field_validator("RATE_LIMIT_WHITELIST_IPS", mode='before')
+    @classmethod
+    def validate_whitelist_ips(cls, v: Union[List[str], str]) -> List[str]:
+        """Validate and normalize whitelist IPs from environment variable string."""
+        if isinstance(v, str):
+            if not v.startswith("["):
+                return [ip.strip() for ip in v.split(",") if ip.strip()]
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [ip.strip() for ip in v.split(",") if ip.strip()]
         return v
 
     # Pydantic configuration - use environment variable prefix and .env file

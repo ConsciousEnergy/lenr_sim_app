@@ -191,20 +191,37 @@ const QuantumTunnelingVisualizer = ({
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
     
-    // Extract data arrays
-    const { positions, potentialValues, waveFunction, tunnelingProbabilities, classicalTurningPoint } = tunnelingData;
+    // Extract data arrays with fallback defaults
+    const { positions = [], potentialValues = [], waveFunction = [], tunnelingProbabilities = [], classicalTurningPoint } = tunnelingData;
     
-    // Convert to log scale for better visualization
-    const logPositions = positions.map(p => Math.log10(p));
+    // Validate we have data to render
+    if (!positions.length || !potentialValues.length) {
+      console.warn('QuantumTunnelingVisualizer: No valid data to render');
+      return;
+    }
+    
+    // Convert to log scale for better visualization, filtering out invalid values
+    const logPositions = positions
+      .map(p => (p > 0 && isFinite(p)) ? Math.log10(p) : null)
+      .filter(v => v !== null && isFinite(v));
+    
+    // Guard against empty array after filtering
+    if (logPositions.length === 0) {
+      console.warn('QuantumTunnelingVisualizer: No valid positions after log conversion');
+      return;
+    }
     
     // Normalize values for visualization
     // Guard against division by zero - use 1 as fallback if no valid max
-    const rawMaxPotential = Math.max(...potentialValues);
+    const validPotentials = potentialValues.filter(v => isFinite(v) && v !== null);
+    const rawMaxPotential = validPotentials.length > 0 ? Math.max(...validPotentials) : 1;
     const maxPotential = (rawMaxPotential > 0 && isFinite(rawMaxPotential)) ? rawMaxPotential : 1;
     
-    // Create scales
+    // Create scales with validated domain
+    const xMin = Math.min(...logPositions);
+    const xMax = Math.max(...logPositions);
     const xScale = d3.scaleLinear()
-      .domain([Math.min(...logPositions), Math.max(...logPositions)])
+      .domain([isFinite(xMin) ? xMin : -15, isFinite(xMax) ? xMax : -9])
       .range([0, innerWidth]);
       
     const yScale = d3.scaleLinear()

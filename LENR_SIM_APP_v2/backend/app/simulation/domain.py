@@ -75,6 +75,16 @@ class SimulationDomain:
         
         logger.info(f"Created simulation domain: {dimensions} m with {resolution} grid points")
     
+    @property
+    def extents(self) -> Tuple[float, float, float]:
+        """
+        Alias for dimensions for backward compatibility.
+        
+        Returns:
+            Physical dimensions of the domain (same as self.dimensions)
+        """
+        return self.dimensions
+    
     def get_coordinates(self, idx: int) -> Tuple[float, float, float]:
         """
         Get the physical coordinates for a given flat index.
