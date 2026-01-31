@@ -230,13 +230,20 @@ function FusionSimulationPage() {
   const [showInfoDialog, setShowInfoDialog] = useState(false);
   const [downloadMenuAnchor, setDownloadMenuAnchor] = useState(null);
   // Note: These states are prepared for full error handling UI - kept for future use
+  // eslint-disable-next-line no-unused-vars
   const [_showError, setShowError] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [_simulationId, setSimulationId] = useState(null);
-  const [_isRunning, setIsRunning] = useState(false);
-  const [_alertMessage, setAlertMessage] = useState('');
-  const [_alertSeverity, setAlertSeverity] = useState('info');
-  const [_alertOpen, setAlertOpen] = useState(false);
-  const [_savedSimulations, setSavedSimulations] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [_isRunning, _setIsRunning] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [_alertMessage, _setAlertMessage] = useState('');
+  // eslint-disable-next-line no-unused-vars
+  const [_alertSeverity, _setAlertSeverity] = useState('info');
+  // eslint-disable-next-line no-unused-vars
+  const [_alertOpen, _setAlertOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
+  const [_savedSimulations, _setSavedSimulations] = useState([]);
   
   // Initialize default parameters
   useEffect(() => {

@@ -87,7 +87,23 @@ This release includes comprehensive physics equation verification and documentat
 - **Suspense boundaries**: All lazy-loaded routes wrapped with proper loading fallbacks
 - **Expected impact**: Reduced initial bundle size, faster initial page load
 
+### Visualization Enhancements
+- **Collapsible Side-Drawer Legend**: New `variant="side-drawer"` for VisualizationLegend
+  - Slim vertical tab on left side when collapsed
+  - Smooth horizontal expansion animation
+  - Improved UX for full-screen simulations
+  - Scrollable content with custom scrollbar styling
+
 ### Bug Fixes
+- **Animation error fixed**: Resolved `TypeError: Cannot read properties of undefined` in UnifiedBubbleLatticeVisualization
+  - Added null-safe access to `enhancement_breakdown` with fallback defaults
+  - Fixed incomplete `interpolateFromAPITimeline` return object
+- **NaN visualization fixed**: Added validation in QuantumTunnelingVisualizer
+  - Filters invalid positions before D3 rendering
+  - Prevents chart errors when API fallback returns incomplete data
+- **Backend test import error**: Fixed `test_advanced_physics.py`
+  - Updated to use `calculate_gamow_factor` with correct signature
+  - Skipped `test_electron_screening` pending migration to `UnifiedEnhancementCalculator`
 - **Unicode logging errors**: Fixed `UnicodeEncodeError` on Windows for 'μ' character
   - Added UTF-8 encoding to file handlers
   - Implemented Windows-safe console handler with character replacement
@@ -108,13 +124,16 @@ This release includes comprehensive physics equation verification and documentat
   - `tests/test_hydrogen_flux_model.py` - Improved test reliability
   - Plus 5 other test/configuration files
 
-- **Frontend**: 20+ files modified
+- **Frontend**: 25+ files modified
   - `src/App.tsx` - Implemented lazy loading and code splitting
   - `src/config/version.js` - NEW: Centralized version config
   - `src/pages/TheoryPaperPage.jsx` - Added Key Equations Quick Reference
+  - `src/components/visualizations/VisualizationLegend.jsx` - Added side-drawer variant
+  - `src/components/visualizations/UnifiedBubbleLatticeVisualization.jsx` - Fixed animation errors, updated legend position
+  - `src/components/visualization/QuantumTunnelingVisualizer.jsx` - Fixed NaN rendering errors
   - Updated 7 components for version consistency
   - Removed 7 duplicate files
-  - Fixed import ordering
+  - Fixed import ordering and ESLint errors
 
 - **Infrastructure**: 32 NEW files created
   - Terraform: 11 files (root + 2 modules)

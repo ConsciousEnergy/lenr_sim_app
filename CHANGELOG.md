@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - REST API endpoints for CRUD operations and similarity matching
 
 #### Visualization Enhancements
+- **Collapsible Side-Drawer Legend**: New `variant="side-drawer"` mode for VisualizationLegend
+  - Slim vertical tab on left side when collapsed (rotated "LEGEND" text)
+  - Smooth horizontal expansion animation when clicked
+  - Scrollable content area with custom scrollbar styling
+  - Improved UX for viewing simulations without legend obstruction
 - **Visualization Legend**: Interactive, collapsible legend showing particle types, energy scale, scale indicator, and live statistics
 - **Quantum Flux Visualization**: Physics-based visualization with 6 modes:
   - Electron Screening (Thomas-Fermi model)
@@ -76,8 +81,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `start_app.bat` and `start_app.sh` to use correct v2 directory paths
 
 ### Fixed
+- **Animation error in UnifiedBubbleLatticeVisualization**: Fixed `TypeError: Cannot read properties of undefined (reading 'total')` by adding null-safe access to `enhancement_breakdown` with fallback defaults
+- **Incomplete interpolation data**: Fixed `interpolateFromAPITimeline` to return complete `enhancement_breakdown` object including all fields (qed, casimir, rydberg, compression, loading, proton_distribution, etc.)
+- **NaN values in QuantumTunnelingVisualizer**: Added validation to filter invalid positions before D3 rendering, preventing chart errors when API fallback returns incomplete data
+- **Backend test import errors**: Updated `test_advanced_physics.py` to use correct function signatures (`calculate_gamow_factor` with `reduced_mass` parameter)
 - Legend cutoff issue - added proper scrolling support
 - Quantum flux visibility - increased opacity and brightened colors
+- **ESLint errors resolved**: Fixed blocking compilation errors in frontend
+  - Removed unused imports (useMemo, CycloneIcon, IconButton, Link)
+  - Added default case to switch statement in UnifiedBubbleLatticeVisualization
+  - Prefixed unused variables to comply with `no-unused-vars` rule
+- **Backend test fixes**: Middleware tests and configuration validation
+  - Fixed Pydantic v2 `field_validator` mode for environment variable parsing
+  - Fixed middleware returning proper JSONResponse instead of raising HTTPException
+  - Added `.coveragerc` configuration file for test coverage
 - `PlasmaVortexEffect is not defined` error after refactoring
 - Hot reload caching issues with webpack
 

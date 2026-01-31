@@ -85,6 +85,8 @@ class ContentTypeValidationMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         if base_content_type not in self.allowed_content_types:
+            from starlette.responses import JSONResponse
+            
             request_id = getattr(request.state, "request_id", "unknown")
             logger.warning(
                 f"Invalid Content-Type | RequestID: {request_id} | "
@@ -93,9 +95,13 @@ class ContentTypeValidationMiddleware(BaseHTTPMiddleware):
                 f"Content-Type: {content_type_header}"
             )
             
-            raise HTTPException(
+            # Return JSONResponse instead of raising HTTPException
+            # because HTTPException raised in middleware isn't handled by FastAPI's exception handlers
+            return JSONResponse(
                 status_code=415,
-                detail=f"Unsupported media type: {content_type_header}. Supported types: {', '.join(self.allowed_content_types)}"
+                content={
+                    "detail": f"Unsupported media type: {content_type_header}. Supported types: {', '.join(self.allowed_content_types)}"
+                }
             )
         
         return await call_next(request) 

@@ -13,7 +13,7 @@
  * - EffectsGroup: Hotspots, collapse flash
  */
 
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -27,7 +27,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
-import CycloneIcon from '@mui/icons-material/Cyclone';
+// CycloneIcon reserved for future vortex toggle UI
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, EnergyFlowVisualizer, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -44,8 +44,9 @@ const PROTON_STATES = {
   NUCLEAR: { color: 0xff4500, emissive: 0xff2200, emissiveIntensity: 1.0, size: 0.09, name: 'Nuclear Active' }
 };
 
-// Bubble collapse phases
-const COLLAPSE_PHASES = {
+// Bubble collapse phases (used for animation timing reference)
+// eslint-disable-next-line no-unused-vars
+const _COLLAPSE_PHASES = {
   EXPANSION: { name: 'Expansion', duration: 0.4 },
   COLLAPSE: { name: 'Collapse', duration: 0.15 },
   MINIMUM: { name: 'Minimum', duration: 0.05 },
@@ -93,10 +94,24 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
       phase: upper.phase,
       enhancement: lerp(lower.enhancement, upper.enhancement, t),
       enhancement_breakdown: {
-        total: lerp(lower.enhancement_breakdown?.total || 1, upper.enhancement_breakdown?.total || 1, t),
+        total: lerp(lower.enhancement_breakdown?.total || lower.enhancement || 1, upper.enhancement_breakdown?.total || upper.enhancement || 1, t),
         screening: lerp(lower.enhancement_breakdown?.screening || 1, upper.enhancement_breakdown?.screening || 1, t),
         phonon: lerp(lower.enhancement_breakdown?.phonon || 1, upper.enhancement_breakdown?.phonon || 1, t),
-      }
+        qed: lerp(lower.enhancement_breakdown?.qed || 1, upper.enhancement_breakdown?.qed || 1, t),
+        casimir: lerp(lower.enhancement_breakdown?.casimir || 1, upper.enhancement_breakdown?.casimir || 1, t),
+        rydberg: lerp(lower.enhancement_breakdown?.rydberg || 1, upper.enhancement_breakdown?.rydberg || 1, t),
+        compression: lerp(lower.enhancement_breakdown?.compression || 1, upper.enhancement_breakdown?.compression || 1, t),
+        loading: lerp(lower.enhancement_breakdown?.loading || 1, upper.enhancement_breakdown?.loading || 1, t),
+      },
+      proton_distribution: {
+        FREE: lerp(lower.proton_distribution?.FREE || 0.1, upper.proton_distribution?.FREE || 0.1, t),
+        SCREENED: lerp(lower.proton_distribution?.SCREENED || 0.2, upper.proton_distribution?.SCREENED || 0.2, t),
+        CAPTURE_READY: lerp(lower.proton_distribution?.CAPTURE_READY || 0.4, upper.proton_distribution?.CAPTURE_READY || 0.4, t),
+        NUCLEAR: lerp(lower.proton_distribution?.NUCLEAR || 0.3, upper.proton_distribution?.NUCLEAR || 0.3, t),
+      },
+      radius_factor: lerp(lower.radius_factor || 1, upper.radius_factor || 1, t),
+      temperature: lerp(lower.temperature || 300, upper.temperature || 300, t),
+      electric_field: lerp(lower.electric_field || 1e8, upper.electric_field || 1e8, t),
     };
   }
   
@@ -218,7 +233,8 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
-  const [showDoubleLayer, setShowDoubleLayer] = useState(true);
+  // eslint-disable-next-line no-unused-vars
+  const [showDoubleLayer, _setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
@@ -237,7 +253,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const {
     hostMaterial = 'palladium',
     loadingRatio = 0.9,
-    temperature = 300,
+    temperature: _paramTemperature = 300, // eslint-disable-line no-unused-vars
     initialBubbleRadius = 3.0,
     drivingPressure = 1.5,
     frequency = 20,
@@ -1015,7 +1031,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const HBAR = 1.055e-34; // J·s
     const C = 3e8; // m/s
     const PI_SQ = Math.PI * Math.PI;
-    const CASIMIR_COEFF = -PI_SQ * HBAR * C / 240; // N·m²
+    const _CASIMIR_COEFF = -PI_SQ * HBAR * C / 240; // N·m² (for reference)
     
     // Create force field lines from bubble surface to lattice atoms
     const lineCount = 16;
@@ -1293,10 +1309,10 @@ const UnifiedBubbleLatticeVisualization = ({
     let temperature = parameters.temperature;
     
     // Physical constants (SI units)
-    const EPS0 = 8.854e-12; // F/m
+    const _EPS0 = 8.854e-12; // F/m (for reference)
     const SIGMA = 0.0728; // N/m (surface tension, water)
-    const RHO = 998; // kg/m³ (density, water)
-    const MU = 1.002e-3; // Pa·s (viscosity, water)
+    const _RHO = 998; // kg/m³ (density, water - for reference)
+    const _MU = 1.002e-3; // Pa·s (viscosity, water - for reference)
     const GAMMA = 1.4; // Polytropic index
     
     // Convert baseRadius from visualization units to meters (approximate)
@@ -1310,7 +1326,7 @@ const UnifiedBubbleLatticeVisualization = ({
     // Phase determination based on normalized time
     if (normalizedTime < 0.4) {
       phase = 'EXPANSION';
-      const t_phase = normalizedTime / 0.4;
+      const _t_phase = normalizedTime / 0.4; // Phase progress (for reference)
       // Expansion: driven by acoustic pressure
       const P_acoustic = parameters.drivingPressure * 1e5 * Math.sin(omega * t * 0.4); // Convert bar to Pa
       const expansionFactor = 1 + (P_acoustic / (101325 + 2 * SIGMA / R0_m)) * 0.3;
@@ -1370,12 +1386,12 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [drivingPressure, parameters.temperature, parameters.frequency]);
 
   // Calculate enhancement factors based on physics conditions
-  const calculateEnhancementFactors = useCallback((compressionRatio, fieldStrength, temperature, pressure) => {
+  const calculateEnhancementFactors = useCallback((compressionRatio, fieldStrength, temperature, _pressure) => {
     // Physical constants
     const KB = 1.381e-23; // J/K
     const E_CHARGE = 1.602e-19; // C
     const EPS0 = 8.854e-12; // F/m
-    const ALPHA = 1/137; // Fine structure constant
+    const _ALPHA = 1/137; // Fine structure constant (for reference)
     
     // Electron density (from material properties)
     const n_e = 6.8e28; // m⁻³ (palladium)
@@ -1556,15 +1572,17 @@ const UnifiedBubbleLatticeVisualization = ({
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
       pressure = 101325 * Math.pow(compressionRatio, 4.2); // Approximate
       
+      // Safely access enhancement_breakdown with fallback defaults
+      const breakdown = apiData.enhancement_breakdown || {};
       enhancements = {
-        total: apiData.enhancement_breakdown.total,
-        screening: apiData.enhancement_breakdown.screening,
-        qed: apiData.enhancement_breakdown.qed,
-        casimir: apiData.enhancement_breakdown.casimir,
-        rydberg: apiData.enhancement_breakdown.rydberg,
-        compression: apiData.enhancement_breakdown.compression,
-        phonon: apiData.enhancement_breakdown.phonon,
-        loading: apiData.enhancement_breakdown.loading
+        total: breakdown.total || apiData.enhancement || 1.0,
+        screening: breakdown.screening || 1.0,
+        qed: breakdown.qed || 1.0,
+        casimir: breakdown.casimir || 1.0,
+        rydberg: breakdown.rydberg || 1.0,
+        compression: breakdown.compression || 1.0,
+        phonon: breakdown.phonon || 1.0,
+        loading: breakdown.loading || 1.0
       };
     } else {
       // Fall back to local physics calculations
@@ -1838,7 +1856,7 @@ const UnifiedBubbleLatticeVisualization = ({
           const reboundProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
           
           // Primary fusion products emit from lattice (reversed energy flow)
-          reboundNuclear.children.forEach((child, index) => {
+          reboundNuclear.children.forEach((child, _index) => {
             if (child.name && child.name.startsWith('PrimaryProduct')) {
               // Update primary products
               child.userData.lifetime += deltaTime;
@@ -1987,6 +2005,9 @@ const UnifiedBubbleLatticeVisualization = ({
           flowDirection = 0.2;
           rotationSpeed = 0.7;
           break;
+        default:
+          // Default case for any unexpected phase values
+          break;
       }
       
       // Update plasma vortex effect
@@ -2134,7 +2155,7 @@ const UnifiedBubbleLatticeVisualization = ({
                 }
               } else {
                 // Particles fade based on distance and conditions
-                const r = particle.userData.r || 0.2;
+                const _r = particle.userData.r || 0.2; // Distance from nucleus (for reference)
                 const prob = particle.userData.probability || 0.5;
                 particle.material.opacity = prob * (0.3 + screeningFactor * 0.2);
               }
@@ -2512,7 +2533,7 @@ const UnifiedBubbleLatticeVisualization = ({
           </FormGroup>
         </Paper>
         
-        {/* Comprehensive Visualization Legend - middle right */}
+        {/* Comprehensive Visualization Legend - collapsible side drawer */}
         {showLegend && (
           <VisualizationLegend
             particleCounts={{
@@ -2521,6 +2542,7 @@ const UnifiedBubbleLatticeVisualization = ({
               titanium: hostMaterial === 'titanium' ? 27 : 0,
               deuterium: Math.round(27 * loadingRatio),
               hydrogen: hostMaterial !== 'palladium' ? Math.round(27 * loadingRatio * 0.5) : 0,
+              lithium: 0, // No lithium by default
             }}
             stats={{
               totalParticles: 27 + Math.round(27 * loadingRatio),
@@ -2543,10 +2565,10 @@ const UnifiedBubbleLatticeVisualization = ({
               realWorldSize: parameters.initialBubbleRadius * 1e-6
             }}
             quantumFluxMode="electron_screening"
-            position="bottom-left"
+            position="top-left"
             collapsed={legendCollapsed}
             onToggleCollapse={setLegendCollapsed}
-            variant="overlay"
+            variant="side-drawer"
             simulationType="lenr"
           />
         )}
