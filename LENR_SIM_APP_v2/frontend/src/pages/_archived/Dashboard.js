@@ -1971,12 +1971,13 @@ function Dashboard() {
             <EnhancedFusionVisualization enhancedFusionData={enhancedFusionData} />
           </Grid>
           
-          {/* Enhanced Fusion Configuration */}
+          {/* Enhanced Fusion Configuration - ARCHIVED: Component removed 
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 2 }}>
               <EnhancedFusionPanel onResultsChange={handleEnhancedFusionResults} />
             </Paper>
           </Grid>
+          */}
         </Grid>
       </TabPanel>
     </Container>

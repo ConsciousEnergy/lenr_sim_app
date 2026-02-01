@@ -1,6 +1,6 @@
 # Physics Equation Verification
 
-**Version:** 0.2.1-beta  
+**Version:** 0.2.2-beta  
 **Last Updated:** January 2026  
 **Status:** Verified against CODATA 2018 and standard physics references
 
@@ -355,7 +355,100 @@ Primary sources:
 
 ---
 
-## 9. Known Limitations
+## 9. MHD and Vorticity Equations (v0.2.2-beta)
+
+### 9.1 Lorentz Force
+```
+F = q(E + v × B)
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Jackson, J.D. (1999). Classical Electrodynamics, Chapter 12  
+**Code:** `calculate_lorentz_force()` in mhd_proton_confinement.py
+
+### 9.2 Z-Pinch Azimuthal Magnetic Field
+```
+B_θ = μ₀I / (2πr)
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Freidberg, J.P. (2014). Ideal MHD. Cambridge University Press, Chapter 3  
+**Physical Meaning:** Azimuthal field from axial current creates radial confinement
+
+### 9.3 MHD Pinch Force
+```
+F_pinch = J × B = -B_θ² / (μ₀r) r̂
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Bennett pinch / Z-pinch equilibrium  
+**Note:** Force points radially inward, confining plasma
+
+### 9.4 Vorticity Transport Equation
+```
+Dω/Dt = (ω · ∇)v + ν∇²ω
+```
+Where:
+- ω = ∇ × v (vorticity)
+- (ω · ∇)v = vorticity stretching term
+- ν = kinematic viscosity
+
+**Status:** ✅ VERIFIED  
+**Reference:** Batchelor, G.K. (2000). An Introduction to Fluid Dynamics. Cambridge University Press  
+**Code:** `compute_vorticity_stretching()` in vortex_particle_system.py
+
+### 9.5 Biot-Savart Velocity Reconstruction
+```
+v(x) = -(1/4π) ∫ [(x - x') × ω(x')] / |x - x'|³ d³x'
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Saffman, P.G. (1992). Vortex Dynamics. Cambridge University Press  
+**Physical Meaning:** Reconstruct velocity field from distributed vorticity
+
+### 9.6 Kelvin Circulation Theorem
+```
+DΓ/Dt = 0 (for inviscid, barotropic flow)
+Γ = ∮ v · dl = ∬ ω · dA
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Fundamental theorem of ideal fluid dynamics  
+**Note:** Conservation of circulation for ideal fluid
+
+### 9.7 Flow Map Distance (VPFM)
+```
+Φ(x, t) = x + ∫₀ᵗ v(Φ(x, τ), τ) dτ
+```
+**Status:** ⚠️ APPROXIMATION  
+**Reference:** Wang et al. (2025). "Vortex Particle Flow Maps". SIGGRAPH 2025 (arXiv:2505.21946)  
+**Note:** Extended trajectory tracking for improved numerical coherence
+
+### 9.8 Vorticity Stretching
+```
+dω_p/dt = (ω_p · ∇)v
+```
+**Status:** ✅ VERIFIED  
+**Reference:** Standard vortex dynamics  
+**Physical Meaning:** Vorticity intensifies when aligned with strain direction
+
+### 9.9 MHD Pressure Gradient Force
+```
+F_pressure = -V_p ∇P
+```
+Where V_p = proton effective volume
+
+**Status:** ✅ VERIFIED  
+**Reference:** Fluid mechanics (pressure force on particle)  
+**Code:** `calculate_pressure_gradient_force()` in mhd_proton_confinement.py
+
+### 9.10 Radial Confinement Scaling
+```
+F_r ∝ χ² / r
+```
+Where χ = compression ratio = R₀/R
+
+**Status:** ⚠️ APPROXIMATION  
+**Note:** Simplified scaling during bubble compression
+
+---
+
+## 10. Known Limitations
 
 1. **WKB Approximation**: Valid only for slowly varying potentials
 2. **Screening Models**: Experimental values vary significantly between labs
@@ -364,7 +457,7 @@ Primary sources:
 
 ---
 
-## 10. Recommendations
+## 11. Recommendations
 
 1. Use CODATA 2018 constants (current implementation ✅)
 2. Default to experimental screening values for LENR calculations

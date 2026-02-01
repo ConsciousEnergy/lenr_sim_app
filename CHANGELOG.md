@@ -5,6 +5,43 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.2-beta] - 2026-02-01
+
+### Added
+- **MHD Proton Confinement**: Magnetohydrodynamic forces for realistic proton convergence
+  - `mhd_proton_confinement.py` - Z-pinch, Lorentz, pressure gradient, and radial electric field forces
+  - `vortex_particle_system.py` - VPFM-inspired vorticity tracking (inspired by arXiv:2505.21946)
+  - Cavitation site geometry with octahedral/tetrahedral interstitial sites
+  - Protons now converge radially toward cavitation point during bubble collapse
+- **Physics Web Worker**: Offload heavy calculations from UI thread
+  - SharedArrayBuffer support for proton position data (with secure context check)
+  - MHD force calculations (`CALCULATE_MHD_FORCES`)
+  - Vortex particle updates (`UPDATE_VORTEX_PARTICLES`)
+  - Force integration (`INTEGRATE_FORCES`)
+- **Simulation Presets**: Save and load simulation configurations
+  - `presets_routes.py` - REST API with CRUD, import/export, duplicate
+  - Built-in presets: Fleischmann-Pons Classic, Ni-H Gas Loading, High Frequency Collapse, Maximum Enhancement, Ti-D System
+  - `PresetManager.jsx` - UI for managing, importing, and exporting presets
+- **Mobile Optimization**: Touch-friendly controls for mobile devices
+  - `TouchControls.jsx` - Pinch-to-zoom, two-finger rotation, swipe gestures
+  - Adaptive quality settings based on device capabilities
+  - Gesture hints for first-time mobile users
+- **Multi-Physics Coupling Enhancement**: Improved domain coupling
+  - `EnhancedDomainCoupler` with operator splitting and conservation checks
+  - Pre-defined coupling transforms (nuclear→thermal, thermal→EM, etc.)
+  - `MultiPhysicsCouplingManager` for coordinating multiple couplers
+
+### Fixed
+- ESLint errors: SharedArrayBuffer globals, `self` in Web Workers, archived component references
+- Test file assertion syntax (`toHaveBeenCalled()` vs `toHaveBeenCalled`)
+- Test compatibility with actual `MHDFieldConfiguration` and `VortexSystemConfig` APIs
+
+### Documentation
+- `docs/MHD_PROTON_DYNAMICS.md` - Complete MHD and VPFM physics documentation
+- Updated `PHYSICS_EQUATION_VERIFICATION.md` with MHD/vorticity equations (Section 9)
+
+---
+
 ## [Unreleased]
 
 ### Added

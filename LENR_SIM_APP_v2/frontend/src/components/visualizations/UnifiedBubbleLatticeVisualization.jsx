@@ -35,6 +35,8 @@ import { VortexField, EnergyFlowVisualizer, PlasmaVortexEffect } from './FluidDy
 import { ScaleBar } from './QuantumFluxVisualization';
 // Import VisualizationLegend for comprehensive display
 import VisualizationLegend from './VisualizationLegend';
+// Import TouchControls for mobile optimization (v0.2.2-beta)
+import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 
 // Proton state definitions with visual properties
 const PROTON_STATES = {
@@ -241,6 +243,10 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
+  
+  // Mobile optimization state (v0.2.2-beta)
+  const [isMobile] = useState(() => isMobileDevice());
+  const [qualitySettings] = useState(() => getRecommendedQualitySettings());
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
@@ -1728,24 +1734,66 @@ const UnifiedBubbleLatticeVisualization = ({
       }
     }
     
-    // Update protons with physics-based transitions
+    // Update protons with physics-based transitions and MHD confinement (v0.2.2)
     if (showProtons) {
       updateProtonStates(phase, normalizedTime, enhancements.total, physicsData.fieldStrength, physicsData.temperature);
       
+      // Cavitation point: where bubble meets lattice during collapse
+      const bubbleY = bubbleGroupRef.current?.position.y ?? 2;
+      const cavitationPoint = {
+        x: 0,
+        y: Math.max(-5, bubbleY - bubbleRadiusRef.current),
+        z: 0
+      };
+      
       protonGroupRef.current?.children.forEach((proton) => {
-        // Move protons toward lattice during collapse
+        // Direction and distance to cavitation point
+        const dx = cavitationPoint.x - proton.position.x;
+        const dy = cavitationPoint.y - proton.position.y;
+        const dz = cavitationPoint.z - proton.position.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
+        
         if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
-          const targetY = -5 + Math.random() * 2;
-          proton.position.y += (targetY - proton.position.y) * 0.05;
+          // MHD-inspired radial convergence toward cavitation point
+          const compressionRatio = physicsData.compressionRatio || 1;
+          const confinementStrength = 0.03 * compressionRatio;
+          
+          // Radial force toward cavitation (increases with compression)
+          const radialForce = confinementStrength / (distance + 0.1);
+          proton.position.x += (dx / distance) * radialForce;
+          proton.position.y += (dy / distance) * radialForce;
+          proton.position.z += (dz / distance) * radialForce;
+          
+          // Tangential spiral motion (MHD azimuthal component)
+          const theta = Math.atan2(dz, dx);
+          const spiralStrength = 0.01 * compressionRatio / (distance + 0.5);
+          proton.position.x += -Math.sin(theta) * spiralStrength;
+          proton.position.z += Math.cos(theta) * spiralStrength;
+          
+          // Store vorticity for visualization
+          proton.userData.vorticity = spiralStrength * 10;
+          
+        } else if (phase === 'REBOUND') {
+          // Slight outward push during rebound
+          proton.position.x -= (dx / distance) * 0.01;
+          proton.position.y -= (dy / distance) * 0.01;
+          proton.position.z -= (dz / distance) * 0.01;
+          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.9;
+          
         } else {
-          // Return to original position
+          // Return to original position during expansion/recovery
           const base = proton.userData.basePosition;
           proton.position.lerp(base, 0.02);
+          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.95;
         }
         
-        // Add small random motion
-        proton.position.x += proton.userData.velocity.x;
-        proton.position.z += proton.userData.velocity.z;
+        // Add small random motion (thermal fluctuations)
+        proton.position.x += proton.userData.velocity.x * 0.5;
+        proton.position.z += proton.userData.velocity.z * 0.5;
+        
+        // Damping for stability
+        proton.userData.velocity.x *= 0.98;
+        proton.userData.velocity.z *= 0.98;
       });
     }
     
@@ -2208,13 +2256,17 @@ const UnifiedBubbleLatticeVisualization = ({
     camera.lookAt(0, -2, 0);
     cameraRef.current = camera;
     
-    // Renderer
+    // Renderer (v0.2.2-beta: mobile-optimized settings)
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
-      antialias: true
+      antialias: qualitySettings.antialias,
+      powerPreference: isMobile ? 'low-power' : 'high-performance'
     });
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(qualitySettings.pixelRatio);
+    
+    // Disable shadows on mobile for better performance
+    renderer.shadowMap.enabled = qualitySettings.shadowsEnabled;
     rendererRef.current = renderer;
     
     // Controls
@@ -2449,6 +2501,35 @@ const UnifiedBubbleLatticeVisualization = ({
         }}
       >
         <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+        
+        {/* Mobile touch controls (v0.2.2-beta) */}
+        <TouchControls
+          containerRef={containerRef}
+          onZoom={(delta) => {
+            if (cameraRef.current) {
+              const camera = cameraRef.current;
+              const direction = new THREE.Vector3();
+              camera.getWorldDirection(direction);
+              camera.position.addScaledVector(direction, delta * 5);
+            }
+          }}
+          onRotate={(deltaX, deltaY) => {
+            if (controlsRef.current) {
+              controlsRef.current.rotateLeft(deltaX);
+              controlsRef.current.rotateUp(deltaY);
+            }
+          }}
+          onReset={() => {
+            if (cameraRef.current && controlsRef.current) {
+              cameraRef.current.position.set(12, 5, 12);
+              controlsRef.current.target.set(0, -2, 0);
+              controlsRef.current.update();
+            }
+          }}
+          showHints={isMobile}
+          showControls={true}
+          enabled={true}
+        />
         
         {/* Overlay controls - top left */}
         <Paper

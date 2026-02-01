@@ -205,6 +205,6 @@ describe('SimulationVisualizer Component', () => {
     unmount();
     
     // Can't directly test cleanup in jest, but this is a proxy for proper cleanup
-    expect(window.removeEventListener).toHaveBeenCalled;
+    expect(window.removeEventListener).toHaveBeenCalled();
   });
 }); 
