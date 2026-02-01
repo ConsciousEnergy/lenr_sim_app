@@ -22,12 +22,17 @@ from .routers.mock_simulation_router import router as mock_simulation_router  # 
 from .routers.physics_simulation_router import router as physics_simulation_router  # Real physics calculations
 from .routers.websocket_router import router as websocket_router  # WebSocket for real-time updates
 from .routers.shared_simulation_router import router as shared_simulation_router  # Shared simulation storage and matching
+from .routers.analytics_routes import router as analytics_router  # Analytics dashboard (v0.2.3-beta)
+
 # Import unified simulation router
 try:
     from .api.routes.unified_simulation import router as unified_simulation_router
 except ImportError as e:
     print(f"Warning: Could not import unified_simulation_router: {e}")
     unified_simulation_router = None
+
+# Import database manager (v0.2.3-beta)
+from .core.database import db_manager, get_database_url
 
 # Import middleware - using relative imports
 from .api.middleware.timeout import TimeoutMiddleware
@@ -159,6 +164,23 @@ async def lifespan(app: FastAPI):
         expired = remove_expired_items()
         app_logger.info(f"Initial cache cleanup: {expired} expired items removed")
     
+    # Initialize database (v0.2.3-beta)
+    try:
+        database_url = get_database_url()
+        db_manager.initialize(
+            database_url=database_url,
+            echo=settings.DB_ECHO_SQL,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
+            pool_timeout=settings.DB_POOL_TIMEOUT,
+        )
+        # Create tables if they don't exist (development mode)
+        if settings.ENVIRONMENT.value == "development":
+            await db_manager.create_tables()
+        app_logger.info("Database initialized successfully")
+    except Exception as e:
+        app_logger.warning(f"Database initialization skipped: {e}")
+    
     yield
     
     # Shutdown: cleanup operations
@@ -169,6 +191,13 @@ async def lifespan(app: FastAPI):
     if cache_available:
         items_cleared = clear_cache()
         app_logger.info(f"Simulation cache cleared: {items_cleared} items removed")
+    
+    # Close database connections (v0.2.3-beta)
+    try:
+        await db_manager.close()
+        app_logger.info("Database connections closed")
+    except Exception as e:
+        app_logger.warning(f"Database shutdown warning: {e}")
     
     # Final garbage collection to clean up resources
     collected = gc.collect()
@@ -255,6 +284,7 @@ app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Moc
 app.include_router(physics_simulation_router)  # Real physics calculation endpoints
 app.include_router(websocket_router, prefix="/api", tags=["WebSocket"])  # Real-time simulation updates
 app.include_router(shared_simulation_router)  # Shared simulation storage and matching (prefix already in router)
+app.include_router(analytics_router, prefix="/api", tags=["Analytics"])  # Analytics dashboard (v0.2.3-beta)
 
 # Include unified simulation router
 if unified_simulation_router:
