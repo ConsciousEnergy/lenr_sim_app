@@ -5,6 +5,41 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.3-beta] - 2026-02-01
+
+### Added
+- **PostgreSQL Database Integration**: Persistent storage for experiment analytics
+  - `database.py` - Async SQLAlchemy 2.0 engine with PostgreSQL and SQLite support
+  - `database_models.py` - Experiment, ExperimentTimeline, and AnalyticsSnapshot models
+  - Alembic migrations for schema versioning
+  - Connection pooling and health checks
+- **Analytics API**: Full REST API for experiment data management
+  - `analytics_routes.py` - CRUD endpoints, export (CSV/JSON), statistics, distributions
+  - `analytics_service.py` - Business logic for stats, filtering, pagination
+  - Dashboard statistics (total simulations, success rate, avg enhancement)
+  - Type and material distribution charts
+  - Timeline data for enhancement over time visualization
+- **Baseline LENR Data**: Published experiment data from LENR research
+  - `baseline_experiments.py` - 20+ baseline experiments from published research
+  - Sources: Fleischmann-Pons, McKubre/SRI, SPAWAR, Iwamura, Brillouin, Clean Planet
+  - `seed_database.py` - Idempotent database seeding script
+- **Analytics Frontend Integration**
+  - `analyticsApi.js` - API client with automatic localStorage fallback
+  - Session-based user tracking for experiment attribution
+  - Updated `AnalyticsPage.jsx` to fetch from database with offline mode indicator
+  - Baseline vs user experiment distinction in UI
+- **Save to Analytics**: One-click experiment saving from simulation pages
+  - Added "Save to Analytics" button to `UnifiedTheoryPage.jsx`
+  - Added "Save to Analytics" button to `FusionSimulationPage.jsx`
+  - Automatic save with session ID for user tracking
+
+### Changed
+- Updated `config.py` with database configuration settings (DB_HOST, DB_PORT, etc.)
+- Updated `main.py` with database initialization in lifespan context
+- App version bumped to 0.2.3-beta
+
+---
+
 ## [v0.2.2-beta] - 2026-02-01
 
 ### Added

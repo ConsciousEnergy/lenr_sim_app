@@ -42,8 +42,10 @@ import SchoolIcon from '@mui/icons-material/School';
 import DownloadIcon from '@mui/icons-material/Download';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';
+import SaveIcon from '@mui/icons-material/Save';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { Link as RouterLink } from 'react-router-dom';
+import { analyticsApi } from '../services/analyticsApi';
 
 // Import new unified visualization
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
@@ -258,6 +260,57 @@ function UnifiedTheoryPage() {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Save simulation results to analytics database (v0.2.3-beta)
+  const saveToAnalytics = useCallback(async () => {
+    if (!simulationData) {
+      setAlertMessage('No simulation data to save. Run a simulation first.');
+      setAlertSeverity('warning');
+      setAlertOpen(true);
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const experimentData = {
+        name: `${parameters.name} Simulation`,
+        experiment_type: 'unified_theory',
+        status: 'completed',
+        material: parameters.hostMaterial,
+        temperature_k: parameters.temperature,
+        pressure_bar: parameters.drivingPressure,
+        loading_ratio: parameters.loadingRatio,
+        driving_frequency_khz: parameters.frequency,
+        parameters: {
+          reactant: parameters.reactant,
+          initial_bubble_radius: parameters.initialBubbleRadius,
+          selected_system: selectedSystem,
+        },
+        enhancement_factor: simulationData.peak_conditions?.enhancement_factor || 1,
+        fusion_rate: simulationData.peak_conditions?.fusion_rate,
+        energy_output_kev: simulationData.total_energy_output || 0,
+        duration_seconds: (simulationData.enhancement_timeline?.length || 0) * 0.001,
+        results: {
+          peak_conditions: simulationData.peak_conditions,
+          enhancement_breakdown: simulationData.enhancement_breakdown,
+          lawson_progress: simulationData.lawson_criterion_progress,
+        },
+      };
+      
+      const saved = await analyticsApi.saveExperiment(experimentData);
+      setAlertMessage(`Simulation saved to analytics! ID: ${saved.id.substring(0, 8)}...`);
+      setAlertSeverity('success');
+      setAlertOpen(true);
+    } catch (error) {
+      console.error('Failed to save to analytics:', error);
+      setAlertMessage('Failed to save to analytics. Data saved locally.');
+      setAlertSeverity('warning');
+      setAlertOpen(true);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [simulationData, parameters, selectedSystem]);
   const [collapseCount, setCollapseCount] = useState(0);
 
   // Handle system preset change
@@ -839,6 +892,21 @@ function UnifiedTheoryPage() {
             >
               {isLoading ? 'Calculating...' : 'Run Physics Simulation'}
             </Button>
+            
+            {/* Save to Analytics button (v0.2.3-beta) */}
+            {simulationData && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                fullWidth
+                startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+                onClick={saveToAnalytics}
+                disabled={isSaving || isLoading}
+                sx={{ mt: 1 }}
+              >
+                {isSaving ? 'Saving...' : 'Save to Analytics'}
+              </Button>
+            )}
 
             {/* Export buttons */}
             <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
