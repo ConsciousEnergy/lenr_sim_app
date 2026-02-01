@@ -23,18 +23,11 @@ from .routers.physics_simulation_router import router as physics_simulation_rout
 from .routers.websocket_router import router as websocket_router  # WebSocket for real-time updates
 from .routers.shared_simulation_router import router as shared_simulation_router  # Shared simulation storage and matching
 # Import unified simulation router
-# #region agent log
 try:
     from .api.routes.unified_simulation import router as unified_simulation_router
-    import json
-    with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:24","message":"Unified simulation router imported","data":{"router_exists":True,"router_prefix":getattr(unified_simulation_router,'prefix','unknown'),"routes_count":len(unified_simulation_router.routes)},"timestamp":int(time.time()*1000)})+"\n")
 except ImportError as e:
-    import json
-    with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:24","message":"Unified simulation router import failed","data":{"error":str(e)},"timestamp":int(time.time()*1000)})+"\n")
+    print(f"Warning: Could not import unified_simulation_router: {e}")
     unified_simulation_router = None
-# #endregion
 
 # Import middleware - using relative imports
 from .api.middleware.timeout import TimeoutMiddleware
@@ -243,84 +236,6 @@ app.add_middleware(
     exclude_paths=timeout_config
 )
 
-# #region agent log - Add request logging middleware to track ALL requests (FIRST middleware)
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Log ALL incoming requests - this should catch everything
-        import json
-        import time
-        import traceback
-        try:
-            path = request.url.path
-            method = request.method
-            origin = request.headers.get('origin', 'no-origin')
-            # Log immediately when request arrives
-            log_entry = json.dumps({
-                "sessionId":"debug-session",
-                "runId":"run1",
-                "hypothesisId":"D",
-                "location":"main.py:248",
-                "message":"Incoming request",
-                "data":{
-                    "path":path,
-                    "method":method,
-                    "origin":origin,
-                    "host":request.headers.get('host', 'no-host')
-                },
-                "timestamp":int(time.time()*1000)
-            })
-            with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-                f.write(log_entry + "\n")
-                f.flush()  # Force write immediately
-            
-            response = await call_next(request)
-            
-            # Log response status
-            log_entry = json.dumps({
-                "sessionId":"debug-session",
-                "runId":"run1",
-                "hypothesisId":"D",
-                "location":"main.py:256",
-                "message":"Response sent",
-                "data":{
-                    "path":path,
-                    "method":method,
-                    "status":response.status_code,
-                    "headers":dict(response.headers) if hasattr(response, 'headers') else {}
-                },
-                "timestamp":int(time.time()*1000)
-            })
-            with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-                f.write(log_entry + "\n")
-                f.flush()
-            
-            return response
-        except Exception as e:
-            error_trace = traceback.format_exc()
-            log_entry = json.dumps({
-                "sessionId":"debug-session",
-                "runId":"run1",
-                "hypothesisId":"D",
-                "location":"main.py:262",
-                "message":"Middleware error",
-                "data":{
-                    "error":str(e),
-                    "traceback":error_trace
-                },
-                "timestamp":int(time.time()*1000)
-            })
-            with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-                f.write(log_entry + "\n")
-                f.flush()
-            raise
-
-# Add this middleware FIRST (before all others) to catch all requests
-app.add_middleware(RequestLoggingMiddleware)
-# #endregion
-
 # Set up all middleware including CORS, request ID, logging, and performance tracking
 setup_middlewares(app)
 
@@ -341,48 +256,15 @@ app.include_router(physics_simulation_router)  # Real physics calculation endpoi
 app.include_router(websocket_router, prefix="/api", tags=["WebSocket"])  # Real-time simulation updates
 app.include_router(shared_simulation_router)  # Shared simulation storage and matching (prefix already in router)
 
-# Include unified simulation router - FIXED: Always include if imported
-# #region agent log
-import json
-try:
-    router_check = unified_simulation_router is not None
-    router_type = str(type(unified_simulation_router)) if unified_simulation_router else "None"
-    with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:297","message":"Before router inclusion","data":{"router_exists":router_check,"type":router_type},"timestamp":int(time.time()*1000)})+"\n")
-        f.flush()
-except Exception as e:
-    with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:297","message":"Error checking router","data":{"error":str(e)},"timestamp":int(time.time()*1000)})+"\n")
-        f.flush()
-
-# Always include the router - it was imported successfully
+# Include unified simulation router
 if unified_simulation_router:
     try:
         app.include_router(unified_simulation_router, prefix="/api", tags=["Unified Simulation"])
-        # Log registered routes
-        registered_routes = []
-        for route in app.routes:
-            if hasattr(route, 'path'):
-                route_path = str(route.path)
-                if '/unified' in route_path:
-                    methods = getattr(route, 'methods', set())
-                    registered_routes.append(f"{methods} {route_path}")
-        
-        with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:310","message":"Router included successfully","data":{"included":True,"registered_routes":registered_routes,"total_routes":len(app.routes)},"timestamp":int(time.time()*1000)})+"\n")
-            f.flush()
-        app_logger.info(f"Unified simulation router included with {len(registered_routes)} routes")
+        app_logger.info("Unified simulation router included successfully")
     except Exception as e:
-        with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:315","message":"Error including router","data":{"error":str(e)},"timestamp":int(time.time()*1000)})+"\n")
-            f.flush()
         app_logger.error(f"Failed to include unified simulation router: {e}")
 else:
-    with open('c:\\Users\\brand\\LENR_SIM_APP\\.cursor\\debug.log', 'a', encoding='utf-8') as f:
-        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.py:318","message":"Router not included - router is None","data":{"included":False},"timestamp":int(time.time()*1000)})+"\n")
-        f.flush()
     app_logger.warning("Unified simulation router not available - router import failed")
-# #endregion
 
 @app.get("/")
 async def root():
