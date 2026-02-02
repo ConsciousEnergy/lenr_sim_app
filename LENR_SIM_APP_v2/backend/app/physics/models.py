@@ -134,12 +134,40 @@ class ReactionConditions:
     """
     Describes the necessary conditions for LENR reactions
     based on the Unified LENR Theory
+    
+    Includes surface physics parameters for heterogeneous nucleation:
+    - Contact angle determines wettability and nucleation barrier reduction
+    - Surface energy affects bubble-surface interactions
+    - Cavity parameters define nucleation site geometry
     """
+    # Original parameters
     loading_ratio: float = 0.0  # H/Pd or H/Ni ratio
     surface_roughness: float = 0.0  # Surface roughness in nm
     defect_density: float = 0.0  # Defects per cm³
     field_strength: float = 0.0  # Local electric field in V/m
     coherence_length: float = 0.0  # Quantum coherence length in nm
+    
+    # Surface physics parameters (Phase 1 enhancement)
+    contact_angle: float = 80.0  # degrees (0-180, wettability)
+    # 0° = complete wetting (hydrophilic), 90° = neutral, 180° = non-wetting (hydrophobic)
+    # Pd ~80°, Ni ~70°, clean metals typically hydrophilic
+    
+    surface_energy: float = 0.05  # J/m² (solid-liquid interface energy)
+    # Pd-water interface ~0.05 J/m², Ni-water ~0.045 J/m²
+    
+    cavity_density: float = 1e12  # nucleation cavities per m²
+    # Typical values: polished surfaces ~10^10, rough surfaces ~10^13
+    
+    cavity_radius: float = 100.0  # nm (typical cavity radius)
+    # Active nucleation sites: 1 nm to 100 μm range
+    
+    cavity_geometry: str = "conical"  # "conical", "cylindrical", "re-entrant", "crack"
+    # Geometry affects nucleation barrier reduction factor
+    
+    # Thermal boundary layer parameters
+    boundary_layer_thickness: float = 1.0  # μm (thermal/diffusion layer)
+    superheat: float = 0.0  # K above saturation temperature
+    supersaturation: float = 1.0  # concentration ratio (>1 for nucleation)
     
     def meets_threshold(self) -> bool:
         """Check if conditions meet LENR thresholds"""
@@ -153,17 +181,80 @@ class ReactionConditions:
                 self.surface_roughness < roughness_threshold and
                 self.defect_density > defect_threshold and
                 self.field_strength > field_threshold)
+    
+    def get_contact_angle_factor(self) -> float:
+        """
+        Calculate the contact angle factor f(θ) for heterogeneous nucleation.
+        
+        f(θ) = (2 + cos θ)(1 - cos θ)² / 4
+        
+        This factor reduces the nucleation energy barrier compared to
+        homogeneous nucleation.
+        """
+        theta_rad = np.radians(self.contact_angle)
+        cos_theta = np.cos(theta_rad)
+        f_theta = (2 + cos_theta) * (1 - cos_theta)**2 / 4
+        return float(f_theta)
+    
+    def is_nucleation_favorable(self) -> bool:
+        """
+        Check if conditions favor heterogeneous bubble nucleation.
+        
+        Returns True if:
+        - Supersaturation > 1 (or superheat > 0)
+        - Contact angle allows nucleation barrier reduction
+        - Cavity density is sufficient
+        """
+        has_driving_force = self.supersaturation > 1.0 or self.superheat > 0
+        has_favorable_angle = self.contact_angle < 150  # Not extremely hydrophobic
+        has_sites = self.cavity_density > 1e8
+        
+        return has_driving_force and has_favorable_angle and has_sites
                 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses"""
         return {
+            # Original parameters
             "loading_ratio": self.loading_ratio,
             "surface_roughness": self.surface_roughness,
             "defect_density": self.defect_density,
             "field_strength": self.field_strength,
             "coherence_length": self.coherence_length,
-            "meets_threshold": self.meets_threshold()
+            "meets_threshold": self.meets_threshold(),
+            
+            # Surface physics parameters
+            "contact_angle": self.contact_angle,
+            "contact_angle_factor": self.get_contact_angle_factor(),
+            "surface_energy": self.surface_energy,
+            "cavity_density": self.cavity_density,
+            "cavity_radius": self.cavity_radius,
+            "cavity_geometry": self.cavity_geometry,
+            
+            # Boundary layer parameters
+            "boundary_layer_thickness": self.boundary_layer_thickness,
+            "superheat": self.superheat,
+            "supersaturation": self.supersaturation,
+            "nucleation_favorable": self.is_nucleation_favorable()
         }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ReactionConditions':
+        """Create instance from dictionary"""
+        return cls(
+            loading_ratio=data.get("loading_ratio", 0.0),
+            surface_roughness=data.get("surface_roughness", 0.0),
+            defect_density=data.get("defect_density", 0.0),
+            field_strength=data.get("field_strength", 0.0),
+            coherence_length=data.get("coherence_length", 0.0),
+            contact_angle=data.get("contact_angle", 80.0),
+            surface_energy=data.get("surface_energy", 0.05),
+            cavity_density=data.get("cavity_density", 1e12),
+            cavity_radius=data.get("cavity_radius", 100.0),
+            cavity_geometry=data.get("cavity_geometry", "conical"),
+            boundary_layer_thickness=data.get("boundary_layer_thickness", 1.0),
+            superheat=data.get("superheat", 0.0),
+            supersaturation=data.get("supersaturation", 1.0)
+        )
 
 
 @dataclass

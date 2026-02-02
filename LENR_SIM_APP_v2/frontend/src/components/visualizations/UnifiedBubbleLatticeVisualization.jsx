@@ -61,6 +61,124 @@ const _COLLAPSE_PHASES = {
 // This multiplier makes one visual cycle take ~3-5 seconds at default speed
 const UX_TIME_SCALE = 0.02; // Slow down by 50x for visual comprehension
 
+// ============================================================================
+// PHYSICS-BASED VISUALIZATION CONFIGURATION (Phase 6 Enhancement)
+// ============================================================================
+// These constants map physical distances to visualization units.
+// 
+// HETEROGENEOUS NUCLEATION PHYSICS:
+// - Bubble nucleates at surface cavities on the lattice boundary layer
+// - Initially very small (critical nucleus ~1nm), penetrating ~half atomic layer into lattice
+// - Grows while attached to surface due to surface tension
+// - Buoyancy eventually pulls on the growing bubble
+// - Before detachment, acoustic/EM forcing causes collapse toward lattice
+// - This collapse creates extreme conditions for LENR reactions
+
+const PHYSICS_CONFIG = {
+  // Scale: how many meters per visualization unit
+  // 1 vis unit = 1 micrometer (μm) for comprehensible display
+  METERS_PER_VIS_UNIT: 1e-6,
+  
+  // Typical physical values
+  BUBBLE_RADIUS_NUCLEATION_M: 100e-9,  // 100 nm critical nucleus
+  BUBBLE_RADIUS_GROWN_M: 10e-6,        // 10 μm grown bubble (before collapse)
+  BUBBLE_RADIUS_MIN_M: 0.5e-6,         // 0.5 μm minimum during collapse
+  SURFACE_DISTANCE_NUCLEATION_M: 10e-9, // 10 nm when nucleating (AT surface)
+  SURFACE_DISTANCE_ATTACHED_M: 50e-9,   // 50 nm when attached and growing
+  CAVITY_RADIUS_M: 100e-9,              // 100 nm typical nucleation cavity
+  BOUNDARY_LAYER_THICKNESS_M: 1e-6,    // 1 μm thermal boundary layer
+  LATTICE_PENETRATION_M: 0.2e-9,       // ~0.2 nm = half atomic layer into lattice
+  
+  // Visualization positions (in vis units)
+  // Lattice surface is defined by top of the lattice atoms
+  LATTICE_Y_OFFSET: -5,  // Lattice rendered at y = -5 for visual clarity
+  LATTICE_SURFACE_OFFSET: 1.5,  // Offset to reach top surface of lattice
+  
+  // Bubble behavior visualization (in vis units)
+  // Bubble starts AT the surface and grows while staying attached
+  NUCLEATION_HEIGHT: 0.3,    // Height above lattice surface when nucleating (small bubble touching surface)
+  ATTACHED_HEIGHT: 0.5,      // Height when attached and growing (center of growing bubble)
+  BUOYANCY_HEIGHT: 1.5,      // Height when buoyancy starts pulling (larger bubble)
+  MAX_HEIGHT: 2.5,           // Maximum height before collapse begins
+  COLLAPSE_HEIGHT: 0.3,      // Height at collapse (back to surface)
+  
+  // Bubble size during phases (scale factor)
+  BUBBLE_SCALE: {
+    NUCLEATION: 0.15,    // Very small at nucleation (critical nucleus)
+    GROWTH_START: 0.3,   // Starting to grow
+    GROWTH_MID: 0.6,     // Mid-growth
+    FULL_SIZE: 1.0,      // Full size before collapse
+    COLLAPSE_MIN: 0.1    // Minimum size during collapse
+  },
+  
+  // Phase-dependent surface distances (in vis units)
+  PHASE_DISTANCES: {
+    EXPANSION: 0.8,     // Growing while mostly attached (small lift from buoyancy)
+    COLLAPSE: 0.4,      // Collapsing back toward surface
+    MINIMUM: 0.2,       // Minimum - AT the surface (nucleation site)
+    REBOUND: 0.5,       // Slight bounce back after collapse
+    RECOVERY: 0.6       // Returning to growth phase
+  }
+};
+
+// Helper function to convert physics meters to visualization units
+const physicsToVis = (meters) => meters / PHYSICS_CONFIG.METERS_PER_VIS_UNIT;
+
+// Helper to get bubble Y position based on physics phase
+// NEW: Bubble stays closer to surface, grows in place, then collapses
+const getBubbleYFromPhase = (phase, progress = 0) => {
+  const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+  const distances = PHYSICS_CONFIG.PHASE_DISTANCES;
+  
+  switch (phase) {
+    case 'EXPANSION':
+      // Bubble grows while staying relatively close to surface
+      // Small vertical lift as buoyancy starts to act on growing bubble
+      return latticeY + distances.MINIMUM + (distances.EXPANSION - distances.MINIMUM) * progress;
+    case 'COLLAPSE':
+      // Acoustic/EM forcing drives bubble back toward surface
+      return latticeY + distances.EXPANSION - (distances.EXPANSION - distances.MINIMUM) * progress;
+    case 'MINIMUM':
+      // Bubble collapsed at/near surface - maximum compression
+      // This is where LENR reactions occur
+      return latticeY + distances.MINIMUM;
+    case 'REBOUND':
+      // Energy release causes slight expansion
+      return latticeY + distances.MINIMUM + (distances.REBOUND - distances.MINIMUM) * progress;
+    case 'RECOVERY':
+      // Returning to growth phase, nucleation begins again
+      return latticeY + distances.REBOUND - (distances.REBOUND - distances.MINIMUM) * (1 - progress);
+    default:
+      return latticeY + distances.MINIMUM;
+  }
+};
+
+// Helper to get bubble scale (size) based on physics phase
+// NEW: Bubble starts small and grows, then collapses to minimum
+const getBubbleScaleFromPhase = (phase, progress = 0) => {
+  const scales = PHYSICS_CONFIG.BUBBLE_SCALE;
+  
+  switch (phase) {
+    case 'EXPANSION':
+      // Bubble grows from nucleation size to full size
+      return scales.NUCLEATION + (scales.FULL_SIZE - scales.NUCLEATION) * progress;
+    case 'COLLAPSE':
+      // Bubble rapidly shrinks during collapse
+      return scales.FULL_SIZE - (scales.FULL_SIZE - scales.COLLAPSE_MIN) * progress;
+    case 'MINIMUM':
+      // At minimum size - maximum compression
+      return scales.COLLAPSE_MIN;
+    case 'REBOUND':
+      // Expanding from minimum
+      return scales.COLLAPSE_MIN + (scales.GROWTH_START - scales.COLLAPSE_MIN) * progress;
+    case 'RECOVERY':
+      // Returning toward nucleation state for next cycle
+      return scales.GROWTH_START + (scales.NUCLEATION - scales.GROWTH_START) * progress;
+    default:
+      return scales.NUCLEATION;
+  }
+};
+
 /**
  * Helper function to interpolate values from API simulation timeline
  * @param {Array} timeline - API enhancement_timeline array
@@ -311,7 +429,8 @@ const UnifiedBubbleLatticeVisualization = ({
       for (let y = 0; y < dimension; y++) {
         for (let z = 0; z < dimension; z++) {
           const posX = x * spacing - offset;
-          const posY = y * spacing - offset - 5; // Position lattice below bubble
+          // Use physics-based lattice Y offset
+          const posY = y * spacing - offset + PHYSICS_CONFIG.LATTICE_Y_OFFSET;
           const posZ = z * spacing - offset;
           
           // Host atom
@@ -351,6 +470,11 @@ const UnifiedBubbleLatticeVisualization = ({
       latticeGroup.add(line);
     });
     
+    // ========================================================================
+    // NUCLEATION CAVITY VISUALIZATION (Phase 6 Enhancement)
+    // Note: Nucleation cavity and boundary layer visualizations removed for cleaner display
+    // The physics calculations still account for these effects
+    
     scene.add(latticeGroup);
     latticeGroupRef.current = latticeGroup;
     
@@ -358,12 +482,22 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [hostMaterial, loadingRatio, latticeSize]);
 
   // Create bubble with double-layer shell
+  // Physics: bubble nucleates at surface cavities within boundary layer
+  // Bubble starts very small at the lattice surface and grows while attached
   const createBubble = useCallback((scene) => {
     const bubbleGroup = new THREE.Group();
     bubbleGroup.name = 'BubbleGroup';
-    bubbleGroup.position.set(0, 2, 0); // Position above lattice
+    // Start at nucleation site - very close to lattice surface
+    // This reflects physics: heterogeneous nucleation occurs AT surface cavities
+    const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    const initialY = latticeY + PHYSICS_CONFIG.PHASE_DISTANCES.MINIMUM;
+    bubbleGroup.position.set(0, initialY, 0);
+    
+    // Start with small scale (nucleation size)
+    const initialScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION;
     
     // Main bubble - starts as sphere, morphs to torus during collapse, then to jet
+    // Physics: starts very small at nucleation (critical nucleus ~100nm)
     const bubbleGeometry = new THREE.SphereGeometry(1, 32, 32);
     const bubbleMaterial = new THREE.MeshPhongMaterial({
       color: 0xaaddff,
@@ -378,6 +512,8 @@ const UnifiedBubbleLatticeVisualization = ({
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
       baseGeometry: bubbleGeometry
     };
+    // Start with nucleation scale (small bubble at surface)
+    bubble.scale.setScalar(initialScale);
     bubbleGroup.add(bubble);
     
     // Torus geometry for collapse phase (torus-to-jet formation)
@@ -400,7 +536,7 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(torus);
     
     // Jet geometry for focused jet formation (during minimum/rebound)
-    // Make jet more visible - wider base, longer, brighter
+    // Visible energy jet during bubble collapse toward lattice
     const jetGeometry = new THREE.ConeGeometry(0.3, 4, 16, 1, true);
     const jetMaterial = new THREE.MeshPhongMaterial({
       color: 0xffff00,
@@ -427,6 +563,7 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     const doubleLayer = new THREE.Mesh(doubleLayerGeometry, doubleLayerMaterial);
     doubleLayer.name = 'DoubleLayer';
+    doubleLayer.scale.setScalar(initialScale); // Start small at nucleation
     bubbleGroup.add(doubleLayer);
     
     // Inner charge layer
@@ -439,6 +576,7 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     const innerLayer = new THREE.Mesh(innerLayerGeometry, innerLayerMaterial);
     innerLayer.name = 'InnerLayer';
+    innerLayer.scale.setScalar(initialScale); // Start small at nucleation
     bubbleGroup.add(innerLayer);
     
     // Pressure wave rings
@@ -463,16 +601,19 @@ const UnifiedBubbleLatticeVisualization = ({
     return bubbleGroup;
   }, []);
 
-  // Create proton phase particles
+  // Create H2/D2 particles that follow MHD fluid dynamics
+  // Physics: Ionized hydrogen/deuterium in electrolytic bubble boundary layer
+  // These particles swirl around the bubble following MHD flow patterns
   const createProtons = useCallback((scene) => {
     const protonGroup = new THREE.Group();
     protonGroup.name = 'ProtonPhaseGroup';
     
-    const protonCount = 30;
-    const protonGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+    // More, smaller particles for MHD fluid visualization
+    const protonCount = 60; // More particles for fluid-like appearance
+    const protonGeometry = new THREE.SphereGeometry(0.05, 6, 6); // Smaller H2/D2 particles
     
     for (let i = 0; i < protonCount; i++) {
-      // Start with FREE state
+      // Start with FREE state (ionized H2/D2 in solution)
       const state = PROTON_STATES.FREE;
       const protonMaterial = new THREE.MeshPhongMaterial({
         color: state.color,
@@ -483,26 +624,43 @@ const UnifiedBubbleLatticeVisualization = ({
       
       const proton = new THREE.Mesh(protonGeometry, protonMaterial);
       
-      // Random position in bubble region
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-      const r = 0.5 + Math.random() * 2;
+      // Position particles around the bubble boundary layer
+      // MHD flow: particles concentrated at bubble-liquid interface
+      const theta = Math.random() * Math.PI * 2; // Azimuthal angle
+      const phi = Math.random() * Math.PI;       // Polar angle
+      
+      // Distribute particles in a shell around the bubble
+      // Some near surface, some in boundary layer
+      const shellRadius = 0.8 + Math.random() * 0.6; // Concentrated near bubble surface
+      const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
       
       proton.position.set(
-        r * Math.sin(phi) * Math.cos(theta),
-        2 + r * Math.cos(phi), // Above lattice
-        r * Math.sin(phi) * Math.sin(theta)
+        shellRadius * Math.sin(phi) * Math.cos(theta),
+        latticeY + 0.5 + shellRadius * (0.3 + Math.cos(phi) * 0.7), // Around bubble at lattice
+        shellRadius * Math.sin(phi) * Math.sin(theta)
       );
+      
+      // MHD flow properties
+      const angularVelocity = 0.5 + Math.random() * 1.0; // Rotation speed
+      const radialOscillation = Math.random() * 0.1;     // Breathing motion
       
       proton.userData = {
         state: 'FREE',
         basePosition: proton.position.clone(),
         velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.1,
-          (Math.random() - 0.5) * 0.1,
-          (Math.random() - 0.5) * 0.1
+          (Math.random() - 0.5) * 0.05,
+          (Math.random() - 0.5) * 0.05,
+          (Math.random() - 0.5) * 0.05
         ),
-        phaseThreshold: 0.3 + Math.random() * 0.4
+        phaseThreshold: 0.3 + Math.random() * 0.4,
+        // MHD-specific properties
+        mhdAngle: theta,                    // Current angle in MHD flow
+        mhdRadius: shellRadius,             // Distance from bubble center
+        mhdAngularVelocity: angularVelocity,// Rotation speed
+        mhdPhase: Math.random() * Math.PI * 2, // Phase offset for variety
+        radialOscillation: radialOscillation,
+        isIonized: Math.random() < 0.7,     // 70% ionized
+        moleculeType: Math.random() < 0.5 ? 'H2' : 'D2' // H2 or D2
       };
       
       protonGroup.add(proton);
@@ -871,155 +1029,47 @@ const UnifiedBubbleLatticeVisualization = ({
     return effectsGroup;
   }, []);
 
-  // Create vortex flow visualization - ions flowing in/out of lattice
+  // Create MHD flow visualization - simplified particle-based fluid dynamics
+  // Physics: Ionized H2/D2 particles following MHD fluid flow, color changes with phase/energy
   const createVortexFlow = useCallback((scene) => {
     const vortexGroup = new THREE.Group();
-    vortexGroup.name = 'VortexFlowGroup';
+    vortexGroup.name = 'MHDFlowGroup';
+    
+    const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     
     try {
-    // Create plasma vortex effect centered between bubble and lattice
+    // Create plasma vortex effect - particle-based MHD flow
     const plasmaVortex = new PlasmaVortexEffect({
       particleCount: 200,
-      vortexStrength: 0.8,
-      radialSpeed: 0.3,
-      verticalSpeed: 0.5,
-      radius: 2.5,
-      height: 6
+      vortexStrength: 1.0,
+      radialSpeed: 0.25,
+      verticalSpeed: 0.4,
+      radius: 2.0,
+      height: 3.5
     });
     plasmaVortex.initialize();
-    plasmaVortex.getGroup().position.set(0, -1.5, 0); // Center between bubble and lattice
+    plasmaVortex.getGroup().position.set(0, latticeY + 0.6, 0);
     vortexGroup.add(plasmaVortex.getGroup());
     plasmaVortexRef.current = plasmaVortex;
     } catch (error) {
       console.warn('Failed to create plasma vortex effect:', error);
-      // Continue without plasma vortex if it fails
-    }
-    
-    // Create energy flow visualizer for directed particle streams
-    const energyFlow = new EnergyFlowVisualizer({
-      particleCount: 80,
-      speed: 0.015,
-      particleSize: 0.06
-    });
-    
-    // Create flow paths from bubble area down to lattice hotspots
-    const flowPathsData = [
-      // Central downward flow
-      {
-        points: [
-          new THREE.Vector3(0, 2, 0),
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(0, -3, 0),
-          new THREE.Vector3(0, -5, 0)
-        ],
-        color: 0x00ffff,
-        intensity: 1.0
-      },
-      // Spiral inward flows
-      {
-        points: [
-          new THREE.Vector3(2, 2, 0),
-          new THREE.Vector3(1.5, 0, 1),
-          new THREE.Vector3(0.5, -2, 0.5),
-          new THREE.Vector3(0, -4, 0)
-        ],
-        color: 0x00ff88,
-        intensity: 0.8
-      },
-      {
-        points: [
-          new THREE.Vector3(-2, 2, 0),
-          new THREE.Vector3(-1.5, 0, -1),
-          new THREE.Vector3(-0.5, -2, -0.5),
-          new THREE.Vector3(0, -4, 0)
-        ],
-        color: 0x00ff88,
-        intensity: 0.8
-      },
-      {
-        points: [
-          new THREE.Vector3(0, 2, 2),
-          new THREE.Vector3(1, 0, 1.5),
-          new THREE.Vector3(0.5, -2, 0.5),
-          new THREE.Vector3(0, -4, 0)
-        ],
-        color: 0x88ffff,
-        intensity: 0.7
-      },
-      {
-        points: [
-          new THREE.Vector3(0, 2, -2),
-          new THREE.Vector3(-1, 0, -1.5),
-          new THREE.Vector3(-0.5, -2, -0.5),
-          new THREE.Vector3(0, -4, 0)
-        ],
-        color: 0x88ffff,
-        intensity: 0.7
-      }
-    ];
-    
-    try {
-    flowPathsData.forEach(path => {
-      energyFlow.addFlowPath(path.points, path.color, path.intensity);
-    });
-    
-    energyFlow.initializeParticles();
-    vortexGroup.add(energyFlow.getGroup());
-    energyFlowRef.current = energyFlow;
-    } catch (error) {
-      console.warn('Failed to create energy flow visualizer:', error);
-      // Continue without energy flow if it fails
     }
     
     try {
-    // Create a vortex field for additional swirl effects
+    // MHD vortex field for fluid dynamics calculations
     const vortexField = new VortexField({
-      strength: 1.0,
+      strength: 1.2,
       decayRate: 0.3,
       rotationAxis: new THREE.Vector3(0, 1, 0)
     });
-    
-    // Add vortex centers at key positions
-    vortexField.addVortex(new THREE.Vector3(0, 2, 0), 1.5, 2.0);  // Bubble center
-    vortexField.addVortex(new THREE.Vector3(0, -4, 0), 2.0, 3.0); // Lattice impact zone
+    vortexField.addVortex(new THREE.Vector3(0, latticeY + 0.5, 0), 2.0, 2.5);
     vortexFieldRef.current = vortexField;
     } catch (error) {
       console.warn('Failed to create vortex field:', error);
-      // Continue without vortex field if it fails
     }
     
-    // Create visual representation of vortex swirl lines
-    const swirlLineCount = 8;
-    const swirlMaterial = new THREE.LineBasicMaterial({
-      color: 0x44ffaa,
-      transparent: true,
-      opacity: 0.4
-    });
-    
-    for (let i = 0; i < swirlLineCount; i++) {
-      const points = [];
-      const baseAngle = (i / swirlLineCount) * Math.PI * 2;
-      const spiralTurns = 2;
-      
-      for (let j = 0; j <= 40; j++) {
-        const t = j / 40;
-        const angle = baseAngle + t * spiralTurns * Math.PI * 2;
-        const radius = 2.5 * (1 - t * 0.6);
-        const y = 2 - t * 7; // From bubble to lattice
-        
-        points.push(new THREE.Vector3(
-          radius * Math.cos(angle),
-          y,
-          radius * Math.sin(angle)
-        ));
-      }
-      
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, swirlMaterial.clone());
-      line.name = `SwirlLine${i}`;
-      line.userData = { baseAngle, phase: i / swirlLineCount };
-      vortexGroup.add(line);
-    }
+    // Note: Removed rings, arrows, and flow lines for cleaner particle-only visualization
+    // MHD flow is represented purely by particle motion following fluid dynamics
     
     scene.add(vortexGroup);
     vortexGroupRef.current = vortexGroup;
@@ -1154,7 +1204,8 @@ const UnifiedBubbleLatticeVisualization = ({
     for (let i = 0; i < orbitalCount; i++) {
       const angle = (i / orbitalCount) * Math.PI * 2;
       const radius = 1.5 + (i % 3) * 0.5;
-      const y = -5 + (i % 4) * 0.8;
+      // Position halo electrons around lattice surface
+      const y = PHYSICS_CONFIG.LATTICE_Y_OFFSET + (i % 4) * 0.8;
       
       const orbital = new THREE.Mesh(orbitalGeometry, orbitalMaterial.clone());
       orbital.position.set(
@@ -1688,14 +1739,13 @@ const UnifiedBubbleLatticeVisualization = ({
         }
         
         if (jet) {
-          // Make jet visible earlier and more prominently
-          jet.visible = jetProgress > 0.1; // Show earlier (10% instead of 20%)
+          // Visible jet during bubble collapse toward lattice
+          jet.visible = jetProgress > 0.1; // Show early in the phase
           // Jet intensifies and extends during minimum (focused jet formation)
-          // Start with base size, contract radius but extend height dramatically
-          const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4); // Less contraction to keep visible
-          const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0); // Much longer at peak
+          const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4);
+          const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0);
           jet.scale.set(jetRadius / jet.userData.baseRadius, jetHeight / jet.userData.baseHeight, jetRadius / jet.userData.baseRadius);
-          // Increase opacity and emissive for better visibility
+          // Bright opacity during collapse
           jet.material.opacity = 0.8 + jetProgress * 0.2;
           if (jet.material.emissiveIntensity !== undefined) {
             jet.material.emissiveIntensity = 1.5 + jetProgress * 2.5;
@@ -1725,75 +1775,192 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
       
-      // Move bubble toward lattice during collapse
-      if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
-        const collapseProgress = Math.min(1, (normalizedTime - 0.4) / 0.2);
-        bubbleGroupRef.current.position.y = 2 - collapseProgress * 4;
-      } else {
-        bubbleGroupRef.current.position.y = 2;
+      // ========================================================================
+      // HETEROGENEOUS NUCLEATION BUBBLE DYNAMICS
+      // ========================================================================
+      // Physics: Bubble nucleates at surface cavity, grows while attached,
+      // buoyancy pulls slightly, then acoustic/EM forcing collapses it to surface
+      const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+      const distances = PHYSICS_CONFIG.PHASE_DISTANCES;
+      
+      // Calculate phase progress for smooth animations
+      let phaseProgress = 0;
+      if (phase === 'EXPANSION') {
+        phaseProgress = Math.min(1, normalizedTime / 0.4);
+      } else if (phase === 'COLLAPSE') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
+      } else if (phase === 'REBOUND') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.55) / 0.1);
+      } else if (phase === 'RECOVERY') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.65) / 0.35);
+      }
+      
+      // Get bubble Y position from helper (stays close to surface)
+      bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress);
+      
+      // Apply physics-based bubble scale
+      // Bubble starts small at nucleation, grows during expansion, shrinks during collapse
+      const physicsScale = getBubbleScaleFromPhase(phase, phaseProgress);
+      
+      // Combine with radius-based scaling from physics calculations
+      const combinedScale = physicsScale * (radius / baseRadius);
+      
+      // Apply scale to main bubble and layers
+      if (bubble && showBubble) {
+        // During EXPANSION: bubble grows from tiny nucleus to full size
+        // During COLLAPSE: bubble rapidly shrinks
+        const displayScale = phase === 'EXPANSION' || phase === 'RECOVERY' 
+          ? combinedScale 
+          : radius / baseRadius; // Use original logic during collapse for visual effect
+      }
+      
+      // Update bubble size based on phase (growth at surface, then collapse)
+      if (doubleLayer) {
+        doubleLayer.scale.setScalar(combinedScale * 1.1);
+      }
+      if (innerLayer) {
+        innerLayer.scale.setScalar(combinedScale * 0.95);
       }
     }
     
-    // Update protons with physics-based transitions and MHD confinement (v0.2.2)
+    // Update H2/D2 particles with MHD fluid dynamics (v0.2.3)
+    // Physics: Ionized hydrogen/deuterium swirling around bubble following MHD flow
     if (showProtons) {
       updateProtonStates(phase, normalizedTime, enhancements.total, physicsData.fieldStrength, physicsData.temperature);
       
-      // Cavitation point: where bubble meets lattice during collapse
-      const bubbleY = bubbleGroupRef.current?.position.y ?? 2;
+      // Cavitation point: nucleation site on the lattice surface
+      const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+      const bubbleY = bubbleGroupRef.current?.position.y ?? latticeY;
+      const bubbleScale = getBubbleScaleFromPhase(phase, normalizedTime);
+      
       const cavitationPoint = {
         x: 0,
-        y: Math.max(-5, bubbleY - bubbleRadiusRef.current),
+        y: latticeY,
         z: 0
       };
       
-      protonGroupRef.current?.children.forEach((proton) => {
+      protonGroupRef.current?.children.forEach((proton, index) => {
+        // MHD properties
+        const mhdAngle = proton.userData.mhdAngle || 0;
+        const mhdRadius = proton.userData.mhdRadius || 1.0;
+        const mhdAngularVelocity = proton.userData.mhdAngularVelocity || 0.5;
+        const mhdPhase = proton.userData.mhdPhase || 0;
+        
         // Direction and distance to cavitation point
         const dx = cavitationPoint.x - proton.position.x;
         const dy = cavitationPoint.y - proton.position.y;
         const dz = cavitationPoint.z - proton.position.z;
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
+        const horizontalDist = Math.sqrt(dx * dx + dz * dz) + 0.001;
         
         if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
-          // MHD-inspired radial convergence toward cavitation point
+          // ========================================================================
+          // MHD COMPRESSION: Particles spiral inward and converge to surface
+          // ========================================================================
           const compressionRatio = physicsData.compressionRatio || 1;
-          const confinementStrength = 0.03 * compressionRatio;
+          const confinementStrength = 0.025 * compressionRatio;
           
           // Radial force toward cavitation (increases with compression)
           const radialForce = confinementStrength / (distance + 0.1);
           proton.position.x += (dx / distance) * radialForce;
-          proton.position.y += (dy / distance) * radialForce;
+          proton.position.y += (dy / distance) * radialForce * 1.5; // Stronger downward
           proton.position.z += (dz / distance) * radialForce;
           
-          // Tangential spiral motion (MHD azimuthal component)
-          const theta = Math.atan2(dz, dx);
-          const spiralStrength = 0.01 * compressionRatio / (distance + 0.5);
-          proton.position.x += -Math.sin(theta) * spiralStrength;
-          proton.position.z += Math.cos(theta) * spiralStrength;
+          // MHD azimuthal rotation (circular flow around bubble)
+          // Speed increases as particles compress inward
+          const rotationSpeed = mhdAngularVelocity * (1 + compressionRatio * 0.5);
+          proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + rotationSpeed * 0.05;
+          
+          // Apply circular motion
+          const theta = proton.userData.mhdAngle;
+          const currentRadius = horizontalDist * 0.95; // Slowly contract radius
+          proton.position.x = currentRadius * Math.cos(theta);
+          proton.position.z = currentRadius * Math.sin(theta);
           
           // Store vorticity for visualization
-          proton.userData.vorticity = spiralStrength * 10;
+          proton.userData.vorticity = rotationSpeed * 5;
           
         } else if (phase === 'REBOUND') {
-          // Slight outward push during rebound
-          proton.position.x -= (dx / distance) * 0.01;
-          proton.position.y -= (dy / distance) * 0.01;
-          proton.position.z -= (dz / distance) * 0.01;
-          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.9;
+          // Particles scatter outward during rebound
+          const scatterForce = 0.015;
+          proton.position.x -= (dx / distance) * scatterForce;
+          proton.position.y -= (dy / distance) * scatterForce * 0.5;
+          proton.position.z -= (dz / distance) * scatterForce;
+          
+          // Continue some rotation but slower
+          proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + mhdAngularVelocity * 0.02;
+          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.8;
           
         } else {
-          // Return to original position during expansion/recovery
-          const base = proton.userData.basePosition;
-          proton.position.lerp(base, 0.02);
-          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.95;
+          // ========================================================================
+          // EXPANSION/RECOVERY: Swirling MHD flow around bubble
+          // ========================================================================
+          // Update MHD angle for continuous rotation
+          proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + mhdAngularVelocity * 0.03;
+          const theta = proton.userData.mhdAngle;
+          
+          // Particles orbit around the bubble at their shell radius
+          // Scale with bubble size
+          const orbitRadius = mhdRadius * (0.7 + bubbleScale * 0.4);
+          const targetX = orbitRadius * Math.cos(theta);
+          const targetZ = orbitRadius * Math.sin(theta);
+          
+          // Target Y position - follow bubble boundary layer
+          const verticalOffset = 0.3 + Math.sin(mhdPhase + normalizedTime * 2) * 0.15;
+          const targetY = bubbleY + verticalOffset;
+          
+          // Smooth interpolation to orbital position
+          proton.position.x = proton.position.x * 0.9 + targetX * 0.1;
+          proton.position.z = proton.position.z * 0.9 + targetZ * 0.1;
+          proton.position.y = proton.position.y * 0.95 + targetY * 0.05;
+          
+          // Store vorticity
+          proton.userData.vorticity = mhdAngularVelocity * 2;
         }
         
-        // Add small random motion (thermal fluctuations)
-        proton.position.x += proton.userData.velocity.x * 0.5;
-        proton.position.z += proton.userData.velocity.z * 0.5;
+        // Add small thermal fluctuations
+        const thermalScale = 0.002;
+        proton.position.x += (Math.random() - 0.5) * thermalScale;
+        proton.position.z += (Math.random() - 0.5) * thermalScale;
         
-        // Damping for stability
-        proton.userData.velocity.x *= 0.98;
-        proton.userData.velocity.z *= 0.98;
+        // ========================================================================
+        // COLOR CHANGES BASED ON PHASE AND ENERGY
+        // ========================================================================
+        // Particles change color to represent ionization state and energy level
+        if (proton.material) {
+          const compressionRatio = physicsData.compressionRatio || 1;
+          const energyLevel = Math.min(1, compressionRatio / 50); // Normalize energy 0-1
+          
+          if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
+            // High energy - shift from yellow/orange to red/white
+            // Ionized state - high energy particles
+            const hue = 0.1 - energyLevel * 0.1; // Orange to red
+            const saturation = 1 - energyLevel * 0.3; // Less saturated at high energy
+            const lightness = 0.5 + energyLevel * 0.3; // Brighter at high energy
+            proton.material.color.setHSL(hue, saturation, lightness);
+            proton.material.emissive.setHSL(hue, saturation, lightness * 0.5);
+            proton.material.emissiveIntensity = 0.8 + energyLevel * 1.5;
+          } else if (phase === 'REBOUND') {
+            // Energy release - bright green/cyan flash
+            const hue = 0.35 + energyLevel * 0.1; // Green to cyan
+            proton.material.color.setHSL(hue, 0.9, 0.6);
+            proton.material.emissive.setHSL(hue, 0.9, 0.4);
+            proton.material.emissiveIntensity = 1.2;
+          } else {
+            // Expansion/Recovery - neutral ionized state (blue/cyan for electrons, orange for protons)
+            const isIonized = proton.userData.isIonized;
+            if (isIonized) {
+              // Ionized - cyan/blue glow
+              proton.material.color.setHSL(0.55, 0.8, 0.5);
+              proton.material.emissive.setHSL(0.55, 0.8, 0.3);
+            } else {
+              // Neutral H2/D2 - warm orange
+              proton.material.color.setHSL(0.08, 0.9, 0.55);
+              proton.material.emissive.setHSL(0.08, 0.9, 0.3);
+            }
+            proton.material.emissiveIntensity = 0.4;
+          }
+        }
       });
     }
     
@@ -1990,7 +2157,8 @@ const UnifiedBubbleLatticeVisualization = ({
         if (shockwave) {
           const reboundStart = 0.6;
           const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
-          shockwave.position.y = -5; // At lattice
+          // Shockwave emanates from lattice surface (nucleation site)
+          shockwave.position.y = PHYSICS_CONFIG.LATTICE_Y_OFFSET;
           shockwave.material.opacity = 0.8 * (1 - shockProgress);
           shockwave.scale.setScalar(1 + shockProgress * 8); // Expand outward
         }
@@ -2068,45 +2236,14 @@ const UnifiedBubbleLatticeVisualization = ({
           }
       }
       
-      // Update energy flow particles
-        if (energyFlowRef.current && typeof energyFlowRef.current.update === 'function') {
-          try {
-        // Adjust particle speed based on phase
-        energyFlowRef.current.speed = 0.015 * Math.abs(flowDirection);
-        energyFlowRef.current.update(deltaTime * vortexIntensity);
-          } catch (err) {
-            // Silently fail if energy flow update fails
-          }
+      // MHD particle flow is handled by plasmaVortex - no additional elements to animate
+      // Rotate the entire MHD flow group based on phase
+      if (vortexGroupRef.current) {
+        vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.1;
       }
-      
-      // Animate swirl lines opacity and rotation
-        if (vortexGroupRef.current && vortexGroupRef.current.children) {
-      vortexGroupRef.current.children.forEach((child) => {
-            if (child && child.name && child.name.startsWith('SwirlLine') && child.material) {
-              try {
-          // Pulse opacity based on phase intensity
-          const baseOpacity = 0.2 + vortexIntensity * 0.3;
-                const pulse = Math.sin(Date.now() * 0.003 + (child.userData?.phase || 0) * Math.PI * 2) * 0.15;
-          child.material.opacity = Math.min(0.8, baseOpacity + pulse);
-          
-          // Color shift during intense phases
-          if (phase === 'MINIMUM' || phase === 'COLLAPSE') {
-            child.material.color.setHex(0xff8844); // Orange during collapse
-          } else {
-            child.material.color.setHex(0x44ffaa); // Green-cyan normally
-                }
-              } catch (err) {
-                // Skip this child if update fails
-          }
-        }
-      });
-      
-      // Rotate the entire vortex group slowly
-      vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.2;
-        }
       } catch (error) {
         // Silently handle vortex update errors to prevent animation loop crashes
-        console.warn('Vortex animation update error (non-critical):', error);
+        console.warn('MHD flow animation update error (non-critical):', error);
       }
     }
     
@@ -2593,11 +2730,11 @@ const UnifiedBubbleLatticeVisualization = ({
             />
             <FormControlLabel
               control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
-              label={<Typography variant="caption" color="white">Vortices</Typography>}
+              label={<Typography variant="caption" color="white">MHD Flow</Typography>}
             />
             <FormControlLabel
               control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
-              label={<Typography variant="caption" color="white">Casimir Field</Typography>}
+              label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
             />
             <FormControlLabel
               control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}

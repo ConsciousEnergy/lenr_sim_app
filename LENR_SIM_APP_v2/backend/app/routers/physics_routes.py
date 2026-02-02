@@ -1793,4 +1793,254 @@ async def calculate_icf_compression(request: ICFCompressionRequest):
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"ICF calculation error: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"ICF calculation error: {str(e)}")
+
+
+# ============================================================================
+# NUCLEATION AND SURFACE PHYSICS ENDPOINTS (Phase 7 Enhancement)
+# ============================================================================
+
+class NucleationSiteRequest(BaseModel):
+    """Request model for nucleation site calculations."""
+    cavity_radius_nm: float = Field(100.0, ge=1, le=100000, description="Cavity radius in nm")
+    cavity_depth_nm: float = Field(200.0, ge=1, le=100000, description="Cavity depth in nm")
+    contact_angle_deg: float = Field(80.0, ge=0, le=180, description="Contact angle in degrees")
+    surface_material: str = Field("Pd", description="Surface material (Pd, Ni, Ti, W)")
+    temperature_K: float = Field(300.0, ge=200, le=1000, description="Temperature in Kelvin")
+    supersaturation: float = Field(1.1, ge=1.0, le=10.0, description="Supersaturation ratio")
+    pressure_Pa: float = Field(1e5, ge=1e3, le=1e9, description="Ambient pressure in Pa")
+
+
+class BoundaryLayerRequest(BaseModel):
+    """Request model for boundary layer calculations."""
+    surface_temperature_K: float = Field(350.0, ge=200, le=1000, description="Surface temperature")
+    bulk_temperature_K: float = Field(300.0, ge=200, le=1000, description="Bulk temperature")
+    surface_concentration: float = Field(1.5, ge=0.1, le=10, description="Surface concentration (mol/m³)")
+    bulk_concentration: float = Field(1.0, ge=0.1, le=10, description="Bulk concentration (mol/m³)")
+    saturation_temperature_K: float = Field(340.0, ge=200, le=1000, description="Saturation temperature")
+    saturation_concentration: float = Field(1.0, ge=0.1, le=10, description="Saturation concentration")
+    characteristic_length_mm: float = Field(1.0, ge=0.01, le=100, description="Characteristic length in mm")
+    surface_material: str = Field("Pd", description="Surface material")
+    fluid: str = Field("D2O", description="Surrounding fluid")
+
+
+class SurfaceReactionRateRequest(BaseModel):
+    """Request model for surface reaction rate calculation."""
+    # Nucleation site
+    cavity_radius_nm: float = Field(100.0, ge=1, le=10000, description="Nucleation cavity radius in nm")
+    contact_angle_deg: float = Field(80.0, ge=0, le=180, description="Contact angle")
+    surface_material: str = Field("Pd", description="Surface material")
+    site_density_per_m2: float = Field(1e12, ge=1e8, le=1e15, description="Site density")
+    
+    # Bubble parameters
+    bubble_radius_um: float = Field(10.0, ge=0.1, le=1000, description="Bubble radius in μm")
+    surface_distance_nm: float = Field(100.0, ge=1, le=10000, description="Surface distance in nm")
+    
+    # Environmental
+    temperature_K: float = Field(350.0, ge=200, le=1000, description="Temperature")
+    pressure_Pa: float = Field(1e5, ge=1e3, le=1e9, description="Pressure")
+    supersaturation: float = Field(1.2, ge=1.0, le=5.0, description="Supersaturation")
+    superheat_K: float = Field(10.0, ge=0, le=100, description="Superheat")
+    
+    # Acoustic
+    acoustic_pressure_bar: float = Field(1.5, ge=0, le=20, description="Acoustic pressure in bar")
+    acoustic_frequency_kHz: float = Field(25.0, ge=1, le=1000, description="Acoustic frequency in kHz")
+    
+    # Reaction
+    loading_ratio: float = Field(0.9, ge=0.1, le=1.0, description="H/M loading ratio")
+
+
+@router.post("/nucleation/calculate", response_model=Dict[str, Any])
+@track_performance("nucleation_calculate")
+async def calculate_nucleation_parameters(request: NucleationSiteRequest):
+    """
+    Calculate nucleation parameters for a surface site.
+    
+    Returns critical radius, energy barrier, waiting time, and
+    active site probability based on classical nucleation theory
+    with heterogeneous nucleation corrections.
+    """
+    try:
+        from app.physics.nucleation_sites import (
+            create_nucleation_site_from_material,
+            calculate_full_nucleation_analysis
+        )
+        
+        # Create site
+        site = create_nucleation_site_from_material(
+            material=request.surface_material,
+            temperature=request.temperature_K,
+            cavity_radius=request.cavity_radius_nm * 1e-9,
+            cavity_geometry="conical"
+        )
+        site.contact_angle = request.contact_angle_deg
+        site.cavity_depth = request.cavity_depth_nm * 1e-9
+        
+        # Calculate pressure difference from supersaturation
+        delta_p = max((request.supersaturation - 1) * request.pressure_Pa, 1000)
+        
+        # Full analysis
+        result = calculate_full_nucleation_analysis(site, delta_p, request.supersaturation)
+        
+        return {
+            "site_parameters": site.to_dict(),
+            "nucleation_results": result.to_dict(),
+            "input_parameters": request.model_dump()
+        }
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"Nucleation module not available: {str(e)}")
+    except Exception as e:
+        router_logger.error(f"Nucleation calculation error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Nucleation calculation error: {str(e)}")
+
+
+@router.post("/boundary-layer/profile", response_model=Dict[str, Any])
+@track_performance("boundary_layer_calculate")
+async def calculate_boundary_layer_profile(request: BoundaryLayerRequest):
+    """
+    Calculate thermal and diffusion boundary layer profiles.
+    
+    Returns layer thicknesses, temperature/concentration gradients,
+    heat/mass fluxes, and the nucleation zone thickness where
+    conditions favor bubble formation.
+    """
+    try:
+        from app.physics.boundary_layers import (
+            calculate_full_boundary_layer_analysis,
+            calculate_temperature_profile,
+            calculate_concentration_profile
+        )
+        
+        # Full analysis
+        bl_state = calculate_full_boundary_layer_analysis(
+            surface_temperature=request.surface_temperature_K,
+            bulk_temperature=request.bulk_temperature_K,
+            surface_concentration=request.surface_concentration,
+            bulk_concentration=request.bulk_concentration,
+            saturation_temperature=request.saturation_temperature_K,
+            saturation_concentration=request.saturation_concentration,
+            characteristic_length=request.characteristic_length_mm * 1e-3,
+            material=request.surface_material,
+            fluid=request.fluid
+        )
+        
+        # Generate profiles at several distances
+        distances = [0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0]  # in μm
+        profiles = {
+            "distance_um": distances,
+            "temperature_K": [],
+            "concentration": []
+        }
+        
+        for d_um in distances:
+            d_m = d_um * 1e-6
+            t = calculate_temperature_profile(
+                d_m, bl_state.thermal_layer_thickness,
+                request.surface_temperature_K, request.bulk_temperature_K
+            )
+            c = calculate_concentration_profile(
+                d_m, bl_state.diffusion_layer_thickness,
+                request.surface_concentration, request.bulk_concentration
+            )
+            profiles["temperature_K"].append(t)
+            profiles["concentration"].append(c)
+        
+        return {
+            "boundary_layer_state": bl_state.to_dict(),
+            "profiles": profiles,
+            "input_parameters": request.model_dump()
+        }
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"Boundary layer module not available: {str(e)}")
+    except Exception as e:
+        router_logger.error(f"Boundary layer calculation error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Boundary layer calculation error: {str(e)}")
+
+
+@router.post("/surface-reaction-rate", response_model=Dict[str, Any])
+@track_performance("surface_reaction_rate")
+async def calculate_surface_reaction_rate_endpoint(request: SurfaceReactionRateRequest):
+    """
+    Calculate LENR reaction rate at a surface nucleation site.
+    
+    This integrates all physics enhancements:
+    - Nucleation probability at surface cavities
+    - Bubble-surface proximity effects
+    - Thermal/diffusion boundary layer
+    - Acoustic enhancement
+    - Standard LENR enhancement mechanisms
+    
+    Returns reaction rate per site, per area, and all contributing factors.
+    """
+    try:
+        from app.physics.integrated_mechanisms import calculate_surface_reaction_rate
+        
+        result = calculate_surface_reaction_rate(
+            cavity_radius=request.cavity_radius_nm * 1e-9,
+            contact_angle=request.contact_angle_deg,
+            surface_material=request.surface_material,
+            site_density=request.site_density_per_m2,
+            bubble_radius=request.bubble_radius_um * 1e-6,
+            surface_distance=request.surface_distance_nm * 1e-9,
+            temperature=request.temperature_K,
+            pressure=request.pressure_Pa,
+            supersaturation=request.supersaturation,
+            superheat=request.superheat_K,
+            acoustic_pressure=request.acoustic_pressure_bar * 1e5,
+            acoustic_frequency=request.acoustic_frequency_kHz * 1000,
+            loading_ratio=request.loading_ratio
+        )
+        
+        return {
+            "reaction_rate": result.to_dict(),
+            "summary": {
+                "rate_per_site": result.reaction_rate_per_site,
+                "rate_per_area": result.reaction_rate_per_area,
+                "log_rate": np.log10(result.reaction_rate_per_site) if result.reaction_rate_per_site > 0 else -100,
+                "total_enhancement": result.total_enhancement,
+                "log_enhancement": result.log_enhancement
+            },
+            "input_parameters": request.model_dump()
+        }
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"Integrated mechanisms module not available: {str(e)}")
+    except Exception as e:
+        router_logger.error(f"Surface reaction rate error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Surface reaction rate calculation error: {str(e)}")
+
+
+@router.get("/surface-physics/materials", response_model=Dict[str, Any])
+async def get_surface_material_properties():
+    """
+    Get surface physics properties for available materials.
+    
+    Returns contact angles, surface energies, typical cavity densities,
+    and other surface parameters for LENR host materials.
+    """
+    try:
+        from app.physics.nucleation_sites import get_material_surface_properties
+        from app.physics.boundary_layers import get_material_properties
+        
+        materials = ["Pd", "Ni", "Ti", "W"]
+        result = {}
+        
+        for mat in materials:
+            surface_props = get_material_surface_properties(mat)
+            thermal_props = get_material_properties(mat)
+            result[mat] = {
+                "surface_properties": surface_props,
+                "thermal_properties": thermal_props
+            }
+        
+        return {
+            "materials": result,
+            "notes": {
+                "contact_angle": "Lower values = more hydrophilic = easier nucleation",
+                "surface_energy": "J/m² at solid-liquid interface",
+                "cavity_density": "Typical nucleation sites per m²"
+            }
+        }
+    except ImportError as e:
+        raise HTTPException(status_code=500, detail=f"Surface physics modules not available: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Material properties error: {str(e)}") 

@@ -8,6 +8,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.2.3-beta] - 2026-02-01
 
 ### Added
+
+#### Physics Enhancements: Heterogeneous Nucleation and Surface Coupling
+- **Nucleation Sites Module** (`nucleation_sites.py`): Classical nucleation theory with surface effects
+  - `NucleationSite` dataclass with cavity geometry, contact angle, surface energy
+  - `calculate_nucleation_energy_barrier()` - Gibbs free energy with f(θ) correction
+  - `calculate_critical_radius()` - Young-Laplace critical radius
+  - `calculate_waiting_time()` - Statistical nucleation timing
+  - `calculate_active_site_probability()` - Site activation based on supersaturation
+  - Contact angle factor: f(θ) = (2 + cosθ)(1 - cosθ)²/4
+
+- **Bubble-Surface Coupling Module** (`bubble_surface_coupling.py`): Physical bubble-lattice relationship
+  - `BubbleSurfaceState` - Position, forces, attachment state tracking
+  - `calculate_equilibrium_distance()` - Casimir/vdW/thermal balance
+  - `calculate_van_der_waals_force()` - Sphere-plate Derjaguin approximation
+  - `calculate_detachment_radius()` - Fritz equation for bubble departure
+  - `calculate_jet_velocity()` - Microjet formation during asymmetric collapse
+  - Surface proximity enhancement for standoff ratios γ < 2
+
+- **Thermal/Diffusion Boundary Layers** (`boundary_layers.py`): Heat and mass transfer
+  - `BoundaryLayerState` - Layer thicknesses, gradients, fluxes
+  - `calculate_thermal_boundary_thickness()` - From Nusselt number
+  - `calculate_diffusion_boundary_thickness()` - Lewis number scaling
+  - `calculate_nucleation_zone_thickness()` - Where conditions favor nucleation
+  - Temperature and concentration profile functions (erf profiles)
+  - Material properties for Pd, Ni, D2O systems
+
+- **Acoustic/Ultrasonic Forcing** (extended `bubble_collapse.py`):
+  - `calculate_minnaert_frequency()` - Natural bubble resonance
+  - `calculate_primary_bjerknes_force()` - Acoustic radiation force
+  - `calculate_secondary_bjerknes_force()` - Bubble-bubble interaction
+  - `calculate_acoustic_streaming_velocity()` - Rayleigh streaming near surface
+  - `calculate_standing_wave_positions()` - Node/antinode locations
+  - `calculate_acoustic_nucleation_enhancement()` - Barrier reduction from pressure
+  - `calculate_rectified_diffusion_rate()` - Asymmetric gas transfer
+
+- **Surface Proximity Effects** (extended `bubble_collapse.py`):
+  - `calculate_surface_proximity_factor()` - Enhancement near rigid boundary
+  - `calculate_asymmetric_collapse_pressure()` - Pressure amplification
+  - `calculate_jet_impact_parameters()` - Microjet velocity, diameter, pressure
+  - `simulate_bubble_dynamics_near_surface()` - Full R-P with surface effects
+  - `calculate_surface_enhanced_collapse()` - Complete enhanced calculation
+
+- **Surface Reaction Rate Integration** (`integrated_mechanisms.py`):
+  - `SurfaceReactionRateResult` - Comprehensive rate result dataclass
+  - `calculate_surface_reaction_rate()` - Full integration of all physics
+  - `calculate_single_site_lenr_rate()` - Simplified API interface
+  - Combines: nucleation, proximity, boundary layer, acoustic, LENR enhancements
+
+- **Updated Visualization** (`UnifiedBubbleLatticeVisualization.jsx`):
+  - `PHYSICS_CONFIG` - Physics-to-visualization scale mapping, bubble scale by phase
+  - Bubble nucleates small at surface, grows while attached, then collapses (heterogeneous nucleation)
+  - Phase-dependent bubble Y position and scale (EXPANSION → MINIMUM → RECOVERY)
+  - Legend: "Casimir Field" → "Casimir Geometry"; "Vortices" → "MHD Flow"
+  - H2/D2 particles: smaller, more count, MHD flow properties (orbit, angular velocity, ionized state)
+  - MHD flow: particle-only (PlasmaVortexEffect + VortexField); removed rings, arrows, and path lines
+  - Reaction jet on bubble collapse: visible focused jet during MINIMUM/REBOUND (restored)
+  - Particle color by phase/energy: collapse/minimum → orange/red/white; rebound → green/cyan; expansion → cyan (ionized) or orange (neutral H2/D2)
+  - Removed dark nucleation cavity cone and boundary layer planes from lattice for cleaner view
+  - Physics comments explaining nm-scale relationships
+
+- **New API Endpoints** (`physics_routes.py`):
+  - `POST /api/physics/nucleation/calculate` - Full nucleation analysis
+  - `POST /api/physics/boundary-layer/profile` - Layer profiles with distance
+  - `POST /api/physics/surface-reaction-rate` - Integrated rate calculation
+  - `GET /api/physics/surface-physics/materials` - Material property reference
+
+#### Database Infrastructure
 - **PostgreSQL Database Integration**: Persistent storage for experiment analytics
   - `database.py` - Async SQLAlchemy 2.0 engine with PostgreSQL and SQLite support
   - `database_models.py` - Experiment, ExperimentTimeline, and AnalyticsSnapshot models
