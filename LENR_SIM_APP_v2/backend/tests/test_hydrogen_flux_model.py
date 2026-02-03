@@ -149,23 +149,26 @@ def test_temperature_effect_on_detrapping():
     model_low = HydrogenFluxModel(grid_size, cell_size)
     model_high = HydrogenFluxModel(grid_size, cell_size)
     
-    # Set same initial trapped concentration for both
+    # Set same initial trapped concentration for both (half-filled traps)
     initial_trapped = model_low.params.trap_density * 0.5
     model_low.trapped_concentration[:] = initial_trapped
     model_high.trapped_concentration[:] = initial_trapped
     
-    # Set same initial concentration for both
-    model_low.concentration[:] = model_low.params.initial_concentration
-    model_high.concentration[:] = model_high.params.initial_concentration
+    # Zero concentration so only detrapping occurs (no trapping) in this step
+    model_low.concentration[:] = 0.0
+    model_high.concentration[:] = 0.0
+    
+    # Small time step so we observe differential detrapping without saturating
+    dt_step = 1e-14
     
     # Run at low temperature
     model_low.temperature[:] = 300.0
-    model_low.step()
+    model_low.step(dt=dt_step)
     trapped_low_temp = model_low.trapped_concentration.copy()
     
     # Run at high temperature
     model_high.temperature[:] = 600.0
-    model_high.step()
+    model_high.step(dt=dt_step)
     trapped_high_temp = model_high.trapped_concentration.copy()
     
     # Higher temperature should result in more detrapping (less trapped concentration)

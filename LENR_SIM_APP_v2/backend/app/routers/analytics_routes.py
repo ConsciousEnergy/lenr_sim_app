@@ -11,7 +11,7 @@ import logging
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 import io
 
@@ -51,8 +51,8 @@ class ExperimentCreate(BaseModel):
     duration_seconds: Optional[float] = None
     results: Optional[dict] = Field(default_factory=dict)
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Palladium D-loading Test",
                 "experiment_type": "lenr",
@@ -65,6 +65,7 @@ class ExperimentCreate(BaseModel):
                 "duration_seconds": 3600,
             }
         }
+    )
 
 
 class ExperimentUpdate(BaseModel):
@@ -112,7 +113,7 @@ class ExperimentListResponse(BaseModel):
 
 class CompareRequest(BaseModel):
     """Request model for comparing experiments."""
-    experiment_ids: List[str] = Field(..., min_items=2, max_items=10)
+    experiment_ids: List[str] = Field(..., min_length=2, max_length=10)
 
 
 # ==================

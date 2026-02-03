@@ -161,25 +161,23 @@ def test_apply_pec_boundary_conditions(solver_instance):
 
 # --- Tests for Interpolation ---
 
-@pytest.mark.xfail(reason="Interpolation implementation changed - test needs update")
 def test_interpolate_field_placeholder(solver_instance):
-    """Test the placeholder _interpolate_field method (expects zeros)."""
+    """Test interpolate_field returns correct shape and values for a uniform E field."""
     N = 5
-    positions = np.random.rand(N, 3) # Positions within [0, 1)^3 domain
-    # Set a non-uniform field to ensure interpolation *should* give non-zero
-    X, Y, Z = np.meshgrid(*[np.linspace(0, 1, d) for d in solver_instance.grid_shape], indexing='ij')
-    solver_instance.electric_field[:,:,:,0] = X 
-    solver_instance.electric_field[:,:,:,1] = Y
-    solver_instance.electric_field[:,:,:,2] = Z
-    
-    interpolated_values = solver_instance._interpolate_field(solver_instance.electric_field, positions)
-    
-    # Currently, the placeholder returns zeros. This assertion will fail when interpolation is implemented.
-    # Once implemented, change this to check against expected interpolated values.
-    assert np.allclose(interpolated_values, 0.0)
-    # Example of what it might look like later:
-    # expected_values = positions # For the field E = [x, y, z]
-    # assert np.allclose(interpolated_values, expected_values, atol=1e-1) # Tolerance depends on grid res
+    # Positions within [0, 1]^3 domain (match grid boundaries)
+    positions = np.random.uniform(0.05, 0.95, size=(N, 3))
+    # Set uniform electric field [1, 0, 0]
+    solver_instance.electric_field[:, :, :, 0] = 1.0
+    solver_instance.electric_field[:, :, :, 1] = 0.0
+    solver_instance.electric_field[:, :, :, 2] = 0.0
+
+    interpolated_values = solver_instance.interpolate_field(positions, field_type="electric")
+
+    assert interpolated_values.shape == (N, 3)
+    assert interpolated_values.dtype == float
+    assert np.allclose(interpolated_values[:, 0], 1.0, atol=1e-9)
+    assert np.allclose(interpolated_values[:, 1], 0.0, atol=1e-9)
+    assert np.allclose(interpolated_values[:, 2], 0.0, atol=1e-9)
 
 # --- Tests for Stability Check --- #
 

@@ -2,6 +2,7 @@
 Tests for the QuantumEffectsSolver module.
 """
 
+import asyncio
 import pytest
 import numpy as np
 from app.physics_engine.quantum_effects_solver import QuantumEffectsSolver
@@ -32,18 +33,20 @@ def test_quantum_solver_init(quantum_solver_instance):
     assert quantum_solver_instance.tunneling_enhancement_grid is not None
     assert quantum_solver_instance.tunneling_enhancement_grid.shape == (5, 5, 5)
 
-# Test placeholder method signature and return type
-@pytest.mark.xfail(reason="Tunneling enhancement calculation implementation changed - test needs update")
-async def test_calculate_tunneling_enhancement_placeholder(quantum_solver_instance):
+# Test tunneling enhancement calculation (spatial grid)
+def test_calculate_tunneling_enhancement_placeholder(quantum_solver_instance):
+    """Test calculate_tunneling_enhancement updates grid with valid enhancement values."""
+    # electric_field_grid is per-cell scalar (V/m magnitude), shape (nx, ny, nz)
     mock_local_state = {
-        'temperature_grid': np.full((5, 5, 5), 300.0),
-        'density_grid': np.full((5, 5, 5), 1.0),
-        'electric_field_grid': np.zeros((5, 5, 5, 3)),
-        'magnetic_field_grid': np.zeros((5, 5, 5, 3))
+        "temperature_grid": np.full((5, 5, 5), 300.0),
+        "density_grid": np.full((5, 5, 5), 1e28),
+        "electric_field_grid": np.full((5, 5, 5), 1e6),
+        "magnetic_field_grid": np.zeros((5, 5, 5)),
     }
-    await quantum_solver_instance.calculate_tunneling_enhancement(mock_local_state)
+    asyncio.run(quantum_solver_instance.calculate_tunneling_enhancement(mock_local_state))
     enhancement_grid = quantum_solver_instance.get_tunneling_enhancement_grid()
     assert isinstance(enhancement_grid, np.ndarray)
     assert enhancement_grid.shape == (5, 5, 5)
-    # Placeholder currently sets to 1.0
-    assert np.allclose(enhancement_grid, 1.0) 
+    assert np.all(np.isfinite(enhancement_grid))
+    assert np.all(enhancement_grid >= 1.0)
+    assert np.all(enhancement_grid <= 1e12) 
