@@ -1036,6 +1036,7 @@ const UnifiedBubbleLatticeVisualization = ({
     vortexGroup.name = 'MHDFlowGroup';
     
     const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    vortexGroup.position.set(0, latticeY + 0.3, 0); // Nucleation site so rotation spins in place
     
     try {
     // Create plasma vortex effect - particle-based MHD flow
@@ -1048,7 +1049,7 @@ const UnifiedBubbleLatticeVisualization = ({
       height: 3.5
     });
     plasmaVortex.initialize();
-    plasmaVortex.getGroup().position.set(0, latticeY + 0.6, 0);
+    plasmaVortex.getGroup().position.set(0, 0, 0); // Parent group handles world position
     vortexGroup.add(plasmaVortex.getGroup());
     plasmaVortexRef.current = plasmaVortex;
     } catch (error) {
@@ -1871,23 +1872,30 @@ const UnifiedBubbleLatticeVisualization = ({
           const rotationSpeed = mhdAngularVelocity * (1 + compressionRatio * 0.5);
           proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + rotationSpeed * 0.05;
           
-          // Apply circular motion
+          // Apply circular motion CENTERED ON CAVITATION POINT
           const theta = proton.userData.mhdAngle;
           const currentRadius = horizontalDist * 0.95; // Slowly contract radius
-          proton.position.x = currentRadius * Math.cos(theta);
-          proton.position.z = currentRadius * Math.sin(theta);
+          proton.position.x = cavitationPoint.x + currentRadius * Math.cos(theta);
+          proton.position.z = cavitationPoint.z + currentRadius * Math.sin(theta);
           
           // Store vorticity for visualization
           proton.userData.vorticity = rotationSpeed * 5;
           
         } else if (phase === 'REBOUND') {
-          // Particles scatter outward during rebound
-          const scatterForce = 0.015;
-          proton.position.x -= (dx / distance) * scatterForce;
-          proton.position.y -= (dy / distance) * scatterForce * 0.5;
-          proton.position.z -= (dz / distance) * scatterForce;
-          
-          // Continue some rotation but slower
+          // REBOUND: Particles perturbed outward but confined by lattice potential.
+          // Physics: Reaction energy transfers to lattice phonons; boundary layer H/D stay confined.
+          const maxScatterDist = PHYSICS_CONFIG.LATTICE_SPACING * 1.2;
+          if (distance < maxScatterDist) {
+            const scatterForce = 0.008;
+            proton.position.x -= (dx / distance) * scatterForce;
+            proton.position.y -= (dy / distance) * scatterForce * 0.3;
+            proton.position.z -= (dz / distance) * scatterForce;
+          } else {
+            const restoreForce = 0.02;
+            proton.position.x += (dx / distance) * restoreForce;
+            proton.position.y += (dy / distance) * restoreForce * 0.5;
+            proton.position.z += (dz / distance) * restoreForce;
+          }
           proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + mhdAngularVelocity * 0.02;
           proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.8;
           
@@ -1899,11 +1907,10 @@ const UnifiedBubbleLatticeVisualization = ({
           proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + mhdAngularVelocity * 0.03;
           const theta = proton.userData.mhdAngle;
           
-          // Particles orbit around the bubble at their shell radius
-          // Scale with bubble size
+          // Particles orbit around the bubble at the nucleation site
           const orbitRadius = mhdRadius * (0.7 + bubbleScale * 0.4);
-          const targetX = orbitRadius * Math.cos(theta);
-          const targetZ = orbitRadius * Math.sin(theta);
+          const targetX = cavitationPoint.x + orbitRadius * Math.cos(theta);
+          const targetZ = cavitationPoint.z + orbitRadius * Math.sin(theta);
           
           // Target Y position - follow bubble boundary layer
           const verticalOffset = 0.3 + Math.sin(mhdPhase + normalizedTime * 2) * 0.15;
@@ -1922,6 +1929,17 @@ const UnifiedBubbleLatticeVisualization = ({
         const thermalScale = 0.002;
         proton.position.x += (Math.random() - 0.5) * thermalScale;
         proton.position.z += (Math.random() - 0.5) * thermalScale;
+        
+        // Hard clamp: protons stay within 2 lattice spacings of nucleation site
+        const maxDist = PHYSICS_CONFIG.LATTICE_SPACING * 2;
+        const clampDx = proton.position.x - cavitationPoint.x;
+        const clampDz = proton.position.z - cavitationPoint.z;
+        const clampDist = Math.sqrt(clampDx * clampDx + clampDz * clampDz);
+        if (clampDist > maxDist) {
+          const scale = maxDist / clampDist;
+          proton.position.x = cavitationPoint.x + clampDx * scale;
+          proton.position.z = cavitationPoint.z + clampDz * scale;
+        }
         
         // ========================================================================
         // COLOR CHANGES BASED ON PHASE AND ENERGY

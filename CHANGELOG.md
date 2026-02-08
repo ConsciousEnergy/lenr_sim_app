@@ -5,6 +5,21 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+#### 3D Visualization – Reaction Formation and MHD Alignment
+- **Reaction formation at top center of lattice**: Nucleation site moved from offset `(spacing*0.5, latticeY, spacing*0.5)` to lattice top center `(0, latticeY, 0)` so the bubble sits in the true interstitial void between the four central top-surface atoms (aligned with centered lattice coordinates).
+- **MHD vortex alignment**: MHD flow group parent is positioned at the nucleation site with child at local origin so rotation spins in place instead of orbiting world origin.
+- **Field lines, effects, and shockwave**: Electric field lines, hotspots, nuclear emissions, shockwave, and field particle animation now all use the same top-center nucleation coordinates.
+- **Casimir geometry**: The four nearest-atom positions for Casimir force lines updated to `(±halfSpacing, latticeY, ±halfSpacing)` to match the centered lattice around the nucleation site.
+- **Proton COLLAPSE orbit**: Circular motion during collapse is now centered on the cavitation point (was incorrectly centered on world origin).
+- **Proton REBOUND confinement**: Rebound scatter is limited to ~1.2 lattice spacings with a restoring force beyond that; hard clamp at 2 lattice spacings in all phases so protons stay confined near the nucleation site, consistent with lattice phonon absorption (Hagelstein model) and experimental observations that reaction energy couples to the lattice rather than ejecting boundary-layer particles.
+
+### Documentation
+- **docs/VISUALIZATION_ALIGNMENT_AND_PROTON_CONFINEMENT.md**: Development note describing nucleation positioning, MHD/field/effects alignment, and physics-based proton confinement.
+
 ## [v0.2.3-beta] - 2026-02-01
 
 ### Added
