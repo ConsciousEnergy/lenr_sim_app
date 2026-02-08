@@ -104,6 +104,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `config.py` with database configuration settings (DB_HOST, DB_PORT, etc.)
 - Updated `main.py` with database initialization in lifespan context
 - App version bumped to 0.2.3-beta
+- **Dashboard UI/UX**: Increased feature chip spacing (Stack spacing and rowGap) to prevent overlap between "Physics Simulation" and "Export Results"; FeatureChip margin and theme-aware background/border for light/dark mode
+- **Terminology**: Renamed "Casimir Force/Forces" to "Casimir Effect" across theory pages, visualizations, and docs (TheoryPage, TheoryPaperPage, UnifiedTheoryPage, UnifiedLENRVisualizer, UnifiedBubbleLatticeVisualization, lenrVizHelper)
+- **Unified theory paper** (`docs/A Unified Theoretical Framework...md`): Added Sections 3.3–3.6 (Heterogeneous Nucleation at Surfaces, Bubble–Surface Coupling, Thermal and Diffusion Boundary Layers, Acoustic and Ultrasonic Forcing); renumbered former 3.3 to 3.7; updated Abstract and Conclusion to include lattice-bubble interaction physics
+- **Documentation**: `LENR_SIM_APP_v2/docs/UNIFIED_BUBBLE_LATTICE_SIMULATION.md` updated to v0.2.3-beta with new physics mechanisms table (3.3–3.6), new API endpoints (nucleation, boundary-layer, surface-reaction-rate, materials), and visualization description (MHD flow, phase-dependent particles, nucleation animation)
+- **Accessibility**: Added aria-labels to Dashboard System Status panel, Quick Action cards, and Memory usage progress bar
+- **Theme consistency**: Quick Action card colors now use theme palette (primary, warning, info, error) instead of hardcoded hex values
 
 ---
 

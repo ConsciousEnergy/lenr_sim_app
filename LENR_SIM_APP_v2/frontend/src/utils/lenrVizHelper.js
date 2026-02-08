@@ -376,7 +376,7 @@ const createEnhancementVisualization = (scene, enhancementFactors = {}, options 
         break;
         
       case 'casimirForces':
-        // Two planes for Casimir forces
+        // Two planes for Casimir effect
         const casimirGroup = new THREE.Group();
         const planeGeometry = new THREE.PlaneGeometry(size * 2, size * 2);
         

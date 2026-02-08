@@ -1210,7 +1210,7 @@ function UnifiedTheoryPage() {
                     </Typography>
                     <Typography variant="body2">
                       This simulation implements the comprehensive theoretical model integrating Rydberg Matter, 
-                      halo electrons, double-layer QED effects, Casimir forces, and quantum tunneling enhancements.
+                      halo electrons, double-layer QED effects, Casimir effect, and quantum tunneling enhancements.
                       Click each section below to explore the physics in detail.
                     </Typography>
                   </Alert>
@@ -1348,7 +1348,7 @@ function UnifiedTheoryPage() {
                           At nanoscale separations during bubble collapse, this effect becomes significant.
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'grey.100', mb: 2 }}>
-                          <Typography variant="caption" color="text.secondary">Casimir Force:</Typography>
+                          <Typography variant="caption" color="text.secondary">Casimir Effect:</Typography>
                           <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem', mt: 1 }}>
                             F_Casimir = -π²ℏc/240 × A/d⁴
                           </Box>

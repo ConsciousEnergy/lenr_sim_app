@@ -88,11 +88,11 @@ const StatusCard = styled(Paper)(({ theme }) => ({
 }));
 
 const FeatureChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
+  margin: theme.spacing(0.75),
   fontWeight: 600,
-  background: 'rgba(255, 255, 255, 0.95)',
+  background: alpha(theme.palette.background.paper, 0.95),
   color: theme.palette.primary.main,
-  border: `1px solid rgba(255, 255, 255, 0.3)`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   '& .MuiChip-icon': {
     color: theme.palette.primary.main
   }
@@ -110,14 +110,14 @@ const MemoryIndicator = styled(Box)(({ theme }) => ({
   zIndex: 1000,
 }));
 
-// Quick Action data - Unified Theory is now the primary simulation
+// Quick Action data - Unified Theory is now the primary simulation (colors from theme palette)
 const quickActions = [
   {
     id: 'unified-theory',
     title: 'Unified LENR Theory',
     description: 'Comprehensive simulation with all enhancement mechanisms from the unified framework',
     icon: <HubIcon />,
-    color: '#2196F3',
+    colorKey: 'primary',
     path: '/unified-theory',
     status: 'new'
   },
@@ -126,7 +126,7 @@ const quickActions = [
     title: 'Quantum Tunneling',
     description: 'Analyze quantum mechanical tunneling effects',
     icon: <TuneIcon />,
-    color: '#FF9800',
+    colorKey: 'warning',
     path: '/quantum-tunneling',
     status: 'ready'
   },
@@ -135,7 +135,7 @@ const quickActions = [
     title: 'Bubble Fusion',
     description: 'Simulate sonofusion and acoustic cavitation phenomena',
     icon: <BubbleChartIcon />,
-    color: '#00BCD4',
+    colorKey: 'info',
     path: '/bubble-fusion',
     status: 'beta'
   },
@@ -144,7 +144,7 @@ const quickActions = [
     title: 'Analytics',
     description: 'Analyze simulation results and generate reports',
     icon: <AssessmentIcon />,
-    color: '#F44336',
+    colorKey: 'error',
     path: '/analytics',
     status: 'ready'
   }
@@ -212,7 +212,7 @@ function DashboardNew() {
                 <Typography variant="h6" sx={{ mb: 3, opacity: 0.9 }}>
                   Advanced modeling and visualization of Low Energy Nuclear Reactions
                 </Typography>
-                <Stack direction="row" spacing={2} flexWrap="wrap">
+                <Stack direction="row" spacing={2.5} flexWrap="wrap" sx={{ rowGap: 1.5 }}>
                   <FeatureChip label="Physics Simulation" icon={<CheckCircleIcon />} />
                   <FeatureChip label="3D Visualization" icon={<CheckCircleIcon />} />
                   <FeatureChip label="Real-time Analysis" icon={<CheckCircleIcon />} />
@@ -254,7 +254,7 @@ function DashboardNew() {
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <StatusCard elevation={3}>
+                <StatusCard elevation={3} component="section" aria-label="System status">
                   <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                     System Status
                   </Typography>
@@ -293,13 +293,14 @@ function DashboardNew() {
                 <QuickActionCard 
                   onClick={() => handleActionClick(action.path)}
                   elevation={1}
+                  aria-label={action.title}
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                       <Avatar 
                         sx={{ 
-                          bgcolor: alpha(action.color, 0.1),
-                          color: action.color,
+                          bgcolor: alpha(theme.palette[action.colorKey].main, 0.1),
+                          color: theme.palette[action.colorKey].main,
                           transition: 'transform 0.3s',
                         }}
                       >
@@ -333,7 +334,7 @@ function DashboardNew() {
                     <Button 
                       fullWidth 
                       endIcon={<ArrowForwardIcon />}
-                      sx={{ color: action.color }}
+                      sx={{ color: theme.palette[action.colorKey].main }}
                     >
                       Launch
                     </Button>
@@ -442,6 +443,7 @@ function DashboardNew() {
                 variant="determinate" 
                 value={(memoryUsage.used / memoryUsage.total) * 100}
                 sx={{ borderRadius: 1 }}
+                aria-label="Memory usage"
               />
             </Box>
           </Stack>

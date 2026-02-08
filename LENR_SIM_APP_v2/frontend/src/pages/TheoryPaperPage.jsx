@@ -193,11 +193,11 @@ const TheoryPaperPage = () => {
                 </Paper>
               </Grid>
 
-              {/* Casimir Force */}
+              {/* Casimir Effect */}
               <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                 <Paper sx={{ p: 2, height: '100%' }}>
                   <Typography variant="subtitle2" color="primary" gutterBottom>
-                    Casimir Force
+                    Casimir Effect
                   </Typography>
                   <Box sx={{ p: 1.5, bgcolor: 'background.default', borderRadius: 1, mb: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}>
                     F = -π²ℏcA/(240d⁴)
@@ -335,7 +335,7 @@ const TheoryPaperPage = () => {
                 Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, 
                 and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper 
                 aims to unify major theoretical elements—including Rydberg Matter (RM), halo electrons, double-layer 
-                Quantum Electrodynamics (QED) effects, Casimir forces, the Oppenheimer-Phillips process, and quantum 
+                Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum 
                 tunneling enhancements—under a single model.
               </Typography>
               <Typography variant="body1" paragraph>
@@ -419,7 +419,7 @@ const TheoryPaperPage = () => {
                 <ListItem>
                   <ListItemText 
                     primary="1. Unify Diverse Phenomena" 
-                    secondary="Integrate Rydberg Matter (RM), halo electrons, double-layer QED, Casimir forces, the Oppenheimer-Phillips process, and quantum tunneling enhancements into a single LENR model"
+                    secondary="Integrate Rydberg Matter (RM), halo electrons, double-layer QED, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements into a single LENR model"
                   />
                 </ListItem>
                 <ListItem>
@@ -929,7 +929,7 @@ const TheoryPaperPage = () => {
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>CORRECTED</Typography>
                 </Alert>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Correction 1: Casimir Force Calculation (Section 2.5)
+                  Correction 1: Casimir Effect Calculation (Section 2.5)
                 </Typography>
               </Box>
             </AccordionSummary>
@@ -950,7 +950,7 @@ const TheoryPaperPage = () => {
                 Result: -1.3 × 10⁻³ N
               </Paper>
               <Typography variant="body2" color="text.secondary">
-                <strong>Impact:</strong> Ensures physical accuracy and prevents misinterpretation of Casimir force magnitudes.
+                <strong>Impact:</strong> Ensures physical accuracy and prevents misinterpretation of Casimir effect magnitudes.
               </Typography>
             </AccordionDetails>
           </Accordion>

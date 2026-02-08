@@ -1077,7 +1077,7 @@ const UnifiedBubbleLatticeVisualization = ({
     return vortexGroup;
   }, []);
 
-  // Create Casimir force field visualization
+  // Create Casimir effect field visualization
   // F_Casimir = -π²ℏc/(240) * A/d⁴
   const createCasimirField = useCallback((scene) => {
     const casimirGroup = new THREE.Group();
@@ -1122,7 +1122,7 @@ const UnifiedBubbleLatticeVisualization = ({
       // Calculate distance
       const distance = bubblePoint.distanceTo(latticePoint);
       
-      // Casimir force magnitude: F ∝ 1/d⁴
+      // Casimir effect magnitude: F ∝ 1/d⁴
       // Normalize for visualization (force lines get more intense as distance decreases)
       const forceMagnitude = 1 / Math.pow(Math.max(distance, 0.1), 4);
       const normalizedForce = Math.min(forceMagnitude * 100, 1.0);
@@ -1466,7 +1466,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const qed_factor = 1 + Math.pow(fieldStrength / E_critical, 2);
     
     // 3. Casimir Enhancement
-    // Casimir force scales with 1/d⁴, enhancement from proximity
+    // Casimir effect scales with 1/d⁴, enhancement from proximity
     // Simplified: f_casimir ≈ (R0/R)² = compressionRatio²
     const casimir_factor = Math.pow(compressionRatio, 2);
     
@@ -2252,7 +2252,7 @@ const UnifiedBubbleLatticeVisualization = ({
       try {
         // Get current physics data
         const currentCompression = physicsData.compressionRatio || 1.0;
-        // Casimir force intensifies as bubble compresses (1/d⁴ relationship)
+        // Casimir effect intensifies as bubble compresses (1/d⁴ relationship)
         const casimirIntensity = Math.pow(currentCompression, 4);
         
         casimirFieldRef.current.children.forEach((child) => {
