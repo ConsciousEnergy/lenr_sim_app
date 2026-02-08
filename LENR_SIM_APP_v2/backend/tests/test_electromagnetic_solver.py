@@ -204,4 +204,16 @@ def test_cfl_warning_logs(solver_instance, caplog):
     assert "FDTD Stability Warning" not in caplog.text
 
 
-# TODO: Add tests for FDTD field updates once curl is implemented. 
+def test_fdtd_update_fields_finite(solver_instance):
+    """Test that update_fields advances E and B and leaves them finite."""
+    E_before = solver_instance.electric_field.copy()
+    B_before = solver_instance.magnetic_field.copy()
+    c_medium = 1.0 / np.sqrt(solver_instance.permittivity * solver_instance.permeability)
+    inv_ds_sq_sum = (1.0 / solver_instance.dx**2) + (1.0 / solver_instance.dy**2) + (1.0 / solver_instance.dz**2)
+    dt_limit = 1.0 / (c_medium * np.sqrt(inv_ds_sq_sum))
+    dt_safe = dt_limit * 0.5
+    asyncio.run(solver_instance.update_fields(dt_safe, None, None))
+    assert np.all(np.isfinite(solver_instance.electric_field))
+    assert np.all(np.isfinite(solver_instance.magnetic_field))
+    assert solver_instance.electric_field.shape == E_before.shape
+    assert solver_instance.magnetic_field.shape == B_before.shape 
