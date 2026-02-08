@@ -80,6 +80,41 @@ Ensure these directories exist:
 mkdir -p backend/data backend/static backend/logs
 ```
 
+### Running backend tests (pytest + coverage)
+Run tests **from the v2 backend directory** so coverage finds `tests/.coveragerc`:
+- **From repo root:** `run_backend_tests.bat` (Windows), or:
+  ```bash
+  cd LENR_SIM_APP_v2\backend
+  python -m pytest tests/ -v --tb=short
+  ```
+  If you use a venv at repo root, activate it first: `venv\Scripts\activate`.
+
+### Node.js and frontend dependencies
+- **Node v20.12** is sufficient; you do not need to upgrade Node to run the app.
+- Frontend: `cd LENR_SIM_APP_v2\frontend` then `npm install` (already works with Node 20.12).
+- To refresh dependencies without upgrading Node: `npm update` in the frontend folder, or a clean install: remove `node_modules`, then `npm install` (keep `package-lock.json` for reproducible installs).
+- Upgrading **npm** to 11.x requires Node ^20.17 or ≥22.9; on Node 20.12 you can use `npm install -g npm@10.9.0` if you want a newer 10.x npm.
+
+### pip install fails: "No such file or directory: ... scipy-1.11.2.dist-info\\METADATA"
+The venv has a **broken scipy** install (metadata missing). Remove it and reinstall.
+
+**Option A (script):** From **LENR_SIM_APP_v2\\backend** with venv activated:
+```bat
+python remove_broken_scipy.py
+pip install -r requirements.txt
+```
+Or run once from repo root: **LENR_SIM_APP_v2\\backend\\fix_scipy_venv.bat**
+
+**Option B (manual PowerShell):** From `LENR_SIM_APP_v2\backend`:
+```powershell
+Remove-Item -Recurse -Force "venv\Lib\site-packages\scipy-1.11.2.dist-info" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "venv\Lib\site-packages\scipy" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "venv\lib\site-packages\scipy-1.11.2.dist-info" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "venv\lib\site-packages\scipy" -ErrorAction SilentlyContinue
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
 ### Other Issues
 Check the logs in:
 - `backend/logs/`

@@ -36,6 +36,14 @@ call venv\Scripts\activate
 
 ECHO Installing backend dependencies...
 pip install -r requirements.txt
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO pip install failed. Trying scipy fix for broken "no RECORD file" install...
+    python remove_broken_scipy.py
+    pip install -r requirements.txt
+)
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO Still failing. Run manually: LENR_SIM_APP_v2\backend\fix_scipy_venv.bat
+)
 
 :: Start backend server in a new window
 ECHO Starting backend server on port 8000...

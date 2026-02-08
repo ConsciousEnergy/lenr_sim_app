@@ -488,8 +488,8 @@ class BubbleConfig(BaseModel):
     initial_radius_um: float = Field(default=10.0, ge=0.1, le=100, description="Initial radius in micrometers")
     driving_pressure_bar: float = Field(default=1.5, ge=0.1, le=10, description="Driving pressure amplitude in bar")
     frequency_khz: float = Field(default=20.0, ge=1, le=100, description="Acoustic frequency in kHz")
-    # Extended range to 600K to support high-temperature Ni-H experiments (Rossi-type)
-    ambient_temperature_k: float = Field(default=298.0, ge=200, le=600, description="Ambient temperature in Kelvin")
+    # Extended range to 2000 K to support high-temperature Ni-H and elevated experiments
+    ambient_temperature_k: float = Field(default=298.0, ge=0, le=2000, description="Ambient temperature in Kelvin")
 
 
 class BubbleLatticeRequest(BaseModel):
@@ -529,8 +529,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     - **driving_pressure_bar** (float, 0.1-10): Acoustic driving pressure amplitude.
       Higher values = more violent collapse.
     - **frequency_khz** (float, 1-100): Acoustic frequency. 20-40 kHz typical for LENR.
-    - **ambient_temperature_k** (float, 200-600): Ambient liquid temperature in Kelvin.
-      Extended range supports high-temperature Ni-H experiments (Rossi-type).
+    - **ambient_temperature_k** (float, 0-2000): Ambient liquid temperature in Kelvin.
+      Supports room temperature through high-temperature Ni-H / Rossi-type experiments.
     
     ### Material Configuration (material)
     - **host_material** (str): "palladium", "nickel", or "titanium"
