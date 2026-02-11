@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -27,7 +27,8 @@ import {
   LinearProgress,
   Checkbox,
   useTheme,
-  alpha
+  alpha,
+  Snackbar
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -38,7 +39,9 @@ import {
   TrendingUp as TrendingUpIcon,
   Science as ScienceIcon,
   Timeline as TimelineIcon,
-  Assessment as AssessmentIcon
+  Assessment as AssessmentIcon,
+  CloudOff as CloudOffIcon,
+  Storage as StorageIcon
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -55,6 +58,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { analyticsApi } from '../services/analyticsApi';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -120,111 +124,122 @@ const AnalyticsPage = () => {
   const [selectedSimulations, setSelectedSimulations] = useState([]);
   const [simulationHistory, setSimulationHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [pieData, setPieData] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [temperatureData, setTemperatureData] = useState([]);
+  const [totalExperiments, setTotalExperiments] = useState(0);
+  const [isOffline, setIsOffline] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   
-  // Load simulation history from localStorage
-  useEffect(() => {
-    const loadHistory = () => {
+  // Load data from API with localStorage fallback
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch all data in parallel
+      const [statsData, typeDistData, timelineData, experimentsData, tempDistData] = await Promise.all([
+        analyticsApi.getStats(),
+        analyticsApi.getTypeDistribution(),
+        analyticsApi.getTimeline({ limit: 30 }),
+        analyticsApi.getExperiments({ limit: rowsPerPage, offset: page * rowsPerPage }),
+        analyticsApi.getTemperatureDistribution(10),
+      ]);
+      
+      // Update state with fetched data
+      setStats({
+        totalSimulations: statsData.totalSimulations || 0,
+        successRate: statsData.successRate?.toFixed(1) || '0.0',
+        avgEnhancement: statsData.avgEnhancement?.toFixed(2) || '0.00',
+        totalEnergy: statsData.totalEnergy?.toFixed(2) || '0.00',
+        maxEnhancement: statsData.maxEnhancement?.toFixed(2) || '0.00',
+      });
+      
+      setPieData(typeDistData || []);
+      
+      // Transform timeline data for charts
+      setChartData(timelineData.map((item, i) => ({
+        name: item.name || `Sim ${i + 1}`,
+        enhancement: item.enhancementFactor || 0,
+        energy: item.energyOutput || 0,
+        date: item.date,
+      })));
+      
+      // Transform temperature distribution for bar chart
+      setTemperatureData(tempDistData || []);
+      
+      // Transform experiments for table display
+      const transformedExperiments = (experimentsData.experiments || []).map(exp => ({
+        id: exp.id,
+        type: exp.type || exp.experiment_type || 'Unknown',
+        status: exp.status || 'completed',
+        material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
+        temperature: exp.temperature_k || 300,
+        pressure: exp.pressure_bar || 1,
+        enhancementFactor: exp.enhancement_factor || 0,
+        fusionRate: exp.fusion_rate || 0,
+        energyOutput: exp.energy_output_kev || 0,
+        timestamp: exp.created_at,
+        isBaseline: exp.is_baseline || false,
+        source: exp.source || 'User Simulation',
+        parameters: exp.parameters || {},
+      }));
+      
+      setSimulationHistory(transformedExperiments);
+      setTotalExperiments(experimentsData.total || transformedExperiments.length);
+      setIsOffline(false);
+      
+    } catch (error) {
+      console.warn('API unavailable, using local fallback:', error);
+      setIsOffline(true);
+      
+      // Fallback to localStorage
       try {
         const stored = localStorage.getItem('lenr_simulation_history');
         if (stored) {
-          setSimulationHistory(JSON.parse(stored));
-        } else {
-          // Generate sample data for demo
-          const sampleData = generateSampleHistory();
-          setSimulationHistory(sampleData);
-          localStorage.setItem('lenr_simulation_history', JSON.stringify(sampleData));
+          const localData = JSON.parse(stored);
+          setSimulationHistory(localData);
+          setTotalExperiments(localData.length);
+          
+          // Calculate local stats
+          if (localData.length > 0) {
+            const completed = localData.filter(s => s.status === 'completed');
+            setStats({
+              totalSimulations: localData.length,
+              successRate: ((completed.length / localData.length) * 100).toFixed(1),
+              avgEnhancement: completed.length > 0 
+                ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
+                : '0.00',
+              totalEnergy: completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+            });
+            
+            // Build pie data from local
+            const typeCounts = {};
+            localData.forEach(exp => {
+              const type = exp.type || 'Unknown';
+              typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+            setPieData(Object.entries(typeCounts).map(([name, value]) => ({ name, value })));
+            
+            // Build chart data from local
+            setChartData(localData.slice(0, 20).reverse().map((s, i) => ({
+              name: `Sim ${i + 1}`,
+              enhancement: s.enhancementFactor || 0,
+              energy: s.energyOutput || 0,
+            })));
+          }
         }
-      } catch (error) {
-        console.error('Error loading simulation history:', error);
-      } finally {
-        setLoading(false);
+      } catch (localError) {
+        console.error('Local storage error:', localError);
       }
-    };
-    
-    loadHistory();
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, rowsPerPage]);
   
-  // Generate sample simulation history for demonstration
-  const generateSampleHistory = () => {
-    const types = ['Quantum Tunneling', 'Fusion', 'LENR', 'Bubble Fusion'];
-    const statuses = ['completed', 'completed', 'completed', 'failed'];
-    const materials = ['Palladium', 'Nickel', 'Titanium', 'Platinum'];
-    
-    return Array.from({ length: 25 }, (_, i) => ({
-      id: `sim-${Date.now() - i * 86400000}`,
-      type: types[i % types.length],
-      status: statuses[Math.floor(Math.random() * 10) > 1 ? 0 : 3],
-      material: materials[i % materials.length],
-      temperature: 300 + Math.random() * 500,
-      pressure: 1 + Math.random() * 10,
-      enhancementFactor: Math.random() * 100 + 1,
-      fusionRate: Math.random() * 1e-15,
-      energyOutput: Math.random() * 100,
-      duration: Math.random() * 10 + 1,
-      timestamp: new Date(Date.now() - i * 86400000).toISOString(),
-      parameters: {
-        loadingRatio: 0.5 + Math.random() * 0.5,
-        defectDensity: Math.random() * 0.2
-      }
-    }));
-  };
-  
-  // Aggregate statistics
-  const stats = useMemo(() => {
-    if (!simulationHistory.length) return null;
-    
-    const completed = simulationHistory.filter(s => s.status === 'completed');
-    const totalSimulations = simulationHistory.length;
-    const successRate = totalSimulations > 0 
-      ? (completed.length / totalSimulations * 100).toFixed(1) 
-      : '0.0';
-    // Guard against division by zero when no completed simulations
-    const avgEnhancement = completed.length > 0 
-      ? completed.reduce((acc, s) => acc + s.enhancementFactor, 0) / completed.length 
-      : 0;
-    const avgFusionRate = completed.length > 0 
-      ? completed.reduce((acc, s) => acc + s.fusionRate, 0) / completed.length 
-      : 0;
-    const totalEnergy = completed.reduce((acc, s) => acc + s.energyOutput, 0);
-    
-    // Type distribution
-    const typeDistribution = simulationHistory.reduce((acc, s) => {
-      acc[s.type] = (acc[s.type] || 0) + 1;
-      return acc;
-    }, {});
-    
-    return {
-      totalSimulations,
-      successRate,
-      avgEnhancement: avgEnhancement.toFixed(2),
-      avgFusionRate: avgFusionRate.toExponential(2),
-      totalEnergy: totalEnergy.toFixed(2),
-      typeDistribution
-    };
-  }, [simulationHistory]);
-  
-  // Chart data for time series
-  const chartData = useMemo(() => {
-    return simulationHistory
-      .filter(s => s.status === 'completed')
-      .slice(0, 20)
-      .reverse()
-      .map((s, i) => ({
-        name: `Sim ${i + 1}`,
-        enhancement: s.enhancementFactor,
-        energy: s.energyOutput,
-        temperature: s.temperature
-      }));
-  }, [simulationHistory]);
-  
-  // Pie chart data
-  const pieData = useMemo(() => {
-    if (!stats?.typeDistribution) return [];
-    return Object.entries(stats.typeDistribution).map(([name, value]) => ({
-      name,
-      value
-    }));
-  }, [stats]);
+  // Load data on mount and when pagination changes
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
   
@@ -234,11 +249,14 @@ const AnalyticsPage = () => {
   
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+    // Data will reload via useEffect when page changes
   };
   
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    // Data will reload via useEffect when rowsPerPage changes
   };
   
   const handleSelectSimulation = (id) => {
@@ -249,47 +267,83 @@ const AnalyticsPage = () => {
     );
   };
   
-  const handleExportCSV = () => {
-    const headers = ['ID', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (atm)', 'Enhancement Factor', 'Fusion Rate', 'Energy Output (keV)', 'Timestamp'];
-    const rows = simulationHistory.map(s => [
-      s.id,
-      s.type,
-      s.status,
-      s.material,
-      s.temperature.toFixed(2),
-      s.pressure.toFixed(2),
-      s.enhancementFactor.toFixed(4),
-      s.fusionRate.toExponential(4),
-      s.energyOutput.toFixed(4),
-      s.timestamp
-    ]);
-    
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportCSV = async () => {
+    try {
+      const blob = await analyticsApi.exportCSV();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lenr_experiments_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSnackbar({ open: true, message: 'CSV exported successfully', severity: 'success' });
+    } catch (error) {
+      console.error('CSV export error:', error);
+      // Fallback to local export
+      const headers = ['ID', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (atm)', 'Enhancement Factor', 'Energy Output (keV)', 'Timestamp'];
+      const rows = simulationHistory.map(s => [
+        s.id,
+        s.type,
+        s.status,
+        s.material,
+        s.temperature?.toFixed(2) || '',
+        s.pressure?.toFixed(2) || '',
+        s.enhancementFactor?.toFixed(4) || '',
+        s.energyOutput?.toFixed(4) || '',
+        s.timestamp || ''
+      ]);
+      
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSnackbar({ open: true, message: 'CSV exported (local data)', severity: 'info' });
+    }
   };
   
-  const handleExportJSON = () => {
-    const dataToExport = selectedSimulations.length > 0
-      ? simulationHistory.filter(s => selectedSimulations.includes(s.id))
-      : simulationHistory;
-    
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportJSON = async () => {
+    try {
+      const data = await analyticsApi.exportJSON();
+      const dataToExport = selectedSimulations.length > 0
+        ? data.filter(s => selectedSimulations.includes(s.id))
+        : data;
+      
+      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lenr_experiments_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSnackbar({ open: true, message: 'JSON exported successfully', severity: 'success' });
+    } catch (error) {
+      console.error('JSON export error:', error);
+      // Fallback to local data
+      const dataToExport = selectedSimulations.length > 0
+        ? simulationHistory.filter(s => selectedSimulations.includes(s.id))
+        : simulationHistory;
+      
+      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lenr_simulations_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSnackbar({ open: true, message: 'JSON exported (local data)', severity: 'info' });
+    }
   };
   
   const handleClearHistory = () => {
@@ -306,14 +360,26 @@ const AnalyticsPage = () => {
   };
   
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const stored = localStorage.getItem('lenr_simulation_history');
-      if (stored) {
-        setSimulationHistory(JSON.parse(stored));
-      }
-      setLoading(false);
-    }, 500);
+    loadData();
+    setSnackbar({ open: true, message: 'Data refreshed', severity: 'info' });
+  };
+  
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+  
+  const handleDeleteExperiment = async (experimentId) => {
+    if (!window.confirm('Delete this experiment?')) return;
+    
+    try {
+      await analyticsApi.deleteExperiment(experimentId);
+      setSimulationHistory(prev => prev.filter(s => s.id !== experimentId));
+      setSelectedSimulations(prev => prev.filter(id => id !== experimentId));
+      setSnackbar({ open: true, message: 'Experiment deleted', severity: 'success' });
+    } catch (error) {
+      console.error('Delete error:', error);
+      setSnackbar({ open: true, message: 'Failed to delete experiment', severity: 'error' });
+    }
   };
   
   if (loading) {
@@ -343,11 +409,29 @@ const AnalyticsPage = () => {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
-          Analytics Dashboard
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            Analytics Dashboard
+          </Typography>
+          {isOffline ? (
+            <Chip 
+              icon={<CloudOffIcon />} 
+              label="Offline Mode" 
+              color="warning" 
+              size="small"
+            />
+          ) : (
+            <Chip 
+              icon={<StorageIcon />} 
+              label="Connected to Database" 
+              color="success" 
+              size="small"
+            />
+          )}
+        </Box>
         <Typography variant="body1" color="text.secondary">
-          Analyze simulation results, compare experiments, and export data
+          Analyze simulation results, compare experiments, and export data.
+          {!isOffline && ' Includes baseline data from published LENR research.'}
         </Typography>
       </Box>
       
@@ -451,18 +535,22 @@ const AnalyticsPage = () => {
             </Paper>
           </Grid>
           
-          {/* Temperature vs Enhancement Bar Chart */}
+          {/* Temperature Distribution Bar Chart */}
           <Grid size={12}>
             <Paper sx={{ p: 3, height: 350 }}>
               <Typography variant="h6" gutterBottom>Temperature Distribution</Typography>
               <ResponsiveContainer width="100%" height="85%">
-                <BarChart data={chartData}>
+                <BarChart data={temperatureData.length > 0 ? temperatureData : chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
+                  <XAxis dataKey={temperatureData.length > 0 ? 'range' : 'name'} />
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="temperature" fill="#8884d8" name="Temperature (K)" />
+                  <Bar 
+                    dataKey={temperatureData.length > 0 ? 'count' : 'temperature'} 
+                    fill="#8884d8" 
+                    name={temperatureData.length > 0 ? 'Experiment Count' : 'Temperature (K)'} 
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -487,7 +575,7 @@ const AnalyticsPage = () => {
           
           <TableContainer>
             <Table size="small">
-              <TableHead>
+                <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -503,6 +591,7 @@ const AnalyticsPage = () => {
                     />
                   </TableCell>
                   <TableCell>Type</TableCell>
+                  <TableCell>Source</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Material</TableCell>
                   <TableCell align="right">Temp (K)</TableCell>
@@ -513,9 +602,7 @@ const AnalyticsPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {simulationHistory
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => (
+                {simulationHistory.map((row) => (
                     <TableRow key={row.id} hover selected={selectedSimulations.includes(row.id)}>
                       <TableCell padding="checkbox">
                         <Checkbox
@@ -525,6 +612,16 @@ const AnalyticsPage = () => {
                       </TableCell>
                       <TableCell>{row.type}</TableCell>
                       <TableCell>
+                        <Tooltip title={row.source || (row.isBaseline ? 'Published Research' : 'User Simulation')}>
+                          <Chip
+                            size="small"
+                            label={row.isBaseline ? 'Baseline' : 'User'}
+                            color={row.isBaseline ? 'primary' : 'default'}
+                            variant={row.isBaseline ? 'filled' : 'outlined'}
+                          />
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           size="small"
                           label={row.status}
@@ -532,16 +629,23 @@ const AnalyticsPage = () => {
                         />
                       </TableCell>
                       <TableCell>{row.material}</TableCell>
-                      <TableCell align="right">{row.temperature.toFixed(1)}</TableCell>
-                      <TableCell align="right">{row.enhancementFactor.toFixed(2)}×</TableCell>
-                      <TableCell align="right">{row.energyOutput.toFixed(3)}</TableCell>
-                      <TableCell>{new Date(row.timestamp).toLocaleDateString()}</TableCell>
+                      <TableCell align="right">{row.temperature?.toFixed(1) || 'N/A'}</TableCell>
+                      <TableCell align="right">{row.enhancementFactor?.toFixed(2) || '0.00'}×</TableCell>
+                      <TableCell align="right">{row.energyOutput?.toFixed(3) || '0.000'}</TableCell>
+                      <TableCell>{row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <Tooltip title="View Details">
                           <IconButton size="small">
                             <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        {!row.isBaseline && (
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => handleDeleteExperiment(row.id)}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -550,9 +654,9 @@ const AnalyticsPage = () => {
           </TableContainer>
           
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 25, 50]}
             component="div"
-            count={simulationHistory.length}
+            count={totalExperiments}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -671,6 +775,18 @@ const AnalyticsPage = () => {
           </Grid>
         </Grid>
       </TabPanel>
+      
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

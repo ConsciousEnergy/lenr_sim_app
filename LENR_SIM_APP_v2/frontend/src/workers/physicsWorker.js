@@ -10,6 +10,8 @@
  *   worker.onmessage = (e) => { console.log(e.data); };
  */
 
+/* eslint-disable no-restricted-globals */
+
 // Physical constants (SI units)
 const PHYSICAL_CONSTANTS = {
   HBAR: 1.054571817e-34,      // Reduced Planck constant (J·s)
@@ -460,6 +462,269 @@ function calculateEnhancementTimeSeries(params) {
   return results;
 }
 
+// =============================================================================
+// MHD Proton Confinement Calculations (v0.2.2-beta)
+// =============================================================================
+
+/**
+ * Calculate MHD confinement forces on a proton
+ * Implements Lorentz force, Z-pinch, and pressure gradient forces
+ * 
+ * @param {Object} params - Proton position, velocity, and field parameters
+ * @returns {Object} Force components and total force
+ */
+function calculateMHDForces(params) {
+  const { position, velocity, cavitationPoint, compressionRatio = 1.0, bubbleRadius = 1e-6 } = params;
+  const { E_CHARGE, MP } = PHYSICAL_CONSTANTS;
+  
+  // MU_0 for magnetic field calculations
+  const MU_0 = 4 * Math.PI * 1e-7;
+  
+  // Direction and distance to cavitation point
+  const dx = cavitationPoint[0] - position[0];
+  const dy = cavitationPoint[1] - position[1];
+  const dz = cavitationPoint[2] - position[2];
+  const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) + 1e-12;
+  
+  // Unit direction vector
+  const dirX = dx / distance;
+  const dirY = dy / distance;
+  const dirZ = dz / distance;
+  
+  // Z-pinch azimuthal B-field: B_theta = mu_0 * I / (2 * pi * r)
+  const pinchCurrent = 1.0; // Amperes (effective)
+  const rPerp = Math.sqrt(dx*dx + dz*dz) + 1e-12;
+  const B_theta = MU_0 * pinchCurrent / (2 * Math.PI * rPerp);
+  
+  // Azimuthal unit vector (perpendicular to radial in x-z plane)
+  const thetaX = -dz / rPerp;
+  const thetaZ = dx / rPerp;
+  
+  // Magnetic field vector (azimuthal component)
+  const B = [B_theta * thetaX, 0, B_theta * thetaZ];
+  
+  // Radial electric field (toward cavitation point)
+  const E0 = 1e8; // V/m reference field
+  const E_magnitude = E0 * compressionRatio * compressionRatio / (distance * 1e6 + 1);
+  const E = [-E_magnitude * dirX, -E_magnitude * dirY, -E_magnitude * dirZ];
+  
+  // Lorentz force: F = q(E + v x B)
+  const vCrossB = [
+    velocity[1] * B[2] - velocity[2] * B[1],
+    velocity[2] * B[0] - velocity[0] * B[2],
+    velocity[0] * B[1] - velocity[1] * B[0]
+  ];
+  
+  const F_lorentz = [
+    E_CHARGE * (E[0] + vCrossB[0]),
+    E_CHARGE * (E[1] + vCrossB[1]),
+    E_CHARGE * (E[2] + vCrossB[2])
+  ];
+  
+  // Pressure gradient force (radially inward during collapse)
+  const P_gradient = 1e10 * compressionRatio * compressionRatio / bubbleRadius; // Pa/m
+  const V_proton = 4/3 * Math.PI * Math.pow(0.87e-15, 3);
+  const F_pressure = [
+    -V_proton * P_gradient * dirX,
+    -V_proton * P_gradient * dirY,
+    -V_proton * P_gradient * dirZ
+  ];
+  
+  // Total force
+  const F_total = [
+    F_lorentz[0] + F_pressure[0],
+    F_lorentz[1] + F_pressure[1],
+    F_lorentz[2] + F_pressure[2]
+  ];
+  
+  // Acceleration
+  const acceleration = [F_total[0] / MP, F_total[1] / MP, F_total[2] / MP];
+  
+  return {
+    total: F_total,
+    lorentz: F_lorentz,
+    pressure: F_pressure,
+    B_field: B,
+    E_field: E,
+    acceleration,
+    distance_to_cavitation: distance
+  };
+}
+
+/**
+ * Update vortex particle positions and vorticity
+ * Inspired by VPFM (Vortex Particle Flow Maps) approach
+ * 
+ * @param {Object} params - Particles array and simulation parameters
+ * @returns {Object} Updated particles and statistics
+ */
+function updateVortexParticles(params) {
+  const {
+    particles,
+    dt,
+    phase,
+    compressionRatio = 1.0,
+    cavitationPoint = [0, 0, 0],
+    bubbleRadius = 1e-6
+  } = params;
+  
+  const isCollapsing = phase === 'COLLAPSE' || phase === 'MINIMUM';
+  const isRebounding = phase === 'REBOUND';
+  
+  const updatedParticles = particles.map(particle => {
+    const pos = particle.position;
+    const vel = particle.velocity;
+    const vort = particle.vorticity || [0, 0, 0];
+    
+    // Calculate MHD forces
+    const forces = calculateMHDForces({
+      position: pos,
+      velocity: vel,
+      cavitationPoint,
+      compressionRatio,
+      bubbleRadius
+    });
+    
+    // Update velocity
+    const newVel = [
+      vel[0] + forces.acceleration[0] * dt,
+      vel[1] + forces.acceleration[1] * dt,
+      vel[2] + forces.acceleration[2] * dt
+    ];
+    
+    // Apply damping
+    const damping = isCollapsing ? 0.95 : 0.98;
+    newVel[0] *= damping;
+    newVel[1] *= damping;
+    newVel[2] *= damping;
+    
+    // Add spiral motion during collapse
+    if (isCollapsing) {
+      const dx = cavitationPoint[0] - pos[0];
+      const dz = cavitationPoint[2] - pos[2];
+      const rPerp = Math.sqrt(dx*dx + dz*dz) + 0.01;
+      const spiralStrength = 0.01 * compressionRatio / rPerp;
+      newVel[0] += (-dz / rPerp) * spiralStrength;
+      newVel[2] += (dx / rPerp) * spiralStrength;
+    }
+    
+    // Update position
+    const newPos = [
+      pos[0] + newVel[0] * dt,
+      pos[1] + newVel[1] * dt,
+      pos[2] + newVel[2] * dt
+    ];
+    
+    // Vorticity evolution: stretching term (omega . grad)v
+    // Simplified: increase during collapse, decay otherwise
+    let vorticityMagnitude = Math.sqrt(vort[0]*vort[0] + vort[1]*vort[1] + vort[2]*vort[2]);
+    if (isCollapsing) {
+      vorticityMagnitude *= (1 + 0.1 * compressionRatio * dt);
+    } else {
+      vorticityMagnitude *= 0.99;
+    }
+    
+    // Direction stays tangential
+    const dx = cavitationPoint[0] - newPos[0];
+    const dz = cavitationPoint[2] - newPos[2];
+    const rPerp = Math.sqrt(dx*dx + dz*dz) + 0.01;
+    const newVort = [
+      (-dz / rPerp) * vorticityMagnitude,
+      0,
+      (dx / rPerp) * vorticityMagnitude
+    ];
+    
+    // Determine state
+    let state = 'dispersed';
+    if (isCollapsing) {
+      state = forces.distance_to_cavitation < 0.5 ? 'confined' :
+              forces.distance_to_cavitation < 2 ? 'spiral' : 'converging';
+    } else if (isRebounding) {
+      state = 'reexpanding';
+    }
+    
+    return {
+      position: newPos,
+      velocity: newVel,
+      vorticity: newVort,
+      state,
+      distance_to_cavitation: forces.distance_to_cavitation
+    };
+  });
+  
+  // Calculate statistics
+  const stateCounts = { dispersed: 0, converging: 0, spiral: 0, confined: 0, reexpanding: 0 };
+  let totalVorticity = 0;
+  let avgDistance = 0;
+  
+  updatedParticles.forEach(p => {
+    stateCounts[p.state] = (stateCounts[p.state] || 0) + 1;
+    totalVorticity += Math.sqrt(
+      p.vorticity[0]*p.vorticity[0] + 
+      p.vorticity[1]*p.vorticity[1] + 
+      p.vorticity[2]*p.vorticity[2]
+    );
+    avgDistance += p.distance_to_cavitation;
+  });
+  
+  avgDistance /= updatedParticles.length;
+  
+  return {
+    particles: updatedParticles,
+    statistics: {
+      stateCounts,
+      totalVorticity,
+      avgVorticity: totalVorticity / updatedParticles.length,
+      avgDistance
+    }
+  };
+}
+
+/**
+ * Integrate multiple proton forces over time step
+ * Uses Velocity Verlet for better accuracy
+ * 
+ * @param {Object} params - Particles and integration parameters
+ * @returns {Array} Updated particle states
+ */
+function integrateProtonForces(params) {
+  const { particles, dt, cavitationPoint, compressionRatio, bubbleRadius } = params;
+  
+  return particles.map(particle => {
+    const pos = particle.position.slice();
+    const vel = particle.velocity.slice();
+    
+    // Half-step velocity (Verlet)
+    const forces1 = calculateMHDForces({
+      position: pos,
+      velocity: vel,
+      cavitationPoint,
+      compressionRatio,
+      bubbleRadius
+    });
+    
+    const halfVel = vel.map((v, i) => v + 0.5 * forces1.acceleration[i] * dt);
+    const newPos = pos.map((p, i) => p + halfVel[i] * dt);
+    
+    // Full step velocity
+    const forces2 = calculateMHDForces({
+      position: newPos,
+      velocity: halfVel,
+      cavitationPoint,
+      compressionRatio,
+      bubbleRadius
+    });
+    
+    const newVel = halfVel.map((v, i) => v + 0.5 * forces2.acceleration[i] * dt);
+    
+    return {
+      position: newPos,
+      velocity: newVel,
+      forces: forces2
+    };
+  });
+}
+
 // Message handler
 self.onmessage = function(e) {
   const { type, params, id } = e.data;
@@ -519,6 +784,19 @@ self.onmessage = function(e) {
       case 'GET_CONSTANTS':
         result = PHYSICAL_CONSTANTS;
         break;
+      
+      // v0.2.2-beta: MHD and VPFM calculations
+      case 'CALCULATE_MHD_FORCES':
+        result = calculateMHDForces(params);
+        break;
+        
+      case 'UPDATE_VORTEX_PARTICLES':
+        result = updateVortexParticles(params);
+        break;
+        
+      case 'INTEGRATE_FORCES':
+        result = integrateProtonForces(params);
+        break;
         
       default:
         throw new Error(`Unknown calculation type: ${type}`);
@@ -552,6 +830,10 @@ if (typeof module !== 'undefined' && module.exports) {
     calculateBubbleCollapse,
     calculateTotalEnhancement,
     calculateEnhancementTimeSeries,
+    // v0.2.2-beta: MHD and VPFM functions
+    calculateMHDForces,
+    updateVortexParticles,
+    integrateProtonForces,
     PHYSICAL_CONSTANTS,
     MATERIALS,
   };

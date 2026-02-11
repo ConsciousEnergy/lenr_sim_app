@@ -81,7 +81,7 @@ const TheoryPage = () => {
             <Chip label="Rydberg Matter" size="small" color="primary" />
             <Chip label="Quantum Tunneling" size="small" color="primary" />
             <Chip label="QED Effects" size="small" color="primary" />
-            <Chip label="Casimir Forces" size="small" color="primary" />
+            <Chip label="Casimir Effect" size="small" color="primary" />
           </Stack>
         </Box>
 
@@ -93,7 +93,7 @@ const TheoryPage = () => {
           <Typography variant="body2">
             Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. 
             This framework unifies major theoretical elements—including Rydberg Matter, halo electrons, double-layer 
-            QED effects, Casimir forces, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under 
+            QED effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under 
             a single comprehensive model. Computational results predict tunneling enhancements exceeding 10⁸, while 
             experimental evidence confirms isotopic shifts, neutron formation, and measurable excess heat production.
           </Typography>
@@ -647,7 +647,7 @@ const TheoryPage = () => {
                       description="Calculates probability of quantum particles penetrating energy barriers. LENR conditions can enhance this by factors exceeding 10⁸."
                     />
                     <EquationCard
-                      title="Casimir Force"
+                      title="Casimir Effect"
                       equation="F_Casimir = -(π²ℏc/240) × (A/d⁴)"
                       description="Attractive force from quantum vacuum fluctuations. Creates energy localization at nanoscale interfaces critical for LENR."
                     />

@@ -30,7 +30,7 @@ import threeCleanup from '../utils/threeCleanup';
  * @property {number} rydbergMatter - Rydberg matter enhancement
  * @property {number} electronScreening - Electron screening enhancement  
  * @property {number} double_layer_qed - QED double layer enhancement
- * @property {number} casimirForces - Casimir forces enhancement
+ * @property {number} casimirForces - Casimir effect enhancement
  * @property {number} quantumTunneling - Quantum tunneling enhancement
  * @property {number} oppenheimerPhillips - Oppenheimer-Phillips process enhancement
  * @property {number} quantumCoherence - Quantum coherence enhancement
@@ -619,7 +619,7 @@ useEffect(() => {
           
           <Grid item xs={12} md={6} lg={4}>
             <Card>
-              <CardHeader title="Casimir Forces" subheader="Vacuum energy effects in confined geometries" />
+              <CardHeader title="Casimir Effect" subheader="Vacuum energy effects in confined geometries" />
               <CardContent>
                 <Slider
                   value={enhancementFactors.casimirForces}

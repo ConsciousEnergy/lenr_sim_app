@@ -61,4 +61,10 @@ backend/output/
 
 # Cache
 .cache/
-*.cache 
+*.cache
+
+# Database files (v0.2.3-beta)
+LENR_SIM_APP_v2/backend/data/
+*.db
+*.sqlite
+*.sqlite3 

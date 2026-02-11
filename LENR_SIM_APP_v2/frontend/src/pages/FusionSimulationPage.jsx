@@ -36,6 +36,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import FusionParameterControls from '../components/controls/FusionParameterControls';
 import FusionVisualization from '../components/visualizations/FusionVisualization';
 import { generateFusionTimeSteps } from '../utils/mockData';
+import { analyticsApi } from '../services/analyticsApi';
 // Note: These imports are kept for future use in full implementation
 // import { useNavigate } from 'react-router-dom';
 // import { useTheme } from '@mui/material/styles';
@@ -444,6 +445,55 @@ function FusionSimulationPage() {
     }
   }, [parameters, configName, configDescription, configsList]);
   
+  // Save simulation results to analytics database (v0.2.3-beta)
+  const saveToAnalytics = useCallback(async () => {
+    if (!simulationData || !parameters) {
+      setError('No simulation data to save. Run a simulation first.');
+      return;
+    }
+    
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      const experimentData = {
+        name: `${parameters.reactionType.toUpperCase()} Fusion - ${parameters.latticeType}`,
+        experiment_type: 'fusion',
+        status: 'completed',
+        material: parameters.latticeType,
+        temperature_k: parameters.temperature,
+        pressure_bar: 1.0, // Standard pressure for fusion simulations
+        loading_ratio: parameters.loadingRatio,
+        parameters: {
+          reaction_type: parameters.reactionType,
+          lattice_dimension: parameters.latticeDimension,
+          defect_density: parameters.defectDensity,
+          diffusion_coefficient: parameters.diffusionCoefficient,
+          initial_flux: parameters.initialFlux,
+          time_step_size: parameters.timeStepSize,
+          total_simulation_time: parameters.totalSimulationTime,
+        },
+        enhancement_factor: simulationData.timeSteps?.[simulationData.timeSteps.length - 1]?.enhancementFactor || 1,
+        fusion_rate: simulationData.timeSteps?.[simulationData.timeSteps.length - 1]?.fusionRate || 0,
+        energy_output_kev: simulationData.metrics?.peakFusionRate ? simulationData.metrics.peakFusionRate * 17.6 : 0, // D-D fusion energy
+        duration_seconds: parameters.totalSimulationTime || 10,
+        results: {
+          time_steps_count: simulationData.timeSteps?.length || 0,
+          final_metrics: simulationData.metrics,
+          lawson_progress: simulationData.lawsonProgress,
+        },
+      };
+      
+      const saved = await analyticsApi.saveExperiment(experimentData);
+      setSuccessMessage(`Simulation saved to analytics! ID: ${saved.id.substring(0, 8)}...`);
+    } catch (err) {
+      console.error('Failed to save to analytics:', err);
+      setError('Failed to save to analytics database. Data saved locally.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [simulationData, parameters]);
+  
   // Set comparison configuration
   const setComparisonMode = useCallback(async (configId) => {
     if (!configId) {
@@ -844,9 +894,22 @@ function FusionSimulationPage() {
             startIcon={<PlayArrowIcon />}
             onClick={runSimulation}
             disabled={isLoading}
+            sx={{ mr: 1 }}
           >
             Run Simulation
           </Button>
+          
+          {simulationData && (
+            <Button 
+              variant="outlined" 
+              color="secondary"
+              startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+              onClick={saveToAnalytics}
+              disabled={isSaving || isLoading}
+            >
+              {isSaving ? 'Saving...' : 'Save to Analytics'}
+            </Button>
+          )}
         </Box>
       </Box>
       

@@ -36,10 +36,18 @@ call venv\Scripts\activate
 
 ECHO Installing backend dependencies...
 pip install -r requirements.txt
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO pip install failed. Trying scipy fix for broken "no RECORD file" install...
+    python remove_broken_scipy.py
+    pip install -r requirements.txt
+)
+IF %ERRORLEVEL% NEQ 0 (
+    ECHO Still failing. Run manually: LENR_SIM_APP_v2\backend\fix_scipy_venv.bat
+)
 
 :: Start backend server in a new window
-ECHO Starting backend server on port 8001...
-START cmd /c "call venv\Scripts\activate && python -m uvicorn app.main:app --reload --port 8001"
+ECHO Starting backend server on port 8000...
+START cmd /c "call venv\Scripts\activate && python -m uvicorn app.main:app --reload --port 8000"
 
 :: Return to root directory
 cd ..\..
@@ -63,7 +71,7 @@ cd ..\..
 
 ECHO.
 ECHO LENR Simulation Application is starting...
-ECHO Backend API: http://localhost:8001
+ECHO Backend API: http://localhost:8000
 ECHO Frontend: http://localhost:3000
 ECHO.
 ECHO Press Ctrl+C in the respective terminal windows to stop the servers. 

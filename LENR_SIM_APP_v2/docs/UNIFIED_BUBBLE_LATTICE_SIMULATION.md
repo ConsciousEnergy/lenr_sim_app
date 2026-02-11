@@ -1,7 +1,7 @@
 # Unified Bubble-Lattice LENR Simulation
 
-**Version**: 0.2.1-beta  
-**Date**: December 8, 2025  
+**Version**: 0.2.3-beta  
+**Date**: January 2026  
 **Feature Branch**: feature/lenr-bubble-physics-implementation
 
 ---
@@ -12,7 +12,8 @@ The Unified Bubble-Lattice LENR Simulation is a comprehensive 3D visualization a
 
 ### Key Capabilities
 
-- **3D Visualization** of bubble collapse dynamics with ionic double-layer
+- **3D Visualization** of bubble collapse dynamics with ionic double-layer, MHD flow, and phase-dependent H₂/D₂ particles
+- **Heterogeneous Nucleation** animation: bubble nucleates small at surface, grows while attached, then collapses
 - **Proton Phase Transitions** through force regimes (EM → Weak → Strong)
 - **Real-time Enhancement Calculations** based on theoretical physics
 - **Time-series Analysis** of collapse events and enhancement factors
@@ -32,6 +33,10 @@ Based on the unified theoretical framework document: *"A Unified Theoretical Fra
 | **Double-Layer QED** | Field strengths up to 10⁸ V/m at interfaces | 2.3 |
 | **Casimir Effect** | Quantum vacuum energy focusing at nanoscale | 2.4 |
 | **Bubble Collapse** | Modified Rayleigh-Plesset dynamics | 3.2 |
+| **Heterogeneous Nucleation** | Classical nucleation at surfaces; contact angle f(θ), critical radius, waiting time | 3.3 |
+| **Bubble–Surface Coupling** | Equilibrium distance, vdW/Casimir, detachment, microjet, standoff enhancement | 3.4 |
+| **Boundary Layers** | Thermal and diffusion layer thickness; Nusselt/Lewis scaling; nucleation zone | 3.5 |
+| **Acoustic Forcing** | Minnaert resonance, Bjerknes forces, streaming, nucleation enhancement, rectified diffusion | 3.6 |
 
 ### Proton Phase Model
 
@@ -102,6 +107,10 @@ Scene
 |----------|--------|-------------|
 | `/api/unified/bubble-lattice` | POST | Run full simulation |
 | `/api/unified/bubble-lattice/instant` | GET | Get instantaneous conditions |
+| `/api/physics/nucleation/calculate` | POST | Full nucleation analysis (barrier, critical radius, waiting time) |
+| `/api/physics/boundary-layer/profile` | POST | Thermal/diffusion layer profiles with distance |
+| `/api/physics/surface-reaction-rate` | POST | Integrated surface reaction rate (nucleation + proximity + LENR) |
+| `/api/physics/surface-physics/materials` | GET | Material property reference (Pd, Ni, D₂O) |
 
 ---
 
@@ -209,4 +218,4 @@ Critical for neutron formation pathway.
 
 ---
 
-*This documentation is part of the LENR Simulation App v0.2-beta release.*
+*This documentation is part of the LENR Simulation App v0.2.3-beta release.*

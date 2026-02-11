@@ -602,3 +602,330 @@ def create_bubble_lattice_simulation(
                 setattr(lp, key, value)
     
     return BubbleLatticeInteraction(bp, lp)
+
+
+# =============================================================================
+# Cavitation Site Geometry (v0.2.2-beta)
+# =============================================================================
+
+# Lattice constants for common host materials (meters)
+LATTICE_CONSTANTS = {
+    "palladium": 3.89e-10,  # FCC
+    "nickel": 3.52e-10,     # FCC
+    "titanium": 2.95e-10,   # HCP (a-axis)
+    "platinum": 3.92e-10,   # FCC
+}
+
+
+@dataclass
+class CavitationSite:
+    """
+    Represents a cavitation site where bubble meets lattice.
+    
+    This is the target point for proton convergence during collapse.
+    """
+    position: np.ndarray              # 3D coordinates (m)
+    lattice_site_type: str           # "octahedral" or "tetrahedral"
+    nearest_lattice_atoms: int       # Number of nearest neighbor atoms
+    site_energy: float               # Interstitial site energy (eV)
+    compression_ratio: float         # R_0/R at this point
+    electric_field: float            # Local E-field (V/m)
+    
+    def __post_init__(self):
+        self.position = np.asarray(self.position)
+
+
+class CavitationGeometry:
+    """
+    Calculator for cavitation site geometry and proton target positions.
+    
+    Determines where the bubble cavitation point meets the lattice and
+    identifies the optimal inter-atomic sites for proton convergence.
+    """
+    
+    def __init__(
+        self,
+        host_material: str = "palladium",
+        bubble_center: np.ndarray = None,
+        lattice_surface_y: float = -5e-6
+    ):
+        """
+        Initialize cavitation geometry calculator.
+        
+        Args:
+            host_material: Host lattice material
+            bubble_center: Initial bubble center position (m)
+            lattice_surface_y: Y-coordinate of lattice surface (m)
+        """
+        self.host_material = host_material
+        self.lattice_constant = LATTICE_CONSTANTS.get(host_material, 3.89e-10)
+        self.bubble_center = np.asarray(bubble_center if bubble_center is not None else [0, 0, 0])
+        self.lattice_surface_y = lattice_surface_y
+        
+        # FCC lattice interstitial sites (fractional coordinates)
+        self._octahedral_sites = self._generate_octahedral_sites()
+        self._tetrahedral_sites = self._generate_tetrahedral_sites()
+        
+        logger.info(
+            f"Initialized CavitationGeometry for {host_material}, "
+            f"lattice constant = {self.lattice_constant*1e10:.3f} Å"
+        )
+    
+    def _generate_octahedral_sites(self) -> np.ndarray:
+        """
+        Generate octahedral interstitial sites in FCC unit cell.
+        
+        Octahedral sites in FCC: edge centers and body center.
+        These are preferred sites for hydrogen in Pd.
+        """
+        a = self.lattice_constant
+        sites = np.array([
+            [0.5, 0.0, 0.0],
+            [0.0, 0.5, 0.0],
+            [0.0, 0.0, 0.5],
+            [0.5, 0.5, 0.0],
+            [0.5, 0.0, 0.5],
+            [0.0, 0.5, 0.5],
+            [0.5, 0.5, 0.5],  # Body center (octahedral)
+        ]) * a
+        return sites
+    
+    def _generate_tetrahedral_sites(self) -> np.ndarray:
+        """
+        Generate tetrahedral interstitial sites in FCC unit cell.
+        
+        Tetrahedral sites: at 1/4 and 3/4 positions along body diagonals.
+        """
+        a = self.lattice_constant
+        sites = np.array([
+            [0.25, 0.25, 0.25],
+            [0.75, 0.75, 0.25],
+            [0.75, 0.25, 0.75],
+            [0.25, 0.75, 0.75],
+            [0.75, 0.25, 0.25],
+            [0.25, 0.75, 0.25],
+            [0.25, 0.25, 0.75],
+            [0.75, 0.75, 0.75],
+        ]) * a
+        return sites
+    
+    def compute_cavitation_point(
+        self,
+        bubble_radius: float,
+        bubble_center: Optional[np.ndarray] = None
+    ) -> np.ndarray:
+        """
+        Compute the exact cavitation point where bubble meets lattice.
+        
+        The cavitation point is where the bubble surface contacts the
+        lattice surface during collapse.
+        
+        Args:
+            bubble_radius: Current bubble radius (m)
+            bubble_center: Current bubble center (uses stored if None)
+            
+        Returns:
+            3D cavitation point coordinates (m)
+        """
+        center = bubble_center if bubble_center is not None else self.bubble_center
+        center = np.asarray(center)
+        
+        # Direction from bubble center toward lattice surface (downward)
+        direction = np.array([0.0, -1.0, 0.0])
+        
+        # Point on bubble surface closest to lattice
+        cavitation_point = center + bubble_radius * direction
+        
+        # Clamp to lattice surface if bubble has reached it
+        if cavitation_point[1] > self.lattice_surface_y:
+            cavitation_point[1] = self.lattice_surface_y
+        
+        return cavitation_point
+    
+    def find_nearest_interstitial_sites(
+        self,
+        point: np.ndarray,
+        site_type: str = "octahedral",
+        num_sites: int = 6,
+        search_radius: int = 3
+    ) -> np.ndarray:
+        """
+        Find nearest interstitial sites to a given point.
+        
+        Args:
+            point: Reference point (typically cavitation point)
+            site_type: "octahedral" or "tetrahedral"
+            num_sites: Number of sites to return
+            search_radius: Number of unit cells to search in each direction
+            
+        Returns:
+            Array of (num_sites, 3) site positions
+        """
+        point = np.asarray(point)
+        base_sites = (self._octahedral_sites if site_type == "octahedral" 
+                      else self._tetrahedral_sites)
+        a = self.lattice_constant
+        
+        # Generate sites in multiple unit cells
+        all_sites = []
+        for i in range(-search_radius, search_radius + 1):
+            for j in range(-search_radius, search_radius + 1):
+                for k in range(-search_radius, search_radius + 1):
+                    offset = np.array([i, j, k]) * a
+                    # Center the search around the point
+                    shifted = base_sites + offset + point
+                    all_sites.extend(shifted)
+        
+        all_sites = np.array(all_sites)
+        
+        # Sort by distance to reference point
+        distances = np.linalg.norm(all_sites - point, axis=1)
+        nearest_indices = np.argsort(distances)[:num_sites]
+        
+        return all_sites[nearest_indices]
+    
+    def get_target_sites_for_protons(
+        self,
+        cavitation_point: np.ndarray,
+        num_protons: int,
+        compression_ratio: float = 1.0
+    ) -> List[CavitationSite]:
+        """
+        Get target interstitial sites for proton convergence.
+        
+        During bubble collapse, protons should converge on specific
+        lattice interstitial sites near the cavitation point.
+        
+        Args:
+            cavitation_point: Cavitation point coordinates
+            num_protons: Number of protons to place
+            compression_ratio: Current compression ratio (affects site selection)
+            
+        Returns:
+            List of CavitationSite objects
+        """
+        cavitation_point = np.asarray(cavitation_point)
+        
+        # Find nearest octahedral sites (preferred for H in Pd)
+        site_positions = self.find_nearest_interstitial_sites(
+            cavitation_point,
+            site_type="octahedral",
+            num_sites=num_protons
+        )
+        
+        sites = []
+        for i, pos in enumerate(site_positions):
+            distance = np.linalg.norm(pos - cavitation_point)
+            
+            # Site energy (approximate, decreases with compression)
+            # Reference: Hydrogen in Pd has ~0.2 eV site energy
+            base_energy = 0.2  # eV
+            site_energy = base_energy / (1 + 0.1 * compression_ratio)
+            
+            # Local E-field increases with compression
+            E_field = 1e8 * compression_ratio**2 / (1 + distance * 1e6)
+            
+            site = CavitationSite(
+                position=pos,
+                lattice_site_type="octahedral",
+                nearest_lattice_atoms=6,  # Octahedral coordination
+                site_energy=site_energy,
+                compression_ratio=compression_ratio,
+                electric_field=E_field
+            )
+            sites.append(site)
+        
+        return sites
+    
+    def compute_proton_convergence_zone(
+        self,
+        cavitation_point: np.ndarray,
+        compression_ratio: float
+    ) -> Dict[str, Any]:
+        """
+        Compute the convergence zone parameters for proton dynamics.
+        
+        The convergence zone is a cone-shaped region where protons
+        are funneled toward the cavitation point.
+        
+        Args:
+            cavitation_point: Cavitation point coordinates
+            compression_ratio: Current compression ratio
+            
+        Returns:
+            Dictionary with convergence zone parameters
+        """
+        # Convergence zone size scales with compression
+        base_radius = 1e-6  # 1 μm base
+        zone_radius = base_radius / compression_ratio
+        
+        # Cone height (distance protons are attracted from)
+        zone_height = 5e-6 / np.sqrt(compression_ratio)
+        
+        # Convergence strength (radial attraction coefficient)
+        convergence_strength = 1e-10 * compression_ratio**2
+        
+        # Spiral parameters (tangential velocity component)
+        spiral_frequency = 1e9 * np.sqrt(compression_ratio)  # rad/s
+        
+        return {
+            "center": cavitation_point.tolist(),
+            "radius": zone_radius,
+            "height": zone_height,
+            "convergence_strength": convergence_strength,
+            "spiral_frequency": spiral_frequency,
+            "compression_ratio": compression_ratio
+        }
+    
+    def get_lattice_site_visualization_data(
+        self,
+        cavitation_point: np.ndarray,
+        num_sites: int = 12
+    ) -> Dict[str, Any]:
+        """
+        Get visualization data for lattice sites around cavitation point.
+        
+        Args:
+            cavitation_point: Cavitation point coordinates
+            num_sites: Number of sites to include
+            
+        Returns:
+            Dictionary with visualization data
+        """
+        octahedral = self.find_nearest_interstitial_sites(
+            cavitation_point, "octahedral", num_sites // 2
+        )
+        tetrahedral = self.find_nearest_interstitial_sites(
+            cavitation_point, "tetrahedral", num_sites // 2
+        )
+        
+        return {
+            "cavitation_point": cavitation_point.tolist(),
+            "octahedral_sites": octahedral.tolist(),
+            "tetrahedral_sites": tetrahedral.tolist(),
+            "lattice_constant": self.lattice_constant,
+            "host_material": self.host_material
+        }
+
+
+def create_cavitation_geometry(
+    host_material: str = "palladium",
+    bubble_center: Optional[np.ndarray] = None,
+    lattice_surface_y: float = -5e-6
+) -> CavitationGeometry:
+    """
+    Factory function to create cavitation geometry calculator.
+    
+    Args:
+        host_material: Host lattice material
+        bubble_center: Initial bubble center position
+        lattice_surface_y: Y-coordinate of lattice surface
+        
+    Returns:
+        Configured CavitationGeometry instance
+    """
+    return CavitationGeometry(
+        host_material=host_material,
+        bubble_center=bubble_center,
+        lattice_surface_y=lattice_surface_y
+    )

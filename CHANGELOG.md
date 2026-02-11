@@ -7,6 +7,166 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### 3D Visualization – Reaction Formation and MHD Alignment
+- **Reaction formation at top center of lattice**: Nucleation site moved from offset `(spacing*0.5, latticeY, spacing*0.5)` to lattice top center `(0, latticeY, 0)` so the bubble sits in the true interstitial void between the four central top-surface atoms (aligned with centered lattice coordinates).
+- **MHD vortex alignment**: MHD flow group parent is positioned at the nucleation site with child at local origin so rotation spins in place instead of orbiting world origin.
+- **Field lines, effects, and shockwave**: Electric field lines, hotspots, nuclear emissions, shockwave, and field particle animation now all use the same top-center nucleation coordinates.
+- **Casimir geometry**: The four nearest-atom positions for Casimir force lines updated to `(±halfSpacing, latticeY, ±halfSpacing)` to match the centered lattice around the nucleation site.
+- **Proton COLLAPSE orbit**: Circular motion during collapse is now centered on the cavitation point (was incorrectly centered on world origin).
+- **Proton REBOUND confinement**: Rebound scatter is limited to ~1.2 lattice spacings with a restoring force beyond that; hard clamp at 2 lattice spacings in all phases so protons stay confined near the nucleation site, consistent with lattice phonon absorption (Hagelstein model) and experimental observations that reaction energy couples to the lattice rather than ejecting boundary-layer particles.
+
+### Documentation
+- **docs/VISUALIZATION_ALIGNMENT_AND_PROTON_CONFINEMENT.md**: Development note describing nucleation positioning, MHD/field/effects alignment, and physics-based proton confinement.
+
+## [v0.2.3-beta] - 2026-02-01
+
+### Added
+
+#### Physics Enhancements: Heterogeneous Nucleation and Surface Coupling
+- **Nucleation Sites Module** (`nucleation_sites.py`): Classical nucleation theory with surface effects
+  - `NucleationSite` dataclass with cavity geometry, contact angle, surface energy
+  - `calculate_nucleation_energy_barrier()` - Gibbs free energy with f(θ) correction
+  - `calculate_critical_radius()` - Young-Laplace critical radius
+  - `calculate_waiting_time()` - Statistical nucleation timing
+  - `calculate_active_site_probability()` - Site activation based on supersaturation
+  - Contact angle factor: f(θ) = (2 + cosθ)(1 - cosθ)²/4
+
+- **Bubble-Surface Coupling Module** (`bubble_surface_coupling.py`): Physical bubble-lattice relationship
+  - `BubbleSurfaceState` - Position, forces, attachment state tracking
+  - `calculate_equilibrium_distance()` - Casimir/vdW/thermal balance
+  - `calculate_van_der_waals_force()` - Sphere-plate Derjaguin approximation
+  - `calculate_detachment_radius()` - Fritz equation for bubble departure
+  - `calculate_jet_velocity()` - Microjet formation during asymmetric collapse
+  - Surface proximity enhancement for standoff ratios γ < 2
+
+- **Thermal/Diffusion Boundary Layers** (`boundary_layers.py`): Heat and mass transfer
+  - `BoundaryLayerState` - Layer thicknesses, gradients, fluxes
+  - `calculate_thermal_boundary_thickness()` - From Nusselt number
+  - `calculate_diffusion_boundary_thickness()` - Lewis number scaling
+  - `calculate_nucleation_zone_thickness()` - Where conditions favor nucleation
+  - Temperature and concentration profile functions (erf profiles)
+  - Material properties for Pd, Ni, D2O systems
+
+- **Acoustic/Ultrasonic Forcing** (extended `bubble_collapse.py`):
+  - `calculate_minnaert_frequency()` - Natural bubble resonance
+  - `calculate_primary_bjerknes_force()` - Acoustic radiation force
+  - `calculate_secondary_bjerknes_force()` - Bubble-bubble interaction
+  - `calculate_acoustic_streaming_velocity()` - Rayleigh streaming near surface
+  - `calculate_standing_wave_positions()` - Node/antinode locations
+  - `calculate_acoustic_nucleation_enhancement()` - Barrier reduction from pressure
+  - `calculate_rectified_diffusion_rate()` - Asymmetric gas transfer
+
+- **Surface Proximity Effects** (extended `bubble_collapse.py`):
+  - `calculate_surface_proximity_factor()` - Enhancement near rigid boundary
+  - `calculate_asymmetric_collapse_pressure()` - Pressure amplification
+  - `calculate_jet_impact_parameters()` - Microjet velocity, diameter, pressure
+  - `simulate_bubble_dynamics_near_surface()` - Full R-P with surface effects
+  - `calculate_surface_enhanced_collapse()` - Complete enhanced calculation
+
+- **Surface Reaction Rate Integration** (`integrated_mechanisms.py`):
+  - `SurfaceReactionRateResult` - Comprehensive rate result dataclass
+  - `calculate_surface_reaction_rate()` - Full integration of all physics
+  - `calculate_single_site_lenr_rate()` - Simplified API interface
+  - Combines: nucleation, proximity, boundary layer, acoustic, LENR enhancements
+
+- **Updated Visualization** (`UnifiedBubbleLatticeVisualization.jsx`):
+  - `PHYSICS_CONFIG` - Physics-to-visualization scale mapping, bubble scale by phase
+  - Bubble nucleates small at surface, grows while attached, then collapses (heterogeneous nucleation)
+  - Phase-dependent bubble Y position and scale (EXPANSION → MINIMUM → RECOVERY)
+  - Legend: "Casimir Field" → "Casimir Geometry"; "Vortices" → "MHD Flow"
+  - H2/D2 particles: smaller, more count, MHD flow properties (orbit, angular velocity, ionized state)
+  - MHD flow: particle-only (PlasmaVortexEffect + VortexField); removed rings, arrows, and path lines
+  - Reaction jet on bubble collapse: visible focused jet during MINIMUM/REBOUND (restored)
+  - Particle color by phase/energy: collapse/minimum → orange/red/white; rebound → green/cyan; expansion → cyan (ionized) or orange (neutral H2/D2)
+  - Removed dark nucleation cavity cone and boundary layer planes from lattice for cleaner view
+  - Physics comments explaining nm-scale relationships
+
+- **New API Endpoints** (`physics_routes.py`):
+  - `POST /api/physics/nucleation/calculate` - Full nucleation analysis
+  - `POST /api/physics/boundary-layer/profile` - Layer profiles with distance
+  - `POST /api/physics/surface-reaction-rate` - Integrated rate calculation
+  - `GET /api/physics/surface-physics/materials` - Material property reference
+
+#### Database Infrastructure
+- **PostgreSQL Database Integration**: Persistent storage for experiment analytics
+  - `database.py` - Async SQLAlchemy 2.0 engine with PostgreSQL and SQLite support
+  - `database_models.py` - Experiment, ExperimentTimeline, and AnalyticsSnapshot models
+  - Alembic migrations for schema versioning
+  - Connection pooling and health checks
+- **Analytics API**: Full REST API for experiment data management
+  - `analytics_routes.py` - CRUD endpoints, export (CSV/JSON), statistics, distributions
+  - `analytics_service.py` - Business logic for stats, filtering, pagination
+  - Dashboard statistics (total simulations, success rate, avg enhancement)
+  - Type and material distribution charts
+  - Timeline data for enhancement over time visualization
+- **Baseline LENR Data**: Published experiment data from LENR research
+  - `baseline_experiments.py` - 20+ baseline experiments from published research
+  - Sources: Fleischmann-Pons, McKubre/SRI, SPAWAR, Iwamura, Brillouin, Clean Planet
+  - `seed_database.py` - Idempotent database seeding script
+- **Analytics Frontend Integration**
+  - `analyticsApi.js` - API client with automatic localStorage fallback
+  - Session-based user tracking for experiment attribution
+  - Updated `AnalyticsPage.jsx` to fetch from database with offline mode indicator
+  - Baseline vs user experiment distinction in UI
+- **Save to Analytics**: One-click experiment saving from simulation pages
+  - Added "Save to Analytics" button to `UnifiedTheoryPage.jsx`
+  - Added "Save to Analytics" button to `FusionSimulationPage.jsx`
+  - Automatic save with session ID for user tracking
+
+### Changed
+- Updated `config.py` with database configuration settings (DB_HOST, DB_PORT, etc.)
+- Updated `main.py` with database initialization in lifespan context
+- App version bumped to 0.2.3-beta
+- **Dashboard UI/UX**: Increased feature chip spacing (Stack spacing and rowGap) to prevent overlap between "Physics Simulation" and "Export Results"; FeatureChip margin and theme-aware background/border for light/dark mode
+- **Terminology**: Renamed "Casimir Force/Forces" to "Casimir Effect" across theory pages, visualizations, and docs (TheoryPage, TheoryPaperPage, UnifiedTheoryPage, UnifiedLENRVisualizer, UnifiedBubbleLatticeVisualization, lenrVizHelper)
+- **Unified theory paper** (`docs/A Unified Theoretical Framework...md`): Added Sections 3.3–3.6 (Heterogeneous Nucleation at Surfaces, Bubble–Surface Coupling, Thermal and Diffusion Boundary Layers, Acoustic and Ultrasonic Forcing); renumbered former 3.3 to 3.7; updated Abstract and Conclusion to include lattice-bubble interaction physics
+- **Documentation**: `LENR_SIM_APP_v2/docs/UNIFIED_BUBBLE_LATTICE_SIMULATION.md` updated to v0.2.3-beta with new physics mechanisms table (3.3–3.6), new API endpoints (nucleation, boundary-layer, surface-reaction-rate, materials), and visualization description (MHD flow, phase-dependent particles, nucleation animation)
+- **Accessibility**: Added aria-labels to Dashboard System Status panel, Quick Action cards, and Memory usage progress bar
+- **Theme consistency**: Quick Action card colors now use theme palette (primary, warning, info, error) instead of hardcoded hex values
+
+---
+
+## [v0.2.2-beta] - 2026-02-01
+
+### Added
+- **MHD Proton Confinement**: Magnetohydrodynamic forces for realistic proton convergence
+  - `mhd_proton_confinement.py` - Z-pinch, Lorentz, pressure gradient, and radial electric field forces
+  - `vortex_particle_system.py` - VPFM-inspired vorticity tracking (inspired by arXiv:2505.21946)
+  - Cavitation site geometry with octahedral/tetrahedral interstitial sites
+  - Protons now converge radially toward cavitation point during bubble collapse
+- **Physics Web Worker**: Offload heavy calculations from UI thread
+  - SharedArrayBuffer support for proton position data (with secure context check)
+  - MHD force calculations (`CALCULATE_MHD_FORCES`)
+  - Vortex particle updates (`UPDATE_VORTEX_PARTICLES`)
+  - Force integration (`INTEGRATE_FORCES`)
+- **Simulation Presets**: Save and load simulation configurations
+  - `presets_routes.py` - REST API with CRUD, import/export, duplicate
+  - Built-in presets: Fleischmann-Pons Classic, Ni-H Gas Loading, High Frequency Collapse, Maximum Enhancement, Ti-D System
+  - `PresetManager.jsx` - UI for managing, importing, and exporting presets
+- **Mobile Optimization**: Touch-friendly controls for mobile devices
+  - `TouchControls.jsx` - Pinch-to-zoom, two-finger rotation, swipe gestures
+  - Adaptive quality settings based on device capabilities
+  - Gesture hints for first-time mobile users
+- **Multi-Physics Coupling Enhancement**: Improved domain coupling
+  - `EnhancedDomainCoupler` with operator splitting and conservation checks
+  - Pre-defined coupling transforms (nuclear→thermal, thermal→EM, etc.)
+  - `MultiPhysicsCouplingManager` for coordinating multiple couplers
+
+### Fixed
+- ESLint errors: SharedArrayBuffer globals, `self` in Web Workers, archived component references
+- Test file assertion syntax (`toHaveBeenCalled()` vs `toHaveBeenCalled`)
+- Test compatibility with actual `MHDFieldConfiguration` and `VortexSystemConfig` APIs
+
+### Documentation
+- `docs/MHD_PROTON_DYNAMICS.md` - Complete MHD and VPFM physics documentation
+- Updated `PHYSICS_EQUATION_VERIFICATION.md` with MHD/vorticity equations (Section 9)
+
+---
+
+## [Unreleased]
+
 ### Added
 - **Infrastructure as Code (IaC)**: Complete deployment infrastructure
   - Terraform modules for Cloudflare (Pages, R2, DNS) and Hostinger VPS provisioning

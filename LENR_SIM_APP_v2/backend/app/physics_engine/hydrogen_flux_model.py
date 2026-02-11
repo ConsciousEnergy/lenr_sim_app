@@ -350,12 +350,13 @@ class HydrogenFluxModel:
         self.concentration += dt * (div_flux + source_term)
         
         # Trap dynamics (update trapped concentration)
-        # Only update if trap_density > 0 (allows disabling for conservation tests)
+        # Use concentration at start of step (conc_old) so trap dynamics are consistent
+        # and tests can isolate detrapping by setting concentration to zero.
         if self.params.trap_density > 0:
             available_traps = self.params.trap_density * (
                 1.0 - self.trapped_concentration / (self.params.trap_density + 1e-30)
             )
-            trapping_rate = 1e-5 * available_traps * self.concentration
+            trapping_rate = 1e-5 * available_traps * conc_old
             
             kb = 8.617333262e-5  # Boltzmann constant in eV/K
             detrapping_rate = 1e13 * np.exp(-self.params.trap_energy / (kb * self.temperature)) * self.trapped_concentration

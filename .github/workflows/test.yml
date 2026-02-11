@@ -27,28 +27,28 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
+        pip install -r LENR_SIM_APP_v2/backend/requirements.txt
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy
 
     - name: Run unit tests
       run: |
-        cd backend
+        cd LENR_SIM_APP_v2/backend
         python -m pytest tests/ --cov=app --cov-report=xml -v
 
     - name: Run integration tests
       run: |
-        cd backend
+        cd LENR_SIM_APP_v2/backend
         python -m pytest tests/integration/ -v
 
     - name: Run performance benchmarks
       run: |
-        cd backend
+        cd LENR_SIM_APP_v2/backend
         python -m pytest tests/performance/ --benchmark-only -v
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
       with:
-        file: ./backend/coverage.xml
+        file: ./LENR_SIM_APP_v2/backend/coverage.xml
         fail_ci_if_error: true
 
     - name: Upload benchmark results
@@ -56,9 +56,36 @@ jobs:
       with:
         name: benchmark-results
         path: |
-          backend/benchmarks/
-          backend/tests/performance/*.png
+          LENR_SIM_APP_v2/backend/benchmarks/
+          LENR_SIM_APP_v2/backend/tests/performance/*.png
         retention-days: 90
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm ci
+
+      - name: Lint frontend
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm run lint
+
+      - name: Test frontend
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm test -- --watchAll=false --passWithNoTests
 
   analyze-benchmarks:
     needs: test
@@ -76,9 +103,9 @@ jobs:
 
     - name: Compare benchmark results
       run: |
-        python backend/scripts/compare_benchmarks.py \
+        python LENR_SIM_APP_v2/backend/scripts/compare_benchmarks.py \
           --previous previous-benchmarks \
-          --current backend/benchmarks \
+          --current LENR_SIM_APP_v2/backend/benchmarks \
           --threshold 10
 
     - name: Comment benchmark comparison

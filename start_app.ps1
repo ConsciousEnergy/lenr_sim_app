@@ -71,9 +71,9 @@ pip install -r requirements.txt
 Pop-Location
 
 # Start backend server in a new window (from project root, targeting app.main:app in the correct dir)
-Write-Host "Starting backend server on port 8001..." -ForegroundColor Green
+Write-Host "Starting backend server on port 8000..." -ForegroundColor Green
 # Ensure the command inside Start-Process knows the backend path and activates venv correctly
-$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8001"
+$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8000"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $BackendCommand
 
 # Setup and start frontend
@@ -95,7 +95,7 @@ Pop-Location
 
 Write-Host ""
 Write-Host "LENR Simulation Application is starting..." -ForegroundColor Cyan
-Write-Host "Backend API: http://localhost:8001" -ForegroundColor Green
+Write-Host "Backend API: http://localhost:8000" -ForegroundColor Green
 Write-Host "Frontend: Check console (likely http://localhost:3000 or http://localhost:5173)" -ForegroundColor Green
 Write-Host ""
 Write-Host "Press Ctrl+C in the respective PowerShell windows to stop the servers." -ForegroundColor Yellow 

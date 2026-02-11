@@ -504,4 +504,875 @@ def simulate_bubble_dynamics(
         }
     }
     
-    return results 
+    return results
+
+
+# ============================================================================
+# SURFACE PROXIMITY EFFECTS (Phase 2 Enhancement)
+# ============================================================================
+
+def calculate_surface_proximity_factor(
+    standoff_ratio: float,
+    collapse_phase: bool = True
+) -> float:
+    """
+    Calculate enhancement factor due to proximity to rigid surface.
+    
+    When a bubble collapses near a rigid boundary, asymmetric flow
+    develops leading to:
+    - Higher compression ratios
+    - Jet formation toward surface
+    - Enhanced energy concentration
+    
+    The standoff ratio γ = h/R where h is distance to surface, R is bubble radius.
+    
+    Args:
+        standoff_ratio: γ = h/R (dimensionless)
+        collapse_phase: Whether in collapse (True) or expansion (False)
+        
+    Returns:
+        Enhancement factor (>1 for proximity enhancement)
+    """
+    gamma = standoff_ratio
+    
+    if gamma > 3.0:
+        # Far from surface - no significant effect
+        return 1.0
+    
+    if not collapse_phase:
+        # Expansion phase - slight inhibition near surface
+        return 1.0 - 0.1 * max(0, 1 - gamma/3)
+    
+    # Collapse phase - enhancement from asymmetric dynamics
+    # Based on empirical correlations from literature
+    if gamma < 0.5:
+        # Very close - strong jet formation, high enhancement
+        enhancement = 3.0 + 2.0 * (0.5 - gamma)
+    elif gamma < 1.0:
+        # Close - developing asymmetry
+        enhancement = 2.0 + (1.0 - gamma) * 2.0
+    elif gamma < 2.0:
+        # Moderate - transition zone
+        enhancement = 1.0 + (2.0 - gamma) * 1.0
+    else:
+        # Far - diminishing effect
+        enhancement = 1.0 + (3.0 - gamma) * 0.3
+    
+    return float(enhancement)
+
+
+def calculate_asymmetric_collapse_pressure(
+    symmetric_pressure: float,
+    standoff_ratio: float,
+    jet_impact: bool = True
+) -> float:
+    """
+    Calculate pressure enhancement from asymmetric collapse near surface.
+    
+    Near a rigid boundary, bubble collapse becomes asymmetric and
+    forms a microjet that impacts the surface, creating localized
+    pressure spikes higher than symmetric collapse.
+    
+    Args:
+        symmetric_pressure: Pressure from symmetric collapse (Pa)
+        standoff_ratio: γ = h/R
+        jet_impact: Whether to include jet impact pressure
+        
+    Returns:
+        Enhanced pressure (Pa)
+    """
+    # Base asymmetric enhancement
+    proximity_factor = calculate_surface_proximity_factor(standoff_ratio)
+    
+    # Pressure scales approximately with square of enhancement
+    # due to increased velocity gradients
+    pressure_enhancement = proximity_factor ** 1.5
+    
+    # Add jet impact pressure contribution
+    if jet_impact and standoff_ratio < 2.0:
+        # Water hammer pressure from jet impact
+        # P_hammer ~ ρ × c × v_jet
+        # Typical jet velocity 100-500 m/s, giving factor 2-5 enhancement
+        jet_factor = 1.0 + 2.0 * max(0, 1 - standoff_ratio / 2)
+        pressure_enhancement *= jet_factor
+    
+    enhanced_pressure = symmetric_pressure * pressure_enhancement
+    
+    logger.debug(
+        f"Asymmetric collapse pressure: {enhanced_pressure:.2e} Pa "
+        f"(γ={standoff_ratio:.2f}, factor={pressure_enhancement:.2f})"
+    )
+    
+    return float(enhanced_pressure)
+
+
+def calculate_jet_impact_parameters(
+    bubble_radius: float,
+    standoff_ratio: float,
+    collapse_pressure: float,
+    water_density: float = WATER_DENSITY,
+    sound_speed: float = 1500.0
+) -> Dict[str, float]:
+    """
+    Calculate microjet impact parameters during asymmetric collapse.
+    
+    When γ < 2, a high-speed liquid jet forms during bubble collapse,
+    directed toward the surface. This jet can reach velocities of
+    100-500 m/s and creates highly localized pressure on the surface.
+    
+    Args:
+        bubble_radius: Initial bubble radius (m)
+        standoff_ratio: γ = h/R
+        collapse_pressure: Driving collapse pressure (Pa)
+        water_density: Liquid density (kg/m³)
+        sound_speed: Speed of sound (m/s)
+        
+    Returns:
+        Dictionary with jet parameters
+    """
+    if standoff_ratio >= 2.0:
+        # No jet formation
+        return {
+            "jet_forms": False,
+            "jet_velocity_m_s": 0.0,
+            "jet_diameter_m": 0.0,
+            "impact_pressure_Pa": 0.0,
+            "impact_area_m2": 0.0,
+            "impact_energy_J": 0.0
+        }
+    
+    # Jet velocity estimation
+    # v_jet ≈ (2ΔP/ρ)^0.5 × geometry_factor
+    v_base = np.sqrt(2 * collapse_pressure / water_density)
+    
+    # Geometry factor peaks around γ ≈ 0.6-0.8
+    if standoff_ratio < 0.5:
+        geom_factor = 1.2
+    elif standoff_ratio < 1.0:
+        geom_factor = 1.5 - 0.6 * standoff_ratio
+    else:
+        geom_factor = 0.9 - 0.3 * (standoff_ratio - 1)
+    
+    jet_velocity = v_base * geom_factor
+    jet_velocity = min(jet_velocity, 2000.0)  # Cap at 2 km/s
+    
+    # Jet diameter (approximately R/5 to R/3)
+    jet_diameter = bubble_radius * (0.2 + 0.1 * standoff_ratio)
+    
+    # Water hammer impact pressure
+    # P_impact = ρ × c × v for acoustic limit
+    # P_impact = 0.5 × ρ × v² for momentum limit
+    # Use geometric mean as estimate
+    p_acoustic = water_density * sound_speed * jet_velocity
+    p_momentum = 0.5 * water_density * jet_velocity**2
+    impact_pressure = np.sqrt(p_acoustic * p_momentum)
+    
+    # Impact area
+    impact_area = np.pi * (jet_diameter / 2)**2
+    
+    # Impact energy (kinetic energy of jet)
+    jet_length = bubble_radius * 2  # Approximate
+    jet_volume = impact_area * jet_length
+    jet_mass = water_density * jet_volume
+    impact_energy = 0.5 * jet_mass * jet_velocity**2
+    
+    return {
+        "jet_forms": True,
+        "jet_velocity_m_s": float(jet_velocity),
+        "jet_diameter_m": float(jet_diameter),
+        "jet_diameter_um": float(jet_diameter * 1e6),
+        "impact_pressure_Pa": float(impact_pressure),
+        "impact_pressure_GPa": float(impact_pressure * 1e-9),
+        "impact_area_m2": float(impact_area),
+        "impact_energy_J": float(impact_energy),
+        "standoff_ratio": float(standoff_ratio)
+    }
+
+
+def simulate_bubble_dynamics_near_surface(
+    initial_radius: float,
+    surface_distance: float,
+    driving_pressure_amplitude: float,
+    frequency: float,
+    time_steps: int = 1000,
+    total_cycles: float = 2.0,
+    water_density: float = WATER_DENSITY,
+    sound_speed: float = 1500.0,
+    surface_tension: float = 0.072,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    contact_angle: float = 80.0
+) -> Dict[str, Any]:
+    """
+    Simulate bubble dynamics including surface proximity effects.
+    
+    This extends the basic Rayleigh-Plesset simulation to include:
+    - Asymmetric collapse effects
+    - Surface-directed jet formation
+    - Enhanced pressure concentration
+    - Modified added mass for near-surface bubble
+    
+    Args:
+        initial_radius: Initial bubble radius (m)
+        surface_distance: Initial distance to surface (m)
+        driving_pressure_amplitude: Acoustic pressure amplitude (Pa)
+        frequency: Acoustic frequency (Hz)
+        time_steps: Number of time steps
+        total_cycles: Number of cycles to simulate
+        water_density: Liquid density (kg/m³)
+        sound_speed: Speed of sound (m/s)
+        surface_tension: Surface tension (N/m)
+        ambient_pressure: Ambient pressure (Pa)
+        contact_angle: Surface contact angle (degrees)
+        
+    Returns:
+        Dictionary with simulation results including surface effects
+    """
+    # Time setup
+    period = 1.0 / frequency
+    total_time = total_cycles * period
+    dt = total_time / time_steps
+    time_array = np.linspace(0, total_time, time_steps)
+    
+    # Initialize arrays
+    radius = np.zeros(time_steps)
+    velocity = np.zeros(time_steps)
+    acceleration = np.zeros(time_steps)
+    pressure = np.zeros(time_steps)
+    temperature = np.zeros(time_steps)
+    distance_to_surface = np.zeros(time_steps)
+    standoff_ratio = np.zeros(time_steps)
+    proximity_factor = np.zeros(time_steps)
+    
+    # Initial conditions
+    radius[0] = initial_radius
+    velocity[0] = 0.0
+    distance_to_surface[0] = surface_distance
+    standoff_ratio[0] = surface_distance / initial_radius
+    gas_pressure_initial = ambient_pressure
+    temperature[0] = STANDARD_TEMPERATURE
+    proximity_factor[0] = calculate_surface_proximity_factor(standoff_ratio[0], False)
+    
+    # Simulation parameters
+    polytropic_exponent = 5/3
+    viscosity = 1e-3
+    
+    # Modified Rayleigh-Plesset with surface effects
+    for i in range(1, time_steps):
+        t = time_array[i]
+        
+        # Driving pressure
+        p_driving = -driving_pressure_amplitude * np.sin(2 * np.pi * frequency * t)
+        p_infinity = ambient_pressure + p_driving
+        
+        # Gas pressure (adiabatic)
+        p_gas = gas_pressure_initial * (initial_radius / radius[i-1])**(3 * polytropic_exponent)
+        
+        # Surface tension
+        p_surface = 2 * surface_tension / radius[i-1]
+        
+        # Viscous damping
+        p_viscous = 4 * viscosity * velocity[i-1] / radius[i-1]
+        
+        # Net pressure difference
+        delta_p = p_gas - p_infinity - p_surface - p_viscous
+        
+        # Surface proximity correction for added mass
+        # Near a wall, added mass coefficient increases
+        gamma = standoff_ratio[i-1]
+        if gamma < 2.0:
+            # Added mass correction (approximate)
+            added_mass_factor = 1.0 + 0.5 / max(gamma, 0.1)
+        else:
+            added_mass_factor = 1.0
+        
+        # Determine if collapsing
+        is_collapsing = velocity[i-1] < 0
+        prox_factor = calculate_surface_proximity_factor(gamma, is_collapsing)
+        proximity_factor[i] = prox_factor
+        
+        # Modified Rayleigh-Plesset with surface effects
+        # Near surface, asymmetry modifies the effective pressure
+        effective_delta_p = delta_p * prox_factor
+        
+        acceleration[i] = (effective_delta_p / (water_density * added_mass_factor) - 
+                          1.5 * velocity[i-1]**2 / radius[i-1])
+        
+        # Update velocity and radius
+        velocity[i] = velocity[i-1] + acceleration[i] * dt
+        new_radius = radius[i-1] + velocity[i] * dt
+        radius[i] = max(initial_radius / 100, new_radius)
+        
+        # Update distance to surface (bubble center moves slightly)
+        # Simplified: assume center stays fixed, only radius changes
+        distance_to_surface[i] = surface_distance - (radius[i] - initial_radius)
+        distance_to_surface[i] = max(1e-9, distance_to_surface[i])  # Minimum 1 nm
+        standoff_ratio[i] = distance_to_surface[i] / radius[i]
+        
+        # Calculate pressure and temperature with proximity enhancement
+        pressure[i] = p_gas * prox_factor
+        temperature[i] = STANDARD_TEMPERATURE * (initial_radius / radius[i])**(3 * (polytropic_exponent - 1))
+    
+    # Find collapse events and calculate jet parameters
+    collapse_events = []
+    for i in range(1, time_steps - 1):
+        if radius[i] < radius[i-1] and radius[i] < radius[i+1]:
+            jet_params = calculate_jet_impact_parameters(
+                initial_radius,
+                standoff_ratio[i],
+                pressure[i],
+                water_density,
+                sound_speed
+            )
+            collapse_events.append({
+                "time_s": time_array[i],
+                "min_radius_m": radius[i],
+                "standoff_ratio": standoff_ratio[i],
+                "pressure_Pa": pressure[i],
+                "temperature_K": temperature[i],
+                "proximity_factor": proximity_factor[i],
+                "jet_parameters": jet_params
+            })
+    
+    # Results
+    results = {
+        "time": time_array.tolist(),
+        "radius": radius.tolist(),
+        "velocity": velocity.tolist(),
+        "pressure": pressure.tolist(),
+        "temperature": temperature.tolist(),
+        "distance_to_surface": distance_to_surface.tolist(),
+        "standoff_ratio": standoff_ratio.tolist(),
+        "proximity_factor": proximity_factor.tolist(),
+        "collapse_events": collapse_events,
+        "metadata": {
+            "initial_radius_m": initial_radius,
+            "initial_surface_distance_m": surface_distance,
+            "initial_standoff_ratio": surface_distance / initial_radius,
+            "driving_pressure_Pa": driving_pressure_amplitude,
+            "frequency_Hz": frequency,
+            "ambient_pressure_Pa": ambient_pressure,
+            "contact_angle_deg": contact_angle,
+            "includes_surface_effects": True
+        }
+    }
+    
+    return results
+
+
+def calculate_surface_enhanced_collapse(
+    initial_radius: float = 10e-6,
+    minimum_radius: float = 1e-6,
+    surface_distance: float = 5e-6,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    ambient_temperature: float = STANDARD_TEMPERATURE,
+    driving_pressure_amplitude: float = 1.5e5,
+    frequency: float = 25000.0
+) -> Dict[str, Any]:
+    """
+    Calculate bubble collapse parameters with surface proximity enhancement.
+    
+    This wraps the standard collapse calculation with surface effects,
+    providing enhanced values for temperature, pressure, and energy
+    concentration due to asymmetric collapse near a rigid boundary.
+    
+    Args:
+        initial_radius: Initial bubble radius (m)
+        minimum_radius: Minimum radius at collapse (m)
+        surface_distance: Distance to surface (m)
+        ambient_pressure: Ambient pressure (Pa)
+        ambient_temperature: Ambient temperature (K)
+        driving_pressure_amplitude: Acoustic pressure amplitude (Pa)
+        frequency: Acoustic frequency (Hz)
+        
+    Returns:
+        Dictionary with enhanced collapse parameters
+    """
+    # Calculate standoff ratio
+    standoff_ratio = surface_distance / initial_radius
+    
+    # Get base collapse parameters
+    from app.physics.bubble_collapse import calculate_collapse_and_enhancement
+    base_results = calculate_collapse_and_enhancement(
+        initial_radius=initial_radius,
+        minimum_radius=minimum_radius,
+        ambient_pressure=ambient_pressure,
+        ambient_temperature=ambient_temperature,
+        driving_pressure_amplitude=driving_pressure_amplitude,
+        frequency=frequency
+    )
+    
+    # Apply surface proximity enhancements
+    proximity_factor = calculate_surface_proximity_factor(standoff_ratio, True)
+    
+    # Enhanced pressure
+    enhanced_pressure = calculate_asymmetric_collapse_pressure(
+        base_results["collapse_pressure_Pa"],
+        standoff_ratio
+    )
+    
+    # Enhanced temperature (scales approximately with pressure ratio)
+    pressure_ratio = enhanced_pressure / base_results["collapse_pressure_Pa"]
+    enhanced_temperature = base_results["collapse_temperature_K"] * pressure_ratio**0.4
+    
+    # Jet impact parameters
+    jet_params = calculate_jet_impact_parameters(
+        initial_radius,
+        standoff_ratio,
+        enhanced_pressure
+    )
+    
+    # Enhanced energy density
+    enhanced_energy_density = base_results["energy_density_J_m3"] * proximity_factor**2
+    
+    # Overall enhancement factor increase
+    surface_enhancement_boost = proximity_factor * (1 + jet_params.get("jet_forms", 0) * 0.5)
+    total_enhancement = base_results["enhancement_factor"] * surface_enhancement_boost
+    total_enhancement = min(total_enhancement, 1e50)  # Cap
+    
+    # Compile results
+    results = {
+        **base_results,  # Include all base results
+        
+        # Surface-enhanced values
+        "surface_distance_m": surface_distance,
+        "standoff_ratio": standoff_ratio,
+        "proximity_factor": proximity_factor,
+        
+        "enhanced_collapse_pressure_Pa": enhanced_pressure,
+        "enhanced_collapse_temperature_K": enhanced_temperature,
+        "enhanced_energy_density_J_m3": enhanced_energy_density,
+        
+        "surface_enhancement_factor": surface_enhancement_boost,
+        "total_enhancement_factor": total_enhancement,
+        "total_log_enhancement": float(np.log10(total_enhancement)) if total_enhancement > 0 else 0,
+        
+        "jet_parameters": jet_params,
+        
+        "metadata": {
+            **base_results.get("metadata", {}),
+            "includes_surface_effects": True,
+            "surface_distance_m": surface_distance,
+            "standoff_ratio": standoff_ratio
+        }
+    }
+    
+    logger.info(
+        f"Surface-enhanced collapse: P={enhanced_pressure:.2e} Pa, "
+        f"T={enhanced_temperature:.2e} K, γ={standoff_ratio:.2f}"
+    )
+    
+    return results
+
+
+# ============================================================================
+# ACOUSTIC FORCING AND POSITIONING (Phase 4 Enhancement)
+# ============================================================================
+
+def calculate_minnaert_frequency(
+    bubble_radius: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    liquid_density: float = WATER_DENSITY,
+    polytropic_exponent: float = 1.4
+) -> float:
+    """
+    Calculate the Minnaert (natural) frequency of a bubble.
+    
+    f_0 = (1/2πR) × sqrt(3γP_0/ρ)
+    
+    This is the resonant frequency at which bubble oscillations
+    are most vigorous.
+    
+    Args:
+        bubble_radius: Bubble radius (m)
+        ambient_pressure: Ambient pressure (Pa)
+        liquid_density: Liquid density (kg/m³)
+        polytropic_exponent: γ for gas in bubble
+        
+    Returns:
+        Natural frequency (Hz)
+    """
+    if bubble_radius <= 0:
+        return float('inf')
+    
+    f_0 = (1 / (2 * np.pi * bubble_radius)) * \
+          np.sqrt(3 * polytropic_exponent * ambient_pressure / liquid_density)
+    
+    logger.debug(f"Minnaert frequency: {f_0:.0f} Hz for R={bubble_radius*1e6:.1f} μm")
+    
+    return float(f_0)
+
+
+def calculate_resonant_radius(
+    frequency: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    liquid_density: float = WATER_DENSITY,
+    polytropic_exponent: float = 1.4
+) -> float:
+    """
+    Calculate bubble radius that resonates at given frequency.
+    
+    R_res = (1/2πf) × sqrt(3γP_0/ρ)
+    
+    Args:
+        frequency: Driving frequency (Hz)
+        ambient_pressure: Ambient pressure (Pa)
+        liquid_density: Liquid density (kg/m³)
+        polytropic_exponent: γ for gas in bubble
+        
+    Returns:
+        Resonant radius (m)
+    """
+    if frequency <= 0:
+        return float('inf')
+    
+    r_res = (1 / (2 * np.pi * frequency)) * \
+            np.sqrt(3 * polytropic_exponent * ambient_pressure / liquid_density)
+    
+    return float(r_res)
+
+
+def calculate_primary_bjerknes_force(
+    bubble_radius: float,
+    acoustic_pressure: float,
+    frequency: float,
+    position_in_wave: float,  # 0 to 1 (0=node, 0.5=antinode)
+    ambient_pressure: float = STANDARD_PRESSURE,
+    liquid_density: float = WATER_DENSITY,
+    sound_speed: float = 1500.0
+) -> float:
+    """
+    Calculate primary Bjerknes force on bubble in acoustic field.
+    
+    The primary Bjerknes force arises from the interaction between
+    the bubble volume oscillation and the pressure gradient in the
+    acoustic field.
+    
+    F = -⟨V(t) × ∇p(t)⟩ (time-averaged)
+    
+    For standing waves:
+    - Bubbles smaller than resonant → pushed to pressure antinodes
+    - Bubbles larger than resonant → pushed to pressure nodes
+    
+    Args:
+        bubble_radius: Bubble radius (m)
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        frequency: Acoustic frequency (Hz)
+        position_in_wave: Position (0=node, 0.5=antinode, 1=node)
+        ambient_pressure: Ambient pressure (Pa)
+        liquid_density: Liquid density (kg/m³)
+        sound_speed: Speed of sound (m/s)
+        
+    Returns:
+        Primary Bjerknes force (N), positive = toward antinode
+    """
+    # Resonant radius
+    r_res = calculate_resonant_radius(frequency, ambient_pressure, liquid_density)
+    
+    # Wavelength
+    wavelength = sound_speed / frequency
+    
+    # Bubble volume
+    volume = (4/3) * np.pi * bubble_radius**3
+    
+    # Pressure gradient in standing wave (maximum at quarter wavelength points)
+    # ∇p_max = p_a × k where k = 2π/λ
+    k = 2 * np.pi / wavelength
+    # Gradient varies sinusoidally with position
+    gradient_factor = np.sin(2 * np.pi * position_in_wave)  # Max at 0.25, 0.75
+    pressure_gradient = acoustic_pressure * k * gradient_factor
+    
+    # Direction factor based on bubble size relative to resonance
+    if bubble_radius < r_res:
+        # Below resonance: phase with pressure → toward antinode
+        direction = 1.0
+    else:
+        # Above resonance: out of phase → toward node
+        direction = -1.0
+    
+    # Force magnitude (simplified - full calculation requires complex analysis)
+    # F ≈ V × ∇p × (phase factor)
+    # Include compressibility correction
+    compressibility = bubble_radius / r_res
+    phase_factor = np.abs(np.sin(np.pi * compressibility / 2))
+    
+    f_bjerknes = volume * pressure_gradient * direction * phase_factor
+    
+    logger.debug(
+        f"Primary Bjerknes force: {f_bjerknes:.2e} N, "
+        f"R/R_res={bubble_radius/r_res:.2f}, direction={direction}"
+    )
+    
+    return float(f_bjerknes)
+
+
+def calculate_secondary_bjerknes_force(
+    radius_1: float,
+    radius_2: float,
+    separation: float,
+    acoustic_pressure: float,
+    frequency: float,
+    liquid_density: float = WATER_DENSITY,
+    ambient_pressure: float = STANDARD_PRESSURE
+) -> float:
+    """
+    Calculate secondary Bjerknes force between two bubbles.
+    
+    This force arises from the mutual interaction of oscillating bubbles.
+    - Bubbles oscillating in phase → attract
+    - Bubbles oscillating out of phase → repel
+    
+    F_12 ≈ -(4πρ ω² R₁³ R₂³ ε₁ ε₂ cos(φ)) / (3 d²)
+    
+    where ε is amplitude ratio and φ is phase difference.
+    
+    Args:
+        radius_1: First bubble radius (m)
+        radius_2: Second bubble radius (m)  
+        separation: Distance between bubble centers (m)
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        frequency: Acoustic frequency (Hz)
+        liquid_density: Liquid density (kg/m³)
+        ambient_pressure: Ambient pressure (Pa)
+        
+    Returns:
+        Secondary Bjerknes force (N), negative = attraction
+    """
+    if separation <= 0:
+        return 0.0
+    
+    omega = 2 * np.pi * frequency
+    r_res = calculate_resonant_radius(frequency, ambient_pressure, liquid_density)
+    
+    # Amplitude ratios (simplified)
+    epsilon_1 = acoustic_pressure / (3 * ambient_pressure) * (r_res / radius_1)**2
+    epsilon_2 = acoustic_pressure / (3 * ambient_pressure) * (r_res / radius_2)**2
+    
+    # Clamp amplitude ratios
+    epsilon_1 = min(epsilon_1, 0.5)
+    epsilon_2 = min(epsilon_2, 0.5)
+    
+    # Phase difference (simplified - both either above or below resonance)
+    both_below = radius_1 < r_res and radius_2 < r_res
+    both_above = radius_1 > r_res and radius_2 > r_res
+    
+    if both_below or both_above:
+        cos_phi = 1.0  # In phase → attract
+    else:
+        cos_phi = -1.0  # Out of phase → repel
+    
+    # Secondary Bjerknes force
+    f_secondary = -(4 * np.pi * liquid_density * omega**2 * 
+                   radius_1**3 * radius_2**3 * epsilon_1 * epsilon_2 * cos_phi) / \
+                  (3 * separation**2)
+    
+    return float(f_secondary)
+
+
+def calculate_acoustic_streaming_velocity(
+    acoustic_pressure: float,
+    frequency: float,
+    characteristic_length: float = 1e-3,
+    liquid_density: float = WATER_DENSITY,
+    sound_speed: float = 1500.0,
+    viscosity: float = 1e-3
+) -> float:
+    """
+    Calculate acoustic streaming velocity near surface.
+    
+    Acoustic streaming creates steady circulation patterns that can
+    transport bubbles and affect nucleation. Near surfaces, Rayleigh
+    streaming creates flows along the boundary.
+    
+    v_streaming ≈ (3/8) × (p_a²/(ρc²)) × (L/δ_v)
+    
+    where δ_v is the viscous boundary layer thickness.
+    
+    Args:
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        frequency: Frequency (Hz)
+        characteristic_length: Length scale (m)
+        liquid_density: Liquid density (kg/m³)
+        sound_speed: Speed of sound (m/s)
+        viscosity: Dynamic viscosity (Pa·s)
+        
+    Returns:
+        Streaming velocity (m/s)
+    """
+    # Viscous boundary layer thickness
+    omega = 2 * np.pi * frequency
+    kinematic_viscosity = viscosity / liquid_density
+    delta_v = np.sqrt(2 * kinematic_viscosity / omega)
+    
+    # Streaming velocity (Rayleigh streaming)
+    v_streaming = (3/8) * (acoustic_pressure**2 / (liquid_density * sound_speed**2)) * \
+                  (characteristic_length / delta_v)
+    
+    # Limit to realistic values
+    v_streaming = min(v_streaming, 1.0)  # Cap at 1 m/s
+    
+    return float(v_streaming)
+
+
+def calculate_standing_wave_positions(
+    frequency: float,
+    sound_speed: float = 1500.0,
+    num_positions: int = 5,
+    container_length: float = 0.1  # m
+) -> Dict[str, Any]:
+    """
+    Calculate pressure node and antinode positions in standing wave.
+    
+    For a standing wave:
+    - Pressure antinodes at x = nλ/2
+    - Pressure nodes at x = (2n+1)λ/4
+    
+    Bubble behavior depends on position:
+    - Bubbles < resonant size → accumulate at antinodes
+    - Bubbles > resonant size → accumulate at nodes
+    
+    Args:
+        frequency: Acoustic frequency (Hz)
+        sound_speed: Speed of sound (m/s)
+        num_positions: Number of node/antinode pairs to calculate
+        container_length: Container length (m)
+        
+    Returns:
+        Dictionary with node and antinode positions
+    """
+    wavelength = sound_speed / frequency
+    
+    # Antinode positions (pressure maxima)
+    antinodes = [n * wavelength / 2 for n in range(num_positions + 1)]
+    antinodes = [x for x in antinodes if x <= container_length]
+    
+    # Node positions (pressure minima)
+    nodes = [(2 * n + 1) * wavelength / 4 for n in range(num_positions)]
+    nodes = [x for x in nodes if x <= container_length]
+    
+    return {
+        "wavelength_m": wavelength,
+        "frequency_Hz": frequency,
+        "pressure_antinodes_m": antinodes,
+        "pressure_nodes_m": nodes,
+        "bubble_accumulation_small": "antinodes",
+        "bubble_accumulation_large": "nodes",
+        "resonant_radius_m": calculate_resonant_radius(frequency),
+        "container_length_m": container_length
+    }
+
+
+def calculate_acoustic_nucleation_enhancement(
+    acoustic_pressure: float,
+    frequency: float,
+    nucleation_barrier: float,
+    temperature: float = 300.0,
+    liquid_density: float = WATER_DENSITY
+) -> float:
+    """
+    Calculate enhancement of nucleation rate due to acoustic field.
+    
+    Acoustic pressure fluctuations transiently reduce the local pressure,
+    lowering the nucleation barrier. This is quantified as:
+    
+    Enhancement ≈ exp((p_a - p_threshold) / (k_B T / V_critical))
+    
+    Args:
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        frequency: Acoustic frequency (Hz)
+        nucleation_barrier: Nucleation energy barrier (J)
+        temperature: Temperature (K)
+        liquid_density: Liquid density (kg/m³)
+        
+    Returns:
+        Enhancement factor for nucleation rate
+    """
+    kb_t = KB * temperature
+    
+    # Critical nucleus volume (estimate)
+    # For typical conditions, critical radius ~1 nm
+    r_critical = 1e-9  # m
+    v_critical = (4/3) * np.pi * r_critical**3
+    
+    # Pressure threshold for nucleation (from barrier)
+    if v_critical > 0:
+        p_threshold = nucleation_barrier / v_critical
+    else:
+        p_threshold = 1e6  # Default 1 MPa
+    
+    # Enhancement when acoustic pressure exceeds threshold
+    if acoustic_pressure > 0:
+        # Effective barrier reduction
+        barrier_reduction = min(acoustic_pressure * v_critical, nucleation_barrier * 0.5)
+        
+        if kb_t > 0:
+            enhancement = np.exp(barrier_reduction / kb_t)
+        else:
+            enhancement = 1.0
+    else:
+        enhancement = 1.0
+    
+    # Cap enhancement at realistic values
+    enhancement = min(enhancement, 1e10)
+    
+    logger.debug(
+        f"Acoustic nucleation enhancement: {enhancement:.2e} for "
+        f"p_a={acoustic_pressure/1e5:.1f} bar, f={frequency/1000:.0f} kHz"
+    )
+    
+    return float(enhancement)
+
+
+def calculate_rectified_diffusion_rate(
+    bubble_radius: float,
+    acoustic_pressure: float,
+    frequency: float,
+    gas_concentration: float,
+    saturation_concentration: float,
+    diffusion_coefficient: float = 2e-9,
+    liquid_density: float = WATER_DENSITY,
+    surface_tension: float = 0.072
+) -> float:
+    """
+    Calculate bubble growth rate from rectified diffusion.
+    
+    During acoustic oscillation, the bubble surface area is larger
+    during expansion (low internal pressure) than during compression.
+    This asymmetry causes net gas influx - rectified diffusion.
+    
+    dR/dt ≈ D × C_sat × (C/C_sat - 1 + 2σ/(P_0 R)) × amplitude_factor / R
+    
+    Args:
+        bubble_radius: Bubble radius (m)
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        frequency: Frequency (Hz)
+        gas_concentration: Dissolved gas concentration (mol/m³)
+        saturation_concentration: Saturation concentration (mol/m³)
+        diffusion_coefficient: Diffusion coefficient (m²/s)
+        liquid_density: Liquid density (kg/m³)
+        surface_tension: Surface tension (N/m)
+        
+    Returns:
+        Growth rate dR/dt (m/s)
+    """
+    if bubble_radius <= 0 or saturation_concentration <= 0:
+        return 0.0
+    
+    # Supersaturation ratio
+    supersaturation = gas_concentration / saturation_concentration
+    
+    # Surface tension pressure
+    p_surface = 2 * surface_tension / bubble_radius
+    
+    # Effective driving force
+    driving_force = supersaturation - 1 + p_surface / STANDARD_PRESSURE
+    
+    # Amplitude factor (related to acoustic pressure ratio)
+    amplitude_ratio = acoustic_pressure / STANDARD_PRESSURE
+    # Rectified diffusion is enhanced by oscillation amplitude
+    amplitude_factor = 1 + 3 * amplitude_ratio**2  # Quadratic in amplitude
+    
+    # Growth rate
+    dr_dt = diffusion_coefficient * saturation_concentration * driving_force * \
+            amplitude_factor / bubble_radius
+    
+    return float(dr_dt)

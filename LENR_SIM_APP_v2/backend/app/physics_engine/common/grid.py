@@ -75,6 +75,10 @@ class SimulationGrid:
         
         return (i, j, k)
 
+    def get_spacing(self) -> Tuple[float, float, float]:
+        """Returns (dx, dy, dz) for FDM solvers."""
+        return (self.dx, self.dy, self.dz)
+
     def create_empty_grid_data(self, dtype=np.float64, fill_value=0.0) -> np.ndarray:
         """Creates a NumPy array matching the grid resolution, initialized with a fill value."""
         return np.full(self.resolution, fill_value=fill_value, dtype=dtype)

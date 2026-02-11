@@ -596,4 +596,422 @@ def get_default_parameters(reaction_name: str = "d-d") -> IntegratedSimulationPa
     else:
         logger.warning(f"Unknown reaction: {reaction_name}. Using d-d as default.")
     
-    return params 
+    return params
+
+
+# ============================================================================
+# SURFACE REACTION RATE CALCULATION (Phase 5 Enhancement)
+# ============================================================================
+
+@dataclass
+class SurfaceReactionRateResult:
+    """
+    Results from surface-localized reaction rate calculation.
+    
+    This combines nucleation physics, bubble-surface coupling,
+    boundary layer effects, and acoustic enhancement to compute
+    reaction rates at a single surface nucleation site.
+    """
+    # Core reaction rate
+    reaction_rate_per_site: float = 0.0  # reactions/second/site
+    reaction_rate_per_area: float = 0.0  # reactions/second/m²
+    
+    # Nucleation contribution
+    nucleation_probability: float = 0.0  # probability per cycle
+    nucleation_rate: float = 0.0  # nucleation events/second/site
+    active_site_fraction: float = 0.0
+    
+    # Enhancement factors
+    surface_proximity_enhancement: float = 1.0
+    boundary_layer_enhancement: float = 1.0
+    acoustic_enhancement: float = 1.0
+    total_enhancement: float = 1.0
+    log_enhancement: float = 0.0
+    
+    # Physical parameters
+    surface_distance_m: float = 0.0
+    standoff_ratio: float = 0.0
+    nucleation_zone_thickness_m: float = 0.0
+    
+    # Collision and tunneling
+    collision_rate: float = 0.0  # collisions/second in confinement
+    tunneling_probability: float = 0.0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API responses."""
+        return {
+            "reaction_rates": {
+                "per_site": self.reaction_rate_per_site,
+                "per_area": self.reaction_rate_per_area,
+                "log_rate_per_site": np.log10(self.reaction_rate_per_site) if self.reaction_rate_per_site > 0 else -100
+            },
+            "nucleation": {
+                "probability_per_cycle": self.nucleation_probability,
+                "rate_per_s": self.nucleation_rate,
+                "active_site_fraction": self.active_site_fraction
+            },
+            "enhancements": {
+                "surface_proximity": self.surface_proximity_enhancement,
+                "boundary_layer": self.boundary_layer_enhancement,
+                "acoustic": self.acoustic_enhancement,
+                "total": self.total_enhancement,
+                "log_total": self.log_enhancement
+            },
+            "geometry": {
+                "surface_distance_m": self.surface_distance_m,
+                "surface_distance_nm": self.surface_distance_m * 1e9,
+                "standoff_ratio": self.standoff_ratio,
+                "nucleation_zone_m": self.nucleation_zone_thickness_m
+            },
+            "physics": {
+                "collision_rate": self.collision_rate,
+                "tunneling_probability": self.tunneling_probability
+            }
+        }
+
+
+def calculate_surface_reaction_rate(
+    # Nucleation site parameters
+    cavity_radius: float = 100e-9,  # m
+    cavity_depth: float = 200e-9,  # m
+    contact_angle: float = 80.0,  # degrees
+    surface_material: str = "Pd",
+    site_density: float = 1e12,  # sites/m²
+    
+    # Bubble parameters
+    bubble_radius: float = 1e-6,  # m
+    surface_distance: float = 100e-9,  # m
+    
+    # Environmental parameters
+    temperature: float = 350.0,  # K
+    pressure: float = 1e5,  # Pa
+    supersaturation: float = 1.2,
+    superheat: float = 10.0,  # K
+    
+    # Acoustic parameters
+    acoustic_pressure: float = 1.5e5,  # Pa (1.5 bar)
+    acoustic_frequency: float = 25000.0,  # Hz
+    
+    # Reaction parameters
+    reaction_name: str = "d-d",
+    loading_ratio: float = 0.9,
+    
+    # Enhancement configuration
+    include_surface_effects: bool = True,
+    include_acoustic_effects: bool = True,
+    include_boundary_layer: bool = True
+) -> SurfaceReactionRateResult:
+    """
+    Calculate LENR reaction rate at a surface nucleation site.
+    
+    This integrates all the physics enhancements:
+    1. Nucleation probability at the site
+    2. Bubble-surface proximity effects
+    3. Thermal/diffusion boundary layer
+    4. Acoustic enhancement
+    5. Standard LENR enhancement mechanisms
+    
+    Args:
+        cavity_radius: Nucleation site cavity radius (m)
+        cavity_depth: Cavity depth (m)
+        contact_angle: Surface contact angle (degrees)
+        surface_material: Surface material ("Pd", "Ni")
+        site_density: Nucleation site density (sites/m²)
+        bubble_radius: Bubble radius at nucleation (m)
+        surface_distance: Bubble-surface distance (m)
+        temperature: Temperature (K)
+        pressure: Ambient pressure (Pa)
+        supersaturation: Gas supersaturation ratio
+        superheat: Superheat above saturation (K)
+        acoustic_pressure: Acoustic pressure amplitude (Pa)
+        acoustic_frequency: Acoustic frequency (Hz)
+        reaction_name: LENR reaction type
+        loading_ratio: Hydrogen loading ratio
+        include_surface_effects: Include bubble-surface proximity
+        include_acoustic_effects: Include acoustic enhancement
+        include_boundary_layer: Include boundary layer effects
+        
+    Returns:
+        SurfaceReactionRateResult with comprehensive rate calculation
+    """
+    result = SurfaceReactionRateResult()
+    result.surface_distance_m = surface_distance
+    
+    # Calculate standoff ratio
+    if bubble_radius > 0:
+        result.standoff_ratio = surface_distance / bubble_radius
+    
+    # =========================================================================
+    # 1. NUCLEATION ANALYSIS
+    # =========================================================================
+    try:
+        from app.physics.nucleation_sites import (
+            NucleationSite, 
+            calculate_full_nucleation_analysis,
+            create_nucleation_site_from_material
+        )
+        
+        # Create nucleation site
+        site = create_nucleation_site_from_material(
+            material=surface_material,
+            temperature=temperature,
+            cavity_radius=cavity_radius,
+            cavity_geometry="conical"
+        )
+        site.contact_angle = contact_angle
+        
+        # Calculate nucleation parameters
+        # Pressure difference for nucleation
+        delta_p = max((supersaturation - 1) * pressure, 1000)  # At least 1 kPa
+        
+        nucleation_result = calculate_full_nucleation_analysis(
+            site, delta_p, supersaturation
+        )
+        
+        result.nucleation_probability = min(nucleation_result.active_site_fraction, 1.0)
+        result.nucleation_rate = nucleation_result.nucleation_rate
+        result.active_site_fraction = nucleation_result.active_site_fraction
+        
+    except ImportError:
+        logger.warning("Nucleation module not available, using defaults")
+        result.nucleation_probability = 0.1
+        result.nucleation_rate = 1e20
+        result.active_site_fraction = 0.5
+    
+    # =========================================================================
+    # 2. SURFACE PROXIMITY ENHANCEMENT
+    # =========================================================================
+    if include_surface_effects:
+        try:
+            from app.physics.bubble_surface_coupling import (
+                calculate_full_bubble_surface_state,
+                calculate_equilibrium_distance
+            )
+            from app.physics.bubble_collapse import (
+                calculate_surface_proximity_factor,
+                calculate_surface_enhanced_collapse
+            )
+            
+            # Get equilibrium distance
+            d_eq = calculate_equilibrium_distance(
+                bubble_radius, contact_angle, temperature=temperature
+            )
+            
+            # Proximity factor
+            gamma = result.standoff_ratio
+            proximity_factor = calculate_surface_proximity_factor(gamma, collapse_phase=True)
+            
+            # Additional enhancement from Casimir forces at nm distances
+            if surface_distance < 100e-9:
+                casimir_enhancement = 1 + (100e-9 / max(surface_distance, 1e-9))**2
+            else:
+                casimir_enhancement = 1.0
+            
+            result.surface_proximity_enhancement = proximity_factor * casimir_enhancement
+            
+        except ImportError:
+            logger.warning("Surface coupling module not available")
+            result.surface_proximity_enhancement = 1.5
+    
+    # =========================================================================
+    # 3. BOUNDARY LAYER ENHANCEMENT
+    # =========================================================================
+    if include_boundary_layer:
+        try:
+            from app.physics.boundary_layers import (
+                calculate_full_boundary_layer_analysis,
+                calculate_nucleation_zone_thickness
+            )
+            
+            # Boundary layer analysis
+            bl_state = calculate_full_boundary_layer_analysis(
+                surface_temperature=temperature + superheat,
+                bulk_temperature=temperature,
+                surface_concentration=supersaturation,  # Simplified
+                bulk_concentration=1.0,
+                saturation_temperature=temperature,
+                saturation_concentration=1.0,
+                material=surface_material,
+                fluid="D2O"
+            )
+            
+            result.nucleation_zone_thickness_m = bl_state.nucleation_zone_thickness
+            
+            # Enhancement from concentration in boundary layer
+            if supersaturation > 1.0:
+                concentration_enhancement = supersaturation**2
+            else:
+                concentration_enhancement = 1.0
+            
+            # Enhancement from thermal gradient (affects tunneling)
+            thermal_enhancement = 1 + superheat / 100  # Modest thermal boost
+            
+            result.boundary_layer_enhancement = concentration_enhancement * thermal_enhancement
+            
+        except ImportError:
+            logger.warning("Boundary layer module not available")
+            result.boundary_layer_enhancement = 1.2
+    
+    # =========================================================================
+    # 4. ACOUSTIC ENHANCEMENT
+    # =========================================================================
+    if include_acoustic_effects and acoustic_pressure > 0:
+        try:
+            from app.physics.bubble_collapse import (
+                calculate_acoustic_nucleation_enhancement,
+                calculate_minnaert_frequency
+            )
+            
+            # Calculate nucleation barrier (estimate)
+            nucleation_barrier = 1e-20  # J (approximate)
+            
+            acoustic_enhancement = calculate_acoustic_nucleation_enhancement(
+                acoustic_pressure,
+                acoustic_frequency,
+                nucleation_barrier,
+                temperature
+            )
+            
+            # Additional enhancement near resonance
+            f_resonant = calculate_minnaert_frequency(bubble_radius, pressure)
+            resonance_factor = 1 + np.exp(-abs(np.log(acoustic_frequency / f_resonant)))
+            
+            result.acoustic_enhancement = acoustic_enhancement * resonance_factor
+            
+        except ImportError:
+            logger.warning("Acoustic functions not available")
+            result.acoustic_enhancement = 1.5
+    
+    # =========================================================================
+    # 5. BASE LENR ENHANCEMENT
+    # =========================================================================
+    try:
+        # Get standard LENR enhancement factors
+        params = create_default_parameters(reaction_name)
+        params.temperature = temperature
+        params.pressure = pressure
+        params.loading_ratio = loading_ratio
+        
+        # Run integrated simulation for base enhancement
+        sim_results = run_integrated_simulation(params)
+        
+        base_tunneling_prob = sim_results.get("tunneling_probability", 1e-50)
+        base_enhancement = sim_results.get("total_enhancement_factor", 1e10)
+        
+        result.tunneling_probability = base_tunneling_prob
+        
+    except Exception as e:
+        logger.warning(f"Base simulation failed: {e}")
+        base_enhancement = 1e10
+        result.tunneling_probability = 1e-50
+    
+    # =========================================================================
+    # 6. CALCULATE TOTAL REACTION RATE
+    # =========================================================================
+    
+    # Total enhancement factor
+    result.total_enhancement = (
+        base_enhancement *
+        result.surface_proximity_enhancement *
+        result.boundary_layer_enhancement *
+        result.acoustic_enhancement
+    )
+    
+    # Cap at physically reasonable maximum
+    result.total_enhancement = min(result.total_enhancement, 1e60)
+    result.log_enhancement = np.log10(result.total_enhancement) if result.total_enhancement > 0 else 0
+    
+    # Collision rate in confined volume
+    # Approximate as deuterium density × thermal velocity × cross-section
+    deuterium_density = loading_ratio * 6e28  # atoms/m³ at full loading
+    thermal_velocity = np.sqrt(8 * KB * temperature / (np.pi * 2 * AMU))  # D atom
+    effective_cross_section = 1e-30  # m² (nuclear cross-section order of magnitude)
+    
+    # Confinement volume (cavity or bubble minimum)
+    confinement_volume = (4/3) * np.pi * (surface_distance)**3
+    confinement_volume = max(confinement_volume, 1e-27)  # Minimum 1 nm³
+    
+    result.collision_rate = (
+        deuterium_density * thermal_velocity * effective_cross_section * 
+        confinement_volume * deuterium_density
+    )
+    
+    # Reaction rate per site
+    # Rate = collision_rate × tunneling_probability × enhancement
+    base_rate = result.collision_rate * result.tunneling_probability
+    result.reaction_rate_per_site = base_rate * result.total_enhancement
+    
+    # Apply nucleation probability (not all sites active all the time)
+    result.reaction_rate_per_site *= result.active_site_fraction
+    
+    # Rate per unit area
+    result.reaction_rate_per_area = result.reaction_rate_per_site * site_density
+    
+    logger.info(
+        f"Surface reaction rate: {result.reaction_rate_per_site:.2e} /s/site, "
+        f"Enhancement: {result.log_enhancement:.1f} orders of magnitude"
+    )
+    
+    return result
+
+
+def calculate_single_site_lenr_rate(
+    # Simplified interface for single-site calculation
+    material: str = "Pd",
+    temperature: float = 350.0,
+    loading_ratio: float = 0.9,
+    surface_distance_nm: float = 10.0,
+    acoustic_pressure_bar: float = 1.5,
+    frequency_khz: float = 25.0
+) -> Dict[str, Any]:
+    """
+    Simplified interface for single-site LENR rate calculation.
+    
+    This is a convenience function for the API that wraps
+    calculate_surface_reaction_rate with typical parameters.
+    
+    Args:
+        material: Host material ("Pd" or "Ni")
+        temperature: Temperature in K
+        loading_ratio: H/M or D/M loading ratio
+        surface_distance_nm: Bubble-surface distance in nm
+        acoustic_pressure_bar: Acoustic pressure in bar
+        frequency_khz: Acoustic frequency in kHz
+        
+    Returns:
+        Dictionary with reaction rate results
+    """
+    result = calculate_surface_reaction_rate(
+        surface_material=material,
+        temperature=temperature,
+        loading_ratio=loading_ratio,
+        surface_distance=surface_distance_nm * 1e-9,
+        acoustic_pressure=acoustic_pressure_bar * 1e5,
+        acoustic_frequency=frequency_khz * 1000,
+        reaction_name="d-d" if "D" in material else "p-d"
+    )
+    
+    return {
+        "reaction_rate_per_site": result.reaction_rate_per_site,
+        "reaction_rate_per_area": result.reaction_rate_per_area,
+        "log_rate_per_site": np.log10(result.reaction_rate_per_site) if result.reaction_rate_per_site > 0 else -100,
+        "total_enhancement": result.total_enhancement,
+        "log_enhancement": result.log_enhancement,
+        "surface_distance_nm": surface_distance_nm,
+        "enhancements": {
+            "surface_proximity": result.surface_proximity_enhancement,
+            "boundary_layer": result.boundary_layer_enhancement,
+            "acoustic": result.acoustic_enhancement
+        },
+        "nucleation": {
+            "probability": result.nucleation_probability,
+            "active_fraction": result.active_site_fraction
+        },
+        "parameters": {
+            "material": material,
+            "temperature_K": temperature,
+            "loading_ratio": loading_ratio,
+            "acoustic_pressure_bar": acoustic_pressure_bar,
+            "frequency_kHz": frequency_khz
+        }
+    }

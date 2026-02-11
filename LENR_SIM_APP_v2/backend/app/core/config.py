@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     
     # Base configuration
     APP_NAME: str = "LENR_Sim_App"
-    APP_VERSION: str = "0.2.1-beta"
+    APP_VERSION: str = "0.2.3-beta"
     API_PREFIX: str = "/api"
     DEBUG: bool = False
     
@@ -38,9 +38,17 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
     
-    # Database configuration (placeholder for future use)
-    DATABASE_URL: Optional[str] = None
-    ASYNC_DATABASE_URL: Optional[str] = None
+    # Database configuration (v0.2.3-beta)
+    DATABASE_URL: Optional[str] = None  # Will be built from DB_* vars if not set
+    DB_HOST: Optional[str] = None
+    DB_PORT: int = 5432
+    DB_USER: Optional[str] = None
+    DB_PASSWORD: Optional[str] = None
+    DB_NAME: Optional[str] = None
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_TIMEOUT: int = 30
+    DB_ECHO_SQL: bool = False  # Log SQL statements (debug only)
     
     # Logging configuration
     LOG_LEVEL: str = "INFO"
