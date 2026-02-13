@@ -97,7 +97,7 @@ The core physics calculations, API endpoints, and application functionality are 
 
 **Cause**: The application's main.py attempts to write to a debug log file in the `.cursor` directory, which is not accessible in the sandboxed test environment.
 
-**Resolution**: Update `app/main.py` to handle missing debug log file gracefully or use a different logging location for tests.
+**Resolution**: ✅ Fixed in v0.2.3-beta. Log directory is now configurable via `LENR_LOG_FILE_DIR`. Tests use `conftest.py` to set `LENR_LOG_FILE_DIR=__temp__` so logs write to the system temp directory.
 
 ---
 

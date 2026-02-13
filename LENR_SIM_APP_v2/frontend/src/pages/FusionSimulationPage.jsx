@@ -41,9 +41,10 @@ import { analyticsApi } from '../services/analyticsApi';
 // import { useNavigate } from 'react-router-dom';
 // import { useTheme } from '@mui/material/styles';
 // import ResultsPanel from '../components/results/ResultsPanel';
+import { API_BASE_URL } from '../config/api';
 
 // API base URL
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 /**
  * Real physics API client for fusion calculations

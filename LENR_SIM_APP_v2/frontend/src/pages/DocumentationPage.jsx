@@ -38,9 +38,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
-
-// API base URL configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../config/api';
 
 const DocumentationPage = () => {
   const theme = useTheme();

@@ -1,0 +1,45 @@
+# Version control
+.git/
+.gitignore
+
+# IDE
+.cursor/
+.vscode/
+.idea/
+
+# Dependencies (rebuilt in image)
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test and development
+tests/
+app/tests/
+*.test.*
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Data and logs
+*.db
+*.sqlite*
+logs/
+data/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Frontend (not needed in backend image)
+frontend/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,18 +1,41 @@
 """
 Logging utility for LENR_Sim_App
-Provides consistent logging across the application
+Provides consistent logging across the application.
+Supports structured JSON format for production (log aggregation).
+Log directory is configurable via LENR_LOG_FILE_DIR (use __temp__ in tests).
 """
 
+import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 import sys
+import tempfile
 from typing import Literal, Optional
 
+
+class JsonFormatter(logging.Formatter):
+    """Format log records as JSON for production log aggregation."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        log_obj = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        if hasattr(record, "request_id"):
+            log_obj["request_id"] = record.request_id
+        return json.dumps(log_obj, default=str)
+
+
 def setup_logger(
-    name: str, 
-    log_file: str, 
-    level: Optional[Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | int] = "INFO"
+    name: str,
+    log_file: str,
+    level: Optional[Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | int] = "INFO",
+    json_format: bool = False,
 ):
     """
     Set up a logger with file and console handlers
@@ -21,6 +44,7 @@ def setup_logger(
         name: Logger name
         log_file: Path to log file
         level: Logging level
+        json_format: Use JSON format (enable in production for log aggregation)
         
     Returns:
         Configured logger instance
@@ -31,9 +55,20 @@ def setup_logger(
     else:
         numeric_level = level if level is not None else logging.INFO
     
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-    
+    # Create formatter (JSON for production, text for development)
+    formatter = (
+        JsonFormatter()
+        if json_format
+        else logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+    )
+
+    # Resolve log path: use temp dir when LENR_LOG_FILE_DIR="__temp__" (tests)
+    log_file_dir = os.getenv("LENR_LOG_FILE_DIR")
+    if log_file_dir == "__temp__":
+        log_file = os.path.join(tempfile.gettempdir(), os.path.basename(log_file))
+    elif log_file_dir:
+        log_file = os.path.join(log_file_dir, os.path.basename(log_file))
+
     # Ensure log directory exists
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     
@@ -47,21 +82,16 @@ def setup_logger(
     file_handler.setFormatter(formatter)
     
     # Console handler with UTF-8 safe encoding for Windows
-    # On Windows, console may not support UTF-8, so we use a safe handler
     if sys.platform == 'win32':
-        # Create a custom handler that safely handles Unicode on Windows
         class SafeConsoleHandler(logging.StreamHandler):
             def emit(self, record):
                 try:
-                    # Try to encode the message, replacing problematic characters
                     msg = self.format(record)
-                    # Replace Unicode characters that Windows console can't handle
-                    msg = msg.replace('μ', 'u').replace('μm', 'um').replace('μs', 'us')
+                    msg = msg.replace('\u03bc', 'u').replace('\u03bcm', 'um').replace('\u03bcs', 'us')
                     stream = self.stream
                     stream.write(msg + self.terminator)
                     self.flush()
                 except UnicodeEncodeError:
-                    # Fallback: replace all non-ASCII characters
                     msg = self.format(record)
                     msg = msg.encode('ascii', 'replace').decode('ascii')
                     stream = self.stream
@@ -72,7 +102,6 @@ def setup_logger(
         
         console_handler = SafeConsoleHandler(sys.stdout)
     else:
-        # On Unix-like systems, use standard handler
         console_handler = logging.StreamHandler(sys.stdout)
     
     console_handler.setFormatter(formatter)
@@ -101,4 +130,4 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logging.getLogger(name) 
+    return logging.getLogger(name)

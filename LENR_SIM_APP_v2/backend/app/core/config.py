@@ -9,8 +9,20 @@ variables from a .env file.
 import os
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from pydantic import field_validator, AnyHttpUrl
+from pydantic import field_validator, model_validator, AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _read_secret_from_file(env_var: str) -> Optional[str]:
+    """Read a secret from a file path stored in an environment variable (Docker secrets pattern)."""
+    path = os.getenv(env_var) or os.getenv(f"LENR_{env_var}")
+    if path and os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        except OSError:
+            pass
+    return None
 
 
 class EnvironmentType(str, Enum):
@@ -54,6 +66,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_TO_FILE: bool = True
     LOG_FILE_DIR: str = "logs"
+    LOG_JSON_FORMAT: bool = False  # Set True in production for structured JSON logging
     
     # Cache configuration
     CACHE_ENABLED: bool = True
@@ -104,6 +117,9 @@ class Settings(BaseSettings):
     # Content-type validation
     ENFORCE_CONTENT_TYPE: bool = True  # Validate Content-Type headers
 
+    # Request body size limit (bytes, default 10 MB)
+    REQUEST_MAX_BODY_SIZE: int = 10 * 1024 * 1024
+
     # Custom validation for CORS origins - must run BEFORE type coercion
     @field_validator("CORS_ORIGINS", mode='before')
     @classmethod
@@ -135,6 +151,19 @@ class Settings(BaseSettings):
             except json.JSONDecodeError:
                 return [ip.strip() for ip in v.split(",") if ip.strip()]
         return v
+
+    @model_validator(mode="after")
+    def load_secrets_from_files(self) -> "Settings":
+        """Load SECRET_KEY and JWT_SECRET_KEY from Docker secret files if *_FILE env vars are set."""
+        if not self.SECRET_KEY:
+            secret = _read_secret_from_file("SECRET_KEY_FILE")
+            if secret:
+                object.__setattr__(self, "SECRET_KEY", secret)
+        if not self.JWT_SECRET_KEY:
+            secret = _read_secret_from_file("JWT_SECRET_KEY_FILE")
+            if secret:
+                object.__setattr__(self, "JWT_SECRET_KEY", secret)
+        return self
 
     # Pydantic configuration - use environment variable prefix and .env file
     model_config = SettingsConfigDict(

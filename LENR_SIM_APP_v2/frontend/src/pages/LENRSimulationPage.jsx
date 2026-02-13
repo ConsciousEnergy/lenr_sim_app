@@ -30,9 +30,10 @@ import LENRVisualization from '../components/visualizations/LENRVisualization';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import ResultsPanel from '../components/results/ResultsPanel';
+import { API_BASE_URL } from '../config/api';
 
 // API base URL - uses environment variable or defaults to localhost
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 /**
  * Real physics API client for LENR calculations

@@ -7,14 +7,14 @@ import {
 import UnifiedLENRVisualizer from './visualization/UnifiedLENRVisualizer';
 import { PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 const { Option } = Select;
 
 // API endpoints
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const SIMULATION_ENDPOINT = `${API_BASE_URL}/simulations`;
+const SIMULATION_ENDPOINT = `${API_BASE_URL}/api/simulations`;
 
 const SimulationDashboard = () => {
   const [form] = Form.useForm();

@@ -6,10 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-
-// API base URL configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
+import { getWebSocketUrl } from '../config/api';
 
 // Types for real-time data
 export interface TimeSeriesDataPoint {
@@ -83,7 +80,7 @@ export class RealtimeDataClient {
 
     this.manualDisconnect = false;
     // Connect to the visualization WebSocket endpoint
-    this.socket = new WebSocket(`${WS_BASE_URL}/api/visualization/ws/${this.simulationId}`);
+    this.socket = new WebSocket(getWebSocketUrl(`/api/visualization/ws/${this.simulationId}`));
     
     this.socket.onopen = () => {
       console.log(`Real-time data WebSocket connected for simulation ${this.simulationId}`);

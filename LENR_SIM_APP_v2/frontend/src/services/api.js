@@ -3,14 +3,14 @@
  * Provides unified interface for interacting with the backend API
  */
 
+import { API_BASE_URL as BASE_URL, DEFAULT_TIMEOUT } from '../config/api';
+
 /**
  * Configuration for API requests
  */
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
 const API_CONFIG = {
-  baseUrl: `${API_BASE_URL}/api`,
-  timeout: 30000, // 30 seconds default timeout
+  baseUrl: `${BASE_URL}/api`,
+  timeout: DEFAULT_TIMEOUT,
   retries: 1,     // Number of retries for failed requests
   headers: {
     'Content-Type': 'application/json',

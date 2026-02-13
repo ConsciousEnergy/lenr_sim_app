@@ -1,8 +1,9 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { API_BASE_URL, DEFAULT_TIMEOUT } from '../config/api';
 
 // API configuration
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const API_TIMEOUT = 30000; // 30 seconds
+const API_URL = API_BASE_URL;
+const API_TIMEOUT = DEFAULT_TIMEOUT;
 
 // Error types
 export enum ErrorType {

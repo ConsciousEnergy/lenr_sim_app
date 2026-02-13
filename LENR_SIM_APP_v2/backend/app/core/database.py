@@ -7,8 +7,10 @@ and SQLite (development) databases.
 v0.2.3-beta: Initial database implementation for analytics and experiment storage.
 """
 
+import asyncio
 import os
 import logging
+import time
 from typing import AsyncGenerator, Optional
 from contextlib import asynccontextmanager
 
@@ -175,6 +177,38 @@ class DatabaseManager:
                 "error": str(e)
             }
     
+    async def wait_for_connection(
+        self, retries: int = 5, base_delay: float = 2.0
+    ) -> bool:
+        """
+        Wait for the database to become reachable using exponential backoff.
+        
+        Critical for Docker Swarm where the backend may start before PostgreSQL.
+        
+        Args:
+            retries: Maximum number of connection attempts.
+            base_delay: Initial delay in seconds (doubles each attempt).
+            
+        Returns:
+            True if connection succeeded, False otherwise.
+        """
+        for attempt in range(1, retries + 1):
+            try:
+                async with self._session_factory() as session:
+                    await session.execute(text("SELECT 1"))
+                logger.info(f"Database connection verified on attempt {attempt}")
+                return True
+            except Exception as exc:
+                delay = base_delay * (2 ** (attempt - 1))
+                logger.warning(
+                    f"DB connection attempt {attempt}/{retries} failed: {exc}. "
+                    f"Retrying in {delay:.1f}s..."
+                )
+                if attempt < retries:
+                    await asyncio.sleep(delay)
+        logger.error(f"Database unreachable after {retries} attempts")
+        return False
+
     async def close(self) -> None:
         """Close the database connection pool."""
         if self._engine:

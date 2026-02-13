@@ -20,9 +20,10 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 // Import our custom components
 import BubbleFusionVisualizer from '../components/visualization/BubbleFusionVisualizer';
 import BubbleFusionParameterControls from '../components/controls/BubbleFusionParameterControls';
+import { API_BASE_URL } from '../config/api';
 
 // API base URL
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 /**
  * Real physics API client for bubble fusion calculations

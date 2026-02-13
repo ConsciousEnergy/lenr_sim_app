@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 // Configuration for API and debugging
 const API_CONFIG = {
@@ -57,7 +58,7 @@ const API_ENDPOINTS = {
 
 // Create an axios instance with common configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000', // Default to 8000
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -86,11 +87,8 @@ const logInfo = (message, ...args) => {
 // Check which API base URL is actually available
 const checkApiAvailability = async () => {
   const possibleEndpoints = [
-    { url: process.env.REACT_APP_API_URL || 'http://localhost:8000', endpoint: '/api/health' },
-    { url: 'http://localhost:8000', endpoint: '/api/health' },
-    { url: 'http://localhost:8001', endpoint: '/api/health' },
-    { url: 'http://localhost:8000', endpoint: '/' }, // Try root endpoint as fallback
-    { url: 'http://localhost:8001', endpoint: '/' }, // Try root endpoint as fallback
+    { url: API_BASE_URL, endpoint: '/api/health' },
+    { url: API_BASE_URL, endpoint: '/' }, // Try root endpoint as fallback
   ];
 
   for (const { url, endpoint } of possibleEndpoints) {

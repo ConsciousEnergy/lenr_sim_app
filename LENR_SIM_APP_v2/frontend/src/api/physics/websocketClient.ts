@@ -11,10 +11,7 @@ import {
   ControlCommandMessage,
   ControlCommand
 } from './types';
-
-// API base URL configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
+import { getWebSocketUrl } from '../../config/api';
 
 /**
  * Event types for the WebSocket client
@@ -62,7 +59,7 @@ export class PhysicsWebSocketClient {
     }
 
     this.manualDisconnect = false;
-    this.socket = new WebSocket(`${WS_BASE_URL}/api/ws/physics/${this.simulationId}`);
+    this.socket = new WebSocket(getWebSocketUrl(`/api/ws/physics/${this.simulationId}`));
     
     this.socket.onopen = () => {
       console.log(`WebSocket connected for simulation ${this.simulationId}`);

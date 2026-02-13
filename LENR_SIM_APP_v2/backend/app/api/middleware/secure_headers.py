@@ -74,15 +74,21 @@ class SecureHeadersMiddleware(BaseHTTPMiddleware):
         return response
     
     def _get_default_csp_policy(self) -> str:
-        """Get the default Content-Security-Policy value."""
+        """
+        Get the default Content-Security-Policy value.
+        
+        For an API backend serving JSON, default-src 'none' is ideal.
+        Swagger UI (/docs, /redoc) requires script-src and style-src exceptions,
+        which are allowed via 'unsafe-inline' on those paths only (CSP applies globally,
+        but Swagger is the only HTML-serving path).
+        """
         return (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "  # 'unsafe-inline' needed for Swagger UI
-            "style-src 'self' 'unsafe-inline'; "   # 'unsafe-inline' needed for Swagger UI
-            "img-src 'self' data:; "
+            "default-src 'none'; "
+            "script-src 'self' 'unsafe-inline'; "  # Swagger UI
+            "style-src 'self' 'unsafe-inline'; "   # Swagger UI
+            "img-src 'self' data:; "               # Swagger UI favicon
             "font-src 'self'; "
             "connect-src 'self'; "
-            "frame-src 'self'; "
             "frame-ancestors 'none'; "
             "form-action 'self'; "
             "base-uri 'self'; "

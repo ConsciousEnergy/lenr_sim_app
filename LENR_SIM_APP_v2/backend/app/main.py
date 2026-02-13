@@ -39,7 +39,7 @@ from .api.middleware.timeout import TimeoutMiddleware
 from .core.middleware import setup_middlewares
 
 # Import configuration - using relative imports
-from .core.config import settings
+from .core.config import settings, EnvironmentType
 
 # Import logging - using relative imports
 from .utils.logging import setup_logger
@@ -66,11 +66,19 @@ except ImportError:
 # Import custom OpenAPI configuration - using relative imports
 from .api.openapi import custom_openapi
 
-# Set up loggers
-app_logger = setup_logger("app", "logs/app.log")
-error_logger = setup_logger("error", "logs/errors.log", level="ERROR")
-fitting_logger = setup_logger("fitting", "logs/fitting.log")
-performance_logger = setup_logger("performance", "logs/performance.log")
+# Set up loggers (JSON format in production for log aggregation)
+app_logger = setup_logger(
+    "app", "logs/app.log", json_format=settings.LOG_JSON_FORMAT
+)
+error_logger = setup_logger(
+    "error", "logs/errors.log", level="ERROR", json_format=settings.LOG_JSON_FORMAT
+)
+fitting_logger = setup_logger(
+    "fitting", "logs/fitting.log", json_format=settings.LOG_JSON_FORMAT
+)
+performance_logger = setup_logger(
+    "performance", "logs/performance.log", json_format=settings.LOG_JSON_FORMAT
+)
 
 # Performance monitoring middleware
 class PerformanceMiddleware(BaseHTTPMiddleware):
@@ -164,7 +172,7 @@ async def lifespan(app: FastAPI):
         expired = remove_expired_items()
         app_logger.info(f"Initial cache cleanup: {expired} expired items removed")
     
-    # Initialize database (v0.2.3-beta)
+    # Initialize database (v0.2.3-beta) with retry for Docker Swarm
     try:
         database_url = get_database_url()
         db_manager.initialize(
@@ -174,6 +182,12 @@ async def lifespan(app: FastAPI):
             max_overflow=settings.DB_MAX_OVERFLOW,
             pool_timeout=settings.DB_POOL_TIMEOUT,
         )
+        # Wait for DB with exponential backoff (critical in Swarm where DB may start late)
+        is_postgres = not database_url.startswith("sqlite")
+        if is_postgres:
+            connected = await db_manager.wait_for_connection(retries=5, base_delay=2.0)
+            if not connected:
+                app_logger.warning("Database unreachable after retries -- running in degraded mode")
         # Create tables if they don't exist (development mode)
         if settings.ENVIRONMENT.value == "development":
             await db_manager.create_tables()
@@ -268,19 +282,34 @@ app.add_middleware(
 # Set up all middleware including CORS, request ID, logging, and performance tracking
 setup_middlewares(app)
 
+# Prometheus metrics (optional -- gracefully skip if not installed)
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    instrumentator = Instrumentator(
+        should_group_status_codes=True,
+        excluded_handlers=["/metrics", "/health", "/api/health", "/docs", "/openapi.json"]
+    )
+    instrumentator.instrument(app).expose(app, endpoint="/metrics")
+except ImportError:
+    pass  # prometheus-fastapi-instrumentator optional
+
 # Mount static files with absolute path
 static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # Include routers
 app.include_router(physics_router, prefix="/api/physics", tags=["Physics"])
-app.include_router(fitting_router, prefix="/api/fitting", tags=["Fitting"])
-app.include_router(logging_router, prefix="/api/logs", tags=["Logging"])
-app.include_router(diagnostics_router, prefix="/api/diagnostics", tags=["Diagnostics"])
+# Dev/debug routers -- disabled in production
+if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+    app.include_router(fitting_router, prefix="/api/fitting", tags=["Fitting"])
+    app.include_router(logging_router, prefix="/api/logs", tags=["Logging"])
+    app.include_router(diagnostics_router, prefix="/api/diagnostics", tags=["Diagnostics"])
 app.include_router(multi_physics_router, prefix="/api/multi-physics", tags=["Multi-Physics Coupling"])
 app.include_router(visualization_router, prefix="/api/visualization", tags=["Visualization"])
 app.include_router(result_visualization_routes.router, prefix="/api/results", tags=["results"])  # Add this line
-app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations"])  # Mock simulations for testing
+# Mock simulation router -- development/test only
+if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+    app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations"])
 app.include_router(physics_simulation_router)  # Real physics calculation endpoints
 app.include_router(websocket_router, prefix="/api", tags=["WebSocket"])  # Real-time simulation updates
 app.include_router(shared_simulation_router)  # Shared simulation storage and matching (prefix already in router)
@@ -359,14 +388,28 @@ async def health_check():
     except ImportError:
         pass
     
+    # Database connectivity check (non-blocking -- return degraded if unreachable)
+    db_status = {"connected": False, "latency_ms": None, "error": None}
+    try:
+        db_result = await db_manager.health_check()
+        db_status["connected"] = db_result.get("connected", False)
+        db_status["latency_ms"] = db_result.get("latency_ms")
+        if not db_status["connected"]:
+            db_status["error"] = db_result.get("error", "unknown")
+    except Exception as e:
+        db_status["error"] = str(e)
+
     # Calculate overall status
     all_physics_ok = all(physics_status.values())
+    overall_healthy = all_physics_ok and db_status["connected"]
+    status = "healthy" if overall_healthy else "degraded"
     
     return {
-        "status": "healthy" if all_physics_ok else "degraded",
+        "status": status,
         "timestamp": time_module.time(),
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
+        "database": db_status,
         "system_memory": {
             "total_gb": round(memory_info.total / (1024**3), 2),
             "available_gb": round(memory_info.available / (1024**3), 2),
@@ -383,12 +426,16 @@ async def health_check():
 
 @app.get("/memory")
 async def memory_status():
-    """Get memory usage status"""
+    """Get memory usage status (disabled in production)"""
+    if settings.ENVIRONMENT == EnvironmentType.PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
     return get_memory_usage()
 
 @app.post("/memory/cleanup")
 async def cleanup_memory():
-    """Force memory cleanup operations"""
+    """Force memory cleanup operations (disabled in production)"""
+    if settings.ENVIRONMENT == EnvironmentType.PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
     gc_collected = perform_gc_cleanup()
     cache_items = 0
     expired_items = 0
@@ -406,14 +453,18 @@ async def cleanup_memory():
 
 @app.get("/cache/stats")
 async def cache_statistics():
-    """Get statistics about the cache"""
+    """Get statistics about the cache (disabled in production)"""
+    if settings.ENVIRONMENT == EnvironmentType.PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
     if not cache_available:
         return {"status": "cache_not_available"}
     return get_cache_stats()
 
 @app.post("/cache/clear")
 async def clear_all_caches():
-    """Clear all simulation caches"""
+    """Clear all simulation caches (disabled in production)"""
+    if settings.ENVIRONMENT == EnvironmentType.PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
     if not cache_available:
         return {"status": "cache_not_available"}
     

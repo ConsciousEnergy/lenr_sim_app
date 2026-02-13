@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SimulationUpdateMessage, LatticeState } from '../api/physics/types';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
+import { API_BASE_URL, getWebSocketUrl } from '../config/api';
 
 export interface PhysicsContextType {
   simulationState: SimulationUpdateMessage | null;
@@ -36,7 +34,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
       ws.close();
     }
 
-    const websocket = new WebSocket(`${WS_BASE_URL}/api/physics/simulate/${simulationId}`);
+    const websocket = new WebSocket(getWebSocketUrl(`/api/physics/simulate/${simulationId}`));
     
     websocket.onopen = () => {
       console.log('WebSocket connected');

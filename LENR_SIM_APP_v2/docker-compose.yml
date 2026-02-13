@@ -1,0 +1,46 @@
+# Local development docker-compose
+# Usage: docker-compose up --build
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lenr_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: lenr_sim
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lenr_user -d lenr_sim"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.backend
+      args:
+        BUILD_VERSION: "0.2.3-beta"
+    ports:
+      - "8000:8000"
+    environment:
+      LENR_ENVIRONMENT: development
+      LENR_DB_HOST: postgres
+      LENR_DB_PORT: 5432
+      LENR_DB_USER: lenr_user
+      LENR_DB_PASSWORD: dev_password
+      LENR_DB_NAME: lenr_sim
+      LENR_CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      LENR_LOG_LEVEL: DEBUG
+    volumes:
+      - ./backend/app:/app/app:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

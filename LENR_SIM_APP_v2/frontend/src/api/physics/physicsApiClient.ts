@@ -20,8 +20,9 @@ import {
   ControlCommand
 } from './types';
 
-// API base URL configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../../config/api';
+
+// API prefix for physics endpoints
 const API_PREFIX = '/api/physics';
 
 /**

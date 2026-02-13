@@ -4,9 +4,9 @@
  */
 
 import errorReporter from './errorReporter';
+import { API_BASE_URL } from '../config/api';
 
-// Default API configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+// Default API configuration -- use shared config, keep extended timeout for physics
 const DEFAULT_TIMEOUT = 60000; // 60 seconds (increased from 30)
 
 // Define endpoint-specific timeouts for known long-running operations

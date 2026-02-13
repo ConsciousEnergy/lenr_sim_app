@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9, '3.10']
+        python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -33,7 +33,7 @@ jobs:
     - name: Run unit tests
       run: |
         cd LENR_SIM_APP_v2/backend
-        python -m pytest tests/ --cov=app --cov-report=xml -v
+        python -m pytest tests/ app/tests/ --cov=app --cov-report=xml -v
 
     - name: Run integration tests
       run: |
@@ -63,7 +63,7 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -87,13 +87,18 @@ jobs:
           cd LENR_SIM_APP_v2/frontend
           npm test -- --watchAll=false --passWithNoTests
 
+      - name: Build frontend
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm run build
+
   analyze-benchmarks:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Download previous benchmark results
       uses: actions/download-artifact@v3

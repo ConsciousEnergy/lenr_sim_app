@@ -7,15 +7,16 @@ import { CircularProgress, Box } from '@mui/material';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppLayoutFixed from './components/AppLayoutFixed';
-import './App.css';
-
-// Pages - Simulation Workflow (Eager load for immediate access)
+import NotFound from './pages/NotFound';
 import Dashboard from './pages/DashboardNew';
 import SimulationDetail from './pages/SimulationDetail';
-
-// Pages - Information & Theory (Eager load for quick access)
 import AboutPage from './pages/AboutPage';
 import TeamPage from './pages/TeamPage';
+import './App.css';
+
+// Development-only routes are hidden in production
+const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production' ||
+  process.env.NODE_ENV === 'production';
 
 // Pages - Simulation Workflow (Lazy load heavy pages)
 const NewSimulation = lazy(() => import('./pages/NewSimulation'));
@@ -175,13 +176,6 @@ const AppContent = () => {
             } />
             
             {/* Advanced Visualization Pages - Use AppLayoutFixed */}
-            <Route path="/lattice-test" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyLatticeTest />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
             <Route path="/real-time-visualization" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
@@ -203,21 +197,6 @@ const AppContent = () => {
                 </Suspense>
               </AppLayoutFixed>
             } />
-            <Route path="/three-test" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <ThreeJsTestPage />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
-            <Route path="/visualization-debug" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <VisualizationDebugPage />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
-            
             {/* Other Pages */}
             <Route path="/about" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
@@ -279,26 +258,58 @@ const AppContent = () => {
               </AppLayoutFixed>
             } />
             
-            {/* Development & Testing Pages */}
-            <Route path="/diagnostics" element={
+            {/* Development & Testing Pages -- hidden in production */}
+            {!IS_PRODUCTION && (
+              <>
+                <Route path="/diagnostics" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <DiagnosticTool />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+                <Route path="/component-showcase" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ComponentShowcase />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+                <Route path="/visualization-test" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <VisualizationTest />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+                <Route path="/visualization-debug" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <VisualizationDebugPage />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+                <Route path="/three-test" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ThreeJsTestPage />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+                <Route path="/lattice-test" element={
+                  <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyLatticeTest />
+                    </Suspense>
+                  </AppLayoutFixed>
+                } />
+              </>
+            )}
+
+            {/* 404 catch-all */}
+            <Route path="*" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <DiagnosticTool />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
-            <Route path="/component-showcase" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <ComponentShowcase />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
-            <Route path="/visualization-test" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <VisualizationTest />
-                </Suspense>
+                <NotFound />
               </AppLayoutFixed>
             } />
           </Routes>

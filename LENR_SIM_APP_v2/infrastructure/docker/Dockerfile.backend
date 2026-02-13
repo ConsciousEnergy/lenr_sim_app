@@ -28,10 +28,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==============================================================================
 FROM python:3.11-slim as production
 
+ARG BUILD_VERSION=0.2.3-beta
+
 # Labels
 LABEL org.opencontainers.image.title="LENR Simulation App Backend"
 LABEL org.opencontainers.image.description="FastAPI backend for LENR Simulation Platform"
-LABEL org.opencontainers.image.version="0.2.1-beta"
+LABEL org.opencontainers.image.version="${BUILD_VERSION}"
 LABEL org.opencontainers.image.vendor="Conscious Energies"
 LABEL org.opencontainers.image.url="https://conscious.energy"
 LABEL org.opencontainers.image.source="https://github.com/ConsciousEnergy/lenr_sim_app"

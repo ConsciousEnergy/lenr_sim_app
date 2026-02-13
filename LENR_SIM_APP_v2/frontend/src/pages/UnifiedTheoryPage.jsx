@@ -50,9 +50,10 @@ import { analyticsApi } from '../services/analyticsApi';
 // Import new unified visualization
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { API_BASE_URL } from '../config/api';
 
 // API base URL
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 // System presets
 const SYSTEM_PRESETS = {

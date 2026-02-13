@@ -55,7 +55,7 @@ def test_csp_enabled():
     
     # Check CSP header
     assert "Content-Security-Policy" in response.headers
-    assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert "default-src 'none'" in response.headers["Content-Security-Policy"]
     assert "Content-Security-Policy-Report-Only" not in response.headers
 
 
@@ -69,7 +69,7 @@ def test_csp_report_only():
     
     # Check CSP header is report-only
     assert "Content-Security-Policy-Report-Only" in response.headers
-    assert "default-src 'self'" in response.headers["Content-Security-Policy-Report-Only"]
+    assert "default-src 'none'" in response.headers["Content-Security-Policy-Report-Only"]
     assert "Content-Security-Policy" not in response.headers
 
 

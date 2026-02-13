@@ -22,6 +22,7 @@ from app.core.config import settings, EnvironmentType
 from app.api.middleware.rate_limiting import RateLimitingMiddleware
 from app.api.middleware.secure_headers import SecureHeadersMiddleware
 from app.api.middleware.content_validation import ContentTypeValidationMiddleware
+from app.api.middleware.request_size_limit import RequestSizeLimitMiddleware
 from app.api.errors.handlers import register_exception_handlers
 
 # Configure logger
@@ -153,6 +154,13 @@ def setup_middlewares(app: FastAPI) -> None:
         )
         logger.info(f"Rate limiting middleware enabled with limit: {settings.RATE_LIMIT_PER_MINUTE} requests/minute")
     
+    # Add request size limit middleware
+    app.add_middleware(
+        RequestSizeLimitMiddleware,
+        max_body_size=settings.REQUEST_MAX_BODY_SIZE,
+    )
+    logger.info(f"Request size limit middleware enabled: {settings.REQUEST_MAX_BODY_SIZE} bytes max")
+
     # Add content-type validation middleware
     if settings.ENFORCE_CONTENT_TYPE:
         app.add_middleware(ContentTypeValidationMiddleware)

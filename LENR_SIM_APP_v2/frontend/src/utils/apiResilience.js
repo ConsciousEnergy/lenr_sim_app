@@ -8,9 +8,11 @@
  * - Error categorization and recovery
  */
 
+import { API_BASE_URL } from '../config/api';
+
 // Default configuration
 const DEFAULT_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8001',
+  baseUrl: API_BASE_URL,
   maxRetries: 3,
   baseDelayMs: 1000,
   maxDelayMs: 10000,
