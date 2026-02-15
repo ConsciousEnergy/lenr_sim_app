@@ -63,7 +63,7 @@ const AdvancedAnalysisPage = () => {
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Tunneling Parameters</Typography>
             <Typography variant="body1">
@@ -80,7 +80,7 @@ const AdvancedAnalysisPage = () => {
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 2, minHeight: 200 }}>
             <Typography variant="h6" gutterBottom>Visualization Placeholder</Typography>
             <Typography variant="body2" color="text.secondary">
@@ -110,7 +110,7 @@ const AdvancedAnalysisPage = () => {
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Lattice Parameters</Typography>
             <Typography variant="body1">
@@ -127,7 +127,7 @@ const AdvancedAnalysisPage = () => {
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 2, minHeight: 200 }}>
             <Typography variant="h6" gutterBottom>Visualization Placeholder</Typography>
             <Typography variant="body2" color="text.secondary">
@@ -158,7 +158,7 @@ const AdvancedAnalysisPage = () => {
 
     return (
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper elevation={2} sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Fluid Dynamics Data</Typography>
             <Typography variant="body1">

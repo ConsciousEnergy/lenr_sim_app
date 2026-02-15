@@ -290,11 +290,31 @@ def analyze_op_process(
         }
     }
     
-    # Base fusion probability (approximate)
-    base_prob = 1e-60  # Placeholder for conventional fusion probability
-    
+    # Base fusion probability derived from Gamow tunneling factor.
+    # For conventional charged-particle fusion (d + target at charge Z),
+    # the tunneling probability through the bare Coulomb barrier is:
+    #   P_Gamow(E) = exp(-2*pi*eta)
+    # where the Sommerfeld parameter eta = Z1*Z2*alpha * sqrt(m_r*c^2/(2*E))
+    # At eV-scale energies this yields extremely small probabilities
+    # (10^-100 to 10^-300), which is the baseline the OP process enhances.
+    #
+    # Ref: Gamow, G. Z. Physik 51, 204 (1928);
+    #      Raiola et al., Eur. Phys. J. A 19, 283 (2004) for screened
+    #      low-energy cross-sections on metal targets.
+
+    alpha = const.alpha  # fine structure constant
+    m_r = DEUTERON_MASS * (a_target * const.u) / (DEUTERON_MASS + a_target * const.u)
+
     # Calculate effects for each energy
     for energy in energies:
+        # Gamow tunneling probability at this CM energy
+        E_J = max(energy * EV_TO_J, 1e-30)  # guard against zero
+        eta = z_target * 1.0 * alpha * np.sqrt(m_r * const.c**2 / (2 * E_J))
+        gamow_exponent = 2 * np.pi * eta
+        # Clamp exponent to avoid underflow; exp(-1500) ≈ 10^-652
+        gamow_exponent = min(gamow_exponent, 1500.0)
+        base_prob = float(np.exp(-gamow_exponent))
+
         enhancement_data = calculate_op_enhancement(
             energy, distance, z_target, a_target, screening_potential, base_prob
         )

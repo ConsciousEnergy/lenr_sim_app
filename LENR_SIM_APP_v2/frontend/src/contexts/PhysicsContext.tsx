@@ -1,6 +1,62 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { SimulationUpdateMessage, LatticeState } from '../api/physics/types';
 import { API_BASE_URL, getWebSocketUrl } from '../config/api';
+
+// ---------------------------------------------------------------------------
+// Theory Testbed types (Phase 4.4)
+// ---------------------------------------------------------------------------
+
+/** Metadata for a single theory module from the backend. */
+export interface TheoryInfo {
+  theory_id: string;
+  theory_name: string;
+  description: string;
+  configurable_parameters: Record<string, any>;
+  references: string[];
+  category: string;
+}
+
+/** Per-theory contribution returned after a pipeline run. */
+export interface TheoryContributionResult {
+  theory_id: string;
+  theory_name: string;
+  enhancement_factor: number;
+  reaction_rate_modifier: number;
+  energy_output_watts: number;
+  observables: Record<string, number>;
+  parameters_used: Record<string, number>;
+  is_applicable: boolean;
+  confidence: number;
+  references: string[];
+}
+
+/** Combined result from the pipeline. */
+export interface TheoryPipelineResult {
+  combined_enhancement: number;
+  combined_reaction_rate_modifier: number;
+  total_energy_watts: number;
+  conditions: Record<string, number>;
+  enabled_theories: string[];
+  per_theory: TheoryContributionResult[];
+}
+
+/** Extended result from the coupled pipeline. */
+export interface CoupledPipelineResult {
+  execution_order: string[];
+  contributions: TheoryContributionResult[];
+  combined_enhancement: number;
+  combined_reaction_rate_modifier: number;
+  total_energy_watts: number;
+  enriched_conditions: Record<string, number>;
+  coupling_map: Record<string, Array<{
+    source_id: string;
+    relationship_type: string;
+    shared_properties: string[];
+    strength: number;
+  }>>;
+}
+
+// ---------------------------------------------------------------------------
 
 export interface PhysicsContextType {
   simulationState: SimulationUpdateMessage | null;
@@ -13,6 +69,19 @@ export interface PhysicsContextType {
   stopSimulation: () => Promise<void>;
   connectWebSocket: (simulationId: string) => void;
   disconnectWebSocket: () => void;
+
+  // Theory Testbed state
+  availableTheories: TheoryInfo[];
+  enabledTheories: string[];
+  theoryConfigs: Record<string, Record<string, any>>;
+  theoryResult: TheoryPipelineResult | null;
+  isLoadingTheories: boolean;
+  setEnabledTheories: (ids: string[]) => void;
+  setTheoryConfigs: (configs: Record<string, Record<string, any>>) => void;
+  fetchTheories: () => Promise<void>;
+  runTheories: (conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
+  runCoupledTheories: (conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
+  coupledResult: CoupledPipelineResult | null;
 }
 
 export const PhysicsContext = createContext<PhysicsContextType | undefined>(undefined);
@@ -28,6 +97,94 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
   const [isSimulating, setIsSimulating] = useState(false);
   const [parameters, setParameters] = useState<Record<string, number | string>>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
+
+  // Theory Testbed state
+  const [availableTheories, setAvailableTheories] = useState<TheoryInfo[]>([]);
+  const [enabledTheories, setEnabledTheories] = useState<string[]>([]);
+  const [theoryConfigs, setTheoryConfigs] = useState<Record<string, Record<string, any>>>({});
+  const [theoryResult, setTheoryResult] = useState<TheoryPipelineResult | null>(null);
+  const [coupledResult, setCoupledResult] = useState<CoupledPipelineResult | null>(null);
+  const [isLoadingTheories, setIsLoadingTheories] = useState(false);
+
+  /** Fetch available theories from the backend. */
+  const fetchTheories = useCallback(async () => {
+    setIsLoadingTheories(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/physics/theories`);
+      if (!response.ok) throw new Error(`Failed to fetch theories: ${response.statusText}`);
+      const data: TheoryInfo[] = await response.json();
+      setAvailableTheories(data);
+      // Enable all theories by default on first load
+      if (enabledTheories.length === 0 && data.length > 0) {
+        setEnabledTheories(data.map((t) => t.theory_id));
+      }
+    } catch (error) {
+      console.error('Error fetching theories:', error);
+    } finally {
+      setIsLoadingTheories(false);
+    }
+  }, [enabledTheories.length]);
+
+  /** Run enabled theories against supplied conditions. */
+  const runTheories = useCallback(
+    async (conditions: Record<string, number>): Promise<TheoryPipelineResult | null> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/physics/theories/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conditions,
+            enabled_theories: enabledTheories.length > 0 ? enabledTheories : null,
+            theory_configs: Object.keys(theoryConfigs).length > 0 ? theoryConfigs : null,
+          }),
+        });
+        if (!response.ok) throw new Error(`Theory run failed: ${response.statusText}`);
+        const data: TheoryPipelineResult = await response.json();
+        setTheoryResult(data);
+        return data;
+      } catch (error) {
+        console.error('Error running theories:', error);
+        return null;
+      }
+    },
+    [enabledTheories, theoryConfigs],
+  );
+
+  /** Run enabled theories in coupled (sequential dependency) mode. */
+  const runCoupledTheories = useCallback(
+    async (conditions: Record<string, number>): Promise<CoupledPipelineResult | null> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/analytics/theories/run-coupled`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conditions,
+            enabled_theories: enabledTheories.length > 0 ? enabledTheories : null,
+            theory_configs: Object.keys(theoryConfigs).length > 0 ? theoryConfigs : null,
+          }),
+        });
+        if (!response.ok) throw new Error(`Coupled run failed: ${response.statusText}`);
+        const data: CoupledPipelineResult = await response.json();
+        setCoupledResult(data);
+
+        // Also update the standard theoryResult so contribution cards render
+        setTheoryResult({
+          combined_enhancement: data.combined_enhancement,
+          combined_reaction_rate_modifier: data.combined_reaction_rate_modifier,
+          total_energy_watts: data.total_energy_watts,
+          conditions: data.enriched_conditions,
+          enabled_theories: data.execution_order,
+          per_theory: data.contributions,
+        });
+
+        return data;
+      } catch (error) {
+        console.error('Error running coupled theories:', error);
+        return null;
+      }
+    },
+    [enabledTheories, theoryConfigs],
+  );
 
   const connectWebSocket = (simulationId: string) => {
     if (ws) {
@@ -137,6 +294,18 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     stopSimulation,
     connectWebSocket,
     disconnectWebSocket,
+    // Theory Testbed
+    availableTheories,
+    enabledTheories,
+    theoryConfigs,
+    theoryResult,
+    isLoadingTheories,
+    setEnabledTheories,
+    setTheoryConfigs,
+    fetchTheories,
+    runTheories,
+    runCoupledTheories,
+    coupledResult,
   };
 
   return (

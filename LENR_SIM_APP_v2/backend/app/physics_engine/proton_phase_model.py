@@ -20,6 +20,8 @@ from enum import Enum
 from scipy import constants as const
 import logging
 
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
 logger = logging.getLogger(__name__)
 
 
@@ -161,8 +163,12 @@ class ProtonPhaseModel:
         # Extended orbital radius
         a = orbital_extension * self.A0  # m
         
-        # Nuclear core radius
-        r0 = 1e-15  # ~1 fm
+        # Nuclear core radius (~1-5 fm for light nuclei).
+        # NOTE: The original theoretical paper used r_0 = 0.1 nm which is the
+        # ionic/atomic radius, NOT the nuclear radius.  Using the correct
+        # nuclear radius reduces P_overlap by ~15 orders of magnitude, but
+        # this is the physically correct value.  See constants.NUCLEAR_RADIUS_M.
+        r0 = 1e-15  # ~1 fm (correct nuclear radius)
         
         # Base overlap probability
         P_base = (1 / (np.pi * a**3)) * np.exp(-2 * r0 / a)
@@ -213,8 +219,8 @@ class ProtonPhaseModel:
         
         total = f_screen * f_qed * f_coherence
         
-        # Cap at theoretical maximum from paper
-        return min(total, 1e8)
+        # Cap at conservative maximum from Part 2 analysis (10^3-10^5, 90% CI)
+        return min(total, MAX_ENHANCEMENT_FACTOR)
     
     def determine_phase(self, proton: ProtonState, conditions: Dict[str, float]) -> ProtonPhase:
         """

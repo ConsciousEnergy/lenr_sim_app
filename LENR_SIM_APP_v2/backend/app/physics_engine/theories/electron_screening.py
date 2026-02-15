@@ -1,0 +1,178 @@
+"""
+Electron Screening Theory Module
+
+Refactored from ``unified_lenr_model._calculate_electron_screening()`` into a
+standalone :class:`TheoryModule` implementation.
+
+Physics (Section 2.1):
+    Debye screening in the host lattice reduces the effective Coulomb barrier
+    by 10-100 eV, exponentially enhancing low-energy tunnelling rates.
+
+    U_s = Z₁Z₂e² / (4πε₀ λ_D)
+    f_screen = exp(π η U_s / E)
+"""
+
+from __future__ import annotations
+
+import logging
+import math
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+from scipy import constants as const
+
+from app.physics_engine.theory_protocol import (
+    TheoryContribution,
+    TheoryMetadata,
+)
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
+logger = logging.getLogger(__name__)
+
+# Physical constants
+HBAR = const.hbar
+E_CHARGE = const.e
+KB = const.k
+EPS0 = const.epsilon_0
+ME = const.m_e
+MP = const.m_p
+ALPHA = const.alpha
+C = const.c
+
+
+class ElectronScreeningTheory:
+    """Debye electron screening enhancement for LENR tunnelling."""
+
+    # -- TheoryModule protocol properties ----------------------------------
+
+    @property
+    def theory_id(self) -> str:
+        return "electron_screening"
+
+    @property
+    def theory_name(self) -> str:
+        return "Electron Screening"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Debye screening in the host lattice reduces the effective Coulomb "
+            "barrier by 10-100 eV, exponentially enhancing low-energy tunnelling."
+        )
+
+    @property
+    def configurable_parameters(self) -> Dict[str, Any]:
+        return {
+            "Z1": {"default": 1, "description": "Charge number of reactant 1"},
+            "Z2": {"default": 1, "description": "Charge number of reactant 2"},
+        }
+
+    # -- TheoryModule protocol methods -------------------------------------
+
+    def is_applicable(self, conditions: Dict[str, float]) -> bool:
+        temperature = conditions.get("temperature", 0)
+        electron_density = conditions.get("electron_density", 0)
+        return temperature > 0 and electron_density > 0
+
+    def calculate(
+        self,
+        conditions: Dict[str, float],
+        config: Optional[Dict[str, Any]] = None,
+    ) -> TheoryContribution:
+        config = config or {}
+        T = conditions.get("temperature", 300.0)
+        n_e = conditions.get("electron_density", 6.8e28)
+        Z1 = config.get("Z1", 1)
+        Z2 = config.get("Z2", 1)
+
+        if not self.is_applicable(conditions):
+            return self._neutral("Conditions outside applicability range")
+
+        # Debye screening length
+        lambda_d = math.sqrt(EPS0 * KB * T / (n_e * E_CHARGE**2))
+
+        # Screening potential
+        U_screen_j = Z1 * Z2 * E_CHARGE**2 / (4 * math.pi * EPS0 * lambda_d)
+        U_screen_ev = U_screen_j / E_CHARGE
+
+        # --- Rydberg matter enhancement (integrated from legacy module) ---
+        # High-n Rydberg states create extended electron orbitals that
+        # further reduce the effective Coulomb barrier.
+        rydberg_enh_factor = 1.0
+        try:
+            from app.physics.rydberg_matter import (
+                calculate_rydberg_enhancement,
+                calculate_formation_probability,
+            )
+            n_rydberg = config.get("rydberg_n", 10)
+            rm_density = config.get("rydberg_density", 1e24)
+            rm_prob = calculate_formation_probability(T, 1e7)
+            if rm_prob > 0.01:
+                rm_enh = calculate_rydberg_enhancement(n_rydberg, rm_density, T)
+                # Modulate by formation probability; cap contribution
+                rydberg_enh_factor = 1.0 + min(rm_enh * rm_prob, 1e4) * 0.001
+                U_screen_ev *= rydberg_enh_factor
+        except Exception:
+            logger.debug("Rydberg matter integration unavailable, skipping")
+
+        # Enhancement factor: f = exp(π η U_s / E)
+        E_thermal = max(1.5 * KB * T / E_CHARGE, 0.01)  # eV, floor 10 meV
+        eta = Z1 * Z2 * ALPHA * math.sqrt(MP * C**2 / (2 * E_thermal * E_CHARGE))
+        enhancement = math.exp(min(math.pi * eta * U_screen_ev / E_thermal, 50.0))
+        enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
+
+        threshold_met = U_screen_ev > 10.0
+        confidence = min(1.0, U_screen_ev / 100.0) if threshold_met else U_screen_ev / 100.0
+
+        return TheoryContribution(
+            theory_id=self.theory_id,
+            theory_name=self.theory_name,
+            enhancement_factor=enhancement,
+            reaction_rate_modifier=enhancement,
+            energy_output_watts=0.0,
+            observables={
+                "screening_potential_eV": U_screen_ev,
+                "debye_length_nm": lambda_d * 1e9,
+                "rydberg_enhancement_factor": rydberg_enh_factor,
+                # Screening enhances D+D -> He-4 pathway (dominant LENR channel)
+                "product_He4": 1.0,
+                "product_neutrons": 0.0,
+                "product_gamma": 0.0,
+            },
+            parameters_used={
+                "temperature": T,
+                "electron_density": n_e,
+                "Z1": Z1,
+                "Z2": Z2,
+            },
+            is_applicable=True,
+            confidence=confidence,
+            references=[
+                "Assenbaum H.J. et al. (1987), Z. Phys. A 327, 461",
+                "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
+            ],
+        )
+
+    def get_metadata(self) -> TheoryMetadata:
+        return TheoryMetadata(
+            theory_id=self.theory_id,
+            theory_name=self.theory_name,
+            description=self.description,
+            configurable_parameters=self.configurable_parameters,
+            references=[
+                "Assenbaum H.J. et al. (1987), Z. Phys. A 327, 461",
+                "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
+            ],
+            category="primary",
+        )
+
+    # -- Helpers -----------------------------------------------------------
+
+    def _neutral(self, reason: str) -> TheoryContribution:
+        logger.debug("ElectronScreening not applicable: %s", reason)
+        return TheoryContribution(
+            theory_id=self.theory_id,
+            theory_name=self.theory_name,
+            is_applicable=False,
+            confidence=0.0,
+        )

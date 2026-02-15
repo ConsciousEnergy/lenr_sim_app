@@ -99,10 +99,11 @@ const SettingsPage = () => {
   
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
   
   // Check system status on mount
   useEffect(() => {
-    checkSystemStatus();
+    checkSystemStatus().finally(() => setStatusLoading(false));
     loadSettings();
   }, []);
   
@@ -462,10 +463,11 @@ const SettingsPage = () => {
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">System Status</Typography>
-                <IconButton onClick={checkSystemStatus} size="small">
+                <IconButton onClick={() => { setStatusLoading(true); checkSystemStatus().finally(() => setStatusLoading(false)); }} size="small">
                   <RefreshIcon />
                 </IconButton>
               </Box>
+              {statusLoading && <LinearProgress sx={{ mb: 1 }} />}
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={2}>

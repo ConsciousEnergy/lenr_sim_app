@@ -1,7 +1,7 @@
 # Physics Module Developer Guide
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.3-beta  
+**Last Updated:** February 2026
 
 ---
 
@@ -65,6 +65,65 @@ This guide provides developers with a comprehensive understanding of the physics
 │  │ tunneling.py   │ │ collapse   │ │ matter.py  │ │ interactions │         │
 │  └────────────────┘ │ .py        │ └────────────┘ │ .py          │         │
 │                     └────────────┘                └──────────────┘         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    MHD PHYSICS LAYER (v0.3.0.1-beta)                        │
+│                                                                             │
+│  ┌───────────────────────┐   ┌───────────────────────────────────────────┐ │
+│  │ dimensionless_        │   │ theories/bubble_mhd_confinement.py       │ │
+│  │ parameters.py         │──▶│ (Full MHD nano-confinement theory)       │ │
+│  │ Rm, Ha, S, β, N, Pm  │   └───────────────────────────────────────────┘ │
+│  └───────────────────────┘                    │                            │
+│  ┌───────────────────────┐                    │                            │
+│  │ hartmann_flow.py      │────────────────────┤                            │
+│  │ Channel profiles      │                    │                            │
+│  └───────────────────────┘                    │                            │
+│  ┌───────────────────────┐                    │                            │
+│  │ hall_faraday_         │────────────────────┤                            │
+│  │ channels.py           │                    │                            │
+│  │ σ tensor, Faraday EMF │                    │                            │
+│  └───────────────────────┘                    │                            │
+│  ┌───────────────────────┐                    │                            │
+│  │ multiscale_bridge.py  │────────────────────┤                            │
+│  │ MACRO→NUCLEAR cascade │                    │                            │
+│  └───────────────────────┘                    │                            │
+│  ┌───────────────────────┐                    │                            │
+│  │ nuclear_force_        │────────────────────┘                            │
+│  │ coupling.py           │                                                 │
+│  │ S-factor, screening   │                                                 │
+│  └───────────────────────┘                                                 │
+│  ┌───────────────────────┐                                                 │
+│  │ mhd_induction_        │                                                 │
+│  │ solver.py             │ (1D Z-pinch + 3D Cartesian)                     │
+│  └───────────────────────┘                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               THEORY TESTBED LAYER (v0.3.2-beta) — 19 Modules             │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ theory_pipeline.py  — Registry, Runner, Combiner (all 19 theories)    │ │
+│  │ theory_protocol.py  — TheoryModule protocol, TheoryContribution       │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│     │                                                                       │
+│  ┌──┴─────────────────────────────────────────────────────────────────────┐ │
+│  │ theories/                                                              │ │
+│  │  electron_screening.py │ coherent_qed.py    │ hydroton.py             │ │
+│  │  nae_model.py          │ bubble_mhd_confinement.py │ casimir.py       │ │
+│  │  quantum_tunneling.py  │ takahashi_tsc.py   │ hagelstein_phonon.py    │ │
+│  │  vysotskii_ccs.py      │ swartz_nanor.py    │ miles_heat_helium.py    │ │
+│  │  widom_larsen.py       │ kim_bec.py         │ matsumoto_enc.py        │ │
+│  │  chubb_ion_band.py     │ piantelli_ni_h.py  │ iwamura_transmutation.py│ │
+│  │  letts_laser.py        │                                              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ Scoring & Validation                                                   │ │
+│  │  theory_relationships.py — 19-node graph, 70+ edges, property taxonomy │ │
+│  │  theory_scoring.py       — 5-factor Predictive Probability Score       │ │
+│  │  theory_validation.py    — 7 cross-examination checks                  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -359,6 +418,64 @@ SCREENING_POTENTIALS['new_material'] = XXX  # eV
 
 ---
 
+## Creating a New TheoryModule
+
+To add a new LENR theory to the testbed, implement the `TheoryModule` protocol and register it in the pipeline.
+
+### TheoryModule Protocol
+
+Each theory module must define these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `theory_id` | str | Unique identifier (e.g., `"bubble_mhd_confinement"`) |
+| `theory_name` | str | Human-readable name |
+| `description` | str | Brief description of the theory |
+| `configurable_parameters` | List[Dict] | Parameter definitions with keys, defaults, ranges |
+
+### Required Methods
+
+| Method | Signature | Purpose |
+|--------|------------|---------|
+| `is_applicable` | `(conditions: Dict) -> bool` | Return `True` if the theory applies under the given physical conditions |
+| `calculate` | `(conditions: Dict, config: Dict) -> TheoryContribution` | Compute the theory's contribution |
+| `get_metadata` | `() -> Dict` | Return theory metadata (id, name, description, parameters) |
+
+### TheoryContribution Return Type
+
+The `calculate` method must return a `TheoryContribution` (or equivalent dict) with these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `theory_id` | str | Same as module's theory_id |
+| `theory_name` | str | Same as module's theory_name |
+| `enhancement_factor` | float | Multiplicative enhancement over baseline |
+| `reaction_rate_modifier` | float | Modifier to reaction rate |
+| `energy_output_watts` | float | Predicted energy output |
+| `observables` | Dict | **Must include** `product_He4`, `product_neutrons`, `product_gamma` for scoring completeness |
+| `parameters_used` | Dict | Input parameters actually used |
+| `is_applicable` | bool | Whether theory applied to conditions |
+| `confidence` | float | 0–1 confidence in the result |
+| `references` | List[str] | Literature references |
+
+**Important:** The `observables` dict **MUST** include `product_He4`, `product_neutrons`, and `product_gamma` (or equivalent keys that map to these) so the scoring system can evaluate observables completeness. Theories missing these keys receive lower completeness scores.
+
+### Registration
+
+Register the new module in `theory_pipeline.py` inside `get_default_pipeline()`:
+
+```python
+from app.physics_engine.theories.my_new_theory import MyNewTheoryModule
+
+def get_default_pipeline() -> TheoryPipeline:
+    pipeline = TheoryPipeline()
+    pipeline.register(MyNewTheoryModule())
+    # ... other theories
+    return pipeline
+```
+
+---
+
 ## Testing
 
 ### Running Physics Tests
@@ -386,6 +503,54 @@ Each physics module has corresponding tests that verify:
 2. **Vectorization:** Use numpy vectorized operations where possible
 3. **Parallel Processing:** `reaction_rates.py` supports multi-core calculations
 4. **Memory:** Large simulations should use generators or chunked processing
+
+---
+
+## Cross-Theory Coupling Pipeline (v0.3.3-beta)
+
+The `TheoryPipeline.run_coupled()` method executes theories in topological dependency order:
+
+```python
+from app.physics_engine.theory_pipeline import get_default_pipeline
+
+pipeline = get_default_pipeline()
+result = pipeline.run_coupled(
+    conditions={"temperature": 350, "loading_ratio": 0.92, ...},
+    enabled_theories=["electron_screening", "coherent_qed", "hydroton"],
+)
+
+# Enriched conditions contain upstream outputs
+print(result.conditions["electron_screening__screening_potential_eV"])
+```
+
+### How It Works
+
+1. `TheoryGraph.topological_sort()` determines execution order from directed edges
+2. Each theory runs with the **enriched** conditions dict
+3. Observable outputs are injected as `{theory_id}__{key}` (namespaced)
+4. Select high-value keys are promoted to top-level (e.g., `screening_potential_eV`)
+
+### Creating a New Theory Module
+
+```python
+# app/physics_engine/theories/my_theory.py
+class MyTheory:
+    @property
+    def theory_id(self) -> str: return "my_theory"
+    @property
+    def theory_name(self) -> str: return "My Theory"
+    @property
+    def description(self) -> str: return "..."
+    @property
+    def configurable_parameters(self) -> dict: return {}
+
+    def is_applicable(self, conditions): return True
+    def calculate(self, conditions, config=None):
+        return TheoryContribution(theory_id="my_theory", ...)
+    def get_metadata(self): return TheoryMetadata(...)
+```
+
+Register in `theory_pipeline.py`'s `get_default_pipeline()` function.
 
 ---
 

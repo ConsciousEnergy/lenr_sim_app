@@ -108,7 +108,7 @@ const TheoryPaperPage = () => {
               variant="outlined"
             />
             <Chip 
-              label="Date: 02-13-2025" 
+              label="Date: 02-14-2026" 
               size="small" 
               variant="outlined"
             />
@@ -544,6 +544,19 @@ const TheoryPaperPage = () => {
 
               <Divider sx={{ my: 3 }} />
 
+              {/* 2.4 Storms' Hydroton / NAE */}
+              <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>2.4 Storms' Hydroton and Nuclear Active Environment (NAE)</Typography>
+                  <Typography variant="body2" paragraph>
+                    Edmund Storms proposes that LENR occurs within specific Nuclear Active Environments (NAE) — nano-scale cracks (~1 nm width) in metallic surfaces formed through repeated hydrogen loading/unloading cycles. Within these NAE sites, hydrogen atoms form the <strong>Hydroton</strong>: a linear covalent H-e-H-e-H chain (related to Rydberg matter and metallic hydrogen) that undergoes resonance-driven fusion.
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    The key physics: the chain vibrates at resonance frequency, and when kinetic energy aligns at a node, D+D → He-4 fusion occurs. Energy is released as a cascade of multiple lower-energy photons (each ~1-5 MeV) rather than a single 23.8 MeV gamma, explaining the absence of dangerous radiation. The reaction rate depends on gap fitness (Gaussian centered at 1 nm), loading factor, and resonance alignment probability via the Boltzmann factor exp(-ℏω/k_BT).
+                  </Typography>
+              </Box>
+
+              <Divider sx={{ my: 3 }} />
+
               {/* 2.5 Casimir Effect */}
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -603,6 +616,19 @@ const TheoryPaperPage = () => {
                     for deuterons at this density.
                   </Typography>
                 </Alert>
+              </Box>
+
+              <Divider sx={{ my: 3 }} />
+
+              {/* 2.7 Oppenheimer-Phillips Stripping */}
+              <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>2.7 Oppenheimer-Phillips Stripping</Typography>
+                  <Typography variant="body2" paragraph>
+                    The Oppenheimer-Phillips (O-P) process is a deuteron stripping reaction where the neutron from an incident deuteron is captured by a target nucleus while the proton is repelled by the Coulomb barrier. Because only the neutron needs to penetrate the nuclear potential, the effective Coulomb barrier is significantly reduced compared to full deuteron absorption, enabling nuclear reactions at sub-Coulomb energies.
+                  </Typography>
+                  <Typography variant="body2" paragraph>
+                    In LENR systems, the O-P process provides a critical pathway for transmutation and energy release. The stripping cross section σ_OP depends on the deuteron breakup probability and the neutron capture cross section of the target nucleus. Combined with lattice screening effects (Section 2.1), the O-P mechanism can enhance transmutation rates by factors of 10²–10⁴ at energies below 1 keV, particularly relevant for Pd-D systems where Pd isotopes have favorable neutron capture cross sections.
+                  </Typography>
               </Box>
 
               <Divider sx={{ my: 3 }} />
@@ -902,6 +928,114 @@ const TheoryPaperPage = () => {
                 Energy conservation requires that E_nuclear = E_phonon + E_electronic + E_recoil + E_γ. The suppression 
                 of high-energy gamma emission in LENR suggests most energy is channeled into lattice and electronic 
                 degrees of freedom, consistent with observed excess heat without commensurate radiation.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Section 6: Extended Theoretical Models */}
+          <Accordion expanded={expandedSection === 'extended'} onChange={handleChange('extended')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h5">6. Extended Theoretical Models</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" paragraph>
+                Beyond the six core mechanisms, our simulation framework incorporates 13 additional peer-reviewed LENR theories as pluggable modules. Each implements a standardized TheoryModule protocol enabling direct comparison, scoring, and mathematical unification.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.1 Takahashi Tetrahedral Symmetric Condensate (TSC)</Typography>
+              <Typography variant="body2" paragraph>
+                Akito Takahashi's TSC theory proposes that four deuterons can form a tetrahedral symmetric condensate within the Pd lattice, enabling 4D multi-body fusion: 4D → He-4 + He-4 + 47.6 MeV. The tetrahedral symmetry minimizes Coulomb repulsion through equal charge distribution, dramatically enhancing the tunnelling probability compared to 2-body reactions.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.2 Hagelstein Phonon-Nuclear Coupling</Typography>
+              <Typography variant="body2" paragraph>
+                Peter Hagelstein's model proposes coherent energy transfer between nuclear and phonon degrees of freedom. The 23.8 MeV released in D+D → He-4 is converted into ~10⁷ phonons (each ~2.5 meV) through a relativistic phonon-nuclear coupling mechanism with coupling strength g_ph-nuc ≈ 0.1–1 eV/Å, avoiding single high-energy gamma emission.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.3 Vysotskii Coherent Correlated States (CCS)</Typography>
+              <Typography variant="body2" paragraph>
+                Vladimir Vysotskii's CCS theory demonstrates that particles in a non-stationary (time-varying) potential well develop anomalously large nuclear overlap integrals. The CCS wavepacket squeezes position uncertainty by √(1-r²) where r is the position-momentum correlation coefficient. When |r| → 1, tunnelling enhancement can reach 10⁴⁰ compared to standard Gamow. This theory also explains biological transmutation.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.4 Swartz NANOR/LANR Optimal Operating Point</Typography>
+              <Typography variant="body2" paragraph>
+                Mitchell Swartz identified a sharp Optimal Operating Point (OOP) in the 2D parameter space of deuterium loading ratio vs. applied current density. The NANOR device (ZrO₂-PdD nanomaterial) demonstrated reproducible excess heat at MIT when operated near this OOP, modeled as a 2D Gaussian response surface.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.5 Miles Heat-Helium Correlation</Typography>
+              <Typography variant="body2" paragraph>
+                Melvin Miles established the definitive correlation: excess heat in Pd-D systems is accompanied by He-4 production at a rate of ~2.6 × 10¹¹ atoms/s per watt, consistent with D+D → He-4 + 23.8 MeV (thermal). This provides direct evidence that the effect is nuclear. Independently verified by University of Texas and Brian Oliver at Rockwell International.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.6 Widom-Larsen Ultra-Low-Momentum Neutrons</Typography>
+              <Typography variant="body2" paragraph>
+                The Widom-Larsen theory proposes that collective surface plasmon polaritons on metal hydride surfaces can renormalize electron mass above the threshold for inverse beta decay (e⁻ + p → n + νₑ), producing ultra-low-momentum neutrons that are immediately captured by nearby nuclei, leading to transmutation and energy release without dangerous radiation.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.7 Matsumoto Electro-Nuclear Collapse (ENC)</Typography>
+              <Typography variant="body2" paragraph>
+                Takaaki Matsumoto's ENC theory proposes that under extreme electrolytic conditions, micro-ball-lightning-like structures can form and collapse, concentrating nuclear-scale energy densities. The collapse produces transmutation products and a characteristic pattern of nuclear fragments.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.8 Chubb Ion Band State</Typography>
+              <Typography variant="body2" paragraph>
+                Scott and Talbot Chubb propose that deuterons in a Pd lattice can occupy Bloch-symmetric quantum states (ion band states), enabling nuclear reactions through a fundamentally different mechanism than point-particle tunnelling. The periodic lattice potential delocalizes the deuteron wavefunction across multiple unit cells.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.9 Piantelli Nickel-Hydrogen</Typography>
+              <Typography variant="body2" paragraph>
+                Francesco Piantelli's Ni-H model focuses on proton absorption in nickel at elevated temperatures (400–700 K activation range). The system produces excess heat through proton-nickel nuclear interactions rather than D-D fusion, representing an alternative LENR pathway.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.10 Iwamura Transmutation</Typography>
+              <Typography variant="body2" paragraph>
+                Yasuhiro Iwamura demonstrated selective nuclear transmutation using multi-layer Pd/CaO/Pd thin-film structures with deuterium gas permeation. Elements deposited on the surface (e.g., Cs, Ba, Sr) were transmuted to higher-Z elements, confirmed by XPS and ICP-MS analysis.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.11 Letts-Cravens Dual-Laser Stimulation</Typography>
+              <Typography variant="body2" paragraph>
+                Dennis Letts and Dennis Cravens showed that irradiating loaded Pd cathodes with two lasers at specific frequencies (producing a beat frequency matching the Pd phonon spectrum) triggers excess heat production. This provides a controlled triggering mechanism for LENR, modeled through phonon-mode coupling.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>Theory-to-Simulation Mapping</Typography>
+              <Typography variant="body2" component="div">
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.3)' }}>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Section</th>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Module ID</th>
+                      <th style={{ textAlign: 'left', padding: '6px 8px' }}>Simulation Page</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['2.1 Rydberg / Screening', 'electron_screening', '/unified-theory'],
+                      ['2.3 Double-Layer QED', 'coherent_qed', '/unified-theory'],
+                      ['2.4 Hydroton / NAE', 'hydroton, nae_model', '/unified-theory'],
+                      ['2.5 Casimir', 'casimir_confinement', '/casimir-calculator'],
+                      ['2.6 BEC / Kim', 'kim_bec', '/unified-theory'],
+                      ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips', '/unified-theory'],
+                      ['2.8 Tunneling', 'quantum_tunneling', '/unified-theory'],
+                      ['6.1 Takahashi TSC', 'takahashi_tsc', '/unified-theory'],
+                      ['6.2 Hagelstein Phonon', 'hagelstein_phonon', '/unified-theory'],
+                      ['6.3 Vysotskii CCS', 'vysotskii_ccs', '/unified-theory'],
+                      ['6.4 Swartz NANOR', 'swartz_nanor', '/unified-theory'],
+                      ['6.5 Miles Heat-He', 'miles_heat_helium', '/analytics'],
+                      ['6.6 Widom-Larsen', 'widom_larsen', '/unified-theory'],
+                      ['6.7 Matsumoto ENC', 'matsumoto_enc', '/unified-theory'],
+                      ['6.8 Chubb Ion Band', 'chubb_ion_band', '/unified-theory'],
+                      ['6.9 Piantelli Ni-H', 'piantelli_ni_h', '/unified-theory'],
+                      ['6.10 Iwamura', 'iwamura_transmutation', '/unified-theory'],
+                      ['6.11 Letts Laser', 'letts_laser', '/unified-theory'],
+                    ].map(([section, moduleId, page], i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <td style={{ padding: '4px 8px', fontSize: '0.85rem' }}>{section}</td>
+                        <td style={{ padding: '4px 8px', fontSize: '0.85rem', fontFamily: 'monospace' }}>{moduleId}</td>
+                        <td style={{ padding: '4px 8px', fontSize: '0.85rem' }}>{page}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -1373,6 +1507,117 @@ const TheoryPaperPage = () => {
                 Full Paper on GitHub
               </MuiLink>
             </ListItem>
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 2 }}>
+              Extended Theory Module References
+            </Typography>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [19] Oppenheimer, J. R. & Phillips, M. (1935)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Note on the Transmutation Function for Deuterons. <em>Physical Review</em>, 48(6), 500-502.
+              </Typography>
+              <MuiLink 
+                href="https://doi.org/10.1103/PhysRev.48.500" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                DOI: 10.1103/PhysRev.48.500
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [20] Storms, E. (2014)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                <em>The Explanation of Low Energy Nuclear Reaction: An Examination of the Relationship Between Observation and Explanation</em>. Infinite Energy Press. Introduces the Hydroton model and Nuclear Active Environment (NAE) theory.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [21] Vysotskii, V. I., Adamenko, S. V., & Vysotskyy, M. V. (2012)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Coherent correlated states of interacting particles — the possible key to paradoxes and features of LENR. <em>Current Science</em>, 108(4), 30-36.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [22] Swartz, M. (2012)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                NANOR-type CF/LANR Components and the Optimal Operating Point Manifold. <em>Journal of Condensed Matter Nuclear Science</em>, 6, 1-18. Demonstrated at MIT IAP courses.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [23] Miles, M. H. & Bush, B. F. (1994)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Heat and Helium Measurements in Deuterated Palladium. <em>Transactions of Fusion Technology</em>, 26(4T), 156-159. Established the heat-helium correlation at ~2.6 × 10¹¹ He-4 atoms/s per watt.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [24] Matsumoto, T. (1995)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Electro-Nuclear Collapse and the Formation of Nuclear Products. <em>Fusion Technology</em>, 27, 194-206.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [25] Chubb, S. R. & Chubb, T. A. (1994)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Ion Band State Fusion. <em>Fusion Technology</em>, 24(4), 403-415. Bloch-symmetric quantum states for deuterons in periodic lattice potentials.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [26] Piantelli, F. (2010)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Nickel-Hydrogen Exothermal Reactions. <em>Patent WO2010058288A1</em>. Proton absorption in nickel at 400–700 K producing anomalous heat.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [27] Iwamura, Y. et al. (2002)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Elemental Analysis of Pd Complexes: Effects of D₂ Gas Permeation. <em>Japanese Journal of Applied Physics</em>, 41(7A), 4642-4650. Selective nuclear transmutation via Pd/CaO/Pd multilayer structures.
+              </Typography>
+              <MuiLink 
+                href="https://doi.org/10.1143/JJAP.41.4642" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                DOI: 10.1143/JJAP.41.4642
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [28] Letts, D. & Cravens, D. (2006)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Laser Stimulation of Deuterated Palladium: Past and Present. <em>Proceedings of the 10th International Conference on Cold Fusion (ICCF-10)</em>. Dual-laser beat-frequency triggering of excess heat via phonon-mode coupling.
+              </Typography>
+            </ListItem>
           </List>
 
           <Divider sx={{ my: 3 }} />
@@ -1386,8 +1631,8 @@ const TheoryPaperPage = () => {
               <MuiLink href="https://www.lenr-canr.org" target="_blank" rel="noopener noreferrer">
                 LENR-CANR.org - Cold Fusion Archive
               </MuiLink>
-              <MuiLink href="https://www.lenr.org" target="_blank" rel="noopener noreferrer">
-                LENR.org - Low Energy Nuclear Reactions Community
+              <MuiLink href="https://www.lenr-forum.com/" target="_blank" rel="noopener noreferrer">
+                LENR Forum - Low Energy Nuclear Reactions Community
               </MuiLink>
             </Box>
           </Alert>

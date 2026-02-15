@@ -40,7 +40,7 @@ export const analyticsApi = {
           include_baseline: includeBaseline,
         },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Analytics API unavailable, using local fallback:', error.message);
       return getLocalStats();
@@ -58,7 +58,7 @@ export const analyticsApi = {
       const response = await api.get('/api/analytics/distribution/type', {
         params: { session_id: sessionId },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Type distribution API unavailable:', error.message);
       return getLocalTypeDistribution();
@@ -76,7 +76,7 @@ export const analyticsApi = {
       const response = await api.get('/api/analytics/distribution/material', {
         params: { session_id: sessionId },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Material distribution API unavailable:', error.message);
       return [];
@@ -95,7 +95,7 @@ export const analyticsApi = {
       const response = await api.get('/api/analytics/distribution/temperature', {
         params: { session_id: sessionId, bins },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Temperature distribution API unavailable:', error.message);
       return getLocalTemperatureDistribution();
@@ -116,7 +116,7 @@ export const analyticsApi = {
       const response = await api.get('/api/analytics/timeline', {
         params: { session_id: sessionId, limit },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Timeline API unavailable:', error.message);
       return getLocalTimeline();
@@ -156,7 +156,7 @@ export const analyticsApi = {
           sort_order: sortOrder,
         },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Experiments API unavailable:', error.message);
       return getLocalExperiments(options);
@@ -171,7 +171,7 @@ export const analyticsApi = {
   getExperiment: async (experimentId) => {
     try {
       const response = await api.get(`/api/analytics/experiments/${experimentId}`);
-      return response.data;
+      return response;
     } catch (error) {
       if (error.status === 404) {
         throw new ApiError('Experiment not found', 404);
@@ -199,7 +199,7 @@ export const analyticsApi = {
       // Also save to localStorage as backup
       saveToLocalStorage(response.data);
       
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Failed to save to API, saving locally:', error.message);
       
@@ -226,7 +226,7 @@ export const analyticsApi = {
   updateExperiment: async (experimentId, updates) => {
     try {
       const response = await api.put(`/api/analytics/experiments/${experimentId}`, updates);
-      return response.data;
+      return response;
     } catch (error) {
       if (error.status === 404) {
         throw new ApiError('Experiment not found', 404);
@@ -264,7 +264,7 @@ export const analyticsApi = {
   getExperimentTimeline: async (experimentId) => {
     try {
       const response = await api.get(`/api/analytics/experiments/${experimentId}/timeline`);
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Experiment timeline API unavailable:', error.message);
       return [];
@@ -282,7 +282,7 @@ export const analyticsApi = {
       const response = await api.post(`/api/analytics/experiments/${experimentId}/timeline`, {
         points,
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Failed to add timeline points:', error.message);
       return { added: 0 };
@@ -301,7 +301,7 @@ export const analyticsApi = {
         params: { session_id: sessionId },
         responseType: 'blob',
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('CSV export API unavailable, using local export');
       return exportLocalCSV();
@@ -319,7 +319,7 @@ export const analyticsApi = {
       const response = await api.get('/api/analytics/export/json', {
         params: { session_id: sessionId },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('JSON export API unavailable, using local export');
       return getLocalExperimentsRaw();
@@ -336,11 +336,131 @@ export const analyticsApi = {
       const response = await api.post('/api/analytics/compare', {
         experiment_ids: experimentIds,
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Compare API unavailable:', error.message);
       // Fallback: fetch from local storage
       return getLocalExperimentsById(experimentIds);
+    }
+  },
+
+  // ==================
+  // Theory Network / Scoring endpoints (v0.3.1-beta)
+  // ==================
+
+  /**
+   * Get the full theory relationship graph (nodes + edges).
+   * @returns {Promise<{nodes: Object[], edges: Object[], properties_taxonomy: Object}>}
+   */
+  getTheoryGraph: async () => {
+    try {
+      const response = await api.get('/api/analytics/theory-graph');
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getTheoryGraph error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Get the shared physical properties taxonomy.
+   * @returns {Promise<{properties: Object}>}
+   */
+  getTheoryProperties: async () => {
+    try {
+      const response = await api.get('/api/analytics/theory-properties');
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getTheoryProperties error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Compute predictive probability scores for all theories.
+   * @param {Object} conditions - Physical conditions
+   * @returns {Promise<{conditions: Object, scores: Object, n_theories: number}>}
+   */
+  computeTheoryScores: async (conditions = {}) => {
+    try {
+      const defaults = {
+        temperature: 300.0,
+        loading_ratio: 0.9,
+        pressure: 101325.0,
+        electron_density: 6.8e28,
+        current_density_mA_cm2: 50.0,
+        excess_heat_W: 1.0,
+      };
+      const response = await api.post('/api/analytics/theory-scores', {
+        ...defaults,
+        ...conditions,
+      });
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] computeTheoryScores error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Compare specific theories side-by-side.
+   * @param {string[]} theoryIds
+   * @param {Object} conditions
+   * @returns {Promise<Object>}
+   */
+  compareTheories: async (theoryIds, conditions = {}) => {
+    try {
+      const defaults = {
+        temperature: 300.0,
+        loading_ratio: 0.9,
+        pressure: 101325.0,
+        electron_density: 6.8e28,
+      };
+      const response = await api.post('/api/analytics/theory-comparison', {
+        theory_ids: theoryIds,
+        conditions: { ...defaults, ...conditions },
+      });
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] compareTheories error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Run a parameter sweep across all theories.
+   * @param {Object} params
+   * @returns {Promise<Object>}
+   */
+  parameterSweep: async (params = {}) => {
+    try {
+      const response = await api.post('/api/analytics/parameter-sweep', params);
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] parameterSweep error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Get the validation report for all theories.
+   * @param {Object} conditions
+   * @returns {Promise<Object>}
+   */
+  getValidationReport: async (conditions = {}) => {
+    try {
+      const response = await api.get('/api/analytics/validation-report', {
+        params: {
+          temperature: conditions.temperature || 300.0,
+          loading_ratio: conditions.loading_ratio || 0.9,
+          pressure: conditions.pressure || 101325.0,
+          electron_density: conditions.electron_density || 6.8e28,
+        },
+      });
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getValidationReport error:', err);
+      throw err;
     }
   },
 };
@@ -565,7 +685,6 @@ function exportLocalCSV() {
   const csv = [headers.join(','), ...rows].join('\n');
   return new Blob([csv], { type: 'text/csv' });
 }
-
 
 export default analyticsApi;
 export { getSessionId };

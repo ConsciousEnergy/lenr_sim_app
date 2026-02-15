@@ -46,11 +46,16 @@ class ElectromagneticSolver:
             self.magnetic_field = np.zeros(self.grid_shape + (3,), dtype=float) # Bx, By, Bz at node centers?
             logger.info(f"ElectromagneticSolver initialized with grid. Shape: {self.grid_shape}")
         else:
+            # Non-spatial (0-D) mode: represent the EM state as a single
+            # uniform field vector.  Values are initialised from config if
+            # provided, otherwise default to zero.
             self.grid_shape = None
             self.dx = self.dy = self.dz = None
-            self.electric_field = np.zeros((1, 3), dtype=float) # Placeholder
-            self.magnetic_field = np.zeros((1, 3), dtype=float) # Placeholder
-            logger.warning("ElectromagneticSolver initialized without grid.")
+            _init_E = self.config.get("initial_electric_field", [0.0, 0.0, 0.0])
+            _init_B = self.config.get("initial_magnetic_field", [0.0, 0.0, 0.0])
+            self.electric_field = np.array([_init_E], dtype=float)  # shape (1, 3)
+            self.magnetic_field = np.array([_init_B], dtype=float)  # shape (1, 3)
+            logger.warning("ElectromagneticSolver initialized without grid (0-D mode).")
         
         # Consider Courant stability condition for FDTD
         # dt <= 1 / (c * sqrt(1/dx^2 + 1/dy^2 + 1/dz^2))
@@ -139,57 +144,99 @@ class ElectromagneticSolver:
 
     def _apply_em_boundary_conditions(self):
         """Applies boundary conditions to the E and B fields.
-        Currently implements PEC (Perfect Electric Conductor) by setting tangential E=0.
-        Note: Magnetic boundary conditions might need separate handling in the FDTD loop.
+
+        Supported types:
+        - ``pec``  -- Perfect Electric Conductor (tangential E = 0, normal B = 0)
+        - ``pmc``  -- Perfect Magnetic Conductor (tangential B = 0, normal E = 0)
+        - ``periodic`` -- Wrap-around in all directions
+        - ``pml``  -- Perfectly Matched Layer (**not yet implemented**;
+          requires split-field / stretched-coordinate FDTD extensions)
         """
-        if not self.grid or self.grid_shape is None: return
+        if not self.grid or self.grid_shape is None:
+            return
 
         nx, ny, nz = self.grid_shape
         E = self.electric_field
-        # B = self.magnetic_field # For magnetic BCs if needed later
+        B = self.magnetic_field
 
-        if self.boundary_condition_type == "pec": # Perfect Electric Conductor
-            # Tangential E = 0 on boundaries.
-            # Assumes standard Yee grid where components tangential to a face lie *on* that face.
-
-            # Faces at x=0 and x=nx-1 (YZ planes)
+        if self.boundary_condition_type == "pec":
+            # --- PEC: tangential E = 0 on all boundary faces ---
             if nx > 1:
-                E[0, :, :, 1] = 0  # Ey on x=0 face
-                E[0, :, :, 2] = 0  # Ez on x=0 face
-                E[-1, :, :, 1] = 0 # Ey on x=Lx face (index nx-1 or equivalent)
-                E[-1, :, :, 2] = 0 # Ez on x=Lx face
-            
-            # Faces at y=0 and y=ny-1 (XZ planes)
+                E[0, :, :, 1] = 0; E[0, :, :, 2] = 0
+                E[-1, :, :, 1] = 0; E[-1, :, :, 2] = 0
             if ny > 1:
-                E[:, 0, :, 0] = 0  # Ex on y=0 face
-                E[:, 0, :, 2] = 0  # Ez on y=0 face
-                E[:, -1, :, 0] = 0 # Ex on y=Ly face
-                E[:, -1, :, 2] = 0 # Ez on y=Ly face
-
-            # Faces at z=0 and z=nz-1 (XY planes)
+                E[:, 0, :, 0] = 0; E[:, 0, :, 2] = 0
+                E[:, -1, :, 0] = 0; E[:, -1, :, 2] = 0
             if nz > 1:
-                E[:, :, 0, 0] = 0  # Ex on z=0 face
-                E[:, :, 0, 1] = 0  # Ey on z=0 face
-                E[:, :, -1, 0] = 0 # Ex on z=Lz face
-                E[:, :, -1, 1] = 0 # Ey on z=Lz face
+                E[:, :, 0, 0] = 0; E[:, :, 0, 1] = 0
+                E[:, :, -1, 0] = 0; E[:, :, -1, 1] = 0
 
-            # TODO: Add handling for Normal B = 0 if required separately.
-            # Example (conceptual, might need adjustment based on staggering):
-            # if nx > 1: B[0, :, :, 0] = 0; B[-1, :, :, 0] = 0 
-            # if ny > 1: B[:, 0, :, 1] = 0; B[:, -1, :, 1] = 0
-            # if nz > 1: B[:, :, 0, 2] = 0; B[:, :, -1, 2] = 0
-            
-            logger.debug("Applied PEC boundary conditions (Tangential E=0).")
-            
-        elif self.boundary_condition_type == "pmc": # Perfect Magnetic Conductor
-            # Placeholder: Tangential H = 0 (implies Tangential B = 0), Normal E = 0
-            logger.warning("PMC boundary conditions not fully implemented.")
-            pass
-        elif self.boundary_condition_type == "pml": # Perfectly Matched Layer (Absorbing)
-            # Placeholder: Requires significant additional implementation
-            logger.warning("PML boundary conditions not implemented.")
-            pass
-        # TODO: Add periodic boundary conditions if needed
+            # --- PEC: normal B = 0 on all boundary faces ---
+            # For a PEC surface the normal component of B must vanish
+            # (∇·B = 0 combined with tangential E = 0 enforces this).
+            if nx > 1:
+                B[0, :, :, 0] = 0; B[-1, :, :, 0] = 0
+            if ny > 1:
+                B[:, 0, :, 1] = 0; B[:, -1, :, 1] = 0
+            if nz > 1:
+                B[:, :, 0, 2] = 0; B[:, :, -1, 2] = 0
+
+            logger.debug("Applied PEC boundary conditions (tan E=0, norm B=0).")
+
+        elif self.boundary_condition_type == "pmc":
+            # --- PMC: tangential B = 0 on all boundary faces ---
+            if nx > 1:
+                B[0, :, :, 1] = 0; B[0, :, :, 2] = 0
+                B[-1, :, :, 1] = 0; B[-1, :, :, 2] = 0
+            if ny > 1:
+                B[:, 0, :, 0] = 0; B[:, 0, :, 2] = 0
+                B[:, -1, :, 0] = 0; B[:, -1, :, 2] = 0
+            if nz > 1:
+                B[:, :, 0, 0] = 0; B[:, :, 0, 1] = 0
+                B[:, :, -1, 0] = 0; B[:, :, -1, 1] = 0
+
+            # --- PMC: normal E = 0 on all boundary faces ---
+            if nx > 1:
+                E[0, :, :, 0] = 0; E[-1, :, :, 0] = 0
+            if ny > 1:
+                E[:, 0, :, 1] = 0; E[:, -1, :, 1] = 0
+            if nz > 1:
+                E[:, :, 0, 2] = 0; E[:, :, -1, 2] = 0
+
+            logger.debug("Applied PMC boundary conditions (tan B=0, norm E=0).")
+
+        elif self.boundary_condition_type == "periodic":
+            # --- Periodic: wrap field values across opposite faces ---
+            if nx > 1:
+                E[0, :, :, :] = E[-2, :, :, :]
+                E[-1, :, :, :] = E[1, :, :, :]
+                B[0, :, :, :] = B[-2, :, :, :]
+                B[-1, :, :, :] = B[1, :, :, :]
+            if ny > 1:
+                E[:, 0, :, :] = E[:, -2, :, :]
+                E[:, -1, :, :] = E[:, 1, :, :]
+                B[:, 0, :, :] = B[:, -2, :, :]
+                B[:, -1, :, :] = B[:, 1, :, :]
+            if nz > 1:
+                E[:, :, 0, :] = E[:, :, -2, :]
+                E[:, :, -1, :] = E[:, :, 1, :]
+                B[:, :, 0, :] = B[:, :, -2, :]
+                B[:, :, -1, :] = B[:, :, 1, :]
+
+            logger.debug("Applied periodic EM boundary conditions.")
+
+        elif self.boundary_condition_type == "pml":
+            # PML (Perfectly Matched Layer) requires a split-field or
+            # stretched-coordinate FDTD formulation with graded lossy
+            # layers.  This is a significant extension and is deferred
+            # for a future release.  For now we fall back to PEC.
+            logger.warning(
+                "PML boundary conditions not yet implemented; "
+                "falling back to PEC."
+            )
+            self.boundary_condition_type = "pec"
+            self._apply_em_boundary_conditions()
+            return
 
     async def update_fields(self, dt: float, charge_density: Optional[np.ndarray], current_density: Optional[np.ndarray]):
         """Update E and B fields over a time step dt using FDTD leapfrog.

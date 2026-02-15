@@ -342,3 +342,82 @@ class AnalyticsSnapshot(Base):
             "material_distribution": self.material_distribution or {},
             "computed_at": self.computed_at.isoformat() if self.computed_at else None,
         }
+
+
+class TheoryRun(Base):
+    """
+    Persists the results of running the theory pipeline.
+
+    Each row records the conditions, which theories were enabled,
+    the per-theory scores and contributions, and a summary of the
+    combined result.  Used by the analytics dashboard to track
+    theory performance over time and across parameter regimes.
+
+    v0.3.1-beta: Initial implementation for theory run persistence.
+    """
+    __tablename__ = "theory_runs"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+
+    # Session tracking
+    session_id: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True, index=True,
+    )
+
+    # Physical conditions used
+    temperature_k: Mapped[float] = mapped_column(Float, default=300.0)
+    loading_ratio: Mapped[float] = mapped_column(Float, default=0.9)
+    pressure_pa: Mapped[float] = mapped_column(Float, default=101325.0)
+    electron_density: Mapped[float] = mapped_column(Float, default=6.8e28)
+
+    # Full conditions JSON (includes any extra parameters)
+    conditions: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Theories that were enabled for this run
+    enabled_theories: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    # Per-theory results (theory_id -> {score, enhancement, confidence, ...})
+    theory_scores: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Combined / summary results
+    combined_enhancement: Mapped[float] = mapped_column(Float, default=1.0)
+    total_energy_watts: Mapped[float] = mapped_column(Float, default=0.0)
+    top_theory_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    top_theory_score: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Validation report summary
+    validation_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        Index("ix_theory_runs_session", "session_id"),
+        Index("ix_theory_runs_created", "created_at"),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "temperature_k": self.temperature_k,
+            "loading_ratio": self.loading_ratio,
+            "pressure_pa": self.pressure_pa,
+            "electron_density": self.electron_density,
+            "conditions": self.conditions or {},
+            "enabled_theories": self.enabled_theories or [],
+            "theory_scores": self.theory_scores or {},
+            "combined_enhancement": self.combined_enhancement,
+            "total_energy_watts": self.total_energy_watts,
+            "top_theory_id": self.top_theory_id,
+            "top_theory_score": self.top_theory_score,
+            "validation_summary": self.validation_summary or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

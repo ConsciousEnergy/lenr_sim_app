@@ -590,27 +590,27 @@ function PresetManager({
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Host Material</Typography>
                 <Typography>{selectedPreset.host_material}</Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Loading Ratio</Typography>
                 <Typography>{(selectedPreset.loading_ratio * 100).toFixed(0)}%</Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Temperature</Typography>
                 <Typography>{selectedPreset.temperature} K</Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Frequency</Typography>
                 <Typography>{(selectedPreset.frequency / 1000).toFixed(1)} kHz</Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Bubble Radius</Typography>
                 <Typography>{formatValue(selectedPreset.initial_bubble_radius)} m</Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Electric Field</Typography>
                 <Typography>{formatValue(selectedPreset.electric_field)} V/m</Typography>
               </Grid>

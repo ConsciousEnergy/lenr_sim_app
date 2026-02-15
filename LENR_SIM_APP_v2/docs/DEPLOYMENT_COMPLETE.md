@@ -69,7 +69,7 @@ All Infrastructure as Code (IaC) files have been created and are ready for deplo
 
 ### GitHub Actions
 
-✅ `.github/workflows/docker-build.yml` - Docker image build and push  
+✅ `.github/workflows/deploy.yml` - Docker image build and push  
 
 ---
 

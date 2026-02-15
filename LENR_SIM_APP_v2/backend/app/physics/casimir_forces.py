@@ -304,4 +304,78 @@ def calculate_casimir_effect_in_lattice(
     
     logger.info(f"Calculated Casimir effects in lattice with a={lattice_constant*1e10:.2f}Å, T={temperature}K")
     
-    return results 
+    return results
+
+
+def lifshitz_finite_conductivity_correction(
+    distance: float,
+    plasma_frequency: float = 1.37e16,
+    temperature: float = 300.0,
+) -> Dict[str, float]:
+    """
+    Lifshitz finite-conductivity correction to the Casimir force.
+
+    Real metallic surfaces are not perfect conductors.  The Drude/plasma model
+    gives a correction factor that reduces the ideal Casimir force:
+
+        F_real / F_ideal ≈ 1 - (16/3)(δ/d)
+
+    where δ = c / ω_p is the electromagnetic skin depth and ω_p is the plasma
+    frequency of the metal.  For Pd (ω_p ≈ 1.37×10^16 rad/s), δ ≈ 22 nm.
+    At d = 1 nm the correction is substantial (~98% reduction).
+
+    Args:
+        distance: Gap distance in metres.
+        plasma_frequency: Plasma frequency of the metal in rad/s.
+            Defaults to Palladium (~1.37×10^16 rad/s).
+        temperature: Temperature in Kelvin (for thermal Drude damping).
+
+    Returns:
+        Dictionary with correction details.
+
+    References:
+        Lifshitz E.M. (1956), Sov. Phys. JETP 2, 73.
+        Klimchitskaya G.L. et al. (2009), Rev. Mod. Phys. 81, 1827.
+    """
+    c = 299792458  # m/s
+    hbar = 1.054571817e-34  # J·s
+    kB = 1.380649e-23  # J/K
+
+    if distance <= 0:
+        distance = 1e-10
+    if plasma_frequency <= 0:
+        plasma_frequency = 1.37e16
+
+    # Electromagnetic skin depth  δ = c / ω_p
+    skin_depth = c / plasma_frequency
+
+    # Leading-order Lifshitz correction (Drude model, zero-temperature limit)
+    correction_ratio = 1.0 - (16.0 / 3.0) * (skin_depth / distance)
+
+    # If d < skin_depth the perturbative expansion breaks down;
+    # in that regime the force is heavily suppressed.
+    correction_ratio = max(correction_ratio, 0.01)
+
+    # Ideal Casimir pressure for reference  P = -π² ħc / (240 d⁴)
+    ideal_pressure = np.pi**2 * hbar * c / (240.0 * distance**4)
+    corrected_pressure = ideal_pressure * correction_ratio
+
+    # Thermal correction (becomes relevant when d > ħc / (2π kB T))
+    thermal_length = hbar * c / (2.0 * np.pi * kB * temperature)
+    thermal_regime = distance > thermal_length
+
+    logger.debug(
+        f"Lifshitz correction: d={distance*1e9:.2f} nm, δ={skin_depth*1e9:.2f} nm, "
+        f"ratio={correction_ratio:.4f}"
+    )
+
+    return {
+        "skin_depth_m": skin_depth,
+        "correction_ratio": correction_ratio,
+        "ideal_pressure_Pa": ideal_pressure,
+        "corrected_pressure_Pa": corrected_pressure,
+        "thermal_length_m": thermal_length,
+        "in_thermal_regime": thermal_regime,
+        "distance_m": distance,
+        "plasma_frequency_rad_s": plasma_frequency,
+    }

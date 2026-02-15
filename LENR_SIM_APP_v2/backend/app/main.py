@@ -31,6 +31,13 @@ except ImportError as e:
     print(f"Warning: Could not import unified_simulation_router: {e}")
     unified_simulation_router = None
 
+# Import theory testbed router (v0.3.0-beta)
+try:
+    from .api.routes.physics import router as theory_physics_router
+except ImportError as e:
+    print(f"Warning: Could not import theory_physics_router: {e}")
+    theory_physics_router = None
+
 # Import database manager (v0.2.3-beta)
 from .core.database import db_manager, get_database_url
 
@@ -297,33 +304,79 @@ except ImportError:
 static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-# Include routers
-app.include_router(physics_router, prefix="/api/physics", tags=["Physics"])
-# Dev/debug routers -- disabled in production
-if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
-    app.include_router(fitting_router, prefix="/api/fitting", tags=["Fitting"])
-    app.include_router(logging_router, prefix="/api/logs", tags=["Logging"])
-    app.include_router(diagnostics_router, prefix="/api/diagnostics", tags=["Diagnostics"])
-app.include_router(multi_physics_router, prefix="/api/multi-physics", tags=["Multi-Physics Coupling"])
-app.include_router(visualization_router, prefix="/api/visualization", tags=["Visualization"])
-app.include_router(result_visualization_routes.router, prefix="/api/results", tags=["results"])  # Add this line
-# Mock simulation router -- development/test only
-if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
-    app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations"])
-app.include_router(physics_simulation_router)  # Real physics calculation endpoints
-app.include_router(websocket_router, prefix="/api", tags=["WebSocket"])  # Real-time simulation updates
-app.include_router(shared_simulation_router)  # Shared simulation storage and matching (prefix already in router)
-app.include_router(analytics_router, prefix="/api", tags=["Analytics"])  # Analytics dashboard (v0.2.3-beta)
+# ── Public API Routers ──────────────────────────────────────────────
+# Physics calculation endpoints (core API surface)
+app.include_router(
+    physics_router,
+    prefix="/api/physics",
+    tags=["Physics Calculations"],
+)
+app.include_router(
+    physics_simulation_router,
+    tags=["Physics Simulations"],
+)
+app.include_router(
+    multi_physics_router,
+    prefix="/api/multi-physics",
+    tags=["Multi-Physics Coupling"],
+)
+app.include_router(
+    visualization_router,
+    prefix="/api/visualization",
+    tags=["Visualization"],
+)
+app.include_router(
+    result_visualization_routes.router,
+    prefix="/api/results",
+    tags=["Result Visualization"],
+)
+app.include_router(
+    shared_simulation_router,
+    tags=["Shared Simulations"],
+)
+app.include_router(
+    websocket_router,
+    prefix="/api",
+    tags=["WebSocket"],
+)
+app.include_router(
+    analytics_router,
+    prefix="/api",
+    tags=["Analytics"],
+)
 
-# Include unified simulation router
+# Theory testbed API (v0.3.0-beta)
+if theory_physics_router:
+    try:
+        app.include_router(
+            theory_physics_router,
+            prefix="/api",
+            tags=["Theory Testbed"],
+        )
+        app_logger.info("Theory testbed router included successfully")
+    except Exception as e:
+        app_logger.error(f"Failed to include theory testbed router: {e}")
+
+# Unified simulation router
 if unified_simulation_router:
     try:
-        app.include_router(unified_simulation_router, prefix="/api", tags=["Unified Simulation"])
+        app.include_router(
+            unified_simulation_router,
+            prefix="/api",
+            tags=["Unified Simulation"],
+        )
         app_logger.info("Unified simulation router included successfully")
     except Exception as e:
         app_logger.error(f"Failed to include unified simulation router: {e}")
 else:
     app_logger.warning("Unified simulation router not available - router import failed")
+
+# ── Dev/Debug Routers (disabled in production) ─────────────────────
+if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+    app.include_router(fitting_router, prefix="/api/fitting", tags=["Fitting (Dev)"])
+    app.include_router(logging_router, prefix="/api/logs", tags=["Logging (Dev)"])
+    app.include_router(diagnostics_router, prefix="/api/diagnostics", tags=["Diagnostics (Dev)"])
+    app.include_router(mock_simulation_router, prefix="/api/simulations", tags=["Mock Simulations (Dev)"])
 
 @app.get("/")
 async def root():

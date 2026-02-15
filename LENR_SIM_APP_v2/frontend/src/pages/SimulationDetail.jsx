@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Typography, 
@@ -23,81 +23,10 @@ import {
 import VisualizationStream from '../components/VisualizationStream';
 import ParameterControls from '../components/ParameterControls';
 import SimulationResults from '../components/SimulationResults';
+import { simulationApi } from '../api/simulationApi';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-
-// Mock data - in a real app, you would fetch this from your API
-const MOCK_SIMULATIONS = {
-  'sim-123': {
-    id: 'sim-123',
-    name: 'Lattice Heating Model',
-    description: 'Simulation of heat distribution in palladium lattice with deuterium loading',
-    status: 'running',
-    progress: 67,
-    createdAt: '2023-09-15T10:30:00Z',
-    estimatedCompletion: '2023-09-15T12:30:00Z',
-    parameters: {
-      latticeType: 'FCC',
-      latticeConstant: 3.89,
-      dimensions: [50, 50, 50],
-      temperature: 300,
-      deuteriumConcentration: 0.7,
-      thermalConductivity: 71.8
-    },
-    resources: {
-      cpuCores: 4,
-      gpuEnabled: true,
-      memory: '8GB',
-      estimatedRuntime: '2 hours'
-    }
-  },
-  'sim-456': {
-    id: 'sim-456',
-    name: 'Electrolysis Cell Dynamics',
-    description: 'Simulation of electrolysis cell with palladium cathode in heavy water',
-    status: 'completed',
-    progress: 100,
-    createdAt: '2023-09-14T08:15:00Z',
-    estimatedCompletion: '2023-09-14T10:45:00Z',
-    parameters: {
-      cellGeometry: 'cylindrical',
-      cathodeArea: 12.5,
-      anodeArea: 25.0,
-      electrolyteMolarity: 0.1,
-      currentDensity: 200,
-      temperature: 295
-    },
-    resources: {
-      cpuCores: 8,
-      gpuEnabled: true,
-      memory: '16GB',
-      estimatedRuntime: '2.5 hours'
-    }
-  },
-  'sim-789': {
-    id: 'sim-789',
-    name: 'Quantum Tunneling Analysis',
-    description: 'Simulation of deuteron tunneling through palladium lattice potential barriers',
-    status: 'error',
-    progress: 43,
-    createdAt: '2023-09-12T14:20:00Z',
-    estimatedCompletion: null,
-    parameters: {
-      potentialModel: 'screened-coulomb',
-      barrierHeight: 24.3,
-      quantumEffects: 'WKB',
-      temperatureRange: [250, 350],
-      stepSize: 10
-    },
-    resources: {
-      cpuCores: 16,
-      gpuEnabled: true,
-      memory: '32GB',
-      estimatedRuntime: '6 hours'
-    }
-  }
-};
 
 const getStatusTag = (status) => {
   const statusMap = {
@@ -123,52 +52,44 @@ function SimulationDetail() {
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    // Simulate API fetch with setTimeout
+
+  const fetchSimulation = useCallback(async () => {
+    if (!simulationId) return;
     setLoading(true);
-    
-    setTimeout(() => {
-      let foundSimulation = MOCK_SIMULATIONS[simulationId];
-      
-      // If not found in mock data, create a new simulation entry
-      // This handles dynamically created simulation IDs from NewSimulation page
-      if (!foundSimulation && simulationId) {
-        foundSimulation = {
-          id: simulationId,
-          name: `New Simulation ${simulationId.replace('sim-', '')}`,
-          description: 'Newly created LENR simulation - configure parameters to start',
-          status: 'pending',
-          progress: 0,
-          createdAt: new Date().toISOString(),
-          estimatedCompletion: null,
-          parameters: {
-            latticeType: 'FCC',
-            latticeConstant: 3.89,
-            dimensions: [10, 10, 10],
-            temperature: 300,
-            deuteriumConcentration: 0.8,
-            thermalConductivity: 71.8
-          },
-          resources: {
-            cpuCores: 4,
-            gpuEnabled: true,
-            memory: '8GB',
-            estimatedRuntime: 'TBD'
-          }
-        };
-      }
-      
-      if (foundSimulation) {
-        setSimulation(foundSimulation);
-        setError(null);
-      } else {
-        setError(`Simulation with ID ${simulationId} not found`);
-      }
-      
+    setError(null);
+
+    try {
+      // Use the real API client (falls back to mock internally when backend is unreachable)
+      const data = await simulationApi.getSimulationStatus(simulationId);
+
+      // Normalise field names -- the API may return snake_case or camelCase
+      setSimulation({
+        id: data.id ?? data.simulation_id ?? simulationId,
+        name: data.name ?? data.simulation_name ?? `Simulation ${simulationId}`,
+        description: data.description ?? '',
+        status: data.status ?? 'pending',
+        progress: data.progress ?? 0,
+        createdAt: data.createdAt ?? data.created_at ?? new Date().toISOString(),
+        estimatedCompletion: data.estimatedCompletion ?? data.estimated_completion ?? null,
+        parameters: data.parameters ?? {},
+        resources: data.resources ?? {
+          cpuCores: data.cpu_cores ?? 4,
+          gpuEnabled: data.gpu_enabled ?? false,
+          memory: data.memory ?? '8GB',
+          estimatedRuntime: data.estimated_runtime ?? 'N/A',
+        },
+      });
+    } catch (err) {
+      console.error('Failed to fetch simulation:', err);
+      setError(`Unable to load simulation ${simulationId}. ${err.message ?? ''}`);
+    } finally {
       setLoading(false);
-    }, 800); // Simulate network delay
+    }
   }, [simulationId]);
+
+  useEffect(() => {
+    fetchSimulation();
+  }, [fetchSimulation]);
   
   if (loading) {
     return (
@@ -183,6 +104,11 @@ function SimulationDetail() {
       <div style={{ textAlign: 'center', padding: 24 }}>
         <Title level={3}>Error</Title>
         <Text type="danger">{error}</Text>
+        <div style={{ marginTop: 16 }}>
+          <Button type="primary" icon={<ReloadOutlined />} onClick={fetchSimulation}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

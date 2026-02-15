@@ -242,9 +242,21 @@ class UnifiedLENRSolver:
              # --- Fallback to Non-Spatial Calculation --- 
              logger.debug(f"Step {self.step_count}: Grid not available or lattice snapshot missing spatial data. Using non-spatial calculation.")
              # Use overall properties calculated by lattice simulator
-             avg_electron_density = self.config.get('electron_density', 1e28) # Need average density?
-             # TODO: Get avg electric field if relevant for non-spatial
-             avg_electric_field = lattice_snapshot.get('_original_lattice_state',{}).get('electric_field', 0) # Example fallback
+             avg_electron_density = self.config.get('electron_density', 1e28)
+
+             # Average electric field for non-spatial enhancement calculation.
+             # Priority: (1) EM solver's current state, (2) lattice snapshot,
+             # (3) config value, (4) zero.
+             if self.electromagnetic_solver is not None:
+                 _E = self.electromagnetic_solver.get_electric_field()
+                 avg_electric_field = float(np.mean(np.linalg.norm(_E, axis=-1)))
+             else:
+                 avg_electric_field = float(
+                     lattice_snapshot.get('_original_lattice_state', {}).get(
+                         'electric_field',
+                         self.config.get('electric_field', 0.0),
+                     )
+                 )
              
              try:
                  enhancement_result = await self.enhancement_calculator.calculate_total_enhancement(
@@ -288,15 +300,43 @@ class UnifiedLENRSolver:
         # --- 3. Update Electromagnetic Fields --- #
         if self.electromagnetic_solver:
             try:
-                # Placeholder: Need to determine charge/current density sources
-                # Maybe from lattice_snapshot or fusion_processor results?
-                charge_density_grid = None # Placeholder
-                current_density_grid = None # Placeholder
-                await self.electromagnetic_solver.update_fields(dt, charge_density_grid, current_density_grid)
-                # Store or use updated fields if needed by other components (e.g., enhancement)
-                # updated_E_field = self.electromagnetic_solver.get_electric_field()
-                # updated_B_field = self.electromagnetic_solver.get_magnetic_field()
-                # spatial_lattice_state["electric_field_grid"] = updated_E_field # Example
+                charge_density_grid = None
+                current_density_grid = None
+
+                # Build charge / current density grids from the lattice
+                # snapshot when spatial data is available.  Uses nearest-
+                # grid-point (NGP) deposition: each ion contributes its
+                # charge (or charge * velocity) to the cell it occupies.
+                if self.grid and lattice_snapshot:
+                    positions = lattice_snapshot.get("positions")  # (N, 3)
+                    velocities = lattice_snapshot.get("velocities")  # (N, 3)
+                    charges = lattice_snapshot.get("charges")  # (N,)
+
+                    if positions is not None and charges is not None:
+                        charge_density_grid = self.grid.create_empty_grid_data()
+                        current_density_grid = np.zeros(
+                            self.grid.resolution + (3,), dtype=float,
+                        )
+                        cell_vol = self.grid.get_cell_volume()
+                        for i in range(len(charges)):
+                            try:
+                                idx = self.grid.get_cell_index(
+                                    positions[i, 0],
+                                    positions[i, 1],
+                                    positions[i, 2],
+                                )
+                                if idx is not None:
+                                    charge_density_grid[idx] += charges[i] / cell_vol
+                                    if velocities is not None:
+                                        current_density_grid[idx + (slice(None),)] += (
+                                            charges[i] * velocities[i] / cell_vol
+                                        )
+                            except (IndexError, Exception):
+                                continue  # particle outside grid
+
+                await self.electromagnetic_solver.update_fields(
+                    dt, charge_density_grid, current_density_grid,
+                )
             except Exception as e:
                  logger.error(f"Error during electromagnetic field update: {e}", exc_info=True)
         
@@ -378,9 +418,22 @@ class UnifiedLENRSolver:
 
                 if positions is not None and velocities is not None and charges is not None and atom_ids is not None:
                      forces = await self.electromagnetic_solver.calculate_lorentz_force(positions, velocities, charges)
-                     # Apply these forces back to the lattice simulator
-                     # Need a method like: self.lattice_simulator.apply_external_forces(atom_ids, forces)
-                     logger.debug(f"Calculated {forces.shape[0]} Lorentz forces (Placeholder application).")
+
+                     # Apply Lorentz forces to the lattice particles.
+                     # The lattice simulator may expose apply_external_forces();
+                     # if not, store forces on the snapshot for the next step.
+                     if hasattr(self.lattice_simulator, 'apply_external_forces'):
+                         self.lattice_simulator.apply_external_forces(atom_ids, forces)
+                         logger.debug(f"Applied Lorentz forces to {forces.shape[0]} particles.")
+                     else:
+                         # Fallback: store forces in snapshot for downstream use
+                         lattice_snapshot["external_forces"] = forces
+                         lattice_snapshot["external_force_ids"] = atom_ids
+                         logger.debug(
+                             f"Calculated {forces.shape[0]} Lorentz forces "
+                             "(stored on snapshot; lattice_simulator lacks "
+                             "apply_external_forces)."
+                         )
                 else:
                      logger.warning("Missing required data (positions, velocities, charges, atom_ids) for Lorentz force calculation.")
                      

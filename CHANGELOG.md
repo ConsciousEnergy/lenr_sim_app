@@ -5,7 +5,407 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.3.4-beta] - 2026-02-15
+
+### Relevance Map — Stability & UX
+- **Hover flicker fix**: Replaced D3 transitions with immediate `.attr()` updates for node visuals; added `pointer-events: none` to the hover tooltip so it no longer overlays nodes and triggers mouseout/mouseover loops. Fixes flickering on Phonon-Nuclear Coupling, Electron Screening, Chubb Ion Band State, and other nodes.
+- **Deterministic layout**: Seeded initial node positions via hash of `theory_id` so the graph loads in the same organization every time. Consistent "locked in" view when opening the Relevance Map tab.
+- **Scrollable main content**: Updated `AppLayoutFixed` with `height: 100vh` root and `overflow-y: auto` on Main for proper scrolling of long content (Relevance Map, Dashboard).
+- **Synchronous pre-compute**: Force simulation runs 200 ticks before first paint; fit-to-bounds zoom applied immediately. No async layout jumps.
+- **gRef fix**: Corrected selection effect — `gRef.current` is already a D3 selection; removed incorrect `d3.select(gRef.current)` wrapper that caused `querySelectorAll is not a function` runtime error.
+
+### Testing & Documentation
+- All backend tests passing (theory pipeline, topological sort, coupled execution, new modules).
+- CHANGELOG and version files updated. Best practices: unified state flow, no conflicting transitions, deterministic layout, pointer-events for tooltips.
+
+---
+
+## [v0.3.3-beta] - 2026-02-14
+
+### Relevance Map UI/UX (2026-02-15)
+- **Hover flashing fix**: Eliminated flashing when hovering Phonon-Nuclear Coupling, Electron Screening, Chubb Ion Band State, and other high-score nodes. Root cause: conflicting updates between D3 mouse handlers and React selection effect. Fix: single source of truth — D3 handlers now only update `hoveredNode` state and edge labels; the React effect applies all node visuals (opacity, stroke-width, glow) including hover styling. Added `hoveredNode` to effect deps for coordinated updates.
+- **Initial "locked in" view**: Graph now loads with a consistently readable default — increased fit padding (60→80px), slight scale headroom (0.95→0.92), and synchronous pre-computed layout so the fit-to-bounds zoom is applied immediately. Recenter button uses the same parameters for consistency.
+- **Documentation**: Changes align with best practices — unified state flow, no conflicting transitions, consistent initial view parameters.
+
+### Cross-Theory Coupling Pipeline (New Feature)
+- **Coupled Pipeline Runner**: Added `run_coupled()` method to `TheoryPipeline` that executes theories in topological dependency order, injecting upstream outputs into downstream conditions
+- **Topological Sort**: Added `topological_sort()` and `get_coupling_map()` methods to `TheoryGraph` using Kahn's algorithm on directed edges (extends, explains_observation)
+- **Promoted Keys**: Key observables (`screening_potential_eV`, `T_peak_K`, `P_peak_Pa`, `B_compressed_T`, `he4_production_rate`) are auto-promoted to top-level conditions for seamless downstream consumption
+- **API Endpoints**: `POST /api/analytics/theories/run-coupled` for coupled execution, `GET /api/analytics/theories/coupling-graph` for dependency order and coupling map visualization
+
+### Legacy Module Integration
+- **Phonon-Nuclear Coupling**: Wrapped `app.physics.phonon_nuclear_coupling` as a `TheoryModule` (`phonon_coupling_legacy`), exposing Debye-Waller, Bose-Einstein phonon occupation, and polaron effective mass as pipeline observables
+- **Non-Equilibrium Thermodynamics**: Wrapped `app.physics.non_equilibrium_thermo` as a `TheoryModule` (`non_equilibrium_thermo`), providing COP, excess power, and entropy production diagnostics
+- **Rydberg Matter → Electron Screening**: Integrated `rydberg_matter.py` calculations into the electron screening theory -- Rydberg state formation probability and extended orbital enhancement now modulate the screening potential
+- **Boundary Layers → Bubble-MHD**: Integrated `boundary_layers.py` into bubble-MHD confinement -- thermal/diffusion layer thicknesses, nucleation zone, and heat flux at the bubble wall are now computed and reported in observables
+- **21 Pipeline Theories**: Theory count increased from 19 to 21 with new legacy wrappers; both appear on the Relevance Map with relationship edges
+
+### Frontend Improvements
+- **Relevance Map Cutoff Fix**: Changed fixed `height: 720/640` to `minHeight` on graph containers; increased D3 centering force strength (0.03 → 0.06); added node position clamping in tick handler to prevent drift outside SVG bounds
+- **Coupled Mode Toggle**: Added "Coupled Mode" switch to Theory Testbed panel with dependency-aware execution, coupling arrows showing upstream feeds, and execution order indicator
+- **Advanced Parameter Passthrough**: `defect_density`, `grain_size`, and `surface_roughness` from Advanced Parameters sliders now forwarded to Theory Testbed conditions
+- **Broken Link Fix**: Fixed dead `https://www.lenr.org` link in Theory Paper → `https://www.lenr-forum.com/`
+
+### API Consolidation
+- Marked `simulation_router.py` and `simulation_routes.py` as deprecated (not mounted in main.py)
+- Documented physics router double-prefix issue (`/api/physics/physics/...`) for future cleanup
+- Added inline documentation for router architecture
+
+### Testing
+- **20+ New Tests**: Topological sort, coupled pipeline (full and subset), phonon coupling legacy, non-equilibrium thermo, pipeline with 21 theories, coupling map verification
+- Updated scoring and validation tests to accept ≥19 theories (from exactly 19)
+
+---
+
+## [v0.3.2-beta] - 2026-02-14
+
+### Physics Engine Improvements
+- **Scoring Engine Fairness**: Set floor on sub-scores at 0.05 to prevent geometric mean catastrophe; theories no longer score near-zero due to a single missing observable
+- **Alternative Observable Key Mapping**: Scoring engine now recognizes `neutron_rate_suppression`, `photon_cascade_count`, `branch_*` ratios as equivalent to product keys
+- **Inapplicable Theory Handling**: Theories outside their applicability domain now receive neutral score (0.5) instead of being penalized with empty observables
+- **Product Observables Added**: All 19 theory modules now output `product_He4`, `product_neutrons`, `product_gamma` with physically justified values based on published literature
+- **Pipeline Parameter Bug Fix**: Fixed `configs=` → `theory_configs=` in `unified_lenr_model.py` that prevented theory-specific configurations from being passed to the pipeline
+- **Gap/Crack Width Conditions**: `gap_width_nm` and `crack_width_nm` now passed from unified model to theory pipeline (derived from surface roughness), enabling Hydroton/NAE applicability
+
+### Frontend UI/UX Improvements
+- **Relevance Map Layout Fix**: Swapped flex values so graph occupies ~75% and score sidebar ~25% (was inverted)
+- **Advanced Parameters Panel**: Added 5 new simulation controls (Initial Bubble Radius, Defect Density, Surface Roughness, Grain Size, Acoustic Cycles) as an expandable accordion in the Unified Theory page
+- **Dynamic Theory Testbed Conditions**: Gap width and crack width now derived from simulation state instead of hardcoded values
+- **Theory Paper Expansion**: Added 13 new theory sections (Section 2.4: Hydroton/NAE, Section 2.7: Oppenheimer-Phillips, Section 6: Extended Theoretical Models covering all remaining theories) with Theory-to-Simulation mapping table
+
+### API Improvements
+- **TheoryConditions Model**: Added `gap_width_nm` and `crack_width_nm` fields to the Pydantic model for scoring and comparison endpoints
+
+### Testing
+- **6 New Tests**: Product observable completeness, Hydroton applicability with gap conditions, scoring fairness (no theory < 10%), Hydroton > 40%, inapplicable neutral score, scoring floor guard
+- **69 Total Tests**: All passing (was 63)
+
+### Documentation
+- Updated all documentation to v0.3.2-beta
+- Created PAPER_CORRECTIONS_APPLIED.md for tracking physics corrections
+- Updated THEORY_OVERVIEW with product observable mappings
+- Expanded PHYSICS_MODULE_GUIDE with TheoryModule creation guide
+
+---
+
+## [v0.3.1-beta] - 2026-02-14
+
+### Added
+
+#### Enhanced Relevance Map — Rigid Network Explorer
+
+- **Rigid force simulation**: Higher `alphaDecay` (0.04) and `velocityDecay` (0.55) so
+  the graph settles quickly into a stable layout rather than floating around.
+  Nodes pin in place when dragged (with "Unpin all" button to reset).
+
+- **Click-to-select with detail panel**: Clicking a node selects it and opens a
+  slide-out detail panel showing full theory info: researcher, year, predictive
+  score breakdown (5 sub-scores), key predictions, physical properties, material
+  systems, and clickable connected-theories list for graph navigation.
+
+- **Neighbourhood highlighting**: When a node is selected, connected nodes remain
+  bright while non-neighbours dim to 15% opacity. Edges to neighbours are
+  highlighted at 85% opacity.
+
+- **Search bar**: Real-time fuzzy search across theory name, researcher, and ID.
+  Matching nodes stay bright; non-matches dim. Clear button (×) to reset.
+
+- **Network statistics**: Live counters for Theories, Relationships, and Properties
+  displayed above the graph.
+
+- **Edge labels on hover**: Hovering a node shows relationship type labels on all
+  connected edges (Shares Mechanism, Same Product, Explains, Extends, Contradicts).
+
+- **Visual polish**: SVG glow filter for high-score nodes (>70%), dark canvas
+  background (`#0a1628`), semi-transparent zoom controls, status bar with usage
+  instructions ("Click nodes to explore · Scroll to zoom · Drag to pan · Drag
+  nodes to pin").
+
+- **`analyticsApi.js` double-unwrap fix**: Fixed pre-existing bug where all 20
+  analytics API methods returned `response.data` but the `api.js` service already
+  unwraps `response.data`, causing the analytics page to show "Offline Mode" even
+  when the backend was healthy. Changed all to `return response`.
+
+#### 12 New LENR Theory Modules (19 Total)
+
+- **Takahashi TSC** (`theories/takahashi_tsc.py`): 4D tetrahedral symmetric
+  condensate, simultaneous 4-body tunnelling. 4D→2He-4 + 47.6 MeV.
+  Ref: Takahashi (2004, 2008, 2013) J. Condensed Matter Nucl. Sci.
+
+- **Hagelstein Phonon-Nuclear** (`theories/hagelstein_phonon.py`): Coherent energy
+  transfer from nuclear reactions to ~10^8 lattice phonons via anharmonic coupling.
+  Explains no-gamma signature. Ref: Hagelstein (2010-2022) JCMNS.
+
+- **Vysotskii CCS** (`theories/vysotskii_ccs.py`): Coherent Correlated States in
+  non-stationary potential wells, up to 10^40 tunnelling enhancement.
+  Ref: Vysotskii & Kornilova (2009, 2013).
+
+- **Swartz NANOR/LANR** (`theories/swartz_nanor.py`): Optimal Operating Point (OOP)
+  model in 2D loading-current parameter space for ZrO2-PdD nanostructures.
+  Ref: Swartz (2006-2021) JCMNS.
+
+- **Miles Heat-Helium** (`theories/miles_heat_helium.py`): Quantitative validation:
+  1W excess heat = 2.6×10^11 He-4/s (23.8 MeV/fusion). Independently confirmed
+  by Gozzi, Bockris, Arata, De Ninno, McKubre. Ref: Miles (1993, 2000).
+
+- **Widom-Larsen** (`theories/widom_larsen.py`): Ultra-low momentum neutrons via
+  surface plasmon mass renormalization and inverse beta decay.
+  Ref: Widom & Larsen (2006) Eur. Phys. J. C 46, 107.
+
+- **Kim BEC** (`theories/kim_bec.py`): Bose-Einstein condensate of deuterons in
+  nano-grains with N²-enhanced collective fusion rate.
+  Ref: Kim (2009, 2013) JCMNS.
+
+- **Matsumoto ENC** (`theories/matsumoto_enc.py`): Electro-nuclear collapse of
+  hydrogen clusters into itonic states under intense EM fields.
+  Ref: Matsumoto (1992-2000) Fusion Technology.
+
+- **Chubb Ion Band** (`theories/chubb_ion_band.py`): Ion band state theory — Bloch
+  wave deuterons fuse via resonant energy minimisation in periodic lattice.
+  Ref: Chubb & Chubb (1990-2005).
+
+- **Piantelli Ni-H** (`theories/piantelli_ni_h.py`): Ni-H thermal activation with
+  Arrhenius onset above 400-700 K, surface area scaling.
+  Ref: Focardi & Piantelli (1998), Piantelli (2012).
+
+- **Iwamura Transmutation** (`theories/iwamura_transmutation.py`): Nuclear
+  transmutation via D₂ permeation through Pd/CaO/Pd multilayers. Cs→Pr, Ba→Sm.
+  Ref: Iwamura et al. (2002, 2004) Jpn. J. Appl. Phys.
+
+- **Letts-Cravens Laser** (`theories/letts_laser.py`): Dual-laser stimulation at
+  670-685 nm triggers 10-30× excess heat enhancement in Pd-D systems.
+  Ref: Letts & Cravens (2003-2009) Proc. ICCF.
+
+#### Theory Relevance Map and Scoring Engine
+
+- **Theory Relationships** (`physics_engine/theory_relationships.py`): 19-node graph
+  with 70+ edges encoding shared mechanisms, product predictions, and explanatory
+  relationships. Physical properties taxonomy with 18 categories.
+
+- **Predictive Probability Scoring** (`physics_engine/theory_scoring.py`): 5-factor
+  weighted geometric mean score (physical consistency, experimental agreement,
+  parameter sensitivity, cross-theory agreement, observables completeness).
+  Includes parameter sweep across all theories.
+
+- **Cross-Examination Validation** (`physics_engine/theory_validation.py`): 7
+  validation checks (Miles correlation, no radiation, loading threshold, surface
+  dependence, product spectrum, thermal activation, reproducibility).
+
+- **New API Endpoints** (`routers/analytics_routes.py`):
+  - `GET /api/analytics/theory-graph` — Network graph nodes + edges
+  - `POST /api/analytics/theory-scores` — Compute all theory scores
+  - `POST /api/analytics/theory-comparison` — Side-by-side comparison
+  - `POST /api/analytics/parameter-sweep` — Sweep parameter across theories
+  - `GET /api/analytics/validation-report` — Full validation report
+  - `GET /api/analytics/theory-properties` — Shared properties taxonomy
+
+#### Frontend: Relevance Map Feature
+
+- **RelevanceMap.tsx**: D3 force-directed network graph with probability-weighted
+  node sizing, category colouring, confidence-based borders, hover tooltips,
+  drag interaction, zoom/pan, and filter controls.
+
+- **Analytics Page Tab**: New "Relevance Map" tab with graph area (70%),
+  ranked theory score cards sidebar (30%), category/property filters,
+  minimum score slider, and "Run Scores" button.
+
+- **Analytics API Client**: 6 new methods for theory graph, scoring,
+  comparison, parameter sweep, validation, and properties endpoints.
+
+#### Infrastructure
+
+- **WebSocket Theory Comparison**: New `theory-comparison` simulation type streams
+  per-theory results in real time to the Relevance Map.
+
+- **TheoryRun DB Model**: SQLAlchemy model for persisting theory pipeline runs
+  with conditions, per-theory scores, and combined results.
+
+### Changed
+
+- **MUI Grid v2 Migration**: Fixed remaining `item`/`xs` props in
+  AdvancedAnalysisPage, PresetManager, EnhancedFusionPanel.
+- **Widom-Larsen**: Corrected default mass renormalization ratio from 2.531 to 4.0
+  (physical threshold is ~3.53 m_e).
+- **Version**: Bumped to v0.3.1-beta across frontend and backend.
+
+### Tests
+
+- 63 new tests in `tests/test_theory_modules.py` covering all 19 theory modules,
+  pipeline integration, scoring engine, validation framework, and theory graph.
+
+---
+
+## [v0.3.0.1-beta] - 2026-02-13
+
+### Added
+
+#### MHD Nano-Confinement Physics Enhancement (9-Phase Implementation)
+
+- **MHD Dimensionless Parameters** (`physics_engine/mhd/dimensionless_parameters.py`):
+  Magnetic Reynolds number (Rm), Hartmann number (Ha), Lundquist number (S),
+  plasma beta (β), Hall parameter (β_H), Stuart/interaction number (N),
+  magnetic Prandtl number (Pm), Alfvén velocity (v_A), with regime classification
+  (frozen-in / diffusive / kinetic / pinch-dominated).
+  Refs: Davidson (2001), Müller & Bühler (2001), Goedbloed & Poedts (2004).
+
+- **MHD Induction Solver** (`physics_engine/mhd/mhd_induction_solver.py`):
+  1D cylindrical (z-pinch) and simplified 3D Cartesian solvers for the generalized
+  induction equation ∂B/∂t = ∇×(v×B) − ∇×(η∇×B) + Hall + ∇Pₑ terms.
+  Explicit Euler with CFL-limited adaptive timestep.
+
+- **Hartmann Channel Flow** (`physics_engine/mhd/hartmann_flow.py`):
+  Analytical Hartmann velocity profiles for insulating and conducting walls,
+  boundary layer thickness δ_Ha = L/Ha, flow rate ratio, pressure drop ratio,
+  Casimir quantum correction at nanoscale gaps.
+  Refs: Hartmann (1937), Shercliff (1953), Casimir (1948), Lifshitz (1956).
+
+- **Hall & Faraday Channel Physics** (`physics_engine/mhd/hall_faraday_channels.py`):
+  Full 3×3 conductivity tensor (σ_parallel, σ_Pedersen, σ_Hall), Hall current
+  density J_H, Faraday EMF and segmented/continuous channel analysis, ion slip
+  factor, loading parameter optimisation, bubble-collapse flux compression model.
+
+- **Multi-Scale Bridging Framework** (`physics_engine/mhd/multiscale_bridge.py`):
+  Five-level hierarchy (MACRO → BUBBLE → SURFACE → LATTICE → NUCLEAR) with
+  downward boundary condition cascade and upward nuclear source term propagation.
+  MHD parameters computed independently at each scale; dominant physics classification.
+
+- **Nuclear Force Coupling** (`physics_engine/mhd/nuclear_force_coupling.py`):
+  EM coupling (Debye screening, Gamow factor, Sommerfeld parameter),
+  Weak coupling (electron capture rate with Rydberg enhancement),
+  Strong coupling (D+D S-factor from NACRE II, energy-dependent cross-sections,
+  branching ratios for D(d,n)He3, D(d,p)T, D(d,γ)He4, p+D radiative capture).
+  Refs: NACRE II — Xu et al. (2013), Caughlan & Fowler (1988), Bahcall (1964),
+  Assenbaum et al. (1987), Ichimaru (1993), Bosch & Hale (1992).
+
+- **LBM–MHD Force Coupling**: `fluid_dynamics_solver.py` gained `set_mhd_body_force()`
+  to inject J×B Lorentz force from the induction solver into the D3Q19 lattice
+  Boltzmann velocity field.
+
+- **Frontend MHD Dashboard**: `TheoryTogglePanel.tsx` now renders a dedicated
+  `MHDParameterDashboard` with colour-coded regime chips for all dimensionless
+  numbers and a key-observables grid (Alfvén velocity, compressed B, Faraday EMF,
+  screening energy, flux compression, nuclear power density, neutron rate,
+  collapse velocity).
+
+### Changed
+
+#### Mathematical Corrections & Rigour Improvements
+
+- **Fixed screening energy unit bug** in `bubble_mhd_confinement.py`:
+  Removed erroneous extra `/ E_CHARGE` division.  Previous formula underestimated
+  screening energy by a factor of ~1.6×10¹⁹.
+  Corrected formula: U_s [eV] = e / (4πε₀ λ_D).
+  Ref: Ichimaru (1993) Rev. Mod. Phys. 65, 255.
+
+- **Improved collapse velocity estimate**: Replaced average v_c = R₀/t_c with
+  Rayleigh peak wall velocity v_max = √(2ΔP / 3ρ).  Uses max(average, peak) for
+  conservative MHD parameter estimation.
+  Ref: Rayleigh (1917) Philos. Mag. 34, 94.
+
+- **Revised enhancement factor model**: Removed physically questionable Hartmann
+  pressure-drop-ratio enhancement.  Replaced raw Stuart number with √(N) scaling
+  (confinement time ∝ N^(1/2), Ref: Davidson §5.3).  Enhancement = flux_compression
+  × √(Stuart) × Gamow_screening, each capped individually.
+
+- **Multi-factor confidence calculation**: Replaced ad-hoc `(compression/10) × (Ha/10)
+  × loading` with a regime-validity model:
+  - Compression quality score (compression_ratio / 5)
+  - MHD regime score (weighted Rm and Ha sub-scores)
+  - Loading quality score
+  - Screening plausibility check (< 1 keV)
+  - Nuclear data quality factor (0.9 for NACRE II D+D)
+  Inspired by Bayesian model evidence methodology (Sivia & Skilling, 2006).
+
+#### Reference & Citation Updates
+
+- Added 13 academic references to `bubble_mhd_confinement.py` metadata (full
+  journal/volume/page format).
+- Added Casimir (1948) and Lifshitz (1956) citations to `hartmann_flow.py`.
+- Added Assenbaum et al. (1987), Ichimaru (1993), Bosch & Hale (1992) to
+  `nuclear_force_coupling.py`.
+
+### Tests
+
+- **47-test MHD physics suite** (`tests/test_mhd_physics.py`): Validates
+  dimensionless parameters, Hartmann flow, Hall conductivity, Faraday channels,
+  nuclear cross-sections, electron capture, multi-scale bridge, induction solver,
+  and full Bubble-MHD theory integration.  All tests pass.
+
+---
+
+## [v0.3.0-beta] - 2026-02-10
+
+### Added
+
+#### Theory Testbed Architecture
+- **TheoryModule protocol** (`physics_engine/theory_protocol.py`): Common interface for composable LENR theory modules with `TheoryContribution` dataclass
+- **TheoryPipeline orchestrator** (`physics_engine/theory_pipeline.py`): Registry-based pipeline to run, combine, and compare multiple theories
+- **API endpoints**: `GET /api/physics/theories`, `POST /api/physics/theories/run`, `POST /api/physics/theories/{id}/run`
+
+#### New Theory Modules (Peer-Level, Selectable)
+- **Electron Screening** (`theories/electron_screening.py`): Debye screening, Sommerfeld parameter, screened Coulomb barrier
+- **Confined-Mode QED / Coherent Domains** (`theories/coherent_qed.py`): Del Giudice/Preparata coherent EM domains, geometry-dependent vacuum modification (replaces bulk Schwinger vacuum polarization)
+- **Storms' Hydroton Model** (`theories/hydroton.py`): H-e-H-e-H covalent chain, resonance fusion, gradual photon emission cascade
+- **Nuclear Active Environment** (`theories/nae_model.py`): Crack-size filtering, simultaneity requirement, site probability distribution, hydrogen loading purity
+- **Bubble-MHD Nano-Confinement** (`theories/bubble_mhd_confinement.py`): Nano-scale Ulam-Teller analog composing MHD confinement, bubble compression, and surface phase transitions
+- **Casimir Confinement** (`theories/casimir_confinement.py`): Casimir force with Lifshitz finite-conductivity correction
+- **Quantum Tunneling** (`theories/quantum_tunneling_theory.py`): WKB/Gamow tunneling as base rate module
+
+#### Mathematical Corrections
+- Unified `MAX_ENHANCEMENT_FACTOR` constant (10^5 default, configurable) across all modules
+- Confined-mode QED functions in `qed_effects.py` (coherence domain enhancement, vacuum mode modification)
+- Lifshitz finite-conductivity correction in `casimir_forces.py`
+- Halo electron overlap radius verification (r_0 = 5 fm nuclear radius)
+
+#### Validation Metrics
+- Miles heat-helium correlation check (1 W = 2.6e11 He-4/s)
+- Ni-H thermal activation threshold (>700 C)
+- Hydrogen loading purity parameter (continuous 0-1)
+
+#### Frontend Theory Testbed
+- **TheoryTogglePanel** component: Enable/disable individual theories with per-theory parameter controls
+- PhysicsModelRegistry wired to backend `/api/physics/theories` endpoint
+- Per-theory contribution breakdown in UnifiedTheoryPage
+- PhysicsContext extended with `enabledTheories` and `theoryConfigs` state
+
+#### Unified Model Integration
+- `unified_lenr_model.py` now delegates to TheoryPipeline via `use_theory_pipeline` config toggle
+- `calculate_full_qed_enhancement()` includes confined-mode and coherent-domain paths alongside classical QED
+
+#### Academic Review Code Improvements
+- Multi-phonon coherence energy gap problem explicitly documented in `phonon_interactions.py` with `estimate_phonon_coherence_number()` utility
+- Oppenheimer-Phillips `base_prob` replaced with Gamow-derived value (was hardcoded 1e-60 placeholder)
+- Gamow factor in `bubble_collapse.py` unified with full Sommerfeld-parameter calculation from `quantum_tunneling.py`
+- EM solver: PEC normal-B=0, PMC, and periodic boundary conditions implemented
+- Thermal solver: periodic and Robin (convective) boundary conditions added
+- Unified LENR solver: charge/current density sources built from lattice particle data (NGP deposition)
+- Fusion processor: host/tritium/proton density grids properly sourced from lattice state
+
+#### Documentation
+- `THEORY_OVERVIEW.md` updated with theory testbed, corrected physics, and 16 academic references
+- Added citations: Storms 2014, Miles 1993, Del Giudice 1998, Preparata 1995, Takahashi 2008, Raiola 2004, Czerski 2001, Lifshitz 1956, Hagelstein 2012
+
+#### Pre-Launch Readiness (Phase 1-5)
+- **Backend API surface cleanup**: Theory testbed router mounted in `main.py`; OpenAPI tags reorganized; dev routers grouped under `(Dev)` tags
+- **Frontend hardening**: `SimulationDetail.jsx` mock data replaced with real `simulationApi` calls and retry button
+- **API client consolidation**: `services/api.js` refactored to delegate to canonical `api/client.ts` Axios instance
+- **Sidebar navigation**: Added Theory Paper, Theory Guide, About links; generalized per-section submenu collapse in `AppLayoutFixed`
+- **Component extraction**: `TheoryDocumentationPanel` extracted from `UnifiedTheoryPage.jsx` (1515→1261 lines)
+- **SettingsPage**: Loading indicator for system health check
+- **Deployment docs**: `PHASE4_DOCKER_SWARM_DEPLOYMENT.md`, `ARCHITECTURE.md`, `DEPLOYMENT_COMPLETE.md` updated to v0.3.0-beta and correct workflow `deploy.yml`
+- **PR template**: `.github/PULL_REQUEST_TEMPLATE.md` with pre-merge checklist
+
+#### Browser Testing & Integration Fixes
+- **PhysicsProvider wrapper**: Added `<PhysicsProvider>` around `UnifiedTheoryPage` route in `App.tsx` (Theory Testbed tab was crashing with `usePhysics must be used within a PhysicsProvider`)
+- **Theory router prefix fix**: Corrected double-prefix bug in `main.py` — theory testbed router mount changed from `prefix="/api/physics"` to `prefix="/api"` (router already has internal `/physics` prefix, resulting path was `/api/physics/physics/theories` instead of `/api/physics/theories`)
+- **MUI Tooltip disabled button fix**: Wrapped disabled download buttons (JSON/CSV) in `<span>` elements in `UnifiedTheoryPage.jsx` to resolve MUI console warnings about disabled children
+
+### Changed
+- Version corrected from v0.3.0.0-beta to v0.3.0-beta (semver compliance) across all 13 files
+- Branch renamed from `lenr_sim_app_v0.3.0.0-beta` to `lenr_sim_app_v0.3.0-beta`
+- QED module reframed from Schwinger bulk vacuum polarization to confined-mode/coherent domain effects
+- BEC critical temperature issue resolved by subsuming into coherent QED domain model
+- Enhancement factor caps unified to 10^5 (from scattered 10^8/10^10/10^15 values)
 
 ### Fixed
 

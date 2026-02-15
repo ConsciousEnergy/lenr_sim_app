@@ -4,6 +4,12 @@ Physics API routes for LENR_Sim_App
 This module defines the API routes for physics calculations in the LENR simulation app.
 It provides endpoints for calculating fusion rates, enhancement factors, and other
 physics-related quantities using the Unified LENR Theory framework.
+
+NOTE (v0.3.3-beta): This router has prefix="/physics" and is mounted at
+"/api/physics" in main.py (via routers/__init__.py), so endpoints resolve
+to /api/physics/physics/... .  This is a legacy prefix issue. The theory
+testbed endpoints (theories, theories/run) live in api/routes/physics.py
+at /api/physics/... .  See docs/API_CONSOLIDATION.md for the full map.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body, Depends, BackgroundTasks

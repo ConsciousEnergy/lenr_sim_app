@@ -55,30 +55,60 @@ class ThermalSolver:
         """Applies boundary conditions to the temperature grid."""
         if not self.grid: return
         
-        # Placeholder: Implement boundary logic based on self.boundary_condition_type
-        # Example for Neumann (zero flux / insulated):
+        T = self.temperature_grid
+
         if self.boundary_condition_type == "neumann":
-            # Set ghost cells or adjust edge values to enforce zero gradient
-            # Simple approach: mirror edge values
-            if self.grid_shape[0] > 1: # Check if more than 1 cell in x
-                self.temperature_grid[0, :, :] = self.temperature_grid[1, :, :]
-                self.temperature_grid[-1, :, :] = self.temperature_grid[-2, :, :]
+            # Zero-flux (insulated): ∂T/∂n = 0 → mirror edge values
+            if self.grid_shape[0] > 1:
+                T[0, :, :] = T[1, :, :]
+                T[-1, :, :] = T[-2, :, :]
             if self.grid_shape[1] > 1:
-                self.temperature_grid[:, 0, :] = self.temperature_grid[:, 1, :]
-                self.temperature_grid[:, -1, :] = self.temperature_grid[:, -2, :]
+                T[:, 0, :] = T[:, 1, :]
+                T[:, -1, :] = T[:, -2, :]
             if self.grid_shape[2] > 1:
-                self.temperature_grid[:, :, 0] = self.temperature_grid[:, :, 1]
-                self.temperature_grid[:, :, -1] = self.temperature_grid[:, :, -2]
+                T[:, :, 0] = T[:, :, 1]
+                T[:, :, -1] = T[:, :, -2]
+
         elif self.boundary_condition_type == "dirichlet":
-            # Example: Set boundary cells to a fixed value
+            # Fixed-temperature boundaries
             fixed_temp = self.config.get("boundary_temperature", 300.0)
-            self.temperature_grid[0, :, :] = fixed_temp
-            self.temperature_grid[-1, :, :] = fixed_temp
-            self.temperature_grid[:, 0, :] = fixed_temp
-            self.temperature_grid[:, -1, :] = fixed_temp
-            self.temperature_grid[:, :, 0] = fixed_temp
-            self.temperature_grid[:, :, -1] = fixed_temp
-        # TODO: Add periodic boundary conditions if needed
+            T[0, :, :] = fixed_temp; T[-1, :, :] = fixed_temp
+            T[:, 0, :] = fixed_temp; T[:, -1, :] = fixed_temp
+            T[:, :, 0] = fixed_temp; T[:, :, -1] = fixed_temp
+
+        elif self.boundary_condition_type == "periodic":
+            # Periodic: domain wraps around in all directions
+            if self.grid_shape[0] > 1:
+                T[0, :, :] = T[-2, :, :]
+                T[-1, :, :] = T[1, :, :]
+            if self.grid_shape[1] > 1:
+                T[:, 0, :] = T[:, -2, :]
+                T[:, -1, :] = T[:, 1, :]
+            if self.grid_shape[2] > 1:
+                T[:, :, 0] = T[:, :, -2]
+                T[:, :, -1] = T[:, :, 1]
+
+        elif self.boundary_condition_type == "robin":
+            # Convective (Robin): -k ∂T/∂n = h(T - T_ambient)
+            # Discretised: T_boundary ≈ (T_interior + Bi * T_ambient) / (1 + Bi)
+            # where Bi = h * dx / k  (Biot number)
+            h_conv = self.config.get("convection_coefficient", 10.0)  # W/(m²·K)
+            T_amb = self.config.get("ambient_temperature", 300.0)
+            k_cond = self.config.get("conductivity", self.conductivity)
+            for axis, dx in enumerate([
+                self.dx or 1e-9, self.dy or 1e-9, self.dz or 1e-9
+            ]):
+                if self.grid_shape[axis] <= 1:
+                    continue
+                bi = h_conv * dx / max(k_cond, 1e-30)
+                slices_lo = [slice(None)] * 3
+                slices_hi = [slice(None)] * 3
+                inner_lo = [slice(None)] * 3
+                inner_hi = [slice(None)] * 3
+                slices_lo[axis] = 0; inner_lo[axis] = 1
+                slices_hi[axis] = -1; inner_hi[axis] = -2
+                T[tuple(slices_lo)] = (T[tuple(inner_lo)] + bi * T_amb) / (1 + bi)
+                T[tuple(slices_hi)] = (T[tuple(inner_hi)] + bi * T_amb) / (1 + bi)
 
     async def update_temperature(self, dt: float, heat_sources: np.ndarray):
         """Update the temperature grid over a time step dt using FDM.

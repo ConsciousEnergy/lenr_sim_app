@@ -1,4 +1,4 @@
-# Deployment Checklist (v0.2.3-beta)
+# Deployment Checklist (v0.3.1-beta)
 
 ## Pre-Deployment
 
@@ -9,7 +9,7 @@
 
 ## Docker / GHCR
 
-- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.2.3-beta .`
+- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.0-beta .`
 - [ ] Image pushed to GHCR: `docker push ghcr.io/ConsciousEnergy/lenr-sim-backend:latest`
 - [ ] **VPS has GHCR credentials**: `docker login ghcr.io -u <user> --password-stdin` on the server
 

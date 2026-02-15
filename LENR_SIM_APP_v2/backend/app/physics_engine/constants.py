@@ -44,6 +44,28 @@ PHYSICAL_CONSTANTS = {
     "J_to_eV": 1.0 / constants.e
 }
 
+# ---------------------------------------------------------------------------
+# Theory-level constants (v0.3.0-beta)
+# ---------------------------------------------------------------------------
+# Conservative upper bound for total tunneling enhancement factor.
+# Part 2 of the unified framework derives 10^3 - 10^5 (90% confidence).
+# Set to 10^5 as the default ceiling; configurable per simulation run.
+MAX_ENHANCEMENT_FACTOR: float = 1e5
+
+# Miles heat-helium correlation: D + D -> He-4 + 23.8 MeV (all as heat)
+# 1 Watt of excess heat = 2.6e11 He-4 atoms/second  (Miles 1993)
+MILES_HEAT_HELIUM_RATE: float = 2.6e11  # He-4 atoms per second per watt
+
+# Ni-H thermal activation threshold (Clean-HME data)
+# Below ~973 K (~700 C) excess heat is not observed in Nickel-Hydrogen systems.
+NIH_ACTIVATION_TEMPERATURE_K: float = 973.0  # K (~700 C)
+
+# Nuclear radius (used for halo electron overlap calculations)
+# r_0 ~ 5 fm for light nuclei.  The 0.1 nm value in the original
+# paper is the ionic/atomic radius, NOT the nuclear radius.
+NUCLEAR_RADIUS_FM: float = 5.0  # femtometers
+NUCLEAR_RADIUS_M: float = 5.0e-15  # meters
+
 # Ultra-Dense Hydrogen (UDH) Constants from arxiv paper 2505.21946
 # "Field-Coupled Quantum Collapse in Ultra-Dense Hydrogen" by Zeiner-Gundersen
 UDH_CONSTANTS = {

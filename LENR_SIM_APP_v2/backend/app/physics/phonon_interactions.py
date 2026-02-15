@@ -6,6 +6,42 @@ This module implements advanced phonon interaction models including:
 2. Density of states calculations
 3. Phonon-assisted tunneling
 4. Temperature-dependent effects
+
+**IMPORTANT: The Multi-Phonon Coherence Energy Gap Problem**
+
+For nuclear-level energy transfer via phonons, the number of coherent
+phonons required is enormous.  A single D-D fusion event releases
+~23.8 MeV.  Typical lattice phonon energies are ~25-100 meV
+(Debye temperature 300-600 K).  Bridging the gap requires:
+
+    N_phonons = E_nuclear / E_phonon  ~  24e6 eV / 0.05 eV  ~  5 x 10^8
+
+Even the more conservative estimate for 1 MeV energy transfer gives
+N ~ 2 x 10^7.  The probability of this many phonons acting in quantum
+coherence simultaneously is vanishingly small by standard statistical
+mechanics.
+
+This is an **open theoretical challenge** (sometimes called the
+"energy gap problem" in LENR theory).  Proposed resolutions include:
+
+- **Hagelstein's cascaded phonon-nuclear coupling** (P.L. Hagelstein,
+  J. Condensed Matter Nucl. Sci., 2012): energy is transferred in a
+  multi-step cascade rather than a single coherent event, with each
+  step coupling a manageable number of phonons (~10^2-10^3).
+- **Preparata coherent QED domains**: collective electromagnetic modes
+  inside coherence domains provide a higher-energy intermediary.
+- **Takahashi TSC**: tetrahedral symmetric condensates bypass the
+  phonon channel entirely via direct multi-body tunneling.
+
+The ``coherent_enhancement`` computed in this module uses a simplified
+exponential model and should be interpreted as an *upper bound*.  The
+true coherent multi-phonon probability remains an unresolved constraint
+(see also the unified framework Part 2, Section 6.2).
+
+References:
+    - Hagelstein, P.L. "Phonon-nuclear coupling..." JCMNS (2012)
+    - Preparata, G. "QED Coherence in Matter" (World Scientific, 1995)
+    - Storms, E. "The Explanation of Low Energy Nuclear Reaction" (2014)
 """
 
 import numpy as np
@@ -144,9 +180,15 @@ def calculate_tunneling_enhancement(
     enhancement, _ = quad(integrand, 0, params.max_frequency)
     
     # Calculate coherent multi-phonon processes
+    # NOTE (energy gap problem): This is a simplified upper-bound model.
+    # True N-phonon coherence for nuclear-scale energy transfer requires
+    # N ~ 10^7-10^8 phonons, which is statistically implausible without
+    # a cascaded mechanism (see Hagelstein 2012).  The exponential model
+    # below captures the *qualitative* enhancement trend but should not
+    # be interpreted as a quantitative prediction of coherent phonon
+    # coupling to nuclear degrees of freedom.
     coherent_enhancement = 1.0
     if temperature > 0 and params.max_frequency > 0:
-        # Simplified model for coherent processes
         thermal_energy = KB * temperature
         exponent = params.electron_phonon_coupling * thermal_energy / (HBAR * params.max_frequency)
         # Clip exponent to prevent overflow
@@ -192,6 +234,69 @@ def calculate_temperature_dependent_screening(
         "phonon_contribution": float(phonon_screening),
         "total_screening_m": float(total_screening)
     }
+
+def estimate_phonon_coherence_number(
+    energy_transfer_eV: float = 24e6,
+    debye_temperature: float = 300.0,
+) -> Dict[str, Any]:
+    """
+    Estimate the number of coherent phonons required to bridge the
+    nuclear energy gap -- the "energy gap problem" in LENR theory.
+
+    For nuclear-scale energy transfer (MeV) via lattice phonons (~meV),
+    an enormous number of phonons must act coherently.  This function
+    quantifies the gap and flags whether it is physically tractable.
+
+    Args:
+        energy_transfer_eV: Energy to transfer in eV (default: 23.8 MeV
+            for D-D fusion).
+        debye_temperature: Lattice Debye temperature in K (determines
+            characteristic phonon energy).
+
+    Returns:
+        Dictionary with:
+        - phonon_energy_eV: single phonon energy (kB * T_Debye)
+        - n_phonons_required: E_nuclear / E_phonon
+        - log10_n: log10 of phonon count
+        - is_tractable: True if N < 10^4 (Hagelstein cascade regime)
+        - note: human-readable assessment
+        - hagelstein_cascade_steps: estimated cascade stages if each
+          stage couples ~1000 phonons
+
+    References:
+        Hagelstein, P.L. J. Condensed Matter Nucl. Sci. (2012)
+    """
+    phonon_energy_eV = KB * debye_temperature / EV_TO_J  # eV
+    n_phonons = energy_transfer_eV / phonon_energy_eV
+    log10_n = float(np.log10(max(n_phonons, 1.0)))
+    cascade_steps = int(np.ceil(log10_n / 3))  # each stage ~1000 phonons
+
+    if n_phonons < 1e4:
+        note = (
+            f"N={n_phonons:.0f} phonons is within the Hagelstein cascade "
+            "regime; coherent coupling is plausible."
+        )
+        is_tractable = True
+    else:
+        note = (
+            f"N={n_phonons:.2e} phonons required. Simultaneous coherence "
+            "is vanishingly improbable by standard statistical mechanics. "
+            "Hagelstein's cascaded phonon-nuclear coupling model proposes "
+            f"~{cascade_steps} cascaded stages of ~10^3 phonons each as "
+            "an alternative mechanism. This remains an OPEN THEORETICAL "
+            "CHALLENGE (energy gap problem)."
+        )
+        is_tractable = False
+
+    return {
+        "phonon_energy_eV": float(phonon_energy_eV),
+        "n_phonons_required": float(n_phonons),
+        "log10_n": log10_n,
+        "is_tractable": is_tractable,
+        "hagelstein_cascade_steps": cascade_steps,
+        "note": note,
+    }
+
 
 def calculate_thermal_properties(
     temperature: float,

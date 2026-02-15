@@ -405,6 +405,35 @@ class FluidDynamicsSolver:
         
         logger.info("Set spatially-varying external force field")
     
+    def set_mhd_body_force(self, J_cross_B: np.ndarray) -> None:
+        """Inject a Lorentz body force  **J × B**  into the LBM force field.
+
+        This is the primary MHD coupling point: the induction solver computes
+        ``J × B`` on the same grid and passes it here so that the next LBM
+        collision step picks it up via the Guo forcing scheme.
+
+        Parameters
+        ----------
+        J_cross_B : np.ndarray
+            Force density array of shape ``(3, nx, ny, nz)`` in SI units
+            (N/m³).  Component ordering is (x, y, z).
+
+        Raises
+        ------
+        ValueError
+            If the shape does not match ``(3, nx, ny, nz)``.
+        """
+        expected = (3, self.nx, self.ny, self.nz)
+        if J_cross_B.shape != expected:
+            raise ValueError(
+                f"J_cross_B shape {J_cross_B.shape} does not match grid {expected}"
+            )
+        self.force[:] = J_cross_B
+        logger.debug(
+            "MHD body force injected — |F|_max = %.3e N/m³",
+            float(np.max(np.sqrt(np.sum(J_cross_B**2, axis=0)))),
+        )
+
     def set_obstacle(self, mask):
         """
         Set obstacles in the fluid domain.

@@ -34,6 +34,8 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import DescriptionIcon from '@mui/icons-material/Description';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ArticleIcon from '@mui/icons-material/Article';
+import InfoIcon from '@mui/icons-material/Info';
 // User profile icons removed - app is open access without authentication
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -47,6 +49,8 @@ const drawerWidth = 260;
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
     flexGrow: 1,
+    height: 0,             // Combined with flexGrow:1 to fill remaining viewport height
+    overflowY: 'auto',     // Scroll when content exceeds available height
     padding: theme.spacing(3),
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
@@ -164,7 +168,27 @@ const menuItems = [
     id: 'documentation',
     title: 'Documentation',
     path: '/documentation',
-    icon: <DescriptionIcon />
+    icon: <DescriptionIcon />,
+    children: [
+      {
+        id: 'theory-paper',
+        title: 'Theory Paper',
+        path: '/theory-paper',
+        icon: <ArticleIcon />
+      },
+      {
+        id: 'theory-guide',
+        title: 'Theory Guide',
+        path: '/theory',
+        icon: <DescriptionIcon />
+      }
+    ]
+  },
+  {
+    id: 'about',
+    title: 'About',
+    path: '/about',
+    icon: <InfoIcon />
   },
   {
     id: 'team',
@@ -186,7 +210,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
   const location = useLocation();
   
   const [open, setOpen] = useState(!isMobile);
-  const [simulationsOpen, setSimulationsOpen] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState({});
 
   useEffect(() => {
     // Auto-close drawer on mobile when route changes
@@ -204,8 +228,8 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
     setOpen(!open);
   };
 
-  const handleSimulationsClick = () => {
-    setSimulationsOpen(!simulationsOpen);
+  const handleSubmenuToggle = (id) => {
+    setSubmenuOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Profile menu handlers removed - app is open access without authentication
@@ -220,16 +244,17 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
     }
 
     if (item.children) {
+      const isSubmenuOpen = !!submenuOpen[item.id];
       return (
         <React.Fragment key={item.id}>
-          <StyledListItemButton onClick={handleSimulationsClick}>
+          <StyledListItemButton onClick={() => handleSubmenuToggle(item.id)}>
             <ListItemIcon sx={{ minWidth: 40 }}>
               {item.icon}
             </ListItemIcon>
             <ListItemText primary={item.title} />
-            {simulationsOpen ? <ExpandLess /> : <ExpandMore />}
+            {isSubmenuOpen ? <ExpandLess /> : <ExpandMore />}
           </StyledListItemButton>
-          <Collapse in={simulationsOpen} timeout="auto" unmountOnExit>
+          <Collapse in={isSubmenuOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {item.children.map((child) => (
                 <StyledListItemButton
@@ -293,7 +318,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', height: '100vh' }}>
       <AppBarStyled position="fixed" open={open} elevation={1}>
         <Toolbar>
           <IconButton

@@ -291,7 +291,7 @@ useEffect(() => {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth margin="normal">
                 <InputLabel id="metal-label">Metal Host</InputLabel>
                 <Select
@@ -312,7 +312,7 @@ useEffect(() => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth margin="normal">
                 <InputLabel id="site-label">Site Occupation</InputLabel>
                 <Select
@@ -423,7 +423,7 @@ useEffect(() => {
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Proximity Factor:
                   </Typography>
@@ -439,7 +439,7 @@ useEffect(() => {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Screening Factor:
                   </Typography>
@@ -455,7 +455,7 @@ useEffect(() => {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Fluctuation Factor:
                   </Typography>
@@ -471,7 +471,7 @@ useEffect(() => {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Resonance Factor:
                   </Typography>
@@ -487,7 +487,7 @@ useEffect(() => {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2">
                     Quantum Factor:
                   </Typography>

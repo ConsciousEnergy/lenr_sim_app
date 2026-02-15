@@ -643,7 +643,7 @@ For **v0.2.1-beta**, the current synchronous architecture is acceptable because:
 
 ## Infrastructure Evolution: Docker Swarm vs Kubernetes + Flux
 
-### Current Architecture: Docker Swarm (v0.2.1-beta)
+### Current Architecture: Docker Swarm (v0.3.0-beta)
 
 ```mermaid
 graph TB
@@ -838,7 +838,7 @@ graph TB
 - ❌ Higher complexity
 - ❌ Steeper learning curve
 
-### Recommendation for v0.2.1-beta
+### Recommendation for v0.3.0-beta
 
 **For now: Stay with Docker Swarm** because:
 1. **Cost-effective** for beta phase
@@ -926,7 +926,7 @@ graph TB
 
 | Phase | When | Cost | Complexity | Main App | New Services |
 |-------|------|------|------------|----------|--------------|
-| Phase 1 | v0.2.1-beta (Current) | $7.50/mo | Low | Docker Swarm | N/A |
+| Phase 1 | v0.3.0-beta (Current) | $7.50/mo | Low | Docker Swarm | N/A |
 | Phase 2 | v0.3.0-beta (Add analytics) | $28.50/mo | Medium | Docker Swarm | Kubernetes + Flux |
 | Phase 3 | v1.0.0 (Production) | $21/mo | High | Kubernetes | Kubernetes |
 

@@ -24,6 +24,8 @@ from scipy import constants as const
 from scipy.integrate import quad
 from enum import Enum
 
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
 logger = logging.getLogger(__name__)
 
 
@@ -122,13 +124,21 @@ class SimulationConfig:
     grain_size: float = 50e-9  # m
     surface_roughness: float = 5e-9  # m
     
-    # Quantum effect toggles
+    # Quantum effect toggles (legacy per-mechanism switches)
     enable_screening: bool = True
     enable_qed: bool = True
     enable_casimir: bool = True
     enable_coherence: bool = True
     enable_bubble_dynamics: bool = True
     enable_rydberg: bool = True
+    
+    # Theory pipeline integration (v0.3.0)
+    # When True, enhancement calculations are delegated to the TheoryPipeline
+    # which runs pluggable TheoryModule instances.  When False, the legacy
+    # hardcoded calculation methods are used.
+    use_theory_pipeline: bool = False
+    enabled_theories: Optional[List[str]] = None  # None = all theories
+    theory_configs: Optional[Dict[str, Dict[str, Any]]] = None
     
     # Simulation parameters
     time_steps: int = 100
@@ -216,6 +226,9 @@ class UnifiedLENRModel:
         self._enhancement_cache = {}
         self._cache_key = None
         
+        # Populated when use_theory_pipeline=True after run_simulation()
+        self._last_pipeline_result = None
+        
         logger.info(f"UnifiedLENRModel initialized with {self.config.host_material.name}-{self.config.reactant.name} system")
     
     def _get_cache_key(self) -> str:
@@ -237,10 +250,19 @@ class UnifiedLENRModel:
                 self.config.enable_coherence,
                 self.config.enable_bubble_dynamics,
                 self.config.enable_rydberg,
+                self.config.use_theory_pipeline,
+                tuple(sorted(self.config.enabled_theories)) if self.config.enabled_theories else None,
             )
             self._cache_key = str(hash(key_parts))
         return self._cache_key
     
+    @property
+    def last_pipeline_result(self):
+        """Access the last :class:`TheoryPipelineResult` (only set when
+        ``use_theory_pipeline=True`` and ``run_simulation()`` has been called).
+        """
+        return self._last_pipeline_result
+
     def run_simulation(self) -> UnifiedSimulationResult:
         """Execute full unified LENR simulation."""
         import time
@@ -290,7 +312,12 @@ class UnifiedLENRModel:
         )
     
     def _calculate_all_enhancements(self) -> List[EnhancementResult]:
-        """Calculate all enhancement mechanisms with caching."""
+        """Calculate all enhancement mechanisms with caching.
+        
+        When ``config.use_theory_pipeline`` is True, calculation is delegated
+        to the pluggable :class:`TheoryPipeline` orchestrator (v0.3.0).
+        Otherwise, the legacy hardcoded methods are used.
+        """
         cache_key = self._get_cache_key()
         
         # Check cache first
@@ -298,6 +325,97 @@ class UnifiedLENRModel:
             logger.debug("Using cached enhancement results")
             return self._enhancement_cache[cache_key]
         
+        # ---- v0.3.0: Theory Pipeline delegation path ----
+        if self.config.use_theory_pipeline:
+            enhancements = self._calculate_enhancements_via_pipeline()
+        else:
+            enhancements = self._calculate_enhancements_legacy()
+        
+        # Cache results (limit cache size to prevent memory issues)
+        if len(self._enhancement_cache) > 100:
+            oldest_key = next(iter(self._enhancement_cache))
+            del self._enhancement_cache[oldest_key]
+        
+        self._enhancement_cache[cache_key] = enhancements
+        return enhancements
+
+    # ------------------------------------------------------------------
+    # Pipeline-backed enhancement calculation (v0.3.0)
+    # ------------------------------------------------------------------
+    def _calculate_enhancements_via_pipeline(self) -> List[EnhancementResult]:
+        """Delegate enhancement calculation to the TheoryPipeline.
+        
+        Translates ``SimulationConfig`` into the ``conditions`` dict expected
+        by :class:`TheoryPipeline`, runs the enabled theories, and converts
+        each :class:`TheoryContribution` back into :class:`EnhancementResult`
+        so the rest of ``run_simulation()`` works unchanged.
+        """
+        from app.physics_engine.theory_pipeline import get_default_pipeline
+
+        pipeline = get_default_pipeline()
+
+        # Build conditions dict from config
+        # Derive gap/crack width from surface roughness for theories that need it
+        surface_roughness_nm = self.config.surface_roughness * 1e9
+        gap_width_nm = max(0.5, surface_roughness_nm)
+
+        conditions: Dict[str, float] = {
+            "temperature": self.config.temperature,
+            "pressure": self.config.pressure,
+            "electric_field": self.config.electric_field,
+            "loading_ratio": self.config.loading_ratio,
+            "defect_density": self.config.defect_density,
+            "grain_size": self.config.grain_size,
+            "surface_roughness": self.config.surface_roughness,
+            "electron_density": self.config.host_material.electron_density,
+            "debye_temperature": self.config.host_material.debye_temperature,
+            "lattice_constant": self.config.host_material.lattice_constant,
+            "atomic_mass": float(self.config.reactant.atomic_mass),
+            "atomic_number": float(self.config.reactant.atomic_number),
+            # Theory-specific conditions (Hydroton, NAE, etc.)
+            "gap_width_nm": gap_width_nm,
+            "crack_width_nm": gap_width_nm,
+        }
+
+        pipeline_result = pipeline.run(
+            conditions=conditions,
+            enabled_theories=self.config.enabled_theories,
+            theory_configs=self.config.theory_configs,
+        )
+
+        # Store the full pipeline result for external consumers
+        self._last_pipeline_result = pipeline_result
+
+        # Map TheoryContribution → EnhancementResult
+        enhancements: List[EnhancementResult] = []
+        for contrib in pipeline_result.contributions:
+            if not contrib.is_applicable:
+                continue
+            enhancements.append(
+                EnhancementResult(
+                    name=contrib.theory_name,
+                    value=contrib.enhancement_factor,
+                    threshold_met=contrib.confidence > 0.5,
+                    equation=f"TheoryPipeline/{contrib.theory_id}",
+                    parameters=contrib.parameters_used,
+                    category="primary" if contrib.confidence > 0.3 else "secondary",
+                )
+            )
+
+        logger.info(
+            "TheoryPipeline returned %d applicable contributions "
+            "(combined enhancement=%.2e, energy=%.4g W)",
+            len(enhancements),
+            pipeline_result.combined_enhancement,
+            pipeline_result.total_energy_watts,
+        )
+        return enhancements
+
+    # ------------------------------------------------------------------
+    # Legacy per-toggle enhancement calculation
+    # ------------------------------------------------------------------
+    def _calculate_enhancements_legacy(self) -> List[EnhancementResult]:
+        """Original hardcoded enhancement calculation (pre-v0.3.0)."""
         enhancements = []
         
         # Primary enhancers
@@ -320,13 +438,6 @@ class UnifiedLENRModel:
         if self.config.enable_rydberg:
             enhancements.append(self._calculate_rydberg_enhancement())
         
-        # Cache results (limit cache size to prevent memory issues)
-        if len(self._enhancement_cache) > 100:
-            # Clear oldest entries (simple FIFO)
-            oldest_key = next(iter(self._enhancement_cache))
-            del self._enhancement_cache[oldest_key]
-        
-        self._enhancement_cache[cache_key] = enhancements
         return enhancements
     
     def _calculate_electron_screening(self) -> EnhancementResult:
@@ -589,8 +700,8 @@ class UnifiedLENRModel:
         
         total = primary_product * secondary_contribution
         
-        # Cap at physically reasonable maximum (10^8 from paper)
-        return min(total, 1e8)
+        # Cap at conservative maximum from Part 2 analysis (10^3-10^5, 90% CI)
+        return min(total, MAX_ENHANCEMENT_FACTOR)
     
     def _check_thresholds(self) -> Dict[str, bool]:
         """Check all threshold conditions from the paper."""

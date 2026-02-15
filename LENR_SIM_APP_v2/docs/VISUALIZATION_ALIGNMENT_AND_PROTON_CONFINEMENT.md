@@ -1,7 +1,7 @@
 # Visualization Alignment and Proton Confinement
 
-**Version:** v0.2.3-beta (post-release fixes)  
-**Last Updated:** January 2026
+**Version:** v0.3.1-beta  
+**Last Updated:** February 2026
 
 ## Summary
 
@@ -76,8 +76,21 @@ These updates keep the visualization consistent with "reaction at the surface, e
 
 ---
 
-## 5. References
+## 5. Frontend MHD Dashboard (v0.3.0.1-beta)
+
+The **Theory Testbed → Bubble-MHD Nano-Confinement** accordion now includes an `MHDParameterDashboard` component displaying:
+
+- **Regime chips**: Colour-coded dimensionless parameter chips (Rm, Ha, S, β, β_H, N, Pm) with thresholds indicating frozen-in, diffusive, MHD-dominated, or Hall regimes.
+- **Key observables grid**: Alfvén velocity, compressed B-field, Faraday EMF, screening energy, flux compression ratio, nuclear power density, neutron rate, collapse velocity.
+- **Confidence sub-scores**: Visible in observables — compression, MHD, loading, and screening quality scores.
+
+Files: `frontend/src/components/physics/TheoryTogglePanel.tsx`
+
+---
+
+## 6. References
 
 - Lattice creation and coordinate system: `UnifiedBubbleLatticeVisualization.jsx` – `createLattice`, `PHYSICS_CONFIG.LATTICE_SPACING`, `LATTICE_Y_OFFSET`, `LATTICE_SURFACE_OFFSET`.
 - MHD and proton dynamics: `docs/MHD_PROTON_DYNAMICS.md`.
+- MHD nano-confinement physics: `docs/MHD_NANO_CONFINEMENT_PHYSICS.md`.
 - Theory (phonon coupling, lattice energy absorption): project unified theory document and Hagelstein-style LENR models.

@@ -308,12 +308,21 @@ def calculate_compression_enhancement(
     
     # Fusion enhancement calculation
     
-    # 1. Temperature contribution
-    # Simplified Gamow factor for D-D fusion
-    gamow_factor = 0.0 if collapse_temp < 1e4 else 44.0 / np.sqrt(max(collapse_temp / 1e6, 1e-10))
-    # Clip gamow_factor to prevent underflow in exp
-    gamow_factor = min(gamow_factor, 700)
-    temp_enhancement = np.exp(-gamow_factor)
+    # 1. Temperature contribution via proper Gamow tunneling factor.
+    # Use the full Sommerfeld-parameter calculation from quantum_tunneling
+    # instead of the previous simplified empirical formula.
+    # For D-D: Z1=Z2=1, reduced mass ~1 AMU, E_cm = 3/2 kB T
+    from app.physics.quantum_tunneling import calculate_gamow_factor
+
+    _dd_cm_energy_eV = 1.5 * KB * collapse_temp / const.e  # CM thermal energy in eV
+    _dd_cm_energy_keV = _dd_cm_energy_eV / 1000.0
+    if _dd_cm_energy_keV > 1e-6:
+        # calculate_gamow_factor expects Z1, Z2, reduced_mass (AMU), energy (keV)
+        temp_enhancement = calculate_gamow_factor(
+            z1=1, z2=1, reduced_mass=1.0, energy=_dd_cm_energy_keV,
+        )
+    else:
+        temp_enhancement = 0.0
     
     # 2. Density contribution
     # Assuming density increases as (r_0/r_min)^3
@@ -342,8 +351,13 @@ def calculate_compression_enhancement(
     log_enhancement = min(30.0, max(1.0, np.log10(raw_enhancement) if raw_enhancement > 0 else 0))
     capped_enhancement = 10**log_enhancement
     
-    # Base tunneling probability (D-D fusion in free space)
-    base_probability = 1e-80
+    # Base tunneling probability from Gamow factor at ambient (pre-collapse) temp.
+    # This represents bare D-D tunneling without collapse enhancement.
+    _ambient_keV = 1.5 * KB * ambient_temperature / const.e / 1000.0
+    base_probability = (
+        calculate_gamow_factor(z1=1, z2=1, reduced_mass=1.0, energy=max(_ambient_keV, 1e-6))
+        if _ambient_keV > 1e-6 else 1e-300
+    )
     
     # Enhanced probability
     enhanced_probability = base_probability * capped_enhancement

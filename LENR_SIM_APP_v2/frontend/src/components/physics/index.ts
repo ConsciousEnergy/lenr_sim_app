@@ -22,6 +22,10 @@ export { default as PhononNuclearPanel } from './PhononNuclearPanel';
 export { default as ThermodynamicsPanel } from './ThermodynamicsPanel';
 export { default as StatisticalAnalysisPanel } from './StatisticalAnalysisPanel';
 
+// Theory Testbed (v0.3.0)
+export { default as TheoryTogglePanel } from './TheoryTogglePanel';
+export { default as TheoryDocumentationPanel } from './TheoryDocumentationPanel';
+
 // Types
 export type { PhysicsParameter } from './PhysicsParameterInput';
 export type { PhysicsParameterGroupProps } from './PhysicsParameterGroup';

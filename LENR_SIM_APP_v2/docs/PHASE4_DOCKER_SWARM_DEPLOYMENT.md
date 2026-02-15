@@ -1,7 +1,7 @@
-# Phase 4: Docker Swarm Deployment Guide (v0.2.1-beta)
+# Phase 4: Docker Swarm Deployment Guide (v0.3.0-beta)
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026  
+**Version:** 0.3.0-beta  
+**Last Updated:** February 2026  
 **Target:** Production deployment on Hostinger VPS with Docker Swarm
 
 ---
@@ -84,7 +84,7 @@ Before starting, ensure you have completed all prerequisites:
   ```bash
   git clone https://github.com/ConsciousEnergy/lenr_sim_app.git
   cd lenr_sim_app
-  git checkout lenr_sim_app_v0.2.1-beta
+  git checkout lenr_sim_app_v0.3.0-beta
   ```
 
 ### 3. Required Information
@@ -392,17 +392,17 @@ grep .secrets.env .gitignore || echo ".secrets.env" >> .gitignore
 
 **Option A: Use GitHub Actions (Recommended)**
 
-The repository includes `.github/workflows/docker-build.yml` which automatically builds and pushes Docker images to GitHub Container Registry (GHCR) when you push to the repository.
+The repository includes `.github/workflows/deploy.yml` which automatically builds and pushes Docker images to GitHub Container Registry (GHCR) when you push to the repository.
 
 **Verify the workflow exists:**
 ```bash
-cat .github/workflows/docker-build.yml
+cat .github/workflows/deploy.yml
 ```
 
 **Trigger build:**
 ```bash
 # Push to repository (triggers GitHub Actions)
-git push origin lenr_sim_app_v0.2.1-beta
+git push origin lenr_sim_app_v0.3.0-beta
 
 # Check GitHub Actions: https://github.com/ConsciousEnergy/lenr_sim_app/actions
 # Wait for "Build and Push Docker Image" workflow to complete

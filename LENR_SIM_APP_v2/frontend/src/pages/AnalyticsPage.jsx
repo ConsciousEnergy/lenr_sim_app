@@ -28,7 +28,12 @@ import {
   Checkbox,
   useTheme,
   alpha,
-  Snackbar
+  Snackbar,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Slider,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -41,7 +46,9 @@ import {
   Timeline as TimelineIcon,
   Assessment as AssessmentIcon,
   CloudOff as CloudOffIcon,
-  Storage as StorageIcon
+  Storage as StorageIcon,
+  Hub as HubIcon,
+  PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -59,6 +66,7 @@ import {
   Cell
 } from 'recharts';
 import { analyticsApi } from '../services/analyticsApi';
+import RelevanceMap from '../components/analytics/RelevanceMap';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -131,6 +139,16 @@ const AnalyticsPage = () => {
   const [totalExperiments, setTotalExperiments] = useState(0);
   const [isOffline, setIsOffline] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  // Relevance Map state
+  const [graphData, setGraphData] = useState(null);
+  const [theoryScores, setTheoryScores] = useState(null);
+  const [graphLoading, setGraphLoading] = useState(false);
+  const [graphError, setGraphError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState('');
+  const [minScoreFilter, setMinScoreFilter] = useState(0);
+  const [propertiesTaxonomy, setPropertiesTaxonomy] = useState({});
   
   // Load data from API with localStorage fallback
   const loadData = useCallback(async () => {
@@ -240,6 +258,47 @@ const AnalyticsPage = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Load theory graph data when Relevance Map tab is selected
+  const loadTheoryGraph = useCallback(async () => {
+    if (graphData && theoryScores) return; // already loaded
+    setGraphLoading(true);
+    setGraphError(null);
+    try {
+      const [graph, scoresResult, propsResult] = await Promise.all([
+        analyticsApi.getTheoryGraph(),
+        analyticsApi.computeTheoryScores(),
+        analyticsApi.getTheoryProperties(),
+      ]);
+      setGraphData(graph);
+      setTheoryScores(scoresResult?.scores || null);
+      setPropertiesTaxonomy(propsResult?.properties || {});
+    } catch (err) {
+      console.error('Failed to load theory graph:', err);
+      setGraphError('Failed to load theory network. Is the backend running?');
+    } finally {
+      setGraphLoading(false);
+    }
+  }, [graphData, theoryScores]);
+
+  const handleRunScores = useCallback(async (conditions) => {
+    setGraphLoading(true);
+    try {
+      const result = await analyticsApi.computeTheoryScores(conditions);
+      setTheoryScores(result?.scores || null);
+    } catch (err) {
+      console.error('Failed to compute scores:', err);
+    } finally {
+      setGraphLoading(false);
+    }
+  }, []);
+
+  // When tab changes to Relevance Map (index 3), load graph data
+  useEffect(() => {
+    if (activeTab === 3) {
+      loadTheoryGraph();
+    }
+  }, [activeTab, loadTheoryGraph]);
   
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
   
@@ -476,10 +535,11 @@ const AnalyticsPage = () => {
       
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange}>
+        <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
           <Tab label="Overview" />
           <Tab label="Simulation History" />
           <Tab label="Comparison" />
+          <Tab icon={<HubIcon />} iconPosition="start" label="Relevance Map" />
           <Tab label="Export" />
         </Tabs>
       </Paper>
@@ -730,8 +790,137 @@ const AnalyticsPage = () => {
         )}
       </TabPanel>
       
-      {/* Export Tab */}
+      {/* Relevance Map Tab */}
       <TabPanel value={activeTab} index={3}>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', lg: 'row' } }}>
+          {/* Main graph area — 75% width with integrated detail panel */}
+          <Box sx={{ flex: 3, minWidth: 0 }}>
+            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+              {/* Controls row */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant="h6">Theory Relevance Network</Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={selectedCategory}
+                      label="Category"
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="mechanism">Mechanism</MenuItem>
+                      <MenuItem value="measurement">Measurement</MenuItem>
+                      <MenuItem value="engineering">Engineering</MenuItem>
+                      <MenuItem value="triggering">Triggering</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Property</InputLabel>
+                    <Select
+                      value={selectedProperty}
+                      label="Property"
+                      onChange={(e) => setSelectedProperty(e.target.value)}
+                    >
+                      <MenuItem value="">All Properties</MenuItem>
+                      {Object.entries(propertiesTaxonomy).map(([key, desc]) => (
+                        <MenuItem key={key} value={key}>{key.replace(/_/g, ' ')}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                      Min: {minScoreFilter}%
+                    </Typography>
+                    <Slider
+                      value={minScoreFilter}
+                      onChange={(e, v) => setMinScoreFilter(v)}
+                      min={0}
+                      max={100}
+                      size="small"
+                      sx={{ width: 100 }}
+                    />
+                  </Box>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<PlayArrowIcon />}
+                    onClick={() => handleRunScores()}
+                    disabled={graphLoading}
+                  >
+                    Run Scores
+                  </Button>
+                </Stack>
+              </Box>
+              {/* Graph with integrated search, stats, detail panel */}
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <RelevanceMap
+                  graphData={graphData}
+                  scores={theoryScores}
+                  loading={graphLoading}
+                  error={graphError}
+                  onNodeClick={(node) => {
+                    setSnackbar({
+                      open: true,
+                      message: `Selected: ${node.theory_name} — ${node.researcher} (${node.year})`,
+                      severity: 'info',
+                    });
+                  }}
+                  onRunScores={handleRunScores}
+                  selectedProperty={selectedProperty || null}
+                  selectedCategory={selectedCategory || null}
+                  minScore={minScoreFilter}
+                />
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* Right sidebar: Score cards (25%) */}
+          <Box sx={{ flex: 1, minWidth: 260 }}>
+            <Paper sx={{ p: 2, maxHeight: 720, overflow: 'auto' }}>
+              <Typography variant="h6" gutterBottom>Theory Scores</Typography>
+              {theoryScores ? (
+                Object.entries(theoryScores)
+                  .sort(([, a], [, b]) => (b.final_score || 0) - (a.final_score || 0))
+                  .map(([tid, s]) => (
+                    <Card key={tid} variant="outlined" sx={{ mb: 1 }}>
+                      <CardContent sx={{ py: 1, px: 1.5, '&:last-child': { pb: 1 } }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
+                            {tid.replace(/_/g, ' ')}
+                          </Typography>
+                          <Chip
+                            label={`${(s.final_score * 100).toFixed(0)}%`}
+                            size="small"
+                            sx={{
+                              fontWeight: 700,
+                              bgcolor:
+                                s.final_score > 0.7 ? '#4CAF50' :
+                                s.final_score > 0.4 ? '#FF9800' : '#F44336',
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                            }}
+                          />
+                        </Box>
+                        <Stack direction="row" spacing={0.3} sx={{ mt: 0.5, flexWrap: 'wrap', gap: 0.3 }}>
+                          <Chip label={`Phys: ${(s.physical_consistency * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+                          <Chip label={`Exp: ${(s.experimental_agreement * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+                          <Chip label={`Sens: ${(s.parameter_sensitivity * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  {graphLoading ? 'Computing scores...' : 'Click "Run Scores" to compute theory rankings.'}
+                </Typography>
+              )}
+            </Paper>
+          </Box>
+        </Box>
+      </TabPanel>
+
+      {/* Export Tab */}
+      <TabPanel value={activeTab} index={4}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>

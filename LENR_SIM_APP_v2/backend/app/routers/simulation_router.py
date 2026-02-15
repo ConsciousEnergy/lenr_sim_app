@@ -1,3 +1,9 @@
+"""
+DEPRECATED (v0.3.3-beta): This router is NOT mounted in main.py.
+Use shared_simulation_router.py for production simulation endpoints
+and mock_simulation_router.py for dev-mode endpoints.
+"""
+
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Query, Path, status
 from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict

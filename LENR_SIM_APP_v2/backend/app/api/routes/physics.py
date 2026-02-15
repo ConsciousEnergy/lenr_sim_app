@@ -1,7 +1,7 @@
 """
 Enhanced Unified Physics API for LENR Simulation v2
 Implements FastAPI routes for advanced quantum enhancement, lattice dynamics,
-and fusion process simulations.
+fusion process simulations, and the LENR Theory Testbed pipeline.
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, status
@@ -23,6 +23,7 @@ from ...physics_engine.unified_lenr_solver import UnifiedLENRSolver
 from ...physics_engine.fluid_dynamics_solver import FluidDynamicsSolver, FluidDynamicsParameters
 from ...models.simulation_models import SimulationParameters, SimulationResponse
 from ...services.simulation_store import SimulationStore
+from ...physics_engine.theory_pipeline import get_default_pipeline
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -377,6 +378,133 @@ async def get_physics_status(
         "temperature": config.get("temperature") if config else None,
         "electron_density": config.get("electron_density") if config else None
     }
+
+# ---------------------------------------------------------------------------
+# Theory Testbed Models (Phase 2.3)
+# ---------------------------------------------------------------------------
+
+class TheoryConditions(BaseModel):
+    """Physical conditions passed to theory modules."""
+    temperature: float = Field(300.0, description="Temperature in Kelvin", ge=0)
+    pressure: float = Field(101325.0, description="Pressure in Pascal", ge=0)
+    electron_density: float = Field(6.8e28, description="Electron density in m⁻³", ge=0)
+    electric_field: float = Field(1e6, description="Electric field in V/m", ge=0)
+    loading_ratio: float = Field(0.9, description="Hydrogen / metal loading ratio", ge=0, le=1.0)
+    surface_roughness: float = Field(5e-9, description="Surface roughness (m)", ge=0)
+    gap_width_nm: Optional[float] = Field(None, description="NAE gap width in nm")
+    crack_width_nm: Optional[float] = Field(None, description="Crack width in nm")
+    oxide_coverage_fraction: Optional[float] = Field(None, description="Oxide coverage 0-1")
+    hydrogen_loading_purity: Optional[float] = Field(None, description="H-accessible fraction 0-1")
+    phonon_frequency: Optional[float] = Field(None, description="Phonon frequency rad/s")
+    material_system: Optional[str] = Field(None, description="Material system e.g. 'pd_d', 'ni_h'")
+    coherence_domain_radius_m: Optional[float] = Field(None, description="Coherence domain radius m")
+
+class TheoryRunRequest(BaseModel):
+    """Request to run one or more theories."""
+    conditions: TheoryConditions
+    enabled_theories: Optional[List[str]] = Field(
+        None, description="Theory IDs to run. If null, run all."
+    )
+    theory_configs: Optional[Dict[str, Dict[str, Any]]] = Field(
+        None, description="Per-theory configuration overrides keyed by theory_id"
+    )
+
+class SingleTheoryRunRequest(BaseModel):
+    """Request to run a single theory in isolation."""
+    conditions: TheoryConditions
+    config: Optional[Dict[str, Any]] = Field(
+        None, description="Configuration overrides for this theory"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Theory Testbed Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/theories")
+async def list_theories() -> List[Dict[str, Any]]:
+    """
+    List all registered theory modules with metadata.
+
+    Returns a list of theories including id, name, description,
+    configurable parameters, and academic references.
+    """
+    pipeline = get_default_pipeline()
+    return pipeline.list_theories()
+
+
+@router.post("/theories/run")
+async def run_theories(request: TheoryRunRequest) -> Dict[str, Any]:
+    """
+    Run selected theories against the given physical conditions.
+
+    If ``enabled_theories`` is null, all registered theories are executed.
+    Returns combined enhancement factors and a per-theory breakdown.
+    """
+    pipeline = get_default_pipeline()
+    conditions = {
+        k: v
+        for k, v in request.conditions.dict().items()
+        if v is not None
+    }
+    try:
+        result = pipeline.run(
+            conditions=conditions,
+            enabled_theories=request.enabled_theories,
+            theory_configs=request.theory_configs,
+        )
+        return result.to_dict()
+    except Exception as e:
+        logger.error("Theory pipeline run error: %s", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/theories/{theory_id}/run")
+async def run_single_theory(
+    theory_id: str, request: SingleTheoryRunRequest
+) -> Dict[str, Any]:
+    """
+    Run a single theory in isolation.
+
+    Path parameter ``theory_id`` must match a registered theory.
+    """
+    pipeline = get_default_pipeline()
+    conditions = {
+        k: v
+        for k, v in request.conditions.dict().items()
+        if v is not None
+    }
+    try:
+        contribution = pipeline.run_single(
+            theory_id=theory_id,
+            conditions=conditions,
+            config=request.config,
+        )
+        return {
+            "theory_id": contribution.theory_id,
+            "theory_name": contribution.theory_name,
+            "enhancement_factor": contribution.enhancement_factor,
+            "reaction_rate_modifier": contribution.reaction_rate_modifier,
+            "energy_output_watts": contribution.energy_output_watts,
+            "observables": contribution.observables,
+            "parameters_used": contribution.parameters_used,
+            "is_applicable": contribution.is_applicable,
+            "confidence": contribution.confidence,
+            "references": contribution.references,
+        }
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Theory '{theory_id}' not found. Use GET /theories to list available theories.",
+        )
+    except Exception as e:
+        logger.error("Single theory run error: %s", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Existing endpoints (simulation store, fluid dynamics, etc.)
+# ---------------------------------------------------------------------------
 
 def get_simulation_store():
     return SimulationStore()

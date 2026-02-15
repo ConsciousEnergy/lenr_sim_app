@@ -372,6 +372,8 @@ async def websocket_simulation(
                 simulation_func = run_lenr_simulation
             elif simulation_type == 'bubble-fusion':
                 simulation_func = run_bubble_fusion_simulation
+            elif simulation_type == 'theory-comparison':
+                simulation_func = run_theory_comparison_stream
             else:
                 await websocket.send_json({
                     'type': 'error',
@@ -391,9 +393,14 @@ async def websocket_simulation(
                     logger.info(f"Cancelled existing task for simulation {simulation_id}")
             
             # Start simulation task
-            task = asyncio.create_task(
-                simulation_func(simulation_id, params, duration)
-            )
+            if simulation_type == 'theory-comparison':
+                task = asyncio.create_task(
+                    simulation_func(simulation_id, params)
+                )
+            else:
+                task = asyncio.create_task(
+                    simulation_func(simulation_id, params, duration)
+                )
             manager.simulation_tasks[simulation_id] = task
             
             # Keep connection alive while simulation runs
@@ -429,6 +436,92 @@ async def websocket_simulation(
             pass
     finally:
         manager.disconnect(websocket, simulation_id)
+
+
+async def run_theory_comparison_stream(
+    simulation_id: str,
+    params: dict,
+):
+    """
+    Stream theory comparison results one-by-one via WebSocket.
+
+    Runs each enabled theory sequentially, streaming the contribution
+    and score as soon as it is computed.  This enables the Relevance
+    Map to update nodes in real time as each theory reports in.
+    """
+    from app.physics_engine.theory_pipeline import get_default_pipeline
+    from app.physics_engine.theory_scoring import (
+        _physical_consistency_score,
+        _experimental_agreement_score,
+        _observables_completeness_score,
+    )
+
+    conditions = {
+        "temperature": params.get("temperature", 300.0),
+        "loading_ratio": params.get("loading_ratio", 0.9),
+        "pressure": params.get("pressure", 101325.0),
+        "electron_density": params.get("electron_density", 6.8e28),
+        "current_density_mA_cm2": params.get("current_density_mA_cm2", 50.0),
+        "excess_heat_W": params.get("excess_heat_W", 1.0),
+    }
+
+    pipeline = get_default_pipeline()
+    enabled = params.get("enabled_theories", list(pipeline.registered_ids))
+    total = len(enabled)
+
+    try:
+        for idx, tid in enumerate(enabled):
+            try:
+                contrib = pipeline.run_single(tid, conditions)
+                phys = _physical_consistency_score(contrib)
+                exp = _experimental_agreement_score(contrib)
+                compl = _observables_completeness_score(contrib)
+
+                await manager.broadcast(simulation_id, {
+                    "type": "theory_result",
+                    "simulation_id": simulation_id,
+                    "step": idx,
+                    "total_steps": total,
+                    "progress": (idx + 1) / total,
+                    "data": {
+                        "theory_id": tid,
+                        "theory_name": contrib.theory_name,
+                        "enhancement_factor": float(contrib.enhancement_factor),
+                        "energy_output_watts": float(contrib.energy_output_watts),
+                        "confidence": float(contrib.confidence),
+                        "is_applicable": contrib.is_applicable,
+                        "physical_consistency": float(phys),
+                        "experimental_agreement": float(exp),
+                        "observables_completeness": float(compl),
+                    },
+                })
+            except Exception as e:
+                await manager.broadcast(simulation_id, {
+                    "type": "theory_error",
+                    "simulation_id": simulation_id,
+                    "theory_id": tid,
+                    "error": str(e),
+                })
+
+            await asyncio.sleep(0.05)  # small delay for UI update
+
+        await manager.broadcast(simulation_id, {
+            "type": "simulation_complete",
+            "simulation_id": simulation_id,
+            "message": f"Theory comparison complete: {total} theories evaluated",
+        })
+
+    except asyncio.CancelledError:
+        await manager.broadcast(simulation_id, {
+            "type": "simulation_cancelled",
+            "simulation_id": simulation_id,
+        })
+    except Exception as e:
+        await manager.broadcast(simulation_id, {
+            "type": "simulation_error",
+            "simulation_id": simulation_id,
+            "error": str(e),
+        })
 
 
 @router.get("/ws/connections/{simulation_id}", response_model=ConnectionCountResponse)

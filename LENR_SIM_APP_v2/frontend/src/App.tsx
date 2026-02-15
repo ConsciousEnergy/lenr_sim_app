@@ -7,6 +7,7 @@ import { CircularProgress, Box } from '@mui/material';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppLayoutFixed from './components/AppLayoutFixed';
+import { PhysicsProvider } from './contexts/PhysicsContext';
 import NotFound from './pages/NotFound';
 import Dashboard from './pages/DashboardNew';
 import SimulationDetail from './pages/SimulationDetail';
@@ -219,9 +220,11 @@ const AppContent = () => {
             } />
             <Route path="/unified-theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <UnifiedTheoryPage />
-                </Suspense>
+                <PhysicsProvider>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <UnifiedTheoryPage />
+                  </Suspense>
+                </PhysicsProvider>
               </AppLayoutFixed>
             } />
             <Route path="/analytics" element={
