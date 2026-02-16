@@ -5,15 +5,21 @@ import {
   unregisterVisualizationListener
 } from '../visualizationWebSocket';
 
+// WebSocket state constants
+const WS_CONNECTING = 0;
+const WS_OPEN = 1;
+const WS_CLOSING = 2;
+const WS_CLOSED = 3;
+
 // Mock WebSocket
 class MockWebSocket {
   constructor(url) {
     this.url = url;
-    this.readyState = WebSocket.CONNECTING;
-    this.CONNECTING = WebSocket.CONNECTING;
-    this.OPEN = WebSocket.OPEN;
-    this.CLOSING = WebSocket.CLOSING;
-    this.CLOSED = WebSocket.CLOSED;
+    this.readyState = WS_CONNECTING;
+    this.CONNECTING = WS_CONNECTING;
+    this.OPEN = WS_OPEN;
+    this.CLOSING = WS_CLOSING;
+    this.CLOSED = WS_CLOSED;
     
     // Add event callbacks
     this.onopen = null;
@@ -23,13 +29,13 @@ class MockWebSocket {
     
     // Auto open connection
     setTimeout(() => {
-      this.readyState = WebSocket.OPEN;
+      this.readyState = WS_OPEN;
       if (this.onopen) this.onopen({ target: this });
     }, 0);
   }
   
   close() {
-    this.readyState = WebSocket.CLOSED;
+    this.readyState = WS_CLOSED;
     if (this.onclose) this.onclose({ target: this });
   }
   
@@ -53,35 +59,33 @@ class MockWebSocket {
   }
 }
 
-// Implement WebSocket constants
-WebSocket.CONNECTING = 0;
-WebSocket.OPEN = 1;
-WebSocket.CLOSING = 2;
-WebSocket.CLOSED = 3;
+// Set static constants on MockWebSocket
+Object.defineProperty(MockWebSocket, 'CONNECTING', { value: WS_CONNECTING });
+Object.defineProperty(MockWebSocket, 'OPEN', { value: WS_OPEN });
+Object.defineProperty(MockWebSocket, 'CLOSING', { value: WS_CLOSING });
+Object.defineProperty(MockWebSocket, 'CLOSED', { value: WS_CLOSED });
 
 // Replace global WebSocket with mock
 global.WebSocket = MockWebSocket;
 
-// Mock fetch API
-global.fetch = jest.fn().mockImplementation(() => 
-  Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({
-      status: 'registered',
-      simulation_id: 'test-simulation'
-    })
-  })
-);
+// Mock fetch API — setup placeholder, re-established in beforeEach
+global.fetch = jest.fn();
 
 describe('visualizationWebSocket', () => {
   beforeEach(() => {
     // Clear singleton instance between tests
     delete window.visualizationWebSocket;
     jest.clearAllMocks();
-  });
-  
-  afterEach(() => {
-    jest.resetAllMocks();
+    // Re-establish fetch mock after clearAllMocks wipes implementation
+    global.fetch = jest.fn().mockImplementation(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'registered',
+          simulation_id: 'test-simulation'
+        })
+      })
+    );
   });
   
   describe('createVisualizationWebSocket', () => {
@@ -119,7 +123,7 @@ describe('visualizationWebSocket', () => {
     
     it('connects to WebSocket server', async () => {
       await wsInstance.connect();
-      expect(wsInstance.isConnected).toBe(true);
+      expect(wsInstance.isConnected()).toBe(true);
     });
     
     it('has the correct WebSocket URL', async () => {
@@ -188,7 +192,7 @@ describe('visualizationWebSocket', () => {
       await wsInstance.connect();
       wsInstance.disconnect();
       
-      expect(wsInstance.isConnected).toBe(false);
+      expect(wsInstance.isConnected()).toBe(false);
       expect(wsInstance.socket).toBeNull();
     });
     

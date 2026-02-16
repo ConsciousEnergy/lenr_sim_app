@@ -42,6 +42,23 @@ jest.mock('../VisualizationStream', () => {
 });
 
 describe('VisualizationDashboard Component', () => {
+  beforeEach(() => {
+    // Re-establish matchMedia mock for Ant Design responsive observer (Row/Col)
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+  });
+
   it('renders without crashing', () => {
     render(<VisualizationDashboard />);
     expect(screen.getByText('Simulation Visualization Dashboard')).toBeInTheDocument();
@@ -60,8 +77,8 @@ describe('VisualizationDashboard Component', () => {
     // Initially in vertical layout
     expect(screen.getByRole('tab', { name: /Monitor/i })).toBeInTheDocument();
     
-    // Switch to horizontal layout
-    const layoutSelect = screen.getByText('Layout:').nextSibling;
+    // Switch to horizontal layout - Ant Design Select uses role="combobox"
+    const layoutSelect = screen.getByRole('combobox');
     fireEvent.mouseDown(layoutSelect);
     const dashboardOption = screen.getByText('Dashboard View');
     fireEvent.click(dashboardOption);
@@ -91,7 +108,7 @@ describe('VisualizationDashboard Component', () => {
     
     // Check if the simulationId is passed to the visualizer
     await waitFor(() => {
-      expect(screen.getByText('Simulation ID: test-sim-123')).toBeInTheDocument();
+      expect(screen.queryAllByText('Simulation ID: test-sim-123')).not.toHaveLength(0);
     });
     
     // Switch to event stream tab
@@ -100,8 +117,8 @@ describe('VisualizationDashboard Component', () => {
     
     // Check if the simulationId is passed to the stream component
     await waitFor(() => {
-      expect(screen.getByText('Simulation ID: test-sim-123')).toBeInTheDocument();
-      expect(screen.getByText('Auto Connect: yes')).toBeInTheDocument();
+      expect(screen.queryAllByText('Simulation ID: test-sim-123')).not.toHaveLength(0);
+      expect(screen.queryAllByText('Auto Connect: yes')).not.toHaveLength(0);
     });
   });
   

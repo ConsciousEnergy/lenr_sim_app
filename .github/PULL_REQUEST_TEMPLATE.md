@@ -45,6 +45,6 @@
 
 <!-- Describe how you tested these changes -->
 
-## Screenshots (if applicable)
+## Screenshots / Media (if applicable)
 
-<!-- Add screenshots for UI changes -->
+<!-- Add screenshots for UI changes. For releases, a short demonstration video may be used instead. -->

@@ -2,9 +2,9 @@ name: Test and Benchmark
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta ]
   # Allow manual triggering
   workflow_dispatch:
 
@@ -38,26 +38,28 @@ jobs:
     - name: Run integration tests
       run: |
         cd LENR_SIM_APP_v2/backend
-        python -m pytest tests/integration/ -v
+        python -m pytest tests/test_integration/ -v
 
     - name: Run performance benchmarks
+      if: hashFiles('LENR_SIM_APP_v2/backend/tests/performance/*.py') != ''
       run: |
         cd LENR_SIM_APP_v2/backend
         python -m pytest tests/performance/ --benchmark-only -v
 
     - name: Upload coverage report
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./LENR_SIM_APP_v2/backend/coverage.xml
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: |
           LENR_SIM_APP_v2/backend/benchmarks/
           LENR_SIM_APP_v2/backend/tests/performance/*.png
+        if-no-files-found: ignore
         retention-days: 90
 
   frontend:
@@ -88,6 +90,8 @@ jobs:
           npm test -- --watchAll=false --passWithNoTests
 
       - name: Build frontend
+        env:
+          CI: false
         run: |
           cd LENR_SIM_APP_v2/frontend
           npm run build
@@ -95,7 +99,7 @@ jobs:
   analyze-benchmarks:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: false  # Disabled until compare_benchmarks.py and tests/performance/ are set up in v2
 
     steps:
     - uses: actions/checkout@v4

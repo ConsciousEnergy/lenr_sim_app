@@ -5,7 +5,7 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.3.4-beta] - 2026-02-15
+## [v0.3.4-beta] - 2026-02-16
 
 ### Relevance Map — Stability & UX
 - **Hover flicker fix**: Replaced D3 transitions with immediate `.attr()` updates for node visuals; added `pointer-events: none` to the hover tooltip so it no longer overlays nodes and triggers mouseout/mouseover loops. Fixes flickering on Phonon-Nuclear Coupling, Electron Screening, Chubb Ion Band State, and other nodes.
@@ -14,9 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Synchronous pre-compute**: Force simulation runs 200 ticks before first paint; fit-to-bounds zoom applied immediately. No async layout jumps.
 - **gRef fix**: Corrected selection effect — `gRef.current` is already a D3 selection; removed incorrect `d3.select(gRef.current)` wrapper that caused `querySelectorAll is not a function` runtime error.
 
+### CI/CD Pipeline Stabilization
+- **GitHub Actions `test.yml`**: Added `frontend` job with Node.js 20, `npm ci`, lint, test, and build steps; corrected integration test path; made benchmarks conditional; fixed codecov artifact upload
+- **ESLint build fix**: Set `CI: false` on frontend build step to prevent Create React App from treating ESLint warnings as fatal errors in CI
+- **All frontend tests green**: Removed temporary `continue-on-error: true` after all 75 tests passing
+
+### Frontend Test Suite — 9 Suites, 75 Tests (All Passing)
+- **`test-utils.tsx` (New)**: Shared test render wrapper providing MUI `ThemeProvider` for all component tests requiring theme context
+- **ThreeJsDebug**: Refactored Three.js mocks to use constructor functions (`function MockPerspectiveCamera() { ... }`) instead of `jest.fn().mockImplementation()` for correct `new` keyword behavior
+- **UnifiedLENRVisualizer**: Fixed `jest.mock` hoisting for PhysicsContext — replaced external `const mockUsePhysics` (Temporal Dead Zone error) with inline `jest.fn()` and `require()` in `beforeEach`
+- **LatticeTest**: Added `children` array to `MockScene`, `userData` to `MockLineSegments`/`MockMesh`/`MockPoints`; corrected text assertions to match actual component output ("Lattice Visualization", "FCC")
+- **SimulationVisualizer**: Updated assertions for rendered text ("3D Visualization"); mocked `VisualizationSwitcher` and `renderingOptimizations` to prevent WebGL errors in JSDOM
+- **SimulationControlPanel**: Mocked `AdvancedControlHelpButton`/`AdvancedControlHelpDialog` to bypass nested `useTheme`/`useMediaQuery` failures; imports `render` from `test-utils`
+- **VisualizationDashboard**: Changed Ant Design `Select` query to `getByRole('combobox')`; added `window.matchMedia` mock for responsive observer
+- **VisualizationStream**: Simulated `onConnected` callback for event display tests; corrected text assertions; added `matchMedia` mock; fixed duplicate element matches with `getAllByText`
+- **visualizationWebSocket**: Fixed `isConnected()` as method call (not property); re-established `global.fetch` mock in `beforeEach` to survive `jest.resetAllMocks()`
+
 ### Testing & Documentation
 - All backend tests passing (theory pipeline, topological sort, coupled execution, new modules).
+- All frontend tests passing (9 suites, 75 tests — ThreeJsDebug, LatticeTest, UnifiedLENRVisualizer, SimulationVisualizer, SimulationControlPanel, VisualizationDashboard, VisualizationStream, visualizationWebSocket)
 - CHANGELOG and version files updated. Best practices: unified state flow, no conflicting transitions, deterministic layout, pointer-events for tooltips.
+- PR template, merging instructions, and release documentation prepared for public launch
 
 ---
 
@@ -812,10 +830,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
-### v0.3.0-beta (Current)
-- **Focus**: Beta launch preparation
+### v0.3.4-beta (Current)
+- **Focus**: Public launch — Relevance Map, CI stabilization, test hardening
+- **Key Features**: Theory Relevance Network, cross-theory coupling pipeline, 21 LENR theories, all 75 frontend tests passing, full CI/CD pipeline green
+- **Status**: Ready for public release
+
+### v0.3.3-beta
+- **Focus**: Cross-theory coupling and legacy integration
+- **Key Features**: Coupled pipeline runner, 21 theory modules, legacy module wrappers
+- **Status**: Stable
+
+### v0.3.2-beta
+- **Focus**: Scoring fairness and frontend improvements
+- **Key Features**: Scoring engine fairness, advanced parameters, theory paper expansion
+- **Status**: Stable
+
+### v0.3.1-beta
+- **Focus**: Relevance Map and 12 new theory modules
+- **Key Features**: D3 force-directed graph, 19 theories, scoring engine, cross-examination
+- **Status**: Stable
+
+### v0.3.0-beta
+- **Focus**: Theory Testbed architecture and beta launch preparation
 - **Key Features**: Multi-physics coupling, comprehensive testing, performance optimization
-- **Status**: Ready for beta testing
+- **Status**: Stable
 
 ### v0.2.0-beta
 - **Focus**: Codebase organization

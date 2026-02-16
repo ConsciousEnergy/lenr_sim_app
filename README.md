@@ -205,7 +205,7 @@ node scripts/dev.js --help  # See all available commands
 
 ## License
 
-MIT License - see LICENSE file for details
+Licensed under **GNU GPL-3.0**. This project is freely available for anyone to use, study, modify, and distribute. See [LICENSE](LICENSE) for full terms.
 
 ## Acknowledgments
 
