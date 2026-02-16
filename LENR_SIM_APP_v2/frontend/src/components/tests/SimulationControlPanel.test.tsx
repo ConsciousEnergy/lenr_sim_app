@@ -1,8 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '../../tests/test-utils';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
 import SimulationControlPanel from '../SimulationControlPanel';
+
+// Mock the AdvancedControlHelp components to avoid useTheme/useMediaQuery issues
+jest.mock('../docs/AdvancedControlHelp', () => ({
+  AdvancedControlHelpButton: () => <span data-testid="mock-help-btn" />,
+  AdvancedControlHelpDialog: () => null,
+}));
 
 // Mock axios module
 jest.mock('axios');

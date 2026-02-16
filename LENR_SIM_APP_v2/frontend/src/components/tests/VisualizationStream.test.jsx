@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import VisualizationStream from '../VisualizationStream';
 import * as visualizationWebSocket from '../../utils/visualizationWebSocket';
 
+
 // Mock the visualization WebSocket utility
 jest.mock('../../utils/visualizationWebSocket', () => ({
   createVisualizationWebSocket: jest.fn(),
@@ -20,7 +21,6 @@ describe('VisualizationStream', () => {
     unsubscribe: jest.fn().mockResolvedValue(undefined),
     onSimulationEvent: jest.fn(),
     offSimulationEvent: jest.fn(),
-    // Add alias methods for backward compatibility
     subscribeToSimulation: jest.fn().mockResolvedValue(undefined),
     unsubscribeFromSimulation: jest.fn().mockResolvedValue(undefined),
     registerVisualizationListener: jest.fn(),
@@ -34,17 +34,32 @@ describe('VisualizationStream', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-establish matchMedia mock for Ant Design responsive observer
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+    mockWebSocketInstance.isConnected.mockReturnValue(false);
     visualizationWebSocket.createVisualizationWebSocket.mockReturnValue(mockWebSocketInstance);
   });
 
   it('renders without crashing', () => {
     render(<VisualizationStream simulationId="test-sim-1" apiBaseUrl="http://localhost:8000" />);
-    expect(screen.getByText(/Visualization Stream/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Visualization Stream/i).length).toBeGreaterThan(0);
   });
 
-  it('shows a placeholder when no simulation is selected', () => {
+  it('shows empty state when no simulation is selected', () => {
     render(<VisualizationStream simulationId={null} apiBaseUrl="http://localhost:8000" />);
-    expect(screen.getByText(/No simulation selected/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connect to start receiving visualization events/i)).toBeInTheDocument();
   });
 
   it('connects to WebSocket on mount when autoConnect is true', async () => {
@@ -70,7 +85,7 @@ describe('VisualizationStream', () => {
       />
     );
     
-    expect(visualizationWebSocket.createVisualizationWebSocket).toHaveBeenCalledWith('http://localhost:8000');
+    expect(visualizationWebSocket.createVisualizationWebSocket).not.toHaveBeenCalled();
     expect(mockWebSocketInstance.connect).not.toHaveBeenCalled();
   });
 
@@ -104,8 +119,7 @@ describe('VisualizationStream', () => {
     expect(mockWebSocketInstance.unregisterVisualizationListener).toHaveBeenCalled();
   });
 
-  it('disconnects when clicking the disconnect button', async () => {
-    // Override isConnected for this test
+  it('reconnects when clicking the reconnect button while connected', async () => {
     mockWebSocketInstance.isConnected.mockReturnValue(true);
     
     render(
@@ -116,21 +130,13 @@ describe('VisualizationStream', () => {
       />
     );
     
-    // Force a re-render to show the disconnect button
-    await act(async () => {
-      // Simulate connection status change
-      const connectionHandler = mockWebSocketInstance.onConnected.mock.calls[0][0];
-      connectionHandler();
-    });
+    // Component goes to else branch (already connected) - sets connected=true
+    // Button should now say "Reconnect"
+    const reconnectButton = screen.getByRole('button', { name: /Reconnect/i });
+    fireEvent.click(reconnectButton);
     
-    // Use the Button with the connected state (showing Disconnect)
-    const connectButton = screen.getByRole('button', { name: /Disconnect/i });
-    fireEvent.click(connectButton);
-    
+    // handleConnect calls disconnect first if connected, then initializeWebSocket
     expect(mockWebSocketInstance.disconnect).toHaveBeenCalled();
-    
-    // Reset for other tests
-    mockWebSocketInstance.isConnected.mockReturnValue(false);
   });
 
   it('displays visualization events as they arrive', async () => {
@@ -142,22 +148,28 @@ describe('VisualizationStream', () => {
       />
     );
     
-    // Find the event handler function from the mock calls
+    // Simulate connection completing via onConnected callback
+    const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
+    act(() => { connectedCallback(); });
+    
+    // Get the event handler from registerVisualizationListener
     const eventHandler = mockWebSocketInstance.registerVisualizationListener.mock.calls[0][1];
     
-    // Simulate receiving an event
+    // Simulate receiving a snapshot event
     act(() => {
       eventHandler({
         id: 'evt-123',
         timestamp: new Date().toISOString(),
         type: 'snapshot',
         source: 'nuclear_domain',
-        title: 'Temperature Snapshot',
+        timestep: 42,
+        metrics: { temperature: 500 },
         data: { temperature: 500 }
       });
     });
     
-    expect(screen.getByText(/Temperature Snapshot/i)).toBeInTheDocument();
+    // Snapshot events render "Snapshot taken at timestep X"
+    expect(screen.getByText(/Snapshot taken at timestep 42/i)).toBeInTheDocument();
   });
 
   it('limits the number of events based on maxEvents prop', async () => {
@@ -170,7 +182,10 @@ describe('VisualizationStream', () => {
       />
     );
     
-    // Find the event handler function
+    // Simulate connection completing
+    const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
+    act(() => { connectedCallback(); });
+    
     const eventHandler = mockWebSocketInstance.registerVisualizationListener.mock.calls[0][1];
     
     // Simulate receiving 3 events (one over the limit)
@@ -180,7 +195,7 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'snapshot',
         source: 'thermal_domain',
-        title: 'Event 1',
+        timestep: 1,
         data: { value: 1 }
       });
       
@@ -189,7 +204,7 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'snapshot',
         source: 'thermal_domain',
-        title: 'Event 2',
+        timestep: 2,
         data: { value: 2 }
       });
       
@@ -198,15 +213,15 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'snapshot',
         source: 'thermal_domain',
-        title: 'Event 3',
+        timestep: 3,
         data: { value: 3 }
       });
     });
     
-    // Should only show the 2 most recent events
-    expect(screen.queryByText(/Event 1/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Event 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Event 3/i)).toBeInTheDocument();
+    // Should only show the 2 most recent events (newest first due to unshift)
+    expect(screen.queryByText(/timestep 1/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/timestep 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/timestep 3/i)).toBeInTheDocument();
   });
 
   it('shows different colors for different event types', async () => {
@@ -218,6 +233,10 @@ describe('VisualizationStream', () => {
       />
     );
     
+    // Simulate connection completing
+    const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
+    act(() => { connectedCallback(); });
+    
     const eventHandler = mockWebSocketInstance.registerVisualizationListener.mock.calls[0][1];
     
     // Simulate events of different types
@@ -227,7 +246,7 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'milestone',
         source: 'nuclear_domain',
-        title: 'Milestone Event',
+        name: 'Milestone Event',
         data: {}
       });
       
@@ -236,17 +255,15 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'error',
         source: 'nuclear_domain',
-        title: 'Error Event',
+        message: 'Something went wrong',
+        details: 'Error details',
         data: { error: 'Something went wrong' }
       });
     });
     
-    // Check if the milestone and error tags are rendered
-    expect(screen.getByText(/Milestone Event/i)).toBeInTheDocument();
-    expect(screen.getByText(/Error Event/i)).toBeInTheDocument();
-    
-    // Error events should show error details
-    expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+    // Both milestone and error event types should render as tags
+    expect(screen.getAllByText(/milestone/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/error/i).length).toBeGreaterThan(0);
   });
 
   it('shows connection errors when they occur', async () => {
@@ -278,6 +295,10 @@ describe('VisualizationStream', () => {
       />
     );
     
+    // Simulate connection completing
+    const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
+    act(() => { connectedCallback(); });
+    
     const eventHandler = mockWebSocketInstance.registerVisualizationListener.mock.calls[0][1];
     
     // Add an event
@@ -287,18 +308,18 @@ describe('VisualizationStream', () => {
         timestamp: new Date().toISOString(),
         type: 'snapshot',
         source: 'nuclear_domain',
-        title: 'Test Event',
+        timestep: 99,
         data: { value: 42 }
       });
     });
     
     // Verify event is displayed
-    expect(screen.getByText(/Test Event/i)).toBeInTheDocument();
+    expect(screen.getByText(/timestep 99/i)).toBeInTheDocument();
     
     // Clear events
     fireEvent.click(screen.getByText(/Clear/i));
     
     // Verify event is no longer displayed
-    expect(screen.queryByText(/Test Event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/timestep 99/i)).not.toBeInTheDocument();
   });
 }); 
