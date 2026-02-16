@@ -4,33 +4,30 @@ This document describes how to merge the release branch into `main` and handle c
 
 ---
 
-## Why GitHub Shows "Nothing to Compare"
+## Current Status
 
-**Root cause:** `main` and `lenr_sim_app_v0.3.0-beta` have **no common ancestor** (unrelated histories). GitHub cannot create a normal PR when branches don't share history.
+`main` and `lenr_sim_app_v0.3.0-beta` **share a common ancestor** (`fff2dbd`). A standard PR from the release branch to `main` will work correctly. Use **Option A** (Standard Merge) below.
 
 ### Verify locally
 
 ```powershell
 git fetch origin
 git merge-base origin/main origin/lenr_sim_app_v0.3.0-beta
-# If this returns nothing (exit code 1): branches are unrelated
+# Should return a commit hash (shared ancestor exists)
 ```
-
-### Resolution
-
-**A normal PR cannot be used.** Use **Option B** below (reset main to match the release branch) — this is the standard approach when going public with a release branch that evolved separately from `main`.
 
 ---
 
 ## Option A: Standard Merge (Recommended)
 
-Best practice for most teams.
+Best practice for most teams. **This is the recommended approach for v0.3.4-beta.**
 
 1. Create PR: `lenr_sim_app_v0.3.0-beta` → `main`
-2. Resolve any merge conflicts in the PR UI
-3. Use **Squash and merge** or **Create a merge commit** (per team preference)
-4. Delete branch after merge (optional)
+2. Verify CI passes (backend + frontend jobs)
+3. Review the PR description and checklist
+4. Use **Create a merge commit** to preserve full history (recommended for release merges)
 5. Tag the release: `git tag v0.3.4-beta && git push origin v0.3.4-beta`
+6. Optionally create a GitHub Release from the tag with notes from CHANGELOG
 
 ---
 
