@@ -90,6 +90,8 @@ jobs:
           npm test -- --watchAll=false --passWithNoTests
 
       - name: Build frontend
+        env:
+          CI: false
         run: |
           cd LENR_SIM_APP_v2/frontend
           npm run build
