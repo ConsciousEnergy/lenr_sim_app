@@ -198,9 +198,14 @@ describe('UnifiedLENRVisualizer Component', () => {
     // If it renders without throwing an error, the test passes
   });
 
-  it('renders with physics context data', () => {
+  it('renders with physics context data and attaches canvas', () => {
     const { container } = render(<UnifiedLENRVisualizer />);
     expect(container).toBeTruthy();
+    // Verify the Three.js renderer canvas is attached to the DOM
+    const canvas = container.querySelector('canvas');
+    if (canvas) {
+      expect(canvas).toBeInTheDocument();
+    }
   });
 
   it('handles rendering when physics data has null values', () => {

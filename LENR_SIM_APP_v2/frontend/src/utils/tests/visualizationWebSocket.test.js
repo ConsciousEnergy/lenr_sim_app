@@ -68,23 +68,15 @@ Object.defineProperty(MockWebSocket, 'CLOSED', { value: WS_CLOSED });
 // Replace global WebSocket with mock
 global.WebSocket = MockWebSocket;
 
-// Mock fetch API
-global.fetch = jest.fn().mockImplementation(() => 
-  Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({
-      status: 'registered',
-      simulation_id: 'test-simulation'
-    })
-  })
-);
+// Mock fetch API — setup placeholder, re-established in beforeEach
+global.fetch = jest.fn();
 
 describe('visualizationWebSocket', () => {
   beforeEach(() => {
     // Clear singleton instance between tests
     delete window.visualizationWebSocket;
     jest.clearAllMocks();
-    // Re-establish fetch mock (clearAllMocks/resetAllMocks can wipe it)
+    // Re-establish fetch mock after clearAllMocks wipes implementation
     global.fetch = jest.fn().mockImplementation(() => 
       Promise.resolve({
         ok: true,

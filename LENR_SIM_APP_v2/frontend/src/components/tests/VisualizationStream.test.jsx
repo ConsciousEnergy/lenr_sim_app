@@ -135,8 +135,10 @@ describe('VisualizationStream', () => {
     const reconnectButton = screen.getByRole('button', { name: /Reconnect/i });
     fireEvent.click(reconnectButton);
     
-    // handleConnect calls disconnect first if connected, then initializeWebSocket
+    // handleConnect calls disconnect first if connected, then re-initializes
     expect(mockWebSocketInstance.disconnect).toHaveBeenCalled();
+    // Verify reconnection is initiated after disconnect (new WebSocket created)
+    expect(visualizationWebSocket.createVisualizationWebSocket).toHaveBeenCalled();
   });
 
   it('displays visualization events as they arrive', async () => {
@@ -149,6 +151,7 @@ describe('VisualizationStream', () => {
     );
     
     // Simulate connection completing via onConnected callback
+    expect(mockWebSocketInstance.onConnected).toHaveBeenCalled();
     const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
     act(() => { connectedCallback(); });
     
@@ -183,6 +186,7 @@ describe('VisualizationStream', () => {
     );
     
     // Simulate connection completing
+    expect(mockWebSocketInstance.onConnected).toHaveBeenCalled();
     const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
     act(() => { connectedCallback(); });
     
@@ -224,7 +228,7 @@ describe('VisualizationStream', () => {
     expect(screen.getByText(/timestep 3/i)).toBeInTheDocument();
   });
 
-  it('shows different colors for different event types', async () => {
+  it('renders milestone and error event types as tags', async () => {
     render(
       <VisualizationStream 
         simulationId="test-sim-1" 
@@ -234,6 +238,7 @@ describe('VisualizationStream', () => {
     );
     
     // Simulate connection completing
+    expect(mockWebSocketInstance.onConnected).toHaveBeenCalled();
     const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
     act(() => { connectedCallback(); });
     
@@ -296,6 +301,7 @@ describe('VisualizationStream', () => {
     );
     
     // Simulate connection completing
+    expect(mockWebSocketInstance.onConnected).toHaveBeenCalled();
     const connectedCallback = mockWebSocketInstance.onConnected.mock.calls[0][0];
     act(() => { connectedCallback(); });
     

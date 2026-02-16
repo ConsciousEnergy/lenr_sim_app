@@ -108,7 +108,7 @@ describe('VisualizationDashboard Component', () => {
     
     // Check if the simulationId is passed to the visualizer
     await waitFor(() => {
-      expect(screen.getAllByText('Simulation ID: test-sim-123').length).toBeGreaterThan(0);
+      expect(screen.queryAllByText('Simulation ID: test-sim-123')).not.toHaveLength(0);
     });
     
     // Switch to event stream tab
@@ -117,8 +117,8 @@ describe('VisualizationDashboard Component', () => {
     
     // Check if the simulationId is passed to the stream component
     await waitFor(() => {
-      expect(screen.getAllByText('Simulation ID: test-sim-123').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Auto Connect: yes').length).toBeGreaterThan(0);
+      expect(screen.queryAllByText('Simulation ID: test-sim-123')).not.toHaveLength(0);
+      expect(screen.queryAllByText('Auto Connect: yes')).not.toHaveLength(0);
     });
   });
   

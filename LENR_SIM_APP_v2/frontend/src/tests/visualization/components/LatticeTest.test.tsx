@@ -172,9 +172,19 @@ describe('LatticeTest Component', () => {
 
   it('changes view mode when buttons are clicked', () => {
     render(<LatticeTest />);
-    fireEvent.click(screen.getByText('Solid'));
-    fireEvent.click(screen.getByText('Wireframe'));
-    fireEvent.click(screen.getByText('Points'));
+    const solidBtn = screen.getByText('Solid');
+    const wireframeBtn = screen.getByText('Wireframe');
+    const pointsBtn = screen.getByText('Points');
+    
+    fireEvent.click(solidBtn);
+    // Verify buttons remain in the document after click (no crash)
+    expect(solidBtn).toBeInTheDocument();
+    
+    fireEvent.click(wireframeBtn);
+    expect(wireframeBtn).toBeInTheDocument();
+    
+    fireEvent.click(pointsBtn);
+    expect(pointsBtn).toBeInTheDocument();
   });
 
   it('toggles options when checkboxes are clicked', () => {
