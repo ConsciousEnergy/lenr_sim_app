@@ -1,7 +1,7 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { SimulationUpdateMessage, LatticePoint as PhysicsLatticePoint } from '../../api/physics/types';
-import { getColorFromMap, getDefaultColorMapForType, colorMaps } from '../utils/colorMaps'; // Assuming color map utility exists
+import { getColorFromMap, getDefaultColorMapForType } from '../utils/colorMaps'; // Assuming color map utility exists
 
 interface PhysicsVisualEffectsProps {
   scene: THREE.Scene;
@@ -51,6 +51,7 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
   // --- Initialization Effect --- 
   // Create object pools and texture once on mount
   useEffect(() => {
+    const effects = effectsRef.current;
     const wavesPool: THREE.Mesh[] = [];
     const spritesPool: THREE.Sprite[] = [];
 
@@ -105,8 +106,8 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
       spritesPool.push(sprite);
     }
 
-    effectsRef.current.energyWaves = wavesPool;
-    effectsRef.current.reactionPoints = spritesPool;
+    effects.energyWaves = wavesPool;
+    effects.reactionPoints = spritesPool;
 
     // Cleanup function for unmount
     return () => {
@@ -114,9 +115,10 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
       // Dispose geometries/textures created here
       ringGeometry.dispose();
       texture?.dispose();
-      effectsRef.current.spriteTexture = null;
+      effects.spriteTexture = null;
       // Materials are disposed in cleanupEffects
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]); // Run only once on mount
 
   // --- Cleanup Function --- 
@@ -400,6 +402,7 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
     // No explicit cleanup here needed as useEffect runs on dependency change
     // Unmount cleanup is handled by the initialization effect
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationData, visualizationType, showParticleMovement, showWaveAnimations, intensity, scene]);
 
   // This component manages effects programmatically, renders null

@@ -1,22 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Grid,
-  Divider,
   Tabs,
   Tab,
   useTheme,
-  FormControlLabel,
-  Switch,
   Slider,
-  TextField,
-  InputAdornment,
   Tooltip,
   IconButton,
-  Button,
-  Stack,
   Card,
   CardContent,
   ToggleButton,
@@ -27,20 +19,15 @@ import {
   ListItemText
 } from '@mui/material';
 import {
-  Science as ScienceIcon,
-  Info as InfoIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   PlayArrow as PlayIcon,
   Pause as PauseIcon,
   SkipNext as NextIcon,
   SkipPrevious as PrevIcon,
   Fullscreen as FullscreenIcon,
-  Timeline as TimelineIcon,
   Visibility as ShowIcon,
-  BarChart as BarChartIcon,
   ShowChart as LineChartIcon,
   MoreVert as MoreVertIcon,
   Save as SaveIcon,
@@ -56,18 +43,12 @@ import {
   CartesianGrid, 
   Tooltip as RechartsTooltip, 
   Legend,
-  ScatterChart,
-  Scatter,
-  ZAxis,
-  Surface,
-  Contour,
   ReferenceArea,
   Brush,
   ReferenceLine
 } from 'recharts';
 
 // Import for 3D visualization
-import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
@@ -77,7 +58,7 @@ import { OrbitControls } from '@react-three/drei';
  * Renders the 3D visualization of quantum tunneling, potential barriers,
  * and reaction cross-sections
  */
-const ReactionDynamics3D = ({ reactionData, potentialType = 'coulomb' }) => {
+const ReactionDynamics3D = ({ reactionData: _reactionData, potentialType = 'coulomb' }) => {
   const meshRef = useRef();
   
   // Animate the mesh
@@ -458,7 +439,7 @@ const QuantumTunnelingChart = ({ reaction, temperature, plotType = 'log' }) => {
 /**
  * Linear progress bar with label
  */
-const LinearProgressWithLabel = ({ value, color = "primary" }) => {
+const LinearProgressWithLabel = ({ value, color: _color = "primary" }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Box sx={{ width: '100%', mr: 1 }}>
@@ -506,8 +487,8 @@ const ReactionPathChart = ({ reaction }) => {
   // This would be more sophisticated in a real implementation
   const generatePathData = () => {
     // Calculate total charge and mass
-    const reactantCharge = reaction.reactant1_z + reaction.reactant2_z;
-    const reactantMass = reaction.reactant1_a + reaction.reactant2_a;
+    const _reactantCharge = reaction.reactant1_z + reaction.reactant2_z;
+    const _reactantMass = reaction.reactant1_a + reaction.reactant2_a;
     
     // Calculate Coulomb barrier (simplified approximation)
     const coulombBarrier = 1.44 * reaction.reactant1_z * reaction.reactant2_z / 
@@ -611,7 +592,7 @@ const ReactionPathChart = ({ reaction }) => {
               label={{ value: 'Energy (MeV)', angle: -90, position: 'insideLeft' }}
             />
             <RechartsTooltip 
-              formatter={(value, name, props) => {
+              formatter={(value, name, _props) => {
                 if (name === 'energy') {
                   return [value.toFixed(3) + ' MeV', 'Energy'];
                 }
@@ -797,7 +778,7 @@ const WaveFunctionVisualization = ({ reaction, energy }) => {
       } else if (x >= barrierStart && x <= barrierEnd) {
         // Inside barrier (exponentially decaying)
         const barrierWidth = barrierEnd - barrierStart;
-        const normalizedPos = (x - barrierStart) / barrierWidth;
+        const _normalizedPos = (x - barrierStart) / barrierWidth;
         
         // Decay inside barrier
         const decayFactor = -k2 * (x - barrierStart);

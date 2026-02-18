@@ -73,7 +73,7 @@ const RelevanceMap = ({
   loading = false,
   error = null,
   onNodeClick,
-  onRunScores,
+  _onRunScores,
   selectedProperty = null,
   selectedCategory = null,
   minScore = 0,
@@ -102,10 +102,10 @@ const RelevanceMap = ({
   }, []);
 
   // Compute filtered data
-  const { nodes, links, nodeScoreMap } = useMemo(() => {
-    if (!graphData) return { nodes: [], links: [], nodeScoreMap: {} };
+  const { nodes, links, _nodeScoreMap } = useMemo(() => {
+    if (!graphData) return { nodes: [], links: [], _nodeScoreMap: {} };
     const { nodes: rawNodes, edges: rawEdges } = graphData;
-    if (!rawNodes?.length) return { nodes: [], links: [], nodeScoreMap: {} };
+    if (!rawNodes?.length) return { nodes: [], links: [], _nodeScoreMap: {} };
 
     const scoreMap: Record<string, number> = {};
     if (scores) {
@@ -147,7 +147,7 @@ const RelevanceMap = ({
       .filter((e: any) => nodeIdSet.has(e.source) && nodeIdSet.has(e.target))
       .map((e: any) => ({ ...e }));
 
-    return { nodes: filteredNodes, links: filteredLinks, nodeScoreMap: scoreMap };
+    return { nodes: filteredNodes, links: filteredLinks, _nodeScoreMap: scoreMap };
   }, [graphData, scores, selectedProperty, selectedCategory, minScore]);
 
   // Network stats

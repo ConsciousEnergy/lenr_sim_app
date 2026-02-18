@@ -41,7 +41,8 @@ const ThreeJsTest: React.FC = () => {
       return;
     }
 
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     // Try creating a minimal Three.js scene
     try {
@@ -52,8 +53,8 @@ const ThreeJsTest: React.FC = () => {
       scene.background = new THREE.Color(0x2a2a2a);
       
       // Create camera
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
       const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
       camera.position.z = 5;
       
@@ -70,10 +71,10 @@ const ThreeJsTest: React.FC = () => {
       renderer.setPixelRatio(window.devicePixelRatio);
       
       // Clear container and append canvas
-      while (containerRef.current.firstChild) {
-        containerRef.current.removeChild(containerRef.current.firstChild);
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
       }
-      containerRef.current.appendChild(renderer.domElement);
+      container.appendChild(renderer.domElement);
       
       // Create a simple cube
       const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -98,8 +99,8 @@ const ThreeJsTest: React.FC = () => {
       
       // Cleanup function
       return () => {
-        if (renderer && containerRef.current) {
-          containerRef.current.removeChild(renderer.domElement);
+        if (renderer && container) {
+          container.removeChild(renderer.domElement);
         }
         geometry.dispose();
         material.dispose();
@@ -109,6 +110,7 @@ const ThreeJsTest: React.FC = () => {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : 'Unknown error initializing Three.js');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

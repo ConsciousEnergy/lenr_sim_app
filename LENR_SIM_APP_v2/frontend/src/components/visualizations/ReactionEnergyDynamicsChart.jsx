@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
   ToggleButton
 } from '@mui/material';
 import {
-  ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   DownloadTwoTone as DownloadIcon,
   RestartAlt as ResetIcon,
@@ -36,8 +35,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
   Brush,
-  ReferenceArea,
-  ReferenceLine
+  ReferenceArea
 } from 'recharts';
 
 /**

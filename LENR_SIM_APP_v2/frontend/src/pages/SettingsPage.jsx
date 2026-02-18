@@ -24,7 +24,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Tooltip,
   LinearProgress,
   useTheme
 } from '@mui/material';
@@ -39,7 +38,6 @@ import {
   CloudOff as DisconnectedIcon,
   Memory as MemoryIcon,
   Storage as StorageIcon,
-  Info as InfoIcon
 } from '@mui/icons-material';
 import { useTheme as useAppTheme } from '../contexts/ThemeContext';
 
@@ -59,7 +57,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const SettingsPage = () => {
-  const theme = useTheme();
+  const _theme = useTheme();
   const { isDarkMode, toggleTheme } = useAppTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [settings, setSettings] = useState({
@@ -105,6 +103,7 @@ const SettingsPage = () => {
   useEffect(() => {
     checkSystemStatus().finally(() => setStatusLoading(false));
     loadSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const checkSystemStatus = async (apiUrl = null) => {

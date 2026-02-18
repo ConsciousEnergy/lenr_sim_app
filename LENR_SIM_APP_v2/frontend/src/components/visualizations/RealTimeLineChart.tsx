@@ -11,7 +11,7 @@ import {
   Brush,
   ReferenceArea
 } from 'recharts';
-import { DataSeries, TimeSeriesDataPoint } from '../../api/realtime';
+import { DataSeries } from '../../api/realtime';
 
 interface RealTimeLineChartProps {
   dataSeries: DataSeries[];

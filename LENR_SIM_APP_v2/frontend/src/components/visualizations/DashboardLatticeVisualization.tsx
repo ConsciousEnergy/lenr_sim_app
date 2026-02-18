@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Box, Paper, Typography, Skeleton, IconButton, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Box, Paper, Typography, IconButton, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import ReplayIcon from '@mui/icons-material/Replay';
-import InfoIcon from '@mui/icons-material/Info';
 
 // Import the PhysicsLatticeVisualization component directly
 import PhysicsLatticeVisualization from '../visualization/PhysicsLatticeVisualization';

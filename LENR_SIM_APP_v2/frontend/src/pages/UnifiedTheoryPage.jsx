@@ -30,15 +30,12 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import InfoIcon from '@mui/icons-material/Info';
 import ScienceIcon from '@mui/icons-material/Science';
 import BoltIcon from '@mui/icons-material/Bolt';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FunctionsIcon from '@mui/icons-material/Functions';
-import SchoolIcon from '@mui/icons-material/School';
 import DownloadIcon from '@mui/icons-material/Download';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';

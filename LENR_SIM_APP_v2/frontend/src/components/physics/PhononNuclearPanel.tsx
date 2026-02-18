@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PhononNuclearPanel Component
  */
 import React from 'react';
@@ -21,7 +21,7 @@ const PhononNuclearPanel: React.FC<PhononNuclearPanelProps> = ({
   phononModes = [],
   couplingStrength = 0.0,
   latticeTemperature = 300,
-  isLoading = false
+  isLoading: _isLoading = false
 }) => {
   return (
     <Paper sx={{ p: 2 }}>

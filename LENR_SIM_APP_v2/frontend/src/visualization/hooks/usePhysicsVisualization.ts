@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { usePhysicsWebSocket, useSimulationResults } from '../../api/physics/hooks';
 import { transformPhysicsToLattice, transformPhysicsToMHDFluid, calculateDataRange } from '../utils/dataTransformers';
 import { SimulationUpdateMessage, SimulationResultsResponse } from '../../api/physics/types';
@@ -47,7 +47,7 @@ export function usePhysicsVisualization(
   // Set default options
   const {
     visualizationType = 'energy',
-    refreshInterval = 1000,
+    refreshInterval: _refreshInterval = 1000,
     initialDataStep
   } = options;
 
@@ -59,7 +59,7 @@ export function usePhysicsVisualization(
 
   // Connect to WebSocket for real-time updates
   const {
-    simulationUpdates,
+    simulationUpdates: _simulationUpdates,
     lastMessage,
     isConnected,
     connectionError,

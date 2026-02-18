@@ -329,7 +329,7 @@ function FusionParameterControls({
   parameters = defaultParameters, 
   onChange = () => {},
   savedConfigs: initialSavedConfigs = [],
-  onLoadConfig = null 
+  _onLoadConfig = null 
 }) {
   const [localParams, setLocalParams] = useState({...defaultParameters, ...parameters});
   const [configName, setConfigName] = useState('');
@@ -547,12 +547,12 @@ function FusionParameterControls({
     
     // For scientific notation parameters, use logarithmic scale
     const isScientific = metadata.scientific;
-    let displayValue = value;
-    let sliderValue = value;
+    let _displayValue = value;
+    let _sliderValue = value;
     
     if (isScientific && value > 0) {
       // Use log scale for slider
-      sliderValue = Math.log10(value);
+      _sliderValue = Math.log10(value);
     }
     
     const formatValue = (val) => {

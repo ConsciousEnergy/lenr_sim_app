@@ -27,8 +27,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ScienceIcon from '@mui/icons-material/Science';
 import HubIcon from '@mui/icons-material/Hub';
 import BoltIcon from '@mui/icons-material/Bolt';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import MemoryIcon from '@mui/icons-material/Memory';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import DescriptionIcon from '@mui/icons-material/Description';

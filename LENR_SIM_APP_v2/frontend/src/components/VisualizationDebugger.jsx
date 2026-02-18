@@ -42,7 +42,7 @@ const VisualizationDebugger = () => {
   const [performanceIssues, setPerformanceIssues] = useState([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [domIssues, setDomIssues] = useState([]);
-  const [consoleLogs, setConsoleLogs] = useState([]);
+  const [_consoleLogs, setConsoleLogs] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Function to run all tests
@@ -373,6 +373,7 @@ const VisualizationDebugger = () => {
   // Effect to run tests on initial load
   useEffect(() => {
     runAllTests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   return (

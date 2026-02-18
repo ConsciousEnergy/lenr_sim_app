@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Box, Tabs, Tab, Typography, FormGroup, FormControlLabel, Switch, CircularProgress,
@@ -38,7 +38,7 @@ const LENRVisualization = ({
   // Quantum flux visualization state
   const [showQuantumFlux, setShowQuantumFlux] = useState(true);
   const [quantumFluxMode, setQuantumFluxMode] = useState(FluxMode.ELECTRON_SCREENING);
-  const [showLegend, setShowLegend] = useState(true);
+  const [showLegend, _setShowLegend] = useState(true);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   
   const containerRef = useRef();
@@ -328,6 +328,7 @@ const LENRVisualization = ({
         });
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Toggle quantum flux visibility
@@ -353,6 +354,7 @@ const LENRVisualization = ({
         latticeConstant: 1.5,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parameters?.temperature]);
   
   // Generate fallback lattice data if none provided

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Container, 
   Typography, 
@@ -50,7 +50,7 @@ const bubbleFusionAPI = {
 };
 
 const BubbleFusionPage = () => {
-  const theme = useTheme();
+  const _theme = useTheme();
   
   // State for simulation parameters
   const [parameters, setParameters] = useState({
@@ -79,7 +79,7 @@ const BubbleFusionPage = () => {
   // State for calculation results
   const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('success');

@@ -3,7 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  Grid,
   Divider,
   Button,
   TextField,
@@ -18,7 +17,6 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  Tooltip,
   CircularProgress,
   Snackbar,
   Alert,
@@ -34,17 +32,13 @@ import {
   Delete as DeleteIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
-  ContentCopy as CopyIcon,
   Edit as EditIcon,
   Star as StarIcon,
   StarBorder as StarBorderIcon,
-  MoreVert as MoreVertIcon,
-  SyncAlt as SyncAltIcon,
-  Bookmark as BookmarkIcon,
-  BookmarkBorder as BookmarkBorderIcon
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 
-import { reactionsService, formatReactionEquation } from '../../services';
+import { formatReactionEquation } from '../../services';
 
 /**
  * Reaction Configuration Manager
@@ -178,9 +172,9 @@ const ReactionConfigurationManager = () => {
   ];
   
   // Load configurations on component mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(() => {
+  useEffect(() => {
     loadConfigurations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Load configurations
@@ -618,7 +612,7 @@ useEffect(() => {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => {
-          const config = configurations.find(c => c.id === menuConfigId);
+          const _config = configurations.find(c => c.id === menuConfigId);
           handleToggleStar(menuConfigId);
         }}>
           {configurations.find(c => c.id === menuConfigId)?.starred ? (

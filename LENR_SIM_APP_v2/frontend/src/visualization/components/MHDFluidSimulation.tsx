@@ -23,7 +23,7 @@ interface MHDFluidSimulationProps {
   showPressure?: boolean;
   colorMap?: 'viridis' | 'plasma' | 'magma' | 'inferno' | 'rainbow';
   timeScale?: number;
-  onDataUpdate?: (data: any) => void;
+  onDataUpdate?: (_data: any) => void;
 }
 
 /**
@@ -36,14 +36,14 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
   width = '100%',
   height = 600,
   simulationId,
-  conductivity = 5.0,
-  viscosity = 1.0,
+  conductivity: _conductivity = 5.0,
+  viscosity: _viscosity = 1.0,
   magneticField = [0, 0, 1],
   density = 1.0,
   temperature = 300,
-  initialFlowVelocity = [0, 0, 0],
+  initialFlowVelocity: _initialFlowVelocity = [0, 0, 0],
   resolution = 32,
-  quality = 'medium',
+  quality: _quality = 'medium',
   showVectors = true,
   showStreamlines = true,
   showTemperature = true,
@@ -253,6 +253,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
         setIsLoading(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationId, resolution, onDataUpdate]);
   
   // Update simulation data on parameter changes
@@ -270,6 +271,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
       
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, simData, timeScale, onDataUpdate]);
   
   // Handle Three.js initialization with improved logging
@@ -298,9 +300,9 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
     
     // Add bounding box
     const gridSize = simData.grid.size * simData.grid.spacing;
-    const halfGrid = gridSize / 2;
+    const _halfGrid = gridSize / 2;
     const boxGeometry = new THREE.BoxGeometry(gridSize, gridSize, gridSize);
-    const boxMaterial = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.2 });
+    const _boxMaterial = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.2 });
     const box = new THREE.LineSegments(new THREE.WireframeGeometry(boxGeometry));
     box.position.set(0, 0, 0);
     scene.add(box);
@@ -388,7 +390,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
     // Create temperature visualization
     if (showTemperature && simData.temperatures) {
       const gridSize = simData.grid.size;
-      const spacing = simData.grid.spacing;
+      const _spacing = simData.grid.spacing;
       
       // Create a 3D texture from temperature data
       const size = gridSize;

@@ -30,7 +30,7 @@ import HomeIcon from '@mui/icons-material/Home';
 // CycloneIcon reserved for future vortex toggle UI
 
 // Import fluid dynamics effects for vortex visualization
-import { VortexField, EnergyFlowVisualizer, PlasmaVortexEffect } from './FluidDynamicsEffects';
+import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
 // Import ScaleBar for physical dimension reference
 import { ScaleBar } from './QuantumFluxVisualization';
 // Import VisualizationLegend for comprehensive display
@@ -122,7 +122,7 @@ const PHYSICS_CONFIG = {
 };
 
 // Helper function to convert physics meters to visualization units
-const physicsToVis = (meters) => meters / PHYSICS_CONFIG.METERS_PER_VIS_UNIT;
+const _physicsToVis = (meters) => meters / PHYSICS_CONFIG.METERS_PER_VIS_UNIT;
 
 // Helper to get bubble Y position based on physics phase
 // NEW: Bubble stays closer to surface, grows in place, then collapses
@@ -354,7 +354,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
   // eslint-disable-next-line no-unused-vars
-  const [showDoubleLayer, _setShowDoubleLayer] = useState(true);
+  const [_showDoubleLayer, _setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
@@ -1027,6 +1027,7 @@ const UnifiedBubbleLatticeVisualization = ({
     effectsGroupRef.current = effectsGroup;
     
     return effectsGroup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Create MHD flow visualization - simplified particle-based fluid dynamics
@@ -1441,6 +1442,7 @@ const UnifiedBubbleLatticeVisualization = ({
       temperature,
       pressure
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drivingPressure, parameters.temperature, parameters.frequency]);
 
   // Calculate enhancement factors based on physics conditions
@@ -1781,8 +1783,8 @@ const UnifiedBubbleLatticeVisualization = ({
       // ========================================================================
       // Physics: Bubble nucleates at surface cavity, grows while attached,
       // buoyancy pulls slightly, then acoustic/EM forcing collapses it to surface
-      const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-      const distances = PHYSICS_CONFIG.PHASE_DISTANCES;
+      const _latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+      const _distances = PHYSICS_CONFIG.PHASE_DISTANCES;
       
       // Calculate phase progress for smooth animations
       let phaseProgress = 0;
@@ -1810,7 +1812,7 @@ const UnifiedBubbleLatticeVisualization = ({
       if (bubble && showBubble) {
         // During EXPANSION: bubble grows from tiny nucleus to full size
         // During COLLAPSE: bubble rapidly shrinks
-        const displayScale = phase === 'EXPANSION' || phase === 'RECOVERY' 
+        const _displayScale = phase === 'EXPANSION' || phase === 'RECOVERY' 
           ? combinedScale 
           : radius / baseRadius; // Use original logic during collapse for visual effect
       }
@@ -1840,9 +1842,9 @@ const UnifiedBubbleLatticeVisualization = ({
         z: 0
       };
       
-      protonGroupRef.current?.children.forEach((proton, index) => {
+      protonGroupRef.current?.children.forEach((proton, _index) => {
         // MHD properties
-        const mhdAngle = proton.userData.mhdAngle || 0;
+        const _mhdAngle = proton.userData.mhdAngle || 0;
         const mhdRadius = proton.userData.mhdRadius || 1.0;
         const mhdAngularVelocity = proton.userData.mhdAngularVelocity || 0.5;
         const mhdPhase = proton.userData.mhdPhase || 0;
@@ -2210,33 +2212,33 @@ const UnifiedBubbleLatticeVisualization = ({
       // Calculate vortex intensity based on phase
       // EXPANSION: slow outward flow, COLLAPSE: fast inward, MINIMUM: intense swirl
       let vortexIntensity = 0.3;
-      let flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
+      let _flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
       let rotationSpeed = 1.0;
       
       switch (phase) {
         case 'EXPANSION':
           vortexIntensity = 0.3;
-          flowDirection = -0.3; // Slow outward
+          _flowDirection = -0.3; // Slow outward
           rotationSpeed = 0.5;
           break;
         case 'COLLAPSE':
           vortexIntensity = 1.0;
-          flowDirection = 2.0; // Fast inward
+          _flowDirection = 2.0; // Fast inward
           rotationSpeed = 2.0;
           break;
         case 'MINIMUM':
           vortexIntensity = 1.5;
-          flowDirection = 0.5; // Swirling at impact
+          _flowDirection = 0.5; // Swirling at impact
           rotationSpeed = 3.0;
           break;
         case 'REBOUND':
             vortexIntensity = 1.2; // Increased intensity for rebound
-            flowDirection = -2.0; // Strong outward (reversed energy flow from lattice)
+            _flowDirection = -2.0; // Strong outward (reversed energy flow from lattice)
             rotationSpeed = 3.0; // Faster rotation during rebound
           break;
         case 'RECOVERY':
           vortexIntensity = 0.4;
-          flowDirection = 0.2;
+          _flowDirection = 0.2;
           rotationSpeed = 0.7;
           break;
         default:
@@ -2372,6 +2374,7 @@ const UnifiedBubbleLatticeVisualization = ({
       } catch (error) {
         console.error('Animation update error:', error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isPlaying, frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,

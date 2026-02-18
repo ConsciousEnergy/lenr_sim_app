@@ -1,4 +1,4 @@
-﻿/**
+/**
  * StatisticalAnalysisPanel Component
  */
 import React from 'react';
@@ -33,7 +33,7 @@ const StatisticalAnalysisPanel: React.FC<StatisticalAnalysisPanelProps> = ({
   energyStats = defaultStats,
   sampleCount = 0,
   confidenceLevel = 0.95,
-  isLoading = false
+  isLoading: _isLoading = false
 }) => {
   const formatStat = (value: number) => {
     if (Math.abs(value) < 0.001 || Math.abs(value) > 1000) {

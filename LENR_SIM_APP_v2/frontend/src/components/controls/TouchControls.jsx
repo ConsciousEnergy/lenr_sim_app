@@ -13,7 +13,6 @@ import { Box, Typography, IconButton, Fade, Chip } from '@mui/material';
 import {
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
-  ThreeDRotation as RotateIcon,
   CenterFocusStrong as CenterIcon,
   TouchApp as TouchIcon,
   Gesture as GestureIcon,
@@ -120,7 +119,7 @@ function TouchControls({
   // Double-tap detection constants
   const DOUBLE_TAP_DELAY = 300; // ms
   const TAP_MOVE_THRESHOLD = 10; // pixels
-  const SWIPE_THRESHOLD = 50; // pixels
+  const _SWIPE_THRESHOLD = 50; // pixels
   const SWIPE_VELOCITY_THRESHOLD = 0.5; // pixels/ms
 
   /**
@@ -511,7 +510,7 @@ export function useTouchGestures(containerRef, options = {}) {
       e.preventDefault();
     };
     
-    const handleEnd = (e) => {
+    const handleEnd = (_e) => {
       setIsTouching(false);
       setGesture(null);
       

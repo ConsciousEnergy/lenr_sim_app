@@ -120,7 +120,7 @@ const LENR_PARTICLE_TYPES = {
 };
 
 // Combined particle types for backward compatibility
-const PARTICLE_TYPES = FUSION_PARTICLE_TYPES;
+const _PARTICLE_TYPES = FUSION_PARTICLE_TYPES;
 
 // Energy color scale definition
 const ENERGY_SCALE = [
@@ -228,7 +228,7 @@ function EnergyGradientBar() {
 /**
  * Single particle type legend item
  */
-function ParticleTypeItem({ type, info, count }) {
+function ParticleTypeItem({ _type, info, count }) {
   return (
     <Tooltip 
       title={

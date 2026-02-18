@@ -64,10 +64,10 @@ export interface PhysicsContextType {
   isConnected: boolean;
   isSimulating: boolean;
   parameters: Record<string, number | string>;
-  setParameters: (params: Record<string, number | string>) => void;
-  startSimulation: (params: Record<string, number | string>) => Promise<void>;
+  setParameters: (_params: Record<string, number | string>) => void;
+  startSimulation: (_params: Record<string, number | string>) => Promise<void>;
   stopSimulation: () => Promise<void>;
-  connectWebSocket: (simulationId: string) => void;
+  connectWebSocket: (_simulationId: string) => void;
   disconnectWebSocket: () => void;
 
   // Theory Testbed state
@@ -76,11 +76,11 @@ export interface PhysicsContextType {
   theoryConfigs: Record<string, Record<string, any>>;
   theoryResult: TheoryPipelineResult | null;
   isLoadingTheories: boolean;
-  setEnabledTheories: (ids: string[]) => void;
-  setTheoryConfigs: (configs: Record<string, Record<string, any>>) => void;
+  setEnabledTheories: (_ids: string[]) => void;
+  setTheoryConfigs: (_configs: Record<string, Record<string, any>>) => void;
   fetchTheories: () => Promise<void>;
-  runTheories: (conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
-  runCoupledTheories: (conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
+  runTheories: (_conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
+  runCoupledTheories: (_conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
   coupledResult: CoupledPipelineResult | null;
 }
 
@@ -281,6 +281,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     return () => {
       disconnectWebSocket();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value: PhysicsContextType = {

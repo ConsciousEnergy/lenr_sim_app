@@ -29,7 +29,7 @@ export type WebSocketEventType =
 export class PhysicsWebSocketClient {
   private socket: WebSocket | null = null;
   private simulationId: string;
-  private eventListeners: Record<WebSocketEventType, Array<(data: any) => void>> = {
+  private eventListeners: Record<WebSocketEventType, Array<(_data: any) => void>> = {
     simulation_update: [],
     parameter_update: [],
     error: [],
@@ -165,7 +165,7 @@ export class PhysicsWebSocketClient {
   /**
    * Add an event listener
    */
-  addEventListener(event: WebSocketEventType, callback: (data: any) => void): () => void {
+  addEventListener(event: WebSocketEventType, callback: (_data: any) => void): () => void {
     this.eventListeners[event].push(callback);
     
     // Return a function to remove the listener

@@ -392,6 +392,7 @@ const SimulationResults = ({
         unregisterVisualizationListener(simulationId, handleWebSocketEvent);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationId]);
   
   // Handle changes to isUpdating state
@@ -414,6 +415,7 @@ const SimulationResults = ({
     return () => {
       stopPolling();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUpdating, simulationId]);
   
   // Toggle auto-updating

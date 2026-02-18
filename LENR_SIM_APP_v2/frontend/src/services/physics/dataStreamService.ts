@@ -11,7 +11,6 @@ import {
 } from '../../api/physics/websocketClient';
 import { 
   SimulationUpdateMessage, 
-  ParameterUpdateMessage,
   LatticeState,
   SimulationSummary,
   WebSocketMessage,
@@ -26,13 +25,13 @@ export type ParameterUpdate = Record<string, any>;
 export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
 
 // Subscription callback types
-export type SubscriptionCallback<T> = (data: T) => void;
+export type SubscriptionCallback<T> = (_data: T) => void;
 
 // Subscription options
 export interface SubscriptionOptions {
   bufferSize?: number;
   throttleMs?: number;
-  filter?: (data: any) => boolean;
+  filter?: (_data: any) => boolean;
 }
 
 /**
@@ -57,7 +56,7 @@ export class PhysicsDataStreamService {
   }> = new Map();
   
   // Status listeners
-  private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
+  private statusListeners: Set<(_status: ConnectionStatus) => void> = new Set();
   
   // Throttling
   private throttledUpdates: Map<string, NodeJS.Timeout> = new Map();
@@ -342,7 +341,7 @@ export class PhysicsDataStreamService {
   /**
    * Add a status listener
    */
-  public addStatusListener(listener: (status: ConnectionStatus) => void): () => void {
+  public addStatusListener(listener: (_status: ConnectionStatus) => void): () => void {
     this.statusListeners.add(listener);
     
     // Immediately call with current status

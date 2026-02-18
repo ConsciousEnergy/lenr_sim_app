@@ -9,14 +9,11 @@ import {
   Card,
   CardContent,
   LinearProgress,
-  Chip,
   Stack,
   useTheme
 } from '@mui/material';
 import { RealTimeLineChart } from './';
 import { useSimulationResults } from '../../api/physics/hooks';
-import { SimulationResult } from '../../api/simulation';
-
 // Type definitions
 interface SimulationStatisticsPanelProps {
   simulationId: string | null;
@@ -227,6 +224,7 @@ const SimulationStatisticsPanel: React.FC<SimulationStatisticsPanelProps> = ({
       console.error('Error processing simulation statistics:', err);
       setError('Error processing simulation data');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results]);
   
   // Render compact mode (for overview panel)

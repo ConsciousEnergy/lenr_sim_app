@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -822,7 +822,7 @@ const AnalyticsPage = () => {
                       onChange={(e) => setSelectedProperty(e.target.value)}
                     >
                       <MenuItem value="">All Properties</MenuItem>
-                      {Object.entries(propertiesTaxonomy).map(([key, desc]) => (
+                      {Object.entries(propertiesTaxonomy).map(([key, _desc]) => (
                         <MenuItem key={key} value={key}>{key.replace(/_/g, ' ')}</MenuItem>
                       ))}
                     </Select>

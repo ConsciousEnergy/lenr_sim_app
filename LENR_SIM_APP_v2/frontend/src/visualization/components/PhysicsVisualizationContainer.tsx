@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Card, CircularProgress, Alert, Button, Stack, Tabs, Tab } from '@mui/material';
 import { SyncOutlined, WarningOutlined } from '@mui/icons-material';
 

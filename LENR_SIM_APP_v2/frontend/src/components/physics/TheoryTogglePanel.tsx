@@ -17,7 +17,6 @@ import {
   Typography,
   Switch,
   FormControlLabel,
-  Slider,
   Chip,
   Paper,
   Divider,
@@ -28,7 +27,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Button,
-  Stack,
   Alert,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
@@ -167,11 +165,11 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   const {
     availableTheories,
     enabledTheories,
-    theoryConfigs,
+    theoryConfigs: _theoryConfigs,
     theoryResult,
     isLoadingTheories,
     setEnabledTheories,
-    setTheoryConfigs,
+    setTheoryConfigs: _setTheoryConfigs,
     fetchTheories,
     runTheories,
     runCoupledTheories,

@@ -128,7 +128,7 @@ const tryEndpoints = async (endpoints, method = 'get', data = null) => {
     endpoints = [endpoints]; // Convert single endpoint to array
   }
   
-  let lastError = null;
+  let _lastError = null;
   let attemptCount = 0;
   const totalEndpoints = endpoints.length;
   
@@ -166,7 +166,7 @@ const tryEndpoints = async (endpoints, method = 'get', data = null) => {
       logInfo(`${method.toUpperCase()} ${endpoint} succeeded`);
       return response.data;
     } catch (error) {
-      lastError = error;
+      _lastError = error;
       
       // Continue to next endpoint unless it's not a 404/405 error
       if (!error.response || ![404, 405].includes(error.response.status)) {
@@ -674,7 +674,7 @@ const generateMockResults = (parameters) => {
   const latticeData = {
     material,
     temperature: temp,
-    atoms: Array.from({ length: 100 }, (_, i) => ({
+    atoms: Array.from({ length: 100 }, (_, _i) => ({
       x: (Math.random() - 0.5) * 10,
       y: (Math.random() - 0.5) * 10,
       z: (Math.random() - 0.5) * 10,

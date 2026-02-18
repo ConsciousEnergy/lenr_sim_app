@@ -39,8 +39,8 @@ const LatticeStructureWithPhysics: React.FC<LatticeStructureWithPhysicsProps> = 
   showParticleMovement = true,
   showWaveAnimations = true,
   visualEffectsIntensity = 1.0,
-  autoRotate = false,
-  refreshInterval = 1000,
+  autoRotate: _autoRotate = false,
+  refreshInterval: _refreshInterval = 1000,
   performanceMode = 'auto',
   simplifyLargeDatasets = true
 }) => {
@@ -59,9 +59,9 @@ const LatticeStructureWithPhysics: React.FC<LatticeStructureWithPhysicsProps> = 
   
   // Connect to WebSocket for real-time updates
   const { 
-    simulationUpdates, 
+    simulationUpdates: _simulationUpdates, 
     lastMessage,
-    isConnected 
+    isConnected: _isConnected 
   } = usePhysicsWebSocket(simulationId);
   
   // Fetch initial data
@@ -165,6 +165,7 @@ const LatticeStructureWithPhysics: React.FC<LatticeStructureWithPhysicsProps> = 
       
       setCurrentSimulationData(simulationData);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results, visualizationType]);
   
   // Process WebSocket updates
@@ -178,12 +179,13 @@ const LatticeStructureWithPhysics: React.FC<LatticeStructureWithPhysicsProps> = 
         setLatticeData(transformedData);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastMessage, visualizationType]);
 
   // Determine if we need to optimize rendering based on data size and performance mode
   const [shouldOptimizeRendering, setShouldOptimizeRendering] = useState(false);
   const [optimizationLevel, setOptimizationLevel] = useState<'none' | 'low' | 'medium' | 'high'>('none');
-  const [frameSkip, setFrameSkip] = useState(0);
+  const [_frameSkip, setFrameSkip] = useState(0);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [isErrorRecovery, setIsErrorRecovery] = useState(false);
 

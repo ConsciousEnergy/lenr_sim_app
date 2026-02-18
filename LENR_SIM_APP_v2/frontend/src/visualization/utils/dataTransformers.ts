@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import { 
   SimulationUpdateMessage, 
   SimulationResultsResponse,
-  LatticeState, 
   LatticePoint as PhysicsLatticePoint
 } from '../../api/physics/types';
 

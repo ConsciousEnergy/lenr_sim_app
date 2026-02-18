@@ -6,6 +6,7 @@ const API_URL = API_BASE_URL;
 const API_TIMEOUT = DEFAULT_TIMEOUT;
 
 // Error types
+/* eslint-disable no-unused-vars */
 export enum ErrorType {
   NETWORK = 'NETWORK',
   TIMEOUT = 'TIMEOUT',
@@ -14,6 +15,7 @@ export enum ErrorType {
   VALIDATION = 'VALIDATION',
   UNKNOWN = 'UNKNOWN',
 }
+/* eslint-enable no-unused-vars */
 
 // Custom error interface
 export interface ApiError {
