@@ -1,6 +1,6 @@
 # Paper Corrections Applied
 
-**Version**: v0.3.2-beta  
+**Version**: 0.3.5-beta  
 **Last Updated**: 2026-02-14
 
 This document tracks specific physics corrections, reconciliations, and

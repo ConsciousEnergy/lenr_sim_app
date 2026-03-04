@@ -1,4 +1,4 @@
-# Deployment Checklist (v0.3.1-beta)
+# Deployment Checklist (v0.3.5-beta)
 
 ## Pre-Deployment
 

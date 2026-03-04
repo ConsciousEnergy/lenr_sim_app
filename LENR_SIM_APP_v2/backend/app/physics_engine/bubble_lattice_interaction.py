@@ -139,8 +139,21 @@ class LatticeParameters:
                 "fermi_energy": 9.7,            # eV
                 "screening_potential": 750.0    # eV (estimate)
             },
+            "lithium": {
+                "lattice_constant": 3.51e-10,   # m (BCC)
+                "electron_density": 4.7e28,     # m^-3
+                "debye_temperature": 344.0,     # K
+                "work_function": 2.9,           # eV
+                "fermi_energy": 4.7,            # eV
+                "screening_potential": 300.0    # eV (Li-H Rydberg matter, estimate)
+            },
         }
-        data = material_data.get(material.lower(), material_data["palladium"])
+        mat_key = (material or "").strip().lower()
+        if mat_key in material_data:
+            data = material_data[mat_key].copy()
+        else:
+            # Generic/custom fallback: use Pd-like structure, work function 5.0 eV
+            data = {**material_data["palladium"], "work_function": 5.0}
         return cls(host_material=material, **data)
 
 
@@ -268,7 +281,10 @@ class BubbleLatticeInteraction:
         
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
-        T_max = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
+        T_max_raw = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
+        # Cap at regime-specific max (sonofusion/single_bubble ~1e4 K)
+        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
+        T_max = min(T_max_raw, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
         
         # Pressure at collapse
         P_max = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
@@ -614,6 +630,7 @@ LATTICE_CONSTANTS = {
     "nickel": 3.52e-10,     # FCC
     "titanium": 2.95e-10,   # HCP (a-axis)
     "platinum": 3.92e-10,   # FCC
+    "lithium": 3.51e-10,    # BCC
 }
 
 

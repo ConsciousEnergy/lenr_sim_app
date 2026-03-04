@@ -40,6 +40,7 @@ from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 logger = logging.getLogger(__name__)
 
 HBAR = const.hbar
+H = const.h
 E_CHARGE = const.e
 KB = const.k
 MP = const.m_p
@@ -51,6 +52,9 @@ EPS0 = const.epsilon_0
 
 # D+D -> He-4 Q-value
 Q_VALUE_MEV = 23.8
+
+# Number density of lattice sites per m³ (typical for Pd/Ni, ~6.8e28 atoms/m³)
+LATTICE_SITES_PER_M3 = 1e28
 Q_VALUE_J = Q_VALUE_MEV * 1e6 * E_CHARGE
 
 
@@ -92,6 +96,22 @@ class KimBECTheory:
                 "default": 100,
                 "description": "Number of deuterons in the BEC trap",
             },
+            "bec_model": {
+                "default": "equilibrium",
+                "description": "equilibrium or driven_dissipative",
+            },
+            "mass_reduction_factor": {
+                "default": 4.0,
+                "description": "Polaron dressing: m_star = m_D / mass_reduction_factor (3-5x typical)",
+            },
+            "cooling_factor": {
+                "default": 4.0,
+                "description": "Phonon standing wave cooling: T_eff = T / cooling_factor (3-5x typical)",
+            },
+            "density_enhancement_factor": {
+                "default": 7.0,
+                "description": "Local density at standing wave nodes (5-10x typical)",
+            },
         }
 
     def is_applicable(self, conditions: Dict[str, float]) -> bool:
@@ -117,6 +137,7 @@ class KimBECTheory:
         N_d = int(config.get("deuteron_count", 100))
 
         d_grain = d_grain_nm * 1e-9
+        grain_volume = (4.0 / 3.0) * math.pi * (d_grain / 2.0)**3
 
         # BEC critical temperature for N deuterons in a 3D harmonic trap:
         # T_c = (ℏω/k_B) × (N/ζ(3))^(1/3)
@@ -131,6 +152,33 @@ class KimBECTheory:
         else:
             # Above T_c: small residual coherence from finite-size effects
             bec_fraction = max(0.0, (T_critical / max(T_bec, 1))**3 * 0.1)
+
+        bec_model = config.get("bec_model", "equilibrium")
+        T_c_eff = None
+        T_eff_deuteron = None
+        phase_space_density = None
+        bec_possible = None
+
+        if bec_model == "driven_dissipative":
+            mass_factor = config.get("mass_reduction_factor", 4.0)
+            cooling_factor_val = config.get("cooling_factor", 4.0)
+            density_factor = config.get("density_enhancement_factor", 7.0)
+
+            T_eff_deuteron = T / cooling_factor_val
+            T_c_eff = T_critical * mass_factor * (density_factor ** (2.0 / 3.0))
+
+            n_deuteron = N_d / grain_volume
+            n_eff = n_deuteron * density_factor
+
+            lambda_dB = H / math.sqrt(2.0 * math.pi * MD * KB * max(T_eff_deuteron, 1e-30))
+            phase_space_density = n_eff * lambda_dB**3
+
+            zeta_32 = 2.612
+            bec_possible = (T_eff_deuteron < T_c_eff) and (phase_space_density >= zeta_32)
+
+            if bec_possible:
+                bec_fraction = 1.0 - (T_eff_deuteron / T_c_eff)**3
+                bec_fraction = max(0.0, bec_fraction)
 
         # BEC-enhanced tunnelling:
         # In the condensate, the effective de Broglie wavelength is enhanced
@@ -167,7 +215,7 @@ class KimBECTheory:
 
         # Estimate grain density and power
         grain_volume = (4.0 / 3.0) * math.pi * (d_grain / 2.0)**3
-        grains_per_m3 = loading / max(grain_volume * 1e28, 1e-10)
+        grains_per_m3 = loading / max(grain_volume * LATTICE_SITES_PER_M3, 1e-10)
 
         # Confidence
         bec_score = bec_fraction
@@ -194,6 +242,8 @@ class KimBECTheory:
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,
                 "product_gamma": 0.0,
+                "bec_model": bec_model,
+                **({"T_c_eff": T_c_eff, "T_eff_deuteron": T_eff_deuteron, "phase_space_density": phase_space_density, "bec_possible": bec_possible} if T_c_eff is not None else {}),
             },
             parameters_used={
                 "temperature": T,

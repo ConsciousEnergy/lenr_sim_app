@@ -141,25 +141,39 @@ class CasimirConfinementTheory:
         thermal_length = HBAR * C / (2.0 * math.pi * KB * T)
         in_thermal_regime = sep_m > thermal_length
 
+        # Domain validity: Lifshitz model extrapolated below ~2 nm
+        domain_valid = sep_nm >= 2.0
+        warning = (
+            "Lifshitz model extrapolated below 2 nm; surface roughness and "
+            "non-locality effects may dominate"
+            if not domain_valid
+            else None
+        )
+
+        observables: Dict[str, Any] = {
+            "F_casimir_ideal_N": F_casimir,
+            "F_casimir_corrected_N": F_corrected,
+            "P_casimir_corrected_Pa": P_corrected,
+            "skin_depth_nm": skin_depth * 1e9,
+            "lifshitz_correction_ratio": correction_ratio,
+            "confinement_energy_eV": confinement_energy_eV,
+            "in_thermal_regime": float(in_thermal_regime),
+            "domain_valid": domain_valid,
+            # Casimir confinement supports D+D -> He-4 pathway
+            "product_He4": 1.0,
+            "product_neutrons": 0.0,
+            "product_gamma": 0.0,
+        }
+        if warning is not None:
+            observables["warning"] = warning
+
         return TheoryContribution(
             theory_id=self.theory_id,
             theory_name=self.theory_name,
             enhancement_factor=enhancement,
             reaction_rate_modifier=enhancement,
             energy_output_watts=0.0,
-            observables={
-                "F_casimir_ideal_N": F_casimir,
-                "F_casimir_corrected_N": F_corrected,
-                "P_casimir_corrected_Pa": P_corrected,
-                "skin_depth_nm": skin_depth * 1e9,
-                "lifshitz_correction_ratio": correction_ratio,
-                "confinement_energy_eV": confinement_energy_eV,
-                "in_thermal_regime": float(in_thermal_regime),
-                # Casimir confinement supports D+D -> He-4 pathway
-                "product_He4": 1.0,
-                "product_neutrons": 0.0,
-                "product_gamma": 0.0,
-            },
+            observables=observables,
             parameters_used={
                 "temperature": T,
                 "separation_nm": sep_nm,

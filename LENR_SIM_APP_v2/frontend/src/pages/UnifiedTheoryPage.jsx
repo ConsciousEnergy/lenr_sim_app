@@ -6,7 +6,7 @@
  * electrodynamic ionic double-layer collapse onto lattice materials.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -26,7 +26,11 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  LinearProgress
+  LinearProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -41,7 +45,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';
 import SaveIcon from '@mui/icons-material/Save';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
 
@@ -100,6 +104,81 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+  },
+  pd_h: {
+    name: 'Palladium-Hydrogen',
+    description: 'Piantelli early work, Arata—lighter isotope testing',
+    hostMaterial: 'palladium',
+    reactant: 'hydrogen',
+    temperature: 350,
+    loadingRatio: 0.85,
+    initialBubbleRadius: 3.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  ni_d: {
+    name: 'Nickel-Deuterium',
+    description: 'Hybrid approach',
+    hostMaterial: 'nickel',
+    reactant: 'deuterium',
+    temperature: 500,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 2.5,
+    drivingPressure: 2.0,
+    frequency: 25,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  li_h: {
+    name: 'Lithium-Hydrogen',
+    description: 'Holmlid, Unified Gravity Corp—Rydberg matter',
+    hostMaterial: 'lithium',
+    reactant: 'hydrogen',
+    temperature: 600,
+    loadingRatio: 0.8,
+    initialBubbleRadius: 2.5,
+    drivingPressure: 2.0,
+    frequency: 25,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  zro2_pd: {
+    name: 'ZrO2-Pd NANOR',
+    description: 'Swartz NANOR—nanostructured palladium',
+    hostMaterial: 'palladium',
+    reactant: 'deuterium',
+    temperature: 300,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 2.0,
+    drivingPressure: 1.8,
+    frequency: 30,
+    defectDensity: 1e17,
+    surfaceRoughness: 8e-9,
+    grainSize: 20e-9,
+    numCycles: 2,
+  },
+  custom: {
+    name: 'Custom Configuration',
+    description: 'User-defined host/reactant—unlocks all parameter sliders for free-form experimentation',
+    hostMaterial: 'palladium',
+    reactant: 'deuterium',
+    temperature: 400,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 3.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
   }
 };
 
@@ -111,12 +190,31 @@ const PHASE_COLORS = {
   nuclear: '#ff4500'
 };
 
+// Tab param to index mapping (tab order: 0=3D Viz, 1=Timeline, 2=Proton Phases, 3=Results, 4=Theory Testbed, 5=Theory)
+const TAB_PARAM_MAP = {
+  tunneling: 4,
+  screening: 4,
+  casimir: 4,
+  fusion: 4,
+  reactions: 4,
+  'bubble-dynamics': 0,
+  visualization: 0,
+  timeline: 1,
+  phases: 2,
+  results: 3,
+  testbed: 4,
+  theory: 5,
+};
+
 // Enhancement thresholds for LENR activity
 const ENHANCEMENT_THRESHOLDS = {
-  observable: 1e10,      // Observable excess heat (10^10)
-  measurable: 1e5,       // Measurable nuclear products
-  screening: 1e2,        // Significant electron screening
+  observable: 1e5,      // Observable excess heat (10^5)
+  measurable: 1e3,       // Measurable nuclear products
+  screening: 1e1,        // Significant electron screening
 };
+
+// Regime max temperatures (K) from physics/bubble_collapse: single_bubble~1e4
+const REGIME_MAX_TEMPERATURE_K = 1e4;
 
 /**
  * Enhancement Progress Indicator Component
@@ -262,12 +360,29 @@ function EnhancementIndicator({ simulationData, parameters }) {
 }
 
 function UnifiedTheoryPage() {
+  const [searchParams] = useSearchParams();
   // State management
   const [selectedSystem, setSelectedSystem] = useState('pd_d');
   const [parameters, setParameters] = useState(SYSTEM_PRESETS.pd_d);
   const [simulationData, setSimulationData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Sync active tab and system from URL params on mount and when searchParams change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') || searchParams.get('focus');
+    if (tabParam) {
+      const idx = TAB_PARAM_MAP[tabParam.toLowerCase()];
+      if (typeof idx === 'number' && idx >= 0 && idx <= 5) {
+        setActiveTab(idx);
+      }
+    }
+    const systemParam = searchParams.get('system');
+    if (systemParam && SYSTEM_PRESETS[systemParam]) {
+      setSelectedSystem(systemParam);
+      setParameters(SYSTEM_PRESETS[systemParam]);
+    }
+  }, [searchParams]);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
@@ -516,11 +631,13 @@ function UnifiedTheoryPage() {
       });
     }
     
+    const rawTempK = params.temperature * compressionRatio ** 1.2;
+    const cappedTempK = Math.min(rawTempK, REGIME_MAX_TEMPERATURE_K);
     return {
       success: true,
       collapse_results: {
         min_radius_um: params.initialBubbleRadius * 0.15 * 3.33,
-        max_temperature_k: params.temperature * compressionRatio ** 1.2,
+        max_temperature_k: cappedTempK,
         max_pressure_bar: 101.325 * compressionRatio ** 4,
         compression_ratio: compressionRatio,
         peak_enhancement: baseEnhancement * tempFactor
@@ -533,7 +650,7 @@ function UnifiedTheoryPage() {
       },
       enhancement_timeline: timeline,
       peak_conditions: {
-        temperature_k: params.temperature * compressionRatio ** 1.2,
+        temperature_k: cappedTempK,
         pressure_gpa: 0.1 * compressionRatio ** 4,
         enhancement_factor: baseEnhancement * tempFactor
       }
@@ -802,6 +919,38 @@ function UnifiedTheoryPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {SYSTEM_PRESETS[selectedSystem].description}
         </Typography>
+
+        {/* Custom preset: host/reactant selectors */}
+        {selectedSystem === 'custom' && (
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Host Material</InputLabel>
+              <Select
+                value={parameters.hostMaterial}
+                label="Host Material"
+                onChange={(e) => handleParameterChange('hostMaterial', e.target.value)}
+                disabled={isLoading}
+              >
+                <MenuItem value="palladium">Palladium</MenuItem>
+                <MenuItem value="nickel">Nickel</MenuItem>
+                <MenuItem value="titanium">Titanium</MenuItem>
+                <MenuItem value="lithium">Lithium</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Reactant</InputLabel>
+              <Select
+                value={parameters.reactant}
+                label="Reactant"
+                onChange={(e) => handleParameterChange('reactant', e.target.value)}
+                disabled={isLoading}
+              >
+                <MenuItem value="deuterium">Deuterium</MenuItem>
+                <MenuItem value="hydrogen">Hydrogen</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        )}
       </Paper>
 
       <Grid container spacing={3}>
@@ -820,7 +969,7 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.loadingRatio}
                 onChange={(_, v) => handleParameterChange('loadingRatio', v)}
-                min={0.5}
+                min={selectedSystem === 'custom' ? 0 : 0.5}
                 max={1.0}
                 step={0.05}
                 marks={[{value: 0.9, label: '0.9'}]}
@@ -841,8 +990,8 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.temperature}
                 onChange={(_, v) => handleParameterChange('temperature', v)}
-                min={200}
-                max={800}
+                min={selectedSystem === 'custom' ? 100 : 200}
+                max={selectedSystem === 'custom' ? 2000 : 800}
                 step={10}
                 disabled={isLoading}
               />
@@ -861,8 +1010,8 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.drivingPressure}
                 onChange={(_, v) => handleParameterChange('drivingPressure', v)}
-                min={0.5}
-                max={5.0}
+                min={selectedSystem === 'custom' ? 0.1 : 0.5}
+                max={selectedSystem === 'custom' ? 10 : 5.0}
                 step={0.1}
                 disabled={isLoading}
               />
@@ -884,8 +1033,8 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.frequency}
                 onChange={(_, v) => handleParameterChange('frequency', v)}
-                min={5}
-                max={50}
+                min={selectedSystem === 'custom' ? 1 : 5}
+                max={selectedSystem === 'custom' ? 100 : 50}
                 step={1}
                 disabled={isLoading}
               />
@@ -1193,7 +1342,7 @@ function UnifiedTheoryPage() {
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography>
+                      <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography><Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Proton phases influenced by delocalized interface electrons at lattice-electrolyte boundaries.</Typography>
                       <Divider sx={{ mb: 2 }} />
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {simulationData.proton_phases && Object.entries(simulationData.proton_phases).map(([phase, fraction]) => (

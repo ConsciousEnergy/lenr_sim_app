@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.5-beta] - 2026-02-16
 
+### Critical Fix — Peak Temperature Capping
+- **REGIME_MAX_TEMPERATURE capping**: Unified Theory page showed unrealistic peak temperatures (e.g. 4.5e9 K). Applied physics caps from `bubble_collapse.py` Phase 1.9: single_bubble ~1e4 K, multi_bubble ~5e3 K, laser_driven ~1e5 K.
+- **bubble_lattice_interaction.py**: Cap T_max at REGIME_MAX_TEMPERATURE["single_bubble"] (1e4 K) after adiabatic rise calculation.
+- **bubble_collapse.py**: Cap `enhanced_temperature` in `calculate_surface_enhanced_collapse` at regime max.
+- **UnifiedTheoryPage.jsx**: Cap local fallback `max_temperature_k` and `peak_conditions.temperature_k` at 1e4 K when API is unavailable.
+
+### Physics Engine Overhaul (Phase 1–2 Verification)
+- **electron_screening.py**: strong/anomalous models, classify_screening_regime, calculate_gamow_integral_screened
+- **casimir_forces.py**: calculate_casimir_force_with_metadata, DOMAIN_VALIDITY_THRESHOLD_M (2e-9 m)
+- **bubble_collapse.py**: REGIME_MAX_TEMPERATURE, calculate_collapse_temperature_regime
+- **non_equilibrium_thermo.py**: MILES_HE_RATE (2.63e11 atoms/s/W), calculate_miles_heat_helium_correlation
+- **proton_phase_model.py**: weak interaction import, get_weak_neutron_formation_params
+- **unified_lenr_model**: get_material_work_function, get_double_layer_potential
+- **TheoryDocumentationPanel**: P_overlap 8.5e-16, "Delocalized Interface Electrons", r_n 5 fm
+- **UnifiedTheoryPage**: ENHANCEMENT_THRESHOLDS observable=1e5, measurable=1e3, screening=1e1
+
 ### ESLint Compliance — CI Build Hardening
 
 Resolved all ESLint warnings across 61 frontend source files so the production build passes with `CI=true` (Create React App treats warnings as errors in CI). The frontend build and tests now run cleanly without requiring `CI: false`.

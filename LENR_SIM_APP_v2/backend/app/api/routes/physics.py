@@ -24,6 +24,7 @@ from ...physics_engine.fluid_dynamics_solver import FluidDynamicsSolver, FluidDy
 from ...models.simulation_models import SimulationParameters, SimulationResponse
 from ...services.simulation_store import SimulationStore
 from ...physics_engine.theory_pipeline import get_default_pipeline
+from ...utils.json_safe import to_json_safe
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -483,14 +484,14 @@ async def run_single_theory(
         return {
             "theory_id": contribution.theory_id,
             "theory_name": contribution.theory_name,
-            "enhancement_factor": contribution.enhancement_factor,
-            "reaction_rate_modifier": contribution.reaction_rate_modifier,
-            "energy_output_watts": contribution.energy_output_watts,
-            "observables": contribution.observables,
-            "parameters_used": contribution.parameters_used,
-            "is_applicable": contribution.is_applicable,
-            "confidence": contribution.confidence,
-            "references": contribution.references,
+            "enhancement_factor": float(contribution.enhancement_factor),
+            "reaction_rate_modifier": float(contribution.reaction_rate_modifier),
+            "energy_output_watts": float(contribution.energy_output_watts),
+            "observables": to_json_safe(contribution.observables),
+            "parameters_used": to_json_safe(contribution.parameters_used),
+            "is_applicable": bool(contribution.is_applicable),
+            "confidence": float(contribution.confidence),
+            "references": list(contribution.references),
         }
     except KeyError:
         raise HTTPException(

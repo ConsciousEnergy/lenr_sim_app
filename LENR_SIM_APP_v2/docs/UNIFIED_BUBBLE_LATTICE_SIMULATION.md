@@ -1,6 +1,6 @@
 # Unified Bubble-Lattice LENR Simulation
 
-**Version**: 0.3.2-beta  
+**Version**: 0.3.5-beta  
 **Date**: February 2026  
 **Feature Branch**: lenr_sim_app_v0.3.0.0-beta
 

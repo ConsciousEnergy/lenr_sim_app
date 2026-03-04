@@ -33,6 +33,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ArticleIcon from '@mui/icons-material/Article';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import InfoIcon from '@mui/icons-material/Info';
 // User profile icons removed - app is open access without authentication
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -144,6 +145,12 @@ const menuItems = [
         title: 'Bubble Fusion',
         path: '/bubble-fusion',
         icon: <BubbleChartIcon />
+      },
+      {
+        id: 'advanced-analysis',
+        title: 'Advanced Analysis',
+        path: '/advanced-analysis',
+        icon: <AssessmentIcon />
       }
       // Legacy simulations (LENR, Fusion) hidden - routes still work via direct URL
     ]

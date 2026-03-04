@@ -19,6 +19,7 @@ import io
 
 from app.core.database import get_db_session
 from app.services.analytics_service import AnalyticsService, get_analytics_service
+from app.utils.json_safe import to_json_safe
 
 logger = logging.getLogger(__name__)
 
@@ -771,22 +772,22 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
         contributions.append({
             "theory_id": c.theory_id,
             "theory_name": c.theory_name,
-            "enhancement_factor": c.enhancement_factor,
-            "reaction_rate_modifier": c.reaction_rate_modifier,
-            "energy_output_watts": c.energy_output_watts,
-            "observables": c.observables,
-            "confidence": c.confidence,
-            "is_applicable": c.is_applicable,
-            "references": c.references,
+            "enhancement_factor": float(c.enhancement_factor),
+            "reaction_rate_modifier": float(c.reaction_rate_modifier),
+            "energy_output_watts": float(c.energy_output_watts),
+            "observables": to_json_safe(c.observables),
+            "confidence": float(c.confidence),
+            "is_applicable": bool(c.is_applicable),
+            "references": list(c.references),
         })
 
     return {
         "execution_order": result.enabled_theories,
         "contributions": contributions,
-        "combined_enhancement": result.combined_enhancement,
-        "combined_reaction_rate_modifier": result.combined_reaction_rate_modifier,
-        "total_energy_watts": result.total_energy_watts,
-        "enriched_conditions": result.conditions,
+        "combined_enhancement": float(result.combined_enhancement),
+        "combined_reaction_rate_modifier": float(result.combined_reaction_rate_modifier),
+        "total_energy_watts": float(result.total_energy_watts),
+        "enriched_conditions": to_json_safe(result.conditions),
         "coupling_map": coupling_map,
     }
 

@@ -10,11 +10,20 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 import logging
 
+from app.physics_engine.constants import MILES_HEAT_HELIUM_RATE
+
 logger = logging.getLogger(__name__)
 
 # Physical constants
 KB = 1.380649e-23  # Boltzmann constant (J/K)
 EV_TO_J = 1.602176634e-19  # eV to Joules conversion
+
+TRITIUM_BRANCHING = 1e-9   # ~1e-9 relative to He-4 channel
+NEUTRON_BRANCHING = 1e-11  # ~1e-11 relative to He-4 channel
+
+
+def calculate_miles_heat_helium_correlation(excess_power_W: float) -> float:
+    return MILES_HEAT_HELIUM_RATE * excess_power_W
 
 
 class ExcessPowerAnalysis(BaseModel):
@@ -36,6 +45,9 @@ class EnergyBalanceResult(BaseModel):
     dissipated_energy: float = Field(description="Energy dissipated (J)")
     nuclear_energy: float = Field(description="Nuclear energy release (J)")
     balance_error: float = Field(description="Energy balance error (%)")
+    tritium_branching_ratio: Optional[float] = Field(default=None, description="Tritium branching relative to He-4")
+    neutron_branching_ratio: Optional[float] = Field(default=None, description="Neutron branching relative to He-4")
+    he4_atoms_per_s: Optional[float] = Field(default=None, description="He-4 atoms/s from Miles correlation if computed")
 
 
 class EntropyProductionResult(BaseModel):
@@ -53,6 +65,7 @@ def calculate_energy_balance(
     loading_ratio: float = 0.9,
     reaction_rate: float = 0.0,
     duration: float = 1.0,
+    include_miles_correlation: bool = False,
     **kwargs
 ) -> EnergyBalanceResult:
     """
@@ -69,6 +82,7 @@ def calculate_energy_balance(
         EnergyBalanceResult with energy balance breakdown
     """
     try:
+        # Q_output = Q_input + Q_nuclear (minus losses); Q_excess = Q_output - Q_input
         # Input energy
         total_input = input_power * duration
         
@@ -90,14 +104,22 @@ def calculate_energy_balance(
         energy_in = total_input + nuclear_energy
         energy_out = total_output + dissipated_energy + stored_energy
         balance_error = abs(energy_in - energy_out) / max(energy_in, 1e-20) * 100
-        
+
+        he4_atoms_per_s = None
+        if include_miles_correlation and duration > 0:
+            excess_power_W = max(0.0, (total_output - total_input) / duration)
+            he4_atoms_per_s = calculate_miles_heat_helium_correlation(excess_power_W)
+
         return EnergyBalanceResult(
             total_input=float(total_input),
             total_output=float(total_output),
             stored_energy=float(stored_energy),
             dissipated_energy=float(dissipated_energy),
             nuclear_energy=float(nuclear_energy),
-            balance_error=float(balance_error)
+            balance_error=float(balance_error),
+            tritium_branching_ratio=TRITIUM_BRANCHING,
+            neutron_branching_ratio=NEUTRON_BRANCHING,
+            he4_atoms_per_s=he4_atoms_per_s
         )
         
     except Exception as e:
@@ -108,7 +130,10 @@ def calculate_energy_balance(
             stored_energy=0.0,
             dissipated_energy=0.0,
             nuclear_energy=0.0,
-            balance_error=100.0
+            balance_error=100.0,
+            tritium_branching_ratio=None,
+            neutron_branching_ratio=None,
+            he4_atoms_per_s=None
         )
 
 
@@ -200,12 +225,12 @@ def entropy_production_rate(
     """
     try:
         # Thermal entropy production (Fourier law)
-        # σ_thermal = κ(∇T)²/T²
-        thermal_conductivity = 70.0  # W/(m·K) for Pd
+        # Ïƒ_thermal = Îº(âˆ‡T)Â²/TÂ²
+        thermal_conductivity = 70.0  # W/(mÂ·K) for Pd
         thermal_entropy = thermal_conductivity * temperature_gradient**2 / (temperature**2) if temperature > 0 else 0.0
         
         # Chemical entropy from loading
-        # σ_chem = Σ J_i * ∇(μ_i/T)
+        # Ïƒ_chem = Î£ J_i * âˆ‡(Î¼_i/T)
         chemical_potential_gradient = 0.1 * loading_rate  # Simplified
         chemical_entropy = abs(loading_rate * chemical_potential_gradient / temperature) if temperature > 0 else 0.0
         
@@ -237,4 +262,5 @@ def entropy_production_rate(
             chemical_entropy=0.0,
             nuclear_entropy=0.0
         )
+
 

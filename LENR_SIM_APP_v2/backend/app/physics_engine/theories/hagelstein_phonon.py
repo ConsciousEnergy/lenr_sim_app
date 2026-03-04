@@ -87,6 +87,11 @@ class HagelsteinPhononTheory:
                 "default": 274.0,
                 "description": "Debye temperature of host lattice (274 K for Pd)",
             },
+            "mechanism": {
+                "default": "coherent_raman",
+                "description": "Multi-phonon mechanism",
+                "options": ["naive", "stimulated_cascade", "coherent_raman", "phonon_polariton_bec"],
+            },
         }
 
     def is_applicable(self, conditions: Dict[str, float]) -> bool:
@@ -111,12 +116,26 @@ class HagelsteinPhononTheory:
         g_coupling = config.get("coupling_strength", 1e-4)
         n_modes = config.get("n_phonon_modes", 1e8)
         T_debye = config.get("debye_temperature_K", 274.0)
+        mechanism = config.get("mechanism", "coherent_raman")
 
-        # Energy per phonon
+        # Energy per phonon (hbar * omega)
         E_phonon = HBAR * 2.0 * math.pi * omega_ph
 
-        # Number of phonons needed to absorb Q
-        n_phonons_needed = Q_VALUE_DD_HE4_J / max(E_phonon, 1e-30)
+        # Number of phonons needed to absorb Q (~2e7 for 50 meV phonons)
+        N_phonons = Q_VALUE_DD_HE4_J / max(E_phonon, 1e-30)
+        n_phonons_needed = N_phonons
+
+        # Naive multi-phonon probability: P_naive = (g/(hbar*omega))^N
+        # g/(hbar*omega) dimensionless: g_coupling when g_energy = g*E_phonon
+        g_over_hbar_omega = min(max(g_coupling, 1e-300), 1.0 - 1e-15)
+        if N_phonons < 1e6:
+            P_naive = g_over_hbar_omega ** N_phonons
+        else:
+            log_P = N_phonons * math.log(g_over_hbar_omega)
+            P_naive = math.exp(log_P) if log_P > -700 else 0.0
+
+        # Dimensionless coupling: g/(hbar*omega); weak coupling (< 0.1) rules out naive mechanism
+        naive_ruled_out = (g_over_hbar_omega < 0.1) or (P_naive < 1e-100)
 
         # Coupling matrix element: V_coupling ~ g × E_phonon × √n_modes
         # This is the rate at which nuclear energy transfers to phonons
@@ -142,20 +161,34 @@ class HagelsteinPhononTheory:
         else:
             n_bose = 0.0
 
-        # Enhancement: stimulated emission of phonons is proportional to
-        # (1 + n_bose)^n_involved, but we cap this sensibly
-        stimulated_factor = (1.0 + n_bose) ** min(math.log10(max(n_modes, 1)), 10)
-
-        # Total coupling enhancement over direct gamma emission
-        # Direct gamma: Gamma_gamma ~ (alpha/pi) × (Q/ℏc)^3
-        # Phonon pathway: much faster when coupling is sufficient
+        n_ph = 1.0 + n_bose
         gamma_gamma = (const.alpha / math.pi) * (Q_VALUE_DD_HE4_J / (HBAR * C))**3 * HBAR
-        branching_ratio = gamma_transfer / max(gamma_gamma, 1e-100)
-        branching_ratio = min(branching_ratio, 1e20)
 
-        # The enhancement factor is how much the phonon pathway increases
-        # the effective reaction rate (by providing a fast de-excitation channel)
-        enhancement = max(1.0, math.sqrt(branching_ratio) * loading)
+        if mechanism == "naive":
+            enhancement = 1e-50 if naive_ruled_out else min(P_naive, 1e-20)
+            branching_ratio = 0.0
+        elif mechanism == "stimulated_cascade":
+            if N_phonons < 500:
+                stim_cascade = (n_ph ** min(N_phonons, 500)) / max(math.factorial(min(int(N_phonons), 170)), 1e-300)
+            else:
+                log_stim = min(N_phonons, 1e4) * math.log(max(n_ph, 1e-300))
+                log_N_fac = min(N_phonons, 1e4) * math.log(max(N_phonons, 1)) - min(N_phonons, 1e4)
+                stim_cascade = math.exp(log_stim - log_N_fac) if (log_stim - log_N_fac) > -700 else 0.0
+            branching_ratio = (gamma_transfer / max(gamma_gamma, 1e-100)) * max(stim_cascade, 1e-20)
+            branching_ratio = min(branching_ratio, 1e20)
+            enhancement = max(1.0, math.sqrt(branching_ratio) * loading)
+        elif mechanism == "phonon_polariton_bec":
+            collective_factor = math.sqrt(n_modes) / 1e4
+            stimulated_factor = (1.0 + n_bose) ** min(math.log10(max(n_modes, 1)), 10) * collective_factor
+            branching_ratio = (gamma_transfer / max(gamma_gamma, 1e-100)) * stimulated_factor
+            branching_ratio = min(branching_ratio, 1e20)
+            enhancement = max(1.0, math.sqrt(branching_ratio) * loading)
+        else:
+            stimulated_factor = (1.0 + n_bose) ** min(math.log10(max(n_modes, 1)), 10)
+            branching_ratio = gamma_transfer / max(gamma_gamma, 1e-100)
+            branching_ratio = min(branching_ratio, 1e20)
+            enhancement = max(1.0, math.sqrt(branching_ratio) * loading)
+
         enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
 
         # Energy output: if the phonon pathway is viable, all Q goes to heat
@@ -175,6 +208,10 @@ class HagelsteinPhononTheory:
             reaction_rate_modifier=enhancement,
             energy_output_watts=0.0,  # coupling model, not absolute rate
             observables={
+                "naive_multi_phonon_probability": P_naive,
+                "naive_ruled_out": naive_ruled_out,
+                "N_phonons_needed": N_phonons,
+                "mechanism": mechanism,
                 "n_phonons_needed": n_phonons_needed,
                 "energy_per_phonon_eV": energy_per_phonon_eV,
                 "coupling_matrix_element_J": V_coupling,
@@ -193,6 +230,7 @@ class HagelsteinPhononTheory:
                 "phonon_frequency_Hz": omega_ph,
                 "coupling_strength": g_coupling,
                 "n_phonon_modes": n_modes,
+                "mechanism": mechanism,
             },
             is_applicable=True,
             confidence=confidence,

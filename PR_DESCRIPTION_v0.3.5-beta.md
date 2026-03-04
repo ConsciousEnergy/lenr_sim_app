@@ -114,3 +114,74 @@ npx react-scripts test --watchAll=false
 - **Release:** v0.3.5-beta
 - **Branch:** `lenr_sim_app_v0.3.5-beta`
 - **License:** GNU GPL-3.0
+
+
+# PR Body for v0.3.5-beta 
+
+---
+
+## Description
+
+Merges the LENR Simulation App **v0.3.5-beta** release into `main` for public deployment. This release adds **full ESLint compliance** across the frontend so the production build passes with `CI=true` (Create React App treats warnings as errors in CI). The pipeline no longer needs `CI: false` as a workaround.
+
+**Key deliverables:**
+- **ESLint compliance** — 61 frontend files updated; unused imports removed, unused vars prefixed with `_`, react-hooks/exhaustive-deps resolved
+- **Ref cleanup patterns** — TestCube, ThreeJsTest, PhysicsVisualEffects use correct React ref-in-cleanup pattern
+- **TypeScript aliasing** — Destructuring aliases (e.g., `isLoading: _isLoading`) preserve type safety and satisfy ESLint
+- **Static extraction** — `DEFAULT_FILTERS` moved outside DashboardControlsPanel component
+- **Build verification** — `npm run build` with `CI=true` compiles successfully; 75 tests passing
+
+This branch includes all v0.3.4-beta work (Relevance Map, cross-theory coupling, 21 theories, CI stabilization, test suite).
+
+---
+
+## Type of Change
+
+- [x] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [x] Documentation update
+- [x] Infrastructure / deployment change
+
+---
+
+## Pre-Merge Checklist
+
+### Build & Tests
+- [x] Backend tests passing
+- [x] Frontend tests: 75/75 passing
+- [x] Frontend build with `CI=true` succeeds
+
+### Code Quality
+- [x] No breaking API changes (ErrorType enum preserved)
+- [x] Component props unchanged (aliasing only)
+
+### Documentation
+- [x] CHANGELOG.md updated (v0.3.5-beta section)
+- [x] Version → 0.3.5-beta
+
+---
+
+## Test Plan
+
+```powershell
+# Backend
+cd LENR_SIM_APP_v2/backend; python -m pytest tests/ -v
+
+# Frontend (strict CI mode)
+cd LENR_SIM_APP_v2/frontend
+$env:CI="true"; npm run build
+npx react-scripts test --watchAll=false
+```
+
+---
+
+## Screenshots / Media
+
+A short demonstration video will be published when we go public.
+
+---
+
+## License
+
+Licensed under **GNU GPL-3.0**. See [LICENSE](LICENSE).

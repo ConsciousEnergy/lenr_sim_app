@@ -234,9 +234,19 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
       <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <ScienceIcon fontSize="small" color="primary" />
         Theory Modules
+        <Chip
+          label={`${availableTheories.length} theories`}
+          size="small"
+          color="primary"
+          variant="outlined"
+          sx={{ fontSize: '0.7rem', height: 22 }}
+        />
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
         Toggle theories on/off and adjust parameters. Run to see per-theory contributions.
+        {availableTheories.length > 0 && (
+          <> All {availableTheories.length} registered backend theory modules are listed below.</>
+        )}
       </Typography>
 
       {/* Combined results summary */}

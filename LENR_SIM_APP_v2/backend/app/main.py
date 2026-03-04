@@ -38,6 +38,13 @@ except ImportError as e:
     print(f"Warning: Could not import theory_physics_router: {e}")
     theory_physics_router = None
 
+# Import docs router (serve markdown from project docs)
+try:
+    from .api.routes.docs_routes import router as docs_router
+except ImportError as e:
+    print(f"Warning: Could not import docs_router: {e}")
+    docs_router = None
+
 # Import database manager (v0.2.3-beta)
 from .core.database import db_manager, get_database_url
 
@@ -356,6 +363,14 @@ if theory_physics_router:
         app_logger.info("Theory testbed router included successfully")
     except Exception as e:
         app_logger.error(f"Failed to include theory testbed router: {e}")
+
+# Docs router (markdown from project docs)
+if docs_router:
+    try:
+        app.include_router(docs_router, prefix="/api", tags=["Docs"])
+        app_logger.info("Docs router included successfully")
+    except Exception as e:
+        app_logger.error(f"Failed to include docs router: {e}")
 
 # Unified simulation router
 if unified_simulation_router:

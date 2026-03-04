@@ -31,6 +31,13 @@ STANDARD_PRESSURE = 101325  # Standard atmospheric pressure in Pa
 STANDARD_TEMPERATURE = 298.15  # Standard temperature in K
 WATER_DENSITY = 1000  # Water density in kg/m^3 (approximate)
 
+# Regime-specific max temperatures (K): single_bubble ~1e4, multi_bubble ~1e3-1e4, laser_driven ~1e5
+REGIME_MAX_TEMPERATURE = {
+    "single_bubble": 1e4,
+    "multi_bubble": 5e3,
+    "laser_driven": 1e5
+}
+
 
 def calculate_rayleigh_collapse_time(
     radius: float,
@@ -61,7 +68,8 @@ def calculate_collapse_temperature(
     initial_radius: float,
     minimum_radius: float,
     initial_temperature: float = STANDARD_TEMPERATURE,
-    gamma: float = 5/3  # Adiabatic index (monatomic gas)
+    gamma: float = 5/3,  # Adiabatic index (monatomic gas)
+    regime: str = "single_bubble"
 ) -> float:
     """
     Calculate the temperature at maximum compression during bubble collapse.
@@ -74,6 +82,10 @@ def calculate_collapse_temperature(
         
     Returns:
         Temperature at maximum compression in Kelvin
+
+    Note:
+        The electric pressure term epsilon_0 E^2/2 is negligible compared
+        to GPa-scale collapse pressures in sonofusion regimes.
     """
     # For adiabatic compression:
     # T_final = T_initial * (V_initial/V_final)^(γ-1)
@@ -86,13 +98,33 @@ def calculate_collapse_temperature(
     # Calculate final temperature
     final_temperature = initial_temperature * temperature_factor
     
-    # Cap temperature at a reasonable maximum (based on literature)
-    max_realistic_temp = 1e6  # K (maximum reasonable temperature)
+    # Cap temperature at regime-specific maximum
+    max_realistic_temp = REGIME_MAX_TEMPERATURE.get(regime, 1e4)  # K
     final_temperature = min(final_temperature, max_realistic_temp)
     
     logger.debug(f"Collapse temperature: {final_temperature:.2e} K with compression ratio {compression_ratio:.2f}")
     
     return final_temperature
+
+
+def calculate_collapse_temperature_regime(
+    initial_radius: float,
+    minimum_radius: float,
+    initial_temperature: float = STANDARD_TEMPERATURE,
+    gamma: float = 5/3,
+    regime: str = "single_bubble"
+) -> float:
+    """
+    Calculate collapse temperature for a specific regime.
+    Regimes: single_bubble (~1e4 K), multi_bubble (~1e3-1e4 K), laser_driven (~1e5 K).
+    """
+    return calculate_collapse_temperature(
+        initial_radius=initial_radius,
+        minimum_radius=minimum_radius,
+        initial_temperature=initial_temperature,
+        gamma=gamma,
+        regime=regime
+    )
 
 
 def calculate_collapse_pressure(
@@ -927,6 +959,7 @@ def calculate_surface_enhanced_collapse(
     # Enhanced temperature (scales approximately with pressure ratio)
     pressure_ratio = enhanced_pressure / base_results["collapse_pressure_Pa"]
     enhanced_temperature = base_results["collapse_temperature_K"] * pressure_ratio**0.4
+    enhanced_temperature = min(enhanced_temperature, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
     
     # Jet impact parameters
     jet_params = calculate_jet_impact_parameters(

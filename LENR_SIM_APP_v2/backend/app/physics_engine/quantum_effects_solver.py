@@ -75,7 +75,8 @@ class QuantumEffectsSolver:
         screening_f = self.enhancement_calc._calculate_screening_contribution(temp, density)
         qed_f = self.enhancement_calc._calculate_qed_contribution(density, temp)
         casimir_f = self.enhancement_calc._calculate_casimir_contribution(self.lattice_constant, temp)
-        coherence_f = self.enhancement_calc._calculate_coherence_contribution(temp, self.lattice_constant)
+        coherence_result = self.enhancement_calc._calculate_coherence_contribution(temp, self.lattice_constant)
+        coherence_f = coherence_result[0] if isinstance(coherence_result, tuple) else coherence_result
         
         # Combine factors using geometric mean approach
         factors = [f for f in [tunneling_f, screening_f, qed_f, casimir_f, coherence_f] if f > 0]

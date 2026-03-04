@@ -8,12 +8,9 @@ import numpy as np
 from unittest.mock import MagicMock
 
 # Import physics modules
-import sys
-sys.path.insert(0, str(__file__).rsplit('tests', 1)[0])
-
-from physics_engine.udh_physics import UltraDenseHydrogenModel, calculate_udh_enhancement
-from physics_engine.quantum_effects_solver import QuantumEffectsSolver
-from physics_engine.constants import get_config, UDH_CONSTANTS, DEFAULT_CONFIG
+from app.physics_engine.udh_physics import UltraDenseHydrogenModel, calculate_udh_enhancement
+from app.physics_engine.quantum_effects_solver import QuantumEffectsSolver
+from app.physics_engine.constants import get_config, UDH_CONSTANTS, DEFAULT_CONFIG
 
 
 class TestUltraDenseHydrogenModel:

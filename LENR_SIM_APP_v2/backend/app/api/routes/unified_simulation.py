@@ -20,7 +20,10 @@ router = APIRouter(prefix="/unified", tags=["unified-simulation"])
 # Request/Response Models
 class MaterialConfig(BaseModel):
     """Material system configuration"""
-    host_material: str = Field(default="palladium", description="Host material: palladium, nickel, titanium")
+    host_material: str = Field(
+        default="palladium",
+        description="Host material: palladium, nickel, titanium, lithium, or custom (generic fallback)"
+    )
     reactant: str = Field(default="deuterium", description="Reactant: deuterium, hydrogen")
 
 
@@ -144,12 +147,17 @@ async def run_unified_simulation(request: SimulationRequest):
         config = SimulationConfig()
         
         # Set material
-        if request.material.host_material.lower() == "palladium":
+        hm = request.material.host_material.lower()
+        if hm == "palladium":
             config.host_material = MaterialProperties.palladium()
-        elif request.material.host_material.lower() == "nickel":
+        elif hm == "nickel":
             config.host_material = MaterialProperties.nickel()
-        elif request.material.host_material.lower() == "titanium":
+        elif hm == "titanium":
             config.host_material = MaterialProperties.titanium()
+        elif hm == "lithium":
+            config.host_material = MaterialProperties.lithium()
+        else:
+            config.host_material = MaterialProperties.generic(request.material.host_material)
         
         # Set reactant
         if request.material.reactant.lower() == "deuterium":
@@ -248,12 +256,17 @@ async def get_mechanisms(
         config = SimulationConfig()
         
         # Set material
-        if host_material.lower() == "palladium":
+        hm = host_material.lower()
+        if hm == "palladium":
             config.host_material = MaterialProperties.palladium()
-        elif host_material.lower() == "nickel":
+        elif hm == "nickel":
             config.host_material = MaterialProperties.nickel()
-        else:
+        elif hm == "titanium":
             config.host_material = MaterialProperties.titanium()
+        elif hm == "lithium":
+            config.host_material = MaterialProperties.lithium()
+        else:
+            config.host_material = MaterialProperties.generic(host_material)
         
         # Set reactant
         if reactant.lower() == "deuterium":
@@ -533,7 +546,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
       Supports room temperature through high-temperature Ni-H / Rossi-type experiments.
     
     ### Material Configuration (material)
-    - **host_material** (str): "palladium", "nickel", or "titanium"
+    - **host_material** (str): "palladium", "nickel", "titanium", "lithium", or custom (generic fallback)
     - **reactant** (str): "deuterium", "hydrogen", or "proton"
     
     ### Lattice Configuration (lattice)
@@ -628,10 +641,12 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 detail="Surface roughness must be non-negative"
             )
         
-        if request.material.host_material not in ['palladium', 'nickel', 'titanium']:
+        # Accept any host material (palladium, nickel, titanium, lithium use specific props; others use generic fallback)
+        hm = request.material.host_material.strip().lower()
+        if not hm:
             raise HTTPException(
                 status_code=400,
-                detail="Host material must be one of: palladium, nickel, titanium"
+                detail="Host material is required"
             )
         
         if request.material.reactant not in ['deuterium', 'hydrogen', 'proton']:
@@ -653,12 +668,19 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             ambient_temperature=request.bubble.ambient_temperature_k
         )
         
-        # Create lattice parameters
+        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback)
+        base = LatticeParameters.for_material(request.material.host_material)
         lattice_params = LatticeParameters(
             host_material=request.material.host_material,
             loading_ratio=request.lattice.loading_ratio,
             defect_density=request.lattice.defect_density,
-            surface_roughness=request.lattice.surface_roughness
+            surface_roughness=request.lattice.surface_roughness,
+            lattice_constant=base.lattice_constant,
+            electron_density=base.electron_density,
+            debye_temperature=base.debye_temperature,
+            work_function=base.work_function,
+            fermi_energy=base.fermi_energy,
+            screening_potential=base.screening_potential,
         )
         
         # Run bubble collapse simulation

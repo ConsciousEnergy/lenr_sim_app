@@ -26,6 +26,11 @@ from app.physics_engine.theory_protocol import (
     TheoryMetadata,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics.electron_screening import (
+    calculate_screening_potential,
+    classify_screening_regime,
+    calculate_enhancement_factor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +70,12 @@ class ElectronScreeningTheory:
         return {
             "Z1": {"default": 1, "description": "Charge number of reactant 1"},
             "Z2": {"default": 1, "description": "Charge number of reactant 2"},
+            "screening_model": {
+                "default": "thomas_fermi",
+                "description": "Screening model",
+                "options": ["debye", "thomas_fermi", "strong", "anomalous"],
+            },
+            "material": {"default": "palladium", "description": "Host material"},
         }
 
     # -- TheoryModule protocol methods -------------------------------------
@@ -88,12 +99,14 @@ class ElectronScreeningTheory:
         if not self.is_applicable(conditions):
             return self._neutral("Conditions outside applicability range")
 
-        # Debye screening length
+        # Screening potential (physics module)
+        U_unit_ev = calculate_screening_potential(
+            n_e, 5.0, T,
+            model=config.get("screening_model", "thomas_fermi"),
+            material=config.get("material", "palladium"),
+        )
+        U_screen_ev = Z1 * Z2 * U_unit_ev
         lambda_d = math.sqrt(EPS0 * KB * T / (n_e * E_CHARGE**2))
-
-        # Screening potential
-        U_screen_j = Z1 * Z2 * E_CHARGE**2 / (4 * math.pi * EPS0 * lambda_d)
-        U_screen_ev = U_screen_j / E_CHARGE
 
         # --- Rydberg matter enhancement (integrated from legacy module) ---
         # High-n Rydberg states create extended electron orbitals that
@@ -115,14 +128,17 @@ class ElectronScreeningTheory:
         except Exception:
             logger.debug("Rydberg matter integration unavailable, skipping")
 
-        # Enhancement factor: f = exp(π η U_s / E)
-        E_thermal = max(1.5 * KB * T / E_CHARGE, 0.01)  # eV, floor 10 meV
-        eta = Z1 * Z2 * ALPHA * math.sqrt(MP * C**2 / (2 * E_thermal * E_CHARGE))
-        enhancement = math.exp(min(math.pi * eta * U_screen_ev / E_thermal, 50.0))
+        # Enhancement factor via physics module
+        E_thermal_ev = max(1.5 * KB * T / E_CHARGE, 0.01)
+        enhancement = calculate_enhancement_factor(
+            int(Z1), int(Z2), U_screen_ev, E_thermal_ev / 1000.0, 1.0
+        )
         enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
 
         threshold_met = U_screen_ev > 10.0
         confidence = min(1.0, U_screen_ev / 100.0) if threshold_met else U_screen_ev / 100.0
+
+        regime = classify_screening_regime(U_screen_ev, E_thermal_ev)
 
         return TheoryContribution(
             theory_id=self.theory_id,
@@ -131,8 +147,10 @@ class ElectronScreeningTheory:
             reaction_rate_modifier=enhancement,
             energy_output_watts=0.0,
             observables={
-                "screening_potential_eV": U_screen_ev,
-                "debye_length_nm": lambda_d * 1e9,
+                "screening_potential_eV": float(U_screen_ev),
+                "debye_length_nm": float(lambda_d * 1e9),
+                "screening_regime": str(regime["regime"]),
+                "salpeter_valid": bool(regime["salpeter_valid"]),
                 "rydberg_enhancement_factor": rydberg_enh_factor,
                 # Screening enhances D+D -> He-4 pathway (dominant LENR channel)
                 "product_He4": 1.0,

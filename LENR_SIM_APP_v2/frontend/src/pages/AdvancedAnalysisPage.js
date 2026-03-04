@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Grid,
   Typography,
@@ -6,7 +7,8 @@ import {
   Box,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  Button
 } from '@mui/material';
 import AppLayout from '../components/layout/AppLayout';
 import { usePhysics } from '../contexts/PhysicsContext';
@@ -48,9 +50,22 @@ const AdvancedAnalysisPage = () => {
   const renderQuantumTunnelingSection = () => {
     if (!advancedPhysicsData?.quantumTunneling) {
       return (
-        <Typography variant="body1" color="text.secondary">
-          No quantum tunneling data available. Please run a simulation first.
-        </Typography>
+        <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+            No quantum tunneling data available.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Run a simulation from the Unified Theory page first to generate analysis data.
+          </Typography>
+          <Button
+            component={Link}
+            to="/unified-theory"
+            variant="contained"
+            color="primary"
+          >
+            Go to Unified Theory
+          </Button>
+        </Paper>
       );
     }
 
@@ -187,6 +202,13 @@ const AdvancedAnalysisPage = () => {
             </Typography>
             <Typography variant="body1" sx={{ mt: 2 }}>
               Please run a simulation first to see advanced physics analysis.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Run a simulation from the{' '}
+              <Link to="/unified-theory" style={{ color: 'inherit', fontWeight: 600 }}>
+                Unified Theory
+              </Link>{' '}
+              page to generate data for this analysis.
             </Typography>
           </Paper>
         ) : (

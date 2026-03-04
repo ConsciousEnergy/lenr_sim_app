@@ -104,13 +104,13 @@ def calculate_screening_potential(
         
     elif model.lower() == "thomas_fermi":
         # Thomas-Fermi screening model (better for degenerate electrons in metals)
-        # λ_TF = √(ε₀ E_F / (3 n_e e²))  where E_F is Fermi energy
+        # λ_TF = √(2 ε₀ E_F / (3 n_e e²))  where E_F is Fermi energy (PlasmaPy/Ashcroft-Mermin)
         
         # Fermi energy (J)
         E_F = (HBAR**2 / (2 * M_ELECTRON)) * (3 * np.pi**2 * electron_density)**(2/3)
         
         # Thomas-Fermi screening length
-        lambda_TF = np.sqrt(EPSILON_0 * E_F / (3 * electron_density * E_CHARGE**2))
+        lambda_TF = np.sqrt(2.0 * EPSILON_0 * E_F / (3 * electron_density * E_CHARGE**2))
         
         # Screening potential
         Ue_J = E_CHARGE**2 / (4 * np.pi * EPSILON_0 * lambda_TF)
@@ -156,9 +156,78 @@ def calculate_screening_potential(
         
         return Ue_eV
         
+    elif model.lower() == "strong":
+        # DeWitt-Graboske-Cooper strong screening
+        E_F = (HBAR**2 / (2 * M_ELECTRON)) * (3 * np.pi**2 * electron_density)**(2/3)
+        lambda_TF = np.sqrt(2.0 * EPSILON_0 * E_F / (3 * electron_density * E_CHARGE**2))
+        U_s_J = E_CHARGE**2 / (4 * np.pi * EPSILON_0 * lambda_TF)
+        return U_s_J / E_CHARGE
+        
+    elif model.lower() == "anomalous":
+        # Anomalous screening: experimental Ue with temp factor if available, else Thomas-Fermi * 5.0
+        if material and material.lower() in EXPERIMENTAL_SCREENING:
+            data = EXPERIMENTAL_SCREENING[material.lower()]
+            base_Ue = data['Ue']
+            T_ref = 300.0
+            temp_factor = np.sqrt(T_ref / max(temperature, T_ref))
+            return base_Ue * temp_factor
+        else:
+            U_s = calculate_screening_potential(electron_density, work_function, temperature, "thomas_fermi")
+            return U_s * 5.0
+        
     else:
         logger.warning(f"Unknown screening model: {model}, using Thomas-Fermi model")
         return calculate_screening_potential(electron_density, work_function, temperature, "thomas_fermi")
+
+
+def classify_screening_regime(screening_potential_eV: float, cm_energy_eV: float) -> Dict[str, Union[str, float, bool]]:
+    if cm_energy_eV <= 0:
+        return {"regime": "weak", "U_s_over_E": 0.0, "salpeter_valid": True}
+    
+    U_s_over_E = screening_potential_eV / cm_energy_eV
+    salpeter_valid = U_s_over_E < 0.1
+    
+    if U_s_over_E < 0.1:
+        regime = "weak"
+    elif U_s_over_E < 1.0:
+        regime = "intermediate"
+    else:
+        regime = "strong"
+    
+    return {"regime": regime, "U_s_over_E": U_s_over_E, "salpeter_valid": salpeter_valid}
+
+
+def calculate_gamow_integral_screened(z1: int, z2: int, reduced_mass_kg: float, energy_j: float, screening_potential_j: float, r_nuclear: float = 5e-15, n_points: int = 500) -> float:
+    k_coulomb = z1 * z2 * E_CHARGE**2 / (4 * np.pi * EPSILON_0)
+    
+    if screening_potential_j <= 0:
+        r_tp = k_coulomb / energy_j
+    else:
+        lambda_screen = k_coulomb / screening_potential_j
+        r_guess = k_coulomb / energy_j
+        r_vals = np.linspace(r_nuclear, max(r_guess * 2, 1e-10), n_points * 2)
+        r_tp = r_nuclear
+        for r in r_vals:
+            V_r = (k_coulomb / r) * np.exp(-r / lambda_screen)
+            if V_r <= energy_j:
+                r_tp = r
+                break
+        else:
+            r_tp = r_vals[-1]
+    
+    r_grid = np.linspace(r_nuclear, r_tp, n_points)
+    
+    if screening_potential_j <= 0:
+        V_grid = k_coulomb / r_grid
+    else:
+        lambda_screen = k_coulomb / screening_potential_j
+        V_grid = (k_coulomb / r_grid) * np.exp(-r_grid / lambda_screen)
+    
+    integrand = np.sqrt(2 * reduced_mass_kg * np.maximum(V_grid - energy_j, 0)) / HBAR
+    G = np.trapz(integrand, r_grid)
+    
+    return G
+
 
 def calculate_enhancement_factor(
     z1: int,

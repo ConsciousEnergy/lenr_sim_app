@@ -41,7 +41,7 @@ function TheoryDocumentationPanel() {
         </Typography>
         <Typography variant="body2">
           This simulation implements the comprehensive theoretical model integrating Rydberg Matter, 
-          halo electrons, double-layer QED effects, Casimir effect, and quantum tunneling enhancements.
+          Delocalized Interface Electrons, double-layer QED effects, Casimir effect, and quantum tunneling enhancements.
           Click each section below to explore the physics in detail.
         </Typography>
       </Alert>
@@ -77,28 +77,31 @@ function TheoryDocumentationPanel() {
           </AccordionDetails>
         </Accordion>
 
-        {/* Section 2: Halo Electrons */}
+        {/* Section 2: Delocalized Interface Electrons */}
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <BoltIcon color="secondary" />
-              <Typography variant="h6">2. Halo Electrons</Typography>
+              <Typography variant="h6">2. Delocalized Interface Electrons</Typography>
               <Chip label="Nuclear Overlap" size="small" color="secondary" variant="outlined" sx={{ ml: 'auto' }} />
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" paragraph>
-              Halo electrons are weakly bound electrons whose extended orbitals overlap significantly with nuclear wavefunctions.
+              Delocalized Interface Electrons are weakly bound electrons whose extended orbitals overlap significantly with nuclear wavefunctions.
               This enhanced overlap raises the probability of electron capture processes.
             </Typography>
             <Paper sx={{ p: 2, bgcolor: 'grey.100', mb: 2 }}>
               <Typography variant="caption" color="text.secondary">Overlap Probability:</Typography>
               <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem', mt: 1 }}>
-                P_overlap = (r₀/a)³ × exp(-2r₀/a) ≈ 5 × 10⁻³
+                P_overlap = (rₙ/a)³ × exp(-2rₙ/a) ≈ 8.5 × 10⁻¹⁶
               </Box>
               <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                Where a = 10a₀ (orbital extension), r₀ = 0.1nm (nuclear core radius)
+                Where a = 10a₀ (orbital extension), rₙ = 5 fm (nuclear core radius)
               </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1, fontStyle: 'italic' }}>
+                  In condensed matter systems (10^23 atoms, 10^12 events/s), even rare per-atom probabilities yield statistically significant event rates.
+                </Typography>
             </Paper>
             <Typography variant="caption" color="text.secondary">
               <strong>Citation:</strong> Widom, A. & Larsen, L. (2006). "Ultra Low Momentum Neutron Catalyzed Nuclear Reactions"

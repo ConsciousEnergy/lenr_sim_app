@@ -1,4 +1,4 @@
-"""
+﻿"""
 Widom-Larsen Ultra-Low Momentum Neutron Theory Module
 
 Physics:
@@ -6,7 +6,7 @@ Physics:
     surfaces can renormalize the electron mass upward.  When the
     effective mass exceeds the Q-value for inverse beta decay:
 
-        e⁻ + p⁺ → n + ν_e
+        eâ» + pâº â†’ n + Î½_e
 
     ultra-low momentum (ULM) neutrons are produced.  These ULM neutrons
     have enormous capture cross-sections (1/v law) and are absorbed
@@ -14,7 +14,7 @@ Physics:
     penetrating radiation escaping the lattice.
 
     Key prediction: transmutation products (not just He-4), tritium
-    production via n + D → T, and characteristic X-ray signatures.
+    production via n + D â†’ T, and characteristic X-ray signatures.
 
 References
 ----------
@@ -39,6 +39,12 @@ from scipy import constants as const
 from app.physics_engine.theory_protocol import TheoryContribution, TheoryMetadata
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
+from app.physics.weak_interaction import (
+    calculate_weak_interaction_cross_section,
+    calculate_neutron_formation_rate,
+    THRESHOLD_ELECTRON_MEV,
+)
+
 logger = logging.getLogger(__name__)
 
 HBAR = const.hbar
@@ -49,7 +55,7 @@ MP = const.m_p
 MN = const.m_n
 C = const.c
 
-# Inverse beta decay threshold: Q = (m_n - m_p)c² = 1.293 MeV
+# Inverse beta decay threshold: Q = (m_n - m_p)cÂ² = 1.293 MeV
 Q_INVERSE_BETA_J = (MN - MP) * C**2
 Q_INVERSE_BETA_MEV = Q_INVERSE_BETA_J / (1e6 * E_CHARGE)
 
@@ -69,7 +75,7 @@ class WidomLarsenTheory:
     def description(self) -> str:
         return (
             "Collective surface plasmon oscillations renormalize the electron mass, "
-            "enabling inverse beta decay (e⁻ + p⁺ → n + ν_e) on metal hydride "
+            "enabling inverse beta decay (eâ» + pâº â†’ n + Î½_e) on metal hydride "
             "surfaces. The resulting ultra-low momentum neutrons have enormous "
             "capture cross-sections, producing transmutations and heat."
         )
@@ -88,6 +94,10 @@ class WidomLarsenTheory:
             "neutron_capture_cross_section_barn": {
                 "default": 1e6,
                 "description": "ULM neutron capture cross-section in barns (1/v enhanced)",
+            },
+            "m_e_star_over_m_e": {
+                "default": 4.0,
+                "description": "Alias for electron_mass_renormalization (m*/m_e)",
             },
         }
 
@@ -110,32 +120,35 @@ class WidomLarsenTheory:
             return self._neutral("Temperature or electron density is zero")
 
         E_spp = config.get("surface_plasmon_energy_eV", 10.0) * E_CHARGE
-        mass_ratio = config.get("electron_mass_renormalization", 4.0)
+        mass_ratio = config.get("electron_mass_renormalization", config.get("m_e_star_over_m_e", 4.0))
         sigma_capture_barn = config.get("neutron_capture_cross_section_barn", 1e6)
 
         # Mass renormalization condition:
-        # The electron must acquire effective mass m* ≥ (m_n - m_p + m_e) ≈ 2.531 m_e
+        # The electron must acquire effective mass m* â‰¥ (m_n - m_p + m_e) â‰ˆ 2.531 m_e
         # from interaction with collective EM modes.
         m_star = mass_ratio * ME
         m_threshold = (MN - MP + ME)  # ~2.531 m_e
 
         # Is renormalization sufficient?
         mass_sufficient = m_star >= m_threshold
+        # Weak cross-section and Boltzmann suppression (for observables)
+        sigma_weak = calculate_weak_interaction_cross_section(1e6)
+        boltzmann_suppression = math.exp(-THRESHOLD_ELECTRON_MEV * 1e6 * E_CHARGE / (KB * T)) if T > 0 else 0.0
 
         if not mass_sufficient:
             # Below threshold: no ULM neutron production
             enhancement = 1.0
             n_production_rate = 0.0
         else:
-            # Kinetic energy of produced neutron: E_n = (m* - m_n + m_p - m_e) × c²
-            # For ULM neutrons: E_n → 0  (ultra-low momentum)
+            # Kinetic energy of produced neutron: E_n = (m* - m_n + m_p - m_e) Ã— cÂ²
+            # For ULM neutrons: E_n â†’ 0  (ultra-low momentum)
             excess_mass_energy = (m_star - m_threshold) * C**2
             E_neutron = max(excess_mass_energy, 0.0)
 
             # ULM neutron velocity
             v_neutron = math.sqrt(2.0 * max(E_neutron, 1e-30) / MN)
 
-            # Neutron capture cross-section: σ ∝ 1/v for thermal/ULM neutrons
+            # Neutron capture cross-section: Ïƒ âˆ 1/v for thermal/ULM neutrons
             sigma_capture_m2 = sigma_capture_barn * 1e-28
             v_thermal = math.sqrt(2.0 * KB * T / MN)
             if v_neutron > 0:
@@ -143,18 +156,11 @@ class WidomLarsenTheory:
             else:
                 sigma_ulm = sigma_capture_m2 * 1e6  # effectively infinite
 
-            # Weak interaction rate for inverse beta decay on surface
-            # Γ ∝ G_F² × p_e × E_ν × ρ_surface
-            G_F = 1.166e-5  # Fermi constant in GeV^-2 (natural units)
-            G_F_J = G_F * (1e9 * E_CHARGE)**(-2) * (HBAR * C)**3
+            # Surface proton density (protons on surface ~ loading * e- density)
+            n_surface = n_e * loading
+            # Weak interaction rate via p + e- -> n + nu_e (cross-section + Boltzmann)
+            n_production_rate = calculate_neutron_formation_rate(n_surface, n_e, T, sigma=sigma_weak)
 
-            # Surface proton density
-            n_surface = n_e * loading  # protons on surface ~ loading × e⁻ density
-
-            # Simplified rate estimate
-            # Rate ~ (G_F/ℏ³)² × E_spp² × n_surface × volume
-            rate_factor = (G_F_J / HBAR**3)**2 * E_spp**2
-            n_production_rate = rate_factor * n_surface * 1e-6  # per mm³
 
             # Enhancement through neutron capture chain
             # Each captured ULM neutron releases ~6-8 MeV binding energy as heat
@@ -186,6 +192,9 @@ class WidomLarsenTheory:
                 "mass_threshold_ratio": m_threshold / ME,
                 "mass_sufficient": 1.0 if mass_sufficient else 0.0,
                 "Q_inverse_beta_MeV": Q_INVERSE_BETA_MEV,
+                "weak_cross_section_m2": sigma_weak,
+                "boltzmann_suppression": boltzmann_suppression,
+                "threshold_MeV": THRESHOLD_ELECTRON_MEV,
                 "neutron_production_rate": n_production_rate,
                 "transmutation_fraction": transmutation_fraction,
                 "tritium_fraction": tritium_fraction,
@@ -231,3 +240,4 @@ class WidomLarsenTheory:
             is_applicable=False,
             confidence=0.0,
         )
+

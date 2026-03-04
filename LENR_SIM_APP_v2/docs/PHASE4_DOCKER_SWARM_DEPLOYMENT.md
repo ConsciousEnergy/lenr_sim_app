@@ -1,6 +1,6 @@
-# Phase 4: Docker Swarm Deployment Guide (v0.3.0-beta)
+# Phase 4: Docker Swarm Deployment Guide (v0.3.5-beta)
 
-**Version:** 0.3.0-beta  
+**Version:** 0.3.5-beta  
 **Last Updated:** February 2026  
 **Target:** Production deployment on Hostinger VPS with Docker Swarm
 

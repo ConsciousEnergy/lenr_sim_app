@@ -31,7 +31,9 @@ const UnifiedTheoryPage = lazy(() => import('./pages/UnifiedTheoryPage'));
 const TheoryPage = lazy(() => import('./pages/TheoryPage'));
 const TheoryPaperPage = lazy(() => import('./pages/TheoryPaperPage'));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const DocViewerPage = lazy(() => import('./pages/DocViewerPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const AdvancedAnalysisPage = lazy(() => import('./pages/AdvancedAnalysisPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 // Pages - Advanced Visualization & Physics (All lazy - heavy Three.js dependencies)
@@ -234,6 +236,13 @@ const AppContent = () => {
                 </Suspense>
               </AppLayoutFixed>
             } />
+            <Route path="/advanced-analysis" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdvancedAnalysisPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
             <Route path="/documentation" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
@@ -245,6 +254,13 @@ const AppContent = () => {
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
                   <DocumentationPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/docs/:slug" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <DocViewerPage />
                 </Suspense>
               </AppLayoutFixed>
             } />
