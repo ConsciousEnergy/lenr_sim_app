@@ -1500,6 +1500,7 @@ const FluidDynamicsVisualizer = ({
     // Create 3D texture
     const texture = new THREE.Data3DTexture(data, size, size, size);
     texture.format = THREE.RGBAFormat;
+    texture.flipY = false;
     texture.needsUpdate = true;
     
     // Create volume rendering material

@@ -286,9 +286,9 @@ def calculate_enhancement_factor(
     exponent = np.clip(exponent, -700, 700)
     enhancement = np.exp(exponent)
     
-    # Apply physical upper bound - enhancement shouldn't exceed ~10^15 
-    # which corresponds to bringing particles to nuclear touching distance
-    enhancement = min(enhancement, 1e15)
+    # Apply theory-level upper bound from constants.py (single source of truth)
+    from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+    enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
     
     logger.debug(f"Screening enhancement: {enhancement:.2e} (η={eta:.2f}, Ue={screening_potential:.1f}eV, E={energy:.3f}keV)")
     

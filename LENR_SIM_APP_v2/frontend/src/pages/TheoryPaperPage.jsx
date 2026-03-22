@@ -500,13 +500,13 @@ const TheoryPaperPage = () => {
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   <AlertTitle><strong>Corrected Overlap Probability</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
                   <Typography variant="body2" paragraph>
-                    For orbital extensions a = 10a₀ = 0.529 nm and nuclear core radius r₀ = 0.1 nm:
+                    For orbital extension a = 10a₀ = 0.529 nm and nuclear core radius rₙ = 5 fm:
                   </Typography>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem', mb: 1 }}>
-                    P_overlap ≈ (r₀/a)³ × exp(-2r₀/a) ≈ 4.6 × 10⁻³
+                    P_overlap ≈ (rₙ/a)³ × exp(-2rₙ/a) ≈ 8.5 × 10⁻¹⁶
                   </Box>
                   <Typography variant="caption" color="text.secondary">
-                    <strong>Note:</strong> r&#8320; = 5 fm (nuclear scale); overlap probability is extremely small but non-zero.
+                    <strong>Note:</strong> rₙ = 5 fm (nuclear scale); overlap probability is extremely small but non-zero.
                   </Typography>
                 </Alert>
               </Box>
@@ -1120,12 +1120,12 @@ const TheoryPaperPage = () => {
                 <strong>Original Error:</strong> Formula P_overlap ≈ 1/(πa³) × exp(-2r₀/a) was dimensionally incorrect
               </Typography>
               <Typography variant="body1" paragraph>
-                <strong>Corrected Formula:</strong> P_overlap ≈ (r₀/a)³ × exp(-2r₀/a) ≈ 4.6 × 10⁻³
+                <strong>Corrected Formula:</strong> P_overlap ≈ (rₙ/a)³ × exp(-2rₙ/a) ≈ 8.5 × 10⁻¹⁶
               </Typography>
               <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem', mb: 2 }}>
-                For a = 10a₀ = 0.529 nm, r₀ = 0.1 nm:
+                For a = 10a₀ = 0.529 nm, rₙ = 5 fm = 5 × 10⁻⁶ nm:
                 <br />
-                P_overlap = (0.1/0.529)³ × exp(-2×0.1/0.529) ≈ 4.6 × 10⁻³
+                P_overlap = (5e-6/0.529)³ × exp(-2×5e-6/0.529) ≈ 8.5 × 10⁻¹⁶
               </Paper>
               <Typography variant="body2" color="text.secondary">
                 <strong>Impact:</strong> Provides physically sound basis for electron-nucleus overlap calculations.

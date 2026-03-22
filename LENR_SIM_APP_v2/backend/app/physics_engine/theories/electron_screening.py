@@ -140,6 +140,15 @@ class ElectronScreeningTheory:
 
         regime = classify_screening_regime(U_screen_ev, E_thermal_ev)
 
+        # Experimental validation: anomalous screening > 800 eV is outside
+        # measured ranges (Kasagi et al. 2002 report ~300-800 eV for Pd-D)
+        validation_flags: list[str] = []
+        if U_screen_ev > 800:
+            validation_flags.append(
+                f"screening potential {U_screen_ev:.0f} eV exceeds experimental "
+                f"range (max ~800 eV for Pd-D, Kasagi et al.)"
+            )
+
         return TheoryContribution(
             theory_id=self.theory_id,
             theory_name=self.theory_name,
@@ -152,6 +161,7 @@ class ElectronScreeningTheory:
                 "screening_regime": str(regime["regime"]),
                 "salpeter_valid": bool(regime["salpeter_valid"]),
                 "rydberg_enhancement_factor": rydberg_enh_factor,
+                "validation_flags": validation_flags,
                 # Screening enhances D+D -> He-4 pathway (dominant LENR channel)
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,

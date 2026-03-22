@@ -433,6 +433,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.unpackAlignment = 1;
+      texture.flipY = false;
       texture.needsUpdate = true;
       
       // Create volume rendering material

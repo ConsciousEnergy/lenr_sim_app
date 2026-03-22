@@ -27,8 +27,8 @@ const QuantumTunnelingVisualizer = ({
   const [tunnelingData, setTunnelingData] = useState(null);
   const [calculatedProbability, setCalculatedProbability] = useState(null);
 
-  // Calculate reduced mass for d-d fusion
-  const reducedMass = tunnelingUtils.DEUTERON_MASS / 2;
+  // Calculate reduced mass for d-d fusion (fallback to literal if somehow undefined)
+  const reducedMass = (tunnelingUtils.DEUTERON_MASS || 3.3435837724e-27) / 2;
 
   // Fetch tunneling data from API or calculate locally
   const calculateTunnelingData = useCallback(async () => {
@@ -256,8 +256,9 @@ const QuantumTunnelingVisualizer = ({
       .attr('text-anchor', 'middle')
       .text('Normalized Value');
     
-    // Draw potential barrier
+    // Draw potential barrier (with NaN filtering)
     const line = d3.line()
+      .defined((d, i) => i < logPositions.length && isFinite(logPositions[i]) && isFinite(d / maxPotential))
       .x((_, i) => xScale(logPositions[i]))
       .y(d => yScale(d / maxPotential));
       

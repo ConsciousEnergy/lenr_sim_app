@@ -366,18 +366,17 @@ class TestBubbleLatticeInteraction:
         """Test enhancement varies over the cycle."""
         results = [model.calculate_instantaneous_enhancement(t) for t in [0.0, 0.3, 0.5, 0.57, 0.8]]
         enhancements = [r['enhancement'] for r in results]
-        
+
         # Enhancement should vary (not all same)
         assert len(set(enhancements)) > 1, \
             "Enhancement should vary across cycle"
-        
-        # Maximum enhancement should be at or near minimum radius
+
+        # COLLAPSE / MINIMUM phase (indices 2,3) should reach the maximum
+        # (Multiple phases may hit the MAX_ENHANCEMENT_FACTOR cap)
         max_enhancement = max(enhancements)
-        max_idx = enhancements.index(max_enhancement)
-        
-        # Should be during COLLAPSE or MINIMUM phase (indices 2 or 3)
-        assert max_idx in [2, 3], \
-            f"Max enhancement at index {max_idx}, expected during collapse"
+        collapse_minimum_max = max(enhancements[2], enhancements[3])
+        assert collapse_minimum_max == max_enhancement, \
+            f"Collapse/Minimum enhancement {collapse_minimum_max} != global max {max_enhancement}"
     
     # =========================================================================
     # Factory Function Tests

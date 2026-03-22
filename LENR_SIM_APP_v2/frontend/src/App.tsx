@@ -108,7 +108,8 @@ const AppContent = () => {
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Router
+        <PhysicsProvider>
+          <Router
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true
@@ -222,11 +223,9 @@ const AppContent = () => {
             } />
             <Route path="/unified-theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <PhysicsProvider>
-                  <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<LoadingFallback />}>
                     <UnifiedTheoryPage />
                   </Suspense>
-                </PhysicsProvider>
               </AppLayoutFixed>
             } />
             <Route path="/analytics" element={
@@ -239,8 +238,8 @@ const AppContent = () => {
             <Route path="/advanced-analysis" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
-                  <AdvancedAnalysisPage />
-                </Suspense>
+                    <AdvancedAnalysisPage />
+                  </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/documentation" element={
@@ -332,7 +331,8 @@ const AppContent = () => {
               </AppLayoutFixed>
             } />
           </Routes>
-        </Router>
+          </Router>
+        </PhysicsProvider>
       </SnackbarProvider>
     </MuiThemeProvider>
   );
@@ -349,4 +349,3 @@ function App() {
 }
 
 export default App;
-

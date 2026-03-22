@@ -122,6 +122,14 @@ class MilesHeatHeliumTheory:
         deviation_MeV = abs(energy_per_event_MeV - Q_VALUE_MEV)
         miles_correlation = math.exp(-deviation_MeV**2 / (2 * 0.5**2))
 
+        # Experimental validation: energy per event should be 23.8 +/- 0.5 MeV
+        validation_flags = []
+        if energy_per_event_MeV > 0 and abs(energy_per_event_MeV - Q_VALUE_MEV) > 0.5:
+            validation_flags.append(
+                f"energy_per_event {energy_per_event_MeV:.1f} MeV deviates from "
+                f"expected {Q_VALUE_MEV} +/- 0.5 MeV"
+            )
+
         # Enhancement is 1.0 (this is a validation model, not enhancement)
         enhancement = 1.0
 
@@ -147,6 +155,7 @@ class MilesHeatHeliumTheory:
                 "miles_correlation_factor": miles_correlation,
                 "Q_value_MeV": Q_VALUE_MEV,
                 "miles_rate_per_watt": MILES_RATE_PER_WATT,
+                "validation_flags": validation_flags,
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,
                 "product_gamma": 0.0,

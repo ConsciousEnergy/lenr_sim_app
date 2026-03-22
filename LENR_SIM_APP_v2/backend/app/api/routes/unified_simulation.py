@@ -659,6 +659,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
         from app.physics_engine.proton_phase_model import ProtonPhaseModel
+        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         
         # Create bubble parameters
         bubble_params = BubbleParameters(
@@ -687,6 +688,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
         
+        # Clamp peak enhancement to the theory-level cap (constants.py)
+        capped_enhancement = min(collapse_result.enhancement_factor, MAX_ENHANCEMENT_FACTOR)
+        
         # Calculate enhancement breakdown at peak conditions
         peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
             collapse_result.max_temperature,
@@ -694,6 +698,11 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             collapse_result.double_layer_field_peak,
             collapse_result.compression_ratio
         )
+        # Clamp each mechanism and total to the theory cap
+        for key in peak_enhancement_breakdown:
+            peak_enhancement_breakdown[key] = min(
+                peak_enhancement_breakdown[key], MAX_ENHANCEMENT_FACTOR
+            )
         
         # Generate enhancement timeline with breakdown
         import numpy as np
@@ -719,11 +728,17 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["electric_field"],
                 instant["conditions"]["compression"]
             )
+            # Cap timeline enhancement to theory limit
+            capped_instant_enhancement = min(instant["enhancement"], MAX_ENHANCEMENT_FACTOR)
+            capped_instant_breakdown = {
+                k: min(v, MAX_ENHANCEMENT_FACTOR) if isinstance(v, (int, float)) else v
+                for k, v in instant_breakdown.items()
+            }
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
-                "enhancement": sanitize_float(instant["enhancement"], 1.0),
-                "enhancement_breakdown": sanitize_dict(instant_breakdown, 1.0),
+                "enhancement": sanitize_float(capped_instant_enhancement, 1.0),
+                "enhancement_breakdown": sanitize_dict(capped_instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],
                 "radius_factor": sanitize_float(instant["conditions"]["radius_factor"], 1.0),
                 "temperature": sanitize_float(instant["conditions"]["temperature"], 300.0),
@@ -740,7 +755,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "compression_ratio": sanitize_float(collapse_result.compression_ratio, 1.0),
                 "collapse_time_us": sanitize_float(collapse_result.collapse_time * 1e6, 0.0),
                 "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "peak_enhancement": sanitize_float(collapse_result.enhancement_factor, 1.0)
+                "peak_enhancement": sanitize_float(capped_enhancement, 1.0)
             },
             proton_phases=collapse_result.proton_phase_distribution,
             enhancement_timeline=timeline,
@@ -748,7 +763,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
                 "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "enhancement_factor": sanitize_float(collapse_result.enhancement_factor, 1.0),
+                "enhancement_factor": sanitize_float(capped_enhancement, 1.0),
                 "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0)
             }
         )

@@ -217,6 +217,14 @@ class KimBECTheory:
         grain_volume = (4.0 / 3.0) * math.pi * (d_grain / 2.0)**3
         grains_per_m3 = loading / max(grain_volume * LATTICE_SITES_PER_M3, 1e-10)
 
+        # Experimental validation: flag when T_c < T_operating
+        validation_flags: list[str] = []
+        if T_critical < T:
+            validation_flags.append(
+                f"BEC T_c ({T_critical:.1f} K) is below operating temperature "
+                f"({T:.0f} K); equilibrium BEC not achievable without driven mechanisms"
+            )
+
         # Confidence
         bec_score = bec_fraction
         size_score = min(10.0 / max(d_grain_nm, 0.1), 1.0)  # smaller = better
@@ -239,6 +247,7 @@ class KimBECTheory:
                 "N_squared_enhancement": N_d**2,
                 "deuteron_count": N_d,
                 "grain_size_nm": d_grain_nm,
+                "validation_flags": validation_flags,
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,
                 "product_gamma": 0.0,

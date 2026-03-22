@@ -52,6 +52,7 @@ import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationP
 // Import new unified visualization
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { usePhysics } from '../contexts/PhysicsContext';
 import { API_BASE_URL } from '../config/api';
 import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
 
@@ -107,7 +108,7 @@ const SYSTEM_PRESETS = {
   },
   pd_h: {
     name: 'Palladium-Hydrogen',
-    description: 'Piantelli early work, Arata—lighter isotope testing',
+    description: 'Piantelli early work, Arata-lighter isotope testing',
     hostMaterial: 'palladium',
     reactant: 'hydrogen',
     temperature: 350,
@@ -137,7 +138,7 @@ const SYSTEM_PRESETS = {
   },
   li_h: {
     name: 'Lithium-Hydrogen',
-    description: 'Holmlid, Unified Gravity Corp—Rydberg matter',
+    description: 'Holmlid, Unified Gravity Corp-Rydberg matter',
     hostMaterial: 'lithium',
     reactant: 'hydrogen',
     temperature: 600,
@@ -151,8 +152,8 @@ const SYSTEM_PRESETS = {
     numCycles: 2,
   },
   zro2_pd: {
-    name: 'ZrO2-Pd NANOR',
-    description: 'Swartz NANOR—nanostructured palladium',
+    name: 'ZrO2-Pd',
+    description: 'Swartz nanostructured palladium in ZrO2 matrix',
     hostMaterial: 'palladium',
     reactant: 'deuterium',
     temperature: 300,
@@ -167,7 +168,7 @@ const SYSTEM_PRESETS = {
   },
   custom: {
     name: 'Custom Configuration',
-    description: 'User-defined host/reactant—unlocks all parameter sliders for free-form experimentation',
+    description: 'User-defined host/reactant-unlocks all parameter sliders for free-form experimentation',
     hostMaterial: 'palladium',
     reactant: 'deuterium',
     temperature: 400,
@@ -294,7 +295,7 @@ function EnhancementIndicator({ simulationData, parameters }) {
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          Enhancement Factor — {enhancementMetrics.material.toUpperCase()}-{enhancementMetrics.reactant.charAt(0).toUpperCase()}
+          Enhancement Factor - {enhancementMetrics.material.toUpperCase()}-{enhancementMetrics.reactant.charAt(0).toUpperCase()}
         </Typography>
         <Chip 
           label={getStatusLabel(enhancementMetrics.status)} 
@@ -326,12 +327,12 @@ function EnhancementIndicator({ simulationData, parameters }) {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, gap: 2, flexWrap: 'wrap' }}>
         <Tooltip title="Peak enhancement factor achieved during bubble collapse">
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Peak: {enhancementMetrics.peakEnhancement.toExponential(2)}×
+            Peak: {enhancementMetrics.peakEnhancement.toExponential(2)}x
           </Typography>
         </Tooltip>
         <Tooltip title="Threshold for observable excess heat production">
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Threshold: {enhancementMetrics.threshold.toExponential(0)}×
+            Threshold: {enhancementMetrics.threshold.toExponential(0)}x
           </Typography>
         </Tooltip>
       </Box>
@@ -361,6 +362,7 @@ function EnhancementIndicator({ simulationData, parameters }) {
 
 function UnifiedTheoryPage() {
   const [searchParams] = useSearchParams();
+  const { setSimulationResult } = usePhysics();
   // State management
   const [selectedSystem, setSelectedSystem] = useState('pd_d');
   const [parameters, setParameters] = useState(SYSTEM_PRESETS.pd_d);
@@ -502,6 +504,7 @@ function UnifiedTheoryPage() {
       if (response.ok) {
         const data = await response.json();
         setSimulationData(data);
+        setSimulationResult(data);
         setAlertMessage('Simulation completed with real physics calculations');
         setAlertSeverity('success');
       } else {
@@ -549,6 +552,7 @@ function UnifiedTheoryPage() {
       try {
         const mockData = generateLocalResults(parameters);
         setSimulationData(mockData);
+        setSimulationResult(mockData);
         
         // Provide specific user-friendly messages based on error type
         if (isConnectionRefused || isNetworkError) {
@@ -976,7 +980,7 @@ function UnifiedTheoryPage() {
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.loadingRatio > 0.9 ? '↑ Higher enhancement expected' : 'Loading affects reaction sites'}
+                {parameters.loadingRatio > 0.9 ? '  Higher enhancement expected' : 'Loading affects reaction sites'}
               </Typography>
             </Box>
 
@@ -996,7 +1000,7 @@ function UnifiedTheoryPage() {
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.temperature > 400 ? '↑ Affects screening length & enhancement' : 'Lower temp = longer screening length'}
+                {parameters.temperature > 400 ? '  Affects screening length & enhancement' : 'Lower temp = longer screening length'}
               </Typography>
             </Box>
 
@@ -1016,7 +1020,7 @@ function UnifiedTheoryPage() {
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.drivingPressure > 2.0 ? '↑ Faster collapse, higher compression' : 'Controls bubble collapse rate'}
+                {parameters.drivingPressure > 2.0 ? '  Faster collapse, higher compression' : 'Controls bubble collapse rate'}
               </Typography>
             </Box>
 
@@ -1067,7 +1071,7 @@ function UnifiedTheoryPage() {
                 {/* Defect Density */}
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Defect Density: {(parameters.defectDensity || 1e16).toExponential(0)} m⁻³
+                    Defect Density: {(parameters.defectDensity || 1e16).toExponential(0)} m^-3
                   </Typography>
                   <Slider
                     value={Math.log10(parameters.defectDensity || 1e16)}
@@ -1294,7 +1298,7 @@ function UnifiedTheoryPage() {
                     <LineChart data={getEnhancementChartData()}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="time" />
-                      <YAxis yAxisId="left" label={{ value: 'log₁₀(Enhancement)', angle: -90, position: 'insideLeft' }} />
+                      <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
                       <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
                       <RechartsTooltip />
                       <Legend />
@@ -1396,7 +1400,7 @@ function UnifiedTheoryPage() {
                           <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                               <Typography variant="body2" color="text.secondary">
-                                Log₁₀ scale visualization of mechanism contributions
+                                Log10 scale visualization of mechanism contributions
                               </Typography>
                               <Chip 
                                 label={`Total: ${totalEnhancement.toExponential(2)}`} 
@@ -1410,7 +1414,7 @@ function UnifiedTheoryPage() {
                                 <XAxis 
                                   type="number" 
                                   domain={[0, 'auto']}
-                                  label={{ value: 'Log₁₀(Enhancement)', position: 'bottom', offset: -5 }}
+                                  label={{ value: 'Log10(Enhancement)', position: 'bottom', offset: -5 }}
                                 />
                                 <YAxis type="category" dataKey="name" width={75} />
                                 <RechartsTooltip 
@@ -1446,7 +1450,7 @@ function UnifiedTheoryPage() {
                     <Alert severity="info">
                       <Typography variant="body2">
                         The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
-                        Protons transition through force regimes: <strong>EM → Screened → Weak Capture → Nuclear</strong>.
+                        Protons transition through force regimes: <strong>EM  ->  Screened  ->  Weak Capture  ->  Nuclear</strong>.
                         Peak enhancement occurs at minimum bubble radius when compression maximizes field strength.
                       </Typography>
                     </Alert>
