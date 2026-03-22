@@ -56,6 +56,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TheoryDocumentationPanel**: P_overlap 8.5e-16, "Delocalized Interface Electrons", r_n 5 fm
 - **UnifiedTheoryPage**: ENHANCEMENT_THRESHOLDS observable=1e5, measurable=1e3, screening=1e1
 
+### Pre-Release Sweep Completion (Phases 1-4)
+- **Quantum tunneling stability**: Fixed NaN visualization path failures by exporting physical constants in `quantumTunnelingUtils.js` and adding finite guards in `QuantumTunnelingVisualizer.jsx`.
+- **Bubble-lattice physical bounds**: Added hard-core compression floor and applied realistic caps for collapse pressure/temperature; synchronized enhancement capping across route and engine paths.
+- **Theory validation metadata**: Added `validation_flags` observables in Miles heat-helium, electron screening, and Kim BEC modules to flag out-of-range outputs against experimental guidance.
+- **Documentation corrections**: Updated halo-electron overlap probability references to `8.5e-16` and aligned equations with nuclear-scale radius assumptions.
+- **UX reliability updates**: Fixed MUI DOM nesting warning in advanced analysis, persisted `simulationResult` via `sessionStorage`, and suppressed noisy WebGL `Data3DTexture` warnings by disabling flipY.
+
+### MHD Flow + Visual Aesthetics Improvements
+- **Lattice-as-solid boundary**: Added explicit topological lattice surface boundary in `UnifiedBubbleLatticeVisualization.jsx` and enforced proton no-penetration constraints.
+- **Vortex site intake model**: Added visible vortex/interstitial intake markers and proton acceptance logic during COLLAPSE/MINIMUM with absorb/respawn cycling.
+- **Cavitation rebound reversal**: Added rebound-triggered azimuthal flow reversal, outward burst blending, and cavitation pulse visual feedback to reflect electro-nuclear event reversal dynamics.
+- **Vortex renderer parity**: Updated `VortexFlowRenderer.js` to support reversed swirl/field-line rotation during rebound and lattice-surface boundary clamping.
+- **Thermal title styling**: Updated Theory page header to a thermal-map gradient (cold-to-hot spectrum) for improved scientific visual language.
+
 ### ESLint Compliance — CI Build Hardening
 
 Resolved all ESLint warnings across 61 frontend source files so the production build passes with `CI=true` (Create React App treats warnings as errors in CI). The frontend build and tests now run cleanly without requiring `CI: false`.

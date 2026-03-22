@@ -93,6 +93,8 @@ const PHYSICS_CONFIG = {
   // Lattice surface is defined by top of the lattice atoms
   LATTICE_Y_OFFSET: -5,  // Lattice rendered at y = -5 for visual clarity
   LATTICE_SURFACE_OFFSET: 1.5,  // Offset to reach top surface of lattice
+  LATTICE_SPACING: 1.2,
+  VORTEX_ACCEPT_RADIUS: 0.22,
   
   // Bubble behavior visualization (in vis units)
   // Bubble starts AT the surface and grows while staying attached
@@ -177,6 +179,19 @@ const getBubbleScaleFromPhase = (phase, progress = 0) => {
     default:
       return scales.NUCLEATION;
   }
+};
+
+const buildVortexSites = (centerX, centerY, centerZ, spacing) => {
+  const ringRadius = spacing * 0.75;
+  return [
+    new THREE.Vector3(centerX, centerY, centerZ),
+    new THREE.Vector3(centerX + ringRadius, centerY, centerZ),
+    new THREE.Vector3(centerX - ringRadius, centerY, centerZ),
+    new THREE.Vector3(centerX, centerY, centerZ + ringRadius),
+    new THREE.Vector3(centerX, centerY, centerZ - ringRadius),
+    new THREE.Vector3(centerX + ringRadius * 0.7, centerY, centerZ + ringRadius * 0.7),
+    new THREE.Vector3(centerX - ringRadius * 0.7, centerY, centerZ - ringRadius * 0.7)
+  ];
 };
 
 /**
@@ -372,6 +387,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const normalizedTimeRef = useRef(0);
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
+  const flowReversalRef = useRef({ timer: 0, isReversed: false });
   
   // Extract parameters with defaults
   const {
@@ -390,7 +406,7 @@ const UnifiedBubbleLatticeVisualization = ({
     latticeGroup.name = 'LatticeGroup';
     
     const dimension = latticeSize;
-    const spacing = 1.2;
+    const spacing = PHYSICS_CONFIG.LATTICE_SPACING;
     const offset = (dimension - 1) * spacing / 2;
     
     // Host atom material (Pd/Ni color)
@@ -470,10 +486,39 @@ const UnifiedBubbleLatticeVisualization = ({
       latticeGroup.add(line);
     });
     
-    // ========================================================================
-    // NUCLEATION CAVITY VISUALIZATION (Phase 6 Enhancement)
-    // Note: Nucleation cavity and boundary layer visualizations removed for cleaner display
-    // The physics calculations still account for these effects
+    const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+
+    // Topological surface layer used as a solid boundary for proton confinement.
+    const surfaceGeometry = new THREE.PlaneGeometry(dimension * spacing * 1.3, dimension * spacing * 1.3);
+    const surfaceMaterial = new THREE.MeshPhongMaterial({
+      color: 0x66d9ff,
+      transparent: true,
+      opacity: 0.12,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const latticeSurface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+    latticeSurface.rotation.x = -Math.PI / 2;
+    latticeSurface.position.set(0, latticeSurfaceY, 0);
+    latticeSurface.name = 'LatticeSurfaceBoundary';
+    latticeGroup.add(latticeSurface);
+
+    // Vortex intake points (interstitial proxies) where protons can be accepted.
+    const vortexSites = buildVortexSites(0, latticeSurfaceY, 0, spacing);
+    const siteGeometry = new THREE.SphereGeometry(0.08, 10, 10);
+    vortexSites.forEach((site, index) => {
+      const siteMaterial = new THREE.MeshPhongMaterial({
+        color: 0x48c7ff,
+        emissive: 0x0a7ea8,
+        emissiveIntensity: 0.8,
+        transparent: true,
+        opacity: 0.7
+      });
+      const marker = new THREE.Mesh(siteGeometry, siteMaterial);
+      marker.position.copy(site);
+      marker.name = `VortexSiteMarker${index}`;
+      latticeGroup.add(marker);
+    });
     
     scene.add(latticeGroup);
     latticeGroupRef.current = latticeGroup;
@@ -660,7 +705,10 @@ const UnifiedBubbleLatticeVisualization = ({
         mhdPhase: Math.random() * Math.PI * 2, // Phase offset for variety
         radialOscillation: radialOscillation,
         isIonized: Math.random() < 0.7,     // 70% ionized
-        moleculeType: Math.random() < 0.5 ? 'H2' : 'D2' // H2 or D2
+        moleculeType: Math.random() < 0.5 ? 'H2' : 'D2', // H2 or D2
+        absorbed: false,
+        absorbTimer: 0,
+        acceptedSite: -1
       };
       
       protonGroup.add(proton);
@@ -1072,6 +1120,17 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Note: Removed rings, arrows, and flow lines for cleaner particle-only visualization
     // MHD flow is represented purely by particle motion following fluid dynamics
+
+    const flowReversalPulseGeometry = new THREE.SphereGeometry(0.18, 16, 16);
+    const flowReversalPulseMaterial = new THREE.MeshBasicMaterial({
+      color: 0x7ef1ff,
+      transparent: true,
+      opacity: 0
+    });
+    const flowReversalPulse = new THREE.Mesh(flowReversalPulseGeometry, flowReversalPulseMaterial);
+    flowReversalPulse.position.set(0, 0, 0);
+    flowReversalPulse.name = 'FlowReversalPulse';
+    vortexGroup.add(flowReversalPulse);
     
     scene.add(vortexGroup);
     vortexGroupRef.current = vortexGroup;
@@ -1668,9 +1727,18 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Use ref to track phase changes to avoid stale closure
     if (phase !== currentPhaseRef.current) {
+      if (phase === 'REBOUND' && currentPhaseRef.current !== 'REBOUND') {
+        flowReversalRef.current = { timer: 0.45, isReversed: true };
+      }
       currentPhaseRef.current = phase;
       setCurrentPhase(phase);
       onPhaseChange(phase);
+    }
+    if (flowReversalRef.current.timer > 0) {
+      flowReversalRef.current.timer = Math.max(0, flowReversalRef.current.timer - deltaTime);
+      if (flowReversalRef.current.timer === 0) {
+        flowReversalRef.current.isReversed = false;
+      }
     }
     
     // Update bubble and torus-to-jet visualization
@@ -1841,6 +1909,16 @@ const UnifiedBubbleLatticeVisualization = ({
         y: latticeY,
         z: 0
       };
+      const latticeSurfaceY = latticeY;
+      const vortexSites = buildVortexSites(
+        cavitationPoint.x,
+        latticeSurfaceY,
+        cavitationPoint.z,
+        PHYSICS_CONFIG.LATTICE_SPACING
+      );
+      const reboundBlend = flowReversalRef.current.isReversed
+        ? Math.min(1, flowReversalRef.current.timer / 0.45)
+        : 0;
       
       protonGroupRef.current?.children.forEach((proton, _index) => {
         // MHD properties
@@ -1855,6 +1933,31 @@ const UnifiedBubbleLatticeVisualization = ({
         const dz = cavitationPoint.z - proton.position.z;
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.001;
         const horizontalDist = Math.sqrt(dx * dx + dz * dz) + 0.001;
+
+        if (proton.userData.absorbed) {
+          proton.userData.absorbTimer = (proton.userData.absorbTimer || 0) + deltaTime;
+          proton.position.y = Math.max(latticeSurfaceY - 0.08, proton.position.y - 0.02);
+          proton.scale.setScalar(Math.max(0.2, 1 - proton.userData.absorbTimer * 2.8));
+          if (proton.material) {
+            proton.material.color.setHex(0xffcc66);
+            proton.material.emissive.setHex(0x664400);
+            proton.material.emissiveIntensity = 0.7;
+          }
+
+          if (proton.userData.absorbTimer > 0.9) {
+            proton.userData.absorbed = false;
+            proton.userData.absorbTimer = 0;
+            proton.userData.acceptedSite = -1;
+            proton.userData.mhdRadius = 0.9 + Math.random() * 0.8;
+            proton.position.set(
+              cavitationPoint.x + (Math.random() - 0.5) * 0.8,
+              latticeSurfaceY + 0.45 + Math.random() * 0.35,
+              cavitationPoint.z + (Math.random() - 0.5) * 0.8
+            );
+            proton.scale.setScalar(1);
+          }
+          return;
+        }
         
         if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
           // ========================================================================
@@ -1882,13 +1985,28 @@ const UnifiedBubbleLatticeVisualization = ({
           
           // Store vorticity for visualization
           proton.userData.vorticity = rotationSpeed * 5;
+
+          // Proton acceptance at vortex intake points near the lattice surface.
+          const nearestSite = vortexSites.reduce((best, site, siteIndex) => {
+            const siteDistance = proton.position.distanceTo(site);
+            if (siteDistance < best.distance) {
+              return { distance: siteDistance, index: siteIndex };
+            }
+            return best;
+          }, { distance: Number.POSITIVE_INFINITY, index: -1 });
+
+          if (nearestSite.distance < PHYSICS_CONFIG.VORTEX_ACCEPT_RADIUS) {
+            proton.userData.absorbed = true;
+            proton.userData.absorbTimer = 0;
+            proton.userData.acceptedSite = nearestSite.index;
+          }
           
         } else if (phase === 'REBOUND') {
           // REBOUND: Particles perturbed outward but confined by lattice potential.
           // Physics: Reaction energy transfers to lattice phonons; boundary layer H/D stay confined.
           const maxScatterDist = PHYSICS_CONFIG.LATTICE_SPACING * 1.2;
           if (distance < maxScatterDist) {
-            const scatterForce = 0.008;
+            const scatterForce = 0.008 + reboundBlend * 0.018;
             proton.position.x -= (dx / distance) * scatterForce;
             proton.position.y -= (dy / distance) * scatterForce * 0.3;
             proton.position.z -= (dz / distance) * scatterForce;
@@ -1898,8 +2016,17 @@ const UnifiedBubbleLatticeVisualization = ({
             proton.position.y += (dy / distance) * restoreForce * 0.5;
             proton.position.z += (dz / distance) * restoreForce;
           }
-          proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + mhdAngularVelocity * 0.02;
-          proton.userData.vorticity = (proton.userData.vorticity || 0) * 0.8;
+          // Reversed azimuthal flow after cavitation/electro-nuclear rebound.
+          const reverseDirection = -1;
+          proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + reverseDirection * mhdAngularVelocity * (0.02 + reboundBlend * 0.06);
+          const reboundTheta = proton.userData.mhdAngle;
+          const reboundRadius = Math.min(
+            PHYSICS_CONFIG.LATTICE_SPACING * 1.6,
+            horizontalDist + 0.02 + reboundBlend * 0.04
+          );
+          proton.position.x = cavitationPoint.x + reboundRadius * Math.cos(reboundTheta);
+          proton.position.z = cavitationPoint.z + reboundRadius * Math.sin(reboundTheta);
+          proton.userData.vorticity = (proton.userData.vorticity || 0) * (0.75 + reboundBlend * 0.2);
           
         } else {
           // ========================================================================
@@ -1942,6 +2069,9 @@ const UnifiedBubbleLatticeVisualization = ({
           proton.position.x = cavitationPoint.x + clampDx * scale;
           proton.position.z = cavitationPoint.z + clampDz * scale;
         }
+        if (proton.position.y < latticeSurfaceY) {
+          proton.position.y = latticeSurfaceY;
+        }
         
         // ========================================================================
         // COLOR CHANGES BASED ON PHASE AND ENERGY
@@ -1951,7 +2081,11 @@ const UnifiedBubbleLatticeVisualization = ({
           const compressionRatio = physicsData.compressionRatio || 1;
           const energyLevel = Math.min(1, compressionRatio / 50); // Normalize energy 0-1
           
-          if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
+          if (proton.userData.absorbed) {
+            proton.material.color.setHex(0xffcc66);
+            proton.material.emissive.setHex(0x664400);
+            proton.material.emissiveIntensity = 0.75;
+          } else if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
             // High energy - shift from yellow/orange to red/white
             // Ionized state - high energy particles
             const hue = 0.1 - energyLevel * 0.1; // Orange to red
@@ -2260,6 +2394,14 @@ const UnifiedBubbleLatticeVisualization = ({
       // Rotate the entire MHD flow group based on phase
       if (vortexGroupRef.current) {
         vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.1;
+        const flowReversalPulse = vortexGroupRef.current.getObjectByName('FlowReversalPulse');
+        if (flowReversalPulse?.material) {
+          const pulseStrength = flowReversalRef.current.isReversed
+            ? Math.min(1, flowReversalRef.current.timer / 0.45)
+            : 0;
+          flowReversalPulse.material.opacity = pulseStrength * 0.75;
+          flowReversalPulse.scale.setScalar(1 + pulseStrength * 4);
+        }
       }
       } catch (error) {
         // Silently handle vortex update errors to prevent animation loop crashes
