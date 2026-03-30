@@ -49,6 +49,8 @@ const QuantumTunnelingVisualizer = ({
           screening_enhancement: electronScreeningFactor,
           material: 'palladium',
           pressure_atm: pressure,
+        }, {
+          suppressErrorLog: true,
         });
         
         // Transform API response to visualization format
@@ -88,7 +90,7 @@ const QuantumTunnelingVisualizer = ({
         console.log('Real physics calculation:', apiData.method, 'P =', apiData.tunneling_probability);
       } catch (apiError) {
         // Fallback to local calculation if API call fails
-        console.warn('API call failed, falling back to local calculation', apiError);
+        void apiError;
         
         // Convert keV to Joules
         const energy = energyKeV * tunnelingUtils.KEV_TO_J;

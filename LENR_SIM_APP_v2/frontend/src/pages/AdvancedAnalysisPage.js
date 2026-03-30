@@ -12,6 +12,7 @@ import {
   Divider,
   Alert
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import AppLayout from '../components/layout/AppLayout';
 import { usePhysics } from '../contexts/PhysicsContext';
 
@@ -42,6 +43,7 @@ function findTheory(perTheory, theoryId) {
 const AdvancedAnalysisPage = () => {
   const [activeTab, setActiveTab] = useState(2);
   const { simulationResult, theoryResult } = usePhysics();
+  const theme = useTheme();
 
   const hasData = !!simulationResult || !!theoryResult;
   const perTheory = theoryResult?.per_theory || null;
@@ -439,7 +441,7 @@ const AdvancedAnalysisPage = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Use &quot;Run Selected Theories&quot; on the Unified Theory page to populate this view.
           </Typography>
-          <Button component={Link} to="/unified-theory?tab=theories" variant="contained" color="primary">
+          <Button component={Link} to="/unified-theory?tab=testbed" variant="contained" color="primary">
             Go to Theory Testbed
           </Button>
         </Paper>
@@ -520,7 +522,7 @@ const AdvancedAnalysisPage = () => {
   };
   return (
     <AppLayout>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, bgcolor: 'background.default', color: 'text.primary' }}>
         <Typography variant="h4" sx={{ mb: 3 }}>
           Advanced Physics Analysis
         </Typography>
@@ -543,13 +545,35 @@ const AdvancedAnalysisPage = () => {
           </Paper>
         ) : (
           <>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                mb: 3,
+                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : theme.palette.background.paper,
+                borderRadius: 1,
+                px: 1,
+              }}
+            >
               <Tabs
                 value={activeTab}
                 onChange={handleTabChange}
                 aria-label="analysis tabs"
-                variant="scrollable"
-                scrollButtons="auto"
+                variant="fullWidth"
+                sx={{
+                  '& .MuiTab-root': {
+                    color: theme.palette.mode === 'dark' ? '#90caf9' : theme.palette.text.secondary,
+                    textTransform: 'uppercase',
+                    fontWeight: 500,
+                    minWidth: 0,
+                  },
+                  '& .MuiTab-root.Mui-selected': {
+                    color: theme.palette.primary.main,
+                  },
+                  '& .MuiTabs-indicator': {
+                    backgroundColor: theme.palette.primary.main,
+                  },
+                }}
               >
                 <Tab
                   label="Quantum Tunneling"

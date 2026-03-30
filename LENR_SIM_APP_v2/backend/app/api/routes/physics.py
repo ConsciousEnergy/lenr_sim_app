@@ -124,6 +124,23 @@ _enhancement_calculator = None
 _lattice_simulator = None
 _fusion_processor = None
 
+def preload_physics_components() -> None:
+    """
+    Eagerly initialize singleton physics components.
+
+    This avoids first-request latency spikes on endpoints that depend on these
+    components (e.g., /api/physics/status, /api/physics/enhancement).
+    """
+    global _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
+
+    if _config is not None:
+        return
+
+    _config = get_config()
+    _enhancement_calculator = UnifiedEnhancementCalculator(_config)
+    _lattice_simulator = LatticeSimulator(_config)
+    _fusion_processor = FusionProcessor(_config)
+
 # Dependency to initialize components
 async def get_physics_components():
     """
@@ -133,11 +150,7 @@ async def get_physics_components():
     global _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
     
     if _config is None:
-        # Default initialization
-        _config = get_config()
-        _enhancement_calculator = UnifiedEnhancementCalculator(_config)
-        _lattice_simulator = LatticeSimulator(_config)
-        _fusion_processor = FusionProcessor(_config)
+        preload_physics_components()
         
     return _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
 

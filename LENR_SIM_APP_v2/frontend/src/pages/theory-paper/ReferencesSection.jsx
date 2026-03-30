@@ -268,6 +268,36 @@ export default function ReferencesSection() {
 
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 2 }}>
+              Computational Flow Visualization References
+            </Typography>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [A1] Wang, S., Zhou, J., Feng, F., Li, Z., Sun, Y., Chen, D., Turk, G., & Zhu, B. (2025)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Fluid Simulation on Vortex Particle Flow Maps (VPFM). <em>ACM Transactions on Graphics (SIGGRAPH 2025)</em>.
+              </Typography>
+              <MuiLink
+                href="https://arxiv.org/pdf/2505.21946"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem', mr: 2 }}
+              >
+                arXiv:2505.21946
+              </MuiLink>
+              <MuiLink
+                href="https://github.com/pfm-gatech/VPFM"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                VPFM GitHub Repository
+              </MuiLink>
+            </ListItem>
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 2 }}>
               Extended Theory Module References
             </Typography>
 

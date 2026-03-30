@@ -84,7 +84,7 @@ Before starting, ensure you have completed all prerequisites:
   ```bash
   git clone https://github.com/ConsciousEnergy/lenr_sim_app.git
   cd lenr_sim_app
-  git checkout lenr_sim_app_v0.3.0-beta
+  git checkout lenr_sim_app_v0.3.5-beta
   ```
 
 ### 3. Required Information
@@ -402,7 +402,7 @@ cat .github/workflows/deploy.yml
 **Trigger build:**
 ```bash
 # Push to repository (triggers GitHub Actions)
-git push origin lenr_sim_app_v0.3.0-beta
+git push origin lenr_sim_app_v0.3.5-beta
 
 # Check GitHub Actions: https://github.com/ConsciousEnergy/lenr_sim_app/actions
 # Wait for "Build and Push Docker Image" workflow to complete

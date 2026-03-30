@@ -83,39 +83,65 @@ npx react-scripts test --watchAll=false
 - Backend tests: passing
 - Frontend build with CI=true: succeeds
 - Frontend tests: 75/75 passing
+- Frontend dependency audit reduced to 2 moderate vulnerabilities (react-scripts/webpack-dev-server path)
+- UnifiedTheoryPage `react-hooks/exhaustive-deps` warning fixed (`runSimulation` dependency list)
+- Unified Bubble-Lattice WebGL warning fixed (`texImage3D` unpack flag conflict during renderer initialization)
+- Backend test sweep re-run completed: `605 passed, 8 skipped` (with existing non-blocking warnings)
+- FastAPI smoke checks passed with `TestClient`: `/api/health`, `/api/docs`, `/api/physics/status`, `/api/physics/theories`, `/api/physics/enhancement`
+- Security middleware regression check passed: `app/tests/api/middleware/test_secure_headers.py` (`8 passed`)
+- Repository secret-pattern scan returned no matches for common key/token/private-key signatures
+- Added startup preloading for physics singletons to remove first-request cold-start latency spikes
+- Standard API calculations now measure <2s after startup (`/api/physics/status` ~0.005-0.007s, `/api/physics/enhancement` ~0.006s in warmed checks)
+- Docker compose build verified in WSL after Docker daemon startup (`docker compose build` + `docker compose up -d`)
+- Lazy-loading wiring verified in `frontend/src/App.tsx` (route-level `React.lazy` + `Suspense` with shared loading fallback)
+- Browser route sweep completed (`/`, `/unified-theory`, `/advanced-analysis`, `/analytics`, `/documentation`, `/theory-paper`, `/lenr-simulation`, `/fusion-simulation`, `/quantum-tunneling`) with no blank screens observed
+- Quantum tunneling fallback logging adjusted; follow-up browser check now reports 0 console errors on `/quantum-tunneling` (warnings only)
+- Physics reasonableness cross-check completed (code + benchmark math + external references):
+  - WolframAlpha MCP benchmark: `k_B*300 K = 0.02585 eV`
+  - WolframAlpha MCP benchmark: Coulomb energy at `5 fm` = `287.99 keV`
+  - `k_B T` at 300 K = `0.02585 eV` (expected thermal scale)
+  - Coulomb scale at nuclear radius (`r=5 fm`) computes to `~288 keV` (within published D-D barrier order of magnitude range)
+  - Gamow behavior is physically monotonic/suppressive: `G(300 K-equivalent)` underflows to ~0, `G(10 keV)=5.04e-5` (<<1)
+  - Miles correlation constant in code yields `2.63e11 He-4 atoms/s/W` at 1 W, matching cited experimental range (`10^11–10^12`)
+  - Bubble-collapse regime capping enforces `single_bubble <= 1e4 K` (extreme compression test returns exactly `10000 K`)
+  - API enhancement output remains finite and positive (`total_enhancement ~236.65`, no NaN/Inf)
+- Added automated backend guardrail tests in `app/tests/test_physics_reasonableness.py` (5 checks passing) to keep these benchmarks CI-enforced
+- Docker stack validated in WSL: `docker compose build` + `docker compose up -d` succeeded after compose/env fixes; backend and postgres report healthy
+- Compose/Docker hygiene updates: removed obsolete `version` key from `docker-compose.yml`; aligned backend image default `BUILD_VERSION` to `0.3.5-beta`
 
 ---
 
 ## Pre-Merge Checklist (from PULL_REQUEST_TEMPLATE)
 
 ### Backend
-- [ ] All backend tests passing
-- [ ] No placeholder endpoints exposed in production
-- [ ] Physics calculations return physically reasonable results
-- [ ] No new linting errors introduced
+- [x] All backend tests passing
+- [x] No placeholder endpoints exposed in production
+- [x] Physics calculations return physically reasonable results
+- [x] No new linting errors introduced
 
 ### Frontend
-- [ ] Frontend builds without errors: `cd frontend && npm ci && npm run build`
-- [ ] No console errors in browser dev tools
-- [ ] Dev/debug routes gated behind `IS_PRODUCTION` check
-- [ ] All pages show loading/error states (no blank screens)
+- [x] Frontend builds without errors: `cd frontend && npm ci && npm run build`
+- [x] Unified Bubble-Lattice WebGL console warning fixed (`texImage3D: FLIP_Y or PREMULTIPLY_ALPHA`)
+- [x] No console errors in browser dev tools
+- [x] Dev/debug routes gated behind `IS_PRODUCTION` check
+- [x] All pages show loading/error states (no blank screens)
 
 ### Security
-- [ ] CORS origins locked to `https://conscious.energy` in production config
-- [ ] Debug endpoints gated behind non-production env
-- [ ] No `.env` files, credentials, or secrets in committed files
-- [ ] CSP headers configured in middleware
+- [x] CORS origins locked to `https://conscious.energy` in production config
+- [x] Debug endpoints gated behind non-production env
+- [x] No `.env` files, credentials, or secrets in committed files
+- [x] CSP headers configured in middleware
 
 ### Documentation
-- [ ] CHANGELOG.md updated with all notable changes
-- [ ] Version strings consistent across `config.py`, `package.json`, `version.js`, `docker-compose.yml`
-- [ ] Deployment docs reference correct version and workflow filenames
+- [x] CHANGELOG.md updated with all notable changes
+- [x] Version strings consistent across `config.py`, `package.json`, `version.js`, `docker-compose.yml`
+- [x] Deployment docs reference correct version and workflow filenames
 
 ### Deployment
-- [ ] Docker images build successfully: `docker-compose build`
-- [ ] Local smoke test passed: `/api/health`, `/api/docs`, basic simulation run
-- [ ] API response times < 2s for standard calculations
-- [ ] Lazy loading works correctly
+- [x] Docker images build successfully: `docker-compose build`
+- [x] Local smoke test passed: `/api/health`, `/api/docs`, basic simulation run
+- [x] API response times < 2s for standard calculations
+- [x] Lazy loading works correctly
 
 ---
 

@@ -324,6 +324,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const protonGroupRef = useRef(null);
   const fieldGroupRef = useRef(null);
   const effectsGroupRef = useRef(null);
+  const boundaryVisualGroupRef = useRef(null);
   
   // Vortex/fluid dynamics refs
   const vortexGroupRef = useRef(null);
@@ -371,6 +372,7 @@ const UnifiedBubbleLatticeVisualization = ({
   // eslint-disable-next-line no-unused-vars
   const [_showDoubleLayer, _setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
+  const [showBoundaryPlane, setShowBoundaryPlane] = useState(false);
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
@@ -487,13 +489,17 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     
     const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    const planeSize = dimension * spacing * 1.3;
 
     // Topological surface layer used as a solid boundary for proton confinement.
-    const surfaceGeometry = new THREE.PlaneGeometry(dimension * spacing * 1.3, dimension * spacing * 1.3);
+    // Physics boundary math uses latticeSurfaceY; render plane is a separate debug visual group.
+    const boundaryVisualGroup = new THREE.Group();
+    boundaryVisualGroup.name = 'BoundaryVisualGroup';
+    const surfaceGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
     const surfaceMaterial = new THREE.MeshPhongMaterial({
       color: 0x66d9ff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.08,
       side: THREE.DoubleSide,
       depthWrite: false
     });
@@ -501,7 +507,18 @@ const UnifiedBubbleLatticeVisualization = ({
     latticeSurface.rotation.x = -Math.PI / 2;
     latticeSurface.position.set(0, latticeSurfaceY, 0);
     latticeSurface.name = 'LatticeSurfaceBoundary';
-    latticeGroup.add(latticeSurface);
+    boundaryVisualGroup.add(latticeSurface);
+
+    // Subtle grid lines on the boundary plane to suggest lattice structure
+    const gridDivisions = Math.min(8, Math.max(4, Math.floor(dimension)));
+    const gridHelper = new THREE.GridHelper(planeSize, gridDivisions, 0x48c7ff, 0x3399cc);
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.25;
+    gridHelper.material.depthWrite = false;
+    gridHelper.rotation.x = -Math.PI / 2;
+    gridHelper.position.set(0, latticeSurfaceY + 0.01, 0);
+    gridHelper.name = 'LatticeSurfaceGrid';
+    boundaryVisualGroup.add(gridHelper);
 
     // Vortex intake points (interstitial proxies) where protons can be accepted.
     const vortexSites = buildVortexSites(0, latticeSurfaceY, 0, spacing);
@@ -517,11 +534,13 @@ const UnifiedBubbleLatticeVisualization = ({
       const marker = new THREE.Mesh(siteGeometry, siteMaterial);
       marker.position.copy(site);
       marker.name = `VortexSiteMarker${index}`;
-      latticeGroup.add(marker);
+      boundaryVisualGroup.add(marker);
     });
     
     scene.add(latticeGroup);
+    scene.add(boundaryVisualGroup);
     latticeGroupRef.current = latticeGroup;
+    boundaryVisualGroupRef.current = boundaryVisualGroup;
     
     return latticeGroup;
   }, [hostMaterial, loadingRatio, latticeSize]);
@@ -2341,39 +2360,59 @@ const UnifiedBubbleLatticeVisualization = ({
     }
     
     // Update vortex flow visualization based on collapse phase
+    // VPFM-inspired phase mapping:
+    // expansion -> outward advection, collapse -> inward acceleration, minimum -> compact core,
+    // rebound -> flow reversal burst, recovery -> damped return.
     if (vortexGroupRef.current && showVortices) {
       try {
-      // Calculate vortex intensity based on phase
-      // EXPANSION: slow outward flow, COLLAPSE: fast inward, MINIMUM: intense swirl
+      const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
       let vortexIntensity = 0.3;
-      let _flowDirection = 1; // 1 = inward (toward lattice), -1 = outward
+      let flowDirection = 1;
       let rotationSpeed = 1.0;
+      let radialOscillationSpeed = 0.8;
+      let verticalOscillationSpeed = 0.5;
+      let coreHeightOffset = 0.3;
       
       switch (phase) {
         case 'EXPANSION':
-          vortexIntensity = 0.3;
-          _flowDirection = -0.3; // Slow outward
-          rotationSpeed = 0.5;
+          vortexIntensity = 0.35;
+          flowDirection = -0.35; // Slow outward advection
+          rotationSpeed = 0.8;
+          radialOscillationSpeed = 0.6;
+          verticalOscillationSpeed = 0.4;
+          coreHeightOffset = 0.45;
           break;
         case 'COLLAPSE':
-          vortexIntensity = 1.0;
-          _flowDirection = 2.0; // Fast inward
-          rotationSpeed = 2.0;
+          vortexIntensity = 1.1;
+          flowDirection = 2.2; // Strong inward acceleration
+          rotationSpeed = 2.4;
+          radialOscillationSpeed = 1.4;
+          verticalOscillationSpeed = 1.0;
+          coreHeightOffset = 0.25;
           break;
         case 'MINIMUM':
-          vortexIntensity = 1.5;
-          _flowDirection = 0.5; // Swirling at impact
-          rotationSpeed = 3.0;
+          vortexIntensity = 1.6;
+          flowDirection = 0.6; // Compact high-vorticity core
+          rotationSpeed = 3.2;
+          radialOscillationSpeed = 2.0;
+          verticalOscillationSpeed = 1.5;
+          coreHeightOffset = 0.2;
           break;
         case 'REBOUND':
-            vortexIntensity = 1.2; // Increased intensity for rebound
-            _flowDirection = -2.0; // Strong outward (reversed energy flow from lattice)
-            rotationSpeed = 3.0; // Faster rotation during rebound
+            vortexIntensity = 1.35;
+            flowDirection = -2.2; // Reversal burst from lattice
+            rotationSpeed = 3.3;
+            radialOscillationSpeed = 2.3;
+            verticalOscillationSpeed = 1.2;
+            coreHeightOffset = 0.35;
           break;
         case 'RECOVERY':
-          vortexIntensity = 0.4;
-          _flowDirection = 0.2;
-          rotationSpeed = 0.7;
+          vortexIntensity = 0.45;
+          flowDirection = 0.25; // Relax back toward baseline
+          rotationSpeed = 1.0;
+          radialOscillationSpeed = 0.8;
+          verticalOscillationSpeed = 0.6;
+          coreHeightOffset = 0.4;
           break;
         default:
           // Default case for any unexpected phase values
@@ -2383,7 +2422,15 @@ const UnifiedBubbleLatticeVisualization = ({
       // Update plasma vortex effect
         if (plasmaVortexRef.current && typeof plasmaVortexRef.current.update === 'function') {
           try {
-        plasmaVortexRef.current.vortexStrength = 0.8 * vortexIntensity;
+        plasmaVortexRef.current.vortexStrength = 0.9 * vortexIntensity;
+        plasmaVortexRef.current.radialSpeed = radialOscillationSpeed;
+        plasmaVortexRef.current.verticalSpeed = verticalOscillationSpeed;
+        // Update particle angular velocities to encode phase-specific advection direction.
+        for (const particle of plasmaVortexRef.current.particles || []) {
+          if (!particle?.userData) continue;
+          const baseAngular = 0.45 + vortexIntensity * (1 + ((plasmaVortexRef.current.radius - particle.userData.r) / Math.max(plasmaVortexRef.current.radius, 0.1)));
+          particle.userData.angularVelocity = baseAngular * flowDirection;
+        }
         plasmaVortexRef.current.update(deltaTime * rotationSpeed);
           } catch (err) {
             // Silently fail if plasma vortex update fails
@@ -2393,6 +2440,7 @@ const UnifiedBubbleLatticeVisualization = ({
       // MHD particle flow is handled by plasmaVortex - no additional elements to animate
       // Rotate the entire MHD flow group based on phase
       if (vortexGroupRef.current) {
+        vortexGroupRef.current.position.y = latticeY + coreHeightOffset;
         vortexGroupRef.current.rotation.y += deltaTime * rotationSpeed * 0.1;
         const flowReversalPulse = vortexGroupRef.current.getObjectByName('FlowReversalPulse');
         if (flowReversalPulse?.material) {
@@ -2531,6 +2579,17 @@ const UnifiedBubbleLatticeVisualization = ({
   // Initialize Three.js scene
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
+
+    // Ensure WebGL unpack flags are valid for texImage3D during renderer init.
+    const webgl2Proto = typeof window !== 'undefined' ? window.WebGL2RenderingContext?.prototype : null;
+    const originalTexImage3D = webgl2Proto?.texImage3D;
+    if (webgl2Proto && typeof originalTexImage3D === 'function') {
+      webgl2Proto.texImage3D = function patchedTexImage3D(...args) {
+        this.pixelStorei(this.UNPACK_FLIP_Y_WEBGL, false);
+        this.pixelStorei(this.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        return originalTexImage3D.apply(this, args);
+      };
+    }
     
     // Create scene
     const scene = new THREE.Scene();
@@ -2562,13 +2621,16 @@ const UnifiedBubbleLatticeVisualization = ({
       antialias: qualitySettings.antialias,
       powerPreference: isMobile ? 'low-power' : 'high-performance'
     });
+    if (webgl2Proto && originalTexImage3D) {
+      webgl2Proto.texImage3D = originalTexImage3D;
+    }
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setPixelRatio(qualitySettings.pixelRatio);
     
     // Disable shadows on mobile for better performance
     renderer.shadowMap.enabled = qualitySettings.shadowsEnabled;
     rendererRef.current = renderer;
-    
+
     // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -2587,7 +2649,7 @@ const UnifiedBubbleLatticeVisualization = ({
     createRydbergOrbitals(scene);
     createHaloElectrons(scene);
     createScaleBar(scene);
-    
+
     // Animation loop - uses ref to avoid re-initialization when animation function changes
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate);
@@ -2597,7 +2659,7 @@ const UnifiedBubbleLatticeVisualization = ({
       if (updateAnimationRef.current) {
         updateAnimationRef.current(deltaTime);
       }
-      
+
       controls.update();
       renderer.render(scene, camera);
     };
@@ -2633,7 +2695,6 @@ const UnifiedBubbleLatticeVisualization = ({
           }
         }
       });
-      
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2649,6 +2710,15 @@ const UnifiedBubbleLatticeVisualization = ({
         latticeGroupRef.current.traverse((child) => {
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showLattice;
+          }
+        });
+      }
+      if (boundaryVisualGroupRef.current) {
+        const isBoundaryVisible = showLattice && showBoundaryPlane;
+        boundaryVisualGroupRef.current.visible = isBoundaryVisible;
+        boundaryVisualGroupRef.current.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = isBoundaryVisible;
           }
         });
       }
@@ -2752,7 +2822,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const timeoutId = setTimeout(updateVisibility, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo]);
+  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const handleZoomIn = () => {
@@ -2878,6 +2948,10 @@ const UnifiedBubbleLatticeVisualization = ({
             <FormControlLabel
               control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
               label={<Typography variant="caption" color="white">Lattice</Typography>}
+            />
+            <FormControlLabel
+              control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
+              label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
             />
             <FormControlLabel
               control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}

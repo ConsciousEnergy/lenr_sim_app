@@ -79,6 +79,7 @@ except ImportError:
 
 # Import custom OpenAPI configuration - using relative imports
 from .api.openapi import custom_openapi
+from .api.routes.physics import preload_physics_components
 
 # Set up loggers (JSON format in production for log aggregation)
 app_logger = setup_logger(
@@ -185,6 +186,13 @@ async def lifespan(app: FastAPI):
         # Initial cleanup
         expired = remove_expired_items()
         app_logger.info(f"Initial cache cleanup: {expired} expired items removed")
+
+    # Preload heavy physics singletons during startup to reduce first-request latency.
+    try:
+        preload_physics_components()
+        app_logger.info("Physics components preloaded successfully")
+    except Exception as e:
+        app_logger.warning(f"Physics preload skipped: {e}")
     
     # Initialize database (v0.2.3-beta) with retry for Docker Swarm
     try:
@@ -234,6 +242,7 @@ async def lifespan(app: FastAPI):
     app_logger.info("Application shutting down...")
 
 # Initialize FastAPI app
+# redirect_slashes=False avoids 307 redirects that can cause 405 when POST follows redirect
 app = FastAPI(
     title=settings.APP_NAME,
     description="API for Low Energy Nuclear Reaction simulations",
@@ -242,6 +251,7 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
+    redirect_slashes=False,
 )
 
 # Set custom OpenAPI schema generator

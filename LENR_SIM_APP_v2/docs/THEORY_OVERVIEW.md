@@ -11,6 +11,8 @@ The Unified LENR (Low Energy Nuclear Reaction) Theory provides a comprehensive t
 
 This document provides an accessible overview of the unified framework. For detailed mathematical derivations and technical implementation, see the [Unified Bubble-Lattice Simulation Documentation](UNIFIED_BUBBLE_LATTICE_SIMULATION.md).
 
+For computational flow visualization provenance (VPFM-inspired phase-flow methodology and citations), see the attribution section in the [Unified Bubble-Lattice Simulation Documentation](UNIFIED_BUBBLE_LATTICE_SIMULATION.md#flow-visualization-methodology-and-attribution).
+
 ---
 
 ## What is LENR?

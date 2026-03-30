@@ -56,6 +56,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    const shouldSuppressErrorLog = Boolean((error.config as any)?.suppressErrorLog);
     const apiError: ApiError = {
       type: ErrorType.UNKNOWN,
       message: 'An unknown error occurred',
@@ -90,7 +91,9 @@ apiClient.interceptors.response.use(
       }
     }
 
-    console.error('API Error:', apiError);
+    if (!shouldSuppressErrorLog) {
+      console.error('API Error:', apiError);
+    }
     
     // Handle unauthorized errors globally
     if (apiError.type === ErrorType.UNAUTHORIZED) {

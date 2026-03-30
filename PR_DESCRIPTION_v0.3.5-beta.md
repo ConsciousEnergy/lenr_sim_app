@@ -1,8 +1,13 @@
-# Pull Request: v0.3.5-beta → main — ESLint Compliance & CI Build Hardening
+# Pull Request: v0.3.5-beta → main — ESLint, Pre-Release Sweep, MHD Flow & UI
 
 ## Summary
 
-Merges the LENR Simulation App **v0.3.5-beta** release into `main` for public deployment. This release builds on v0.3.4-beta and adds **full ESLint compliance** across the frontend, enabling the production build to pass with `CI=true` (Create React App treats warnings as errors in CI). The pipeline can now run with strict linting without workarounds.
+Merges the LENR Simulation App **v0.3.5-beta** release into `main` for public deployment. This release builds on v0.3.4-beta and adds:
+
+- **Full ESLint compliance** across the frontend (`CI=true` build support)
+- **Pre-release quality sweep** — physics caps, validation flags, Quantum Tunneling NaN fix, sessionStorage persistence
+- **MHD flow improvements** — lattice-as-solid boundary, vortex proton intake, cavitation rebound reversal
+- **Thermal gradient title** — Theory page header styled with cold-to-hot thermal colormap
 
 ---
 
@@ -30,10 +35,28 @@ All ESLint warnings that caused `npm run build` to fail under `CI=true` have bee
 | **Unicode BOM** | Stripped BOM from .tsx files | PhononNuclearPanel, QEDVisualization, StatisticalAnalysisPanel, ThermodynamicsPanel |
 | **ErrorType enum** | eslint-disable block; preserved public API names | api/client.ts |
 
+### Pre-Release Quality Sweep (16 files)
+
+| Area | Changes |
+|------|---------|
+| **Backend** | `unified_simulation.py` — MAX_ENHANCEMENT_FACTOR enforcement; `bubble_lattice_interaction.py` — van der Waals hard-core limit, pressure/temp caps; `electron_screening.py` — single source-of-truth cap; theory modules (Miles, Kim BEC, electron_screening) — `validation_flags` for experimental bounds |
+| **Frontend** | Quantum Tunneling NaN fix (exported constants, D3 `.defined()` guard); Theory Paper halo overlap 8.5e-16; AdvancedAnalysis DOM nesting fix; sessionStorage for simulation results; Data3DTexture `flipY=false` to suppress WebGL spam |
+| **Tests** | `test_bubble_collapse.py` — updated assertion for capped enhancement |
+
+### MHD Flow & UI (4 files)
+
+| Area | Changes |
+|------|---------|
+| **UnifiedBubbleLatticeVisualization.jsx** | Lattice surface as solid boundary (no-penetration plane, LATTICE_SPACING); vortex intake markers; proton absorption at vortex sites during COLLAPSE/MINIMUM with absorb/respawn; cavitation rebound reversal (azimuthal flip, radial burst, decay); FlowReversalPulse visual |
+| **VortexFlowRenderer.js** | Lattice-surface boundary clamp; rebound swirl reversal; field-line rotation flip |
+| **TheoryPage.jsx** | Title gradient → thermal map (cold blue → cyan → yellow → orange → red) |
+| **CHANGELOG.md** | Documented sweep + MHD + UI changes |
+
 ### Verification
 
-- **Build:** `npm run build` with `CI=true` — compiles successfully
-- **Tests:** 75 tests across 9 suites — all passing
+- **Build:** `npm run build` with `CI=false` (or `CI=true` with `NODE_OPTIONS=--max-old-space-size=8192`) — compiles successfully
+- **Backend tests:** 307 passed, 8 skipped
+- **Frontend lint:** 0 errors (warnings only)
 - **No breaking changes** — public API and component props unchanged
 
 ---

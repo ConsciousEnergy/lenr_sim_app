@@ -163,6 +163,21 @@ class Settings(BaseSettings):
             secret = _read_secret_from_file("JWT_SECRET_KEY_FILE")
             if secret:
                 object.__setattr__(self, "JWT_SECRET_KEY", secret)
+
+        # Enforce safe production CORS defaults when local dev origins are left unchanged.
+        if self.ENVIRONMENT == EnvironmentType.PRODUCTION:
+            local_origins = {
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:5173",
+            }
+            configured_origins = set(self.CORS_ORIGINS or [])
+            if not configured_origins or configured_origins.issubset(local_origins):
+                object.__setattr__(
+                    self,
+                    "CORS_ORIGINS",
+                    ["https://conscious.energy", "https://www.conscious.energy"],
+                )
         return self
 
     # Pydantic configuration - use environment variable prefix and .env file

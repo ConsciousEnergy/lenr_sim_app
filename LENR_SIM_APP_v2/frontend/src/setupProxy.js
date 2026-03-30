@@ -39,11 +39,10 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:8000',
+      target: 'http://localhost:8010',
       changeOrigin: true,
-      pathRewrite: {
-        '^/api': '', // Remove /api prefix when forwarding to the backend
-      },
+      // Keep /api prefix because backend routes are mounted under /api.
+      pathRewrite: {},
       // Don't log proxy errors to avoid console spam
       logLevel: 'silent',
       // Skip proxy for health check and logs

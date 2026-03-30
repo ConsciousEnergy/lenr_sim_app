@@ -53,11 +53,10 @@ import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationP
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { usePhysics } from '../contexts/PhysicsContext';
-import { API_BASE_URL } from '../config/api';
+import { resolveApiUrl } from '../config/api';
 import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
 
-// API base URL
-const API_BASE = API_BASE_URL;
+const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
 
 // System presets
 const SYSTEM_PRESETS = {
@@ -474,31 +473,32 @@ function UnifiedTheoryPage() {
         throw new Error('Frequency must be between 1 and 100 kHz');
       }
       
-      // Try real physics API
-      const apiUrl = `${API_BASE}/api/unified/bubble-lattice`;
-      
+      // Try real physics API via canonical endpoint (dev proxy / explicit prod base)
+      const apiUrl = resolveApiUrl(BUBBLE_LATTICE_ENDPOINT);
+      const requestPayload = {
+        bubble: {
+          initial_radius_um: parameters.initialBubbleRadius * 3.33,
+          driving_pressure_bar: parameters.drivingPressure,
+          frequency_khz: parameters.frequency,
+          ambient_temperature_k: parameters.temperature
+        },
+        material: {
+          host_material: parameters.hostMaterial,
+          reactant: parameters.reactant
+        },
+        lattice: {
+          loading_ratio: parameters.loadingRatio,
+          defect_density: parameters.defectDensity || 1e16,
+          surface_roughness: parameters.surfaceRoughness || 5e-9,
+          grain_size: parameters.grainSize || 50e-9
+        },
+        num_cycles: parameters.numCycles || 2
+      };
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bubble: {
-            initial_radius_um: parameters.initialBubbleRadius * 3.33,
-            driving_pressure_bar: parameters.drivingPressure,
-            frequency_khz: parameters.frequency,
-            ambient_temperature_k: parameters.temperature
-          },
-          material: {
-            host_material: parameters.hostMaterial,
-            reactant: parameters.reactant
-          },
-          lattice: {
-            loading_ratio: parameters.loadingRatio,
-            defect_density: parameters.defectDensity || 1e16,
-            surface_roughness: parameters.surfaceRoughness || 5e-9,
-            grain_size: parameters.grainSize || 50e-9
-          },
-          num_cycles: parameters.numCycles || 2
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (response.ok) {
@@ -512,7 +512,11 @@ function UnifiedTheoryPage() {
         let errorMessage;
         let errorType = 'api_error';
         
-        if (response.status === 404) {
+        if (response.status === 405) {
+          const allowHeader = response.headers.get('Allow');
+          errorMessage = `Method Not Allowed (405). Endpoint: ${apiUrl}. Allow: ${allowHeader || 'unknown'}.`;
+          errorType = 'method_not_allowed';
+        } else if (response.status === 404) {
           errorMessage = 'API endpoint not found (404). The backend may need to be updated.';
           errorType = 'endpoint_not_found';
         } else if (response.status === 500) {
@@ -531,6 +535,7 @@ function UnifiedTheoryPage() {
           } catch {
             errorMessage = `API error: ${response.status} ${response.statusText}`;
           }
+          errorMessage = `${errorMessage} (endpoint: ${apiUrl})`;
         }
         throw new Error(`[${errorType}] ${errorMessage}`);
       }
@@ -567,6 +572,9 @@ function UnifiedTheoryPage() {
         } else if (errorMessage.includes('server_error')) {
           setAlertMessage('Backend calculation error. Using local fallback calculations.');
           setAlertSeverity('warning');
+        } else if (errorMessage.includes('method_not_allowed')) {
+          setAlertMessage(`Backend route mismatch (405). Check backend restart and route mount. ${errorMessage.replace(/\[.*?\]\s*/, '')}`);
+          setAlertSeverity('warning');
         } else if (errorMessage.includes('validation_error')) {
           setAlertMessage('Parameter validation failed. Please check your inputs.');
           setAlertSeverity('error');
@@ -584,7 +592,7 @@ function UnifiedTheoryPage() {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters]);
+  }, [parameters, setSimulationResult]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {

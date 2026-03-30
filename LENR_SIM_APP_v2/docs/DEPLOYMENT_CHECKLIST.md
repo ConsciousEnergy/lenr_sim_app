@@ -9,7 +9,7 @@
 
 ## Docker / GHCR
 
-- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.0-beta .`
+- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.5-beta .`
 - [ ] Image pushed to GHCR: `docker push ghcr.io/ConsciousEnergy/lenr-sim-backend:latest`
 - [ ] **VPS has GHCR credentials**: `docker login ghcr.io -u <user> --password-stdin` on the server
 
