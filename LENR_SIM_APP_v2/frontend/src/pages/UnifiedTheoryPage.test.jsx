@@ -8,6 +8,15 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../tests/test-utils';
 import UnifiedTheoryPage from './UnifiedTheoryPage';
 
+const mockSetSimulationResult = jest.fn();
+
+jest.mock('../contexts/PhysicsContext', () => ({
+  ...jest.requireActual('../contexts/PhysicsContext'),
+  usePhysics: () => ({
+    setSimulationResult: mockSetSimulationResult,
+  }),
+}));
+
 // Mock heavy visualization component
 jest.mock('../components/visualizations/UnifiedBubbleLatticeVisualization', () => () => (
   <div data-testid="mock-unified-visualization">Mock Visualization</div>

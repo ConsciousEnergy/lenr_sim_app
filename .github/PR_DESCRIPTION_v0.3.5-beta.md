@@ -3,6 +3,7 @@
 ## Summary
 
 Merges the LENR Simulation App **v0.3.5-beta** release into `main`. This Pre-PR Quality Sweep addresses math/physics accuracy, UX stability, documentation consistency, and CI build hardening.
+This document now consolidates the cumulative scope already tracked on PR #23 with the latest fixes in this branch.
 
 **Base branch:** `main`  
 **Compare branch:** `lenr_sim_app_v0.3.5-beta`
@@ -93,6 +94,8 @@ npx react-scripts test --watchAll=false
 - Added startup preloading for physics singletons to remove first-request cold-start latency spikes
 - Standard API calculations now measure <2s after startup (`/api/physics/status` ~0.005-0.007s, `/api/physics/enhancement` ~0.006s in warmed checks)
 - Docker compose build verified in WSL after Docker daemon startup (`docker compose build` + `docker compose up -d`)
+- CI frontend test regression fixed by pinning `@tootallnate/once` to `2.0.0` (avoids Jest `ERR_REQUIRE_ESM` through `react-scripts`/`http-proxy-agent`)
+- CI workflow cleanup applied: removed permanently disabled benchmark-analysis job and stabilized frontend tests with `--runInBand` and explicit Node memory limits
 - Lazy-loading wiring verified in `frontend/src/App.tsx` (route-level `React.lazy` + `Suspense` with shared loading fallback)
 - Browser route sweep completed (`/`, `/unified-theory`, `/advanced-analysis`, `/analytics`, `/documentation`, `/theory-paper`, `/lenr-simulation`, `/fusion-simulation`, `/quantum-tunneling`) with no blank screens observed
 - Quantum tunneling fallback logging adjusted; follow-up browser check now reports 0 console errors on `/quantum-tunneling` (warnings only)

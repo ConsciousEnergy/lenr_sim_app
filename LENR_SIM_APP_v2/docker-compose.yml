@@ -24,7 +24,7 @@ services:
       args:
         BUILD_VERSION: "0.3.5-beta"
     ports:
-      - "8000:8000"
+      - "8010:8000"
     environment:
       LENR_ENVIRONMENT: development
       LENR_DB_HOST: postgres

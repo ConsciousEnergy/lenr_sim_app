@@ -2,13 +2,16 @@ import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
+import { PhysicsProvider } from '../contexts/PhysicsContext';
 
 const theme = createTheme();
 
 function AllProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <PhysicsProvider>
+        <MemoryRouter>{children}</MemoryRouter>
+      </PhysicsProvider>
     </ThemeProvider>
   );
 }
