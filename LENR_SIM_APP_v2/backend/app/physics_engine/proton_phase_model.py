@@ -1,4 +1,4 @@
-"""
+﻿"""
 Proton Phase Transition Model for LENR
 
 Models proton state transitions through multiple force regimes:
@@ -21,6 +21,11 @@ from scipy import constants as const
 import logging
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
+from app.physics.weak_interaction import (
+    calculate_weak_interaction_cross_section,
+    THRESHOLD_ELECTRON_MEV,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +136,7 @@ class ProtonPhaseModel:
         Calculate electron screening energy.
         
         From Section 2.1: Debye screening model
-        U_s = Z₁Z₂e²/(4πε₀λ_D)
+        U_s = Zâ‚Zâ‚‚eÂ²/(4Ï€Îµâ‚€Î»_D)
         """
         # Debye screening length
         lambda_d = np.sqrt(self.EPS0 * self.KB * temperature / 
@@ -158,7 +163,7 @@ class ProtonPhaseModel:
         Calculate halo electron-nucleus overlap probability.
         
         From Section 2.2:
-        P_overlap = (1/πa³) * exp(-2r₀/a)
+        P_overlap = (1/Ï€aÂ³) * exp(-2râ‚€/a)
         """
         # Extended orbital radius
         a = orbital_extension * self.A0  # m
@@ -195,7 +200,7 @@ class ProtonPhaseModel:
         Calculate total tunneling enhancement factor.
         
         Combines screening, field, and coherence effects.
-        Target: 10³-10⁵ under optimal conditions (Section 5.1)
+        Target: 10Â³-10âµ under optimal conditions (Section 5.1)
         """
         # Thermal energy
         E_thermal = self.KB * temperature
@@ -386,7 +391,7 @@ def get_phase_info(phase: ProtonPhase) -> Dict[str, Any]:
         },
         ProtonPhase.CAPTURE_READY: {
             "name": "Capture Ready",
-            "description": "Halo electron overlap enables weak force coupling (p + e⁻ → n + νₑ)",
+            "description": "Halo electron overlap enables weak force coupling (p + eâ» â†’ n + Î½â‚‘)",
             "force_regime": "weak",
             "color": "#f1c40f"
         },
@@ -398,3 +403,18 @@ def get_phase_info(phase: ProtonPhase) -> Dict[str, Any]:
         }
     }
     return info.get(phase, {})
+
+
+
+def get_weak_neutron_formation_params(E_nu_eV: float = 1e6) -> Dict[str, float]:
+    """
+    Expose weak interaction cross-section and threshold for neutron formation.
+
+    Returns cross-section (m^2) at given neutrino energy and the 0.782 MeV threshold.
+    """
+    sigma = calculate_weak_interaction_cross_section(E_nu_eV)
+    return {
+        "weak_cross_section_m2": sigma,
+        "threshold_MeV": THRESHOLD_ELECTRON_MEV,
+        "E_nu_eV": E_nu_eV,
+    }

@@ -49,7 +49,7 @@ export type RealtimeDataEventType =
 export class RealtimeDataClient {
   private socket: WebSocket | null = null;
   private simulationId: string;
-  private eventListeners: Record<RealtimeDataEventType, Array<(data: any) => void>> = {
+  private eventListeners: Record<RealtimeDataEventType, Array<(_data: any) => void>> = {
     data_update: [],
     error: [],
     open: [],
@@ -232,7 +232,7 @@ export class RealtimeDataClient {
   /**
    * Add an event listener
    */
-  addEventListener(event: RealtimeDataEventType, callback: (data: any) => void): () => void {
+  addEventListener(event: RealtimeDataEventType, callback: (_data: any) => void): () => void {
     this.eventListeners[event].push(callback);
     
     // Return a function to remove the listener

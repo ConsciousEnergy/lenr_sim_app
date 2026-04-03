@@ -25,7 +25,6 @@ import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 // Icons
-import ScienceIcon from '@mui/icons-material/Science';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import TuneIcon from '@mui/icons-material/Tune';
 import AssessmentIcon from '@mui/icons-material/Assessment';

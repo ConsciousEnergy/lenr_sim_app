@@ -31,7 +31,9 @@ const UnifiedTheoryPage = lazy(() => import('./pages/UnifiedTheoryPage'));
 const TheoryPage = lazy(() => import('./pages/TheoryPage'));
 const TheoryPaperPage = lazy(() => import('./pages/TheoryPaperPage'));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const DocViewerPage = lazy(() => import('./pages/DocViewerPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const AdvancedAnalysisPage = lazy(() => import('./pages/AdvancedAnalysisPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 // Pages - Advanced Visualization & Physics (All lazy - heavy Three.js dependencies)
@@ -106,7 +108,8 @@ const AppContent = () => {
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Router
+        <PhysicsProvider>
+          <Router
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true
@@ -220,11 +223,9 @@ const AppContent = () => {
             } />
             <Route path="/unified-theory" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <PhysicsProvider>
-                  <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<LoadingFallback />}>
                     <UnifiedTheoryPage />
                   </Suspense>
-                </PhysicsProvider>
               </AppLayoutFixed>
             } />
             <Route path="/analytics" element={
@@ -232,6 +233,13 @@ const AppContent = () => {
                 <Suspense fallback={<LoadingFallback />}>
                   <AnalyticsPage />
                 </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/advanced-analysis" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                    <AdvancedAnalysisPage />
+                  </Suspense>
               </AppLayoutFixed>
             } />
             <Route path="/documentation" element={
@@ -245,6 +253,13 @@ const AppContent = () => {
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
                   <DocumentationPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/docs/:slug" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <DocViewerPage />
                 </Suspense>
               </AppLayoutFixed>
             } />
@@ -316,7 +331,8 @@ const AppContent = () => {
               </AppLayoutFixed>
             } />
           </Routes>
-        </Router>
+          </Router>
+        </PhysicsProvider>
       </SnackbarProvider>
     </MuiThemeProvider>
   );
@@ -333,4 +349,3 @@ function App() {
 }
 
 export default App;
-

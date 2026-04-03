@@ -1,5 +1,5 @@
 import React, { Component, useEffect, useState } from 'react';
-import { Typography, Button, Box, Alert, Paper, Divider } from '@mui/material';
+import { Typography, Button, Box, Alert, Paper } from '@mui/material';
 
 /**
  * Error boundary component specifically for Three.js and WebGL related errors.
@@ -15,7 +15,7 @@ class ThreeJsErrorBoundary extends Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(_error) {
     // Update state to trigger fallback UI
     return { hasError: true };
   }
@@ -80,8 +80,8 @@ class ThreeJsErrorBoundary extends Component {
  * This is useful for detecting issues that don't cause crashes but may affect rendering.
  */
 const ThreeJsErrorMonitor = ({ children, onDetectError }) => {
-  const [errors, setErrors] = useState([]);
-  const [warnings, setWarnings] = useState([]);
+  const [_errors, setErrors] = useState([]);
+  const [_warnings, setWarnings] = useState([]);
 
   useEffect(() => {
     // Track if component is mounted

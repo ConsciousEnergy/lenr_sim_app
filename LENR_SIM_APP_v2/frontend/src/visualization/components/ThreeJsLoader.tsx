@@ -5,8 +5,8 @@ import * as THREE from 'three';
 interface ThreeJsLoaderProps {
   width?: number | string;
   height?: number | string;
-  onThreeJsReady?: (three: typeof THREE, renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => void;
-  onError?: (error: Error) => void;
+  onThreeJsReady?: (_three: typeof THREE, _renderer: THREE.WebGLRenderer, _scene: THREE.Scene, _camera: THREE.Camera) => void;
+  onError?: (_error: Error) => void;
   fallback?: React.ReactNode;
   backgroundColor?: string;
   children?: React.ReactNode;

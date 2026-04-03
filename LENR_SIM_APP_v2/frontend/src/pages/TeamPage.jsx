@@ -6,13 +6,11 @@ import {
   Paper,
   Card,
   CardContent,
-  CardMedia,
   Avatar,
   Chip,
   Stack,
   Divider,
   Button,
-  Link,
   useTheme,
   alpha
 } from '@mui/material';
@@ -20,7 +18,6 @@ import Grid from '@mui/material/Grid';
 import { APP_VERSION } from '../config/version';
 import {
   GitHub as GitHubIcon,
-  LinkedIn as LinkedInIcon,
   Email as EmailIcon,
   Language as WebsiteIcon,
   Science as ScienceIcon,

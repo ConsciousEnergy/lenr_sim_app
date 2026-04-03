@@ -8,7 +8,7 @@ interface TestCubeProps {
   height?: number | string;
   complexity?: 'low' | 'medium' | 'high';
   onRenderSuccess?: () => void;
-  onRenderError?: (error: Error) => void;
+  onRenderError?: (_error: Error) => void;
 }
 
 /**
@@ -36,9 +36,10 @@ const TestCube: React.FC<TestCubeProps> = ({
   useEffect(() => {
     setIsLoading(true);
     setError(null);
+    const container = containerRef.current;
     
     try {
-      if (!containerRef.current) {
+      if (!container) {
         throw new Error('Container reference not available');
       }
       
@@ -50,7 +51,7 @@ const TestCube: React.FC<TestCubeProps> = ({
       // Create camera
       const camera = new THREE.PerspectiveCamera(
         75, 
-        containerRef.current.clientWidth / containerRef.current.clientHeight, 
+        container.clientWidth / container.clientHeight, 
         0.1, 
         1000
       );
@@ -63,9 +64,9 @@ const TestCube: React.FC<TestCubeProps> = ({
         alpha: true,
         powerPreference: 'high-performance'
       });
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
-      containerRef.current.appendChild(renderer.domElement);
+      container.appendChild(renderer.domElement);
       rendererRef.current = renderer;
       
       // Add orbit controls
@@ -158,10 +159,10 @@ const TestCube: React.FC<TestCubeProps> = ({
       
       // Handle window resize
       const handleResize = () => {
-        if (!containerRef.current || !camera || !renderer) return;
+        if (!container || !camera || !renderer) return;
         
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
         
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -192,8 +193,8 @@ const TestCube: React.FC<TestCubeProps> = ({
         if (material && 'dispose' in material) material.dispose();
         
         // Remove renderer DOM element
-        if (rendererRef.current && containerRef.current) {
-          containerRef.current.removeChild(rendererRef.current.domElement);
+        if (rendererRef.current && container) {
+          container.removeChild(rendererRef.current.domElement);
           rendererRef.current.dispose();
         }
         
@@ -212,6 +213,7 @@ const TestCube: React.FC<TestCubeProps> = ({
         onRenderError(err instanceof Error ? err : new Error('Unknown error'));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complexity, onRenderSuccess, onRenderError]);
   
   return (

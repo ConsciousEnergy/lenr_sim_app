@@ -1,6 +1,6 @@
 # LENR Simulation App - Architecture Documentation
 
-**Version:** 0.2.1-beta  
+**Version:** 0.3.5-beta  
 **Last Updated:** January 2026
 
 ---

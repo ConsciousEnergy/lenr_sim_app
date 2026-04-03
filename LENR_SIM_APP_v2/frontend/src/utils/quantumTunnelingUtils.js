@@ -8,14 +8,14 @@
 // Physical constants
 const HBAR = 1.054571817e-34; // Reduced Planck constant in J·s
 const KB = 1.380649e-23; // Boltzmann constant in J/K
-const _ELECTRON_MASS = 9.1093837015e-31; // Electron mass in kg - available for electron tunneling calculations
-const _PROTON_MASS = 1.67262192369e-27; // Proton mass in kg - available for proton tunneling calculations  
-const _DEUTERON_MASS = 3.3435837724e-27; // Deuteron mass in kg - available for D-D fusion calculations
+const ELECTRON_MASS = 9.1093837015e-31; // Electron mass in kg
+const PROTON_MASS = 1.67262192369e-27; // Proton mass in kg
+const DEUTERON_MASS = 3.3435837724e-27; // Deuteron mass in kg
 const ELECTRON_CHARGE = 1.602176634e-19; // Elementary charge in C
 const VACUUM_PERMITTIVITY = 8.8541878128e-12; // Vacuum permittivity in F/m
 const EV_TO_J = ELECTRON_CHARGE; // Conversion from eV to J
 const KEV_TO_J = 1e3 * EV_TO_J; // Conversion from keV to J
-const _MEV_TO_J = 1e6 * EV_TO_J; // Conversion from MeV to J - available for nuclear energy calculations
+const MEV_TO_J = 1e6 * EV_TO_J; // Conversion from MeV to J
 
 /**
  * Calculate the Coulomb potential between two charged particles
@@ -271,7 +271,14 @@ export const calculateCoherentTunnelingEnhancement = (params, tunnelingParams) =
   return Math.min(1, baseProbability * Math.pow(coherenceEnhancement, 2));
 };
 
+export { DEUTERON_MASS, ELECTRON_MASS, PROTON_MASS, KEV_TO_J, MEV_TO_J };
+
 export default {
+  DEUTERON_MASS,
+  ELECTRON_MASS,
+  PROTON_MASS,
+  KEV_TO_J,
+  MEV_TO_J,
   calculateCoulombPotential,
   calculateYukawaPotential,
   calculateEffectivePotential,
@@ -280,4 +287,4 @@ export default {
   generateTunnelingVisualizationData,
   calculateTemperatureEnhancedTunneling,
   calculateCoherentTunnelingEnhancement
-}; 
+};

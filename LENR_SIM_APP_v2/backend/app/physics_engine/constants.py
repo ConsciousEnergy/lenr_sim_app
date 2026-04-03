@@ -53,8 +53,8 @@ PHYSICAL_CONSTANTS = {
 MAX_ENHANCEMENT_FACTOR: float = 1e5
 
 # Miles heat-helium correlation: D + D -> He-4 + 23.8 MeV (all as heat)
-# 1 Watt of excess heat = 2.6e11 He-4 atoms/second  (Miles 1993)
-MILES_HEAT_HELIUM_RATE: float = 2.6e11  # He-4 atoms per second per watt
+# 1 Watt of excess heat = 2.63e11 He-4 atoms/second  (Miles 1990)
+MILES_HEAT_HELIUM_RATE: float = 2.63e11  # He-4 atoms per second per watt
 
 # Ni-H thermal activation threshold (Clean-HME data)
 # Below ~973 K (~700 C) excess heat is not observed in Nickel-Hydrogen systems.

@@ -2,9 +2,9 @@ name: Test and Benchmark
 
 on:
   push:
-    branches: [ main, lenr_sim_app_v0.3.0-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
   pull_request:
-    branches: [ main, lenr_sim_app_v0.3.0-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
   # Allow manual triggering
   workflow_dispatch:
 
@@ -85,47 +85,17 @@ jobs:
           npm run lint
 
       - name: Test frontend
+        env:
+          # Stabilize Jest execution in CI and avoid worker memory spikes.
+          NODE_OPTIONS: --max-old-space-size=4096
         run: |
           cd LENR_SIM_APP_v2/frontend
-          npm test -- --watchAll=false --passWithNoTests
+          npm test -- --watchAll=false --passWithNoTests --runInBand
 
       - name: Build frontend
         env:
-          CI: false
+          CI: true
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
           cd LENR_SIM_APP_v2/frontend
           npm run build
-
-  analyze-benchmarks:
-    needs: test
-    runs-on: ubuntu-latest
-    if: false  # Disabled until compare_benchmarks.py and tests/performance/ are set up in v2
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download previous benchmark results
-      uses: actions/download-artifact@v3
-      with:
-        name: benchmark-results
-        path: previous-benchmarks
-
-    - name: Compare benchmark results
-      run: |
-        python LENR_SIM_APP_v2/backend/scripts/compare_benchmarks.py \
-          --previous previous-benchmarks \
-          --current LENR_SIM_APP_v2/backend/benchmarks \
-          --threshold 10
-
-    - name: Comment benchmark comparison
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          const comparison = fs.readFileSync('benchmark-comparison.md', 'utf8');
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comparison
-          }); 

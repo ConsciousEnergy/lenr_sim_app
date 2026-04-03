@@ -27,8 +27,8 @@ const QuantumTunnelingVisualizer = ({
   const [tunnelingData, setTunnelingData] = useState(null);
   const [calculatedProbability, setCalculatedProbability] = useState(null);
 
-  // Calculate reduced mass for d-d fusion
-  const reducedMass = tunnelingUtils.DEUTERON_MASS / 2;
+  // Calculate reduced mass for d-d fusion (fallback to literal if somehow undefined)
+  const reducedMass = (tunnelingUtils.DEUTERON_MASS || 3.3435837724e-27) / 2;
 
   // Fetch tunneling data from API or calculate locally
   const calculateTunnelingData = useCallback(async () => {
@@ -49,6 +49,8 @@ const QuantumTunnelingVisualizer = ({
           screening_enhancement: electronScreeningFactor,
           material: 'palladium',
           pressure_atm: pressure,
+        }, {
+          suppressErrorLog: true,
         });
         
         // Transform API response to visualization format
@@ -88,7 +90,7 @@ const QuantumTunnelingVisualizer = ({
         console.log('Real physics calculation:', apiData.method, 'P =', apiData.tunneling_probability);
       } catch (apiError) {
         // Fallback to local calculation if API call fails
-        console.warn('API call failed, falling back to local calculation', apiError);
+        void apiError;
         
         // Convert keV to Joules
         const energy = energyKeV * tunnelingUtils.KEV_TO_J;
@@ -256,8 +258,9 @@ const QuantumTunnelingVisualizer = ({
       .attr('text-anchor', 'middle')
       .text('Normalized Value');
     
-    // Draw potential barrier
+    // Draw potential barrier (with NaN filtering)
     const line = d3.line()
+      .defined((d, i) => i < logPositions.length && isFinite(logPositions[i]) && isFinite(d / maxPotential))
       .x((_, i) => xScale(logPositions[i]))
       .y(d => yScale(d / maxPotential));
       

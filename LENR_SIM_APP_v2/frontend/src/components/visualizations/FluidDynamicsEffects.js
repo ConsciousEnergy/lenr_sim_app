@@ -100,7 +100,7 @@ export class FlowLineGenerator {
   /**
    * Generate a streamline from a seed point following a velocity field
    */
-  generateStreamline(seedPoint, velocityField, scene) {
+  generateStreamline(seedPoint, velocityField, _scene) {
     const points = [seedPoint.clone()];
     let currentPoint = seedPoint.clone();
     
@@ -345,7 +345,7 @@ export class EnergyFlowVisualizer {
   /**
    * Update particle positions (call in animation loop)
    */
-  update(deltaTime = 0.016) {
+  update(_deltaTime = 0.016) {
     for (const particle of this.particles) {
       // Advance t parameter
       particle.userData.t += particle.userData.speed;

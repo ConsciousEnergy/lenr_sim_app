@@ -16,6 +16,7 @@ import {
   Tooltip,
   IconButton,
   Collapse,
+  useTheme,
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -120,7 +121,7 @@ const LENR_PARTICLE_TYPES = {
 };
 
 // Combined particle types for backward compatibility
-const PARTICLE_TYPES = FUSION_PARTICLE_TYPES;
+const _PARTICLE_TYPES = FUSION_PARTICLE_TYPES;
 
 // Energy color scale definition
 const ENERGY_SCALE = [
@@ -228,7 +229,7 @@ function EnergyGradientBar() {
 /**
  * Single particle type legend item
  */
-function ParticleTypeItem({ type, info, count }) {
+function ParticleTypeItem({ _type, info, count }) {
   return (
     <Tooltip 
       title={
@@ -536,6 +537,12 @@ function VisualizationLegend({
   variant = 'overlay', // 'overlay' | 'panel' | 'side-drawer'
   simulationType = 'fusion', // 'lenr' | 'fusion'
 }) {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === 'light';
+  const legendBgColor = isLightMode ? 'rgba(255, 255, 255, 0.96)' : 'rgba(0, 0, 0, 0.92)';
+  const legendPrimaryTextColor = isLightMode ? 'text.primary' : 'common.white';
+  const legendSecondaryTextColor = isLightMode ? 'text.secondary' : 'rgba(255,255,255,0.75)';
+
   // Select particle types based on simulation type
   const particleTypes = simulationType === 'lenr' ? LENR_PARTICLE_TYPES : FUSION_PARTICLE_TYPES;
   const [isCollapsed, setIsCollapsed] = React.useState(collapsed);
@@ -608,14 +615,17 @@ function VisualizationLegend({
           <Paper
             elevation={4}
             sx={{
-              bgcolor: 'rgba(0, 0, 0, 0.92)',
-              color: 'text.primary',
+              bgcolor: legendBgColor,
+              color: legendPrimaryTextColor,
               width: 280,
               maxHeight: 'calc(100vh - 200px)',
               borderRadius: '0 8px 8px 0',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
+              '& .MuiTypography-colorTextSecondary': {
+                color: legendSecondaryTextColor,
+              },
             }}
           >
             {/* Header */}
@@ -785,14 +795,17 @@ function VisualizationLegend({
       elevation={variant === 'overlay' ? 4 : 0}
       sx={{
         ...positionStyles,
-        bgcolor: variant === 'overlay' ? 'rgba(0, 0, 0, 0.9)' : 'background.paper',
-        color: 'text.primary',
+        bgcolor: variant === 'overlay' ? legendBgColor : 'background.paper',
+        color: variant === 'overlay' ? legendPrimaryTextColor : 'text.primary',
         minWidth: 220,
         maxWidth: 300,
         maxHeight: 'calc(100vh - 180px)',
         borderRadius: 1,
         display: 'flex',
         flexDirection: 'column',
+        '& .MuiTypography-colorTextSecondary': {
+          color: variant === 'overlay' ? legendSecondaryTextColor : 'text.secondary',
+        },
       }}
     >
       {/* Header */}

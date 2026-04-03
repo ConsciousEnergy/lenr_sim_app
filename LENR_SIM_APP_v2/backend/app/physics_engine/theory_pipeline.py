@@ -23,6 +23,7 @@ from app.physics_engine.theory_protocol import (
     TheoryModule,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR, MILES_HEAT_HELIUM_RATE
+from app.utils.json_safe import to_json_safe
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +54,10 @@ class TheoryPipelineResult:
         expected_he4_rate = self.total_energy_watts * MILES_HEAT_HELIUM_RATE
 
         return {
-            "combined_enhancement": self.combined_enhancement,
-            "combined_reaction_rate_modifier": self.combined_reaction_rate_modifier,
-            "total_energy_watts": self.total_energy_watts,
-            "conditions": self.conditions,
+            "combined_enhancement": float(self.combined_enhancement),
+            "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
+            "total_energy_watts": float(self.total_energy_watts),
+            "conditions": to_json_safe(self.conditions),
             "enabled_theories": self.enabled_theories,
             "validation": {
                 "miles_heat_helium": {
@@ -69,14 +70,14 @@ class TheoryPipelineResult:
                 {
                     "theory_id": c.theory_id,
                     "theory_name": c.theory_name,
-                    "enhancement_factor": c.enhancement_factor,
-                    "reaction_rate_modifier": c.reaction_rate_modifier,
-                    "energy_output_watts": c.energy_output_watts,
-                    "observables": c.observables,
-                    "parameters_used": c.parameters_used,
-                    "is_applicable": c.is_applicable,
-                    "confidence": c.confidence,
-                    "references": c.references,
+                    "enhancement_factor": float(c.enhancement_factor),
+                    "reaction_rate_modifier": float(c.reaction_rate_modifier),
+                    "energy_output_watts": float(c.energy_output_watts),
+                    "observables": to_json_safe(c.observables),
+                    "parameters_used": to_json_safe(c.parameters_used),
+                    "is_applicable": bool(c.is_applicable),
+                    "confidence": float(c.confidence),
+                    "references": list(c.references),
                 }
                 for c in self.contributions
             ],

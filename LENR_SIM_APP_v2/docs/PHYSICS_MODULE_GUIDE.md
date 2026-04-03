@@ -1,6 +1,6 @@
 # Physics Module Developer Guide
 
-**Version:** 0.3.3-beta  
+**Version:** 0.3.5-beta  
 **Last Updated:** February 2026
 
 ---
@@ -100,10 +100,10 @@ This guide provides developers with a comprehensive understanding of the physics
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│               THEORY TESTBED LAYER (v0.3.2-beta) — 19 Modules             │
+│               THEORY TESTBED LAYER (v0.3.5-beta) — 21 Modules             │
 │                                                                             │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │ theory_pipeline.py  — Registry, Runner, Combiner (all 19 theories)    │ │
+│  │ theory_pipeline.py  — Registry, Runner, Combiner (all 21 theories)    │ │
 │  │ theory_protocol.py  — TheoryModule protocol, TheoryContribution       │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 │     │                                                                       │
@@ -120,7 +120,7 @@ This guide provides developers with a comprehensive understanding of the physics
 │                                                                             │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
 │  │ Scoring & Validation                                                   │ │
-│  │  theory_relationships.py — 19-node graph, 70+ edges, property taxonomy │ │
+│  │  theory_relationships/ — 21-node graph, property taxonomy (refactored) │ │
 │  │  theory_scoring.py       — 5-factor Predictive Probability Score       │ │
 │  │  theory_validation.py    — 7 cross-examination checks                  │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
@@ -280,15 +280,87 @@ def simulate_bubble_dynamics(...) -> Dict  # Full Rayleigh-Plesset simulation
 
 ---
 
+#### weak_interaction.py
+**Purpose:** Weak interaction cross-section for neutron formation (p + e⁻ → n + νₑ).
+
+**Key Physics:**
+- Inverse beta decay threshold: **0.782 MeV** (mass difference m_n − m_p − m_e)
+- Cross-section ~**10⁻⁴⁷ m²** at ~1 MeV, following Fermi theory: σ ∝ G_F² E_ν²
+
+**Key Functions:**
+```python
+def calculate_weak_interaction_cross_section(E_nu_eV: float) -> float  # m²
+def calculate_neutron_formation_rate(n_p, n_e, T, sigma=None) -> float  # m⁻³ s⁻¹
+```
+
+**Dependencies:** scipy.constants
+
+---
+
 ### Engine Layer (`backend/app/physics_engine/`)
 
-#### unified_lenr_model.py
-**Purpose:** Main orchestrator integrating all physics mechanisms.
+#### coherence.py
+**Purpose:** Electronic vs nuclear coherence length calculations for LENR.
+
+**Key Physics:**
+- **Electronic coherence** (ξ_e): ~6.6 nm for v_F=10⁶ m/s, ΔE=0.1 eV (electron-mediated effects)
+- **Nuclear coherence** (ξ_D): ~7.2 pm for deuteron thermal v_D~1100 m/s at 300 K (direct nuclear coherence)
+
+**Key Functions:**
+```python
+def calculate_electronic_coherence_length(v_F_m_s, delta_E_eV) -> float  # m
+def calculate_nuclear_coherence_length(v_D_m_s, delta_E_eV) -> float  # m
+def get_deuteron_thermal_velocity(T_K) -> float
+```
+
+**Dependencies:** scipy.constants
+
+---
+
+#### unified_lenr_model/ (package)
+**Purpose:** Refactored from single `unified_lenr_model.py` into a package that orchestrates all physics mechanisms.
+
+**Key Submodules:**
+- `model.py` — Main orchestrator integrating bubble dynamics with lattice interactions
+- `config.py` — Simulation configuration
+- `enhancements.py` — QED, coherence, Casimir, bubble, Rydberg enhancements
+- `screening.py` — Electron screening calculations
+- `cross_sections.py` — Reaction cross-sections
 
 **Key Capabilities:**
 - Combines bubble dynamics with lattice interactions
 - Calculates total enhancement from all mechanisms
 - Provides unified simulation interface
+
+---
+
+#### unified_enhancement/ (package)
+**Purpose:** Refactored from single `unified_enhancement.py` into a package for quantum coherence and nuclear reaction enhancement.
+
+**Key Submodules:**
+- `calculator.py` — Main enhancement calculator with coherence and phonon factors
+- `screening_effects.py` — Screening contributions
+
+**Key Capabilities:**
+- Quantum coherence and collective enhancement effects
+- Screening, tunneling, QED, Casimir contributions
+- Integrates with `coherence.py` for electronic/nuclear coherence lengths
+
+---
+
+#### theory_relationships/ (package)
+**Purpose:** Refactored from single `theory_relationships.py` into a package for theory graph and dependency management.
+
+**Key Submodules:**
+- `graph.py` — Theory dependency graph and topological sort
+- `nodes.py` — Theory node definitions
+- `algorithms.py` — Graph algorithms
+- `defaults.py` — Default relationship data
+
+**Key Capabilities:**
+- 21-node theory graph with directed edges
+- Topological execution order for coupled pipeline mode
+- Property taxonomy for cross-theory validation
 
 ---
 

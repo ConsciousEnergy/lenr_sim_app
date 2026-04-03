@@ -139,8 +139,21 @@ class LatticeParameters:
                 "fermi_energy": 9.7,            # eV
                 "screening_potential": 750.0    # eV (estimate)
             },
+            "lithium": {
+                "lattice_constant": 3.51e-10,   # m (BCC)
+                "electron_density": 4.7e28,     # m^-3
+                "debye_temperature": 344.0,     # K
+                "work_function": 2.9,           # eV
+                "fermi_energy": 4.7,            # eV
+                "screening_potential": 300.0    # eV (Li-H Rydberg matter, estimate)
+            },
         }
-        data = material_data.get(material.lower(), material_data["palladium"])
+        mat_key = (material or "").strip().lower()
+        if mat_key in material_data:
+            data = material_data[mat_key].copy()
+        else:
+            # Generic/custom fallback: use Pd-like structure, work function 5.0 eV
+            data = {**material_data["palladium"], "work_function": 5.0}
         return cls(host_material=material, **data)
 
 
@@ -180,6 +193,11 @@ class BubbleLatticeInteraction:
     KB = const.k
     HBAR = const.hbar
     E_CHARGE = const.e
+    
+    # Van der Waals hard-core limit: maximum compression ratio before
+    # repulsive molecular forces dominate.  Single-bubble sonoluminescence
+    # experiments measure compression ratios up to ~1000.
+    MAX_COMPRESSION_RATIO = 1000
     
     def __init__(
         self, 
@@ -259,19 +277,25 @@ class BubbleLatticeInteraction:
         
         # Find minimum radius (collapse point)
         min_idx = np.argmin(R)
-        R_min = max(R[min_idx], 1e-12)  # Prevent division by zero
+        
+        # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO
+        R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+        R_min = max(R[min_idx], R_min_floor, 1e-12)
         collapse_time = t[min_idx]
         
-        # Calculate peak conditions at collapse
-        # Limit compression ratio to physically reasonable values
-        compression_ratio = min(self.bubble.initial_radius / R_min, 1e6)
+        # Compression ratio is capped by the hard-core limit
+        compression_ratio = min(self.bubble.initial_radius / R_min, self.MAX_COMPRESSION_RATIO)
         
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
-        T_max = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
+        T_max_raw = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
+        # Cap at regime-specific max (sonofusion/single_bubble ~1e4 K)
+        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
+        T_max = min(T_max_raw, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
         
-        # Pressure at collapse
-        P_max = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
+        # Pressure at collapse (capped at 10^10 Pa, consistent with bubble_collapse.py)
+        P_max_raw = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
+        P_max = min(P_max_raw, 1e10)  # ~100 kbar, sonoluminescence regime
         
         # Peak double-layer field
         E_peak = self.bubble.double_layer_field * compression_ratio ** 2
@@ -452,12 +476,13 @@ class BubbleLatticeInteraction:
         sigmoid_value = 1.0 / (1.0 + np.exp(-sigmoid_arg))
         loading_factor = 1.0 + (max_enhancement - 1.0) * sigmoid_value
 
-        # Combined enhancement (multiplicative, capped)
+        # Combined enhancement (multiplicative, capped to theory-level limit)
+        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         total = (screening_factor * phonon_factor * qed_factor * 
                 density_factor * casimir_factor * rydberg_factor * loading_factor)
         
         return {
-            "total": min(total, 1e8),
+            "total": min(total, MAX_ENHANCEMENT_FACTOR),
             "screening": float(screening_factor),
             "phonon": float(phonon_factor),
             "qed": float(qed_factor),
@@ -614,6 +639,7 @@ LATTICE_CONSTANTS = {
     "nickel": 3.52e-10,     # FCC
     "titanium": 2.95e-10,   # HCP (a-axis)
     "platinum": 3.92e-10,   # FCC
+    "lithium": 3.51e-10,    # BCC
 }
 
 

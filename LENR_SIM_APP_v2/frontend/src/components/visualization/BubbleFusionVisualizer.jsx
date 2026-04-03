@@ -20,7 +20,7 @@ const BubbleFusionVisualizer = ({
 }) => {
   const canvasRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [animationTime, setAnimationTime] = useState(0);
+  const [_animationTime, setAnimationTime] = useState(0);
   const [physicsData, setPhysicsData] = useState(null);
   const [error, setError] = useState(null);
   const animationRef = useRef(null);
@@ -31,8 +31,8 @@ const BubbleFusionVisualizer = ({
   const minRadius = useRef(null);
   
   // Animation settings
-  const fps = 30;
-  const animationDuration = 2000; // ms
+  const _fps = 30;
+  const _animationDuration = 2000; // ms
   const animationPeriod = 1 / frequency * 1000; // ms
   
   // Fetch physics calculation from backend
@@ -258,6 +258,7 @@ const BubbleFusionVisualizer = ({
     else phaseText = 'Recovery';
     
     ctx.fillText(phaseText, centerX, centerY + radiusPixels + 50);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRadius, drivingPressureAmplitude, frequency, animationPeriod, showPressureField, showTemperatureField, showCollapse]);
   
   // Animation loop

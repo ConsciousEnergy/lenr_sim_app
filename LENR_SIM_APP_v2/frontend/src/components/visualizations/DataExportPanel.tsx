@@ -48,16 +48,16 @@ const DataExportPanel: React.FC<DataExportPanelProps> = ({
   title = "Export Simulation Data",
   height = 'auto',
   width = '100%',
-  onClose
+  onClose: _onClose
 }) => {
   // Fetch simulation results
-  const { results, isLoading, error, refetchResults } = useSimulationResults(simulationId);
+  const { results, isLoading, error, refetchResults: _refetchResults } = useSimulationResults(simulationId);
   
   // Export state
   const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
   const [selectedDataSeries, setSelectedDataSeries] = useState<string[]>([]);
   const [includeMetadata, setIncludeMetadata] = useState(true);
-  const [timeRange, setTimeRange] = useState<[number, number] | null>(null);
+  const [_timeRange, _setTimeRange] = useState<[number, number] | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);

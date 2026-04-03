@@ -67,7 +67,7 @@ const TheoryPage = () => {
             gutterBottom 
             sx={{ 
               fontWeight: 'bold', 
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              background: 'linear-gradient(90deg, #0d47a1, #1976d2, #4fc3f7, #fff176, #ffb74d, #e65100)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}

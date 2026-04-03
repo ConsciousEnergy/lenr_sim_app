@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Paper, 
@@ -6,9 +6,7 @@ import {
   Grid, 
   Tabs, 
   Tab, 
-  Divider, 
-  IconButton, 
-  Button,
+  IconButton,
   CircularProgress,
   Alert,
   useTheme,

@@ -24,6 +24,7 @@ from ...physics_engine.fluid_dynamics_solver import FluidDynamicsSolver, FluidDy
 from ...models.simulation_models import SimulationParameters, SimulationResponse
 from ...services.simulation_store import SimulationStore
 from ...physics_engine.theory_pipeline import get_default_pipeline
+from ...utils.json_safe import to_json_safe
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -123,6 +124,23 @@ _enhancement_calculator = None
 _lattice_simulator = None
 _fusion_processor = None
 
+def preload_physics_components() -> None:
+    """
+    Eagerly initialize singleton physics components.
+
+    This avoids first-request latency spikes on endpoints that depend on these
+    components (e.g., /api/physics/status, /api/physics/enhancement).
+    """
+    global _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
+
+    if _config is not None:
+        return
+
+    _config = get_config()
+    _enhancement_calculator = UnifiedEnhancementCalculator(_config)
+    _lattice_simulator = LatticeSimulator(_config)
+    _fusion_processor = FusionProcessor(_config)
+
 # Dependency to initialize components
 async def get_physics_components():
     """
@@ -132,11 +150,7 @@ async def get_physics_components():
     global _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
     
     if _config is None:
-        # Default initialization
-        _config = get_config()
-        _enhancement_calculator = UnifiedEnhancementCalculator(_config)
-        _lattice_simulator = LatticeSimulator(_config)
-        _fusion_processor = FusionProcessor(_config)
+        preload_physics_components()
         
     return _config, _enhancement_calculator, _lattice_simulator, _fusion_processor
 
@@ -483,14 +497,14 @@ async def run_single_theory(
         return {
             "theory_id": contribution.theory_id,
             "theory_name": contribution.theory_name,
-            "enhancement_factor": contribution.enhancement_factor,
-            "reaction_rate_modifier": contribution.reaction_rate_modifier,
-            "energy_output_watts": contribution.energy_output_watts,
-            "observables": contribution.observables,
-            "parameters_used": contribution.parameters_used,
-            "is_applicable": contribution.is_applicable,
-            "confidence": contribution.confidence,
-            "references": contribution.references,
+            "enhancement_factor": float(contribution.enhancement_factor),
+            "reaction_rate_modifier": float(contribution.reaction_rate_modifier),
+            "energy_output_watts": float(contribution.energy_output_watts),
+            "observables": to_json_safe(contribution.observables),
+            "parameters_used": to_json_safe(contribution.parameters_used),
+            "is_applicable": bool(contribution.is_applicable),
+            "confidence": float(contribution.confidence),
+            "references": list(contribution.references),
         }
     except KeyError:
         raise HTTPException(

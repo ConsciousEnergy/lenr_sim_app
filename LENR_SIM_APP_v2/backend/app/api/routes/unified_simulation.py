@@ -20,7 +20,10 @@ router = APIRouter(prefix="/unified", tags=["unified-simulation"])
 # Request/Response Models
 class MaterialConfig(BaseModel):
     """Material system configuration"""
-    host_material: str = Field(default="palladium", description="Host material: palladium, nickel, titanium")
+    host_material: str = Field(
+        default="palladium",
+        description="Host material: palladium, nickel, titanium, lithium, or custom (generic fallback)"
+    )
     reactant: str = Field(default="deuterium", description="Reactant: deuterium, hydrogen")
 
 
@@ -144,12 +147,17 @@ async def run_unified_simulation(request: SimulationRequest):
         config = SimulationConfig()
         
         # Set material
-        if request.material.host_material.lower() == "palladium":
+        hm = request.material.host_material.lower()
+        if hm == "palladium":
             config.host_material = MaterialProperties.palladium()
-        elif request.material.host_material.lower() == "nickel":
+        elif hm == "nickel":
             config.host_material = MaterialProperties.nickel()
-        elif request.material.host_material.lower() == "titanium":
+        elif hm == "titanium":
             config.host_material = MaterialProperties.titanium()
+        elif hm == "lithium":
+            config.host_material = MaterialProperties.lithium()
+        else:
+            config.host_material = MaterialProperties.generic(request.material.host_material)
         
         # Set reactant
         if request.material.reactant.lower() == "deuterium":
@@ -248,12 +256,17 @@ async def get_mechanisms(
         config = SimulationConfig()
         
         # Set material
-        if host_material.lower() == "palladium":
+        hm = host_material.lower()
+        if hm == "palladium":
             config.host_material = MaterialProperties.palladium()
-        elif host_material.lower() == "nickel":
+        elif hm == "nickel":
             config.host_material = MaterialProperties.nickel()
-        else:
+        elif hm == "titanium":
             config.host_material = MaterialProperties.titanium()
+        elif hm == "lithium":
+            config.host_material = MaterialProperties.lithium()
+        else:
+            config.host_material = MaterialProperties.generic(host_material)
         
         # Set reactant
         if reactant.lower() == "deuterium":
@@ -533,7 +546,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
       Supports room temperature through high-temperature Ni-H / Rossi-type experiments.
     
     ### Material Configuration (material)
-    - **host_material** (str): "palladium", "nickel", or "titanium"
+    - **host_material** (str): "palladium", "nickel", "titanium", "lithium", or custom (generic fallback)
     - **reactant** (str): "deuterium", "hydrogen", or "proton"
     
     ### Lattice Configuration (lattice)
@@ -628,10 +641,12 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 detail="Surface roughness must be non-negative"
             )
         
-        if request.material.host_material not in ['palladium', 'nickel', 'titanium']:
+        # Accept any host material (palladium, nickel, titanium, lithium use specific props; others use generic fallback)
+        hm = request.material.host_material.strip().lower()
+        if not hm:
             raise HTTPException(
                 status_code=400,
-                detail="Host material must be one of: palladium, nickel, titanium"
+                detail="Host material is required"
             )
         
         if request.material.reactant not in ['deuterium', 'hydrogen', 'proton']:
@@ -644,6 +659,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
         from app.physics_engine.proton_phase_model import ProtonPhaseModel
+        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         
         # Create bubble parameters
         bubble_params = BubbleParameters(
@@ -653,17 +669,27 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             ambient_temperature=request.bubble.ambient_temperature_k
         )
         
-        # Create lattice parameters
+        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback)
+        base = LatticeParameters.for_material(request.material.host_material)
         lattice_params = LatticeParameters(
             host_material=request.material.host_material,
             loading_ratio=request.lattice.loading_ratio,
             defect_density=request.lattice.defect_density,
-            surface_roughness=request.lattice.surface_roughness
+            surface_roughness=request.lattice.surface_roughness,
+            lattice_constant=base.lattice_constant,
+            electron_density=base.electron_density,
+            debye_temperature=base.debye_temperature,
+            work_function=base.work_function,
+            fermi_energy=base.fermi_energy,
+            screening_potential=base.screening_potential,
         )
         
         # Run bubble collapse simulation
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
+        
+        # Clamp peak enhancement to the theory-level cap (constants.py)
+        capped_enhancement = min(collapse_result.enhancement_factor, MAX_ENHANCEMENT_FACTOR)
         
         # Calculate enhancement breakdown at peak conditions
         peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
@@ -672,6 +698,11 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             collapse_result.double_layer_field_peak,
             collapse_result.compression_ratio
         )
+        # Clamp each mechanism and total to the theory cap
+        for key in peak_enhancement_breakdown:
+            peak_enhancement_breakdown[key] = min(
+                peak_enhancement_breakdown[key], MAX_ENHANCEMENT_FACTOR
+            )
         
         # Generate enhancement timeline with breakdown
         import numpy as np
@@ -697,11 +728,17 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["electric_field"],
                 instant["conditions"]["compression"]
             )
+            # Cap timeline enhancement to theory limit
+            capped_instant_enhancement = min(instant["enhancement"], MAX_ENHANCEMENT_FACTOR)
+            capped_instant_breakdown = {
+                k: min(v, MAX_ENHANCEMENT_FACTOR) if isinstance(v, (int, float)) else v
+                for k, v in instant_breakdown.items()
+            }
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
-                "enhancement": sanitize_float(instant["enhancement"], 1.0),
-                "enhancement_breakdown": sanitize_dict(instant_breakdown, 1.0),
+                "enhancement": sanitize_float(capped_instant_enhancement, 1.0),
+                "enhancement_breakdown": sanitize_dict(capped_instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],
                 "radius_factor": sanitize_float(instant["conditions"]["radius_factor"], 1.0),
                 "temperature": sanitize_float(instant["conditions"]["temperature"], 300.0),
@@ -718,7 +755,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "compression_ratio": sanitize_float(collapse_result.compression_ratio, 1.0),
                 "collapse_time_us": sanitize_float(collapse_result.collapse_time * 1e6, 0.0),
                 "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "peak_enhancement": sanitize_float(collapse_result.enhancement_factor, 1.0)
+                "peak_enhancement": sanitize_float(capped_enhancement, 1.0)
             },
             proton_phases=collapse_result.proton_phase_distribution,
             enhancement_timeline=timeline,
@@ -726,7 +763,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
                 "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "enhancement_factor": sanitize_float(collapse_result.enhancement_factor, 1.0),
+                "enhancement_factor": sanitize_float(capped_enhancement, 1.0),
                 "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0)
             }
         )

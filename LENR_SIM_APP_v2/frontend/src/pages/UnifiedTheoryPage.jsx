@@ -6,7 +6,7 @@
  * electrodynamic ionic double-layer collapse onto lattice materials.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -26,36 +26,37 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  LinearProgress
+  LinearProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import InfoIcon from '@mui/icons-material/Info';
 import ScienceIcon from '@mui/icons-material/Science';
 import BoltIcon from '@mui/icons-material/Bolt';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FunctionsIcon from '@mui/icons-material/Functions';
-import SchoolIcon from '@mui/icons-material/School';
 import DownloadIcon from '@mui/icons-material/Download';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';
 import SaveIcon from '@mui/icons-material/Save';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
 
 // Import new unified visualization
 import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { API_BASE_URL } from '../config/api';
+import { usePhysics } from '../contexts/PhysicsContext';
+import { resolveApiUrl } from '../config/api';
 import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
 
-// API base URL
-const API_BASE = API_BASE_URL;
+const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
 
 // System presets
 const SYSTEM_PRESETS = {
@@ -103,6 +104,81 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+  },
+  pd_h: {
+    name: 'Palladium-Hydrogen',
+    description: 'Piantelli early work, Arata-lighter isotope testing',
+    hostMaterial: 'palladium',
+    reactant: 'hydrogen',
+    temperature: 350,
+    loadingRatio: 0.85,
+    initialBubbleRadius: 3.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  ni_d: {
+    name: 'Nickel-Deuterium',
+    description: 'Hybrid approach',
+    hostMaterial: 'nickel',
+    reactant: 'deuterium',
+    temperature: 500,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 2.5,
+    drivingPressure: 2.0,
+    frequency: 25,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  li_h: {
+    name: 'Lithium-Hydrogen',
+    description: 'Holmlid, Unified Gravity Corp-Rydberg matter',
+    hostMaterial: 'lithium',
+    reactant: 'hydrogen',
+    temperature: 600,
+    loadingRatio: 0.8,
+    initialBubbleRadius: 2.5,
+    drivingPressure: 2.0,
+    frequency: 25,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+  },
+  zro2_pd: {
+    name: 'ZrO2-Pd',
+    description: 'Swartz nanostructured palladium in ZrO2 matrix',
+    hostMaterial: 'palladium',
+    reactant: 'deuterium',
+    temperature: 300,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 2.0,
+    drivingPressure: 1.8,
+    frequency: 30,
+    defectDensity: 1e17,
+    surfaceRoughness: 8e-9,
+    grainSize: 20e-9,
+    numCycles: 2,
+  },
+  custom: {
+    name: 'Custom Configuration',
+    description: 'User-defined host/reactant-unlocks all parameter sliders for free-form experimentation',
+    hostMaterial: 'palladium',
+    reactant: 'deuterium',
+    temperature: 400,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 3.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
   }
 };
 
@@ -114,12 +190,31 @@ const PHASE_COLORS = {
   nuclear: '#ff4500'
 };
 
+// Tab param to index mapping (tab order: 0=3D Viz, 1=Timeline, 2=Proton Phases, 3=Results, 4=Theory Testbed, 5=Theory)
+const TAB_PARAM_MAP = {
+  tunneling: 4,
+  screening: 4,
+  casimir: 4,
+  fusion: 4,
+  reactions: 4,
+  'bubble-dynamics': 0,
+  visualization: 0,
+  timeline: 1,
+  phases: 2,
+  results: 3,
+  testbed: 4,
+  theory: 5,
+};
+
 // Enhancement thresholds for LENR activity
 const ENHANCEMENT_THRESHOLDS = {
-  observable: 1e10,      // Observable excess heat (10^10)
-  measurable: 1e5,       // Measurable nuclear products
-  screening: 1e2,        // Significant electron screening
+  observable: 1e5,      // Observable excess heat (10^5)
+  measurable: 1e3,       // Measurable nuclear products
+  screening: 1e1,        // Significant electron screening
 };
+
+// Regime max temperatures (K) from physics/bubble_collapse: single_bubble~1e4
+const REGIME_MAX_TEMPERATURE_K = 1e4;
 
 /**
  * Enhancement Progress Indicator Component
@@ -199,7 +294,7 @@ function EnhancementIndicator({ simulationData, parameters }) {
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
-          Enhancement Factor — {enhancementMetrics.material.toUpperCase()}-{enhancementMetrics.reactant.charAt(0).toUpperCase()}
+          Enhancement Factor - {enhancementMetrics.material.toUpperCase()}-{enhancementMetrics.reactant.charAt(0).toUpperCase()}
         </Typography>
         <Chip 
           label={getStatusLabel(enhancementMetrics.status)} 
@@ -231,12 +326,12 @@ function EnhancementIndicator({ simulationData, parameters }) {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, gap: 2, flexWrap: 'wrap' }}>
         <Tooltip title="Peak enhancement factor achieved during bubble collapse">
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Peak: {enhancementMetrics.peakEnhancement.toExponential(2)}×
+            Peak: {enhancementMetrics.peakEnhancement.toExponential(2)}x
           </Typography>
         </Tooltip>
         <Tooltip title="Threshold for observable excess heat production">
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Threshold: {enhancementMetrics.threshold.toExponential(0)}×
+            Threshold: {enhancementMetrics.threshold.toExponential(0)}x
           </Typography>
         </Tooltip>
       </Box>
@@ -265,12 +360,30 @@ function EnhancementIndicator({ simulationData, parameters }) {
 }
 
 function UnifiedTheoryPage() {
+  const [searchParams] = useSearchParams();
+  const { setSimulationResult } = usePhysics();
   // State management
   const [selectedSystem, setSelectedSystem] = useState('pd_d');
   const [parameters, setParameters] = useState(SYSTEM_PRESETS.pd_d);
   const [simulationData, setSimulationData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Sync active tab and system from URL params on mount and when searchParams change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') || searchParams.get('focus');
+    if (tabParam) {
+      const idx = TAB_PARAM_MAP[tabParam.toLowerCase()];
+      if (typeof idx === 'number' && idx >= 0 && idx <= 5) {
+        setActiveTab(idx);
+      }
+    }
+    const systemParam = searchParams.get('system');
+    if (systemParam && SYSTEM_PRESETS[systemParam]) {
+      setSelectedSystem(systemParam);
+      setParameters(SYSTEM_PRESETS[systemParam]);
+    }
+  }, [searchParams]);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
@@ -360,36 +473,38 @@ function UnifiedTheoryPage() {
         throw new Error('Frequency must be between 1 and 100 kHz');
       }
       
-      // Try real physics API
-      const apiUrl = `${API_BASE}/api/unified/bubble-lattice`;
-      
+      // Try real physics API via canonical endpoint (dev proxy / explicit prod base)
+      const apiUrl = resolveApiUrl(BUBBLE_LATTICE_ENDPOINT);
+      const requestPayload = {
+        bubble: {
+          initial_radius_um: parameters.initialBubbleRadius * 3.33,
+          driving_pressure_bar: parameters.drivingPressure,
+          frequency_khz: parameters.frequency,
+          ambient_temperature_k: parameters.temperature
+        },
+        material: {
+          host_material: parameters.hostMaterial,
+          reactant: parameters.reactant
+        },
+        lattice: {
+          loading_ratio: parameters.loadingRatio,
+          defect_density: parameters.defectDensity || 1e16,
+          surface_roughness: parameters.surfaceRoughness || 5e-9,
+          grain_size: parameters.grainSize || 50e-9
+        },
+        num_cycles: parameters.numCycles || 2
+      };
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bubble: {
-            initial_radius_um: parameters.initialBubbleRadius * 3.33,
-            driving_pressure_bar: parameters.drivingPressure,
-            frequency_khz: parameters.frequency,
-            ambient_temperature_k: parameters.temperature
-          },
-          material: {
-            host_material: parameters.hostMaterial,
-            reactant: parameters.reactant
-          },
-          lattice: {
-            loading_ratio: parameters.loadingRatio,
-            defect_density: parameters.defectDensity || 1e16,
-            surface_roughness: parameters.surfaceRoughness || 5e-9,
-            grain_size: parameters.grainSize || 50e-9
-          },
-          num_cycles: parameters.numCycles || 2
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (response.ok) {
         const data = await response.json();
         setSimulationData(data);
+        setSimulationResult(data);
         setAlertMessage('Simulation completed with real physics calculations');
         setAlertSeverity('success');
       } else {
@@ -397,7 +512,11 @@ function UnifiedTheoryPage() {
         let errorMessage;
         let errorType = 'api_error';
         
-        if (response.status === 404) {
+        if (response.status === 405) {
+          const allowHeader = response.headers.get('Allow');
+          errorMessage = `Method Not Allowed (405). Endpoint: ${apiUrl}. Allow: ${allowHeader || 'unknown'}.`;
+          errorType = 'method_not_allowed';
+        } else if (response.status === 404) {
           errorMessage = 'API endpoint not found (404). The backend may need to be updated.';
           errorType = 'endpoint_not_found';
         } else if (response.status === 500) {
@@ -416,6 +535,7 @@ function UnifiedTheoryPage() {
           } catch {
             errorMessage = `API error: ${response.status} ${response.statusText}`;
           }
+          errorMessage = `${errorMessage} (endpoint: ${apiUrl})`;
         }
         throw new Error(`[${errorType}] ${errorMessage}`);
       }
@@ -437,6 +557,7 @@ function UnifiedTheoryPage() {
       try {
         const mockData = generateLocalResults(parameters);
         setSimulationData(mockData);
+        setSimulationResult(mockData);
         
         // Provide specific user-friendly messages based on error type
         if (isConnectionRefused || isNetworkError) {
@@ -450,6 +571,9 @@ function UnifiedTheoryPage() {
           setAlertSeverity('info');
         } else if (errorMessage.includes('server_error')) {
           setAlertMessage('Backend calculation error. Using local fallback calculations.');
+          setAlertSeverity('warning');
+        } else if (errorMessage.includes('method_not_allowed')) {
+          setAlertMessage(`Backend route mismatch (405). Check backend restart and route mount. ${errorMessage.replace(/\[.*?\]\s*/, '')}`);
           setAlertSeverity('warning');
         } else if (errorMessage.includes('validation_error')) {
           setAlertMessage('Parameter validation failed. Please check your inputs.');
@@ -468,7 +592,7 @@ function UnifiedTheoryPage() {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters]);
+  }, [parameters, setSimulationResult]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {
@@ -519,11 +643,13 @@ function UnifiedTheoryPage() {
       });
     }
     
+    const rawTempK = params.temperature * compressionRatio ** 1.2;
+    const cappedTempK = Math.min(rawTempK, REGIME_MAX_TEMPERATURE_K);
     return {
       success: true,
       collapse_results: {
         min_radius_um: params.initialBubbleRadius * 0.15 * 3.33,
-        max_temperature_k: params.temperature * compressionRatio ** 1.2,
+        max_temperature_k: cappedTempK,
         max_pressure_bar: 101.325 * compressionRatio ** 4,
         compression_ratio: compressionRatio,
         peak_enhancement: baseEnhancement * tempFactor
@@ -536,7 +662,7 @@ function UnifiedTheoryPage() {
       },
       enhancement_timeline: timeline,
       peak_conditions: {
-        temperature_k: params.temperature * compressionRatio ** 1.2,
+        temperature_k: cappedTempK,
         pressure_gpa: 0.1 * compressionRatio ** 4,
         enhancement_factor: baseEnhancement * tempFactor
       }
@@ -805,6 +931,38 @@ function UnifiedTheoryPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {SYSTEM_PRESETS[selectedSystem].description}
         </Typography>
+
+        {/* Custom preset: host/reactant selectors */}
+        {selectedSystem === 'custom' && (
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Host Material</InputLabel>
+              <Select
+                value={parameters.hostMaterial}
+                label="Host Material"
+                onChange={(e) => handleParameterChange('hostMaterial', e.target.value)}
+                disabled={isLoading}
+              >
+                <MenuItem value="palladium">Palladium</MenuItem>
+                <MenuItem value="nickel">Nickel</MenuItem>
+                <MenuItem value="titanium">Titanium</MenuItem>
+                <MenuItem value="lithium">Lithium</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Reactant</InputLabel>
+              <Select
+                value={parameters.reactant}
+                label="Reactant"
+                onChange={(e) => handleParameterChange('reactant', e.target.value)}
+                disabled={isLoading}
+              >
+                <MenuItem value="deuterium">Deuterium</MenuItem>
+                <MenuItem value="hydrogen">Hydrogen</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        )}
       </Paper>
 
       <Grid container spacing={3}>
@@ -823,14 +981,14 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.loadingRatio}
                 onChange={(_, v) => handleParameterChange('loadingRatio', v)}
-                min={0.5}
+                min={selectedSystem === 'custom' ? 0 : 0.5}
                 max={1.0}
                 step={0.05}
                 marks={[{value: 0.9, label: '0.9'}]}
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.loadingRatio > 0.9 ? '↑ Higher enhancement expected' : 'Loading affects reaction sites'}
+                {parameters.loadingRatio > 0.9 ? '  Higher enhancement expected' : 'Loading affects reaction sites'}
               </Typography>
             </Box>
 
@@ -844,13 +1002,13 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.temperature}
                 onChange={(_, v) => handleParameterChange('temperature', v)}
-                min={200}
-                max={800}
+                min={selectedSystem === 'custom' ? 100 : 200}
+                max={selectedSystem === 'custom' ? 2000 : 800}
                 step={10}
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.temperature > 400 ? '↑ Affects screening length & enhancement' : 'Lower temp = longer screening length'}
+                {parameters.temperature > 400 ? '  Affects screening length & enhancement' : 'Lower temp = longer screening length'}
               </Typography>
             </Box>
 
@@ -864,13 +1022,13 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.drivingPressure}
                 onChange={(_, v) => handleParameterChange('drivingPressure', v)}
-                min={0.5}
-                max={5.0}
+                min={selectedSystem === 'custom' ? 0.1 : 0.5}
+                max={selectedSystem === 'custom' ? 10 : 5.0}
                 step={0.1}
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.drivingPressure > 2.0 ? '↑ Faster collapse, higher compression' : 'Controls bubble collapse rate'}
+                {parameters.drivingPressure > 2.0 ? '  Faster collapse, higher compression' : 'Controls bubble collapse rate'}
               </Typography>
             </Box>
 
@@ -887,8 +1045,8 @@ function UnifiedTheoryPage() {
               <Slider
                 value={parameters.frequency}
                 onChange={(_, v) => handleParameterChange('frequency', v)}
-                min={5}
-                max={50}
+                min={selectedSystem === 'custom' ? 1 : 5}
+                max={selectedSystem === 'custom' ? 100 : 50}
                 step={1}
                 disabled={isLoading}
               />
@@ -921,7 +1079,7 @@ function UnifiedTheoryPage() {
                 {/* Defect Density */}
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Defect Density: {(parameters.defectDensity || 1e16).toExponential(0)} m⁻³
+                    Defect Density: {(parameters.defectDensity || 1e16).toExponential(0)} m^-3
                   </Typography>
                   <Slider
                     value={Math.log10(parameters.defectDensity || 1e16)}
@@ -1148,7 +1306,7 @@ function UnifiedTheoryPage() {
                     <LineChart data={getEnhancementChartData()}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="time" />
-                      <YAxis yAxisId="left" label={{ value: 'log₁₀(Enhancement)', angle: -90, position: 'insideLeft' }} />
+                      <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
                       <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
                       <RechartsTooltip />
                       <Legend />
@@ -1196,7 +1354,7 @@ function UnifiedTheoryPage() {
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography>
+                      <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography><Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Proton phases influenced by delocalized interface electrons at lattice-electrolyte boundaries.</Typography>
                       <Divider sx={{ mb: 2 }} />
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {simulationData.proton_phases && Object.entries(simulationData.proton_phases).map(([phase, fraction]) => (
@@ -1250,7 +1408,7 @@ function UnifiedTheoryPage() {
                           <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                               <Typography variant="body2" color="text.secondary">
-                                Log₁₀ scale visualization of mechanism contributions
+                                Log10 scale visualization of mechanism contributions
                               </Typography>
                               <Chip 
                                 label={`Total: ${totalEnhancement.toExponential(2)}`} 
@@ -1264,7 +1422,7 @@ function UnifiedTheoryPage() {
                                 <XAxis 
                                   type="number" 
                                   domain={[0, 'auto']}
-                                  label={{ value: 'Log₁₀(Enhancement)', position: 'bottom', offset: -5 }}
+                                  label={{ value: 'Log10(Enhancement)', position: 'bottom', offset: -5 }}
                                 />
                                 <YAxis type="category" dataKey="name" width={75} />
                                 <RechartsTooltip 
@@ -1300,7 +1458,7 @@ function UnifiedTheoryPage() {
                     <Alert severity="info">
                       <Typography variant="body2">
                         The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
-                        Protons transition through force regimes: <strong>EM → Screened → Weak Capture → Nuclear</strong>.
+                        Protons transition through force regimes: <strong>EM  ->  Screened  ->  Weak Capture  ->  Nuclear</strong>.
                         Peak enhancement occurs at minimum bubble radius when compression maximizes field strength.
                       </Typography>
                     </Alert>

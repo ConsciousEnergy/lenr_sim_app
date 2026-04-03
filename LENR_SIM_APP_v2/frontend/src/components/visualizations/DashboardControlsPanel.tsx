@@ -42,8 +42,8 @@ interface FilterSettings {
 interface DashboardControlsPanelProps {
   simulationId: string | null;
   title?: string;
-  onFilterChange?: (filters: FilterSettings) => void;
-  onVisualizationTypeChange?: (type: 'energy' | 'temperature' | 'reaction_rate') => void;
+  onFilterChange?: (_filters: FilterSettings) => void;
+  onVisualizationTypeChange?: (_type: 'energy' | 'temperature' | 'reaction_rate') => void;
   onRefresh?: () => void;
   height?: number | string;
   width?: number | string;
@@ -55,6 +55,20 @@ interface DashboardControlsPanelProps {
  * Provides controls for filtering and customizing the physics simulation dashboard.
  * Allows users to filter by date, status, energy range, and more.
  */
+
+// Static default filter settings (outside component to avoid recreation on every render)
+const DEFAULT_FILTERS: FilterSettings = {
+  status: ['running', 'completed'],
+  energyRange: [0, 100],
+  temperatureRange: [0, 1000],
+  reactionRate: [0, 1],
+  showRealTimeUpdates: true,
+  searchTerm: '',
+  visualizationType: 'energy',
+  autoRefresh: true,
+  refreshInterval: 5
+};
+
 const DashboardControlsPanel: React.FC<DashboardControlsPanelProps> = ({
   simulationId,
   title = "Dashboard Controls",
@@ -65,23 +79,10 @@ const DashboardControlsPanel: React.FC<DashboardControlsPanelProps> = ({
   width = '100%'
 }) => {
   // Fetch simulation status to show current data
-  const { status, isLoading } = useSimulationStatus(simulationId);
-  
-  // Default filter settings
-  const defaultFilters: FilterSettings = {
-    status: ['running', 'completed'],
-    energyRange: [0, 100],
-    temperatureRange: [0, 1000],
-    reactionRate: [0, 1],
-    showRealTimeUpdates: true,
-    searchTerm: '',
-    visualizationType: 'energy',
-    autoRefresh: true,
-    refreshInterval: 5
-  };
+  const { status: _status, isLoading } = useSimulationStatus(simulationId);
   
   // Filter state
-  const [filters, setFilters] = useState<FilterSettings>(defaultFilters);
+  const [filters, setFilters] = useState<FilterSettings>(DEFAULT_FILTERS);
   
   // Expanded sections state
   const [expandedSections, setExpandedSections] = useState({
@@ -105,12 +106,12 @@ const DashboardControlsPanel: React.FC<DashboardControlsPanelProps> = ({
   
   // Reset filters to default
   const handleResetFilters = useCallback(() => {
-    setFilters(defaultFilters);
+    setFilters(DEFAULT_FILTERS);
     
     if (onFilterChange) {
-      onFilterChange(defaultFilters);
+      onFilterChange(DEFAULT_FILTERS);
     }
-  }, [onFilterChange, defaultFilters]);
+  }, [onFilterChange]);
   
   // Handle visualization type change
   const handleVisualizationTypeChange = useCallback((event: SelectChangeEvent) => {

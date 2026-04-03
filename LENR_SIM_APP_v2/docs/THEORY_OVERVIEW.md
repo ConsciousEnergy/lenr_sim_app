@@ -1,6 +1,6 @@
 # Unified LENR Theory Overview
 
-**Version**: 0.3.3-beta  
+**Version**: 0.3.5-beta  
 **Last Updated**: February 2026
 
 ---
@@ -10,6 +10,8 @@
 The Unified LENR (Low Energy Nuclear Reaction) Theory provides a comprehensive theoretical framework that integrates quantum mechanics, nuclear physics, and condensed matter phenomena to explain how nuclear reactions can occur at low energies in metal lattices loaded with hydrogen or deuterium.
 
 This document provides an accessible overview of the unified framework. For detailed mathematical derivations and technical implementation, see the [Unified Bubble-Lattice Simulation Documentation](UNIFIED_BUBBLE_LATTICE_SIMULATION.md).
+
+For computational flow visualization provenance (VPFM-inspired phase-flow methodology and citations), see the attribution section in the [Unified Bubble-Lattice Simulation Documentation](UNIFIED_BUBBLE_LATTICE_SIMULATION.md#flow-visualization-methodology-and-attribution).
 
 ---
 
@@ -241,7 +243,7 @@ For detailed mathematical derivations, see:
 - [Paper Corrections Applied](../../docs/PAPER_CORRECTIONS_APPLIED.md)
 
 Key equations are implemented in:
-- `backend/app/physics_engine/unified_lenr_model.py` -- Central simulation model
+- `backend/app/physics_engine/unified_lenr_model/` -- Central simulation model (refactored package)
 - `backend/app/physics_engine/theory_pipeline.py` -- Theory Testbed orchestrator (v0.3.0)
 - `backend/app/physics_engine/theories/` -- Pluggable theory modules (v0.3.0)
 - `backend/app/physics_engine/theories/bubble_mhd_confinement.py` -- Full MHD nano-confinement (v0.3.0.1)
@@ -263,9 +265,9 @@ For comprehensive MHD physics documentation, see:
 
 ---
 
-## Complete Theory Module Inventory (v0.3.2-beta)
+## Complete Theory Module Inventory (v0.3.5-beta)
 
-The simulation platform now includes **19 independently testable theory modules**, all implementing the `TheoryModule` protocol for composable pipeline execution.
+The simulation platform now includes **21 independently testable theory modules**, all implementing the `TheoryModule` protocol for composable pipeline execution.
 
 ### Existing Modules (1–7)
 
@@ -308,7 +310,7 @@ The simulation platform now includes **19 independently testable theory modules*
 
 ### Theory Scoring and Validation
 
-All 19 theories are scored using a 5-factor Predictive Probability Score:
+All 21 theories are scored using a 5-factor Predictive Probability Score:
 - **Physical consistency** (25%): Conservation laws, no NaN/Inf, sensible enhancement
 - **Experimental agreement** (25%): Miles correlation, He-4 production, no radiation
 - **Parameter sensitivity** (15%): Robustness to ±10% parameter variation

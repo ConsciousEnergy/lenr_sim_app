@@ -77,6 +77,7 @@ class VortexFlowRenderer {
       fieldLinesEnabled: options.fieldLinesEnabled !== false,
       maxVorticity: options.maxVorticity || 10.0,
       particleSize: options.particleSize || 0.08,
+      latticeSurfaceY: options.latticeSurfaceY ?? -3.5,
       ...options
     };
     
@@ -219,6 +220,7 @@ class VortexFlowRenderer {
     
     const isCollapsing = phase === 'COLLAPSE' || phase === 'MINIMUM';
     const isRebounding = phase === 'REBOUND';
+    const swirlDirection = isRebounding ? -1 : 1;
     
     // Compute maximum vorticity for color scaling
     let maxVorticity = 0;
@@ -260,14 +262,16 @@ class VortexFlowRenderer {
         // Tangential force (spiral motion)
         const tangent = new THREE.Vector3(-direction.z, 0, direction.x).normalize();
         const spiralStrength = 0.02 * compressionRatio / (distance + 0.1);
-        tangentialForce = tangent.multiplyScalar(spiralStrength);
+        tangentialForce = tangent.multiplyScalar(spiralStrength * swirlDirection);
         
         // Vorticity stretching (intensification)
         const stretchFactor = 1 + 0.1 * compressionRatio * dt;
         particle.vorticity.multiplyScalar(stretchFactor);
       } else if (isRebounding) {
         // Outward push during rebound
-        radialForce = direction.clone().multiplyScalar(-0.02);
+        radialForce = direction.clone().multiplyScalar(-0.03);
+        const tangent = new THREE.Vector3(-direction.z, 0, direction.x).normalize();
+        tangentialForce = tangent.multiplyScalar(0.015 * swirlDirection);
         particle.vorticity.multiplyScalar(0.95); // Decay
       } else {
         // Random walk during expansion/recovery
@@ -289,6 +293,14 @@ class VortexFlowRenderer {
       
       // Update position
       particle.position.add(particle.velocity.clone().multiplyScalar(dt * 60));
+
+      // Treat lattice topological surface as solid.
+      if (particle.position.y < this.options.latticeSurfaceY) {
+        particle.position.y = this.options.latticeSurfaceY;
+        if (particle.velocity.y < 0) {
+          particle.velocity.y *= -0.35;
+        }
+      }
       
       // Update trail
       particle.updateTrail();
@@ -364,6 +376,7 @@ class VortexFlowRenderer {
   
   _updateFieldLines(compressionRatio, phase) {
     const isCollapsing = phase === 'COLLAPSE' || phase === 'MINIMUM';
+    const rotationSign = phase === 'REBOUND' ? -1 : 1;
     
     this.fieldLines.forEach((fieldLine, i) => {
       // Compress field lines toward center during collapse
@@ -371,7 +384,7 @@ class VortexFlowRenderer {
       fieldLine.scale.set(scale, 1, scale);
       
       // Rotate slowly
-      fieldLine.rotation.y += 0.01;
+      fieldLine.rotation.y += 0.01 * rotationSign;
       
       // Pulse opacity
       const opacity = 0.2 + 0.2 * Math.sin(this.time * 5 + i * 0.5);

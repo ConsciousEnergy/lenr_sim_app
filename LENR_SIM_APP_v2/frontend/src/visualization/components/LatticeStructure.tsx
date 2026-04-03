@@ -20,7 +20,7 @@ export type LatticeData = {
 export type VisualizationMode = 'wireframe' | 'solid' | 'points';
 
 // Define a type for a color mapping function
-export type ColorMapFunction = (value: number, min: number, max: number) => THREE.Color;
+export type ColorMapFunction = (_value: number, _min: number, _max: number) => THREE.Color;
 
 interface LatticeStructureProps {
   width?: number;
@@ -29,7 +29,7 @@ interface LatticeStructureProps {
   mode?: VisualizationMode;
   highlightEnergy?: boolean;
   showUnitCell?: boolean;
-  onSceneReady?: (scene: THREE.Scene) => void;
+  onSceneReady?: (_scene: THREE.Scene) => void;
   colorMapFunction?: ColorMapFunction;
   optimizationLevel?: 'none' | 'low' | 'medium' | 'high';
 }

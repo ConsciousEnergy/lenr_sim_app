@@ -1,8 +1,7 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Box, Typography } from '@mui/material';
-import * as THREE from 'three';
-import { colorMaps, ColorMap } from '../utils/colorMaps';
+import { colorMaps } from '../utils/colorMaps';
 
 // Styled components
 const LegendContainer = styled(Box)(({ theme }) => ({

@@ -3,7 +3,7 @@
 **Advanced modeling and visualization of Low Energy Nuclear Reactions**
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-0.3.5--beta-blue.svg)]()
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
@@ -29,7 +29,7 @@ This will start both:
 
 ---
 
-## 📊 Project Status (November 9, 2025)
+## 📊 Project Status (February 2026)
 
 ### ✅ **App is Running Successfully**
 
@@ -269,7 +269,7 @@ REACT_APP_MOCK_DELAY=500
 
 ---
 
-## 📝 Recent Updates (November 9, 2025)
+## 📝 Recent Updates (February 2026)
 
 ### ✅ Completed
 - UI/UX improvements (readable chips, clean navigation)

@@ -448,7 +448,7 @@ class TestUnifiedEnhancementCalculator:
             lattice_constant=3.89e-10
         )
         
-        assert result == 1.0  # Default fallback
+        assert result == 1.0  # Default fallback (returns enhancement, xi_e_nm, xi_D_pm)
     
     def test_screening_contribution_error_handling(self, calculator: UnifiedEnhancementCalculator):
         """Test screening contribution handles errors gracefully."""
@@ -458,7 +458,7 @@ class TestUnifiedEnhancementCalculator:
             electron_density=0.0
         )
         
-        assert result == 1.0  # Default fallback
+        assert result == 1.0  # Default fallback (returns enhancement, xi_e_nm, xi_D_pm)
     
     def test_qed_contribution_error_handling(self, calculator: UnifiedEnhancementCalculator):
         """Test QED contribution handles errors gracefully."""
@@ -467,7 +467,7 @@ class TestUnifiedEnhancementCalculator:
             temperature=0.0
         )
         
-        assert result == 1.0  # Default fallback
+        assert result == 1.0  # Default fallback (returns enhancement, xi_e_nm, xi_D_pm)
     
     def test_casimir_contribution_error_handling(self, calculator: UnifiedEnhancementCalculator):
         """Test Casimir contribution handles errors gracefully."""
@@ -476,7 +476,7 @@ class TestUnifiedEnhancementCalculator:
             temperature=300.0
         )
         
-        assert result == 1.0  # Default fallback
+        assert result == 1.0  # Default fallback (returns enhancement, xi_e_nm, xi_D_pm)
     
     def test_coherence_contribution_error_handling(self, calculator: UnifiedEnhancementCalculator):
         """Test coherence contribution handles errors gracefully."""
@@ -485,7 +485,7 @@ class TestUnifiedEnhancementCalculator:
             lattice_constant=0.0
         )
         
-        assert result == 1.0  # Default fallback
+        assert result[0] == 1.0  # Default fallback (returns enhancement, xi_e_nm, xi_D_pm)
 
 
 class TestEffectiveBarrierCalculation:

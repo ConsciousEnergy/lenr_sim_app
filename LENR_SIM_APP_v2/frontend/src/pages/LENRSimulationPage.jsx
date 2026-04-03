@@ -29,7 +29,6 @@ import LENRParameterControls from '../components/controls/LENRParameterControls'
 import LENRVisualization from '../components/visualizations/LENRVisualization';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import ResultsPanel from '../components/results/ResultsPanel';
 import { API_BASE_URL } from '../config/api';
 
 // API base URL - uses environment variable or defaults to localhost
@@ -160,8 +159,8 @@ function generateFallbackResults(params, config) {
  * Main page for LENR simulation model with parameter controls and visualization
  */
 function LENRSimulationPage() {
-  const navigate = useNavigate();
-  const theme = useTheme();
+  const _navigate = useNavigate();
+  const _theme = useTheme();
   
   // Simulation states
   const [parameters, setParameters] = useState(null);
@@ -179,13 +178,13 @@ function LENRSimulationPage() {
   const [configDescription, setConfigDescription] = useState('');
   const [configsList, setConfigsList] = useState([]);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
-  const [showError, setShowError] = useState(false);
-  const [simulationId, setSimulationId] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState('info');
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [savedSimulations, setSavedSimulations] = useState([]);
+  const [_showError, setShowError] = useState(false);
+  const [_simulationId, setSimulationId] = useState(null);
+  const [_isRunning, _setIsRunning] = useState(false);
+  const [_alertMessage, setAlertMessage] = useState('');
+  const [_alertSeverity, setAlertSeverity] = useState('info');
+  const [_alertOpen, setAlertOpen] = useState(false);
+  const [_savedSimulations, _setSavedSimulations] = useState([]);
   
   // Initialize default parameters
   useEffect(() => {

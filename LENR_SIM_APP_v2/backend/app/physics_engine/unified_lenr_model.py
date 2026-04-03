@@ -498,73 +498,183 @@ class UnifiedLENRModel:
     
     def _calculate_qed_enhancement(self) -> EnhancementResult:
         """
-        Calculate double-layer QED field enhancement.
-        
-        From paper Section 2.3:
-        E = ΔV/d can reach 10^8 V/m in nanoscale double layers.
+        Calculate double-layer field-assisted barrier suppression enhancement.
+
+        Distinguishes two mechanisms per paper Section 2.3:
+        1. Barrier suppression (dominant at E ~ 10^8 V/m): Field lowers effective
+           Coulomb barrier via Delta V = e E d, increasing tunneling probability.
+        2. Vacuum polarization: Uses Schwinger limit E_cr ~ 1.3e18 V/m; negligible
+           at double-layer fields (E/E_cr)^2 ~ 10^-20.
+
+        The implementation models barrier suppression only; vacuum polarization
+        is negligible at LENR-relevant field strengths.
         """
-        # Electric field from configuration
         E_field = self.config.electric_field
-        
-        # Double layer contribution (estimate based on surface properties)
-        d_layer = self.config.surface_roughness  # Approximate double layer thickness
-        delta_V = 0.1  # Typical potential drop across layer (V)
-        
-        E_double_layer = delta_V / max(d_layer, 1e-10)
+
+        # Double-layer contribution: E = Delta V / d
+        d_layer = max(self.config.surface_roughness, 1e-10)
+        delta_V = 0.1  # V, typical potential drop across layer
+        E_double_layer = delta_V / d_layer
         E_total = E_field + E_double_layer
-        
-        # QED field enhancement to tunneling
-        # Enhancement scales with field strength
-        E_critical = 1e8  # V/m, characteristic field
-        enhancement = 1 + (E_total / E_critical)**2
+
+        # Barrier suppression: Delta V = e * E * d_eff (effective barrier lowering)
+        # d_eff: screening/barrier width in condensed matter ~ 0.1-1 nm
+        d_eff = min(d_layer, 1e-9)  # m
+        delta_V_j = self.E_CHARGE * E_total * d_eff
+        delta_V_ev = delta_V_j / self.E_CHARGE  # eV
+
+        # Enhancement from barrier lowering: increases effective energy for Gamow factor
+        # f = exp(pi * eta * Delta_V / (E_thermal + Delta_V)) for stability
+        E_thermal_ev = 1.5 * self.KB * self.config.temperature / self.E_CHARGE
+        E_thermal_ev = max(E_thermal_ev, 0.001)
+
+        Z1 = Z2 = self.config.reactant.atomic_number
+        m_reduced = self.config.reactant.atomic_mass * const.u / 2
+        eta = Z1 * Z2 * self.ALPHA * np.sqrt(
+            m_reduced * self.C**2 / (2 * E_thermal_ev * self.E_CHARGE)
+        )
+
+        exp_arg = np.pi * eta * delta_V_ev / (E_thermal_ev + delta_V_ev)
+        enhancement = np.exp(min(exp_arg, 50.0))  # Cap exponent for numerical stability
         enhancement = min(enhancement, 1e4)
-        
-        # Threshold: E > 10^8 V/m
+
+        # Vacuum polarization (for reference; negligible at E << E_cr)
+        E_cr = 1.3e18  # V/m, Schwinger critical field
+        eps_eff = 1 + (2 * self.ALPHA / (45 * np.pi)) * (E_total / E_cr) ** 2
+
         threshold_met = E_total > 1e8
-        
+
         return EnhancementResult(
-            name="Double-Layer QED",
+            name="Double-Layer Barrier Suppression",
             value=enhancement,
             threshold_met=threshold_met,
-            equation="E = ΔV/d",
-            parameters={"E_field_V_m": E_total, "d_nm": d_layer * 1e9},
-            category="primary"
+            equation="f = exp(pi*eta*DeltaV/(E+DeltaV)), DeltaV=eEd",
+            parameters={
+                "E_field_V_m": E_total,
+                "d_nm": d_layer * 1e9,
+                "delta_V_eV": delta_V_ev,
+                "eps_vacuum_polarization": eps_eff,
+            },
+            category="primary",
         )
     
+    def _calculate_phonon_nuclear_params(self) -> Dict[str, float]:
+        """
+        Compute phonon-nuclear coupling parameters per paper Section 2.8.1.
+
+        g_ph-nuc = (d V_nuclear / du) * sqrt(hbar / (2 M omega_ph))
+        Gamma_transfer = (2 pi / hbar) |g_ph-nuc|^2 rho(omega) n_ph(omega)
+        P_multi-phonon propto (g_ph-nuc / (hbar omega_ph))^N, N = delta_E / (hbar omega_ph)
+        """
+        T = self.config.temperature
+        T_debye = self.config.host_material.debye_temperature
+        M = self.config.reactant.atomic_mass * const.u  # kg
+        omega_ph = 1e13  # rad/s, optical phonon in Pd-D
+        dV_du = 5.0  # eV/AA, lattice strain effect on nuclear potential (1-10 range)
+
+        # g_ph-nuc in eV/AA
+        g_ph_nuc_ev_aa = dV_du * np.sqrt(
+            self.HBAR / (2 * M * omega_ph)
+        ) * (1e10 / self.E_CHARGE)  # convert sqrt(J) to eV/AA
+        g_ph_nuc_si = g_ph_nuc_ev_aa * self.E_CHARGE / 1e10  # J/m
+
+        hbar_omega_ph_ev = self.HBAR * omega_ph / self.E_CHARGE  # ~0.066 eV
+        n_ph = 1.0 / (np.exp(hbar_omega_ph_ev * self.E_CHARGE / (self.KB * T)) - 1)
+        n_ph = max(n_ph, 1e-10)
+
+        # Simplified Debye DOS: rho(omega) ~ 3 omega^2 / omega_D^3
+        omega_D = self.KB * T_debye / self.HBAR
+        rho_omega = 3.0 * omega_ph**2 / (omega_D**3) if omega_D > 0 else 0
+
+        Gamma_transfer = (2 * np.pi / self.HBAR) * (g_ph_nuc_si**2) * rho_omega * n_ph
+
+        # Multi-phonon probability for sub-barrier assist (delta_E ~ 1 eV scale)
+        delta_E_ev = 1.0  # eV, typical assist energy
+        N_phonons = min(delta_E_ev / hbar_omega_ph_ev, 20.0)
+        x_sq = min((g_ph_nuc_ev_aa / hbar_omega_ph_ev) ** 2, 10.0)
+        P_multi = min(1.0, (x_sq**min(int(N_phonons), 10)) / 1e6)
+        P_multi = max(P_multi, 1e-10)
+
+        return {
+            "g_ph_nuc_eV_aa": g_ph_nuc_ev_aa,
+            "hbar_omega_ph_eV": hbar_omega_ph_ev,
+            "n_ph": n_ph,
+            "Gamma_transfer": Gamma_transfer,
+            "P_multi_phonon": P_multi,
+            "N_phonons_assist": N_phonons,
+        }
+
+    def _coherence_length_nm(self) -> float:
+        """
+        Quantum coherence length xi = hbar * v_F / delta_E (paper Section 2.5.1).
+
+        v_F ~ 10^6 m/s (Pd, Ni); delta_E ~ 0.1-1 eV (LENR energy scale).
+        """
+        v_F = 1e6  # m/s
+        delta_E_ev = 0.5
+        delta_E_J = delta_E_ev * self.E_CHARGE
+        xi_m = self.HBAR * v_F / delta_E_J
+        return xi_m * 1e9
+
+    def _max_coherent_sites_from_xi(self) -> int:
+        """
+        Max coherent sites such that cluster size <= coherence length xi.
+
+        Cluster dimension ~ lattice_constant * sqrt(N); N_max = (xi / a)^2.
+        """
+        xi_nm = self._coherence_length_nm()
+        a_nm = self.config.host_material.lattice_constant * 1e9
+        if a_nm <= 0:
+            return 16
+        N_max = int((xi_nm / a_nm) ** 2)
+        return max(1, min(N_max, 256))
+
     def _calculate_coherence_enhancement(self) -> EnhancementResult:
         """
-        Calculate quantum coherence/multi-body tunneling enhancement.
-        
-        From paper Section 2.5 and Takahashi's TSC model:
-        Coherent tunneling in lattice sites increases probability.
+        Quantum coherence and multi-body tunneling with phonon-nuclear coupling.
+
+        From paper Section 2.5 (Takahashi TSC) and 2.8.1 (phonon-nuclear coupling):
+        - Coherent sites limited by coherence length xi = hbar v_F / delta_E
+        - Phonon enhancement from g_ph-nuc, Gamma_transfer, P_multi-phonon
         """
         T = self.config.temperature
         T_debye = self.config.host_material.debye_temperature
         loading = self.config.loading_ratio
-        
-        # Number of coherent sites (simplified model)
-        # Higher loading and lower T increase coherence
+
+        pparams = self._calculate_phonon_nuclear_params()
+        g_ph = pparams["g_ph_nuc_eV_aa"]
+        hw_ph = pparams["hbar_omega_ph_eV"]
+        n_ph = pparams["n_ph"]
+        x = g_ph / hw_ph
+        phonon_factor = 1.0 + min(x * np.sqrt(n_ph), 5.0)
+
         coherence_factor = loading * np.exp(-T / T_debye)
-        n_sites = max(1, int(4 * coherence_factor))  # Tetrahedral cluster
-        
-        # Enhancement from coherent multi-body tunneling
-        # Scales as √N for N coherent sites (simplified)
-        enhancement = np.sqrt(n_sites)
-        
-        # Additional coherence from phonon coupling
-        phonon_factor = 1 + 0.5 * np.exp(-T / (0.5 * T_debye))
-        enhancement *= phonon_factor
-        
-        # Threshold: loading ratio > 0.9
+        n_sites_raw = max(1, int(4 * coherence_factor))
+
+        n_sites_max = self._max_coherent_sites_from_xi()
+        n_sites = min(n_sites_raw, n_sites_max)
+
+        enhancement = np.sqrt(n_sites) * phonon_factor
+        enhancement = max(1.0, min(enhancement, 1e3))
+
         threshold_met = loading > 0.9
-        
+
+        xi_nm = self._coherence_length_nm()
+        params = {
+            "n_sites": n_sites,
+            "n_sites_max_xi": n_sites_max,
+            "loading_ratio": loading,
+            "xi_coherence_nm": xi_nm,
+            "g_ph_nuc_eV_aa": pparams["g_ph_nuc_eV_aa"],
+            "Gamma_transfer": pparams["Gamma_transfer"],
+        }
         return EnhancementResult(
             name="Quantum Coherence",
             value=enhancement,
             threshold_met=threshold_met,
-            equation="f = √N × f_phonon",
-            parameters={"n_sites": n_sites, "loading_ratio": loading},
-            category="primary"
+            equation="f = sqrt(N) * (1 + (g/hw)*sqrt(n_ph)), N <= (xi/a)^2",
+            parameters=params,
+            category="primary",
         )
     
     def _calculate_casimir_enhancement(self) -> EnhancementResult:
@@ -602,40 +712,62 @@ class UnifiedLENRModel:
     
     def _calculate_bubble_enhancement(self) -> EnhancementResult:
         """
-        Calculate bubble collapse enhancement.
-        
-        From paper Section 3.2 (Rayleigh-Plesset dynamics):
-        Bubble collapse can create local T > 10^5 K and P > 1 GPa.
+        Bubble collapse enhancement via modified Rayleigh-Plesset solver.
+
+        Paper Section 3.2:
+        R*R̈ + (3/2)*Ṙ² = (1/ρ)(P_bubble - P_∞ - 2σ/R - 4μṘ/R + ε₀E²/2)
+
+        Uses numerical solver for transient T and P; enhancement from
+        temperature and pressure at maximum compression.
         """
+        from app.physics_engine.bubble_solver import (
+            get_bubble_enhancement_from_solver,
+        )
+
         P = self.config.pressure
         T = self.config.temperature
-        
-        # Simplified bubble collapse model
-        # Maximum compression ratio
-        P_ambient = 101325  # Pa
-        compression_ratio = (P / P_ambient)**(1/3) if P > P_ambient else 1
-        
-        # Temperature spike during collapse (simplified)
-        T_collapse = T * compression_ratio**2
-        
-        # Enhancement from transient high-energy conditions
-        if T_collapse > 1000:  # Significant heating
-            enhancement = 1 + np.log10(T_collapse / T)
+        E_field = self.config.electric_field
+        P_ambient = 101325.0  # Pa
+
+        R0 = 10e-6  # m, typical electrolytic bubble
+        t_collapse = 1e-6  # s
+
+        try:
+            result = get_bubble_enhancement_from_solver(
+                R0=R0,
+                t_collapse=t_collapse,
+                E_field=E_field,
+                T0=T,
+                P_inf=P,
+            )
+            T_collapse = result["T_collapse_K"]
+            P_collapse = result["P_collapse_Pa"]
+            compression_ratio = result["compression_ratio"]
+        except Exception:
+            compression_ratio = (P / P_ambient) ** (1 / 3) if P > P_ambient else 1.0
+            T_collapse = T * compression_ratio**2
+            P_collapse = P * compression_ratio**3
+
+        if T_collapse > 1000:
+            enhancement = 1 + np.log10(max(1, T_collapse / T))
         else:
             enhancement = 1.0
-        
-        enhancement = max(1, min(enhancement, 50))
-        
-        # Threshold: pressure-induced collapse possible
+
+        enhancement = max(1.0, min(enhancement, 50.0))
+
         threshold_met = P > 5 * P_ambient
-        
+
         return EnhancementResult(
             name="Bubble Collapse",
             value=enhancement,
             threshold_met=threshold_met,
-            equation="R R̈ + 3/2 Ṙ² = (P_b - P_∞)/ρ",
-            parameters={"T_collapse_K": T_collapse, "compression": compression_ratio},
-            category="secondary"
+            equation="R R̈ + 3/2 Ṙ² = (P_b - P_∞)/ρ - 2σ/R - 4μṘ/R + ε₀E²/2",
+            parameters={
+                "T_collapse_K": T_collapse,
+                "P_collapse_Pa": P_collapse,
+                "compression": compression_ratio,
+            },
+            category="secondary",
         )
     
     def _calculate_rydberg_enhancement(self) -> EnhancementResult:
@@ -739,24 +871,92 @@ class UnifiedLENRModel:
         
         return min(P_enhanced, 1.0)
     
+    def _sigma_from_s_factor(
+        self, E_keV: float, Z1: int, Z2: int, mu_kg: float, S_keV_b: float
+    ) -> float:
+        """
+        Cross-section from astrophysical S-factor: sigma(E) = (S(E)/E) * exp(-sqrt(E_G/E)).
+
+        E_G = 2*mu*(Z1*Z2*e^2/hbar)^2; S in keV·b, returns sigma in m².
+        """
+        E_J = E_keV * 1e3 * self.E_CHARGE
+        E_G_J = (
+            2
+            * mu_kg
+            * (Z1 * Z2 * self.E_CHARGE**2 / (4 * np.pi * self.EPS0 * self.HBAR)) ** 2
+        )
+        E_G_keV = E_G_J / (1e3 * self.E_CHARGE)
+        if E_keV <= 0:
+            return 0.0
+        S_b = S_keV_b * 1e-3  # keV·b -> MeV·b; use S directly in keV·b
+        sigma_b = (S_keV_b / E_keV) * np.exp(-np.sqrt(E_G_keV / E_keV))
+        return sigma_b * 1e-28  # barns -> m²
+
+    def _thermal_avg_sigma_v(
+        self, T: float, Z1: int, Z2: int, mu_kg: float, S_keV_b: float
+    ) -> float:
+        """
+        Thermally averaged <sigma*v> using Gamow peak approximation.
+
+        E0 = (E_G * (k_B T/2)^2)^(1/3); <sigma*v> ~ sigma(E0) * v_thermal * (E0/(k_B T))^(1/3).
+        """
+        E_thermal_J = 1.5 * self.KB * T
+        E_thermal_keV = E_thermal_J / (1e3 * self.E_CHARGE)
+        E_G_J = (
+            2
+            * mu_kg
+            * (Z1 * Z2 * self.E_CHARGE**2 / (4 * np.pi * self.EPS0 * self.HBAR)) ** 2
+        )
+        E_G_keV = E_G_J / (1e3 * self.E_CHARGE)
+        E0_keV = (E_G_keV * (0.5 * E_thermal_keV) ** 2) ** (1.0 / 3.0)
+        E0_keV = max(E0_keV, 0.001)
+        sigma_at_E0 = self._sigma_from_s_factor(E0_keV, Z1, Z2, mu_kg, S_keV_b)
+        v_thermal = np.sqrt(8 * self.KB * T / (np.pi * mu_kg))
+        tau = 3 * E0_keV / (self.KB * T / (1e3 * self.E_CHARGE))
+        return sigma_at_E0 * v_thermal * (2 / np.sqrt(tau)) * np.exp(-tau / 3)
+
     def _calculate_reaction_rate(self, tunneling_prob: float) -> float:
-        """Calculate fusion reaction rate."""
-        # Number density of reactants
-        n_host = self.config.host_material.electron_density / self.config.host_material.atomic_number
+        """
+        Fusion reaction rate using astrophysical S-factor formulation.
+
+        R = n1 * n2 * <sigma*v>_thermal * f_enhancement
+        with sigma(E) = S(E)/E * exp(-sqrt(E_G/E)).
+        """
+        n_host = (
+            self.config.host_material.electron_density
+            / self.config.host_material.atomic_number
+        )
         n_reactant = n_host * self.config.loading_ratio
-        
-        # Thermal velocity
+
         T = self.config.temperature
         m = self.config.reactant.atomic_mass * const.u
-        v_thermal = np.sqrt(8 * self.KB * T / (np.pi * m))
-        
-        # Nuclear cross section (simplified)
-        sigma_nuclear = 1e-28  # m²
-        
-        # Reaction rate: R = n₁ × n₂ × σ × v × P_tunnel
-        rate = 0.5 * n_reactant**2 * sigma_nuclear * v_thermal * tunneling_prob
-        
-        return rate
+        mu_kg = m / 2
+        Z1 = Z2 = self.config.reactant.atomic_number
+
+        # Astrophysical S-factor (keV·b): D+D ~ 55, p+p ~ 4e-22 (very low)
+        if self.config.reactant.name == "Deuterium":
+            S_keV_b = 55.0
+        elif self.config.reactant.name == "Hydrogen":
+            S_keV_b = 4e-22
+        else:
+            S_keV_b = 10.0
+
+        sigma_v = self._thermal_avg_sigma_v(T, Z1, Z2, mu_kg, S_keV_b)
+
+        # f_enhancement encodes screening, coherence, etc. via tunneling_prob
+        # tunneling_prob = P_gamow * enhancement; use enhancement = tunneling_prob / P_gamow
+        # For rate: R = 0.5 * n^2 * <sigma*v> * (tunneling_enhancement_factor)
+        # The tunneling_prob passed in is P_gamow * total_enhancement; base rate uses <sigma*v>
+        # which already includes Gamow. So enhancement multiplies the rate.
+        eta = Z1 * Z2 * self.ALPHA * np.sqrt(
+            mu_kg * self.C**2 / (2 * 1.5 * self.KB * T)
+        )
+        P_gamow = np.exp(-2 * np.pi * eta)
+        P_gamow = max(P_gamow, 1e-100)
+        enhancement = tunneling_prob / P_gamow
+
+        rate = 0.5 * n_reactant**2 * sigma_v * enhancement
+        return max(rate, 0.0)
     
     def _calculate_excess_heat(self, reaction_rate: float) -> float:
         """Calculate excess heat production."""

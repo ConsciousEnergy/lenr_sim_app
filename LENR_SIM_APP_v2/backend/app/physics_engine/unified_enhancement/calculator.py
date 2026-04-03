@@ -1,5 +1,6 @@
 """
-Enhanced Unified Quantum Effect Calculator for LENR Simulation v2
+UnifiedEnhancementCalculator - main class.
+Refactored from unified_enhancement.py. for LENR Simulation v2
 Implements comprehensive quantum tunneling, electron screening, QED effects,
 quantum coherence, and nuclear reaction enhancement calculations based on
 the advanced Unified LENR Theory. Includes spatial calculation capabilities.
@@ -14,7 +15,12 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 
 # Import the grid class
-from .common.grid import SimulationGrid
+from ..common.grid import SimulationGrid
+from ..coherence import (
+    calculate_electronic_coherence_length,
+    calculate_nuclear_coherence_length,
+    get_deuteron_thermal_velocity,
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -558,7 +564,7 @@ class UnifiedEnhancementCalculator:
                 screening_f = self._calculate_screening_contribution(local_temp, local_density)
                 qed_f = self._calculate_qed_contribution(local_density, local_temp)
                 casimir_f = self._calculate_casimir_contribution(lattice_constant, local_temp) # Uses global lattice const for now
-                coherence_f = self._calculate_coherence_contribution(local_temp, lattice_constant) # Uses global lattice const for now
+                coherence_f, _, _ = self._calculate_coherence_contribution(local_temp, lattice_constant, coherence_type='nuclear') # Uses global lattice const for now
                 
                 # Combine factors (using geometric mean approach like in original total)
                 factors = [f for f in [tunneling_f, screening_f, qed_f, casimir_f, coherence_f] if f > 0]
@@ -582,8 +588,13 @@ class UnifiedEnhancementCalculator:
                  total_enhancement_grid[index] = 1.0 # Default on cell error
 
         # Return dictionary of result grids
+        # Coherence observables (from global conditions)
+        xi_e_nm = calculate_electronic_coherence_length(1e6, 0.1) * 1e9
+        xi_D_pm = calculate_nuclear_coherence_length(get_deuteron_thermal_velocity(np.mean(temp_grid) if hasattr(temp_grid, '__len__') else 300), 0.1) * 1e12
         return {
             "total_enhancement_grid": total_enhancement_grid,
+            "xi_e_nm": xi_e_nm,
+            "xi_D_pm": xi_D_pm,
             # "screening_grid": screening_grid, # Uncomment if storing individual factors
             # ... etc ...
         }
@@ -683,22 +694,33 @@ class UnifiedEnhancementCalculator:
              logger.error(f"Error in Casimir calculation: {e}", exc_info=True)
              return 1.0
 
-    def _calculate_coherence_contribution(self, temperature: float, lattice_constant: float) -> float:
-        """ Calculates the coherence-related component of enhancement. """
+    def _calculate_coherence_contribution(
+        self, temperature: float, lattice_constant: float, coherence_type: str = "nuclear"
+    ) -> Tuple[float, Optional[float], Optional[float]]:
+        """ Calculates the coherence-related component of enhancement.
+        coherence_type: 'electronic' uses xi_e; 'nuclear' uses xi_D. Returns (enhancement, xi_e_nm, xi_D_pm). """
         try:
-             if temperature <= 0 or lattice_constant <= 0: return 1.0
-             m_d = self.config.get("constants", {}).get("m_d", 2.01410177811 * constants.atomic_mass)
-             thermal_wavelength_d = np.sqrt(2 * np.pi * self.hbar**2 / (m_d * self.kb * temperature))
-             coherence_length = thermal_wavelength_d * self.config.get("coherence_factor", 0.5)
+             if temperature <= 0 or lattice_constant <= 0: return 1.0, None, None
+             xi_e_nm, xi_D_pm = None, None
+             if coherence_type == "nuclear":
+                 v_D = get_deuteron_thermal_velocity(temperature)
+                 delta_E_eV = 0.1
+                 coherence_length = calculate_nuclear_coherence_length(v_D, delta_E_eV)
+                 xi_D_pm = coherence_length * 1e12
+             else:
+                 v_F = 1e6
+                 delta_E_eV = 0.1
+                 coherence_length = calculate_electronic_coherence_length(v_F, delta_E_eV)
+                 xi_e_nm = coherence_length * 1e9
              volume_ratio = (coherence_length / lattice_constant)**3
              n_coherent = min(100, max(1.0, volume_ratio)) if volume_ratio > 0 else 1.0
              coherence_enhancement = np.sqrt(n_coherent)
              temp_factor = 1 + np.exp(-temperature / 500)
              total_enhancement = coherence_enhancement * temp_factor
-             return max(1.0, total_enhancement)
+             return max(1.0, total_enhancement), xi_e_nm, xi_D_pm
         except Exception as e:
              logger.error(f"Error in coherence calculation: {e}", exc_info=True)
-             return 1.0
+             return 1.0, None, None
 
     # --- Keep Original Non-Spatial Method (Optional) ---
     # Can be used if grid is not provided or for comparison
@@ -721,7 +743,7 @@ class UnifiedEnhancementCalculator:
         screening_res = self._calculate_screening_contribution(temperature, electron_density)
         qed_res = self._calculate_qed_contribution(electron_density, temperature)
         casimir_res = self._calculate_casimir_contribution(lattice_constant, temperature)
-        coherence_res = self._calculate_coherence_contribution(temperature, lattice_constant)
+        coherence_res, xi_e_nm_coh, xi_D_pm_coh = self._calculate_coherence_contribution(temperature, lattice_constant, coherence_type='nuclear')
         
         # Combine factors
         factors = [f for f in [tunneling_res, screening_res, qed_res, casimir_res, coherence_res] if f > 0]
@@ -733,16 +755,21 @@ class UnifiedEnhancementCalculator:
         else:
             total_factor = 1.0
 
+        # Coherence lengths for observables
+        xi_e_nm = calculate_electronic_coherence_length(1e6, 0.1) * 1e9
+        xi_D_pm = calculate_nuclear_coherence_length(get_deuteron_thermal_velocity(temperature), 0.1) * 1e12
         return {
-            "total_enhancement": max(1.0, total_factor), # Renamed key slightly for clarity
-            "factors": { # Provide individual factors
+            "total_enhancement": max(1.0, total_factor),
+            "factors": {
                  "tunneling": tunneling_res,
                  "screening": screening_res,
                  "qed": qed_res,
                  "casimir": casimir_res,
                  "coherence": coherence_res
             },
-            "metadata": { # Metadata about inputs used
+            "xi_e_nm": xi_e_nm,
+            "xi_D_pm": xi_D_pm,
+            "metadata": {
                 "temperature": temperature,
                 "electron_density": electron_density,
                 "electric_field": electric_field,

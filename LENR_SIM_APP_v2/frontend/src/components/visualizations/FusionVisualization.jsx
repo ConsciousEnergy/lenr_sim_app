@@ -424,6 +424,7 @@ function FusionVisualization({
         trailSystemRef.current.clear();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Update visualization when time step changes

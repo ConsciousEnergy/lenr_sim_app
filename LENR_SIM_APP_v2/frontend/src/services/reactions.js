@@ -216,7 +216,7 @@ const simulateTestResults = (reaction) => {
   // In a real implementation, this would call a backend API
   
   // Calculate total input/output Z and A
-  const inputZ = reaction.reactant1_z + reaction.reactant2_z;
+  const _inputZ = reaction.reactant1_z + reaction.reactant2_z;
   const inputA = reaction.reactant1_a + reaction.reactant2_a;
   
   // Calculate Coulomb barrier (approximation)
@@ -331,8 +331,8 @@ const generateDetailedTestResults = async (reaction, params) => {
     duration,
     initialEnergy,
     confinementTime,
-    magneticField,
-    plasmaVolume,
+    magneticField: _magneticField,
+    plasmaVolume: _plasmaVolume,
     parameterSweep,
     sweepParameter,
     sweepStart,

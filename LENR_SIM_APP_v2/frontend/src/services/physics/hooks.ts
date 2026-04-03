@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PhysicsDataStreamService, ConnectionStatus, SubscriptionOptions, ParameterUpdate } from './dataStreamService';
+import { PhysicsDataStreamService, ConnectionStatus, SubscriptionOptions } from './dataStreamService';
 import {
   SimulationUpdateMessage,
   ParameterUpdateMessage,

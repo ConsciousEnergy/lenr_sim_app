@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, Typography, Container, Select, MenuItem, FormControl, InputLabel, Paper, Button, Alert, SelectChangeEvent, Grid } from '@mui/material';
+import { Box, Typography, Container, Select, MenuItem, FormControl, InputLabel, Paper, Button, Alert, SelectChangeEvent } from '@mui/material';
 import { PhysicsSimulationDashboard } from '../components/dashboards';
 import { simulationApi } from '../api/simulation';
 

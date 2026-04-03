@@ -24,7 +24,7 @@ import {
   alpha
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { APP_VERSION } from '../config/version';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';

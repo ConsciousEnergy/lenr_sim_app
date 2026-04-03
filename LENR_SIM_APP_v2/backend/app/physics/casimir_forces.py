@@ -16,6 +16,9 @@ from app.utils.logging import setup_logger
 # Set up logger
 logger = setup_logger("casimir_forces", "logs/simulation.log")
 
+# Domain-of-validity threshold: ideal Casimir formula breaks down below ~2 nm
+DOMAIN_VALIDITY_THRESHOLD_M = 2e-9
+
 def calculate_casimir_force(
     distance: float,
     area: float,
@@ -68,18 +71,55 @@ def calculate_casimir_force(
         casimir_force = casimir_force_zero * correction_factor
     
     # Material properties correction
-    # The original Casimir formula assumes perfect conductors
-    # For real materials, we need a correction factor
-    r1 = (permittivity1 - 1) / (permittivity1 + 1)
-    r2 = (permittivity2 - 1) / (permittivity2 + 1)
-    material_factor = r1 * r2  # Simplified correction
-    
+    # The original Casimir formula assumes perfect conductors (epsilon -> infinity).
+    # Default permittivity 1.0 is treated as ideal conductors, not vacuum.
+    # For vacuum (both 1.0), skip material correction so we get standard ~1.3 mN.
+    # For real materials, use Lifshitz-style correction r1*r2.
+    if permittivity1 == 1.0 and permittivity2 == 1.0:
+        material_factor = 1.0  # Ideal conductors (standard Casimir formula)
+    else:
+        r1 = (permittivity1 - 1) / (permittivity1 + 1)
+        r2 = (permittivity2 - 1) / (permittivity2 + 1)
+        material_factor = r1 * r2  # Simplified correction for real materials
+
     # Apply material correction
     casimir_force *= material_factor
     
     logger.debug(f"Calculated Casimir force of {casimir_force:.2e} N at d={distance*1e9:.2f} nm")
     
     return casimir_force
+
+def calculate_casimir_force_with_metadata(
+    distance: float,
+    area: float,
+    temperature: float = 300.0,
+    permittivity1: float = 1.0,
+    permittivity2: float = 1.0,
+    permeability1: float = 1.0,
+    permeability2: float = 1.0,
+    plasma_frequency: float | None = 1.37e16,
+) -> Dict[str, Any]:
+    """Calculate Casimir force with domain-of-validity metadata."""
+    domain_valid = distance >= DOMAIN_VALIDITY_THRESHOLD_M
+    warning = ""
+    if not domain_valid:
+        warning = (
+            "At d<2nm ideal Casimir formula is at edge of validity: surface roughness, "
+            "finite plasma frequency, and continuum mode approximation break down. "
+            "Value is order-of-magnitude estimate."
+        )
+    force_N = calculate_casimir_force(
+        distance, area, temperature,
+        permittivity1, permittivity2, permeability1, permeability2
+    )
+    if plasma_frequency is not None and plasma_frequency > 0:
+        lifshitz = lifshitz_finite_conductivity_correction(
+            distance, plasma_frequency=plasma_frequency, temperature=temperature
+        )
+        force_N *= lifshitz["correction_ratio"]
+    return {"force_N": force_N, "domain_valid": domain_valid, "warning": warning}
+
+
 
 def calculate_casimir_energy(
     distance: float,
@@ -114,11 +154,14 @@ def calculate_casimir_energy(
     # E = -π²ħc A / (720 d³)
     casimir_energy = -np.pi**2 * hbar * c * area / (720 * distance**3)
     
-    # Material properties correction (simplified)
-    r1 = (permittivity1 - 1) / (permittivity1 + 1)
-    r2 = (permittivity2 - 1) / (permittivity2 + 1)
-    material_factor = r1 * r2
-    
+    # Material properties correction (ideal conductors when both 1.0)
+    if permittivity1 == 1.0 and permittivity2 == 1.0:
+        material_factor = 1.0
+    else:
+        r1 = (permittivity1 - 1) / (permittivity1 + 1)
+        r2 = (permittivity2 - 1) / (permittivity2 + 1)
+        material_factor = r1 * r2
+
     # Apply material correction
     casimir_energy *= material_factor
     
@@ -163,11 +206,14 @@ def calculate_casimir_pressure(
     # P = -π²ħc / (240 d⁴)
     casimir_pressure = -np.pi**2 * hbar * c / (240 * distance**4)
     
-    # Material properties correction (simplified)
-    r1 = (permittivity1 - 1) / (permittivity1 + 1)
-    r2 = (permittivity2 - 1) / (permittivity2 + 1)
-    material_factor = r1 * r2
-    
+    # Material properties correction (ideal conductors when both 1.0)
+    if permittivity1 == 1.0 and permittivity2 == 1.0:
+        material_factor = 1.0
+    else:
+        r1 = (permittivity1 - 1) / (permittivity1 + 1)
+        r2 = (permittivity2 - 1) / (permittivity2 + 1)
+        material_factor = r1 * r2
+
     # Apply material correction
     casimir_pressure *= material_factor
     
@@ -199,10 +245,11 @@ def area_constant(permittivity1: float, permittivity2: float) -> float:
     Returns:
         Area constant (dimensionless)
     """
-    # Simplified model for real materials
+    # Ideal conductors (both 1.0) -> r1=r2=1, return pi^2/4
+    if permittivity1 == 1.0 and permittivity2 == 1.0:
+        return np.pi**2 / 4
     r1 = (permittivity1 - 1) / (permittivity1 + 1)
     r2 = (permittivity2 - 1) / (permittivity2 + 1)
-    
     return np.pi**2 / 4 * r1 * r2
 
 def calculate_casimir_force_sphere_plate(

@@ -1,6 +1,6 @@
 # Unified Bubble-Lattice LENR Simulation
 
-**Version**: 0.3.2-beta  
+**Version**: 0.3.5-beta  
 **Date**: February 2026  
 **Feature Branch**: lenr_sim_app_v0.3.0.0-beta
 
@@ -17,6 +17,14 @@ The Unified Bubble-Lattice LENR Simulation is a comprehensive 3D visualization a
 - **Proton Phase Transitions** through force regimes (EM → Weak → Strong)
 - **Real-time Enhancement Calculations** based on theoretical physics
 - **Time-series Analysis** of collapse events and enhancement factors
+
+### Flow Visualization Methodology and Attribution
+
+The interactive flow layer in the Unified Theory visualization is **informed by** vortex-particle flow-map concepts (phase-dependent advection, swirl evolution, and reversal bursts). In this release, we use a lightweight in-app approximation calibrated to LENR phase timing (`EXPANSION`, `COLLAPSE`, `MINIMUM`, `REBOUND`, `RECOVERY`) rather than a direct port of the research code.
+
+References:
+- VPFM repository: <https://github.com/pfm-gatech/VPFM>
+- VPFM paper: <https://arxiv.org/pdf/2505.21946>
 
 ---
 

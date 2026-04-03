@@ -38,6 +38,13 @@ except ImportError as e:
     print(f"Warning: Could not import theory_physics_router: {e}")
     theory_physics_router = None
 
+# Import docs router (serve markdown from project docs)
+try:
+    from .api.routes.docs_routes import router as docs_router
+except ImportError as e:
+    print(f"Warning: Could not import docs_router: {e}")
+    docs_router = None
+
 # Import database manager (v0.2.3-beta)
 from .core.database import db_manager, get_database_url
 
@@ -72,6 +79,7 @@ except ImportError:
 
 # Import custom OpenAPI configuration - using relative imports
 from .api.openapi import custom_openapi
+from .api.routes.physics import preload_physics_components
 
 # Set up loggers (JSON format in production for log aggregation)
 app_logger = setup_logger(
@@ -178,6 +186,13 @@ async def lifespan(app: FastAPI):
         # Initial cleanup
         expired = remove_expired_items()
         app_logger.info(f"Initial cache cleanup: {expired} expired items removed")
+
+    # Preload heavy physics singletons during startup to reduce first-request latency.
+    try:
+        preload_physics_components()
+        app_logger.info("Physics components preloaded successfully")
+    except Exception as e:
+        app_logger.warning(f"Physics preload skipped: {e}")
     
     # Initialize database (v0.2.3-beta) with retry for Docker Swarm
     try:
@@ -227,6 +242,7 @@ async def lifespan(app: FastAPI):
     app_logger.info("Application shutting down...")
 
 # Initialize FastAPI app
+# redirect_slashes=False avoids 307 redirects that can cause 405 when POST follows redirect
 app = FastAPI(
     title=settings.APP_NAME,
     description="API for Low Energy Nuclear Reaction simulations",
@@ -235,6 +251,7 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
+    redirect_slashes=False,
 )
 
 # Set custom OpenAPI schema generator
@@ -356,6 +373,14 @@ if theory_physics_router:
         app_logger.info("Theory testbed router included successfully")
     except Exception as e:
         app_logger.error(f"Failed to include theory testbed router: {e}")
+
+# Docs router (markdown from project docs)
+if docs_router:
+    try:
+        app.include_router(docs_router, prefix="/api", tags=["Docs"])
+        app_logger.info("Docs router included successfully")
+    except Exception as e:
+        app_logger.error(f"Failed to include docs router: {e}")
 
 # Unified simulation router
 if unified_simulation_router:

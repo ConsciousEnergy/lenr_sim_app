@@ -64,10 +64,10 @@ export interface PhysicsContextType {
   isConnected: boolean;
   isSimulating: boolean;
   parameters: Record<string, number | string>;
-  setParameters: (params: Record<string, number | string>) => void;
-  startSimulation: (params: Record<string, number | string>) => Promise<void>;
+  setParameters: (_params: Record<string, number | string>) => void;
+  startSimulation: (_params: Record<string, number | string>) => Promise<void>;
   stopSimulation: () => Promise<void>;
-  connectWebSocket: (simulationId: string) => void;
+  connectWebSocket: (_simulationId: string) => void;
   disconnectWebSocket: () => void;
 
   // Theory Testbed state
@@ -76,12 +76,16 @@ export interface PhysicsContextType {
   theoryConfigs: Record<string, Record<string, any>>;
   theoryResult: TheoryPipelineResult | null;
   isLoadingTheories: boolean;
-  setEnabledTheories: (ids: string[]) => void;
-  setTheoryConfigs: (configs: Record<string, Record<string, any>>) => void;
+  setEnabledTheories: (_ids: string[]) => void;
+  setTheoryConfigs: (_configs: Record<string, Record<string, any>>) => void;
   fetchTheories: () => Promise<void>;
-  runTheories: (conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
-  runCoupledTheories: (conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
+  runTheories: (_conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
+  runCoupledTheories: (_conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
   coupledResult: CoupledPipelineResult | null;
+
+  // Shared simulation result (persists across route navigation)
+  simulationResult: Record<string, any> | null;
+  setSimulationResult: (_data: Record<string, any> | null) => void;
 }
 
 export const PhysicsContext = createContext<PhysicsContextType | undefined>(undefined);
@@ -105,6 +109,27 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
   const [theoryResult, setTheoryResult] = useState<TheoryPipelineResult | null>(null);
   const [coupledResult, setCoupledResult] = useState<CoupledPipelineResult | null>(null);
   const [isLoadingTheories, setIsLoadingTheories] = useState(false);
+
+  // Shared simulation result (bubble-lattice response persists across pages and reloads)
+  const [simulationResult, setSimulationResultRaw] = useState<Record<string, any> | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('lenr_simulationResult');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const setSimulationResult = useCallback((data: Record<string, any> | null) => {
+    setSimulationResultRaw(data);
+    try {
+      if (data) {
+        sessionStorage.setItem('lenr_simulationResult', JSON.stringify(data));
+      } else {
+        sessionStorage.removeItem('lenr_simulationResult');
+      }
+    } catch { /* quota exceeded or private browsing */ }
+  }, []);
 
   /** Fetch available theories from the backend. */
   const fetchTheories = useCallback(async () => {
@@ -281,6 +306,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     return () => {
       disconnectWebSocket();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value: PhysicsContextType = {
@@ -306,6 +332,9 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     runTheories,
     runCoupledTheories,
     coupledResult,
+    // Shared simulation result
+    simulationResult,
+    setSimulationResult,
   };
 
   return (

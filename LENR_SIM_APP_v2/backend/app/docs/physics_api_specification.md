@@ -15,6 +15,14 @@ This document defines the API requirements and specifications for integrating th
 7. **Error Handling**: Provide robust error handling and reporting.
 8. **Performance Optimization**: Support efficient data transfer and caching strategies.
 
+## Flow Visualization Attribution
+
+The Unified Theory frontend visualization includes a phase-aware fluid-flow layer inspired by vortex particle flow-map methodology. The current implementation uses an internal approximation aligned to LENR bubble phases and API outputs, rather than a direct embedding of external solver code.
+
+Reference materials:
+- VPFM repository: <https://github.com/pfm-gatech/VPFM>
+- VPFM paper (arXiv): <https://arxiv.org/pdf/2505.21946>
+
 ## API Endpoints
 
 ### Simulation Initialization and Control

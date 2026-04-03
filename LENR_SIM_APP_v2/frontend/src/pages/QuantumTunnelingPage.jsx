@@ -15,12 +15,11 @@ import QuantumTunnelingVisualizer from '../components/visualization/QuantumTunne
 import TunnelingParameterControls from '../components/controls/TunnelingParameterControls';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CallMadeIcon from '@mui/icons-material/CallMade';
-import GetAppIcon from '@mui/icons-material/GetApp';
 import DownloadIcon from '@mui/icons-material/Download';
 import tunnelingUtils from '../utils/quantumTunnelingUtils';
 
 const QuantumTunnelingPage = () => {
-  const theme = useTheme();
+  const _theme = useTheme();
   
   // State for tunneling parameters
   const [tunnelingParams, setTunnelingParams] = useState({

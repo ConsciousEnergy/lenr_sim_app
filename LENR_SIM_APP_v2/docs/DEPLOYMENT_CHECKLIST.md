@@ -1,4 +1,12 @@
-# Deployment Checklist (v0.3.1-beta)
+# Deployment Checklist (v0.3.5-beta)
+
+## Environment Modes (Avoid Port/Hosting Confusion)
+
+- **Local development UI:** run frontend with `cd frontend && npm start` and open `http://localhost:3000`
+- **Local development API (Docker):** run backend with `docker compose up -d --build` and use `http://localhost:8010/api/health`
+- **Production UI (Hostinger/Cloudflare):** serve frontend static build from hosting pipeline, not CRA dev server
+- **Production API:** public API endpoint is `https://api.conscious.energy` (behind reverse proxy/TLS)
+- **Best practice:** do not mix local CRA frontend expectations with production static hosting assumptions
 
 ## Pre-Deployment
 
@@ -9,7 +17,7 @@
 
 ## Docker / GHCR
 
-- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.0-beta .`
+- [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.5-beta .`
 - [ ] Image pushed to GHCR: `docker push ghcr.io/ConsciousEnergy/lenr-sim-backend:latest`
 - [ ] **VPS has GHCR credentials**: `docker login ghcr.io -u <user> --password-stdin` on the server
 

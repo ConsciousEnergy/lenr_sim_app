@@ -57,7 +57,7 @@ export function usePhysicsWorker() {
     try {
       // Create worker using Vite's worker syntax
       workerRef.current = new Worker(
-        new URL('../workers/physicsWorker.js', import.meta.url),
+        new URL('../workers/physics/index.js', import.meta.url),
         { type: 'module' }
       );
 

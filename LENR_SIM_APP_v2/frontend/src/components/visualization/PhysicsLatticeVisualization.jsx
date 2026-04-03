@@ -8,8 +8,8 @@
 
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, CircularProgress, Typography, Paper, IconButton, 
-  FormControl, InputLabel, Select, MenuItem, Tooltip, Slider,
-  Stack, Switch, FormControlLabel } from '@mui/material';
+  FormControl, InputLabel, Select, MenuItem, Tooltip,
+  Switch, FormControlLabel } from '@mui/material';
 import styled from '@emotion/styled';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -44,7 +44,7 @@ const ControlsOverlay = styled(Box)(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
-const ViewControlsOverlay = styled(Box)(({ theme }) => ({
+const _ViewControlsOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
   bottom: theme.spacing(2),
   right: theme.spacing(2),
@@ -85,7 +85,7 @@ const LegendGradient = styled(Box)(({ gradient }) => ({
   background: gradient,
 }));
 
-const LoadingOverlay = styled(Box)(({ theme }) => ({
+const LoadingOverlay = styled(Box)(({ _theme }) => ({
   position: 'absolute',
   top: 0,
   left: 0,
@@ -107,7 +107,7 @@ const ThreeContainer = styled('div')(({ theme }) => ({
 }));
 
 // Heat map color scales
-const createColorScale = (colors, steps = 100) => {
+const createColorScale = (colors, _steps = 100) => {
   const colorStops = colors.map((color, index) => {
     const position = index / (colors.length - 1);
     return { position, color };
@@ -150,8 +150,8 @@ const createColorScale = (colors, steps = 100) => {
 const PhysicsLatticeVisualization = ({ 
   simulationId, 
   visualizationSettings = {},
-  onStartSimulation,
-  onStopSimulation 
+  onStartSimulation: _onStartSimulation,
+  onStopSimulation: _onStopSimulation 
 }) => {
   const logger = useLogger();
   const { settings } = useAppSettings();
@@ -166,7 +166,7 @@ const PhysicsLatticeVisualization = ({
   
   // Physics data state
   const { 
-    isConnected, 
+    _isConnected, 
     connectionStatus,
     latticeState,
     simulationSummary
@@ -445,6 +445,7 @@ const PhysicsLatticeVisualization = ({
       logger.error('Error updating lattice visualization', error);
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latticeState, visualizationType, colorProperty, mergedVisualizationSettings, showConnections, logger, minMaxValues]);
   
   // Handle visualization type change

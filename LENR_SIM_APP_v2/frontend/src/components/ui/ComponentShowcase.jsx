@@ -4,7 +4,7 @@ import { Button, Input, Card, Toggle, Badge } from './index';
 const ComponentShowcase = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [inputError, setInputError] = useState('');
+  const [inputError, _setInputError] = useState('');
   
   // Toggle dark mode class on body
   // eslint-disable-next-line react-hooks/exhaustive-deps

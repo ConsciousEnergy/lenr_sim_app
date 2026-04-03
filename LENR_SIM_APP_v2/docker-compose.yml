@@ -1,7 +1,5 @@
 # Local development docker-compose
 # Usage: docker-compose up --build
-version: "3.8"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -24,9 +22,9 @@ services:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.backend
       args:
-        BUILD_VERSION: "0.3.0-beta"
+        BUILD_VERSION: "0.3.5-beta"
     ports:
-      - "8000:8000"
+      - "8010:8000"
     environment:
       LENR_ENVIRONMENT: development
       LENR_DB_HOST: postgres
@@ -34,7 +32,7 @@ services:
       LENR_DB_USER: lenr_user
       LENR_DB_PASSWORD: dev_password
       LENR_DB_NAME: lenr_sim
-      LENR_CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      LENR_CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173"]'
       LENR_LOG_LEVEL: DEBUG
     volumes:
       - ./backend/app:/app/app:ro

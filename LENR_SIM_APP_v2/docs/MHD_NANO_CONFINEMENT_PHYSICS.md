@@ -1,6 +1,6 @@
 # MHD Nano-Confinement Physics — Comprehensive Reference
 
-**Version:** v0.3.0.1-beta  
+**Version:** 0.3.5-beta  
 **Author:** LENR Simulation Team  
 **Date:** February 2026  
 **Module Path:** `backend/app/physics_engine/mhd/`

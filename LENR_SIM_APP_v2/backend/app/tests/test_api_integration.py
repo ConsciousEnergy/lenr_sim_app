@@ -37,6 +37,12 @@ class TestUnifiedSimulationAPI:
             assert "id" in preset
             assert "name" in preset
             assert "config" in preset
+
+    def test_bubble_lattice_route_methods(self):
+        """Ensure bubble-lattice path remains POST-only and advertises Allow header."""
+        get_response = self.client.get("/api/unified/bubble-lattice")
+        assert get_response.status_code == 405
+        assert "POST" in (get_response.headers.get("allow") or "")
     
     def test_simulate_endpoint_with_defaults(self):
         """Test /api/unified/simulate with default parameters."""

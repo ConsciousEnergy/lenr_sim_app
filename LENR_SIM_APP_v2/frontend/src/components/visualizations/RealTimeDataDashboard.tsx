@@ -53,7 +53,7 @@ const RealTimeDataDashboard: React.FC<RealTimeDataDashboardProps> = ({
   }, [dataSeries, visibleSeries]);
   
   // Apply visibility settings to data series
-  const visibleDataSeries = dataSeries.map(series => ({
+  const _visibleDataSeries = dataSeries.map(series => ({
     ...series,
     visible: visibleSeries[series.id] !== false // Default to true if not set
   }));
