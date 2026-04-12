@@ -1,332 +1,190 @@
 /**
- * Physics Model Registry
- * 
- * A centralized registry for all available physics models in the application.
- * Models are registered with metadata including parameters, compatibility 
- * requirements, and documentation.
+ * Physics Model Registry (v0.3.0+ - Backend-Driven)
+ *
+ * Populated from `GET /api/physics/theories`. Hardcoded fallback models
+ * apply when the backend is unreachable.
  */
 
-import { PhysicsParameter } from './PhysicsParameterInput';
-import { ParameterDocumentationData } from './ParameterDocumentation';
+import { API_BASE_URL } from '../../config/api';
 
-/**
- * Physics model category types
- */
-export type PhysicsModelCategory = 
-  | 'quantum'
-  | 'classical'
-  | 'hybrid'
-  | 'statistical'
-  | 'molecular'
-  | 'lattice';
+export type PhysicsModelCategory =
+  | 'LENR'
+  | 'Classical'
+  | 'Quantum'
+  | 'Experimental'
+  | 'primary'
+  | 'secondary'
+  | 'base'
+  | 'general';
 
-/**
- * Compatibility requirements for a physics model
- */
-export interface ModelCompatibility {
-  requiredParameters: string[];
-  incompatibleModels: string[];
-  temperatureRange?: { min: number; max: number };
-  pressureRange?: { min: number; max: number };
-  otherRequirements?: Record<string, any>;
-}
-
-/**
- * Physics model reference information
- */
-export interface ModelReference {
-  authors: string[];
+export interface PhysicsModelReference {
   title: string;
-  publication?: string;
-  year: number;
-  doi?: string;
+  authors?: string;
+  year?: number;
   url?: string;
+  doi?: string;
 }
 
-/**
- * Complete physics model definition
- */
+export interface CompatibilityRule {
+  check: (params: Record<string, unknown>) => boolean;
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+}
+
 export interface PhysicsModel {
   id: string;
   name: string;
   description: string;
   category: PhysicsModelCategory;
-  parameters: PhysicsParameter[];
-  compatibility: ModelCompatibility;
-  documentation?: ParameterDocumentationData;
-  references?: ModelReference[];
-  version: string;
-  tags: string[];
-  complexity: 'low' | 'medium' | 'high';
-  computeIntensity: 'low' | 'medium' | 'high';
-  estimatedRuntime?: string;
+  compatibilityRules?: CompatibilityRule[];
+  tags?: string[];
+  references?: PhysicsModelReference[];
+  defaultParameters?: Record<string, unknown>;
+  version?: string;
+  author?: string;
 }
 
-/**
- * Registry class to store and manage physics models
- */
-class ModelRegistry {
-  private models: Map<string, PhysicsModel> = new Map();
+interface BackendTheoryInfo {
+  theory_id: string;
+  theory_name: string;
+  description: string;
+  configurable_parameters: Record<string, unknown>;
+  references: string[];
+  category: string;
+}
 
-  /**
-   * Register a new physics model
-   */
-  register(model: PhysicsModel): void {
-    if (this.models.has(model.id)) {
-      console.warn(`Model with ID ${model.id} already exists in registry. Overwriting.`);
-    }
+class PhysicsModelRegistry {
+  private models: Map<string, PhysicsModel> = new Map();
+  private _loaded = false;
+
+  registerModel(model: PhysicsModel): void {
     this.models.set(model.id, model);
   }
 
-  /**
-   * Get a physics model by ID
-   */
-  getModel(id: string): PhysicsModel | undefined {
-    return this.models.get(id);
+  /** Alias for legacy callers; same as registerModel. */
+  register(model: PhysicsModel): void {
+    this.registerModel(model);
   }
 
-  /**
-   * Get all registered models
-   */
+  getModel(modelId: string): PhysicsModel | undefined {
+    return this.models.get(modelId);
+  }
+
   getAllModels(): PhysicsModel[] {
     return Array.from(this.models.values());
   }
 
-  /**
-   * Get models filtered by category
-   */
   getModelsByCategory(category: PhysicsModelCategory): PhysicsModel[] {
-    return this.getAllModels().filter(model => model.category === category);
+    return this.getAllModels().filter((m) => m.category === category);
   }
 
-  /**
-   * Get models filtered by tag
-   */
   getModelsByTag(tag: string): PhysicsModel[] {
-    return this.getAllModels().filter(model => model.tags.includes(tag));
+    return this.getAllModels().filter((m) => m.tags?.includes(tag));
   }
 
-  /**
-   * Check if a model is compatible with the current parameter values
-   */
   checkModelCompatibility(
-    modelId: string, 
-    currentParameters: Record<string, number | string>
+    modelId: string,
+    parameters: Record<string, unknown>,
   ): { compatible: boolean; issues: string[] } {
     const model = this.getModel(modelId);
-    if (!model) {
-      return { 
-        compatible: false, 
-        issues: [`Model with ID ${modelId} not found`] 
-      };
+    if (!model) return { compatible: false, issues: ['Error: Model not found'] };
+    if (!model.compatibilityRules || model.compatibilityRules.length === 0) {
+      return { compatible: true, issues: [] };
     }
-
-    const { compatibility } = model;
     const issues: string[] = [];
-
-    // Check required parameters
-    for (const param of compatibility.requiredParameters) {
-      if (!(param in currentParameters)) {
-        issues.push(`Missing required parameter: ${param}`);
+    model.compatibilityRules.forEach((rule) => {
+      if (!rule.check(parameters)) {
+        const prefix =
+          rule.severity === 'error' ? 'Error: ' : rule.severity === 'warning' ? 'Warning: ' : 'Info: ';
+        issues.push(`${prefix}${rule.message}`);
       }
-    }
+    });
+    return { compatible: !issues.some((i) => i.startsWith('Error:')), issues };
+  }
 
-    // Check temperature range
-    if (compatibility.temperatureRange && 'temperature' in currentParameters) {
-      const temp = Number(currentParameters.temperature);
-      const { min, max } = compatibility.temperatureRange;
-      if (temp < min || temp > max) {
-        issues.push(`Temperature ${temp}K is outside the valid range (${min}-${max}K) for this model`);
-      }
-    }
+  getModelDefaultParameters(modelId: string): Record<string, unknown> | undefined {
+    return this.getModel(modelId)?.defaultParameters;
+  }
 
-    // Check pressure range
-    if (compatibility.pressureRange && 'pressure' in currentParameters) {
-      const pressure = Number(currentParameters.pressure);
-      const { min, max } = compatibility.pressureRange;
-      if (pressure < min || pressure > max) {
-        issues.push(`Pressure ${pressure} is outside the valid range (${min}-${max}) for this model`);
-      }
-    }
+  get loaded(): boolean {
+    return this._loaded;
+  }
 
-    // Check other requirements
-    if (compatibility.otherRequirements) {
-      for (const [key, requirement] of Object.entries(compatibility.otherRequirements)) {
-        // This would need custom logic based on the requirement type
-        // For now just check if the parameter exists
-        if (!(key in currentParameters)) {
-          issues.push(`Parameter required by model: ${key}`);
-        }
-      }
-    }
+  async loadFromBackend(): Promise<void> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/physics/theories`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: BackendTheoryInfo[] = await res.json();
 
-    return {
-      compatible: issues.length === 0,
-      issues
-    };
+      this.models.clear();
+
+      data.forEach((t) => {
+        this.registerModel({
+          id: t.theory_id,
+          name: t.theory_name,
+          description: t.description,
+          category: (t.category || 'LENR') as PhysicsModelCategory,
+          defaultParameters: t.configurable_parameters,
+          references: t.references.map((r) => ({ title: r })),
+          tags: [t.category],
+        });
+      });
+
+      this._loaded = true;
+      console.log(`PhysicsModelRegistry loaded ${data.length} theories from backend`);
+    } catch (err) {
+      console.warn('Failed to load theories from backend, using fallback models:', err);
+    }
   }
 }
 
-// Create and export singleton instance
-export const physicsModelRegistry = new ModelRegistry();
+const physicsModelRegistry = new PhysicsModelRegistry();
 
-/**
- * Sample models for testing and demonstration
- */
-const sampleModels: PhysicsModel[] = [
+const fallbackModels: PhysicsModel[] = [
   {
-    id: 'quantum_tunneling_basic',
-    name: 'Basic Quantum Tunneling Model',
-    description: 'A simplified quantum tunneling model for deuterium in metal lattices',
-    category: 'quantum',
-    parameters: [
-      {
-        name: 'screeningFactor',
-        label: 'Electron Screening Factor',
-        value: 5.0,
-        min: 1.0,
-        max: 100.0,
-        step: 0.5,
-        unit: '',
-        description: 'Enhancement factor for electron screening effect',
-        validation: (value: number) => value > 0 || 'Screening factor must be positive'
-      },
-      {
-        name: 'tunnelDistance',
-        label: 'Tunneling Distance',
-        value: 0.74, // Å
-        min: 0.1,
-        max: 5.0,
-        step: 0.01,
-        unit: 'Å',
-        description: 'Mean distance for quantum tunneling effect',
-        validation: (value: number) => value > 0 || 'Tunneling distance must be positive'
-      }
-    ],
-    compatibility: {
-      requiredParameters: ['temperature', 'latticeConstant'],
-      incompatibleModels: ['classical_diffusion'],
-      temperatureRange: { min: 50, max: 500 },
-    },
-    version: '1.0.0',
-    tags: ['quantum', 'tunneling', 'beginner'],
-    complexity: 'low',
-    computeIntensity: 'low',
-    estimatedRuntime: '<1s',
-    references: [
-      {
-        authors: ['Fleischmann, M.', 'Pons, S.'],
-        title: 'Electrochemically induced nuclear fusion of deuterium',
-        publication: 'Journal of Electroanalytical Chemistry',
-        year: 1989,
-        doi: '10.1016/0022-0728(89)80006-3'
-      }
-    ]
+    id: 'electron_screening',
+    name: 'Electron Screening',
+    description: 'Debye screening reduces Coulomb barrier by 10-100 eV.',
+    category: 'primary',
+    tags: ['screening', 'debye'],
   },
   {
-    id: 'lattice_phonon_model',
-    name: 'Phonon-Deuterium Coupling Model',
-    description: 'Models the interactions between lattice phonons and deuterium nuclei',
-    category: 'lattice',
-    parameters: [
-      {
-        name: 'phononFrequency',
-        label: 'Phonon Frequency',
-        value: 7.5e12, // Hz
-        min: 1e12,
-        max: 1e14,
-        step: 1e11,
-        unit: 'Hz',
-        description: 'Characteristic frequency of lattice phonons',
-        validation: (value: number) => value > 0 || 'Frequency must be positive'
-      },
-      {
-        name: 'couplingStrength',
-        label: 'Coupling Strength',
-        value: 0.2,
-        min: 0.01,
-        max: 0.99,
-        step: 0.01,
-        unit: '',
-        description: 'Strength of phonon-deuterium coupling (0-1)',
-        validation: (value: number) => 
-          value > 0 && value < 1 ? true : 'Value must be between 0 and 1'
-      }
-    ],
-    compatibility: {
-      requiredParameters: ['temperature', 'latticeConstant', 'defectConcentration'],
-      incompatibleModels: [],
-      temperatureRange: { min: 100, max: 800 },
-      pressureRange: { min: 0.1, max: 50 }
-    },
-    version: '1.2.1',
-    tags: ['lattice', 'phonon', 'intermediate'],
-    complexity: 'medium',
-    computeIntensity: 'medium',
-    estimatedRuntime: '5-10s'
+    id: 'coherent_qed',
+    name: 'Confined-Mode QED / Coherent Domains',
+    description: 'Del Giudice/Preparata coherent EM domains with geometry-dependent vacuum modification.',
+    category: 'primary',
+    tags: ['qed', 'coherent'],
   },
   {
-    id: 'hybrid_statistical_model',
-    name: 'Hybrid Quantum-Statistical Model',
-    description: 'A combined quantum and statistical approach to modeling LENR phenomena',
-    category: 'hybrid',
-    parameters: [
-      {
-        name: 'quantumWeight',
-        label: 'Quantum Component Weight',
-        value: 0.7,
-        min: 0,
-        max: 1,
-        step: 0.05,
-        unit: '',
-        description: 'Relative weight of quantum component in the hybrid model (0-1)',
-        validation: (value: number) => 
-          value >= 0 && value <= 1 ? true : 'Value must be between 0 and 1'
-      },
-      {
-        name: 'interactionRange',
-        label: 'Interaction Range',
-        value: 5.0, // Å
-        min: 1.0,
-        max: 20.0,
-        step: 0.1,
-        unit: 'Å',
-        description: 'Maximum range of nuclear interactions',
-        validation: (value: number) => value > 0 || 'Range must be positive'
-      },
-      {
-        name: 'resonanceWidth',
-        label: 'Resonance Width',
-        value: 0.05, // eV
-        min: 0.001,
-        max: 1.0,
-        step: 0.001,
-        unit: 'eV',
-        description: 'Width of energy resonance for reactions',
-        validation: (value: number) => value > 0 || 'Width must be positive'
-      }
-    ],
-    compatibility: {
-      requiredParameters: [
-        'temperature', 
-        'pressure', 
-        'deuteriumLoading',
-        'screeningFactor',
-        'activationEnergy'
-      ],
-      incompatibleModels: [],
-      temperatureRange: { min: 200, max: 1000 },
-      pressureRange: { min: 0.5, max: 100 }
-    },
-    version: '2.1.0',
-    tags: ['hybrid', 'statistical', 'advanced', 'comprehensive'],
-    complexity: 'high',
-    computeIntensity: 'high',
-    estimatedRuntime: '30-60s'
-  }
+    id: 'nae_model',
+    name: 'Nuclear Active Environment (NAE)',
+    description: 'Statistical model of NAE site density.',
+    category: 'primary',
+    tags: ['nae', 'storms'],
+  },
+  {
+    id: 'bubble_mhd_confinement',
+    name: 'Bubble-MHD Nano-Confinement',
+    description: 'Staged confinement: Rayleigh-Plesset + MHD Z-pinch.',
+    category: 'primary',
+    tags: ['bubble', 'mhd'],
+  },
+  {
+    id: 'casimir_confinement',
+    name: 'Casimir Confinement',
+    description: 'Vacuum fluctuation confinement with Lifshitz correction.',
+    category: 'secondary',
+    tags: ['casimir', 'vacuum'],
+  },
+  {
+    id: 'quantum_tunneling',
+    name: 'Quantum Tunneling (Base Rate)',
+    description: 'Gamow/WKB base tunnelling probability.',
+    category: 'base',
+    tags: ['tunneling', 'gamow'],
+  },
 ];
 
-// Register sample models
-sampleModels.forEach(model => physicsModelRegistry.register(model));
+fallbackModels.forEach((m) => physicsModelRegistry.registerModel(m));
 
-export default physicsModelRegistry; 
+export default physicsModelRegistry;

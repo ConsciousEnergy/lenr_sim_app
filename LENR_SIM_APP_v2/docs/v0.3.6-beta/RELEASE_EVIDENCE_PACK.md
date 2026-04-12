@@ -19,6 +19,10 @@
   - `unsupported_extrapolation_flags`
   - `electrolyte_diagnostics`
   - `validation.contradiction_reason_code`
+  - `dimensionless_parameters` (Ha, Rm, wall regime notes for UI transparency)
+  - `transmutation_validation` (embedded Parkhomov-style subset; not the full external database)
+- Unified simulate responses additionally include:
+  - `transmutation_validation` (same schema as bubble-lattice)
 - Theory-pipeline responses include composition provenance:
   - `composition_provenance.combination_rule`
   - `composition_provenance.applied_groups`
@@ -38,6 +42,11 @@
 - Frontend gate: `npm audit --audit-level=high` retained as blocker for high/critical vulnerabilities.
 - Backend gate added: `pip-audit -r requirements.txt`.
 - Workflow includes explicit least-privilege permissions (`contents: read`).
+
+## Code Hygiene (v0.3.6-beta)
+
+- Removed unmounted legacy routers and duplicate frontend registry stubs where they caused resolution ambiguity.
+- Centralized API URL handling in `frontend/src/config/api.js` and proxy target override `REACT_APP_BACKEND_PROXY_TARGET`.
 
 ## Residual Risk Statement
 - CRA remains the selected build tool for v0.3.6-beta. Moderate/low advisories may remain in transitive dev-tool dependencies.

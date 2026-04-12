@@ -12,6 +12,8 @@
 - `composition_provenance.applied_groups`
 - `composition_provenance.excluded_theories`
 - `validation.contradiction_reason_code`
+- `transmutation_validation` (unified simulate + bubble-lattice): `parkhomov_match`, `matching_reactions`, `total_candidates`, `source`
+- `dimensionless_parameters` (bubble-lattice): `hartmann_number`, `magnetic_reynolds_number`, `wall_conductivity_regime`, `notes`
 
 ## Purpose
 - Make confidence composition and normalization inspectable from API payloads.
@@ -19,6 +21,7 @@
 - Make electrolyte assumptions explicit (family, species, molarity regime, consistency checks).
 - Expose overlap resolution policy so theory combinations are reproducible and auditable.
 - Distinguish explicit contradiction reason taxonomy from generic warning text.
+- Document Parkhomov-style validation and MHD dimensionless summaries returned beside primary physics outputs.
 
 ## Contradiction Reason Taxonomy
 - `none`: no contradiction detected.

@@ -431,6 +431,43 @@ For the full cross-examination framework, see [THEORY_CROSS_EXAMINATION.md](THEO
 
 ---
 
+## Lattice Physics Foundation (Fermi–Hubbard Analogy)
+
+Hydrogen isotopes in interstitial sites can be discussed using the same *language* as fermionic Hubbard models: an effective on-site repulsion **U** (Coulomb / screening scale) competes with a tunnelling amplitude **t** (overlap between neighbouring sites). The ratio **U/t** distinguishes strongly correlated (large **U/t**) from more itinerant regimes.
+
+In this codebase:
+
+- **t** is represented by the `quantum_tunneling` theory module (Gamow / thermal tunnelling language).
+- **U** is represented indirectly by `electron_screening` (barrier reduction in eV) and other confinement theories.
+- **Transparency fields**: `quantum_tunneling` exposes a `fermi_hubbard_proxy` dict with `U_over_t_ratio` (order-of-magnitude proxy, not a full Wannier extraction).
+
+Literature touchpoints: optical-lattice double-well experiments (e.g. Bojović *et al.*, Nature 2026) motivate the parameter language; Pd–H diffusion barriers from atomistic studies (LAMMPS EAM literature, ~0.49 eV bulk order-of-magnitude) motivate consistency checks on loading-dependent transport.
+
+---
+
+## External Validation Sources (v0.3.6-beta)
+
+These sources inform *bounds*, *benchmarks*, and *documentation*—they are not imported as runtime scientific databases unless explicitly wired:
+
+- **Parkhomov / LENR Academy**: large exothermic reaction tables for pathway sanity checks; the API embeds a **small curated subset** via `transmutation_validation` on `POST /api/unified/simulate` and `POST /api/unified/bubble-lattice`.
+- **LAMMPS (Pd–H)**: diffusion barriers and isotope trends (inverse isotope effect at low T) inform qualitative D vs H handling in `quantum_tunneling` transparency outputs.
+- **Quantum ESPRESSO / DFT (PdHx)**: metallic screening suppression with loading is cited qualitatively next to screening modules.
+- **Cvetinović *et al.*, Phys. Lett. B 838 (2023)**: wide experimental spread of screening in Pd targets; `electron_screening` adds audit flags when potentials exceed conservative documentation caps.
+
+---
+
+## Visualization ↔ Theory Mapping
+
+The frontend registry `frontend/src/config/theoryVisualizationMap.js` maps each backend `theory_id` to legend groups and 3D overlay families. Heuristic overlays (**Rydberg**, **Halo**) are labeled as visualization models without dedicated pipeline IDs.
+
+---
+
+## MHD Modeling References (COMSOL / OpenFOAM)
+
+Industrial MHD tutorials (COMSOL Hartmann flow) and open benchmarks (OpenFOAM `mhdFoam`) motivate which **dimensionless numbers** belong in transparency payloads (`hartmann_number`, `magnetic_reynolds_number`) and which **wall-conductivity regimes** (Shercliff vs Hunt) are meaningful language for channel-like confinement—even when the WebGL scene remains a stylized proxy.
+
+---
+
 ## Cross-Theory Coupling (v0.3.3-beta)
 
 The theory pipeline now supports **coupled mode**, where theories execute in topological dependency order and upstream outputs feed into downstream conditions:

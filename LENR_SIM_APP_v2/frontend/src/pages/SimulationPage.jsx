@@ -1,7 +1,10 @@
 import SimulationControls from '../components/SimulationControls';
 
-const API_BASE_URL = 'http://localhost:8010'; // Canonical local backend port
-
+/**
+ * Stub simulation page. Use resolveApiUrl() from ../config/api for any API calls.
+ */
 const SimulationPage = () => {
-// ... existing code ...
-} 
+  return <SimulationControls />;
+};
+
+export default SimulationPage;

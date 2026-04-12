@@ -13,7 +13,7 @@
  * - EffectsGroup: Hotspots, collapse flash
  */
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -35,6 +35,7 @@ import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
 import { ScaleBar } from './QuantumFluxVisualization';
 // Import VisualizationLegend for comprehensive display
 import VisualizationLegend from './VisualizationLegend';
+import { resolveQuantumFluxModeForOverlays, THEORY_VISUALIZATION_MAP } from '../../config/theoryVisualizationMap';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 
@@ -329,7 +330,6 @@ const UnifiedBubbleLatticeVisualization = ({
   // Vortex/fluid dynamics refs
   const vortexGroupRef = useRef(null);
   const vortexFieldRef = useRef(null);
-  const energyFlowRef = useRef(null);
   const plasmaVortexRef = useRef(null);
   
   // Theoretical mechanism visualization refs
@@ -339,6 +339,8 @@ const UnifiedBubbleLatticeVisualization = ({
   
   // Scale bar ref
   const scaleBarRef = useRef(null);
+  /** World positions of host lattice sites (for Rydberg / halo anchoring). */
+  const latticeHostPositionsRef = useRef([]);
   
   // Animation state
   const [isPlaying, setIsPlaying] = useState(true);
@@ -378,6 +380,42 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
+
+  const quantumFluxModeForLegend = useMemo(
+    () => resolveQuantumFluxModeForOverlays({ showCasimir, showRydberg }),
+    [showCasimir, showRydberg],
+  );
+
+  const overlayLegendHints = useMemo(
+    () => [
+      {
+        key: 'mhd',
+        label: 'MHD Flow',
+        text:
+          'Maps to bubble_mhd_confinement. Hartmann-layer ring and J×B arrows are visualization proxies; Ha/Rm shown when the API returns dimensionless_parameters.',
+      },
+      {
+        key: 'casimir',
+        label: 'Casimir Geometry',
+        text:
+          THEORY_VISUALIZATION_MAP.casimir_confinement?.notes ||
+          'Casimir lines are parented to BubbleGroup so they follow the bubble.',
+      },
+      {
+        key: 'rydberg',
+        label: 'Rydberg Orbitals',
+        text: THEORY_VISUALIZATION_MAP.rydberg_visual?.notes || 'Heuristic extended orbitals at lattice host sites.',
+      },
+      {
+        key: 'halo',
+        label: 'Halo Electrons',
+        text: THEORY_VISUALIZATION_MAP.halo_electrons_visual?.notes || 'Heuristic screening-scaled cloud at host sites.',
+      },
+    ],
+    [],
+  );
+
+  const legendDimensionlessParameters = simulationData?.dimensionless_parameters ?? null;
   
   // Mobile optimization state (v0.2.2-beta)
   const [isMobile] = useState(() => isMobileDevice());
@@ -390,6 +428,51 @@ const UnifiedBubbleLatticeVisualization = ({
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
   const flowReversalRef = useRef({ timer: 0, isReversed: false });
+  /** When set, proton meshes use fixed phase buckets from API `proton_phases` (length 60). */
+  const protonPhaseBucketsRef = useRef(null);
+
+  const assignProtonBucketStates = useCallback(() => {
+    const buckets = protonPhaseBucketsRef.current;
+    const group = protonGroupRef.current;
+    if (!buckets || !group) return;
+    const s = buckets.free + buckets.screened + buckets.capture + buckets.nuclear;
+    if (s <= 0) return;
+    const n = group.children.length || 1;
+    group.children.forEach((proton, i) => {
+      const t = (i + 0.5) / n;
+      const f0 = buckets.free / s;
+      const f1 = f0 + buckets.screened / s;
+      const f2 = f1 + buckets.capture / s;
+      let st = 'FREE';
+      if (t < f0) st = 'FREE';
+      else if (t < f1) st = 'SCREENED';
+      else if (t < f2) st = 'CAPTURE_READY';
+      else st = 'NUCLEAR';
+      proton.userData.state = st;
+      const sp = PROTON_STATES[st];
+      if (proton.material && sp) {
+        proton.material.color.setHex(sp.color);
+        proton.material.emissive.setHex(sp.emissive);
+        proton.material.emissiveIntensity = sp.emissiveIntensity;
+        proton.scale.setScalar(sp.size / 0.12);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const pp = simulationData?.proton_phases;
+    if (!pp || typeof pp !== 'object') {
+      protonPhaseBucketsRef.current = null;
+      return;
+    }
+    const free = Number(pp.FREE ?? 0);
+    const screened = Number(pp.SCREENED ?? 0);
+    const capture = Number(pp.CAPTURE_READY ?? 0);
+    const nuclear = Number(pp.NUCLEAR ?? 0);
+    const sum = free + screened + capture + nuclear;
+    protonPhaseBucketsRef.current = sum > 0 ? { free, screened, capture, nuclear } : null;
+    assignProtonBucketStates();
+  }, [simulationData?.proton_phases, assignProtonBucketStates]);
   
   // Extract parameters with defaults
   const {
@@ -399,8 +482,52 @@ const UnifiedBubbleLatticeVisualization = ({
     initialBubbleRadius = 3.0,
     drivingPressure = 1.5,
     frequency = 20,
-    latticeSize = 4
+    latticeSize = 4,
+    electrolyteFamily = '',
+    electrolyteSpecies = '',
   } = parameters;
+
+  const latticeSiteCount = Math.max(1, Math.round(Math.pow(latticeSize, 3)));
+
+  const legendParticleCounts = useMemo(() => {
+    const diag = simulationData?.electrolyte_diagnostics || {};
+    const family = (diag.electrolyte_family || electrolyteFamily || '').toLowerCase();
+    const species = (diag.electrolyte_species || electrolyteSpecies || '').toLowerCase();
+    const isAlkali = family === 'alkali' || species.includes('li') || species.includes('na') || species.includes('k');
+    const lithiumCount = isAlkali ? Math.max(1, Math.round(latticeSiteCount * 0.05 * loadingRatio)) : 0;
+    const hostCount = latticeSiteCount;
+    const hCount =
+      hostMaterial === 'palladium'
+        ? 0
+        : Math.round(hostCount * loadingRatio * (hostMaterial === 'nickel' ? 0.5 : 0.65));
+    const dCount = Math.round(hostCount * loadingRatio * (hostMaterial === 'palladium' ? 1 : 0.35));
+    return {
+      palladium: hostMaterial === 'palladium' ? hostCount : 0,
+      nickel: hostMaterial === 'nickel' ? hostCount : 0,
+      titanium: hostMaterial === 'titanium' ? hostCount : 0,
+      deuterium: dCount,
+      hydrogen: hCount,
+      lithium: lithiumCount,
+    };
+  }, [
+    simulationData?.electrolyte_diagnostics,
+    electrolyteFamily,
+    electrolyteSpecies,
+    latticeSiteCount,
+    loadingRatio,
+    hostMaterial,
+  ]);
+
+  const legendElectrolyteChips = useMemo(() => {
+    const diag = simulationData?.electrolyte_diagnostics;
+    const family = diag?.electrolyte_family || electrolyteFamily;
+    const species = diag?.electrolyte_species || electrolyteSpecies;
+    if (!family && !species) return [];
+    const chips = [];
+    if (family) chips.push({ label: `Electrolyte: ${family}`, key: 'fam' });
+    if (species) chips.push({ label: `Species: ${species}`, key: 'sp' });
+    return chips;
+  }, [simulationData?.electrolyte_diagnostics, electrolyteFamily, electrolyteSpecies]);
 
   // Create lattice structure
   const createLattice = useCallback((scene) => {
@@ -441,6 +568,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const points = [];
     const connections = [];
     let pointIndex = 0;
+    latticeHostPositionsRef.current = [];
     
     // Create FCC-like lattice
     for (let x = 0; x < dimension; x++) {
@@ -454,6 +582,7 @@ const UnifiedBubbleLatticeVisualization = ({
           // Host atom
           const hostAtom = new THREE.Mesh(hostGeometry, hostMaterial3D);
           hostAtom.position.set(posX, posY, posZ);
+          latticeHostPositionsRef.current.push(new THREE.Vector3(posX, posY, posZ));
           latticeGroup.add(hostAtom);
           
           // Add hydrogen at interstitial sites based on loading ratio
@@ -658,7 +787,70 @@ const UnifiedBubbleLatticeVisualization = ({
       ring.userData = { baseRadius: 1.2 + i * 0.5, phase: i * 0.3 };
       bubbleGroup.add(ring);
     }
-    
+
+    // Casimir field lines in bubble-local space (follow BubbleGroup motion)
+    const casimirGroup = new THREE.Group();
+    casimirGroup.name = 'CasimirFieldGroup';
+    const lineCount = 16;
+    const casimirLineMaterial = new THREE.LineBasicMaterial({
+      color: 0xff8800,
+      transparent: true,
+      opacity: 0.6,
+      linewidth: 2,
+    });
+    const latticeSurfaceWorldY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    for (let i = 0; i < lineCount; i++) {
+      const angle = (i / lineCount) * Math.PI * 2;
+      const phi = (i % 8) / 8 * Math.PI;
+      const bubbleRadius = 1.0;
+      const bubblePoint = new THREE.Vector3(
+        bubbleRadius * Math.sin(phi) * Math.cos(angle),
+        0,
+        bubbleRadius * Math.sin(phi) * Math.sin(angle),
+      );
+      const latticePoint = new THREE.Vector3(
+        bubblePoint.x * 0.3,
+        latticeSurfaceWorldY - bubbleGroup.position.y,
+        bubblePoint.z * 0.3,
+      );
+      const distance = bubblePoint.distanceTo(latticePoint);
+      const forceMagnitude = 1 / Math.pow(Math.max(distance, 0.1), 4);
+      const normalizedForce = Math.min(forceMagnitude * 100, 1.0);
+      const points = [];
+      const segments = 20;
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        const curveFactor = Math.sin(t * Math.PI) * 0.3;
+        const point = new THREE.Vector3().lerpVectors(bubblePoint, latticePoint, t);
+        const perp = new THREE.Vector3(-point.z, 0, point.x).normalize();
+        point.add(perp.multiplyScalar(curveFactor * normalizedForce));
+        points.push(point);
+      }
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, casimirLineMaterial.clone());
+      line.material.opacity = normalizedForce * 0.6;
+      line.material.color.setHSL(0.1, 1, 0.5 + normalizedForce * 0.3);
+      line.name = `CasimirLine${i}`;
+      line.userData = { distance, forceMagnitude, baseAngle: angle };
+      casimirGroup.add(line);
+    }
+    const indicatorGeometry = new THREE.SphereGeometry(0.03, 6, 6);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const indicatorMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff4400,
+        transparent: true,
+        opacity: 0.4,
+      });
+      const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
+      indicator.position.set(Math.cos(angle) * 0.5, latticeSurfaceWorldY - bubbleGroup.position.y, Math.sin(angle) * 0.5);
+      indicator.name = `CasimirIndicator${i}`;
+      indicator.userData = { pulsePhase: i / 8, baseScale: 1.0 };
+      casimirGroup.add(indicator);
+    }
+    bubbleGroup.add(casimirGroup);
+    casimirFieldRef.current = casimirGroup;
+
     scene.add(bubbleGroup);
     bubbleGroupRef.current = bubbleGroup;
     
@@ -1151,113 +1343,41 @@ const UnifiedBubbleLatticeVisualization = ({
     flowReversalPulse.name = 'FlowReversalPulse';
     vortexGroup.add(flowReversalPulse);
     
+    // Hartmann-boundary-layer proxy: thin ring of fast particles at duct wall (x = ±R)
+    const hartmannLayer = new THREE.Group();
+    hartmannLayer.name = 'HartmannBoundaryLayer';
+    const layerParticleGeo = new THREE.SphereGeometry(0.04, 5, 5);
+    const layerMat = new THREE.MeshBasicMaterial({ color: 0x66ffcc, transparent: true, opacity: 0.55 });
+    const R = 2.0;
+    const nPerSide = 24;
+    for (let s = -1; s <= 1; s += 2) {
+      for (let i = 0; i < nPerSide; i++) {
+        const p = new THREE.Mesh(layerParticleGeo, layerMat.clone());
+        const z = ((i / (nPerSide - 1)) * 2 - 1) * R * 0.85;
+        const y = ((i % 5) / 5 - 0.4) * 1.2;
+        p.position.set(s * R * 0.95, y, z);
+        p.userData = { side: s, baseZ: z, baseY: y };
+        hartmannLayer.add(p);
+      }
+    }
+    vortexGroup.add(hartmannLayer);
+
+    // Lorentz J×B direction arrows (conceptual, along ±x at sample points)
+    const lorentzGroup = new THREE.Group();
+    lorentzGroup.name = 'LorentzForceArrows';
+    const arrowHelper = (origin, dir, color) => {
+      const h = new THREE.ArrowHelper(dir.normalize(), origin, 0.45, color, 0.12, 0.08);
+      h.name = 'LorentzArrow';
+      lorentzGroup.add(h);
+    };
+    arrowHelper(new THREE.Vector3(0, 0.6, 0), new THREE.Vector3(1, 0, 0), 0xffee66);
+    arrowHelper(new THREE.Vector3(0, -0.6, 0), new THREE.Vector3(-1, 0, 0), 0xffaa44);
+    vortexGroup.add(lorentzGroup);
+
     scene.add(vortexGroup);
     vortexGroupRef.current = vortexGroup;
     
     return vortexGroup;
-  }, []);
-
-  // Create Casimir effect field visualization
-  // F_Casimir = -π²ℏc/(240) * A/d⁴
-  const createCasimirField = useCallback((scene) => {
-    const casimirGroup = new THREE.Group();
-    casimirGroup.name = 'CasimirFieldGroup';
-    
-    // Physical constants
-    const HBAR = 1.055e-34; // J·s
-    const C = 3e8; // m/s
-    const PI_SQ = Math.PI * Math.PI;
-    const _CASIMIR_COEFF = -PI_SQ * HBAR * C / 240; // N·m² (for reference)
-    
-    // Create force field lines from bubble surface to lattice atoms
-    const lineCount = 16;
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xff8800,
-      transparent: true,
-      opacity: 0.6,
-      linewidth: 2
-    });
-    
-    // Sample points on bubble surface and lattice
-    for (let i = 0; i < lineCount; i++) {
-      const angle = (i / lineCount) * Math.PI * 2;
-      const phi = (i % 8) / 8 * Math.PI; // Vary elevation
-      
-      // Bubble surface point (at radius ~1.0 in visualization units)
-      const bubbleRadius = 1.0;
-      const bubblePoint = new THREE.Vector3(
-        bubbleRadius * Math.sin(phi) * Math.cos(angle),
-        2, // Bubble Y position
-        bubbleRadius * Math.sin(phi) * Math.sin(angle)
-      );
-      
-      // Nearest lattice point (simplified - find closest lattice atom)
-      const latticeY = -5;
-      const latticePoint = new THREE.Vector3(
-        bubblePoint.x * 0.3, // Project toward center
-        latticeY,
-        bubblePoint.z * 0.3
-      );
-      
-      // Calculate distance
-      const distance = bubblePoint.distanceTo(latticePoint);
-      
-      // Casimir effect magnitude: F ∝ 1/d⁴
-      // Normalize for visualization (force lines get more intense as distance decreases)
-      const forceMagnitude = 1 / Math.pow(Math.max(distance, 0.1), 4);
-      const normalizedForce = Math.min(forceMagnitude * 100, 1.0);
-      
-      // Create curved force line (attractive, so toward each other)
-      const points = [];
-      const segments = 20;
-      for (let j = 0; j <= segments; j++) {
-        const t = j / segments;
-        // Curve the line to show attractive force
-        const curveFactor = Math.sin(t * Math.PI) * 0.3;
-        const point = new THREE.Vector3().lerpVectors(bubblePoint, latticePoint, t);
-        // Add curvature perpendicular to line
-        const perp = new THREE.Vector3(-point.z, 0, point.x).normalize();
-        point.add(perp.multiplyScalar(curveFactor * normalizedForce));
-        points.push(point);
-      }
-      
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, lineMaterial.clone());
-      line.material.opacity = normalizedForce * 0.6;
-      line.material.color.setHSL(0.1, 1, 0.5 + normalizedForce * 0.3); // Orange to red based on intensity
-      line.name = `CasimirLine${i}`;
-      line.userData = { distance, forceMagnitude, baseAngle: angle };
-      casimirGroup.add(line);
-    }
-    
-    // Add force intensity indicators (small spheres showing force strength)
-    // Keep these small and subtle - they should not dominate the visualization
-    const indicatorGeometry = new THREE.SphereGeometry(0.03, 6, 6); // Smaller base size
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const indicatorMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff4400,
-        transparent: true,
-        opacity: 0.4 // Lower base opacity
-      });
-      const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
-      indicator.position.set(
-        Math.cos(angle) * 0.5,
-        -4,
-        Math.sin(angle) * 0.5
-      );
-      indicator.name = `CasimirIndicator${i}`;
-      indicator.userData = { 
-        pulsePhase: i / 8,
-        baseScale: 1.0 // Track base scale to prevent excessive scaling
-      };
-      casimirGroup.add(indicator);
-    }
-    
-    scene.add(casimirGroup);
-    casimirFieldRef.current = casimirGroup;
-    
-    return casimirGroup;
   }, []);
 
   // Create Rydberg Matter orbital visualization
@@ -1270,56 +1390,49 @@ const UnifiedBubbleLatticeVisualization = ({
     // Rydberg orbitals: physically scale as n²*a₀ (Bohr radius)
     // For n=3: R = 9*0.053nm ≈ 0.48nm, but in visualization we scale for visibility
     // Observationally, Rydberg orbitals are ~10-100x larger than ground state (0.3 → 0.4-0.6 is reasonable)
-    const orbitalCount = 12; // Number of lattice atoms to show orbitals for
-    const orbitalGeometry = new THREE.SphereGeometry(0.5, 16, 16); // Reduced from 0.8 to 0.5 (more accurate scale)
+    const hosts = latticeHostPositionsRef.current || [];
+    const orbitalGeometry = new THREE.SphereGeometry(0.5, 16, 16);
     const orbitalMaterial = new THREE.MeshBasicMaterial({
       color: 0x8844ff,
       transparent: true,
-      opacity: 0.06, // Much more transparent (reduced from 0.15 to 0.06)
+      opacity: 0.06,
       wireframe: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
-    
-    // Sample some lattice positions (simplified - in real implementation, get from lattice)
-    for (let i = 0; i < orbitalCount; i++) {
-      const angle = (i / orbitalCount) * Math.PI * 2;
-      const radius = 1.5 + (i % 3) * 0.5;
-      // Position halo electrons around lattice surface
-      const y = PHYSICS_CONFIG.LATTICE_Y_OFFSET + (i % 4) * 0.8;
-      
+    const positions =
+      hosts.length > 0 ? hosts.slice(0, Math.min(16, hosts.length)) : [];
+    if (positions.length === 0) {
+      const orbitalCount = 12;
+      for (let i = 0; i < orbitalCount; i++) {
+        const angle = (i / orbitalCount) * Math.PI * 2;
+        const radius = 1.5 + (i % 3) * 0.5;
+        const y = PHYSICS_CONFIG.LATTICE_Y_OFFSET + (i % 4) * 0.8;
+        positions.push(new THREE.Vector3(radius * Math.cos(angle), y, radius * Math.sin(angle)));
+      }
+    }
+    positions.forEach((pos, i) => {
       const orbital = new THREE.Mesh(orbitalGeometry, orbitalMaterial.clone());
-      orbital.position.set(
-        radius * Math.cos(angle),
-        y,
-        radius * Math.sin(angle)
-      );
+      orbital.position.copy(pos);
       orbital.name = `RydbergOrbital${i}`;
-      orbital.userData = { 
-        baseRadius: 0.5, // Updated to match new geometry size
-        phase: i / orbitalCount,
-        energyLevel: 1 + (i % 3) // n=1,2,3 Rydberg states
+      orbital.userData = {
+        baseRadius: 0.5,
+        phase: i / Math.max(positions.length, 1),
+        energyLevel: 1 + (i % 3),
       };
       rydbergGroup.add(orbital);
-    }
-    
-    // Add overlap regions (where orbitals intersect - reaction sites)
+    });
+
     const overlapGeometry = new THREE.SphereGeometry(0.2, 8, 8);
     const overlapMaterial = new THREE.MeshStandardMaterial({
       color: 0xff00ff,
       transparent: true,
       opacity: 0.6,
       emissive: 0xff00ff,
-      emissiveIntensity: 0.5
+      emissiveIntensity: 0.5,
     });
-    
-    // Add overlap indicators at intersections
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < Math.min(4, Math.max(1, positions.length - 1)); i++) {
       const overlap = new THREE.Mesh(overlapGeometry, overlapMaterial.clone());
-      overlap.position.set(
-        (Math.random() - 0.5) * 2,
-        -4.5 + Math.random() * 2,
-        (Math.random() - 0.5) * 2
-      );
+      overlap.position.copy(positions[i]).lerp(positions[(i + 1) % positions.length], 0.5);
       overlap.name = `OrbitalOverlap${i}`;
       overlap.userData = { pulsePhase: Math.random() * Math.PI * 2 };
       rydbergGroup.add(overlap);
@@ -1339,7 +1452,8 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Halo electrons are extended probability clouds around protons
     // Overlap probability with nucleus is ~10⁻³
-    const protonCount = 20; // Number of protons to show halo electrons for
+    const hosts = latticeHostPositionsRef.current || [];
+    const protonCount = Math.min(20, Math.max(4, hosts.length || 20));
     const cloudParticleCount = 150; // Particles per cloud
     
     const particleGeometry = new THREE.SphereGeometry(0.03, 6, 6);
@@ -1348,12 +1462,12 @@ const UnifiedBubbleLatticeVisualization = ({
       const cloudGroup = new THREE.Group();
       cloudGroup.name = `HaloCloud${i}`;
       
-      // Random position near lattice (where protons would be)
-      const basePos = new THREE.Vector3(
-        (Math.random() - 0.5) * 4,
-        -5 + Math.random() * 2,
-        (Math.random() - 0.5) * 4
-      );
+      const basePos =
+        hosts.length > 0
+          ? hosts[i % hosts.length].clone().add(
+              new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.4),
+            )
+          : new THREE.Vector3((Math.random() - 0.5) * 4, -5 + Math.random() * 2, (Math.random() - 0.5) * 4);
       
       // Create probability cloud (larger than normal electron cloud)
       const cloudRadius = 0.4; // Extended halo radius
@@ -1576,7 +1690,8 @@ const UnifiedBubbleLatticeVisualization = ({
   // Update proton states based on physics-based transition probabilities
   const updateProtonStates = useCallback((phase, normalizedTime, enhancement, fieldStrength, temperature) => {
     if (!protonGroupRef.current) return;
-    
+    if (protonPhaseBucketsRef.current) return;
+
     // Physics-based transition thresholds
     const SCREENING_THRESHOLD = 10; // eV (10 eV barrier reduction)
     const CAPTURE_THRESHOLD = 1e3; // Enhancement factor
@@ -2091,47 +2206,53 @@ const UnifiedBubbleLatticeVisualization = ({
         if (proton.position.y < latticeSurfaceY) {
           proton.position.y = latticeSurfaceY;
         }
+
+        if (showVortices && vortexFieldRef.current && !proton.userData.absorbed) {
+          vortexFieldRef.current.advectParticles([proton], deltaTime * 0.28);
+        }
         
         // ========================================================================
         // COLOR CHANGES BASED ON PHASE AND ENERGY
         // ========================================================================
         // Particles change color to represent ionization state and energy level
         if (proton.material) {
-          const compressionRatio = physicsData.compressionRatio || 1;
-          const energyLevel = Math.min(1, compressionRatio / 50); // Normalize energy 0-1
-          
           if (proton.userData.absorbed) {
             proton.material.color.setHex(0xffcc66);
             proton.material.emissive.setHex(0x664400);
             proton.material.emissiveIntensity = 0.75;
-          } else if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
-            // High energy - shift from yellow/orange to red/white
-            // Ionized state - high energy particles
-            const hue = 0.1 - energyLevel * 0.1; // Orange to red
-            const saturation = 1 - energyLevel * 0.3; // Less saturated at high energy
-            const lightness = 0.5 + energyLevel * 0.3; // Brighter at high energy
-            proton.material.color.setHSL(hue, saturation, lightness);
-            proton.material.emissive.setHSL(hue, saturation, lightness * 0.5);
-            proton.material.emissiveIntensity = 0.8 + energyLevel * 1.5;
-          } else if (phase === 'REBOUND') {
-            // Energy release - bright green/cyan flash
-            const hue = 0.35 + energyLevel * 0.1; // Green to cyan
-            proton.material.color.setHSL(hue, 0.9, 0.6);
-            proton.material.emissive.setHSL(hue, 0.9, 0.4);
-            proton.material.emissiveIntensity = 1.2;
+          } else if (protonPhaseBucketsRef.current) {
+            const st = proton.userData.state || 'FREE';
+            const sp = PROTON_STATES[st] || PROTON_STATES.FREE;
+            proton.material.color.setHex(sp.color);
+            proton.material.emissive.setHex(sp.emissive);
+            proton.material.emissiveIntensity = sp.emissiveIntensity;
+            proton.scale.setScalar(sp.size / 0.12);
           } else {
-            // Expansion/Recovery - neutral ionized state (blue/cyan for electrons, orange for protons)
-            const isIonized = proton.userData.isIonized;
-            if (isIonized) {
-              // Ionized - cyan/blue glow
-              proton.material.color.setHSL(0.55, 0.8, 0.5);
-              proton.material.emissive.setHSL(0.55, 0.8, 0.3);
+            const compressionRatio = physicsData.compressionRatio || 1;
+            const energyLevel = Math.min(1, compressionRatio / 50);
+            if (phase === 'COLLAPSE' || phase === 'MINIMUM') {
+              const hue = 0.1 - energyLevel * 0.1;
+              const saturation = 1 - energyLevel * 0.3;
+              const lightness = 0.5 + energyLevel * 0.3;
+              proton.material.color.setHSL(hue, saturation, lightness);
+              proton.material.emissive.setHSL(hue, saturation, lightness * 0.5);
+              proton.material.emissiveIntensity = 0.8 + energyLevel * 1.5;
+            } else if (phase === 'REBOUND') {
+              const hue = 0.35 + energyLevel * 0.1;
+              proton.material.color.setHSL(hue, 0.9, 0.6);
+              proton.material.emissive.setHSL(hue, 0.9, 0.4);
+              proton.material.emissiveIntensity = 1.2;
             } else {
-              // Neutral H2/D2 - warm orange
-              proton.material.color.setHSL(0.08, 0.9, 0.55);
-              proton.material.emissive.setHSL(0.08, 0.9, 0.3);
+              const isIonized = proton.userData.isIonized;
+              if (isIonized) {
+                proton.material.color.setHSL(0.55, 0.8, 0.5);
+                proton.material.emissive.setHSL(0.55, 0.8, 0.3);
+              } else {
+                proton.material.color.setHSL(0.08, 0.9, 0.55);
+                proton.material.emissive.setHSL(0.08, 0.9, 0.3);
+              }
+              proton.material.emissiveIntensity = 0.4;
             }
-            proton.material.emissiveIntensity = 0.4;
           }
         }
       });
@@ -2455,6 +2576,15 @@ const UnifiedBubbleLatticeVisualization = ({
         // Silently handle vortex update errors to prevent animation loop crashes
         console.warn('MHD flow animation update error (non-critical):', error);
       }
+
+      const hartmannLayer = vortexGroupRef.current?.getObjectByName('HartmannBoundaryLayer');
+      if (hartmannLayer) {
+        const B = Math.max(1e-6, (physicsData.fieldStrength || 1e6) / 1e8);
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.002 + (physicsData.compressionRatio || 1) * 0.05);
+        hartmannLayer.children.forEach((p) => {
+          if (p.material) p.material.opacity = 0.35 + pulse * 0.35 * B;
+        });
+      }
     }
     
     // Update Casimir field visualization based on compression
@@ -2645,7 +2775,6 @@ const UnifiedBubbleLatticeVisualization = ({
     createFieldVisualization(scene);
     createEffects(scene);
     createVortexFlow(scene);
-    createCasimirField(scene);
     createRydbergOrbitals(scene);
     createHaloElectrons(scene);
     createScaleBar(scene);
@@ -2698,7 +2827,7 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createRydbergOrbitals, createHaloElectrons, createScaleBar]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
 
   // Update visibility based on toggles - immediate update with force refresh
@@ -2764,21 +2893,6 @@ const UnifiedBubbleLatticeVisualization = ({
             if (plasmaGroup) {
               plasmaGroup.visible = showVortices;
               plasmaGroup.traverse((child) => {
-                if (child.isMesh || child.isLine || child.isPoints) {
-                  child.visible = showVortices;
-                }
-              });
-            }
-          } catch (e) {
-            // Silently handle if getGroup fails
-          }
-        }
-        if (energyFlowRef.current && typeof energyFlowRef.current.getGroup === 'function') {
-          try {
-            const energyGroup = energyFlowRef.current.getGroup();
-            if (energyGroup) {
-              energyGroup.visible = showVortices;
-              energyGroup.traverse((child) => {
                 if (child.isMesh || child.isLine || child.isPoints) {
                   child.visible = showVortices;
                 }
@@ -2991,16 +3105,15 @@ const UnifiedBubbleLatticeVisualization = ({
         {/* Comprehensive Visualization Legend - collapsible side drawer */}
         {showLegend && (
           <VisualizationLegend
-            particleCounts={{
-              palladium: hostMaterial === 'palladium' ? 27 : 0,
-              nickel: hostMaterial === 'nickel' ? 27 : 0,
-              titanium: hostMaterial === 'titanium' ? 27 : 0,
-              deuterium: Math.round(27 * loadingRatio),
-              hydrogen: hostMaterial !== 'palladium' ? Math.round(27 * loadingRatio * 0.5) : 0,
-              lithium: 0, // No lithium by default
-            }}
+            particleCounts={legendParticleCounts}
             stats={{
-              totalParticles: 27 + Math.round(27 * loadingRatio),
+              totalParticles:
+                legendParticleCounts.palladium +
+                legendParticleCounts.nickel +
+                legendParticleCounts.titanium +
+                legendParticleCounts.deuterium +
+                legendParticleCounts.hydrogen +
+                legendParticleCounts.lithium,
               hotspotCount: currentPhase === 'MINIMUM' || currentPhase === 'REBOUND' ? 3 : 0,
               loadingRatio: loadingRatio,
               enhancementFactor: currentEnhancement,
@@ -3015,11 +3128,14 @@ const UnifiedBubbleLatticeVisualization = ({
             showScale={true}
             showQuantumFlux={showCasimir || showRydberg}
             scaleInfo={{
-              gridSize: 5,
+              gridSize: latticeSize,
               scaleUnit: 'μm',
               realWorldSize: parameters.initialBubbleRadius * 1e-6
             }}
-            quantumFluxMode="electron_screening"
+            quantumFluxMode={quantumFluxModeForLegend}
+            electrolyteChips={legendElectrolyteChips}
+            overlayHints={overlayLegendHints}
+            dimensionlessParameters={legendDimensionlessParameters}
             position="top-left"
             collapsed={legendCollapsed}
             onToggleCollapse={setLegendCollapsed}
@@ -3204,7 +3320,9 @@ UnifiedBubbleLatticeVisualization.propTypes = {
     initialBubbleRadius: PropTypes.number,
     drivingPressure: PropTypes.number,
     frequency: PropTypes.number,
-    latticeSize: PropTypes.number
+    latticeSize: PropTypes.number,
+    electrolyteFamily: PropTypes.string,
+    electrolyteSpecies: PropTypes.string,
   }),
   simulationData: PropTypes.object,
   onPhaseChange: PropTypes.func,

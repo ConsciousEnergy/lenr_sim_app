@@ -40,6 +40,7 @@ import {
   Storage as StorageIcon,
 } from '@mui/icons-material';
 import { useTheme as useAppTheme } from '../contexts/ThemeContext';
+import { resolveApiUrl } from '../config/api';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -80,7 +81,7 @@ const SettingsPage = () => {
       showGrid: false
     },
     advanced: {
-      apiUrl: 'http://localhost:8010',
+      apiUrl: '',
       enableDebugMode: false,
       cacheTTL: 3600,
       experimentalFeatures: false
@@ -108,11 +109,13 @@ const SettingsPage = () => {
   
   const checkSystemStatus = async (apiUrl = null) => {
     // Use provided apiUrl or settings value or default
-    const baseUrl = apiUrl || settings.advanced?.apiUrl || 'http://localhost:8010';
+    const customBase = (apiUrl || settings.advanced?.apiUrl || '').trim();
+    const baseUrl = customBase ? customBase.replace(/\/$/, '') : '';
     
     // Check API connection
     try {
-      const response = await fetch(`${baseUrl}/health`, { 
+      const healthPath = baseUrl ? `${baseUrl}/api/health` : resolveApiUrl('/api/health');
+      const response = await fetch(healthPath, { 
         method: 'GET',
         signal: AbortSignal.timeout(3000)
       });
@@ -190,7 +193,7 @@ const SettingsPage = () => {
           showGrid: false
         },
         advanced: {
-          apiUrl: 'http://localhost:8010',
+          apiUrl: '',
           enableDebugMode: false,
           cacheTTL: 3600,
           experimentalFeatures: false

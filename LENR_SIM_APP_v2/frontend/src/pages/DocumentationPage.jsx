@@ -38,7 +38,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, resolveApiUrl } from '../config/api';
 
 const DocumentationPage = () => {
   const theme = useTheme();
@@ -419,7 +419,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
             </Typography>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
               <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                http://localhost:8000
+                {API_BASE_URL || '(development: same origin + CRA proxy to backend)'}
               </Typography>
             </Box>
 
@@ -472,12 +472,16 @@ python -m uvicorn app.main:app --reload  # Backend`}
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
               <Typography variant="body2" paragraph>
-                Visit <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink> for 
-                the interactive Swagger UI with complete API documentation.
+                Visit{' '}
+                <MuiLink href={resolveApiUrl('/api/docs')} target="_blank" rel="noopener noreferrer">
+                  {resolveApiUrl('/api/docs')}
+                </MuiLink>{' '}
+                for the interactive Swagger UI with complete API documentation.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Note:</strong> Make sure the backend server is running on port 8000. If you see a blank page, 
-                check that the backend is started and accessible.
+                <strong>Note:</strong> In development, the frontend proxies <code>/api</code> to the backend (see{' '}
+                <code>setupProxy.js</code> and <code>REACT_APP_BACKEND_PROXY_TARGET</code>). Start the backend on the
+                configured port before opening docs.
               </Typography>
             </Alert>
           </AccordionDetails>
@@ -503,8 +507,10 @@ python -m uvicorn app.main:app --reload  # Backend`}
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 3 }}>
               <Typography variant="body2" component="pre" sx={{ m: 0 }}>
 {`# Frontend Environment Variables
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_WS_URL=ws://localhost:8000/ws
+# Leave REACT_APP_API_URL unset in dev to use CRA proxy (see setupProxy.js).
+# Optional direct backend URL:
+# REACT_APP_API_URL=http://localhost:8010
+# WebSockets: import getWebSocketUrl from src/config/api.js (same-origin in dev).
 REACT_APP_ENV=development`}
               </Typography>
             </Box>

@@ -4,6 +4,12 @@ Electron Screening Theory Module
 Refactored from ``unified_lenr_model._calculate_electron_screening()`` into a
 standalone :class:`TheoryModule` implementation.
 
+Experimental context: Cvetinović et al., *Phys. Lett. B* **838**, 137684 (2023)
+report electron screening in hydrogen-loaded palladium targets with a wide
+spread versus atomic-model expectations (including cases far above simple
+theoretical estimates). This module keeps explicit ``validation_flags`` when
+potentials exceed literature-scale bounds used elsewhere in the codebase.
+
 Physics (Section 2.1):
     Debye screening in the host lattice reduces the effective Coulomb barrier
     by 10-100 eV, exponentially enhancing low-energy tunnelling rates.
@@ -148,6 +154,12 @@ class ElectronScreeningTheory:
                 f"screening potential {U_screen_ev:.0f} eV exceeds experimental "
                 f"range (max ~800 eV for Pd-D, Kasagi et al.)"
             )
+        cvet_upper_ev = 8000.0
+        if U_screen_ev > cvet_upper_ev:
+            validation_flags.append(
+                f"screening potential {U_screen_ev:.0f} eV exceeds conservative "
+                f"Pd-H upper audit bound ({cvet_upper_ev:.0f} eV; see Cvetinović et al. 2023)"
+            )
 
         return TheoryContribution(
             theory_id=self.theory_id,
@@ -162,6 +174,8 @@ class ElectronScreeningTheory:
                 "salpeter_valid": bool(regime["salpeter_valid"]),
                 "rydberg_enhancement_factor": rydberg_enh_factor,
                 "validation_flags": validation_flags,
+                "cvetinovic_audit_upper_ev": float(cvet_upper_ev),
+                "screening_within_cvetinovic_soft_cap": bool(U_screen_ev <= cvet_upper_ev),
                 # Screening enhances D+D -> He-4 pathway (dominant LENR channel)
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,

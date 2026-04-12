@@ -7,6 +7,7 @@ import { Button, Card, Col, Row, Space, Switch, Typography, Alert, message } fro
 import { PlayCircleOutlined, ReloadOutlined, DatabaseOutlined } from '@ant-design/icons';
 import UnifiedLENRVisualizer from '../components/visualization/UnifiedLENRVisualizer';
 import axios from 'axios';
+import { resolveApiUrl } from '../config/api';
 
 const { Title, Text } = Typography;
 
@@ -141,7 +142,7 @@ const VisualizationTest = () => {
     try {
       // Try to fetch test data from the mock backend endpoint
       const response = await axios.post(
-        'http://localhost:8000/api/simulations/test-visualization-data',
+        resolveApiUrl('/api/simulations/test-visualization-data'),
         {},
         { timeout: 5000 }
       );

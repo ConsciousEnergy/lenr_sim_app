@@ -57,7 +57,10 @@ class VisualizationWebSocket {
         
         // Create new WebSocket connection
         // Ensure we have a valid base URL
-        const baseUrl = this.baseUrl || 'http://localhost:8010';
+        const baseUrl =
+          this.baseUrl ||
+          API_BASE_URL ||
+          (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '');
         // Convert http(s) to ws(s)
         const wsUrl = baseUrl.replace(/^http/, 'ws');
         // Remove trailing /api if present to avoid duplication

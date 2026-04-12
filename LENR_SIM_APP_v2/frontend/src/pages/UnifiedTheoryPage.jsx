@@ -784,6 +784,25 @@ function UnifiedTheoryPage() {
         contradiction: false,
         contradiction_reason_code: 'none',
       },
+      dimensionless_parameters: {
+        hartmann_number: 12.0,
+        magnetic_reynolds_number: 0.8,
+        wall_conductivity_regime: 'shercliff',
+        notes: 'Local fallback placeholder values.',
+      },
+      transmutation_validation: {
+        parkhomov_match: 'partial',
+        matching_reactions: [
+          {
+            reactants: ['D', 'Pd'],
+            products: ['Ag'],
+            energy_mev: 0.0,
+            channel: 'transmutation_placeholder',
+          },
+        ],
+        total_candidates: 1,
+        source: 'Local fallback (no Parkhomov DB in browser)',
+      },
     };
   };
 
@@ -1606,6 +1625,42 @@ function UnifiedTheoryPage() {
                           />
                         ))}
                       </Box>
+                    </Paper>
+                  </Grid>
+                  <Grid size={12}>
+                    <Paper sx={{ p: 2 }} variant="outlined">
+                      <Typography variant="h6" gutterBottom>Transmutation validation (Parkhomov-style)</Typography>
+                      <Divider sx={{ mb: 2 }} />
+                      {simulationData.transmutation_validation ? (
+                        <Box sx={{ display: 'grid', gap: 1 }}>
+                          <Chip
+                            size="small"
+                            color={
+                              simulationData.transmutation_validation.parkhomov_match === 'exact'
+                                ? 'success'
+                                : simulationData.transmutation_validation.parkhomov_match === 'partial'
+                                  ? 'warning'
+                                  : 'default'
+                            }
+                            label={`Parkhomov: ${simulationData.transmutation_validation.parkhomov_match}`}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {simulationData.transmutation_validation.source}
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ mt: 1 }}>
+                            Top matches
+                          </Typography>
+                          {(simulationData.transmutation_validation.matching_reactions || []).map((r, idx) => (
+                            <Typography key={idx} variant="body2">
+                              {r.reactants?.join(' + ')} → {r.products?.join(' + ')} | {r.energy_mev} MeV | {r.channel}
+                            </Typography>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No transmutation_validation in this payload.
+                        </Typography>
+                      )}
                     </Paper>
                   </Grid>
                   <Grid size={12}>

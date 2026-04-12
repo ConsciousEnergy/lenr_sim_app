@@ -42,7 +42,9 @@ export function resolveApiUrl(path) {
  * When API_BASE_URL is empty (dev proxy), uses window.location so the proxy can forward.
  */
 export function getWebSocketUrl(path = '/ws') {
-  const base = API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:8010');
+  const base =
+    API_BASE_URL ||
+    (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '');
   const wsProtocol = base.startsWith('https') ? 'wss' : 'ws';
   const host = base.replace(/^https?:\/\//, '');
   return `${wsProtocol}://${host}${path}`;

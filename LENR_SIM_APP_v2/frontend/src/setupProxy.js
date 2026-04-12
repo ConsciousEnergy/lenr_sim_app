@@ -4,6 +4,9 @@
  */
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+const backendTarget =
+  process.env.REACT_APP_BACKEND_PROXY_TARGET || 'http://localhost:8010';
+
 module.exports = function(app) {
   // Add mock endpoints for development when backend is unavailable
   // Health check endpoint
@@ -39,7 +42,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:8010',
+      target: backendTarget,
       changeOrigin: true,
       // Keep /api prefix because backend routes are mounted under /api.
       pathRewrite: {},

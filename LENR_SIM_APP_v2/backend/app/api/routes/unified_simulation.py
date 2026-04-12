@@ -13,6 +13,7 @@ import asyncio
 import json
 import math
 from app.core.config import settings
+from app.physics_engine.parkhomov_validation import validate_transmutation
 from app.physics_engine.scientific_guardrails import (
     build_electrolyte_diagnostics,
     classify_molarity_window,
@@ -116,6 +117,7 @@ class SimulationResponse(BaseModel):
     falsification_conditions: List[str]
     observables_bridge: Dict[str, Any]
     computation_time: float
+    transmutation_validation: Dict[str, Any] = Field(default_factory=dict)
 
 
 class MechanismResponse(BaseModel):
@@ -270,7 +272,11 @@ async def run_unified_simulation(request: SimulationRequest):
         
         # Convert thresholds to Python bools
         thresholds = {k: bool(v) for k, v in result.thresholds_met.items()}
-        
+        transmutation_validation = validate_transmutation(
+            request.material.host_material,
+            request.material.reactant,
+        )
+
         return SimulationResponse(
             success=True,
             enhancement={
@@ -308,7 +314,8 @@ async def run_unified_simulation(request: SimulationRequest):
             uncertainty_interval=result.uncertainty_interval,
             falsification_conditions=result.falsification_conditions,
             observables_bridge=result.observables_bridge,
-            computation_time=float(result.computation_time)
+            computation_time=float(result.computation_time),
+            transmutation_validation=transmutation_validation,
         )
         
     except Exception as e:
@@ -605,6 +612,8 @@ class BubbleLatticeResponse(BaseModel):
     validation: Dict[str, Any] = {}
     regime_validity_flags: Dict[str, bool] = {}
     unsupported_extrapolation_flags: Dict[str, bool] = {}
+    dimensionless_parameters: Dict[str, Any] = Field(default_factory=dict)
+    transmutation_validation: Dict[str, Any] = Field(default_factory=dict)
 
 
 @router.post("/bubble-lattice", response_model=BubbleLatticeResponse)
@@ -745,7 +754,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         )
         from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         from app.physics_engine.proton_phase_model import ProtonPhaseModel
-        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+        from app.physics_engine.mhd.dimensionless_parameters import compute_mhd_parameters
         
         # Create bubble parameters
         bubble_params = BubbleParameters(
@@ -863,6 +872,31 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         
         validated_window, soft_window, outside_supported_range = classify_molarity_window(molarity)
 
+        # Dimensionless MHD summary for visualization / transparency (order-of-magnitude).
+        L_char = max(request.bubble.initial_radius_um * 1e-6, 1e-9)
+        B_eff = max(abs(collapse_result.double_layer_field_peak), 1.0) / 1e8
+        v_char = max(2.0 * math.pi * request.bubble.frequency_khz * 1e3 * L_char * 0.02, 1e-4)
+        mhd_dim = compute_mhd_parameters(
+            B=B_eff,
+            L=L_char,
+            v=v_char,
+            rho=1000.0,
+            sigma=100.0,
+            nu=1e-6,
+            temperature=float(collapse_result.max_temperature),
+            ion_density=float(lattice_params.electron_density),
+        )
+        dimensionless_parameters = {
+            "hartmann_number": float(mhd_dim.hartmann_number),
+            "magnetic_reynolds_number": float(mhd_dim.magnetic_reynolds_number),
+            "wall_conductivity_regime": "shercliff",
+            "notes": "Ha/Rm use B~E/1e8 T proxy and acoustic velocity scale for Web visualization contract.",
+        }
+        transmutation_validation = validate_transmutation(
+            request.material.host_material,
+            request.material.reactant,
+        )
+
         # Sanitize all float values to ensure JSON compliance
         return BubbleLatticeResponse(
             success=True,
@@ -906,6 +940,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "low_support_alkali_family": bool(family in {"rb", "cs", "other"}),
                 "inconsistent_electrolyte_species_family": not species_family_consistent,
             },
+            dimensionless_parameters=dimensionless_parameters,
+            transmutation_validation=transmutation_validation,
         )
         
     except HTTPException:
