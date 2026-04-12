@@ -1,6 +1,6 @@
 # LENR Simulation App - Deployment Quick Reference
 
-**Version:** 0.3.5-beta  
+**Version:** 0.3.6-beta  
 **Last Updated:** March 2026
 
 ---

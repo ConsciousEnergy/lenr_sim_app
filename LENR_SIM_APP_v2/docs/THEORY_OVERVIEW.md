@@ -1,6 +1,6 @@
 # Unified LENR Theory Overview
 
-**Version**: 0.3.5-beta  
+**Version**: 0.3.6-beta  
 **Last Updated**: February 2026
 
 ---
@@ -90,6 +90,16 @@ The additional electric field term (ε₀E²/2) is crucial for LENR applications
 
 **In the simulation**: You can adjust initial bubble radius, driving pressure, and frequency to see how they affect collapse dynamics.
 
+### Electrolyte System Axis (v0.3.6-beta uplift)
+
+The Unified Theory runtime now treats electrolyte context as a first-class axis in addition to host/reactant presets:
+
+- **Family**: Li, Na, K, Rb, Cs, mixed, other
+- **Species**: hydroxide/carbonate variants (`lioh`, `li2co3`, `naoh`, `na2co3`, `koh`, `k2co3`, etc.)
+- **Molarity**: bounded evidence windows with soft/hard extrapolation flags
+
+Electrolyte selection only modifies electrochemical boundary conditions and confidence support; it does not introduce independent nuclear reaction channels.
+
 ---
 
 ### 5. Casimir Effect
@@ -139,6 +149,16 @@ FREE (EM) → SCREENED → CAPTURE_READY (Weak) → NUCLEAR (Strong)
 | **CAPTURE_READY** | Enhancement > 10³ | Weak force coupling becomes significant (p + e⁻ → n + νₑ possible) |
 | **NUCLEAR** | Enhancement > 10⁵ | Strong force engagement possible, nuclear reactions can occur |
 
+### Contradiction Semantics (v0.3.6-beta hardening)
+
+- Threshold policy is boundary-stable: nuclear-phase checks use `enhancement >= 1e5`.
+- Contradiction alerts are backend-authored and include a deterministic reason code:
+  - `none`
+  - `threshold_boundary`
+  - `missing_phase_data`
+  - `inconsistent_mode`
+- UI warnings should consume the reason code directly instead of re-deriving contradiction state from partial fields.
+
 **Visualization**: In the interactive simulation, protons are color-coded by phase:
 - 🔵 Blue = FREE
 - 🔷 Cyan = SCREENED  
@@ -155,7 +175,7 @@ In addition to the six integrated mechanisms above, the v0.3.0 release introduce
 |---|---|---|
 | **Electron Screening** | Debye screening reduces Coulomb barrier by 10-100 eV | Raiola 2004, Czerski 2001 |
 | **Confined-Mode QED** | Del Giudice/Preparata coherent EM domains; replaces bulk Schwinger | Del Giudice 1998, Preparata 1995 |
-| **Storms' Hydroton** | H-e-H-e-H covalent chain with resonance fusion and gradual photon cascade | Storms 2007, 2014 |
+| **Storms' Hydroton (legacy, deprecated)** | Historical H-e-H-e-H covalent chain concept retained only for archival compatibility, not active default scoring | Storms 2007, 2014 |
 | **Nuclear Active Environment** | Crack-size filtering, simultaneity requirement, site probability, H-loading purity | Storms 2014 |
 | **Bubble-MHD Confinement** | Nano-scale Ulam-Teller analog: Rayleigh-Plesset + Z-pinch + surface phase transitions | This work |
 | **Casimir Confinement** | Quantum vacuum force with Lifshitz finite-conductivity correction | Casimir 1948, Lifshitz 1956 |
@@ -265,7 +285,7 @@ For comprehensive MHD physics documentation, see:
 
 ---
 
-## Complete Theory Module Inventory (v0.3.5-beta)
+## Complete Theory Module Inventory (v0.3.6-beta)
 
 The simulation platform now includes **21 independently testable theory modules**, all implementing the `TheoryModule` protocol for composable pipeline execution.
 
@@ -275,7 +295,7 @@ The simulation platform now includes **21 independently testable theory modules*
 |---|-----------|----------------|----------|-------------|------------|------------------|---------------|
 | 1 | `electron_screening` | Raiola, Czerski | mechanism | Debye screening reduces Coulomb barrier by 10-100 eV | 1.0 | 0.0 | 0.0 |
 | 2 | `coherent_qed` | Del Giudice, Preparata | mechanism | Coherent EM domains, QED vacuum modification | 1.0 | 0.0 | 0.0 |
-| 3 | `hydroton` | Edmund Storms | mechanism | H-e-H-e-H chain, resonance fusion in nano-gaps | 1.0 | 0.01 | 0.0 |
+| 3 | `hydroton` | Edmund Storms | mechanism (legacy/deprecated) | Historical compatibility module; excluded from default runtime in v0.3.6-beta | 1.0 | 0.01 | 0.0 |
 | 4 | `nae_model` | Edmund Storms | mechanism | Nuclear Active Environment in cracks, loading threshold | 1.0 | 0.0 | 0.0 |
 | 5 | `bubble_mhd_confinement` | (Novel) | mechanism | MHD flux compression, Hartmann flow confinement | derived | derived | 0.0 |
 | 6 | `casimir_confinement` | Casimir, Lifshitz | mechanism | Quantum vacuum confinement at nanoscale | 1.0 | 0.0 | 0.0 |
@@ -419,6 +439,13 @@ The theory pipeline now supports **coupled mode**, where theories execute in top
 - **Promoted Keys**: `screening_potential_eV`, `T_peak_K`, `P_peak_Pa`, `B_compressed_T`, `he4_production_rate` are auto-promoted to top-level conditions
 - **Namespaced Outputs**: All observables injected as `{theory_id}__{key}` to avoid collisions
 - **Coupling Map**: Visualized in the frontend via "Fed by" chips on each theory card
+
+### Composition guardrails (v0.3.6-beta hardening)
+
+- Overlapping theories are grouped by mechanism (e.g., `screening`, `coherence`, `confinement`).
+- Pipeline combination rule: `grouped_max_confidence_product`.
+- For each group, one contribution is applied using `max(enhancement_factor * confidence)`.
+- Excluded overlaps are preserved in payload provenance (`excluded_theories`) for reproducibility.
 
 ### Legacy Module Integration (v0.3.3-beta)
 

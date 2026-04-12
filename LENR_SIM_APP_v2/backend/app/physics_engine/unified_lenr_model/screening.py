@@ -43,7 +43,8 @@ def calculate_electron_screening(config: "SimulationConfig") -> EnhancementResul
     U_screen_j = Z1 * Z2 * E_CHARGE**2 / (4 * np.pi * EPS0 * lambda_d)
     U_screen_ev = U_screen_j / E_CHARGE
     E_thermal = 1.5 * KB * T / E_CHARGE
-    eta = Z1 * Z2 * ALPHA * np.sqrt(MP * C**2 / (2 * E_thermal * E_CHARGE))
+    reduced_mass = 0.5 * config.reactant.atomic_mass * const.u
+    eta = Z1 * Z2 * ALPHA * np.sqrt(reduced_mass * C**2 / (2 * E_thermal * E_CHARGE))
     E_thermal = max(E_thermal, 0.01)
     enhancement = np.exp(np.pi * eta * U_screen_ev / E_thermal)
     if not np.isfinite(enhancement):

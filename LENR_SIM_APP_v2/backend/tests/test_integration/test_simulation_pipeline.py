@@ -183,7 +183,11 @@ class TestSimulationAPI:
         assert isinstance(data, list)
         ids = [t["theory_id"] for t in data]
         assert "electron_screening" in ids
+        assert "takahashi_tsc" in ids
         assert "hagelstein_phonon" in ids
+        assert "vysotskii_ccs" in ids
+        assert "swartz_nanor" in ids
+        assert "miles_heat_helium" in ids
         assert "casimir_confinement" in ids
 
     def test_theories_run_endpoint_minimal(self, client):
@@ -199,8 +203,42 @@ class TestSimulationAPI:
         data = response.json()
         assert "combined_enhancement" in data
         assert "per_theory" in data
+        assert data.get("contract_version") == "v0.3.6-beta-science-gate-1"
+        assert "validation" in data
+        assert "observables_bridge" in data
         assert data["combined_enhancement"] >= 1.0
         assert len(data["per_theory"]) >= 3
+
+    def test_unified_simulate_supports_pipeline_mode(self, client):
+        response = client.post(
+            "/api/unified/simulate",
+            json={
+                "material": {"host_material": "palladium", "reactant": "deuterium"},
+                "environmental": {"temperature": 300.0, "pressure": 101325.0, "electric_field": 1e6},
+                "lattice": {
+                    "loading_ratio": 0.9,
+                    "defect_density": 1e16,
+                    "grain_size": 50e-9,
+                    "surface_roughness": 5e-9,
+                    "electrolyte_family": "li",
+                    "electrolyte_species": "lioh",
+                    "electrolyte_molarity_mol_l": 0.3,
+                },
+                "electrolyte": {"family": "li", "species": "lioh", "molarity_mol_l": 0.3},
+                "use_theory_pipeline": True,
+                "enabled_theories": ["electron_screening", "hagelstein_phonon"],
+                "time_steps": 20,
+                "total_time": 1.0,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") is True
+        assert data.get("contract_version") == "v0.3.6-beta-science-gate-1"
+        assert data.get("validation", {}).get("route_mode") == "theory_pipeline"
+        assert data.get("analytics_transparency", {}).get("electrolyte_family") == "li"
+        assert data.get("analytics_transparency", {}).get("electrolyte_species") == "lioh"
+        assert "electrolyte_diagnostics" in data.get("analytics_transparency", {})
 
     def test_single_theory_electron_screening_via_api(self, client):
         """POST /api/physics/theories/electron_screening/run returns regime and salpeter_valid."""
@@ -262,3 +300,61 @@ class TestSimulationAPI:
         assert "combined_enhancement" in data
         assert "execution_order" in data
         assert data["combined_enhancement"] >= 1.0
+
+    def test_parameter_sweep_endpoint(self, client):
+        """POST /api/analytics/parameter-sweep returns sweep curves for requested theories."""
+        response = client.post(
+            "/api/analytics/parameter-sweep",
+            json={
+                "conditions": MINIMAL_CONDITIONS,
+                "sweep_param": "temperature",
+                "sweep_min": 250.0,
+                "sweep_max": 450.0,
+                "sweep_steps": 5,
+                "enabled_theories": ["electron_screening", "takahashi_tsc", "miles_heat_helium"],
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("sweep_param") == "temperature"
+        assert len(data.get("sweep_values", [])) == 5
+        assert "results" in data
+        for theory_id in ("electron_screening", "takahashi_tsc", "miles_heat_helium"):
+            assert theory_id in data["results"]
+            assert len(data["results"][theory_id]) == 5
+
+    def test_unified_bubble_lattice_frontend_payload(self, client):
+        """POST /api/unified/bubble-lattice accepts frontend payload and returns success."""
+        response = client.post(
+            "/api/unified/bubble-lattice",
+            json={
+                "bubble": {
+                    "initial_radius_um": 9.99,
+                    "driving_pressure_bar": 1.5,
+                    "frequency_khz": 20.0,
+                    "ambient_temperature_k": 300.0,
+                },
+                "material": {
+                    "host_material": "palladium",
+                    "reactant": "deuterium",
+                },
+                "lattice": {
+                    "loading_ratio": 0.9,
+                    "defect_density": 1e16,
+                    "surface_roughness": 5e-9,
+                    "grain_size": 50e-9,
+                    "electrolyte_family": "li",
+                    "electrolyte_species": "lioh",
+                    "electrolyte_molarity_mol_l": 0.3,
+                },
+                "num_cycles": 2,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") is True
+        assert "collapse_results" in data
+        assert "proton_phases" in data
+        assert "peak_conditions" in data
+        assert "enhancement_timeline" in data
+        assert data.get("electrolyte_diagnostics", {}).get("electrolyte_species") == "lioh"

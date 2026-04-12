@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { SimulationUpdateMessage, LatticeState } from '../api/physics/types';
-import { API_BASE_URL, getWebSocketUrl } from '../config/api';
+import { getWebSocketUrl, resolveApiUrl } from '../config/api';
 
 // ---------------------------------------------------------------------------
 // Theory Testbed types (Phase 4.4)
@@ -27,6 +27,13 @@ export interface TheoryContributionResult {
   parameters_used: Record<string, number>;
   is_applicable: boolean;
   confidence: number;
+  confidence_breakdown?: Record<string, any>;
+  uncertainty_interval?: Record<string, number>;
+  falsification_conditions?: string[];
+  evidence_class?: string;
+  reproducibility_tier?: string;
+  claim_tier?: string;
+  provenance?: Record<string, any>;
   references: string[];
 }
 
@@ -37,6 +44,9 @@ export interface TheoryPipelineResult {
   total_energy_watts: number;
   conditions: Record<string, number>;
   enabled_theories: string[];
+  contract_version?: string;
+  observables_bridge?: Record<string, any>;
+  analytics_transparency?: Record<string, any>;
   per_theory: TheoryContributionResult[];
 }
 
@@ -79,8 +89,8 @@ export interface PhysicsContextType {
   setEnabledTheories: (_ids: string[]) => void;
   setTheoryConfigs: (_configs: Record<string, Record<string, any>>) => void;
   fetchTheories: () => Promise<void>;
-  runTheories: (_conditions: Record<string, number>) => Promise<TheoryPipelineResult | null>;
-  runCoupledTheories: (_conditions: Record<string, number>) => Promise<CoupledPipelineResult | null>;
+  runTheories: (_conditions: Record<string, number | string>) => Promise<TheoryPipelineResult | null>;
+  runCoupledTheories: (_conditions: Record<string, number | string>) => Promise<CoupledPipelineResult | null>;
   coupledResult: CoupledPipelineResult | null;
 
   // Shared simulation result (persists across route navigation)
@@ -135,7 +145,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
   const fetchTheories = useCallback(async () => {
     setIsLoadingTheories(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/physics/theories`);
+      const response = await fetch(resolveApiUrl('/api/physics/theories'));
       if (!response.ok) throw new Error(`Failed to fetch theories: ${response.statusText}`);
       const data: TheoryInfo[] = await response.json();
       setAvailableTheories(data);
@@ -152,9 +162,9 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
 
   /** Run enabled theories against supplied conditions. */
   const runTheories = useCallback(
-    async (conditions: Record<string, number>): Promise<TheoryPipelineResult | null> => {
+    async (conditions: Record<string, number | string>): Promise<TheoryPipelineResult | null> => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/physics/theories/run`, {
+        const response = await fetch(resolveApiUrl('/api/physics/theories/run'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -177,9 +187,9 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
 
   /** Run enabled theories in coupled (sequential dependency) mode. */
   const runCoupledTheories = useCallback(
-    async (conditions: Record<string, number>): Promise<CoupledPipelineResult | null> => {
+    async (conditions: Record<string, number | string>): Promise<CoupledPipelineResult | null> => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/analytics/theories/run-coupled`, {
+        const response = await fetch(resolveApiUrl('/api/analytics/theories/run-coupled'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -261,7 +271,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
 
   const startSimulation = async (params: Record<string, number | string>) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/physics/simulate`, {
+      const response = await fetch(resolveApiUrl('/api/physics/simulate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

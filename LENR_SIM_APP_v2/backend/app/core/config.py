@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     
     # Base configuration
     APP_NAME: str = "LENR_Sim_App"
-    APP_VERSION: str = "0.3.5-beta"
+    APP_VERSION: str = "0.3.6-beta"
     API_PREFIX: str = "/api"
     DEBUG: bool = False
     
@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     ENABLE_TRACEMALLOC: bool = False  # Disable in production for performance
     ENABLE_AUTO_GC: bool = True  # Enable automatic garbage collection
     SLOW_REQUEST_THRESHOLD: float = 500.0  # Milliseconds
+    ENABLE_LEGACY_HYDROTON: bool = False
     
     # Middleware configuration
     ENABLE_REQUEST_ID_MIDDLEWARE: bool = True

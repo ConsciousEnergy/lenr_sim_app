@@ -5,7 +5,7 @@
  * process.env directly.  This ensures a single source of truth for
  * the backend URL, timeout, and WebSocket URL.
  *
- * Environment variable: REACT_APP_API_URL (e.g. http://localhost:8000)
+ * Environment variable: REACT_APP_API_URL (e.g. http://localhost:8010)
  *
  * In development without REACT_APP_API_URL, uses empty string so requests
  * go through the dev server proxy (package.json "proxy" field) to avoid
@@ -21,7 +21,7 @@ const forceDirectApi = process.env.REACT_APP_FORCE_DIRECT_API === 'true';
  */
 export const API_BASE_URL = isDev
   ? (forceDirectApi ? runtimeApiUrl : '')
-  : (runtimeApiUrl || 'http://localhost:8000');
+  : (runtimeApiUrl || 'https://api.conscious.energy');
 
 export const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
@@ -42,7 +42,7 @@ export function resolveApiUrl(path) {
  * When API_BASE_URL is empty (dev proxy), uses window.location so the proxy can forward.
  */
 export function getWebSocketUrl(path = '/ws') {
-  const base = API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:8000');
+  const base = API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:8010');
   const wsProtocol = base.startsWith('https') ? 'wss' : 'ws';
   const host = base.replace(/^https?:\/\//, '');
   return `${wsProtocol}://${host}${path}`;

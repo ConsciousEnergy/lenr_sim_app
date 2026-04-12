@@ -180,13 +180,6 @@ const fallbackModels: PhysicsModel[] = [
     tags: ['qed', 'coherent'],
   },
   {
-    id: 'hydroton',
-    name: "Storms' Hydroton Model",
-    description: 'H-e-H-e-H covalent chain forming in NAE nano-gaps.',
-    category: 'primary',
-    tags: ['hydroton', 'storms'],
-  },
-  {
     id: 'nae_model',
     name: 'Nuclear Active Environment (NAE)',
     description: 'Statistical model of NAE site density.',

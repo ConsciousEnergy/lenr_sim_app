@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { 
   Typography, 
   Card, 
@@ -49,9 +49,29 @@ const formatDate = (dateString) => {
 
 function SimulationDetail() {
   const { simulationId } = useParams();
+  const location = useLocation();
+  const preview = location.state?.simulationPreview || null;
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState('');
+
+  const buildSimulationFromPreview = useCallback((snapshot) => ({
+    id: snapshot.id ?? simulationId,
+    name: snapshot.name ?? `${snapshot.type || 'Simulation'} (${snapshot.id || simulationId})`,
+    description: `Loaded from analytics history snapshot (${snapshot.source || 'unknown source'})`,
+    status: snapshot.status || 'completed',
+    progress: snapshot.status === 'completed' ? 100 : 0,
+    createdAt: snapshot.timestamp || new Date().toISOString(),
+    estimatedCompletion: null,
+    parameters: snapshot.parameters || {},
+    resources: {
+      cpuCores: 4,
+      gpuEnabled: false,
+      memory: 'N/A',
+      estimatedRuntime: 'N/A',
+    },
+  }), [simulationId]);
 
   const fetchSimulation = useCallback(async () => {
     if (!simulationId) return;
@@ -79,13 +99,20 @@ function SimulationDetail() {
           estimatedRuntime: data.estimated_runtime ?? 'N/A',
         },
       });
+      setNotice('');
     } catch (err) {
       console.error('Failed to fetch simulation:', err);
-      setError(`Unable to load simulation ${simulationId}. ${err.message ?? ''}`);
+      if (preview) {
+        setSimulation(buildSimulationFromPreview(preview));
+        setNotice(`Live details unavailable for ${simulationId}. Showing stored history snapshot.`);
+        setError(null);
+      } else {
+        setError(`Unable to load simulation ${simulationId}. ${err.message ?? ''}`);
+      }
     } finally {
       setLoading(false);
     }
-  }, [simulationId]);
+  }, [simulationId, preview, buildSimulationFromPreview]);
 
   useEffect(() => {
     fetchSimulation();
@@ -120,6 +147,11 @@ function SimulationDetail() {
   return (
     <div>
       <Card style={{ marginBottom: 16 }}>
+        {notice ? (
+          <Card style={{ marginBottom: 16, background: '#fffbe6', borderColor: '#ffe58f' }}>
+            <Text>{notice}</Text>
+          </Card>
+        ) : null}
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} md={16}>
             <Title level={2}>{simulation.name}</Title>

@@ -26,19 +26,6 @@ def _build_default_nodes() -> List[TheoryNode]:
             material_systems=["Pd-D"],
         ),
         TheoryNode(
-            theory_id="hydroton",
-            theory_name="Hydroton (Storms)",
-            researcher="Edmund Storms",
-            year=2007,
-            category="mechanism",
-            key_predictions=["H-e-H chain fusion", "Resonance in nano-gaps", "He-4 product"],
-            physical_properties=[
-                "nano_confinement", "he4_production", "no_dangerous_radiation",
-                "electron_mediation", "surface_reaction",
-            ],
-            material_systems=["Pd-D"],
-        ),
-        TheoryNode(
             theory_id="nae_model",
             theory_name="NAE Model (Storms)",
             researcher="Edmund Storms",
@@ -268,7 +255,7 @@ def _build_default_edges() -> List[TheoryEdge]:
 
     # --- He-4 producing theories ---
     he4_theories = [
-        "hydroton", "takahashi_tsc", "hagelstein_phonon",
+        "takahashi_tsc", "hagelstein_phonon",
         "miles_heat_helium", "chubb_ion_band", "kim_bec", "letts_laser",
     ]
     for i, t1 in enumerate(he4_theories):
@@ -298,22 +285,7 @@ def _build_default_edges() -> List[TheoryEdge]:
             ))
 
     # --- Phonon/lattice coupling ---
-    edges.append(TheoryEdge(
-        source_id="hagelstein_phonon", target_id="hydroton",
-        relationship_type="extends",
-        shared_properties=["phonon_coupling", "no_dangerous_radiation"],
-        strength=0.8,
-        description="Hagelstein provides mechanism for Storms' slow resonance",
-    ))
-
     # --- NAE and surface theories ---
-    edges.append(TheoryEdge(
-        source_id="nae_model", target_id="hydroton",
-        relationship_type="extends",
-        shared_properties=["nano_confinement", "surface_reaction"],
-        strength=0.95,
-        description="NAE provides the site; Hydroton the mechanism within",
-    ))
     edges.append(TheoryEdge(
         source_id="nae_model", target_id="swartz_nanor",
         relationship_type="shares_mechanism",
@@ -323,13 +295,6 @@ def _build_default_edges() -> List[TheoryEdge]:
     ))
 
     # --- Electron mediation ---
-    edges.append(TheoryEdge(
-        source_id="hydroton", target_id="widom_larsen",
-        relationship_type="shares_mechanism",
-        shared_properties=["electron_mediation"],
-        strength=0.4,
-        description="Both invoke special electron roles, but different mechanisms",
-    ))
     edges.append(TheoryEdge(
         source_id="widom_larsen", target_id="chubb_ion_band",
         relationship_type="shares_mechanism",
@@ -442,13 +407,6 @@ def _build_default_edges() -> List[TheoryEdge]:
         strength=0.8,
         description="Phonon model explains heat-helium energy balance",
     ))
-    edges.append(TheoryEdge(
-        source_id="miles_heat_helium", target_id="hydroton",
-        relationship_type="explains_observation",
-        shared_properties=["he4_production"],
-        strength=0.85,
-        description="Hydroton predicts He-4 at rates matching Miles",
-    ))
 
     # --- Phonon coupling connections ---
     edges.append(TheoryEdge(
@@ -457,13 +415,6 @@ def _build_default_edges() -> List[TheoryEdge]:
         shared_properties=["phonon_coupling"],
         strength=0.85,
         description="Legacy phonon module provides quantitative Debye-Waller and polaron effects",
-    ))
-    edges.append(TheoryEdge(
-        source_id="phonon_coupling_legacy", target_id="hydroton",
-        relationship_type="extends",
-        shared_properties=["phonon_coupling"],
-        strength=0.5,
-        description="Phonon coupling facilitates energy dissipation in Hydroton resonance",
     ))
 
     # --- Non-equilibrium thermo connections ---
