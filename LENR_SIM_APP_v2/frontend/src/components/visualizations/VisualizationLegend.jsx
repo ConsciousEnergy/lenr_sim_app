@@ -97,6 +97,13 @@ const LENR_PARTICLE_TYPES = {
     description: 'Alternative host metal - HCP structure',
     mass: '47.87 u',
   },
+  copper: {
+    color: '#b87333',
+    label: 'Copper (Cu)',
+    symbol: 'Cu',
+    description: 'Host metal reference - FCC structure',
+    mass: '63.55 u',
+  },
   hydrogen: {
     color: '#32cd32',
     label: 'Hydrogen (H)',
@@ -388,17 +395,24 @@ StatItem.propTypes = {
 };
 
 /**
- * Scale indicator component
+ * Format a length in meters using the most appropriate SI prefix.
  */
-function ScaleIndicator({ gridSize, scaleUnit, realWorldSize }) {
-  // Format the real-world size appropriately
-  const formatSize = (size) => {
-    if (size >= 1e-6) return `${(size * 1e6).toFixed(1)} μm`;
-    if (size >= 1e-9) return `${(size * 1e9).toFixed(1)} nm`;
-    if (size >= 1e-10) return `${(size * 1e10).toFixed(1)} Å`;
-    return `${(size * 1e12).toFixed(1)} pm`;
-  };
+function formatPhysicalLength(size) {
+  if (size >= 1e-3) return `${(size * 1e3).toFixed(1)} mm`;
+  if (size >= 1e-6) return `${(size * 1e6).toFixed(1)} μm`;
+  if (size >= 1e-9) return `${(size * 1e9).toFixed(1)} nm`;
+  if (size >= 1e-10) return `${(size * 1e10).toFixed(1)} Å`;
+  return `${(size * 1e12).toFixed(1)} pm`;
+}
 
+/**
+ * Scale indicator component.
+ *
+ * When `mixedScales` is set on `scaleInfo` the indicator renders both the
+ * bubble-regime (μm) and lattice-regime (nm/Å) calibrations side by side so
+ * the user understands the unified scene is a mixed-scale schematic.
+ */
+function ScaleIndicator({ gridSize, scaleUnit, realWorldSize, mixedScales, bubbleRegime, latticeRegime }) {
   return (
     <Box sx={{ mb: 2 }}>
       <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -406,35 +420,53 @@ function ScaleIndicator({ gridSize, scaleUnit, realWorldSize }) {
         Scale
       </Typography>
       <Box sx={{ pl: 1 }}>
-        {/* Visual scale bar */}
+        {/* Primary scale bar for the current (default) regime */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            gap: 0,
-          }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
             <Box sx={{ width: 4, height: 12, bgcolor: 'white' }} />
             <Box sx={{ width: 60, height: 3, bgcolor: 'white' }} />
             <Box sx={{ width: 4, height: 12, bgcolor: 'white' }} />
           </Box>
           <Typography variant="caption">
-            {formatSize(realWorldSize)}
+            {formatPhysicalLength(realWorldSize)}
           </Typography>
         </Box>
-        {/* Grid info */}
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: 0.5,
-          fontSize: '0.7rem',
-        }}>
-          <Typography variant="caption" color="text.secondary">
-            Grid: {gridSize} × {gridSize} × {gridSize}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Unit: {scaleUnit}
-          </Typography>
-        </Box>
+
+        {mixedScales && bubbleRegime && latticeRegime ? (
+          <Box sx={{ mt: 0.5, mb: 0.5, display: 'grid', gap: 0.25 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.65rem' }}>
+              Mixed-scale schematic — scale bar adapts as you zoom
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0.25, pl: 0.5 }}>
+              <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                • <strong>{bubbleRegime.label}:</strong> 1 unit ≈ {formatPhysicalLength(bubbleRegime.metersPerUnit)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', pl: 1.5 }}>
+                {bubbleRegime.note}
+              </Typography>
+              <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                • <strong>{latticeRegime.label}:</strong> 1 unit ≈ {formatPhysicalLength(latticeRegime.metersPerUnit)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', pl: 1.5 }}>
+                {latticeRegime.note}
+              </Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 0.5,
+            fontSize: '0.7rem',
+          }}>
+            <Typography variant="caption" color="text.secondary">
+              Grid: {gridSize} × {gridSize} × {gridSize}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Unit: {scaleUnit}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
@@ -444,6 +476,17 @@ ScaleIndicator.propTypes = {
   gridSize: PropTypes.number,
   scaleUnit: PropTypes.string,
   realWorldSize: PropTypes.number,
+  mixedScales: PropTypes.bool,
+  bubbleRegime: PropTypes.shape({
+    label: PropTypes.string,
+    metersPerUnit: PropTypes.number,
+    note: PropTypes.string,
+  }),
+  latticeRegime: PropTypes.shape({
+    label: PropTypes.string,
+    metersPerUnit: PropTypes.number,
+    note: PropTypes.string,
+  }),
 };
 
 /**
@@ -737,10 +780,13 @@ function VisualizationLegend({
               {showScale && (
                 <>
                   <Divider sx={{ my: 1.5 }} />
-                  <ScaleIndicator 
+                  <ScaleIndicator
                     gridSize={scaleInfo.gridSize}
                     scaleUnit={scaleInfo.scaleUnit}
                     realWorldSize={scaleInfo.realWorldSize}
+                    mixedScales={scaleInfo.mixedScales}
+                    bubbleRegime={scaleInfo.bubbleRegime}
+                    latticeRegime={scaleInfo.latticeRegime}
                   />
                 </>
               )}
@@ -916,10 +962,13 @@ function VisualizationLegend({
           {showScale && (
             <>
               <Divider sx={{ my: 1.5 }} />
-              <ScaleIndicator 
+              <ScaleIndicator
                 gridSize={scaleInfo.gridSize}
                 scaleUnit={scaleInfo.scaleUnit}
                 realWorldSize={scaleInfo.realWorldSize}
+                mixedScales={scaleInfo.mixedScales}
+                bubbleRegime={scaleInfo.bubbleRegime}
+                latticeRegime={scaleInfo.latticeRegime}
               />
             </>
           )}
@@ -1041,6 +1090,17 @@ VisualizationLegend.propTypes = {
     gridSize: PropTypes.number,
     scaleUnit: PropTypes.string,
     realWorldSize: PropTypes.number,
+    mixedScales: PropTypes.bool,
+    bubbleRegime: PropTypes.shape({
+      label: PropTypes.string,
+      metersPerUnit: PropTypes.number,
+      note: PropTypes.string,
+    }),
+    latticeRegime: PropTypes.shape({
+      label: PropTypes.string,
+      metersPerUnit: PropTypes.number,
+      note: PropTypes.string,
+    }),
   }),
   quantumFluxMode: PropTypes.oneOf([
     // Lattice-scale modes (LENR)
