@@ -38,6 +38,12 @@ import VisualizationLegend from './VisualizationLegend';
 import { resolveQuantumFluxModeForOverlays, THEORY_VISUALIZATION_MAP } from '../../config/theoryVisualizationMap';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
+import {
+  getMaterialScale,
+  getLatticeMetersPerVisUnit,
+  getAtomRadiusVisUnits,
+  buildLatticeScaleDescriptor,
+} from '../../utils/materialScale';
 
 // Proton state definitions with visual properties
 const PROTON_STATES = {
@@ -61,6 +67,14 @@ const _COLLAPSE_PHASES = {
 // Physical frequency is in kHz (e.g., 20kHz = 50μs cycles) - way too fast to observe
 // This multiplier makes one visual cycle take ~3-5 seconds at default speed
 const UX_TIME_SCALE = 0.02; // Slow down by 50x for visual comprehension
+
+const HOST_MATERIAL_COLORS = {
+  palladium: 0x8b8b8b,
+  nickel: 0x4682b4,
+  titanium: 0x7f8c8d,
+  copper: 0xb87333,
+  lithium: 0xc0c0c0,
+};
 
 // ============================================================================
 // PHYSICS-BASED VISUALIZATION CONFIGURATION (Phase 6 Enhancement)
@@ -206,6 +220,11 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
     return null;
   }
   
+  // Canonical field accessors (backend contract aliases).
+  const resolveTemperatureK = (point) => point?.temperature_k ?? point?.temperature ?? 300;
+  const resolveElectricFieldVm = (point) => point?.electric_field_v_m ?? point?.electric_field ?? 1e8;
+  const resolveRadiusFactor = (point) => point?.radius_factor ?? 1;
+
   // Handle out-of-range times: clamp to nearest segment
   if (timeline.length < 2) {
     return timeline[0];
@@ -245,9 +264,11 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
         CAPTURE_READY: lerp(lower.proton_distribution?.CAPTURE_READY || 0.4, upper.proton_distribution?.CAPTURE_READY || 0.4, t),
         NUCLEAR: lerp(lower.proton_distribution?.NUCLEAR || 0.3, upper.proton_distribution?.NUCLEAR || 0.3, t),
       },
-      radius_factor: lerp(lower.radius_factor || 1, upper.radius_factor || 1, t),
-      temperature: lerp(lower.temperature || 300, upper.temperature || 300, t),
-      electric_field: lerp(lower.electric_field || 1e8, upper.electric_field || 1e8, t),
+      radius_factor: lerp(resolveRadiusFactor(lower), resolveRadiusFactor(upper), t),
+      temperature: lerp(resolveTemperatureK(lower), resolveTemperatureK(upper), t),
+      temperature_k: lerp(resolveTemperatureK(lower), resolveTemperatureK(upper), t),
+      electric_field: lerp(resolveElectricFieldVm(lower), resolveElectricFieldVm(upper), t),
+      electric_field_v_m: lerp(resolveElectricFieldVm(lower), resolveElectricFieldVm(upper), t),
     };
   }
   
@@ -292,9 +313,11 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
       CAPTURE_READY: lerp(lower.proton_distribution?.CAPTURE_READY || 0.4, upper.proton_distribution?.CAPTURE_READY || 0.4, t),
       NUCLEAR: lerp(lower.proton_distribution?.NUCLEAR || 0.3, upper.proton_distribution?.NUCLEAR || 0.3, t),
     },
-    radius_factor: lerp(lower.radius_factor || 1, upper.radius_factor || 1, t),
-    temperature: lerp(lower.temperature || 300, upper.temperature || 300, t),
-    electric_field: lerp(lower.electric_field || 1e8, upper.electric_field || 1e8, t),
+    radius_factor: lerp(resolveRadiusFactor(lower), resolveRadiusFactor(upper), t),
+    temperature: lerp(resolveTemperatureK(lower), resolveTemperatureK(upper), t),
+    temperature_k: lerp(resolveTemperatureK(lower), resolveTemperatureK(upper), t),
+    electric_field: lerp(resolveElectricFieldVm(lower), resolveElectricFieldVm(upper), t),
+    electric_field_v_m: lerp(resolveElectricFieldVm(lower), resolveElectricFieldVm(upper), t),
   };
 };
 
@@ -487,6 +510,43 @@ const UnifiedBubbleLatticeVisualization = ({
     electrolyteSpecies = '',
   } = parameters;
 
+  const materialScale = useMemo(() => getMaterialScale(hostMaterial), [hostMaterial]);
+  const palladiumScale = useMemo(() => getMaterialScale('palladium'), []);
+
+  // Keep scene readability stable while preserving material-specific spacing ratios.
+  const latticeSpacingVisUnits = useMemo(() => {
+    const baseSpacing = PHYSICS_CONFIG.LATTICE_SPACING;
+    const ratio = materialScale.latticeConstantM / palladiumScale.latticeConstantM;
+    return baseSpacing * ratio;
+  }, [materialScale.latticeConstantM, palladiumScale.latticeConstantM]);
+
+  const latticeMetersPerVisUnit = useMemo(
+    () => getLatticeMetersPerVisUnit({
+      material: hostMaterial,
+      latticeSpacingVisUnits,
+    }),
+    [hostMaterial, latticeSpacingVisUnits],
+  );
+
+  const hostAtomRadiusVisUnits = useMemo(
+    () => getAtomRadiusVisUnits({
+      material: hostMaterial,
+      metersPerVisUnit: latticeMetersPerVisUnit,
+      minimumVisRadius: 0.12,
+    }),
+    [hostMaterial, latticeMetersPerVisUnit],
+  );
+
+  const latticeScaleDescriptor = useMemo(
+    () => buildLatticeScaleDescriptor({ material: hostMaterial, latticeSpacingVisUnits }),
+    [hostMaterial, latticeSpacingVisUnits],
+  );
+
+  const latticeBaselineLengthVisUnits = useMemo(
+    () => Math.max(4, Math.round(5e-9 / Math.max(latticeMetersPerVisUnit, 1e-15))),
+    [latticeMetersPerVisUnit],
+  );
+
   const latticeSiteCount = Math.max(1, Math.round(Math.pow(latticeSize, 3)));
 
   const legendParticleCounts = useMemo(() => {
@@ -535,14 +595,13 @@ const UnifiedBubbleLatticeVisualization = ({
     latticeGroup.name = 'LatticeGroup';
     
     const dimension = latticeSize;
-    const spacing = PHYSICS_CONFIG.LATTICE_SPACING;
+    const spacing = latticeSpacingVisUnits;
     const offset = (dimension - 1) * spacing / 2;
     
     // Host atom material (Pd/Ni color)
-    const hostColor = hostMaterial === 'palladium' ? 0x8b8b8b : 
-                      hostMaterial === 'nickel' ? 0x4682b4 : 0x696969;
+    const hostColor = HOST_MATERIAL_COLORS[hostMaterial] || 0x696969;
     
-    const hostGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+    const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 16, 16);
     const hostMaterial3D = new THREE.MeshPhongMaterial({
       color: hostColor,
       shininess: 100,
@@ -550,7 +609,8 @@ const UnifiedBubbleLatticeVisualization = ({
     });
     
     // Hydrogen atom material
-    const hydrogenGeometry = new THREE.SphereGeometry(0.15, 12, 12);
+    const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
+    const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 12, 12);
     const hydrogenMaterial = new THREE.MeshPhongMaterial({
       color: 0x32cd32,
       emissive: 0x0a3a0a,
@@ -672,7 +732,7 @@ const UnifiedBubbleLatticeVisualization = ({
     boundaryVisualGroupRef.current = boundaryVisualGroup;
     
     return latticeGroup;
-  }, [hostMaterial, loadingRatio, latticeSize]);
+  }, [hostMaterial, hostAtomRadiusVisUnits, latticeSize, latticeSpacingVisUnits, loadingRatio]);
 
   // Create bubble with double-layer shell
   // Physics: bubble nucleates at surface cavities within boundary layer
@@ -1380,6 +1440,7 @@ const UnifiedBubbleLatticeVisualization = ({
     return vortexGroup;
   }, []);
 
+
   // Create Rydberg Matter orbital visualization
   // Extended electron orbitals around lattice atoms (Rydberg states)
   const createRydbergOrbitals = useCallback((scene) => {
@@ -1526,29 +1587,35 @@ const UnifiedBubbleLatticeVisualization = ({
   }, []);
 
   /**
-   * Create 3D scale bar for physical dimension reference
-   * Shows real-world scale (micrometers) for bubble/lattice visualization
+   * Create 3D scale bar for physical dimension reference.
+   *
+   * The unified scene is a mixed-scale schematic: bubble features are
+   * rendered at ~1 vis unit = 1 μm (physically reasonable for the
+   * acoustic cavitation bubble), while lattice atoms are drawn ~1.2 vis
+   * units apart even though the real Pd lattice constant is 0.389 nm
+   * (~3000× smaller). A single fixed scale-bar calibration is therefore
+   * misleading when the user zooms in on the lattice. The bar is created
+   * here with a sensible default and then updated adaptively in the
+   * animation loop via `setAdaptiveScale(cameraDistance)`.
    */
   const createScaleBar = useCallback((scene) => {
-    // Clean up existing scale bar
     if (scaleBarRef.current) {
       scene.remove(scaleBarRef.current.getGroup());
     }
-    
-    // Create scale bar - bubble radius is typically 1-50 micrometers
-    // Position in bottom-left of the scene
+
     const scaleBar = new ScaleBar({
-      length: 4,
-      realWorldScale: 1e-6, // 1 unit = 1 micrometer for bubble visualization
+      length: latticeBaselineLengthVisUnits,
+      realWorldScale: latticeMetersPerVisUnit,
       position: new THREE.Vector3(-6, -6, 4),
       color: 0x00ffcc,
+      regimeLabel: latticeScaleDescriptor.label,
     });
     scaleBar.initialize();
     scene.add(scaleBar.getGroup());
     scaleBarRef.current = scaleBar;
-    
+
     return scaleBar;
-  }, []);
+  }, [latticeBaselineLengthVisUnits, latticeMetersPerVisUnit, latticeScaleDescriptor.label]);
 
   // Physics-based bubble radius calculation using Rayleigh-Plesset equation
   // R*R'' + 3/2*R'² = (1/ρ)[P_b - P_∞ - 2σ/R - 4μR'/R + ε₀E²/2]
@@ -1820,8 +1887,8 @@ const UnifiedBubbleLatticeVisualization = ({
       // Use API physics data
       radius = baseRadius * apiData.radius_factor;
       phase = apiData.phase;
-      fieldStrength = apiData.electric_field;
-      temperature = apiData.temperature;
+      fieldStrength = apiData.electric_field_v_m ?? apiData.electric_field;
+      temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
       pressure = 101325 * Math.pow(compressionRatio, 4.2); // Approximate
       
@@ -2048,7 +2115,7 @@ const UnifiedBubbleLatticeVisualization = ({
         cavitationPoint.x,
         latticeSurfaceY,
         cavitationPoint.z,
-        PHYSICS_CONFIG.LATTICE_SPACING
+        latticeSpacingVisUnits
       );
       const reboundBlend = flowReversalRef.current.isReversed
         ? Math.min(1, flowReversalRef.current.timer / 0.45)
@@ -2138,7 +2205,7 @@ const UnifiedBubbleLatticeVisualization = ({
         } else if (phase === 'REBOUND') {
           // REBOUND: Particles perturbed outward but confined by lattice potential.
           // Physics: Reaction energy transfers to lattice phonons; boundary layer H/D stay confined.
-          const maxScatterDist = PHYSICS_CONFIG.LATTICE_SPACING * 1.2;
+          const maxScatterDist = latticeSpacingVisUnits * 1.2;
           if (distance < maxScatterDist) {
             const scatterForce = 0.008 + reboundBlend * 0.018;
             proton.position.x -= (dx / distance) * scatterForce;
@@ -2155,7 +2222,7 @@ const UnifiedBubbleLatticeVisualization = ({
           proton.userData.mhdAngle = (proton.userData.mhdAngle || 0) + reverseDirection * mhdAngularVelocity * (0.02 + reboundBlend * 0.06);
           const reboundTheta = proton.userData.mhdAngle;
           const reboundRadius = Math.min(
-            PHYSICS_CONFIG.LATTICE_SPACING * 1.6,
+            latticeSpacingVisUnits * 1.6,
             horizontalDist + 0.02 + reboundBlend * 0.04
           );
           proton.position.x = cavitationPoint.x + reboundRadius * Math.cos(reboundTheta);
@@ -2194,7 +2261,7 @@ const UnifiedBubbleLatticeVisualization = ({
         proton.position.z += (Math.random() - 0.5) * thermalScale;
         
         // Hard clamp: protons stay within 2 lattice spacings of nucleation site
-        const maxDist = PHYSICS_CONFIG.LATTICE_SPACING * 2;
+        const maxDist = latticeSpacingVisUnits * 2;
         const clampDx = proton.position.x - cavitationPoint.x;
         const clampDz = proton.position.z - cavitationPoint.z;
         const clampDist = Math.sqrt(clampDx * clampDx + clampDz * clampDz);
@@ -2698,7 +2765,8 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     isPlaying, frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo
+    showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo,
+    latticeSpacingVisUnits
   ]); // Note: currentPhase removed - using currentPhaseRef to avoid scene re-initialization
 
   // Store updateAnimation in ref to avoid triggering scene re-initialization
@@ -2782,11 +2850,23 @@ const UnifiedBubbleLatticeVisualization = ({
     // Animation loop - uses ref to avoid re-initialization when animation function changes
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate);
-      
+
       const deltaTime = clockRef.current.getDelta();
-      // Use ref to call latest animation function without causing re-init
       if (updateAnimationRef.current) {
         updateAnimationRef.current(deltaTime);
+      }
+
+      // Zoom-adaptive scale bar: use camera distance to orbit target rather than
+      // absolute origin distance so the transition remains stable after panning.
+      if (scaleBarRef.current) {
+        const camDistance = camera.position.distanceTo(controls.target);
+        scaleBarRef.current.setAdaptiveScale(camDistance, {
+          latticeRegimeScale: latticeMetersPerVisUnit,
+          transitionDistance: 20,
+          fovDeg: 75,
+          latticeTargetLengthM: 5e-9,
+          forceLatticeOnly: true,
+        });
       }
 
       controls.update();
@@ -2827,7 +2907,7 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createRydbergOrbitals, createHaloElectrons, createScaleBar]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
 
   // Update visibility based on toggles - immediate update with force refresh
@@ -3011,96 +3091,106 @@ const UnifiedBubbleLatticeVisualization = ({
             }
           }}
           showHints={isMobile}
-          showControls={true}
+          showControls={isMobile}
           enabled={true}
         />
         
-        {/* Overlay controls - top left */}
-        <Paper
-          elevation={3}
-          sx={{
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            bgcolor: 'rgba(20, 20, 40, 0.9)',
-            borderRadius: 1,
-            p: 0.5,
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          <Tooltip title="Zoom In" placement="right">
-            <IconButton size="small" onClick={handleZoomIn} sx={{ color: 'white' }}>
-              <ZoomInIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Zoom Out" placement="right">
-            <IconButton size="small" onClick={handleZoomOut} sx={{ color: 'white' }}>
-              <ZoomOutIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Reset View" placement="right">
-            <IconButton size="small" onClick={handleResetView} sx={{ color: 'white' }}>
-              <HomeIcon />
-            </IconButton>
-          </Tooltip>
-        </Paper>
-        
-        {/* Layer toggles - top right */}
-        <Paper
-          elevation={3}
+        {/* Right-side control stack: layer toggles + desktop zoom controls */}
+        <Box
           sx={{
             position: 'absolute',
             top: 10,
             right: 10,
-            bgcolor: 'rgba(20, 20, 40, 0.9)',
-            borderRadius: 1,
-            p: 1
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 1,
+            zIndex: 5,
           }}
         >
-          <FormGroup>
-            <FormControlLabel
-              control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
-              label={<Typography variant="caption" color="white">Lattice</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
-              label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
-              label={<Typography variant="caption" color="white">Bubble</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
-              label={<Typography variant="caption" color="white">Protons</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
-              label={<Typography variant="caption" color="white">Fields</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
-              label={<Typography variant="caption" color="white">MHD Flow</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
-              label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}
-              label={<Typography variant="caption" color="white">Rydberg Orbitals</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
-              label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
-              label={<Typography variant="caption" color="white">Legend</Typography>}
-            />
-          </FormGroup>
-        </Paper>
+          {/* Layer toggles */}
+          <Paper
+            elevation={3}
+            sx={{
+              bgcolor: 'rgba(20, 20, 40, 0.9)',
+              borderRadius: 1,
+              p: 1,
+            }}
+          >
+            <FormGroup>
+              <FormControlLabel
+                control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
+                label={<Typography variant="caption" color="white">Lattice</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
+                label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
+                label={<Typography variant="caption" color="white">Bubble</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
+                label={<Typography variant="caption" color="white">Protons</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
+                label={<Typography variant="caption" color="white">Fields</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
+                label={<Typography variant="caption" color="white">MHD Flow</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
+                label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showRydberg} onChange={(e) => setShowRydberg(e.target.checked)} size="small" sx={{ color: '#8844ff' }} />}
+                label={<Typography variant="caption" color="white">Rydberg Orbitals</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showHalo} onChange={(e) => setShowHalo(e.target.checked)} size="small" sx={{ color: '#00ffff' }} />}
+                label={<Typography variant="caption" color="white">Halo Electrons</Typography>}
+              />
+              <FormControlLabel
+                control={<Switch checked={showLegend} onChange={(e) => setShowLegend(e.target.checked)} size="small" sx={{ color: '#88ff88' }} />}
+                label={<Typography variant="caption" color="white">Legend</Typography>}
+              />
+            </FormGroup>
+          </Paper>
+
+          {/* Desktop zoom controls are intentionally grouped below legend toggles */}
+          {!isMobile && (
+            <Paper
+              elevation={3}
+              sx={{
+                bgcolor: 'rgba(20, 20, 40, 0.9)',
+                borderRadius: 1,
+                p: 0.5,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Tooltip title="Zoom In" placement="left">
+                <IconButton size="small" onClick={handleZoomIn} sx={{ color: 'white' }}>
+                  <ZoomInIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Zoom Out" placement="left">
+                <IconButton size="small" onClick={handleZoomOut} sx={{ color: 'white' }}>
+                  <ZoomOutIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Reset View" placement="left">
+                <IconButton size="small" onClick={handleResetView} sx={{ color: 'white' }}>
+                  <HomeIcon />
+                </IconButton>
+              </Tooltip>
+            </Paper>
+          )}
+        </Box>
         
         {/* Comprehensive Visualization Legend - collapsible side drawer */}
         {showLegend && (
@@ -3128,9 +3218,17 @@ const UnifiedBubbleLatticeVisualization = ({
             showScale={true}
             showQuantumFlux={showCasimir || showRydberg}
             scaleInfo={{
-              gridSize: latticeSize,
-              scaleUnit: 'μm',
-              realWorldSize: parameters.initialBubbleRadius * 1e-6
+              // Lattice-only display contract: keep nm-scale reference as the
+              // single source of truth for the visual marker and legend.
+              gridSize: 5,
+              scaleUnit: 'nm',
+              realWorldSize: 5e-9,
+              mixedScales: false,
+              latticeRegime: {
+                label: latticeScaleDescriptor.label,
+                metersPerUnit: latticeScaleDescriptor.metersPerUnit,
+                note: latticeScaleDescriptor.note,
+              },
             }}
             quantumFluxMode={quantumFluxModeForLegend}
             electrolyteChips={legendElectrolyteChips}

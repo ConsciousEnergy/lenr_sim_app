@@ -832,8 +832,14 @@ export class ScaleBar {
     this.realWorldScale = options.realWorldScale || 1e-9; // meters per unit
     this.position = options.position || new THREE.Vector3(-4, -4.5, 4);
     this.color = options.color || 0xffffff;
+    // Optional subtitle describing which physical regime this scale represents
+    // (e.g. "bubble scale", "lattice scale"). Used by adaptive scale-bar mode.
+    this.regimeLabel = options.regimeLabel || null;
     this.group = new THREE.Group();
     this.group.name = 'scaleBar';
+    // Internal cache so adaptive updates do not rebuild meshes every frame
+    this._lastRegime = null;
+    this._lastLength = null;
   }
 
   initialize() {
@@ -878,42 +884,117 @@ export class ScaleBar {
 
   createLabel() {
     const realLength = this.length * this.realWorldScale;
-    let labelText;
-    
-    if (realLength >= 1e-6) {
-      labelText = `${(realLength * 1e6).toFixed(1)} μm`;
-    } else if (realLength >= 1e-9) {
-      labelText = `${(realLength * 1e9).toFixed(1)} nm`;
-    } else if (realLength >= 1e-10) {
-      labelText = `${(realLength * 1e10).toFixed(1)} Å`;
-    } else {
-      labelText = `${(realLength * 1e12).toFixed(1)} pm`;
-    }
-    
+    const labelText = ScaleBar.formatPhysicalLength(realLength);
+
+    const hasRegime = Boolean(this.regimeLabel);
     const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 32;
+    canvas.width = 192;
+    canvas.height = hasRegime ? 56 : 32;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'Bold 16px Arial';
+    ctx.font = 'Bold 18px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(labelText, 64, 16);
-    
+    ctx.fillText(labelText, canvas.width / 2, hasRegime ? 16 : 16);
+    if (hasRegime) {
+      ctx.fillStyle = '#9fd7ff';
+      ctx.font = '13px Arial';
+      ctx.fillText(`(${this.regimeLabel})`, canvas.width / 2, 40);
+    }
+
     const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ 
-      map: texture, 
+    const material = new THREE.SpriteMaterial({
+      map: texture,
       transparent: true,
       depthTest: false,
     });
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(1.8, 0.45, 1);
-    
+    sprite.scale.set(2.5, hasRegime ? 0.75 : 0.45, 1);
+
     return sprite;
+  }
+
+  /**
+   * Format a length in meters into a human-friendly string with a suitable
+   * SI prefix. Uses Angstroms for sub-nm scales, nm for sub-μm, μm for
+   * sub-mm, and mm above that.
+   */
+  static formatPhysicalLength(meters) {
+    const absLen = Math.abs(meters);
+    if (absLen >= 1e-3) return `${(meters * 1e3).toFixed(1)} mm`;
+    if (absLen >= 1e-6) return `${(meters * 1e6).toFixed(1)} μm`;
+    if (absLen >= 1e-9) return `${(meters * 1e9).toFixed(1)} nm`;
+    if (absLen >= 1e-10) return `${(meters * 1e10).toFixed(1)} Å`;
+    return `${(meters * 1e12).toFixed(1)} pm`;
   }
 
   setScale(realWorldScale) {
     this.realWorldScale = realWorldScale;
+    this.initialize();
+  }
+
+  /**
+   * Zoom-adaptive scale selection for mixed-scale schematic scenes.
+   *
+   * The Unified Theory visualization draws two physical regimes in one
+   * scene: a bubble of ~1-10 μm diameter and a crystal lattice with
+   * atomic spacing ~0.3-0.5 nm. A single fixed "meters per vis-unit"
+   * conversion is therefore misleading once the user zooms in close to
+   * the lattice. This method picks the appropriate regime based on the
+   * current camera distance to the scene origin and rebuilds the bar
+   * only when the regime or target length changes.
+   *
+   * @param {number} cameraDistance - camera-to-origin distance in vis units
+   * @param {object} [opts]
+   * @param {number} [opts.bubbleRegimeScale=1e-6] - meters per vis-unit when zoomed out (bubble view)
+   * @param {number} [opts.latticeRegimeScale=0.324e-9] - meters per vis-unit when zoomed in (lattice view)
+   * @param {number} [opts.transitionDistance=8] - camera distance threshold between regimes
+   * @param {number} [opts.fovDeg=75] - vertical field of view, used to pick a target bar length
+   * @param {number} [opts.latticeTargetLengthM=5e-9] - target lattice physical marker length (meters)
+   * @param {boolean} [opts.forceLatticeOnly=false] - disable bubble regime and keep nm-scale marker only
+   */
+  setAdaptiveScale(cameraDistance, opts = {}) {
+    const {
+      bubbleRegimeScale = 1e-6,
+      latticeRegimeScale = 0.324e-9,
+      transitionDistance = 8,
+      fovDeg = 75,
+      latticeTargetLengthM = 5e-9,
+      forceLatticeOnly = false,
+    } = opts;
+
+    const inLattice = forceLatticeOnly ? true : cameraDistance < transitionDistance;
+    const regime = inLattice ? 'lattice scale' : 'bubble scale';
+    const scale = inLattice ? latticeRegimeScale : bubbleRegimeScale;
+
+    // Pick a bar length (in vis units) that spans ~15% of the visible world
+    // width at the current camera distance, clamped to a pleasant range.
+    const visibleWidth = 2 * Math.max(cameraDistance, 1e-3) *
+      Math.tan((fovDeg / 2) * Math.PI / 180);
+    const viewportTarget = visibleWidth * 0.15;
+    const desiredLatticeUnits = Math.max(1, latticeTargetLengthM / Math.max(scale, 1e-15));
+    const blendedTarget = inLattice
+      ? (viewportTarget * 0.1 + desiredLatticeUnits * 0.9)
+      : viewportTarget;
+    const rawTarget = inLattice
+      ? Math.max(blendedTarget, desiredLatticeUnits * 0.9)
+      : blendedTarget;
+    const minUnits = inLattice ? 4 : 1;
+    const maxUnits = inLattice ? 48 : 10;
+    const nearTargetMin = desiredLatticeUnits * 0.95;
+    const nearTargetMax = desiredLatticeUnits * 1.05;
+    const bounded = inLattice
+      ? Math.max(nearTargetMin, Math.min(nearTargetMax, rawTarget))
+      : rawTarget;
+    const clamped = Math.max(minUnits, Math.min(maxUnits, Number(bounded.toFixed(2))));
+
+    if (this._lastRegime === regime && this._lastLength === clamped) return;
+
+    this.length = clamped;
+    this.realWorldScale = scale;
+    this.regimeLabel = regime;
+    this._lastRegime = regime;
+    this._lastLength = clamped;
     this.initialize();
   }
 
