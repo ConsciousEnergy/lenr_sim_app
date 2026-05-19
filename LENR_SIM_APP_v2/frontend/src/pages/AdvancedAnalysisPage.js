@@ -47,6 +47,7 @@ const AdvancedAnalysisPage = () => {
 
   const hasData = !!simulationResult || !!theoryResult;
   const perTheory = theoryResult?.per_theory || null;
+  const observablesBridge = theoryResult?.observables_bridge || null;
 
   const enhancementBreakdown = useMemo(() => {
     return simulationResult?.peak_conditions?.enhancement_breakdown || null;
@@ -545,6 +546,11 @@ const AdvancedAnalysisPage = () => {
           </Paper>
         ) : (
           <>
+            {observablesBridge && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Observable bridge active: heat, helium proxy, and radiation bound fields are coming from the backend contract.
+              </Alert>
+            )}
             <Box
               sx={{
                 borderBottom: 1,

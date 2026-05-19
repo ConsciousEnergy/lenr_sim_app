@@ -5,6 +5,23 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.6-beta] - 2026-04-12
+
+### Contract and Scientific Guardrail Alignment
+- Unified backend/frontend release markers to `0.3.6-beta` and retained contract identifier `v0.3.6-beta-science-gate-1`.
+- Consolidated electrolyte evidence and activity scaling through shared scientific guardrail utilities to remove divergent weighting paths.
+- Propagated electrolyte context into theory-pipeline execution conditions in unified model runs.
+
+### Unified Runtime Consistency
+- Updated unified simulation API response with explicit contract metadata and analytics transparency fields.
+- Normalized electrolyte semantics in unified request handling and improved extrapolation/validity flag consistency.
+- Hardened websocket update path to use the same bounded electrolyte multiplier strategy as HTTP simulation paths.
+
+### CI, Docs, and Release Hardening
+- Added/updated v0.3.6-beta governance and verification docs, including explicit residual-risk framing and release readiness gates.
+- Refreshed deployment and merge guidance to v0.3.6-beta release naming and branch/tag conventions.
+- Extended CI hardening plan to include backend dependency audit and least-privilege permissions posture.
+
 ## [v0.3.4-beta] - 2026-02-16
 
 ### Relevance Map — Stability & UX

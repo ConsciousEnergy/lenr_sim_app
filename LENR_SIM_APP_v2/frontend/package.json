@@ -1,6 +1,6 @@
 {
   "name": "lenr-sim-frontend",
-  "version": "0.3.5-beta",
+  "version": "0.3.6-beta",
   "private": true,
   "license": "GPL-3.0",
   "repository": {
@@ -22,9 +22,10 @@
     "@tanstack/react-query": "^5.72.2",
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.4.0",
-    "axios": "^1.13.6",
+    "axios": "^1.15.0",
     "d3": "^7.8.4",
     "dotenv": "^16.4.5",
+    "lodash": "^4.18.1",
     "notistack": "^3.0.1",
     "qs": "^6.15.0",
     "react": "^18.2.0",

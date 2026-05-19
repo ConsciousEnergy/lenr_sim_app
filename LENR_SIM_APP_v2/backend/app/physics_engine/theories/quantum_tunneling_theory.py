@@ -27,6 +27,48 @@ from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
 logger = logging.getLogger(__name__)
 
+
+def compute_fermi_hubbard_regime(
+    *,
+    temperature_k: float,
+    lattice_constant_m: float,
+    z1: int,
+    z2: int,
+    coulomb_barrier_ev: float,
+    thermal_energy_ev: float,
+) -> Dict[str, float]:
+    """
+    Map lattice + Coulomb scales to a Fermi–Hubbard-style ``U/t`` ratio (proxy).
+
+    ``U`` is approximated by the Gamow-scale Coulomb barrier; ``t`` is approximated
+    by the thermal energy scale. This is a transparency aid, not a full Hubbard
+    parameter extraction (which would require Wannier functions / DFT).
+
+    References: Bojović et al., Nature (2026) optical-lattice double-well analogue;
+    LAMMPS EAM literature for Pd–H bulk diffusion barriers ~0.49 eV (order-of-magnitude).
+    """
+    t_ev = max(float(thermal_energy_ev), 1e-9)
+    u_ev = max(float(coulomb_barrier_ev), 1e-9)
+    u_over_t = u_ev / t_ev
+    a_m = max(float(lattice_constant_m), 1e-12)
+    return {
+        "U_over_t_ratio": float(u_over_t),
+        "lattice_constant_m": float(a_m),
+        "temperature_k": float(temperature_k),
+        "z1": float(z1),
+        "z2": float(z2),
+        "reference_bulk_tunnel_barrier_eV_pd_h": 0.49,
+    }
+
+
+def _inverse_isotope_tunneling_factor(a1: float, a2: float, temperature_k: float) -> float:
+    """Small empirical factor for D vs H at low T (inverse isotope effect in Pd)."""
+    is_heavy = max(float(a1), float(a2)) >= 1.9
+    if temperature_k >= 800.0:
+        return 1.0
+    return 1.0 + (0.035 if is_heavy else 0.0)
+
+
 HBAR = const.hbar
 E_CHARGE = const.e
 KB = const.k
@@ -109,6 +151,17 @@ class QuantumTunnelingTheory:
         V_coulomb_J = Z1 * Z2 * E_CHARGE**2 / (4 * math.pi * EPS0 * r_nuclear)
         V_coulomb_eV = V_coulomb_J / E_CHARGE
 
+        lattice_constant_m = 3.89e-10  # Pd FCC ~3.89 Å (DFT / experiment)
+        fh = compute_fermi_hubbard_regime(
+            temperature_k=T,
+            lattice_constant_m=lattice_constant_m,
+            z1=Z1,
+            z2=Z2,
+            coulomb_barrier_ev=V_coulomb_eV,
+            thermal_energy_ev=E_thermal_eV,
+        )
+        isotope_correction_factor = _inverse_isotope_tunneling_factor(A1, A2, T)
+
         # The tunnelling probability IS the base rate; enhancement = 1
         # since this IS the base.  Other theories multiply on top.
         enhancement = 1.0
@@ -128,6 +181,8 @@ class QuantumTunnelingTheory:
                 "coulomb_barrier_eV": V_coulomb_eV,
                 "thermal_energy_eV": E_thermal_eV,
                 "nuclear_radius_fm": r_nuclear * 1e15,
+                "fermi_hubbard_proxy": fh,
+                "isotope_correction_factor": float(isotope_correction_factor),
                 # Base tunneling for D+D -> He-4 fusion pathway
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,

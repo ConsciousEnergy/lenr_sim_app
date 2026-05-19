@@ -83,6 +83,11 @@ const TheoryPage = () => {
             <Chip label="QED Effects" size="small" color="primary" />
             <Chip label="Casimir Effect" size="small" color="primary" />
           </Stack>
+          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1 }}>
+            <Chip label="Established Physics" size="small" color="success" variant="outlined" />
+            <Chip label="Empirical LENR Correlation" size="small" color="warning" variant="outlined" />
+            <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
+          </Stack>
         </Box>
 
         <Divider sx={{ my: 4 }} />

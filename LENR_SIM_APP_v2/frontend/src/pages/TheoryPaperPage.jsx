@@ -115,6 +115,11 @@ const TheoryPaperPage = () => {
               variant="outlined"
             />
           </Stack>
+          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
+            <Chip label="Established Physics" size="small" color="success" variant="outlined" />
+            <Chip label="Empirical LENR Correlation" size="small" color="warning" variant="outlined" />
+            <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
+          </Stack>
 
           <Alert severity="info" sx={{ mt: 3, textAlign: 'left' }}>
             <AlertTitle><strong>Note for Contributors</strong></AlertTitle>
@@ -548,6 +553,9 @@ const TheoryPaperPage = () => {
               {/* 2.4 Storms' Hydroton / NAE */}
               <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>2.4 Storms' Hydroton and Nuclear Active Environment (NAE)</Typography>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    Hydroton is deprecated for default runtime scoring in v0.3.6-beta and retained only as legacy/archival context.
+                  </Alert>
                   <Typography variant="body2" paragraph>
                     Edmund Storms proposes that LENR occurs within specific Nuclear Active Environments (NAE) — nano-scale cracks (~1 nm width) in metallic surfaces formed through repeated hydrogen loading/unloading cycles. Within these NAE sites, hydrogen atoms form the <strong>Hydroton</strong>: a linear covalent H-e-H-e-H chain (related to Rydberg matter and metallic hydrogen) that undergoes resonance-driven fusion.
                   </Typography>
@@ -1025,7 +1033,7 @@ const TheoryPaperPage = () => {
                     {[
                       ['2.1 Rydberg / Screening', 'electron_screening', '/unified-theory'],
                       ['2.3 Double-Layer QED', 'coherent_qed', '/unified-theory'],
-                      ['2.4 Hydroton / NAE', 'hydroton, nae_model', '/unified-theory'],
+                      ['2.4 Hydroton / NAE', 'nae_model (hydroton: legacy/deprecated)', '/unified-theory'],
                       ['2.5 Casimir', 'casimir_confinement', '/unified-theory?tab=casimir'],
                       ['2.6 BEC / Kim', 'kim_bec', '/unified-theory'],
                       ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips', '/unified-theory'],

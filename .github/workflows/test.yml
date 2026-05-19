@@ -2,11 +2,14 @@ name: Test and Benchmark
 
 on:
   push:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
   pull_request:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
   # Allow manual triggering
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -28,7 +31,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
-        pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy
+        pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
+
+    - name: Backend dependency audit
+      run: |
+        cd LENR_SIM_APP_v2/backend
+        pip-audit -r requirements.txt
 
     - name: Run unit tests
       run: |
@@ -39,6 +47,11 @@ jobs:
       run: |
         cd LENR_SIM_APP_v2/backend
         python -m pytest tests/test_integration/ -v
+
+    - name: Run deterministic V&V benchmark gates
+      run: |
+        cd LENR_SIM_APP_v2/backend
+        python -m pytest tests/test_integration/test_physics_benchmark_gates.py -v
 
     - name: Run performance benchmarks
       if: hashFiles('LENR_SIM_APP_v2/backend/tests/performance/*.py') != ''
@@ -78,6 +91,11 @@ jobs:
         run: |
           cd LENR_SIM_APP_v2/frontend
           npm ci
+
+      - name: Security gate (high and critical)
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm audit --audit-level=high
 
       - name: Lint frontend
         run: |

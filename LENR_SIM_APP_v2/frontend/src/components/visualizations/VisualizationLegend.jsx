@@ -574,6 +574,9 @@ function VisualizationLegend({
   scaleInfo = { gridSize: 10, scaleUnit: 'nm', realWorldSize: 5e-9 },
   quantumFluxMode = 'electron_screening',
   quantumFluxIntensity = undefined,
+  electrolyteChips = [],
+  overlayHints = [],
+  dimensionlessParameters = null,
   position = 'top-right',
   collapsed = false,
   onToggleCollapse,
@@ -725,6 +728,48 @@ function VisualizationLegend({
                       />
                     ))}
                   </Box>
+                </Box>
+              )}
+
+              {electrolyteChips.length > 0 && (
+                <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {electrolyteChips.map((c) => (
+                    <Chip key={c.key || c.label} size="small" label={c.label} color="info" variant="outlined" />
+                  ))}
+                </Box>
+              )}
+
+              {overlayHints.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Layer provenance
+                  </Typography>
+                  {overlayHints.map((h) => (
+                    <Tooltip key={h.key} title={h.text || ''} placement="right">
+                      <Typography variant="caption" display="block" sx={{ cursor: 'help', mb: 0.5 }}>
+                        {h.label}
+                      </Typography>
+                    </Tooltip>
+                  ))}
+                </Box>
+              )}
+
+              {dimensionlessParameters && typeof dimensionlessParameters === 'object' && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    MHD scales (contract)
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Ha ≈ {Number(dimensionlessParameters.hartmann_number || 0).toExponential(2)}
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Rm ≈ {Number(dimensionlessParameters.magnetic_reynolds_number || 0).toExponential(2)}
+                  </Typography>
+                  {dimensionlessParameters.wall_conductivity_regime && (
+                    <Typography variant="caption" display="block">
+                      Wall regime: {dimensionlessParameters.wall_conductivity_regime}
+                    </Typography>
+                  )}
                 </Box>
               )}
               
@@ -1116,6 +1161,13 @@ VisualizationLegend.propTypes = {
     'z_pinch',
   ]),
   quantumFluxIntensity: PropTypes.number,
+  electrolyteChips: PropTypes.arrayOf(
+    PropTypes.shape({ key: PropTypes.string, label: PropTypes.string.isRequired }),
+  ),
+  overlayHints: PropTypes.arrayOf(
+    PropTypes.shape({ key: PropTypes.string.isRequired, label: PropTypes.string.isRequired, text: PropTypes.string }),
+  ),
+  dimensionlessParameters: PropTypes.object,
   position: PropTypes.oneOf(['top-right', 'top-left', 'bottom-right', 'bottom-left']),
   collapsed: PropTypes.bool,
   onToggleCollapse: PropTypes.func,

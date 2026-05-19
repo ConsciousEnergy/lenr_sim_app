@@ -4,6 +4,7 @@
  * This module provides utilities for connecting to the WebSocket API
  * to receive real-time visualization events from simulations.
  */
+import { API_BASE_URL } from '../config/api';
 
 /**
  * WebSocket connection manager for visualization data
@@ -56,7 +57,10 @@ class VisualizationWebSocket {
         
         // Create new WebSocket connection
         // Ensure we have a valid base URL
-        const baseUrl = this.baseUrl || 'http://localhost:8000';
+        const baseUrl =
+          this.baseUrl ||
+          API_BASE_URL ||
+          (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '');
         // Convert http(s) to ws(s)
         const wsUrl = baseUrl.replace(/^http/, 'ws');
         // Remove trailing /api if present to avoid duplication
@@ -488,12 +492,13 @@ class VisualizationWebSocket {
 
 /**
  * Create a singleton instance of VisualizationWebSocket
- * @param {string} baseUrl - API base URL (defaults to http://localhost:8000 if empty)
+ * @param {string} baseUrl - API base URL (defaults to http://localhost:8010 if empty)
  * @returns {VisualizationWebSocket} WebSocket manager instance
  */
 export function createVisualizationWebSocket(baseUrl) {
-  // Use default backend URL if baseUrl is empty or doesn't start with http
-  const effectiveBaseUrl = (baseUrl && baseUrl.startsWith('http')) ? baseUrl : 'http://localhost:8000';
+  // Prefer centralized API config and only fall back to explicit input URL.
+  const configuredBaseUrl = API_BASE_URL || `${window.location.protocol}//${window.location.host}`;
+  const effectiveBaseUrl = (baseUrl && baseUrl.startsWith('http')) ? baseUrl : configuredBaseUrl;
   
   if (!window.visualizationWebSocket) {
     window.visualizationWebSocket = new VisualizationWebSocket(effectiveBaseUrl);

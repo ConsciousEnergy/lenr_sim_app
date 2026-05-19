@@ -518,12 +518,16 @@ class BubbleLatticeInteraction:
             "NUCLEAR": 0.0
         }
         
-        if enhancement > nuclear_threshold:
-            distribution["NUCLEAR"] = min(0.3, (enhancement / nuclear_threshold - 1) * 0.1)
+        if enhancement >= nuclear_threshold:
+            # Preserve a non-zero nuclear share at the exact threshold boundary.
+            distribution["NUCLEAR"] = max(
+                0.01,
+                min(0.3, (enhancement / nuclear_threshold - 1) * 0.1),
+            )
             distribution["CAPTURE_READY"] = 0.4
             distribution["SCREENED"] = 0.2
             distribution["FREE"] = 1 - sum(distribution.values())
-        elif enhancement > capture_threshold:
+        elif enhancement >= capture_threshold:
             distribution["CAPTURE_READY"] = min(0.5, (enhancement / capture_threshold - 1) * 0.2)
             distribution["SCREENED"] = 0.3
             distribution["FREE"] = 1 - sum(distribution.values())

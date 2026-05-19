@@ -38,12 +38,11 @@ import {
   RocketOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../contexts/ThemeContext'; // Assuming ThemeContext is used
+import { API_BASE_URL } from '../config/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-
-const API_BASE_URL = 'http://localhost:8000'; // Corrected hardcoded port
 
 /**
  * Component for monitoring active simulations and their status

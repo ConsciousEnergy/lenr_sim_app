@@ -158,7 +158,7 @@ const MHDParameterDashboard: React.FC<{ observables: Record<string, number> }> =
 
 interface TheoryTogglePanelProps {
   /** Physical conditions to pass when running theories. */
-  conditions?: Record<string, number>;
+  conditions?: Record<string, number | string>;
 }
 
 const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => {
@@ -261,6 +261,11 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           <Typography variant="caption" color="text.secondary">
             Energy: {theoryResult.total_energy_watts.toExponential(2)} W
           </Typography>
+          {theoryResult.contract_version && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              Contract: {theoryResult.contract_version}
+            </Typography>
+          )}
         </Paper>
       )}
 
@@ -392,7 +397,25 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
                         Confidence:
                       </Typography>
                       <Chip label={conf.label} size="small" color={conf.color} sx={{ height: 16, fontSize: '0.6rem' }} />
+                      {contribution.evidence_class && (
+                        <Chip
+                          label={contribution.evidence_class}
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 16, fontSize: '0.55rem' }}
+                        />
+                      )}
                     </Box>
+                  )}
+                  {contribution.confidence_breakdown?.weighted_score !== undefined && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      Weighted confidence: {(Number(contribution.confidence_breakdown.weighted_score) * 100).toFixed(1)}%
+                    </Typography>
+                  )}
+                  {contribution.uncertainty_interval?.lower_95 !== undefined && contribution.uncertainty_interval?.upper_95 !== undefined && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      95% CI: {Number(contribution.uncertainty_interval.lower_95).toFixed(2)} - {Number(contribution.uncertainty_interval.upper_95).toFixed(2)}
+                    </Typography>
                   )}
                 </Box>
               )}
@@ -431,6 +454,13 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
                   </Typography>
                 </Box>
               )}
+              {contribution?.falsification_conditions?.length ? (
+                <Box sx={{ mt: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Invalid if: {contribution.falsification_conditions[0]}
+                  </Typography>
+                </Box>
+              ) : null}
             </AccordionDetails>
           </Accordion>
         );
