@@ -1,0 +1,41 @@
+---
+description: Enforce LENR numeric consistency bands, symbol/unit discipline, and claim-tier/provenance metadata on every physics output and user-facing claim
+globs: LENR_SIM_APP_v2/backend/app/physics_engine/**/*.py, LENR_SIM_APP_v2/frontend/src/utils/theoryGovernance.ts, LENR_SIM_APP_v2/frontend/src/components/physics/**/*.tsx, docs/**/*.md
+alwaysApply: false
+---
+
+- **Authority:** [SCIENTIFIC_RIGOR_REVIEW.md](mdc:docs/REVIEW_2026/SCIENTIFIC_RIGOR_REVIEW.md), [LENR_FRAMEWORK_ISSUE_LEDGER.md](mdc:docs/LENR_FRAMEWORK_ISSUE_LEDGER.md), [PROVENANCE_GOVERNANCE.md](mdc:LENR_SIM_APP_v2/docs/v0.3.6-beta/PROVENANCE_GOVERNANCE.md), [DATA_CONTRACT_LOCK.md](mdc:LENR_SIM_APP_v2/docs/v0.3.6-beta/DATA_CONTRACT_LOCK.md). Reference the finding ID (`RR-xxx` / `IL-xxx`) in commits/comments when remediating.
+
+- **Adopted numeric bands (do NOT reintroduce superseded values).**
+  - Tunneling enhancement: **10^3-10^5** (never 10^8, RR-001/IL-002). Rate scales ~linearly with this factor.
+  - Enhancement composition cap: **`MAX_ENHANCEMENT_FACTOR = 1e5`**, composed with `grouped_max_confidence_product` (no double-counting within a group).
+  - Coherent many-body `collective_factor`: hard cap **1e6**, explicitly labelled a model assumption.
+  - Miles He-4/heat: **24 ± 4 MeV** band (20-28 MeV), stated as a band + retention caveat, not an equality (RR-010).
+  - Electron screening: **material-dependent cited ranges** (e.g. ErD3 U_e ~347 eV), never a single hardcoded 800 eV scalar (RR-007/IL-004).
+  - Casimir force: **-1.3 mN** at the modeled geometry (not 10^-7 N / 10^-8, RR-003/IL-001).
+  - Condensed-matter mechanism energy budget: capped at **10-100 eV/atom** (IL-017); nuclear-scale MeV outputs require an explicit down-conversion mechanism + claim tier.
+
+- **Never silently replace a validated baseline.** The `two_body` reaction rate is the default validated-tier baseline; `trapped_state` (Takahashi TSC) is a separate speculative-tier mode. Add modes beside the baseline; never overwrite it (RR-006).
+
+- **Symbol discipline (IL-015).** Use distinct symbols for distinct quantities in equations, code, and docs.
+  ```python
+  # ✅ DO
+  E_kin, E_field;  sigma_nuc, sigma_surf;  R_rate, R_bubble
+  # ❌ DON'T: overload one symbol (E, sigma, R) for different physical quantities
+  ```
+
+- **Units and precision.** Re-derivations use SI with explicit unit checks (ℏ, c, e²/(4πε₀), ...). Keep significant figures consistent with the cited source; annotate rounding (e.g. Debye length ~4.6 pm). Label every driving constant as cited or `model assumption` (see [scientific-citations.mdc](mdc:.cursor/rules/scientific-citations.mdc)).
+
+- **Provenance + claim-tier metadata is mandatory on outputs.** Each theory contribution carries:
+  ```python
+  provenance={"source": ..., "validation_status": ..., "model_version": ...}
+  evidence_class=...        # replicated | partial | exploratory
+  reproducibility_tier=...
+  claim_tier=...            # empirical correlation vs speculative mechanism
+  ```
+  - `validation_status` prevents silent promotion of non-applicable theory outputs.
+  - **Governance rule:** any UI claim without evidence/provenance metadata is treated as **non-release-ready**. A claim-tier chip is required next to any quantitative UI claim; `theoryGovernance.ts` `CLAIM_TIER_MULTIPLIER` (1.0 validated ... 0.2 cross-regime) is the source of truth mirrored from the backend.
+
+- **Preserve the locked data contract.** Theory-pipeline responses keep the `contract_version` (`v0.3.6-beta-science-gate-1`) required fields: `confidence_breakdown`, `uncertainty_interval`, `falsification_conditions`, `provenance`. The frontend renders these; it does not compute scores. Additive changes only; do not drop or rename locked fields.
+
+- **Falsifiability.** New physics claims should be expressible as a falsifiable gate (see `backend/tests/test_integration/test_experiment_anchored_gates.py`); prefer adding a gate with an explicit falsifier condition over an unfalsifiable assertion.
