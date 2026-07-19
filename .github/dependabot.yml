@@ -1,0 +1,83 @@
+# Dependabot configuration for the LENR Simulation App
+# See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  # Backend Python (FastAPI) dependencies
+  - package-ecosystem: "pip"
+    directory: "/LENR_SIM_APP_v2/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(backend)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+    ignore:
+      # Pin pydantic-v2 minor upgrades until migration completes.
+      - dependency-name: "pydantic"
+        update-types:
+          - "version-update:semver-major"
+
+  # Frontend npm dependencies (CRA stack, migration to Vite planned).
+  - package-ecosystem: "npm"
+    directory: "/LENR_SIM_APP_v2/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(frontend)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+    groups:
+      mui:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+      react-three:
+        patterns:
+          - "@react-three/*"
+          - "three"
+          - "@types/three"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "jest*"
+    ignore:
+      # Hold react-scripts upgrades until Vite migration is complete.
+      - dependency-name: "react-scripts"
+
+  # GitHub Actions workflow versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"
+
+  # Docker base image updates
+  - package-ecosystem: "docker"
+    directory: "/LENR_SIM_APP_v2/infrastructure/docker"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"

@@ -70,10 +70,10 @@ Write-Host "Installing backend dependencies (from $BackendDir)..." -ForegroundCo
 pip install -r requirements.txt
 Pop-Location
 
-# Start backend server in a new window (from project root, targeting app.main:app in the correct dir)
-Write-Host "Starting backend server on port 8001..." -ForegroundColor Green
+# Start backend server in a new window (canonical local backend host port: 8010)
+Write-Host "Starting backend server on port 8010..." -ForegroundColor Green
 # Ensure the command inside Start-Process knows the backend path and activates venv correctly
-$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8001"
+$BackendCommand = "Set-Location -Path '$BackendDir'; & '$ActivateScript'; python -m uvicorn app.main:app --reload --port 8010"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $BackendCommand
 
 # Setup and start frontend
@@ -87,15 +87,14 @@ if (-not (Test-Path -Path ".\node_modules")) {
 }
 
 # Start frontend server in a new window
-Write-Host "Starting frontend server on default port (likely 3000 or 5173)..." -ForegroundColor Green
-# Use npm run dev as per Vite convention often seen in package.json
-$FrontendCommand = "Set-Location -Path '$FrontendDir'; npm run dev"
+Write-Host "Starting frontend server on port 3000..." -ForegroundColor Green
+$FrontendCommand = "Set-Location -Path '$FrontendDir'; npm start"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $FrontendCommand
 Pop-Location
 
 Write-Host ""
 Write-Host "LENR Simulation Application is starting..." -ForegroundColor Cyan
-Write-Host "Backend API: http://localhost:8001" -ForegroundColor Green
-Write-Host "Frontend: Check console (likely http://localhost:3000 or http://localhost:5173)" -ForegroundColor Green
+Write-Host "Backend API: http://localhost:8010" -ForegroundColor Green
+Write-Host "Frontend: http://localhost:3000" -ForegroundColor Green
 Write-Host ""
 Write-Host "Press Ctrl+C in the respective PowerShell windows to stop the servers." -ForegroundColor Yellow 

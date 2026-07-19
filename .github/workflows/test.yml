@@ -2,15 +2,45 @@ name: Test and Benchmark
 
 on:
   push:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
   pull_request:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta ]
+    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
   # Allow manual triggering
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  version-consistency:
+    # v0.3.6-beta: fail fast on mixed version markers across runtime surfaces.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version consistency
+        shell: bash
+        run: |
+          EXPECTED=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          echo "Expected version: ${EXPECTED}"
+          FAIL=0
+          FRONT_PKG=$(jq -r '.version' LENR_SIM_APP_v2/frontend/package.json)
+          FRONT_CFG=$(grep -oP "APP_VERSION = '\K[^']+" LENR_SIM_APP_v2/frontend/src/config/version.js)
+          DOCKER_VER=$(grep -oP 'BUILD_VERSION=\K[^\s]+' LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend)
+          for pair in "frontend/package.json:${FRONT_PKG}" "frontend/config/version.js:${FRONT_CFG}" "Dockerfile.backend:${DOCKER_VER}"; do
+            name="${pair%%:*}"
+            val="${pair##*:}"
+            if [ "$val" != "$EXPECTED" ]; then
+              echo "::error file=${name}::expected ${EXPECTED} but found ${val}"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+
   test:
     runs-on: ubuntu-latest
+    needs: version-consistency
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
@@ -28,7 +58,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
-        pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy
+        pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
+
+    - name: Backend dependency audit
+      run: |
+        cd LENR_SIM_APP_v2/backend
+        pip-audit -r requirements.txt
 
     - name: Run unit tests
       run: |
@@ -39,6 +74,22 @@ jobs:
       run: |
         cd LENR_SIM_APP_v2/backend
         python -m pytest tests/test_integration/ -v
+
+    - name: Run deterministic V&V benchmark gates
+      run: |
+        cd LENR_SIM_APP_v2/backend
+        python -m pytest tests/test_integration/test_physics_benchmark_gates.py -v
+
+    - name: Run experiment-anchored science gates (release-blocking)
+      run: |
+        cd LENR_SIM_APP_v2/backend
+        python -m pytest -v \
+          tests/test_integration/test_experiment_anchored_gates.py \
+          tests/test_integration/test_rate_engine_api.py \
+          tests/test_physics/test_reaction_rate_engine.py \
+          tests/test_physics/test_cavitation_kgrp.py \
+          tests/test_physics/test_shell_pairing_prior.py \
+          tests/test_physics/test_run_export.py
 
     - name: Run performance benchmarks
       if: hashFiles('LENR_SIM_APP_v2/backend/tests/performance/*.py') != ''
@@ -64,6 +115,9 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    needs: version-consistency
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -78,6 +132,11 @@ jobs:
         run: |
           cd LENR_SIM_APP_v2/frontend
           npm ci
+
+      - name: Security gate (high and critical)
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm audit --audit-level=high
 
       - name: Lint frontend
         run: |

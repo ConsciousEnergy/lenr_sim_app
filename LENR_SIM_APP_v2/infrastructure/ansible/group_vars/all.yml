@@ -3,7 +3,7 @@
 
 # Application settings
 app_name: lenr-sim
-app_version: "0.3.0-beta"
+app_version: "0.3.6-beta"
 app_domain: "conscious.energy"
 api_subdomain: "api"
 

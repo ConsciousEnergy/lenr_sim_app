@@ -1,0 +1,54 @@
+# LENR_SIM_APP_v2 .gitignore
+# Added as part of v0.3.6-beta refactor (plan §1D)
+
+# ---- Python / pytest / coverage ----
+backend/.coverage
+backend/.coverage.*
+backend/htmlcov/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/coverage.xml
+backend/logs/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# ---- Virtual environments ----
+backend/venv/
+backend/.venv/
+backend/env/
+
+# ---- Node / frontend build artefacts ----
+frontend/node_modules/
+frontend/node_modules/.cache/
+frontend/build/
+frontend/coverage/
+frontend/.eslintcache
+frontend/.vite/
+
+# ---- Playwright E2E artefacts ----
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/.playwright/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*.log
+
+# ---- Env files (never commit secrets) ----
+backend/.env
+backend/.env.*
+frontend/.env.local
+frontend/.env.*.local
+!frontend/.env.development
+
+# ---- Logs / temp ----
+*.log
+tmp/

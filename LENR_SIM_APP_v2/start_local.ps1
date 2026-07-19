@@ -3,14 +3,14 @@
   Start LENR Simulation App backend and frontend locally.
 
 .DESCRIPTION
-  - Activates backend venv (or creates one), installs pip requirements, starts uvicorn on 8001
+  - Activates backend venv (or creates one), installs pip requirements, starts uvicorn on 8010
   - Installs npm dependencies for frontend, starts npm start on 3000
   - Prints instructions for stopping and URLs
 
 .NOTES
-  Backend: http://localhost:8001
+  Backend: http://localhost:8010
   Frontend: http://localhost:3000
-  If frontend proxy is set to 8000, update package.json "proxy" to "http://localhost:8001"
+  Vite proxy target is configured in frontend/vite.config.js (server.proxy)
 #>
 
 $ErrorActionPreference = "Stop"
@@ -44,7 +44,7 @@ if (Test-Path $VenvActivate) {
 Write-Host "  Installing pip requirements..." -ForegroundColor Gray
 pip install -q -r requirements.txt
 
-Write-Host "  Starting uvicorn on port 8001 (background)..." -ForegroundColor Gray
+Write-Host "  Starting uvicorn on port 8010 (background)..." -ForegroundColor Gray
 $PythonExe = if (Test-Path (Join-Path $VenvPath "Scripts" "python.exe")) {
     Join-Path $VenvPath "Scripts" "python.exe"
 } else {
@@ -53,7 +53,7 @@ $PythonExe = if (Test-Path (Join-Path $VenvPath "Scripts" "python.exe")) {
 $BackendJob = Start-Job -ScriptBlock {
     param($dir, $py)
     Set-Location $dir
-    & $py -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --no-use-colors
+    & $py -m uvicorn app.main:app --host 127.0.0.1 --port 8010 --no-use-colors
 } -ArgumentList $BackendDir, $PythonExe
 
 Start-Sleep -Seconds 2
@@ -77,6 +77,8 @@ $FrontendJob = Start-Job -ScriptBlock {
     param($dir)
     Set-Location $dir
     $env:BROWSER = "none"
+    $env:REACT_APP_API_URL = "http://localhost:8010"
+    $env:VITE_API_URL = "http://localhost:8010"
     npm start
 } -ArgumentList $FrontendDir
 
@@ -88,11 +90,11 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  URLs" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Backend:   http://localhost:8001" -ForegroundColor White
-Write-Host "  API Docs:  http://localhost:8001/api/docs" -ForegroundColor White
+Write-Host "  Backend:   http://localhost:8010" -ForegroundColor White
+Write-Host "  API Docs:  http://localhost:8010/api/docs" -ForegroundColor White
 Write-Host "  Frontend:  http://localhost:3000" -ForegroundColor White
 Write-Host ""
-Write-Host "  Note: If frontend proxy targets 8000, update frontend/package.json 'proxy' to 'http://localhost:8001'" -ForegroundColor DarkGray
+Write-Host "  Note: If frontend proxy target is wrong, set VITE_API_URL or REACT_APP_API_URL to http://localhost:8010" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  To Stop" -ForegroundColor Cyan
