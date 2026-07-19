@@ -1,11 +1,13 @@
 # **A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)**
 
-**Authors:** Diadon Acs, LENR-ARA/GPT-4, Sonnet 4.5, Opus 4.5, Gemini 2.5, Gemini 3.0, AI Assistant (Mathematical Review & Theoretical Enhancements)
-Date: 02-13-2025 
+**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0
+Date: 2026-02-14 (revised 2026-06-06, v0.3.6-beta)
 Organization: Conscious Energies
 
+**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families) assisted with literature compilation, mathematical derivation and verification, simulation code, and manuscript drafting under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+
 **Abstract**  
-Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), halo electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated to describe cavitation-driven LENR conditions. In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling, finite-element analysis, thermodynamic models, and statistical methods) that validate and quantify these LENR processes. Computational results predict tunneling enhancements exceeding 10810^{8}, while experimental evidence confirms isotopic shifts, neutron formation, and measurable excess heat production. This work establishes a reproducible methodology for LENR research and paves the way for interdisciplinary collaboration to scale LENR reactors for practical energy applications.
+Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), halo electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated to describe cavitation-driven LENR conditions. In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling, finite-element analysis, thermodynamic models, and statistical methods) that validate and quantify these LENR processes. Computational results predict tunneling enhancements in the range $10^{3}$–$10^{5}$ (revised downward from earlier $10^{8}$ estimates; see Section 5.1 and the reconciliation note), while experimental evidence reports isotopic shifts, neutron formation, and measurable excess heat production. This work establishes a reproducible methodology for LENR research and paves the way for interdisciplinary collaboration to scale LENR reactors for practical energy applications.
 
 ---
 
@@ -99,7 +101,7 @@ This paper aims to:
 
 ### **2.2 Delocalized Interface Electrons (Extended Electronic States)**
 
-**Definition:** In metallic hydrides and at metal-hydrogen interfaces, electrons can occupy extended or delocalized quantum states with wavefunctions that have non-negligible amplitude at nuclear length scales. These "extended electronic states" arise from band-structure effects, surface states, and hybridization in the condensed matter environment. (Note: the reference \[12\] (Meng et al. 2013) discusses *halo nuclei*—nuclei with weakly bound nucleons extending far beyond the nuclear core—not electrons. The electronic analogue relevant to LENR is the delocalized interface electron described here.)
+**Definition:** In metallic hydrides and at metal-hydrogen interfaces, electrons can occupy extended or delocalized quantum states with wavefunctions that have non-negligible amplitude at nuclear length scales. These "extended electronic states" arise from band-structure effects, surface states, and hybridization in the condensed matter environment. (Citation correction: an earlier draft cited reference \[12\] (Meng et al. 2013) here, but that work concerns *halo nuclei*—nuclei with weakly bound nucleons extending beyond the nuclear core—and does **not** support a claim about electrons. Reference \[12\] is therefore *not* cited as evidence for delocalized interface electrons; this concept rests instead on standard condensed-matter band-structure and surface-state physics, and is treated here as a model construct whose overlap magnitude is bounded in Section 5.1 rather than asserted from \[12\].)
 
 1. **Overlap Probability**  
     The probability of an electronic wavefunction overlapping with the nuclear volume is:
@@ -331,7 +333,7 @@ This sub-angstrom coherence length implies that deuteron-deuteron quantum cohere
 
 The equilibrium BEC temperature of 7.9 K is far below LENR operating conditions (300-800 K), making equilibrium BEC impossible. However, non-equilibrium driven-dissipative mechanisms may achieve the required phase-space density through three synergistic effects:
 
-1. **Effective Mass Renormalization (Polaron Dressing):** Deuterons strongly coupled to the phonon cloud form polaronic quasiparticles with effective mass \( m^* < m_D \). For strong electron-phonon coupling in PdD systems, mass reduction factors of 3-5x are plausible, raising \( T_c \) to 24-40 K.
+1. **Effective Mass Renormalization (Polaron Dressing):** Deuterons strongly coupled to the phonon cloud form polaronic quasiparticles with effective mass \( m^* < m_D \). For strong electron-phonon coupling in PdD systems, mass reduction factors of 3-5x are plausible, raising \( T_c \) to 24-40 K. *(Model assumption: the 3-5x factor is an order-of-magnitude estimate, not a measured value; it is treated as an uncertain input for the Monte Carlo / sensitivity analysis of Section 5.1 and is not independently cited.)*
 
 2. **Driven Dissipative Cooling (Phonon Standing Wave Mechanism):** Coherent phonon standing waves—whether acoustically driven or arising from lattice resonances—create a spatially periodic potential for interstitial deuterons. Through anharmonic coupling, deuteron kinetic energy is preferentially channeled into high-frequency optical phonon modes that rapidly dissipate into the bulk lattice. This mechanism is analogous to resolved sideband cooling in optomechanics and Sisyphus cooling in atomic physics. Estimated effective temperature reduction: factor of 3-5x, giving \( T_{\text{eff}} \sim 60\text{-}100 \) K.
 
@@ -886,7 +888,7 @@ The Widom-Larsen mechanism requires electrons with kinetic energy \( > 0.782 \) 
 
 **Analysis:**
 
-1. **Widom-Larsen heavy electron mechanism:** Proposes that collective electromagnetic fluctuations at the metal-hydrogen interface renormalize the electron effective mass to \( m_e^* > 2.53 \, m_e \). This is a very large mass renormalization by condensed matter standards (typical electron effective masses in metals are \( 0.5\text{-}5 \, m_e \)). Whether coherent electromagnetic fields can achieve this remains debated.
+1. **Widom-Larsen heavy electron mechanism:** Proposes that collective electromagnetic fluctuations at the metal-hydrogen interface renormalize the electron effective mass to \( m_e^* > 2.53 \, m_e \). This is a very large mass renormalization by condensed matter standards (typical electron effective masses in metals are \( 0.5\text{-}5 \, m_e \)). Whether coherent electromagnetic fields can achieve this remains debated. In particular, Tennfors (Eur. Phys. J. Plus 128, 15, 2013) estimated, from neutron-scattering data on protons in palladium, an electron mass enhancement of less than one percent—far below the threshold required—and Ciuchi et al. similarly questioned the predicted rates; Widom and Larsen rebut these by arguing the process is collective (many-body) rather than two-body. We therefore treat this mechanism as **speculative/contested** and do not rely on it for the paper's primary energy-balance argument.
 
 2. **Alternative: D+D priming reactions:** The D+D → ³He + n channel (3.27 MeV, athermal neutron) could provide "seed" neutrons at low rates, which then catalyze Oppenheimer-Phillips transmutation chains on heavier lattice nuclei. This avoids the electron capture threshold entirely but requires explaining the initial D+D reaction.
 
@@ -1043,6 +1045,29 @@ Below is a reference list defining the primary symbols and terms used in this pa
 
 17. Taleyarkhan, R. P., et al. "Evidence for Nuclear Emissions During Acoustic Cavitation." *Science*, vol. 295, no. 5561, 2002, pp. 1868–1873.  
      **Link:** [https://doi.org/10.1126/science.1067589](https://doi.org/10.1126/science.1067589)
+
+### Supplementary References (2026 Rigor Review additions)
+
+These sources support the 2026 scientific-rigor review and remediation. Each
+entry lists the canonical citation key used in the codebase traceability matrix
+(`docs/REVIEW_2026/TRACEABILITY_MATRIX.md`) so every claim resolves to a DOI in
+both directions.
+
+18. **[takahashi2016]** Takahashi, A. "Fundamental of Rate Theory for CMNS." *Journal of Condensed Matter Nuclear Science*, vol. 19, 2016, pp. 298–315. (Trapped-state / TSC rate formalism; basis for the `trapped_state` rate mode.)
+19. **[hagelstein2025]** Hagelstein, P. L. "Relativistic Phonon–Nuclear Coupling Matrix Element for D₂/⁴He" and lossy spin-boson model reviews (2025). (MeV-gap down-conversion channel.)
+20. **[steinetz2020exp]** Steinetz, B. M., et al. "Novel Nuclear Reactions Observed in Bremsstrahlung-Irradiated Deuterated Metals." *Physical Review C*, vol. 101, 2020, 044610. **DOI:** [10.1103/PhysRevC.101.044610](https://doi.org/10.1103/PhysRevC.101.044610)
+21. **[pines2020theory]** Pines, V., et al. "Nuclear Fusion Reactions in Deuterated Metals." *Physical Review C*, vol. 101, 2020, 044609. **DOI:** [10.1103/PhysRevC.101.044609](https://doi.org/10.1103/PhysRevC.101.044609) (ErD₃ screening U_e ≈ 347 eV.)
+22. **[raiola2002]** Raiola, F., et al. "Electron Screening in d(d,p)t for Deuterated Metals." *European Physical Journal A*, vol. 13, 2002, pp. 377–382. **DOI:** [10.1007/s10050-002-8766-5](https://doi.org/10.1007/s10050-002-8766-5)
+23. **[huke2008]** Huke, A., et al. "Enhancement of Deuteron-Fusion Reactions in Metals." *Physical Review C*, vol. 78, 2008, 015803. **DOI:** [10.1103/PhysRevC.78.015803](https://doi.org/10.1103/PhysRevC.78.015803)
+24. **[czerski2023]** Czerski, K., et al. "Electron Screening in Palladium." *Physics Letters B*, vol. 845, 2023, 137750. **DOI:** [10.1016/j.physletb.2023.137750](https://doi.org/10.1016/j.physletb.2023.137750)
+25. **[screeningreview2024]** "Electron Screening in Laboratory Nuclear Reactions." *Particles*, vol. 7, no. 3, 2024, 50. **DOI:** [10.3390/particles7030050](https://doi.org/10.3390/particles7030050)
+26. **[storms2015]** Storms, E. "Efficient Production of Energy from the LENR Effect." *Current Science*, vol. 108, no. 4, 2015, pp. 574–577. (He-4/heat correlation review.)
+27. **[tennfors2013]** Tennfors, E. "On the Assumptions for an Effective Electron Mass." *European Physical Journal Plus*, vol. 128, 2013, 15. **DOI:** [10.1140/epjp/i2013-13015-3](https://doi.org/10.1140/epjp/i2013-13015-3) (Widom-Larsen critique.)
+28. **[mulnix2026]** Mulnix, A. "Structural Theory of Sonoluminescence via Klein–Gordon / Rayleigh–Plesset Harmonic Locking." Zenodo, 2026. **DOI:** [10.5281/zenodo.19079074](https://doi.org/10.5281/zenodo.19079074)
+29. **[nguyen2026]** Nguyen, T., et al. "Quantum Shell Structure of Proton–Neutron Pairing." *Nature*, 2026. **DOI:** [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)
+30. **[floquetwkb2026]** "Floquet–WKB Analysis of Lattice Confinement Fusion under a Driven Barrier." 2026. **DOI:** [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)
+31. **[parkhomov2018]** Parkhomov, A. G. "Nuclear Reactions in LENR: Review of Experimental Results." 2018 (republished via LENR Academy). (Curated exothermic-reaction subset for transmutation validation.)
+32. **[miles1993]** Miles, M. H., et al. "Correlation of Excess Power and Helium Production." *Journal of Electroanalytical Chemistry*, vol. 346, 1993, pp. 99–117. **DOI:** [10.1016/0022-0728(93)85700-H](https://doi.org/10.1016/0022-0728\(93\)85700-H)
 
 ---
 
@@ -1626,6 +1651,7 @@ P\_{\\text{tunnel}} \= \\exp\\left(-\\frac{2}{\\hbar} \\int\_{a}^{b} \\sqrt{2m(V
 \\\[  
 F\_{\\text{Casimir}} \= \-\\frac{\\pi^2 \\hbar c}{240} \\cdot \\frac{A}{d^4}  
 \\\]
+For the reference geometry $A = 1\\,\\mu\\text{m}^2$, $d = 1\\,\\text{nm}$ this evaluates to $F_{\\text{Casimir}} \\approx -1.3\\,\\text{mN}$ (consistent with Part 1, Section 2.5; the earlier $-10^{-7}\\,\\text{N}$ figure was superseded — see issue ledger IL-001).
 
 \\subsection\*{Rayleigh–Plesset Equation (Modified)}  
 \\\[  
@@ -1936,5 +1962,5 @@ We model this as a multiplicative term in the local potential barrier reduction:
 
 $$U\_{\\mathrm{eff}} \= U\_{\\mathrm{Coulomb}} \- \\Delta U\_{\\mathrm{screen}} \- C\_{\\mathrm{ENC}} \\cdot \\Delta U\_{\\mathrm{Casimir/Bubble}}$$
 
-where $$C\_{\\mathrm{ENC}}$$ is a stochastic variable (log-normal, median $$\\approx 30$$). This allows certain Monte Carlo realizations to cross transient thresholds for nuclear-scale overlap densities, potentially generating both morphological byproducts (e.g., hollow spheres, particle tracks) and isotopic shifts.
+where $$C\_{\\mathrm{ENC}}$$ is a stochastic variable (log-normal, median $$\\approx 30$$). This allows certain Monte Carlo realizations to cross transient thresholds for nuclear-scale overlap densities, potentially generating both morphological byproducts (e.g., hollow spheres, particle tracks) and isotopic shifts. *(Model assumption: the $$C\_{\\mathrm{ENC}} \\approx 10\\text{--}100\\times$$ range and log-normal median $$\\approx 30$$ are heuristic, motivated qualitatively by Matsumoto's ENC observations but not quantitatively calibrated; they enter only as an uncertain prior in the Monte Carlo and carry the lowest claim tier.)*
 

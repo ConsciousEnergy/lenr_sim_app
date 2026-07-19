@@ -5,6 +5,74 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.6-beta] - 2026-04-18
+
+### Reaction-Rate Engine E2E Integration (2026-06-06)
+- Enriched the `/api/unified/bubble-lattice` response with an **additive** `reaction_rate_engine` block (claim-tier labelled). The change is backward-compatible: the block is empty unless the engine can be evaluated, and all existing fields/contract version (`v0.3.6-beta-science-gate-1`) are unchanged.
+  - Collapse-instant rate via the selectable formalism (`two_body` validated baseline / `trapped_state` speculative TSC), evaluated at peak collapse temperature + peak capped enhancement; tunneling derived from the existing cross-section utility.
+  - Optional Sobol/Bayesian uncertainty summary (`include_uncertainty`, `uncertainty_samples`, `random_seed`, `experimental_band`); default samples capped at 256 in the UI for deployment timeout safety.
+  - Shell-pairing branching prior over matched Parkhomov products (relative re-weighting only; never alters rate magnitude or Q-values).
+  - KG-RP harmonic-locking diagnostics (Mulnix 2026) computed from the collapse timeline.
+  - Shared `_compose_rate_block` helper now backs both `/simulate` and `/bubble-lattice`; failures fall back to an empty dict so the core response is never affected.
+- Added new optional request fields to `BubbleLatticeRequest` (`rate_mode`, `include_uncertainty`, `uncertainty_samples`, `random_seed`, `experimental_band`), all defaulting to legacy behaviour.
+- Frontend `UnifiedTheoryPage`: new "Reaction Rate & Uncertainty" controls (mode select, UQ switch, sample slider, optional seed), `ReactionRateGovernancePanel` rendered in the Results tab, and a `GovernanceGlossaryDrawer` wired to header/results help buttons. JSON export envelope now records the rate-engine controls, route mode, and the `reaction_rate_engine` block for reproducibility.
+
+### Release Hardening Continuation (2026-05-06)
+- Completed CRA -> Vite migration within v0.3.6-beta scope:
+  - replaced `react-scripts`-based dev/build scripts with Vite,
+  - added `vite.config.js` with API/WebSocket proxy and `REACT_APP_*` compatibility defines,
+  - moved frontend app entrypoint to `src/index.jsx`.
+- Restored standalone quality gates after CRA removal:
+  - explicit Jest/Babel dependency chain for `jest.config.js` test execution,
+  - explicit ESLint dependency chain so `npm run lint` remains operational.
+- Applied UI/UX overlap fix in Unified Theory visualization:
+  - desktop zoom controls moved to the right-side stack under layer/legend toggles,
+  - mobile controls retained via `TouchControls`,
+  - adaptive scale transition now keyed to camera-to-orbit-target distance.
+- Finalized electrolyte phase-1 propagation contract:
+  - canonical top-level `electrolyte` payload support (with lattice fallback),
+  - bounded proxy fields (`solvent_type`, `ph_proxy`, `ionic_strength_proxy`) propagated through diagnostics, observables bridge, and regime flags,
+  - integration test added for canonical top-level override behavior.
+
+### Contract and Scientific Guardrail Alignment
+- Unified backend/frontend release markers to `0.3.6-beta` and retained contract identifier `v0.3.6-beta-science-gate-1`.
+- Consolidated electrolyte evidence and activity scaling through shared scientific guardrail utilities to remove divergent weighting paths.
+- Propagated electrolyte context into theory-pipeline execution conditions in unified model runs.
+- Fixed version alignment in `Dockerfile.backend` (`BUILD_VERSION=0.3.6-beta`), `RelevanceMap.tsx` jsdoc, and `infrastructure/ansible/group_vars/all.yml`.
+
+### Unified Runtime Consistency
+- Updated unified simulation API response with explicit contract metadata and analytics transparency fields.
+- Normalized electrolyte semantics in unified request handling and improved extrapolation/validity flag consistency.
+- Hardened websocket update path to use the same bounded electrolyte multiplier strategy as HTTP simulation paths.
+
+### Stellar-Scaling Context Line (New)
+- Added `stellar_scaling_mhd` theory module (`theories/stellar_scaling_mhd.py`) as a claim-tier down-weighted comparison track.
+- Strict applicability gate: only `True` when `T ≥ 1e6 K`, `B ≥ 1e4 T`, and `n ≥ 1e24 /m³`.
+- Isolated composition group `context_line` so the track never multiplies into LENR-grounded `screening`/`confinement`/`coherence` groups.
+- Transparency fields: `extrapolation_penalty`, `class_aware_weight`, `stellar_contribution_log10`, `regime_applicable`.
+- Explicit falsification criteria and `claim_tier="speculative_exploratory"`, `evidence_class="cross_regime_extrapolation"`.
+
+### Claim-Tier Scoring Governance
+- Added `CLAIM_TIER_MULTIPLIER` to `theory_scoring.py` (validated=1.00, empirical=0.90, speculative=0.30, cross-regime=0.20).
+- Multiplier applied to both applicable and inapplicable scoring paths; response exposes `final_score`, `raw_score_pre_tier`, `claim_tier`, and `claim_tier_multiplier`.
+- Cross-regime lines are visible in output but cannot silently dominate empirically-grounded tracks.
+- Added `TestStellarScalingMHD` coverage (6 new tests) for regime gate, bounded enhancement, transparency fields, and claim-tier down-weighting.
+
+### UI/UX Governance Chips
+- `TheoryTogglePanel.tsx` now renders both `evidence_class` and `claim_tier` chips with hover explanations and color coding (cross-regime = `warning`, validated = `success`).
+
+### CI, Docs, and Release Hardening
+- Added `.github/dependabot.yml` covering pip, npm (grouped mui/react-three/testing), github-actions, and docker ecosystems; later aligned with Vite-based frontend workflow in the release-hardening continuation.
+- Added `version-consistency` CI job that fails fast on mismatched version markers between `backend/core/config.py`, `frontend/package.json`, `frontend/src/config/version.js`, and `Dockerfile.backend`.
+- Tightened per-job `permissions: contents: read` on the `test` and `frontend` jobs.
+- Extended `RUBRIC_GOVERNANCE.md` with orthogonal `evidence_class` / `claim_tier` semantics tables.
+- Refreshed `RELEASE_EVIDENCE_PACK.md` with 315-passing test count, scoring/governance evidence, and stellar-scaling residual-risk statement.
+- Added/updated v0.3.6-beta governance and verification docs, including explicit residual-risk framing and release readiness gates.
+
+### Test Evidence
+- Backend: **315 passed, 1 skipped** (up from 309 in the prior RC; 6 new stellar-scaling guardrail tests).
+- Frontend: **13 suites, 96 tests passed, 0 failed** (Jest `--runInBand`, 423.7 s wall-clock).
+
 ## [v0.3.4-beta] - 2026-02-16
 
 ### Relevance Map — Stability & UX

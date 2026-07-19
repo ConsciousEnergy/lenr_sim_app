@@ -3,10 +3,33 @@
 **Advanced modeling and visualization of Low Energy Nuclear Reactions**
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![Version](https://img.shields.io/badge/version-0.3.5--beta-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-0.3.6--beta-blue.svg)]()
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
+
+## 🧭 Architecture & Onboarding (v0.3.6-beta)
+
+New to the codebase? Start with the curated maps below before diving into files.
+
+**Where things live**
+- `backend/app/physics_engine/` — physics core. Key modules: `unified_lenr_model/` (config, cross-sections, screening, reaction-rate engine + UQ), `theory_pipeline.py` / `theory_protocol.py` (pluggable `TheoryModule`s), `cavitation_kgrp.py` (KG-RP harmonic-locking diagnostics), `shell_pairing_prior.py`, `parkhomov_validation.py`, `scientific_guardrails.py`.
+- `backend/app/api/routes/unified_simulation.py` — the unified API: `/api/unified/simulate`, `/api/unified/bubble-lattice` (now returns the additive `reaction_rate_engine` block), and `/api/unified/export` (`lenr-run-export-v1`).
+- `frontend/src/pages/UnifiedTheoryPage.jsx` — primary simulation UI (bubble-lattice flow, reaction-rate/UQ controls, governance panel + glossary).
+- `frontend/src/components/physics/` — governance UI (`ReactionRateGovernancePanel`, `GovernanceGlossaryDrawer`, `TheoryTogglePanel`) backed by the shared source of truth `frontend/src/utils/theoryGovernance.ts`.
+
+**Read these first**
+- [`docs/v0.3.6-beta/CODEBASE_MAP.md`](docs/v0.3.6-beta/CODEBASE_MAP.md) — annotated module-by-module map.
+- [`docs/v0.3.6-beta/CONSISTENCY_SOURCE_OF_TRUTH.md`](docs/v0.3.6-beta/CONSISTENCY_SOURCE_OF_TRUTH.md) and [`DATA_CONTRACT_LOCK.md`](docs/v0.3.6-beta/DATA_CONTRACT_LOCK.md) — API/version contracts.
+- [`docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`](docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md) — claim tiers / evidence classes (mirrored in the in-app glossary).
+- [`docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md) — canonical dev/prod ports (frontend `:3000`, backend `:8010`).
+- Scientific review & evidence: [`../docs/REVIEW_2026/`](../docs/REVIEW_2026) (citation standard, MeV-gap hypothesis, evidence matrices).
+
+**Deferred restructure backlog** (intentionally out of scope for v0.3.6-beta; tracked for a later, dedicated refactor pass so this release stays additive and low-risk):
+- Unify the mixed `.js`/`.jsx`/`.tsx` frontend file extensions onto a single convention.
+- Split oversized modules (`UnifiedTheoryPage.jsx`, `unified_simulation.py`) into smaller route/handler/util units (<300 lines per the project style rule).
+- Consolidate the legacy `electrolyte`-in-`lattice` fallback fields once all clients send the canonical top-level `electrolyte` object.
+- Refresh the stale "February 2026 / react-scripts" notes below (superseded by the Vite migration in the v0.3.6-beta changelog).
 
 ## 🎯 Quick Start
 
