@@ -1,9 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, List, Tag, Typography, Empty, Spin, Alert, Space, Button } from 'antd';
-import { ReloadOutlined, ClockCircleOutlined, LineChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Chip,
+  Typography,
+  Alert,
+  AlertTitle,
+  CircularProgress,
+  Stack,
+  Button,
+  Box
+} from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import BoltIcon from '@mui/icons-material/Bolt';
 import { createVisualizationWebSocket } from '../utils/visualizationWebSocket';
-
-const { Text } = Typography;
 
 /**
  * Component that subscribes to and displays real-time visualization events from a simulation
@@ -147,17 +160,17 @@ const VisualizationStream = ({
     }
   };
   
-  // Get color for event type
+  // Get MUI Chip color for an event type
   const getEventColor = (eventType) => {
     const eventTypeMap = {
-      'temperature': 'red',
-      'pressure': 'blue',
-      'density': 'green',
-      'velocity': 'purple',
-      'energy': 'orange',
+      'temperature': 'error',
+      'pressure': 'info',
+      'density': 'success',
+      'velocity': 'secondary',
+      'energy': 'warning',
       'error': 'error',
       'warning': 'warning',
-      'info': 'processing'
+      'info': 'info'
     };
     
     return eventTypeMap[eventType?.toLowerCase()] || 'default';
@@ -171,165 +184,156 @@ const VisualizationStream = ({
     switch (event.type?.toLowerCase()) {
       case 'snapshot':
         return (
-          <div>
-            <Text strong>Snapshot taken at timestep {event.timestep}</Text>
-            <div>
+          <Box>
+            <Typography component="span" sx={{ fontWeight: 700 }}>Snapshot taken at timestep {event.timestep}</Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
               {event.metrics && Object.entries(event.metrics).map(([key, value]) => (
-                <Tag key={key}>{key}: {value}</Tag>
+                <Chip key={key} size="small" label={`${key}: ${value}`} />
               ))}
-            </div>
-          </div>
+            </Stack>
+          </Box>
         );
         
       case 'statistic':
         return (
-          <div>
-            <Text strong>{event.name || 'Statistic update'}</Text>
-            <div>
-              <Tag color="blue">Value: {event.value}</Tag>
-              {event.unit && <Tag color="cyan">Unit: {event.unit}</Tag>}
-            </div>
-          </div>
+          <Box>
+            <Typography component="span" sx={{ fontWeight: 700 }}>{event.name || 'Statistic update'}</Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+              <Chip size="small" color="info" label={`Value: ${event.value}`} />
+              {event.unit && <Chip size="small" color="info" variant="outlined" label={`Unit: ${event.unit}`} />}
+            </Stack>
+          </Box>
         );
         
       case 'milestone':
         return (
-          <div>
-            <Text strong>{event.name || 'Milestone reached'}</Text>
-            <div>
-              <Text>{event.description}</Text>
-            </div>
-          </div>
+          <Box>
+            <Typography component="span" sx={{ fontWeight: 700 }}>{event.name || 'Milestone reached'}</Typography>
+            <Box>
+              <Typography component="span">{event.description}</Typography>
+            </Box>
+          </Box>
         );
         
       case 'error':
         return (
-          <Alert 
-            type="error" 
-            message={event.message || 'Error occurred'} 
-            description={event.details} 
-            showIcon 
-          />
+          <Alert severity="error">
+            <AlertTitle>{event.message || 'Error occurred'}</AlertTitle>
+            {event.details}
+          </Alert>
         );
         
       case 'warning':
         return (
-          <Alert 
-            type="warning" 
-            message={event.message || 'Warning'} 
-            description={event.details} 
-            showIcon 
-          />
+          <Alert severity="warning">
+            <AlertTitle>{event.message || 'Warning'}</AlertTitle>
+            {event.details}
+          </Alert>
         );
         
       default:
         // Generic event display
         return (
-          <div>
-            <Text>{event.message || JSON.stringify(event.data || {})}</Text>
-          </div>
+          <Box>
+            <Typography component="span">{event.message || JSON.stringify(event.data || {})}</Typography>
+          </Box>
         );
     }
   };
   
   return (
-    <Card
-      title={
-        <Space>
-          <LineChartOutlined />
-          <span>Visualization Stream</span>
-          {connected && <Tag color="success">Connected</Tag>}
-          {!connected && !connecting && <Tag color="error">Disconnected</Tag>}
-          {connecting && <Tag color="processing">Connecting...</Tag>}
-        </Space>
-      }
-      extra={
-        <Space>
-          <Button 
-            type={connected ? "default" : "primary"}
-            icon={<ReloadOutlined />}
-            onClick={handleConnect}
-            loading={connecting}
-          >
-            {connected ? 'Reconnect' : 'Connect'}
-          </Button>
-          <Button 
-            onClick={handleClearEvents} 
-            disabled={events.length === 0}
-          >
-            Clear
-          </Button>
-        </Space>
-      }
-    >
-      {/* Error message if any */}
-      {error && (
-        <Alert 
-          type="error" 
-          message="Connection Error" 
-          description={error}
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
-      
-      {/* Loading state */}
-      {connecting && (
-        <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Spin />
-          <div style={{ marginTop: 16 }}>Connecting to visualization stream...</div>
-        </div>
-      )}
-      
-      {/* Events list */}
-      {!connecting && (
-        <>
-          <div style={{ marginBottom: 16 }}>
-            <Text type="secondary">
-              <ThunderboltOutlined /> Showing last {Math.min(events.length, maxEvents)} events
-              {simulationId && <> for simulation <Text code>{simulationId.slice(-8)}</Text></>}
-            </Text>
-          </div>
-          
-          {events.length === 0 ? (
-            <Empty 
-              description={
-                <span>
+    <Card>
+      <CardHeader
+        title={
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ShowChartIcon fontSize="small" />
+            <span>Visualization Stream</span>
+            {connected && <Chip size="small" color="success" label="Connected" />}
+            {!connected && !connecting && <Chip size="small" color="error" label="Disconnected" />}
+            {connecting && <Chip size="small" color="info" label="Connecting..." />}
+          </Stack>
+        }
+        action={
+          <Stack direction="row" spacing={1}>
+            <Button 
+              variant={connected ? 'outlined' : 'contained'}
+              startIcon={<RefreshIcon />}
+              onClick={handleConnect}
+              loading={connecting}
+            >
+              {connected ? 'Reconnect' : 'Connect'}
+            </Button>
+            <Button 
+              variant="outlined"
+              onClick={handleClearEvents} 
+              disabled={events.length === 0}
+            >
+              Clear
+            </Button>
+          </Stack>
+        }
+      />
+      <CardContent>
+        {/* Error message if any */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <AlertTitle>Connection Error</AlertTitle>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Loading state */}
+        {connecting && (
+          <Box sx={{ textAlign: 'center', py: 2.5, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <CircularProgress />
+            <Box sx={{ mt: 2 }}>Connecting to visualization stream...</Box>
+          </Box>
+        )}
+        
+        {/* Events list */}
+        {!connecting && (
+          <>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" component="span">
+                <BoltIcon fontSize="inherit" sx={{ verticalAlign: 'middle' }} /> Showing last {Math.min(events.length, maxEvents)} events
+                {simulationId && <> for simulation <Box component="code">{simulationId.slice(-8)}</Box></>}
+              </Typography>
+            </Box>
+            
+            {events.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: 'text.disabled', py: 4 }}>
+                <Typography color="text.secondary">
                   {connected 
-                    ? "No visualization events received yet" 
-                    : "Connect to start receiving visualization events"}
-                </span>
-              } 
-            />
-          ) : (
-            <List
-              dataSource={events}
-              renderItem={(event) => (
-                <List.Item>
-                  <Card 
-                    type="inner" 
-                    style={{ width: '100%' }}
-                    title={
-                      <Space>
-                        <Tag color={getEventColor(event.type)}>
-                          {event.type || 'Event'}
-                        </Tag>
-                        <span>
-                          <ClockCircleOutlined /> {formatTimestamp(event.timestamp)}
-                        </span>
-                      </Space>
-                    }
-                  >
-                    {renderEventContent(event)}
+                    ? 'No visualization events received yet' 
+                    : 'Connect to start receiving visualization events'}
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={1}>
+                {events.map((event, index) => (
+                  <Card key={index} variant="outlined" sx={{ width: '100%' }}>
+                    <CardHeader
+                      title={
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Chip size="small" color={getEventColor(event.type)} label={event.type || 'Event'} />
+                          <Typography variant="body2" component="span">
+                            <AccessTimeIcon fontSize="inherit" sx={{ verticalAlign: 'middle' }} /> {formatTimestamp(event.timestamp)}
+                          </Typography>
+                        </Stack>
+                      }
+                    />
+                    <CardContent>
+                      {renderEventContent(event)}
+                    </CardContent>
                   </Card>
-                </List.Item>
-              )}
-            />
-          )}
-        </>
-      )}
+                ))}
+              </Stack>
+            )}
+          </>
+        )}
+      </CardContent>
     </Card>
   );
 };
 
-export default VisualizationStream; 
+export default VisualizationStream;

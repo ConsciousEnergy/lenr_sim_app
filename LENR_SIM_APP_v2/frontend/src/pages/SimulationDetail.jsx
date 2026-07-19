@@ -1,44 +1,46 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { 
-  Typography, 
-  Card, 
-  Row, 
-  Col, 
-  Descriptions, 
-  Tag, 
-  Progress, 
+import {
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  LinearProgress,
   Tabs,
+  Tab,
   Divider,
-  Space,
-  Button
-} from 'antd';
-import { 
-  PlayCircleOutlined, 
-  PauseCircleOutlined, 
-  ReloadOutlined, 
-  DownloadOutlined,
-  EyeOutlined
-} from '@ant-design/icons';
+  Stack,
+  Button,
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableContainer,
+  TableRow,
+  TableCell
+} from '@mui/material';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import DownloadIcon from '@mui/icons-material/Download';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisualizationStream from '../components/VisualizationStream';
 import ParameterControls from '../components/ParameterControls';
 import SimulationResults from '../components/SimulationResults';
 import { simulationApi } from '../api/simulationApi';
 
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
-
 const getStatusTag = (status) => {
   const statusMap = {
     'pending': { color: 'default', text: 'Pending' },
-    'running': { color: 'processing', text: 'Running' },
+    'running': { color: 'info', text: 'Running' },
     'paused': { color: 'warning', text: 'Paused' },
     'completed': { color: 'success', text: 'Completed' },
     'error': { color: 'error', text: 'Error' }
   };
   
   const config = statusMap[status] || statusMap.pending;
-  return <Tag color={config.color}>{config.text}</Tag>;
+  return <Chip size="small" color={config.color} label={config.text} />;
 };
 
 const formatDate = (dateString) => {
@@ -46,6 +48,25 @@ const formatDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleString();
 };
+
+// Small helper mirroring antd's bordered Descriptions using an MUI table
+const DescriptionTable = ({ title, rows }) => (
+  <Box>
+    <Typography variant="subtitle1" gutterBottom>{title}</Typography>
+    <TableContainer component={Paper} variant="outlined">
+      <Table size="small">
+        <TableBody>
+          {rows.map(({ label, value }) => (
+            <TableRow key={label}>
+              <TableCell component="th" sx={{ fontWeight: 600, width: '40%', bgcolor: 'action.hover' }}>{label}</TableCell>
+              <TableCell>{value}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </Box>
+);
 
 function SimulationDetail() {
   const { simulationId } = useParams();
@@ -55,6 +76,7 @@ function SimulationDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState('');
+  const [tab, setTab] = useState('live');
 
   const buildSimulationFromPreview = useCallback((snapshot) => ({
     id: snapshot.id ?? simulationId,
@@ -120,23 +142,23 @@ function SimulationDetail() {
   
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: 24 }}>
-        <Title level={3}>Loading simulation details...</Title>
-      </div>
+      <Box sx={{ textAlign: 'center', p: 3 }}>
+        <Typography variant="h5" component="h3">Loading simulation details...</Typography>
+      </Box>
     );
   }
   
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: 24 }}>
-        <Title level={3}>Error</Title>
-        <Text type="danger">{error}</Text>
-        <div style={{ marginTop: 16 }}>
-          <Button type="primary" icon={<ReloadOutlined />} onClick={fetchSimulation}>
+      <Box sx={{ textAlign: 'center', p: 3 }}>
+        <Typography variant="h5" component="h3">Error</Typography>
+        <Typography color="error">{error}</Typography>
+        <Box sx={{ mt: 2 }}>
+          <Button variant="contained" startIcon={<RefreshIcon />} onClick={fetchSimulation}>
             Retry
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
   
@@ -145,108 +167,117 @@ function SimulationDetail() {
   }
   
   return (
-    <div>
-      <Card style={{ marginBottom: 16 }}>
-        {notice ? (
-          <Card style={{ marginBottom: 16, background: '#fffbe6', borderColor: '#ffe58f' }}>
-            <Text>{notice}</Text>
-          </Card>
-        ) : null}
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={16}>
-            <Title level={2}>{simulation.name}</Title>
-            <Text>{simulation.description}</Text>
-          </Col>
-          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
-            <Space>
-              {simulation.status === 'running' && (
-                <Button 
-                  type="primary" 
-                  icon={<PauseCircleOutlined />}
-                  ghost
-                >
-                  Pause
+    <Box>
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          {notice ? (
+            <Card sx={{ mb: 2, background: '#fffbe6', borderColor: '#ffe58f' }} variant="outlined">
+              <CardContent>
+                <Typography>{notice}</Typography>
+              </CardContent>
+            </Card>
+          ) : null}
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Typography variant="h4" component="h2">{simulation.name}</Typography>
+              <Typography>{simulation.description}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: 'right' }}>
+              <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+                {simulation.status === 'running' && (
+                  <Button variant="outlined" startIcon={<PauseCircleOutlineIcon />}>
+                    Pause
+                  </Button>
+                )}
+                
+                {simulation.status === 'paused' && (
+                  <Button variant="contained" startIcon={<PlayCircleOutlineIcon />}>
+                    Resume
+                  </Button>
+                )}
+                
+                {simulation.status === 'error' && (
+                  <Button variant="contained" color="error" startIcon={<RefreshIcon />}>
+                    Retry
+                  </Button>
+                )}
+                
+                {simulation.status === 'completed' && (
+                  <Button variant="contained" startIcon={<DownloadIcon />}>
+                    Download Results
+                  </Button>
+                )}
+                
+                <Button variant="outlined" startIcon={<VisibilityIcon />}>
+                  View Data
                 </Button>
-              )}
-              
-              {simulation.status === 'paused' && (
-                <Button 
-                  type="primary" 
-                  icon={<PlayCircleOutlined />}
-                >
-                  Resume
-                </Button>
-              )}
-              
-              {simulation.status === 'error' && (
-                <Button 
-                  type="primary" 
-                  icon={<ReloadOutlined />}
-                  danger
-                >
-                  Retry
-                </Button>
-              )}
-              
-              {simulation.status === 'completed' && (
-                <Button 
-                  type="primary" 
-                  icon={<DownloadOutlined />}
-                >
-                  Download Results
-                </Button>
-              )}
-              
-              <Button 
-                type="default" 
-                icon={<EyeOutlined />}
-              >
-                View Data
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+              </Stack>
+            </Grid>
+          </Grid>
 
-        <Divider />
-        
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={12}>
-            <Descriptions title="Simulation Status" bordered size="small">
-              <Descriptions.Item label="Status" span={3}>{getStatusTag(simulation.status)}</Descriptions.Item>
-              <Descriptions.Item label="Progress" span={3}>
-                <Progress percent={simulation.progress} status={simulation.status === 'error' ? 'exception' : undefined} />
-              </Descriptions.Item>
-              <Descriptions.Item label="Created" span={3}>{formatDate(simulation.createdAt)}</Descriptions.Item>
-              {simulation.estimatedCompletion && (
-                <Descriptions.Item label="Est. Completion" span={3}>
-                  {formatDate(simulation.estimatedCompletion)}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-          </Col>
+          <Divider sx={{ my: 2 }} />
           
-          <Col xs={24} md={12}>
-            <Descriptions title="Resources" bordered size="small">
-              <Descriptions.Item label="CPU Cores">{simulation.resources.cpuCores}</Descriptions.Item>
-              <Descriptions.Item label="GPU Enabled">{simulation.resources.gpuEnabled ? 'Yes' : 'No'}</Descriptions.Item>
-              <Descriptions.Item label="Memory">{simulation.resources.memory}</Descriptions.Item>
-              <Descriptions.Item label="Est. Runtime" span={3}>{simulation.resources.estimatedRuntime}</Descriptions.Item>
-            </Descriptions>
-          </Col>
-        </Row>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DescriptionTable
+                title="Simulation Status"
+                rows={[
+                  { label: 'Status', value: getStatusTag(simulation.status) },
+                  {
+                    label: 'Progress',
+                    value: (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.max(0, Math.min(100, simulation.progress || 0))}
+                            color={simulation.status === 'error' ? 'error' : 'primary'}
+                          />
+                        </Box>
+                        <Typography variant="body2">{`${Math.round(simulation.progress || 0)}%`}</Typography>
+                      </Box>
+                    )
+                  },
+                  { label: 'Created', value: formatDate(simulation.createdAt) },
+                  ...(simulation.estimatedCompletion
+                    ? [{ label: 'Est. Completion', value: formatDate(simulation.estimatedCompletion) }]
+                    : [])
+                ]}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DescriptionTable
+                title="Resources"
+                rows={[
+                  { label: 'CPU Cores', value: simulation.resources.cpuCores },
+                  { label: 'GPU Enabled', value: simulation.resources.gpuEnabled ? 'Yes' : 'No' },
+                  { label: 'Memory', value: simulation.resources.memory },
+                  { label: 'Est. Runtime', value: simulation.resources.estimatedRuntime }
+                ]}
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
       </Card>
       
-      <Tabs defaultActiveKey="live" style={{ marginBottom: 16 }}>
-        <TabPane tab="Live Updates" key="live">
+      <Box sx={{ mb: 2 }}>
+        <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2 }}>
+          <Tab label="Live Updates" value="live" />
+          <Tab label="Parameters" value="parameters" />
+          <Tab label="Results" value="results" />
+        </Tabs>
+
+        {tab === 'live' && (
           <VisualizationStream 
             simulationId={simulationId}
             apiBaseUrl="/api"
             autoConnect={simulation.status === 'running'}
             maxEvents={50}
           />
-        </TabPane>
+        )}
         
-        <TabPane tab="Parameters" key="parameters">
+        {tab === 'parameters' && (
           <ParameterControls
             initialParameters={simulation.parameters}
             onParametersChange={(params) => console.log('Parameters changed:', params)}
@@ -254,10 +285,10 @@ function SimulationDetail() {
             disabled={simulation.status === 'running'}
             mode="basic"
           />
-        </TabPane>
+        )}
         
-        <TabPane tab="Results" key="results">
-          {simulation.status === 'completed' || simulation.status === 'running' ? (
+        {tab === 'results' && (
+          simulation.status === 'completed' || simulation.status === 'running' ? (
             <SimulationResults 
               simulationId={simulationId}
               apiBaseUrl="/api"
@@ -266,16 +297,18 @@ function SimulationDetail() {
             />
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40 }}>
-                <Title level={4}>Results will be available once the simulation starts</Title>
-                <Text>Current status: {getStatusTag(simulation.status)}</Text>
-              </div>
+              <CardContent>
+                <Box sx={{ textAlign: 'center', p: 5 }}>
+                  <Typography variant="h6" component="h4" gutterBottom>Results will be available once the simulation starts</Typography>
+                  <Typography component="span">Current status: {getStatusTag(simulation.status)}</Typography>
+                </Box>
+              </CardContent>
             </Card>
-          )}
-        </TabPane>
-      </Tabs>
-    </div>
+          )
+        )}
+      </Box>
+    </Box>
   );
 }
 
-export default SimulationDetail; 
+export default SimulationDetail;

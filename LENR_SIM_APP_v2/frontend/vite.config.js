@@ -61,7 +61,6 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
             if (id.includes('three') || id.includes('@react-three')) return 'three';
-            if (id.includes('antd') || id.includes('@ant-design')) return 'antd';
             if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
             if (
               id.includes('recharts') ||

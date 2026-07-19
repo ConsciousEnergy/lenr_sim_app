@@ -3,14 +3,16 @@
  * For testing the UnifiedLENRVisualizer with mock data directly
  */
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Col, Row, Space, Switch, Typography, Alert, message } from 'antd';
-import { PlayCircleOutlined, ReloadOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { Button, Card, CardContent, CardHeader, Stack, Switch, Typography, Alert, FormControlLabel, Box } from '@mui/material';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import StorageIcon from '@mui/icons-material/Storage';
+import { useSnackbar } from 'notistack';
 import UnifiedLENRVisualizer from '../components/visualization/UnifiedLENRVisualizer';
 import axios from 'axios';
 
-const { Title, Text } = Typography;
-
 const VisualizationTest = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [visualizationData, setVisualizationData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -147,7 +149,7 @@ const VisualizationTest = () => {
       );
       
       setVisualizationData(response.data);
-      message.success('Loaded mock data from backend');
+      enqueueSnackbar('Loaded mock data from backend', { variant: 'success' });
     } catch (err) {
       console.error('Failed to load backend mock data:', err);
       setError('Failed to load backend data. Using local mock data instead.');
@@ -155,7 +157,7 @@ const VisualizationTest = () => {
       // Fall back to local mock data
       const localData = generateLocalMockData();
       setVisualizationData(localData);
-      message.info('Using local mock data');
+      enqueueSnackbar('Using local mock data', { variant: 'info' });
     } finally {
       setLoading(false);
     }
@@ -166,14 +168,14 @@ const VisualizationTest = () => {
     setError(null);
     const data = generateLocalMockData();
     setVisualizationData(data);
-    message.success('Loaded local mock data');
+    enqueueSnackbar('Loaded local mock data', { variant: 'success' });
   };
 
   // Clear visualization
   const clearVisualization = () => {
     setVisualizationData(null);
     setError(null);
-    message.info('Visualization cleared');
+    enqueueSnackbar('Visualization cleared', { variant: 'info' });
   };
 
   // Update visualization when fusion/enhancement toggles change
@@ -194,80 +196,72 @@ const VisualizationTest = () => {
   }, []);
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>Visualization Test Page</Title>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" component="h2" gutterBottom>Visualization Test Page</Typography>
       
       {error && (
         <Alert
-          message="Warning"
-          description={error}
-          type="warning"
-          showIcon
-          closable
+          severity="warning"
           onClose={() => setError(null)}
-          style={{ marginBottom: 16 }}
-        />
+          sx={{ mb: 2 }}
+        >
+          {error}
+        </Alert>
       )}
       
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Card title="Test Controls">
-            <Space size="large" wrap>
+      <Stack spacing={2}>
+        <Card>
+          <CardHeader title="Test Controls" />
+          <CardContent>
+            <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap alignItems="center">
               <Button
-                type="primary"
-                icon={<PlayCircleOutlined />}
+                variant="contained"
+                startIcon={<PlayCircleOutlineIcon />}
                 onClick={loadLocalMockData}
               >
                 Load Local Mock Data
               </Button>
               
               <Button
-                icon={<DatabaseOutlined />}
+                variant="outlined"
+                startIcon={<StorageIcon />}
                 onClick={loadBackendMockData}
-                loading={loading}
+                disabled={loading}
               >
                 Load Backend Mock Data
               </Button>
               
               <Button
-                icon={<ReloadOutlined />}
+                variant="outlined"
+                startIcon={<RefreshIcon />}
                 onClick={clearVisualization}
               >
                 Clear Visualization
               </Button>
               
-              <Space>
-                <Text>Show Fusion Events:</Text>
-                <Switch
-                  checked={showFusion}
-                  onChange={setShowFusion}
-                />
-              </Space>
+              <FormControlLabel
+                control={<Switch checked={showFusion} onChange={(e) => setShowFusion(e.target.checked)} />}
+                label="Show Fusion Events"
+              />
               
-              <Space>
-                <Text>Show Enhancement:</Text>
-                <Switch
-                  checked={showEnhancement}
-                  onChange={setShowEnhancement}
-                />
-              </Space>
-            </Space>
+              <FormControlLabel
+                control={<Switch checked={showEnhancement} onChange={(e) => setShowEnhancement(e.target.checked)} />}
+                label="Show Enhancement"
+              />
+            </Stack>
             
-            <div style={{ marginTop: 16 }}>
-              <Text type="secondary">
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
                 This page tests the UnifiedLENRVisualizer component with mock data. 
                 Use the controls above to load different data sets and toggle visualization features.
-              </Text>
-            </div>
-          </Card>
-        </Col>
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
         
-        <Col span={24}>
-          <Card 
-            title="3D Visualization" 
-            style={{ minHeight: 600 }}
-            bodyStyle={{ height: 600, position: 'relative' }}
-          >
+        <Card sx={{ minHeight: 600 }}>
+          <CardHeader title="3D Visualization" />
+          <CardContent sx={{ height: 600, position: 'relative' }}>
             {visualizationData ? (
               <UnifiedLENRVisualizer
                 visualizationData={visualizationData}
@@ -277,37 +271,41 @@ const VisualizationTest = () => {
                 loading={loading}
               />
             ) : (
-              <div style={{ 
+              <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 height: '100%',
-                color: '#999'
+                color: 'text.disabled'
               }}>
-                <Text>No visualization data loaded. Click "Load Local Mock Data" to start.</Text>
-              </div>
+                <Typography>No visualization data loaded. Click "Load Local Mock Data" to start.</Typography>
+              </Box>
             )}
-          </Card>
-        </Col>
+          </CardContent>
+        </Card>
         
         {visualizationData && (
-          <Col span={24}>
-            <Card title="Debug Information" collapsible>
-              <pre style={{ 
-                maxHeight: 300, 
-                overflow: 'auto',
-                fontSize: '12px',
-                backgroundColor: '#f5f5f5',
-                padding: '12px',
-                borderRadius: '4px'
-              }}>
+          <Card>
+            <CardHeader title="Debug Information" />
+            <CardContent>
+              <Box
+                component="pre"
+                sx={{ 
+                  maxHeight: 300, 
+                  overflow: 'auto',
+                  fontSize: '12px',
+                  backgroundColor: '#f5f5f5',
+                  p: 1.5,
+                  borderRadius: 1
+                }}
+              >
                 {JSON.stringify(visualizationData, null, 2)}
-              </pre>
-            </Card>
-          </Col>
+              </Box>
+            </CardContent>
+          </Card>
         )}
-      </Row>
-    </div>
+      </Stack>
+    </Box>
   );
 };
 

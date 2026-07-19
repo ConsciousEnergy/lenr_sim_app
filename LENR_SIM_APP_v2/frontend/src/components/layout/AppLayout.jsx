@@ -1,50 +1,48 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Layout } from 'antd';
+import { Box, Typography } from '@mui/material';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 /**
  * AppLayout provides a consistent layout structure for the application
  * It includes a header and main content area, wrapped in an ErrorBoundary
  */
-const AppLayout = ({ 
+const AppLayout = ({
   children,
   disableErrorBoundary = false
 }) => {
   const content = (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Layout.Header style={{ 
-        background: '#fff', 
-        padding: '0 20px',
-        boxShadow: '0 1px 4px rgba(0, 21, 41, 0.08)'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+    <Box sx={{ minHeight: '100vh' }}>
+      <Box
+        component="header"
+        sx={{
+          background: '#fff',
+          px: 2.5,
+          height: 64,
+          display: 'flex',
           alignItems: 'center',
-          height: '100%'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <h1 style={{ margin: 0, fontSize: '1.5rem' }}>LENR Simulation App</h1>
-          </div>
-        </div>
-      </Layout.Header>
-      
-      <Layout.Content style={{ 
-        padding: '24px', 
-        overflow: 'auto',
-        backgroundColor: '#f0f2f5'
-      }}>
-        <div style={{ 
-          background: '#fff', 
-          padding: '24px', 
-          minHeight: 'calc(100vh - 112px)',
-          borderRadius: '4px'
-        }}>
+          justifyContent: 'space-between',
+          boxShadow: '0 1px 4px rgba(0, 21, 41, 0.08)'
+        }}
+      >
+        <Typography variant="h5" component="h1" sx={{ m: 0 }}>
+          LENR Simulation App
+        </Typography>
+      </Box>
+
+      <Box sx={{ p: 3, overflow: 'auto', backgroundColor: '#f0f2f5' }}>
+        <Box
+          sx={{
+            background: '#fff',
+            p: 3,
+            minHeight: 'calc(100vh - 112px)',
+            borderRadius: 1
+          }}
+        >
           {children}
-        </div>
-      </Layout.Content>
-    </Layout>
+        </Box>
+      </Box>
+    </Box>
   );
 
   return disableErrorBoundary ? (
@@ -61,4 +59,4 @@ AppLayout.propTypes = {
   disableErrorBoundary: PropTypes.bool
 };
 
-export default AppLayout; 
+export default AppLayout;

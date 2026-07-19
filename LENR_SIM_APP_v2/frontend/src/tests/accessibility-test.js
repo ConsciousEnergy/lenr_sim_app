@@ -55,9 +55,6 @@ const projectRoot = path.resolve(__dirname, '../..');
 const filesToCheck = [
   // Main simulation components
   path.join(projectRoot, 'src/components/SimulationControls.jsx'),
-  path.join(projectRoot, 'src/components/SimulationDashboard.jsx'),
-  path.join(projectRoot, 'src/components/SimulationMonitor.jsx'),
-  path.join(projectRoot, 'src/components/SimulationStatusPanel.jsx'),
   path.join(projectRoot, 'src/components/SimulationResults.jsx'),
   path.join(projectRoot, 'src/components/SimulationHistory.jsx'),
   
