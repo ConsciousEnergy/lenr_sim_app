@@ -406,6 +406,109 @@ export default function ReferencesSection() {
                 Laser Stimulation of Deuterated Palladium: Past and Present. <em>Proceedings of the 10th International Conference on Cold Fusion (ICCF-10)</em>. Dual-laser beat-frequency triggering of excess heat via phonon-mode coupling.
               </Typography>
             </ListItem>
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+              2026 Rigor-Review Sources (canonical citation keys)
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              These entries use DOI-first <code>AuthorYear</code> keys (per <code>docs/REVIEW_2026/CITATION_STANDARD.md</code>)
+              and resolve every <code>references</code> key emitted by the backend physics modules (rate engine, UQ,
+              KG-RP, shell-pairing, screening). See <code>docs/REVIEW_2026/REFERENCES_AUDIT.md</code> for the
+              canonical list and old&rarr;new numbering map.
+            </Typography>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [mulnix2026] Mulnix, A. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Structural Theory of Sonoluminescence via Klein-Gordon / Rayleigh-Plesset Harmonic Locking. <em>Zenodo</em>.
+              </Typography>
+              <MuiLink href="https://doi.org/10.5281/zenodo.19079074" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.5281/zenodo.19079074
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [nguyen2026] Nguyen, T. et al. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Quantum shell structure of proton-neutron pairing. <em>Nature</em>.
+              </Typography>
+              <MuiLink href="https://doi.org/10.1038/s41586-026-10616-2" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.1038/s41586-026-10616-2
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [takahashi2016] Takahashi, A. (2016)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Fundamentals of Rate Theory for CMNS (Tetrahedral Symmetric Condensate). <em>Journal of Condensed Matter Nuclear Science</em>, 19, 298-315.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [hagelstein2025] Hagelstein, P. L. (2025)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Phonon-nuclear coupling and coherent energy exchange in condensed matter (updated treatment). <em>Journal of Condensed Matter Nuclear Science</em>.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [floquetwkb2026] Floquet-WKB barrier-penetration analysis (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Floquet-WKB treatment of time-periodic barrier penetration for trapped-state reaction rates (supporting analysis for the trapped-state formalism).
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [parkhomov2018] Parkhomov, A. G. (2018)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Database of LENR transmutation reactions (curated subset). <em>LENR Academy</em>. Used for transmutation-pathway validation.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [miles1993] Miles, M. H. et al. (1993)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Correlation of excess power and helium-4 production in the D/Pd system. <em>Journal of Electroanalytical Chemistry</em>, 346(1-2), 99-117.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                Electron-screening sources [raiola2002], [huke2008], [czerski2023], [screeningreview2024]
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Raiola et al. (2002, deuteron screening in metals); Huke et al. (2008,
+                <em> Phys. Rev. C</em> 78, 015803, DOI: 10.1103/PhysRevC.78.015803); Czerski et al. (2023);
+                and a 2024 screening-potential review. These constrain the screening-potential priors used by the
+                reaction-rate engine and UQ (<code>screening_data.py</code>).
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                Supplementary keys [storms2015], [tennfors2013], [steinetz2020exp], [pines2020theory]
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Storms (2015, NAE critical review); Tennfors (2013, on cluster/coherence assumptions);
+                Steinetz et al. (2020, NASA lattice-confinement fusion — experiment); and the companion
+                Pines et al. (2020, theory). Retained so backend/supplementary citation keys resolve consistently.
+              </Typography>
+            </ListItem>
           </List>
 
           <Divider sx={{ my: 3 }} />

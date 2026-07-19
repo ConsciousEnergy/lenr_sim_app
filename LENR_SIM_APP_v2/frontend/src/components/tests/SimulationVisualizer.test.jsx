@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { render, screen, waitFor } from '../../tests/test-utils';
 import '@testing-library/jest-dom';
 import SimulationVisualizer from '../SimulationVisualizer';

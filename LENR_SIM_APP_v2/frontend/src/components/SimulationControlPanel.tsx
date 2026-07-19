@@ -70,8 +70,9 @@ import axios from 'axios';
 import PhysicsModelSelector from './physics/PhysicsModelSelector';
 import physicsModelRegistry from './physics/PhysicsModelRegistry';
 import { AdvancedControlHelpDialog, AdvancedControlHelpButton } from './docs/AdvancedControlHelp';
+import { resolveApiUrl } from '../config/api';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+const AVAILABLE_REACTIONS_ENDPOINT = '/api/physics/available-reactions';
 
 // Extend Window interface to include our custom functions
 declare global {
@@ -215,7 +216,20 @@ const SimulationControlPanel: React.FC<SimulationControlPanelProps> = ({
   const [showEnhancementFactors, setShowEnhancementFactors] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [availableReactions, setAvailableReactions] = useState<Array<{name: string, description: string}>>([]);
+  // Seeded with the canonical LENR/fusion reactions the backend is
+  // expected to expose. This keeps the reaction-name Select in a valid
+  // MUI state on first render (and in Jest tests) before
+  // `/api/physics/available-reactions` resolves, which otherwise
+  // triggers the "out-of-range value 'd-d'" warning.
+  const [availableReactions, setAvailableReactions] = useState<Array<{name: string, description: string}>>([
+    { name: 'd-d', description: 'Deuterium-deuterium fusion' },
+    { name: 'd-t', description: 'Deuterium-tritium fusion' },
+    { name: 'p-d', description: 'Proton-deuteron fusion' },
+    { name: 'p-Li6', description: 'Proton + Li-6 reaction' },
+    { name: 'p-Li7', description: 'Proton + Li-7 reaction' },
+    { name: 'd-Li6', description: 'Deuteron + Li-6 reaction' },
+    { name: 'p-ni', description: 'Proton-nickel (Piantelli-style) reaction' },
+  ]);
   
   // Validation states
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -244,7 +258,7 @@ const SimulationControlPanel: React.FC<SimulationControlPanelProps> = ({
   useEffect(() => {
     const fetchReactions = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/physics/available-reactions`);
+        const response = await axios.get(resolveApiUrl(AVAILABLE_REACTIONS_ENDPOINT));
         setAvailableReactions(response.data);
       } catch (err) {
         console.error('Failed to fetch available reactions:', err);
@@ -348,11 +362,27 @@ const SimulationControlPanel: React.FC<SimulationControlPanelProps> = ({
     // Apply model parameters if available
     const model = physicsModelRegistry.getModel(modelId);
     if (model) {
-      // Extract parameter values from the model
-      const modelParameterValues: Record<string, number> = {};
-      model.parameters.forEach(param => {
-        modelParameterValues[param.name] = param.value;
-      });
+      const modelRecord = model as unknown as Record<string, unknown>;
+      // Accept both backend-driven defaultParameters and legacy parameters[] shapes.
+      const rawParameterSource =
+        (modelRecord.defaultParameters as Record<string, unknown> | undefined) ||
+        ((Array.isArray(modelRecord.parameters)
+          ? (modelRecord.parameters as Array<{ name?: unknown; value?: unknown }>).reduce(
+              (acc, parameter) => {
+                if (typeof parameter?.name === 'string') acc[parameter.name] = parameter.value;
+                return acc;
+              },
+              {} as Record<string, unknown>,
+            )
+          : undefined) as Record<string, unknown> | undefined) ||
+        {};
+      const modelParameterValues: Record<string, number> = Object.entries(rawParameterSource).reduce(
+        (acc, [key, value]) => {
+          if (typeof value === 'number') acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
       
       // Update parameters with model values
       setParameters(prev => ({
@@ -377,7 +407,7 @@ const SimulationControlPanel: React.FC<SimulationControlPanelProps> = ({
         console.log(`Setting simulation speed to ${newSpeed}x for simulation ${simulationId}`);
         
         // Example of what an actual API call might look like:
-        // await axios.post(`${BACKEND_URL}/simulations/${simulationId}/speed`, { speed: newSpeed });
+        // await axios.post(resolveApiUrl(`/api/simulations/${simulationId}/speed`), { speed: newSpeed });
       } catch (err) {
         console.error('Failed to update simulation speed:', err);
       }

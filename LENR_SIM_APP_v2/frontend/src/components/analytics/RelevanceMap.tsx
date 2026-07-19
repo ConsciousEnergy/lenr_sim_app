@@ -8,7 +8,7 @@
  * click-to-select with neighbourhood highlighting, search, detail panel.
  *
  * @module RelevanceMap
- * @version 0.3.4-beta
+ * @version 0.3.6-beta
  */
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';

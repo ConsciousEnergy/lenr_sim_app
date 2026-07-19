@@ -59,7 +59,6 @@ const filesToCheck = [
   path.join(projectRoot, 'src/components/SimulationMonitor.jsx'),
   path.join(projectRoot, 'src/components/SimulationStatusPanel.jsx'),
   path.join(projectRoot, 'src/components/SimulationResults.jsx'),
-  path.join(projectRoot, 'src/components/SimulationVisualization.jsx'),
   path.join(projectRoot, 'src/components/SimulationHistory.jsx'),
   
   // Visualization components

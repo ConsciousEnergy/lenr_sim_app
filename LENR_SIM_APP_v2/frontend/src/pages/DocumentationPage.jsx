@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -39,11 +39,16 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
 import { API_BASE_URL } from '../config/api';
+import { track } from '../analytics/events';
 
 const DocumentationPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState('getting-started');
+
+  useEffect(() => {
+    track.docsViewed({ slug: 'documentation', source: 'documentation-hub' });
+  }, []);
   
   // Refs for scrolling to accordion sections
   const gettingStartedRef = useRef(null);
@@ -389,10 +394,10 @@ python -m uvicorn app.main:app --reload  # Backend`}
 │
 ├── backend/                  # FastAPI application
 │   ├── app/
-│   │   ├── routers/          # API endpoints
-│   │   ├── core/             # Core logic
+│   │   ├── api/routes/       # Public API endpoints (unified, physics, docs)
+│   │   ├── core/             # Core config & logic
 │   │   ├── services/         # Business logic
-│   │   └── physics/          # Physics modules
+│   │   └── physics_engine/   # Physics modules (theories, unified model)
 │   └── tests/                # Backend tests
 │
 ├── docs/                     # Documentation
@@ -419,7 +424,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
             </Typography>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
               <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                http://localhost:8000
+                http://localhost:8010
               </Typography>
             </Box>
 
@@ -430,27 +435,13 @@ python -m uvicorn app.main:app --reload  # Backend`}
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                  <Chip label="POST" color="success" size="small" />
-                  <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                    /api/simulations
-                  </Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  Create a new simulation with specified parameters
-                </Typography>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   <Chip label="GET" color="primary" size="small" />
                   <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                    /api/simulations/{'<id>'}
+                    /api/health
                   </Typography>
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  Retrieve simulation status and results
+                  Service health, version, and physics-engine readiness
                 </Typography>
               </CardContent>
             </Card>
@@ -460,11 +451,40 @@ python -m uvicorn app.main:app --reload  # Backend`}
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   <Chip label="POST" color="success" size="small" />
                   <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                    /api/simulations/{'<id>'}/start
+                    /api/unified/simulate
                   </Typography>
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  Start a configured simulation
+                  Run a unified multi-theory enhancement calculation
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ mb: 2 }}>
+              <CardContent>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Chip label="POST" color="success" size="small" />
+                  <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                    /api/unified/bubble-lattice
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Cavitation bubble-lattice run; returns the additive reaction-rate
+                  engine block (rate, optional UQ credible interval, KG-RP diagnostics)
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ mb: 2 }}>
+              <CardContent>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Chip label="POST" color="success" size="small" />
+                  <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                    /api/unified/export
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Reproducibility export envelope (lenr-run-export-v1)
                 </Typography>
               </CardContent>
             </Card>
@@ -476,7 +496,7 @@ python -m uvicorn app.main:app --reload  # Backend`}
                 the interactive Swagger UI with complete API documentation.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Note:</strong> Make sure the backend server is running on port 8000. If you see a blank page, 
+                <strong>Note:</strong> Make sure the backend server is running on port 8010. If you see a blank page, 
                 check that the backend is started and accessible.
               </Typography>
             </Alert>
@@ -498,14 +518,16 @@ python -m uvicorn app.main:app --reload  # Backend`}
               Environment Variables
             </Typography>
             <Typography variant="body2" paragraph>
-              Create a <code>.env</code> file in the frontend directory:
+              Create a <code>.env</code> file in the frontend directory (the app uses Vite,
+              so <code>VITE_</code>-prefixed variables are canonical; the legacy
+              <code>REACT_APP_</code> name is still honored for backward compatibility):
             </Typography>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 3 }}>
               <Typography variant="body2" component="pre" sx={{ m: 0 }}>
-{`# Frontend Environment Variables
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_WS_URL=ws://localhost:8000/ws
-REACT_APP_ENV=development`}
+{`# Frontend (Vite) Environment Variables
+VITE_API_URL=http://localhost:8010
+# Legacy CRA-style alias (optional, same value):
+REACT_APP_API_URL=http://localhost:8010`}
               </Typography>
             </Box>
 
@@ -650,13 +672,15 @@ LOG_LEVEL=info`}
                   Port Already in Use
                 </Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  If ports 3000 or 8000 are already in use:
+                  If ports 3000 or 8010 are already in use:
                 </Typography>
                 <Box sx={{ p: 1.5, bgcolor: 'background.default', borderRadius: 1 }}>
                   <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                    # Find and kill the process<br />
+                    # macOS / Linux<br />
                     lsof -ti:3000 | xargs kill -9  # Frontend<br />
-                    lsof -ti:8000 | xargs kill -9  # Backend
+                    lsof -ti:8010 | xargs kill -9  # Backend<br />
+                    # Windows (PowerShell)<br />
+                    taskkill /F /IM node.exe; taskkill /F /IM python.exe
                   </Typography>
                 </Box>
               </CardContent>

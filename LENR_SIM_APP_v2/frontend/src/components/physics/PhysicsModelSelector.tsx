@@ -178,14 +178,18 @@ const PhysicsModelSelector: React.FC<PhysicsModelSelectorProps> = ({
                 
                 <Divider textAlign="left">References</Divider>
                 <List dense sx={{ pl: 2 }}>
-                  {selectedModel.references?.map((ref, idx) => (
+                  {selectedModel.references?.map((ref, idx) => {
+                    const authorsStr = Array.isArray(ref.authors)
+                      ? ref.authors.join(', ')
+                      : (ref.authors || '');
+                    return (
                     <ListItem key={idx} disablePadding>
                       <ListItemText
                         primary={
                           <Typography variant="body2">
                             {[
                               ref.title,
-                              ref.authors?.length > 0 && ref.authors.join(', '),
+                              authorsStr,
                               ref.year && `(${ref.year})`
                             ].filter(Boolean).join(' ')}
                             {ref.url && (
@@ -203,7 +207,8 @@ const PhysicsModelSelector: React.FC<PhysicsModelSelectorProps> = ({
                         }
                       />
                     </ListItem>
-                  ))}
+                    );
+                  })}
                 </List>
                 
                 {showCompatibilityInfo && compatibilityMessages[selectedModel.id]?.length > 0 && (

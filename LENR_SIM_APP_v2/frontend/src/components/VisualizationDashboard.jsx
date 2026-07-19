@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col, Tabs, Layout, Typography, Card, Select, Space, Divider } from 'antd';
 import SimulationMonitor from './SimulationMonitor';
 import SimulationVisualizer from './SimulationVisualizer';

@@ -38,12 +38,15 @@ import {
   RocketOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../contexts/ThemeContext'; // Assuming ThemeContext is used
+import { API_BASE_URL as CONFIG_API_BASE_URL } from '../config/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const API_BASE_URL = 'http://localhost:8000'; // Corrected hardcoded port
+// Single source of truth for the API base (see config/api.js): empty in dev so the
+// Vite proxy forwards /api/* to the backend; the configured prod URL otherwise.
+const API_BASE_URL = CONFIG_API_BASE_URL;
 
 /**
  * Component for monitoring active simulations and their status

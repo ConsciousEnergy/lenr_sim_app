@@ -172,10 +172,8 @@ function DashboardNew() {
 
   const handleActionClick = (path) => {
     setLoading(true);
-    setTimeout(() => {
-      navigate(path);
-      setLoading(false);
-    }, 300);
+    navigate(path);
+    setLoading(false);
   };
 
   return (

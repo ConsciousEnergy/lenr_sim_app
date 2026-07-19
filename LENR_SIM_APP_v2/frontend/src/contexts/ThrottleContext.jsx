@@ -12,4 +12,4 @@ export const ThrottleProvider = ({ children }) => {
       {children}
     </ThrottleContext.Provider>
   );
-}; 
+};

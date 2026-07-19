@@ -37,6 +37,7 @@ import { ScaleBar } from './QuantumFluxVisualization';
 import VisualizationLegend from './VisualizationLegend';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
+import { track } from '../../analytics/events';
 import {
   getMaterialScale,
   getLatticeMetersPerVisUnit,
@@ -340,6 +341,17 @@ const UnifiedBubbleLatticeVisualization = ({
   const controlsRef = useRef(null);
   const frameIdRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
+
+  // Fire a single product-analytics view event when this visualization mounts.
+  useEffect(() => {
+    track.visualizationViewed({
+      viz_type: 'unified_bubble_lattice',
+      host_material: parameters?.hostMaterial,
+      reactant: parameters?.reactant,
+      has_simulation_data: !!simulationData,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Group refs for scene hierarchy
   const latticeGroupRef = useRef(null);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, List, Tag, Typography, Empty, Spin, Alert, Space, Button } from 'antd';
 import { ReloadOutlined, ClockCircleOutlined, LineChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { createVisualizationWebSocket } from '../utils/visualizationWebSocket';

@@ -80,7 +80,7 @@ const SettingsPage = () => {
       showGrid: false
     },
     advanced: {
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:8010',
       enableDebugMode: false,
       cacheTTL: 3600,
       experimentalFeatures: false
@@ -108,7 +108,7 @@ const SettingsPage = () => {
   
   const checkSystemStatus = async (apiUrl = null) => {
     // Use provided apiUrl or settings value or default
-    const baseUrl = apiUrl || settings.advanced?.apiUrl || 'http://localhost:8000';
+    const baseUrl = apiUrl || settings.advanced?.apiUrl || 'http://localhost:8010';
     
     // Check API connection
     try {
@@ -190,7 +190,7 @@ const SettingsPage = () => {
           showGrid: false
         },
         advanced: {
-          apiUrl: 'http://localhost:8000',
+          apiUrl: 'http://localhost:8010',
           enableDebugMode: false,
           cacheTTL: 3600,
           experimentalFeatures: false
