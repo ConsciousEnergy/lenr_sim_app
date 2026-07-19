@@ -1,4 +1,4 @@
-﻿"""
+"""
 Widom-Larsen Ultra-Low Momentum Neutron Theory Module
 
 Physics:
@@ -216,6 +216,9 @@ class WidomLarsenTheory:
                 "Widom A. & Larsen L. (2006) Eur. Phys. J. C 46, 107",
                 "Widom A. & Larsen L. (2007) arXiv:nucl-th/0608059v2",
                 "Larsen L. & Widom A. (2008) arXiv:0709.3905",
+                # Contested: principal critique cited per RR-008 / citation policy.
+                "Tennfors E. (2013) Eur. Phys. J. Plus 128, 15 [critique] "
+                "doi:10.1140/epjp/i2013-13015-3",
             ],
         )
 
@@ -228,6 +231,8 @@ class WidomLarsenTheory:
             references=[
                 "Widom A. & Larsen L. (2006) Eur. Phys. J. C 46, 107",
                 "Widom A. & Larsen L. (2007) arXiv:nucl-th/0608059v2",
+                "Tennfors E. (2013) Eur. Phys. J. Plus 128, 15 [critique] "
+                "doi:10.1140/epjp/i2013-13015-3",
             ],
             category="mechanism",
         )

@@ -138,6 +138,9 @@ class SimulationConfig:
     time_steps: int = 100
     total_time: float = 10.0
     random_seed: Optional[int] = None
+    electrolyte_family: str = "li"
+    electrolyte_species: str = "lioh"
+    electrolyte_molarity_mol_l: float = 0.3
 
 
 @dataclass
@@ -164,5 +167,8 @@ class UnifiedSimulationResult:
     heat_output: List[float]
     enhancement_history: List[float]
     confidence: float
+    uncertainty_interval: Dict[str, float]
+    falsification_conditions: List[str]
+    observables_bridge: Dict[str, Any]
     config: SimulationConfig
     computation_time: float

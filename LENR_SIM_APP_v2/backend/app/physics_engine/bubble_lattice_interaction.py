@@ -92,7 +92,10 @@ class LatticeParameters:
     debye_temperature: float = 275.0  # K (Pd)
     work_function: float = 5.12  # eV (Pd)
     fermi_energy: float = 11.7  # eV (Pd)
-    screening_potential: float = 800.0  # eV (experimental for Pd-D)
+    # eV. Typical (point-estimate) value for Pd-D. The cited material-dependent
+    # range lives in unified_lenr_model/screening_data.py (RR-007); Pd spans
+    # ~250-800 eV, up to ~18 keV in hard targets. UQ should sample the range.
+    screening_potential: float = 800.0
     
     @classmethod
     def for_material(cls, material: str) -> "LatticeParameters":
@@ -104,7 +107,10 @@ class LatticeParameters:
         - Electron densities: Ashcroft & Mermin, Solid State Physics
         - Debye temperatures: American Institute of Physics Handbook
         - Work functions: CRC Handbook of Chemistry and Physics
-        - Screening potentials: Kasagi et al., J. Phys. Soc. Jpn. 71 (2002)
+        - Screening potentials: cited material-dependent ranges in
+          unified_lenr_model/screening_data.py (Raiola 2002; Huke 2008;
+          Czerski 2023; Pines 2020). Values below are the typical point
+          estimates of those ranges (RR-007); Kasagi et al. JPSJ 71 (2002).
         """
         material_data = {
             "palladium": {
@@ -518,12 +524,16 @@ class BubbleLatticeInteraction:
             "NUCLEAR": 0.0
         }
         
-        if enhancement > nuclear_threshold:
-            distribution["NUCLEAR"] = min(0.3, (enhancement / nuclear_threshold - 1) * 0.1)
+        if enhancement >= nuclear_threshold:
+            # Preserve a non-zero nuclear share at the exact threshold boundary.
+            distribution["NUCLEAR"] = max(
+                0.01,
+                min(0.3, (enhancement / nuclear_threshold - 1) * 0.1),
+            )
             distribution["CAPTURE_READY"] = 0.4
             distribution["SCREENED"] = 0.2
             distribution["FREE"] = 1 - sum(distribution.values())
-        elif enhancement > capture_threshold:
+        elif enhancement >= capture_threshold:
             distribution["CAPTURE_READY"] = min(0.5, (enhancement / capture_threshold - 1) * 0.2)
             distribution["SCREENED"] = 0.3
             distribution["FREE"] = 1 - sum(distribution.values())

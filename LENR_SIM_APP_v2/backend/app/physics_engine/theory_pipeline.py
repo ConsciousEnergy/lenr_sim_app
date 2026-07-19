@@ -23,9 +23,37 @@ from app.physics_engine.theory_protocol import (
     TheoryModule,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR, MILES_HEAT_HELIUM_RATE
+from app.physics_engine.scientific_guardrails import (
+    build_confidence_breakdown,
+    build_falsification_conditions,
+    build_observables_bridge,
+    build_uncertainty_interval,
+    classify_evidence_tier,
+)
+from app.core.config import settings
 from app.utils.json_safe import to_json_safe
 
 logger = logging.getLogger(__name__)
+
+THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
+    "electron_screening": "screening",
+    "quantum_tunneling": "screening",
+    "coherent_qed": "coherence",
+    "vysotskii_ccs": "coherence",
+    "kim_bec": "coherence",
+    "bubble_mhd_confinement": "confinement",
+    "casimir_confinement": "confinement",
+    "nae_model": "surface_activation",
+    "swartz_nanor": "surface_activation",
+    "phonon_coupling_legacy": "phonon_transfer",
+    "hagelstein_phonon": "phonon_transfer",
+    # v0.3.6-beta: stellar-scaling context line is isolated in its own
+    # group so that grouped_max_confidence_product composition never lets
+    # it dominate empirically-grounded LENR tracks.
+    "stellar_scaling_mhd": "context_line",
+}
+
+DEFAULT_COMBINATION_RULE = "grouped_max_confidence_product"
 
 
 class TheoryPipelineResult:
@@ -39,6 +67,9 @@ class TheoryPipelineResult:
         total_energy_watts: float,
         conditions: Dict[str, float],
         enabled_theories: List[str],
+        combination_rule: str = DEFAULT_COMBINATION_RULE,
+        applied_groups: Optional[List[Dict[str, Any]]] = None,
+        excluded_theories: Optional[List[Dict[str, str]]] = None,
     ):
         self.contributions = contributions
         self.combined_enhancement = combined_enhancement
@@ -46,6 +77,9 @@ class TheoryPipelineResult:
         self.total_energy_watts = total_energy_watts
         self.conditions = conditions
         self.enabled_theories = enabled_theories
+        self.combination_rule = combination_rule
+        self.applied_groups = applied_groups or []
+        self.excluded_theories = excluded_theories or []
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a JSON-friendly dictionary."""
@@ -53,12 +87,35 @@ class TheoryPipelineResult:
         # 1 W excess heat ≈ 2.6×10^11 He-4 atoms/s
         expected_he4_rate = self.total_energy_watts * MILES_HEAT_HELIUM_RATE
 
+        per_theory = [
+            {
+                "theory_id": c.theory_id,
+                "theory_name": c.theory_name,
+                "enhancement_factor": float(c.enhancement_factor),
+                "reaction_rate_modifier": float(c.reaction_rate_modifier),
+                "energy_output_watts": float(c.energy_output_watts),
+                "observables": to_json_safe(c.observables),
+                "parameters_used": to_json_safe(c.parameters_used),
+                "is_applicable": bool(c.is_applicable),
+                "confidence": float(c.confidence),
+                "confidence_breakdown": to_json_safe(c.confidence_breakdown),
+                "uncertainty_interval": to_json_safe(c.uncertainty_interval),
+                "falsification_conditions": list(c.falsification_conditions),
+                "evidence_class": c.evidence_class,
+                "reproducibility_tier": c.reproducibility_tier,
+                "claim_tier": c.claim_tier,
+                "provenance": to_json_safe(c.provenance),
+                "references": list(c.references),
+            }
+            for c in self.contributions
+        ]
         return {
             "combined_enhancement": float(self.combined_enhancement),
             "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
             "total_energy_watts": float(self.total_energy_watts),
             "conditions": to_json_safe(self.conditions),
             "enabled_theories": self.enabled_theories,
+            "contract_version": "v0.3.6-beta-science-gate-1",
             "validation": {
                 "miles_heat_helium": {
                     "expected_he4_rate_per_s": expected_he4_rate,
@@ -66,21 +123,23 @@ class TheoryPipelineResult:
                     "note": "1 W excess heat = 2.6e11 He-4/s (Miles 1993)",
                 },
             },
-            "per_theory": [
-                {
-                    "theory_id": c.theory_id,
-                    "theory_name": c.theory_name,
-                    "enhancement_factor": float(c.enhancement_factor),
-                    "reaction_rate_modifier": float(c.reaction_rate_modifier),
-                    "energy_output_watts": float(c.energy_output_watts),
-                    "observables": to_json_safe(c.observables),
-                    "parameters_used": to_json_safe(c.parameters_used),
-                    "is_applicable": bool(c.is_applicable),
-                    "confidence": float(c.confidence),
-                    "references": list(c.references),
-                }
-                for c in self.contributions
-            ],
+            "observables_bridge": build_observables_bridge(
+                total_energy_watts=self.total_energy_watts,
+                expected_he4_rate_per_s=expected_he4_rate,
+            ),
+            "analytics_transparency": {
+                "confidence_weights": to_json_safe(
+                    per_theory[0]["confidence_breakdown"].get("weights", {}) if per_theory else {}
+                ),
+                "normalization": "All rubric dimensions normalized to [0, 1]. Weighted sum forms confidence score.",
+                "sensitivity_note": "Parameter proximity contributes strongest penalties when outside validated regimes.",
+            },
+            "composition_provenance": {
+                "combination_rule": self.combination_rule,
+                "applied_groups": to_json_safe(self.applied_groups),
+                "excluded_theories": to_json_safe(self.excluded_theories),
+            },
+            "per_theory": per_theory,
         }
 
 
@@ -139,6 +198,71 @@ class TheoryPipeline:
     # Execution
     # ------------------------------------------------------------------
 
+    def _combine_contributions(
+        self,
+        contributions: List[TheoryContribution],
+        combination_rule: str,
+    ) -> Dict[str, Any]:
+        grouped: Dict[str, List[TheoryContribution]] = {}
+        for contribution in contributions:
+            if not contribution.is_applicable:
+                continue
+            group = THEORY_COMPOSITION_GROUPS.get(contribution.theory_id, "independent")
+            grouped.setdefault(group, []).append(contribution)
+
+        combined_enhancement = 1.0
+        combined_rate_modifier = 1.0
+        total_energy = 0.0
+        applied_groups: List[Dict[str, Any]] = []
+        excluded_theories: List[Dict[str, str]] = []
+
+        for group_name, group_contributions in grouped.items():
+            selected = max(
+                group_contributions,
+                key=lambda item: float(item.enhancement_factor) * max(float(item.confidence), 1e-6),
+            )
+            selected.provenance = {
+                **(selected.provenance or {}),
+                "composition_group": group_name,
+                "composition_status": "applied",
+            }
+            for contribution in group_contributions:
+                if contribution is selected:
+                    continue
+                contribution.provenance = {
+                    **(contribution.provenance or {}),
+                    "composition_group": group_name,
+                    "composition_status": "excluded_overlap",
+                }
+                excluded_theories.append(
+                    {
+                        "theory_id": contribution.theory_id,
+                        "group": group_name,
+                        "excluded_by": selected.theory_id,
+                    }
+                )
+
+            combined_enhancement *= selected.enhancement_factor
+            combined_rate_modifier *= selected.reaction_rate_modifier
+            total_energy += selected.energy_output_watts
+            applied_groups.append(
+                {
+                    "group": group_name,
+                    "selected_theory": selected.theory_id,
+                    "rule": "max(enhancement_factor * confidence)",
+                    "candidates": [item.theory_id for item in group_contributions],
+                }
+            )
+
+        return {
+            "combined_enhancement": min(combined_enhancement, MAX_ENHANCEMENT_FACTOR),
+            "combined_reaction_rate_modifier": combined_rate_modifier,
+            "total_energy_watts": total_energy,
+            "applied_groups": applied_groups,
+            "excluded_theories": excluded_theories,
+            "combination_rule": combination_rule,
+        }
+
     def run(
         self,
         conditions: Dict[str, float],
@@ -175,6 +299,30 @@ class TheoryPipeline:
 
             try:
                 contribution = module.calculate(conditions, config)
+                electrolyte_family = str(conditions.get("electrolyte_family", "li")).lower()
+                electrolyte_molarity_mol_l = float(conditions.get("electrolyte_molarity_mol_l", 0.3))
+                loading_ratio = float(conditions.get("loading_ratio", 0.9))
+                confidence_breakdown = build_confidence_breakdown(
+                    confidence=contribution.confidence,
+                    is_applicable=contribution.is_applicable,
+                    loading_ratio=loading_ratio,
+                    electrolyte_family=electrolyte_family,
+                    electrolyte_molarity_mol_l=electrolyte_molarity_mol_l,
+                )
+                weighted_score = float(confidence_breakdown.get("weighted_score", contribution.confidence))
+                evidence_class, claim_tier = classify_evidence_tier(weighted_score)
+                contribution.confidence = weighted_score
+                contribution.confidence_breakdown = confidence_breakdown
+                contribution.uncertainty_interval = build_uncertainty_interval(weighted_score)
+                contribution.falsification_conditions = build_falsification_conditions(contribution.theory_id)
+                contribution.evidence_class = evidence_class
+                contribution.reproducibility_tier = evidence_class
+                contribution.claim_tier = claim_tier
+                contribution.provenance = {
+                    "source": "theory_pipeline",
+                    "validation_status": "applicable" if contribution.is_applicable else "not_applicable",
+                    "model_version": settings.APP_VERSION,
+                }
                 contributions.append(contribution)
             except Exception:
                 logger.exception("Error running theory '%s'", tid)
@@ -188,27 +336,22 @@ class TheoryPipeline:
                     )
                 )
 
-        # ----- Combine contributions -----
-        combined_enhancement = 1.0
-        combined_rate_modifier = 1.0
-        total_energy = 0.0
-
-        for c in contributions:
-            if c.is_applicable:
-                combined_enhancement *= c.enhancement_factor
-                combined_rate_modifier *= c.reaction_rate_modifier
-                total_energy += c.energy_output_watts
-
-        # Cap combined enhancement at the theory-level ceiling
-        combined_enhancement = min(combined_enhancement, MAX_ENHANCEMENT_FACTOR)
+        composition_rule = str(conditions.get("theory_combination_rule", DEFAULT_COMBINATION_RULE))
+        combined = self._combine_contributions(
+            contributions=contributions,
+            combination_rule=composition_rule,
+        )
 
         return TheoryPipelineResult(
             contributions=contributions,
-            combined_enhancement=combined_enhancement,
-            combined_reaction_rate_modifier=combined_rate_modifier,
-            total_energy_watts=total_energy,
+            combined_enhancement=combined["combined_enhancement"],
+            combined_reaction_rate_modifier=combined["combined_reaction_rate_modifier"],
+            total_energy_watts=combined["total_energy_watts"],
             conditions=conditions,
             enabled_theories=enabled_theories,
+            combination_rule=combined["combination_rule"],
+            applied_groups=combined["applied_groups"],
+            excluded_theories=combined["excluded_theories"],
         )
 
     def run_single(
@@ -289,6 +432,30 @@ class TheoryPipeline:
 
             try:
                 contrib = module.calculate(enriched, config)
+                electrolyte_family = str(enriched.get("electrolyte_family", "li")).lower()
+                electrolyte_molarity_mol_l = float(enriched.get("electrolyte_molarity_mol_l", 0.3))
+                loading_ratio = float(enriched.get("loading_ratio", 0.9))
+                confidence_breakdown = build_confidence_breakdown(
+                    confidence=contrib.confidence,
+                    is_applicable=contrib.is_applicable,
+                    loading_ratio=loading_ratio,
+                    electrolyte_family=electrolyte_family,
+                    electrolyte_molarity_mol_l=electrolyte_molarity_mol_l,
+                )
+                weighted_score = float(confidence_breakdown.get("weighted_score", contrib.confidence))
+                evidence_class, claim_tier = classify_evidence_tier(weighted_score)
+                contrib.confidence = weighted_score
+                contrib.confidence_breakdown = confidence_breakdown
+                contrib.uncertainty_interval = build_uncertainty_interval(weighted_score)
+                contrib.falsification_conditions = build_falsification_conditions(contrib.theory_id)
+                contrib.evidence_class = evidence_class
+                contrib.reproducibility_tier = evidence_class
+                contrib.claim_tier = claim_tier
+                contrib.provenance = {
+                    "source": "theory_pipeline_coupled",
+                    "validation_status": "applicable" if contrib.is_applicable else "not_applicable",
+                    "model_version": settings.APP_VERSION,
+                }
             except Exception:
                 logger.exception("Coupled pipeline: error in '%s'", tid)
                 contrib = TheoryContribution(
@@ -308,25 +475,22 @@ class TheoryPipeline:
                         if key in PROMOTED_KEYS:
                             enriched[key] = value
 
-        # Combine
-        combined_enhancement = 1.0
-        combined_rate = 1.0
-        total_energy = 0.0
-        for c in contributions:
-            if c.is_applicable:
-                combined_enhancement *= c.enhancement_factor
-                combined_rate *= c.reaction_rate_modifier
-                total_energy += c.energy_output_watts
-
-        combined_enhancement = min(combined_enhancement, MAX_ENHANCEMENT_FACTOR)
+        composition_rule = str(enriched.get("theory_combination_rule", DEFAULT_COMBINATION_RULE))
+        combined = self._combine_contributions(
+            contributions=contributions,
+            combination_rule=composition_rule,
+        )
 
         return TheoryPipelineResult(
             contributions=contributions,
-            combined_enhancement=combined_enhancement,
-            combined_reaction_rate_modifier=combined_rate,
-            total_energy_watts=total_energy,
+            combined_enhancement=combined["combined_enhancement"],
+            combined_reaction_rate_modifier=combined["combined_reaction_rate_modifier"],
+            total_energy_watts=combined["total_energy_watts"],
             conditions=enriched,
             enabled_theories=execution_order,
+            combination_rule=combined["combination_rule"],
+            applied_groups=combined["applied_groups"],
+            excluded_theories=combined["excluded_theories"],
         )
 
 
@@ -358,11 +522,12 @@ def get_default_pipeline() -> TheoryPipeline:
     except Exception:
         logger.exception("Failed to register CoherentQEDTheory")
 
-    try:
-        from app.physics_engine.theories.hydroton import HydrotonTheory
-        pipeline.register(HydrotonTheory())
-    except Exception:
-        logger.exception("Failed to register HydrotonTheory")
+    if getattr(settings, "ENABLE_LEGACY_HYDROTON", False):
+        try:
+            from app.physics_engine.theories.hydroton import HydrotonTheory
+            pipeline.register(HydrotonTheory())
+        except Exception:
+            logger.exception("Failed to register HydrotonTheory")
 
     try:
         from app.physics_engine.theories.nae_model import NAEModelTheory
@@ -479,6 +644,16 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(NonEquilibriumThermoTheory())
     except Exception:
         logger.exception("Failed to register NonEquilibriumThermoTheory")
+
+    # --- Phase 3: v0.3.6-beta context/comparison tracks ---
+    # Stellar-scaling MHD line is a claim-tier down-weighted context track
+    # used to expose the quantitative gap between astrophysical plasma
+    # regimes and LENR conditions.  See docs/THEORY_OVERVIEW.md.
+    try:
+        from app.physics_engine.theories.stellar_scaling_mhd import StellarScalingMHDTheory
+        pipeline.register(StellarScalingMHDTheory())
+    except Exception:
+        logger.exception("Failed to register StellarScalingMHDTheory")
 
     _default_pipeline = pipeline
     logger.info(
