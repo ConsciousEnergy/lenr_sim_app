@@ -412,6 +412,15 @@ class TheoryConditions(BaseModel):
     phonon_frequency: Optional[float] = Field(None, description="Phonon frequency rad/s")
     material_system: Optional[str] = Field(None, description="Material system e.g. 'pd_d', 'ni_h'")
     coherence_domain_radius_m: Optional[float] = Field(None, description="Coherence domain radius m")
+    electrolyte_family: Optional[str] = Field(
+        "li",
+        description="Electrolyte family (li, na, k, rb, cs, mixed, other)",
+    )
+    electrolyte_molarity_mol_l: Optional[float] = Field(
+        0.3,
+        description="Electrolyte molarity in mol/L. Validated window 0.01-1.0.",
+        ge=0.0,
+    )
 
 class TheoryRunRequest(BaseModel):
     """Request to run one or more theories."""

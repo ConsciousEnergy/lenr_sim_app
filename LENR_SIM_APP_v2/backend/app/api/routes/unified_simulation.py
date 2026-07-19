@@ -11,6 +11,22 @@ from typing import Optional, Dict, Any, List
 import logging
 import asyncio
 import json
+import math
+from app.core.config import settings
+from app.physics_engine.scientific_guardrails import (
+    build_electrolyte_diagnostics,
+    classify_molarity_window,
+    check_species_family_consistency,
+    compute_alkali_activity_factor,
+    compute_electrolyte_activity_multiplier,
+    get_electrolyte_evidence_weight,
+    normalize_electrolyte_species,
+)
+from app.physics_engine.parkhomov_validation import (
+    validate_transmutation,
+    infer_default_products,
+    infer_default_reactants,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +56,12 @@ class LatticeConfig(BaseModel):
     defect_density: float = Field(default=1e16, ge=0, description="Defect density in m^-3")
     grain_size: float = Field(default=50e-9, ge=1e-12, description="Grain size in meters")
     surface_roughness: float = Field(default=5e-9, ge=1e-12, description="Surface roughness in meters")
+    electrolyte_family: str = Field(default="li", description="li, na, k, rb, cs, mixed, other")
+    electrolyte_species: Optional[str] = Field(default=None, description="lioh, li2co3, naoh, na2co3, koh, k2co3, mixed, other")
+    electrolyte_molarity_mol_l: float = Field(default=0.3, ge=0.0, description="Electrolyte molarity mol/L")
+    solvent_type: str = Field(default="d2o", description="Electrolyte solvent type: d2o, h2o, mixed")
+    ph_proxy: Optional[float] = Field(default=None, ge=0.0, le=14.0, description="Optional bounded pH proxy (0-14)")
+    ionic_strength_proxy: Optional[float] = Field(default=None, ge=0.0, description="Optional bounded ionic-strength proxy")
 
 
 class QuantumEffectsConfig(BaseModel):
@@ -52,14 +74,49 @@ class QuantumEffectsConfig(BaseModel):
     enable_rydberg: bool = Field(default=True, description="Enable Rydberg matter effects")
 
 
+class ElectrolyteConfig(BaseModel):
+    """Electrolyte and alkali-ion context for electrolytic LENR runs."""
+    family: str = Field(default="li", description="li, na, k, rb, cs, mixed, other")
+    species: Optional[str] = Field(default=None, description="Electrolyte species, e.g. lioh, k2co3")
+    molarity_mol_l: float = Field(
+        default=0.3,
+        ge=0.0,
+        description="Electrolyte molarity (mol/L), recommended 0.01-1.0.",
+    )
+    solvent_type: str = Field(default="d2o", description="Electrolyte solvent type: d2o, h2o, mixed")
+    ph_proxy: Optional[float] = Field(default=None, ge=0.0, le=14.0, description="Optional bounded pH proxy (0-14)")
+    ionic_strength_proxy: Optional[float] = Field(default=None, ge=0.0, description="Optional bounded ionic-strength proxy")
+
+
 class SimulationRequest(BaseModel):
     """Full simulation request"""
     material: MaterialConfig = Field(default_factory=MaterialConfig)
     environmental: EnvironmentalConfig = Field(default_factory=EnvironmentalConfig)
     lattice: LatticeConfig = Field(default_factory=LatticeConfig)
     quantum_effects: QuantumEffectsConfig = Field(default_factory=QuantumEffectsConfig)
+    electrolyte: ElectrolyteConfig = Field(default_factory=ElectrolyteConfig)
+    use_theory_pipeline: bool = Field(default=False, description="Enable theory-pipeline execution path")
+    enabled_theories: Optional[List[str]] = Field(default=None, description="Optional list of theory IDs")
+    theory_configs: Optional[Dict[str, Dict[str, Any]]] = Field(default=None, description="Optional per-theory config overrides")
     time_steps: int = Field(default=100, ge=10, le=1000)
     total_time: float = Field(default=10.0, ge=0.1, le=1000)
+    # --- Additive reaction-rate engine / UQ controls (Phase 8, RR-006). ---
+    # Defaults preserve legacy behaviour: conservative two_body mode, no UQ.
+    rate_mode: str = Field(
+        default="two_body",
+        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
+        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+    )
+    include_uncertainty: bool = Field(
+        default=False,
+        description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
+    )
+    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
+    experimental_band: Optional[List[float]] = Field(
+        default=None,
+        description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
+    )
 
 
 class EnhancementFactor(BaseModel):
@@ -80,7 +137,29 @@ class SimulationResponse(BaseModel):
     thresholds: Dict[str, bool]
     time_series: Dict[str, List[float]]
     confidence: float
+    contract_version: str
+    validation: Dict[str, Any]
+    analytics_transparency: Dict[str, Any]
+    uncertainty_interval: Dict[str, float]
+    falsification_conditions: List[str]
+    observables_bridge: Dict[str, Any]
     computation_time: float
+    transmutation_validation: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Parkhomov (2018) database lookup for the host/reactant "
+            "transmutation pathway. See parkhomov_validation.py."
+        ),
+    )
+    reaction_rate_engine: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Selectable reaction-rate formalism result (claim-tier labelled), "
+            "optional Sobol/Bayesian uncertainty summary, and shell-pairing "
+            "branching prior. Additive; empty unless requested. See "
+            "reaction_rate_engine.py / reaction_rate_uq.py / shell_pairing_prior.py."
+        ),
+    )
 
 
 class MechanismResponse(BaseModel):
@@ -108,6 +187,13 @@ class CompareResponse(BaseModel):
 # Helper function to create simulation config
 def create_simulation_config(request: SimulationRequest) -> Dict[str, Any]:
     """Convert API request to simulation config dict."""
+    # Preserve top-level electrolyte as authoritative; lattice values are fallback-compatible.
+    electrolyte_family = (request.electrolyte.family or request.lattice.electrolyte_family).lower()
+    electrolyte_species = normalize_electrolyte_species(
+        electrolyte_family,
+        request.electrolyte.species or request.lattice.electrolyte_species,
+    )
+    electrolyte_molarity = request.electrolyte.molarity_mol_l
     return {
         "host_material": request.material.host_material,
         "reactant": request.material.reactant,
@@ -124,6 +210,15 @@ def create_simulation_config(request: SimulationRequest) -> Dict[str, Any]:
         "enable_coherence": request.quantum_effects.enable_coherence,
         "enable_bubble_dynamics": request.quantum_effects.enable_bubble_dynamics,
         "enable_rydberg": request.quantum_effects.enable_rydberg,
+        "electrolyte_family": electrolyte_family,
+        "electrolyte_species": electrolyte_species,
+        "electrolyte_molarity_mol_l": electrolyte_molarity,
+        "electrolyte_solvent_type": request.electrolyte.solvent_type,
+        "electrolyte_ph_proxy": request.electrolyte.ph_proxy,
+        "electrolyte_ionic_strength_proxy": request.electrolyte.ionic_strength_proxy,
+        "use_theory_pipeline": request.use_theory_pipeline,
+        "enabled_theories": request.enabled_theories,
+        "theory_configs": request.theory_configs,
         "time_steps": request.time_steps,
         "total_time": request.total_time
     }
@@ -187,26 +282,61 @@ async def run_unified_simulation(request: SimulationRequest):
         # Set simulation parameters
         config.time_steps = request.time_steps
         config.total_time = request.total_time
+        config.electrolyte_family = (request.electrolyte.family or request.lattice.electrolyte_family).lower()
+        config.electrolyte_species = normalize_electrolyte_species(
+            config.electrolyte_family,
+            request.electrolyte.species or request.lattice.electrolyte_species,
+        )
+        config.electrolyte_molarity_mol_l = request.electrolyte.molarity_mol_l
+        config.use_theory_pipeline = request.use_theory_pipeline
+        config.enabled_theories = request.enabled_theories
+        config.theory_configs = request.theory_configs
+        electrolyte_diagnostics = build_electrolyte_diagnostics(
+            electrolyte_family=config.electrolyte_family,
+            electrolyte_species=config.electrolyte_species,
+            electrolyte_molarity_mol_l=config.electrolyte_molarity_mol_l,
+        )
         
         # Run simulation
         model = UnifiedLENRModel(config)
         result = model.run_simulation()
         
         # Format response - ensure all numpy types are converted to Python native types
-        enhancement_breakdown = {
-            e.name: {
+        enhancement_breakdown = {}
+        for e in result.enhancement_breakdown:
+            enhancement_breakdown[e.name] = {
                 "value": float(e.value),
                 "threshold_met": bool(e.threshold_met),
                 "equation": str(e.equation),
                 "category": str(e.category),
-                "parameters": {k: float(v) for k, v in e.parameters.items()}
+                "parameters": {
+                    k: (float(v) if isinstance(v, (int, float)) else v)
+                    for k, v in e.parameters.items()
+                },
             }
-            for e in result.enhancement_breakdown
-        }
         
         # Convert thresholds to Python bools
         thresholds = {k: bool(v) for k, v in result.thresholds_met.items()}
-        
+
+        # Parkhomov transmutation validation (v0.3.6-beta §3B)
+        nuclear_reactants = infer_default_reactants(
+            request.material.host_material, request.material.reactant
+        )
+        inferred_products = infer_default_products(
+            request.material.host_material, request.material.reactant
+        )
+        transmutation_validation = validate_transmutation(
+            reactants=nuclear_reactants,
+            products=inferred_products,
+        )
+
+        # Additive reaction-rate engine + optional UQ + shell-pairing branching.
+        # Non-fatal: a failure here must not break the core simulation response.
+        reaction_rate_engine_block = _build_rate_engine_block(
+            config, float(result.tunneling_probability), request,
+            transmutation_validation,
+        )
+
         return SimulationResponse(
             success=True,
             enhancement={
@@ -227,12 +357,267 @@ async def run_unified_simulation(request: SimulationRequest):
                 "enhancement": [float(x) for x in result.enhancement_history]
             },
             confidence=float(result.confidence),
-            computation_time=float(result.computation_time)
+            contract_version="v0.3.6-beta-science-gate-1",
+            validation={
+                "route_mode": "theory_pipeline" if config.use_theory_pipeline else "legacy_unified_model",
+                "enabled_theories": config.enabled_theories or [],
+                "electrolyte_species_family_consistent": electrolyte_diagnostics["species_family_consistent"],
+                "electrolyte_support_level": electrolyte_diagnostics["support_level"],
+            },
+            analytics_transparency={
+                "model_version": settings.APP_VERSION,
+                "electrolyte_family": config.electrolyte_family,
+                "electrolyte_species": config.electrolyte_species,
+                "electrolyte_molarity_mol_l": float(config.electrolyte_molarity_mol_l),
+                "electrolyte_diagnostics": electrolyte_diagnostics,
+            },
+            uncertainty_interval=result.uncertainty_interval,
+            falsification_conditions=result.falsification_conditions,
+            observables_bridge=result.observables_bridge,
+            computation_time=float(result.computation_time),
+            transmutation_validation=transmutation_validation,
+            reaction_rate_engine=reaction_rate_engine_block,
         )
         
     except Exception as e:
         logger.error(f"Unified simulation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _compose_rate_block(
+    config: Any,
+    tunneling_probability: float,
+    *,
+    mode: str,
+    include_uncertainty: bool,
+    uncertainty_samples: int,
+    random_seed: Optional[int],
+    experimental_band: Optional[List[float]],
+    material_key: str,
+    transmutation_validation: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Shared reaction-rate engine core (RORO), reused by /simulate and /bubble-lattice.
+
+    Computes the claim-tier-labelled rate, optional Sobol/Bayesian UQ, and the
+    shell-pairing branching prior over matched transmutation products. Raises on
+    failure so callers can apply their own defensive fallback.
+    """
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        compute_reaction_rate,
+    )
+    from app.physics_engine.shell_pairing_prior import annotate_branching
+
+    mode = (mode or "two_body").strip().lower()
+    if mode not in {"two_body", "trapped_state"}:
+        mode = "two_body"
+
+    rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
+    block: Dict[str, Any] = {"rate": rate_result.as_dict()}
+
+    if include_uncertainty:
+        from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
+            propagate_rate_uncertainty,
+        )
+
+        band = None
+        if experimental_band and len(experimental_band) == 2:
+            band = (float(experimental_band[0]), float(experimental_band[1]))
+        uq = propagate_rate_uncertainty(
+            config,
+            mode=mode,
+            n_samples=int(uncertainty_samples),
+            seed=random_seed,
+            experimental_band=band,
+            material_key=material_key,
+        )
+        block["uncertainty"] = uq.as_dict()
+
+    # Shell-pairing branching prior over the matched transmutation products.
+    matches = (transmutation_validation or {}).get("matching_reactions", [])
+    if matches:
+        block["shell_pairing_branching"] = annotate_branching(matches)
+
+    return block
+
+
+def _build_rate_engine_block(
+    config: Any,
+    tunneling_probability: float,
+    request: "SimulationRequest",
+    transmutation_validation: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build the additive reaction-rate-engine response block for /simulate (RORO).
+
+    Returns an empty dict on any failure so the core response is never affected.
+    """
+    try:
+        return _compose_rate_block(
+            config,
+            tunneling_probability,
+            mode=request.rate_mode,
+            include_uncertainty=request.include_uncertainty,
+            uncertainty_samples=request.uncertainty_samples,
+            random_seed=request.random_seed,
+            experimental_band=request.experimental_band,
+            material_key=(request.material.host_material or "palladium").lower(),
+            transmutation_validation=transmutation_validation,
+        )
+    except Exception as exc:  # pragma: no cover - defensive, must not break core
+        logger.warning("Reaction-rate engine block skipped: %s", exc)
+        return {}
+
+
+def _kgrp_block_from_timeline(
+    timeline: List[Dict[str, Any]], drive_frequency_hz: float
+) -> Dict[str, Any]:
+    """KG-RP harmonic-locking diagnostics (6a) from the collapse timeline (RORO).
+
+    The 50-point timeline spans one normalized acoustic cycle, so normalized_time
+    in [0, 1] is mapped onto a single drive period for the harmonic analysis.
+    Returns an empty dict if diagnostics cannot be computed.
+    """
+    try:
+        import numpy as np
+        from app.physics_engine.cavitation_kgrp import compute_kgrp_diagnostics
+
+        if not timeline or len(timeline) < 4 or drive_frequency_hz <= 0:
+            return {}
+        period_s = 1.0 / float(drive_frequency_hz)
+        times = np.array(
+            [float(p.get("normalized_time", 0.0)) * period_s for p in timeline]
+        )
+        radii_m = np.array(
+            [float(p.get("radius_um", 0.0)) * 1e-6 for p in timeline]
+        )
+        diagnostics = compute_kgrp_diagnostics(times, radii_m, float(drive_frequency_hz))
+        return diagnostics.as_dict()
+    except Exception as exc:  # pragma: no cover - defensive, must not break core
+        logger.warning("KG-RP diagnostics skipped: %s", exc)
+        return {}
+
+
+def build_bubble_rate_engine_block(
+    request: "BubbleLatticeRequest",
+    collapse_result: Any,
+    peak_enhancement: float,
+    timeline: List[Dict[str, Any]],
+    transmutation_validation: Dict[str, Any],
+    *,
+    electrolyte_family: str,
+    electrolyte_species: Optional[str],
+    electrolyte_molarity: float,
+) -> Dict[str, Any]:
+    """Build the additive reaction-rate-engine block for /bubble-lattice (RORO).
+
+    Adapts the bubble-lattice request into a ``SimulationConfig`` evaluated at the
+    LENR-active collapse instant (peak temperature + peak capped enhancement),
+    derives the tunneling probability from the existing cross-section utility,
+    then reuses ``_compose_rate_block`` (rate + UQ + shell-pairing) and appends
+    KG-RP harmonic-locking diagnostics from the collapse timeline.
+
+    Returns an empty dict on any failure so the core response is never affected.
+    """
+    try:
+        from app.physics_engine.unified_lenr_model import (
+            SimulationConfig, MaterialProperties, ReactantProperties,
+        )
+        from app.physics_engine.unified_lenr_model.cross_sections import (
+            calculate_tunneling_probability,
+        )
+
+        config = SimulationConfig()
+        hm = (request.material.host_material or "palladium").strip().lower()
+        if hm == "palladium":
+            config.host_material = MaterialProperties.palladium()
+        elif hm == "nickel":
+            config.host_material = MaterialProperties.nickel()
+        elif hm == "titanium":
+            config.host_material = MaterialProperties.titanium()
+        elif hm == "lithium":
+            config.host_material = MaterialProperties.lithium()
+        else:
+            config.host_material = MaterialProperties.generic(request.material.host_material)
+
+        reactant = (request.material.reactant or "deuterium").strip().lower()
+        if reactant == "deuterium":
+            config.reactant = ReactantProperties.deuterium()
+        elif reactant == "proton":
+            config.reactant = ReactantProperties.proton()
+        else:
+            config.reactant = ReactantProperties.hydrogen()
+
+        # Evaluate the rate at the LENR-active collapse instant rather than at
+        # ambient conditions: peak collapse temperature + peak capped enhancement.
+        collapse_temperature_k = max(
+            float(getattr(collapse_result, "max_temperature", 0.0)),
+            float(request.bubble.ambient_temperature_k),
+            1.0,
+        )
+        config.temperature = collapse_temperature_k
+        config.loading_ratio = request.lattice.loading_ratio
+        config.electrolyte_family = electrolyte_family
+        config.electrolyte_species = electrolyte_species
+        config.electrolyte_molarity_mol_l = electrolyte_molarity
+        config.random_seed = request.random_seed
+
+        tunneling_probability = float(
+            calculate_tunneling_probability(config, max(float(peak_enhancement), 1.0))
+        )
+
+        block = _compose_rate_block(
+            config,
+            tunneling_probability,
+            mode=request.rate_mode,
+            include_uncertainty=request.include_uncertainty,
+            uncertainty_samples=request.uncertainty_samples,
+            random_seed=request.random_seed,
+            experimental_band=request.experimental_band,
+            material_key=hm,
+            transmutation_validation=transmutation_validation,
+        )
+
+        # Transparency: record the collapse-instant inputs used for the rate.
+        block["inputs"] = {
+            "evaluated_at": "collapse_peak",
+            "temperature_k": collapse_temperature_k,
+            "peak_enhancement": float(peak_enhancement),
+            "tunneling_probability": tunneling_probability,
+        }
+
+        # KG-RP harmonic-locking diagnostics (speculative_exploratory tier).
+        kgrp = _kgrp_block_from_timeline(timeline, request.bubble.frequency_khz * 1e3)
+        if kgrp:
+            block["kgrp"] = kgrp
+
+        return block
+    except Exception as exc:  # pragma: no cover - defensive, must not break core
+        logger.warning("Bubble reaction-rate engine block skipped: %s", exc)
+        return {}
+
+
+@router.post("/export")
+async def export_unified_run(request: SimulationRequest) -> Dict[str, Any]:
+    """Run a simulation and return a reproducible ``lenr-run-export-v1`` envelope.
+
+    Wraps the standard simulate response with seeds, claim tiers, an uncertainty
+    summary, provenance, and a deduplicated per-run citation list (RR-017).
+    """
+    from app.physics_engine.run_export import build_run_export
+
+    response = await run_unified_simulation(request)
+    try:
+        env_value = settings.ENVIRONMENT.value  # EnvironmentType enum
+    except AttributeError:
+        env_value = str(getattr(settings, "ENVIRONMENT", "development"))
+
+    return build_run_export(
+        simulation_parameters=request.model_dump(),
+        results=response.model_dump(),
+        environment=env_value,
+        system_preset=f"{request.material.host_material}_{request.material.reactant}",
+        seed=request.random_seed,
+        model_version=settings.APP_VERSION,
+    )
 
 
 @router.get("/mechanisms", response_model=MechanismResponse)
@@ -510,16 +895,60 @@ class BubbleLatticeRequest(BaseModel):
     bubble: BubbleConfig = Field(default_factory=BubbleConfig)
     material: MaterialConfig = Field(default_factory=MaterialConfig)
     lattice: LatticeConfig = Field(default_factory=LatticeConfig)
+    electrolyte: ElectrolyteConfig = Field(default_factory=ElectrolyteConfig)
     num_cycles: int = Field(default=2, ge=1, le=10, description="Number of acoustic cycles to simulate")
+    # --- Additive reaction-rate engine / UQ controls (Phase 1, RR-006). ---
+    # Defaults preserve legacy behaviour: conservative two_body mode, no UQ, and
+    # an empty reaction_rate_engine block unless a non-default mode/UQ is requested.
+    rate_mode: str = Field(
+        default="two_body",
+        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
+        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+    )
+    include_uncertainty: bool = Field(
+        default=False,
+        description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
+    )
+    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
+    experimental_band: Optional[List[float]] = Field(
+        default=None,
+        description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
+    )
 
 
 class BubbleLatticeResponse(BaseModel):
     """Response from bubble-lattice simulation."""
     success: bool
+    contract_version: str = Field(
+        default="v0.3.6-beta-science-gate-1",
+        description="Canonical response contract version for unified bubble-lattice payload.",
+    )
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
     peak_conditions: Dict[str, Any]  # Changed from Dict[str, float] to allow enhancement_breakdown dict
+    electrolyte_diagnostics: Dict[str, Any] = {}
+    validation: Dict[str, Any] = {}
+    observables_bridge: Dict[str, Any] = {}
+    regime_validity_flags: Dict[str, bool] = {}
+    unsupported_extrapolation_flags: Dict[str, bool] = {}
+    transmutation_validation: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Parkhomov (2018) database lookup for the host/reactant "
+            "transmutation pathway."
+        ),
+    )
+    reaction_rate_engine: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive collapse-instant reaction-rate result (claim-tier "
+            "labelled), optional Sobol/Bayesian uncertainty summary, shell-pairing "
+            "branching prior, and KG-RP harmonic-locking diagnostics. Empty unless "
+            "the engine could be evaluated. See build_bubble_rate_engine_block."
+        ),
+    )
 
 
 @router.post("/bubble-lattice", response_model=BubbleLatticeResponse)
@@ -658,6 +1087,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         from app.physics_engine.bubble_lattice_interaction import (
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
+        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         from app.physics_engine.proton_phase_model import ProtonPhaseModel
         from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         
@@ -690,6 +1120,61 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         
         # Clamp peak enhancement to the theory-level cap (constants.py)
         capped_enhancement = min(collapse_result.enhancement_factor, MAX_ENHANCEMENT_FACTOR)
+        # Canonical electrolyte source is top-level request.electrolyte; lattice fields
+        # remain fallback-compatible for older clients.
+        family = (
+            request.electrolyte.family
+            or request.lattice.electrolyte_family
+            or "li"
+        ).lower()
+        species = normalize_electrolyte_species(
+            family,
+            request.electrolyte.species or request.lattice.electrolyte_species,
+        )
+        molarity = float(
+            request.electrolyte.molarity_mol_l
+            if request.electrolyte.molarity_mol_l is not None
+            else (request.lattice.electrolyte_molarity_mol_l or 0.0)
+        )
+        solvent_type = request.electrolyte.solvent_type or request.lattice.solvent_type
+        ph_proxy = request.electrolyte.ph_proxy if request.electrolyte.ph_proxy is not None else request.lattice.ph_proxy
+        ionic_strength_proxy = (
+            request.electrolyte.ionic_strength_proxy
+            if request.electrolyte.ionic_strength_proxy is not None
+            else request.lattice.ionic_strength_proxy
+        )
+        evidence_weight = get_electrolyte_evidence_weight(family)
+        alkali_activity_factor = compute_alkali_activity_factor(molarity)
+        electrolyte_multiplier = compute_electrolyte_activity_multiplier(family, molarity, species)
+        species_family_consistent = check_species_family_consistency(family, species)
+        electrolyte_diagnostics = build_electrolyte_diagnostics(
+            electrolyte_family=family,
+            electrolyte_species=species,
+            electrolyte_molarity_mol_l=molarity,
+        )
+        electrolyte_diagnostics.update({
+            "solvent_type": solvent_type,
+            "ph_proxy": ph_proxy,
+            "ionic_strength_proxy": ionic_strength_proxy,
+        })
+        capped_enhancement = min(capped_enhancement * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)
+        corrected_proton_phases = model._calculate_proton_phases(
+            collapse_result.max_temperature,
+            collapse_result.double_layer_field_peak,
+            capped_enhancement,
+        )
+        nuclear_fraction = float(corrected_proton_phases.get("NUCLEAR", 0.0))
+        contradiction_reason_code = "none"
+        has_contradiction = False
+        if capped_enhancement >= MAX_ENHANCEMENT_FACTOR and nuclear_fraction <= 0.0:
+            contradiction_reason_code = "threshold_boundary"
+            has_contradiction = True
+        elif "NUCLEAR" not in corrected_proton_phases:
+            contradiction_reason_code = "missing_phase_data"
+            has_contradiction = True
+        elif not species_family_consistent:
+            contradiction_reason_code = "inconsistent_mode"
+            has_contradiction = True
         
         # Calculate enhancement breakdown at peak conditions
         peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
@@ -706,7 +1191,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         
         # Generate enhancement timeline with breakdown
         import numpy as np
-        import math
         
         def sanitize_float(value, default=0.0):
             """Sanitize float values to ensure JSON compatibility."""
@@ -738,16 +1222,56 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
                 "enhancement": sanitize_float(capped_instant_enhancement, 1.0),
+                "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
                 "enhancement_breakdown": sanitize_dict(capped_instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],
                 "radius_factor": sanitize_float(instant["conditions"]["radius_factor"], 1.0),
+                # Canonical aliases for frontend consumers (avoid divergent field names).
+                "radius_um": sanitize_float(
+                    instant["conditions"]["radius_factor"] * request.bubble.initial_radius_um,
+                    request.bubble.initial_radius_um,
+                ),
                 "temperature": sanitize_float(instant["conditions"]["temperature"], 300.0),
-                "electric_field": sanitize_float(instant["conditions"]["electric_field"], 0.0)
+                "temperature_k": sanitize_float(instant["conditions"]["temperature"], 300.0),
+                "electric_field": sanitize_float(instant["conditions"]["electric_field"], 0.0),
+                "electric_field_v_m": sanitize_float(instant["conditions"]["electric_field"], 0.0),
+                "pressure_bar": sanitize_float(
+                    (request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2) / 1e5,
+                    1.0,
+                ),
             })
         
+        validated_window, soft_window, outside_supported_range = classify_molarity_window(molarity)
+
+        # Parkhomov transmutation validation (v0.3.6-beta §3B)
+        nuclear_reactants = infer_default_reactants(
+            request.material.host_material, request.material.reactant
+        )
+        inferred_products = infer_default_products(
+            request.material.host_material, request.material.reactant
+        )
+        transmutation_validation = validate_transmutation(
+            reactants=nuclear_reactants,
+            products=inferred_products,
+        )
+
+        # Additive reaction-rate engine + optional UQ + shell-pairing + KG-RP.
+        # Non-fatal: a failure here must not break the core bubble-lattice response.
+        reaction_rate_engine_block = build_bubble_rate_engine_block(
+            request,
+            collapse_result,
+            capped_enhancement,
+            timeline,
+            transmutation_validation,
+            electrolyte_family=family,
+            electrolyte_species=species,
+            electrolyte_molarity=molarity,
+        )
+
         # Sanitize all float values to ensure JSON compliance
         return BubbleLatticeResponse(
             success=True,
+            contract_version=f"v{settings.APP_VERSION}-science-gate-1",
             collapse_results={
                 "min_radius_um": sanitize_float(collapse_result.min_radius * 1e6, 0.1),
                 "max_temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
@@ -757,15 +1281,52 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
                 "peak_enhancement": sanitize_float(capped_enhancement, 1.0)
             },
-            proton_phases=collapse_result.proton_phase_distribution,
+            proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
             peak_conditions={
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
                 "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
                 "enhancement_factor": sanitize_float(capped_enhancement, 1.0),
-                "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0)
-            }
+                "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0),
+                "alkali_activity_factor": sanitize_float(alkali_activity_factor, 1.0),
+                "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
+                "electrolyte_species": species,
+                "electrolyte_family": family,
+                "electrolyte_molarity_mol_l": molarity,
+            },
+            electrolyte_diagnostics=electrolyte_diagnostics,
+            validation={
+                "route_mode": "bubble_lattice_legacy",
+                "contradiction": has_contradiction,
+                "contradiction_reason_code": contradiction_reason_code,
+                "nuclear_threshold_policy": "nuclear_fraction > 0 expected when enhancement_factor >= 1e5",
+            },
+            observables_bridge={
+                "electrolyte_family": family,
+                "electrolyte_species": species,
+                "electrolyte_molarity_mol_l": molarity,
+                "electrolyte_solvent_type": solvent_type,
+                "electrolyte_ph_proxy": ph_proxy,
+                "electrolyte_ionic_strength_proxy": ionic_strength_proxy,
+                "electrolyte_activity_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
+                "evidence_weight": sanitize_float(evidence_weight, 1.0),
+                "alkali_activity_factor": sanitize_float(alkali_activity_factor, 1.0),
+            },
+            regime_validity_flags={
+                "electrolyte_molarity_validated_window": validated_window,
+                "electrolyte_molarity_soft_window": soft_window,
+                "electrolyte_species_family_consistent": species_family_consistent,
+                "electrolyte_ph_proxy_provided": ph_proxy is not None,
+                "electrolyte_ionic_strength_proxy_provided": ionic_strength_proxy is not None,
+            },
+            unsupported_extrapolation_flags={
+                "electrolyte_molarity_outside_supported_range": outside_supported_range,
+                "low_support_alkali_family": bool(family in {"rb", "cs", "other"}),
+                "inconsistent_electrolyte_species_family": not species_family_consistent,
+            },
+            transmutation_validation=transmutation_validation,
+            reaction_rate_engine=reaction_rate_engine_block,
         )
         
     except HTTPException:
@@ -825,6 +1386,23 @@ async def bubble_lattice_websocket(websocket: WebSocket):
             defect_density=params["lattice"].get("defect_density", 1e16),
             surface_roughness=params["lattice"].get("surface_roughness", 5e-9)
         )
+        electrolyte_payload = params.get("electrolyte", {}) or {}
+        lattice_payload = params.get("lattice", {}) or {}
+        family = (
+            electrolyte_payload.get("family")
+            or lattice_payload.get("electrolyte_family")
+            or "li"
+        ).lower()
+        species = normalize_electrolyte_species(
+            family,
+            electrolyte_payload.get("species") or lattice_payload.get("electrolyte_species"),
+        )
+        molarity = float(
+            electrolyte_payload.get("molarity_mol_l")
+            if electrolyte_payload.get("molarity_mol_l") is not None
+            else lattice_payload.get("electrolyte_molarity_mol_l", 0.3)
+        )
+        electrolyte_multiplier = compute_electrolyte_activity_multiplier(family, molarity, species)
         
         # Create model
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
@@ -851,12 +1429,16 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 # Send update
                 await websocket.send_json({
                     "type": "physics_update",
+                    "contract_version": f"v{settings.APP_VERSION}-science-gate-1",
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
-                    "enhancement": float(instant["enhancement"]),
+                    "enhancement": float(min(instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)),
                     "enhancement_breakdown": breakdown,
                     "proton_distribution": instant["proton_distribution"],
+                    "radius_um": float(instant["conditions"]["radius_factor"] * params["bubble"]["initial_radius_um"]),
+                    "temperature_k": float(instant["conditions"]["temperature"]),
+                    "electric_field_v_m": float(instant["conditions"]["electric_field"]),
                     "conditions": {
                         "radius_factor": float(instant["conditions"]["radius_factor"]),
                         "compression": float(instant["conditions"]["compression"]),
