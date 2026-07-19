@@ -50,8 +50,12 @@ build/
 htmlcov/
 .pytest_cache/
 
-# IDE
-.cursor/
+# IDE (ignore .cursor internals, but share project skills, rules + the memory decision log)
+.cursor/*
+!.cursor/skills/
+!.cursor/rules/
+!.cursor/memory/
+.cursor/memory/chroma/
 .cursorindexingignore
 .specstory/
 
