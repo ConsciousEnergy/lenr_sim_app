@@ -57,6 +57,14 @@
   - Backend `python -m pytest tests/` -> **354 passed, 1 skipped**.
   - Frontend `npm test` -> **103 passed** (15 suites); `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS**; `npm audit --audit-level=high` -> **0 vulnerabilities**.
 
+## UI Library Consolidation Evidence (antd -> MUI, 2026-07-18)
+- Migrated the remaining active-route antd views to MUI (`NewSimulation`, `SimulationDetail`, `ParameterControls`, `SimulationResults`, `VisualizationStream`, `VisualizationTest`, `layout/AppLayout`, `common/ErrorBoundary`) with behavior-preserving equivalents (controlled-state form validation; sortable/paginated MUI `Table`; `ToggleButtonGroup`; MUI `Tabs`).
+- Import-graph-gated and deleted the unrouted legacy antd cluster and orphaned tests; removed `utils/antdPatch.js` (+ `index.jsx` init) and the `antd` vite chunk branch.
+- Dropped `antd` + `@ant-design/icons` (and the unused `lodash`); `npm install` pruned 65 packages. App is now single-UI-library (MUI); `antd` is absent from the production bundle.
+- Refactor-delta CI mirror (Node 20.12):
+  - Backend `python -m pytest tests/ app/tests/` -> **667 passed, 9 skipped** (unchanged; backend untouched).
+  - Frontend `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS** (no `antd` chunk; entry `index` ~90 kB / gzip ~26 kB); `npm test` -> **90 passed** (13 suites); `npm audit --audit-level=high` -> **0 vulnerabilities**.
+
 ## Scoring and Governance Evidence
 - `claim_tier` and `evidence_class` chips rendered in `TheoryTogglePanel.tsx` with
   hover explanations so operators see the orthogonal axes at a glance.

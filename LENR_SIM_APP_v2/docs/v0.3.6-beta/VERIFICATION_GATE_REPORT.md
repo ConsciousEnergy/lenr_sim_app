@@ -74,7 +74,8 @@
 - ~~Vite on Node `20.12.0` emits a CJS deprecation warning~~ **RESOLVED (2026-07-18)**: Vite 6.4.3 drops the CJS Node API, so no deprecation warning is emitted on Node 20.12.
 - `npm run lint` currently reports a high warning count (`567 warnings`) in legacy files; this is non-blocking but should be reduced.
 - Python residual advisories require major-version movement (`pytest`) or framework transitive upgrades (`starlette`); out of beta scope.
-- ~~Frontend bundle size warnings remain (`index` and `three.module` chunks exceed 500 kB)~~ **RESOLVED (2026-07-18)**: `manualChunks` splits three/antd/mui/charts/markdown/react-vendor; entry `index` ~88 kB (gzip ~26 kB), no build size warning. (`three`/`vendor` chunks are inherently large for a 3D viz app; expected to shrink after antd removal in v0.3.7.)
+- ~~Frontend bundle size warnings remain (`index` and `three.module` chunks exceed 500 kB)~~ **RESOLVED (2026-07-18)**: `manualChunks` splits three/mui/charts/markdown/react-vendor; entry `index` ~90 kB (gzip ~26 kB), no build size warning. (`three`/`vendor` chunks are inherently large for a 3D viz app.)
+- ~~Dual UI libraries (antd + MUI) increase bundle weight; antd removal deferred to v0.3.7~~ **RESOLVED (2026-07-18)**: antd fully removed this release; app is now single-UI-library (MUI) and `antd` no longer appears in the production bundle.
 
 ## 2026 Scientific Rigor Review & Remediation (RR-001..RR-020)
 
@@ -153,7 +154,7 @@ Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; 
 - Aligned the backend web stack to pinned `fastapi==0.128.0`, `starlette==0.49.1`, `pydantic==2.10.3` for reproducible local + CI test runs.
 
 ### Build / performance
-- `vite.config.js` `manualChunks` vendor splitting (three / antd / mui / charts / markdown / react-vendor / vendor). Entry `index` chunk reduced to ~88 kB (gzip ~26 kB), resolving the prior bundle-size warning.
+- `vite.config.js` `manualChunks` vendor splitting (three / mui / charts / markdown / react-vendor / vendor; the `antd` branch was removed once antd was retired below). Entry `index` chunk reduced to ~90 kB (gzip ~26 kB), resolving the prior bundle-size warning.
 
 ### Correctness
 - Fixed `contract_version` on `/api/unified/bubble-lattice` and the physics-update websocket to the canonical `v0.3.6-beta-science-gate-1` (the computed value was missing the `v` prefix), matching `/simulate`, `theory_pipeline`, and `DATA_CONTRACT_LOCK.md`.
@@ -166,6 +167,14 @@ Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; 
 - Frontend: `npm test` -> **103 passed** (15 suites); `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS** (chunk-split, no size warning); `npm audit --audit-level=high` -> **0 vulnerabilities**.
 - Status: **PASS**
 
+### UI library consolidation (antd -> MUI, 2026-07-18)
+- Migrated the remaining active-route Ant Design views to Material-UI (`NewSimulation`, `SimulationDetail`, `ParameterControls`, `SimulationResults`, `VisualizationStream`, `VisualizationTest`, `layout/AppLayout`, `common/ErrorBoundary`); `ParameterControls` moved from antd `Form`/`useForm` to controlled state with equivalent range/required validation, and `SimulationResults` from antd `Table`/`Radio.Group`/`Tabs` to MUI `Table` (sortable + paginated) / `ToggleButtonGroup` / `Tabs`.
+- Import-graph-gated and deleted the unrouted legacy antd cluster (`SimulationDashboard`, `SimulationMonitor`, `SimulationStatusPanel`, `SimulationVisualizer`, `VisualizationDashboard`, both `MainLayout` variants, root `AppLayout`/`AppHeader`/`AppSidebar`, `results/SimulationDetails`) plus their orphaned tests.
+- Removed `utils/antdPatch.js` (+ its `index.jsx` init), the `antd` vite `manualChunks` branch, and the `antd` + `@ant-design/icons` dependencies (`npm install` removed 65 packages).
+- App is now single-UI-library (MUI); `antd` no longer appears in the production bundle.
+- Refactor-delta CI mirror: `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS** (no `antd` chunk; entry `index` ~90 kB / gzip ~26 kB); `npm test` -> **90 passed** (13 suites, after removing the 2 orphaned cluster tests); `npm audit --audit-level=high` -> **0 vulnerabilities**.
+- Status: **PASS**
+
 ## Go/No-Go Statement
 - For v0.3.6-beta science-gate baseline, current implementation is **GO with tracked residuals**:
   - no active high/critical frontend vulnerabilities,
@@ -174,4 +183,5 @@ Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; 
   - uncertainty/falsification/observables contract exposed end-to-end,
   - 2026 rigor-review findings RR-001..RR-020 closed with 30 new passing gates,
   - ship-prep hardening (2026-07-18): Vite 6.4.3 (0 high vulns), bundle chunk-splitting, `contract_version` consistency fix; full local CI mirror green (backend 354 passed/1 skipped, frontend 103 passed).
+  - UI consolidation (2026-07-18): antd fully removed in favor of MUI (single UI library, no `antd` in bundle); refactor-delta CI mirror green (lint 0 errors, build PASS, frontend 90 passed, 0 high vulns).
 
