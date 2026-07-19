@@ -71,10 +71,10 @@
 | Legacy vs pipeline parity drift | PASS | Mode parity fixture | Wide tolerance, regression sentinel not calibration proof |
 
 ## Known Residual Risks
-- Vite on Node `20.12.0` emits a CJS deprecation warning; non-blocking, but node upgrade is recommended.
-- `npm run lint` currently reports a high warning count (`566 warnings`) in legacy files; this is non-blocking but should be reduced.
-- Python residual advisories require major-version movement (`pytest`) or framework transitive upgrades (`starlette`).
-- Frontend bundle size warnings remain (`index` and `three.module` chunks exceed 500 kB); manual chunking is recommended.
+- ~~Vite on Node `20.12.0` emits a CJS deprecation warning~~ **RESOLVED (2026-07-18)**: Vite 6.4.3 drops the CJS Node API, so no deprecation warning is emitted on Node 20.12.
+- `npm run lint` currently reports a high warning count (`567 warnings`) in legacy files; this is non-blocking but should be reduced.
+- Python residual advisories require major-version movement (`pytest`) or framework transitive upgrades (`starlette`); out of beta scope.
+- ~~Frontend bundle size warnings remain (`index` and `three.module` chunks exceed 500 kB)~~ **RESOLVED (2026-07-18)**: `manualChunks` splits three/antd/mui/charts/markdown/react-vendor; entry `index` ~88 kB (gzip ~26 kB), no build size warning. (`three`/`vendor` chunks are inherently large for a 3D viz app; expected to shrink after antd removal in v0.3.7.)
 
 ## 2026 Scientific Rigor Review & Remediation (RR-001..RR-020)
 
@@ -142,11 +142,36 @@ Verifies the additive `reaction_rate_engine` block surfaced through
   caught by the build, de-duplicated in `UnifiedTheoryPage.jsx`, and the rebuild is clean.
 - Status: **PASS**
 
+## Ship-Prep Hardening (2026-07-18)
+
+Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; committed in seven reviewable slices.
+
+### Dependency / security hardening
+- **Vite 5 -> 6.4.3** (with `@vitejs/plugin-react` 4.7.0): clears the dev-server `server.fs.deny` bypass advisory **without** the semver-major Vite 8 jump, so it **supersedes** the earlier "blocked until Node 20.19 / Vite 8" residual. No Node bump required (project stays on Node 20.12).
+- `npm audit --audit-level=high` -> **0 vulnerabilities** (was 1 residual high).
+- Added scheduled `security-scan.yml` (weekly `pip-audit` + `npm audit`), `dependabot.yml`, and a PR `dependency-review` gate.
+- Aligned the backend web stack to pinned `fastapi==0.128.0`, `starlette==0.49.1`, `pydantic==2.10.3` for reproducible local + CI test runs.
+
+### Build / performance
+- `vite.config.js` `manualChunks` vendor splitting (three / antd / mui / charts / markdown / react-vendor / vendor). Entry `index` chunk reduced to ~88 kB (gzip ~26 kB), resolving the prior bundle-size warning.
+
+### Correctness
+- Fixed `contract_version` on `/api/unified/bubble-lattice` and the physics-update websocket to the canonical `v0.3.6-beta-science-gate-1` (the computed value was missing the `v` prefix), matching `/simulate`, `theory_pipeline`, and `DATA_CONTRACT_LOCK.md`.
+
+### Analytics
+- Env-gated PostHog instrumentation (no-op without key / outside production / when `doNotTrack`), wired into simulation, theory-toggle, export, visualization, and docs flows. Transparency documented in `ANALYTICS_TRANSPARENCY.md`.
+
+### Full local CI mirror (2026-07-18)
+- Backend: `python -m pytest tests/` -> **354 passed, 1 skipped**.
+- Frontend: `npm test` -> **103 passed** (15 suites); `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS** (chunk-split, no size warning); `npm audit --audit-level=high` -> **0 vulnerabilities**.
+- Status: **PASS**
+
 ## Go/No-Go Statement
 - For v0.3.6-beta science-gate baseline, current implementation is **GO with tracked residuals**:
   - no active high/critical frontend vulnerabilities,
   - deterministic runtime behavior for audited critical actions,
   - Vite migration validated (build/test/dev smoke),
   - uncertainty/falsification/observables contract exposed end-to-end,
-  - 2026 rigor-review findings RR-001..RR-020 closed with 30 new passing gates.
+  - 2026 rigor-review findings RR-001..RR-020 closed with 30 new passing gates,
+  - ship-prep hardening (2026-07-18): Vite 6.4.3 (0 high vulns), bundle chunk-splitting, `contract_version` consistency fix; full local CI mirror green (backend 354 passed/1 skipped, frontend 103 passed).
 

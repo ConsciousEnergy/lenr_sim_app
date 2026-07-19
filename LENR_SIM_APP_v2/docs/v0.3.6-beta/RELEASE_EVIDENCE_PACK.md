@@ -45,8 +45,17 @@
   docker updates, grouped to minimise PR churn (mui, react-three, testing).
 - Frontend safe security upgrades applied in this pass:
   - `axios` upgraded to latest available release,
-  - Vite upgraded to latest compatible `5.x` patch line for current Node runtime.
+  - Vite upgraded to `6.4.3` (with `@vitejs/plugin-react` 4.7.0), which clears the dev-server `server.fs.deny` advisory on Node 20.12 **without** the semver-major Vite 8 jump; `npm audit --audit-level=high` now reports **0 vulnerabilities**.
+- Added a scheduled `security-scan.yml` (weekly `pip-audit` + `npm audit`) and a PR `dependency-review` gate alongside the existing audit blockers.
 - Hostinger VPS deployment readiness is tracked in `PUBLIC_DEPLOYMENT_TRACKER.md` with explicit phase mapping (4.1-4.5) and operator-owned blockers.
+
+## Ship-Prep Evidence (2026-07-18)
+- Release body committed in seven reviewable, conventional-commit slices on `ux-ui-v0.3.6-beta-scale-calibration` (physics engine + tests; route consolidation + contract fix; frontend Vite/governance/analytics; infra/CI; docs/evidence; `.cursor` rules/skills; gitignore).
+- Correctness: `contract_version` on `/api/unified/bubble-lattice` and the physics-update websocket fixed to the canonical `v0.3.6-beta-science-gate-1` (matches `/simulate`, `theory_pipeline`, and `DATA_CONTRACT_LOCK.md`).
+- Performance: `vite.config.js` `manualChunks` vendor splitting; entry `index` chunk ~88 kB (gzip ~26 kB).
+- Full local CI mirror (Node 20.12, pinned backend web stack):
+  - Backend `python -m pytest tests/` -> **354 passed, 1 skipped**.
+  - Frontend `npm test` -> **103 passed** (15 suites); `npm run lint` -> **0 errors** (567 legacy warnings); `CI=true npm run build` -> **PASS**; `npm audit --audit-level=high` -> **0 vulnerabilities**.
 
 ## Scoring and Governance Evidence
 - `claim_tier` and `evidence_class` chips rendered in `TheoryTogglePanel.tsx` with

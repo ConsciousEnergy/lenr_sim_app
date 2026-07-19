@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Ship-Prep Hardening (2026-07-18)
+- **Security**: upgraded Vite `5` -> `6.4.3` (with `@vitejs/plugin-react` 4.7.0), clearing the dev-server `server.fs.deny` bypass advisory on Node 20.12 without the semver-major Vite 8 jump; `npm audit --audit-level=high` now reports 0 vulnerabilities. Added a scheduled `security-scan.yml` (weekly `pip-audit` + `npm audit`), `dependabot.yml`, and a PR `dependency-review` gate.
+- **Performance**: added `manualChunks` vendor splitting in `vite.config.js` (three / antd / mui / charts / markdown / react-vendor / vendor); entry `index` chunk reduced to ~88 kB (gzip ~26 kB), resolving the prior bundle-size warning.
+- **Correctness**: fixed `contract_version` on `/api/unified/bubble-lattice` and the physics-update websocket to the canonical `v0.3.6-beta-science-gate-1` (the computed value was missing the `v` prefix), aligning with `/simulate`, `theory_pipeline`, and `DATA_CONTRACT_LOCK.md`.
+- **Analytics**: env-gated PostHog instrumentation (no-op without a key, outside production, or when `doNotTrack` is set), wired into simulation, theory-toggle, export, visualization, and docs flows; transparency documented in `ANALYTICS_TRANSPARENCY.md`.
+- **Backend**: pinned web stack (`fastapi==0.128.0`, `starlette==0.49.1`, `pydantic==2.10.3`) for reproducible test runs; removed the legacy `app/routers/*` tree and superseded routes.
+- **Verification**: full local CI mirror green — backend `pytest tests/` 354 passed / 1 skipped; frontend `npm test` 103 passed, `npm run lint` 0 errors, `npm run build` PASS, `npm audit --audit-level=high` 0 vulnerabilities.
+
 ### Reaction-Rate Engine E2E Integration (2026-06-06)
 - Enriched the `/api/unified/bubble-lattice` response with an **additive** `reaction_rate_engine` block (claim-tier labelled). The change is backward-compatible: the block is empty unless the engine can be evaluated, and all existing fields/contract version (`v0.3.6-beta-science-gate-1`) are unchanged.
   - Collapse-instant rate via the selectable formalism (`two_body` validated baseline / `trapped_state` speculative TSC), evaluated at peak collapse temperature + peak capped enhancement; tunneling derived from the existing cross-section utility.

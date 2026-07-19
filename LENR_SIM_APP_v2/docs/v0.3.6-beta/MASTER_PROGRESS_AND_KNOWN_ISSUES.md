@@ -14,8 +14,16 @@
 - Frontend production build: `npm run build` -> PASS (Vite output in `dist/`).
 - Frontend lint gate: `npm run lint` -> PASS with warnings (`564 warnings`, `0 errors`).
 
+## Verification Snapshot (2026-07-18 ship-prep, full local CI mirror)
+- Backend full suite: `python -m pytest tests/` -> **354 passed, 1 skipped** (pinned web stack fastapi 0.128.0 / starlette 0.49.1 / pydantic 2.10.3).
+- Backend science/contract gates: **39 passed** (rate-engine API, benchmark gates, simulation pipeline, run-export, experiment-anchored gates).
+- Frontend suite: `npm test` -> **103 passed** (15 suites).
+- Frontend lint: `npm run lint` -> `0 errors, 567 warnings`.
+- Frontend build: `CI=true npm run build` -> PASS (chunk-split, no size warning).
+- Frontend audit: `npm audit --audit-level=high` -> **0 vulnerabilities**.
+
 ## Security Snapshot
-- Frontend `npm audit` reduced to `6` findings (`4 low`, `2 moderate`, `0 high/critical`) after safe upgrades.
+- Frontend `npm audit --audit-level=high` -> **0 vulnerabilities** (2026-07-18) after the Vite 5 -> 6.4.3 upgrade cleared the last dev-server high; previously `6` low/moderate findings after safe upgrades.
 - Backend `pip-audit -r requirements.txt` reduced to `4` findings in `pytest`, transitive `pyasn1`, and transitive `starlette`.
 - Safe backend dependency upgrades completed for:
   - `python-multipart` -> `0.0.26`
@@ -24,13 +32,13 @@
   - `jinja2` -> `3.1.6`
 
 ## Known Issues
-- Vite emits a CJS Node API deprecation warning on current Node runtime (`20.12.0`); non-blocking but upgrade is recommended.
-- Bundle-size warnings remain for large chunks (`index` and `three.module`) and should be reduced via code splitting/manual chunks.
+- ~~Vite emits a CJS Node API deprecation warning on current Node runtime (`20.12.0`)~~ **RESOLVED (2026-07-18)**: Vite 6.4.3 drops the CJS Node API; no deprecation warning on Node 20.12.
+- ~~Bundle-size warnings remain for large chunks (`index` and `three.module`)~~ **RESOLVED (2026-07-18)**: `manualChunks` in `vite.config.js` splits three/antd/mui/charts/markdown/react-vendor; entry `index` ~88 kB. (`three`/`vendor` remain inherently large for a 3D viz app; further shrink after antd removal in v0.3.7.)
 - Lint warning backlog remains high in legacy frontend modules; cleanup is recommended before GA hardening.
 - Backend advisory residue requires wider version movement than this beta scope (notably `pytest` major and `starlette` transitive line).
 
 ## Next Recommended Actions
-- Add `manualChunks` strategy in `vite.config.js` for Three.js and analytics-heavy routes.
+- ~~Add `manualChunks` strategy in `vite.config.js` for Three.js and analytics-heavy routes.~~ **DONE (2026-07-18)**: vendor splitting implemented (three/antd/mui/charts/markdown/react-vendor).
 - Run a targeted lint cleanup pass on high-churn visualization and context modules first.
 - Execute full backend + frontend regression matrix once final docs and evidence pack are frozen.
 - Revisit Python transitive advisory remediation in the post-beta maintenance slice.
