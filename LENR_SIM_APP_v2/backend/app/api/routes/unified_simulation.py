@@ -27,10 +27,17 @@ from app.physics_engine.parkhomov_validation import (
     infer_default_products,
     infer_default_reactants,
 )
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/unified", tags=["unified-simulation"])
+
+# Canonical response contract token for every unified surface (/simulate,
+# /bubble-lattice HTTP, and the physics-update websocket). Derived from
+# APP_VERSION so a version bump updates all surfaces in lockstep and cannot
+# drift (CI version-consistency stays authoritative).
+CONTRACT_VERSION = f"v{settings.APP_VERSION}-science-gate-1"
 
 
 # Request/Response Models
@@ -357,7 +364,7 @@ async def run_unified_simulation(request: SimulationRequest):
                 "enhancement": [float(x) for x in result.enhancement_history]
             },
             confidence=float(result.confidence),
-            contract_version="v0.3.6-beta-science-gate-1",
+            contract_version=CONTRACT_VERSION,
             validation={
                 "route_mode": "theory_pipeline" if config.use_theory_pipeline else "legacy_unified_model",
                 "enabled_theories": config.enabled_theories or [],
@@ -921,7 +928,7 @@ class BubbleLatticeResponse(BaseModel):
     """Response from bubble-lattice simulation."""
     success: bool
     contract_version: str = Field(
-        default="v0.3.6-beta-science-gate-1",
+        default=CONTRACT_VERSION,
         description="Canonical response contract version for unified bubble-lattice payload.",
     )
     collapse_results: Dict[str, Any]
@@ -1087,9 +1094,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         from app.physics_engine.bubble_lattice_interaction import (
             BubbleLatticeInteraction, BubbleParameters, LatticeParameters
         )
-        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         from app.physics_engine.proton_phase_model import ProtonPhaseModel
-        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
         
         # Create bubble parameters
         bubble_params = BubbleParameters(
@@ -1212,8 +1217,12 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["electric_field"],
                 instant["conditions"]["compression"]
             )
-            # Cap timeline enhancement to theory limit
-            capped_instant_enhancement = min(instant["enhancement"], MAX_ENHANCEMENT_FACTOR)
+            # Apply the electrolyte activity multiplier (as at peak_conditions and
+            # on the websocket stream) before capping to the theory limit, so
+            # HTTP timeline points do not under-report enhancement vs peak.
+            capped_instant_enhancement = min(
+                instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR
+            )
             capped_instant_breakdown = {
                 k: min(v, MAX_ENHANCEMENT_FACTOR) if isinstance(v, (int, float)) else v
                 for k, v in instant_breakdown.items()
@@ -1271,7 +1280,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # Sanitize all float values to ensure JSON compliance
         return BubbleLatticeResponse(
             success=True,
-            contract_version=f"v{settings.APP_VERSION}-science-gate-1",
+            contract_version=CONTRACT_VERSION,
             collapse_results={
                 "min_radius_um": sanitize_float(collapse_result.min_radius * 1e6, 0.1),
                 "max_temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
@@ -1429,7 +1438,7 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 # Send update
                 await websocket.send_json({
                     "type": "physics_update",
-                    "contract_version": f"v{settings.APP_VERSION}-science-gate-1",
+                    "contract_version": CONTRACT_VERSION,
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
