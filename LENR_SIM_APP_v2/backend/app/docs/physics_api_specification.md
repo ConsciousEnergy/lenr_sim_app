@@ -107,7 +107,7 @@ curl -X POST http://localhost:8000/api/physics/quantum-tunneling \
 | `potential_type` | `screened` | `coulomb`, `screened`, `woods_saxon` |
 | `screening_enhancement` | `1.0` | Multiplier applied to material screening energy |
 | `material` | `palladium` | `palladium`, `nickel`, `titanium`, `platinum` |
-| `pressure_atm` | `1.0` | atm; reported but not used in the current calculation |
+| `pressure_atm` | `1.0` | atm; accepted but not used or returned by the current calculation |
 
 The response contains:
 
@@ -324,7 +324,8 @@ socket.addEventListener('message', ({ data }) => {
 
 ### Lifecycle and diagnostics
 
-- `GET /api/ws/active` returns connected simulation IDs and task IDs.
+- `GET /api/ws/active` returns simulation IDs with active connections and
+  simulation IDs retained in the task registry.
 - `GET /api/ws/connections/{simulation_id}` returns the active client count.
 - Reusing a `simulation_id` cancels the existing task for that ID.
 - Disconnecting the last client cancels its running task.
