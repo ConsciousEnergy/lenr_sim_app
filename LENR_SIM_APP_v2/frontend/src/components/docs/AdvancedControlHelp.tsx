@@ -24,7 +24,7 @@ import {
   Science,
   BatchPrediction,
   History,
-  HelpOutline,
+  HelpOutlined as HelpOutline,
   ChevronRight,
   Info,
   Close

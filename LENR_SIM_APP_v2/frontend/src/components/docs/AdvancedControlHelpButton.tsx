@@ -20,7 +20,7 @@ import {
   useMediaQuery
 } from '@mui/material';
 import {
-  HelpOutline,
+  HelpOutlined as HelpOutline,
   Info,
   Lightbulb,
   Check

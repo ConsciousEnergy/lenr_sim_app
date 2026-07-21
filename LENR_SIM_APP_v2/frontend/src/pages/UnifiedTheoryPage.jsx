@@ -46,7 +46,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';
 import SaveIcon from '@mui/icons-material/Save';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';

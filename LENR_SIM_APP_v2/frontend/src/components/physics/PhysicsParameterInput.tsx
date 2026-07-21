@@ -13,7 +13,7 @@ import {
   MenuItem,
   FormHelperText
 } from '@mui/material';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import ParameterHelpButton from './ParameterHelpButton';
 import { ParameterDocumentationData } from './ParameterDocumentation';
 

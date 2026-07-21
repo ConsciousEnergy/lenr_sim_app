@@ -36,7 +36,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import BoltIcon from '@mui/icons-material/Bolt';
 import LinkIcon from '@mui/icons-material/Link';
 import ExploreIcon from '@mui/icons-material/Explore';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { usePhysics, TheoryContributionResult } from '../../contexts/PhysicsContext';

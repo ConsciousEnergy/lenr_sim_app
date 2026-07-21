@@ -7,7 +7,7 @@ import {
   SxProps,
   Theme
 } from '@mui/material';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import WarningIcon from '@mui/icons-material/Warning';
 import ParameterDocumentation, { ParameterDocumentationData } from './ParameterDocumentation';

@@ -63,7 +63,7 @@ import {
   MoreVert,
   FileCopy,
   History,
-  HelpOutline,
+  HelpOutlined as HelpOutline,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';

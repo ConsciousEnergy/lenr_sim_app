@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 
 /**
  * ErrorBoundary component that catches JavaScript errors in child components

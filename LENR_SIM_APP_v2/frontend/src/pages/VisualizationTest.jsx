@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Button, Card, CardContent, CardHeader, Stack, Switch, Typography, Alert, FormControlLabel, Box } from '@mui/material';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import StorageIcon from '@mui/icons-material/Storage';
 import { useSnackbar } from 'notistack';
