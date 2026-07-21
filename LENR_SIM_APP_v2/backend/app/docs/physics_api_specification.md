@@ -1,758 +1,381 @@
-# Physics Engine Integration API Specification
+# Physics Simulation API Reference
 
-## Overview
+## Purpose and scope
 
-This document defines the API requirements and specifications for integrating the LENR physics simulation engine with the frontend visualization system. The API provides endpoints for simulation initialization, parameter updates, real-time data streaming, and simulation control.
+This document describes the mounted physics calculation and real-time simulation
+interfaces in `backend/app/routers/physics_simulation_router.py` and
+`backend/app/routers/websocket_router.py`.
 
-## Core Requirements
+These interfaces expose exploratory numerical models:
 
-1. **Real-time Data Streaming**: Provide WebSocket connections for real-time physics data updates to support visualization components.
-2. **Simulation Control**: Allow the frontend to start, pause, resume, and reset simulations.
-3. **Parameter Configuration**: Support updating physics parameters during simulation.
-4. **Model Selection**: Enable selection and configuration of different physics models (quantum tunneling, phonon modes, electron screening, etc.).
-5. **Data Transformation**: Provide normalized and transformed data suitable for frontend visualization.
-6. **Simulation State Management**: Support saving and restoring simulation states.
-7. **Error Handling**: Provide robust error handling and reporting.
-8. **Performance Optimization**: Support efficient data transfer and caching strategies.
+- WKB tunneling through Coulomb, screened Coulomb, or Woods-Saxon potentials.
+- Fusion-rate estimates based on astrophysical S-factors.
+- Proposed LENR enhancement mechanisms.
+- A simplified acoustic-cavitation collapse model.
 
-## API Endpoints
+The LENR mechanisms and bubble-fusion estimates are theoretical and, in several
+cases, scientifically disputed. Treat outputs as model results, not predictions
+of experimentally validated reaction yields.
 
-### Simulation Initialization and Control
+## Local access
 
-#### `POST /api/physics/simulation/initialize`
+From `LENR_SIM_APP_v2/backend`:
 
-Initialize a new simulation with the provided configuration.
+```bash
+python -m uvicorn app.main:app --reload --port 8000
+```
 
-**Request Body:**
+| Interface | URL |
+| --- | --- |
+| REST base | `http://localhost:8000/api` |
+| Swagger UI | `http://localhost:8000/api/docs` |
+| ReDoc | `http://localhost:8000/api/redoc` |
+| OpenAPI JSON | `http://localhost:8000/api/openapi.json` |
+| WebSocket base | `ws://localhost:8000/api` |
+
+The frontend REST and simulation WebSocket clients default to port `8000`.
+`start_app.sh` starts the backend on port `8001`; when using that script, set
+`REACT_APP_API_URL=http://localhost:8001` for REST requests. The development
+simulation WebSocket client currently hard-codes port `8000`, so its streaming
+interface still requires the backend on port `8000` or a corresponding frontend
+code change.
+
+## Architecture and routing
+
+`app.main` mounts the calculation router directly at `/api/physics` and mounts
+the WebSocket router with an `/api` prefix. REST calls are stateless: each
+request performs a complete calculation and returns its result.
+
+A separate, older physics router is mounted at `/api/physics/physics/*` because
+it already declares its own `/physics` prefix. Its request and response models
+are different. Use the paths in this document for the newer WKB, LENR, and
+bubble-fusion interfaces used by the current visualization components.
+
+## REST endpoint summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/physics/quantum-tunneling` | Calculate WKB tunneling and visualization curves |
+| `GET` | `/api/physics/quantum-tunneling/defaults` | List tunneling defaults, options, and advisory limits |
+| `POST` | `/api/physics/fusion-rate` | Estimate a fusion rate and power density |
+| `GET` | `/api/physics/materials` | List material properties used by the models |
+| `GET` | `/api/physics/reactions` | List reaction Q-values and S-factors |
+| `POST` | `/api/physics/lenr-enhancement` | Calculate selected LENR enhancement factors |
+| `GET` | `/api/physics/lenr-enhancement/mechanisms` | List enhancement mechanism identifiers |
+| `POST` | `/api/physics/lenr-reaction-rate` | Estimate an enhanced D-D reaction rate |
+| `POST` | `/api/physics/bubble-fusion` | Simulate simplified bubble collapse |
+| `GET` | `/api/physics/bubble-fusion/defaults` | List bubble defaults, options, and advisory limits |
+
+All request fields have model defaults, so `{}` is a valid JSON body. FastAPI
+returns `422` for malformed types. Calculation failures are returned as `500`
+responses with a `detail` field.
+
+The `limits` returned by the two defaults endpoints are guidance for clients;
+the Pydantic request models do not currently enforce those numeric ranges.
+
+## Quantum tunneling
+
+`POST /api/physics/quantum-tunneling` calculates a WKB tunneling probability.
+Electron screening raises the effective collision energy before the barrier
+integral is evaluated.
+
+```bash
+curl -X POST http://localhost:8000/api/physics/quantum-tunneling \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "z1": 1,
+    "z2": 1,
+    "a1": 2.0,
+    "a2": 2.0,
+    "energy_kev": 0.1,
+    "temperature_k": 300.0,
+    "potential_type": "screened",
+    "screening_enhancement": 1.0,
+    "material": "palladium",
+    "pressure_atm": 1.0
+  }'
+```
+
+### Request fields
+
+| Field | Default | Units or allowed values |
+| --- | --- | --- |
+| `z1`, `z2` | `1` | Nuclear charge numbers |
+| `a1`, `a2` | `2.0` | Nuclear mass numbers |
+| `energy_kev` | `0.1` | Center-of-mass energy, keV |
+| `temperature_k` | `300.0` | K |
+| `potential_type` | `screened` | `coulomb`, `screened`, `woods_saxon` |
+| `screening_enhancement` | `1.0` | Multiplier applied to material screening energy |
+| `material` | `palladium` | `palladium`, `nickel`, `titanium`, `platinum` |
+| `pressure_atm` | `1.0` | atm; accepted but not used or returned by the current calculation |
+
+The response contains:
+
+- Scalar results: `tunneling_probability`, `gamow_factor`,
+  `barrier_height_kev`, `classical_turning_point_m`,
+  `screening_energy_kev`, and `enhancement_factor`.
+- Diagnostic factors: `electron_screening_enhancement`,
+  `temperature_enhancement`, and `method`.
+- Visualization arrays: 100-point `potential_curve` and 100-point
+  `wave_function`.
+- The effective calculation `parameters`.
+
+`GET /api/physics/quantum-tunneling/defaults` is the source of truth for
+client-selectable materials, potentials, screening energies, and suggested
+ranges.
+
+## Fusion-rate estimate
+
+`POST /api/physics/fusion-rate` evaluates the cross section near the Gamow peak
+using a configured S-factor, then estimates the volumetric rate and power.
+
 ```json
 {
-  "simulation_id": "string",  // Optional, generated if not provided
-  "models": [
-    {
-      "model_type": "string",  // e.g., "quantum_tunneling", "phonon_modes"
-      "parameters": {
-        // Model-specific parameters
-      }
-    }
-  ],
-  "lattice": {
-    "type": "string",  // e.g., "fcc", "bcc", "hcp"
-    "dimensions": [10, 10, 10],
-    "constants": [3.89e-10, 3.89e-10, 3.89e-10],
-    "elements": [
-      {
-        "symbol": "string",
-        "position": [0, 0, 0],
-        "occupancy": 1.0
-      }
-    ]
+  "reaction_type": "d-d",
+  "temperature_k": 1000.0,
+  "density_per_cm3": 1e22,
+  "material": "palladium",
+  "loading_ratio": 0.8
+}
+```
+
+Configured reaction identifiers include `d-d`, `d-t`, `d-he3`, `p-b11`, and
+`p-li7`. `GET /api/physics/reactions` returns the exact configured Q-values and
+S-factors.
+
+The response fields are `reaction_rate_per_s`, `cross_section_barn`,
+`s_factor_kev_barn`, `mean_energy_kev`, `q_value_mev`,
+`power_density_w_cm3`, `enhancement_factors`, and `parameters`.
+
+Despite its name, `reaction_rate_per_s` is calculated from number density as a
+rate per cubic metre per second; consumers should not interpret it as the total
+rate for a sample volume.
+
+## LENR enhancement
+
+`POST /api/physics/lenr-enhancement` multiplies the selected model factors. The
+available mechanism identifiers are:
+
+- `electron_screening`
+- `phonon_assisted`
+- `heavy_electron`
+- `coherent_multi_body`
+- `loading_ratio`
+- `defect_enhancement`
+- `electromagnetic_field`
+
+Fetch the same list and descriptions from
+`GET /api/physics/lenr-enhancement/mechanisms`.
+
+```bash
+curl -X POST http://localhost:8000/api/physics/lenr-enhancement \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "energy_kev": 0.025,
+    "temperature_k": 350.0,
+    "loading_ratio": 0.9,
+    "material": "palladium",
+    "defect_density": 0.01,
+    "mechanisms": ["electron_screening", "loading_ratio"]
+  }'
+```
+
+Omit `mechanisms` or set it to `null` to evaluate all mechanisms. An unknown
+mechanism currently becomes a `500` calculation error rather than a validation
+error.
+
+The response contains `total_enhancement`, `individual_factors`,
+`dominant_mechanism`, `parameters`, and `warnings`. Each individual factor is
+clamped to the range `1e-10` through `1e20`; their product is not separately
+clamped.
+
+### Enhanced reaction rate
+
+`POST /api/physics/lenr-reaction-rate` combines the D-D tunneling model with
+hydrogen number density and the LENR enhancement factors.
+
+```json
+{
+  "temperature_k": 400.0,
+  "loading_ratio": 0.9,
+  "material": "palladium",
+  "defect_density": 0.01,
+  "volume_cm3": 1.0,
+  "include_enhancements": true
+}
+```
+
+The response contains `reaction_rate_per_cm3_s`, `total_reaction_rate_s`,
+`power_output_w`, base and enhanced tunneling probabilities,
+`total_enhancement`, `hydrogen_density_per_cm3`, `thermal_energy_kev`, and
+`enhancement_factors`.
+
+## Bubble-fusion model
+
+`POST /api/physics/bubble-fusion` uses a simplified Rayleigh-Plesset collapse
+estimate, adiabatic heating, and a D-D Gamow-factor estimate. It returns both
+peak collapse conditions and a 500-point, two-cycle visualization series.
+
+```bash
+curl -X POST http://localhost:8000/api/physics/bubble-fusion \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "initial_radius_um": 10.0,
+    "acoustic_pressure_bar": 1.2,
+    "frequency_khz": 20.0,
+    "ambient_pressure_bar": 1.0,
+    "ambient_temperature_k": 298.0,
+    "fluid_type": "water",
+    "gas_type": "deuterium",
+    "gas_fraction": 0.8
+  }'
+```
+
+Advertised fluids are `water`, `d2o`, `acetone`, and `d_acetone`. Advertised
+gases are `air`, `argon`, `deuterium`, and `xenon`. Unknown strings currently
+fall back to water or deuterium, respectively, so clients should validate
+against `GET /api/physics/bubble-fusion/defaults`.
+
+The response has three top-level objects:
+
+- `collapse_results`: peak temperature, pressure, minimum radius, compression,
+  collapse time, velocity, estimated fusion probability and neutron yield,
+  energy density, and threshold flags.
+- `timeseries`: parallel `time_us`, `radius_um`, `temperature_k`, and
+  `pressure_bar` arrays.
+- `parameters`: the submitted model inputs.
+
+The implementation caps compression ratio, temperature, pressure, and collapse
+velocity for numerical stability. These caps and the quasi-static time series
+make this an exploratory visualization model, not a high-fidelity
+hydrodynamics solver.
+
+## Real-time simulation WebSocket
+
+### Connection and start protocol
+
+Connect to:
+
+```text
+ws://localhost:8000/api/ws/simulation/{simulation_type}/{simulation_id}
+```
+
+`simulation_type` must be `quantum-tunneling`, `lenr`, or `bubble-fusion`.
+`simulation_id` is a client-generated registry key; it does not refer to a
+persisted REST resource.
+
+Within 30 seconds of connection, send:
+
+```json
+{
+  "action": "start",
+  "params": {
+    "temperature_k": 350.0,
+    "loading_ratio": 0.5,
+    "target_loading": 0.95,
+    "material": "palladium"
   },
-  "conditions": {
-    "temperature": 300.0,
-    "pressure": 101325.0,
-    "electric_field": [0, 0, 0],
-    "magnetic_field": [0, 0, 0]
-  },
-  "simulation_parameters": {
-    "time_step": 1e-15,
-    "total_steps": 1000,
-    "save_frequency": 10
-  }
+  "duration_steps": 100
 }
 ```
 
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "initialized",
-  "websocket_url": "string",
-  "models": ["string"],
-  "initialized_at": "timestamp"
-}
-```
-
-#### `POST /api/physics/simulation/{simulation_id}/start`
-
-Start the specified simulation.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "running",
-  "started_at": "timestamp"
-}
-```
-
-#### `POST /api/physics/simulation/{simulation_id}/pause`
-
-Pause the specified simulation.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "paused",
-  "paused_at": "timestamp"
-}
-```
-
-#### `POST /api/physics/simulation/{simulation_id}/resume`
-
-Resume the specified simulation.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "running",
-  "resumed_at": "timestamp"
-}
-```
-
-#### `POST /api/physics/simulation/{simulation_id}/reset`
-
-Reset the specified simulation to its initial state.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "initialized",
-  "reset_at": "timestamp"
-}
-```
-
-### Parameter Updates
-
-#### `PATCH /api/physics/simulation/{simulation_id}/parameters`
-
-Update simulation parameters while the simulation is running.
-
-**Request Body:**
-```json
-{
-  "conditions": {
-    "temperature": 350.0
-  },
-  "models": [
-    {
-      "model_type": "quantum_tunneling",
-      "parameters": {
-        "screening_potential": 200.0
-      }
-    }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "parameters_updated",
-  "updated_at": "timestamp"
-}
-```
-
-### Simulation State Management
-
-#### `POST /api/physics/simulation/{simulation_id}/snapshot`
-
-Take a snapshot of the current simulation state.
-
-**Request Body:**
-```json
-{
-  "name": "string",  // Optional snapshot name
-  "description": "string"  // Optional description
-}
-```
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "snapshot_id": "string",
-  "name": "string",
-  "created_at": "timestamp"
-}
-```
-
-#### `GET /api/physics/simulation/{simulation_id}/snapshots`
-
-List all snapshots for the specified simulation.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "snapshots": [
-    {
-      "snapshot_id": "string",
-      "name": "string",
-      "description": "string",
-      "created_at": "timestamp"
-    }
-  ]
-}
-```
-
-#### `POST /api/physics/simulation/{simulation_id}/restore/{snapshot_id}`
-
-Restore the simulation to a previous snapshot.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "snapshot_id": "string",
-  "status": "restored",
-  "restored_at": "timestamp"
-}
-```
-
-### Data Retrieval
-
-#### `GET /api/physics/simulation/{simulation_id}/status`
-
-Get the current status of the simulation.
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "status": "string",  // "initialized", "running", "paused", "completed", "error"
-  "current_step": 500,
-  "total_steps": 1000,
-  "elapsed_time": 500.0,  // In simulation time
-  "wall_time": 5.0,  // In real seconds
-  "error": "string"  // Only present if status is "error"
-}
-```
-
-#### `GET /api/physics/simulation/{simulation_id}/results`
-
-Get the current results of the simulation.
-
-**Query Parameters:**
-- `step`: Get results at a specific step
-- `format`: Response format, e.g., "json", "csv"
-
-**Response:**
-```json
-{
-  "simulation_id": "string",
-  "step": 500,
-  "time": 5e-13,
-  "lattice": {
-    "dimensions": [10, 10, 10],
-    "points": [
-      {
-        "position": [0, 0, 0],
-        "element": "string",
-        "energy": 0.0,
-        "temperature": 300.0,
-        "reaction_rate": 0.0
-      }
-    ],
-    "connections": [
-      [0, 1],
-      [1, 2]
-    ]
-  },
-  "summary": {
-    "average_temperature": 300.0,
-    "total_energy": 1e-10,
-    "reaction_counts": {
-      "d-d": 5,
-      "p-d": 2
-    }
-  }
-}
-```
-
-## WebSocket API
-
-### Connection
-
-Connect to the WebSocket endpoint provided during simulation initialization.
-
-```
-ws://server/api/ws/physics/{simulation_id}
-```
-
-### Message Types
-
-#### Simulation Updates
-
-Server-sent message with current simulation state:
-
-```json
-{
-  "type": "simulation_update",
-  "simulation_id": "string",
-  "step": 500,
-  "time": 5e-13,
-  "lattice": {
-    // Compressed lattice data
-  },
-  "summary": {
-    "average_temperature": 300.0,
-    "total_energy": 1e-10
-  }
-}
-```
-
-#### Parameter Updates
-
-Client-sent message to update simulation parameters:
-
-```json
-{
-  "type": "parameter_update",
-  "simulation_id": "string",
-  "parameters": {
-    "temperature": 350.0
-  }
-}
-```
-
-#### Control Commands
-
-Client-sent message to control the simulation:
-
-```json
-{
-  "type": "control_command",
-  "simulation_id": "string",
-  "command": "pause|resume|reset|stop"
-}
-```
-
-## Use Cases
-
-### 1. Visualizing Lattice Dynamics
-
-The frontend uses the API to retrieve and visualize lattice structure and dynamics, including:
-
-- Displaying atomic positions and connections
-- Visualizing energy distributions with color mapping
-- Showing temperature gradients across the lattice
-- Animating particle movements and interactions
-
-### 2. Real-time Simulation Control
-
-Users interact with the simulation through UI controls that:
-
-- Initialize a simulation with specific parameters
-- Start, pause, and reset simulations
-- Adjust parameters during simulation
-- Take snapshots of interesting states
-- Export data for further analysis
-
-### 3. Model Comparison and Analysis
-
-Researchers use the API to:
-
-- Compare different physics models
-- Study parameter sensitivity
-- Analyze reaction rates and energy outputs
-- Validate theoretical predictions
-
-### 4. Data Export and Sharing
-
-Scientists export simulation results to:
-
-- Share with colleagues
-- Integrate with other analysis tools
-- Generate publication-quality visualizations
-- Archive for future reference
-
-## Error Handling
-
-All API endpoints return standard HTTP status codes:
-
-- 200: Success
-- 400: Bad Request (invalid parameters)
-- 404: Not Found (simulation or snapshot not found)
-- 409: Conflict (e.g., trying to start an already running simulation)
-- 500: Internal Server Error
-
-Error responses include detailed information:
-
-```json
-{
-  "error": "string",
-  "code": "string",
-  "details": "string",
-  "timestamp": "timestamp"
-}
-```
-
-## Performance Considerations
-
-- WebSocket connections use binary message format for large data transfers
-- Lattice data is compressed when appropriate
-- Optional level-of-detail parameter allows for simplified data during real-time interactions
-- Client-side caching is used for previously retrieved data 
-
-## Implementation Examples
-
-### Frontend Integration
-
-The following TypeScript example demonstrates how to initialize a simulation and handle real-time updates:
-
-```typescript
-import { physicsApiClient } from './api/physics/physicsApiClient';
-import { PhysicsWebSocketClient } from './api/physics/websocketClient';
-import { SimulationInitializeRequest } from './api/physics/types';
-
-// 1. Initialize a simulation
-const initializeSimulation = async () => {
-  const config: SimulationInitializeRequest = {
-    models: [
-      {
-        model_type: 'quantum_tunneling',
-        parameters: {
-          screening_potential: 150.0,
-          barrier_width: 2.5e-10
-        }
-      }
-    ],
-    lattice: {
-      type: 'fcc',
-      dimensions: [10, 10, 10],
-      constants: [3.89e-10, 3.89e-10, 3.89e-10],
-      elements: [
-        {
-          symbol: 'Pd',
-          position: [0, 0, 0],
-          occupancy: 1.0
-        }
-      ]
+Send `{"action": "stop"}` while the task is running to cancel it.
+
+The server emits:
+
+| Type | Meaning |
+| --- | --- |
+| `simulation_update` | Progress and simulation-specific data |
+| `simulation_complete` | Successful final result |
+| `simulation_cancelled` | Task stopped or cancelled |
+| `simulation_error` | Error caught inside a simulation task |
+| `error` | Protocol, simulation-type, timeout, or router-level error |
+
+Every update includes `simulation_id`, `step`, `total_steps`, `progress`,
+`timestamp`, and `data`. The fields inside `data` depend on the simulation type.
+For bubble fusion, `duration_steps` is passed to the model as the number of
+acoustic cycles.
+
+Minimal browser example:
+
+```javascript
+const socket = new WebSocket(
+  'ws://localhost:8000/api/ws/simulation/lenr/example-1'
+);
+
+socket.addEventListener('open', () => {
+  socket.send(JSON.stringify({
+    action: 'start',
+    params: {
+      temperature_k: 350,
+      loading_ratio: 0.5,
+      target_loading: 0.95,
+      material: 'palladium'
     },
-    conditions: {
-      temperature: 300.0,
-      pressure: 101325.0
-    },
-    simulation_parameters: {
-      time_step: 1e-15,
-      total_steps: 10000,
-      save_frequency: 10
-    }
-  };
+    duration_steps: 100
+  }));
+});
 
-  try {
-    const response = await physicsApiClient.initializeSimulation(config);
-    console.log(`Simulation initialized with ID: ${response.simulation_id}`);
-    return response.simulation_id;
-  } catch (error) {
-    console.error('Failed to initialize simulation:', error);
-    throw error;
-  }
-};
-
-// 2. Start the simulation and connect to WebSocket for updates
-const startSimulationAndListen = async (simulationId: string) => {
-  try {
-    // Start the simulation
-    await physicsApiClient.startSimulation(simulationId);
-    
-    // Connect to WebSocket for real-time updates
-    const wsClient = new PhysicsWebSocketClient(simulationId);
-    
-    // Listen for simulation updates
-    wsClient.addEventListener('simulation_update', (message) => {
-      console.log(`Step ${message.step} received:`, message.summary);
-      // Update your visualization with the latest data
-      updateVisualization(message.lattice, message.summary);
-    });
-    
-    // Handle connection events
-    wsClient.addEventListener('open', () => {
-      console.log('WebSocket connection established');
-    });
-    
-    wsClient.addEventListener('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
-    
-    wsClient.addEventListener('close', (event) => {
-      console.log('WebSocket connection closed:', event);
-    });
-    
-    // Connect
-    wsClient.connect();
-    
-    return wsClient;
-  } catch (error) {
-    console.error('Error starting simulation:', error);
-    throw error;
-  }
-};
-
-// 3. Update parameters during simulation
-const updateSimulationParameters = async (simulationId: string) => {
-  try {
-    await physicsApiClient.updateParameters(simulationId, {
-      conditions: {
-        temperature: 350.0
-      }
-    });
-    console.log('Parameters updated successfully');
-  } catch (error) {
-    console.error('Failed to update parameters:', error);
-  }
-};
-
-// 4. Take a snapshot of the simulation
-const takeSnapshot = async (simulationId: string) => {
-  try {
-    const snapshot = await physicsApiClient.takeSnapshot(simulationId, {
-      name: 'High-temperature state',
-      description: 'Snapshot taken after temperature increased to 350K'
-    });
-    console.log(`Snapshot created with ID: ${snapshot.snapshot_id}`);
-  } catch (error) {
-    console.error('Failed to take snapshot:', error);
-  }
-};
-
-// Helper function to update visualization (implementation depends on your visualization library)
-const updateVisualization = (lattice, summary) => {
-  // Example implementation using a hypothetical visualization component
-  myLatticeVisualizer.updateData(lattice);
-  myEnergyChart.updateData(summary.total_energy);
-  myTemperatureMap.updateData(lattice.points.map(p => p.temperature));
-};
+socket.addEventListener('message', ({ data }) => {
+  const message = JSON.parse(data);
+  console.log(message.type, message);
+});
 ```
 
-### React Hooks Usage
+### Lifecycle and diagnostics
 
-When using React, you can leverage the provided hooks for simpler integration:
+- `GET /api/ws/active` returns simulation IDs with active connections and
+  simulation IDs retained in the task registry.
+- `GET /api/ws/connections/{simulation_id}` returns the active client count.
+- Reusing a `simulation_id` cancels the existing task for that ID.
+- Disconnecting the last client cancels its running task.
+- State is process-local and is lost when the backend restarts.
 
-```typescript
-import { useEffect, useState } from 'react';
-import { 
-  useInitializeSimulation, 
-  useSimulationControl,
-  usePhysicsWebSocket,
-  useUpdateParameters
-} from './api/physics/hooks';
+### Current streaming constraints
 
-const LENRSimulationComponent = () => {
-  const [simulationId, setSimulationId] = useState<string | null>(null);
-  
-  // Initialize simulation hook
-  const { 
-    initializeSimulation, 
-    isLoading: isInitializing
-  } = useInitializeSimulation();
-  
-  // Simulation control hook
-  const { 
-    startSimulation, 
-    pauseSimulation, 
-    resumeSimulation,
-    resetSimulation,
-    status,
-    isLoading: isControlLoading
-  } = useSimulationControl(simulationId);
-  
-  // WebSocket hook for real-time updates
-  const { 
-    isConnected,
-    simulationUpdates,
-    error: wsError,
-    sendControlCommand
-  } = usePhysicsWebSocket(simulationId);
-  
-  // Parameter updates hook
-  const { 
-    updateParameters, 
-    isLoading: isUpdatingParams 
-  } = useUpdateParameters(simulationId);
-  
-  // Initialize simulation on component mount
-  useEffect(() => {
-    const init = async () => {
-      if (!simulationId) {
-        try {
-          const config = {
-            models: [{ model_type: 'quantum_tunneling', parameters: {} }],
-            lattice: {
-              type: 'fcc',
-              dimensions: [5, 5, 5],
-              constants: [3.89e-10, 3.89e-10, 3.89e-10],
-              elements: [{ symbol: 'Pd', position: [0, 0, 0], occupancy: 1.0 }]
-            },
-            conditions: { temperature: 300.0, pressure: 101325.0 },
-            simulation_parameters: { time_step: 1e-15, total_steps: 1000, save_frequency: 10 }
-          };
-          
-          const response = await initializeSimulation(config);
-          setSimulationId(response.simulation_id);
-        } catch (error) {
-          console.error('Failed to initialize simulation:', error);
-        }
-      }
-    };
-    
-    init();
-  }, []);
-  
-  // Use the latest simulation update for visualization
-  const latestUpdate = simulationUpdates[simulationUpdates.length - 1];
-  
-  return (
-    <div>
-      <h2>LENR Simulation Control</h2>
-      
-      {/* Status indicator */}
-      <div>
-        Status: {status || 'Not initialized'} 
-        {isConnected ? '(WebSocket Connected)' : '(WebSocket Disconnected)'}
-      </div>
-      
-      {/* Control buttons */}
-      <div>
-        <button onClick={() => startSimulation()} disabled={isControlLoading || !simulationId}>
-          Start
-        </button>
-        <button onClick={() => pauseSimulation()} disabled={isControlLoading || !simulationId}>
-          Pause
-        </button>
-        <button onClick={() => resumeSimulation()} disabled={isControlLoading || !simulationId}>
-          Resume
-        </button>
-        <button onClick={() => resetSimulation()} disabled={isControlLoading || !simulationId}>
-          Reset
-        </button>
-      </div>
-      
-      {/* Parameter controls */}
-      <div>
-        <h3>Update Parameters</h3>
-        <button 
-          onClick={() => updateParameters({ conditions: { temperature: 350.0 } })}
-          disabled={isUpdatingParams || !simulationId}
-        >
-          Increase Temperature
-        </button>
-      </div>
-      
-      {/* Simulation visualization */}
-      {latestUpdate && (
-        <div>
-          <h3>Latest Update (Step {latestUpdate.step})</h3>
-          <pre>{JSON.stringify(latestUpdate.summary, null, 2)}</pre>
-          
-          {/* Replace with actual visualization components */}
-          <LatticeVisualization latticeData={latestUpdate.lattice} />
-          <EnergyChart energyData={latestUpdate.summary.total_energy} />
-        </div>
-      )}
-      
-      {/* Error display */}
-      {wsError && (
-        <div className="error">
-          WebSocket Error: {wsError.message}
-        </div>
-      )}
-    </div>
-  );
-};
+- The `quantum-tunneling` stream is not operational: its runner constructs
+  `WKBTunnelingCalculator` with unsupported constructor arguments and reports
+  an error before producing updates. The REST quantum-tunneling endpoint is the
+  working interface.
+- The implemented path is `/api/ws/simulation/{type}/{id}`. The older
+  `/api/ws/physics/{id}` path referenced by
+  `frontend/src/api/physics/websocketClient.ts` is not mounted.
+- The React hook in `frontend/src/hooks/useSimulationWebSocket.js` wraps the
+  implemented protocol, but no current simulation page imports that hook.
+
+## Troubleshooting
+
+### REST works but streaming does not
+
+Confirm that the backend port matches the WebSocket URL. In frontend
+development, `frontend/src/services/websocket.js` uses port `8000` even when
+`REACT_APP_API_URL` points elsewhere.
+
+### Swagger UI returns 404
+
+Use `/api/docs`, not `/docs`. `app.main` explicitly configures the prefixed
+documentation URL.
+
+### Request values outside advertised limits are accepted
+
+The defaults endpoints publish advisory limits, but the request models only
+enforce types. Validate ranges in the caller until server-side bounds are
+added.
+
+### A calculation returns HTTP 500
+
+Inspect the response `detail`. Common causes include an unknown LENR mechanism,
+an unsupported tunneling potential, or nonphysical numeric inputs. The
+calculation routes currently translate model exceptions to HTTP 500.
+
+## Verification
+
+The REST contracts are covered by:
+
+```bash
+cd LENR_SIM_APP_v2/backend
+pytest tests/test_integration/test_api_integration.py
 ```
 
-## Error Handling Best Practices
-
-### Client-Side Error Handling
-
-When integrating with the Physics API, implement the following error handling strategies:
-
-1. **Handle Network Errors**: Use try/catch blocks around all API calls to handle network failures.
-
-2. **Implement Retry Logic**: For transient errors, implement exponential backoff.
-
-   ```typescript
-   const fetchWithRetry = async (url, options, maxRetries = 3) => {
-     let retries = 0;
-     while (retries < maxRetries) {
-       try {
-         const response = await fetch(url, options);
-         if (response.ok) return response.json();
-         
-         // Handle HTTP errors
-         const errorData = await response.json();
-         if (response.status === 429 || response.status >= 500) {
-           // Retry for server errors and rate limiting
-           retries++;
-           const delay = 2 ** retries * 1000; // Exponential backoff
-           await new Promise(resolve => setTimeout(resolve, delay));
-           continue;
-         }
-         
-         throw new Error(errorData.error || 'API request failed');
-       } catch (error) {
-         if (retries === maxRetries - 1) throw error;
-         retries++;
-         const delay = 2 ** retries * 1000;
-         await new Promise(resolve => setTimeout(resolve, delay));
-       }
-     }
-   };
-   ```
-
-3. **WebSocket Reconnection**: Implement automatic reconnection for WebSocket connections.
-
-4. **Graceful Degradation**: When real-time data is unavailable, fall back to polling endpoints.
-
-### Common Error Codes
-
-| Error Code | Description | Handling Strategy |
-|------------|-------------|-------------------|
-| `INVALID_PARAMETERS` | Request contains invalid parameters | Fix parameters based on validation errors |
-| `SIMULATION_NOT_FOUND` | Simulation ID does not exist | Redirect to simulation creation |
-| `ALREADY_RUNNING` | Simulation is already running | Update UI to reflect current state |
-| `ALREADY_PAUSED` | Simulation is already paused | Update UI to reflect current state |
-| `MODEL_NOT_SUPPORTED` | Requested physics model is not available | Show supported model options |
-| `RESOURCE_EXHAUSTED` | Server resource limits reached | Implement backoff or suggest parameter reduction |
-
-## Security Considerations
-
-1. **API Authentication**: All API requests should include appropriate authentication headers.
-
-2. **Input Validation**: Validate all user inputs before sending to the API.
-
-3. **Rate Limiting**: Implement client-side throttling to respect server rate limits.
-
-4. **Secure WebSockets**: Ensure WebSocket connections use secure protocols (wss://).
-
-## Versioning and Backward Compatibility
-
-The API follows semantic versioning. Breaking changes are indicated by incrementing the major version number. The current version is v1.
-
-API versioning is specified in the URL path or through Accept headers:
-
-```
-/api/v1/physics/simulation/initialize
-```
-
-Or:
-
-```
-Accept: application/json; version=1
-```
-
-## Browser Support
-
-The Physics API client and WebSocket implementations support all modern browsers:
-
-- Chrome (latest 2 versions)
-- Firefox (latest 2 versions)
-- Safari (latest 2 versions)
-- Edge (latest 2 versions)
-
-For older browsers, polyfills may be required for WebSocket and Fetch API support. 
+The integration suite does not exercise an actual WebSocket connection; verify
+streaming changes separately with a WebSocket client.
