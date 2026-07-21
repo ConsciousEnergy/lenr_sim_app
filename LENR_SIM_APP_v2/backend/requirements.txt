@@ -26,7 +26,7 @@ psutil==6.1.0
 # Database dependencies (v0.2.3-beta)
 sqlalchemy==2.0.36
 asyncpg==0.30.0
-aiosqlite==0.20.0
+aiosqlite==0.22.1
 alembic==1.14.0
 greenlet==3.0.3
 
