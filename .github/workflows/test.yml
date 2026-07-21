@@ -139,7 +139,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
 
@@ -160,11 +160,10 @@ jobs:
 
       - name: Test frontend
         env:
-          # Stabilize Jest execution in CI and avoid worker memory spikes.
           NODE_OPTIONS: --max-old-space-size=4096
         run: |
           cd LENR_SIM_APP_v2/frontend
-          npm test -- --watchAll=false --passWithNoTests --runInBand
+          npm test
 
       - name: Build frontend
         env:

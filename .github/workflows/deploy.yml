@@ -56,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
 
@@ -67,6 +67,7 @@ jobs:
       - name: Build frontend
         working-directory: LENR_SIM_APP_v2/frontend
         env:
+          VITE_API_URL: https://api.conscious.energy
           REACT_APP_API_URL: https://api.conscious.energy
         run: npm run build
 
@@ -74,5 +75,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: frontend-build
-          path: LENR_SIM_APP_v2/frontend/build/
+          path: LENR_SIM_APP_v2/frontend/dist/
           retention-days: 7
