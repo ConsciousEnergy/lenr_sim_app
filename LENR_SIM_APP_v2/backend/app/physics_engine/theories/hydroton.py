@@ -1,6 +1,14 @@
 """
 Storms' Hydroton Theory Module
 
+.. deprecated:: v0.3.6-beta
+    DEPRECATED (RR-015). Disabled by default; only registered when
+    ``settings.ENABLE_LEGACY_HYDROTON`` is true. Its gradual-photon-emission /
+    down-conversion narrative overlaps the maintained ``hagelstein_phonon``
+    module and the NAE confinement captured by ``nae_model``; prefer those.
+    Retained behind the flag for backward compatibility and historical
+    comparison only. Do not add new physics here.
+
 Implements Edmund Storms' Hydroton model: a linear covalent H-e-H-e-H chain
 forming in Nuclear Active Environment (NAE) nano-gaps.
 

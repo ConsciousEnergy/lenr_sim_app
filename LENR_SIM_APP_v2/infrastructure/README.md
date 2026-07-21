@@ -1,7 +1,7 @@
 # LENR Simulation App - Infrastructure as Code
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** May 2026
 
 ---
 
@@ -12,6 +12,7 @@ This directory contains all Infrastructure as Code (IaC) configuration for deplo
 - **Terraform** - Provisions Cloudflare (Pages, R2, DNS) and Hostinger VPS
 - **Ansible** - Configures server (Docker, Swarm) and deploys application stack
 - **Docker Swarm** - Orchestrates containers (Traefik, FastAPI, PostgreSQL)
+- **Vite static frontend build** - Deployed through Cloudflare Pages in production
 
 ---
 

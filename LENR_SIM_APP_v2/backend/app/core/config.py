@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     
     # Base configuration
     APP_NAME: str = "LENR_Sim_App"
-    APP_VERSION: str = "0.3.5-beta"
+    APP_VERSION: str = "0.3.6-beta"
     API_PREFIX: str = "/api"
     DEBUG: bool = False
     
@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     ENABLE_TRACEMALLOC: bool = False  # Disable in production for performance
     ENABLE_AUTO_GC: bool = True  # Enable automatic garbage collection
     SLOW_REQUEST_THRESHOLD: float = 500.0  # Milliseconds
+    ENABLE_LEGACY_HYDROTON: bool = False
     
     # Middleware configuration
     ENABLE_REQUEST_ID_MIDDLEWARE: bool = True
@@ -178,6 +179,13 @@ class Settings(BaseSettings):
                     "CORS_ORIGINS",
                     ["https://conscious.energy", "https://www.conscious.energy"],
                 )
+
+        # Disable the global per-IP rate limiter under the test environment. The full test
+        # suite floods a single client past the 60 req/min limit and would otherwise return
+        # 429s (the limiter's own unit tests build a dedicated app with the middleware
+        # attached explicitly, so they are unaffected). See VERIFICATION_GATE_REPORT.md.
+        if self.ENVIRONMENT == EnvironmentType.TEST and self.ENABLE_RATE_LIMITING:
+            object.__setattr__(self, "ENABLE_RATE_LIMITING", False)
         return self
 
     # Pydantic configuration - use environment variable prefix and .env file

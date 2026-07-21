@@ -45,6 +45,13 @@ class TheoryContribution:
     is_applicable: bool = True
     confidence: float = 0.0
     references: List[str] = field(default_factory=list)
+    confidence_breakdown: Dict[str, Any] = field(default_factory=dict)
+    uncertainty_interval: Dict[str, float] = field(default_factory=dict)
+    falsification_conditions: List[str] = field(default_factory=list)
+    evidence_class: str = "exploratory"
+    reproducibility_tier: str = "exploratory"
+    claim_tier: str = "speculative_exploratory"
+    provenance: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

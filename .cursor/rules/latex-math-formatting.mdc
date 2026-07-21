@@ -1,0 +1,31 @@
+---
+description: Consistent math notation across surfaces - LaTeX in markdown docs, Unicode monospace in app JSX, and no reliance on unconfigured in-app LaTeX rendering
+globs: docs/**/*.md, LENR_SIM_APP_v2/docs/**/*.md, LENR_SIM_APP_v2/frontend/src/pages/theory-paper/**/*.jsx, LENR_SIM_APP_v2/frontend/src/pages/TheoryPaperPage.jsx, LENR_SIM_APP_v2/frontend/src/pages/DocViewerPage.tsx
+alwaysApply: false
+---
+
+- **Author math per surface. Do not mix conventions within one surface.**
+
+- **Markdown docs (`docs/**`, the paper) - use LaTeX, one dialect.** Prefer Pandoc-style delimiters:
+  ```markdown
+  Inline:  \( F_{\text{Casimir}} \approx -1.3 \times 10^{-3} \) N
+  Display: \[ F_{\text{Casimir}} = -\frac{\pi^2 \hbar c}{240}\cdot\frac{A}{d^4} \]
+  ```
+  - Do NOT introduce new escaped `\\\[ ... \\\]` blocks or bare `$...$` inline in new content; the repo already has mixed legacy dialects and we are converging on `\( \)` / `\[ \]`.
+  - Use `\text{}` for multi-letter subscripts and `\cite{key}` keys consistent with [scientific-citations.mdc](mdc:.cursor/rules/scientific-citations.mdc).
+
+- **App JSX theory pages ([TheoryPaperPage.jsx](mdc:LENR_SIM_APP_v2/frontend/src/pages/TheoryPaperPage.jsx)) - use Unicode monospace, not LaTeX.** Match the existing curated render:
+  ```jsx
+  // ✅ DO: Unicode super/subscripts in a monospace Box/Typography
+  <Box fontFamily="monospace">f = exp(πη·Uₑ/E)</Box>
+  <Box fontFamily="monospace">F = -π²ℏcA/(240d⁴)</Box>   // 10³ to 10⁵
+  // ❌ DON'T: paste raw LaTeX ( \frac, \times ) into JSX - it renders literally
+  ```
+
+- **`ReactMarkdown` has no math plugin (`DocViewerPage.tsx`).** LaTeX in fetched markdown renders as raw text there.
+  - Do NOT assume in-app LaTeX rendering works.
+  - If a LaTeX-bearing doc must render in-app, either (a) add `remark-math` + `rehype-katex` (plus a KaTeX stylesheet) to the markdown pipeline as an explicit, reviewed change, or (b) pre-render the equations to Unicode monospace. Flag this trade-off rather than silently shipping broken math.
+
+- **Numbers inside math obey the physics bands.** Any quantitative value in an equation follows [scientific-rigor-provenance.mdc](mdc:.cursor/rules/scientific-rigor-provenance.mdc) (e.g. tunneling 10³-10⁵, Casimir -1.3 mN) and carries a citation or `model assumption` label.
+
+- **The app paper view is a curated, corrected subset** of the canonical LaTeX paper markdown - not a live render of it. Keep corrected values (post-RR remediation) in sync across both; do not backport superseded values into either.

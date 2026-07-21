@@ -1,0 +1,42 @@
+---
+description: DOI-first AuthorYear citation keys and resolvable code `references` for all LENR physics claims, per the 2026 Citation Standard
+globs: LENR_SIM_APP_v2/backend/app/physics_engine/**/*.py, LENR_SIM_APP_v2/frontend/src/pages/theory-paper/**/*.jsx, LENR_SIM_APP_v2/frontend/src/utils/theoryGovernance.ts
+alwaysApply: false
+---
+
+- **Authority:** [CITATION_STANDARD.md](mdc:docs/REVIEW_2026/CITATION_STANDARD.md), [REFERENCES_AUDIT.md](mdc:docs/REVIEW_2026/REFERENCES_AUDIT.md), [TRACEABILITY_MATRIX.md](mdc:docs/REVIEW_2026/TRACEABILITY_MATRIX.md). This rule enforces them in code.
+
+- **Identifier priority (DOI-first).** Capture the strongest identifier available, in order:
+  - **DOI** (preferred) — e.g. `10.1103/PhysRevC.101.044610`
+  - **arXiv ID** — only when no DOI exists (e.g. `arXiv:nucl-th/0608059`)
+  - **Stable publisher/registry URL** — e.g. JCMNS PDF, NASA TP number
+  - Every reference also carries author(s), year, title, venue, and volume/pages where applicable.
+
+- **Citation keys are `AuthorYear`.** Lowercased surname + 4-digit year, with a disambiguating letter when needed. The SAME key appears in the paper BibTeX, the traceability matrix, and code `references`.
+  ```python
+  # ✅ DO
+  "takahashi2016", "hagelstein2025a", "steinetz2020exp", "nguyen2026"
+  # ❌ DON'T: ad-hoc keys, numbers, or titles as keys
+  "ref1", "Takahashi_JCMNS", "[18]"
+  ```
+
+- **Code `references` entries must be human-readable AND resolvable.** Trailing `— key` or `— doi:` token is what the matrix matches on.
+  ```python
+  # ✅ DO (in TheoryContribution / TheoryMetadata references, in BOTH calculate() and get_metadata())
+  references=[
+      "Takahashi (2016), JCMNS 19, 298 — takahashi2016",
+      "Steinetz et al. (2020), Phys. Rev. C 101, 044610 — doi:10.1103/PhysRevC.101.044610",
+  ]
+  # ❌ DON'T: unresolvable prose with no key/doi token
+  references=["See Takahashi's work on TSC"]
+  ```
+
+- **Claim-tier + provenance pairing (required).** Any user-facing scientific claim carries BOTH a citation and a `claim_tier`. See [scientific-rigor-provenance.mdc](mdc:.cursor/rules/scientific-rigor-provenance.mdc).
+
+- **Contested mechanisms cite the critique too.** For disputed models (e.g. Widom-Larsen) the `references` must include BOTH the proposing work AND its principal critique (e.g. `tennfors2013`). This is a scientific-integrity requirement, enforced in code, not only in the paper.
+
+- **Numeric values resolve or are labelled assumptions.** Every hardcoded constant, calibration value, or enhancement factor must either resolve to a citation key (measured/derived) or be explicitly labelled a `model assumption` in code and in the matrix. Replace single-point "magic numbers" that drive physics with cited ranges where the literature reports one.
+
+- **No new orphans.** A `references` key emitted by any backend module MUST resolve in both the paper markdown bibliography and the app [ReferencesSection.jsx](mdc:LENR_SIM_APP_v2/frontend/src/pages/theory-paper/ReferencesSection.jsx). When adding a key in code, add it to the bibliography and ReferencesSection in the same change.
+
+- **Frontend must not overstate evidence.** UI copy describes mechanisms without asserting they are established; a claim-tier chip is required next to any quantitative claim (`theoryGovernance.ts` mirrors backend `CLAIM_TIER_MULTIPLIER`).

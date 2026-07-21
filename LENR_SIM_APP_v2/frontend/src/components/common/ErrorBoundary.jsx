@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Card, Typography, Button, Alert, Space, Divider } from 'antd';
-import { WarningOutlined, ReloadOutlined } from '@ant-design/icons';
-
-const { Title, Text, Paragraph } = Typography;
+import { Card, CardContent, Typography, Button, Alert, AlertTitle, Stack, Divider, Box } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 /**
  * A centralized error logging function that can be expanded
@@ -86,78 +85,73 @@ class ErrorBoundary extends Component {
 
       // Otherwise, use the default fallback UI
       return (
-        <div style={{ 
-          padding: 24, 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          width: '100%'
-        }}>
-          <Card
-            style={{ 
-              maxWidth: 600,
-              textAlign: 'center',
-              borderRadius: 8,
-            }}
-          >
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <WarningOutlined style={{ fontSize: 60, color: '#ff4d4f' }} />
-              
-              <Title level={3}>{errorTitle}</Title>
-              
-              <Paragraph type="secondary">
-                We encountered an unexpected error. The development team has been notified.
-              </Paragraph>
-              
-              {showDetails && error && (
-                <Alert 
-                  message="Error Details" 
-                  description={
-                    <div>
-                      <Text code style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {error.toString()}
-                      </Text>
-                      {errorInfo && (
-                        <div 
-                          style={{ 
-                            marginTop: 8,
-                            maxHeight: 200, 
-                            overflow: 'auto',
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            backgroundColor: 'rgba(0,0,0,0.03)',
-                            padding: 8,
-                            borderRadius: 4
-                          }}
-                        >
-                          <Text code style={{ whiteSpace: 'pre-wrap' }}>
-                            {errorInfo.componentStack}
-                          </Text>
-                        </div>
-                      )}
-                    </div>
-                  }
-                  type="error" 
-                  style={{ textAlign: 'left', marginTop: 16, marginBottom: 16 }}
-                />
-              )}
-              
-              <Divider />
-              
-              {showReset && (
-                <Button 
-                  type="primary" 
-                  icon={<ReloadOutlined />}
-                  onClick={this.handleReset}
-                >
-                  {resetButtonText}
-                </Button>
-              )}
-            </Space>
+        <Box
+          sx={{
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            width: '100%'
+          }}
+        >
+          <Card sx={{ maxWidth: 600, textAlign: 'center', borderRadius: 2 }}>
+            <CardContent>
+              <Stack spacing={2} alignItems="center" sx={{ width: '100%' }}>
+                <WarningAmberIcon sx={{ fontSize: 60, color: 'error.main' }} />
+
+                <Typography variant="h5" component="h3">{errorTitle}</Typography>
+
+                <Typography color="text.secondary">
+                  We encountered an unexpected error. The development team has been notified.
+                </Typography>
+
+                {showDetails && error && (
+                  <Alert severity="error" sx={{ textAlign: 'left', width: '100%', mt: 2, mb: 2 }}>
+                    <AlertTitle>Error Details</AlertTitle>
+                    <Box
+                      component="code"
+                      sx={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                    >
+                      {error.toString()}
+                    </Box>
+                    {errorInfo && (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          maxHeight: 200,
+                          overflow: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          backgroundColor: 'rgba(0,0,0,0.03)',
+                          p: 1,
+                          borderRadius: 1
+                        }}
+                      >
+                        <Box component="code" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {errorInfo.componentStack}
+                        </Box>
+                      </Box>
+                    )}
+                  </Alert>
+                )}
+
+                <Divider sx={{ width: '100%' }} />
+
+                {showReset && (
+                  <Button
+                    variant="contained"
+                    startIcon={<RefreshIcon />}
+                    onClick={this.handleReset}
+                  >
+                    {resetButtonText}
+                  </Button>
+                )}
+              </Stack>
+            </CardContent>
           </Card>
-        </div>
+        </Box>
       );
     }
 

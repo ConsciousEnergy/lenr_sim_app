@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { API_BASE_URL } from '../config/api';
+import { track } from '../analytics/events';
 
 const SLUG_TO_TITLE: Record<string, string> = {
   'issue-ledger': 'Issue Ledger',
@@ -51,6 +52,7 @@ export default function DocViewerPage() {
       })
       .then((text) => {
         setContent(text);
+        track.docsViewed({ slug, source: 'doc-viewer', success: true });
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Failed to load document.');

@@ -107,16 +107,30 @@ const checkApiAvailability = async () => {
   return false;
 };
 
-// Initialize API availability check
+// Defer availability probing until first real call so Vite startup does not
+// immediately spam /api/health when backend is intentionally offline.
 let apiAvailable = false;
-checkApiAvailability().then(available => {
-  apiAvailable = available;
-  if (available) {
-    logInfo('API is available');
-  } else {
-    logWarning('API is not available, will use mock data');
-  }
-});
+let apiAvailabilityProbe = null;
+const ensureApiAvailability = async () => {
+  if (apiAvailable) return true;
+  if (apiAvailabilityProbe) return apiAvailabilityProbe;
+
+  apiAvailabilityProbe = checkApiAvailability()
+    .then((available) => {
+      apiAvailable = available;
+      if (available) {
+        logInfo('API is available');
+      } else {
+        logWarning('API is not available, will use mock data');
+      }
+      return available;
+    })
+    .finally(() => {
+      apiAvailabilityProbe = null;
+    });
+
+  return apiAvailabilityProbe;
+};
 
 // Utility to simulate API delay for mock data
 const simulateApiDelay = (duration = API_CONFIG.mockDelay) => 
@@ -132,6 +146,10 @@ const tryEndpoints = async (endpoints, method = 'get', data = null) => {
   let attemptCount = 0;
   const totalEndpoints = endpoints.length;
   
+  if (!API_CONFIG.preferMockData && !apiAvailable) {
+    await ensureApiAvailability();
+  }
+
   if (API_CONFIG.preferMockData || !apiAvailable) {
     logInfo('Using mock data due to configuration or API unavailability');
     return null; // Return null to trigger mock data

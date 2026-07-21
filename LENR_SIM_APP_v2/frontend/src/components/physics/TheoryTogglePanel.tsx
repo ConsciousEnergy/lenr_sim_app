@@ -35,7 +35,19 @@ import ScienceIcon from '@mui/icons-material/Science';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import BoltIcon from '@mui/icons-material/Bolt';
 import LinkIcon from '@mui/icons-material/Link';
+import ExploreIcon from '@mui/icons-material/Explore';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { usePhysics, TheoryContributionResult } from '../../contexts/PhysicsContext';
+import { track } from '../../analytics/events';
+import {
+  claimTierMultiplier,
+  buildRegimeGateReason,
+  CLAIM_TIERS,
+  EVIDENCE_CLASSES,
+} from '../../utils/theoryGovernance';
+import GovernanceGlossaryDrawer from './GovernanceGlossaryDrawer';
 
 // Colour map for theory categories
 const CATEGORY_COLORS: Record<string, string> = {
@@ -158,7 +170,7 @@ const MHDParameterDashboard: React.FC<{ observables: Record<string, number> }> =
 
 interface TheoryTogglePanelProps {
   /** Physical conditions to pass when running theories. */
-  conditions?: Record<string, number>;
+  conditions?: Record<string, number | string>;
 }
 
 const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => {
@@ -177,6 +189,13 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   } = usePhysics();
 
   const [coupledMode, setCoupledMode] = useState(false);
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
+  const [glossaryAnchor, setGlossaryAnchor] = useState<'evidence' | 'claim' | null>(null);
+
+  const openGlossary = useCallback((anchor: 'evidence' | 'claim' | null) => {
+    setGlossaryAnchor(anchor);
+    setGlossaryOpen(true);
+  }, []);
 
   // Fetch theories on mount
   useEffect(() => {
@@ -185,6 +204,24 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Partition theories into primary LENR tracks and "context tracks".
+  // Context tracks are cross-regime / comparison-only entries (see
+  // backend theory_pipeline.THEORY_COMPOSITION_GROUPS). They are always
+  // visible but visually separated so they cannot be mistaken for
+  // first-class LENR mechanisms.
+  const { primaryTheories, contextTheories } = useMemo(() => {
+    const primary: typeof availableTheories = [];
+    const context: typeof availableTheories = [];
+    for (const theory of availableTheories) {
+      if (theory.category === 'context_line') {
+        context.push(theory);
+      } else {
+        primary.push(theory);
+      }
+    }
+    return { primaryTheories: primary, contextTheories: context };
+  }, [availableTheories]);
 
   // Build a lookup from theory_id -> contribution result
   const contributionMap = useMemo(() => {
@@ -200,10 +237,12 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   // Toggle a single theory on/off
   const handleToggle = useCallback(
     (theoryId: string) => {
+      const enabled = !enabledTheories.includes(theoryId);
+      track.theoryToggled({ theory_id: theoryId, enabled });
       setEnabledTheories(
-        enabledTheories.includes(theoryId)
-          ? enabledTheories.filter((id) => id !== theoryId)
-          : [...enabledTheories, theoryId],
+        enabled
+          ? [...enabledTheories, theoryId]
+          : enabledTheories.filter((id) => id !== theoryId),
       );
     },
     [enabledTheories, setEnabledTheories],
@@ -261,6 +300,11 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           <Typography variant="caption" color="text.secondary">
             Energy: {theoryResult.total_energy_watts.toExponential(2)} W
           </Typography>
+          {theoryResult.contract_version && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              Contract: {theoryResult.contract_version}
+            </Typography>
+          )}
         </Paper>
       )}
 
@@ -317,132 +361,387 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
 
       <Divider sx={{ mb: 1 }} />
 
-      {/* Theory list */}
-      {availableTheories.map((theory) => {
-        const isEnabled = enabledTheories.includes(theory.theory_id);
-        const contribution = contributionMap[theory.theory_id];
-        const conf = contribution ? confidenceLabel(contribution.confidence) : null;
+      {/* Section header: Primary LENR theories */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+        <ScienceIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+        <Typography variant="subtitle2" color="primary">
+          Primary LENR theories
+        </Typography>
+        <Chip
+          label={`${primaryTheories.length}`}
+          size="small"
+          variant="outlined"
+          sx={{ height: 18, fontSize: '0.65rem' }}
+        />
+        <Box sx={{ flex: 1 }} />
+        <Tooltip title="Open governance glossary — claim tiers & evidence classes">
+          <Button
+            size="small"
+            startIcon={<MenuBookIcon sx={{ fontSize: 14 }} />}
+            onClick={() => openGlossary(null)}
+            sx={{ fontSize: '0.65rem', py: 0, minWidth: 0 }}
+          >
+            glossary
+          </Button>
+        </Tooltip>
+      </Box>
 
-        return (
-          <Accordion
-            key={theory.theory_id}
-            disableGutters
-            elevation={0}
+      {primaryTheories.map((theory) =>
+        renderTheoryAccordion({
+          theory,
+          isEnabled: enabledTheories.includes(theory.theory_id),
+          contribution: contributionMap[theory.theory_id],
+          handleToggle,
+          coupledMode,
+          coupledResult,
+          onOpenGlossary: openGlossary,
+        }),
+      )}
+
+      {/* Context tracks section (down-weighted comparison theories) */}
+      {contextTheories.length > 0 && (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2, mb: 1 }}>
+            <ExploreIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+            <Typography variant="subtitle2" color="warning.main">
+              Context tracks
+            </Typography>
+            <Chip
+              label={`${contextTheories.length}`}
+              size="small"
+              variant="outlined"
+              color="warning"
+              sx={{ height: 18, fontSize: '0.65rem' }}
+            />
+            <Tooltip
+              title={
+                'Comparison-only tracks (e.g. stellar-scaling MHD) are always visible but strongly down-weighted in the final score so they cannot dominate LENR-specific mechanisms. See the governance glossary for multipliers.'
+              }
+            >
+              <InfoOutlinedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            </Tooltip>
+          </Box>
+          <Alert
+            severity="warning"
+            icon={<ExploreIcon fontSize="inherit" />}
             sx={{
-              '&:before': { display: 'none' },
-              bgcolor: 'transparent',
-              border: '1px solid',
-              borderColor: isEnabled ? 'primary.dark' : 'divider',
               mb: 1,
-              borderRadius: 1,
-              overflow: 'hidden',
+              py: 0,
+              '& .MuiAlert-message': { py: 0.5, fontSize: '0.7rem' },
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 48 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-                <Switch
-                  size="small"
-                  checked={isEnabled}
-                  onChange={() => handleToggle(theory.theory_id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="body2" noWrap>
-                    {theory.theory_name}
-                  </Typography>
-                </Box>
-                <Chip
-                  label={theory.category}
-                  size="small"
-                  sx={{
-                    fontSize: '0.6rem',
-                    height: 18,
-                    bgcolor: CATEGORY_COLORS[theory.category] || '#666',
-                    color: 'white',
-                  }}
-                />
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 0, pb: 1 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                {theory.description}
-              </Typography>
-
-              {/* Contribution bar if available */}
-              {contribution && (
-                <Box sx={{ mb: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption">Enhancement</Typography>
-                    <Typography variant="caption" fontWeight="bold">
-                      {contribution.enhancement_factor.toExponential(1)}x
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(
-                      100,
-                      (Math.log10(Math.max(contribution.enhancement_factor, 1)) / 5) * 100,
-                    )}
-                    color={contribution.is_applicable ? 'primary' : 'inherit'}
-                    sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
-                  />
-                  {conf && (
-                    <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Confidence:
-                      </Typography>
-                      <Chip label={conf.label} size="small" color={conf.color} sx={{ height: 16, fontSize: '0.6rem' }} />
-                    </Box>
-                  )}
-                </Box>
-              )}
-
-              {/* Coupling arrows (coupled mode only) */}
-              {coupledMode && coupledResult?.coupling_map?.[theory.theory_id] && (
-                <Box sx={{ mb: 0.5 }}>
-                  <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.65rem' }}>
-                    <LinkIcon sx={{ fontSize: 12 }} /> Fed by:
-                  </Typography>
-                  {coupledResult.coupling_map[theory.theory_id].map((c) => (
-                    <Chip
-                      key={c.source_id}
-                      label={`← ${c.source_id.replace(/_/g, ' ')}`}
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                      sx={{ fontSize: '0.55rem', height: 16, mr: 0.5, mb: 0.3 }}
-                    />
-                  ))}
-                </Box>
-              )}
-
-              {/* MHD Parameter Dashboard (Bubble-MHD only) */}
-              {theory.theory_id === 'bubble_mhd_confinement' &&
-                contribution?.observables &&
-                Object.keys(contribution.observables).length > 0 && (
-                  <MHDParameterDashboard observables={contribution.observables} />
-                )}
-
-              {/* References */}
-              {theory.references && theory.references.length > 0 && (
-                <Box sx={{ mt: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Refs: {theory.references.slice(0, 2).join('; ')}
-                  </Typography>
-                </Box>
-              )}
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+            These tracks are quantitative comparisons from other physical
+            regimes (e.g. stellar plasma). Visible for transparency only.
+          </Alert>
+          {contextTheories.map((theory) =>
+            renderTheoryAccordion({
+              theory,
+              isEnabled: enabledTheories.includes(theory.theory_id),
+              contribution: contributionMap[theory.theory_id],
+              handleToggle,
+              coupledMode,
+              coupledResult,
+              isContextTrack: true,
+              onOpenGlossary: openGlossary,
+            }),
+          )}
+        </>
+      )}
 
       {availableTheories.length === 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
           No theories available. Is the backend running?
         </Typography>
       )}
+
+      <GovernanceGlossaryDrawer
+        open={glossaryOpen}
+        onClose={() => setGlossaryOpen(false)}
+        initialAnchor={glossaryAnchor}
+      />
     </Box>
   );
 };
+
+// ---------------------------------------------------------------------------
+// Per-theory accordion renderer (extracted so it can be reused by both the
+// primary-theories section and the context-tracks section).
+// ---------------------------------------------------------------------------
+
+interface RenderTheoryAccordionArgs {
+  theory: {
+    theory_id: string;
+    theory_name: string;
+    description: string;
+    category: string;
+    references: string[];
+  };
+  isEnabled: boolean;
+  contribution: TheoryContributionResult | undefined;
+  handleToggle: (_id: string) => void;
+  coupledMode: boolean;
+  coupledResult: { coupling_map?: Record<string, Array<{ source_id: string }>> } | null | undefined;
+  isContextTrack?: boolean;
+  onOpenGlossary: (_anchor: 'evidence' | 'claim' | null) => void;
+}
+
+function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElement {
+  const {
+    theory,
+    isEnabled,
+    contribution,
+    handleToggle,
+    coupledMode,
+    coupledResult,
+    isContextTrack = false,
+    onOpenGlossary,
+  } = args;
+
+  const conf = contribution ? confidenceLabel(contribution.confidence) : null;
+  const tier = contribution?.claim_tier;
+  const tierInfo = tier ? CLAIM_TIERS[tier] : undefined;
+  const evidenceInfo = contribution?.evidence_class
+    ? EVIDENCE_CLASSES[contribution.evidence_class]
+    : undefined;
+  const tierMult = claimTierMultiplier(tier);
+  const rawEnhancement = contribution?.enhancement_factor ?? 0;
+  const effectiveEnhancement = rawEnhancement * tierMult;
+  const regimeGateReason =
+    contribution && contribution.is_applicable === false
+      ? buildRegimeGateReason(
+          contribution.provenance as Record<string, unknown> | undefined,
+          contribution.parameters_used,
+        )
+      : null;
+
+  return (
+    <Accordion
+      key={theory.theory_id}
+      disableGutters
+      elevation={0}
+      sx={{
+        '&:before': { display: 'none' },
+        bgcolor: isContextTrack ? 'rgba(255,152,0,0.04)' : 'transparent',
+        border: isContextTrack ? '1px dashed' : '1px solid',
+        borderColor: isContextTrack
+          ? 'warning.dark'
+          : isEnabled
+            ? 'primary.dark'
+            : 'divider',
+        mb: 1,
+        borderRadius: 1,
+        overflow: 'hidden',
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 48 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
+          <Switch
+            size="small"
+            checked={isEnabled}
+            onChange={() => handleToggle(theory.theory_id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" noWrap>
+              {theory.theory_name}
+            </Typography>
+          </Box>
+          <Chip
+            label={theory.category}
+            size="small"
+            sx={{
+              fontSize: '0.6rem',
+              height: 18,
+              bgcolor: CATEGORY_COLORS[theory.category] || '#666',
+              color: 'white',
+            }}
+          />
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ pt: 0, pb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          {theory.description}
+        </Typography>
+
+        {/* Inline regime-gate reason when inapplicable */}
+        {regimeGateReason && (
+          <Alert
+            severity="info"
+            variant="outlined"
+            icon={<InfoOutlinedIcon fontSize="inherit" />}
+            sx={{ mb: 1, py: 0, '& .MuiAlert-message': { py: 0.5, fontSize: '0.7rem' } }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block' }}>
+              Not applicable under current conditions
+            </Typography>
+            <Typography variant="caption">{regimeGateReason}</Typography>
+          </Alert>
+        )}
+
+        {/* Contribution bar if available */}
+        {contribution && (
+          <Box sx={{ mb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
+              <Typography variant="caption">Enhancement</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="caption" fontWeight="bold">
+                  {rawEnhancement.toExponential(1)}x
+                </Typography>
+                <Tooltip
+                  arrow
+                  title={
+                    <Box sx={{ maxWidth: 260 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+                        Why this score?
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block' }}>
+                        <strong>Raw enhancement:</strong> {rawEnhancement.toExponential(2)}×
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block' }}>
+                        <strong>Claim-tier multiplier:</strong> {tierMult.toFixed(2)}× (
+                        {tierInfo?.label ?? tier ?? 'unknown tier'})
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block' }}>
+                        <strong>Effective contribution:</strong>{' '}
+                        {effectiveEnhancement.toExponential(2)}×
+                      </Typography>
+                      <Divider sx={{ my: 0.5, borderColor: 'rgba(255,255,255,0.15)' }} />
+                      <Typography variant="caption" sx={{ display: 'block', fontStyle: 'italic' }}>
+                        Effective = Raw × multiplier. Speculative and
+                        cross-regime tiers are down-weighted so they cannot
+                        dominate aggregated scores.
+                      </Typography>
+                    </Box>
+                  }
+                >
+                  <HelpOutlineIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                </Tooltip>
+              </Box>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(
+                100,
+                (Math.log10(Math.max(rawEnhancement, 1)) / 5) * 100,
+              )}
+              color={contribution.is_applicable ? 'primary' : 'inherit'}
+              sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
+            />
+            {tierMult < 1.0 && (
+              <Typography
+                variant="caption"
+                color="warning.main"
+                sx={{ display: 'block', mt: 0.25, fontSize: '0.6rem' }}
+              >
+                Down-weighted to {effectiveEnhancement.toExponential(1)}× by
+                claim-tier multiplier ({tierMult.toFixed(2)}×).
+              </Typography>
+            )}
+
+            {conf && (
+              <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                <Typography variant="caption" color="text.secondary">
+                  Confidence:
+                </Typography>
+                <Chip label={conf.label} size="small" color={conf.color} sx={{ height: 16, fontSize: '0.6rem' }} />
+                {contribution.evidence_class && (
+                  <Tooltip
+                    arrow
+                    title={
+                      evidenceInfo
+                        ? `${evidenceInfo.label}: ${evidenceInfo.description} (click for glossary)`
+                        : 'Click to open governance glossary'
+                    }
+                  >
+                    <Chip
+                      onClick={() => onOpenGlossary('evidence')}
+                      label={contribution.evidence_class}
+                      size="small"
+                      variant="outlined"
+                      clickable
+                      sx={{ height: 16, fontSize: '0.55rem' }}
+                    />
+                  </Tooltip>
+                )}
+                {contribution.claim_tier && (
+                  <Tooltip
+                    arrow
+                    title={
+                      tierInfo
+                        ? `${tierInfo.label} (×${tierInfo.multiplier.toFixed(2)}): ${tierInfo.description} (click for glossary)`
+                        : 'Click to open governance glossary'
+                    }
+                  >
+                    <Chip
+                      onClick={() => onOpenGlossary('claim')}
+                      label={`tier: ${contribution.claim_tier.replace(/_/g, ' ')}`}
+                      size="small"
+                      variant="outlined"
+                      clickable
+                      color={tierInfo?.color ?? 'default'}
+                      sx={{ height: 16, fontSize: '0.55rem' }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
+            )}
+            {contribution.confidence_breakdown?.weighted_score !== undefined && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                Weighted confidence: {(Number(contribution.confidence_breakdown.weighted_score) * 100).toFixed(1)}%
+              </Typography>
+            )}
+            {contribution.uncertainty_interval?.lower_95 !== undefined && contribution.uncertainty_interval?.upper_95 !== undefined && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                95% CI: {Number(contribution.uncertainty_interval.lower_95).toFixed(2)} - {Number(contribution.uncertainty_interval.upper_95).toFixed(2)}
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {/* Coupling arrows (coupled mode only) */}
+        {coupledMode && coupledResult?.coupling_map?.[theory.theory_id] && (
+          <Box sx={{ mb: 0.5 }}>
+            <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.65rem' }}>
+              <LinkIcon sx={{ fontSize: 12 }} /> Fed by:
+            </Typography>
+            {coupledResult.coupling_map[theory.theory_id].map((c: { source_id: string }) => (
+              <Chip
+                key={c.source_id}
+                label={`← ${c.source_id.replace(/_/g, ' ')}`}
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ fontSize: '0.55rem', height: 16, mr: 0.5, mb: 0.3 }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* MHD Parameter Dashboard (Bubble-MHD only) */}
+        {theory.theory_id === 'bubble_mhd_confinement' &&
+          contribution?.observables &&
+          Object.keys(contribution.observables).length > 0 && (
+            <MHDParameterDashboard observables={contribution.observables} />
+          )}
+
+        {/* References */}
+        {theory.references && theory.references.length > 0 && (
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              Refs: {theory.references.slice(0, 2).join('; ')}
+            </Typography>
+          </Box>
+        )}
+        {contribution?.falsification_conditions?.length ? (
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              Invalid if: {contribution.falsification_conditions[0]}
+            </Typography>
+          </Box>
+        ) : null}
+      </AccordionDetails>
+    </Accordion>
+  );
+}
 
 export default TheoryTogglePanel;

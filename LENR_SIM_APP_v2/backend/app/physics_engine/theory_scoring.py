@@ -28,6 +28,23 @@ W_SENSITIVITY = 0.15
 W_CROSS_THEORY = 0.15
 W_COMPLETENESS = 0.20
 
+# v0.3.6-beta claim-tier down-weighting.
+# Applied as a multiplicative factor on the final score so exploratory
+# cross-regime tracks (e.g. stellar-scaling) are visible in the output but
+# cannot silently dominate empirically-grounded LENR tracks.
+CLAIM_TIER_MULTIPLIER: Dict[str, float] = {
+    "validated_lenr_mechanism": 1.00,
+    "empirical_lenr_correlation": 0.90,
+    "speculative_exploratory": 0.30,
+    "cross_regime_extrapolation": 0.20,
+}
+
+
+def _claim_tier_multiplier(contrib: TheoryContribution) -> float:
+    """Return a bounded multiplier in (0, 1] from the contribution's claim tier."""
+    tier = getattr(contrib, "claim_tier", None) or "speculative_exploratory"
+    return float(CLAIM_TIER_MULTIPLIER.get(tier, CLAIM_TIER_MULTIPLIER["speculative_exploratory"]))
+
 
 # ---------------------------------------------------------------------------
 # Sub-score calculators
@@ -270,13 +287,18 @@ def compute_theory_scores(
         # Inapplicable theories get a neutral score rather than being
         # penalised by the full scoring pipeline with empty observables.
         if not contrib.is_applicable:
+            tier_multiplier = _claim_tier_multiplier(contrib)
+            raw_neutral = 0.5
             results[contrib.theory_id] = {
                 "physical_consistency": 0.5,
                 "experimental_agreement": 0.5,
                 "parameter_sensitivity": 0.5,
                 "cross_theory_agreement": 0.5,
                 "observables_completeness": 0.0,
-                "final_score": 0.5,
+                "final_score": round(raw_neutral * tier_multiplier, 4),
+                "raw_score_pre_tier": raw_neutral,
+                "claim_tier": getattr(contrib, "claim_tier", "speculative_exploratory"),
+                "claim_tier_multiplier": round(tier_multiplier, 4),
                 "confidence": 0.0,
                 "enhancement_factor": contrib.enhancement_factor,
                 "is_applicable": False,
@@ -302,7 +324,12 @@ def compute_theory_scores(
             (max(compl, FLOOR), W_COMPLETENESS),
         ]
         log_sum = sum(w * math.log(s) for s, w in scores)
-        final = math.exp(log_sum)
+        raw_final = math.exp(log_sum)
+
+        # Apply claim-tier multiplier so cross-regime / exploratory tracks
+        # are visible but cannot silently dominate LENR-grounded scores.
+        tier_multiplier = _claim_tier_multiplier(contrib)
+        final = raw_final * tier_multiplier
 
         results[contrib.theory_id] = {
             "physical_consistency": round(phys, 4),
@@ -311,6 +338,9 @@ def compute_theory_scores(
             "cross_theory_agreement": round(cross, 4),
             "observables_completeness": round(compl, 4),
             "final_score": round(final, 4),
+            "raw_score_pre_tier": round(raw_final, 4),
+            "claim_tier": getattr(contrib, "claim_tier", "speculative_exploratory"),
+            "claim_tier_multiplier": round(tier_multiplier, 4),
             "confidence": round(contrib.confidence, 4),
             "enhancement_factor": contrib.enhancement_factor,
             "is_applicable": contrib.is_applicable,

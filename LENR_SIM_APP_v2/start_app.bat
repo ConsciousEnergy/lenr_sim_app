@@ -19,9 +19,9 @@ start cmd /k "cd backend && venv\Scripts\activate && pip install -r requirements
 REM Wait a moment for backend to start
 timeout /t 5 /nobreak > nul
 
-REM Start Frontend
+REM Start Frontend (Vite honors both REACT_APP_API_URL and VITE_API_URL)
 echo Starting Frontend Development Server...
-start cmd /k "cd frontend && set REACT_APP_API_URL=http://localhost:8010 && npm install --legacy-peer-deps && npm start"
+start cmd /k "cd frontend && set REACT_APP_API_URL=http://localhost:8010 && set VITE_API_URL=http://localhost:8010 && npm install --legacy-peer-deps && npm start"
 
 echo.
 echo ========================================

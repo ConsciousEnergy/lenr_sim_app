@@ -1,0 +1,80 @@
+name: Scheduled Security Scan
+
+# Complements the push/PR audits in test.yml and the PR-only dependency-review:
+# this runs on a cadence so newly-disclosed CVEs against ALREADY-committed
+# dependencies are caught even when no code changes land. Also manually runnable.
+
+on:
+  schedule:
+    # Weekly, Mondays 13:00 UTC (aligns with the Dependabot Monday cadence).
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-audit:
+    name: Backend pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+
+      - name: Audit backend requirements
+        run: |
+          cd LENR_SIM_APP_v2/backend
+          set +e
+          pip-audit -r requirements.txt --desc > audit.txt 2>&1
+          code=$?
+          {
+            echo "## Backend pip-audit";
+            echo '```';
+            cat audit.txt;
+            echo '```';
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+
+  frontend-audit:
+    name: Frontend npm audit (high+)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm ci
+
+      - name: Audit frontend dependencies
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          set +e
+          npm audit --audit-level=high > audit.txt 2>&1
+          code=$?
+          {
+            echo "## Frontend npm audit (high and critical)";
+            echo '```';
+            cat audit.txt;
+            echo '```';
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code

@@ -1,7 +1,7 @@
 # LENR Simulation App - Deployment Quick Reference
 
-**Version:** 0.3.5-beta  
-**Last Updated:** March 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** May 2026
 
 ---
 
@@ -17,7 +17,7 @@ cd LENR_SIM_APP_v2/infrastructure/scripts
 ## Local Development Routing
 
 ```bash
-# Frontend (local dev server)
+# Frontend (Vite local dev server)
 http://localhost:3000
 
 # Backend API (docker compose host mapping)
@@ -25,7 +25,7 @@ http://localhost:8010/api/health
 http://localhost:8010/api/docs
 ```
 
-- Frontend is local in development (`npm start`), not served from Hostinger.
+- Frontend is local in development (`npm run dev` or `npm start`), not served from Hostinger.
 - Hostinger/Cloudflare is for production static frontend + public API.
 
 ---

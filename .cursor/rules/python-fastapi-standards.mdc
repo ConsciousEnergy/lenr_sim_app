@@ -1,0 +1,34 @@
+---
+description: Repo-specific FastAPI backend conventions for LENR_SIM_APP_v2 (Pydantic v2, env-gated routers, DI, contract stability)
+globs: LENR_SIM_APP_v2/backend/app/**/*.py
+alwaysApply: false
+---
+
+- **Global Python/FastAPI conventions still apply** (RORO, `async def` for I/O, `def` for pure/sync, type hints, guard clauses + early returns, files under ~300 lines). This rule adds only repo-specific specifics.
+
+- **Pydantic v2 API - no v1 leftovers in new code.**
+  ```python
+  # ✅ DO
+  model.model_dump()            # not model.dict()
+  model.model_validate(data)    # not Model.parse_obj(data)
+  field_validator, model_validator, ConfigDict
+  # ❌ DON'T: @validator, .dict(), .json(), parse_obj (legacy v1 still present in some files - migrate when touched)
+  ```
+
+- **Router placement.** New API surface goes under `app/api/routes/`; `app/routers/` is the legacy layout. Register in [main.py](mdc:LENR_SIM_APP_v2/backend/app/main.py) following the existing pattern.
+
+- **Environment-gate dev-only routers.** Never expose diagnostics/mock/fitting/logging routes in production.
+  ```python
+  if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+      app.include_router(diagnostics_router, prefix="/api/diagnostics", tags=["Diagnostics (Dev)"])
+  ```
+
+- **Config via `LENR_`-prefixed settings.** Read config through `get_settings()` (Pydantic Settings, `env_prefix="LENR_"`); never read `os.environ` ad hoc in routes. Environments are `development | test | production` (`EnvironmentType`).
+
+- **Use dependency injection, not module globals.** Inject shared resources via `Depends` from [core/dependencies.py](mdc:LENR_SIM_APP_v2/backend/app/core/dependencies.py) (`get_physics_components`, `get_fusion_calculator`, service factories) and `get_db_session()` for DB.
+
+- **Preserve API contracts (additive-only).** Keep `contract_version` and `schema_version` (`lenr-run-export-v1`) responses backward-compatible; add optional request fields with legacy-preserving defaults and build new response blocks defensively (return `{}` on failure so the core response never breaks). See [scientific-rigor-provenance.mdc](mdc:.cursor/rules/scientific-rigor-provenance.mdc) and the `api-contract-tester` skill.
+
+- **Tests via `TestClient` against `app.main:app`.** Lazy-import the app inside the fixture so `tests/conftest.py` env setup (`LENR_ENVIRONMENT=test`) applies first. Mark tests with the `pytest.ini` markers (`unit`, `integration`, `physics`, `api`, ...).
+
+- **No mock/fake data in dev or prod code paths** - mocking is test-only.

@@ -1,6 +1,15 @@
 """
 Unified LENR Model - Comprehensive Physics Implementation
 
+.. deprecated:: v0.3.6-beta
+    DEPRECATED legacy monolith (RR-014). The canonical implementation is the
+    ``unified_lenr_model/`` **package** (config.py, model.py, cross_sections.py,
+    screening.py, enhancements.py, reaction_rate_engine.py, ...). Because a
+    package directory of the same name exists alongside this file, Python
+    imports resolve to the package and this module is shadowed/unused. It is
+    retained only for historical reference and will be removed in a future
+    release. Do NOT add new code here; edit the package modules instead.
+
 Implements the theoretical framework from:
 "A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions"
 

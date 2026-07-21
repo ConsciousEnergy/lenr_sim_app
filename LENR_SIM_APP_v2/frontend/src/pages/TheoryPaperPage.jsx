@@ -7,7 +7,7 @@
  * For beta launch on www.conscious.energy - accessible to all visitors for contribution and review.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -47,6 +47,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
 import ReferencesSection from './theory-paper/ReferencesSection';
 import OpenChallengesSection from '../components/OpenChallengesSection';
+import { track } from '../analytics/events';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -66,6 +67,10 @@ const TheoryPaperPage = () => {
   const theme = useTheme();
   const [expandedSection, setExpandedSection] = useState('abstract');
   const [tabValue, setTabValue] = useState(0);
+
+  useEffect(() => {
+    track.docsViewed({ slug: 'theory-paper', source: 'theory-paper' });
+  }, []);
 
   const handleChange = (section) => (event, isExpanded) => {
     setExpandedSection(isExpanded ? section : false);
@@ -96,24 +101,31 @@ const TheoryPaperPage = () => {
             Integrating Quantum, Nuclear, and Condensed Matter Phenomena
           </Typography>
           
-          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3, mb: 2 }}>
-            <Chip 
-              label="Authors: Diadon Acs, LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Gemini 2.5, Gemini 3.0, AI Assistant" 
-              size="small" 
-              color="primary" 
-              variant="outlined"
-            />
-            <Chip 
-              label="Organization: Conscious Energies" 
-              size="small" 
-              color="secondary" 
-              variant="outlined"
-            />
-            <Chip 
-              label="Date: 02-14-2026" 
-              size="small" 
-              variant="outlined"
-            />
+          <Box sx={{ mt: 3, mb: 2, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Authors</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences:
+              LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8,
+              Gemini 2.5, Gemini 3.0. See the Author Contributions &amp; AI Assistance statement below.
+            </Typography>
+            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
+              <Chip
+                label="Organization: Conscious Energies"
+                size="small"
+                color="secondary"
+                variant="outlined"
+              />
+              <Chip
+                label="Date: 2026-02-14 (revised 2026-06-06, v0.3.6-beta)"
+                size="small"
+                variant="outlined"
+              />
+            </Stack>
+          </Box>
+          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
+            <Chip label="Established Physics" size="small" color="success" variant="outlined" />
+            <Chip label="Empirical LENR Correlation" size="small" color="warning" variant="outlined" />
+            <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
           </Stack>
 
           <Alert severity="info" sx={{ mt: 3, textAlign: 'left' }}>
@@ -123,6 +135,24 @@ const TheoryPaperPage = () => {
               Sections marked with <CheckCircleIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /> have been 
               reviewed and corrected. Sections marked with <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /> 
               include enhancements added during review.
+            </Typography>
+          </Alert>
+
+          <Alert severity="warning" sx={{ mt: 2, textAlign: 'left' }}>
+            <AlertTitle><strong>Author Contributions &amp; AI Assistance</strong></AlertTitle>
+            <Typography variant="body2" paragraph>
+              <strong>Diadon Acs</strong> (Conscious Energies) directs this research, sets its scientific
+              direction, and is solely accountable for its content, claims, and conclusions. The listed
+              Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families) assisted with
+              literature compilation, mathematical derivation and verification, simulation code, and manuscript
+              drafting under the human author's direction and review.
+            </Typography>
+            <Typography variant="body2">
+              Listing AI systems as contributors is unconventional and not accepted by all venues; it is
+              disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather
+              than to assert independent agency or authorship rights. All AI-assisted derivations were
+              checked by the human author, and every quantitative claim is governed by the claim-tier and
+              evidence-class labels described above and in the Reaction-Rate Engine governance panel.
             </Typography>
           </Alert>
 
@@ -548,6 +578,9 @@ const TheoryPaperPage = () => {
               {/* 2.4 Storms' Hydroton / NAE */}
               <Box sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>2.4 Storms' Hydroton and Nuclear Active Environment (NAE)</Typography>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    Hydroton is deprecated for default runtime scoring in v0.3.6-beta and retained only as legacy/archival context.
+                  </Alert>
                   <Typography variant="body2" paragraph>
                     Edmund Storms proposes that LENR occurs within specific Nuclear Active Environments (NAE) — nano-scale cracks (~1 nm width) in metallic surfaces formed through repeated hydrogen loading/unloading cycles. Within these NAE sites, hydrogen atoms form the <strong>Hydroton</strong>: a linear covalent H-e-H-e-H chain (related to Rydberg matter and metallic hydrogen) that undergoes resonance-driven fusion.
                   </Typography>
@@ -648,8 +681,9 @@ const TheoryPaperPage = () => {
                   </Typography>
                 </Paper>
                 <Typography variant="body1" paragraph>
-                  Under LENR conditions, combined effects of electron screening, phonon coupling, and QED enhancement 
-                  can increase tunneling probability by factors of 10³ to 10⁸.
+                  Under LENR conditions, combined effects of electron screening, phonon coupling, and QED enhancement
+                  can increase tunneling probability by factors of 10³ to 10⁵ (revised downward from earlier 10⁸
+                  estimates; consistent with the abstract and issue-ledger item IL-002).
                 </Typography>
 
                 <Alert severity="info" sx={{ mt: 2 }}>
@@ -1011,6 +1045,59 @@ const TheoryPaperPage = () => {
                 Dennis Letts and Dennis Cravens showed that irradiating loaded Pd cathodes with two lasers at specific frequencies (producing a beat frequency matching the Pd phonon spectrum) triggers excess heat production. This provides a controlled triggering mechanism for LENR, modeled through phonon-mode coupling.
               </Typography>
 
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                2026 Rigor-Review Additions
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.12 KG-RP Harmonic Locking (Mulnix 2026)</Typography>
+              <Typography variant="body2" paragraph>
+                The Klein-Gordon / Rayleigh-Plesset (KG-RP) harmonic-locking framework (Mulnix, 2026,
+                doi:10.5281/zenodo.19079074) treats sonoluminescent bubble collapse as a driven field that can
+                lock to integer harmonics of the acoustic drive. In this app it is implemented as a
+                <em> diagnostic and hypothesis layer</em> (<code>cavitation_kgrp.py</code>) on top of the existing
+                Rayleigh-Plesset solver: it reports the collapse/drive locking ratio, nearest-integer harmonic,
+                detuning, and dimensionless compression/Mach invariants without altering the collapse dynamics or
+                reaction-rate magnitude. Surfaced on <code>/unified-theory</code> (Results tab). <em>Claim tier:
+                speculative_exploratory.</em>
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.13 Shell-Structure Nucleon Pairing (Nguyen et al., Nature 2026)</Typography>
+              <Typography variant="body2" paragraph>
+                Nguyen et al. (Nature, 2026, doi:10.1038/s41586-026-10616-2) report that proton-neutron pairing is
+                organized by nuclear shell structure. We use this only as a <em>relative branching prior</em>
+                (<code>shell_pairing_prior.py</code>): among already-allowed transmutation products, even-even and
+                magic-number (doubly-magic He-4) channels are structurally favoured. This re-weights product
+                channels for explanatory purposes and never changes any reaction rate, Q-value, or absolute number
+                of reactions. <em>Claim tier: speculative_exploratory.</em>
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.14 Reaction-Rate Engine &amp; Uncertainty Quantification</Typography>
+              <Typography variant="body2" paragraph>
+                The reaction-rate engine (<code>unified_lenr_model/reaction_rate_engine.py</code>) exposes two
+                explicitly labelled formalisms so the conservative baseline and the speculative CMNS rate never
+                silently replace one another: a <strong>two-body</strong> textbook thermonuclear rate
+                (0.5·n²·⟨σv⟩·P, <em>claim tier: validated_lenr_mechanism</em>, reported as a lower bound) and a
+                <strong> trapped-state</strong> Fermi's-golden-rule / TSC rate evaluated at sub-picometre cluster
+                separation (Takahashi 2016; <em>claim tier: speculative_exploratory</em>). Optional Sobol/Bayesian
+                uncertainty quantification (<code>reaction_rate_uq.py</code>) propagates input priors to a
+                predictive/credible interval (p05-p95) with a variance-based sensitivity ranking, optionally
+                anchored to an experimental rate band.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.15 Stellar-Scaling MHD &amp; the MeV-Gap Down-Conversion Hypothesis</Typography>
+              <Typography variant="body2" paragraph>
+                A cross-regime <code>stellar_scaling_mhd</code> comparison track is included as a strictly
+                down-weighted context line (applicable only at <em>T ≥ 10⁶ K, B ≥ 10⁴ T, n ≥ 10²⁴ m⁻³</em>) so
+                stellar-scaling intuition is visible but cannot dominate LENR-grounded tracks
+                (<em>claim tier: speculative_exploratory; evidence class: cross_regime_extrapolation</em>). The
+                open <strong>MeV-gap problem</strong> — how a ~24 MeV nuclear release fragments into lattice
+                excitations without hard radiation — is treated as a <em>falsifiable hypothesis</em>: KG-RP
+                harmonic locking is proposed as a necessary-not-sufficient condition for coherent down-conversion
+                (see <code>docs/REVIEW_2026/MEV_GAP_HYPOTHESIS.md</code>), not as an established result.
+              </Typography>
+
               <Typography variant="h6" sx={{ mt: 3, color: 'primary.main' }}>Theory-to-Simulation Mapping</Typography>
               <Typography variant="body2" component="div">
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
@@ -1025,7 +1112,7 @@ const TheoryPaperPage = () => {
                     {[
                       ['2.1 Rydberg / Screening', 'electron_screening', '/unified-theory'],
                       ['2.3 Double-Layer QED', 'coherent_qed', '/unified-theory'],
-                      ['2.4 Hydroton / NAE', 'hydroton, nae_model', '/unified-theory'],
+                      ['2.4 Hydroton / NAE', 'nae_model (hydroton: legacy/deprecated)', '/unified-theory'],
                       ['2.5 Casimir', 'casimir_confinement', '/unified-theory?tab=casimir'],
                       ['2.6 BEC / Kim', 'kim_bec', '/unified-theory'],
                       ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips', '/unified-theory'],
@@ -1041,6 +1128,10 @@ const TheoryPaperPage = () => {
                       ['6.9 Piantelli Ni-H', 'piantelli_ni_h', '/unified-theory'],
                       ['6.10 Iwamura', 'iwamura_transmutation', '/unified-theory'],
                       ['6.11 Letts Laser', 'letts_laser', '/unified-theory'],
+                      ['6.12 KG-RP Harmonic Locking', 'kgrp_harmonic_locking', '/unified-theory (Results)'],
+                      ['6.13 Shell-Pairing Prior', 'shell_pairing_prior', '/unified-theory (Results)'],
+                      ['6.14 Reaction-Rate Engine + UQ', 'reaction_rate_engine / reaction_rate_uq', '/unified-theory (Results)'],
+                      ['6.15 Stellar-Scaling MHD', 'stellar_scaling_mhd', '/unified-theory'],
                     ].map(([section, moduleId, page], i) => (
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                         <td style={{ padding: '4px 8px', fontSize: '0.85rem' }}>{section}</td>

@@ -30,7 +30,9 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -44,6 +46,9 @@ import DownloadIcon from '@mui/icons-material/Download';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ShareIcon from '@mui/icons-material/Share';
 import SaveIcon from '@mui/icons-material/Save';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
@@ -55,8 +60,13 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { usePhysics } from '../contexts/PhysicsContext';
 import { resolveApiUrl } from '../config/api';
 import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
+import ReactionRateGovernancePanel from '../components/physics/ReactionRateGovernancePanel';
+import GovernanceGlossaryDrawer from '../components/physics/GovernanceGlossaryDrawer';
+import { deriveSimulationHeadlineState } from '../utils/simulationDerivedState';
+import { track } from '../analytics/events';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
+const UNIFIED_SIMULATE_ENDPOINT = '/api/unified/simulate';
 
 // System presets
 const SYSTEM_PRESETS = {
@@ -74,6 +84,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'li',
+    electrolyteSpecies: 'lioh',
+    electrolyteMolarityMolL: 0.3,
   },
   ni_h: {
     name: 'Nickel-Hydrogen',
@@ -89,6 +102,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'k',
+    electrolyteSpecies: 'koh',
+    electrolyteMolarityMolL: 0.35,
   },
   ti_d: {
     name: 'Titanium-Deuterium',
@@ -104,6 +120,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'na',
+    electrolyteSpecies: 'naoh',
+    electrolyteMolarityMolL: 0.25,
   },
   pd_h: {
     name: 'Palladium-Hydrogen',
@@ -119,6 +138,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'li',
+    electrolyteSpecies: 'lioh',
+    electrolyteMolarityMolL: 0.3,
   },
   ni_d: {
     name: 'Nickel-Deuterium',
@@ -134,6 +156,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'k',
+    electrolyteSpecies: 'k2co3',
+    electrolyteMolarityMolL: 0.3,
   },
   li_h: {
     name: 'Lithium-Hydrogen',
@@ -149,6 +174,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'li',
+    electrolyteSpecies: 'li2co3',
+    electrolyteMolarityMolL: 0.4,
   },
   zro2_pd: {
     name: 'ZrO2-Pd',
@@ -164,6 +192,9 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 8e-9,
     grainSize: 20e-9,
     numCycles: 2,
+    electrolyteFamily: 'li',
+    electrolyteSpecies: 'lioh',
+    electrolyteMolarityMolL: 0.3,
   },
   custom: {
     name: 'Custom Configuration',
@@ -179,7 +210,45 @@ const SYSTEM_PRESETS = {
     surfaceRoughness: 5e-9,
     grainSize: 50e-9,
     numCycles: 2,
+    electrolyteFamily: 'li',
+    electrolyteSpecies: 'lioh',
+    electrolyteMolarityMolL: 0.3,
   }
+};
+
+const DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY = {
+  li: 'lioh',
+  na: 'naoh',
+  k: 'koh',
+  rb: 'other',
+  cs: 'other',
+  mixed: 'mixed',
+  other: 'other',
+};
+
+const ELECTROLYTE_SPECIES_BY_FAMILY = {
+  li: [
+    { value: 'lioh', label: 'LiOH (hydroxide)' },
+    { value: 'li2co3', label: 'Li2CO3 (carbonate)' },
+  ],
+  na: [
+    { value: 'naoh', label: 'NaOH (hydroxide)' },
+    { value: 'na2co3', label: 'Na2CO3 (carbonate)' },
+  ],
+  k: [
+    { value: 'koh', label: 'KOH (hydroxide)' },
+    { value: 'k2co3', label: 'K2CO3 (carbonate)' },
+  ],
+  rb: [{ value: 'other', label: 'Other Rb species (low support)' }],
+  cs: [{ value: 'other', label: 'Other Cs species (low support)' }],
+  mixed: [{ value: 'mixed', label: 'Mixed electrolyte blend' }],
+  other: [{ value: 'other', label: 'Other / custom species' }],
+};
+
+const resolveElectrolyteSpecies = (family, species) => {
+  const normalizedFamily = (family || 'other').toLowerCase();
+  if (species) return species.toLowerCase();
+  return DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY[normalizedFamily] || 'other';
 };
 
 // Proton phase colors for charts
@@ -216,6 +285,13 @@ const ENHANCEMENT_THRESHOLDS = {
 // Regime max temperatures (K) from physics/bubble_collapse: single_bubble~1e4
 const REGIME_MAX_TEMPERATURE_K = 1e4;
 
+const CONTRADICTION_REASON_LABELS = {
+  threshold_boundary: 'Threshold boundary mismatch between enhancement cap and proton phase assignment.',
+  missing_phase_data: 'Phase model did not provide a NUCLEAR share for this run.',
+  inconsistent_mode: 'Input consistency or mode assumptions are incompatible with this prediction.',
+  none: 'No contradiction detected.',
+};
+
 /**
  * Enhancement Progress Indicator Component
  * Shows progress toward nuclear-active enhancement levels
@@ -251,7 +327,7 @@ function EnhancementIndicator({ simulationData, parameters }) {
     }
     
     // Get top contributing mechanisms
-    const breakdown = simulationData.enhancement_breakdown || {};
+    const breakdown = simulationData.peak_conditions?.enhancement_breakdown || {};
     const mechanisms = Object.entries(breakdown)
       .filter(([k, v]) => k !== 'total' && v > 1)
       .sort((a, b) => b[1] - a[1])
@@ -361,13 +437,21 @@ function EnhancementIndicator({ simulationData, parameters }) {
 
 function UnifiedTheoryPage() {
   const [searchParams] = useSearchParams();
-  const { setSimulationResult } = usePhysics();
+  const { setSimulationResult, theoryResult } = usePhysics();
   // State management
   const [selectedSystem, setSelectedSystem] = useState('pd_d');
   const [parameters, setParameters] = useState(SYSTEM_PRESETS.pd_d);
   const [simulationData, setSimulationData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  // Reaction-rate engine / UQ controls (v0.3.6-beta). Defaults mirror the
+  // backend: conservative two_body mode, no UQ. uncertaintySamples is capped to
+  // keep the additive request within deployment timeout budgets.
+  const [rateMode, setRateMode] = useState('two_body');
+  const [includeUncertainty, setIncludeUncertainty] = useState(false);
+  const [uncertaintySamples, setUncertaintySamples] = useState(256);
+  const [randomSeed, setRandomSeed] = useState('');
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   // Sync active tab and system from URL params on mount and when searchParams change
   useEffect(() => {
@@ -389,6 +473,7 @@ function UnifiedTheoryPage() {
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [isSaving, setIsSaving] = useState(false);
+  const derivedState = deriveSimulationHeadlineState({ simulationData, theoryResult });
   
   // Save simulation results to analytics database (v0.2.3-beta)
   const saveToAnalytics = useCallback(async () => {
@@ -414,6 +499,12 @@ function UnifiedTheoryPage() {
           reactant: parameters.reactant,
           initial_bubble_radius: parameters.initialBubbleRadius,
           selected_system: selectedSystem,
+          electrolyte_family: parameters.electrolyteFamily || 'li',
+          electrolyte_species: resolveElectrolyteSpecies(
+            parameters.electrolyteFamily || 'li',
+            parameters.electrolyteSpecies,
+          ),
+          electrolyte_molarity_mol_l: parameters.electrolyteMolarityMolL || 0.3,
         },
         enhancement_factor: simulationData.peak_conditions?.enhancement_factor || 1,
         fusion_rate: simulationData.peak_conditions?.fusion_rate,
@@ -421,7 +512,10 @@ function UnifiedTheoryPage() {
         duration_seconds: (simulationData.enhancement_timeline?.length || 0) * 0.001,
         results: {
           peak_conditions: simulationData.peak_conditions,
-          enhancement_breakdown: simulationData.enhancement_breakdown,
+          enhancement_breakdown:
+            simulationData.peak_conditions?.enhancement_breakdown ||
+            simulationData.enhancement_breakdown ||
+            {},
           lawson_progress: simulationData.lawson_criterion_progress,
         },
       };
@@ -450,6 +544,14 @@ function UnifiedTheoryPage() {
 
   // Handle parameter changes
   const handleParameterChange = useCallback((param, value) => {
+    if (param === 'electrolyteFamily') {
+      setParameters(prev => ({
+        ...prev,
+        electrolyteFamily: value,
+        electrolyteSpecies: resolveElectrolyteSpecies(value, null),
+      }));
+      return;
+    }
     setParameters(prev => ({ ...prev, [param]: value }));
   }, []);
 
@@ -457,6 +559,13 @@ function UnifiedTheoryPage() {
   const runSimulation = useCallback(async () => {
     setIsLoading(true);
     setAlertOpen(false);
+    const simStartedAt = Date.now();
+    track.simulationStarted({
+      sim_type: 'bubble_lattice',
+      host_material: parameters.hostMaterial,
+      reactant: parameters.reactant,
+      rate_mode: rateMode,
+    });
     
     try {
       // Validate parameters before sending
@@ -475,6 +584,16 @@ function UnifiedTheoryPage() {
       
       // Try real physics API via canonical endpoint (dev proxy / explicit prod base)
       const apiUrl = resolveApiUrl(BUBBLE_LATTICE_ENDPOINT);
+      const electrolyteFamily = parameters.electrolyteFamily || 'li';
+      const electrolyteSpecies = resolveElectrolyteSpecies(electrolyteFamily, parameters.electrolyteSpecies);
+      const electrolyteMolarity = parameters.electrolyteMolarityMolL || 0.3;
+      const electrolyteSolventType = parameters.electrolyteSolventType || 'd2o';
+      const electrolytePhProxy = typeof parameters.electrolytePhProxy === 'number'
+        ? Math.max(0, Math.min(14, parameters.electrolytePhProxy))
+        : null;
+      const electrolyteIonicStrengthProxy = typeof parameters.electrolyteIonicStrengthProxy === 'number'
+        ? Math.max(0, parameters.electrolyteIonicStrengthProxy)
+        : null;
       const requestPayload = {
         bubble: {
           initial_radius_um: parameters.initialBubbleRadius * 3.33,
@@ -490,9 +609,29 @@ function UnifiedTheoryPage() {
           loading_ratio: parameters.loadingRatio,
           defect_density: parameters.defectDensity || 1e16,
           surface_roughness: parameters.surfaceRoughness || 5e-9,
-          grain_size: parameters.grainSize || 50e-9
+          grain_size: parameters.grainSize || 50e-9,
+          electrolyte_family: electrolyteFamily,
+          electrolyte_species: electrolyteSpecies,
+          electrolyte_molarity_mol_l: electrolyteMolarity,
+          solvent_type: electrolyteSolventType,
+          ph_proxy: electrolytePhProxy,
+          ionic_strength_proxy: electrolyteIonicStrengthProxy,
         },
-        num_cycles: parameters.numCycles || 2
+        electrolyte: {
+          family: electrolyteFamily,
+          species: electrolyteSpecies,
+          molarity_mol_l: electrolyteMolarity,
+          solvent_type: electrolyteSolventType,
+          ph_proxy: electrolytePhProxy,
+          ionic_strength_proxy: electrolyteIonicStrengthProxy,
+        },
+        num_cycles: parameters.numCycles || 2,
+        // Additive reaction-rate engine / UQ controls (v0.3.6-beta).
+        rate_mode: rateMode,
+        include_uncertainty: includeUncertainty,
+        uncertainty_samples: uncertaintySamples,
+        random_seed:
+          randomSeed === '' || randomSeed === null ? null : Number(randomSeed),
       };
 
       const response = await fetch(apiUrl, {
@@ -505,6 +644,12 @@ function UnifiedTheoryPage() {
         const data = await response.json();
         setSimulationData(data);
         setSimulationResult(data);
+        track.simulationCompleted({
+          sim_type: 'bubble_lattice',
+          success: true,
+          route_mode: data.validation?.route_mode || 'api',
+          duration_ms: Date.now() - simStartedAt,
+        });
         setAlertMessage('Simulation completed with real physics calculations');
         setAlertSeverity('success');
       } else {
@@ -558,6 +703,12 @@ function UnifiedTheoryPage() {
         const mockData = generateLocalResults(parameters);
         setSimulationData(mockData);
         setSimulationResult(mockData);
+        track.simulationCompleted({
+          sim_type: 'bubble_lattice',
+          success: true,
+          route_mode: 'local_fallback',
+          duration_ms: Date.now() - simStartedAt,
+        });
         
         // Provide specific user-friendly messages based on error type
         if (isConnectionRefused || isNetworkError) {
@@ -592,13 +743,23 @@ function UnifiedTheoryPage() {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters, setSimulationResult]);
+  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {
     const baseEnhancement = params.loadingRatio > 0.9 ? 1e5 : 1e3;
     const tempFactor = Math.exp(-Math.abs(params.temperature - 400) / 500);
     const compressionRatio = 1 + params.drivingPressure * 5;
+    const electrolyteFamily = params.electrolyteFamily || 'li';
+    const electrolyteSpecies = resolveElectrolyteSpecies(electrolyteFamily, params.electrolyteSpecies);
+    const electrolyteMolarity = params.electrolyteMolarityMolL || 0.3;
+    const electrolyteSolventType = params.electrolyteSolventType || 'd2o';
+    const electrolytePhProxy = typeof params.electrolytePhProxy === 'number'
+      ? Math.max(0, Math.min(14, params.electrolytePhProxy))
+      : null;
+    const electrolyteIonicStrengthProxy = typeof params.electrolyteIonicStrengthProxy === 'number'
+      ? Math.max(0, params.electrolyteIonicStrengthProxy)
+      : null;
     
     // Generate timeline data
     const timeline = [];
@@ -632,6 +793,7 @@ function UnifiedTheoryPage() {
         normalized_time: t,
         phase,
         enhancement,
+        electrolyte_multiplier: 1.0,
         radius_factor: radiusFactor,
         temperature: params.temperature * (1 + (1 / radiusFactor - 1) * 0.3),
         proton_distribution: {
@@ -661,11 +823,51 @@ function UnifiedTheoryPage() {
         NUCLEAR: 0.1
       },
       enhancement_timeline: timeline,
+      electrolyte_diagnostics: {
+        electrolyte_family: electrolyteFamily,
+        electrolyte_species: electrolyteSpecies,
+        electrolyte_molarity_mol_l: electrolyteMolarity,
+        solvent_type: electrolyteSolventType,
+        ph_proxy: electrolytePhProxy,
+        ionic_strength_proxy: electrolyteIonicStrengthProxy,
+        activity_multiplier: 1.0,
+        support_level: electrolyteMolarity > 1.0 ? 'soft_extrapolation' : 'validated',
+        species_family_consistent: true,
+      },
       peak_conditions: {
         temperature_k: cappedTempK,
         pressure_gpa: 0.1 * compressionRatio ** 4,
-        enhancement_factor: baseEnhancement * tempFactor
-      }
+        enhancement_factor: baseEnhancement * tempFactor,
+        electrolyte_multiplier: 1.0,
+        electrolyte_family: electrolyteFamily,
+        electrolyte_species: electrolyteSpecies,
+        electrolyte_molarity_mol_l: electrolyteMolarity,
+      },
+      regime_validity_flags: {
+        electrolyte_molarity_validated_window: electrolyteMolarity <= 1.0,
+        electrolyte_molarity_soft_window: electrolyteMolarity > 1.0 && electrolyteMolarity <= 2.0,
+        electrolyte_species_family_consistent: true,
+      },
+      unsupported_extrapolation_flags: {
+        electrolyte_molarity_outside_supported_range: electrolyteMolarity > 2.0,
+        inconsistent_electrolyte_species_family: false,
+      },
+      validation: {
+        route_mode: 'local_fallback',
+        contradiction: false,
+        contradiction_reason_code: 'none',
+      },
+      observables_bridge: {
+        electrolyte_family: electrolyteFamily,
+        electrolyte_species: electrolyteSpecies,
+        electrolyte_molarity_mol_l: electrolyteMolarity,
+        electrolyte_solvent_type: electrolyteSolventType,
+        electrolyte_ph_proxy: electrolytePhProxy,
+        electrolyte_ionic_strength_proxy: electrolyteIonicStrengthProxy,
+      },
+      // Local fallback has no governed reaction-rate engine; the panel renders a
+      // clear "no output" state rather than fabricating numbers (dev/offline only).
+      reaction_rate_engine: {},
     };
   };
 
@@ -684,11 +886,17 @@ function UnifiedTheoryPage() {
   // Prepare chart data
   const getEnhancementChartData = () => {
     if (!simulationData?.enhancement_timeline) return [];
+    const baseRadiusUm = (parameters.initialBubbleRadius || 10) * 3.33;
     return simulationData.enhancement_timeline.map(point => ({
       time: (point.normalized_time * 100).toFixed(0) + '%',
       enhancement: Math.log10(Math.max(1, point.enhancement)),
-      temperature: point.temperature,
-      radius: point.radius_factor * 100
+      electrolyteMultiplier: point.electrolyte_multiplier || simulationData.electrolyte_diagnostics?.activity_multiplier || 1.0,
+      temperature: point.temperature_k ?? point.temperature,
+      radius: point.radius_factor
+        ? point.radius_factor * 100
+        : point.radius_um
+          ? (point.radius_um / Math.max(baseRadiusUm, 0.001)) * 100
+          : 100
     }));
   };
 
@@ -710,10 +918,22 @@ function UnifiedTheoryPage() {
     }
     
     const exportData = {
+      schema_version: 'lenr-run-export-v1',
       exported_at: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
       simulation_parameters: parameters,
       system_preset: selectedSystem,
-      results: simulationData
+      // Reproducibility/provenance: the exact rate-engine controls used for the
+      // run, surfaced at top level so an exported file is self-describing.
+      reaction_rate_controls: {
+        rate_mode: rateMode,
+        include_uncertainty: includeUncertainty,
+        uncertainty_samples: uncertaintySamples,
+        random_seed: randomSeed === '' || randomSeed === null ? null : Number(randomSeed),
+      },
+      reaction_rate_engine: simulationData.reaction_rate_engine || {},
+      route_mode: simulationData.validation?.route_mode || 'unknown',
+      results: simulationData,
     };
     
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -725,11 +945,17 @@ function UnifiedTheoryPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    track.exportDownloaded({
+      schema_version: 'lenr-run-export-v1',
+      format: 'json',
+      route_mode: simulationData.validation?.route_mode || 'unknown',
+      success: true,
+    });
     
     setAlertMessage('Simulation data exported successfully');
     setAlertSeverity('success');
     setAlertOpen(true);
-  }, [simulationData, parameters, selectedSystem]);
+  }, [simulationData, parameters, selectedSystem, rateMode, includeUncertainty, uncertaintySamples, randomSeed]);
 
   // Export simulation results as CSV
   const exportAsCSV = useCallback(() => {
@@ -791,11 +1017,15 @@ function UnifiedTheoryPage() {
     const timelineRows = timeline.map(entry => {
       const breakdown = entry.enhancement_breakdown || {};
       const protons = entry.proton_distribution || {};
+      const freeFraction = protons.FREE ?? protons.free;
+      const screenedFraction = protons.SCREENED ?? protons.screened;
+      const captureReadyFraction = protons.CAPTURE_READY ?? protons.capture_ready;
+      const nuclearFraction = protons.NUCLEAR ?? protons.nuclear;
       return [
         entry.normalized_time?.toFixed(4) || '',
         entry.phase || '',
-        entry.radius_um?.toFixed(4) || '',
-        entry.temperature_k?.toFixed(1) || '',
+        entry.radius_um?.toFixed(4) || (entry.radius_factor ? (entry.radius_factor * 3.33).toFixed(4) : ''),
+        entry.temperature_k?.toFixed(1) || entry.temperature?.toFixed(1) || '',
         entry.pressure_bar?.toFixed(1) || '',
         entry.enhancement?.toExponential(4) || '',
         breakdown.screening?.toExponential(4) || '',
@@ -805,10 +1035,10 @@ function UnifiedTheoryPage() {
         breakdown.rydberg?.toExponential(4) || '',
         breakdown.compression?.toExponential(4) || '',
         breakdown.loading?.toExponential(4) || '',
-        protons.free?.toFixed(4) || '',
-        protons.screened?.toFixed(4) || '',
-        protons.capture_ready?.toFixed(4) || '',
-        protons.nuclear?.toFixed(4) || ''
+        freeFraction?.toFixed(4) || '',
+        screenedFraction?.toFixed(4) || '',
+        captureReadyFraction?.toFixed(4) || '',
+        nuclearFraction?.toFixed(4) || ''
       ].join(',');
     });
     
@@ -900,15 +1130,26 @@ function UnifiedTheoryPage() {
               Electrodynamic ionic double-layer bubble collapse onto lattice-loaded materials with proton phase transitions
             </Typography>
           </Box>
-          <Button
-            component={RouterLink}
-            to="/theory"
-            variant="outlined"
-            startIcon={<MenuBookIcon />}
-            sx={{ whiteSpace: 'nowrap' }}
-          >
-            View Theory Paper
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Tooltip title="Governance glossary: claim tiers & evidence classes">
+              <IconButton
+                onClick={() => setGlossaryOpen(true)}
+                aria-label="Open governance glossary"
+                color="primary"
+              >
+                <HelpOutlineIcon />
+              </IconButton>
+            </Tooltip>
+            <Button
+              component={RouterLink}
+              to="/theory"
+              variant="outlined"
+              startIcon={<MenuBookIcon />}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              View Theory Paper
+            </Button>
+          </Stack>
         </Box>
       </Box>
 
@@ -931,6 +1172,112 @@ function UnifiedTheoryPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {SYSTEM_PRESETS[selectedSystem].description}
         </Typography>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle2" gutterBottom>Electrolyte System</Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Family</InputLabel>
+              <Select
+                value={parameters.electrolyteFamily || 'li'}
+                label="Family"
+                onChange={(e) => handleParameterChange('electrolyteFamily', e.target.value)}
+                disabled={isLoading}
+              >
+                <MenuItem value="li">Li</MenuItem>
+                <MenuItem value="na">Na</MenuItem>
+                <MenuItem value="k">K</MenuItem>
+                <MenuItem value="rb">Rb (low support)</MenuItem>
+                <MenuItem value="cs">Cs (low support)</MenuItem>
+                <MenuItem value="mixed">Mixed</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Species</InputLabel>
+              <Select
+                value={resolveElectrolyteSpecies(parameters.electrolyteFamily || 'li', parameters.electrolyteSpecies)}
+                label="Species"
+                onChange={(e) => handleParameterChange('electrolyteSpecies', e.target.value)}
+                disabled={isLoading}
+              >
+                {(ELECTROLYTE_SPECIES_BY_FAMILY[parameters.electrolyteFamily || 'li'] || ELECTROLYTE_SPECIES_BY_FAMILY.other).map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Typography variant="caption" color="text.secondary">
+              Electrolyte Molarity: {(parameters.electrolyteMolarityMolL || 0.3).toFixed(2)} mol/L
+            </Typography>
+            <Slider
+              value={parameters.electrolyteMolarityMolL || 0.3}
+              onChange={(_, v) => handleParameterChange('electrolyteMolarityMolL', v)}
+              min={0.01}
+              max={2.0}
+              step={0.01}
+              disabled={isLoading}
+              size="small"
+            />
+            {(() => {
+              // Real-time support-level indicator mirroring the backend's
+              // scientific_guardrails thresholds (VALIDATED / SOFT_EXTRAPOLATION
+              // / unsupported) and ELECTROLYTE_EVIDENCE_WEIGHT family weights.
+              const molarity = parameters.electrolyteMolarityMolL || 0.3;
+              const family = parameters.electrolyteFamily || 'li';
+              const FAMILY_WEIGHTS = {
+                li: 1.0, na: 0.82, k: 0.76, rb: 0.45, cs: 0.4, mixed: 0.7, other: 0.55,
+              };
+              let level = 'validated';
+              let color = 'success';
+              let message = 'Within validated 0.01–1.00 mol/L window.';
+              if (molarity > 2.0) {
+                level = 'unsupported';
+                color = 'error';
+                message = 'Outside supported range (> 2.0 mol/L). Confidence penalties apply.';
+              } else if (molarity > 1.0) {
+                level = 'soft extrapolation';
+                color = 'warning';
+                message = 'Soft extrapolation window (1.0–2.0 mol/L). Results less trustworthy.';
+              } else if (molarity < 0.01) {
+                level = 'unsupported';
+                color = 'error';
+                message = 'Below supported minimum (0.01 mol/L).';
+              }
+              const familyWeight = FAMILY_WEIGHTS[family] ?? 0.55;
+              return (
+                <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+                  <Tooltip title={message} arrow>
+                    <Chip
+                      label={`Support: ${level}`}
+                      size="small"
+                      color={color}
+                      sx={{ height: 18, fontSize: '0.65rem' }}
+                    />
+                  </Tooltip>
+                  <Tooltip
+                    title={`Family evidence weight: ${familyWeight.toFixed(2)}× (${family.toUpperCase()}). Li has the strongest empirical support; other families are down-weighted.`}
+                    arrow
+                  >
+                    <Chip
+                      label={`${family.toUpperCase()} weight: ${familyWeight.toFixed(2)}×`}
+                      size="small"
+                      variant="outlined"
+                      color={familyWeight >= 0.8 ? 'success' : familyWeight >= 0.6 ? 'info' : 'warning'}
+                      sx={{ height: 18, fontSize: '0.65rem' }}
+                    />
+                  </Tooltip>
+                </Box>
+              );
+            })()}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              Validated 0.01–1.00 mol/L; soft extrapolation up to 2.00 mol/L.
+            </Typography>
+          </Grid>
+        </Grid>
 
         {/* Custom preset: host/reactant selectors */}
         {selectedSystem === 'custom' && (
@@ -1140,6 +1487,74 @@ function UnifiedTheoryPage() {
               </AccordionDetails>
             </Accordion>
 
+            {/* Reaction Rate & Uncertainty (v0.3.6-beta) */}
+            <Accordion sx={{ mb: 2, '&:before': { display: 'none' } }} disableGutters>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 36, '& .MuiAccordionSummary-content': { my: 0.5 } }}>
+                <Typography variant="subtitle2" color="text.secondary">Reaction Rate &amp; Uncertainty</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0 }}>
+                <FormControl size="small" fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Rate Formalism</InputLabel>
+                  <Select
+                    value={rateMode}
+                    label="Rate Formalism"
+                    onChange={(e) => setRateMode(e.target.value)}
+                    disabled={isLoading}
+                  >
+                    <MenuItem value="two_body">Two-body (validated baseline)</MenuItem>
+                    <MenuItem value="trapped_state">Trapped-state (speculative TSC)</MenuItem>
+                  </Select>
+                </FormControl>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  {rateMode === 'trapped_state'
+                    ? 'Speculative: sub-pm cluster rate (Takahashi TSC). Many orders of magnitude above the baseline; treat as exploratory.'
+                    : 'Conservative textbook thermonuclear rate; reported as a lower bound.'}
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={includeUncertainty}
+                      onChange={(e) => setIncludeUncertainty(e.target.checked)}
+                      disabled={isLoading}
+                      size="small"
+                    />
+                  }
+                  label={<Typography variant="caption">Quantify uncertainty (Sobol)</Typography>}
+                />
+                {includeUncertainty && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Sobol samples: {uncertaintySamples}
+                    </Typography>
+                    <Slider
+                      value={uncertaintySamples}
+                      onChange={(_, v) => setUncertaintySamples(v)}
+                      min={16}
+                      max={1024}
+                      step={16}
+                      disabled={isLoading}
+                      size="small"
+                      marks={[{ value: 256, label: '256' }, { value: 1024, label: '1024' }]}
+                    />
+                    <TextField
+                      label="Random seed (optional)"
+                      type="number"
+                      size="small"
+                      fullWidth
+                      value={randomSeed}
+                      onChange={(e) => setRandomSeed(e.target.value)}
+                      disabled={isLoading}
+                      placeholder="deterministic if set"
+                      sx={{ mt: 1 }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      Higher sample counts increase accuracy but add backend time.
+                    </Typography>
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+
             <Button
               variant="contained"
               color="primary"
@@ -1241,6 +1656,11 @@ function UnifiedTheoryPage() {
               parameters={parameters}
             />
           )}
+          {derivedState.contradiction && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {CONTRADICTION_REASON_LABELS[derivedState.contradictionReasonCode] || 'This run is flagged for contradiction review.'}
+            </Alert>
+          )}
           
           <Paper sx={{ p: 2 }}>
             {/* Results Summary */}
@@ -1261,7 +1681,47 @@ function UnifiedTheoryPage() {
                     label={`Compression: ${simulationData.collapse_results?.compression_ratio?.toFixed(1) || 'N/A'}x`}
                     color="success"
                   />
+                  <Chip
+                    label={`Electrolyte: ${(simulationData.electrolyte_diagnostics?.electrolyte_family || parameters.electrolyteFamily || 'li').toUpperCase()} / ${(simulationData.electrolyte_diagnostics?.electrolyte_species || resolveElectrolyteSpecies(parameters.electrolyteFamily || 'li', parameters.electrolyteSpecies)).toUpperCase()}`}
+                    color="info"
+                  />
+                  <Chip
+                    label={`Support: ${simulationData.electrolyte_diagnostics?.support_level || 'validated'}`}
+                    color={
+                      simulationData.electrolyte_diagnostics?.support_level === 'validated'
+                        ? 'success'
+                        : simulationData.electrolyte_diagnostics?.support_level === 'soft_extrapolation'
+                          ? 'warning'
+                          : 'error'
+                    }
+                  />
+                  <Chip
+                    label={`Mode: ${simulationData.validation?.route_mode || 'unknown'}`}
+                    color="default"
+                  />
                 </Stack>
+                <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                  <Chip
+                    size="small"
+                    color={simulationData.regime_validity_flags?.electrolyte_molarity_validated_window ? 'success' : 'warning'}
+                    label={`Validity regime: ${simulationData.regime_validity_flags?.electrolyte_molarity_validated_window ? 'validated' : 'extrapolated'}`}
+                  />
+                  <Chip
+                    size="small"
+                    color="info"
+                    label="Uncertainty interval: model-based confidence band"
+                  />
+                </Stack>
+                {simulationData.unsupported_extrapolation_flags?.electrolyte_molarity_outside_supported_range && (
+                  <Alert severity="warning" sx={{ mt: 1 }}>
+                    Electrolyte molarity is outside supported range. Confidence penalties apply.
+                  </Alert>
+                )}
+                {simulationData.unsupported_extrapolation_flags?.inconsistent_electrolyte_species_family && (
+                  <Alert severity="warning" sx={{ mt: 1 }}>
+                    Electrolyte species does not match selected family; diagnostics downgraded to inconsistent pairing.
+                  </Alert>
+                )}
               </Box>
             )}
 
@@ -1287,6 +1747,20 @@ function UnifiedTheoryPage() {
                     </Alert>
                   }
                 >
+                  {simulationData?.electrolyte_diagnostics && (
+                    <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap" useFlexGap>
+                      <Chip
+                        size="small"
+                        color="info"
+                        label={`Electrolyte multiplier: ${(simulationData.electrolyte_diagnostics.activity_multiplier || 1).toFixed(3)}x`}
+                      />
+                      <Chip
+                        size="small"
+                        color="default"
+                        label={`Species-family consistent: ${simulationData.electrolyte_diagnostics.species_family_consistent ? 'yes' : 'no'}`}
+                      />
+                    </Stack>
+                  )}
                   <UnifiedBubbleLatticeVisualization
                     parameters={parameters}
                     simulationData={simulationData}
@@ -1308,10 +1782,12 @@ function UnifiedTheoryPage() {
                       <XAxis dataKey="time" />
                       <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
                       <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
+                      <YAxis yAxisId="right2" orientation="right" hide domain={[0.7, 1.2]} />
                       <RechartsTooltip />
                       <Legend />
                       <Line yAxisId="left" type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement" strokeWidth={2} />
                       <Line yAxisId="right" type="monotone" dataKey="radius" stroke="#82ca9d" name="Bubble Radius %" />
+                      <Line yAxisId="right2" type="monotone" dataKey="electrolyteMultiplier" stroke="#ff9800" name="Electrolyte Multiplier" strokeDasharray="5 4" />
                     </LineChart>
                   </ResponsiveContainer>
                 </Box>
@@ -1364,6 +1840,45 @@ function UnifiedTheoryPage() {
                             sx={{ bgcolor: PHASE_COLORS[phase.toLowerCase()] || '#888', color: 'white' }}
                           />
                         ))}
+                      </Box>
+                    </Paper>
+                  </Grid>
+                  {/* Reaction-Rate Engine governance (v0.3.6-beta) */}
+                  <Grid size={12}>
+                    <Paper sx={{ p: 0 }} variant="outlined">
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 2 }}>
+                        <Typography variant="h6">Reaction-Rate Engine</Typography>
+                        <Tooltip title="What do these claim tiers mean?">
+                          <IconButton size="small" onClick={() => setGlossaryOpen(true)} aria-label="Open governance glossary">
+                            <HelpOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <Divider sx={{ mt: 1 }} />
+                      <ReactionRateGovernancePanel
+                        block={simulationData.reaction_rate_engine}
+                        onOpenGlossary={() => setGlossaryOpen(true)}
+                      />
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Paper sx={{ p: 2 }} variant="outlined">
+                      <Typography variant="h6" gutterBottom>Electrolyte Contribution</Typography>
+                      <Divider sx={{ mb: 2 }} />
+                      <Box sx={{ display: 'grid', gap: 1 }}>
+                        <Typography>
+                          Family: <strong>{simulationData.electrolyte_diagnostics?.electrolyte_family || parameters.electrolyteFamily || 'li'}</strong>
+                        </Typography>
+                        <Typography>
+                          Species: <strong>{simulationData.electrolyte_diagnostics?.electrolyte_species || resolveElectrolyteSpecies(parameters.electrolyteFamily || 'li', parameters.electrolyteSpecies)}</strong>
+                        </Typography>
+                        <Typography>
+                          Activity Multiplier: <strong>{(simulationData.electrolyte_diagnostics?.activity_multiplier || simulationData.peak_conditions?.electrolyte_multiplier || 1).toFixed(3)}x</strong>
+                        </Typography>
+                        <Typography>
+                          Support Level: <strong>{simulationData.electrolyte_diagnostics?.support_level || 'validated'}</strong>
+                        </Typography>
                       </Box>
                     </Paper>
                   </Grid>
@@ -1427,7 +1942,7 @@ function UnifiedTheoryPage() {
                                 <YAxis type="category" dataKey="name" width={75} />
                                 <RechartsTooltip 
                                   formatter={(value, name, props) => [
-                                    `${props.payload.value.toExponential(2)} (${props.payload.percentage}% of log total)`,
+                                    `${props.payload.value.toExponential(2)} (log10 ${props.payload.logValue.toFixed(2)})`,
                                     'Enhancement'
                                   ]}
                                 />
@@ -1454,11 +1969,79 @@ function UnifiedTheoryPage() {
                     </Paper>
                   </Grid>
                   
+                  {/* Parkhomov Transmutation Validation (v0.3.6-beta §3C) */}
+                  {simulationData.transmutation_validation && (
+                    <Grid size={12}>
+                      <Paper sx={{ p: 2 }} variant="outlined">
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="h6" gutterBottom>
+                            Transmutation Validation
+                          </Typography>
+                          {(() => {
+                            const match = simulationData.transmutation_validation.parkhomov_match || 'none';
+                            const total = simulationData.transmutation_validation.total_candidates || 0;
+                            const color = match === 'exact' ? 'success' : match === 'partial' ? 'warning' : 'default';
+                            const label = match === 'none'
+                              ? 'Parkhomov: no match'
+                              : `Parkhomov: ${total} ${match} match${total === 1 ? '' : 'es'}`;
+                            return <Chip label={label} color={color} size="small" />;
+                          })()}
+                        </Box>
+                        <Divider sx={{ mb: 2 }} />
+                        {(simulationData.transmutation_validation.matching_reactions || []).length > 0 ? (
+                          <Box sx={{ display: 'grid', gap: 1 }}>
+                            {simulationData.transmutation_validation.matching_reactions.slice(0, 5).map((rxn, idx) => {
+                              const formatSide = (side) =>
+                                (side || [])
+                                  .map((e) => (e.A > 0 ? `${e.symbol}-${e.A}` : e.symbol))
+                                  .join(' + ');
+                              return (
+                                <Box
+                                  key={idx}
+                                  sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    p: 1,
+                                    borderRadius: 1,
+                                    bgcolor: 'action.hover',
+                                  }}
+                                >
+                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {formatSide(rxn.reactants)} {'->'} {formatSide(rxn.products)}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                    <Chip label={rxn.category} size="small" variant="outlined" />
+                                    <Chip
+                                      label={`${(rxn.energy_mev || 0).toFixed(2)} MeV`}
+                                      size="small"
+                                      color="primary"
+                                      variant="outlined"
+                                    />
+                                  </Box>
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No Parkhomov reactions matched the inferred host/reactant pathway. This
+                            does not invalidate the simulation — the curated table only covers
+                            common Pd-D, Ni-H, Li-H, and Ti-D channels.
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                          Data: Dr. Alexander Parkhomov (2018), LENR Academy (curated subset).
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  )}
+
                   <Grid size={12}>
                     <Alert severity="info">
                       <Typography variant="body2">
                         The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
-                        Protons transition through force regimes: <strong>EM  ->  Screened  ->  Weak Capture  ->  Nuclear</strong>.
+                        Protons transition through force regimes: <strong>EM {'->'} Screened {'->'} Weak Capture {'->'} Nuclear</strong>.
                         Peak enhancement occurs at minimum bubble radius when compression maximizes field strength.
                       </Typography>
                     </Alert>
@@ -1468,6 +2051,11 @@ function UnifiedTheoryPage() {
 
               {activeTab === 4 && (
                 <Box>
+                  {theoryResult?.observables_bridge && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      Observables bridge active: excess heat, helium proxy, and radiation bounds are available from backend contract.
+                    </Alert>
+                  )}
                   <Alert severity="info" sx={{ mb: 3 }}>
                     <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
                       LENR Theory Testbed
@@ -1491,6 +2079,12 @@ function UnifiedTheoryPage() {
                       grain_size: parameters.grainSize || 50e-9,
                       gap_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
                       crack_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
+                      electrolyte_family: parameters.electrolyteFamily || 'li',
+                      electrolyte_species: resolveElectrolyteSpecies(
+                        parameters.electrolyteFamily || 'li',
+                        parameters.electrolyteSpecies,
+                      ),
+                      electrolyte_molarity_mol_l: parameters.electrolyteMolarityMolL || 0.3,
                     }}
                   />
                 </Box>
@@ -1510,6 +2104,12 @@ function UnifiedTheoryPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      <GovernanceGlossaryDrawer
+        open={glossaryOpen}
+        onClose={() => setGlossaryOpen(false)}
+        initialAnchor="claim"
+      />
 
       <Snackbar open={alertOpen} autoHideDuration={4000} onClose={() => setAlertOpen(false)}>
         <Alert onClose={() => setAlertOpen(false)} severity={alertSeverity} sx={{ width: '100%' }}>

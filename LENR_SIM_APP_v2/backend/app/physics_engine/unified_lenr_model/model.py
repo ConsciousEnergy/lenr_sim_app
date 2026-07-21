@@ -7,6 +7,11 @@ import time
 from typing import Dict, Any, Optional, List, Tuple
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.scientific_guardrails import (
+    build_observables_bridge,
+    build_uncertainty_interval,
+    compute_electrolyte_activity_multiplier,
+)
 
 from .config import (
     SimulationConfig,
@@ -57,6 +62,9 @@ class UnifiedLENRModel:
                 self.config.enable_rydberg,
                 self.config.use_theory_pipeline,
                 tuple(sorted(self.config.enabled_theories)) if self.config.enabled_theories else None,
+                self.config.electrolyte_family,
+                self.config.electrolyte_species,
+                round(self.config.electrolyte_molarity_mol_l, 4),
             )
             self._cache_key = str(hash(key_parts))
         return self._cache_key
@@ -79,6 +87,15 @@ class UnifiedLENRModel:
             excess_heat, total_enhancement)
         confidence = self._calculate_confidence(thresholds, enhancements_list)
         computation_time = time.time() - start_time
+        uncertainty_interval = build_uncertainty_interval(confidence)
+        falsification_conditions = [
+            "Invalid if excess_heat_watts does not remain within the uncertainty-supported regime.",
+            "Invalid if electrolyte parameters are outside validated range without confidence penalty.",
+        ]
+        observables_bridge = build_observables_bridge(
+            total_energy_watts=excess_heat,
+            expected_he4_rate_per_s=helium4_rate,
+        )
         return UnifiedSimulationResult(
             total_enhancement=total_enhancement,
             enhancement_breakdown=enhancements_list,
@@ -92,6 +109,9 @@ class UnifiedLENRModel:
             heat_output=heat_output,
             enhancement_history=enhancement_history,
             confidence=confidence,
+            uncertainty_interval=uncertainty_interval,
+            falsification_conditions=falsification_conditions,
+            observables_bridge=observables_bridge,
             config=self.config,
             computation_time=computation_time,
         )
@@ -131,6 +151,9 @@ class UnifiedLENRModel:
             "atomic_number": float(self.config.reactant.atomic_number),
             "gap_width_nm": gap_width_nm,
             "crack_width_nm": gap_width_nm,
+            "electrolyte_family": self.config.electrolyte_family,
+            "electrolyte_species": self.config.electrolyte_species,
+            "electrolyte_molarity_mol_l": self.config.electrolyte_molarity_mol_l,
         }
         pipeline_result = pipeline.run(
             conditions=conditions,
@@ -163,7 +186,18 @@ class UnifiedLENRModel:
             secondary_contribution = np.exp(np.mean(np.log([e.value for e in secondary])))
         else:
             secondary_contribution = 1.0
-        return min(primary_product * secondary_contribution, MAX_ENHANCEMENT_FACTOR)
+        alkali_multiplier = self._compute_alkali_activity_multiplier()
+        return min(primary_product * secondary_contribution * alkali_multiplier, MAX_ENHANCEMENT_FACTOR)
+
+    def _compute_alkali_activity_multiplier(self) -> float:
+        """
+        Bounded electrolyte/alkali modifier for electrochemical boundary conditions.
+        """
+        return compute_electrolyte_activity_multiplier(
+            self.config.electrolyte_family,
+            self.config.electrolyte_molarity_mol_l,
+            self.config.electrolyte_species,
+        )
 
     def _check_thresholds(self) -> Dict[str, bool]:
         return {
@@ -190,7 +224,7 @@ class UnifiedLENRModel:
     def _calculate_neutron_rate(self, reaction_rate: float) -> float:
         branch_ratio = 0.5 if self.config.reactant.name == "Deuterium" else 0.0
         V = self.config.grain_size**3 * 1e6
-        return reaction_rate * branch_ratio * V * 0.01
+        return reaction_rate * branch_ratio * V
 
     def _generate_time_series(self, base_heat: float, base_enhancement: float
     ) -> Tuple[List[float], List[float], List[float]]:

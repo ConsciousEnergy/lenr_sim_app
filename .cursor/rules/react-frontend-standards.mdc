@@ -1,0 +1,28 @@
+---
+description: Repo-specific React/Vite frontend conventions for LENR_SIM_APP_v2 (canonical API client, single WS pattern, provider tree, testing)
+globs: LENR_SIM_APP_v2/frontend/src/**/*.js, LENR_SIM_APP_v2/frontend/src/**/*.jsx, LENR_SIM_APP_v2/frontend/src/**/*.ts, LENR_SIM_APP_v2/frontend/src/**/*.tsx
+alwaysApply: false
+---
+
+- **One canonical HTTP client.** Use the Axios instance in [client.ts](mdc:LENR_SIM_APP_v2/frontend/src/api/client.ts) (base URL from [config/api.js](mdc:LENR_SIM_APP_v2/frontend/src/config/api.js), interceptors for auth + typed `ApiError`).
+  ```js
+  // ✅ DO
+  import { apiClient } from "@/api/client";
+  // ❌ DON'T: create ad-hoc axios instances or raw fetch() in components/pages
+  ```
+  - Do not add new direct `axios.create` / `fetch()` call sites; migrate to `apiClient` when you touch such code.
+
+- **Environment-aware URLs only via config.** Get base/WS URLs from `config/api.js` (`API_BASE_URL`, `getWebSocketUrl()`); dev uses relative paths through the Vite proxy (`/api`, `/ws` -> backend `:8010`). Never hardcode `http://localhost:...`.
+
+- **WebSockets: pick the existing client for the job, do not add a 4th.**
+  - Simulation stream -> [services/websocket.js](mdc:LENR_SIM_APP_v2/frontend/src/services/websocket.js) (`createSimulationSocket()`)
+  - Typed physics-engine stream -> `api/physics/websocketClient.ts`
+  - Visualization stream -> `utils/visualizationWebSocket.js`
+
+- **State management.** Global/shared state uses the Context API providers in `src/contexts/` (Theme, Physics, Throttle, Offline). Keep the provider tree in [index.jsx](mdc:LENR_SIM_APP_v2/frontend/src/index.jsx) / `App.tsx`. `@tanstack/react-query` is installed but unused - either wire it up intentionally (with a `QueryClientProvider`) or do not import it; do not add half-configured usage.
+
+- **Tests: Jest + React Testing Library** (not Vitest). Place tests in `src/**/tests/` or `*.test.jsx`; wrap renders with the shared [test-utils.tsx](mdc:LENR_SIM_APP_v2/frontend/src/tests/test-utils.tsx) helper (MUI theme + `PhysicsProvider` + `MemoryRouter`). Run `npm test`.
+
+- **Claim-tier chip beside quantitative science claims.** Any UI surfacing a numeric physics claim renders a claim-tier chip using [theoryGovernance.ts](mdc:LENR_SIM_APP_v2/frontend/src/utils/theoryGovernance.ts) (see [scientific-rigor-provenance.mdc](mdc:.cursor/rules/scientific-rigor-provenance.mdc)).
+
+- **Prefer `.jsx`/`.tsx` for new components** (the Vite config shims legacy `.js`-as-JSX, but new code should use explicit extensions). TypeScript for new shared modules where practical.

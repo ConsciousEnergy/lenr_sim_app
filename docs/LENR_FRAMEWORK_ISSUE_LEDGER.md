@@ -19,6 +19,7 @@
 | **Required assumption** | Pick one: either correct numerical result (mN) or different geometry (d or A) that yields 10⁻⁷ N. |
 | **Falsify/validate** | Recompute Casimir force for stated A,d; compare with simulation geometry. |
 | **Simulation impact** | Casimir-induced pressure in nanogaps must use consistent F/A. |
+| **Status (2026 rigor review)** | **RESOLVED** — paper reconciled to -1.3 mN (RR-003); independently verified via WolframAlpha (1.3 mN for A=1 µm², d=1 nm). |
 
 ---
 
@@ -35,6 +36,7 @@
 | **Required assumption** | Adopt single range (10³–10⁵) and remove/annotate 10⁸ claim; explain revision rationale. |
 | **Falsify/validate** | Monte Carlo propagation with f_enhancement ∈ [10³, 10⁵] vs [10⁵, 10⁸]; compare to experimental bounds. |
 | **Simulation impact** | Simulation must use one consistent f_enhancement prior/range. |
+| **Status (2026 rigor review)** | **RESOLVED** — abstract adopts 10³–10⁵ (RR-001); reaction-rate UQ uses a 1e3–1e5 enhancement prior (reaction_rate_uq.py). |
 
 ---
 
@@ -67,6 +69,7 @@
 | **Required assumption** | Clarify whether E is in eV or other units; whether the formula applies to barrier reduction (Ue) not incident energy; or adopt a different screening model (e.g. adiabatic Ue). |
 | **Falsify/validate** | Recompute with e²/(4πϵ₀) in SI; check dimension of E. |
 | **Simulation impact** | Screening enhancement must use dimensionally correct expression. |
+| **Status (2026 rigor review)** | **RESOLVED** — single scalar replaced by cited material-dependent range with adiabatic Ue floor (RR-007); see `unified_lenr_model/screening_data.py`. |
 
 ---
 

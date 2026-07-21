@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -126,6 +127,7 @@ const StatCard = ({ title, value, unit, icon: Icon, color, trend }) => {
 
 const AnalyticsPage = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -440,6 +442,16 @@ const AnalyticsPage = () => {
       setSnackbar({ open: true, message: 'Failed to delete experiment', severity: 'error' });
     }
   };
+
+  const handleViewDetails = useCallback((experiment) => {
+    if (!experiment?.id) {
+      setSnackbar({ open: true, message: 'Missing simulation id for details view', severity: 'warning' });
+      return;
+    }
+    navigate(`/simulation/${experiment.id}`, {
+      state: { simulationPreview: experiment },
+    });
+  }, [navigate]);
   
   if (loading) {
     return (
@@ -695,7 +707,7 @@ const AnalyticsPage = () => {
                       <TableCell>{row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <Tooltip title="View Details">
-                          <IconButton size="small">
+                          <IconButton size="small" onClick={() => handleViewDetails(row)}>
                             <ViewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

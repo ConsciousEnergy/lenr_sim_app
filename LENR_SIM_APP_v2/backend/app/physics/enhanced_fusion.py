@@ -49,6 +49,7 @@ class EnhancedFusionCalculator:
         """
         self.available_reactions: Dict[str, FusionReaction] = {}
         self.storage = storage
+        self.config = get_default_configuration()
         self._initialize_default_reactions()
         
         # Load custom reactions from storage if provided
@@ -215,20 +216,22 @@ class EnhancedFusionCalculator:
         coulomb_barrier = calculate_coulomb_barrier(z1, z2)
         
         # Calculate base tunneling probability
-        # Convert temperature to energy in eV
-        energy_eV = (3/2) * KB * temperature / EV_TO_J
+        # Convert temperature to energy in keV
+        energy_keV = (3/2) * KB * temperature / (EV_TO_J * 1000)
         
-        # Get reduced mass
+        # Get mass numbers
         a1 = reaction.reactant1_a
         a2 = reaction.reactant2_a
         reduced_mass = (a1 * a2) / (a1 + a2) * const.u  # kg
         
-        # Calculate base probability
-        base_probability = calculate_tunneling_probability(
-            energy_eV * EV_TO_J,  # Convert to J
-            coulomb_barrier * EV_TO_J,  # Convert to J
-            z1, z2, reduced_mass
+        # Calculate base probability using the tunneling engine
+        tunneling_result = calculate_tunneling_probability(
+            z1, z2, a1, a2, energy_keV, temperature
         )
+        if isinstance(tunneling_result, dict):
+            base_probability = tunneling_result.get("total_probability", 0.0)
+        else:
+            base_probability = float(tunneling_result)
         
         # Prepare configuration
         config = self.config.copy()
@@ -243,7 +246,7 @@ class EnhancedFusionCalculator:
         config["oppenheimer_phillips"]["target_z"] = z2
         config["oppenheimer_phillips"]["projectile_a"] = a1
         config["oppenheimer_phillips"]["target_a"] = a2
-        config["oppenheimer_phillips"]["energy_kev"] = energy_eV / 1000  # Convert eV to keV
+        config["oppenheimer_phillips"]["energy_kev"] = energy_keV
         
         config["electron_screening"]["atomic_number_1"] = z1
         config["electron_screening"]["atomic_number_2"] = z2
@@ -262,8 +265,8 @@ class EnhancedFusionCalculator:
         enhanced_probability = base_probability * enhancement_factor
         
         # Calculate reaction rate coefficient
-        # <σv> = (2/√π) * (E_0/kT)^(3/2) * S(E_0) * exp(-3*E_0/kT)
-        # where E_0 is the Gamow peak energy, and S(E_0) is the astrophysical S-factor
+        # Derive energy_eV from energy_keV for velocity and output
+        energy_eV = energy_keV * 1000
         
         # Simplified calculation using the enhanced probability
         # Velocity estimation from thermal energy
@@ -358,7 +361,35 @@ class EnhancedFusionCalculator:
                 results["power_densities"].append(0.0)
         
         return results
-    
+
+    def calculate_temperature_scan(
+        self,
+        reaction_name: str,
+        temperatures: List[float],
+        density: float,
+        enhancement_factors: Optional[Any] = None
+    ) -> Dict[str, List[float]]:
+        """
+        Calculate fusion rates across multiple temperatures.
+
+        Adapter for the legacy route interface. Delegates to
+        calculate_multiple_temperatures using a single density for both
+        reactants (symmetric reaction assumption).
+        """
+        result = self.calculate_multiple_temperatures(
+            reaction_name=reaction_name,
+            temperatures=temperatures,
+            density1=density,
+            density2=density,
+            mechanisms=None
+        )
+        return {
+            "temperatures": result["temperatures"],
+            "reaction_rates": result["reaction_rates"],
+            "enhancement_factors": result["enhancement_factors"],
+            "power_densities": result["power_densities"]
+        }
+
     def compare_reactions(
         self,
         temperature: float,

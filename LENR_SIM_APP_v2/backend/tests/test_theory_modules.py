@@ -548,10 +548,12 @@ class TestScoringFairness:
                 )
 
     def test_hydroton_scores_above_40_percent(self):
-        """Hydroton with proper conditions should score reasonably."""
+        """Hydroton is legacy-gated; only assert score when explicitly present."""
         from app.physics_engine.theory_scoring import compute_theory_scores
         scores = compute_theory_scores(FULL_CONDITIONS)
-        hydroton = scores.get("hydroton", {})
+        if "hydroton" not in scores:
+            pytest.skip("Hydroton is disabled by default in v0.3.6-beta")
+        hydroton = scores["hydroton"]
         assert hydroton.get("final_score", 0) >= 0.40, (
             f"Hydroton scored {hydroton.get('final_score', 0):.2%}"
         )
@@ -603,8 +605,8 @@ class TestTopologicalSort:
     def test_subset_filter(self):
         from app.physics_engine.theory_relationships import TheoryGraph
         graph = TheoryGraph()
-        order = graph.topological_sort(["electron_screening", "hydroton"])
-        assert set(order) == {"electron_screening", "hydroton"}
+        order = graph.topological_sort(["electron_screening", "nae_model"])
+        assert set(order) == {"electron_screening", "nae_model"}
 
     def test_coupling_map(self):
         from app.physics_engine.theory_relationships import TheoryGraph
@@ -706,7 +708,7 @@ class TestNonEquilibriumThermo:
 
 
 class TestPipelineWith21Theories:
-    """Test that the pipeline now has 21 theories (19 + 2 legacy wrappers)."""
+    """Test that the pipeline has legacy wrappers with Hydroton optional."""
 
     def setup_method(self):
         from app.physics_engine.theory_pipeline import get_default_pipeline
@@ -715,9 +717,73 @@ class TestPipelineWith21Theories:
         self.pipeline = get_default_pipeline()
 
     def test_21_registered(self):
-        assert len(self.pipeline.registered_ids) >= 21
+        assert len(self.pipeline.registered_ids) >= 20
 
     def test_new_theories_registered(self):
         ids = self.pipeline.registered_ids
         assert "phonon_coupling_legacy" in ids
         assert "non_equilibrium_thermo" in ids
+        assert "hydroton" not in ids
+
+
+# =====================================================
+# v0.3.6-beta: Stellar-scaling context-line track
+# =====================================================
+
+class TestStellarScalingMHD:
+    """Stellar-scaling context line guardrails (v0.3.6-beta)."""
+
+    def setup_method(self):
+        from app.physics_engine.theories.stellar_scaling_mhd import StellarScalingMHDTheory
+        self.theory = StellarScalingMHDTheory()
+
+    def test_protocol_compliance(self):
+        assert_theory_protocol(self.theory)
+        assert self.theory.theory_id == "stellar_scaling_mhd"
+
+    def test_inapplicable_under_lenr_conditions(self):
+        """LENR regime must gate the track off."""
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.is_applicable is False, "stellar track must not be applicable under LENR conditions"
+        assert contrib.enhancement_factor >= 1.0
+        assert contrib.confidence <= 0.2, "confidence must collapse outside stellar regime"
+        assert contrib.claim_tier == "speculative_exploratory"
+        assert contrib.evidence_class == "cross_regime_extrapolation"
+
+    def test_applicable_under_stellar_regime(self):
+        """Astrophysical regime must pass the gate."""
+        stellar = {
+            "temperature": 5.0e6,
+            "mhd_field_strength_T": 1.0e5,
+            "plasma_density_m3": 1.0e26,
+            "characteristic_length_m": 1.0,
+        }
+        contrib = self.theory.calculate(stellar)
+        assert contrib.is_applicable is True
+        assert "alfven_speed_m_s" in contrib.observables
+
+    def test_enhancement_bounded(self):
+        """Extrapolation penalty must keep enhancement bounded."""
+        from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.enhancement_factor <= MAX_ENHANCEMENT_FACTOR
+
+    def test_transparency_fields(self):
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        for key in (
+            "extrapolation_penalty",
+            "class_aware_weight",
+            "stellar_contribution_log10",
+            "regime_applicable",
+        ):
+            assert key in contrib.observables, f"missing transparency field: {key}"
+
+    def test_claim_tier_down_weight_in_scoring(self):
+        """Scoring must apply claim-tier multiplier to stellar track."""
+        from app.physics_engine.theory_scoring import compute_theory_scores
+        scores = compute_theory_scores(STANDARD_CONDITIONS)
+        assert "stellar_scaling_mhd" in scores
+        entry = scores["stellar_scaling_mhd"]
+        assert entry["claim_tier"] == "speculative_exploratory"
+        assert entry["claim_tier_multiplier"] <= 0.5
+        assert entry["final_score"] <= entry["raw_score_pre_tier"] + 1e-6

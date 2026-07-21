@@ -5,9 +5,7 @@
  * Provides WebSocket connectivity for streaming simulation data.
  */
 
-const WS_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'ws://localhost:8000/api'
-  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api`;
+import { getWebSocketUrl } from '../config/api';
 
 /**
  * Simulation WebSocket Client
@@ -52,7 +50,7 @@ class SimulationWebSocket {
     this.simulationId = simulationId;
     this.callbacks = { ...this.callbacks, ...callbacks };
 
-    const url = `${WS_BASE_URL}/ws/simulation/${simulationType}/${simulationId}`;
+    const url = getWebSocketUrl(`/api/ws/simulation/${simulationType}/${simulationId}`);
     
     try {
       this.ws = new WebSocket(url);
