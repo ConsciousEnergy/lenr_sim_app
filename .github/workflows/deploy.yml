@@ -37,7 +37,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./LENR_SIM_APP_v2
           file: ./LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend
