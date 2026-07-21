@@ -96,7 +96,6 @@ async def run_quantum_tunneling_simulation(
     This generates time-evolving tunneling probability data.
     """
     from ..physics.wkb_tunneling import WKBTunnelingCalculator
-    from ..physics.core_constants import M_DEUTERON, AMU
     
     z1 = params.get('z1', 1)
     z2 = params.get('z2', 1)
@@ -106,10 +105,7 @@ async def run_quantum_tunneling_simulation(
     base_temp = params.get('temperature_k', 300.0)
     material = params.get('material', 'palladium')
     
-    calc = WKBTunnelingCalculator(
-        z1=z1, z2=z2,
-        mass1=a1 * AMU, mass2=a2 * AMU
-    )
+    calc = WKBTunnelingCalculator()
     
     try:
         for step in range(duration_steps):
@@ -123,9 +119,15 @@ async def run_quantum_tunneling_simulation(
             
             # Calculate tunneling
             result = calc.calculate_tunneling_probability(
+                z1=z1,
+                z2=z2,
+                a1=a1,
+                a2=a2,
                 energy_kev=current_energy,
                 potential_type='screened',
-                screening_energy_ev=800 if material == 'palladium' else 500
+                screening_energy_ev=800 if material == 'palladium' else 500,
+                temperature_k=current_temp,
+                material=material,
             )
             
             # Send update
@@ -141,7 +143,7 @@ async def run_quantum_tunneling_simulation(
                     'temperature_k': float(current_temp),
                     'tunneling_probability': float(result.probability),
                     'gamow_factor': float(result.gamow_factor),
-                    'barrier_height_kev': float(result.barrier_height_kev),
+                    'barrier_height_kev': float(result.barrier_height),
                 }
             })
             
