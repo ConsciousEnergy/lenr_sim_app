@@ -13,14 +13,13 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
-    # Non-blocking: requires Dependency Graph + GHAS to be enabled in repo settings.
-    # Remove continue-on-error once enabled at Settings > Code security and analysis.
-    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
+        continue-on-error: true
         with:
           fail-on-severity: high
+          comment-summary-in-pr: on-failure
