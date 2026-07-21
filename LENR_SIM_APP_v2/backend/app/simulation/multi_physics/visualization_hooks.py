@@ -218,7 +218,7 @@ class EventSystem:
                                        np.int16, np.int32, np.int64, np.uint8,
                                        np.uint16, np.uint32, np.uint64)):
                         return int(obj)
-                    if isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+                    if isinstance(obj, (np.float16, np.float32, np.float64)):
                         return float(obj)
                     if isinstance(obj, (np.bool_)):
                         return bool(obj)
