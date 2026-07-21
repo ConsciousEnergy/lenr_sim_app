@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
+jest.mock('./contexts/ThemeContext', () => ({
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+  useTheme: () => ({ isDarkMode: false, toggleTheme: jest.fn() }),
+}));
 jest.mock('./components/AppLayoutFixed', () => ({ children }: { children: React.ReactNode }) => children);
 jest.mock('./pages/DashboardNew', () => () => <div>Dashboard page</div>);
 jest.mock('./pages/SimulationDetail', () => () => <div data-testid="simulation-detail">Simulation detail</div>);
