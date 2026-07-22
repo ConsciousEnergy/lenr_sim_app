@@ -9,6 +9,9 @@ dev-debug.log
 # Dependency directories
 node_modules/
 
+# Accidental nested checkout / junk under the real frontend install root
+LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/
+
 # Environment variables
 .env
 

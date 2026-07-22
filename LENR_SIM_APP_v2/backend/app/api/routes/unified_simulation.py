@@ -5,13 +5,14 @@ Provides endpoints for the unified LENR theory simulation,
 implementing all mechanisms from the theoretical framework paper.
 """
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
 import asyncio
 import json
 import math
+import time
 from app.core.config import settings
 from app.physics_engine.scientific_guardrails import (
     build_electrolyte_diagnostics,
@@ -38,6 +39,48 @@ router = APIRouter(prefix="/unified", tags=["unified-simulation"])
 # APP_VERSION so a version bump updates all surfaces in lockstep and cannot
 # drift (CI version-consistency stays authoritative).
 CONTRACT_VERSION = f"v{settings.APP_VERSION}-science-gate-1"
+
+# Production hardening caps for unauthenticated compute surfaces.
+MAX_UNCERTAINTY_SAMPLES = 512
+MAX_WS_NUM_CYCLES = 10
+MAX_WS_CONNECTIONS = 8
+_WS_ACTIVE_CONNECTIONS = 0
+_EXPORT_RATE_LIMIT_PER_MINUTE = 10
+_export_clients: Dict[str, tuple] = {}
+
+
+def _client_safe_error(log_message: str, exc: Exception, *, status_code: int = 500) -> HTTPException:
+    """Log full exception server-side; return a generic client-facing detail."""
+    logger.error("%s: %s", log_message, exc, exc_info=True)
+    if status_code == 400:
+        return HTTPException(status_code=400, detail="Invalid request parameters.")
+    return HTTPException(status_code=500, detail="Simulation failed. Please check parameters and try again.")
+
+
+def _enforce_export_rate_limit(request: Request) -> None:
+    """Stricter per-IP budget for /export (full simulate + envelope)."""
+    if not settings.ENABLE_RATE_LIMITING:
+        return
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+    if client_ip in settings.RATE_LIMIT_WHITELIST_IPS:
+        return
+
+    now = time.time()
+    count, window_start = _export_clients.get(client_ip, (0, now))
+    if now - window_start >= 60:
+        _export_clients[client_ip] = (1, now)
+        return
+    if count >= _EXPORT_RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail="Too Many Requests - export rate limit exceeded",
+            headers={"Retry-After": str(max(1, int(60 - (now - window_start))))},
+        )
+    _export_clients[client_ip] = (count + 1, window_start)
 
 
 # Request/Response Models
@@ -118,7 +161,7 @@ class SimulationRequest(BaseModel):
         default=False,
         description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
     )
-    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    uncertainty_samples: int = Field(default=256, ge=16, le=MAX_UNCERTAINTY_SAMPLES)
     random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
     experimental_band: Optional[List[float]] = Field(
         default=None,
@@ -387,9 +430,7 @@ async def run_unified_simulation(request: SimulationRequest):
         )
         
     except Exception as e:
-        logger.error(f"Unified simulation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise _client_safe_error("Unified simulation error", e)
 
 def _compose_rate_block(
     config: Any,
@@ -603,12 +644,13 @@ def build_bubble_rate_engine_block(
 
 
 @router.post("/export")
-async def export_unified_run(request: SimulationRequest) -> Dict[str, Any]:
+async def export_unified_run(request: SimulationRequest, http_request: Request) -> Dict[str, Any]:
     """Run a simulation and return a reproducible ``lenr-run-export-v1`` envelope.
 
     Wraps the standard simulate response with seeds, claim tiers, an uncertainty
     summary, provenance, and a deduplicated per-run citation list (RR-017).
     """
+    _enforce_export_rate_limit(http_request)
     from app.physics_engine.run_export import build_run_export
 
     response = await run_unified_simulation(request)
@@ -693,8 +735,7 @@ async def get_mechanisms(
         )
         
     except Exception as e:
-        logger.error(f"Get mechanisms error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _client_safe_error("Get mechanisms error", e)
 
 
 @router.post("/compare", response_model=CompareResponse)
@@ -750,8 +791,7 @@ async def compare_systems(request: CompareRequest):
         )
         
     except Exception as e:
-        logger.error(f"Compare systems error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _client_safe_error("Compare systems error", e)
 
 
 @router.get("/presets")
@@ -916,7 +956,7 @@ class BubbleLatticeRequest(BaseModel):
         default=False,
         description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
     )
-    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    uncertainty_samples: int = Field(default=256, ge=16, le=MAX_UNCERTAINTY_SAMPLES)
     random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
     experimental_band: Optional[List[float]] = Field(
         default=None,
@@ -1342,16 +1382,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # Re-raise HTTP exceptions (validation errors)
         raise
     except ValueError as e:
-        # Handle value errors (invalid physics parameters)
-        logger.error(f"Invalid physics parameters: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Invalid physics parameters: {str(e)}")
+        raise _client_safe_error("Invalid physics parameters", e, status_code=400)
     except Exception as e:
-        # Handle unexpected errors
-        logger.error(f"Bubble-lattice simulation error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Simulation failed: {str(e)}. Please check parameters and try again."
-        )
+        raise _client_safe_error("Bubble-lattice simulation error", e)
 
 
 @router.websocket("/bubble-lattice/stream")
@@ -1370,8 +1403,19 @@ async def bubble_lattice_websocket(websocket: WebSocket):
         "num_cycles": 2
     }
     """
+    global _WS_ACTIVE_CONNECTIONS
+
+    if _WS_ACTIVE_CONNECTIONS >= MAX_WS_CONNECTIONS:
+        await websocket.close(code=1013, reason="Too many concurrent streams")
+        return
+
     await websocket.accept()
-    logger.info("WebSocket connection established for bubble-lattice simulation")
+    _WS_ACTIVE_CONNECTIONS += 1
+    logger.info(
+        "WebSocket connection established for bubble-lattice simulation (%s/%s)",
+        _WS_ACTIVE_CONNECTIONS,
+        MAX_WS_CONNECTIONS,
+    )
     
     try:
         # Receive initial parameters
@@ -1416,9 +1460,13 @@ async def bubble_lattice_websocket(websocket: WebSocket):
         # Create model
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         
-        # Stream real-time updates
+        # Stream real-time updates — cap cycles to match HTTP BubbleLatticeRequest.
         num_points = 100  # Points per cycle
-        num_cycles = params.get("num_cycles", 2)
+        try:
+            requested_cycles = int(params.get("num_cycles", 2))
+        except (TypeError, ValueError):
+            requested_cycles = 2
+        num_cycles = max(1, min(MAX_WS_NUM_CYCLES, requested_cycles))
         
         for cycle in range(num_cycles):
             for i in range(num_points):
@@ -1468,14 +1516,16 @@ async def bubble_lattice_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected for bubble-lattice simulation")
     except Exception as e:
-        logger.error(f"WebSocket error in bubble-lattice simulation: {e}", exc_info=True)
+        logger.error("WebSocket error in bubble-lattice simulation: %s", e, exc_info=True)
         try:
             await websocket.send_json({
                 "type": "error",
-                "message": str(e)
+                "message": "Simulation stream failed. Please check parameters and try again."
             })
-        except:
+        except Exception:
             pass
+    finally:
+        _WS_ACTIVE_CONNECTIONS = max(0, _WS_ACTIVE_CONNECTIONS - 1)
 
 
 @router.get("/bubble-lattice/instant")
@@ -1567,11 +1617,6 @@ async def get_instant_conditions(
         }
         
     except ValueError as e:
-        logger.error(f"Invalid parameters for instant conditions: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
+        raise _client_safe_error("Invalid parameters for instant conditions", e, status_code=400)
     except Exception as e:
-        logger.error(f"Instant conditions error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to calculate instant conditions: {str(e)}"
-        )
+        raise _client_safe_error("Instant conditions error", e)

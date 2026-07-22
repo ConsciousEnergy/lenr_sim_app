@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - development
       - lenr_sim_app_v0.3.6-beta
 
 permissions:
@@ -17,9 +18,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Blocking on high/critical. Requires Dependency graph enabled in
+      # Settings → Code security and analysis. See SECURITY_CI_HARDENING.md.
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
-        continue-on-error: true
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure

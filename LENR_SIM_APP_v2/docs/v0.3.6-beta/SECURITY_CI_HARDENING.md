@@ -34,4 +34,6 @@ fails the build. Revisit each in the post-beta maintenance slice.
 - Release-blocking: any high/critical vulnerability, and any *new* or *fixable* backend advisory.
 - Accepted temporarily (with tracking): the backend transitive advisories tabled above (upstream-constrained), documented and ignored explicitly in the CI `pip-audit` step.
 - Follow-up: coordinated FastAPI/Starlette major upgrade, `vtk 9.5.1` via PyVista revalidation, and `python-jose` replacement in a dedicated post-beta maintenance slice.
+- Dependency Review is **blocking** on high severity for PRs into `main`, `development`, and `lenr_sim_app_v0.3.6-beta`. Enable Dependency graph under repo Settings → Code security and analysis or the workflow cannot run.
+- Pre-VPS API hardening (2026-07-22): WebSocket `num_cycles` capped at 10, concurrent stream budget, UQ samples max 512, generic client error messages, and a tighter `/export` per-IP rate limit.
 
