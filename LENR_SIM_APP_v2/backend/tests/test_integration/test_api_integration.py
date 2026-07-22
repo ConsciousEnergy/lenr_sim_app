@@ -324,7 +324,44 @@ class TestEdgeCases:
 
 
 class TestWebSocketEndpoints:
-    """Test WebSocket-related endpoints (non-WS)."""
+    """Test WebSocket-related endpoints."""
+
+    def test_quantum_tunneling_stream(self):
+        """Test quantum tunneling streams an update before completion."""
+        with client.websocket_connect(
+            "/api/ws/simulation/quantum-tunneling/test-quantum-stream"
+        ) as websocket:
+            websocket.send_json({
+                "action": "start",
+                "params": {
+                    "z1": 1,
+                    "z2": 1,
+                    "a1": 2.0,
+                    "a2": 2.0,
+                    "energy_kev": 0.1,
+                    "temperature_k": 300.0,
+                    "material": "palladium",
+                },
+                "duration_steps": 1,
+            })
+
+            update = websocket.receive_json()
+            completion = websocket.receive_json()
+
+        assert update["type"] == "simulation_update"
+        assert update["simulation_id"] == "test-quantum-stream"
+        assert update["step"] == 0
+        assert update["total_steps"] == 1
+        assert update["progress"] == 1.0
+        assert update["data"]["tunneling_probability"] > 0
+        assert update["data"]["gamow_factor"] > 0
+        assert update["data"]["barrier_height_kev"] > 0
+
+        assert completion == {
+            "type": "simulation_complete",
+            "simulation_id": "test-quantum-stream",
+            "message": "Simulation completed successfully",
+        }
     
     def test_active_simulations(self):
         """Test getting active simulations."""
