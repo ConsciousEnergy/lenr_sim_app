@@ -97,8 +97,8 @@ const TheoryPaperPage = () => {
           >
             A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
           </Typography>
-          <Typography variant="h6" color="text.secondary" paragraph>
-            Integrating Quantum, Nuclear, and Condensed Matter Phenomena
+          <Typography variant="h6" color="text.secondary" paragraph sx={{ fontStyle: 'italic' }}>
+            Electron, Neutron, and Proton coupling is all you need
           </Typography>
           
           <Box sx={{ mt: 3, mb: 2, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
@@ -106,7 +106,7 @@ const TheoryPaperPage = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
               Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences:
               LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8,
-              Gemini 2.5, Gemini 3.0. See the Author Contributions &amp; AI Assistance statement below.
+              Gemini 2.5, Gemini 3.0, Composer (Cursor). See the Author Contributions &amp; AI Assistance statement below.
             </Typography>
             <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
               <Chip
@@ -116,7 +116,7 @@ const TheoryPaperPage = () => {
                 variant="outlined"
               />
               <Chip
-                label="Date: 2026-02-14 (revised 2026-06-06, v0.3.6-beta)"
+                label="Date: 2026-02-14 (revised 2026-07-22, v0.3.6-beta)"
                 size="small"
                 variant="outlined"
               />
@@ -143,16 +143,22 @@ const TheoryPaperPage = () => {
             <Typography variant="body2" paragraph>
               <strong>Diadon Acs</strong> (Conscious Energies) directs this research, sets its scientific
               direction, and is solely accountable for its content, claims, and conclusions. The listed
-              Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families) assisted with
-              literature compilation, mathematical derivation and verification, simulation code, and manuscript
-              drafting under the human author's direction and review.
+              Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families, and Composer
+              in Cursor) assisted with literature compilation, mathematical derivation and verification,
+              simulation code, manuscript drafting, and multi-agent review under the human author's direction
+              and review.
             </Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" paragraph>
               Listing AI systems as contributors is unconventional and not accepted by all venues; it is
               disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather
               than to assert independent agency or authorship rights. All AI-assisted derivations were
               checked by the human author, and every quantitative claim is governed by the claim-tier and
               evidence-class labels described above and in the Reaction-Rate Engine governance panel.
+            </Typography>
+            <Typography variant="body2">
+              Multi-body lattice–bubble constructions in this framework are <strong>exploratory models</strong>,
+              not empirically validated nuclear-engineering predictions. Experimental correlations and
+              speculative mechanisms are labeled separately.
             </Typography>
           </Alert>
 
@@ -363,20 +369,22 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body1" paragraph>
-                Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. 
-                Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, 
-                and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper 
-                aims to unify major theoretical elements—including Rydberg Matter (RM), halo electrons, double-layer 
-                Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum 
+                Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentially consequential
+                pathway toward clean and sustainable energy. Despite decades of experimental findings indicating
+                anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a
+                comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical
+                elements—including Rydberg Matter (RM), delocalized interface electrons, double-layer Quantum
+                Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum
                 tunneling enhancements—under a single model.
               </Typography>
               <Typography variant="body1" paragraph>
-                In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling, 
-                finite-element analysis, thermodynamic models, and statistical methods) that validate and quantify 
-                these LENR processes. Computational results predict tunneling enhancements of 10³ to 10⁵, while 
-                experimental evidence confirms isotopic shifts, neutron formation, and measurable excess heat production. 
-                This work establishes a reproducible methodology for LENR research and paves the way for interdisciplinary 
-                collaboration to scale LENR reactors for practical energy applications.
+                In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling,
+                finite-element analysis, thermodynamic models, and statistical methods) that quantify these LENR
+                hypotheses under explicit claim tiers. Computational results predict tunneling enhancements of
+                10³ to 10⁵, while experimental reports include isotopic shifts, neutron signals, and measurable
+                excess heat under disputed reproducibility. This work proposes a reproducible, claim-tiered
+                methodology for LENR research; scaling to practical energy applications remains contingent on
+                independent experimental validation.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -520,7 +528,7 @@ const TheoryPaperPage = () => {
               {/* 2.2 Halo Electrons */}
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  2.2 Halo Electrons <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main', verticalAlign: 'middle', ml: 1 }} />
+                  2.2 Delocalized Interface Electrons <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main', verticalAlign: 'middle', ml: 1 }} />
                 </Typography>
                 <Typography variant="body1" paragraph>
                   <strong>Definition:</strong> Halo electrons are weakly bound electrons whose extended orbitals overlap 
@@ -1012,7 +1020,10 @@ const TheoryPaperPage = () => {
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.5 Miles Heat-Helium Correlation</Typography>
               <Typography variant="body2" paragraph>
-                Melvin Miles established the definitive correlation: excess heat in Pd-D systems is accompanied by He-4 production at a rate of ~2.6 × 10¹¹ atoms/s per watt, consistent with D+D → He-4 + 23.8 MeV (thermal). This provides direct evidence that the effect is nuclear. Independently verified by University of Texas and Brian Oliver at Rockwell International.
+                Melvin Miles reported an empirical excess-heat / He-4 correlation in Pd-D systems (~2.6 × 10¹¹ atoms/s
+                per watt, consistent with a D+D → He-4 + ~24 MeV thermal band). This is treated as an
+                <strong> empirical LENR correlation</strong> (claim-tiered), not definitive proof that every excess-heat
+                observation is nuclear. Independent reports exist; reproducibility remains contested.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.6 Widom-Larsen Ultra-Low-Momentum Neutrons</Typography>
@@ -1075,12 +1086,15 @@ const TheoryPaperPage = () => {
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.14 Reaction-Rate Engine &amp; Uncertainty Quantification</Typography>
               <Typography variant="body2" paragraph>
-                The reaction-rate engine (<code>unified_lenr_model/reaction_rate_engine.py</code>) exposes two
-                explicitly labelled formalisms so the conservative baseline and the speculative CMNS rate never
+                The reaction-rate engine (<code>unified_lenr_model/reaction_rate_engine.py</code>) exposes
+                explicitly labelled formalisms so the conservative baseline and speculative CMNS rates never
                 silently replace one another: a <strong>two-body</strong> textbook thermonuclear rate
-                (0.5·n²·⟨σv⟩·P, <em>claim tier: validated_lenr_mechanism</em>, reported as a lower bound) and a
-                <strong> trapped-state</strong> Fermi's-golden-rule / TSC rate evaluated at sub-picometre cluster
-                separation (Takahashi 2016; <em>claim tier: speculative_exploratory</em>). Optional Sobol/Bayesian
+                (0.5·n²·⟨σv⟩·P, <em>claim tier: established_reference</em>, reported as a lower bound);
+                a <strong>trapped-state</strong> Fermi's-golden-rule / TSC rate at sub-picometre separation
+                (Takahashi 2016; <em>claim tier: speculative_exploratory</em>); and a <strong>three-body</strong>
+                cavitation chain <code>p+e⁻→n</code> then <code>n+d→products</code> (Widom–Larsen class +
+                Oppenheimer–Phillips / NASA LCF follow-on; <em>claim tier: speculative_exploratory</em>,
+                default conversion ≪&nbsp;1). Optional Sobol/Bayesian
                 uncertainty quantification (<code>reaction_rate_uq.py</code>) propagates input priors to a
                 predictive/credible interval (p05-p95) with a variance-based sensitivity ranking, optionally
                 anchored to an experimental rate band.

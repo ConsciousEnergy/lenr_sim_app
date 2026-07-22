@@ -350,10 +350,10 @@ function EnhancementIndicator({ simulationData, parameters }) {
   
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'nuclear-active': return 'NUCLEAR ENHANCEMENT ACHIEVED';
-      case 'near-threshold': return 'Approaching Observable Activity';
-      case 'screening-enhanced': return 'Screening Enhanced';
-      default: return 'Sub-threshold';
+      case 'nuclear-active': return 'Enhancement threshold reached (model)';
+      case 'near-threshold': return 'Approaching model observable band';
+      case 'screening-enhanced': return 'Screening enhanced (model)';
+      default: return 'Sub-threshold (model)';
     }
   };
   
@@ -405,7 +405,7 @@ function EnhancementIndicator({ simulationData, parameters }) {
             Peak: {enhancementMetrics.peakEnhancement.toExponential(2)}x
           </Typography>
         </Tooltip>
-        <Tooltip title="Threshold for observable excess heat production">
+        <Tooltip title="Internal model threshold for excess-heat labeling; not experimental confirmation">
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             Threshold: {enhancementMetrics.threshold.toExponential(0)}x
           </Typography>
@@ -1142,7 +1142,7 @@ function UnifiedTheoryPage() {
             </Tooltip>
             <Button
               component={RouterLink}
-              to="/theory"
+              to="/theory-paper"
               variant="outlined"
               startIcon={<MenuBookIcon />}
               sx={{ whiteSpace: 'nowrap' }}
@@ -1335,7 +1335,7 @@ function UnifiedTheoryPage() {
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {parameters.loadingRatio > 0.9 ? '  Higher enhancement expected' : 'Loading affects reaction sites'}
+                {parameters.loadingRatio > 0.9 ? '  Higher modeled enhancement expected' : 'Loading affects reaction sites'}
               </Typography>
             </Box>
 
@@ -1501,14 +1501,17 @@ function UnifiedTheoryPage() {
                     onChange={(e) => setRateMode(e.target.value)}
                     disabled={isLoading}
                   >
-                    <MenuItem value="two_body">Two-body (validated baseline)</MenuItem>
+                    <MenuItem value="two_body">Two-body (reference baseline)</MenuItem>
                     <MenuItem value="trapped_state">Trapped-state (speculative TSC)</MenuItem>
+                    <MenuItem value="three_body">Three-body p+e+d (cavitation chain)</MenuItem>
                   </Select>
                 </FormControl>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
                   {rateMode === 'trapped_state'
-                    ? 'Speculative: sub-pm cluster rate (Takahashi TSC). Many orders of magnitude above the baseline; treat as exploratory.'
-                    : 'Conservative textbook thermonuclear rate; reported as a lower bound.'}
+                    ? 'Speculative: sub-pm cluster rate (Takahashi TSC). Many orders above the baseline; exploratory only.'
+                    : rateMode === 'three_body'
+                      ? 'Speculative: p+e⁻→n then n+d under cavitation compression (Widom–Larsen class + OP/NASA LCF). Default conversion ≪ 1; not a validated LENR proof.'
+                      : 'Conservative textbook thermonuclear rate; reported as a lower bound.'}
                 </Typography>
                 <FormControlLabel
                   control={
@@ -1808,7 +1811,7 @@ function UnifiedTheoryPage() {
                       <Line type="monotone" dataKey="FREE" stroke={PHASE_COLORS.free} name="Free (EM)" strokeWidth={2} />
                       <Line type="monotone" dataKey="SCREENED" stroke={PHASE_COLORS.screened} name="Screened" strokeWidth={2} />
                       <Line type="monotone" dataKey="CAPTURE_READY" stroke={PHASE_COLORS.capture_ready} name="Capture Ready" strokeWidth={2} />
-                      <Line type="monotone" dataKey="NUCLEAR" stroke={PHASE_COLORS.nuclear} name="Nuclear Active" strokeWidth={2} />
+                      <Line type="monotone" dataKey="NUCLEAR" stroke={PHASE_COLORS.nuclear} name="Model nuclear-active phase" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </Box>

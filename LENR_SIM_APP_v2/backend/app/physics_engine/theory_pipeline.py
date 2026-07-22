@@ -41,6 +41,9 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "coherent_qed": "coherence",
     "vysotskii_ccs": "coherence",
     "kim_bec": "coherence",
+    # Confinement only — bubble_mhd's σ_screened/σ_bare ratio is reported as a
+    # diagnostic (gamow_enhancement observable), not multiplied here, so it
+    # does not compound with the "screening" group.
     "bubble_mhd_confinement": "confinement",
     "casimir_confinement": "confinement",
     "nae_model": "surface_activation",

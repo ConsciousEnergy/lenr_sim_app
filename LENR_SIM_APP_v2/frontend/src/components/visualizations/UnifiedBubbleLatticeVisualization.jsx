@@ -1403,14 +1403,14 @@ const UnifiedBubbleLatticeVisualization = ({
     return rydbergGroup;
   }, []);
 
-  // Create Halo electron cloud visualization
-  // P_overlap = (1/πa³)exp(-2r₀/a) ≈ 10⁻³
+  // Delocalized interface-electron cloud visualization (formerly "halo electrons")
+  // Paper §2.2: P_overlap ≈ (r₀/a)³ exp(-2r₀/a) ≈ 8.5×10⁻¹⁶ (not ~10⁻³)
   const createHaloElectrons = useCallback((scene) => {
     const haloGroup = new THREE.Group();
     haloGroup.name = 'HaloElectronsGroup';
     
-    // Halo electrons are extended probability clouds around protons
-    // Overlap probability with nucleus is ~10⁻³
+    // Extended probability clouds near lattice protons (visualization only)
+    // Quantitative overlap is ~10⁻¹⁶ per the paper; particle count here is artistic
     const protonCount = 20; // Number of protons to show halo electrons for
     const cloudParticleCount = 150; // Particles per cloud
     
@@ -2611,7 +2611,7 @@ const UnifiedBubbleLatticeVisualization = ({
         // Get current enhancement breakdown
         const currentScreening = enhancements.screening || 1.0;
         const currentField = physicsData.fieldStrength || 0;
-        // Halo electron overlap probability: P_overlap ≈ 10⁻³
+        // Visualization scaling only — paper P_overlap ≈ 8.5×10⁻¹⁶ (not 10⁻³)
         // Cloud size and density affected by screening and field
         const screeningFactor = currentScreening / 100; // Normalize
         const fieldFactor = currentField / 1e8;

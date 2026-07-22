@@ -100,7 +100,9 @@ function TheoryDocumentationPanel() {
                 Where a = 10a₀ (orbital extension), rₙ = 5 fm (nuclear core radius)
               </Typography>
                 <Typography variant="caption" display="block" sx={{ mt: 1, fontStyle: 'italic' }}>
-                  In condensed matter systems (10^23 atoms, 10^12 events/s), even rare per-atom probabilities yield statistically significant event rates.
+                  In condensed matter systems (10^23 atoms, 10^12 events/s), even rare per-atom probabilities
+                  may accumulate over ensemble scales (hypothesis)—not automatically &quot;statistically significant&quot;
+                  experimental events.
                 </Typography>
             </Paper>
             <Typography variant="caption" color="text.secondary">
@@ -237,7 +239,7 @@ function TheoryDocumentationPanel() {
             { color: '#3498db', name: 'FREE (EM)', desc: 'Normal electromagnetic behavior', range: 'E_thermal < 10 eV' },
             { color: '#00ffff', name: 'SCREENED', desc: 'Coulomb barrier lowered 10-100 eV', range: 'Enhancement > 10' },
             { color: '#f1c40f', name: 'CAPTURE READY', desc: 'Weak force coupling (p + e⁻ → n + νₑ)', range: 'Enhancement > 10³' },
-            { color: '#ff4500', name: 'NUCLEAR', desc: 'Strong force engagement possible', range: 'Enhancement > 10⁵' }
+            { color: '#ff4500', name: 'NUCLEAR', desc: 'Model phase above enhancement gate', range: 'Enhancement > 10⁵' }
           ].map((phase) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={phase.name}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>

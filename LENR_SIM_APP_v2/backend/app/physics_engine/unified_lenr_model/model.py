@@ -79,7 +79,20 @@ class UnifiedLENRModel:
         total_enhancement = self._combine_enhancements(enhancements_list)
         thresholds = self._check_thresholds()
         tunneling_prob = calculate_tunneling_probability(self.config, total_enhancement)
-        reaction_rate = calculate_reaction_rate(self.config, tunneling_prob)
+        # Rate uses Gamow-free f_enh. On the legacy path, screening enters once
+        # via σ(E+U_e) from cited screening_data; Electron Screening is excluded
+        # from the f product below to avoid Assenbaum × (E+U_e) double-count.
+        screening_kev = 0.0
+        if not self.config.use_theory_pipeline:
+            from .screening_data import get_screening_potential
+            screening_kev = get_screening_potential(
+                self.config.host_material.name
+            ) / 1000.0
+        reaction_rate = calculate_reaction_rate(
+            self.config,
+            total_enhancement,
+            screening_energy_keV=screening_kev,
+        )
         excess_heat = self._calculate_excess_heat(reaction_rate)
         helium4_rate = self._calculate_helium4_rate(reaction_rate)
         neutron_rate = self._calculate_neutron_rate(reaction_rate)
@@ -177,10 +190,26 @@ class UnifiedLENRModel:
         return enhancements_list
 
     def _combine_enhancements(self, enhancements_list: List[EnhancementResult]) -> float:
+        # Prefer the pipeline's already-composed product when that path ran
+        # (avoids rebuilding/over-stacking multipliers from contribution list).
+        if (
+            self.config.use_theory_pipeline
+            and self._last_pipeline_result is not None
+        ):
+            alkali_multiplier = self._compute_alkali_activity_multiplier()
+            return min(
+                float(self._last_pipeline_result.combined_enhancement) * alkali_multiplier,
+                MAX_ENHANCEMENT_FACTOR,
+            )
         if not enhancements_list:
             return 1.0
-        primary = [e for e in enhancements_list if e.category == "primary"]
-        secondary = [e for e in enhancements_list if e.category == "secondary"]
+        # Bubble collapse: cavitation diagnostic (paper §3.2).
+        # Electron Screening: Assenbaum ratio — screening enters σ(E+U_e) on
+        # the legacy rate path instead (see run_simulation).
+        _non_nuclear = {"Bubble Collapse", "Electron Screening"}
+        rate_factors = [e for e in enhancements_list if e.name not in _non_nuclear]
+        primary = [e for e in rate_factors if e.category == "primary"]
+        secondary = [e for e in rate_factors if e.category == "secondary"]
         primary_product = np.prod([e.value for e in primary]) if primary else 1.0
         if secondary:
             secondary_contribution = np.exp(np.mean(np.log([e.value for e in secondary])))
@@ -209,21 +238,24 @@ class UnifiedLENRModel:
         }
 
     def _calculate_excess_heat(self, reaction_rate: float) -> float:
+        # D+D → ⁴He + lattice: 23.8 MeV (paper §5.2); volumetric rate is per m³.
         if self.config.reactant.name == "Deuterium":
-            Q_reaction = 24e6 * 1.602e-19
+            Q_reaction = 23.8e6 * 1.602e-19
         else:
             Q_reaction = 6e6 * 1.602e-19
-        V = self.config.grain_size**3 * 1e6
+        V = self.config.grain_size**3  # m³
         return reaction_rate * Q_reaction * V
 
     def _calculate_helium4_rate(self, reaction_rate: float) -> float:
-        branch_ratio = 0.5 if self.config.reactant.name == "Deuterium" else 0.0
-        V = self.config.grain_size**3 * 1e6
+        # LENR-like branching (paper §5.2.2): He-4 dominant; neutron ≲ 10⁻¹¹.
+        # Not hot-plasma D-D 50/50. Claim-tier: empirical correlation / scenario.
+        branch_ratio = (1.0 - 1e-11) if self.config.reactant.name == "Deuterium" else 0.0
+        V = self.config.grain_size**3
         return reaction_rate * branch_ratio * V
 
     def _calculate_neutron_rate(self, reaction_rate: float) -> float:
-        branch_ratio = 0.5 if self.config.reactant.name == "Deuterium" else 0.0
-        V = self.config.grain_size**3 * 1e6
+        branch_ratio = 1e-11 if self.config.reactant.name == "Deuterium" else 0.0
+        V = self.config.grain_size**3
         return reaction_rate * branch_ratio * V
 
     def _generate_time_series(self, base_heat: float, base_enhancement: float

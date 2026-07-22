@@ -6,9 +6,11 @@ scipy (scipy.stats.qmc Sobol sequence), so no new dependency is introduced.
 
 Two layers, both deterministic given a seed:
 1. **Sobol propagation** -- low-discrepancy sampling of uncertain inputs
-   (screening potential, tunneling enhancement, and -- for trapped_state --
-   trap separation, cluster lifetime, coherence count) to obtain the predictive
-   rate distribution and a first-order variance-based sensitivity ranking.
+   (screening potential, tunneling enhancement; for trapped_state -- trap
+   separation, lifetime, fusion_probability; for three_body -- compression,
+   conversion_probability, proton_fraction)
+   to obtain the predictive rate distribution and a first-order variance-based
+   sensitivity ranking.
 2. **Optional Bayesian band update** -- when an experimental rate band is
    supplied, samples are importance-weighted by a log-normal likelihood centred
    on the band, yielding a posterior credible interval. This is a pragmatic,
@@ -27,11 +29,16 @@ import numpy as np
 from scipy.stats import qmc
 
 from .config import SimulationConfig
+from .cross_sections import calculate_reaction_rate as _two_body_rate
 from .reaction_rate_engine import (
     RateMode,
     compute_reaction_rate,
     DEFAULT_TRAP_SEPARATION_M,
     DEFAULT_CLUSTER_LIFETIME_S,
+    DEFAULT_COMPRESSION_RATIO,
+    DEFAULT_PROTON_FRACTION,
+    DEFAULT_THREE_BODY_CONVERSION,
+    DEFAULT_MASS_RENORMALIZATION,
 )
 from .screening_data import get_screening_potential_range
 
@@ -123,44 +130,84 @@ def propagate_rate_uncertainty(
     scr = get_screening_potential_range(material_key)
 
     is_trapped = mode_value == RateMode.TRAPPED_STATE.value
-    # Dimensions: [screening_potential, enhancement] (+ trap params if trapped).
-    n_dims = 4 if is_trapped else 2
+    is_three = mode_value == RateMode.THREE_BODY.value
+    if is_trapped:
+        n_dims = 5
+    elif is_three:
+        n_dims = 4  # compression, conversion, proton_fraction, mass_renorm
+    else:
+        n_dims = 2
     unit = _sample_unit(n_samples, n_dims, seed)
 
     # Screening potential prior over the cited material range (eV).
-    u_screen = scr.minimum + unit[:, 0] * (scr.maximum - scr.minimum)
+    u_screen = (
+        scr.minimum + unit[:, 0] * (scr.maximum - scr.minimum)
+        if not is_three
+        else np.full(n_samples, scr.typical)
+    )
     # Tunneling enhancement prior: 1e3-1e5 (paper-adopted band, RR-001).
-    enhancement = _loguniform(unit[:, 1], 1e3, 1e5)
+    enhancement = (
+        _loguniform(unit[:, 1], 1e3, 1e5)
+        if not is_three
+        else np.ones(n_samples)
+    )
 
     if is_trapped:
         trap_sep = _loguniform(unit[:, 2], 1e-12, 1e-10)   # 1-100 pm
         lifetime = _loguniform(unit[:, 3], 1e-21, 1e-19)   # collapse time
+        fusion_prob = _loguniform(unit[:, 4], 1e-6, 1.0)
+        compression = np.full(n_samples, DEFAULT_COMPRESSION_RATIO)
+        conversion = np.full(n_samples, DEFAULT_THREE_BODY_CONVERSION)
+        proton_frac = np.full(n_samples, DEFAULT_PROTON_FRACTION)
+        mass_renorm = np.full(n_samples, DEFAULT_MASS_RENORMALIZATION)
+    elif is_three:
+        trap_sep = np.full(n_samples, DEFAULT_TRAP_SEPARATION_M)
+        lifetime = np.full(n_samples, DEFAULT_CLUSTER_LIFETIME_S)
+        fusion_prob = np.ones(n_samples)
+        compression = _loguniform(unit[:, 0], 1.0, 1e3)
+        conversion = _loguniform(unit[:, 1], 1e-12, 1e-2)
+        proton_frac = unit[:, 2]  # uniform [0,1)
+        mass_renorm = 2.0 + unit[:, 3] * 6.0  # 2–8 (threshold ≈ 2.53)
     else:
         trap_sep = np.full(n_samples, DEFAULT_TRAP_SEPARATION_M)
         lifetime = np.full(n_samples, DEFAULT_CLUSTER_LIFETIME_S)
+        fusion_prob = np.ones(n_samples)
+        compression = np.full(n_samples, DEFAULT_COMPRESSION_RATIO)
+        conversion = np.full(n_samples, DEFAULT_THREE_BODY_CONVERSION)
+        proton_frac = np.full(n_samples, DEFAULT_PROTON_FRACTION)
+        mass_renorm = np.full(n_samples, DEFAULT_MASS_RENORMALIZATION)
 
+    rates = np.empty(n_samples, dtype=float)
     if is_trapped:
-        # Trapped-state rate is non-linear in trap separation -> per-sample loop.
-        rates = np.empty(n_samples, dtype=float)
         for i in range(n_samples):
-            tun = _tunneling_from_enhancement(config, float(enhancement[i]))
             res = compute_reaction_rate(
                 config,
-                tun,
+                1.0,
                 mode=mode_value,
                 trap_separation_m=float(trap_sep[i]),
                 cluster_lifetime_s=float(lifetime[i]),
+                fusion_probability=float(fusion_prob[i]),
+            )
+            rates[i] = res.rate_per_m3_s
+    elif is_three:
+        for i in range(n_samples):
+            res = compute_reaction_rate(
+                config,
+                1.0,
+                mode=mode_value,
+                compression_ratio=float(compression[i]),
+                conversion_probability=float(conversion[i]),
+                proton_fraction=float(proton_frac[i]),
+                mass_renormalization=float(mass_renorm[i]),
             )
             rates[i] = res.rate_per_m3_s
     else:
-        # Two-body rate is *linear* in the tunneling probability, so compute the
-        # baseline once (P=1) and scale by the vectorised P array. This avoids
-        # n_samples cross-section lookups (perf, RR-019) with identical results.
-        base = compute_reaction_rate(config, 1.0, mode="two_body").rate_per_m3_s
-        tun = np.array([
-            _tunneling_from_enhancement(config, float(e)) for e in enhancement
-        ])
-        rates = base * tun
+        for i in range(n_samples):
+            rates[i] = _two_body_rate(
+                config,
+                float(enhancement[i]),
+                screening_energy_keV=float(u_screen[i]) / 1000.0,
+            )
 
     # Keep zeros: a vanishing two-body cold rate is an honest, physical outcome.
     finite = np.isfinite(rates)
@@ -177,7 +224,7 @@ def propagate_rate_uncertainty(
         if lo > 0 and hi > 0:
             target = np.sqrt(lo * hi)
             sigma = max(np.log10(hi / lo) / 2.0, 0.1)
-            log_resid = (np.log10(rates) - np.log10(target)) / sigma
+            log_resid = (np.log10(np.clip(rates, 1e-300, None)) - np.log10(target)) / sigma
             weights = np.exp(-0.5 * log_resid**2)
             if weights.sum() > 0:
                 interval_kind = "posterior_credible"
@@ -186,14 +233,22 @@ def propagate_rate_uncertainty(
 
     summary = _weighted_summary(rates, weights)
     sensitivity = _first_order_sensitivity(
-        unit, rates, is_trapped
+        unit, rates, mode_value
     ) if rates.size > 1 else {}
 
-    refs = ["takahashi2016", "floquetwkb2026"] if is_trapped else ["gamow1928"]
+    if is_trapped:
+        refs = ["takahashi2016", "floquetwkb2026"]
+        claim = "speculative_exploratory"
+    elif is_three:
+        refs = ["widomlarsen2006", "tennfors2013", "steinetz2020exp", "miles1993"]
+        claim = "speculative_exploratory"
+    else:
+        refs = ["gamow1928"]
+        claim = "established_reference"
     refs += [c for c in scr.citations]
     return UQResult(
         mode=mode_value,
-        claim_tier="speculative_exploratory" if is_trapped else "validated_lenr_mechanism",
+        claim_tier=claim,
         median=summary["p50"],
         mean=summary["mean"],
         credible_interval={k: summary[k] for k in ("p05", "p25", "p50", "p75", "p95")},
@@ -231,15 +286,31 @@ def _weighted_summary(values: np.ndarray, weights: np.ndarray) -> Dict[str, floa
 
 
 def _first_order_sensitivity(
-    unit: np.ndarray, rates: np.ndarray, is_trapped: bool
+    unit: np.ndarray, rates: np.ndarray, mode_value: str
 ) -> Dict[str, float]:
     """Cheap variance-based sensitivity: correlation of each input with log-rate."""
-    names = ["screening_potential_eV", "tunneling_enhancement"]
-    if is_trapped:
-        names += ["trap_separation_m", "cluster_lifetime_s"]
+    if mode_value == RateMode.TRAPPED_STATE.value:
+        names = [
+            "screening_potential_eV",
+            "tunneling_enhancement",
+            "trap_separation_m",
+            "cluster_lifetime_s",
+            "fusion_probability",
+        ]
+    elif mode_value == RateMode.THREE_BODY.value:
+        names = [
+            "compression_ratio",
+            "conversion_probability",
+            "proton_fraction",
+            "mass_renormalization",
+        ]
+    else:
+        names = ["screening_potential_eV", "tunneling_enhancement"]
     log_rate = np.log10(np.clip(rates, 1e-300, None))
     out: Dict[str, float] = {}
     for i, name in enumerate(names):
+        if i >= unit.shape[1]:
+            break
         col = unit[:, i]
         if np.std(col) < 1e-12 or np.std(log_rate) < 1e-12:
             out[name] = 0.0

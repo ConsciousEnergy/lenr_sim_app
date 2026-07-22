@@ -14,6 +14,17 @@ describe('TheoryPaperPage', () => {
     expect(screen.getByText(/A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions/)).toBeInTheDocument();
   });
 
+  test('renders Transformer homage subtitle', () => {
+    render(<TheoryPaperPage />);
+    expect(screen.getByText(/Electron, Neutron, and Proton coupling is all you need/)).toBeInTheDocument();
+    expect(screen.getByText(/Attention Is All You Need/)).toBeInTheDocument();
+  });
+
+  test('lists Composer among AI contributors', () => {
+    render(<TheoryPaperPage />);
+    expect(screen.getByText(/Composer \(Cursor\)/)).toBeInTheDocument();
+  });
+
   test('renders Section 5A Open Theoretical Challenges accordion', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText('5A. Open Theoretical Challenges')).toBeInTheDocument();

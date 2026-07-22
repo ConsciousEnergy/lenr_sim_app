@@ -154,8 +154,9 @@ class SimulationRequest(BaseModel):
     # Defaults preserve legacy behaviour: conservative two_body mode, no UQ.
     rate_mode: str = Field(
         default="two_body",
-        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
-        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+        description="Reaction-rate formalism: 'two_body' (reference baseline), "
+        "'trapped_state' (speculative TSC), or 'three_body' (speculative "
+        "p+e+d cavitation chain).",
     )
     include_uncertainty: bool = Field(
         default=False,
@@ -456,7 +457,7 @@ def _compose_rate_block(
     from app.physics_engine.shell_pairing_prior import annotate_branching
 
     mode = (mode or "two_body").strip().lower()
-    if mode not in {"two_body", "trapped_state"}:
+    if mode not in {"two_body", "trapped_state", "three_body"}:
         mode = "two_body"
 
     rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
@@ -949,8 +950,9 @@ class BubbleLatticeRequest(BaseModel):
     # an empty reaction_rate_engine block unless a non-default mode/UQ is requested.
     rate_mode: str = Field(
         default="two_body",
-        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
-        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+        description="Reaction-rate formalism: 'two_body' (reference baseline), "
+        "'trapped_state' (speculative TSC), or 'three_body' (speculative "
+        "p+e+d cavitation chain).",
     )
     include_uncertainty: bool = Field(
         default=False,

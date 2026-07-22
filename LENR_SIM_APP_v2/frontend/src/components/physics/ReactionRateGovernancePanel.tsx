@@ -4,7 +4,7 @@
  * Surfaces the backend `reaction_rate_engine` block (see
  * api/routes/unified_simulation.py) with explicit claim-tier governance so the
  * UI never overstates evidence:
- *   - selectable rate mode (two_body / trapped_state) + claim-tier chip
+ *   - selectable rate mode (two_body / trapped_state / three_body) + claim-tier chip
  *   - reaction-rate credible / predictive interval (p05..p95) when UQ was run
  *   - KG-RP harmonic-locking diagnostics (Phase 6) when provided
  *   - per-result citation keys

@@ -78,7 +78,12 @@ def calculate_casimir_enhancement(config: SimulationConfig) -> EnhancementResult
 
 
 def calculate_bubble_enhancement(config: SimulationConfig) -> EnhancementResult:
-    """Bubble collapse enhancement. From paper Section 3.2."""
+    """Bubble collapse diagnostic (paper §3.2).
+
+    Reported in the enhancement breakdown for UI/diagnostics only.
+    Excluded from the nuclear-rate product in ``model._combine_enhancements``
+    — cavitation extremes are not evidence of fusion.
+    """
     P = config.pressure
     T = config.temperature
     P_ambient = 101325
