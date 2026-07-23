@@ -14,15 +14,25 @@ describe('TheoryPaperPage', () => {
     expect(screen.getByText(/A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions/)).toBeInTheDocument();
   });
 
-  test('renders Transformer homage subtitle', () => {
+  test('renders Transformer-inspired subtitle without front-matter homage', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText(/Electron, Neutron, and Proton coupling is all you need/)).toBeInTheDocument();
-    expect(screen.getByText(/Attention Is All You Need/)).toBeInTheDocument();
+    // Vaswani homage lives in References only (not the hero / title block).
+    expect(screen.queryByText(/Attention Is All You Need/)).not.toBeInTheDocument();
   });
 
   test('lists Composer among AI contributors', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText(/Composer \(Cursor\)/)).toBeInTheDocument();
+  });
+
+  test('References tab lists Vaswani homage with a source link', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByRole('tab', { name: /References/i }));
+    expect(screen.getByText(/\[vaswani2017\] Vaswani/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Attention Is All You Need/).length).toBeGreaterThan(0);
+    const arxivLinks = screen.getAllByRole('link', { name: /arXiv:1706\.03762/i });
+    expect(arxivLinks.some((el) => el.getAttribute('href') === 'https://arxiv.org/abs/1706.03762')).toBe(true);
   });
 
   test('renders Section 5A Open Theoretical Challenges accordion', () => {
