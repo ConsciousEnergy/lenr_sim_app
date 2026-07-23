@@ -226,10 +226,13 @@ class BubbleLatticeInteraction:
         Modified RP equation from paper Section 3.2:
         R*R'' + 3/2*R'^2 = (1/ρ) * [P_b - P_∞ - 2σ/R - 4μR'/R + ε₀E²/2]
         """
-        R, dRdt = y
-        
-        # Prevent singularity at R=0
-        R = max(R, 1e-12)
+        R, dRdt = float(y[0]), float(y[1])
+
+        # Hard-core + singularity floor (van der Waals / numerical).
+        R_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+        R = max(R, R_floor, 1e-12)
+        if not np.isfinite(dRdt):
+            dRdt = 0.0
         
         # Driving pressure (sinusoidal acoustic field)
         omega = 2 * np.pi * self.bubble.frequency
@@ -259,6 +262,8 @@ class BubbleLatticeInteraction:
         # Rayleigh-Plesset: R*R'' + 3/2*R'² = (1/ρ)*ΔP
         # Solving for R'':
         d2Rdt2 = (delta_P / self.bubble.fluid_density - 1.5 * dRdt ** 2) / R
+        if not np.isfinite(d2Rdt2):
+            d2Rdt2 = 0.0
         
         return np.array([dRdt, d2Rdt2])
     
@@ -278,19 +283,27 @@ class BubbleLatticeInteraction:
         # Integrate ODE
         solution = odeint(self.rayleigh_plesset_rhs, y0, t)
         
-        R = solution[:, 0]
-        dRdt = solution[:, 1]
-        
-        # Find minimum radius (collapse point)
-        min_idx = np.argmin(R)
-        
+        R = np.asarray(solution[:, 0], dtype=float)
+        dRdt = np.asarray(solution[:, 1], dtype=float)
+
         # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO
         R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
-        R_min = max(R[min_idx], R_min_floor, 1e-12)
-        collapse_time = t[min_idx]
+        # ODE blow-up can yield NaN/inf/underflow; Python max(nan, floor) stays nan.
+        bad = ~np.isfinite(R) | (R <= 0.0)
+        if np.any(bad):
+            R = R.copy()
+            dRdt = dRdt.copy()
+            R[bad] = R_min_floor
+            dRdt[bad] = 0.0
+        R = np.maximum(R, R_min_floor)
+
+        # Find minimum radius (collapse point) among sanitized samples
+        min_idx = int(np.argmin(R))
+        R_min = float(max(R[min_idx], R_min_floor, 1e-12))
+        collapse_time = float(t[min_idx])
         
         # Compression ratio is capped by the hard-core limit
-        compression_ratio = min(self.bubble.initial_radius / R_min, self.MAX_COMPRESSION_RATIO)
+        compression_ratio = float(min(self.bubble.initial_radius / R_min, self.MAX_COMPRESSION_RATIO))
         
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
@@ -304,7 +317,9 @@ class BubbleLatticeInteraction:
         P_max = min(P_max_raw, 1e10)  # ~100 kbar, sonoluminescence regime
         
         # Peak double-layer field
-        E_peak = self.bubble.double_layer_field * compression_ratio ** 2
+        E_peak = float(self.bubble.double_layer_field * compression_ratio ** 2)
+        if not np.isfinite(E_peak):
+            E_peak = float(self.bubble.double_layer_field)
         
         # Calculate enhancement factor
         enhancement = self._calculate_enhancement_at_collapse(
