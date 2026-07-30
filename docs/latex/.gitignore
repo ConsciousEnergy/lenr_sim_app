@@ -1,0 +1,13 @@
+# LaTeX build artifacts
+out/
+*.aux
+*.log
+*.toc
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+_pandoc_body.tex
+_part1_source.md

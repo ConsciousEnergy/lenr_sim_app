@@ -31,6 +31,8 @@ model assumption).
 | Miles heat-helium correlation (2.62e11 /s/W) | 5.2 | constants.py MILES_HEAT_HELIUM_RATE, theories/miles_heat_helium.py | miles1993, mckubre2008, storms2015 | Phase 4 gate | RR-010 |
 | Screened Oppenheimer-Phillips channel | 2.7 | theories (O-P), parkhomov_validation.py | steinetz2020exp, pines2020theory | Phase 4 NASA LCF gate | RR-009 |
 | Shell-structure nucleon-pairing prior | (Part 2 6.1, new) | Phase 7: parkhomov_validation.py | nguyen2026 | Phase 7 tests | RR-013 |
+| Homogeneous ALR enhancement (exact closed-form Gamow integral) | 5A.3.1 (new) | `app/physics/electron_screening.py::calculate_alr_enhancement` | karahadian2026 | test_heterogeneous_screening.py | — |
+| Bi-exponential heterogeneous (surface/bulk) screening, sigmoid Ue_eff(E) | 5A.3, 5A.3.1 (new) | `app/physics/electron_screening.py::calculate_heterogeneous_screening_enhancement` | karahadian2026 | test_heterogeneous_screening.py | — |
 
 ---
 
@@ -59,6 +61,7 @@ model assumption).
 | kim2009 | — | Y. E. Kim, Bose-Einstein condensate nuclear fusion theory (2009). |
 | gamow1928 | — | G. Gamow, Z. Phys. 51, 204 (1928). |
 | nacreii | Nucl. Phys. A | NACRE II compilation of astrophysical S-factors. |
+| karahadian2026 | doi:10.1038/s41467-026-74421-1 | M. E. Karahadian et al., "Enhanced nuclear fusion in the sub-keV energy regime," Nat. Commun. (2026). |
 
 > Keys without DOIs are flagged for Phase 13 DOI lookup. Existing paper refs
 > 1-17 will be merged into this register during Phase 13.
@@ -95,6 +98,20 @@ not stacked - only the strongest is taken. The new collective many-body term
 group, never multiplied on top of screening/tunneling. Recorded as a Phase 5
 constraint.
 
+**Karahadian 2026 functions are exempt from `MAX_ENHANCEMENT_FACTOR`, by
+design.** `calculate_alr_enhancement` and
+`calculate_heterogeneous_screening_enhancement` (`electron_screening.py`) are
+opt-in, standalone functions that are **not** wired into
+`theory_pipeline.py`/`grouped_max_confidence_product` and do not feed the
+default enhancement-factor composition. They intentionally omit the 1e5 cap
+because the cited paper reports directly measured enhancement factors
+exceeding 1e18 at sub-keV D-D energies; capping them would make the functions
+unable to reproduce the cited experimental result they exist to model. If a
+future phase wires either function into the default pipeline, it must be
+added to a composition group (not multiplied on top of existing
+screening/tunneling terms) and the pipeline-level `MAX_ENHANCEMENT_FACTOR`
+cap must be re-applied at that integration point.
+
 ## Dual unified-model decision (Phase 2 -> Phase 8)
 
 Canonical: the `unified_lenr_model/` **package**. The legacy
@@ -105,3 +122,7 @@ monolith; it duplicates the package's Sections 2.1-2.8 implementations.
 ## Change log
 - 2026-06-04: Matrix created (Phase 0) with core equations and citation register.
 - 2026-06-04: Phase 2 verification log, composition audit, dual-model decision added.
+- 2026-07-27: Added karahadian2026 (Nat. Commun., sub-keV D-D fusion in Pd/Ti
+  hydrides) and its two new equation rows (homogeneous ALR closed-form,
+  bi-exponential heterogeneous screening), plus a composition-audit note that
+  both are opt-in/uncapped and not wired into the default pipeline.

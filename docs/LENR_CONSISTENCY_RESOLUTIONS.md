@@ -41,16 +41,22 @@
 
 ## 3. Overlap Probability (IL-003)
 
-**Resolved: Split regimes**
+**Superseded note (kept for audit trail):** An earlier version of this resolution
+adopted r₀ ≈ 0.1 nm for the "halo" regime, giving P_overlap ~5×10⁻³. That radius
+is atomic-scale, not nuclear-scale, and was later identified as a genuine error
+(13 orders of magnitude overestimate — see `ISSUE_LEDGER.md` issue C2), not a
+legitimate second regime. The corrected resolution below replaces it.
 
-| Regime | P_overlap | Applicability |
-|--------|-----------|---------------|
-| **Halo** | ~5×10⁻³ | Extended orbitals, a ≈ 10a₀, r₀ ≈ 0.1 nm; electron overlap with nuclear volume |
-| **Interface** | 10⁻¹⁰ – 10⁻¹² | Metal–electrolyte interface; decay length 1–5 pm, nuclear radius ~1 fm |
+**Resolved: nuclear-scale radius, two independent theory modules (not a hard selector)**
 
-**Formula for halo regime:** \( P_{\text{overlap}} \approx (r_0/a)^3 e^{-2r_0/a} \) with a = 0.53 nm, r₀ = 0.1 nm.
+| Model | P_overlap | r₀ (nuclear-scale) | Code |
+|-------|-----------|---------------------|------|
+| Halo / electron-capture overlap | ≈8.5×10⁻¹⁶ (before screening enhancement) | 5 fm | `proton_phase_model.py` (`NUCLEAR_RADIUS_M = 5e-15` m) |
+| Delocalized ion-band overlap | 10⁻¹⁰ – 10⁻¹² (volume-ratio, depends on delocalization length) | 1.5 fm | `theories/chubb_ion_band.py` (`R_nuclear = 1.5e-15` m) |
 
-**Usage:** Neutron formation via electron capture (p+e⁻→n) in §2.4 uses σ₀×P_overlap. Given IL-007, the p+e⁻→n pathway is energetically forbidden at low energy; do not use halo P_overlap for that. Use halo P_overlap only for overlap-sensitive *electronic* effects (e.g., screening, wavefunction penetration), and interface P_overlap for interface-specific processes. For neutron yield, adopt a different pathway (e.g., Widom–Larsen) or treat P_overlap as a placeholder until pathway is specified.
+**Formula (halo/electron-capture model):** \( P_{\text{overlap}} \approx (r_0/a)^3 e^{-2r_0/a} \) with a = 0.529 nm (10 a₀), r₀ ≈ 5 fm. This matches Part 1 §2.2 of the current paper.
+
+**Usage:** Both models now use nuclear-scale radii, so their outputs differ by ordinary model-parameter variation (delocalization length, effective wavefunction amplitude at the nucleus), not by an atomic-vs-nuclear regime error. They are intentionally run as two independent, claim-tier-weighted theory contributions in `theory_pipeline.py` rather than unified behind a single selector — the claim-tier/evidence-class weighting (see `theory_scoring.py`) is the app's regime-arbitration mechanism. Per IL-007, the halo P_overlap is not used to justify the p+e⁻→n pathway at low energy (that pathway remains energetically disfavored); it is used for overlap-sensitive electronic effects (screening, wavefunction penetration).
 
 ---
 

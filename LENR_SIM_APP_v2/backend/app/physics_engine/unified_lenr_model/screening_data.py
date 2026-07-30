@@ -18,6 +18,19 @@ References:
 - czerski2023: Electron screening in palladium, doi:10.1016/j.physletb.2023.137750.
 - screeningreview2024: Particles 7(3):50 (2024), doi:10.3390/particles7030050.
 - pines2020theory: Pines et al., Phys. Rev. C 101, 044609 (2020) (Ue~347 eV ErD3).
+- karahadian2026: Karahadian et al., Enhanced nuclear fusion in the sub-keV energy
+  regime, Nat. Commun. (2026), doi:10.1038/s41467-026-74421-1. Direct sub-keV
+  ion-beam measurements of D-D fusion in Pd and Ti hydrides report effective
+  screening potentials of Ue = 0.8 +/- 0.2 keV (Pd, beam-only) rising to
+  1.7 +/- 0.2 keV with electrochemical D-loading, and Ue = 0.3 +/- 0.2 keV
+  (Ti, beam-only) rising to 0.9 +/- 0.2 keV with loading. Below ~2 keV a single
+  constant Ue no longer fits the data: the *effective* Ue must rise further
+  (to ~2-3 keV at E_cm=0.25 keV) to reproduce the observed fusion-yield plateau,
+  which the authors attribute to a heterogeneous surface/bulk screening
+  environment rather than a single homogeneous value (see
+  ``calculate_heterogeneous_screening_enhancement`` in
+  ``app/physics/electron_screening.py`` for the bi-exponential model this
+  motivates). These values extend/raise the previously coded ranges below.
 
 These ranges are intended as priors for the Phase 5 uncertainty quantification,
 not as single deterministic constants.
@@ -57,8 +70,14 @@ class ScreeningPotentialRange:
 MEASURED_SCREENING_POTENTIAL_EV: Dict[str, ScreeningPotentialRange] = {
     "palladium": ScreeningPotentialRange(
         material="palladium", minimum=250.0, typical=800.0, maximum=18000.0,
-        citations=["raiola2002", "czerski2023", "screeningreview2024"],
-        note="D-D in Pd; up to ~18 keV reported for 'hard' Pd targets.",
+        citations=["raiola2002", "czerski2023", "screeningreview2024", "karahadian2026"],
+        note=(
+            "D-D in Pd; up to ~18 keV reported for 'hard' Pd targets. Sub-keV "
+            "ion-beam measurements (karahadian2026) confirm typical~800 eV "
+            "(beam-only bulk) rising to 1700+/-200 eV with electrochemical "
+            "D-loading (PdD); the single-Ue model breaks down below ~2 keV "
+            "beam energy (see heterogeneous screening model)."
+        ),
     ),
     "nickel": ScreeningPotentialRange(
         material="nickel", minimum=200.0, typical=500.0, maximum=800.0,
@@ -66,9 +85,16 @@ MEASURED_SCREENING_POTENTIAL_EV: Dict[str, ScreeningPotentialRange] = {
         note="H-H in Ni; estimate anchored to metal-host screening trend.",
     ),
     "titanium": ScreeningPotentialRange(
-        material="titanium", minimum=35.0, typical=350.0, maximum=600.0,
-        citations=["raiola2002", "huke2008"],
-        note="D-D in Ti; gas-like (~36 eV) to enhanced depending on loading.",
+        material="titanium", minimum=35.0, typical=350.0, maximum=1100.0,
+        citations=["raiola2002", "huke2008", "karahadian2026"],
+        note=(
+            "D-D in Ti; gas-like (~36 eV) to enhanced depending on loading. "
+            "Sub-keV ion-beam measurements (karahadian2026) give 300+/-200 eV "
+            "(beam-only bulk) rising to 900+/-200 eV with electrochemical "
+            "D-loading (TiD); maximum raised to 1100 eV to cover this "
+            "measured value plus uncertainty (was previously capped at 600 eV, "
+            "which excluded the loaded-TiD data point)."
+        ),
     ),
     "erbium": ScreeningPotentialRange(
         material="erbium", minimum=300.0, typical=347.0, maximum=750.0,

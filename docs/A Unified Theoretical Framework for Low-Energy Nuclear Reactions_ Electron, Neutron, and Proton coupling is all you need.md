@@ -31,7 +31,7 @@ Low-Energy Nuclear Reactions (LENR) refer to nuclear processes hypothesized to o
 
 However, the field faces two major hurdles:
 
-* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[3,15\].  
+* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[3,15\]; materials-engineering reviews argue that better-controlled nanostructuring could improve consistency \[31\].  
 * **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena \[18,22\].
 
 Given LENR’s potential for clean, virtually limitless energy, resolving these issues remains a priority for both scientific understanding and practical commercialization.
@@ -207,7 +207,7 @@ This threshold means free electrons at thermal energies cannot drive this reacti
     m_e^* c^2 > (m_n - m_p)c^2 = 1.293 \text{ MeV} \quad \Rightarrow \quad \frac{m_e^*}{m_e} > \frac{1.293}{0.511} \approx 2.53
     \]
     
-    This mechanism remains controversial: while the electromagnetic field energy near surfaces can be large, whether it coherently renormalizes the electron mass to this degree in condensed matter systems is debated \[Hagelstein et al., J. Condensed Matter Nucl. Sci. 12, 105 (2013)\].
+    This mechanism remains controversial: while the electromagnetic field energy near surfaces can be large, whether it coherently renormalizes the electron mass to this degree in condensed matter systems is debated \[Hagelstein et al., J. Condensed Matter Nucl. Sci. 12, 105 (2013)\]. Related heavy-electron analyses of ultra-low-momentum neutron production on metallic hydride surfaces reach similar qualitative conclusions \[34\].
 
 * **Corrected Rate Estimate.** The neutron production rate per unit volume is:
     
@@ -628,7 +628,7 @@ where \( UA \) is the overall heat transfer coefficient-area product.
 3. **Reported outcomes (disputed; claim-tier: empirical correlation):**
 
    * Excess heat relative to electrical input has been reported in some electrolytic campaigns (often cited near tens of percent); replication and calorimetry systematics remain contested.  
-   * Helium-4 and tritium signals have been reported in a subset of studies; collection efficiency and blank controls vary.  
+   * Helium-4 and tritium signals have been reported in a subset of studies \[7,28,29\]; collection efficiency and blank controls vary.  
    * Low-level neutron signals are occasionally reported above background; they are not established as routine LENR signatures.
 
 ---
@@ -647,9 +647,10 @@ where \( UA \) is the overall heat transfer coefficient-area product.
    * **Elemental Analysis:** Post-run detection of transmutation products such as copper and zinc in nickel.  
 3. **Reported outcomes (disputed; claim-tier: empirical correlation):**
 
-   * **Anomalous Heat:** High-power excess claims (including kW-scale reports) exist in the literature but lack community consensus on calorimetry.  
+   * **Anomalous Heat:** High-power excess claims (including kW-scale reports) exist in the literature for nickel-hydrogen and related gas-loaded metal systems \[13,14,30,32\] but lack community consensus on calorimetry.  
    * **RM Detection:** Spectroscopic signatures have been interpreted as consistent with Rydberg Matter in some studies; alternative assignments exist.  
-   * **Transmutations:** Post-run elemental shifts on nickel surfaces are reported in some campaigns; contamination and analytical artifacts must be excluded case-by-case.
+   * **Transmutations:** Post-run elemental shifts on nickel surfaces are reported in some campaigns; contamination and analytical artifacts must be excluded case-by-case.  
+   * **Neutron Emission:** Some gas-phase deuterium/titanium-loading experiments have reported transient neutron bursts above background \[27\], though this is not established as a routine LENR signature.
 
 ---
 
@@ -754,7 +755,7 @@ Reaction rate predictions are validated using Monte Carlo sampling:
 
 ### **5.2 Validation of Nuclear Products**
 
-* **Isotopic Shifts:** Detection of helium-4, tritium, and heavier isotopes supports multi-step nuclear processes (e.g., Oppenheimer-Phillips).  
+* **Isotopic Shifts:** Detection of helium-4, tritium, and heavier isotopes supports multi-step nuclear processes (e.g., Oppenheimer-Phillips) \[8,9\].  
 * **Excess Heat Consistency:** Experimental outputs match the hypothesized nuclear energy contributions once purely chemical avenues are discounted.
 
 #### **5.2.1 Detailed Energy Accounting**
@@ -796,7 +797,7 @@ A self-consistency check between excess heat and nuclear product yields is essen
 
 **Comparison with experimental claims:**
 
-Reported ⁴He yields in LENR experiments range from \( 10^{11} \)–\( 10^{13} \) atoms/W·hr (Miles 1993, McKubre 2006). This is a factor of 100–10,000 below the theoretical yield if all excess heat originated from D+D → ⁴He. Several explanations are possible:
+Reported ⁴He yields in LENR experiments range from \( 10^{11} \)–\( 10^{13} \) atoms/W·hr (Miles 1993 \[7\]; McKubre et al. 1994 \[2\]). This is a factor of 100–10,000 below the theoretical yield if all excess heat originated from D+D → ⁴He. Several explanations are possible:
 
 1. **Detection efficiency:** ⁴He measurement via mass spectrometry has limited collection efficiency, particularly when helium diffuses into the lattice or escapes through the electrolyte.
 2. **Multiple reaction channels:** Heat may also arise from channels with different products: D+D → T + p (3.27 MeV), D+D → ³He + n (3.27 MeV), or lattice-mediated transmutations that produce heat without helium.
@@ -868,13 +869,48 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 **Resolution pathways:**
 
-1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al.), gives \( f \sim e^{U_e / k_B T} \) which at room temperature is enormous. The issue is converting this screening potential to a tunneling enhancement through the proper Gamow integral, which may yield enhancement factors far exceeding \( 10^5 \).
+1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al. \[10\], corroborated by complementary screening measurements in metals \[11\]), gives \( f \sim e^{U_e / k_B T} \) which at room temperature is enormous. The issue is converting this screening potential to a tunneling enhancement through the proper Gamow integral, which may yield enhancement factors far exceeding \( 10^5 \). **Direct experimental confirmation (2026):** Karahadian et al. \[35\] measured D–D fusion in Pd and Ti hydrides at sub-keV ion-beam energies (0.25–6.5 keV) and report a fusion enhancement factor \( \mathcal{E}(E) = Y_{\text{scr}}(E)/Y_{\text{bare}}(E) \) that **exceeds \( 10^{18} \)** at \( E_{cm} = 0.25 \) keV in both materials — 13 orders of magnitude beyond the software's conservative \( 10^3\text{-}10^5 \) bookkeeping band (Section 2.8). Critically, a *single* constant screening potential (the standard Assenbaum–Langanke–Rolfs, ALR, model \[15\]) fails to reproduce this once \( E_{cm} \lesssim 2 \) keV; matching the data requires an *energy-dependent effective* \( U_{e,\text{eff}}(E_{cm}) \) that rises from bulk values (0.8 keV Pd, 0.3 keV Ti) to 2–3 keV at the lowest energies. This is direct evidence for resolution pathway (a): enhancement factors are indeed far larger than single-pair, constant-\(U_e\) estimates suggest, provided the reaction environment is treated as heterogeneous rather than homogeneous (see Section 5A.3.1).
 
-2. **Collective/coherent multi-body processes:** If LENR proceeds through coherent multi-body tunneling (Takahashi's TSC model) or condensate transitions (Section 2.6), the bare probability is not \( P_{\text{bare}} = e^{-2\pi\eta} \) for a single pair, but a collective probability with fundamentally different scaling.
+2. **Collective/coherent multi-body processes:** If LENR proceeds through coherent multi-body tunneling (Takahashi's TSC model \[19\]) or condensate transitions (Section 2.6), the bare probability is not \( P_{\text{bare}} = e^{-2\pi\eta} \) for a single pair, but a collective probability with fundamentally different scaling.
 
 3. **Threshold behavior:** The system may exhibit sharp phase-transition-like behavior where below a critical condition the rate is essentially zero, but above it the rate jumps discontinuously. This is consistent with the observed poor reproducibility—most experiments are below threshold.
 
-**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close. The framework requires either (a) much larger enhancement factors than currently estimated, (b) a fundamentally collective mechanism, or (c) both. This is explicitly identified as an open problem. **Until an experimentally constrained matrix element and state-occupation probability replace the assumed trapped separation, lifetime, and collective factor, multi-body (`trapped_state`) rate outputs are scenario explorations rather than predictions.** The software default remains the conservative **standard two-body reference baseline** (`two_body`): established free-particle formalism used as a reference, *not* a validated lattice-LENR mechanism.
+**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close. The framework requires either (a) much larger enhancement factors than currently estimated, (b) a fundamentally collective mechanism, or (c) both. This is explicitly identified as an open problem. **Until an experimentally constrained matrix element and state-occupation probability replace the assumed trapped separation, lifetime, and collective factor (cf. the trapped-state rate-theory formalism of \[20\]), multi-body (`trapped_state`) rate outputs are scenario explorations rather than predictions.** The software default remains the conservative **standard two-body reference baseline** (`two_body`): established free-particle formalism used as a reference, *not* a validated lattice-LENR mechanism.
+
+#### **5A.3.1 Heterogeneous (Bi-Exponential) Screening Model — Karahadian et al. 2026**
+
+Karahadian et al. \[35\] formalize the "screening is not homogeneous" intuition behind resolution pathway (a) into an explicit, fitted mathematical model, which we summarize here because it is directly implementable alongside (not replacing) the existing constant-\( U_e \) Assenbaum–Langanke–Rolfs (ALR) treatment.
+
+**Homogeneous ALR enhancement (baseline).** For a single effective screening potential \( U_e \), the screened-to-bare yield ratio is:
+
+\[
+\mathcal{E}_{\text{scr}}(E; U_e) = \sqrt{\frac{E}{E + U_e}} \exp\left[\sqrt{\frac{E_G}{E}} - \sqrt{\frac{E_G}{E + U_e}}\right]
+\]
+
+where \( E_G = 2 m_r c^2 (\pi \alpha Z_1 Z_2)^2 \) is the Gamow energy for the reacting pair and \( m_r \) is the reduced mass. This is the model already implicit in the software's `ElectronScreeningTheory` module (\( f_{\text{screen}} = \exp(\pi \eta U_s/E) \) is its non-relativistic/thermal-averaged analogue).
+
+**Heterogeneous extension.** Rather than one \( U_e \), the measured yield is modeled as a weighted sum of two screening *environments* — a near-surface, defect-rich "surface" channel and a "bulk" lattice channel — each individually obeying the homogeneous ALR form:
+
+\[
+\mathcal{E}_{\text{env}}(E) = A_s\, \mathcal{E}_{\text{scr}}(E; U_{e,s}) + A_b\, \mathcal{E}_{\text{scr}}(E; U_{e,b}), \qquad A_s + A_b = 1,\ A_s, A_b \ge 0
+\]
+
+The amplitudes \( A_s, A_b \) are constant, but because each term retains its own Gamow-suppressed energy dependence, the *effective* screening potential that would reproduce \( \mathcal{E}_{\text{env}}(E) \) under the single-parameter model varies smoothly with energy. Karahadian et al. parameterize this effective potential directly as a sigmoid crossover between the bulk and surface values:
+
+\[
+U_{e,\text{eff}}(E) = U_{e,b} + \frac{U_{e,s} - U_{e,b}}{1 + \exp[(E - E_0)/\Delta]}
+\]
+
+with \( \Delta = 0.5 \) keV a fixed smoothing width and \( E_0 \) the crossover energy (fitted to \( 0.6 \) keV for both Pd and Ti in their data). *(Sign note: the source manuscript is an explicitly-flagged "unedited version" of the preprint; the exponent sign shown here is fixed to match the authors' own stated physical limits — \( U_{e,\text{eff}} \to U_{e,b} \) at high \( E \) (deep implantation) and \( U_{e,\text{eff}} \to U_{e,s} \) at low \( E \) (shallow, defect-rich implantation) — rather than the as-published exponent sign, which gives the opposite, physically-inconsistent limits.)* Fits (log-space \( \chi^2 \) minimization, since the enhancement spans many orders of magnitude) give:
+
+| Material | \( U_{e,b} \) (bulk, high-\(E\) asymptote) | \( U_{e,s} \) (surface, low-\(E\) asymptote) |
+|---|---|---|
+| Pd (beam-only) | 0.8 ± 0.2 keV | ≈3.0 keV (at \( E_{cm}=0.25\) keV) |
+| PdD (+ electrochemical loading) | 1.7 ± 0.2 keV | — |
+| Ti (beam-only) | 0.3 ± 0.2 keV | ≈2.2 keV (at \( E_{cm}=0.25\) keV) |
+| TiD (+ electrochemical loading) | 0.9 ± 0.2 keV | — |
+
+**Interpretation and status.** The physical picture is that lower-energy ions stop closer to the surface (implantation depth ~4 nm at \( E_{cm}=0.25\) keV vs. ~70 nm at 6.5 keV \[27\]), sampling a defect-rich, non-equilibrium-occupancy region with intrinsically stronger local screening than the bulk lattice. This is consistent with — and gives a quantitatively fitted form to — the qualitative "defect-mediated near-surface environment" language already used elsewhere in this framework (Sections 2.2, 2.3). It does **not** resolve the microscopic origin of the surface enhancement (the authors explicitly leave this open, citing candidate mechanisms including defect/vacancy-trapped deuterium, grain-boundary screening amplification, and low-energy nuclear resonances), and it is a two-material (Pd, Ti), single-reaction (D–D) result — it should be treated as a **strong existence proof that heterogeneous screening environments can supply order(s)-of-magnitude-larger enhancement than homogeneous models**, not as a validated, material-general LENR mechanism. The companion simulation implements this bi-exponential model as an explicit, opt-in alternative to the default homogeneous screening calculation (see `calculate_heterogeneous_screening_enhancement` in `app/physics/electron_screening.py`), so it can be explored without displacing the existing conservative default.
 
 ### **5A.4 Electron Capture Energy Source (Q4)**
 
@@ -882,7 +918,7 @@ The Widom-Larsen mechanism requires electrons with kinetic energy \( > 0.782 \) 
 
 **Analysis:**
 
-1. **Widom-Larsen heavy electron mechanism:** Proposes that collective electromagnetic fluctuations at the metal-hydrogen interface renormalize the electron effective mass to \( m_e^* > 2.53 \, m_e \). This is a very large mass renormalization by condensed matter standards (typical electron effective masses in metals are \( 0.5\text{-}5 \, m_e \)). Whether coherent electromagnetic fields can achieve this remains debated. In particular, Tennfors (Eur. Phys. J. Plus 128, 15, 2013) estimated, from neutron-scattering data on protons in palladium, an electron mass enhancement of less than one percent—far below the threshold required—and Ciuchi et al. similarly questioned the predicted rates; Widom and Larsen rebut these by arguing the process is collective (many-body) rather than two-body. We therefore treat this mechanism as **speculative/contested** and do not rely on it for the paper's primary energy-balance argument.
+1. **Widom-Larsen heavy electron mechanism:** Proposes that collective electromagnetic fluctuations at the metal-hydrogen interface renormalize the electron effective mass to \( m_e^* > 2.53 \, m_e \). This is a very large mass renormalization by condensed matter standards (typical electron effective masses in metals are \( 0.5\text{-}5 \, m_e \)). Whether coherent electromagnetic fields can achieve this remains debated. In particular, Tennfors (Eur. Phys. J. Plus 128, 15, 2013) [tennfors2013] estimated, from neutron-scattering data on protons in palladium, an electron mass enhancement of less than one percent—far below the threshold required—and Ciuchi et al. similarly questioned the predicted rates; Widom and Larsen rebut these by arguing the process is collective (many-body) rather than two-body. We therefore treat this mechanism as **speculative/contested** and do not rely on it for the paper's primary energy-balance argument.
 
 2. **Alternative: D+D priming reactions:** The D+D → ³He + n channel (3.27 MeV, athermal neutron) could provide "seed" neutrons at low rates, which then catalyze Oppenheimer-Phillips transmutation chains on heavier lattice nuclei. This avoids the electron capture threshold entirely but requires explaining the initial D+D reaction.
 
@@ -938,7 +974,7 @@ While the preceding sections introduced key theoretical constructs, LENR also re
  \[
  \nabla\cdot\mathbf{E} = \frac{\rho}{\epsilon_0}, \qquad \nabla\times\mathbf{B} = \mu_0\mathbf{J} + \frac{1}{c^2}\frac{\partial\mathbf{E}}{\partial t},
  \]
- crucial for modeling plasma-like oscillations and double-layer fields in electrochemical or gaseous LENR environments.
+ crucial for modeling plasma-like oscillations and double-layer fields in electrochemical or gaseous LENR environments, an approach with roots in early quantum-field treatments of cold fusion \[24\].
 
 4. **Nuclear Reaction Cross-Sections**
  * **Reaction Rate Expression:**
@@ -1139,6 +1175,9 @@ Drawn from the project's evidence-base bibliography (`Unified_LENR_Theory_D.Acs.
 34. Safajuei, F., Safajuei, S., & Hajimohammadi, M. (2023). Production of ultra-low momentum neutrons on metallic hydride surfaces by heavy electrons. *Iranian Journal of Science and Technology, Transactions A: Science*, 47, 995–1002.  
     **Link:** [https://doi.org/10.1007/s40995-023-01437-3](https://doi.org/10.1007/s40995-023-01437-3)
 
+35. Karahadian, M. E., Colborne, M., Persaud, A., Schenkel, T., & Munday, J. N. (2026). Enhanced nuclear fusion in the sub-keV energy regime. *Nature Communications* (2026).  
+    **Link:** [https://doi.org/10.1038/s41467-026-74421-1](https://doi.org/10.1038/s41467-026-74421-1)
+
 ### Supplementary keys (software / UQ traceability)
 
 These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_2026/TRACEABILITY_MATRIX.md`:
@@ -1158,6 +1197,7 @@ These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_202
 - **[nguyen2026]** Nguyen, T., et al. (2026). Quantum shell structure of proton–neutron pairing. *Nature*. DOI: [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)  
 - **[floquetwkb2026]** Floquet–WKB analysis of lattice confinement fusion under a driven barrier (2026). DOI: [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)  
 - **[parkhomov2018]** Parkhomov, A. G. (2018). Nuclear reactions in LENR: review of experimental results (LENR Academy curated subset).  
+- **[karahadian2026]** → entry 35 above. Source for the heterogeneous/bi-exponential screening model in Section 5A.3.1 and the updated Pd/Ti screening-potential ranges in `screening_data.py`.  
 
 ---
 

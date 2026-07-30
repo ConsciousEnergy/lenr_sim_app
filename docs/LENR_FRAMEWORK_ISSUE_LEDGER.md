@@ -53,6 +53,7 @@
 | **Required assumption** | Either: (a) split regimes (halo vs interface) and label which applies where, or (b) adopt one model and remove the other. |
 | **Falsify/validate** | Compare neutron-yield predictions using P_overlap=5×10⁻³ vs 10⁻¹¹; test against neutron-count data. |
 | **Simulation impact** | Single P_overlap (or regime-dependent) must be used in reaction-rate formula. |
+| **Status (2026 rigor review)** | **RESOLVED** — the atomic-scale radius (r₀=0.1 nm) was the actual error (see `ISSUE_LEDGER.md` C2), not a genuine two-regime conflict. Current Part 1 §2.2 uses a nuclear-scale r₀≈5 fm, giving P_overlap≈8.5×10⁻¹⁶, and explicitly notes this is "consistent with the Part 2 LaTeX analysis... which uses ~1 fm scales and obtains P~10⁻¹⁰–10⁻¹² per event (the difference reflecting different assumptions about the effective wavefunction amplitude at the nucleus)." Code mirrors this split as two independent, claim-tier-scored theory modules rather than one hard-coded constant: `proton_phase_model.py` (halo/electron-capture overlap, `NUCLEAR_RADIUS_M=5e-15` m) and `theories/chubb_ion_band.py` (delocalized ion-band overlap, `R_nuclear=1.5e-15` m). Both now use nuclear-scale radii, so the residual difference is ordinary model-parameter variation, not a 10⁷–10⁹ regime error. Note: `LENR_CONSISTENCY_RESOLUTIONS.md` §3 still cited the superseded r₀=0.1 nm numbers and has been updated to match.
 
 ---
 
