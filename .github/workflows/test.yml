@@ -113,7 +113,7 @@ jobs:
         python -m pytest tests/performance/ --benchmark-only -v
 
     - name: Upload coverage report
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         file: ./LENR_SIM_APP_v2/backend/coverage.xml
         fail_ci_if_error: false
