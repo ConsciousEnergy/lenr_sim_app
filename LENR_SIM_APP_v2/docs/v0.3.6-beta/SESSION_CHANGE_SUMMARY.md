@@ -98,6 +98,14 @@ This document captures the concrete code, doc, and CI changes landed in the curr
 - Mobile-only zoom controls remain managed by `TouchControls`.
 - Adaptive scale regime switching now uses camera-to-orbit-target distance for more stable lattice/bubble transition behavior during panning.
 
+## Karahadian 2026 + ship-readiness (2026-07-27 / 2026-08-02)
+
+- Opt-in heterogeneous screening model + ALR helpers in `app/physics/electron_screening.py`; Pd/Ti ranges in `screening_data.py`; unit tests in `test_heterogeneous_screening.py`.
+- Theory paper §5A.3.1, BibTeX `karahadian2026`, academic exports regenerated under `docs/academic_exports/`.
+- Traceability matrix updated; composition audit notes uncapped helpers are **not** in the default pipeline.
+- AI tooling attribution: see [AI_TOOLING.md](AI_TOOLING.md) (Cursor Cloud, Composer/default, GPT-5.6 automations, **Grok 4.5** when used).
+- Ship gate evidence: [VERIFICATION_GATE_REPORT.md](VERIFICATION_GATE_REPORT.md) § Ship-readiness gate (2026-08-02); draft PR https://github.com/ConsciousEnergy/lenr_sim_app/pull/67.
+
 ## Remaining deferred items (post-beta maintenance)
 
 - Broader electrochemistry (full speciation and transport) remains out of beta scope; current Phase-1 salt modifiers stay bounded in the `[0.7, 1.2]` activity window.

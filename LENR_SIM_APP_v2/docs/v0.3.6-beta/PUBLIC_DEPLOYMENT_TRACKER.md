@@ -11,8 +11,12 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
   - Docker stack templates include Traefik TLS, backend replicas, and Postgres secret usage.
 - **Release documentation:** READY
   - `DEPLOYMENT_CHECKLIST.md`, `DEPLOYMENT_QUICK_REFERENCE.md`, and release evidence docs updated for v0.3.6-beta + Vite workflow.
-- **Manual cloud execution:** PENDING
+- **Ship-readiness gates (2026-08-02):** READY / PASS
+  - Version consistency, backend science gates, frontend lint/test/build, security audits, Playwright E2E (4 passed), docs + AI tooling attribution.
+  - Evidence: `VERIFICATION_GATE_REPORT.md` § Ship-readiness gate; draft PR https://github.com/ConsciousEnergy/lenr_sim_app/pull/67
+- **Manual cloud execution:** PENDING (blocked on operator secrets in cloud agent)
   - Cloudflare/Hostinger account actions, token creation, terraform apply, and live DNS cutover must still be performed.
+  - Required before `./infrastructure/scripts/deploy.sh production`: `terraform.tfvars` (Cloudflare + Hostinger tokens, SSH pubkey), GHCR login on VPS, Swarm secrets.
 
 ## Plan Mapping (Phase 4)
 

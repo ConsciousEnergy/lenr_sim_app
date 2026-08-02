@@ -185,3 +185,52 @@ Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; 
   - ship-prep hardening (2026-07-18): Vite 6.4.3 (0 high vulns), bundle chunk-splitting, `contract_version` consistency fix; full local CI mirror green (backend 354 passed/1 skipped, frontend 103 passed).
   - UI consolidation (2026-07-18): antd fully removed in favor of MUI (single UI library, no `antd` in bundle); refactor-delta CI mirror green (lint 0 errors, build PASS, frontend 90 passed, 0 high vulns).
 
+---
+
+## Ship-readiness gate (2026-08-02) — Hostinger / Cloudflare prep
+
+### Version consistency
+- Markers: `config.py`, `frontend/package.json`, `version.js`, `Dockerfile.backend` all `0.3.6-beta`.
+- Status: **PASS**
+
+### Backend (CI parity)
+- `pytest tests/ app/tests/` → **701 passed, 9 skipped**
+- `pytest tests/test_integration/` → **60 passed**
+- `pytest tests/test_integration/test_physics_benchmark_gates.py` → **3 passed**
+- Experiment-anchored science gates + export/rate/KGRP/shell-pairing → **52 passed**
+- `test_heterogeneous_screening.py` → **19 passed**
+- Export contract (`lenr-run-export-v1` / rate-engine export tests) → **PASS**
+- Status: **PASS**
+
+### Frontend
+- `npm run lint` → **0 errors** (567 legacy warnings, non-blocking)
+- `npm test` → **97 passed** (15 suites)
+- `npm run build` → **PASS**
+- Status: **PASS**
+
+### Security
+- `npm audit --audit-level=high` → **0 high/critical** after `npm audit fix` (cleared `brace-expansion`); residual **2 moderate** (`react-router` / `react-router-dom`) tracked for a coordinated upgrade.
+- `pip-audit -r requirements.txt` with CI ignore list → **0 new vulns** (11 documented starlette/vtk/ecdsa residuals ignored per `SECURITY_CI_HARDENING.md`).
+- No committed secrets (`terraform.tfvars`, `.secrets.env`, `.env` absent from tree).
+- Swarm entrypoint secret mapping + Traefik/CORS present in stack templates.
+- Middleware tests `app/tests/api/middleware/` → **22 passed**.
+- Status: **PASS** (residuals documented)
+
+### Docs / AI tooling
+- Karahadian traceability rows present in `docs/REVIEW_2026/TRACEABILITY_MATRIX.md`.
+- New `AI_TOOLING.md` records Cursor Cloud agents + models (Composer/default, GPT-5.6 automations, **Grok 4.5** when used).
+- CHANGELOG updated for Karahadian + ship gate.
+- Status: **PASS**
+
+### Playwright E2E
+- Expanded beyond app-shell: `unified-theory.spec.js`, `analytics.spec.js` + page objects.
+- Local run (Chromium): **4 passed** (app-shell, analytics shell, unified-theory glossary, run/export controls).
+- Wired as pre-deploy manual/local gate (not yet in `test.yml`).
+- Status: **PASS**
+
+### Live Hostinger / Cloudflare deploy
+- Credentials (`HOSTINGER_API_TOKEN`, Cloudflare tokens, `terraform.tfvars`) **not available** in the cloud agent environment at gate time.
+- Probe: `curl https://api.conscious.energy/api/health` failed TLS name mismatch (`SSL: no alternative certificate subject name matches target host name`), consistent with DNS/TLS not yet cut over to the Swarm/Traefik stack.
+- Operator go/no-go artifact: `/opt/cursor/artifacts/HOSTINGER_DEPLOY_GO_NO_GO.md`
+- Status: **BLOCKED on operator secrets** — runbook remains `infrastructure/scripts/deploy.sh production` + Cloudflare Pages `VITE_API_URL=https://api.conscious.energy`.
+

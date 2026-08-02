@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Karahadian heterogeneous screening + academic exports (2026-07-27 / ship gate 2026-08-02)
+- **Physics:** opt-in Assenbaum–Langanke–Rolfs closed-form and bi-exponential heterogeneous screening helpers in `app/physics/electron_screening.py` (`calculate_alr_enhancement`, `calculate_heterogeneous_screening_enhancement`), citing Karahadian et al. (2026) Nat. Commun.; not wired into the default capped pipeline.
+- **Data:** Pd/Ti `screening_data.py` ranges updated (Ti maximum raised to 1100 eV); citation key `karahadian2026`.
+- **Paper / exports:** theory paper §5A.3.1 + reference [35]; LaTeX/BibTeX pipeline and regenerated PDF/DOCX/DOC under `docs/academic_exports/`.
+- **Governance:** traceability matrix rows + composition-audit note; AI tooling attribution in `docs/v0.3.6-beta/AI_TOOLING.md` (Cursor Cloud, Composer/default, GPT-5.6 automations, Grok 4.5 when used).
+- **Ship-readiness:** full CI-parity gates green locally (backend 701 passed / 9 skipped; science gates 52 passed; frontend lint 0 errors, Jest 97 passed, Vite build PASS); `npm audit fix` cleared high `brace-expansion`; Playwright E2E expanded beyond app-shell.
+- **PR:** draft into `development` — https://github.com/ConsciousEnergy/lenr_sim_app/pull/67
+
 ### Ship-Prep Hardening (2026-07-18)
 - **Security**: upgraded Vite `5` -> `6.4.3` (with `@vitejs/plugin-react` 4.7.0), clearing the dev-server `server.fs.deny` bypass advisory on Node 20.12 without the semver-major Vite 8 jump; `npm audit --audit-level=high` now reports 0 vulnerabilities. Added a scheduled `security-scan.yml` (weekly `pip-audit` + `npm audit`), `dependabot.yml`, and a PR `dependency-review` gate.
 - **Performance**: added `manualChunks` vendor splitting in `vite.config.js` (three / antd / mui / charts / markdown / react-vendor / vendor); entry `index` chunk reduced to ~88 kB (gzip ~26 kB), resolving the prior bundle-size warning.

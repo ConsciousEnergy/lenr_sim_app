@@ -38,6 +38,13 @@
 - Frontend gate: `npm audit --audit-level=high` retained as blocker for high/critical vulnerabilities.
 - Backend gate: `pip-audit -r requirements.txt` runs before the test matrix.
 - Workflow includes explicit least-privilege permissions (`contents: read`) at both workflow and job scope.
+
+## Ship-readiness evidence (2026-08-02)
+- Draft PR to `development`: https://github.com/ConsciousEnergy/lenr_sim_app/pull/67
+- Full local CI mirror recorded in `VERIFICATION_GATE_REPORT.md` § Ship-readiness gate (2026-08-02).
+- Karahadian heterogeneous screening: opt-in only; default pipeline still capped at `MAX_ENHANCEMENT_FACTOR` (1e5).
+- AI tooling attribution: `AI_TOOLING.md` (Cursor Cloud, Composer/default, GPT-5.6 automations, Grok 4.5 when used).
+- Live Hostinger VPS + Cloudflare Pages: blocked until operator secrets (`terraform.tfvars` / API tokens) are supplied; runbook unchanged (`deploy.sh production`).
 - CI-level `version-consistency` job fails fast on mismatched version markers between
   `backend/core/config.py APP_VERSION`, `frontend/package.json`, `frontend/src/config/version.js`,
   and `Dockerfile.backend BUILD_VERSION`.
