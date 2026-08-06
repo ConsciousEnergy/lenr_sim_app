@@ -46,6 +46,7 @@ MAX_WS_NUM_CYCLES = 10
 MAX_WS_CONNECTIONS = 8
 _WS_ACTIVE_CONNECTIONS = 0
 _EXPORT_RATE_LIMIT_PER_MINUTE = 10
+_EXPORT_CLIENT_MAX_ENTRIES = 4096
 _export_clients: Dict[str, tuple] = {}
 
 
@@ -70,6 +71,18 @@ def _enforce_export_rate_limit(request: Request) -> None:
         return
 
     now = time.time()
+    # Drop expired windows so the table cannot grow without bound over uptime.
+    expired = [
+        ip for ip, (_count, window_start) in _export_clients.items()
+        if now - window_start >= 60
+    ]
+    for ip in expired:
+        _export_clients.pop(ip, None)
+    if len(_export_clients) >= _EXPORT_CLIENT_MAX_ENTRIES and client_ip not in _export_clients:
+        # Evict the oldest window when at capacity (rare; scan-defense).
+        oldest_ip = min(_export_clients.items(), key=lambda item: item[1][1])[0]
+        _export_clients.pop(oldest_ip, None)
+
     count, window_start = _export_clients.get(client_ip, (0, now))
     if now - window_start >= 60:
         _export_clients[client_ip] = (1, now)
@@ -1407,12 +1420,19 @@ async def bubble_lattice_websocket(websocket: WebSocket):
     """
     global _WS_ACTIVE_CONNECTIONS
 
+    # Reserve a slot before the awaitable accept() so concurrent connects
+    # cannot race past MAX_WS_CONNECTIONS.
     if _WS_ACTIVE_CONNECTIONS >= MAX_WS_CONNECTIONS:
         await websocket.close(code=1013, reason="Too many concurrent streams")
         return
 
-    await websocket.accept()
     _WS_ACTIVE_CONNECTIONS += 1
+    try:
+        await websocket.accept()
+    except Exception:
+        _WS_ACTIVE_CONNECTIONS = max(0, _WS_ACTIVE_CONNECTIONS - 1)
+        raise
+
     logger.info(
         "WebSocket connection established for bubble-lattice simulation (%s/%s)",
         _WS_ACTIVE_CONNECTIONS,

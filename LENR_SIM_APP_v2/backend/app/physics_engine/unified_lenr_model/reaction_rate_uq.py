@@ -5,10 +5,14 @@ reports a predictive distribution with credible intervals. Uses only numpy +
 scipy (scipy.stats.qmc Sobol sequence), so no new dependency is introduced.
 
 Two layers, both deterministic given a seed:
-1. **Sobol propagation** -- low-discrepancy sampling of uncertain inputs
-   (screening potential, tunneling enhancement; for trapped_state -- trap
-   separation, lifetime, fusion_probability; for three_body -- compression,
-   conversion_probability, proton_fraction)
+1. **Sobol propagation** -- low-discrepancy sampling of mode-specific inputs:
+   - ``two_body``: screening potential, tunneling enhancement
+   - ``trapped_state``: trap separation, lifetime, fusion_probability
+     (screening/enhancement dims are reserved in the Sobol layout for a
+     uniform sample matrix shape but are **not** consumed by the trapped-state
+     rate formula today)
+   - ``three_body``: compression, conversion_probability, proton_fraction,
+     mass_renormalization
    to obtain the predictive rate distribution and a first-order variance-based
    sensitivity ranking.
 2. **Optional Bayesian band update** -- when an experimental rate band is

@@ -34,6 +34,7 @@ fails the build. Revisit each in the post-beta maintenance slice.
 - Release-blocking: any high/critical vulnerability, and any *new* or *fixable* backend advisory.
 - Accepted temporarily (with tracking): the backend transitive advisories tabled above (upstream-constrained), documented and ignored explicitly in the CI `pip-audit` step.
 - Follow-up: coordinated FastAPI/Starlette major upgrade, `vtk 9.5.1` via PyVista revalidation, and `python-jose` replacement in a dedicated post-beta maintenance slice.
-- Dependency Review is **blocking** on high severity for PRs into `main`, `development`, and `lenr_sim_app_v0.3.6-beta`. Enable Dependency graph under repo Settings → Code security and analysis or the workflow cannot run.
+- Dependency Review targets high severity for PRs into `main`, `development`, and `lenr_sim_app_v0.3.6-beta`. It currently uses `continue-on-error: true` because Dependency graph / GitHub Advanced Security is not enabled on this repository (the action otherwise fails with "Dependency review is not supported"). Once Dependency graph + GHAS are enabled under Settings → Code security and analysis, remove `continue-on-error` so the check becomes a hard blocker again.
+- Frontend `npm audit --audit-level=high` is a hard CI gate; residual **moderate** `react-router` / `react-router-dom` advisories are tracked for a coordinated upgrade.
 - Pre-VPS API hardening (2026-07-22): WebSocket `num_cycles` capped at 10, concurrent stream budget, UQ samples max 512, generic client error messages, and a tighter `/export` per-IP rate limit.
 
