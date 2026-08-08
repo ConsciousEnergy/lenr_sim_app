@@ -50,6 +50,12 @@ Newly published advisories had re-broken the frontend high gate. Cleared via `np
 
 Post-fix posture: `npm audit --audit-level=high` -> **exit 0**, `2 moderate, 0 high`.
 
+`frontend/package.json` `overrides` floors these packages (`@tootallnate/once`, `nth-check`,
+`serialize-javascript`, `underscore`, `postcss`, `js-yaml`, `esbuild`, `brace-expansion`,
+`nanoid`, `fast-uri`, `dompurify`) so older lockfiles cannot resolve vulnerable patch versions.
+The Windows **"8 vulns (4 high)"** signature matches pre-`95bedd1` / `bd1684f` trees (stale
+`node_modules` or a lockfile from before those fixes).
+
 **Verify the gate by reading the exit code directly, never through a pipe.** `npm audit --audit-level=high | tail`
 reports `tail`'s status and silently masks a failing gate:
 
@@ -59,9 +65,13 @@ npm audit --audit-level=high > /dev/null 2>&1; echo "gate exit: $?"
 
 ### Local `start_app.bat` / Vite terminal noise
 
-`LENR_SIM_APP_v2/start_app.bat` and the root `start_app.bat` run `npm ci` before
-`npm start` (`vite`). npm always prints a funding line and an audit summary after install.
-That is **not** a Vite failure — the next lines should be:
+`LENR_SIM_APP_v2/start_app.bat` and the root `start_app.bat` sync frontend
+`node_modules` to `package-lock.json` via a SHA256 stamp file
+(`node_modules\.lockfile-hash`) before `npm start` (`vite`). If `node_modules`
+is missing, the stamp is missing, or the hash mismatches, they run
+`npm ci --legacy-peer-deps` and rewrite the stamp. npm always prints a funding
+line and an audit summary after install. That is **not** a Vite failure — the
+next lines should be:
 
 ```text
 > lenr-sim-frontend@0.3.6-beta start

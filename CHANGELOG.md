@@ -12,6 +12,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Physics-accuracy, reporting-honesty, and UX-coherence pass ahead of the public VPS
 release. No breaking contract changes: every new response field is additive.
 
+#### Follow-up (same day): local audit sync + thermo consistency
+
+- **npm highs on local `start_app`**: Windows terminals still showing
+  `8 vulnerabilities (4 moderate, 4 high)` were on pre-`95bedd1`/`bd1684f` lockfiles.
+  Tip remains `2 moderate, 0 high` (react-router only). Overrides now floor
+  `js-yaml`, `brace-expansion`, `nanoid`, `fast-uri`, `dompurify`, and `postcss`.
+  `start_app.bat` / `LENR_SIM_APP_v2/start_app.bat` sync via a SHA256 stamp of
+  `package-lock.json` so a pulled lockfile forces `npm ci`.
+- **Timeline pressure bug**: HTTP/WS rebuilt pressure as
+  `ambient_temperature_k * 101325 * CR**4.2` (~300× high at 298 K), corrupting Casimir
+  on charts. Now uses thermo-consistent `ambient_pressure * CR**(3γ)` with the same
+  1e10 Pa ceiling as the peak path.
+- **Peak vs timeline thermo**: `get_collapse_phases` now uses the bubble γ, R hard-core
+  floor, and T/P ceilings from `simulate_collapse`.
+- **Material Casimir**: API lattice reconstruct now copies `bulk_modulus` (Li is ~16×
+  softer than Pd).
+- **Electrolyte alignment**: multiplier is a mechanism in the saturation product so
+  `enhancement_factor` and `enhancement_breakdown.total` agree.
+- **UI**: Advanced Analysis surfaces `collapse_results.limits`; Unified Theory chart
+  filters the `saturation` object and prefers peak_conditions breakdown.
+
 - **Enhancement reporting**: the `MAX_ENHANCEMENT_FACTOR = 1e5` ceiling was applied to
   every breakdown mechanism independently, so at the peak conditions the UI actually
   reaches (CR = 1000, E = 1e14 V/m) the QED, Casimir, Rydberg and compression terms all

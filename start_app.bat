@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 ECHO Starting LENR Simulation Application...
 
 :: Check if Python is installed
@@ -56,25 +57,41 @@ cd ..\..
 ECHO Setting up frontend...
 cd LENR_SIM_APP_v2\frontend
 
-:: Install from package-lock.json when node_modules is missing. After a git pull that
-:: updates the lockfile, delete node_modules once so the next start picks up security fixes.
-:: The funding / vulnerability summary is printed by npm, not by Vite.
-IF NOT EXIST node_modules (
-    ECHO Installing frontend dependencies from package-lock.json...
+:: Sync node_modules to package-lock.json via SHA256 stamp (node_modules\.lockfile-hash).
+:: Missing node_modules, missing stamp, or hash mismatch triggers npm ci.
+SET NEED_NPM_CI=0
+IF NOT EXIST node_modules SET NEED_NPM_CI=1
+IF NOT EXIST node_modules\.lockfile-hash SET NEED_NPM_CI=1
+
+IF !NEED_NPM_CI!==0 (
+    SET LOCK_HASH=
+    FOR /F "skip=1 delims=" %%H IN ('certutil -hashfile package-lock.json SHA256') DO (
+        IF NOT DEFINED LOCK_HASH SET "LOCK_HASH=%%H"
+    )
+    SET /P STORED_HASH=<node_modules\.lockfile-hash
+    IF /I NOT "!LOCK_HASH!"=="!STORED_HASH!" SET NEED_NPM_CI=1
+)
+
+IF !NEED_NPM_CI!==1 (
+    ECHO Lockfile changed or node_modules missing — running npm ci --legacy-peer-deps...
     npm ci --legacy-peer-deps
-    IF %ERRORLEVEL% NEQ 0 (
+    IF !ERRORLEVEL! NEQ 0 (
         ECHO npm ci failed. Falling back to npm install --legacy-peer-deps...
         npm install --legacy-peer-deps
     )
-    ECHO.
-    ECHO Expected on development tip: 2 moderate (react-router), 0 high.
-    ECHO If you still see high vulnerabilities: git pull origin development,
-    ECHO then delete LENR_SIM_APP_v2\frontend\node_modules and re-run.
-    ECHO.
+    SET LOCK_HASH=
+    FOR /F "skip=1 delims=" %%H IN ('certutil -hashfile package-lock.json SHA256') DO (
+        IF NOT DEFINED LOCK_HASH SET "LOCK_HASH=%%H"
+    )
+    ECHO !LOCK_HASH!>node_modules\.lockfile-hash
 ) ELSE (
-    ECHO Frontend node_modules already present — skipping npm ci.
-    ECHO After pulling lockfile security fixes, delete node_modules once and re-run.
+    ECHO Frontend node_modules matches package-lock.json — skipping npm ci.
 )
+
+ECHO.
+ECHO Expected audit: 2 moderate (react-router), 0 high.
+ECHO Funding / vulnerability summary lines are npm noise, not a Vite failure.
+ECHO.
 
 :: Start frontend server
 ECHO Starting frontend server...
@@ -88,4 +105,5 @@ ECHO LENR Simulation Application is starting...
 ECHO Backend API: http://localhost:8000
 ECHO Frontend: http://localhost:3000
 ECHO.
-ECHO Press Ctrl+C in the respective terminal windows to stop the servers. 
+ECHO Press Ctrl+C in the respective terminal windows to stop the servers.
+endlocal
