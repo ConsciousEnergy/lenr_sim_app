@@ -104,8 +104,9 @@ class TestBackwardCompatibility:
 class TestRawTotal:
     def test_raw_total_is_mechanism_product(self):
         _, report = build_saturation_report(SATURATING_BREAKDOWN)
+        # Absent optional keys (e.g. electrolyte) default to 1.0 in the product.
         expected_log10 = sum(
-            math.log10(SATURATING_BREAKDOWN[k]) for k in MECHANISM_KEYS
+            math.log10(SATURATING_BREAKDOWN.get(k, 1.0)) for k in MECHANISM_KEYS
         )
         assert report["mechanisms"]["total"]["log10_value_raw"] == pytest.approx(
             expected_log10, rel=1e-9
@@ -123,7 +124,7 @@ class TestRawTotal:
         _, report = build_saturation_report(breakdown)
         total = report["mechanisms"]["total"]
         assert total["value_raw"] is None  # linear product overflowed
-        assert total["log10_value_raw"] == pytest.approx(420.0)
+        assert total["log10_value_raw"] == pytest.approx(60.0 * len(MECHANISM_KEYS))
         assert total["is_saturated"] is True
 
 

@@ -1892,12 +1892,17 @@ function UnifiedTheoryPage() {
                       <Typography variant="h6" gutterBottom>Enhancement Mechanism Breakdown</Typography>
                       <Divider sx={{ mb: 2 }} />
                       {(() => {
-                        // Get peak enhancement breakdown from timeline (at minimum phase)
-                        const peakEntry = simulationData.enhancement_timeline?.find(e => e.phase === 'MINIMUM') 
+                        // Prefer peak_conditions (thermo-consistent) over a MINIMUM
+                        // timeline sample; filter non-numeric keys like `saturation`.
+                        const peakEntry = simulationData.enhancement_timeline?.find(e => e.phase === 'MINIMUM')
                           || simulationData.enhancement_timeline?.[Math.floor(simulationData.enhancement_timeline.length / 2)]
                           || {};
-                        const breakdown = peakEntry.enhancement_breakdown || {};
-                        
+                        const breakdown =
+                          simulationData.peak_conditions?.enhancement_breakdown
+                          || peakEntry.enhancement_breakdown
+                          || {};
+                        const saturation = breakdown.saturation || null;
+
                         // Prepare data for bar chart with log scale values
                         const mechanismColors = {
                           screening: '#4caf50',
@@ -1906,21 +1911,31 @@ function UnifiedTheoryPage() {
                           casimir: '#9c27b0',
                           rydberg: '#f44336',
                           compression: '#00bcd4',
-                          loading: '#795548'
+                          loading: '#795548',
+                          electrolyte: '#607d8b',
                         };
-                        
+
                         const chartData = Object.entries(breakdown)
-                          .filter(([key]) => key !== 'total')
-                          .map(([key, value]) => ({
-                            name: key.charAt(0).toUpperCase() + key.slice(1),
-                            value: Math.max(value, 1),
-                            logValue: Math.log10(Math.max(value, 1)),
-                            color: mechanismColors[key] || '#888',
-                            displayValue: Math.max(value, 1).toExponential(1) // Use exponential notation instead of misleading percentage
-                          }))
+                          .filter(([key, value]) => key !== 'total' && typeof value === 'number')
+                          .map(([key, value]) => {
+                            const detail = saturation?.mechanisms?.[key];
+                            const logRaw = detail?.log10_value_raw;
+                            const safeValue = Math.max(Number(value) || 1, 1);
+                            const logValue = (typeof logRaw === 'number' && Number.isFinite(logRaw))
+                              ? logRaw
+                              : Math.log10(safeValue);
+                            return {
+                              name: key.charAt(0).toUpperCase() + key.slice(1),
+                              value: safeValue,
+                              logValue,
+                              color: mechanismColors[key] || '#888',
+                              displayValue: safeValue.toExponential(1),
+                              isSaturated: !!detail?.is_saturated,
+                            };
+                          })
                           .sort((a, b) => b.logValue - a.logValue);
-                        
-                        const totalEnhancement = breakdown.total || 1;
+
+                        const totalEnhancement = typeof breakdown.total === 'number' ? breakdown.total : 1;
                         
                         return (
                           <Box>

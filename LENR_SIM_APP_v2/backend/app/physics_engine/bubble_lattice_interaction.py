@@ -798,20 +798,38 @@ class BubbleLatticeInteraction:
             radius_factor = 0.65 + 0.35 * t
             source = "analytic_envelope"
         
-        # Calculate instantaneous conditions
+        # Instantaneous thermo must match simulate_collapse: same gamma, same R
+        # floor, same T/P ceilings. The old path used max(0.1, radius_factor)
+        # (CR<=10), hardcoded γ-1=0.4, and no ceilings, so timeline charts
+        # disagreed with the reported peak conditions.
         R0 = self.bubble.initial_radius
-        R = R0 * max(0.1, radius_factor)
-        compression = R0 / R
-        
-        E_field = self.bubble.double_layer_field * compression ** 2
-        T = self.bubble.ambient_temperature * compression ** (3 * 0.4)  # γ-1 ≈ 0.4
-        
+        R_min_floor = R0 / self.MAX_COMPRESSION_RATIO
+        R = max(R0 * float(radius_factor), R_min_floor)
+        compression = float(min(R0 / R, self.MAX_COMPRESSION_RATIO))
+
+        gamma = float(self.bubble.polytropic_index)
+        E_field = float(self.bubble.double_layer_field * compression ** 2)
+
+        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
+        T_ceiling = float(REGIME_MAX_TEMPERATURE.get("single_bubble", 2.0e6))
+        T_raw = float(
+            self.bubble.ambient_temperature * compression ** (3.0 * (gamma - 1.0))
+        )
+        T = min(T_raw, T_ceiling) if np.isfinite(T_raw) else T_ceiling
+
+        P_CEILING_PA = 1.0e10
+        P_raw = float(self.bubble.ambient_pressure * compression ** (3.0 * gamma))
+        P = min(P_raw, P_CEILING_PA) if np.isfinite(P_raw) else P_CEILING_PA
+
         conditions = {
             "radius": R,
-            "radius_factor": radius_factor,
+            "radius_factor": float(R / R0),
             "compression": compression,
             "electric_field": E_field,
             "temperature": T,
+            "temperature_raw": T_raw,
+            "pressure": P,
+            "pressure_raw": P_raw,
             "is_critical": phase in ["COLLAPSE", "MINIMUM"],
             # Which collapse model produced this point, so a client can tell the
             # integrated solution from the fallback envelope.
@@ -833,7 +851,12 @@ class BubbleLatticeInteraction:
         from app.physics_engine.enhancement_saturation import build_saturation_report
 
         phase, conditions = self.get_collapse_phases(normalized_time)
-        pressure = self.bubble.ambient_pressure * conditions["compression"] ** 4.2
+        # Prefer the thermo-consistent pressure from get_collapse_phases; never
+        # reconstruct pressure from ambient temperature (a prior bug).
+        pressure = float(conditions.get("pressure") or (
+            self.bubble.ambient_pressure
+            * conditions["compression"] ** (3.0 * self.bubble.polytropic_index)
+        ))
 
         breakdown = self._calculate_enhancement_breakdown(
             conditions["temperature"],

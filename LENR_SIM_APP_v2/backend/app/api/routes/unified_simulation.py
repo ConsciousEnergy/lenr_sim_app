@@ -1160,7 +1160,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             ambient_temperature=request.bubble.ambient_temperature_k
         )
         
-        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback)
+        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback).
+        # bulk_modulus must be copied through: Casimir strain is P/K, and Li's K is
+        # ~16x softer than Pd — dropping it silently forced every host onto Pd.
         base = LatticeParameters.for_material(request.material.host_material)
         lattice_params = LatticeParameters(
             host_material=request.material.host_material,
@@ -1173,6 +1175,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             work_function=base.work_function,
             fermi_energy=base.fermi_energy,
             screening_potential=base.screening_potential,
+            bulk_modulus=base.bulk_modulus,
         )
         
         # Run bubble collapse simulation
@@ -1180,7 +1183,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
         
         # Clamp peak enhancement to the theory-level cap (constants.py)
-        capped_enhancement = min(collapse_result.enhancement_factor, MAX_ENHANCEMENT_FACTOR)
         # Canonical electrolyte source is top-level request.electrolyte; lattice fields
         # remain fallback-compatible for older clients.
         family = (
@@ -1218,7 +1220,25 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             "ph_proxy": ph_proxy,
             "ionic_strength_proxy": ionic_strength_proxy,
         })
-        capped_enhancement = min(capped_enhancement * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)
+
+        # Calculate enhancement breakdown at peak conditions. Fold the electrolyte
+        # multiplier into the same product as the other mechanisms so
+        # peak_conditions.enhancement_factor and enhancement_breakdown.total agree.
+        peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
+            collapse_result.max_temperature,
+            collapse_result.max_pressure,
+            collapse_result.double_layer_field_peak,
+            collapse_result.compression_ratio
+        )
+        peak_enhancement_breakdown["electrolyte"] = float(electrolyte_multiplier)
+        # Apply the theory display ceiling, but keep the raw value and an explicit
+        # saturation flag per mechanism. Clamping alone made unrelated mechanisms
+        # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
+        # breakdown's information content.
+        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
+            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
+        )
+        capped_enhancement = float(peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
         corrected_proton_phases = model._calculate_proton_phases(
             collapse_result.max_temperature,
             collapse_result.double_layer_field_peak,
@@ -1236,21 +1256,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         elif not species_family_consistent:
             contradiction_reason_code = "inconsistent_mode"
             has_contradiction = True
-        
-        # Calculate enhancement breakdown at peak conditions
-        peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
-            collapse_result.max_temperature,
-            collapse_result.max_pressure,
-            collapse_result.double_layer_field_peak,
-            collapse_result.compression_ratio
-        )
-        # Apply the theory display ceiling, but keep the raw value and an explicit
-        # saturation flag per mechanism. Clamping alone made unrelated mechanisms
-        # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
-        # breakdown's information content.
-        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
-            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
-        )
         
         # Generate enhancement timeline with breakdown
         import numpy as np
@@ -1281,23 +1286,31 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         timeline = []
         for t in np.linspace(0, 1, 50):
             instant = model.calculate_instantaneous_enhancement(t)
-            # Calculate breakdown for this time point
+            # Pressure comes from thermo-consistent conditions — never from
+            # ambient_temperature_k (that bug overstated timeline pressure ~300x
+            # and corrupted Casimir on the chart).
+            pressure_pa = float(
+                instant["conditions"].get("pressure")
+                or (
+                    bubble_params.ambient_pressure
+                    * instant["conditions"]["compression"]
+                    ** (3.0 * bubble_params.polytropic_index)
+                )
+            )
             instant_breakdown = model._calculate_enhancement_breakdown(
                 instant["conditions"]["temperature"],
-                request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2,
+                pressure_pa,
                 instant["conditions"]["electric_field"],
                 instant["conditions"]["compression"]
             )
-            # Apply the electrolyte activity multiplier (as at peak_conditions and
-            # on the websocket stream) before capping to the theory limit, so
-            # HTTP timeline points do not under-report enhancement vs peak.
-            capped_instant_enhancement = min(
-                instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR
-            )
+            instant_breakdown["electrolyte"] = float(electrolyte_multiplier)
             capped_instant_breakdown, instant_saturation = build_saturation_report(
                 instant_breakdown, MAX_ENHANCEMENT_FACTOR
             )
             capped_instant_breakdown["saturation"] = instant_saturation
+            capped_instant_enhancement = float(
+                capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR)
+            )
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
@@ -1305,10 +1318,15 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 # Uncapped magnitude, so a timeline plot is not a flat line at the
                 # display ceiling. Additive.
                 "enhancement_log10_raw": sanitize_float(
-                    instant.get("enhancement_log10_raw"), 0.0
+                    instant_saturation.get("mechanisms", {})
+                    .get("total", {})
+                    .get("log10_value_raw", instant.get("enhancement_log10_raw")),
+                    0.0,
                 ),
                 "enhancement_is_saturated": bool(
-                    instant.get("enhancement_is_saturated", False)
+                    instant_saturation.get("mechanisms", {})
+                    .get("total", {})
+                    .get("is_saturated", instant.get("enhancement_is_saturated", False))
                 ),
                 "collapse_model": instant["conditions"].get("source", "unknown"),
                 "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
@@ -1324,10 +1342,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "temperature_k": sanitize_float(instant["conditions"]["temperature"], 300.0),
                 "electric_field": sanitize_float(instant["conditions"]["electric_field"], 0.0),
                 "electric_field_v_m": sanitize_float(instant["conditions"]["electric_field"], 0.0),
-                "pressure_bar": sanitize_float(
-                    (request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2) / 1e5,
-                    1.0,
-                ),
+                "pressure_bar": sanitize_float(pressure_pa / 1e5, 1.0),
             })
         
         validated_window, soft_window, outside_supported_range = classify_molarity_window(molarity)
@@ -1485,11 +1500,19 @@ async def bubble_lattice_websocket(websocket: WebSocket):
             ambient_temperature=params["bubble"]["ambient_temperature_k"]
         )
         
+        base = LatticeParameters.for_material(params["material"]["host_material"])
         lattice_params = LatticeParameters(
             host_material=params["material"]["host_material"],
             loading_ratio=params["lattice"]["loading_ratio"],
             defect_density=params["lattice"].get("defect_density", 1e16),
-            surface_roughness=params["lattice"].get("surface_roughness", 5e-9)
+            surface_roughness=params["lattice"].get("surface_roughness", 5e-9),
+            lattice_constant=base.lattice_constant,
+            electron_density=base.electron_density,
+            debye_temperature=base.debye_temperature,
+            work_function=base.work_function,
+            fermi_energy=base.fermi_energy,
+            screening_potential=base.screening_potential,
+            bulk_modulus=base.bulk_modulus,
         )
         electrolyte_payload = params.get("electrolyte", {}) or {}
         lattice_payload = params.get("lattice", {}) or {}
@@ -1528,12 +1551,21 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 
                 # Calculate instantaneous conditions
                 instant = model.calculate_instantaneous_enhancement(normalized_time)
+                pressure_pa = float(
+                    instant["conditions"].get("pressure")
+                    or (
+                        bubble_params.ambient_pressure
+                        * instant["conditions"]["compression"]
+                        ** (3.0 * bubble_params.polytropic_index)
+                    )
+                )
                 breakdown = model._calculate_enhancement_breakdown(
                     instant["conditions"]["temperature"],
-                    params["bubble"]["ambient_temperature_k"] * 101325 * instant["conditions"]["compression"] ** 4.2,
+                    pressure_pa,
                     instant["conditions"]["electric_field"],
                     instant["conditions"]["compression"]
                 )
+                breakdown["electrolyte"] = float(electrolyte_multiplier)
                 breakdown, breakdown_saturation = build_saturation_report(
                     breakdown, MAX_ENHANCEMENT_FACTOR
                 )
@@ -1546,16 +1578,18 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
-                    "enhancement": float(min(instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)),
+                    "enhancement": float(breakdown.get("total", MAX_ENHANCEMENT_FACTOR)),
                     "enhancement_breakdown": breakdown,
                     "proton_distribution": instant["proton_distribution"],
                     "radius_um": float(instant["conditions"]["radius_factor"] * params["bubble"]["initial_radius_um"]),
                     "temperature_k": float(instant["conditions"]["temperature"]),
                     "electric_field_v_m": float(instant["conditions"]["electric_field"]),
+                    "pressure_bar": float(pressure_pa / 1e5),
                     "conditions": {
                         "radius_factor": float(instant["conditions"]["radius_factor"]),
                         "compression": float(instant["conditions"]["compression"]),
                         "temperature": float(instant["conditions"]["temperature"]),
+                        "pressure": float(pressure_pa),
                         "electric_field": float(instant["conditions"]["electric_field"])
                     }
                 })

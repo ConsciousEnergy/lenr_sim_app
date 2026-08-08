@@ -38,6 +38,10 @@ MECHANISM_KEYS: Tuple[str, ...] = (
     "rydberg",
     "compression",
     "loading",
+    # Optional: applied by the HTTP/WS layer when an electrolyte multiplier is
+    # present. Absent keys default to 1.0 in the product, so unit tests of the
+    # core bubble-lattice breakdown are unaffected.
+    "electrolyte",
 )
 
 TOTAL_KEY = "total"

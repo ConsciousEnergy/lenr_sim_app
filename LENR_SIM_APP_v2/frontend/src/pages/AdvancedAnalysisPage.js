@@ -122,6 +122,7 @@ const AdvancedAnalysisPage = () => {
       collapseTimeUs: cr.collapse_time_us,
       peakFieldVm: cr.peak_field_v_m,
       peakEnhancement: cr.peak_enhancement,
+      limits: cr.limits || null,
     };
   }, [simulationResult]);
 
@@ -345,6 +346,10 @@ const AdvancedAnalysisPage = () => {
               {renderEnhancementLiteCard('phonon', 'Phonon-Nuclear Coupling', litePhonon)}
               {renderEnhancementLiteCard('casimir', 'Casimir Force')}
               {renderEnhancementLiteCard('qed', 'QED Vacuum Effects')}
+              {renderEnhancementLiteCard('rydberg', 'Rydberg Matter')}
+              {renderEnhancementLiteCard('compression', 'Compression Density')}
+              {renderEnhancementLiteCard('loading', 'Loading Ratio')}
+              {renderEnhancementLiteCard('electrolyte', 'Electrolyte Activity')}
             </>
           )}
         </Grid>
@@ -397,6 +402,43 @@ const AdvancedAnalysisPage = () => {
             )}
           </Paper>
         </Grid>
+
+        {collapseData.limits && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={2} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>Reporting Limits</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Literature-anchored ceilings applied to the adiabatic closed form.
+                Saturated values are bounds, not predictions.
+              </Typography>
+              {['temperature_k', 'pressure_pa', 'compression_ratio'].map((key) => {
+                const lim = collapseData.limits[key];
+                if (!lim) return null;
+                const label = key === 'temperature_k'
+                  ? 'Temperature'
+                  : key === 'pressure_pa'
+                    ? 'Pressure'
+                    : 'Compression';
+                const unit = key === 'temperature_k' ? 'K' : key === 'pressure_pa' ? 'Pa' : 'x';
+                return (
+                  <Box key={key} sx={{ mb: 1 }}>
+                    <Typography variant="body2" component="div">
+                      {label}: {formatNumber(lim.value, key === 'compression_ratio' ? 'fixed' : 'exponential', key === 'compression_ratio' ? 1 : 2)} {unit}
+                      {lim.is_saturated && (
+                        <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
+                      )}
+                    </Typography>
+                    {lim.is_saturated && lim.value_raw != null && (
+                      <Typography variant="caption" color="warning.main" display="block">
+                        raw ≈ {formatNumber(lim.value_raw)} {unit} (ceiling {formatNumber(lim.ceiling)})
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
+            </Paper>
+          </Grid>
+        )}
 
         {protonPhases && (
           <Grid size={{ xs: 12, md: 6 }}>
