@@ -56,10 +56,24 @@ cd ..\..
 ECHO Setting up frontend...
 cd LENR_SIM_APP_v2\frontend
 
-:: Install frontend dependencies if needed
+:: Install from package-lock.json when node_modules is missing. After a git pull that
+:: updates the lockfile, delete node_modules once so the next start picks up security fixes.
+:: The funding / vulnerability summary is printed by npm, not by Vite.
 IF NOT EXIST node_modules (
-    ECHO Installing frontend dependencies...
-    npm install
+    ECHO Installing frontend dependencies from package-lock.json...
+    npm ci --legacy-peer-deps
+    IF %ERRORLEVEL% NEQ 0 (
+        ECHO npm ci failed. Falling back to npm install --legacy-peer-deps...
+        npm install --legacy-peer-deps
+    )
+    ECHO.
+    ECHO Expected on development tip: 2 moderate (react-router), 0 high.
+    ECHO If you still see high vulnerabilities: git pull origin development,
+    ECHO then delete LENR_SIM_APP_v2\frontend\node_modules and re-run.
+    ECHO.
+) ELSE (
+    ECHO Frontend node_modules already present — skipping npm ci.
+    ECHO After pulling lockfile security fixes, delete node_modules once and re-run.
 )
 
 :: Start frontend server

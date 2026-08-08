@@ -19,9 +19,11 @@ start cmd /k "cd backend && venv\Scripts\activate && pip install -r requirements
 REM Wait a moment for backend to start
 timeout /t 5 /nobreak > nul
 
-REM Start Frontend (Vite honors both REACT_APP_API_URL and VITE_API_URL)
+REM Start Frontend (Vite honors both REACT_APP_API_URL and VITE_API_URL).
+REM npm ci installs exactly from package-lock.json (wipes node_modules first).
+REM The "packages looking for funding" / "vulnerabilities" lines are from npm, not Vite.
 echo Starting Frontend Development Server...
-start cmd /k "cd frontend && set REACT_APP_API_URL=http://localhost:8010 && set VITE_API_URL=http://localhost:8010 && npm install --legacy-peer-deps && npm start"
+start cmd /k "cd frontend && set REACT_APP_API_URL=http://localhost:8010 && set VITE_API_URL=http://localhost:8010 && npm ci --legacy-peer-deps && echo. && echo Expected on development tip: 2 moderate (react-router), 0 high. && echo If you still see high vulnerabilities: git pull origin development, then re-run. && echo. && npm start"
 
 echo.
 echo ========================================

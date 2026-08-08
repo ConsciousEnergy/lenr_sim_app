@@ -57,6 +57,32 @@ reports `tail`'s status and silently masks a failing gate:
 npm audit --audit-level=high > /dev/null 2>&1; echo "gate exit: $?"
 ```
 
+### Local `start_app.bat` / Vite terminal noise
+
+`LENR_SIM_APP_v2/start_app.bat` and the root `start_app.bat` run `npm ci` before
+`npm start` (`vite`). npm always prints a funding line and an audit summary after install.
+That is **not** a Vite failure — the next lines should be:
+
+```text
+> lenr-sim-frontend@0.3.6-beta start
+> vite
+```
+
+On `development` tip (`bd1684f` / `32a8260` and later), a clean install reports
+**2 moderate, 0 high** (react-router only). If a local Windows terminal still shows
+**8 vulnerabilities (4 moderate, 4 high)**, the machine is on a pre-fix lockfile or a
+stale `node_modules` tree. Fix:
+
+```bat
+git pull origin development
+cd LENR_SIM_APP_v2\frontend
+rmdir /s /q node_modules
+npm ci --legacy-peer-deps
+npm audit
+```
+
+Expect `2 moderate severity vulnerabilities` and `npm audit --audit-level=high` exit `0`.
+
 ### Accepted frontend residual
 
 | Package | Advisories | Why not fixed now |
