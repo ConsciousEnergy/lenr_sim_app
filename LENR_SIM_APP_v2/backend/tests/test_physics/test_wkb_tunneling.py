@@ -244,3 +244,48 @@ class TestNumericalStability:
             assert probabilities[i+1] >= probabilities[i], \
                 f"Probability not monotonic: {probabilities[i+1]} < {probabilities[i]}"
 
+
+class TestStreamingContract:
+    """Pin the TunnelingResult fields consumed by the WebSocket stream.
+
+    ``app/routers/websocket_router.py`` serialises ``probability``,
+    ``gamow_factor`` and ``barrier_height`` on every streamed frame. Renaming or
+    re-basing the units of any of them breaks the stream at runtime rather than
+    at import time, so the contract is asserted here.
+    """
+
+    @pytest.fixture
+    def calculator(self):
+        return WKBTunnelingCalculator()
+
+    def test_streamed_fields_exist(self, calculator):
+        result = calculator.calculate_tunneling_probability(
+            z1=1, z2=1, a1=2.0, a2=2.0, energy_kev=0.1,
+            potential_type='screened', screening_energy_ev=800,
+            temperature_k=300.0, material='palladium',
+        )
+        for field in ('probability', 'gamow_factor', 'barrier_height'):
+            assert hasattr(result, field), f"websocket_router streams {field}"
+            assert np.isfinite(float(getattr(result, field)))
+
+    def test_barrier_height_is_kev(self, calculator):
+        """barrier_height is already keV, so the stream must not rescale it."""
+        result = calculator.calculate_tunneling_probability(
+            z1=1, z2=1, a1=2.0, a2=2.0, energy_kev=0.1,
+            potential_type='screened', screening_energy_ev=800,
+            temperature_k=300.0, material='palladium',
+        )
+        # D-D Coulomb barrier at contact is a few hundred keV; joules or eV
+        # would land many orders of magnitude away from this window.
+        assert 100.0 < result.barrier_height < 1000.0
+
+    def test_barrier_height_grows_with_charge(self, calculator):
+        """Z1*Z2 scaling confirms the field carries barrier physics, not a stub."""
+        dd = calculator.calculate_tunneling_probability(
+            z1=1, z2=1, a1=2.0, a2=2.0, energy_kev=1.0
+        )
+        dhe = calculator.calculate_tunneling_probability(
+            z1=1, z2=2, a1=2.0, a2=3.0, energy_kev=1.0
+        )
+        assert dhe.barrier_height > dd.barrier_height
+

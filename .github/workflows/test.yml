@@ -43,7 +43,9 @@ jobs:
       contents: read
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        # 3.12 matches the runtime shipped by Dockerfile.backend; keeping 3.10/3.11
+        # guards the documented minimum-supported range.
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v7

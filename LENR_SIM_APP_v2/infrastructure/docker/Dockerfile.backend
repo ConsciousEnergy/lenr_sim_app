@@ -61,8 +61,11 @@ COPY --chown=appuser:appgroup backend/app ./app
 COPY --chown=appuser:appgroup backend/alembic ./alembic
 COPY --chown=appuser:appgroup backend/alembic.ini ./
 
-# Copy entrypoint script (reads Docker secrets into env vars)
+# Copy entrypoint script (reads Docker secrets into env vars). The explicit
+# chmod keeps startup working even if the source file loses its +x bit on a
+# checkout that does not preserve POSIX modes (e.g. Windows clones).
 COPY --chown=appuser:appgroup infrastructure/docker/entrypoint.sh /entrypoint.sh
+RUN chmod 0555 /entrypoint.sh
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/data /app/static /app/static/cluster_fields && \
