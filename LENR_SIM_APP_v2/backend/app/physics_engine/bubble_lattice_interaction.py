@@ -182,6 +182,11 @@ class CollapseResult:
     enhancement_factor: float
     proton_phase_distribution: Dict[str, float]
 
+    # Which reporting limits bound this result, and the pre-clamp values. Peak
+    # conditions are clamped to physical/claim-tier ceilings; without this a
+    # saturated value is indistinguishable from a computed one.
+    limits: Dict[str, Any] = field(default_factory=dict)
+
 
 class BubbleLatticeInteraction:
     """
@@ -308,13 +313,20 @@ class BubbleLatticeInteraction:
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
         T_max_raw = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
-        # Cap at regime-specific max (sonofusion/single_bubble ~1e4 K)
-        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
-        T_max = min(T_max_raw, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
+        # Ceiling is a literature-anchored bound, not a prediction; the closed-form
+        # adiabatic law ignores dissociation, ionisation and conduction losses and
+        # overshoots badly at high compression. See REGIME_TEMPERATURE_PROVENANCE.
+        from app.physics.bubble_collapse import (
+            REGIME_MAX_TEMPERATURE,
+            REGIME_TEMPERATURE_PROVENANCE,
+        )
+        T_ceiling = REGIME_MAX_TEMPERATURE.get("single_bubble", 2.0e6)
+        T_max = min(T_max_raw, T_ceiling)
         
         # Pressure at collapse (capped at 10^10 Pa, consistent with bubble_collapse.py)
         P_max_raw = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
-        P_max = min(P_max_raw, 1e10)  # ~100 kbar, sonoluminescence regime
+        P_CEILING_PA = 1e10  # ~100 kbar, sonoluminescence regime
+        P_max = min(P_max_raw, P_CEILING_PA)
         
         # Peak double-layer field
         E_peak = float(self.bubble.double_layer_field * compression_ratio ** 2)
@@ -329,6 +341,35 @@ class BubbleLatticeInteraction:
         # Determine proton phase distribution
         proton_phases = self._calculate_proton_phases(T_max, E_peak, enhancement)
         
+        compression_saturated = (
+            self.bubble.initial_radius / R_min >= self.MAX_COMPRESSION_RATIO
+        )
+        limits = {
+            "temperature_k": {
+                "value": float(T_max),
+                "value_raw": float(T_max_raw) if np.isfinite(T_max_raw) else None,
+                "ceiling": float(T_ceiling),
+                "is_saturated": bool(T_max_raw >= T_ceiling),
+                "basis": REGIME_TEMPERATURE_PROVENANCE["single_bubble"]["basis"],
+                "citation": REGIME_TEMPERATURE_PROVENANCE["single_bubble"][
+                    "simulation_citation"
+                ],
+            },
+            "pressure_pa": {
+                "value": float(P_max),
+                "value_raw": float(P_max_raw) if np.isfinite(P_max_raw) else None,
+                "ceiling": float(P_CEILING_PA),
+                "is_saturated": bool(P_max_raw >= P_CEILING_PA),
+                "basis": "sonoluminescence regime bound",
+            },
+            "compression_ratio": {
+                "value": float(compression_ratio),
+                "ceiling": float(self.MAX_COMPRESSION_RATIO),
+                "is_saturated": bool(compression_saturated),
+                "basis": "van der Waals hard-core radius floor on R_min",
+            },
+        }
+
         return CollapseResult(
             time_series=t,
             radius_series=R,
@@ -340,7 +381,8 @@ class BubbleLatticeInteraction:
             compression_ratio=compression_ratio,
             double_layer_field_peak=E_peak,
             enhancement_factor=enhancement,
-            proton_phase_distribution=proton_phases
+            proton_phase_distribution=proton_phases,
+            limits=limits,
         )
     
     def _calculate_enhancement_at_collapse(

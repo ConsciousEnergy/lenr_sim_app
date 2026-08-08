@@ -1359,7 +1359,10 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "compression_ratio": sanitize_float(collapse_result.compression_ratio, 1.0),
                 "collapse_time_us": sanitize_float(collapse_result.collapse_time * 1e6, 0.0),
                 "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "peak_enhancement": sanitize_float(capped_enhancement, 1.0)
+                "peak_enhancement": sanitize_float(capped_enhancement, 1.0),
+                # Which reporting ceilings bound this result (additive; see
+                # REGIME_TEMPERATURE_PROVENANCE for the anchoring literature).
+                "limits": sanitize_dict(collapse_result.limits or {}, 0.0),
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,

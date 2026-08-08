@@ -31,11 +31,60 @@ STANDARD_PRESSURE = 101325  # Standard atmospheric pressure in Pa
 STANDARD_TEMPERATURE = 298.15  # Standard temperature in K
 WATER_DENSITY = 1000  # Water density in kg/m^3 (approximate)
 
-# Regime-specific max temperatures (K): single_bubble ~1e4, multi_bubble ~1e3-1e4, laser_driven ~1e5
+# Regime-specific reporting ceilings for peak collapse temperature (K).
+#
+# A ceiling is required: ideal adiabatic compression gives T = T0 * CR^(3(gamma-1)),
+# which reaches 3e8 K at CR=1000 for a monatomic gas. That is unphysical because the
+# closed form ignores dissociation, ionisation, thermal conduction and the van der
+# Waals hard-core radius, all of which absorb energy near minimum radius.
+#
+# These are upper *bounds* drawn from the hydrodynamic literature, not predictions.
+# The previous single_bubble ceiling of 1e4 K was below the top of the measured
+# emission band (1.5e4 K), so it truncated experimentally observed temperatures.
+# See REGIME_TEMPERATURE_PROVENANCE for the anchoring measurement/simulation of each.
 REGIME_MAX_TEMPERATURE = {
-    "single_bubble": 1e4,
-    "multi_bubble": 5e3,
-    "laser_driven": 1e5
+    "single_bubble": 2.0e6,   # Moss et al. peak ion temperature, doi:10.1121/1.416948
+    "multi_bubble": 2.0e4,    # MBSL ~5e3 K measured; headroom for cloud asymmetry
+    "laser_driven": 1.0e5,    # unchanged; consistent with shock-focused hydrodynamics
+}
+
+# Provenance for each ceiling so the number is auditable and the UI can state what
+# a saturated temperature means. Measured bands are emission temperatures, which are
+# lower than peak core ion temperatures; both are recorded to avoid conflating them.
+REGIME_TEMPERATURE_PROVENANCE = {
+    "single_bubble": {
+        "ceiling_k": 2.0e6,
+        "measured_emission_band_k": (4.0e3, 1.5e4),
+        "measured_citation": (
+            "Flannigan & Suslick, Nature 434, 52 (2005), doi:10.1038/nature03361 "
+            "(Ar/SO spectroscopic emission temperature, 4000-15000 K)"
+        ),
+        "simulation_citation": (
+            "Moss, Clarke, White & Young, JASA (1996), doi:10.1121/1.416948 "
+            "(two-temperature plasma with ion/electron conduction and radiant "
+            "transport; peak ion temperature ~2e6 K for a deuterium bubble). "
+            "Intermediate value ~1.08e5 K from self-consistent hydrodynamics, "
+            "doi:10.1103/physreve.57.4265"
+        ),
+        "basis": "peak ion temperature upper bound",
+    },
+    "multi_bubble": {
+        "ceiling_k": 2.0e4,
+        "measured_emission_band_k": (4.0e3, 5.2e3),
+        "measured_citation": (
+            "McNamara, Didenko & Suslick, Nature 401, 772 (1999) "
+            "(multi-bubble sonoluminescence ~5000 K)"
+        ),
+        "simulation_citation": "",
+        "basis": "measured emission temperature with asymmetry headroom",
+    },
+    "laser_driven": {
+        "ceiling_k": 1.0e5,
+        "measured_emission_band_k": (1.0e4, 1.0e5),
+        "measured_citation": "",
+        "simulation_citation": "doi:10.1103/physreve.57.4265 (shock-focused hydrodynamics)",
+        "basis": "shock-focused hydrodynamic simulation",
+    },
 }
 
 

@@ -448,12 +448,76 @@ Where χ = compression ratio = R₀/R
 
 ---
 
+## 9A. Collapse Reporting Ceilings (v0.3.6-beta pre-public hardening)
+
+Peak collapse conditions are reported under explicit ceilings. These are **bounds,
+not predictions**: the closed-form adiabatic law overshoots badly because it omits
+dissociation, ionisation, thermal conduction and the van der Waals hard core. Each
+ceiling is now anchored to published values and reported with an `is_saturated`
+flag so a clamped value is never mistaken for a computed one.
+
+### 9A.1 Adiabatic collapse temperature (the equation being bounded)
+```
+T_peak = T_0 * (R_0 / R_min)^(3(gamma - 1))
+```
+**Status:** ⚠️ APPROXIMATION (ideal adiabatic; no loss channels)
+**Code:** `calculate_collapse_temperature()` in `app/physics/bubble_collapse.py`;
+same law in `BubbleLatticeInteraction.simulate_collapse()`
+**Independent check (analytic, this repo):** at `CR = 1000`, `T_0 = 300 K`:
+`gamma = 5/3` -> `3.000e+08 K`; `gamma = 1.399` (D2) -> `1.170e+06 K`.
+Both far exceed any observed value, confirming a ceiling is required.
+**Reference:** standard adiabatic relation for `V ∝ r^3` (Landau & Lifshitz,
+*Statistical Physics*)
+
+### 9A.2 Single-bubble temperature ceiling
+```
+REGIME_MAX_TEMPERATURE["single_bubble"] = 2.0e6 K
+```
+**Status:** ✅ REFERENCE (upper bound, peak ion temperature)
+**Code:** `REGIME_MAX_TEMPERATURE` in `app/physics/bubble_collapse.py`
+**Previous value:** `1.0e4 K` — **rejected**: it sits *below* the top of the
+measured emission band (1.5e4 K), so it truncated experimentally observed
+temperatures and pinned every high-compression run to exactly 10000 K.
+**Adopted band:**
+- measured emission `4.0e3 - 1.5e4 K` — Flannigan & Suslick, *Nature* **434**, 52
+  (2005), doi:10.1038/nature03361 (Ar/SO spectroscopic determination)
+- self-consistent hydrodynamics `~1.08e5 K` — doi:10.1103/physreve.57.4265
+- peak **ion** temperature `~2e6 K` (≈200 eV) — Moss, Clarke, White & Young,
+  *JASA* (1996), doi:10.1121/1.416948 (two-temperature plasma with ion/electron
+  conduction and radiant transport, deuterium bubble)
+
+Emission temperature and peak core ion temperature are distinct quantities; both
+are recorded in `REGIME_TEMPERATURE_PROVENANCE` so they are not conflated.
+
+### 9A.3 Enhancement display ceiling
+```
+MAX_ENHANCEMENT_FACTOR = 1e5   (unchanged)
+```
+**Status:** ✅ REFERENCE (claim-tier governance limit, not a physics result)
+**Code:** `app/physics_engine/constants.py`; reporting via
+`app/physics_engine/enhancement_saturation.py`
+**Note:** The ceiling is deliberately retained. Previously it was applied to every
+mechanism independently, so at `CR = 1000` and `E = 1e14 V/m` the QED, Casimir,
+Rydberg and compression terms all printed `1.0000e+5`. Raw magnitudes at those
+conditions are `10^12`, `10^6`, `10^8.7` and `10^6` respectively, with a combined
+raw total of `10^38.8`. Each mechanism now reports `value_raw`,
+`log10_value_raw` and `is_saturated` alongside the clamped display value.
+
+**Verification note:** the `user-wolframalpha` MCP server was not available in this
+environment, so 9A.1 was checked by independent analytic evaluation of the adiabatic
+relation in-repo rather than against WolframAlpha. Re-run the Wolfram check when the
+server is reachable.
+
+---
+
 ## 10. Known Limitations
 
 1. **WKB Approximation**: Valid only for slowly varying potentials
 2. **Screening Models**: Experimental values vary significantly between labs
 3. **Bubble Dynamics**: Simplified Rayleigh-Plesset ignores compressibility
 4. **Enhancement Factors**: Large uncertainties in LENR regime
+5. **Collapse Ceilings**: Peak temperature/pressure/compression are reported under
+   explicit bounds (§9A); a saturated value is a display ceiling, not a prediction
 
 ---
 
