@@ -10,7 +10,8 @@ import {
   Button,
   Chip,
   Divider,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import AppLayout from '../components/layout/AppLayout';
@@ -45,13 +46,33 @@ const AdvancedAnalysisPage = () => {
   const { simulationResult, theoryResult } = usePhysics();
   const theme = useTheme();
 
-  const hasData = !!simulationResult || !!theoryResult;
+  // Tracked separately rather than as one OR-gate. A persisted simulation used to
+  // satisfy a combined `hasData`, so the page rendered as ready while the
+  // theory-dependent tabs stayed permanently empty.
+  const hasSimulationData = !!simulationResult;
+  const hasTheoryData = !!(theoryResult?.per_theory?.length);
+  const hasData = hasSimulationData || hasTheoryData;
   const perTheory = theoryResult?.per_theory || null;
   const observablesBridge = theoryResult?.observables_bridge || null;
 
   const enhancementBreakdown = useMemo(() => {
     return simulationResult?.peak_conditions?.enhancement_breakdown || null;
   }, [simulationResult]);
+
+  // The backend emits `screening` and `phonon`; this page previously read
+  // `electron_screening` and `phonon_coupling`, so the lite cards never rendered.
+  // Both spellings are accepted so older cached payloads still work.
+  const liteScreening = useMemo(() => (
+    enhancementBreakdown?.screening ?? enhancementBreakdown?.electron_screening ?? null
+  ), [enhancementBreakdown]);
+
+  const litePhonon = useMemo(() => (
+    enhancementBreakdown?.phonon ?? enhancementBreakdown?.phonon_coupling ?? null
+  ), [enhancementBreakdown]);
+
+  // Per-mechanism saturation provenance (additive backend field). When a mechanism
+  // is saturated its displayed value is the claim-tier ceiling, not a prediction.
+  const saturation = enhancementBreakdown?.saturation || null;
 
   const quantumData = useMemo(() => {
     const qt = findTheory(perTheory, 'quantum_tunneling');
@@ -127,24 +148,44 @@ const AdvancedAnalysisPage = () => {
 
   const tabHasData = (index) => {
     switch (index) {
-      case 0: return !!(quantumData || screeningData || enhancementBreakdown?.electron_screening);
-      case 1: return !!(latticeData || enhancementBreakdown?.phonon_coupling);
+      case 0: return !!(quantumData || screeningData || liteScreening != null);
+      case 1: return !!(latticeData || litePhonon != null);
       case 2: return !!collapseData;
-      case 3: return !!(perTheory && perTheory.length > 0);
+      case 3: return hasTheoryData;
       default: return false;
     }
   };
-  const renderEnhancementLiteCard = (factorKey, factorLabel) => {
-    if (!enhancementBreakdown || enhancementBreakdown[factorKey] == null) return null;
-    const val = enhancementBreakdown[factorKey];
+
+  /** Chip marking a value that was clamped to the reporting ceiling. */
+  const renderSaturationChip = (mechanismKey) => {
+    const mechanism = saturation?.mechanisms?.[mechanismKey];
+    if (!mechanism?.is_saturated) return null;
+    const log10Raw = mechanism.log10_value_raw;
+    return (
+      <Tooltip
+        title={
+          `Clamped to the ${formatNumber(mechanism.ceiling)} claim-tier display ceiling. ` +
+          `Uncapped model value is about 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}. ` +
+          'This is a reporting limit, not a physical prediction.'
+        }
+      >
+        <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
+      </Tooltip>
+    );
+  };
+
+  const renderEnhancementLiteCard = (factorKey, factorLabel, explicitValue) => {
+    const val = explicitValue !== undefined ? explicitValue : enhancementBreakdown?.[factorKey];
+    if (val == null) return null;
     return (
       <Grid size={{ xs: 12, md: 6 }}>
         <Paper elevation={2} sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
             {factorLabel} (from Simulation)
           </Typography>
-          <Typography variant="body1">
+          <Typography variant="body1" component="div">
             Enhancement Factor: {formatNumber(val)}
+            {renderSaturationChip(factorKey)}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Extracted from the bubble-lattice simulation peak conditions.
@@ -156,7 +197,7 @@ const AdvancedAnalysisPage = () => {
 
   const renderQuantumTunnelingSection = () => {
     const hasTheoryData = !!(quantumData || screeningData);
-    const hasLiteData = !!(enhancementBreakdown?.electron_screening);
+    const hasLiteData = liteScreening != null;
 
     if (!hasTheoryData && !hasLiteData) {
       return (
@@ -168,8 +209,8 @@ const AdvancedAnalysisPage = () => {
             Run the theory pipeline from the Unified Theory page to generate detailed per-theory analysis,
             or run a bubble-lattice simulation to see enhancement factors.
           </Typography>
-          <Button component={Link} to="/unified-theory" variant="contained" color="primary">
-            Go to Unified Theory
+          <Button component={Link} to="/unified-theory?tab=testbed" variant="contained" color="primary">
+            Go to Theory Testbed
           </Button>
         </Paper>
       );
@@ -222,14 +263,13 @@ const AdvancedAnalysisPage = () => {
               </Paper>
             </Grid>
           )}
-          {!quantumData && renderEnhancementLiteCard('quantum_tunneling', 'Quantum Tunneling')}
-          {!screeningData && renderEnhancementLiteCard('electron_screening', 'Electron Screening')}
+          {!screeningData && renderEnhancementLiteCard('screening', 'Electron Screening', liteScreening)}
         </Grid>
       </>
     );
   };
   const renderLatticeSection = () => {
-    const hasLiteData = !!(enhancementBreakdown?.phonon_coupling);
+    const hasLiteData = litePhonon != null;
 
     if (!latticeData && !hasLiteData) {
       return (
@@ -241,8 +281,8 @@ const AdvancedAnalysisPage = () => {
             Run the theory pipeline (with Hagelstein Phonon enabled) to see lattice analysis,
             or run a bubble-lattice simulation for enhancement factors.
           </Typography>
-          <Button component={Link} to="/unified-theory" variant="contained" color="primary">
-            Go to Unified Theory
+          <Button component={Link} to="/unified-theory?tab=testbed" variant="contained" color="primary">
+            Go to Theory Testbed
           </Button>
         </Paper>
       );
@@ -302,9 +342,9 @@ const AdvancedAnalysisPage = () => {
             </>
           ) : (
             <>
-              {renderEnhancementLiteCard('phonon_coupling', 'Phonon-Nuclear Coupling')}
-              {renderEnhancementLiteCard('casimir_force', 'Casimir Force')}
-              {renderEnhancementLiteCard('qed_vacuum', 'QED Vacuum Effects')}
+              {renderEnhancementLiteCard('phonon', 'Phonon-Nuclear Coupling', litePhonon)}
+              {renderEnhancementLiteCard('casimir', 'Casimir Force')}
+              {renderEnhancementLiteCard('qed', 'QED Vacuum Effects')}
             </>
           )}
         </Grid>
@@ -321,8 +361,8 @@ const AdvancedAnalysisPage = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Run a bubble-lattice simulation from the Unified Theory page.
           </Typography>
-          <Button component={Link} to="/unified-theory" variant="contained" color="primary">
-            Go to Unified Theory
+          <Button component={Link} to="/unified-theory?tab=testbed" variant="contained" color="primary">
+            Go to Theory Testbed
           </Button>
         </Paper>
       );
@@ -412,19 +452,50 @@ const AdvancedAnalysisPage = () => {
           <Grid size={12}>
             <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
               <Typography variant="h6" gutterBottom>Enhancement Breakdown</Typography>
+              {saturation?.any_saturated && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {saturation.saturated_mechanisms.length} mechanism(s) reached the{' '}
+                  {formatNumber(saturation.ceiling)} claim-tier display ceiling, so their
+                  displayed values are identical by construction. The uncapped magnitude
+                  is shown beneath each saturated value; these are reporting limits, not
+                  physical predictions.
+                </Alert>
+              )}
               <Grid container spacing={2}>
-                {Object.entries(enhancementBreakdown).map(([mechanism, value]) => (
-                  <Grid size={{ xs: 6, md: 3 }} key={mechanism}>
-                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                        {mechanism.replace(/_/g, ' ')}
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {formatNumber(value)}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                ))}
+                {Object.entries(enhancementBreakdown)
+                  // `saturation` is provenance metadata, not a mechanism.
+                  .filter(([, value]) => typeof value === 'number')
+                  .map(([mechanism, value]) => {
+                    const detail = saturation?.mechanisms?.[mechanism];
+                    const isSaturated = !!detail?.is_saturated;
+                    return (
+                      <Grid size={{ xs: 6, md: 3 }} key={mechanism}>
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 1.5,
+                            textAlign: 'center',
+                            borderColor: isSaturated ? 'warning.main' : undefined,
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                            {mechanism.replace(/_/g, ' ')}
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {formatNumber(value)}
+                          </Typography>
+                          {isSaturated && (
+                            <>
+                              {renderSaturationChip(mechanism)}
+                              <Typography variant="caption" display="block" color="warning.main">
+                                raw ≈ 10^{Number(detail.log10_value_raw).toFixed(1)}
+                              </Typography>
+                            </>
+                          )}
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
               </Grid>
             </Paper>
           </Grid>
@@ -531,21 +602,51 @@ const AdvancedAnalysisPage = () => {
         {!hasData ? (
           <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
             <Typography variant="h6" color="text.secondary">
-              No Simulation Data Available
+              No Analysis Data Available
             </Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              Please run a simulation first to see advanced physics analysis.
+            <Typography variant="body1" sx={{ mt: 2, mb: 1 }}>
+              This page reads two independent data sources. Run either or both.
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Run a simulation from the{' '}
-              <Link to="/unified-theory" style={{ color: 'inherit', fontWeight: 600 }}>
-                Unified Theory
-              </Link>{' '}
-              page to generate data for this analysis.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              &ldquo;Run Physics Simulation&rdquo; fills Bubble Collapse.
+              &ldquo;Run Selected Theories&rdquo; on the Theory Testbed fills Theory Summary.
             </Typography>
+            <Button component={Link} to="/unified-theory?tab=testbed" variant="contained" color="primary">
+              Go to Theory Testbed
+            </Button>
           </Paper>
         ) : (
           <>
+            {/* Which of the two sources is missing, so a half-populated page is not
+                mistaken for a complete one. */}
+            {hasSimulationData && !hasTheoryData && (
+              <Alert
+                severity="info"
+                sx={{ mb: 2 }}
+                action={(
+                  <Button component={Link} to="/unified-theory?tab=testbed" size="small" color="inherit">
+                    Theory Testbed
+                  </Button>
+                )}
+              >
+                Simulation data loaded. Theory Summary and the per-theory observables stay
+                empty until you use &ldquo;Run Selected Theories&rdquo; on the Theory Testbed.
+              </Alert>
+            )}
+            {hasTheoryData && !hasSimulationData && (
+              <Alert
+                severity="info"
+                sx={{ mb: 2 }}
+                action={(
+                  <Button component={Link} to="/unified-theory" size="small" color="inherit">
+                    Unified Theory
+                  </Button>
+                )}
+              >
+                Theory results loaded. Bubble Collapse stays empty until you use
+                &ldquo;Run Physics Simulation&rdquo; on the Unified Theory page.
+              </Alert>
+            )}
             {observablesBridge && (
               <Alert severity="info" sx={{ mb: 2 }}>
                 Observable bridge active: heat, helium proxy, and radiation bound fields are coming from the backend contract.

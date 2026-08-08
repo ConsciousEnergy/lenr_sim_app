@@ -85,6 +85,9 @@ export interface PhysicsContextType {
   enabledTheories: string[];
   theoryConfigs: Record<string, Record<string, any>>;
   theoryResult: TheoryPipelineResult | null;
+  // Exposed so consumers can clear stale theory results; the value is persisted, so
+  // without a setter a stale run would survive until the tab closed.
+  setTheoryResult: (_data: TheoryPipelineResult | null) => void;
   isLoadingTheories: boolean;
   setEnabledTheories: (_ids: string[]) => void;
   setTheoryConfigs: (_configs: Record<string, Record<string, any>>) => void;
@@ -116,29 +119,50 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
   const [availableTheories, setAvailableTheories] = useState<TheoryInfo[]>([]);
   const [enabledTheories, setEnabledTheories] = useState<string[]>([]);
   const [theoryConfigs, setTheoryConfigs] = useState<Record<string, Record<string, any>>>({});
-  const [theoryResult, setTheoryResult] = useState<TheoryPipelineResult | null>(null);
   const [coupledResult, setCoupledResult] = useState<CoupledPipelineResult | null>(null);
   const [isLoadingTheories, setIsLoadingTheories] = useState(false);
 
-  // Shared simulation result (bubble-lattice response persists across pages and reloads)
-  const [simulationResult, setSimulationResultRaw] = useState<Record<string, any> | null>(() => {
+  /** Read a persisted context value, tolerating quota/private-browsing failures. */
+  const readPersisted = <T,>(key: string): T | null => {
     try {
-      const stored = sessionStorage.getItem('lenr_simulationResult');
-      return stored ? JSON.parse(stored) : null;
+      const stored = sessionStorage.getItem(key);
+      return stored ? (JSON.parse(stored) as T) : null;
     } catch {
       return null;
     }
-  });
+  };
+
+  const writePersisted = (key: string, data: unknown | null) => {
+    try {
+      if (data) {
+        sessionStorage.setItem(key, JSON.stringify(data));
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch { /* quota exceeded or private browsing */ }
+  };
+
+  // Shared simulation result (bubble-lattice response persists across pages and reloads)
+  const [simulationResult, setSimulationResultRaw] = useState<Record<string, any> | null>(
+    () => readPersisted<Record<string, any>>('lenr_simulationResult'),
+  );
 
   const setSimulationResult = useCallback((data: Record<string, any> | null) => {
     setSimulationResultRaw(data);
-    try {
-      if (data) {
-        sessionStorage.setItem('lenr_simulationResult', JSON.stringify(data));
-      } else {
-        sessionStorage.removeItem('lenr_simulationResult');
-      }
-    } catch { /* quota exceeded or private browsing */ }
+    writePersisted('lenr_simulationResult', data);
+  }, []);
+
+  // Theory-pipeline result. Persisted for the same reason as simulationResult: the
+  // Advanced Analysis page reads it on a different route, and without persistence a
+  // reload silently emptied the Theory Summary tab while the simulation-backed tabs
+  // stayed populated, so the page looked ready but never was.
+  const [theoryResult, setTheoryResultRaw] = useState<TheoryPipelineResult | null>(
+    () => readPersisted<TheoryPipelineResult>('lenr_theoryResult'),
+  );
+
+  const setTheoryResult = useCallback((data: TheoryPipelineResult | null) => {
+    setTheoryResultRaw(data);
+    writePersisted('lenr_theoryResult', data);
   }, []);
 
   /** Fetch available theories from the backend. */
@@ -335,6 +359,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     enabledTheories,
     theoryConfigs,
     theoryResult,
+    setTheoryResult,
     isLoadingTheories,
     setEnabledTheories,
     setTheoryConfigs,

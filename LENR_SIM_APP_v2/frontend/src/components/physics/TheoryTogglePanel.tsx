@@ -39,6 +39,8 @@ import ExploreIcon from '@mui/icons-material/Explore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { Link as RouterLink } from 'react-router-dom';
 import { usePhysics, TheoryContributionResult } from '../../contexts/PhysicsContext';
 import { track } from '../../analytics/events';
 import {
@@ -354,10 +356,27 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
         onClick={handleRun}
         disabled={!conditions || enabledTheories.length === 0}
         color={coupledMode ? 'success' : 'primary'}
-        sx={{ mb: 2 }}
+        sx={{ mb: theoryResult?.per_theory?.length ? 1 : 2 }}
       >
         {coupledMode ? 'Run Coupled Pipeline' : 'Run Selected Theories'}
       </Button>
+
+      {/* Closes the loop: without a route back, users returned to Advanced Analysis
+          by hand and often re-ran the simulation instead, which never fills the
+          Theory Summary tab. */}
+      {!!theoryResult?.per_theory?.length && (
+        <Button
+          component={RouterLink}
+          to="/advanced-analysis"
+          variant="outlined"
+          size="small"
+          fullWidth
+          startIcon={<AssessmentIcon />}
+          sx={{ mb: 2 }}
+        >
+          View in Advanced Analysis
+        </Button>
+      )}
 
       <Divider sx={{ mb: 1 }} />
 

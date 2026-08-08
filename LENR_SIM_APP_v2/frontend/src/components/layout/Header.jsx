@@ -31,11 +31,13 @@ const Header = () => {
   // Check if we're in development mode
   const isDevelopment = process.env.NODE_ENV === 'development';
 
+  // Paths must exist in App.tsx's route table. '/simulation' and '/history' were
+  // listed here but are not routed, so both landed on the NotFound page.
   const navigationItems = [
     { text: 'Home', path: '/' },
-    { text: 'Simulation', path: '/simulation' },
+    { text: 'Unified Theory', path: '/unified-theory' },
     { text: 'Advanced Analysis', path: '/advanced-analysis' },
-    { text: 'History', path: '/history' },
+    { text: 'Analytics', path: '/analytics' },
     { text: 'About', path: '/about' }
   ];
   

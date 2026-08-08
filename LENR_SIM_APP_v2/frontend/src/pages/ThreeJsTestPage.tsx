@@ -51,7 +51,7 @@ const ThreeJsTestPage: React.FC = () => {
         <Button 
           variant="contained" 
           component={Link} 
-          to="/simulation"
+          to="/unified-theory"
         >
           Go to Simulation
         </Button>
