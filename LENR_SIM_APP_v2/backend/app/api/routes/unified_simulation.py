@@ -29,6 +29,7 @@ from app.physics_engine.parkhomov_validation import (
     infer_default_reactants,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.enhancement_saturation import build_saturation_report
 
 logger = logging.getLogger(__name__)
 
@@ -1243,11 +1244,13 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             collapse_result.double_layer_field_peak,
             collapse_result.compression_ratio
         )
-        # Clamp each mechanism and total to the theory cap
-        for key in peak_enhancement_breakdown:
-            peak_enhancement_breakdown[key] = min(
-                peak_enhancement_breakdown[key], MAX_ENHANCEMENT_FACTOR
-            )
+        # Apply the theory display ceiling, but keep the raw value and an explicit
+        # saturation flag per mechanism. Clamping alone made unrelated mechanisms
+        # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
+        # breakdown's information content.
+        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
+            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
+        )
         
         # Generate enhancement timeline with breakdown
         import numpy as np
@@ -1259,8 +1262,21 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             return float(value)
         
         def sanitize_dict(d, default=0.0):
-            """Recursively sanitize a dict of float values."""
-            return {k: sanitize_float(v, default) if isinstance(v, (int, float)) else v for k, v in d.items()}
+            """Recursively sanitize a dict of float values.
+
+            Nested dicts must be walked too, otherwise a non-finite float inside
+            a sub-dict (e.g. the saturation report) reaches the JSON encoder and
+            fails the response.
+            """
+            sanitized = {}
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    sanitized[k] = sanitize_dict(v, default)
+                elif isinstance(v, bool) or not isinstance(v, (int, float)):
+                    sanitized[k] = v
+                else:
+                    sanitized[k] = sanitize_float(v, default)
+            return sanitized
         
         timeline = []
         for t in np.linspace(0, 1, 50):
@@ -1278,10 +1294,10 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             capped_instant_enhancement = min(
                 instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR
             )
-            capped_instant_breakdown = {
-                k: min(v, MAX_ENHANCEMENT_FACTOR) if isinstance(v, (int, float)) else v
-                for k, v in instant_breakdown.items()
-            }
+            capped_instant_breakdown, instant_saturation = build_saturation_report(
+                instant_breakdown, MAX_ENHANCEMENT_FACTOR
+            )
+            capped_instant_breakdown["saturation"] = instant_saturation
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
@@ -1352,7 +1368,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
                 "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
                 "enhancement_factor": sanitize_float(capped_enhancement, 1.0),
-                "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0),
+                "enhancement_breakdown": sanitize_dict(
+                    {**peak_enhancement_breakdown, "saturation": peak_saturation}, 1.0
+                ),
                 "alkali_activity_factor": sanitize_float(alkali_activity_factor, 1.0),
                 "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
                 "electrolyte_species": species,
@@ -1504,6 +1522,10 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     instant["conditions"]["electric_field"],
                     instant["conditions"]["compression"]
                 )
+                breakdown, breakdown_saturation = build_saturation_report(
+                    breakdown, MAX_ENHANCEMENT_FACTOR
+                )
+                breakdown["saturation"] = breakdown_saturation
                 
                 # Send update
                 await websocket.send_json({
