@@ -1302,6 +1302,15 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
                 "enhancement": sanitize_float(capped_instant_enhancement, 1.0),
+                # Uncapped magnitude, so a timeline plot is not a flat line at the
+                # display ceiling. Additive.
+                "enhancement_log10_raw": sanitize_float(
+                    instant.get("enhancement_log10_raw"), 0.0
+                ),
+                "enhancement_is_saturated": bool(
+                    instant.get("enhancement_is_saturated", False)
+                ),
+                "collapse_model": instant["conditions"].get("source", "unknown"),
                 "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
                 "enhancement_breakdown": sanitize_dict(capped_instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],

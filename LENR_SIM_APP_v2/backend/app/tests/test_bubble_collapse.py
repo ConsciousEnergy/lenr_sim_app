@@ -25,6 +25,7 @@ from app.physics_engine.bubble_lattice_interaction import (
     CollapseResult,
     create_bubble_lattice_simulation,
 )
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
 
 class TestBubbleParameters:
@@ -363,20 +364,28 @@ class TestBubbleLatticeInteraction:
         assert 'conditions' in result
     
     def test_instantaneous_enhancement_varies_with_time(self, model: BubbleLatticeInteraction):
-        """Test enhancement varies over the cycle."""
-        results = [model.calculate_instantaneous_enhancement(t) for t in [0.0, 0.3, 0.5, 0.57, 0.8]]
-        enhancements = [r['enhancement'] for r in results]
+        """Test enhancement varies over the cycle.
 
-        # Enhancement should vary (not all same)
-        assert len(set(enhancements)) > 1, \
-            "Enhancement should vary across cycle"
+        The displayed enhancement is clamped to MAX_ENHANCEMENT_FACTOR and is flat
+        across most of the cycle, so asserting on it would only be testing the
+        clamp. The physically meaningful claim is that the *raw* magnitude varies,
+        which is what enhancement_log10_raw reports.
+        """
+        results = [model.calculate_instantaneous_enhancement(t) for t in [0.0, 0.3, 0.5, 0.57, 0.8]]
+        raw_log10 = [r['enhancement_log10_raw'] for r in results]
+
+        assert len(set(raw_log10)) > 1, \
+            "Raw enhancement magnitude should vary across cycle"
 
         # COLLAPSE / MINIMUM phase (indices 2,3) should reach the maximum
-        # (Multiple phases may hit the MAX_ENHANCEMENT_FACTOR cap)
-        max_enhancement = max(enhancements)
-        collapse_minimum_max = max(enhancements[2], enhancements[3])
-        assert collapse_minimum_max == max_enhancement, \
-            f"Collapse/Minimum enhancement {collapse_minimum_max} != global max {max_enhancement}"
+        max_raw = max(raw_log10)
+        collapse_minimum_max = max(raw_log10[2], raw_log10[3])
+        assert collapse_minimum_max == max_raw, \
+            f"Collapse/Minimum raw magnitude {collapse_minimum_max} != global max {max_raw}"
+
+        # And no displayed value may exceed the ceiling.
+        for result in results:
+            assert result['enhancement'] <= MAX_ENHANCEMENT_FACTOR
     
     # =========================================================================
     # Factory Function Tests

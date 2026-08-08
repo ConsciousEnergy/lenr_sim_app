@@ -96,6 +96,10 @@ class LatticeParameters:
     # range lives in unified_lenr_model/screening_data.py (RR-007); Pd spans
     # ~250-800 eV, up to ~18 keV in hard targets. UQ should sample the range.
     screening_potential: float = 800.0
+    # Pa. Isothermal bulk modulus, used to convert collapse pressure into lattice
+    # strain for the Casimir term. Values from CRC Handbook of Chemistry and
+    # Physics (elastic constants of the elements).
+    bulk_modulus: float = 1.80e11  # Pd
     
     @classmethod
     def for_material(cls, material: str) -> "LatticeParameters":
@@ -119,7 +123,8 @@ class LatticeParameters:
                 "debye_temperature": 275.0,     # K
                 "work_function": 5.12,          # eV
                 "fermi_energy": 11.7,           # eV
-                "screening_potential": 800.0    # eV (D-D in Pd)
+                "screening_potential": 800.0,   # eV (D-D in Pd)
+                "bulk_modulus": 1.80e11,        # Pa (CRC Handbook)
             },
             "nickel": {
                 "lattice_constant": 3.52e-10,   # m (FCC)
@@ -127,7 +132,8 @@ class LatticeParameters:
                 "debye_temperature": 450.0,     # K
                 "work_function": 5.15,          # eV
                 "fermi_energy": 11.7,           # eV
-                "screening_potential": 500.0    # eV (H-H in Ni, estimate)
+                "screening_potential": 500.0,   # eV (H-H in Ni, estimate)
+                "bulk_modulus": 1.80e11,        # Pa (CRC Handbook)
             },
             "titanium": {
                 "lattice_constant": 2.95e-10,   # m (HCP)
@@ -135,7 +141,8 @@ class LatticeParameters:
                 "debye_temperature": 420.0,     # K
                 "work_function": 4.33,          # eV
                 "fermi_energy": 7.0,            # eV
-                "screening_potential": 350.0    # eV (D-D in Ti, estimate)
+                "screening_potential": 350.0,   # eV (D-D in Ti, estimate)
+                "bulk_modulus": 1.10e11,        # Pa (CRC Handbook)
             },
             "platinum": {
                 "lattice_constant": 3.92e-10,   # m (FCC)
@@ -143,7 +150,8 @@ class LatticeParameters:
                 "debye_temperature": 240.0,     # K
                 "work_function": 5.65,          # eV
                 "fermi_energy": 9.7,            # eV
-                "screening_potential": 750.0    # eV (estimate)
+                "screening_potential": 750.0,   # eV (estimate)
+                "bulk_modulus": 2.30e11,        # Pa (CRC Handbook)
             },
             "lithium": {
                 "lattice_constant": 3.51e-10,   # m (BCC)
@@ -151,7 +159,8 @@ class LatticeParameters:
                 "debye_temperature": 344.0,     # K
                 "work_function": 2.9,           # eV
                 "fermi_energy": 4.7,            # eV
-                "screening_potential": 300.0    # eV (Li-H Rydberg matter, estimate)
+                "screening_potential": 300.0,   # eV (Li-H Rydberg matter, estimate)
+                "bulk_modulus": 1.10e10,        # Pa (CRC Handbook)
             },
         }
         mat_key = (material or "").strip().lower()
@@ -341,6 +350,10 @@ class BubbleLatticeInteraction:
         # Determine proton phase distribution
         proton_phases = self._calculate_proton_phases(T_max, E_peak, enhancement)
         
+        # Cache the integrated trajectory so get_collapse_phases() reports the same
+        # collapse the peak conditions came from, instead of a separate envelope.
+        self._trajectory = {"t": t, "R": R}
+
         compression_saturated = (
             self.bubble.initial_radius / R_min >= self.MAX_COMPRESSION_RATIO
         )
@@ -487,6 +500,51 @@ class BubbleLatticeInteraction:
         # Ensure factor is at least 1.0 and cap at reasonable value
         return float(min(max(phonon_factor, 1.0), 100.0))
     
+    # Continuum Casimir formulae assume separations above roughly 2 nm; below that
+    # the ideal-plate result is an extrapolation (see the domain-validity checks in
+    # tests/test_integration/test_simulation_pipeline.py).
+    CASIMIR_CONTINUUM_FLOOR_M = 2e-9
+
+    def _calculate_casimir_enhancement(self, pressure: float) -> float:
+        """Casimir enhancement from pressure-induced lattice strain.
+
+        The collapse pressure ``P`` elastically compresses the host lattice by a
+        volumetric strain ``P / K`` (``K`` = bulk modulus), so the linear spacing
+        contracts as
+
+            d = d0 * (1 - P / (3K))^(1/3) ≈ d0 * (1 - P / (9K))
+
+        The Casimir pressure between the confining planes scales as ``1/d⁴``, so
+        the enhancement relative to the unstrained lattice is ``(d0/d)⁴``.
+
+        This depends on pressure, not on the compression ratio, which is what makes
+        it an independent mechanism rather than a restatement of the density term.
+        The magnitude is deliberately modest: at the 1e10 Pa pressure ceiling and
+        Pd's K = 180 GPa the strain is ~2%, giving a few percent enhancement.
+
+        Args:
+            pressure: Local collapse pressure in Pa.
+
+        Returns:
+            Dimensionless enhancement factor >= 1.
+        """
+        bulk_modulus = float(getattr(self.lattice, "bulk_modulus", 1.80e11) or 1.80e11)
+        if bulk_modulus <= 0:
+            return 1.0
+
+        p = max(float(pressure), 0.0)
+        # Volumetric strain, kept below 1 so the lattice cannot invert.
+        volumetric_strain = min(p / bulk_modulus, 0.9)
+        spacing_ratio = (1.0 - volumetric_strain) ** (1.0 / 3.0)
+        if spacing_ratio <= 0.0:
+            return 1.0
+
+        # Casimir pressure ratio P(d)/P(d0) = (d0/d)^4
+        casimir_factor = spacing_ratio ** -4.0
+        if not np.isfinite(casimir_factor):
+            return 1.0
+        return float(max(casimir_factor, 1.0))
+
     def _calculate_enhancement_breakdown(
         self,
         temperature: float,
@@ -519,8 +577,12 @@ class BubbleLatticeInteraction:
         # Compression enhancement (increased density)
         density_factor = compression ** 2
         
-        # Casimir enhancement (scales with 1/d⁴, simplified as compression²)
-        casimir_factor = compression ** 2
+        # Casimir enhancement. Previously this was literally compression**2, i.e.
+        # a duplicate of density_factor, so it was not an independent mechanism.
+        # It is now driven by the collapse *pressure* elastically straining the
+        # lattice spacing, using the real Casimir pressure scaling P ∝ 1/d⁴
+        # (app/physics/casimir_forces.py: P = -π²ħc/(240 d⁴)).
+        casimir_factor = self._calculate_casimir_enhancement(pressure)
         
         # Rydberg Matter enhancement (simplified)
         rydberg_factor = 1 + 0.5 * compression * (electric_field / 1e8)
@@ -555,6 +617,12 @@ class BubbleLatticeInteraction:
             "loading": float(loading_factor)
         }
     
+    @staticmethod
+    def _logistic(x: float, steepness: float = 1.0) -> float:
+        """Numerically safe logistic gate returning a value in (0, 1)."""
+        arg = float(np.clip(x * steepness, -60.0, 60.0))
+        return float(1.0 / (1.0 + np.exp(-arg)))
+
     def _calculate_proton_phases(
         self,
         temperature: float,
@@ -563,70 +631,172 @@ class BubbleLatticeInteraction:
     ) -> Dict[str, float]:
         """
         Calculate distribution of protons across phase states.
-        
-        States: FREE, SCREENED, CAPTURE_READY, NUCLEAR
+
+        States: FREE -> SCREENED -> CAPTURE_READY -> NUCLEAR, which is a strictly
+        ordered cascade: a proton must be screened before halo-electron overlap can
+        make it capture-ready, and capture-ready before the strong force engages.
+
+        The distribution is therefore built from three smooth occupancy gates rather
+        than the previous hardcoded tier table, which returned fixed fractions
+        (0.4 / 0.2 and a floored nuclear share) whenever the enhancement crossed a
+        threshold. Those constants meant the reported distribution was independent
+        of temperature, field and loading over wide ranges.
+
+        Gate criteria come from ``PhaseThresholds`` in ``proton_phase_model.py``:
+          - screened:      screening energy relative to thermal energy (section 2.1)
+          - capture-ready: double-layer field relative to 1e8 V/m (section 2.3)
+          - nuclear:       tunnelling enhancement relative to 1e5 (section 5.1)
+        each additionally gated on the loading ratio required for that phase.
+
+        Note: ``ProtonPhaseModel.calculate_overlap_probability`` is deliberately not
+        used as the capture gate. Its ``P_base = 1/(pi a^3)`` term is a number
+        density (m^-3), not a probability, so it evaluates to ~1e27 and always
+        clips to its 0.1 ceiling, making it constant across all conditions. The
+        field criterion from the same theory section is used instead.
+
+        Returns:
+            Normalised fractions summing to 1.0.
         """
-        # Thresholds from theory
-        screening_threshold = 10 * self.E_CHARGE  # 10 eV
-        capture_threshold = 1e3  # Enhancement factor
-        nuclear_threshold = 1e5  # Enhancement factor
-        
-        E_thermal = self.KB * temperature
-        
-        # Calculate probabilities based on conditions
+        from app.physics_engine.proton_phase_model import (
+            PhaseThresholds,
+            ProtonPhaseModel,
+        )
+
+        thresholds = PhaseThresholds()
+        phase_model = ProtonPhaseModel(thresholds)
+
+        temperature = max(float(temperature), 1.0)
+        loading = float(self.lattice.loading_ratio)
+
+        # Screening strength relative to thermal energy: screening only matters
+        # when it exceeds kT.
+        screening_ev = phase_model.calculate_screening_energy(
+            temperature, self.lattice.electron_density, electric_field
+        )
+        thermal_ev = self.KB * temperature / self.E_CHARGE
+        screening_ratio = screening_ev / max(thermal_ev, 1e-12)
+
+        # log10-space gates so each spans the many decades these quantities cover.
+        LOG_STEEPNESS = 1.5
+        LOADING_STEEPNESS = 25.0
+
+        g_screened = self._logistic(
+            np.log10(max(screening_ratio, 1e-30)), LOG_STEEPNESS
+        ) * self._logistic(loading - thresholds.min_loading_ratio, LOADING_STEEPNESS)
+
+        g_capture = self._logistic(
+            np.log10(max(electric_field, 1e-30) / thresholds.electric_field_threshold),
+            LOG_STEEPNESS,
+        ) * self._logistic(
+            loading - thresholds.capture_loading_ratio, LOADING_STEEPNESS
+        )
+
+        g_nuclear = self._logistic(
+            np.log10(max(enhancement, 1e-30) / thresholds.tunneling_enhancement),
+            LOG_STEEPNESS,
+        ) * self._logistic(
+            loading - thresholds.nuclear_loading_ratio, LOADING_STEEPNESS
+        )
+
+        # Ordered cascade; these four terms sum to exactly 1 by construction.
         distribution = {
-            "FREE": 0.0,
-            "SCREENED": 0.0,
-            "CAPTURE_READY": 0.0,
-            "NUCLEAR": 0.0
+            "FREE": (1.0 - g_screened),
+            "SCREENED": g_screened * (1.0 - g_capture),
+            "CAPTURE_READY": g_screened * g_capture * (1.0 - g_nuclear),
+            "NUCLEAR": g_screened * g_capture * g_nuclear,
         }
-        
-        if enhancement >= nuclear_threshold:
-            # Preserve a non-zero nuclear share at the exact threshold boundary.
-            distribution["NUCLEAR"] = max(
-                0.01,
-                min(0.3, (enhancement / nuclear_threshold - 1) * 0.1),
-            )
-            distribution["CAPTURE_READY"] = 0.4
-            distribution["SCREENED"] = 0.2
-            distribution["FREE"] = 1 - sum(distribution.values())
-        elif enhancement >= capture_threshold:
-            distribution["CAPTURE_READY"] = min(0.5, (enhancement / capture_threshold - 1) * 0.2)
-            distribution["SCREENED"] = 0.3
-            distribution["FREE"] = 1 - sum(distribution.values())
-        elif electric_field > 1e7:
-            distribution["SCREENED"] = min(0.6, electric_field / 1e8)
-            distribution["FREE"] = 1 - distribution["SCREENED"]
-        else:
-            distribution["FREE"] = 1.0
-        
-        return distribution
+        return {k: float(v) for k, v in distribution.items()}
     
+    def _phases_from_trajectory(
+        self, normalized_time: float
+    ) -> Optional[Tuple[str, float]]:
+        """Read phase and radius factor off the integrated Rayleigh-Plesset solution.
+
+        Returns ``None`` when no trajectory has been computed yet, so the caller can
+        fall back to the analytic envelope.
+        """
+        trajectory = getattr(self, "_trajectory", None)
+        if not trajectory:
+            return None
+
+        t_series = trajectory["t"]
+        r_series = trajectory["R"]
+        if t_series is None or len(t_series) < 3:
+            return None
+
+        t_start, t_end = float(t_series[0]), float(t_series[-1])
+        span = t_end - t_start
+        if span <= 0:
+            return None
+
+        t_query = t_start + float(np.clip(normalized_time, 0.0, 1.0)) * span
+        radius = float(np.interp(t_query, t_series, r_series))
+        radius_factor = radius / self.bubble.initial_radius
+
+        r_min = float(np.min(r_series))
+        r_max = float(np.max(r_series))
+        t_min = float(t_series[int(np.argmin(r_series))])
+        slope = float(np.interp(t_query, t_series, np.gradient(r_series, t_series)))
+
+        # Thresholds are relative to this trajectory's own range so the labels do
+        # not depend on the driving amplitude. Phase names match the analytic
+        # envelope, so existing consumers are unaffected.
+        span = max(r_max - r_min, 1e-30)
+        near_minimum = radius <= r_min * 1.05
+        rebound_ceiling = r_min + 0.5 * span
+
+        if near_minimum:
+            phase = "MINIMUM"
+        elif t_query < t_min:
+            phase = "EXPANSION" if slope >= 0 else "COLLAPSE"
+        elif radius < rebound_ceiling:
+            phase = "REBOUND"
+        else:
+            phase = "RECOVERY"
+
+        return phase, radius_factor
+
     def get_collapse_phases(self, normalized_time: float) -> Tuple[str, Dict[str, Any]]:
         """
         Determine collapse phase from normalized time (0-1 in cycle).
-        
+
+        Prefers the integrated Rayleigh-Plesset trajectory cached by
+        ``simulate_collapse``, so the timeline and the peak conditions describe the
+        same collapse. The piecewise envelope below is only a fallback for callers
+        that ask for a phase before any collapse has been integrated; previously it
+        was always used, which meant the timeline and the reported peak came from two
+        different collapse models.
+
         Returns phase name and associated conditions.
         """
-        if normalized_time < 0.4:
+        from_trajectory = self._phases_from_trajectory(normalized_time)
+        if from_trajectory is not None:
+            phase, radius_factor = from_trajectory
+            source = "rayleigh_plesset_trajectory"
+        elif normalized_time < 0.4:
             phase = "EXPANSION"
             t = normalized_time / 0.4
             radius_factor = 1 + 0.3 * np.sin(t * np.pi / 2)
+            source = "analytic_envelope"
         elif normalized_time < 0.55:
             phase = "COLLAPSE"
             t = (normalized_time - 0.4) / 0.15
             radius_factor = 1.3 - 1.15 * t ** 2
+            source = "analytic_envelope"
         elif normalized_time < 0.6:
             phase = "MINIMUM"
             radius_factor = 0.15
+            source = "analytic_envelope"
         elif normalized_time < 0.7:
             phase = "REBOUND"
             t = (normalized_time - 0.6) / 0.1
             radius_factor = 0.15 + 0.5 * t
+            source = "analytic_envelope"
         else:
             phase = "RECOVERY"
             t = (normalized_time - 0.7) / 0.3
             radius_factor = 0.65 + 0.35 * t
+            source = "analytic_envelope"
         
         # Calculate instantaneous conditions
         R0 = self.bubble.initial_radius
@@ -642,7 +812,10 @@ class BubbleLatticeInteraction:
             "compression": compression,
             "electric_field": E_field,
             "temperature": T,
-            "is_critical": phase in ["COLLAPSE", "MINIMUM"]
+            "is_critical": phase in ["COLLAPSE", "MINIMUM"],
+            # Which collapse model produced this point, so a client can tell the
+            # integrated solution from the fallback envelope.
+            "source": source,
         }
         
         return phase, conditions
@@ -651,16 +824,27 @@ class BubbleLatticeInteraction:
         """
         Calculate enhancement factor at a specific point in the cycle.
         For real-time visualization feedback.
+
+        ``enhancement`` is clamped to the theory display ceiling and is therefore
+        flat across most of the cycle. ``enhancement_log10_raw`` carries the
+        uncapped magnitude so a timeline plot still shows real variation instead of
+        a horizontal line at the ceiling.
         """
+        from app.physics_engine.enhancement_saturation import build_saturation_report
+
         phase, conditions = self.get_collapse_phases(normalized_time)
-        
-        enhancement = self._calculate_enhancement_at_collapse(
+        pressure = self.bubble.ambient_pressure * conditions["compression"] ** 4.2
+
+        breakdown = self._calculate_enhancement_breakdown(
             conditions["temperature"],
-            self.bubble.ambient_pressure * conditions["compression"] ** 4.2,
+            pressure,
             conditions["electric_field"],
-            conditions["compression"]
+            conditions["compression"],
         )
-        
+        _, saturation = build_saturation_report(breakdown)
+        total = saturation["mechanisms"]["total"]
+        enhancement = total["value"]
+
         proton_phases = self._calculate_proton_phases(
             conditions["temperature"],
             conditions["electric_field"],
@@ -670,6 +854,8 @@ class BubbleLatticeInteraction:
         return {
             "phase": phase,
             "enhancement": enhancement,
+            "enhancement_log10_raw": total["log10_value_raw"],
+            "enhancement_is_saturated": total["is_saturated"],
             "proton_distribution": proton_phases,
             "conditions": conditions
         }
