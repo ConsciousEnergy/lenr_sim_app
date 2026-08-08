@@ -38,3 +38,38 @@ fails the build. Revisit each in the post-beta maintenance slice.
 - Frontend `npm audit --audit-level=high` is a hard CI gate; residual **moderate** `react-router` / `react-router-dom` advisories are tracked for a coordinated upgrade.
 - Pre-VPS API hardening (2026-07-22): WebSocket `num_cycles` capped at 10, concurrent stream budget, UQ samples max 512, generic client error messages, and a tighter `/export` per-IP rate limit.
 
+## Pre-Public Hardening Update (2026-08-08)
+
+Newly published advisories had re-broken the frontend high gate. Cleared via `npm audit fix`
+(patch-level, no major upgrades):
+
+| Package | Advisory | Change |
+|---|---|---|
+| `js-yaml` | GHSA-5p4m-2wfm-xmqj (high, quadratic CPU in `!!omap`) | `4.3.0 -> 4.3.1` |
+| `dompurify` | GHSA-55q2-fjhq-7xh7 (moderate, detached-subtree XSS) | `3.4.12 -> 3.4.13` |
+
+Post-fix posture: `npm audit --audit-level=high` -> **exit 0**, `2 moderate, 0 high`.
+
+**Verify the gate by reading the exit code directly, never through a pipe.** `npm audit --audit-level=high | tail`
+reports `tail`'s status and silently masks a failing gate:
+
+```bash
+npm audit --audit-level=high > /dev/null 2>&1; echo "gate exit: $?"
+```
+
+### Accepted frontend residual
+
+| Package | Advisories | Why not fixed now |
+|---|---|---|
+| `react-router`, `react-router-dom` | GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg, GHSA-jjmj-jmhj-qwj2 (all moderate) | Fixed only in `react-router >= 7.18.0`. We are on `6.x`, so this is a major-version migration touching every route in `frontend/src/App.tsx`. Deferred to a dedicated slice so it is not bundled with unrelated changes. |
+
+Exposure is limited: both advisories require attacker-influenced navigation targets, and this
+app builds its routes from a static table with no user-supplied redirect parameters and no SSR
+hydration (Vite SPA), so `deserializeErrors()` is never reached.
+
+### CI runtime parity
+
+The backend test matrix now includes `3.12` to match the `python:3.12-slim` runtime in
+`Dockerfile.backend`. `3.10`/`3.11` stay in the matrix to guard the documented
+minimum-supported range.
+
