@@ -28,9 +28,11 @@ import {
   AccordionDetails,
   Button,
   Alert,
+  TextField,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TuneIcon from '@mui/icons-material/Tune';
 import ScienceIcon from '@mui/icons-material/Science';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -179,11 +181,11 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   const {
     availableTheories,
     enabledTheories,
-    theoryConfigs: _theoryConfigs,
+    theoryConfigs,
     theoryResult,
     isLoadingTheories,
     setEnabledTheories,
-    setTheoryConfigs: _setTheoryConfigs,
+    setTheoryConfigs,
     fetchTheories,
     runTheories,
     runCoupledTheories,
@@ -248,6 +250,47 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
       );
     },
     [enabledTheories, setEnabledTheories],
+  );
+
+  /**
+   * Override one configurable parameter for one theory. An empty string clears
+   * the override so the module's own default applies again; sending an empty
+   * override object would otherwise pin the parameter to NaN.
+   */
+  const handleConfigChange = useCallback(
+    (theoryId: string, paramName: string, rawValue: string, isNumeric: boolean) => {
+      const next = { ...theoryConfigs };
+      const forTheory = { ...(next[theoryId] || {}) };
+
+      if (rawValue === '') {
+        delete forTheory[paramName];
+      } else if (isNumeric) {
+        const parsed = Number(rawValue);
+        if (Number.isNaN(parsed)) return;
+        forTheory[paramName] = parsed;
+      } else {
+        forTheory[paramName] = rawValue;
+      }
+
+      if (Object.keys(forTheory).length === 0) {
+        delete next[theoryId];
+      } else {
+        next[theoryId] = forTheory;
+      }
+      setTheoryConfigs(next);
+    },
+    [theoryConfigs, setTheoryConfigs],
+  );
+
+  /** Drop all overrides for one theory. */
+  const handleConfigReset = useCallback(
+    (theoryId: string) => {
+      if (!theoryConfigs[theoryId]) return;
+      const next = { ...theoryConfigs };
+      delete next[theoryId];
+      setTheoryConfigs(next);
+    },
+    [theoryConfigs, setTheoryConfigs],
   );
 
   // Run theories with current conditions (coupled or independent)
@@ -414,6 +457,9 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           coupledMode,
           coupledResult,
           onOpenGlossary: openGlossary,
+          configOverrides: theoryConfigs[theory.theory_id],
+          onConfigChange: handleConfigChange,
+          onConfigReset: handleConfigReset,
         }),
       )}
 
@@ -462,6 +508,9 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
               coupledResult,
               isContextTrack: true,
               onOpenGlossary: openGlossary,
+              configOverrides: theoryConfigs[theory.theory_id],
+              onConfigChange: handleConfigChange,
+              onConfigReset: handleConfigReset,
             }),
           )}
         </>
@@ -494,6 +543,7 @@ interface RenderTheoryAccordionArgs {
     description: string;
     category: string;
     references: string[];
+    configurable_parameters?: Record<string, any>;
   };
   isEnabled: boolean;
   contribution: TheoryContributionResult | undefined;
@@ -502,6 +552,14 @@ interface RenderTheoryAccordionArgs {
   coupledResult: { coupling_map?: Record<string, Array<{ source_id: string }>> } | null | undefined;
   isContextTrack?: boolean;
   onOpenGlossary: (_anchor: 'evidence' | 'claim' | null) => void;
+  configOverrides?: Record<string, any>;
+  onConfigChange: (
+    _theoryId: string,
+    _paramName: string,
+    _rawValue: string,
+    _isNumeric: boolean,
+  ) => void;
+  onConfigReset: (_theoryId: string) => void;
 }
 
 function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElement {
@@ -514,6 +572,9 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
     coupledResult,
     isContextTrack = false,
     onOpenGlossary,
+    configOverrides,
+    onConfigChange,
+    onConfigReset,
   } = args;
 
   const conf = contribution ? confidenceLabel(contribution.confidence) : null;
@@ -717,6 +778,18 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
           </Box>
         )}
 
+        {/* Per-theory parameter overrides. Sent as theory_configs on the next run. */}
+        {theory.configurable_parameters &&
+          Object.keys(theory.configurable_parameters).length > 0 && (
+            <TheoryParameterEditor
+              theoryId={theory.theory_id}
+              configurableParameters={theory.configurable_parameters}
+              overrides={configOverrides}
+              onChange={onConfigChange}
+              onReset={onConfigReset}
+            />
+          )}
+
         {/* Coupling arrows (coupled mode only) */}
         {coupledMode && coupledResult?.coupling_map?.[theory.theory_id] && (
           <Box sx={{ mb: 0.5 }}>
@@ -762,5 +835,111 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
     </Accordion>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Per-theory parameter overrides
+// ---------------------------------------------------------------------------
+
+interface TheoryParameterEditorProps {
+  theoryId: string;
+  configurableParameters: Record<string, any>;
+  overrides?: Record<string, any>;
+  onChange: (
+    _theoryId: string,
+    _paramName: string,
+    _rawValue: string,
+    _isNumeric: boolean,
+  ) => void;
+  onReset: (_theoryId: string) => void;
+}
+
+/**
+ * Editor for a theory's `configurable_parameters`, which the backend returns as
+ * `{ name: { default, description } }`. Leaving a field blank means "use the
+ * module default" rather than sending an explicit value.
+ */
+const TheoryParameterEditor: React.FC<TheoryParameterEditorProps> = ({
+  theoryId,
+  configurableParameters,
+  overrides,
+  onChange,
+  onReset,
+}) => {
+  const entries = Object.entries(configurableParameters);
+  const overrideCount = overrides ? Object.keys(overrides).length : 0;
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{ bgcolor: 'transparent', '&:before': { display: 'none' }, mb: 0.5 }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+        sx={{ minHeight: 0, px: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <TuneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          <Typography variant="caption" color="text.secondary">
+            Parameters ({entries.length})
+          </Typography>
+          {overrideCount > 0 && (
+            <Chip
+              label={`${overrideCount} overridden`}
+              size="small"
+              color="info"
+              variant="outlined"
+              sx={{ height: 16, fontSize: '0.55rem' }}
+            />
+          )}
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0 }}>
+        <Grid container spacing={1}>
+          {entries.map(([name, meta]) => {
+            const defaultValue = meta && typeof meta === 'object' ? meta.default : meta;
+            const description =
+              meta && typeof meta === 'object' ? meta.description : undefined;
+            const isNumeric = typeof defaultValue === 'number';
+            const current = overrides?.[name];
+            return (
+              <Grid size={{ xs: 12, sm: 6 }} key={name}>
+                <Tooltip title={description || name} arrow>
+                  <TextField
+                    label={name}
+                    size="small"
+                    fullWidth
+                    type={isNumeric ? 'number' : 'text'}
+                    value={current ?? ''}
+                    placeholder={String(defaultValue ?? '')}
+                    onChange={(e) => onChange(theoryId, name, e.target.value, isNumeric)}
+                    InputLabelProps={{ shrink: true, sx: { fontSize: '0.7rem' } }}
+                    inputProps={{ style: { fontSize: '0.7rem' } }}
+                  />
+                </Tooltip>
+              </Grid>
+            );
+          })}
+        </Grid>
+        {overrideCount > 0 && (
+          <Button
+            size="small"
+            onClick={() => onReset(theoryId)}
+            sx={{ mt: 1, fontSize: '0.65rem' }}
+          >
+            Reset to defaults
+          </Button>
+        )}
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', mt: 0.5, fontSize: '0.6rem' }}
+        >
+          Blank uses the module default. Overrides apply on the next run.
+        </Typography>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
 
 export default TheoryTogglePanel;

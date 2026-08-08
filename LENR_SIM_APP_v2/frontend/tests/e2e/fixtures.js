@@ -2,6 +2,7 @@ import { test as base } from '@playwright/test';
 import { HomePage } from './pages/HomePage.js';
 import { UnifiedTheoryPage } from './pages/UnifiedTheoryPage.js';
 import { AdvancedAnalysisPage } from './pages/AdvancedAnalysisPage.js';
+import { DashboardPage } from './pages/DashboardPage.js';
 
 /**
  * Shared fixtures. Extend with more page objects as E2E coverage grows.
@@ -15,6 +16,9 @@ export const test = base.extend({
   },
   advancedAnalysisPage: async ({ page }, use) => {
     await use(new AdvancedAnalysisPage(page));
+  },
+  dashboardPage: async ({ page }, use) => {
+    await use(new DashboardPage(page));
   },
 });
 

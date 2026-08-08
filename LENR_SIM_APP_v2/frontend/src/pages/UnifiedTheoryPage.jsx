@@ -63,6 +63,7 @@ import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
 import ReactionRateGovernancePanel from '../components/physics/ReactionRateGovernancePanel';
 import GovernanceGlossaryDrawer from '../components/physics/GovernanceGlossaryDrawer';
 import { deriveSimulationHeadlineState } from '../utils/simulationDerivedState';
+import { buildTheoryConditions, resolveElectrolyteSpecies } from '../utils/theoryConditions';
 import { track } from '../analytics/events';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
@@ -216,16 +217,6 @@ const SYSTEM_PRESETS = {
   }
 };
 
-const DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY = {
-  li: 'lioh',
-  na: 'naoh',
-  k: 'koh',
-  rb: 'other',
-  cs: 'other',
-  mixed: 'mixed',
-  other: 'other',
-};
-
 const ELECTROLYTE_SPECIES_BY_FAMILY = {
   li: [
     { value: 'lioh', label: 'LiOH (hydroxide)' },
@@ -243,12 +234,6 @@ const ELECTROLYTE_SPECIES_BY_FAMILY = {
   cs: [{ value: 'other', label: 'Other Cs species (low support)' }],
   mixed: [{ value: 'mixed', label: 'Mixed electrolyte blend' }],
   other: [{ value: 'other', label: 'Other / custom species' }],
-};
-
-const resolveElectrolyteSpecies = (family, species) => {
-  const normalizedFamily = (family || 'other').toLowerCase();
-  if (species) return species.toLowerCase();
-  return DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY[normalizedFamily] || 'other';
 };
 
 // Proton phase colors for charts
@@ -2085,26 +2070,7 @@ function UnifiedTheoryPage() {
                     </Typography>
                   </Alert>
 
-                  <TheoryTogglePanel
-                    conditions={{
-                      temperature: parameters.temperature || 300,
-                      pressure: (parameters.drivingPressure || 1.5) * 101325,
-                      electron_density: 6.8e28,
-                      electric_field: 1e6,
-                      loading_ratio: parameters.loadingRatio || 0.9,
-                      surface_roughness: parameters.surfaceRoughness || 5e-9,
-                      defect_density: parameters.defectDensity || 1e14,
-                      grain_size: parameters.grainSize || 50e-9,
-                      gap_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
-                      crack_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
-                      electrolyte_family: parameters.electrolyteFamily || 'li',
-                      electrolyte_species: resolveElectrolyteSpecies(
-                        parameters.electrolyteFamily || 'li',
-                        parameters.electrolyteSpecies,
-                      ),
-                      electrolyte_molarity_mol_l: parameters.electrolyteMolarityMolL || 0.3,
-                    }}
-                  />
+                  <TheoryTogglePanel conditions={buildTheoryConditions({ parameters })} />
                 </Box>
               )}
 

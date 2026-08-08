@@ -24,13 +24,24 @@ const THEORY_RESULT = {
 const SIMULATION_RESULT = { collapse_results: { min_radius_um: 0.01 } };
 
 function Probe() {
-  const { theoryResult, setTheoryResult, simulationResult, setSimulationResult } = usePhysics();
+  const {
+    theoryResult,
+    setTheoryResult,
+    simulationResult,
+    setSimulationResult,
+    enabledTheories,
+    setEnabledTheories,
+    theoryConfigs,
+    setTheoryConfigs,
+  } = usePhysics();
   return (
     <div>
       <span data-testid="theory">{theoryResult ? 'theory-present' : 'theory-absent'}</span>
       <span data-testid="simulation">
         {simulationResult ? 'simulation-present' : 'simulation-absent'}
       </span>
+      <span data-testid="enabled">{enabledTheories.join(',') || 'none'}</span>
+      <span data-testid="configs">{JSON.stringify(theoryConfigs)}</span>
       <button type="button" onClick={() => setTheoryResult(THEORY_RESULT)}>
         set theory
       </button>
@@ -39,6 +50,18 @@ function Probe() {
       </button>
       <button type="button" onClick={() => setSimulationResult(SIMULATION_RESULT)}>
         set simulation
+      </button>
+      <button type="button" onClick={() => setEnabledTheories(['takahashi_tsc', 'kim_bec'])}>
+        set enabled
+      </button>
+      <button type="button" onClick={() => setEnabledTheories([])}>
+        clear enabled
+      </button>
+      <button
+        type="button"
+        onClick={() => setTheoryConfigs({ kim_bec: { grain_size_nm: 12 } })}
+      >
+        set configs
       </button>
     </div>
   );
@@ -100,5 +123,47 @@ describe('PhysicsContext theoryResult persistence', () => {
     sessionStorage.setItem('lenr_theoryResult', '{not json');
     renderProbe();
     expect(screen.getByTestId('theory')).toHaveTextContent('theory-absent');
+  });
+});
+
+describe('PhysicsContext theory selection persistence', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('persists the enabled theory selection so the dashboard choice reaches the testbed', () => {
+    const first = renderProbe();
+    act(() => {
+      screen.getByText('set enabled').click();
+    });
+    expect(sessionStorage.getItem('lenr_enabledTheories')).toContain('takahashi_tsc');
+    first.unmount();
+
+    renderProbe();
+    expect(screen.getByTestId('enabled')).toHaveTextContent('takahashi_tsc,kim_bec');
+  });
+
+  it('clears the stored key when the selection is emptied', () => {
+    renderProbe();
+    act(() => {
+      screen.getByText('set enabled').click();
+    });
+    act(() => {
+      screen.getByText('clear enabled').click();
+    });
+    expect(sessionStorage.getItem('lenr_enabledTheories')).toBeNull();
+    expect(screen.getByTestId('enabled')).toHaveTextContent('none');
+  });
+
+  it('persists per-theory parameter overrides', () => {
+    const first = renderProbe();
+    act(() => {
+      screen.getByText('set configs').click();
+    });
+    expect(sessionStorage.getItem('lenr_theoryConfigs')).toContain('grain_size_nm');
+    first.unmount();
+
+    renderProbe();
+    expect(screen.getByTestId('configs')).toHaveTextContent('grain_size_nm');
   });
 });
