@@ -1098,6 +1098,90 @@ def calculate_minnaert_frequency(
     return float(f_0)
 
 
+def calculate_blake_critical_radius(
+    initial_radius: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    surface_tension: float = 0.0728
+) -> float:
+    """
+    Calculate the Blake critical radius for unstable (inertial) bubble growth.
+
+    Quasi-static equilibrium of a gas bubble requires the far-field liquid pressure
+
+        p_L(R) = p_g0 (R_0/R)^3 - 2*sigma/R,     p_g0 = P_0 + 2*sigma/R_0
+
+    where the isothermal gas exponent is used, as is conventional for the
+    quasi-static Blake analysis. Equilibrium is lost where p_L(R) is stationary:
+
+        dp_L/dR = -3 p_g0 R_0^3 / R^4 + 2*sigma/R^2 = 0
+        =>  R_crit = sqrt( 3 p_g0 R_0^3 / (2*sigma) )
+
+    Beyond R_crit surface tension can no longer restrain the bubble and growth runs
+    away, which is the onset of inertial cavitation.
+
+    Args:
+        initial_radius: Equilibrium bubble radius in meters
+        ambient_pressure: Ambient pressure in Pa
+        surface_tension: Liquid surface tension in N/m
+
+    Returns:
+        Blake critical radius in meters
+
+    Reference:
+        Blake (1949); Brennen, *Cavitation and Bubble Dynamics*, section 2.4
+    """
+    if initial_radius <= 0 or surface_tension <= 0:
+        return float('inf')
+
+    p_gas_0 = ambient_pressure + 2 * surface_tension / initial_radius
+    return float(np.sqrt(3 * p_gas_0 * initial_radius ** 3 / (2 * surface_tension)))
+
+
+def calculate_blake_threshold_pressure(
+    initial_radius: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    surface_tension: float = 0.0728
+) -> float:
+    """
+    Calculate the Blake threshold acoustic pressure amplitude.
+
+    Evaluating the quasi-static equilibrium curve at the critical radius (see
+    :func:`calculate_blake_critical_radius`) gives the lowest far-field pressure the
+    bubble can withstand:
+
+        p_L,min = p_g0 (R_0/R_crit)^3 - 2*sigma/R_crit
+
+    The acoustic amplitude needed to reach it from ambient is
+
+        P_Blake = P_0 - p_L,min
+
+    Below this drive amplitude the bubble oscillates stably; above it, growth is
+    inertial and a violent collapse follows.
+
+    Args:
+        initial_radius: Equilibrium bubble radius in meters
+        ambient_pressure: Ambient pressure in Pa
+        surface_tension: Liquid surface tension in N/m
+
+    Returns:
+        Threshold acoustic pressure amplitude in Pa
+
+    Reference:
+        Blake (1949); Brennen, *Cavitation and Bubble Dynamics*, section 2.4
+    """
+    r_crit = calculate_blake_critical_radius(
+        initial_radius, ambient_pressure, surface_tension
+    )
+    if not np.isfinite(r_crit):
+        return float('inf')
+
+    p_gas_0 = ambient_pressure + 2 * surface_tension / initial_radius
+    p_liquid_min = (
+        p_gas_0 * (initial_radius / r_crit) ** 3 - 2 * surface_tension / r_crit
+    )
+    return float(ambient_pressure - p_liquid_min)
+
+
 def calculate_resonant_radius(
     frequency: float,
     ambient_pressure: float = STANDARD_PRESSURE,

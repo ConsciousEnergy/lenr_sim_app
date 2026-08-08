@@ -510,14 +510,83 @@ server is reachable.
 
 ---
 
+## 9B. Bubble Dynamics Reduction Limits
+
+Canonical limits that do not depend on our implementation, so they detect physics
+errors that self-consistent unit tests cannot. Modelled on the validation suites of
+the open-source `sonolumen` simulator and APECSS (doi:10.21105/joss.05435). Enforced
+by `tests/test_physics/test_bubble_dynamics_gates.py`.
+
+### 9B.1 Rayleigh collapse time
+```
+t_R = 0.915 * R_0 * sqrt(rho / dP)
+```
+**Status:** ✅ REFERENCE
+**Code:** `calculate_rayleigh_collapse_time()` in `app/physics/bubble_collapse.py`
+**Checks:** matches the closed form to 1e-12; linear in `R_0`; scales as
+`dP^(-1/2)`; ~1 us for a 10 um bubble at 1 atm
+**Reference:** Rayleigh, *Phil. Mag.* **34**, 94 (1917)
+
+### 9B.2 Minnaert resonance frequency
+```
+f_0 = (1 / (2*pi*R)) * sqrt(3*gamma*P_0 / rho)
+```
+**Status:** ✅ REFERENCE
+**Code:** `calculate_minnaert_frequency()` in `app/physics/bubble_collapse.py`
+**Independent check:** `f_0 * R ≈ 3.3 m/s` for an air bubble in water (the classic
+rule of thumb), and `calculate_resonant_radius()` inverts it to 1e-9
+**Reference:** Minnaert, *Phil. Mag.* **16**, 235 (1933)
+
+### 9B.3 Blake threshold
+```
+R_crit  = sqrt( 3 * p_g0 * R_0^3 / (2*sigma) ),   p_g0 = P_0 + 2*sigma/R_0
+P_Blake = P_0 - [ p_g0 (R_0/R_crit)^3 - 2*sigma/R_crit ]
+```
+**Status:** ✅ REFERENCE
+**Code:** `calculate_blake_critical_radius()`, `calculate_blake_threshold_pressure()`
+in `app/physics/bubble_collapse.py`
+**Independent check:** `R_crit` is confirmed to be the numerical stationary point of
+the quasi-static equilibrium pressure curve it is derived from (400k-point scan,
+agreement to 1e-3), so the closed form is validated against its own governing
+equation rather than against itself. Threshold rises as `R_0` shrinks (surface
+tension dominates) and tends to ambient for large bubbles.
+**Reference:** Blake (1949); Brennen, *Cavitation and Bubble Dynamics*, section 2.4
+
+### 9B.4 Keller-Miksis reduces to Rayleigh-Plesset
+```
+(1 - Rdot/c) R Rddot + (3/2)(1 - Rdot/(3c)) Rdot^2
+    = (1/rho)(1 + Rdot/c)(p_L - p_inf) + (R/(rho c)) dp_L/dt
+```
+**Status:** ✅ REFERENCE
+**Code:** `solve_keller_miksis()` in `app/physics_engine/bubble_solver.py`
+**Check:** as `c -> infinity` every compressibility correction vanishes and the
+equation must recover `R Rddot + (3/2) Rdot^2 = (p_L - p_inf)/rho`. Measured maximum
+deviation from the Rayleigh-Plesset solution is `< 1e-3 * R_0` at `c = 1e12 m/s`, and
+the deviation decreases monotonically with increasing `c`. At the physical water
+value (1481 m/s) acoustic radiation damping makes the collapse *less* violent than
+the incompressible idealisation, as expected.
+**Reference:** Keller & Miksis, *JASA* **68**, 628 (1980)
+
+This addresses the "simplified Rayleigh-Plesset ignores compressibility" entry under
+Known Limitations: a compressible solver is now available and validated against its
+incompressible limit.
+
+---
+
 ## 10. Known Limitations
 
 1. **WKB Approximation**: Valid only for slowly varying potentials
 2. **Screening Models**: Experimental values vary significantly between labs
-3. **Bubble Dynamics**: Simplified Rayleigh-Plesset ignores compressibility
+3. **Bubble Dynamics**: The default Rayleigh-Plesset path ignores liquid
+   compressibility. A validated Keller-Miksis solver is now available
+   (`solve_keller_miksis`, §9B.4) but is not yet the default for the bubble-lattice
+   route
 4. **Enhancement Factors**: Large uncertainties in LENR regime
 5. **Collapse Ceilings**: Peak temperature/pressure/compression are reported under
    explicit bounds (§9A); a saturated value is a display ceiling, not a prediction
+6. **Overlap Probability**: `ProtonPhaseModel.calculate_overlap_probability` returns a
+   number density rather than a probability, so it always clips to its 0.1 ceiling.
+   It is therefore excluded from the proton-phase cascade and needs renormalising
 
 ---
 
