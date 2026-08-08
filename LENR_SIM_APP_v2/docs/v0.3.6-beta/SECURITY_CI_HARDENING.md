@@ -65,13 +65,13 @@ npm audit --audit-level=high > /dev/null 2>&1; echo "gate exit: $?"
 
 ### Local `start_app.bat` / Vite terminal noise
 
-`LENR_SIM_APP_v2/start_app.bat` and the root `start_app.bat` sync frontend
-`node_modules` to `package-lock.json` via a SHA256 stamp file
-(`node_modules\.lockfile-hash`) before `npm start` (`vite`). If `node_modules`
-is missing, the stamp is missing, or the hash mismatches, they run
-`npm ci --legacy-peer-deps` and rewrite the stamp. npm always prints a funding
-line and an audit summary after install. That is **not** a Vite failure — the
-next lines should be:
+`LENR_SIM_APP_v2/start_app.bat` opens a dedicated **LENR Frontend** window that
+runs `frontend/start_dev.bat`. That script syncs `node_modules` to
+`package-lock.json` via a SHA256 stamp (`node_modules\.lockfile-hash`), then
+starts Vite. Fresh trees use `npm ci`; existing trees with a changed lockfile
+use `npm install` (lower RAM than a full `npm ci` wipe). npm always prints a
+funding line and an audit summary after install. That is **not** a Vite
+failure — the next lines should be:
 
 ```text
 > lenr-sim-frontend@0.3.6-beta start
