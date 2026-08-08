@@ -185,3 +185,57 @@ Final release-preparation pass on branch `ux-ui-v0.3.6-beta-scale-calibration`; 
   - ship-prep hardening (2026-07-18): Vite 6.4.3 (0 high vulns), bundle chunk-splitting, `contract_version` consistency fix; full local CI mirror green (backend 354 passed/1 skipped, frontend 103 passed).
   - UI consolidation (2026-07-18): antd fully removed in favor of MUI (single UI library, no `antd` in bundle); refactor-delta CI mirror green (lint 0 errors, build PASS, frontend 90 passed, 0 high vulns).
 
+
+---
+
+## Pre-Public Hardening Gate (2026-08-08)
+
+Scope: PR #68 (`development` -> `main`). Physics accuracy, reporting honesty, UX
+coherence, and the frontend security gate. Full command log in
+`RELEASE_EVIDENCE_PACK.md`.
+
+### Gate results
+
+| Gate | Result |
+|---|---|
+| Version consistency (4 markers) | **PASS** - all `0.3.6-beta` |
+| Backend `pip-audit` (9 documented ignores) | **PASS** - no known vulnerabilities |
+| Backend `pytest tests/ app/tests/` | **PASS** - 749 passed, 9 skipped |
+| Experiment-anchored science gates | **PASS** - 52 passed, none skipped/xfailed |
+| Physics benchmark gates | **PASS** - 3 passed (assertions strengthened) |
+| Bubble-dynamics reduction limits (new) | **PASS** - 18 passed |
+| Frontend `npm audit --audit-level=high` | **PASS** - exit 0 (2 moderate, 0 high) |
+| Frontend lint / test / build | **PASS** - 0 errors / 110 passed / build OK |
+| Playwright E2E | **PASS** - 7 passed, stable over 3 runs |
+| Export envelope | **PASS** - `lenr-run-export-v1` intact, changes additive |
+
+### What this gate now additionally refuses to accept
+
+The previous benchmark gate asserted only `enhancement_factor <= 1e5`, which a
+silently flattened breakdown satisfies. It now also requires that saturated
+mechanisms declare themselves and expose their uncapped magnitude, that peak
+conditions name the ceilings bounding them, that proton phases form a normalised
+distribution, and that every timeline point names its collapse model.
+
+Three new reduction-limit gates assert agreement with results that do not depend on
+this implementation at all (Rayleigh collapse time, Minnaert frequency, Blake
+threshold, and Keller-Miksis reducing to Rayleigh-Plesset as `c -> infinity`). A
+solver can pass every unit test and still be wrong; these fail when the physics is
+wrong rather than merely inconsistent.
+
+### Status: **PASS**
+
+### Go/No-Go
+
+**GO with tracked residuals** for the public release candidate, unchanged from the
+prior baseline plus:
+
+- moderate `react-router` / `react-router-dom` advisories remain; the fix requires a
+  `react-router 7.18` major migration touching every route, deliberately deferred to
+  its own slice rather than bundled here (rationale in `SECURITY_CI_HARDENING.md`)
+- `ProtonPhaseModel.calculate_overlap_probability` needs renormalising; excluded from
+  the proton-phase cascade in the meantime
+- `solve_keller_miksis` is validated but not yet the default for the bubble-lattice
+  route
+- CI has not re-run on the pushed commits from this agent's token; a maintainer needs
+  to re-trigger `Test and Benchmark` so PR #68 reflects the current HEAD

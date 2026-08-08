@@ -71,3 +71,27 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 - Node runtime on operators should be updated beyond `20.12.0` to remove Vite CJS warning path.
 - Frontend lint warnings are non-blocking but should be reduced after deployment freeze.
 - Backend transitive dependency advisories (`pytest`, `starlette`, `pyasn1` lineage) remain documented residuals.
+
+## Pre-Public Hardening Slice (2026-08-08)
+
+Blockers cleared before public rollout:
+
+- Frontend high-severity advisory (`js-yaml` GHSA-5p4m-2wfm-xmqj) cleared; the
+  `npm audit --audit-level=high` CI gate passes again. Note the gate must be read via
+  its direct exit code - piping it through `tail` reports the pipe's status and had
+  been masking the failure.
+- Advanced Physics Analysis no longer reports saturated clamps as if they were
+  computed physics; the single-bubble temperature ceiling is anchored to published
+  hydrodynamic values instead of sitting below the measured emission band.
+- The Advanced Analysis <-> Theory Testbed navigation loop is fixed (theory results
+  persist, empty states name the missing data source, and the testbed offers a route
+  back). Covered by Playwright E2E.
+- CI test matrix now includes Python 3.12, matching the shipped container runtime.
+
+Still operator-owned:
+
+- Re-trigger `Test and Benchmark` on PR #68 so CI reflects current HEAD (this agent's
+  token cannot dispatch workflows).
+- Hostinger/Cloudflare apply still needs `terraform.tfvars` plus Hostinger and
+  Cloudflare API tokens; unchanged from the prior tracker entry.
+- Confirm the Cloudflare Pages build output directory is `dist` (Vite), not `build`.
