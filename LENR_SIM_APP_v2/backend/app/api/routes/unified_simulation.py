@@ -950,6 +950,21 @@ class BubbleConfig(BaseModel):
     frequency_khz: float = Field(default=20.0, ge=1, le=100, description="Acoustic frequency in kHz")
     # Extended range to 2000 K to support high-temperature Ni-H and elevated experiments
     ambient_temperature_k: float = Field(default=298.0, ge=0, le=2000, description="Ambient temperature in Kelvin")
+    # Additive, opt-in. Default keeps the incompressible Rayleigh-Plesset path so
+    # every stored baseline stays valid; 'keller_miksis' adds acoustic radiation
+    # damping, which matters once the peak wall Mach number approaches ~0.1
+    # (reported under collapse_results.bubble_dynamics).
+    bubble_dynamics_mode: str = Field(
+        default="rayleigh_plesset",
+        description="Bubble-dynamics model: 'rayleigh_plesset' (incompressible, "
+        "default) or 'keller_miksis' (weakly compressible, retains acoustic "
+        "radiation damping).",
+    )
+    sound_speed_m_s: float = Field(
+        default=1481.0,
+        gt=0,
+        description="Speed of sound in the surrounding liquid (water at 20 C by default).",
+    )
 
 
 class BubbleLatticeRequest(BaseModel):
@@ -1164,11 +1179,21 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         )
 
         # Create bubble parameters
+        # An unrecognised mode falls back to the incompressible default rather than
+        # erroring, matching how rate_mode handles bad input.
+        requested_dynamics_mode = str(request.bubble.bubble_dynamics_mode or "").lower()
+        dynamics_mode = (
+            requested_dynamics_mode
+            if requested_dynamics_mode in {"rayleigh_plesset", "keller_miksis"}
+            else "rayleigh_plesset"
+        )
         bubble_params = BubbleParameters(
             initial_radius=request.bubble.initial_radius_um * 1e-6,
             driving_pressure=request.bubble.driving_pressure_bar * 1e5,
             frequency=request.bubble.frequency_khz * 1e3,
-            ambient_temperature=request.bubble.ambient_temperature_k
+            ambient_temperature=request.bubble.ambient_temperature_k,
+            bubble_dynamics_mode=dynamics_mode,
+            sound_speed=request.bubble.sound_speed_m_s,
         )
         
         # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback).
@@ -1441,6 +1466,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 # Which screening kernel and cited potential produced the screening
                 # term, and whether the Casimir term is inside its continuum domain.
                 "mechanism_provenance": mechanism_provenance,
+                # Solver, dynamics model and peak wall Mach number, so a client can
+                # tell whether the incompressible model was admissible.
+                "bubble_dynamics": sanitize_dict(collapse_result.bubble_dynamics or {}, 0.0),
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,

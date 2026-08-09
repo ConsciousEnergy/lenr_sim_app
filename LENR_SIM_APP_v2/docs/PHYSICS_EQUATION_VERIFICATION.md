@@ -682,7 +682,47 @@ probability.
 `unified_lenr_model/cross_sections.py` re-exports it instead of redeclaring the
 literal, and `app/physics/qed_effects.py` imports it instead of hardcoding `1e5`.
 
-### 9C.9 Net effect on the reported breakdown
+### 9C.9 Production collapse integrator
+```
+solve_ivp(LSODA, rtol=1e-8, atol=[R_floor*1e-6, 1e-6]), event: Rdot = 0
+```
+**Status:** ✅ VERIFIED (reduction limit asserted)
+**Code:** `BubbleLatticeInteraction.simulate_collapse()`
+**Previous form:** `odeint` on a fixed 1000-points-per-cycle grid. Two defects: it
+emitted `ODEintWarning: Excess work done on this call` on every run, because the
+collapse is stiff as `R -> R_min`; and the collapse instant could not be located more
+precisely than the sample spacing, since it was found by `argmin` over that grid.
+**Now:** LSODA adapts its own step under error control, and a non-terminal
+wall-at-rest event (`Rdot = 0`) locates the extremum exactly. The event sample is
+*spliced into* the trajectory rather than only reported, so the cached trajectory and
+the reported peak still describe one collapse — the invariant `get_collapse_phases`
+and the timeline depend on.
+
+### 9C.10 Keller-Miksis mode on the production path
+```
+(1 - Rdot/c) R Rddot + (3/2)(1 - Rdot/3c) Rdot^2
+    = (1/rho)(1 + Rdot/c)(p_L - p_inf) + (R/(rho c)) dp_L/dt
+```
+**Status:** ✅ REFERENCE (opt-in; default remains Rayleigh-Plesset)
+**Code:** `BubbleLatticeInteraction.keller_miksis_rhs()`, selected via
+`bubble_dynamics_mode`
+**Why not routed through `bubble_solver`:** that module drives with a constant
+`P_inf * drive_factor` and a constant `E_field`, while this path uses a sinusoidal
+acoustic drive and `E ~ (R0/R)^2`. Reusing it would have silently changed the physics
+being compared, making the reduction test meaningless. The two RHS functions on this
+class differ *only* in their compressibility treatment, which is asserted directly.
+**Check:** as `c -> infinity` the compressible solution recovers the incompressible
+one to `< 1e-3 * R_0`, monotonically in `c`; at the physical water value the collapse
+is not more violent than the incompressible idealisation.
+**Reference:** Keller & Miksis, *JASA* **68**, 628 (1980)
+
+### 9C.11 Compressibility-regime reporting
+`collapse_results.bubble_dynamics` reports `peak_mach = max|Rdot| / c` and classifies
+the regime: `incompressible_valid` below Mach 0.01, `compressibility_marginal` to
+0.1, `compressibility_significant` above. Previously unreported, so an incompressible
+solution at high Mach looked exactly as trustworthy as one at low Mach.
+
+### 9C.12 Net effect on the reported breakdown
 At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) for Pd:
 
 | Mechanism | Before | After |
@@ -705,9 +745,11 @@ At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) 
    screened form itself is only strictly valid for `U_e << E` and saturates
    outside that domain
 3. **Bubble Dynamics**: The default Rayleigh-Plesset path ignores liquid
-   compressibility. A validated Keller-Miksis solver is now available
-   (`solve_keller_miksis`, §9B.4) but is not yet the default for the bubble-lattice
-   route
+   compressibility. Keller-Miksis is now available *on the production path*
+   (`bubble_dynamics_mode='keller_miksis'`, §9C.10) and validated against its
+   incompressible limit, but remains opt-in so stored baselines stay valid. The
+   peak wall Mach number is reported so callers can tell when the default is
+   inadmissible (§9C.11)
 4. **Enhancement Factors**: Large uncertainties in LENR regime. The bubble-lattice
    mechanism product is correlated rather than a factorisation of independent
    effects (§9C.6) and must not be multiplied by the theory pipeline's combined

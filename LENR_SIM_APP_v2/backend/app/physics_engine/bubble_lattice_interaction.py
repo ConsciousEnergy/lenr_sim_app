@@ -15,7 +15,7 @@ import numpy as np
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from scipy import constants as const
-from scipy.integrate import odeint
+from scipy.integrate import odeint, solve_ivp
 import logging
 
 from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
@@ -78,6 +78,13 @@ class BubbleParameters:
     
     # Electric field in double layer
     double_layer_field: float = 1e8  # V/m
+
+    # Bubble-dynamics model. "rayleigh_plesset" is incompressible (default, keeps
+    # every stored baseline valid); "keller_miksis" adds acoustic radiation
+    # damping, which matters once the wall Mach number Rdot/c approaches ~0.1.
+    bubble_dynamics_mode: str = "rayleigh_plesset"
+    # Speed of sound in the surrounding liquid (water at 20 C).
+    sound_speed: float = 1481.0
     
     def __post_init__(self):
         """Set polytropic index based on gas type if not explicitly provided."""
@@ -213,8 +220,13 @@ class CollapseResult:
 
     # Which reporting limits bound this result, and the pre-clamp values. Peak
     # conditions are clamped to physical/claim-tier ceilings; without this a
-    # saturated value is indistinguishable from a computed one.
+    # saturated value is indistinguishable from a computed one. Every entry here
+    # carries a ``ceiling``; solver diagnostics live in ``bubble_dynamics``.
     limits: Dict[str, Any] = field(default_factory=dict)
+
+    # Which bubble-dynamics model and solver produced this result, plus the peak
+    # wall Mach number that decides whether the incompressible model applies.
+    bubble_dynamics: Dict[str, Any] = field(default_factory=dict)
 
 
 class BubbleLatticeInteraction:
@@ -300,6 +312,78 @@ class BubbleLatticeInteraction:
             d2Rdt2 = 0.0
         
         return np.array([dRdt, d2Rdt2])
+
+    def keller_miksis_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
+        """Right-hand side of the Keller-Miksis equation, same drive model.
+
+        Keller & Miksis (1980) for a bubble in a weakly compressible liquid:
+
+            (1 - Rdot/c) R Rddot + (3/2)(1 - Rdot/3c) Rdot^2
+                = (1/rho)(1 + Rdot/c)(p_L - p_inf) + (R/(rho c)) dp_L/dt
+
+        This shares the sinusoidal acoustic drive and the ``E ~ (R0/R)^2``
+        double-layer field with :meth:`rayleigh_plesset_rhs`, so the two modes
+        differ *only* in their compressibility treatment. ``bubble_solver`` has a
+        Keller-Miksis solver too, but it drives with a constant
+        ``P_inf * drive_factor`` and a constant field, so routing this path
+        through it would have silently changed the physics being compared.
+
+        As ``c -> infinity`` every correction vanishes and this recovers
+        Rayleigh-Plesset; that limit is asserted in the bubble-dynamics gates.
+        """
+        R, dRdt = float(y[0]), float(y[1])
+
+        R_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+        R = max(R, R_floor, 1e-12)
+        if not np.isfinite(dRdt):
+            dRdt = 0.0
+
+        omega = 2 * np.pi * self.bubble.frequency
+        P_acoustic = self.bubble.driving_pressure * np.sin(omega * t)
+        P_infinity = self.bubble.ambient_pressure + P_acoustic
+
+        R0 = self.bubble.initial_radius
+        gamma = self.bubble.polytropic_index
+        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
+        P_gas = P_gas_0 * (R0 / R) ** (3 * gamma)
+
+        E_field = self.bubble.double_layer_field * (R0 / R) ** 2
+        P_electric = self.EPS0 * E_field ** 2 / 2
+
+        # Liquid pressure at the wall.
+        p_L = (
+            P_gas
+            - 2 * self.bubble.surface_tension / R
+            - 4 * self.bubble.dynamic_viscosity * dRdt / R
+            + P_electric
+        )
+        # Only the gas term's derivative is retained, the standard simplification
+        # for the radiation term: P_gas ~ R^(-3 gamma) so dP/dt = -3 gamma P Rdot/R.
+        dp_L_dt = -3.0 * gamma * P_gas * dRdt / R
+
+        c = max(float(self.bubble.sound_speed), 1.0)
+        mach = dRdt / c
+        # Guard the singularity at Rdot = c; the model is only valid well below it.
+        lhs_coefficient = max(1.0 - mach, 1e-6)
+        rho = self.bubble.fluid_density
+
+        rhs = (
+            (1.0 + mach) * (p_L - P_infinity) / rho
+            + R * dp_L_dt / (rho * c)
+            - 1.5 * (1.0 - mach / 3.0) * dRdt ** 2
+        )
+        d2Rdt2 = rhs / (lhs_coefficient * R)
+        if not np.isfinite(d2Rdt2):
+            d2Rdt2 = 0.0
+
+        return np.array([dRdt, d2Rdt2])
+
+    def _dynamics_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
+        """Dispatch to the configured bubble-dynamics model."""
+        mode = str(getattr(self.bubble, "bubble_dynamics_mode", "rayleigh_plesset")).lower()
+        if mode == "keller_miksis":
+            return self.keller_miksis_rhs(y, t)
+        return self.rayleigh_plesset_rhs(y, t)
     
     def simulate_collapse(self, num_cycles: int = 2, points_per_cycle: int = 1000) -> CollapseResult:
         """
@@ -313,15 +397,82 @@ class BubbleLatticeInteraction:
         
         # Initial conditions: [R0, dR/dt=0]
         y0 = np.array([self.bubble.initial_radius, 0.0])
-        
-        # Integrate ODE
-        solution = odeint(self.rayleigh_plesset_rhs, y0, t)
-        
-        R = np.asarray(solution[:, 0], dtype=float)
-        dRdt = np.asarray(solution[:, 1], dtype=float)
 
-        # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO
+        # Adaptive integration with error control. `odeint` on a fixed grid emitted
+        # "Excess work done on this call" on every run, because the collapse is
+        # stiff near R -> R_min, and it cannot locate the collapse instant more
+        # precisely than the sample spacing. solve_ivp with LSODA adapts its own
+        # step, and the wall-velocity event below finds the extremum exactly.
         R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+
+        def _rhs(time: float, state: np.ndarray) -> np.ndarray:
+            return self._dynamics_rhs(state, time)
+
+        def _wall_at_rest(_time: float, state: np.ndarray) -> float:
+            """Zero crossings of the wall velocity locate collapse minima/maxima."""
+            return float(state[1])
+
+        _wall_at_rest.direction = 0.0
+        _wall_at_rest.terminal = False
+
+        solution = solve_ivp(
+            _rhs,
+            (0.0, total_time),
+            y0,
+            t_eval=t,
+            method="LSODA",
+            rtol=1e-8,
+            atol=[R_min_floor * 1e-6, 1e-6],
+            events=_wall_at_rest,
+            dense_output=False,
+        )
+
+        if solution.y.shape[1] >= 2:
+            R = np.asarray(solution.y[0], dtype=float)
+            dRdt = np.asarray(solution.y[1], dtype=float)
+            if R.size < t.size:
+                # Integration stopped early; pad with the hard-core floor so
+                # downstream shapes stay aligned with the requested grid.
+                pad = t.size - R.size
+                R = np.concatenate([R, np.full(pad, R_min_floor)])
+                dRdt = np.concatenate([dRdt, np.zeros(pad)])
+            t = t[: R.size]
+        else:
+            logger.warning(
+                "solve_ivp returned no usable solution (%s); falling back to odeint",
+                getattr(solution, "message", "unknown"),
+            )
+            fallback = odeint(self.rayleigh_plesset_rhs, y0, t)
+            R = np.asarray(fallback[:, 0], dtype=float)
+            dRdt = np.asarray(fallback[:, 1], dtype=float)
+
+        # Exact extrema found by the event, used to refine the reported minimum
+        # beyond the sampling grid.
+        event_times = np.asarray(solution.t_events[0], dtype=float) if solution.t_events else np.array([])
+        event_states = (
+            np.asarray(solution.y_events[0], dtype=float)
+            if solution.y_events is not None and len(solution.y_events) > 0
+            else np.empty((0, 2))
+        )
+
+        # Splice the exact collapse instant into the trajectory. The true minimum
+        # sits where the wall comes to rest (Rdot = 0), which a fixed sample grid
+        # can only bracket. Inserting the event sample rather than merely reporting
+        # it keeps the cached trajectory and the reported peak describing the same
+        # collapse, which get_collapse_phases and the timeline both depend on.
+        if event_states.size:
+            event_radii = np.asarray(event_states[:, 0], dtype=float)
+            usable = np.isfinite(event_radii) & (event_radii > 0.0)
+            if np.any(usable):
+                deepest = int(np.argmin(np.where(usable, event_radii, np.inf)))
+                event_time = float(event_times[deepest])
+                if event_radii[deepest] < np.min(R) and 0.0 <= event_time <= total_time:
+                    insert_at = int(np.searchsorted(t, event_time))
+                    t = np.insert(t, insert_at, event_time)
+                    R = np.insert(R, insert_at, float(event_radii[deepest]))
+                    dRdt = np.insert(dRdt, insert_at, float(event_states[deepest, 1]))
+
+        # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO.
         # ODE blow-up can yield NaN/inf/underflow; Python max(nan, floor) stays nan.
         bad = ~np.isfinite(R) | (R <= 0.0)
         if np.any(bad):
@@ -335,6 +486,23 @@ class BubbleLatticeInteraction:
         min_idx = int(np.argmin(R))
         R_min = float(max(R[min_idx], R_min_floor, 1e-12))
         collapse_time = float(t[min_idx])
+
+        # Peak wall Mach number decides whether the incompressible model is even
+        # admissible: Keller-Miksis corrections scale with Rdot/c and matter once
+        # this approaches ~0.1.
+        sound_speed = max(float(getattr(self.bubble, "sound_speed", 1481.0)), 1.0)
+        finite_velocities = dRdt[np.isfinite(dRdt)]
+        peak_wall_speed = float(np.max(np.abs(finite_velocities))) if finite_velocities.size else 0.0
+        peak_mach = peak_wall_speed / sound_speed
+        dynamics_mode = str(
+            getattr(self.bubble, "bubble_dynamics_mode", "rayleigh_plesset")
+        ).lower()
+        if peak_mach >= 0.1:
+            compressibility_regime = "compressibility_significant"
+        elif peak_mach >= 0.01:
+            compressibility_regime = "compressibility_marginal"
+        else:
+            compressibility_regime = "incompressible_valid"
         
         # Compression ratio is capped by the hard-core limit
         compression_ratio = float(min(self.bubble.initial_radius / R_min, self.MAX_COMPRESSION_RATIO))
@@ -404,6 +572,26 @@ class BubbleLatticeInteraction:
             },
         }
 
+        # Kept out of `limits`: every entry there describes a value clamped to a
+        # ceiling, and this is solver diagnostics. It reports whether the chosen
+        # bubble-dynamics model is admissible at the wall speeds actually reached,
+        # which was previously invisible.
+        dynamics_report = {
+            "mode": dynamics_mode,
+            "solver": "scipy.integrate.solve_ivp(LSODA)",
+            "sound_speed_m_s": float(sound_speed),
+            "peak_wall_speed_m_s": float(peak_wall_speed),
+            "peak_mach": float(peak_mach),
+            "compressibility_regime": compressibility_regime,
+            "collapse_time_refined_by_event": bool(event_states.size > 0),
+            "note": (
+                "Keller-Miksis corrections scale with Rdot/c. Above Mach ~0.1 the "
+                "incompressible Rayleigh-Plesset result overpredicts rebound "
+                "because it omits acoustic radiation damping; set "
+                "bubble_dynamics_mode='keller_miksis' for that regime."
+            ),
+        }
+
         return CollapseResult(
             time_series=t,
             radius_series=R,
@@ -417,6 +605,7 @@ class BubbleLatticeInteraction:
             enhancement_factor=enhancement,
             proton_phase_distribution=proton_phases,
             limits=limits,
+            bubble_dynamics=dynamics_report,
         )
     
     def _calculate_enhancement_at_collapse(

@@ -96,6 +96,54 @@ def test_wall_velocity_is_reported_when_available() -> None:
     assert len(velocities) == len(trajectory["radius_um"])
 
 
+def test_bubble_dynamics_diagnostics_are_reported() -> None:
+    """Solver, mode and peak Mach so a client can tell whether the incompressible
+    model was admissible at the wall speeds reached."""
+    data = _client().post("/api/unified/bubble-lattice", json=_bubble_payload()).json()
+    dynamics = data["collapse_results"]["bubble_dynamics"]
+
+    assert dynamics["mode"] == "rayleigh_plesset"  # opt-in stays opt-in
+    assert dynamics["solver"] == "scipy.integrate.solve_ivp(LSODA)"
+    assert dynamics["peak_mach"] >= 0.0
+    assert dynamics["compressibility_regime"] in {
+        "incompressible_valid",
+        "compressibility_marginal",
+        "compressibility_significant",
+    }
+
+
+def test_keller_miksis_mode_is_selectable() -> None:
+    payload = _bubble_payload()
+    payload["bubble"]["bubble_dynamics_mode"] = "keller_miksis"
+    data = _client().post("/api/unified/bubble-lattice", json=payload).json()
+
+    assert data["success"] is True
+    assert data["collapse_results"]["bubble_dynamics"]["mode"] == "keller_miksis"
+
+
+def test_invalid_dynamics_mode_falls_back_not_500() -> None:
+    payload = _bubble_payload()
+    payload["bubble"]["bubble_dynamics_mode"] = "nonsense_mode"
+    response = _client().post("/api/unified/bubble-lattice", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["collapse_results"]["bubble_dynamics"]["mode"] == (
+        "rayleigh_plesset"
+    )
+
+
+def test_mechanism_provenance_names_the_screening_kernel() -> None:
+    data = _client().post("/api/unified/bubble-lattice", json=_bubble_payload()).json()
+    provenance = data["collapse_results"]["mechanism_provenance"]
+
+    assert provenance["screening"]["model"] == "assenbaum_rolfs_gamow_cited_range_v1"
+    assert provenance["screening"]["citations"], "screening potential needs citations"
+    assert provenance["screening"]["screening_potential_ev"] > 0
+    # Casimir at collapse pressures is outside its continuum domain, and says so.
+    assert provenance["casimir"]["domain_valid"] is False
+    assert "warning" in provenance["casimir"]
+
+
 def test_existing_bubble_lattice_contract_is_unchanged() -> None:
     """Additivity guard: the trajectory block must not disturb locked fields."""
     data = _client().post("/api/unified/bubble-lattice", json=_bubble_payload()).json()
