@@ -44,7 +44,29 @@ def build_model(
 class TestAdaptiveSolver:
     def test_reports_the_adaptive_solver(self):
         result = build_model().simulate_collapse(num_cycles=1)
-        assert result.bubble_dynamics["solver"] == "scipy.integrate.solve_ivp(LSODA)"
+        # LSODA when the Fortran wrapper is healthy; BDF on Windows installs
+        # that raise TypeError inside the LSODA work-array allocation.
+        assert result.bubble_dynamics["solver"] in {
+            "scipy.integrate.solve_ivp(LSODA)",
+            "scipy.integrate.solve_ivp(BDF)",
+        }
+
+    def test_falls_back_to_bdf_when_lsoda_raises_typeerror(self, monkeypatch):
+        """Reproduce the Windows work-array TypeError and require a usable BDF path."""
+        import app.physics_engine.bubble_lattice_interaction as bli
+
+        real_solve_ivp = bli.solve_ivp
+
+        def flaky_solve_ivp(*args, **kwargs):
+            if kwargs.get("method") == "LSODA":
+                raise TypeError  # bare TypeError, matching the Windows traceback
+            return real_solve_ivp(*args, **kwargs)
+
+        monkeypatch.setattr(bli, "solve_ivp", flaky_solve_ivp)
+        result = build_model().simulate_collapse(num_cycles=1)
+        assert result.bubble_dynamics["solver"] == "scipy.integrate.solve_ivp(BDF)"
+        assert np.all(np.isfinite(result.radius_series))
+        assert result.min_radius > 0
 
     def test_no_integrator_warning_is_emitted(self, recwarn):
         """odeint raised ODEintWarning('Excess work done') on every run."""
@@ -121,18 +143,15 @@ class TestVanDerWaalsHardCore:
 
     def test_raw_solution_no_longer_diverges(self):
         """Before the hard-core gas law the unsanitised minimum was ~-3e145."""
-        from scipy.integrate import solve_ivp
-
         model = build_model(driving_pressure=8e5)
         total_time = 2.0 / model.bubble.frequency
-        solution = solve_ivp(
+        # Use the same portable integrator path as production (LSODA→BDF).
+        solution, _label = model._solve_collapse_ivp(
             lambda t, y: model._dynamics_rhs(y, t),
-            (0.0, total_time),
-            np.array([model.bubble.initial_radius, 0.0]),
+            t_span=(0.0, total_time),
+            y0=np.array([model.bubble.initial_radius, 0.0]),
             t_eval=np.linspace(0.0, total_time, 2000),
-            method="LSODA",
-            rtol=1e-8,
-            atol=[model.hard_core_radius * 1e-6, 1e-6],
+            atol=np.asarray([model.hard_core_radius * 1e-6, 1e-6], dtype=float),
         )
         assert solution.success
         assert np.all(np.isfinite(solution.y))

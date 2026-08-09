@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy import constants as const
-from scipy.integrate import odeint, solve_ivp
+from scipy.integrate import solve_ivp
 
 from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
 from app.physics_engine.constants import (
@@ -475,7 +475,48 @@ class BubbleLatticeInteraction:
         if mode == "keller_miksis":
             return self.keller_miksis_rhs(y, t)
         return self.rayleigh_plesset_rhs(y, t)
-    
+
+    def _solve_collapse_ivp(
+        self,
+        rhs,
+        *,
+        t_span: Tuple[float, float],
+        y0: np.ndarray,
+        t_eval: np.ndarray,
+        atol: np.ndarray,
+        events=None,
+    ):
+        """Integrate the collapse ODE with a portable stiff solver.
+
+        Returns:
+            ``(OdeResult, solver_label)``. Prefers LSODA; on the Windows/SciPy
+            work-array ``TypeError`` falls back to BDF so the API never 500s
+            solely because the Fortran wrapper cannot allocate ``iwork``.
+        """
+        common = {
+            "fun": rhs,
+            "t_span": t_span,
+            "y0": y0,
+            "t_eval": t_eval,
+            "rtol": 1e-8,
+            "atol": atol,
+            "events": events,
+            "dense_output": False,
+        }
+        try:
+            with _suppressed_fortran_stdout():
+                solution = solve_ivp(method="LSODA", **common)
+            return solution, "scipy.integrate.solve_ivp(LSODA)"
+        except TypeError as exc:
+            # Observed on Windows: zeros((liw,), _lsoda_int_dtype) raises bare
+            # TypeError when the SciPy Fortran wrapper and NumPy disagree.
+            logger.warning(
+                "LSODA integrator unavailable (%s); falling back to BDF",
+                exc or "work-array TypeError",
+            )
+        solution = solve_ivp(method="BDF", **common)
+        return solution, "scipy.integrate.solve_ivp(BDF)"
+
     def simulate_collapse(self, num_cycles: int = 2, points_per_cycle: int = 1000) -> CollapseResult:
         """
         Simulate bubble collapse dynamics over multiple acoustic cycles.
@@ -492,10 +533,12 @@ class BubbleLatticeInteraction:
         # Adaptive integration with error control. `odeint` on a fixed grid emitted
         # "Excess work done on this call" on every run, because the collapse is
         # stiff near R -> R_min, and it cannot locate the collapse instant more
-        # precisely than the sample spacing. solve_ivp with LSODA adapts its own
-        # step; a non-terminal min-radius event records hard-core crossings, and
-        # the parabolic splice below refines the true extremum when it sits
-        # above the floor.
+        # precisely than the sample spacing. Prefer LSODA when the SciPy Fortran
+        # wrapper is healthy; on some Windows installs it raises a bare TypeError
+        # inside ``zeros((liw,), _lsoda_int_dtype)`` and 500s the API. Fall back
+        # to pure-Python BDF in that case. A non-terminal min-radius event records
+        # hard-core crossings; the parabolic splice below refines extrema above
+        # the floor.
         R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
 
         def _rhs(time: float, state: np.ndarray) -> np.ndarray:
@@ -508,18 +551,14 @@ class BubbleLatticeInteraction:
         _min_radius_event.terminal = False
         _min_radius_event.direction = -1
 
-        with _suppressed_fortran_stdout():
-            solution = solve_ivp(
-                _rhs,
-                (0.0, total_time),
-                y0,
-                t_eval=t,
-                method="LSODA",
-                rtol=1e-8,
-                atol=[R_min_floor * 1e-6, 1e-6],
-                events=_min_radius_event,
-                dense_output=False,
-            )
+        solution, solver_label = self._solve_collapse_ivp(
+            _rhs,
+            t_span=(0.0, total_time),
+            y0=y0,
+            t_eval=t,
+            atol=np.asarray([R_min_floor * 1e-6, 1e-6], dtype=float),
+            events=_min_radius_event,
+        )
 
         if not solution.success:
             logger.warning(
@@ -528,7 +567,7 @@ class BubbleLatticeInteraction:
                 getattr(solution, "message", "unknown"),
             )
 
-        if solution.y.shape[1] >= 2:
+        if solution.y.ndim == 2 and solution.y.shape[1] >= 2:
             R = np.asarray(solution.y[0], dtype=float)
             dRdt = np.asarray(solution.y[1], dtype=float)
             if R.size < t.size:
@@ -539,13 +578,10 @@ class BubbleLatticeInteraction:
                 dRdt = np.concatenate([dRdt, np.zeros(pad)])
             t = t[: R.size]
         else:
-            logger.warning(
-                "solve_ivp returned no usable solution (%s); falling back to odeint",
-                getattr(solution, "message", "unknown"),
+            raise RuntimeError(
+                "Collapse integrator returned no usable solution "
+                f"({getattr(solution, 'message', 'unknown')})"
             )
-            fallback = odeint(self.rayleigh_plesset_rhs, y0, t)
-            R = np.asarray(fallback[:, 0], dtype=float)
-            dRdt = np.asarray(fallback[:, 1], dtype=float)
 
         # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO.
         # ODE blow-up can yield NaN/inf/underflow; Python max(nan, floor) stays nan.
@@ -699,7 +735,7 @@ class BubbleLatticeInteraction:
 
         dynamics_report = {
             "mode": dynamics_mode,
-            "solver": "scipy.integrate.solve_ivp(LSODA)",
+            "solver": solver_label,
             "sound_speed_m_s": float(sound_speed),
             "peak_wall_speed_m_s": float(peak_wall_speed),
             "peak_mach": float(peak_mach),

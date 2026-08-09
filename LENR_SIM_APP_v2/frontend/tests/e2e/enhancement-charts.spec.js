@@ -32,7 +32,7 @@ const SATURATING_RESPONSE = {
     },
     bubble_dynamics: {
       mode: 'rayleigh_plesset',
-      solver: 'scipy.integrate.solve_ivp(LSODA)',
+      solver: 'scipy.integrate.solve_ivp(BDF)',
       peak_mach: 0.219,
       compressibility_regime: 'compressibility_significant',
     },

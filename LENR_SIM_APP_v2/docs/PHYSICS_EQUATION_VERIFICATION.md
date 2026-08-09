@@ -707,16 +707,20 @@ sonoluminescence bubble models.
 
 ### 9C.9a Production collapse integrator
 ```
-solve_ivp(LSODA, rtol=1e-8, atol=[h*1e-6, 1e-6]) + parabolic sub-grid vertex
+solve_ivp(LSODA|BDF, rtol=1e-8, atol=[h*1e-6, 1e-6]) + parabolic sub-grid vertex
 ```
 **Status:** ✅ VERIFIED
-**Code:** `BubbleLatticeInteraction.simulate_collapse()`
+**Code:** `BubbleLatticeInteraction.simulate_collapse()` /
+`_solve_collapse_ivp()`
 **Previous form:** `odeint` on a fixed 1000-points-per-cycle grid, which emitted
 `ODEintWarning: Excess work done on this call` on every run and could locate the
 collapse instant no more precisely than the sample spacing (`argmin` over the grid).
-**Now:** LSODA adapts its own step under error control. The collapse instant is
-refined by fitting a parabola through the three samples bracketing the discrete
-minimum, since `R(t)` is smooth and locally quadratic at its extremum. A wall-at-rest
+**Now:** Prefer LSODA under error control; on Windows installs where SciPy's
+Fortran wrapper raises `TypeError` inside `zeros((liw,), _lsoda_int_dtype)` during
+integrator reset, fall back to pure-Python BDF so `/api/unified/bubble-lattice`
+cannot 500 solely from a packaging mismatch. The collapse instant is refined by
+fitting a parabola through the three samples bracketing the discrete minimum,
+since `R(t)` is smooth and locally quadratic at its extremum. A wall-at-rest
 (`Rdot = 0`) solver event would be more direct, but the initial condition has
 `Rdot` exactly `0`, so Brent's method is handed a bracket with no sign change and
 raises `ValueError: f(a) and f(b) must have different signs`; refinement therefore

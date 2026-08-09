@@ -103,7 +103,10 @@ def test_bubble_dynamics_diagnostics_are_reported() -> None:
     dynamics = data["collapse_results"]["bubble_dynamics"]
 
     assert dynamics["mode"] == "rayleigh_plesset"  # opt-in stays opt-in
-    assert dynamics["solver"] == "scipy.integrate.solve_ivp(LSODA)"
+    assert dynamics["solver"] in {
+        "scipy.integrate.solve_ivp(LSODA)",
+        "scipy.integrate.solve_ivp(BDF)",
+    }
     assert dynamics["peak_mach"] >= 0.0
     assert dynamics["compressibility_regime"] in {
         "incompressible_valid",
