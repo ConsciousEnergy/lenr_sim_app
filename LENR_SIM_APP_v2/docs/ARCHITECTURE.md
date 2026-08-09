@@ -1,7 +1,7 @@
 # LENR Simulation App - Architecture Documentation
 
-**Version:** 0.3.5-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026
 
 ---
 
@@ -28,7 +28,7 @@ graph TB
 
     subgraph "Backend Layer - Hostinger VPS"
         Traefik[Traefik<br/>Reverse Proxy<br/>:80/:443<br/>Auto-SSL]
-        FastAPI[FastAPI Backend<br/>Port 8000<br/>x2 Replicas]
+        FastAPI[FastAPI Backend<br/>Port 8010<br/>x2 Replicas]
         Postgres[(PostgreSQL 16<br/>Persistent Volume)]
     end
 

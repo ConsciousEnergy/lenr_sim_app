@@ -35,11 +35,11 @@ python -m uvicorn app.main:app --reload --port 8000
 
 | Interface | URL |
 | --- | --- |
-| REST base | `http://localhost:8000/api` |
-| Swagger UI | `http://localhost:8000/api/docs` |
-| ReDoc | `http://localhost:8000/api/redoc` |
-| OpenAPI JSON | `http://localhost:8000/api/openapi.json` |
-| WebSocket base | `ws://localhost:8000/api` |
+| REST base | `http://localhost:8010/api` |
+| Swagger UI | `http://localhost:8010/api/docs` |
+| ReDoc | `http://localhost:8010/api/redoc` |
+| OpenAPI JSON | `http://localhost:8010/api/openapi.json` |
+| WebSocket base | `ws://localhost:8010/api` |
 
 The frontend REST and simulation WebSocket clients default to port `8000`.
 `start_app.sh` starts the backend on port `8001`; when using that script, set
@@ -88,7 +88,7 @@ Electron screening raises the effective collision energy before the barrier
 integral is evaluated.
 
 ```bash
-curl -X POST http://localhost:8000/api/physics/quantum-tunneling \
+curl -X POST http://localhost:8010/api/physics/quantum-tunneling \
   -H 'Content-Type: application/json' \
   -d '{
     "z1": 1,
@@ -176,7 +176,7 @@ Fetch the same list and descriptions from
 `GET /api/physics/lenr-enhancement/mechanisms`.
 
 ```bash
-curl -X POST http://localhost:8000/api/physics/lenr-enhancement \
+curl -X POST http://localhost:8010/api/physics/lenr-enhancement \
   -H 'Content-Type: application/json' \
   -d '{
     "energy_kev": 0.025,
@@ -225,7 +225,7 @@ estimate, adiabatic heating, and a D-D Gamow-factor estimate. It returns both
 peak collapse conditions and a 500-point, two-cycle visualization series.
 
 ```bash
-curl -X POST http://localhost:8000/api/physics/bubble-fusion \
+curl -X POST http://localhost:8010/api/physics/bubble-fusion \
   -H 'Content-Type: application/json' \
   -d '{
     "initial_radius_um": 10.0,
@@ -265,7 +265,7 @@ hydrodynamics solver.
 Connect to:
 
 ```text
-ws://localhost:8000/api/ws/simulation/{simulation_type}/{simulation_id}
+ws://localhost:8010/api/ws/simulation/{simulation_type}/{simulation_id}
 ```
 
 `simulation_type` must be `quantum-tunneling`, `lenr`, or `bubble-fusion`.
@@ -308,7 +308,7 @@ Minimal browser example:
 
 ```javascript
 const socket = new WebSocket(
-  'ws://localhost:8000/api/ws/simulation/lenr/example-1'
+  'ws://localhost:8010/api/ws/simulation/lenr/example-1'
 );
 
 socket.addEventListener('open', () => {

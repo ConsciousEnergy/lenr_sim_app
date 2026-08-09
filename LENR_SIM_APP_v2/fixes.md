@@ -1,5 +1,12 @@
 # LENR_SIM_APP_v2 Fixes
 
+> **HISTORICAL SNAPSHOT — do not follow the recommendations below.**
+> This records a fix pass from the Create React App era. The frontend migrated to
+> Vite 6 in v0.3.6-beta, so the `npm audit fix --force` advice further down would
+> now do nothing useful. For the current audit policy see
+> [`docs/v0.3.6-beta/SECURITY_CI_HARDENING.md`](docs/v0.3.6-beta/SECURITY_CI_HARDENING.md)
+> and [`frontend/WARNINGS_EXPLAINED.md`](frontend/WARNINGS_EXPLAINED.md).
+
 ## Fixed Issues
 
 1. Missing ErrorBoundary component - Created component in src/components/ErrorBoundary.jsx

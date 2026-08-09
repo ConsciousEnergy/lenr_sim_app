@@ -1,7 +1,7 @@
 # LENR Simulation App v2 - Product Requirements Document
 
-**Version**: 0.1.0  
-**Last Updated**: November 9, 2025  
+**Version**: 0.3.6-beta  
+**Last Updated**: August 2026  
 **Status**: Active Development  
 **Document Owner**: Product Team
 
@@ -448,11 +448,15 @@ To democratize access to LENR simulation and visualization tools, enabling anyon
 
 ### Technical Limitations
 
-**Current** (v0.1.0):
-- ⚠️ Mock data only (real physics calculations in development)
+**Current** (v0.3.6-beta):
 - ⚠️ Limited to single-user sessions (no collaboration)
-- ⚠️ No data persistence (results lost on refresh)
+- ⚠️ Results persist only for the browser session (sessionStorage), not server-side
 - ⚠️ Basic visualization quality on mobile devices
+- ⚠️ Enhancement values are reported under a `1e5` claim-tier ceiling; saturated
+  entries are reporting limits, not predictions
+- ⚠️ The default bubble-dynamics mode is incompressible Rayleigh-Plesset, which
+  measured wall Mach numbers place outside its valid domain at ordinary drive
+  amplitudes (see `docs/PHYSICS_EQUATION_VERIFICATION.md` §9C.11)
 - ⚠️ English only (no i18n)
 
 **Architectural Constraints**:
@@ -525,7 +529,27 @@ To democratize access to LENR simulation and visualization tools, enabling anyon
 
 ## Release History
 
-### v0.1.0 (November 2025) - Current
+### v0.3.6-beta (August 2026) - Current
+
+**Theme**: Scientific governance, reporting honesty, and pre-public hardening
+
+**Major Features**:
+- ✅ Unified bubble-lattice physics engine (no longer mock data)
+- ✅ Theory pipeline with 21 registered modules, runnable from the dashboard and
+      the Unified Theory testbed
+- ✅ Claim-tier governance on every quantitative claim, with a single documented
+      composition contract (`docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`)
+- ✅ Saturation, reporting-limit and mechanism provenance in every response
+- ✅ Sobol uncertainty quantification for reaction rate and collapse observables
+- ✅ Vite 6 frontend toolchain (migrated off Create React App)
+
+**Known Issues**:
+- 4 MUI Grid console warnings (non-blocking)
+- 2 moderate `react-router` advisories pending a v7 migration
+
+---
+
+### v0.1.0 (November 2025) - Historical
 
 **Theme**: Foundation & Stability
 
@@ -546,10 +570,11 @@ To democratize access to LENR simulation and visualization tools, enabling anyon
 - Created testing task list (13 tasks)
 - Documented all warnings
 
-**Known Issues**:
+**Known Issues at the time**:
 - 4 MUI Grid console warnings (non-blocking)
-- 9 npm vulnerabilities in dependencies (development only)
-- Mock data only (real physics pending)
+- 9 npm vulnerabilities in `react-scripts` dependencies (resolved by the Vite
+  migration in v0.3.6-beta)
+- Mock data only (real physics landed in later releases)
 
 ---
 

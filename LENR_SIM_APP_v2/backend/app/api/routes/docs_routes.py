@@ -1,6 +1,18 @@
 """
 Docs API — serve markdown documentation from the project docs folder.
 Maps URL slugs to filenames (e.g. issue-ledger -> ISSUE_LEDGER.md).
+
+Adding a served document takes three steps, all of them required:
+
+1. Place the markdown in the **repository-root** ``docs/`` directory, not
+   ``LENR_SIM_APP_v2/docs/``. ``_get_docs_dir`` resolves six levels up from this
+   file, so a doc placed under the v2 tree returns 404.
+2. Add the slug here in ``SLUG_TO_FILENAME``.
+3. Add the slug to ``SLUG_TO_TITLE`` in ``frontend/src/pages/DocViewerPage.tsx``
+   and link it from ``DocumentationPage.jsx``, or the route stays unreachable.
+
+Note the path collision hazard: FastAPI's Swagger UI is mounted at ``/api/docs``
+and these markdown documents at ``/api/docs/{slug}``.
 """
 
 from pathlib import Path

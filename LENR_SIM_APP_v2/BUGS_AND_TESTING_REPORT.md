@@ -147,15 +147,15 @@ python -m uvicorn app.main:app --reload
 
 Expected: 
 - Server starts on port 8000
-- API docs accessible at http://localhost:8000/docs
+- API docs accessible at http://localhost:8010/docs
 - No import errors
 - No module not found errors
 
 #### API Tests
 Once server is running:
 ```bash
-curl http://localhost:8000/api/health
-curl http://localhost:8000/docs
+curl http://localhost:8010/api/health
+curl http://localhost:8010/docs
 ```
 
 Expected:

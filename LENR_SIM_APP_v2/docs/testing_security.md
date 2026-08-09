@@ -104,7 +104,7 @@ In addition to automated tests, you should perform manual testing of security fe
 Example curl command:
 ```bash
 for i in {1..10}; do 
-  curl -i http://localhost:8000/api/test
+  curl -i http://localhost:8010/api/test
   sleep 1
 done
 ```
@@ -130,10 +130,10 @@ Test with various content types using curl:
 
 ```bash
 # Valid content type
-curl -X POST -H "Content-Type: application/json" -d '{"test":"data"}' http://localhost:8000/api/test
+curl -X POST -H "Content-Type: application/json" -d '{"test":"data"}' http://localhost:8010/api/test
 
 # Invalid content type
-curl -X POST -H "Content-Type: text/plain" -d 'plain text' http://localhost:8000/api/test
+curl -X POST -H "Content-Type: text/plain" -d 'plain text' http://localhost:8010/api/test
 ```
 
 ## Security Scanning

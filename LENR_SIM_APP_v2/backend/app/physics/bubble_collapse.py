@@ -148,7 +148,11 @@ def calculate_collapse_temperature(
     final_temperature = initial_temperature * temperature_factor
     
     # Cap temperature at regime-specific maximum
-    max_realistic_temp = REGIME_MAX_TEMPERATURE.get(regime, 1e4)  # K
+    # Fall back to the single-bubble ceiling for an unknown regime rather than a
+    # stale 1e4, which sits below the measured sonoluminescence emission band.
+    max_realistic_temp = REGIME_MAX_TEMPERATURE.get(
+        regime, REGIME_MAX_TEMPERATURE["single_bubble"]
+    )  # K
     final_temperature = min(final_temperature, max_realistic_temp)
     
     logger.debug(f"Collapse temperature: {final_temperature:.2e} K with compression ratio {compression_ratio:.2f}")
@@ -165,7 +169,9 @@ def calculate_collapse_temperature_regime(
 ) -> float:
     """
     Calculate collapse temperature for a specific regime.
-    Regimes: single_bubble (~1e4 K), multi_bubble (~1e3-1e4 K), laser_driven (~1e5 K).
+    Ceilings come from REGIME_MAX_TEMPERATURE: single_bubble 2e6 K (peak ion
+    temperature, Moss et al.), multi_bubble 2e4 K, laser_driven 1e5 K. See
+    REGIME_TEMPERATURE_PROVENANCE for the anchoring measurement per regime.
     """
     return calculate_collapse_temperature(
         initial_radius=initial_radius,
@@ -1008,7 +1014,9 @@ def calculate_surface_enhanced_collapse(
     # Enhanced temperature (scales approximately with pressure ratio)
     pressure_ratio = enhanced_pressure / base_results["collapse_pressure_Pa"]
     enhanced_temperature = base_results["collapse_temperature_K"] * pressure_ratio**0.4
-    enhanced_temperature = min(enhanced_temperature, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
+    enhanced_temperature = min(
+        enhanced_temperature, REGIME_MAX_TEMPERATURE["single_bubble"]
+    )
     
     # Jet impact parameters
     jet_params = calculate_jet_impact_parameters(

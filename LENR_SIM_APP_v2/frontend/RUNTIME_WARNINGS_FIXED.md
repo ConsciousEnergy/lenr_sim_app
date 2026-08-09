@@ -1,5 +1,12 @@
 # Runtime Warnings Status - November 9, 2025
 
+> **HISTORICAL SNAPSHOT — records a Create React App era fix pass.**
+> The frontend migrated to Vite 6 in v0.3.6-beta, so the react-scripts and
+> webpack references below no longer describe this project. Current posture:
+> `npm audit --audit-level=high` exits 0 with 2 deferred react-router
+> moderates. See [WARNINGS_EXPLAINED.md](WARNINGS_EXPLAINED.md).
+
+
 ## Summary
 
 This document details the runtime deprecation warnings in the LENR Simulation App v2 and the status of fixes.

@@ -1,7 +1,7 @@
 # Visualization Alignment and Proton Confinement
 
-**Version:** 0.3.5-beta  
-**Last Updated:** February 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026
 
 ## Summary
 
