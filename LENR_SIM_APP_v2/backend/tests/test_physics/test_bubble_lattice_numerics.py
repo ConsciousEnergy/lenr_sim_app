@@ -63,10 +63,28 @@ class TestAdaptiveSolver:
             return real_solve_ivp(*args, **kwargs)
 
         monkeypatch.setattr(bli, "solve_ivp", flaky_solve_ivp)
+        # Force the non-Windows method order so LSODA is attempted first.
+        monkeypatch.setattr(bli.sys, "platform", "linux")
         result = build_model().simulate_collapse(num_cycles=1)
         assert result.bubble_dynamics["solver"] == "scipy.integrate.solve_ivp(BDF)"
         assert np.all(np.isfinite(result.radius_series))
         assert result.min_radius > 0
+
+    def test_windows_platform_uses_bdf_without_trying_lsoda(self, monkeypatch):
+        import app.physics_engine.bubble_lattice_interaction as bli
+
+        calls = []
+        real_solve_ivp = bli.solve_ivp
+
+        def tracking_solve_ivp(*args, **kwargs):
+            calls.append(kwargs.get("method"))
+            return real_solve_ivp(*args, **kwargs)
+
+        monkeypatch.setattr(bli, "solve_ivp", tracking_solve_ivp)
+        monkeypatch.setattr(bli.sys, "platform", "win32")
+        result = build_model().simulate_collapse(num_cycles=1)
+        assert calls == ["BDF"]
+        assert result.bubble_dynamics["solver"] == "scipy.integrate.solve_ivp(BDF)"
 
     def test_no_integrator_warning_is_emitted(self, recwarn):
         """odeint raised ODEintWarning('Excess work done') on every run."""

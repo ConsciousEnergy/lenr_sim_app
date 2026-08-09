@@ -489,9 +489,13 @@ class BubbleLatticeInteraction:
         """Integrate the collapse ODE with a portable stiff solver.
 
         Returns:
-            ``(OdeResult, solver_label)``. Prefers LSODA; on the Windows/SciPy
-            work-array ``TypeError`` falls back to BDF so the API never 500s
-            solely because the Fortran wrapper cannot allocate ``iwork``.
+            ``(OdeResult, solver_label)``.
+
+        Windows SciPy builds have been observed to raise a bare ``TypeError``
+        inside ``zeros((liw,), _lsoda_int_dtype)`` during LSODA reset, which
+        500s ``/api/unified/bubble-lattice``. Skip LSODA on ``win32`` and use
+        pure-Python BDF. On other platforms try LSODA first and fall back to
+        BDF if that TypeError still appears.
         """
         common = {
             "fun": rhs,
@@ -503,19 +507,32 @@ class BubbleLatticeInteraction:
             "events": events,
             "dense_output": False,
         }
-        try:
-            with _suppressed_fortran_stdout():
-                solution = solve_ivp(method="LSODA", **common)
-            return solution, "scipy.integrate.solve_ivp(LSODA)"
-        except TypeError as exc:
-            # Observed on Windows: zeros((liw,), _lsoda_int_dtype) raises bare
-            # TypeError when the SciPy Fortran wrapper and NumPy disagree.
-            logger.warning(
-                "LSODA integrator unavailable (%s); falling back to BDF",
-                exc or "work-array TypeError",
-            )
-        solution = solve_ivp(method="BDF", **common)
-        return solution, "scipy.integrate.solve_ivp(BDF)"
+        # Known-bad on Windows: do not even attempt the Fortran wrapper.
+        methods = ("BDF",) if sys.platform.startswith("win") else ("LSODA", "BDF")
+
+        last_error: Optional[BaseException] = None
+        for method in methods:
+            try:
+                if method == "LSODA":
+                    with _suppressed_fortran_stdout():
+                        solution = solve_ivp(method=method, **common)
+                else:
+                    solution = solve_ivp(method=method, **common)
+                label = f"scipy.integrate.solve_ivp({method})"
+                logger.info("Collapse integrator selected: %s", label)
+                return solution, label
+            except TypeError as exc:
+                last_error = exc
+                logger.warning(
+                    "%s integrator unavailable (%s); trying next method",
+                    method,
+                    exc or "work-array TypeError",
+                )
+
+        raise RuntimeError(
+            "No usable collapse integrator (tried "
+            f"{', '.join(methods)}); last error: {last_error!r}"
+        )
 
     def simulate_collapse(self, num_cycles: int = 2, points_per_cycle: int = 1000) -> CollapseResult:
         """
