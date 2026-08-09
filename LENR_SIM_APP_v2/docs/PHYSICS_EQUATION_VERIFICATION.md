@@ -577,9 +577,11 @@ incompressible limit.
 
 The seven-factor bubble-lattice enhancement breakdown was never catalogued here,
 which is how four defective forms survived. Verification oracle for this section
-is CODATA 2018 via `scipy.constants` (the WolframAlpha MCP server was unavailable
-in the verification environment; every value below is derived from CODATA rather
-than hardcoded, and cross-checked against its published reference value).
+is CODATA 2018 via `scipy.constants` (the WolframAlpha MCP server remains
+unavailable in this environment as of 2026-08-09; every value below is derived
+from CODATA rather than hardcoded, and cross-checked against its published
+reference value). Re-run each §9C entry through `user-wolframalpha` when that
+MCP is authenticated.
 
 ### 9C.1 Screening enhancement (Assenbaum-Rolfs, cited potential)
 ```

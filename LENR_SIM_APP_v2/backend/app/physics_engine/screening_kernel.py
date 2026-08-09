@@ -4,10 +4,12 @@ Canonical electron-screening enhancement kernel.
 Three incompatible screening models existed for the same physics:
 
 ============================  ==================================================
-``bubble_lattice_interaction``  ``exp(min(U_Debye / E_thermal, 9.2))``
-``unified_lenr_model/screening``  Gamow ``exp(pi*eta*U_e/E)`` capped at ``1e6``
+``bubble_lattice_interaction``  (legacy) ``exp(min(U_Debye / E_thermal, 9.2))``
+``unified_lenr_model/screening``  (legacy) Gamow form capped at ``1e6``
 ``theories/electron_screening``   Thomas-Fermi with cited material ranges
 ============================  ==================================================
+
+Both production callers above now route through this kernel.
 
 The bubble-lattice form was the worst of the three: it derived its potential from
 a Debye length rather than a measured screening potential, so

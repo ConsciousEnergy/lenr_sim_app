@@ -52,6 +52,15 @@ PHYSICAL_CONSTANTS = {
 # Set to 10^5 as the default ceiling; configurable per simulation run.
 MAX_ENHANCEMENT_FACTOR: float = 1e5
 
+# Schwinger critical field E_cr = m_e^2 c^3 / (e hbar) ≈ 1.323285e18 V/m.
+# Derived from CODATA via scipy.constants (see PHYSICS_EQUATION_VERIFICATION §9C.2).
+SCHWINGER_CRITICAL_FIELD_V_M: float = (
+    constants.m_e**2 * constants.c**3 / (constants.e * constants.hbar)
+)
+
+# Leading Heisenberg–Euler vacuum-polarisation coefficient 2*alpha/(45*pi).
+QED_VACUUM_COEFFICIENT: float = 2.0 * constants.alpha / (45.0 * np.pi)
+
 # Miles heat-helium correlation: D + D -> He-4 + 23.8 MeV (all as heat)
 # 1 Watt of excess heat = 2.63e11 He-4 atoms/second  (Miles 1990)
 MILES_HEAT_HELIUM_RATE: float = 2.63e11  # He-4 atoms per second per watt

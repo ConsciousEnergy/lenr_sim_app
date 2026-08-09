@@ -23,6 +23,10 @@ from scipy import constants as const
 from scipy.integrate import odeint, solve_ivp
 
 from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
+from app.physics_engine.constants import (
+    QED_VACUUM_COEFFICIENT,
+    SCHWINGER_CRITICAL_FIELD_V_M,
+)
 from app.physics_engine.screening_kernel import (
     compute_screening_enhancement,
     thermal_energy_ev,
@@ -30,16 +34,8 @@ from app.physics_engine.screening_kernel import (
 
 logger = logging.getLogger(__name__)
 
-# Schwinger critical field, E_cr = m_e^2 c^3 / (e hbar) = 1.323285e18 V/m.
-# Derived from CODATA constants rather than hardcoded; verified numerically
-# against the standard value (see PHYSICS_EQUATION_VERIFICATION.md 9C.2).
-SCHWINGER_CRITICAL_FIELD_V_M: float = (
-    const.m_e**2 * const.c**3 / (const.e * const.hbar)
-)
-
-# Leading QED vacuum-polarisation coefficient 2*alpha/(45*pi) = 1.0324e-4 from
-# the Heisenberg-Euler effective Lagrangian (weak-field expansion).
-QED_VACUUM_COEFFICIENT: float = 2.0 * const.alpha / (45.0 * np.pi)
+# Re-export Schwinger / QED coefficients for callers that historically imported
+# them from this module (API routes, mechanism bound tests).
 
 # Hydrogen ground-state binding energy in eV, for the Rydberg level spacing.
 RYDBERG_GROUND_STATE_EV: float = 13.605693122994
@@ -497,11 +493,20 @@ class BubbleLatticeInteraction:
         # "Excess work done on this call" on every run, because the collapse is
         # stiff near R -> R_min, and it cannot locate the collapse instant more
         # precisely than the sample spacing. solve_ivp with LSODA adapts its own
-        # step, and the wall-velocity event below finds the extremum exactly.
+        # step; a non-terminal min-radius event records hard-core crossings, and
+        # the parabolic splice below refines the true extremum when it sits
+        # above the floor.
         R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
 
         def _rhs(time: float, state: np.ndarray) -> np.ndarray:
             return self._dynamics_rhs(state, time)
+
+        def _min_radius_event(time: float, state: np.ndarray) -> float:
+            # Zero crossing when the wall reaches the van der Waals hard core.
+            return float(state[0] - R_min_floor)
+
+        _min_radius_event.terminal = False
+        _min_radius_event.direction = -1
 
         with _suppressed_fortran_stdout():
             solution = solve_ivp(
@@ -512,6 +517,7 @@ class BubbleLatticeInteraction:
                 method="LSODA",
                 rtol=1e-8,
                 atol=[R_min_floor * 1e-6, 1e-6],
+                events=_min_radius_event,
                 dense_output=False,
             )
 
@@ -556,10 +562,11 @@ class BubbleLatticeInteraction:
         # quadratic near its extremum, so fitting a parabola through the bracketing
         # samples locates the vertex to well inside one step.
         #
-        # A wall-at-rest (Rdot = 0) solver event would be more direct, but the
-        # initial condition has Rdot exactly 0, so the root finder is handed a
-        # bracket with no sign change and raises. Refinement stays out of the
-        # integrator for that reason.
+        # A wall-at-rest (Rdot = 0) solver event would be more direct for the
+        # extremum, but the initial condition has Rdot exactly 0, so the root
+        # finder is handed a bracket with no sign change and raises. The
+        # min-radius (hard-core) event above records floor crossings; the
+        # parabolic splice here refines extrema that sit above the floor.
         #
         # The vertex is *spliced into* the trajectory rather than only reported:
         # get_collapse_phases interpolates the cached trajectory, so a reported
@@ -683,6 +690,13 @@ class BubbleLatticeInteraction:
         # ceiling, and this is solver diagnostics. It reports whether the chosen
         # bubble-dynamics model is admissible at the wall speeds actually reached,
         # which was previously invisible.
+        hard_core_hits = 0
+        if getattr(solution, "t_events", None):
+            try:
+                hard_core_hits = int(len(solution.t_events[0]))
+            except (IndexError, TypeError):
+                hard_core_hits = 0
+
         dynamics_report = {
             "mode": dynamics_mode,
             "solver": "scipy.integrate.solve_ivp(LSODA)",
@@ -690,6 +704,7 @@ class BubbleLatticeInteraction:
             "peak_wall_speed_m_s": float(peak_wall_speed),
             "peak_mach": float(peak_mach),
             "compressibility_regime": compressibility_regime,
+            "min_radius_event_count": hard_core_hits,
             "collapse_time_refinement": (
                 "parabolic_subgrid" if collapse_time_refined else "grid_sample"
             ),
@@ -1055,10 +1070,11 @@ class BubbleLatticeInteraction:
         each additionally gated on the loading ratio required for that phase.
 
         Note: ``ProtonPhaseModel.calculate_overlap_probability`` is deliberately not
-        used as the capture gate. Its ``P_base = 1/(pi a^3)`` term is a number
-        density (m^-3), not a probability, so it evaluates to ~1e27 and always
-        clips to its 0.1 ceiling, making it constant across all conditions. The
-        field criterion from the same theory section is used instead.
+        used as the capture gate. Even after the density-form units fix (~9e-18
+        for a 10 a0 orbital), the nuclear-volume overlap is many orders below any
+        useful threshold, so the field criterion from the same theory section
+        remains the capture gate. Overlap is still computed on the
+        ``ProtonPhaseModel`` path for diagnostics.
 
         Returns:
             Normalised fractions summing to 1.0.

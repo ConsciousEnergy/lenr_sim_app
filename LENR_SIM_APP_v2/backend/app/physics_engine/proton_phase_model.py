@@ -235,18 +235,25 @@ class ProtonPhaseModel:
         else:
             f_screen = 1.0
         
-        # QED field enhancement
-        E_critical = 1e8
-        f_qed = 1 + (electric_field / E_critical)**2
-        
+        # Weak-field QED vacuum polarisation (Schwinger / Heisenberg–Euler).
+        # The previous 1e8 V/m stand-in inflated this term by ~10^12 at collapse
+        # fields; keep it consistent with bubble_lattice_interaction.
+        from app.physics_engine.constants import (
+            QED_VACUUM_COEFFICIENT,
+            SCHWINGER_CRITICAL_FIELD_V_M,
+        )
+        f_qed = 1.0 + QED_VACUUM_COEFFICIENT * (
+            float(electric_field) / SCHWINGER_CRITICAL_FIELD_V_M
+        ) ** 2
+
         # Coherence enhancement (loading dependent)
         if loading_ratio > 0.85:
             f_coherence = 1 + 10 * (loading_ratio - 0.85)
         else:
             f_coherence = 1.0
-        
+
         total = f_screen * f_qed * f_coherence
-        
+
         # Cap at conservative maximum from Part 2 analysis (10^3-10^5, 90% CI)
         return min(total, MAX_ENHANCEMENT_FACTOR)
     
