@@ -43,4 +43,22 @@ export class UnifiedTheoryPage {
   async runTheories() {
     await this.runTheoriesButton().click();
   }
+
+  /** Collapsible summary of group winners and excluded overlapping theories. */
+  compositionSummary() {
+    return this.page.getByText(/how this was composed/i);
+  }
+
+  excludedOverlapNotice() {
+    return this.page.getByText(/excluded as overlapping alternatives/i);
+  }
+
+  /**
+   * Full inventory of registered modules, fed from /api/physics/theories.
+   * MUI wraps an AccordionSummary in its own heading element, so target the
+   * expandable control rather than the heading to stay unambiguous.
+   */
+  registeredModulesSection() {
+    return this.page.getByRole('button', { name: /registered theory modules/i });
+  }
 }

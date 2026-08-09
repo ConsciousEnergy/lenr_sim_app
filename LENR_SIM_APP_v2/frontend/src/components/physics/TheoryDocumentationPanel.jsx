@@ -1,12 +1,15 @@
 /**
  * TheoryDocumentationPanel.jsx
  *
- * Static, expandable accordion section explaining each mechanism
- * in the Unified LENR Theoretical Framework.  Extracted from
- * UnifiedTheoryPage to reduce component size.
+ * Expandable documentation for the Unified LENR Theoretical Framework.
+ *
+ * The curated sections below are deep dives on the six mechanisms the
+ * bubble-lattice route models directly. The registered-module inventory is fed
+ * from /api/physics/theories, because the pipeline registers far more modules
+ * than these six and a hardcoded list implied the six were the whole framework.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,6 +22,7 @@ import {
   Chip,
   Stack,
   Alert,
+  Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ScienceIcon from '@mui/icons-material/Science';
@@ -30,7 +34,89 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FunctionsIcon from '@mui/icons-material/Functions';
 import SchoolIcon from '@mui/icons-material/School';
 import InfoIcon from '@mui/icons-material/Info';
+import HubIcon from '@mui/icons-material/Hub';
 import { Link as RouterLink } from 'react-router-dom';
+import { usePhysics } from '../../contexts/PhysicsContext';
+
+/**
+ * Inventory of every theory module the backend actually registers.
+ *
+ * Sourced from the API so it cannot drift from the pipeline the way a
+ * hardcoded list did.
+ */
+function RegisteredTheoryModules() {
+  const { availableTheories, isLoadingTheories, fetchTheories } = usePhysics();
+
+  useEffect(() => {
+    if (availableTheories.length === 0) {
+      fetchTheories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (isLoadingTheories && availableTheories.length === 0) return null;
+  if (availableTheories.length === 0) return null;
+
+  const byCategory = availableTheories.reduce((groups, theory) => {
+    const key = theory.category || 'general';
+    groups[key] = groups[key] || [];
+    groups[key].push(theory);
+    return groups;
+  }, {});
+
+  return (
+    <Accordion>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+          <HubIcon color="primary" />
+          <Typography variant="h6">Registered theory modules</Typography>
+          <Chip
+            label={`${availableTheories.length} in pipeline`}
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{ ml: 'auto' }}
+          />
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          The sections above describe the mechanisms the bubble-lattice route models
+          directly. The theory pipeline registers the full set below, which you can
+          run and compare in the Theory Testbed. Enabling several does not multiply
+          them all: one winner per composition group contributes.
+        </Typography>
+        {Object.entries(byCategory).map(([category, theories]) => (
+          <Box key={category} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', mb: 0.5 }}>
+              {category.replace(/_/g, ' ')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {theories.map((theory) => (
+                <Tooltip
+                  key={theory.theory_id}
+                  title={theory.description || theory.theory_name}
+                  describeChild
+                >
+                  <Chip label={theory.theory_name} size="small" variant="outlined" />
+                </Tooltip>
+              ))}
+            </Box>
+          </Box>
+        ))}
+        <Button
+          component={RouterLink}
+          to="/unified-theory?tab=testbed"
+          variant="outlined"
+          size="small"
+          startIcon={<ScienceIcon />}
+        >
+          Open Theory Testbed
+        </Button>
+      </AccordionDetails>
+    </Accordion>
+  );
+}
 
 function TheoryDocumentationPanel() {
   return (
@@ -40,9 +126,13 @@ function TheoryDocumentationPanel() {
           Unified LENR Theoretical Framework
         </Typography>
         <Typography variant="body2">
-          This simulation implements the comprehensive theoretical model integrating Rydberg Matter, 
-          Delocalized Interface Electrons, double-layer QED effects, Casimir effect, and quantum tunneling enhancements.
-          Click each section below to explore the physics in detail.
+          The sections below document the mechanisms the bubble-lattice simulation
+          models directly: Rydberg Matter, Delocalized Interface Electrons,
+          double-layer QED effects, the Casimir effect, and quantum tunneling.
+          Several are phenomenological multipliers rather than literal ports of the
+          paper&apos;s equations, and the framework&apos;s Poisson-Schrodinger coupling is
+          documented but not yet solved self-consistently. The full set of runnable
+          theory modules is listed at the end.
         </Typography>
       </Alert>
 
@@ -226,6 +316,8 @@ function TheoryDocumentationPanel() {
             </Typography>
           </AccordionDetails>
         </Accordion>
+
+        <RegisteredTheoryModules />
       </Box>
 
       {/* Proton Phase Transitions */}

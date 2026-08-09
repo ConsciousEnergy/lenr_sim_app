@@ -350,6 +350,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
               Contract: {theoryResult.contract_version}
             </Typography>
           )}
+          <CompositionProvenance provenance={theoryResult.composition_provenance} />
         </Paper>
       )}
 
@@ -850,6 +851,107 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
     </Accordion>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Composition provenance
+// ---------------------------------------------------------------------------
+
+interface CompositionProvenanceProps {
+  provenance?: {
+    combination_rule?: string;
+    applied_groups?: Array<{ group: string; selected_theory: string; candidates?: string[] }>;
+    excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
+    ungrouped_theories?: string[];
+    not_combinable_with?: string[];
+    note?: string;
+  };
+}
+
+/**
+ * How the combined enhancement was assembled.
+ *
+ * The backend has always returned this block, but nothing rendered it, so a
+ * user could not tell that only one theory per group contributes or which
+ * theories were dropped as overlapping alternatives.
+ */
+const CompositionProvenance: React.FC<CompositionProvenanceProps> = ({ provenance }) => {
+  if (!provenance) return null;
+  const appliedGroups = provenance.applied_groups || [];
+  const excluded = provenance.excluded_theories || [];
+  const ungrouped = provenance.ungrouped_theories || [];
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{ bgcolor: 'transparent', '&:before': { display: 'none' }, mt: 0.5 }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+        sx={{ minHeight: 0, px: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+      >
+        <Typography variant="caption" color="text.secondary">
+          How this was composed ({appliedGroups.length} group
+          {appliedGroups.length === 1 ? '' : 's'}
+          {excluded.length > 0 ? `, ${excluded.length} excluded` : ''})
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0 }}>
+        {provenance.note && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            {provenance.note}
+          </Typography>
+        )}
+
+        {appliedGroups.map((entry) => (
+          <Box key={entry.group} sx={{ mb: 0.75 }}>
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
+              {entry.group.replace(/_/g, ' ')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6rem' }}>
+              applied: {entry.selected_theory.replace(/_/g, ' ')}
+              {entry.candidates && entry.candidates.length > 1
+                ? ` (of ${entry.candidates.length} candidates)`
+                : ''}
+            </Typography>
+          </Box>
+        ))}
+
+        {excluded.length > 0 && (
+          <Alert severity="info" sx={{ mt: 1, py: 0, '& .MuiAlert-message': { py: 0.5 } }}>
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
+              Excluded as overlapping alternatives
+            </Typography>
+            {excluded.map((entry) => (
+              <Typography
+                key={entry.theory_id}
+                variant="caption"
+                sx={{ display: 'block', fontSize: '0.6rem' }}
+              >
+                {entry.theory_id.replace(/_/g, ' ')} — superseded by{' '}
+                {entry.excluded_by.replace(/_/g, ' ')} in {entry.group.replace(/_/g, ' ')}
+              </Typography>
+            ))}
+          </Alert>
+        )}
+
+        {ungrouped.length > 0 && (
+          <Alert severity="warning" sx={{ mt: 1, py: 0, '& .MuiAlert-message': { py: 0.5 } }}>
+            <Typography variant="caption">
+              Ungrouped theories each multiply into the total: {ungrouped.join(', ')}
+            </Typography>
+          </Alert>
+        )}
+
+        {provenance.combination_rule && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontSize: '0.6rem' }}>
+            Rule: {provenance.combination_rule.replace(/_/g, ' ')}
+          </Typography>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Per-theory parameter overrides

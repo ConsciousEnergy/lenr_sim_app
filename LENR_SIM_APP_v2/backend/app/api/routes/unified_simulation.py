@@ -1421,6 +1421,23 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "contradiction": has_contradiction,
                 "contradiction_reason_code": contradiction_reason_code,
                 "nuclear_threshold_policy": "nuclear_fraction > 0 expected when enhancement_factor >= 1e5",
+                # Composition contract: this route reports a phenomenological
+                # product of bubble-lattice mechanisms. The theory pipeline
+                # reports a grouped-winner product from a different engine.
+                # Neither is a factor of the other.
+                "composition_contract": {
+                    "engine": "bubble_lattice_mechanism_product",
+                    "combination_rule": "phenomenological_multiplicative",
+                    "not_combinable_with": [
+                        "theory_pipeline.combined_enhancement",
+                    ],
+                    "note": (
+                        "peak_conditions.enhancement_factor is the product of "
+                        "this route's mechanism breakdown (including the "
+                        "electrolyte multiplier). Do not multiply it by the "
+                        "theory pipeline's combined_enhancement."
+                    ),
+                },
             },
             observables_bridge={
                 "electrolyte_family": family,

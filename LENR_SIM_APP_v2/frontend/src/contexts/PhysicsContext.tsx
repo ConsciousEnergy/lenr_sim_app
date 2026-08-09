@@ -37,6 +37,21 @@ export interface TheoryContributionResult {
   references: string[];
 }
 
+/** How the pipeline assembled `combined_enhancement` from group winners. */
+export interface CompositionProvenanceResult {
+  combination_rule?: string;
+  applied_groups?: Array<{
+    group: string;
+    selected_theory: string;
+    rule?: string;
+    candidates?: string[];
+  }>;
+  excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
+  ungrouped_theories?: string[];
+  not_combinable_with?: string[];
+  note?: string;
+}
+
 /** Combined result from the pipeline. */
 export interface TheoryPipelineResult {
   combined_enhancement: number;
@@ -47,6 +62,7 @@ export interface TheoryPipelineResult {
   contract_version?: string;
   observables_bridge?: Record<string, any>;
   analytics_transparency?: Record<string, any>;
+  composition_provenance?: CompositionProvenanceResult;
   per_theory: TheoryContributionResult[];
 }
 
