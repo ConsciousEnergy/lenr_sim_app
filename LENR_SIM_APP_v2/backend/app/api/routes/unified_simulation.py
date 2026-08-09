@@ -191,7 +191,32 @@ class EnhancementFactor(BaseModel):
     threshold_met: bool
     equation: str
     category: str
-    parameters: Dict[str, float]
+    # Numeric diagnostics plus string provenance (e.g. screening_model id).
+    parameters: Dict[str, Any]
+
+
+def _jsonable_mechanism_parameters(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Coerce mechanism parameter values for JSON without dropping provenance strings.
+
+    The /mechanisms endpoint previously forced every value through ``float()``,
+    which 500'd as soon as a mechanism reported a model identifier.
+    """
+    out: Dict[str, Any] = {}
+    for key, value in (parameters or {}).items():
+        if isinstance(value, bool):
+            out[key] = value
+            continue
+        if isinstance(value, (int, float)):
+            out[key] = float(value)
+            continue
+        if isinstance(value, str):
+            try:
+                out[key] = float(value)
+            except ValueError:
+                out[key] = value
+            continue
+        out[key] = value
+    return out
 
 
 class SimulationResponse(BaseModel):
@@ -737,7 +762,7 @@ async def get_mechanisms(
                 "threshold_met": bool(m["threshold_met"]),
                 "equation": str(m["equation"]),
                 "category": str(m["category"]),
-                "parameters": {k: float(v) for k, v in m["parameters"].items()}
+                "parameters": _jsonable_mechanism_parameters(m.get("parameters") or {}),
             }
             for m in summary["mechanisms"]
         ]
