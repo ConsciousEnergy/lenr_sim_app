@@ -44,6 +44,35 @@ export class UnifiedTheoryPage {
     await this.runTheoriesButton().click();
   }
 
+  tab(name) {
+    return this.page.getByRole('tab', { name });
+  }
+
+  async openEnhancementTimeline() {
+    await this.tab(/enhancement timeline/i).click();
+  }
+
+  async openResults() {
+    await this.tab(/^results$/i).click();
+  }
+
+  /**
+   * Legend entry of the enhancement chart. Recharts renders nothing at all when
+   * its container resolves to zero height, so asserting a legend label is what
+   * catches a silently collapsed chart.
+   */
+  enhancementLegendEntry(name) {
+    return this.page.getByText(name, { exact: true });
+  }
+
+  collapseTrajectoryHeading() {
+    return this.page.getByText(/integrated collapse trajectory/i);
+  }
+
+  saturationBanner() {
+    return this.page.getByText(/samples exceed the/i);
+  }
+
   /** Collapsible summary of group winners and excluded overlapping theories. */
   compositionSummary() {
     return this.page.getByText(/how this was composed/i);

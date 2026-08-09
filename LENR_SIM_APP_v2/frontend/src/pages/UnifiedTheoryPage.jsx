@@ -1850,7 +1850,7 @@ function UnifiedTheoryPage() {
                 const chartData = getEnhancementChartData();
                 const saturatedPoints = chartData.filter((point) => point.isSaturated).length;
                 return (
-                  <Box sx={{ minHeight: 480 }}>
+                  <Box>
                     <Typography variant="subtitle2" gutterBottom>
                       Enhancement Factor During Collapse Cycle (log10 scale)
                     </Typography>
@@ -1864,7 +1864,11 @@ function UnifiedTheoryPage() {
                         </Typography>
                       </Alert>
                     )}
-                    <ResponsiveContainer width="100%" height="85%">
+                    {/* Explicit pixel height: ResponsiveContainer resolves a
+                        percentage height against its parent's *computed* height, so
+                        a percentage inside a minHeight-only parent collapses the
+                        chart to zero and it renders invisibly. */}
+                    <ResponsiveContainer width="100%" height={400}>
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" />
@@ -1884,7 +1888,7 @@ function UnifiedTheoryPage() {
                       if (trajectory.length === 0) return null;
                       const minRadius = Math.min(...trajectory.map((p) => p.radiusUm));
                       return (
-                        <Box sx={{ mt: 4, height: 320 }}>
+                        <Box sx={{ mt: 4 }}>
                           <Typography variant="subtitle2" gutterBottom>
                             Integrated Collapse Trajectory (Rayleigh-Plesset)
                           </Typography>
@@ -1896,7 +1900,7 @@ function UnifiedTheoryPage() {
                               : ''}
                             .
                           </Typography>
-                          <ResponsiveContainer width="100%" height="80%">
+                          <ResponsiveContainer width="100%" height={280}>
                             <LineChart data={trajectory}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis
