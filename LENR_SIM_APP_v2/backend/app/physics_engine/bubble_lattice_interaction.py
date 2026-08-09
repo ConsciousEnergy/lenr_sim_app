@@ -352,7 +352,8 @@ class BubbleLatticeInteraction:
         
         # Cache the integrated trajectory so get_collapse_phases() reports the same
         # collapse the peak conditions came from, instead of a separate envelope.
-        self._trajectory = {"t": t, "R": R}
+        # dRdt is kept too so get_collapse_trajectory() can report wall velocity.
+        self._trajectory = {"t": t, "R": R, "dRdt": dRdt}
 
         compression_saturated = (
             self.bubble.initial_radius / R_min >= self.MAX_COMPRESSION_RATIO
@@ -755,6 +756,59 @@ class BubbleLatticeInteraction:
             phase = "RECOVERY"
 
         return phase, radius_factor
+
+    def get_collapse_trajectory(self, max_points: int = 200) -> Dict[str, Any]:
+        """Downsampled view of the integrated Rayleigh-Plesset trajectory.
+
+        ``simulate_collapse`` integrates R(t) and dR/dt but only the scalar peak
+        conditions were ever reported, so no client could plot the collapse curve
+        itself. This exposes the same cached solution the peak conditions came
+        from, decimated to a plottable length.
+
+        The minimum-radius sample is always retained, since that is the collapse
+        instant every other reported quantity is evaluated at.
+
+        Args:
+            max_points: Upper bound on returned samples.
+
+        Returns:
+            Dict with ``time_s``, ``radius_um``, ``wall_velocity_m_s``, and
+            provenance, or an empty dict when no collapse has been integrated.
+        """
+        trajectory = getattr(self, "_trajectory", None)
+        if not trajectory:
+            return {}
+
+        t = np.asarray(trajectory.get("t"), dtype=float)
+        R = np.asarray(trajectory.get("R"), dtype=float)
+        dRdt = trajectory.get("dRdt")
+        dRdt = np.asarray(dRdt, dtype=float) if dRdt is not None else None
+        if t.size == 0 or R.size == 0:
+            return {}
+
+        n = int(min(t.size, R.size))
+        step = max(1, int(np.ceil(n / max(1, max_points))))
+        indices = list(range(0, n, step))
+
+        # The collapse instant must survive decimation.
+        min_idx = int(np.argmin(R[:n]))
+        if min_idx not in indices:
+            indices.append(min_idx)
+            indices.sort()
+
+        velocities = None
+        if dRdt is not None and dRdt.size >= n:
+            velocities = [float(dRdt[i]) for i in indices]
+
+        return {
+            "time_s": [float(t[i]) for i in indices],
+            "radius_um": [float(R[i] * 1e6) for i in indices],
+            "wall_velocity_m_s": velocities,
+            "min_radius_sample_index": indices.index(min_idx),
+            "sample_count": len(indices),
+            "downsample_step": step,
+            "source": "rayleigh_plesset_trajectory",
+        }
 
     def get_collapse_phases(self, normalized_time: float) -> Tuple[str, Dict[str, Any]]:
         """

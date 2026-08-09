@@ -2589,13 +2589,19 @@ const UnifiedBubbleLatticeVisualization = ({
             // Opacity based on energy level and conditions (keep very transparent)
             child.material.opacity = Math.min(0.08, 0.04 + (temperatureFactor + fieldFactor) * 0.02);
           } else if (child.name && child.name.startsWith('OrbitalOverlap')) {
-            // Overlap regions glow during high enhancement
+            // Overlap regions glow during high enhancement.
+            //
+            // Enhancement spans many orders of magnitude and the reported value
+            // is clamped at 1e5, so a linear ratio against that ceiling pins the
+            // glow to its maximum for the whole collapse — exactly where the
+            // visual should be conveying change. Drive it from log10 instead.
             const enhancementValue = enhancements.total || 1.0;
+            const logFraction = Math.min(1, Math.max(0, Math.log10(Math.max(enhancementValue, 1)) / 5));
             const pulse = Math.sin(Date.now() * 0.005 + child.userData.pulsePhase * Math.PI * 2) * 0.3 + 0.7;
-            child.material.opacity = 0.4 + (enhancementValue / 1e5) * 0.4;
+            child.material.opacity = 0.4 + logFraction * 0.4;
             // Only set emissiveIntensity if material supports it (MeshStandardMaterial does)
             if (child.material && typeof child.material.emissiveIntensity !== 'undefined') {
-              child.material.emissiveIntensity = 0.3 + (enhancementValue / 1e6) * 0.5;
+              child.material.emissiveIntensity = 0.3 + logFraction * 0.5;
             }
             child.scale.setScalar(1 + pulse * 0.2);
           }

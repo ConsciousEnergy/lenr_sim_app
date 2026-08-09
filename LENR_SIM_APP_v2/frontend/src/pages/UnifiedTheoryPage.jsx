@@ -267,8 +267,28 @@ const ENHANCEMENT_THRESHOLDS = {
   screening: 1e1,        // Significant electron screening
 };
 
-// Regime max temperatures (K) from physics/bubble_collapse: single_bubble~1e4
-const REGIME_MAX_TEMPERATURE_K = 1e4;
+// Reporting ceiling for single-bubble collapse temperature, mirroring
+// backend app/physics/bubble_collapse.REGIME_MAX_TEMPERATURE["single_bubble"]
+// (2e6 K, peak ion temperature from Moss et al., doi:10.1121/1.416948).
+// Used only by the offline fallback below; a real response carries its own
+// ceiling under collapse_results.limits, which resolveTemperatureLimit prefers.
+const REGIME_MAX_TEMPERATURE_K = 2.0e6;
+
+/**
+ * Read the temperature reporting limit from a response, falling back to the
+ * mirrored constant. The backend is authoritative: hardcoding the ceiling here
+ * previously understated it by 200x and mislabelled saturation.
+ */
+const resolveTemperatureLimit = (simulationData) => {
+  const limit = simulationData?.collapse_results?.limits?.temperature_k;
+  return {
+    ceiling: limit?.ceiling ?? REGIME_MAX_TEMPERATURE_K,
+    isSaturated: Boolean(limit?.is_saturated),
+    valueRaw: limit?.value_raw ?? null,
+    basis: limit?.basis ?? null,
+    citation: limit?.citation ?? null,
+  };
+};
 
 const CONTRADICTION_REASON_LABELS = {
   threshold_boundary: 'Threshold boundary mismatch between enhancement cap and proton phase assignment.',
@@ -868,21 +888,36 @@ function UnifiedTheoryPage() {
     setActiveTab(newValue);
   };
 
-  // Prepare chart data
+  // Prepare chart data.
+  //
+  // `enhancement` is clamped to the 1e5 display ceiling, so plotting log10 of it
+  // draws a flat line at 5.0 across the whole collapse. The backend also emits
+  // `enhancement_log10_raw`, which is the uncapped magnitude; that is the series
+  // with real structure, so it is primary and the capped one is kept alongside.
   const getEnhancementChartData = () => {
     if (!simulationData?.enhancement_timeline) return [];
     const baseRadiusUm = (parameters.initialBubbleRadius || 10) * 3.33;
-    return simulationData.enhancement_timeline.map(point => ({
-      time: (point.normalized_time * 100).toFixed(0) + '%',
-      enhancement: Math.log10(Math.max(1, point.enhancement)),
-      electrolyteMultiplier: point.electrolyte_multiplier || simulationData.electrolyte_diagnostics?.activity_multiplier || 1.0,
-      temperature: point.temperature_k ?? point.temperature,
-      radius: point.radius_factor
-        ? point.radius_factor * 100
-        : point.radius_um
-          ? (point.radius_um / Math.max(baseRadiusUm, 0.001)) * 100
-          : 100
-    }));
+    return simulationData.enhancement_timeline.map(point => {
+      const cappedLog10 = Math.log10(Math.max(1, point.enhancement));
+      const rawLog10 = typeof point.enhancement_log10_raw === 'number'
+        && Number.isFinite(point.enhancement_log10_raw)
+        ? point.enhancement_log10_raw
+        : cappedLog10;
+      return {
+        time: (point.normalized_time * 100).toFixed(0) + '%',
+        enhancement: rawLog10,
+        enhancementCapped: cappedLog10,
+        isSaturated: Boolean(point.enhancement_is_saturated),
+        electrolyteMultiplier: point.electrolyte_multiplier || simulationData.electrolyte_diagnostics?.activity_multiplier || 1.0,
+        temperature: point.temperature_k ?? point.temperature,
+        pressureBar: point.pressure_bar ?? null,
+        radius: point.radius_factor
+          ? point.radius_factor * 100
+          : point.radius_um
+            ? (point.radius_um / Math.max(baseRadiusUm, 0.001)) * 100
+            : 100
+      };
+    });
   };
 
   const getProtonPhaseChartData = () => {
@@ -890,6 +925,22 @@ function UnifiedTheoryPage() {
     return simulationData.enhancement_timeline.map(point => ({
       time: (point.normalized_time * 100).toFixed(0) + '%',
       ...point.proton_distribution
+    }));
+  };
+
+  /**
+   * The integrated Rayleigh-Plesset collapse curve (additive
+   * `collapse_trajectory`). This is the actual solved trajectory the peak
+   * conditions came from, rather than the normalized-time envelope.
+   */
+  const getCollapseTrajectoryData = () => {
+    const trajectory = simulationData?.collapse_trajectory;
+    if (!trajectory?.time_s?.length) return [];
+    const velocities = trajectory.wall_velocity_m_s;
+    return trajectory.time_s.map((timeS, index) => ({
+      timeUs: Number((timeS * 1e6).toFixed(4)),
+      radiusUm: trajectory.radius_um[index],
+      wallVelocity: velocities ? velocities[index] : null,
     }));
   };
 
@@ -1759,27 +1810,80 @@ function UnifiedTheoryPage() {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 1 && simulationData && (
-                <Box sx={{ height: 450 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Enhancement Factor During Collapse Cycle (log10 scale)
-                  </Typography>
-                  <ResponsiveContainer width="100%" height="90%">
-                    <LineChart data={getEnhancementChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="time" />
-                      <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
-                      <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
-                      <YAxis yAxisId="right2" orientation="right" hide domain={[0.7, 1.2]} />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line yAxisId="left" type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement" strokeWidth={2} />
-                      <Line yAxisId="right" type="monotone" dataKey="radius" stroke="#82ca9d" name="Bubble Radius %" />
-                      <Line yAxisId="right2" type="monotone" dataKey="electrolyteMultiplier" stroke="#ff9800" name="Electrolyte Multiplier" strokeDasharray="5 4" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
-              )}
+              {activeTab === 1 && simulationData && (() => {
+                const chartData = getEnhancementChartData();
+                const saturatedPoints = chartData.filter((point) => point.isSaturated).length;
+                return (
+                  <Box sx={{ minHeight: 480 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Enhancement Factor During Collapse Cycle (log10 scale)
+                    </Typography>
+                    {saturatedPoints > 0 && (
+                      <Alert severity="info" sx={{ mb: 1, py: 0 }}>
+                        <Typography variant="caption">
+                          {saturatedPoints} of {chartData.length} samples exceed the{' '}
+                          {ENHANCEMENT_THRESHOLDS.observable.toExponential(0)} display ceiling.
+                          The solid line is the uncapped model magnitude; the dashed line is
+                          the reported (clamped) value, which is flat where it saturates.
+                        </Typography>
+                      </Alert>
+                    )}
+                    <ResponsiveContainer width="100%" height="85%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" />
+                        <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
+                        <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
+                        <YAxis yAxisId="right2" orientation="right" hide domain={[0.7, 1.2]} />
+                        <RechartsTooltip />
+                        <Legend />
+                        <Line yAxisId="left" type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement (uncapped log10)" strokeWidth={2} dot={false} />
+                        <Line yAxisId="left" type="monotone" dataKey="enhancementCapped" stroke="#ce93d8" name="Enhancement (reported, clamped)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+                        <Line yAxisId="right" type="monotone" dataKey="radius" stroke="#82ca9d" name="Bubble Radius %" dot={false} />
+                        <Line yAxisId="right2" type="monotone" dataKey="electrolyteMultiplier" stroke="#ff9800" name="Electrolyte Multiplier" strokeDasharray="5 4" dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    {(() => {
+                      const trajectory = getCollapseTrajectoryData();
+                      if (trajectory.length === 0) return null;
+                      const minRadius = Math.min(...trajectory.map((p) => p.radiusUm));
+                      return (
+                        <Box sx={{ mt: 4, height: 320 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Integrated Collapse Trajectory (Rayleigh-Plesset)
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                            Solved R(t) behind the reported peak conditions. Minimum radius{' '}
+                            {minRadius.toExponential(2)} μm
+                            {simulationData.collapse_trajectory?.sample_count
+                              ? ` from ${simulationData.collapse_trajectory.sample_count} samples`
+                              : ''}
+                            .
+                          </Typography>
+                          <ResponsiveContainer width="100%" height="80%">
+                            <LineChart data={trajectory}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis
+                                dataKey="timeUs"
+                                label={{ value: 'Time (μs)', position: 'insideBottom', offset: -4 }}
+                              />
+                              <YAxis
+                                yAxisId="radius"
+                                label={{ value: 'Radius (μm)', angle: -90, position: 'insideLeft' }}
+                              />
+                              <YAxis yAxisId="velocity" orientation="right" hide />
+                              <RechartsTooltip />
+                              <Legend />
+                              <Line yAxisId="radius" type="monotone" dataKey="radiusUm" stroke="#29b6f6" name="Radius (μm)" strokeWidth={2} dot={false} />
+                              <Line yAxisId="velocity" type="monotone" dataKey="wallVelocity" stroke="#ef5350" name="Wall velocity (m/s)" strokeWidth={1} strokeDasharray="4 3" dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </Box>
+                      );
+                    })()}
+                  </Box>
+                );
+              })()}
 
               {activeTab === 2 && simulationData && (
                 <Box sx={{ height: 450 }}>
@@ -1810,7 +1914,22 @@ function UnifiedTheoryPage() {
                       <Divider sx={{ mb: 2 }} />
                       <Box sx={{ display: 'grid', gap: 1 }}>
                         <Typography>Min Radius: <strong>{simulationData.collapse_results?.min_radius_um?.toFixed(2)} μm</strong></Typography>
-                        <Typography>Max Temperature: <strong>{simulationData.collapse_results?.max_temperature_k?.toFixed(0)} K</strong></Typography>
+                        <Typography component="div">
+                          Max Temperature: <strong>{simulationData.collapse_results?.max_temperature_k?.toFixed(0)} K</strong>
+                          {(() => {
+                            const limit = resolveTemperatureLimit(simulationData);
+                            if (!limit.isSaturated) return null;
+                            return (
+                              <Tooltip
+                                title={`Clamped to the ${limit.ceiling.toExponential(1)} K reporting ceiling${
+                                  limit.valueRaw ? `; adiabatic closed form gives ${Number(limit.valueRaw).toExponential(1)} K` : ''
+                                }. ${limit.basis || ''} ${limit.citation || ''}`.trim()}
+                              >
+                                <Chip label="AT CEILING" size="small" color="warning" sx={{ ml: 1 }} />
+                              </Tooltip>
+                            );
+                          })()}
+                        </Typography>
                         <Typography>Max Pressure: <strong>{simulationData.collapse_results?.max_pressure_bar?.toFixed(0)} bar</strong></Typography>
                         <Typography>Compression Ratio: <strong>{simulationData.collapse_results?.compression_ratio?.toFixed(1)}x</strong></Typography>
                       </Box>
@@ -1824,7 +1943,10 @@ function UnifiedTheoryPage() {
                         {simulationData.proton_phases && Object.entries(simulationData.proton_phases).map(([phase, fraction]) => (
                           <Chip
                             key={phase}
-                            label={`${phase}: ${(fraction * 100).toFixed(0)}%`}
+                            // One decimal: rounding to whole percent hid small but
+                            // physically meaningful nuclear-active fractions and made
+                            // the four shares look like they did not sum to 100%.
+                            label={`${phase}: ${(fraction * 100).toFixed(1)}%`}
                             sx={{ bgcolor: PHASE_COLORS[phase.toLowerCase()] || '#888', color: 'white' }}
                           />
                         ))}

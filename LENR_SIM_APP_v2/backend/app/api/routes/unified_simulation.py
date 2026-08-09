@@ -990,6 +990,15 @@ class BubbleLatticeResponse(BaseModel):
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
+    collapse_trajectory: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive downsampled Rayleigh-Plesset trajectory (time, radius, "
+            "wall velocity) from the integrated solution the peak conditions "
+            "came from. Previously the series never left the engine, so no "
+            "client could plot the actual collapse curve."
+        ),
+    )
     peak_conditions: Dict[str, Any]  # Changed from Dict[str, float] to allow enhancement_breakdown dict
     electrolyte_diagnostics: Dict[str, Any] = {}
     validation: Dict[str, Any] = {}
@@ -1390,6 +1399,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
+            # Additive: the integrated collapse curve behind the peak conditions.
+            collapse_trajectory=model.get_collapse_trajectory(),
             peak_conditions={
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),

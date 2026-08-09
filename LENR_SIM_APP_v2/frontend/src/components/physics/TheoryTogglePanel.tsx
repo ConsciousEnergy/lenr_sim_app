@@ -698,15 +698,30 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
                 </Tooltip>
               </Box>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(
-                100,
-                (Math.log10(Math.max(rawEnhancement, 1)) / 5) * 100,
-              )}
-              color={contribution.is_applicable ? 'primary' : 'inherit'}
-              sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
-            />
+            {/* Bar length is log10 of the enhancement against the 1e5 display
+                ceiling. It is a relative magnitude, NOT a percentage of any
+                total, so it carries an explicit label. */}
+            <Tooltip
+              arrow
+              title="Bar length is log10(enhancement) relative to the 1e5 display ceiling — a magnitude indicator, not a percentage of a total."
+            >
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(
+                  100,
+                  (Math.log10(Math.max(rawEnhancement, 1)) / 5) * 100,
+                )}
+                color={contribution.is_applicable ? 'primary' : 'inherit'}
+                sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
+              />
+            </Tooltip>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', fontSize: '0.55rem' }}
+            >
+              log10 scale vs 1e5 ceiling
+            </Typography>
             {tierMult < 1.0 && (
               <Typography
                 variant="caption"

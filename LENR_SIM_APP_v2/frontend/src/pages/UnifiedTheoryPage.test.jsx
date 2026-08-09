@@ -107,3 +107,131 @@ describe('UnifiedTheoryPage', () => {
     );
   });
 });
+
+/**
+ * Saturation-aware timeline and reporting limits.
+ *
+ * The timeline plotted log10 of the *clamped* enhancement, so it drew a flat
+ * line at 5.0 through the entire collapse. The backend also emits
+ * enhancement_log10_raw / enhancement_is_saturated, which the frontend ignored
+ * entirely, and the page hardcoded a 1e4 K ceiling against a backend value of
+ * 2e6 K.
+ */
+describe('UnifiedTheoryPage saturation and limits reporting', () => {
+  const originalFetch = global.fetch;
+
+  const SATURATED_RESPONSE = {
+    success: true,
+    collapse_results: {
+      max_temperature_k: 2.0e6,
+      compression_ratio: 1000,
+      min_radius_um: 0.01,
+      max_pressure_bar: 100000,
+      limits: {
+        temperature_k: {
+          value: 2.0e6,
+          value_raw: 4.7e6,
+          ceiling: 2.0e6,
+          is_saturated: true,
+          basis: 'literature-anchored bound',
+          citation: 'doi:10.1121/1.416948',
+        },
+      },
+    },
+    proton_phases: { FREE: 0.0127, SCREENED: 0.5145, CAPTURE_READY: 0.3546, NUCLEAR: 0.1182 },
+    enhancement_timeline: [
+      {
+        normalized_time: 0,
+        phase: 'EXPANSION',
+        enhancement: 1,
+        enhancement_log10_raw: 0,
+        enhancement_is_saturated: false,
+        radius_factor: 1,
+        temperature_k: 300,
+        pressure_bar: 1,
+      },
+      {
+        normalized_time: 0.5,
+        phase: 'MINIMUM',
+        enhancement: 1e5,
+        enhancement_log10_raw: 38.83,
+        enhancement_is_saturated: true,
+        radius_factor: 0.001,
+        temperature_k: 2.0e6,
+        pressure_bar: 100000,
+      },
+    ],
+    peak_conditions: { enhancement_factor: 1e5 },
+    collapse_trajectory: {
+      time_s: [0, 2.5e-5, 5e-5],
+      radius_um: [10, 0.01, 9.4],
+      wall_velocity_m_s: [0, -1200, 300],
+      min_radius_sample_index: 1,
+      sample_count: 3,
+      downsample_step: 1,
+      source: 'rayleigh_plesset_trajectory',
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => SATURATED_RESPONSE,
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  const runAndOpenTab = async (tabName) => {
+    render(<UnifiedTheoryPage />);
+    fireEvent.click(screen.getByRole('button', { name: /Run Physics Simulation/i }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: tabName })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('tab', { name: tabName }));
+  };
+
+  test('timeline warns that saturated samples are clamped', async () => {
+    await runAndOpenTab(/enhancement timeline/i);
+    await waitFor(() => {
+      expect(screen.getByText(/exceed the/i)).toBeInTheDocument();
+      expect(screen.getByText(/uncapped model magnitude/i)).toBeInTheDocument();
+    });
+  });
+
+  test('timeline plots the integrated collapse trajectory', async () => {
+    await runAndOpenTab(/enhancement timeline/i);
+    await waitFor(() => {
+      expect(
+        screen.getByText(/integrated collapse trajectory/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('flags the temperature ceiling using the backend limit, not a hardcoded 1e4', async () => {
+    await runAndOpenTab(/results/i);
+    await waitFor(() => {
+      expect(screen.getByText('AT CEILING')).toBeInTheDocument();
+    });
+    // The reported 2e6 K comes from the response, not the old 1e4 constant.
+    // The value and its unit are separate text nodes, so match on textContent.
+    expect(
+      screen.getByText(
+        (_content, element) => element?.tagName === 'STRONG'
+          && element.textContent.replace(/\s+/g, ' ').trim() === '2000000 K',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  test('proton phase shares keep one decimal so small nuclear fractions survive', async () => {
+    await runAndOpenTab(/results/i);
+    await waitFor(() => {
+      expect(screen.getByText(/NUCLEAR: 11\.8%/)).toBeInTheDocument();
+      expect(screen.getByText(/FREE: 1\.3%/)).toBeInTheDocument();
+    });
+  });
+});
