@@ -1014,6 +1014,15 @@ class BubbleLatticeResponse(BaseModel):
             "client could plot the actual collapse curve."
         ),
     )
+    collapse_uncertainty: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive, opt-in Sobol predictive intervals for the collapse "
+            "observables and the mechanism breakdown. Populated only when "
+            "include_uncertainty is true; previously only the reaction rate "
+            "carried an interval while peak T/P/R_min were bare point estimates."
+        ),
+    )
     peak_conditions: Dict[str, Any]  # Changed from Dict[str, float] to allow enhancement_breakdown dict
     electrolyte_diagnostics: Dict[str, Any] = {}
     validation: Dict[str, Any] = {}
@@ -1421,6 +1430,38 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "pressure_bar": sanitize_float(pressure_pa / 1e5, 1.0),
             })
         
+        # Opt-in Sobol intervals for the collapse observables and mechanisms.
+        # Non-fatal by construction: a UQ failure must not break the core response.
+        collapse_uncertainty: Dict[str, Any] = {}
+        if request.include_uncertainty:
+            try:
+                from app.physics_engine.collapse_uq import propagate_collapse_uncertainty
+
+                collapse_uncertainty = sanitize_dict(
+                    propagate_collapse_uncertainty(
+                        model=model,
+                        compression_ratio=collapse_result.compression_ratio,
+                        temperature_ceiling=float(
+                            (collapse_result.limits.get("temperature_k") or {}).get(
+                                "ceiling", 2.0e6
+                            )
+                        ),
+                        pressure_ceiling=float(
+                            (collapse_result.limits.get("pressure_pa") or {}).get(
+                                "ceiling", 1.0e10
+                            )
+                        ),
+                        # Bounded independently of the rate-engine sample count: each
+                        # sample re-evaluates the mechanism breakdown.
+                        n_samples=min(request.uncertainty_samples, 256),
+                        seed=request.random_seed,
+                        material=request.material.host_material,
+                    ),
+                    0.0,
+                )
+            except Exception:
+                logger.exception("Collapse UQ failed; continuing without it")
+
         validated_window, soft_window, outside_supported_range = classify_molarity_window(molarity)
 
         # Parkhomov transmutation validation (v0.3.6-beta §3B)
@@ -1474,6 +1515,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             enhancement_timeline=timeline,
             # Additive: the integrated collapse curve behind the peak conditions.
             collapse_trajectory=model.get_collapse_trajectory(),
+            collapse_uncertainty=collapse_uncertainty,
             peak_conditions={
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),

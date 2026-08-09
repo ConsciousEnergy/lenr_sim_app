@@ -682,21 +682,48 @@ probability.
 `unified_lenr_model/cross_sections.py` re-exports it instead of redeclaring the
 literal, and `app/physics/qed_effects.py` imports it instead of hardcoding `1e5`.
 
-### 9C.9 Production collapse integrator
+### 9C.9 Van der Waals hard core in the gas law
 ```
-solve_ivp(LSODA, rtol=1e-8, atol=[R_floor*1e-6, 1e-6]), event: Rdot = 0
+P(R) = P_0 * ((R_0^3 - h^3) / (R^3 - h^3))^gamma,    h = R_0 / MAX_COMPRESSION_RATIO
 ```
-**Status:** ✅ VERIFIED (reduction limit asserted)
+**Status:** ✅ VERIFIED (removes the collapse singularity)
+**Code:** `BubbleLatticeInteraction._gas_pressure()`
+**Previous form:** `P_0 (R_0/R)^(3 gamma)` in the right-hand side, plus
+`R = max(R, R_floor)` applied *inside* that same right-hand side. That combination is
+genuinely singular: the integrator's state kept driving the radius below the floor
+while the right-hand side pretended it sat at the floor, so the adaptive step size
+collapsed to ~`1e-20` and **LSODA's raw solution diverged to ~`-3e145`** at the
+collapse instant. The divergence was invisible because a downstream sanitisation pass
+replaced non-finite and non-positive radii with the floor.
+**Now:** the hard core sits in the gas law, where it physically belongs — it is what
+sets `R_min`. As `R -> h` the pressure diverges, decelerating the wall and producing a
+smooth rebound, so `R_min` emerges from the physics instead of from a clamp. The raw
+solution stays finite and positive at driving pressures from `1.5e5` to `8e5 Pa`, and
+`solution.success` is True in every case.
+**Reference:** standard hard-core (van der Waals) regularisation used in
+sonoluminescence bubble models.
+
+### 9C.9a Production collapse integrator
+```
+solve_ivp(LSODA, rtol=1e-8, atol=[h*1e-6, 1e-6]) + parabolic sub-grid vertex
+```
+**Status:** ✅ VERIFIED
 **Code:** `BubbleLatticeInteraction.simulate_collapse()`
-**Previous form:** `odeint` on a fixed 1000-points-per-cycle grid. Two defects: it
-emitted `ODEintWarning: Excess work done on this call` on every run, because the
-collapse is stiff as `R -> R_min`; and the collapse instant could not be located more
-precisely than the sample spacing, since it was found by `argmin` over that grid.
-**Now:** LSODA adapts its own step under error control, and a non-terminal
-wall-at-rest event (`Rdot = 0`) locates the extremum exactly. The event sample is
-*spliced into* the trajectory rather than only reported, so the cached trajectory and
-the reported peak still describe one collapse — the invariant `get_collapse_phases`
-and the timeline depend on.
+**Previous form:** `odeint` on a fixed 1000-points-per-cycle grid, which emitted
+`ODEintWarning: Excess work done on this call` on every run and could locate the
+collapse instant no more precisely than the sample spacing (`argmin` over the grid).
+**Now:** LSODA adapts its own step under error control. The collapse instant is
+refined by fitting a parabola through the three samples bracketing the discrete
+minimum, since `R(t)` is smooth and locally quadratic at its extremum. A wall-at-rest
+(`Rdot = 0`) solver event would be more direct, but the initial condition has
+`Rdot` exactly `0`, so Brent's method is handed a bracket with no sign change and
+raises `ValueError: f(a) and f(b) must have different signs`; refinement therefore
+stays outside the integrator. The refined vertex is *spliced into* the trajectory
+rather than only reported, so the cached trajectory and the reported peak still
+describe one collapse — the invariant `get_collapse_phases` and the timeline depend on.
+**Accuracy check:** the returned minimum radius agrees to six significant figures
+across `rtol` from `1e-6` to `1e-8`, with and without `max_step`/`min_step` limits,
+so the solution is converged.
 
 ### 9C.10 Keller-Miksis mode on the production path
 ```
@@ -722,6 +749,38 @@ the regime: `incompressible_valid` below Mach 0.01, `compressibility_marginal` t
 0.1, `compressibility_significant` above. Previously unreported, so an incompressible
 solution at high Mach looked exactly as trustworthy as one at low Mach.
 
+**Measured, and material to how results should be read:** for a 10 um bubble at
+20 kHz in water, peak wall Mach is `0.22` at `1.5e5 Pa` drive, `0.84` at `4e5 Pa`
+and `0.79` at `8e5 Pa`. Every one of those is in the
+`compressibility_significant` band, so the **default Rayleigh-Plesset mode is
+already outside its comfortable domain at ordinary drive amplitudes** and will
+overpredict rebound. Callers wanting a defensible collapse at these drives should
+set `bubble_dynamics_mode='keller_miksis'`. The default is retained only for
+continuity with stored baselines; see §10 item 3.
+
+### 9C.13 Uncertainty quantification for collapse observables
+```
+Sobol over: U_e (cited range), CR (+/-20%, model assumption),
+            gamma (+/-5%, model assumption)  ->  T, P, R_min, E, mechanisms
+```
+**Status:** ⚠️ APPROXIMATION (input-range propagation, not model-form error)
+**Code:** `physics_engine/collapse_uq.propagate_collapse_uncertainty()`, exposed as the
+opt-in `collapse_uncertainty` block when `include_uncertainty` is true
+**Why:** only the reaction rate carried a real interval; peak temperature, pressure,
+minimum radius and every mechanism were bare point estimates despite depending on
+inputs with cited ranges spanning more than a decade (Pd `U_e` is 250-18000 eV).
+**Method note:** propagation uses the same closed-form adiabatic relations the point
+estimate uses, rather than re-integrating the ODE per sample (~50 ms each would make
+the block unusable in a request). Every sampled dimension is labelled
+`cited_range` or `model_assumption` so measured spread is distinguishable from
+assumed spread.
+**Saturation note:** the breakdown's `total` is clamped at the display ceiling, so at
+peak conditions every sample equals `1e5` and an interval on it is degenerate. The
+uncapped product is therefore also reported as `log10_total_enhancement_raw`, which
+retains a spread. Measured for Pd: median `log10 = 11.64`, p05-p95 `11.48-11.79`,
+with the spread dominated by compression ratio (99.9%); peak temperature spread is
+dominated instead by the polytropic index (94%).
+
 ### 9C.12 Net effect on the reported breakdown
 At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) for Pd:
 
@@ -745,18 +804,22 @@ At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) 
    screened form itself is only strictly valid for `U_e << E` and saturates
    outside that domain
 3. **Bubble Dynamics**: The default Rayleigh-Plesset path ignores liquid
-   compressibility. Keller-Miksis is now available *on the production path*
+   compressibility, and measured peak wall Mach numbers (0.22-0.84 at ordinary
+   drive amplitudes, §9C.11) put it **outside its valid domain by default**.
+   Keller-Miksis is now available on the production path
    (`bubble_dynamics_mode='keller_miksis'`, §9C.10) and validated against its
-   incompressible limit, but remains opt-in so stored baselines stay valid. The
-   peak wall Mach number is reported so callers can tell when the default is
-   inadmissible (§9C.11)
+   incompressible limit, but remains opt-in so stored baselines stay comparable.
+   Making it the default is the recommended next change
 4. **Enhancement Factors**: Large uncertainties in LENR regime. The bubble-lattice
    mechanism product is correlated rather than a factorisation of independent
    effects (§9C.6) and must not be multiplied by the theory pipeline's combined
    enhancement (see `docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`)
-5. **Collapse Ceilings**: Peak temperature/pressure/compression are reported under
+5. **Uncertainty**: the collapse-observable and mechanism intervals (§9C.13)
+   propagate *input* ranges only. They exclude model-form error, which the Mach
+   finding in §9C.11 shows is not negligible here
+6. **Collapse Ceilings**: Peak temperature/pressure/compression are reported under
    explicit bounds (§9A); a saturated value is a display ceiling, not a prediction
-6. **Casimir domain**: at collapse pressures the strained lattice spacing is well
+7. **Casimir domain**: at collapse pressures the strained lattice spacing is well
    below the 2 nm continuum floor, so the term is an extrapolation. This is now
    enforced and reported as `domain_valid = false` (§9C.5) rather than silent
 

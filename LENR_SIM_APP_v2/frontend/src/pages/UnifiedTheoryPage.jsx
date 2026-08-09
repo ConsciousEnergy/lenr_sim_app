@@ -929,6 +929,42 @@ function UnifiedTheoryPage() {
   };
 
   /**
+   * Sobol predictive intervals for the collapse observables (additive, opt-in
+   * `collapse_uncertainty`). Rendered as a fan: the p05-p95 band with p25-p75
+   * inside it, so the reported point estimate is visibly one draw from a spread
+   * rather than a single number.
+   */
+  const getUncertaintyFanData = () => {
+    const observables = simulationData?.collapse_uncertainty?.observables;
+    if (!observables) return [];
+    const labels = {
+      peak_temperature_k: 'Peak temperature',
+      peak_pressure_pa: 'Peak pressure',
+      min_radius_um: 'Min radius',
+      peak_field_v_m: 'Peak field',
+    };
+    return Object.entries(observables).map(([key, summary]) => {
+      const interval = summary.credible_interval || {};
+      // Log10 so four quantities spanning many decades share one axis.
+      const toLog = (value) => Math.log10(Math.max(Number(value) || 0, 1e-30));
+      const p05 = toLog(interval.p05);
+      const p25 = toLog(interval.p25);
+      const p75 = toLog(interval.p75);
+      const p95 = toLog(interval.p95);
+      return {
+        name: labels[key] || key,
+        unit: summary.unit,
+        median: toLog(summary.median),
+        // Recharts stacks band segments, so widths are supplied rather than edges.
+        lower: p05,
+        innerLowWidth: Math.max(0, p25 - p05),
+        innerHighWidth: Math.max(0, p75 - p25),
+        outerHighWidth: Math.max(0, p95 - p75),
+      };
+    });
+  };
+
+  /**
    * The integrated Rayleigh-Plesset collapse curve (additive
    * `collapse_trajectory`). This is the actual solved trajectory the peak
    * conditions came from, rather than the normalized-time envelope.
@@ -1953,6 +1989,69 @@ function UnifiedTheoryPage() {
                       </Box>
                     </Paper>
                   </Grid>
+                  {/* Sobol predictive intervals for the collapse observables */}
+                  {(() => {
+                    const fanData = getUncertaintyFanData();
+                    if (fanData.length === 0) return null;
+                    const uq = simulationData.collapse_uncertainty;
+                    const sensitivity = uq?.sensitivity?.log10_total_enhancement_raw || {};
+                    const ranked = Object.entries(sensitivity)
+                      .sort((a, b) => b[1] - a[1])
+                      .filter(([, weight]) => weight > 0.01);
+                    return (
+                      <Grid size={12}>
+                        <Paper sx={{ p: 2 }} variant="outlined">
+                          <Typography variant="h6" gutterBottom>
+                            Collapse Uncertainty
+                          </Typography>
+                          <Divider sx={{ mb: 1 }} />
+                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                            Sobol predictive intervals over {uq?.inputs?.n_samples} samples
+                            (seed {uq?.inputs?.seed}). Dark band is the interquartile range,
+                            light band spans the 5th to 95th percentile, and the marker is
+                            the median. Log10 scale, since the four quantities span many
+                            decades.
+                          </Typography>
+                          <Box sx={{ height: 260 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={fanData} layout="vertical" barCategoryGap="30%">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis
+                                  type="number"
+                                  label={{ value: 'log10(value)', position: 'insideBottom', offset: -4 }}
+                                />
+                                <YAxis type="category" dataKey="name" width={130} />
+                                <RechartsTooltip
+                                  formatter={(value, name) => [Number(value).toFixed(2), name]}
+                                />
+                                {/* Transparent offset so the stacked bands start at p05. */}
+                                <Bar dataKey="lower" stackId="fan" fill="transparent" />
+                                <Bar dataKey="innerLowWidth" stackId="fan" fill="#42a5f5" fillOpacity={0.35} name="p05-p25" />
+                                <Bar dataKey="innerHighWidth" stackId="fan" fill="#1565c0" fillOpacity={0.75} name="p25-p75" />
+                                <Bar dataKey="outerHighWidth" stackId="fan" fill="#42a5f5" fillOpacity={0.35} name="p75-p95" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </Box>
+                          {ranked.length > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="caption" color="text.secondary">
+                                Dominant contributors to the enhancement spread:{' '}
+                                {ranked
+                                  .map(([key, weight]) => `${key.replace(/_/g, ' ')} ${(weight * 100).toFixed(0)}%`)
+                                  .join(', ')}
+                              </Typography>
+                            </Box>
+                          )}
+                          <Alert severity="warning" sx={{ mt: 1, py: 0 }}>
+                            <Typography variant="caption">
+                              {uq?.provenance?.note}
+                            </Typography>
+                          </Alert>
+                        </Paper>
+                      </Grid>
+                    );
+                  })()}
+
                   {/* Reaction-Rate Engine governance (v0.3.6-beta) */}
                   <Grid size={12}>
                     <Paper sx={{ p: 0 }} variant="outlined">

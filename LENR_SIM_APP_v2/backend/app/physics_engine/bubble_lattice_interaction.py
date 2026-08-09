@@ -11,12 +11,16 @@ R*R'' + 3/2*R'^2 = (P_bubble - P_inf - 2*sigma/R - 4*mu*R'/R + epsilon_0*E^2/2) 
 Author: Conscious Energies
 """
 
-import numpy as np
-from typing import Dict, Any, Optional, List, Tuple
+import logging
+import os
+import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 from scipy import constants as const
 from scipy.integrate import odeint, solve_ivp
-import logging
 
 from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
 from app.physics_engine.screening_kernel import (
@@ -39,6 +43,48 @@ QED_VACUUM_COEFFICIENT: float = 2.0 * const.alpha / (45.0 * np.pi)
 
 # Hydrogen ground-state binding energy in eV, for the Rydberg level spacing.
 RYDBERG_GROUND_STATE_EV: float = 13.605693122994
+
+
+@contextmanager
+def _suppressed_fortran_stdout():
+    """Silence LSODA's Fortran chatter for the duration of one solve.
+
+    SciPy's LSODA wrapper writes step-size warnings ("internal t and h are such
+    that t + h = t ... solver will continue anyway") straight to file descriptor 1,
+    so they cannot be captured by ``warnings`` or ``logging``. At high acoustic
+    drive the collapse rebound triggers ~11 of them per run, which floods server
+    logs. They are informational: across drives from 1.5e5 to 8e5 Pa and every
+    tolerance and step-limit setting tried, the returned minimum radius agrees to
+    six significant figures and ``solution.success`` is True, so the solution is
+    converged. ``simulate_collapse`` logs ``solution.status`` itself when the
+    solver genuinely fails, so no real failure is hidden.
+
+    Safe here because ``solve_ivp`` is a blocking, synchronous call with no
+    ``await`` inside it: no other coroutine on this event loop can write to stdout
+    while it runs. The descriptor is always restored.
+    """
+    try:
+        original_fd = os.dup(1)
+    except OSError:
+        # No real stdout to redirect (e.g. captured test environment).
+        yield
+        return
+
+    devnull_fd = None
+    try:
+        sys.stdout.flush()
+        devnull_fd = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull_fd, 1)
+        yield
+    finally:
+        try:
+            sys.stdout.flush()
+        except ValueError:
+            pass
+        os.dup2(original_fd, 1)
+        os.close(original_fd)
+        if devnull_fd is not None:
+            os.close(devnull_fd)
 
 
 # Gas-specific polytropic indices (heat capacity ratio γ = Cp/Cv)
@@ -263,6 +309,61 @@ class BubbleLatticeInteraction:
         logger.info(f"  Bubble: R0={self.bubble.initial_radius*1e6:.1f}μm, f={self.bubble.frequency/1e3:.0f}kHz")
         logger.info(f"  Lattice: {self.lattice.host_material}, loading={self.lattice.loading_ratio}")
     
+    @property
+    def hard_core_radius(self) -> float:
+        """Van der Waals hard-core radius: the incompressible gas core.
+
+        This is what physically sets ``R_min``, so it belongs in the gas law rather
+        than being applied afterwards as a clamp.
+        """
+        return self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+
+    def _guard_radius(self, R: float) -> float:
+        """Keep the radius strictly outside the hard core for numerical safety."""
+        floor = self.hard_core_radius * (1.0 + 1e-9)
+        if not np.isfinite(R):
+            return floor
+        return max(R, floor)
+
+    def _gas_pressure(self, R: float, dRdt: float) -> Tuple[float, float]:
+        """Van der Waals hard-core polytropic gas pressure and its derivative.
+
+            P(R) = P_0 * ((R_0^3 - h^3) / (R^3 - h^3))^gamma
+
+        where ``h`` is the hard-core radius. As ``R -> h`` the pressure diverges,
+        which decelerates the wall and produces a smooth rebound.
+
+        This replaces ``P_0 (R_0/R)^(3 gamma)`` plus a post-hoc ``max(R, floor)``
+        clamp. That combination was genuinely singular: the state kept driving the
+        radius below the floor while the right-hand side pretended it sat at the
+        floor, so the adaptive solver drove its step size to ~1e-20 and LSODA's raw
+        solution diverged to ~-3e145 at the collapse instant. The divergence was
+        invisible because it was sanitised away afterwards. With the hard core in
+        the gas law, R_min emerges from the physics instead.
+
+        Returns:
+            ``(P_gas, dP_gas/dt)`` in Pa and Pa/s.
+        """
+        R0 = self.bubble.initial_radius
+        gamma = self.bubble.polytropic_index
+        h = self.hard_core_radius
+
+        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
+        volume_term = R**3 - h**3
+        reference_term = R0**3 - h**3
+        if volume_term <= 0.0 or reference_term <= 0.0:
+            return float(P_gas_0), 0.0
+
+        P_gas = P_gas_0 * (reference_term / volume_term) ** gamma
+        if not np.isfinite(P_gas):
+            return float(P_gas_0), 0.0
+
+        # d/dt of P ~ (R^3 - h^3)^(-gamma).
+        dP_dt = -3.0 * gamma * P_gas * R**2 * dRdt / volume_term
+        if not np.isfinite(dP_dt):
+            dP_dt = 0.0
+        return float(P_gas), float(dP_dt)
+
     def rayleigh_plesset_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
         """
         Right-hand side of modified Rayleigh-Plesset equation.
@@ -274,9 +375,7 @@ class BubbleLatticeInteraction:
         """
         R, dRdt = float(y[0]), float(y[1])
 
-        # Hard-core + singularity floor (van der Waals / numerical).
-        R_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
-        R = max(R, R_floor, 1e-12)
+        R = self._guard_radius(R)
         if not np.isfinite(dRdt):
             dRdt = 0.0
         
@@ -285,11 +384,10 @@ class BubbleLatticeInteraction:
         P_acoustic = self.bubble.driving_pressure * np.sin(omega * t)
         P_infinity = self.bubble.ambient_pressure + P_acoustic
         
-        # Bubble internal pressure (polytropic gas law)
+        # Bubble internal pressure (van der Waals hard-core polytropic law)
         R0 = self.bubble.initial_radius
         gamma = self.bubble.polytropic_index
-        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
-        P_bubble = P_gas_0 * (R0 / R) ** (3 * gamma)
+        P_bubble, _ = self._gas_pressure(R, dRdt)
         
         # Surface tension term
         P_surface = 2 * self.bubble.surface_tension / R
@@ -333,8 +431,7 @@ class BubbleLatticeInteraction:
         """
         R, dRdt = float(y[0]), float(y[1])
 
-        R_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
-        R = max(R, R_floor, 1e-12)
+        R = self._guard_radius(R)
         if not np.isfinite(dRdt):
             dRdt = 0.0
 
@@ -343,9 +440,7 @@ class BubbleLatticeInteraction:
         P_infinity = self.bubble.ambient_pressure + P_acoustic
 
         R0 = self.bubble.initial_radius
-        gamma = self.bubble.polytropic_index
-        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
-        P_gas = P_gas_0 * (R0 / R) ** (3 * gamma)
+        P_gas, dp_gas_dt = self._gas_pressure(R, dRdt)
 
         E_field = self.bubble.double_layer_field * (R0 / R) ** 2
         P_electric = self.EPS0 * E_field ** 2 / 2
@@ -358,8 +453,8 @@ class BubbleLatticeInteraction:
             + P_electric
         )
         # Only the gas term's derivative is retained, the standard simplification
-        # for the radiation term: P_gas ~ R^(-3 gamma) so dP/dt = -3 gamma P Rdot/R.
-        dp_L_dt = -3.0 * gamma * P_gas * dRdt / R
+        # for the acoustic radiation term.
+        dp_L_dt = dp_gas_dt
 
         c = max(float(self.bubble.sound_speed), 1.0)
         mach = dRdt / c
@@ -408,24 +503,24 @@ class BubbleLatticeInteraction:
         def _rhs(time: float, state: np.ndarray) -> np.ndarray:
             return self._dynamics_rhs(state, time)
 
-        def _wall_at_rest(_time: float, state: np.ndarray) -> float:
-            """Zero crossings of the wall velocity locate collapse minima/maxima."""
-            return float(state[1])
+        with _suppressed_fortran_stdout():
+            solution = solve_ivp(
+                _rhs,
+                (0.0, total_time),
+                y0,
+                t_eval=t,
+                method="LSODA",
+                rtol=1e-8,
+                atol=[R_min_floor * 1e-6, 1e-6],
+                dense_output=False,
+            )
 
-        _wall_at_rest.direction = 0.0
-        _wall_at_rest.terminal = False
-
-        solution = solve_ivp(
-            _rhs,
-            (0.0, total_time),
-            y0,
-            t_eval=t,
-            method="LSODA",
-            rtol=1e-8,
-            atol=[R_min_floor * 1e-6, 1e-6],
-            events=_wall_at_rest,
-            dense_output=False,
-        )
+        if not solution.success:
+            logger.warning(
+                "Collapse integration reported status %s: %s",
+                solution.status,
+                getattr(solution, "message", "unknown"),
+            )
 
         if solution.y.shape[1] >= 2:
             R = np.asarray(solution.y[0], dtype=float)
@@ -446,32 +541,6 @@ class BubbleLatticeInteraction:
             R = np.asarray(fallback[:, 0], dtype=float)
             dRdt = np.asarray(fallback[:, 1], dtype=float)
 
-        # Exact extrema found by the event, used to refine the reported minimum
-        # beyond the sampling grid.
-        event_times = np.asarray(solution.t_events[0], dtype=float) if solution.t_events else np.array([])
-        event_states = (
-            np.asarray(solution.y_events[0], dtype=float)
-            if solution.y_events is not None and len(solution.y_events) > 0
-            else np.empty((0, 2))
-        )
-
-        # Splice the exact collapse instant into the trajectory. The true minimum
-        # sits where the wall comes to rest (Rdot = 0), which a fixed sample grid
-        # can only bracket. Inserting the event sample rather than merely reporting
-        # it keeps the cached trajectory and the reported peak describing the same
-        # collapse, which get_collapse_phases and the timeline both depend on.
-        if event_states.size:
-            event_radii = np.asarray(event_states[:, 0], dtype=float)
-            usable = np.isfinite(event_radii) & (event_radii > 0.0)
-            if np.any(usable):
-                deepest = int(np.argmin(np.where(usable, event_radii, np.inf)))
-                event_time = float(event_times[deepest])
-                if event_radii[deepest] < np.min(R) and 0.0 <= event_time <= total_time:
-                    insert_at = int(np.searchsorted(t, event_time))
-                    t = np.insert(t, insert_at, event_time)
-                    R = np.insert(R, insert_at, float(event_radii[deepest]))
-                    dRdt = np.insert(dRdt, insert_at, float(event_states[deepest, 1]))
-
         # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO.
         # ODE blow-up can yield NaN/inf/underflow; Python max(nan, floor) stays nan.
         bad = ~np.isfinite(R) | (R <= 0.0)
@@ -481,6 +550,44 @@ class BubbleLatticeInteraction:
             R[bad] = R_min_floor
             dRdt[bad] = 0.0
         R = np.maximum(R, R_min_floor)
+
+        # Sub-grid refinement of the collapse instant. Plain argmin resolves the
+        # minimum no better than the sample spacing, and R(t) is smooth and locally
+        # quadratic near its extremum, so fitting a parabola through the bracketing
+        # samples locates the vertex to well inside one step.
+        #
+        # A wall-at-rest (Rdot = 0) solver event would be more direct, but the
+        # initial condition has Rdot exactly 0, so the root finder is handed a
+        # bracket with no sign change and raises. Refinement stays out of the
+        # integrator for that reason.
+        #
+        # The vertex is *spliced into* the trajectory rather than only reported:
+        # get_collapse_phases interpolates the cached trajectory, so a reported
+        # minimum that is not in it would make the timeline and the peak describe
+        # two different collapses.
+        collapse_time_refined = False
+        grid_min_idx = int(np.argmin(R))
+        if 0 < grid_min_idx < R.size - 1:
+            left = float(R[grid_min_idx - 1])
+            centre = float(R[grid_min_idx])
+            right = float(R[grid_min_idx + 1])
+            curvature = left - 2.0 * centre + right
+            if curvature > 0.0:
+                offset = 0.5 * (left - right) / curvature
+                spacing = float(t[grid_min_idx + 1] - t[grid_min_idx])
+                vertex_radius = centre - 0.25 * (left - right) * offset
+                if (
+                    -1.0 < offset < 1.0
+                    and spacing > 0.0
+                    and R_min_floor <= vertex_radius < centre
+                ):
+                    vertex_time = float(t[grid_min_idx]) + offset * spacing
+                    insert_at = int(np.searchsorted(t, vertex_time))
+                    t = np.insert(t, insert_at, vertex_time)
+                    R = np.insert(R, insert_at, float(vertex_radius))
+                    # The wall is momentarily at rest at the extremum.
+                    dRdt = np.insert(dRdt, insert_at, 0.0)
+                    collapse_time_refined = True
 
         # Find minimum radius (collapse point) among sanitized samples
         min_idx = int(np.argmin(R))
@@ -583,7 +690,9 @@ class BubbleLatticeInteraction:
             "peak_wall_speed_m_s": float(peak_wall_speed),
             "peak_mach": float(peak_mach),
             "compressibility_regime": compressibility_regime,
-            "collapse_time_refined_by_event": bool(event_states.size > 0),
+            "collapse_time_refinement": (
+                "parabolic_subgrid" if collapse_time_refined else "grid_sample"
+            ),
             "note": (
                 "Keller-Miksis corrections scale with Rdot/c. Above Mach ~0.1 the "
                 "incompressible Rayleigh-Plesset result overpredicts rebound "

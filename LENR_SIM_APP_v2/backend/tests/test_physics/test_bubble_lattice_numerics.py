@@ -82,6 +82,93 @@ class TestAdaptiveSolver:
         assert result.time_series[min_index] == pytest.approx(result.collapse_time)
 
 
+class TestVanDerWaalsHardCore:
+    """The hard core belongs in the gas law, not in a post-hoc radius clamp.
+
+    ``P_0 (R_0/R)^(3 gamma)`` plus ``R = max(R, floor)`` inside the right-hand side
+    was genuinely singular: the state kept driving the radius below the floor while
+    the RHS pretended it sat at the floor. LSODA's raw solution diverged to ~-3e145
+    at the collapse instant, which was invisible because it was sanitised away.
+    """
+
+    def test_gas_pressure_matches_the_polytropic_law_at_the_initial_radius(self):
+        model = build_model()
+        pressure, _ = model._gas_pressure(model.bubble.initial_radius, 0.0)
+        expected = (
+            model.bubble.ambient_pressure
+            + 2 * model.bubble.surface_tension / model.bubble.initial_radius
+        )
+        assert pressure == pytest.approx(expected, rel=1e-9)
+
+    def test_gas_pressure_diverges_towards_the_hard_core(self):
+        model = build_model()
+        h = model.hard_core_radius
+        near = model._gas_pressure(h * 1.01, 0.0)[0]
+        far = model._gas_pressure(h * 10.0, 0.0)[0]
+        assert near > far * 100
+
+    def test_hard_core_radius_matches_the_compression_limit(self):
+        model = build_model()
+        assert model.hard_core_radius == pytest.approx(
+            model.bubble.initial_radius / model.MAX_COMPRESSION_RATIO
+        )
+
+    def test_radius_guard_keeps_the_state_outside_the_core(self):
+        model = build_model()
+        assert model._guard_radius(0.0) > model.hard_core_radius
+        assert model._guard_radius(float("nan")) > model.hard_core_radius
+        assert model._guard_radius(5e-6) == pytest.approx(5e-6)
+
+    def test_raw_solution_no_longer_diverges(self):
+        """Before the hard-core gas law the unsanitised minimum was ~-3e145."""
+        from scipy.integrate import solve_ivp
+
+        model = build_model(driving_pressure=8e5)
+        total_time = 2.0 / model.bubble.frequency
+        solution = solve_ivp(
+            lambda t, y: model._dynamics_rhs(y, t),
+            (0.0, total_time),
+            np.array([model.bubble.initial_radius, 0.0]),
+            t_eval=np.linspace(0.0, total_time, 2000),
+            method="LSODA",
+            rtol=1e-8,
+            atol=[model.hard_core_radius * 1e-6, 1e-6],
+        )
+        assert solution.success
+        assert np.all(np.isfinite(solution.y))
+        # No sanitisation applied here: the raw solution itself must stay physical.
+        assert np.min(solution.y[0]) > 0.0
+        assert np.min(solution.y[0]) >= model.hard_core_radius
+
+    @pytest.mark.parametrize("driving_pressure", [1.5e5, 4e5, 8e5])
+    def test_minimum_radius_respects_the_hard_core(self, driving_pressure):
+        result = build_model(driving_pressure=driving_pressure).simulate_collapse(
+            num_cycles=2
+        )
+        assert result.min_radius >= build_model().hard_core_radius
+        assert result.compression_ratio <= BubbleLatticeInteraction.MAX_COMPRESSION_RATIO
+
+
+class TestSubGridRefinement:
+    def test_refinement_method_is_reported(self):
+        dynamics = (
+            build_model(driving_pressure=4e5).simulate_collapse(num_cycles=1).bubble_dynamics
+        )
+        assert dynamics["collapse_time_refinement"] in {"parabolic_subgrid", "grid_sample"}
+
+    def test_refined_vertex_is_the_trajectory_minimum(self):
+        result = build_model(driving_pressure=4e5).simulate_collapse(num_cycles=1)
+        assert np.min(result.radius_series) == pytest.approx(result.min_radius, rel=1e-12)
+
+    def test_refinement_does_not_break_below_the_bracket(self):
+        """A parabolic vertex must sit inside the samples that bracket it."""
+        result = build_model(driving_pressure=4e5).simulate_collapse(num_cycles=1)
+        radii = np.sort(result.radius_series)
+        # The refined minimum should be close to the next-smallest sample, not an
+        # order of magnitude below it.
+        assert radii[0] > radii[1] * 0.5
+
+
 class TestMachReporting:
     def test_peak_mach_is_reported(self):
         dynamics = build_model().simulate_collapse(num_cycles=1).bubble_dynamics

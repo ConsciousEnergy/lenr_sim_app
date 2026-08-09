@@ -235,3 +235,135 @@ describe('UnifiedTheoryPage saturation and limits reporting', () => {
     });
   });
 });
+
+/**
+ * Collapse uncertainty.
+ *
+ * The page advertised an uncertainty-interval chip with no interval rendered
+ * anywhere, and only the reaction rate carried a real physics interval.
+ */
+describe('UnifiedTheoryPage collapse uncertainty', () => {
+  const originalFetch = global.fetch;
+
+  const withUncertainty = {
+    success: true,
+    collapse_results: {
+      max_temperature_k: 1.16e6,
+      compression_ratio: 1000,
+      min_radius_um: 0.01,
+      max_pressure_bar: 100000,
+    },
+    proton_phases: { FREE: 0.1, SCREENED: 0.5, CAPTURE_READY: 0.3, NUCLEAR: 0.1 },
+    enhancement_timeline: [
+      {
+        normalized_time: 0,
+        phase: 'EXPANSION',
+        enhancement: 1,
+        enhancement_log10_raw: 0,
+        radius_factor: 1,
+        temperature_k: 300,
+      },
+    ],
+    peak_conditions: { enhancement_factor: 1e5 },
+    collapse_uncertainty: {
+      observables: {
+        peak_temperature_k: {
+          unit: 'K',
+          median: 9.891e4,
+          mean: 1.1e5,
+          credible_interval: {
+            p05: 3.975e4, p25: 6.5e4, p50: 9.891e4, p75: 1.5e5, p95: 2.504e5,
+          },
+          interval_kind: 'predictive',
+        },
+        peak_pressure_pa: {
+          unit: 'Pa',
+          median: 1e10,
+          mean: 1e10,
+          credible_interval: {
+            p05: 8e9, p25: 9e9, p50: 1e10, p75: 1e10, p95: 1e10,
+          },
+          interval_kind: 'predictive',
+        },
+      },
+      mechanisms: {},
+      log10_total_enhancement_raw: {
+        unit: 'log10',
+        median: 11.64,
+        credible_interval: { p05: 11.48, p25: 11.55, p50: 11.64, p75: 11.72, p95: 11.79 },
+      },
+      sensitivity: {
+        log10_total_enhancement_raw: {
+          compression_ratio: 0.999,
+          screening_potential_ev: 0.0,
+          polytropic_index: 0.001,
+        },
+      },
+      inputs: { n_samples: 64, seed: 7 },
+      provenance: {
+        claim_tier: 'speculative_exploratory',
+        note: 'Intervals propagate input ranges and do not include model-form error.',
+      },
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => withUncertainty });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  const openResults = async () => {
+    render(<UnifiedTheoryPage />);
+    fireEvent.click(screen.getByRole('button', { name: /Run Physics Simulation/i }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /results/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('tab', { name: /results/i }));
+  };
+
+  test('renders the collapse uncertainty panel when intervals are present', async () => {
+    await openResults();
+    await waitFor(() => {
+      expect(screen.getByText('Collapse Uncertainty')).toBeInTheDocument();
+    });
+  });
+
+  test('states the sample count and seed for reproducibility', async () => {
+    await openResults();
+    await waitFor(() => {
+      expect(screen.getByText(/64 samples/i)).toBeInTheDocument();
+      expect(screen.getByText(/seed 7/i)).toBeInTheDocument();
+    });
+  });
+
+  test('ranks the dominant contributor to the spread', async () => {
+    await openResults();
+    await waitFor(() => {
+      expect(screen.getByText(/compression ratio 100%/i)).toBeInTheDocument();
+    });
+  });
+
+  test('carries the model-form caveat', async () => {
+    await openResults();
+    await waitFor(() => {
+      expect(screen.getByText(/do not include model-form error/i)).toBeInTheDocument();
+    });
+  });
+
+  test('omits the panel entirely when uncertainty was not requested', async () => {
+    const noUq = { ...withUncertainty };
+    delete noUq.collapse_uncertainty;
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => noUq });
+
+    await openResults();
+    await waitFor(() => {
+      expect(screen.getByText(/Collapse Results/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Collapse Uncertainty')).not.toBeInTheDocument();
+  });
+});
