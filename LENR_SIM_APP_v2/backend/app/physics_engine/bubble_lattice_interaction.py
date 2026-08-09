@@ -18,7 +18,27 @@ from scipy import constants as const
 from scipy.integrate import odeint
 import logging
 
+from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
+from app.physics_engine.screening_kernel import (
+    compute_screening_enhancement,
+    thermal_energy_ev,
+)
+
 logger = logging.getLogger(__name__)
+
+# Schwinger critical field, E_cr = m_e^2 c^3 / (e hbar) = 1.323285e18 V/m.
+# Derived from CODATA constants rather than hardcoded; verified numerically
+# against the standard value (see PHYSICS_EQUATION_VERIFICATION.md 9C.2).
+SCHWINGER_CRITICAL_FIELD_V_M: float = (
+    const.m_e**2 * const.c**3 / (const.e * const.hbar)
+)
+
+# Leading QED vacuum-polarisation coefficient 2*alpha/(45*pi) = 1.0324e-4 from
+# the Heisenberg-Euler effective Lagrangian (weak-field expansion).
+QED_VACUUM_COEFFICIENT: float = 2.0 * const.alpha / (45.0 * np.pi)
+
+# Hydrogen ground-state binding energy in eV, for the Rydberg level spacing.
+RYDBERG_GROUND_STATE_EV: float = 13.605693122994
 
 
 # Gas-specific polytropic indices (heat capacity ratio γ = Cp/Cv)
@@ -502,9 +522,50 @@ class BubbleLatticeInteraction:
         return float(min(max(phonon_factor, 1.0), 100.0))
     
     # Continuum Casimir formulae assume separations above roughly 2 nm; below that
-    # the ideal-plate result is an extrapolation (see the domain-validity checks in
-    # tests/test_integration/test_simulation_pipeline.py).
-    CASIMIR_CONTINUUM_FLOOR_M = 2e-9
+    # the ideal-plate result is an extrapolation. Shared with
+    # app/physics/casimir_forces.DOMAIN_VALIDITY_THRESHOLD_M and
+    # theories/casimir_confinement, so one threshold governs every path.
+    CASIMIR_CONTINUUM_FLOOR_M = DOMAIN_VALIDITY_THRESHOLD_M
+
+    def casimir_domain_validity(self, pressure: float) -> Dict[str, Any]:
+        """Report whether the Casimir term is inside its continuum domain.
+
+        The strained lattice spacing at collapse pressures is a few angstroms,
+        far below the ~2 nm floor where the ideal-plate result holds, so the term
+        is an extrapolation. The floor constant existed but was never enforced or
+        reported, so a client could not tell. Mirrors the observable names used by
+        ``theories/casimir_confinement`` (``domain_valid`` plus ``warning``).
+
+        Args:
+            pressure: Local collapse pressure in Pa.
+
+        Returns:
+            Dict with ``spacing_m``, ``threshold_m``, ``domain_valid`` and an
+            optional ``warning``.
+        """
+        spacing = self._strained_spacing(pressure)
+        domain_valid = bool(spacing >= self.CASIMIR_CONTINUUM_FLOOR_M)
+        report: Dict[str, Any] = {
+            "spacing_m": float(spacing),
+            "threshold_m": float(self.CASIMIR_CONTINUUM_FLOOR_M),
+            "domain_valid": domain_valid,
+        }
+        if not domain_valid:
+            report["warning"] = (
+                "Ideal-plate Casimir scaling extrapolated below "
+                f"{self.CASIMIR_CONTINUUM_FLOOR_M * 1e9:.1f} nm; surface roughness, "
+                "finite conductivity and non-locality may dominate at this spacing."
+            )
+        return report
+
+    def _strained_spacing(self, pressure: float) -> float:
+        """Lattice plane spacing after elastic compression by ``pressure`` (m)."""
+        bulk_modulus = float(getattr(self.lattice, "bulk_modulus", 1.80e11) or 1.80e11)
+        d0 = float(self.lattice.lattice_constant)
+        if bulk_modulus <= 0:
+            return d0
+        volumetric_strain = min(max(float(pressure), 0.0) / bulk_modulus, 0.9)
+        return float(d0 * (1.0 - volumetric_strain) ** (1.0 / 3.0))
 
     def _calculate_casimir_enhancement(self, pressure: float) -> float:
         """Casimir enhancement from pressure-induced lattice strain.
@@ -546,6 +607,36 @@ class BubbleLatticeInteraction:
             return 1.0
         return float(max(casimir_factor, 1.0))
 
+    # Rydberg orbital-overlap bounds, matching unified_lenr_model/enhancements.py.
+    RYDBERG_MAX_N = 10
+    RYDBERG_MAX_ENHANCEMENT = 10.0
+    RYDBERG_LOG_COEFFICIENT = 0.1
+
+    def _calculate_rydberg_enhancement(self, temperature: float) -> float:
+        """Bounded Rydberg-matter enhancement from orbital extension.
+
+        The accessible principal quantum number follows the hydrogenic level
+        spacing ``E_n = -13.6 eV / n^2``, capped at ``RYDBERG_MAX_N``. Overlap
+        gain is logarithmic in the orbital extension ``r_n ~ n^2 a_0``, so the
+        factor is bounded in ``[1, RYDBERG_MAX_ENHANCEMENT]``.
+
+        Args:
+            temperature: Local temperature in K.
+
+        Returns:
+            Dimensionless enhancement in ``[1, 10]``.
+        """
+        thermal_ev = thermal_energy_ev(temperature)
+        if thermal_ev > 0.001:
+            n_estimate = min(
+                self.RYDBERG_MAX_N, max(1, int(np.sqrt(RYDBERG_GROUND_STATE_EV / thermal_ev)))
+            )
+        else:
+            n_estimate = 1
+        orbital_extension = float(n_estimate**2)
+        enhancement = 1.0 + self.RYDBERG_LOG_COEFFICIENT * np.log(orbital_extension)
+        return float(max(1.0, min(enhancement, self.RYDBERG_MAX_ENHANCEMENT)))
+
     def _calculate_enhancement_breakdown(
         self,
         temperature: float,
@@ -558,24 +649,34 @@ class BubbleLatticeInteraction:
         
         Returns dictionary with individual enhancement factors.
         """
-        # Screening enhancement (temperature-dependent Debye model)
-        n_e = self.lattice.electron_density
-        lambda_d = np.sqrt(self.EPS0 * self.KB * max(temperature, 1.0) / (n_e * self.E_CHARGE ** 2))
-        U_screen = self.E_CHARGE ** 2 / (4 * np.pi * self.EPS0 * lambda_d)
-        
-        E_thermal = max(1.5 * self.KB * temperature, 1e-25)  # Prevent division by zero
-        # Limit exponent to prevent overflow (exp(700) ≈ 10^304)
-        exp_arg = min(U_screen / E_thermal, 9.2)  # exp(9.2) ≈ 10^4
-        screening_factor = np.exp(exp_arg)
-        
+        # Screening enhancement. Canonical kernel (screening_kernel.py): the
+        # Assenbaum-Rolfs screened cross-section with the *cited, material
+        # dependent* potential. The previous form derived its potential from a
+        # Debye length and capped the exponent at a magic 9.2, so every host
+        # screened identically and lattice.screening_potential was never read.
+        screening_report = compute_screening_enhancement(
+            temperature_k=temperature,
+            material=self.lattice.host_material,
+            screening_potential_ev=self.lattice.screening_potential,
+        )
+        screening_factor = screening_report["enhancement"]
+
         # Phonon-nuclear coupling (temperature-dependent)
         phonon_factor = self._calculate_debye_phonon_coupling(temperature)
-        
-        # QED field enhancement
-        E_critical = 1e8  # V/m
-        qed_factor = 1 + (electric_field / E_critical) ** 2
-        
-        # Compression enhancement (increased density)
+
+        # QED vacuum polarisation. The critical field is the Schwinger limit
+        # E_cr = m_e^2 c^3 / (e hbar) = 1.3233e18 V/m, not the 1e8 V/m stand-in
+        # used before. With the real constant the leading correction is
+        # eps_eff = 1 + (2 alpha / 45 pi) (E/E_cr)^2, which is ~1 + 6e-13 at the
+        # 1e14 V/m peak field. The old expression returned ~1e12 there, making a
+        # negligible effect the single largest term in the product.
+        # Reference: Heisenberg-Euler effective Lagrangian; Schwinger (1951).
+        qed_factor = 1.0 + QED_VACUUM_COEFFICIENT * (electric_field / SCHWINGER_CRITICAL_FIELD_V_M) ** 2
+
+        # Compression enhancement (increased pair density). Bounded by the van der
+        # Waals hard-core limit on compression (MAX_COMPRESSION_RATIO), so this
+        # cannot exceed MAX_COMPRESSION_RATIO**2. Correlated with the other
+        # collapse-driven terms rather than independent of them.
         density_factor = compression ** 2
         
         # Casimir enhancement. Previously this was literally compression**2, i.e.
@@ -585,8 +686,14 @@ class BubbleLatticeInteraction:
         # (app/physics/casimir_forces.py: P = -π²ħc/(240 d⁴)).
         casimir_factor = self._calculate_casimir_enhancement(pressure)
         
-        # Rydberg Matter enhancement (simplified)
-        rydberg_factor = 1 + 0.5 * compression * (electric_field / 1e8)
+        # Rydberg Matter enhancement. Previously 1 + 0.5*cr*(E/1e8), which grows
+        # linearly without bound and reached ~5e8 at peak conditions. Rydberg
+        # states are bounded: the principal quantum number accessible at a given
+        # thermal energy follows E_n = -13.6 eV / n^2, and the orbital-overlap
+        # gain is logarithmic in the orbital extension r_n ~ n^2 a_0. This is the
+        # same bounded form the unified model uses (enhancements.py), so the two
+        # paths no longer disagree by eight orders of magnitude.
+        rydberg_factor = self._calculate_rydberg_enhancement(temperature)
         
         # Loading ratio enhancement using smooth sigmoid function
         # Enhancement increases significantly above critical loading (~0.85 for Pd-D)

@@ -1157,10 +1157,12 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             )
         
         from app.physics_engine.bubble_lattice_interaction import (
-            BubbleLatticeInteraction, BubbleParameters, LatticeParameters
+            SCHWINGER_CRITICAL_FIELD_V_M,
+            BubbleLatticeInteraction,
+            BubbleParameters,
+            LatticeParameters,
         )
-        from app.physics_engine.proton_phase_model import ProtonPhaseModel
-        
+
         # Create bubble parameters
         bubble_params = BubbleParameters(
             initial_radius=request.bubble.initial_radius_um * 1e-6,
@@ -1240,6 +1242,46 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             collapse_result.compression_ratio
         )
         peak_enhancement_breakdown["electrolyte"] = float(electrolyte_multiplier)
+
+        # Mechanism-level provenance: which screening kernel and cited potential
+        # were used, and whether the Casimir term is inside its continuum domain.
+        # Both were previously unreported, so a client could not tell that every
+        # host screened identically or that Casimir was being extrapolated.
+        from app.physics_engine.screening_kernel import compute_screening_enhancement
+
+        peak_screening = compute_screening_enhancement(
+            temperature_k=collapse_result.max_temperature,
+            material=request.material.host_material,
+            screening_potential_ev=lattice_params.screening_potential,
+        )
+        mechanism_provenance = {
+            "screening": {
+                "model": peak_screening["model"],
+                "screening_potential_ev": peak_screening["screening_potential_ev"],
+                "screening_potential_range_ev": peak_screening["screening_potential_range_ev"],
+                "thermal_energy_ev": peak_screening["thermal_energy_ev"],
+                "sommerfeld_parameter": peak_screening["sommerfeld_parameter"],
+                # Uncapped magnitude in log space: exp() of the raw exponent
+                # overflows float64 at collapse temperatures.
+                "log10_enhancement_raw": peak_screening["log10_enhancement_raw"],
+                "is_saturated": peak_screening["is_saturated"],
+                "exceeds_adiabatic_limit": peak_screening["exceeds_adiabatic_limit"],
+                "citations": peak_screening["citations"],
+            },
+            "casimir": model.casimir_domain_validity(collapse_result.max_pressure),
+            "qed": {
+                "model": "heisenberg_euler_weak_field",
+                "critical_field_v_m": SCHWINGER_CRITICAL_FIELD_V_M,
+                "note": (
+                    "eps_eff = 1 + (2 alpha / 45 pi)(E/E_cr)^2 with E_cr the "
+                    "Schwinger limit; negligible at attainable collapse fields."
+                ),
+            },
+            "rydberg": {
+                "model": "log_bounded_orbital_overlap",
+                "max_enhancement": BubbleLatticeInteraction.RYDBERG_MAX_ENHANCEMENT,
+            },
+        }
         # Apply the theory display ceiling, but keep the raw value and an explicit
         # saturation flag per mechanism. Clamping alone made unrelated mechanisms
         # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
@@ -1396,6 +1438,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 # Which reporting ceilings bound this result (additive; see
                 # REGIME_TEMPERATURE_PROVENANCE for the anchoring literature).
                 "limits": sanitize_dict(collapse_result.limits or {}, 0.0),
+                # Which screening kernel and cited potential produced the screening
+                # term, and whether the Casimir term is inside its continuum domain.
+                "mechanism_provenance": mechanism_provenance,
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,

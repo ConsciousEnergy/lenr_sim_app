@@ -738,8 +738,10 @@ def calculate_confined_mode_qed(
     decoherence_factor = np.exp(-kB_T / max(coherence_energy, 1e-30))
 
     # Final enhancement factor
+    from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
     enhancement = 1.0 + barrier_reduction_eV * decoherence_factor
-    enhancement = min(enhancement, 1e5)  # MAX_ENHANCEMENT_FACTOR ceiling
+    enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
 
     logger.debug(
         f"Confined-mode QED: gap={gap_width*1e9:.2f} nm, "

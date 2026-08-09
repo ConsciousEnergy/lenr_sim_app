@@ -161,33 +161,56 @@ class ProtonPhaseModel:
     ) -> float:
         """
         Calculate halo electron-nucleus overlap probability.
-        
-        From Section 2.2:
-        P_overlap = (1/Ï€aÂ³) * exp(-2râ‚€/a)
+
+        The probability that a halo electron is found inside the nuclear volume,
+        obtained by integrating the hydrogenic s-state density over that volume:
+
+            P = integral_0^r0 |psi(r)|^2 4 pi r^2 dr
+              ~= (4/3) (r0/a)^3   for r0 << a
+
+        where ``a = orbital_extension * a_0`` is the delocalised orbital radius
+        and ``r0`` is the nuclear radius.
+
+        The previous implementation returned ``(1/(pi a^3)) exp(-2 r0/a)``. That
+        leading term is ``|psi(0)|^2``, a probability *density* in m^-3, not a
+        probability: with ``a = 10 a_0`` it evaluates to ~2e27 and therefore always
+        clipped to the old 0.1 ceiling, making the result a constant independent of
+        temperature, screening and orbital extension. The normalised form below is
+        ~9e-18 for the same inputs, which is the physically expected magnitude for
+        a femtometre-scale target inside an angstrom-scale orbital.
+
+        Args:
+            screening_energy: Screening energy in eV.
+            temperature: Temperature in K.
+            orbital_extension: Orbital radius in units of the Bohr radius.
+
+        Returns:
+            Dimensionless probability in [0, 1].
         """
-        # Extended orbital radius
-        a = orbital_extension * self.A0  # m
-        
+        a = max(float(orbital_extension), 1e-6) * self.A0  # m
+
         # Nuclear core radius (~1-5 fm for light nuclei).
         # NOTE: The original theoretical paper used r_0 = 0.1 nm which is the
         # ionic/atomic radius, NOT the nuclear radius.  Using the correct
         # nuclear radius reduces P_overlap by ~15 orders of magnitude, but
         # this is the physically correct value.  See constants.NUCLEAR_RADIUS_M.
         r0 = 1e-15  # ~1 fm (correct nuclear radius)
-        
-        # Base overlap probability
-        P_base = (1 / (np.pi * a**3)) * np.exp(-2 * r0 / a)
-        
+
+        # Normalised overlap: fraction of the s-state density inside the nucleus.
+        P_base = (4.0 / 3.0) * (r0 / a) ** 3
+
         # Screening enhancement factor
         E_thermal = self.KB * temperature / self.E_CHARGE  # eV
         if E_thermal > 0.001:
             screening_factor = np.exp(screening_energy / (10 * E_thermal))
         else:
             screening_factor = 1.0
-        
+
         P_overlap = P_base * min(screening_factor, 1e6)
-        
-        return min(P_overlap, 0.1)  # Physical limit
+
+        # A probability, so bounded by 1. The old 0.1 clip was doing all the work
+        # and hid the units error above.
+        return float(min(P_overlap, 1.0))
     
     def calculate_tunneling_enhancement(
         self,

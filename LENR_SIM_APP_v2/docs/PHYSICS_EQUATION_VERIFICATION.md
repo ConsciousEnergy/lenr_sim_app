@@ -1,7 +1,7 @@
 # Physics Equation Verification
 
-**Version:** 0.2.2-beta  
-**Last Updated:** January 2026  
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026  
 **Status:** Verified against CODATA 2018 and standard physics references
 
 ---
@@ -573,20 +573,150 @@ incompressible limit.
 
 ---
 
+## 9C. Bubble-Lattice Mechanism Formulae (v0.3.6-beta)
+
+The seven-factor bubble-lattice enhancement breakdown was never catalogued here,
+which is how four defective forms survived. Verification oracle for this section
+is CODATA 2018 via `scipy.constants` (the WolframAlpha MCP server was unavailable
+in the verification environment; every value below is derived from CODATA rather
+than hardcoded, and cross-checked against its published reference value).
+
+### 9C.1 Screening enhancement (Assenbaum-Rolfs, cited potential)
+```
+f(E) = exp( pi * eta * U_e / E ),    eta = Z1 Z2 alpha sqrt( mu c^2 / (2E) )
+E    = 1.5 kT  (eV)
+```
+**Status:** ⚠️ APPROXIMATION (valid for `U_e << E`; saturating outside)
+**Code:** `compute_screening_enhancement()` in `app/physics_engine/screening_kernel.py`
+**Previous form:** `exp(min(U_Debye / E_thermal, 9.2))` in `bubble_lattice_interaction.py`.
+Two defects: `U_Debye` came from a Debye length, so the cited material potential
+`LatticeParameters.screening_potential` (800 eV Pd, 300 eV Li) was never read and every
+host screened identically; and the `9.2` exponent cap was a magic number
+(`exp(9.2) = 9.897e3`) unrelated to the documented `MAX_ENHANCEMENT_FACTOR` ceiling.
+**Now:** `U_e` comes from `get_screening_potential_range(material)` (§4 ranges), and the
+exponent is capped at `ln(MAX_ENHANCEMENT_FACTOR) = 11.5129`, so the only limit is the
+governance ceiling. `log10_enhancement_raw` reports the uncapped magnitude, because
+`exp(exponent_raw)` overflows float64 at collapse temperatures (the exponent reaches ~200).
+**Reference:** Assenbaum, Langanke & Rolfs, *Z. Phys. A* **327**, 461 (1987);
+potentials per Raiola 2002 / Huke 2008 / Czerski 2023.
+
+### 9C.2 Schwinger critical field
+```
+E_cr = m_e^2 c^3 / (e hbar)
+```
+**Status:** ✅ VERIFIED
+**Code:** `SCHWINGER_CRITICAL_FIELD_V_M` (file: `physics_engine/bubble_lattice_interaction.py`)
+**Computed:** `1.323285e+18 V/m` from `scipy.constants` (CODATA 2018)
+**Reference value:** `1.323285e18 V/m`; ratio to computed = `1.000000` (verified 2026-08-08)
+
+### 9C.3 QED vacuum polarisation
+```
+eps_eff = 1 + (2 alpha / 45 pi) (E / E_cr)^2
+```
+**Status:** ✅ REFERENCE (weak-field Heisenberg-Euler expansion)
+**Code:** `QED_VACUUM_COEFFICIENT` = `2*alpha/(45*pi)` = `1.032364e-04`
+**Previous form:** `1 + (E / 1e8)^2`. The `1e8 V/m` "critical field" was a stand-in ten
+orders of magnitude below the Schwinger limit, so at the `1e14 V/m` peak double-layer
+field the term returned `~1e12` and was the single largest factor in the product.
+**Now:** at `E = 1e14 V/m`, `eps_eff - 1 = 5.896e-13`, i.e. QED vacuum polarisation is
+negligible at any attainable collapse field, which is the physically expected result.
+At `E = E_cr` the correction equals the bare coefficient.
+**Reference:** Heisenberg & Euler (1936); Schwinger, *Phys. Rev.* **82**, 664 (1951)
+
+### 9C.4 Rydberg orbital-overlap enhancement
+```
+n       = min(10, max(1, floor( sqrt(13.6 eV / E_thermal) )))
+f_ryd   = clamp( 1 + 0.1 ln(n^2), 1, 10 )
+```
+**Status:** ⚠️ APPROXIMATION (phenomenological, bounded)
+**Code:** `_calculate_rydberg_enhancement()` in `physics_engine/bubble_lattice_interaction.py`
+**Previous form:** `1 + 0.5 * cr * (E / 1e8)`, which grows without bound and reached
+`~5e8` at peak conditions, while `unified_lenr_model/enhancements.py` bounded the same
+physics at `10`. The two paths disagreed by eight orders of magnitude.
+**Now:** both paths use the log-bounded orbital-extension form. At `T = 1.16e6 K` the
+factor is `1.0`: no bound Rydberg state survives at a million kelvin, which is correct.
+**Reference:** hydrogenic level spacing `E_n = -13.6 eV / n^2`, `r_n ~ n^2 a_0`
+
+### 9C.5 Casimir enhancement from pressure-induced strain
+```
+d/d0  = (1 - P/K)^(1/3)
+f_cas = (d0/d)^4
+```
+**Status:** ⚠️ APPROXIMATION — **outside continuum domain at collapse pressures**
+**Code:** `_calculate_casimir_enhancement()`, `casimir_domain_validity()`
+**Domain floor:** `CASIMIR_CONTINUUM_FLOOR_M` now aliases
+`app/physics/casimir_forces.DOMAIN_VALIDITY_THRESHOLD_M = 2e-9 m`, so one threshold
+governs every path. The constant previously existed but was never enforced or reported.
+**Measured:** at `P = 1e10 Pa` the strained Pd spacing is `3.817e-10 m`, about 5x below
+the 2 nm floor, so `domain_valid = false` and a warning is emitted. Magnitudes stay
+modest: Pd `1.079`, Li `21.54` (Li's bulk modulus is ~16x smaller).
+**Reference:** Casimir (1948); Lifshitz (1956) for the finite-conductivity correction
+
+### 9C.6 Compression (pair-density) factor
+```
+f_comp = CR^2,    CR <= MAX_COMPRESSION_RATIO = 1000
+```
+**Status:** ⚠️ APPROXIMATION (bounded by the van der Waals hard-core limit)
+**Code:** `_calculate_enhancement_breakdown()`
+**Note:** bounded by construction at `1e6`, but *correlated* with the other
+collapse-driven terms rather than independent of them, so the product is a
+scenario construction rather than a factorisation of independent effects. See
+`docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`.
+
+### 9C.7 Halo electron-nucleus overlap probability
+```
+P = integral_0^r0 |psi(r)|^2 4 pi r^2 dr  ~=  (4/3) (r0/a)^3     for r0 << a
+```
+**Status:** ✅ VERIFIED (normalised hydrogenic s-state)
+**Code:** `ProtonPhaseModel.calculate_overlap_probability()`
+**Previous form:** `(1/(pi a^3)) exp(-2 r0/a)`. The leading term is `|psi(0)|^2`, a
+probability *density* in m^-3, not a probability: with `a = 10 a_0` it evaluates to
+`2.148e+27` and therefore always clipped to the old `0.1` ceiling, making the result
+constant in temperature, screening and orbital extension.
+**Now:** `8.998e-18` for the same inputs, and the value scales as `(r0/a)^3` (doubling
+the orbital radius reduces overlap by exactly 8x). Bound is `1.0`, since it is a
+probability.
+
+### 9C.8 Single enhancement ceiling
+`MAX_ENHANCEMENT_FACTOR = 1e5` is defined once in `physics_engine/constants.py`.
+`unified_lenr_model/cross_sections.py` re-exports it instead of redeclaring the
+literal, and `app/physics/qed_effects.py` imports it instead of hardcoding `1e5`.
+
+### 9C.9 Net effect on the reported breakdown
+At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) for Pd:
+
+| Mechanism | Before | After |
+|---|---|---|
+| screening | `9.897e3` (material-independent) | `1e5` at ceiling, raw log10 reported, material-dependent |
+| qed | `1.000e12` | `1.000` |
+| rydberg | `5.000e8` | `1.000` |
+| casimir | `1.079` | `1.079` (Pd), `21.54` (Li) |
+| compression | `1.000e6` | `1.000e6` |
+| **raw total** | **`log10 ~ 38.8`** | **`log10 = 13.42`** |
+| saturated mechanisms | 5 | 2 (screening, compression) |
+
+---
+
 ## 10. Known Limitations
 
 1. **WKB Approximation**: Valid only for slowly varying potentials
-2. **Screening Models**: Experimental values vary significantly between labs
+2. **Screening Models**: Experimental values vary significantly between labs. The
+   bubble-lattice path now uses the cited per-material range (§9C.1), but the
+   screened form itself is only strictly valid for `U_e << E` and saturates
+   outside that domain
 3. **Bubble Dynamics**: The default Rayleigh-Plesset path ignores liquid
    compressibility. A validated Keller-Miksis solver is now available
    (`solve_keller_miksis`, §9B.4) but is not yet the default for the bubble-lattice
    route
-4. **Enhancement Factors**: Large uncertainties in LENR regime
+4. **Enhancement Factors**: Large uncertainties in LENR regime. The bubble-lattice
+   mechanism product is correlated rather than a factorisation of independent
+   effects (§9C.6) and must not be multiplied by the theory pipeline's combined
+   enhancement (see `docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`)
 5. **Collapse Ceilings**: Peak temperature/pressure/compression are reported under
    explicit bounds (§9A); a saturated value is a display ceiling, not a prediction
-6. **Overlap Probability**: `ProtonPhaseModel.calculate_overlap_probability` returns a
-   number density rather than a probability, so it always clips to its 0.1 ceiling.
-   It is therefore excluded from the proton-phase cascade and needs renormalising
+6. **Casimir domain**: at collapse pressures the strained lattice spacing is well
+   below the 2 nm continuum floor, so the term is an extrapolation. This is now
+   enforced and reported as `domain_valid = false` (§9C.5) rather than silent
 
 ---
 
