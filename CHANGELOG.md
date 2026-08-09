@@ -12,6 +12,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Physics-accuracy, reporting-honesty, and UX-coherence pass ahead of the public VPS
 release. No breaking contract changes: every new response field is additive.
 
+#### Modeling, visualization, unified theory, and documentation iterations (2026-08-09)
+
+Eight-phase pass. Every new response field is additive.
+
+- **Theory Testbed on the dashboard**: the hub was launcher-only, so the theory
+  pipeline could not be run without navigating away first. Added
+  `TheoryTestbedCard` backed by a shared `buildTheoryConditions` util, and persisted
+  `enabledTheories` / `theoryConfigs` so a selection survives the trip to the full
+  testbed. Wired `setTheoryConfigs`, which had been destructured as unused.
+- **Saturation-aware charts**: the timeline plotted log10 of the *clamped*
+  enhancement, drawing a flat line at 5.0 through the whole collapse, while
+  `enhancement_log10_raw` and `enhancement_is_saturated` had no frontend consumer at
+  all. The page also hardcoded a `1e4 K` ceiling against a backend value of `2e6 K`.
+- **`collapse_trajectory`**: the integrated R(t) and wall velocity never left the
+  engine, so no client could draw the actual collapse curve.
+- **One composition contract**: ten theories sat in the ungrouped fallback and each
+  multiplied into `combined_enhancement`, producing a single product of mutually
+  exclusive accounts of the same effect. Grouped them, and stopped the rubric from
+  overwriting module-declared claim tiers (which had erased
+  `cross_regime_extrapolation`'s 0.2x weighting). See
+  `docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`.
+- **Mechanism formulae corrected**: QED used `1e8 V/m` as the critical field, ten
+  orders below the Schwinger limit, returning ~`1e12` where the true correction is
+  ~`6e-13`; Rydberg grew linearly to ~`5e8` where the unified model bounds the same
+  physics at 10; screening ignored the cited per-material potential entirely; and
+  `calculate_overlap_probability` returned a number density that always clipped to
+  its guard. Raw total for Pd drops from log10 ~38.8 to 13.42.
+- **Collapse singularity**: the hard-core radius was applied as a clamp inside the
+  right-hand side, which made the ODE genuinely singular — LSODA's raw solution
+  diverged to ~`-3e145`, hidden by downstream sanitisation. Moved the hard core into
+  the gas law, added an opt-in Keller-Miksis mode, and reported peak wall Mach.
+  Measured Mach of 0.22-0.84 shows the incompressible default is already outside its
+  valid domain.
+- **Uncertainty**: added Sobol intervals for collapse observables and mechanisms,
+  and rendered them; the page had advertised an interval chip with nothing to show.
+- **Documentation**: retired the Create React App narrative, normalised the dev
+  backend port to 8010, fixed version drift, and made the in-app doc viewer
+  reachable.
+- **Cleanup**: archived ~8.9k lines of orphaned visualization code, converted the
+  lattice to `InstancedMesh`, and removed per-render `Math.random()` chart jitter.
+  Frontend lint errors and app-code type errors are both now zero.
+
 #### Follow-up (same day): local audit sync + thermo consistency
 
 - **npm highs on local `start_app`**: Windows terminals still showing

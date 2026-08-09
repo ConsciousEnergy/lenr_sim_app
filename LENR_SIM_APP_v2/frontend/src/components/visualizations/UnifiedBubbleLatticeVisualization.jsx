@@ -513,7 +513,21 @@ const UnifiedBubbleLatticeVisualization = ({
     const points = [];
     const connections = [];
     let pointIndex = 0;
-    
+
+    // Lattice atoms are static: they never move or change material individually,
+    // only toggle visibility as a group. One Mesh per atom therefore cost one draw
+    // call each (dimension^3 host atoms plus up to as many hydrogens). InstancedMesh
+    // draws all of them in a single call.
+    const hostCount = dimension * dimension * dimension;
+    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
+    hostAtoms.name = 'LatticeHostAtoms';
+    hostAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+    // Hydrogen occupancy is stochastic, so positions are collected first and the
+    // instanced mesh is sized to the actual count.
+    const hydrogenPositions = [];
+    const instanceTransform = new THREE.Object3D();
+
     // Create FCC-like lattice
     for (let x = 0; x < dimension; x++) {
       for (let y = 0; y < dimension; y++) {
@@ -522,23 +536,19 @@ const UnifiedBubbleLatticeVisualization = ({
           // Use physics-based lattice Y offset
           const posY = y * spacing - offset + PHYSICS_CONFIG.LATTICE_Y_OFFSET;
           const posZ = z * spacing - offset;
-          
-          // Host atom
-          const hostAtom = new THREE.Mesh(hostGeometry, hostMaterial3D);
-          hostAtom.position.set(posX, posY, posZ);
-          latticeGroup.add(hostAtom);
-          
+
+          instanceTransform.position.set(posX, posY, posZ);
+          instanceTransform.updateMatrix();
+          hostAtoms.setMatrixAt(pointIndex, instanceTransform.matrix);
+
           // Add hydrogen at interstitial sites based on loading ratio
           if (Math.random() < loadingRatio) {
             const hOffset = spacing * 0.25;
-            const hydrogen = new THREE.Mesh(hydrogenGeometry, hydrogenMaterial);
-            hydrogen.position.set(
+            hydrogenPositions.push([
               posX + (Math.random() - 0.5) * hOffset,
               posY + (Math.random() - 0.5) * hOffset,
-              posZ + (Math.random() - 0.5) * hOffset
-            );
-            hydrogen.userData = { type: 'hydrogen', state: 'FREE' };
-            latticeGroup.add(hydrogen);
+              posZ + (Math.random() - 0.5) * hOffset,
+            ]);
           }
           
           points.push(new THREE.Vector3(posX, posY, posZ));
@@ -552,13 +562,51 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
     }
-    
-    // Add bond lines
-    connections.forEach(([i, j]) => {
-      const geometry = new THREE.BufferGeometry().setFromPoints([points[i], points[j]]);
-      const line = new THREE.Line(geometry, bondMaterial);
-      latticeGroup.add(line);
-    });
+
+    hostAtoms.instanceMatrix.needsUpdate = true;
+    hostAtoms.computeBoundingSphere();
+    latticeGroup.add(hostAtoms);
+
+    if (hydrogenPositions.length > 0) {
+      const hydrogenAtoms = new THREE.InstancedMesh(
+        hydrogenGeometry,
+        hydrogenMaterial,
+        hydrogenPositions.length,
+      );
+      hydrogenAtoms.name = 'LatticeHydrogenAtoms';
+      hydrogenAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+      hydrogenPositions.forEach(([hx, hy, hz], index) => {
+        instanceTransform.position.set(hx, hy, hz);
+        instanceTransform.updateMatrix();
+        hydrogenAtoms.setMatrixAt(index, instanceTransform.matrix);
+      });
+      hydrogenAtoms.instanceMatrix.needsUpdate = true;
+      hydrogenAtoms.computeBoundingSphere();
+      hydrogenAtoms.userData = { type: 'hydrogen', state: 'FREE' };
+      latticeGroup.add(hydrogenAtoms);
+    }
+
+    // Bonds share one geometry: merging the segments into a single LineSegments
+    // replaces up to 3 * dimension^3 Line objects with one draw call.
+    if (connections.length > 0) {
+      const bondVertices = new Float32Array(connections.length * 6);
+      connections.forEach(([i, j], index) => {
+        const start = points[i];
+        const finish = points[j];
+        const base = index * 6;
+        bondVertices[base] = start.x;
+        bondVertices[base + 1] = start.y;
+        bondVertices[base + 2] = start.z;
+        bondVertices[base + 3] = finish.x;
+        bondVertices[base + 4] = finish.y;
+        bondVertices[base + 5] = finish.z;
+      });
+      const bondGeometry = new THREE.BufferGeometry();
+      bondGeometry.setAttribute('position', new THREE.BufferAttribute(bondVertices, 3));
+      const bonds = new THREE.LineSegments(bondGeometry, bondMaterial);
+      bonds.name = 'LatticeBonds';
+      latticeGroup.add(bonds);
+    }
     
     const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     const planeSize = dimension * spacing * 1.3;
@@ -2805,6 +2853,8 @@ const UnifiedBubbleLatticeVisualization = ({
       if (latticeGroupRef.current) {
         latticeGroupRef.current.visible = showLattice;
         latticeGroupRef.current.traverse((child) => {
+          // isInstancedMesh also satisfies isMesh, and LineSegments satisfies
+          // isLine, so both instanced atoms and merged bonds are covered here.
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showLattice;
           }
