@@ -528,6 +528,22 @@ class BubbleLatticeInteraction:
                     method,
                     exc or "work-array TypeError",
                 )
+            except (RuntimeError, AttributeError) as exc:
+                # Broken Windows NumPy hybrid installs fail inside BDF while
+                # formatting a ufunc error: "Unable to configure default
+                # ndarray.__repr__" / missing multiarray.complexfloating.
+                message = str(exc)
+                if (
+                    "ndarray.__repr__" in message
+                    or "complexfloating" in message
+                    or "Unable to configure default" in message
+                ):
+                    raise RuntimeError(
+                        "NumPy/SciPy install is corrupted (ndarray.__repr__ broken). "
+                        "Repair the backend venv: run backend\\fix_scipy_venv.bat "
+                        "or force-reinstall numpy==1.26.4 and scipy==1.14.1."
+                    ) from exc
+                raise
 
         raise RuntimeError(
             "No usable collapse integrator (tried "

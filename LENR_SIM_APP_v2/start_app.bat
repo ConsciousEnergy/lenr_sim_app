@@ -34,10 +34,12 @@ if not exist "backend\venv\Scripts\activate.bat" (
 )
 
 echo Starting Backend Server window...
-start "LENR Backend" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && pip install -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 8010"
+REM Numeric-stack check/repair runs before uvicorn so a broken Windows NumPy
+REM (ndarray.__repr__ / complexfloating) cannot 500 bubble-lattice mid-run.
+start "LENR Backend" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && call fix_scipy_venv.bat && uvicorn app.main:app --reload --host 0.0.0.0 --port 8010"
 
-echo Waiting 5 seconds for backend bind...
-timeout /t 5 /nobreak > nul
+echo Waiting 15 seconds for backend bind (numeric-stack check/repair may take a bit)...
+timeout /t 15 /nobreak > nul
 
 echo Starting Frontend Server window...
 start "LENR Frontend" cmd /k "cd /d "%~dp0frontend" && call start_dev.bat"

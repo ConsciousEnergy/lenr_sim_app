@@ -7,7 +7,10 @@ uvicorn==0.30.6
 websockets==14.2
 pydantic==2.10.3
 numpy==1.26.4
-scipy>=1.11.2,<1.15
+# Pin SciPy with NumPy 1.26.x. A floating upper bound let Windows venvs drift into
+# hybrid NumPy 1/2 trees that 500 bubble-lattice with:
+#   RuntimeError: Unable to configure default ndarray.__repr__
+scipy==1.14.1
 sympy==1.12
 pyvista==0.45.2
 pandas==2.2.3
