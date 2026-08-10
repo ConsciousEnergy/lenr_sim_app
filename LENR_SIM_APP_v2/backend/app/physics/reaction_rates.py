@@ -184,7 +184,10 @@ def thermal_average_cross_section(
     E_max = max(10 * E_peak, 10 * temperature_keV)
     result, error = quad(integrand, 0, E_max, limit=100)
     
-    sigma_v_m3_s = prefactor * result
+    # The quadrature variable is E in keV while the integrand's energy factor
+    # is in joules, so convert the dE measure keV -> J. (Omitting this
+    # overestimated <sigma*v> by ~6e15.)
+    sigma_v_m3_s = prefactor * result * (1000 * EV_TO_J)
     
     # Convert to cm³/s
     sigma_v_cm3_s = sigma_v_m3_s * 1e6
