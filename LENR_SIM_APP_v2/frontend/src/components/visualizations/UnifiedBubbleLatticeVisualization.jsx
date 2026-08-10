@@ -28,6 +28,10 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
 // CycloneIcon reserved for future vortex toggle UI
+import {
+  getBubbleDisplayScale,
+  getBubbleScaleFromPhase,
+} from '../../utils/bubbleVisualScale';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -170,31 +174,8 @@ const getBubbleYFromPhase = (phase, progress = 0) => {
   }
 };
 
-// Helper to get bubble scale (size) based on physics phase
-// NEW: Bubble starts small and grows, then collapses to minimum
-const getBubbleScaleFromPhase = (phase, progress = 0) => {
-  const scales = PHYSICS_CONFIG.BUBBLE_SCALE;
-  
-  switch (phase) {
-    case 'EXPANSION':
-      // Bubble grows from nucleation size to full size
-      return scales.NUCLEATION + (scales.FULL_SIZE - scales.NUCLEATION) * progress;
-    case 'COLLAPSE':
-      // Bubble rapidly shrinks during collapse
-      return scales.FULL_SIZE - (scales.FULL_SIZE - scales.COLLAPSE_MIN) * progress;
-    case 'MINIMUM':
-      // At minimum size - maximum compression
-      return scales.COLLAPSE_MIN;
-    case 'REBOUND':
-      // Expanding from minimum
-      return scales.COLLAPSE_MIN + (scales.GROWTH_START - scales.COLLAPSE_MIN) * progress;
-    case 'RECOVERY':
-      // Returning toward nucleation state for next cycle
-      return scales.GROWTH_START + (scales.NUCLEATION - scales.GROWTH_START) * progress;
-    default:
-      return scales.NUCLEATION;
-  }
-};
+// Bubble scale helpers live in utils/bubbleVisualScale.js so oversized
+// Rayleigh–Plesset radius_factor values cannot blow past the scene frustum.
 
 const buildVortexSites = (centerX, centerY, centerZ, spacing) => {
   const ringRadius = spacing * 0.75;
@@ -1896,6 +1877,25 @@ const UnifiedBubbleLatticeVisualization = ({
       // Torus-to-jet formation visualization (always update, visibility controlled by phase)
       const torus = bubbleGroupRef.current.getObjectByName('TorusFormation');
       const jet = bubbleGroupRef.current.getObjectByName('FocusedJet');
+
+      // Phase progress for nucleation storytelling + scene-safe display scale.
+      // API radius_factor can be ≫ 1.3 during real RP expansion; clamp it.
+      let phaseProgress = 0;
+      if (phase === 'EXPANSION') {
+        phaseProgress = Math.min(1, normalizedTime / 0.4);
+      } else if (phase === 'COLLAPSE') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
+      } else if (phase === 'REBOUND') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.55) / 0.1);
+      } else if (phase === 'RECOVERY') {
+        phaseProgress = Math.min(1, (normalizedTime - 0.65) / 0.35);
+      }
+      const radiusFactor = radius / Math.max(baseRadius, 1e-12);
+      const displayScale = getBubbleDisplayScale({
+        radiusFactor,
+        phase,
+        phaseProgress,
+      });
       
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
@@ -1903,8 +1903,8 @@ const UnifiedBubbleLatticeVisualization = ({
         // Show sphere
         if (bubble && showBubble) {
           bubble.visible = true;
-        bubble.scale.setScalar(radius / baseRadius);
-        bubble.material.opacity = 0.3 + (1 - radius / baseRadius) * 0.4;
+          bubble.scale.setScalar(displayScale);
+          bubble.material.opacity = 0.3 + (1 - Math.min(radiusFactor, 1.3) / 1.3) * 0.4;
         } else if (bubble) {
           bubble.visible = false;
         }
@@ -1918,7 +1918,7 @@ const UnifiedBubbleLatticeVisualization = ({
         if (bubble && showBubble) {
           // Fade out sphere as torus appears
           bubble.visible = torusProgress < 0.7;
-          bubble.scale.setScalar((radius / baseRadius) * (1 - torusProgress * 0.5));
+          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.5));
           bubble.material.opacity = 0.3 * (1 - torusProgress);
         } else if (bubble) {
           bubble.visible = false;
@@ -1971,72 +1971,33 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
       
-      // Update double layer and inner layer
+      // Double / inner shells track the same scene-safe display scale
       if (doubleLayer) {
-        doubleLayer.scale.setScalar((radius * 1.1) / baseRadius);
+        doubleLayer.scale.setScalar(displayScale * 1.1);
         const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.4 : 0.15;
         doubleLayer.material.opacity = intensity;
+        if (!showBubble) doubleLayer.visible = false;
       }
       if (innerLayer) {
-        innerLayer.scale.setScalar((radius * 0.95) / baseRadius);
+        innerLayer.scale.setScalar(displayScale * 0.95);
+        if (!showBubble) innerLayer.visible = false;
       }
       
-      // Update pressure rings
+      // Update pressure rings — anchored to the display bubble, not unbounded growth
       for (let i = 0; i < 3; i++) {
         const ring = bubbleGroupRef.current.getObjectByName(`PressureRing${i}`);
         if (ring) {
           const ringPhase = (normalizedTime + ring.userData.phase) % 1;
-          ring.scale.setScalar(1 + ringPhase * 2);
+          ring.scale.setScalar(displayScale * (1 + ringPhase * 0.6));
           ring.material.opacity = Math.max(0, 0.2 - ringPhase * 0.2);
+          if (!showBubble) ring.visible = false;
         }
       }
       
       // ========================================================================
-      // HETEROGENEOUS NUCLEATION BUBBLE DYNAMICS
+      // HETEROGENEOUS NUCLEATION — keep bubble attached near the lattice surface
       // ========================================================================
-      // Physics: Bubble nucleates at surface cavity, grows while attached,
-      // buoyancy pulls slightly, then acoustic/EM forcing collapses it to surface
-      const _latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-      const _distances = PHYSICS_CONFIG.PHASE_DISTANCES;
-      
-      // Calculate phase progress for smooth animations
-      let phaseProgress = 0;
-      if (phase === 'EXPANSION') {
-        phaseProgress = Math.min(1, normalizedTime / 0.4);
-      } else if (phase === 'COLLAPSE') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
-      } else if (phase === 'REBOUND') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.55) / 0.1);
-      } else if (phase === 'RECOVERY') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.65) / 0.35);
-      }
-      
-      // Get bubble Y position from helper (stays close to surface)
       bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress);
-      
-      // Apply physics-based bubble scale
-      // Bubble starts small at nucleation, grows during expansion, shrinks during collapse
-      const physicsScale = getBubbleScaleFromPhase(phase, phaseProgress);
-      
-      // Combine with radius-based scaling from physics calculations
-      const combinedScale = physicsScale * (radius / baseRadius);
-      
-      // Apply scale to main bubble and layers
-      if (bubble && showBubble) {
-        // During EXPANSION: bubble grows from tiny nucleus to full size
-        // During COLLAPSE: bubble rapidly shrinks
-        const _displayScale = phase === 'EXPANSION' || phase === 'RECOVERY' 
-          ? combinedScale 
-          : radius / baseRadius; // Use original logic during collapse for visual effect
-      }
-      
-      // Update bubble size based on phase (growth at surface, then collapse)
-      if (doubleLayer) {
-        doubleLayer.scale.setScalar(combinedScale * 1.1);
-      }
-      if (innerLayer) {
-        innerLayer.scale.setScalar(combinedScale * 0.95);
-      }
     }
     
     // Update H2/D2 particles with MHD fluid dynamics (v0.2.3)
