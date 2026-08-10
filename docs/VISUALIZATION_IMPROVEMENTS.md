@@ -74,7 +74,7 @@ Physics-based visualization replacing decorative effects with meaningful represe
 | **Magnetic Dipoles** | Nuclear/electron spin | μ = gₙ·μₙ·I | NMR, hyperfine splitting |
 | **Phonon Modes** | Debye model | ω = vₛ·k (acoustic) | X-ray diffraction, neutron scattering |
 | **Coulomb Exchange** | Virtual photon exchange | V(r) = Z₁Z₂e²/4πε₀r | All electromagnetic interactions |
-| **Gamow Window** | Stellar nucleosynthesis | E₀ = (E_G·kT/2)^(2/3) | Stellar fusion rates |
+| **Gamow Window** | Stellar nucleosynthesis | E₀ = (E_G·(kT)²/4)^(1/3) | Stellar fusion rates |
 | **Combined** | Total enhancement | η_total = η_screen × η_phonon × P_tunnel | LENR excess heat |
 
 #### Implementation Details
@@ -102,8 +102,10 @@ Debye model implementation showing:
 ##### Gamow Window
 From stellar nucleosynthesis, shows where tunneling probability × Maxwell-Boltzmann distribution peaks:
 ```
-E₀ = (E_G × k_B × T / 2)^(2/3)
+E₀ = (E_G × (k_B × T)² / 4)^(1/3)
 ```
+(equivalently E₀ = (√E_G · k_B T / 2)^(2/3); a previous form omitted the
+square on k_B T, understating E₀ by orders of magnitude)
 
 ### 3. Scale Bar
 

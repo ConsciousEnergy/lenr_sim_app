@@ -26,7 +26,7 @@
 - Casimir force (A=1 µm², d=1 nm): **-1.3 mN**
 - f_enhancement: **10³–10⁵** (adopt; drop 10⁸)
 - P_overlap: halo ~5×10⁻³; interface 10⁻¹⁰–10⁻¹²
-- f_screening: use exp(Ue/E) with Ue 10–100 eV; cap at 10⁵
+- f_screening: use the Assenbaum form exp(π·η·Ue/E) with cited material-dependent Ue (`screening_data.py`; e.g. Pd typical 800 eV, Er ~347 eV); cap at 10⁵
 
 ### Tier A issues (fix first)
 IL-001, IL-002, IL-003, IL-004, IL-005, IL-007, IL-008, IL-010, IL-013, IL-017, IL-018

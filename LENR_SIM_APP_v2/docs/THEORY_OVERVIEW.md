@@ -86,7 +86,7 @@ For n=10, the energy is only -0.136 eV, much lower than ground state.
 RR̈ + (3/2)Ṙ² = (1/ρ)[P_b - P_∞ - 2σ/R - 4μṘ/R + ε₀E²/2]
 ```
 
-The additional electric field term (ε₀E²/2) is crucial for LENR applications.
+The additional electric field term (ε₀E²/2) is included for completeness; at the modeled double-layer fields (~10⁸ V/m) it contributes ~0.04 MPa, small against the GPa-scale collapse pressures (see ledger IL-006).
 
 **In the simulation**: You can adjust initial bubble radius, driving pressure, and frequency to see how they affect collapse dynamics.
 
@@ -145,7 +145,7 @@ FREE (EM) → SCREENED → CAPTURE_READY (Weak) → NUCLEAR (Strong)
 | Phase | Energy Range | Description |
 |-------|-------------|-------------|
 | **FREE** | E < 10 eV | Normal electromagnetic behavior, no nuclear effects |
-| **SCREENED** | Enhancement > 10 | Coulomb barrier lowered by 10-100 eV due to electron screening |
+| **SCREENED** | Enhancement > 10 | Coulomb barrier lowered by tens to hundreds of eV (material-dependent; Pd typical ~800 eV) due to electron screening |
 | **CAPTURE_READY** | Enhancement > 10³ | Weak force coupling becomes significant (p + e⁻ → n + νₑ possible) |
 | **NUCLEAR** | Enhancement > 10⁵ | Strong force engagement possible, nuclear reactions can occur |
 
@@ -173,7 +173,7 @@ In addition to the six integrated mechanisms above, the v0.3.0 release introduce
 
 | Theory Module | Key Physics | References |
 |---|---|---|
-| **Electron Screening** | Debye screening reduces Coulomb barrier by 10-100 eV | Raiola 2004, Czerski 2001 |
+| **Electron Screening** | Electron screening reduces the Coulomb barrier by a material-dependent cited potential (tens to hundreds of eV; Pd typical ~800 eV) | Raiola 2004, Czerski 2001 |
 | **Confined-Mode QED** | Del Giudice/Preparata coherent EM domains; replaces bulk Schwinger | Del Giudice 1998, Preparata 1995 |
 | **Storms' Hydroton (legacy, deprecated)** | Historical H-e-H-e-H covalent chain concept retained only for archival compatibility, not active default scoring | Storms 2007, 2014 |
 | **Nuclear Active Environment** | Crack-size filtering, simultaneity requirement, site probability, H-loading purity | Storms 2014 |
@@ -293,7 +293,7 @@ The simulation platform now includes **21 independently testable theory modules*
 
 | # | Module ID | Researcher(s) | Category | Key Physics | product_He4 | product_neutrons | product_gamma |
 |---|-----------|----------------|----------|-------------|------------|------------------|---------------|
-| 1 | `electron_screening` | Raiola, Czerski | mechanism | Debye screening reduces Coulomb barrier by 10-100 eV | 1.0 | 0.0 | 0.0 |
+| 1 | `electron_screening` | Raiola, Czerski | mechanism | Electron screening reduces the Coulomb barrier by a cited material-dependent potential (tens to hundreds of eV) | 1.0 | 0.0 | 0.0 |
 | 2 | `coherent_qed` | Del Giudice, Preparata | mechanism | Coherent EM domains, QED vacuum modification | 1.0 | 0.0 | 0.0 |
 | 3 | `hydroton` | Edmund Storms | mechanism (legacy/deprecated) | Historical compatibility module; excluded from default runtime in v0.3.6-beta | 1.0 | 0.01 | 0.0 |
 | 4 | `nae_model` | Edmund Storms | mechanism | Nuclear Active Environment in cracks, loading threshold | 1.0 | 0.0 | 0.0 |

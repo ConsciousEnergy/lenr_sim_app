@@ -188,12 +188,14 @@ P = -π²ℏc / (240 d⁴)
 
 ### 4.2 Thomas-Fermi Screening Length
 ```
-λ_TF = √(ε₀E_F / (3n_e e²))
+λ_TF = √(2ε₀E_F / (3n_e e²))
 
 where E_F = (ℏ²/2m_e)(3π²n_e)^(2/3)
 ```
 **Status:** ✅ VERIFIED  
-**Reference:** Thomas-Fermi theory  
+**Reference:** Thomas-Fermi theory (k_TF² = 3n_e e²/(2ε₀E_F), λ_TF = 1/k_TF)  
+**Code:** `electron_screening.py` (matches; an earlier revision of this log
+omitted the factor of 2 that the code correctly includes)  
 **Validity:** Degenerate electron gas (metals at T << T_Fermi)
 
 ### 4.3 Screening Potential
@@ -213,10 +215,13 @@ f_screen = exp(πη U_e / E)
 
 ### 4.5 Adiabatic Screening Limit
 ```
-U_e,adiabatic ≈ 27.2 eV × (Z₁^0.687 + Z₂^0.687)
+U_e,adiabatic ≈ 13.6 eV × (Z₁^0.687 + Z₂^0.687)
 ```
 **Status:** ⚠️ APPROXIMATION  
 **Reference:** Salpeter (1954)  
+**Code:** `electron_screening.py` (13.6 eV coefficient; gives ≈27.2 eV for
+D+D, the standard adiabatic limit. An earlier revision of this log doubled
+the coefficient to 27.2 eV, i.e. ≈54.4 eV for D+D, which the code never used.)  
 **Note:** Lower bound for screening in condensed matter
 
 ### 4.6 Experimental Screening Values
