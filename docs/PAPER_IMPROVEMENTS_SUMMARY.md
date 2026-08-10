@@ -308,7 +308,7 @@ The paper now provides the most accurate, rigorous, and complete theoretical fra
 ## 9. Files Modified
 
 1. **Main Paper:**
-   - `A Unified Theoretical Framework for Low-Energy Nuclear Reactions_ Integrating Quantum, Nuclear, and Condensed Matter Phenomena (1).md`
+   - `A_Unified_Theoretical_Framework_for_LENR.md`
    - Sections updated: 2.1, 2.2, 2.3.1 (new), 2.5, 2.5.1 (new), 2.6, 2.8.1 (new), 3.3 (new), 5.1.1 (new), 5.2.1
    - Author list updated
 

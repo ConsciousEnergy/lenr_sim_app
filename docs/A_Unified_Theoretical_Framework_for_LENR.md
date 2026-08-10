@@ -755,7 +755,7 @@ Reaction rate predictions are validated using Monte Carlo sampling:
 ### **5.2 Validation of Nuclear Products**
 
 * **Isotopic Shifts:** Detection of helium-4, tritium, and heavier isotopes supports multi-step nuclear processes (e.g., Oppenheimer-Phillips).  
-* **Excess Heat Consistency:** Experimental outputs match the hypothesized nuclear energy contributions once purely chemical avenues are discounted.
+* **Excess Heat Consistency:** Reported experimental outputs are consistent in magnitude with the hypothesized nuclear energy contributions once purely chemical avenues are discounted; this remains a disputed empirical correlation (claim tier: `empirical_lenr_correlation`), not an established result.
 
 #### **5.2.1 Detailed Energy Accounting**
 
@@ -802,7 +802,7 @@ Reported ⁴He yields in LENR experiments range from \( 10^{11} \)–\( 10^{13} 
 2. **Multiple reaction channels:** Heat may also arise from channels with different products: D+D → T + p (Q = 4.03 MeV), D+D → ³He + n (Q = 3.27 MeV), or lattice-mediated transmutations that produce heat without helium.
 3. **Incomplete energy release:** If some reaction energy goes into lattice defect creation or radiation that escapes calorimetric detection, the effective heat per ⁴He atom would be lower.
 
-The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He atoms per second per watt of excess heat—is within a factor of ~2 of the 23.8 MeV/⁴He prediction (\( 2.63 \times 10^{11} \) atoms/s/W), providing strong evidence that the D+D → ⁴He channel dominates. The discrepancy in integrated yields (per W·hr) likely reflects time-varying reaction rates and measurement integration periods rather than a fundamental inconsistency.
+The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He atoms per second per watt of excess heat—is within a factor of ~2 of the 23.8 MeV/⁴He prediction (\( 2.63 \times 10^{11} \) atoms/s/W). If the underlying measurements are accepted, this correlation is *consistent with* a dominant D+D → ⁴He channel; it remains a contested empirical correlation (helium retention and measurement caveats apply) rather than a validated mechanism. The discrepancy in integrated yields (per W·hr) likely reflects time-varying reaction rates and measurement integration periods rather than a fundamental inconsistency.
 
 **Tritium and neutron accounting:**
 
@@ -811,7 +811,7 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 ### **5.3 Implications for LENR**
 
-* **Unified Model:** By merging condensed matter, quantum mechanics, and nuclear physics, the framework explains multiple LENR observations in a self-consistent manner.  
+* **Unified Model:** By merging condensed matter, quantum mechanics, and nuclear physics, the framework offers a self-consistent candidate interpretation of multiple reported LENR observations; it does not by itself establish that those observations are nuclear in origin.  
 * **Improved Reproducibility:** Standardized protocols with precisely characterized materials and well-monitored conditions are starting to yield more consistent data.
 
 ---

@@ -307,9 +307,9 @@ The simulation platform now includes **21 independently testable theory modules*
 |---|-----------|----------------|----------|-------------|------------|------------------|---------------|
 | 8 | `takahashi_tsc` | Akito Takahashi | mechanism | 4D simultaneous tunnelling at tetrahedral sites → 2He-4 + 47.6 MeV | 1.0 | 0.0 | 0.0 |
 | 9 | `hagelstein_phonon` | Peter Hagelstein | mechanism | 24 MeV → 10^8 phonons via anharmonic coupling (no gamma) | 1.0 | 0.0 | 0.0 |
-| 10 | `vysotskii_ccs` | Vladimir Vysotskii | mechanism | Coherent Correlated States, up to 10^40 tunnelling enhancement | 1.0 | 0.0 | 0.0 |
+| 10 | `vysotskii_ccs` | Vladimir Vysotskii | mechanism | Coherent Correlated States; claimed up to 10^40 tunnelling enhancement (speculative_exploratory tier; app output is capped at the 10^5 governance ceiling) | 1.0 | 0.0 | 0.0 |
 | 11 | `swartz_nanor` | Mitchell Swartz | engineering | Optimal Operating Point in loading-current space (NANOR device) | 1.0 | 0.0 | 0.0 |
-| 12 | `miles_heat_helium` | Melvin Miles | measurement | 1W = 2.6×10^11 He-4/s quantitative validation | 1.0 | 0.0 | 0.0 |
+| 12 | `miles_heat_helium` | Melvin Miles | measurement | 1W ≈ 2.6×10^11 He-4/s empirical correlation (24 ± 4 MeV band; contested, retention caveats apply) | 1.0 | 0.0 | 0.0 |
 
 ### Complementary Theories (13–15)
 

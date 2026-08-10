@@ -1110,7 +1110,12 @@ Resolved all ESLint warnings across 61 frontend source files so the production b
 
 ## Version History Summary
 
-### v0.3.5-beta (Current)
+### v0.3.6-beta (Current)
+- **Focus**: Pre-public hardening — physics accuracy, reporting honesty, UX coherence
+- **Key Features**: Theory Testbed, reaction-rate governance with claim tiers, collapse trajectories and UQ, math-accuracy corrections across backend/frontend/docs
+- **Status**: Release candidate for public deployment
+
+### v0.3.5-beta
 - **Focus**: ESLint compliance — CI build hardening
 - **Key Features**: All ESLint warnings resolved across 61 frontend files, build passes with CI=true, 75 tests passing
 - **Status**: Ready for public release (PR to main)
