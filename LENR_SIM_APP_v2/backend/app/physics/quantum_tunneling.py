@@ -767,8 +767,10 @@ def calculate_fusion_rate(
     reduced_mass_u = a1 * a2 / (a1 + a2)
     reduced_mass_kg = reduced_mass_u * 1.66053906660e-27  # kg
     
-    # Calculate thermal velocity (average)
-    thermal_velocity = np.sqrt(8 * kB * temperature / (np.pi * reduced_mass_u * amu_c2 / 1e6)) * 3e8  # m/s
+    # Calculate mean thermal speed: v = c*sqrt(8*kT/(pi*mu*c^2)) with kT and
+    # mu*c^2 both in eV. (A previous /1e6 treated the ~931 MeV rest energy as
+    # ~931 eV, inflating the speed - and every rate downstream - by ~1000x.)
+    thermal_velocity = np.sqrt(8 * kB * temperature / (np.pi * reduced_mass_u * amu_c2)) * 2.99792458e8  # m/s
     
     # Energy range for integration (typical thermal energies)
     energy_min = 0.001  # 1 eV

@@ -237,10 +237,16 @@ def calculate_derived_parameters(config: Dict[str, Any]) -> Dict[str, Any]:
         config["constants"]["e"]**2 / (4 * np.pi * config["constants"]["epsilon_0"] * 2e-15)
     ) * config["constants"]["J_to_eV"]  # Value in eV
     
-    # Gamow factor for tunneling (approximate for D-D)
+    # Gamow exponent 2*pi*eta for D-D at the thermal energy:
+    # 2*pi*eta = pi*alpha*sqrt(2*mu*c^2/E) with mu = m_d/2, i.e.
+    # pi*alpha*sqrt(m_d*c^2/E). Rest energy is converted to eV so the ratio
+    # is dimensionless (a previous version divided joules by eV).
+    m_d_c2_eV = (
+        config["constants"]["m_d"] * config["constants"]["c"]**2
+        * config["constants"]["J_to_eV"]
+    )
     derived["gamow_factor_dd"] = np.pi * config["constants"]["alpha"] * np.sqrt(
-        config["constants"]["m_d"] * config["constants"]["c"]**2 * 0.5 / 
-        derived["thermal_energy_eV"]
+        m_d_c2_eV / derived["thermal_energy_eV"]
     )
     
     # Phonon-assisted tunneling factor
