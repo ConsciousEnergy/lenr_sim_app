@@ -34,8 +34,9 @@ export function clampBubbleRadiusFactor(radiusFactor) {
 export function getBubbleScaleFromPhase(phase, progress = 0) {
   const scales = BUBBLE_VIS_SCALE;
   const t = Math.min(1, Math.max(0, Number(progress) || 0));
+  const normalized = phase === 'RECOVERY' ? 'EXPANSION' : phase;
 
-  switch (phase) {
+  switch (normalized) {
     case 'EXPANSION':
       return scales.NUCLEATION + (scales.FULL_SIZE - scales.NUCLEATION) * t;
     case 'COLLAPSE':
@@ -44,8 +45,6 @@ export function getBubbleScaleFromPhase(phase, progress = 0) {
       return scales.COLLAPSE_MIN;
     case 'REBOUND':
       return scales.COLLAPSE_MIN + (scales.GROWTH_START - scales.COLLAPSE_MIN) * t;
-    case 'RECOVERY':
-      return scales.GROWTH_START + (scales.NUCLEATION - scales.GROWTH_START) * t;
     default:
       return scales.NUCLEATION;
   }
@@ -67,7 +66,7 @@ export function getBubbleDisplayScale({
   const physical = clampBubbleRadiusFactor(radiusFactor);
   const phaseScale = getBubbleScaleFromPhase(phase, phaseProgress);
 
-  if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+  if (phase === 'EXPANSION') {
     // Keep nucleation storytelling (grow from small) but never exceed the
     // scene-safe physical clamp — and never jump above the phase envelope
     // early in the cycle.

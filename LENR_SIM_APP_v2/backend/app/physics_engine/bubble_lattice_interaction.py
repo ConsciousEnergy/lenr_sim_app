@@ -1201,11 +1201,15 @@ class BubbleLatticeInteraction:
     def _phases_from_trajectory(
         self, normalized_time: float
     ) -> Optional[Tuple[str, float]]:
-        """Read phase and radius factor off the integrated Rayleigh-Plesset solution.
+        """Read radius off the RP trajectory; label phase from the visual cycle.
 
-        Returns ``None`` when no trajectory has been computed yet, so the caller can
-        fall back to the analytic envelope.
+        Wall-velocity sign flips many times during growth, so slope-based labels
+        flickered EXPANSION↔COLLAPSE. Phase names follow the stable schedule
+        ``EXPANSION → COLLAPSE → MINIMUM → REBOUND`` (then repeats). Radius and
+        thermo still come from the integrated solution.
         """
+        from app.physics_engine.bubble_phase_schedule import phase_from_cycle_fraction
+
         trajectory = getattr(self, "_trajectory", None)
         if not trajectory:
             return None
@@ -1224,27 +1228,9 @@ class BubbleLatticeInteraction:
         radius = float(np.interp(t_query, t_series, r_series))
         radius_factor = radius / self.bubble.initial_radius
 
-        r_min = float(np.min(r_series))
-        r_max = float(np.max(r_series))
-        t_min = float(t_series[int(np.argmin(r_series))])
-        slope = float(np.interp(t_query, t_series, np.gradient(r_series, t_series)))
-
-        # Thresholds are relative to this trajectory's own range so the labels do
-        # not depend on the driving amplitude. Phase names match the analytic
-        # envelope, so existing consumers are unaffected.
-        span = max(r_max - r_min, 1e-30)
-        near_minimum = radius <= r_min * 1.05
-        rebound_ceiling = r_min + 0.5 * span
-
-        if near_minimum:
-            phase = "MINIMUM"
-        elif t_query < t_min:
-            phase = "EXPANSION" if slope >= 0 else "COLLAPSE"
-        elif radius < rebound_ceiling:
-            phase = "REBOUND"
-        else:
-            phase = "RECOVERY"
-
+        period = 1.0 / max(float(self.bubble.frequency), 1e-12)
+        cycle_fraction = (t_query / period) % 1.0
+        phase = phase_from_cycle_fraction(cycle_fraction)
         return phase, radius_factor
 
     def get_collapse_trajectory(self, max_points: int = 200) -> Dict[str, Any]:
@@ -1317,29 +1303,25 @@ class BubbleLatticeInteraction:
         if from_trajectory is not None:
             phase, radius_factor = from_trajectory
             source = "rayleigh_plesset_trajectory"
-        elif normalized_time < 0.4:
-            phase = "EXPANSION"
-            t = normalized_time / 0.4
-            radius_factor = 1 + 0.3 * np.sin(t * np.pi / 2)
-            source = "analytic_envelope"
-        elif normalized_time < 0.55:
-            phase = "COLLAPSE"
-            t = (normalized_time - 0.4) / 0.15
-            radius_factor = 1.3 - 1.15 * t ** 2
-            source = "analytic_envelope"
-        elif normalized_time < 0.6:
-            phase = "MINIMUM"
-            radius_factor = 0.15
-            source = "analytic_envelope"
-        elif normalized_time < 0.7:
-            phase = "REBOUND"
-            t = (normalized_time - 0.6) / 0.1
-            radius_factor = 0.15 + 0.5 * t
-            source = "analytic_envelope"
         else:
-            phase = "RECOVERY"
-            t = (normalized_time - 0.7) / 0.3
-            radius_factor = 0.65 + 0.35 * t
+            # Analytic envelope: same phase order as the trajectory path, with a
+            # schematic radius curve for callers that have not integrated yet.
+            from app.physics_engine.bubble_phase_schedule import (
+                phase_from_cycle_fraction,
+                phase_progress_in_cycle,
+            )
+
+            cycle_frac = float(np.clip(normalized_time, 0.0, 1.0)) % 1.0
+            phase = phase_from_cycle_fraction(cycle_frac)
+            t = phase_progress_in_cycle(cycle_frac)
+            if phase == "EXPANSION":
+                radius_factor = 1 + 0.3 * np.sin(t * np.pi / 2)
+            elif phase == "COLLAPSE":
+                radius_factor = 1.3 - 1.15 * t ** 2
+            elif phase == "MINIMUM":
+                radius_factor = 0.15
+            else:  # REBOUND
+                radius_factor = 0.15 + 0.5 * t
             source = "analytic_envelope"
         
         # Instantaneous thermo must match simulate_collapse: same gamma, same R

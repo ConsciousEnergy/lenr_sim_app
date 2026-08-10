@@ -170,10 +170,22 @@ class TestSingleCollapseModel:
     def test_phase_labels_are_known(self):
         model = build_model(driving_pressure=4e5)
         model.simulate_collapse(num_cycles=1)
-        valid = {"EXPANSION", "COLLAPSE", "MINIMUM", "REBOUND", "RECOVERY"}
+        valid = {"EXPANSION", "COLLAPSE", "MINIMUM", "REBOUND"}
         for t in np.linspace(0, 1, 50):
             phase, _ = model.get_collapse_phases(float(t))
             assert phase in valid
+
+    def test_phase_order_per_cycle_is_stable(self):
+        """Visual cycle must be Expansion → Collapse → Minimum → Rebound."""
+        model = build_model(driving_pressure=4e5)
+        model.simulate_collapse(num_cycles=2)
+        sequence = []
+        for t in np.linspace(0, 0.999, 80):
+            # One acoustic cycle lives in the first half of a 2-cycle run.
+            phase, _ = model.get_collapse_phases(float(t) * 0.5)
+            if not sequence or sequence[-1] != phase:
+                sequence.append(phase)
+        assert sequence == ["EXPANSION", "COLLAPSE", "MINIMUM", "REBOUND"]
 
     def test_raw_enhancement_varies_even_when_display_saturates(self):
         model = build_model()

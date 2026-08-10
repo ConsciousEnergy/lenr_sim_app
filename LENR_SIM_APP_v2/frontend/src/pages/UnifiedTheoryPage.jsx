@@ -736,26 +736,22 @@ function UnifiedTheoryPage() {
       const t = i / 49;
       let phase, enhancement, radiusFactor;
       
-      if (t < 0.4) {
+      if (t < 0.45) {
         phase = 'EXPANSION';
-        radiusFactor = 1 + 0.3 * Math.sin(t / 0.4 * Math.PI / 2);
+        radiusFactor = 1 + 0.3 * Math.sin(t / 0.45 * Math.PI / 2);
         enhancement = baseEnhancement * 0.1;
-      } else if (t < 0.55) {
+      } else if (t < 0.7) {
         phase = 'COLLAPSE';
-        radiusFactor = 1.3 - 1.15 * ((t - 0.4) / 0.15) ** 2;
-        enhancement = baseEnhancement * (1 + 5 * ((t - 0.4) / 0.15));
-      } else if (t < 0.6) {
+        radiusFactor = 1.3 - 1.15 * ((t - 0.45) / 0.25) ** 2;
+        enhancement = baseEnhancement * (1 + 5 * ((t - 0.45) / 0.25));
+      } else if (t < 0.8) {
         phase = 'MINIMUM';
         radiusFactor = 0.15;
         enhancement = baseEnhancement * tempFactor;
-      } else if (t < 0.7) {
-        phase = 'REBOUND';
-        radiusFactor = 0.15 + 0.5 * ((t - 0.6) / 0.1);
-        enhancement = baseEnhancement * 0.5;
       } else {
-        phase = 'RECOVERY';
-        radiusFactor = 0.65 + 0.35 * ((t - 0.7) / 0.3);
-        enhancement = baseEnhancement * 0.2;
+        phase = 'REBOUND';
+        radiusFactor = 0.15 + 0.5 * ((t - 0.8) / 0.2);
+        enhancement = baseEnhancement * 0.5;
       }
       
       timeline.push({
@@ -766,7 +762,7 @@ function UnifiedTheoryPage() {
         radius_factor: radiusFactor,
         temperature: params.temperature * (1 + (1 / radiusFactor - 1) * 0.3),
         proton_distribution: {
-          FREE: phase === 'EXPANSION' || phase === 'RECOVERY' ? 0.7 : 0.2,
+          FREE: phase === 'EXPANSION' ? 0.7 : 0.2,
           SCREENED: phase === 'COLLAPSE' ? 0.4 : 0.2,
           CAPTURE_READY: phase === 'MINIMUM' ? 0.5 : 0.1,
           NUCLEAR: phase === 'MINIMUM' ? 0.1 : 0

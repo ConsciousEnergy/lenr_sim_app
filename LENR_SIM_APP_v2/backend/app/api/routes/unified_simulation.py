@@ -1129,7 +1129,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     ### enhancement_timeline
     List of enhancement factors over the bubble cycle, each containing:
     - **time**: Time in seconds
-    - **phase**: Current collapse phase (EXPANSION, COLLAPSE, MINIMUM, REBOUND, RECOVERY)
+    - **phase**: Current collapse phase (EXPANSION, COLLAPSE, MINIMUM, REBOUND; then repeats)
     - **radius**: Current bubble radius (m)
     - **total_enhancement**: Combined enhancement factor
     - **screening**, **qed**, **casimir**, **rydberg**, **compression**: Individual factors

@@ -32,6 +32,12 @@ import {
   getBubbleDisplayScale,
   getBubbleScaleFromPhase,
 } from '../../utils/bubbleVisualScale';
+import {
+  normalizePhaseName,
+  phaseFromCycleFraction,
+  phaseProgressFromTimeline,
+  phaseProgressInCycle,
+} from '../../utils/bubblePhaseSchedule';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -58,13 +64,13 @@ const PROTON_STATES = {
 };
 
 // Bubble collapse phases (used for animation timing reference)
+// Canonical order: Expansion → Collapse → Minimum → Rebound → repeat
 // eslint-disable-next-line no-unused-vars
 const _COLLAPSE_PHASES = {
-  EXPANSION: { name: 'Expansion', duration: 0.4 },
-  COLLAPSE: { name: 'Collapse', duration: 0.15 },
-  MINIMUM: { name: 'Minimum', duration: 0.05 },
-  REBOUND: { name: 'Rebound', duration: 0.1 },
-  RECOVERY: { name: 'Recovery', duration: 0.3 }
+  EXPANSION: { name: 'Expansion', duration: 0.45 },
+  COLLAPSE: { name: 'Collapse', duration: 0.25 },
+  MINIMUM: { name: 'Minimum', duration: 0.10 },
+  REBOUND: { name: 'Rebound', duration: 0.20 },
 };
 
 // UX Time Scale: Slow down the physics animation for user comprehension
@@ -164,12 +170,10 @@ const getBubbleYFromPhase = (phase, progress = 0) => {
       // This is where LENR reactions occur
       return latticeY + distances.MINIMUM;
     case 'REBOUND':
-      // Energy release causes slight expansion
+      // Energy release causes slight expansion; next cycle restarts as Expansion
       return latticeY + distances.MINIMUM + (distances.REBOUND - distances.MINIMUM) * progress;
-    case 'RECOVERY':
-      // Returning to growth phase, nucleation begins again
-      return latticeY + distances.REBOUND - (distances.REBOUND - distances.MINIMUM) * (1 - progress);
     default:
+      // Legacy RECOVERY (and unknown labels) behave like Expansion restart
       return latticeY + distances.MINIMUM;
   }
 };
@@ -1567,41 +1571,29 @@ const UnifiedBubbleLatticeVisualization = ({
     const t = normalizedTime * period;
     const omega = 2 * Math.PI * parameters.frequency * 1000;
     
-    // Phase determination based on normalized time
-    if (normalizedTime < 0.4) {
-      phase = 'EXPANSION';
-      const _t_phase = normalizedTime / 0.4; // Phase progress (for reference)
+    // Phase determination: Expansion → Collapse → Minimum → Rebound → repeat
+    phase = phaseFromCycleFraction(normalizedTime);
+    const t_phase = phaseProgressInCycle(normalizedTime);
+    if (phase === 'EXPANSION') {
       // Expansion: driven by acoustic pressure
       const P_acoustic = parameters.drivingPressure * 1e5 * Math.sin(omega * t * 0.4); // Convert bar to Pa
       const expansionFactor = 1 + (P_acoustic / (101325 + 2 * SIGMA / R0_m)) * 0.3;
       radius = baseRadius * Math.max(1.0, Math.min(1.3, expansionFactor));
-    } else if (normalizedTime < 0.55) {
-      phase = 'COLLAPSE';
-      const t_phase = (normalizedTime - 0.4) / 0.15;
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
+    } else if (phase === 'COLLAPSE') {
       // Collapse: rapid compression following Rayleigh-Plesset dynamics
-      // Simplified: R(t) ≈ R_max * (1 - t²) for rapid collapse
       const R_max = baseRadius * (1 + parameters.drivingPressure * 0.3);
       const R_min = baseRadius * 0.1; // Minimum radius (compression ratio ~10)
       radius = R_max - (R_max - R_min) * Math.pow(t_phase, 2);
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
-    } else if (normalizedTime < 0.6) {
-      phase = 'MINIMUM';
+    } else if (phase === 'MINIMUM') {
       radius = baseRadius * 0.1; // Maximum compression
       compressionRatio = 10.0;
-    } else if (normalizedTime < 0.7) {
-      phase = 'REBOUND';
-      const t_phase = (normalizedTime - 0.6) / 0.1;
-      // Rebound: rapid expansion after collapse
+    } else {
+      // REBOUND: rapid expansion after collapse, then the cycle restarts
       const R_min = baseRadius * 0.1;
       const R_rebound = baseRadius * 0.6;
       radius = R_min + (R_rebound - R_min) * t_phase;
-      compressionRatio = baseRadius / radius;
-    } else {
-      phase = 'RECOVERY';
-      const t_phase = (normalizedTime - 0.7) / 0.3;
-      // Recovery: gradual return to equilibrium
-      const R_recovery = baseRadius * 0.6;
-      radius = R_recovery + (baseRadius - R_recovery) * t_phase;
       compressionRatio = baseRadius / radius;
     }
     
@@ -1694,7 +1686,7 @@ const UnifiedBubbleLatticeVisualization = ({
     protonGroupRef.current.children.forEach((proton) => {
       let newState;
       
-      if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+      if (phase === 'EXPANSION') {
         newState = 'FREE';
       } else if (phase === 'COLLAPSE') {
         // Physics-based transitions during collapse
@@ -1811,7 +1803,7 @@ const UnifiedBubbleLatticeVisualization = ({
     if (apiData) {
       // Use API physics data
       radius = baseRadius * apiData.radius_factor;
-      phase = apiData.phase;
+      phase = normalizePhaseName(apiData.phase);
       fieldStrength = apiData.electric_field_v_m ?? apiData.electric_field;
       temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
@@ -1833,7 +1825,7 @@ const UnifiedBubbleLatticeVisualization = ({
       // Fall back to local physics calculations
       const localPhysics = calculateBubbleRadius(normalizedTime, baseRadius);
       radius = localPhysics.radius;
-      phase = localPhysics.phase;
+      phase = normalizePhaseName(localPhysics.phase);
       compressionRatio = localPhysics.compressionRatio;
       fieldStrength = localPhysics.fieldStrength;
       temperature = localPhysics.temperature;
@@ -1879,17 +1871,14 @@ const UnifiedBubbleLatticeVisualization = ({
       const jet = bubbleGroupRef.current.getObjectByName('FocusedJet');
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
-      // API radius_factor can be ≫ 1.3 during real RP expansion; clamp it.
-      let phaseProgress = 0;
-      if (phase === 'EXPANSION') {
-        phaseProgress = Math.min(1, normalizedTime / 0.4);
-      } else if (phase === 'COLLAPSE') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
-      } else if (phase === 'REBOUND') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.55) / 0.1);
-      } else if (phase === 'RECOVERY') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.65) / 0.35);
-      }
+      // Prefer timeline segment progress when API data is driving the mesh.
+      const phaseProgress = simulationData?.enhancement_timeline
+        ? phaseProgressFromTimeline(
+          simulationData.enhancement_timeline,
+          normalizedTime,
+          phase,
+        )
+        : phaseProgressInCycle(normalizedTime);
       const radiusFactor = radius / Math.max(baseRadius, 1e-12);
       const displayScale = getBubbleDisplayScale({
         radiusFactor,
@@ -1899,7 +1888,7 @@ const UnifiedBubbleLatticeVisualization = ({
       
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
-      if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+      if (phase === 'EXPANSION') {
         // Show sphere
         if (bubble && showBubble) {
           bubble.visible = true;
@@ -1912,7 +1901,7 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) jet.visible = false;
       } else if (phase === 'COLLAPSE') {
         // Show torus formation (bubble collapsing into torus shape)
-        const collapseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
+        const collapseProgress = phaseProgress;
         const torusProgress = Math.min(1, collapseProgress * 2); // Torus appears halfway through collapse
         
         if (bubble && showBubble) {
@@ -2493,14 +2482,6 @@ const UnifiedBubbleLatticeVisualization = ({
             verticalOscillationSpeed = 1.2;
             coreHeightOffset = 0.35;
           break;
-        case 'RECOVERY':
-          vortexIntensity = 0.45;
-          flowDirection = 0.25; // Relax back toward baseline
-          rotationSpeed = 1.0;
-          radialOscillationSpeed = 0.8;
-          verticalOscillationSpeed = 0.6;
-          coreHeightOffset = 0.4;
-          break;
         default:
           // Default case for any unexpected phase values
           break;
@@ -2954,12 +2935,11 @@ const UnifiedBubbleLatticeVisualization = ({
 
   // Phase indicator color
   const getPhaseColor = (phase) => {
-    switch (phase) {
+    switch (normalizePhaseName(phase)) {
       case 'EXPANSION': return 'info';
       case 'COLLAPSE': return 'warning';
       case 'MINIMUM': return 'error';
       case 'REBOUND': return 'secondary';
-      case 'RECOVERY': return 'success';
       default: return 'default';
     }
   };
