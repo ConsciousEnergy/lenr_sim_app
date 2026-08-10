@@ -94,17 +94,13 @@ def calculate_gamow_energy(
     Returns:
         Gamow energy in keV
     """
-    alpha = const.alpha  # Fine structure constant
-    reduced_mass = reduced_mass_amu * AMU
-    
-    # E_G = 2μ(Z₁Z₂e²/4πε₀ℏ)²
-    e2_over_4pi_eps0 = const.e**2 / (4 * np.pi * const.epsilon_0)
-    E_G_J = 2 * reduced_mass * (z1 * z2 * e2_over_4pi_eps0 / HBAR)**2
-    
-    # Convert to keV
-    E_G_keV = E_G_J / EV_TO_J / 1000
-    
-    return E_G_keV
+    # Delegate to the canonical implementation so every Gamow energy in the
+    # codebase comes from one formula: E_G = 2μc²(παZ₁Z₂)² ≈ 986 keV for D+D.
+    # (A previous local derivation here omitted the π², giving ≈100 keV and
+    # overestimating keV-range cross-sections by 10³-10⁴×.)
+    from app.physics.core_constants import gamow_energy
+
+    return gamow_energy(z1, z2, reduced_mass_amu * AMU)
 
 
 def tunneling_cross_section(
