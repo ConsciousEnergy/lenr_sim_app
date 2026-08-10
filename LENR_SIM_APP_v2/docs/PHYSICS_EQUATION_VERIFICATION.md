@@ -807,6 +807,78 @@ At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) 
 
 ---
 
+## 9D. Math-Accuracy Hardening Corrections (2026-08-10)
+
+Corrections landed in the pre-public math-accuracy pass. The WolframAlpha
+MCP server was not reachable from this environment (consistent with the 9A/9C
+notes), so each value was verified with scipy CODATA constants plus the
+analytic closed form, and locked by an absolute numeric gate in
+`backend/tests/test_physics/test_absolute_numeric_gates.py`. Re-run the
+Wolfram queries when the server is reachable.
+
+### 9D.1 Gamow energy (legacy reaction_rates path)
+```
+E_G = 2 μ c² (π α Z₁Z₂)²  ≈ 985.8 keV for D+D
+```
+**Status:** ✅ VERIFIED  
+**Code:** `calculate_gamow_energy` now delegates to `core_constants.gamow_energy` (file: app/physics/reaction_rates.py)  
+**Check:** scipy CODATA: 2·(m_d/2)·c²·(π·α)² = 985.8 keV (query for Wolfram: "2*(deuteron mass/2)*c^2*(pi*fine structure constant)^2 in keV")  
+**Note:** previous local derivation omitted the π², giving ≈99.9 keV; the dead `unified_lenr_model.py` monolith carrying the same form was deleted. Gate: `TestGamowEnergyGate` (verified 2026-08-10)
+
+### 9D.2 Phonon-path Coulomb barrier units
+```
+V_C = 1.44 MeV·fm · Z₁Z₂ / r_fm ≈ 0.476 MeV for D+D at contact (r ≈ 3.02 fm)
+```
+**Status:** ✅ VERIFIED  
+**Code:** `barrier_height = 1.44e6 * z1 * z2 / (r*1e15)` in eV (file: app/physics/phonon_modes.py)  
+**Note:** previously the MeV value was labelled/consumed as eV (10⁶ too low). Gate: `TestCoulombBarrierGate` (verified 2026-08-10)
+
+### 9D.3 Mean thermal speed
+```
+v = c·sqrt(8 kT / (π μ c²)) ≈ 2.5×10³ m/s for D-D at 300 K
+```
+**Status:** ✅ VERIFIED  
+**Code:** `mean_thermal_speed` (file: app/physics/quantum_tunneling.py)  
+**Note:** previous inline form divided the 931 MeV/u rest energy by 10⁶, inflating v (and downstream rates) ~1000×. Gate: `TestThermalSpeedGate` (verified 2026-08-10)
+
+### 9D.4 Thermally averaged ⟨σv⟩ integration measure
+```
+⟨σv⟩ = sqrt(8/(π μ (kT)³)) ∫ σ(E)·E·e^(−E/kT) dE   (dE in joules)
+```
+**Status:** ✅ VERIFIED  
+**Code:** `thermal_average_cross_section` (file: app/physics/reaction_rates.py)  
+**Reference:** Bosch & Hale (1992) Nucl. Fusion 32, 611 — D(d,n)He3: computed 2.96e-21 / 5.07e-19 cm³/s at 2 / 10 keV vs tabulated 3.11e-21 / 6.02e-19 (within ~20%)  
+**Note:** the quadrature ran over E in keV with a joule-valued integrand, overestimating ⟨σv⟩ by ~6×10¹⁵. Gate: `TestSigmaVReferenceGate` (verified 2026-08-10)
+
+### 9D.5 Casimir classical (high-temperature) limit
+```
+F/A = −ζ(3) k_B T / (8π d³)  for d ≫ λ_T
+```
+**Status:** ✅ VERIFIED (standard result; e.g. Bordag et al., Advances in the Casimir Effect)  
+**Code:** `calculate_casimir_force` high-T branch (file: app/physics/casimir_forces.py)  
+**Note:** previous branch divided by (λ_T/d), making |F| grow with separation. Gate: `TestCasimirHighTemperatureGate` (verified 2026-08-10)
+
+### 9D.6 Widom-Larsen mass-renormalization threshold
+```
+m* ≥ (m_n − m_p) ≈ 2.531 m_e
+```
+**Status:** 📖 REFERENCE (Widom & Larsen 2006, Eur. Phys. J. C 46, 107)  
+**Code:** `m_threshold = MN - MP` (file: app/physics_engine/theories/widom_larsen.py)  
+**Check:** scipy CODATA: (m_n − m_p)/m_e = 2.531  
+**Note:** previous code added an extra m_e (3.531 m_e); the 10¹⁰ rate-to-enhancement bridge is now a named, labelled model assumption. Gate: `TestWidomLarsenThresholdGate` (verified 2026-08-10)
+
+### 9D.7 Free-electron Fermi energies (materials table)
+```
+E_F = (ħ²/2m_e)(3π² n_e)^(2/3): Pd 6.1 eV (n_e=6.8e28), Ni 7.4 eV (9.1e28), Ti 7.9 eV (1.0e29), Pt 6.0 eV (6.6e28)
+```
+**Status:** ⚠️ APPROXIMATION (free-electron model; self-consistent with the stored n_e consumed by the TF formulas)  
+**Code:** `MATERIALS` (file: app/physics/core_constants.py) and `DEFAULT_CONFIG` (file: app/physics_engine/constants.py)  
+**Note:** Pd/Ni previously carried 11.7 eV — aluminium's textbook value (verified 2026-08-10)
+
+### 9D.8 Log self-corrections
+- §4.2 Thomas-Fermi length: restored the factor 2 (λ_TF = sqrt(2ε₀E_F/(3n_e e²))), matching the code.
+- §4.5 Adiabatic limit: coefficient corrected to 13.6 eV (≈27.2 eV for D+D), matching the code; the log previously doubled it.
+
 ## 10. Known Limitations
 
 1. **WKB Approximation**: Valid only for slowly varying potentials
