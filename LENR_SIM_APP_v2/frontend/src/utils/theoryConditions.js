@@ -34,7 +34,9 @@ export const DEFAULT_THEORY_PARAMETERS = {
   drivingPressure: 1.5,
   loadingRatio: 0.9,
   surfaceRoughness: 5e-9,
-  defectDensity: 1e14,
+  // Matches the Pd-D reference preset in UnifiedTheoryPage (was 1e14, which
+  // silently disagreed with every preset's 1e16).
+  defectDensity: 1e16,
   grainSize: 50e-9,
   electrolyteFamily: 'li',
   electrolyteSpecies: null,
@@ -67,7 +69,7 @@ export const buildTheoryConditions = ({ parameters } = {}) => {
     electric_field: BASELINE_ELECTRIC_FIELD_V_M,
     loading_ratio: params.loadingRatio || 0.9,
     surface_roughness: params.surfaceRoughness || 5e-9,
-    defect_density: params.defectDensity || 1e14,
+    defect_density: params.defectDensity || 1e16,
     grain_size: params.grainSize || 50e-9,
     gap_width_nm: roughnessNm,
     crack_width_nm: roughnessNm,

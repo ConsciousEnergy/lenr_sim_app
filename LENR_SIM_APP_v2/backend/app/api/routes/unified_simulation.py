@@ -1740,6 +1740,13 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 breakdown["saturation"] = breakdown_saturation
                 
                 # Send update
+                # Additive fields matching the HTTP timeline contract so the
+                # live stream can report saturation instead of clients
+                # recomputing log10 from the already-capped display value.
+                total_saturation = breakdown_saturation.get("mechanisms", {}).get("total", {})
+                raw_log10 = total_saturation.get("log10_value_raw")
+                if not isinstance(raw_log10, (int, float)) or not math.isfinite(raw_log10):
+                    raw_log10 = None
                 await websocket.send_json({
                     "type": "physics_update",
                     "contract_version": CONTRACT_VERSION,
@@ -1747,6 +1754,10 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
                     "enhancement": float(breakdown.get("total", MAX_ENHANCEMENT_FACTOR)),
+                    "enhancement_log10_raw": raw_log10,
+                    "enhancement_is_saturated": bool(
+                        total_saturation.get("is_saturated", False)
+                    ),
                     "enhancement_breakdown": breakdown,
                     "proton_distribution": instant["proton_distribution"],
                     "radius_um": float(instant["conditions"]["radius_factor"] * params["bubble"]["initial_radius_um"]),

@@ -101,11 +101,16 @@ export function framesToStreamPreview(frames) {
     normalized_time: frame.normalized_time,
     phase: frame.phase,
     enhancement: frame.enhancement,
+    // Prefer the backend's uncapped log10 magnitude and saturation flag;
+    // log10 of the displayed value is only a last-resort fallback because
+    // that value may already be capped at the reporting ceiling.
     enhancement_log10_raw:
-      typeof frame.enhancement === 'number' && frame.enhancement > 0
-        ? Math.log10(frame.enhancement)
-        : 0,
-    enhancement_is_saturated: false,
+      typeof frame.enhancement_log10_raw === 'number'
+        ? frame.enhancement_log10_raw
+        : (typeof frame.enhancement === 'number' && frame.enhancement > 0
+          ? Math.log10(frame.enhancement)
+          : 0),
+    enhancement_is_saturated: Boolean(frame.enhancement_is_saturated),
     enhancement_breakdown: frame.enhancement_breakdown || {},
     proton_distribution: frame.proton_distribution || {},
     radius_um: frame.radius_um,

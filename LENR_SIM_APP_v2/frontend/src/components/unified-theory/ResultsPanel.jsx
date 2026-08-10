@@ -49,8 +49,18 @@ export default function ResultsPanel({
 }) {
   const fanData = getUncertaintyFanData(simulationData);
   const mechanismFanData = getMechanismUncertaintyFanData(simulationData);
+  const isLocalFallback = simulationData?.validation?.route_mode === 'local_fallback';
   return (
 <Grid container spacing={2}>
+  {isLocalFallback && (
+    <Grid size={{ xs: 12 }}>
+      <Alert severity="warning">
+        Offline placeholder values: the backend was unreachable, so these
+        numbers come from a schematic client-side fallback, not the physics
+        engine. Do not cite them as simulation output.
+      </Alert>
+    </Grid>
+  )}
   <Grid size={{ xs: 12, md: 6 }}>
     <Paper sx={{ p: 2 }} variant="outlined">
       <Typography variant="h6" gutterBottom>Collapse Results</Typography>
