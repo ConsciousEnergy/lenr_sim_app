@@ -35,7 +35,10 @@ export function buildBubbleLatticePayload(parameters, options = {}) {
 
   const payload = {
     bubble: {
-      initial_radius_um: parameters.initialBubbleRadius * 3.33,
+      // The slider value is true micrometres and is sent unmodified. (A
+      // previous x3.33 rescale silently turned a "3 um" slider into ~10 um
+      // on the backend while the UI and CSV export still claimed 3 um.)
+      initial_radius_um: parameters.initialBubbleRadius,
       driving_pressure_bar: parameters.drivingPressure,
       frequency_khz: parameters.frequency,
       ambient_temperature_k: parameters.temperature,

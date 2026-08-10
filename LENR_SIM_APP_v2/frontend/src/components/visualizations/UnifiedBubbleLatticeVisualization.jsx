@@ -403,7 +403,7 @@ const UnifiedBubbleLatticeVisualization = ({
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
-  const bubbleRadiusRef = useRef(3.0);
+  const bubbleRadiusRef = useRef(10.0);
   const normalizedTimeRef = useRef(0);
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
@@ -414,7 +414,7 @@ const UnifiedBubbleLatticeVisualization = ({
     hostMaterial = 'palladium',
     loadingRatio = 0.9,
     temperature: _paramTemperature = 300, // eslint-disable-line no-unused-vars
-    initialBubbleRadius = 3.0,
+    initialBubbleRadius = 10.0,
     drivingPressure = 1.5,
     frequency = 20,
     latticeSize = 4
