@@ -119,7 +119,7 @@ DEFAULT_CONFIG = {
     "spring_constant": 10.0,      # Spring constant for lattice dynamics
     "debye_temperature": 275.0,   # Debye temperature for Pd
     "work_function": 5.12,        # Work function for Pd in eV
-    "fermi_energy": 7.0,          # Fermi energy for Pd in eV
+    "fermi_energy": 6.1,          # Free-electron E_F for Pd in eV (from n_e=6.8e28 m^-3)
     "screening_length": 5e-11,    # Electron screening length in meters
     
     # Advanced model parameters
