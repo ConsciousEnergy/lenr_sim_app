@@ -3064,7 +3064,7 @@ const UnifiedBubbleLatticeVisualization = ({
               />
               <FormControlLabel
                 control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
-                label={<Typography variant="caption" color="white">Bubble</Typography>}
+                label={<Typography variant="caption" color="white">Double-layer bubble</Typography>}
               />
               <FormControlLabel
                 control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
