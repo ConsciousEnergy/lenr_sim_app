@@ -389,8 +389,6 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
-  // eslint-disable-next-line no-unused-vars
-  const [_showDoubleLayer, _setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
   const [showBoundaryPlane, setShowBoundaryPlane] = useState(false);
   const [showCasimir, setShowCasimir] = useState(false);
@@ -665,21 +663,26 @@ const UnifiedBubbleLatticeVisualization = ({
     // Start with small scale (nucleation size)
     const initialScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION;
     
-    // Main bubble - starts as sphere, morphs to torus during collapse, then to jet
-    // Physics: starts very small at nucleation (critical nucleus ~100nm)
+    // Interior gas volume — kept nearly transparent so the ionic double-layer
+    // shells remain the primary visual. A filled opaque MainBubble was covering
+    // the developed double-layer dynamics.
     const bubbleGeometry = new THREE.SphereGeometry(1, 32, 32);
     const bubbleMaterial = new THREE.MeshPhongMaterial({
       color: 0xaaddff,
       transparent: true,
-      opacity: 0.4,
-      shininess: 100,
-      specular: 0xffffff
+      opacity: 0.1,
+      shininess: 80,
+      specular: 0xffffff,
+      depthWrite: false,
+      side: THREE.FrontSide,
     });
     const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     bubble.name = 'MainBubble';
+    bubble.renderOrder = 1;
     bubble.userData = { 
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
-      baseGeometry: bubbleGeometry
+      baseGeometry: bubbleGeometry,
+      baseOpacity: 0.1,
     };
     // Start with nucleation scale (small bubble at surface)
     bubble.scale.setScalar(initialScale);
@@ -695,12 +698,14 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.8,
       emissive: 0xff4400,
       emissiveIntensity: 1.0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const torus = new THREE.Mesh(torusGeometry, torusMaterial);
     torus.name = 'TorusFormation';
     torus.visible = false; // Hidden initially, shown during collapse
     torus.rotation.x = Math.PI / 2; // Rotate to horizontal (XZ plane) - ring around Y axis
+    torus.renderOrder = 3;
     torus.userData = { baseRadius: 1.5, baseTubeRadius: 0.8 };
     bubbleGroup.add(torus);
     
@@ -713,39 +718,64 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.9,
       emissive: 0xffff00,
       emissiveIntensity: 2.0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const jet = new THREE.Mesh(jetGeometry, jetMaterial);
     jet.name = 'FocusedJet';
     jet.visible = false; // Hidden initially, shown during minimum/rebound
     jet.rotation.x = Math.PI; // Point downward
+    jet.renderOrder = 3;
     jet.userData = { baseRadius: 0.3, baseHeight: 4 };
     bubbleGroup.add(jet);
     
-    // Ionic double-layer shell (outer)
-    const doubleLayerGeometry = new THREE.SphereGeometry(1.1, 32, 32);
+    // Ionic double-layer shell (outer) — primary bubble visual
+    const doubleLayerGeometry = new THREE.SphereGeometry(1.12, 48, 48);
     const doubleLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
+      color: 0x00e8ff,
       transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide
+      opacity: 0.32,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      wireframe: false,
     });
     const doubleLayer = new THREE.Mesh(doubleLayerGeometry, doubleLayerMaterial);
     doubleLayer.name = 'DoubleLayer';
+    doubleLayer.renderOrder = 2;
     doubleLayer.scale.setScalar(initialScale); // Start small at nucleation
+    doubleLayer.userData = { baseOpacity: 0.32 };
     bubbleGroup.add(doubleLayer);
+
+    // Outer wire rim so the double-layer stays readable without filling the view
+    const doubleLayerWire = new THREE.Mesh(
+      new THREE.SphereGeometry(1.13, 24, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0x66ffff,
+        transparent: true,
+        opacity: 0.45,
+        wireframe: true,
+        depthWrite: false,
+      }),
+    );
+    doubleLayerWire.name = 'DoubleLayerWire';
+    doubleLayerWire.renderOrder = 2;
+    doubleLayerWire.scale.setScalar(initialScale);
+    bubbleGroup.add(doubleLayerWire);
     
     // Inner charge layer
-    const innerLayerGeometry = new THREE.SphereGeometry(0.95, 32, 32);
+    const innerLayerGeometry = new THREE.SphereGeometry(0.92, 32, 32);
     const innerLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff6600,
+      color: 0xff7722,
       transparent: true,
-      opacity: 0.1,
-      side: THREE.FrontSide
+      opacity: 0.22,
+      side: THREE.FrontSide,
+      depthWrite: false,
     });
     const innerLayer = new THREE.Mesh(innerLayerGeometry, innerLayerMaterial);
     innerLayer.name = 'InnerLayer';
+    innerLayer.renderOrder = 2;
     innerLayer.scale.setScalar(initialScale); // Start small at nucleation
+    innerLayer.userData = { baseOpacity: 0.22 };
     bubbleGroup.add(innerLayer);
     
     // Pressure wave rings
@@ -1864,6 +1894,7 @@ const UnifiedBubbleLatticeVisualization = ({
     if (bubbleGroupRef.current) {
       const bubble = bubbleGroupRef.current.getObjectByName('MainBubble');
       const doubleLayer = bubbleGroupRef.current.getObjectByName('DoubleLayer');
+      const doubleLayerWire = bubbleGroupRef.current.getObjectByName('DoubleLayerWire');
       const innerLayer = bubbleGroupRef.current.getObjectByName('InnerLayer');
       
       // Torus-to-jet formation visualization (always update, visibility controlled by phase)
@@ -1893,7 +1924,9 @@ const UnifiedBubbleLatticeVisualization = ({
         if (bubble && showBubble) {
           bubble.visible = true;
           bubble.scale.setScalar(displayScale);
-          bubble.material.opacity = 0.3 + (1 - Math.min(radiusFactor, 1.3) / 1.3) * 0.4;
+          // Ghost interior only — never opaque enough to hide the double-layer.
+          const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
+          bubble.material.opacity = baseOpacity;
         } else if (bubble) {
           bubble.visible = false;
         }
@@ -1905,10 +1938,11 @@ const UnifiedBubbleLatticeVisualization = ({
         const torusProgress = Math.min(1, collapseProgress * 2); // Torus appears halfway through collapse
         
         if (bubble && showBubble) {
-          // Fade out sphere as torus appears
+          // Fade out ghost interior as torus appears
           bubble.visible = torusProgress < 0.7;
           bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.5));
-          bubble.material.opacity = 0.3 * (1 - torusProgress);
+          const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
+          bubble.material.opacity = baseOpacity * (1 - torusProgress);
         } else if (bubble) {
           bubble.visible = false;
         }
@@ -1960,16 +1994,24 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
       
-      // Double / inner shells track the same scene-safe display scale
+      // Double / inner shells are the primary bubble visual (ionic double-layer).
       if (doubleLayer) {
-        doubleLayer.scale.setScalar(displayScale * 1.1);
-        const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.4 : 0.15;
+        doubleLayer.scale.setScalar(displayScale * 1.12);
+        const base = doubleLayer.userData.baseOpacity ?? 0.32;
+        const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.2 : base;
         doubleLayer.material.opacity = intensity;
-        if (!showBubble) doubleLayer.visible = false;
+        doubleLayer.visible = showBubble;
+      }
+      if (doubleLayerWire) {
+        doubleLayerWire.scale.setScalar(displayScale * 1.13);
+        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.65 : 0.45;
+        doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
-        innerLayer.scale.setScalar(displayScale * 0.95);
-        if (!showBubble) innerLayer.visible = false;
+        innerLayer.scale.setScalar(displayScale * 0.92);
+        const base = innerLayer.userData.baseOpacity ?? 0.22;
+        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.15 : base;
+        innerLayer.visible = showBubble;
       }
       
       // Update pressure rings — anchored to the display bubble, not unbounded growth
