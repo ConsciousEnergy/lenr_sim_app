@@ -664,8 +664,11 @@ def calculate_comprehensive_phonon_enhancement(
     # Effective nuclear radius in meters
     nuclear_radius = 1.2e-15 * (a1**(1/3) + a2**(1/3))
     
-    # Coulomb barrier height in eV
-    barrier_height = 1.44 * z1 * z2 / (nuclear_radius * 1e15)
+    # Coulomb barrier height in eV.
+    # 1.44 MeV·fm / r_fm gives the barrier in MeV; convert to eV with 1e6.
+    # (A previous version returned the MeV number labelled as eV, feeding a
+    # barrier ~10^6 too low into the phonon-assisted tunneling factors.)
+    barrier_height = 1.44e6 * z1 * z2 / (nuclear_radius * 1e15)
     
     # Effective barrier width in meters
     # Typically on the order of 1-10 fm for nuclear reactions

@@ -62,9 +62,14 @@ def calculate_casimir_force(
     thermal_length = hbar * c / (2 * np.pi * kB * temperature)
     
     if distance > thermal_length:
-        # High-temperature limit correction
-        correction_factor = (thermal_length / distance) * (np.pi**2 / 3)
-        casimir_force = casimir_force_zero / correction_factor
+        # Classical (high-temperature / large-separation) limit for ideal
+        # plates: F/A = -zeta(3) k_B T / (8 pi d^3), which decays as 1/d^3.
+        # (A previous version divided by (lambda_T/d), so |F| grew with
+        # separation - the wrong sign of the d-dependence entirely.)
+        # Note both branches are asymptotic limits; near d ~ lambda_T the
+        # exact Lifshitz result interpolates between them.
+        zeta_3 = 1.2020569031595942  # Riemann zeta(3)
+        casimir_force = -zeta_3 * kB * temperature * area / (8 * np.pi * distance**3)
     else:
         # Low-temperature approximation (minimal correction)
         correction_factor = 1 + (distance / thermal_length)**4 / 45

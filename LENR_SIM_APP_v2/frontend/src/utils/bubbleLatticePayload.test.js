@@ -9,7 +9,7 @@ describe('buildBubbleLatticePayload', () => {
     reactant: 'deuterium',
     temperature: 300,
     loadingRatio: 0.9,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -28,7 +28,8 @@ describe('buildBubbleLatticePayload', () => {
       uncertaintySamples: 256,
       randomSeed: '',
     });
-    expect(payload.bubble.initial_radius_um).toBeCloseTo(3.0 * 3.33);
+    // The slider value is true micrometres and must be sent unmodified.
+    expect(payload.bubble.initial_radius_um).toBe(10.0);
     expect(payload.material.host_material).toBe('palladium');
     expect(payload.lattice.loading_ratio).toBe(0.9);
     expect(payload.electrolyte.family).toBe('li');

@@ -70,13 +70,14 @@ N_T = \frac{3600}{4.03 \times 1.602\times 10^{-13}} \approx 5.58\times 10^{15} \
 
 | Parameter | Value |
 |-----------|-------|
-| Q | 2.45 MeV per reaction |
+| Q | 3.27 MeV per reaction (2.45 MeV of it as neutron kinetic energy) |
 | Neutrons per reaction | 1 |
 | Neutron energy | ~2.45 MeV |
 
-**Neutrons per W·hr (100% heat from n branch):**
+**Neutrons per W·hr (100% heat from n branch, Q = 3.27 MeV deposited per
+reaction):**
 \[
-N_n = \frac{3600}{2.45 \times 1.602\times 10^{-13}} \approx 9.17\times 10^{15} \text{ n/W·hr}
+N_n = \frac{3600}{3.27 \times 1.602\times 10^{-13}} \approx 6.87\times 10^{15} \text{ n/W·hr}
 \]
 
 **Observed:** "Low-level" neutron flux, 2–4× background. Background ~0.01–1 n/s typical. So observed maybe 0.02–4 n/s ≈ 70–1.4×10⁴ n/hr.

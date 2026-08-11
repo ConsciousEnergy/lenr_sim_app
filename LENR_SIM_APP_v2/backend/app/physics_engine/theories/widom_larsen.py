@@ -59,6 +59,12 @@ C = const.c
 Q_INVERSE_BETA_J = (MN - MP) * C**2
 Q_INVERSE_BETA_MEV = Q_INVERSE_BETA_J / (1e6 * E_CHARGE)
 
+# Dimensional bridge from (neutron production rate x capture cross-section)
+# to the pipeline's dimensionless rate modifier. Model assumption (uncited):
+# the WL papers derive no such conversion, so this scale only sets where the
+# ULM chain saturates against the governance MAX_ENHANCEMENT_FACTOR ceiling.
+ULM_CHAIN_RATE_TO_ENHANCEMENT = 1e10  # model assumption
+
 
 class WidomLarsenTheory:
     """Ultra-low momentum neutron production via weak interaction on surfaces."""
@@ -89,7 +95,7 @@ class WidomLarsenTheory:
             },
             "electron_mass_renormalization": {
                 "default": 4.0,
-                "description": "Ratio m*/m_e (threshold ~3.53 for inverse beta decay)",
+                "description": "Ratio m*/m_e (threshold ~2.53 for inverse beta decay)",
             },
             "neutron_capture_cross_section_barn": {
                 "default": 1e6,
@@ -123,11 +129,12 @@ class WidomLarsenTheory:
         mass_ratio = config.get("electron_mass_renormalization", config.get("m_e_star_over_m_e", 4.0))
         sigma_capture_barn = config.get("neutron_capture_cross_section_barn", 1e6)
 
-        # Mass renormalization condition:
-        # The electron must acquire effective mass m* â‰¥ (m_n - m_p + m_e) â‰ˆ 2.531 m_e
-        # from interaction with collective EM modes.
+        # Mass renormalization condition (Widom & Larsen 2006, beta_0 ~ 2.531):
+        # energy conservation for e- + p+ -> n + nu_e requires
+        # m* + m_p >= m_n, i.e. m* >= (m_n - m_p) ~ 2.531 m_e.
+        # (A previous version added an extra m_e, using ~3.531 m_e.)
         m_star = mass_ratio * ME
-        m_threshold = (MN - MP + ME)  # ~2.531 m_e
+        m_threshold = MN - MP  # ~2.531 m_e
 
         # Is renormalization sufficient?
         mass_sufficient = m_star >= m_threshold
@@ -168,7 +175,7 @@ class WidomLarsenTheory:
             capture_energy_J = capture_energy_MeV * 1e6 * E_CHARGE
 
             enhancement = max(1.0, min(
-                n_production_rate * sigma_ulm * 1e10,
+                n_production_rate * sigma_ulm * ULM_CHAIN_RATE_TO_ENHANCEMENT,
                 MAX_ENHANCEMENT_FACTOR
             ))
 

@@ -403,7 +403,7 @@ const UnifiedBubbleLatticeVisualization = ({
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
-  const bubbleRadiusRef = useRef(3.0);
+  const bubbleRadiusRef = useRef(10.0);
   const normalizedTimeRef = useRef(0);
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
@@ -414,7 +414,7 @@ const UnifiedBubbleLatticeVisualization = ({
     hostMaterial = 'palladium',
     loadingRatio = 0.9,
     temperature: _paramTemperature = 300, // eslint-disable-line no-unused-vars
-    initialBubbleRadius = 3.0,
+    initialBubbleRadius = 10.0,
     drivingPressure = 1.5,
     frequency = 20,
     latticeSize = 4
@@ -1652,23 +1652,32 @@ const UnifiedBubbleLatticeVisualization = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drivingPressure, parameters.temperature, parameters.frequency]);
 
-  // Calculate enhancement factors based on physics conditions
+  // SCHEMATIC PREVIEW ONLY: used when no backend data is streaming, so the
+  // idle animation still has colours. The screening term mirrors the backend
+  // screening_kernel (Assenbaum-Rolfs with the cited Pd potential) and the
+  // total is capped at the governance MAX_ENHANCEMENT_FACTOR (1e5), so this
+  // preview cannot contradict streamed results. It is never shown as a
+  // simulation output. (A previous version used the retired Debye form and
+  // an unrelated 1e8 cap.)
   const calculateEnhancementFactors = useCallback((compressionRatio, fieldStrength, temperature, _pressure) => {
     // Physical constants
-    const KB = 1.381e-23; // J/K
-    const E_CHARGE = 1.602e-19; // C
-    const EPS0 = 8.854e-12; // F/m
-    const _ALPHA = 1/137; // Fine structure constant (for reference)
+    const KB = 1.380649e-23; // J/K
+    const E_CHARGE = 1.602176634e-19; // C
+    const ALPHA = 7.2973525693e-3; // Fine structure constant
+    const MAX_ENHANCEMENT = 1e5; // governance ceiling (MAX_ENHANCEMENT_FACTOR)
+    const U_SCREEN_EV = 800; // Pd cited typical potential (screening_data.py)
+    const MU_C2_EV = 0.5 * 2.014 * 931.494e6; // D+D reduced-mass rest energy, eV
     
-    // Electron density (from material properties)
-    const n_e = 6.8e28; // m⁻³ (palladium)
-    
-    // 1. Electron Screening Enhancement
-    // Debye screening length: λ_D = √(ε₀kT / (n_e e²))
-    const lambda_d = Math.sqrt(EPS0 * KB * temperature / (n_e * E_CHARGE * E_CHARGE));
-    const U_screen = E_CHARGE * E_CHARGE / (4 * Math.PI * EPS0 * lambda_d);
-    const E_thermal = 1.5 * KB * temperature / E_CHARGE; // eV
-    const screening_factor = Math.min(1e4, Math.exp(U_screen / Math.max(E_thermal, 0.01)));
+    // 1. Electron Screening Enhancement (Assenbaum-Rolfs, as in the backend
+    // kernel): f = exp(pi * eta * Ue / E) with the exponent capped at
+    // ln(ceiling) so the ceiling is the only limit.
+    const eThermalEv = Math.max(1.5 * KB * temperature / E_CHARGE, 1e-6);
+    const eta = ALPHA * Math.sqrt(MU_C2_EV / (2 * eThermalEv));
+    const exponent = Math.min(
+      Math.PI * eta * U_SCREEN_EV / eThermalEv,
+      Math.log(MAX_ENHANCEMENT),
+    );
+    const screening_factor = Math.exp(exponent);
     
     // 2. QED Double-Layer Enhancement
     // Enhancement from high electric field: f_QED = 1 + (E/E_crit)²
@@ -1689,11 +1698,11 @@ const UnifiedBubbleLatticeVisualization = ({
     // Increased density from compression
     const compression_factor = Math.pow(compressionRatio, 1.5);
     
-    // Combined enhancement (multiplicative, capped at 10⁸)
+    // Combined enhancement (multiplicative, capped at the governance ceiling)
     const total = screening_factor * qed_factor * casimir_factor * rydberg_factor * compression_factor;
     
     return {
-      total: Math.min(total, 1e8),
+      total: Math.min(total, MAX_ENHANCEMENT),
       screening: screening_factor,
       qed: qed_factor,
       casimir: casimir_factor,

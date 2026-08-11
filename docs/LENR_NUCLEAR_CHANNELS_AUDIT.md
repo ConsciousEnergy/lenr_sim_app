@@ -9,9 +9,13 @@
 
 | Channel | Q-value | Branching (beam) | Threshold | Expected radiation/neutron |
 |---------|---------|------------------|-----------|----------------------------|
-| D+D → ³He + n | 2.45 MeV | ~50% | ~0 | Neutron ~2.45 MeV |
-| D+D → T + p | 4.03 MeV | ~50% | ~0 | Proton ~3 MeV |
-| D+D → ⁴He + γ | 23.8 MeV | ~10⁻⁵ | ~0 | Gamma ~23.8 MeV |
+| D+D → ³He + n | 3.27 MeV | ~50% | ~0 | Neutron ~2.45 MeV (KE; the remaining ~0.82 MeV goes to ³He) |
+| D+D → T + p | 4.03 MeV | ~50% | ~0 | Proton ~3.02 MeV |
+| D+D → ⁴He + γ | 23.85 MeV | ~10⁻⁷ | ~0 | Gamma ~23.8 MeV |
+
+Note: 2.45 MeV is the *neutron kinetic energy* in the n branch, not the
+reaction Q-value (Q = 3.269 MeV, shared between n and ³He by momentum
+conservation). Code source of truth: `nuclear_force_coupling.py`.
 
 **Condensed-matter modification:** Screening can reduce effective barrier; enhancement factors of 10³–10⁵ (per consistency resolutions) apply to penetration probability. Branching ratios are nuclear-structure dominated and unlikely to change in metal lattice.
 

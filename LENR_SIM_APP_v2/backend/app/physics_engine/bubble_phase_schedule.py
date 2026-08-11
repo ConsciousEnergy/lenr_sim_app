@@ -26,6 +26,11 @@ PHASE_SCHEDULE: Tuple[Tuple[str, float, float], ...] = (
 
 CANONICAL_PHASES = ("EXPANSION", "COLLAPSE", "MINIMUM", "REBOUND")
 
+# Centre of the MINIMUM segment; the physical minimum-radius instant of an
+# integrated trajectory is anchored here (see ``anchor_cycle_fraction``).
+_MINIMUM_SEGMENT = next(seg for seg in PHASE_SCHEDULE if seg[0] == "MINIMUM")
+MINIMUM_CENTER = (_MINIMUM_SEGMENT[1] + _MINIMUM_SEGMENT[2]) / 2.0
+
 
 def normalize_phase_name(phase: str) -> str:
     """Map legacy labels onto the canonical four-phase cycle."""
@@ -47,6 +52,33 @@ def phase_from_cycle_fraction(cycle_fraction: float) -> str:
             return name
     # frac == 1.0 after modulo is 0.0; keep rebound closed at the end.
     return "REBOUND"
+
+
+def anchor_cycle_fraction(cycle_fraction: float, minimum_fraction: float) -> float:
+    """Remap one cycle so the physical minimum lands at ``MINIMUM_CENTER``.
+
+    The fixed schedule alone can label the trajectory's true minimum-radius
+    instant as COLLAPSE or REBOUND when the integrated collapse does not sit
+    at 75% of the acoustic period. This monotonic piecewise-linear map keeps
+    the stable EXPANSION→COLLAPSE→MINIMUM→REBOUND order (0 maps to 0, 1 to 1)
+    while guaranteeing ``minimum_fraction`` maps into the MINIMUM segment.
+
+    Args:
+        cycle_fraction: Position in [0, 1) of one acoustic cycle.
+        minimum_fraction: Cycle fraction at which the trajectory radius is
+            minimal.
+
+    Returns:
+        Remapped cycle fraction to feed ``phase_from_cycle_fraction``.
+    """
+    frac = float(cycle_fraction) % 1.0
+    if frac < 0.0:
+        frac += 1.0
+    # Keep both linear pieces well-defined even for a minimum at a cycle edge.
+    m = min(max(float(minimum_fraction) % 1.0, 1e-3), 1.0 - 1e-3)
+    if frac <= m:
+        return frac * (MINIMUM_CENTER / m)
+    return MINIMUM_CENTER + (frac - m) * ((1.0 - MINIMUM_CENTER) / (1.0 - m))
 
 
 def phase_progress_in_cycle(cycle_fraction: float) -> float:

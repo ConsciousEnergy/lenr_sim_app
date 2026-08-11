@@ -80,14 +80,14 @@ chmod +x start_app.sh  # First time only
 
 - **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Initial setup guide
 - **[SECURITY.md](SECURITY.md)** - Security practices
-- **[REORGANIZATION_PLAN.md](REORGANIZATION_PLAN.md)** - Project reorganization details
+- **[REORGANIZATION_PLAN.md](archive/status-reports/REORGANIZATION_PLAN.md)** - Project reorganization details (archived)
 
 ### Version-Specific Documentation
 
 #### v2 Documentation (Recommended)
 - [v2 README](LENR_SIM_APP_v2/README.md) - Complete v2 guide
 - [Development Plan](LENR_SIM_APP_v2/DEV_PLAN.md) - Roadmap and status
-- [Development Status](LENR_SIM_APP_v2/DEVELOPMENT_STATUS.md) - Current progress
+- [Changelog](CHANGELOG.md) - Current progress and version history
 - [Test Plan](LENR_SIM_APP_v2/TEST_PLAN.md) - Testing strategy
 - [API Documentation](LENR_SIM_APP_v2/docs/api/) - API reference
 - [Tutorials](LENR_SIM_APP_v2/docs/tutorials/) - Usage guides
@@ -240,7 +240,7 @@ Current v2 development focus:
 - Performance optimization
 - Documentation improvements
 
-For detailed status, see [v2 Development Status](LENR_SIM_APP_v2/DEVELOPMENT_STATUS.md)
+For detailed status, see the [Changelog](CHANGELOG.md) and the v0.3.6-beta evidence pack under `LENR_SIM_APP_v2/docs/v0.3.6-beta/`
 
 ---
 

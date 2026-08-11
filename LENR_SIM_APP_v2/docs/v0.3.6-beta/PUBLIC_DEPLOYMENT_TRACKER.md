@@ -95,3 +95,15 @@ Still operator-owned:
 - Hostinger/Cloudflare apply still needs `terraform.tfvars` plus Hostinger and
   Cloudflare API tokens; unchanged from the prior tracker entry.
 - Confirm the Cloudflare Pages build output directory is `dist` (Vite), not `build`.
+
+## Math-Accuracy Hardening Slice (2026-08-10)
+
+- Physics math-accuracy pass landed on `cursor/math-accuracy-f130` (PR #71
+  into `development`): CI-red bubble-collapse phase tests fixed, five
+  order-of-magnitude backend math bugs corrected, frontend x3.33 radius
+  rescale removed, docs Q-values/Gamow forms corrected, ~35 stale status
+  documents archived. Evidence: `VERIFICATION_GATE_REPORT.md` (same date)
+  and `RELEASE_EVIDENCE_PACK.md`.
+- Operator follow-up (pre-existing, unchanged by this slice): pip-audit
+  advisories for pinned starlette/vtk/ecdsa; upgrade alongside a FastAPI
+  compatibility check before or shortly after go-live.

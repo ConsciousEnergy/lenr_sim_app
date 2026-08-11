@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Math-Accuracy Hardening (2026-08-10)
+
+Pre-public mathematics pass across backend, frontend, and documentation.
+No breaking contract changes: new stream fields are additive.
+
+- **Bubble phase labels anchored to physics**: the visual phase schedule could
+  label the trajectory's true minimum-radius instant COLLAPSE or REBOUND; the
+  MINIMUM segment is now anchored to the Rayleigh-Plesset argmin
+  (`bubble_phase_schedule.anchor_cycle_fraction`), fixing the 4 red CI tests.
+- **Backend order-of-magnitude corrections**: Gamow energy missing pi^2 in the
+  legacy `reaction_rates` path (~100 keV vs ~986 keV for D+D; dead
+  `unified_lenr_model.py` monolith with the same bug deleted); MeV-as-eV
+  Coulomb barrier in `phonon_modes` (10^6); ~1000x mean thermal speed in
+  `quantum_tunneling`; J/eV-mixed derived Gamow factor in
+  `physics_engine.constants`; `<sigma*v>` keV/J integration measure (~6e15,
+  now within ~35% of Bosch & Hale at 2-20 keV); Casimir high-temperature
+  branch now the classical -zeta(3)kT/(8*pi*d^3) limit.
+- **Screening enters exactly once**: the WKB convenience path applied an
+  energy shift, a Yukawa barrier, and the Assenbaum multiplier simultaneously;
+  now a single Assenbaum factor capped at the governance 1e5 (was 1e10).
+  `exp(Ue/kT)` in statistical rates replaced with the Assenbaum form at the
+  Gamow peak; identical-particle 1/2 factor added.
+- **Constants**: Widom-Larsen threshold corrected to (m_n - m_p) ~ 2.531 m_e;
+  Pd/Ni Fermi energies (11.7 eV was aluminium's value) recomputed from each
+  material's electron density; p-d and d-d radiative Q-values added; d-d
+  S-factor channel label fixed; bubble-fusion neutron yield now counts the
+  conserved gas inventory (P0/kT0) instead of a hardcoded 1e30 m^-3.
+- **Frontend units**: the Unified Theory bubble-radius slider is true
+  micrometres end-to-end (removed the silent x3.33 rescale; presets converted
+  to preserve effective physics); `radius_factor` no longer exported as um;
+  offline Gamow fallback gained the missing 1/(4*pi*eps0); `total_energy`
+  labelled J (matches backend joules); small probabilities no longer render
+  as "0.00%".
+- **Client-side physics retired or badged**: dead physics WebWorker stack and
+  orphaned mock Results page deleted; 3D idle-preview enhancement mirrors the
+  backend screening kernel and 1e5 ceiling; reaction testbench badged as
+  schematic (Math.random() efficiency metric removed; proton identification
+  fixed); offline fallback results carry a visible placeholder warning; live
+  stream forwards `enhancement_log10_raw`/`enhancement_is_saturated`
+  (additive).
+- **Documentation**: D+D Q-value tables corrected (2.45 MeV is the neutron
+  kinetic energy, not Q = 3.269 MeV; T+p is 4.03 MeV); paper Gamow form and
+  Gamow-peak formula fixed; Debye-vs-Thomas-Fermi labels and screening
+  guidance aligned with `screening_kernel`/`screening_data`; enhancement band
+  unified at 10^3-10^5; Miles/Vysotskii claims reworded to claim-tier
+  language; verification log self-corrections (TF factor 2, adiabatic
+  13.6 eV) plus new section 9D; version drift fixed (package.json 0.1.0,
+  CHANGELOG summary, MHD doc headers); ~35 stale status documents archived
+  under `archive/status-reports/`; paper renamed to
+  `A_Unified_Theoretical_Framework_for_LENR.md`.
+- **Tests**: 20 new absolute numeric gates
+  (`tests/test_physics/test_absolute_numeric_gates.py`) pin E_G, barrier,
+  thermal speed, Assenbaum validity/single-application, Q-value consistency,
+  Bosch-Hale sigma-v spot checks, the Casimir classical limit, and the WL
+  threshold; frontend payload and formatter tests added. Backend suite:
+  942 passed.
+
 ### Pre-Public Hardening (2026-08-08)
 
 Physics-accuracy, reporting-honesty, and UX-coherence pass ahead of the public VPS
@@ -1110,7 +1167,12 @@ Resolved all ESLint warnings across 61 frontend source files so the production b
 
 ## Version History Summary
 
-### v0.3.5-beta (Current)
+### v0.3.6-beta (Current)
+- **Focus**: Pre-public hardening — physics accuracy, reporting honesty, UX coherence
+- **Key Features**: Theory Testbed, reaction-rate governance with claim tiers, collapse trajectories and UQ, math-accuracy corrections across backend/frontend/docs
+- **Status**: Release candidate for public deployment
+
+### v0.3.5-beta
 - **Focus**: ESLint compliance — CI build hardening
 - **Key Features**: All ESLint warnings resolved across 61 frontend files, build passes with CI=true, 75 tests passing
 - **Status**: Ready for public release (PR to main)

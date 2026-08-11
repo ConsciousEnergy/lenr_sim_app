@@ -226,9 +226,13 @@ class TestWKBTunnelingCalculator:
         
         enhancement = result_screened.probability / result_unscreened.probability
         
-        # Enhancement at 2.5 keV with 310 eV screening should be significant
-        assert enhancement > 10, \
-            f"Enhancement {enhancement} lower than expected for Czerski screening"
+        # Assenbaum: f = exp(pi*eta*Ue/E) ~ 3.4 at 2.5 keV with Ue = 310 eV
+        # (the exact energy-shift form gives ~3.1). A previous version
+        # asserted > 10, which was only reachable because screening was
+        # double-counted (energy shift AND Assenbaum multiplier).
+        assert 2.0 < enhancement < 6.0, \
+            f"Enhancement {enhancement} outside the Assenbaum band (~3.4) " \
+            f"for 310 eV screening at 2.5 keV"
     
     # =========================================================================
     # Potential Model Tests

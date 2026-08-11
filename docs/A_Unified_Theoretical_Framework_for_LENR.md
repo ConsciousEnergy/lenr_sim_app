@@ -701,7 +701,7 @@ For tunneling-dominated reactions:
 \sigma(E) \propto \frac{1}{E} \exp\left(-\sqrt{\frac{E_G}{E}}\right)
 \]
 
-where \( E_G = 2\mu (Z_1 Z_2 e^2 / \hbar)^2 \) is the Gamow energy.
+where \( E_G = 2\mu c^2 (\pi \alpha Z_1 Z_2)^2 \) is the Gamow energy (in SI, \( E_G = 2\mu \left[\pi Z_1 Z_2 e^2/(4\pi\varepsilon_0 \hbar)\right]^2 \); for D+D, \( E_G \approx 986\ \text{keV} \)).
 
 **Enhancement Factor Decomposition:**
 
@@ -755,7 +755,7 @@ Reaction rate predictions are validated using Monte Carlo sampling:
 ### **5.2 Validation of Nuclear Products**
 
 * **Isotopic Shifts:** Detection of helium-4, tritium, and heavier isotopes supports multi-step nuclear processes (e.g., Oppenheimer-Phillips).  
-* **Excess Heat Consistency:** Experimental outputs match the hypothesized nuclear energy contributions once purely chemical avenues are discounted.
+* **Excess Heat Consistency:** Reported experimental outputs are consistent in magnitude with the hypothesized nuclear energy contributions once purely chemical avenues are discounted; this remains a disputed empirical correlation (claim tier: `empirical_lenr_correlation`), not an established result.
 
 #### **5.2.1 Detailed Energy Accounting**
 
@@ -799,10 +799,10 @@ A self-consistency check between excess heat and nuclear product yields is essen
 Reported ⁴He yields in LENR experiments range from \( 10^{11} \)–\( 10^{13} \) atoms/W·hr (Miles 1993, McKubre 2006). This is a factor of 100–10,000 below the theoretical yield if all excess heat originated from D+D → ⁴He. Several explanations are possible:
 
 1. **Detection efficiency:** ⁴He measurement via mass spectrometry has limited collection efficiency, particularly when helium diffuses into the lattice or escapes through the electrolyte.
-2. **Multiple reaction channels:** Heat may also arise from channels with different products: D+D → T + p (3.27 MeV), D+D → ³He + n (3.27 MeV), or lattice-mediated transmutations that produce heat without helium.
+2. **Multiple reaction channels:** Heat may also arise from channels with different products: D+D → T + p (Q = 4.03 MeV), D+D → ³He + n (Q = 3.27 MeV), or lattice-mediated transmutations that produce heat without helium.
 3. **Incomplete energy release:** If some reaction energy goes into lattice defect creation or radiation that escapes calorimetric detection, the effective heat per ⁴He atom would be lower.
 
-The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He atoms per second per watt of excess heat—is within a factor of ~2 of the 23.8 MeV/⁴He prediction (\( 2.63 \times 10^{11} \) atoms/s/W), providing strong evidence that the D+D → ⁴He channel dominates. The discrepancy in integrated yields (per W·hr) likely reflects time-varying reaction rates and measurement integration periods rather than a fundamental inconsistency.
+The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He atoms per second per watt of excess heat—is within a factor of ~2 of the 23.8 MeV/⁴He prediction (\( 2.63 \times 10^{11} \) atoms/s/W). If the underlying measurements are accepted, this correlation is *consistent with* a dominant D+D → ⁴He channel; it remains a contested empirical correlation (helium retention and measurement caveats apply) rather than a validated mechanism. The discrepancy in integrated yields (per W·hr) likely reflects time-varying reaction rates and measurement integration periods rather than a fundamental inconsistency.
 
 **Tritium and neutron accounting:**
 
@@ -811,7 +811,7 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 ### **5.3 Implications for LENR**
 
-* **Unified Model:** By merging condensed matter, quantum mechanics, and nuclear physics, the framework explains multiple LENR observations in a self-consistent manner.  
+* **Unified Model:** By merging condensed matter, quantum mechanics, and nuclear physics, the framework offers a self-consistent candidate interpretation of multiple reported LENR observations; it does not by itself establish that those observations are nuclear in origin.  
 * **Improved Reproducibility:** Standardized protocols with precisely characterized materials and well-monitored conditions are starting to yield more consistent data.
 
 ---
@@ -868,7 +868,7 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 **Resolution pathways:**
 
-1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al.), gives \( f \sim e^{U_e / k_B T} \) which at room temperature is enormous. The issue is converting this screening potential to a tunneling enhancement through the proper Gamow integral, which may yield enhancement factors far exceeding \( 10^5 \).
+1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al.), evaluated with the Assenbaum screened-cross-section form \( f = \exp(\pi \eta U_e / E) \) at thermal energies, is formally enormous. The issue is that this expansion is only valid for \( U_e \ll E \); converting the screening potential to a tunneling enhancement through the proper Gamow integral may yield enhancement factors exceeding the adopted \( 10^3\text{-}10^5 \) band, which is why reported values are capped there.
 
 2. **Collective/coherent multi-body processes:** If LENR proceeds through coherent multi-body tunneling (Takahashi's TSC model) or condensate transitions (Section 2.6), the bare probability is not \( P_{\text{bare}} = e^{-2\pi\eta} \) for a single pair, but a collective probability with fundamentally different scaling.
 
@@ -1609,9 +1609,9 @@ While the results presented thus far offer a quantitatively supported and histor
 Standard nuclear physics imposes stringent constraints on reaction energetics and product signatures. Fusion reactions such as:
 
 \\\[  
-\\text{D} \+ \\text{D} \\rightarrow \\text{He}^3 \+ \\text{n} \\quad \\text{(2.45 MeV)}  
+\\text{D} \+ \\text{D} \\rightarrow \\text{He}^3 \+ \\text{n} \\quad \\text{(Q = 3.27 MeV; neutron carries ~2.45 MeV)}  
 \\quad \\text{or} \\quad  
-\\text{D} \+ \\text{D} \\rightarrow \\text{T} \+ \\text{p} \\quad \\text{(4.03 MeV)}  
+\\text{D} \+ \\text{D} \\rightarrow \\text{T} \+ \\text{p} \\quad \\text{(Q = 4.03 MeV)}  
 \\\]
 
 require incident kinetic energies far beyond the thermal range available in LENR environments. Even proposed low-threshold reactions like:

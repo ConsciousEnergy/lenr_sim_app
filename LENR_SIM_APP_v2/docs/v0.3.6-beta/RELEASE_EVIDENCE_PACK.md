@@ -234,3 +234,21 @@ the Wolfram check when the server is reachable.
 - `theory_summary_empty_state_routes_to_testbed.png`
 - `theory_testbed_round_trip.mp4` - testbed -> run theories -> Advanced Analysis ->
   reload, with Theory Summary staying populated
+
+## Math-Accuracy Hardening Evidence (2026-08-10)
+
+- Corrected equations and constants are logged with dated entries in
+  `docs/PHYSICS_EQUATION_VERIFICATION.md` section 10 (Gamow pi^2, phonon
+  barrier units, thermal speed, <sigma*v> integration measure, Casimir
+  classical limit, WL threshold, Fermi energies, adiabatic-limit and TF-length
+  log corrections).
+- Absolute numeric gates locking those values:
+  `backend/tests/test_physics/test_absolute_numeric_gates.py` (20 tests, all
+  passing; references cited in-file, incl. Bosch & Hale 1992).
+- Full gate run for this slice: see "Math-Accuracy Hardening Slice
+  (2026-08-10)" in `VERIFICATION_GATE_REPORT.md`.
+- UI honesty: local-fallback results now carry a visible offline-placeholder
+  warning (`ResultsPanel`), the reaction testbench is badged as schematic,
+  and the live stream forwards `enhancement_log10_raw` /
+  `enhancement_is_saturated` (additive fields; `lenr-run-export-v1` and
+  `contract_version` unchanged).

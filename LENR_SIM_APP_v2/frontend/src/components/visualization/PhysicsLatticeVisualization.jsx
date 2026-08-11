@@ -691,7 +691,8 @@ const PhysicsLatticeVisualization = ({
                 Avg Temperature: {simulationSummary.average_temperature.toFixed(1)} K
               </Typography>
               <Typography variant="caption" display="block">
-                Total Energy: {simulationSummary.total_energy.toFixed(2)} eV
+                {/* Backend reports total_energy as cumulative joules, not eV. */}
+                Total Energy: {simulationSummary.total_energy.toExponential(2)} J
               </Typography>
               {simulationSummary.reaction_rate !== undefined && (
                 <Typography variant="caption" display="block">

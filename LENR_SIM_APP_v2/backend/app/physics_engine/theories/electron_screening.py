@@ -5,8 +5,10 @@ Refactored from ``unified_lenr_model._calculate_electron_screening()`` into a
 standalone :class:`TheoryModule` implementation.
 
 Physics (Section 2.1):
-    Debye screening in the host lattice reduces the effective Coulomb barrier
-    by 10-100 eV, exponentially enhancing low-energy tunnelling rates.
+    Electron screening in the host lattice reduces the effective Coulomb
+    barrier by a material-dependent potential (tens to hundreds of eV; cited
+    ranges in screening_data.py, e.g. Pd typical 800 eV), exponentially
+    enhancing low-energy tunnelling rates.
 
     U_s = Z₁Z₂e² / (4πε₀ λ_D)
     f_screen = exp(π η U_s / E)
@@ -61,8 +63,9 @@ class ElectronScreeningTheory:
     @property
     def description(self) -> str:
         return (
-            "Debye screening in the host lattice reduces the effective Coulomb "
-            "barrier by 10-100 eV, exponentially enhancing low-energy tunnelling."
+            "Electron screening in the host lattice reduces the effective "
+            "Coulomb barrier by a material-dependent cited potential (tens to "
+            "hundreds of eV), exponentially enhancing low-energy tunnelling."
         )
 
     @property

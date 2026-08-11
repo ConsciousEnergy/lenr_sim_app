@@ -193,11 +193,11 @@ useEffect(() => {
               <Typography variant="body2" color="textSecondary">Energy Distribution:</Typography>
               <Typography variant="h6">{testResults.energyDistribution}</Typography>
             </Box>
-            <Box>
-              <Typography variant="body2" color="textSecondary">Energy Efficiency:</Typography>
-              <Typography variant="h6">{(testResults.energyEfficiency * 100).toFixed(1)}%</Typography>
-            </Box>
           </Box>
+          <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
+            Schematic estimates from Q-value kinematics and barrier heuristics,
+            not backend simulation output.
+          </Typography>
         </Paper>
         
         <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
