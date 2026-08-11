@@ -5,7 +5,7 @@ uvicorn==0.30.6
 # Required for WebSocket upgrades (Live Stream Collapse). Bare uvicorn prints
 # "No supported WebSocket library detected" and the stream path 404s as HTTP GET.
 websockets==14.2
-pydantic==2.10.3
+pydantic==2.13.4
 numpy==1.26.4
 # Pin SciPy with NumPy 1.26.x. A floating upper bound let Windows venvs drift into
 # hybrid NumPy 1/2 trees that 500 bubble-lattice with:
