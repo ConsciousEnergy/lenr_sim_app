@@ -44,7 +44,7 @@ prometheus-fastapi-instrumentator==7.0.0
 pytest-cov==7.1.0
 pytest-xdist==3.8.0
 pytest-benchmark==4.0.0
-matplotlib==3.9.2
+matplotlib==3.11.1
 snakeviz==2.2.2
 pytest-profiling==1.7.0
 pytest-html==4.1.1
