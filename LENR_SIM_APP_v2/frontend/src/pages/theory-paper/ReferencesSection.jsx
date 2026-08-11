@@ -11,11 +11,46 @@ export default function ReferencesSection() {
           </Typography>
           
           <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 3 }}>
-            Comprehensive list of source materials, theoretical foundations, and experimental validations referenced 
-            throughout this unified LENR framework. All links open in a new tab.
+            Sources that support the mathematical modeling—preferring replicable experimental reports
+            (calorimetry, helium/isotope assays, screening) and established mechanisms used in the equations.
+            The full numbered list (1–34) lives in the markdown paper; this tab highlights key entries.
+            All links open in a new tab.
           </Typography>
-          
+
           <List>
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="overline" color="text.secondary">Subtitle homage (listed first)</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [vaswani2017] Vaswani, A. et al. (2017)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Attention Is All You Need. <em>Advances in Neural Information Processing Systems</em> 30.
+                Methodological metaphor only—not a LENR physics source. The paper subtitle echoes this
+                framing of coupled multi-agent representations.
+              </Typography>
+              <MuiLink
+                href="https://arxiv.org/abs/1706.03762"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem', mr: 2 }}
+              >
+                arXiv:1706.03762
+              </MuiLink>
+              <MuiLink
+                href="https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                NeurIPS 2017
+              </MuiLink>
+            </ListItem>
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+              Selected modeling / evidence sources
+            </Typography>
+
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [1] Fleischmann, M. & Pons, S. (1989)
@@ -40,6 +75,14 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Zur Quantentheorie des Atomkernes [On the Quantum Theory of Atomic Nuclei]. <em>Zeitschrift für Physik</em>, 51(3-4), 204-212.
               </Typography>
+              <MuiLink
+                href="https://doi.org/10.1007/BF01343196"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                DOI: 10.1007/BF01343196
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -251,10 +294,12 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                [18] Acs, D. et al. (2025)
+                [18] Acs, D. et al. (2025–2026)
               </Typography>
               <Typography variant="body2" paragraph>
-                A Unified Theoretical Framework for Low-Energy Nuclear Reactions: Integrating Quantum, Nuclear, and Condensed Matter Phenomena. <em>Conscious Energies</em>.
+                A Unified Theoretical Framework for Low-Energy Nuclear Reactions:
+                Electron, Neutron, and Proton coupling is all you need.
+                <em> Conscious Energies</em> (v0.3.6-beta, revised 2026-07-22).
               </Typography>
               <MuiLink 
                 href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/main/docs/A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum%2C%20Nuclear%2C%20and%20Condensed%20Matter%20Phenomena%20(1).md" 
@@ -263,6 +308,24 @@ export default function ReferencesSection() {
                 sx={{ fontSize: '0.875rem' }}
               >
                 Full Paper on GitHub
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [19] Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., &amp; Polosukhin, I. (2017)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Attention Is All You Need. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>.
+                Homage source for this paper&apos;s subtitle framing of multi-agent coupling.
+              </Typography>
+              <MuiLink
+                href="https://doi.org/10.48550/arXiv.1706.03762"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                arXiv:1706.03762
               </MuiLink>
             </ListItem>
 
@@ -449,6 +512,9 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Fundamentals of Rate Theory for CMNS (Tetrahedral Symmetric Condensate). <em>Journal of Condensed Matter Nuclear Science</em>, 19, 298-315.
               </Typography>
+              <MuiLink href="https://www.lenr-canr.org/acrobat/TakahashiAfundamenta.pdf" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                Full text (LENR-CANR.org)
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -458,6 +524,12 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Phonon-nuclear coupling and coherent energy exchange in condensed matter (updated treatment). <em>Journal of Condensed Matter Nuclear Science</em>.
               </Typography>
+              <MuiLink href="https://www.lenr-canr.org/acrobat/HagelsteinPcoherenten.pdf" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                Related: coherent energy exchange (LENR-CANR)
+              </MuiLink>
+              <MuiLink href="https://www.iscmns.org/CMNS/CMNS.htm" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                ISCMNS / JCMNS archive
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -467,6 +539,9 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Floquet-WKB treatment of time-periodic barrier penetration for trapped-state reaction rates (supporting analysis for the trapped-state formalism).
               </Typography>
+              <MuiLink href="https://doi.org/10.14293/PR2199.002776.v1" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.14293/PR2199.002776.v1
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -476,6 +551,9 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Database of LENR transmutation reactions (curated subset). <em>LENR Academy</em>. Used for transmutation-pathway validation.
               </Typography>
+              <MuiLink href="https://www.lenr-forum.com/" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                LENR Forum (community discussion / mirrors)
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -485,6 +563,28 @@ export default function ReferencesSection() {
               <Typography variant="body2" paragraph>
                 Correlation of excess power and helium-4 production in the D/Pd system. <em>Journal of Electroanalytical Chemistry</em>, 346(1-2), 99-117.
               </Typography>
+              <MuiLink href="https://www.lenr-canr.org/acrobat/MilesMHcorrelatio.pdf" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                Full text (LENR-CANR.org)
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.1016/0022-0728(93)85006-3" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                Related DOI (J. Electroanal. Chem.)
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [widomlarsen2006] Widom, A. &amp; Larsen, L. (2006)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Ultra low momentum neutron catalyzed nuclear reactions on metallic hydride surfaces.
+                Basis for the speculative three-body <code>p+e⁻→n</code> step (critiqued by Tennfors 2013).
+              </Typography>
+              <MuiLink href="https://arxiv.org/abs/nucl-th/0608059" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                arXiv:nucl-th/0608059
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.1140/epjc/s2006-02479-8" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.1140/epjc/s2006-02479-8
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -493,10 +593,19 @@ export default function ReferencesSection() {
               </Typography>
               <Typography variant="body2" paragraph>
                 Raiola et al. (2002, deuteron screening in metals); Huke et al. (2008,
-                <em> Phys. Rev. C</em> 78, 015803, DOI: 10.1103/PhysRevC.78.015803); Czerski et al. (2023);
-                and a 2024 screening-potential review. These constrain the screening-potential priors used by the
+                <em> Phys. Rev. C</em> 78, 015803); Czerski et al. (2023, Pd screening);
+                and the 2024 screening-potential review. These constrain the screening-potential priors used by the
                 reaction-rate engine and UQ (<code>screening_data.py</code>).
               </Typography>
+              <MuiLink href="https://doi.org/10.1103/PhysRevC.78.015803" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                huke2008 DOI
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.1016/j.physletb.2023.137750" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                czerski2023 DOI
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.3390/particles7030050" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                screeningreview2024 DOI
+              </MuiLink>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
@@ -504,10 +613,19 @@ export default function ReferencesSection() {
                 Supplementary keys [storms2015], [tennfors2013], [steinetz2020exp], [pines2020theory]
               </Typography>
               <Typography variant="body2" paragraph>
-                Storms (2015, NAE critical review); Tennfors (2013, on cluster/coherence assumptions);
+                Storms (2015, NAE critical review); Tennfors (2013, critique of Widom–Larsen / coherence assumptions);
                 Steinetz et al. (2020, NASA lattice-confinement fusion — experiment); and the companion
-                Pines et al. (2020, theory). Retained so backend/supplementary citation keys resolve consistently.
+                Pines et al. (2020, theory). Used by the three-body rate mode and NASA LCF gates.
               </Typography>
+              <MuiLink href="https://doi.org/10.1140/epjp/i2013-13015-3" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                tennfors2013 DOI
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.1103/PhysRevC.101.044610" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem', mr: 2 }}>
+                steinetz2020exp DOI
+              </MuiLink>
+              <MuiLink href="https://doi.org/10.1103/PhysRevC.101.044609" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                pines2020theory DOI
+              </MuiLink>
             </ListItem>
           </List>
 

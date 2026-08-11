@@ -1,15 +1,23 @@
 # **A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)**
 
-**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0
-Date: 2026-02-14 (revised 2026-06-06, v0.3.6-beta)
-Organization: Conscious Energies
+**Subtitle:** Electron, Neutron, and Proton coupling is all you need
 
-**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families) assisted with literature compilation, mathematical derivation and verification, simulation code, and manuscript drafting under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Composer (Cursor)
 
-**Abstract**  
-Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), halo electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated to describe cavitation-driven LENR conditions. In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling, finite-element analysis, thermodynamic models, and statistical methods) that validate and quantify these LENR processes. Computational results predict tunneling enhancements in the range $10^{3}$–$10^{5}$ (revised downward from earlier $10^{8}$ estimates; see Section 5.1 and the reconciliation note), while experimental evidence reports isotopic shifts, neutron formation, and measurable excess heat production. This work establishes a reproducible methodology for LENR research and paves the way for interdisciplinary collaboration to scale LENR reactors for practical energy applications.
+Date: 2026-02-14 (revised 2026-07-22, v0.3.6-beta)
+Organization: Conscious Energies | www.conscious.energy
+
+**Keywords:** LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tunneling; Casimir; claim tiers; condensed-matter nuclear hypotheses
+
+**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+
+**Epistemic posture.** Multi-body lattice–bubble constructions in this framework are **exploratory models**, not empirically validated nuclear-engineering predictions. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
+
+**Abstract**
+Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentially consequential pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), delocalized interface electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated as a candidate environment for cavitation-assisted interfacial conditions—not as proof of nuclear rates. In tandem, we detail mathematical tools and simulations that quantify these LENR hypotheses under explicit claim tiers. Computational explorations in the companion LENR_SIM software implement a phenomenological tunneling-enhancement band of \(10^{3}\)–\(10^{5}\) (revised downward from earlier \(10^{8}\) estimates; see Section 5.1); this band is a software sensitivity envelope, not a first-principles prediction. Reported isotopic shifts, neutron signals, and excess heat remain disputed empirical correlations that motivate—but do not validate—the framework.
 
 ---
+
 
 ## **1\. Introduction**
 
@@ -17,14 +25,14 @@ Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean 
 
 Low-Energy Nuclear Reactions (LENR) refer to nuclear processes hypothesized to occur at or near room temperature and pressure, challenging the conventional high-energy paradigm of nuclear fusion or fission. Over the past several decades, experiments have reported:
 
-* **Anomalous Heat Generation:** Measured energy outputs exceeding what chemical processes alone can produce \[1,5\]\[1, 5\].  
-* **Isotopic Transmutations:** Conversion of elements without the high-energy nuclear by-products usually observed \[2,6\]\[2, 6\].  
-* **Minimal Radiation:** Comparatively negligible ionizing radiation despite evidence of nuclear-scale events \[3,7\]\[3, 7\].
+* **Anomalous Heat Generation:** Measured energy outputs exceeding what chemical processes alone can produce \[1,4\].  
+* **Isotopic Transmutations:** Conversion of elements without the high-energy nuclear by-products usually observed \[2,5\].  
+* **Minimal Radiation:** Comparatively negligible ionizing radiation despite evidence of nuclear-scale events \[3,6\].
 
 However, the field faces two major hurdles:
 
-* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[4,8\]\[4, 8\].  
-* **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena \[9,10\]\[9, 10\].
+* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[3,15\].  
+* **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena \[18,22\].
 
 Given LENR’s potential for clean, virtually limitless energy, resolving these issues remains a priority for both scientific understanding and practical commercialization.
 
@@ -42,7 +50,7 @@ This paper aims to:
 
 ### **2.1 Rydberg Matter (RM)**
 
-**Definition:** Rydberg Matter is a phase in which atoms or molecules occupy highly excited electronic states with extended orbitals \[11\]\[11\].
+**Definition:** Rydberg Matter is a phase in which atoms or molecules occupy highly excited electronic states with extended orbitals \[21\].
 
 1. **Role in LENR**
 
@@ -50,53 +58,14 @@ This paper aims to:
    * **Formation Sites:** Commonly formed at metal–hydrogen interfaces during electrolysis or near catalytic surfaces in gaseous systems under specific pressures and temperatures.  
    *   
 2. **Energy Calculation**  
-    For an atom at principal quantum number \\\[n=10n \= 10:  
-    En=-13.6 eVn2=-0.136 eV,E\_n \= \-\\frac{13.6\\,\\text{eV}}{n^2} \= \-0.136\\,\\text{eV}\\\],  
+    For an atom at principal quantum number \( n = 10 \):
+
+    \[
+    E_n = -\frac{13.6\,\mathrm{eV}}{n^2} = -0.136\,\mathrm{eV},
+    \]
+
     indicating a weaker binding energy than ground-state levels, which can promote higher electron mobility.
 
-3. **Implications for LENR**
-
-   * **Facilitated Tunneling:** Lower bound states enable enhanced quantum tunneling.  
-   * **Cluster Formation:** RM clusters may serve as “catalytic hot spots” for nuclear reactions.
-
-4. **Enhanced Electron Screening Model**
-
-   The electron screening in metallic lattices can be treated using Thomas-Fermi theory. The screened Coulomb potential is:
-   
-   \[
-   V_{\text{screened}}(r) = \frac{Ze^2}{4\pi\epsilon_0 r} e^{-k_{\text{TF}} r}
-   \]
-   
-   where the Thomas-Fermi screening wavevector in SI units is:
-   
-   \[
-   k_{\text{TF}} = \sqrt{\frac{3 n_e e^2}{2 \epsilon_0 E_F}} = \sqrt{\frac{3 n_e e^2 m_e}{2 \epsilon_0 \hbar^2 (3\pi^2 n_e)^{2/3}}}
-   \]
-   
-   For typical metal densities (\( n_e \approx 10^{29} \) m⁻³), \( k_{\text{TF}} \approx 10^{10} \) m⁻¹, giving a screening length of \( \lambda_{\text{TF}} = 1/k_{\text{TF}} \approx 0.1 \) nm. The corresponding screening energy is:
-   
-   \[
-   U_s = \frac{Z_1 Z_2 e^2 k_{\text{TF}}}{4\pi\epsilon_0} \approx 14.4 \text{ eV}
-   \]
-   
-   **Validity of weak-screening approximations.** The Salpeter weak-screening formula gives an enhancement factor \( f = \exp(U_s / E) \). For D+D reactions at \( E \approx 0.1 \) eV, this yields \( U_s/E \approx 144 \), giving \( f \sim e^{144} \)—a manifestly unphysical result. The weak-screening (Salpeter) approximation is only valid when \( U_s / E \ll 1 \); when \( U_s / E \gg 1 \) as here, the system is in the **strong screening regime** and the Salpeter formula breaks down entirely.
-   
-   **Strong screening formalism.** In this regime, the appropriate treatment follows the DeWitt-Graboske-Cooper strong screening model \[DeWitt et al., Astrophys. J. 181, 439 (1973)\]. In the strong screening limit, the enhancement saturates: the effective Coulomb barrier is reduced by the screening energy \( U_s \), and for thermally distributed particles at temperature \( T \), the enhancement scales as:
-   
-   \[
-   f_{\text{strong}} \sim \exp\left(\frac{U_s}{k_B T}\right)
-   \]
-   
-   For \( T = 300 \) K (\( k_B T \approx 0.026 \) eV), this gives \( f_{\text{strong}} \sim \exp(554) \), which is still enormous and unphysical for a simple exponential treatment. This signals that the exponential approximation itself is inadequate—a proper calculation requires evaluating the full Gamow integral with the screened potential:
-   
-   \[
-   G_{\text{screened}} = \int_{r_n}^{r_{\text{tp}}} \sqrt{\frac{2\mu}{\hbar^2}\left(V_{\text{screened}}(r) - E\right)}\, dr
-   \]
-   
-   where \( r_{\text{tp}} \) is the classical turning point of the screened potential, which is significantly reduced compared to the bare Coulomb case.
-   
-   **Anomalous screening in metal deuterides.** Experimentally measured screening energies in metal deuterides are \( U_e \sim 300\text{--}800 \) eV \[Raiola et al., Eur. Phys. J. A 19, 283 (2004); Czerski et al., Europhys. Lett. 54, 449 (2001)\], far exceeding theoretical Thomas-Fermi predictions of \( \sim 50\text{--}100 \) eV. This "anomalous screening" remains an open question in the field and may involve contributions from lattice coherence effects, channeling, or local electron density enhancements beyond the Thomas-Fermi model. A quantitative LENR screening model must account for these anomalously large measured screening energies rather than relying on simple exponential enhancement factors.
-   
 ---
 
 ### **2.2 Delocalized Interface Electrons (Extended Electronic States)**
@@ -124,7 +93,7 @@ This paper aims to:
     
     This is consistent with the Part 2 LaTeX analysis of this paper, which uses \( \sim 1 \) fm scales and obtains \( P \sim 10^{-10} \) to \( 10^{-12} \) per event (the difference reflecting different assumptions about the effective wavefunction amplitude at the nucleus).
     
-    **Statistical significance in condensed matter systems.** While individually negligible, this overlap becomes statistically significant in systems containing \( \sim 10^{23} \) atoms undergoing high-frequency dynamical cycling (\( > 10^{12} \) events/sec per site). The aggregate overlap event rate can reach:
+    **Ensemble scaling (order-of-magnitude only).** Individually, \( P_{\text{overlap}} \sim 10^{-16} \) (or \( 10^{-10} \)–\( 10^{-12} \) under alternate nuclear-radius assumptions) is negligible. Multiplying by macroscopic atom counts (\( \sim 10^{23} \)) and high attempt frequencies does **not** by itself establish nuclear reaction rates: most "overlap events" are not reaction events, and the conversion factor is precisely the unknown matrix element under test. The following product is therefore an **upper-bound counting argument**, not a predicted LENR rate:
     
     \[
     R_{\text{overlap}} \sim 10^{23} \times 10^{12} \times 10^{-12} \sim 10^{23} \text{ potential overlap events per second}
@@ -139,10 +108,14 @@ This paper aims to:
 
 ### **2.3 Double-Layer QED Effects**
 
-**Definition:** Charge separation at electrolyte or lattice interfaces can form high electric fields in thin double layers \[13\]\[13\].
+**Definition:** Charge separation at electrolyte or lattice interfaces can form high electric fields in thin double layers \[23,33\].
 
-* **Field Calculation:** For a potential difference of ΔV=0.1 V\\Delta V \= 0.1\\,\\text{V} over a distance d=1 nmd \= 1\\,\\text{nm}:  
-   E=ΔVd=0.1 V1×10−9 m=1×108 V/m.E \= \\frac{\\Delta V}{d} \= \\frac{0.1\\,\\text{V}}{1\\times 10^{-9}\\,\\text{m}} \= 1\\times 10^{8}\\,\\text{V/m}.  
+* **Field Calculation:** For a potential difference of \( \Delta V = 0.1\,\text{V} \) over a distance \( d = 1\,\text{nm} \):
+
+\[
+E = \frac{\Delta V}{d} = \frac{0.1\,\text{V}}{1\times 10^{-9}\,\text{m}} = 1\times 10^{8}\,\text{V/m}.
+\]
+
 * **Implications:**
 
   * Coulomb Barrier Reduction through localized high fields.  
@@ -250,9 +223,9 @@ This threshold means free electrons at thermal energies cannot drive this reacti
 
 ### **2.5 Casimir Effect**
 
-**Definition:** Quantum vacuum fluctuations produce an attractive force between closely spaced conductive or dielectric surfaces \[14\]\[14\].
+**Definition:** Quantum vacuum fluctuations produce an attractive force between closely spaced conductive or dielectric surfaces \[17\].
 
-* **Force Calculation:** For area A=1 μm2A \= 1\\,\\mu\\text{m}^2 and separation d=1 nmd \= 1\\,\\text{nm}:  
+* **Force Calculation:** For area \( A = 1\,\mu\text{m}^2 \) and separation \( d = 1\,\text{nm} \):
    \[
    F_{\text{Casimir}} = -\frac{\pi^2 \hbar c}{240}\,\frac{A}{d^4}
    \]
@@ -310,9 +283,9 @@ This sub-angstrom coherence length implies that deuteron-deuteron quantum cohere
 
 ### **2.6 Bose-Einstein Condensation (BEC)**
 
-**Definition:** BEC occurs when particles coalesce into a single quantum state, enabling coherent interactions \[15\]\[15\].
+**Definition:** BEC occurs when particles coalesce into a single quantum state, enabling coherent interactions \[25\].
 
-* **Critical Temperature Estimate:** For a density n=1×1028 m−3n \= 1 \\times 10^{28}\\,\\text{m}^{-3}:  
+* **Critical Temperature Estimate:**
  For a density \( n = 1 \times 10^{28} \) m⁻³ of deuterons (mass \( m = 3.344 \times 10^{-27} \) kg):
    
    \[
@@ -357,17 +330,23 @@ Since \( T_{\text{deuteron}}^{\text{eff}} < T_c^{\text{eff}} \), BEC becomes for
 
 ### **2.7 Oppenheimer-Phillips Process**
 
-**Definition:** A mechanism where a deuteron interacts with a nucleus at low energies, resulting in neutron capture and proton emission \[16\]\[16\].
+**Definition:** A mechanism where a deuteron interacts with a nucleus at low energies, resulting in neutron capture and proton emission \[16\].
 
-d+ZAX⟶ZA+1Y+p.d \+ {}^{A}\_{Z}\\text{X} \\longrightarrow {}^{A+1}\_{Z}\\text{Y} \+ p.
+\[
+d + {}^{A}_{Z}\text{X} \longrightarrow {}^{A+1}_{Z}\text{Y} + p.
+\]
 
 1. **Mechanism**
 
-   * Neutron from the deuteron is absorbed, forming ZA+1Y{}^{A+1}\_{Z}\\text{Y}.  
+   * Neutron from the deuteron is absorbed, forming \( {}^{A+1}_{Z}\text{Y} \).  
    * The proton is repelled by Coulomb forces and emitted.  
-2. **Rate Calculation**  
-    R=σOP  Φn  N,R \= \\sigma\_{\\text{OP}}\\;\\Phi\_{n}\\;N,  
-    where σOP\\sigma\_{\\text{OP}} is the Oppenheimer-Phillips cross-section, Φn\\Phi\_{n} the neutron flux, and NN the number density of target nuclei.
+2. **Rate Calculation**
+
+\[
+R_{\text{rate}} = n_d\,n_X\,\langle\sigma_{\text{OP}} v_d\rangle,
+\]
+
+where \( \sigma_{\text{OP}} \) is the Oppenheimer-Phillips (deuteron-stripping) cross-section, \( n_d \) and \( n_X \) are deuteron and target densities, and \( \langle\sigma_{\text{OP}} v_d\rangle \) is the reactivity formed with the deuteron velocity distribution (not a free-neutron flux).
 
 ---
 
@@ -375,15 +354,17 @@ d+ZAX⟶ZA+1Y+p.d \+ {}^{A}\_{Z}\\text{X} \\longrightarrow {}^{A+1}\_{Z}\\text{Y
 
 **Standard Tunneling Probability**
 
-Ptunnel=exp⁡( −2ℏ∫ab2m(V(x)−E) dx).P\_{\\text{tunnel}} \= \\exp\\Bigl(\\,-\\frac{2}{\\hbar}\\int\_{a}^{b}\\sqrt{2m\\bigl(V(x)-E\\bigr)}\\,dx\\Bigr).
+\[
+P_{\text{tunnel}} = \exp\left(-\frac{2}{\hbar}\int_{a}^{b}\sqrt{2m\bigl(V(x)-E\bigr)}\,dx\right).
+\]
 
 **LENR Conditions**
 
-* **Reduced Barrier Height:** Electric fields, Rydberg states, and Casimir effects lower  V(x)\\,V(x).  
+* **Reduced Barrier Height:** Electric fields, Rydberg states, and Casimir effects lower \( V(x) \).  
 * **Enhanced Particle Energy:** Localized heating and lattice phonon interactions can further increase effective particle energies.
 
 **Overall Enhancement**  
- Numerical simulations indicate that PtunnelP\_{\\text{tunnel}} can be boosted by factors of 10^3 to 10^5 under LENR-specific conditions. This revised estimate, based on Monte Carlo uncertainty propagation with 90% confidence bounds (see Section 3.2 of the extended analysis), accounts for the cumulative effect of electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)). The total enhancement factor is: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \).
+ The reported \(10^{3}\)–\(10^{5}\) range is a **bounded phenomenological sensitivity band** implemented in the current LENR_SIM software (independent mechanism multipliers with a hard composition cap), **not** a first-principles prediction of a coupled electron–lattice–nuclear Hamiltonian. Factorization into electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)) is a bookkeeping device: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \), subject to software caps and claim-tier labels. Monte Carlo / Sobol runs in the companion app explore this band; they do not by themselves validate microscopic mechanisms.
 
 #### **2.8.1 Phonon-Nuclear Coupling Strength**
 
@@ -455,37 +436,43 @@ The resolution of the MeV energy gap through lattice-nuclear coupling remains th
 
 ### **3.1 Poisson–Schrödinger Coupled Dynamics**
 
-1. **Poisson’s Equation:**  
-    ∇2 ϕ=− ρϵ0,\\nabla^{2}\\,\\phi \= \-\\,\\frac{\\rho}{\\epsilon\_{0}},  
-    where ϕ\\phi is the electric potential and ρ\\rho is the charge density.
+1. **Poisson's Equation:**
+\[
+\nabla^{2}\phi = -\frac{\rho}{\epsilon_0},
+\]
+where \( \phi \) is the electric potential and \( \rho \) is the charge density.
 
-2. **Schrödinger’s Equation:**  
-    − ℏ22m ∇2 ψ+V(r) ψ=E ψ,-\\,\\frac{\\hbar^{2}}{2m}\\,\\nabla^{2}\\,\\psi \+ V(\\mathbf{r})\\,\\psi \= E\\,\\psi,  
-    which governs the quantum state ψ\\psi under potential V(r)V(\\mathbf{r}).
+2. **Schrödinger's Equation:**
+\[
+-\frac{\hbar^{2}}{2m}\nabla^{2}\psi + V(\mathbf{r})\psi = E\psi,
+\]
+which governs the quantum state \( \psi \) under potential \( V(\mathbf{r}) \).
 
 3. **Simulation Details**
 
    * **Software:** COMSOL Multiphysics and custom Python scripts (NumPy, SciPy) for finite-element and finite-difference methods.  
-   * **Grid Size:** ∼0.1 nm\\sim 0.1\\,\\text{nm}.  
-   * **Time Steps:** ∼1 fs\\sim 1\\,\\text{fs}.  
-   * **Results:** Electric fields in interfacial regions can exceed 108 V/m10^{8}\\,\\text{V/m}; wavefunction solutions show significant electron density near protons, supporting neutron formation pathways.
+   * **Grid Size:** \( \sim 0.1\,\text{nm} \).  
+   * **Time Steps:** \( \sim 1\,\text{fs} \).  
+   * **Results:** Electric fields in interfacial regions can exceed \( 10^{8}\,\text{V/m} \); wavefunction solutions can show elevated electron density near protons. Any link to neutron-formation pathways remains claim-tiered and speculative.
 
 ---
 
 ### **3.2 Bubble Collapse Dynamics**
 
-**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[17\]\[17\].
+**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\].
 
-1. **Modified Rayleigh–Plesset Equation:**  
-    R R¨+32 R˙2=1ρ(Pbubble−P∞−2σR−4μ R˙R+ϵ0 E22),R\\,\\ddot{R} \+ \\tfrac{3}{2}\\,\\dot{R}^{2} \= \\frac{1}{\\rho}\\Bigl(P\_{\\text{bubble}} \- P\_{\\infty} \- \\tfrac{2\\sigma}{R} \- \\tfrac{4\\mu\\,\\dot{R}}{R} \+ \\tfrac{\\epsilon\_{0}\\,E^{2}}{2}\\Bigr),  
-    where RR is bubble radius, ρ\\rho fluid density, σ\\sigma surface tension, μ\\mu viscosity, and EE external electric field.
+1. **Modified Rayleigh–Plesset Equation:**
+\[
+R\,\ddot{R} + \frac{3}{2}\dot{R}^{2} = \frac{1}{\rho}\left(P_{\text{bubble}} - P_{\infty} - \frac{2\sigma_{\text{surf}}}{R} - \frac{4\mu\,\dot{R}}{R} + \frac{\epsilon_0 E^{2}}{2}\right),
+\]
+where \( R \) is bubble radius, \( \rho \) fluid density, \( \sigma_{\text{surf}} \) surface tension, \( \mu \) viscosity, and \( E \) external electric field.
 
     *Note:* The electric pressure term \( \epsilon_0 E^2 / 2 \approx 4.4 \times 10^4 \) Pa at \( E = 10^8 \) V/m is negligible compared to collapse pressures of ~GPa. This term primarily influences bubble initiation and early-stage dynamics rather than peak collapse conditions.
 
 2. **Simulation Outcomes:**
 
    * **Temperature Peaks:** Localized temperatures can exceed 10⁵ K in extreme regimes. *Note:* Peak temperatures depend strongly on the collapse regime. Single-bubble sonoluminescence in water typically achieves ~10⁴ K, while the 10⁵ K figure applies to extreme multi-bubble collapse or laser-driven cavitation conditions. The relevant regime for LENR electrolysis systems should be specified when applying these estimates.  
-   * **Pressure Increases:** Collapsing bubbles can produce pressures of multiple GPa, supporting nuclear reaction conditions.
+   * **Pressure Increases:** Collapsing bubbles can produce pressures of multiple GPa. These collapse conditions may alter interfacial transport and material microstructure, but do not by themselves establish an appreciable nuclear reaction rate.
 
 ---
 
@@ -624,25 +611,25 @@ where \( UA \) is the overall heat transfer coefficient-area product.
 
 ---
 
-## **4\. Experimental Validation**
+## **4\. Experimental Context and Reported Correlations**
 
 ### **4.1 Electrolytic Reactors**
 
 1. **Setup:**
 
-   * Palladium electrodes (\>99.99%\\gt 99.99\\% purity).  
-   * Heavy water (D2O\\text{D}\_2\\text{O}) electrolytes with lithium salts.  
-   * Current densities between 0.1–1 A/cm20.1\\text{–}1\\,\\text{A/cm}^2.  
+   * Palladium electrodes (\(>99.99\%\) purity).  
+   * Heavy water (\(\text{D}_2\text{O}\)) electrolytes with lithium salts.  
+   * Current densities between \(0.1\text{–}1\,\text{A/cm}^2\).  
 2. **Measurements:**
 
-   * **Calorimetry:** Input power (voltage ×\\times current) vs. output power via isoperibolic or flow calorimeters.  
+   * **Calorimetry:** Input power (voltage \(\times\) current) vs. output power via isoperibolic or flow calorimeters.  
    * **Mass Spectrometry:** Detection of helium-4, tritium, or other isotopes in off-gas.  
-   * **Neutron Counters:** Helium-3 or BF3\_3 detectors above background sensitivity.  
-3. **Results:**
+   * **Neutron Counters:** Helium-3 or \(\text{BF}_3\) detectors above background sensitivity.  
+3. **Reported outcomes (disputed; claim-tier: empirical correlation):**
 
-   * Up to 50% excess heat relative to electrical input.  
-   * Helium-4 and tritium production.  
-   * Detectable neutron flux, albeit low-level.
+   * Excess heat relative to electrical input has been reported in some electrolytic campaigns (often cited near tens of percent); replication and calorimetry systematics remain contested.  
+   * Helium-4 and tritium signals have been reported in a subset of studies; collection efficiency and blank controls vary.  
+   * Low-level neutron signals are occasionally reported above background; they are not established as routine LENR signatures.
 
 ---
 
@@ -658,11 +645,11 @@ where \( UA \) is the overall heat transfer coefficient-area product.
    * **Calorimetry:** Monitoring of potential excess heat.  
    * **Spectroscopy:** Raman, infrared, or other techniques to detect Rydberg Matter or ultra-dense hydrogen states.  
    * **Elemental Analysis:** Post-run detection of transmutation products such as copper and zinc in nickel.  
-3. **Results:**
+3. **Reported outcomes (disputed; claim-tier: empirical correlation):**
 
-   * **Anomalous Heat:** Up to 1 kW in certain high-surface-area setups.  
-   * **RM Detection:** Spectroscopic signatures consistent with Rydberg Matter.  
-   * **Transmutations:** Evidence of new elemental species on nickel surfaces.
+   * **Anomalous Heat:** High-power excess claims (including kW-scale reports) exist in the literature but lack community consensus on calorimetry.  
+   * **RM Detection:** Spectroscopic signatures have been interpreted as consistent with Rydberg Matter in some studies; alternative assignments exist.  
+   * **Transmutations:** Post-run elemental shifts on nickel surfaces are reported in some campaigns; contamination and analytical artifacts must be excluded case-by-case.
 
 ---
 
@@ -679,11 +666,18 @@ A rigorous treatment of LENR reaction rates requires proper statistical mechanic
 
 **Reaction Rate Formula:**
 
-The nuclear reaction rate per unit volume is:
+The nuclear reaction rate per unit volume for two reacting species is:
 
 \[
-R = n_1 n_2 \langle \sigma v \rangle_{\text{thermal}} \times f_{\text{enhancement}} \times P_{\text{threshold}}
+R = \frac{n_1 n_2}{1+\delta_{12}} \langle \sigma v \rangle_{\text{thermal}} \times f_{\text{enhancement}} \times P_{\text{threshold}}
 \]
+
+where \( \delta_{12} = 1 \) for identical reacting species (e.g., D+D self-fusion, giving the
+familiar \( \tfrac{1}{2}n^2 \) form used by `reaction_rate_engine.py::compute_two_body_rate`)
+and \( \delta_{12} = 0 \) for distinct species. This is the *thermal self-fusion* rate and is
+distinct from the Oppenheimer–Phillips capture rate \( R_{\text{rate}} = \sigma_{\text{OP}}\Phi_n N \)
+(§2.7, a flux-driven capture process) and the generic placeholder \( R_{\text{rate}} = n\sigma_{\text{nuc}}v \)
+(§7); see the Glossary (§8) note on \( R \) for how these three regimes relate.
 
 where:
 - \( n_1, n_2 \) are the number densities of reacting species [m⁻³]
@@ -714,7 +708,7 @@ where \( E_G = 2\mu (Z_1 Z_2 e^2 / \hbar)^2 \) is the Gamow energy.
 The total enhancement factor combines multiple mechanisms:
 
 \[
-f_{\text{enhancement}} = f_{\text{screening}} \times f_{\text{coherence}} \times f_{\text{field}} \times f_{\text{phonon}}
+f_{\text{enhancement}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}}
 \]
 
 Each factor has associated uncertainties that propagate through the calculation.
@@ -880,7 +874,7 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 3. **Threshold behavior:** The system may exhibit sharp phase-transition-like behavior where below a critical condition the rate is essentially zero, but above it the rate jumps discontinuously. This is consistent with the observed poor reproducibility—most experiments are below threshold.
 
-**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close. The framework requires either (a) much larger enhancement factors than currently estimated, (b) a fundamentally collective mechanism, or (c) both. This is explicitly identified as an open problem.
+**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close. The framework requires either (a) much larger enhancement factors than currently estimated, (b) a fundamentally collective mechanism, or (c) both. This is explicitly identified as an open problem. **Until an experimentally constrained matrix element and state-occupation probability replace the assumed trapped separation, lifetime, and collective factor, multi-body (`trapped_state`) rate outputs are scenario explorations rather than predictions.** The software default remains the conservative **standard two-body reference baseline** (`two_body`): established free-particle formalism used as a reference, *not* a validated lattice-LENR mechanism.
 
 ### **5A.4 Electron Capture Energy Source (Q4)**
 
@@ -906,7 +900,7 @@ However, integrated yields per W·hr are 100-10,000× lower than expected (Secti
 
 ## **6\. Conclusion**
 
-This work presents a unified theoretical and mathematical framework that addresses key LENR phenomena—anomalous heat production, isotopic shifts, minimal radiation, and neutron generation—through a synthesis of Rydberg Matter, halo electrons, double-layer QED effects, Casimir effect, and quantum tunneling. Lattice-bubble interaction physics (heterogeneous nucleation, bubble–surface coupling, boundary layers, acoustic forcing) extends modified bubble dynamics to surface-coupled cavitation. Computational models (Poisson–Schrödinger coupling, nucleation and surface-reaction integration) and experimental validations (excess heat detection, transmutations) reinforce the plausibility of these mechanisms.
+This work presents a unified theoretical and mathematical framework that addresses key LENR phenomena—anomalous heat production, isotopic shifts, minimal radiation, and neutron generation—through a synthesis of Rydberg Matter, halo electrons, double-layer QED effects, Casimir effect, and quantum tunneling. Lattice-bubble interaction physics (heterogeneous nucleation, bubble–surface coupling, boundary layers, acoustic forcing) extends modified bubble dynamics to surface-coupled cavitation. Computational models (Poisson–Schrödinger coupling, nucleation and surface-reaction integration) organize these mechanisms under claim tiers; reported excess-heat and transmutation correlations remain disputed and are not treated as validation of the framework.
 
 **Future Directions**
 
@@ -921,25 +915,53 @@ This work presents a unified theoretical and mathematical framework that address
 While the preceding sections introduced key theoretical constructs, LENR also relies heavily on rigorous mathematical methods for both modeling and empirical validation. Below is a concise overview:
 
 1. **Quantum Mechanics and Tunneling**
+ * **Schrödinger Equation:**
+ \[
+ -\frac{\hbar^2}{2m}\nabla^2\psi + V(r)\psi = E\psi,
+ \]
+ central for calculating wavefunction overlaps, tunneling rates, and delocalized-interface-electron interactions. Numerical integration (finite difference, finite element) helps solve complex potential landscapes.
 
-   * **Schrödinger Equation:** −ℏ22m∇2 ψ+V(r) ψ=E ψ,-\\frac{\\hbar^2}{2m}\\nabla^2\\,\\psi \+ V(r)\\,\\psi \= E\\,\\psi, central for calculating wavefunction overlaps, tunneling rates, and halo electron interactions. Numerical integration (finite difference, finite element) helps solve complex potential landscapes.  
 2. **Thermodynamics and Energy Conservation**
+ * **Excess Heat Models:**
+ \[
+ Q_{\text{output}} = Q_{\text{input}} + Q_{\text{nuclear}}, \qquad Q_{\text{excess}} = Q_{\text{output}} - Q_{\text{input}},
+ \]
+ ensuring total energy balance in calorimetric setups.
+ * **Partition Functions:**
+ \[
+ Z = \sum_i e^{-E_i/k_B T},
+ \]
+ used for analyzing statistical behavior of lattice atoms, phonons, and quasi-particles.
 
-   * **Excess Heat Models:** Qoutput=Qinput+Qnuclear,Q\_{\\text{output}} \= Q\_{\\text{input}} \+ Q\_{\\text{nuclear}}, and Qexcess=Qoutput−Qinput,Q\_{\\text{excess}} \= Q\_{\\text{output}} \- Q\_{\\text{input}}, ensuring total energy balance in calorimetric setups.  
-   * **Partition Functions:** Z=∑ie−Ei/kBT,Z \= \\sum\_{i} e^{-E\_i/k\_B T}, used for analyzing statistical behavior of lattice atoms, phonons, and quasi-particles.  
 3. **Field Theory and Electrodynamics**
+ * **Extended Maxwell's Equations:**
+ \[
+ \nabla\cdot\mathbf{E} = \frac{\rho}{\epsilon_0}, \qquad \nabla\times\mathbf{B} = \mu_0\mathbf{J} + \frac{1}{c^2}\frac{\partial\mathbf{E}}{\partial t},
+ \]
+ crucial for modeling plasma-like oscillations and double-layer fields in electrochemical or gaseous LENR environments.
 
-   * **Extended Maxwell’s Equations:** ∇⋅E=ρϵ0,∇×B=μ0J+1c2∂E∂t,\\nabla\\cdot \\mathbf{E} \= \\frac{\\rho}{\\epsilon\_0}, \\quad \\nabla\\times \\mathbf{B} \= \\mu\_0 \\mathbf{J} \+ \\frac{1}{c^2}\\frac{\\partial \\mathbf{E}}{\\partial t}, crucial for modeling plasma-like oscillations and double-layer fields in electrochemical or gaseous LENR environments.  
 4. **Nuclear Reaction Cross-Sections**
+ * **Reaction Rate Expression:**
+ \[
+ R_{\text{target}} = n\,\sigma_{\text{nuc}}\,v, \qquad R_V = n_1 n_2\langle\sigma_{\text{nuc}} v\rangle
+ \]
+ with \( R_{\text{target}} \) a per-target rate (s\(^{-1}\)) and \( R_V \) the volumetric rate (m\(^{-3}\) s\(^{-1}\)). For identical deuterons use \( R_V=\tfrac12 n_D^2\langle\sigma v\rangle \). LENR enhancements arise from small effective barriers (via Casimir, high local fields, or RM).
 
-   * **Reaction Rate Expression:** R=n σ v,R \= n\\,\\sigma\\,v, with nn as density, σ\\sigma cross-section, and vv relative velocity. LENR enhancements arise from small effective barriers (via Casimir, high local fields, or RM).  
 5. **Lattice Dynamics**
+ * **Harmonic Oscillators:**
+ \[
+ H = \sum_i\left(\frac{p_i^2}{2m} + \frac{1}{2}k x_i^2\right),
+ \]
+ used to approximate phonons interacting with embedded deuterons or protons.
+ * **Cluster Fusion Models:** Tetrahedral Symmetric Condensate (TSC) → advanced group-theoretic tools describe multi-body fusion in metals (Takahashi's approach; claim tier speculative).
 
-   * **Harmonic Oscillators:** H=∑(p22m+12kx2),H \= \\sum\\Bigl(\\frac{p^2}{2m} \+ \\frac{1}{2}kx^2\\Bigr), used to approximate phonons interacting with embedded deuterons or protons.  
-   * **Cluster Fusion Models:** Tetrahedral Symmetric Condensate (TSC) →\\rightarrow advanced group-theoretic tools describe multi-body fusion in metals (Takahashi’s approach).  
 6. **Casimir and Vacuum Fluctuations**
+ * **Casimir Force:**
+ \[
+ F_{\text{Casimir}} = -\frac{\pi^2 \hbar c}{240}\frac{A}{d^4},
+ \]
+ leading to an attractive potential that can enhance electron–nucleus proximity (correlation ≠ nuclear proof).
 
-   * **Casimir Force:** FCasimir=−π2ℏc240Ad4,F\_{\\text{Casimir}} \= \-\\frac{\\pi^2 \\hbar c}{240} \\frac{A}{d^4}, leading to an attractive potential that can enhance electron–nucleus proximity.  
 7. **Machine Learning and Statistical Analysis**
 
    * **Pattern Recognition:** Clustering and neural networks to identify parameter regimes that maximize excess heat or transmutation yields.  
@@ -957,117 +979,185 @@ Through this collection of mathematical and computational tools, researchers sys
 
 Below is a reference list defining the primary symbols and terms used in this paper:
 
-* ∇2\\boldsymbol{\\nabla^2}: The Laplacian operator, ∇2=∂2∂x2+∂2∂y2+∂2∂z2\\nabla^2 \= \\frac{\\partial^2}{\\partial x^2} \+ \\frac{\\partial^2}{\\partial y^2} \+ \\frac{\\partial^2}{\\partial z^2}.  
-* ϕ\\boldsymbol{\\phi}: Electric potential  \[V\]\\,\[\\text{V}\].  
-* ρ\\boldsymbol{\\rho}: Charge density  \[C/m3\]\\,\[\\text{C/m}^3\].  
-* ϵ0\\boldsymbol{\\epsilon\_0}: Vacuum permittivity ≈8.854×10−12 F/m\\approx 8.854 \\times 10^{-12}\\,\\text{F/m}.  
-* ψ\\boldsymbol{\\psi}: Wavefunction describing the quantum state of a particle.  
-* V(r)\\boldsymbol{V(\\mathbf{r})}: Potential energy function  \[J\]\\,\[\\text{J}\] or  \[eV\]\\,\[\\text{eV}\].  
-* E\\boldsymbol{E}: (1) Energy eigenvalue in the Schrödinger equation; (2) Electric field strength  \[V/m\]\\,\[\\text{V/m}\], depending on context.  
-* ℏ\\boldsymbol{\\hbar}: Reduced Planck’s constant, ℏ=h2π≈1.054×10−34 J⋅s\\hbar \= \\frac{h}{2\\pi} \\approx 1.054 \\times 10^{-34}\\,\\text{J}\\cdot \\text{s}.  
-* c\\boldsymbol{c}: Speed of light in vacuum, c≈3×108 m/sc \\approx 3 \\times 10^8\\,\\text{m/s}.  
-* m\\boldsymbol{m}: Mass (of an electron, proton, or other particle), context-specific.  
-* kB\\boldsymbol{k\_B}: Boltzmann’s constant, kB≈1.381×10−23 J/Kk\_B \\approx 1.381 \\times 10^{-23}\\,\\text{J/K}.  
-* a0\\boldsymbol{a\_0}: Bohr radius, a0≈0.0529 nma\_0 \\approx 0.0529\\,\\text{nm}.  
-* n\\boldsymbol{n}: (1) Principal quantum number; (2) Number density  \[m−3\]\\,\[\\text{m}^{-3}\], depending on context.  
-* a\\boldsymbol{a}: Characteristic distance scale (e.g., extended orbital radius).  
-* r0\\boldsymbol{r\_0}: Nuclear core or reference radius.  
-* Poverlap\\boldsymbol{P\_{\\text{overlap}}}: Overlap probability between halo electron and nuclear wavefunctions.  
-* p\\boldsymbol{p}: Proton, or momentum operator (p^\\hat{p}) in context; typically, pp is proton when used in reaction equations.  
-* e−\\boldsymbol{e^-}: Electron.  
-* νe\\boldsymbol{\\nu\_e}: Electron neutrino.  
-* FCasimir\\boldsymbol{F\_{\\text{Casimir}}}: Casimir force.  
-* A\\boldsymbol{A}: Area (e.g., in the Casimir effect)  \[m2\]\\,\[\\text{m}^2\].  
-* d\\boldsymbol{d}: Separation distance (e.g., in Casimir or double-layer calculations)  \[m\]\\,\[\\text{m}\].  
-* T\\boldsymbol{T}: Temperature  \[K\]\\,\[\\text{K}\].  
-* Tc\\boldsymbol{T\_c}: Critical temperature for Bose-Einstein condensation.  
-* ζ(3/2)\\boldsymbol{\\zeta(3/2)}: Riemann zeta function evaluated at 3/23/2, ζ(3/2)≈2.612\\zeta(3/2) \\approx 2.612.  
-* ΔV\\boldsymbol{\\Delta V}: Potential difference  \[V\]\\,\[\\text{V}\].  
-* μ\\boldsymbol{\\mu}: Dynamic viscosity  \[Pa⋅s\]\\,\[\\text{Pa}\\cdot \\text{s}\].  
-* σ\\boldsymbol{\\sigma}: (1) Cross-section  \[m2\]\\,\[\\text{m}^2\]; (2) Surface tension  \[N/m\]\\,\[\\text{N/m}\] when used in Rayleigh–Plesset. Context clarifies usage.  
-* σ0\\boldsymbol{\\sigma\_0}: Base or reference cross-section  \[m2\]\\,\[\\text{m}^2\].  
-* R\\boldsymbol{R}: (1) Reaction rate  \[reactions/s\]\\,\[\\text{reactions/s}\]; (2) Bubble radius in Rayleigh–Plesset equation  \[m\]\\,\[\\text{m}\].  
-* Ptunnel\\boldsymbol{P\_{\\text{tunnel}}}: Quantum tunneling probability.  
-* Qnuclear\\boldsymbol{Q\_{\\text{nuclear}}}, Qinput\\boldsymbol{Q\_{\\text{input}}}, Qexcess\\boldsymbol{Q\_{\\text{excess}}}: Energy quantities in calorimetry  \[J\]\\,\[\\text{J}\].  
-* ζ\\boldsymbol{\\zeta}: Generic variable for partition functions or the Riemann zeta function, as context requires.
+* \( \boldsymbol{\nabla^2} \): The Laplacian operator, \( \nabla^2 = \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} \).
+* \( \boldsymbol{\phi} \): Electric potential \([\text{V}]\).
+* \( \boldsymbol{\rho} \): Charge density \([\text{C/m}^3]\).
+* \( \boldsymbol{\epsilon_0} \): Vacuum permittivity, \( \approx 8.854 \times 10^{-12}\,\text{F/m} \).
+* \( \boldsymbol{\psi} \): Wavefunction describing the quantum state of a particle.
+* \( \boldsymbol{V(\mathbf{r})} \): Potential energy function \([\text{J}]\) or \([\text{eV}]\).
+* \( \boldsymbol{E} \): (1) Energy eigenvalue in the Schrödinger equation; (2) Electric field strength \([\text{V/m}]\), depending on context.
+* \( \boldsymbol{\hbar} \): Reduced Planck's constant, \( \hbar = h/2\pi \approx 1.054 \times 10^{-34}\,\text{J}\cdot\text{s} \).
+* \( \boldsymbol{c} \): Speed of light in vacuum, \( c \approx 3 \times 10^8\,\text{m/s} \).
+* \( \boldsymbol{m} \): Mass (electron, proton, or other particle), context-specific.
+* \( \boldsymbol{k_B} \): Boltzmann's constant, \( k_B \approx 1.381 \times 10^{-23}\,\text{J/K} \).
+* \( \boldsymbol{a_0} \): Bohr radius, \( a_0 \approx 0.0529\,\text{nm} \).
+* \( \boldsymbol{n} \): (1) Principal quantum number; (2) Number density \([\text{m}^{-3}]\), depending on context.
+* \( \boldsymbol{n_1, n_2} \): Number densities of two (possibly identical) reacting species \([\text{m}^{-3}]\); use \( \tfrac{1}{2}n^2 \) rather than \( n_1 n_2 \) when the species are identical (§5.1.1).
+* \( \boldsymbol{N} \): Number density of target nuclei (OP process, §2.7) \([\text{m}^{-3}]\).
+* \( \boldsymbol{\Phi_n} \): Neutron flux \([\text{m}^{-2}\text{s}^{-1}]\) (§2.7).
+* \( \boldsymbol{a} \): Characteristic distance scale (e.g., extended orbital radius).
+* \( \boldsymbol{r_0} \): Nuclear core or reference radius.
+* \( \boldsymbol{P_{\text{overlap}}} \): Overlap probability between interface electron and nuclear wavefunctions.
+* \( \boldsymbol{p} \): Proton, or momentum operator (\( \hat{p} \)) depending on context.
+* \( \boldsymbol{e^-} \): Electron.
+* \( \boldsymbol{\nu_e} \): Electron neutrino.
+* \( \boldsymbol{F_{\text{Casimir}}} \): Casimir force.
+* \( \boldsymbol{A} \): Area (e.g., Casimir effect) \([\text{m}^2]\).
+* \( \boldsymbol{d} \): Separation distance (e.g., Casimir or double-layer) \([\text{m}]\).
+* \( \boldsymbol{T} \): Temperature \([\text{K}]\).
+* \( \boldsymbol{T_c} \): Critical temperature for Bose–Einstein condensation.
+* \( \boldsymbol{\zeta(3/2)} \): Riemann zeta function at \( 3/2 \), \( \zeta(3/2) \approx 2.612 \).
+* \( \boldsymbol{\Delta V} \): Potential difference \([\text{V}]\).
+* \( \boldsymbol{\mu} \): (1) Dynamic viscosity \([\text{Pa}\cdot\text{s}]\); (2) reduced mass \([\text{kg}]\), depending on context.
+* \( \boldsymbol{\sigma} \): (1) Generic cross-section \([\text{m}^2]\); (2) surface tension \([\text{N/m}]\) in Rayleigh–Plesset. Context clarifies usage.
+* \( \boldsymbol{\sigma_0} \): Base/reference cross-section \([\text{m}^2]\).
+* \( \boldsymbol{\sigma_{\text{nuc}}} \): Nuclear (fusion) cross-section used in the generic rate expression \( R_{\text{rate}} = n\sigma_{\text{nuc}}v \) (§7) \([\text{m}^2]\).
+* \( \boldsymbol{\sigma_{\text{OP}}} \): Oppenheimer–Phillips capture cross-section (§2.7) \([\text{m}^2]\).
+* \( \boldsymbol{\sigma_{\text{surf}}} \): Bubble surface tension in the Rayleigh–Plesset equation (§3.2) \([\text{N/m}]\).
+* \( \boldsymbol{\langle\sigma v\rangle} \): Thermally-averaged cross-section–velocity product (§5.1.1) \([\text{m}^3/\text{s}]\).
+* \( \boldsymbol{R} \): (1) Reaction rate **per unit volume**, \([\text{reactions}\cdot\text{m}^{-3}\text{s}^{-1}]\) — see §2.7/§5.1.1/§7 for three distinct regimes of this quantity; (2) Bubble radius in the Rayleigh–Plesset equation \([\text{m}]\).
+* \( \boldsymbol{P_{\text{tunnel}}} \): Quantum tunneling (Gamow) probability, dimensionless.
+* \( \boldsymbol{P_{\text{threshold}}} \): Probability of exceeding reaction threshold conditions, dimensionless (§5.1.1).
+* \( \boldsymbol{f_{\text{enhancement}}} \): Cumulative tunneling-enhancement factor, dimensionless; \( f_{\text{enhancement}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \) (§2.8, §5.1.1).
+* \( \boldsymbol{Q_{\text{nuclear}}, Q_{\text{input}}, Q_{\text{excess}}} \): Energy quantities in calorimetry \([\text{J}]\).
+* \( \boldsymbol{\zeta} \): Generic variable for partition functions or the Riemann zeta function, as context requires.
 
 ---
 
 ## **References**
 
-1. Fleischmann, M., & Pons, S. "Electrochemically Induced Nuclear Fusion of Deuterium." *Journal of Electroanalytical Chemistry*, vol. 261, no. 2, 1989, pp. 301–308.  
-    **Link:** [https://doi.org/10.1016/0022-0728(89)80006-3](https://doi.org/10.1016/0022-0728\(89\)80006-3)
+Citations below support the mathematical modeling in this paper. Preference is given to sources tied to **replicable experimental reports** (calorimetry, helium/isotope assays, screening measurements) and to **established mechanisms** used in the equations (tunneling, Casimir, Oppenheimer–Phillips, phonon–nuclear coupling). Speculative mechanisms remain claim-tiered in the body text even when cited.
 
-2. McKubre, M. C. H., et al. "Excess Power Observations in Electrochemical Studies of the D/Pd System." *Journal of Electroanalytical Chemistry*, vol. 368, no. 1–2, 1994, pp. 55–66.  
-    **Link:** [https://doi.org/10.1016/0022-0728(94)87011-6](https://doi.org/10.1016/0022-0728\(94\)87011-6)
+### Subtitle homage
 
-3. Storms, E. "A Critical Analysis of the LENR Phenomenon." *Naturwissenschaften*, vol. 97, no. 10, 2010, pp. 861–881.  
-    **Link:** [https://doi.org/10.1007/s00114-010-0711-x](https://doi.org/10.1007/s00114-010-0711-x)
+**[vaswani2017]** Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems* 30.  
+*Methodological metaphor only—not a LENR physics source.* The subtitle "Electron, Neutron, and Proton coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
+**Link:** [https://arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762) · [NeurIPS 2017](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html)
 
-4. Rothwell, J. "Cold Fusion and the Future." LENR-CANR.org, 2004\.  
-    **Link:** [http://lenr-canr.org/acrobat/RothwellJcoldfusiona.pdf](http://lenr-canr.org/acrobat/RothwellJcoldfusiona.pdf)
+### Primary sources for mathematical modeling (replicable evidence & established mechanisms)
 
-5. Arata, Y., & Zhang, Y. C. "Observation of Anomalous Heat Release and Helium-4 Production from Highly Deuterated Palladium Fine Particles." *Proceedings of the Japan Academy, Series B*, vol. 78, no. 7, 2002, pp. 57–61.  
-    **Link:** [https://doi.org/10.2183/pjab.78.57](https://doi.org/10.2183/pjab.78.57)
+Drawn from the project's evidence-base bibliography (`Unified_LENR_Theory_D.Acs.docx.md`) and from DOI-backed screening / heat–helium constraints used by the companion simulation.
 
-6. Mizuno, T. "Anomalous Energy Generation During Treatment of Nickel with Hydrogen Gas." *Journal of Nuclear Science and Technology*, vol. 44, no. 2, 2007, pp. 331–338.  
-    **Link:** [https://doi.org/10.1080/18811248.2007.9711293](https://doi.org/10.1080/18811248.2007.9711293)
+1. Fleischmann, M., & Pons, S. (1989). Electrochemically induced nuclear fusion of deuterium. *Journal of Electroanalytical Chemistry*, 261(2), 301–308.  
+   **Link:** [https://doi.org/10.1016/0022-0728(89)80006-3](https://doi.org/10.1016/0022-0728(89)80006-3)
 
-7. Celani, F., et al. "Experimental Results on Sub-Micro Structured Pd Wires and Thin Films: Evidence of LENR Effect." *Journal of Condensed Matter Nuclear Science*, vol. 13, 2014, pp. 56–68.  
-    **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol13.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol13.pdf) (see relevant pages)
+2. McKubre, M. C. H., et al. (1994). Excess power observations in electrochemical studies of the D/Pd system. *Journal of Electroanalytical Chemistry*, 368, 55–66.  
+   **Link:** [https://doi.org/10.1016/0022-0728(94)87011-6](https://doi.org/10.1016/0022-0728(94)87011-6)
 
-8. Godes, R. "Quantum Fusion Hypothesis: A New Approach to LENR." *International Journal of Hydrogen Energy*, vol. 43, no. 5, 2018, pp. 2492–2502.  
-    **Link:** [https://doi.org/10.1016/j.ijhydene.2017.11.102](https://doi.org/10.1016/j.ijhydene.2017.11.102)
+3. Storms, E. (2010). A critical analysis of the LENR phenomenon. *Naturwissenschaften*, 97(10), 861–881.  
+   **Link:** [https://doi.org/10.1007/s00114-010-0711-x](https://doi.org/10.1007/s00114-010-0711-x)
 
-9. Widom, A., & Larsen, L. "Ultra Low-Momentum Neutron Catalyzed Nuclear Reactions on Metallic Hydride Surfaces." *The European Physical Journal C*, vol. 46, no. 1, 2006, pp. 107–111.  
+4. Arata, Y., & Zhang, Y.-C. (2002). Observation of anomalous heat release and helium-4 production from highly deuterated palladium fine particles. *Proceedings of the Japan Academy, Series B*, 78(7), 57–61.  
+   **Link:** [https://doi.org/10.2183/pjab.78.57](https://doi.org/10.2183/pjab.78.57)
+
+5. Mizuno, T. (2007). Anomalous energy generation during treatment of nickel with hydrogen gas. *Journal of Nuclear Science and Technology*, 44(2), 331–338.  
+   **Link:** [https://doi.org/10.1080/18811248.2007.9711293](https://doi.org/10.1080/18811248.2007.9711293)
+
+6. Mizuno, T., & Rothwell, J. (2019). Increased excess heat from palladium deposited on nickel. *Journal of Condensed Matter Nuclear Science*, 29, 1–30.  
+   **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol29.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol29.pdf)
+
+7. Miles, M. H., et al. (1993). Correlation of excess power and helium production. *Journal of Electroanalytical Chemistry*, 346, 99–117.  
+   **Link:** [https://doi.org/10.1016/0022-0728(93)85700-H](https://doi.org/10.1016/0022-0728(93)85700-H)
+
+8. Steinetz, B. M., et al. (2020). Novel nuclear reactions observed in bremsstrahlung-irradiated deuterated metals. *Physical Review C*, 101, 044610.  
+   **Link:** [https://doi.org/10.1103/PhysRevC.101.044610](https://doi.org/10.1103/PhysRevC.101.044610)
+
+9. Pines, V., et al. (2020). Nuclear fusion reactions in deuterated metals. *Physical Review C*, 101, 044609.  
+   **Link:** [https://doi.org/10.1103/PhysRevC.101.044609](https://doi.org/10.1103/PhysRevC.101.044609)
+
+10. Raiola, F., et al. (2002). Electron screening in d(d,p)t for deuterated metals. *European Physical Journal A*, 13, 377–382.  
+    **Link:** [https://doi.org/10.1007/s10050-002-8766-5](https://doi.org/10.1007/s10050-002-8766-5)
+
+11. Huke, A., et al. (2008). Enhancement of deuteron-fusion reactions in metals. *Physical Review C*, 78, 015803.  
+    **Link:** [https://doi.org/10.1103/PhysRevC.78.015803](https://doi.org/10.1103/PhysRevC.78.015803)
+
+12. Czerski, K., et al. (2023). Electron screening in palladium. *Physics Letters B*, 845, 137750.  
+    **Link:** [https://doi.org/10.1016/j.physletb.2023.137750](https://doi.org/10.1016/j.physletb.2023.137750)
+
+13. Fralick, G., Decher, R., & Rousar, D. (2003). Anomalous heat effects in metal hydrides. NASA/TM—2003-212795.  
+    **Link:** [https://ntrs.nasa.gov/citations/20040152112](https://ntrs.nasa.gov/citations/20040152112)
+
+14. Iwamura, Y., Itoh, T., & Takahashi, T. (2024). Anomalous heat generation in nano-composite hydrides. *Japanese Journal of Applied Physics*, 63(3), 037001.  
+    **Link:** [https://doi.org/10.35848/1347-4065/ad2622](https://doi.org/10.35848/1347-4065/ad2622)
+
+15. Bellucci, S., Cardone, F., & Pistella, F. (2023). Review of experiments reporting non-conventional phenomena in nuclear matter. *Symmetry*, 15(8), 1507.  
+    **Link:** [https://doi.org/10.3390/sym15081507](https://doi.org/10.3390/sym15081507)
+
+16. Oppenheimer, J. R., & Phillips, M. (1935). Note on the transmutation function for deuterons. *Physical Review*, 48(7), 500–502.  
+    **Link:** [https://doi.org/10.1103/PhysRev.48.500](https://doi.org/10.1103/PhysRev.48.500)
+
+17. Bordag, M., Mohideen, U., & Mostepanenko, V. M. (2001). New developments in the Casimir effect. *Physics Reports*, 353(1–3), 1–205.  
+    **Link:** [https://doi.org/10.1016/S0370-1573(01)00015-1](https://doi.org/10.1016/S0370-1573(01)00015-1)
+
+18. Hagelstein, P. L., & Chaudhary, I. U. (2015). Coherent energy exchange between lattice and nuclear degrees of freedom. *Journal of Condensed Matter Nuclear Science*, 15, 1–24.  
+    **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol15.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol15.pdf)
+
+19. Takahashi, A. (2004). Tetrahedral symmetric condensate fusion model and multi-body fusion in deuterated metal. *Journal of Condensed Matter Nuclear Science*, 1, 4–17.  
+    **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol1.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol1.pdf)
+
+20. Takahashi, A. (2016). Fundamental of rate theory for CMNS. *Journal of Condensed Matter Nuclear Science*, 19, 298–315. (Basis for the software `trapped_state` rate mode.)
+
+21. Holmlid, L. (2015). Rydberg Matter and its detection: A review of experimental techniques. *Journal of Physics: Conference Series*, 635, 012002.  
+    **Link:** [https://doi.org/10.1088/1742-6596/635/1/012002](https://doi.org/10.1088/1742-6596/635/1/012002)
+
+22. Widom, A., & Larsen, L. (2006). Ultra low-momentum neutron catalyzed nuclear reactions on metallic hydride surfaces. *The European Physical Journal C*, 46(1), 107–111.  
     **Link:** [https://doi.org/10.1140/epjc/s2006-02479-8](https://doi.org/10.1140/epjc/s2006-02479-8)
 
-10. Hagelstein, P. L., & Chaudhary, I. U. "Arguments for d \+ d → 4He \+ γ Reaction in Condensed Matter Nuclear Science." *Journal of Condensed Matter Nuclear Science*, vol. 12, 2013, pp. 59–82.  
-     **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol12.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol12.pdf)
+23. Preparata, G. (1995). *QED Coherence in Matter*. World Scientific.  
+    **Link:** [https://www.worldscientific.com/worldscibooks/10.1142/2739](https://www.worldscientific.com/worldscibooks/10.1142/2739)
 
-11. Holmlid, L. "Rydberg Matter and Its Detection: A Review of Experimental Techniques." *Journal of Physics: Conference Series*, vol. 635, 2015, 012002\.  
-     **Link:** [https://doi.org/10.1088/1742-6596/635/1/012002](https://doi.org/10.1088/1742-6596/635/1/012002)
+24. Schwinger, J. (1990). Cold fusion: A hypothesis. *Zeitschrift für Naturforschung A*, 45, 756–758.  
+    **Link:** [https://www.lenr-canr.org/acrobat/SchwingerJcoldfusion.pdf](https://www.lenr-canr.org/acrobat/SchwingerJcoldfusion.pdf)
 
-12. Meng, J., et al. "Halo Phenomena in Weakly Bound Nuclei." *Frontiers of Physics in China*, vol. 8, no. 1, 2013, pp. 55–79.  
-     **Link:** [https://doi.org/10.1007/s11467-013-0306-3](https://doi.org/10.1007/s11467-013-0306-3)
+25. Kim, Y. E., & Zubarev, A. L. (2001). Theory of Bose–Einstein condensation mechanism for deuteron-induced nuclear reactions in micro/nano-scale metal grains and particles. *Physical Review A*, 64, 013603.  
+    **Link:** [https://doi.org/10.1103/PhysRevA.64.013603](https://doi.org/10.1103/PhysRevA.64.013603)
 
-13. Del Giudice, E., et al. "Coherent Quantum Electrodynamics in Living Matter." *Electromagnetic Biology and Medicine*, vol. 19, no. 1, 2000, pp. 75–79.  
-     **Link:** [https://doi.org/10.1081/JBC-100100302](https://doi.org/10.1081/JBC-100100302)
+26. Taleyarkhan, R. P., et al. (2002). Evidence for nuclear emissions during acoustic cavitation. *Science*, 295(5561), 1868–1873.  
+    **Link:** [https://doi.org/10.1126/science.1067589](https://doi.org/10.1126/science.1067589)
 
-14. Bordag, M., Mohideen, U., & Mostepanenko, V. M. "New Developments in the Casimir Effect." *Physics Reports*, vol. 353, no. 1–3, 2001, pp. 1–205.  
-     **Link:** [https://doi.org/10.1016/S0370-1573(01)00015-1](https://doi.org/10.1016/S0370-1573\(01\)00015-1)
+27. Menlove, H. O., et al. (1989). Neutron emission from titanium exposed to deuterium gas at high pressure. Los Alamos National Laboratory Report.  
+    **Link:** [https://www.osti.gov/biblio/5039188](https://www.osti.gov/biblio/5039188)
 
-15. Kim, Y. E., & Zubarev, A. L. "Theory of Bose-Einstein Condensation Mechanism for Deuteron-Induced Nuclear Reactions in Micro/Nano-Scale Metal Grains and Particles." *Physical Review A*, vol. 64, no. 1, 2001, 013603\.  
-     **Link:** [https://doi.org/10.1103/PhysRevA.64.013603](https://doi.org/10.1103/PhysRevA.64.013603)
+28. Bockris, J. O'M., Lin, G. H., & Bush, B. F. (1991). Tritium and neutron generation in electrolysis of heavy water. *Proceedings of the Electrochemical Society* / LENR-CANR archive.  
+    **Link:** [https://lenr-canr.org/acrobat/BockrisJdoestritiu.pdf](https://lenr-canr.org/acrobat/BockrisJdoestritiu.pdf)
 
-16. Oppenheimer, J. R., & Phillips, M. "Note on the Transmutation Function for Deuterons." *Physical Review*, vol. 48, no. 7, 1935, pp. 500–502.  
-     **Link:** [https://doi.org/10.1103/PhysRev.48.500](https://doi.org/10.1103/PhysRev.48.500)
+29. Wolf, K. L., et al. (1990). Tritium production in deuterated palladium. Texas A&M / related reports.  
+    **Link:** [https://link.springer.com/article/10.1007/BF02627575](https://link.springer.com/article/10.1007/BF02627575)
 
-17. Taleyarkhan, R. P., et al. "Evidence for Nuclear Emissions During Acoustic Cavitation." *Science*, vol. 295, no. 5561, 2002, pp. 1868–1873.  
-     **Link:** [https://doi.org/10.1126/science.1067589](https://doi.org/10.1126/science.1067589)
+30. Celani, F., et al. (2014). Experimental results on sub-micro structured Pd wires and thin films. *Journal of Condensed Matter Nuclear Science*, 13, 56–68.  
+    **Link:** [http://www.iscmns.org/CMNS/JCMNS-Vol13.pdf](http://www.iscmns.org/CMNS/JCMNS-Vol13.pdf)
 
-### Supplementary References (2026 Rigor Review additions)
+31. Bakranov, N., Didenko, V., & Nagel, D. (2024). Nanomaterials engineering for enhanced LENR: A comprehensive review. *Frontiers in Materials*, 11, 1500487.  
+    **Link:** [https://doi.org/10.3389/fmats.2024.1500487](https://doi.org/10.3389/fmats.2024.1500487)
 
-These sources support the 2026 scientific-rigor review and remediation. Each
-entry lists the canonical citation key used in the codebase traceability matrix
-(`docs/REVIEW_2026/TRACEABILITY_MATRIX.md`) so every claim resolves to a DOI in
-both directions.
+32. Levi, G., et al. (2013). Indications of anomalous heat energy production in a reactor device containing hydrogen-loaded nickel powder. arXiv:1305.3913.  
+    **Link:** [https://arxiv.org/abs/1305.3913](https://arxiv.org/abs/1305.3913)
 
-18. **[takahashi2016]** Takahashi, A. "Fundamental of Rate Theory for CMNS." *Journal of Condensed Matter Nuclear Science*, vol. 19, 2016, pp. 298–315. (Trapped-state / TSC rate formalism; basis for the `trapped_state` rate mode.)
-19. **[hagelstein2025]** Hagelstein, P. L. "Relativistic Phonon–Nuclear Coupling Matrix Element for D₂/⁴He" and lossy spin-boson model reviews (2025). (MeV-gap down-conversion channel.)
-20. **[steinetz2020exp]** Steinetz, B. M., et al. "Novel Nuclear Reactions Observed in Bremsstrahlung-Irradiated Deuterated Metals." *Physical Review C*, vol. 101, 2020, 044610. **DOI:** [10.1103/PhysRevC.101.044610](https://doi.org/10.1103/PhysRevC.101.044610)
-21. **[pines2020theory]** Pines, V., et al. "Nuclear Fusion Reactions in Deuterated Metals." *Physical Review C*, vol. 101, 2020, 044609. **DOI:** [10.1103/PhysRevC.101.044609](https://doi.org/10.1103/PhysRevC.101.044609) (ErD₃ screening U_e ≈ 347 eV.)
-22. **[raiola2002]** Raiola, F., et al. "Electron Screening in d(d,p)t for Deuterated Metals." *European Physical Journal A*, vol. 13, 2002, pp. 377–382. **DOI:** [10.1007/s10050-002-8766-5](https://doi.org/10.1007/s10050-002-8766-5)
-23. **[huke2008]** Huke, A., et al. "Enhancement of Deuteron-Fusion Reactions in Metals." *Physical Review C*, vol. 78, 2008, 015803. **DOI:** [10.1103/PhysRevC.78.015803](https://doi.org/10.1103/PhysRevC.78.015803)
-24. **[czerski2023]** Czerski, K., et al. "Electron Screening in Palladium." *Physics Letters B*, vol. 845, 2023, 137750. **DOI:** [10.1016/j.physletb.2023.137750](https://doi.org/10.1016/j.physletb.2023.137750)
-25. **[screeningreview2024]** "Electron Screening in Laboratory Nuclear Reactions." *Particles*, vol. 7, no. 3, 2024, 50. **DOI:** [10.3390/particles7030050](https://doi.org/10.3390/particles7030050)
-26. **[storms2015]** Storms, E. "Efficient Production of Energy from the LENR Effect." *Current Science*, vol. 108, no. 4, 2015, pp. 574–577. (He-4/heat correlation review.)
-27. **[tennfors2013]** Tennfors, E. "On the Assumptions for an Effective Electron Mass." *European Physical Journal Plus*, vol. 128, 2013, 15. **DOI:** [10.1140/epjp/i2013-13015-3](https://doi.org/10.1140/epjp/i2013-13015-3) (Widom-Larsen critique.)
-28. **[mulnix2026]** Mulnix, A. "Structural Theory of Sonoluminescence via Klein–Gordon / Rayleigh–Plesset Harmonic Locking." Zenodo, 2026. **DOI:** [10.5281/zenodo.19079074](https://doi.org/10.5281/zenodo.19079074)
-29. **[nguyen2026]** Nguyen, T., et al. "Quantum Shell Structure of Proton–Neutron Pairing." *Nature*, 2026. **DOI:** [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)
-30. **[floquetwkb2026]** "Floquet–WKB Analysis of Lattice Confinement Fusion under a Driven Barrier." 2026. **DOI:** [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)
-31. **[parkhomov2018]** Parkhomov, A. G. "Nuclear Reactions in LENR: Review of Experimental Results." 2018 (republished via LENR Academy). (Curated exothermic-reaction subset for transmutation validation.)
-32. **[miles1993]** Miles, M. H., et al. "Correlation of Excess Power and Helium Production." *Journal of Electroanalytical Chemistry*, vol. 346, 1993, pp. 99–117. **DOI:** [10.1016/0022-0728(93)85700-H](https://doi.org/10.1016/0022-0728\(93\)85700-H)
+33. Del Giudice, E., Doglia, S., Milani, M., & Vitiello, G. (1985). Electrodynamical coherence in biological systems. *Physical Review Letters*, 54(7), 622–625.  
+    **Link:** [https://doi.org/10.1103/PhysRevLett.54.622](https://doi.org/10.1103/PhysRevLett.54.622)
+
+34. Safajuei, F., Safajuei, S., & Hajimohammadi, M. (2023). Production of ultra-low momentum neutrons on metallic hydride surfaces by heavy electrons. *Iranian Journal of Science and Technology, Transactions A: Science*, 47, 995–1002.  
+    **Link:** [https://doi.org/10.1007/s40995-023-01437-3](https://doi.org/10.1007/s40995-023-01437-3)
+
+### Supplementary keys (software / UQ traceability)
+
+These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_2026/TRACEABILITY_MATRIX.md`:
+
+- **[steinetz2020exp]** → entry 8 above  
+- **[pines2020theory]** → entry 9 above  
+- **[raiola2002]** → entry 10 above  
+- **[huke2008]** → entry 11 above  
+- **[czerski2023]** → entry 12 above  
+- **[miles1993]** → entry 7 above  
+- **[takahashi2016]** → entry 20 above  
+- **[hagelstein2025]** Hagelstein, P. L. (2025). Relativistic phonon–nuclear coupling / lossy spin-boson reviews (MeV-gap channel).  
+- **[screeningreview2024]** Electron screening in laboratory nuclear reactions. *Particles*, 7(3), 50. DOI: [10.3390/particles7030050](https://doi.org/10.3390/particles7030050)  
+- **[storms2015]** Storms, E. (2015). Efficient production of energy from the LENR effect. *Current Science*, 108(4), 574–577.  
+- **[tennfors2013]** Tennfors, E. (2013). On the assumptions for an effective electron mass. *European Physical Journal Plus*, 128, 15. DOI: [10.1140/epjp/i2013-13015-3](https://doi.org/10.1140/epjp/i2013-13015-3)  
+- **[mulnix2026]** Mulnix, A. (2026). Structural theory of sonoluminescence via Klein–Gordon / Rayleigh–Plesset harmonic locking. Zenodo. DOI: [10.5281/zenodo.19079074](https://doi.org/10.5281/zenodo.19079074)  
+- **[nguyen2026]** Nguyen, T., et al. (2026). Quantum shell structure of proton–neutron pairing. *Nature*. DOI: [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)  
+- **[floquetwkb2026]** Floquet–WKB analysis of lattice confinement fusion under a driven barrier (2026). DOI: [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)  
+- **[parkhomov2018]** Parkhomov, A. G. (2018). Nuclear reactions in LENR: review of experimental results (LENR Academy curated subset).  
 
 ---
 
@@ -1077,7 +1167,7 @@ This paper contains two versions of the unified LENR framework developed in para
 
 - **Part 1 (Sections 1-8, above):** Primary reference — Markdown format. Contains all mathematically corrected formulas, the non-equilibrium BEC framework, energy-product accounting, open theoretical challenges (Section 5A), and corrected numerical estimates. **This is the authoritative version for all quantitative claims.**
 
-- **Part 2 (below, LaTeX format):** Extended analysis — contains substantial unique content not in Part 1, including: historical antecedents (Section 2.9), advanced computational framework with uncertainty quantification (Section 3), detailed experimental correlations with legacy and modern data (Section 4), Monte Carlo/Sobol sensitivity analysis (Sections 3.2-3.4), machine learning methodology (Section 3.4), and a comprehensive discussion of theoretical implications (Section 6).
+- **Part 2 (below, LaTeX-export appendix):** Extended historical/UQ content retained for continuity. **Many Part 2 equations use escaped display/math dialects and may render poorly in Markdown viewers.** Treat Part 2 as an archival appendix: do **not** override Part 1 quantitative claim tiers. Leaked build scaffolding (orphaned documentclass preamble, duplicated BibTeX, shell pdflatex/bibtex commands) after the appendix body has been removed. Future work should merge unique Part 2 prose into Part 1 and retire the duplicated equation blocks.
 
 **Reconciliation of contradictions (all resolved):**
 
@@ -1681,286 +1771,3 @@ S \= \\frac{n \- \\lambda}{\\sqrt{\\lambda}}, \\quad \\text{where $n$ \= observe
 Q\_{\\text{nuclear}} \= Q\_{\\text{output}} \- Q\_{\\text{input}} \\pm \\Delta Q  
 \\\]  
 with confidence thresholds set at $S \\geq 5$ for statistically significant nuclear inference.
-
-\\documentclass\[12pt\]{article}  
-\\usepackage\[margin=1in\]{geometry}  
-\\usepackage{amsmath, amssymb}  
-\\usepackage{graphicx}  
-\\usepackage{physics}  
-\\usepackage{hyperref}  
-\\usepackage{natbib}  
-\\usepackage{authblk}  
-\\usepackage{setspace}  
-\\usepackage{appendix}
-
-\\title{\\textbf{A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR): A Critical Assessment}}  
-\\author\[1\]{Diadon Acs}  
-\\author\[2\]{LENR-ARA (Autonomous Research Assistant)}  
-\\author\[3\]{GPT-o1 (Modeling and Simulation Unit)}  
-\\affil\[1\]{Conscious Energies, Principal Investigator}  
-\\affil\[2\]{LENR Autonomous Research Project, Theoretical Physics Division}  
-\\affil\[3\]{Advanced Computing and Simulation Cluster}
-
-\\date{February 2025}
-
-\\begin{document}
-
-\\maketitle
-
-\\input{sections/abstract}
-
-\\newpage  
-\\tableofcontents  
-\\newpage
-
-\\input{sections/introduction}  
-\\input{sections/theory}  
-\\input{sections/computation}  
-\\input{sections/experiments}  
-\\input{sections/results}  
-\\input{sections/discussion}  
-\\input{sections/conclusion}  
-\\input{sections/appendix}
-
-\\bibliographystyle{unsrt}  
-\\bibliography{refs}
-
-\\end{document}
-
-@article{fleischmann1989,  
-  title={Electrochemically induced nuclear fusion of deuterium},  
-  author={Fleischmann, Martin and Pons, Stanley},  
-  journal={Journal of Electroanalytical Chemistry},  
-  volume={261},  
-  number={2},  
-  pages={301--308},  
-  year={1989}  
-}
-
-@article{oriani1990,  
-  title={Calorimetric measurements of excess power during electrolysis of D2O with palladium cathodes},  
-  author={Oriani, Richard A. and others},  
-  journal={EPRI-NSF Workshop Proceedings},  
-  year={1990}  
-}
-
-@article{bockris1991,  
-  title={Tritium and neutron generation in electrolysis of heavy water},  
-  author={Bockris, John O'M. and Lin, G.H. and Bush, B.F.},  
-  journal={Proceedings of the Electrochemical Society},  
-  year={1991}  
-}
-
-@article{wolf1990,  
-  title={Tritium production in deuterated palladium},  
-  author={Wolf, K.L. and others},  
-  journal={Texas A\\\&M Report},  
-  year={1990}  
-}
-
-@article{menlove1989,  
-  title={Neutron emission from titanium exposed to deuterium gas at high pressure},  
-  author={Menlove, Howard O. and others},  
-  journal={Los Alamos National Laboratory Report},  
-  year={1989}  
-}
-
-@article{mckubre1994,  
-  title={Excess power observations in electrochemical studies of the D/Pd system},  
-  author={McKubre, M.C.H. and others},  
-  journal={Journal of Electroanalytical Chemistry},  
-  volume={368},  
-  pages={55--66},  
-  year={1994}  
-}
-
-@article{mizuno2007,  
-  title={Anomalous energy generation during treatment of nickel with hydrogen gas},  
-  author={Mizuno, Tadahiko},  
-  journal={Journal of Nuclear Science and Technology},  
-  volume={44},  
-  number={2},  
-  pages={331--338},  
-  year={2007}  
-}
-
-@article{arata2002,  
-  title={Observation of anomalous heat release and helium-4 production from highly deuterated palladium},  
-  author={Arata, Yoshiaki and Zhang, Yue-Chang},  
-  journal={Proceedings of the Japan Academy, Series B},  
-  volume={78},  
-  number={7},  
-  pages={57--61},  
-  year={2002}  
-}
-
-@article{storms2010,  
-  title={A critical analysis of the LENR phenomenon},  
-  author={Storms, Edmund},  
-  journal={Naturwissenschaften},  
-  volume={97},  
-  number={10},  
-  pages={861--881},  
-  year={2010}  
-}
-
-@article{fleischmann1989,  
-  title={Electrochemically induced nuclear fusion of deuterium},  
-  author={Fleischmann, Martin and Pons, Stanley},  
-  journal={Journal of Electroanalytical Chemistry},  
-  volume={261},  
-  number={2},  
-  pages={301--308},  
-  year={1989}  
-}
-
-@article{oriani1990,  
-  title={Calorimetric measurements of excess power during electrolysis of D2O with palladium cathodes},  
-  author={Oriani, Richard A. and others},  
-  journal={EPRI-NSF Workshop Proceedings},  
-  year={1990}  
-}
-
-@article{bockris1991,  
-  title={Tritium and neutron generation in electrolysis of heavy water},  
-  author={Bockris, John O'M. and Lin, G.H. and Bush, B.F.},  
-  journal={Proceedings of the Electrochemical Society},  
-  year={1991}  
-}
-
-@article{wolf1990,  
-  title={Tritium production in deuterated palladium},  
-  author={Wolf, K.L. and others},  
-  journal={Texas A\\\&M Report},  
-  year={1990}  
-}
-
-@article{menlove1989,  
-  title={Neutron emission from titanium exposed to deuterium gas at high pressure},  
-  author={Menlove, Howard O. and others},  
-  journal={Los Alamos National Laboratory Report},  
-  year={1989}  
-}
-
-@article{mckubre1994,  
-  title={Excess power observations in electrochemical studies of the D/Pd system},  
-  author={McKubre, M.C.H. and others},  
-  journal={Journal of Electroanalytical Chemistry},  
-  volume={368},  
-  pages={55--66},  
-  year={1994}  
-}
-
-@article{mizuno2007,  
-  title={Anomalous energy generation during treatment of nickel with hydrogen gas},  
-  author={Mizuno, Tadahiko},  
-  journal={Journal of Nuclear Science and Technology},  
-  volume={44},  
-  number={2},  
-  pages={331--338},  
-  year={2007}  
-}
-
-@article{arata2002,  
-  title={Observation of anomalous heat release and helium-4 production from highly deuterated palladium},  
-  author={Arata, Yoshiaki and Zhang, Yue-Chang},  
-  journal={Proceedings of the Japan Academy, Series B},  
-  volume={78},  
-  number={7},  
-  pages={57--61},  
-  year={2002}  
-}
-
-@article{storms2010,  
-  title={A critical analysis of the LENR phenomenon},  
-  author={Storms, Edmund},  
-  journal={Naturwissenschaften},  
-  volume={97},  
-  number={10},  
-  pages={861--881},  
-  year={2010}  
-}
-
-@article{preparata1991,  
-  title={QED Coherence in Matter},  
-  author={Preparata, Giuliano},  
-  journal={World Scientific},  
-  year={1995}  
-}
-
-@article{takahashi2004,  
-  title={Tetrahedral Symmetric Condensate Fusion Model and Multi-body Fusion in Deuterated Metal},  
-  author={Takahashi, Akito},  
-  journal={JCMNS},  
-  volume={1},  
-  pages={4--17},  
-  year={2004}  
-}
-
-@article{hagelstein2015,  
-  title={Coherent Energy Exchange Between Lattice and Nuclear Degrees of Freedom},  
-  author={Hagelstein, Peter L. and Chaudhary, Irfan U.},  
-  journal={JCMNS},  
-  volume={15},  
-  pages={1--24},  
-  year={2015}  
-}
-
-@article{mizuno2019,  
-  title={Increased Excess Heat from Palladium Deposited on Nickel},  
-  author={Mizuno, Tadahiko and Rothwell, Jed},  
-  journal={JCMNS},  
-  volume={29},  
-  pages={1--30},  
-  year={2019}  
-}
-
-@article{miley1996,  
-  title={Evidence of Transmutation Products in Thin-Film Nickel},  
-  author={Miley, George H. and Patterson, James A.},  
-  journal={Fusion Technology},  
-  volume={30},  
-  number={1},  
-  pages={156--159},  
-  year={1996}  
-}
-
-@article{levi2013,  
-  title={Indications of anomalous heat energy production in a reactor device containing hydrogen loaded nickel powder},  
-  author={Levi, Giuseppe and Foschi, Evelina and Höistad, Bengt and Pettersson, Roland and Tegnér, Lars and Essén, Sven},  
-  journal={arXiv preprint},  
-  year={2013},  
-  eprint={1305.3913},  
-  archivePrefix={arXiv},  
-  primaryClass={physics.gen-ph}  
-}
-
-@techreport{fralick2003,  
-  title={Anomalous Heat Effects in Metal Hydrides},  
-  author={Fralick, Gustave and Decher, Roger and Rousar, Dennis},  
-  institution={NASA Glenn Research Center},  
-  year={2003}  
-}
-
-@article{schwinger1990,  
-  title={Cold Fusion: A Hypothesis},  
-  author={Schwinger, Julian},  
-  journal={Z. Naturforsch. A},  
-  volume={45},  
-  pages={756--758},  
-  year={1990}  
-}
-
-pdflatex main.tex  
-bibtex main  
-pdflatex main.tex  
-pdflatex main.tex
-
-In rare high-energy localization events, the interface collapse dynamics described in §2.7 can transition into an extreme compression regime similar to the Electro-Nuclear Collapse (ENC) observed by Matsumoto (1992–2000). ENC involves transient, micro-plasmoid-like structures ("itonic, ionic, electron, etc. clusters") formed during high-current pinch discharges or cavitation events, achieving compression factors $$C\_{\\mathrm{ENC}} \\approx 10\\text{--}100\\times$$ above standard bubble collapse pressures.
-
-We model this as a multiplicative term in the local potential barrier reduction:
-
-$$U\_{\\mathrm{eff}} \= U\_{\\mathrm{Coulomb}} \- \\Delta U\_{\\mathrm{screen}} \- C\_{\\mathrm{ENC}} \\cdot \\Delta U\_{\\mathrm{Casimir/Bubble}}$$
-
-where $$C\_{\\mathrm{ENC}}$$ is a stochastic variable (log-normal, median $$\\approx 30$$). This allows certain Monte Carlo realizations to cross transient thresholds for nuclear-scale overlap densities, potentially generating both morphological byproducts (e.g., hollow spheres, particle tracks) and isotopic shifts. *(Model assumption: the $$C\_{\\mathrm{ENC}} \\approx 10\\text{--}100\\times$$ range and log-normal median $$\\approx 30$$ are heuristic, motivated qualitatively by Matsumoto's ENC observations but not quantitatively calibrated; they enter only as an uncertain prior in the Monte Carlo and carry the lowest claim tier.)*
-

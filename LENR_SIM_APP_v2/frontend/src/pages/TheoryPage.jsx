@@ -74,8 +74,8 @@ const TheoryPage = () => {
           >
             Unified LENR Theoretical Framework
           </Typography>
-          <Typography variant="h6" color="text.secondary" paragraph>
-            A Comprehensive Integration of Quantum, Nuclear, and Condensed Matter Phenomena
+          <Typography variant="h6" color="text.secondary" paragraph sx={{ fontStyle: 'italic' }}>
+            Electron, Neutron, and Proton coupling is all you need
           </Typography>
           <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
             <Chip label="Rydberg Matter" size="small" color="primary" />
@@ -96,11 +96,12 @@ const TheoryPage = () => {
         <Alert severity="info" sx={{ mb: 4 }}>
           <AlertTitle><strong>Abstract</strong></AlertTitle>
           <Typography variant="body2">
-            Low-Energy Nuclear Reactions (LENR) offer a transformative pathway toward clean and sustainable energy. 
-            This framework unifies major theoretical elements—including Rydberg Matter, halo electrons, double-layer 
-            QED effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under 
-            a single comprehensive model. Computational results predict tunneling enhancements exceeding 10⁸, while 
-            experimental evidence confirms isotopic shifts, neutron formation, and measurable excess heat production.
+            Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentially consequential pathway
+            toward clean energy. This guide summarizes the unified framework—including Rydberg Matter, delocalized
+            interface electrons, double-layer QED effects, Casimir effect, the Oppenheimer-Phillips process, and
+            quantum tunneling enhancements—under explicit claim tiers. Modeled tunneling enhancements are in the
+            range 10³–10⁵ (not earlier 10⁸ estimates). Experimental reports of isotopic shifts, neutron signals, and
+            excess heat remain disputed in reproducibility and are labeled separately from speculative mechanisms.
           </Typography>
         </Alert>
 
@@ -195,7 +196,7 @@ const TheoryPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <FlashOnIcon sx={{ mr: 1, color: 'secondary.main' }} />
                     <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                      Halo Electrons
+                      Halo Electrons / Delocalized Interface Electrons
                     </Typography>
                   </Box>
                   <Typography variant="body2" paragraph>
@@ -211,7 +212,7 @@ const TheoryPage = () => {
                       </ListItemIcon>
                       <ListItemText 
                         primary="Enhanced Nuclear Interaction" 
-                        secondary="Increased overlap probability (~10⁻³)" 
+                        secondary="Modeled nuclear-volume overlap ~8.5×10⁻¹⁶ (not ~10⁻³)" 
                         primaryTypographyProps={{ variant: 'body2', fontWeight: 'bold' }}
                         secondaryTypographyProps={{ variant: 'caption' }}
                       />
@@ -339,7 +340,7 @@ const TheoryPage = () => {
                   </List>
                   <Box sx={{ mt: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 1 }}>
                     <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                      F<sub>Casimir</sub> = -(π²ℏc/240) × (A/d⁴) ≈ -10⁻⁷ N
+                      F<sub>Casimir</sub> = -(π²ℏc/240) × (A/d⁴) ≈ -1.3 mN (modeled geometry)
                     </Typography>
                   </Box>
                 </CardContent>
@@ -353,7 +354,7 @@ const TheoryPage = () => {
               <AlertTitle><strong>Quantum Tunneling Enhancements</strong></AlertTitle>
               <Typography variant="body2" paragraph>
                 Under LENR-specific conditions (reduced barrier height through electric fields, Rydberg states, and 
-                Casimir effects), numerical simulations indicate tunneling probability enhancements exceeding <strong>10⁸</strong>.
+                Casimir effects), numerical simulations indicate tunneling probability enhancements in the band <strong>10³–10⁵</strong> (revised from earlier 10⁸ estimates).
               </Typography>
               <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mt: 2 }}>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
@@ -470,7 +471,7 @@ const TheoryPage = () => {
                   <Alert severity="success" sx={{ mt: 2 }}>
                     <Typography variant="body2">
                       <strong>Simulation Outcomes:</strong> Temperature peaks exceed 10⁵ K; collapsing bubbles produce 
-                      pressures of multiple GPa, supporting nuclear reaction conditions.
+                      pressures of multiple GPa, indicating extreme local conditions in the model.
                     </Typography>
                   </Alert>
                 </CardContent>
@@ -506,7 +507,8 @@ const TheoryPage = () => {
                   </List>
                   <Alert severity="info" sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      <strong>Results:</strong> Enhancement factors of 10³–10⁵ occur with 90% confidence within 
+                      <strong>Results:</strong> Modeled enhancement factors of 10³–10⁵ appear within a
+                      sensitivity band (not an experimental 90% confidence claim) for
                       specific material and field ranges.
                     </Typography>
                   </Alert>
@@ -608,17 +610,18 @@ const TheoryPage = () => {
             </Grid>
 
             <Grid size={{ xs: 12 }}>
-              <Alert severity="success">
-                <AlertTitle><strong>Computational-Experimental Correlation</strong></AlertTitle>
+              <Alert severity="info">
+                <AlertTitle><strong>Hypothesis-level alignment (not experimental confirmation)</strong></AlertTitle>
                 <Typography variant="body2">
-                  <strong>Tunneling Enhancements:</strong> Calculations show up to 10⁸-fold increases in tunneling 
-                  probability under combined RM, halo electron, and high-field environments.
+                  <strong>Tunneling Enhancements:</strong> Calculations show modeled increases of 10³–10⁵ in tunneling
+                  probability under combined RM, delocalized-interface-electron, and high-field environments.
                   <br /><br />
-                  <strong>Neutron Formation:</strong> Estimated neutron production rates align with low-level neutron 
-                  signatures found experimentally.
+                  <strong>Neutron Formation:</strong> Model neutron production rates are compared against low-level
+                  neutron signatures reported in some experiments (reproducibility varies).
                   <br /><br />
-                  <strong>Isotopic Shifts:</strong> Detection of helium-4, tritium, and heavier isotopes supports 
-                  multi-step nuclear processes (e.g., Oppenheimer-Phillips).
+                  <strong>Isotopic Shifts:</strong> Reports of helium-4, tritium, and heavier isotopes are treated as
+                  empirical correlations that motivate multi-step nuclear hypotheses (e.g., Oppenheimer-Phillips),
+                  not as settled proof.
                 </Typography>
               </Alert>
             </Grid>
@@ -649,7 +652,7 @@ const TheoryPage = () => {
                     <EquationCard
                       title="Quantum Tunneling Probability"
                       equation="P_tunnel = exp(-2/ℏ ∫ √[2m(V(x)-E)] dx)"
-                      description="Calculates probability of quantum particles penetrating energy barriers. LENR conditions can enhance this by factors exceeding 10⁸."
+                      description="Calculates probability of quantum particles penetrating energy barriers. LENR model conditions can enhance this by factors of 10³–10⁵ (claim-tiered)."
                     />
                     <EquationCard
                       title="Casimir Effect"
@@ -713,10 +716,11 @@ const TheoryPage = () => {
         <Divider sx={{ my: 4 }} />
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" paragraph>
-            <strong>Authors:</strong> Diadon Acs, LENR-ARA/GPT-4, Sonnet 4.5, and Gemini 2.5
+            <strong>Authors:</strong> Diadon Acs (lead); contributing AIs: LENR-ARA/GPT-4, GPT-5.2,
+            Sonnet/Opus family, Gemini family, Composer (Cursor)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Date: February 13, 2025 | Organization: www.conscious.energy
+            Date: revised 2026-07-22 (v0.3.6-beta) | Organization: www.conscious.energy
           </Typography>
         </Box>
       </Paper>

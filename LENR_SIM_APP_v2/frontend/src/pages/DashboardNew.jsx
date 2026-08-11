@@ -23,6 +23,7 @@ import {
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
+import TheoryTestbedCard from '../components/physics/TheoryTestbedCard';
 
 // Icons
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
@@ -341,6 +342,14 @@ function DashboardNew() {
             </Grow>
           ))}
         </Grid>
+      </Box>
+
+      {/* Theory Testbed - runnable from the hub, no navigation required */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 2, fontWeight: 600 }}>
+          Theory Testbed
+        </Typography>
+        <TheoryTestbedCard />
       </Box>
 
       {/* Recent Activity / Info Section */}

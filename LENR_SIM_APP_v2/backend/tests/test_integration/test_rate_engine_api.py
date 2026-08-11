@@ -25,7 +25,7 @@ def test_default_response_includes_two_body_rate_block() -> None:
     assert resp.status_code == 200
     block = resp.json()["reaction_rate_engine"]
     assert block["rate"]["mode"] == "two_body"
-    assert block["rate"]["claim_tier"] == "validated_lenr_mechanism"
+    assert block["rate"]["claim_tier"] == "established_reference"
     # UQ is opt-in: absent by default.
     assert "uncertainty" not in block
 
@@ -114,7 +114,7 @@ def test_bubble_lattice_default_includes_rate_and_kgrp() -> None:
     block = resp.json()["reaction_rate_engine"]
     # Block is populated by default (rate + KG-RP) but UQ stays opt-in.
     assert block["rate"]["mode"] == "two_body"
-    assert block["rate"]["claim_tier"] == "validated_lenr_mechanism"
+    assert block["rate"]["claim_tier"] == "established_reference"
     assert "kgrp" in block
     assert block["kgrp"]["claim_tier"] == "speculative_exploratory"
     assert "inputs" in block and block["inputs"]["evaluated_at"] == "collapse_peak"

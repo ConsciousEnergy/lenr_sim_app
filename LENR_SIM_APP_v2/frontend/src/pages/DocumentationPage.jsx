@@ -247,6 +247,45 @@ const DocumentationPage = () => {
           </Grid>
         </Grid>
 
+        {/* Scientific governance documents.
+            These are served as markdown by GET /api/docs/{slug} and rendered by
+            DocViewerPage, but nothing linked to them, so the route was
+            unreachable without typing the URL. */}
+        <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <SchoolIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Scientific Governance Documents
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Rendered in-app from the repository. These record open issues, the
+            falsifiable predictions the model commits to, and the packets prepared
+            for external reviewers.
+          </Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {[
+              { slug: 'issue-ledger', label: 'Issue Ledger' },
+              { slug: 'testable-predictions', label: 'Testable Predictions' },
+              { slug: 'reviewer-packets', label: 'Reviewer Packets' },
+            ].map((doc) => (
+              <Button
+                key={doc.slug}
+                variant="outlined"
+                size="small"
+                fullWidth
+                startIcon={<CodeIcon />}
+                onClick={() => {
+                  track.docsViewed({ slug: doc.slug, surface: 'documentation_page' });
+                  navigate(`/docs/${doc.slug}`);
+                }}
+              >
+                {doc.label}
+              </Button>
+            ))}
+          </Stack>
+        </Paper>
+
         {/* Main Documentation Sections */}
         
         {/* Getting Started */}

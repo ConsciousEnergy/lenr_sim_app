@@ -27,14 +27,18 @@ npm start
 
 ---
 
-## ⚠️ Known Warnings (Safe to Ignore)
-
-Your app **compiles and runs successfully**. The warnings you see are documented and do not affect functionality.
+## ⚠️ Known Warnings
 
 ### Summary of Warnings:
-1. **9 NPM Vulnerabilities** - In react-scripts dependencies, cannot fix without breaking changes
-2. **Webpack Deprecation Warnings** - Will be fixed when Create React App updates
-3. **Source Map Warning** - Missing map for @mediapipe/tasks-vision library
+1. **2 moderate npm advisories** - `react-router` 6.x; clearing them needs a v7
+   migration, so they are deferred. `npm audit --audit-level=high` exits `0`.
+2. **npm install summary** - the funding line and audit count printed after
+   `npm ci` come from npm, not from Vite.
+3. **Source Map Warning** - missing map for prebuilt third-party bundles
+   (`@mediapipe/tasks-vision` via `@react-three/drei`).
+
+If you see any **high** advisory you are on a stale lockfile or `node_modules`;
+pull and reinstall.
 
 📖 **See `frontend/WARNINGS_EXPLAINED.md` for detailed explanations**
 
@@ -42,9 +46,9 @@ Your app **compiles and runs successfully**. The warnings you see are documented
 
 ## App Status: ✅ HEALTHY
 
-- ✓ Compiles successfully
+- ✓ Builds successfully (Vite 6.4.3)
 - ✓ Runs on http://localhost:3000
-- ✓ Backend API on http://localhost:8000
+- ✓ Backend API on http://localhost:8010
 - ✓ All features functional
 - ✓ Production builds work (`npm run build`)
 
@@ -141,7 +145,7 @@ Make sure the backend is running:
 ```bash
 cd backend
 venv\Scripts\activate
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8010
 ```
 
 ---
@@ -178,11 +182,12 @@ LENR_SIM_APP_v2/
 
 ## Environment Variables
 
-### Required Variables
-Create `frontend/.env.local` with:
+### Optional API override
+Vite proxies relative `/api/*` paths to the backend, so local development usually
+needs no override at all. To bypass the proxy, create `frontend/.env.local`:
 ```
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_API_BASE_URL=http://localhost:8000
+REACT_APP_API_URL=http://localhost:8010
+VITE_API_URL=http://localhost:8010
 ```
 
 ### Optional Variables
@@ -226,8 +231,8 @@ uvicorn app.main:app --reload      # Start dev server
 
 ### Quick Links
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/api/docs
+- Backend API: http://localhost:8010
+- API Docs: http://localhost:8010/api/docs
 - Visualization Test: http://localhost:3000/visualization-test
 
 ---
@@ -241,7 +246,7 @@ For issues or questions:
 
 ---
 
-**Last Updated**: November 9, 2025  
-**Version**: 0.1.0  
+**Last Updated**: August 2026  
+**Version**: 0.3.6-beta  
 **Status**: Development - Stable
 

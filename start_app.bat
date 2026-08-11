@@ -1,77 +1,56 @@
 @echo off
+setlocal EnableDelayedExpansion
+cd /d "%~dp0"
+
 ECHO Starting LENR Simulation Application...
+ECHO.
+ECHO Tip: prefer LENR_SIM_APP_v2\start_app.bat (backend :8010 + frontend sync).
+ECHO This root launcher uses backend :8000.
+ECHO.
 
-:: Check if Python is installed
-python --version >nul 2>&1
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO Python is not installed or not in PATH. Please install Python 3.8+.
+where python >nul 2>&1
+IF ERRORLEVEL 1 (
+    ECHO ERROR: Python is not installed or not in PATH. Please install Python 3.8+.
+    pause
     EXIT /B 1
 )
 
-:: Check if Node.js is installed
-node --version >nul 2>&1
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO Node.js is not installed or not in PATH. Please install Node.js 14+.
+where node >nul 2>&1
+IF ERRORLEVEL 1 (
+    ECHO ERROR: Node.js is not installed or not in PATH. Please install Node.js 18+.
+    pause
     EXIT /B 1
 )
 
-:: Ensure necessary directories exist
 IF NOT EXIST LENR_SIM_APP_v2\backend\data mkdir LENR_SIM_APP_v2\backend\data
 IF NOT EXIST LENR_SIM_APP_v2\backend\static mkdir LENR_SIM_APP_v2\backend\static
 IF NOT EXIST LENR_SIM_APP_v2\backend\logs mkdir LENR_SIM_APP_v2\backend\logs
 
-:: Setup and start backend
 ECHO Setting up backend...
-cd LENR_SIM_APP_v2\backend
+pushd LENR_SIM_APP_v2\backend
 
-:: Check for virtual environment
-IF NOT EXIST venv (
+IF NOT EXIST venv\Scripts\activate.bat (
     ECHO Creating virtual environment...
     python -m venv venv
 )
 
-:: Activate virtual environment and install dependencies
-ECHO Activating virtual environment...
-call venv\Scripts\activate
+ECHO Starting Backend Server window on port 8000...
+start "LENR Backend" cmd /k "cd /d "%~dp0LENR_SIM_APP_v2\backend" && call venv\Scripts\activate.bat && pip install -r requirements.txt && python -m uvicorn app.main:app --reload --port 8000"
+popd
 
-ECHO Installing backend dependencies...
-pip install -r requirements.txt
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO pip install failed. Trying scipy fix for broken "no RECORD file" install...
-    python remove_broken_scipy.py
-    pip install -r requirements.txt
-)
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO Still failing. Run manually: LENR_SIM_APP_v2\backend\fix_scipy_venv.bat
-)
+ECHO Waiting 5 seconds for backend bind...
+timeout /t 5 /nobreak > nul
 
-:: Start backend server in a new window
-ECHO Starting backend server on port 8000...
-START cmd /c "call venv\Scripts\activate && python -m uvicorn app.main:app --reload --port 8000"
-
-:: Return to root directory
-cd ..\..
-
-:: Setup and start frontend
-ECHO Setting up frontend...
-cd LENR_SIM_APP_v2\frontend
-
-:: Install frontend dependencies if needed
-IF NOT EXIST node_modules (
-    ECHO Installing frontend dependencies...
-    npm install
-)
-
-:: Start frontend server
-ECHO Starting frontend server...
-START cmd /c "npm start"
-
-:: Return to root directory
-cd ..\..
+ECHO Starting Frontend Server window...
+REM Reuse the v2 frontend launcher; override API URL to port 8000 for this root script.
+start "LENR Frontend" cmd /k "cd /d "%~dp0LENR_SIM_APP_v2\frontend" && set REACT_APP_API_URL=http://localhost:8000&& set VITE_API_URL=http://localhost:8000&& call start_dev.bat"
 
 ECHO.
 ECHO LENR Simulation Application is starting...
 ECHO Backend API: http://localhost:8000
-ECHO Frontend: http://localhost:3000
+ECHO Frontend:    http://localhost:3000
 ECHO.
-ECHO Press Ctrl+C in the respective terminal windows to stop the servers. 
+ECHO Watch the "LENR Frontend" window for npm/Vite errors.
+ECHO Press any key to close this launcher (servers keep running)...
+pause > nul
+endlocal

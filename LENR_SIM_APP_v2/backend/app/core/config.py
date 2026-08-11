@@ -74,8 +74,11 @@ class Settings(BaseSettings):
     
     # Performance configuration
     DEFAULT_TIMEOUT: float = 30.0  # Default API timeout in seconds
-    MEMORY_WARNING_THRESHOLD: float = 75.0  # Percentage
-    MEMORY_CRITICAL_THRESHOLD: float = 90.0  # Percentage
+    # System-wide virtual_memory().percent thresholds. Desktop machines often sit
+    # above 75% with a browser/IDE open; 75/90 caused CRITICAL spam and competed
+    # with `npm ci` during start_app.bat. Warn later; critical only when nearly full.
+    MEMORY_WARNING_THRESHOLD: float = 90.0  # Percentage
+    MEMORY_CRITICAL_THRESHOLD: float = 97.0  # Percentage
     MEMORY_CHECK_INTERVAL: float = 10.0  # Seconds
     ENABLE_TRACEMALLOC: bool = False  # Disable in production for performance
     ENABLE_AUTO_GC: bool = True  # Enable automatic garbage collection

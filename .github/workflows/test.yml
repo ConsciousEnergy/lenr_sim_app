@@ -16,7 +16,7 @@ jobs:
     # v0.3.6-beta: fail fast on mixed version markers across runtime surfaces.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check version consistency
         shell: bash
         run: |
@@ -43,10 +43,12 @@ jobs:
       contents: read
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        # 3.12 matches the runtime shipped by Dockerfile.backend; keeping 3.10/3.11
+        # guards the documented minimum-supported range.
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -119,7 +121,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: benchmark-results
         path: |
@@ -134,12 +136,12 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
 
@@ -160,11 +162,10 @@ jobs:
 
       - name: Test frontend
         env:
-          # Stabilize Jest execution in CI and avoid worker memory spikes.
           NODE_OPTIONS: --max-old-space-size=4096
         run: |
           cd LENR_SIM_APP_v2/frontend
-          npm test -- --watchAll=false --passWithNoTests --runInBand
+          npm test
 
       - name: Build frontend
         env:

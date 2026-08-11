@@ -7,6 +7,136 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Pre-Public Hardening (2026-08-08)
+
+Physics-accuracy, reporting-honesty, and UX-coherence pass ahead of the public VPS
+release. No breaking contract changes: every new response field is additive.
+
+#### Modeling, visualization, unified theory, and documentation iterations (2026-08-09)
+
+Eight-phase pass. Every new response field is additive.
+
+- **Theory Testbed on the dashboard**: the hub was launcher-only, so the theory
+  pipeline could not be run without navigating away first. Added
+  `TheoryTestbedCard` backed by a shared `buildTheoryConditions` util, and persisted
+  `enabledTheories` / `theoryConfigs` so a selection survives the trip to the full
+  testbed. Wired `setTheoryConfigs`, which had been destructured as unused.
+- **Saturation-aware charts**: the timeline plotted log10 of the *clamped*
+  enhancement, drawing a flat line at 5.0 through the whole collapse, while
+  `enhancement_log10_raw` and `enhancement_is_saturated` had no frontend consumer at
+  all. The page also hardcoded a `1e4 K` ceiling against a backend value of `2e6 K`.
+- **`collapse_trajectory`**: the integrated R(t) and wall velocity never left the
+  engine, so no client could draw the actual collapse curve.
+- **One composition contract**: ten theories sat in the ungrouped fallback and each
+  multiplied into `combined_enhancement`, producing a single product of mutually
+  exclusive accounts of the same effect. Grouped them, and stopped the rubric from
+  overwriting module-declared claim tiers (which had erased
+  `cross_regime_extrapolation`'s 0.2x weighting). See
+  `docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`.
+- **Mechanism formulae corrected**: QED used `1e8 V/m` as the critical field, ten
+  orders below the Schwinger limit, returning ~`1e12` where the true correction is
+  ~`6e-13`; Rydberg grew linearly to ~`5e8` where the unified model bounds the same
+  physics at 10; screening ignored the cited per-material potential entirely; and
+  `calculate_overlap_probability` returned a number density that always clipped to
+  its guard. Raw total for Pd drops from log10 ~38.8 to 13.42.
+- **Collapse singularity**: the hard-core radius was applied as a clamp inside the
+  right-hand side, which made the ODE genuinely singular — LSODA's raw solution
+  diverged to ~`-3e145`, hidden by downstream sanitisation. Moved the hard core into
+  the gas law, added an opt-in Keller-Miksis mode, and reported peak wall Mach.
+  Measured Mach of 0.22-0.84 shows the incompressible default is already outside its
+  valid domain.
+- **Uncertainty**: added Sobol intervals for collapse observables and mechanisms,
+  and rendered them; the page had advertised an interval chip with nothing to show.
+- **Documentation**: retired the Create React App narrative, normalised the dev
+  backend port to 8010, fixed version drift, and made the in-app doc viewer
+  reachable.
+- **Cleanup**: archived ~8.9k lines of orphaned visualization code, converted the
+  lattice to `InstancedMesh`, and removed per-render `Math.random()` chart jitter.
+  Frontend lint errors and app-code type errors are both now zero.
+
+#### Follow-up (same day): local audit sync + thermo consistency
+
+- **npm highs on local `start_app`**: Windows terminals still showing
+  `8 vulnerabilities (4 moderate, 4 high)` were on pre-`95bedd1`/`bd1684f` lockfiles.
+  Tip remains `2 moderate, 0 high` (react-router only). Overrides now floor
+  `js-yaml`, `brace-expansion`, `nanoid`, `fast-uri`, `dompurify`, and `postcss`.
+  `start_app.bat` / `LENR_SIM_APP_v2/start_app.bat` sync via a SHA256 stamp of
+  `package-lock.json` so a pulled lockfile forces `npm ci`.
+- **Timeline pressure bug**: HTTP/WS rebuilt pressure as
+  `ambient_temperature_k * 101325 * CR**4.2` (~300× high at 298 K), corrupting Casimir
+  on charts. Now uses thermo-consistent `ambient_pressure * CR**(3γ)` with the same
+  1e10 Pa ceiling as the peak path.
+- **Peak vs timeline thermo**: `get_collapse_phases` now uses the bubble γ, R hard-core
+  floor, and T/P ceilings from `simulate_collapse`.
+- **Material Casimir**: API lattice reconstruct now copies `bulk_modulus` (Li is ~16×
+  softer than Pd).
+- **Electrolyte alignment**: multiplier is a mechanism in the saturation product so
+  `enhancement_factor` and `enhancement_breakdown.total` agree.
+- **UI**: Advanced Analysis surfaces `collapse_results.limits`; Unified Theory chart
+  filters the `saturation` object and prefers peak_conditions breakdown.
+
+- **Enhancement reporting**: the `MAX_ENHANCEMENT_FACTOR = 1e5` ceiling was applied to
+  every breakdown mechanism independently, so at the peak conditions the UI actually
+  reaches (CR = 1000, E = 1e14 V/m) the QED, Casimir, Rydberg and compression terms all
+  rendered as `1.0000e+5` and the breakdown carried no information. The ceiling is
+  retained (it is a claim-tier limit, not a physics result) but each mechanism now also
+  reports `value_raw`, `log10_value_raw` and `is_saturated`. The five previously
+  identical cells resolve to 10^12, 10^6, 10^8.7, 10^6 and 10^38.8. The UI outlines and
+  labels saturated cells and prints their uncapped magnitude.
+- **Collapse temperature ceiling**: `REGIME_MAX_TEMPERATURE["single_bubble"]` was `1e4 K`,
+  which sits *below* the top of the spectroscopically measured emission band
+  (1.5e4 K, Flannigan & Suslick, *Nature* **434**, 52, doi:10.1038/nature03361), so it
+  truncated experimentally observed temperatures. Raised to `2e6 K`, the peak ion
+  temperature from Moss et al. (doi:10.1121/1.416948). `REGIME_TEMPERATURE_PROVENANCE`
+  records the anchoring measurement and simulation per regime, and
+  `collapse_results.limits` reports the pre-clamp value, ceiling and saturation flag for
+  temperature, pressure and compression.
+- **Casimir mechanism**: was literally `compression ** 2`, a duplicate of the density
+  term. Now driven by pressure-induced lattice strain using the real `1/d^4` Casimir
+  scaling, so it depends on pressure rather than compression ratio and is physically
+  modest (~8% at the 1e10 Pa ceiling for Pd). Per-material bulk moduli added (CRC
+  Handbook).
+- **Proton phase distribution**: was a hardcoded tier table returning fixed 0.4/0.2
+  fractions with a floored nuclear share, independent of temperature, field and loading
+  over wide ranges. Now an ordered cascade of smooth occupancy gates built from
+  `PhaseThresholds`, normalised to 1 by construction.
+- **Single collapse model**: `get_collapse_phases()` used a piecewise normalised-time
+  envelope while the peak conditions came from the integrated ODE, so the timeline and
+  the headline numbers described two different collapses. It now interpolates the cached
+  Rayleigh-Plesset trajectory; each timeline point reports its `collapse_model`.
+- **Keller-Miksis solver** (`solve_keller_miksis`): addresses the standing "simplified
+  Rayleigh-Plesset ignores compressibility" limitation. Validated against its own
+  incompressible limit (deviation < 1e-3 R0 at c = 1e12 m/s, decreasing monotonically
+  with c).
+- **Bubble dynamics reduction gates** (18 tests): Rayleigh collapse time, Minnaert
+  frequency (cross-checked against the f0*R ~ 3.3 m/s rule of thumb), Blake threshold
+  (cross-checked against the numerical stationary point of the curve it derives from),
+  and Keller-Miksis -> Rayleigh-Plesset. Modelled on the `sonolumen` and APECSS
+  validation suites (doi:10.21105/joss.05435).
+- **UX coherence**: `theoryResult` now persists to `sessionStorage`, so a reload no
+  longer empties the Theory Summary tab while the simulation-backed tabs stay populated.
+  `hasData` split into `hasSimulationData` / `hasTheoryData` so a half-populated page is
+  not mistaken for a complete one. All theory-dependent empty states link to
+  `/unified-theory?tab=testbed` instead of tab 0, whose dominant action fills the wrong
+  data source, and the testbed gained a "View in Advanced Analysis" return action.
+- **UI/API key mismatch**: Advanced Analysis read `electron_screening`,
+  `phonon_coupling`, `casimir_force` and `qed_vacuum` from the enhancement breakdown; the
+  backend emits `screening`, `phonon`, `casimir` and `qed`, so those cards could never
+  render. Both spellings are now accepted.
+- **Cleanup**: removed the stale `AdvancedAnalysisPage.jsx` shadow file (referenced
+  context fields that no longer exist; survived only because Vite resolves `.js` first);
+  fixed `Header.jsx` and `ThreeJsTestPage` links to unrouted `/simulation` and `/history`.
+- **Security**: `js-yaml 4.3.0 -> 4.3.1` clears high advisory GHSA-5p4m-2wfm-xmqj;
+  `dompurify 3.4.12 -> 3.4.13` clears GHSA-55q2-fjhq-7xh7. `SECURITY_CI_HARDENING.md`
+  documents that the audit gate must be read via its direct exit code, never through a
+  pipe, which had been masking a failing gate.
+- **CI**: added Python `3.12` to the test matrix to match the `python:3.12-slim` runtime
+  shipped by `Dockerfile.backend`.
+- **Verification**: backend 749 passed / 9 skipped; release-blocking experiment-anchored
+  science gates 52 passed; benchmark gates 3 passed; `pip-audit` clean (11 documented
+  ignores); frontend 110 tests / 17 suites, lint 0 errors, build PASS,
+  `npm audit --audit-level=high` exit 0; Playwright E2E 7 passed, stable across 3 runs.
+
 ### Ship-Prep Hardening (2026-07-18)
 - **Security**: upgraded Vite `5` -> `6.4.3` (with `@vitejs/plugin-react` 4.7.0), clearing the dev-server `server.fs.deny` bypass advisory on Node 20.12 without the semver-major Vite 8 jump; `npm audit --audit-level=high` now reports 0 vulnerabilities. Added a scheduled `security-scan.yml` (weekly `pip-audit` + `npm audit`), `dependabot.yml`, and a PR `dependency-review` gate.
 - **Performance**: added `manualChunks` vendor splitting in `vite.config.js` (three / antd / mui / charts / markdown / react-vendor / vendor); entry `index` chunk reduced to ~88 kB (gzip ~26 kB), resolving the prior bundle-size warning.

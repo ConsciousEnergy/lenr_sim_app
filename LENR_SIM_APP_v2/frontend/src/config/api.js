@@ -42,7 +42,8 @@ export const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
 /**
  * Resolve an API path against configured base URL.
- * In dev, API_BASE_URL is intentionally empty so `/api/...` uses CRA proxy.
+ * In dev, API_BASE_URL is intentionally empty so `/api/...` goes through the
+ * Vite dev-server proxy (see vite.config.js `server.proxy`), which avoids CORS.
  */
 export function resolveApiUrl(path) {
   if (!path) return API_BASE_URL || '';

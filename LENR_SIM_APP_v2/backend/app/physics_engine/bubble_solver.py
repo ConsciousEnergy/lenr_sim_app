@@ -110,6 +110,117 @@ def solve_modified_rayleigh_plesset(
     return t, R, R_dot
 
 
+def _bubble_wall_pressure(
+    R: float,
+    R_dot: float,
+    R0: float,
+    P_gas0: float,
+    params: "RayleighPlessetParams",
+) -> Tuple[float, float]:
+    """Liquid pressure at the bubble wall and its time derivative.
+
+    Shared by the Rayleigh-Plesset and Keller-Miksis right-hand sides so the two
+    equations differ only in their compressibility treatment, which is what makes
+    the ``c -> infinity`` reduction test meaningful.
+
+    Returns:
+        ``(p_L, dp_L_dt)`` in Pa and Pa/s.
+    """
+    P_gas = P_gas0 * (R0 / R) ** (3 * params.gamma)
+    P_electric = 0.5 * EPS0 * params.E_field ** 2
+    p_L = P_gas - 2 * params.sigma / R - 4 * params.mu * R_dot / R + P_electric
+
+    # d/dt of the gas term: P_gas ∝ R^(-3γ) so dP_gas/dt = -3γ P_gas Ṙ / R.
+    # The surface and viscous derivatives are omitted, the standard simplification
+    # for the Keller-Miksis radiation term.
+    dp_L_dt = -3.0 * params.gamma * P_gas * R_dot / R
+    return p_L, dp_L_dt
+
+
+def _keller_miksis_rhs(
+    t: float,
+    y: np.ndarray,
+    R0: float,
+    P_gas0: float,
+    params: "RayleighPlessetParams",
+    sound_speed: float,
+) -> np.ndarray:
+    """RHS of the Keller-Miksis equation: d/dt [R, Ṙ].
+
+    Keller & Miksis (1980), for a bubble in a weakly compressible liquid:
+
+        (1 - Ṙ/c) R R̈ + (3/2)(1 - Ṙ/(3c)) Ṙ²
+            = (1/ρ)(1 + Ṙ/c)(p_L - p_inf) + (R/(ρ c)) dp_L/dt
+
+    Setting ``c -> infinity`` drops every correction term and recovers
+    Rayleigh-Plesset, ``R R̈ + (3/2) Ṙ² = (p_L - p_inf)/ρ``. That limit is asserted
+    in the bubble-dynamics gates.
+
+    Unlike Rayleigh-Plesset this retains acoustic radiation damping, so it does not
+    overpredict rebound amplitude at high Mach number.
+    """
+    R, R_dot = y
+    if R <= 1e-12:
+        return np.array([0.0, 0.0])
+
+    p_L, dp_L_dt = _bubble_wall_pressure(R, R_dot, R0, P_gas0, params)
+    P_inf_eff = params.P_inf * params.drive_factor
+
+    mach = R_dot / sound_speed
+    # Guard the singularity at Ṙ = c; the model is only valid well below it.
+    lhs_coefficient = max(1.0 - mach, 1e-6)
+
+    rhs = (
+        (1.0 + mach) * (p_L - P_inf_eff) / params.rho
+        + R * dp_L_dt / (params.rho * sound_speed)
+        - 1.5 * (1.0 - mach / 3.0) * R_dot ** 2
+    )
+    R_ddot = rhs / (lhs_coefficient * R)
+
+    return np.array([R_dot, R_ddot])
+
+
+def solve_keller_miksis(
+    R0: float,
+    t_span: Tuple[float, float],
+    params: Optional["RayleighPlessetParams"] = None,
+    R_dot0: float = 0.0,
+    sound_speed: float = 1481.0,
+    max_step: float = 1e-8,
+    events=None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Solve the Keller-Miksis equation for a compressible surrounding liquid.
+
+    Args:
+        R0: Initial bubble radius (m)
+        t_span: (t_start, t_end) in seconds
+        params: RayleighPlessetParams; if None, uses defaults
+        R_dot0: Initial radial velocity (m/s)
+        sound_speed: Speed of sound in the liquid (m/s). Default 1481 m/s is water
+            at 20 C. Pass a very large value to recover Rayleigh-Plesset.
+        max_step: Maximum ODE step size
+        events: Optional callable(s) for event detection
+
+    Returns:
+        t, R, R_dot arrays
+    """
+    params = params or RayleighPlessetParams()
+    P_gas0 = params.P_inf + 2 * params.sigma / R0
+
+    def rhs(t: float, y: np.ndarray) -> np.ndarray:
+        return _keller_miksis_rhs(t, y, R0, P_gas0, params, sound_speed)
+
+    sol = solve_ivp(
+        rhs,
+        t_span,
+        np.array([R0, R_dot0]),
+        max_step=max_step,
+        events=events,
+        dense_output=False,
+    )
+    return sol.t, sol.y[0], sol.y[1]
+
+
 def compute_collapse_temperature_pressure(
     R0: float,
     R_min: float,

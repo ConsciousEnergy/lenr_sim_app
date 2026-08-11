@@ -1,5 +1,11 @@
 # LENR_SIM_APP_v2 Debugging Report
 
+> **HISTORICAL SNAPSHOT — do not follow the recommendations below.**
+> Written during the Create React App era. The `npm audit fix --force` advice no
+> longer applies: the frontend runs on Vite 6 as of v0.3.6-beta, and the audit gate
+> is `npm audit --audit-level=high`. See
+> [`docs/v0.3.6-beta/SECURITY_CI_HARDENING.md`](docs/v0.3.6-beta/SECURITY_CI_HARDENING.md).
+
 ## Issues Fixed
 
 1. **Missing ErrorBoundary Component**:

@@ -2,6 +2,9 @@
   "extends": [
     "react-app"
   ],
+  "ignorePatterns": [
+    "src/**/_archived/**"
+  ],
   "rules": {
     "no-unused-vars": ["warn", {
       "varsIgnorePattern": "^_",

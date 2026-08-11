@@ -29,34 +29,38 @@ New to the codebase? Start with the curated maps below before diving into files.
 - Unify the mixed `.js`/`.jsx`/`.tsx` frontend file extensions onto a single convention.
 - Split oversized modules (`UnifiedTheoryPage.jsx`, `unified_simulation.py`) into smaller route/handler/util units (<300 lines per the project style rule).
 - Consolidate the legacy `electrolyte`-in-`lattice` fallback fields once all clients send the canonical top-level `electrolyte` object.
-- Refresh the stale "February 2026 / react-scripts" notes below (superseded by the Vite migration in the v0.3.6-beta changelog).
+- Consolidate the repository-root `start_app.bat` (backend on `8000`) with the v2 launcher (`8010`) so there is one canonical entry point.
 
 ## 🎯 Quick Start
 
 ### Start the Application
 
 ```bash
-# From project root
+# From LENR_SIM_APP_v2 (preferred; backend on 8010 per the port policy)
 start_app.bat
 ```
 
-This will start both:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
+This opens two windows:
+- **LENR Frontend**: http://localhost:3000 (Vite)
+- **LENR Backend API**: http://localhost:8010
 
 ### Access the App
 
 - **Homepage**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/api/docs
+- **API Documentation**: http://localhost:8010/api/docs
 - **Visualization Test**: http://localhost:3000/visualization-test
+
+The repository-root `start_app.bat` is a legacy launcher that runs the backend on
+`8000` instead. See [PORT_TOPOLOGY_POLICY.md](docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md)
+for the canonical port matrix.
 
 ---
 
-## 📊 Project Status (February 2026)
+## 📊 Project Status (August 2026)
 
 ### ✅ **App is Running Successfully**
 
-- ✓ Compiles without errors
+- ✓ Builds without errors (Vite 6.4.3)
 - ✓ All core features functional
 - ✓ UI/UX improvements applied
 - ✓ Accessibility enhanced
@@ -64,11 +68,10 @@ This will start both:
 
 ### ⚠️ Known Non-Critical Warnings
 
-All warnings are **documented and safe to ignore**:
-- 9 NPM vulnerabilities (in react-scripts dependencies)
-- Webpack deprecation warnings (will be fixed in CRA update)
-- 4 MUI Grid console warnings (informational only)
-- Source map warning (cosmetic)
+- 2 moderate npm advisories (`react-router` 6.x; needs a v7 migration).
+  `npm audit --audit-level=high` exits `0`.
+- npm install prints a funding line and an audit summary; neither is a Vite error.
+- Source map warnings from prebuilt third-party bundles (cosmetic).
 
 📖 **See [WARNINGS_EXPLAINED.md](frontend/WARNINGS_EXPLAINED.md) for details**
 
@@ -281,14 +284,18 @@ See **[TESTING_AND_DEBUG_TASKS.md](TESTING_AND_DEBUG_TASKS.md)** for:
 
 ### Environment Variables
 
-Create `frontend/.env.local`:
+Create `frontend/.env.local`. Vite honours both the `REACT_APP_` and `VITE_`
+prefixes here, and `8010` is the canonical dev backend port:
 ```env
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_API_BASE_URL=http://localhost:8000
+REACT_APP_API_URL=http://localhost:8010
+VITE_API_URL=http://localhost:8010
 REACT_APP_DEBUG_LEVEL=3
 REACT_APP_USE_MOCK_DATA=false
 REACT_APP_MOCK_DELAY=500
 ```
+
+Leaving these unset is usually better for local development: the Vite dev-server
+proxy forwards relative `/api/*` paths, which avoids CORS entirely.
 
 ---
 

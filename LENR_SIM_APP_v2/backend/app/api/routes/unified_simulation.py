@@ -5,13 +5,14 @@ Provides endpoints for the unified LENR theory simulation,
 implementing all mechanisms from the theoretical framework paper.
 """
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, Request
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
 import asyncio
 import json
 import math
+import time
 from app.core.config import settings
 from app.physics_engine.scientific_guardrails import (
     build_electrolyte_diagnostics,
@@ -28,6 +29,7 @@ from app.physics_engine.parkhomov_validation import (
     infer_default_reactants,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.enhancement_saturation import build_saturation_report
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,61 @@ router = APIRouter(prefix="/unified", tags=["unified-simulation"])
 # APP_VERSION so a version bump updates all surfaces in lockstep and cannot
 # drift (CI version-consistency stays authoritative).
 CONTRACT_VERSION = f"v{settings.APP_VERSION}-science-gate-1"
+
+# Production hardening caps for unauthenticated compute surfaces.
+MAX_UNCERTAINTY_SAMPLES = 512
+MAX_WS_NUM_CYCLES = 10
+MAX_WS_CONNECTIONS = 8
+_WS_ACTIVE_CONNECTIONS = 0
+_EXPORT_RATE_LIMIT_PER_MINUTE = 10
+_EXPORT_CLIENT_MAX_ENTRIES = 4096
+_export_clients: Dict[str, tuple] = {}
+
+
+def _client_safe_error(log_message: str, exc: Exception, *, status_code: int = 500) -> HTTPException:
+    """Log full exception server-side; return a generic client-facing detail."""
+    logger.error("%s: %s", log_message, exc, exc_info=True)
+    if status_code == 400:
+        return HTTPException(status_code=400, detail="Invalid request parameters.")
+    return HTTPException(status_code=500, detail="Simulation failed. Please check parameters and try again.")
+
+
+def _enforce_export_rate_limit(request: Request) -> None:
+    """Stricter per-IP budget for /export (full simulate + envelope)."""
+    if not settings.ENABLE_RATE_LIMITING:
+        return
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+    if client_ip in settings.RATE_LIMIT_WHITELIST_IPS:
+        return
+
+    now = time.time()
+    # Drop expired windows so the table cannot grow without bound over uptime.
+    expired = [
+        ip for ip, (_count, window_start) in _export_clients.items()
+        if now - window_start >= 60
+    ]
+    for ip in expired:
+        _export_clients.pop(ip, None)
+    if len(_export_clients) >= _EXPORT_CLIENT_MAX_ENTRIES and client_ip not in _export_clients:
+        # Evict the oldest window when at capacity (rare; scan-defense).
+        oldest_ip = min(_export_clients.items(), key=lambda item: item[1][1])[0]
+        _export_clients.pop(oldest_ip, None)
+
+    count, window_start = _export_clients.get(client_ip, (0, now))
+    if now - window_start >= 60:
+        _export_clients[client_ip] = (1, now)
+        return
+    if count >= _EXPORT_RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail="Too Many Requests - export rate limit exceeded",
+            headers={"Retry-After": str(max(1, int(60 - (now - window_start))))},
+        )
+    _export_clients[client_ip] = (count + 1, window_start)
 
 
 # Request/Response Models
@@ -111,14 +168,15 @@ class SimulationRequest(BaseModel):
     # Defaults preserve legacy behaviour: conservative two_body mode, no UQ.
     rate_mode: str = Field(
         default="two_body",
-        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
-        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+        description="Reaction-rate formalism: 'two_body' (reference baseline), "
+        "'trapped_state' (speculative TSC), or 'three_body' (speculative "
+        "p+e+d cavitation chain).",
     )
     include_uncertainty: bool = Field(
         default=False,
         description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
     )
-    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    uncertainty_samples: int = Field(default=256, ge=16, le=MAX_UNCERTAINTY_SAMPLES)
     random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
     experimental_band: Optional[List[float]] = Field(
         default=None,
@@ -133,7 +191,32 @@ class EnhancementFactor(BaseModel):
     threshold_met: bool
     equation: str
     category: str
-    parameters: Dict[str, float]
+    # Numeric diagnostics plus string provenance (e.g. screening_model id).
+    parameters: Dict[str, Any]
+
+
+def _jsonable_mechanism_parameters(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Coerce mechanism parameter values for JSON without dropping provenance strings.
+
+    The /mechanisms endpoint previously forced every value through ``float()``,
+    which 500'd as soon as a mechanism reported a model identifier.
+    """
+    out: Dict[str, Any] = {}
+    for key, value in (parameters or {}).items():
+        if isinstance(value, bool):
+            out[key] = value
+            continue
+        if isinstance(value, (int, float)):
+            out[key] = float(value)
+            continue
+        if isinstance(value, str):
+            try:
+                out[key] = float(value)
+            except ValueError:
+                out[key] = value
+            continue
+        out[key] = value
+    return out
 
 
 class SimulationResponse(BaseModel):
@@ -387,9 +470,7 @@ async def run_unified_simulation(request: SimulationRequest):
         )
         
     except Exception as e:
-        logger.error(f"Unified simulation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise _client_safe_error("Unified simulation error", e)
 
 def _compose_rate_block(
     config: Any,
@@ -415,7 +496,7 @@ def _compose_rate_block(
     from app.physics_engine.shell_pairing_prior import annotate_branching
 
     mode = (mode or "two_body").strip().lower()
-    if mode not in {"two_body", "trapped_state"}:
+    if mode not in {"two_body", "trapped_state", "three_body"}:
         mode = "two_body"
 
     rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
@@ -603,12 +684,13 @@ def build_bubble_rate_engine_block(
 
 
 @router.post("/export")
-async def export_unified_run(request: SimulationRequest) -> Dict[str, Any]:
+async def export_unified_run(request: SimulationRequest, http_request: Request) -> Dict[str, Any]:
     """Run a simulation and return a reproducible ``lenr-run-export-v1`` envelope.
 
     Wraps the standard simulate response with seeds, claim tiers, an uncertainty
     summary, provenance, and a deduplicated per-run citation list (RR-017).
     """
+    _enforce_export_rate_limit(http_request)
     from app.physics_engine.run_export import build_run_export
 
     response = await run_unified_simulation(request)
@@ -680,7 +762,7 @@ async def get_mechanisms(
                 "threshold_met": bool(m["threshold_met"]),
                 "equation": str(m["equation"]),
                 "category": str(m["category"]),
-                "parameters": {k: float(v) for k, v in m["parameters"].items()}
+                "parameters": _jsonable_mechanism_parameters(m.get("parameters") or {}),
             }
             for m in summary["mechanisms"]
         ]
@@ -693,8 +775,7 @@ async def get_mechanisms(
         )
         
     except Exception as e:
-        logger.error(f"Get mechanisms error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _client_safe_error("Get mechanisms error", e)
 
 
 @router.post("/compare", response_model=CompareResponse)
@@ -750,8 +831,7 @@ async def compare_systems(request: CompareRequest):
         )
         
     except Exception as e:
-        logger.error(f"Compare systems error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _client_safe_error("Compare systems error", e)
 
 
 @router.get("/presets")
@@ -895,6 +975,21 @@ class BubbleConfig(BaseModel):
     frequency_khz: float = Field(default=20.0, ge=1, le=100, description="Acoustic frequency in kHz")
     # Extended range to 2000 K to support high-temperature Ni-H and elevated experiments
     ambient_temperature_k: float = Field(default=298.0, ge=0, le=2000, description="Ambient temperature in Kelvin")
+    # Additive, opt-in. Default keeps the incompressible Rayleigh-Plesset path so
+    # every stored baseline stays valid; 'keller_miksis' adds acoustic radiation
+    # damping, which matters once the peak wall Mach number approaches ~0.1
+    # (reported under collapse_results.bubble_dynamics).
+    bubble_dynamics_mode: str = Field(
+        default="rayleigh_plesset",
+        description="Bubble-dynamics model: 'rayleigh_plesset' (incompressible, "
+        "default) or 'keller_miksis' (weakly compressible, retains acoustic "
+        "radiation damping).",
+    )
+    sound_speed_m_s: float = Field(
+        default=1481.0,
+        gt=0,
+        description="Speed of sound in the surrounding liquid (water at 20 C by default).",
+    )
 
 
 class BubbleLatticeRequest(BaseModel):
@@ -909,14 +1004,15 @@ class BubbleLatticeRequest(BaseModel):
     # an empty reaction_rate_engine block unless a non-default mode/UQ is requested.
     rate_mode: str = Field(
         default="two_body",
-        description="Reaction-rate formalism: 'two_body' (validated baseline) or "
-        "'trapped_state' (speculative TSC/Fermi-golden-rule).",
+        description="Reaction-rate formalism: 'two_body' (reference baseline), "
+        "'trapped_state' (speculative TSC), or 'three_body' (speculative "
+        "p+e+d cavitation chain).",
     )
     include_uncertainty: bool = Field(
         default=False,
         description="If true, run Sobol UQ on the reaction rate and return credible intervals.",
     )
-    uncertainty_samples: int = Field(default=256, ge=16, le=4096)
+    uncertainty_samples: int = Field(default=256, ge=16, le=MAX_UNCERTAINTY_SAMPLES)
     random_seed: Optional[int] = Field(default=None, description="Deterministic UQ seed.")
     experimental_band: Optional[List[float]] = Field(
         default=None,
@@ -934,6 +1030,24 @@ class BubbleLatticeResponse(BaseModel):
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
+    collapse_trajectory: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive downsampled Rayleigh-Plesset trajectory (time, radius, "
+            "wall velocity) from the integrated solution the peak conditions "
+            "came from. Previously the series never left the engine, so no "
+            "client could plot the actual collapse curve."
+        ),
+    )
+    collapse_uncertainty: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive, opt-in Sobol predictive intervals for the collapse "
+            "observables and the mechanism breakdown. Populated only when "
+            "include_uncertainty is true; previously only the reaction rate "
+            "carried an interval while peak T/P/R_min were bare point estimates."
+        ),
+    )
     peak_conditions: Dict[str, Any]  # Changed from Dict[str, float] to allow enhancement_breakdown dict
     electrolyte_diagnostics: Dict[str, Any] = {}
     validation: Dict[str, Any] = {}
@@ -1015,7 +1129,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     ### enhancement_timeline
     List of enhancement factors over the bubble cycle, each containing:
     - **time**: Time in seconds
-    - **phase**: Current collapse phase (EXPANSION, COLLAPSE, MINIMUM, REBOUND, RECOVERY)
+    - **phase**: Current collapse phase (EXPANSION, COLLAPSE, MINIMUM, REBOUND; then repeats)
     - **radius**: Current bubble radius (m)
     - **total_enhancement**: Combined enhancement factor
     - **screening**, **qed**, **casimir**, **rydberg**, **compression**: Individual factors
@@ -1092,19 +1206,33 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             )
         
         from app.physics_engine.bubble_lattice_interaction import (
-            BubbleLatticeInteraction, BubbleParameters, LatticeParameters
+            SCHWINGER_CRITICAL_FIELD_V_M,
+            BubbleLatticeInteraction,
+            BubbleParameters,
+            LatticeParameters,
         )
-        from app.physics_engine.proton_phase_model import ProtonPhaseModel
-        
+
         # Create bubble parameters
+        # An unrecognised mode falls back to the incompressible default rather than
+        # erroring, matching how rate_mode handles bad input.
+        requested_dynamics_mode = str(request.bubble.bubble_dynamics_mode or "").lower()
+        dynamics_mode = (
+            requested_dynamics_mode
+            if requested_dynamics_mode in {"rayleigh_plesset", "keller_miksis"}
+            else "rayleigh_plesset"
+        )
         bubble_params = BubbleParameters(
             initial_radius=request.bubble.initial_radius_um * 1e-6,
             driving_pressure=request.bubble.driving_pressure_bar * 1e5,
             frequency=request.bubble.frequency_khz * 1e3,
-            ambient_temperature=request.bubble.ambient_temperature_k
+            ambient_temperature=request.bubble.ambient_temperature_k,
+            bubble_dynamics_mode=dynamics_mode,
+            sound_speed=request.bubble.sound_speed_m_s,
         )
         
-        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback)
+        # Create lattice parameters (use for_material for Li/custom; unknown → Pd fallback).
+        # bulk_modulus must be copied through: Casimir strain is P/K, and Li's K is
+        # ~16x softer than Pd — dropping it silently forced every host onto Pd.
         base = LatticeParameters.for_material(request.material.host_material)
         lattice_params = LatticeParameters(
             host_material=request.material.host_material,
@@ -1117,6 +1245,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             work_function=base.work_function,
             fermi_energy=base.fermi_energy,
             screening_potential=base.screening_potential,
+            bulk_modulus=base.bulk_modulus,
         )
         
         # Run bubble collapse simulation
@@ -1124,7 +1253,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
         
         # Clamp peak enhancement to the theory-level cap (constants.py)
-        capped_enhancement = min(collapse_result.enhancement_factor, MAX_ENHANCEMENT_FACTOR)
         # Canonical electrolyte source is top-level request.electrolyte; lattice fields
         # remain fallback-compatible for older clients.
         family = (
@@ -1162,7 +1290,65 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             "ph_proxy": ph_proxy,
             "ionic_strength_proxy": ionic_strength_proxy,
         })
-        capped_enhancement = min(capped_enhancement * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)
+
+        # Calculate enhancement breakdown at peak conditions. Fold the electrolyte
+        # multiplier into the same product as the other mechanisms so
+        # peak_conditions.enhancement_factor and enhancement_breakdown.total agree.
+        peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
+            collapse_result.max_temperature,
+            collapse_result.max_pressure,
+            collapse_result.double_layer_field_peak,
+            collapse_result.compression_ratio
+        )
+        peak_enhancement_breakdown["electrolyte"] = float(electrolyte_multiplier)
+
+        # Mechanism-level provenance: which screening kernel and cited potential
+        # were used, and whether the Casimir term is inside its continuum domain.
+        # Both were previously unreported, so a client could not tell that every
+        # host screened identically or that Casimir was being extrapolated.
+        from app.physics_engine.screening_kernel import compute_screening_enhancement
+
+        peak_screening = compute_screening_enhancement(
+            temperature_k=collapse_result.max_temperature,
+            material=request.material.host_material,
+            screening_potential_ev=lattice_params.screening_potential,
+        )
+        mechanism_provenance = {
+            "screening": {
+                "model": peak_screening["model"],
+                "screening_potential_ev": peak_screening["screening_potential_ev"],
+                "screening_potential_range_ev": peak_screening["screening_potential_range_ev"],
+                "thermal_energy_ev": peak_screening["thermal_energy_ev"],
+                "sommerfeld_parameter": peak_screening["sommerfeld_parameter"],
+                # Uncapped magnitude in log space: exp() of the raw exponent
+                # overflows float64 at collapse temperatures.
+                "log10_enhancement_raw": peak_screening["log10_enhancement_raw"],
+                "is_saturated": peak_screening["is_saturated"],
+                "exceeds_adiabatic_limit": peak_screening["exceeds_adiabatic_limit"],
+                "citations": peak_screening["citations"],
+            },
+            "casimir": model.casimir_domain_validity(collapse_result.max_pressure),
+            "qed": {
+                "model": "heisenberg_euler_weak_field",
+                "critical_field_v_m": SCHWINGER_CRITICAL_FIELD_V_M,
+                "note": (
+                    "eps_eff = 1 + (2 alpha / 45 pi)(E/E_cr)^2 with E_cr the "
+                    "Schwinger limit; negligible at attainable collapse fields."
+                ),
+            },
+            "rydberg": {
+                "model": "log_bounded_orbital_overlap",
+                "max_enhancement": BubbleLatticeInteraction.RYDBERG_MAX_ENHANCEMENT,
+            },
+        }
+        # Apply the theory display ceiling, but keep the raw value and an explicit
+        # saturation flag per mechanism. Clamping alone made unrelated mechanisms
+        # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
+        # breakdown's information content.
+        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
+            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
+        )
+        capped_enhancement = float(peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
         corrected_proton_phases = model._calculate_proton_phases(
             collapse_result.max_temperature,
             collapse_result.double_layer_field_peak,
@@ -1181,19 +1367,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             contradiction_reason_code = "inconsistent_mode"
             has_contradiction = True
         
-        # Calculate enhancement breakdown at peak conditions
-        peak_enhancement_breakdown = model._calculate_enhancement_breakdown(
-            collapse_result.max_temperature,
-            collapse_result.max_pressure,
-            collapse_result.double_layer_field_peak,
-            collapse_result.compression_ratio
-        )
-        # Clamp each mechanism and total to the theory cap
-        for key in peak_enhancement_breakdown:
-            peak_enhancement_breakdown[key] = min(
-                peak_enhancement_breakdown[key], MAX_ENHANCEMENT_FACTOR
-            )
-        
         # Generate enhancement timeline with breakdown
         import numpy as np
         
@@ -1204,33 +1377,68 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             return float(value)
         
         def sanitize_dict(d, default=0.0):
-            """Recursively sanitize a dict of float values."""
-            return {k: sanitize_float(v, default) if isinstance(v, (int, float)) else v for k, v in d.items()}
+            """Recursively sanitize a dict of float values.
+
+            Nested dicts must be walked too, otherwise a non-finite float inside
+            a sub-dict (e.g. the saturation report) reaches the JSON encoder and
+            fails the response.
+            """
+            sanitized = {}
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    sanitized[k] = sanitize_dict(v, default)
+                elif isinstance(v, bool) or not isinstance(v, (int, float)):
+                    sanitized[k] = v
+                else:
+                    sanitized[k] = sanitize_float(v, default)
+            return sanitized
         
         timeline = []
         for t in np.linspace(0, 1, 50):
             instant = model.calculate_instantaneous_enhancement(t)
-            # Calculate breakdown for this time point
+            # Pressure comes from thermo-consistent conditions — never from
+            # ambient_temperature_k (that bug overstated timeline pressure ~300x
+            # and corrupted Casimir on the chart).
+            pressure_pa = float(
+                instant["conditions"].get("pressure")
+                or (
+                    bubble_params.ambient_pressure
+                    * instant["conditions"]["compression"]
+                    ** (3.0 * bubble_params.polytropic_index)
+                )
+            )
             instant_breakdown = model._calculate_enhancement_breakdown(
                 instant["conditions"]["temperature"],
-                request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2,
+                pressure_pa,
                 instant["conditions"]["electric_field"],
                 instant["conditions"]["compression"]
             )
-            # Apply the electrolyte activity multiplier (as at peak_conditions and
-            # on the websocket stream) before capping to the theory limit, so
-            # HTTP timeline points do not under-report enhancement vs peak.
-            capped_instant_enhancement = min(
-                instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR
+            instant_breakdown["electrolyte"] = float(electrolyte_multiplier)
+            capped_instant_breakdown, instant_saturation = build_saturation_report(
+                instant_breakdown, MAX_ENHANCEMENT_FACTOR
             )
-            capped_instant_breakdown = {
-                k: min(v, MAX_ENHANCEMENT_FACTOR) if isinstance(v, (int, float)) else v
-                for k, v in instant_breakdown.items()
-            }
+            capped_instant_breakdown["saturation"] = instant_saturation
+            capped_instant_enhancement = float(
+                capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR)
+            )
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
                 "phase": instant["phase"],
                 "enhancement": sanitize_float(capped_instant_enhancement, 1.0),
+                # Uncapped magnitude, so a timeline plot is not a flat line at the
+                # display ceiling. Additive.
+                "enhancement_log10_raw": sanitize_float(
+                    instant_saturation.get("mechanisms", {})
+                    .get("total", {})
+                    .get("log10_value_raw", instant.get("enhancement_log10_raw")),
+                    0.0,
+                ),
+                "enhancement_is_saturated": bool(
+                    instant_saturation.get("mechanisms", {})
+                    .get("total", {})
+                    .get("is_saturated", instant.get("enhancement_is_saturated", False))
+                ),
+                "collapse_model": instant["conditions"].get("source", "unknown"),
                 "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
                 "enhancement_breakdown": sanitize_dict(capped_instant_breakdown, 1.0),
                 "proton_distribution": instant["proton_distribution"],
@@ -1244,12 +1452,41 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "temperature_k": sanitize_float(instant["conditions"]["temperature"], 300.0),
                 "electric_field": sanitize_float(instant["conditions"]["electric_field"], 0.0),
                 "electric_field_v_m": sanitize_float(instant["conditions"]["electric_field"], 0.0),
-                "pressure_bar": sanitize_float(
-                    (request.bubble.ambient_temperature_k * 101325 * instant["conditions"]["compression"] ** 4.2) / 1e5,
-                    1.0,
-                ),
+                "pressure_bar": sanitize_float(pressure_pa / 1e5, 1.0),
             })
         
+        # Opt-in Sobol intervals for the collapse observables and mechanisms.
+        # Non-fatal by construction: a UQ failure must not break the core response.
+        collapse_uncertainty: Dict[str, Any] = {}
+        if request.include_uncertainty:
+            try:
+                from app.physics_engine.collapse_uq import propagate_collapse_uncertainty
+
+                collapse_uncertainty = sanitize_dict(
+                    propagate_collapse_uncertainty(
+                        model=model,
+                        compression_ratio=collapse_result.compression_ratio,
+                        temperature_ceiling=float(
+                            (collapse_result.limits.get("temperature_k") or {}).get(
+                                "ceiling", 2.0e6
+                            )
+                        ),
+                        pressure_ceiling=float(
+                            (collapse_result.limits.get("pressure_pa") or {}).get(
+                                "ceiling", 1.0e10
+                            )
+                        ),
+                        # Bounded independently of the rate-engine sample count: each
+                        # sample re-evaluates the mechanism breakdown.
+                        n_samples=min(request.uncertainty_samples, 256),
+                        seed=request.random_seed,
+                        material=request.material.host_material,
+                    ),
+                    0.0,
+                )
+            except Exception:
+                logger.exception("Collapse UQ failed; continuing without it")
+
         validated_window, soft_window, outside_supported_range = classify_molarity_window(molarity)
 
         # Parkhomov transmutation validation (v0.3.6-beta §3B)
@@ -1288,16 +1525,30 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "compression_ratio": sanitize_float(collapse_result.compression_ratio, 1.0),
                 "collapse_time_us": sanitize_float(collapse_result.collapse_time * 1e6, 0.0),
                 "peak_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
-                "peak_enhancement": sanitize_float(capped_enhancement, 1.0)
+                "peak_enhancement": sanitize_float(capped_enhancement, 1.0),
+                # Which reporting ceilings bound this result (additive; see
+                # REGIME_TEMPERATURE_PROVENANCE for the anchoring literature).
+                "limits": sanitize_dict(collapse_result.limits or {}, 0.0),
+                # Which screening kernel and cited potential produced the screening
+                # term, and whether the Casimir term is inside its continuum domain.
+                "mechanism_provenance": mechanism_provenance,
+                # Solver, dynamics model and peak wall Mach number, so a client can
+                # tell whether the incompressible model was admissible.
+                "bubble_dynamics": sanitize_dict(collapse_result.bubble_dynamics or {}, 0.0),
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
+            # Additive: the integrated collapse curve behind the peak conditions.
+            collapse_trajectory=model.get_collapse_trajectory(),
+            collapse_uncertainty=collapse_uncertainty,
             peak_conditions={
                 "temperature_k": sanitize_float(collapse_result.max_temperature, 300.0),
                 "pressure_gpa": sanitize_float(collapse_result.max_pressure / 1e9, 0.0001),
                 "electric_field_v_m": sanitize_float(collapse_result.double_layer_field_peak, 0.0),
                 "enhancement_factor": sanitize_float(capped_enhancement, 1.0),
-                "enhancement_breakdown": sanitize_dict(peak_enhancement_breakdown, 1.0),
+                "enhancement_breakdown": sanitize_dict(
+                    {**peak_enhancement_breakdown, "saturation": peak_saturation}, 1.0
+                ),
                 "alkali_activity_factor": sanitize_float(alkali_activity_factor, 1.0),
                 "electrolyte_multiplier": sanitize_float(electrolyte_multiplier, 1.0),
                 "electrolyte_species": species,
@@ -1310,6 +1561,23 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "contradiction": has_contradiction,
                 "contradiction_reason_code": contradiction_reason_code,
                 "nuclear_threshold_policy": "nuclear_fraction > 0 expected when enhancement_factor >= 1e5",
+                # Composition contract: this route reports a phenomenological
+                # product of bubble-lattice mechanisms. The theory pipeline
+                # reports a grouped-winner product from a different engine.
+                # Neither is a factor of the other.
+                "composition_contract": {
+                    "engine": "bubble_lattice_mechanism_product",
+                    "combination_rule": "phenomenological_multiplicative",
+                    "not_combinable_with": [
+                        "theory_pipeline.combined_enhancement",
+                    ],
+                    "note": (
+                        "peak_conditions.enhancement_factor is the product of "
+                        "this route's mechanism breakdown (including the "
+                        "electrolyte multiplier). Do not multiply it by the "
+                        "theory pipeline's combined_enhancement."
+                    ),
+                },
             },
             observables_bridge={
                 "electrolyte_family": family,
@@ -1342,16 +1610,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # Re-raise HTTP exceptions (validation errors)
         raise
     except ValueError as e:
-        # Handle value errors (invalid physics parameters)
-        logger.error(f"Invalid physics parameters: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Invalid physics parameters: {str(e)}")
+        raise _client_safe_error("Invalid physics parameters", e, status_code=400)
     except Exception as e:
-        # Handle unexpected errors
-        logger.error(f"Bubble-lattice simulation error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Simulation failed: {str(e)}. Please check parameters and try again."
-        )
+        raise _client_safe_error("Bubble-lattice simulation error", e)
 
 
 @router.websocket("/bubble-lattice/stream")
@@ -1370,8 +1631,26 @@ async def bubble_lattice_websocket(websocket: WebSocket):
         "num_cycles": 2
     }
     """
-    await websocket.accept()
-    logger.info("WebSocket connection established for bubble-lattice simulation")
+    global _WS_ACTIVE_CONNECTIONS
+
+    # Reserve a slot before the awaitable accept() so concurrent connects
+    # cannot race past MAX_WS_CONNECTIONS.
+    if _WS_ACTIVE_CONNECTIONS >= MAX_WS_CONNECTIONS:
+        await websocket.close(code=1013, reason="Too many concurrent streams")
+        return
+
+    _WS_ACTIVE_CONNECTIONS += 1
+    try:
+        await websocket.accept()
+    except Exception:
+        _WS_ACTIVE_CONNECTIONS = max(0, _WS_ACTIVE_CONNECTIONS - 1)
+        raise
+
+    logger.info(
+        "WebSocket connection established for bubble-lattice simulation (%s/%s)",
+        _WS_ACTIVE_CONNECTIONS,
+        MAX_WS_CONNECTIONS,
+    )
     
     try:
         # Receive initial parameters
@@ -1389,11 +1668,19 @@ async def bubble_lattice_websocket(websocket: WebSocket):
             ambient_temperature=params["bubble"]["ambient_temperature_k"]
         )
         
+        base = LatticeParameters.for_material(params["material"]["host_material"])
         lattice_params = LatticeParameters(
             host_material=params["material"]["host_material"],
             loading_ratio=params["lattice"]["loading_ratio"],
             defect_density=params["lattice"].get("defect_density", 1e16),
-            surface_roughness=params["lattice"].get("surface_roughness", 5e-9)
+            surface_roughness=params["lattice"].get("surface_roughness", 5e-9),
+            lattice_constant=base.lattice_constant,
+            electron_density=base.electron_density,
+            debye_temperature=base.debye_temperature,
+            work_function=base.work_function,
+            fermi_energy=base.fermi_energy,
+            screening_potential=base.screening_potential,
+            bulk_modulus=base.bulk_modulus,
         )
         electrolyte_payload = params.get("electrolyte", {}) or {}
         lattice_payload = params.get("lattice", {}) or {}
@@ -1416,9 +1703,13 @@ async def bubble_lattice_websocket(websocket: WebSocket):
         # Create model
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         
-        # Stream real-time updates
+        # Stream real-time updates — cap cycles to match HTTP BubbleLatticeRequest.
         num_points = 100  # Points per cycle
-        num_cycles = params.get("num_cycles", 2)
+        try:
+            requested_cycles = int(params.get("num_cycles", 2))
+        except (TypeError, ValueError):
+            requested_cycles = 2
+        num_cycles = max(1, min(MAX_WS_NUM_CYCLES, requested_cycles))
         
         for cycle in range(num_cycles):
             for i in range(num_points):
@@ -1428,12 +1719,25 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 
                 # Calculate instantaneous conditions
                 instant = model.calculate_instantaneous_enhancement(normalized_time)
+                pressure_pa = float(
+                    instant["conditions"].get("pressure")
+                    or (
+                        bubble_params.ambient_pressure
+                        * instant["conditions"]["compression"]
+                        ** (3.0 * bubble_params.polytropic_index)
+                    )
+                )
                 breakdown = model._calculate_enhancement_breakdown(
                     instant["conditions"]["temperature"],
-                    params["bubble"]["ambient_temperature_k"] * 101325 * instant["conditions"]["compression"] ** 4.2,
+                    pressure_pa,
                     instant["conditions"]["electric_field"],
                     instant["conditions"]["compression"]
                 )
+                breakdown["electrolyte"] = float(electrolyte_multiplier)
+                breakdown, breakdown_saturation = build_saturation_report(
+                    breakdown, MAX_ENHANCEMENT_FACTOR
+                )
+                breakdown["saturation"] = breakdown_saturation
                 
                 # Send update
                 await websocket.send_json({
@@ -1442,16 +1746,18 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
-                    "enhancement": float(min(instant["enhancement"] * electrolyte_multiplier, MAX_ENHANCEMENT_FACTOR)),
+                    "enhancement": float(breakdown.get("total", MAX_ENHANCEMENT_FACTOR)),
                     "enhancement_breakdown": breakdown,
                     "proton_distribution": instant["proton_distribution"],
                     "radius_um": float(instant["conditions"]["radius_factor"] * params["bubble"]["initial_radius_um"]),
                     "temperature_k": float(instant["conditions"]["temperature"]),
                     "electric_field_v_m": float(instant["conditions"]["electric_field"]),
+                    "pressure_bar": float(pressure_pa / 1e5),
                     "conditions": {
                         "radius_factor": float(instant["conditions"]["radius_factor"]),
                         "compression": float(instant["conditions"]["compression"]),
                         "temperature": float(instant["conditions"]["temperature"]),
+                        "pressure": float(pressure_pa),
                         "electric_field": float(instant["conditions"]["electric_field"])
                     }
                 })
@@ -1468,14 +1774,16 @@ async def bubble_lattice_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected for bubble-lattice simulation")
     except Exception as e:
-        logger.error(f"WebSocket error in bubble-lattice simulation: {e}", exc_info=True)
+        logger.error("WebSocket error in bubble-lattice simulation: %s", e, exc_info=True)
         try:
             await websocket.send_json({
                 "type": "error",
-                "message": str(e)
+                "message": "Simulation stream failed. Please check parameters and try again."
             })
-        except:
+        except Exception:
             pass
+    finally:
+        _WS_ACTIVE_CONNECTIONS = max(0, _WS_ACTIVE_CONNECTIONS - 1)
 
 
 @router.get("/bubble-lattice/instant")
@@ -1567,11 +1875,6 @@ async def get_instant_conditions(
         }
         
     except ValueError as e:
-        logger.error(f"Invalid parameters for instant conditions: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Invalid parameters: {str(e)}")
+        raise _client_safe_error("Invalid parameters for instant conditions", e, status_code=400)
     except Exception as e:
-        logger.error(f"Instant conditions error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to calculate instant conditions: {str(e)}"
-        )
+        raise _client_safe_error("Instant conditions error", e)

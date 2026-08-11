@@ -4,7 +4,7 @@
 # ==============================================================================
 # Stage 1: Build dependencies
 # ==============================================================================
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==============================================================================
 # Stage 2: Production image
 # ==============================================================================
-FROM python:3.11-slim AS production
+FROM python:3.12-slim AS production
 
 ARG BUILD_VERSION=0.3.6-beta
 
@@ -61,6 +61,12 @@ COPY --chown=appuser:appgroup backend/app ./app
 COPY --chown=appuser:appgroup backend/alembic ./alembic
 COPY --chown=appuser:appgroup backend/alembic.ini ./
 
+# Copy entrypoint script (reads Docker secrets into env vars). The explicit
+# chmod keeps startup working even if the source file loses its +x bit on a
+# checkout that does not preserve POSIX modes (e.g. Windows clones).
+COPY --chown=appuser:appgroup infrastructure/docker/entrypoint.sh /entrypoint.sh
+RUN chmod 0555 /entrypoint.sh
+
 # Create necessary directories
 RUN mkdir -p /app/logs /app/data /app/static /app/static/cluster_fields && \
     chown -R appuser:appgroup /app
@@ -80,6 +86,9 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
+
+# Entrypoint reads Docker secrets into environment variables
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Run with uvicorn
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -2,10 +2,13 @@
 
 import math
 
-import numpy as np
 import pytest
 
 from app.physics_engine.unified_lenr_model.config import SimulationConfig
+from app.physics_engine.unified_lenr_model.cross_sections import (
+    calculate_reaction_rate,
+    calculate_tunneling_probability,
+)
 from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
     RateMode,
     compute_reaction_rate,
@@ -16,20 +19,46 @@ from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
 from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
     propagate_rate_uncertainty,
 )
+from app.physics_engine.mhd.nuclear_force_coupling import compute_nuclear_cross_section
 
 
 def _config() -> SimulationConfig:
     return SimulationConfig(temperature=320.0, loading_ratio=0.9)
 
 
-def test_two_body_mode_matches_baseline_and_is_validated_tier() -> None:
+def test_two_body_mode_matches_baseline_and_is_reference_tier() -> None:
     cfg = _config()
-    res = compute_reaction_rate(cfg, tunneling_prob=1e-40, mode=RateMode.TWO_BODY)
+    res = compute_reaction_rate(cfg, tunneling_prob=1.0, mode=RateMode.TWO_BODY)
     assert res.mode == "two_body"
-    assert res.claim_tier == "validated_lenr_mechanism"
+    assert res.claim_tier == "established_reference"
     assert res.collective_factor == 1.0
     assert math.isfinite(res.rate_per_m3_s)
     assert res.rate_per_m3_s >= 0.0
+
+
+def test_two_body_does_not_double_count_gamow() -> None:
+    """σ(E) already includes e^{-2πη}; rate must multiply enhancement only once."""
+    cfg = SimulationConfig(temperature=1e7, loading_ratio=0.9)  # keV-scale E
+    e_cm_kev = max(1.380649e-23 * cfg.temperature / (1e3 * 1.602176634e-19), 1e-6)
+    xs = compute_nuclear_cross_section(
+        E_keV=e_cm_kev, reaction="D(d,n)He3", screening_energy_keV=0.0
+    )
+    assert xs.cross_section_m2 > 0.0
+    rate_enh1 = calculate_reaction_rate(cfg, tunneling_prob=1.0)
+    n_host = cfg.host_material.electron_density / cfg.host_material.atomic_number
+    n = n_host * cfg.loading_ratio
+    m = 0.5 * cfg.reactant.atomic_mass * 1.66053906660e-27
+    v = math.sqrt(8 * 1.380649e-23 * cfg.temperature / (math.pi * m))
+    expected = 0.5 * n**2 * xs.cross_section_m2 * v
+    assert rate_enh1 == pytest.approx(expected, rel=1e-3)
+    rate_enh2 = calculate_reaction_rate(cfg, tunneling_prob=2.0)
+    assert rate_enh2 == pytest.approx(2.0 * rate_enh1, rel=1e-6)
+
+
+def test_no_artificial_cross_section_floor_at_room_temp() -> None:
+    cfg = _config()
+    rate = calculate_reaction_rate(cfg, tunneling_prob=1.0)
+    assert rate == 0.0 or rate < 1e-50
 
 
 def test_trapped_state_is_speculative_and_cites_takahashi() -> None:
@@ -44,7 +73,7 @@ def test_trapped_state_is_speculative_and_cites_takahashi() -> None:
 def test_trapped_state_exceeds_two_body_at_subpm_separation() -> None:
     """Crux of RR-006: trapped-state rate >> two-body at sub-pm separation."""
     cfg = _config()
-    two_body = compute_two_body_rate(cfg, tunneling_prob=1e-40).rate_per_m3_s
+    two_body = compute_two_body_rate(cfg, tunneling_prob=1.0).rate_per_m3_s
     trapped = compute_trapped_state_rate(
         cfg, trap_separation_m=1e-12
     ).rate_per_m3_s
@@ -59,7 +88,7 @@ def test_collective_factor_is_hard_capped() -> None:
 
 def test_default_mode_is_backward_compatible_two_body() -> None:
     cfg = _config()
-    res = compute_reaction_rate(cfg, tunneling_prob=1e-40)
+    res = compute_reaction_rate(cfg, tunneling_prob=1.0)
     assert res.mode == "two_body"
 
 
@@ -77,6 +106,18 @@ def test_uq_interval_is_ordered_and_predictive_without_band() -> None:
     ci = res.credible_interval
     assert ci["p05"] <= ci["p50"] <= ci["p95"]
     assert res.interval_kind == "predictive"
+    assert res.claim_tier == "established_reference"
+
+
+def test_uq_screening_potential_affects_two_body_rate() -> None:
+    """Cited U_e prior must propagate into σ(E+U_e), not be a phantom dimension."""
+    cfg = SimulationConfig(temperature=1e7, loading_ratio=0.9)
+    res = propagate_rate_uncertainty(
+        cfg, mode="two_body", n_samples=64, seed=11, material_key="palladium"
+    )
+    assert math.isfinite(res.median)
+    assert "screening_potential_eV" in res.sensitivity
+    assert res.sensitivity["screening_potential_eV"] > 0.0
 
 
 def test_uq_sensitivity_ranking_sums_to_one_when_nondegenerate() -> None:
@@ -85,7 +126,6 @@ def test_uq_sensitivity_ranking_sums_to_one_when_nondegenerate() -> None:
     res = propagate_rate_uncertainty(cfg, mode="trapped_state", n_samples=256, seed=2)
     assert res.sensitivity, "expected non-empty sensitivity for trapped_state"
     assert 0.99 <= sum(res.sensitivity.values()) <= 1.01
-    # Trap separation should dominate the variance (exponential barrier sensitivity).
     assert res.sensitivity.get("trap_separation_m", 0.0) > 0.0
 
 
@@ -98,3 +138,125 @@ def test_uq_posterior_update_with_experimental_band() -> None:
     assert res.interval_kind == "posterior_credible"
     assert res.credible_interval["p05"] <= res.credible_interval["p95"]
     assert "takahashi2016" in res.references
+
+
+def test_tunneling_helper_still_reports_enhanced_probability() -> None:
+    cfg = _config()
+    p = calculate_tunneling_probability(cfg, enhancement=1e3)
+    assert 0.0 <= p <= 1.0
+
+
+def test_rate_call_conventions_agree_on_enhancement() -> None:
+    """f and legacy P_gamow×f must resolve to the same volumetric rate."""
+    cfg = SimulationConfig(temperature=1e7, loading_ratio=0.9)
+    f = 50.0
+    p_legacy = calculate_tunneling_probability(cfg, enhancement=f)
+    assert p_legacy < 1.0
+    r_from_f = calculate_reaction_rate(cfg, tunneling_prob=f)
+    r_from_p = calculate_reaction_rate(cfg, tunneling_prob=p_legacy)
+    assert r_from_f == pytest.approx(r_from_p, rel=1e-9)
+    assert r_from_f == pytest.approx(f * calculate_reaction_rate(cfg, 1.0), rel=1e-9)
+
+
+def test_trapped_exposes_fusion_probability() -> None:
+    cfg = _config()
+    baseline = compute_trapped_state_rate(cfg, fusion_probability=1.0)
+    half = compute_trapped_state_rate(cfg, fusion_probability=0.5)
+    assert "fusion_probability" in half.provenance
+    assert half.provenance["fusion_probability"] == pytest.approx(0.5)
+    assert half.rate_per_m3_s == pytest.approx(0.5 * baseline.rate_per_m3_s)
+
+
+def test_subnuclear_separation_is_guarded() -> None:
+    cfg = _config()
+    res = compute_trapped_state_rate(cfg, trap_separation_m=1e-16)
+    assert res.provenance["barrier_penetration"] < 1.0
+
+
+def test_penetration_monotonic_in_separation() -> None:
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        _gamow_penetration,
+    )
+
+    cfg = _config()
+    assert _gamow_penetration(cfg, 1e-12) > _gamow_penetration(cfg, 1e-11)
+
+
+def test_power_density_falsifier_flags_unphysical() -> None:
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        DEFAULT_TRAP_NUCLEAR_RADIUS_M,
+    )
+
+    cfg = _config()
+    res = compute_trapped_state_rate(
+        cfg,
+        trap_separation_m=DEFAULT_TRAP_NUCLEAR_RADIUS_M,
+        n_coherent=1e6,
+    )
+    assert res.provenance["unphysical"] == 1.0
+    assert res.provenance["power_density_W_m3"] > 1e9
+
+
+def test_uq_fusion_probability_dimension_present_for_trapped() -> None:
+    cfg = _config()
+    res = propagate_rate_uncertainty(cfg, mode="trapped_state", n_samples=128, seed=5)
+    assert "fusion_probability" in res.sensitivity
+
+
+def test_three_body_is_speculative_and_cites_widom_larsen() -> None:
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        compute_three_body_rate,
+    )
+
+    cfg = _config()
+    res = compute_three_body_rate(cfg)
+    assert res.mode == "three_body"
+    assert res.claim_tier == "speculative_exploratory"
+    assert "widomlarsen2006" in res.references
+    assert "steinetz2020exp" in res.references
+    assert "conversion_probability" in res.provenance
+    assert res.provenance["conversion_probability"] == pytest.approx(1e-6)
+    assert math.isfinite(res.rate_per_m3_s)
+    assert res.rate_per_m3_s >= 0.0
+
+
+def test_three_body_scales_with_conversion_and_compression() -> None:
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        compute_three_body_rate,
+    )
+
+    cfg = _config()
+    base = compute_three_body_rate(
+        cfg, conversion_probability=1e-6, compression_ratio=10.0, mass_renormalization=4.0
+    )
+    hotter = compute_three_body_rate(
+        cfg, conversion_probability=2e-6, compression_ratio=10.0, mass_renormalization=4.0
+    )
+    denser = compute_three_body_rate(
+        cfg, conversion_probability=1e-6, compression_ratio=20.0, mass_renormalization=4.0
+    )
+    assert base.rate_per_m3_s > 0.0
+    assert hotter.rate_per_m3_s == pytest.approx(2.0 * base.rate_per_m3_s, rel=1e-6)
+    # Densities scale as compression² in n_p·n_e product → 4× for 2× compression.
+    assert denser.rate_per_m3_s == pytest.approx(4.0 * base.rate_per_m3_s, rel=1e-6)
+
+
+def test_three_body_closed_without_mass_renormalization() -> None:
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        compute_three_body_rate,
+    )
+
+    cfg = _config()
+    closed = compute_three_body_rate(cfg, mass_renormalization=1.0)
+    open_ = compute_three_body_rate(cfg, mass_renormalization=4.0)
+    assert closed.provenance["mass_sufficient"] == 0.0
+    assert closed.rate_per_m3_s < open_.rate_per_m3_s
+    assert open_.provenance["mass_sufficient"] == 1.0
+
+
+def test_uq_three_body_exposes_conversion_sensitivity() -> None:
+    cfg = _config()
+    res = propagate_rate_uncertainty(cfg, mode="three_body", n_samples=128, seed=9)
+    assert res.claim_tier == "speculative_exploratory"
+    assert "conversion_probability" in res.sensitivity
+    assert "widomlarsen2006" in res.references

@@ -58,9 +58,11 @@ const filesToCheck = [
   path.join(projectRoot, 'src/components/SimulationResults.jsx'),
   path.join(projectRoot, 'src/components/SimulationHistory.jsx'),
   
-  // Visualization components
+  // Visualization components. FluidDynamicsVisualizer_new.jsx was a duplicate of
+  // FluidDynamicsVisualizer.jsx with no import chain; it is archived, so this
+  // checks the canonical file instead.
   path.join(projectRoot, 'src/components/visualization/UnifiedLENRVisualizer.jsx'),
-  path.join(projectRoot, 'src/components/visualization/FluidDynamicsVisualizer_new.jsx'),
+  path.join(projectRoot, 'src/components/visualization/FluidDynamicsVisualizer.jsx'),
   
   // UI components (if they exist)
   path.join(projectRoot, 'src/components/ui/Input.jsx'),

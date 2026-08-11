@@ -49,9 +49,9 @@
 
 | Warning | Type | Severity | Impact | Status |
 |---------|------|----------|--------|--------|
-| 9 NPM vulnerabilities | Build | Moderate-High | None (dev only) | Documented |
-| Webpack deprecations | Build | Info | None | Documented |
-| Source map missing | Build | Cosmetic | None | Documented |
+| 2 npm advisories (`react-router` 6.x) | Build | Moderate | High gate exits 0 | Deferred to v7 migration |
+| Vite CJS Node API notice | Build | Info | None | Documented |
+| Source map missing (third-party bundles) | Build | Cosmetic | None | Documented |
 | 4 MUI Grid warnings | Runtime | Info | None | Documented |
 
 **Reference**: See `frontend/WARNINGS_EXPLAINED.md` for details
@@ -159,8 +159,8 @@
 
 #### Task 2.1: Mock Simulation API
 - [ ] **Backend Status**
-  - [ ] Verify backend is running (`http://localhost:8000`)
-  - [ ] Check API docs (`http://localhost:8000/api/docs`)
+  - [ ] Verify backend is running (`http://localhost:8010`)
+  - [ ] Check API docs (`http://localhost:8010/api/docs`)
   - [ ] Test health endpoint
 
 - [ ] **Simulation Endpoints**
@@ -302,10 +302,10 @@
   - [ ] Test migration when stable
   - [ ] Update documentation
 
-- [ ] **NPM Vulnerabilities**
-  - [ ] Wait for react-scripts update
-  - [ ] Monitor for security advisories
-  - [ ] Document workarounds if needed
+- [ ] **NPM Advisories**
+  - [ ] Migrate `react-router` 6.x -> 7.18+ to clear the residual moderates
+  - [ ] Monitor for new advisories (weekly `security-scan.yml`)
+  - [ ] Keep `package.json` overrides floored at safe patch versions
 
 **Estimated Time**: 2 hours (when updates available)  
 **Dependencies**: Library updates  
@@ -366,7 +366,7 @@ npm run build:analyze
 - **Visualization Test**: `http://localhost:3000/visualization-test`
 - **Component Showcase**: `http://localhost:3000/components`
 - **Three.js Test**: `http://localhost:3000/threejs-test`
-- **API Docs**: `http://localhost:8000/api/docs`
+- **API Docs**: `http://localhost:8010/api/docs`
 
 ### Browser DevTools Checks
 

@@ -1,6 +1,13 @@
 """Legacy enhancement calculations (QED, coherence, Casimir, bubble, Rydberg)."""
 import numpy as np
 from scipy import constants as const
+
+from app.physics_engine.constants import (
+    MAX_ENHANCEMENT_FACTOR,
+    QED_VACUUM_COEFFICIENT,
+    SCHWINGER_CRITICAL_FIELD_V_M,
+)
+
 from .config import (
     SimulationConfig,
     EnhancementResult,
@@ -15,7 +22,12 @@ KB = const.k
 
 
 def calculate_qed_enhancement(config: SimulationConfig) -> EnhancementResult:
-    """Double-layer QED field enhancement. From paper Section 2.3."""
+    """Weak-field QED vacuum polarisation (Heisenberg–Euler / Schwinger).
+
+    The previous form used ``E_critical = 1e8 V/m``, ten orders below the
+    Schwinger limit, and produced ~1e12 factors at collapse fields. Aligns with
+    the bubble-lattice production path.
+    """
     E_field = config.electric_field
     d_layer = config.surface_roughness
     n_e = config.host_material.electron_density
@@ -23,16 +35,21 @@ def calculate_qed_enhancement(config: SimulationConfig) -> EnhancementResult:
     delta_V = get_double_layer_potential(config.host_material, n_e, T)
     E_double_layer = delta_V / max(d_layer, 1e-10)
     E_total = E_field + E_double_layer
-    E_critical = 1e8
-    enhancement = 1 + (E_total / E_critical)**2
-    enhancement = min(enhancement, 1e4)
+    enhancement = 1.0 + QED_VACUUM_COEFFICIENT * (
+        E_total / SCHWINGER_CRITICAL_FIELD_V_M
+    ) ** 2
+    enhancement = min(enhancement, MAX_ENHANCEMENT_FACTOR)
     threshold_met = E_total > 1e8
     return EnhancementResult(
         name="Double-Layer QED",
-        value=enhancement,
+        value=float(enhancement),
         threshold_met=threshold_met,
-        equation="E = delta_V/d",
-        parameters={"E_field_V_m": E_total, "d_nm": d_layer * 1e9},
+        equation="eps = 1 + (2 alpha / 45 pi)(E/E_cr)^2",
+        parameters={
+            "E_field_V_m": E_total,
+            "d_nm": d_layer * 1e9,
+            "E_cr_V_m": SCHWINGER_CRITICAL_FIELD_V_M,
+        },
         category="primary",
     )
 
@@ -78,7 +95,12 @@ def calculate_casimir_enhancement(config: SimulationConfig) -> EnhancementResult
 
 
 def calculate_bubble_enhancement(config: SimulationConfig) -> EnhancementResult:
-    """Bubble collapse enhancement. From paper Section 3.2."""
+    """Bubble collapse diagnostic (paper §3.2).
+
+    Reported in the enhancement breakdown for UI/diagnostics only.
+    Excluded from the nuclear-rate product in ``model._combine_enhancements``
+    — cavitation extremes are not evidence of fusion.
+    """
     P = config.pressure
     T = config.temperature
     P_ambient = 101325

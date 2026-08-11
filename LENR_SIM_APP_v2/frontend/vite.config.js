@@ -5,7 +5,7 @@ function resolveProxyTarget(env) {
   const raw =
     env.VITE_API_URL ||
     env.REACT_APP_API_URL ||
-    'http://127.0.0.1:8000';
+    'http://127.0.0.1:8010';
   return raw.replace(/^wss?:\/\//, 'http://');
 }
 

@@ -34,6 +34,7 @@ W_COMPLETENESS = 0.20
 # cannot silently dominate empirically-grounded LENR tracks.
 CLAIM_TIER_MULTIPLIER: Dict[str, float] = {
     "validated_lenr_mechanism": 1.00,
+    "established_reference": 1.00,  # textbook formalism; not lattice-LENR validation
     "empirical_lenr_correlation": 0.90,
     "speculative_exploratory": 0.30,
     "cross_regime_extrapolation": 0.20,

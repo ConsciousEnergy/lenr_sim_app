@@ -294,10 +294,11 @@ class BubbleMHDConfinementTheory:
         #    Ref: Davidson (2001) §5.3 — "Interaction parameter".
         stuart_factor = max(1.0, math.sqrt(max(mhd_params.stuart_number, 0.0)))
 
-        # c) Gamow penetration enhancement from electron screening:
-        #    σ_screened / σ_bare — the most physically rigorous factor.
-        #    Ref: Assenbaum et al. (1987) Z. Phys. A 327, 461;
-        #         Ichimaru (1993) Rev. Mod. Phys. 65, 255.
+        # c) Gamow penetration ratio σ_screened/σ_bare — diagnostic only.
+        #    Same physical screening mechanism as the pipeline "screening"
+        #    composition group (electron_screening). Including it in
+        #    total_enhancement would double-count when both theories run.
+        #    Ref: Assenbaum et al. (1987); Ichimaru (1993).
         gamow_enhancement = 1.0
         if nuclear.dd_cross_sections:
             xs_screened = nuclear.dd_cross_sections.get("D(d,n)He3")
@@ -311,12 +312,11 @@ class BubbleMHDConfinementTheory:
                 )
                 gamow_enhancement = min(gamow_enhancement, MAX_ENHANCEMENT_FACTOR)
 
-        total_enhancement = (
-            flux_enhancement
-            * stuart_factor
-            * gamow_enhancement
+        # Confinement product only (flux × Stuart); screening via observables.
+        total_enhancement = min(
+            flux_enhancement * stuart_factor,
+            MAX_ENHANCEMENT_FACTOR,
         )
-        total_enhancement = min(total_enhancement, MAX_ENHANCEMENT_FACTOR)
 
         # ── Energy & rate estimates ───────────────────────────────────
         reaction_volume = 4.0 / 3.0 * math.pi * R_min**3

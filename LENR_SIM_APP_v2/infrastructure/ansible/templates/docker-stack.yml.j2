@@ -69,15 +69,25 @@ services:
   backend:
     image: ghcr.io/{{ github_owner | default('ConsciousEnergy') }}/lenr-sim-backend:latest
     environment:
+      # LENR_*-prefixed vars feed Pydantic Settings (env_prefix="LENR_").
+      - LENR_ENVIRONMENT=production
+      - LENR_DB_HOST=postgres
+      - LENR_DB_PORT=5432
+      - LENR_DB_USER={{ postgres_user | default('lenr_app') }}
+      - LENR_DB_NAME={{ postgres_db | default('lenr_sim') }}
+      - LENR_LOG_LEVEL={{ fastapi_log_level | default('info') }}
+      - LENR_LOG_TO_FILE=true
+      - LENR_LOG_JSON_FORMAT=true
+      - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}"]
+      - LENR_ENABLE_RATE_LIMITING=true
+      - LENR_HTTPS_REDIRECT=false
+      # Unprefixed DB_* aliases for get_database_url() / os.getenv readers
+      # (entrypoint also exports DB_PASSWORD from the Swarm secret).
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER={{ postgres_user | default('lenr_app') }}
       - DB_NAME={{ postgres_db | default('lenr_sim') }}
       - DB_PASSWORD_FILE=/run/secrets/postgres_password
-      - ENVIRONMENT=production
-      - LOG_LEVEL={{ fastapi_log_level | default('info') }}
-      - CORS_ORIGINS=https://{{ app_domain }},https://www.{{ app_domain }}
-      - SECRET_KEY_FILE=/run/secrets/api_secret_key
     secrets:
       - source: postgres_password
         target: postgres_password

@@ -187,6 +187,30 @@ async def lifespan(app: FastAPI):
         expired = remove_expired_items()
         app_logger.info(f"Initial cache cleanup: {expired} expired items removed")
 
+    # Fail fast if NumPy/SciPy is a hybrid/broken Windows install — otherwise
+    # /api/unified/bubble-lattice 500s deep inside SciPy BDF with an opaque
+    # "Unable to configure default ndarray.__repr__" RuntimeError.
+    try:
+        import sys as _sys
+        from pathlib import Path as _Path
+
+        _backend_root = _Path(__file__).resolve().parents[1]
+        if str(_backend_root) not in _sys.path:
+            _sys.path.insert(0, str(_backend_root))
+        from check_numeric_stack import check_numeric_stack
+
+        _stack_ok, _stack_detail = check_numeric_stack()
+        if _stack_ok:
+            app_logger.info("Numeric stack healthy: %s", _stack_detail)
+        else:
+            app_logger.error(
+                "Numeric stack BROKEN (%s). Bubble-lattice will 500 until "
+                "backend\\fix_scipy_venv.bat is run.",
+                _stack_detail,
+            )
+    except Exception as e:
+        app_logger.warning("Numeric stack check skipped: %s", e)
+
     # Preload heavy physics singletons during startup to reduce first-request latency.
     try:
         preload_physics_components()

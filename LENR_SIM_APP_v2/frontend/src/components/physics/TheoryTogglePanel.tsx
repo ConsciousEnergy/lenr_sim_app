@@ -28,9 +28,11 @@ import {
   AccordionDetails,
   Button,
   Alert,
+  TextField,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TuneIcon from '@mui/icons-material/Tune';
 import ScienceIcon from '@mui/icons-material/Science';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -39,6 +41,8 @@ import ExploreIcon from '@mui/icons-material/Explore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { Link as RouterLink } from 'react-router-dom';
 import { usePhysics, TheoryContributionResult } from '../../contexts/PhysicsContext';
 import { track } from '../../analytics/events';
 import {
@@ -177,11 +181,11 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   const {
     availableTheories,
     enabledTheories,
-    theoryConfigs: _theoryConfigs,
+    theoryConfigs,
     theoryResult,
     isLoadingTheories,
     setEnabledTheories,
-    setTheoryConfigs: _setTheoryConfigs,
+    setTheoryConfigs,
     fetchTheories,
     runTheories,
     runCoupledTheories,
@@ -248,6 +252,47 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
     [enabledTheories, setEnabledTheories],
   );
 
+  /**
+   * Override one configurable parameter for one theory. An empty string clears
+   * the override so the module's own default applies again; sending an empty
+   * override object would otherwise pin the parameter to NaN.
+   */
+  const handleConfigChange = useCallback(
+    (theoryId: string, paramName: string, rawValue: string, isNumeric: boolean) => {
+      const next = { ...theoryConfigs };
+      const forTheory = { ...(next[theoryId] || {}) };
+
+      if (rawValue === '') {
+        delete forTheory[paramName];
+      } else if (isNumeric) {
+        const parsed = Number(rawValue);
+        if (Number.isNaN(parsed)) return;
+        forTheory[paramName] = parsed;
+      } else {
+        forTheory[paramName] = rawValue;
+      }
+
+      if (Object.keys(forTheory).length === 0) {
+        delete next[theoryId];
+      } else {
+        next[theoryId] = forTheory;
+      }
+      setTheoryConfigs(next);
+    },
+    [theoryConfigs, setTheoryConfigs],
+  );
+
+  /** Drop all overrides for one theory. */
+  const handleConfigReset = useCallback(
+    (theoryId: string) => {
+      if (!theoryConfigs[theoryId]) return;
+      const next = { ...theoryConfigs };
+      delete next[theoryId];
+      setTheoryConfigs(next);
+    },
+    [theoryConfigs, setTheoryConfigs],
+  );
+
   // Run theories with current conditions (coupled or independent)
   const handleRun = useCallback(() => {
     if (conditions) {
@@ -305,6 +350,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
               Contract: {theoryResult.contract_version}
             </Typography>
           )}
+          <CompositionProvenance provenance={theoryResult.composition_provenance} />
         </Paper>
       )}
 
@@ -354,10 +400,27 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
         onClick={handleRun}
         disabled={!conditions || enabledTheories.length === 0}
         color={coupledMode ? 'success' : 'primary'}
-        sx={{ mb: 2 }}
+        sx={{ mb: theoryResult?.per_theory?.length ? 1 : 2 }}
       >
         {coupledMode ? 'Run Coupled Pipeline' : 'Run Selected Theories'}
       </Button>
+
+      {/* Closes the loop: without a route back, users returned to Advanced Analysis
+          by hand and often re-ran the simulation instead, which never fills the
+          Theory Summary tab. */}
+      {!!theoryResult?.per_theory?.length && (
+        <Button
+          component={RouterLink}
+          to="/advanced-analysis"
+          variant="outlined"
+          size="small"
+          fullWidth
+          startIcon={<AssessmentIcon />}
+          sx={{ mb: 2 }}
+        >
+          View in Advanced Analysis
+        </Button>
+      )}
 
       <Divider sx={{ mb: 1 }} />
 
@@ -395,6 +458,9 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           coupledMode,
           coupledResult,
           onOpenGlossary: openGlossary,
+          configOverrides: theoryConfigs[theory.theory_id],
+          onConfigChange: handleConfigChange,
+          onConfigReset: handleConfigReset,
         }),
       )}
 
@@ -443,6 +509,9 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
               coupledResult,
               isContextTrack: true,
               onOpenGlossary: openGlossary,
+              configOverrides: theoryConfigs[theory.theory_id],
+              onConfigChange: handleConfigChange,
+              onConfigReset: handleConfigReset,
             }),
           )}
         </>
@@ -475,6 +544,7 @@ interface RenderTheoryAccordionArgs {
     description: string;
     category: string;
     references: string[];
+    configurable_parameters?: Record<string, any>;
   };
   isEnabled: boolean;
   contribution: TheoryContributionResult | undefined;
@@ -483,6 +553,14 @@ interface RenderTheoryAccordionArgs {
   coupledResult: { coupling_map?: Record<string, Array<{ source_id: string }>> } | null | undefined;
   isContextTrack?: boolean;
   onOpenGlossary: (_anchor: 'evidence' | 'claim' | null) => void;
+  configOverrides?: Record<string, any>;
+  onConfigChange: (
+    _theoryId: string,
+    _paramName: string,
+    _rawValue: string,
+    _isNumeric: boolean,
+  ) => void;
+  onConfigReset: (_theoryId: string) => void;
 }
 
 function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElement {
@@ -495,6 +573,9 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
     coupledResult,
     isContextTrack = false,
     onOpenGlossary,
+    configOverrides,
+    onConfigChange,
+    onConfigReset,
   } = args;
 
   const conf = contribution ? confidenceLabel(contribution.confidence) : null;
@@ -618,15 +699,30 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
                 </Tooltip>
               </Box>
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(
-                100,
-                (Math.log10(Math.max(rawEnhancement, 1)) / 5) * 100,
-              )}
-              color={contribution.is_applicable ? 'primary' : 'inherit'}
-              sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
-            />
+            {/* Bar length is log10 of the enhancement against the 1e5 display
+                ceiling. It is a relative magnitude, NOT a percentage of any
+                total, so it carries an explicit label. */}
+            <Tooltip
+              arrow
+              title="Bar length is log10(enhancement) relative to the 1e5 display ceiling — a magnitude indicator, not a percentage of a total."
+            >
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(
+                  100,
+                  (Math.log10(Math.max(rawEnhancement, 1)) / 5) * 100,
+                )}
+                color={contribution.is_applicable ? 'primary' : 'inherit'}
+                sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}
+              />
+            </Tooltip>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', fontSize: '0.55rem' }}
+            >
+              log10 scale vs 1e5 ceiling
+            </Typography>
             {tierMult < 1.0 && (
               <Typography
                 variant="caption"
@@ -698,6 +794,18 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
           </Box>
         )}
 
+        {/* Per-theory parameter overrides. Sent as theory_configs on the next run. */}
+        {theory.configurable_parameters &&
+          Object.keys(theory.configurable_parameters).length > 0 && (
+            <TheoryParameterEditor
+              theoryId={theory.theory_id}
+              configurableParameters={theory.configurable_parameters}
+              overrides={configOverrides}
+              onChange={onConfigChange}
+              onReset={onConfigReset}
+            />
+          )}
+
         {/* Coupling arrows (coupled mode only) */}
         {coupledMode && coupledResult?.coupling_map?.[theory.theory_id] && (
           <Box sx={{ mb: 0.5 }}>
@@ -743,5 +851,212 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
     </Accordion>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Composition provenance
+// ---------------------------------------------------------------------------
+
+interface CompositionProvenanceProps {
+  provenance?: {
+    combination_rule?: string;
+    applied_groups?: Array<{ group: string; selected_theory: string; candidates?: string[] }>;
+    excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
+    ungrouped_theories?: string[];
+    not_combinable_with?: string[];
+    note?: string;
+  };
+}
+
+/**
+ * How the combined enhancement was assembled.
+ *
+ * The backend has always returned this block, but nothing rendered it, so a
+ * user could not tell that only one theory per group contributes or which
+ * theories were dropped as overlapping alternatives.
+ */
+const CompositionProvenance: React.FC<CompositionProvenanceProps> = ({ provenance }) => {
+  if (!provenance) return null;
+  const appliedGroups = provenance.applied_groups || [];
+  const excluded = provenance.excluded_theories || [];
+  const ungrouped = provenance.ungrouped_theories || [];
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{ bgcolor: 'transparent', '&:before': { display: 'none' }, mt: 0.5 }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+        sx={{ minHeight: 0, px: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+      >
+        <Typography variant="caption" color="text.secondary">
+          How this was composed ({appliedGroups.length} group
+          {appliedGroups.length === 1 ? '' : 's'}
+          {excluded.length > 0 ? `, ${excluded.length} excluded` : ''})
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0 }}>
+        {provenance.note && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            {provenance.note}
+          </Typography>
+        )}
+
+        {appliedGroups.map((entry) => (
+          <Box key={entry.group} sx={{ mb: 0.75 }}>
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
+              {entry.group.replace(/_/g, ' ')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6rem' }}>
+              applied: {entry.selected_theory.replace(/_/g, ' ')}
+              {entry.candidates && entry.candidates.length > 1
+                ? ` (of ${entry.candidates.length} candidates)`
+                : ''}
+            </Typography>
+          </Box>
+        ))}
+
+        {excluded.length > 0 && (
+          <Alert severity="info" sx={{ mt: 1, py: 0, '& .MuiAlert-message': { py: 0.5 } }}>
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
+              Excluded as overlapping alternatives
+            </Typography>
+            {excluded.map((entry) => (
+              <Typography
+                key={entry.theory_id}
+                variant="caption"
+                sx={{ display: 'block', fontSize: '0.6rem' }}
+              >
+                {entry.theory_id.replace(/_/g, ' ')} — superseded by{' '}
+                {entry.excluded_by.replace(/_/g, ' ')} in {entry.group.replace(/_/g, ' ')}
+              </Typography>
+            ))}
+          </Alert>
+        )}
+
+        {ungrouped.length > 0 && (
+          <Alert severity="warning" sx={{ mt: 1, py: 0, '& .MuiAlert-message': { py: 0.5 } }}>
+            <Typography variant="caption">
+              Ungrouped theories each multiply into the total: {ungrouped.join(', ')}
+            </Typography>
+          </Alert>
+        )}
+
+        {provenance.combination_rule && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontSize: '0.6rem' }}>
+            Rule: {provenance.combination_rule.replace(/_/g, ' ')}
+          </Typography>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Per-theory parameter overrides
+// ---------------------------------------------------------------------------
+
+interface TheoryParameterEditorProps {
+  theoryId: string;
+  configurableParameters: Record<string, any>;
+  overrides?: Record<string, any>;
+  onChange: (
+    _theoryId: string,
+    _paramName: string,
+    _rawValue: string,
+    _isNumeric: boolean,
+  ) => void;
+  onReset: (_theoryId: string) => void;
+}
+
+/**
+ * Editor for a theory's `configurable_parameters`, which the backend returns as
+ * `{ name: { default, description } }`. Leaving a field blank means "use the
+ * module default" rather than sending an explicit value.
+ */
+const TheoryParameterEditor: React.FC<TheoryParameterEditorProps> = ({
+  theoryId,
+  configurableParameters,
+  overrides,
+  onChange,
+  onReset,
+}) => {
+  const entries = Object.entries(configurableParameters);
+  const overrideCount = overrides ? Object.keys(overrides).length : 0;
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{ bgcolor: 'transparent', '&:before': { display: 'none' }, mb: 0.5 }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+        sx={{ minHeight: 0, px: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <TuneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          <Typography variant="caption" color="text.secondary">
+            Parameters ({entries.length})
+          </Typography>
+          {overrideCount > 0 && (
+            <Chip
+              label={`${overrideCount} overridden`}
+              size="small"
+              color="info"
+              variant="outlined"
+              sx={{ height: 16, fontSize: '0.55rem' }}
+            />
+          )}
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0 }}>
+        <Grid container spacing={1}>
+          {entries.map(([name, meta]) => {
+            const defaultValue = meta && typeof meta === 'object' ? meta.default : meta;
+            const description =
+              meta && typeof meta === 'object' ? meta.description : undefined;
+            const isNumeric = typeof defaultValue === 'number';
+            const current = overrides?.[name];
+            return (
+              <Grid size={{ xs: 12, sm: 6 }} key={name}>
+                <Tooltip title={description || name} arrow>
+                  <TextField
+                    label={name}
+                    size="small"
+                    fullWidth
+                    type={isNumeric ? 'number' : 'text'}
+                    value={current ?? ''}
+                    placeholder={String(defaultValue ?? '')}
+                    onChange={(e) => onChange(theoryId, name, e.target.value, isNumeric)}
+                    InputLabelProps={{ shrink: true, sx: { fontSize: '0.7rem' } }}
+                    inputProps={{ style: { fontSize: '0.7rem' } }}
+                  />
+                </Tooltip>
+              </Grid>
+            );
+          })}
+        </Grid>
+        {overrideCount > 0 && (
+          <Button
+            size="small"
+            onClick={() => onReset(theoryId)}
+            sx={{ mt: 1, fontSize: '0.65rem' }}
+          >
+            Reset to defaults
+          </Button>
+        )}
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', mt: 0.5, fontSize: '0.6rem' }}
+        >
+          Blank uses the module default. Overrides apply on the next run.
+        </Typography>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
 
 export default TheoryTogglePanel;

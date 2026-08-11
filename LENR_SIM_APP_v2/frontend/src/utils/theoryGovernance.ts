@@ -17,6 +17,7 @@
 
 export type ClaimTier =
   | 'validated_lenr_mechanism'
+  | 'established_reference'
   | 'empirical_lenr_correlation'
   | 'speculative_exploratory'
   | 'cross_regime_extrapolation'
@@ -36,6 +37,7 @@ export type EvidenceClass =
  */
 export const CLAIM_TIER_MULTIPLIER: Record<string, number> = {
   validated_lenr_mechanism: 1.0,
+  established_reference: 1.0,
   empirical_lenr_correlation: 0.9,
   speculative_exploratory: 0.3,
   cross_regime_extrapolation: 0.2,
@@ -55,6 +57,13 @@ export const CLAIM_TIERS: Record<string, TierInfo> = {
     multiplier: 1.0,
     description:
       'Mechanism with reproducible LENR observations and physics-consistent mechanism; weighted at full strength in aggregated scores.',
+  },
+  established_reference: {
+    label: 'Established reference formalism',
+    color: 'info',
+    multiplier: 1.0,
+    description:
+      'Standard free-particle / thermonuclear reference (e.g. two-body ⟨σv⟩). Used as a baseline for comparison—not a validated lattice-LENR mechanism.',
   },
   empirical_lenr_correlation: {
     label: 'Empirical LENR correlation',

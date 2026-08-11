@@ -78,7 +78,7 @@ npm start
   4. View 3D visualization with results
 
 ### 3. **Direct API Testing**
-- API Documentation: http://localhost:8000/api/docs
+- API Documentation: http://localhost:8010/api/docs
 - Test endpoints:
   - `POST /api/simulations/` - Create a new simulation
   - `GET /api/simulations/{id}/status` - Check simulation status

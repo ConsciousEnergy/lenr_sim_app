@@ -61,3 +61,48 @@ chips in `TheoryTogglePanel` and the scoring engine applies
 cross-regime lines are visible in the output without silently dominating
 empirically-grounded tracks.
 
+
+---
+
+## Pre-Public Hardening Rubric Delta (2026-08-08)
+
+Rubric impact of the physics-accuracy / reporting-honesty slice. The scoring axes
+above are unchanged; what changed is whether reported numbers are *falsifiable*.
+
+### Pre-state defects (all reduce falsifiability to zero for the affected quantity)
+
+| Quantity | Defect | Why it was unfalsifiable |
+|---|---|---|
+| `enhancement_breakdown.{qed,casimir,rydberg,compression,total}` | each clamped to 1e5 independently | five mechanisms printed the same number, so no prediction could be checked against any one of them |
+| `collapse_results.max_temperature_k` | ceiling 1e4 K | below the measured 4e3-1.5e4 K emission band, so the model could not even reproduce experiment |
+| `enhancement_breakdown.casimir` | `= compression ** 2` | not an independent mechanism; testing it tested the density term |
+| `proton_phases` | hardcoded 0.4 / 0.2 / floored nuclear | invariant across temperature, field and loading, so no condition could refute it |
+| `enhancement_timeline` | envelope model, peak from ODE | the timeline and the headline number were not the same physical claim |
+
+### Post-state
+
+| Quantity | Now | Falsification handle |
+|---|---|---|
+| enhancement mechanisms | ceiling retained, `value_raw` + `log10_value_raw` + `is_saturated` reported | the uncapped magnitude is a checkable prediction; the ceiling is declared as a reporting limit |
+| temperature ceiling | 2e6 K, anchored to doi:10.1121/1.416948 | comparable to published peak ion temperatures; measured emission band recorded separately in `REGIME_TEMPERATURE_PROVENANCE` |
+| casimir | pressure-driven lattice strain, real `1/d^4` scaling | responds to pressure and to material bulk modulus, both independently measurable |
+| proton phases | smooth cascade over `PhaseThresholds` | monotone in enhancement and loading; a measured distribution can contradict it |
+| timeline | reads the integrated trajectory, reports `collapse_model` | one collapse claim, checkable against the reported peak |
+
+### Claim-tier discipline
+
+`MAX_ENHANCEMENT_FACTOR` stays at `1e5`. Raising it would have inflated headline
+numbers and required governance sign-off; the defect was never the ceiling's value
+but that saturation was silent. Reported values still never exceed the tier limit -
+`test_physics_benchmark_gates.py` enforces this - but a clamped value is now labelled
+as such in both the API and the UI, so no saturated number can be read as a
+prediction.
+
+### Residual, tracked
+
+- `ProtonPhaseModel.calculate_overlap_probability` returns a number density rather
+  than a probability, so it always clips to its 0.1 ceiling. It is excluded from the
+  cascade and logged under Known Limitations in
+  `docs/PHYSICS_EQUATION_VERIFICATION.md`; it needs renormalising.
+- `solve_keller_miksis` is validated but is not yet the default for the
+  bubble-lattice route, which still uses the incompressible equation.
