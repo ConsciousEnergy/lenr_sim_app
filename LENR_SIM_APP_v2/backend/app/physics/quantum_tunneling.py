@@ -733,6 +733,30 @@ def calculate_tunneling_probability(
     
     return tunneling_prob
 
+def mean_thermal_speed(temperature: float, reduced_mass_u: float) -> float:
+    """
+    Mean thermal speed of the relative motion, v = c*sqrt(8*kT/(pi*mu*c^2)).
+
+    kT and the reduced-mass rest energy are both evaluated in eV so the ratio
+    is dimensionless. (A previous inline version divided the ~931 MeV/u rest
+    energy by 1e6, treating it as ~931 eV and inflating the speed - and every
+    rate downstream - by ~1000x.)
+
+    Args:
+        temperature: Temperature in K
+        reduced_mass_u: Reduced mass in atomic mass units
+
+    Returns:
+        Mean thermal speed in m/s (~2.5 km/s for D-D at 300 K)
+    """
+    kB = 8.617333262e-5  # Boltzmann constant in eV/K
+    amu_c2 = 931.494061e6  # 1 amu rest energy in eV
+    return float(
+        np.sqrt(8 * kB * temperature / (np.pi * reduced_mass_u * amu_c2))
+        * 2.99792458e8
+    )
+
+
 def calculate_fusion_rate(
     nuclei_density1: float,
     nuclei_density2: float,
@@ -761,14 +785,12 @@ def calculate_fusion_rate(
     """
     # Physical constants
     kB = 8.617333262e-5  # Boltzmann constant in eV/K
-    amu_c2 = 931.494061e6  # 1 atomic mass unit in eV/c²
     
     # Calculate reduced mass
     reduced_mass_u = a1 * a2 / (a1 + a2)
     reduced_mass_kg = reduced_mass_u * 1.66053906660e-27  # kg
     
-    # Calculate thermal velocity (average)
-    thermal_velocity = np.sqrt(8 * kB * temperature / (np.pi * reduced_mass_u * amu_c2 / 1e6)) * 3e8  # m/s
+    thermal_velocity = mean_thermal_speed(temperature, reduced_mass_u)  # m/s
     
     # Energy range for integration (typical thermal energies)
     energy_min = 0.001  # 1 eV

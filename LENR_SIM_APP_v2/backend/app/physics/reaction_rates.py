@@ -94,17 +94,13 @@ def calculate_gamow_energy(
     Returns:
         Gamow energy in keV
     """
-    alpha = const.alpha  # Fine structure constant
-    reduced_mass = reduced_mass_amu * AMU
-    
-    # E_G = 2μ(Z₁Z₂e²/4πε₀ℏ)²
-    e2_over_4pi_eps0 = const.e**2 / (4 * np.pi * const.epsilon_0)
-    E_G_J = 2 * reduced_mass * (z1 * z2 * e2_over_4pi_eps0 / HBAR)**2
-    
-    # Convert to keV
-    E_G_keV = E_G_J / EV_TO_J / 1000
-    
-    return E_G_keV
+    # Delegate to the canonical implementation so every Gamow energy in the
+    # codebase comes from one formula: E_G = 2μc²(παZ₁Z₂)² ≈ 986 keV for D+D.
+    # (A previous local derivation here omitted the π², giving ≈100 keV and
+    # overestimating keV-range cross-sections by 10³-10⁴×.)
+    from app.physics.core_constants import gamow_energy
+
+    return gamow_energy(z1, z2, reduced_mass_amu * AMU)
 
 
 def tunneling_cross_section(
@@ -188,7 +184,10 @@ def thermal_average_cross_section(
     E_max = max(10 * E_peak, 10 * temperature_keV)
     result, error = quad(integrand, 0, E_max, limit=100)
     
-    sigma_v_m3_s = prefactor * result
+    # The quadrature variable is E in keV while the integrand's energy factor
+    # is in joules, so convert the dE measure keV -> J. (Omitting this
+    # overestimated <sigma*v> by ~6e15.)
+    sigma_v_m3_s = prefactor * result * (1000 * EV_TO_J)
     
     # Convert to cm³/s
     sigma_v_cm3_s = sigma_v_m3_s * 1e6
@@ -201,7 +200,10 @@ def calculate_enhancement_factors(
     coherence_factor: float = 1.0,
     field_strength_V_m: float = 0.0,
     phonon_coupling: float = 0.0,
-    temperature_keV: float = 0.1
+    temperature_keV: float = 0.1,
+    z1: int = 1,
+    z2: int = 1,
+    reduced_mass_amu: float = 1.0
 ) -> EnhancementFactors:
     """
     Calculate decomposed enhancement factors.
@@ -214,15 +216,28 @@ def calculate_enhancement_factors(
         field_strength_V_m: Electric field strength in V/m
         phonon_coupling: Phonon coupling strength
         temperature_keV: Temperature in keV
+        z1, z2: Atomic numbers (for the Sommerfeld parameter)
+        reduced_mass_amu: Reduced mass in AMU
         
     Returns:
         EnhancementFactors object
     """
-    # Screening enhancement
-    # f_screening ≈ exp(U_screening / kT)
-    kT_eV = temperature_keV * 1000
-    if kT_eV > 0:
-        f_screening = np.exp(min(50, screening_potential_eV / kT_eV))
+    # Screening enhancement, Assenbaum-Rolfs form evaluated at the Gamow peak
+    # energy where thermal reactions actually occur:
+    #   f = exp(pi * eta(E0) * U_e / E0)
+    # A previous exp(U_e/kT) form is not the screened-cross-section result and
+    # blows up unphysically at thermal energies. Capped at the governance
+    # ceiling MAX_ENHANCEMENT_FACTOR, consistent with screening_kernel.
+    from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
+    if screening_potential_eV > 0 and temperature_keV > 0:
+        E_G = calculate_gamow_energy(z1, z2, reduced_mass_amu)
+        E0_keV = max((E_G * temperature_keV**2 / 4) ** (1 / 3), 1e-9)
+        # eta = sqrt(E_G / E) / (2*pi) for the same E_G convention
+        eta = np.sqrt(E_G / E0_keV) / (2 * np.pi)
+        exponent = np.pi * eta * (screening_potential_eV / 1000.0) / E0_keV
+        exponent = min(exponent, np.log(MAX_ENHANCEMENT_FACTOR))
+        f_screening = float(np.exp(exponent))
     else:
         f_screening = 1.0
     
@@ -427,14 +442,19 @@ def statistical_reaction_rate(
         coherence_factor=coherence_factor,
         field_strength_V_m=field_strength_V_m,
         phonon_coupling=phonon_coupling,
-        temperature_keV=temperature_keV
+        temperature_keV=temperature_keV,
+        z1=z1,
+        z2=z2,
+        reduced_mass_amu=reduced_mass_amu
     )
     
-    # Reaction rate R = n²<σv>f (for identical particles)
-    # Convert σv from cm³/s to m³/s
+    # Reaction rate R = (1/2) n²<σv>f for identical reactants (z1 == z2 with a
+    # single shared density), to avoid double-counting pairs; n1*n2*<σv>f for
+    # distinguishable species. Convert σv from cm³/s to m³/s.
     sigma_v_m3_s = sigma_v * 1e-6
     
-    rate = density_m3**2 * sigma_v_m3_s * enhancements.total
+    identical_particle_factor = 0.5 if z1 == z2 else 1.0
+    rate = identical_particle_factor * density_m3**2 * sigma_v_m3_s * enhancements.total
     
     # Error propagation
     sigma_v_uncertainty = 0.2  # Typical 20% uncertainty in S-factor

@@ -106,3 +106,17 @@ prediction.
   `docs/PHYSICS_EQUATION_VERIFICATION.md`; it needs renormalising.
 - `solve_keller_miksis` is validated but is not yet the default for the
   bubble-lattice route, which still uses the incompressible equation.
+
+## Math-Accuracy Hardening Rubric Delta (2026-08-10)
+
+| Dimension | Pre | Post | Falsification evidence |
+|---|---|---|---|
+| Numeric correctness | 2/5 (five order-of-magnitude errors live in legacy paths; one locked in by a test) | 4/5 | `tests/test_physics/test_absolute_numeric_gates.py` fails on the old code for E_G (~100 keV vs 986 keV), phonon barrier (0.48 eV vs 0.48 MeV), thermal speed (~1000x), `<sigma*v>` (~6e15), Casimir d-dependence |
+| Single-source formulas | 2/5 (three Gamow derivations, one wrong; screening triple-counted in WKB) | 4/5 | Gamow delegated to `core_constants.gamow_energy`; dead `unified_lenr_model.py` monolith deleted; screening applied exactly once (gate: `test_screening_applied_exactly_once`) |
+| UI honesty | 3/5 (silent x3.33 radius rescale; Math.random efficiency; unbadged fallbacks) | 4/5 | payload test asserts the slider value is sent unmodified; fallback results carry a visible warning; random metric removed |
+| Docs-vs-code consistency | 2/5 (Q=2.45 MeV in tables; log's own TF/adiabatic errors) | 4/5 | corrected docs cross-referenced to code in `PHYSICS_EQUATION_VERIFICATION.md` section 10 |
+
+Residual to 5/5: legacy `app/physics` modules still duplicate some barrier /
+rate formalisms (each now individually correct and gated); trapped-state
+rectangular-barrier model in `reaction_rate_engine` remains a documented
+approximation pending a Coulomb-WKB integral treatment.

@@ -293,7 +293,7 @@ class BubbleFusionCalculator:
         
         # Estimate neutron yield
         neutron_yield = self._estimate_neutron_yield(
-            fusion_prob, R_min, params.gas_fraction, gas
+            fusion_prob, params, gas
         )
         
         return BubbleCollapseResult(
@@ -357,17 +357,24 @@ class BubbleFusionCalculator:
     def _estimate_neutron_yield(
         self,
         fusion_prob: float,
-        R_min: float,
-        gas_fraction: float,
+        params: 'BubbleSimulationParams',
         gas: GasProperties
     ) -> float:
         """Estimate neutron yield per collapse."""
         if fusion_prob <= 0:
             return 0.0
         
-        # Number of deuterium atoms in compressed bubble
-        # Assuming ideal gas at collapse
-        n_atoms = (4/3) * np.pi * R_min**3 * 1e30 * gas_fraction
+        # Number of gas atoms is conserved through the collapse, so count them
+        # in the *initial* bubble at ambient conditions with the ideal gas law
+        # n0 = P0 / (kB * T0). (A previous version multiplied the collapsed
+        # volume by a hardcoded 1e30 m^-3, a magic density unrelated to the
+        # actual gas inventory.)
+        k_B = 1.380649e-23  # J/K
+        R0_m = params.initial_radius_um * 1e-6
+        P0_pa = params.ambient_pressure_bar * 1e5
+        T0_k = max(params.ambient_temperature_k, 1.0)
+        n_ambient = P0_pa / (k_B * T0_k)  # m^-3 (~2.4e25 at 1 bar, 298 K)
+        n_atoms = (4/3) * np.pi * R0_m**3 * n_ambient * params.gas_fraction
         n_atoms = min(n_atoms, 1e15)  # Physical limit
         
         # D-D → 50% He-3 + n, 50% T + p

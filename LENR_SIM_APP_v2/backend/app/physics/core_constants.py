@@ -135,7 +135,9 @@ R0_NUCLEAR = 1.2  # r = r0 * A^(1/3)
 # Nuclear force range (fm)
 NUCLEAR_FORCE_RANGE = 1.4
 
-# Strong coupling constant at low energy
+# QCD strong coupling evaluated at the Z-boson mass, alpha_s(M_Z).
+# NOTE: this is NOT a low-energy nuclear coupling; at nuclear (MeV) scales
+# the strong interaction is non-perturbative and alpha_s is O(1).
 ALPHA_STRONG = 0.1181
 
 # ============================================================================
@@ -173,6 +175,8 @@ SCREENING_POTENTIALS = {
 REACTION_Q_VALUES = {
     'd-d_n': 3.269,      # D + D → He-3 + n
     'd-d_p': 4.033,      # D + D → T + p
+    'd-d_gamma': 23.847, # D + D → He-4 + γ (radiative; branch ~1e-7 in vacuum)
+    'p-d': 5.494,        # p + D → He-3 + γ
     'd-t': 17.589,       # D + T → He-4 + n
     'd-he3': 18.353,     # D + He-3 → He-4 + p
     'p-li7': 17.346,     # p + Li-7 → 2 He-4
@@ -186,7 +190,8 @@ REACTION_Q_VALUES = {
 
 # S-factor at zero energy for various reactions
 S_FACTORS = {
-    'd-d': 52.9,         # D + D (both channels combined)
+    'd-d': 52.9,         # D(d,n)He-3 single channel S(0); D(d,p)T is ~55-56,
+                         # so both channels combined is ~108 keV·barn (NACRE)
     'd-t': 1.1e4,        # D + T (much higher due to resonance)
     'd-he3': 6.2e3,      # D + He-3
     'p-b11': 2.0e-4,     # p + B-11 (very low)
@@ -223,7 +228,10 @@ MATERIALS = {
         lattice_type='fcc',
         debye_temperature=274.0,
         electron_density=6.8e28,
-        fermi_energy=11.7,
+        # Free-electron E_F from electron_density (self-consistent with the
+        # Thomas-Fermi screening formulas that consume both). The previous
+        # 11.7 eV is aluminium's textbook value.
+        fermi_energy=6.1,
         screening_potential=800.0
     ),
     'nickel': MaterialProperties(
@@ -236,7 +244,7 @@ MATERIALS = {
         lattice_type='fcc',
         debye_temperature=450.0,
         electron_density=9.1e28,
-        fermi_energy=11.7,
+        fermi_energy=7.4,  # free-electron model from electron_density
         screening_potential=500.0
     ),
     'titanium': MaterialProperties(
@@ -249,7 +257,7 @@ MATERIALS = {
         lattice_type='hcp',
         debye_temperature=420.0,
         electron_density=1.0e29,
-        fermi_energy=7.0,
+        fermi_energy=7.9,  # free-electron model from electron_density
         screening_potential=350.0
     ),
     'platinum': MaterialProperties(
@@ -262,7 +270,7 @@ MATERIALS = {
         lattice_type='fcc',
         debye_temperature=240.0,
         electron_density=6.6e28,
-        fermi_energy=9.7,
+        fermi_energy=6.0,  # free-electron model from electron_density
         screening_potential=750.0
     ),
 }

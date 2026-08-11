@@ -415,7 +415,7 @@ def get_phase_info(phase: ProtonPhase) -> Dict[str, Any]:
         },
         ProtonPhase.SCREENED: {
             "name": "Screened",
-            "description": "Electron screening active, Coulomb barrier lowered by 10-100 eV",
+            "description": "Electron screening active; Coulomb barrier lowered by a material-dependent cited potential (tens to hundreds of eV)",
             "force_regime": "electromagnetic_screened", 
             "color": "#00ffff"
         },

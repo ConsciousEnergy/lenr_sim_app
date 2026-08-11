@@ -330,24 +330,29 @@ class TestBubbleLatticeInteraction:
         assert conditions['is_critical']
     
     def test_get_collapse_phases_minimum(self, model: BubbleLatticeInteraction):
-        """Test MINIMUM phase at maximum compression."""
-        phase, conditions = model.get_collapse_phases(0.57)
+        """Test MINIMUM phase at maximum compression (0.70-0.80 of cycle)."""
+        phase, conditions = model.get_collapse_phases(0.75)
         
-        assert phase == 'MINIMUM', f"Expected MINIMUM at t=0.57, got {phase}"
+        assert phase == 'MINIMUM', f"Expected MINIMUM at t=0.75, got {phase}"
         assert conditions['is_critical']
         assert conditions['radius_factor'] < 0.5
     
     def test_get_collapse_phases_rebound(self, model: BubbleLatticeInteraction):
-        """Test REBOUND phase after minimum."""
-        phase, conditions = model.get_collapse_phases(0.65)
+        """Test REBOUND phase after minimum (0.80-1.00 of cycle)."""
+        phase, conditions = model.get_collapse_phases(0.85)
         
-        assert phase == 'REBOUND', f"Expected REBOUND at t=0.65, got {phase}"
+        assert phase == 'REBOUND', f"Expected REBOUND at t=0.85, got {phase}"
     
-    def test_get_collapse_phases_recovery(self, model: BubbleLatticeInteraction):
-        """Test RECOVERY phase at end of cycle."""
+    def test_get_collapse_phases_recovery_alias(self, model: BubbleLatticeInteraction):
+        """RECOVERY is a deprecated alias of EXPANSION in the 4-phase cycle."""
+        from app.physics_engine.bubble_phase_schedule import normalize_phase_name
+
+        assert normalize_phase_name('RECOVERY') == 'EXPANSION'
+
+        # Late in the cycle the bubble is rebounding, and rebound is not
+        # flagged as a critical (collapse/minimum) instant.
         phase, conditions = model.get_collapse_phases(0.9)
-        
-        assert phase == 'RECOVERY', f"Expected RECOVERY at t=0.9, got {phase}"
+        assert phase == 'REBOUND', f"Expected REBOUND at t=0.9, got {phase}"
         assert not conditions['is_critical']
     
     # =========================================================================
@@ -371,17 +376,18 @@ class TestBubbleLatticeInteraction:
         clamp. The physically meaningful claim is that the *raw* magnitude varies,
         which is what enhancement_log10_raw reports.
         """
-        results = [model.calculate_instantaneous_enhancement(t) for t in [0.0, 0.3, 0.5, 0.57, 0.8]]
+        results = [model.calculate_instantaneous_enhancement(t) for t in [0.0, 0.3, 0.5, 0.75, 0.9]]
         raw_log10 = [r['enhancement_log10_raw'] for r in results]
 
         assert len(set(raw_log10)) > 1, \
             "Raw enhancement magnitude should vary across cycle"
 
-        # COLLAPSE / MINIMUM phase (indices 2,3) should reach the maximum
-        max_raw = max(raw_log10)
-        collapse_minimum_max = max(raw_log10[2], raw_log10[3])
-        assert collapse_minimum_max == max_raw, \
-            f"Collapse/Minimum raw magnitude {collapse_minimum_max} != global max {max_raw}"
+        # The physically meaningful invariant: whichever sample carries the
+        # peak raw enhancement must be labelled COLLAPSE or MINIMUM, since
+        # peak compression is what drives the enhancement.
+        peak = max(results, key=lambda r: r['enhancement_log10_raw'])
+        assert peak['phase'] in ('COLLAPSE', 'MINIMUM'), \
+            f"Peak enhancement labelled {peak['phase']}, expected COLLAPSE/MINIMUM"
 
         # And no displayed value may exceed the ceiling.
         for result in results:

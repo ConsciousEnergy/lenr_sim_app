@@ -239,3 +239,51 @@ prior baseline plus:
   route
 - CI has not re-run on the pushed commits from this agent's token; a maintainer needs
   to re-trigger `Test and Benchmark` so PR #68 reflects the current HEAD
+
+## Math-Accuracy Hardening Slice (2026-08-10)
+
+Scope: pre-public math-accuracy pass (branch `cursor/math-accuracy-f130`,
+PR #71 into `development`). Every command below was run locally on that
+branch after the changes.
+
+### Backend
+- Command: `python -m pytest tests/ app/tests/ -q -o addopts=""`
+- Result: `942 passed, 9 skipped` (was `918 passed, 4 failed` on the
+  development tip in CI; the 4 bubble-collapse phase failures are fixed and
+  20 new absolute numeric gates were added)
+- Status: **PASS**
+
+### Release-blocking science gates
+- Command: `python -m pytest tests/test_integration/test_physics_benchmark_gates.py -q` -> `3 passed`
+- Command: `python -m pytest tests/test_integration/test_experiment_anchored_gates.py tests/test_integration/test_rate_engine_api.py tests/test_physics/test_reaction_rate_engine.py tests/test_physics/test_cavitation_kgrp.py tests/test_physics/test_shell_pairing_prior.py tests/test_physics/test_run_export.py -q` -> `52 passed`
+- No gate was re-baselined: the canonical `physics_engine` rate path was not
+  numerically altered by this slice (fixes landed in legacy `app/physics`
+  paths, phase labelling, and additive stream fields).
+- Status: **PASS**
+
+### New absolute numeric gates
+- File: `tests/test_physics/test_absolute_numeric_gates.py` (20 tests)
+- Pins: E_G(D,D) ~986 keV across all three implementations; D+D contact
+  barrier 0.3-0.6 MeV; mean thermal speed ~2.5 km/s at 300 K; Assenbaum
+  enhancement analytic in its validity regime, applied exactly once, capped
+  at 1e5; Q-value consistency vs the MHD S-factor tables; <sigma*v> within
+  2.5x of Bosch & Hale D(d,n)He3 at 2-10 keV; Casimir classical 1/d^3
+  limit; Widom-Larsen 2.531 m_e threshold.
+- Status: **PASS**
+
+### Frontend
+- Command: `npm test -- --watchAll=false --passWithNoTests --runInBand`
+  -> `24 suites, 168 tests passed` (before the new dataFormatter suite)
+- Command: `npm run lint` -> `0 errors` (506 pre-existing warnings)
+- Command: `npm run build` -> Vite build succeeds
+- Command: `npm audit --audit-level=high` -> no high/critical findings
+  (2 moderate, pre-existing)
+- Status: **PASS**
+
+### Backend dependency audit
+- Command: `pip-audit -r requirements.txt`
+- Result: pre-existing advisories in pinned dependencies (starlette 0.49.1,
+  vtk 9.4.2, ecdsa 0.19.2). These pins were not introduced or changed by
+  this slice; upgrading them is tracked as an operator follow-up because the
+  starlette pin is coupled to the FastAPI version.
+- Status: **PASS WITH NOTES** (no new findings introduced)

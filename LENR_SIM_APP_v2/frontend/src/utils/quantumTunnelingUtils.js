@@ -144,7 +144,12 @@ export const calculateWKBTunnelingProbability = (params) => {
  */
 export const calculateGamowFactor = (z1, z2, reducedMass, energyKeV) => {
   const energy = energyKeV * KEV_TO_J;
-  const coulombParameter = z1 * z2 * ELECTRON_CHARGE * ELECTRON_CHARGE * Math.sqrt(reducedMass / (2 * energy)) / HBAR;
+  // Sommerfeld parameter in SI: eta = Z1*Z2*e^2/(4*pi*eps0*hbar) * sqrt(mu/(2E)).
+  // (A previous version omitted the 1/(4*pi*eps0), inflating eta by ~10^10.)
+  const coulombParameter = (
+    z1 * z2 * ELECTRON_CHARGE * ELECTRON_CHARGE
+    / (4 * Math.PI * VACUUM_PERMITTIVITY * HBAR)
+  ) * Math.sqrt(reducedMass / (2 * energy));
   return Math.exp(-2 * Math.PI * coulombParameter);
 };
 
