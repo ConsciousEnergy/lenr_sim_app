@@ -81,9 +81,16 @@ class TestSFactorCrossSection:
         from app.physics.reaction_rates import tunneling_cross_section, calculate_gamow_energy
 
         E_G = calculate_gamow_energy(1, 1, 1.0)  # D+D reduced mass 1 amu
+        # E_G = 2*mu*c^2*(pi*alpha)^2 ~ 980 keV for mu = 1 amu (986 keV with
+        # the exact D+D reduced mass). A previous formula missing pi^2 gave
+        # ~100 keV and a ~1000x too-large sigma, which this band locked in.
+        assert 950.0 <= E_G <= 1000.0, f"E_G={E_G:.1f} keV, expected ~980 keV"
+
         sigma = tunneling_cross_section(10.0, E_G, s_factor_keV_barn=55)
         assert sigma > 0
-        assert 0.01 <= sigma <= 10.0, f"sigma={sigma:.4f} barns at 10 keV"
+        # sigma(10 keV) = (55/10)*exp(-sqrt(E_G/10)) ~ 2.8e-4 barn, consistent
+        # with the measured D+D fusion cross-section scale at 10 keV CM.
+        assert 1e-4 <= sigma <= 1e-3, f"sigma={sigma:.2e} barns at 10 keV"
 
 
 # ============ 4. Weak interaction ============

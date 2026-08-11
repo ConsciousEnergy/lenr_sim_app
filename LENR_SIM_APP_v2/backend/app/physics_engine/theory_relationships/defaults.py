@@ -11,7 +11,7 @@ def _build_default_nodes() -> List[TheoryNode]:
             researcher="Raiola, Czerski",
             year=1987,
             category="mechanism",
-            key_predictions=["Barrier reduction 10-100 eV", "Enhanced tunnelling"],
+            key_predictions=["Material-dependent barrier reduction (tens to hundreds of eV)", "Enhanced tunnelling"],
             physical_properties=["coulomb_barrier_reduction"],
             material_systems=["Pd-D", "Ni-H"],
         ),

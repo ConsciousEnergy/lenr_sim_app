@@ -237,8 +237,8 @@ const simulateTestResults = (reaction) => {
       type = 'neutron radiation';
       range = 'high';
       shielding = 'requires thick hydrogen-rich materials';
-    } else if (product.z === 1 && product.a === 0) {
-      // Proton
+    } else if (product.z === 1 && product.a === 1) {
+      // Proton (z=1, a=1; a previous a===0 check never matched a real proton)
       type = 'proton radiation';
       range = 'medium';
       shielding = 'requires dense materials';
@@ -302,7 +302,11 @@ const simulateTestResults = (reaction) => {
         reactionEquation: formatReactionEquation(reaction),
         qValue: reaction.q_value,
         energyDistribution,
-        energyEfficiency: Math.min(0.85, 0.3 + Math.random() * 0.4),
+        // Everything here is a schematic client-side estimate from Q-value
+        // kinematics and barrier heuristics, NOT backend simulation output.
+        // (A previous version also emitted a Math.random() "energy
+        // efficiency", which had no physical basis and is removed.)
+        provenance: 'schematic_client_estimate',
         coulombBarrier,
         crossSection: {
           low: lowCrossSection,

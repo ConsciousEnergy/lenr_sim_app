@@ -137,7 +137,9 @@ const PhysicsInfoPanel: React.FC<PhysicsInfoPanelProps> = ({
                   <ListItem disablePadding>
                     <ListItemText 
                       primary="Enhancement Factor" 
-                      secondary={enhancedSummary.key_metrics.enhancement_factor?.toFixed(2) + 'x' || 'N/A'} 
+                      secondary={typeof enhancedSummary.key_metrics.enhancement_factor === 'number'
+                        ? `${enhancedSummary.key_metrics.enhancement_factor.toFixed(2)}x`
+                        : 'N/A'} 
                     />
                   </ListItem>
                 )}

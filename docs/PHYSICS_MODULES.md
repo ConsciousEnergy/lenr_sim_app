@@ -80,27 +80,38 @@ Electron screening reduces the effective Coulomb barrier by screening the nuclea
 
 #### Thomas-Fermi Screening
 
-The Thomas-Fermi model provides screening length:
+The Thomas-Fermi model (degenerate electrons, uses the Fermi energy, not
+temperature) provides the screening length:
 
 ```
-λ_TF = sqrt(ε₀ * k_B * T / (e² * n_e))
+λ_TF = sqrt(2 * ε₀ * E_F / (3 * e² * n_e))
 ```
 
 #### Debye-Hückel Screening
 
-For plasma-like conditions:
+For plasma-like (classical, non-degenerate) conditions:
 
 ```
 λ_D = sqrt(ε₀ * k_B * T / (e² * Σ n_i * Z_i²))
 ```
 
+(A previous revision labelled the Debye expression sqrt(ε₀ k_B T / (e² n_e))
+as "Thomas-Fermi"; that form is Debye-Hückel and is invalid for degenerate
+metal electrons where T ≪ T_F.)
+
 ### Enhancement Factor
 
-The enhancement factor due to electron screening:
+The enhancement factor due to electron screening follows the
+Assenbaum-Rolfs screened-cross-section form used by the code
+(`screening_kernel.py`), valid for U_e ≪ E:
 
 ```
-f_screen = exp(Z1 * Z2 * e² / (4πε₀ * λ * k_B * T))
+f_screen = exp(π * η * U_e / E),   η = Z1 * Z2 * α * sqrt(μc² / 2E)
 ```
+
+with the material screening potential U_e taken from cited measurements
+(`screening_data.py`; e.g. Pd typical 800 eV), and capped at the governance
+ceiling of 10⁵.
 
 ### API Integration
 

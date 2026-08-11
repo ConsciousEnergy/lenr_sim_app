@@ -18,7 +18,8 @@ export const ENHANCEMENT_THRESHOLDS = {
 
 export function getEnhancementChartData(simulationData, parameters) {
   if (!simulationData?.enhancement_timeline) return [];
-  const baseRadiusUm = (parameters?.initialBubbleRadius || 10) * 3.33;
+  // Slider value is true micrometres; no rescale.
+  const baseRadiusUm = parameters?.initialBubbleRadius || 10;
   return simulationData.enhancement_timeline.map((point) => {
     const cappedLog10 = Math.log10(Math.max(1, point.enhancement));
     const rawLog10 = typeof point.enhancement_log10_raw === 'number'

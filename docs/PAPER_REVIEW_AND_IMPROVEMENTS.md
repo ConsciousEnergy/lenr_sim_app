@@ -3,7 +3,7 @@
 
 **Review Date:** December 12, 2025  
 **Reviewer:** AI Assistant with WolframAlpha Verification  
-**Document:** A Unified Theoretical Framework for Low-Energy Nuclear Reactions_ Integrating Quantum, Nuclear, and Condensed Matter Phenomena (1).md
+**Document:** A_Unified_Theoretical_Framework_for_LENR.md
 
 ---
 

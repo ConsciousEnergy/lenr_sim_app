@@ -82,7 +82,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 300,
     loadingRatio: 0.9,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -100,7 +100,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 500,
     loadingRatio: 0.85,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -118,7 +118,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 350,
     loadingRatio: 0.8,
-    initialBubbleRadius: 3.5,
+    initialBubbleRadius: 11.7,
     drivingPressure: 1.2,
     frequency: 15,
     defectDensity: 1e16,
@@ -136,7 +136,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 350,
     loadingRatio: 0.85,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -154,7 +154,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 500,
     loadingRatio: 0.9,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -172,7 +172,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 600,
     loadingRatio: 0.8,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -190,7 +190,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 300,
     loadingRatio: 0.9,
-    initialBubbleRadius: 2.0,
+    initialBubbleRadius: 6.7,
     drivingPressure: 1.8,
     frequency: 30,
     defectDensity: 1e17,
@@ -208,7 +208,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 400,
     loadingRatio: 0.9,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -775,7 +775,7 @@ function UnifiedTheoryPage() {
     return {
       success: true,
       collapse_results: {
-        min_radius_um: params.initialBubbleRadius * 0.15 * 3.33,
+        min_radius_um: params.initialBubbleRadius * 0.15,
         max_temperature_k: cappedTempK,
         max_pressure_bar: 101.325 * compressionRatio ** 4,
         compression_ratio: compressionRatio,
@@ -964,7 +964,12 @@ function UnifiedTheoryPage() {
       return [
         entry.normalized_time?.toFixed(4) || '',
         entry.phase || '',
-        entry.radius_um?.toFixed(4) || (entry.radius_factor ? (entry.radius_factor * 3.33).toFixed(4) : ''),
+        // radius_factor is dimensionless R/R0; convert to um with the true
+        // initial radius (previously multiplied by a bare 3.33 "scale").
+        entry.radius_um?.toFixed(4)
+          || (entry.radius_factor
+            ? (entry.radius_factor * parameters.initialBubbleRadius).toFixed(4)
+            : ''),
         entry.temperature_k?.toFixed(1) || entry.temperature?.toFixed(1) || '',
         entry.pressure_bar?.toFixed(1) || '',
         entry.enhancement?.toExponential(4) || '',
@@ -1358,7 +1363,7 @@ function UnifiedTheoryPage() {
                     onChange={(_, v) => handleParameterChange('initialBubbleRadius', v)}
                     min={1}
                     max={50}
-                    step={0.5}
+                    step={0.1}
                     disabled={isLoading}
                     size="small"
                   />

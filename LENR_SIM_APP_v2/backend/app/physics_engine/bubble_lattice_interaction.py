@@ -1205,10 +1205,15 @@ class BubbleLatticeInteraction:
 
         Wall-velocity sign flips many times during growth, so slope-based labels
         flickered EXPANSION↔COLLAPSE. Phase names follow the stable schedule
-        ``EXPANSION → COLLAPSE → MINIMUM → REBOUND`` (then repeats). Radius and
-        thermo still come from the integrated solution.
+        ``EXPANSION → COLLAPSE → MINIMUM → REBOUND`` (then repeats), anchored so
+        the labelled MINIMUM segment contains the trajectory's true
+        minimum-radius instant. Radius and thermo still come from the
+        integrated solution.
         """
-        from app.physics_engine.bubble_phase_schedule import phase_from_cycle_fraction
+        from app.physics_engine.bubble_phase_schedule import (
+            anchor_cycle_fraction,
+            phase_from_cycle_fraction,
+        )
 
         trajectory = getattr(self, "_trajectory", None)
         if not trajectory:
@@ -1229,7 +1234,13 @@ class BubbleLatticeInteraction:
         radius_factor = radius / self.bubble.initial_radius
 
         period = 1.0 / max(float(self.bubble.frequency), 1e-12)
-        cycle_fraction = (t_query / period) % 1.0
+        # Anchor the schedule to the physical collapse: the minimum-radius
+        # sample is the instant every reported peak quantity refers to, so its
+        # cycle position must be labelled MINIMUM, not whatever the fixed
+        # schedule happens to say at t/period.
+        t_min = float(t_series[int(np.argmin(np.asarray(r_series, dtype=float)))])
+        minimum_fraction = (t_min / period) % 1.0
+        cycle_fraction = anchor_cycle_fraction((t_query / period) % 1.0, minimum_fraction)
         phase = phase_from_cycle_fraction(cycle_fraction)
         return phase, radius_factor
 
