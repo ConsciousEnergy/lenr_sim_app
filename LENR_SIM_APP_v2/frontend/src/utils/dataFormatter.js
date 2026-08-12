@@ -244,8 +244,13 @@ export const formatProbability = (value, precision = 2) => {
   // Ensure value is between 0 and 1
   const clampedValue = Math.max(0, Math.min(1, value));
   
-  // Convert to percentage and format
-  return `${formatNumber(clampedValue * 100, precision)}%`;
+  const percent = clampedValue * 100;
+  // Small but non-zero probabilities must not render as "0.00%": switch to
+  // scientific notation when the percentage would round to zero.
+  if (percent > 0 && percent < Math.pow(10, -precision)) {
+    return `${percent.toExponential(precision)}%`;
+  }
+  return `${formatNumber(percent, precision)}%`;
 };
 
 /**

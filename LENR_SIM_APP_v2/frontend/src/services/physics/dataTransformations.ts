@@ -355,7 +355,9 @@ function formatPropertyLabel(property: keyof SimulationSummary): string {
 function getUnitForProperty(property: keyof SimulationSummary): string {
   const units: Record<string, string> = {
     average_temperature: 'K',
-    total_energy: 'eV',
+    // Backend simulation engines report total_energy as cumulative joules
+    // (cumsum of excess power x dt); it is not a per-event eV value.
+    total_energy: 'J',
     reaction_rate: '/s'
   };
   

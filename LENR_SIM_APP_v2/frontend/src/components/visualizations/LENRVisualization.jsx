@@ -707,56 +707,50 @@ const LENRVisualization = ({
     };
   }, [timeSeriesData, visOptions, isSceneReady]);
   
-  // Prepare chart data
-  const prepareChartData = () => {
-    // Default values for chart generation
+  /**
+   * Build the time-series chart data from the summary.
+   *
+   * This interpolates a linear ramp between zero and the summary values, because
+   * the summary is all this component receives; it is a shape, not per-step data.
+   *
+   * It used to add `(Math.random() - 0.5) * ...` jitter to temperature and reaction
+   * rate. Two problems: the noise was regenerated on every render, so the chart
+   * visibly jittered whenever anything unrelated re-rendered, and synthetic noise
+   * reads as measurement scatter that no model produced.
+   */
+  const chartData = useMemo(() => {
     const defaultSummary = {
       total_energy: 50,
       average_temperature: 400,
       reaction_rate: 0.05
     };
-    
+
     const summary = timeSeriesData?.summary || defaultSummary;
     const totalTime = timeSeriesData?.time || 10;
-    
-    // Generate time points
-    const timePoints = Array.from({ length: 50 }, (_, i) => i * (totalTime / 49));
-    
-    // Create chart data with main simulation series
-    return timePoints.map((time, index) => {
-      // Calculate values based on time progression (this would come from actual simulation data)
-      const progress = index / 49;
-      const energyOutput = (summary.total_energy || 50) * progress;
-      const temperature = (summary.average_temperature || 400) + 
-        (Math.random() - 0.5) * 5 * progress;
-      const reactionRate = (summary.reaction_rate || 0.05) * progress + 
-        (Math.random() - 0.5) * 0.01;
-      
-      // Get comparison values if available
-      let comparisonEnergy, comparisonTemp, comparisonRate;
-      
-      if (comparisonData?.summary) {
-        comparisonEnergy = comparisonData.summary.total_energy * progress;
-        comparisonTemp = comparisonData.summary.average_temperature + 
-          (Math.random() - 0.5) * 5 * progress;
-        comparisonRate = (comparisonData.summary.reaction_rate || 0.05) * progress + 
-          (Math.random() - 0.5) * 0.01;
-      }
-      
+    const steps = 50;
+
+    return Array.from({ length: steps }, (_, index) => {
+      const time = index * (totalTime / (steps - 1));
+      const progress = index / (steps - 1);
+      const comparisonSummary = comparisonData?.summary;
+
       return {
         time: Number(time.toFixed(2)),
-        energyOutput: Number(energyOutput.toFixed(2)),
-        temperature: Number(temperature.toFixed(2)),
-        reactionRate: Number(reactionRate.toFixed(4)),
-        comparisonEnergy: comparisonEnergy ? Number(comparisonEnergy.toFixed(2)) : undefined,
-        comparisonTemp: comparisonTemp ? Number(comparisonTemp.toFixed(2)) : undefined,
-        comparisonRate: comparisonRate ? Number(comparisonRate.toFixed(4)) : undefined
+        energyOutput: Number(((summary.total_energy || 50) * progress).toFixed(2)),
+        temperature: Number((summary.average_temperature || 400).toFixed(2)),
+        reactionRate: Number(((summary.reaction_rate || 0.05) * progress).toFixed(4)),
+        comparisonEnergy: comparisonSummary
+          ? Number((comparisonSummary.total_energy * progress).toFixed(2))
+          : undefined,
+        comparisonTemp: comparisonSummary
+          ? Number(comparisonSummary.average_temperature.toFixed(2))
+          : undefined,
+        comparisonRate: comparisonSummary
+          ? Number(((comparisonSummary.reaction_rate || 0.05) * progress).toFixed(4))
+          : undefined
       };
     });
-  };
-  
-  // Format chart data for display
-  const chartData = prepareChartData();
+  }, [timeSeriesData, comparisonData]);
   
   // Tab content components
   const renderTabs = () => {

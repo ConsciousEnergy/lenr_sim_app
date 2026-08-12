@@ -1,6 +1,6 @@
 # MHD Proton Dynamics in LENR Bubble Collapse
 
-**Version:** 0.3.5-beta  
+**Version:** 0.3.6-beta  
 **Author:** LENR Simulation Team  
 **Last Updated:** February 2026
 
@@ -595,4 +595,4 @@ The spiral convergence pattern should show:
 
 ---
 
-*Document generated for LENR Simulation App v0.3.0.1-beta*
+*Document generated for LENR Simulation App v0.3.6-beta*

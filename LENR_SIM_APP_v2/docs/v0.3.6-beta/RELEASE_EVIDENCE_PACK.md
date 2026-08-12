@@ -178,3 +178,77 @@
 - Remaining operator-owned steps before Hostinger execution:
   - merge PR #26 in GitHub UI
   - execute external Terraform/Ansible/cloud actions per `hostinger_deployment_execution_0d3b6ed5.plan.md`.
+
+## Pre-Public Hardening Gate (2026-08-08)
+
+Full `release-quality-gate` run for the physics-accuracy / reporting-honesty / UX
+slice on `development` (PR #68). All commands run locally at CI parity.
+
+### Version consistency
+All four markers agree at `0.3.6-beta` (`config.py`, `frontend/package.json`,
+`frontend/src/config/version.js`, `Dockerfile.backend`) -> PASS.
+
+### Backend
+- `pip-audit -r requirements.txt` with the 9 documented ignores ->
+  **PASS** (`No known vulnerabilities found, 11 ignored`)
+- `pytest tests/ app/tests/` -> **749 passed, 9 skipped**
+- Release-blocking experiment-anchored science gates
+  (`test_experiment_anchored_gates`, `test_rate_engine_api`,
+  `test_reaction_rate_engine`, `test_cavitation_kgrp`, `test_shell_pairing_prior`,
+  `test_run_export`) -> **52 passed**, none skipped or xfailed
+- `test_physics_benchmark_gates.py` -> **3 passed** (now additionally requires
+  saturated mechanisms to declare themselves, peak conditions to name their
+  ceilings, proton phases to be normalised, and each timeline point to name its
+  collapse model)
+- New bubble-dynamics reduction-limit gates -> **18 passed**
+- New collapse-ceiling / mechanism / saturation suites -> **46 passed**
+
+### Frontend
+- `npm audit --audit-level=high` -> **exit 0** (`2 moderate, 0 high`), verified via
+  the direct exit code rather than through a pipe
+- `npm run lint` -> **0 errors** (569 warnings, pre-existing)
+- `npm test` -> **110 passed, 17 suites**
+- `npm run build` -> **PASS**
+- `npx playwright test` -> **7 passed**, stable across 3 consecutive runs
+
+### Reproducibility
+`POST /api/unified/export` still returns `schema_version: lenr-run-export-v1` with
+`citations`, `provenance`, `reproducibility` and `claim_tiers_present` intact. The
+`contract_version` is unchanged at `v0.3.6-beta-science-gate-1`; every new field in
+this slice (`enhancement_breakdown.saturation`, `collapse_results.limits`,
+`enhancement_timeline[].enhancement_log10_raw`,
+`enhancement_timeline[].collapse_model`) is **additive**.
+
+### Numeric verification
+Recorded in `docs/PHYSICS_EQUATION_VERIFICATION.md` sections 9A and 9B. The
+`user-wolframalpha` MCP server was unavailable in this environment, so the adiabatic
+collapse relation was checked by independent in-repo evaluation and the Blake
+threshold against the numerical stationary point of its governing equation. Re-run
+the Wolfram check when the server is reachable.
+
+### Walkthrough artifacts
+- `breakdown_before_five_identical_values.png` - five mechanisms rendering an
+  identical `1.0000e+5`
+- `breakdown_after_saturation_flagged.png` - same payload, saturation labelled with
+  distinct uncapped magnitudes
+- `theory_summary_empty_state_routes_to_testbed.png`
+- `theory_testbed_round_trip.mp4` - testbed -> run theories -> Advanced Analysis ->
+  reload, with Theory Summary staying populated
+
+## Math-Accuracy Hardening Evidence (2026-08-10)
+
+- Corrected equations and constants are logged with dated entries in
+  `docs/PHYSICS_EQUATION_VERIFICATION.md` section 10 (Gamow pi^2, phonon
+  barrier units, thermal speed, <sigma*v> integration measure, Casimir
+  classical limit, WL threshold, Fermi energies, adiabatic-limit and TF-length
+  log corrections).
+- Absolute numeric gates locking those values:
+  `backend/tests/test_physics/test_absolute_numeric_gates.py` (20 tests, all
+  passing; references cited in-file, incl. Bosch & Hale 1992).
+- Full gate run for this slice: see "Math-Accuracy Hardening Slice
+  (2026-08-10)" in `VERIFICATION_GATE_REPORT.md`.
+- UI honesty: local-fallback results now carry a visible offline-placeholder
+  warning (`ResultsPanel`), the reaction testbench is badged as schematic,
+  and the live stream forwards `enhancement_log10_raw` /
+  `enhancement_is_saturated` (additive fields; `lenr-run-export-v1` and
+  `contract_version` unchanged).

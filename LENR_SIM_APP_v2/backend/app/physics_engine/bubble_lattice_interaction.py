@@ -11,14 +11,76 @@ R*R'' + 3/2*R'^2 = (P_bubble - P_inf - 2*sigma/R - 4*mu*R'/R + epsilon_0*E^2/2) 
 Author: Conscious Energies
 """
 
-import numpy as np
-from typing import Dict, Any, Optional, List, Tuple
-from dataclasses import dataclass, field
-from scipy import constants as const
-from scipy.integrate import odeint
 import logging
+import os
+import sys
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+from scipy import constants as const
+from scipy.integrate import solve_ivp
+
+from app.physics.casimir_forces import DOMAIN_VALIDITY_THRESHOLD_M
+from app.physics_engine.constants import (
+    QED_VACUUM_COEFFICIENT,
+    SCHWINGER_CRITICAL_FIELD_V_M,
+)
+from app.physics_engine.screening_kernel import (
+    compute_screening_enhancement,
+    thermal_energy_ev,
+)
 
 logger = logging.getLogger(__name__)
+
+# Re-export Schwinger / QED coefficients for callers that historically imported
+# them from this module (API routes, mechanism bound tests).
+
+# Hydrogen ground-state binding energy in eV, for the Rydberg level spacing.
+RYDBERG_GROUND_STATE_EV: float = 13.605693122994
+
+
+@contextmanager
+def _suppressed_fortran_stdout():
+    """Silence LSODA's Fortran chatter for the duration of one solve.
+
+    SciPy's LSODA wrapper writes step-size warnings ("internal t and h are such
+    that t + h = t ... solver will continue anyway") straight to file descriptor 1,
+    so they cannot be captured by ``warnings`` or ``logging``. At high acoustic
+    drive the collapse rebound triggers ~11 of them per run, which floods server
+    logs. They are informational: across drives from 1.5e5 to 8e5 Pa and every
+    tolerance and step-limit setting tried, the returned minimum radius agrees to
+    six significant figures and ``solution.success`` is True, so the solution is
+    converged. ``simulate_collapse`` logs ``solution.status`` itself when the
+    solver genuinely fails, so no real failure is hidden.
+
+    Safe here because ``solve_ivp`` is a blocking, synchronous call with no
+    ``await`` inside it: no other coroutine on this event loop can write to stdout
+    while it runs. The descriptor is always restored.
+    """
+    try:
+        original_fd = os.dup(1)
+    except OSError:
+        # No real stdout to redirect (e.g. captured test environment).
+        yield
+        return
+
+    devnull_fd = None
+    try:
+        sys.stdout.flush()
+        devnull_fd = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull_fd, 1)
+        yield
+    finally:
+        try:
+            sys.stdout.flush()
+        except ValueError:
+            pass
+        os.dup2(original_fd, 1)
+        os.close(original_fd)
+        if devnull_fd is not None:
+            os.close(devnull_fd)
 
 
 # Gas-specific polytropic indices (heat capacity ratio γ = Cp/Cv)
@@ -58,6 +120,13 @@ class BubbleParameters:
     
     # Electric field in double layer
     double_layer_field: float = 1e8  # V/m
+
+    # Bubble-dynamics model. "rayleigh_plesset" is incompressible (default, keeps
+    # every stored baseline valid); "keller_miksis" adds acoustic radiation
+    # damping, which matters once the wall Mach number Rdot/c approaches ~0.1.
+    bubble_dynamics_mode: str = "rayleigh_plesset"
+    # Speed of sound in the surrounding liquid (water at 20 C).
+    sound_speed: float = 1481.0
     
     def __post_init__(self):
         """Set polytropic index based on gas type if not explicitly provided."""
@@ -96,6 +165,10 @@ class LatticeParameters:
     # range lives in unified_lenr_model/screening_data.py (RR-007); Pd spans
     # ~250-800 eV, up to ~18 keV in hard targets. UQ should sample the range.
     screening_potential: float = 800.0
+    # Pa. Isothermal bulk modulus, used to convert collapse pressure into lattice
+    # strain for the Casimir term. Values from CRC Handbook of Chemistry and
+    # Physics (elastic constants of the elements).
+    bulk_modulus: float = 1.80e11  # Pd
     
     @classmethod
     def for_material(cls, material: str) -> "LatticeParameters":
@@ -119,7 +192,8 @@ class LatticeParameters:
                 "debye_temperature": 275.0,     # K
                 "work_function": 5.12,          # eV
                 "fermi_energy": 11.7,           # eV
-                "screening_potential": 800.0    # eV (D-D in Pd)
+                "screening_potential": 800.0,   # eV (D-D in Pd)
+                "bulk_modulus": 1.80e11,        # Pa (CRC Handbook)
             },
             "nickel": {
                 "lattice_constant": 3.52e-10,   # m (FCC)
@@ -127,7 +201,8 @@ class LatticeParameters:
                 "debye_temperature": 450.0,     # K
                 "work_function": 5.15,          # eV
                 "fermi_energy": 11.7,           # eV
-                "screening_potential": 500.0    # eV (H-H in Ni, estimate)
+                "screening_potential": 500.0,   # eV (H-H in Ni, estimate)
+                "bulk_modulus": 1.80e11,        # Pa (CRC Handbook)
             },
             "titanium": {
                 "lattice_constant": 2.95e-10,   # m (HCP)
@@ -135,7 +210,8 @@ class LatticeParameters:
                 "debye_temperature": 420.0,     # K
                 "work_function": 4.33,          # eV
                 "fermi_energy": 7.0,            # eV
-                "screening_potential": 350.0    # eV (D-D in Ti, estimate)
+                "screening_potential": 350.0,   # eV (D-D in Ti, estimate)
+                "bulk_modulus": 1.10e11,        # Pa (CRC Handbook)
             },
             "platinum": {
                 "lattice_constant": 3.92e-10,   # m (FCC)
@@ -143,7 +219,8 @@ class LatticeParameters:
                 "debye_temperature": 240.0,     # K
                 "work_function": 5.65,          # eV
                 "fermi_energy": 9.7,            # eV
-                "screening_potential": 750.0    # eV (estimate)
+                "screening_potential": 750.0,   # eV (estimate)
+                "bulk_modulus": 2.30e11,        # Pa (CRC Handbook)
             },
             "lithium": {
                 "lattice_constant": 3.51e-10,   # m (BCC)
@@ -151,7 +228,8 @@ class LatticeParameters:
                 "debye_temperature": 344.0,     # K
                 "work_function": 2.9,           # eV
                 "fermi_energy": 4.7,            # eV
-                "screening_potential": 300.0    # eV (Li-H Rydberg matter, estimate)
+                "screening_potential": 300.0,   # eV (Li-H Rydberg matter, estimate)
+                "bulk_modulus": 1.10e10,        # Pa (CRC Handbook)
             },
         }
         mat_key = (material or "").strip().lower()
@@ -181,6 +259,16 @@ class CollapseResult:
     double_layer_field_peak: float
     enhancement_factor: float
     proton_phase_distribution: Dict[str, float]
+
+    # Which reporting limits bound this result, and the pre-clamp values. Peak
+    # conditions are clamped to physical/claim-tier ceilings; without this a
+    # saturated value is indistinguishable from a computed one. Every entry here
+    # carries a ``ceiling``; solver diagnostics live in ``bubble_dynamics``.
+    limits: Dict[str, Any] = field(default_factory=dict)
+
+    # Which bubble-dynamics model and solver produced this result, plus the peak
+    # wall Mach number that decides whether the incompressible model applies.
+    bubble_dynamics: Dict[str, Any] = field(default_factory=dict)
 
 
 class BubbleLatticeInteraction:
@@ -217,6 +305,61 @@ class BubbleLatticeInteraction:
         logger.info(f"  Bubble: R0={self.bubble.initial_radius*1e6:.1f}μm, f={self.bubble.frequency/1e3:.0f}kHz")
         logger.info(f"  Lattice: {self.lattice.host_material}, loading={self.lattice.loading_ratio}")
     
+    @property
+    def hard_core_radius(self) -> float:
+        """Van der Waals hard-core radius: the incompressible gas core.
+
+        This is what physically sets ``R_min``, so it belongs in the gas law rather
+        than being applied afterwards as a clamp.
+        """
+        return self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+
+    def _guard_radius(self, R: float) -> float:
+        """Keep the radius strictly outside the hard core for numerical safety."""
+        floor = self.hard_core_radius * (1.0 + 1e-9)
+        if not np.isfinite(R):
+            return floor
+        return max(R, floor)
+
+    def _gas_pressure(self, R: float, dRdt: float) -> Tuple[float, float]:
+        """Van der Waals hard-core polytropic gas pressure and its derivative.
+
+            P(R) = P_0 * ((R_0^3 - h^3) / (R^3 - h^3))^gamma
+
+        where ``h`` is the hard-core radius. As ``R -> h`` the pressure diverges,
+        which decelerates the wall and produces a smooth rebound.
+
+        This replaces ``P_0 (R_0/R)^(3 gamma)`` plus a post-hoc ``max(R, floor)``
+        clamp. That combination was genuinely singular: the state kept driving the
+        radius below the floor while the right-hand side pretended it sat at the
+        floor, so the adaptive solver drove its step size to ~1e-20 and LSODA's raw
+        solution diverged to ~-3e145 at the collapse instant. The divergence was
+        invisible because it was sanitised away afterwards. With the hard core in
+        the gas law, R_min emerges from the physics instead.
+
+        Returns:
+            ``(P_gas, dP_gas/dt)`` in Pa and Pa/s.
+        """
+        R0 = self.bubble.initial_radius
+        gamma = self.bubble.polytropic_index
+        h = self.hard_core_radius
+
+        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
+        volume_term = R**3 - h**3
+        reference_term = R0**3 - h**3
+        if volume_term <= 0.0 or reference_term <= 0.0:
+            return float(P_gas_0), 0.0
+
+        P_gas = P_gas_0 * (reference_term / volume_term) ** gamma
+        if not np.isfinite(P_gas):
+            return float(P_gas_0), 0.0
+
+        # d/dt of P ~ (R^3 - h^3)^(-gamma).
+        dP_dt = -3.0 * gamma * P_gas * R**2 * dRdt / volume_term
+        if not np.isfinite(dP_dt):
+            dP_dt = 0.0
+        return float(P_gas), float(dP_dt)
+
     def rayleigh_plesset_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
         """
         Right-hand side of modified Rayleigh-Plesset equation.
@@ -228,9 +371,7 @@ class BubbleLatticeInteraction:
         """
         R, dRdt = float(y[0]), float(y[1])
 
-        # Hard-core + singularity floor (van der Waals / numerical).
-        R_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
-        R = max(R, R_floor, 1e-12)
+        R = self._guard_radius(R)
         if not np.isfinite(dRdt):
             dRdt = 0.0
         
@@ -239,11 +380,10 @@ class BubbleLatticeInteraction:
         P_acoustic = self.bubble.driving_pressure * np.sin(omega * t)
         P_infinity = self.bubble.ambient_pressure + P_acoustic
         
-        # Bubble internal pressure (polytropic gas law)
+        # Bubble internal pressure (van der Waals hard-core polytropic law)
         R0 = self.bubble.initial_radius
         gamma = self.bubble.polytropic_index
-        P_gas_0 = self.bubble.ambient_pressure + 2 * self.bubble.surface_tension / R0
-        P_bubble = P_gas_0 * (R0 / R) ** (3 * gamma)
+        P_bubble, _ = self._gas_pressure(R, dRdt)
         
         # Surface tension term
         P_surface = 2 * self.bubble.surface_tension / R
@@ -266,7 +406,150 @@ class BubbleLatticeInteraction:
             d2Rdt2 = 0.0
         
         return np.array([dRdt, d2Rdt2])
-    
+
+    def keller_miksis_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
+        """Right-hand side of the Keller-Miksis equation, same drive model.
+
+        Keller & Miksis (1980) for a bubble in a weakly compressible liquid:
+
+            (1 - Rdot/c) R Rddot + (3/2)(1 - Rdot/3c) Rdot^2
+                = (1/rho)(1 + Rdot/c)(p_L - p_inf) + (R/(rho c)) dp_L/dt
+
+        This shares the sinusoidal acoustic drive and the ``E ~ (R0/R)^2``
+        double-layer field with :meth:`rayleigh_plesset_rhs`, so the two modes
+        differ *only* in their compressibility treatment. ``bubble_solver`` has a
+        Keller-Miksis solver too, but it drives with a constant
+        ``P_inf * drive_factor`` and a constant field, so routing this path
+        through it would have silently changed the physics being compared.
+
+        As ``c -> infinity`` every correction vanishes and this recovers
+        Rayleigh-Plesset; that limit is asserted in the bubble-dynamics gates.
+        """
+        R, dRdt = float(y[0]), float(y[1])
+
+        R = self._guard_radius(R)
+        if not np.isfinite(dRdt):
+            dRdt = 0.0
+
+        omega = 2 * np.pi * self.bubble.frequency
+        P_acoustic = self.bubble.driving_pressure * np.sin(omega * t)
+        P_infinity = self.bubble.ambient_pressure + P_acoustic
+
+        R0 = self.bubble.initial_radius
+        P_gas, dp_gas_dt = self._gas_pressure(R, dRdt)
+
+        E_field = self.bubble.double_layer_field * (R0 / R) ** 2
+        P_electric = self.EPS0 * E_field ** 2 / 2
+
+        # Liquid pressure at the wall.
+        p_L = (
+            P_gas
+            - 2 * self.bubble.surface_tension / R
+            - 4 * self.bubble.dynamic_viscosity * dRdt / R
+            + P_electric
+        )
+        # Only the gas term's derivative is retained, the standard simplification
+        # for the acoustic radiation term.
+        dp_L_dt = dp_gas_dt
+
+        c = max(float(self.bubble.sound_speed), 1.0)
+        mach = dRdt / c
+        # Guard the singularity at Rdot = c; the model is only valid well below it.
+        lhs_coefficient = max(1.0 - mach, 1e-6)
+        rho = self.bubble.fluid_density
+
+        rhs = (
+            (1.0 + mach) * (p_L - P_infinity) / rho
+            + R * dp_L_dt / (rho * c)
+            - 1.5 * (1.0 - mach / 3.0) * dRdt ** 2
+        )
+        d2Rdt2 = rhs / (lhs_coefficient * R)
+        if not np.isfinite(d2Rdt2):
+            d2Rdt2 = 0.0
+
+        return np.array([dRdt, d2Rdt2])
+
+    def _dynamics_rhs(self, y: np.ndarray, t: float) -> np.ndarray:
+        """Dispatch to the configured bubble-dynamics model."""
+        mode = str(getattr(self.bubble, "bubble_dynamics_mode", "rayleigh_plesset")).lower()
+        if mode == "keller_miksis":
+            return self.keller_miksis_rhs(y, t)
+        return self.rayleigh_plesset_rhs(y, t)
+
+    def _solve_collapse_ivp(
+        self,
+        rhs,
+        *,
+        t_span: Tuple[float, float],
+        y0: np.ndarray,
+        t_eval: np.ndarray,
+        atol: np.ndarray,
+        events=None,
+    ):
+        """Integrate the collapse ODE with a portable stiff solver.
+
+        Returns:
+            ``(OdeResult, solver_label)``.
+
+        Windows SciPy builds have been observed to raise a bare ``TypeError``
+        inside ``zeros((liw,), _lsoda_int_dtype)`` during LSODA reset, which
+        500s ``/api/unified/bubble-lattice``. Skip LSODA on ``win32`` and use
+        pure-Python BDF. On other platforms try LSODA first and fall back to
+        BDF if that TypeError still appears.
+        """
+        common = {
+            "fun": rhs,
+            "t_span": t_span,
+            "y0": y0,
+            "t_eval": t_eval,
+            "rtol": 1e-8,
+            "atol": atol,
+            "events": events,
+            "dense_output": False,
+        }
+        # Known-bad on Windows: do not even attempt the Fortran wrapper.
+        methods = ("BDF",) if sys.platform.startswith("win") else ("LSODA", "BDF")
+
+        last_error: Optional[BaseException] = None
+        for method in methods:
+            try:
+                if method == "LSODA":
+                    with _suppressed_fortran_stdout():
+                        solution = solve_ivp(method=method, **common)
+                else:
+                    solution = solve_ivp(method=method, **common)
+                label = f"scipy.integrate.solve_ivp({method})"
+                logger.info("Collapse integrator selected: %s", label)
+                return solution, label
+            except TypeError as exc:
+                last_error = exc
+                logger.warning(
+                    "%s integrator unavailable (%s); trying next method",
+                    method,
+                    exc or "work-array TypeError",
+                )
+            except (RuntimeError, AttributeError) as exc:
+                # Broken Windows NumPy hybrid installs fail inside BDF while
+                # formatting a ufunc error: "Unable to configure default
+                # ndarray.__repr__" / missing multiarray.complexfloating.
+                message = str(exc)
+                if (
+                    "ndarray.__repr__" in message
+                    or "complexfloating" in message
+                    or "Unable to configure default" in message
+                ):
+                    raise RuntimeError(
+                        "NumPy/SciPy install is corrupted (ndarray.__repr__ broken). "
+                        "Repair the backend venv: run backend\\fix_scipy_venv.bat "
+                        "or force-reinstall numpy==1.26.4 and scipy==1.14.1."
+                    ) from exc
+                raise
+
+        raise RuntimeError(
+            "No usable collapse integrator (tried "
+            f"{', '.join(methods)}); last error: {last_error!r}"
+        )
+
     def simulate_collapse(self, num_cycles: int = 2, points_per_cycle: int = 1000) -> CollapseResult:
         """
         Simulate bubble collapse dynamics over multiple acoustic cycles.
@@ -279,15 +562,61 @@ class BubbleLatticeInteraction:
         
         # Initial conditions: [R0, dR/dt=0]
         y0 = np.array([self.bubble.initial_radius, 0.0])
-        
-        # Integrate ODE
-        solution = odeint(self.rayleigh_plesset_rhs, y0, t)
-        
-        R = np.asarray(solution[:, 0], dtype=float)
-        dRdt = np.asarray(solution[:, 1], dtype=float)
 
-        # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO
+        # Adaptive integration with error control. `odeint` on a fixed grid emitted
+        # "Excess work done on this call" on every run, because the collapse is
+        # stiff near R -> R_min, and it cannot locate the collapse instant more
+        # precisely than the sample spacing. Prefer LSODA when the SciPy Fortran
+        # wrapper is healthy; on some Windows installs it raises a bare TypeError
+        # inside ``zeros((liw,), _lsoda_int_dtype)`` and 500s the API. Fall back
+        # to pure-Python BDF in that case. A non-terminal min-radius event records
+        # hard-core crossings; the parabolic splice below refines extrema above
+        # the floor.
         R_min_floor = self.bubble.initial_radius / self.MAX_COMPRESSION_RATIO
+
+        def _rhs(time: float, state: np.ndarray) -> np.ndarray:
+            return self._dynamics_rhs(state, time)
+
+        def _min_radius_event(time: float, state: np.ndarray) -> float:
+            # Zero crossing when the wall reaches the van der Waals hard core.
+            return float(state[0] - R_min_floor)
+
+        _min_radius_event.terminal = False
+        _min_radius_event.direction = -1
+
+        solution, solver_label = self._solve_collapse_ivp(
+            _rhs,
+            t_span=(0.0, total_time),
+            y0=y0,
+            t_eval=t,
+            atol=np.asarray([R_min_floor * 1e-6, 1e-6], dtype=float),
+            events=_min_radius_event,
+        )
+
+        if not solution.success:
+            logger.warning(
+                "Collapse integration reported status %s: %s",
+                solution.status,
+                getattr(solution, "message", "unknown"),
+            )
+
+        if solution.y.ndim == 2 and solution.y.shape[1] >= 2:
+            R = np.asarray(solution.y[0], dtype=float)
+            dRdt = np.asarray(solution.y[1], dtype=float)
+            if R.size < t.size:
+                # Integration stopped early; pad with the hard-core floor so
+                # downstream shapes stay aligned with the requested grid.
+                pad = t.size - R.size
+                R = np.concatenate([R, np.full(pad, R_min_floor)])
+                dRdt = np.concatenate([dRdt, np.zeros(pad)])
+            t = t[: R.size]
+        else:
+            raise RuntimeError(
+                "Collapse integrator returned no usable solution "
+                f"({getattr(solution, 'message', 'unknown')})"
+            )
+
+        # Van der Waals hard-core floor: R_min >= R_0 / MAX_COMPRESSION_RATIO.
         # ODE blow-up can yield NaN/inf/underflow; Python max(nan, floor) stays nan.
         bad = ~np.isfinite(R) | (R <= 0.0)
         if np.any(bad):
@@ -297,10 +626,66 @@ class BubbleLatticeInteraction:
             dRdt[bad] = 0.0
         R = np.maximum(R, R_min_floor)
 
+        # Sub-grid refinement of the collapse instant. Plain argmin resolves the
+        # minimum no better than the sample spacing, and R(t) is smooth and locally
+        # quadratic near its extremum, so fitting a parabola through the bracketing
+        # samples locates the vertex to well inside one step.
+        #
+        # A wall-at-rest (Rdot = 0) solver event would be more direct for the
+        # extremum, but the initial condition has Rdot exactly 0, so the root
+        # finder is handed a bracket with no sign change and raises. The
+        # min-radius (hard-core) event above records floor crossings; the
+        # parabolic splice here refines extrema that sit above the floor.
+        #
+        # The vertex is *spliced into* the trajectory rather than only reported:
+        # get_collapse_phases interpolates the cached trajectory, so a reported
+        # minimum that is not in it would make the timeline and the peak describe
+        # two different collapses.
+        collapse_time_refined = False
+        grid_min_idx = int(np.argmin(R))
+        if 0 < grid_min_idx < R.size - 1:
+            left = float(R[grid_min_idx - 1])
+            centre = float(R[grid_min_idx])
+            right = float(R[grid_min_idx + 1])
+            curvature = left - 2.0 * centre + right
+            if curvature > 0.0:
+                offset = 0.5 * (left - right) / curvature
+                spacing = float(t[grid_min_idx + 1] - t[grid_min_idx])
+                vertex_radius = centre - 0.25 * (left - right) * offset
+                if (
+                    -1.0 < offset < 1.0
+                    and spacing > 0.0
+                    and R_min_floor <= vertex_radius < centre
+                ):
+                    vertex_time = float(t[grid_min_idx]) + offset * spacing
+                    insert_at = int(np.searchsorted(t, vertex_time))
+                    t = np.insert(t, insert_at, vertex_time)
+                    R = np.insert(R, insert_at, float(vertex_radius))
+                    # The wall is momentarily at rest at the extremum.
+                    dRdt = np.insert(dRdt, insert_at, 0.0)
+                    collapse_time_refined = True
+
         # Find minimum radius (collapse point) among sanitized samples
         min_idx = int(np.argmin(R))
         R_min = float(max(R[min_idx], R_min_floor, 1e-12))
         collapse_time = float(t[min_idx])
+
+        # Peak wall Mach number decides whether the incompressible model is even
+        # admissible: Keller-Miksis corrections scale with Rdot/c and matter once
+        # this approaches ~0.1.
+        sound_speed = max(float(getattr(self.bubble, "sound_speed", 1481.0)), 1.0)
+        finite_velocities = dRdt[np.isfinite(dRdt)]
+        peak_wall_speed = float(np.max(np.abs(finite_velocities))) if finite_velocities.size else 0.0
+        peak_mach = peak_wall_speed / sound_speed
+        dynamics_mode = str(
+            getattr(self.bubble, "bubble_dynamics_mode", "rayleigh_plesset")
+        ).lower()
+        if peak_mach >= 0.1:
+            compressibility_regime = "compressibility_significant"
+        elif peak_mach >= 0.01:
+            compressibility_regime = "compressibility_marginal"
+        else:
+            compressibility_regime = "incompressible_valid"
         
         # Compression ratio is capped by the hard-core limit
         compression_ratio = float(min(self.bubble.initial_radius / R_min, self.MAX_COMPRESSION_RATIO))
@@ -308,13 +693,20 @@ class BubbleLatticeInteraction:
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
         T_max_raw = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
-        # Cap at regime-specific max (sonofusion/single_bubble ~1e4 K)
-        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
-        T_max = min(T_max_raw, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
+        # Ceiling is a literature-anchored bound, not a prediction; the closed-form
+        # adiabatic law ignores dissociation, ionisation and conduction losses and
+        # overshoots badly at high compression. See REGIME_TEMPERATURE_PROVENANCE.
+        from app.physics.bubble_collapse import (
+            REGIME_MAX_TEMPERATURE,
+            REGIME_TEMPERATURE_PROVENANCE,
+        )
+        T_ceiling = REGIME_MAX_TEMPERATURE.get("single_bubble", 2.0e6)
+        T_max = min(T_max_raw, T_ceiling)
         
         # Pressure at collapse (capped at 10^10 Pa, consistent with bubble_collapse.py)
         P_max_raw = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
-        P_max = min(P_max_raw, 1e10)  # ~100 kbar, sonoluminescence regime
+        P_CEILING_PA = 1e10  # ~100 kbar, sonoluminescence regime
+        P_max = min(P_max_raw, P_CEILING_PA)
         
         # Peak double-layer field
         E_peak = float(self.bubble.double_layer_field * compression_ratio ** 2)
@@ -329,6 +721,70 @@ class BubbleLatticeInteraction:
         # Determine proton phase distribution
         proton_phases = self._calculate_proton_phases(T_max, E_peak, enhancement)
         
+        # Cache the integrated trajectory so get_collapse_phases() reports the same
+        # collapse the peak conditions came from, instead of a separate envelope.
+        # dRdt is kept too so get_collapse_trajectory() can report wall velocity.
+        self._trajectory = {"t": t, "R": R, "dRdt": dRdt}
+
+        compression_saturated = (
+            self.bubble.initial_radius / R_min >= self.MAX_COMPRESSION_RATIO
+        )
+        limits = {
+            "temperature_k": {
+                "value": float(T_max),
+                "value_raw": float(T_max_raw) if np.isfinite(T_max_raw) else None,
+                "ceiling": float(T_ceiling),
+                "is_saturated": bool(T_max_raw >= T_ceiling),
+                "basis": REGIME_TEMPERATURE_PROVENANCE["single_bubble"]["basis"],
+                "citation": REGIME_TEMPERATURE_PROVENANCE["single_bubble"][
+                    "simulation_citation"
+                ],
+            },
+            "pressure_pa": {
+                "value": float(P_max),
+                "value_raw": float(P_max_raw) if np.isfinite(P_max_raw) else None,
+                "ceiling": float(P_CEILING_PA),
+                "is_saturated": bool(P_max_raw >= P_CEILING_PA),
+                "basis": "sonoluminescence regime bound",
+            },
+            "compression_ratio": {
+                "value": float(compression_ratio),
+                "ceiling": float(self.MAX_COMPRESSION_RATIO),
+                "is_saturated": bool(compression_saturated),
+                "basis": "van der Waals hard-core radius floor on R_min",
+            },
+        }
+
+        # Kept out of `limits`: every entry there describes a value clamped to a
+        # ceiling, and this is solver diagnostics. It reports whether the chosen
+        # bubble-dynamics model is admissible at the wall speeds actually reached,
+        # which was previously invisible.
+        hard_core_hits = 0
+        if getattr(solution, "t_events", None):
+            try:
+                hard_core_hits = int(len(solution.t_events[0]))
+            except (IndexError, TypeError):
+                hard_core_hits = 0
+
+        dynamics_report = {
+            "mode": dynamics_mode,
+            "solver": solver_label,
+            "sound_speed_m_s": float(sound_speed),
+            "peak_wall_speed_m_s": float(peak_wall_speed),
+            "peak_mach": float(peak_mach),
+            "compressibility_regime": compressibility_regime,
+            "min_radius_event_count": hard_core_hits,
+            "collapse_time_refinement": (
+                "parabolic_subgrid" if collapse_time_refined else "grid_sample"
+            ),
+            "note": (
+                "Keller-Miksis corrections scale with Rdot/c. Above Mach ~0.1 the "
+                "incompressible Rayleigh-Plesset result overpredicts rebound "
+                "because it omits acoustic radiation damping; set "
+                "bubble_dynamics_mode='keller_miksis' for that regime."
+            ),
+        }
+
         return CollapseResult(
             time_series=t,
             radius_series=R,
@@ -340,7 +796,9 @@ class BubbleLatticeInteraction:
             compression_ratio=compression_ratio,
             double_layer_field_peak=E_peak,
             enhancement_factor=enhancement,
-            proton_phase_distribution=proton_phases
+            proton_phase_distribution=proton_phases,
+            limits=limits,
+            bubble_dynamics=dynamics_report,
         )
     
     def _calculate_enhancement_at_collapse(
@@ -445,6 +903,122 @@ class BubbleLatticeInteraction:
         # Ensure factor is at least 1.0 and cap at reasonable value
         return float(min(max(phonon_factor, 1.0), 100.0))
     
+    # Continuum Casimir formulae assume separations above roughly 2 nm; below that
+    # the ideal-plate result is an extrapolation. Shared with
+    # app/physics/casimir_forces.DOMAIN_VALIDITY_THRESHOLD_M and
+    # theories/casimir_confinement, so one threshold governs every path.
+    CASIMIR_CONTINUUM_FLOOR_M = DOMAIN_VALIDITY_THRESHOLD_M
+
+    def casimir_domain_validity(self, pressure: float) -> Dict[str, Any]:
+        """Report whether the Casimir term is inside its continuum domain.
+
+        The strained lattice spacing at collapse pressures is a few angstroms,
+        far below the ~2 nm floor where the ideal-plate result holds, so the term
+        is an extrapolation. The floor constant existed but was never enforced or
+        reported, so a client could not tell. Mirrors the observable names used by
+        ``theories/casimir_confinement`` (``domain_valid`` plus ``warning``).
+
+        Args:
+            pressure: Local collapse pressure in Pa.
+
+        Returns:
+            Dict with ``spacing_m``, ``threshold_m``, ``domain_valid`` and an
+            optional ``warning``.
+        """
+        spacing = self._strained_spacing(pressure)
+        domain_valid = bool(spacing >= self.CASIMIR_CONTINUUM_FLOOR_M)
+        report: Dict[str, Any] = {
+            "spacing_m": float(spacing),
+            "threshold_m": float(self.CASIMIR_CONTINUUM_FLOOR_M),
+            "domain_valid": domain_valid,
+        }
+        if not domain_valid:
+            report["warning"] = (
+                "Ideal-plate Casimir scaling extrapolated below "
+                f"{self.CASIMIR_CONTINUUM_FLOOR_M * 1e9:.1f} nm; surface roughness, "
+                "finite conductivity and non-locality may dominate at this spacing."
+            )
+        return report
+
+    def _strained_spacing(self, pressure: float) -> float:
+        """Lattice plane spacing after elastic compression by ``pressure`` (m)."""
+        bulk_modulus = float(getattr(self.lattice, "bulk_modulus", 1.80e11) or 1.80e11)
+        d0 = float(self.lattice.lattice_constant)
+        if bulk_modulus <= 0:
+            return d0
+        volumetric_strain = min(max(float(pressure), 0.0) / bulk_modulus, 0.9)
+        return float(d0 * (1.0 - volumetric_strain) ** (1.0 / 3.0))
+
+    def _calculate_casimir_enhancement(self, pressure: float) -> float:
+        """Casimir enhancement from pressure-induced lattice strain.
+
+        The collapse pressure ``P`` elastically compresses the host lattice by a
+        volumetric strain ``P / K`` (``K`` = bulk modulus), so the linear spacing
+        contracts as
+
+            d = d0 * (1 - P / (3K))^(1/3) ≈ d0 * (1 - P / (9K))
+
+        The Casimir pressure between the confining planes scales as ``1/d⁴``, so
+        the enhancement relative to the unstrained lattice is ``(d0/d)⁴``.
+
+        This depends on pressure, not on the compression ratio, which is what makes
+        it an independent mechanism rather than a restatement of the density term.
+        The magnitude is deliberately modest: at the 1e10 Pa pressure ceiling and
+        Pd's K = 180 GPa the strain is ~2%, giving a few percent enhancement.
+
+        Args:
+            pressure: Local collapse pressure in Pa.
+
+        Returns:
+            Dimensionless enhancement factor >= 1.
+        """
+        bulk_modulus = float(getattr(self.lattice, "bulk_modulus", 1.80e11) or 1.80e11)
+        if bulk_modulus <= 0:
+            return 1.0
+
+        p = max(float(pressure), 0.0)
+        # Volumetric strain, kept below 1 so the lattice cannot invert.
+        volumetric_strain = min(p / bulk_modulus, 0.9)
+        spacing_ratio = (1.0 - volumetric_strain) ** (1.0 / 3.0)
+        if spacing_ratio <= 0.0:
+            return 1.0
+
+        # Casimir pressure ratio P(d)/P(d0) = (d0/d)^4
+        casimir_factor = spacing_ratio ** -4.0
+        if not np.isfinite(casimir_factor):
+            return 1.0
+        return float(max(casimir_factor, 1.0))
+
+    # Rydberg orbital-overlap bounds, matching unified_lenr_model/enhancements.py.
+    RYDBERG_MAX_N = 10
+    RYDBERG_MAX_ENHANCEMENT = 10.0
+    RYDBERG_LOG_COEFFICIENT = 0.1
+
+    def _calculate_rydberg_enhancement(self, temperature: float) -> float:
+        """Bounded Rydberg-matter enhancement from orbital extension.
+
+        The accessible principal quantum number follows the hydrogenic level
+        spacing ``E_n = -13.6 eV / n^2``, capped at ``RYDBERG_MAX_N``. Overlap
+        gain is logarithmic in the orbital extension ``r_n ~ n^2 a_0``, so the
+        factor is bounded in ``[1, RYDBERG_MAX_ENHANCEMENT]``.
+
+        Args:
+            temperature: Local temperature in K.
+
+        Returns:
+            Dimensionless enhancement in ``[1, 10]``.
+        """
+        thermal_ev = thermal_energy_ev(temperature)
+        if thermal_ev > 0.001:
+            n_estimate = min(
+                self.RYDBERG_MAX_N, max(1, int(np.sqrt(RYDBERG_GROUND_STATE_EV / thermal_ev)))
+            )
+        else:
+            n_estimate = 1
+        orbital_extension = float(n_estimate**2)
+        enhancement = 1.0 + self.RYDBERG_LOG_COEFFICIENT * np.log(orbital_extension)
+        return float(max(1.0, min(enhancement, self.RYDBERG_MAX_ENHANCEMENT)))
+
     def _calculate_enhancement_breakdown(
         self,
         temperature: float,
@@ -457,31 +1031,51 @@ class BubbleLatticeInteraction:
         
         Returns dictionary with individual enhancement factors.
         """
-        # Screening enhancement (temperature-dependent Debye model)
-        n_e = self.lattice.electron_density
-        lambda_d = np.sqrt(self.EPS0 * self.KB * max(temperature, 1.0) / (n_e * self.E_CHARGE ** 2))
-        U_screen = self.E_CHARGE ** 2 / (4 * np.pi * self.EPS0 * lambda_d)
-        
-        E_thermal = max(1.5 * self.KB * temperature, 1e-25)  # Prevent division by zero
-        # Limit exponent to prevent overflow (exp(700) ≈ 10^304)
-        exp_arg = min(U_screen / E_thermal, 9.2)  # exp(9.2) ≈ 10^4
-        screening_factor = np.exp(exp_arg)
-        
+        # Screening enhancement. Canonical kernel (screening_kernel.py): the
+        # Assenbaum-Rolfs screened cross-section with the *cited, material
+        # dependent* potential. The previous form derived its potential from a
+        # Debye length and capped the exponent at a magic 9.2, so every host
+        # screened identically and lattice.screening_potential was never read.
+        screening_report = compute_screening_enhancement(
+            temperature_k=temperature,
+            material=self.lattice.host_material,
+            screening_potential_ev=self.lattice.screening_potential,
+        )
+        screening_factor = screening_report["enhancement"]
+
         # Phonon-nuclear coupling (temperature-dependent)
         phonon_factor = self._calculate_debye_phonon_coupling(temperature)
-        
-        # QED field enhancement
-        E_critical = 1e8  # V/m
-        qed_factor = 1 + (electric_field / E_critical) ** 2
-        
-        # Compression enhancement (increased density)
+
+        # QED vacuum polarisation. The critical field is the Schwinger limit
+        # E_cr = m_e^2 c^3 / (e hbar) = 1.3233e18 V/m, not the 1e8 V/m stand-in
+        # used before. With the real constant the leading correction is
+        # eps_eff = 1 + (2 alpha / 45 pi) (E/E_cr)^2, which is ~1 + 6e-13 at the
+        # 1e14 V/m peak field. The old expression returned ~1e12 there, making a
+        # negligible effect the single largest term in the product.
+        # Reference: Heisenberg-Euler effective Lagrangian; Schwinger (1951).
+        qed_factor = 1.0 + QED_VACUUM_COEFFICIENT * (electric_field / SCHWINGER_CRITICAL_FIELD_V_M) ** 2
+
+        # Compression enhancement (increased pair density). Bounded by the van der
+        # Waals hard-core limit on compression (MAX_COMPRESSION_RATIO), so this
+        # cannot exceed MAX_COMPRESSION_RATIO**2. Correlated with the other
+        # collapse-driven terms rather than independent of them.
         density_factor = compression ** 2
         
-        # Casimir enhancement (scales with 1/d⁴, simplified as compression²)
-        casimir_factor = compression ** 2
+        # Casimir enhancement. Previously this was literally compression**2, i.e.
+        # a duplicate of density_factor, so it was not an independent mechanism.
+        # It is now driven by the collapse *pressure* elastically straining the
+        # lattice spacing, using the real Casimir pressure scaling P ∝ 1/d⁴
+        # (app/physics/casimir_forces.py: P = -π²ħc/(240 d⁴)).
+        casimir_factor = self._calculate_casimir_enhancement(pressure)
         
-        # Rydberg Matter enhancement (simplified)
-        rydberg_factor = 1 + 0.5 * compression * (electric_field / 1e8)
+        # Rydberg Matter enhancement. Previously 1 + 0.5*cr*(E/1e8), which grows
+        # linearly without bound and reached ~5e8 at peak conditions. Rydberg
+        # states are bounded: the principal quantum number accessible at a given
+        # thermal energy follows E_n = -13.6 eV / n^2, and the orbital-overlap
+        # gain is logarithmic in the orbital extension r_n ~ n^2 a_0. This is the
+        # same bounded form the unified model uses (enhancements.py), so the two
+        # paths no longer disagree by eight orders of magnitude.
+        rydberg_factor = self._calculate_rydberg_enhancement(temperature)
         
         # Loading ratio enhancement using smooth sigmoid function
         # Enhancement increases significantly above critical loading (~0.85 for Pd-D)
@@ -513,6 +1107,12 @@ class BubbleLatticeInteraction:
             "loading": float(loading_factor)
         }
     
+    @staticmethod
+    def _logistic(x: float, steepness: float = 1.0) -> float:
+        """Numerically safe logistic gate returning a value in (0, 1)."""
+        arg = float(np.clip(x * steepness, -60.0, 60.0))
+        return float(1.0 / (1.0 + np.exp(-arg)))
+
     def _calculate_proton_phases(
         self,
         temperature: float,
@@ -521,86 +1121,256 @@ class BubbleLatticeInteraction:
     ) -> Dict[str, float]:
         """
         Calculate distribution of protons across phase states.
-        
-        States: FREE, SCREENED, CAPTURE_READY, NUCLEAR
+
+        States: FREE -> SCREENED -> CAPTURE_READY -> NUCLEAR, which is a strictly
+        ordered cascade: a proton must be screened before halo-electron overlap can
+        make it capture-ready, and capture-ready before the strong force engages.
+
+        The distribution is therefore built from three smooth occupancy gates rather
+        than the previous hardcoded tier table, which returned fixed fractions
+        (0.4 / 0.2 and a floored nuclear share) whenever the enhancement crossed a
+        threshold. Those constants meant the reported distribution was independent
+        of temperature, field and loading over wide ranges.
+
+        Gate criteria come from ``PhaseThresholds`` in ``proton_phase_model.py``:
+          - screened:      screening energy relative to thermal energy (section 2.1)
+          - capture-ready: double-layer field relative to 1e8 V/m (section 2.3)
+          - nuclear:       tunnelling enhancement relative to 1e5 (section 5.1)
+        each additionally gated on the loading ratio required for that phase.
+
+        Note: ``ProtonPhaseModel.calculate_overlap_probability`` is deliberately not
+        used as the capture gate. Even after the density-form units fix (~9e-18
+        for a 10 a0 orbital), the nuclear-volume overlap is many orders below any
+        useful threshold, so the field criterion from the same theory section
+        remains the capture gate. Overlap is still computed on the
+        ``ProtonPhaseModel`` path for diagnostics.
+
+        Returns:
+            Normalised fractions summing to 1.0.
         """
-        # Thresholds from theory
-        screening_threshold = 10 * self.E_CHARGE  # 10 eV
-        capture_threshold = 1e3  # Enhancement factor
-        nuclear_threshold = 1e5  # Enhancement factor
-        
-        E_thermal = self.KB * temperature
-        
-        # Calculate probabilities based on conditions
+        from app.physics_engine.proton_phase_model import (
+            PhaseThresholds,
+            ProtonPhaseModel,
+        )
+
+        thresholds = PhaseThresholds()
+        phase_model = ProtonPhaseModel(thresholds)
+
+        temperature = max(float(temperature), 1.0)
+        loading = float(self.lattice.loading_ratio)
+
+        # Screening strength relative to thermal energy: screening only matters
+        # when it exceeds kT.
+        screening_ev = phase_model.calculate_screening_energy(
+            temperature, self.lattice.electron_density, electric_field
+        )
+        thermal_ev = self.KB * temperature / self.E_CHARGE
+        screening_ratio = screening_ev / max(thermal_ev, 1e-12)
+
+        # log10-space gates so each spans the many decades these quantities cover.
+        LOG_STEEPNESS = 1.5
+        LOADING_STEEPNESS = 25.0
+
+        g_screened = self._logistic(
+            np.log10(max(screening_ratio, 1e-30)), LOG_STEEPNESS
+        ) * self._logistic(loading - thresholds.min_loading_ratio, LOADING_STEEPNESS)
+
+        g_capture = self._logistic(
+            np.log10(max(electric_field, 1e-30) / thresholds.electric_field_threshold),
+            LOG_STEEPNESS,
+        ) * self._logistic(
+            loading - thresholds.capture_loading_ratio, LOADING_STEEPNESS
+        )
+
+        g_nuclear = self._logistic(
+            np.log10(max(enhancement, 1e-30) / thresholds.tunneling_enhancement),
+            LOG_STEEPNESS,
+        ) * self._logistic(
+            loading - thresholds.nuclear_loading_ratio, LOADING_STEEPNESS
+        )
+
+        # Ordered cascade; these four terms sum to exactly 1 by construction.
         distribution = {
-            "FREE": 0.0,
-            "SCREENED": 0.0,
-            "CAPTURE_READY": 0.0,
-            "NUCLEAR": 0.0
+            "FREE": (1.0 - g_screened),
+            "SCREENED": g_screened * (1.0 - g_capture),
+            "CAPTURE_READY": g_screened * g_capture * (1.0 - g_nuclear),
+            "NUCLEAR": g_screened * g_capture * g_nuclear,
         }
-        
-        if enhancement >= nuclear_threshold:
-            # Preserve a non-zero nuclear share at the exact threshold boundary.
-            distribution["NUCLEAR"] = max(
-                0.01,
-                min(0.3, (enhancement / nuclear_threshold - 1) * 0.1),
-            )
-            distribution["CAPTURE_READY"] = 0.4
-            distribution["SCREENED"] = 0.2
-            distribution["FREE"] = 1 - sum(distribution.values())
-        elif enhancement >= capture_threshold:
-            distribution["CAPTURE_READY"] = min(0.5, (enhancement / capture_threshold - 1) * 0.2)
-            distribution["SCREENED"] = 0.3
-            distribution["FREE"] = 1 - sum(distribution.values())
-        elif electric_field > 1e7:
-            distribution["SCREENED"] = min(0.6, electric_field / 1e8)
-            distribution["FREE"] = 1 - distribution["SCREENED"]
-        else:
-            distribution["FREE"] = 1.0
-        
-        return distribution
+        return {k: float(v) for k, v in distribution.items()}
     
+    def _phases_from_trajectory(
+        self, normalized_time: float
+    ) -> Optional[Tuple[str, float]]:
+        """Read radius off the RP trajectory; label phase from the visual cycle.
+
+        Wall-velocity sign flips many times during growth, so slope-based labels
+        flickered EXPANSION↔COLLAPSE. Phase names follow the stable schedule
+        ``EXPANSION → COLLAPSE → MINIMUM → REBOUND`` (then repeats), anchored so
+        the labelled MINIMUM segment contains the trajectory's true
+        minimum-radius instant. Radius and thermo still come from the
+        integrated solution.
+        """
+        from app.physics_engine.bubble_phase_schedule import (
+            anchor_cycle_fraction,
+            phase_from_cycle_fraction,
+        )
+
+        trajectory = getattr(self, "_trajectory", None)
+        if not trajectory:
+            return None
+
+        t_series = trajectory["t"]
+        r_series = trajectory["R"]
+        if t_series is None or len(t_series) < 3:
+            return None
+
+        t_start, t_end = float(t_series[0]), float(t_series[-1])
+        span = t_end - t_start
+        if span <= 0:
+            return None
+
+        t_query = t_start + float(np.clip(normalized_time, 0.0, 1.0)) * span
+        radius = float(np.interp(t_query, t_series, r_series))
+        radius_factor = radius / self.bubble.initial_radius
+
+        period = 1.0 / max(float(self.bubble.frequency), 1e-12)
+        # Anchor the schedule to the physical collapse: the minimum-radius
+        # sample is the instant every reported peak quantity refers to, so its
+        # cycle position must be labelled MINIMUM, not whatever the fixed
+        # schedule happens to say at t/period.
+        t_min = float(t_series[int(np.argmin(np.asarray(r_series, dtype=float)))])
+        minimum_fraction = (t_min / period) % 1.0
+        cycle_fraction = anchor_cycle_fraction((t_query / period) % 1.0, minimum_fraction)
+        phase = phase_from_cycle_fraction(cycle_fraction)
+        return phase, radius_factor
+
+    def get_collapse_trajectory(self, max_points: int = 200) -> Dict[str, Any]:
+        """Downsampled view of the integrated Rayleigh-Plesset trajectory.
+
+        ``simulate_collapse`` integrates R(t) and dR/dt but only the scalar peak
+        conditions were ever reported, so no client could plot the collapse curve
+        itself. This exposes the same cached solution the peak conditions came
+        from, decimated to a plottable length.
+
+        The minimum-radius sample is always retained, since that is the collapse
+        instant every other reported quantity is evaluated at.
+
+        Args:
+            max_points: Upper bound on returned samples.
+
+        Returns:
+            Dict with ``time_s``, ``radius_um``, ``wall_velocity_m_s``, and
+            provenance, or an empty dict when no collapse has been integrated.
+        """
+        trajectory = getattr(self, "_trajectory", None)
+        if not trajectory:
+            return {}
+
+        t = np.asarray(trajectory.get("t"), dtype=float)
+        R = np.asarray(trajectory.get("R"), dtype=float)
+        dRdt = trajectory.get("dRdt")
+        dRdt = np.asarray(dRdt, dtype=float) if dRdt is not None else None
+        if t.size == 0 or R.size == 0:
+            return {}
+
+        n = int(min(t.size, R.size))
+        step = max(1, int(np.ceil(n / max(1, max_points))))
+        indices = list(range(0, n, step))
+
+        # The collapse instant must survive decimation.
+        min_idx = int(np.argmin(R[:n]))
+        if min_idx not in indices:
+            indices.append(min_idx)
+            indices.sort()
+
+        velocities = None
+        if dRdt is not None and dRdt.size >= n:
+            velocities = [float(dRdt[i]) for i in indices]
+
+        return {
+            "time_s": [float(t[i]) for i in indices],
+            "radius_um": [float(R[i] * 1e6) for i in indices],
+            "wall_velocity_m_s": velocities,
+            "min_radius_sample_index": indices.index(min_idx),
+            "sample_count": len(indices),
+            "downsample_step": step,
+            "source": "rayleigh_plesset_trajectory",
+        }
+
     def get_collapse_phases(self, normalized_time: float) -> Tuple[str, Dict[str, Any]]:
         """
         Determine collapse phase from normalized time (0-1 in cycle).
-        
+
+        Prefers the integrated Rayleigh-Plesset trajectory cached by
+        ``simulate_collapse``, so the timeline and the peak conditions describe the
+        same collapse. The piecewise envelope below is only a fallback for callers
+        that ask for a phase before any collapse has been integrated; previously it
+        was always used, which meant the timeline and the reported peak came from two
+        different collapse models.
+
         Returns phase name and associated conditions.
         """
-        if normalized_time < 0.4:
-            phase = "EXPANSION"
-            t = normalized_time / 0.4
-            radius_factor = 1 + 0.3 * np.sin(t * np.pi / 2)
-        elif normalized_time < 0.55:
-            phase = "COLLAPSE"
-            t = (normalized_time - 0.4) / 0.15
-            radius_factor = 1.3 - 1.15 * t ** 2
-        elif normalized_time < 0.6:
-            phase = "MINIMUM"
-            radius_factor = 0.15
-        elif normalized_time < 0.7:
-            phase = "REBOUND"
-            t = (normalized_time - 0.6) / 0.1
-            radius_factor = 0.15 + 0.5 * t
+        from_trajectory = self._phases_from_trajectory(normalized_time)
+        if from_trajectory is not None:
+            phase, radius_factor = from_trajectory
+            source = "rayleigh_plesset_trajectory"
         else:
-            phase = "RECOVERY"
-            t = (normalized_time - 0.7) / 0.3
-            radius_factor = 0.65 + 0.35 * t
+            # Analytic envelope: same phase order as the trajectory path, with a
+            # schematic radius curve for callers that have not integrated yet.
+            from app.physics_engine.bubble_phase_schedule import (
+                phase_from_cycle_fraction,
+                phase_progress_in_cycle,
+            )
+
+            cycle_frac = float(np.clip(normalized_time, 0.0, 1.0)) % 1.0
+            phase = phase_from_cycle_fraction(cycle_frac)
+            t = phase_progress_in_cycle(cycle_frac)
+            if phase == "EXPANSION":
+                radius_factor = 1 + 0.3 * np.sin(t * np.pi / 2)
+            elif phase == "COLLAPSE":
+                radius_factor = 1.3 - 1.15 * t ** 2
+            elif phase == "MINIMUM":
+                radius_factor = 0.15
+            else:  # REBOUND
+                radius_factor = 0.15 + 0.5 * t
+            source = "analytic_envelope"
         
-        # Calculate instantaneous conditions
+        # Instantaneous thermo must match simulate_collapse: same gamma, same R
+        # floor, same T/P ceilings. The old path used max(0.1, radius_factor)
+        # (CR<=10), hardcoded γ-1=0.4, and no ceilings, so timeline charts
+        # disagreed with the reported peak conditions.
         R0 = self.bubble.initial_radius
-        R = R0 * max(0.1, radius_factor)
-        compression = R0 / R
-        
-        E_field = self.bubble.double_layer_field * compression ** 2
-        T = self.bubble.ambient_temperature * compression ** (3 * 0.4)  # γ-1 ≈ 0.4
-        
+        R_min_floor = R0 / self.MAX_COMPRESSION_RATIO
+        R = max(R0 * float(radius_factor), R_min_floor)
+        compression = float(min(R0 / R, self.MAX_COMPRESSION_RATIO))
+
+        gamma = float(self.bubble.polytropic_index)
+        E_field = float(self.bubble.double_layer_field * compression ** 2)
+
+        from app.physics.bubble_collapse import REGIME_MAX_TEMPERATURE
+        T_ceiling = float(REGIME_MAX_TEMPERATURE.get("single_bubble", 2.0e6))
+        T_raw = float(
+            self.bubble.ambient_temperature * compression ** (3.0 * (gamma - 1.0))
+        )
+        T = min(T_raw, T_ceiling) if np.isfinite(T_raw) else T_ceiling
+
+        P_CEILING_PA = 1.0e10
+        P_raw = float(self.bubble.ambient_pressure * compression ** (3.0 * gamma))
+        P = min(P_raw, P_CEILING_PA) if np.isfinite(P_raw) else P_CEILING_PA
+
         conditions = {
             "radius": R,
-            "radius_factor": radius_factor,
+            "radius_factor": float(R / R0),
             "compression": compression,
             "electric_field": E_field,
             "temperature": T,
-            "is_critical": phase in ["COLLAPSE", "MINIMUM"]
+            "temperature_raw": T_raw,
+            "pressure": P,
+            "pressure_raw": P_raw,
+            "is_critical": phase in ["COLLAPSE", "MINIMUM"],
+            # Which collapse model produced this point, so a client can tell the
+            # integrated solution from the fallback envelope.
+            "source": source,
         }
         
         return phase, conditions
@@ -609,16 +1379,32 @@ class BubbleLatticeInteraction:
         """
         Calculate enhancement factor at a specific point in the cycle.
         For real-time visualization feedback.
+
+        ``enhancement`` is clamped to the theory display ceiling and is therefore
+        flat across most of the cycle. ``enhancement_log10_raw`` carries the
+        uncapped magnitude so a timeline plot still shows real variation instead of
+        a horizontal line at the ceiling.
         """
+        from app.physics_engine.enhancement_saturation import build_saturation_report
+
         phase, conditions = self.get_collapse_phases(normalized_time)
-        
-        enhancement = self._calculate_enhancement_at_collapse(
+        # Prefer the thermo-consistent pressure from get_collapse_phases; never
+        # reconstruct pressure from ambient temperature (a prior bug).
+        pressure = float(conditions.get("pressure") or (
+            self.bubble.ambient_pressure
+            * conditions["compression"] ** (3.0 * self.bubble.polytropic_index)
+        ))
+
+        breakdown = self._calculate_enhancement_breakdown(
             conditions["temperature"],
-            self.bubble.ambient_pressure * conditions["compression"] ** 4.2,
+            pressure,
             conditions["electric_field"],
-            conditions["compression"]
+            conditions["compression"],
         )
-        
+        _, saturation = build_saturation_report(breakdown)
+        total = saturation["mechanisms"]["total"]
+        enhancement = total["value"]
+
         proton_phases = self._calculate_proton_phases(
             conditions["temperature"],
             conditions["electric_field"],
@@ -628,6 +1414,8 @@ class BubbleLatticeInteraction:
         return {
             "phase": phase,
             "enhancement": enhancement,
+            "enhancement_log10_raw": total["log10_value_raw"],
+            "enhancement_is_saturated": total["is_saturated"],
             "proton_distribution": proton_phases,
             "conditions": conditions
         }

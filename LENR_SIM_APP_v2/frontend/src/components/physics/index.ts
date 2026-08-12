@@ -24,6 +24,7 @@ export { default as StatisticalAnalysisPanel } from './StatisticalAnalysisPanel'
 
 // Theory Testbed (v0.3.0)
 export { default as TheoryTogglePanel } from './TheoryTogglePanel';
+export { default as TheoryTestbedCard } from './TheoryTestbedCard';
 export { default as TheoryDocumentationPanel } from './TheoryDocumentationPanel';
 
 // Types

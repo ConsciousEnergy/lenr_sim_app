@@ -29,6 +29,8 @@ from app.physics_engine.scientific_guardrails import (
     build_observables_bridge,
     build_uncertainty_interval,
     classify_evidence_tier,
+    resolve_claim_tier,
+    resolve_evidence_class,
 )
 from app.core.config import settings
 from app.utils.json_safe import to_json_safe
@@ -38,18 +40,42 @@ logger = logging.getLogger(__name__)
 THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "electron_screening": "screening",
     "quantum_tunneling": "screening",
+    # Coherent many-body accounts of barrier suppression. Del Giudice coherent
+    # QED domains, Vysotskii correlated coherent states, Kim nano-grain BEC and
+    # Takahashi's 4D tetrahedral condensate are *competing* explanations of the
+    # same coherence, so at most one may contribute. Multiplying them together
+    # would compound alternative descriptions of one effect.
     "coherent_qed": "coherence",
     "vysotskii_ccs": "coherence",
     "kim_bec": "coherence",
-    # Confinement only — bubble_mhd's σ_screened/σ_bare ratio is reported as a
-    # diagnostic (gamow_enhancement observable), not multiplied here, so it
-    # does not compound with the "screening" group.
+    "takahashi_tsc": "coherence",
+    # Vacuum-force confinement. bubble_mhd's sigma_screened/sigma_bare ratio is
+    # reported as a diagnostic (gamow_enhancement observable), not multiplied
+    # here, so it does not compound with the "screening" group.
     "bubble_mhd_confinement": "confinement",
     "casimir_confinement": "confinement",
+    # Active-site / surface geometry accounts.
     "nae_model": "surface_activation",
     "swartz_nanor": "surface_activation",
+    "hydroton": "surface_activation",
     "phonon_coupling_legacy": "phonon_transfer",
     "hagelstein_phonon": "phonon_transfer",
+    # Weak-interaction / neutron-mediated routes. Widom-Larsen (ULM neutrons)
+    # and Chubb's ion-band state are rival single-mechanism accounts of the same
+    # "three miracles", so they share a group.
+    "widom_larsen": "weak_interaction",
+    "chubb_ion_band": "weak_interaction",
+    # Transmutation-observable accounts: these predict the same product spectra
+    # by different routes and must not multiply.
+    "iwamura_transmutation": "transmutation_route",
+    "matsumoto_enc": "transmutation_route",
+    # Empirical calorimetric / stimulation correlations. These are observations
+    # rather than independent barrier mechanisms, so one representative applies.
+    "miles_heat_helium": "empirical_correlation",
+    "letts_laser": "empirical_correlation",
+    "piantelli_ni_h": "empirical_correlation",
+    # Thermodynamic framing, not an independent enhancement channel.
+    "non_equilibrium_thermo": "thermodynamic_framing",
     # v0.3.6-beta: stellar-scaling context line is isolated in its own
     # group so that grouped_max_confidence_product composition never lets
     # it dominate empirically-grounded LENR tracks.
@@ -57,6 +83,11 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
 }
 
 DEFAULT_COMBINATION_RULE = "grouped_max_confidence_product"
+
+# Any theory without an explicit group falls here. Members of this group each
+# multiply into the combined enhancement, so an unassigned theory silently
+# compounds. Keep it empty: run() warns when it is not.
+UNGROUPED_FALLBACK_GROUP = "independent"
 
 
 class TheoryPipelineResult:
@@ -73,6 +104,7 @@ class TheoryPipelineResult:
         combination_rule: str = DEFAULT_COMBINATION_RULE,
         applied_groups: Optional[List[Dict[str, Any]]] = None,
         excluded_theories: Optional[List[Dict[str, str]]] = None,
+        ungrouped_theories: Optional[List[str]] = None,
     ):
         self.contributions = contributions
         self.combined_enhancement = combined_enhancement
@@ -83,6 +115,7 @@ class TheoryPipelineResult:
         self.combination_rule = combination_rule
         self.applied_groups = applied_groups or []
         self.excluded_theories = excluded_theories or []
+        self.ungrouped_theories = ungrouped_theories or []
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a JSON-friendly dictionary."""
@@ -141,6 +174,18 @@ class TheoryPipelineResult:
                 "combination_rule": self.combination_rule,
                 "applied_groups": to_json_safe(self.applied_groups),
                 "excluded_theories": to_json_safe(self.excluded_theories),
+                "ungrouped_theories": list(self.ungrouped_theories),
+                # Stated on the response so a client cannot treat this total and
+                # the bubble-lattice peak enhancement as factors of one product.
+                "not_combinable_with": [
+                    "bubble_lattice.peak_conditions.enhancement_factor",
+                ],
+                "note": (
+                    "combined_enhancement is the product of one winner per "
+                    "composition group (max enhancement x confidence within a "
+                    "group). It is a separate engine from the bubble-lattice "
+                    "mechanism product; the two must never be multiplied."
+                ),
             },
             "per_theory": per_theory,
         }
@@ -207,11 +252,25 @@ class TheoryPipeline:
         combination_rule: str,
     ) -> Dict[str, Any]:
         grouped: Dict[str, List[TheoryContribution]] = {}
+        ungrouped: List[str] = []
         for contribution in contributions:
             if not contribution.is_applicable:
                 continue
-            group = THEORY_COMPOSITION_GROUPS.get(contribution.theory_id, "independent")
+            group = THEORY_COMPOSITION_GROUPS.get(contribution.theory_id)
+            if group is None:
+                group = UNGROUPED_FALLBACK_GROUP
+                ungrouped.append(contribution.theory_id)
             grouped.setdefault(group, []).append(contribution)
+
+        if ungrouped:
+            # Every member of the fallback group multiplies into the combined
+            # enhancement, so an unassigned theory silently compounds with
+            # unrelated mechanisms. Assign it in THEORY_COMPOSITION_GROUPS.
+            logger.warning(
+                "Theories without a composition group will each multiply into the "
+                "combined enhancement: %s",
+                ", ".join(sorted(ungrouped)),
+            )
 
         combined_enhancement = 1.0
         combined_rate_modifier = 1.0
@@ -264,6 +323,7 @@ class TheoryPipeline:
             "applied_groups": applied_groups,
             "excluded_theories": excluded_theories,
             "combination_rule": combination_rule,
+            "ungrouped_theories": sorted(ungrouped),
         }
 
     def run(
@@ -313,18 +373,34 @@ class TheoryPipeline:
                     electrolyte_molarity_mol_l=electrolyte_molarity_mol_l,
                 )
                 weighted_score = float(confidence_breakdown.get("weighted_score", contribution.confidence))
-                evidence_class, claim_tier = classify_evidence_tier(weighted_score)
+                rubric_evidence_class, rubric_claim_tier = classify_evidence_tier(weighted_score)
+                # Preserve the module's own declaration where it is stronger
+                # evidence about provenance than a score can be. Overwriting it
+                # erased cross_regime_extrapolation (0.2x) by promoting it to
+                # speculative_exploratory (0.3x).
+                declared_claim_tier = contribution.claim_tier
+                declared_evidence_class = contribution.evidence_class
+                resolved_claim_tier = resolve_claim_tier(declared_claim_tier, rubric_claim_tier)
+                resolved_evidence_class = resolve_evidence_class(
+                    declared_evidence_class, rubric_evidence_class
+                )
                 contribution.confidence = weighted_score
                 contribution.confidence_breakdown = confidence_breakdown
                 contribution.uncertainty_interval = build_uncertainty_interval(weighted_score)
                 contribution.falsification_conditions = build_falsification_conditions(contribution.theory_id)
-                contribution.evidence_class = evidence_class
-                contribution.reproducibility_tier = evidence_class
-                contribution.claim_tier = claim_tier
+                contribution.evidence_class = resolved_evidence_class
+                contribution.reproducibility_tier = resolved_evidence_class
+                contribution.claim_tier = resolved_claim_tier
                 contribution.provenance = {
                     "source": "theory_pipeline",
                     "validation_status": "applicable" if contribution.is_applicable else "not_applicable",
                     "model_version": settings.APP_VERSION,
+                    "claim_tier_resolution": {
+                        "declared_by_module": declared_claim_tier,
+                        "rubric_classification": rubric_claim_tier,
+                        "resolved": resolved_claim_tier,
+                        "policy": "rubric may downgrade a declared tier, never upgrade it",
+                    },
                 }
                 contributions.append(contribution)
             except Exception:
@@ -355,6 +431,7 @@ class TheoryPipeline:
             combination_rule=combined["combination_rule"],
             applied_groups=combined["applied_groups"],
             excluded_theories=combined["excluded_theories"],
+            ungrouped_theories=combined["ungrouped_theories"],
         )
 
     def run_single(

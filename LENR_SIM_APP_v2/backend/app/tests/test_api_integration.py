@@ -182,10 +182,17 @@ class TestUnifiedSimulationAPI:
             params={"temperature": 300.0, "loading_ratio": 0.9}
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert "mechanisms" in data
         assert "total_enhancement" in data
+        # Provenance strings (e.g. screening_model) must not 500 the endpoint.
+        screening = next(
+            (m for m in data["mechanisms"] if "screen" in m["name"].lower()),
+            None,
+        )
+        assert screening is not None
+        assert isinstance(screening["parameters"].get("screening_model"), str)
 
 
 class TestAPIResponseStructure:

@@ -7,7 +7,7 @@ stable contract that frontend views can render without re-deriving science logic
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import math
 
 
@@ -147,13 +147,73 @@ def build_falsification_conditions(theory_id: str) -> List[str]:
     return by_theory.get(theory_id, defaults)
 
 
+#: Claim tiers ordered from strongest to weakest. Used to decide whether the
+#: rubric may override a module's declared tier: the rubric can only downgrade.
+CLAIM_TIER_STRENGTH_ORDER: Tuple[str, ...] = (
+    "validated_lenr_mechanism",
+    "established_reference",
+    "empirical_lenr_correlation",
+    "speculative_exploratory",
+    "cross_regime_extrapolation",
+)
+
+
 def classify_evidence_tier(confidence_score: float) -> Tuple[str, str]:
+    """Map a rubric confidence score to an (evidence_class, claim_tier) pair.
+
+    This is the *rubric's* opinion only. It can emit two of the five defined
+    tiers; see :func:`resolve_claim_tier` for combining it with a module's own
+    declaration.
+    """
     score = _clamp01(confidence_score)
     if score >= 0.75:
         return "replicated", "empirical_lenr_correlation"
     if score >= 0.45:
         return "partial", "empirical_lenr_correlation"
     return "exploratory", "speculative_exploratory"
+
+
+def resolve_claim_tier(declared_tier: Optional[str], rubric_tier: str) -> str:
+    """Combine a module's declared claim tier with the rubric's classification.
+
+    The rubric only ever emits ``empirical_lenr_correlation`` or
+    ``speculative_exploratory``, so overwriting the module's declaration erased
+    tiers the governance vocabulary defines: ``cross_regime_extrapolation`` was
+    silently promoted to ``speculative_exploratory`` (0.2x -> 0.3x weighting),
+    and ``established_reference`` / ``validated_lenr_mechanism`` could never be
+    reported at all.
+
+    Policy: the rubric may **downgrade** a declared tier when the score is weak,
+    but never upgrade it. A module that declares a weak tier keeps it.
+
+    Args:
+        declared_tier: Tier declared by the theory module, if any.
+        rubric_tier: Tier implied by the confidence rubric.
+
+    Returns:
+        The tier to report.
+    """
+    if not declared_tier:
+        return rubric_tier
+    if declared_tier not in CLAIM_TIER_STRENGTH_ORDER:
+        return rubric_tier
+    if rubric_tier not in CLAIM_TIER_STRENGTH_ORDER:
+        return declared_tier
+    # Larger index == weaker claim. Keep whichever is weaker.
+    declared_rank = CLAIM_TIER_STRENGTH_ORDER.index(declared_tier)
+    rubric_rank = CLAIM_TIER_STRENGTH_ORDER.index(rubric_tier)
+    return declared_tier if declared_rank >= rubric_rank else rubric_tier
+
+
+def resolve_evidence_class(declared_class: Optional[str], rubric_class: str) -> str:
+    """Preserve a module's declared evidence class where it is meaningful.
+
+    ``cross_regime_extrapolation`` in particular is a statement about which
+    physical regime the track comes from, which no confidence score can infer.
+    """
+    if declared_class and declared_class == "cross_regime_extrapolation":
+        return declared_class
+    return rubric_class
 
 
 def build_observables_bridge(

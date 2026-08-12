@@ -31,11 +31,60 @@ STANDARD_PRESSURE = 101325  # Standard atmospheric pressure in Pa
 STANDARD_TEMPERATURE = 298.15  # Standard temperature in K
 WATER_DENSITY = 1000  # Water density in kg/m^3 (approximate)
 
-# Regime-specific max temperatures (K): single_bubble ~1e4, multi_bubble ~1e3-1e4, laser_driven ~1e5
+# Regime-specific reporting ceilings for peak collapse temperature (K).
+#
+# A ceiling is required: ideal adiabatic compression gives T = T0 * CR^(3(gamma-1)),
+# which reaches 3e8 K at CR=1000 for a monatomic gas. That is unphysical because the
+# closed form ignores dissociation, ionisation, thermal conduction and the van der
+# Waals hard-core radius, all of which absorb energy near minimum radius.
+#
+# These are upper *bounds* drawn from the hydrodynamic literature, not predictions.
+# The previous single_bubble ceiling of 1e4 K was below the top of the measured
+# emission band (1.5e4 K), so it truncated experimentally observed temperatures.
+# See REGIME_TEMPERATURE_PROVENANCE for the anchoring measurement/simulation of each.
 REGIME_MAX_TEMPERATURE = {
-    "single_bubble": 1e4,
-    "multi_bubble": 5e3,
-    "laser_driven": 1e5
+    "single_bubble": 2.0e6,   # Moss et al. peak ion temperature, doi:10.1121/1.416948
+    "multi_bubble": 2.0e4,    # MBSL ~5e3 K measured; headroom for cloud asymmetry
+    "laser_driven": 1.0e5,    # unchanged; consistent with shock-focused hydrodynamics
+}
+
+# Provenance for each ceiling so the number is auditable and the UI can state what
+# a saturated temperature means. Measured bands are emission temperatures, which are
+# lower than peak core ion temperatures; both are recorded to avoid conflating them.
+REGIME_TEMPERATURE_PROVENANCE = {
+    "single_bubble": {
+        "ceiling_k": 2.0e6,
+        "measured_emission_band_k": (4.0e3, 1.5e4),
+        "measured_citation": (
+            "Flannigan & Suslick, Nature 434, 52 (2005), doi:10.1038/nature03361 "
+            "(Ar/SO spectroscopic emission temperature, 4000-15000 K)"
+        ),
+        "simulation_citation": (
+            "Moss, Clarke, White & Young, JASA (1996), doi:10.1121/1.416948 "
+            "(two-temperature plasma with ion/electron conduction and radiant "
+            "transport; peak ion temperature ~2e6 K for a deuterium bubble). "
+            "Intermediate value ~1.08e5 K from self-consistent hydrodynamics, "
+            "doi:10.1103/physreve.57.4265"
+        ),
+        "basis": "peak ion temperature upper bound",
+    },
+    "multi_bubble": {
+        "ceiling_k": 2.0e4,
+        "measured_emission_band_k": (4.0e3, 5.2e3),
+        "measured_citation": (
+            "McNamara, Didenko & Suslick, Nature 401, 772 (1999) "
+            "(multi-bubble sonoluminescence ~5000 K)"
+        ),
+        "simulation_citation": "",
+        "basis": "measured emission temperature with asymmetry headroom",
+    },
+    "laser_driven": {
+        "ceiling_k": 1.0e5,
+        "measured_emission_band_k": (1.0e4, 1.0e5),
+        "measured_citation": "",
+        "simulation_citation": "doi:10.1103/physreve.57.4265 (shock-focused hydrodynamics)",
+        "basis": "shock-focused hydrodynamic simulation",
+    },
 }
 
 
@@ -99,7 +148,11 @@ def calculate_collapse_temperature(
     final_temperature = initial_temperature * temperature_factor
     
     # Cap temperature at regime-specific maximum
-    max_realistic_temp = REGIME_MAX_TEMPERATURE.get(regime, 1e4)  # K
+    # Fall back to the single-bubble ceiling for an unknown regime rather than a
+    # stale 1e4, which sits below the measured sonoluminescence emission band.
+    max_realistic_temp = REGIME_MAX_TEMPERATURE.get(
+        regime, REGIME_MAX_TEMPERATURE["single_bubble"]
+    )  # K
     final_temperature = min(final_temperature, max_realistic_temp)
     
     logger.debug(f"Collapse temperature: {final_temperature:.2e} K with compression ratio {compression_ratio:.2f}")
@@ -116,7 +169,9 @@ def calculate_collapse_temperature_regime(
 ) -> float:
     """
     Calculate collapse temperature for a specific regime.
-    Regimes: single_bubble (~1e4 K), multi_bubble (~1e3-1e4 K), laser_driven (~1e5 K).
+    Ceilings come from REGIME_MAX_TEMPERATURE: single_bubble 2e6 K (peak ion
+    temperature, Moss et al.), multi_bubble 2e4 K, laser_driven 1e5 K. See
+    REGIME_TEMPERATURE_PROVENANCE for the anchoring measurement per regime.
     """
     return calculate_collapse_temperature(
         initial_radius=initial_radius,
@@ -959,7 +1014,9 @@ def calculate_surface_enhanced_collapse(
     # Enhanced temperature (scales approximately with pressure ratio)
     pressure_ratio = enhanced_pressure / base_results["collapse_pressure_Pa"]
     enhanced_temperature = base_results["collapse_temperature_K"] * pressure_ratio**0.4
-    enhanced_temperature = min(enhanced_temperature, REGIME_MAX_TEMPERATURE.get("single_bubble", 1e4))
+    enhanced_temperature = min(
+        enhanced_temperature, REGIME_MAX_TEMPERATURE["single_bubble"]
+    )
     
     # Jet impact parameters
     jet_params = calculate_jet_impact_parameters(
@@ -1047,6 +1104,90 @@ def calculate_minnaert_frequency(
     logger.debug(f"Minnaert frequency: {f_0:.0f} Hz for R={bubble_radius*1e6:.1f} μm")
     
     return float(f_0)
+
+
+def calculate_blake_critical_radius(
+    initial_radius: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    surface_tension: float = 0.0728
+) -> float:
+    """
+    Calculate the Blake critical radius for unstable (inertial) bubble growth.
+
+    Quasi-static equilibrium of a gas bubble requires the far-field liquid pressure
+
+        p_L(R) = p_g0 (R_0/R)^3 - 2*sigma/R,     p_g0 = P_0 + 2*sigma/R_0
+
+    where the isothermal gas exponent is used, as is conventional for the
+    quasi-static Blake analysis. Equilibrium is lost where p_L(R) is stationary:
+
+        dp_L/dR = -3 p_g0 R_0^3 / R^4 + 2*sigma/R^2 = 0
+        =>  R_crit = sqrt( 3 p_g0 R_0^3 / (2*sigma) )
+
+    Beyond R_crit surface tension can no longer restrain the bubble and growth runs
+    away, which is the onset of inertial cavitation.
+
+    Args:
+        initial_radius: Equilibrium bubble radius in meters
+        ambient_pressure: Ambient pressure in Pa
+        surface_tension: Liquid surface tension in N/m
+
+    Returns:
+        Blake critical radius in meters
+
+    Reference:
+        Blake (1949); Brennen, *Cavitation and Bubble Dynamics*, section 2.4
+    """
+    if initial_radius <= 0 or surface_tension <= 0:
+        return float('inf')
+
+    p_gas_0 = ambient_pressure + 2 * surface_tension / initial_radius
+    return float(np.sqrt(3 * p_gas_0 * initial_radius ** 3 / (2 * surface_tension)))
+
+
+def calculate_blake_threshold_pressure(
+    initial_radius: float,
+    ambient_pressure: float = STANDARD_PRESSURE,
+    surface_tension: float = 0.0728
+) -> float:
+    """
+    Calculate the Blake threshold acoustic pressure amplitude.
+
+    Evaluating the quasi-static equilibrium curve at the critical radius (see
+    :func:`calculate_blake_critical_radius`) gives the lowest far-field pressure the
+    bubble can withstand:
+
+        p_L,min = p_g0 (R_0/R_crit)^3 - 2*sigma/R_crit
+
+    The acoustic amplitude needed to reach it from ambient is
+
+        P_Blake = P_0 - p_L,min
+
+    Below this drive amplitude the bubble oscillates stably; above it, growth is
+    inertial and a violent collapse follows.
+
+    Args:
+        initial_radius: Equilibrium bubble radius in meters
+        ambient_pressure: Ambient pressure in Pa
+        surface_tension: Liquid surface tension in N/m
+
+    Returns:
+        Threshold acoustic pressure amplitude in Pa
+
+    Reference:
+        Blake (1949); Brennen, *Cavitation and Bubble Dynamics*, section 2.4
+    """
+    r_crit = calculate_blake_critical_radius(
+        initial_radius, ambient_pressure, surface_tension
+    )
+    if not np.isfinite(r_crit):
+        return float('inf')
+
+    p_gas_0 = ambient_pressure + 2 * surface_tension / initial_radius
+    p_liquid_min = (
+        p_gas_0 * (initial_radius / r_crit) ** 3 - 2 * surface_tension / r_crit
+    )
+    return float(ambient_pressure - p_liquid_min)
 
 
 def calculate_resonant_radius(

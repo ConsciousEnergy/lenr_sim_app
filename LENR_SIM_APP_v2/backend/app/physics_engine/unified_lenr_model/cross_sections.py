@@ -7,13 +7,17 @@ from scipy import constants as const
 from .config import SimulationConfig
 from app.physics_engine.mhd.nuclear_force_coupling import compute_nuclear_cross_section
 
+# Phenomenological enhancement hard cap (paper §2.8 / RR-001). Re-exported from
+# the canonical definition rather than redeclared: a second literal here could
+# drift from constants.py and silently change the governance ceiling on one path.
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
 KB = const.k
 E_CHARGE = const.e
 C = const.c
 ALPHA = const.alpha
 
-# Phenomenological enhancement hard cap (paper §2.8 / RR-001).
-MAX_ENHANCEMENT_FACTOR = 1e5
+__all__ = ["MAX_ENHANCEMENT_FACTOR"]
 
 
 def _get_reduced_mass_kg(config: SimulationConfig) -> float:

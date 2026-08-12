@@ -77,7 +77,7 @@ FREE (EM) → SCREENED → CAPTURE_READY (Weak) → NUCLEAR (Strong)
 | Phase | Color | Description |
 |-------|-------|-------------|
 | **FREE** | Blue (#3498db) | Normal electromagnetic behavior |
-| **SCREENED** | Cyan (#00ffff) | Coulomb barrier lowered 10-100 eV |
+| **SCREENED** | Cyan (#00ffff) | Coulomb barrier lowered by a material-dependent screening potential (tens to hundreds of eV) |
 | **CAPTURE_READY** | Yellow (#f1c40f) | Weak force coupling (p + e⁻ → n + νₑ) |
 | **NUCLEAR** | Orange-Red (#ff4500) | Strong force engagement possible |
 
@@ -265,13 +265,16 @@ D+D S-factors from NACRE II: S₀ ≈ 55 keV·barn for D(d,n)He3.
 P_tunnel = exp(-2/ℏ ∫√[2m(V(x)-E)]dx)
 ```
 
-Combined screening, QED, and coherence effects can enhance tunneling by factors of 10³-10⁸.
+Combined screening, QED, and coherence effects can enhance tunneling by factors of 10³-10⁵ (the adopted governance band; reported values are capped at `MAX_ENHANCEMENT_FACTOR = 1e5`).
 
 ### Halo Electron Overlap
 
 ```
-P_overlap = (1/πa³)exp(-2r₀/a) ≈ 10⁻³
+P_overlap = (r₀/a)³ exp(-2r₀/a) ≈ 5×10⁻³
 ```
+
+(dimensionally consistent form per PAPER_CORRECTIONS_APPLIED.md; the earlier
+(1/πa³)exp(-2r₀/a) had units of inverse volume)
 
 Critical for neutron formation pathway.
 

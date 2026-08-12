@@ -29,6 +29,7 @@ from .core_constants import (
     SCREENING_POTENTIALS, MATERIALS,
     reduced_mass, sommerfeld_parameter, gamow_energy, coulomb_barrier
 )
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
 
 @dataclass
@@ -121,12 +122,8 @@ class WKBTunnelingCalculator:
         if material and screening_energy_ev == 0:
             screening_energy_ev = SCREENING_POTENTIALS.get(material, 0)
         
-        # Convert energies to Joules
+        # Convert energy to Joules
         energy_j = energy_kev * KEV_TO_J
-        screening_j = screening_energy_ev * EV_TO_J
-        
-        # Effective energy with screening
-        effective_energy_j = energy_j + screening_j
         
         # Guard against zero or negative energy
         if energy_kev <= 0:
@@ -145,19 +142,24 @@ class WKBTunnelingCalculator:
         e_g = gamow_energy(z1, z2, mu)  # Gamow energy in keV
         gamow_factor = np.sqrt(e_g / energy_kev)
         
-        # Calculate classical turning point
-        r_turn = self._classical_turning_point(z1, z2, effective_energy_j)
+        # Calculate classical turning point (bare energy; screening is applied
+        # once, as the Assenbaum enhancement below)
+        r_turn = self._classical_turning_point(z1, z2, energy_j)
         
         # Calculate barrier height
         barrier_kev = coulomb_barrier(z1, z2)
         
-        # Calculate WKB integral numerically for more accuracy
+        # Bare-barrier penetration at the bare collision energy. Electron
+        # screening enters exactly once, via the Assenbaum factor in
+        # _calculate_enhancement. A previous version applied screening three
+        # times for potential_type='screened': as an E -> E + U_e shift, as a
+        # Yukawa-modified barrier, and as the Assenbaum multiplier.
         if potential_type == 'coulomb':
             # Use analytic Gamow formula for pure Coulomb
-            tunneling_prob = self._gamow_probability(z1, z2, mu, energy_kev, screening_energy_ev/1000)
+            tunneling_prob = self._gamow_probability(z1, z2, mu, energy_kev)
         else:
             # Use numerical integration for modified potentials
-            tunneling_prob = self._numerical_wkb(z1, z2, mu, energy_j, potential_type, screening_j)
+            tunneling_prob = self._numerical_wkb(z1, z2, mu, energy_j, potential_type)
         
         # Calculate enhancement factors
         enhancement = self._calculate_enhancement(
@@ -185,23 +187,20 @@ class WKBTunnelingCalculator:
         z1: int,
         z2: int,
         mu: float,
-        energy_kev: float,
-        screening_kev: float = 0.0
+        energy_kev: float
     ) -> float:
         """
-        Calculate tunneling probability using the Gamow formula.
+        Calculate bare-barrier tunneling probability using the Gamow formula.
         
-        P = exp(-2*pi*eta) where eta is the Sommerfeld parameter
-        
-        For screened Coulomb: E → E + U_e
+        P = exp(-2*pi*eta) where eta is the Sommerfeld parameter, evaluated
+        at the bare collision energy. Screening is applied separately (once)
+        via the Assenbaum enhancement factor.
         """
-        effective_energy = energy_kev + screening_kev
-        
-        if effective_energy <= 0:
+        if energy_kev <= 0:
             return 0.0
             
         # Calculate Sommerfeld parameter
-        eta = sommerfeld_parameter(z1, z2, effective_energy, mu)
+        eta = sommerfeld_parameter(z1, z2, energy_kev, mu)
         
         # Gamow penetration factor
         p = np.exp(-2 * np.pi * eta)
@@ -285,8 +284,7 @@ class WKBTunnelingCalculator:
         z2: int,
         mu: float,
         energy_j: float,
-        potential_type: str,
-        screening_j: float = 0.0
+        potential_type: str
     ) -> float:
         """
         Calculate tunneling probability using numerical WKB integration.
@@ -320,15 +318,15 @@ class WKBTunnelingCalculator:
             mu: Reduced mass (kg)
             energy_j: Center-of-mass energy (Joules)
             potential_type: Potential model to use
-            screening_j: Screening energy (Joules)
             
         Returns:
             Tunneling probability (dimensionless, between 0 and 1)
         """
         potential_func = self.potential_models.get(potential_type, self._coulomb_potential)
         
-        # Effective energy (particle energy + screening enhancement)
-        E_eff = energy_j + screening_j
+        # Bare collision energy; screening is applied once, downstream, as the
+        # Assenbaum enhancement factor (never as an additional energy shift here).
+        E_eff = energy_j
         
         # Define classical turning points
         # Inner boundary: nuclear radius where Coulomb potential is cutoff
@@ -357,7 +355,7 @@ class WKBTunnelingCalculator:
             return max(probability, 1e-300)  # Prevent underflow
         except Exception:
             # Fall back to analytic Gamow approximation on numerical failure
-            return self._gamow_probability(z1, z2, mu, energy_j/KEV_TO_J, screening_j/KEV_TO_J)
+            return self._gamow_probability(z1, z2, mu, energy_j / KEV_TO_J)
     
     def _calculate_enhancement(
         self,
@@ -377,15 +375,18 @@ class WKBTunnelingCalculator:
         """
         enhancement = 1.0
         
-        # Electron screening enhancement
+        # Electron screening enhancement (Assenbaum-Rolfs), applied exactly
+        # once per calculation. Capped at the governance ceiling
+        # MAX_ENHANCEMENT_FACTOR (1e5), matching screening_kernel, instead of
+        # the previous unrelated 1e10 magic number.
         if screening_ev > 0 and energy_kev > 0:
             # f = exp(π * η * Ue / E) approximately
             eta = sommerfeld_parameter(z1, z2, energy_kev, mu)
-            # Clip exponent to prevent overflow (max safe exp arg ~700)
+            # Cap the exponent at ln(ceiling) so the ceiling is the only limit
             exponent = np.pi * eta * (screening_ev/1000) / energy_kev
-            exponent = np.clip(exponent, -700, 700)
+            exponent = min(exponent, np.log(MAX_ENHANCEMENT_FACTOR))
             screen_factor = np.exp(exponent)
-            enhancement *= min(screen_factor, 1e10)  # Cap enhancement
+            enhancement *= min(screen_factor, MAX_ENHANCEMENT_FACTOR)
         
         # Temperature enhancement (phonon effects, very small at low T)
         if temperature_k > 0:

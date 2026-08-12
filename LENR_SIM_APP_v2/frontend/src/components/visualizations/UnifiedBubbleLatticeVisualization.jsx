@@ -28,6 +28,16 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
 // CycloneIcon reserved for future vortex toggle UI
+import {
+  getBubbleDisplayScale,
+  getBubbleScaleFromPhase,
+} from '../../utils/bubbleVisualScale';
+import {
+  normalizePhaseName,
+  phaseFromCycleFraction,
+  phaseProgressFromTimeline,
+  phaseProgressInCycle,
+} from '../../utils/bubblePhaseSchedule';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -54,13 +64,13 @@ const PROTON_STATES = {
 };
 
 // Bubble collapse phases (used for animation timing reference)
+// Canonical order: Expansion → Collapse → Minimum → Rebound → repeat
 // eslint-disable-next-line no-unused-vars
 const _COLLAPSE_PHASES = {
-  EXPANSION: { name: 'Expansion', duration: 0.4 },
-  COLLAPSE: { name: 'Collapse', duration: 0.15 },
-  MINIMUM: { name: 'Minimum', duration: 0.05 },
-  REBOUND: { name: 'Rebound', duration: 0.1 },
-  RECOVERY: { name: 'Recovery', duration: 0.3 }
+  EXPANSION: { name: 'Expansion', duration: 0.45 },
+  COLLAPSE: { name: 'Collapse', duration: 0.25 },
+  MINIMUM: { name: 'Minimum', duration: 0.10 },
+  REBOUND: { name: 'Rebound', duration: 0.20 },
 };
 
 // UX Time Scale: Slow down the physics animation for user comprehension
@@ -160,41 +170,16 @@ const getBubbleYFromPhase = (phase, progress = 0) => {
       // This is where LENR reactions occur
       return latticeY + distances.MINIMUM;
     case 'REBOUND':
-      // Energy release causes slight expansion
+      // Energy release causes slight expansion; next cycle restarts as Expansion
       return latticeY + distances.MINIMUM + (distances.REBOUND - distances.MINIMUM) * progress;
-    case 'RECOVERY':
-      // Returning to growth phase, nucleation begins again
-      return latticeY + distances.REBOUND - (distances.REBOUND - distances.MINIMUM) * (1 - progress);
     default:
+      // Legacy RECOVERY (and unknown labels) behave like Expansion restart
       return latticeY + distances.MINIMUM;
   }
 };
 
-// Helper to get bubble scale (size) based on physics phase
-// NEW: Bubble starts small and grows, then collapses to minimum
-const getBubbleScaleFromPhase = (phase, progress = 0) => {
-  const scales = PHYSICS_CONFIG.BUBBLE_SCALE;
-  
-  switch (phase) {
-    case 'EXPANSION':
-      // Bubble grows from nucleation size to full size
-      return scales.NUCLEATION + (scales.FULL_SIZE - scales.NUCLEATION) * progress;
-    case 'COLLAPSE':
-      // Bubble rapidly shrinks during collapse
-      return scales.FULL_SIZE - (scales.FULL_SIZE - scales.COLLAPSE_MIN) * progress;
-    case 'MINIMUM':
-      // At minimum size - maximum compression
-      return scales.COLLAPSE_MIN;
-    case 'REBOUND':
-      // Expanding from minimum
-      return scales.COLLAPSE_MIN + (scales.GROWTH_START - scales.COLLAPSE_MIN) * progress;
-    case 'RECOVERY':
-      // Returning toward nucleation state for next cycle
-      return scales.GROWTH_START + (scales.NUCLEATION - scales.GROWTH_START) * progress;
-    default:
-      return scales.NUCLEATION;
-  }
-};
+// Bubble scale helpers live in utils/bubbleVisualScale.js so oversized
+// Rayleigh–Plesset radius_factor values cannot blow past the scene frustum.
 
 const buildVortexSites = (centerX, centerY, centerZ, spacing) => {
   const ringRadius = spacing * 0.75;
@@ -404,8 +389,6 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
-  // eslint-disable-next-line no-unused-vars
-  const [_showDoubleLayer, _setShowDoubleLayer] = useState(true);
   const [showVortices, setShowVortices] = useState(true);
   const [showBoundaryPlane, setShowBoundaryPlane] = useState(false);
   const [showCasimir, setShowCasimir] = useState(false);
@@ -420,7 +403,7 @@ const UnifiedBubbleLatticeVisualization = ({
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
-  const bubbleRadiusRef = useRef(3.0);
+  const bubbleRadiusRef = useRef(10.0);
   const normalizedTimeRef = useRef(0);
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
@@ -431,7 +414,7 @@ const UnifiedBubbleLatticeVisualization = ({
     hostMaterial = 'palladium',
     loadingRatio = 0.9,
     temperature: _paramTemperature = 300, // eslint-disable-line no-unused-vars
-    initialBubbleRadius = 3.0,
+    initialBubbleRadius = 10.0,
     drivingPressure = 1.5,
     frequency = 20,
     latticeSize = 4
@@ -513,7 +496,21 @@ const UnifiedBubbleLatticeVisualization = ({
     const points = [];
     const connections = [];
     let pointIndex = 0;
-    
+
+    // Lattice atoms are static: they never move or change material individually,
+    // only toggle visibility as a group. One Mesh per atom therefore cost one draw
+    // call each (dimension^3 host atoms plus up to as many hydrogens). InstancedMesh
+    // draws all of them in a single call.
+    const hostCount = dimension * dimension * dimension;
+    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
+    hostAtoms.name = 'LatticeHostAtoms';
+    hostAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+    // Hydrogen occupancy is stochastic, so positions are collected first and the
+    // instanced mesh is sized to the actual count.
+    const hydrogenPositions = [];
+    const instanceTransform = new THREE.Object3D();
+
     // Create FCC-like lattice
     for (let x = 0; x < dimension; x++) {
       for (let y = 0; y < dimension; y++) {
@@ -522,23 +519,19 @@ const UnifiedBubbleLatticeVisualization = ({
           // Use physics-based lattice Y offset
           const posY = y * spacing - offset + PHYSICS_CONFIG.LATTICE_Y_OFFSET;
           const posZ = z * spacing - offset;
-          
-          // Host atom
-          const hostAtom = new THREE.Mesh(hostGeometry, hostMaterial3D);
-          hostAtom.position.set(posX, posY, posZ);
-          latticeGroup.add(hostAtom);
-          
+
+          instanceTransform.position.set(posX, posY, posZ);
+          instanceTransform.updateMatrix();
+          hostAtoms.setMatrixAt(pointIndex, instanceTransform.matrix);
+
           // Add hydrogen at interstitial sites based on loading ratio
           if (Math.random() < loadingRatio) {
             const hOffset = spacing * 0.25;
-            const hydrogen = new THREE.Mesh(hydrogenGeometry, hydrogenMaterial);
-            hydrogen.position.set(
+            hydrogenPositions.push([
               posX + (Math.random() - 0.5) * hOffset,
               posY + (Math.random() - 0.5) * hOffset,
-              posZ + (Math.random() - 0.5) * hOffset
-            );
-            hydrogen.userData = { type: 'hydrogen', state: 'FREE' };
-            latticeGroup.add(hydrogen);
+              posZ + (Math.random() - 0.5) * hOffset,
+            ]);
           }
           
           points.push(new THREE.Vector3(posX, posY, posZ));
@@ -552,13 +545,51 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
     }
-    
-    // Add bond lines
-    connections.forEach(([i, j]) => {
-      const geometry = new THREE.BufferGeometry().setFromPoints([points[i], points[j]]);
-      const line = new THREE.Line(geometry, bondMaterial);
-      latticeGroup.add(line);
-    });
+
+    hostAtoms.instanceMatrix.needsUpdate = true;
+    hostAtoms.computeBoundingSphere();
+    latticeGroup.add(hostAtoms);
+
+    if (hydrogenPositions.length > 0) {
+      const hydrogenAtoms = new THREE.InstancedMesh(
+        hydrogenGeometry,
+        hydrogenMaterial,
+        hydrogenPositions.length,
+      );
+      hydrogenAtoms.name = 'LatticeHydrogenAtoms';
+      hydrogenAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+      hydrogenPositions.forEach(([hx, hy, hz], index) => {
+        instanceTransform.position.set(hx, hy, hz);
+        instanceTransform.updateMatrix();
+        hydrogenAtoms.setMatrixAt(index, instanceTransform.matrix);
+      });
+      hydrogenAtoms.instanceMatrix.needsUpdate = true;
+      hydrogenAtoms.computeBoundingSphere();
+      hydrogenAtoms.userData = { type: 'hydrogen', state: 'FREE' };
+      latticeGroup.add(hydrogenAtoms);
+    }
+
+    // Bonds share one geometry: merging the segments into a single LineSegments
+    // replaces up to 3 * dimension^3 Line objects with one draw call.
+    if (connections.length > 0) {
+      const bondVertices = new Float32Array(connections.length * 6);
+      connections.forEach(([i, j], index) => {
+        const start = points[i];
+        const finish = points[j];
+        const base = index * 6;
+        bondVertices[base] = start.x;
+        bondVertices[base + 1] = start.y;
+        bondVertices[base + 2] = start.z;
+        bondVertices[base + 3] = finish.x;
+        bondVertices[base + 4] = finish.y;
+        bondVertices[base + 5] = finish.z;
+      });
+      const bondGeometry = new THREE.BufferGeometry();
+      bondGeometry.setAttribute('position', new THREE.BufferAttribute(bondVertices, 3));
+      const bonds = new THREE.LineSegments(bondGeometry, bondMaterial);
+      bonds.name = 'LatticeBonds';
+      latticeGroup.add(bonds);
+    }
     
     const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     const planeSize = dimension * spacing * 1.3;
@@ -632,21 +663,26 @@ const UnifiedBubbleLatticeVisualization = ({
     // Start with small scale (nucleation size)
     const initialScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION;
     
-    // Main bubble - starts as sphere, morphs to torus during collapse, then to jet
-    // Physics: starts very small at nucleation (critical nucleus ~100nm)
+    // Interior gas volume — kept nearly transparent so the ionic double-layer
+    // shells remain the primary visual. A filled opaque MainBubble was covering
+    // the developed double-layer dynamics.
     const bubbleGeometry = new THREE.SphereGeometry(1, 32, 32);
     const bubbleMaterial = new THREE.MeshPhongMaterial({
       color: 0xaaddff,
       transparent: true,
-      opacity: 0.4,
-      shininess: 100,
-      specular: 0xffffff
+      opacity: 0.1,
+      shininess: 80,
+      specular: 0xffffff,
+      depthWrite: false,
+      side: THREE.FrontSide,
     });
     const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     bubble.name = 'MainBubble';
+    bubble.renderOrder = 1;
     bubble.userData = { 
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
-      baseGeometry: bubbleGeometry
+      baseGeometry: bubbleGeometry,
+      baseOpacity: 0.1,
     };
     // Start with nucleation scale (small bubble at surface)
     bubble.scale.setScalar(initialScale);
@@ -662,12 +698,14 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.8,
       emissive: 0xff4400,
       emissiveIntensity: 1.0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const torus = new THREE.Mesh(torusGeometry, torusMaterial);
     torus.name = 'TorusFormation';
     torus.visible = false; // Hidden initially, shown during collapse
     torus.rotation.x = Math.PI / 2; // Rotate to horizontal (XZ plane) - ring around Y axis
+    torus.renderOrder = 3;
     torus.userData = { baseRadius: 1.5, baseTubeRadius: 0.8 };
     bubbleGroup.add(torus);
     
@@ -680,39 +718,64 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.9,
       emissive: 0xffff00,
       emissiveIntensity: 2.0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const jet = new THREE.Mesh(jetGeometry, jetMaterial);
     jet.name = 'FocusedJet';
     jet.visible = false; // Hidden initially, shown during minimum/rebound
     jet.rotation.x = Math.PI; // Point downward
+    jet.renderOrder = 3;
     jet.userData = { baseRadius: 0.3, baseHeight: 4 };
     bubbleGroup.add(jet);
     
-    // Ionic double-layer shell (outer)
-    const doubleLayerGeometry = new THREE.SphereGeometry(1.1, 32, 32);
+    // Ionic double-layer shell (outer) — primary bubble visual
+    const doubleLayerGeometry = new THREE.SphereGeometry(1.12, 48, 48);
     const doubleLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
+      color: 0x00e8ff,
       transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide
+      opacity: 0.32,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      wireframe: false,
     });
     const doubleLayer = new THREE.Mesh(doubleLayerGeometry, doubleLayerMaterial);
     doubleLayer.name = 'DoubleLayer';
+    doubleLayer.renderOrder = 2;
     doubleLayer.scale.setScalar(initialScale); // Start small at nucleation
+    doubleLayer.userData = { baseOpacity: 0.32 };
     bubbleGroup.add(doubleLayer);
+
+    // Outer wire rim so the double-layer stays readable without filling the view
+    const doubleLayerWire = new THREE.Mesh(
+      new THREE.SphereGeometry(1.13, 24, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0x66ffff,
+        transparent: true,
+        opacity: 0.45,
+        wireframe: true,
+        depthWrite: false,
+      }),
+    );
+    doubleLayerWire.name = 'DoubleLayerWire';
+    doubleLayerWire.renderOrder = 2;
+    doubleLayerWire.scale.setScalar(initialScale);
+    bubbleGroup.add(doubleLayerWire);
     
     // Inner charge layer
-    const innerLayerGeometry = new THREE.SphereGeometry(0.95, 32, 32);
+    const innerLayerGeometry = new THREE.SphereGeometry(0.92, 32, 32);
     const innerLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff6600,
+      color: 0xff7722,
       transparent: true,
-      opacity: 0.1,
-      side: THREE.FrontSide
+      opacity: 0.22,
+      side: THREE.FrontSide,
+      depthWrite: false,
     });
     const innerLayer = new THREE.Mesh(innerLayerGeometry, innerLayerMaterial);
     innerLayer.name = 'InnerLayer';
+    innerLayer.renderOrder = 2;
     innerLayer.scale.setScalar(initialScale); // Start small at nucleation
+    innerLayer.userData = { baseOpacity: 0.22 };
     bubbleGroup.add(innerLayer);
     
     // Pressure wave rings
@@ -1538,41 +1601,29 @@ const UnifiedBubbleLatticeVisualization = ({
     const t = normalizedTime * period;
     const omega = 2 * Math.PI * parameters.frequency * 1000;
     
-    // Phase determination based on normalized time
-    if (normalizedTime < 0.4) {
-      phase = 'EXPANSION';
-      const _t_phase = normalizedTime / 0.4; // Phase progress (for reference)
+    // Phase determination: Expansion → Collapse → Minimum → Rebound → repeat
+    phase = phaseFromCycleFraction(normalizedTime);
+    const t_phase = phaseProgressInCycle(normalizedTime);
+    if (phase === 'EXPANSION') {
       // Expansion: driven by acoustic pressure
       const P_acoustic = parameters.drivingPressure * 1e5 * Math.sin(omega * t * 0.4); // Convert bar to Pa
       const expansionFactor = 1 + (P_acoustic / (101325 + 2 * SIGMA / R0_m)) * 0.3;
       radius = baseRadius * Math.max(1.0, Math.min(1.3, expansionFactor));
-    } else if (normalizedTime < 0.55) {
-      phase = 'COLLAPSE';
-      const t_phase = (normalizedTime - 0.4) / 0.15;
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
+    } else if (phase === 'COLLAPSE') {
       // Collapse: rapid compression following Rayleigh-Plesset dynamics
-      // Simplified: R(t) ≈ R_max * (1 - t²) for rapid collapse
       const R_max = baseRadius * (1 + parameters.drivingPressure * 0.3);
       const R_min = baseRadius * 0.1; // Minimum radius (compression ratio ~10)
       radius = R_max - (R_max - R_min) * Math.pow(t_phase, 2);
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
-    } else if (normalizedTime < 0.6) {
-      phase = 'MINIMUM';
+    } else if (phase === 'MINIMUM') {
       radius = baseRadius * 0.1; // Maximum compression
       compressionRatio = 10.0;
-    } else if (normalizedTime < 0.7) {
-      phase = 'REBOUND';
-      const t_phase = (normalizedTime - 0.6) / 0.1;
-      // Rebound: rapid expansion after collapse
+    } else {
+      // REBOUND: rapid expansion after collapse, then the cycle restarts
       const R_min = baseRadius * 0.1;
       const R_rebound = baseRadius * 0.6;
       radius = R_min + (R_rebound - R_min) * t_phase;
-      compressionRatio = baseRadius / radius;
-    } else {
-      phase = 'RECOVERY';
-      const t_phase = (normalizedTime - 0.7) / 0.3;
-      // Recovery: gradual return to equilibrium
-      const R_recovery = baseRadius * 0.6;
-      radius = R_recovery + (baseRadius - R_recovery) * t_phase;
       compressionRatio = baseRadius / radius;
     }
     
@@ -1601,23 +1652,32 @@ const UnifiedBubbleLatticeVisualization = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drivingPressure, parameters.temperature, parameters.frequency]);
 
-  // Calculate enhancement factors based on physics conditions
+  // SCHEMATIC PREVIEW ONLY: used when no backend data is streaming, so the
+  // idle animation still has colours. The screening term mirrors the backend
+  // screening_kernel (Assenbaum-Rolfs with the cited Pd potential) and the
+  // total is capped at the governance MAX_ENHANCEMENT_FACTOR (1e5), so this
+  // preview cannot contradict streamed results. It is never shown as a
+  // simulation output. (A previous version used the retired Debye form and
+  // an unrelated 1e8 cap.)
   const calculateEnhancementFactors = useCallback((compressionRatio, fieldStrength, temperature, _pressure) => {
     // Physical constants
-    const KB = 1.381e-23; // J/K
-    const E_CHARGE = 1.602e-19; // C
-    const EPS0 = 8.854e-12; // F/m
-    const _ALPHA = 1/137; // Fine structure constant (for reference)
+    const KB = 1.380649e-23; // J/K
+    const E_CHARGE = 1.602176634e-19; // C
+    const ALPHA = 7.2973525693e-3; // Fine structure constant
+    const MAX_ENHANCEMENT = 1e5; // governance ceiling (MAX_ENHANCEMENT_FACTOR)
+    const U_SCREEN_EV = 800; // Pd cited typical potential (screening_data.py)
+    const MU_C2_EV = 0.5 * 2.014 * 931.494e6; // D+D reduced-mass rest energy, eV
     
-    // Electron density (from material properties)
-    const n_e = 6.8e28; // m⁻³ (palladium)
-    
-    // 1. Electron Screening Enhancement
-    // Debye screening length: λ_D = √(ε₀kT / (n_e e²))
-    const lambda_d = Math.sqrt(EPS0 * KB * temperature / (n_e * E_CHARGE * E_CHARGE));
-    const U_screen = E_CHARGE * E_CHARGE / (4 * Math.PI * EPS0 * lambda_d);
-    const E_thermal = 1.5 * KB * temperature / E_CHARGE; // eV
-    const screening_factor = Math.min(1e4, Math.exp(U_screen / Math.max(E_thermal, 0.01)));
+    // 1. Electron Screening Enhancement (Assenbaum-Rolfs, as in the backend
+    // kernel): f = exp(pi * eta * Ue / E) with the exponent capped at
+    // ln(ceiling) so the ceiling is the only limit.
+    const eThermalEv = Math.max(1.5 * KB * temperature / E_CHARGE, 1e-6);
+    const eta = ALPHA * Math.sqrt(MU_C2_EV / (2 * eThermalEv));
+    const exponent = Math.min(
+      Math.PI * eta * U_SCREEN_EV / eThermalEv,
+      Math.log(MAX_ENHANCEMENT),
+    );
+    const screening_factor = Math.exp(exponent);
     
     // 2. QED Double-Layer Enhancement
     // Enhancement from high electric field: f_QED = 1 + (E/E_crit)²
@@ -1638,11 +1698,11 @@ const UnifiedBubbleLatticeVisualization = ({
     // Increased density from compression
     const compression_factor = Math.pow(compressionRatio, 1.5);
     
-    // Combined enhancement (multiplicative, capped at 10⁸)
+    // Combined enhancement (multiplicative, capped at the governance ceiling)
     const total = screening_factor * qed_factor * casimir_factor * rydberg_factor * compression_factor;
     
     return {
-      total: Math.min(total, 1e8),
+      total: Math.min(total, MAX_ENHANCEMENT),
       screening: screening_factor,
       qed: qed_factor,
       casimir: casimir_factor,
@@ -1665,7 +1725,7 @@ const UnifiedBubbleLatticeVisualization = ({
     protonGroupRef.current.children.forEach((proton) => {
       let newState;
       
-      if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+      if (phase === 'EXPANSION') {
         newState = 'FREE';
       } else if (phase === 'COLLAPSE') {
         // Physics-based transitions during collapse
@@ -1782,7 +1842,7 @@ const UnifiedBubbleLatticeVisualization = ({
     if (apiData) {
       // Use API physics data
       radius = baseRadius * apiData.radius_factor;
-      phase = apiData.phase;
+      phase = normalizePhaseName(apiData.phase);
       fieldStrength = apiData.electric_field_v_m ?? apiData.electric_field;
       temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
@@ -1804,7 +1864,7 @@ const UnifiedBubbleLatticeVisualization = ({
       // Fall back to local physics calculations
       const localPhysics = calculateBubbleRadius(normalizedTime, baseRadius);
       radius = localPhysics.radius;
-      phase = localPhysics.phase;
+      phase = normalizePhaseName(localPhysics.phase);
       compressionRatio = localPhysics.compressionRatio;
       fieldStrength = localPhysics.fieldStrength;
       temperature = localPhysics.temperature;
@@ -1843,20 +1903,39 @@ const UnifiedBubbleLatticeVisualization = ({
     if (bubbleGroupRef.current) {
       const bubble = bubbleGroupRef.current.getObjectByName('MainBubble');
       const doubleLayer = bubbleGroupRef.current.getObjectByName('DoubleLayer');
+      const doubleLayerWire = bubbleGroupRef.current.getObjectByName('DoubleLayerWire');
       const innerLayer = bubbleGroupRef.current.getObjectByName('InnerLayer');
       
       // Torus-to-jet formation visualization (always update, visibility controlled by phase)
       const torus = bubbleGroupRef.current.getObjectByName('TorusFormation');
       const jet = bubbleGroupRef.current.getObjectByName('FocusedJet');
+
+      // Phase progress for nucleation storytelling + scene-safe display scale.
+      // Prefer timeline segment progress when API data is driving the mesh.
+      const phaseProgress = simulationData?.enhancement_timeline
+        ? phaseProgressFromTimeline(
+          simulationData.enhancement_timeline,
+          normalizedTime,
+          phase,
+        )
+        : phaseProgressInCycle(normalizedTime);
+      const radiusFactor = radius / Math.max(baseRadius, 1e-12);
+      const displayScale = getBubbleDisplayScale({
+        radiusFactor,
+        phase,
+        phaseProgress,
+      });
       
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle
-      if (phase === 'EXPANSION' || phase === 'RECOVERY') {
+      if (phase === 'EXPANSION') {
         // Show sphere
         if (bubble && showBubble) {
           bubble.visible = true;
-        bubble.scale.setScalar(radius / baseRadius);
-        bubble.material.opacity = 0.3 + (1 - radius / baseRadius) * 0.4;
+          bubble.scale.setScalar(displayScale);
+          // Ghost interior only — never opaque enough to hide the double-layer.
+          const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
+          bubble.material.opacity = baseOpacity;
         } else if (bubble) {
           bubble.visible = false;
         }
@@ -1864,14 +1943,15 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) jet.visible = false;
       } else if (phase === 'COLLAPSE') {
         // Show torus formation (bubble collapsing into torus shape)
-        const collapseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
+        const collapseProgress = phaseProgress;
         const torusProgress = Math.min(1, collapseProgress * 2); // Torus appears halfway through collapse
         
         if (bubble && showBubble) {
-          // Fade out sphere as torus appears
+          // Fade out ghost interior as torus appears
           bubble.visible = torusProgress < 0.7;
-          bubble.scale.setScalar((radius / baseRadius) * (1 - torusProgress * 0.5));
-          bubble.material.opacity = 0.3 * (1 - torusProgress);
+          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.5));
+          const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
+          bubble.material.opacity = baseOpacity * (1 - torusProgress);
         } else if (bubble) {
           bubble.visible = false;
         }
@@ -1923,72 +2003,41 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       }
       
-      // Update double layer and inner layer
+      // Double / inner shells are the primary bubble visual (ionic double-layer).
       if (doubleLayer) {
-        doubleLayer.scale.setScalar((radius * 1.1) / baseRadius);
-        const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.4 : 0.15;
+        doubleLayer.scale.setScalar(displayScale * 1.12);
+        const base = doubleLayer.userData.baseOpacity ?? 0.32;
+        const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.2 : base;
         doubleLayer.material.opacity = intensity;
+        doubleLayer.visible = showBubble;
+      }
+      if (doubleLayerWire) {
+        doubleLayerWire.scale.setScalar(displayScale * 1.13);
+        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.65 : 0.45;
+        doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
-        innerLayer.scale.setScalar((radius * 0.95) / baseRadius);
+        innerLayer.scale.setScalar(displayScale * 0.92);
+        const base = innerLayer.userData.baseOpacity ?? 0.22;
+        innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.15 : base;
+        innerLayer.visible = showBubble;
       }
       
-      // Update pressure rings
+      // Update pressure rings — anchored to the display bubble, not unbounded growth
       for (let i = 0; i < 3; i++) {
         const ring = bubbleGroupRef.current.getObjectByName(`PressureRing${i}`);
         if (ring) {
           const ringPhase = (normalizedTime + ring.userData.phase) % 1;
-          ring.scale.setScalar(1 + ringPhase * 2);
+          ring.scale.setScalar(displayScale * (1 + ringPhase * 0.6));
           ring.material.opacity = Math.max(0, 0.2 - ringPhase * 0.2);
+          if (!showBubble) ring.visible = false;
         }
       }
       
       // ========================================================================
-      // HETEROGENEOUS NUCLEATION BUBBLE DYNAMICS
+      // HETEROGENEOUS NUCLEATION — keep bubble attached near the lattice surface
       // ========================================================================
-      // Physics: Bubble nucleates at surface cavity, grows while attached,
-      // buoyancy pulls slightly, then acoustic/EM forcing collapses it to surface
-      const _latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-      const _distances = PHYSICS_CONFIG.PHASE_DISTANCES;
-      
-      // Calculate phase progress for smooth animations
-      let phaseProgress = 0;
-      if (phase === 'EXPANSION') {
-        phaseProgress = Math.min(1, normalizedTime / 0.4);
-      } else if (phase === 'COLLAPSE') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.4) / 0.15);
-      } else if (phase === 'REBOUND') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.55) / 0.1);
-      } else if (phase === 'RECOVERY') {
-        phaseProgress = Math.min(1, (normalizedTime - 0.65) / 0.35);
-      }
-      
-      // Get bubble Y position from helper (stays close to surface)
       bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress);
-      
-      // Apply physics-based bubble scale
-      // Bubble starts small at nucleation, grows during expansion, shrinks during collapse
-      const physicsScale = getBubbleScaleFromPhase(phase, phaseProgress);
-      
-      // Combine with radius-based scaling from physics calculations
-      const combinedScale = physicsScale * (radius / baseRadius);
-      
-      // Apply scale to main bubble and layers
-      if (bubble && showBubble) {
-        // During EXPANSION: bubble grows from tiny nucleus to full size
-        // During COLLAPSE: bubble rapidly shrinks
-        const _displayScale = phase === 'EXPANSION' || phase === 'RECOVERY' 
-          ? combinedScale 
-          : radius / baseRadius; // Use original logic during collapse for visual effect
-      }
-      
-      // Update bubble size based on phase (growth at surface, then collapse)
-      if (doubleLayer) {
-        doubleLayer.scale.setScalar(combinedScale * 1.1);
-      }
-      if (innerLayer) {
-        innerLayer.scale.setScalar(combinedScale * 0.95);
-      }
     }
     
     // Update H2/D2 particles with MHD fluid dynamics (v0.2.3)
@@ -2484,14 +2533,6 @@ const UnifiedBubbleLatticeVisualization = ({
             verticalOscillationSpeed = 1.2;
             coreHeightOffset = 0.35;
           break;
-        case 'RECOVERY':
-          vortexIntensity = 0.45;
-          flowDirection = 0.25; // Relax back toward baseline
-          rotationSpeed = 1.0;
-          radialOscillationSpeed = 0.8;
-          verticalOscillationSpeed = 0.6;
-          coreHeightOffset = 0.4;
-          break;
         default:
           // Default case for any unexpected phase values
           break;
@@ -2589,13 +2630,19 @@ const UnifiedBubbleLatticeVisualization = ({
             // Opacity based on energy level and conditions (keep very transparent)
             child.material.opacity = Math.min(0.08, 0.04 + (temperatureFactor + fieldFactor) * 0.02);
           } else if (child.name && child.name.startsWith('OrbitalOverlap')) {
-            // Overlap regions glow during high enhancement
+            // Overlap regions glow during high enhancement.
+            //
+            // Enhancement spans many orders of magnitude and the reported value
+            // is clamped at 1e5, so a linear ratio against that ceiling pins the
+            // glow to its maximum for the whole collapse — exactly where the
+            // visual should be conveying change. Drive it from log10 instead.
             const enhancementValue = enhancements.total || 1.0;
+            const logFraction = Math.min(1, Math.max(0, Math.log10(Math.max(enhancementValue, 1)) / 5));
             const pulse = Math.sin(Date.now() * 0.005 + child.userData.pulsePhase * Math.PI * 2) * 0.3 + 0.7;
-            child.material.opacity = 0.4 + (enhancementValue / 1e5) * 0.4;
+            child.material.opacity = 0.4 + logFraction * 0.4;
             // Only set emissiveIntensity if material supports it (MeshStandardMaterial does)
             if (child.material && typeof child.material.emissiveIntensity !== 'undefined') {
-              child.material.emissiveIntensity = 0.3 + (enhancementValue / 1e6) * 0.5;
+              child.material.emissiveIntensity = 0.3 + logFraction * 0.5;
             }
             child.scale.setScalar(1 + pulse * 0.2);
           }
@@ -2799,6 +2846,8 @@ const UnifiedBubbleLatticeVisualization = ({
       if (latticeGroupRef.current) {
         latticeGroupRef.current.visible = showLattice;
         latticeGroupRef.current.traverse((child) => {
+          // isInstancedMesh also satisfies isMesh, and LineSegments satisfies
+          // isLine, so both instanced atoms and merged bonds are covered here.
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showLattice;
           }
@@ -2937,12 +2986,11 @@ const UnifiedBubbleLatticeVisualization = ({
 
   // Phase indicator color
   const getPhaseColor = (phase) => {
-    switch (phase) {
+    switch (normalizePhaseName(phase)) {
       case 'EXPANSION': return 'info';
       case 'COLLAPSE': return 'warning';
       case 'MINIMUM': return 'error';
       case 'REBOUND': return 'secondary';
-      case 'RECOVERY': return 'success';
       default: return 'default';
     }
   };
@@ -3025,7 +3073,7 @@ const UnifiedBubbleLatticeVisualization = ({
               />
               <FormControlLabel
                 control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
-                label={<Typography variant="caption" color="white">Bubble</Typography>}
+                label={<Typography variant="caption" color="white">Double-layer bubble</Typography>}
               />
               <FormControlLabel
                 control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}

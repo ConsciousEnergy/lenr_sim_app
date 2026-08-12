@@ -1,6 +1,13 @@
 /**
- * Development Proxy Configuration
- * This file is automatically registered by create-react-app during development.
+ * Development Proxy Configuration (LEGACY — NOT LOADED)
+ *
+ * Create React App auto-registered this file during development. The frontend
+ * migrated to Vite in v0.3.6-beta, and Vite does not load `setupProxy.js`, so
+ * nothing here runs. The live proxy configuration is `server.proxy` in
+ * `vite.config.js`, which forwards `/api` and `/ws` to the backend on :8010.
+ *
+ * Retained only as a record of the mock health-check and log-sink endpoints the
+ * CRA proxy used to provide; delete once those are confirmed unnecessary.
  */
 const { createProxyMiddleware } = require('http-proxy-middleware');
 

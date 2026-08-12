@@ -49,20 +49,25 @@ import SaveIcon from '@mui/icons-material/Save';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
-
-// Import new unified visualization
-import UnifiedBubbleLatticeVisualization from '../components/visualizations/UnifiedBubbleLatticeVisualization';
-import ErrorBoundary from '../components/ErrorBoundary';
+import VisualizationPanel from '../components/unified-theory/VisualizationPanel';
+import EnhancementTimelinePanel from '../components/unified-theory/EnhancementTimelinePanel';
+import ProtonPhasesPanel from '../components/unified-theory/ProtonPhasesPanel';
+import ResultsPanel from '../components/unified-theory/ResultsPanel';
+import TheoryTestbedPanel from '../components/unified-theory/TheoryTestbedPanel';
 import { usePhysics } from '../contexts/PhysicsContext';
 import { resolveApiUrl } from '../config/api';
-import TheoryTogglePanel from '../components/physics/TheoryTogglePanel';
-import ReactionRateGovernancePanel from '../components/physics/ReactionRateGovernancePanel';
 import GovernanceGlossaryDrawer from '../components/physics/GovernanceGlossaryDrawer';
 import { deriveSimulationHeadlineState } from '../utils/simulationDerivedState';
+import { resolveElectrolyteSpecies } from '../utils/theoryConditions';
+import {
+  buildBubbleLatticePayload,
+  framesToStreamPreview,
+} from '../utils/bubbleLatticePayload';
+import { ENHANCEMENT_THRESHOLDS } from '../utils/unifiedTheoryCharts';
+import { useBubbleLatticeStream, STREAM_STATUS } from '../hooks/useBubbleLatticeStream';
 import { track } from '../analytics/events';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
@@ -77,7 +82,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 300,
     loadingRatio: 0.9,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -95,7 +100,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 500,
     loadingRatio: 0.85,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -113,7 +118,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 350,
     loadingRatio: 0.8,
-    initialBubbleRadius: 3.5,
+    initialBubbleRadius: 11.7,
     drivingPressure: 1.2,
     frequency: 15,
     defectDensity: 1e16,
@@ -131,7 +136,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 350,
     loadingRatio: 0.85,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -149,7 +154,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 500,
     loadingRatio: 0.9,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -167,7 +172,7 @@ const SYSTEM_PRESETS = {
     reactant: 'hydrogen',
     temperature: 600,
     loadingRatio: 0.8,
-    initialBubbleRadius: 2.5,
+    initialBubbleRadius: 8.3,
     drivingPressure: 2.0,
     frequency: 25,
     defectDensity: 1e16,
@@ -185,7 +190,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 300,
     loadingRatio: 0.9,
-    initialBubbleRadius: 2.0,
+    initialBubbleRadius: 6.7,
     drivingPressure: 1.8,
     frequency: 30,
     defectDensity: 1e17,
@@ -203,7 +208,7 @@ const SYSTEM_PRESETS = {
     reactant: 'deuterium',
     temperature: 400,
     loadingRatio: 0.9,
-    initialBubbleRadius: 3.0,
+    initialBubbleRadius: 10.0,
     drivingPressure: 1.5,
     frequency: 20,
     defectDensity: 1e16,
@@ -214,16 +219,6 @@ const SYSTEM_PRESETS = {
     electrolyteSpecies: 'lioh',
     electrolyteMolarityMolL: 0.3,
   }
-};
-
-const DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY = {
-  li: 'lioh',
-  na: 'naoh',
-  k: 'koh',
-  rb: 'other',
-  cs: 'other',
-  mixed: 'mixed',
-  other: 'other',
 };
 
 const ELECTROLYTE_SPECIES_BY_FAMILY = {
@@ -245,20 +240,6 @@ const ELECTROLYTE_SPECIES_BY_FAMILY = {
   other: [{ value: 'other', label: 'Other / custom species' }],
 };
 
-const resolveElectrolyteSpecies = (family, species) => {
-  const normalizedFamily = (family || 'other').toLowerCase();
-  if (species) return species.toLowerCase();
-  return DEFAULT_ELECTROLYTE_SPECIES_BY_FAMILY[normalizedFamily] || 'other';
-};
-
-// Proton phase colors for charts
-const PHASE_COLORS = {
-  free: '#3498db',
-  screened: '#00ffff',
-  capture_ready: '#f1c40f',
-  nuclear: '#ff4500'
-};
-
 // Tab param to index mapping (tab order: 0=3D Viz, 1=Timeline, 2=Proton Phases, 3=Results, 4=Theory Testbed, 5=Theory)
 const TAB_PARAM_MAP = {
   tunneling: 4,
@@ -275,15 +256,12 @@ const TAB_PARAM_MAP = {
   theory: 5,
 };
 
-// Enhancement thresholds for LENR activity
-const ENHANCEMENT_THRESHOLDS = {
-  observable: 1e5,      // Observable excess heat (10^5)
-  measurable: 1e3,       // Measurable nuclear products
-  screening: 1e1,        // Significant electron screening
-};
-
-// Regime max temperatures (K) from physics/bubble_collapse: single_bubble~1e4
-const REGIME_MAX_TEMPERATURE_K = 1e4;
+// Reporting ceiling for single-bubble collapse temperature, mirroring
+// backend app/physics/bubble_collapse.REGIME_MAX_TEMPERATURE["single_bubble"]
+// (2e6 K, peak ion temperature from Moss et al., doi:10.1121/1.416948).
+// Used only by the offline fallback below; a real response carries its own
+// ceiling under collapse_results.limits, which resolveTemperatureLimit prefers.
+const REGIME_MAX_TEMPERATURE_K = 2.0e6;
 
 const CONTRADICTION_REASON_LABELS = {
   threshold_boundary: 'Threshold boundary mismatch between enhancement cap and proton phase assignment.',
@@ -474,6 +452,40 @@ function UnifiedTheoryPage() {
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [isSaving, setIsSaving] = useState(false);
   const derivedState = deriveSimulationHeadlineState({ simulationData, theoryResult });
+  const streamPayload = React.useMemo(
+    () => buildBubbleLatticePayload(parameters),
+    [parameters],
+  );
+  const {
+    status: streamStatus,
+    frames: streamFrames,
+    latest: streamLatest,
+    error: streamError,
+    start: startStream,
+    stop: stopStream,
+  } = useBubbleLatticeStream({ parameters: streamPayload });
+
+  // When the live stream finishes, fold frames into the same timeline shape the
+  // charts already consume so the unused WS endpoint has a real UI path.
+  useEffect(() => {
+    if (streamStatus !== STREAM_STATUS.complete || streamFrames.length === 0) return;
+    const preview = framesToStreamPreview(streamFrames);
+    if (!preview) return;
+    setSimulationData(preview);
+    setSimulationResult(preview);
+    setAlertMessage(`Live stream complete (${streamFrames.length} frames). Run Physics Simulation for full collapse/UQ results.`);
+    setAlertSeverity('success');
+    setAlertOpen(true);
+  }, [streamStatus, streamFrames, setSimulationResult]);
+
+  useEffect(() => {
+    if (streamStatus === STREAM_STATUS.error && streamError) {
+      setAlertMessage(`Live stream failed: ${streamError}`);
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    }
+  }, [streamStatus, streamError]);
+
   
   // Save simulation results to analytics database (v0.2.3-beta)
   const saveToAnalytics = useCallback(async () => {
@@ -584,55 +596,12 @@ function UnifiedTheoryPage() {
       
       // Try real physics API via canonical endpoint (dev proxy / explicit prod base)
       const apiUrl = resolveApiUrl(BUBBLE_LATTICE_ENDPOINT);
-      const electrolyteFamily = parameters.electrolyteFamily || 'li';
-      const electrolyteSpecies = resolveElectrolyteSpecies(electrolyteFamily, parameters.electrolyteSpecies);
-      const electrolyteMolarity = parameters.electrolyteMolarityMolL || 0.3;
-      const electrolyteSolventType = parameters.electrolyteSolventType || 'd2o';
-      const electrolytePhProxy = typeof parameters.electrolytePhProxy === 'number'
-        ? Math.max(0, Math.min(14, parameters.electrolytePhProxy))
-        : null;
-      const electrolyteIonicStrengthProxy = typeof parameters.electrolyteIonicStrengthProxy === 'number'
-        ? Math.max(0, parameters.electrolyteIonicStrengthProxy)
-        : null;
-      const requestPayload = {
-        bubble: {
-          initial_radius_um: parameters.initialBubbleRadius * 3.33,
-          driving_pressure_bar: parameters.drivingPressure,
-          frequency_khz: parameters.frequency,
-          ambient_temperature_k: parameters.temperature
-        },
-        material: {
-          host_material: parameters.hostMaterial,
-          reactant: parameters.reactant
-        },
-        lattice: {
-          loading_ratio: parameters.loadingRatio,
-          defect_density: parameters.defectDensity || 1e16,
-          surface_roughness: parameters.surfaceRoughness || 5e-9,
-          grain_size: parameters.grainSize || 50e-9,
-          electrolyte_family: electrolyteFamily,
-          electrolyte_species: electrolyteSpecies,
-          electrolyte_molarity_mol_l: electrolyteMolarity,
-          solvent_type: electrolyteSolventType,
-          ph_proxy: electrolytePhProxy,
-          ionic_strength_proxy: electrolyteIonicStrengthProxy,
-        },
-        electrolyte: {
-          family: electrolyteFamily,
-          species: electrolyteSpecies,
-          molarity_mol_l: electrolyteMolarity,
-          solvent_type: electrolyteSolventType,
-          ph_proxy: electrolytePhProxy,
-          ionic_strength_proxy: electrolyteIonicStrengthProxy,
-        },
-        num_cycles: parameters.numCycles || 2,
-        // Additive reaction-rate engine / UQ controls (v0.3.6-beta).
-        rate_mode: rateMode,
-        include_uncertainty: includeUncertainty,
-        uncertainty_samples: uncertaintySamples,
-        random_seed:
-          randomSeed === '' || randomSeed === null ? null : Number(randomSeed),
-      };
+      const requestPayload = buildBubbleLatticePayload(parameters, {
+        rateMode,
+        includeUncertainty,
+        uncertaintySamples,
+        randomSeed,
+      });
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -767,26 +736,22 @@ function UnifiedTheoryPage() {
       const t = i / 49;
       let phase, enhancement, radiusFactor;
       
-      if (t < 0.4) {
+      if (t < 0.45) {
         phase = 'EXPANSION';
-        radiusFactor = 1 + 0.3 * Math.sin(t / 0.4 * Math.PI / 2);
+        radiusFactor = 1 + 0.3 * Math.sin(t / 0.45 * Math.PI / 2);
         enhancement = baseEnhancement * 0.1;
-      } else if (t < 0.55) {
+      } else if (t < 0.7) {
         phase = 'COLLAPSE';
-        radiusFactor = 1.3 - 1.15 * ((t - 0.4) / 0.15) ** 2;
-        enhancement = baseEnhancement * (1 + 5 * ((t - 0.4) / 0.15));
-      } else if (t < 0.6) {
+        radiusFactor = 1.3 - 1.15 * ((t - 0.45) / 0.25) ** 2;
+        enhancement = baseEnhancement * (1 + 5 * ((t - 0.45) / 0.25));
+      } else if (t < 0.8) {
         phase = 'MINIMUM';
         radiusFactor = 0.15;
         enhancement = baseEnhancement * tempFactor;
-      } else if (t < 0.7) {
-        phase = 'REBOUND';
-        radiusFactor = 0.15 + 0.5 * ((t - 0.6) / 0.1);
-        enhancement = baseEnhancement * 0.5;
       } else {
-        phase = 'RECOVERY';
-        radiusFactor = 0.65 + 0.35 * ((t - 0.7) / 0.3);
-        enhancement = baseEnhancement * 0.2;
+        phase = 'REBOUND';
+        radiusFactor = 0.15 + 0.5 * ((t - 0.8) / 0.2);
+        enhancement = baseEnhancement * 0.5;
       }
       
       timeline.push({
@@ -797,7 +762,7 @@ function UnifiedTheoryPage() {
         radius_factor: radiusFactor,
         temperature: params.temperature * (1 + (1 / radiusFactor - 1) * 0.3),
         proton_distribution: {
-          FREE: phase === 'EXPANSION' || phase === 'RECOVERY' ? 0.7 : 0.2,
+          FREE: phase === 'EXPANSION' ? 0.7 : 0.2,
           SCREENED: phase === 'COLLAPSE' ? 0.4 : 0.2,
           CAPTURE_READY: phase === 'MINIMUM' ? 0.5 : 0.1,
           NUCLEAR: phase === 'MINIMUM' ? 0.1 : 0
@@ -810,7 +775,7 @@ function UnifiedTheoryPage() {
     return {
       success: true,
       collapse_results: {
-        min_radius_um: params.initialBubbleRadius * 0.15 * 3.33,
+        min_radius_um: params.initialBubbleRadius * 0.15,
         max_temperature_k: cappedTempK,
         max_pressure_bar: 101.325 * compressionRatio ** 4,
         compression_ratio: compressionRatio,
@@ -881,31 +846,6 @@ function UnifiedTheoryPage() {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-  };
-
-  // Prepare chart data
-  const getEnhancementChartData = () => {
-    if (!simulationData?.enhancement_timeline) return [];
-    const baseRadiusUm = (parameters.initialBubbleRadius || 10) * 3.33;
-    return simulationData.enhancement_timeline.map(point => ({
-      time: (point.normalized_time * 100).toFixed(0) + '%',
-      enhancement: Math.log10(Math.max(1, point.enhancement)),
-      electrolyteMultiplier: point.electrolyte_multiplier || simulationData.electrolyte_diagnostics?.activity_multiplier || 1.0,
-      temperature: point.temperature_k ?? point.temperature,
-      radius: point.radius_factor
-        ? point.radius_factor * 100
-        : point.radius_um
-          ? (point.radius_um / Math.max(baseRadiusUm, 0.001)) * 100
-          : 100
-    }));
-  };
-
-  const getProtonPhaseChartData = () => {
-    if (!simulationData?.enhancement_timeline) return [];
-    return simulationData.enhancement_timeline.map(point => ({
-      time: (point.normalized_time * 100).toFixed(0) + '%',
-      ...point.proton_distribution
-    }));
   };
 
   // Export simulation results as JSON
@@ -1024,7 +964,12 @@ function UnifiedTheoryPage() {
       return [
         entry.normalized_time?.toFixed(4) || '',
         entry.phase || '',
-        entry.radius_um?.toFixed(4) || (entry.radius_factor ? (entry.radius_factor * 3.33).toFixed(4) : ''),
+        // radius_factor is dimensionless R/R0; convert to um with the true
+        // initial radius (previously multiplied by a bare 3.33 "scale").
+        entry.radius_um?.toFixed(4)
+          || (entry.radius_factor
+            ? (entry.radius_factor * parameters.initialBubbleRadius).toFixed(4)
+            : ''),
         entry.temperature_k?.toFixed(1) || entry.temperature?.toFixed(1) || '',
         entry.pressure_bar?.toFixed(1) || '',
         entry.enhancement?.toExponential(4) || '',
@@ -1418,7 +1363,7 @@ function UnifiedTheoryPage() {
                     onChange={(_, v) => handleParameterChange('initialBubbleRadius', v)}
                     min={1}
                     max={50}
-                    step={0.5}
+                    step={0.1}
                     disabled={isLoading}
                     size="small"
                   />
@@ -1569,6 +1514,31 @@ function UnifiedTheoryPage() {
             >
               {isLoading ? 'Calculating...' : 'Run Physics Simulation'}
             </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              fullWidth
+              sx={{ mt: 1 }}
+              startIcon={
+                streamStatus === STREAM_STATUS.streaming || streamStatus === STREAM_STATUS.connecting
+                  ? <CircularProgress size={18} />
+                  : <BoltIcon />
+              }
+              onClick={() => {
+                if (streamStatus === STREAM_STATUS.streaming || streamStatus === STREAM_STATUS.connecting) {
+                  stopStream();
+                  return;
+                }
+                setActiveTab(0);
+                startStream();
+              }}
+              disabled={isLoading}
+            >
+              {streamStatus === STREAM_STATUS.streaming || streamStatus === STREAM_STATUS.connecting
+                ? 'Stop Live Stream'
+                : 'Live Stream Collapse'}
+            </Button>
+
             
             {/* Save to Analytics button (v0.2.3-beta) */}
             {simulationData && (
@@ -1739,358 +1709,40 @@ function UnifiedTheoryPage() {
 
             <Box sx={{ mt: 2, minHeight: 500 }}>
               {activeTab === 0 && (
-                <ErrorBoundary
-                  fallback={
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      <Typography variant="h6">Visualization Error</Typography>
-                      <Typography variant="body2">
-                        An error occurred while rendering the 3D visualization. 
-                        Please try refreshing the page or adjusting the parameters.
-                      </Typography>
-                    </Alert>
-                  }
-                >
-                  {simulationData?.electrolyte_diagnostics && (
-                    <Stack direction="row" spacing={1} sx={{ mb: 1 }} flexWrap="wrap" useFlexGap>
-                      <Chip
-                        size="small"
-                        color="info"
-                        label={`Electrolyte multiplier: ${(simulationData.electrolyte_diagnostics.activity_multiplier || 1).toFixed(3)}x`}
-                      />
-                      <Chip
-                        size="small"
-                        color="default"
-                        label={`Species-family consistent: ${simulationData.electrolyte_diagnostics.species_family_consistent ? 'yes' : 'no'}`}
-                      />
-                    </Stack>
-                  )}
-                  <UnifiedBubbleLatticeVisualization
-                    parameters={parameters}
-                    simulationData={simulationData}
-                    onPhaseChange={handlePhaseChange}
-                    onCollapseEvent={handleCollapseEvent}
-                    height={550}
-                  />
-                </ErrorBoundary>
+                <VisualizationPanel
+                  parameters={parameters}
+                  simulationData={simulationData}
+                  streamLatest={streamLatest}
+                  streamStatus={streamStatus}
+                  onPhaseChange={handlePhaseChange}
+                  onCollapseEvent={handleCollapseEvent}
+                />
               )}
 
               {activeTab === 1 && simulationData && (
-                <Box sx={{ height: 450 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Enhancement Factor During Collapse Cycle (log10 scale)
-                  </Typography>
-                  <ResponsiveContainer width="100%" height="90%">
-                    <LineChart data={getEnhancementChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="time" />
-                      <YAxis yAxisId="left" label={{ value: 'log10(Enhancement)', angle: -90, position: 'insideLeft' }} />
-                      <YAxis yAxisId="right" orientation="right" label={{ value: 'Radius %', angle: 90, position: 'insideRight' }} />
-                      <YAxis yAxisId="right2" orientation="right" hide domain={[0.7, 1.2]} />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line yAxisId="left" type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement" strokeWidth={2} />
-                      <Line yAxisId="right" type="monotone" dataKey="radius" stroke="#82ca9d" name="Bubble Radius %" />
-                      <Line yAxisId="right2" type="monotone" dataKey="electrolyteMultiplier" stroke="#ff9800" name="Electrolyte Multiplier" strokeDasharray="5 4" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
+                <EnhancementTimelinePanel
+                  simulationData={simulationData}
+                  parameters={parameters}
+                />
               )}
 
               {activeTab === 2 && simulationData && (
-                <Box sx={{ height: 450 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Proton Phase Distribution During Collapse
-                  </Typography>
-                  <ResponsiveContainer width="100%" height="90%">
-                    <LineChart data={getProtonPhaseChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="time" />
-                      <YAxis label={{ value: 'Fraction', angle: -90, position: 'insideLeft' }} />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="FREE" stroke={PHASE_COLORS.free} name="Free (EM)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="SCREENED" stroke={PHASE_COLORS.screened} name="Screened" strokeWidth={2} />
-                      <Line type="monotone" dataKey="CAPTURE_READY" stroke={PHASE_COLORS.capture_ready} name="Capture Ready" strokeWidth={2} />
-                      <Line type="monotone" dataKey="NUCLEAR" stroke={PHASE_COLORS.nuclear} name="Model nuclear-active phase" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
+                <ProtonPhasesPanel simulationData={simulationData} />
               )}
 
               {activeTab === 3 && simulationData && (
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Collapse Results</Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      <Box sx={{ display: 'grid', gap: 1 }}>
-                        <Typography>Min Radius: <strong>{simulationData.collapse_results?.min_radius_um?.toFixed(2)} μm</strong></Typography>
-                        <Typography>Max Temperature: <strong>{simulationData.collapse_results?.max_temperature_k?.toFixed(0)} K</strong></Typography>
-                        <Typography>Max Pressure: <strong>{simulationData.collapse_results?.max_pressure_bar?.toFixed(0)} bar</strong></Typography>
-                        <Typography>Compression Ratio: <strong>{simulationData.collapse_results?.compression_ratio?.toFixed(1)}x</strong></Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography><Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Proton phases influenced by delocalized interface electrons at lattice-electrolyte boundaries.</Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {simulationData.proton_phases && Object.entries(simulationData.proton_phases).map(([phase, fraction]) => (
-                          <Chip
-                            key={phase}
-                            label={`${phase}: ${(fraction * 100).toFixed(0)}%`}
-                            sx={{ bgcolor: PHASE_COLORS[phase.toLowerCase()] || '#888', color: 'white' }}
-                          />
-                        ))}
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  {/* Reaction-Rate Engine governance (v0.3.6-beta) */}
-                  <Grid size={12}>
-                    <Paper sx={{ p: 0 }} variant="outlined">
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 2 }}>
-                        <Typography variant="h6">Reaction-Rate Engine</Typography>
-                        <Tooltip title="What do these claim tiers mean?">
-                          <IconButton size="small" onClick={() => setGlossaryOpen(true)} aria-label="Open governance glossary">
-                            <HelpOutlineIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                      <Divider sx={{ mt: 1 }} />
-                      <ReactionRateGovernancePanel
-                        block={simulationData.reaction_rate_engine}
-                        onOpenGlossary={() => setGlossaryOpen(true)}
-                      />
-                    </Paper>
-                  </Grid>
-
-                  <Grid size={12}>
-                    <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Electrolyte Contribution</Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      <Box sx={{ display: 'grid', gap: 1 }}>
-                        <Typography>
-                          Family: <strong>{simulationData.electrolyte_diagnostics?.electrolyte_family || parameters.electrolyteFamily || 'li'}</strong>
-                        </Typography>
-                        <Typography>
-                          Species: <strong>{simulationData.electrolyte_diagnostics?.electrolyte_species || resolveElectrolyteSpecies(parameters.electrolyteFamily || 'li', parameters.electrolyteSpecies)}</strong>
-                        </Typography>
-                        <Typography>
-                          Activity Multiplier: <strong>{(simulationData.electrolyte_diagnostics?.activity_multiplier || simulationData.peak_conditions?.electrolyte_multiplier || 1).toFixed(3)}x</strong>
-                        </Typography>
-                        <Typography>
-                          Support Level: <strong>{simulationData.electrolyte_diagnostics?.support_level || 'validated'}</strong>
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  
-                  {/* Enhancement Breakdown Chart */}
-                  <Grid size={12}>
-                    <Paper sx={{ p: 2 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>Enhancement Mechanism Breakdown</Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      {(() => {
-                        // Get peak enhancement breakdown from timeline (at minimum phase)
-                        const peakEntry = simulationData.enhancement_timeline?.find(e => e.phase === 'MINIMUM') 
-                          || simulationData.enhancement_timeline?.[Math.floor(simulationData.enhancement_timeline.length / 2)]
-                          || {};
-                        const breakdown = peakEntry.enhancement_breakdown || {};
-                        
-                        // Prepare data for bar chart with log scale values
-                        const mechanismColors = {
-                          screening: '#4caf50',
-                          phonon: '#2196f3',
-                          qed: '#ff9800',
-                          casimir: '#9c27b0',
-                          rydberg: '#f44336',
-                          compression: '#00bcd4',
-                          loading: '#795548'
-                        };
-                        
-                        const chartData = Object.entries(breakdown)
-                          .filter(([key]) => key !== 'total')
-                          .map(([key, value]) => ({
-                            name: key.charAt(0).toUpperCase() + key.slice(1),
-                            value: Math.max(value, 1),
-                            logValue: Math.log10(Math.max(value, 1)),
-                            color: mechanismColors[key] || '#888',
-                            displayValue: Math.max(value, 1).toExponential(1) // Use exponential notation instead of misleading percentage
-                          }))
-                          .sort((a, b) => b.logValue - a.logValue);
-                        
-                        const totalEnhancement = breakdown.total || 1;
-                        
-                        return (
-                          <Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                              <Typography variant="body2" color="text.secondary">
-                                Log10 scale visualization of mechanism contributions
-                              </Typography>
-                              <Chip 
-                                label={`Total: ${totalEnhancement.toExponential(2)}`} 
-                                color="primary" 
-                                size="small"
-                              />
-                            </Box>
-                            <ResponsiveContainer width="100%" height={250}>
-                              <BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 30 }}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis 
-                                  type="number" 
-                                  domain={[0, 'auto']}
-                                  label={{ value: 'Log10(Enhancement)', position: 'bottom', offset: -5 }}
-                                />
-                                <YAxis type="category" dataKey="name" width={75} />
-                                <RechartsTooltip 
-                                  formatter={(value, name, props) => [
-                                    `${props.payload.value.toExponential(2)} (log10 ${props.payload.logValue.toFixed(2)})`,
-                                    'Enhancement'
-                                  ]}
-                                />
-                                <Bar dataKey="logValue" radius={[0, 4, 4, 0]}>
-                                  {chartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                  ))}
-                                </Bar>
-                              </BarChart>
-                            </ResponsiveContainer>
-                            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                              {chartData.map((item) => (
-                                <Chip
-                                  key={item.name}
-                                  label={`${item.name}: ${item.value.toExponential(1)}`}
-                                  size="small"
-                                  sx={{ bgcolor: item.color, color: 'white', fontSize: '0.7rem' }}
-                                />
-                              ))}
-                            </Box>
-                          </Box>
-                        );
-                      })()}
-                    </Paper>
-                  </Grid>
-                  
-                  {/* Parkhomov Transmutation Validation (v0.3.6-beta §3C) */}
-                  {simulationData.transmutation_validation && (
-                    <Grid size={12}>
-                      <Paper sx={{ p: 2 }} variant="outlined">
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="h6" gutterBottom>
-                            Transmutation Validation
-                          </Typography>
-                          {(() => {
-                            const match = simulationData.transmutation_validation.parkhomov_match || 'none';
-                            const total = simulationData.transmutation_validation.total_candidates || 0;
-                            const color = match === 'exact' ? 'success' : match === 'partial' ? 'warning' : 'default';
-                            const label = match === 'none'
-                              ? 'Parkhomov: no match'
-                              : `Parkhomov: ${total} ${match} match${total === 1 ? '' : 'es'}`;
-                            return <Chip label={label} color={color} size="small" />;
-                          })()}
-                        </Box>
-                        <Divider sx={{ mb: 2 }} />
-                        {(simulationData.transmutation_validation.matching_reactions || []).length > 0 ? (
-                          <Box sx={{ display: 'grid', gap: 1 }}>
-                            {simulationData.transmutation_validation.matching_reactions.slice(0, 5).map((rxn, idx) => {
-                              const formatSide = (side) =>
-                                (side || [])
-                                  .map((e) => (e.A > 0 ? `${e.symbol}-${e.A}` : e.symbol))
-                                  .join(' + ');
-                              return (
-                                <Box
-                                  key={idx}
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    p: 1,
-                                    borderRadius: 1,
-                                    bgcolor: 'action.hover',
-                                  }}
-                                >
-                                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                                    {formatSide(rxn.reactants)} {'->'} {formatSide(rxn.products)}
-                                  </Typography>
-                                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                    <Chip label={rxn.category} size="small" variant="outlined" />
-                                    <Chip
-                                      label={`${(rxn.energy_mev || 0).toFixed(2)} MeV`}
-                                      size="small"
-                                      color="primary"
-                                      variant="outlined"
-                                    />
-                                  </Box>
-                                </Box>
-                              );
-                            })}
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            No Parkhomov reactions matched the inferred host/reactant pathway. This
-                            does not invalidate the simulation — the curated table only covers
-                            common Pd-D, Ni-H, Li-H, and Ti-D channels.
-                          </Typography>
-                        )}
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                          Data: Dr. Alexander Parkhomov (2018), LENR Academy (curated subset).
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  )}
-
-                  <Grid size={12}>
-                    <Alert severity="info">
-                      <Typography variant="body2">
-                        The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
-                        Protons transition through force regimes: <strong>EM {'->'} Screened {'->'} Weak Capture {'->'} Nuclear</strong>.
-                        Peak enhancement occurs at minimum bubble radius when compression maximizes field strength.
-                      </Typography>
-                    </Alert>
-                  </Grid>
-                </Grid>
+                <ResultsPanel
+                  simulationData={simulationData}
+                  parameters={parameters}
+                  onOpenGlossary={() => setGlossaryOpen(true)}
+                />
               )}
 
               {activeTab === 4 && (
-                <Box>
-                  {theoryResult?.observables_bridge && (
-                    <Alert severity="info" sx={{ mb: 2 }}>
-                      Observables bridge active: excess heat, helium proxy, and radiation bounds are available from backend contract.
-                    </Alert>
-                  )}
-                  <Alert severity="info" sx={{ mb: 3 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
-                      LENR Theory Testbed
-                    </Typography>
-                    <Typography variant="body2">
-                      Toggle individual theory modules on/off, adjust parameters, and compare
-                      their contributions side-by-side. Run the pipeline to see each theory's
-                      enhancement factor and confidence under the current simulation conditions.
-                    </Typography>
-                  </Alert>
-
-                  <TheoryTogglePanel
-                    conditions={{
-                      temperature: parameters.temperature || 300,
-                      pressure: (parameters.drivingPressure || 1.5) * 101325,
-                      electron_density: 6.8e28,
-                      electric_field: 1e6,
-                      loading_ratio: parameters.loadingRatio || 0.9,
-                      surface_roughness: parameters.surfaceRoughness || 5e-9,
-                      defect_density: parameters.defectDensity || 1e14,
-                      grain_size: parameters.grainSize || 50e-9,
-                      gap_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
-                      crack_width_nm: Math.max(0.5, (parameters.surfaceRoughness || 5e-9) * 1e9),
-                      electrolyte_family: parameters.electrolyteFamily || 'li',
-                      electrolyte_species: resolveElectrolyteSpecies(
-                        parameters.electrolyteFamily || 'li',
-                        parameters.electrolyteSpecies,
-                      ),
-                      electrolyte_molarity_mol_l: parameters.electrolyteMolarityMolL || 0.3,
-                    }}
-                  />
-                </Box>
+                <TheoryTestbedPanel
+                  parameters={parameters}
+                  theoryResult={theoryResult}
+                />
               )}
 
               {activeTab === 5 && (

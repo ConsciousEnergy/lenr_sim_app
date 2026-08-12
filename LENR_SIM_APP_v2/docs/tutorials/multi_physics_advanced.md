@@ -35,7 +35,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
 # API endpoint
-base_url = "http://localhost:8000/api"
+base_url = "http://localhost:8010/api"
 
 # Simulation parameters
 payload = {

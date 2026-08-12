@@ -38,15 +38,20 @@ This document tracks known issues, warnings, and their explanations for the LENR
 
 ---
 
-### 3. Non-Finite Enhancement Capping
+### 3. Enhancement Saturation at the Reporting Ceiling
 
-**Warning:** `Non-finite enhancement calculated, capping to 1e6`
+**Location:** `physics_engine/constants.py`, `physics_engine/enhancement_saturation.py`
 
-**Location:** `unified_lenr_model.py`
+**Explanation:** The canonical ceiling is `MAX_ENHANCEMENT_FACTOR = 1e5`, the
+claim-tier governance limit, not `1e6`. The legacy `1e6` numeric guard survives only
+in `unified_lenr_model/screening.py`; every other path imports the canonical value.
 
-**Explanation:** When electron screening calculations produce extremely high enhancement factors (approaching infinity), they are capped to 10^6 for numerical stability.
+When a mechanism exceeds the ceiling it is reported *at* the ceiling with
+`is_saturated: true` plus `log10_value_raw`, so a clamped value is distinguishable
+from a computed one. Saturated values are reporting limits, not predictions.
 
-**Impact:** Low - capped values still represent significant enhancement
+**Impact:** Low, and now explicit in the response rather than silent. See
+`PHYSICS_EQUATION_VERIFICATION.md` §9A/§9C.
 
 ---
 
@@ -64,13 +69,16 @@ This document tracks known issues, warnings, and their explanations for the LENR
 
 ---
 
-### 2. Webpack Deprecation Warnings
+### 2. Vite CJS Node API Notice
 
-**Warning:** `onAfterSetupMiddleware` / `onBeforeSetupMiddleware` deprecated
+**Warning:** `The CJS build of Vite's Node API is deprecated.`
 
-**Explanation:** Create React App uses deprecated webpack-dev-server options.
+**Explanation:** The Vite config is loaded through the CommonJS entry point. The
+frontend migrated off Create React App and webpack-dev-server during v0.3.6-beta,
+so the old `onAfterSetupMiddleware` / `onBeforeSetupMiddleware` deprecations no
+longer occur.
 
-**Impact:** None - future CRA update will resolve this
+**Impact:** None - informational; resolves when the config moves to ESM
 
 ---
 
@@ -118,4 +126,4 @@ When running the application, the following should be monitored:
 2. API response times (logged via middleware)
 3. Simulation timeout errors (30s default)
 
-For detailed API documentation, visit `http://localhost:8000/api/docs` when the backend is running.
+For detailed API documentation, visit `http://localhost:8010/api/docs` when the backend is running.

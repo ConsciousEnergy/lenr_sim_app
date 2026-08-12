@@ -20,7 +20,7 @@ function Home() {
             Launch Simulation
           </Link>
           <Link 
-            to="/results" 
+            to="/simulations" 
             className="bg-secondary-600 hover:bg-secondary-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md"
           >
             View Results

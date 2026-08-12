@@ -52,6 +52,15 @@ PHYSICAL_CONSTANTS = {
 # Set to 10^5 as the default ceiling; configurable per simulation run.
 MAX_ENHANCEMENT_FACTOR: float = 1e5
 
+# Schwinger critical field E_cr = m_e^2 c^3 / (e hbar) ≈ 1.323285e18 V/m.
+# Derived from CODATA via scipy.constants (see PHYSICS_EQUATION_VERIFICATION §9C.2).
+SCHWINGER_CRITICAL_FIELD_V_M: float = (
+    constants.m_e**2 * constants.c**3 / (constants.e * constants.hbar)
+)
+
+# Leading Heisenberg–Euler vacuum-polarisation coefficient 2*alpha/(45*pi).
+QED_VACUUM_COEFFICIENT: float = 2.0 * constants.alpha / (45.0 * np.pi)
+
 # Miles heat-helium correlation: D + D -> He-4 + 23.8 MeV (all as heat)
 # 1 Watt of excess heat = 2.63e11 He-4 atoms/second  (Miles 1990)
 MILES_HEAT_HELIUM_RATE: float = 2.63e11  # He-4 atoms per second per watt
@@ -110,7 +119,7 @@ DEFAULT_CONFIG = {
     "spring_constant": 10.0,      # Spring constant for lattice dynamics
     "debye_temperature": 275.0,   # Debye temperature for Pd
     "work_function": 5.12,        # Work function for Pd in eV
-    "fermi_energy": 7.0,          # Fermi energy for Pd in eV
+    "fermi_energy": 6.1,          # Free-electron E_F for Pd in eV (from n_e=6.8e28 m^-3)
     "screening_length": 5e-11,    # Electron screening length in meters
     
     # Advanced model parameters
@@ -228,10 +237,16 @@ def calculate_derived_parameters(config: Dict[str, Any]) -> Dict[str, Any]:
         config["constants"]["e"]**2 / (4 * np.pi * config["constants"]["epsilon_0"] * 2e-15)
     ) * config["constants"]["J_to_eV"]  # Value in eV
     
-    # Gamow factor for tunneling (approximate for D-D)
+    # Gamow exponent 2*pi*eta for D-D at the thermal energy:
+    # 2*pi*eta = pi*alpha*sqrt(2*mu*c^2/E) with mu = m_d/2, i.e.
+    # pi*alpha*sqrt(m_d*c^2/E). Rest energy is converted to eV so the ratio
+    # is dimensionless (a previous version divided joules by eV).
+    m_d_c2_eV = (
+        config["constants"]["m_d"] * config["constants"]["c"]**2
+        * config["constants"]["J_to_eV"]
+    )
     derived["gamow_factor_dd"] = np.pi * config["constants"]["alpha"] * np.sqrt(
-        config["constants"]["m_d"] * config["constants"]["c"]**2 * 0.5 / 
-        derived["thermal_energy_eV"]
+        m_d_c2_eV / derived["thermal_energy_eV"]
     )
     
     # Phonon-assisted tunneling factor

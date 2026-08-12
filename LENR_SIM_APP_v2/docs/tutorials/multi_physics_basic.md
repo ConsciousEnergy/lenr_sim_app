@@ -27,7 +27,7 @@ Before starting, it's important to understand the key parameters for our simulat
 Send a POST request to the `/api/multi-physics/simulations` endpoint with your simulation parameters:
 
 ```bash
-curl -X POST http://localhost:8000/api/multi-physics/simulations \
+curl -X POST http://localhost:8010/api/multi-physics/simulations \
   -H "Content-Type: application/json" \
   -d '{
     "domain_size": [0.01, 0.01, 0.01],
@@ -50,7 +50,7 @@ curl -X POST http://localhost:8000/api/multi-physics/simulations \
 import requests
 import json
 
-url = "http://localhost:8000/api/multi-physics/simulations"
+url = "http://localhost:8010/api/multi-physics/simulations"
 payload = {
     "domain_size": [0.01, 0.01, 0.01],
     "resolution": [10, 10, 10],
@@ -87,7 +87,7 @@ Save this simulation ID, as you'll need it to check the status and retrieve resu
 While the simulation is running, you can check its status by sending a GET request to the `/api/multi-physics/simulations/{simulation_id}/status` endpoint:
 
 ```bash
-curl -X GET http://localhost:8000/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/status
+curl -X GET http://localhost:8010/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/status
 ```
 
 ### Python Example
@@ -97,7 +97,7 @@ import requests
 import time
 
 simulation_id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-status_url = f"http://localhost:8000/api/multi-physics/simulations/{simulation_id}/status"
+status_url = f"http://localhost:8010/api/multi-physics/simulations/{simulation_id}/status"
 
 # Poll status until simulation is complete
 while True:
@@ -130,7 +130,7 @@ Continue polling until the status changes to "completed".
 Once the simulation is complete, retrieve the results by sending a GET request to the `/api/multi-physics/simulations/{simulation_id}/results` endpoint:
 
 ```bash
-curl -X GET http://localhost:8000/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/results
+curl -X GET http://localhost:8010/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6/results
 ```
 
 ### Python Example
@@ -139,7 +139,7 @@ curl -X GET http://localhost:8000/api/multi-physics/simulations/3fa85f64-5717-45
 import requests
 import matplotlib.pyplot as plt
 
-results_url = f"http://localhost:8000/api/multi-physics/simulations/{simulation_id}/results"
+results_url = f"http://localhost:8010/api/multi-physics/simulations/{simulation_id}/results"
 response = requests.get(results_url)
 results = response.json()
 
@@ -190,7 +190,7 @@ For a basic simulation like this, you might not see significant temperature incr
 When you're done with the simulation, you can delete it to free up server resources:
 
 ```bash
-curl -X DELETE http://localhost:8000/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6
+curl -X DELETE http://localhost:8010/api/multi-physics/simulations/3fa85f64-5717-4562-b3fc-2c963f66afa6
 ```
 
 ### Python Example
@@ -198,7 +198,7 @@ curl -X DELETE http://localhost:8000/api/multi-physics/simulations/3fa85f64-5717
 ```python
 import requests
 
-delete_url = f"http://localhost:8000/api/multi-physics/simulations/{simulation_id}"
+delete_url = f"http://localhost:8010/api/multi-physics/simulations/{simulation_id}"
 response = requests.delete(delete_url)
 print(response.json())
 ```

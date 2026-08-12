@@ -45,9 +45,40 @@ def test_bubble_lattice_threshold_boundary_has_reason_code() -> None:
         "missing_phase_data",
         "inconsistent_mode",
     }
-    assert payload["peak_conditions"]["enhancement_factor"] <= 1e5
-    if payload["peak_conditions"]["enhancement_factor"] >= 1e5:
+    peak = payload["peak_conditions"]
+    assert peak["enhancement_factor"] <= 1e5
+    if peak["enhancement_factor"] >= 1e5:
         assert payload["proton_phases"]["NUCLEAR"] > 0.0
+
+    # The 1e5 ceiling is a claim-tier display limit, so a saturated value must be
+    # declared as such rather than passed off as a computed result. Without this the
+    # gate would accept a breakdown whose mechanisms had all been silently flattened
+    # to the ceiling.
+    saturation = peak["enhancement_breakdown"]["saturation"]
+    assert saturation["ceiling"] == 1e5
+    for mechanism, detail in saturation["mechanisms"].items():
+        assert detail["value"] <= saturation["ceiling"], mechanism
+        assert isinstance(detail["is_saturated"], bool), mechanism
+        # A saturated mechanism must still expose its true magnitude.
+        if detail["is_saturated"]:
+            assert detail["log10_value_raw"] is not None, mechanism
+
+    # Peak conditions must declare which physical ceilings bound them.
+    limits = payload["collapse_results"]["limits"]
+    for quantity in ("temperature_k", "pressure_pa", "compression_ratio"):
+        assert quantity in limits, quantity
+        assert limits[quantity]["value"] <= limits[quantity]["ceiling"] * (1 + 1e-9)
+
+    # Proton phases are a normalised distribution, not an arbitrary set of weights.
+    phases = payload["proton_phases"]
+    assert math.isclose(sum(phases.values()), 1.0, abs_tol=1e-6)
+
+    # Timeline and peak must come from one collapse model, not two.
+    for point in payload["enhancement_timeline"]:
+        assert point["collapse_model"] in {
+            "rayleigh_plesset_trajectory",
+            "analytic_envelope",
+        }
 
 
 def test_theory_pipeline_exposes_overlap_composition_provenance() -> None:

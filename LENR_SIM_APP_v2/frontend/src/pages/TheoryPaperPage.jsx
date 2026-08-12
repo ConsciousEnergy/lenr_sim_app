@@ -177,7 +177,7 @@ const TheoryPaperPage = () => {
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Key Equations Quick Reference
               </Typography>
-              <Tooltip title="These equations are implemented in the simulation engine. Click 'Try it' to use them.">
+              <Tooltip title="Most of these equations have a direct counterpart in the simulation engine; some mechanisms are represented by phenomenological multipliers rather than a literal solve, and the Poisson-Schrodinger coupling is not yet solved self-consistently. Click 'Try it' to run the implemented path.">
                 <InfoOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
               </Tooltip>
             </Box>
@@ -831,11 +831,23 @@ const TheoryPaperPage = () => {
                 </ListItem>
               </List>
 
-              <Alert severity="success" sx={{ mt: 2 }}>
-                <AlertTitle><strong>Typical Results</strong></AlertTitle>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                <AlertTitle>
+                  <strong>Reported Results</strong>
+                  <Chip
+                    label="empirical LENR correlation"
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                </AlertTitle>
                 <Typography variant="body2">
-                  Up to 50% excess heat relative to electrical input. Helium-4 and tritium production. 
-                  Detectable neutron flux, albeit low-level compared to conventional nuclear reactions.
+                  Reported in the literature: up to 50% excess heat relative to electrical
+                  input, helium-4 and tritium production, and low-level neutron flux
+                  compared with conventional nuclear reactions. These are reported
+                  experimental observations with contested reproducibility, not outputs
+                  this simulation predicts or validates.
                 </Typography>
               </Alert>
 
@@ -1129,7 +1141,9 @@ const TheoryPaperPage = () => {
                       ['2.4 Hydroton / NAE', 'nae_model (hydroton: legacy/deprecated)', '/unified-theory'],
                       ['2.5 Casimir', 'casimir_confinement', '/unified-theory?tab=casimir'],
                       ['2.6 BEC / Kim', 'kim_bec', '/unified-theory'],
-                      ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips', '/unified-theory'],
+                      // app/physics/oppenheimer_phillips.py exists but is not a
+                      // registered TheoryModule, so it cannot be run from the testbed.
+                      ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips (not registered in pipeline)', 'not runnable'],
                       ['2.8 Tunneling', 'quantum_tunneling', '/unified-theory'],
                       ['6.1 Takahashi TSC', 'takahashi_tsc', '/unified-theory'],
                       ['6.2 Hagelstein Phonon', 'hagelstein_phonon', '/unified-theory'],

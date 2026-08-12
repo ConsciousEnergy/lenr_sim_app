@@ -264,27 +264,35 @@ def get_database_url(
     
     Priority:
     1. Explicit parameters
-    2. Environment variables (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
+    2. Environment variables — unprefixed ``DB_*`` or ``LENR_DB_*``
+       (Pydantic Settings uses the ``LENR_`` prefix; Swarm stack sets both)
     3. SQLite fallback for development
     
     Returns:
         Async database URL string
     """
+    def _env(*names: str, default: Optional[str] = None) -> Optional[str]:
+        for name in names:
+            value = os.getenv(name)
+            if value is not None and value != "":
+                return value
+        return default
+
     # Check for explicit PostgreSQL configuration
-    host = db_host or os.getenv("DB_HOST")
-    port = db_port or int(os.getenv("DB_PORT", "5432"))
-    user = db_user or os.getenv("DB_USER")
-    name = db_name or os.getenv("DB_NAME")
+    host = db_host or _env("DB_HOST", "LENR_DB_HOST")
+    port = db_port or int(_env("DB_PORT", "LENR_DB_PORT", default="5432") or "5432")
+    user = db_user or _env("DB_USER", "LENR_DB_USER")
+    name = db_name or _env("DB_NAME", "LENR_DB_NAME")
     
     # Try to get password from file (Docker secrets) or env var
     password = db_password
     if not password:
-        password_file = os.getenv("DB_PASSWORD_FILE")
+        password_file = _env("DB_PASSWORD_FILE", "LENR_DB_PASSWORD_FILE")
         if password_file and os.path.exists(password_file):
-            with open(password_file, 'r') as f:
+            with open(password_file, 'r', encoding='utf-8') as f:
                 password = f.read().strip()
         else:
-            password = os.getenv("DB_PASSWORD")
+            password = _env("DB_PASSWORD", "LENR_DB_PASSWORD")
     
     # If we have PostgreSQL config, build the URL
     if host and user and password and name:

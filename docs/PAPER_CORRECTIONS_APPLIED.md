@@ -105,8 +105,11 @@ V_{\text{screened}}(r) = \frac{Ze^2}{4\pi\epsilon_0 r} e^{-k_{\text{TF}} r}
 where the Thomas-Fermi screening wavevector is:
 
 \[
-k_{\text{TF}} = \sqrt{\frac{3e^2 n_e}{2E_F}} = \sqrt{\frac{3e^2 n_e m_e}{2\hbar^2 (3\pi^2 n_e)^{2/3}}}
+k_{\text{TF}} = \sqrt{\frac{3e^2 n_e}{2\epsilon_0 E_F}} = \sqrt{\frac{3e^2 n_e m_e}{2\epsilon_0 \hbar^2 (3\pi^2 n_e)^{2/3}}}
 \]
+
+(SI form; an earlier revision omitted the \( \epsilon_0 \), mixing Gaussian
+and SI conventions.)
 
 For typical metal densities (\( n_e \approx 10^{29} \) m⁻³), \( k_{\text{TF}} \approx 10^{10} \) m⁻¹, giving a screening length of \( \lambda_{\text{TF}} = 1/k_{\text{TF}} \approx 0.1 \) nm.
 
@@ -122,7 +125,13 @@ For D+D reactions with \( E \approx 0.1 \) eV and \( k_{\text{TF}} \approx 10^{1
 f_{\text{screening}} \approx \exp(0.1-1) \approx 1.1-2.7
 \]
 
-This provides a more quantitative foundation for screening calculations.
+Note this static Thomas-Fermi estimate is far below the measured anomalous
+screening potentials in metals (e.g. Pd \( U_e \approx 800 \) eV, collected
+in `screening_data.py`); the production code therefore uses the
+Assenbaum-Rolfs form \( f = \exp(\pi \eta U_e / E) \) with cited
+material-dependent \( U_e \) rather than a Thomas-Fermi-derived value. The
+gap between the static estimate and measured values is an open question
+(see ISSUE_LEDGER C1).
 
 ---
 

@@ -1,6 +1,6 @@
 # LENR Unified Framework Paper — Issue Ledger
 
-**Source:** [A Unified Theoretical Framework for Low-Energy Nuclear Reactions_ Integrating Quantum, Nuclear, and Condensed Matter Phenomena (1).md](A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum,%20Nuclear,%20and%20Condensed%20Matter%20Phenomena%20(1).md)  
+**Source:** [A_Unified_Theoretical_Framework_for_LENR.md](A_Unified_Theoretical_Framework_for_LENR.md)  
 **Audit date:** 2025-02-15  
 **Status:** Atomic issues for Tier A (hard blockers) and Tier B (speculative / needs-derivation)
 

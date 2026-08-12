@@ -37,6 +37,21 @@ export interface TheoryContributionResult {
   references: string[];
 }
 
+/** How the pipeline assembled `combined_enhancement` from group winners. */
+export interface CompositionProvenanceResult {
+  combination_rule?: string;
+  applied_groups?: Array<{
+    group: string;
+    selected_theory: string;
+    rule?: string;
+    candidates?: string[];
+  }>;
+  excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
+  ungrouped_theories?: string[];
+  not_combinable_with?: string[];
+  note?: string;
+}
+
 /** Combined result from the pipeline. */
 export interface TheoryPipelineResult {
   combined_enhancement: number;
@@ -47,6 +62,7 @@ export interface TheoryPipelineResult {
   contract_version?: string;
   observables_bridge?: Record<string, any>;
   analytics_transparency?: Record<string, any>;
+  composition_provenance?: CompositionProvenanceResult;
   per_theory: TheoryContributionResult[];
 }
 
@@ -85,6 +101,9 @@ export interface PhysicsContextType {
   enabledTheories: string[];
   theoryConfigs: Record<string, Record<string, any>>;
   theoryResult: TheoryPipelineResult | null;
+  // Exposed so consumers can clear stale theory results; the value is persisted, so
+  // without a setter a stale run would survive until the tab closed.
+  setTheoryResult: (_data: TheoryPipelineResult | null) => void;
   isLoadingTheories: boolean;
   setEnabledTheories: (_ids: string[]) => void;
   setTheoryConfigs: (_configs: Record<string, Record<string, any>>) => void;
@@ -114,31 +133,78 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
 
   // Theory Testbed state
   const [availableTheories, setAvailableTheories] = useState<TheoryInfo[]>([]);
-  const [enabledTheories, setEnabledTheories] = useState<string[]>([]);
-  const [theoryConfigs, setTheoryConfigs] = useState<Record<string, Record<string, any>>>({});
-  const [theoryResult, setTheoryResult] = useState<TheoryPipelineResult | null>(null);
   const [coupledResult, setCoupledResult] = useState<CoupledPipelineResult | null>(null);
   const [isLoadingTheories, setIsLoadingTheories] = useState(false);
 
-  // Shared simulation result (bubble-lattice response persists across pages and reloads)
-  const [simulationResult, setSimulationResultRaw] = useState<Record<string, any> | null>(() => {
+  /** Read a persisted context value, tolerating quota/private-browsing failures. */
+  const readPersisted = <T,>(key: string): T | null => {
     try {
-      const stored = sessionStorage.getItem('lenr_simulationResult');
-      return stored ? JSON.parse(stored) : null;
+      const stored = sessionStorage.getItem(key);
+      return stored ? (JSON.parse(stored) as T) : null;
     } catch {
       return null;
     }
-  });
+  };
+
+  const writePersisted = (key: string, data: unknown | null) => {
+    try {
+      if (data) {
+        sessionStorage.setItem(key, JSON.stringify(data));
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch { /* quota exceeded or private browsing */ }
+  };
+
+  // Theory selection is persisted so a selection made on the dashboard card is
+  // still in force after navigating to the full testbed, and so a reload does
+  // not silently reset to "all theories enabled" while a stale theoryResult
+  // (which IS persisted) still reflects the narrower selection.
+  const [enabledTheories, setEnabledTheoriesRaw] = useState<string[]>(
+    () => readPersisted<string[]>('lenr_enabledTheories') || [],
+  );
+
+  const setEnabledTheories = useCallback((ids: string[]) => {
+    setEnabledTheoriesRaw(ids);
+    // An empty selection is meaningful (user cleared it), but writePersisted
+    // treats falsy as "remove", so store the array only when non-empty and
+    // clear the key otherwise.
+    writePersisted('lenr_enabledTheories', ids.length > 0 ? ids : null);
+  }, []);
+
+  const [theoryConfigs, setTheoryConfigsRaw] = useState<Record<string, Record<string, any>>>(
+    () => readPersisted<Record<string, Record<string, any>>>('lenr_theoryConfigs') || {},
+  );
+
+  const setTheoryConfigs = useCallback((configs: Record<string, Record<string, any>>) => {
+    setTheoryConfigsRaw(configs);
+    writePersisted(
+      'lenr_theoryConfigs',
+      configs && Object.keys(configs).length > 0 ? configs : null,
+    );
+  }, []);
+
+  // Shared simulation result (bubble-lattice response persists across pages and reloads)
+  const [simulationResult, setSimulationResultRaw] = useState<Record<string, any> | null>(
+    () => readPersisted<Record<string, any>>('lenr_simulationResult'),
+  );
 
   const setSimulationResult = useCallback((data: Record<string, any> | null) => {
     setSimulationResultRaw(data);
-    try {
-      if (data) {
-        sessionStorage.setItem('lenr_simulationResult', JSON.stringify(data));
-      } else {
-        sessionStorage.removeItem('lenr_simulationResult');
-      }
-    } catch { /* quota exceeded or private browsing */ }
+    writePersisted('lenr_simulationResult', data);
+  }, []);
+
+  // Theory-pipeline result. Persisted for the same reason as simulationResult: the
+  // Advanced Analysis page reads it on a different route, and without persistence a
+  // reload silently emptied the Theory Summary tab while the simulation-backed tabs
+  // stayed populated, so the page looked ready but never was.
+  const [theoryResult, setTheoryResultRaw] = useState<TheoryPipelineResult | null>(
+    () => readPersisted<TheoryPipelineResult>('lenr_theoryResult'),
+  );
+
+  const setTheoryResult = useCallback((data: TheoryPipelineResult | null) => {
+    setTheoryResultRaw(data);
+    writePersisted('lenr_theoryResult', data);
   }, []);
 
   /** Fetch available theories from the backend. */
@@ -149,8 +215,11 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
       if (!response.ok) throw new Error(`Failed to fetch theories: ${response.statusText}`);
       const data: TheoryInfo[] = await response.json();
       setAvailableTheories(data);
-      // Enable all theories by default on first load
-      if (enabledTheories.length === 0 && data.length > 0) {
+      // Enable all theories by default on first load. A persisted selection
+      // (including a deliberately empty one) must win over this default, so
+      // only seed when nothing has been stored yet.
+      const hasPersistedSelection = readPersisted<string[]>('lenr_enabledTheories') !== null;
+      if (!hasPersistedSelection && enabledTheories.length === 0 && data.length > 0) {
         setEnabledTheories(data.map((t) => t.theory_id));
       }
     } catch (error) {
@@ -158,7 +227,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     } finally {
       setIsLoadingTheories(false);
     }
-  }, [enabledTheories.length]);
+  }, [enabledTheories.length, setEnabledTheories]);
 
   /** Run enabled theories against supplied conditions. */
   const runTheories = useCallback(
@@ -335,6 +404,7 @@ export const PhysicsProvider: React.FC<PhysicsProviderProps> = ({ children }) =>
     enabledTheories,
     theoryConfigs,
     theoryResult,
+    setTheoryResult,
     isLoadingTheories,
     setEnabledTheories,
     setTheoryConfigs,
