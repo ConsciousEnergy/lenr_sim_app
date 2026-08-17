@@ -46,5 +46,5 @@ pytest-xdist==3.8.0
 pytest-benchmark==4.0.0
 matplotlib==3.9.2
 snakeviz==2.2.2
-pytest-profiling==1.7.0
+pytest-profiling==1.8.1
 pytest-html==4.1.1
