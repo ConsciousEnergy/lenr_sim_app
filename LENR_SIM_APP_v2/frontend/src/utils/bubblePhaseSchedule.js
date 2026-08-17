@@ -3,6 +3,11 @@
  *
  * EXPANSION → COLLAPSE → MINIMUM → REBOUND → (repeat)
  * Legacy RECOVERY is treated as EXPANSION.
+ *
+ * Backend timelines store ``normalized_time`` on the acoustic / RP clock, but
+ * label MINIMUM via ``anchor_cycle_fraction`` so the true min-radius sample
+ * sits in the MINIMUM segment. The 3D viz remaps that timeline onto the
+ * visual schedule (MINIMUM at 70–80%) with ``timelineOnVisualClock``.
  */
 
 export const PHASE_SCHEDULE = [
@@ -14,6 +19,23 @@ export const PHASE_SCHEDULE = [
 
 export const CANONICAL_PHASES = PHASE_SCHEDULE.map((entry) => entry.name);
 
+const _MINIMUM_SEGMENT = PHASE_SCHEDULE.find((entry) => entry.name === 'MINIMUM');
+export const MINIMUM_CENTER = (_MINIMUM_SEGMENT.start + _MINIMUM_SEGMENT.end) / 2;
+
+/**
+ * Maps driving frequency in kHz onto visual seconds per cycle.
+ * At 20 kHz the physical period is 50 μs; this scale makes one on-screen
+ * cycle ~2.5 s (50,000×), not 50×.
+ */
+export const VISUAL_CYCLE_SCALE = 0.02;
+
+export function wrapCycleFraction(cycleFraction) {
+  let frac = Number(cycleFraction) % 1;
+  if (Number.isNaN(frac)) return 0;
+  if (frac < 0) frac += 1;
+  return frac;
+}
+
 export function normalizePhaseName(phase) {
   const name = String(phase || 'EXPANSION').trim().toUpperCase();
   if (name === 'RECOVERY') return 'EXPANSION';
@@ -21,10 +43,13 @@ export function normalizePhaseName(phase) {
   return 'EXPANSION';
 }
 
+export function phaseSegment(name) {
+  const target = normalizePhaseName(name);
+  return PHASE_SCHEDULE.find((entry) => entry.name === target) || PHASE_SCHEDULE[0];
+}
+
 export function phaseFromCycleFraction(cycleFraction) {
-  let frac = Number(cycleFraction) % 1;
-  if (Number.isNaN(frac)) return 'EXPANSION';
-  if (frac < 0) frac += 1;
+  const frac = wrapCycleFraction(cycleFraction);
   for (const entry of PHASE_SCHEDULE) {
     if (frac >= entry.start && frac < entry.end) return entry.name;
   }
@@ -32,9 +57,7 @@ export function phaseFromCycleFraction(cycleFraction) {
 }
 
 export function phaseProgressInCycle(cycleFraction) {
-  let frac = Number(cycleFraction) % 1;
-  if (Number.isNaN(frac)) return 0;
-  if (frac < 0) frac += 1;
+  const frac = wrapCycleFraction(cycleFraction);
   for (const entry of PHASE_SCHEDULE) {
     if (frac >= entry.start && frac < entry.end) {
       const width = Math.max(entry.end - entry.start, 1e-12);
@@ -42,6 +65,104 @@ export function phaseProgressInCycle(cycleFraction) {
     }
   }
   return 1;
+}
+
+export function clampMinimumFraction(minimumFraction) {
+  const wrapped = wrapCycleFraction(minimumFraction);
+  return Math.min(Math.max(wrapped, 1e-3), 1.0 - 1e-3);
+}
+
+/**
+ * Acoustic → visual (mirrors backend ``anchor_cycle_fraction``).
+ * Maps the physical min-radius instant onto ``MINIMUM_CENTER``.
+ */
+export function anchorCycleFraction(cycleFraction, minimumFraction) {
+  const frac = wrapCycleFraction(cycleFraction);
+  const m = clampMinimumFraction(minimumFraction);
+  if (frac <= m) {
+    return frac * (MINIMUM_CENTER / m);
+  }
+  return MINIMUM_CENTER + (frac - m) * ((1.0 - MINIMUM_CENTER) / (1.0 - m));
+}
+
+/**
+ * Visual → acoustic. Inverse of ``anchorCycleFraction``.
+ */
+export function unanchorCycleFraction(visualFraction, minimumFraction) {
+  const vis = wrapCycleFraction(visualFraction);
+  const m = clampMinimumFraction(minimumFraction);
+  if (vis <= MINIMUM_CENTER) {
+    return vis * (m / MINIMUM_CENTER);
+  }
+  return m + (vis - MINIMUM_CENTER) * ((1.0 - m) / (1.0 - MINIMUM_CENTER));
+}
+
+/**
+ * Acoustic cycle fraction of the smallest radius sample on an API timeline.
+ */
+export function minimumFractionFromTimeline(timeline) {
+  if (!Array.isArray(timeline) || timeline.length === 0) {
+    return MINIMUM_CENTER;
+  }
+
+  let best = timeline[0];
+  let bestRadius = Number.POSITIVE_INFINITY;
+  timeline.forEach((entry) => {
+    const radius = Number(
+      entry?.radius_factor ?? entry?.radius_um ?? Number.POSITIVE_INFINITY,
+    );
+    if (Number.isFinite(radius) && radius < bestRadius) {
+      bestRadius = radius;
+      best = entry;
+    }
+  });
+
+  const tMin = Number(best?.normalized_time);
+  if (!Number.isFinite(tMin)) return MINIMUM_CENTER;
+  return clampMinimumFraction(tMin);
+}
+
+/**
+ * Convert the 3D viz clock (visual schedule 0–1) into the acoustic
+ * ``normalized_time`` stored on ``enhancement_timeline``.
+ */
+export function visualTimeToTimelineTime(visualTime, timeline) {
+  return unanchorCycleFraction(visualTime, minimumFractionFromTimeline(timeline));
+}
+
+/**
+ * Copy of an acoustic ``enhancement_timeline`` with ``normalized_time`` on the
+ * visual schedule, so a 0–1 animation clock hits MINIMUM at 70–80%.
+ */
+export function timelineOnVisualClock(timeline) {
+  if (!Array.isArray(timeline) || timeline.length === 0) return [];
+  const minimumFraction = minimumFractionFromTimeline(timeline);
+  return timeline
+    .map((entry) => ({
+      ...entry,
+      normalized_time: anchorCycleFraction(entry.normalized_time, minimumFraction),
+    }))
+    .sort((a, b) => Number(a.normalized_time) - Number(b.normalized_time));
+}
+
+export function physicalPeriodMicroseconds(frequencyKhz) {
+  const f = Number(frequencyKhz);
+  if (!Number.isFinite(f) || f <= 0) return 0;
+  return 1e3 / f;
+}
+
+export function visualCycleSeconds(frequencyKhz, scale = VISUAL_CYCLE_SCALE) {
+  const f = Number(frequencyKhz);
+  if (!Number.isFinite(f) || f <= 0 || !(scale > 0)) return 0;
+  return (1 / f) / scale;
+}
+
+export function formatCycleTimeChip(frequencyKhz) {
+  const physUs = physicalPeriodMicroseconds(frequencyKhz);
+  const visS = visualCycleSeconds(frequencyKhz);
+  const physLabel = physUs >= 100 ? `${Math.round(physUs)} μs` : `${physUs.toFixed(0)} μs`;
+  const visLabel = visS >= 10 ? `${Math.round(visS)}s vis` : `~${visS.toFixed(1)}s vis`;
+  return `${physLabel} · ${visLabel}`;
 }
 
 /**

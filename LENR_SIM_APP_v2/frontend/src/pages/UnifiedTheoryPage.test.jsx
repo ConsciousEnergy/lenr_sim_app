@@ -53,6 +53,7 @@ describe('UnifiedTheoryPage', () => {
     expect(screen.getByText('Unified Bubble-Lattice LENR Simulation')).toBeInTheDocument();
     expect(screen.getByText('System Configuration')).toBeInTheDocument();
     expect(screen.getByText('Electrolyte System')).toBeInTheDocument();
+    expect(screen.getByText('50 μs · ~2.5s vis')).toBeInTheDocument();
   });
 
   test('includes electrolyte_species in bubble-lattice payload', async () => {
