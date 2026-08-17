@@ -1846,9 +1846,10 @@ const UnifiedBubbleLatticeVisualization = ({
     let radius, phase, compressionRatio, fieldStrength, temperature, pressure, enhancements;
     
     if (apiData) {
-      // Use API physics data
+      // Use API physics data for R(t) / T / E; phase names follow the visual
+      // clock so Expansion → Collapse → Minimum → Rebound match HUD progress.
       radius = baseRadius * apiData.radius_factor;
-      phase = normalizePhaseName(apiData.phase);
+      phase = phaseFromCycleFraction(normalizedTime);
       fieldStrength = apiData.electric_field_v_m ?? apiData.electric_field;
       temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
@@ -3228,7 +3229,7 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small" 
           />
           <Typography variant="caption" color="white">
-            Cycle: {collapseCount} | {currentPhase} {(cycleProgress * 100).toFixed(0)}%
+            Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}% · {currentPhase}
           </Typography>
           <Chip 
             label={`Enhancement: ${currentEnhancement.toExponential(2)}`}

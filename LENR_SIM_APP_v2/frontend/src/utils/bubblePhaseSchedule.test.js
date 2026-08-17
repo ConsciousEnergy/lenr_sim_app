@@ -62,6 +62,42 @@ describe('bubblePhaseSchedule', () => {
     });
   });
 
+  test('walking the visual clock yields Expansion → Collapse → Minimum → Rebound with min radius at MINIMUM', () => {
+    const timeline = [
+      { normalized_time: 0.0, phase: 'EXPANSION', radius_factor: 1.25 },
+      { normalized_time: 0.10, phase: 'EXPANSION', radius_factor: 0.9 },
+      { normalized_time: 0.22, phase: 'MINIMUM', radius_factor: 0.12 },
+      { normalized_time: 0.40, phase: 'REBOUND', radius_factor: 0.4 },
+      { normalized_time: 0.75, phase: 'EXPANSION', radius_factor: 1.1 },
+      { normalized_time: 0.99, phase: 'EXPANSION', radius_factor: 1.2 },
+    ];
+    const remapped = timelineOnVisualClock(timeline);
+    const radiusAt = (visualTime) => {
+      let lower = remapped[0];
+      let upper = remapped[remapped.length - 1];
+      for (let i = 0; i < remapped.length - 1; i += 1) {
+        if (
+          remapped[i].normalized_time <= visualTime
+          && remapped[i + 1].normalized_time >= visualTime
+        ) {
+          lower = remapped[i];
+          upper = remapped[i + 1];
+          break;
+        }
+      }
+      const range = upper.normalized_time - lower.normalized_time;
+      const t = range > 0 ? (visualTime - lower.normalized_time) / range : 0;
+      return lower.radius_factor + (upper.radius_factor - lower.radius_factor) * t;
+    };
+
+    expect(phaseFromCycleFraction(0.20)).toBe('EXPANSION');
+    expect(phaseFromCycleFraction(0.55)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.75)).toBe('MINIMUM');
+    expect(phaseFromCycleFraction(0.90)).toBe('REBOUND');
+    expect(radiusAt(0.75)).toBeLessThan(radiusAt(0.20));
+    expect(radiusAt(0.75)).toBeLessThan(radiusAt(0.90));
+  });
+
   test('visual viz clock looks up the acoustic min-radius sample at MINIMUM', () => {
     const timeline = [
       { normalized_time: 0.0, phase: 'EXPANSION', radius_factor: 1.2 },
