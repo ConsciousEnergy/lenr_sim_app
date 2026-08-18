@@ -66,6 +66,7 @@ import {
   buildBubbleLatticePayload,
   framesToStreamPreview,
 } from '../utils/bubbleLatticePayload';
+import { formatCycleTimeChip } from '../utils/bubblePhaseSchedule';
 import { ENHANCEMENT_THRESHOLDS } from '../utils/unifiedTheoryCharts';
 import { useBubbleLatticeStream, STREAM_STATUS } from '../hooks/useBubbleLatticeStream';
 import { track } from '../analytics/events';
@@ -1328,7 +1329,7 @@ function UnifiedTheoryPage() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
                 <Typography variant="subtitle2">Frequency: {parameters.frequency} kHz</Typography>
                 <Chip 
-                  label={`~${Math.round((1 / parameters.frequency) / 0.02)}s cycle`} 
+                  label={formatCycleTimeChip(parameters.frequency)} 
                   size="small" 
                   color="info" 
                   sx={{ fontSize: '0.65rem' }} 
@@ -1343,7 +1344,7 @@ function UnifiedTheoryPage() {
                 disabled={isLoading}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                Higher frequency = faster cycles (visualization slowed 50x for observation)
+                Higher frequency shortens the physical period (20 kHz = 50 μs). The 3D cycle is stretched to a few seconds so Expansion → Collapse → Minimum → Rebound can be watched.
               </Typography>
             </Box>
 
