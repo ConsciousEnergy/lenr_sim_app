@@ -35,8 +35,10 @@ import {
 import {
   normalizePhaseName,
   phaseFromCycleFraction,
-  phaseProgressFromTimeline,
   phaseProgressInCycle,
+  phaseSegment,
+  timelineOnVisualClock,
+  VISUAL_CYCLE_SCALE,
 } from '../../utils/bubblePhaseSchedule';
 
 // Import fluid dynamics effects for vortex visualization
@@ -74,9 +76,9 @@ const _COLLAPSE_PHASES = {
 };
 
 // UX Time Scale: Slow down the physics animation for user comprehension
-// Physical frequency is in kHz (e.g., 20kHz = 50μs cycles) - way too fast to observe
-// This multiplier makes one visual cycle take ~3-5 seconds at default speed
-const UX_TIME_SCALE = 0.02; // Slow down by 50x for visual comprehension
+// Physical frequency is in kHz (e.g. 20 kHz = 50 μs cycles) — too fast to observe.
+// VISUAL_CYCLE_SCALE maps that onto ~2.5 s per on-screen cycle at 20 kHz (50,000×).
+const UX_TIME_SCALE = VISUAL_CYCLE_SCALE;
 
 const HOST_MATERIAL_COLORS = {
   palladium: 0x8b8b8b,
@@ -1825,9 +1827,13 @@ const UnifiedBubbleLatticeVisualization = ({
     
     const baseRadius = initialBubbleRadius;
     
-    // Try to use API simulation data if available, otherwise use local calculations
-    const apiData = simulationData?.enhancement_timeline 
-      ? interpolateFromAPITimeline(simulationData.enhancement_timeline, normalizedTime)
+    // Try to use API simulation data if available, otherwise use local calculations.
+    // Backend timelines are on the acoustic clock with MINIMUM labelled at the
+    // physical min radius; remap onto the visual schedule so Progress 70–80%
+    // is MINIMUM and the bubble is actually smallest then.
+    const visualTimeline = timelineOnVisualClock(simulationData?.enhancement_timeline);
+    const apiData = visualTimeline.length
+      ? interpolateFromAPITimeline(visualTimeline, normalizedTime)
       : null;
     
     // Track whether we're using API data (only update state if changed)
@@ -1840,9 +1846,10 @@ const UnifiedBubbleLatticeVisualization = ({
     let radius, phase, compressionRatio, fieldStrength, temperature, pressure, enhancements;
     
     if (apiData) {
-      // Use API physics data
+      // Use API physics data for R(t) / T / E; phase names follow the visual
+      // clock so Expansion → Collapse → Minimum → Rebound match HUD progress.
       radius = baseRadius * apiData.radius_factor;
-      phase = normalizePhaseName(apiData.phase);
+      phase = phaseFromCycleFraction(normalizedTime);
       fieldStrength = apiData.electric_field_v_m ?? apiData.electric_field;
       temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
@@ -1912,13 +1919,7 @@ const UnifiedBubbleLatticeVisualization = ({
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
       // Prefer timeline segment progress when API data is driving the mesh.
-      const phaseProgress = simulationData?.enhancement_timeline
-        ? phaseProgressFromTimeline(
-          simulationData.enhancement_timeline,
-          normalizedTime,
-          phase,
-        )
-        : phaseProgressInCycle(normalizedTime);
+      const phaseProgress = phaseProgressInCycle(normalizedTime);
       const radiusFactor = radius / Math.max(baseRadius, 1e-12);
       const displayScale = getBubbleDisplayScale({
         radiusFactor,
@@ -1977,7 +1978,11 @@ const UnifiedBubbleLatticeVisualization = ({
         if (jet) jet.visible = false;
       } else if (phase === 'MINIMUM' || phase === 'REBOUND') {
         // Show focused jet (torus collapses into focused jet)
-        const jetProgress = phase === 'MINIMUM' ? 1.0 : Math.max(0, 1 - (normalizedTime - 0.6) / 0.1);
+        const minStart = phaseSegment('MINIMUM').start;
+        const minWidth = Math.max(phaseSegment('MINIMUM').end - minStart, 1e-12);
+        const jetProgress = phase === 'MINIMUM'
+          ? 1.0
+          : Math.max(0, 1 - (normalizedTime - minStart) / minWidth);
         
         if (bubble) bubble.visible = false; // Always hide bubble during minimum/rebound
         if (torus) {
@@ -2048,7 +2053,7 @@ const UnifiedBubbleLatticeVisualization = ({
       // Cavitation point: nucleation site on the lattice surface
       const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
       const bubbleY = bubbleGroupRef.current?.position.y ?? latticeY;
-      const bubbleScale = getBubbleScaleFromPhase(phase, normalizedTime);
+      const bubbleScale = getBubbleScaleFromPhase(phase, phaseProgressInCycle(normalizedTime));
       
       const cavitationPoint = {
         x: 0,
@@ -2314,7 +2319,7 @@ const UnifiedBubbleLatticeVisualization = ({
           nuclearEmissions.visible = true;
           
           // Animate fractal emissions - pulse and expand
-          const emissionIntensity = phase === 'MINIMUM' ? 1.0 : Math.max(0, 1 - (normalizedTime - 0.6) / 0.1);
+          const emissionIntensity = 1.0;
           const time = Date.now() * 0.001; // Slower animation
           
           // Recursively animate all children in the fractal structure
@@ -2367,8 +2372,9 @@ const UnifiedBubbleLatticeVisualization = ({
           reboundNuclear.visible = true;
           
           // Calculate rebound progress (0 to 1 during rebound phase)
-          const reboundStart = 0.6; // Rebound starts at 60% of cycle
-          const reboundProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
+          const reboundStart = phaseSegment('REBOUND').start;
+          const reboundWidth = Math.max(phaseSegment('REBOUND').end - reboundStart, 1e-12);
+          const reboundProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / reboundWidth));
           
           // Primary fusion products emit from lattice (reversed energy flow)
           reboundNuclear.children.forEach((child, _index) => {
@@ -2455,8 +2461,9 @@ const UnifiedBubbleLatticeVisualization = ({
         
         // Shockwave during rebound (expanding from lattice)
         if (shockwave) {
-          const reboundStart = 0.6;
-          const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / 0.1));
+          const reboundStart = phaseSegment('REBOUND').start;
+          const reboundWidth = Math.max(phaseSegment('REBOUND').end - reboundStart, 1e-12);
+          const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / reboundWidth));
           // Shockwave emanates from lattice surface (nucleation site)
           shockwave.position.y = PHYSICS_CONFIG.LATTICE_Y_OFFSET;
           shockwave.material.opacity = 0.8 * (1 - shockProgress);
@@ -3222,7 +3229,7 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small" 
           />
           <Typography variant="caption" color="white">
-            Cycle: {collapseCount} | Progress: {(cycleProgress * 100).toFixed(0)}%
+            Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}% · {currentPhase}
           </Typography>
           <Chip 
             label={`Enhancement: ${currentEnhancement.toExponential(2)}`}

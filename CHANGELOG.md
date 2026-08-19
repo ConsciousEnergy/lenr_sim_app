@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Unified Theory cycle clock (2026-08-17)
+
+- **3D viz phases follow the visual schedule**: API `enhancement_timeline`
+  stores acoustic / Rayleigh–Plesset `normalized_time`, with MINIMUM labelled
+  at the physical min-radius sample (often ~20% of the drive period). The
+  unified-theory animation clock was looking that timeline up 1:1, so Progress
+  ~20% showed MINIMUM (tiny bubble) and ~75% showed EXPANSION (large bubble).
+  The timeline is now remapped onto Expansion 0–45% → Collapse 45–70% →
+  Minimum 70–80% → Rebound 80–100%, and the HUD phase label is taken from that
+  visual clock. Jet / rebound / shockwave cues use the same segments (no more
+  leftover `t - 0.6` from the old three-phase schedule).
+- **Frequency chip units**: 20 kHz is a 50 μs physical period; the on-screen
+  cycle is ~2.5 s (50,000×, not “slowed 50×”). Chip now reads
+  `50 μs · ~2.5s vis`.
+
 ### Math-Accuracy Hardening (2026-08-10)
 
 Pre-public mathematics pass across backend, frontend, and documentation.
