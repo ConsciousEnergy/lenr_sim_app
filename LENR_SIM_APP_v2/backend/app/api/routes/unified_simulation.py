@@ -182,6 +182,13 @@ class SimulationRequest(BaseModel):
         default=None,
         description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
     )
+    # Optional lab ingest for Oracle B. None defaults; never auto-flips rate_mode.
+    excess_power_W: Optional[float] = Field(default=None, ge=0)
+    sigma_Q_W: Optional[float] = Field(default=None, ge=0)
+    he4_atoms_per_s: Optional[float] = Field(default=None, ge=0)
+    gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
+    gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
+    p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
 
 
 class EnhancementFactor(BaseModel):
@@ -248,6 +255,14 @@ class SimulationResponse(BaseModel):
             "optional Sobol/Bayesian uncertainty summary, and shell-pairing "
             "branching prior. Additive; empty unless requested. See "
             "reaction_rate_engine.py / reaction_rate_uq.py / shell_pairing_prior.py."
+        ),
+    )
+    open_questions: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive researcher cockpit (lenr-open-questions-v1): two-oracle "
+            "determination, Q1–Q5 ledger, three-engine composition. Does not "
+            "change contract_version. Never LENR_PROVED."
         ),
     )
 
@@ -426,6 +441,14 @@ async def run_unified_simulation(request: SimulationRequest):
             config, float(result.tunneling_probability), request,
             transmutation_validation,
         )
+        route_mode = "theory_pipeline" if config.use_theory_pipeline else "legacy_unified_model"
+        open_questions = _build_simulate_open_questions(
+            request=request,
+            model=model,
+            result=result,
+            rate_block=reaction_rate_engine_block,
+            route_mode=route_mode,
+        )
 
         return SimulationResponse(
             success=True,
@@ -467,10 +490,50 @@ async def run_unified_simulation(request: SimulationRequest):
             computation_time=float(result.computation_time),
             transmutation_validation=transmutation_validation,
             reaction_rate_engine=reaction_rate_engine_block,
+            open_questions=open_questions,
         )
         
     except Exception as e:
         raise _client_safe_error("Unified simulation error", e)
+
+def _build_simulate_open_questions(
+    *,
+    request: "SimulationRequest",
+    model: Any,
+    result: Any,
+    rate_block: Dict[str, Any],
+    route_mode: str,
+) -> Dict[str, Any]:
+    """Additive cockpit for /simulate. Empty dict on failure."""
+    from app.physics_engine.open_questions import (
+        observations_from_obj,
+        safe_build_open_questions,
+    )
+
+    pipe = getattr(model, "last_pipeline_result", None)
+    pipe_enh = float(pipe.combined_enhancement) if pipe is not None else None
+    legacy = None if pipe is not None else float(result.total_enhancement)
+    enabled = list(request.enabled_theories or [])
+    if not enabled and pipe is not None:
+        enabled = list(pipe.enabled_theories or [])
+    hag = None
+    if pipe is not None:
+        for contrib in pipe.contributions:
+            if getattr(contrib, "theory_id", "") == "hagelstein_phonon":
+                hag = contrib.observables
+                break
+    return safe_build_open_questions(
+        route_mode=route_mode,
+        rate_mode=request.rate_mode,
+        pipeline_combined_enhancement=pipe_enh,
+        legacy_geometric_mean=legacy,
+        rate_block=rate_block,
+        two_body_reference=rate_block.get("two_body_reference"),
+        enabled_theories=enabled,
+        hagelstein_observables=hag,
+        observations=observations_from_obj(request),
+    )
+
 
 def _compose_rate_block(
     config: Any,
@@ -501,6 +564,12 @@ def _compose_rate_block(
 
     rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
     block: Dict[str, Any] = {"rate": rate_result.as_dict()}
+
+    if mode != "two_body":
+        two_body_result = compute_reaction_rate(
+            config, tunneling_probability, mode="two_body"
+        )
+        block["two_body_reference"] = two_body_result.as_dict()
 
     if include_uncertainty:
         from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
@@ -1018,6 +1087,12 @@ class BubbleLatticeRequest(BaseModel):
         default=None,
         description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
     )
+    excess_power_W: Optional[float] = Field(default=None, ge=0)
+    sigma_Q_W: Optional[float] = Field(default=None, ge=0)
+    he4_atoms_per_s: Optional[float] = Field(default=None, ge=0)
+    gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
+    gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
+    p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
 
 
 class BubbleLatticeResponse(BaseModel):
@@ -1068,6 +1143,13 @@ class BubbleLatticeResponse(BaseModel):
             "labelled), optional Sobol/Bayesian uncertainty summary, shell-pairing "
             "branching prior, and KG-RP harmonic-locking diagnostics. Empty unless "
             "the engine could be evaluated. See build_bubble_rate_engine_block."
+        ),
+    )
+    open_questions: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive researcher cockpit (lenr-open-questions-v1). "
+            "Does not change contract_version. Never LENR_PROVED."
         ),
     )
 
@@ -1513,6 +1595,18 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             electrolyte_species=species,
             electrolyte_molarity=molarity,
         )
+        from app.physics_engine.open_questions import (
+            observations_from_obj,
+            safe_build_open_questions,
+        )
+        open_questions = safe_build_open_questions(
+            route_mode="bubble_lattice_legacy",
+            rate_mode=request.rate_mode,
+            bubble_peak_enhancement=float(capped_enhancement),
+            rate_block=reaction_rate_engine_block,
+            two_body_reference=reaction_rate_engine_block.get("two_body_reference"),
+            observations=observations_from_obj(request),
+        )
 
         # Sanitize all float values to ensure JSON compliance
         return BubbleLatticeResponse(
@@ -1604,6 +1698,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             },
             transmutation_validation=transmutation_validation,
             reaction_rate_engine=reaction_rate_engine_block,
+            open_questions=open_questions,
         )
         
     except HTTPException:
