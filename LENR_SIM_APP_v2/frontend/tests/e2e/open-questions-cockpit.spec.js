@@ -67,9 +67,9 @@ test.describe('Open-questions cockpit', () => {
     await unifiedTheoryPage.runSimulationButton().click();
     await unifiedTheoryPage.openResults();
     await expect(page.getByTestId('open-questions-cockpit')).toBeVisible();
-    await expect(page.getByText(/RATE BUDGET DOES NOT CLOSE/i)).toBeVisible();
+    await expect(page.getByText(/Oracle A \/ B status:\s*RATE BUDGET DOES NOT CLOSE/i)).toBeVisible();
     await expect(page.getByText(/Two-body rate budget does not close/i)).toBeVisible();
     await expect(page.getByText('EQ-RATE-2B-NC-01')).toBeVisible();
-    await expect(page.getByText('LENR_PROVED')).toHaveCount(0);
+    await expect(page.getByText('LENR_PROVED', { exact: true })).toHaveCount(0);
   });
 });

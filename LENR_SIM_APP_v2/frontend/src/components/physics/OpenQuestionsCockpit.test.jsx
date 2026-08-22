@@ -43,18 +43,18 @@ const TWO_BODY_OQ = {
 describe('OpenQuestionsCockpit', () => {
   test('prints two-body does not close as a determination', () => {
     render(<OpenQuestionsCockpit openQuestions={TWO_BODY_OQ} />);
-    expect(screen.getByText(/RATE BUDGET DOES NOT CLOSE/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oracle A \/ B status:\s*RATE BUDGET DOES NOT CLOSE/i)).toBeInTheDocument();
     expect(screen.getByText(/Two-body rate budget does not close/i)).toBeInTheDocument();
     expect(screen.getByText('EQ-RATE-2B-NC-01')).toBeInTheDocument();
     expect(screen.getByText('EQ-OPEN-MEV-01')).toBeInTheDocument();
     expect(screen.getByText('Q4 Electron capture')).toBeInTheDocument();
     expect(screen.getByText('Q5 Integrated yield')).toBeInTheDocument();
-    expect(screen.queryByText('LENR_PROVED')).not.toBeInTheDocument();
+    expect(screen.queryByText('LENR_PROVED', { exact: true })).not.toBeInTheDocument();
   });
 
   test('strikes through illegal product and warns on TSC leak', () => {
     render(<OpenQuestionsCockpit openQuestions={TWO_BODY_OQ} />);
-    expect(screen.getByText(/illegal product/i)).toBeInTheDocument();
+    expect(screen.getByText(/illegal product 1e\+10/i)).toBeInTheDocument();
     expect(screen.getByText(/not trapped_state/i)).toBeInTheDocument();
   });
 
@@ -64,8 +64,8 @@ describe('OpenQuestionsCockpit', () => {
         simulationData={{ validation: { route_mode: 'local_fallback' } }}
       />,
     );
-    expect(screen.getByText(/INCONCLUSIVE/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oracle A \/ B status:\s*INCONCLUSIVE/i)).toBeInTheDocument();
     expect(screen.queryByText(/Miles 24/)).not.toBeInTheDocument();
-    expect(screen.queryByText('LENR_PROVED')).not.toBeInTheDocument();
+    expect(screen.queryByText('LENR_PROVED', { exact: true })).not.toBeInTheDocument();
   });
 });
