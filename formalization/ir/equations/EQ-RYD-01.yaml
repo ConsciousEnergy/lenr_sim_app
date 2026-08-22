@@ -1,0 +1,17 @@
+id: EQ-RYD-01
+latex: "E_n = -13.6 eV / n_prin^2"
+symbols:
+  E_n: "Rydberg level energy (eV)"
+  n_prin: "principal quantum number"
+units: eV
+tag: THM
+paper_ref: "§2.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/rydberg_matter.py
+citation_keys:
+  - CODATA_rydberg
+lean_target: LenrFormal.Rydberg
+adopted_value:
+  n_prin: 10
+  E_n_eV: -0.136
+notes: "Exact rational: -136/1000 = -0.136 for n=10."

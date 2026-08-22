@@ -908,6 +908,12 @@ This work presents a unified theoretical and mathematical framework that address
 2. **Scaling Reactor Designs:** Develop larger prototypes with real-time neutron/helium monitoring to push toward commercial viability.  
 3. **Interdisciplinary Collaboration:** Encourage a synergy of nuclear engineers, condensed matter physicists, chemists, and computational scientists to expedite the resolution of outstanding LENR challenges.
 
+### **6.1 Mechanized consistency (Lean)**
+
+A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\), and the Miles \(Q\)-value conversion identity. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
+
+**Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
+
 ---
 
 ## **7\. Mathematical Approaches and Their Relevance to LENR**
@@ -1021,6 +1027,8 @@ Below is a reference list defining the primary symbols and terms used in this pa
 * \( \boldsymbol{f_{\text{enhancement}}} \): Cumulative tunneling-enhancement factor, dimensionless; \( f_{\text{enhancement}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \) (§2.8, §5.1.1).
 * \( \boldsymbol{Q_{\text{nuclear}}, Q_{\text{input}}, Q_{\text{excess}}} \): Energy quantities in calorimetry \([\text{J}]\).
 * \( \boldsymbol{\zeta} \): Generic variable for partition functions or the Riemann zeta function, as context requires.
+
+**Formalization symbol map (IL-015).** In the Lean/IR ledger (`docs/FORMALIZATION/CLAIM_TAXONOMY.md`), overloaded symbols are disambiguated as `E_eigen` / `E_field` / `E_kin`, `n_prin` / `n_dens`, and `R_rate` / `R_bubble` / `R_overlap_count`.
 
 ---
 

@@ -1,0 +1,16 @@
+id: EQ-GAMOW-01
+latex: "eta = Z1 Z2 e^2 / (4 pi eps0 hbar v); P = exp(-2 pi eta)"
+symbols:
+  eta: "Sommerfeld parameter (dimensionless)"
+  P: "Gamow penetration factor"
+  E_kin: "center-of-mass kinetic energy (not E_field)"
+units: "dimensionless"
+tag: DEF
+paper_ref: "§5.1.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/cross_sections.py
+  - LENR_SIM_APP_v2/backend/app/physics/wkb_tunneling.py
+citation_keys:
+  - gamow1928
+lean_target: LenrFormal.Gamow
+notes: "Monotonicity in eta is the Lean THM; full WKB integral is out of pilot."

@@ -1,0 +1,15 @@
+id: EQ-QDD-01
+latex: "Q(D+D->4He) ≈ 23.8 MeV"
+symbols:
+  Q: "reaction Q-value"
+units: MeV
+tag: THM
+paper_ref: "§5.2.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/constants.py
+citation_keys:
+  - nuclear_mass_tables
+lean_target: LenrFormal.Miles
+adopted_value:
+  Q_MeV: 23.8
+notes: "Standard mass-defect identity used by Miles conversion."

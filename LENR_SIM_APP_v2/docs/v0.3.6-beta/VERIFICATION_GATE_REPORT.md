@@ -287,3 +287,23 @@ branch after the changes.
   this slice; upgrading them is tracked as an operator follow-up because the
   starlette pin is coupled to the FastAPI version.
 - Status: **PASS WITH NOTES** (no new findings introduced)
+
+## Formal proof status (Lean consistency pilot)
+
+Sibling oracle to Wolfram numeric verification and pytest empirical gates.
+**Scope:** mathematical consistency of adopted `THM`/`DEF` identities — **not**
+a proof that LENR occurs or that §5A open problems are closed.
+
+- Taxonomy / audit: `docs/FORMALIZATION/CLAIM_TAXONOMY.md`, `MATH_AUDIT_2026.md`
+- Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`
+- Equation IR: `formalization/ir/equations/*.yaml`
+- Commands:
+  - `python formalization/scripts/check_ir.py`
+  - `python formalization/scripts/diff_code_literals.py`
+  - `cd formalization/lean && lake build`
+- CI job: `formalization` in `.github/workflows/test.yml`
+- Proved pilot IDs: EQ-RYD-01, EQ-FIELD-01, EQ-CAS-01/02, EQ-GAMOW-01,
+  EQ-ASSEN-DOM-01, EQ-COMP-01/02, EQ-QDD-01, EQ-MILES-CONV-01
+- Open obligations (unchanged): EQ-OPEN-MEV-01, EQ-OPEN-RAD-01, EQ-OPEN-RATE-01,
+  EQ-OPEN-EC-01, EQ-OPEN-YIELD-01
+- Status: **PASS** (local `lake build` + IR checks, 2026-08-22)
