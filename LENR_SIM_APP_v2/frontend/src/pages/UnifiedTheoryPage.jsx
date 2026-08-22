@@ -6,7 +6,7 @@
  * electrodynamic ionic double-layer collapse onto lattice materials.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import {
   Box,
   Container,
@@ -52,7 +52,7 @@ import IconButton from '@mui/material/IconButton';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
-import VisualizationPanel from '../components/unified-theory/VisualizationPanel';
+const VisualizationPanel = lazy(() => import('../components/unified-theory/VisualizationPanel'));
 import EnhancementTimelinePanel from '../components/unified-theory/EnhancementTimelinePanel';
 import ProtonPhasesPanel from '../components/unified-theory/ProtonPhasesPanel';
 import ResultsPanel from '../components/unified-theory/ResultsPanel';
@@ -1710,14 +1710,29 @@ function UnifiedTheoryPage() {
 
             <Box sx={{ mt: 2, minHeight: 500 }}>
               {activeTab === 0 && (
-                <VisualizationPanel
-                  parameters={parameters}
-                  simulationData={simulationData}
-                  streamLatest={streamLatest}
-                  streamStatus={streamStatus}
-                  onPhaseChange={handlePhaseChange}
-                  onCollapseEvent={handleCollapseEvent}
-                />
+                <Suspense
+                  fallback={
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 500,
+                      }}
+                    >
+                      <CircularProgress aria-label="Loading 3D visualization panel" />
+                    </Box>
+                  }
+                >
+                  <VisualizationPanel
+                    parameters={parameters}
+                    simulationData={simulationData}
+                    streamLatest={streamLatest}
+                    streamStatus={streamStatus}
+                    onPhaseChange={handlePhaseChange}
+                    onCollapseEvent={handleCollapseEvent}
+                  />
+                </Suspense>
               )}
 
               {activeTab === 1 && simulationData && (
