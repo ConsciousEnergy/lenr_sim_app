@@ -78,6 +78,13 @@ tunneling"). No copy overstates evidence relative to its claim tier. New
 UI surfaces in Phase 9 must keep this property (claim-tier chip required next to
 any quantitative claim).
 
+**Timeline-only (not a TheoryModule):** Huang et al. *Sci. Rep.* 14, 214 (2024) and
+the Fomitchev-Zamilov Maximus critique (2024-05-29) are documented in
+[OPEN_QUESTION_CORPUS_GAPS.md](OPEN_QUESTION_CORPUS_GAPS.md) and the Theory Guide.
+They must not be registered as a physics module and must not be folded into Miles
+heat–⁴He. See `EQ-HUANG-EMP-01`. Theory Paper §6.1 TSC and §6.11 Letts copy was
+aligned to claim tiers in the 2026 corpus-honesty pass (TSC remains open SPEC).
+
 ## 4. v0.3.6-beta E2E citation-coherence closure
 
 The reaction-rate engine is now surfaced end-to-end (`/api/unified/bubble-lattice`
@@ -105,6 +112,8 @@ non-additive renumber recorded in the README deferred-restructure backlog. The n
 2026 entries already use canonical keys, so no emitted key is unresolved.
 
 ## Change log
+- 2026-08-22: Huang/Fomitchev timeline-only note; Theory Paper §6.1/§6.11
+  claim-tier alignment. See OPEN_QUESTION_CORPUS_GAPS.md.
 - 2026-06-04: Audit created (Phase 3). Tennfors critique added to widom_larsen.py.
 - 2026-06-06: Closed the bibliography->code orphan check; added the v0.3.6-beta
   citation-coherence closure map (Section 4) after wiring the rate engine E2E.

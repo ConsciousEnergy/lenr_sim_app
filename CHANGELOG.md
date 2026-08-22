@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Corpus honesty + Unified Theory first paint (2026-08-22)
+- Theory Guide timeline: Paneth–Peters (retracted), Tandberg (unproven), Miles EMP, acoustic environment, Letts EMP, Huang 2024 **contested EMP** (Scientific Reports editor's note + Fomitchev-Zamilov critique); Takahashi TSC stays **open SPEC**
+- Theory Paper §6.1 TSC labelled `speculative_exploratory`; §6.11 Letts EMP (not "showed" a controlled trigger)
+- Added `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md` living claim register; `EQ-HUANG-EMP-01` in claim taxonomy (no Lean theorem, not a TheoryModule)
+- Nested `React.lazy` of the bubble-lattice Three.js viz inside `VisualizationPanel` so the Unified Theory shell paints before the `three` chunk
+- Drawer footer: © 2025-2026 plus GNU GPL-3.0 copyleft; ASCII `--` in `start_dev.bat` echo lines (OEM mojibake fix)
+
 ### Formal math review + Lean consistency pilot (2026-08-22)
 - Added claim taxonomy, math audit, and formal proof status under `docs/FORMALIZATION/`
 - Added equation IR (`formalization/ir/`) with checker scripts linking paper ↔ code ↔ Lean

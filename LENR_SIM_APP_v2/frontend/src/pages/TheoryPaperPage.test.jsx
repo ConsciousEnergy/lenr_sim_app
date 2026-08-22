@@ -72,4 +72,22 @@ describe('TheoryPaperPage', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText('Key Equations Quick Reference')).toBeInTheDocument();
   });
+
+  test('Section 6.1 TSC is labelled speculative and remains open', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.1 Takahashi Tetrahedral Symmetric Condensate/)).toBeInTheDocument();
+    expect(screen.getByText(/open speculative channel/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/claim tier: speculative_exploratory/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/trapped_state/)).toBeInTheDocument();
+  });
+
+  test('Section 6.11 Letts is EMP, not a shown controlled trigger', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.11 Letts-Cravens Dual-Laser Stimulation/)).toBeInTheDocument();
+    expect(screen.getAllByText(/empirical LENR correlation/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/showed that irradiating/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/controlled triggering mechanism/i)).not.toBeInTheDocument();
+  });
 });

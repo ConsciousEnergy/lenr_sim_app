@@ -69,6 +69,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-QDD-01 | D+D→⁴He \(Q\approx 23.8\,\mathrm{MeV}\) | §5.2.1 | miles / energy accounting | nuclear data | `THM` | `Miles.lean` |
 | EQ-MILES-CONV-01 | \(N_{\mathrm{He}}\approx P_{\mathrm{W}}/Q\) ⇒ \(\sim 2.63\times 10^{11}\) atoms/s/W at 23.8 MeV | §5.2.2 | `MILES_HEAT_HELIUM_RATE` | conversion identity | `THM` | `Miles.lean` |
 | EQ-MILES-EMP-01 | Miles correlation \(24\pm 4\,\mathrm{MeV}/^4\mathrm{He}\) band | §5.2.2 | gates | miles1993, mckubre2008 | `EMP` | hypothesis |
+| EQ-HUANG-EMP-01 | Huang et al. water-cavitation COP / \(^{22}\)Ne MS claims (contested; *Sci. Rep.* 14, 214) | — | timeline + gap doc only (not a TheoryModule) | huang2024; Fomitchev-Zamilov 2024-05-29 critique | contested `EMP` | no Lean |
 | EQ-CM-BUDGET-01 | Condensed-matter budget capped ~10–100 eV/atom without MeV channel | IL-017 | guardrails | governance | `AX` | — |
 | EQ-OPEN-MEV-01 | MeV energy gap (phonon→nuclear) unsolved | §5A.1 | MEV_GAP_HYPOTHESIS | OPEN | `OPEN` | obligation |
 | EQ-OPEN-RAD-01 | Radiation suppression / no prompt γ | §5A.2 | — | OPEN | `OPEN` | obligation |
@@ -86,4 +87,4 @@ Every row in [TRACEABILITY_MATRIX.md](../REVIEW_2026/TRACEABILITY_MATRIX.md) map
 
 ## Non-claims
 
-No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Widom–Larsen mass renormalization, or MeV-gap closure.
+No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Huang 2024 cavitation COP/\(^{22}\)Ne, Widom–Larsen mass renormalization, or MeV-gap closure. `EQ-HUANG-EMP-01` is contested EMP and does not close `EQ-TSC-01`.
