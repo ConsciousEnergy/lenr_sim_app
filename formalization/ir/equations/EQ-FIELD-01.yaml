@@ -1,0 +1,18 @@
+id: EQ-FIELD-01
+latex: "E_field = DeltaV / d"
+symbols:
+  E_field: "electric field (V/m)"
+  DeltaV: "potential difference (V)"
+  d: "gap (m)"
+units: V/m
+tag: THM
+paper_ref: "§2.3"
+code_refs: []
+citation_keys: []
+lean_target: LenrFormal.Field
+adopted_value:
+  DeltaV_V: 0.1
+  d_m: 1.0e-9
+  E_field_V_m: 1.0e8
+notes: "paper-only code_refs empty is allowed when labelled; algebraic identity."
+paper_only: true

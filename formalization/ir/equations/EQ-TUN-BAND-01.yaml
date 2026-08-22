@@ -1,0 +1,16 @@
+id: EQ-TUN-BAND-01
+latex: "f in [1e3, 1e5]; MAX_ENHANCEMENT_FACTOR = 1e5"
+symbols:
+  f: "phenomenological tunneling enhancement"
+units: "dimensionless"
+tag: AX
+paper_ref: "§2.8; RR-001/IL-002"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/constants.py
+citation_keys:
+  - model_assumption_RR001
+lean_target: LenrFormal.Composition
+adopted_value:
+  f_min: 1000
+  f_max: 100000
+notes: "Axiom / governance band — not a first-principles prediction."

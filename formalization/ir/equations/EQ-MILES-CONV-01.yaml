@@ -1,0 +1,18 @@
+id: EQ-MILES-CONV-01
+latex: "N_He = P_W / Q_J  (atoms/s/W)"
+symbols:
+  N_He: "He-4 atoms per second per watt"
+  P_W: "1 W excess heat"
+  Q_J: "Q-value in joules (23.8 MeV)"
+units: "atoms s^-1 W^-1"
+tag: THM
+paper_ref: "§5.2.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/constants.py
+citation_keys:
+  - miles1993
+lean_target: LenrFormal.Miles
+adopted_value:
+  MILES_HEAT_HELIUM_RATE: 2.63e11
+  Q_MeV: 23.8
+notes: "Conversion identity only; Miles EMP band is separate (EQ-MILES-EMP-01)."

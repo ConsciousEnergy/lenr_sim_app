@@ -1,0 +1,17 @@
+id: EQ-CAS-01
+latex: "F_Casimir = - (pi^2 hbar c / 240) * (A / d^4)"
+symbols:
+  F_Casimir: "Casimir force (N), attractive"
+  A: "plate area (m^2)"
+  d: "separation (m)"
+  hbar: "reduced Planck constant (J s)"
+  c: "speed of light (m/s)"
+units: N
+tag: DEF
+paper_ref: "§2.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/casimir_confinement.py
+citation_keys:
+  - casimir1948
+lean_target: LenrFormal.Casimir
+notes: "Ideal parallel-plate; Lifshitz correction is a separate code path."
