@@ -834,6 +834,22 @@ function UnifiedTheoryPage() {
       // Local fallback has no governed reaction-rate engine; the panel renders a
       // clear "no output" state rather than fabricating numbers (dev/offline only).
       reaction_rate_engine: {},
+      open_questions: {
+        schema: 'lenr-open-questions-v1',
+        route_mode: 'local_fallback',
+        determination: {
+          status: 'INCONCLUSIVE',
+          oracle_b: { note: 'UNAVAILABLE on local_fallback' },
+          oracle_emp: { evaluated: false },
+        },
+        emp_chips: [],
+        lenr_proved: false,
+        q_mev_gap: { id: 'EQ-OPEN-MEV-01', status: 'OPEN' },
+        q_radiation: { id: 'EQ-OPEN-RAD-01', status: 'OPEN' },
+        q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'OPEN' },
+        q_electron_capture: { id: 'EQ-OPEN-EC-01', status: 'OPEN', dimmed: true },
+        q_integrated_yield: { id: 'EQ-OPEN-YIELD-01', status: 'OPEN', dimmed: true },
+      },
     };
   };
 
