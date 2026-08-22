@@ -1,0 +1,15 @@
+id: EQ-RATE-COND-01
+latex: "if n_occ >= n0 and f_nuc >= f0 then n_occ * f_nuc >= n0 * f0"
+symbols:
+  n_occ: "occupation"
+  f_nuc: "nuclear fusion probability"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.RateBudget"
+notes: "Would-close-if conditional. Not a theorem that occupation is large."

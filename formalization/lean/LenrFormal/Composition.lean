@@ -52,4 +52,13 @@ theorem empty_compose_le :
 
 theorem cap_value : maxEnhancementFactor = 100000 := rfl
 
+/-- Illegal product of two already-capped engine totals (EQ-COMP-03). Not physical. -/
+theorem illegal_engine_product_at_cap :
+    maxEnhancementFactor * maxEnhancementFactor = 10000000000 := by
+  native_decide
+
+theorem illegal_product_exceeds_single_cap :
+    maxEnhancementFactor < maxEnhancementFactor * maxEnhancementFactor := by
+  native_decide
+
 end LenrFormal.Composition

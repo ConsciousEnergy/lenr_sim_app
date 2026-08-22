@@ -1,0 +1,15 @@
+id: EQ-QED-HE-NEG-01
+latex: "Heisenberg-Euler 1 + (2 alpha / 45 pi)(E/E_cr)^2 approx 1 at 1e14 V/m"
+symbols:
+  E: "lab electric field"
+  E_cr: "Schwinger critical field"
+units: "dimensionless"
+tag: THM
+paper_ref: "§2.5 / bubble QED vacuum term"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_lattice_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - heisenberg_euler_1936
+lean_target: "LenrFormal.ScaleQED"
+notes: "Milli-unit identity: factor = 1.000. Cannot close MeV gap."

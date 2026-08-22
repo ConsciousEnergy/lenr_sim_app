@@ -1,0 +1,13 @@
+id: EQ-UQ-PRIOR-01
+latex: "default priors: null 0.35, two_body 0.50, trap 0.10, three_body 0.05"
+symbols:
+  pi: "Oracle B prior"
+units: "dimensionless"
+tag: DEF
+paper_ref: "software Oracle B"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+citation_keys:
+  - model_assumption_decision_priors
+lean_target: "LenrFormal.Decision"
+notes: "Skeptical defaults. Engine fusion_probability=1 is not this prior."

@@ -1,0 +1,14 @@
+id: EQ-RATE-REPLACE-01
+latex: "two_body, trapped_state, three_body are alternative formalisms; max < product"
+symbols:
+  rate_mode: "dispatch, not a factor"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.3 RR-006"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.RateBudget"
+notes: "Modes replace; they never multiply. TSC enhancement is not a trapped_state factor."

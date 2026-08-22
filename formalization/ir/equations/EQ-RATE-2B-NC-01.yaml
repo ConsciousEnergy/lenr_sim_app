@@ -1,0 +1,18 @@
+id: EQ-RATE-2B-NC-01
+latex: "log10 N_events = 23 + 12 + 5 - 80 = -40 < 0"
+symbols:
+  N_events: "expected fusion events"
+  P_bare: "10^{-85}"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - model_assumption_RR001
+lean_target: "LenrFormal.RateBudget"
+adopted_value:
+  log10NEvents: -40
+notes: "Two-body budget does not close under f<=1e5. Does not flip EQ-OPEN-RATE-01."

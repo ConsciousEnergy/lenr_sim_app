@@ -7,6 +7,11 @@ import LenrFormal.Gamow
 import LenrFormal.Assenbaum
 import LenrFormal.Composition
 import LenrFormal.Miles
+import LenrFormal.Phonon
+import LenrFormal.RateBudget
+import LenrFormal.NBody
+import LenrFormal.ScaleQED
+import LenrFormal.Decision
 
 /-!
 # LenrFormal — mechanized consistency pilot for Unified LENR Theory

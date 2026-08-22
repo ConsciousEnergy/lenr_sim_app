@@ -1,0 +1,16 @@
+id: EQ-3B-MASS-DOM-01
+latex: "ULM factor claimed only if m*/m_e >= 2.53"
+symbols:
+  m_star: "effective electron mass"
+  m_e: "electron mass"
+units: "dimensionless"
+tag: THM
+paper_ref: "§2.4, §5A.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/widom_larsen.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - widomlarsen2006
+  - tennfors2013
+lean_target: "LenrFormal.NBody"
+notes: "Assenbaum-style domain gate. Formula not claimed below threshold."

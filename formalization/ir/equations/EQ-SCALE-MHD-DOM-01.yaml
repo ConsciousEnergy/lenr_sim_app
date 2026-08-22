@@ -1,0 +1,14 @@
+id: EQ-SCALE-MHD-DOM-01
+latex: "MHD Ha/Rm claimed only for continuum scales; not at nuclear fm"
+symbols:
+  L: "characteristic length"
+  Ha: "Hartmann number"
+units: "m"
+tag: THM
+paper_ref: "software MHD bridge; Assenbaum-style domain"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/mhd/multiscale_bridge.py
+citation_keys:
+  - model_assumption_mhd_domain
+lean_target: "LenrFormal.ScaleQED"
+notes: "Same honesty pattern as EQ-ASSEN-DOM-01."

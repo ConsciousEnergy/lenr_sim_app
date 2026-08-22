@@ -1,0 +1,13 @@
+id: EQ-TSC-OCC-01
+latex: "P_4 = theta^4 * 0.25 is Bernoulli; correlated condensate occupation unconstrained"
+symbols:
+  P_4: "tetrahedral occupation"
+units: "dimensionless"
+tag: OPEN
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+notes: "Does not close EQ-TSC-01 or EQ-OPEN-RATE-01."
