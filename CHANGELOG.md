@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
-### Corpus honesty + Unified Theory first paint (2026-08-22)
+### Open-questions cockpit (2026-08-22)
+- Additive `open_questions` (`lenr-open-questions-v1`) on `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run`: two-oracle determination (Lean identities + skeptical-prior odds), Q1–Q5 ledger with Q4/Q5 dimmed, three-engine composition (pipeline / bubble / legacy) with illegal-product pedagogy, n-body mode ledger, MHD-to-MHD cascade labels
+- Status alphabet includes `RATE_BUDGET_DOES_NOT_CLOSE`; never `LENR_PROVED` / `LENR_DISPROVED_AS_THEOREM`. `local_fallback` stays `INCONCLUSIVE` without EMP chips
+- Optional lab ingest (`excess_power_W`, `he4_atoms_per_s`, `sigma_Q_W`, γ UL, `p_4_occupation`) does **not** auto-flip `rate_mode`; `two_body` reference remains beside SPEC modes
+- Lean: phonon \(N\), naive \(g^N\) fails, two-body does-not-close, would-close-if, `EQ-COMP-03`, n-body geometry vs 25 pm trap, MHD domain, Heisenberg-Euler ≈1. `EQ-OPEN-*` rows unchanged. No version bump; `use_theory_pipeline` still defaults false; `oppenheimer_phillips` still unregistered
+- Unified Results `OpenQuestionsCockpit` (copyable Lean IDs, OPEN remainder charts). `OpenChallengesSection` remains the static paper fallback
+
 - Theory Guide timeline: Paneth–Peters (retracted), Tandberg (unproven), Miles EMP, acoustic environment, Letts EMP, Huang 2024 **contested EMP** (Scientific Reports editor's note + Fomitchev-Zamilov critique); Takahashi TSC stays **open SPEC**
 - Theory Paper §6.1 TSC labelled `speculative_exploratory`; §6.11 Letts EMP (not "showed" a controlled trigger)
 - Added `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md` living claim register; `EQ-HUANG-EMP-01` in claim taxonomy (no Lean theorem, not a TheoryModule)
