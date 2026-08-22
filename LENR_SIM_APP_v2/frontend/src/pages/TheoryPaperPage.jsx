@@ -1010,9 +1010,15 @@ const TheoryPaperPage = () => {
                 Beyond the six core mechanisms, our simulation framework incorporates 13 additional peer-reviewed LENR theories as pluggable modules. Each implements a standardized TheoryModule protocol enabling direct comparison, scoring, and mathematical unification.
               </Typography>
 
-              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.1 Takahashi Tetrahedral Symmetric Condensate (TSC)</Typography>
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
+                6.1 Takahashi Tetrahedral Symmetric Condensate (TSC)
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
               <Typography variant="body2" paragraph>
                 Akito Takahashi's TSC theory proposes that four deuterons can form a tetrahedral symmetric condensate within the Pd lattice, enabling 4D multi-body fusion: 4D → He-4 + He-4 + 47.6 MeV. The tetrahedral symmetry minimizes Coulomb repulsion through equal charge distribution, dramatically enhancing the tunnelling probability compared to 2-body reactions.
+                This remains an <strong>open speculative channel</strong> (<em>claim tier: speculative_exploratory</em>;
+                software mode <code>trapped_state</code> beside the default <code>two_body</code> baseline, RR-006).
+                Criticism of unrelated experiments does not close this class.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.2 Hagelstein Phonon-Nuclear Coupling</Typography>
@@ -1065,7 +1071,12 @@ const TheoryPaperPage = () => {
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.11 Letts-Cravens Dual-Laser Stimulation</Typography>
               <Typography variant="body2" paragraph>
-                Dennis Letts and Dennis Cravens showed that irradiating loaded Pd cathodes with two lasers at specific frequencies (producing a beat frequency matching the Pd phonon spectrum) triggers excess heat production. This provides a controlled triggering mechanism for LENR, modeled through phonon-mode coupling.
+                Dennis Letts and Dennis Cravens reported that irradiating loaded Pd cathodes with two lasers near
+                ~670–685 nm (Lorentzian peak ~682 nm) correlates with excess heat relative to unstimulated controls
+                (ICCF proceedings, 2003–2009). This is treated as an <strong>empirical LENR correlation</strong>
+                (claim-tiered), not a first-principles MeV-gap solution. Dual-beam beat-frequency coupling to optical
+                phonons remains a hypothesis (module docstring); <code>letts_laser.calculate()</code> implements the
+                wavelength Lorentzian only.
               </Typography>
 
               <Divider sx={{ my: 2 }} />

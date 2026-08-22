@@ -10,6 +10,7 @@ where the 2025 audit already captured the issue.
 
 **Citation policy:** [CITATION_STANDARD.md](CITATION_STANDARD.md).
 **Traceability:** [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
+**Open-question corpus gaps:** [OPEN_QUESTION_CORPUS_GAPS.md](OPEN_QUESTION_CORPUS_GAPS.md) (Q1–Q3 vs CANR/Dashboard/UMLENR; Huang contested EMP; TSC/`trapped_state` remains open).
 
 ---
 
@@ -242,6 +243,8 @@ variance (exponential barrier sensitivity).
 - **All 20 findings RR-001..RR-020 now resolved.**
 
 ## Change log
+- 2026-08-22: Linked OPEN_QUESTION_CORPUS_GAPS.md (Huang contested EMP;
+  TSC/`trapped_state` remains open; not a new RR finding).
 - 2026-06-04: Report created (Phase 0). Findings RR-001..RR-020 registered.
 - 2026-06-04: Phases 1-14 implemented. All RR-001..RR-020 resolved; engine,
   KG-RP, pairing prior, export, UI panel, CI gates, and paper bibliography

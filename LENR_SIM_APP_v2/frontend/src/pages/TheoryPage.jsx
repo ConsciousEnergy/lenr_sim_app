@@ -21,7 +21,8 @@ import {
   useTheme,
   alpha,
   Tab,
-  Tabs
+  Tabs,
+  Link as MuiLink
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -369,11 +370,34 @@ const TheoryPage = () => {
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Historical Theoretical Foundations (1920–2025)
+                  Historical foundations and contested experiments (1926-2026)
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
+                <Typography variant="caption" color="text.secondary" paragraph>
+                  Entries are claim-tiered (EMP, SPEC, withdrawn). Criticism of one experiment
+                  does not close a mechanism class: the two-body rate remains the default
+                  reference baseline; trapped-state / TSC stays an open SPEC channel (RR-006).{' '}
+                  <MuiLink
+                    href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/lenr_sim_app_v0.3.6-beta/docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open-question corpus gaps
+                  </MuiLink>
+                  .
+                </Typography>
                 <Timeline>
+                  <TimelineItem year="1926-27" author="Paneth & Peters">
+                    Hydrogen over finely divided palladium; spectroscopic helium reported, then
+                    retracted as glass/asbestos artifacts. Not electrolysis, not deuterium, and
+                    not a validated nuclear effect.
+                  </TimelineItem>
+                  <TimelineItem year="1927+" author="Tandberg">
+                    Electrolytic palladium patent (denied); later D₂O/Pd work with Wilner.
+                    Apparatus parallel to later CMNS cells; no conclusive published fusion result
+                    and not a validated precursor to Fleischmann–Pons.
+                  </TimelineItem>
                   <TimelineItem year="1928" author="Gamow">
                     Introduces quantum tunneling to explain alpha decay—setting precedent for sub-barrier interactions.
                   </TimelineItem>
@@ -386,17 +410,45 @@ const TheoryPage = () => {
                   <TimelineItem year="1989" author="Fleischmann & Pons">
                     Report anomalous heat generation during deuterium electrolysis in palladium electrodes.
                   </TimelineItem>
+                  <TimelineItem year="1993" author="Miles">
+                    Empirical excess-heat / ⁴He correlation in Pd-D (~24±4 MeV per ⁴He; gated in
+                    this app). Claim-tier EMP, not proof that every excess-heat report is nuclear.
+                    Stronger EMP than Huang 2024.
+                  </TimelineItem>
                   <TimelineItem year="1990s" author="Schwinger">
                     Proposes quantum field approach to LENR, invoking non-linear QED in condensed matter.
                   </TimelineItem>
                   <TimelineItem year="2000s" author="Takahashi">
-                    Develops tetrahedral fusion cluster model, predicting multi-body coherent D-D fusion pathways.
+                    Proposes tetrahedral symmetric condensate (TSC) as a multi-body D-cluster rate
+                    program (claim-tier SPEC). Remains an open parallel channel beside the two-body
+                    reference baseline; not closed by criticism of unrelated experiments.
                   </TimelineItem>
                   <TimelineItem year="2010s-2020s" author="Hagelstein">
                     Explores phonon-nuclear coupling and coherent energy transfer between lattice and nuclear degrees of freedom.
                   </TimelineItem>
-                  <TimelineItem year="2025" author="Acs et al.">
-                    Unified theoretical framework integrating quantum, nuclear, and condensed matter phenomena.
+                  <TimelineItem year="2002+" author="Acoustic / ultrasonic forcing">
+                    Ultrasonic and cavitation forcing (Minnaert, Bjerknes, streaming, rectified
+                    diffusion) as the computational environment for bubble-lattice coupling.
+                    Taleyarkhan-type acoustic-cavitation nuclear claims remain disputed EMP; not a
+                    validated LENR rate.
+                  </TimelineItem>
+                  <TimelineItem year="2003-09" author="Letts & Cravens">
+                    Dual-laser stimulation of loaded Pd-D near ~682 nm as an empirical correlation
+                    (EMP). Optical-phonon beat-frequency coupling remains a hypothesis, not a
+                    first-principles MeV-gap solution.
+                  </TimelineItem>
+                  <TimelineItem year="2024" author="Huang et al.">
+                    Huang et al., Scientific Reports 14, 214 (2024; DOI 10.1038/s41598-023-50824-8,
+                    PMID 38167629) report water-cavitation excess heat and MS peaks assigned to
+                    ²²Ne. Claim-tier contested EMP: Scientific Reports editor&apos;s note plus
+                    Fomitchev-Zamilov critique (Maximus Energy, 2024-05-29) on flow-COP
+                    systematics, m/z=22 vs CO₂⁺⁺, missing spectra, and SEM/EDX of common elements.
+                    Product channel is not D+D → ⁴He 23.8 MeV. Criticism of this paper does not
+                    close the acoustic or multi-body CMNS class.
+                  </TimelineItem>
+                  <TimelineItem year="2025-2026" author="Acs et al.">
+                    Unified theoretical framework integrating quantum, nuclear, and condensed-matter
+                    hypotheses under claim tiers (original work February 2025 through present).
                   </TimelineItem>
                 </Timeline>
               </AccordionDetails>
