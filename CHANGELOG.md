@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Formal math review + Lean consistency pilot (2026-08-22)
+- Added claim taxonomy, math audit, and formal proof status under `docs/FORMALIZATION/`
+- Added equation IR (`formalization/ir/`) with checker scripts linking paper ↔ code ↔ Lean
+- Added Lean 4 `LenrFormal` pilot theorems for adopted classical core (Casimir band, Gamow, Assenbaum domain, enhancement composition cap, Miles conversion, Rydberg)
+- Wired CI `formalization` job; extended verification gate report
+- Paper §6.1 documents mechanized consistency **non-claims** (does not assert LENR is proven)
+
 ### Unified Theory cycle clock (2026-08-17)
 
 - **3D viz phases follow the visual schedule**: API `enhancement_timeline`
