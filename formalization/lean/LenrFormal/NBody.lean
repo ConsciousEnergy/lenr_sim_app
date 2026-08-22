@@ -46,6 +46,7 @@ theorem ulm_not_applicable_implies_not_claimed
     ¬ ulmFormulaClaimed m := h
 
 theorem default_four_is_applicable : ulmApplicable 400 := by
+  unfold ulmApplicable
   native_decide
 
 /-- If the final state is two on-shell alphas, no primary γ is required.

@@ -22,6 +22,7 @@ theorem nuclear_ha_not_claimed :
   nuclear_not_continuum
 
 theorem surface_claimed : continuumClaimed 2 := by
+  unfold continuumClaimed
   native_decide
 
 /-- Weak-field Heisenberg-Euler: 1 + δ with δ ≪ 10^{-3} at 1e14 V/m.

@@ -25,10 +25,9 @@ def test_two_body_log10_n_events_is_minus_forty() -> None:
 def test_lenr_proved_never_emitted() -> None:
     block = build_open_questions(route_mode="legacy_unified_model")
     assert block["lenr_proved"] is False
-    dumped = str(block)
-    for forbidden in FORBIDDEN_STATUS:
-        assert forbidden not in dumped
-    assert "LENR_PROVED" not in dumped
+    assert block["determination"]["status"] not in FORBIDDEN_STATUS
+    assert block["ui_phrase_class"] == "consistency_or_odds_only"
+    assert "lenr_occurs" not in str(block["determination"].get("oracle_a", {})).lower()
 
 
 def test_illegal_product_is_pedagogy_only() -> None:

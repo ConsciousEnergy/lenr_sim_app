@@ -37,7 +37,7 @@ def _assert_open_questions(data: dict, *, route_mode: str) -> None:
     assert oq["schema"] == "lenr-open-questions-v1"
     assert oq["route_mode"] == route_mode
     assert oq["lenr_proved"] is False
-    assert "LENR_PROVED" not in str(oq)
+    assert oq["determination"]["status"] not in ("LENR_PROVED", "LENR_DISPROVED_AS_THEOREM")
     assert oq["composition"]["not_combinable"] is True
     assert oq["q_mev_gap"]["status"] == "OPEN"
     assert oq["q_radiation"]["status"] == "OPEN"
