@@ -166,3 +166,8 @@ def test_existing_bubble_lattice_contract_is_unchanged() -> None:
     # Reporting limits and saturation provenance stay where clients expect them.
     assert "limits" in data["collapse_results"]
     assert "saturation" in data["peak_conditions"]["enhancement_breakdown"]
+    prediction = data["peak_conditions"]["enhancement_breakdown"]["prediction"]
+    assert prediction["composition_rule"] == "bubble_grouped_max_product"
+    assert "physics_governed" in prediction
+    assert "claim_tier_display" in prediction
+    assert prediction["claim_tier_display"]["total"] <= 1e5
