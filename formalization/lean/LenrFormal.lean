@@ -1,4 +1,5 @@
 import LenrFormal.Constants
+import LenrFormal.CollapseBounds
 import LenrFormal.RealShim
 import LenrFormal.Rydberg
 import LenrFormal.Field
@@ -14,6 +15,7 @@ import LenrFormal.ScaleQED
 import LenrFormal.Decision
 import LenrFormal.WhenHow
 import LenrFormal.Branching
+import LenrFormal.OpenObligations
 
 /-!
 # LenrFormal — mechanized consistency pilot for Unified LENR Theory

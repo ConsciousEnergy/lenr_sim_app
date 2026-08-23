@@ -11,6 +11,9 @@ code_refs:
 citation_keys:
   - takahashi2016
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.fcc_dDD_pm"
+  - "LenrFormal.NBody.fcc_dd_less_than_lattice"
 adopted_value:
   fcc_dDD_pm: 137
 notes: "Geometry identity. Occupation remains OPEN."

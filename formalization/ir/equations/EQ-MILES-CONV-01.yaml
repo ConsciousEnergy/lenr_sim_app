@@ -12,6 +12,10 @@ code_refs:
 citation_keys:
   - miles1993
 lean_target: LenrFormal.Miles
+lean_decls:
+  - "LenrFormal.Miles.conversionMilliRate"
+  - "LenrFormal.Miles.conversion_band"
+  - "LenrFormal.Miles.code_matches_conversion_rounding"
 adopted_value:
   MILES_HEAT_HELIUM_RATE: 2.63e11
   Q_MeV: 23.8

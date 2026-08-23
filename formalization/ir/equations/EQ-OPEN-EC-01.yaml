@@ -1,0 +1,17 @@
+id: EQ-OPEN-EC-01
+latex: "Q_4\\text{ closed} \\iff E_{\\mathrm{available}} \\ge E_{\\mathrm{EC\\ threshold}}"
+symbols:
+  E_available: "supplied condensed-matter electron energy"
+  E_EC_threshold: "electron-capture threshold energy"
+units: "integer-scaled energy"
+tag: OPEN
+paper_ref: "§5A.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys: []
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q4ElectronCaptureSourceClosed"
+  - "LenrFormal.OpenObligations.energy_deficit_implies_q4_not_closed"
+notes: "This obligation remains open. The declarations encode a necessary energy threshold and a non-closure implication; they provide no proof of occurrence."

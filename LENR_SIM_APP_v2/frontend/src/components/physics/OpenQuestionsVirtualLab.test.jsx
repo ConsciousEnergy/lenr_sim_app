@@ -51,8 +51,35 @@ const TWO_BODY_OQ = {
   },
   q_radiation: { id: 'EQ-OPEN-RAD-01', status: 'OPEN', detector_ul_log10: -8 },
   q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'BUDGET_DOES_NOT_CLOSE', n_events_log10_two_body: -40 },
-  q_electron_capture: { id: 'EQ-OPEN-EC-01', status: 'OPEN', dimmed: true },
-  q_integrated_yield: { id: 'EQ-OPEN-YIELD-01', status: 'OPEN', dimmed: true },
+  q_electron_capture: {
+    id: 'EQ-OPEN-EC-01',
+    status: 'OPEN',
+    claim_tier: 'speculative_exploratory',
+    dimmed: true,
+    electron_capture_threshold_mev: 0.782,
+    mass_renormalization_input_mstar_over_me: 4,
+    mass_renormalization_threshold_mstar_over_me: 2.531,
+    mass_renormalization_threshold_met: true,
+    energy_deficit_mev: 0,
+    occurrence_claimed: false,
+    unmet_reason: 'Meeting the speculative mass gate is necessary, not sufficient.',
+  },
+  q_integrated_yield: {
+    id: 'EQ-OPEN-YIELD-01',
+    status: 'OPEN',
+    claim_tier: 'empirical_lenr_correlation',
+    dimmed: true,
+    expected_he4_rate_per_s: 2.62e11,
+    duty_adjusted_expected_he4_rate_per_s: 1.31e11,
+    expected_integrated_he4_yield_atoms: 2.62e12,
+    observed_integrated_he4_yield_atoms: null,
+    observed_integrated_yield_note: 'No observed integrated yield was supplied.',
+    reported_integrated_yield_discrepancy: {
+      factor_band: [1e2, 1e4],
+    },
+    retention_time_resolved_caveat: 'Retention and simultaneous time-resolved accounting remain required.',
+    occurrence_claimed: false,
+  },
   composition: {
     not_combinable: true,
     illegal_product: 1e10,
@@ -119,6 +146,28 @@ describe('OpenQuestionsVirtualLab', () => {
   test('renders energy partition flow chart', () => {
     render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
     expect(screen.getByTestId('energy-partition-flow')).toBeInTheDocument();
+  });
+
+  test('renders dimmed Q4 and Q5 computed fields without claiming occurrence', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('q4-computed-fields')).toHaveTextContent(
+      /Energy gate 0.782 MeV · m\*\/mₑ 4.00 \/ 2.53 required/i,
+    );
+    expect(screen.getByTestId('q4-computed-fields')).toHaveTextContent(
+      /Threshold status does not establish capture occurrence/i,
+    );
+    expect(screen.getByTestId('q5-computed-fields')).toHaveTextContent(
+      /2.62e\+11 atoms\/s active/i,
+    );
+    expect(screen.getByTestId('q5-computed-fields')).toHaveTextContent(
+      /Reported \/ known integrated-yield shortfall: 1e2–1e4× lower/i,
+    );
+    expect(screen.getByTestId('q5-computed-fields')).toHaveTextContent(
+      /No observed integrated yield was supplied/i,
+    );
+    expect(screen.getAllByText('Speculative / exploratory').length).toBeGreaterThan(0);
+    expect(screen.getByText('Empirical LENR correlation')).toBeInTheDocument();
+    expect(TWO_BODY_OQ.lenr_proved).toBe(false);
   });
 });
 

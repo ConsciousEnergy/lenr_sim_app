@@ -10,6 +10,8 @@ paper_ref: "§2.3"
 code_refs: []
 citation_keys: []
 lean_target: LenrFormal.Field
+lean_decls:
+  - "LenrFormal.Field.double_layer_identity"
 adopted_value:
   DeltaV_V: 0.1
   d_m: 1.0e-9

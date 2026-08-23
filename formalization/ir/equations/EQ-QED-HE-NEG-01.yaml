@@ -12,4 +12,7 @@ code_refs:
 citation_keys:
   - heisenberg_euler_1936
 lean_target: "LenrFormal.ScaleQED"
+lean_decls:
+  - "LenrFormal.ScaleQED.heFactorMilli"
+  - "LenrFormal.ScaleQED.he_is_identity_milli"
 notes: "Milli-unit identity: factor = 1.000. Cannot close MeV gap."

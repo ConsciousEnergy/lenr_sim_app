@@ -11,4 +11,7 @@ code_refs:
 citation_keys:
   - paper_5A_2
 lean_target: "LenrFormal.Branching"
+lean_decls:
+  - "LenrFormal.Branching.latticeGammaTarget"
+  - "LenrFormal.Branching.gammaBranchingUpperBound"
 notes: "Open lattice branching requirement; not derived from code."

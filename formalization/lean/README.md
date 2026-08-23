@@ -29,11 +29,20 @@ lake build
 | `Casimir` | EQ-CAS-01/02 | Check geometry + 1.3 mN band |
 | `Gamow` | EQ-GAMOW-01 | Penetration anti-monotone in η |
 | `Assenbaum` | EQ-ASSEN-* | Domain predicate |
-| `Composition` | EQ-COMP-* | Cap ≤ 1e5; intra-group max |
+| `Composition` | EQ-COMP-*, EQ-BBL-COMP-01, EQ-PRED-* | Cap ≤ 1e5; intra-group max; bubble prediction envelope |
 | `Miles` | EQ-QDD/MILES-CONV | Conversion identity band |
+| `Phonon` | EQ-PHONON-N-01, EQ-NAIVE-GN-01 | Phonon order identity; naive \(g^N\) fails |
+| `RateBudget` | EQ-RATE-* | Two-body does-not-close; rival modes |
+| `NBody` | EQ-TSC-*, EQ-TRAP-*, EQ-3B-*, EQ-NBODY-* | Geometry, FGR/trap bookkeeping, ULM domain |
+| `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
+| `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
+| `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
+| `CollapseBounds` | EQ-BBL-LIM-01 | Pointwise calculated-bound clamp |
+| `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `RealShim` | — | `expZ` mono bridge axiom |
 
 ## Hygiene
 
 - File headers state claim-tier / non-claims.
-- Speculative physics (MeV gap, TSC, Hagelstein, KG–RP) is out of scope.
+- Speculative physics (MeV gap, TSC, Hagelstein, KG–RP) remains claim-tiered and unproved.
+- There is no `theorem lenr_occurs`. `EQ-OPEN-*` rows stay open.

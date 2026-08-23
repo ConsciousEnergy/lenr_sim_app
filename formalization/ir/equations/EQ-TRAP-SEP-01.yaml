@@ -10,4 +10,6 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.trapSep_pm"
 notes: "Input, not a derivation."

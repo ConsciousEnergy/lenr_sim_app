@@ -11,6 +11,9 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.collective"
+  - "LenrFormal.NBody.collective_le_cap"
 adopted_value:
   MAX_COLLECTIVE_FACTOR: 1000000
 notes: "Engine uses linear clamp, not Dicke N^2."

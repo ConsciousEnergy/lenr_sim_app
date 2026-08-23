@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Formalization accuracy pass (2026-08-23)
+- Lean: `CollapseBounds.lean` and `OpenObligations.lean`; missing DEF/THM declarations for bubble composition, prediction envelope, FGR/trap bookkeeping, sequential three-body, Bayes-factor definition, and trap lifetime. No `sorry`; no new axioms; `EQ-OPEN-*` remain undischarged
+- IR: every equation YAML now lists `lean_decls`; five `EQ-OPEN-*.yaml` obligation files; `check_ir.py` resolves Lean modules, imports, and runtime `EQ-*` identifiers
+- Numeric lock: Lean↔Python agreement tests plus generalized `diff_code_literals.py` (`code_symbols` optional bindings)
+- Virtual lab: Q4 electron-capture threshold and Q5 Miles expected-yield blocks are computed and still `OPEN`; mechanism-path diagram specs are wired from the backend
+- Docs: `FORMAL_PROOF_STATUS.md`, `CLAIM_TAXONOMY.md`, and `TRACEABILITY_MATRIX.md` updated; open-obligations table unchanged
+
 ### Public release readiness review (2026-08-23)
 - Theory Testbed: primary-scoped **All** / **None** controls beside the glossary on
   `TheoryTogglePanel` (preserves context-track selections; unit-tested)

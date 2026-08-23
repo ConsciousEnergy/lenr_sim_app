@@ -10,4 +10,9 @@ code_refs:
 citation_keys:
   - model_assumption_decision_priors
 lean_target: "LenrFormal.Decision"
+lean_decls:
+  - "LenrFormal.Decision.priorNullPct"
+  - "LenrFormal.Decision.priorTwoBodyPct"
+  - "LenrFormal.Decision.priorTrapPct"
+  - "LenrFormal.Decision.priorThreeBodyPct"
 notes: "Skeptical defaults. Engine fusion_probability=1 is not this prior."

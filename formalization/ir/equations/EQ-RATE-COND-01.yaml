@@ -12,4 +12,7 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.rateProduct"
+  - "LenrFormal.RateBudget.would_close_if"
 notes: "Would-close-if conditional. Not a theorem that occupation is large."

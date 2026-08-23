@@ -29,11 +29,18 @@ from app.physics_engine.many_body.fgr_model import (
     fcc_d_dd_m,
     trap_separation_m,
 )
+from app.physics_engine.mechanism_path_diagrams import enrich_mechanism_paths
+from app.physics_engine.open_question_details import (
+    ElectronCaptureQuestionInput,
+    IntegratedYieldQuestionInput,
+    build_electron_capture_question,
+    build_integrated_yield_question,
+)
 from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
     DEFAULT_CLUSTER_LIFETIME_S,
-    DEFAULT_TRAP_SEPARATION_M,
-    DEFAULT_THREE_BODY_CONVERSION,
     DEFAULT_MASS_RENORMALIZATION,
+    DEFAULT_THREE_BODY_CONVERSION,
+    DEFAULT_TRAP_SEPARATION_M,
     MAX_COLLECTIVE_FACTOR,
 )
 
@@ -271,6 +278,12 @@ def build_open_questions(
         }
         for path_id in ("trapped_state", "phonon_cascade", "three_body")
     ]
+    try:
+        mechanism_paths = enrich_mechanism_paths(mechanism_paths)
+    except Exception:
+        LOGGER.exception(
+            "mechanism-path diagram enrichment failed; using plain path rows"
+        )
     fgr_params = _fgr_parameters_from_rate(
         rate,
         loading_ratio=float(loading_ratio),
@@ -379,20 +392,19 @@ def build_open_questions(
         "unphysical": unphysical,
         "lean_theorems": ["EQ-RATE-2B-NC-01", "EQ-RATE-REPLACE-01", "EQ-RATE-COND-01"],
     }
-    q_ec = {
-        "id": "EQ-OPEN-EC-01",
-        "status": "OPEN",
-        "claim_tier": "speculative_exploratory",
-        "dimmed": True,
-        "lean_theorems": ["EQ-3B-MASS-DOM-01"],
-    }
-    q_yield = {
-        "id": "EQ-OPEN-YIELD-01",
-        "status": "OPEN",
-        "claim_tier": "empirical_lenr_correlation",
-        "dimmed": True,
-        "lean_theorems": ["EQ-MILES-CONV-01"],
-    }
+    q_ec = build_electron_capture_question(
+        ElectronCaptureQuestionInput(
+            mode=mode,
+            rate_provenance=provenance,
+        )
+    )
+    q_yield = build_integrated_yield_question(
+        IntegratedYieldQuestionInput(
+            observations=obs,
+            total_time_s=total_time,
+            duty_fraction=duty,
+        )
+    )
 
     emp_chips = []
     if not fallback:

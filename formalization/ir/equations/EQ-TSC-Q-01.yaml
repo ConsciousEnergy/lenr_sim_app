@@ -12,6 +12,8 @@ code_refs:
 citation_keys:
   - takahashi2016
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.q4d_is_two_qdd"
 adopted_value:
   q4d_keV: 47600
 notes: "Conversion identity. Does not prove the channel occurs."

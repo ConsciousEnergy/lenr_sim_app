@@ -10,4 +10,6 @@ code_refs:
 citation_keys:
   - paper_5A_5
 lean_target: "LenrFormal.WhenHow"
+lean_decls:
+  - "LenrFormal.WhenHow.dutyCycleYield"
 notes: "Integrated-yield duty-cycle bookkeeping."

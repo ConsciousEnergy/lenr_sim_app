@@ -10,4 +10,8 @@ code_refs:
 citation_keys:
   - widomlarsen2006
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.ThreeBodyStage"
+  - "LenrFormal.NBody.threeBodySequence"
+  - "LenrFormal.NBody.defaultThreeBodyConversionMillionths"
 notes: "Not Faddeev three-body. Reopens EQ-OPEN-EC-01."

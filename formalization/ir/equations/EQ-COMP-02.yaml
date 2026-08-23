@@ -10,4 +10,7 @@ code_refs:
 citation_keys:
   - model_assumption_composition
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.intra_group_is_max"
+  - "LenrFormal.Composition.intra_group_not_product"
 notes: "Intra-group max prevents double-counting rival mechanisms."

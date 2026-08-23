@@ -10,4 +10,7 @@ code_refs:
 citation_keys:
   - takahashi2016
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.requiresPrimaryGamma"
+  - "LenrFormal.NBody.tsc_channel_kin"
 notes: "Conditional kinematics. Does not prove the channel occurs. Does not close EQ-OPEN-RAD-01."

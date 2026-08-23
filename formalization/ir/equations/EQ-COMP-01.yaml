@@ -12,6 +12,10 @@ code_refs:
 citation_keys:
   - model_assumption_RR001
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.composeCapped"
+  - "LenrFormal.Composition.composeCapped_le_max"
+  - "LenrFormal.Composition.cap_value"
 adopted_value:
   MAX_ENHANCEMENT_FACTOR: 100000
 notes: "grouped_max_confidence_product + cap."

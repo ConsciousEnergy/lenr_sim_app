@@ -22,6 +22,7 @@ import {
 import MechanismPathDiagram from './MechanismPathDiagram';
 import OpenQuestionsCharts from './OpenQuestionsCharts';
 import PredictionReadoutPanel from './PredictionReadoutPanel';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
   schema: 'lenr-open-questions-v1',
@@ -41,8 +42,23 @@ export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
   q_mev_gap: { id: 'EQ-OPEN-MEV-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
   q_radiation: { id: 'EQ-OPEN-RAD-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
   q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'OPEN', claim_tier: 'established_reference' },
-  q_electron_capture: { id: 'EQ-OPEN-EC-01', status: 'OPEN', dimmed: true },
-  q_integrated_yield: { id: 'EQ-OPEN-YIELD-01', status: 'OPEN', dimmed: true },
+  q_electron_capture: {
+    id: 'EQ-OPEN-EC-01',
+    status: 'OPEN',
+    claim_tier: 'speculative_exploratory',
+    dimmed: true,
+    occurrence_claimed: false,
+    unmet_reason: 'No backend electron-capture threshold calculation is available in local fallback.',
+  },
+  q_integrated_yield: {
+    id: 'EQ-OPEN-YIELD-01',
+    status: 'OPEN',
+    claim_tier: 'empirical_lenr_correlation',
+    dimmed: true,
+    occurrence_claimed: false,
+    observed_integrated_he4_yield_atoms: null,
+    observed_integrated_yield_note: 'No observed integrated yield was supplied.',
+  },
   composition: { not_combinable: true, illegal_product: null },
   open_ids: [
     'EQ-OPEN-MEV-01',
@@ -76,10 +92,19 @@ function LeanId({ id }) {
 
 function TierChip({ tier }) {
   if (!tier) return null;
-  return <Chip label={tier} size="small" variant="outlined" />;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || tier}
+      title={info?.description}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+    />
+  );
 }
 
-function QuestionRow({ title, block, dimmed = false }) {
+function QuestionRow({ title, block, dimmed = false, children }) {
   if (!block) return null;
   return (
     <Box sx={{ opacity: dimmed || block.dimmed ? 0.55 : 1, mb: 1.5 }}>
@@ -92,6 +117,83 @@ function QuestionRow({ title, block, dimmed = false }) {
           <LeanId key={id} id={id} />
         ))}
       </Stack>
+      {children}
+    </Box>
+  );
+}
+
+function formatScientific(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toExponential(2) : '—';
+}
+
+function ElectronCaptureDetails({ block }) {
+  if (!block) return null;
+  const threshold = Number(block.electron_capture_threshold_mev);
+  const massInput = Number(block.mass_renormalization_input_mstar_over_me);
+  const massThreshold = Number(block.mass_renormalization_threshold_mstar_over_me);
+  const hasComputedThresholds = [threshold, massInput, massThreshold].every(Number.isFinite);
+
+  return (
+    <Box sx={{ mt: 0.75, pl: 1 }} data-testid="q4-computed-fields">
+      {hasComputedThresholds && (
+        <Typography variant="body2" color="text.secondary">
+          Energy gate {threshold.toFixed(3)} MeV · m*/mₑ {massInput.toFixed(2)}
+          {' / '}{massThreshold.toFixed(2)} required · mass gate{' '}
+          {block.mass_renormalization_threshold_met ? 'met in scenario' : 'not met'}
+        </Typography>
+      )}
+      {block.energy_deficit_mev != null && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          Remaining energy deficit: {Number(block.energy_deficit_mev).toFixed(3)} MeV.
+          {' '}Threshold status does not establish capture occurrence.
+        </Typography>
+      )}
+      {block.unmet_reason && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          Open because: {block.unmet_reason}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+function IntegratedYieldDetails({ block }) {
+  if (!block) return null;
+  const discrepancy = block.reported_integrated_yield_discrepancy;
+  const band = discrepancy?.factor_band;
+  const bandLabel = Array.isArray(band) && band.length === 2
+    ? `${Number(band[0]).toExponential(0).replace('e+', 'e')}–${Number(band[1]).toExponential(0).replace('e+', 'e')}×`
+    : null;
+
+  return (
+    <Box sx={{ mt: 0.75, pl: 1 }} data-testid="q5-computed-fields">
+      {block.expected_he4_rate_per_s != null ? (
+        <Typography variant="body2" color="text.secondary">
+          Expected He-4 from supplied excess power: {formatScientific(block.expected_he4_rate_per_s)} atoms/s active
+          {' · '}{formatScientific(block.duty_adjusted_expected_he4_rate_per_s)} atoms/s duty-adjusted
+          {' · '}{formatScientific(block.expected_integrated_he4_yield_atoms)} atoms over the supplied window
+        </Typography>
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          Expected He-4 rate unavailable until excess power is supplied.
+        </Typography>
+      )}
+      {bandLabel && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          Reported / known integrated-yield shortfall: {bandLabel} lower than the Miles expectation.
+        </Typography>
+      )}
+      {block.retention_time_resolved_caveat && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          {block.retention_time_resolved_caveat}
+        </Typography>
+      )}
+      {block.observed_integrated_he4_yield_atoms == null && block.observed_integrated_yield_note && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          {block.observed_integrated_yield_note}
+        </Typography>
+      )}
     </Box>
   );
 }
@@ -290,8 +392,12 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <QuestionRow title="Q1 MeV energy gap" block={oq.q_mev_gap} />
       <QuestionRow title="Q2 Radiation suppression" block={oq.q_radiation} />
       <QuestionRow title="Q3 Statistical feasibility" block={oq.q_statistical} />
-      <QuestionRow title="Q4 Electron capture" block={oq.q_electron_capture} dimmed />
-      <QuestionRow title="Q5 Integrated yield" block={oq.q_integrated_yield} dimmed />
+      <QuestionRow title="Q4 Electron capture" block={oq.q_electron_capture} dimmed>
+        <ElectronCaptureDetails block={oq.q_electron_capture} />
+      </QuestionRow>
+      <QuestionRow title="Q5 Integrated yield" block={oq.q_integrated_yield} dimmed>
+        <IntegratedYieldDetails block={oq.q_integrated_yield} />
+      </QuestionRow>
 
       <Typography variant="subtitle2" sx={{ mt: 2 }}>Composition (three engines, never multiplied)</Typography>
       <Typography variant="body2" color="text.secondary">
