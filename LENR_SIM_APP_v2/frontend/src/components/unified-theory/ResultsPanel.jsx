@@ -25,6 +25,7 @@ import ReactionRateGovernancePanel from '../physics/ReactionRateGovernancePanel'
 import OpenQuestionsVirtualLab from '../physics/OpenQuestionsVirtualLab';
 import PredictionReadoutPanel from '../physics/PredictionReadoutPanel';
 import EnhancementWaterfallChart from '../physics/EnhancementWaterfallChart';
+import ScreeningProvenancePanel from '../physics/ScreeningProvenancePanel';
 import { resolveElectrolyteSpecies } from '../../utils/theoryConditions';
 import {
   PHASE_COLORS,
@@ -101,6 +102,14 @@ export default function ResultsPanel({
               : ''}
           </Typography>
         )}
+        {simulationData.collapse_results?.bubble_dynamics?.bounds_solver_used && (
+          <Typography>
+            Bounds solver: <strong>{simulationData.collapse_results.bubble_dynamics.bounds_solver_used}</strong>
+            {simulationData.collapse_results.bubble_dynamics.km_auto_selected && (
+              <Chip label="KM auto-selected" size="small" color="info" sx={{ ml: 1 }} />
+            )}
+          </Typography>
+        )}
         {simulationData.collapse_results?.bubble_dynamics?.mode && (
           <Typography>
             Dynamics: <strong>{simulationData.collapse_results.bubble_dynamics.mode}</strong>
@@ -112,6 +121,13 @@ export default function ResultsPanel({
       </Box>
     </Paper>
   </Grid>
+  {simulationData.collapse_results?.mechanism_provenance?.screening && (
+    <Grid size={12}>
+      <ScreeningProvenancePanel
+        screening={simulationData.collapse_results.mechanism_provenance.screening}
+      />
+    </Grid>
+  )}
   <Grid size={{ xs: 12, md: 6 }}>
     <Paper sx={{ p: 2 }} variant="outlined">
       <Typography variant="h6" gutterBottom>Peak Proton Phases</Typography><Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Proton phases influenced by delocalized interface electrons at lattice-electrolyte boundaries.</Typography>
@@ -279,7 +295,10 @@ export default function ResultsPanel({
                 display ceiling. Saturated segments are reporting limits, not physical predictions.
               </Alert>
             )}
-            <EnhancementWaterfallChart breakdown={breakdown} />
+            <EnhancementWaterfallChart
+              breakdown={breakdown}
+              screeningProvenance={simulationData.collapse_results?.mechanism_provenance?.screening}
+            />
             <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {typeof governedTotal === 'number' && (
                 <Chip
