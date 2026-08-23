@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Public release readiness review (2026-08-23)
+- Theory Testbed: primary-scoped **All** / **None** controls beside the glossary on
+  `TheoryTogglePanel` (preserves context-track selections; unit-tested)
+- Docker frontend image: copy Vite `dist/` (not CRA `build/`), include `.npmrc`
+  before `npm ci`, and stop excluding `frontend/` from the shared `.dockerignore`
+- Docs: root `CONTRIBUTING.md`, reframed `RELEASE_CHECKLIST.md` for v0.3.6-beta,
+  refreshed governance evidence pack; theoretical paper revision date synced
+- Release gates re-run: version markers aligned; pip-audit (documented ignores);
+  experiment-anchored science gates; frontend audit (high=0) / lint (0 errors) /
+  tests / production build; backend + frontend Docker images build locally
+
 ### Open-questions virtual lab — when/how many-body pass (2026-08-23)
 - Reframe virtual lab from "whether" to **when/how** under named conditions: additive `occurrence`, `when`, `how` blocks on `lenr-open-questions-v1` (no envelope bump)
 - Unified Many-Body FGR library (`many_body/fgr_model.py`, `branching_model.py`); trapped_state rate refactored to shared EQ-NBODY-FGR-01 bookkeeping
