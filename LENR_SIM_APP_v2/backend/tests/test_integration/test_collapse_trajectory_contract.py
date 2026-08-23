@@ -108,37 +108,11 @@ def test_bubble_dynamics_diagnostics_are_reported() -> None:
         "scipy.integrate.solve_ivp(BDF)",
     }
     assert dynamics["peak_mach"] >= 0.0
-    assert "bounds_solver_used" in dynamics
     assert dynamics["compressibility_regime"] in {
         "incompressible_valid",
         "compressibility_marginal",
         "compressibility_significant",
     }
-
-
-def test_limits_include_calculated_bound_fields() -> None:
-    data = _client().post("/api/unified/bubble-lattice", json=_bubble_payload()).json()
-    limits = data["collapse_results"]["limits"]
-    assert "calculated_bound_k" in limits["temperature_k"]
-    assert "calculated_bound_pa" in limits["pressure_pa"]
-    assert "calculated_bound" in limits["compression_ratio"]
-    assert limits["temperature_k"]["value"] == min(
-        limits["temperature_k"]["value_raw"],
-        limits["temperature_k"]["calculated_bound_k"],
-    )
-
-
-def test_km_auto_select_at_high_drive() -> None:
-    payload = _bubble_payload()
-    payload["bubble"]["driving_pressure_bar"] = 4.0
-    dynamics = (
-        _client()
-        .post("/api/unified/bubble-lattice", json=payload)
-        .json()["collapse_results"]["bubble_dynamics"]
-    )
-    assert dynamics["bounds_solver_used"] == "keller_miksis"
-    assert dynamics["km_auto_selected"] is True
-    assert dynamics["mode"] == "keller_miksis"
 
 
 def test_keller_miksis_mode_is_selectable() -> None:

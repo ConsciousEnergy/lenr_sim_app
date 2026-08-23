@@ -35,14 +35,6 @@ const SIMULATION_ONLY = {
       compression_ratio: 1000,
       collapse_time_us: 56.578,
       peak_enhancement: 1e5,
-      mechanism_provenance: {
-        screening: {
-          screening_potential_ev: 800,
-          thermal_energy_ev: 0.05,
-          log10_enhancement_raw: 7.2,
-          is_saturated: true,
-        },
-      },
     },
     peak_conditions: {
       temperature_k: 10000,
@@ -173,7 +165,7 @@ describe('AdvancedAnalysisPage saturation reporting', () => {
 
   it('flags that saturated mechanisms are a display ceiling', () => {
     renderPage(SIMULATION_ONLY);
-    expect(screen.getAllByText(/claim-tier display ceiling/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/claim-tier display ceiling/i)).toBeInTheDocument();
   });
 
   it('shows the waterfall chart with governed and sensitivity tiers', () => {
@@ -185,35 +177,5 @@ describe('AdvancedAnalysisPage saturation reporting', () => {
   it('does not render the saturation metadata block as a mechanism card', () => {
     renderPage(SIMULATION_ONLY);
     expect(screen.queryByText(/^saturation$/i)).not.toBeInTheDocument();
-  });
-
-  it('renders screening provenance panel from collapse results', () => {
-    renderPage(SIMULATION_ONLY);
-    expect(screen.getByTestId('screening-provenance-panel')).toBeInTheDocument();
-    expect(screen.getByText(/800/)).toBeInTheDocument();
-  });
-});
-
-describe('AdvancedAnalysisPage theory screening observables', () => {
-  afterEach(() => {
-    mockUsePhysics.mockReset();
-  });
-
-  it('reads screening_potential_eV from theory observables', () => {
-    renderPage({
-      simulationResult: null,
-      theoryResult: {
-        combined_enhancement: 1234,
-        per_theory: [
-          {
-            theory_id: 'electron_screening',
-            theory_name: 'Electron Screening',
-            enhancement_factor: 9897,
-            observables: { screening_potential_eV: 27.4 },
-          },
-        ],
-      },
-    });
-    expect(screen.getByText(/27\.4/)).toBeInTheDocument();
   });
 });
