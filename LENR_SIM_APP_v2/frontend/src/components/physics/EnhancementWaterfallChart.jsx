@@ -27,7 +27,7 @@ function formatLog10(value) {
   return value.toFixed(2);
 }
 
-export default function EnhancementWaterfallChart({ breakdown, screeningProvenance }) {
+export default function EnhancementWaterfallChart({ breakdown }) {
   const [showSensitivity, setShowSensitivity] = useState(false);
   const data = getEnhancementWaterfallData(breakdown);
   if (!data.segments.length) return null;
@@ -64,17 +64,12 @@ export default function EnhancementWaterfallChart({ breakdown, screeningProvenan
           const left = (segment.startLog10 / maxLog) * 100;
           const width = Math.max(((segment.endLog10 - segment.startLog10) / maxLog) * 100, 0.5);
           const color = GROUP_COLORS[segment.group] || '#888';
-          const tooltipSuffix = segment.id === 'barrier_screening'
-            && screeningProvenance?.log10_enhancement_raw != null
-            && segment.isSaturated
-            ? ` (true log₁₀ raw: ${formatLog10(screeningProvenance.log10_enhancement_raw)})`
-            : '';
           return (
             <Tooltip
               key={segment.id}
               title={`${segment.label}: 10^${formatLog10(segment.log10Value)}${
                 segment.isSaturated ? ' (reporting limit)' : ''
-              }${tooltipSuffix}`}
+              }`}
             >
               <Box
                 sx={{

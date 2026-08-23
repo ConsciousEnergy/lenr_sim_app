@@ -30,10 +30,7 @@ from :mod:`screening_data`:
 
 The exponent is capped at ``ln(ceiling)`` so the ceiling is the *only* limit and
 it is the documented governance constant, not an unrelated magic number.
-Saturation is reported rather than hidden. Downstream ``build_saturation_report``
-receives the capped ``enhancement`` factor for display; the true uncapped magnitude
-is ``log10_enhancement_raw`` and must be passed via ``mechanism_raw_log10`` overrides
-so ``saturation.mechanisms.screening.log10_value_raw`` matches provenance.
+Saturation is reported rather than hidden.
 
 References:
 - Assenbaum, Langanke & Rolfs (1987) Z. Phys. A 327, 461 (screened cross-section).

@@ -36,14 +36,9 @@ from app.physics_engine.enhancement_saturation import build_saturation_report
 def _finalize_enhancement_breakdown(
     raw_breakdown: Dict[str, Any],
     ceiling: float = MAX_ENHANCEMENT_FACTOR,
-    mechanism_raw_log10: Optional[Dict[str, float]] = None,
 ) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Apply saturation reporting and the three-tier prediction block."""
-    capped, saturation = build_saturation_report(
-        raw_breakdown,
-        ceiling,
-        mechanism_raw_log10=mechanism_raw_log10,
-    )
+    capped, saturation = build_saturation_report(raw_breakdown, ceiling)
     capped["saturation"] = saturation
     capped["prediction"] = build_prediction_report(raw_breakdown, ceiling=ceiling)
     return capped, saturation
@@ -1265,27 +1260,9 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             bulk_modulus=base.bulk_modulus,
         )
         
-        # Run bubble collapse simulation. When the caller left the default
-        # Rayleigh-Plesset mode and peak Mach exceeds the compressibility
-        # threshold, re-run with Keller-Miksis so bounds and peak conditions
-        # reflect acoustic radiation damping (EQ-BBL-LIM-01 / §9C.11).
-        _KM_AUTO_MACH_THRESHOLD = 0.3
+        # Run bubble collapse simulation
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
-        bounds_solver_used = dynamics_mode
-        km_auto_selected = False
-        if (
-            dynamics_mode == "rayleigh_plesset"
-            and float(collapse_result.bubble_dynamics.get("peak_mach", 0.0)) >= _KM_AUTO_MACH_THRESHOLD
-        ):
-            bubble_params.bubble_dynamics_mode = "keller_miksis"
-            model = BubbleLatticeInteraction(bubble_params, lattice_params)
-            collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
-            bounds_solver_used = "keller_miksis"
-            km_auto_selected = True
-        bubble_dynamics_report = dict(collapse_result.bubble_dynamics or {})
-        bubble_dynamics_report["bounds_solver_used"] = bounds_solver_used
-        bubble_dynamics_report["km_auto_selected"] = km_auto_selected
         
         # Clamp peak enhancement to the theory-level cap (constants.py)
         # Canonical electrolyte source is top-level request.electrolyte; lattice fields
@@ -1381,11 +1358,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
         # breakdown's information content.
         peak_enhancement_breakdown, peak_saturation = _finalize_enhancement_breakdown(
-            peak_enhancement_breakdown,
-            MAX_ENHANCEMENT_FACTOR,
-            mechanism_raw_log10={
-                "screening": peak_screening["log10_enhancement_raw"],
-            },
+            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
         )
         capped_enhancement = float(
             peak_enhancement_breakdown.get("prediction", {})
@@ -1457,17 +1430,8 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["compression"]
             )
             instant_breakdown["electrolyte"] = float(electrolyte_multiplier)
-            instant_screening = compute_screening_enhancement(
-                temperature_k=instant["conditions"]["temperature"],
-                material=request.material.host_material,
-                screening_potential_ev=lattice_params.screening_potential,
-            )
             capped_instant_breakdown, instant_saturation = _finalize_enhancement_breakdown(
-                instant_breakdown,
-                MAX_ENHANCEMENT_FACTOR,
-                mechanism_raw_log10={
-                    "screening": instant_screening["log10_enhancement_raw"],
-                },
+                instant_breakdown, MAX_ENHANCEMENT_FACTOR
             )
             capped_instant_enhancement = float(
                 capped_instant_breakdown.get("prediction", {})
@@ -1587,7 +1551,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "mechanism_provenance": mechanism_provenance,
                 # Solver, dynamics model and peak wall Mach number, so a client can
                 # tell whether the incompressible model was admissible.
-                "bubble_dynamics": sanitize_dict(bubble_dynamics_report, 0.0),
+                "bubble_dynamics": sanitize_dict(collapse_result.bubble_dynamics or {}, 0.0),
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,

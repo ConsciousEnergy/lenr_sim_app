@@ -10,17 +10,6 @@ const RESPONSE_WITH_PREDICTION = {
     compression_ratio: 6.0,
     peak_enhancement: 1e5,
     limits: { temperature_k: { value: 2539, ceiling: 2e6, is_saturated: false } },
-    mechanism_provenance: {
-      screening: {
-        model: 'assenbaum_rolfs_screened',
-        screening_potential_ev: 800,
-        thermal_energy_ev: 0.05,
-        log10_enhancement_raw: 7.2,
-        is_saturated: true,
-        exceeds_adiabatic_limit: true,
-        citations: ['Assenbaum, Langanke & Rolfs (1987)'],
-      },
-    },
   },
   proton_phases: { FREE: 0.5, SCREENED: 0.3, CAPTURE_READY: 0.15, NUCLEAR: 0.05 },
   peak_conditions: {
@@ -92,8 +81,6 @@ test.describe('Results prediction waterfall', () => {
     await expect(unifiedTheoryPage.predictionReadoutPanel()).toBeVisible();
     await expect(unifiedTheoryPage.enhancementWaterfall()).toBeVisible();
     await expect(page.getByText(/Physics governed/)).toBeVisible();
-    await expect(page.getByTestId('screening-provenance-panel')).toBeVisible();
-    await expect(page.getByText(/800/)).toBeVisible();
   });
 
   test('Virtual lab renders with diagram toggle', async ({ page, unifiedTheoryPage }) => {
