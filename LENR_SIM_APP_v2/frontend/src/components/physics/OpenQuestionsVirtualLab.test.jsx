@@ -2,8 +2,9 @@
  * OpenQuestionsVirtualLab — when/how rows, Oracle B, no LENR_PROVED.
  */
 import React from 'react';
-import { render, screen } from '../../tests/test-utils';
+import { fireEvent, render, screen } from '../../tests/test-utils';
 import OpenQuestionsVirtualLab from './OpenQuestionsVirtualLab';
+import MechanismPathDiagram from './MechanismPathDiagram';
 
 const TWO_BODY_OQ = {
   schema: 'lenr-open-questions-v1',
@@ -99,5 +100,32 @@ describe('OpenQuestionsVirtualLab', () => {
     );
     expect(screen.getByText(/Oracle A \/ B status:\s*INCONCLUSIVE/i)).toBeInTheDocument();
     expect(screen.queryByText(/Miles 24/)).not.toBeInTheDocument();
+  });
+
+  test('toggles Oracle B diagram view', () => {
+    render(
+      <OpenQuestionsVirtualLab
+        simulationData={{
+          open_questions: TWO_BODY_OQ,
+          peak_conditions: { enhancement_breakdown: {} },
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('oracle-b-tab-diagram'));
+    expect(screen.getByTestId('oracle-b-diagrams')).toBeInTheDocument();
+    expect(screen.getByTestId('mechanism-diagram-trapped_state')).toBeInTheDocument();
+  });
+
+  test('renders energy partition flow chart', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('energy-partition-flow')).toBeInTheDocument();
+  });
+});
+
+describe('MechanismPathDiagram', () => {
+  test('renders SVG for known path', () => {
+    render(<MechanismPathDiagram pathId="three_body" posterior={0.1} />);
+    expect(screen.getByTestId('mechanism-diagram-three_body')).toBeInTheDocument();
+    expect(screen.getByText(/Three-body sequential path/)).toBeInTheDocument();
   });
 });

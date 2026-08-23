@@ -121,3 +121,27 @@ tier, the rubric classification, the resolved value, and the policy.
   `use_theory_pipeline=false`.
 - `app/physics/oppenheimer_phillips.py` exists but is not a registered
   `TheoryModule`, so paper section 2.7 has no runnable module.
+
+## Bubble-lattice prediction block (EQ-PRED-01)
+
+The bubble-lattice `/api/unified/bubble-lattice` response carries a three-tier
+`enhancement_breakdown.prediction` block:
+
+| Tier | Role |
+|---|---|
+| `sensitivity_model` | Naive mechanism product (exploratory upper bound) |
+| `physics_governed` | Grouped max-within-collapse-groups (EQ-BBL-COMP-01) |
+| `claim_tier_display` | `min(physics_governed, 1e5)` — headline numbers use this |
+
+Flat mechanism keys in `enhancement_breakdown` remain claim-tier display values.
+
+## Screening: bubble route vs theory pipeline
+
+| Path | U_e source | Typical Pd value | Combinable? |
+|---|---|---|---|
+| Bubble-lattice (`screening_kernel.py`) | Cited material range | **800 eV** | Canonical for collapse route |
+| Theory pipeline (`electron_screening.py`) | Thomas-Fermi from `n_e` | **~27 eV** | Parallel; not multiplied with bubble total |
+
+The theory pipeline's `electron_screening` and the bubble-lattice screening kernel
+address the same physics by different models. They must not be read as independent
+factors of a single product.
