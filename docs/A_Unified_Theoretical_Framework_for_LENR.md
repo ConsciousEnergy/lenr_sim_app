@@ -4,8 +4,10 @@
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-07-22, v0.3.6-beta)
+Date: 2026-02-14 (revised 2026-08-23, v0.3.6-beta)
 Organization: Conscious Energies | www.conscious.energy
+
+**Revision note (2026-08-23).** Public-readiness sync with companion software v0.3.6-beta: revision metadata and in-app paper view aligned; §5A companion-app field names (`open_questions`, occurrence/when/how blocks, Oracle A/B) unchanged. No quantitative band changes in this revision.
 
 **Keywords:** LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tunneling; Casimir; claim tiers; condensed-matter nuclear hypotheses
 
