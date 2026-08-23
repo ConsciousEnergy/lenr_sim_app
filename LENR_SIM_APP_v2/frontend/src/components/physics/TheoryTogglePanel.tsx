@@ -252,6 +252,20 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
     [enabledTheories, setEnabledTheories],
   );
 
+  // Primary-scoped bulk select: preserve any enabled context-track ids.
+  const handleSelectAllPrimary = useCallback(() => {
+    const primaryIds = primaryTheories.map((t) => t.theory_id);
+    const contextIds = enabledTheories.filter(
+      (id) => !primaryIds.includes(id),
+    );
+    setEnabledTheories([...new Set([...primaryIds, ...contextIds])]);
+  }, [primaryTheories, enabledTheories, setEnabledTheories]);
+
+  const handleDeselectAllPrimary = useCallback(() => {
+    const primaryIdSet = new Set(primaryTheories.map((t) => t.theory_id));
+    setEnabledTheories(enabledTheories.filter((id) => !primaryIdSet.has(id)));
+  }, [primaryTheories, enabledTheories, setEnabledTheories]);
+
   /**
    * Override one configurable parameter for one theory. An empty string clears
    * the override so the module's own default applies again; sending an empty
@@ -437,6 +451,24 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           sx={{ height: 18, fontSize: '0.65rem' }}
         />
         <Box sx={{ flex: 1 }} />
+        <Button
+          size="small"
+          onClick={handleSelectAllPrimary}
+          disabled={primaryTheories.length === 0}
+          aria-label="Select all primary theories"
+          sx={{ fontSize: '0.65rem', py: 0, minWidth: 0 }}
+        >
+          All
+        </Button>
+        <Button
+          size="small"
+          onClick={handleDeselectAllPrimary}
+          disabled={primaryTheories.length === 0}
+          aria-label="Deselect all primary theories"
+          sx={{ fontSize: '0.65rem', py: 0, minWidth: 0 }}
+        >
+          None
+        </Button>
         <Tooltip title="Open governance glossary — claim tiers & evidence classes">
           <Button
             size="small"
