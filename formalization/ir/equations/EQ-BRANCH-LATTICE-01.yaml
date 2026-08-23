@@ -1,0 +1,14 @@
+id: EQ-BRANCH-LATTICE-01
+latex: "\\Gamma_{\\mathrm{ph}}/\\Gamma_\\gamma > 10^{11} \\text{ (open target)}"
+symbols:
+  Gamma_ph: "phonon decay width (OPEN)"
+  Gamma_gamma: "gamma decay width (OPEN)"
+units: "dimensionless ratio"
+tag: DEF
+paper_ref: "§5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+citation_keys:
+  - paper_5A_2
+lean_target: "LenrFormal.Branching"
+notes: "Open lattice branching requirement; not derived from code."

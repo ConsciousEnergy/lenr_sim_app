@@ -1,0 +1,14 @@
+id: EQ-WHEN-THRESH-01
+latex: "R_{\\mathrm{mode}} \\ge R_{\\mathrm{obs}} \\Rightarrow \\text{threshold crossed}"
+symbols:
+  R_mode: "volumetric rate under named hypothesis"
+  R_obs: "calorimetric floor from excess_power_W"
+units: "s^{-1} m^{-3}"
+tag: DEF
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.WhenHow"
+notes: "Conditional threshold predicate; occurrence EMP ≠ mechanism proof."

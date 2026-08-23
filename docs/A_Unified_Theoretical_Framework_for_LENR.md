@@ -364,7 +364,9 @@ P_{\text{tunnel}} = \exp\left(-\frac{2}{\hbar}\int_{a}^{b}\sqrt{2m\bigl(V(x)-E\b
 * **Enhanced Particle Energy:** Localized heating and lattice phonon interactions can further increase effective particle energies.
 
 **Overall Enhancement**  
- The reported \(10^{3}\)–\(10^{5}\) range is a **bounded phenomenological sensitivity band** implemented in the current LENR_SIM software (independent mechanism multipliers with a hard composition cap), **not** a first-principles prediction of a coupled electron–lattice–nuclear Hamiltonian. Factorization into electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)) is a bookkeeping device: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \), subject to software caps and claim-tier labels. Monte Carlo / Sobol runs in the companion app explore this band; they do not by themselves validate microscopic mechanisms.
+ The reported \(10^{3}\)–\(10^{5}\) range is a **bounded phenomenological sensitivity band** implemented in the current LENR_SIM software (independent mechanism multipliers with a hard composition cap), **not** a first-principles prediction of a coupled electron–lattice–nuclear Hamiltonian. Factorization into electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)) is a bookkeeping device: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \), subject to software caps and claim-tier labels.[^comp-eq] Monte Carlo / Sobol runs in the companion app explore this band; they do not by themselves validate microscopic mechanisms.
+
+[^comp-eq]: Software composition is **not** this four-factor product. The theory pipeline uses grouped-max then a \(10^{5}\) cap (`EQ-COMP-01`, `EQ-COMP-02`); multiplying that total by the bubble-lattice peak (or the legacy geometric-mean path) is an illegal product (`EQ-COMP-03`). See `LENR_SIM_APP_v2/docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`.
 
 #### **2.8.1 Phonon-Nuclear Coupling Strength**
 
@@ -818,7 +820,7 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 ## **5A. Open Theoretical Challenges and Fundamental Questions**
 
-This section addresses the most critical unresolved theoretical questions facing the unified LENR framework. Rather than dismissing these as fatal flaws, we formulate each as a quantitative challenge with testable implications.
+Occurrence under Miles-class heat–helium correlations is empirically anchored in parts of the corpus; the open theoretical work is **how** MeV energy partitions (Q1), **how** prompt γ is suppressed (Q2), and **when** the rate budget closes under a named mechanism path (Q3). This section formulates each as a quantitative challenge with testable implications. The companion app's **open-questions virtual lab** (`open_questions` on unified / bubble-lattice / theory-pipeline responses) encodes occurrence (`occurrence.anchored`), when (`when.threshold_crossed`, duty cycle, stimulation), and how (`how.mechanism_paths`, FGR parameters) under Oracle A (Lean identities and conditionals) plus Oracle B (mechanism-path odds). It never prints `LENR_PROVED`. See `docs/ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md`, `docs/ARCHITECTURE/MANY_BODY_FGR_MODEL.md`, and `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md`.
 
 ### **5A.1 The MeV Energy Gap Problem (Q1)**
 
@@ -910,7 +912,7 @@ This work presents a unified theoretical and mathematical framework that address
 
 ### **6.1 Mechanized consistency (Lean)**
 
-A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\), and the Miles \(Q\)-value conversion identity. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
+A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, and n-body geometry vs trap identities. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
 
 **Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
 

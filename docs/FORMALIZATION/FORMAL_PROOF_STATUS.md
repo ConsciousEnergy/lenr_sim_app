@@ -25,6 +25,19 @@
 | EQ-COMP-02 | Intra-group selection is max, not product of rivals | `Composition` | **PROVED** |
 | EQ-QDD-01 | Adopted Q = 23.8 MeV (keV scale lock) | `Miles` | **PROVED** |
 | EQ-MILES-CONV-01 | Conversion / code rate in governance band | `Miles` | **PROVED** |
+| EQ-PHONON-N-01 | \(N=Q/(\hbar\omega)\) for 23.8 MeV / 50 meV | `Phonon` | **PROVED** |
+| EQ-NAIVE-GN-01 | Nat-floor of \((1/2)^n=0\) for \(n\ge 1\) | `Phonon` | **PROVED** |
+| EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |
+| EQ-RATE-COND-01 | Occupation/fusion would-close-if product bound | `RateBudget` | **PROVED** |
+| EQ-RATE-REPLACE-01 | Rival rate modes: max, not product | `RateBudget` | **PROVED** |
+| EQ-COMP-03 | Illegal product of two capped engine totals \(=10^{10}\) | `Composition` | **PROVED** |
+| EQ-TSC-GEOM-01/02 | FCC \(d_{DD}\) identity; \(\neq 25\,\mathrm{pm}\) trap | `NBody` | **PROVED** |
+| EQ-TSC-Q-01 | \(47.6=2\times 23.8\) keV conversion | `NBody` | **PROVED** |
+| EQ-TSC-CH-01 | Two-alpha final state ⇒ no primary \(\gamma\) required | `NBody` | **PROVED** (kinematics only) |
+| EQ-COLL-LIN-01 | \(C=\min(N,10^6)\le 10^6\) | `NBody` | **PROVED** |
+| EQ-3B-MASS-DOM-01 | ULM claimed only if \(m^*/m_e\ge 2.53\) | `NBody` | **PROVED** (domain) |
+| EQ-SCALE-MHD-DOM-01 | MHD formulas not claimed at nuclear fm | `ScaleQED` | **PROVED** |
+| EQ-QED-HE-NEG-01 | Heisenberg–Euler milli-unit identity \(\equiv 1\) | `ScaleQED` | **PROVED** |
 
 ## Axioms / hypotheses (not theorems of nature)
 
@@ -32,6 +45,8 @@
 |----|------|
 | EQ-TUN-BAND-01 | Enhancement band / cap is a **model assumption** (RR-001) |
 | EQ-MILES-EMP-01 | Miles heat–helium correlation remains `EMP` |
+| EQ-TRAP-SEP-01 / EQ-TRAP-TAU-01 | 25 pm and \(10^{-20}\,\mathrm{s}\) are inputs, not derivations |
+| EQ-UQ-PRIOR-01 / EQ-UQ-BF-01 | Oracle B priors and approximate Bayes factor are definitions |
 | `RealShim.expZ_strict_mono` | Analysis bridge until mathlib upgrade |
 
 ## Open obligations (unchanged)
@@ -44,7 +59,9 @@
 | EQ-OPEN-EC-01 | Electron-capture energy source |
 | EQ-OPEN-YIELD-01 | Integrated yield discrepancy |
 
-SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems.
+**New DEF rows (when/how pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01` — Lean `WhenHow.lean` / `Branching.lean`; no measured branching or nature theorem.
+
+SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`.
 
 ## How to reproduce
 

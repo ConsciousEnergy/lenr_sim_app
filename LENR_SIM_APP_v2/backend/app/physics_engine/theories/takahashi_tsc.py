@@ -33,6 +33,11 @@ from scipy import constants as const
 
 from app.physics_engine.theory_protocol import TheoryContribution, TheoryMetadata
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.many_body.fgr_model import (
+    TETRAHEDRAL_SITE_FRACTION,
+    bernoulli_p4,
+    fcc_d_dd_m,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +55,6 @@ C = const.c
 # TSC specific constants
 Q_VALUE_4D_MEV = 47.6  # 4D -> 2He4 Q-value in MeV
 Q_VALUE_4D_J = Q_VALUE_4D_MEV * 1e6 * E_CHARGE
-TETRAHEDRAL_SITE_FRACTION = 0.25  # fraction of interstitial sites that are tetrahedral
 
 
 class TakahashiTSCTheory:
@@ -112,15 +116,11 @@ class TakahashiTSCTheory:
         coherence = config.get("coherence_factor", 1.0)
         a_lattice = config.get("lattice_constant_A", 3.89) * 1e-10  # -> metres
 
-        # Tetrahedral site geometry: D-D distance in tetrahedral void
-        # d_DD = a/(2√2) for FCC tetrahedral sites
-        d_DD = a_lattice / (2.0 * math.sqrt(2.0))
+        # Tetrahedral site geometry via shared FGR library (EQ-TSC-GEOM-01).
+        d_DD = fcc_d_dd_m(a_lattice)
 
-        # Occupation probability: probability that 4 deuterons occupy
-        # a single tetrahedral site simultaneously.
-        # P_4 ∝ loading^4 × tetrahedral_fraction
         site_fraction = TETRAHEDRAL_SITE_FRACTION if site_type == "tetrahedral" else 0.5
-        p_4_occupation = loading**4 * site_fraction
+        p_4_occupation = bernoulli_p4(loading, site_fraction)
 
         # 4-body Gamow factor: coherent tunnelling reduces the effective
         # barrier because the 4 deuterons share the Coulomb cost.

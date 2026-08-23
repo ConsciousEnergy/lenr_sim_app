@@ -22,6 +22,7 @@ import {
   YAxis,
 } from 'recharts';
 import ReactionRateGovernancePanel from '../physics/ReactionRateGovernancePanel';
+import OpenQuestionsVirtualLab from '../physics/OpenQuestionsVirtualLab';
 import { resolveElectrolyteSpecies } from '../../utils/theoryConditions';
 import {
   PHASE_COLORS,
@@ -61,6 +62,9 @@ export default function ResultsPanel({
       </Alert>
     </Grid>
   )}
+  <Grid size={12}>
+    <OpenQuestionsVirtualLab simulationData={simulationData} />
+  </Grid>
   <Grid size={{ xs: 12, md: 6 }}>
     <Paper sx={{ p: 2 }} variant="outlined">
       <Typography variant="h6" gutterBottom>Collapse Results</Typography>

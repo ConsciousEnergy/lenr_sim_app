@@ -908,6 +908,49 @@ E_F = (ħ²/2m_e)(3π² n_e)^(2/3): Pd 6.1 eV (n_e=6.8e28), Ni 7.4 eV (9.1e28), 
 
 ---
 
+## 12. Open-questions virtual lab identities (2026-08-22)
+
+WolframAlpha MCP was not available in this environment. Independents below use
+CODATA SI definitions (`scipy.constants`) and paper §5A.3 bookkeeping.
+
+### 12.1 Phonon order N = Q / ħω (EQ-PHONON-N-01)
+```
+N = 23.8e6 eV / 0.05 eV = 4.76e8
+```
+**Status:** VERIFIED (arithmetic)
+**Code:** `phononOrderN = 476000000` (`formalization/lean/LenrFormal/Phonon.lean`); Python `_phonon_order` uses 10 THz (N ~ 5.8e8)
+**Independent:** 23.8 MeV / 50 meV = 4.76e8. Paper §2.8.1 1 MeV / 50 meV = 2e7.
+
+### 12.2 Two-body event count (EQ-RATE-2B-NC-01)
+```
+log10 N_events = 23 + 12 + 5 - 80 = -40
+```
+**Status:** VERIFIED (paper §5A.3 bookkeeping)
+**Code:** `TWO_BODY_LOG10_N_EVENTS = -40` (`decision_oracle.py`)
+
+### 12.3 FCC d_DD vs trap (EQ-TSC-GEOM-01/02)
+```
+d_DD = a/(2√2); a_Pd = 3.89e-10 m ⇒ d_DD ≈ 1.375e-10 m = 137.5 pm ≠ 25 pm
+```
+**Status:** VERIFIED (geometry)
+**Code:** `open_questions._fcc_d_dd_m`; Lean `fcc_dDD_pm = 137`, `trapSep_pm = 25`
+
+### 12.4 TSC Q identity (EQ-TSC-Q-01)
+```
+47.6 MeV = 2 × 23.8 MeV
+```
+**Status:** VERIFIED
+**Code:** `q_4d_mev: 47.6` in `open_questions.py`; Lean `2 * 23800 = 47600`
+
+### 12.5 Heisenberg-Euler lab correction (EQ-QED-HE-NEG-01)
+```
+eps_eff - 1 ≈ 5.9e-13 at E = 1e14 V/m
+```
+**Status:** VERIFIED (see §9C.3)
+**Code:** `HEISENBERG_EULER_LAB_CORRECTION = 5.9e-13`
+
+---
+
 ## 11. Recommendations
 
 1. Use CODATA 2018 constants (current implementation ✅)

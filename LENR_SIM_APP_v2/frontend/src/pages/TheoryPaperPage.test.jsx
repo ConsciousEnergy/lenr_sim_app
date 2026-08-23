@@ -44,28 +44,29 @@ describe('TheoryPaperPage', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('MeV energy gap')).toBeInTheDocument();
+    expect(screen.getByText(/MeV energy gap \(how\)/)).toBeInTheDocument();
   });
 
   test('Section 5A shows radiation suppression content when expanded', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('Radiation suppression')).toBeInTheDocument();
+    expect(screen.getByText(/Radiation suppression \(how\)/)).toBeInTheDocument();
   });
 
   test('Section 5A shows statistical feasibility content when expanded', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('Statistical feasibility')).toBeInTheDocument();
+    expect(screen.getByText(/Statistical feasibility \(when\)/)).toBeInTheDocument();
   });
 
-  test('Section 5A shows Key open questions in LENR theory', () => {
+  test('Section 5A shows when/how framing intro', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText(/Key open questions in LENR theory/)).toBeInTheDocument();
+    expect(screen.getByText(/Open Questions Virtual Lab/i)).toBeInTheDocument();
+    expect(screen.getByText(/closes under a named mechanism path/i)).toBeInTheDocument();
   });
 
   test('renders Key Equations Quick Reference panel', () => {
