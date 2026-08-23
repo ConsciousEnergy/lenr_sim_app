@@ -1,5 +1,5 @@
 /**
- * Open-questions virtual lab charts (Recharts). Values from API when/how blocks.
+ * Open-questions virtual lab charts. Q1 uses energy flow; Q2/Q3 use log bars.
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';
@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import EnergyPartitionFlow from './EnergyPartitionFlow';
 
 const OPEN_COLOR = '#c62828';
 const SPEC_COLOR = '#ef6c00';
@@ -35,12 +36,6 @@ export default function OpenQuestionsCharts({ openQuestions }) {
   if (oq.route_mode === 'local_fallback') return null;
 
   const part = oq.q_mev_gap?.energy_partition_mev || {};
-  const energyData = [
-    { name: 'phonon', mev: Number(part.phonon) || 0 },
-    { name: 'gamma', mev: Number(part.gamma) || 0 },
-    { name: 'recoil', mev: Number(part.recoil) || 0 },
-    { name: 'OPEN remainder', mev: Number(part.open_remainder) || 23.8 },
-  ];
 
   const branch = oq.q_radiation?.assumed_branching || { he4: 1, n: 1e-11, gamma: 0 };
   const ulLog10 = oq.q_radiation?.detector_ul_log10;
@@ -88,25 +83,13 @@ export default function OpenQuestionsCharts({ openQuestions }) {
 
   return (
     <Box>
-      <ChartFrame title="Q1 energy partition (MeV) — OPEN remainder required">
-        <BarChart data={energyData} layout="vertical" margin={{ left: 90 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis type="category" dataKey="name" />
-          <Tooltip />
-          <Bar dataKey="mev">
-            {energyData.map((row) => (
-              <Cell key={row.name} fill={row.name.startsWith('OPEN') ? OPEN_COLOR : REF_COLOR} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ChartFrame>
+      <EnergyPartitionFlow partition={part} />
 
       <ChartFrame title="Q2 log10 branching (assumed / scenario — not a derived Gamma)">
-        <BarChart data={radData}>
+        <BarChart data={radData} layout="vertical" margin={{ left: 110 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" hide />
-          <YAxis />
+          <XAxis type="number" />
+          <YAxis type="category" dataKey="name" width={100} />
           <Tooltip />
           <Bar dataKey="log10">
             {radData.map((row) => (
@@ -117,10 +100,10 @@ export default function OpenQuestionsCharts({ openQuestions }) {
       </ChartFrame>
 
       <ChartFrame title="Q3 log10 N_events vs 1-event (modes replace, not a product)">
-        <BarChart data={rateData}>
+        <BarChart data={rateData} layout="vertical" margin={{ left: 110 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" hide />
-          <YAxis />
+          <XAxis type="number" />
+          <YAxis type="category" dataKey="name" width={100} />
           <Tooltip />
           <Bar dataKey="log10">
             {rateData.map((row) => (

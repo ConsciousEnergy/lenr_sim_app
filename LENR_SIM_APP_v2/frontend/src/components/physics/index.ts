@@ -29,6 +29,12 @@ export { default as OpenQuestionsCockpit } from './OpenQuestionsVirtualLab';
 export { default as TheoryTogglePanel } from './TheoryTogglePanel';
 export { default as TheoryTestbedCard } from './TheoryTestbedCard';
 export { default as TheoryDocumentationPanel } from './TheoryDocumentationPanel';
+export { default as OpenQuestionsVirtualLab } from './OpenQuestionsVirtualLab';
+export { default as MechanismPathDiagram } from './MechanismPathDiagram';
+export { default as EnhancementWaterfallChart } from './EnhancementWaterfallChart';
+export { default as EnergyPartitionFlow } from './EnergyPartitionFlow';
+export { default as PredictionReadoutPanel } from './PredictionReadoutPanel';
+export { default as ScreeningProvenancePanel } from './ScreeningProvenancePanel';
 
 // Types
 export type { PhysicsParameter } from './PhysicsParameterInput';

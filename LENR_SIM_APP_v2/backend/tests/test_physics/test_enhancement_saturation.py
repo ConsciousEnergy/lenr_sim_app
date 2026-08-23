@@ -146,3 +146,12 @@ class TestNumericalEdgeCases:
         assert report["ceiling"] == 1e3
         assert "screening" in report["saturated_mechanisms"]
         assert capped["screening"] == 1e3
+
+
+class TestPredictionBlock:
+    def test_prediction_can_be_built_from_raw_breakdown(self):
+        from app.physics_engine.bubble_mechanism_composition import build_prediction_report
+
+        prediction = build_prediction_report(SATURATING_BREAKDOWN)
+        assert prediction["claim_tier_display"]["total"] <= MAX_ENHANCEMENT_FACTOR
+        assert prediction["physics_governed"]["total_log10"] < prediction["sensitivity_model"]["total_log10"]

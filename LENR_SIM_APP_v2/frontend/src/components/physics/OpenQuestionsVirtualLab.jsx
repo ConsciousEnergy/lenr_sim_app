@@ -1,7 +1,7 @@
 /**
  * OpenQuestionsVirtualLab — when/how under named conditions and data.
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Box,
@@ -9,6 +9,8 @@ import {
   Divider,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   Table,
   TableBody,
   TableCell,
@@ -17,7 +19,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import MechanismPathDiagram from './MechanismPathDiagram';
 import OpenQuestionsCharts from './OpenQuestionsCharts';
+import PredictionReadoutPanel from './PredictionReadoutPanel';
 
 export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
   schema: 'lenr-open-questions-v1',
@@ -92,8 +96,30 @@ function QuestionRow({ title, block, dimmed = false }) {
   );
 }
 
-function OracleBPanel({ oracleB }) {
+function OracleBPanel({ oracleB, mechanismPaths, viewMode }) {
   if (!oracleB?.hypotheses?.length) return null;
+
+  if (viewMode === 'diagram') {
+    const paths = mechanismPaths?.length
+      ? mechanismPaths
+      : oracleB.hypotheses.map((row) => ({ id: row.id, posterior: row.posterior }));
+    return (
+      <Box sx={{ mb: 2 }} data-testid="oracle-b-diagrams">
+        <Typography variant="subtitle2" gutterBottom>Oracle B — mechanism path diagrams</Typography>
+        <Stack spacing={2}>
+          {paths.map((row) => (
+            <MechanismPathDiagram
+              key={row.id}
+              pathId={row.id}
+              diagramSpec={row.diagram_spec}
+              posterior={row.posterior ?? 0}
+            />
+          ))}
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ mb: 2 }} data-testid="oracle-b-panel">
       <Typography variant="subtitle2" gutterBottom>Oracle B — mechanism paths</Typography>
@@ -185,6 +211,7 @@ function NextMeasurementPanel({ items }) {
 }
 
 export default function OpenQuestionsVirtualLab({ simulationData, openQuestions }) {
+  const [oracleView, setOracleView] = useState('table');
   const routeMode = simulationData?.validation?.route_mode;
   const raw = openQuestions || simulationData?.open_questions;
   const isFallback = routeMode === 'local_fallback' || raw?.route_mode === 'local_fallback';
@@ -204,6 +231,13 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
       </Typography>
+
+      {!isFallback && (
+        <PredictionReadoutPanel
+          prediction={simulationData?.peak_conditions?.enhancement_breakdown?.prediction}
+        />
+      )}
+
       <Alert
         severity={status === 'RATE_BUDGET_DOES_NOT_CLOSE' ? 'warning' : 'info'}
         sx={{ mb: 2 }}
@@ -238,7 +272,18 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
         <TierChip tier="established_reference" />
       </Stack>
 
-      <OracleBPanel oracleB={oq.determination?.oracle_b} />
+      <Box sx={{ mb: 2 }}>
+        <Tabs value={oracleView} onChange={(_, value) => setOracleView(value)} sx={{ mb: 1 }}>
+          <Tab label="Table" value="table" data-testid="oracle-b-tab-table" />
+          <Tab label="Diagram" value="diagram" data-testid="oracle-b-tab-diagram" />
+        </Tabs>
+        <OracleBPanel
+          oracleB={oq.determination?.oracle_b}
+          mechanismPaths={oq.how?.mechanism_paths}
+          viewMode={oracleView}
+        />
+      </Box>
+
       <NextMeasurementPanel items={oq.determination?.next_measurement} />
 
       <Divider sx={{ mb: 2 }} />

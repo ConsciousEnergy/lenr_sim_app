@@ -82,6 +82,10 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) under \(f\le 10^5\) | §5A.3 | rate engine / decision oracle | paper bookkeeping | `THM` | `RateBudget.lean` |
 | EQ-RATE-COND-01 | If \(n_{\mathrm{occ}}\ge n_0\land f_{\mathrm{nuc}}\ge f_0\) then product \(\ge n_0 f_0\) | §5A.3 | decision oracle | would-close-if | `THM` | `RateBudget.lean` |
 | EQ-COMP-03 | Pipeline \(\times\) bubble totals are not a physical observable; at cap \(=10^{10}\) | software | `theory_pipeline.py`, virtual lab | RR composition | `THM` | `Composition.lean` |
+| EQ-BBL-COMP-01 | Bubble-lattice grouped max-within-group then multiply across groups | software | `bubble_mechanism_composition.py` | RR bubble route | `THM` | `Composition.lean` |
+| EQ-PRED-01 | Three-tier prediction: sensitivity / physics_governed / claim_tier_display | software | `unified_simulation.py` | governance | `DEF` | `Composition.lean` |
+| EQ-PRED-02 | Per-mechanism physics bounds \(b_i\) before claim-tier clamp | software | `bubble_mechanism_composition.py` | model assumption | `AX` | `Composition.lean` |
+| EQ-BBL-LIM-01 | Collapse reporting: \(\text{value}=\min(\text{value\_raw},\text{calculated\_bound})\) | §3.2 | `collapse_calculated_bounds.py` | Moss / Flannigan bounds | `DEF` | `CollapseBounds.lean` |
 | EQ-RATE-REPLACE-01 | `two_body` / `trapped_state` / `three_body` are alternatives, not factors | RR-006 | rate engine | governance | `THM` | `RateBudget.lean` |
 | EQ-TSC-GEOM-01 | FCC \(d_{DD}=a/(2\sqrt{2})\) identity (~137 pm for Pd) | §5A.3 | `takahashi_tsc.py` | takahashi2016 | `THM` | `NBody.lean` |
 | EQ-TSC-GEOM-02 | FCC \(d_{DD}\) is not the 25 pm trap radius | §5A.3 | TSC + trapped_state | two hypotheses | `THM` | `NBody.lean` |
