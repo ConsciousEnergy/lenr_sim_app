@@ -162,6 +162,41 @@ def test_miles_ingest_does_not_close_two_body() -> None:
         "sigma_Q_W": 0.1,
     }
     data = client.post("/api/unified/simulate", json=payload).json()
-    assert data["open_questions"]["determination"]["status"] == "RATE_BUDGET_DOES_NOT_CLOSE"
+    assert data["open_questions"]["determination"]["status"] == "OCCURRENCE_ANCHORED_EMP"
+    assert data["open_questions"]["occurrence"]["anchored"] is True
     emp = data["open_questions"]["determination"]["oracle_emp"]
     assert emp["miles_band_gate"] is True
+
+
+def test_occurrence_anchored_has_oracle_b_panel_fields() -> None:
+    client = _client()
+    payload = {
+        **_base_payload(),
+        "excess_power_W": 1.0,
+        "he4_atoms_per_s": 2.63e11,
+    }
+    oq = client.post("/api/unified/simulate", json=payload).json()["open_questions"]
+    hyps = oq["determination"]["oracle_b"]["hypotheses"]
+    assert len(hyps) == 5
+    assert "phonon_cascade" in {h["id"] for h in hyps}
+    assert oq["how"]["mechanism_paths"]
+
+
+def test_geometry_mode_fcc_tetrahedral() -> None:
+    client = _client()
+    payload = {
+        **_base_payload(),
+        "rate_mode": "trapped_state",
+        "geometry_mode": "fcc_tetrahedral",
+    }
+    data = client.post("/api/unified/simulate", json=payload).json()
+    prov = data["reaction_rate_engine"]["rate"]["provenance"]
+    assert prov["geometry_mode"] == "fcc_tetrahedral"
+    assert data["open_questions"]["nbody"]["geometry_mode"] == "fcc_tetrahedral"
+
+
+def test_when_block_duty_fraction() -> None:
+    client = _client()
+    payload = {**_base_payload(), "duty_fraction": 0.5, "total_time": 20.0}
+    when = client.post("/api/unified/simulate", json=payload).json()["open_questions"]["when"]
+    assert when["duty_cycle_s"] == 10.0

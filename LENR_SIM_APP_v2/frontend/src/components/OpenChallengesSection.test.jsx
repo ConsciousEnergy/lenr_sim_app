@@ -16,20 +16,20 @@ describe('OpenChallengesSection', () => {
 
   test('renders MeV energy gap content', () => {
     render(<OpenChallengesSection />);
-    expect(screen.getByText('MeV energy gap')).toBeInTheDocument();
+    expect(screen.getByText(/MeV energy gap \(how\)/)).toBeInTheDocument();
     expect(screen.getByText(/Mechanism for distributing 23\.8 MeV into lattice\/electronic modes without single gamma emission remains debated/)).toBeInTheDocument();
   });
 
   test('renders radiation suppression content', () => {
     render(<OpenChallengesSection />);
-    expect(screen.getByText('Radiation suppression')).toBeInTheDocument();
-    expect(screen.getByText(/How LENR systems suppress dangerous radiation while releasing nuclear-scale energy/)).toBeInTheDocument();
+    expect(screen.getByText(/Radiation suppression \(how\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Detector UL and/)).toBeInTheDocument();
   });
 
   test('renders statistical feasibility content', () => {
     render(<OpenChallengesSection />);
-    expect(screen.getByText('Statistical feasibility')).toBeInTheDocument();
-    expect(screen.getByText(/Whether observed excess heat and transmutations are statistically distinguishable from background/)).toBeInTheDocument();
+    expect(screen.getByText(/Statistical feasibility \(when\)/)).toBeInTheDocument();
+    expect(screen.getByText(/calorimetric floor under the selected hypothesis/)).toBeInTheDocument();
   });
 
   test('renders companion documents links', () => {

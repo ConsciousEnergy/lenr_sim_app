@@ -1,7 +1,5 @@
 /**
- * Open-questions cockpit charts (Recharts). Claim-tier labelled 2D views:
- * energy partition with OPEN remainder, radiation branching, rate vs 1-event,
- * three-engine composition, MHD continuum ladder. Never a LENR_PROVED plot.
+ * Open-questions cockpit charts (Recharts). Values from API when/how blocks.
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';
@@ -45,20 +43,35 @@ export default function OpenQuestionsCharts({ openQuestions }) {
   ];
 
   const branch = oq.q_radiation?.assumed_branching || { he4: 1, n: 1e-11, gamma: 0 };
+  const ulLog10 = oq.q_radiation?.detector_ul_log10;
   const radData = [
     { name: 'vacuum D+D n', log10: -0.3, fill: REF_COLOR },
     { name: 'scenario n', log10: Math.log10(Math.max(branch.n || 1e-11, 1e-30)), fill: SPEC_COLOR },
     { name: 'scenario gamma', log10: Math.log10(Math.max(branch.gamma || 1e-12, 1e-30)), fill: SPEC_COLOR },
-    { name: 'detection UL sketch', log10: -6, fill: OPEN_COLOR },
   ];
+  if (ulLog10 != null && Number.isFinite(ulLog10)) {
+    radData.push({ name: 'detector UL', log10: ulLog10, fill: OPEN_COLOR });
+  } else {
+    radData.push({ name: 'detector UL (no ingest)', log10: -6, fill: OPEN_COLOR });
+  }
 
   const n2 = Number(oq.q_statistical?.n_events_log10_two_body);
+  const when = oq.when || {};
+  const trappedLog10 = when.trapped_state_log10_n;
+  const threeBodyLog10 = when.three_body_log10_n;
+  const activeLog10 = when.active_mode_log10_n;
   const rateData = [
     { name: 'two_body', log10: Number.isFinite(n2) ? n2 : -40, fill: REF_COLOR },
     { name: '1-event', log10: 0, fill: OPEN_COLOR },
-    { name: 'trapped_state SPEC', log10: -8, fill: SPEC_COLOR },
-    { name: 'three_body SPEC', log10: -10, fill: SPEC_COLOR },
   ];
+  if (trappedLog10 != null && Number.isFinite(trappedLog10)) {
+    rateData.push({ name: 'trapped_state', log10: trappedLog10, fill: SPEC_COLOR });
+  }
+  if (threeBodyLog10 != null && Number.isFinite(threeBodyLog10)) {
+    rateData.push({ name: 'three_body', log10: threeBodyLog10, fill: SPEC_COLOR });
+  } else if (oq.rate_mode === 'trapped_state' && activeLog10 != null) {
+    rateData.push({ name: 'trapped_state (active)', log10: activeLog10, fill: SPEC_COLOR });
+  }
 
   const comp = oq.composition || {};
   const engines = [

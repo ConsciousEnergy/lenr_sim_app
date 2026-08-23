@@ -16,6 +16,18 @@ from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 from app.physics_engine.decision_oracle import (
     TWO_BODY_LOG10_N_EVENTS,
     evaluate_determination,
+    occurrence_anchored,
+)
+from app.physics_engine.many_body.branching_model import (
+    branching_inconsistent_with_ul,
+    compute_branching_partition,
+    detector_gamma_ul_log10,
+)
+from app.physics_engine.many_body.fgr_model import (
+    GeometryMode,
+    bernoulli_p4,
+    fcc_d_dd_m,
+    trap_separation_m,
 )
 from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
     DEFAULT_CLUSTER_LIFETIME_S,
@@ -66,8 +78,61 @@ def _phonon_order(omega_hz: float = DEFAULT_PHONON_HZ) -> Dict[str, Any]:
     }
 
 
-def _fcc_d_dd_m(a_m: float = FCC_A_PD_M) -> float:
-    return a_m / (2.0 * math.sqrt(2.0))
+# Nominal active volume for calorimetric threshold bookkeeping (1 cm³).
+NOMINAL_ACTIVE_VOLUME_M3 = 1e-6
+
+_MECHANISM_LEAN_IDS = {
+    "trapped_state": ["EQ-NBODY-FGR-01", "EQ-TSC-GEOM-01", "EQ-TRAP-SEP-01"],
+    "phonon_cascade": ["EQ-PHONON-N-01", "EQ-BRANCH-LATTICE-01"],
+    "three_body": ["EQ-3B-SEQ-01", "EQ-3B-MASS-DOM-01"],
+}
+
+
+def _log10_n_events(rate_per_m3_s: float, volume_m3: float, time_s: float) -> Optional[float]:
+    n = float(rate_per_m3_s) * float(volume_m3) * float(time_s)
+    if n <= 0:
+        return None
+    return math.log10(n)
+
+
+def _observed_volumetric_rate_floor(excess_power_w: float, volume_m3: float) -> float:
+    """Minimum volumetric reaction rate consistent with observed excess power."""
+    vol = max(float(volume_m3), 1e-30)
+    return float(excess_power_w) / (Q_DD_HE4_J * vol)
+
+
+def _fgr_parameters_from_rate(
+    rate: Mapping[str, Any],
+    *,
+    loading_ratio: float,
+    geometry_mode: Optional[str],
+) -> Dict[str, Any]:
+    prov = dict(rate.get("provenance") or {})
+    mode = str(rate.get("mode") or "two_body")
+    if mode == "two_body":
+        return {
+            "mode": mode,
+            "P_occ": None,
+            "Gamma_tun": prov.get("tunneling_probability"),
+            "f_nuc": None,
+            "C_lin": 1.0,
+            "geometry_mode": None,
+            "log10_n_events": None,
+        }
+    geom = geometry_mode or prov.get("geometry_mode") or "trap_25pm_default"
+    p_occ = prov.get("P_occ")
+    if p_occ is None and mode == "trapped_state":
+        p_occ = bernoulli_p4(loading_ratio)
+    return {
+        "mode": mode,
+        "P_occ": p_occ,
+        "Gamma_tun": prov.get("fgr_Gamma_tun") or prov.get("barrier_penetration"),
+        "f_nuc": prov.get("fusion_probability"),
+        "C_lin": prov.get("fgr_C_lin") or prov.get("collective_factor"),
+        "geometry_mode": geom,
+        "trap_separation_m": prov.get("trap_separation_m"),
+        "log10_n_events": None,
+    }
 
 
 def build_open_questions(
@@ -85,6 +150,13 @@ def build_open_questions(
     priors: Optional[Mapping[str, float]] = None,
     assumed_branching: Optional[Mapping[str, float]] = None,
     electrolyte_is_boundary_modifier: bool = True,
+    loading_ratio: float = 0.9,
+    total_time: float = 10.0,
+    duty_fraction: Optional[float] = None,
+    geometry_mode: Optional[str] = None,
+    stimulation: Optional[Mapping[str, Any]] = None,
+    active_volume_m3: Optional[float] = None,
+    kgrp_locked: bool = False,
 ) -> Dict[str, Any]:
     """Assemble the additive open_questions object."""
     enabled = list(enabled_theories or [])
@@ -97,22 +169,64 @@ def build_open_questions(
     hag = dict(hagelstein_observables or {})
     if hag.get("n_phonons_needed"):
         phonon["phonon_order_N"] = float(hag["n_phonons_needed"])
-    phonon_energy = float(hag.get("phonon_fraction") or 0.0) * Q_DD_HE4_MEV
-    # Heuristic SPEC split never sums to Q — OPEN remainder is required.
-    gamma_energy = 0.0
-    recoil_energy = 0.0
-    remainder = max(Q_DD_HE4_MEV - phonon_energy - gamma_energy - recoil_energy, 0.0)
+    phonon_frac = float(hag.get("phonon_fraction") or 0.0)
+    phonon_energy = phonon_frac * Q_DD_HE4_MEV
 
     branching = dict(
         assumed_branching
         or {"he4": 1.0 - 1e-11, "n": 1e-11, "gamma": 0.0}
+    )
+    branch_part = compute_branching_partition(
+        branching,
+        phonon_fraction=phonon_frac,
+    )
+    gamma_energy = float(branch_part["gamma_mev"])
+    recoil_energy = float(branch_part["recoil_mev"])
+    remainder = max(
+        Q_DD_HE4_MEV - phonon_energy - gamma_energy - recoil_energy, 0.0
     )
     rate = dict((rate_block or {}).get("rate") or {})
     provenance = dict(rate.get("provenance") or {})
     unphysical = bool(provenance.get("unphysical"))
     uq = (rate_block or {}).get("uncertainty") or {}
 
-    d_dd = _fcc_d_dd_m()
+    d_dd = fcc_d_dd_m(FCC_A_PD_M)
+    obs = dict(observations or {})
+    anchored = occurrence_anchored(obs)
+    emp_gates: list[str] = []
+    if anchored:
+        emp_gates.append("miles_q_band")
+    if obs.get("gamma_cps_ul") is not None:
+        emp_gates.append("gamma_ul_ingest")
+
+    vol = float(active_volume_m3 or NOMINAL_ACTIVE_VOLUME_M3)
+    duty = float(duty_fraction) if duty_fraction is not None else 1.0
+    duty = max(0.0, min(duty, 1.0))
+    stim = dict(stimulation or {})
+    letts = bool(stim.get("letts_laser"))
+    acoustic = bool(stim.get("acoustic_drive"))
+    bubble_drive = route_mode.startswith("bubble")
+    stimulation_active = letts or acoustic or bubble_drive
+    hagelstein_enabled = "hagelstein_phonon" in enabled
+
+    rate_per_m3 = float(rate.get("rate_per_m3_s") or 0.0)
+    active_log10_n = _log10_n_events(rate_per_m3, vol, total_time * duty)
+    threshold_crossed: Optional[bool] = None
+    power = obs.get("excess_power_W")
+    if power is not None and float(power) > 0:
+        r_obs = _observed_volumetric_rate_floor(float(power), vol)
+        threshold_crossed = rate_per_m3 >= r_obs
+
+    ul_log10 = detector_gamma_ul_log10(
+        obs.get("gamma_cps_ul"),
+        obs.get("gamma_efficiency"),
+        obs.get("he4_atoms_per_s"),
+    )
+    branch_inconsistent = branching_inconsistent_with_ul(
+        float(branch_part["gamma_fraction"]),
+        ul_log10,
+    )
+
     engines_present = []
     if pipeline_combined_enhancement is not None:
         engines_present.append("theory_pipeline")
@@ -138,7 +252,74 @@ def build_open_questions(
         observations=observations,
         priors=priors,
         uq_interval_kind=uq.get("interval_kind"),
+        hagelstein_enabled=hagelstein_enabled,
+        kgrp_locked=bool(kgrp_locked),
+        branching_inconsistent=branch_inconsistent,
+        threshold_crossed=threshold_crossed,
+        active_mode_log10_n=active_log10_n,
     )
+
+    posteriors = {
+        row["id"]: float(row["posterior"])
+        for row in determination.get("oracle_b", {}).get("hypotheses", [])
+    }
+    mechanism_paths = [
+        {
+            "id": path_id,
+            "posterior": posteriors.get(path_id, 0.0),
+            "lean_ids": _MECHANISM_LEAN_IDS.get(path_id, []),
+        }
+        for path_id in ("trapped_state", "phonon_cascade", "three_body")
+    ]
+    fgr_params = _fgr_parameters_from_rate(
+        rate,
+        loading_ratio=float(loading_ratio),
+        geometry_mode=geometry_mode,
+    )
+    if active_log10_n is not None:
+        fgr_params["log10_n_events"] = active_log10_n
+    trapped_ref = dict((rate_block or {}).get("two_body_reference") or {})
+    trapped_log10 = None
+    if trapped_ref:
+        trapped_log10 = _log10_n_events(
+            float(trapped_ref.get("rate_per_m3_s") or 0.0), vol, total_time * duty
+        )
+
+    occurrence = {
+        "anchored": anchored,
+        "emp_gates": emp_gates,
+        "note": (
+            "EMP anchors when occurrence is in band, not how the mechanism works."
+            if anchored
+            else "No Miles-class simultaneous heat–He ingest; occurrence not anchored."
+        ),
+    }
+    when = {
+        "threshold_crossed": threshold_crossed,
+        "duty_cycle_s": float(total_time) * duty,
+        "loading_ratio": float(loading_ratio),
+        "stimulation_active": stimulation_active,
+        "stimulation": {
+            "letts_laser": letts,
+            "acoustic_drive": acoustic,
+            "bubble_drive": bubble_drive,
+        },
+        "two_body_reference_log10_n": TWO_BODY_LOG10_N_EVENTS,
+        "active_mode_log10_n": active_log10_n,
+        "trapped_state_log10_n": trapped_log10 if mode != "trapped_state" else active_log10_n,
+        "three_body_log10_n": active_log10_n if mode == "three_body" else None,
+        "nominal_volume_m3": vol,
+        "lean_theorems": ["EQ-WHEN-THRESH-01", "EQ-WHEN-DUTY-01"],
+    }
+    how = {
+        "mechanism_paths": mechanism_paths,
+        "active_rate_mode": mode,
+        "best_mechanism_path": determination.get("oracle_b", {}).get(
+            "best_mechanism_path"
+        ),
+        "fgr_parameters": fgr_params,
+        "lean_theorems": ["EQ-MECH-PATH-01", "EQ-NBODY-FGR-01"],
+    }
 
     q_mev = {
         "id": "EQ-OPEN-MEV-01",
@@ -155,6 +336,11 @@ def build_open_questions(
         },
         "lean_theorems": ["EQ-PHONON-N-01", "EQ-NAIVE-GN-01"],
         "kgrp_lock": "necessary_not_sufficient",
+        "required_V_nuc_sketch": (
+            "WOULD_CLOSE_IF: |V_eff| such that cascade rate matches excess_power_W "
+            "(not solved here)."
+            if obs.get("excess_power_W") else None
+        ),
     }
     q_rad = {
         "id": "EQ-OPEN-RAD-01",
@@ -164,7 +350,11 @@ def build_open_questions(
         "assumed_branching_label": "assumed / scenario — not a derived Gamma_ph/Gamma_gamma",
         "hardcoded_product_gamma_is_not_a_limit": True,
         "detection_limit_note": "Publish BR_gamma < U/epsilon; do not cite product_gamma=0.",
-        "lean_theorems": ["EQ-TSC-CH-01"],
+        "detector_ul_log10": ul_log10,
+        "branching_inconsistent_with_ul": branch_inconsistent,
+        "lattice_gamma_target": branch_part["lattice_gamma_target"],
+        "lattice_gamma_target_label": branch_part["lattice_gamma_target_label"],
+        "lean_theorems": list(branch_part["lean_theorems"]),
     }
     q_stat = {
         "id": "EQ-OPEN-RATE-01",
@@ -225,6 +415,9 @@ def build_open_questions(
         "route_mode": route_mode,
         "rate_mode": mode,
         "determination": determination,
+        "occurrence": occurrence,
+        "when": when,
+        "how": how,
         "q_mev_gap": q_mev,
         "q_radiation": q_rad,
         "q_statistical": q_stat,
@@ -252,6 +445,8 @@ def build_open_questions(
             "modes_replace_not_product": True,
             "fcc_d_DD_m": d_dd,
             "trap_separation_m": TRAP_SEP_M,
+            "fcc_tetrahedral_separation_m": trap_separation_m(GeometryMode.FCC_TETRAHEDRAL),
+            "geometry_mode": geometry_mode,
             "geometry_neq_trap": abs(d_dd - TRAP_SEP_M) > 1e-12,
             "p4_occupation_is_open": True,
             "q_4d_mev": 47.6,

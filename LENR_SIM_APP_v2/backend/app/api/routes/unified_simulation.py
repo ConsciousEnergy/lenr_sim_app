@@ -152,6 +152,12 @@ class ElectrolyteConfig(BaseModel):
     ionic_strength_proxy: Optional[float] = Field(default=None, ge=0.0, description="Optional bounded ionic-strength proxy")
 
 
+class StimulationConfig(BaseModel):
+    """Optional stimulation gates for when/how cockpit (never auto-flips rate_mode)."""
+    letts_laser: bool = Field(default=False)
+    acoustic_drive: bool = Field(default=False)
+
+
 class SimulationRequest(BaseModel):
     """Full simulation request"""
     material: MaterialConfig = Field(default_factory=MaterialConfig)
@@ -189,6 +195,18 @@ class SimulationRequest(BaseModel):
     gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
     gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
     p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
+    duty_fraction: Optional[float] = Field(
+        default=None, ge=0, le=1,
+        description="Fraction of total_time with active stimulation (when block).",
+    )
+    geometry_mode: Optional[str] = Field(
+        default=None,
+        description="Trap geometry rival: 'fcc_tetrahedral' or 'trap_25pm'.",
+    )
+    stimulation: Optional[StimulationConfig] = Field(
+        default=None,
+        description="Optional laser/acoustic stimulation flags for when block.",
+    )
 
 
 class EnhancementFactor(BaseModel):
@@ -532,6 +550,13 @@ def _build_simulate_open_questions(
         enabled_theories=enabled,
         hagelstein_observables=hag,
         observations=observations_from_obj(request),
+        loading_ratio=float(request.lattice.loading_ratio),
+        total_time=float(request.total_time),
+        duty_fraction=request.duty_fraction,
+        geometry_mode=request.geometry_mode,
+        stimulation=(
+            request.stimulation.model_dump() if request.stimulation else None
+        ),
     )
 
 
@@ -546,6 +571,8 @@ def _compose_rate_block(
     experimental_band: Optional[List[float]],
     material_key: str,
     transmutation_validation: Dict[str, Any],
+    geometry_mode: Optional[str] = None,
+    p4_occupation: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Shared reaction-rate engine core (RORO), reused by /simulate and /bubble-lattice.
 
@@ -562,7 +589,13 @@ def _compose_rate_block(
     if mode not in {"two_body", "trapped_state", "three_body"}:
         mode = "two_body"
 
-    rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
+    rate_result = compute_reaction_rate(
+        config,
+        tunneling_probability,
+        mode=mode,
+        geometry_mode=geometry_mode,
+        p4_occupation=p4_occupation,
+    )
     block: Dict[str, Any] = {"rate": rate_result.as_dict()}
 
     if mode != "two_body":
@@ -618,6 +651,8 @@ def _build_rate_engine_block(
             experimental_band=request.experimental_band,
             material_key=(request.material.host_material or "palladium").lower(),
             transmutation_validation=transmutation_validation,
+            geometry_mode=request.geometry_mode,
+            p4_occupation=request.p_4_occupation,
         )
     except Exception as exc:  # pragma: no cover - defensive, must not break core
         logger.warning("Reaction-rate engine block skipped: %s", exc)
@@ -731,6 +766,8 @@ def build_bubble_rate_engine_block(
             experimental_band=request.experimental_band,
             material_key=hm,
             transmutation_validation=transmutation_validation,
+            geometry_mode=request.geometry_mode,
+            p4_occupation=request.p_4_occupation,
         )
 
         # Transparency: record the collapse-instant inputs used for the rate.
@@ -1093,6 +1130,9 @@ class BubbleLatticeRequest(BaseModel):
     gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
     gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
     p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
+    duty_fraction: Optional[float] = Field(default=None, ge=0, le=1)
+    geometry_mode: Optional[str] = Field(default=None)
+    stimulation: Optional[StimulationConfig] = Field(default=None)
 
 
 class BubbleLatticeResponse(BaseModel):
@@ -1606,6 +1646,17 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             rate_block=reaction_rate_engine_block,
             two_body_reference=reaction_rate_engine_block.get("two_body_reference"),
             observations=observations_from_obj(request),
+            loading_ratio=float(request.lattice.loading_ratio),
+            total_time=float(request.num_cycles),
+            duty_fraction=request.duty_fraction,
+            geometry_mode=request.geometry_mode,
+            stimulation=(
+                {**(request.stimulation.model_dump() if request.stimulation else {}),
+                 "acoustic_drive": True}
+            ),
+            kgrp_locked=bool(
+                (reaction_rate_engine_block.get("kgrp") or {}).get("is_locked")
+            ),
         )
 
         # Sanitize all float values to ensure JSON compliance

@@ -1,8 +1,5 @@
 /**
- * OpenQuestionsCockpit
- *
- * Researcher ledger for whether a nuclear LENR explanation can occur under
- * named hypotheses. Oracle A (Lean) + Oracle B (odds). Never LENR_PROVED.
+ * OpenQuestionsCockpit v2 — when/how under named conditions and data.
  */
 import React, { useCallback } from 'react';
 import {
@@ -12,6 +9,11 @@ import {
   Divider,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -27,6 +29,9 @@ export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
     oracle_b: { note: 'UNAVAILABLE on local_fallback' },
     oracle_emp: { evaluated: false },
   },
+  occurrence: { anchored: false, emp_gates: [] },
+  when: {},
+  how: {},
   emp_chips: [],
   lenr_proved: false,
   q_mev_gap: { id: 'EQ-OPEN-MEV-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
@@ -87,6 +92,98 @@ function QuestionRow({ title, block, dimmed = false }) {
   );
 }
 
+function OracleBPanel({ oracleB }) {
+  if (!oracleB?.hypotheses?.length) return null;
+  return (
+    <Box sx={{ mb: 2 }} data-testid="oracle-b-panel">
+      <Typography variant="subtitle2" gutterBottom>Oracle B — mechanism paths</Typography>
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+        Priors: {oracleB.priors_source || 'default_skeptical'}
+        {oracleB.occurrence_anchored ? ' · occurrence anchored' : ''}
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Hypothesis</TableCell>
+            <TableCell align="right">Posterior</TableCell>
+            <TableCell align="right">log10 BF vs two_body</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {oracleB.hypotheses.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell>{row.id}</TableCell>
+              <TableCell align="right">{(row.posterior * 100).toFixed(1)}%</TableCell>
+              <TableCell align="right">
+                {Number(row.log10_bayes_vs_two_body).toFixed(2)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+function WhenHowRow({ occurrence, when, how }) {
+  return (
+    <Box sx={{ mb: 2 }} data-testid="when-how-row">
+      {occurrence?.anchored && (
+        <Chip
+          label="Occurrence anchored (Miles EMP)"
+          color="success"
+          size="small"
+          sx={{ mr: 1, mb: 1 }}
+          data-testid="occurrence-anchored-chip"
+        />
+      )}
+      {when?.threshold_crossed != null && (
+        <Chip
+          label={when.threshold_crossed ? 'Threshold crossed' : 'Threshold not crossed'}
+          color={when.threshold_crossed ? 'success' : 'warning'}
+          size="small"
+          sx={{ mr: 1, mb: 1 }}
+        />
+      )}
+      {when?.stimulation_active && (
+        <Chip label="Stimulation active" size="small" sx={{ mr: 1, mb: 1 }} />
+      )}
+      {when?.loading_ratio != null && (
+        <Chip label={`loading ${when.loading_ratio}`} size="small" sx={{ mr: 1, mb: 1 }} />
+      )}
+      {how?.best_mechanism_path && (
+        <Chip
+          label={`path: ${how.best_mechanism_path}`}
+          size="small"
+          variant="outlined"
+          sx={{ mr: 1, mb: 1 }}
+        />
+      )}
+      {how?.fgr_parameters && (
+        <Typography variant="caption" color="text.secondary" display="block">
+          FGR: P_occ={String(how.fgr_parameters.P_occ ?? '—')}
+          {' · '}Γ_tun={String(how.fgr_parameters.Gamma_tun ?? '—')}
+          {' · '}log10 N={String(how.fgr_parameters.log10_n_events ?? when?.active_mode_log10_n ?? '—')}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+function NextMeasurementPanel({ items }) {
+  if (!items?.length) return null;
+  return (
+    <Box sx={{ mb: 2 }} data-testid="next-measurement-ivg">
+      <Typography variant="subtitle2" gutterBottom>Next measurement (IVG)</Typography>
+      {items.map((row) => (
+        <Typography key={row.observable} variant="body2">
+          #{row.rank} {row.observable}: {row.rationale}
+        </Typography>
+      ))}
+    </Box>
+  );
+}
+
 export default function OpenQuestionsCockpit({ simulationData, openQuestions }) {
   const routeMode = simulationData?.validation?.route_mode;
   const raw = openQuestions || simulationData?.open_questions;
@@ -105,7 +202,7 @@ export default function OpenQuestionsCockpit({ simulationData, openQuestions }) 
     <Paper sx={{ p: 2 }} variant="outlined" data-testid="open-questions-cockpit">
       <Typography variant="h6" gutterBottom>Open questions cockpit</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Determination under named hypotheses. Not a nature theorem. Not LENR_PROVED.
+        When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
       </Typography>
       <Alert
         severity={status === 'RATE_BUDGET_DOES_NOT_CLOSE' ? 'warning' : 'info'}
@@ -117,7 +214,12 @@ export default function OpenQuestionsCockpit({ simulationData, openQuestions }) 
         {status === 'RATE_BUDGET_DOES_NOT_CLOSE' && (
           <Typography variant="body2">
             Two-body rate budget does not close under f ≤ 10^5
-            (log10 N_events = −40).
+            (log10 N_events = −40). Occurrence EMP is separate from this reference.
+          </Typography>
+        )}
+        {status === 'OCCURRENCE_ANCHORED_EMP' && (
+          <Typography variant="body2">
+            Miles-band heat–He anchors occurrence; mechanism path remains open.
           </Typography>
         )}
         {isFallback && (
@@ -126,12 +228,19 @@ export default function OpenQuestionsCockpit({ simulationData, openQuestions }) 
           </Typography>
         )}
       </Alert>
+
+      <WhenHowRow occurrence={oq.occurrence} when={oq.when} how={oq.how} />
+
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
         {(oq.determination?.oracle_a?.lean_theorems || ['EQ-RATE-2B-NC-01']).map((id) => (
           <LeanId key={id} id={id} />
         ))}
         <TierChip tier="established_reference" />
       </Stack>
+
+      <OracleBPanel oracleB={oq.determination?.oracle_b} />
+      <NextMeasurementPanel items={oq.determination?.next_measurement} />
+
       <Divider sx={{ mb: 2 }} />
       <QuestionRow title="Q1 MeV energy gap" block={oq.q_mev_gap} />
       <QuestionRow title="Q2 Radiation suppression" block={oq.q_radiation} />

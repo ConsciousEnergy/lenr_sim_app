@@ -50,9 +50,24 @@ flowchart TB
   h3 -.-> dispatch
 ```
 
+```mermaid
+flowchart TB
+  emp[OracleEMP Miles and lab ingest]
+  umbf[many_body FGR + branching]
+  lean[LenrFormal WhenHow Branching]
+  dec[decision_oracle mechanism paths]
+  oq[open_questions occurrence when how]
+  ui[OpenQuestionsCockpit v2]
+  emp -->|"occurrence_anchored"| dec
+  umbf -->|"fgr_parameters"| oq
+  lean -->|"oracle_a IDs"| oq
+  dec -->|"when_how status"| oq
+  oq --> ui
+```
+
 Verified against:
 
-- `LENR_SIM_APP_v2/backend/app/api/routes/unified_simulation.py`
+- `LENR_SIM_APP_v2/backend/app/physics_engine/many_body/`
 - `LENR_SIM_APP_v2/backend/app/api/routes/physics.py` (`/theories/run`)
 - `LENR_SIM_APP_v2/backend/app/physics_engine/theory_pipeline.py`
 - `LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py`

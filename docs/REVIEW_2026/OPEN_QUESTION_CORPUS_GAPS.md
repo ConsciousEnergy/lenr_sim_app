@@ -27,11 +27,11 @@ That is compatible with keeping multi-body (`trapped_state` / TSC) **open** besi
 
 ## Q1–Q3 vs existing modules
 
-| Open question | Strongest in-app handle | Still missing |
-|---------------|-------------------------|---------------|
-| Q1 MeV gap (phonon → nuclear) | `hagelstein_phonon.py`; [MEV_GAP_HYPOTHESIS.md](MEV_GAP_HYPOTHESIS.md) | Constrained matrix element + occupation probability |
-| Q2 Radiation suppression / no prompt γ | Hagelstein lossy spin-boson narrative; Widom ULM neutrons | Quantitative γ-absorption / branching vs detection limits |
-| Q3 Rate closure | `two_body` baseline + `trapped_state` SPEC (RR-006) | Experimentally constrained collective factor; do not product rival EMP multipliers |
+| Open question | Strongest in-app handle | When/how cockpit field | Still missing |
+|---------------|-------------------------|------------------------|---------------|
+| Q1 MeV gap (phonon → nuclear) | `hagelstein_phonon.py`; [MEV_GAP_HYPOTHESIS.md](MEV_GAP_HYPOTHESIS.md) | `q_mev_gap`, `how.fgr_parameters.f_nuc` | Constrained matrix element + occupation probability |
+| Q2 Radiation suppression / no prompt γ | `branching_model.py`; Hagelstein narrative | `q_radiation.detector_ul_log10`, `BRANCHING_INCONSISTENT_WITH_UL` | Quantitative γ-absorption vs detection limits |
+| Q3 Rate closure | `two_body` + `trapped_state` / `three_body` FGR | `when.threshold_crossed`, `when.active_mode_log10_n` | Experimentally constrained collective factor |
 
 **Deferred (not modules in this slice):** Dubinko LAV; Widom γ-absorption SPEC vs ULM neutrons; Letts beat-frequency term in `calculate()`; Floquet-WKB drive; maser / microwave TheoryModule.
 
@@ -39,8 +39,8 @@ That is compatible with keeping multi-body (`trapped_state` / TSC) **open** besi
 
 | Channel | Experiment | In formalism today | Honest gap |
 |---------|------------|--------------------|------------|
-| Laser | Letts & Cravens dual-beam ~670–685 nm on Pd-D; Lorentzian ~682 nm; EMP heat vs unstimulated | `letts_laser.py`; pipeline group `empirical_correlation` (with Miles) | Beat frequency → optical phonons is docstring-only, not in `calculate()` |
-| Acoustic / kinetic | Ultrasonic forcing; Minnaert / Bjerknes / streaming; RP + Keller–Miksis in bubble-lattice. Taleyarkhan-type nuclear claims **disputed EMP**. Huang 2024 **contested EMP** (below) | Paper §3.6; bubble-lattice; KG–RP | Environmental **drive**, not a named TheoryModule |
+| Laser | Letts & Cravens dual-beam ~670–685 nm on Pd-D; Lorentzian ~682 nm; EMP heat vs unstimulated | `letts_laser.py`; `when.stimulation.letts_laser` | Beat frequency → optical phonons is docstring-only, not in `calculate()` |
+| Acoustic / kinetic | Ultrasonic forcing; Minnaert / Bjerknes / streaming; RP + Keller–Miksis in bubble-lattice. Taleyarkhan-type nuclear claims **disputed EMP**. Huang 2024 **contested EMP** (below) | Paper §3.6; bubble-lattice; `when.stimulation_active` (acoustic/bubble) | Environmental **drive**, not a named TheoryModule |
 | Maser | No CMNS-class experimental track comparable to Letts | No `maser` module (correct) | Paper §2.8.1 “phonon maser” is an **analogy**. Do not invent a maser milestone |
 
 Do not multiply laser × acoustic enhancement factors.

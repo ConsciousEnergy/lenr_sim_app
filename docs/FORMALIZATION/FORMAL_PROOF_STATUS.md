@@ -59,6 +59,8 @@
 | EQ-OPEN-EC-01 | Electron-capture energy source |
 | EQ-OPEN-YIELD-01 | Integrated yield discrepancy |
 
+**New DEF rows (when/how pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01` — Lean `WhenHow.lean` / `Branching.lean`; no measured branching or nature theorem.
+
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`.
 
 ## How to reproduce

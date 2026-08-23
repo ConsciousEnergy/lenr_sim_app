@@ -97,6 +97,10 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-3B-SEQ-01 | Sequential Widom–OP chain, not Faddeev | §2.4, §5A.4 | rate engine | DEF | `DEF` | `NBody.lean` |
 | EQ-3B-MASS-DOM-01 | ULM factor claimed only if \(m^*/m_e\ge 2.53\) | §2.4, §5A.4 | `widom_larsen.py` | tennfors2013 domain | `THM` | `NBody.lean` |
 | EQ-NBODY-FGR-01 | Bookkeeping FGR for a correlated 4-body condensate | §5A.3 | TSC / rate | DEF | `DEF` | `NBody.lean` |
+| EQ-BRANCH-LATTICE-01 | Lattice Γ_ph/Γ_γ > 10^11 open target | §5A.2 | `branching_model.py` | paper §5A.2 | `DEF` | `Branching.lean` |
+| EQ-WHEN-THRESH-01 | Threshold predicate R_mode ≥ R_obs | §5A.3 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
+| EQ-WHEN-DUTY-01 | Duty-cycle integrated yield t_duty = t_total f_duty | §5A.5 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
+| EQ-MECH-PATH-01 | Mechanism path enum (TSC / phonon / three_body) | §5A | `decision_oracle.py` | Oracle B odds | `DEF` | `WhenHow.lean` |
 | EQ-SCALE-MHD-DOM-01 | MHD Ha/Rm not claimed at nuclear fm | software | `multiscale_bridge.py` | domain | `THM` | `ScaleQED.lean` |
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler factor \(\approx 1\) at simulated lab \(E\) | bubble QED term | `bubble_lattice_interaction.py` | HE 1936 | `THM` | `ScaleQED.lean` |
 | EQ-UQ-PRIOR-01 | Oracle B skeptical default priors | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |

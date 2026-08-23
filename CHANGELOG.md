@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Open-questions cockpit — when/how many-body pass (2026-08-23)
+- Reframe cockpit from "whether" to **when/how** under named conditions: additive `occurrence`, `when`, `how` blocks on `lenr-open-questions-v1` (no envelope bump)
+- Unified Many-Body FGR library (`many_body/fgr_model.py`, `branching_model.py`); trapped_state rate refactored to shared EQ-NBODY-FGR-01 bookkeeping
+- Oracle B: `phonon_cascade` hypothesis, occurrence-anchored priors, status alphabet (`OCCURRENCE_ANCHORED_EMP`, `MECHANISM_PATH_*`, `THRESHOLD_*`, `BRANCHING_INCONSISTENT_WITH_UL`)
+- API: optional `duty_fraction`, `geometry_mode`, `stimulation` on `/simulate` and `/bubble-lattice`
+- Lean: `WhenHow.lean`, `Branching.lean`; IR `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`
+- UI: Oracle B panel, when/how rows, IVG, charts from API (no hardcoded Q3 bars)
+- Docs: `MANY_BODY_FGR_MODEL.md`, paper §5A reframe, TESTABLE_PREDICTIONS crosswalk
+
 ### Open-questions cockpit (2026-08-22)
 - Additive `open_questions` (`lenr-open-questions-v1`) on `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run`: two-oracle determination (Lean identities + skeptical-prior odds), Q1–Q5 ledger with Q4/Q5 dimmed, three-engine composition (pipeline / bubble / legacy) with illegal-product pedagogy, n-body mode ledger, MHD-to-MHD cascade labels
 - Status alphabet includes `RATE_BUDGET_DOES_NOT_CLOSE`; never `LENR_PROVED` / `LENR_DISPROVED_AS_THEOREM`. `local_fallback` stays `INCONCLUSIVE` without EMP chips
