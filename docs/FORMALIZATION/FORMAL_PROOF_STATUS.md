@@ -1,6 +1,6 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-08-22  
+**Updated:** 2026-08-23  
 **Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved.
 
 ## Oracle stack (siblings, not substitutes)
@@ -38,6 +38,24 @@
 | EQ-3B-MASS-DOM-01 | ULM claimed only if \(m^*/m_e\ge 2.53\) | `NBody` | **PROVED** (domain) |
 | EQ-SCALE-MHD-DOM-01 | MHD formulas not claimed at nuclear fm | `ScaleQED` | **PROVED** |
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler milli-unit identity \(\equiv 1\) | `ScaleQED` | **PROVED** |
+| EQ-BBL-COMP-01 | Intra-group max of per-mechanism clamps; groups multiply | `Composition` | **PROVED** (algebra) |
+| EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
+| EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | `Decision` | **DEF** mechanized |
+
+## Definitions mechanized in this pass (not nature theorems)
+
+| ID | Lean module | What is encoded |
+|----|-------------|-----------------|
+| EQ-BBL-LIM-01 | `CollapseBounds` | Pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\) |
+| EQ-PRED-02 | `Composition` | Per-mechanism bound table (model input) |
+| EQ-3B-SEQ-01 | `NBody` | Sequential two-stage chain, not Faddeev |
+| EQ-NBODY-FGR-01 | `NBody` | Unnormalized FGR bookkeeping ratio |
+| EQ-TRAP-DEF-01 | `NBody` | Trapped-state bookkeeping; \(f_{\mathrm{nuc}}\) unconstrained |
+| EQ-TSC-STOP-01 | `NBody` | Alpha stopping \(\neq\) prompt-photon transfer mode |
+| EQ-TRAP-TAU-01 | `Constants` | \(\tau=10^{-20}\,\mathrm{s}\) integer-scaled input |
+| EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
+
+`OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). It does **not** discharge any open obligation.
 
 ## Axioms / hypotheses (not theorems of nature)
 
