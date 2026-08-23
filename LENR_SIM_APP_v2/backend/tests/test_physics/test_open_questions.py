@@ -1,6 +1,8 @@
 """Unit tests for the open-questions virtual lab builder and decision oracle."""
 from __future__ import annotations
 
+import pytest
+
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 from app.physics_engine.decision_oracle import (
     ANCHORED_PRIORS,
@@ -16,8 +18,10 @@ from app.physics_engine.open_questions import (
     build_open_questions,
     safe_build_open_questions,
 )
+from app.physics_engine.theories.miles_heat_helium import MILES_RATE_PER_WATT
 from app.physics_engine.unified_lenr_model.config import SimulationConfig
 from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+    DEFAULT_MASS_RENORMALIZATION,
     compute_reaction_rate,
     compute_trapped_state_rate,
 )
@@ -149,9 +153,88 @@ def test_tsc_leak_flag_when_module_enabled_on_two_body() -> None:
 
 def test_q4_q5_are_dimmed_and_open() -> None:
     block = build_open_questions(route_mode="legacy_unified_model")
-    assert block["q_electron_capture"]["dimmed"] is True
-    assert block["q_integrated_yield"]["dimmed"] is True
+    q_ec = block["q_electron_capture"]
+    q_yield = block["q_integrated_yield"]
+    assert q_ec["dimmed"] is True
+    assert q_ec["status"] == "OPEN"
+    assert q_ec["claim_tier"] == "speculative_exploratory"
+    assert q_ec["electron_capture_threshold_mev"] == pytest.approx(0.782)
+    assert q_ec["mass_renormalization_threshold_mstar_over_me"] == pytest.approx(
+        2.53, rel=0.01
+    )
+    assert (
+        q_ec["mass_renormalization_input_mstar_over_me"]
+        == DEFAULT_MASS_RENORMALIZATION
+    )
+    assert q_ec["mass_renormalization_threshold_met"] is True
+    assert q_ec["energy_deficit_mev"] == 0.0
+    assert q_ec["occurrence_claimed"] is False
+    assert q_ec["unmet_reason"]
+    assert q_yield["dimmed"] is True
+    assert q_yield["status"] == "OPEN"
+    assert q_yield["claim_tier"] == "empirical_lenr_correlation"
+    assert q_yield["observed_integrated_he4_yield_atoms"] is None
+    assert q_yield["occurrence_claimed"] is False
+    assert q_yield["reported_integrated_yield_discrepancy"]["factor_band"] == [
+        1e2,
+        1e4,
+    ]
     assert block["open_ids"][0] == "EQ-OPEN-MEV-01"
+    assert block["lenr_proved"] is False
+
+
+def test_q4_reports_mass_and_energy_gaps_below_threshold() -> None:
+    block = build_open_questions(
+        route_mode="legacy_unified_model",
+        rate_block={
+            "rate": {
+                "mode": "three_body",
+                "provenance": {"mass_renormalization": 2.0},
+            }
+        },
+        rate_mode="three_body",
+    )
+    q_ec = block["q_electron_capture"]
+    assert q_ec["status"] == "OPEN"
+    assert q_ec["mass_renormalization_active"] is True
+    assert q_ec["mass_renormalization_threshold_met"] is False
+    assert q_ec["mass_renormalization_gap_mstar_over_me"] > 0
+    assert q_ec["energy_deficit_mev"] > 0
+    assert "below" in q_ec["unmet_reason"]
+    assert q_ec["occurrence_claimed"] is False
+    assert block["lenr_proved"] is False
+
+
+def test_q5_computes_miles_rate_and_duty_adjusted_yield() -> None:
+    block = build_open_questions(
+        route_mode="legacy_unified_model",
+        observations={"excess_power_W": 1.0},
+        total_time=20.0,
+        duty_fraction=0.5,
+    )
+    q_yield = block["q_integrated_yield"]
+    assert q_yield["status"] == "OPEN"
+    assert q_yield["expected_he4_rate_per_s"] == pytest.approx(
+        MILES_RATE_PER_WATT
+    )
+    assert q_yield["duty_adjusted_expected_he4_rate_per_s"] == pytest.approx(
+        0.5 * MILES_RATE_PER_WATT
+    )
+    assert q_yield["expected_integrated_he4_yield_atoms"] == pytest.approx(
+        10.0 * MILES_RATE_PER_WATT
+    )
+    assert q_yield["observed_integrated_he4_yield_atoms"] is None
+    assert "time-resolved" in q_yield["retention_time_resolved_caveat"]
+    assert q_yield["occurrence_claimed"] is False
+    assert block["lenr_proved"] is False
+
+
+def test_mechanism_paths_include_backend_diagram_specs() -> None:
+    block = build_open_questions(route_mode="legacy_unified_model")
+    paths = block["how"]["mechanism_paths"]
+    assert paths
+    assert all(path["diagram_spec"]["nodes"] for path in paths)
+    assert all(path["diagram_spec"]["edges"] for path in paths)
 
 
 def test_two_body_dispatch_unchanged() -> None:

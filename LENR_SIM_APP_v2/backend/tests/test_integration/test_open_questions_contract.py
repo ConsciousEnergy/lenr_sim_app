@@ -1,4 +1,5 @@
 """Contract tests for additive open_questions on unified / pipeline routes."""
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -41,8 +42,31 @@ def _assert_open_questions(data: dict, *, route_mode: str) -> None:
     assert oq["composition"]["not_combinable"] is True
     assert oq["q_mev_gap"]["status"] == "OPEN"
     assert oq["q_radiation"]["status"] == "OPEN"
-    assert oq["q_electron_capture"]["dimmed"] is True
-    assert oq["q_integrated_yield"]["dimmed"] is True
+    q_ec = oq["q_electron_capture"]
+    q_yield = oq["q_integrated_yield"]
+    assert q_ec["status"] == "OPEN"
+    assert q_ec["dimmed"] is True
+    assert q_ec["claim_tier"] == "speculative_exploratory"
+    assert q_ec["electron_capture_threshold_mev"] == pytest.approx(0.782)
+    assert q_ec["mass_renormalization_threshold_mstar_over_me"] == pytest.approx(
+        2.53, rel=0.01
+    )
+    assert isinstance(q_ec["mass_renormalization_threshold_met"], bool)
+    assert q_ec["unmet_reason"]
+    assert q_ec["occurrence_claimed"] is False
+    assert q_yield["status"] == "OPEN"
+    assert q_yield["dimmed"] is True
+    assert q_yield["claim_tier"] == "empirical_lenr_correlation"
+    assert q_yield["observed_integrated_he4_yield_atoms"] is None
+    assert q_yield["reported_integrated_yield_discrepancy"]["factor_band"] == [
+        1e2,
+        1e4,
+    ]
+    assert q_yield["occurrence_claimed"] is False
+    assert all(
+        path.get("diagram_spec")
+        for path in oq["how"]["mechanism_paths"]
+    )
 
 
 def test_simulate_default_is_additive_and_does_not_close() -> None:
@@ -198,5 +222,33 @@ def test_geometry_mode_fcc_tetrahedral() -> None:
 def test_when_block_duty_fraction() -> None:
     client = _client()
     payload = {**_base_payload(), "duty_fraction": 0.5, "total_time": 20.0}
-    when = client.post("/api/unified/simulate", json=payload).json()["open_questions"]["when"]
+    oq = client.post("/api/unified/simulate", json=payload).json()["open_questions"]
+    when = oq["when"]
     assert when["duty_cycle_s"] == 10.0
+    assert oq["q_electron_capture"]["status"] == "OPEN"
+    assert oq["q_integrated_yield"]["status"] == "OPEN"
+    assert oq["lenr_proved"] is False
+
+
+def test_integrated_yield_uses_miles_conversion_and_duty_cycle() -> None:
+    client = _client()
+    payload = {
+        **_base_payload(),
+        "excess_power_W": 1.0,
+        "duty_fraction": 0.5,
+        "total_time": 20.0,
+    }
+    oq = client.post("/api/unified/simulate", json=payload).json()["open_questions"]
+    q_yield = oq["q_integrated_yield"]
+    assert q_yield["expected_he4_rate_per_s"] == pytest.approx(2.62e11, rel=0.01)
+    assert q_yield["duty_adjusted_expected_he4_rate_per_s"] == pytest.approx(
+        1.31e11, rel=0.01
+    )
+    assert q_yield["expected_integrated_he4_yield_atoms"] == pytest.approx(
+        2.62e12, rel=0.01
+    )
+    assert q_yield["observed_integrated_he4_yield_atoms"] is None
+    assert "time-resolved" in q_yield["retention_time_resolved_caveat"]
+    assert q_yield["status"] == "OPEN"
+    assert q_yield["occurrence_claimed"] is False
+    assert oq["lenr_proved"] is False
