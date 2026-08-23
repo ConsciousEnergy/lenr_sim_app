@@ -1,6 +1,6 @@
 # Many-body FGR model (UMBF)
 
-**Status:** Bookkeeping library shared by trapped_state rate, Takahashi TSC, and open-questions cockpit.  
+**Status:** Bookkeeping library shared by trapped_state rate, Takahashi TSC, and open-questions virtual lab.  
 **Not a fourth rate_mode** — rival formalisms replace; they never multiply.
 
 ## Core identity (EQ-NBODY-FGR-01)
@@ -36,7 +36,7 @@ In code, `fusion_probability` / `f_nuc` absorbs \(|V_{\text{nuc}}|^2\); per-clus
 - `f_nuc` — open matrix element (defaults to 1.0 in trapped_state; MeV-gap unresolved)
 - `cluster_lifetime_s` — collapse timescale \(\tau\) (default 1e-20 s)
 
-## Cockpit wiring
+## Virtual lab wiring
 
 - `how.fgr_parameters` — active mode ledger
 - `when.threshold_crossed` — \(R_{\text{mode}} \ge R_{\text{obs}}\) from `excess_power_W` at nominal 1 cm³ volume

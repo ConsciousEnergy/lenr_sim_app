@@ -153,7 +153,7 @@ class ElectrolyteConfig(BaseModel):
 
 
 class StimulationConfig(BaseModel):
-    """Optional stimulation gates for when/how cockpit (never auto-flips rate_mode)."""
+    """Optional stimulation gates for when/how virtual lab (never auto-flips rate_mode)."""
     letts_laser: bool = Field(default=False)
     acoustic_drive: bool = Field(default=False)
 
@@ -278,7 +278,7 @@ class SimulationResponse(BaseModel):
     open_questions: Dict[str, Any] = Field(
         default_factory=dict,
         description=(
-            "Additive researcher cockpit (lenr-open-questions-v1): two-oracle "
+            "Additive researcher virtual lab (lenr-open-questions-v1): two-oracle "
             "determination, Q1–Q5 ledger, three-engine composition. Does not "
             "change contract_version. Never LENR_PROVED."
         ),
@@ -522,7 +522,7 @@ def _build_simulate_open_questions(
     rate_block: Dict[str, Any],
     route_mode: str,
 ) -> Dict[str, Any]:
-    """Additive cockpit for /simulate. Empty dict on failure."""
+    """Additive virtual lab for /simulate. Empty dict on failure."""
     from app.physics_engine.open_questions import (
         observations_from_obj,
         safe_build_open_questions,
@@ -1188,7 +1188,7 @@ class BubbleLatticeResponse(BaseModel):
     open_questions: Dict[str, Any] = Field(
         default_factory=dict,
         description=(
-            "Additive researcher cockpit (lenr-open-questions-v1). "
+            "Additive researcher virtual lab (lenr-open-questions-v1). "
             "Does not change contract_version. Never LENR_PROVED."
         ),
     )

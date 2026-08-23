@@ -1,5 +1,5 @@
 /**
- * Open-questions cockpit charts (Recharts). Values from API when/how blocks.
+ * Open-questions virtual lab charts (Recharts). Values from API when/how blocks.
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';

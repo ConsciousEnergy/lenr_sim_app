@@ -3,7 +3,7 @@
 **Status:** Living. Not a paper-by-paper LENR-CANR audit.  
 **Rule:** Mapping the CMNS corpus against Q1–Q3 does **not** close those questions.  
 **Companion:** [SCIENTIFIC_RIGOR_REVIEW.md](SCIENTIFIC_RIGOR_REVIEW.md) (RR-006), [MEV_GAP_HYPOTHESIS.md](MEV_GAP_HYPOTHESIS.md), [CLAIM_TAXONOMY.md](../FORMALIZATION/CLAIM_TAXONOMY.md).  
-**In-app ledger:** Unified Results `OpenQuestionsCockpit` (`open_questions` / `lenr-open-questions-v1`) prints determinations under named hypotheses. It does not flip `EQ-OPEN-*` rows and never emits `LENR_PROVED`. Architecture: [OPEN_QUESTIONS_COCKPIT_2026-08-22.md](../ARCHITECTURE/OPEN_QUESTIONS_COCKPIT_2026-08-22.md).
+**In-app ledger:** Unified Results `OpenQuestionsVirtualLab` (`open_questions` / `lenr-open-questions-v1`) prints determinations under named hypotheses. It does not flip `EQ-OPEN-*` rows and never emits `LENR_PROVED`. Architecture: [OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md](../ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md).
 
 ## Non-resolution
 
@@ -27,7 +27,7 @@ That is compatible with keeping multi-body (`trapped_state` / TSC) **open** besi
 
 ## Q1–Q3 vs existing modules
 
-| Open question | Strongest in-app handle | When/how cockpit field | Still missing |
+| Open question | Strongest in-app handle | When/how virtual lab field | Still missing |
 |---------------|-------------------------|------------------------|---------------|
 | Q1 MeV gap (phonon → nuclear) | `hagelstein_phonon.py`; [MEV_GAP_HYPOTHESIS.md](MEV_GAP_HYPOTHESIS.md) | `q_mev_gap`, `how.fgr_parameters.f_nuc` | Constrained matrix element + occupation probability |
 | Q2 Radiation suppression / no prompt γ | `branching_model.py`; Hagelstein narrative | `q_radiation.detector_ul_log10`, `BRANCHING_INCONSISTENT_WITH_UL` | Quantitative γ-absorption vs detection limits |

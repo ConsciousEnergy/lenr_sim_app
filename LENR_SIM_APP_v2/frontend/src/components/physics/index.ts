@@ -21,7 +21,9 @@ export { default as QEDVisualization } from './QEDVisualization';
 export { default as PhononNuclearPanel } from './PhononNuclearPanel';
 export { default as ThermodynamicsPanel } from './ThermodynamicsPanel';
 export { default as StatisticalAnalysisPanel } from './StatisticalAnalysisPanel';
-export { default as OpenQuestionsCockpit } from './OpenQuestionsCockpit';
+export { default as OpenQuestionsVirtualLab } from './OpenQuestionsVirtualLab';
+/** @deprecated Use OpenQuestionsVirtualLab */
+export { default as OpenQuestionsCockpit } from './OpenQuestionsVirtualLab';
 
 // Theory Testbed (v0.3.0)
 export { default as TheoryTogglePanel } from './TheoryTogglePanel';

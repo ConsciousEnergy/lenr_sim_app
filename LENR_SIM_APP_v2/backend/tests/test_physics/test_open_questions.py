@@ -1,4 +1,4 @@
-"""Unit tests for the open-questions cockpit builder and decision oracle."""
+"""Unit tests for the open-questions virtual lab builder and decision oracle."""
 from __future__ import annotations
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR

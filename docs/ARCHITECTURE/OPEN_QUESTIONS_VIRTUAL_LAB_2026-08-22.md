@@ -1,10 +1,10 @@
-# Open-questions cockpit — architecture map (2026-08-22)
+# Open-questions virtual lab — architecture map (2026-08-22)
 
 **Question this diagram answers:** how a unified / bubble-lattice / theory-pipeline
 run becomes an additive `open_questions` determination without changing
 `contract_version` or multiplying rival engines.
 
-**Commit note:** dated at introduction of the cockpit; regenerate if routes move.
+**Commit note:** dated at introduction of the virtual lab; regenerate if routes move.
 
 ```mermaid
 flowchart TD
@@ -57,7 +57,7 @@ flowchart TB
   lean[LenrFormal WhenHow Branching]
   dec[decision_oracle mechanism paths]
   oq[open_questions occurrence when how]
-  ui[OpenQuestionsCockpit v2]
+  ui[OpenQuestionsVirtualLab]
   emp -->|"occurrence_anchored"| dec
   umbf -->|"fgr_parameters"| oq
   lean -->|"oracle_a IDs"| oq
@@ -68,12 +68,13 @@ flowchart TB
 Verified against:
 
 - `LENR_SIM_APP_v2/backend/app/physics_engine/many_body/`
+- `LENR_SIM_APP_v2/backend/app/api/routes/unified_simulation.py`
 - `LENR_SIM_APP_v2/backend/app/api/routes/physics.py` (`/theories/run`)
 - `LENR_SIM_APP_v2/backend/app/physics_engine/theory_pipeline.py`
 - `LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py`
 - `LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py`
 - `LENR_SIM_APP_v2/backend/app/physics_engine/mhd/multiscale_bridge.py`
-- `LENR_SIM_APP_v2/frontend/src/components/physics/OpenQuestionsCockpit.jsx`
+- `LENR_SIM_APP_v2/frontend/src/components/physics/OpenQuestionsVirtualLab.jsx`
 
 Engines that must never be multiplied: theory-pipeline grouped product,
 bubble-lattice mechanism product, legacy geometric-mean

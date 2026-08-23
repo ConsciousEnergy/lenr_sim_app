@@ -1,9 +1,9 @@
 /**
- * OpenQuestionsCockpit v2 — when/how rows, Oracle B, no LENR_PROVED.
+ * OpenQuestionsVirtualLab — when/how rows, Oracle B, no LENR_PROVED.
  */
 import React from 'react';
 import { render, screen } from '../../tests/test-utils';
-import OpenQuestionsCockpit from './OpenQuestionsCockpit';
+import OpenQuestionsVirtualLab from './OpenQuestionsVirtualLab';
 
 const TWO_BODY_OQ = {
   schema: 'lenr-open-questions-v1',
@@ -75,9 +75,9 @@ const ANCHORED_OQ = {
   },
 };
 
-describe('OpenQuestionsCockpit', () => {
+describe('OpenQuestionsVirtualLab', () => {
   test('prints when/how header and two-body does not close', () => {
-    render(<OpenQuestionsCockpit openQuestions={TWO_BODY_OQ} />);
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
     expect(screen.getByText(/When and how under named conditions/i)).toBeInTheDocument();
     expect(screen.getByText(/Oracle A \/ B status:\s*RATE BUDGET DOES NOT CLOSE/i)).toBeInTheDocument();
     expect(screen.getByTestId('oracle-b-panel')).toBeInTheDocument();
@@ -86,14 +86,14 @@ describe('OpenQuestionsCockpit', () => {
   });
 
   test('shows occurrence anchored chip', () => {
-    render(<OpenQuestionsCockpit openQuestions={ANCHORED_OQ} />);
+    render(<OpenQuestionsVirtualLab openQuestions={ANCHORED_OQ} />);
     expect(screen.getByTestId('occurrence-anchored-chip')).toBeInTheDocument();
     expect(screen.getByText(/Miles-band heat–He anchors occurrence/i)).toBeInTheDocument();
   });
 
   test('local_fallback is INCONCLUSIVE without EMP chips', () => {
     render(
-      <OpenQuestionsCockpit
+      <OpenQuestionsVirtualLab
         simulationData={{ validation: { route_mode: 'local_fallback' } }}
       />,
     );

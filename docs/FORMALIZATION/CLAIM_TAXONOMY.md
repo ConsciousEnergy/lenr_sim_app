@@ -81,13 +81,13 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-NAIVE-GN-01 | Nat-floor of independent \(g^N\) is 0 for \(n\ge 1\) (naive multi-phonon fails) | §2.8.1 | `hagelstein_phonon.py`, `open_questions.py` | analysis | `THM` | `Phonon.lean` |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) under \(f\le 10^5\) | §5A.3 | rate engine / decision oracle | paper bookkeeping | `THM` | `RateBudget.lean` |
 | EQ-RATE-COND-01 | If \(n_{\mathrm{occ}}\ge n_0\land f_{\mathrm{nuc}}\ge f_0\) then product \(\ge n_0 f_0\) | §5A.3 | decision oracle | would-close-if | `THM` | `RateBudget.lean` |
-| EQ-COMP-03 | Pipeline \(\times\) bubble totals are not a physical observable; at cap \(=10^{10}\) | software | `theory_pipeline.py`, cockpit | RR composition | `THM` | `Composition.lean` |
+| EQ-COMP-03 | Pipeline \(\times\) bubble totals are not a physical observable; at cap \(=10^{10}\) | software | `theory_pipeline.py`, virtual lab | RR composition | `THM` | `Composition.lean` |
 | EQ-RATE-REPLACE-01 | `two_body` / `trapped_state` / `three_body` are alternatives, not factors | RR-006 | rate engine | governance | `THM` | `RateBudget.lean` |
 | EQ-TSC-GEOM-01 | FCC \(d_{DD}=a/(2\sqrt{2})\) identity (~137 pm for Pd) | §5A.3 | `takahashi_tsc.py` | takahashi2016 | `THM` | `NBody.lean` |
 | EQ-TSC-GEOM-02 | FCC \(d_{DD}\) is not the 25 pm trap radius | §5A.3 | TSC + trapped_state | two hypotheses | `THM` | `NBody.lean` |
 | EQ-TSC-Q-01 | \(Q(4\mathrm{D}\to 2\alpha)=47.6\,\mathrm{MeV}=2\times 23.8\,\mathrm{MeV}\) | §5A.3 | `takahashi_tsc.py` | conversion | `THM` | `NBody.lean` |
 | EQ-TSC-CH-01 | If two on-shell alphas, no primary \(\gamma\) required (kinematics only) | §5A.2/3 | `takahashi_tsc.py` | does not close Q2 | `THM` | `NBody.lean` |
-| EQ-TSC-STOP-01 | Alpha stopping is a different MeV-gap than a 24 MeV photon | §5A.1 | TSC / cockpit remainder | DEF | `DEF` | `NBody.lean` |
+| EQ-TSC-STOP-01 | Alpha stopping is a different MeV-gap than a 24 MeV photon | §5A.1 | TSC / virtual lab remainder | DEF | `DEF` | `NBody.lean` |
 | EQ-TSC-OCC-01 | \(P_4=\theta^4 f_{\mathrm{tet}}\) Bernoulli; correlated occupation unconstrained | §5A.3 | `takahashi_tsc.py` | OPEN | `OPEN` | obligation |
 | EQ-COLL-LIN-01 | Engine collective \(C=\min(N,10^6)\le 10^6\) (not Dicke \(N^2\)) | software | rate engine | AX+THM clamp | `THM` | `NBody.lean` |
 | EQ-TRAP-DEF-01 | Trapped-state rate formula as in the engine | §5A.3 | `reaction_rate_engine.py` | DEF | `DEF` | `NBody.lean` |

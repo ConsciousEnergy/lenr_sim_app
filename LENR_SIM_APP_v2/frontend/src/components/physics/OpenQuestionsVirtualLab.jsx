@@ -1,5 +1,5 @@
 /**
- * OpenQuestionsCockpit v2 — when/how under named conditions and data.
+ * OpenQuestionsVirtualLab — when/how under named conditions and data.
  */
 import React, { useCallback } from 'react';
 import {
@@ -184,7 +184,7 @@ function NextMeasurementPanel({ items }) {
   );
 }
 
-export default function OpenQuestionsCockpit({ simulationData, openQuestions }) {
+export default function OpenQuestionsVirtualLab({ simulationData, openQuestions }) {
   const routeMode = simulationData?.validation?.route_mode;
   const raw = openQuestions || simulationData?.open_questions;
   const isFallback = routeMode === 'local_fallback' || raw?.route_mode === 'local_fallback';
@@ -199,8 +199,8 @@ export default function OpenQuestionsCockpit({ simulationData, openQuestions }) 
   const tscLeak = oq.composition?.tsc_enhancement_can_scale_two_body;
 
   return (
-    <Paper sx={{ p: 2 }} variant="outlined" data-testid="open-questions-cockpit">
-      <Typography variant="h6" gutterBottom>Open questions cockpit</Typography>
+    <Paper sx={{ p: 2 }} variant="outlined" data-testid="open-questions-virtual-lab">
+      <Typography variant="h6" gutterBottom>Open questions virtual lab</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
       </Typography>

@@ -87,7 +87,7 @@ def compute_fgr_volumetric_rate(
     cluster_lifetime_s: float,
     n_coherent: float = 1.0,
 ) -> Dict[str, float]:
-    """Assemble volumetric FGR rate and parameter ledger for cockpit ``how`` block."""
+    """Assemble volumetric FGR rate and parameter ledger for virtual lab ``how`` block."""
     per_cluster = fgr_rate_per_cluster(gamma_tun, f_nuc, cluster_lifetime_s)
     c_lin = collective_linear(n_coherent)
     rate = float(n_sites) * float(p_occ) * per_cluster * c_lin

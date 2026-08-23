@@ -2,7 +2,7 @@
  * OpenChallengesSection.jsx
  *
  * Section 5A: when/how LENR occurs under named conditions (static fallback).
- * Live cockpit on Unified Results carries occurrence/when/how blocks.
+ * Live virtual lab on Unified Results carries occurrence/when/how blocks.
  */
 
 import React from 'react';
@@ -38,7 +38,7 @@ const OpenChallengesSection = ({ embedded = false }) => {
       Occurrence under Miles-class conditions is empirically anchored in parts of the
       corpus; the open questions are <strong>how</strong> MeV energy partitions,
       <strong> how</strong> γ is suppressed, and <strong>when</strong> the rate budget
-      closes under a named mechanism path. See the live Open Questions Cockpit on
+      closes under a named mechanism path. See the live Open Questions Virtual Lab on
       Unified Results for Oracle A/B determinations.
     </Typography>
     <List dense>

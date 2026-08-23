@@ -24,7 +24,7 @@
 
 **Current Status:** Miles (1993) reported (2.6 ± 0.6) × 10^11 He-4/s/W, consistent with prediction within 2σ. Needs replication with modern instrumentation.
 
-**Cockpit crosswalk:** `EQ-MILES-EMP-01` → `occurrence.anchored` / `oracle_emp.miles_band_gate` → falsifier: Q outside 24±4 MeV/He with simultaneous calorimetry + MS.
+**Virtual lab crosswalk:** `EQ-MILES-EMP-01` → `occurrence.anchored` / `oracle_emp.miles_band_gate` → falsifier: Q outside 24±4 MeV/He with simultaneous calorimetry + MS.
 
 ---
 
@@ -152,9 +152,9 @@
 | 6 | BEC momentum narrowing | Sub-thermal deuteron distribution | No data yet | LOW |
 | 7 | Isotopic shifts | Pd-105/107 enrichment, Cu appearance | Suggestive SIMS data | MEDIUM |
 
-## Cockpit crosswalk (open_questions v2)
+## Virtual lab crosswalk (open_questions v2)
 
-| Prediction # | EQ / IR id | Cockpit field / status | Falsifier |
+| Prediction # | EQ / IR id | Virtual lab field / status | Falsifier |
 |--------------|------------|------------------------|-----------|
 | 1 | EQ-MILES-EMP-01 | `occurrence.anchored`, `OCCURRENCE_ANCHORED_EMP` | Q outside 24±4 MeV/He with simultaneous heat + He |
 | 2 | EQ-OPEN-RAD-01 | `q_radiation.detector_ul_log10`, `BRANCHING_INCONSISTENT_WITH_UL` | γ UL violated under assumed branching |

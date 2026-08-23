@@ -1,11 +1,11 @@
 import { test, expect } from './fixtures.js';
 
 /**
- * Open-questions cockpit on Unified Results.
+ * Open-questions virtual lab on Unified Results.
  * Prints two-body does-not-close as a determination; never LENR_PROVED.
  */
 
-const COCKPIT_RESPONSE = {
+const VIRTUAL_LAB_RESPONSE = {
   success: true,
   contract_version: 'v0.3.6-beta-science-gate-1',
   collapse_results: {
@@ -52,13 +52,13 @@ const COCKPIT_RESPONSE = {
   },
 };
 
-test.describe('Open-questions cockpit', () => {
+test.describe('Open-questions virtual lab', () => {
   test('prints two-body does not close and never LENR_PROVED', async ({
     page,
     unifiedTheoryPage,
   }) => {
     await page.route('**/api/unified/bubble-lattice', async (route) => {
-      await route.fulfill({ json: COCKPIT_RESPONSE });
+      await route.fulfill({ json: VIRTUAL_LAB_RESPONSE });
     });
     await page.route('**/api/physics/theories', async (route) => {
       await route.fulfill({ json: [] });
@@ -66,7 +66,7 @@ test.describe('Open-questions cockpit', () => {
     await unifiedTheoryPage.goto();
     await unifiedTheoryPage.runSimulationButton().click();
     await unifiedTheoryPage.openResults();
-    await expect(page.getByTestId('open-questions-cockpit')).toBeVisible();
+    await expect(page.getByTestId('open-questions-virtual-lab')).toBeVisible();
     await expect(page.getByText(/Oracle A \/ B status:\s*RATE BUDGET DOES NOT CLOSE/i)).toBeVisible();
     await expect(page.getByText(/Two-body rate budget does not close/i)).toBeVisible();
     await expect(page.getByText('EQ-RATE-2B-NC-01')).toBeVisible();

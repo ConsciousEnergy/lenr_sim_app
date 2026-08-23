@@ -908,7 +908,7 @@ E_F = (ħ²/2m_e)(3π² n_e)^(2/3): Pd 6.1 eV (n_e=6.8e28), Ni 7.4 eV (9.1e28), 
 
 ---
 
-## 12. Open-questions cockpit identities (2026-08-22)
+## 12. Open-questions virtual lab identities (2026-08-22)
 
 WolframAlpha MCP was not available in this environment. Independents below use
 CODATA SI definitions (`scipy.constants`) and paper §5A.3 bookkeeping.

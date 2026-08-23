@@ -47,7 +47,7 @@ const StatisticalAnalysisPanel: React.FC<StatisticalAnalysisPanelProps> = ({
       <Typography variant="h6" gutterBottom>Statistical Analysis</Typography>
       <Alert severity="info" sx={{ mb: 2 }}>
         These zeros are a placeholder. This panel is not calorimetry SNR.
-        Use the Unified Results open-questions cockpit (Q3 / Oracle B) for
+        Use the Unified Results open-questions virtual lab (Q3 / Oracle B) for
         rate-budget and next-measurement determinations.
       </Alert>
       <Box sx={{ mb: 2 }}>

@@ -491,7 +491,7 @@ def observations_from_obj(src: Any) -> Dict[str, Any]:
 
 
 def safe_build_open_questions(**kwargs: Any) -> Dict[str, Any]:
-    """Never raise: a cockpit failure must not 500 the core contract."""
+    """Never raise: a virtual lab failure must not 500 the core contract."""
     try:
         return build_open_questions(**kwargs)
     except Exception:
