@@ -63,8 +63,8 @@ describe('TheoryTogglePanel primary All / None', () => {
   it('renders All and None next to the Primary LENR theories header', async () => {
     render(<TheoryTogglePanel />);
     expect(await screen.findByText('Primary LENR theories')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Select all primary theories' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Deselect all primary theories' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enable every primary LENR theory' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear every primary LENR theory' })).toBeInTheDocument();
   });
 
   it('None clears only primary theories and leaves context tracks enabled', async () => {
@@ -77,7 +77,7 @@ describe('TheoryTogglePanel primary All / None', () => {
       expect(enabled).toEqual(expect.arrayContaining([...PRIMARY_IDS, CONTEXT_ID]));
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Deselect all primary theories' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear every primary LENR theory' }));
 
     await waitFor(() => {
       expect(readEnabledIds()).toEqual([CONTEXT_ID]);
@@ -92,12 +92,12 @@ describe('TheoryTogglePanel primary All / None', () => {
       expect(readEnabledIds().length).toBeGreaterThan(0);
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Deselect all primary theories' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear every primary LENR theory' }));
     await waitFor(() => {
       expect(readEnabledIds()).toEqual([CONTEXT_ID]);
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Select all primary theories' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Enable every primary LENR theory' }));
 
     await waitFor(() => {
       const enabled = readEnabledIds();

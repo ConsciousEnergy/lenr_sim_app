@@ -455,7 +455,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           size="small"
           onClick={handleSelectAllPrimary}
           disabled={primaryTheories.length === 0}
-          aria-label="Select all primary theories"
+          aria-label="Enable every primary LENR theory"
           sx={{ fontSize: '0.65rem', py: 0, minWidth: 0 }}
         >
           All
@@ -464,7 +464,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
           size="small"
           onClick={handleDeselectAllPrimary}
           disabled={primaryTheories.length === 0}
-          aria-label="Deselect all primary theories"
+          aria-label="Clear every primary LENR theory"
           sx={{ fontSize: '0.65rem', py: 0, minWidth: 0 }}
         >
           None
