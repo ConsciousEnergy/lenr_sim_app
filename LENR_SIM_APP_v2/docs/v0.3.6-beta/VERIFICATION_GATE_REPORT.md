@@ -1,5 +1,52 @@
 # Verification Gate Report (v0.3.6-beta)
 
+## Public release readiness review (2026-08-23)
+
+### Version consistency
+- Markers: `config.py`, `frontend/package.json`, `version.js`, `Dockerfile.backend`
+- Result: all `0.3.6-beta`
+- Status: **PASS**
+
+### Backend security audit
+- Command: `pip-audit -r requirements.txt` with CI ignore list
+  (`PYSEC-2026-161`, `PYSEC-2026-248`, `PYSEC-2026-249`, `PYSEC-2026-2280`,
+  `PYSEC-2026-2281`, `PYSEC-2025-224`, `PYSEC-2025-225`, `PYSEC-2025-226`,
+  `PYSEC-2026-1325`)
+- Result: `No known vulnerabilities found, 11 ignored`
+- Status: **PASS** (residuals documented in `SECURITY_CI_HARDENING.md`)
+
+### Release-blocking science gates
+- Command: pytest on experiment-anchored gates, rate-engine API, reaction rate
+  engine, cavitation KGRP, shell-pairing prior, run-export, physics benchmark gates
+- Result: **55 passed**
+- Status: **PASS**
+
+### Frontend security / quality
+- `npm audit --audit-level=high` → **0 high/critical** (2 moderate `react-router`
+  advisories remain as documented residual; gate is high+)
+- `npm run lint` → **0 errors**, 506 warnings (legacy residual)
+- `npm test -- --watchAll=false --runInBand` → **201 passed** (30 suites)
+- `CI=true npm run build` → **PASS** (Vite `dist/`)
+- Status: **PASS**
+
+### Docker images
+- `Dockerfile.backend` → `lenr-sim-backend:0.3.6-beta` **PASS**
+- `Dockerfile.frontend` → `lenr-sim-frontend:0.3.6-beta` **PASS**
+  (fixes: Vite `dist/` path, `.npmrc` before `npm ci`, `.dockerignore` allows
+  `frontend/` sources)
+- Status: **PASS**
+
+### UX slice
+- Primary LENR theories **All** / **None** on `TheoryTogglePanel` (primary-scoped)
+- Unit tests: `TheoryTogglePanel.test.jsx` **3 passed**
+
+### Public deployment
+- Code/infra: READY
+- Live Cloudflare/Hostinger cutover: still **operator PENDING**
+  (`PUBLIC_DEPLOYMENT_TRACKER.md`)
+
+---
+
 ## Automated Checks
 
 ### Backend

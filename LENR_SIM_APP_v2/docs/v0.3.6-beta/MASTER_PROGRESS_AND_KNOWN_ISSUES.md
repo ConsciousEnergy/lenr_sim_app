@@ -1,5 +1,12 @@
 # v0.3.6-beta Master Progress and Known Issues
 
+## Progress Snapshot (2026-08-23 public readiness)
+- Theory Testbed primary **All / None** shipped on `TheoryTogglePanel`.
+- Frontend Docker image builds again (Vite `dist/`, `.npmrc`, `.dockerignore`).
+- Release quality gate re-run locally: science gates 55 passed; frontend 201 tests;
+  npm high audit clean; pip-audit clean under documented ignores.
+- Live cloud deploy remains operator PENDING.
+
 ## Progress Snapshot
 - Contract canonicalization is complete for unified bubble-lattice payloads (`contract_version`, canonical timeline aliases, observables bridge).
 - Frontend parity is aligned to backend-authoritative fields in Unified Theory views and Three.js consumers.
@@ -7,12 +14,15 @@
 - Duplicate zoom/home controls were reduced by limiting touch control buttons to mobile only; adaptive scale transitions are tuned by orbit-target distance.
 - Frontend build toolchain migrated from CRA to Vite (`start/dev/build/preview` scripts and proxy/websocket behavior validated).
 
-## Verification Snapshot (Latest Local)
-- Backend theory suite: `pytest tests/test_theory_modules.py -q` -> `93 passed, 1 skipped`.
-- Backend integration guardrail suite: `pytest tests/test_scientific_guardrails.py tests/test_integration/test_simulation_pipeline.py -q` -> `23 passed`.
-- Frontend targeted suite: `npm test -- src/pages/UnifiedTheoryPage.test.jsx` -> `1 suite, 4 passed`.
-- Frontend production build: `npm run build` -> PASS (Vite output in `dist/`).
-- Frontend lint gate: `npm run lint` -> PASS with warnings (`564 warnings`, `0 errors`).
+## Verification Snapshot (2026-08-23 public readiness)
+- Version markers: all `0.3.6-beta`.
+- Backend science gates: **55 passed**.
+- Frontend suite: `npm test` -> **201 passed** (30 suites).
+- Frontend lint: `npm run lint` -> `0 errors, 506 warnings`.
+- Frontend build: `CI=true npm run build` -> PASS.
+- Frontend audit: `npm audit --audit-level=high` -> **0 vulnerabilities** (2 moderate react-router residuals).
+- Backend audit: `pip-audit` -> clean under CI ignore list (11 ignored).
+- Docker: backend + frontend images build locally.
 
 ## Verification Snapshot (2026-07-18 ship-prep, full local CI mirror)
 - Backend full suite: `python -m pytest tests/` -> **354 passed, 1 skipped** (pinned web stack fastapi 0.128.0 / starlette 0.49.1 / pydantic 2.10.3).
@@ -22,33 +32,18 @@
 - Frontend build: `CI=true npm run build` -> PASS (chunk-split, no size warning).
 - Frontend audit: `npm audit --audit-level=high` -> **0 vulnerabilities**.
 
-## Verification Snapshot (2026-07-18 antd -> MUI consolidation, refactor delta)
-- Backend full suite: `python -m pytest tests/ app/tests/` -> **667 passed, 9 skipped** (unchanged; backend not touched by the refactor).
-- Frontend suite: `npm test` -> **90 passed** (13 suites; the 2 legacy antd-cluster test files were removed with their components).
-- Frontend lint: `npm run lint` -> `0 errors, 567 warnings`.
-- Frontend build: `CI=true npm run build` -> PASS; **no `antd` chunk**, entry `index` ~90 kB (gzip ~26 kB).
-- Frontend audit: `npm audit --audit-level=high` -> **0 vulnerabilities** (65 packages pruned after dropping `antd`/`@ant-design/icons`/`lodash`).
-- Result: app is now single-UI-library (MUI); `antd` no longer appears in the production bundle.
-
 ## Security Snapshot
-- Frontend `npm audit --audit-level=high` -> **0 vulnerabilities** (2026-07-18) after the Vite 5 -> 6.4.3 upgrade cleared the last dev-server high; previously `6` low/moderate findings after safe upgrades.
-- Backend `pip-audit -r requirements.txt` reduced to `4` findings in `pytest`, transitive `pyasn1`, and transitive `starlette`.
-- Safe backend dependency upgrades completed for:
-  - `python-multipart` -> `0.0.26`
-  - `python-jose[cryptography]` -> `3.4.0`
-  - `python-dotenv` -> `1.2.2`
-  - `jinja2` -> `3.1.6`
+- Frontend `npm audit --audit-level=high` -> **0 vulnerabilities** (2026-08-23); 2 moderate `react-router` advisories remain outside the high gate.
+- Backend `pip-audit` clean under documented CI ignores (2026-08-23).
 
 ## Known Issues
-- ~~Vite emits a CJS Node API deprecation warning on current Node runtime (`20.12.0`)~~ **RESOLVED (2026-07-18)**: Vite 6.4.3 drops the CJS Node API; no deprecation warning on Node 20.12.
-- ~~Bundle-size warnings remain for large chunks (`index` and `three.module`)~~ **RESOLVED (2026-07-18)**: `manualChunks` in `vite.config.js` splits three/mui/charts/markdown/react-vendor; entry `index` ~90 kB. (`three`/`vendor` remain inherently large for a 3D viz app.)
-- ~~Dual UI libraries (antd + MUI) inflate the bundle; antd removal deferred to v0.3.7~~ **RESOLVED (2026-07-18)**: antd fully removed this release (single-UI-library MUI; no `antd` in the bundle).
+- ~~Frontend Docker image failed (CRA `build/` path + missing `.npmrc` during `npm ci`)~~ **RESOLVED (2026-08-23)**.
 - Lint warning backlog remains high in legacy frontend modules; cleanup is recommended before GA hardening.
-- Backend advisory residue requires wider version movement than this beta scope (notably `pytest` major and `starlette` transitive line).
+- Backend advisory residue requires wider version movement than this beta scope (notably transitive lines behind documented pip-audit ignores).
+- Moderate `react-router` advisories remain; upgrade path tracked for a post-beta maintenance slice (high gate still clean).
+- Live public VPS cutover still operator PENDING.
 
 ## Next Recommended Actions
-- ~~Add `manualChunks` strategy in `vite.config.js` for Three.js and analytics-heavy routes.~~ **DONE (2026-07-18)**: vendor splitting implemented (three/mui/charts/markdown/react-vendor).
-- ~~Retire Ant Design in favor of MUI to drop the dual-UI-library overhead.~~ **DONE (2026-07-18)**: antd + `@ant-design/icons` removed; all routes on MUI.
+- Execute operator public deployment runbook (`PUBLIC_DEPLOYMENT_TRACKER.md`).
 - Run a targeted lint cleanup pass on high-churn visualization and context modules first.
-- Execute full backend + frontend regression matrix once final docs and evidence pack are frozen.
-- Revisit Python transitive advisory remediation in the post-beta maintenance slice.
+- Revisit Python transitive advisory remediation and react-router moderate advisories in the post-beta maintenance slice.

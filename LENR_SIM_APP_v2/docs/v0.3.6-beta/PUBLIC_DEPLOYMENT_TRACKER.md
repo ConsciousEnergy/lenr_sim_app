@@ -4,13 +4,15 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 ## Current Readiness Summary
 
-- **Code/infra artifacts:** READY
+- **Code/infra artifacts:** READY (refreshed 2026-08-23)
   - Terraform modules for Cloudflare + Hostinger are present.
   - Ansible playbooks for Docker/Swarm setup and stack deployment are present.
   - Deployment scripts (`deploy.sh`, `backup-db.sh`, `rollback.sh`) are present.
   - Docker stack templates include Traefik TLS, backend replicas, and Postgres secret usage.
+  - Local `Dockerfile.backend` + `Dockerfile.frontend` builds verified (Vite `dist/`, `.npmrc`).
 - **Release documentation:** READY
-  - `DEPLOYMENT_CHECKLIST.md`, `DEPLOYMENT_QUICK_REFERENCE.md`, and release evidence docs updated for v0.3.6-beta + Vite workflow.
+  - `DEPLOYMENT_CHECKLIST.md`, `DEPLOYMENT_QUICK_REFERENCE.md`, root `RELEASE_CHECKLIST.md`,
+    `CONTRIBUTING.md`, and release evidence docs updated for v0.3.6-beta + Vite workflow.
 - **Manual cloud execution:** PENDING
   - Cloudflare/Hostinger account actions, token creation, terraform apply, and live DNS cutover must still be performed.
 
