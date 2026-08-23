@@ -13,4 +13,8 @@ citation_keys:
   - widomlarsen2006
   - tennfors2013
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.ulmApplicable"
+  - "LenrFormal.NBody.ulmFormulaClaimed"
+  - "LenrFormal.NBody.ulm_not_applicable_implies_not_claimed"
 notes: "Assenbaum-style domain gate. Formula not claimed below threshold."

@@ -11,4 +11,8 @@ code_refs:
 citation_keys:
   - takahashi2016
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.EnergyTransferMode"
+  - "LenrFormal.NBody.tscStoppingMode"
+  - "LenrFormal.NBody.radiativeTransferMode"
 notes: "Easier gap than prompt gamma; still needs OPEN remainder in the UI."

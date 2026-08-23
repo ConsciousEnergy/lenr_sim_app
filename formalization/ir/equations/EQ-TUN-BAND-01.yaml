@@ -10,6 +10,9 @@ code_refs:
 citation_keys:
   - model_assumption_RR001
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.composeCapped"
+  - "LenrFormal.Composition.cap_value"
 adopted_value:
   f_min: 1000
   f_max: 100000

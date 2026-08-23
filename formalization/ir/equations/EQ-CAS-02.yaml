@@ -12,6 +12,9 @@ code_refs:
 citation_keys:
   - casimir1948
 lean_target: LenrFormal.Casimir
+lean_decls:
+  - "LenrFormal.Casimir.mid_is_1p3_mN"
+  - "LenrFormal.Casimir.geometry_exp"
 adopted_value:
   magnitude_N: 0.0013
   band_relative: 0.05

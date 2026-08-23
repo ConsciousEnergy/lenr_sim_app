@@ -12,4 +12,7 @@ citation_keys:
   - mckubre2000
   - model_assumption_RR001
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.mechanismPhysicsBound"
+  - "LenrFormal.Composition.respectsPhysicsBound"
 notes: "Bounds are literature/model caps distinct from MAX_ENHANCEMENT_FACTOR governance ceiling."

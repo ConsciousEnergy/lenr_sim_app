@@ -10,4 +10,6 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.WhenHow"
+lean_decls:
+  - "LenrFormal.WhenHow.MechanismPath"
 notes: "Oracle B mechanism-path enum; posteriors are odds not nature theorems."

@@ -10,6 +10,8 @@ code_refs:
 citation_keys:
   - nuclear_mass_tables
 lean_target: LenrFormal.Miles
+lean_decls:
+  - "LenrFormal.Miles.q_adopted_keV"
 adopted_value:
   Q_MeV: 23.8
 notes: "Standard mass-defect identity used by Miles conversion."

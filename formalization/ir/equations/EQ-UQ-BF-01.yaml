@@ -10,4 +10,7 @@ code_refs:
 citation_keys:
   - model_assumption_decision_priors
 lean_target: "LenrFormal.Decision"
+lean_decls:
+  - "LenrFormal.Decision.logBayesFactor"
+  - "LenrFormal.Decision.approxBayesFactor"
 notes: "Toy log-evidence softmax. Not MCMC. Odds do not flip EQ-OPEN-* rows."

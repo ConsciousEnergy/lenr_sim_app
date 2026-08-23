@@ -1,0 +1,15 @@
+id: EQ-OPEN-MEV-01
+latex: "Q_1\\text{ closed} \\iff E_{\\mathrm{open\\ remainder}} = 0"
+symbols:
+  E_open_remainder: "unallocated nuclear-scale energy remainder"
+units: "integer-scaled energy"
+tag: OPEN
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys: []
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q1MeVEnergyGapClosed"
+  - "LenrFormal.OpenObligations.positive_remainder_implies_q1_not_closed"
+notes: "This obligation remains open. The declarations encode a closure criterion and a non-closure implication; they provide no proof of occurrence."

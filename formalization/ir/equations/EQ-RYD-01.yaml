@@ -11,6 +11,10 @@ code_refs:
 citation_keys:
   - CODATA_rydberg
 lean_target: LenrFormal.Rydberg
+lean_decls:
+  - "LenrFormal.Rydberg.absLevel_meV"
+  - "LenrFormal.Rydberg.E_n_meV"
+  - "LenrFormal.Rydberg.E_at_10_meV"
 adopted_value:
   n_prin: 10
   E_n_eV: -0.136

@@ -12,4 +12,8 @@ code_refs:
 citation_keys:
   - hagelstein2025
 lean_target: "LenrFormal.Phonon"
+lean_decls:
+  - "LenrFormal.Phonon.naiveHalfPowFloor"
+  - "LenrFormal.Phonon.naive_gN_fails_n1"
+  - "LenrFormal.Phonon.naive_gN_fails_n40"
 notes: "Naive independent multi-phonon pathway is negligible. Alias of EQ-PHONON-NAIVE-01."

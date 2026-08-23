@@ -12,4 +12,8 @@ code_refs:
 citation_keys:
   - model_assumption_composition
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.bubbleGroupScore"
+  - "LenrFormal.Composition.bubblePhysicsGoverned"
+  - "LenrFormal.Composition.bubble_group_pair_is_max"
 notes: "Collapse-correlated groups (compression/casimir, qed/rydberg) use max-within-group; across groups multiply."

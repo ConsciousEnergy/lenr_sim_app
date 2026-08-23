@@ -11,4 +11,7 @@ code_refs:
 citation_keys:
   - model_assumption_mhd_domain
 lean_target: "LenrFormal.ScaleQED"
+lean_decls:
+  - "LenrFormal.ScaleQED.formulaClaimed"
+  - "LenrFormal.ScaleQED.nuclear_ha_not_claimed"
 notes: "Same honesty pattern as EQ-ASSEN-DOM-01."

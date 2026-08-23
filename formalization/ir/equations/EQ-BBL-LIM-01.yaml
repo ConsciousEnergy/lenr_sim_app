@@ -15,4 +15,7 @@ citation_keys:
   - flannigan_suslick_nature_2005
   - brenner_sbsl_rev_mod_phys_2002
 lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.clamped"
+  - "LenrFormal.CollapseBounds.saturated"
 notes: "Replaces static-only ceilings with regime-aware calculated bounds; KM auto-selected at peak_mach >= 0.3."

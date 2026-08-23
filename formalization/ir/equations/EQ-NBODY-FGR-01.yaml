@@ -11,4 +11,7 @@ code_refs:
 citation_keys:
   - takahashi2016
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.BookkeepingRatio"
+  - "LenrFormal.NBody.fgrRateBookkeeping"
 notes: "Bookkeeping Fermi golden rule. Occupation unconstrained."

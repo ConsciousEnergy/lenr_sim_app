@@ -13,6 +13,10 @@ code_refs:
 citation_keys:
   - hagelstein2025
 lean_target: "LenrFormal.Phonon"
+lean_decls:
+  - "LenrFormal.Phonon.phononOrderN"
+  - "LenrFormal.Phonon.phonon_order_identity"
+  - "LenrFormal.Phonon.one_MeV_phonon_order"
 adopted_value:
   phononOrderN: 476000000
 notes: "Identity of definitions. Does not close EQ-OPEN-MEV-01."

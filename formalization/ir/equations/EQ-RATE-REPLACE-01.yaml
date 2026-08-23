@@ -11,4 +11,6 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.rival_modes_not_product"
 notes: "Modes replace; they never multiply. TSC enhancement is not a trapped_state factor."

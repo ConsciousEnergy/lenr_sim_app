@@ -13,4 +13,7 @@ code_refs:
 citation_keys:
   - model_assumption_RR001
 lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.Prediction"
+  - "LenrFormal.Composition.bubblePrediction"
 notes: "Three-tier separation; flat breakdown keys remain claim-tier display values."

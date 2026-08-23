@@ -13,6 +13,10 @@ code_refs:
 citation_keys:
   - model_assumption_RR001
 lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.log10NEvents"
+  - "LenrFormal.RateBudget.two_body_budget_does_not_close"
+  - "LenrFormal.RateBudget.two_body_log10_value"
 adopted_value:
   log10NEvents: -40
 notes: "Two-body budget does not close under f<=1e5. Does not flip EQ-OPEN-RATE-01."

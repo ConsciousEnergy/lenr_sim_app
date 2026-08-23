@@ -13,4 +13,6 @@ citation_keys:
   - takahashi2016
   - model_assumption_RR006
 lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.geom_neq_trap"
 notes: "Two hypotheses; label both. Does not close EQ-TSC-01."

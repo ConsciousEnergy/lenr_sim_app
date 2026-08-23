@@ -13,4 +13,7 @@ code_refs:
 citation_keys:
   - gamow1928
 lean_target: LenrFormal.Gamow
+lean_decls:
+  - "LenrFormal.Gamow.penetration"
+  - "LenrFormal.Gamow.penetration_strict_anti_mono"
 notes: "Monotonicity in eta is the Lean THM; full WKB integral is out of pilot."

@@ -15,4 +15,7 @@ citation_keys:
   - Assenbaum1987
   - raiola2002
 lean_target: LenrFormal.Assenbaum
+lean_decls:
+  - "LenrFormal.Assenbaum.applicable"
+  - "LenrFormal.Assenbaum.formulaClaimed"
 notes: "Material U_e from screening_data.py ranges."

@@ -1,0 +1,16 @@
+id: EQ-OPEN-YIELD-01
+latex: "Q_5\\text{ closed} \\iff \\Delta N_{^4\\mathrm{He},\\mathrm{integrated}} = 0"
+symbols:
+  Delta_N_He4_integrated: "integrated He-4 yield discrepancy"
+units: "atoms (integer-scaled bookkeeping)"
+tag: OPEN
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys: []
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q5IntegratedYieldClosed"
+  - "LenrFormal.OpenObligations.positive_yield_discrepancy_implies_q5_not_closed"
+notes: "This obligation remains open. The declarations encode a closure criterion and a non-closure implication; they provide no proof of occurrence."

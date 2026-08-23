@@ -1,0 +1,17 @@
+id: EQ-OPEN-RATE-01
+latex: "Q_3\\text{ closed} \\iff \\log_{10}(N_{\\mathrm{events}}) \\ge 0"
+symbols:
+  N_events: "event budget under the named rate model"
+units: "dimensionless"
+tag: OPEN
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+citation_keys: []
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q3RateBudgetClosed"
+  - "LenrFormal.OpenObligations.two_body_log_budget_is_negative"
+  - "LenrFormal.OpenObligations.two_body_q3_not_closed"
+notes: "This obligation remains open. The declarations show non-closure for the stated two-body budget only; they provide no proof of occurrence."

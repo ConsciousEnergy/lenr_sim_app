@@ -11,4 +11,6 @@ code_refs:
 citation_keys:
   - model_assumption_RR006
 lean_target: "LenrFormal.WhenHow"
+lean_decls:
+  - "LenrFormal.WhenHow.thresholdCrossed"
 notes: "Conditional threshold predicate; occurrence EMP ≠ mechanism proof."

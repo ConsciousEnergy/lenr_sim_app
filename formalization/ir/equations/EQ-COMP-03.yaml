@@ -12,6 +12,9 @@ code_refs:
 citation_keys:
   - model_assumption_composition
 lean_target: "LenrFormal.Composition"
+lean_decls:
+  - "LenrFormal.Composition.illegal_engine_product_at_cap"
+  - "LenrFormal.Composition.illegal_product_exceeds_single_cap"
 adopted_value:
   illegal_product_at_cap: 10000000000
 notes: "Illegal product of two already-capped engine totals."

@@ -11,4 +11,7 @@ code_refs:
 citation_keys:
   - Assenbaum1987
 lean_target: LenrFormal.Assenbaum
+lean_decls:
+  - "LenrFormal.Assenbaum.applicable"
+  - "LenrFormal.Assenbaum.not_applicable_implies_not_claimed"
 notes: "Strict < as machine-checkable stand-in for ≪; outside domain ⇒ formula not claimed."
