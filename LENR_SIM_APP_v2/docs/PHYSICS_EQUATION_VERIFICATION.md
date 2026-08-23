@@ -527,6 +527,34 @@ environment, so 9A.1 was checked by independent analytic evaluation of the adiab
 relation in-repo rather than against WolframAlpha. Re-run the Wolfram check when the
 server is reachable.
 
+### 9A.5 Calculated vs reporting bounds (EQ-BBL-LIM-01)
+
+Collapse limits now distinguish four quantities per observable:
+
+| Field | Meaning |
+|---|---|
+| `value_raw` | Adiabatic closed-form (or integrated peak) from the active solver |
+| `calculated_bound` / `calculated_bound_k` / `calculated_bound_pa` | Literature- or trajectory-derived upper bound |
+| `value` | Reported quantity: `min(value_raw, calculated_bound)` |
+| `is_saturated` | `value_raw` exceeds the calculated bound |
+
+**Temperature bound logic** (`collapse_calculated_bounds.py`):
+
+| Condition | Bound source |
+|---|---|
+| `peak_mach < 0.3`, Rayleigh-Plesset mode | Emission-band upper (1.5×10⁴ K), Flannigan & Suslick |
+| `peak_mach ≥ 0.3` or Keller-Miksis mode | Moss ion ceiling (2×10⁶ K) |
+
+**Pressure bound:** adiabatic value at the hard-core radius; capped at 10¹⁰ Pa only when
+the calculated value exceeds the sonoluminescence shock literature limit.
+
+**Code:** `build_reporting_limits()` in `app/physics_engine/collapse_calculated_bounds.py`;
+wired in `BubbleLatticeInteraction.simulate_collapse()`. Keller-Miksis is auto-selected
+when an initial Rayleigh-Plesset run reaches `peak_mach ≥ 0.3`; reported under
+`collapse_results.bubble_dynamics.bounds_solver_used`.
+
+**Status:** ✅ REFERENCE (literature-anchored bounds, not point predictions)
+
 ---
 
 ## 9B. Bubble Dynamics Reduction Limits
@@ -818,6 +846,37 @@ At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) 
 | compression | `1.000e6` | `1.000e6` |
 | **raw total** | **`log10 ~ 38.8`** | **`log10 = 13.42`** |
 | saturated mechanisms | 5 | 2 (screening, compression) |
+
+### 9C.14 Screening provenance contract
+
+The bubble-lattice route computes screening via `compute_screening_enhancement()`
+(`screening_kernel.py`). Three API surfaces carry related but distinct fields:
+
+| API field | Typical Pd-D default | Meaning |
+|---|---|---|
+| `mechanism_provenance.screening.screening_potential_ev` | 800 eV | Cited material potential (Assenbaum–Rolfs band) |
+| `mechanism_provenance.screening.thermal_energy_ev` | ~0.05 eV at collapse | 1.5 kT |
+| `mechanism_provenance.screening.log10_enhancement_raw` | ~10⁷ | True uncapped magnitude |
+| `enhancement_breakdown.screening` | 1e5 | Claim-tier display ceiling |
+| `saturation.mechanisms.screening.log10_value_raw` | matches provenance | Uncapped log₁₀ (not the capped breakdown input) |
+
+**Screening visibility FAQ — "Why do I see 1e5 and not U_e?"**
+
+At default Pd-D collapse, cited `U_e = 800 eV` ≫ thermal energy even at modest
+compression, so Salpeter validity is broken (`exceeds_adiabatic_limit: true`) and the
+enhancement saturates at the governance ceiling. This is **expected** — the calculation
+runs, but the UI must surface `U_e`, `E`, and `log10_enhancement_raw` via
+`ScreeningProvenancePanel`, not only the saturated `1e5`.
+
+**Dual-model note:** the theory pipeline's `electron_screening` module uses a
+Thomas-Fermi potential from `n_e` (~27 eV for Pd), while the bubble-lattice kernel uses
+the cited material range (800 eV). The kernel is canonical for the bubble route; the
+theory module is parallel and not combinable with it (see
+`THEORY_COMPOSITION_CONTRACT.md`).
+
+**Three-tier prediction cross-ref:** flat `enhancement_breakdown` keys remain
+claim-tier display values; read `enhancement_breakdown.prediction` for the
+sensitivity / physics-governed / claim-tier separation (EQ-PRED-01).
 
 ---
 

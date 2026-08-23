@@ -1,0 +1,18 @@
+id: EQ-BBL-LIM-01
+latex: "\\text{value} = \\min(\\text{value\\_raw}, \\text{calculated\\_bound})"
+symbols:
+  value_raw: "adiabatic closed-form or integrated peak from active solver"
+  calculated_bound: "literature- or trajectory-derived upper bound"
+  is_saturated: "value_raw exceeds calculated_bound"
+units: "mixed (K, Pa, dimensionless)"
+tag: DEF
+paper_ref: "PHYSICS_EQUATION_VERIFICATION.md §9A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_calculated_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_lattice_interaction.py
+citation_keys:
+  - moss_ion_ceiling_jasa_1996
+  - flannigan_suslick_nature_2005
+  - brenner_sbsl_rev_mod_phys_2002
+lean_target: LenrFormal.CollapseBounds
+notes: "Replaces static-only ceilings with regime-aware calculated bounds; KM auto-selected at peak_mach >= 0.3."
