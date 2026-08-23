@@ -3,7 +3,7 @@ latex: "b_i \\in \\{\\text{screening}: 10^5, \\text{phonon}: 10^2, \\text{qed}: 
 symbols:
   b_i: "per-mechanism physics bound before claim-tier clamp"
 units: "dimensionless"
-tag: REF
+tag: AX
 paper_ref: "PHYSICS_EQUATION_VERIFICATION.md §9A.3"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_mechanism_composition.py
