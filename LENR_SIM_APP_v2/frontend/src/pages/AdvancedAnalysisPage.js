@@ -18,6 +18,7 @@ import AppLayout from '../components/layout/AppLayout';
 import { usePhysics } from '../contexts/PhysicsContext';
 import EnhancementWaterfallChart from '../components/physics/EnhancementWaterfallChart';
 import PredictionReadoutPanel from '../components/physics/PredictionReadoutPanel';
+import ScreeningProvenancePanel from '../components/physics/ScreeningProvenancePanel';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -94,7 +95,7 @@ const AdvancedAnalysisPage = () => {
     if (!es) return null;
     const obs = es.observables || {};
     return {
-      screenPotentialEV: obs.U_screen_eV ?? obs.screen_potential_eV ?? null,
+      screenPotentialEV: obs.screening_potential_eV ?? obs.U_screen_eV ?? obs.screen_potential_eV ?? null,
       debyeLengthNm: obs.lambda_D_nm ?? obs.debye_length_nm ?? null,
       screeningEnhancement: es.enhancement_factor ?? null,
     };
@@ -125,6 +126,7 @@ const AdvancedAnalysisPage = () => {
       peakFieldVm: cr.peak_field_v_m,
       peakEnhancement: cr.peak_enhancement,
       limits: cr.limits || null,
+      mechanismProvenance: cr.mechanism_provenance || null,
     };
   }, [simulationResult]);
 
@@ -422,6 +424,11 @@ const AdvancedAnalysisPage = () => {
                     ? 'Pressure'
                     : 'Compression';
                 const unit = key === 'temperature_k' ? 'K' : key === 'pressure_pa' ? 'Pa' : 'x';
+                const calculatedBound = key === 'temperature_k'
+                  ? lim.calculated_bound_k
+                  : key === 'pressure_pa'
+                    ? lim.calculated_bound_pa
+                    : lim.calculated_bound;
                 return (
                   <Box key={key} sx={{ mb: 1 }}>
                     <Typography variant="body2" component="div">
@@ -430,15 +437,32 @@ const AdvancedAnalysisPage = () => {
                         <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
                       )}
                     </Typography>
-                    {lim.is_saturated && lim.value_raw != null && (
-                      <Typography variant="caption" color="warning.main" display="block">
-                        raw ≈ {formatNumber(lim.value_raw)} {unit} (ceiling {formatNumber(lim.ceiling)})
+                    {lim.value_raw != null && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        raw (adiabatic): {formatNumber(lim.value_raw)} {unit}
+                      </Typography>
+                    )}
+                    {calculatedBound != null && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        calculated bound: {formatNumber(calculatedBound)} {unit}
+                        {lim.basis ? ` · ${lim.basis}` : ''}
+                      </Typography>
+                    )}
+                    {lim.citation && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {lim.citation}
                       </Typography>
                     )}
                   </Box>
                 );
               })}
             </Paper>
+          </Grid>
+        )}
+
+        {collapseData.mechanismProvenance?.screening && (
+          <Grid size={12}>
+            <ScreeningProvenancePanel screening={collapseData.mechanismProvenance.screening} />
           </Grid>
         )}
 
@@ -506,7 +530,10 @@ const AdvancedAnalysisPage = () => {
                   physical predictions.
                 </Alert>
               )}
-              <EnhancementWaterfallChart breakdown={enhancementBreakdown} />
+              <EnhancementWaterfallChart
+                breakdown={enhancementBreakdown}
+                screeningProvenance={simulationResult?.collapse_results?.mechanism_provenance?.screening}
+              />
             </Paper>
           </Grid>
         )}

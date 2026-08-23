@@ -24,7 +24,7 @@ extreme parameter corners, so ``log10_value_raw`` stays finite where
 """
 
 import math
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 
@@ -70,6 +70,7 @@ def _safe_log10(value: float) -> float:
 def build_saturation_report(
     raw_breakdown: Dict[str, Any],
     ceiling: float = MAX_ENHANCEMENT_FACTOR,
+    mechanism_raw_log10: Optional[Dict[str, float]] = None,
 ) -> Tuple[Dict[str, float], Dict[str, Any]]:
     """Split a raw enhancement breakdown into displayed values plus provenance.
 
@@ -86,6 +87,7 @@ def build_saturation_report(
     """
     capped: Dict[str, float] = {}
     mechanisms: Dict[str, Dict[str, Any]] = {}
+    raw_log10_overrides = mechanism_raw_log10 or {}
 
     # Raw total is the mechanism product, accumulated in log space so it survives
     # parameter corners where the linear product overflows.
@@ -109,6 +111,11 @@ def build_saturation_report(
             # recomputed product as the raw value.
             raw_float = total_raw_linear
             log10_raw = log10_total_raw
+        elif key in raw_log10_overrides:
+            log10_raw = float(raw_log10_overrides[key])
+            raw_float = (
+                10.0 ** log10_raw if math.isfinite(log10_raw) and log10_raw < 300.0 else math.inf
+            )
         else:
             log10_raw = _safe_log10(raw_float)
 

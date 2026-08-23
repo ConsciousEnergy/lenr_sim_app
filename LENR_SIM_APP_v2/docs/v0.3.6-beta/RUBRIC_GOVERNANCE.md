@@ -106,14 +106,24 @@ prediction.
 | `enhancement_breakdown.prediction.physics_governed` | grouped max-within-collapse-groups (EQ-BBL-COMP-01) | group winners reported in `groups[]`; must be `< sensitivity_model` at peak |
 | `enhancement_breakdown.prediction.claim_tier_display` | `min(physics_governed, 1e5)` | flat breakdown keys and headline `enhancement_factor` use this tier |
 
+### Screening visibility and calculated bounds (2026-08-23)
+
+| Defect | Fix | Evidence |
+|---|---|---|
+| Screening appears missing | Surface `mechanism_provenance` + fix theory observables key | UI shows U_e, E, log10_raw via `ScreeningProvenancePanel` |
+| Static T ceiling only | Calculated bound from regime + Mach + solver mode (EQ-BBL-LIM-01) | `limits.temperature_k.calculated_bound_k` checkable against Moss / emission band |
+| `saturation` log10_raw ≠ provenance | Pass kernel `log10_enhancement_raw` into `build_saturation_report` | `test_screening_provenance_chain.py` |
+| KM not selected at high Mach | Auto-select when `peak_mach ≥ 0.3` | `bubble_dynamics.bounds_solver_used` reports `keller_miksis` |
+
 ### Residual, tracked
 
 - `ProtonPhaseModel.calculate_overlap_probability` returns a number density rather
   than a probability, so it always clips to its 0.1 ceiling. It is excluded from the
   cascade and logged under Known Limitations in
   `docs/PHYSICS_EQUATION_VERIFICATION.md`; it needs renormalising.
-- `solve_keller_miksis` is validated but is not yet the default for the
-  bubble-lattice route, which still uses the incompressible equation.
+- `solve_keller_miksis` is validated and is now **auto-selected** when an initial
+  Rayleigh-Plesset run reaches `peak_mach ≥ 0.3`; reported under
+  `collapse_results.bubble_dynamics.bounds_solver_used`.
 
 ## Math-Accuracy Hardening Rubric Delta (2026-08-10)
 
