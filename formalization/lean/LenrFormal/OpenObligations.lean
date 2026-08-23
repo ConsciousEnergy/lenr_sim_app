@@ -50,7 +50,7 @@ theorem gamma_above_bound_implies_q2_not_closed
     ¬ q2RadiationSuppressionClosed gammaBranching upperBound := by
   intro hClosed
   unfold q2RadiationSuppressionClosed at hClosed
-  exact (not_lt_of_ge hClosed) h
+  exact (Nat.lt_irrefl upperBound) (Nat.lt_of_lt_of_le h hClosed)
 
 theorem two_body_log_budget_is_negative : log10NEvents < 0 :=
   two_body_budget_does_not_close
@@ -59,7 +59,9 @@ theorem two_body_q3_not_closed :
     ¬ q3RateBudgetClosed log10NEvents := by
   intro hClosed
   unfold q3RateBudgetClosed at hClosed
-  exact (not_lt_of_ge hClosed) two_body_budget_does_not_close
+  exact
+    (Int.lt_irrefl log10NEvents)
+    (Int.lt_of_lt_of_le two_body_budget_does_not_close hClosed)
 
 theorem energy_deficit_implies_q4_not_closed
     {availableEnergy thresholdEnergy : Nat}
@@ -67,7 +69,7 @@ theorem energy_deficit_implies_q4_not_closed
     ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy := by
   intro hClosed
   unfold q4ElectronCaptureSourceClosed at hClosed
-  exact (not_lt_of_ge hClosed) h
+  exact (Nat.lt_irrefl availableEnergy) (Nat.lt_of_lt_of_le h hClosed)
 
 theorem positive_yield_discrepancy_implies_q5_not_closed
     {yieldDiscrepancy : Nat}

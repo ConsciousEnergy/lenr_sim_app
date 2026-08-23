@@ -174,6 +174,20 @@ def parse_code_bindings(equation: Mapping[str, Any]) -> list[CodeBinding]:
     raise BindingError("code_symbols must be a mapping or list")
 
 
+def coerce_numeric(value: Any, *, context: str) -> int | float:
+    """Accept YAML numeric scalars, including scientific notation strings."""
+    if isinstance(value, bool):
+        raise BindingError(f"{context} must be numeric, got {value!r}")
+    if isinstance(value, Real):
+        return int(value) if isinstance(value, int) else float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError as exc:
+            raise BindingError(f"{context} must be numeric, got {value!r}") from exc
+    raise BindingError(f"{context} must be numeric, got {value!r}")
+
+
 def _numbers_agree(actual: Real, expected: Real) -> bool:
     if type(actual) is int and type(expected) is int:
         return actual == expected
@@ -217,12 +231,17 @@ def declared_binding_errors(root: Path, ir_dir: Path) -> list[str]:
                     f"{binding.adopted_key!r} declared by code_symbols"
                 )
                 continue
-            expected = adopted_values[binding.adopted_key]
-            if isinstance(expected, bool) or not isinstance(expected, Real):
-                errors.append(
-                    f"{relative_path}: adopted_value[{binding.adopted_key!r}] "
-                    f"must be numeric, got {expected!r}"
+            raw_expected = adopted_values[binding.adopted_key]
+            try:
+                expected = coerce_numeric(
+                    raw_expected,
+                    context=(
+                        f"{relative_path}: "
+                        f"adopted_value[{binding.adopted_key!r}]"
+                    ),
                 )
+            except BindingError as exc:
+                errors.append(str(exc))
                 continue
             try:
                 actual = python_numeric_literal(root, binding.path, binding.symbol)

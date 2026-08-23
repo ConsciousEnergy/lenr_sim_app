@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 import re
 import sys
-from numbers import Real
 from pathlib import Path
 
 try:
@@ -17,12 +16,14 @@ except ImportError:
 if __package__:
     from .code_symbol_bindings import (
         BindingError,
+        coerce_numeric,
         declared_binding_errors,
         python_numeric_literal,
     )
 else:
     from code_symbol_bindings import (
         BindingError,
+        coerce_numeric,
         declared_binding_errors,
         python_numeric_literal,
     )
@@ -44,11 +45,10 @@ def _ir_adopted_number(ir_name: str, key: str) -> int | float:
         raise BindingError(
             f"{ir_path.relative_to(ROOT)}: missing adopted value {key!r}"
         ) from exc
-    if isinstance(value, bool) or not isinstance(value, Real):
-        raise BindingError(
-            f"{ir_path.relative_to(ROOT)}: adopted value {key!r} is not numeric"
-        )
-    return int(value) if isinstance(value, int) else float(value)
+    return coerce_numeric(
+        value,
+        context=f"{ir_path.relative_to(ROOT)}: adopted value {key!r}",
+    )
 
 
 def _legacy_literal_errors() -> list[str]:
