@@ -21,4 +21,22 @@ theorem priors_sum_to_100 :
 theorem two_body_is_largest_prior : priorTrapPct < priorTwoBodyPct := by
   native_decide
 
+/-- Log-evidence difference used by the EQ-UQ-BF-01 toy decision model. -/
+def logBayesFactor (logEvidenceI logEvidenceJ : Int) : Int :=
+  logEvidenceI - logEvidenceJ
+
+/-- EQ-UQ-BF-01. `expApprox` is an explicit numerical-model input.
+    This definition supplies odds bookkeeping and does not close open questions. -/
+def approxBayesFactor
+    (expApprox : Int → Nat)
+    (logEvidenceI logEvidenceJ : Int) :
+    Nat :=
+  expApprox (logBayesFactor logEvidenceI logEvidenceJ)
+
+theorem approx_bayes_factor_self_consistent
+    (expApprox : Int → Nat)
+    (logEvidence : Int) :
+    approxBayesFactor expApprox logEvidence logEvidence = expApprox 0 := by
+  simp [approxBayesFactor, logBayesFactor]
+
 end LenrFormal.Decision

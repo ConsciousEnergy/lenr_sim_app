@@ -1,7 +1,8 @@
 import LenrFormal.Constants
 
 /-!
-Composition — EQ-COMP-01 / EQ-COMP-02 / EQ-TUN-BAND-01
+Composition — EQ-COMP-01/02, EQ-BBL-COMP-01, EQ-PRED-01/02,
+and EQ-TUN-BAND-01.
 -/
 
 namespace LenrFormal.Composition
@@ -51,6 +52,78 @@ theorem empty_compose_le :
   composeCapped_le_max []
 
 theorem cap_value : maxEnhancementFactor = 100000 := rfl
+
+/-- Mechanisms governed by the EQ-PRED-02 model-input bounds. -/
+inductive Mechanism where
+  | screening
+  | phonon
+  | qed
+  | compression
+  | casimir
+  | rydberg
+  | loading
+  deriving DecidableEq, Repr
+
+/-- EQ-PRED-02 model-assumption inputs, not derived physical limits. -/
+def mechanismPhysicsBound : Mechanism → Nat
+  | .screening => 100000
+  | .phonon => 100
+  | .qed => 2
+  | .compression => 1000000
+  | .casimir => 1000000
+  | .rydberg => 10
+  | .loading => 3
+
+/-- Input property stating that a mechanism value respects its assumed bound. -/
+def respectsPhysicsBound (mechanism : Mechanism) (value : Nat) : Prop :=
+  value ≤ mechanismPhysicsBound mechanism
+
+structure MechanismScore where
+  raw : Nat
+  bound : Nat
+
+def boundedScore (score : MechanismScore) : Nat :=
+  Nat.min score.raw score.bound
+
+/-- EQ-BBL-COMP-01: max within a correlated mechanism group. -/
+def bubbleGroupScore (scores : List MechanismScore) : Nat :=
+  maxScore (scores.map boundedScore)
+
+/-- EQ-BBL-COMP-01: multiply the independently grouped winners. -/
+def bubblePhysicsGoverned (groups : List (List MechanismScore)) : Nat :=
+  productScores (groups.map bubbleGroupScore)
+
+def rawGroupProduct (scores : List MechanismScore) : Nat :=
+  productScores (scores.map (fun score => score.raw))
+
+/-- Naive exploratory product retained only as the EQ-PRED-01 sensitivity tier. -/
+def bubbleSensitivityModel (groups : List (List MechanismScore)) : Nat :=
+  productScores (groups.map rawGroupProduct)
+
+/-- Global RR-001 display clamp, distinct from per-mechanism physics bounds. -/
+def bubbleClaimTierDisplay (groups : List (List MechanismScore)) : Nat :=
+  Nat.min (bubblePhysicsGoverned groups) maxEnhancementFactor
+
+structure Prediction where
+  sensitivityModel : Nat
+  physicsGoverned : Nat
+  claimTierDisplay : Nat
+
+/-- EQ-PRED-01 three-tier report; no field is a theorem of nature. -/
+def bubblePrediction (groups : List (List MechanismScore)) : Prediction :=
+  {
+    sensitivityModel := bubbleSensitivityModel groups
+    physicsGoverned := bubblePhysicsGoverned groups
+    claimTierDisplay := bubbleClaimTierDisplay groups
+  }
+
+theorem bubble_group_pair_is_max (a b : MechanismScore) :
+    bubbleGroupScore [a, b] = Nat.max (boundedScore a) (boundedScore b) := by
+  simp [bubbleGroupScore, maxScore, List.foldl]
+
+theorem bubble_claim_tier_le_cap (groups : List (List MechanismScore)) :
+    bubbleClaimTierDisplay groups ≤ maxEnhancementFactor := by
+  exact Nat.min_le_right _ _
 
 /-- Illegal product of two already-capped engine totals (EQ-COMP-03). Not physical. -/
 theorem illegal_engine_product_at_cap :

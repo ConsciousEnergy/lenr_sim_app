@@ -25,4 +25,7 @@ def casimirForce_uN : Nat := 1300
 /-- Band half-width 5% ≈ 65 µN. -/
 def casimirBandHalf_uN : Nat := 65
 
+/-- EQ-TRAP-TAU-01 model-assumption input: 10 zeptoseconds = 10⁻²⁰ s. -/
+def trapLifetime_zeptoseconds : Nat := 10
+
 end LenrFormal.Constants
