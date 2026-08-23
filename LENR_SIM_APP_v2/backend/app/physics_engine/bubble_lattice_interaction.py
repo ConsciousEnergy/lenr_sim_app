@@ -693,25 +693,27 @@ class BubbleLatticeInteraction:
         # Adiabatic temperature rise: T = T0 * (R0/R)^(3(γ-1))
         gamma = self.bubble.polytropic_index
         T_max_raw = self.bubble.ambient_temperature * compression_ratio ** (3 * (gamma - 1))
-        # Ceiling is a literature-anchored bound, not a prediction; the closed-form
-        # adiabatic law ignores dissociation, ionisation and conduction losses and
-        # overshoots badly at high compression. See REGIME_TEMPERATURE_PROVENANCE.
-        from app.physics.bubble_collapse import (
-            REGIME_MAX_TEMPERATURE,
-            REGIME_TEMPERATURE_PROVENANCE,
-        )
-        T_ceiling = REGIME_MAX_TEMPERATURE.get("single_bubble", 2.0e6)
-        T_max = min(T_max_raw, T_ceiling)
         
-        # Pressure at collapse (capped at 10^10 Pa, consistent with bubble_collapse.py)
+        # Pressure at collapse from adiabatic gas law at R_min
         P_max_raw = self.bubble.ambient_pressure * compression_ratio ** (3 * gamma)
-        P_CEILING_PA = 1e10  # ~100 kbar, sonoluminescence regime
-        P_max = min(P_max_raw, P_CEILING_PA)
         
         # Peak double-layer field
         E_peak = float(self.bubble.double_layer_field * compression_ratio ** 2)
         if not np.isfinite(E_peak):
             E_peak = float(self.bubble.double_layer_field)
+
+        from app.physics_engine.collapse_calculated_bounds import build_reporting_limits
+
+        limits = build_reporting_limits(
+            temperature_raw_k=float(T_max_raw) if np.isfinite(T_max_raw) else 0.0,
+            pressure_raw_pa=float(P_max_raw) if np.isfinite(P_max_raw) else 0.0,
+            compression_ratio=float(compression_ratio),
+            max_compression_ratio=float(self.MAX_COMPRESSION_RATIO),
+            peak_mach=float(peak_mach),
+            dynamics_mode=dynamics_mode,
+        )
+        T_max = limits["temperature_k"]["value"]
+        P_max = limits["pressure_pa"]["value"]
         
         # Calculate enhancement factor
         enhancement = self._calculate_enhancement_at_collapse(
@@ -725,35 +727,6 @@ class BubbleLatticeInteraction:
         # collapse the peak conditions came from, instead of a separate envelope.
         # dRdt is kept too so get_collapse_trajectory() can report wall velocity.
         self._trajectory = {"t": t, "R": R, "dRdt": dRdt}
-
-        compression_saturated = (
-            self.bubble.initial_radius / R_min >= self.MAX_COMPRESSION_RATIO
-        )
-        limits = {
-            "temperature_k": {
-                "value": float(T_max),
-                "value_raw": float(T_max_raw) if np.isfinite(T_max_raw) else None,
-                "ceiling": float(T_ceiling),
-                "is_saturated": bool(T_max_raw >= T_ceiling),
-                "basis": REGIME_TEMPERATURE_PROVENANCE["single_bubble"]["basis"],
-                "citation": REGIME_TEMPERATURE_PROVENANCE["single_bubble"][
-                    "simulation_citation"
-                ],
-            },
-            "pressure_pa": {
-                "value": float(P_max),
-                "value_raw": float(P_max_raw) if np.isfinite(P_max_raw) else None,
-                "ceiling": float(P_CEILING_PA),
-                "is_saturated": bool(P_max_raw >= P_CEILING_PA),
-                "basis": "sonoluminescence regime bound",
-            },
-            "compression_ratio": {
-                "value": float(compression_ratio),
-                "ceiling": float(self.MAX_COMPRESSION_RATIO),
-                "is_saturated": bool(compression_saturated),
-                "basis": "van der Waals hard-core radius floor on R_min",
-            },
-        }
 
         # Kept out of `limits`: every entry there describes a value clamped to a
         # ceiling, and this is solver diagnostics. It reports whether the chosen
@@ -1401,7 +1374,19 @@ class BubbleLatticeInteraction:
             conditions["electric_field"],
             conditions["compression"],
         )
-        _, saturation = build_saturation_report(breakdown)
+        from app.physics_engine.screening_kernel import compute_screening_enhancement
+
+        screening_report = compute_screening_enhancement(
+            temperature_k=conditions["temperature"],
+            material=self.lattice.host_material,
+            screening_potential_ev=self.lattice.screening_potential,
+        )
+        _, saturation = build_saturation_report(
+            breakdown,
+            mechanism_raw_log10={
+                "screening": screening_report["log10_enhancement_raw"],
+            },
+        )
         total = saturation["mechanisms"]["total"]
         enhancement = total["value"]
 
