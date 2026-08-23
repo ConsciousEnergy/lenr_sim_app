@@ -508,6 +508,20 @@ conditions are `10^12`, `10^6`, `10^8.7` and `10^6` respectively, with a combine
 raw total of `10^38.8`. Each mechanism now reports `value_raw`,
 `log10_value_raw` and `is_saturated` alongside the clamped display value.
 
+### 9A.4 Three-tier prediction separation (EQ-PRED-01)
+
+The bubble-lattice route now reports three distinct tiers in
+`enhancement_breakdown.prediction` (additive; flat mechanism keys unchanged):
+
+| Tier | Meaning | Falsification handle |
+|---|---|---|
+| `sensitivity_model` | Naive mechanism product (exploratory upper bound) | `total_log10` must exceed governed log10 at peak |
+| `physics_governed` | Grouped max-within-group composition (EQ-BBL-COMP-01) with per-mechanism physics bounds (EQ-PRED-02) | Group winners and bounded magnitudes are independently checkable |
+| `claim_tier_display` | `min(physics_governed, 1e5)` | Never exceeds `MAX_ENHANCEMENT_FACTOR`; labelled as governance ceiling |
+
+**Code:** `app/physics_engine/bubble_mechanism_composition.py`;
+wired in `app/api/routes/unified_simulation.py` via `_finalize_enhancement_breakdown`.
+
 **Verification note:** the `user-wolframalpha` MCP server was not available in this
 environment, so 9A.1 was checked by independent analytic evaluation of the adiabatic
 relation in-repo rather than against WolframAlpha. Re-run the Wolfram check when the

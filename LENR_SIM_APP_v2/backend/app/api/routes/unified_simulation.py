@@ -29,7 +29,19 @@ from app.physics_engine.parkhomov_validation import (
     infer_default_reactants,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.bubble_mechanism_composition import build_prediction_report
 from app.physics_engine.enhancement_saturation import build_saturation_report
+
+
+def _finalize_enhancement_breakdown(
+    raw_breakdown: Dict[str, Any],
+    ceiling: float = MAX_ENHANCEMENT_FACTOR,
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Apply saturation reporting and the three-tier prediction block."""
+    capped, saturation = build_saturation_report(raw_breakdown, ceiling)
+    capped["saturation"] = saturation
+    capped["prediction"] = build_prediction_report(raw_breakdown, ceiling=ceiling)
+    return capped, saturation
 
 logger = logging.getLogger(__name__)
 
@@ -1345,10 +1357,14 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # saturation flag per mechanism. Clamping alone made unrelated mechanisms
         # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
         # breakdown's information content.
-        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
+        peak_enhancement_breakdown, peak_saturation = _finalize_enhancement_breakdown(
             peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
         )
-        capped_enhancement = float(peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+        capped_enhancement = float(
+            peak_enhancement_breakdown.get("prediction", {})
+            .get("claim_tier_display", {})
+            .get("total", peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+        )
         corrected_proton_phases = model._calculate_proton_phases(
             collapse_result.max_temperature,
             collapse_result.double_layer_field_peak,
@@ -1414,12 +1430,13 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["compression"]
             )
             instant_breakdown["electrolyte"] = float(electrolyte_multiplier)
-            capped_instant_breakdown, instant_saturation = build_saturation_report(
+            capped_instant_breakdown, instant_saturation = _finalize_enhancement_breakdown(
                 instant_breakdown, MAX_ENHANCEMENT_FACTOR
             )
-            capped_instant_breakdown["saturation"] = instant_saturation
             capped_instant_enhancement = float(
-                capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR)
+                capped_instant_breakdown.get("prediction", {})
+                .get("claim_tier_display", {})
+                .get("total", capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
             )
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
@@ -1734,10 +1751,9 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     instant["conditions"]["compression"]
                 )
                 breakdown["electrolyte"] = float(electrolyte_multiplier)
-                breakdown, breakdown_saturation = build_saturation_report(
+                breakdown, breakdown_saturation = _finalize_enhancement_breakdown(
                     breakdown, MAX_ENHANCEMENT_FACTOR
                 )
-                breakdown["saturation"] = breakdown_saturation
                 
                 # Send update
                 # Additive fields matching the HTTP timeline contract so the
@@ -1747,13 +1763,18 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 raw_log10 = total_saturation.get("log10_value_raw")
                 if not isinstance(raw_log10, (int, float)) or not math.isfinite(raw_log10):
                     raw_log10 = None
+                claim_total = (
+                    breakdown.get("prediction", {})
+                    .get("claim_tier_display", {})
+                    .get("total", breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+                )
                 await websocket.send_json({
                     "type": "physics_update",
                     "contract_version": CONTRACT_VERSION,
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
-                    "enhancement": float(breakdown.get("total", MAX_ENHANCEMENT_FACTOR)),
+                    "enhancement": float(claim_total),
                     "enhancement_log10_raw": raw_log10,
                     "enhancement_is_saturated": bool(
                         total_saturation.get("is_saturated", False)

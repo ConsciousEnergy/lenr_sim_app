@@ -98,6 +98,14 @@ but that saturation was silent. Reported values still never exceed the tier limi
 as such in both the API and the UI, so no saturated number can be read as a
 prediction.
 
+### Governed prediction formalism (2026-08-23)
+
+| Quantity | Now | Falsification handle |
+|---|---|---|
+| `enhancement_breakdown.prediction.sensitivity_model` | naive product retained for exploration | `total_log10` checkable against mechanism table |
+| `enhancement_breakdown.prediction.physics_governed` | grouped max-within-collapse-groups (EQ-BBL-COMP-01) | group winners reported in `groups[]`; must be `< sensitivity_model` at peak |
+| `enhancement_breakdown.prediction.claim_tier_display` | `min(physics_governed, 1e5)` | flat breakdown keys and headline `enhancement_factor` use this tier |
+
 ### Residual, tracked
 
 - `ProtonPhaseModel.calculate_overlap_probability` returns a number density rather

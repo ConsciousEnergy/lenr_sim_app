@@ -16,6 +16,8 @@ import {
 import { useTheme } from '@mui/material/styles';
 import AppLayout from '../components/layout/AppLayout';
 import { usePhysics } from '../contexts/PhysicsContext';
+import EnhancementWaterfallChart from '../components/physics/EnhancementWaterfallChart';
+import PredictionReadoutPanel from '../components/physics/PredictionReadoutPanel';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -494,6 +496,7 @@ const AdvancedAnalysisPage = () => {
           <Grid size={12}>
             <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
               <Typography variant="h6" gutterBottom>Enhancement Breakdown</Typography>
+              <PredictionReadoutPanel prediction={enhancementBreakdown.prediction} />
               {saturation?.any_saturated && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
                   {saturation.saturated_mechanisms.length} mechanism(s) reached the{' '}
@@ -503,42 +506,7 @@ const AdvancedAnalysisPage = () => {
                   physical predictions.
                 </Alert>
               )}
-              <Grid container spacing={2}>
-                {Object.entries(enhancementBreakdown)
-                  // `saturation` is provenance metadata, not a mechanism.
-                  .filter(([, value]) => typeof value === 'number')
-                  .map(([mechanism, value]) => {
-                    const detail = saturation?.mechanisms?.[mechanism];
-                    const isSaturated = !!detail?.is_saturated;
-                    return (
-                      <Grid size={{ xs: 6, md: 3 }} key={mechanism}>
-                        <Paper
-                          variant="outlined"
-                          sx={{
-                            p: 1.5,
-                            textAlign: 'center',
-                            borderColor: isSaturated ? 'warning.main' : undefined,
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                            {mechanism.replace(/_/g, ' ')}
-                          </Typography>
-                          <Typography variant="body1" fontWeight={600}>
-                            {formatNumber(value)}
-                          </Typography>
-                          {isSaturated && (
-                            <>
-                              {renderSaturationChip(mechanism)}
-                              <Typography variant="caption" display="block" color="warning.main">
-                                raw ≈ 10^{Number(detail.log10_value_raw).toFixed(1)}
-                              </Typography>
-                            </>
-                          )}
-                        </Paper>
-                      </Grid>
-                    );
-                  })}
-              </Grid>
+              <EnhancementWaterfallChart breakdown={enhancementBreakdown} />
             </Paper>
           </Grid>
         )}

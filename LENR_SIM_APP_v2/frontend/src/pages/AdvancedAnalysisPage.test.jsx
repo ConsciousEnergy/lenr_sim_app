@@ -64,6 +64,20 @@ const SIMULATION_ONLY = {
             loading: { value: 2.4621, log10_value_raw: 0.39, is_saturated: false, ceiling: 1e5 },
           },
         },
+        prediction: {
+          physics_governed: {
+            total_log10: 7.5,
+            groups: [
+              { group: 'barrier_screening', selected: 'screening', log10_value: 4.0, value: 9897 },
+              { group: 'collapse_geometry', selected: 'compression', log10_value: 6.0, value: 1e6 },
+              { group: 'field_coupling', selected: 'rydberg', log10_value: 1.0, value: 10 },
+              { group: 'lattice_coupling', selected: 'phonon', log10_value: 1.74, value: 55 },
+              { group: 'material_loading', selected: 'loading', log10_value: 0.39, value: 2.5 },
+            ],
+          },
+          sensitivity_model: { total_log10: 38.83 },
+          claim_tier_display: { total: 1e5, ceiling: 1e5 },
+        },
       },
     },
     proton_phases: { FREE: 0.0127, SCREENED: 0.5145, CAPTURE_READY: 0.3546, NUCLEAR: 0.1182 },
@@ -154,13 +168,10 @@ describe('AdvancedAnalysisPage saturation reporting', () => {
     expect(screen.getByText(/claim-tier display ceiling/i)).toBeInTheDocument();
   });
 
-  it('shows the uncapped magnitude so identical values stay distinguishable', () => {
+  it('shows the waterfall chart with governed and sensitivity tiers', () => {
     renderPage(SIMULATION_ONLY);
-    // qed, casimir/compression and rydberg all display 1.0000e+5 but differ in raw
-    // magnitude; the raw annotation is what makes the breakdown informative.
-    expect(screen.getByText(/raw ≈ 10\^12\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/raw ≈ 10\^8\.7/)).toBeInTheDocument();
-    expect(screen.getByText(/raw ≈ 10\^38\.8/)).toBeInTheDocument();
+    expect(screen.getByTestId('enhancement-waterfall')).toBeInTheDocument();
+    expect(screen.getByTestId('prediction-readout-panel')).toBeInTheDocument();
   });
 
   it('does not render the saturation metadata block as a mechanism card', () => {
