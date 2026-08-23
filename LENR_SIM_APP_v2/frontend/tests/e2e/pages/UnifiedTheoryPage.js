@@ -73,6 +73,18 @@ export class UnifiedTheoryPage {
     return this.page.getByText(/samples exceed the/i);
   }
 
+  enhancementWaterfall() {
+    return this.page.getByTestId('enhancement-waterfall');
+  }
+
+  predictionReadoutPanel() {
+    return this.page.getByTestId('prediction-readout-panel');
+  }
+
+  openQuestionsVirtualLab() {
+    return this.page.getByTestId('open-questions-virtual-lab');
+  }
+
   /** Collapsible summary of group winners and excluded overlapping theories. */
   compositionSummary() {
     return this.page.getByText(/how this was composed/i);

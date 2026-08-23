@@ -22,6 +22,9 @@ import {
   YAxis,
 } from 'recharts';
 import ReactionRateGovernancePanel from '../physics/ReactionRateGovernancePanel';
+import OpenQuestionsVirtualLab from '../physics/OpenQuestionsVirtualLab';
+import PredictionReadoutPanel from '../physics/PredictionReadoutPanel';
+import EnhancementWaterfallChart from '../physics/EnhancementWaterfallChart';
 import { resolveElectrolyteSpecies } from '../../utils/theoryConditions';
 import {
   PHASE_COLORS,
@@ -59,6 +62,11 @@ export default function ResultsPanel({
         numbers come from a schematic client-side fallback, not the physics
         engine. Do not cite them as simulation output.
       </Alert>
+    </Grid>
+  )}
+  {simulationData?.open_questions && (
+    <Grid size={12}>
+      <OpenQuestionsVirtualLab simulationData={simulationData} />
     </Grid>
   )}
   <Grid size={{ xs: 12, md: 6 }}>
@@ -244,14 +252,12 @@ export default function ResultsPanel({
     </Paper>
   </Grid>
   
-  {/* Enhancement Breakdown Chart */}
+  {/* Enhancement Breakdown Waterfall */}
   <Grid size={12}>
     <Paper sx={{ p: 2 }} variant="outlined">
       <Typography variant="h6" gutterBottom>Enhancement Mechanism Breakdown</Typography>
       <Divider sx={{ mb: 2 }} />
       {(() => {
-        // Prefer peak_conditions (thermo-consistent) over a MINIMUM
-        // timeline sample; filter non-numeric keys like `saturation`.
         const peakEntry = simulationData.enhancement_timeline?.find(e => e.phase === 'MINIMUM')
           || simulationData.enhancement_timeline?.[Math.floor(simulationData.enhancement_timeline.length / 2)]
           || {};
@@ -260,84 +266,29 @@ export default function ResultsPanel({
           || peakEntry.enhancement_breakdown
           || {};
         const saturation = breakdown.saturation || null;
+        const prediction = breakdown.prediction || null;
+        const governedTotal = prediction?.physics_governed?.total;
+        const claimTotal = prediction?.claim_tier_display?.total ?? breakdown.total;
 
-        // Prepare data for bar chart with log scale values
-        const mechanismColors = {
-          screening: '#4caf50',
-          phonon: '#2196f3',
-          qed: '#ff9800',
-          casimir: '#9c27b0',
-          rydberg: '#f44336',
-          compression: '#00bcd4',
-          loading: '#795548',
-          electrolyte: '#607d8b',
-        };
-
-        const chartData = Object.entries(breakdown)
-          .filter(([key, value]) => key !== 'total' && typeof value === 'number')
-          .map(([key, value]) => {
-            const detail = saturation?.mechanisms?.[key];
-            const logRaw = detail?.log10_value_raw;
-            const safeValue = Math.max(Number(value) || 1, 1);
-            const logValue = (typeof logRaw === 'number' && Number.isFinite(logRaw))
-              ? logRaw
-              : Math.log10(safeValue);
-            return {
-              name: key.charAt(0).toUpperCase() + key.slice(1),
-              value: safeValue,
-              logValue,
-              color: mechanismColors[key] || '#888',
-              displayValue: safeValue.toExponential(1),
-              isSaturated: !!detail?.is_saturated,
-            };
-          })
-          .sort((a, b) => b.logValue - a.logValue);
-
-        const totalEnhancement = typeof breakdown.total === 'number' ? breakdown.total : 1;
-        
         return (
           <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Log10 scale visualization of mechanism contributions
-              </Typography>
-              <Chip 
-                label={`Total: ${totalEnhancement.toExponential(2)}`} 
-                color="primary" 
-                size="small"
-              />
-            </Box>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 30 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  type="number" 
-                  domain={[0, 'auto']}
-                  label={{ value: 'Log10(Enhancement)', position: 'bottom', offset: -5 }}
-                />
-                <YAxis type="category" dataKey="name" width={75} />
-                <RechartsTooltip 
-                  formatter={(value, name, props) => [
-                    `${props.payload.value.toExponential(2)} (log10 ${props.payload.logValue.toFixed(2)})`,
-                    'Enhancement'
-                  ]}
-                />
-                <Bar dataKey="logValue" radius={[0, 4, 4, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-              {chartData.map((item) => (
+            <PredictionReadoutPanel prediction={prediction} />
+            {saturation?.any_saturated && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {saturation.saturated_mechanisms.length} mechanism(s) reached the claim-tier
+                display ceiling. Saturated segments are reporting limits, not physical predictions.
+              </Alert>
+            )}
+            <EnhancementWaterfallChart breakdown={breakdown} />
+            <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {typeof governedTotal === 'number' && (
                 <Chip
-                  key={item.name}
-                  label={`${item.name}: ${item.value.toExponential(1)}`}
+                  label={`Physics governed: ${governedTotal.toExponential(2)}`}
+                  color="primary"
                   size="small"
-                  sx={{ bgcolor: item.color, color: 'white', fontSize: '0.7rem' }}
                 />
-              ))}
+              )}
+              <Chip label={`Claim-tier display: ${Number(claimTotal).toExponential(2)}`} size="small" />
             </Box>
           </Box>
         );
