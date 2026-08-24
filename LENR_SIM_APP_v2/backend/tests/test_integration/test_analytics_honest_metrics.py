@@ -1,5 +1,7 @@
 """Analytics stats: completion is not scientific-positive."""
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 
@@ -9,7 +11,7 @@ def _client() -> TestClient:
 
 
 def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
-    session_id = "honest-metrics-session"
+    session_id = f"honest-metrics-{uuid.uuid4().hex}"
     with _client() as client:
         failed = client.post(
             "/api/analytics/experiments",
@@ -100,10 +102,11 @@ def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
 
 def test_stats_fields_are_additive_with_baseline() -> None:
     """New stats keys are additive; TEST DBs may have zero baseline rows."""
+    session_id = f"additive-session-{uuid.uuid4().hex}"
     with _client() as client:
         empty = client.get(
             "/api/analytics/stats",
-            params={"session_id": "other-session", "include_baseline": True},
+            params={"session_id": session_id, "include_baseline": True},
         )
         assert empty.status_code == 200
         empty_body = empty.json()
@@ -129,7 +132,7 @@ def test_stats_fields_are_additive_with_baseline() -> None:
             json={
                 "name": "additive-contract row",
                 "experiment_type": "lenr",
-                "session_id": "additive-session",
+                "session_id": session_id,
                 "status": "completed",
                 "material": "palladium",
                 "temperature_k": 300.0,
@@ -140,7 +143,7 @@ def test_stats_fields_are_additive_with_baseline() -> None:
         assert created.status_code == 201
         stats = client.get(
             "/api/analytics/stats",
-            params={"session_id": "additive-session", "include_baseline": True},
+            params={"session_id": session_id, "include_baseline": True},
         )
         assert stats.status_code == 200
         body = stats.json()
