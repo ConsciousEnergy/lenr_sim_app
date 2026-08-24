@@ -70,6 +70,7 @@ const MAX_NODE_RADIUS = 40;
 const RelevanceMap = ({
   graphData,
   scores,
+  campaignOverlay = null,
   loading = false,
   error = null,
   onNodeClick,
@@ -113,6 +114,12 @@ const RelevanceMap = ({
         scoreMap[tid] = s.final_score ?? 0;
       });
     }
+    const campaignMap: Record<string, number> = {};
+    if (campaignOverlay?.per_theory) {
+      Object.entries(campaignOverlay.per_theory).forEach(([tid, rec]: [string, any]) => {
+        campaignMap[tid] = rec.mean_score ?? rec.mean_confidence ?? 0;
+      });
+    }
 
     let filteredIds: Set<string> = new Set(rawNodes.map((n: any) => n.theory_id as string));
 
@@ -140,6 +147,7 @@ const RelevanceMap = ({
         ...n,
         id: n.theory_id,
         score: scoreMap[n.theory_id] ?? 0,
+        campaignScore: campaignMap[n.theory_id] ?? null,
       }));
 
     const nodeIdSet = new Set(filteredNodes.map((n: any) => n.id));
@@ -148,7 +156,7 @@ const RelevanceMap = ({
       .map((e: any) => ({ ...e }));
 
     return { nodes: filteredNodes, links: filteredLinks, _nodeScoreMap: scoreMap };
-  }, [graphData, scores, selectedProperty, selectedCategory, minScore]);
+  }, [graphData, scores, campaignOverlay, selectedProperty, selectedCategory, minScore]);
 
   // Network stats
   const stats = useMemo(() => {
@@ -829,6 +837,14 @@ const RelevanceMap = ({
                     })}
                   </Stack>
                 </Box>
+              )}
+
+              {campaignOverlay?.per_theory?.[selectedNode.id] && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Campaign mean score:{' '}
+                  {(campaignOverlay.per_theory[selectedNode.id].mean_score * 100).toFixed(0)}%
+                  {' '}({campaignOverlay.per_theory[selectedNode.id].n} model runs; not empirical)
+                </Typography>
               )}
 
               <Divider sx={{ my: 1.5 }} />

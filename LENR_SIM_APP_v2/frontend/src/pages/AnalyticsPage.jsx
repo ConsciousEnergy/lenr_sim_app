@@ -145,6 +145,7 @@ const AnalyticsPage = () => {
   // Relevance Map state
   const [graphData, setGraphData] = useState(null);
   const [theoryScores, setTheoryScores] = useState(null);
+  const [campaignOverlay, setCampaignOverlay] = useState(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphError, setGraphError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -267,14 +268,16 @@ const AnalyticsPage = () => {
     setGraphLoading(true);
     setGraphError(null);
     try {
-      const [graph, scoresResult, propsResult] = await Promise.all([
+      const [graph, scoresResult, propsResult, historyResult] = await Promise.all([
         analyticsApi.getTheoryGraph(),
         analyticsApi.computeTheoryScores(),
         analyticsApi.getTheoryProperties(),
+        analyticsApi.getTheoryRunHistory().catch(() => null),
       ]);
       setGraphData(graph);
       setTheoryScores(scoresResult?.scores || null);
       setPropertiesTaxonomy(propsResult?.properties || {});
+      setCampaignOverlay(historyResult);
     } catch (err) {
       console.error('Failed to load theory graph:', err);
       setGraphError('Failed to load theory network. Is the backend running?');
@@ -558,6 +561,10 @@ const AnalyticsPage = () => {
       
       {/* Overview Tab */}
       <TabPanel value={activeTab} index={0}>
+        <Alert severity="info" sx={{ mb: 2 }} data-testid="model-output-disclaimer">
+          Auto-saved runs are <strong>model outputs</strong>, not laboratory experiments.
+          More simulations do not raise empirical claim tiers or close EQ-OPEN questions.
+        </Alert>
         <Grid container spacing={3}>
           {/* Enhancement Factor Chart */}
           <Grid size={{ xs: 12, md: 8 }}>
@@ -864,10 +871,18 @@ const AnalyticsPage = () => {
                 </Stack>
               </Box>
               {/* Graph with integrated search, stats, detail panel */}
+              {campaignOverlay?.n_runs > 0 && (
+                <Alert severity="info" sx={{ mb: 1 }} data-testid="campaign-overlay-disclaimer">
+                  Campaign overlay from {campaignOverlay.n_runs} persisted theory runs.
+                  This is model-output association, not empirical confidence. Curated
+                  edge strength is unchanged.
+                </Alert>
+              )}
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <RelevanceMap
                   graphData={graphData}
                   scores={theoryScores}
+                  campaignOverlay={campaignOverlay}
                   loading={graphLoading}
                   error={graphError}
                   onNodeClick={(node) => {

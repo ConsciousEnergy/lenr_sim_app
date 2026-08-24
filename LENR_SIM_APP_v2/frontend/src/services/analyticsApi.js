@@ -349,6 +349,20 @@ export const analyticsApi = {
   // ==================
 
   /**
+   * Aggregate persisted theory_runs for the Relevance Map overlay.
+   * Simulation-derived association; not empirical confidence.
+   */
+  getTheoryRunHistory: async () => {
+    try {
+      const response = await api.get('/api/analytics/theory-run-history');
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getTheoryRunHistory error:', err);
+      throw err;
+    }
+  },
+
+  /**
    * Get the full theory relationship graph (nodes + edges).
    * @returns {Promise<{nodes: Object[], edges: Object[], properties_taxonomy: Object}>}
    */
