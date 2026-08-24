@@ -3,6 +3,7 @@
 Usage (from LENR_SIM_APP_v2/backend):
     python -m app.scripts.run_simulation_campaign --preset smoke
     python -m app.scripts.run_simulation_campaign --preset default
+    python -m app.scripts.run_simulation_campaign --preset diverse
     python -m app.scripts.run_simulation_campaign --preset full
 
 Does not prove LENR. EQ-OPEN-* stay OPEN.
@@ -28,7 +29,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--preset",
         choices=sorted(PRESETS.keys()),
         default="default",
-        help="Grid size (smoke=4, default=48, full=288 unified runs)",
+        help="Grid size (smoke=4, default=48, full=288, diverse=~197 unified + theory-group runs)",
     )
     parser.add_argument(
         "--skip-theory-pipeline",
@@ -62,7 +63,9 @@ async def _async_main(args: argparse.Namespace) -> int:
         "n_unified_runs": result["n_unified_runs"],
         "n_theory_pipeline_runs": result["n_theory_pipeline_runs"],
         "invariants_passed": result["invariants"]["passed"],
-        "n_failed_runs": result["invariants"]["n_failed_runs"],
+        "n_attempted_runs": result.get("n_attempted_runs"),
+        "n_exception_runs": result.get("n_exception_runs", 0),
+        "n_failed_runs": result["invariants"].get("n_failed_runs", 0),
         "lenr_proved": False,
         "empirical_claim_tiers_raised": False,
         "persisted": sum(1 for row in result["persistence"] if row.get("experiment_id")),

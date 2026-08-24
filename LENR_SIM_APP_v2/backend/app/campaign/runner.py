@@ -11,8 +11,14 @@ from typing import Any, Dict, List
 
 from app.api.routes.unified_simulation import SimulationRequest, run_unified_simulation
 from app.api.routes.physics import TheoryConditions, TheoryRunRequest, run_theories
-from app.campaign.grid import campaign_size, describe_preset, iter_campaign_cases
+from app.campaign.grid import (
+    campaign_size,
+    describe_preset,
+    iter_campaign_cases,
+    iter_diverse_theory_group_cases,
+)
 from app.services.campaign_invariants import evaluate_campaign
+from app.services.persist_runs import persist_failed_run
 from app.services.simulation_persistence import SOURCE_CAMPAIGN
 
 logger = logging.getLogger(__name__)
@@ -21,9 +27,12 @@ CAMPAIGN_SESSION = "simulation_campaign"
 
 
 def _simulate_payload(case: Dict[str, Any], session_id: str) -> SimulationRequest:
-    return SimulationRequest(
+    environmental: Dict[str, Any] = {"temperature": case["temperature"]}
+    if "electric_field" in case:
+        environmental["electric_field"] = case["electric_field"]
+    kwargs: Dict[str, Any] = dict(
         material={"host_material": case["host_material"], "reactant": case["reactant"]},
-        environmental={"temperature": case["temperature"]},
+        environmental=environmental,
         lattice={"loading_ratio": case["loading_ratio"]},
         rate_mode=case["rate_mode"],
         use_theory_pipeline=case["use_theory_pipeline"],
@@ -32,6 +41,52 @@ def _simulate_payload(case: Dict[str, Any], session_id: str) -> SimulationReques
         persist_session_id=session_id,
         persist_source=SOURCE_CAMPAIGN,
     )
+    if case.get("enabled_theories"):
+        kwargs["enabled_theories"] = list(case["enabled_theories"])
+    if case.get("electrolyte_family"):
+        kwargs["electrolyte"] = {"family": case["electrolyte_family"]}
+    return SimulationRequest(**kwargs)
+
+
+async def _run_unified_case(
+    case: Dict[str, Any],
+    session_id: str,
+    index: int,
+    total: int,
+    preset: str,
+) -> tuple[Dict[str, Any] | None, Dict[str, Any]]:
+    request = _simulate_payload(case, session_id)
+    try:
+        response = await run_unified_simulation(request)
+        body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
+        body["rate_mode"] = case["rate_mode"]
+        persist = (body.get("analytics_transparency") or {}).get("persistence") or {}
+        logger.info(
+            "campaign %s %s/%s %s T=%.0f pipeline=%s tag=%s",
+            preset,
+            index + 1,
+            total,
+            case["host_material"],
+            case["temperature"],
+            case["use_theory_pipeline"],
+            case.get("tag"),
+        )
+        return body, persist
+    except Exception as exc:
+        logger.exception(
+            "campaign %s case failed host=%s T=%.0f tag=%s",
+            preset,
+            case.get("host_material"),
+            float(case.get("temperature") or 0.0),
+            case.get("tag"),
+        )
+        persist = await persist_failed_run(
+            case,
+            exc,
+            session_id=session_id,
+            source=SOURCE_CAMPAIGN,
+        )
+        return None, persist
 
 
 async def run_campaign(
@@ -42,31 +97,26 @@ async def run_campaign(
 ) -> Dict[str, Any]:
     """Execute the named grid, persist via route auto-save, check invariants."""
     cases = list(iter_campaign_cases(preset))
+    if preset == "diverse":
+        cases.extend(iter_diverse_theory_group_cases())
+
     payloads: List[Dict[str, Any]] = []
     persist_ids: List[Dict[str, Any]] = []
+    n_exception_runs = 0
 
     for index, case in enumerate(cases):
-        request = _simulate_payload(case, session_id)
-        response = await run_unified_simulation(request)
-        body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
-        body["rate_mode"] = case["rate_mode"]
+        body, persist = await _run_unified_case(
+            case, session_id, index, len(cases), preset
+        )
+        persist_ids.append(persist)
+        if body is None:
+            n_exception_runs += 1
+            continue
         payloads.append(body)
-        persist_ids.append(
-            (body.get("analytics_transparency") or {}).get("persistence") or {}
-        )
-        logger.info(
-            "campaign %s %s/%s %s T=%.0f pipeline=%s",
-            preset,
-            index + 1,
-            len(cases),
-            case["host_material"],
-            case["temperature"],
-            case["use_theory_pipeline"],
-        )
 
     theory_payloads: List[Dict[str, Any]] = []
-    if include_theory_pipeline:
-        representative = cases[0]
+    if include_theory_pipeline and preset != "diverse":
+        representative = next(iter_campaign_cases(preset))
         theory_request = TheoryRunRequest(
             conditions=TheoryConditions(
                 temperature=representative["temperature"],
@@ -79,10 +129,13 @@ async def run_campaign(
         theory_payloads.append(theory_body)
 
     comparison = evaluate_campaign(payloads)
+    comparison["n_exception_runs"] = n_exception_runs
     return {
         "preset": preset,
         "grid": describe_preset(preset),
         "n_unified_runs": len(payloads),
+        "n_attempted_runs": len(cases),
+        "n_exception_runs": n_exception_runs,
         "n_theory_pipeline_runs": len(theory_payloads),
         "session_id": session_id,
         "source": SOURCE_CAMPAIGN,
