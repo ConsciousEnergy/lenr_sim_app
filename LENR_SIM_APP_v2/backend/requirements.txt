@@ -11,7 +11,7 @@ numpy==1.26.4
 # hybrid NumPy 1/2 trees that 500 bubble-lattice with:
 #   RuntimeError: Unable to configure default ndarray.__repr__
 scipy==1.14.1
-sympy==1.12
+sympy==1.14.0
 pyvista==0.45.2
 pandas==2.2.3
 plotly==5.24.1
