@@ -125,6 +125,33 @@ const StatCard = ({ title, value, unit, icon: Icon, color, trend }) => {
   );
 };
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+const SOURCE_CHIP = {
+  simulation_campaign: { label: 'Campaign', color: 'info', variant: 'outlined' },
+  auto_persist: { label: 'Auto', color: 'secondary', variant: 'outlined' },
+};
+
+function experimentSourceChip(row) {
+  if (row.isBaseline) {
+    return { label: 'Baseline', color: 'primary', variant: 'filled', title: row.source || 'Published Research' };
+  }
+  const mapped = SOURCE_CHIP[row.source];
+  if (mapped) {
+    return { ...mapped, title: row.source };
+  }
+  return { label: 'User', color: 'default', variant: 'outlined', title: row.source || 'User Simulation' };
+}
+
+function ExperimentSourceChip({ row }) {
+  const chip = experimentSourceChip(row);
+  return (
+    <Tooltip title={chip.title}>
+      <Chip size="small" label={chip.label} color={chip.color} variant={chip.variant} />
+    </Tooltip>
+  );
+}
+
 const AnalyticsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -304,8 +331,6 @@ const AnalyticsPage = () => {
       loadTheoryGraph();
     }
   }, [activeTab, loadTheoryGraph]);
-  
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
   
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -691,14 +716,7 @@ const AnalyticsPage = () => {
                       </TableCell>
                       <TableCell>{row.type}</TableCell>
                       <TableCell>
-                        <Tooltip title={row.source || (row.isBaseline ? 'Published Research' : 'User Simulation')}>
-                          <Chip
-                            size="small"
-                            label={row.isBaseline ? 'Baseline' : 'User'}
-                            color={row.isBaseline ? 'primary' : 'default'}
-                            variant={row.isBaseline ? 'filled' : 'outlined'}
-                          />
-                        </Tooltip>
+                        <ExperimentSourceChip row={row} />
                       </TableCell>
                       <TableCell>
                         <Chip
