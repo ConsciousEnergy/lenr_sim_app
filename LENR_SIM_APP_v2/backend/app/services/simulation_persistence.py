@@ -157,11 +157,31 @@ async def persist_best_effort(
     session_id: Optional[str] = None,
     source: str = SOURCE_AUTO_PERSIST,
     conditions: Optional[Dict[str, Any]] = None,
+    status: str = ExperimentStatus.COMPLETED.value,
 ) -> Dict[str, Any]:
     """Insert Experiment + optional TheoryRun. Never raises to callers."""
     if not persistence_enabled() or not db_manager._is_initialized:
         return {}
     try:
+        from app.services.scientific_outcomes import (
+            classify_scientific_outcome,
+            tally_claim_tiers,
+        )
+
+        scores = _scores_from_pipeline(pipeline_result)
+        stamped = dict(results or {})
+        if scores:
+            stamped.setdefault("pipeline_scores", scores)
+        stamped["scientific_outcome"] = classify_scientific_outcome(
+            status=status,
+            excess_heat_watts=excess_heat_watts,
+            pipeline_scores=scores,
+            results=stamped,
+        )
+        stamped.setdefault("claim_tier_histogram", tally_claim_tiers(scores))
+        stamped.setdefault("is_model_output", True)
+        stamped.setdefault("disclaimer", DISCLAIMER)
+
         async with db_manager.session() as session:
             experiment = Experiment(
                 id=str(uuid.uuid4()),
@@ -169,7 +189,7 @@ async def persist_best_effort(
                 description=DISCLAIMER,
                 experiment_type=experiment_type,
                 session_id=session_id,
-                status=ExperimentStatus.COMPLETED.value,
+                status=status or ExperimentStatus.COMPLETED.value,
                 is_baseline=False,
                 source=source,
                 material=(material or "palladium").lower(),
@@ -182,7 +202,7 @@ async def persist_best_effort(
                 energy_output_kev=energy_output_kev,
                 excess_heat_watts=excess_heat_watts,
                 duration_seconds=duration_seconds,
-                results_json=results,
+                results_json=to_json_safe(stamped),
             )
             session.add(experiment)
 

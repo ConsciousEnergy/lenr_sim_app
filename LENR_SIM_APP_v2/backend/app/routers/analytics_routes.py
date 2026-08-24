@@ -10,7 +10,7 @@ v0.3.1-beta: Added theory-graph, theory-scores, theory-comparison,
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -96,14 +96,22 @@ class TimelinePointsCreate(BaseModel):
 
 
 class StatsResponse(BaseModel):
-    """Response model for statistics."""
+    """Response model for statistics.
+
+    ``successRate`` is a completion-rate alias kept for older clients.
+    It is *not* a scientific-positive or LENR-validation rate.
+    """
     totalSimulations: int
     successRate: float
+    completionRate: float = 0.0
+    scientificPositiveRate: float = 0.0
     avgEnhancement: float
     totalEnergy: float
     maxEnhancement: float
     completedCount: int
     failedCount: int
+    outcomeCounts: Dict[str, int] = Field(default_factory=dict)
+    claimTierCounts: Dict[str, int] = Field(default_factory=dict)
 
 
 class ExperimentListResponse(BaseModel):
@@ -131,9 +139,9 @@ async def get_statistics(
 ):
     """
     Get aggregate statistics for the analytics dashboard.
-    
-    Returns total simulations, success rate, average enhancement factor,
-    and total energy output.
+
+    ``successRate`` is a completion-rate alias for older clients. Use
+    ``completionRate`` and ``scientificPositiveRate`` for honest labels.
     """
     service = get_analytics_service(db)
     stats = await service.get_statistics(

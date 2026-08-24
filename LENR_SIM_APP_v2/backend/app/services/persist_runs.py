@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from app.models.database_models import ExperimentStatus
 from app.services.simulation_persistence import (
+    DISCLAIMER,
     SOURCE_AUTO_PERSIST,
     _compact_results,
     _dump,
@@ -139,3 +141,52 @@ async def persist_theory_pipeline(
         source=source,
         conditions=conditions,
     )
+
+
+async def persist_failed_simulation(
+    case: Dict[str, Any],
+    error: BaseException,
+    *,
+    session_id: Optional[str] = None,
+    source: str = SOURCE_AUTO_PERSIST,
+) -> Dict[str, Any]:
+    """Persist a campaign/unified case that raised so Analytics can show failures."""
+    material = str(case.get("host_material") or "palladium")
+    temperature = float(case.get("temperature") or 300.0)
+    return await persist_best_effort(
+        experiment_type="unified_theory",
+        name=f"FAILED Unified {material} T={temperature:.0f}K",
+        material=material,
+        temperature_k=temperature,
+        pressure_bar=1.01325,
+        loading_ratio=case.get("loading_ratio"),
+        enhancement_factor=None,
+        fusion_rate=None,
+        energy_output_kev=None,
+        excess_heat_watts=None,
+        duration_seconds=None,
+        parameters={
+            "reactant": case.get("reactant"),
+            "rate_mode": case.get("rate_mode"),
+            "use_theory_pipeline": case.get("use_theory_pipeline"),
+            "enabled_theories": case.get("enabled_theories"),
+            "tag": case.get("tag"),
+        },
+        results={
+            "is_model_output": True,
+            "disclaimer": DISCLAIMER,
+            "scientific_outcome": "failed",
+            "error": str(error)[:500],
+        },
+        session_id=session_id,
+        source=source,
+        status=ExperimentStatus.FAILED.value,
+        conditions={
+            "temperature": temperature,
+            "loading_ratio": case.get("loading_ratio"),
+        },
+    )
+
+
+# Alias used by the campaign runner.
+persist_failed_run = persist_failed_simulation

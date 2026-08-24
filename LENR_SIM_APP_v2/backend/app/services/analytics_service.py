@@ -25,6 +25,14 @@ from app.models.database_models import (
     MaterialType,
 )
 from app.services.simulation_persistence import SHARED_SOURCES
+from app.services.scientific_outcomes import (
+    OUTCOME_FAILED,
+    OUTCOME_INAPPLICABLE,
+    OUTCOME_NULL,
+    OUTCOME_POSITIVE,
+    classify_experiment,
+    tally_claim_tiers_from_experiment,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -100,11 +108,20 @@ class AnalyticsService:
             return {
                 "totalSimulations": 0,
                 "successRate": 0.0,
+                "completionRate": 0.0,
+                "scientificPositiveRate": 0.0,
                 "avgEnhancement": 0.0,
                 "totalEnergy": 0.0,
                 "maxEnhancement": 0.0,
                 "completedCount": 0,
                 "failedCount": 0,
+                "outcomeCounts": {
+                    OUTCOME_POSITIVE: 0,
+                    OUTCOME_NULL: 0,
+                    OUTCOME_INAPPLICABLE: 0,
+                    OUTCOME_FAILED: 0,
+                },
+                "claimTierCounts": {},
             }
         
         total = len(experiments)
@@ -124,16 +141,38 @@ class AnalyticsService:
         max_enhancement = max(enhancement_values) if enhancement_values else 0.0
         total_energy = sum(energy_values) if energy_values else 0.0
         
-        success_rate = (completed / total * 100) if total > 0 else 0.0
+        completion_rate = (completed / total * 100) if total > 0 else 0.0
+
+        outcome_counts = {
+            OUTCOME_POSITIVE: 0,
+            OUTCOME_NULL: 0,
+            OUTCOME_INAPPLICABLE: 0,
+            OUTCOME_FAILED: 0,
+        }
+        claim_tier_counts: Dict[str, int] = {}
+        for experiment in experiments:
+            outcome = classify_experiment(experiment)
+            outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
+            for tier, count in tally_claim_tiers_from_experiment(experiment).items():
+                claim_tier_counts[tier] = claim_tier_counts.get(tier, 0) + count
+
+        scientific_positive_rate = (
+            (outcome_counts[OUTCOME_POSITIVE] / total * 100) if total > 0 else 0.0
+        )
         
         return {
             "totalSimulations": total,
-            "successRate": round(success_rate, 1),
+            # successRate is a historical alias for completion — not LENR validation.
+            "successRate": round(completion_rate, 1),
+            "completionRate": round(completion_rate, 1),
+            "scientificPositiveRate": round(scientific_positive_rate, 1),
             "avgEnhancement": round(avg_enhancement, 2),
             "totalEnergy": round(total_energy, 2),
             "maxEnhancement": round(max_enhancement, 2),
             "completedCount": completed,
             "failedCount": failed,
+            "outcomeCounts": outcome_counts,
+            "claimTierCounts": claim_tier_counts,
         }
     
     async def get_type_distribution(
@@ -411,12 +450,34 @@ class AnalyticsService:
         Returns:
             Created experiment as dictionary
         """
+        from app.services.scientific_outcomes import (
+            classify_scientific_outcome,
+            tally_claim_tiers,
+        )
+
+        status = kwargs.get('status', ExperimentStatus.COMPLETED.value)
+        results = dict(kwargs.get('results') or {})
+        results.setdefault(
+            "scientific_outcome",
+            classify_scientific_outcome(
+                status=status,
+                excess_heat_watts=kwargs.get('excess_heat_watts'),
+                pipeline_scores=results.get("pipeline_scores"),
+                results=results,
+            ),
+        )
+        results.setdefault(
+            "claim_tier_histogram",
+            tally_claim_tiers(results.get("pipeline_scores")),
+        )
+        results.setdefault("is_model_output", True)
+
         experiment = Experiment(
             id=str(uuid.uuid4()),
             name=name,
             experiment_type=experiment_type,
             session_id=session_id,
-            status=kwargs.get('status', ExperimentStatus.COMPLETED.value),
+            status=status,
             is_baseline=kwargs.get('is_baseline', False),
             source=kwargs.get('source', 'User Simulation'),
             material=kwargs.get('material', MaterialType.PALLADIUM.value),
@@ -431,7 +492,7 @@ class AnalyticsService:
             energy_output_kev=kwargs.get('energy_output_kev'),
             excess_heat_watts=kwargs.get('excess_heat_watts'),
             duration_seconds=kwargs.get('duration_seconds'),
-            results_json=kwargs.get('results', {}),
+            results_json=results,
         )
         
         self.session.add(experiment)

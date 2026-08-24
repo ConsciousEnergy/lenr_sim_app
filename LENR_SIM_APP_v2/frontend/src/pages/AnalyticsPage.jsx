@@ -197,9 +197,13 @@ const AnalyticsPage = () => {
       setStats({
         totalSimulations: statsData.totalSimulations || 0,
         successRate: statsData.successRate?.toFixed(1) || '0.0',
+        completionRate: (statsData.completionRate ?? statsData.successRate)?.toFixed(1) || '0.0',
+        scientificPositiveRate: statsData.scientificPositiveRate?.toFixed(1) || '0.0',
         avgEnhancement: statsData.avgEnhancement?.toFixed(2) || '0.00',
         totalEnergy: statsData.totalEnergy?.toFixed(2) || '0.00',
         maxEnhancement: statsData.maxEnhancement?.toFixed(2) || '0.00',
+        outcomeCounts: statsData.outcomeCounts || {},
+        claimTierCounts: statsData.claimTierCounts || {},
       });
       
       setPieData(typeDistData || []);
@@ -248,16 +252,26 @@ const AnalyticsPage = () => {
           setSimulationHistory(localData);
           setTotalExperiments(localData.length);
           
-          // Calculate local stats
           if (localData.length > 0) {
+            const localStats = typeof analyticsApi.getLocalStats === 'function'
+              ? analyticsApi.getLocalStats()
+              : null;
             const completed = localData.filter(s => s.status === 'completed');
             setStats({
-              totalSimulations: localData.length,
-              successRate: ((completed.length / localData.length) * 100).toFixed(1),
-              avgEnhancement: completed.length > 0 
-                ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
-                : '0.00',
-              totalEnergy: completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              totalSimulations: localStats?.totalSimulations ?? localData.length,
+              successRate: Number(localStats?.successRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              completionRate: Number(localStats?.completionRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              scientificPositiveRate: Number(localStats?.scientificPositiveRate ?? 0).toFixed(1),
+              avgEnhancement: localStats
+                ? Number(localStats.avgEnhancement || 0).toFixed(2)
+                : (completed.length > 0
+                  ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
+                  : '0.00'),
+              totalEnergy: localStats
+                ? Number(localStats.totalEnergy || 0).toFixed(2)
+                : completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              outcomeCounts: localStats?.outcomeCounts || {},
+              claimTierCounts: localStats?.claimTierCounts || {},
             });
             
             // Build pie data from local
@@ -535,8 +549,8 @@ const AnalyticsPage = () => {
       </Box>
       
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
             title="Total Simulations"
             value={stats?.totalSimulations || 0}
@@ -544,16 +558,25 @@ const AnalyticsPage = () => {
             color={theme.palette.primary.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Success Rate"
-            value={stats?.successRate || 0}
+            title="Completion Rate"
+            value={stats?.completionRate || stats?.successRate || 0}
             unit="%"
             icon={TrendingUpIcon}
+            color={theme.palette.info.main}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Scientific-positive"
+            value={stats?.scientificPositiveRate || 0}
+            unit="%"
+            icon={AssessmentIcon}
             color={theme.palette.success.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Avg Enhancement"
             value={stats?.avgEnhancement || 0}
@@ -562,7 +585,7 @@ const AnalyticsPage = () => {
             color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Total Energy Output"
             value={stats?.totalEnergy || 0}
@@ -572,6 +595,28 @@ const AnalyticsPage = () => {
           />
         </Grid>
       </Grid>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 3 }}
+        data-testid="completion-vs-scientific-note"
+      >
+        Completion rate is SQL/HTTP status (completed ÷ total). Scientific-positive is
+        excess heat &gt; 0 W only. Enhancement-only rows and the Google/ARPA-E null
+        seed count as null, not success. Neither card validates LENR.
+        {stats?.outcomeCounts && Object.keys(stats.outcomeCounts).length > 0 && (
+          <> Outcome mix: positive {stats.outcomeCounts.positive || 0}, null {stats.outcomeCounts.null || 0}, inapplicable {stats.outcomeCounts.inapplicable || 0}, failed {stats.outcomeCounts.failed || 0}.</>
+        )}
+        {stats?.claimTierCounts && Object.keys(stats.claimTierCounts).length > 0 && (
+          <>
+            {' '}
+            Claim-tier histogram (popularity is not validation):{' '}
+            {Object.entries(stats.claimTierCounts)
+              .map(([tier, count]) => `${tier} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+      </Typography>
       
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
