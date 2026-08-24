@@ -27,23 +27,23 @@ def test_invariants_registry_does_not_claim_lenr() -> None:
 
 
 def test_live_simulate_matches_campaign_invariants() -> None:
-    client = _client()
-    resp = client.post(
-        "/api/unified/simulate",
-        json={
-            "material": {"host_material": "palladium", "reactant": "deuterium"},
-            "environmental": {"temperature": 300.0},
-            "lattice": {"loading_ratio": 0.9},
-            "rate_mode": "two_body",
-            "time_steps": 10,
-            "total_time": 1.0,
-        },
-    )
-    assert resp.status_code == 200
-    payload = resp.json()
-    payload["rate_mode"] = "two_body"
-    report = evaluate_invariants(payload)
-    assert report["passed"], report["failed"]
-    assert payload["open_questions"]["lenr_proved"] is False
-    assert payload["open_questions"]["q_electron_capture"]["status"] == "OPEN"
-    assert payload["open_questions"]["q_integrated_yield"]["status"] == "OPEN"
+    with _client() as client:
+        resp = client.post(
+            "/api/unified/simulate",
+            json={
+                "material": {"host_material": "palladium", "reactant": "deuterium"},
+                "environmental": {"temperature": 300.0},
+                "lattice": {"loading_ratio": 0.9},
+                "rate_mode": "two_body",
+                "time_steps": 10,
+                "total_time": 1.0,
+            },
+        )
+        assert resp.status_code == 200
+        payload = resp.json()
+        payload["rate_mode"] = "two_body"
+        report = evaluate_invariants(payload)
+        assert report["passed"], report["failed"]
+        assert payload["open_questions"]["lenr_proved"] is False
+        assert payload["open_questions"]["q_electron_capture"]["status"] == "OPEN"
+        assert payload["open_questions"]["q_integrated_yield"]["status"] == "OPEN"

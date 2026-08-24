@@ -18,6 +18,20 @@ from app.services.simulation_persistence import DISCLAIMER
 HISTORY_SCHEMA = "lenr-theory-run-history-v1"
 
 
+def empty_theory_run_history() -> Dict[str, Any]:
+    """Overlay payload when the database is unavailable."""
+    return {
+        "schema": HISTORY_SCHEMA,
+        "score_source": "simulation_campaign",
+        "is_empirical_confidence": False,
+        "curated_edge_strength_unchanged": True,
+        "disclaimer": DISCLAIMER,
+        "n_runs": 0,
+        "n_theories": 0,
+        "per_theory": {},
+    }
+
+
 async def aggregate_theory_run_history(
     session: AsyncSession,
     session_id: Optional[str] = None,

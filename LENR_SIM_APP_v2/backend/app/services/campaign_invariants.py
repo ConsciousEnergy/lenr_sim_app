@@ -7,17 +7,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
-
-import yaml
+import json
 
 
 def _default_invariants_path() -> Path:
     here = Path(__file__).resolve()
     for parent in here.parents:
-        candidate = parent / "formalization" / "predictions" / "campaign_invariants.yaml"
+        candidate = parent / "formalization" / "predictions" / "campaign_invariants.json"
         if candidate.is_file():
             return candidate
-    raise FileNotFoundError("campaign_invariants.yaml not found")
+    raise FileNotFoundError("campaign_invariants.json not found")
 
 
 DEFAULT_INVARIANTS_PATH = _default_invariants_path()
@@ -27,7 +26,7 @@ def load_invariants(path: Optional[Path] = None) -> Dict[str, Any]:
     """Load the campaign prediction registry."""
     target = path or DEFAULT_INVARIANTS_PATH
     with target.open("r", encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+        return json.load(handle)
 
 
 def dig(payload: Any, dotted: str) -> Any:

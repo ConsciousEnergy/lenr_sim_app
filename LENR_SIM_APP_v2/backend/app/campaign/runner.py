@@ -1,7 +1,7 @@
 """Run a model-output simulation campaign and persist results to SQL.
 
 Does not claim LENR is proved. Invariants in
-formalization/predictions/campaign_invariants.yaml stay OPEN.
+formalization/predictions/campaign_invariants.json stay OPEN.
 """
 
 from __future__ import annotations

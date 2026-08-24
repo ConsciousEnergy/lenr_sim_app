@@ -23,69 +23,73 @@ def _base_payload() -> dict:
 
 
 def test_simulate_auto_persists_and_keeps_locked_contract() -> None:
-    client = _client()
-    resp = client.post("/api/unified/simulate", json=_base_payload())
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["contract_version"].endswith("-science-gate-1")
-    assert data["open_questions"]["lenr_proved"] is False
-    persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
-    assert persistence.get("experiment_id")
-    assert persistence.get("is_model_output") is True
-    assert persistence.get("source") == SOURCE_AUTO_PERSIST
+    with _client() as client:
+        resp = client.post("/api/unified/simulate", json=_base_payload())
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["contract_version"].endswith("-science-gate-1")
+        assert data["open_questions"]["lenr_proved"] is False
+        persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
+        assert persistence.get("experiment_id")
+        assert persistence.get("is_model_output") is True
+        assert persistence.get("source") == SOURCE_AUTO_PERSIST
 
-    listed = client.get(
-        "/api/analytics/experiments",
-        params={"session_id": "other-session", "include_baseline": True, "limit": 50},
-    )
-    assert listed.status_code == 200
-    experiments = listed.json()["experiments"]
-    match = next(e for e in experiments if e["id"] == persistence["experiment_id"])
-    assert match["source"] == SOURCE_AUTO_PERSIST
-    assert match["results"]["is_model_output"] is True
-    assert match["results"]["open_question_status"]["lenr_proved"] is False
-    assert DISCLAIMER in (match.get("description") or "")
+        listed = client.get(
+            "/api/analytics/experiments",
+            params={"session_id": "other-session", "include_baseline": True, "limit": 50},
+        )
+        assert listed.status_code == 200
+        experiments = listed.json()["experiments"]
+        match = next(e for e in experiments if e["id"] == persistence["experiment_id"])
+        assert match["source"] == SOURCE_AUTO_PERSIST
+        assert match["results"]["is_model_output"] is True
+        assert match["results"]["open_question_status"]["lenr_proved"] is False
+        assert DISCLAIMER in (match.get("description") or "")
 
-    stats = client.get(
-        "/api/analytics/stats",
-        params={"session_id": "other-session", "include_baseline": True},
-    )
-    assert stats.status_code == 200
-    assert stats.json()["totalSimulations"] >= 1
+        stats = client.get(
+            "/api/analytics/stats",
+            params={"session_id": "other-session", "include_baseline": True},
+        )
+        assert stats.status_code == 200
+        assert stats.json()["totalSimulations"] >= 1
 
 
 def test_theories_run_persists_theory_run_history() -> None:
-    client = _client()
-    resp = client.post(
-        "/api/physics/theories/run",
-        json={
-            "conditions": {"temperature": 300.0, "loading_ratio": 0.9},
-            "persist_session_id": "test-persist-session",
-            "persist_source": SOURCE_AUTO_PERSIST,
-        },
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["contract_version"].endswith("-science-gate-1")
-    persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
-    assert persistence.get("experiment_id")
-    assert persistence.get("theory_run_id")
+    with _client() as client:
+        resp = client.post(
+            "/api/physics/theories/run",
+            json={
+                "conditions": {"temperature": 300.0, "loading_ratio": 0.9},
+                "persist_session_id": "test-persist-session",
+                "persist_source": SOURCE_AUTO_PERSIST,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["contract_version"].endswith("-science-gate-1")
+        persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
+        assert persistence.get("experiment_id")
+        assert persistence.get("theory_run_id")
 
-    history = client.get("/api/analytics/theory-run-history")
-    assert history.status_code == 200
-    body = history.json()
-    assert body["schema"] == "lenr-theory-run-history-v1"
-    assert body["is_empirical_confidence"] is False
-    assert body["curated_edge_strength_unchanged"] is True
-    assert body["n_runs"] >= 1
-    assert body["per_theory"]
+        history = client.get("/api/analytics/theory-run-history")
+        assert history.status_code == 200
+        body = history.json()
+        assert body["schema"] == "lenr-theory-run-history-v1"
+        assert body["is_empirical_confidence"] is False
+        assert body["curated_edge_strength_unchanged"] is True
+        assert body["n_runs"] >= 1
+        assert body["per_theory"]
 
 
 def test_theory_graph_edges_unchanged_by_history() -> None:
-    client = _client()
-    graph = client.get("/api/analytics/theory-graph").json()
-    history = client.get("/api/analytics/theory-run-history").json()
-    assert "edges" in graph
-    assert history["curated_edge_strength_unchanged"] is True
-    for edge in graph["edges"]:
-        assert "strength" in edge
+    with _client() as client:
+        graph = client.get("/api/analytics/theory-graph")
+        history = client.get("/api/analytics/theory-run-history")
+        assert graph.status_code == 200
+        assert history.status_code == 200
+        graph_body = graph.json()
+        history_body = history.json()
+        assert "edges" in graph_body
+        assert history_body["curated_edge_strength_unchanged"] is True
+        for edge in graph_body["edges"]:
+            assert "strength" in edge

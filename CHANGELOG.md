@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Simulation campaign persistence (2026-08-24)
 - Auto-persist `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run` into SQL (`experiments` + `theory_runs`) as **model outputs**
 - Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
-- Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.yaml` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
+- Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
 - Alembic `002` creates the `theory_runs` table; multi-physics results read `step_count` from `simulation_stats`
 
 ### Formalization accuracy pass (2026-08-23)

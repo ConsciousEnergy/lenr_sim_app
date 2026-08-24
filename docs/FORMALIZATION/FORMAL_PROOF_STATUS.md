@@ -79,7 +79,7 @@
 
 **New DEF rows (when/how pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01` — Lean `WhenHow.lean` / `Branching.lean`; no measured branching or nature theorem.
 
-SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.yaml`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
+SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 
 ## How to reproduce
 
