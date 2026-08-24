@@ -431,6 +431,14 @@ class TheoryRunRequest(BaseModel):
     theory_configs: Optional[Dict[str, Dict[str, Any]]] = Field(
         None, description="Per-theory configuration overrides keyed by theory_id"
     )
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
 
 class SingleTheoryRunRequest(BaseModel):
     """Request to run a single theory in isolation."""
@@ -476,7 +484,19 @@ async def run_theories(request: TheoryRunRequest) -> Dict[str, Any]:
             enabled_theories=request.enabled_theories,
             theory_configs=request.theory_configs,
         )
-        return result.to_dict()
+        payload = result.to_dict()
+        from app.services.persist_runs import persist_theory_pipeline
+        persistence = await persist_theory_pipeline(
+            request,
+            result,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            transparency = dict(payload.get("analytics_transparency") or {})
+            transparency["persistence"] = persistence
+            payload["analytics_transparency"] = transparency
+        return payload
     except Exception as e:
         logger.error("Theory pipeline run error: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))

@@ -525,6 +525,22 @@ async def get_theory_graph():
     return graph.to_dict()
 
 
+@router.get("/theory-run-history")
+async def get_theory_run_history(
+    session_id: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Aggregate persisted theory_runs into a Relevance Map overlay.
+
+    This is simulation-derived association, not empirical confidence.
+    Curated edge strength on /theory-graph is not modified.
+    """
+    from app.services.theory_run_history import aggregate_theory_run_history
+
+    return await aggregate_theory_run_history(db, session_id=session_id)
+
+
 @router.get("/theory-properties")
 async def get_theory_properties():
     """

@@ -297,6 +297,13 @@ def get_database_url(
     # If we have PostgreSQL config, build the URL
     if host and user and password and name:
         return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}"
+
+    sqlite_override = _env("SQLITE_PATH", "LENR_SQLITE_PATH")
+    if sqlite_override:
+        parent = os.path.dirname(os.path.abspath(sqlite_override))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        return f"sqlite+aiosqlite:///{os.path.abspath(sqlite_override)}"
     
     # Fall back to SQLite for development
     if use_sqlite_fallback:

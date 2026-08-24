@@ -24,8 +24,27 @@ from app.models.database_models import (
     ExperimentStatus,
     MaterialType,
 )
+from app.services.simulation_persistence import SHARED_SOURCES
 
 logger = logging.getLogger(__name__)
+
+
+def _visibility_clause(session_id: Optional[str], include_baseline: bool = True):
+    """Filter experiments visible on the dashboard.
+
+    Auto-persisted and campaign rows are shared model outputs (not user-session
+    private and not literature baselines). They appear whenever baseline/shared
+    data is included so Analytics Overview/History populate after a campaign.
+    """
+    if not session_id:
+        return None
+    if not include_baseline:
+        return Experiment.session_id == session_id
+    return or_(
+        Experiment.session_id == session_id,
+        Experiment.is_baseline == True,  # noqa: E712
+        Experiment.source.in_(list(SHARED_SOURCES)),
+    )
 
 
 class AnalyticsService:
@@ -67,16 +86,9 @@ class AnalyticsService:
         query = select(Experiment)
         
         filters = []
-        if session_id and not include_baseline:
-            filters.append(Experiment.session_id == session_id)
-        elif session_id:
-            # Include user's experiments AND baseline
-            filters.append(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            filters.append(visibility)
         
         if filters:
             query = query.where(and_(*filters))
@@ -146,7 +158,8 @@ class AnalyticsService:
             query = query.where(
                 or_(
                     Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
+                    Experiment.is_baseline == True,  # noqa: E712
+                    Experiment.source.in_(list(SHARED_SOURCES)),
                 )
             )
         
@@ -191,7 +204,8 @@ class AnalyticsService:
             query = query.where(
                 or_(
                     Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
+                    Experiment.is_baseline == True,  # noqa: E712
+                    Experiment.source.in_(list(SHARED_SOURCES)),
                 )
             )
         
@@ -232,7 +246,8 @@ class AnalyticsService:
             query = query.where(
                 or_(
                     Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
+                    Experiment.is_baseline == True,  # noqa: E712
+                    Experiment.source.in_(list(SHARED_SOURCES)),
                 )
             )
         
@@ -270,7 +285,8 @@ class AnalyticsService:
             query = query.where(
                 or_(
                     Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
+                    Experiment.is_baseline == True,  # noqa: E712
+                    Experiment.source.in_(list(SHARED_SOURCES)),
                 )
             )
         
@@ -327,7 +343,8 @@ class AnalyticsService:
             filters.append(
                 or_(
                     Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
+                    Experiment.is_baseline == True,  # noqa: E712
+                    Experiment.source.in_(list(SHARED_SOURCES)),
                 )
             )
         
