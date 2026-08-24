@@ -51,7 +51,16 @@ def test_simulate_auto_persists_and_keeps_locked_contract() -> None:
             params={"session_id": "other-session", "include_baseline": True},
         )
         assert stats.status_code == 200
-        assert stats.json()["totalSimulations"] >= 1
+        stats_body = stats.json()
+        assert stats_body["totalSimulations"] >= 1
+        assert stats_body["successRate"] == stats_body["completionRate"]
+        assert "scientificPositiveRate" in stats_body
+        assert match["results"]["scientific_outcome"] in {
+            "positive",
+            "null",
+            "inapplicable",
+            "failed",
+        }
 
 
 def test_theories_run_persists_theory_run_history() -> None:

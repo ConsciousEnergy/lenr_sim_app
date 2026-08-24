@@ -24,7 +24,12 @@ def test_smoke_campaign_persists_and_invariants_pass() -> None:
             params={"session_id": "ui-session", "include_baseline": True},
         )
         assert stats.status_code == 200
-        assert stats.json()["totalSimulations"] >= 4
+        stats_body = stats.json()
+        assert stats_body["totalSimulations"] >= 4
+        assert "completionRate" in stats_body
+        assert "scientificPositiveRate" in stats_body
+        assert "outcomeCounts" in stats_body
+        assert stats_body["successRate"] == stats_body["completionRate"]
 
         history = client.get("/api/analytics/theory-run-history").json()
         assert history["n_runs"] >= 1

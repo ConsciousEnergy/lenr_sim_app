@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Honest analytics metrics and diverse campaign (2026-08-24)
+- Split Analytics Overview: **completion rate** (`completed/total`, still aliased as `successRate`) vs **scientific-positive** (`excess_heat_watts > 0`). Additive `outcomeCounts` and `claimTierCounts`
+- Persist true failures as `status=failed` (campaign try/except and UI true-fail paths)
+- `diverse` campaign preset: designed negative-control grid (~197 unified) plus one run per theory composition group; `python -m app.scripts.run_simulation_campaign --preset diverse`
+- Google/ARPA-E seed counts as scientific **null**; campaigns remain model outputs (`lenr_proved` false, EQ-OPEN-* unchanged)
+- Docs: `LENR_SIM_APP_v2/docs/v0.3.6-beta/ANALYTICS_TRANSPARENCY.md`
+
 ### Simulation campaign persistence (2026-08-24)
+- Auto-persist `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run` into SQL (`experiments` + `theory_runs`) as **model outputs**
+- Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
+- Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
+- Alembic `002` creates the `theory_runs` table; multi-physics results read `step_count` from `simulation_stats`
 - Auto-persist `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run` into SQL (`experiments` + `theory_runs`) as **model outputs**
 - Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
 - Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
