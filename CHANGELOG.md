@@ -19,10 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
 - Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
 - Alembic `002` creates the `theory_runs` table; multi-physics results read `step_count` from `simulation_stats`
-- Auto-persist `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run` into SQL (`experiments` + `theory_runs`) as **model outputs**
-- Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
-- Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
-- Alembic `002` creates the `theory_runs` table; multi-physics results read `step_count` from `simulation_stats`
+
+### Dependency hygiene (2026-08-24)
+- `pytest-html` 4.1.1 → 4.2.0 (test-report plugin only; not a runtime physics dep)
+- Dependabot now targets `lenr_sim_app_v0.3.6-beta` and ignores NumPy/SciPy/websockets majors plus TypeScript/MUI/`@vitejs/plugin-react` majors until dedicated migrations. Stale CRA/`react-scripts` ignore removed.
 
 ### Formalization accuracy pass (2026-08-23)
 - Lean: `CollapseBounds.lean` and `OpenObligations.lean`; missing DEF/THM declarations for bubble composition, prediction envelope, FGR/trap bookkeeping, sequential three-body, Bayes-factor definition, and trap lifetime. No `sorry`; no new axioms; `EQ-OPEN-*` remain undischarged
