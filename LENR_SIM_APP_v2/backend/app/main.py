@@ -234,8 +234,10 @@ async def lifespan(app: FastAPI):
             connected = await db_manager.wait_for_connection(retries=5, base_delay=2.0)
             if not connected:
                 app_logger.warning("Database unreachable after retries -- running in degraded mode")
-        # Create tables if they don't exist (development mode)
-        if settings.ENVIRONMENT.value == "development":
+        # Create tables if they don't exist (development / test / sqlite)
+        from app.models import database_models as _database_models  # noqa: F401
+        env_name = getattr(settings.ENVIRONMENT, "value", str(settings.ENVIRONMENT))
+        if env_name in {"development", "test"} or database_url.startswith("sqlite"):
             await db_manager.create_tables()
         app_logger.info("Database initialized successfully")
     except Exception as e:

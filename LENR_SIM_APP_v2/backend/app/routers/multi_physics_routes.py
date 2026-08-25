@@ -144,16 +144,32 @@ def run_simulation_task(
             mechanisms=params.mechanisms
         )
         
-        # Store results
+        # Store results. step_count lives on simulation_stats; timeseries
+        # arrays come from the visualization collector when present.
+        stats = results.get("simulation_stats") or {}
+
+        def _as_list(value):
+            if value is None:
+                return []
+            if hasattr(value, "tolist"):
+                return value.tolist()
+            return list(value)
+
+        final_temperature = results.get("final_temperature")
+        if final_temperature is None:
+            final_max = 0.0
+        else:
+            final_max = float(np.max(final_temperature))
+
         simulation_results[simulation_id]["status"] = "completed"
         simulation_results[simulation_id]["end_time"] = time.time()
         simulation_results[simulation_id]["results"] = {
-            "times": results["times"].tolist(),
-            "max_temperatures": results["max_temperatures"].tolist(),
-            "mean_reaction_rates": results["mean_reaction_rates"].tolist(),
-            "final_max_temperature": float(np.max(results["final_temperature"])),
-            "elapsed_time": results["elapsed_time"],
-            "step_count": results["step_count"]
+            "times": _as_list(results.get("times")),
+            "max_temperatures": _as_list(results.get("max_temperatures")),
+            "mean_reaction_rates": _as_list(results.get("mean_reaction_rates")),
+            "final_max_temperature": final_max,
+            "elapsed_time": results.get("elapsed_time", 0.0),
+            "step_count": int(stats.get("step_count") or results.get("step_count") or 0),
         }
         
         # Try to generate a plot

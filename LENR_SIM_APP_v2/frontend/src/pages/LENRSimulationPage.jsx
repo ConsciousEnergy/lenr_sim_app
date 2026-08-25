@@ -30,6 +30,7 @@ import LENRVisualization from '../components/visualizations/LENRVisualization';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { API_BASE_URL } from '../config/api';
+import { analyticsApi } from '../services/analyticsApi';
 
 // API base URL - uses environment variable or defaults to localhost
 const API_BASE = API_BASE_URL;
@@ -365,6 +366,13 @@ function LENRSimulationPage() {
       console.error('Simulation error:', err);
       setError('Failed to run simulation: ' + (err.message || 'Unknown error'));
       setShowError(true);
+      analyticsApi.saveFailedRun({
+        name: 'FAILED LENR Simulation',
+        experiment_type: 'lenr',
+        material: parameters.materialType,
+        temperature_k: parameters.temperature,
+        error: err.message,
+      }).catch(() => {});
     } finally {
       setIsLoading(false);
     }

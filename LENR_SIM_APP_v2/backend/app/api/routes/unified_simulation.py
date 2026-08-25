@@ -224,6 +224,14 @@ class SimulationRequest(BaseModel):
         default=None,
         description="Optional laser/acoustic stimulation flags for when block.",
     )
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
 
 
 class EnhancementFactor(BaseModel):
@@ -485,7 +493,7 @@ async def run_unified_simulation(request: SimulationRequest):
             route_mode=route_mode,
         )
 
-        return SimulationResponse(
+        response = SimulationResponse(
             success=True,
             enhancement={
                 "total": float(result.total_enhancement),
@@ -527,6 +535,19 @@ async def run_unified_simulation(request: SimulationRequest):
             reaction_rate_engine=reaction_rate_engine_block,
             open_questions=open_questions,
         )
+        from app.services.persist_runs import persist_unified_simulation
+        persistence = await persist_unified_simulation(
+            request,
+            response,
+            getattr(model, "last_pipeline_result", None),
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            transparency = dict(response.analytics_transparency or {})
+            transparency["persistence"] = persistence
+            response.analytics_transparency = transparency
+        return response
         
     except Exception as e:
         raise _client_safe_error("Unified simulation error", e)
@@ -1150,6 +1171,14 @@ class BubbleLatticeRequest(BaseModel):
     duty_fraction: Optional[float] = Field(default=None, ge=0, le=1)
     geometry_mode: Optional[str] = Field(default=None)
     stimulation: Optional[StimulationConfig] = Field(default=None)
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
 
 
 class BubbleLatticeResponse(BaseModel):
@@ -1713,7 +1742,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         )
 
         # Sanitize all float values to ensure JSON compliance
-        return BubbleLatticeResponse(
+        response = BubbleLatticeResponse(
             success=True,
             contract_version=CONTRACT_VERSION,
             collapse_results={
@@ -1804,6 +1833,18 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             reaction_rate_engine=reaction_rate_engine_block,
             open_questions=open_questions,
         )
+        from app.services.persist_runs import persist_bubble_lattice
+        persistence = await persist_bubble_lattice(
+            request,
+            response,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            validation = dict(response.validation or {})
+            validation["persistence"] = persistence
+            response.validation = validation
+        return response
         
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors)

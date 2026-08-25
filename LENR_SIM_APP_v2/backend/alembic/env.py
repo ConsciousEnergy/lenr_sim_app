@@ -23,7 +23,8 @@ from app.core.database import Base, get_database_url
 from app.models.database_models import (
     Experiment, 
     ExperimentTimeline, 
-    AnalyticsSnapshot
+    AnalyticsSnapshot,
+    TheoryRun,
 )
 
 # This is the Alembic Config object

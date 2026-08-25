@@ -218,6 +218,32 @@ export const analyticsApi = {
   },
 
   /**
+   * Persist a true simulation failure so Analytics can show mixed outcomes.
+   * Best-effort: never throws to the caller.
+   */
+  saveFailedRun: async (partial = {}) => {
+    try {
+      return await analyticsApi.saveExperiment({
+        name: 'Failed simulation',
+        experiment_type: 'unified_theory',
+        material: 'palladium',
+        temperature_k: 300,
+        ...partial,
+        status: 'failed',
+        results: {
+          scientific_outcome: 'failed',
+          error: String(partial.error || 'simulation failed'),
+          is_model_output: true,
+          ...(partial.results || {}),
+        },
+      });
+    } catch (error) {
+      console.warn('Failed to persist failed run:', error.message);
+      return null;
+    }
+  },
+
+  /**
    * Update an existing experiment
    * @param {string} experimentId - Experiment ID
    * @param {Object} updates - Fields to update
@@ -347,6 +373,20 @@ export const analyticsApi = {
   // ==================
   // Theory Network / Scoring endpoints (v0.3.1-beta)
   // ==================
+
+  /**
+   * Aggregate persisted theory_runs for the Relevance Map overlay.
+   * Simulation-derived association; not empirical confidence.
+   */
+  getTheoryRunHistory: async () => {
+    try {
+      const response = await api.get('/api/analytics/theory-run-history');
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getTheoryRunHistory error:', err);
+      throw err;
+    }
+  },
 
   /**
    * Get the full theory relationship graph (nodes + edges).
@@ -522,21 +562,47 @@ function removeFromLocalStorage(experimentId) {
 /**
  * Get local statistics (fallback)
  */
+function classifyLocalOutcome(experiment) {
+  const status = String(experiment.status || '').toLowerCase();
+  if (status === 'failed' || status === 'cancelled') {
+    return 'failed';
+  }
+  const results = experiment.results || {};
+  const scores = results.pipeline_scores || {};
+  const applicability = Object.values(scores)
+    .filter((record) => record && Object.prototype.hasOwnProperty.call(record, 'is_applicable'))
+    .map((record) => Boolean(record.is_applicable));
+  if (applicability.length > 0 && applicability.every((flag) => !flag)) {
+    return 'inapplicable';
+  }
+  const heat = experiment.excess_heat_watts ?? experiment.excessHeatWatts
+    ?? results.excess_heat_watts ?? results.observables?.excess_heat_watts;
+  if (heat != null && Number(heat) > 0) {
+    return 'positive';
+  }
+  return 'null';
+}
+
 function getLocalStats() {
   const experiments = getLocalExperimentsRaw();
-  
+
+  const emptyCounts = { positive: 0, null: 0, inapplicable: 0, failed: 0 };
   if (experiments.length === 0) {
     return {
       totalSimulations: 0,
       successRate: 0,
+      completionRate: 0,
+      scientificPositiveRate: 0,
       avgEnhancement: 0,
       totalEnergy: 0,
       maxEnhancement: 0,
       completedCount: 0,
       failedCount: 0,
+      outcomeCounts: emptyCounts,
+      claimTierCounts: {},
     };
   }
-  
+
   const completed = experiments.filter(e => e.status === 'completed').length;
   const failed = experiments.filter(e => e.status === 'failed').length;
   const enhancementValues = experiments
@@ -545,17 +611,30 @@ function getLocalStats() {
   const energyValues = experiments
     .map(e => e.energyOutput || e.energy_output_kev)
     .filter(v => v != null);
-  
+  const outcomeCounts = { ...emptyCounts };
+  experiments.forEach((experiment) => {
+    const outcome = classifyLocalOutcome(experiment);
+    outcomeCounts[outcome] = (outcomeCounts[outcome] || 0) + 1;
+  });
+  const completionRate = experiments.length > 0 ? (completed / experiments.length * 100) : 0;
+  const scientificPositiveRate = experiments.length > 0
+    ? (outcomeCounts.positive / experiments.length * 100)
+    : 0;
+
   return {
     totalSimulations: experiments.length,
-    successRate: experiments.length > 0 ? (completed / experiments.length * 100) : 0,
-    avgEnhancement: enhancementValues.length > 0 
-      ? enhancementValues.reduce((a, b) => a + b, 0) / enhancementValues.length 
+    successRate: completionRate,
+    completionRate,
+    scientificPositiveRate,
+    avgEnhancement: enhancementValues.length > 0
+      ? enhancementValues.reduce((a, b) => a + b, 0) / enhancementValues.length
       : 0,
     totalEnergy: energyValues.reduce((a, b) => a + b, 0),
     maxEnhancement: enhancementValues.length > 0 ? Math.max(...enhancementValues) : 0,
     completedCount: completed,
     failedCount: failed,
+    outcomeCounts,
+    claimTierCounts: {},
   };
 }
 
@@ -686,5 +765,7 @@ function exportLocalCSV() {
   return new Blob([csv], { type: 'text/csv' });
 }
 
+analyticsApi.getLocalStats = getLocalStats;
+
 export default analyticsApi;
-export { getSessionId };
+export { getSessionId, getLocalStats };

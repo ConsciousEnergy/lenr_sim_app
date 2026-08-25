@@ -708,6 +708,13 @@ function UnifiedTheoryPage() {
         console.error('Fallback calculation failed:', fallbackError);
         setAlertMessage(`Simulation failed: ${fallbackError.message || 'Unknown error'}`);
         setAlertSeverity('error');
+        analyticsApi.saveFailedRun({
+          name: `FAILED ${parameters.name} Simulation`,
+          experiment_type: 'unified_theory',
+          material: parameters.hostMaterial,
+          temperature_k: parameters.temperature,
+          error: fallbackError.message,
+        }).catch(() => {});
       }
     } finally {
       setIsLoading(false);

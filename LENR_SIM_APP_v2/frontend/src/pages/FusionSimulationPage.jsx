@@ -330,6 +330,13 @@ function FusionSimulationPage() {
       console.error('Simulation error:', err);
       setError('Failed to run simulation: ' + (err.message || 'Unknown error'));
       setShowError(true);
+      analyticsApi.saveFailedRun({
+        name: `FAILED ${parameters.reactionType} Fusion`,
+        experiment_type: 'fusion',
+        material: parameters.latticeType,
+        temperature_k: parameters.temperature,
+        error: err.message,
+      }).catch(() => {});
     } finally {
       setIsLoading(false);
     }

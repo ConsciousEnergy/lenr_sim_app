@@ -125,6 +125,33 @@ const StatCard = ({ title, value, unit, icon: Icon, color, trend }) => {
   );
 };
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+const SOURCE_CHIP = {
+  simulation_campaign: { label: 'Campaign', color: 'info', variant: 'outlined' },
+  auto_persist: { label: 'Auto', color: 'secondary', variant: 'outlined' },
+};
+
+function experimentSourceChip(row) {
+  if (row.isBaseline) {
+    return { label: 'Baseline', color: 'primary', variant: 'filled', title: row.source || 'Published Research' };
+  }
+  const mapped = SOURCE_CHIP[row.source];
+  if (mapped) {
+    return { ...mapped, title: row.source };
+  }
+  return { label: 'User', color: 'default', variant: 'outlined', title: row.source || 'User Simulation' };
+}
+
+function ExperimentSourceChip({ row }) {
+  const chip = experimentSourceChip(row);
+  return (
+    <Tooltip title={chip.title}>
+      <Chip size="small" label={chip.label} color={chip.color} variant={chip.variant} />
+    </Tooltip>
+  );
+}
+
 const AnalyticsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -145,6 +172,7 @@ const AnalyticsPage = () => {
   // Relevance Map state
   const [graphData, setGraphData] = useState(null);
   const [theoryScores, setTheoryScores] = useState(null);
+  const [campaignOverlay, setCampaignOverlay] = useState(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphError, setGraphError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -169,9 +197,13 @@ const AnalyticsPage = () => {
       setStats({
         totalSimulations: statsData.totalSimulations || 0,
         successRate: statsData.successRate?.toFixed(1) || '0.0',
+        completionRate: (statsData.completionRate ?? statsData.successRate)?.toFixed(1) || '0.0',
+        scientificPositiveRate: statsData.scientificPositiveRate?.toFixed(1) || '0.0',
         avgEnhancement: statsData.avgEnhancement?.toFixed(2) || '0.00',
         totalEnergy: statsData.totalEnergy?.toFixed(2) || '0.00',
         maxEnhancement: statsData.maxEnhancement?.toFixed(2) || '0.00',
+        outcomeCounts: statsData.outcomeCounts || {},
+        claimTierCounts: statsData.claimTierCounts || {},
       });
       
       setPieData(typeDistData || []);
@@ -220,16 +252,26 @@ const AnalyticsPage = () => {
           setSimulationHistory(localData);
           setTotalExperiments(localData.length);
           
-          // Calculate local stats
           if (localData.length > 0) {
+            const localStats = typeof analyticsApi.getLocalStats === 'function'
+              ? analyticsApi.getLocalStats()
+              : null;
             const completed = localData.filter(s => s.status === 'completed');
             setStats({
-              totalSimulations: localData.length,
-              successRate: ((completed.length / localData.length) * 100).toFixed(1),
-              avgEnhancement: completed.length > 0 
-                ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
-                : '0.00',
-              totalEnergy: completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              totalSimulations: localStats?.totalSimulations ?? localData.length,
+              successRate: Number(localStats?.successRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              completionRate: Number(localStats?.completionRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              scientificPositiveRate: Number(localStats?.scientificPositiveRate ?? 0).toFixed(1),
+              avgEnhancement: localStats
+                ? Number(localStats.avgEnhancement || 0).toFixed(2)
+                : (completed.length > 0
+                  ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
+                  : '0.00'),
+              totalEnergy: localStats
+                ? Number(localStats.totalEnergy || 0).toFixed(2)
+                : completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              outcomeCounts: localStats?.outcomeCounts || {},
+              claimTierCounts: localStats?.claimTierCounts || {},
             });
             
             // Build pie data from local
@@ -267,14 +309,16 @@ const AnalyticsPage = () => {
     setGraphLoading(true);
     setGraphError(null);
     try {
-      const [graph, scoresResult, propsResult] = await Promise.all([
+      const [graph, scoresResult, propsResult, historyResult] = await Promise.all([
         analyticsApi.getTheoryGraph(),
         analyticsApi.computeTheoryScores(),
         analyticsApi.getTheoryProperties(),
+        analyticsApi.getTheoryRunHistory().catch(() => null),
       ]);
       setGraphData(graph);
       setTheoryScores(scoresResult?.scores || null);
       setPropertiesTaxonomy(propsResult?.properties || {});
+      setCampaignOverlay(historyResult);
     } catch (err) {
       console.error('Failed to load theory graph:', err);
       setGraphError('Failed to load theory network. Is the backend running?');
@@ -301,8 +345,6 @@ const AnalyticsPage = () => {
       loadTheoryGraph();
     }
   }, [activeTab, loadTheoryGraph]);
-  
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
   
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -507,8 +549,8 @@ const AnalyticsPage = () => {
       </Box>
       
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
             title="Total Simulations"
             value={stats?.totalSimulations || 0}
@@ -516,16 +558,25 @@ const AnalyticsPage = () => {
             color={theme.palette.primary.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Success Rate"
-            value={stats?.successRate || 0}
+            title="Completion Rate"
+            value={stats?.completionRate || stats?.successRate || 0}
             unit="%"
             icon={TrendingUpIcon}
+            color={theme.palette.info.main}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Scientific-positive"
+            value={stats?.scientificPositiveRate || 0}
+            unit="%"
+            icon={AssessmentIcon}
             color={theme.palette.success.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Avg Enhancement"
             value={stats?.avgEnhancement || 0}
@@ -534,7 +585,7 @@ const AnalyticsPage = () => {
             color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Total Energy Output"
             value={stats?.totalEnergy || 0}
@@ -544,6 +595,28 @@ const AnalyticsPage = () => {
           />
         </Grid>
       </Grid>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 3 }}
+        data-testid="completion-vs-scientific-note"
+      >
+        Completion rate is SQL/HTTP status (completed ÷ total). Scientific-positive is
+        excess heat &gt; 0 W only. Enhancement-only rows and the Google/ARPA-E null
+        seed count as null, not success. Neither card validates LENR.
+        {stats?.outcomeCounts && Object.keys(stats.outcomeCounts).length > 0 && (
+          <> Outcome mix: positive {stats.outcomeCounts.positive || 0}, null {stats.outcomeCounts.null || 0}, inapplicable {stats.outcomeCounts.inapplicable || 0}, failed {stats.outcomeCounts.failed || 0}.</>
+        )}
+        {stats?.claimTierCounts && Object.keys(stats.claimTierCounts).length > 0 && (
+          <>
+            {' '}
+            Claim-tier histogram (popularity is not validation):{' '}
+            {Object.entries(stats.claimTierCounts)
+              .map(([tier, count]) => `${tier} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+      </Typography>
       
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
@@ -558,6 +631,10 @@ const AnalyticsPage = () => {
       
       {/* Overview Tab */}
       <TabPanel value={activeTab} index={0}>
+        <Alert severity="info" sx={{ mb: 2 }} data-testid="model-output-disclaimer">
+          Auto-saved runs are <strong>model outputs</strong>, not laboratory experiments.
+          More simulations do not raise empirical claim tiers or close EQ-OPEN questions.
+        </Alert>
         <Grid container spacing={3}>
           {/* Enhancement Factor Chart */}
           <Grid size={{ xs: 12, md: 8 }}>
@@ -684,14 +761,7 @@ const AnalyticsPage = () => {
                       </TableCell>
                       <TableCell>{row.type}</TableCell>
                       <TableCell>
-                        <Tooltip title={row.source || (row.isBaseline ? 'Published Research' : 'User Simulation')}>
-                          <Chip
-                            size="small"
-                            label={row.isBaseline ? 'Baseline' : 'User'}
-                            color={row.isBaseline ? 'primary' : 'default'}
-                            variant={row.isBaseline ? 'filled' : 'outlined'}
-                          />
-                        </Tooltip>
+                        <ExperimentSourceChip row={row} />
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -864,10 +934,18 @@ const AnalyticsPage = () => {
                 </Stack>
               </Box>
               {/* Graph with integrated search, stats, detail panel */}
+              {campaignOverlay?.n_runs > 0 && (
+                <Alert severity="info" sx={{ mb: 1 }} data-testid="campaign-overlay-disclaimer">
+                  Campaign overlay from {campaignOverlay.n_runs} persisted theory runs.
+                  This is model-output association, not empirical confidence. Curated
+                  edge strength is unchanged.
+                </Alert>
+              )}
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <RelevanceMap
                   graphData={graphData}
                   scores={theoryScores}
+                  campaignOverlay={campaignOverlay}
                   loading={graphLoading}
                   error={graphError}
                   onNodeClick={(node) => {
