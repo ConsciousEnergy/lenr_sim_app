@@ -1,10 +1,14 @@
 # Dependabot configuration for the LENR Simulation App
 # See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Integration branch is lenr_sim_app_v0.3.6-beta. main is behind and is not
+# the place to land version bumps until beta is promoted.
 version: 2
 updates:
   # Backend Python (FastAPI) dependencies
   - package-ecosystem: "pip"
     directory: "/LENR_SIM_APP_v2/backend"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -18,14 +22,28 @@ updates:
       - "dependencies"
       - "backend"
     ignore:
-      # Pin pydantic-v2 minor upgrades until migration completes.
+      # Stay on pydantic v2 until an explicit v3 migration.
       - dependency-name: "pydantic"
         update-types:
           - "version-update:semver-major"
+      # NumPy 2.5+ drops Python 3.10/3.11; CI matrix is 3.10-3.12. The
+      # stack is also pinned to NumPy 1.26 to avoid hybrid 1/2 Windows breakage.
+      - dependency-name: "numpy"
+        update-types:
+          - "version-update:semver-major"
+      # SciPy 1.18+ requires Python >=3.12 and NumPy 2.x.
+      - dependency-name: "scipy"
+        update-types:
+          - "version-update:semver-major"
+      # websockets 17.x requires Python >=3.11; keep 14.x with FastAPI/uvicorn.
+      - dependency-name: "websockets"
+        update-types:
+          - "version-update:semver-major"
 
-  # Frontend npm dependencies (CRA stack, migration to Vite planned).
+  # Frontend npm dependencies (Vite + React 18).
   - package-ecosystem: "npm"
     directory: "/LENR_SIM_APP_v2/frontend"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -53,12 +71,25 @@ updates:
           - "@testing-library/*"
           - "jest*"
     ignore:
-      # Hold react-scripts upgrades until Vite migration is complete.
-      - dependency-name: "react-scripts"
+      # TypeScript 5/6/7 is a compiler migration; the app is still mostly JS.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      # MUI 8/9 is a dedicated Grid/API migration, not a weekly bump.
+      - dependency-name: "@mui/material"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@mui/icons-material"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@vitejs/plugin-react"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions workflow versions
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
@@ -72,6 +103,7 @@ updates:
   # Docker base image updates
   - package-ecosystem: "docker"
     directory: "/LENR_SIM_APP_v2/infrastructure/docker"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
