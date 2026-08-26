@@ -1,6 +1,6 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-08-24  
+**Updated:** 2026-08-26  
 **Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved.
 
 ## Oracle stack (siblings, not substitutes)
@@ -41,6 +41,7 @@
 | EQ-BBL-COMP-01 | Intra-group max of per-mechanism clamps; groups multiply | `Composition` | **PROVED** (algebra) |
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | `Decision` | **DEF** mechanized |
+| EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -54,8 +55,10 @@
 | EQ-TSC-STOP-01 | `NBody` | Alpha stopping \(\neq\) prompt-photon transfer mode |
 | EQ-TRAP-TAU-01 | `Constants` | \(\tau=10^{-20}\,\mathrm{s}\) integer-scaled input |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
+| EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
+| occupancy / lattice \(\Gamma\) would-close-if | `OpenQuestionBounds` | Nat inputs; Q1 named hypotheses (Hagelstein/Dicke/BEC) are labels |
 
-`OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). It does **not** discharge any open obligation.
+`OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). `OpenQuestionBounds.lean` adds would-close-if lemmas and the Q4 millielectronvolt deficit identity. Neither module discharges any open obligation.
 
 ## Axioms / hypotheses (not theorems of nature)
 
@@ -77,7 +80,7 @@
 | EQ-OPEN-EC-01 | Electron-capture energy source |
 | EQ-OPEN-YIELD-01 | Integrated yield discrepancy |
 
-**New DEF rows (when/how pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01` — Lean `WhenHow.lean` / `Branching.lean`; no measured branching or nature theorem.
+**New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 

@@ -8,9 +8,16 @@ paper_ref: "§5A.5"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
-citation_keys: []
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+testable_prediction_ids:
+  - PRED-01
+  - PRED-05
+still_missing: "Time-resolved simultaneous heat + He; integrated W·hr yields 100-10000× low"
 lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q5IntegratedYieldClosed"
   - "LenrFormal.OpenObligations.positive_yield_discrepancy_implies_q5_not_closed"
-notes: "This obligation remains open. The declarations encode a closure criterion and a non-closure implication; they provide no proof of occurrence."
+notes: "This obligation remains open. Instantaneous Miles EMP (~2×) is not integrated-yield closure. See EQ-OPEN-YIELD-BAND-01. ISSUE_LEDGER 'FIXED' means a paper section was written, not that this obligation is discharged."

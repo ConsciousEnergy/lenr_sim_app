@@ -8,10 +8,16 @@ paper_ref: "§5A.3"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
-citation_keys: []
+citation_keys:
+  - takahashi2016
+  - takahashi2026brief
+  - paper_5A_3
+testable_prediction_ids:
+  - PRED-03
+still_missing: "Experimentally constrained collective factor (not a free 1e6-cap assumption)"
 lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q3RateBudgetClosed"
   - "LenrFormal.OpenObligations.two_body_log_budget_is_negative"
   - "LenrFormal.OpenObligations.two_body_q3_not_closed"
-notes: "This obligation remains open. The declarations show non-closure for the stated two-body budget only; they provide no proof of occurrence."
+notes: "This obligation remains open. Two-body log10 N_events = -40 is proved as non-closure (EQ-RATE-2B-NC-01). Occupancy/collective Nat inputs live in OpenQuestionBounds; they do not discharge this row."

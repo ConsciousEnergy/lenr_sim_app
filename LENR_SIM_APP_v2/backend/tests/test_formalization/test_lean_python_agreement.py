@@ -206,3 +206,55 @@ def test_two_body_event_budget_agrees_with_lean() -> None:
         ),
         expected_value=-40,
     )
+
+
+def test_q4_double_layer_deficit_agrees_with_lean() -> None:
+    from app.physics.weak_interaction import THRESHOLD_ELECTRON_MEV
+    from app.physics_engine.open_question_details import (
+        DOUBLE_LAYER_STATED_MEV,
+        ELECTRON_CAPTURE_THRESHOLD_MEV,
+    )
+
+    lean_path = LEAN_DIR / "OpenQuestionBounds.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="doubleLayer_meV",
+        lean_value=_evaluate_lean_integer(lean_path, "doubleLayer_meV"),
+        python_symbol="DOUBLE_LAYER_STATED_MEV",
+        python_value=DOUBLE_LAYER_STATED_MEV,
+        expected_value=100,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="ecThreshold_meV",
+        lean_value=_evaluate_lean_integer(lean_path, "ecThreshold_meV"),
+        python_symbol="ELECTRON_CAPTURE_THRESHOLD_MEV",
+        python_value=ELECTRON_CAPTURE_THRESHOLD_MEV,
+        expected_value=782_000_000,
+    )
+    assert round(THRESHOLD_ELECTRON_MEV * 1e9) == ELECTRON_CAPTURE_THRESHOLD_MEV
+
+
+def test_q5_integrated_yield_band_agrees_with_lean() -> None:
+    from app.physics_engine.open_question_details import (
+        INTEGRATED_YIELD_DISCREPANCY_HI,
+        INTEGRATED_YIELD_DISCREPANCY_LO,
+    )
+
+    lean_path = LEAN_DIR / "OpenQuestionBounds.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="integratedYieldDiscrepancyLo",
+        lean_value=_evaluate_lean_integer(lean_path, "integratedYieldDiscrepancyLo"),
+        python_symbol="INTEGRATED_YIELD_DISCREPANCY_LO",
+        python_value=INTEGRATED_YIELD_DISCREPANCY_LO,
+        expected_value=100,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="integratedYieldDiscrepancyHi",
+        lean_value=_evaluate_lean_integer(lean_path, "integratedYieldDiscrepancyHi"),
+        python_symbol="INTEGRATED_YIELD_DISCREPANCY_HI",
+        python_value=INTEGRATED_YIELD_DISCREPANCY_HI,
+        expected_value=10_000,
+    )

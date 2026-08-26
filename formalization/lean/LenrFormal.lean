@@ -16,6 +16,7 @@ import LenrFormal.Decision
 import LenrFormal.WhenHow
 import LenrFormal.Branching
 import LenrFormal.OpenObligations
+import LenrFormal.OpenQuestionBounds
 
 /-!
 # LenrFormal — mechanized consistency pilot for Unified LENR Theory
