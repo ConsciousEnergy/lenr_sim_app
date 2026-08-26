@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Analytics SQL match, Relevance Map persisted scores, all-claims collection (2026-08-26)
+- Overview charts plot SQL `experiments` fields on separate enhancement (×) and energy (keV) axes; X-axis is `created_at` date with name/source in the tooltip
+- Cards: **Total Records** (SQL row count); keV sum labelled as estimated, not conserved; **Include published baselines** toggle; stored-type pie plus **Source class** pie
+- History **Name** column; Comparison/CSV pressure is **bar**, not atm
+- Persist attaches additive `final_score` (five-factor GM × claim-tier) beside guardrails `weighted_score`; persist uses `skip_sensitivity=True` (stored sensitivity 0.5). Relevance Map defaults to SQL means when `theory_runs` exist
+- `all_claims` campaign: 4 Pd-D cartesian + 2 occurrence-anchored cells + one unified run per registered theory. Coupled `/theories/run-coupled` now persists
+- Takahashi TSC citations add 2026 brief-view (`takahashi2026brief`); 4H/TSC WS is literature-only (Weak-Strong, not Woods–Saxon). No new theory_id. `EQ-OPEN-*` unchanged
+- Docs: `LENR_SIM_APP_v2/docs/v0.3.6-beta/ANALYTICS_TRANSPARENCY.md`
+
 ### Honest analytics metrics and diverse campaign (2026-08-24)
 - Split Analytics Overview: **completion rate** (`completed/total`, still aliased as `successRate`) vs **scientific-positive** (`excess_heat_watts > 0`). Additive `outcomeCounts` and `claimTierCounts`
 - Persist true failures as `status=failed` (campaign try/except and UI true-fail paths)

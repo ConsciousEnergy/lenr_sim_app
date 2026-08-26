@@ -4,10 +4,20 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from app.services.analytics_service import classify_source_class
+from app.services.simulation_persistence import SOURCE_AUTO_PERSIST, SOURCE_CAMPAIGN
+
 
 def _client() -> TestClient:
     from app.main import app
     return TestClient(app)
+
+
+def test_classify_source_class_matches_history_chips() -> None:
+    assert classify_source_class(is_baseline=True, source="anything") == "Baseline"
+    assert classify_source_class(is_baseline=False, source=SOURCE_CAMPAIGN) == "Campaign"
+    assert classify_source_class(is_baseline=False, source=SOURCE_AUTO_PERSIST) == "Auto"
+    assert classify_source_class(is_baseline=False, source="User Simulation") == "User"
 
 
 def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
@@ -151,3 +161,106 @@ def test_stats_fields_are_additive_with_baseline() -> None:
         assert body["successRate"] == body["completionRate"]
         assert "scientificPositiveRate" in body
         assert "claimTierCounts" in body
+
+
+def _insert_baseline_row(*, name: str, energy_kev: float, enhancement: float) -> str:
+    import asyncio
+
+    from app.core.database import db_manager
+    from app.models.database_models import Experiment
+
+    async def _go() -> str:
+        async with db_manager.session() as session:
+            experiment = Experiment(
+                id=str(uuid.uuid4()),
+                name=name,
+                experiment_type="bubble_fusion",
+                status="completed",
+                is_baseline=True,
+                source="Published Research",
+                material="palladium",
+                temperature_k=300.0,
+                pressure_bar=1.0,
+                enhancement_factor=enhancement,
+                energy_output_kev=energy_kev,
+                excess_heat_watts=0.0,
+                results_json={"is_model_output": False},
+            )
+            session.add(experiment)
+            await session.commit()
+            return experiment.id
+
+    return asyncio.run(_go())
+
+
+def test_timeline_and_source_distribution_match_sql_fields() -> None:
+    session_id = f"sql-charts-{uuid.uuid4().hex}"
+    with _client() as client:
+        created = client.post(
+            "/api/analytics/experiments",
+            json={
+                "name": "user Pd-D cell",
+                "experiment_type": "lenr",
+                "session_id": session_id,
+                "status": "completed",
+                "material": "palladium",
+                "temperature_k": 300.0,
+                "enhancement_factor": 12.5,
+                "energy_output_kev": 75.0,
+                "excess_heat_watts": 0.0,
+                "results": {"is_model_output": True},
+            },
+        )
+        assert created.status_code == 201
+        baseline_id = _insert_baseline_row(
+            name="Taleyarkhan bubble fusion",
+            energy_kev=2500.0,
+            enhancement=5.0,
+        )
+
+        timeline = client.get(
+            "/api/analytics/timeline",
+            params={"session_id": session_id, "include_baseline": True, "limit": 100},
+        )
+        assert timeline.status_code == 200
+        rows = timeline.json()
+        assert rows
+        for row in rows:
+            assert "date" in row
+            assert "name" in row
+            assert "sourceClass" in row
+            assert "enhancementFactor" in row
+            assert "energyOutput" in row
+        taleyarkhan = next(row for row in rows if row["name"] == "Taleyarkhan bubble fusion")
+        assert taleyarkhan["energyOutput"] == 2500.0
+        assert taleyarkhan["enhancementFactor"] == 5.0
+        assert taleyarkhan["sourceClass"] == "Baseline"
+        user_row = next(row for row in rows if row["name"] == "user Pd-D cell")
+        assert user_row["energyOutput"] == 75.0
+        assert user_row["sourceClass"] == "User"
+
+        sources = client.get(
+            "/api/analytics/distribution/source",
+            params={"session_id": session_id, "include_baseline": True},
+        )
+        assert sources.status_code == 200
+        source_names = {row["name"] for row in sources.json()}
+        assert "Baseline" in source_names
+        assert "User" in source_names
+
+        hidden = client.get(
+            "/api/analytics/timeline",
+            params={"session_id": session_id, "include_baseline": False, "limit": 100},
+        )
+        assert hidden.status_code == 200
+        hidden_names = {row["name"] for row in hidden.json()}
+        assert "Taleyarkhan bubble fusion" not in hidden_names
+        assert "user Pd-D cell" in hidden_names
+        hidden_ids = {
+            row["id"]
+            for row in client.get(
+                "/api/analytics/experiments",
+                params={"session_id": session_id, "include_baseline": False, "limit": 100},
+            ).json()["experiments"]
+        }
+        assert baseline_id not in hidden_ids

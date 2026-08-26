@@ -300,6 +300,8 @@ class TestSimulationAPI:
         assert "combined_enhancement" in data
         assert "execution_order" in data
         assert data["combined_enhancement"] >= 1.0
+        persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
+        assert persistence.get("is_model_output") is True or persistence == {}
 
     def test_parameter_sweep_endpoint(self, client):
         """POST /api/analytics/parameter-sweep returns sweep curves for requested theories."""

@@ -54,6 +54,82 @@ experiment stacked on the campaign runner, not a full cartesian of every theory:
 - Theory-group axis: one `enabled_theories` representative per composition group at four cells (~40)
 - `full` remains the large cartesian; do not run `diverse` in CI
 
+## Chart ↔ SQL field map
+
+Overview charts plot columns from the `experiments` table. They do **not**
+share one Y-axis. A 2500 keV Taleyarkhan `energy_output_kev` row must not
+flatten 5–85× `enhancement_factor` traces.
+
+| UI | SQL / API field |
+|---|---|
+| Total Records | `COUNT(experiments)` (`stats.totalSimulations`) |
+| Completion Rate | `status = completed` / total (`completionRate`, alias `successRate`) |
+| Scientific-positive | `excess_heat_watts > 0` (`scientificPositiveRate`) |
+| Avg Enhancement | mean `enhancement_factor` |
+| Total Energy Output | sum of estimated `energy_output_kev` (not a conserved total) |
+| Enhancement factor (SQL) | timeline `enhancementFactor` vs `created_at` date |
+| Energy output (SQL keV) | timeline `energyOutput` vs `created_at` date |
+| Stored experiment type | `experiment_type` enum pie |
+| Source class | Baseline / Campaign / Auto / User from `is_baseline` + `source` |
+| Temperature Distribution | binned `temperature_k` |
+| History Name | `experiments.name` |
+| Comparison / CSV pressure | `pressure_bar` (bar, not atm) |
+
+`GET /api/analytics/timeline` is additive: `date`, `name`, `is_baseline`,
+`source`, `sourceClass`. `GET /api/analytics/distribution/source` is new.
+`include_baseline=false` keeps the user's session rows and hides literature
+seeds (and shared campaign/auto rows that are not in that session).
+
+```mermaid
+flowchart TD
+  testbed[Theory Testbed or campaign]
+  persist[persist_theory_pipeline / persist_unified_simulation]
+  experiments[(experiments SQL)]
+  theoryRuns[(theory_runs SQL)]
+  overview[Analytics Overview charts]
+  map[Relevance Map persisted_mean]
+  curated[Curated TheoryGraph edges]
+  testbed --> persist
+  persist --> experiments
+  persist --> theoryRuns
+  experiments --> overview
+  theoryRuns --> map
+  curated --> map
+```
+
+## Score contract: `final_score` vs `weighted_score`
+
+Two formulas used to share the name `score`:
+
+| Field | Formula | Where |
+|---|---|---|
+| `score` | guardrails `confidence_breakdown.weighted_score` | existing persist column |
+| `final_score` | five-factor geometric mean × claim-tier | Relevance Map live + persist overlay |
+
+Persist enrichment is **additive**. `theory_runs.theory_scores[*]` now also
+stores `final_score`, the five subscores, and
+`score_formula: five_factor_gm_x_claim_tier`. Persist calls
+`compute_theory_scores(..., skip_sensitivity=True)` so campaigns are not 2–3×
+slower; stored `parameter_sensitivity` is the neutral **0.5**. Live
+“Run live scores” still computes sensitivity.
+
+`GET /api/analytics/theory-run-history` (`lenr-theory-run-history-v1`) is
+additive: `score_field: final_score_preferred`, `mean_final_score`,
+`mean_weighted_score`, mean subscores. `mean_score` prefers `final_score`.
+Curated edge strength is never rewritten from SQL co-occurrence.
+
+The map defaults to **SQL means** when `n_runs > 0`, with **Run live scores**
+/ **Use SQL means** to switch. Node radius in `persisted_mean` uses
+`mean_final_score`.
+
+## Collection loop (model outputs)
+
+`python -m app.scripts.run_simulation_campaign --preset all_claims` samples
+every registered `theory_id` plus a 2 T × 2 loading Pd-D cartesian (4) and
+two tagged occurrence-anchored Pd-D cells. Extra runs are **model outputs**.
+They do not raise empirical claim tiers or close `EQ-OPEN-*`.
+`lenr_proved` stays false. Do not run `--preset full` or full `diverse` in CI.
+
 ## Backend Outputs Added
 - `analytics_transparency.confidence_weights`
 - `analytics_transparency.normalization`
@@ -70,6 +146,12 @@ experiment stacked on the campaign runner, not a full cartesian of every theory:
 - `GET /api/analytics/stats.scientificPositiveRate`
 - `GET /api/analytics/stats.outcomeCounts`
 - `GET /api/analytics/stats.claimTierCounts`
+- `GET /api/analytics/timeline.{date,name,is_baseline,source,sourceClass}`
+- `GET /api/analytics/distribution/source`
+- `GET /api/analytics/distribution/{type,material,temperature}.include_baseline`
+- `theory_runs.theory_scores[*].final_score` (additive; `score` remains weighted)
+- `GET /api/analytics/theory-run-history.{score_field,mean_final_score,mean_weighted_score}`
+- `POST /api/analytics/theories/run-coupled` auto-persist (`persist_session_id`, `persist_source`)
 
 ## Purpose
 - Make confidence composition and normalization inspectable from API payloads.
