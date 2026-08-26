@@ -36,6 +36,16 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [False, True],
     },
+    # All registered theories at a small occurrence-relevant Pd-D grid.
+    # Cartesian is 2 T × 2 loading × 1 host × 1 reactant × 1 pipeline = 4.
+    "all_claims": {
+        "temperatures": [300.0, 350.0],
+        "loading_ratios": [0.90, 0.95],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
     # Designed experiment: cryogenic/hot + unloaded/loaded negatives, H/D, three hosts.
     # Cartesian is 4 T × 4 loading × 3 hosts × 2 reactants × 2 pipeline = 192.
     "diverse": {
@@ -181,6 +191,9 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
     if preset == "diverse":
         for extra in DIVERSE_EXTRA_CASES:
             yield dict(extra)
+    if preset == "all_claims":
+        for extra in ALL_CLAIMS_OCCURRENCE_CASES:
+            yield dict(extra)
 
 
 def campaign_size(preset: str) -> int:
@@ -190,6 +203,8 @@ def campaign_size(preset: str) -> int:
         n *= len(spec[key])
     if preset == "diverse":
         n += len(DIVERSE_EXTRA_CASES)
+    if preset == "all_claims":
+        n += len(ALL_CLAIMS_OCCURRENCE_CASES)
     return n
 
 
@@ -230,6 +245,52 @@ def diverse_theory_group_count() -> int:
     return len(theory_group_representatives()) * len(DIVERSE_THEORY_CONDITION_CELLS)
 
 
+ALL_CLAIMS_OCCURRENCE_CASES: List[Dict[str, Any]] = [
+    {
+        "temperature": 300.0,
+        "loading_ratio": 0.95,
+        "host_material": "palladium",
+        "reactant": "deuterium",
+        "rate_mode": "two_body",
+        "use_theory_pipeline": True,
+        "tag": "occurrence_anchored_pd_d",
+    },
+    {
+        "temperature": 350.0,
+        "loading_ratio": 0.90,
+        "host_material": "palladium",
+        "reactant": "deuterium",
+        "rate_mode": "two_body",
+        "use_theory_pipeline": True,
+        "tag": "occurrence_anchored_pd_d_warm",
+    },
+]
+
+
+def iter_all_claims_single_theory_cases() -> Iterator[Dict[str, Any]]:
+    """One pipeline run per registered theory_id at high-loading Pd-D."""
+    from app.physics_engine.theory_pipeline import get_default_pipeline
+
+    theory_ids = list(get_default_pipeline().registered_ids)
+    for theory_id in theory_ids:
+        yield {
+            "temperature": 300.0,
+            "loading_ratio": 0.90,
+            "host_material": "palladium",
+            "reactant": "deuterium",
+            "rate_mode": "two_body",
+            "use_theory_pipeline": True,
+            "enabled_theories": [theory_id],
+            "tag": f"all_claims:{theory_id}",
+        }
+
+
+def all_claims_single_theory_count() -> int:
+    from app.physics_engine.theory_pipeline import get_default_pipeline
+
+    return len(list(get_default_pipeline().registered_ids))
+
+
 def describe_preset(preset: str) -> Mapping[str, Any]:
     payload: Dict[str, Any] = {
         "preset": preset,
@@ -240,4 +301,11 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["n_extra_unified"] = len(DIVERSE_EXTRA_CASES)
         payload["n_theory_group_runs"] = diverse_theory_group_count()
         payload["theory_group_representatives"] = theory_group_representatives()
+    if preset == "all_claims":
+        payload["n_occurrence_anchored"] = len(ALL_CLAIMS_OCCURRENCE_CASES)
+        payload["n_single_theory_runs"] = all_claims_single_theory_count()
+        payload["note"] = (
+            "Model-output sampling of every registered theory_id plus "
+            "occurrence-anchored Pd-D cells. Does not prove LENR."
+        )
     return payload

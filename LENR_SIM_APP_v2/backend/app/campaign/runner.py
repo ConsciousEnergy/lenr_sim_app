@@ -14,6 +14,7 @@ from app.api.routes.physics import TheoryConditions, TheoryRunRequest, run_theor
 from app.campaign.grid import (
     campaign_size,
     describe_preset,
+    iter_all_claims_single_theory_cases,
     iter_campaign_cases,
     iter_diverse_theory_group_cases,
 )
@@ -99,6 +100,8 @@ async def run_campaign(
     cases = list(iter_campaign_cases(preset))
     if preset == "diverse":
         cases.extend(iter_diverse_theory_group_cases())
+    if preset == "all_claims":
+        cases.extend(iter_all_claims_single_theory_cases())
 
     payloads: List[Dict[str, Any]] = []
     persist_ids: List[Dict[str, Any]] = []
@@ -115,7 +118,7 @@ async def run_campaign(
         payloads.append(body)
 
     theory_payloads: List[Dict[str, Any]] = []
-    if include_theory_pipeline and preset != "diverse":
+    if include_theory_pipeline and preset not in {"diverse"}:
         representative = next(iter_campaign_cases(preset))
         theory_request = TheoryRunRequest(
             conditions=TheoryConditions(
