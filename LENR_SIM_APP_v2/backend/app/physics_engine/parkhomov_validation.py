@@ -25,6 +25,8 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Tuple, Sequence
 
+from app.data.dataset_io import parkhomov_curated
+
 
 # ---------------------------------------------------------------------------
 # Curated subset of Parkhomov-tabulated exothermic reactions.
@@ -35,16 +37,34 @@ from typing import Any, Dict, List, Optional, Tuple, Sequence
 # `_ATOMIC_NUMBER` below so the lookup is tolerant to isotope labels.
 # ---------------------------------------------------------------------------
 
-_ATOMIC_NUMBER: Dict[str, int] = {
-    "H": 1, "D": 1, "T": 1,
-    "He": 2, "Li": 3, "Be": 4, "B": 5, "C": 6, "N": 7, "O": 8,
-    "F": 9, "Ne": 10, "Na": 11, "Mg": 12, "Al": 13, "Si": 14,
-    "P": 15, "S": 16, "Cl": 17, "Ar": 18, "K": 19, "Ca": 20,
-    "Ti": 22, "V": 23, "Cr": 24, "Mn": 25, "Fe": 26, "Co": 27,
-    "Ni": 28, "Cu": 29, "Zn": 30, "Ga": 31, "Ge": 32,
-    "Rb": 37, "Sr": 38, "Pd": 46, "Ag": 47, "Cd": 48,
-    "Cs": 55, "Ba": 56, "Pt": 78,
-}
+def _nuclide(row: Dict[str, Any]) -> Tuple[str, int]:
+    return (str(row["symbol"]), int(row["A"]))
+
+
+def _load_atomic_number() -> Dict[str, int]:
+    raw = parkhomov_curated().get("atomic_number") or {}
+    return {str(key): int(value) for key, value in raw.items()}
+
+
+def _load_reactions() -> Tuple[ParkhomovReaction, ...]:
+    rows = parkhomov_curated().get("reactions") or []
+    loaded: List[ParkhomovReaction] = []
+    for row in rows:
+        loaded.append(
+            ParkhomovReaction(
+                reactants=tuple(_nuclide(item) for item in row.get("reactants") or ()),
+                products=tuple(_nuclide(item) for item in row.get("products") or ()),
+                energy_mev=float(row["energy_mev"]),
+                category=str(row["category"]),
+                classification=str(row["classification"]),
+                neutrino=str(row.get("neutrino") or "none"),
+                notes=str(row.get("notes") or ""),
+            )
+        )
+    return tuple(loaded)
+
+
+_ATOMIC_NUMBER: Dict[str, int] = _load_atomic_number()
 
 
 @dataclass(frozen=True)
@@ -60,58 +80,8 @@ class ParkhomovReaction:
     notes: str = ""
 
 
-# Compact curated table. Energy values rounded to 3 decimals.
-_REACTIONS: Tuple[ParkhomovReaction, ...] = (
-    # --- Pd-D / Pd-H two-body fusion analogues ---
-    ParkhomovReaction((("D", 2), ("D", 2)), (("He", 3), ("n", 1)), 3.269, "fusion", "boson-boson", "none"),
-    ParkhomovReaction((("D", 2), ("D", 2)), (("T", 3), ("H", 1)), 4.033, "fusion", "boson-boson", "none"),
-    ParkhomovReaction((("D", 2), ("D", 2)), (("He", 4),), 23.847, "fusion", "boson-boson", "none",
-                      "rare branch; dominant pathway in clean-LENR excess-heat signature"),
-    ParkhomovReaction((("D", 2), ("T", 3)), (("He", 4), ("n", 1)), 17.589, "fusion", "boson-fermion", "none"),
-    ParkhomovReaction((("H", 1), ("Li", 6)), (("He", 4), ("He", 3)), 4.020, "fusion", "fermion-fermion", "none"),
-    ParkhomovReaction((("H", 1), ("Li", 7)), (("He", 4), ("He", 4)), 17.347, "fusion", "fermion-fermion", "none",
-                      "Parkhomov flagship p-Li7 alpha-alpha reaction"),
-    ParkhomovReaction((("D", 2), ("Li", 6)), (("He", 4), ("He", 4)), 22.374, "fusion", "fermion-fermion", "none"),
-    ParkhomovReaction((("D", 2), ("Li", 7)), (("Be", 8),), 16.695, "fusion", "fermion-fermion", "none",
-                      "Be-8 unstable; decays 2 He-4"),
-
-    # --- Ni-H transmutations (Rossi-class) ---
-    ParkhomovReaction((("Ni", 58), ("H", 1)), (("Cu", 59),), 3.418, "fusion", "fermion-fermion", "none"),
-    ParkhomovReaction((("Ni", 60), ("H", 1)), (("Cu", 61),), 4.800, "fusion", "fermion-fermion", "none"),
-    ParkhomovReaction((("Ni", 62), ("H", 1)), (("Cu", 63),), 6.123, "fusion", "fermion-fermion", "none"),
-    ParkhomovReaction((("Ni", 64), ("H", 1)), (("Cu", 65),), 7.454, "fusion", "fermion-fermion", "none"),
-
-    # --- Ti-D transmutations ---
-    ParkhomovReaction((("Ti", 48), ("D", 2)), (("V", 50),), 9.215, "fusion", "fermion-boson", "none"),
-    ParkhomovReaction((("Ti", 46), ("D", 2)), (("V", 48),), 10.341, "fusion", "fermion-boson", "none"),
-
-    # --- Pd-D transmutations ---
-    ParkhomovReaction((("Pd", 104), ("D", 2)), (("Ag", 106),), 7.212, "fusion", "fermion-boson", "none"),
-    ParkhomovReaction((("Pd", 105), ("D", 2)), (("Ag", 107),), 8.128, "fusion", "fermion-boson", "none"),
-    ParkhomovReaction((("Pd", 106), ("D", 2)), (("Ag", 108),), 8.972, "fusion", "fermion-boson", "none"),
-
-    # --- 2->2 transmutation (nuclei exchange) ---
-    ParkhomovReaction((("Ni", 62), ("Li", 7)), (("Cu", 65), ("He", 4)), 3.110, "transmutation", "mixed", "none"),
-    ParkhomovReaction((("Pd", 106), ("Li", 6)), (("Ag", 108), ("He", 4)), 5.204, "transmutation", "mixed", "none"),
-    ParkhomovReaction((("Ni", 60), ("H", 1)), (("Co", 57), ("He", 4)), 1.935, "transmutation", "fermion-fermion", "none"),
-
-    # --- Widom-Larsen ULMN capture (Parkhomov weak-channel) ---
-    ParkhomovReaction((("Ni", 58), ("n", 1)), (("Ni", 59),), 8.999, "fusion", "mixed", "none",
-                      "neutron capture; Widom-Larsen ULMN channel"),
-    ParkhomovReaction((("Ni", 59), ("n", 1)), (("Ni", 60),), 11.388, "fusion", "mixed", "none"),
-
-    # --- Iwamura-class multi-nucleon transfer ---
-    ParkhomovReaction((("Cs", 133), ("D", 2), ("D", 2)), (("Pr", 141),), 50.487, "transmutation", "mixed", "none",
-                      "Iwamura Cs->Pr 4D transfer"),
-    ParkhomovReaction((("Ba", 138), ("D", 2), ("D", 2), ("D", 2)), (("Sm", 150),),
-                      49.123, "transmutation", "mixed", "none", "Iwamura Ba->Sm 6D transfer"),
-
-    # --- Light-element fusion backstops ---
-    ParkhomovReaction((("H", 1), ("H", 1)), (("D", 2),), 1.442, "fusion", "fermion-fermion", "nu",
-                      "pp-chain step; requires weak interaction"),
-    ParkhomovReaction((("H", 1), ("D", 2)), (("He", 3),), 5.493, "fusion", "fermion-boson", "none"),
-    ParkhomovReaction((("He", 3), ("He", 3)), (("He", 4), ("H", 1), ("H", 1)), 12.860, "fusion", "boson-boson", "none"),
-)
+# Compact curated table loaded from parkhomov_curated.v1.json.
+_REACTIONS: Tuple[ParkhomovReaction, ...] = _load_reactions()
 
 
 # ---------------------------------------------------------------------------

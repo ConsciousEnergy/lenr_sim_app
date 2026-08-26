@@ -1,0 +1,48 @@
+{
+  "schema": "lenr-app-dataset-v1",
+  "id": "screening_priors.v1",
+  "disclaimer": "Cited U_e ranges used as UQ priors, not single deterministic constants.",
+  "adiabatic_limit_eV": 25.0,
+  "materials": [
+    {
+      "material": "palladium",
+      "minimum_eV": 250.0,
+      "typical_eV": 800.0,
+      "maximum_eV": 18000.0,
+      "citations": ["raiola2002", "czerski2023", "screeningreview2024"],
+      "note": "D-D in Pd; up to ~18 keV reported for 'hard' Pd targets."
+    },
+    {
+      "material": "nickel",
+      "minimum_eV": 200.0,
+      "typical_eV": 500.0,
+      "maximum_eV": 800.0,
+      "citations": ["huke2008", "screeningreview2024"],
+      "note": "H-H in Ni; estimate anchored to metal-host screening trend."
+    },
+    {
+      "material": "titanium",
+      "minimum_eV": 35.0,
+      "typical_eV": 350.0,
+      "maximum_eV": 600.0,
+      "citations": ["raiola2002", "huke2008"],
+      "note": "D-D in Ti; gas-like (~36 eV) to enhanced depending on loading."
+    },
+    {
+      "material": "erbium",
+      "minimum_eV": 300.0,
+      "typical_eV": 347.0,
+      "maximum_eV": 750.0,
+      "citations": ["pines2020theory"],
+      "note": "ErD3 conduction/plasma screening Ue~347 eV (NASA LCF theory)."
+    },
+    {
+      "material": "lithium",
+      "minimum_eV": 100.0,
+      "typical_eV": 300.0,
+      "maximum_eV": 600.0,
+      "citations": ["huke2008"],
+      "note": "Li-H / Rydberg-matter regime; estimate."
+    }
+  ]
+}
