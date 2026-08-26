@@ -70,6 +70,7 @@ import {
 } from 'recharts';
 import { analyticsApi } from '../services/analyticsApi';
 import RelevanceMap from '../components/analytics/RelevanceMap';
+import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPanels';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -165,9 +166,19 @@ function scoresFromOverlay(overlay) {
       parameter_sensitivity: rec.mean_parameter_sensitivity ?? 0,
       cross_theory_agreement: rec.mean_cross_theory_agreement ?? 0,
       observables_completeness: rec.mean_observables_completeness ?? 0,
+      n: rec.n ?? rec.n_runs,
+      ci_lo: rec.ci_lo,
+      ci_hi: rec.ci_hi,
+      ci_method: rec.ci_method,
+      score_formula: rec.score_formula || overlay.score_formula,
     };
   });
   return scores;
+}
+
+function formatCi(lo, hi) {
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
+  return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`;
 }
 
 function SqlChartTooltip({ active, payload, label }) {
@@ -221,6 +232,7 @@ const AnalyticsPage = () => {
   const [includeBaseline, setIncludeBaseline] = useState(true);
   const [sourcePieData, setSourcePieData] = useState([]);
   const [scoreMode, setScoreMode] = useState('live');
+  const [literatureScoreMode, setLiteratureScoreMode] = useState('five_factor');
   
   // Load data from API with localStorage fallback
   const loadData = useCallback(async () => {
@@ -384,7 +396,10 @@ const AnalyticsPage = () => {
   const handleRunScores = useCallback(async (conditions) => {
     setGraphLoading(true);
     try {
-      const result = await analyticsApi.computeTheoryScores(conditions);
+      const result = await analyticsApi.computeTheoryScores({
+        ...(conditions || {}),
+        score_mode: literatureScoreMode,
+      });
       setScoreMode('live');
       setTheoryScores(result?.scores || null);
     } catch (err) {
@@ -392,7 +407,7 @@ const AnalyticsPage = () => {
     } finally {
       setGraphLoading(false);
     }
-  }, []);
+  }, [literatureScoreMode]);
 
   // When tab changes to Relevance Map (index 3), load graph data
   useEffect(() => {
@@ -1052,6 +1067,23 @@ const AnalyticsPage = () => {
                   >
                     Run live scores
                   </Button>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={literatureScoreMode === 'five_factor_plus_literature'}
+                        onChange={(event) => {
+                          setLiteratureScoreMode(
+                            event.target.checked
+                              ? 'five_factor_plus_literature'
+                              : 'five_factor'
+                          );
+                        }}
+                        inputProps={{ 'aria-label': 'Literature likelihood' }}
+                      />
+                    }
+                    label="Literature likelihood"
+                  />
                   <Button
                     variant={scoreMode === 'persisted_mean' ? 'contained' : 'outlined'}
                     size="small"
@@ -1075,9 +1107,33 @@ const AnalyticsPage = () => {
                     ? `Node size uses mean final_score from ${campaignOverlay.n_runs} persisted theory_runs (SQL).`
                     : 'Live five-factor scores at stated conditions. SQL means are available via Use SQL means.'}
                   {' '}This is model-output association, not empirical confidence. Curated
-                  edge strength is unchanged.
+                  edge strength is unchanged. SQL mean is not experimental confirmation.
                 </Alert>
               )}
+              <Stack direction="row" spacing={0.5} sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
+                {campaignOverlay?.score_formula && (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={campaignOverlay.score_formula}
+                    data-testid="score-formula-chip"
+                  />
+                )}
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label="persisted sensitivity = 0.5 unless live"
+                  data-testid="sensitivity-note-chip"
+                />
+                {campaignOverlay?.n_runs > 0 && (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`N=${campaignOverlay.n_runs}`}
+                    data-testid="overlay-n-chip"
+                  />
+                )}
+              </Stack>
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <RelevanceMap
                   graphData={graphData}
@@ -1113,6 +1169,13 @@ const AnalyticsPage = () => {
                   label={scoreMode === 'persisted_mean' ? 'SQL mean' : 'Live'}
                   data-testid="score-mode-chip"
                 />
+                <Chip
+                  size="small"
+                  sx={{ ml: 1 }}
+                  variant="outlined"
+                  label={literatureScoreMode}
+                  data-testid="live-score-mode-chip"
+                />
               </Typography>
               {theoryScores ? (
                 Object.entries(theoryScores)
@@ -1141,6 +1204,24 @@ const AnalyticsPage = () => {
                           <Chip label={`Phys: ${(s.physical_consistency * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
                           <Chip label={`Exp: ${(s.experimental_agreement * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
                           <Chip label={`Sens: ${(s.parameter_sensitivity * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+                          {Number.isFinite(s.n) && (
+                            <Chip
+                              label={`N=${s.n}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.6rem' }}
+                              data-testid={`score-n-${tid}`}
+                            />
+                          )}
+                          {formatCi(s.ci_lo, s.ci_hi) && (
+                            <Chip
+                              label={`CI ${formatCi(s.ci_lo, s.ci_hi)}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.6rem' }}
+                              data-testid={`score-ci-${tid}`}
+                            />
+                          )}
                         </Stack>
                       </CardContent>
                     </Card>
@@ -1151,6 +1232,7 @@ const AnalyticsPage = () => {
                 </Typography>
               )}
             </Paper>
+            <ReviewerAnalyticsPanels />
           </Box>
         </Box>
       </TabPanel>

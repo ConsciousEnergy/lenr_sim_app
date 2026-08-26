@@ -18,6 +18,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.physics_engine.theory_pipeline import TheoryPipeline, get_default_pipeline
 from app.physics_engine.theory_protocol import TheoryContribution
 from app.physics_engine.constants import MILES_HEAT_HELIUM_RATE
+from app.physics_engine.literature_likelihood import (
+    SCORE_MODE_FIVE_FACTOR,
+    blend_experimental_agreement,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +258,7 @@ def compute_theory_scores(
     enabled_theories: Optional[List[str]] = None,
     config: Optional[Dict[str, Any]] = None,
     skip_sensitivity: bool = False,
+    score_mode: str = SCORE_MODE_FIVE_FACTOR,
 ) -> Dict[str, Dict[str, float]]:
     """Run all theories and compute probability scores.
 
@@ -310,11 +315,16 @@ def compute_theory_scores(
                 "enhancement_factor": contrib.enhancement_factor,
                 "is_applicable": False,
                 "energy_output_watts": contrib.energy_output_watts,
+                "score_mode": score_mode or SCORE_MODE_FIVE_FACTOR,
             }
             continue
 
         phys = _physical_consistency_score(contrib)
-        exper = _experimental_agreement_score(contrib)
+        exper = blend_experimental_agreement(
+            contrib,
+            _experimental_agreement_score(contrib),
+            score_mode,
+        )
         sens = (
             0.5
             if skip_sensitivity
@@ -356,6 +366,7 @@ def compute_theory_scores(
             "enhancement_factor": contrib.enhancement_factor,
             "is_applicable": contrib.is_applicable,
             "energy_output_watts": contrib.energy_output_watts,
+            "score_mode": score_mode or SCORE_MODE_FIVE_FACTOR,
         }
 
     return results

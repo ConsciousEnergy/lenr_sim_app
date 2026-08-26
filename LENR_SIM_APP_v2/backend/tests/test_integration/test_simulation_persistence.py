@@ -109,6 +109,12 @@ def test_theories_run_persists_theory_run_history() -> None:
         overlay = body["per_theory"][theory_id]
         assert "mean_final_score" in overlay
         assert "mean_weighted_score" in overlay
+        assert "ci_lo" in overlay
+        assert "ci_hi" in overlay
+        assert overlay["ci_method"] == "percentile_2.5_97.5"
+        assert body["score_formula"] == "five_factor_gm_x_claim_tier"
+        assert "by_source_class" in body
+        assert body["skip_sensitivity_note"]
 
 
 def test_coupled_run_persists_experiment_and_final_score() -> None:

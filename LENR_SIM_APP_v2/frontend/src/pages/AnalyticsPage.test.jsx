@@ -96,14 +96,51 @@ jest.mock('../services/analyticsApi', () => ({
       is_empirical_confidence: false,
       curated_edge_strength_unchanged: true,
       score_field: 'final_score_preferred',
+      score_formula: 'five_factor_gm_x_claim_tier',
+      skip_sensitivity_note:
+        'Persisted parameter_sensitivity is 0.5 unless live scores are computed.',
       per_theory: {
         electron_screening: {
           n: 2,
           mean_final_score: 0.42,
           mean_score: 0.42,
           mean_weighted_score: 0.31,
+          ci_lo: 0.40,
+          ci_hi: 0.44,
+          ci_method: 'percentile_2.5_97.5',
         },
       },
+    }),
+    parameterSweep: jest.fn().mockResolvedValue({
+      sweep_param: 'loading_ratio',
+      sweep_values: [0.1, 1.0],
+      results: {
+        electron_screening: [
+          { sweep_value: 0.1, final_score: 0.21 },
+          { sweep_value: 1.0, final_score: 0.44 },
+        ],
+      },
+    }),
+    getValidationReport: jest.fn().mockResolvedValue({
+      n_theories: 1,
+      reports: [
+        {
+          theory_id: 'electron_screening',
+          theory_name: 'Electron Screening',
+          n_passed: 5,
+          n_total: 7,
+          overall_pass_rate: 0.71,
+          checks: [
+            {
+              check_id: 'miles_correlation',
+              check_name: 'Miles Heat-Helium Correlation',
+              passed: true,
+              score: 1,
+              detail: '',
+            },
+          ],
+        },
+      ],
     }),
     getLocalStats: jest.fn().mockReturnValue({
       totalSimulations: 0,
@@ -178,6 +215,40 @@ describe('AnalyticsPage honest metrics', () => {
     });
     expect(screen.getByTestId('run-live-scores')).toBeInTheDocument();
     expect(screen.getByTestId('use-persisted-scores')).toBeInTheDocument();
+    expect(screen.getByTestId('score-formula-chip')).toHaveTextContent(
+      'five_factor_gm_x_claim_tier'
+    );
+    expect(screen.getByTestId('sensitivity-note-chip')).toHaveTextContent(
+      /persisted sensitivity = 0.5 unless live/i
+    );
+    expect(screen.getByTestId('overlay-n-chip')).toHaveTextContent('N=2');
+    expect(screen.getByTestId('score-n-electron_screening')).toHaveTextContent('N=2');
+    expect(screen.getByTestId('score-ci-electron_screening')).toHaveTextContent('CI 40–44%');
+    expect(screen.getByTestId('reviewer-analytics-panels')).toBeInTheDocument();
+    expect(screen.getByTestId('parameter-sweep-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-report-panel')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(analyticsApi.getValidationReport).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId('validation-theory-count')).toHaveTextContent('1 theories');
+    await userEvent.click(screen.getByTestId('run-parameter-sweep'));
+    await waitFor(() => {
+      expect(analyticsApi.parameterSweep).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sweep_param: 'loading_ratio',
+          sweep_steps: expect.any(Number),
+        })
+      );
+    });
+    expect(analyticsApi.parameterSweep.mock.calls[0][0].sweep_steps).toBeLessThanOrEqual(100);
+    expect(screen.getByTestId('live-score-mode-chip')).toHaveTextContent('five_factor');
+    await userEvent.click(screen.getByLabelText(/Literature likelihood/i));
+    await userEvent.click(screen.getByTestId('run-live-scores'));
+    await waitFor(() => {
+      expect(analyticsApi.computeTheoryScores).toHaveBeenCalledWith(
+        expect.objectContaining({ score_mode: 'five_factor_plus_literature' })
+      );
+    });
   });
 
   test('baseline toggle remains usable and refetches without baselines', async () => {

@@ -115,18 +115,29 @@ slower; stored `parameter_sensitivity` is the neutral **0.5**. Live
 
 `GET /api/analytics/theory-run-history` (`lenr-theory-run-history-v1`) is
 additive: `score_field: final_score_preferred`, `mean_final_score`,
-`mean_weighted_score`, mean subscores. `mean_score` prefers `final_score`.
-Curated edge strength is never rewritten from SQL co-occurrence.
+`mean_weighted_score`, mean subscores, percentile `ci_lo`/`ci_hi`
+(2.5/97.5), `by_source_class`, and `skip_sensitivity_note`. `mean_score`
+prefers `final_score`. Curated edge strength is never rewritten from SQL
+co-occurrence.
+
+SQL mean is **not** experimental confirmation. `scientificPositiveRate` is
+**not** LENR proof. Mixed Overview **Avg enhancement** can be dominated by
+capped `combined_enhancement` (\(10^5\)) from pipeline rows.
 
 The map defaults to **SQL means** when `n_runs > 0`, with **Run live scores**
 / **Use SQL means** to switch. Node radius in `persisted_mean` uses
-`mean_final_score`.
+`mean_final_score`. Relevance Map chips show N, CI, `score_formula`, and
+that persisted sensitivity is 0.5 unless live scores are computed. The
+page also calls existing `parameter-sweep` (max 100 steps) and
+`validation-report` APIs; those checks are phenomenology screens, not proof.
 
 ## Collection loop (model outputs)
 
 `python -m app.scripts.run_simulation_campaign --preset all_claims` samples
 every registered `theory_id` plus a 2 T × 2 loading Pd-D cartesian (4) and
-two tagged occurrence-anchored Pd-D cells. Extra runs are **model outputs**.
+two tagged occurrence-anchored Pd-D cells. `--preset literature_grid` is the
+designed literature-anchored grid (distinct baseline cells + negative
+controls, ~16–32). Extra runs are **model outputs**.
 They do not raise empirical claim tiers or close `EQ-OPEN-*`.
 `lenr_proved` stays false. Do not run `--preset full` or full `diverse` in CI.
 
@@ -150,7 +161,7 @@ They do not raise empirical claim tiers or close `EQ-OPEN-*`.
 - `GET /api/analytics/distribution/source`
 - `GET /api/analytics/distribution/{type,material,temperature}.include_baseline`
 - `theory_runs.theory_scores[*].final_score` (additive; `score` remains weighted)
-- `GET /api/analytics/theory-run-history.{score_field,mean_final_score,mean_weighted_score}`
+- `GET /api/analytics/theory-run-history.{score_field,mean_final_score,mean_weighted_score,ci_lo,ci_hi,by_source_class}`
 - `POST /api/analytics/theories/run-coupled` auto-persist (`persist_session_id`, `persist_source`)
 
 ## Purpose
