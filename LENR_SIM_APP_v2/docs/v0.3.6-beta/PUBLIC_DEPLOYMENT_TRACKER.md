@@ -4,9 +4,14 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 ## Current Readiness Summary
 
-- **Code/infra artifacts:** READY (refreshed 2026-08-23)
+- **Code/infra artifacts:** READY (refreshed 2026-08-26)
   - Terraform modules for Cloudflare + Hostinger are present.
+  - Cloudflare Pages `destination_dir` is Vite `LENR_SIM_APP_v2/frontend/dist` with `VITE_API_URL`.
   - Ansible playbooks for Docker/Swarm setup and stack deployment are present.
+  - Swarm backend sets `LENR_ENVIRONMENT=production` and `LENR_AUTO_PERSIST=0`.
+  - After `alembic upgrade head`, seed with `seed_database --force --hydrate-demo`.
+  - Production API hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, `/metrics`.
+  - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
   - Deployment scripts (`deploy.sh`, `backup-db.sh`, `rollback.sh`) are present.
   - Docker stack templates include Traefik TLS, backend replicas, and Postgres secret usage.
   - Local `Dockerfile.backend` + `Dockerfile.frontend` builds verified (Vite `dist/`, `.npmrc`).
@@ -96,7 +101,6 @@ Still operator-owned:
   token cannot dispatch workflows).
 - Hostinger/Cloudflare apply still needs `terraform.tfvars` plus Hostinger and
   Cloudflare API tokens; unchanged from the prior tracker entry.
-- Confirm the Cloudflare Pages build output directory is `dist` (Vite), not `build`.
 
 ## Math-Accuracy Hardening Slice (2026-08-10)
 

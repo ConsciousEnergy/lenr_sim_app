@@ -82,7 +82,7 @@ resource "cloudflare_pages_project" "frontend" {
   
   build_config {
     build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci && npm run build"
-    destination_dir     = "LENR_SIM_APP_v2/frontend/build"
+    destination_dir     = "LENR_SIM_APP_v2/frontend/dist"
     root_dir            = ""
     web_analytics_token = ""
   }
@@ -91,6 +91,7 @@ resource "cloudflare_pages_project" "frontend" {
     production {
       environment_variables = {
         REACT_APP_API_URL     = "https://api.${var.domain}"
+        VITE_API_URL          = "https://api.${var.domain}"
         REACT_APP_ENVIRONMENT = "production"
         NODE_ENV              = "production"
       }
@@ -99,6 +100,7 @@ resource "cloudflare_pages_project" "frontend" {
     preview {
       environment_variables = {
         REACT_APP_API_URL     = "https://api.${var.domain}"
+        VITE_API_URL          = "https://api.${var.domain}"
         REACT_APP_ENVIRONMENT = "preview"
         NODE_ENV              = "development"
       }

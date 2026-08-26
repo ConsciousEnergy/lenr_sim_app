@@ -81,6 +81,7 @@ services:
       - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}"]
       - LENR_ENABLE_RATE_LIMITING=true
       - LENR_HTTPS_REDIRECT=false
+      - LENR_AUTO_PERSIST=0
       # Unprefixed DB_* aliases for get_database_url() / os.getenv readers
       # (entrypoint also exports DB_PASSWORD from the Swarm secret).
       - DB_HOST=postgres
@@ -136,7 +137,7 @@ services:
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
         # CORS
         - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
-        - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowheaders=Content-Type,Authorization"
+        - "traefik.http.middlewares.backend-cors.headers.accesscontrolallowheaders=Content-Type,Authorization,X-LENR-Write-Token"
         - "traefik.http.middlewares.backend-cors.headers.accesscontrolalloworiginlist=https://{{ app_domain }},https://www.{{ app_domain }}"
         - "traefik.http.middlewares.backend-cors.headers.accesscontrolmaxage=3600"
 

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Public Analytics harden (2026-08-26)
+- Removed the Analytics seed-only CLI warning banner; seed vs campaign N stays in the caption
+- VPS deploy: `alembic upgrade head` then `seed_database --force --hydrate-demo` into Postgres. Do not write campaign rows into `literature_baselines.v1.json`
+- Swarm `LENR_AUTO_PERSIST=0`; production default is off unless the env flag is set
+- Production Analytics POST/PUT/DELETE require `X-LENR-Write-Token` (dedicated token or `SECRET_KEY`). GET/stats stay public
+- Production hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, and `/metrics`; boot fails without `LENR_SECRET_KEY`
+- Cloudflare Pages output is Vite `dist/`; set `VITE_API_URL` alongside `REACT_APP_API_URL`
+
 ### Analytics pack hydrate (2026-08-26)
 - `import_reviewer_pack` upserts JSONL into SQL by id; refuses `lenr_proved` packs
 - Committed demo pack `datasets/reviewer_packs/q_campaign_demo/` (~107 experiments / 89 theory_runs). `seed_database --hydrate-demo` is the clone path to match cloud Analytics N
