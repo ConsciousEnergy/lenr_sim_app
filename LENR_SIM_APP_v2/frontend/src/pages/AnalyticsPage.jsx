@@ -551,7 +551,7 @@ const AnalyticsPage = () => {
     });
   }, [navigate]);
   
-  if (loading) {
+  if (loading && !stats) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <LinearProgress />

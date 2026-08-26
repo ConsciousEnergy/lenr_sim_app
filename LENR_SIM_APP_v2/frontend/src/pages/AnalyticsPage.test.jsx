@@ -193,5 +193,6 @@ describe('AnalyticsPage honest metrics', () => {
       );
     });
     expect(screen.getByTestId('include-baseline-toggle')).toBeInTheDocument();
+    expect(screen.getByText('Total Records')).toBeInTheDocument();
   });
 });
