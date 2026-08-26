@@ -4,6 +4,7 @@ Usage (from LENR_SIM_APP_v2/backend):
     python -m app.scripts.run_simulation_campaign --preset smoke
     python -m app.scripts.run_simulation_campaign --preset default
     python -m app.scripts.run_simulation_campaign --preset diverse
+    python -m app.scripts.run_simulation_campaign --preset literature_grid
     python -m app.scripts.run_simulation_campaign --preset all_claims
     python -m app.scripts.run_simulation_campaign --preset full
 
@@ -32,13 +33,23 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default="default",
         help=(
             "Grid size (smoke=4, default=48, full=288, diverse=~197 unified + "
-            "theory-group runs, all_claims=6 unified + one run per registered theory)"
+            "theory-group runs, all_claims=6 unified + one run per registered theory, "
+            "literature_grid=distinct literature cells + negative controls)"
         ),
     )
     parser.add_argument(
         "--skip-theory-pipeline",
         action="store_true",
         help="Do not add a representative /theories/run after the unified grid",
+    )
+    parser.add_argument(
+        "--uq-samples",
+        type=int,
+        default=None,
+        help=(
+            "Opt-in Sobol samples for the first two cells only (max 512). "
+            "Default remains UQ off. Does not prove LENR."
+        ),
     )
     parser.add_argument(
         "--list",
@@ -61,6 +72,7 @@ async def _async_main(args: argparse.Namespace) -> int:
     result = await run_campaign_from_cli(
         args.preset,
         include_theory_pipeline=not args.skip_theory_pipeline,
+        uq_samples=args.uq_samples,
     )
     summary = {
         "preset": result["preset"],

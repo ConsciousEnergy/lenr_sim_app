@@ -268,6 +268,7 @@ const DocumentationPage = () => {
               { slug: 'issue-ledger', label: 'Issue Ledger' },
               { slug: 'testable-predictions', label: 'Testable Predictions' },
               { slug: 'reviewer-packets', label: 'Reviewer Packets' },
+              { slug: 'researcher-review-pack', label: 'Researcher Review Pack' },
             ].map((doc) => (
               <Button
                 key={doc.slug}

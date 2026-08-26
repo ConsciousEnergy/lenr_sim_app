@@ -46,6 +46,11 @@ def _simulate_payload(case: Dict[str, Any], session_id: str) -> SimulationReques
         kwargs["enabled_theories"] = list(case["enabled_theories"])
     if case.get("electrolyte_family"):
         kwargs["electrolyte"] = {"family": case["electrolyte_family"]}
+    if case.get("include_uncertainty"):
+        kwargs["include_uncertainty"] = True
+        kwargs["uncertainty_samples"] = int(case.get("uncertainty_samples") or 256)
+        if case.get("random_seed") is not None:
+            kwargs["random_seed"] = int(case["random_seed"])
     return SimulationRequest(**kwargs)
 
 
@@ -95,6 +100,7 @@ async def run_campaign(
     *,
     include_theory_pipeline: bool = True,
     session_id: str = CAMPAIGN_SESSION,
+    uq_samples: int | None = None,
 ) -> Dict[str, Any]:
     """Execute the named grid, persist via route auto-save, check invariants."""
     cases = list(iter_campaign_cases(preset))
@@ -102,6 +108,13 @@ async def run_campaign(
         cases.extend(iter_diverse_theory_group_cases())
     if preset == "all_claims":
         cases.extend(iter_all_claims_single_theory_cases())
+    if uq_samples:
+        # API contract: UQ stays opt-in; sample cap matches MAX_UNCERTAINTY_SAMPLES.
+        samples = max(16, min(int(uq_samples), 512))
+        for case in cases[:2]:
+            case["include_uncertainty"] = True
+            case["uncertainty_samples"] = samples
+            case["random_seed"] = 5
 
     payloads: List[Dict[str, Any]] = []
     persist_ids: List[Dict[str, Any]] = []
@@ -154,9 +167,11 @@ async def run_campaign(
 async def run_campaign_from_cli(
     preset: str = "default",
     include_theory_pipeline: bool = True,
+    uq_samples: int | None = None,
 ) -> Dict[str, Any]:
     """CLI helper; caller must have initialized the database."""
     return await run_campaign(
         preset,
         include_theory_pipeline=include_theory_pipeline,
+        uq_samples=uq_samples,
     )

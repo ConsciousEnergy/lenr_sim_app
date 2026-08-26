@@ -9,9 +9,15 @@ paper_ref: "§5A.4"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
-citation_keys: []
+citation_keys:
+  - widomlarsen2006
+  - tennfors2013
+  - paper_5A_4
+testable_prediction_ids:
+  - PRED-07
+still_missing: "Condensed-matter path to E > 0.782 MeV; double-layer is ~0.1 eV"
 lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q4ElectronCaptureSourceClosed"
   - "LenrFormal.OpenObligations.energy_deficit_implies_q4_not_closed"
-notes: "This obligation remains open. The declarations encode a necessary energy threshold and a non-closure implication; they provide no proof of occurrence."
+notes: "This obligation remains open. The millielectronvolt deficit theorem (EQ-OPEN-EC-DEFICIT-01) uses stated double-layer numbers only; Widom–Larsen mass renormalization stays SPEC."

@@ -76,6 +76,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-OPEN-RATE-01 | Rate closure with single-pair enhancements | §5A.3 | two_body vs trapped_state | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RATE-01.yaml` (undischarged) |
 | EQ-OPEN-EC-01 | No convincing condensed-matter path to \(E_e>0.782\,\mathrm{MeV}\) | §5A.4 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-EC-01.yaml` (undischarged) |
 | EQ-OPEN-YIELD-01 | Integrated He yield vs heat duty-cycle discrepancy | §5A.5 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-YIELD-01.yaml` (undischarged) |
+| EQ-OPEN-EC-DEFICIT-01 | Stated 0.1 eV vs 0.782 MeV deficit factor \(\sim 10^7\) (meV integers) | §5A.4 | `open_question_details.py` | would-close-if bookkeeping | `THM` | `OpenQuestionBounds.lean` (does **not** close Q4) |
+| EQ-OPEN-YIELD-BAND-01 | Instantaneous Miles EMP band vs integrated \(10^2\)–\(10^4\) remainder | §5A.5 | `open_question_details.py` | miles1993 | `DEF` | `OpenQuestionBounds.lean` (does **not** close Q5) |
 | EQ-TSC-01 | Takahashi trapped-state / TSC rate | §5A.3 | `takahashi_tsc.py`, trapped_state mode | takahashi2016 | `SPEC` | separate mode |
 | EQ-BASE-2B-01 | `two_body` remains default baseline; never silently replaced | RR-006 | rate engine | governance | `AX` | contract |
 | EQ-NAIVE-GN-01 | Nat-floor of independent \(g^N\) is 0 for \(n\ge 1\) (naive multi-phonon fails) | §2.8.1 | `hagelstein_phonon.py`, `open_questions.py` | analysis | `THM` | `Phonon.lean` |
@@ -118,6 +120,6 @@ Every row in [TRACEABILITY_MATRIX.md](../REVIEW_2026/TRACEABILITY_MATRIX.md) map
 
 ## Non-claims
 
-No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Huang 2024 cavitation COP/\(^{22}\)Ne, Widom–Larsen mass renormalization, or MeV-gap closure. `EQ-HUANG-EMP-01` is contested EMP and does not close `EQ-TSC-01`. Adding n-body / composition / decision IDs does **not** flip `EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, `EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, or `EQ-OPEN-YIELD-01`. There is no `theorem lenr_occurs`.
+No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Huang 2024 cavitation COP/\(^{22}\)Ne, Widom–Larsen mass renormalization, or MeV-gap closure. `EQ-HUANG-EMP-01` is contested EMP and does not close `EQ-TSC-01`. Adding n-body / composition / decision IDs, `EQ-OPEN-EC-DEFICIT-01`, or `EQ-OPEN-YIELD-BAND-01` does **not** flip `EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, `EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, or `EQ-OPEN-YIELD-01`. There is no `theorem lenr_occurs`.
 
 Every IR YAML now carries `lean_decls` (fully qualified Lean names). `check_ir.py` resolves the target module, requires those names to exist, requires a direct import in `LenrFormal.lean`, and requires every `EQ-*` literal in `open_questions.py` / `open_question_details.py` / `decision_oracle.py` to resolve to an IR or taxonomy row.

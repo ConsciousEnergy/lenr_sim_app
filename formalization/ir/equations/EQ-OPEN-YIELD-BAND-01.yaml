@@ -1,0 +1,21 @@
+id: EQ-OPEN-YIELD-BAND-01
+latex: "\\Delta N_{\\mathrm{He,int}} \\in [10^{2},10^{4}]\\quad\\text{(open remainder vs instantaneous Miles EMP)}"
+symbols:
+  Delta_N_He_int: "integrated He-4 yield discrepancy factor"
+units: "dimensionless factor band"
+tag: DEF
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+lean_target: "LenrFormal.OpenQuestionBounds"
+lean_decls:
+  - "LenrFormal.OpenQuestionBounds.milesInstantaneousBandLo"
+  - "LenrFormal.OpenQuestionBounds.milesInstantaneousBandHi"
+  - "LenrFormal.OpenQuestionBounds.integratedYieldDiscrepancyLo"
+  - "LenrFormal.OpenQuestionBounds.integratedYieldDiscrepancyHi"
+  - "LenrFormal.OpenQuestionBounds.q5WouldCloseIf"
+notes: "Definition only: instantaneous Miles band versus integrated 100–10000 remainder. Does not discharge EQ-OPEN-YIELD-01."

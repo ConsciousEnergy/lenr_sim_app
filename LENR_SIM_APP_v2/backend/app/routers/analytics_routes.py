@@ -500,6 +500,14 @@ class TheoryConditions(BaseModel):
         default=None,
         description="List of theory_ids to include (None = all)",
     )
+    score_mode: str = Field(
+        default="five_factor",
+        description=(
+            "five_factor (default geometric mean) or "
+            "five_factor_plus_literature (opt-in literature likelihood). "
+            "Does not raise claim_tier."
+        ),
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -616,6 +624,7 @@ async def compute_theory_scores_endpoint(request: TheoryConditions):
         scores = compute_theory_scores(
             conditions=conditions,
             enabled_theories=request.enabled_theories,
+            score_mode=request.score_mode or "five_factor",
         )
     except Exception as exc:
         logger.exception("Error computing theory scores")
@@ -625,6 +634,8 @@ async def compute_theory_scores_endpoint(request: TheoryConditions):
         "conditions": conditions,
         "scores": scores,
         "n_theories": len(scores),
+        "score_mode": request.score_mode or "five_factor",
+        "claim_tiers_raised": False,
     }
 
 

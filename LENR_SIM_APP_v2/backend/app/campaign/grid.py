@@ -36,6 +36,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [False, True],
     },
+    # Literature-anchored designed grid (not a cartesian). Axes unused.
+    "literature_grid": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
     # All registered theories at a small occurrence-relevant Pd-D grid.
     # Cartesian is 2 T × 2 loading × 1 host × 1 reactant × 1 pipeline = 4.
     "all_claims": {
@@ -185,6 +194,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
     spec = PRESETS.get(preset)
     if spec is None:
         raise KeyError(f"Unknown campaign preset: {preset}")
+    if preset == "literature_grid":
+        from app.campaign.literature import iter_literature_grid_cases
+
+        yield from iter_literature_grid_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -197,6 +211,10 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
 
 def campaign_size(preset: str) -> int:
+    if preset == "literature_grid":
+        from app.campaign.literature import literature_grid_count
+
+        return literature_grid_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -307,5 +325,13 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["note"] = (
             "Model-output sampling of every registered theory_id plus "
             "occurrence-anchored Pd-D cells. Does not prove LENR."
+        )
+    if preset == "literature_grid":
+        from app.campaign.literature import LITERATURE_NEGATIVE_CONTROLS
+
+        payload["n_negative_controls"] = len(LITERATURE_NEGATIVE_CONTROLS)
+        payload["note"] = (
+            "Literature-anchored model-output grid plus negative controls. "
+            "Does not prove LENR. Do not run full or diverse in CI."
         )
     return payload

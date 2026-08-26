@@ -114,3 +114,27 @@ def test_all_claims_grid_covers_registered_theories() -> None:
     assert described["n_occurrence_anchored"] == 2
     assert described["n_single_theory_runs"] == len(registered)
     assert "Does not prove LENR" in described["note"]
+
+
+def test_literature_grid_is_designed_not_cartesian() -> None:
+    from app.campaign.literature import LITERATURE_NEGATIVE_CONTROLS, literature_grid_count
+    from app.data.dataset_io import literature_records
+
+    n = campaign_size("literature_grid")
+    assert n == literature_grid_count()
+    assert 16 <= n <= 32
+    cases = list(iter_campaign_cases("literature_grid"))
+    tags = {case.get("tag") for case in cases}
+    assert any(str(tag).startswith("literature:") for tag in tags)
+    assert "literature_copper_host_control" in tags
+    assert "literature_trapped_state_slice" in tags
+    arpa = next(case for case in cases if case.get("literature_id") == "berlinguette-arpa-e-2019")
+    assert arpa["claim_tag"] == "null"
+    hosts = {case["host_material"] for case in cases}
+    assert "palladium" in hosts
+    assert "copper" in hosts
+    described = describe_preset("literature_grid")
+    assert described["n_negative_controls"] == len(LITERATURE_NEGATIVE_CONTROLS)
+    assert "Does not prove LENR" in described["note"]
+    assert len(literature_records()) == 16
+

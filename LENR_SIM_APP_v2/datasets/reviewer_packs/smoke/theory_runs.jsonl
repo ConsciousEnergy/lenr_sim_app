@@ -1,0 +1,1 @@
+{"id": "smoke-run-1", "session_id": "simulation_campaign", "temperature_k": 300.0, "loading_ratio": 0.85, "theory_scores": {"electron_screening": {"final_score": 0.42, "score": 0.31, "score_formula": "five_factor_gm_x_claim_tier", "parameter_sensitivity": 0.5, "claim_tier": "established_reference"}}, "combined_enhancement": 1.0}

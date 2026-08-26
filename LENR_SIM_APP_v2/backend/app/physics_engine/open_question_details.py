@@ -17,8 +17,16 @@ _ELECTRON_CAPTURE_MASS_THRESHOLD_RATIO = (
     const.m_n - const.m_p
 ) / const.m_e
 _ELECTRON_REST_ENERGY_MEV = const.m_e * const.c**2 / (1e6 * const.e)
+# Integer-scaled Lean OpenQuestionBounds bookkeeping (would-close-if; still OPEN).
+DOUBLE_LAYER_STATED_MEV = 100  # 0.1 eV
+ELECTRON_CAPTURE_THRESHOLD_MEV = 782_000_000  # 0.782 MeV in meV
+INTEGRATED_YIELD_DISCREPANCY_LO = 100
+INTEGRATED_YIELD_DISCREPANCY_HI = 10_000
 # Governed in LENR_FRAMEWORK_ISSUE_LEDGER and the unified-framework §5.2.2.
-_REPORTED_INTEGRATED_YIELD_DISCREPANCY_BAND = (1e2, 1e4)
+_REPORTED_INTEGRATED_YIELD_DISCREPANCY_BAND = (
+    float(INTEGRATED_YIELD_DISCREPANCY_LO),
+    float(INTEGRATED_YIELD_DISCREPANCY_HI),
+)
 
 
 @dataclass(frozen=True)

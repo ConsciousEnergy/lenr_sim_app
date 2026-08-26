@@ -27,6 +27,7 @@ SLUG_TO_FILENAME = {
     "issue-ledger": "ISSUE_LEDGER.md",
     "testable-predictions": "TESTABLE_PREDICTIONS.md",
     "reviewer-packets": "REVIEWER_PACKETS.md",
+    "researcher-review-pack": "RESEARCHER_REVIEW_PACK.md",
 }
 
 
@@ -42,7 +43,8 @@ def _get_docs_dir() -> Path:
 async def get_doc(slug: str) -> str:
     """
     Return raw markdown for a doc by slug.
-    Slugs: issue-ledger, testable-predictions, reviewer-packets.
+    Slugs: issue-ledger, testable-predictions, reviewer-packets,
+    researcher-review-pack.
     Returns 404 if slug unknown or file missing.
     """
     if slug not in SLUG_TO_FILENAME:
