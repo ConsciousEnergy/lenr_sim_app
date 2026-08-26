@@ -620,6 +620,8 @@ function getLocalStats() {
       outcomeCounts: emptyCounts,
       claimTierCounts: {},
       openQuestionCounts: {},
+      openQuestionCountsCampaign: {},
+      sourceClassCounts: {},
     };
   }
 
@@ -656,6 +658,8 @@ function getLocalStats() {
     outcomeCounts,
     claimTierCounts: {},
     openQuestionCounts: {},
+    openQuestionCountsCampaign: {},
+    sourceClassCounts: {},
   };
 }
 

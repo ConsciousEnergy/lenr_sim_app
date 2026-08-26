@@ -16,6 +16,8 @@ Current split (additive API fields on `GET /api/analytics/stats`):
 | `outcomeCounts` | `{positive, null, inapplicable, failed}` |
 | `claimTierCounts` | Histogram of theory `claim_tier` labels from saved pipeline scores |
 | `openQuestionCounts` | Histogram of `parameters.open_question_ids` on persisted rows (campaign + seeded baselines). Model N, not Q1–Q5 closure |
+| `openQuestionCountsCampaign` | Same histogram restricted to `source=simulation_campaign` |
+| `sourceClassCounts` | `{Baseline, Campaign, Auto, User}` from `is_baseline` + `source` |
 
 Classification rules (model/literature outcomes only):
 
@@ -78,8 +80,13 @@ flatten 5–85× `enhancement_factor` traces.
 
 `GET /api/analytics/timeline` is additive: `date`, `name`, `is_baseline`,
 `source`, `sourceClass`. `GET /api/analytics/distribution/source` is new.
-`include_baseline=false` keeps the user's session rows and hides literature
-seeds (and shared campaign/auto rows that are not in that session).
+`include_baseline=false` hides **literature seeds** (`is_baseline`) only.
+Campaign and auto-persist (`source` in `simulation_campaign` / `auto_persist`)
+stay visible so seed-only vs hydrated campaign N is not confused with “hide my
+runs.”
+
+Analytics Overview shows a seed-only banner when `sourceClassCounts.Campaign`
+is 0 and Total Records > 0. Import `q_campaign_demo` to match the cloud ~107.
 
 ```mermaid
 flowchart TD
