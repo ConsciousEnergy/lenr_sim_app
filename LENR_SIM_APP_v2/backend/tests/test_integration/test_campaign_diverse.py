@@ -6,14 +6,17 @@ from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 
 from app.campaign.grid import (
+    ALL_CLAIMS_OCCURRENCE_CASES,
     DIVERSE_EXTRA_CASES,
     DIVERSE_THEORY_GROUPS,
     PRESETS,
     campaign_size,
     describe_preset,
+    iter_all_claims_single_theory_cases,
+    iter_campaign_cases,
     iter_diverse_theory_group_cases,
 )
-from app.physics_engine.theory_pipeline import THEORY_COMPOSITION_GROUPS
+from app.physics_engine.theory_pipeline import THEORY_COMPOSITION_GROUPS, get_default_pipeline
 from app.campaign.runner import run_campaign
 
 
@@ -85,3 +88,29 @@ def test_failed_campaign_case_persists_failed_status(monkeypatch) -> None:
         ]
         assert len(failed_rows) == 4
         assert all(row["results"].get("scientific_outcome") == "failed" for row in failed_rows)
+
+
+def test_all_claims_grid_covers_registered_theories() -> None:
+    cartesian = 1
+    for values in PRESETS["all_claims"].values():
+        cartesian *= len(values)
+    assert cartesian == 2 * 2
+    assert campaign_size("all_claims") == cartesian + len(ALL_CLAIMS_OCCURRENCE_CASES)
+    assert campaign_size("all_claims") == 6
+    unified_tags = {case.get("tag") for case in iter_campaign_cases("all_claims")}
+    assert "occurrence_anchored_pd_d" in unified_tags
+    assert "occurrence_anchored_pd_d_warm" in unified_tags
+
+    registered = set(get_default_pipeline().registered_ids)
+    cases = list(iter_all_claims_single_theory_cases())
+    theory_ids = {
+        case["enabled_theories"][0]
+        for case in cases
+        if case.get("enabled_theories")
+    }
+    assert theory_ids == registered
+    described = describe_preset("all_claims")
+    assert described["n_cases"] == 6
+    assert described["n_occurrence_anchored"] == 2
+    assert described["n_single_theory_runs"] == len(registered)
+    assert "Does not prove LENR" in described["note"]

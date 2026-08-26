@@ -172,17 +172,36 @@ async def get_type_distribution(
 @router.get("/distribution/material")
 async def get_material_distribution(
     session_id: Optional[str] = Query(None),
+    include_baseline: bool = Query(True),
     db: AsyncSession = Depends(get_db_session),
 ):
     """Get distribution of materials used in experiments."""
     service = get_analytics_service(db)
-    return await service.get_material_distribution(session_id=session_id)
+    return await service.get_material_distribution(
+        session_id=session_id,
+        include_baseline=include_baseline,
+    )
+
+
+@router.get("/distribution/source")
+async def get_source_distribution(
+    session_id: Optional[str] = Query(None),
+    include_baseline: bool = Query(True),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Pie of Baseline / Campaign / Auto / User from SQL source flags."""
+    service = get_analytics_service(db)
+    return await service.get_source_distribution(
+        session_id=session_id,
+        include_baseline=include_baseline,
+    )
 
 
 @router.get("/distribution/temperature")
 async def get_temperature_distribution(
     session_id: Optional[str] = Query(None),
     bins: int = Query(10, ge=3, le=20),
+    include_baseline: bool = Query(True),
     db: AsyncSession = Depends(get_db_session),
 ):
     """Get temperature distribution for bar chart."""
@@ -190,6 +209,7 @@ async def get_temperature_distribution(
     return await service.get_temperature_distribution(
         session_id=session_id,
         bins=bins,
+        include_baseline=include_baseline,
     )
 
 
@@ -524,7 +544,7 @@ async def get_theory_graph():
     """
     Get the full theory relationship network graph.
 
-    Returns nodes (19 theories with properties, categories, predictions)
+    Returns nodes (theories with properties, categories, predictions)
     and edges (relationship types, shared properties, strength) for
     the D3 force-directed Relevance Map.
     """
@@ -754,6 +774,14 @@ class CoupledRunRequest(BaseModel):
         default=None,
         description="Per-theory configuration overrides keyed by theory_id",
     )
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
 
 
 @router.post("/theories/run-coupled")
@@ -815,7 +843,7 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
             "references": list(c.references),
         })
 
-    return {
+    payload = {
         "execution_order": result.enabled_theories,
         "contributions": contributions,
         "combined_enhancement": float(result.combined_enhancement),
@@ -824,6 +852,23 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
         "enriched_conditions": to_json_safe(result.conditions),
         "coupling_map": coupling_map,
     }
+    try:
+        from app.services.persist_runs import persist_theory_pipeline
+
+        persistence = await persist_theory_pipeline(
+            {
+                "conditions": conditions,
+                "enabled_theories": enabled,
+            },
+            result,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            payload["analytics_transparency"] = {"persistence": persistence}
+    except Exception:
+        logger.exception("coupled pipeline persist skipped")
+    return payload
 
 
 @router.get("/theories/coupling-graph")

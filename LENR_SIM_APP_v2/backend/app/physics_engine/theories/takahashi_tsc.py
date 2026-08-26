@@ -17,10 +17,20 @@ References
 ----------
 [1] Takahashi, A. (2004). "Deuteron cluster fusion and related nuclear
     reactions in metal-deuterium/hydrogen systems". Proc. ICCF-10, 809.
+    — takahashi2004
 [2] Takahashi, A. (2008). "TSC-induced nuclear reactions and cold
     transmutations". J. Condensed Matter Nucl. Sci. 1, 86-96.
+    — takahashi2008
 [3] Takahashi, A. (2013). "Nuclear Products of Cold Fusion by TSC Theory".
-    J. Condensed Matter Nucl. Sci. 12, 26-34.
+    J. Condensed Matter Nucl. Sci. 12, 26-34. — takahashi2013
+[4] Takahashi, A. (2014). "Physics of Cold Fusion by TSC Theory".
+    J. Condensed Matter Nucl. Sci. — takahashi2014
+[5] Takahashi, A. (2016). "Fundamental of Rate Theory for CMNS".
+    J. Condensed Matter Nucl. Sci. 19, 298-315. — takahashi2016
+[6] Takahashi, A. (2026). "4HTSC WS Fusion Theory in brief view".
+    ResearchGate 412949900. Weak-Strong (not Woods-Saxon) protium channel
+    is literature context; this module remains the 4D surrogate.
+    — takahashi2026brief
 """
 
 from __future__ import annotations
@@ -207,9 +217,12 @@ class TakahashiTSCTheory:
             is_applicable=True,
             confidence=confidence,
             references=[
-                "Takahashi A. (2004) Proc. ICCF-10, 809",
-                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86",
-                "Takahashi A. (2013) J. Condensed Matter Nucl. Sci. 12, 26",
+                "Takahashi A. (2004) Proc. ICCF-10, 809 — takahashi2004",
+                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86 — takahashi2008",
+                "Takahashi A. (2013) J. Condensed Matter Nucl. Sci. 12, 26 — takahashi2013",
+                "Takahashi A. (2014) Physics of Cold Fusion by TSC Theory — takahashi2014",
+                "Takahashi A. (2016) JCMNS 19, 298 — takahashi2016",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
         )
 
@@ -220,8 +233,10 @@ class TakahashiTSCTheory:
             description=self.description,
             configurable_parameters=self.configurable_parameters,
             references=[
-                "Takahashi A. (2004) Proc. ICCF-10, 809",
-                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86",
+                "Takahashi A. (2004) Proc. ICCF-10, 809 — takahashi2004",
+                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86 — takahashi2008",
+                "Takahashi A. (2016) JCMNS 19, 298 — takahashi2016",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
             category="mechanism",
         )

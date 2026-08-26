@@ -71,6 +71,7 @@ const RelevanceMap = ({
   graphData,
   scores,
   campaignOverlay = null,
+  scoreMode = 'live',
   loading = false,
   error = null,
   onNodeClick,
@@ -109,15 +110,17 @@ const RelevanceMap = ({
     if (!rawNodes?.length) return { nodes: [], links: [], _nodeScoreMap: {} };
 
     const scoreMap: Record<string, number> = {};
-    if (scores) {
-      Object.entries(scores).forEach(([tid, s]: [string, any]) => {
-        scoreMap[tid] = s.final_score ?? 0;
-      });
-    }
     const campaignMap: Record<string, number> = {};
     if (campaignOverlay?.per_theory) {
       Object.entries(campaignOverlay.per_theory).forEach(([tid, rec]: [string, any]) => {
-        campaignMap[tid] = rec.mean_score ?? rec.mean_confidence ?? 0;
+        campaignMap[tid] = rec.mean_final_score ?? rec.mean_score ?? rec.mean_confidence ?? 0;
+      });
+    }
+    if (scoreMode === 'persisted_mean' && Object.keys(campaignMap).length > 0) {
+      Object.assign(scoreMap, campaignMap);
+    } else if (scores) {
+      Object.entries(scores).forEach(([tid, s]: [string, any]) => {
+        scoreMap[tid] = s.final_score ?? 0;
       });
     }
 
@@ -156,7 +159,7 @@ const RelevanceMap = ({
       .map((e: any) => ({ ...e }));
 
     return { nodes: filteredNodes, links: filteredLinks, _nodeScoreMap: scoreMap };
-  }, [graphData, scores, campaignOverlay, selectedProperty, selectedCategory, minScore]);
+  }, [graphData, scores, campaignOverlay, scoreMode, selectedProperty, selectedCategory, minScore]);
 
   // Network stats
   const stats = useMemo(() => {

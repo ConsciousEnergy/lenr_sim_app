@@ -519,6 +519,18 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [takahashi2026brief] Takahashi, A. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                4HTSC WS Fusion Theory in brief view (Weak-Strong protium channel; not Woods–Saxon). ResearchGate publication 412949900. Cited as literature context for the existing Takahashi TSC module; not implemented as a separate theory_id.
+              </Typography>
+              <MuiLink href="https://www.researchgate.net/publication/412949900_4HTSC_WS_Fusion_Theory_in_brief_view" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                ResearchGate 412949900
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [hagelstein2025] Hagelstein, P. L. (2025)
               </Typography>
               <Typography variant="body2" paragraph>

@@ -35,6 +35,8 @@ import {
   FormControl,
   InputLabel,
   Slider,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -152,6 +154,43 @@ function ExperimentSourceChip({ row }) {
   );
 }
 
+function scoresFromOverlay(overlay) {
+  const scores = {};
+  Object.entries(overlay?.per_theory || {}).forEach(([tid, rec]) => {
+    const finalScore = rec.mean_final_score ?? rec.mean_score ?? 0;
+    scores[tid] = {
+      final_score: finalScore,
+      physical_consistency: rec.mean_physical_consistency ?? 0,
+      experimental_agreement: rec.mean_experimental_agreement ?? 0,
+      parameter_sensitivity: rec.mean_parameter_sensitivity ?? 0,
+      cross_theory_agreement: rec.mean_cross_theory_agreement ?? 0,
+      observables_completeness: rec.mean_observables_completeness ?? 0,
+    };
+  });
+  return scores;
+}
+
+function SqlChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload || {};
+  return (
+    <Paper sx={{ p: 1.25 }} elevation={3} data-testid="sql-chart-tooltip">
+      <Typography variant="caption" display="block">{label}</Typography>
+      <Typography variant="caption" display="block" sx={{ fontWeight: 600 }}>
+        {row.name}
+      </Typography>
+      {row.sourceClass && (
+        <Typography variant="caption" display="block">{row.sourceClass}</Typography>
+      )}
+      {payload.map((entry) => (
+        <Typography key={entry.dataKey} variant="caption" display="block">
+          {entry.name}: {Number(entry.value).toFixed(2)}
+        </Typography>
+      ))}
+    </Paper>
+  );
+}
+
 const AnalyticsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -179,18 +218,23 @@ const AnalyticsPage = () => {
   const [selectedProperty, setSelectedProperty] = useState('');
   const [minScoreFilter, setMinScoreFilter] = useState(0);
   const [propertiesTaxonomy, setPropertiesTaxonomy] = useState({});
+  const [includeBaseline, setIncludeBaseline] = useState(true);
+  const [sourcePieData, setSourcePieData] = useState([]);
+  const [scoreMode, setScoreMode] = useState('live');
   
   // Load data from API with localStorage fallback
   const loadData = useCallback(async () => {
     setLoading(true);
+    const queryOpts = { includeBaseline };
     try {
       // Fetch all data in parallel
-      const [statsData, typeDistData, timelineData, experimentsData, tempDistData] = await Promise.all([
-        analyticsApi.getStats(),
-        analyticsApi.getTypeDistribution(),
-        analyticsApi.getTimeline({ limit: 30 }),
-        analyticsApi.getExperiments({ limit: rowsPerPage, offset: page * rowsPerPage }),
-        analyticsApi.getTemperatureDistribution(10),
+      const [statsData, typeDistData, timelineData, experimentsData, tempDistData, sourceDistData] = await Promise.all([
+        analyticsApi.getStats(queryOpts),
+        analyticsApi.getTypeDistribution(queryOpts),
+        analyticsApi.getTimeline({ limit: 30, ...queryOpts }),
+        analyticsApi.getExperiments({ limit: rowsPerPage, offset: page * rowsPerPage, ...queryOpts }),
+        analyticsApi.getTemperatureDistribution(10, queryOpts),
+        analyticsApi.getSourceDistribution(queryOpts),
       ]);
       
       // Update state with fetched data
@@ -207,13 +251,17 @@ const AnalyticsPage = () => {
       });
       
       setPieData(typeDistData || []);
+      setSourcePieData(sourceDistData || []);
       
-      // Transform timeline data for charts
-      setChartData(timelineData.map((item, i) => ({
+      // Transform timeline data for charts — date on X, full name in tooltip
+      setChartData((timelineData || []).map((item, i) => ({
         name: item.name || `Sim ${i + 1}`,
         enhancement: item.enhancementFactor || 0,
         energy: item.energyOutput || 0,
         date: item.date,
+        isBaseline: item.is_baseline || false,
+        source: item.source,
+        sourceClass: item.sourceClass,
       })));
       
       // Transform temperature distribution for bar chart
@@ -222,6 +270,7 @@ const AnalyticsPage = () => {
       // Transform experiments for table display
       const transformedExperiments = (experimentsData.experiments || []).map(exp => ({
         id: exp.id,
+        name: exp.name || 'Unnamed',
         type: exp.type || exp.experiment_type || 'Unknown',
         status: exp.status || 'completed',
         material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
@@ -296,7 +345,7 @@ const AnalyticsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, includeBaseline]);
   
   // Load data on mount and when pagination changes
   useEffect(() => {
@@ -305,32 +354,38 @@ const AnalyticsPage = () => {
 
   // Load theory graph data when Relevance Map tab is selected
   const loadTheoryGraph = useCallback(async () => {
-    if (graphData && theoryScores) return; // already loaded
     setGraphLoading(true);
     setGraphError(null);
     try {
-      const [graph, scoresResult, propsResult, historyResult] = await Promise.all([
+      const [graph, propsResult, historyResult] = await Promise.all([
         analyticsApi.getTheoryGraph(),
-        analyticsApi.computeTheoryScores(),
         analyticsApi.getTheoryProperties(),
         analyticsApi.getTheoryRunHistory().catch(() => null),
       ]);
       setGraphData(graph);
-      setTheoryScores(scoresResult?.scores || null);
       setPropertiesTaxonomy(propsResult?.properties || {});
       setCampaignOverlay(historyResult);
+      if (historyResult?.n_runs > 0) {
+        setScoreMode('persisted_mean');
+        setTheoryScores(scoresFromOverlay(historyResult));
+      } else {
+        const scoresResult = await analyticsApi.computeTheoryScores();
+        setScoreMode('live');
+        setTheoryScores(scoresResult?.scores || null);
+      }
     } catch (err) {
       console.error('Failed to load theory graph:', err);
       setGraphError('Failed to load theory network. Is the backend running?');
     } finally {
       setGraphLoading(false);
     }
-  }, [graphData, theoryScores]);
+  }, []);
 
   const handleRunScores = useCallback(async (conditions) => {
     setGraphLoading(true);
     try {
       const result = await analyticsApi.computeTheoryScores(conditions);
+      setScoreMode('live');
       setTheoryScores(result?.scores || null);
     } catch (err) {
       console.error('Failed to compute scores:', err);
@@ -385,9 +440,10 @@ const AnalyticsPage = () => {
     } catch (error) {
       console.error('CSV export error:', error);
       // Fallback to local export
-      const headers = ['ID', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (atm)', 'Enhancement Factor', 'Energy Output (keV)', 'Timestamp'];
+      const headers = ['ID', 'Name', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (bar)', 'Enhancement Factor', 'Energy Output (keV)', 'Timestamp'];
       const rows = simulationHistory.map(s => [
         s.id,
+        s.name || '',
         s.type,
         s.status,
         s.material,
@@ -495,25 +551,11 @@ const AnalyticsPage = () => {
     });
   }, [navigate]);
   
-  if (loading) {
+  if (loading && !stats) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <LinearProgress />
         <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading analytics...</Typography>
-      </Container>
-    );
-  }
-  
-  if (!simulationHistory.length) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <AlertTitle>No Simulation Data</AlertTitle>
-          Run some simulations first to see analytics data here. Visit the simulation pages to get started.
-        </Alert>
-        <Button variant="contained" href="/dashboard">
-          Go to Dashboard
-        </Button>
       </Container>
     );
   }
@@ -544,15 +586,37 @@ const AnalyticsPage = () => {
         </Box>
         <Typography variant="body1" color="text.secondary">
           Analyze simulation results, compare experiments, and export data.
-          {!isOffline && ' Includes baseline data from published LENR research.'}
+          Charts plot SQL <code>experiments</code> fields. Auto-saved runs are model outputs.
         </Typography>
+        <FormControlLabel
+          sx={{ mt: 1 }}
+          control={
+            <Switch
+              checked={includeBaseline}
+              onChange={(event) => {
+                setIncludeBaseline(event.target.checked);
+                setPage(0);
+              }}
+              inputProps={{ 'aria-label': 'Include published baselines' }}
+              data-testid="include-baseline-toggle"
+            />
+          }
+          label="Include published baselines"
+        />
       </Box>
+      
+      {!simulationHistory.length && (
+        <Alert severity="info" sx={{ mb: 3 }} data-testid="analytics-empty-state">
+          <AlertTitle>No rows in this SQL filter</AlertTitle>
+          Turn published baselines on, run the Theory Testbed, or start a campaign to persist model-output rows.
+        </Alert>
+      )}
       
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Total Simulations"
+            title="Total Records"
             value={stats?.totalSimulations || 0}
             icon={ScienceIcon}
             color={theme.palette.primary.main}
@@ -604,6 +668,8 @@ const AnalyticsPage = () => {
         Completion rate is SQL/HTTP status (completed ÷ total). Scientific-positive is
         excess heat &gt; 0 W only. Enhancement-only rows and the Google/ARPA-E null
         seed count as null, not success. Neither card validates LENR.
+        Total records is the SQL row count (baseline + session + shared). Total energy
+        sums estimated <code>energy_output_kev</code> and is not a conserved physical total.
         {stats?.outcomeCounts && Object.keys(stats.outcomeCounts).length > 0 && (
           <> Outcome mix: positive {stats.outcomeCounts.positive || 0}, null {stats.outcomeCounts.null || 0}, inapplicable {stats.outcomeCounts.inapplicable || 0}, failed {stats.outcomeCounts.failed || 0}.</>
         )}
@@ -636,70 +702,122 @@ const AnalyticsPage = () => {
           More simulations do not raise empirical claim tiers or close EQ-OPEN questions.
         </Alert>
         <Grid container spacing={3}>
-          {/* Enhancement Factor Chart */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 3, height: 400 }}>
-              <Typography variant="h6" gutterBottom>Enhancement Factor Over Time</Typography>
-              <ResponsiveContainer width="100%" height="85%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <RechartsTooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement Factor" />
-                  <Line type="monotone" dataKey="energy" stroke="#82ca9d" name="Energy Output (keV)" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Paper>
+            <Stack spacing={2}>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="enhancement-sql-chart">
+                <Typography variant="h6" gutterBottom>Enhancement factor (SQL)</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  X-axis is created_at date. Experiment name is in the tooltip. Scale is enhancement ×, not keV.
+                </Typography>
+                <ResponsiveContainer width="100%" height="75%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" interval="preserveStartEnd" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      label={{ value: 'Enhancement (×)', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+                    />
+                    <RechartsTooltip content={<SqlChartTooltip />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement Factor" dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="energy-sql-chart">
+                <Typography variant="h6" gutterBottom>Energy output (SQL keV)</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  Separate scale from enhancement. A 2500 keV Taleyarkhan row must not flatten 5–85× factors.
+                </Typography>
+                <ResponsiveContainer width="100%" height="75%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" interval="preserveStartEnd" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      label={{ value: 'Energy (keV)', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+                    />
+                    <RechartsTooltip content={<SqlChartTooltip />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="energy" stroke="#82ca9d" name="Energy Output (keV)" dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Stack>
           </Grid>
           
-          {/* Type Distribution Pie Chart */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, height: 400 }}>
-              <Typography variant="h6" gutterBottom>Simulation Types</Typography>
-              <ResponsiveContainer width="100%" height="85%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={70}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip formatter={(value, name) => [`${value} simulations`, name]} />
-                  <Legend 
-                    layout="horizontal"
-                    verticalAlign="bottom"
-                    align="center"
-                    wrapperStyle={{ paddingTop: '10px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </Paper>
+            <Stack spacing={2}>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="experiment-type-pie">
+                <Typography variant="h6" gutterBottom>Stored experiment type</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  SQL <code>experiment_type</code> enum, not experiment identity.
+                </Typography>
+                <ResponsiveContainer width="100%" height="70%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value, name) => [`${value} rows`, name]} />
+                    <Legend 
+                      layout="horizontal"
+                      verticalAlign="bottom"
+                      align="center"
+                      wrapperStyle={{ paddingTop: '10px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="source-class-pie">
+                <Typography variant="h6" gutterBottom>Source class</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  Baseline / Campaign / Auto / User from SQL source flags.
+                </Typography>
+                <ResponsiveContainer width="100%" height="70%">
+                  <PieChart>
+                    <Pie
+                      data={sourcePieData}
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {sourcePieData.map((entry, index) => (
+                        <Cell key={`source-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value, name) => [`${value} rows`, name]} />
+                    <Legend 
+                      layout="horizontal"
+                      verticalAlign="bottom"
+                      align="center"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Stack>
           </Grid>
           
-          {/* Temperature Distribution Bar Chart */}
           <Grid size={12}>
             <Paper sx={{ p: 3, height: 350 }}>
               <Typography variant="h6" gutterBottom>Temperature Distribution</Typography>
               <ResponsiveContainer width="100%" height="85%">
-                <BarChart data={temperatureData.length > 0 ? temperatureData : chartData}>
+                <BarChart data={temperatureData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey={temperatureData.length > 0 ? 'range' : 'name'} />
+                  <XAxis dataKey="range" />
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar 
-                    dataKey={temperatureData.length > 0 ? 'count' : 'temperature'} 
-                    fill="#8884d8" 
-                    name={temperatureData.length > 0 ? 'Experiment Count' : 'Temperature (K)'} 
-                  />
+                  <Bar dataKey="count" fill="#8884d8" name="Experiment Count" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -739,6 +857,7 @@ const AnalyticsPage = () => {
                       }}
                     />
                   </TableCell>
+                  <TableCell>Name</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Source</TableCell>
                   <TableCell>Status</TableCell>
@@ -759,6 +878,7 @@ const AnalyticsPage = () => {
                           onChange={() => handleSelectSimulation(row.id)}
                         />
                       </TableCell>
+                      <TableCell>{row.name || 'Unnamed'}</TableCell>
                       <TableCell>{row.type}</TableCell>
                       <TableCell>
                         <ExperimentSourceChip row={row} />
@@ -822,8 +942,8 @@ const AnalyticsPage = () => {
               return (
                 <Grid size={{ xs: 12, md: 6, lg: 3 }} key={id}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-                      {sim.type}
+                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                      {sim.name || sim.type}
                     </Typography>
                     <Divider sx={{ my: 1 }} />
                     <Stack spacing={1}>
@@ -837,7 +957,7 @@ const AnalyticsPage = () => {
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Pressure:</Typography>
-                        <Typography variant="body2">{sim.pressure.toFixed(2)} atm</Typography>
+                        <Typography variant="body2">{sim.pressure.toFixed(2)} bar</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Enhancement:</Typography>
@@ -923,21 +1043,38 @@ const AnalyticsPage = () => {
                     />
                   </Box>
                   <Button
-                    variant="contained"
+                    variant={scoreMode === 'live' ? 'contained' : 'outlined'}
                     size="small"
                     startIcon={<PlayArrowIcon />}
                     onClick={() => handleRunScores()}
                     disabled={graphLoading}
+                    data-testid="run-live-scores"
                   >
-                    Run Scores
+                    Run live scores
+                  </Button>
+                  <Button
+                    variant={scoreMode === 'persisted_mean' ? 'contained' : 'outlined'}
+                    size="small"
+                    disabled={graphLoading || !(campaignOverlay?.n_runs > 0)}
+                    onClick={() => {
+                      if (campaignOverlay?.n_runs > 0) {
+                        setScoreMode('persisted_mean');
+                        setTheoryScores(scoresFromOverlay(campaignOverlay));
+                      }
+                    }}
+                    data-testid="use-persisted-scores"
+                  >
+                    Use SQL means
                   </Button>
                 </Stack>
               </Box>
               {/* Graph with integrated search, stats, detail panel */}
               {campaignOverlay?.n_runs > 0 && (
                 <Alert severity="info" sx={{ mb: 1 }} data-testid="campaign-overlay-disclaimer">
-                  Campaign overlay from {campaignOverlay.n_runs} persisted theory runs.
-                  This is model-output association, not empirical confidence. Curated
+                  {scoreMode === 'persisted_mean'
+                    ? `Node size uses mean final_score from ${campaignOverlay.n_runs} persisted theory_runs (SQL).`
+                    : 'Live five-factor scores at stated conditions. SQL means are available via Use SQL means.'}
+                  {' '}This is model-output association, not empirical confidence. Curated
                   edge strength is unchanged.
                 </Alert>
               )}
@@ -946,6 +1083,7 @@ const AnalyticsPage = () => {
                   graphData={graphData}
                   scores={theoryScores}
                   campaignOverlay={campaignOverlay}
+                  scoreMode={scoreMode}
                   loading={graphLoading}
                   error={graphError}
                   onNodeClick={(node) => {
@@ -967,7 +1105,15 @@ const AnalyticsPage = () => {
           {/* Right sidebar: Score cards (25%) */}
           <Box sx={{ flex: 1, minWidth: 260 }}>
             <Paper sx={{ p: 2, maxHeight: 720, overflow: 'auto' }}>
-              <Typography variant="h6" gutterBottom>Theory Scores</Typography>
+              <Typography variant="h6" gutterBottom>
+                Theory Scores
+                <Chip
+                  size="small"
+                  sx={{ ml: 1 }}
+                  label={scoreMode === 'persisted_mean' ? 'SQL mean' : 'Live'}
+                  data-testid="score-mode-chip"
+                />
+              </Typography>
               {theoryScores ? (
                 Object.entries(theoryScores)
                   .sort(([, a], [, b]) => (b.final_score || 0) - (a.final_score || 0))
@@ -1001,7 +1147,7 @@ const AnalyticsPage = () => {
                   ))
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  {graphLoading ? 'Computing scores...' : 'Click "Run Scores" to compute theory rankings.'}
+                  {graphLoading ? 'Computing scores...' : 'Persisted SQL means appear after Theory Testbed or campaign runs. Click "Run live scores" for the heuristic at default conditions.'}
                 </Typography>
               )}
             </Paper>

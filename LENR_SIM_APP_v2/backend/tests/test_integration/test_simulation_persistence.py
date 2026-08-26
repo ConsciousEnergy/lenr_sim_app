@@ -88,6 +88,61 @@ def test_theories_run_persists_theory_run_history() -> None:
         assert body["curated_edge_strength_unchanged"] is True
         assert body["n_runs"] >= 1
         assert body["per_theory"]
+        assert body["score_field"] == "final_score_preferred"
+        listed = client.get(
+            "/api/analytics/experiments",
+            params={"session_id": "other-session", "include_baseline": True, "limit": 50},
+        )
+        match = next(
+            row
+            for row in listed.json()["experiments"]
+            if row["id"] == persistence["experiment_id"]
+        )
+        scores = (match.get("results") or {}).get("pipeline_scores") or {}
+        assert scores
+        sample = next(iter(scores.values()))
+        assert sample.get("final_score") is not None
+        assert sample.get("score") is not None
+        assert sample.get("score_formula") == "five_factor_gm_x_claim_tier"
+        assert sample.get("parameter_sensitivity") == 0.5
+        theory_id = next(iter(scores))
+        overlay = body["per_theory"][theory_id]
+        assert "mean_final_score" in overlay
+        assert "mean_weighted_score" in overlay
+
+
+def test_coupled_run_persists_experiment_and_final_score() -> None:
+    with _client() as client:
+        resp = client.post(
+            "/api/analytics/theories/run-coupled",
+            json={
+                "conditions": {"temperature": 300.0, "loading_ratio": 0.9},
+                "enabled_theories": ["electron_screening"],
+                "persist_session_id": "test-coupled-persist",
+                "persist_source": SOURCE_AUTO_PERSIST,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "contributions" in data
+        assert "combined_enhancement" in data
+        persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
+        assert persistence.get("experiment_id")
+        assert persistence.get("theory_run_id")
+
+        listed = client.get(
+            "/api/analytics/experiments",
+            params={"session_id": "other-session", "include_baseline": True, "limit": 50},
+        )
+        match = next(
+            row
+            for row in listed.json()["experiments"]
+            if row["id"] == persistence["experiment_id"]
+        )
+        scores = (match.get("results") or {}).get("pipeline_scores") or {}
+        assert "electron_screening" in scores
+        assert scores["electron_screening"].get("final_score") is not None
+        assert scores["electron_screening"].get("score_formula") == "five_factor_gm_x_claim_tier"
 
 
 def test_theory_graph_edges_unchanged_by_history() -> None:

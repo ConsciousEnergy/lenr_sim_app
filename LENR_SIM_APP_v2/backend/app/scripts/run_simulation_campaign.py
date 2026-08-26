@@ -4,6 +4,7 @@ Usage (from LENR_SIM_APP_v2/backend):
     python -m app.scripts.run_simulation_campaign --preset smoke
     python -m app.scripts.run_simulation_campaign --preset default
     python -m app.scripts.run_simulation_campaign --preset diverse
+    python -m app.scripts.run_simulation_campaign --preset all_claims
     python -m app.scripts.run_simulation_campaign --preset full
 
 Does not prove LENR. EQ-OPEN-* stay OPEN.
@@ -29,7 +30,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--preset",
         choices=sorted(PRESETS.keys()),
         default="default",
-        help="Grid size (smoke=4, default=48, full=288, diverse=~197 unified + theory-group runs)",
+        help=(
+            "Grid size (smoke=4, default=48, full=288, diverse=~197 unified + "
+            "theory-group runs, all_claims=6 unified + one run per registered theory)"
+        ),
     )
     parser.add_argument(
         "--skip-theory-pipeline",

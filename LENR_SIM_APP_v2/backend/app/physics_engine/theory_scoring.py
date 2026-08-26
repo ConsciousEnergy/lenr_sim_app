@@ -253,8 +253,14 @@ def compute_theory_scores(
     pipeline: Optional[TheoryPipeline] = None,
     enabled_theories: Optional[List[str]] = None,
     config: Optional[Dict[str, Any]] = None,
+    skip_sensitivity: bool = False,
 ) -> Dict[str, Dict[str, float]]:
     """Run all theories and compute probability scores.
+
+    skip_sensitivity:
+        Persist/campaign paths pass True so ``parameter_sensitivity`` is
+        the neutral 0.5 instead of the expensive perturbation loop.
+        Live Relevance Map scoring keeps the default False.
 
     Returns:
         Dict mapping theory_id -> {
@@ -309,7 +315,11 @@ def compute_theory_scores(
 
         phys = _physical_consistency_score(contrib)
         exper = _experimental_agreement_score(contrib)
-        sens = _parameter_sensitivity_score(pipeline, contrib.theory_id, conditions, config)
+        sens = (
+            0.5
+            if skip_sensitivity
+            else _parameter_sensitivity_score(pipeline, contrib.theory_id, conditions, config)
+        )
         cross = _cross_theory_agreement_score(contrib, applicable_contribs)
         compl = _observables_completeness_score(contrib)
 
