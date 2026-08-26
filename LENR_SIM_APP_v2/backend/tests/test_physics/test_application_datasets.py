@@ -21,16 +21,26 @@ from app.physics_engine.unified_lenr_model.screening_data import (
 
 def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     records = literature_records()
-    assert len(records) == 16
+    assert len(records) == 17
     experiments = get_baseline_experiments()
-    assert len(experiments) == 16
+    assert len(experiments) == 17
     ids = {row["id"] for row in experiments}
-    assert len(ids) == 16
+    assert len(ids) == 17
     assert all(len(row["id"]) == 36 for row in experiments)
     arpa = next(row for row in experiments if "ARPA-E" in row["name"])
     assert arpa["claim_tag"] == "null"
     assert float(arpa["excess_heat_watts"]) == 0.0
     assert arpa["id"] == stable_baseline_id("berlinguette-arpa-e-2019")
+    miles = next(row for row in experiments if row["literature_id"] == "miles-1993")
+    assert miles["claim_tag"] == "EMP"
+    assert miles["citation_key"] == "miles1993"
+    assert float(miles["excess_heat_watts"]) == 1.0
+    assert miles["id"] == stable_baseline_id("miles-1993")
+    assert miles["parameters"]["literature_id"] == "miles-1993"
+    assert miles["parameters"]["open_question_ids"] == [
+        "EQ-OPEN-YIELD-01",
+        "EQ-OPEN-RAD-01",
+    ]
     assert get_baseline_experiments()[0]["id"] == experiments[0]["id"]
     tagged = {row["claim_tag"] for row in records}
     assert {"EMP", "null", "disputed", "contested", "speculative"} <= tagged

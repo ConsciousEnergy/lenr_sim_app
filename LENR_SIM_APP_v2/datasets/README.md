@@ -9,7 +9,7 @@ simulations do not raise `claim_tier` or close `EQ-OPEN-*`.
 
 | File | Rows | Loaded by |
 |------|------|-----------|
-| `literature_baselines.v1.json` | 16 | `app.data.baseline_experiments` |
+| `literature_baselines.v1.json` | 17 | `app.data.baseline_experiments` |
 | `screening_priors.v1.json` | 5 hosts | `unified_lenr_model.screening_data` |
 | `parkhomov_curated.v1.json` | curated subset | `parkhomov_validation.py` |
 | `open_question_register.v1.json` | Q1–Q5 | campaigns / docs / Lean IR |

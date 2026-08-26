@@ -27,20 +27,31 @@ logger = logging.getLogger(__name__)
 CAMPAIGN_SESSION = "simulation_campaign"
 
 
-def _simulate_payload(case: Dict[str, Any], session_id: str) -> SimulationRequest:
-    environmental: Dict[str, Any] = {"temperature": case["temperature"]}
+def _simulate_payload(
+    case: Dict[str, Any],
+    session_id: str,
+    preset: str,
+) -> SimulationRequest:
+    environmental: Dict[str, Any] = {
+        "temperature": min(max(float(case["temperature"]), 1.0), 2000.0)
+    }
     if "electric_field" in case:
         environmental["electric_field"] = case["electric_field"]
     kwargs: Dict[str, Any] = dict(
         material={"host_material": case["host_material"], "reactant": case["reactant"]},
         environmental=environmental,
-        lattice={"loading_ratio": case["loading_ratio"]},
+        lattice={"loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)},
         rate_mode=case["rate_mode"],
         use_theory_pipeline=case["use_theory_pipeline"],
         time_steps=10,
         total_time=1.0,
         persist_session_id=session_id,
         persist_source=SOURCE_CAMPAIGN,
+        campaign_preset=preset,
+        campaign_tag=case.get("tag"),
+        literature_id=case.get("literature_id"),
+        claim_tag=case.get("claim_tag"),
+        open_question_ids=list(case.get("open_question_ids") or []) or None,
     )
     if case.get("enabled_theories"):
         kwargs["enabled_theories"] = list(case["enabled_theories"])
@@ -61,7 +72,7 @@ async def _run_unified_case(
     total: int,
     preset: str,
 ) -> tuple[Dict[str, Any] | None, Dict[str, Any]]:
-    request = _simulate_payload(case, session_id)
+    request = _simulate_payload(case, session_id, preset)
     try:
         response = await run_unified_simulation(request)
         body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
@@ -86,8 +97,10 @@ async def _run_unified_case(
             float(case.get("temperature") or 0.0),
             case.get("tag"),
         )
+        failed_case = dict(case)
+        failed_case["campaign_preset"] = preset
         persist = await persist_failed_run(
-            case,
+            failed_case,
             exc,
             session_id=session_id,
             source=SOURCE_CAMPAIGN,
@@ -131,15 +144,21 @@ async def run_campaign(
         payloads.append(body)
 
     theory_payloads: List[Dict[str, Any]] = []
-    if include_theory_pipeline and preset not in {"diverse"}:
+    if include_theory_pipeline and preset not in {"diverse", "question_theories"}:
         representative = next(iter_campaign_cases(preset))
+        loading = float(representative["loading_ratio"])
         theory_request = TheoryRunRequest(
             conditions=TheoryConditions(
-                temperature=representative["temperature"],
-                loading_ratio=representative["loading_ratio"],
+                temperature=min(max(float(representative["temperature"]), 1.0), 2000.0),
+                loading_ratio=min(max(float(representative.get("loading_ratio") or 0.9), 0.0), 1.0),
             ),
             persist_session_id=session_id,
             persist_source=SOURCE_CAMPAIGN,
+            campaign_preset=preset,
+            campaign_tag=representative.get("tag"),
+            literature_id=representative.get("literature_id"),
+            claim_tag=representative.get("claim_tag"),
+            open_question_ids=list(representative.get("open_question_ids") or []) or None,
         )
         theory_body = await run_theories(theory_request)
         theory_payloads.append(theory_body)

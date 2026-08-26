@@ -65,6 +65,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [False, True],
     },
+    # Q-anchored isolated theories (not a cartesian). Axes unused.
+    "question_theories": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
 }
 
 AXIS_KEYS = (
@@ -199,6 +208,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_literature_grid_cases()
         return
+    if preset == "question_theories":
+        from app.campaign.question_theories import iter_question_theories_cases
+
+        yield from iter_question_theories_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -215,6 +229,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.literature import literature_grid_count
 
         return literature_grid_count()
+    if preset == "question_theories":
+        from app.campaign.question_theories import question_theories_count
+
+        return question_theories_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -333,5 +351,14 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["note"] = (
             "Literature-anchored model-output grid plus negative controls. "
             "Does not prove LENR. Do not run full or diverse in CI."
+        )
+    if preset == "question_theories":
+        from app.campaign.question_theories import QUESTION_THEORY_SLICES
+
+        payload["n_question_slices"] = len(QUESTION_THEORY_SLICES)
+        payload["note"] = (
+            "Designed Q-anchored isolated theory runs at tagged literature "
+            "cells plus ARPA-E composition-group nulls. Does not prove LENR. "
+            "Do not run full or diverse in CI."
         )
     return payload

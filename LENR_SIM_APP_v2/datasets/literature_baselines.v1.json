@@ -385,6 +385,38 @@
       "energy_output_kev": 60.0,
       "excess_heat_watts": 5.0,
       "duration_seconds": 86400
+    },
+    {
+      "literature_id": "miles-1993",
+      "citation_key": "miles1993",
+      "doi": "10.1016/0022-0728(93)85006-4",
+      "claim_tag": "EMP",
+      "reactant": "deuterium",
+      "open_question_ids": ["EQ-OPEN-YIELD-01", "EQ-OPEN-RAD-01"],
+      "created_at_offset_days": 12053,
+      "name": "Miles Heat-Helium Correlation (1993)",
+      "description": "Pd-D electrolysis heat-helium correlation. In-app handle uses 1 W excess heat = 2.63e11 He-4/s at 23.8 MeV/He (EQ-MILES-CONV-01 / miles_heat_helium). Instantaneous Miles band is EMP (24±4 MeV/He); integrated yield remains OPEN (EQ-OPEN-YIELD-01).",
+      "experiment_type": "lenr",
+      "status": "completed",
+      "is_baseline": true,
+      "source": "Miles et al., J. Electroanal. Chem. 346 (1993) 99-117",
+      "source_url": "https://doi.org/10.1016/0022-0728(93)85006-4",
+      "material": "palladium",
+      "temperature_k": 300.0,
+      "pressure_bar": 1.0,
+      "loading_ratio": 0.9,
+      "defect_density": 0.05,
+      "parameters": {
+        "q_value_mev": 23.8,
+        "miles_rate_per_watt": 2.63e11,
+        "miles_band_mev_per_he": "24±4"
+      },
+      "excess_heat_watts": 1.0,
+      "duration_seconds": 86400,
+      "results": {
+        "observable": "heat_helium_correlation",
+        "note": "1 W is the Miles module definition scale, not a single-run calorimetry integral"
+      }
     }
   ]
 }

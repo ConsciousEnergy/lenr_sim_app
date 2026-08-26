@@ -15,6 +15,7 @@ from app.campaign.grid import (
     iter_all_claims_single_theory_cases,
     iter_campaign_cases,
     iter_diverse_theory_group_cases,
+    theory_group_representatives,
 )
 from app.physics_engine.theory_pipeline import THEORY_COMPOSITION_GROUPS, get_default_pipeline
 from app.campaign.runner import run_campaign
@@ -136,5 +137,51 @@ def test_literature_grid_is_designed_not_cartesian() -> None:
     described = describe_preset("literature_grid")
     assert described["n_negative_controls"] == len(LITERATURE_NEGATIVE_CONTROLS)
     assert "Does not prove LENR" in described["note"]
-    assert len(literature_records()) == 16
+    records = literature_records()
+    assert len(records) == 17
+    miles = next(case for case in cases if case.get("literature_id") == "miles-1993")
+    assert miles["claim_tag"] == "EMP"
+    assert "EQ-OPEN-YIELD-01" in miles["open_question_ids"]
+    assert "EQ-OPEN-RAD-01" in miles["open_question_ids"]
+    chubb = next(
+        case for case in cases if case.get("literature_id") == "chubb-lattice-tunneling-2004"
+    )
+    assert chubb["tag"] == "literature:chubb-lattice-tunneling-2004"
+    literature_ids = {
+        case.get("literature_id") for case in cases if case.get("literature_id")
+    }
+    assert len(literature_ids) == 17
+
+
+def test_question_theories_is_designed_not_cartesian() -> None:
+    from app.campaign.question_theories import (
+        NULL_LITERATURE_ID,
+        QUESTION_THEORY_SLICES,
+        question_theories_count,
+    )
+
+    n = campaign_size("question_theories")
+    assert n == question_theories_count()
+    assert 20 <= n <= 45
+    cases = list(iter_campaign_cases("question_theories"))
+    assert len(cases) == n
+    tags = {case.get("tag") for case in cases}
+    assert any(str(tag).startswith("question_theories:EQ-OPEN-MEV-01:") for tag in tags)
+    assert any(str(tag).startswith("question_theories:null:") for tag in tags)
+    miles_heat = [
+        case
+        for case in cases
+        if case.get("literature_id") == "miles-1993"
+        and case.get("enabled_theories") == ["miles_heat_helium"]
+    ]
+    assert len(miles_heat) == 1
+    arpa = [case for case in cases if case.get("literature_id") == NULL_LITERATURE_ID]
+    assert len(arpa) == len(theory_group_representatives())
+    assert all(case["claim_tag"] == "null" for case in arpa)
+    isolated = {tuple(case["enabled_theories"]) for case in cases}
+    assert all(len(ids) == 1 for ids in isolated)
+    described = describe_preset("question_theories")
+    assert described["n_question_slices"] == len(QUESTION_THEORY_SLICES)
+    assert "Does not prove LENR" in described["note"]
+
 
