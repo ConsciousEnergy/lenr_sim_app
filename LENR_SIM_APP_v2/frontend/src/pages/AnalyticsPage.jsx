@@ -261,6 +261,8 @@ const AnalyticsPage = () => {
         outcomeCounts: statsData.outcomeCounts || {},
         claimTierCounts: statsData.claimTierCounts || {},
         openQuestionCounts: statsData.openQuestionCounts || {},
+        openQuestionCountsCampaign: statsData.openQuestionCountsCampaign || {},
+        sourceClassCounts: statsData.sourceClassCounts || {},
       });
       
       setPieData(typeDistData || []);
@@ -335,6 +337,8 @@ const AnalyticsPage = () => {
               outcomeCounts: localStats?.outcomeCounts || {},
               claimTierCounts: localStats?.claimTierCounts || {},
               openQuestionCounts: localStats?.openQuestionCounts || {},
+              openQuestionCountsCampaign: localStats?.openQuestionCountsCampaign || {},
+              sourceClassCounts: localStats?.sourceClassCounts || {},
             });
             
             // Build pie data from local
@@ -614,18 +618,35 @@ const AnalyticsPage = () => {
                 setIncludeBaseline(event.target.checked);
                 setPage(0);
               }}
-              inputProps={{ 'aria-label': 'Include published baselines' }}
+              inputProps={{ 'aria-label': 'Include published literature baselines' }}
               data-testid="include-baseline-toggle"
             />
           }
-          label="Include published baselines"
+          label="Include published literature baselines"
         />
+        <Typography variant="caption" color="text.secondary" display="block">
+          Off hides literature seeds only. Campaign and auto-persist model outputs stay visible.
+        </Typography>
       </Box>
       
       {!simulationHistory.length && (
         <Alert severity="info" sx={{ mb: 3 }} data-testid="analytics-empty-state">
           <AlertTitle>No rows in this SQL filter</AlertTitle>
           Turn published baselines on, run the Theory Testbed, or start a campaign to persist model-output rows.
+        </Alert>
+      )}
+      {Number(stats?.sourceClassCounts?.Campaign || 0) === 0
+        && Number(stats?.totalSimulations || 0) > 0 && (
+        <Alert severity="warning" sx={{ mb: 3 }} data-testid="analytics-seed-only-banner">
+          <AlertTitle>Literature seeds only — not the cloud campaign N</AlertTitle>
+          Git does not ship SQLite campaign rows. Seed-only Analytics is ~17 baselines
+          (18 if a couple of UI autos exist). To match the ~107 model-output rows from
+          {' '}<code>literature_grid</code> + <code>all_claims</code> + <code>question_theories</code>:
+          <Box component="pre" sx={{ mt: 1, mb: 0, whiteSpace: 'pre-wrap' }}>
+            python -m app.scripts.seed_database --force --hydrate-demo
+          </Box>
+          Or import <code>datasets/reviewer_packs/q_campaign_demo</code>. Extra rows are
+          model outputs; they do not close EQ-OPEN-* or prove LENR.
         </Alert>
       )}
       
@@ -702,8 +723,20 @@ const AnalyticsPage = () => {
         {stats?.openQuestionCounts && Object.keys(stats.openQuestionCounts).length > 0 && (
           <>
             {' '}
-            Campaign N by open question (model rows, not closure):{' '}
+            {Number(stats?.sourceClassCounts?.Campaign || 0) > 0
+              ? 'Open-question N on persisted rows (model rows, not closure)'
+              : 'Open-question tags on literature seeds (not a hydrated campaign)'}
+            {': '}
             {Object.entries(stats.openQuestionCounts)
+              .map(([qid, count]) => `${qid} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+        {stats?.openQuestionCountsCampaign && Object.keys(stats.openQuestionCountsCampaign).length > 0 && (
+          <>
+            {' '}
+            Campaign-only N:{' '}
+            {Object.entries(stats.openQuestionCountsCampaign)
               .map(([qid, count]) => `${qid} ${count}`)
               .join(', ')}.
           </>

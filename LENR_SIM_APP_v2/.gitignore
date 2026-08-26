@@ -52,3 +52,6 @@ frontend/.env.*.local
 # ---- Logs / temp ----
 *.log
 tmp/
+
+# Generated / local-only reviewer packs (q_campaign_demo is committed)
+datasets/reviewer_packs/local/

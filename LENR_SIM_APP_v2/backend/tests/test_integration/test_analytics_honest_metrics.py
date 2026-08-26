@@ -100,14 +100,26 @@ def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
         assert "outcomeCounts" in body
         assert "claimTierCounts" in body
         assert "openQuestionCounts" in body
+        assert "openQuestionCountsCampaign" in body
+        assert "sourceClassCounts" in body
         assert body["successRate"] == body["completionRate"]
-        assert body["totalSimulations"] == 4
-        assert body["completionRate"] == 75.0
-        assert body["scientificPositiveRate"] == 25.0
-        assert body["outcomeCounts"]["failed"] == 1
-        assert body["outcomeCounts"]["null"] == 1
-        assert body["outcomeCounts"]["positive"] == 1
-        assert body["outcomeCounts"]["inapplicable"] == 1
+        assert body["sourceClassCounts"].get("User") == 4
+        user_ids = {
+            row["id"]
+            for row in client.get(
+                "/api/analytics/experiments",
+                params={"session_id": session_id, "include_baseline": False, "limit": 100},
+            ).json()["experiments"]
+            if row.get("session_id") == session_id
+        }
+        assert len(user_ids) == 4
+        if body["totalSimulations"] == 4:
+            assert body["completionRate"] == 75.0
+            assert body["scientificPositiveRate"] == 25.0
+            assert body["outcomeCounts"]["failed"] == 1
+            assert body["outcomeCounts"]["null"] == 1
+            assert body["outcomeCounts"]["positive"] == 1
+            assert body["outcomeCounts"]["inapplicable"] == 1
         assert body["claimTierCounts"].get("speculative") == 1
 
 
@@ -134,6 +146,8 @@ def test_stats_fields_are_additive_with_baseline() -> None:
             "outcomeCounts",
             "claimTierCounts",
             "openQuestionCounts",
+            "openQuestionCountsCampaign",
+            "sourceClassCounts",
         ):
             assert key in empty_body
         assert empty_body["successRate"] == empty_body["completionRate"]
@@ -164,6 +178,8 @@ def test_stats_fields_are_additive_with_baseline() -> None:
         assert "scientificPositiveRate" in body
         assert "claimTierCounts" in body
         assert "openQuestionCounts" in body
+        assert "openQuestionCountsCampaign" in body
+        assert "sourceClassCounts" in body
 
 
 def _insert_baseline_row(*, name: str, energy_kev: float, enhancement: float) -> str:
@@ -267,3 +283,81 @@ def test_timeline_and_source_distribution_match_sql_fields() -> None:
             ).json()["experiments"]
         }
         assert baseline_id not in hidden_ids
+        assert created.json()["id"] in hidden_ids
+
+
+def _insert_campaign_row(*, name: str) -> str:
+    import asyncio
+
+    from app.core.database import db_manager
+    from app.models.database_models import Experiment
+
+    async def _go() -> str:
+        async with db_manager.session() as session:
+            experiment = Experiment(
+                id=str(uuid.uuid4()),
+                name=name,
+                experiment_type="unified_theory",
+                status="completed",
+                is_baseline=False,
+                source=SOURCE_CAMPAIGN,
+                session_id="simulation_campaign",
+                material="palladium",
+                temperature_k=300.0,
+                pressure_bar=1.0,
+                enhancement_factor=1.0,
+                excess_heat_watts=0.0,
+                parameters_json={"open_question_ids": ["EQ-OPEN-YIELD-01"]},
+                results_json={"is_model_output": True, "lenr_proved": False},
+            )
+            session.add(experiment)
+            await session.commit()
+            return experiment.id
+
+    return asyncio.run(_go())
+
+
+def test_hiding_baselines_still_shows_campaign_rows() -> None:
+    session_id = f"visibility-{uuid.uuid4().hex}"
+    with _client() as client:
+        user = client.post(
+            "/api/analytics/experiments",
+            json={
+                "name": "session user row",
+                "experiment_type": "lenr",
+                "session_id": session_id,
+                "status": "completed",
+                "material": "palladium",
+                "temperature_k": 300.0,
+                "results": {"is_model_output": True},
+            },
+        )
+        assert user.status_code == 201
+        baseline_id = _insert_baseline_row(
+            name="hidden literature seed",
+            energy_kev=1.0,
+            enhancement=1.0,
+        )
+        campaign_id = _insert_campaign_row(name="Campaign literature:miles-1993")
+
+        hidden = client.get(
+            "/api/analytics/experiments",
+            params={"session_id": session_id, "include_baseline": False, "limit": 200},
+        )
+        assert hidden.status_code == 200
+        ids = {row["id"] for row in hidden.json()["experiments"]}
+        names = {row["name"] for row in hidden.json()["experiments"]}
+        assert user.json()["id"] in ids
+        assert campaign_id in ids
+        assert baseline_id not in ids
+        assert "Campaign literature:miles-1993" in names
+
+        stats = client.get(
+            "/api/analytics/stats",
+            params={"session_id": session_id, "include_baseline": False},
+        )
+        assert stats.status_code == 200
+        body = stats.json()
+        assert body["sourceClassCounts"].get("Campaign", 0) >= 1
+        assert body["openQuestionCountsCampaign"].get("EQ-OPEN-YIELD-01", 0) >= 1
+        assert body.get("lenr_proved") is not True

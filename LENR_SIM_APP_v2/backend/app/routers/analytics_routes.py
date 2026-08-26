@@ -113,6 +113,8 @@ class StatsResponse(BaseModel):
     outcomeCounts: Dict[str, int] = Field(default_factory=dict)
     claimTierCounts: Dict[str, int] = Field(default_factory=dict)
     openQuestionCounts: Dict[str, int] = Field(default_factory=dict)
+    openQuestionCountsCampaign: Dict[str, int] = Field(default_factory=dict)
+    sourceClassCounts: Dict[str, int] = Field(default_factory=dict)
 
 
 class ExperimentListResponse(BaseModel):

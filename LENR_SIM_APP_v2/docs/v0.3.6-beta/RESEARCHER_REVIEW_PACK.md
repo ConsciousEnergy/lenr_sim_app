@@ -1,7 +1,34 @@
 # Researcher review pack (v0.3.6-beta)
 
-How to collect, inspect, and export **model-output** rows for other researchers.
+How to collect, inspect, **import**, and export **model-output** rows for other researchers.
 Extra simulations do **not** prove LENR, close `EQ-OPEN-*`, or raise `claim_tier`.
+
+## Clone ≠ 107 Analytics rows
+
+`git pull` of `lenr_sim_app_v0.3.6-beta` ships **code** and literature JSON, not
+the cloud agent's SQLite. App startup creates tables only.
+
+| After | Analytics Total Records | What it is |
+|-------|-------------------------|------------|
+| Pull and start | 0 | Empty sqlite |
+| `seed_database` | ~17 | Literature baselines (includes Miles 1993). Old DBs without `--force` stay at 16 |
+| Seed + a couple of UI runs | ~18 | The usual “I synced but I am not on 107” state |
+| Import `q_campaign_demo` or `--hydrate-demo` | ~107 | 17 Baseline + 90 Campaign model-output rows |
+| Re-run the three campaign presets | ~107+ | Live physics; same honest N, slower |
+
+Point `LENR_SQLITE_PATH` at the **same** file the API uses. A second sqlite
+(`/tmp/lenr_reviewer.db`) will look like 16–18 forever.
+
+```bash
+# Match the cloud/PR Analytics screenshot (from LENR_SIM_APP_v2/backend)
+python -m app.scripts.seed_database --force --hydrate-demo
+# equivalent:
+python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_campaign_demo
+```
+
+Committed demo pack: `LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/`
+(107 experiments, 89 `theory_runs`). Smoke fixture N=1 remains for tests.
+Do **not** git-add `reviewer_packs/local/` (export scratch).
 
 ## Commands (from `LENR_SIM_APP_v2/backend`)
 
@@ -11,6 +38,7 @@ python -m app.scripts.run_simulation_campaign --preset all_claims
 python -m app.scripts.run_simulation_campaign --preset question_theories
 python -m app.scripts.export_reviewer_pack --out ../datasets/reviewer_packs/local
 python -m app.scripts.report_open_question_stress --out ../datasets/reviewer_packs/local
+python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_campaign_demo
 ```
 
 Do **not** run `--preset full` or full `--preset diverse` in CI. Optional
@@ -25,6 +53,7 @@ question_theories (~20–45 isolated theory×literature cells) + optional divers
 aspiration of \(10^4\)–\(10^6\).
 
 Smoke fixture (in git): `LENR_SIM_APP_v2/datasets/reviewer_packs/smoke/`.
+Demo hydrate pack (in git): `LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/`.
 
 ## What N means
 

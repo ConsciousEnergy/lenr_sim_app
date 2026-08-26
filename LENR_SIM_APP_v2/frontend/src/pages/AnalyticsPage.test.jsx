@@ -28,6 +28,8 @@ jest.mock('../services/analyticsApi', () => ({
       outcomeCounts: { positive: 1, null: 1, inapplicable: 1, failed: 1 },
       claimTierCounts: { speculative: 2, validated_lenr_mechanism: 1 },
       openQuestionCounts: { 'EQ-OPEN-YIELD-01': 2, 'EQ-OPEN-RAD-01': 1 },
+      openQuestionCountsCampaign: { 'EQ-OPEN-YIELD-01': 2 },
+      sourceClassCounts: { Baseline: 1, Campaign: 1, User: 2 },
     }),
     getTypeDistribution: jest.fn().mockResolvedValue([
       { name: 'LENR', value: 3, percentage: 75 },
@@ -153,6 +155,8 @@ jest.mock('../services/analyticsApi', () => ({
       outcomeCounts: {},
       claimTierCounts: {},
       openQuestionCounts: {},
+      openQuestionCountsCampaign: {},
+      sourceClassCounts: {},
     }),
   },
 }));
@@ -175,8 +179,10 @@ describe('AnalyticsPage honest metrics', () => {
     expect(note).toHaveTextContent(/Claim-tier histogram/i);
     expect(note).toHaveTextContent(/popularity is not validation/i);
     expect(note).toHaveTextContent(/energy_output_kev/i);
-    expect(note).toHaveTextContent(/Campaign N by open question/i);
+    expect(note).toHaveTextContent(/Open-question N on persisted rows/i);
+    expect(note).toHaveTextContent(/Campaign-only N/i);
     expect(screen.getByTestId('open-question-n-chips')).toHaveTextContent('EQ-OPEN-YIELD-01 N=2');
+    expect(screen.queryByTestId('analytics-seed-only-banner')).not.toBeInTheDocument();
 
     expect(screen.getByTestId('model-output-disclaimer')).toHaveTextContent(
       /model outputs/i
@@ -269,5 +275,38 @@ describe('AnalyticsPage honest metrics', () => {
     });
     expect(screen.getByTestId('include-baseline-toggle')).toBeInTheDocument();
     expect(screen.getByText('Total Records')).toBeInTheDocument();
+    expect(screen.getByText(/Include published literature baselines/i)).toBeInTheDocument();
+  });
+
+  test('seed-only banner shows import command when Campaign N is 0', async () => {
+    analyticsApi.getStats.mockResolvedValueOnce({
+      totalSimulations: 17,
+      successRate: 100,
+      completionRate: 100,
+      scientificPositiveRate: 0,
+      avgEnhancement: 1,
+      totalEnergy: 0,
+      maxEnhancement: 1,
+      completedCount: 17,
+      failedCount: 0,
+      outcomeCounts: { positive: 0, null: 17, inapplicable: 0, failed: 0 },
+      claimTierCounts: {},
+      openQuestionCounts: { 'EQ-OPEN-YIELD-01': 4 },
+      openQuestionCountsCampaign: {},
+      sourceClassCounts: { Baseline: 17, Campaign: 0 },
+    });
+
+    render(<AnalyticsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('analytics-seed-only-banner')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('analytics-seed-only-banner')).toHaveTextContent(
+      /seed_database --force --hydrate-demo/
+    );
+    expect(screen.getByTestId('analytics-seed-only-banner')).toHaveTextContent(/q_campaign_demo/);
+    expect(screen.getByTestId('completion-vs-scientific-note')).toHaveTextContent(
+      /not a hydrated campaign/i
+    );
   });
 });

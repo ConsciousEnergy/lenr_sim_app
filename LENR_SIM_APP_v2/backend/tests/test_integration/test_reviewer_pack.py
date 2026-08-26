@@ -74,3 +74,74 @@ def test_empty_manifest_never_claims_proof() -> None:
     manifest = build_manifest([], [], preset="smoke")
     assert manifest["lenr_proved"] is False
     assert set(manifest["open_ids"]) == OPEN_IDS
+
+
+def test_q_campaign_demo_pack_size_lock() -> None:
+    root = datasets_root() / "reviewer_packs" / "q_campaign_demo"
+    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == PACK_SCHEMA
+    assert manifest["lenr_proved"] is False
+    assert manifest["preset"] == "q_campaign_demo"
+    assert manifest["n_experiments"] == 107
+    assert manifest["n_theory_runs"] == 89
+    assert manifest["source_class_counts"]["Baseline"] == 17
+    assert manifest["source_class_counts"]["Campaign"] == 90
+    experiments = (root / "experiments.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    runs = (root / "theory_runs.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    assert len(experiments) == 107
+    assert len(runs) == 89
+    assert set(manifest["open_ids"]) == OPEN_IDS
+
+
+def test_import_smoke_pack_is_idempotent_and_stays_unproved(tmp_path: Path) -> None:
+    import asyncio
+
+    from app.core.database import db_manager
+    from app.models.database_models import Experiment
+    from app.services.reviewer_pack import PackImportError, import_pack_rows, read_pack
+    from sqlalchemy import func, select
+
+    smoke = datasets_root() / "reviewer_packs" / "smoke"
+    manifest, experiments, _runs = read_pack(smoke)
+    assert manifest["lenr_proved"] is False
+    assert len(experiments) == 1
+
+    def _client() -> TestClient:
+        from app.main import app
+
+        return TestClient(app)
+
+    with _client():
+        async def _import_twice() -> tuple[dict, dict, int]:
+            async with db_manager.session() as session:
+                first = await import_pack_rows(session, smoke)
+            async with db_manager.session() as session:
+                second = await import_pack_rows(session, smoke)
+                count = (
+                    await session.execute(
+                        select(func.count(Experiment.id)).where(
+                            Experiment.id == "smoke-exp-1"
+                        )
+                    )
+                ).scalar()
+            return first, second, int(count or 0)
+
+        first, second, count = asyncio.run(_import_twice())
+        assert first["lenr_proved"] is False
+        assert first["n_experiments"] == 1
+        assert second["experiments_updated"] >= 1
+        assert count == 1
+
+    proved = tmp_path / "proved"
+    proved.mkdir()
+    (proved / "manifest.json").write_text(
+        json.dumps({"schema": PACK_SCHEMA, "lenr_proved": True, "open_ids": list(OPEN_IDS)})
+        + "\n",
+        encoding="utf-8",
+    )
+    (proved / "experiments.jsonl").write_text("{}\n", encoding="utf-8")
+    try:
+        read_pack(proved)
+        raise AssertionError("expected PackImportError")
+    except PackImportError as exc:
+        assert "lenr_proved" in str(exc)

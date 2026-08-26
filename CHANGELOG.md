@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Analytics pack hydrate (2026-08-26)
+- `import_reviewer_pack` upserts JSONL into SQL by id; refuses `lenr_proved` packs
+- Committed demo pack `datasets/reviewer_packs/q_campaign_demo/` (~107 experiments / 89 theory_runs). `seed_database --hydrate-demo` is the clone path to match cloud Analytics N
+- Additive stats: `sourceClassCounts`, `openQuestionCountsCampaign`. Seed-only banner when Campaign N is 0
+- “Include published literature baselines” no longer hides campaign/auto model outputs
+- Docs: clone ≠ 107; `LENR_SQLITE_PATH` must match the API
+
 ### Q-anchored theory vs literature campaign (2026-08-26)
 - Persist campaign provenance on **successful** unified and theory-pipeline rows: `parameters_json` keys `campaign_preset`, `tag`, `literature_id`, `claim_tag`, `open_question_ids`; History name prefers `Campaign {tag}`
 - `literature_grid` cells are keyed by `literature_id` so Miles/Chubb are not collapsed into Fleischmann–Pons when T/loading match

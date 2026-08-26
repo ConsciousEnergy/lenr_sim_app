@@ -57,18 +57,58 @@ def _visibility_clause(session_id: Optional[str], include_baseline: bool = True)
     """Filter experiments visible on the dashboard.
 
     Auto-persisted and campaign rows are shared model outputs (not user-session
-    private and not literature baselines). They appear whenever baseline/shared
-    data is included so Analytics Overview/History populate after a campaign.
+    private and not literature baselines). They remain visible when published
+    baselines are hidden so a researcher can still see campaign N.
     """
     if not session_id:
         return None
+    shared = Experiment.source.in_(list(SHARED_SOURCES))
     if not include_baseline:
-        return Experiment.session_id == session_id
+        return or_(
+            Experiment.session_id == session_id,
+            shared,
+        )
     return or_(
         Experiment.session_id == session_id,
         Experiment.is_baseline == True,  # noqa: E712
-        Experiment.source.in_(list(SHARED_SOURCES)),
+        shared,
     )
+
+
+def _source_class_counts(experiments) -> Dict[str, int]:
+    counts: Dict[str, int] = defaultdict(int)
+    for experiment in experiments:
+        counts[
+            classify_source_class(
+                is_baseline=bool(experiment.is_baseline),
+                source=experiment.source,
+            )
+        ] += 1
+    return dict(counts)
+
+
+def _empty_stats() -> Dict[str, Any]:
+    return {
+        "totalSimulations": 0,
+        "successRate": 0.0,
+        "completionRate": 0.0,
+        "scientificPositiveRate": 0.0,
+        "avgEnhancement": 0.0,
+        "totalEnergy": 0.0,
+        "maxEnhancement": 0.0,
+        "completedCount": 0,
+        "failedCount": 0,
+        "outcomeCounts": {
+            OUTCOME_POSITIVE: 0,
+            OUTCOME_NULL: 0,
+            OUTCOME_INAPPLICABLE: 0,
+            OUTCOME_FAILED: 0,
+        },
+        "claimTierCounts": {},
+        "openQuestionCounts": {},
+        "openQuestionCountsCampaign": {},
+        "sourceClassCounts": {},
+    }
 
 
 class AnalyticsService:
@@ -121,25 +161,7 @@ class AnalyticsService:
         experiments = result.scalars().all()
         
         if not experiments:
-            return {
-                "totalSimulations": 0,
-                "successRate": 0.0,
-                "completionRate": 0.0,
-                "scientificPositiveRate": 0.0,
-                "avgEnhancement": 0.0,
-                "totalEnergy": 0.0,
-                "maxEnhancement": 0.0,
-                "completedCount": 0,
-                "failedCount": 0,
-                "outcomeCounts": {
-                    OUTCOME_POSITIVE: 0,
-                    OUTCOME_NULL: 0,
-                    OUTCOME_INAPPLICABLE: 0,
-                    OUTCOME_FAILED: 0,
-                },
-                "claimTierCounts": {},
-                "openQuestionCounts": {},
-            }
+            return _empty_stats()
         
         total = len(experiments)
         completed = sum(1 for e in experiments if e.status == ExperimentStatus.COMPLETED.value)
@@ -173,6 +195,17 @@ class AnalyticsService:
             for tier, count in tally_claim_tiers_from_experiment(experiment).items():
                 claim_tier_counts[tier] = claim_tier_counts.get(tier, 0) + count
         open_question_counts = tally_open_question_counts(experiments)
+        campaign_rows = [
+            experiment
+            for experiment in experiments
+            if classify_source_class(
+                is_baseline=bool(experiment.is_baseline),
+                source=experiment.source,
+            )
+            == "Campaign"
+        ]
+        open_question_counts_campaign = tally_open_question_counts(campaign_rows)
+        source_class_counts = _source_class_counts(experiments)
 
         scientific_positive_rate = (
             (outcome_counts[OUTCOME_POSITIVE] / total * 100) if total > 0 else 0.0
@@ -192,6 +225,8 @@ class AnalyticsService:
             "outcomeCounts": outcome_counts,
             "claimTierCounts": claim_tier_counts,
             "openQuestionCounts": open_question_counts,
+            "openQuestionCountsCampaign": open_question_counts_campaign,
+            "sourceClassCounts": source_class_counts,
         }
     
     async def get_type_distribution(
@@ -411,17 +446,9 @@ class AnalyticsService:
         """
         # Build filters
         filters = []
-        
-        if session_id and not include_baseline:
-            filters.append(Experiment.session_id == session_id)
-        elif session_id:
-            filters.append(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True,  # noqa: E712
-                    Experiment.source.in_(list(SHARED_SOURCES)),
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            filters.append(visibility)
         
         if experiment_type:
             filters.append(Experiment.experiment_type == experiment_type)

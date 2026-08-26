@@ -74,4 +74,7 @@ backend/output/
 LENR_SIM_APP_v2/backend/data/
 *.db
 *.sqlite
-*.sqlite3 
+*.sqlite3
+
+# Generated / local-only reviewer packs (demo pack q_campaign_demo is committed)
+LENR_SIM_APP_v2/datasets/reviewer_packs/local/ 
