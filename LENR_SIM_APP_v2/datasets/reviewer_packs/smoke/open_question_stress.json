@@ -1,0 +1,64 @@
+{
+  "schema": "lenr-open-question-stress-v1",
+  "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
+  "lenr_proved": false,
+  "occurrence_claimed": false,
+  "empirical_claim_tiers_raised": false,
+  "n_experiments": 0,
+  "open_ids": [
+    "EQ-OPEN-MEV-01",
+    "EQ-OPEN-RAD-01",
+    "EQ-OPEN-RATE-01",
+    "EQ-OPEN-EC-01",
+    "EQ-OPEN-YIELD-01"
+  ],
+  "open_question_counts": {},
+  "questions": [
+    {
+      "id": "EQ-OPEN-MEV-01",
+      "status": "OPEN",
+      "n": 0,
+      "literature_cells": [],
+      "theories": [],
+      "stored_scores": [],
+      "live_scores": []
+    },
+    {
+      "id": "EQ-OPEN-RAD-01",
+      "status": "OPEN",
+      "n": 0,
+      "literature_cells": [],
+      "theories": [],
+      "stored_scores": [],
+      "live_scores": []
+    },
+    {
+      "id": "EQ-OPEN-RATE-01",
+      "status": "OPEN",
+      "n": 0,
+      "literature_cells": [],
+      "theories": [],
+      "stored_scores": [],
+      "live_scores": []
+    },
+    {
+      "id": "EQ-OPEN-EC-01",
+      "status": "OPEN",
+      "n": 0,
+      "literature_cells": [],
+      "theories": [],
+      "stored_scores": [],
+      "live_scores": []
+    },
+    {
+      "id": "EQ-OPEN-YIELD-01",
+      "status": "OPEN",
+      "n": 0,
+      "literature_cells": [],
+      "theories": [],
+      "stored_scores": [],
+      "live_scores": []
+    }
+  ],
+  "any_row_claimed_proved": false
+}

@@ -56,6 +56,15 @@ def get_baseline_experiments() -> List[Dict[str, Any]]:
         for key in _RUNTIME_KEYS:
             if key in record:
                 row[key] = record[key]
+        params = dict(row.get("parameters") or {})
+        params.setdefault("literature_id", literature_id)
+        if record.get("claim_tag"):
+            params.setdefault("claim_tag", record.get("claim_tag"))
+        params.setdefault(
+            "open_question_ids",
+            list(record.get("open_question_ids") or []),
+        )
+        row["parameters"] = params
         experiments.append(row)
     return experiments
 

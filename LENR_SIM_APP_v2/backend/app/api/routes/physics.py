@@ -439,6 +439,26 @@ class TheoryRunRequest(BaseModel):
         default=None,
         description="Optional persist source label (auto_persist or simulation_campaign).",
     )
+    campaign_preset: Optional[str] = Field(
+        default=None,
+        description="Optional campaign preset name stored on persisted rows. Additive.",
+    )
+    campaign_tag: Optional[str] = Field(
+        default=None,
+        description="Optional campaign cell tag stored as parameters.tag. Additive.",
+    )
+    literature_id: Optional[str] = Field(
+        default=None,
+        description="Optional literature_baselines id for Q-anchored campaign cells. Additive.",
+    )
+    claim_tag: Optional[str] = Field(
+        default=None,
+        description="Optional EMP/null/disputed/contested/speculative literature tag. Additive.",
+    )
+    open_question_ids: Optional[List[str]] = Field(
+        default=None,
+        description="Optional EQ-OPEN-* ids this cell is meant to stress. Additive.",
+    )
 
 class SingleTheoryRunRequest(BaseModel):
     """Request to run a single theory in isolation."""

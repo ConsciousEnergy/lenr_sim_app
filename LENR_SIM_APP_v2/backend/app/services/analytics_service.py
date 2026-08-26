@@ -37,6 +37,7 @@ from app.services.scientific_outcomes import (
     classify_experiment,
     tally_claim_tiers_from_experiment,
 )
+from app.services.open_question_stress import tally_open_question_counts
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +138,7 @@ class AnalyticsService:
                     OUTCOME_FAILED: 0,
                 },
                 "claimTierCounts": {},
+                "openQuestionCounts": {},
             }
         
         total = len(experiments)
@@ -170,6 +172,7 @@ class AnalyticsService:
             outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
             for tier, count in tally_claim_tiers_from_experiment(experiment).items():
                 claim_tier_counts[tier] = claim_tier_counts.get(tier, 0) + count
+        open_question_counts = tally_open_question_counts(experiments)
 
         scientific_positive_rate = (
             (outcome_counts[OUTCOME_POSITIVE] / total * 100) if total > 0 else 0.0
@@ -188,6 +191,7 @@ class AnalyticsService:
             "failedCount": failed,
             "outcomeCounts": outcome_counts,
             "claimTierCounts": claim_tier_counts,
+            "openQuestionCounts": open_question_counts,
         }
     
     async def get_type_distribution(

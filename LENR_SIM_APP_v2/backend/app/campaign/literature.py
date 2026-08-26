@@ -1,7 +1,8 @@
 """Literature-anchored campaign cells from versioned baseline JSON.
 
-Designed experiment: one unified cell per distinct literature
-(host, reactant, T, loading) plus tagged negative controls.
+Designed experiment: one unified cell per distinct literature_id
+plus tagged negative controls. Same (host, T, loading) does not collapse
+Miles or Chubb into Fleischmann–Pons.
 Does not prove LENR. EQ-OPEN-* stay OPEN.
 """
 
@@ -74,9 +75,13 @@ def _cell_key(case: Dict[str, Any]) -> Tuple[Any, ...]:
 
 
 def iter_literature_baseline_cells() -> Iterator[Dict[str, Any]]:
-    """One two-body pipeline cell per distinct literature condition."""
-    seen: set[Tuple[Any, ...]] = set()
+    """One two-body pipeline cell per distinct literature_id (not T/loading)."""
+    seen: set[str] = set()
     for record in literature_records():
+        literature_id = str(record["literature_id"])
+        if literature_id in seen:
+            continue
+        seen.add(literature_id)
         loading = record.get("loading_ratio")
         case = {
             "temperature": float(record.get("temperature_k") or 300.0),
@@ -85,16 +90,12 @@ def iter_literature_baseline_cells() -> Iterator[Dict[str, Any]]:
             "reactant": str(record.get("reactant") or "deuterium"),
             "rate_mode": "two_body",
             "use_theory_pipeline": True,
-            "tag": f"literature:{record['literature_id']}",
-            "literature_id": record["literature_id"],
+            "tag": f"literature:{literature_id}",
+            "literature_id": literature_id,
             "citation_key": record.get("citation_key"),
             "claim_tag": record.get("claim_tag"),
             "open_question_ids": list(record.get("open_question_ids") or []),
         }
-        key = _cell_key(case)
-        if key in seen:
-            continue
-        seen.add(key)
         yield case
 
 

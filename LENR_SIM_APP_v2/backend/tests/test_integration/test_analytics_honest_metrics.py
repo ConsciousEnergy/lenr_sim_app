@@ -99,6 +99,7 @@ def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
         assert "scientificPositiveRate" in body
         assert "outcomeCounts" in body
         assert "claimTierCounts" in body
+        assert "openQuestionCounts" in body
         assert body["successRate"] == body["completionRate"]
         assert body["totalSimulations"] == 4
         assert body["completionRate"] == 75.0
@@ -132,6 +133,7 @@ def test_stats_fields_are_additive_with_baseline() -> None:
             "failedCount",
             "outcomeCounts",
             "claimTierCounts",
+            "openQuestionCounts",
         ):
             assert key in empty_body
         assert empty_body["successRate"] == empty_body["completionRate"]
@@ -161,6 +163,7 @@ def test_stats_fields_are_additive_with_baseline() -> None:
         assert body["successRate"] == body["completionRate"]
         assert "scientificPositiveRate" in body
         assert "claimTierCounts" in body
+        assert "openQuestionCounts" in body
 
 
 def _insert_baseline_row(*, name: str, energy_kev: float, enhancement: float) -> str:

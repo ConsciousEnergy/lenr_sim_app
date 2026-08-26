@@ -15,6 +15,52 @@ from app.services.simulation_persistence import (
 )
 
 
+def provenance_from_mapping(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Copy campaign literature keys into parameters_json (omit empties)."""
+    payload: Dict[str, Any] = {}
+    preset = data.get("campaign_preset")
+    tag = data.get("campaign_tag") or data.get("tag")
+    literature_id = data.get("literature_id")
+    claim_tag = data.get("claim_tag")
+    open_ids = data.get("open_question_ids")
+    if preset:
+        payload["campaign_preset"] = preset
+    if tag:
+        payload["tag"] = tag
+    if literature_id:
+        payload["literature_id"] = literature_id
+    if claim_tag:
+        payload["claim_tag"] = claim_tag
+    if isinstance(open_ids, list) and open_ids:
+        payload["open_question_ids"] = [str(item) for item in open_ids if item]
+    return payload
+
+
+def campaign_experiment_name(
+    *,
+    kind: str,
+    material: str,
+    rate_mode: str,
+    temperature: float,
+    tag: Optional[str] = None,
+    failed: bool = False,
+) -> str:
+    """Prefer the campaign tag so Analytics History can slice by literature cell."""
+    prefix = "FAILED " if failed else ""
+    if tag:
+        return f"{prefix}Campaign {tag}"[:255]
+    return f"{prefix}{kind} {material} {rate_mode} T={float(temperature):.0f}K"[:255]
+
+
+def _merge_parameters(
+    base: Dict[str, Any],
+    data: Dict[str, Any],
+) -> Dict[str, Any]:
+    merged = dict(base)
+    merged.update(provenance_from_mapping(data))
+    return merged
+
+
 async def persist_unified_simulation(
     request: Any,
     response: Any,
@@ -30,11 +76,20 @@ async def persist_unified_simulation(
     lattice = req.get("lattice") or {}
     enhancement = (resp.get("enhancement") or {}).get("total")
     observables = resp.get("observables") or {}
+    rate_mode = req.get("rate_mode") or "two_body"
+    temperature = float(env.get("temperature") or 300.0)
+    provenance = provenance_from_mapping(req)
     return await persist_best_effort(
         experiment_type="unified_theory",
-        name=f"Unified {material} {req.get('rate_mode', 'two_body')} T={env.get('temperature', 300):.0f}K",
+        name=campaign_experiment_name(
+            kind="Unified",
+            material=material,
+            rate_mode=str(rate_mode),
+            temperature=temperature,
+            tag=provenance.get("tag"),
+        ),
         material=material,
-        temperature_k=float(env.get("temperature") or 300.0),
+        temperature_k=temperature,
         pressure_bar=_pa_to_bar(float(env.get("pressure") or 101325.0)),
         loading_ratio=lattice.get("loading_ratio"),
         enhancement_factor=enhancement,
@@ -42,12 +97,15 @@ async def persist_unified_simulation(
         energy_output_kev=None,
         excess_heat_watts=observables.get("excess_heat_watts"),
         duration_seconds=req.get("total_time"),
-        parameters={
-            "reactant": (req.get("material") or {}).get("reactant"),
-            "rate_mode": req.get("rate_mode"),
-            "use_theory_pipeline": req.get("use_theory_pipeline"),
-            "enabled_theories": req.get("enabled_theories"),
-        },
+        parameters=_merge_parameters(
+            {
+                "reactant": (req.get("material") or {}).get("reactant"),
+                "rate_mode": rate_mode,
+                "use_theory_pipeline": req.get("use_theory_pipeline"),
+                "enabled_theories": req.get("enabled_theories"),
+            },
+            req,
+        ),
         results=_compact_results(experiment_type="unified_theory", response=resp),
         pipeline_result=pipeline_result,
         session_id=session_id,
@@ -119,11 +177,19 @@ async def persist_theory_pipeline(
     material = str(conditions.get("material_system") or "palladium")
     if "_" in material:
         material = material.split("_", 1)[0]
+    temperature = float(conditions.get("temperature") or 300.0)
+    provenance = provenance_from_mapping(req)
     return await persist_best_effort(
         experiment_type="lenr",
-        name=f"Theory pipeline T={float(conditions.get('temperature') or 300):.0f}K",
+        name=campaign_experiment_name(
+            kind="Theory pipeline",
+            material=material,
+            rate_mode="pipeline",
+            temperature=temperature,
+            tag=provenance.get("tag"),
+        ),
         material=material,
-        temperature_k=float(conditions.get("temperature") or 300.0),
+        temperature_k=temperature,
         pressure_bar=_pa_to_bar(float(conditions.get("pressure") or 101325.0)),
         loading_ratio=conditions.get("loading_ratio"),
         enhancement_factor=payload.get("combined_enhancement"),
@@ -131,10 +197,13 @@ async def persist_theory_pipeline(
         energy_output_kev=None,
         excess_heat_watts=payload.get("total_energy_watts"),
         duration_seconds=None,
-        parameters={
-            "enabled_theories": req.get("enabled_theories") or payload.get("enabled_theories"),
-            "material_system": conditions.get("material_system"),
-        },
+        parameters=_merge_parameters(
+            {
+                "enabled_theories": req.get("enabled_theories") or payload.get("enabled_theories"),
+                "material_system": conditions.get("material_system"),
+            },
+            req,
+        ),
         results=_compact_results(experiment_type="lenr", response=payload),
         pipeline_result=result,
         session_id=session_id,
@@ -153,9 +222,17 @@ async def persist_failed_simulation(
     """Persist a campaign/unified case that raised so Analytics can show failures."""
     material = str(case.get("host_material") or "palladium")
     temperature = float(case.get("temperature") or 300.0)
+    provenance = provenance_from_mapping(case)
     return await persist_best_effort(
         experiment_type="unified_theory",
-        name=f"FAILED Unified {material} T={temperature:.0f}K",
+        name=campaign_experiment_name(
+            kind="Unified",
+            material=material,
+            rate_mode=str(case.get("rate_mode") or "two_body"),
+            temperature=temperature,
+            tag=provenance.get("tag") or case.get("tag"),
+            failed=True,
+        ),
         material=material,
         temperature_k=temperature,
         pressure_bar=1.01325,
@@ -165,13 +242,15 @@ async def persist_failed_simulation(
         energy_output_kev=None,
         excess_heat_watts=None,
         duration_seconds=None,
-        parameters={
-            "reactant": case.get("reactant"),
-            "rate_mode": case.get("rate_mode"),
-            "use_theory_pipeline": case.get("use_theory_pipeline"),
-            "enabled_theories": case.get("enabled_theories"),
-            "tag": case.get("tag"),
-        },
+        parameters=_merge_parameters(
+            {
+                "reactant": case.get("reactant"),
+                "rate_mode": case.get("rate_mode"),
+                "use_theory_pipeline": case.get("use_theory_pipeline"),
+                "enabled_theories": case.get("enabled_theories"),
+            },
+            case,
+        ),
         results={
             "is_model_output": True,
             "disclaimer": DISCLAIMER,

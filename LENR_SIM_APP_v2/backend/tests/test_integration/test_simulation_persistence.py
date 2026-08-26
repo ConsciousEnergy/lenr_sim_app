@@ -163,3 +163,44 @@ def test_theory_graph_edges_unchanged_by_history() -> None:
         assert history_body["curated_edge_strength_unchanged"] is True
         for edge in graph_body["edges"]:
             assert "strength" in edge
+
+
+def test_simulate_persists_campaign_provenance_on_success() -> None:
+    payload = _base_payload()
+    payload.update(
+        {
+            "campaign_preset": "literature_grid",
+            "campaign_tag": "literature:miles-1993",
+            "literature_id": "miles-1993",
+            "claim_tag": "EMP",
+            "open_question_ids": ["EQ-OPEN-YIELD-01", "EQ-OPEN-RAD-01"],
+        }
+    )
+    with _client() as client:
+        resp = client.post("/api/unified/simulate", json=payload)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["contract_version"].endswith("-science-gate-1")
+        assert data["open_questions"]["lenr_proved"] is False
+        persistence = (data.get("analytics_transparency") or {}).get("persistence") or {}
+        listed = client.get(
+            "/api/analytics/experiments",
+            params={"session_id": "other-session", "include_baseline": True, "limit": 100},
+        )
+        match = next(row for row in listed.json()["experiments"] if row["id"] == persistence["experiment_id"])
+        assert match["name"] == "Campaign literature:miles-1993"
+        params = match.get("parameters") or {}
+        assert params["campaign_preset"] == "literature_grid"
+        assert params["tag"] == "literature:miles-1993"
+        assert params["literature_id"] == "miles-1993"
+        assert params["claim_tag"] == "EMP"
+        assert params["open_question_ids"] == ["EQ-OPEN-YIELD-01", "EQ-OPEN-RAD-01"]
+        stats = client.get(
+            "/api/analytics/stats",
+            params={"session_id": "other-session", "include_baseline": True},
+        )
+        assert stats.status_code == 200
+        counts = stats.json().get("openQuestionCounts") or {}
+        assert counts.get("EQ-OPEN-YIELD-01", 0) >= 1
+        assert counts.get("EQ-OPEN-RAD-01", 0) >= 1
+

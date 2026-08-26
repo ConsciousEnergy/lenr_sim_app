@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Q-anchored theory vs literature campaign (2026-08-26)
+- Persist campaign provenance on **successful** unified and theory-pipeline rows: `parameters_json` keys `campaign_preset`, `tag`, `literature_id`, `claim_tag`, `open_question_ids`; History name prefers `Campaign {tag}`
+- `literature_grid` cells are keyed by `literature_id` so Miles/Chubb are not collapsed into Fleischmann–Pons when T/loading match
+- Miles 1993 EMP seed (`miles-1993`) using in-app 1 W / 23.8 MeV / 2.63e11 He-4 s⁻¹ W⁻¹ handles; Q5 and Q2 tagged; `EQ-OPEN-*` stay OPEN
+- Designed `question_theories` preset: isolated theories at Q-relevant literature cells plus ARPA-E composition-group nulls (~20–45). Do not run `full` / full `diverse` in CI
+- `report_open_question_stress` CLI + smoke fixture; Analytics `openQuestionCounts` chips (model N, not closure)
+- Docs: `Q_THEORY_CAMPAIGN_2026-08-26.md`, researcher pack commands, Analytics transparency
+
 ### Theory reviewer campaign: datasets, Analytics N/CI, Lean bounds (2026-08-26)
 - Versioned JSON datasets (`literature_baselines`, screening priors, Parkhomov curated, Q1–Q5 register, PRED-01…07) with Python loaders and stable baseline IDs
 - Campaign preset `literature_grid` (designed, not cartesian) plus `export_reviewer_pack` smoke fixture. Do not run `full` / full `diverse` in CI

@@ -34,7 +34,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help=(
             "Grid size (smoke=4, default=48, full=288, diverse=~197 unified + "
             "theory-group runs, all_claims=6 unified + one run per registered theory, "
-            "literature_grid=distinct literature cells + negative controls)"
+            "literature_grid=one cell per literature_id + negative controls, "
+            "question_theories=Q-anchored isolated theories + ARPA-E nulls)"
         ),
     )
     parser.add_argument(
