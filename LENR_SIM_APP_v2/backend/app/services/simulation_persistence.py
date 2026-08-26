@@ -28,9 +28,13 @@ DISCLAIMER = (
 
 
 def persistence_enabled() -> bool:
-    """Return False when LENR_AUTO_PERSIST is explicitly disabled."""
-    flag = os.getenv("LENR_AUTO_PERSIST", "1").strip().lower()
-    return flag not in {"0", "false", "no", "off"}
+    """Return False when LENR_AUTO_PERSIST is off, or by default in production."""
+    flag = os.getenv("LENR_AUTO_PERSIST")
+    if flag is not None:
+        return flag.strip().lower() not in {"0", "false", "no", "off"}
+    from app.core.config import EnvironmentType, settings
+
+    return settings.ENVIRONMENT != EnvironmentType.PRODUCTION
 
 
 def _dump(obj: Any) -> Dict[str, Any]:

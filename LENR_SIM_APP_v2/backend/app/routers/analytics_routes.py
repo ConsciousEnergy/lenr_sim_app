@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import io
 
 from app.core.database import get_db_session
+from app.core.analytics_write_guard import require_analytics_write
 from app.services.analytics_service import AnalyticsService, get_analytics_service
 from app.utils.json_safe import to_json_safe
 
@@ -302,6 +303,7 @@ async def get_experiment(
 async def create_experiment(
     experiment: ExperimentCreate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """
     Create a new experiment record.
@@ -338,6 +340,7 @@ async def update_experiment(
     experiment_id: str,
     update: ExperimentUpdate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Update an existing experiment."""
     service = get_analytics_service(db)
@@ -357,6 +360,7 @@ async def update_experiment(
 async def delete_experiment(
     experiment_id: str,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Delete an experiment."""
     service = get_analytics_service(db)
@@ -394,6 +398,7 @@ async def add_timeline_points(
     experiment_id: str,
     data: TimelinePointsCreate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Add timeline data points to an experiment."""
     service = get_analytics_service(db)
