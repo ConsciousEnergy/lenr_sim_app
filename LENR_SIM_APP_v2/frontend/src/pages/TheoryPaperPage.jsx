@@ -1018,6 +1018,8 @@ const TheoryPaperPage = () => {
                 Akito Takahashi's TSC theory proposes that four deuterons can form a tetrahedral symmetric condensate within the Pd lattice, enabling 4D multi-body fusion: 4D → He-4 + He-4 + 47.6 MeV. The tetrahedral symmetry minimizes Coulomb repulsion through equal charge distribution, dramatically enhancing the tunnelling probability compared to 2-body reactions.
                 This remains an <strong>open speculative channel</strong> (<em>claim tier: speculative_exploratory</em>;
                 software mode <code>trapped_state</code> beside the default <code>two_body</code> baseline, RR-006).
+                Takahashi (2026) restates a 4H/TSC Weak-Strong (protium) channel in brief view; that path is
+                <strong>literature context only</strong> and is not a separate registered theory_id.
                 Criticism of unrelated experiments does not close this class.
               </Typography>
 

@@ -51,12 +51,13 @@ export const analyticsApi = {
    * Get type distribution for pie chart
    * @returns {Promise<Array>} Distribution data
    */
-  getTypeDistribution: async () => {
+  getTypeDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/type', {
-        params: { session_id: sessionId },
+        params: { session_id: sessionId, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -69,12 +70,13 @@ export const analyticsApi = {
    * Get material distribution
    * @returns {Promise<Array>} Material distribution data
    */
-  getMaterialDistribution: async () => {
+  getMaterialDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/material', {
-        params: { session_id: sessionId },
+        params: { session_id: sessionId, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -83,17 +85,34 @@ export const analyticsApi = {
     }
   },
 
+  getSourceDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
+    const sessionId = getSessionId();
+
+    try {
+      const response = await api.get('/api/analytics/distribution/source', {
+        params: { session_id: sessionId, include_baseline: includeBaseline },
+      });
+      return response;
+    } catch (error) {
+      console.warn('Source distribution API unavailable:', error.message);
+      return [];
+    }
+  },
+
   /**
    * Get temperature distribution for bar chart
    * @param {number} bins - Number of bins (default: 10)
+   * @param {Object} options - Query options
    * @returns {Promise<Array>} Temperature distribution data
    */
-  getTemperatureDistribution: async (bins = 10) => {
+  getTemperatureDistribution: async (bins = 10, options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/temperature', {
-        params: { session_id: sessionId, bins },
+        params: { session_id: sessionId, bins, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -109,12 +128,12 @@ export const analyticsApi = {
    * @returns {Promise<Array>} Timeline data
    */
   getTimeline: async (options = {}) => {
-    const { limit = 30 } = options;
+    const { limit = 30, includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/timeline', {
-        params: { session_id: sessionId, limit },
+        params: { session_id: sessionId, limit, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -696,6 +715,9 @@ function getLocalTimeline() {
       energyOutput: exp.energyOutput || exp.energy_output_kev || 0,
       type: exp.type || exp.experiment_type || 'Unknown',
       status: exp.status || 'completed',
+      is_baseline: exp.is_baseline || exp.isBaseline || false,
+      source: exp.source,
+      sourceClass: exp.sourceClass || (exp.is_baseline || exp.isBaseline ? 'Baseline' : 'User'),
     }));
 }
 

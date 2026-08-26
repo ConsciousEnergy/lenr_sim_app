@@ -109,8 +109,8 @@ export const THEORY_VISUALIZATION_MAP = {
     has3DOverlay: false,
     displayName: 'Takahashi 4D Tetrahedral Symmetric Condensate',
     description:
-      '4D-tetrahedron symmetric condensate for multi-body fusion. Scalar enhancement only.',
-    reference: 'Takahashi (2009); Takahashi & Yabuuchi (2015)',
+      '4D-tetrahedron symmetric condensate for multi-body fusion. Scalar enhancement only. 4H/TSC WS (protium Weak-Strong) is cited literature, not a separate theory_id.',
+    reference: 'Takahashi (2004, 2008, 2013, 2014, 2016, 2026 brief view)',
   },
   vysotskii_ccs: {
     vizLayer: null,
