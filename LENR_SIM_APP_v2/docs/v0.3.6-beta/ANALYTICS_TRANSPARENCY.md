@@ -85,8 +85,9 @@ Campaign and auto-persist (`source` in `simulation_campaign` / `auto_persist`)
 stay visible so seed-only vs hydrated campaign N is not confused with “hide my
 runs.”
 
-Analytics Overview shows a seed-only banner when `sourceClassCounts.Campaign`
-is 0 and Total Records > 0. Import `q_campaign_demo` to match the cloud ~107.
+Analytics Overview does **not** show a CLI hydrate banner. Seed-only vs campaign
+N is in the caption (`openQuestionCounts` / `openQuestionCountsCampaign`).
+Researchers import `q_campaign_demo` from the CLI; see `RESEARCHER_REVIEW_PACK.md`.
 
 ```mermaid
 flowchart TD

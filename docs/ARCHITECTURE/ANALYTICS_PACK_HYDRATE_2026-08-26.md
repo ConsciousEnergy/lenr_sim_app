@@ -12,7 +12,7 @@ flowchart LR
   gitPull["git pull beta"] --> jsonSeeds["literature_baselines.v1.json"]
   jsonSeeds --> seedCli["seed_database"]
   seedCli --> sql17["sqlite ~17 Baseline"]
-  sql17 --> banner["Analytics seed-only banner"]
+  sql17 --> caption["Analytics caption seed vs campaign N"]
   demo["reviewer_packs/q_campaign_demo"] --> importCli["import_reviewer_pack"]
   importCli --> sql107["sqlite 17 Baseline plus 90 Campaign"]
   sql107 --> stats["GET analytics stats sourceClassCounts"]
