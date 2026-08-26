@@ -260,6 +260,7 @@ const AnalyticsPage = () => {
         maxEnhancement: statsData.maxEnhancement?.toFixed(2) || '0.00',
         outcomeCounts: statsData.outcomeCounts || {},
         claimTierCounts: statsData.claimTierCounts || {},
+        openQuestionCounts: statsData.openQuestionCounts || {},
       });
       
       setPieData(typeDistData || []);
@@ -333,6 +334,7 @@ const AnalyticsPage = () => {
                 : completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
               outcomeCounts: localStats?.outcomeCounts || {},
               claimTierCounts: localStats?.claimTierCounts || {},
+              openQuestionCounts: localStats?.openQuestionCounts || {},
             });
             
             // Build pie data from local
@@ -697,7 +699,33 @@ const AnalyticsPage = () => {
               .join(', ')}.
           </>
         )}
+        {stats?.openQuestionCounts && Object.keys(stats.openQuestionCounts).length > 0 && (
+          <>
+            {' '}
+            Campaign N by open question (model rows, not closure):{' '}
+            {Object.entries(stats.openQuestionCounts)
+              .map(([qid, count]) => `${qid} ${count}`)
+              .join(', ')}.
+          </>
+        )}
       </Typography>
+      {stats?.openQuestionCounts && Object.keys(stats.openQuestionCounts).length > 0 && (
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}
+          data-testid="open-question-n-chips"
+        >
+          {Object.entries(stats.openQuestionCounts).map(([qid, count]) => (
+            <Chip
+              key={qid}
+              size="small"
+              variant="outlined"
+              label={`${qid} N=${count}`}
+            />
+          ))}
+        </Stack>
+      )}
       
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>

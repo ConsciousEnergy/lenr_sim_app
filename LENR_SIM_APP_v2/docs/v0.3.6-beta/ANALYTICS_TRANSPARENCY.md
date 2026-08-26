@@ -15,6 +15,7 @@ Current split (additive API fields on `GET /api/analytics/stats`):
 | `scientificPositiveRate` | Share classified `positive` |
 | `outcomeCounts` | `{positive, null, inapplicable, failed}` |
 | `claimTierCounts` | Histogram of theory `claim_tier` labels from saved pipeline scores |
+| `openQuestionCounts` | Histogram of `parameters.open_question_ids` on persisted rows (campaign + seeded baselines). Model N, not Q1–Q5 closure |
 
 Classification rules (model/literature outcomes only):
 

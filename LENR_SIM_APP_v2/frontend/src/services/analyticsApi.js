@@ -619,6 +619,7 @@ function getLocalStats() {
       failedCount: 0,
       outcomeCounts: emptyCounts,
       claimTierCounts: {},
+      openQuestionCounts: {},
     };
   }
 
@@ -654,6 +655,7 @@ function getLocalStats() {
     failedCount: failed,
     outcomeCounts,
     claimTierCounts: {},
+    openQuestionCounts: {},
   };
 }
 

@@ -27,6 +27,7 @@ jest.mock('../services/analyticsApi', () => ({
       failedCount: 1,
       outcomeCounts: { positive: 1, null: 1, inapplicable: 1, failed: 1 },
       claimTierCounts: { speculative: 2, validated_lenr_mechanism: 1 },
+      openQuestionCounts: { 'EQ-OPEN-YIELD-01': 2, 'EQ-OPEN-RAD-01': 1 },
     }),
     getTypeDistribution: jest.fn().mockResolvedValue([
       { name: 'LENR', value: 3, percentage: 75 },
@@ -151,6 +152,7 @@ jest.mock('../services/analyticsApi', () => ({
       totalEnergy: 0,
       outcomeCounts: {},
       claimTierCounts: {},
+      openQuestionCounts: {},
     }),
   },
 }));
@@ -173,6 +175,8 @@ describe('AnalyticsPage honest metrics', () => {
     expect(note).toHaveTextContent(/Claim-tier histogram/i);
     expect(note).toHaveTextContent(/popularity is not validation/i);
     expect(note).toHaveTextContent(/energy_output_kev/i);
+    expect(note).toHaveTextContent(/Campaign N by open question/i);
+    expect(screen.getByTestId('open-question-n-chips')).toHaveTextContent('EQ-OPEN-YIELD-01 N=2');
 
     expect(screen.getByTestId('model-output-disclaimer')).toHaveTextContent(
       /model outputs/i
