@@ -3,7 +3,7 @@ from typing import List
 from .nodes import TheoryNode, TheoryEdge
 
 def _build_default_nodes() -> List[TheoryNode]:
-    """Return the full set of 19 theory nodes."""
+    """Return the full set of registered theory nodes."""
     return [
         TheoryNode(
             theory_id="electron_screening",
@@ -76,7 +76,8 @@ def _build_default_nodes() -> List[TheoryNode]:
             researcher="Akito Takahashi",
             year=2004,
             category="mechanism",
-            key_predictions=["4D→2He-4 + 47.6 MeV", "No neutrons", "No gamma"],
+            key_predictions=["4D→2He-4 + 47.6 MeV", "No neutrons", "No gamma",
+                             "4H/TSC WS literature context (protium, not implemented)"],
             physical_properties=[
                 "multi_body_fusion", "he4_production", "no_dangerous_radiation",
                 "coulomb_barrier_reduction", "loading_threshold",
@@ -246,6 +247,19 @@ def _build_default_nodes() -> List[TheoryNode]:
             ],
             material_systems=["Pd-D"],
         ),
+        TheoryNode(
+            theory_id="stellar_scaling_mhd",
+            theory_name="Stellar-Scaling MHD (context)",
+            researcher="Parkin, Pudritz",
+            year=2004,
+            category="engineering",
+            key_predictions=[
+                "Cross-regime MHD dimensionless groups",
+                "Not an LENR mechanism prediction",
+            ],
+            physical_properties=["flux_compression"],
+            material_systems=["context"],
+        ),
     ]
 
 
@@ -367,6 +381,13 @@ def _build_default_edges() -> List[TheoryEdge]:
         shared_properties=["nano_confinement"],
         strength=0.7,
         description="Both provide nanoscale confinement mechanisms",
+    ))
+    edges.append(TheoryEdge(
+        source_id="stellar_scaling_mhd", target_id="bubble_mhd_confinement",
+        relationship_type="extends",
+        shared_properties=["flux_compression"],
+        strength=0.3,
+        description="Stellar MHD scaling is a cross-regime context line, not an LENR mechanism",
     ))
     edges.append(TheoryEdge(
         source_id="casimir_confinement", target_id="nae_model",

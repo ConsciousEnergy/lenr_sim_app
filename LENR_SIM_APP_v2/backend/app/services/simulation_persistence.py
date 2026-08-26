@@ -94,6 +94,47 @@ def _compact_results(
     return to_json_safe(payload)
 
 
+def _enrich_with_final_scores(
+    scores: Dict[str, Any],
+    conditions: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Attach Relevance Map five-factor final_score onto persisted pipeline scores.
+
+    Additive: existing ``score`` (guardrails weighted_score) is unchanged.
+    Failures are logged and skipped so persist never raises.
+    """
+    if not scores:
+        return scores
+    try:
+        from app.physics_engine.theory_scoring import compute_theory_scores
+
+        cond: Dict[str, Any] = {}
+        for key, value in (conditions or {}).items():
+            if isinstance(value, (int, float)):
+                cond[key] = float(value)
+        cond.setdefault("temperature", 300.0)
+        cond.setdefault("loading_ratio", 0.9)
+        ranked = compute_theory_scores(
+            conditions=cond,
+            enabled_theories=list(scores.keys()),
+            skip_sensitivity=True,
+        )
+        for theory_id, record in scores.items():
+            extra = ranked.get(theory_id) or {}
+            if extra.get("final_score") is None:
+                continue
+            record["final_score"] = extra.get("final_score")
+            record["physical_consistency"] = extra.get("physical_consistency")
+            record["experimental_agreement"] = extra.get("experimental_agreement")
+            record["parameter_sensitivity"] = extra.get("parameter_sensitivity")
+            record["cross_theory_agreement"] = extra.get("cross_theory_agreement")
+            record["observables_completeness"] = extra.get("observables_completeness")
+            record["score_formula"] = "five_factor_gm_x_claim_tier"
+    except Exception:
+        logger.exception("final_score enrichment skipped; weighted_score still stored")
+    return scores
+
+
 def _scores_from_pipeline(pipeline_result: Any) -> Dict[str, Any]:
     if pipeline_result is None:
         return {}
@@ -168,7 +209,10 @@ async def persist_best_effort(
             tally_claim_tiers,
         )
 
-        scores = _scores_from_pipeline(pipeline_result)
+        scores = _enrich_with_final_scores(
+            _scores_from_pipeline(pipeline_result),
+            conditions,
+        )
         stamped = dict(results or {})
         if scores:
             stamped.setdefault("pipeline_scores", scores)
@@ -207,7 +251,6 @@ async def persist_best_effort(
             session.add(experiment)
 
             theory_run_id = None
-            scores = _scores_from_pipeline(pipeline_result)
             if scores or pipeline_result is not None:
                 cond = conditions or {}
                 top_id, top_score = _top_theory(scores)
