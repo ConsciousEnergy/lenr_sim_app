@@ -749,6 +749,16 @@ Reaction rate predictions are validated using Monte Carlo sampling:
 3. Build probability distributions for output observables
 4. Compare with experimental data using likelihood ratios
 
+*Honesty on sample size (companion app, 2026-08-26):* default Sobol UQ remains
+**512 samples, opt-in** (API cap 512). Campaign presets that a reviewer can
+actually run are `literature_grid` (~16–32 designed cells), `all_claims`
+(~6 unified + one run per registered theory), and optional `diverse` (~237).
+That corpus is on the order of **hundreds of model-output rows**, not
+\(10^4\)–\(10^6\). The larger Monte Carlo aspiration remains a sensitivity
+method, not a completed campaign. See
+`LENR_SIM_APP_v2/docs/v0.3.6-beta/RESEARCHER_REVIEW_PACK.md`. Extra runs do
+not close §5A or prove LENR.
+
 **Implications:**
 
 1. Proper statistical treatment enables rigorous comparison between theory and experiment
@@ -917,6 +927,8 @@ This work presents a unified theoretical and mathematical framework that address
 A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, and n-body geometry vs trap identities. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
 
 **Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
+
+**Would-close-if lemmas (still OPEN).** `LenrFormal.OpenQuestionBounds` records closure *predicates* and integer-scaled implications only: Q1 closes if the energy remainder is identically zero (Hagelstein/Dicke/BEC remain named hypotheses); Q2 would close if the lattice \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma\) bookkeeping ratio meets \(10^{11}\); Q3 occupancy/collective factors are Nat inputs to the existing `RateBudget.would_close_if` product (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a millielectronvolt **deficit** of \(\sim 10^{7}\) between a stated 0.1 eV double-layer and the 0.782 MeV capture threshold (`EQ-OPEN-EC-DEFICIT-01`) without discharging `EQ-OPEN-EC-01`; Q5 distinguishes an instantaneous Miles EMP band from an integrated 100–\(10^{4}\) remainder (`EQ-OPEN-YIELD-BAND-01`). The OPEN table is unchanged. There is no `theorem lenr_occurs`.
 
 ---
 

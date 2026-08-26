@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Theory reviewer campaign: datasets, Analytics N/CI, Lean bounds (2026-08-26)
+- Versioned JSON datasets (`literature_baselines`, screening priors, Parkhomov curated, Q1–Q5 register, PRED-01…07) with Python loaders and stable baseline IDs
+- Campaign preset `literature_grid` (designed, not cartesian) plus `export_reviewer_pack` smoke fixture. Do not run `full` / full `diverse` in CI
+- Analytics Relevance Map: N, percentile CI, score-formula / sensitivity chips; wires existing parameter-sweep and validation-report APIs
+- Opt-in `score_mode=five_factor_plus_literature`; default five-factor GM unchanged; claim tiers are not auto-promoted
+- Lean `OpenQuestionBounds.lean`: would-close-if lemmas; Q4 millielectronvolt deficit THM; Q5 yield-band DEF. `EQ-OPEN-*` stay OPEN
+- Docs: `RESEARCHER_REVIEW_PACK.md`, architecture map 2026-08-26, paper §5.1 N honesty and §6.1 would-close-if note, ISSUE_LEDGER “section written ≠ obligation discharged”
+
 ### Analytics SQL match, Relevance Map persisted scores, all-claims collection (2026-08-26)
 - Overview charts plot SQL `experiments` fields on separate enhancement (×) and energy (keV) axes; X-axis is `created_at` date with name/source in the tooltip
 - Cards: **Total Records** (SQL row count); keV sum labelled as estimated, not conserved; **Include published baselines** toggle; stored-type pie plus **Source class** pie

@@ -39,7 +39,11 @@ const OpenChallengesSection = ({ embedded = false }) => {
       corpus; the open questions are <strong>how</strong> MeV energy partitions,
       <strong> how</strong> γ is suppressed, and <strong>when</strong> the rate budget
       closes under a named mechanism path. See the live Open Questions Virtual Lab on
-      Unified Results for Oracle A/B determinations.
+      Unified Results for Oracle A/B determinations. Formal IDs{' '}
+      <code>EQ-OPEN-MEV-01</code>, <code>EQ-OPEN-RAD-01</code>,{' '}
+      <code>EQ-OPEN-RATE-01</code>, <code>EQ-OPEN-EC-01</code>, and{' '}
+      <code>EQ-OPEN-YIELD-01</code> remain <strong>OPEN</strong>.
+      Lean <code>OpenQuestionBounds</code> lemmas are would-close-if only.
     </Typography>
     <List dense>
       <ListItem>
@@ -76,7 +80,18 @@ const OpenChallengesSection = ({ embedded = false }) => {
         <MuiLink href="/docs/reviewer-packets" component={Link} to="/docs/reviewer-packets">
           REVIEWER_PACKETS
         </MuiLink>
-        {' '}for the full mathematical audit and verification framework.
+        ,{' '}
+        <MuiLink
+          href="/docs/researcher-review-pack"
+          component={Link}
+          to="/docs/researcher-review-pack"
+        >
+          researcher review pack
+        </MuiLink>
+        , and application datasets{' '}
+        <code>LENR_SIM_APP_v2/datasets/</code>
+        {' '}for the full mathematical audit and verification framework. Extra
+        simulations are model outputs; they do not close these questions.
       </Typography>
     </Alert>
   </Wrapper>
