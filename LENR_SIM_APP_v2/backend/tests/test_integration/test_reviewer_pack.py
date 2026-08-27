@@ -82,14 +82,14 @@ def test_q_campaign_demo_pack_size_lock() -> None:
     assert manifest["schema"] == PACK_SCHEMA
     assert manifest["lenr_proved"] is False
     assert manifest["preset"] == "q_campaign_demo"
-    assert manifest["n_experiments"] == 107
-    assert manifest["n_theory_runs"] == 89
+    assert manifest["n_experiments"] == 126
+    assert manifest["n_theory_runs"] == 108
     assert manifest["source_class_counts"]["Baseline"] == 17
-    assert manifest["source_class_counts"]["Campaign"] == 90
+    assert manifest["source_class_counts"]["Campaign"] == 109
     experiments = (root / "experiments.jsonl").read_text(encoding="utf-8").strip().splitlines()
     runs = (root / "theory_runs.jsonl").read_text(encoding="utf-8").strip().splitlines()
-    assert len(experiments) == 107
-    assert len(runs) == 89
+    assert len(experiments) == 126
+    assert len(runs) == 108
     assert set(manifest["open_ids"]) == OPEN_IDS
 
 

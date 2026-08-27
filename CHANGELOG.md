@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additive experiment list fields: `sourceClass`, `literatureId`, `meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` and `source_class` filter. This is five-factor association, not P(LENR)
 - History: Model association % / top theory / literature id, sort control, source-class chips
 - Relevance Map **Model association rank** panel (N, CI, claim_tier, `is_empirical_confidence: false`). Overlay adds `ranked_theory_ids`
-- Designed `association_screen` campaign (Miles / McKubre / ARPA-E × 3 T × 2 loading, ~18). Do not run `full` / full `diverse` in CI
+- Designed `association_screen` campaign (Miles / McKubre / ARPA-E × 3 T × 2 loading, 18 cells). Demo pack refreshed to 126 experiments / 108 theory_runs. Do not run `full` / full `diverse` in CI
 - Unified Theory Save to Analytics attaches optional Theory Testbed `pipeline_scores` without multiplying into bubble enhancement
 - Theory Paper / Guide / markdown paper Author Contributions list Grok 4.6 and the xAI/Grok family
 

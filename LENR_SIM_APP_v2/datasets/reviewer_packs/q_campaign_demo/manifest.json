@@ -1,18 +1,18 @@
 {
   "schema": "lenr-reviewer-pack-v1",
-  "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*. Imported demo pack; clone does not include live SQLite campaign rows.",
+  "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
-  "git_sha": "710eaa19ae2d8b6f336421b6034f6ddc7956ca92",
+  "git_sha": "0ac08e6d456435b9e02a0f58d5c083126b88a4e8",
   "preset": "q_campaign_demo",
-  "n_experiments": 107,
-  "n_theory_runs": 89,
+  "n_experiments": 126,
+  "n_theory_runs": 108,
   "claim_tier_histogram": {
-    "speculative_exploratory": 1218
+    "speculative_exploratory": 2016
   },
   "source_class_counts": {
     "Baseline": 17,
-    "Campaign": 90
+    "Campaign": 109
   },
   "open_ids": [
     "EQ-OPEN-MEV-01",

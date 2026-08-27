@@ -3,7 +3,7 @@
 How to collect, inspect, **import**, and export **model-output** rows for other researchers.
 Extra simulations do **not** prove LENR, close `EQ-OPEN-*`, or raise `claim_tier`.
 
-## Clone ≠ 107 Analytics rows
+## Clone ≠ 126 Analytics rows
 
 `git pull` of `lenr_sim_app_v0.3.6-beta` ships **code** and literature JSON, not
 the cloud agent's SQLite. App startup creates tables only.
@@ -12,9 +12,9 @@ the cloud agent's SQLite. App startup creates tables only.
 |-------|-------------------------|------------|
 | Pull and start | 0 | Empty sqlite |
 | `seed_database` | ~17 | Literature baselines (includes Miles 1993). Old DBs without `--force` stay at 16 |
-| Seed + a couple of UI runs | ~18 | The usual “I synced but I am not on 107” state |
-| Import `q_campaign_demo` or `--hydrate-demo` | ~107 | 17 Baseline + 90 Campaign model-output rows |
-| Re-run the three campaign presets | ~107+ | Live physics; same honest N, slower |
+| Seed + a couple of UI runs | ~18 | The usual “I synced but I am not on 126” state |
+| Import `q_campaign_demo` or `--hydrate-demo` | ~126 | 17 Baseline + Campaign model-output rows (includes association_screen) |
+| Re-run campaign presets including association_screen | ~126+ | Live physics; same honest N, slower |
 
 Point `LENR_SQLITE_PATH` at the **same** file the API uses. A second sqlite
 (`/tmp/lenr_reviewer.db`) will look like 16–18 forever.
@@ -30,7 +30,7 @@ python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_cam
 ```
 
 Committed demo pack: `LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/`
-(107 experiments, 89 `theory_runs`). Smoke fixture N=1 remains for tests.
+(126 experiments, 108 `theory_runs`, including association_screen). Smoke fixture N=1 remains for tests.
 Do **not** git-add `reviewer_packs/local/` (export scratch).
 Do **not** write campaign or UI model outputs into `literature_baselines.v1.json`
 (cited literature only). Persist those rows in the app DB / demo pack.
