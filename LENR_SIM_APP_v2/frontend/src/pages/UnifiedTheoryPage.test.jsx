@@ -14,6 +14,7 @@ jest.mock('../contexts/PhysicsContext', () => ({
   ...jest.requireActual('../contexts/PhysicsContext'),
   usePhysics: () => ({
     setSimulationResult: mockSetSimulationResult,
+    theoryResult: null,
   }),
 }));
 

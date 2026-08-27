@@ -70,6 +70,7 @@ import { formatCycleTimeChip } from '../utils/bubblePhaseSchedule';
 import { ENHANCEMENT_THRESHOLDS } from '../utils/unifiedTheoryCharts';
 import { useBubbleLatticeStream, STREAM_STATUS } from '../hooks/useBubbleLatticeStream';
 import { track } from '../analytics/events';
+import { attachTestbedScoresToResults } from '../utils/theoryTestbedScores';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
 const UNIFIED_SIMULATE_ENDPOINT = '/api/unified/simulate';
@@ -523,14 +524,17 @@ function UnifiedTheoryPage() {
         fusion_rate: simulationData.peak_conditions?.fusion_rate,
         energy_output_kev: simulationData.total_energy_output || 0,
         duration_seconds: (simulationData.enhancement_timeline?.length || 0) * 0.001,
-        results: {
-          peak_conditions: simulationData.peak_conditions,
-          enhancement_breakdown:
-            simulationData.peak_conditions?.enhancement_breakdown ||
-            simulationData.enhancement_breakdown ||
-            {},
-          lawson_progress: simulationData.lawson_criterion_progress,
-        },
+        results: attachTestbedScoresToResults(
+          {
+            peak_conditions: simulationData.peak_conditions,
+            enhancement_breakdown:
+              simulationData.peak_conditions?.enhancement_breakdown ||
+              simulationData.enhancement_breakdown ||
+              {},
+            lawson_progress: simulationData.lawson_criterion_progress,
+          },
+          theoryResult,
+        ),
       };
       
       const saved = await analyticsApi.saveExperiment(experimentData);
@@ -545,7 +549,7 @@ function UnifiedTheoryPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [simulationData, parameters, selectedSystem]);
+  }, [simulationData, parameters, selectedSystem, theoryResult]);
   const [collapseCount, setCollapseCount] = useState(0);
 
   // Handle system preset change

@@ -54,6 +54,10 @@ class ExperimentCreate(BaseModel):
     excess_heat_watts: Optional[float] = None
     duration_seconds: Optional[float] = None
     results: Optional[dict] = Field(default_factory=dict)
+    source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source (User Simulation, simulation_campaign, auto_persist).",
+    )
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -252,6 +256,10 @@ async def list_experiments(
     experiment_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     material: Optional[str] = Query(None),
+    source_class: Optional[str] = Query(
+        None,
+        description="Filter Baseline, Campaign, Auto, or User (additive).",
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     sort_by: str = Query("created_at"),
@@ -261,7 +269,9 @@ async def list_experiments(
     """
     Get paginated list of experiments with optional filtering.
     
-    Supports filtering by type, status, material, and pagination.
+    Supports filtering by type, status, material, source_class, and pagination.
+    Additive list fields: sourceClass, literatureId, meanFinalScore, topTheoryId.
+    sort_by=mean_final_score ranks by five-factor association, not P(LENR).
     """
     service = get_analytics_service(db)
     experiments, total = await service.get_experiments(
@@ -270,6 +280,7 @@ async def list_experiments(
         experiment_type=experiment_type,
         status=status,
         material=material,
+        source_class=source_class,
         limit=limit,
         offset=offset,
         sort_by=sort_by,
@@ -330,6 +341,7 @@ async def create_experiment(
         excess_heat_watts=experiment.excess_heat_watts,
         duration_seconds=experiment.duration_seconds,
         results=experiment.results,
+        source=experiment.source or "User Simulation",
     )
     
     return created

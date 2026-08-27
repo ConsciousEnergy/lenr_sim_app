@@ -2,7 +2,7 @@
 
 **Subtitle:** Electron, Neutron, and Proton coupling is all you need
 
-**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Composer (Cursor)
+**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
 Date: 2026-02-14 (revised 2026-08-23, v0.3.6-beta)
 Organization: Conscious Energies | www.conscious.energy
@@ -11,7 +11,7 @@ Organization: Conscious Energies | www.conscious.energy
 
 **Keywords:** LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tunneling; Casimir; claim tiers; condensed-matter nuclear hypotheses
 
-**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
 
 **Epistemic posture.** Multi-body lattice–bubble constructions in this framework are **exploratory models**, not empirically validated nuclear-engineering predictions. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
 

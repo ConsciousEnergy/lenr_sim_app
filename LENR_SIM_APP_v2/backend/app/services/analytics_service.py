@@ -26,8 +26,13 @@ from app.models.database_models import (
 )
 from app.services.simulation_persistence import (
     SHARED_SOURCES,
-    SOURCE_AUTO_PERSIST,
-    SOURCE_CAMPAIGN,
+)
+from app.services.experiment_association import (
+    PYTHON_SORT_FIELDS,
+    classify_source_class,
+    enrich_experiment_dict,
+    sort_enriched_rows,
+    source_class_clause,
 )
 from app.services.scientific_outcomes import (
     OUTCOME_FAILED,
@@ -40,17 +45,6 @@ from app.services.scientific_outcomes import (
 from app.services.open_question_stress import tally_open_question_counts
 
 logger = logging.getLogger(__name__)
-
-
-def classify_source_class(*, is_baseline: bool, source: Optional[str] = None) -> str:
-    """Map SQL flags onto the History source-chip vocabulary."""
-    if is_baseline:
-        return "Baseline"
-    if source == SOURCE_CAMPAIGN:
-        return "Campaign"
-    if source == SOURCE_AUTO_PERSIST:
-        return "Auto"
-    return "User"
 
 
 def _visibility_clause(session_id: Optional[str], include_baseline: bool = True):
@@ -433,6 +427,7 @@ class AnalyticsService:
         experiment_type: Optional[str] = None,
         status: Optional[str] = None,
         material: Optional[str] = None,
+        source_class: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
         sort_by: str = "created_at",
@@ -456,6 +451,9 @@ class AnalyticsService:
             filters.append(Experiment.status == status)
         if material:
             filters.append(Experiment.material == material)
+        class_clause = source_class_clause(source_class)
+        if class_clause is not None:
+            filters.append(class_clause)
         
         # Count query
         count_query = select(func.count(Experiment.id))
@@ -465,24 +463,26 @@ class AnalyticsService:
         count_result = await self.session.execute(count_query)
         total = count_result.scalar() or 0
         
-        # Main query with sorting and pagination
         query = select(Experiment)
         if filters:
             query = query.where(and_(*filters))
-        
-        # Sorting
-        sort_column = getattr(Experiment, sort_by, Experiment.created_at)
-        if sort_order == "desc":
-            query = query.order_by(desc(sort_column))
-        else:
-            query = query.order_by(sort_column)
-        
-        query = query.offset(offset).limit(limit)
-        
+
+        use_python_sort = (sort_by or "") in PYTHON_SORT_FIELDS
+        if not use_python_sort:
+            sort_column = getattr(Experiment, sort_by, Experiment.created_at)
+            if sort_order == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(sort_column)
+            query = query.offset(offset).limit(limit)
+            result = await self.session.execute(query)
+            experiments = result.scalars().all()
+            return [enrich_experiment_dict(e.to_dict()) for e in experiments], total
+
         result = await self.session.execute(query)
-        experiments = result.scalars().all()
-        
-        return [e.to_dict() for e in experiments], total
+        rows = [enrich_experiment_dict(e.to_dict()) for e in result.scalars().all()]
+        rows = sort_enriched_rows(rows, sort_by=sort_by, sort_order=sort_order)
+        return rows[offset:offset + limit], total
     
     async def get_experiment(self, experiment_id: str) -> Optional[Dict[str, Any]]:
         """Get a single experiment by ID."""
@@ -491,7 +491,7 @@ class AnalyticsService:
         experiment = result.scalar_one_or_none()
         
         if experiment:
-            return experiment.to_dict()
+            return enrich_experiment_dict(experiment.to_dict())
         return None
     
     async def create_experiment(
@@ -520,6 +520,38 @@ class AnalyticsService:
 
         status = kwargs.get('status', ExperimentStatus.COMPLETED.value)
         results = dict(kwargs.get('results') or {})
+        if not results.get("pipeline_scores"):
+            from app.services.simulation_persistence import _scores_from_pipeline
+
+            attached = results.get("theory_result") or results
+            derived = _scores_from_pipeline(attached)
+            if derived:
+                results["pipeline_scores"] = derived
+        if results.get("pipeline_scores"):
+            records = [
+                record
+                for record in results["pipeline_scores"].values()
+                if isinstance(record, dict)
+            ]
+            needs_final = any(
+                record.get("final_score") is None
+                and (
+                    "score" in record
+                    or "enhancement" in record
+                    or "confidence" in record
+                )
+                for record in records
+            )
+            if needs_final:
+                from app.services.simulation_persistence import _enrich_with_final_scores
+
+                results["pipeline_scores"] = _enrich_with_final_scores(
+                    results["pipeline_scores"],
+                    {
+                        "temperature": kwargs.get("temperature_k"),
+                        "loading_ratio": kwargs.get("loading_ratio"),
+                    },
+                )
         results.setdefault(
             "scientific_outcome",
             classify_scientific_outcome(
@@ -564,7 +596,7 @@ class AnalyticsService:
         
         logger.info(f"Created experiment: {experiment.id} - {experiment.name}")
         
-        return experiment.to_dict()
+        return enrich_experiment_dict(experiment.to_dict())
     
     async def update_experiment(
         self,

@@ -769,10 +769,10 @@ const TheoryPage = () => {
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" paragraph>
             <strong>Authors:</strong> Diadon Acs (lead); contributing AIs: LENR-ARA/GPT-4, GPT-5.2,
-            Sonnet/Opus family, Gemini family, Composer (Cursor)
+            Sonnet/Opus family, Gemini family, xAI/Grok family, Composer (Cursor)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Date: revised 2026-07-22 (v0.3.6-beta) | Organization: www.conscious.energy
+            Date: revised 2026-08-23 (v0.3.6-beta) | Organization: www.conscious.energy
           </Typography>
         </Box>
       </Paper>

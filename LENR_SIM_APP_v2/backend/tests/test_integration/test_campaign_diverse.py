@@ -185,3 +185,27 @@ def test_question_theories_is_designed_not_cartesian() -> None:
     assert "Does not prove LENR" in described["note"]
 
 
+def test_association_screen_is_designed_not_cartesian() -> None:
+    from app.campaign.association_screen import (
+        ANCHOR_LITERATURE_IDS,
+        association_screen_count,
+    )
+
+    n = campaign_size("association_screen")
+    assert n == association_screen_count()
+    assert 18 <= n <= 40
+    cases = list(iter_campaign_cases("association_screen"))
+    assert len(cases) == n
+    literature_ids = {case.get("literature_id") for case in cases}
+    assert set(ANCHOR_LITERATURE_IDS) <= literature_ids
+    temperatures = {case["temperature"] for case in cases}
+    loadings = {case["loading_ratio"] for case in cases}
+    assert temperatures == {280.0, 300.0, 350.0}
+    assert loadings == {0.85, 0.95}
+    assert all(case["use_theory_pipeline"] is True for case in cases)
+    described = describe_preset("association_screen")
+    assert described["n_cases"] == n
+    assert "Does not prove LENR" in described["note"]
+    assert "P(LENR)" in described["note"]
+
+

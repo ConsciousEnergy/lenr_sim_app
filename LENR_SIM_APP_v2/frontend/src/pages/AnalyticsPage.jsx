@@ -71,6 +71,7 @@ import {
 import { analyticsApi } from '../services/analyticsApi';
 import RelevanceMap from '../components/analytics/RelevanceMap';
 import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPanels';
+import AssociationRankPanel from '../components/analytics/AssociationRankPanel';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -176,6 +177,11 @@ function scoresFromOverlay(overlay) {
   return scores;
 }
 
+function formatAssociation(score) {
+  if (!Number.isFinite(score)) return '—';
+  return `${(score * 100).toFixed(0)}%`;
+}
+
 function formatCi(lo, hi) {
   if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
   return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`;
@@ -233,6 +239,8 @@ const AnalyticsPage = () => {
   const [sourcePieData, setSourcePieData] = useState([]);
   const [scoreMode, setScoreMode] = useState('live');
   const [literatureScoreMode, setLiteratureScoreMode] = useState('five_factor');
+  const [historySortBy, setHistorySortBy] = useState('created_at');
+  const [historySourceClass, setHistorySourceClass] = useState('');
   
   // Load data from API with localStorage fallback
   const loadData = useCallback(async () => {
@@ -244,7 +252,14 @@ const AnalyticsPage = () => {
         analyticsApi.getStats(queryOpts),
         analyticsApi.getTypeDistribution(queryOpts),
         analyticsApi.getTimeline({ limit: 30, ...queryOpts }),
-        analyticsApi.getExperiments({ limit: rowsPerPage, offset: page * rowsPerPage, ...queryOpts }),
+        analyticsApi.getExperiments({
+          limit: rowsPerPage,
+          offset: page * rowsPerPage,
+          sortBy: historySortBy,
+          sortOrder: 'desc',
+          sourceClass: historySourceClass || undefined,
+          ...queryOpts,
+        }),
         analyticsApi.getTemperatureDistribution(10, queryOpts),
         analyticsApi.getSourceDistribution(queryOpts),
       ]);
@@ -297,6 +312,10 @@ const AnalyticsPage = () => {
         timestamp: exp.created_at,
         isBaseline: exp.is_baseline || false,
         source: exp.source || 'User Simulation',
+        sourceClass: exp.sourceClass,
+        literatureId: exp.literatureId,
+        meanFinalScore: exp.meanFinalScore,
+        topTheoryId: exp.topTheoryId,
         parameters: exp.parameters || {},
       }));
       
@@ -363,7 +382,7 @@ const AnalyticsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, includeBaseline]);
+  }, [page, rowsPerPage, includeBaseline, historySortBy, historySourceClass]);
   
   // Load data on mount and when pagination changes
   useEffect(() => {
@@ -890,7 +909,7 @@ const AnalyticsPage = () => {
       {/* Simulation History Tab */}
       <TabPanel value={activeTab} index={1}>
         <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h6">Simulation History</Typography>
             <Stack direction="row" spacing={1}>
               <Button startIcon={<RefreshIcon />} onClick={handleRefresh}>
@@ -901,6 +920,54 @@ const AnalyticsPage = () => {
               </Button>
             </Stack>
           </Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 1 }}
+            data-testid="association-history-caption"
+          >
+            Model association % is five-factor GM × claim-tier, not a laboratory
+            probability that LENR occurs. Huge enhancement is not contribution probability.
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}
+            data-testid="history-source-class-chips"
+          >
+            {['Campaign', 'Baseline', 'Auto', 'User'].map((label) => (
+              <Chip
+                key={label}
+                size="small"
+                label={label}
+                color={historySourceClass === label ? 'primary' : 'default'}
+                variant={historySourceClass === label ? 'filled' : 'outlined'}
+                onClick={() => {
+                  setPage(0);
+                  setHistorySourceClass((current) => (current === label ? '' : label));
+                }}
+                data-testid={`history-source-chip-${label.toLowerCase()}`}
+              />
+            ))}
+            <FormControl size="small" sx={{ minWidth: 180, ml: 1 }}>
+              <InputLabel id="history-sort-label">Sort</InputLabel>
+              <Select
+                labelId="history-sort-label"
+                label="Sort"
+                value={historySortBy}
+                onChange={(event) => {
+                  setPage(0);
+                  setHistorySortBy(event.target.value);
+                }}
+                data-testid="history-sort-select"
+              >
+                <MenuItem value="created_at">Date (newest)</MenuItem>
+                <MenuItem value="enhancement_factor">Enhancement</MenuItem>
+                <MenuItem value="mean_final_score">Model association %</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
           
           <TableContainer>
             <Table size="small">
@@ -926,6 +993,11 @@ const AnalyticsPage = () => {
                   <TableCell>Material</TableCell>
                   <TableCell align="right">Temp (K)</TableCell>
                   <TableCell align="right">Enhancement</TableCell>
+                  <TableCell align="right" data-testid="association-percent-header">
+                    Model association %
+                  </TableCell>
+                  <TableCell>Top theory</TableCell>
+                  <TableCell>Literature id</TableCell>
                   <TableCell align="right">Energy (keV)</TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Actions</TableCell>
@@ -955,6 +1027,9 @@ const AnalyticsPage = () => {
                       <TableCell>{row.material}</TableCell>
                       <TableCell align="right">{row.temperature?.toFixed(1) || 'N/A'}</TableCell>
                       <TableCell align="right">{row.enhancementFactor?.toFixed(2) || '0.00'}×</TableCell>
+                      <TableCell align="right">{formatAssociation(row.meanFinalScore)}</TableCell>
+                      <TableCell>{row.topTheoryId ? String(row.topTheoryId).replace(/_/g, ' ') : '—'}</TableCell>
+                      <TableCell>{row.literatureId || '—'}</TableCell>
                       <TableCell align="right">{row.energyOutput?.toFixed(3) || '0.000'}</TableCell>
                       <TableCell>{row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
@@ -1056,6 +1131,7 @@ const AnalyticsPage = () => {
       
       {/* Relevance Map Tab */}
       <TabPanel value={activeTab} index={3}>
+        <AssociationRankPanel overlay={campaignOverlay} />
         <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', lg: 'row' } }}>
           {/* Main graph area — 75% width with integrated detail panel */}
           <Box sx={{ flex: 3, minWidth: 0 }}>

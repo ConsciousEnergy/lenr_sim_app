@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Analytics association rank (2026-08-27)
+- Additive experiment list fields: `sourceClass`, `literatureId`, `meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` and `source_class` filter. This is five-factor association, not P(LENR)
+- History: Model association % / top theory / literature id, sort control, source-class chips
+- Relevance Map **Model association rank** panel (N, CI, claim_tier, `is_empirical_confidence: false`). Overlay adds `ranked_theory_ids`
+- Designed `association_screen` campaign (Miles / McKubre / ARPA-E × 3 T × 2 loading, 18 cells). Demo pack refreshed to 126 experiments / 108 theory_runs. Do not run `full` / full `diverse` in CI
+- Unified Theory Save to Analytics attaches optional Theory Testbed `pipeline_scores` without multiplying into bubble enhancement
+- Theory Paper / Guide / markdown paper Author Contributions list Grok 4.6 and the xAI/Grok family
+
 ### Public Analytics harden (2026-08-26)
 - Removed the Analytics seed-only CLI warning banner; seed vs campaign N stays in the caption
 - VPS deploy: `alembic upgrade head` then `seed_database --force --hydrate-demo` into Postgres. Do not write campaign rows into `literature_baselines.v1.json`
