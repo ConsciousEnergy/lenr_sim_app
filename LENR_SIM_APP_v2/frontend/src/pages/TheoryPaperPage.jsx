@@ -106,7 +106,7 @@ const TheoryPaperPage = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
               Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences:
               LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8,
-              Gemini 2.5, Gemini 3.0, Composer (Cursor). See the Author Contributions &amp; AI Assistance statement below.
+              Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor). See the Author Contributions &amp; AI Assistance statement below.
             </Typography>
             <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
               <Chip
@@ -143,8 +143,8 @@ const TheoryPaperPage = () => {
             <Typography variant="body2" paragraph>
               <strong>Diadon Acs</strong> (Conscious Energies) directs this research, sets its scientific
               direction, and is solely accountable for its content, claims, and conclusions. The listed
-              Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families, and Composer
-              in Cursor) assisted with literature compilation, mathematical derivation and verification,
+              Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok
+              model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification,
               simulation code, manuscript drafting, and multi-agent review under the human author's direction
               and review.
             </Typography>

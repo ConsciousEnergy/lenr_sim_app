@@ -76,6 +76,8 @@ flatten 5–85× `enhancement_factor` traces.
 | Source class | Baseline / Campaign / Auto / User from `is_baseline` + `source` |
 | Temperature Distribution | binned `temperature_k` |
 | History Name | `experiments.name` |
+| History Model association % | mean `results.pipeline_scores[*].final_score` (`meanFinalScore`; not P(LENR)) |
+| History Top theory / Literature id | `topTheoryId` / `literatureId` from pipeline scores and `parameters.literature_id` |
 | Comparison / CSV pressure | `pressure_bar` (bar, not atm) |
 
 `GET /api/analytics/timeline` is additive: `date`, `name`, `is_baseline`,
@@ -140,13 +142,29 @@ that persisted sensitivity is 0.5 unless live scores are computed. The
 page also calls existing `parameter-sweep` (max 100 steps) and
 `validation-report` APIs; those checks are phenomenology screens, not proof.
 
+`GET /api/analytics/experiments` is additive: `sourceClass`, `literatureId`,
+`meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` ranks by that
+association (missing scores sort last). `source_class` filters Baseline /
+Campaign / Auto / User. Seed-only rows may have `meanFinalScore: null`.
+
+`GET /api/analytics/theory-run-history` also returns `ranked_theory_ids` and
+per-theory `claim_tier` (mode across persisted records). The Relevance Map
+**Model association rank** panel uses those fields. `is_empirical_confidence`
+stays false.
+
+Unified Theory **Save to Analytics** may attach Theory Testbed
+`pipeline_scores` onto `results`. Those scores are **not** multiplied into
+`peak_conditions.enhancement_factor` (bubble-lattice and theory pipeline are
+separate engines).
+
 ## Collection loop (model outputs)
 
 `python -m app.scripts.run_simulation_campaign --preset all_claims` samples
 every registered `theory_id` plus a 2 T × 2 loading Pd-D cartesian (4) and
 two tagged occurrence-anchored Pd-D cells. `--preset literature_grid` is the
 designed literature-anchored grid (distinct baseline cells + negative
-controls, ~16–32). Extra runs are **model outputs**.
+controls, ~16–32). `--preset association_screen` is Miles 1993 + McKubre SRI
++ ARPA-E null at 3 T × 2 loading (~18 cells). Extra runs are **model outputs**.
 They do not raise empirical claim tiers or close `EQ-OPEN-*`.
 `lenr_proved` stays false. Do not run `--preset full` or full `diverse` in CI.
 

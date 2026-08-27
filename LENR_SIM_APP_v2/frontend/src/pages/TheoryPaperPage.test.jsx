@@ -21,9 +21,11 @@ describe('TheoryPaperPage', () => {
     expect(screen.queryByText(/Attention Is All You Need/)).not.toBeInTheDocument();
   });
 
-  test('lists Composer among AI contributors', () => {
+  test('lists Composer and xAI/Grok among AI contributors', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText(/Composer \(Cursor\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Grok 4\.6/)).toBeInTheDocument();
+    expect(screen.getByText(/xAI\/Grok/)).toBeInTheDocument();
   });
 
   test('References tab lists Vaswani homage with a source link', () => {
