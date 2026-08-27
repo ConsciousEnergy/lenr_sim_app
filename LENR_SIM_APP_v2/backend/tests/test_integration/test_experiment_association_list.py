@@ -74,6 +74,7 @@ def test_enrich_experiment_dict_is_additive() -> None:
 
 def test_list_experiments_includes_association_fields_and_sort() -> None:
     session_id = f"assoc-list-{uuid.uuid4().hex}"
+    created_ids: list[str] = []
     with _client() as client:
         low = client.post(
             "/api/analytics/experiments",
@@ -92,7 +93,7 @@ def test_list_experiments_includes_association_fields_and_sort() -> None:
                         "electron_screening": {
                             "score": 0.2,
                             "final_score": 0.21,
-                            "claim_tier": "speculative",
+                            "claim_tier": "speculative_exploratory",
                             "is_applicable": True,
                         }
                     },
@@ -145,47 +146,53 @@ def test_list_experiments_includes_association_fields_and_sort() -> None:
         assert created["literatureId"] == "miles-1993"
         assert created["sourceClass"] == "Campaign"
         low_id, high_id, seed_id = low.json()["id"], high.json()["id"], seedish.json()["id"]
+        created_ids.extend([low_id, high_id, seed_id])
+        try:
+            rows = _all_experiments(
+                client,
+                session_id=session_id,
+                include_baseline=False,
+                sort_by="mean_final_score",
+                sort_order="desc",
+            )
+            by_id = {row["id"]: row for row in rows}
+            assert by_id[high_id]["meanFinalScore"] == 0.77
+            assert by_id[high_id]["topTheoryId"] == "miles_heat_helium"
+            assert by_id[high_id]["sourceClass"] == "Campaign"
+            assert by_id[high_id]["literatureId"] == "miles-1993"
+            assert by_id[seed_id]["meanFinalScore"] is None
+            ours = [row for row in rows if row["id"] in {low_id, high_id, seed_id}]
+            ranked = [row["name"] for row in ours if row.get("meanFinalScore") is not None]
+            assert ranked[0] == "high association"
+            assert ranked[1] == "low association"
+            assert "enhancement_factor" in rows[0]
+            assert "type" in rows[0]
 
-        rows = _all_experiments(
-            client,
-            session_id=session_id,
-            include_baseline=False,
-            sort_by="mean_final_score",
-            sort_order="desc",
-        )
-        by_id = {row["id"]: row for row in rows}
-        assert by_id[high_id]["meanFinalScore"] == 0.77
-        assert by_id[high_id]["topTheoryId"] == "miles_heat_helium"
-        assert by_id[high_id]["sourceClass"] == "Campaign"
-        assert by_id[high_id]["literatureId"] == "miles-1993"
-        assert by_id[seed_id]["meanFinalScore"] is None
-        ours = [row for row in rows if row["id"] in {low_id, high_id, seed_id}]
-        ranked = [row["name"] for row in ours if row.get("meanFinalScore") is not None]
-        assert ranked[0] == "high association"
-        assert ranked[1] == "low association"
-        assert "enhancement_factor" in rows[0]
-        assert "type" in rows[0]
+            campaign_rows = _all_experiments(
+                client,
+                session_id=session_id,
+                include_baseline=False,
+                source_class="Campaign",
+            )
+            campaign_ids = {row["id"] for row in campaign_rows}
+            assert high_id in campaign_ids
+            assert low_id in campaign_ids
+            assert seed_id not in campaign_ids
 
-        campaign_rows = _all_experiments(
-            client,
-            session_id=session_id,
-            include_baseline=False,
-            source_class="Campaign",
-        )
-        campaign_ids = {row["id"] for row in campaign_rows}
-        assert high_id in campaign_ids
-        assert low_id in campaign_ids
-        assert seed_id not in campaign_ids
-
-        user_rows = _all_experiments(
-            client,
-            session_id=session_id,
-            include_baseline=False,
-            source_class="User",
-        )
-        user_ids = {row["id"] for row in user_rows}
-        assert seed_id in user_ids
-        assert high_id not in user_ids
+            user_rows = _all_experiments(
+                client,
+                session_id=session_id,
+                include_baseline=False,
+                source_class="User",
+            )
+            user_ids = {row["id"] for row in user_rows}
+            assert seed_id in user_ids
+            assert high_id not in user_ids
+        finally:
+            # Campaign source is SHARED_SOURCES; leftover rows leak into other
+            # sessions' stats when include_baseline=False (CI re-runs integration).
+            for experiment_id in created_ids:
+                client.delete(f"/api/analytics/experiments/{experiment_id}")
 
 
 def test_theory_run_history_ranked_ids_and_claim_tiers_not_raised() -> None:

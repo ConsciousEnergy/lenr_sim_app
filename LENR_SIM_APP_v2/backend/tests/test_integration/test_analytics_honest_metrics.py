@@ -120,7 +120,9 @@ def test_mixed_outcomes_split_completion_and_scientific_positive() -> None:
             assert body["outcomeCounts"]["null"] == 1
             assert body["outcomeCounts"]["positive"] == 1
             assert body["outcomeCounts"]["inapplicable"] == 1
-        assert body["claimTierCounts"].get("speculative") == 1
+            # SHARED_SOURCES campaign/auto rows stay visible with include_baseline=False,
+            # so exclusive histogram counts are only meaningful on an isolated session.
+            assert body["claimTierCounts"].get("speculative") == 1
 
 
 def test_stats_fields_are_additive_with_baseline() -> None:
