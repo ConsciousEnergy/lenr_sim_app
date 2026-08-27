@@ -211,6 +211,10 @@ docker exec -it $(docker ps -q -f name=lenr-sim_postgres) psql -U lenr_app -d le
 # Or run migrations via backend service (non-interactive, for scripts/CI)
 docker exec -i $(docker ps -q -f name=lenr-sim_backend) python -m alembic upgrade head
 
+# Public Analytics snapshot (literature seeds + q_campaign_demo). CLI only;
+# app lifespan does not auto-seed or auto-run campaigns.
+docker exec -i $(docker ps -q -f name=lenr-sim_backend) python -m app.scripts.seed_database --force --hydrate-demo
+
 # Verify schema exists (non-interactive)
 docker exec -i $(docker ps -q -f name=lenr-sim_postgres) psql -U lenr_app -d lenr_sim -c "\dt"
 

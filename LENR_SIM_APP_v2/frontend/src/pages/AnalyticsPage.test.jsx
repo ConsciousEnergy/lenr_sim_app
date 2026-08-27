@@ -278,7 +278,7 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByText(/Include published literature baselines/i)).toBeInTheDocument();
   });
 
-  test('seed-only banner shows import command when Campaign N is 0', async () => {
+  test('seed-only Campaign N is 0 has no CLI warning banner', async () => {
     analyticsApi.getStats.mockResolvedValueOnce({
       totalSimulations: 17,
       successRate: 100,
@@ -299,12 +299,10 @@ describe('AnalyticsPage honest metrics', () => {
     render(<AnalyticsPage />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('analytics-seed-only-banner')).toBeInTheDocument();
+      expect(screen.getByText('Total Records')).toBeInTheDocument();
     });
-    expect(screen.getByTestId('analytics-seed-only-banner')).toHaveTextContent(
-      /seed_database --force --hydrate-demo/
-    );
-    expect(screen.getByTestId('analytics-seed-only-banner')).toHaveTextContent(/q_campaign_demo/);
+    expect(screen.queryByTestId('analytics-seed-only-banner')).not.toBeInTheDocument();
+    expect(screen.queryByText(/seed_database --force --hydrate-demo/)).not.toBeInTheDocument();
     expect(screen.getByTestId('completion-vs-scientific-note')).toHaveTextContent(
       /not a hydrated campaign/i
     );

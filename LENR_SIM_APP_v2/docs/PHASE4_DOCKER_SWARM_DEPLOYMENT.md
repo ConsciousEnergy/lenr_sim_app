@@ -537,6 +537,12 @@ ssh -i ~/.ssh/lenr-sim-deploy root@$(terraform output -raw vps_ip)
 docker exec -i $(docker ps -q -f name=lenr-sim_backend) \
   python -m alembic upgrade head
 
+# Load cited literature seeds plus the frozen q_campaign_demo snapshot
+# (~107 experiments / 89 theory_runs). Do not merge campaign rows into
+# literature_baselines.v1.json. Extra rows are model outputs; EQ-OPEN-* stay OPEN.
+docker exec -i $(docker ps -q -f name=lenr-sim_backend) \
+  python -m app.scripts.seed_database --force --hydrate-demo
+
 # Verify schema exists
 docker exec -i $(docker ps -q -f name=lenr-sim_postgres) \
   psql -U lenr_app -d lenr_sim -c "\dt"

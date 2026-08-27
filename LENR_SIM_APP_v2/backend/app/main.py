@@ -53,7 +53,7 @@ from .api.middleware.timeout import TimeoutMiddleware
 from .core.middleware import setup_middlewares
 
 # Import configuration - using relative imports
-from .core.config import settings, EnvironmentType
+from .core.config import settings, EnvironmentType, openapi_surface
 
 # Import logging - using relative imports
 from .utils.logging import setup_logger
@@ -269,14 +269,15 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 # redirect_slashes=False avoids 307 redirects that can cause 405 when POST follows redirect
+_openapi = openapi_surface(settings.ENVIRONMENT)
 app = FastAPI(
     title=settings.APP_NAME,
     description="API for Low Energy Nuclear Reaction simulations",
     version=settings.APP_VERSION,
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url=_openapi["docs_url"],
+    redoc_url=_openapi["redoc_url"],
+    openapi_url=_openapi["openapi_url"],
     redirect_slashes=False,
 )
 
@@ -332,14 +333,16 @@ app.add_middleware(
 # Set up all middleware including CORS, request ID, logging, and performance tracking
 setup_middlewares(app)
 
-# Prometheus metrics (optional -- gracefully skip if not installed)
+# Prometheus metrics (optional -- gracefully skip if not installed).
+# Not exposed on the public production API.
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
-    instrumentator = Instrumentator(
-        should_group_status_codes=True,
-        excluded_handlers=["/metrics", "/health", "/api/health", "/docs", "/openapi.json"]
-    )
-    instrumentator.instrument(app).expose(app, endpoint="/metrics")
+    if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+        instrumentator = Instrumentator(
+            should_group_status_codes=True,
+            excluded_handlers=["/metrics", "/health", "/api/health", "/docs", "/openapi.json"]
+        )
+        instrumentator.instrument(app).expose(app, endpoint="/metrics")
 except ImportError:
     pass  # prometheus-fastapi-instrumentator optional
 

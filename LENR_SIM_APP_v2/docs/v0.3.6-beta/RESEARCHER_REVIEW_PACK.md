@@ -19,6 +19,9 @@ the cloud agent's SQLite. App startup creates tables only.
 Point `LENR_SQLITE_PATH` at the **same** file the API uses. A second sqlite
 (`/tmp/lenr_reviewer.db`) will look like 16–18 forever.
 
+Analytics Overview does **not** show a CLI hydrate warning. Seed-only vs campaign
+N is in the caption. Use the commands below (from `LENR_SIM_APP_v2/backend`).
+
 ```bash
 # Match the cloud/PR Analytics screenshot (from LENR_SIM_APP_v2/backend)
 python -m app.scripts.seed_database --force --hydrate-demo
@@ -29,6 +32,8 @@ python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_cam
 Committed demo pack: `LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/`
 (107 experiments, 89 `theory_runs`). Smoke fixture N=1 remains for tests.
 Do **not** git-add `reviewer_packs/local/` (export scratch).
+Do **not** write campaign or UI model outputs into `literature_baselines.v1.json`
+(cited literature only). Persist those rows in the app DB / demo pack.
 
 ## Commands (from `LENR_SIM_APP_v2/backend`)
 

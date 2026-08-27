@@ -635,20 +635,6 @@ const AnalyticsPage = () => {
           Turn published baselines on, run the Theory Testbed, or start a campaign to persist model-output rows.
         </Alert>
       )}
-      {Number(stats?.sourceClassCounts?.Campaign || 0) === 0
-        && Number(stats?.totalSimulations || 0) > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }} data-testid="analytics-seed-only-banner">
-          <AlertTitle>Literature seeds only — not the cloud campaign N</AlertTitle>
-          Git does not ship SQLite campaign rows. Seed-only Analytics is ~17 baselines
-          (18 if a couple of UI autos exist). To match the ~107 model-output rows from
-          {' '}<code>literature_grid</code> + <code>all_claims</code> + <code>question_theories</code>:
-          <Box component="pre" sx={{ mt: 1, mb: 0, whiteSpace: 'pre-wrap' }}>
-            python -m app.scripts.seed_database --force --hydrate-demo
-          </Box>
-          Or import <code>datasets/reviewer_packs/q_campaign_demo</code>. Extra rows are
-          model outputs; they do not close EQ-OPEN-* or prove LENR.
-        </Alert>
-      )}
       
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 2 }}>
