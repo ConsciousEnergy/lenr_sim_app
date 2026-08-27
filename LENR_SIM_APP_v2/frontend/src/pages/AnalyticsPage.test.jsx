@@ -72,6 +72,10 @@ jest.mock('../services/analyticsApi', () => ({
           excess_heat_watts: 0,
           created_at: '2026-08-24T00:00:00Z',
           source: 'simulation_campaign',
+          sourceClass: 'Campaign',
+          literatureId: 'miles-1993',
+          meanFinalScore: 0.62,
+          topTheoryId: 'miles_heat_helium',
         },
         {
           id: 'exp-null',
@@ -85,6 +89,10 @@ jest.mock('../services/analyticsApi', () => ({
           created_at: '2026-08-24T00:00:00Z',
           source: 'Published Research',
           is_baseline: true,
+          sourceClass: 'Baseline',
+          literatureId: 'berlinguette-arpa-e-2019',
+          meanFinalScore: null,
+          topTheoryId: null,
         },
       ],
       total: 2,
@@ -111,8 +119,10 @@ jest.mock('../services/analyticsApi', () => ({
           ci_lo: 0.40,
           ci_hi: 0.44,
           ci_method: 'percentile_2.5_97.5',
+          claim_tier: 'validated_lenr_mechanism',
         },
       },
+      ranked_theory_ids: ['electron_screening'],
     }),
     parameterSweep: jest.fn().mockResolvedValue({
       sweep_param: 'loading_ratio',
@@ -211,6 +221,12 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('FAILED Unified palladium')).toBeInTheDocument();
     expect(screen.getByText('Google/ARPA-E null')).toBeInTheDocument();
+    expect(screen.getByTestId('association-percent-header')).toHaveTextContent(/Model association %/);
+    expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/not a laboratory/);
+    expect(screen.getByText('62%')).toBeInTheDocument();
+    expect(screen.getByText('miles heat helium')).toBeInTheDocument();
+    expect(screen.getByText('miles-1993')).toBeInTheDocument();
+    expect(screen.getByTestId('history-source-chip-campaign')).toBeInTheDocument();
 
     const checkboxes = screen.getAllByRole('checkbox');
     await userEvent.click(checkboxes[1]);
@@ -223,6 +239,11 @@ describe('AnalyticsPage honest metrics', () => {
     await waitFor(() => {
       expect(screen.getByTestId('score-mode-chip')).toHaveTextContent('SQL mean');
     });
+    expect(screen.getByTestId('association-rank-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('association-rank-caption')).toHaveTextContent(/not empirical P\(LENR\)/i);
+    expect(screen.getByTestId('association-rank-row-electron_screening')).toHaveTextContent(
+      /validated_lenr_mechanism/
+    );
     expect(screen.getByTestId('run-live-scores')).toBeInTheDocument();
     expect(screen.getByTestId('use-persisted-scores')).toBeInTheDocument();
     expect(screen.getByTestId('score-formula-chip')).toHaveTextContent(
@@ -276,6 +297,27 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByTestId('include-baseline-toggle')).toBeInTheDocument();
     expect(screen.getByText('Total Records')).toBeInTheDocument();
     expect(screen.getByText(/Include published literature baselines/i)).toBeInTheDocument();
+  });
+
+  test('history sort and source-class chips pass query params', async () => {
+    render(<AnalyticsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Total Records')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByRole('tab', { name: /Simulation History/i }));
+    await userEvent.click(screen.getByTestId('history-source-chip-campaign'));
+    await waitFor(() => {
+      expect(analyticsApi.getExperiments).toHaveBeenCalledWith(
+        expect.objectContaining({ sourceClass: 'Campaign' })
+      );
+    });
+    await userEvent.click(screen.getByLabelText('Sort'));
+    await userEvent.click(await screen.findByRole('option', { name: /Model association %/i }));
+    await waitFor(() => {
+      expect(analyticsApi.getExperiments).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: 'mean_final_score' })
+      );
+    });
   });
 
   test('seed-only Campaign N is 0 has no CLI warning banner', async () => {

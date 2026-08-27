@@ -157,6 +157,7 @@ export const analyticsApi = {
       sortBy = 'created_at',
       sortOrder = 'desc',
       includeBaseline = true,
+      sourceClass,
     } = options;
     
     const sessionId = getSessionId();
@@ -169,6 +170,7 @@ export const analyticsApi = {
           experiment_type: experimentType,
           status,
           material,
+          source_class: sourceClass,
           limit,
           offset,
           sort_by: sortBy,
