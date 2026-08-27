@@ -6,7 +6,7 @@ Usage (from LENR_SIM_APP_v2/backend):
     python -m app.scripts.run_simulation_campaign --preset diverse
     python -m app.scripts.run_simulation_campaign --preset literature_grid
     python -m app.scripts.run_simulation_campaign --preset all_claims
-    python -m app.scripts.run_simulation_campaign --preset full
+    python -m app.scripts.run_simulation_campaign --preset association_screen
 
 Does not prove LENR. EQ-OPEN-* stay OPEN.
 """

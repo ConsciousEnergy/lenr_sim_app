@@ -74,6 +74,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    # Designed association screen (not a cartesian). Axes unused.
+    "association_screen": {
+        "temperatures": [280.0, 300.0, 350.0],
+        "loading_ratios": [0.85, 0.95],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
 }
 
 AXIS_KEYS = (
@@ -213,6 +222,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_question_theories_cases()
         return
+    if preset == "association_screen":
+        from app.campaign.association_screen import iter_association_screen_cases
+
+        yield from iter_association_screen_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -233,6 +247,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.question_theories import question_theories_count
 
         return question_theories_count()
+    if preset == "association_screen":
+        from app.campaign.association_screen import association_screen_count
+
+        return association_screen_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -360,5 +378,14 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
             "Designed Q-anchored isolated theory runs at tagged literature "
             "cells plus ARPA-E composition-group nulls. Does not prove LENR. "
             "Do not run full or diverse in CI."
+        )
+    if preset == "association_screen":
+        from app.campaign.association_screen import association_screen_axes
+
+        payload["axes"] = association_screen_axes()
+        payload["note"] = (
+            "Designed Miles / McKubre / ARPA-E screen at 3 T × 2 loading. "
+            "Ranks five-factor association, not P(LENR). Do not run full or "
+            "diverse in CI."
         )
     return payload
