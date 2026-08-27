@@ -46,6 +46,7 @@ def empty_theory_run_history() -> Dict[str, Any]:
         "n_runs": 0,
         "n_theories": 0,
         "per_theory": {},
+        "ranked_theory_ids": [],
         "by_source_class": {},
     }
 
@@ -97,6 +98,7 @@ async def aggregate_theory_run_history(
             "sum_enhancement": 0.0,
             "sum_confidence": 0.0,
             "values": [],
+            "claim_tiers": [],
             **{f"sum_{key}": 0.0 for key in _SUBSCORE_KEYS},
         }
     )
@@ -117,6 +119,9 @@ async def aggregate_theory_run_history(
                 rec.get("enhancement") or rec.get("enhancement_factor") or 0.0
             )
             bucket["sum_confidence"] += float(rec.get("confidence") or 0.0)
+            claim_tier = rec.get("claim_tier")
+            if claim_tier:
+                bucket["claim_tiers"].append(str(claim_tier))
             for key in _SUBSCORE_KEYS:
                 bucket[f"sum_{key}"] += float(rec.get(key) or 0.0)
 
@@ -124,6 +129,12 @@ async def aggregate_theory_run_history(
     for theory_id, bucket in buckets.items():
         n = max(bucket["n"], 1.0)
         values = sorted(float(item) for item in bucket["values"])
+        claim_tier = None
+        if bucket["claim_tiers"]:
+            claim_tier = max(
+                set(bucket["claim_tiers"]),
+                key=bucket["claim_tiers"].count,
+            )
         entry = {
             "n": int(bucket["n"]),
             "mean_score": bucket["sum_score"] / n,
@@ -131,6 +142,7 @@ async def aggregate_theory_run_history(
             "mean_weighted_score": bucket["sum_weighted"] / n,
             "mean_enhancement": bucket["sum_enhancement"] / n,
             "mean_confidence": bucket["sum_confidence"] / n,
+            "claim_tier": claim_tier,
             "ci_lo": _percentile(values, 2.5),
             "ci_hi": _percentile(values, 97.5),
             "ci_method": "percentile_2.5_97.5",
@@ -139,6 +151,12 @@ async def aggregate_theory_run_history(
         for key in _SUBSCORE_KEYS:
             entry[f"mean_{key}"] = bucket[f"sum_{key}"] / n
         per_theory[theory_id] = entry
+
+    ranked_theory_ids = sorted(
+        per_theory.keys(),
+        key=lambda tid: float(per_theory[tid].get("mean_final_score") or 0.0),
+        reverse=True,
+    )
 
     return {
         "schema": HISTORY_SCHEMA,
@@ -154,5 +172,6 @@ async def aggregate_theory_run_history(
         "n_runs": len(runs),
         "n_theories": len(per_theory),
         "per_theory": per_theory,
+        "ranked_theory_ids": ranked_theory_ids,
         "by_source_class": dict(source_counts),
     }
