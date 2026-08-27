@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 
 from fastapi.testclient import TestClient
@@ -21,41 +20,22 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def _insert_experiment(
-    *,
-    name: str,
-    source: str,
-    parameters: dict,
-    results: dict,
-    session_id: str | None = None,
-    is_baseline: bool = False,
-) -> str:
-    from app.core.database import db_manager
-    from app.models.database_models import Experiment
-
-    async def _go() -> str:
-        async with db_manager.session() as session:
-            experiment = Experiment(
-                id=str(uuid.uuid4()),
-                name=name,
-                experiment_type="lenr",
-                status="completed",
-                is_baseline=is_baseline,
-                source=source,
-                session_id=session_id,
-                material="palladium",
-                temperature_k=300.0,
-                pressure_bar=1.0,
-                enhancement_factor=1.0,
-                excess_heat_watts=0.0,
-                parameters_json=parameters,
-                results_json=results,
-            )
-            session.add(experiment)
-            await session.commit()
-            return experiment.id
-
-    return asyncio.run(_go())
+def _all_experiments(client: TestClient, **params) -> list:
+    offset = 0
+    rows: list = []
+    while True:
+        listed = client.get(
+            "/api/analytics/experiments",
+            params={**params, "limit": 200, "offset": offset},
+        )
+        assert listed.status_code == 200
+        payload = listed.json()
+        batch = payload.get("experiments") or []
+        rows.extend(batch)
+        total = int(payload.get("total") or 0)
+        offset += 200
+        if not batch or offset >= total:
+            return rows
 
 
 def test_association_from_scores_prefers_final_score() -> None:
@@ -95,37 +75,51 @@ def test_enrich_experiment_dict_is_additive() -> None:
 def test_list_experiments_includes_association_fields_and_sort() -> None:
     session_id = f"assoc-list-{uuid.uuid4().hex}"
     with _client() as client:
-        low_id = _insert_experiment(
-            name="low association",
-            source=SOURCE_CAMPAIGN,
-            session_id=SOURCE_CAMPAIGN,
-            parameters={"literature_id": "berlinguette-arpa-e-2019"},
-            results={
-                "is_model_output": True,
-                "pipeline_scores": {
-                    "electron_screening": {
-                        "score": 0.2,
-                        "final_score": 0.21,
-                        "claim_tier": "speculative",
-                        "is_applicable": True,
-                    }
+        low = client.post(
+            "/api/analytics/experiments",
+            json={
+                "name": "low association",
+                "experiment_type": "lenr",
+                "session_id": session_id,
+                "status": "completed",
+                "material": "palladium",
+                "temperature_k": 300.0,
+                "source": SOURCE_CAMPAIGN,
+                "parameters": {"literature_id": "berlinguette-arpa-e-2019"},
+                "results": {
+                    "is_model_output": True,
+                    "pipeline_scores": {
+                        "electron_screening": {
+                            "score": 0.2,
+                            "final_score": 0.21,
+                            "claim_tier": "speculative",
+                            "is_applicable": True,
+                        }
+                    },
                 },
             },
         )
-        high_id = _insert_experiment(
-            name="high association",
-            source=SOURCE_CAMPAIGN,
-            session_id=SOURCE_CAMPAIGN,
-            parameters={"literature_id": "miles-1993"},
-            results={
-                "is_model_output": True,
-                "pipeline_scores": {
-                    "miles_heat_helium": {
-                        "score": 0.4,
-                        "final_score": 0.77,
-                        "claim_tier": "validated_lenr_mechanism",
-                        "is_applicable": True,
-                    }
+        high = client.post(
+            "/api/analytics/experiments",
+            json={
+                "name": "high association",
+                "experiment_type": "lenr",
+                "session_id": session_id,
+                "status": "completed",
+                "material": "palladium",
+                "temperature_k": 350.0,
+                "source": SOURCE_CAMPAIGN,
+                "parameters": {"literature_id": "miles-1993"},
+                "results": {
+                    "is_model_output": True,
+                    "pipeline_scores": {
+                        "miles_heat_helium": {
+                            "score": 0.4,
+                            "final_score": 0.77,
+                            "claim_tier": "validated_lenr_mechanism",
+                            "is_applicable": True,
+                        }
+                    },
                 },
             },
         )
@@ -141,63 +135,56 @@ def test_list_experiments_includes_association_fields_and_sort() -> None:
                 "results": {"is_model_output": True},
             },
         )
+        assert low.status_code == 201
+        assert high.status_code == 201
         assert seedish.status_code == 201
-        created = seedish.json()
+        created = high.json()
         assert "sourceClass" in created
         assert "meanFinalScore" in created
         assert "topTheoryId" in created
-        assert created["meanFinalScore"] is None
+        assert created["literatureId"] == "miles-1993"
+        assert created["sourceClass"] == "Campaign"
+        low_id, high_id, seed_id = low.json()["id"], high.json()["id"], seedish.json()["id"]
 
-        listed = client.get(
-            "/api/analytics/experiments",
-            params={
-                "session_id": session_id,
-                "include_baseline": False,
-                "sort_by": "mean_final_score",
-                "sort_order": "desc",
-                "limit": 50,
-            },
+        rows = _all_experiments(
+            client,
+            session_id=session_id,
+            include_baseline=False,
+            sort_by="mean_final_score",
+            sort_order="desc",
         )
-        assert listed.status_code == 200
-        rows = listed.json()["experiments"]
         by_id = {row["id"]: row for row in rows}
-        assert high_id in by_id
         assert by_id[high_id]["meanFinalScore"] == 0.77
         assert by_id[high_id]["topTheoryId"] == "miles_heat_helium"
         assert by_id[high_id]["sourceClass"] == "Campaign"
         assert by_id[high_id]["literatureId"] == "miles-1993"
-        assert by_id[seedish.json()["id"]]["meanFinalScore"] is None
-        ranked = [row["name"] for row in rows if row.get("meanFinalScore") is not None]
+        assert by_id[seed_id]["meanFinalScore"] is None
+        ours = [row for row in rows if row["id"] in {low_id, high_id, seed_id}]
+        ranked = [row["name"] for row in ours if row.get("meanFinalScore") is not None]
         assert ranked[0] == "high association"
-        assert "low association" in ranked
+        assert ranked[1] == "low association"
         assert "enhancement_factor" in rows[0]
         assert "type" in rows[0]
 
-        campaign_only = client.get(
-            "/api/analytics/experiments",
-            params={
-                "session_id": session_id,
-                "include_baseline": False,
-                "source_class": "Campaign",
-                "limit": 50,
-            },
+        campaign_rows = _all_experiments(
+            client,
+            session_id=session_id,
+            include_baseline=False,
+            source_class="Campaign",
         )
-        campaign_ids = {row["id"] for row in campaign_only.json()["experiments"]}
+        campaign_ids = {row["id"] for row in campaign_rows}
         assert high_id in campaign_ids
         assert low_id in campaign_ids
-        assert seedish.json()["id"] not in campaign_ids
+        assert seed_id not in campaign_ids
 
-        user_only = client.get(
-            "/api/analytics/experiments",
-            params={
-                "session_id": session_id,
-                "include_baseline": False,
-                "source_class": "User",
-                "limit": 50,
-            },
+        user_rows = _all_experiments(
+            client,
+            session_id=session_id,
+            include_baseline=False,
+            source_class="User",
         )
-        user_ids = {row["id"] for row in user_only.json()["experiments"]}
-        assert seedish.json()["id"] in user_ids
+        user_ids = {row["id"] for row in user_rows}
+        assert seed_id in user_ids
         assert high_id not in user_ids
 
 

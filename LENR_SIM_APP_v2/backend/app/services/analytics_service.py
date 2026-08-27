@@ -528,15 +528,30 @@ class AnalyticsService:
             if derived:
                 results["pipeline_scores"] = derived
         if results.get("pipeline_scores"):
-            from app.services.simulation_persistence import _enrich_with_final_scores
-
-            results["pipeline_scores"] = _enrich_with_final_scores(
-                results["pipeline_scores"],
-                {
-                    "temperature": kwargs.get("temperature_k"),
-                    "loading_ratio": kwargs.get("loading_ratio"),
-                },
+            records = [
+                record
+                for record in results["pipeline_scores"].values()
+                if isinstance(record, dict)
+            ]
+            needs_final = any(
+                record.get("final_score") is None
+                and (
+                    "score" in record
+                    or "enhancement" in record
+                    or "confidence" in record
+                )
+                for record in records
             )
+            if needs_final:
+                from app.services.simulation_persistence import _enrich_with_final_scores
+
+                results["pipeline_scores"] = _enrich_with_final_scores(
+                    results["pipeline_scores"],
+                    {
+                        "temperature": kwargs.get("temperature_k"),
+                        "loading_ratio": kwargs.get("loading_ratio"),
+                    },
+                )
         results.setdefault(
             "scientific_outcome",
             classify_scientific_outcome(

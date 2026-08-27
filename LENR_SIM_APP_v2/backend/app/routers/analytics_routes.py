@@ -54,6 +54,10 @@ class ExperimentCreate(BaseModel):
     excess_heat_watts: Optional[float] = None
     duration_seconds: Optional[float] = None
     results: Optional[dict] = Field(default_factory=dict)
+    source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source (User Simulation, simulation_campaign, auto_persist).",
+    )
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -337,6 +341,7 @@ async def create_experiment(
         excess_heat_watts=experiment.excess_heat_watts,
         duration_seconds=experiment.duration_seconds,
         results=experiment.results,
+        source=experiment.source or "User Simulation",
     )
     
     return created

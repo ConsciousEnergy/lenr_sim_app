@@ -385,7 +385,7 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["axes"] = association_screen_axes()
         payload["note"] = (
             "Designed Miles / McKubre / ARPA-E screen at 3 T × 2 loading. "
-            "Ranks five-factor association, not P(LENR). Do not run full or "
-            "diverse in CI."
+            "Ranks five-factor association, not P(LENR). Does not prove LENR. "
+            "Do not run full or diverse in CI."
         )
     return payload
