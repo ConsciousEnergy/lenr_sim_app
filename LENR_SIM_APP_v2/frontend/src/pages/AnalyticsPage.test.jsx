@@ -265,7 +265,7 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/Power \(W\)/);
     expect(screen.getByText('62%')).toBeInTheDocument();
     expect(screen.getByText('miles heat helium')).toBeInTheDocument();
-    expect(screen.getByText('miles-1993')).toBeInTheDocument();
+    expect(screen.getAllByText('miles-1993').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('history-source-chip-campaign')).toBeInTheDocument();
     expect(screen.getByText('Power (W)')).toBeInTheDocument();
     expect(screen.getByText('Energy (keV)')).toBeInTheDocument();
