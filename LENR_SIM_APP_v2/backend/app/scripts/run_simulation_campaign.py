@@ -7,6 +7,7 @@ Usage (from LENR_SIM_APP_v2/backend):
     python -m app.scripts.run_simulation_campaign --preset literature_grid
     python -m app.scripts.run_simulation_campaign --preset all_claims
     python -m app.scripts.run_simulation_campaign --preset association_screen
+    python -m app.scripts.run_simulation_campaign --preset testbed_review
 
 Does not prove LENR. EQ-OPEN-* stay OPEN.
 """
@@ -35,7 +36,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
             "Grid size (smoke=4, default=48, full=288, diverse=~197 unified + "
             "theory-group runs, all_claims=6 unified + one run per registered theory, "
             "literature_grid=one cell per literature_id + negative controls, "
-            "question_theories=Q-anchored isolated theories + ARPA-E nulls)"
+            "question_theories=Q-anchored isolated theories + ARPA-E nulls, "
+            "testbed_review=one isolated cell per registered theory + 3 literature cells)"
         ),
     )
     parser.add_argument(
