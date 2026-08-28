@@ -83,6 +83,15 @@ export function buildBubbleLatticePayload(parameters, options = {}) {
     const seed = options.randomSeed;
     payload.random_seed = seed === '' || seed === null ? null : Number(seed);
   }
+  if (options.literatureId) {
+    payload.literature_id = options.literatureId;
+  }
+  if (options.theoryResult && typeof options.theoryResult === 'object') {
+    payload.theory_result = options.theoryResult;
+  }
+  if (options.pipelineScores && typeof options.pipelineScores === 'object') {
+    payload.pipeline_scores = options.pipelineScores;
+  }
 
   return payload;
 }

@@ -522,7 +522,12 @@ function UnifiedTheoryPage() {
         },
         enhancement_factor: simulationData.peak_conditions?.enhancement_factor || 1,
         fusion_rate: simulationData.peak_conditions?.fusion_rate,
-        energy_output_kev: simulationData.total_energy_output || 0,
+        energy_output_kev: Number.isFinite(simulationData.total_energy_output)
+          ? simulationData.total_energy_output
+          : null,
+        excess_heat_watts: Number.isFinite(theoryResult?.total_energy_watts)
+          ? theoryResult.total_energy_watts
+          : null,
         duration_seconds: (simulationData.enhancement_timeline?.length || 0) * 0.001,
         results: attachTestbedScoresToResults(
           {
@@ -606,6 +611,7 @@ function UnifiedTheoryPage() {
         includeUncertainty,
         uncertaintySamples,
         randomSeed,
+        theoryResult,
       });
 
       const response = await fetch(apiUrl, {
@@ -724,7 +730,7 @@ function UnifiedTheoryPage() {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed]);
+  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed, theoryResult]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {

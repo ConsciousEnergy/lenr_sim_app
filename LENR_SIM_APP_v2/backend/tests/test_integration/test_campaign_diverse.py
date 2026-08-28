@@ -209,3 +209,33 @@ def test_association_screen_is_designed_not_cartesian() -> None:
     assert "P(LENR)" in described["note"]
 
 
+def test_testbed_review_is_designed_not_cartesian() -> None:
+    from app.campaign.testbed_review import (
+        ANCHOR_LITERATURE_IDS,
+        testbed_review_count,
+    )
+    from app.physics_engine.theory_pipeline import get_default_pipeline
+
+    n = campaign_size("testbed_review")
+    assert n == testbed_review_count()
+    assert 24 <= n <= 30
+    cases = list(iter_campaign_cases("testbed_review"))
+    assert len(cases) == n
+    isolated = [case for case in cases if case.get("enabled_theories")]
+    literature = [case for case in cases if not case.get("enabled_theories")]
+    registered = set(get_default_pipeline().registered_ids)
+    isolated_ids = {case["enabled_theories"][0] for case in isolated}
+    assert isolated_ids == registered
+    assert {case["literature_id"] for case in literature} == set(ANCHOR_LITERATURE_IDS)
+    piantelli = next(
+        case for case in isolated if case["enabled_theories"] == ["piantelli_ni_h"]
+    )
+    assert piantelli["host_material"] == "nickel"
+    assert piantelli["reactant"] == "hydrogen"
+    assert all(case["use_theory_pipeline"] is True for case in cases)
+    described = describe_preset("testbed_review")
+    assert described["n_cases"] == n
+    assert "Does not prove LENR" in described["note"]
+    assert "P(LENR)" in described["note"]
+
+

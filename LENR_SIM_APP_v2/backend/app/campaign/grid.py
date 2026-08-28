@@ -83,6 +83,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    # Isolated registered theories + three literature full-pipeline cells.
+    "testbed_review": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
 }
 
 AXIS_KEYS = (
@@ -227,6 +236,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_association_screen_cases()
         return
+    if preset == "testbed_review":
+        from app.campaign.testbed_review import iter_testbed_review_cases
+
+        yield from iter_testbed_review_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -251,6 +265,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.association_screen import association_screen_count
 
         return association_screen_count()
+    if preset == "testbed_review":
+        from app.campaign.testbed_review import testbed_review_count
+
+        return testbed_review_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -387,5 +405,14 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
             "Designed Miles / McKubre / ARPA-E screen at 3 T × 2 loading. "
             "Ranks five-factor association, not P(LENR). Does not prove LENR. "
             "Do not run full or diverse in CI."
+        )
+    if preset == "testbed_review":
+        from app.campaign.testbed_review import testbed_review_axes
+
+        payload["axes"] = testbed_review_axes()
+        payload["note"] = (
+            "Isolated registered theories plus Miles / McKubre / ARPA-E "
+            "full-pipeline cells. Model association, not P(LENR). Does not "
+            "prove LENR. Do not run full or diverse in CI."
         )
     return payload

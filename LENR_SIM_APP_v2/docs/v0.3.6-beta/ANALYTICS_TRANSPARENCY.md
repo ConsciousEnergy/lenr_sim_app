@@ -143,9 +143,36 @@ page also calls existing `parameter-sweep` (max 100 steps) and
 `validation-report` APIs; those checks are phenomenology screens, not proof.
 
 `GET /api/analytics/experiments` is additive: `sourceClass`, `literatureId`,
-`meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` ranks by that
-association (missing scores sort last). `source_class` filters Baseline /
-Campaign / Auto / User. Seed-only rows may have `meanFinalScore: null`.
+`meanFinalScore`, `topTheoryId`, `enhancementSaturated`, `log10EnhancementRaw`,
+`excessHeatWatts`. `sort_by=mean_final_score` ranks by that association
+(missing scores sort last). `source_class` filters Baseline / Campaign / Auto
+/ User. Seed-only rows may have `meanFinalScore: null`.
+
+History **Enhancement** shows `≥1e5 (capped)` when the stored factor hits the
+governance ceiling (`MAX_ENHANCEMENT_FACTOR = 1e5`) or
+`results.enhancement_saturation.is_saturated`. That chip is **not** a
+laboratory tunneling measurement. Numeric `enhancement_factor` is unchanged
+for Overview charts.
+
+History **Energy (keV)** is literature-seed `energy_output_kev`. Auto-persist
+stores `null` (em dash), not `0.000`. **Power (W)** is
+`excess_heat_watts` / pipeline `total_energy_watts`. Watts and keV are not
+converted. Phonon meV stays in the theory-detail drawer.
+
+`persist_unified_simulation` copies pipeline watts when observables heat is 0.
+Bubble-lattice Auto rows stay watts-null unless the request already carries
+labeled `theory_result` / `pipeline_scores` (Save-to-Analytics pattern).
+Attached scores are **not** multiplied into `peak_conditions.enhancement_factor`.
+`composition_contract.not_combinable_with` records that split.
+
+Theory Testbed persist accepts optional `literature_id` (existing
+`provenance_from_mapping`). Public VPS stays `LENR_AUTO_PERSIST=0`; shared
+History grows via campaign CLI + demo pack hydrate.
+
+`python -m app.scripts.run_simulation_campaign --preset testbed_review` is a
+designed experiment: one isolated cell per registered `theory_id` (Pd-D
+default; Ni-H for `piantelli_ni_h`) plus Miles / McKubre / ARPA-E full-pipeline
+cells (~24–30). Not a cartesian. Not P(LENR).
 
 `GET /api/analytics/theory-run-history` also returns `ranked_theory_ids` and
 per-theory `claim_tier` (mode across persisted records). The Relevance Map
@@ -164,7 +191,9 @@ every registered `theory_id` plus a 2 T × 2 loading Pd-D cartesian (4) and
 two tagged occurrence-anchored Pd-D cells. `--preset literature_grid` is the
 designed literature-anchored grid (distinct baseline cells + negative
 controls, ~16–32). `--preset association_screen` is Miles 1993 + McKubre SRI
-+ ARPA-E null at 3 T × 2 loading (~18 cells). Extra runs are **model outputs**.
++ ARPA-E null at 3 T × 2 loading (~18 cells). `--preset testbed_review` is
+isolated registered theories plus three literature full-pipeline cells
+(~24–30). Extra runs are **model outputs**.
 They do not raise empirical claim tiers or close `EQ-OPEN-*`.
 `lenr_proved` stays false. Do not run `--preset full` or full `diverse` in CI.
 
@@ -189,6 +218,7 @@ They do not raise empirical claim tiers or close `EQ-OPEN-*`.
 - `GET /api/analytics/distribution/{type,material,temperature}.include_baseline`
 - `theory_runs.theory_scores[*].final_score` (additive; `score` remains weighted)
 - `GET /api/analytics/theory-run-history.{score_field,mean_final_score,mean_weighted_score,ci_lo,ci_hi,by_source_class}`
+- `GET /api/analytics/experiments.{sourceClass,literatureId,meanFinalScore,topTheoryId,enhancementSaturated,log10EnhancementRaw,excessHeatWatts}`
 - `POST /api/analytics/theories/run-coupled` auto-persist (`persist_session_id`, `persist_source`)
 
 ## Purpose

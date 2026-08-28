@@ -94,8 +94,46 @@ jest.mock('../services/analyticsApi', () => ({
           meanFinalScore: null,
           topTheoryId: null,
         },
+        {
+          id: 'exp-capped',
+          name: 'Theory pipeline palladium',
+          experiment_type: 'lenr',
+          status: 'completed',
+          material: 'palladium',
+          temperature_k: 300,
+          pressure_bar: 1.0,
+          enhancement_factor: 100000,
+          enhancementSaturated: true,
+          log10EnhancementRaw: 18.4,
+          energy_output_kev: null,
+          excessHeatWatts: 0.012,
+          created_at: '2026-08-24T00:00:00Z',
+          source: 'auto_persist',
+          sourceClass: 'Auto',
+          literatureId: 'miles-1993',
+          meanFinalScore: 0.24,
+          topTheoryId: 'electron_screening',
+        },
+        {
+          id: 'exp-bubble',
+          name: 'Bubble-lattice palladium T=500K',
+          experiment_type: 'bubble_fusion',
+          status: 'completed',
+          material: 'palladium',
+          temperature_k: 500,
+          pressure_bar: 1.5,
+          enhancement_factor: 12,
+          energy_output_kev: null,
+          excessHeatWatts: null,
+          created_at: '2026-08-24T00:00:00Z',
+          source: 'auto_persist',
+          sourceClass: 'Auto',
+          literatureId: null,
+          meanFinalScore: null,
+          topTheoryId: null,
+        },
       ],
-      total: 2,
+      total: 4,
     }),
     getTemperatureDistribution: jest.fn().mockResolvedValue([]),
     getTheoryGraph: jest.fn().mockResolvedValue({ nodes: [], edges: [] }),
@@ -223,10 +261,22 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByText('Google/ARPA-E null')).toBeInTheDocument();
     expect(screen.getByTestId('association-percent-header')).toHaveTextContent(/Model association %/);
     expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/not a laboratory/);
+    expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/governance ceiling/);
+    expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/Power \(W\)/);
     expect(screen.getByText('62%')).toBeInTheDocument();
     expect(screen.getByText('miles heat helium')).toBeInTheDocument();
-    expect(screen.getByText('miles-1993')).toBeInTheDocument();
+    expect(screen.getAllByText('miles-1993').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('history-source-chip-campaign')).toBeInTheDocument();
+    expect(screen.getByText('Power (W)')).toBeInTheDocument();
+    expect(screen.getByText('Energy (keV)')).toBeInTheDocument();
+    expect(screen.getByTestId('history-enhancement-capped')).toHaveTextContent('≥1e5 (capped)');
+    expect(screen.queryByText('100000.00×')).not.toBeInTheDocument();
+    const energyCells = screen.getAllByTestId('history-energy-kev');
+    expect(energyCells.some((cell) => cell.textContent === '—')).toBe(true);
+    expect(energyCells.some((cell) => cell.textContent === '0.000')).toBe(false);
+    const powerCells = screen.getAllByTestId('history-power-watts');
+    expect(powerCells.some((cell) => cell.textContent === '0.012')).toBe(true);
+    expect(powerCells.some((cell) => cell.textContent === '—')).toBe(true);
 
     const checkboxes = screen.getAllByRole('checkbox');
     await userEvent.click(checkboxes[1]);

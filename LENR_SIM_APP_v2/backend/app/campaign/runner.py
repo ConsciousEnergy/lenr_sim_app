@@ -144,7 +144,11 @@ async def run_campaign(
         payloads.append(body)
 
     theory_payloads: List[Dict[str, Any]] = []
-    if include_theory_pipeline and preset not in {"diverse", "question_theories"}:
+    if include_theory_pipeline and preset not in {
+        "diverse",
+        "question_theories",
+        "testbed_review",
+    }:
         representative = next(iter_campaign_cases(preset))
         loading = float(representative["loading_ratio"])
         theory_request = TheoryRunRequest(

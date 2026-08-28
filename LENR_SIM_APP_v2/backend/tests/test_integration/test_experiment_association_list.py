@@ -70,6 +70,8 @@ def test_enrich_experiment_dict_is_additive() -> None:
     assert row["topTheoryId"] is None
     assert row["enhancement_factor"] == 12.0
     assert row["name"] == "seed"
+    assert row["enhancementSaturated"] is False
+    assert row["excessHeatWatts"] is None
 
 
 def test_list_experiments_includes_association_fields_and_sort() -> None:

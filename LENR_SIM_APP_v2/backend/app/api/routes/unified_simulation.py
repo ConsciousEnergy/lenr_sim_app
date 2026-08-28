@@ -1199,6 +1199,37 @@ class BubbleLatticeRequest(BaseModel):
         default=None,
         description="Optional persist source label (auto_persist or simulation_campaign).",
     )
+    literature_id: Optional[str] = Field(
+        default=None,
+        description="Optional literature_baselines id stored on persisted rows. Additive.",
+    )
+    campaign_preset: Optional[str] = Field(
+        default=None,
+        description="Optional campaign preset name stored on persisted rows. Additive.",
+    )
+    campaign_tag: Optional[str] = Field(
+        default=None,
+        description="Optional campaign cell tag stored as parameters.tag. Additive.",
+    )
+    claim_tag: Optional[str] = Field(
+        default=None,
+        description="Optional EMP/null/disputed/contested/speculative literature tag. Additive.",
+    )
+    open_question_ids: Optional[List[str]] = Field(
+        default=None,
+        description="Optional EQ-OPEN-* ids this cell is meant to stress. Additive.",
+    )
+    theory_result: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Optional Theory Testbed result already computed in the client. "
+            "Persisted as labeled pipeline_scores; not multiplied into peak enhancement."
+        ),
+    )
+    pipeline_scores: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Optional pre-built pipeline_scores. Not multiplied into peak enhancement.",
+    )
 
 
 class BubbleLatticeResponse(BaseModel):
