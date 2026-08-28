@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - History shows `≥1e5 (capped)` when enhancement hits the governance ceiling; persist stores `results.enhancement_saturation` without changing the numeric column. Not a laboratory 10^5 tunneling measurement
 - Additive list fields: `enhancementSaturated`, `log10EnhancementRaw`, `excessHeatWatts`. Energy (keV) uses an em dash when `energy_output_kev` is null (no more `0.000`). Power (W) is pipeline/excess heat. Watts and keV are not converted
 - `persist_unified_simulation` copies pipeline watts when observables heat is 0. Bubble Auto may attach labeled Theory Testbed `pipeline_scores` / `literature_id` without multiplying into peak enhancement
-- Designed `testbed_review` campaign: one isolated cell per registered theory plus Miles / McKubre / ARPA-E full-pipeline cells (~24–30). Demo pack hydrate remains the public History path (`LENR_AUTO_PERSIST=0`)
+- Designed `testbed_review` campaign: one isolated cell per registered theory plus Miles / McKubre / ARPA-E full-pipeline cells (24 cells). Demo pack refreshed to 150 experiments / 132 theory_runs. Public History still grows via hydrate (`LENR_AUTO_PERSIST=0`)
 - Docs: `ANALYTICS_TRANSPARENCY.md` capped enhancement, keV vs W, bubble vs pipeline scores. `lenr_proved` false; `EQ-OPEN-*` stay OPEN
 
 ### Analytics association rank (2026-08-27)
