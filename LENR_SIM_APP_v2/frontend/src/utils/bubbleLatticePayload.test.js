@@ -35,6 +35,21 @@ describe('buildBubbleLatticePayload', () => {
     expect(payload.electrolyte.family).toBe('li');
     expect(payload.rate_mode).toBe('two_body');
     expect(payload.random_seed).toBeNull();
+    expect(payload.theory_result).toBeUndefined();
+  });
+
+  it('attaches optional theoryResult and literatureId without mixing engines', () => {
+    const theoryResult = {
+      combined_enhancement: 12,
+      enabled_theories: ['electron_screening'],
+    };
+    const payload = buildBubbleLatticePayload(parameters, {
+      literatureId: 'miles-1993',
+      theoryResult,
+    });
+    expect(payload.literature_id).toBe('miles-1993');
+    expect(payload.theory_result).toEqual(theoryResult);
+    expect(payload.bubble.initial_radius_um).toBe(10.0);
   });
 });
 

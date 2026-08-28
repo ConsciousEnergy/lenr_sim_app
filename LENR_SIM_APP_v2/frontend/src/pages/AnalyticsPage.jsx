@@ -182,6 +182,42 @@ function formatAssociation(score) {
   return `${(score * 100).toFixed(0)}%`;
 }
 
+const ENHANCEMENT_CEILING = 1e5;
+
+function isEnhancementCapped(factor, saturated) {
+  if (saturated) return true;
+  return Number.isFinite(factor) && factor >= ENHANCEMENT_CEILING * (1 - 1e-9);
+}
+
+function formatEnhancement(factor, saturated, log10Raw) {
+  if (isEnhancementCapped(factor, saturated)) {
+    const rawHint = Number.isFinite(log10Raw)
+      ? ` Uncapped log10 ≈ ${Number(log10Raw).toFixed(2)}.`
+      : '';
+    return {
+      capped: true,
+      label: '≥1e5 (capped)',
+      title: `Governance ceiling 1e5, not a physical prediction.${rawHint}`,
+    };
+  }
+  if (!Number.isFinite(factor)) {
+    return { capped: false, label: '—', title: '' };
+  }
+  return { capped: false, label: `${factor.toFixed(2)}×`, title: '' };
+}
+
+function formatEnergyKev(value) {
+  if (!Number.isFinite(value)) return '—';
+  return value.toFixed(3);
+}
+
+function formatPowerWatts(value) {
+  if (!Number.isFinite(value)) return '—';
+  const abs = Math.abs(value);
+  if (abs !== 0 && (abs >= 1e4 || abs < 1e-3)) return value.toExponential(2);
+  return Number(value.toPrecision(4)).toString();
+}
+
 function formatCi(lo, hi) {
   if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
   return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`;
@@ -306,9 +342,12 @@ const AnalyticsPage = () => {
         material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
         temperature: exp.temperature_k || 300,
         pressure: exp.pressure_bar || 1,
-        enhancementFactor: exp.enhancement_factor || 0,
+        enhancementFactor: exp.enhancement_factor,
         fusionRate: exp.fusion_rate || 0,
-        energyOutput: exp.energy_output_kev || 0,
+        energyOutput: exp.energy_output_kev,
+        excessHeatWatts: exp.excessHeatWatts ?? exp.excess_heat_watts,
+        enhancementSaturated: Boolean(exp.enhancementSaturated),
+        log10EnhancementRaw: exp.log10EnhancementRaw,
         timestamp: exp.created_at,
         isBaseline: exp.is_baseline || false,
         source: exp.source || 'User Simulation',
@@ -928,7 +967,10 @@ const AnalyticsPage = () => {
             data-testid="association-history-caption"
           >
             Model association % is five-factor GM × claim-tier, not a laboratory
-            probability that LENR occurs. Huge enhancement is not contribution probability.
+            probability that LENR occurs. Huge enhancement is not contribution
+            probability — values at 1e5 are the governance ceiling, not a
+            laboratory tunneling measurement. Energy (keV) is literature-seed
+            estimates; Power (W) is pipeline/excess heat. Units are not converted.
           </Typography>
           <Stack
             direction="row"
@@ -999,6 +1041,7 @@ const AnalyticsPage = () => {
                   <TableCell>Top theory</TableCell>
                   <TableCell>Literature id</TableCell>
                   <TableCell align="right">Energy (keV)</TableCell>
+                  <TableCell align="right">Power (W)</TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
@@ -1026,11 +1069,36 @@ const AnalyticsPage = () => {
                       </TableCell>
                       <TableCell>{row.material}</TableCell>
                       <TableCell align="right">{row.temperature?.toFixed(1) || 'N/A'}</TableCell>
-                      <TableCell align="right">{row.enhancementFactor?.toFixed(2) || '0.00'}×</TableCell>
+                      <TableCell align="right">
+                        {(() => {
+                          const shown = formatEnhancement(
+                            row.enhancementFactor,
+                            row.enhancementSaturated,
+                            row.log10EnhancementRaw,
+                          );
+                          if (shown.capped) {
+                            return (
+                              <Tooltip title={shown.title}>
+                                <Chip
+                                  size="small"
+                                  label={shown.label}
+                                  data-testid="history-enhancement-capped"
+                                />
+                              </Tooltip>
+                            );
+                          }
+                          return shown.label;
+                        })()}
+                      </TableCell>
                       <TableCell align="right">{formatAssociation(row.meanFinalScore)}</TableCell>
                       <TableCell>{row.topTheoryId ? String(row.topTheoryId).replace(/_/g, ' ') : '—'}</TableCell>
                       <TableCell>{row.literatureId || '—'}</TableCell>
-                      <TableCell align="right">{row.energyOutput?.toFixed(3) || '0.000'}</TableCell>
+                      <TableCell align="right" data-testid="history-energy-kev">
+                        {formatEnergyKev(row.energyOutput)}
+                      </TableCell>
+                      <TableCell align="right" data-testid="history-power-watts">
+                        {formatPowerWatts(row.excessHeatWatts)}
+                      </TableCell>
                       <TableCell>{row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <Tooltip title="View Details">
@@ -1099,12 +1167,20 @@ const AnalyticsPage = () => {
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Enhancement:</Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                          {sim.enhancementFactor.toFixed(2)}×
+                          {formatEnhancement(
+                            sim.enhancementFactor,
+                            sim.enhancementSaturated,
+                            sim.log10EnhancementRaw,
+                          ).label}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">Energy Output:</Typography>
-                        <Typography variant="body2">{sim.energyOutput.toFixed(3)} keV</Typography>
+                        <Typography variant="body2" color="text.secondary">Energy (keV):</Typography>
+                        <Typography variant="body2">{formatEnergyKev(sim.energyOutput)}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">Power (W):</Typography>
+                        <Typography variant="body2">{formatPowerWatts(sim.excessHeatWatts)}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Fusion Rate:</Typography>
