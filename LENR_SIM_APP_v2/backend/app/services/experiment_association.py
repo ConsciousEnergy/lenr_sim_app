@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import and_, or_
 
 from app.models.database_models import Experiment
+from app.services.enhancement_history import enhancement_is_saturated
 from app.services.simulation_persistence import (
     SHARED_SOURCES,
     SOURCE_AUTO_PERSIST,
@@ -113,6 +114,21 @@ def enrich_experiment_dict(payload: Dict[str, Any]) -> Dict[str, Any]:
         row["meanFinalScore"] = mean
     if "topTheoryId" not in row:
         row["topTheoryId"] = top_id
+    saturation = results.get("enhancement_saturation") or {}
+    if "enhancementSaturated" not in row:
+        row["enhancementSaturated"] = bool(
+            saturation.get("is_saturated")
+        ) or enhancement_is_saturated(row.get("enhancement_factor"))
+    if "log10EnhancementRaw" not in row:
+        log10_raw = saturation.get("log10_value_raw")
+        row["log10EnhancementRaw"] = (
+            float(log10_raw) if isinstance(log10_raw, (int, float)) else None
+        )
+    if "excessHeatWatts" not in row:
+        watts = row.get("excess_heat_watts")
+        if watts is None:
+            watts = results.get("total_energy_watts")
+        row["excessHeatWatts"] = watts
     return row
 
 

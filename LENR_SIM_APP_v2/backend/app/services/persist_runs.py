@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from app.models.database_models import ExperimentStatus
+from app.services.enhancement_history import (
+    compact_saturation_snippet,
+    prefer_heat_watts,
+    wrap_attached_pipeline,
+)
 from app.services.simulation_persistence import (
     DISCLAIMER,
     SOURCE_AUTO_PERSIST,
@@ -13,6 +18,15 @@ from app.services.simulation_persistence import (
     _pa_to_bar,
     persist_best_effort,
 )
+
+PIPELINE_NOT_COMBINABLE = {
+    "engine": "theory_pipeline_scores_attached",
+    "not_combinable_with": ["peak_conditions.enhancement_factor"],
+    "note": (
+        "Theory Testbed association scores. Not multiplied into "
+        "bubble-lattice peak enhancement."
+    ),
+}
 
 
 def provenance_from_mapping(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -79,6 +93,11 @@ async def persist_unified_simulation(
     rate_mode = req.get("rate_mode") or "two_body"
     temperature = float(env.get("temperature") or 300.0)
     provenance = provenance_from_mapping(req)
+    heat = prefer_heat_watts(observables.get("excess_heat_watts"), pipeline_result)
+    saturation = compact_saturation_snippet(
+        enhancement_factor=enhancement,
+        report=(resp.get("enhancement") or {}).get("saturation"),
+    )
     return await persist_best_effort(
         experiment_type="unified_theory",
         name=campaign_experiment_name(
@@ -95,7 +114,7 @@ async def persist_unified_simulation(
         enhancement_factor=enhancement,
         fusion_rate=observables.get("reaction_rate"),
         energy_output_kev=None,
-        excess_heat_watts=observables.get("excess_heat_watts"),
+        excess_heat_watts=heat,
         duration_seconds=req.get("total_time"),
         parameters=_merge_parameters(
             {
@@ -106,7 +125,11 @@ async def persist_unified_simulation(
             },
             req,
         ),
-        results=_compact_results(experiment_type="unified_theory", response=resp),
+        results=_compact_results(
+            experiment_type="unified_theory",
+            response=resp,
+            extra={"enhancement_saturation": saturation},
+        ),
         pipeline_result=pipeline_result,
         session_id=session_id,
         source=source,
@@ -132,6 +155,26 @@ async def persist_bubble_lattice(
     lattice = req.get("lattice") or {}
     peak = resp.get("peak_conditions") or {}
     collapse = resp.get("collapse_results") or {}
+    enhancement = peak.get("enhancement_factor") or collapse.get("peak_enhancement")
+    breakdown = peak.get("enhancement_breakdown") or {}
+    saturation_report = breakdown.get("saturation") if isinstance(breakdown, dict) else None
+    saturation = compact_saturation_snippet(
+        enhancement_factor=enhancement,
+        report=saturation_report if isinstance(saturation_report, dict) else None,
+    )
+    attached = wrap_attached_pipeline(
+        req.get("theory_result"),
+        req.get("pipeline_scores"),
+    )
+    extra: Dict[str, Any] = {
+        "peak_conditions": {
+            k: peak.get(k)
+            for k in ("temperature_k", "pressure_gpa", "enhancement_factor")
+        },
+        "enhancement_saturation": saturation,
+    }
+    if attached is not None:
+        extra["composition_contract"] = dict(PIPELINE_NOT_COMBINABLE)
     return await persist_best_effort(
         experiment_type="bubble_fusion",
         name=f"Bubble-lattice {material} T={bubble.get('ambient_temperature_k', 298):.0f}K",
@@ -139,22 +182,26 @@ async def persist_bubble_lattice(
         temperature_k=float(bubble.get("ambient_temperature_k") or 298.0),
         pressure_bar=float(bubble.get("driving_pressure_bar") or 1.0),
         loading_ratio=lattice.get("loading_ratio"),
-        enhancement_factor=peak.get("enhancement_factor") or collapse.get("peak_enhancement"),
+        enhancement_factor=enhancement,
         fusion_rate=None,
         energy_output_kev=None,
-        excess_heat_watts=None,
+        excess_heat_watts=prefer_heat_watts(None, attached),
         duration_seconds=None,
-        parameters={
-            "reactant": (req.get("material") or {}).get("reactant"),
-            "rate_mode": req.get("rate_mode"),
-            "frequency_khz": bubble.get("frequency_khz"),
-            "initial_radius_um": bubble.get("initial_radius_um"),
-        },
+        parameters=_merge_parameters(
+            {
+                "reactant": (req.get("material") or {}).get("reactant"),
+                "rate_mode": req.get("rate_mode"),
+                "frequency_khz": bubble.get("frequency_khz"),
+                "initial_radius_um": bubble.get("initial_radius_um"),
+            },
+            req,
+        ),
         results=_compact_results(
             experiment_type="bubble_fusion",
             response=resp,
-            extra={"peak_conditions": {k: peak.get(k) for k in ("temperature_k", "pressure_gpa", "enhancement_factor")}},
+            extra=extra,
         ),
+        pipeline_result=attached,
         session_id=session_id,
         source=source,
         conditions={
@@ -179,6 +226,8 @@ async def persist_theory_pipeline(
         material = material.split("_", 1)[0]
     temperature = float(conditions.get("temperature") or 300.0)
     provenance = provenance_from_mapping(req)
+    combined = payload.get("combined_enhancement")
+    saturation = compact_saturation_snippet(enhancement_factor=combined)
     return await persist_best_effort(
         experiment_type="lenr",
         name=campaign_experiment_name(
@@ -192,7 +241,7 @@ async def persist_theory_pipeline(
         temperature_k=temperature,
         pressure_bar=_pa_to_bar(float(conditions.get("pressure") or 101325.0)),
         loading_ratio=conditions.get("loading_ratio"),
-        enhancement_factor=payload.get("combined_enhancement"),
+        enhancement_factor=combined,
         fusion_rate=None,
         energy_output_kev=None,
         excess_heat_watts=payload.get("total_energy_watts"),
@@ -204,7 +253,11 @@ async def persist_theory_pipeline(
             },
             req,
         ),
-        results=_compact_results(experiment_type="lenr", response=payload),
+        results=_compact_results(
+            experiment_type="lenr",
+            response=payload,
+            extra={"enhancement_saturation": saturation},
+        ),
         pipeline_result=result,
         session_id=session_id,
         source=source,

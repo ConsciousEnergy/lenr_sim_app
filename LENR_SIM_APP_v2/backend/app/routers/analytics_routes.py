@@ -270,7 +270,8 @@ async def list_experiments(
     Get paginated list of experiments with optional filtering.
     
     Supports filtering by type, status, material, source_class, and pagination.
-    Additive list fields: sourceClass, literatureId, meanFinalScore, topTheoryId.
+    Additive list fields: sourceClass, literatureId, meanFinalScore, topTheoryId,
+    enhancementSaturated, log10EnhancementRaw, excessHeatWatts.
     sort_by=mean_final_score ranks by five-factor association, not P(LENR).
     """
     service = get_analytics_service(db)
