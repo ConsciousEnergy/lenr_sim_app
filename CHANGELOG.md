@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-04-18
 
+### Theory testbed review History honesty (2026-08-27)
+- History shows `≥1e5 (capped)` when enhancement hits the governance ceiling; persist stores `results.enhancement_saturation` without changing the numeric column. Not a laboratory 10^5 tunneling measurement
+- Additive list fields: `enhancementSaturated`, `log10EnhancementRaw`, `excessHeatWatts`. Energy (keV) uses an em dash when `energy_output_kev` is null (no more `0.000`). Power (W) is pipeline/excess heat. Watts and keV are not converted
+- `persist_unified_simulation` copies pipeline watts when observables heat is 0. Bubble Auto may attach labeled Theory Testbed `pipeline_scores` / `literature_id` without multiplying into peak enhancement
+- Designed `testbed_review` campaign: one isolated cell per registered theory plus Miles / McKubre / ARPA-E full-pipeline cells (~24–30). Demo pack hydrate remains the public History path (`LENR_AUTO_PERSIST=0`)
+- Docs: `ANALYTICS_TRANSPARENCY.md` capped enhancement, keV vs W, bubble vs pipeline scores. `lenr_proved` false; `EQ-OPEN-*` stay OPEN
+
 ### Analytics association rank (2026-08-27)
 - Additive experiment list fields: `sourceClass`, `literatureId`, `meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` and `source_class` filter. This is five-factor association, not P(LENR)
 - History: Model association % / top theory / literature id, sort control, source-class chips

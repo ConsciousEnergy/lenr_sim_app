@@ -42,6 +42,7 @@ python -m app.scripts.run_simulation_campaign --preset literature_grid
 python -m app.scripts.run_simulation_campaign --preset all_claims
 python -m app.scripts.run_simulation_campaign --preset question_theories
 python -m app.scripts.run_simulation_campaign --preset association_screen
+python -m app.scripts.run_simulation_campaign --preset testbed_review
 python -m app.scripts.export_reviewer_pack --out ../datasets/reviewer_packs/local
 python -m app.scripts.report_open_question_stress --out ../datasets/reviewer_packs/local
 python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_campaign_demo
@@ -55,7 +56,8 @@ five-factor vs literature-likelihood; it does not close `EQ-OPEN-*`.
 Honest N: literature_grid (~16–32 designed cells, one per `literature_id` plus
 negative controls) + all_claims (~6 unified + one run per registered theory) +
 question_theories (~20–45 isolated theory×literature cells) + association_screen
-(~18 Miles/McKubre/ARPA-E T×loading cells) + optional diverse
+(~18 Miles/McKubre/ARPA-E T×loading cells) + testbed_review (~24–30 isolated
+theories + 3 literature cells) + optional diverse
 (~237). That is a few hundred persisted model rows, not the paper’s Monte Carlo
 aspiration of \(10^4\)–\(10^6\).
 
