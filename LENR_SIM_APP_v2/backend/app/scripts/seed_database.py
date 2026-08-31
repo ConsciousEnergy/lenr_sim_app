@@ -4,7 +4,7 @@ Database Seeding Script for LENR Simulation App
 Seeds the database with baseline LENR experiment data from published research.
 Idempotent - safe to run multiple times.
 
-v0.2.3-beta
+v0.3.6-beta
 
 Usage:
     cd backend
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--hydrate-demo",
         action="store_true",
-        help="Import datasets/reviewer_packs/q_campaign_demo after seeding (model outputs, ~107 rows)",
+        help="Import datasets/reviewer_packs/q_campaign_demo after seeding (model outputs, 150 experiments / 132 theory_runs)",
     )
     
     args = parser.parse_args()

@@ -40,8 +40,9 @@ module "cloudflare" {
   cloudflare_zone_id    = var.cloudflare_zone_id
   domain                = var.domain
   environment           = var.environment
-  github_owner          = var.github_owner
-  github_repo           = var.github_repo
+  github_owner            = var.github_owner
+  github_repo             = var.github_repo
+  pages_production_branch = var.pages_production_branch
 }
 
 # ==============================================================================

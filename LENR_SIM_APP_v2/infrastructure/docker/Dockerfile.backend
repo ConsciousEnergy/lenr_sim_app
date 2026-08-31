@@ -60,6 +60,8 @@ WORKDIR /app
 COPY --chown=appuser:appgroup backend/app ./app
 COPY --chown=appuser:appgroup backend/alembic ./alembic
 COPY --chown=appuser:appgroup backend/alembic.ini ./
+# Hydrate CLI (`seed_database --hydrate-demo`) needs literature + reviewer packs.
+COPY --chown=appuser:appgroup datasets ./datasets
 
 # Copy entrypoint script (reads Docker secrets into env vars). The explicit
 # chmod keeps startup working even if the source file loses its +x bit on a

@@ -15,7 +15,7 @@ docker_users:
 
 # Traefik settings
 traefik_version: "v3.0"
-traefik_dashboard_enabled: true
+traefik_dashboard_enabled: false
 traefik_dashboard_auth: true
 traefik_acme_email: "diadon@conscious.energy"
 traefik_acme_staging: false  # Set to true for testing
