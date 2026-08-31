@@ -13,6 +13,7 @@ import Dashboard from './pages/DashboardNew';
 import SimulationDetail from './pages/SimulationDetail';
 import AboutPage from './pages/AboutPage';
 import TeamPage from './pages/TeamPage';
+import PrivacyPage from './pages/PrivacyPage';
 import './App.css';
 
 // Development-only routes are hidden in production
@@ -205,6 +206,11 @@ const AppContent = () => {
             <Route path="/about" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <AboutPage />
+              </AppLayoutFixed>
+            } />
+            <Route path="/privacy" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <PrivacyPage />
               </AppLayoutFixed>
             } />
             <Route path="/theory" element={

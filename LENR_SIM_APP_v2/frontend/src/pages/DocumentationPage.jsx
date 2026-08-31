@@ -189,7 +189,7 @@ const DocumentationPage = () => {
                     window.open(`${API_BASE_URL}/api/docs`, '_blank', 'noopener,noreferrer');
                   }}
                 >
-                  Open Swagger UI
+                  Open Swagger UI (dev only)
                 </Button>
               </CardContent>
             </Card>
@@ -532,12 +532,14 @@ python -m uvicorn app.main:app --reload  # Backend`}
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
               <Typography variant="body2" paragraph>
-                Visit <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink> for 
-                the interactive Swagger UI with complete API documentation.
+                Swagger UI is available at <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink>
+                {' '}in <strong>development</strong> only. Production returns <strong>404</strong> for
+                `/api/docs` (no slug), `/api/redoc`, `/api/openapi.json`, and `/metrics`.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Note:</strong> Make sure the backend server is running on port 8010. If you see a blank page, 
-                check that the backend is started and accessible.
+                Public markdown docs remain at <code>/api/docs/{'{slug}'}</code> (issue-ledger,
+                testable-predictions, reviewer-packets, researcher-review-pack). Local backend
+                default is port 8010.
               </Typography>
             </Alert>
           </AccordionDetails>

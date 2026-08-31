@@ -32,8 +32,35 @@ const POSTHOG_KEY = process.env.REACT_APP_POSTHOG_KEY || metaEnv.VITE_POSTHOG_KE
 const POSTHOG_HOST =
   process.env.REACT_APP_POSTHOG_HOST || metaEnv.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const OPT_OUT_KEY = 'lenr_posthog_opt_out';
 
 let _enabled = false;
+
+export function isProductAnalyticsConfigured() {
+  return Boolean(POSTHOG_KEY) && IS_PRODUCTION;
+}
+
+export function isAnalyticsOptedOut() {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(OPT_OUT_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+export function setAnalyticsOptOut(optOut) {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    if (optOut) localStorage.setItem(OPT_OUT_KEY, '1');
+    else localStorage.removeItem(OPT_OUT_KEY);
+  } catch (_) {
+    /* ignore quota / private mode */
+  }
+  if (optOut && _enabled) {
+    posthog.opt_out_capturing();
+    _enabled = false;
+  }
+}
 
 /**
  * Initialize PostHog. Safe to call unconditionally; it self-gates.
@@ -44,8 +71,7 @@ export function initAnalytics() {
     typeof navigator !== 'undefined' &&
     (navigator.doNotTrack === '1' || navigator.doNotTrack === 'yes');
 
-  // No-op unless we have a key, are in production, and the user hasn't opted out.
-  if (!POSTHOG_KEY || !IS_PRODUCTION || doNotTrack) return;
+  if (!POSTHOG_KEY || !IS_PRODUCTION || doNotTrack || isAnalyticsOptedOut()) return;
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
