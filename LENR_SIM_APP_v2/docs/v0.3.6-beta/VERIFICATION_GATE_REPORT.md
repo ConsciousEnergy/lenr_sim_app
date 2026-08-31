@@ -48,10 +48,24 @@ Re-ran gates on product HEAD `d6be618` (`lenr_sim_app_v0.3.6-beta`). Specialist 
 - Demo pack: 150 experiments / 132 theory_runs; `lenr_proved: false`
 - Status: **PASS**
 
-### Public deployment
-- Code/infra: **NOT READY** to apply as committed (see tracker 2026-08-31)
+### Public deployment (Wave 2 snapshot)
+- Code/infra at review HEAD: **NOT READY** to apply as committed
 - Live Cloudflare/Hostinger cutover: **operator PENDING** and blocked on WordPress.com DNS
-- Science honesty: **NO-GO** until `/bubble-fusion` stops fabricating `1e13`
+- Science honesty at review HEAD: **NO-GO** until `/bubble-fusion` stops fabricating `1e13`
+
+## Wave 3 code cutover fixes (2026-08-31, same branch)
+
+Implemented confirmed code blockers on `consciousenergy/public-release-review-7a95`. Live DNS remains **NO-GO**.
+
+| Check | Result |
+|---|---|
+| SCI-001 bubble-fusion no `1e13` default | **PASS** — Jest `BubbleFusionPage.test.jsx`; UI chip `Enhancement: not provided` on local fallback |
+| Pages `production_branch` + `BUILD_VERSION=0.3.6-beta` | **PASS** in Terraform + `deploy.yml` |
+| Traefik dashboard / placeholder auth | **PASS** — dashboard off |
+| Dual Traefik CORS | **PASS** — `backend-cors` removed |
+| Playwright Chromium | **27 passed** in 35.1s; job `frontend-e2e` in `test.yml` |
+| Science + production-hardening quiet pytest | **64 passed** in 6.99s |
+| `CI=true npm run build` | **PASS** — `dist/` contains `_headers`, `_redirects`, `robots.txt` |
 
 ### What this review did not discharge
 - `EQ-OPEN-MEV-01` … `EQ-OPEN-YIELD-01` remain OPEN (accepted residual)

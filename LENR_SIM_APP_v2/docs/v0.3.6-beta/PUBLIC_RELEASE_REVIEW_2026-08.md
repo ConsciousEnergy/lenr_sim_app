@@ -30,33 +30,35 @@ Live probe 2026-08-31: that architecture is **not** what serves `conscious.energ
 
 ## Go / no-go rubric (plan)
 
-| Required for GO | Result |
-|---|---|
-| Four version markers identical `0.3.6-beta` | **PASS** |
-| Science gates green | **PASS** — 55 passed (3 V&V + 52 experiment-anchored) |
-| No new high/critical audits | **PASS** — pip-audit 0 new IDs (11 ignored); npm high=0 |
-| Export envelope and `contract_version` additive-only | **PASS** — `lenr-run-export-v1`, `v0.3.6-beta-science-gate-1` |
-| Production hides OpenAPI/metrics/diagnostics; Analytics writes token-gated; persist off | **PASS** in code / Swarm template |
-| Cloudflare Pages would build **this** release branch with `VITE_API_URL=https://api.conscious.energy` (not `main`) | **FAIL** — Terraform `production_branch = "main"`; `origin/main` is 88 commits behind |
-| GHCR image tag matches `0.3.6-beta`, not `latest`/`main` by accident | **FAIL** — Swarm pulls `:latest`; `deploy.yml` only on `main` + `v*` tags; `BUILD_VERSION=${{ github.ref_name }}` |
-| No public UI path claims LENR is proved or presents `1e5` as a laboratory measurement | **FAIL** — `/bubble-fusion` shows **1.00e+13×** when the API omits `enhancement_factor`. Analytics History `≥1e5 (capped)` is honest. `lenr_proved` remains false |
-| Traefik dashboard is not world-reachable with a placeholder password | **FAIL in template** — public router + `admin:$apr1$xxxxx$xxxxx`. Not live until DNS exists (today NS is WordPress.com) |
-| Operator runbook no longer tells them to open `/api/docs` in production | **FAIL** — `DEPLOYMENT_CHECKLIST.md` still expects Swagger 200 |
+Wave 2 is the review snapshot. Wave 3 landed the confirmed **code** blockers on this branch. Live DNS is still **NO-GO**.
 
-**Slice gates that are green do not make a public GO.** Cutover would either publish stale `main`, fail GHCR pull, steal the WordPress marketing site, or show a 10^13 enhancement chip.
+| Required for GO | Wave 2 (review) | After Wave 3 (this branch) |
+|---|---|---|
+| Four version markers identical `0.3.6-beta` | **PASS** | **PASS** |
+| Science gates green | **PASS** — 55 passed | **PASS** — 55 passed (re-run 64 quiet science+hardening tests) |
+| No new high/critical audits | **PASS** | **PASS** (unchanged ignores) |
+| Export envelope and `contract_version` additive-only | **PASS** | **PASS** |
+| Production hides OpenAPI/metrics/diagnostics; Analytics writes token-gated; persist off | **PASS** in code / Swarm | **PASS** |
+| Cloudflare Pages would build **this** release branch with `VITE_API_URL=https://api.conscious.energy` (not `main`) | **FAIL** — `production_branch = "main"` | **PASS in templates** — default `lenr_sim_app_v0.3.6-beta`. Not applied to Cloudflare |
+| GHCR image tag matches `0.3.6-beta`, not `latest`/`main` by accident | **FAIL** — `:latest` + `github.ref_name` | **PASS in templates** — `deploy.yml` stamps `0.3.6-beta`; Swarm `:0.3.6-beta` lowercase. Image not pushed until CI deploy |
+| No public UI path claims LENR is proved or presents `1e5` as a laboratory measurement | **FAIL** — `/bubble-fusion` `1e13×` | **SCI-001 PASS** — missing enhancement → `Enhancement: not provided`; fallback is a warning. SCI-002/003/005 remain majors. `lenr_proved` remains false |
+| Traefik dashboard is not world-reachable with a placeholder password | **FAIL in template** | **PASS in templates** — dashboard off; no placeholder htpasswd |
+| Operator runbook no longer tells them to open `/api/docs` in production | **FAIL** | **PASS in docs** — checklist / Phase 4 expect **404** |
+
+**Slice gates that are green still do not make a public GO.** Wave 3 closed the git-side cutover traps. Cutover remains blocked on WordPress.com NS (INF-008): a naive apex CNAME would still steal the marketing site.
 
 ---
 
 ## Three buckets
 
-### Code blockers (must change in git before a safe apply)
+### Code blockers (Wave 3 — implemented on this branch)
 
-| ID | Finding | Owner file |
+| ID | Finding | Wave 3 |
 |---|---|---|
-| SCI-001 | `/bubble-fusion` defaults missing `enhancement_factor` to `1e13` | [02-science-honesty.md](review-2026-08/02-science-honesty.md) |
-| INF-001 | Pages Terraform pins `production_branch = "main"` twice | [06-infra-website.md](review-2026-08/06-infra-website.md) |
-| INF-002 | `deploy.yml` on `main`+tags only; `BUILD_VERSION` stamps `main`/`v0.3.6-beta`; Swarm `:latest` | same |
-| INF-012 | No Pages `_redirects` → SPA deep links 404 | same |
+| SCI-001 | `/bubble-fusion` defaults missing `enhancement_factor` to `1e13` | **Fixed** — finite mapping + `Enhancement: not provided` |
+| INF-001 | Pages Terraform pins `production_branch = "main"` twice | **Fixed** — default `lenr_sim_app_v0.3.6-beta` |
+| INF-002 | `deploy.yml` on `main`+tags only; `BUILD_VERSION` stamps `main`/`v0.3.6-beta`; Swarm `:latest` | **Fixed** — ship branch + `0.3.6-beta` tag |
+| INF-012 | No Pages `_redirects` → SPA deep links 404 | **Fixed** — `frontend/public/_redirects` |
 
 ### Operator blockers (nothing in git goes live until these)
 
@@ -181,6 +183,8 @@ Not in Wave 3 (accepted or later): discharging `EQ-OPEN-*`; FastAPI/Starlette/vt
 ## Wave 3 (same branch, 2026-08-31)
 
 Implemented confirmed **code** blockers from the plan list. Operator DNS / `terraform apply` remain PENDING. Public cutover is still **NO-GO** until WordPress.com NS is replaced with a written hostname map.
+
+UI verification (Vite `http://127.0.0.1:3000`, backend down on purpose): `/privacy` (PostHog not enabled), About disclaimer (`lenr_proved` false, `EQ-OPEN-*` OPEN), `/bubble-fusion` Run Simulation shows **Enhancement: not provided** plus schematic-fallback warning (no `1e13` chip). Playwright Chromium **27/27**. GitHub `frontend-e2e` **pass**.
 
 | Fix | Finding |
 |---|---|
