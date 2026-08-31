@@ -65,14 +65,14 @@ provider "cloudflare" {
 resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = "lenr-sim-${var.environment}"
-  production_branch = "main"
+  production_branch = var.pages_production_branch
   
   source {
     type = "github"
     config {
       owner                         = var.github_owner
       repo_name                     = var.github_repo
-      production_branch             = "main"
+      production_branch             = var.pages_production_branch
       deployments_enabled           = true
       production_deployment_enabled = true
       preview_deployment_setting    = "all"
@@ -102,7 +102,7 @@ resource "cloudflare_pages_project" "frontend" {
         REACT_APP_API_URL     = "https://api.${var.domain}"
         VITE_API_URL          = "https://api.${var.domain}"
         REACT_APP_ENVIRONMENT = "preview"
-        NODE_ENV              = "development"
+        NODE_ENV              = "production"
       }
       compatibility_date = "2024-01-01"
     }

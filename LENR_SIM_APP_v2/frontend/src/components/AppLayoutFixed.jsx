@@ -419,6 +419,10 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
               GPL-3.0
             </MuiLink>
             {' '}copyleft
+            {' · '}
+            <MuiLink component={Link} to="/privacy" color="inherit" underline="hover">
+              Privacy
+            </MuiLink>
           </Typography>
         </Box>
       </Drawer>

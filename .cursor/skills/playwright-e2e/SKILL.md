@@ -11,23 +11,29 @@ description: >-
 
 ## Overview
 
-The frontend currently has zero E2E coverage. This skill establishes a
-Playwright setup for the Vite/React app and a durable pattern: role-based
-locators, page objects, and fixtures, with Playwright auto-starting the dev
-server. Prefer testing real user flows over implementation details.
+The Vite/React frontend already has Playwright coverage. `@playwright/test` is
+in `LENR_SIM_APP_v2/frontend/package.json`. Specs live under
+`LENR_SIM_APP_v2/frontend/tests/e2e/` with page objects in `tests/e2e/pages/`.
+Config: `playwright.config.js` (Chromium, Vite `:3000`, proxy `:8010`).
+Run with `npm run e2e`. CI job `frontend-e2e` in `.github/workflows/test.yml`
+installs Chromium and runs the same command. Specs stub `/api/**` via
+`page.route` and do not need a live production API.
 
-## Setup status (one-time, needs confirmation to install)
+## Setup status
 
-Playwright is not yet a dependency. First-time setup (confirm before running):
+Already installed. Do not re-run first-time `npm install -D @playwright/test`
+as if this were greenfield. Browsers: `npx playwright install chromium` (CI uses
+`--with-deps`).
 
-```bash
-cd LENR_SIM_APP_v2/frontend
-npm install -D @playwright/test
-npx playwright install --with-deps
-```
+Current specs:
 
-Then add the config and scripts from [reference.md](reference.md). Once set up,
-day-to-day use is just authoring specs and running them.
+- `app-shell.spec.js`
+- `composition-provenance.spec.js`
+- `dashboard-testbed.spec.js`
+- `enhancement-charts.spec.js`
+- `open-questions-virtual-lab.spec.js`
+- `prediction-waterfall.spec.js`
+- `theory-round-trip.spec.js`
 
 ## When to Use
 

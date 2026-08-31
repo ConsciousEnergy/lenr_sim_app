@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import MechanismPathDiagram from './MechanismPathDiagram';
 import OpenQuestionsCharts from './OpenQuestionsCharts';
-import PredictionReadoutPanel from './PredictionReadoutPanel';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
@@ -333,12 +332,6 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
       </Typography>
-
-      {!isFallback && (
-        <PredictionReadoutPanel
-          prediction={simulationData?.peak_conditions?.enhancement_breakdown?.prediction}
-        />
-      )}
 
       <Alert
         severity={status === 'RATE_BUDGET_DOES_NOT_CLOSE' ? 'warning' : 'info'}

@@ -33,7 +33,7 @@ function Home() {
               Advanced Physics Models
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Simulate quantum tunneling, electron screening, and phonon interactions with high precision.
+              Simulate quantum tunneling, electron screening, and phonon interactions as named models with claim-tier chips. Not laboratory proof of LENR.
             </p>
           </div>
           

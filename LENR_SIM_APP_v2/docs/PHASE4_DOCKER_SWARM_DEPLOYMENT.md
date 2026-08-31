@@ -1,7 +1,7 @@
-# Phase 4: Docker Swarm Deployment Guide (v0.3.5-beta)
+# Phase 4: Docker Swarm Deployment Guide (v0.3.6-beta)
 
-**Version:** 0.3.5-beta  
-**Last Updated:** February 2026  
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026  
 **Target:** Production deployment on Hostinger VPS with Docker Swarm
 
 ---
@@ -538,7 +538,7 @@ docker exec -i $(docker ps -q -f name=lenr-sim_backend) \
   python -m alembic upgrade head
 
 # Load cited literature seeds plus the frozen q_campaign_demo snapshot
-# (~107 experiments / 89 theory_runs). Do not merge campaign rows into
+# (150 experiments / 132 theory_runs). Do not merge campaign rows into
 # literature_baselines.v1.json. Extra rows are model outputs; EQ-OPEN-* stay OPEN.
 docker exec -i $(docker ps -q -f name=lenr-sim_backend) \
   python -m app.scripts.seed_database --force --hydrate-demo
@@ -587,15 +587,15 @@ curl -vI https://api.conscious.energy 2>&1 | grep -A 5 "Server certificate"
 curl https://api.conscious.energy/api/health
 
 # Expected response:
-# {"status": "healthy", "version": "0.2.1-beta"}
+# {"status": "healthy", "version": "0.3.6-beta"}
 ```
 
-**Swagger Documentation:**
+**OpenAPI (must be hidden):**
 ```bash
-# Check Swagger docs are accessible
+# Production hides Swagger / ReDoc / openapi.json
 curl -I https://api.conscious.energy/api/docs
 
-# Expected: HTTP/2 200
+# Expected: HTTP/2 404
 ```
 
 **Frontend:**
@@ -608,8 +608,9 @@ curl -I https://conscious.energy
 
 **Full Verification Checklist:**
 - [ ] SSL certificate valid (HTTPS works)
-- [ ] API health endpoint returns 200
-- [ ] Swagger docs accessible
+- [ ] API health endpoint returns 200 with `version: 0.3.6-beta`
+- [ ] OpenAPI `/api/docs` (no slug) returns 404
+- [ ] `/metrics` returns 404
 - [ ] Frontend loads correctly
 - [ ] Frontend can connect to API
 - [ ] Database migrations completed

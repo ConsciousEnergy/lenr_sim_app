@@ -86,3 +86,9 @@ variable "github_repo" {
   type        = string
   default     = "lenr_sim_app"
 }
+
+variable "pages_production_branch" {
+  description = "Cloudflare Pages production branch (ship branch; main is behind)"
+  type        = string
+  default     = "lenr_sim_app_v0.3.6-beta"
+}

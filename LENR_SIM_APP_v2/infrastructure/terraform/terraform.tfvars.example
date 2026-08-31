@@ -52,3 +52,5 @@ data_center_id = 1
 
 github_owner = "ConsciousEnergy"
 github_repo  = "lenr_sim_app"
+# Pages production deploy follows this branch (main is behind the ship branch)
+pages_production_branch = "lenr_sim_app_v0.3.6-beta"

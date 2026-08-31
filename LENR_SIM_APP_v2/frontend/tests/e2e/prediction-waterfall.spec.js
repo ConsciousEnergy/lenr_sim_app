@@ -91,7 +91,9 @@ test.describe('Results prediction waterfall', () => {
     await unifiedTheoryPage.openResults();
     await expect(unifiedTheoryPage.predictionReadoutPanel()).toBeVisible();
     await expect(unifiedTheoryPage.enhancementWaterfall()).toBeVisible();
-    await expect(page.getByText(/Physics governed/)).toBeVisible();
+    await expect(
+      unifiedTheoryPage.enhancementWaterfall().getByText(/Physics governed/),
+    ).toBeVisible();
     await expect(page.getByTestId('screening-provenance-panel')).toBeVisible();
     await expect(page.getByText(/800/)).toBeVisible();
   });

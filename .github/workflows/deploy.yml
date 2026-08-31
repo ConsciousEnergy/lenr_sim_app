@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, lenr_sim_app_v0.3.6-beta]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -26,12 +26,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase GHCR owner
+        id: image
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/lenr-sim-backend
+          images: ghcr.io/${{ steps.image.outputs.owner }}/lenr-sim-backend
           tags: |
+            type=raw,value=0.3.6-beta
             type=sha,prefix=
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
@@ -45,7 +50,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            BUILD_VERSION=${{ github.ref_name }}
+            BUILD_VERSION=0.3.6-beta
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

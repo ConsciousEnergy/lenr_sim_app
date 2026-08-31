@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /diagnostics
+Disallow: /visualization-test
+Disallow: /visualization-debug
+Disallow: /three-test
+Disallow: /lattice-test
+Disallow: /component-showcase
+
+Sitemap: https://conscious.energy/sitemap.xml

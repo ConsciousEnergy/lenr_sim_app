@@ -222,9 +222,13 @@ export const analyticsApi = {
       
       return response;
     } catch (error) {
+      const status = error.statusCode ?? error.status;
+      if (status === 403 || status === 401) {
+        throw error;
+      }
       console.warn('Failed to save to API, saving locally:', error.message);
       
-      // Fallback: save to localStorage only
+      // Fallback: save to localStorage only (network / offline — not a 403)
       const localExperiment = {
         ...payload,
         id: `local_${Date.now()}`,

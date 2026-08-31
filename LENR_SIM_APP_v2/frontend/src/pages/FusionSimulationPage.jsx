@@ -496,7 +496,12 @@ function FusionSimulationPage() {
       setSuccessMessage(`Simulation saved to analytics! ID: ${saved.id.substring(0, 8)}...`);
     } catch (err) {
       console.error('Failed to save to analytics:', err);
-      setError('Failed to save to analytics database. Data saved locally.');
+      const status = err.statusCode ?? err.status;
+      if (status === 403 || status === 401) {
+        setError('Shared Analytics writes are operator-gated on the public API (HTTP 403). This run was not saved.');
+      } else {
+        setError('Failed to save to analytics database. Data saved locally.');
+      }
     } finally {
       setIsSaving(false);
     }

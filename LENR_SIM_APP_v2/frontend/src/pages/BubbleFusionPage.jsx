@@ -25,6 +25,58 @@ import { API_BASE_URL } from '../config/api';
 // API base URL
 const API_BASE = API_BASE_URL;
 
+/** First finite number in `values`, or null. Never invent a physics default. */
+export function pickFiniteNumber(...values) {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+/**
+ * Map POST /api/physics/bubble-fusion JSON onto the page model.
+ * Do not default missing enhancement to 1e13 (or any other ceiling).
+ */
+export function mapBubbleFusionApiResults(apiResults) {
+  const collapse = apiResults?.collapse_results || {};
+  return {
+    maxTemperature: pickFiniteNumber(
+      apiResults.peak_temperature_k,
+      collapse.max_temperature_k,
+      apiResults.max_temperature,
+    ),
+    maxPressure: pickFiniteNumber(
+      apiResults.peak_pressure_bar,
+      collapse.max_pressure_bar,
+      apiResults.max_pressure,
+    ),
+    minRadius: pickFiniteNumber(
+      apiResults.min_radius_um,
+      collapse.min_radius_um,
+      apiResults.minimum_radius,
+    ),
+    collapseTime: pickFiniteNumber(
+      apiResults.collapse_time_s,
+      collapse.collapse_time_s,
+      apiResults.collapse_duration,
+    ),
+    energyRelease: pickFiniteNumber(apiResults.energy_release_j, apiResults.energy),
+    fusionProbability: pickFiniteNumber(apiResults.fusion_probability),
+    enhancementFactor: pickFiniteNumber(
+      apiResults.enhancement_factor,
+      collapse.peak_enhancement,
+      apiResults.peak_enhancement,
+    ),
+    neutronYield: pickFiniteNumber(apiResults.neutron_yield),
+    compressionRatio: pickFiniteNumber(
+      apiResults.compression_ratio,
+      collapse.compression_ratio,
+    ),
+    rayleighPlesset: apiResults.rayleigh_plesset_dynamics,
+    isLocalFallback: false,
+  };
+}
+
 /**
  * Real physics API client for bubble fusion calculations
  */
@@ -101,23 +153,7 @@ const BubbleFusionPage = () => {
       // Try real physics API first
       try {
         const apiResults = await bubbleFusionAPI.simulate(parameters);
-        
-        // Transform API results to our expected format
-        const physicsResults = {
-          maxTemperature: apiResults.peak_temperature_k || apiResults.max_temperature || 15000,
-          maxPressure: apiResults.peak_pressure_bar || apiResults.max_pressure || 1500,
-          minRadius: apiResults.min_radius_um || apiResults.minimum_radius || 0.3,
-          collapseTime: apiResults.collapse_time_s || apiResults.collapse_duration || 1.5e-7,
-          energyRelease: apiResults.energy_release_j || apiResults.energy || 1.5e-12,
-          fusionProbability: apiResults.fusion_probability || 1e-18,
-          enhancementFactor: apiResults.enhancement_factor || 1e13,
-          neutronYield: apiResults.neutron_yield || 0,
-          // Additional physics data if available
-          compressionRatio: apiResults.compression_ratio,
-          rayleighPlesset: apiResults.rayleigh_plesset_dynamics
-        };
-        
-        setResults(physicsResults);
+        setResults(mapBubbleFusionApiResults(apiResults));
         setAlertMessage('Simulation completed using real physics calculations');
         setAlertSeverity('success');
         setAlertOpen(true);
@@ -137,14 +173,17 @@ const BubbleFusionPage = () => {
           collapseTime: 1e-6 / (parameters.frequency * 1000),
           energyRelease: 4/3 * Math.PI * Math.pow(parameters.initialRadius * 1e-6, 3) * 
                          parameters.ambientPressure * 1e5 * (compressionRatio - 1) * 1e-12,
-          fusionProbability: Math.exp(-25000 / maxTemp) * 1e-15,
-          enhancementFactor: Math.pow(compressionRatio, 3) * 1e10,
-          neutronYield: maxTemp > 10000 ? Math.random() * 10 : 0
+          fusionProbability: null,
+          enhancementFactor: null,
+          neutronYield: null,
+          isLocalFallback: true,
         };
         
         setResults(fallbackResults);
-        setAlertMessage('Simulation completed (using local physics model)');
-        setAlertSeverity('info');
+        setAlertMessage(
+          'Backend unreachable. Schematic local fallback only — not physics-engine output. Do not cite these numbers.',
+        );
+        setAlertSeverity('warning');
         setAlertOpen(true);
       }
       
@@ -165,10 +204,9 @@ const BubbleFusionPage = () => {
       setResults(prev => ({
         ...prev,
         fusionProbability: probability,
-        enhancementFactor: Math.exp(-10 / parameters.drivingPressureAmplitude) * 1e12
       }));
     }
-  }, [parameters.drivingPressureAmplitude, results]);
+  }, [results]);
   
   // Download results as JSON
   const handleDownloadResults = () => {
@@ -265,10 +303,19 @@ const BubbleFusionPage = () => {
                 Fusion Parameters:
               </Typography>
               
+              {results.isLocalFallback && (
+                <Alert severity="warning" sx={{ mt: 1, mb: 1 }}>
+                  Schematic fallback — not a laboratory measurement and not the physics engine.
+                </Alert>
+              )}
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                 <Chip 
-                  label={`Enhancement: ${results.enhancementFactor?.toExponential(2) || 'N/A'}x`} 
-                  color="primary" 
+                  label={
+                    results.enhancementFactor != null
+                      ? `Enhancement: ${Number(results.enhancementFactor).toExponential(2)}x`
+                      : 'Enhancement: not provided'
+                  }
+                  color={results.enhancementFactor != null ? 'primary' : 'default'}
                   size="small" 
                   variant="outlined"
                 />
@@ -278,9 +325,9 @@ const BubbleFusionPage = () => {
                   size="small" 
                   variant="outlined"
                 />
-                {results.neutronYield !== undefined && (
+                {results.neutronYield != null && (
                   <Chip 
-                    label={`Neutrons: ${results.neutronYield?.toFixed(2) || '0'}/collapse`} 
+                    label={`Neutrons: ${Number(results.neutronYield).toFixed(2)}/collapse`} 
                     color={results.neutronYield > 0 ? "success" : "default"} 
                     size="small"
                   />

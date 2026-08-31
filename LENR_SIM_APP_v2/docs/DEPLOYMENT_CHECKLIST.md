@@ -18,7 +18,7 @@
 ## Docker / GHCR
 
 - [ ] Backend image builds: `docker build -f infrastructure/docker/Dockerfile.backend --build-arg BUILD_VERSION=0.3.6-beta .`
-- [ ] Image pushed to GHCR: `docker push ghcr.io/ConsciousEnergy/lenr-sim-backend:latest`
+- [ ] Image pushed to GHCR: `docker push ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta`
 - [ ] **VPS has GHCR credentials**: `docker login ghcr.io -u <user> --password-stdin` on the server
 
 ## Infrastructure
@@ -32,17 +32,18 @@
 
 ## Cloudflare
 
-- [ ] Cloudflare Pages `production_branch` set to `main`
+- [ ] Cloudflare Pages `production_branch` set to `lenr_sim_app_v0.3.6-beta` (not stale `main`)
 - [ ] DNS A record for `api.conscious.energy` points to VPS IP
 - [ ] Cloudflare Pages builds frontend from `LENR_SIM_APP_v2/frontend`
 - [ ] Build-time env `VITE_API_URL=https://api.conscious.energy` set in the Pages project (production build). If unset, `src/config/api.js` falls back to `https://api.conscious.energy`, so this is a safety belt, not a hard requirement.
 
 ## Post-Deployment Verification
 
-- [ ] `curl https://api.conscious.energy/api/health` returns status
-- [ ] `https://api.conscious.energy/api/docs` loads Swagger UI
-- [ ] Frontend loads at `https://conscious.energy`
-- [ ] CORS: frontend can call API without errors
+- [ ] `curl https://api.conscious.energy/api/health` returns status `"version": "0.3.6-beta"`
+- [ ] `https://api.conscious.energy/api/docs` (no slug) returns **404** — OpenAPI/Swagger is hidden in production. That is the expected probe, not a failure.
+- [ ] `https://api.conscious.energy/metrics` returns **404**
+- [ ] Frontend loads at the **chosen Pages host** (do not CNAME apex to Pages while WordPress.com still owns the marketing site)
+- [ ] CORS: frontend can call API without errors (a **single** `Access-Control-Allow-Origin`)
 - [ ] Rate limiting active (test with rapid requests)
 - [ ] Debug endpoints return 404 (`/memory`, `/cache/stats`, `/api/diagnostics`)
 

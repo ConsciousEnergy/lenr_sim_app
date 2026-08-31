@@ -12,23 +12,21 @@ description: >-
 
 ## Overview
 
-The app has no product analytics today (the existing `analyticsApi.js` /
-AnalyticsPage is *scientific* analysis of simulation results - do not conflate).
-This skill adds PostHog for product usage: an env-gated provider, a small stable
-event taxonomy, feature flags, and opt-in session replay - privacy-respecting and
-consistent with the app's analytics-transparency governance.
+Product analytics is already wired. `posthog-js` is in
+`LENR_SIM_APP_v2/frontend/package.json`. Implementation:
+`frontend/src/analytics/posthog.js` + `events.js`. `index.jsx` calls
+`initAnalytics()` and wraps `PostHogProvider`. This is **product** usage
+tracking — do not conflate with scientific `analyticsApi.js` / AnalyticsPage.
 
-## Setup status (one-time, needs confirmation to install)
+Init is a no-op unless `VITE_POSTHOG_KEY` / `REACT_APP_POSTHOG_KEY` is set
+**and** `NODE_ENV === production` **and** Do-Not-Track is off **and** the user
+has not opted out (`localStorage lenr_posthog_opt_out`). Never commit a `phc_`
+key. Public `/privacy` documents this; leave the key unset until counsel agrees.
 
-PostHog is not yet a dependency. First-time setup (confirm before running):
+## Setup status
 
-```bash
-cd LENR_SIM_APP_v2/frontend
-npm install posthog-js
-```
-
-Then add the provider + config from [reference.md](reference.md). Key/host come
-from env (`VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`); no key -> analytics is a no-op.
+Already installed. Do not `npm install posthog-js` as if greenfield. Follow
+existing modules and the taxonomy in [reference.md](reference.md).
 
 ## When to Use
 

@@ -5,7 +5,23 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.3.6-beta] - 2026-04-18
+## [v0.3.6-beta] - 2026-08-31
+
+### Public release Wave 3 cutover fixes (2026-08-31)
+- `/bubble-fusion` no longer defaults missing enhancement to `1e13`; API mapping uses only finite fields; local fallback is a warning without fabricated fusion yield
+- Pages Terraform `production_branch` defaults to `lenr_sim_app_v0.3.6-beta`; preview `NODE_ENV=production`
+- `deploy.yml` runs on the ship branch, stamps `BUILD_VERSION=0.3.6-beta`, tags GHCR `0.3.6-beta` with a lowercase owner
+- Swarm image `ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta`; Traefik dashboard off; Traefik CORS middleware removed (FastAPI CORS remains)
+- `Dockerfile.backend` copies `datasets/`; frontend Docker defaults `VITE_API_URL` to `https://api.conscious.energy`
+- Pages `_headers` / `_redirects` / `robots.txt`; public `/privacy`; PostHog opt-out
+- Playwright `frontend-e2e` job; duplicate prediction readout removed; saturated `raw ≈ 10^` labels restored
+- Operator docs: production `/api/docs` expected **404**. `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
+### Public release review (2026-08-31)
+- Re-ran release gates vs the 2026-08-23 pack: science **55**, Jest **210** (was 201), lint 0/506, pip-audit 11 ignored, npm high=0. IR checkers PASS. CI `formalization`/`lake build` last green on `d6be618`
+- Verdict **NO-GO** for live cutover: Pages `production_branch=main`, `deploy.yml` stamps `BUILD_VERSION` from `github.ref_name` and only runs on `main`+tags, live DNS is WordPress.com, `/bubble-fusion` can show `1e13×`
+- Ledgers: `LENR_SIM_APP_v2/docs/v0.3.6-beta/review-2026-08/`. Synthesis: `PUBLIC_RELEASE_REVIEW_2026-08.md`. Tracker and `VERIFICATION_GATE_REPORT.md` updated
+- Wave 3 on the same review branch implements confirmed **code** blockers. Operator DNS / `terraform apply` stay operator-owned. `EQ-OPEN-*` stay OPEN; `lenr_proved` remains false
 
 ### Theory testbed review History honesty (2026-08-27)
 - History shows `≥1e5 (capped)` when enhancement hits the governance ceiling; persist stores `results.enhancement_saturation` without changing the numeric column. Not a laboratory 10^5 tunneling measurement
