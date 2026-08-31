@@ -548,8 +548,16 @@ function UnifiedTheoryPage() {
       setAlertOpen(true);
     } catch (error) {
       console.error('Failed to save to analytics:', error);
-      setAlertMessage('Failed to save to analytics. Data saved locally.');
-      setAlertSeverity('warning');
+      const status = error.statusCode ?? error.status;
+      if (status === 403 || status === 401) {
+        setAlertMessage(
+          'Shared Analytics writes are operator-gated on the public API (HTTP 403). This run was not saved to shared History.',
+        );
+        setAlertSeverity('warning');
+      } else {
+        setAlertMessage('Failed to save to analytics. Data saved locally.');
+        setAlertSeverity('warning');
+      }
       setAlertOpen(true);
     } finally {
       setIsSaving(false);

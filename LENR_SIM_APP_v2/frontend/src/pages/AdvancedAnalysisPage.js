@@ -167,15 +167,20 @@ const AdvancedAnalysisPage = () => {
     if (!mechanism?.is_saturated) return null;
     const log10Raw = mechanism.log10_value_raw;
     return (
-      <Tooltip
-        title={
-          `Clamped to the ${formatNumber(mechanism.ceiling)} claim-tier display ceiling. ` +
-          `Uncapped model value is about 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}. ` +
-          'This is a reporting limit, not a physical prediction.'
-        }
-      >
-        <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
-      </Tooltip>
+      <>
+        <Tooltip
+          title={
+            `Clamped to the ${formatNumber(mechanism.ceiling)} claim-tier display ceiling. ` +
+            `Uncapped model value is about 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}. ` +
+            'This is a reporting limit, not a physical prediction.'
+          }
+        >
+          <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
+        </Tooltip>
+        <Typography variant="caption" color="text.secondary" display="block">
+          {`raw ≈ 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}`}
+        </Typography>
+      </>
     );
   };
 
@@ -528,6 +533,19 @@ const AdvancedAnalysisPage = () => {
                   displayed values are identical by construction. The uncapped magnitude
                   is shown beneath each saturated value; these are reporting limits, not
                   physical predictions.
+                  <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                    {Object.entries(saturation.mechanisms || {})
+                      .filter(([, mechanism]) => mechanism?.is_saturated)
+                      .map(([key, mechanism]) => (
+                        <Typography component="li" variant="caption" key={key}>
+                          {key}: raw ≈ 10^{
+                            mechanism.log10_value_raw != null
+                              ? Number(mechanism.log10_value_raw).toFixed(1)
+                              : '?'
+                          }
+                        </Typography>
+                      ))}
+                  </Box>
                 </Alert>
               )}
               <EnhancementWaterfallChart

@@ -109,7 +109,12 @@ const AboutPage = () => {
             Disclaimer
           </Typography>
           <Typography variant="body2" paragraph>
-            This software is provided for educational and research purposes only. The simulations are based on theoretical models and may not perfectly represent real-world LENR phenomena. The developers make no claims regarding the accuracy or completeness of the simulations for predicting actual experimental outcomes.
+            This software is for educational and research use. Numbers in the app are
+            <strong> model outputs</strong>, not laboratory measurements. They do not prove
+            that LENR occurs. Miles-style heat–helium correlation is claim-tier EMP, not nuclear
+            confirmation. <code>lenr_proved</code> remains false. The five open obligations
+            (EQ-OPEN-MEV-01, RAD-01, RATE-01, EC-01, YIELD-01) stay OPEN. Enhancement values
+            at 10⁵ are a governance ceiling, not a measured tunneling factor.
           </Typography>
         </Box>
 
