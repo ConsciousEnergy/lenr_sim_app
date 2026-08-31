@@ -178,7 +178,20 @@ Not in Wave 3 (accepted or later): discharging `EQ-OPEN-*`; FastAPI/Starlette/vt
 
 ---
 
-## Specialist files
+## Wave 3 (same branch, 2026-08-31)
+
+Implemented confirmed **code** blockers from the plan list. Operator DNS / `terraform apply` remain PENDING. Public cutover is still **NO-GO** until WordPress.com NS is replaced with a written hostname map.
+
+| Fix | Finding |
+|---|---|
+| Bubble-fusion never defaults enhancement to `1e13` | SCI-001 |
+| Pages `production_branch` = `lenr_sim_app_v0.3.6-beta`; preview `NODE_ENV=production` | INF-001, INF-014 |
+| `deploy.yml` ship branch + `BUILD_VERSION=0.3.6-beta` + lowercase GHCR + `0.3.6-beta` tag | INF-002, SEC-005 |
+| Traefik dashboard off; no placeholder htpasswd | SEC-001 / INF-011 |
+| Drop Traefik `backend-cors` | API-003 / INF-010 |
+| `_headers` / `_redirects` / `robots.txt` / `/privacy` | INF-006, INF-012, DOC-001 |
+| Playwright in `test.yml`; unique readout; `raw ≈ 10^` visible | FE-006, FE-007 |
+| `COPY datasets`; frontend `VITE_API_URL`; OpenAPI GPL-3.0; About honesty; 403 not toasted as success | AN-008, INF-005, DOC-006, SCI-007, AN-009 |
 
 | File | Agent | Slice verdict |
 |---|---|---|

@@ -4,19 +4,19 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 ## Current Readiness Summary
 
-- **Public cutover:** **NO-GO** (review 2026-08-31). See [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
-- **Code/infra artifacts:** NOT READY for a naive apply (refreshed 2026-08-31). Templates exist, but:
-  - Pages Terraform `production_branch` is still `"main"` while the ship branch is `lenr_sim_app_v0.3.6-beta` (`origin/main` is 88 commits behind).
-  - `.github/workflows/deploy.yml` runs on `main` + `v*` tags only; Swarm pulls `:latest`.
-  - `Dockerfile.backend` does not `COPY datasets/`, so documented `seed_database --hydrate-demo` cannot run in the image.
-  - Traefik dashboard is published with placeholder basic-auth; dual CORS (Traefik + FastAPI).
-  - Wave 3 on this review branch addresses those **code** defects. Do not treat this tracker as GO until Wave 3 lands **and** operator DNS is decided.
+- **Public cutover:** **NO-GO** for live DNS (WordPress.com still authoritative). **Code/infra templates** after Wave 3 (2026-08-31): Pages production branch, deploy version stamp, Traefik dashboard off, single CORS, datasets in the backend image, bubble-fusion `1e13` removed. See [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
+- **Code/infra artifacts:** templates updated 2026-08-31 (Wave 3). Still do **not** `terraform apply` until operator DNS is decided.
+  - Pages Terraform `production_branch` defaults to `lenr_sim_app_v0.3.6-beta`.
+  - `.github/workflows/deploy.yml` runs on that ship branch and stamps `BUILD_VERSION=0.3.6-beta`.
+  - Swarm pulls `ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta` (lowercase, version tag).
+  - `Dockerfile.backend` copies `datasets/` for hydrate.
+  - Traefik dashboard is off; dual Traefik CORS removed.
 - **What already holds in code (do not regress):**
   - Cloudflare Pages `destination_dir` is Vite `LENR_SIM_APP_v2/frontend/dist` with `VITE_API_URL`.
   - Swarm backend sets `LENR_ENVIRONMENT=production` and `LENR_AUTO_PERSIST=0`.
   - Production API hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, `/metrics` (404 is correct; checklists that expect Swagger 200 are wrong).
   - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
-- **Release documentation:** STALE in places (0.2.1-beta headers, `/api/docs` should load). Wave 3 refreshes operator probes.
+- **Release documentation:** operator probes updated 2026-08-31 (`/api/docs` expected 404).
 - **Manual cloud execution:** PENDING and **blocked on live DNS**.
   - Authoritative NS are WordPress.com. Apex/`www`/`api`/`app` are Automattic. `api.conscious.energy` TLS SAN mismatch. `lenr-sim-prod.pages.dev` NXDOMAIN.
   - Do **not** `terraform apply` the documented apex CNAME while WordPress owns the marketing site.

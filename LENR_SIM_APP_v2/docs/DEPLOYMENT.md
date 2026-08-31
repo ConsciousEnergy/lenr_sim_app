@@ -1,7 +1,7 @@
 # LENR Simulation App - Deployment Guide
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026
 
 ---
 
@@ -245,13 +245,17 @@ curl https://api.conscious.energy/api/health
 
 ## DNS Configuration
 
-Terraform automatically creates these DNS records:
+**Do not apply this table blindly.** Live NS for `conscious.energy` (2026-08-31) are WordPress.com. Pointing `@` at Pages while WordPress still owns the brochure **replaces the marketing site**.
+
+Intended records **after** a written hostname map:
 
 | Record | Type | Value | Purpose |
 |--------|------|-------|---------|
-| `@` | CNAME | `lenr-sim-prod.pages.dev` | Frontend |
-| `api` | A | `<VPS_IP>` | Backend API |
-| `www` | CNAME | `@` | WWW redirect |
+| SPA host (Pages) | CNAME | `lenr-sim-prod.pages.dev` | Vite frontend — **not** apex while WordPress stays there |
+| `api` | A | `<VPS_IP>` (DNS-only / grey-cloud) | Backend API + WebSockets |
+| WordPress host | existing WP records | Brochure site | Keep on WordPress.com or CNAME-to-WP |
+
+Terraform currently still creates an apex CNAME to Pages. Override or skip that resource until WordPress has moved. Pages `production_branch` is `lenr_sim_app_v0.3.6-beta`.
 
 ---
 

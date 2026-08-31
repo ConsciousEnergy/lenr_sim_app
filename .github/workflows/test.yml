@@ -175,6 +175,37 @@ jobs:
           cd LENR_SIM_APP_v2/frontend
           npm run build
 
+  frontend-e2e:
+    runs-on: ubuntu-latest
+    needs: version-consistency
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npm ci
+
+      - name: Install Playwright Chromium
+        run: |
+          cd LENR_SIM_APP_v2/frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright (Chromium)
+        working-directory: LENR_SIM_APP_v2/frontend
+        env:
+          CI: true
+        run: npm run e2e
+
   formalization:
     # Equation IR + Lean 4 consistency pilot (sibling to Wolfram/pytest science gates).
     # Does NOT claim LENR is proven — only mathematical consistency of adopted THM/DEF core.

@@ -1,7 +1,7 @@
 # WordPress Integration Guide
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.6-beta  
+**Last Updated:** August 2026
 
 ---
 
@@ -15,7 +15,8 @@ This guide explains how to integrate the LENR Simulation App into a WordPress si
 
 ### Option 1: Iframe Embed (Recommended)
 
-The simplest approach - embed the app directly in a WordPress page.
+**Live DNS note (2026-08-31):** `conscious.energy` apex is currently the WordPress.com marketing site. Do **not** iframe `https://conscious.energy` until the SPA lives on a Pages host. Iframe the Cloudflare Pages origin (or `app.conscious.energy` after that CNAME is cut over), never `api.conscious.energy`.
+
 
 #### Step 1: Create a New Page in WordPress
 
