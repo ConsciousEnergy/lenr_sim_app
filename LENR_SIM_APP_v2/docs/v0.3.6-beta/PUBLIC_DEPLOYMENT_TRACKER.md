@@ -4,22 +4,22 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 ## Current Readiness Summary
 
-- **Code/infra artifacts:** READY (refreshed 2026-08-26)
-  - Terraform modules for Cloudflare + Hostinger are present.
+- **Public cutover:** **NO-GO** (review 2026-08-31). See [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
+- **Code/infra artifacts:** NOT READY for a naive apply (refreshed 2026-08-31). Templates exist, but:
+  - Pages Terraform `production_branch` is still `"main"` while the ship branch is `lenr_sim_app_v0.3.6-beta` (`origin/main` is 88 commits behind).
+  - `.github/workflows/deploy.yml` runs on `main` + `v*` tags only; Swarm pulls `:latest`.
+  - `Dockerfile.backend` does not `COPY datasets/`, so documented `seed_database --hydrate-demo` cannot run in the image.
+  - Traefik dashboard is published with placeholder basic-auth; dual CORS (Traefik + FastAPI).
+  - Wave 3 on this review branch addresses those **code** defects. Do not treat this tracker as GO until Wave 3 lands **and** operator DNS is decided.
+- **What already holds in code (do not regress):**
   - Cloudflare Pages `destination_dir` is Vite `LENR_SIM_APP_v2/frontend/dist` with `VITE_API_URL`.
-  - Ansible playbooks for Docker/Swarm setup and stack deployment are present.
   - Swarm backend sets `LENR_ENVIRONMENT=production` and `LENR_AUTO_PERSIST=0`.
-  - After `alembic upgrade head`, seed with `seed_database --force --hydrate-demo`.
-  - Production API hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, `/metrics`.
+  - Production API hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, `/metrics` (404 is correct; checklists that expect Swagger 200 are wrong).
   - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
-  - Deployment scripts (`deploy.sh`, `backup-db.sh`, `rollback.sh`) are present.
-  - Docker stack templates include Traefik TLS, backend replicas, and Postgres secret usage.
-  - Local `Dockerfile.backend` + `Dockerfile.frontend` builds verified (Vite `dist/`, `.npmrc`).
-- **Release documentation:** READY
-  - `DEPLOYMENT_CHECKLIST.md`, `DEPLOYMENT_QUICK_REFERENCE.md`, root `RELEASE_CHECKLIST.md`,
-    `CONTRIBUTING.md`, and release evidence docs updated for v0.3.6-beta + Vite workflow.
-- **Manual cloud execution:** PENDING
-  - Cloudflare/Hostinger account actions, token creation, terraform apply, and live DNS cutover must still be performed.
+- **Release documentation:** STALE in places (0.2.1-beta headers, `/api/docs` should load). Wave 3 refreshes operator probes.
+- **Manual cloud execution:** PENDING and **blocked on live DNS**.
+  - Authoritative NS are WordPress.com. Apex/`www`/`api`/`app` are Automattic. `api.conscious.energy` TLS SAN mismatch. `lenr-sim-prod.pages.dev` NXDOMAIN.
+  - Do **not** `terraform apply` the documented apex CNAME while WordPress owns the marketing site.
 
 ## Plan Mapping (Phase 4)
 
@@ -44,8 +44,8 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 - **Manual tasks pending:** GHCR login on VPS (or worker manager), secret creation/rotation, stack deployment on live server.
 
 ### 4.5 Verification and go-live
-- **Repo readiness:** health/docs URLs and verification checklist documented.
-- **Manual tasks pending:** DNS propagation, SSL issuance validation, API/Swagger checks, frontend domain verification, WordPress embed and integration test, backup cron confirmation.
+- **Repo readiness:** health URL documented. OpenAPI/Swagger is **hidden** in production.
+- **Manual tasks pending:** DNS propagation, SSL issuance validation, API **health** (not Swagger), frontend domain verification, WordPress embed of the **Pages SPA** (never the API, never today's WordPress apex), backup cron confirmation.
 
 ## Blocking Inputs Required Before Live Apply
 
@@ -65,10 +65,12 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 1. Fill `infrastructure/terraform/terraform.tfvars` from example with real values.
 2. Run `infrastructure/scripts/deploy.sh production` (preferred path).
-3. Validate:
-   - `curl https://api.conscious.energy/api/health`
-   - `curl -I https://api.conscious.energy/api/docs`
-   - frontend reachable at configured Cloudflare Pages/custom domain.
+3. Validate (after DNS actually points at Traefik / Pages — today it does not):
+   - `curl https://api.conscious.energy/api/health` → 200, `"version": "0.3.6-beta"`
+   - `curl -I https://api.conscious.energy/api/docs` → **404** (OpenAPI off; this is not a failure)
+   - `curl -I https://api.conscious.energy/metrics` → **404**
+   - frontend reachable at the **chosen Pages host** (not WordPress.com apex unless WordPress has moved)
+   - OPTIONS from that origin returns a **single** `Access-Control-Allow-Origin`
 4. Record outputs and checks in:
    - `docs/v0.3.6-beta/VERIFICATION_GATE_REPORT.md`
    - `docs/v0.3.6-beta/RELEASE_EVIDENCE_PACK.md`

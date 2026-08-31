@@ -1,5 +1,66 @@
 # Verification Gate Report (v0.3.6-beta)
 
+## Public release readiness review (2026-08-31)
+
+Re-ran gates on product HEAD `d6be618` (`lenr_sim_app_v0.3.6-beta`). Specialist ledgers: [review-2026-08/](review-2026-08/). Synthesis: [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
+
+**Public cutover: NO-GO.** Pytest/npm/pip-audit/IR gates are green. Pages branch, GHCR `:latest`, live WordPress.com DNS, Traefik dashboard placeholder auth, and `/bubble-fusion` `1e13` chip fail the go-live rubric.
+
+### Version consistency
+- Markers: `config.py`, `frontend/package.json`, `version.js`, `Dockerfile.backend`
+- Result: all `0.3.6-beta`
+- Status: **PASS**
+
+### Backend security audit
+- Command: `pip-audit -r requirements.txt` with the `test.yml` ignore list
+- Result: `No known vulnerabilities found, 11 ignored`
+- Unfiltered: 11 findings in starlette 0.49.1, vtk 9.4.2, ecdsa 0.19.2 (accepted residual; no new IDs)
+- Status: **PASS** (residuals in `SECURITY_CI_HARDENING.md`)
+
+### Release-blocking science gates
+- V&V `test_physics_benchmark_gates.py`: **3 passed**
+- Experiment-anchored set: **52 passed**
+- Combined: **55 passed** (matches 08-23)
+- Status: **PASS**
+
+### Backend unit
+- Command: `pytest tests/ app/tests/` (coverage on)
+- Result: **1077 passed, 9 skipped**
+- Status: **PASS** (new recorded baseline)
+
+### Formalization
+- `check_ir.py`: IR 51, taxonomy 75, **PASS**
+- `diff_code_literals.py`: **PASS**
+- Local `lake build`: skipped (elan absent on this VM)
+- CI `formalization` job on `d6be618`: **success** (run `33132075488`, 2026-08-28), includes `lake build`
+- Status: **PASS** (CI is the lake oracle)
+
+### Frontend security / quality
+- `npm audit --audit-level=high` → **0 high/critical** (2 moderate `react-router`)
+- `npm run lint` → **0 errors**, 506 warnings (unchanged vs 08-23)
+- `npm test -- --watchAll=false --runInBand` → **210 passed** (32 suites; 08-23 was 201 / 30)
+- `CI=true npm run build` → **PASS**
+- Playwright: **25 passed, 2 failed**, not in `test.yml`
+- Status: **PASS** for Jest/lint/audit/build; **HOLD** for E2E-in-CI
+
+### Analytics honesty
+- `test_production_hardening.py` + honest-metrics + history-honesty + pack size lock: **20 passed**
+- Demo pack: 150 experiments / 132 theory_runs; `lenr_proved: false`
+- Status: **PASS**
+
+### Public deployment
+- Code/infra: **NOT READY** to apply as committed (see tracker 2026-08-31)
+- Live Cloudflare/Hostinger cutover: **operator PENDING** and blocked on WordPress.com DNS
+- Science honesty: **NO-GO** until `/bubble-fusion` stops fabricating `1e13`
+
+### What this review did not discharge
+- `EQ-OPEN-MEV-01` … `EQ-OPEN-YIELD-01` remain OPEN (accepted residual)
+- FastAPI/Starlette majors, vtk via PyVista, React Router 7
+- Live `terraform apply` / Hostinger / GHAS enablement
+- `--preset full` / full `diverse`
+
+---
+
 ## Public release readiness review (2026-08-23)
 
 ### Version consistency
