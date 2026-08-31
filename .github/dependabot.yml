@@ -1,10 +1,21 @@
 # Dependabot configuration for the LENR Simulation App
 # See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Integration branch is lenr_sim_app_v0.3.6-beta. GitHub reads this file from
+# the default branch (main); until beta is merged there, copy this file onto
+# main so weekly PRs do not target stale main with weaker ignores.
+#
+# When beta is promoted to main as the product line, drop `target-branch`
+# (or set it to main) so updates do not keep targeting a frozen beta branch.
+#
+# Required repository labels (create in GitHub Settings → Labels or they are
+# skipped with a Dependabot comment): dependencies, backend, frontend, ci, docker.
 version: 2
 updates:
   # Backend Python (FastAPI) dependencies
   - package-ecosystem: "pip"
     directory: "/LENR_SIM_APP_v2/backend"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -18,14 +29,37 @@ updates:
       - "dependencies"
       - "backend"
     ignore:
-      # Pin pydantic-v2 minor upgrades until migration completes.
+      # Stay on pydantic v2 until an explicit v3 migration.
       - dependency-name: "pydantic"
         update-types:
           - "version-update:semver-major"
+      # NumPy 2.5+ drops Python 3.10/3.11; CI matrix is 3.10-3.12. The
+      # stack is also pinned to NumPy 1.26 to avoid hybrid 1/2 Windows breakage.
+      - dependency-name: "numpy"
+        update-types:
+          - "version-update:semver-major"
+      # SciPy 1.18+ requires Python >=3.12 and NumPy 2.x.
+      - dependency-name: "scipy"
+        update-types:
+          - "version-update:semver-major"
+      # websockets 17.x requires Python >=3.11; keep 14.x with FastAPI/uvicorn.
+      - dependency-name: "websockets"
+        update-types:
+          - "version-update:semver-major"
+      # Numba 0.67 pulls llvmlite 0.49; JIT is used in physics optimizations
+      # with no dedicated import tests. Stay on 0.60 until a numba migration.
+      - dependency-name: "numba"
+        update-types:
+          - "version-update:semver-major"
+      # psutil 7 is a major used at process boot (app.main). Not a weekly bump.
+      - dependency-name: "psutil"
+        update-types:
+          - "version-update:semver-major"
 
-  # Frontend npm dependencies (CRA stack, migration to Vite planned).
+  # Frontend npm dependencies (Vite + React 18).
   - package-ecosystem: "npm"
     directory: "/LENR_SIM_APP_v2/frontend"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -53,12 +87,46 @@ updates:
           - "@testing-library/*"
           - "jest*"
     ignore:
-      # Hold react-scripts upgrades until Vite migration is complete.
-      - dependency-name: "react-scripts"
+      # TypeScript 5/6/7 is a compiler migration; the app is still mostly JS.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      # MUI 8/9 is a dedicated Grid/API migration, not a weekly bump.
+      # MUI 9 drops path imports such as @mui/icons-material/HelpOutline.
+      - dependency-name: "@mui/material"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@mui/icons-material"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@vitejs/plugin-react"
+        update-types:
+          - "version-update:semver-major"
+      # Vite 8 switches to Rolldown and drops bundled esbuild transforms.
+      - dependency-name: "vite"
+        update-types:
+          - "version-update:semver-major"
+      # Jest 30 / RTL 16 / jest-dom 7 need a dedicated test-harness migration.
+      - dependency-name: "@testing-library/react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@testing-library/jest-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@testing-library/user-event"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "jest"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "jest-environment-jsdom"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions workflow versions
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
@@ -72,6 +140,7 @@ updates:
   # Docker base image updates
   - package-ecosystem: "docker"
     directory: "/LENR_SIM_APP_v2/infrastructure/docker"
+    target-branch: "lenr_sim_app_v0.3.6-beta"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
