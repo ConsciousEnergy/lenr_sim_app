@@ -193,7 +193,7 @@ python3 -m pytest tests/test_integration/test_production_hardening.py \
 
 Pack size lock (read-only, not a campaign run): `tests/test_integration/test_reviewer_pack.py::test_q_campaign_demo_pack_size_lock` (150 / 132).
 
-A concurrent science-gate pytest already executed eight of nine `test_production_hardening.py` cases as PASSED, including anonymous-write 403 and auto-persist-off-in-production. `test_analytics_http_writes_gated_in_production` was still in app startup when that suite was cut off (`science_gates_exit=120`). This agent re-runs the three files below after that suite exited.
+Re-ran after an earlier science-gate suite exited. Result: **20 passed** in 40.69s (`analytics_honesty_exit=0`), including `test_analytics_http_writes_gated_in_production` (anonymous POST 403, GET stats 200, token POST 201), all honest-metrics / history-honesty cases, and `test_q_campaign_demo_pack_size_lock` (150 / 132). Log: `/opt/cursor/artifacts/analytics-persistence-pytest.log`. Did not run `--preset full` or full `diverse`.
 
 ## Slice verdict
 
