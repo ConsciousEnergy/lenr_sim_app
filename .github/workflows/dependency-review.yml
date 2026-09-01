@@ -23,7 +23,7 @@ jobs:
       # fails with "Dependency review is not supported on this repository", so
       # keep continue-on-error so PR checks stay green. See SECURITY_CI_HARDENING.md.
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         continue-on-error: true
         with:
           fail-on-severity: high
