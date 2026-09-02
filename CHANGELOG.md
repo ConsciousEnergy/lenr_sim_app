@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-08-31
 
+### Dependabot majors after slot refill (2026-09-02)
+- Closing skip PRs #135–#138 / #143 / #144 freed Dependabot's 5-PR-per-ecosystem slots. New PRs #147–#152 targeted `lenr_sim_app_v0.3.6-beta`, not `main`
+- Extra ignores so those majors do not refill: pip `prometheus-fastapi-instrumentator` major (v8 wants `starlette>=1`); npm `tailwindcss` 4, `react-router-dom` / `react-router` 7, `recharts` 3. Copy this `dependabot.yml` onto `main` again
+- Suggested take: #147 `asyncpg` 0.31.0 (already fully green); #151 `axios` 1.20.0 after remaining Python jobs; then `@dependabot rebase` #142 / #139+#140 / #141 onto #145
+- Suggested skip/close: #148 instrumentator 8, #149 Tailwind 4, #150 React Router 7, #152 Recharts 3
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
 ### Dependabot weekly on beta + npm audit gate (2026-09-02)
 - After copying `dependabot.yml` to default `main` (#131), weekly PRs now target `lenr_sim_app_v0.3.6-beta` (#135–#144)
 - Frontend `npm audit --audit-level=high` was red on those PRs from lockfile pins, not the bumped packages: `browserslist` 4.28.6 (GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g) and `fast-uri` 3.1.5 (SSRF/host-confusion range through 3.1.5). Overrides now `browserslist` ^4.28.7 and `fast-uri` ^3.1.7
