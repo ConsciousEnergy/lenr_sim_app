@@ -20,6 +20,10 @@ describe('BetaNotice', () => {
       'href',
       expect.stringContaining('github.com/ConsciousEnergy/lenr_sim_app/issues/new'),
     );
+    expect(screen.getByRole('link', { name: 'diadon@conscious.energy' })).toHaveAttribute(
+      'href',
+      'mailto:diadon@conscious.energy',
+    );
   });
 
   it('hides the banner after dismiss and remembers it in localStorage', async () => {

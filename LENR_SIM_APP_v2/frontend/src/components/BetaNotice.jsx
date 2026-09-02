@@ -75,7 +75,7 @@ export default function BetaNotice({ monitorApi = true }) {
             <Link href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
               Send beta feedback
             </Link>{' '}
-            or email <Link href="mailto:info@conscious.energy">info@conscious.energy</Link>.{' '}
+            or email <Link href="mailto:diadon@conscious.energy">diadon@conscious.energy</Link>.{' '}
             <Link component={RouterLink} to="/privacy">Privacy</Link>
           </Typography>
         </Alert>
