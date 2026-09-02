@@ -13,7 +13,7 @@ numpy==1.26.4
 scipy==1.14.1
 sympy==1.12
 pyvista==0.45.2
-pandas==2.2.3
+pandas==3.0.5
 plotly==5.24.1
 python-multipart==0.0.32
 pytest==9.0.3
