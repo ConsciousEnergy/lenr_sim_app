@@ -70,7 +70,7 @@ export default function BetaNotice({ monitorApi = true }) {
           <AlertTitle>Public beta {APP_VERSION} - research preview</AlertTitle>
           <Typography variant="body2" component="span">
             Every number here is a <strong>model output</strong>, not a laboratory measurement.
-            LENR is not established physics; the open questions and claim tiers are described on
+            LENR is still an experimental inquiry; the open questions and claim tiers are described on
             the <Link component={RouterLink} to="/about">About</Link> page. Found a problem?{' '}
             <Link href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
               Send beta feedback

@@ -13,6 +13,9 @@ describe('BetaNotice', () => {
     render(<BetaNotice monitorApi={false} />);
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(/Public beta/);
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(/model output/);
+    expect(screen.getByTestId('beta-banner')).toHaveTextContent(
+      /LENR is still an experimental inquiry/,
+    );
     expect(screen.getByRole('link', { name: /Send beta feedback/i })).toHaveAttribute(
       'href',
       expect.stringContaining('github.com/ConsciousEnergy/lenr_sim_app/issues/new'),
