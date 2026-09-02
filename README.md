@@ -231,7 +231,7 @@ Licensed under **GNU GPL-3.0**. This project is freely available for anyone to u
 
 ## Project Status
 
-- **v2**: ✅ Active Development (55% complete)
+- **v2**: Active development (`0.3.6-beta` public-beta ship line)
 - **v1**: 🔒 Archived (Maintenance only)
 
 Current v2 development focus:

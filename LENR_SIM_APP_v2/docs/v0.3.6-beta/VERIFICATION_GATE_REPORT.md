@@ -1,5 +1,36 @@
 # Verification Gate Report (v0.3.6-beta)
 
+## Public beta VPS slice (2026-09-02)
+
+Ship branch `consciousenergy/vps-public-beta-e822`. Topology:
+`https://beta.conscious.energy` same-origin Compose (Caddy + nginx SPA + FastAPI + Postgres).
+
+### Version consistency
+- Four markers still `0.3.6-beta`. Status: **PASS**
+
+### Backend
+- Science gates (experiment-anchored + V&V): **55 passed**
+- Full `pytest tests/ app/tests/` after compute-guard slice: **1095 passed, 9 skipped**
+- New: `tests/test_integration/test_compute_guard.py` (18) — semaphore 503,
+  multi-physics 422/503, WS `duration_steps` cap, export envelope
+  `schema_version: lenr-run-export-v1` unchanged
+- Status: **PASS**
+
+### Frontend
+- `npm run lint`: 0 errors
+- `npm audit --audit-level=high`: 0 high (3 moderate residuals)
+- `vite build`: PASS
+- Jest: `src/config/api.test.js` + `BetaNotice.test.jsx` **8 passed**
+- Status: **PASS** (full `npm test` / Playwright CI on the PR)
+
+### Production contract (must hold after cutover)
+- `GET /api/health` 200 `version: 0.3.6-beta`
+- `GET /api/docs`, `/api/openapi.json`, `/metrics` **404**
+- SPA `/unified-theory` 200; beta banner visible
+- Live probe results: recorded in this section after first deploy
+
+---
+
 ## Public release readiness review (2026-08-31)
 
 Re-ran gates on product HEAD `d6be618` (`lenr_sim_app_v0.3.6-beta`). Specialist ledgers: [review-2026-08/](review-2026-08/). Synthesis: [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
