@@ -4,7 +4,7 @@
 
 - **Local development UI (Vite):** run frontend with `cd frontend && npm run dev` (or `npm start`) and open `http://localhost:3000`
 - **Local development API (Docker):** run backend with `docker compose up -d --build` and use `http://localhost:8010/api/health`
-- **Production UI + API (Hostinger VPS):** `https://lenr-sim-beta.conscious.energy` (Caddy, same origin). See `infrastructure/vps/README.md`.
+- **Production UI + API (Hostinger VPS):** `https://lenr-simp-app.conscious.energy` once its A record points here; until then `https://lenr-sim-beta.conscious.energy` (Caddy, same origin). See `infrastructure/vps/README.md`.
 - **Production API (legacy Swarm design):** `https://api.conscious.energy` — not used for the 2026-09 public beta.
 - **Best practice:** do not mix local development-server expectations with production static hosting assumptions
 
@@ -29,7 +29,7 @@
 - [ ] `hydrate-demo.sh` once; `backup-db.sh` cron installed
 
 The Terraform / Ansible / Swarm / Cloudflare Pages path below is the **alternative
-multi-node design**. Skip it for `lenr-sim-beta.conscious.energy`.
+multi-node design**. Skip it for `lenr-simp-app.conscious.energy` / `lenr-sim-beta.conscious.energy`.
 
 ## Infrastructure (alternative: Terraform + Swarm)
 

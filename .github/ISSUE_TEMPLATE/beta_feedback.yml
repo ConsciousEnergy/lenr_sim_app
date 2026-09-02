@@ -1,5 +1,5 @@
 name: Beta feedback
-description: Report a problem or suggestion from the public beta (beta.conscious.energy)
+description: Report a problem or suggestion from the public beta (lenr-simp-app.conscious.energy)
 title: "[beta] "
 labels: ["beta-feedback"]
 body:
@@ -12,7 +12,7 @@ body:
     id: page
     attributes:
       label: Page / URL
-      placeholder: https://beta.conscious.energy/unified-theory
+      placeholder: https://lenr-simp-app.conscious.energy/unified-theory
     validations:
       required: true
   - type: dropdown

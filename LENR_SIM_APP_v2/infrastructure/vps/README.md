@@ -1,8 +1,26 @@
 # Single-VPS public beta (Caddy + Compose)
 
-Same-origin stack for `https://lenr-sim-beta.conscious.energy`. Terraform/Ansible/Swarm under
-`infrastructure/ansible` and `infrastructure/terraform` remain the multi-node path;
-do not run them for this beta.
+Same-origin stack. Intended public URL: `https://lenr-simp-app.conscious.energy`.
+Terraform/Ansible/Swarm under `infrastructure/ansible` and
+`infrastructure/terraform` remain the multi-node path; do not run them for this beta.
+
+## DNS (WordPress.com)
+
+Apex NS stay on WordPress.com. Leave `@` and `www` alone.
+
+A **CNAME to `conscious.energy`** is WordPress.com mapping the subdomain onto
+the marketing site. Let's Encrypt then sees `WP.com` and the VPS never receives
+the browser. Use an **A record to this VPS**, or a CNAME to the VPS hostname.
+
+| Type | Name | Value | Notes |
+|---|---|---|---|
+| A | `lenr-simp-app` | `185.211.4.66` | intended public name (replace the CNAME-to-apex) |
+| AAAA (optional) | `lenr-simp-app` | `2a02:4780:10:fc6a::1` | |
+| A | `lenr-sim-beta` | `185.211.4.66` | already live; used for TLS until `lenr-simp-app` points here |
+
+`SITE_ADDRESS` must list **only** names that already resolve here. After
+`lenr-simp-app` is an A record (or CNAME to `srv1280333.hstgr.cloud`), add
+`lenr-simp-app.conscious.energy` to `SITE_ADDRESS` and recreate Caddy.
 
 ## Layout
 
@@ -11,7 +29,7 @@ do not run them for this beta.
 | `docker-compose.prod.yml` | caddy, frontend, backend, postgres, migrate (profile) |
 | `Caddyfile` | TLS, `/api*` -> FastAPI (incl. WebSockets), `/*` -> nginx SPA |
 | `.env.production.example` | copied to `/opt/lenr-sim/.env` (mode 0600) |
-| `scripts/bootstrap-host.sh` | SSH harden, UFW, fail2ban, swap, docker logs |
+| `scripts/bootstrap-host.sh` | SSH harden, UFW, fail2ban, swap, docker logs, backup cron |
 | `scripts/deploy.sh` | pull or build, alembic, up, health probe |
 | `scripts/rollback.sh` | redeploy previous `IMAGE_TAG` |
 | `scripts/backup-db.sh` | `pg_dump` -> `/opt/lenr-sim/backups` (14 days) |
@@ -19,12 +37,16 @@ do not run them for this beta.
 
 ## First boot
 
-1. DNS: `A lenr-sim-beta.conscious.energy -> 185.211.4.66` (optional AAAA).
+1. DNS: `A lenr-simp-app.conscious.energy -> 185.211.4.66` (not a CNAME to apex).
 2. `bootstrap-host.sh` as root (install a deploy key first).
 3. Clone this repo to `/opt/lenr-sim/src`, copy `.env.production.example` to `/opt/lenr-sim/.env`, fill `CHANGE_ME`.
 4. `BUILD_LOCALLY=1 LENR_ENV_FILE=/opt/lenr-sim/.env infrastructure/vps/scripts/deploy.sh`
 5. `hydrate-demo.sh` once.
-6. Cron: `0 3 * * * root .../backup-db.sh`
 
-Probe: `GET https://lenr-sim-beta.conscious.energy/api/health` must return `"version": "0.3.6-beta"`.
-`GET /api/docs` and `GET /metrics` must 404.
+Always pass `--env-file /opt/lenr-sim/.env` (deploy.sh does this). Never start
+backend from `.env.production.example` — that sets `LENR_DB_PASSWORD=CHANGE_ME`
+while the Postgres volume keeps the real password.
+
+Probe: `GET /api/health` must return `"status": "healthy"` and `"version": "0.3.6-beta"`.
+`GET /api/docs` and `GET /metrics` must 404. Until `lenr-simp-app` points here, probe
+`https://lenr-sim-beta.conscious.energy` and `https://srv1280333.hstgr.cloud`.

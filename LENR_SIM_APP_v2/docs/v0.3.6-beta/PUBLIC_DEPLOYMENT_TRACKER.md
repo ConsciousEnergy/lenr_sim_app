@@ -5,16 +5,24 @@ manual execution status.
 
 ## Current Readiness Summary (2026-09-02)
 
-- **Public hostname:** `https://lenr-sim-beta.conscious.energy` (same-origin SPA + `/api`
+- **Intended public hostname:** `https://lenr-simp-app.conscious.energy` (same-origin SPA + `/api`
   + WebSockets). Apex/`www` stay on WordPress.com; **INF-008 / INF-004 / INF-017
   are bypassed** (no NS move, no Cloudflare Pages, no Swarm GHCR login).
+- **Live DNS as probed 2026-09-02 23:15 UTC:**
+  - `lenr-simp-app.conscious.energy` is a **CNAME to `conscious.energy`** (WordPress
+    `192.0.78.x`). That mapping never reaches the VPS. Replace it with
+    `A lenr-simp-app → 185.211.4.66` (or CNAME to `srv1280333.hstgr.cloud`).
+  - `lenr-sim-beta.conscious.energy` is **A `185.211.4.66`** (this VPS). Use this
+    name in `SITE_ADDRESS` for Let's Encrypt until `lenr-simp-app` points here.
+  - Working TLS today: `https://srv1280333.hstgr.cloud`.
 - **Topology:** Docker Compose on the existing VPS `185.211.4.66`
   (`srv1280333.hstgr.cloud`). Caddy terminates TLS; nginx serves the Vite
   `dist/`; FastAPI runs **one** uvicorn worker; Postgres 16 is unpublished.
   Runbook: [`infrastructure/vps/README.md`](../../infrastructure/vps/README.md).
 - **Code on this slice:** heavy-compute semaphore + input bounds; `VITE_API_URL=same-origin`;
   beta banner + API-unreachable alert; GHCR frontend image; `workflow_dispatch`
-  SSH deploy job.
+  SSH deploy job. Compose interpolates secrets from `--env-file` (do not
+  `env_file` the example or backend gets `CHANGE_ME` and `/api/health` is degraded).
 - **Terraform / Ansible / Swarm:** kept as the **alternative multi-node path**.
   Do **not** `terraform apply` while WordPress owns the marketing site.
 - **What already holds in code (do not regress):**
@@ -22,10 +30,10 @@ manual execution status.
   - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
   - `LENR_AUTO_PERSIST=0` on the VPS stack.
   - `Dockerfile.backend` copies `datasets/` for hydrate.
-- **Operator leftovers:** WordPress.com DNS host `lenr-sim-beta` → `A 185.211.4.66`
-  (optional AAAA); rotate the root password in hPanel (the password used
-  during bootstrap is burned); add GitHub Actions secrets `VPS_HOST`,
-  `VPS_SSH_KEY`, `GHCR_PULL_TOKEN`. Leave `VITE_POSTHOG_KEY` unset.
+- **Operator leftovers:** WordPress.com DNS: delete the `lenr-simp-app` CNAME-to-apex
+  and add **`A lenr-simp-app` → `185.211.4.66`**; rotate the root password in hPanel
+  (the password used during bootstrap is burned); add GitHub Actions secrets
+  `VPS_HOST`, `VPS_SSH_KEY`, `GHCR_PULL_TOKEN`. Leave `VITE_POSTHOG_KEY` unset.
 
 ## Same-origin VPS runbook
 
@@ -35,11 +43,11 @@ manual execution status.
 4. `BUILD_LOCALLY=1` or GHCR pull: `infrastructure/vps/scripts/deploy.sh`
    (alembic `upgrade head`, compose up, `/api/health` probe).
 5. Once: `hydrate-demo.sh`. Cron: `backup-db.sh` at 03:00 UTC.
-6. Probe:
-   - `curl https://lenr-sim-beta.conscious.energy/api/health` → 200, `"version": "0.3.6-beta"`
-   - `curl -I https://lenr-sim-beta.conscious.energy/api/docs` → **404**
-   - `curl -I https://lenr-sim-beta.conscious.energy/metrics` → **404**
-   - `curl -I https://lenr-sim-beta.conscious.energy/unified-theory` → 200 (SPA fallback)
+6. Probe (`https://lenr-sim-beta.conscious.energy` while `lenr-simp-app` still CNAMEs to WordPress):
+   - `curl .../api/health` → 200, `"status":"healthy"`, `"version": "0.3.6-beta"`
+   - `curl -I .../api/docs` → **404**
+   - `curl -I .../metrics` → **404**
+   - `curl -I .../unified-theory` → 200 (SPA fallback)
 
 ---
 

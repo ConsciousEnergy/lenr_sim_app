@@ -118,4 +118,13 @@ install -d -m 755 /opt/lenr-sim/{logs/backend,logs/caddy,data,backups}
 chown -R 1000:1000 /opt/lenr-sim/logs/backend /opt/lenr-sim/data
 log "created /opt/lenr-sim/{logs,data,backups}"
 
+# --- nightly postgres dump (script path exists after the src tree is copied) ---
+cat > /etc/cron.d/lenr-sim-backup <<'EOF'
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+0 3 * * * root LENR_ENV_FILE=/opt/lenr-sim/.env /opt/lenr-sim/src/LENR_SIM_APP_v2/infrastructure/vps/scripts/backup-db.sh >> /opt/lenr-sim/logs/backup.log 2>&1
+EOF
+chmod 644 /etc/cron.d/lenr-sim-backup
+log "installed /etc/cron.d/lenr-sim-backup"
+
 log "bootstrap complete"

@@ -63,7 +63,7 @@ mv "$PREVIOUS_TAG_FILE.tmp" "$PREVIOUS_TAG_FILE"
 
 echo "Waiting for backend health..."
 for _ in $(seq 1 40); do
-  if "${COMPOSE[@]}" exec -T backend curl -fsS http://localhost:8000/api/health >/dev/null 2>&1; then
+  if "${COMPOSE[@]}" exec -T backend sh -c "curl -fsS http://localhost:8000/api/health | grep -q '\"status\":\"healthy\"'"; then
     echo "Backend healthy."
     "${COMPOSE[@]}" exec -T backend curl -fsS http://localhost:8000/api/health || true
     echo "Deploy complete. IMAGE_TAG=$IMAGE_TAG"

@@ -4,7 +4,8 @@
 > local backend host port **8010**, Vite **3000**. See
 > [`backend/.env.example`](backend/.env.example) and
 > [`docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md).
-> Production is `https://lenr-sim-beta.conscious.energy` (`infrastructure/vps/.env.production.example`).
+> Production intended URL is `https://lenr-simp-app.conscious.energy` (`infrastructure/vps/.env.production.example`).
+> Until that name is an A record to the VPS, use `https://lenr-sim-beta.conscious.energy`.
 > Numbered examples below that mention port 8001 or `APP_VERSION=2.0.0` are historical.
 
 ## Overview

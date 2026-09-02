@@ -3,7 +3,13 @@
 ## Public beta VPS slice (2026-09-02)
 
 Ship branch `consciousenergy/vps-public-beta-e822`. Topology:
-`https://lenr-sim-beta.conscious.energy` same-origin Compose (Caddy + nginx SPA + FastAPI + Postgres).
+same-origin Compose (Caddy + nginx SPA + FastAPI + Postgres) on
+`185.211.4.66`. Intended name `https://lenr-simp-app.conscious.energy` is a
+CNAME to WordPress apex (not this VPS). Live A record:
+`lenr-sim-beta.conscious.energy`. Interim TLS: `https://srv1280333.hstgr.cloud`.
+Health must be `"status":"healthy"` (not merely HTTP 200) — `env_file` fallback
+to `.env.production.example` caused `password authentication failed` until
+compose interpolated `/opt/lenr-sim/.env`.
 
 ### Version consistency
 - Four markers still `0.3.6-beta`. Status: **PASS**

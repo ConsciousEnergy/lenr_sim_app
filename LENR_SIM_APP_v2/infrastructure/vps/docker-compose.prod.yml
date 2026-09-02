@@ -4,6 +4,10 @@
 # Run from LENR_SIM_APP_v2/:
 #   docker compose -f infrastructure/vps/docker-compose.prod.yml --env-file /opt/lenr-sim/.env up -d
 #
+# Secrets are interpolated from that --env-file. Do NOT add
+# `env_file: .env.production.example` on services — a later `up` without
+# LENR_ENV_FILE overlays CHANGE_ME and Postgres rejects lenr_app.
+#
 # First boot without GHCR: BUILD_LOCALLY=1 ./infrastructure/vps/scripts/deploy.sh
 
 name: lenr-sim
@@ -17,7 +21,7 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-lenr-sim-beta.conscious.energy}
+      SITE_ADDRESS: ${SITE_ADDRESS:-lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -61,18 +65,26 @@ services:
       args:
         BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
     restart: unless-stopped
-    env_file:
-      - ${LENR_ENV_FILE:-.env.production.example}
     environment:
       LENR_ENVIRONMENT: production
+      LENR_SECRET_KEY: ${LENR_SECRET_KEY:?LENR_SECRET_KEY is required}
+      LENR_JWT_SECRET_KEY: ${LENR_JWT_SECRET_KEY:-}
+      LENR_ANALYTICS_WRITE_TOKEN: ${LENR_ANALYTICS_WRITE_TOKEN:-}
+      LENR_CORS_ORIGINS: ${LENR_CORS_ORIGINS:-["https://lenr-simp-app.conscious.energy","https://lenr-sim-beta.conscious.energy","https://srv1280333.hstgr.cloud"]}
       LENR_DB_HOST: postgres
       LENR_DB_PORT: "5432"
+      LENR_DB_USER: ${LENR_DB_USER:-lenr_app}
+      LENR_DB_PASSWORD: ${LENR_DB_PASSWORD:?LENR_DB_PASSWORD is required}
+      LENR_DB_NAME: ${LENR_DB_NAME:-lenr_sim}
       LENR_WORKERS: ${LENR_WORKERS:-1}
       LENR_HTTPS_REDIRECT: "false"
       LENR_AUTO_PERSIST: "0"
       LENR_LOG_JSON_FORMAT: "true"
       LENR_LOG_TO_FILE: "true"
       LENR_LOG_FILE_DIR: /app/logs
+      LENR_ENABLE_RATE_LIMITING: ${LENR_ENABLE_RATE_LIMITING:-true}
+      LENR_MAX_CONCURRENT_HEAVY_SIMS: ${LENR_MAX_CONCURRENT_HEAVY_SIMS:-2}
+      LENR_HEAVY_SLOT_WAIT_SECONDS: ${LENR_HEAVY_SLOT_WAIT_SECONDS:-10}
     volumes:
       - /opt/lenr-sim/logs/backend:/app/logs
       - /opt/lenr-sim/data:/app/data
@@ -82,7 +94,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health | grep -q '\"status\":\"healthy\"'"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -99,12 +111,14 @@ services:
       args:
         BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
     profiles: ["migrate"]
-    env_file:
-      - ${LENR_ENV_FILE:-.env.production.example}
     environment:
       LENR_ENVIRONMENT: production
+      LENR_SECRET_KEY: ${LENR_SECRET_KEY:?LENR_SECRET_KEY is required}
       LENR_DB_HOST: postgres
       LENR_DB_PORT: "5432"
+      LENR_DB_USER: ${LENR_DB_USER:-lenr_app}
+      LENR_DB_PASSWORD: ${LENR_DB_PASSWORD:?LENR_DB_PASSWORD is required}
+      LENR_DB_NAME: ${LENR_DB_NAME:-lenr_sim}
     depends_on:
       postgres:
         condition: service_healthy

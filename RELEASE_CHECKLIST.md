@@ -48,13 +48,13 @@ Evidence pack: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/`](LENR_SIM_APP_v2/docs/v0.3.6
 
 ## Public deploy (operator)
 
-Canonical path is the **same-origin VPS** (`https://lenr-sim-beta.conscious.energy`), not Cloudflare Pages + Swarm.
+Canonical path is the **same-origin VPS** (`https://lenr-simp-app.conscious.energy` once its A record points here; until then `https://lenr-sim-beta.conscious.energy`), not Cloudflare Pages + Swarm.
 
-- [ ] WordPress.com DNS: host `lenr-sim-beta` `A` → `185.211.4.66` (optional AAAA)
+- [ ] WordPress.com DNS: replace `lenr-simp-app` CNAME-to-apex with `A` → `185.211.4.66` (optional AAAA)
 - [ ] `infrastructure/vps/scripts/bootstrap-host.sh` (SSH key-only, UFW, fail2ban, swap)
 - [ ] `/opt/lenr-sim/.env` filled from `.env.production.example` (mode 0600)
 - [ ] `deploy.sh` (alembic + compose up); `hydrate-demo.sh` once; backup cron
-- [ ] Health: `https://lenr-sim-beta.conscious.energy/api/health` → 200 `version: 0.3.6-beta`
+- [ ] Health: `GET /api/health` → 200 `"status":"healthy"` `"version": "0.3.6-beta"` (`https://lenr-sim-beta.conscious.energy` / `https://srv1280333.hstgr.cloud` until `lenr-simp-app` is an A record)
 - [ ] `GET /api/docs` and `GET /metrics` → **404**
 - [ ] SPA deep link `/unified-theory` → 200; beta banner visible
 - [ ] Root password rotated in hPanel; Actions secrets `VPS_HOST` / `VPS_SSH_KEY` / `GHCR_PULL_TOKEN`
