@@ -1,0 +1,27 @@
+{$SITE_ADDRESS:beta.conscious.energy} {
+	encode zstd gzip
+	request_body {
+		max_size 10MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# FastAPI, including WebSocket upgrades under /api/ws, /api/visualization/ws,
+	# and /api/unified/bubble-lattice/stream. Caddy strips client X-Forwarded-For.
+	handle /api* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 50mb
+			roll_keep 5
+		}
+	}
+}
