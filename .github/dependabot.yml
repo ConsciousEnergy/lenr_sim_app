@@ -66,6 +66,11 @@ updates:
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
+      # v8 requires starlette>=1; the app is pinned to starlette==0.49.1 /
+      # fastapi==0.128.0. #148 failed pip install on 3.10–3.12.
+      - dependency-name: "prometheus-fastapi-instrumentator"
+        update-types:
+          - "version-update:semver-major"
 
   # Frontend npm dependencies (Vite + React 18).
   - package-ecosystem: "npm"
@@ -143,6 +148,21 @@ updates:
           - "version-update:semver-major"
       # react-markdown 10 is a major (remark/rehype peer shift). Stay on 9.x.
       - dependency-name: "react-markdown"
+        update-types:
+          - "version-update:semver-major"
+      # Tailwind 4 is a PostCSS / @tailwind rewrite. Stay on 3.x (#149).
+      - dependency-name: "tailwindcss"
+        update-types:
+          - "version-update:semver-major"
+      # React Router 7 is a dedicated data-router migration. Stay on 6.x (#150).
+      - dependency-name: "react-router-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "react-router"
+        update-types:
+          - "version-update:semver-major"
+      # Recharts 3 is a chart-API major on Analytics / waterfall. Stay on 2.x (#152).
+      - dependency-name: "recharts"
         update-types:
           - "version-update:semver-major"
 
