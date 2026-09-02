@@ -55,6 +55,17 @@ updates:
       - dependency-name: "psutil"
         update-types:
           - "version-update:semver-major"
+      # pandas 3 broke backend tests (#138). Stay on 2.2.x until a dedicated migration.
+      - dependency-name: "pandas"
+        update-types:
+          - "version-update:semver-major"
+      # uvicorn 0.52 is a 0.x jump vs fastapi==0.128.0 / starlette==0.49.1 /
+      # websockets==14.2. Dependabot treats 0.30→0.52 as a minor; ignore both
+      # until an explicit FastAPI/ASGI bump. Patches on 0.30.x still open.
+      - dependency-name: "uvicorn"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   # Frontend npm dependencies (Vite + React 18).
   - package-ecosystem: "npm"
@@ -120,6 +131,18 @@ updates:
         update-types:
           - "version-update:semver-major"
       - dependency-name: "jest-environment-jsdom"
+        update-types:
+          - "version-update:semver-major"
+      # eslint-config-react-app is ESLint 8; eslint 9/10 is a dedicated migration.
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
+      # CI Node is 22; @types/node 26 is a types-major, not a weekly bump.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      # react-markdown 10 is a major (remark/rehype peer shift). Stay on 9.x.
+      - dependency-name: "react-markdown"
         update-types:
           - "version-update:semver-major"
 
