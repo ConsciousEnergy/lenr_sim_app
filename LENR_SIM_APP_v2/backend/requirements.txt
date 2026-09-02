@@ -38,7 +38,7 @@ greenlet==3.5.3
 
 # Observability
 prometheus-client==0.26.0
-prometheus-fastapi-instrumentator==7.0.0
+prometheus-fastapi-instrumentator==8.1.0
 
 # Testing dependencies
 pytest-cov==7.1.0
