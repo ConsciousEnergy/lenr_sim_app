@@ -55,9 +55,12 @@ class VisualizationWebSocket {
         // Reset manual disconnect flag when connecting
         this.manualDisconnect = false;
         
-        // Create new WebSocket connection
-        // Ensure we have a valid base URL
-        const baseUrl = this.baseUrl || 'http://localhost:8010';
+        // Create new WebSocket connection. With no explicit base (same-origin
+        // deployments) follow the page origin so https pages get wss://.
+        const pageOrigin = typeof window !== 'undefined'
+          ? `${window.location.protocol}//${window.location.host}`
+          : 'http://localhost:8010';
+        const baseUrl = this.baseUrl || pageOrigin;
         // Convert http(s) to ws(s)
         const wsUrl = baseUrl.replace(/^http/, 'ws');
         // Remove trailing /api if present to avoid duplication
@@ -489,7 +492,7 @@ class VisualizationWebSocket {
 
 /**
  * Create a singleton instance of VisualizationWebSocket
- * @param {string} baseUrl - API base URL (defaults to http://localhost:8010 if empty)
+ * @param {string} baseUrl - API base URL (defaults to the configured API base or page origin)
  * @returns {VisualizationWebSocket} WebSocket manager instance
  */
 export function createVisualizationWebSocket(baseUrl) {

@@ -11,7 +11,25 @@
  * In development without direct API override, uses empty string so requests
  * go through the dev server proxy (Vite `server.proxy`) to avoid
  * CORS and trailing-slash redirect issues.
+ *
+ * Production same-origin deployments (SPA and `/api` behind one reverse proxy,
+ * e.g. the VPS Caddy stack) set `VITE_API_URL=same-origin` (or `/`). The base
+ * URL then resolves to '' so `/api/...` and `wss://` follow `window.location`.
+ * An empty/unset value keeps the historical split-host default for backwards
+ * compatibility with Cloudflare Pages builds.
  */
+const SAME_ORIGIN_SENTINELS = new Set(['same-origin', '/']);
+const SPLIT_HOST_DEFAULT_API_URL = 'https://api.conscious.energy';
+
+/**
+ * Resolve the production API base URL from the configured value.
+ * Exported for tests; callers should use API_BASE_URL.
+ */
+export function resolveProductionApiBase(configuredUrl) {
+  const value = (configuredUrl || '').trim();
+  if (SAME_ORIGIN_SENTINELS.has(value.toLowerCase())) return '';
+  return value.replace(/\/+$/, '') || SPLIT_HOST_DEFAULT_API_URL;
+}
 const isDev = process.env.NODE_ENV !== 'production';
 const readViteEnv = () => {
   try {
@@ -36,7 +54,7 @@ const forceDirectApi =
  */
 export const API_BASE_URL = isDev
   ? (forceDirectApi ? runtimeApiUrl : '')
-  : (runtimeApiUrl || 'https://api.conscious.energy');
+  : resolveProductionApiBase(runtimeApiUrl);
 
 export const DEFAULT_TIMEOUT = 30000; // 30 seconds
 

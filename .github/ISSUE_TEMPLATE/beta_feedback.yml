@@ -1,0 +1,46 @@
+name: Beta feedback
+description: Report a problem or suggestion from the public beta (beta.conscious.energy)
+title: "[beta] "
+labels: ["beta-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing the LENR Simulation App public beta. Every number in the app is a
+        model output, not a laboratory measurement - please tell us where that was unclear too.
+  - type: input
+    id: page
+    attributes:
+      label: Page / URL
+      placeholder: https://beta.conscious.energy/unified-theory
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - Bug (something broke or errored)
+        - Scientific claim looks wrong or overstated
+        - Confusing UI / copy
+        - Performance (slow, timed out, 503)
+        - Feature request
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, what you expected, what you saw. Paste any error banner text.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version shown in the sidebar
+      placeholder: 0.3.6-beta
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / device
+      placeholder: Firefox 131 on Windows 11
