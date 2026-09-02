@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: `VITE_API_URL=same-origin` → relative `/api` and `wss://` from `window.location`; beta research-preview banner + API-unreachable alert; nginx cache/CSP headers
 - CI: GHCR `lenr-sim-frontend` image; `workflow_dispatch` SSH deploy; compose `config` gate
 - Compose interpolates secrets from `--env-file /opt/lenr-sim/.env` (no `env_file` fallback to `.env.production.example`); health probe requires `"status":"healthy"`
+- Production SPA no longer white-screens: Vite `manualChunks` no longer splits react/mui/charts into circular vendor chunks (`Cannot access 'P' before initialization`)
 - `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN; PostHog key stays unset
 
 ### Dependabot majors after slot refill (2026-09-02)
