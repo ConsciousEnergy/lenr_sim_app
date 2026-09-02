@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const live = process.env.LIVE_BASE_URL;
 
 test.describe('live VPS smoke', () => {
-  test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://beta.conscious.energy) to run against the deployed beta');
+  test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://lenr-sim-beta.conscious.energy) to run against the deployed beta');
 
   test('GET /api/health returns 0.3.6-beta', async ({ request }) => {
     const res = await request.get(`${live}/api/health`);

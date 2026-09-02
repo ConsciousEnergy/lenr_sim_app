@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.3.6-beta] - 2026-08-31
 
 ### Public beta VPS cutover (2026-09-02)
-- Same-origin stack for `https://beta.conscious.energy`: Caddy TLS + nginx SPA + FastAPI + Postgres Compose (`infrastructure/vps/`). WordPress.com apex/`www` untouched
+- Same-origin stack for `https://lenr-sim-beta.conscious.energy`: Caddy TLS + nginx SPA + FastAPI + Postgres Compose (`infrastructure/vps/`). WordPress.com apex/`www` untouched
 - Backend: single uvicorn worker (`LENR_WORKERS=1`), heavy-compute semaphore (`LENR_MAX_CONCURRENT_HEAVY_SIMS=2`) returning 503 + `Retry-After`, multi-physics grid/step caps, WebSocket `duration_steps` cap, `/simulate` and `/bubble-lattice` run in the threadpool. Root `/` no longer advertises OpenAPI in production
 - Frontend: `VITE_API_URL=same-origin` → relative `/api` and `wss://` from `window.location`; beta research-preview banner + API-unreachable alert; nginx cache/CSP headers
 - CI: GHCR `lenr-sim-frontend` image; `workflow_dispatch` SSH deploy; compose `config` gate

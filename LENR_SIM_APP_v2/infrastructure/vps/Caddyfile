@@ -1,4 +1,4 @@
-{$SITE_ADDRESS:beta.conscious.energy} {
+{$SITE_ADDRESS:lenr-sim-beta.conscious.energy} {
 	encode zstd gzip
 	request_body {
 		max_size 10MB

@@ -2,7 +2,7 @@
 
 ## Public beta VPS slice (2026-09-02)
 
-- Same-origin Hostinger VPS at `https://beta.conscious.energy`. WordPress.com
+- Same-origin Hostinger VPS at `https://lenr-sim-beta.conscious.energy`. WordPress.com
   apex/`www` unchanged (INF-008 bypassed).
 - Compute hardening: `app/core/compute_guard.py`, Dockerfile `LENR_WORKERS=1`,
   multi-physics / WS input caps. Export envelope still `lenr-run-export-v1`.
@@ -11,7 +11,7 @@
   `deploy-vps` job. Tracker: `PUBLIC_DEPLOYMENT_TRACKER.md`.
 - Gates: science 55; backend 1095 passed / 9 skipped; frontend lint 0 /
   audit-high 0 / build PASS. `lenr_proved` remains false; `EQ-OPEN-*` OPEN.
-- Live TLS/health probes: fill in after DNS `A beta` is live.
+- Live TLS/health probes: fill in after DNS `A lenr-sim-beta` is live.
 
 ---
 

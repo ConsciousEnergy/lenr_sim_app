@@ -5,7 +5,7 @@ manual execution status.
 
 ## Current Readiness Summary (2026-09-02)
 
-- **Public hostname:** `https://beta.conscious.energy` (same-origin SPA + `/api`
+- **Public hostname:** `https://lenr-sim-beta.conscious.energy` (same-origin SPA + `/api`
   + WebSockets). Apex/`www` stay on WordPress.com; **INF-008 / INF-004 / INF-017
   are bypassed** (no NS move, no Cloudflare Pages, no Swarm GHCR login).
 - **Topology:** Docker Compose on the existing VPS `185.211.4.66`
@@ -22,8 +22,8 @@ manual execution status.
   - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
   - `LENR_AUTO_PERSIST=0` on the VPS stack.
   - `Dockerfile.backend` copies `datasets/` for hydrate.
-- **Operator leftovers:** add `A beta -> 185.211.4.66` (optional AAAA) in
-  WordPress.com DNS; rotate the root password in hPanel (the password used
+- **Operator leftovers:** WordPress.com DNS host `lenr-sim-beta` → `A 185.211.4.66`
+  (optional AAAA); rotate the root password in hPanel (the password used
   during bootstrap is burned); add GitHub Actions secrets `VPS_HOST`,
   `VPS_SSH_KEY`, `GHCR_PULL_TOKEN`. Leave `VITE_POSTHOG_KEY` unset.
 
@@ -36,10 +36,10 @@ manual execution status.
    (alembic `upgrade head`, compose up, `/api/health` probe).
 5. Once: `hydrate-demo.sh`. Cron: `backup-db.sh` at 03:00 UTC.
 6. Probe:
-   - `curl https://beta.conscious.energy/api/health` → 200, `"version": "0.3.6-beta"`
-   - `curl -I https://beta.conscious.energy/api/docs` → **404**
-   - `curl -I https://beta.conscious.energy/metrics` → **404**
-   - `curl -I https://beta.conscious.energy/unified-theory` → 200 (SPA fallback)
+   - `curl https://lenr-sim-beta.conscious.energy/api/health` → 200, `"version": "0.3.6-beta"`
+   - `curl -I https://lenr-sim-beta.conscious.energy/api/docs` → **404**
+   - `curl -I https://lenr-sim-beta.conscious.energy/metrics` → **404**
+   - `curl -I https://lenr-sim-beta.conscious.energy/unified-theory` → 200 (SPA fallback)
 
 ---
 

@@ -17,7 +17,7 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-beta.conscious.energy}
+      SITE_ADDRESS: ${SITE_ADDRESS:-lenr-sim-beta.conscious.energy}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

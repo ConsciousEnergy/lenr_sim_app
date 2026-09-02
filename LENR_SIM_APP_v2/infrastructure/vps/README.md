@@ -1,6 +1,6 @@
 # Single-VPS public beta (Caddy + Compose)
 
-Same-origin stack for `https://beta.conscious.energy`. Terraform/Ansible/Swarm under
+Same-origin stack for `https://lenr-sim-beta.conscious.energy`. Terraform/Ansible/Swarm under
 `infrastructure/ansible` and `infrastructure/terraform` remain the multi-node path;
 do not run them for this beta.
 
@@ -19,12 +19,12 @@ do not run them for this beta.
 
 ## First boot
 
-1. DNS: `A beta.conscious.energy -> 185.211.4.66` (optional AAAA).
+1. DNS: `A lenr-sim-beta.conscious.energy -> 185.211.4.66` (optional AAAA).
 2. `bootstrap-host.sh` as root (install a deploy key first).
 3. Clone this repo to `/opt/lenr-sim/src`, copy `.env.production.example` to `/opt/lenr-sim/.env`, fill `CHANGE_ME`.
 4. `BUILD_LOCALLY=1 LENR_ENV_FILE=/opt/lenr-sim/.env infrastructure/vps/scripts/deploy.sh`
 5. `hydrate-demo.sh` once.
 6. Cron: `0 3 * * * root .../backup-db.sh`
 
-Probe: `GET https://beta.conscious.energy/api/health` must return `"version": "0.3.6-beta"`.
+Probe: `GET https://lenr-sim-beta.conscious.energy/api/health` must return `"version": "0.3.6-beta"`.
 `GET /api/docs` and `GET /metrics` must 404.

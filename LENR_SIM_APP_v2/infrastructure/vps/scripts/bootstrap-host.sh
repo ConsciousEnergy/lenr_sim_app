@@ -114,6 +114,8 @@ fi
 
 # --- app directories ---
 install -d -m 755 /opt/lenr-sim/{logs/backend,logs/caddy,data,backups}
+# Backend image runs as uid 1000 (appuser); bind-mounted logs/data must be writable.
+chown -R 1000:1000 /opt/lenr-sim/logs/backend /opt/lenr-sim/data
 log "created /opt/lenr-sim/{logs,data,backups}"
 
 log "bootstrap complete"

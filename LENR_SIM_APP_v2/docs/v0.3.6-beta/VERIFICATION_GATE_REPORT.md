@@ -3,7 +3,7 @@
 ## Public beta VPS slice (2026-09-02)
 
 Ship branch `consciousenergy/vps-public-beta-e822`. Topology:
-`https://beta.conscious.energy` same-origin Compose (Caddy + nginx SPA + FastAPI + Postgres).
+`https://lenr-sim-beta.conscious.energy` same-origin Compose (Caddy + nginx SPA + FastAPI + Postgres).
 
 ### Version consistency
 - Four markers still `0.3.6-beta`. Status: **PASS**

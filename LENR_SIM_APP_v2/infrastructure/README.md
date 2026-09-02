@@ -11,7 +11,7 @@ Same-origin Docker Compose on the Hostinger VPS:
 
 - **Docs:** [`vps/README.md`](vps/README.md)
 - **Stack:** Caddy (Let's Encrypt) → nginx SPA + FastAPI + Postgres 16
-- **Host:** `https://beta.conscious.energy`
+- **Host:** `https://lenr-sim-beta.conscious.energy`
 
 ```
 infrastructure/vps/
