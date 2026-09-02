@@ -22,7 +22,7 @@ pytest-asyncio==1.4.0
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 python-dotenv==1.2.2
-pydantic-settings==2.14.2
+pydantic-settings==2.15.0
 aiofiles==24.1.0
 jinja2==3.1.6
 numba==0.60.0
