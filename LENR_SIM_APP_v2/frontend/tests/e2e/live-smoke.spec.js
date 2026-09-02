@@ -21,8 +21,11 @@ test.describe('live VPS smoke', () => {
   });
 
   test('SPA deep link and beta banner', async ({ page }) => {
-    await page.goto(`${live}/unified-theory`);
-    await expect(page.getByTestId('beta-notice')).toBeVisible();
+    const pageErrors = [];
+    page.on('pageerror', (err) => pageErrors.push(err.message));
+    await page.goto(`${live}/unified-theory`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('beta-notice')).toBeVisible({ timeout: 15000 });
     await expect(page.getByTestId('beta-banner')).toBeVisible();
+    expect(pageErrors, pageErrors.join('\n')).toEqual([]);
   });
 });
