@@ -1,7 +1,7 @@
 # Core dependencies (pinned for reproducible builds)
 fastapi==0.128.0
 starlette==0.49.1
-uvicorn==0.30.6
+uvicorn==0.52.4
 # Required for WebSocket upgrades (Live Stream Collapse). Bare uvicorn prints
 # "No supported WebSocket library detected" and the stream path 404s as HTTP GET.
 websockets==14.2
