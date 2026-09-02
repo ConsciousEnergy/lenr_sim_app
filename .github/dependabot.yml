@@ -1,8 +1,15 @@
 # Dependabot configuration for the LENR Simulation App
 # See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
-# Integration branch is lenr_sim_app_v0.3.6-beta. main is behind and is not
-# the place to land version bumps until beta is promoted.
+# Integration branch is lenr_sim_app_v0.3.6-beta. GitHub reads this file from
+# the default branch (main); until beta is merged there, copy this file onto
+# main so weekly PRs do not target stale main with weaker ignores.
+#
+# When beta is promoted to main as the product line, drop `target-branch`
+# (or set it to main) so updates do not keep targeting a frozen beta branch.
+#
+# Required repository labels (create in GitHub Settings → Labels or they are
+# skipped with a Dependabot comment): dependencies, backend, frontend, ci, docker.
 version: 2
 updates:
   # Backend Python (FastAPI) dependencies
@@ -37,6 +44,15 @@ updates:
           - "version-update:semver-major"
       # websockets 17.x requires Python >=3.11; keep 14.x with FastAPI/uvicorn.
       - dependency-name: "websockets"
+        update-types:
+          - "version-update:semver-major"
+      # Numba 0.67 pulls llvmlite 0.49; JIT is used in physics optimizations
+      # with no dedicated import tests. Stay on 0.60 until a numba migration.
+      - dependency-name: "numba"
+        update-types:
+          - "version-update:semver-major"
+      # psutil 7 is a major used at process boot (app.main). Not a weekly bump.
+      - dependency-name: "psutil"
         update-types:
           - "version-update:semver-major"
 
@@ -76,6 +92,7 @@ updates:
         update-types:
           - "version-update:semver-major"
       # MUI 8/9 is a dedicated Grid/API migration, not a weekly bump.
+      # MUI 9 drops path imports such as @mui/icons-material/HelpOutline.
       - dependency-name: "@mui/material"
         update-types:
           - "version-update:semver-major"
@@ -83,6 +100,26 @@ updates:
         update-types:
           - "version-update:semver-major"
       - dependency-name: "@vitejs/plugin-react"
+        update-types:
+          - "version-update:semver-major"
+      # Vite 8 switches to Rolldown and drops bundled esbuild transforms.
+      - dependency-name: "vite"
+        update-types:
+          - "version-update:semver-major"
+      # Jest 30 / RTL 16 / jest-dom 7 need a dedicated test-harness migration.
+      - dependency-name: "@testing-library/react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@testing-library/jest-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@testing-library/user-event"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "jest"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "jest-environment-jsdom"
         update-types:
           - "version-update:semver-major"
 

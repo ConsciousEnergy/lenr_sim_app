@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-08-31
 
+### Main Dependabot parity (2026-08-31)
+- Safe pins from main PRs #120/#122/#123/#127: `python-multipart` 0.0.32, `pytest-asyncio` 1.4.0, `alembic` 1.19.1, `posthog-js` ^1.422.2. Not physics runtime except multipart/alembic
+- Skipped failing or high-risk majors from #121/#124/#125/#126/#128/#129: Vite 8, `@vitejs/plugin-react` 6, MUI 9, Jest 30/RTL 16, `numba` 0.67, `psutil` 7. Stay on Vite 6.4.3, plugin-react 4.7.0, MUI 7, Jest 29, `numba` 0.60.0, `psutil` 6.1.0
+- Dependabot ignores those majors on the integration branch. GitHub still reads `dependabot.yml` from default `main` until this file is there. Create repo labels `dependencies`, `backend`, `frontend`, `ci`, `docker` or Dependabot cannot apply them
+- Do not merge main PRs #120–#129 into `main`. Close them after these pins exist on the ship line
+- Promotion merge to `main` must keep beta for Virtual Lab files deleted by #94/#95: `OpenQuestionsCharts.jsx`, `OpenQuestionsVirtualLab.jsx` + test, `prediction-waterfall.spec.js`, `EQ-BBL-COMP-01.yaml`, `EQ-BBL-LIM-01.yaml`, `EQ-PRED-01.yaml`, `EQ-PRED-02.yaml`, and resolve `ResultsPanel.jsx` with beta. Do not merge `main` into beta first (that imports the revert commits). When promoting, drop `target-branch` in `dependabot.yml` (or set it to `main`)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
 ### Public release Wave 3 cutover fixes (2026-08-31)
 - `/bubble-fusion` no longer defaults missing enhancement to `1e13`; API mapping uses only finite fields; local fallback is a warning without fabricated fusion yield
 - Pages Terraform `production_branch` defaults to `lenr_sim_app_v0.3.6-beta`; preview `NODE_ENV=production`
