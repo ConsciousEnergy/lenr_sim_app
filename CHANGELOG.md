@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-08-31
 
+### Dependabot weekly on beta + npm audit gate (2026-09-02)
+- After copying `dependabot.yml` to default `main` (#131), weekly PRs now target `lenr_sim_app_v0.3.6-beta` (#135–#144)
+- Frontend `npm audit --audit-level=high` was red on those PRs from lockfile pins, not the bumped packages: `browserslist` 4.28.6 (GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g) and `fast-uri` 3.1.5 (SSRF/host-confusion range through 3.1.5). Overrides now `browserslist` ^4.28.7 and `fast-uri` ^3.1.7
+- Extra Dependabot ignores: pip `pandas` major; `uvicorn` major+minor (keep 0.30.x patches until FastAPI/ASGI bump); npm `eslint` major, `@types/node` major, `react-markdown` major. Copy this `dependabot.yml` onto `main` again so GitHub honors the new ignores
+- Suggested take after this audit lands (rebase first): #142 `greenlet` 3.5.5, #139 `pydantic` 2.13.5 with #140 `pydantic-settings` 2.15.0, #141 `@playwright/test` 1.62.1
+- Suggested skip/close: #135 `react-markdown` 10, #136 `eslint` 10, #137 `@types/node` 26, #138 `pandas` 3, #143 `uvicorn` 0.52, #144 `@tanstack/react-query` (declared, unused in `src/`)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
 ### Main Dependabot parity (2026-08-31)
 - Safe pins from main PRs #120/#122/#123/#127: `python-multipart` 0.0.32, `pytest-asyncio` 1.4.0, `alembic` 1.19.1, `posthog-js` ^1.422.2. Not physics runtime except multipart/alembic
 - Skipped failing or high-risk majors from #121/#124/#125/#126/#128/#129: Vite 8, `@vitejs/plugin-react` 6, MUI 9, Jest 30/RTL 16, `numba` 0.67, `psutil` 7. Stay on Vite 6.4.3, plugin-react 4.7.0, MUI 7, Jest 29, `numba` 0.60.0, `psutil` 6.1.0
