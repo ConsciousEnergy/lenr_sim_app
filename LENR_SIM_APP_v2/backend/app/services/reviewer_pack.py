@@ -21,20 +21,30 @@ from app.services.analytics_service import classify_source_class
 from app.services.simulation_persistence import DISCLAIMER
 
 PACK_SCHEMA = "lenr-reviewer-pack-v1"
+
+
+def _repo_root() -> Path:
+    """Walk up from this file to the git/docs root, or /app in the backend image."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "formalization" / "predictions" / "campaign_invariants.json").is_file():
+            return parent
+        if (parent / ".git").exists() and (parent / "LENR_SIM_APP_v2").is_dir():
+            return parent
+    # Docker image: /app/app/services/this.py → /app (datasets live at /app/datasets).
+    return Path("/app") if Path("/app/datasets").is_dir() else here.parents[min(2, len(here.parents) - 1)]
+
+
 INVARIANTS_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "formalization"
-    / "predictions"
-    / "campaign_invariants.json"
+    _repo_root() / "formalization" / "predictions" / "campaign_invariants.json"
 )
 
 
 def _git_sha() -> Optional[str]:
     try:
-        root = Path(__file__).resolve().parents[4]
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
-            cwd=root,
+            cwd=_repo_root(),
             check=True,
             capture_output=True,
             text=True,
