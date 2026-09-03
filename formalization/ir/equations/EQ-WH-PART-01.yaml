@@ -1,0 +1,21 @@
+id: EQ-WH-PART-01
+latex: "E_{\\mathrm{derived}}+E_{\\mathrm{open}}=Q\\ (23.8\\,\\mathrm{MeV})"
+symbols:
+  E_derived: "energy allocated to derived channels"
+  E_open: "unallocated remainder"
+  Q: "D+D to 4He Q-value"
+units: "keV"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - hagelstein2025
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.partition_conserved"
+  - "LenrFormal.WorkingHypothesis.remainder_positive"
+  - "LenrFormal.WorkingHypothesis.remainder_implies_q1_open"
+  - "LenrFormal.WorkingHypothesis.naive_gN_does_not_close"
+notes: "Conservation identity with positive remainder. Does not close EQ-OPEN-MEV-01."

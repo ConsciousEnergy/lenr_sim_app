@@ -1,0 +1,19 @@
+id: EQ-WH-ENP-01
+latex: "\\mathrm{WH\\text{-}ENP\\text{-}01}\\colon\\text{shared geometry, occupation, operator for Q1--Q3}"
+symbols:
+  WH_ENP_01: "coupled working hypothesis identifier"
+units: "dimensionless"
+tag: DEF
+paper_ref: "§5A"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - hagelstein2025
+  - takahashi2016
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.hypothesisId"
+  - "LenrFormal.WorkingHypothesis.geometryIsFccTetrahedral"
+  - "LenrFormal.WorkingHypothesis.occupationNat"
+notes: "Speculative coupled hypothesis ledger. Does not discharge EQ-OPEN-*."
