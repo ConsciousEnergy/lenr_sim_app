@@ -67,6 +67,13 @@ def _assert_open_questions(data: dict, *, route_mode: str) -> None:
         path.get("diagram_spec")
         for path in oq["how"]["mechanism_paths"]
     )
+    wh = oq["working_hypothesis"]
+    assert wh["id"] == "WH-ENP-01"
+    assert wh["status"] == "OPEN"
+    assert wh["lenr_proved"] is False
+    assert wh["discharges_eq_open"] is False
+    assert oq["q_radiation"]["branching_is_scenario_input"] is True
+    assert oq["q_radiation"]["derived_bound"]["meets_target"] is False
 
 
 def test_simulate_default_is_additive_and_does_not_close() -> None:

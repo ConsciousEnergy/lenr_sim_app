@@ -43,6 +43,7 @@ from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
     DEFAULT_TRAP_SEPARATION_M,
     MAX_COLLECTIVE_FACTOR,
 )
+from app.physics_engine.working_hypothesis import compute_working_hypothesis
 
 HBAR = const.hbar
 E_CHARGE = const.e
@@ -406,6 +407,43 @@ def build_open_questions(
         )
     )
 
+    working_hypothesis = compute_working_hypothesis(
+        phonon_energy_mev=phonon_energy,
+        gamma_energy_mev=gamma_energy,
+        recoil_energy_mev=recoil_energy,
+        open_remainder_mev=remainder,
+        q_total_mev=Q_DD_HE4_MEV,
+        naive_ruled_out=bool(phonon.get("naive_ruled_out")),
+        rate_per_m3_s=rate_per_m3,
+        active_volume_m3=vol,
+        excess_power_w=float(power) if power is not None else None,
+        loading_ratio=float(loading_ratio),
+        fgr_params=fgr_params,
+        g_coupling=float(phonon.get("naive_g") or DEFAULT_G_COUPLING),
+    )
+    q_mev["working_hypothesis_id"] = working_hypothesis["id"]
+    q_mev["lean_theorems"] = list(q_mev["lean_theorems"]) + [
+        "EQ-WH-PART-01",
+        "EQ-WH-STOP-01",
+        "EQ-WH-NONCLOSE-01",
+    ]
+    q_rad["working_hypothesis_id"] = working_hypothesis["id"]
+    q_rad["derived_bound"] = working_hypothesis["q2"]["derived_bound"]
+    q_rad["branching_is_scenario_input"] = True
+    q_rad["lean_theorems"] = list(q_rad["lean_theorems"]) + [
+        "EQ-WH-BOUND-01",
+        "EQ-WH-NONCLOSE-01",
+    ]
+    q_stat["working_hypothesis_id"] = working_hypothesis["id"]
+    q_stat["R_obs_per_m3_s"] = working_hypothesis["q3"]["R_obs_per_m3_s"]
+    q_stat["lean_theorems"] = list(q_stat["lean_theorems"]) + [
+        "EQ-WH-FLOOR-01",
+        "EQ-WH-NONCLOSE-01",
+    ]
+    when["R_obs_per_m3_s"] = working_hypothesis["q3"]["R_obs_per_m3_s"]
+    when["R_mode_per_m3_s"] = working_hypothesis["q3"]["R_mode_per_m3_s"]
+    how["working_hypothesis_id"] = working_hypothesis["id"]
+
     emp_chips = []
     if not fallback:
         emp_chips.append({
@@ -435,6 +473,7 @@ def build_open_questions(
         "q_statistical": q_stat,
         "q_electron_capture": q_ec,
         "q_integrated_yield": q_yield,
+        "working_hypothesis": working_hypothesis,
         "composition": {
             "pipeline_combined_enhancement": pipe_v,
             "bubble_peak_enhancement": bub_v,
