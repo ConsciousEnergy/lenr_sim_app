@@ -44,11 +44,16 @@ export default function OpenQuestionsCharts({ openQuestions }) {
     { name: 'scenario n', log10: Math.log10(Math.max(branch.n || 1e-11, 1e-30)), fill: SPEC_COLOR },
     { name: 'scenario gamma', log10: Math.log10(Math.max(branch.gamma || 1e-12, 1e-30)), fill: SPEC_COLOR },
   ];
+  const boundLog = oq.working_hypothesis?.q2?.derived_bound;
+  if (boundLog && boundLog.meets_target === false) {
+    radData.push({ name: 'derived harmonic Γ', log10: -30, fill: OPEN_COLOR });
+  }
   if (ulLog10 != null && Number.isFinite(ulLog10)) {
     radData.push({ name: 'detector UL', log10: ulLog10, fill: OPEN_COLOR });
   } else {
     radData.push({ name: 'detector UL (no ingest)', log10: -6, fill: OPEN_COLOR });
   }
+  radData.push({ name: 'open target 1e11', log10: 11, fill: REF_COLOR });
 
   const n2 = Number(oq.q_statistical?.n_events_log10_two_body);
   const when = oq.when || {};
@@ -85,7 +90,7 @@ export default function OpenQuestionsCharts({ openQuestions }) {
     <Box>
       <EnergyPartitionFlow partition={part} />
 
-      <ChartFrame title="Q2 log10 branching (assumed / scenario — not a derived Gamma)">
+      <ChartFrame title="Q2 log10 branching (assumed scenario vs derived harmonic bound vs 10^11 target)">
         <BarChart data={radData} layout="vertical" margin={{ left: 110 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />

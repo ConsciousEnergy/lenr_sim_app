@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-08-31
 
+### WH-ENP-01 open-questions hypothesis (2026-09-03)
+- Coupled working hypothesis `WH-ENP-01` on unified / bubble-lattice / theory-pipeline `open_questions` (additive): Hagelstein cascade on Takahashi TSC geometry, harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}=0\) bound, same-cluster FGR vs \(R_{\mathrm{obs}}=P/(QV)\)
+- Lean `LenrFormal.WorkingHypothesis` identities and non-closure (`EQ-WH-*`); `EQ-OPEN-MEV-01` / `RAD-01` / `RATE-01` stay OPEN; `lenr_proved` stays false
+- Virtual lab panel: channel graph, Dicke-radius license, HE negative control, n-moderation lengths; paper §5A names WH-ENP-01
+
 ### Public beta VPS cutover (2026-09-02)
 - Same-origin stack on the Hostinger VPS: Caddy TLS + nginx SPA + FastAPI + Postgres Compose (`infrastructure/vps/`). Intended public URL `https://lenr-simp-app.conscious.energy`; WordPress.com apex/`www` untouched
 - Backend: single uvicorn worker (`LENR_WORKERS=1`), heavy-compute semaphore (`LENR_MAX_CONCURRENT_HEAVY_SIMS=2`) returning 503 + `Retry-After`, multi-physics grid/step caps, WebSocket `duration_steps` cap, `/simulate` and `/bubble-lattice` run in the threadpool. Root `/` no longer advertises OpenAPI in production

@@ -30,6 +30,11 @@ The hypothesis under test: **harmonic locking provides a coherent, high-Q
 channel that, combined with phonon-nuclear coupling, enables MeV->multi-eV
 down-conversion** during the final collapse phase.
 
+For electrolytic PdD, the coupled working hypothesis is **WH-ENP-01**
+(Hagelstein cascade on Takahashi TSC geometry). KG-RP locking is an optional
+cavitation overlay, not the PdD core. See Lean `LenrFormal.WorkingHypothesis`
+and `open_questions.working_hypothesis`. EQ-OPEN-MEV-01 remains OPEN.
+
 ## Falsifiable predictions (encoded as gates / diagnostics)
 
 | # | Prediction | Where checked | Falsifier |

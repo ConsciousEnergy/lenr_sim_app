@@ -1022,6 +1022,30 @@ eps_eff - 1 ≈ 5.9e-13 at E = 1e14 V/m
 **Status:** VERIFIED (see §9C.3)
 **Code:** `HEISENBERG_EULER_LAB_CORRECTION = 5.9e-13`
 
+### 12.6 WH-ENP-01 partition remainder (EQ-WH-PART-01)
+```
+E_derived + E_open = 23.8 MeV; default derived = 0 ⇒ remainder = 23.8 MeV
+2 × 23.8 MeV = 47.6 MeV (TSC α KE identity; 23.8 MeV per α)
+```
+**Status:** VERIFIED (integer identity; remainder OPEN)
+**Code:** `working_hypothesis.py`; Lean `derivedKeV + openRemainderKeV = 23800`
+
+### 12.7 Harmonic Γ_ph/Γ_γ bound (EQ-WH-BOUND-01)
+```
+Pd Debye θ_D ≈ 274 K ⇒ k_B θ_D ≈ 23.6 meV ≪ 23.8 MeV ⇒ ρ_ph(Q)=0
+(Γ_ph/Γ_γ)_harmonic = 0 < 10^11
+```
+**Status:** VERIFIED (cutoff identity; does not close Q2)
+**Code:** `derive_lattice_gamma_bound()`; Lean `derivedRatio = 0`
+
+### 12.8 Dicke cooperation radius (EQ-WH-DICKE-01)
+```
+λ = v_s / f; v_s = 3070 m/s (model assumption); f = 10^13 Hz ⇒ λ ≈ 0.307 nm
+R_dicke = λ/(2π) ≈ 49 pm; paper domain 6.6 nm > R_dicke ⇒ N² not licensed
+```
+**Status:** APPROXIMATION (sound-speed model assumption; inequality is exact given inputs)
+**Code:** `dicke_radius_m()`; Lean `dickeN2Licensed 6600 48 = false`
+
 ---
 
 ## 11. Recommendations

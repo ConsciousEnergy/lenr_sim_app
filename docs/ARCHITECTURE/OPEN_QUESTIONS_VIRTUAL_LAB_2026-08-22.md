@@ -4,6 +4,11 @@
 run becomes an additive `open_questions` determination without changing
 `contract_version` or multiplying rival engines.
 
+Additive `working_hypothesis` (`WH-ENP-01`) is assembled by
+`working_hypothesis.compute_working_hypothesis` and attached to the same block.
+Lean `LenrFormal.WorkingHypothesis` certifies conservation and non-closure;
+`EQ-OPEN-*` stay OPEN.
+
 **Commit note:** dated at introduction of the virtual lab; regenerate if routes move.
 
 ```mermaid
