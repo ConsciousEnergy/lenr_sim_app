@@ -1,0 +1,17 @@
+id: EQ-WH-DICKE-01
+latex: "R_{\\mathrm{domain}}>R_{\\mathrm{dicke}}\\Rightarrow N^{2}\\ \\mathrm{not\\ licensed}"
+symbols:
+  R_domain: "paper coherent-domain radius"
+  R_dicke: "cooperation radius lambda/(2 pi)"
+units: "pm"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - hagelstein2025
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.dickeN2Licensed"
+  - "LenrFormal.WorkingHypothesis.paper_domain_not_dicke_licensed"
+notes: "Constraint only. Engine collective remains linear min(N,1e6) (EQ-COLL-LIN-01)."

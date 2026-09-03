@@ -39,6 +39,7 @@ lake build
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
 | `CollapseBounds` | EQ-BBL-LIM-01 | Pointwise calculated-bound clamp |
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
+| `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
 | `RealShim` | — | `expZ` mono bridge axiom |
 
 ## Hygiene

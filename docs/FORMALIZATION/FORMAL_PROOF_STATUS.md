@@ -42,6 +42,11 @@
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | `Decision` | **DEF** mechanized |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
+| EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0 | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
+| EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
+| EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\) | `WorkingHypothesis` | **PROVED** (constraint) |
+| EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
+| EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -56,7 +61,8 @@
 | EQ-TRAP-TAU-01 | `Constants` | \(\tau=10^{-20}\,\mathrm{s}\) integer-scaled input |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
-| occupancy / lattice \(\Gamma\) would-close-if | `OpenQuestionBounds` | Nat inputs; Q1 named hypotheses (Hagelstein/Dicke/BEC) are labels |
+| EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
+| EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 
 `OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). `OpenQuestionBounds.lean` adds would-close-if lemmas and the Q4 millielectronvolt deficit identity. Neither module discharges any open obligation.
 

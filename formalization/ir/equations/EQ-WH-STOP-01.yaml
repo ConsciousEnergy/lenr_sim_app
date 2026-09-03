@@ -1,0 +1,18 @@
+id: EQ-WH-STOP-01
+latex: "2\\times 23.8\\,\\mathrm{MeV}=47.6\\,\\mathrm{MeV};\\ \\mathrm{stopping}\\neq\\gamma"
+symbols:
+  E_alpha: "kinetic energy per on-shell alpha"
+units: "keV"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - takahashi2016
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.two_alpha_ke_is_q4d"
+  - "LenrFormal.WorkingHypothesis.two_alpha_ke_is_two_qdd"
+  - "LenrFormal.WorkingHypothesis.stopping_mode_neq_photon"
+  - "LenrFormal.WorkingHypothesis.tsc_kinematics_do_not_zero_remainder"
+notes: "Alpha KE identity plus transfer-mode inequality. Does not close EQ-OPEN-MEV-01."

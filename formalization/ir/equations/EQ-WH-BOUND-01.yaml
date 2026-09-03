@@ -1,0 +1,20 @@
+id: EQ-WH-BOUND-01
+latex: "(\\Gamma_{\\mathrm{ph}}/\\Gamma_{\\gamma})_{\\mathrm{harmonic}}=0<10^{11}"
+symbols:
+  Gamma_ph: "lattice/phonon width"
+  Gamma_gamma: "E1 photon width"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_2
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.derivedRatio"
+  - "LenrFormal.WorkingHypothesis.derived_ratio_below_target"
+  - "LenrFormal.WorkingHypothesis.derived_ratio_does_not_close_q2"
+notes: "Harmonic phonon DOS vanishes at 23.8 MeV. Derived bound fails the 10^11 target. Assumed branching stays scenario input."
