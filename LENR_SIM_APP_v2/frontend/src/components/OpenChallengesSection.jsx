@@ -34,17 +34,20 @@ const OpenChallengesSection = ({ embedded = false }) => {
         5A. Open Theoretical Challenges
       </Typography>
     )}
-    <Typography variant="body2" paragraph>
-      Occurrence under Miles-class conditions is empirically anchored in parts of the
-      corpus; the open questions are <strong>how</strong> MeV energy partitions,
-      <strong> how</strong> γ is suppressed, and <strong>when</strong> the rate budget
-      closes under a named mechanism path. See the live Open Questions Virtual Lab on
-      Unified Results for Oracle A/B determinations. Formal IDs{' '}
-      <code>EQ-OPEN-MEV-01</code>, <code>EQ-OPEN-RAD-01</code>,{' '}
-      <code>EQ-OPEN-RATE-01</code>, <code>EQ-OPEN-EC-01</code>, and{' '}
-      <code>EQ-OPEN-YIELD-01</code> remain <strong>OPEN</strong>.
-      Lean <code>OpenQuestionBounds</code> lemmas are would-close-if only.
-    </Typography>
+      <Typography variant="body2" paragraph>
+        Occurrence under Miles-class conditions is empirically anchored in parts of the
+        corpus; the open questions are <strong>how</strong> MeV energy partitions,
+        <strong> how</strong> γ is suppressed, and <strong>when</strong> the rate budget
+        closes under a named mechanism path. See the live Open Questions Virtual Lab on
+        Unified Results for Oracle A/B determinations. Formal IDs{' '}
+        <code>EQ-OPEN-MEV-01</code>, <code>EQ-OPEN-RAD-01</code>,{' '}
+        <code>EQ-OPEN-RATE-01</code>, <code>EQ-OPEN-EC-01</code>, and{' '}
+        <code>EQ-OPEN-YIELD-01</code> remain <strong>OPEN</strong>.
+        Working hypothesis <code>WH-ENP-01</code> (Lean <code>WorkingHypothesis</code>)
+        is a coupled Hagelstein/TSC ledger with derived remainders; it does not
+        discharge those obligations. Lean <code>OpenQuestionBounds</code> lemmas are
+        would-close-if only.
+      </Typography>
     <List dense>
       <ListItem>
         <ListItemText

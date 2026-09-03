@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import MechanismPathDiagram from './MechanismPathDiagram';
 import OpenQuestionsCharts from './OpenQuestionsCharts';
+import OpenQuestionsWorkingHypothesis from './OpenQuestionsWorkingHypothesis';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
@@ -359,6 +360,8 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       </Alert>
 
       <WhenHowRow occurrence={oq.occurrence} when={oq.when} how={oq.how} />
+
+      <OpenQuestionsWorkingHypothesis workingHypothesis={oq.working_hypothesis} />
 
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
         {(oq.determination?.oracle_a?.lean_theorems || ['EQ-RATE-2B-NC-01']).map((id) => (
