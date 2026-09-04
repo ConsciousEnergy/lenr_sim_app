@@ -3,44 +3,101 @@
   "route_mode": "legacy_unified_model",
   "rate_mode": "two_body",
   "lenr_proved": false,
-  "occurrence": { "anchored": false, "emp_gates": [] },
+  "occurrence": {
+    "anchored": false,
+    "emp_gates": []
+  },
   "when": {
     "threshold_crossed": null,
     "two_body_reference_log10_n": -40,
     "active_mode_log10_n": -40,
-    "R_obs_per_m3_s": 2.62e17,
+    "R_obs_per_m3_s": 2.622e+17,
     "R_mode_per_m3_s": 1e-30
   },
   "how": {
     "mechanism_paths": [
-      { "id": "trapped_state", "posterior": 0.1, "lean_ids": ["EQ-NBODY-FGR-01"] },
-      { "id": "phonon_cascade", "posterior": 0.0, "lean_ids": [] },
-      { "id": "three_body", "posterior": 0.05, "lean_ids": [] }
+      {
+        "id": "trapped_state",
+        "posterior": 0.1,
+        "lean_ids": [
+          "EQ-NBODY-FGR-01"
+        ]
+      },
+      {
+        "id": "phonon_cascade",
+        "posterior": 0.0,
+        "lean_ids": []
+      },
+      {
+        "id": "three_body",
+        "posterior": 0.05,
+        "lean_ids": []
+      }
     ],
     "active_rate_mode": "two_body",
-    "fgr_parameters": { "P_occ": null, "Gamma_tun": 1e-20 }
+    "fgr_parameters": {
+      "P_occ": null,
+      "Gamma_tun": 1e-20
+    }
   },
   "determination": {
     "status": "RATE_BUDGET_DOES_NOT_CLOSE",
-    "oracle_a": { "two_body_budget_closes": false, "lean_theorems": ["EQ-RATE-2B-NC-01"] },
+    "oracle_a": {
+      "two_body_budget_closes": false,
+      "lean_theorems": [
+        "EQ-RATE-2B-NC-01"
+      ]
+    },
     "oracle_b": {
       "priors_source": "default_skeptical",
       "hypotheses": [
-        { "id": "chemical_null", "posterior": 0.35, "log10_bayes_vs_two_body": 0 },
-        { "id": "two_body", "posterior": 0.5, "log10_bayes_vs_two_body": 0 },
-        { "id": "trapped_state", "posterior": 0.1, "log10_bayes_vs_two_body": 1.2 },
-        { "id": "phonon_cascade", "posterior": 0.0, "log10_bayes_vs_two_body": -1 },
-        { "id": "three_body", "posterior": 0.05, "log10_bayes_vs_two_body": 0.5 }
+        {
+          "id": "chemical_null",
+          "posterior": 0.35,
+          "log10_bayes_vs_two_body": 0
+        },
+        {
+          "id": "two_body",
+          "posterior": 0.5,
+          "log10_bayes_vs_two_body": 0
+        },
+        {
+          "id": "trapped_state",
+          "posterior": 0.1,
+          "log10_bayes_vs_two_body": 1.2
+        },
+        {
+          "id": "phonon_cascade",
+          "posterior": 0.0,
+          "log10_bayes_vs_two_body": -1
+        },
+        {
+          "id": "three_body",
+          "posterior": 0.05,
+          "log10_bayes_vs_two_body": 0.5
+        }
       ]
     },
-    "next_measurement": [{ "observable": "he4", "rank": 1, "rationale": "Miles EMP" }]
+    "next_measurement": [
+      {
+        "observable": "he4",
+        "rank": 1,
+        "rationale": "Miles EMP"
+      }
+    ]
   },
   "q_mev_gap": {
     "id": "EQ-OPEN-MEV-01",
     "status": "OPEN",
     "claim_tier": "speculative_exploratory",
     "working_hypothesis_id": "WH-ENP-01",
-    "energy_partition_mev": { "phonon": 0, "gamma": 0, "recoil": 0, "open_remainder": 23.8, "q_total": 23.8 }
+    "energy_partition_mev": {
+      "phonon": 0,
+      "gamma": 0,
+      "recoil": 0,
+      "open_remainder": 23.8,
+      "q_total": 23.8
+    }
   },
   "q_radiation": {
     "id": "EQ-OPEN-RAD-01",
@@ -48,7 +105,11 @@
     "detector_ul_log10": -8,
     "branching_is_scenario_input": true
   },
-  "q_statistical": { "id": "EQ-OPEN-RATE-01", "status": "BUDGET_DOES_NOT_CLOSE", "n_events_log10_two_body": -40 },
+  "q_statistical": {
+    "id": "EQ-OPEN-RATE-01",
+    "status": "BUDGET_DOES_NOT_CLOSE",
+    "n_events_log10_two_body": -40
+  },
   "q_electron_capture": {
     "id": "EQ-OPEN-EC-01",
     "status": "OPEN",
@@ -67,118 +128,519 @@
     "status": "OPEN",
     "claim_tier": "empirical_lenr_correlation",
     "dimmed": true,
-    "expected_he4_rate_per_s": 2.62e11,
-    "duty_adjusted_expected_he4_rate_per_s": 1.31e11,
-    "expected_integrated_he4_yield_atoms": 2.62e12,
+    "expected_he4_rate_per_s": 262000000000.0,
+    "duty_adjusted_expected_he4_rate_per_s": 131000000000.0,
+    "expected_integrated_he4_yield_atoms": 2620000000000.0,
     "observed_integrated_he4_yield_atoms": null,
     "observed_integrated_yield_note": "No observed integrated yield was supplied.",
-    "reported_integrated_yield_discrepancy": { "factor_band": [100, 10000] },
+    "reported_integrated_yield_discrepancy": {
+      "factor_band": [
+        100,
+        10000
+      ]
+    },
     "retention_time_resolved_caveat": "Retention and simultaneous time-resolved accounting remain required.",
     "occurrence_claimed": false
   },
-  "composition": { "not_combinable": true, "illegal_product": 1e10, "tsc_enhancement_can_scale_two_body": true },
-  "emp_chips": [{ "id": "miles_q_band", "label": "Miles 24±4 MeV/He EMP" }],
+  "composition": {
+    "not_combinable": true,
+    "illegal_product": 10000000000.0,
+    "tsc_enhancement_can_scale_two_body": true
+  },
+  "emp_chips": [
+    {
+      "id": "miles_q_band",
+      "label": "Miles 24±4 MeV/He EMP"
+    }
+  ],
   "working_hypothesis": {
     "id": "WH-ENP-01",
+    "claim_tier": "speculative_exploratory",
     "status": "OPEN",
     "lenr_proved": false,
-    "discharges_eq_open": false,
-    "claim_tier": "speculative_exploratory",
-    "statement": "Coupled Hagelstein/TSC ledger; remainders OPEN.",
+    "statement": "Electron–neutron–proton coupling in a deuteron cluster partitions D+D energy through a Hagelstein coherent virtual-phonon cascade on Takahashi TSC 4D geometry. Two on-shell alphas remove a primary 24 MeV γ kinematically but do not close the MeV gap or radiation suppression. Γ_ph/Γ_γ is a derived harmonic bound (fails 10^11). Rate feasibility is the same-cluster FGR versus R_obs = P_W/(Q V).",
     "geometry": "fcc_tetrahedral",
     "occupation_model": "bernoulli_p4_model_assumption",
     "P_occ": 0.164,
-    "lean_theorems": [
-      "EQ-WH-ENP-01", "EQ-WH-PART-01", "EQ-WH-BOUND-01", "EQ-WH-FLOOR-01",
-      "EQ-WH-DICKE-01", "EQ-WH-STOP-01", "EQ-WH-NONCLOSE-01",
-      "EQ-WH-FC-01", "EQ-WH-PART-02", "EQ-WH-DICKE-N-01", "EQ-WH-CAP-01"
+    "nuclear_operator": "hagelstein_phonon_on_tsc_4d",
+    "references": [
+      "Hagelstein (2025), JCMNS phonon-nuclear matrix — hagelstein2025",
+      "Takahashi (2016), JCMNS 19, 298 — takahashi2016",
+      "Heisenberg & Euler (1936); Schwinger Phys. Rev. 82, 664 (1951) — EQ-QED-HE-NEG-01"
     ],
-    "dicke": {
-      "phonon_wavelength_m": 3.07e-10,
-      "dicke_radius_m": 4.886e-11,
-      "paper_domain_m": 6.6e-9,
-      "n2_licensed": false,
-      "n_d_per_m3": 6.8e28,
-      "dicke_volume_m3": 4.886e-31,
-      "n_within_radius": 0.0332,
-      "n_coh_licensed_max": 0,
-      "engine_collective": "linear_min_N_1e6",
-      "lean_theorems": ["EQ-WH-DICKE-01", "EQ-COLL-LIN-01", "EQ-WH-DICKE-N-01"]
-    },
-    "schwinger_he": { "lab_field_v_m": 1e14, "he_factor": 1.0000000000005895, "closes_q1": false, "closes_q2": false },
+    "derived_terms": [
+      "phonon_order_N",
+      "naive_gN_ruled_out",
+      "tsc_2alpha_kinematics",
+      "harmonic_Gamma_ph_over_Gamma_gamma",
+      "heisenberg_euler_lab_identity",
+      "dicke_radius_license",
+      "two_body_log10N_events"
+    ],
+    "assumed_terms": [
+      "trap_separation_25pm",
+      "cluster_lifetime_1e-20_s",
+      "f_nuc",
+      "P_occ_if_bernoulli",
+      "assumed_branching_fractions",
+      "alpha_csda_range_pd",
+      "neutron_moderation_lengths",
+      "phonon_sound_speed"
+    ],
     "q1": {
       "open_remainder_mev": 23.8,
-      "derived_mev": 0,
+      "derived_mev": 0.0,
       "q_total_mev": 23.8,
-      "status": "OPEN",
-      "alpha_stopping": { "csda_range_pd_m": 4e-5, "ke_per_alpha_mev": 23.8, "q_4d_mev": 47.6, "n_alphas": 2, "counted_in_derived_mev": false },
+      "naive_gN_closes": false,
+      "alpha_stopping": {
+        "ke_per_alpha_mev": 23.8,
+        "q_4d_mev": 47.6,
+        "n_alphas": 2,
+        "csda_range_pd_m": 4e-05,
+        "counted_in_derived_mev": false,
+        "note": "Alpha stopping ≠ 24 MeV photon down-conversion (EQ-TSC-STOP-01).",
+        "lean_theorems": [
+          "EQ-WH-STOP-01",
+          "EQ-TSC-STOP-01"
+        ],
+        "provenance": "model assumption (range magnitude)"
+      },
       "coupling_scan": {
-        "default_derived_mev": 0,
+        "default_derived_mev": 0.0,
         "model": "first_order_fraction_n_coh_g_squared",
         "n_coh_cited_cap": 0,
+        "g_cited": 0.0001,
         "rows": [
-          { "g": 1e-4, "n_coh": 0, "derived_mev": 0, "remainder_mev": 23.8, "kind": "cited" },
-          { "g": 1e-4, "n_coh": 1, "derived_mev": 2.38e-7, "remainder_mev": 23.7999998, "kind": "scenario" },
-          { "g": 1e-2, "n_coh": 100, "derived_mev": 0.238, "remainder_mev": 23.562, "kind": "scenario" },
-          { "g": 0.1, "n_coh": 100, "derived_mev": 23.8, "remainder_mev": 0, "kind": "scenario" }
+          {
+            "g": 0.0001,
+            "n_coh": 0.0,
+            "derived_mev": 0.0,
+            "remainder_mev": 23.8,
+            "kind": "cited",
+            "licensed_by_dicke_count": true
+          },
+          {
+            "g": 0.0001,
+            "n_coh": 1.0,
+            "derived_mev": 2.38e-07,
+            "remainder_mev": 23.8,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          },
+          {
+            "g": 0.0001,
+            "n_coh": 100.0,
+            "derived_mev": 2.38e-05,
+            "remainder_mev": 23.8,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          },
+          {
+            "g": 0.01,
+            "n_coh": 1.0,
+            "derived_mev": 0.00238,
+            "remainder_mev": 23.8,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          },
+          {
+            "g": 0.01,
+            "n_coh": 100.0,
+            "derived_mev": 0.238,
+            "remainder_mev": 23.56,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          },
+          {
+            "g": 0.1,
+            "n_coh": 1.0,
+            "derived_mev": 0.238,
+            "remainder_mev": 23.56,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          },
+          {
+            "g": 0.1,
+            "n_coh": 100.0,
+            "derived_mev": 23.8,
+            "remainder_mev": 0.0,
+            "kind": "scenario",
+            "licensed_by_dicke_count": false
+          }
         ],
         "conservation_holds": true,
-        "lean_theorems": ["EQ-WH-PART-02"]
-      }
+        "note": "Scenario rows with n_coh > n_coh_cited_cap are unlicensed by EQ-WH-DICKE-N-01; derived fraction is a model assumption.",
+        "claim_tier": "speculative_exploratory",
+        "lean_theorems": [
+          "EQ-WH-PART-02"
+        ]
+      },
+      "status": "OPEN"
     },
     "q2": {
-      "status": "OPEN",
-      "derived_bound": { "derived_gamma_ph_over_gamma_gamma": 0, "lattice_gamma_target": 1e11, "meets_target": false, "branching_is_scenario_input": true },
-      "neutron_moderation": { "media": { "liquid_d2o": { "label": "liquid", "length_m": 0.06 }, "solid_pdh": { "label": "solid", "length_m": 0.08 } } },
+      "derived_bound": {
+        "g_coupling": 0.0001,
+        "g_over_alpha_sq": 0.0001878,
+        "pd_debye_mev": 23.61,
+        "harmonic_phonon_dos_at_q": 0.0,
+        "derived_gamma_ph_over_gamma_gamma": 0.0,
+        "log10_derived_ratio": null,
+        "lattice_gamma_target": 100000000000.0,
+        "meets_target": false,
+        "branching_is_scenario_input": true,
+        "claim_tier": "speculative_exploratory",
+        "label": "Harmonic ρ_ph(Q)=0 above Debye cutoff; derived Γ_ph/Γ_γ = 0 < 10^11. Assumed branching remains scenario input.",
+        "lean_theorems": [
+          "EQ-WH-BOUND-01",
+          "EQ-BRANCH-LATTICE-01"
+        ],
+        "references": [
+          "Hagelstein (2025), JCMNS phonon-nuclear matrix — hagelstein2025",
+          "Takahashi (2016), JCMNS 19, 298 — takahashi2016",
+          "Heisenberg & Euler (1936); Schwinger Phys. Rev. 82, 664 (1951) — EQ-QED-HE-NEG-01"
+        ]
+      },
+      "neutron_moderation": {
+        "neutron_energy_mev": 2.45,
+        "media": {
+          "liquid_d2o": {
+            "length_m": 0.06,
+            "label": "liquid",
+            "provenance": "model assumption (H-rich slowing-down length, cm scale)"
+          },
+          "solid_pdh": {
+            "length_m": 0.08,
+            "label": "solid",
+            "provenance": "model assumption (comparable H density to water)"
+          },
+          "gas_d2_stp": {
+            "length_m": 60.0,
+            "label": "gas",
+            "provenance": "model assumption (~10^3 lower H density than liquid)"
+          },
+          "plasma": {
+            "length_m": null,
+            "label": "plasma",
+            "provenance": "not a condensed moderator; length unbounded here"
+          }
+        },
+        "closes_mev_gap": false,
+        "note": "Residual n-branch only; does not partition 23.8 MeV on the ⁴He channel."
+      },
       "franck_condon": {
         "model": "displaced_oscillator_linear_coupling",
-        "phonon_order_N": 575000,
-        "s_grid": [1, 10, 100, 1000, 10000],
-        "log10_p_n": [-3560000, -2990000, -2410000, -1840000, -760000],
-        "s_min_for_target": 569600,
-        "target_log10": -11,
+        "phonon_order_N": 575500000.0,
+        "phonon_energy_mev": 4.136e-08,
+        "s_grid": [
+          1.0,
+          10.0,
+          100.0,
+          1000.0,
+          10000.0
+        ],
+        "log10_p_n": [
+          -4791000000.0,
+          -4216000000.0,
+          -3640000000.0,
+          -3065000000.0,
+          -2489000000.0
+        ],
+        "s_min_for_target": 575400000.0,
+        "relaxation_energy_at_s_min_mev": 23.79,
+        "q_mev": 23.8,
+        "target_log10": -11.0,
         "meets_target": false,
         "claim_tier": "speculative_exploratory",
-        "provenance": "model assumption (linear coupling; Stirling)",
-        "lean_theorems": ["EQ-WH-FC-01"]
-      }
+        "provenance": "model assumption (linear coupling, displaced oscillator; anharmonic/lossy spin-boson boosts labeled AX, not inserted)",
+        "lean_theorems": [
+          "EQ-WH-FC-01"
+        ]
+      },
+      "status": "OPEN"
     },
     "q3": {
-      "status": "OPEN",
-      "R_obs_per_m3_s": 2.62e17,
-      "R_mode_per_m3_s": 1e-30,
+      "R_obs_per_m3_s": 2.622e+17,
+      "R_mode_per_m3_s": 0.0,
+      "active_volume_m3": 1e-06,
       "threshold_crossed": false,
-      "two_body_log10_n_events": -40,
+      "two_body_log10_n_events": -40.0,
       "two_body_closes": false,
+      "P_occ_provenance": "bernoulli_p4_model_assumption",
+      "f_nuc": null,
+      "C_lin": 1.0,
       "closure_demand": {
-        "R_obs_per_m3_s": 2.62e17,
-        "required_product": 8.7e-4,
+        "R_obs_per_m3_s": 2.622e+17,
+        "n_sites_per_m3": 6.652e+26,
+        "required_product": 5.784e+26,
+        "required_product_geometry": "trap_25pm",
         "grid": {
-          "theta": [0.6, 0.9, 1.0],
-          "tau_s": [1e-20, 1e-16, 1e-12],
-          "f_nuc": [1e-4, 1],
+          "geometry": "trap_25pm",
+          "gamma_tun": 6.815e-37,
+          "theta": [
+            0.6,
+            0.8,
+            0.9,
+            1.0
+          ],
+          "tau_s": [
+            1e-20,
+            1e-18,
+            1e-16,
+            1e-14,
+            1e-12
+          ],
+          "f_nuc": [
+            1e-06,
+            0.0001,
+            0.01,
+            1.0
+          ],
           "log10_ratio": [
-            [[-3.1, 0.9], [-7.1, -3.1], [-11.1, -7.1]],
-            [[-2.4, 1.6], [-6.4, -2.4], [-10.4, -6.4]],
-            [[-2.2, 1.8], [-6.2, -2.2], [-10.2, -6.2]]
+            [
+              [
+                -14.25,
+                -12.25,
+                -10.25,
+                -8.252
+              ],
+              [
+                -16.25,
+                -14.25,
+                -12.25,
+                -10.25
+              ],
+              [
+                -18.25,
+                -16.25,
+                -14.25,
+                -12.25
+              ],
+              [
+                -20.25,
+                -18.25,
+                -16.25,
+                -14.25
+              ],
+              [
+                -22.25,
+                -20.25,
+                -18.25,
+                -16.25
+              ]
+            ],
+            [
+              [
+                -13.75,
+                -11.75,
+                -9.752,
+                -7.752
+              ],
+              [
+                -15.75,
+                -13.75,
+                -11.75,
+                -9.752
+              ],
+              [
+                -17.75,
+                -15.75,
+                -13.75,
+                -11.75
+              ],
+              [
+                -19.75,
+                -17.75,
+                -15.75,
+                -13.75
+              ],
+              [
+                -21.75,
+                -19.75,
+                -17.75,
+                -15.75
+              ]
+            ],
+            [
+              [
+                -13.55,
+                -11.55,
+                -9.547,
+                -7.547
+              ],
+              [
+                -15.55,
+                -13.55,
+                -11.55,
+                -9.547
+              ],
+              [
+                -17.55,
+                -15.55,
+                -13.55,
+                -11.55
+              ],
+              [
+                -19.55,
+                -17.55,
+                -15.55,
+                -13.55
+              ],
+              [
+                -21.55,
+                -19.55,
+                -17.55,
+                -15.55
+              ]
+            ],
+            [
+              [
+                -13.36,
+                -11.36,
+                -9.364,
+                -7.364
+              ],
+              [
+                -15.36,
+                -13.36,
+                -11.36,
+                -9.364
+              ],
+              [
+                -17.36,
+                -15.36,
+                -13.36,
+                -11.36
+              ],
+              [
+                -19.36,
+                -17.36,
+                -15.36,
+                -13.36
+              ],
+              [
+                -21.36,
+                -19.36,
+                -17.36,
+                -15.36
+              ]
+            ]
           ]
         },
         "engine_cap": {
-          "fcc_tetrahedral": { "gamma_tun": 1e-60, "r_max_per_m3_s": 3e-6, "crosses": false },
-          "trap_25pm": { "gamma_tun": 1e-4, "r_max_per_m3_s": 3e50, "crosses": true }
+          "fcc_tetrahedral": {
+            "gamma_tun": 1.439e-85,
+            "r_max_per_m3_s": 9.575e-33,
+            "crosses": false
+          },
+          "trap_25pm": {
+            "gamma_tun": 6.815e-37,
+            "r_max_per_m3_s": 4.534e+16,
+            "crosses": false
+          }
         },
-        "caps": { "P_occ": 1, "f_nuc": 1, "C_lin": 1e6, "tau_s": 1e-20 },
+        "caps": {
+          "P_occ": 1.0,
+          "f_nuc": 1.0,
+          "C_lin": 1000000.0,
+          "tau_s": 1e-20
+        },
         "two_body_untouched": true,
         "kind": "scenario_table_not_posterior",
-        "lean_theorems": ["EQ-WH-CAP-01"]
-      }
+        "claim_tier": "speculative_exploratory",
+        "n_sites_convention": "reaction_rate_engine: 0.5 * (electron_density / Z) * loading; ~46x below 0.5 * n_D at the physical Pd atom density used by the Dicke count",
+        "provenance": "model assumption (FGR scenario grid; n_sites follows the engine's _reactant_number_density convention; caps from reaction_rate_engine)",
+        "lean_theorems": [
+          "EQ-WH-CAP-01"
+        ]
+      },
+      "status": "OPEN"
+    },
+    "dicke": {
+      "phonon_wavelength_m": 3.07e-10,
+      "dicke_radius_m": 4.886e-11,
+      "paper_domain_m": 6.6e-09,
+      "n2_licensed": false,
+      "n_d_per_m3": 6.8e+28,
+      "dicke_volume_m3": 4.886e-31,
+      "n_within_radius": 0.03323,
+      "n_coh_licensed_max": 0,
+      "n_d_provenance": "Pd atom density 6.8e28 m^-3 (matches engine electron_density default; PdD x≈1 model assumption)",
+      "engine_collective": "linear_min_N_1e6",
+      "lean_theorems": [
+        "EQ-WH-DICKE-01",
+        "EQ-COLL-LIN-01",
+        "EQ-WH-DICKE-N-01"
+      ],
+      "note": "N² is not the engine rate law; domain > λ/(2π) does not license Dicke N²."
+    },
+    "schwinger_he": {
+      "lab_field_v_m": 100000000000000.0,
+      "he_factor": 1.0,
+      "closes_q1": false,
+      "closes_q2": false,
+      "lean_theorems": [
+        "EQ-QED-HE-NEG-01"
+      ]
     },
     "channels": [
-      { "id": "dd_he4_phonons", "q_mev": 23.8, "primary_gamma_required": "open", "weight_kind": "assumed" },
-      { "id": "tsc_4d_2alpha", "q_mev": 47.6, "primary_gamma_required": false, "weight_kind": "kinematics_only" },
-      { "id": "dd_t_p", "q_mev": 4.03, "primary_gamma_required": false, "weight_kind": "conventional_branch" },
-      { "id": "dd_n_he3", "q_mev": 3.27, "primary_gamma_required": false, "weight_kind": "conventional_branch" }
+      {
+        "id": "dd_he4_phonons",
+        "q_mev": 23.8,
+        "primary_gamma_required": "open",
+        "weight_kind": "assumed",
+        "lean_ids": [
+          "EQ-QDD-01",
+          "EQ-OPEN-MEV-01"
+        ]
+      },
+      {
+        "id": "tsc_4d_2alpha",
+        "q_mev": 47.6,
+        "primary_gamma_required": false,
+        "weight_kind": "kinematics_only",
+        "lean_ids": [
+          "EQ-TSC-Q-01",
+          "EQ-TSC-CH-01",
+          "EQ-TSC-STOP-01"
+        ]
+      },
+      {
+        "id": "dd_t_p",
+        "q_mev": 4.03,
+        "primary_gamma_required": false,
+        "weight_kind": "conventional_branch",
+        "lean_ids": []
+      },
+      {
+        "id": "dd_n_he3",
+        "q_mev": 3.27,
+        "primary_gamma_required": false,
+        "weight_kind": "conventional_branch",
+        "lean_ids": []
+      }
     ],
-    "remainder_vector": { "q1_open_remainder_mev": 23.8, "q2_log10_ratio_minus_11": null, "q3_log10_n_two_body": -40 }
+    "remainder_vector": {
+      "q1_open_remainder_mev": 23.8,
+      "q2_log10_ratio_minus_11": null,
+      "q3_log10_n_two_body": -40.0
+    },
+    "discharges_eq_open": false,
+    "lean_theorems": [
+      "EQ-WH-ENP-01",
+      "EQ-WH-PART-01",
+      "EQ-WH-BOUND-01",
+      "EQ-WH-FLOOR-01",
+      "EQ-WH-DICKE-01",
+      "EQ-WH-STOP-01",
+      "EQ-WH-NONCLOSE-01",
+      "EQ-WH-FC-01",
+      "EQ-WH-PART-02",
+      "EQ-WH-DICKE-N-01",
+      "EQ-WH-CAP-01",
+      "EQ-WH-NONCLOSE-02"
+    ],
+    "q1_closed": false,
+    "q2_closed": false,
+    "q3_closed": false
   }
 }

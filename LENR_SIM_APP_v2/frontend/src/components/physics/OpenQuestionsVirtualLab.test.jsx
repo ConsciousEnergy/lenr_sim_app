@@ -5,6 +5,13 @@ import React from 'react';
 import { fireEvent, render, screen } from '../../tests/test-utils';
 import OpenQuestionsVirtualLab from './OpenQuestionsVirtualLab';
 import MechanismPathDiagram from './MechanismPathDiagram';
+import whFixture from '../../../tests/fixtures/open_questions_wh_v2.json';
+
+// The lazily-loaded R3F scene pulls in three; it has its own test with mocks.
+jest.mock('./TscClusterScene', () => ({
+  __esModule: true,
+  default: () => <div data-testid="tsc-cluster-scene" />,
+}));
 
 const TWO_BODY_OQ = {
   schema: 'lenr-open-questions-v1',
@@ -196,6 +203,30 @@ describe('OpenQuestionsVirtualLab', () => {
     expect(screen.getByText(/Working hypothesis WH-ENP-01/)).toBeInTheDocument();
     expect(screen.getByText(/EQ-OPEN-MEV-01 \/ RAD-01 \/ RATE-01 remain OPEN/)).toBeInTheDocument();
     expect(screen.getByTestId('wh-channel-graph')).toBeInTheDocument();
+  });
+
+  test('renders the v2 WH fixture with scenario controls, Franck–Condon chart and DAG', async () => {
+    render(<OpenQuestionsVirtualLab openQuestions={whFixture} />);
+    expect(screen.getByTestId('wh-enp-01-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-scenario-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-remainder-vector')).toHaveTextContent(/Q1 remainder 23\.8 MeV OPEN/);
+    expect(screen.getByTestId('wh-franck-condon-chart')).toHaveTextContent(/S_min for target 575400000/);
+    expect(screen.getByTestId('wh-channel-dag')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-channel-graph')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-closure-demand-row')).toHaveTextContent(
+      /required product 5\.784e26.*fcc_tetrahedral:.*crosses R_obs no.*trap_25pm:.*crosses R_obs no/,
+    );
+    expect(screen.getByTestId('wh-coupling-cited-row')).toHaveTextContent(/g 0\.0001, n_coh 0 → derived 0 MeV/);
+    expect(await screen.findByTestId('tsc-cluster-scene')).toBeInTheDocument();
+    expect(screen.queryByText('LENR_PROVED', { exact: true })).not.toBeInTheDocument();
+    expect(whFixture.lenr_proved).toBe(false);
+  });
+
+  test('older responses without the v2 grids still render without the new panels', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('wh-scenario-controls')).toHaveTextContent(/not supplied by this API response/);
+    expect(screen.queryByTestId('wh-franck-condon-chart')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('wh-closure-demand-row')).not.toBeInTheDocument();
   });
 });
 

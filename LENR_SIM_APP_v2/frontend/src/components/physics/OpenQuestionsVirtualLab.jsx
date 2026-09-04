@@ -1,7 +1,7 @@
 /**
  * OpenQuestionsVirtualLab — when/how under named conditions and data.
  */
-import React, { useCallback, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useState } from 'react';
 import {
   Alert,
   Box,
@@ -22,7 +22,17 @@ import {
 import MechanismPathDiagram from './MechanismPathDiagram';
 import OpenQuestionsCharts from './OpenQuestionsCharts';
 import OpenQuestionsWorkingHypothesis from './OpenQuestionsWorkingHypothesis';
+import OpenQuestionsScenarioControls from './OpenQuestionsScenarioControls';
+import TscClusterSceneUnavailable from './TscClusterSceneFallback';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+// three / @react-three ship in their own chunk; only load them when a WH with
+// Dicke geometry is actually present. If that chunk fails to evaluate (e.g. the
+// R3F reconciler rejects the installed React runtime) fall back to the same
+// numbers as text instead of tripping the page-level error boundary.
+const TscClusterScene = lazy(() =>
+  import('./TscClusterScene').catch(() => ({ default: TscClusterSceneUnavailable })),
+);
 
 export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
   schema: 'lenr-open-questions-v1',
@@ -326,6 +336,7 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
   const empChips = isFallback ? [] : (oq.emp_chips || []);
   const illegal = oq.composition?.illegal_product;
   const tscLeak = oq.composition?.tsc_enhancement_can_scale_two_body;
+  const wh = oq.working_hypothesis;
 
   return (
     <Paper sx={{ p: 2 }} variant="outlined" data-testid="open-questions-virtual-lab">
@@ -362,6 +373,24 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <WhenHowRow occurrence={oq.occurrence} when={oq.when} how={oq.how} />
 
       <OpenQuestionsWorkingHypothesis workingHypothesis={oq.working_hypothesis} />
+      {wh?.dicke && (
+        <Suspense
+          fallback={(
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              Loading TSC cluster scene…
+            </Typography>
+          )}
+        >
+          <TscClusterScene
+            dicke={wh.dicke}
+            alphaStopping={wh.q1?.alpha_stopping}
+            channels={wh.channels}
+          />
+        </Suspense>
+      )}
+      {wh?.id && (
+        <OpenQuestionsScenarioControls q1={wh.q1} q2={wh.q2} q3={wh.q3} dicke={wh.dicke} />
+      )}
 
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
         {(oq.determination?.oracle_a?.lean_theorems || ['EQ-RATE-2B-NC-01']).map((id) => (

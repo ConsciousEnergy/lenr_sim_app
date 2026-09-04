@@ -16,6 +16,39 @@ import {
   Typography,
 } from '@mui/material';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+import ChannelDag from './ChannelDag';
+import { formatCompact as fmt } from '../../utils/formatCompact';
+
+function ClosureDemandRow({ demand }) {
+  if (!demand) return null;
+  const caps = Object.entries(demand.engine_cap || {});
+  return (
+    <Typography variant="caption" display="block" color="text.secondary" data-testid="wh-closure-demand-row">
+      Closure demand (scenario table, not a posterior): required product {fmt(demand.required_product)}
+      {demand.R_obs_per_m3_s != null ? ` for R_obs ${fmt(demand.R_obs_per_m3_s)} m⁻³ s⁻¹` : ''}
+      {caps.map(([geometry, cap]) => (
+        <span key={geometry}>
+          {' · '}{geometry}: Γ_tun {fmt(cap.gamma_tun)}, R_max {fmt(cap.r_max_per_m3_s)}, crosses R_obs{' '}
+          {cap.crosses ? 'yes' : 'no'}
+        </span>
+      ))}
+      {' · two-body untouched; EQ-OPEN-RATE-01 remains OPEN'}
+    </Typography>
+  );
+}
+
+function CouplingCitedRow({ scan }) {
+  const row = (scan?.rows || []).find((r) => r.kind === 'cited');
+  if (!scan || !row) return null;
+  return (
+    <Typography variant="caption" display="block" color="text.secondary" data-testid="wh-coupling-cited-row">
+      Coupling scan (cited row): g {fmt(row.g)}, n_coh {fmt(row.n_coh)} → derived {fmt(row.derived_mev)} MeV,
+      {' '}remainder {fmt(row.remainder_mev)} MeV OPEN
+      {scan.n_coh_cited_cap != null ? ` · n_coh cited cap ${fmt(scan.n_coh_cited_cap)}` : ''}
+      {' · other rows are scenario inputs'}
+    </Typography>
+  );
+}
 
 function LeanChip({ id }) {
   return (
@@ -70,6 +103,9 @@ export default function OpenQuestionsWorkingHypothesis({ workingHypothesis }) {
         {' '}(not counted in derived MeV). Harmonic Γ_ph/Γ_γ = {bound.derived_gamma_ph_over_gamma_gamma}
         {' '}vs target {bound.lattice_gamma_target}.
       </Typography>
+      <ClosureDemandRow demand={wh.q3?.closure_demand} />
+      <CouplingCitedRow scan={wh.q1?.coupling_scan} />
+      <ChannelDag channels={channels} />
       <Table size="small" sx={{ mb: 1 }} data-testid="wh-channel-graph">
         <TableHead>
           <TableRow>

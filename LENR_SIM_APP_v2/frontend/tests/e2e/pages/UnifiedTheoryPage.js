@@ -85,6 +85,56 @@ export class UnifiedTheoryPage {
     return this.page.getByTestId('open-questions-virtual-lab');
   }
 
+  /** WH-ENP-01 coupled ledger panel inside the virtual lab. */
+  whPanel() {
+    return this.page.getByTestId('wh-enp-01-panel');
+  }
+
+  channelDag() {
+    return this.page.getByTestId('wh-channel-dag');
+  }
+
+  scenarioControls() {
+    return this.page.getByTestId('wh-scenario-controls');
+  }
+
+  scenarioSelect(label) {
+    return this.scenarioControls().getByLabel(label);
+  }
+
+  remainderVector() {
+    return this.page.getByTestId('wh-remainder-vector');
+  }
+
+  unlicensedNcohChip() {
+    return this.page.getByText(/unlicensed by EQ-WH-DICKE-N-01/);
+  }
+
+  franckCondonChart() {
+    return this.page.getByTestId('wh-franck-condon-chart');
+  }
+
+  /** Either the R3F canvas wrapper or its text fallback (no WebGL). */
+  tscScene() {
+    return this.page.getByTestId('tsc-cluster-scene');
+  }
+
+  tscSceneFallback() {
+    return this.page.getByTestId('tsc-cluster-scene-fallback');
+  }
+
+  tscSceneOrFallback() {
+    return this.tscScene().or(this.tscSceneFallback());
+  }
+
+  collapseSlider() {
+    return this.page.getByRole('slider', { name: /TSC collapse/i });
+  }
+
+  logScaleToggle() {
+    return this.page.getByRole('switch', { name: /log-scale radii/i });
+  }
+
   /** Collapsible summary of group winners and excluded overlapping theories. */
   compositionSummary() {
     return this.page.getByText(/how this was composed/i);
