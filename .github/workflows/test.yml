@@ -247,6 +247,13 @@ jobs:
         working-directory: formalization/lean
         run: lake build
 
+      - name: No sorry in LenrFormal
+        # Matches `sorry` used as a proof term (`:= sorry`, `by sorry`, `exact sorry`,
+        # or on its own tactic line); the word inside prose comments does not trip it.
+        run: |
+          ! grep -rnE '(^\s*(·\s*)?|:=\s*|\bby\s+|\bexact\s+)sorry\b' \
+            formalization/lean/LenrFormal --include='*.lean'
+
   compose-config:
     runs-on: ubuntu-latest
     needs: version-consistency

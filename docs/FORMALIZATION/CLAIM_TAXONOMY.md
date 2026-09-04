@@ -118,6 +118,11 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-WH-DICKE-01 | Paper domain \(>\) Dicke radius \(\Rightarrow N^2\) not licensed | §5A.1 | `working_hypothesis.py` | constraint | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; alpha stopping \(\neq\) prompt \(\gamma\) | §5A.1 | `working_hypothesis.py` | takahashi2016 | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-NONCLOSE-01 | WH remainders do not discharge Q1–Q3 OPEN predicates | §5A | `working_hypothesis.py` | non-closure | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-FC-01 | Poisson (Huang–Rhys) tail \(t_{N+1}/t_N=S/(N+1)<1\) for \(N\ge S\); \(\log_{10}P_N\le-7\times10^{5}<-11\) at \(S\le10^{4}\) | §5A.1/5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-PART-02 | General partition \(E_{\text{derived}}+(Q-E_{\text{derived}})=Q\); remainder \(=0\iff E_{\text{derived}}=Q\) | §5A.1 | `many_body/wh_bounds.py` | conservation | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-DICKE-N-01 | \(n_D V_{\text{dicke}}\approx0.033<1\Rightarrow N_{\text{coh}}^{\max}=0\); no pair licensed | §5A.1 | `many_body/wh_bounds.py` | counting bound | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-CAP-01 | \(P_{\text{occ}},f_{\text{nuc}}\le1,\ C_{\text{lin}}\le10^{6}\Rightarrow\) capped product bound; demand above cap unmet | §5A.3 | `many_body/wh_bounds.py` | upper bound (RR-006 clamp) | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-NONCLOSE-02 | WH v2 bounds (FC, partition, Dicke count, cap) do not discharge Q1–Q3 | §5A | `many_body/wh_bounds.py` | non-closure | `THM` | `WorkingHypothesisBounds.lean` |
 
 ---
 

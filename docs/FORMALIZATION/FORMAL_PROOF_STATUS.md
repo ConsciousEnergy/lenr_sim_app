@@ -47,6 +47,11 @@
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\) | `WorkingHypothesis` | **PROVED** (constraint) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
+| EQ-WH-FC-01 | Poisson tail \(S/(N+1)<1\) for \(N\ge S\); \(\log_{10}P_N\le-7\times10^{5}<-11\) on the scan grid | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q2) |
+| EQ-WH-PART-02 | \(E_{\text{derived}}+(Q-E_{\text{derived}})=Q\); remainder \(=0\iff E_{\text{derived}}=Q\) | `WorkingHypothesisBounds` | **PROVED** (identity; does **not** close Q1) |
+| EQ-WH-DICKE-N-01 | \(\lfloor n_D V_{\text{dicke}}\rfloor=0\); no \(N\ge2\) Dicke count licensed | `WorkingHypothesisBounds` | **PROVED** (bound) |
+| EQ-WH-CAP-01 | Capped \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}\) product bound; demand above cap unmet | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q3) |
+| EQ-WH-NONCLOSE-02 | WH v2 bounds do not discharge Q1–Q3 OPEN predicates | `WorkingHypothesisBounds` | **PROVED** (does **not** close) |
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -64,7 +69,7 @@
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
 | EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 
-`OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). `OpenQuestionBounds.lean` adds would-close-if lemmas and the Q4 millielectronvolt deficit identity. Neither module discharges any open obligation.
+`OpenObligations.lean` proves only that *stated deficits imply non-closure* (positive remainder, two-body \(\log_{10}N<0\), energy deficit, yield discrepancy). `OpenQuestionBounds.lean` adds would-close-if lemmas and the Q4 millielectronvolt deficit identity. `WorkingHypothesisBounds.lean` adds the WH-ENP-01 v2 bounds (Poisson multi-phonon tail, general partition, Dicke count, engine-cap product) as identities / bounds over integer-scaled inputs; the Franck–Condon displaced-oscillator model is a labelled model assumption and the \(-7\times10^{5}\) bound is a conservative integer cap on the Python `lgamma` value. None of these modules discharges any open obligation.
 
 ## Axioms / hypotheses (not theorems of nature)
 
