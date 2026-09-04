@@ -4,34 +4,29 @@ A comprehensive application for simulating Low Energy Nuclear Reaction (LENR) ph
 
 ## Project Organization
 
-This repository contains multiple versions of the LENR Simulation Application:
+The application lives under **[`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/)** (backend, frontend, infrastructure, docs). Everything else at the repository root is shared tooling and governance:
 
-### 📁 LENR_SIM_APP_v2 (Current Development - **START HERE**)
+| Path | Purpose |
+|------|---------|
+| `LENR_SIM_APP_v2/` | The application: FastAPI backend, React/Vite frontend, Docker/Terraform infrastructure, release evidence docs |
+| `formalization/` | Equation IR and Lean 4 consistency checks (mathematical consistency only, not a proof that LENR occurs) |
+| `docs/` | Repository-level documentation, including [`docs/releases/`](docs/releases/) (release notes and merge instructions) |
+| `archive/status-reports/` | Historical status reports kept for provenance |
+| `.github/` | CI workflows, Dependabot, PR template, CODEOWNERS |
+| `.cursor/` | Shared agent rules and skills |
 
-**Status**: ✅ Active Development  
-**Recommended for**: All new development and usage
-
-The latest and most comprehensive version with:
+The application features:
 - Advanced multi-physics coupling (thermal, nuclear, electromagnetic)
 - Complete FEM implementation
 - Comprehensive physics models (quantum tunneling, electron screening, phonon interactions)
 - Full-featured React frontend with Three.js 3D visualizations
-- Task management system
-- Extensive API and test suite
+- Extensive API and test suite with release-blocking, experiment-anchored science gates
 
-👉 **[Go to v2 README](LENR_SIM_APP_v2/README.md)** for installation and usage instructions.
+👉 **[Go to the application README](LENR_SIM_APP_v2/README.md)** for installation and usage instructions.
 
-### 📁 LENR_SIM_APP_v1 (Legacy/Stable)
+### Legacy code
 
-**Status**: 🔒 Archived  
-**Recommended for**: Reference only
-
-The original stable version, kept for:
-- Historical reference
-- Legacy compatibility
-- Comparison with v2 improvements
-
-This version is **not actively maintained** but remains functional.
+The original `LENR_SIM_APP_v1/` tree and the root `backend/` / `frontend/` mirrors were removed from the working tree in September 2026. They remain available in git history at the annotated tag `archive/pre-legacy-removal` (for example `git show archive/pre-legacy-removal:LENR_SIM_APP_v1/README.md`).
 
 ## Quick Start
 
@@ -58,42 +53,25 @@ chmod +x start_app.sh  # First time only
 ./start_app.sh
 ```
 
-## Feature Comparison
-
-| Feature | v1 | v2 |
-|---------|----|----|
-| Basic Physics Models | ✅ | ✅ |
-| Advanced Physics (QED, Rydberg, etc.) | ❌ | ✅ |
-| Multi-Physics Coupling | ❌ | ✅ |
-| FEM Simulation | Basic | Advanced |
-| 3D Visualization | Basic | Advanced (Three.js) |
-| Real-time Data Streaming | ❌ | ✅ |
-| Custom Reactions | ❌ | ✅ |
-| Task Management System | ❌ | ✅ |
-| Comprehensive Test Suite | Partial | Complete |
-| API Documentation | Basic | Extensive |
-| Performance Optimization | Basic | Advanced |
-
 ## Documentation
 
 ### Essential Documentation
 
 - **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Initial setup guide
-- **[SECURITY.md](SECURITY.md)** - Security practices
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution workflow and code style
+- **[.github/BRANCHING.md](.github/BRANCHING.md)** - Branching model, release tagging, and hotfix flow
+- **[SECURITY.md](SECURITY.md)** - Security practices and vulnerability reporting
+- **[docs/releases/](docs/releases/)** - Release notes and merge instructions
 - **[REORGANIZATION_PLAN.md](archive/status-reports/REORGANIZATION_PLAN.md)** - Project reorganization details (archived)
 
-### Version-Specific Documentation
+### Application Documentation
 
-#### v2 Documentation (Recommended)
-- [v2 README](LENR_SIM_APP_v2/README.md) - Complete v2 guide
+- [Application README](LENR_SIM_APP_v2/README.md) - Complete guide
 - [Development Plan](LENR_SIM_APP_v2/DEV_PLAN.md) - Roadmap and status
 - [Changelog](CHANGELOG.md) - Current progress and version history
 - [Test Plan](LENR_SIM_APP_v2/TEST_PLAN.md) - Testing strategy
 - [API Documentation](LENR_SIM_APP_v2/docs/api/) - API reference
 - [Tutorials](LENR_SIM_APP_v2/docs/tutorials/) - Usage guides
-
-#### v1 Documentation (Legacy)
-- [v1 README](LENR_SIM_APP_v1/README.md) - v1 guide (archived)
 
 ## Architecture Overview
 
@@ -141,18 +119,6 @@ chmod +x start_app.sh  # First time only
 └─────────────────────────────────────────┘
 ```
 
-## Migration from v1 to v2
-
-If you're currently using v1 and want to upgrade:
-
-1. **Back up your v1 data and configuration**
-2. **Set up v2 following the [v2 README](LENR_SIM_APP_v2/README.md)**
-3. **Review the v2 API changes** in the API documentation
-4. **Update your simulation parameters** to use v2's enhanced models
-5. **Test thoroughly** before decommissioning v1
-
-Note: v1 configuration files are not directly compatible with v2. You'll need to manually transfer your settings.
-
 ## Requirements
 
 ### System Requirements
@@ -170,11 +136,11 @@ Note: v1 configuration files are not directly compatible with v2. You'll need to
 
 ### Contributing
 
-1. **Choose the right version**:
-   - All new development should target v2
-   - v1 accepts only critical bug fixes
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. In short:
 
-2. **Follow the development workflow**:
+1. **Branch from `main`** using a short-lived branch (`feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`); see [.github/BRANCHING.md](.github/BRANCHING.md).
+
+2. **Work inside `LENR_SIM_APP_v2/`**:
    ```bash
    cd LENR_SIM_APP_v2
    node scripts/dev.js list  # See available tasks
@@ -192,11 +158,11 @@ Note: v1 configuration files are not directly compatible with v2. You'll need to
    npm test
    ```
 
-4. **Submit a pull request** with clear description of changes
+4. **Submit a pull request to `main`** using the PR template; it is squash-merged once CI (including the science gates) is green.
 
 ### Development Tools
 
-v2 includes a comprehensive task management system:
+The application includes a comprehensive task management system:
 
 ```bash
 cd LENR_SIM_APP_v2
@@ -218,32 +184,23 @@ Licensed under **GNU GPL-3.0**. This project is freely available for anyone to u
 ### Getting Help
 
 1. **Check the documentation**:
-   - Start with [v2 README](LENR_SIM_APP_v2/README.md)
+   - Start with the [application README](LENR_SIM_APP_v2/README.md)
    - Review [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-   - Check [v2 docs](LENR_SIM_APP_v2/docs/)
+   - Check the [application docs](LENR_SIM_APP_v2/docs/)
 
 2. **Common Issues**:
-   - See troubleshooting section in [v2 README](LENR_SIM_APP_v2/README.md#troubleshooting)
+   - See the troubleshooting section in the [application README](LENR_SIM_APP_v2/README.md#troubleshooting)
 
 3. **Report Issues**:
-   - Open an issue on GitHub
+   - Open an issue on GitHub (for security vulnerabilities, follow [SECURITY.md](SECURITY.md) instead)
    - Include version number, OS, and error logs
 
 ## Project Status
 
-- **v2**: ✅ Active Development (55% complete)
-- **v1**: 🔒 Archived (Maintenance only)
-
-Current v2 development focus:
-- Completing 3D visualization components
-- Enhancing custom reaction support
-- Performance optimization
-- Documentation improvements
-
-For detailed status, see the [Changelog](CHANGELOG.md) and the v0.3.6-beta evidence pack under `LENR_SIM_APP_v2/docs/v0.3.6-beta/`
+- **Current release**: `v0.3.6-beta` (see [Changelog](CHANGELOG.md) and the evidence pack under `LENR_SIM_APP_v2/docs/v0.3.6-beta/`)
+- **Development branch**: `main` (trunk-based; releases are `v*` tags)
 
 ---
 
-**Recommended Version**: [LENR_SIM_APP_v2](LENR_SIM_APP_v2/)  
-**Last Updated**: November 2025  
-**Maintainers**: See CONTRIBUTORS.md in each version
+**Last Updated**: September 2026  
+**Maintainers**: See [CODEOWNERS](.github/CODEOWNERS)

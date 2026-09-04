@@ -42,12 +42,13 @@ Thumbs.db
 .idea/
 .vscode/*.log
 
-# ---- Env files (never commit secrets) ----
+# ---- Env files (never commit secrets; only *.example templates are tracked) ----
 backend/.env
 backend/.env.*
-frontend/.env.local
-frontend/.env.*.local
-!frontend/.env.development
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # ---- Logs / temp ----
 *.log
