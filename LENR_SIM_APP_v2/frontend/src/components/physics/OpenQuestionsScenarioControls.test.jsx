@@ -86,6 +86,24 @@ describe('OpenQuestionsScenarioControls', () => {
     expect(screen.getByTestId('wh-remainder-q3')).toHaveTextContent(/= 0\.9 at θ=0\.6, τ=1e-20 s, f_nuc=1e-6: crosses R_obs/);
   });
 
+  test('null R_obs (no excess-power ingest) never reads as 0 or as a crossing', () => {
+    const noPower = JSON.parse(JSON.stringify(WH));
+    noPower.q3.closure_demand.R_obs_per_m3_s = null;
+    noPower.q3.closure_demand.required_product = null;
+    noPower.q3.closure_demand.grid.log10_ratio = noPower.q3.closure_demand.grid.log10_ratio.map((a) =>
+      a.map((b) => b.map(() => null)),
+    );
+    render(
+      <OpenQuestionsScenarioControls q1={noPower.q1} q2={noPower.q2} q3={noPower.q3} dicke={noPower.dicke} />,
+    );
+    const q3 = screen.getByTestId('wh-remainder-q3');
+    expect(q3).toHaveTextContent(/= — at θ=0\.6/);
+    expect(q3).toHaveTextContent(/R_obs not supplied \(no excess-power ingest\)/);
+    expect(q3).toHaveTextContent(/required product not supplied/);
+    expect(q3).not.toHaveTextContent(/crosses R_obs/);
+    expect(lookupClosureCell(noPower.q3.closure_demand.grid, 0, 0, 0)).toBeNull();
+  });
+
   test('Franck–Condon S selection reads the matching log10 P_N', () => {
     renderControls();
     fireEvent.change(screen.getByLabelText('Huang–Rhys S'), { target: { value: '10000' } });
