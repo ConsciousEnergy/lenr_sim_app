@@ -43,7 +43,11 @@ from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
     DEFAULT_TRAP_SEPARATION_M,
     MAX_COLLECTIVE_FACTOR,
 )
-from app.physics_engine.working_hypothesis import compute_working_hypothesis
+from app.physics_engine.working_hypothesis import (
+    compute_working_hypothesis,
+    default_gamma_tun_by_geometry,
+    default_n_sites_per_m3,
+)
 
 HBAR = const.hbar
 E_CHARGE = const.e
@@ -420,12 +424,16 @@ def build_open_questions(
         loading_ratio=float(loading_ratio),
         fgr_params=fgr_params,
         g_coupling=float(phonon.get("naive_g") or DEFAULT_G_COUPLING),
+        n_sites_per_m3=default_n_sites_per_m3(float(loading_ratio)),
+        gamma_tun_by_geometry=default_gamma_tun_by_geometry(),
     )
     q_mev["working_hypothesis_id"] = working_hypothesis["id"]
     q_mev["lean_theorems"] = list(q_mev["lean_theorems"]) + [
         "EQ-WH-PART-01",
         "EQ-WH-STOP-01",
         "EQ-WH-NONCLOSE-01",
+        "EQ-WH-PART-02",
+        "EQ-WH-DICKE-N-01",
     ]
     q_rad["working_hypothesis_id"] = working_hypothesis["id"]
     q_rad["derived_bound"] = working_hypothesis["q2"]["derived_bound"]
@@ -433,12 +441,14 @@ def build_open_questions(
     q_rad["lean_theorems"] = list(q_rad["lean_theorems"]) + [
         "EQ-WH-BOUND-01",
         "EQ-WH-NONCLOSE-01",
+        "EQ-WH-FC-01",
     ]
     q_stat["working_hypothesis_id"] = working_hypothesis["id"]
     q_stat["R_obs_per_m3_s"] = working_hypothesis["q3"]["R_obs_per_m3_s"]
     q_stat["lean_theorems"] = list(q_stat["lean_theorems"]) + [
         "EQ-WH-FLOOR-01",
         "EQ-WH-NONCLOSE-01",
+        "EQ-WH-CAP-01",
     ]
     when["R_obs_per_m3_s"] = working_hypothesis["q3"]["R_obs_per_m3_s"]
     when["R_mode_per_m3_s"] = working_hypothesis["q3"]["R_mode_per_m3_s"]
