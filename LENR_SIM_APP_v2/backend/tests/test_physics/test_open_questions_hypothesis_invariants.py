@@ -140,3 +140,63 @@ def test_compute_working_hypothesis_direct() -> None:
     assert wh["q2_closed"] is False
     assert wh["q3_closed"] is False
     assert "EQ-WH-NONCLOSE-01" in wh["lean_theorems"]
+
+
+WH_V2_LEAN_IDS = ("EQ-WH-FC-01", "EQ-WH-PART-02", "EQ-WH-DICKE-N-01", "EQ-WH-CAP-01")
+
+
+def test_v2_blocks_present_and_nothing_closes() -> None:
+    block = build_open_questions(
+        route_mode="legacy_unified_model",
+        observations={"excess_power_W": 1.0},
+    )
+    wh = block["working_hypothesis"]
+    for lean_id in WH_V2_LEAN_IDS:
+        assert lean_id in wh["lean_theorems"]
+    assert wh["q2"]["franck_condon"]["meets_target"] is False
+    assert wh["q2"]["franck_condon"]["lean_theorems"] == ["EQ-WH-FC-01"]
+    assert wh["q1"]["open_remainder_mev"] == 23.8
+    assert wh["q1"]["coupling_scan"]["default_derived_mev"] == 0.0
+    assert wh["q1"]["coupling_scan"]["conservation_holds"] is True
+    assert wh["q1"]["coupling_scan"]["n_coh_cited_cap"] == wh["dicke"]["n_coh_licensed_max"] == 0
+    assert wh["dicke"]["n_within_radius"] < 1.0
+    assert "EQ-WH-DICKE-N-01" in wh["dicke"]["lean_theorems"]
+    closure = wh["q3"]["closure_demand"]
+    assert closure["kind"] == "scenario_table_not_posterior"
+    assert closure["two_body_untouched"] is True
+    assert closure["R_obs_per_m3_s"] == wh["q3"]["R_obs_per_m3_s"]
+    assert closure["required_product"] is not None
+    assert closure["engine_cap"]["fcc_tetrahedral"]["crosses"] is False
+    assert closure["engine_cap"]["trap_25pm"]["crosses"] is False
+    assert closure["n_sites_convention"].startswith("reaction_rate_engine")
+    assert wh["lenr_proved"] is False
+    assert wh["discharges_eq_open"] is False
+    assert wh["status"] == "OPEN"
+    assert wh["q1"]["status"] == "OPEN"
+    assert wh["q2"]["status"] == "OPEN"
+    assert wh["q3"]["status"] == "OPEN"
+    assert block["lenr_proved"] is False
+    assert block["q_mev_gap"]["energy_partition_mev"]["open_remainder"] == 23.8
+    assert block["q_statistical"]["n_events_log10_two_body"] == -40.0
+    assert block["q_statistical"]["two_body_reference"] == {}
+
+
+def test_v2_lean_ids_propagate_to_open_question_blocks() -> None:
+    block = build_open_questions(route_mode="legacy_unified_model")
+    assert "EQ-WH-PART-02" in block["q_mev_gap"]["lean_theorems"]
+    assert "EQ-WH-DICKE-N-01" in block["q_mev_gap"]["lean_theorems"]
+    assert "EQ-WH-FC-01" in block["q_radiation"]["lean_theorems"]
+    assert "EQ-WH-CAP-01" in block["q_statistical"]["lean_theorems"]
+    assert block["schema"] == "lenr-open-questions-v1"
+    assert block["q_mev_gap"]["status"] == "OPEN"
+    assert block["q_radiation"]["status"] == "OPEN"
+
+
+def test_v2_closure_demand_without_power_stays_null_not_closed() -> None:
+    block = build_open_questions(route_mode="legacy_unified_model")
+    closure = block["working_hypothesis"]["q3"]["closure_demand"]
+    assert closure["R_obs_per_m3_s"] is None
+    assert closure["required_product"] is None
+    assert closure["engine_cap"]["trap_25pm"]["crosses"] is None
+    assert block["working_hypothesis"]["q3_closed"] is False
+    assert block["working_hypothesis"]["q2"]["franck_condon"]["meets_target"] is False

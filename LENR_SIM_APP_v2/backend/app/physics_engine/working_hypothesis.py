@@ -15,7 +15,18 @@ from app.physics_engine.constants import (
     SCHWINGER_CRITICAL_FIELD_V_M,
 )
 from app.physics_engine.many_body.branching_model import LATTICE_GAMMA_TARGET
-from app.physics_engine.many_body.fgr_model import bernoulli_p4
+from app.physics_engine.many_body.fgr_model import (
+    GeometryMode,
+    bernoulli_p4,
+    trap_separation_m,
+)
+from app.physics_engine.many_body.wh_bounds import (
+    PD_D_NUMBER_DENSITY_M3,
+    closure_demand,
+    coupling_scan,
+    dicke_count,
+    franck_condon_tail,
+)
 
 HBAR = const.hbar
 H_PLANCK = const.h
@@ -157,6 +168,40 @@ def heisenberg_euler_lab_factor(e_field_v_m: float = LAB_FIELD_V_M) -> float:
     return 1.0 + QED_VACUUM_COEFFICIENT * (float(e_field_v_m) / SCHWINGER_CRITICAL_FIELD_V_M) ** 2
 
 
+def default_gamma_tun_by_geometry() -> Dict[str, float]:
+    """Gamow WKB penetration per rival trap geometry (engine helper, D+D in Pd)."""
+    from app.physics_engine.unified_lenr_model.config import SimulationConfig
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        _gamow_penetration,
+    )
+
+    config = SimulationConfig()
+    return {
+        geometry.value: _gamow_penetration(config, trap_separation_m(geometry))
+        for geometry in GeometryMode
+    }
+
+
+def default_n_sites_per_m3(loading_ratio: float) -> float:
+    """Engine-convention site density: 0.5 * _reactant_number_density(config).
+
+    Mirrors ``compute_trapped_state_rate`` exactly (host density =
+    electron_density / Z, times loading) so the EQ-WH-CAP-01 ceiling bounds the
+    rate the engine can actually emit. This is ~46x below 0.5 * n_D with the
+    physical Pd atom density (6.8e28 m^-3) used by the Dicke count; the
+    difference is recorded in the closure_demand provenance, not hidden.
+    """
+    from app.physics_engine.unified_lenr_model.config import SimulationConfig
+    from app.physics_engine.unified_lenr_model.reaction_rate_engine import (
+        _reactant_number_density,
+    )
+
+    loading = max(0.0, min(float(loading_ratio), 1.0))
+    config = SimulationConfig()
+    config.loading_ratio = loading
+    return 0.5 * _reactant_number_density(config)
+
+
 def compute_working_hypothesis(
     *,
     phonon_energy_mev: float,
@@ -172,6 +217,8 @@ def compute_working_hypothesis(
     fgr_params: Optional[Mapping[str, Any]] = None,
     g_coupling: float = 1e-4,
     phonon_hz: float = PHONON_HZ,
+    n_sites_per_m3: Optional[float] = None,
+    gamma_tun_by_geometry: Optional[Mapping[str, float]] = None,
 ) -> Dict[str, Any]:
     """Assemble the coupled WH-ENP-01 ledger shared by Q1–Q3."""
     fgr = dict(fgr_params or {})
@@ -187,6 +234,22 @@ def compute_working_hypothesis(
         r_obs = float(excess_power_w) / (q_j * vol)
     r_mode = float(rate_per_m3_s)
     threshold = None if r_obs is None else r_mode >= r_obs
+    dicke_n = dicke_count(dicke_radius_m=dicke_r)
+    franck_condon = franck_condon_tail(q_mev=Q_DD_HE4_MEV, phonon_hz=phonon_hz)
+    scan = coupling_scan(
+        q_mev=Q_DD_HE4_MEV,
+        g_cited=g_coupling,
+        n_coh_cited_cap=int(dicke_n["n_coh_licensed_max"]),
+    )
+    closure = closure_demand(
+        r_obs_per_m3_s=r_obs,
+        n_sites_per_m3=(
+            float(n_sites_per_m3)
+            if n_sites_per_m3 is not None
+            else default_n_sites_per_m3(loading_ratio)
+        ),
+        gamma_tun_by_geometry=dict(gamma_tun_by_geometry or default_gamma_tun_by_geometry()),
+    )
     derived_sum = (
         float(phonon_energy_mev) + float(gamma_energy_mev) + float(recoil_energy_mev)
     )
@@ -255,11 +318,13 @@ def compute_working_hypothesis(
                 "lean_theorems": ["EQ-WH-STOP-01", "EQ-TSC-STOP-01"],
                 "provenance": "model assumption (range magnitude)",
             },
+            "coupling_scan": scan,
             "status": "OPEN",
         },
         "q2": {
             "derived_bound": bound,
             "neutron_moderation": neutron_moderation_lengths_m(),
+            "franck_condon": franck_condon,
             "status": "OPEN",
         },
         "q3": {
@@ -272,6 +337,7 @@ def compute_working_hypothesis(
             "P_occ_provenance": p_occ_kind,
             "f_nuc": fgr.get("f_nuc"),
             "C_lin": fgr.get("C_lin"),
+            "closure_demand": closure,
             "status": "OPEN" if not q3_two_body_closed else "BUDGET_DOES_NOT_CLOSE",
         },
         "dicke": {
@@ -279,8 +345,13 @@ def compute_working_hypothesis(
             "dicke_radius_m": dicke_r,
             "paper_domain_m": domain,
             "n2_licensed": bool(dicke_licensed),
+            "n_d_per_m3": dicke_n["n_d_per_m3"],
+            "dicke_volume_m3": dicke_n["dicke_volume_m3"],
+            "n_within_radius": dicke_n["n_within_radius"],
+            "n_coh_licensed_max": dicke_n["n_coh_licensed_max"],
+            "n_d_provenance": dicke_n["n_d_provenance"],
             "engine_collective": "linear_min_N_1e6",
-            "lean_theorems": ["EQ-WH-DICKE-01", "EQ-COLL-LIN-01"],
+            "lean_theorems": ["EQ-WH-DICKE-01", "EQ-COLL-LIN-01", "EQ-WH-DICKE-N-01"],
             "note": "N² is not the engine rate law; domain > λ/(2π) does not license Dicke N².",
         },
         "schwinger_he": {
@@ -305,6 +376,10 @@ def compute_working_hypothesis(
             "EQ-WH-DICKE-01",
             "EQ-WH-STOP-01",
             "EQ-WH-NONCLOSE-01",
+            "EQ-WH-FC-01",
+            "EQ-WH-PART-02",
+            "EQ-WH-DICKE-N-01",
+            "EQ-WH-CAP-01",
         ],
         "q1_closed": q1_closed,
         "q2_closed": q2_closed,
