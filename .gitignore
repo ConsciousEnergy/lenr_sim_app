@@ -12,8 +12,13 @@ node_modules/
 # Accidental nested checkout / junk under the real frontend install root
 LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/
 
-# Environment variables
+# Environment variables (only *.example templates are tracked)
 .env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
 
 # Editor directories and files
 .idea
@@ -47,6 +52,7 @@ setup.py
 # Distribution / packaging
 dist/
 build/
+*.tsbuildinfo
 
 # Testing
 .coverage

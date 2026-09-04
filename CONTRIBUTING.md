@@ -1,9 +1,10 @@
 # Contributing to LENR Simulation App
 
-Thank you for considering a contribution. The canonical application for
-**v0.3.6-beta** lives under [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/). Prefer that
-tree for all new work; `LENR_SIM_APP_v1/` and the root `backend/` / `frontend/`
-mirrors are legacy.
+Thank you for considering a contribution. The application lives under
+[`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/); all work happens in that tree. (The
+legacy `LENR_SIM_APP_v1/` tree and root `backend/` / `frontend/` mirrors were
+removed from the working tree; they remain in history at the
+`archive/pre-legacy-removal` tag.)
 
 ## License
 
@@ -47,15 +48,21 @@ See `LENR_SIM_APP_v2/docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md` and
 
 ## Development workflow
 
-1. Create a feature branch from `lenr_sim_app_v0.3.6-beta` (or the current release
-   branch).
+The repository is trunk-based: `main` is the only long-lived branch and
+releases are `v*` tags. See [`.github/BRANCHING.md`](.github/BRANCHING.md) for
+the full model, naming rules, and the hotfix flow.
+
+1. Create a short-lived branch from `main`: `feat/<topic>`, `fix/<topic>`,
+   `chore/<topic>`, or `docs/<topic>`.
 2. Keep changes focused; do not mix unrelated refactors.
 3. Add or update tests for behaviour you change.
 4. Before opening a PR, run the [release quality gate](.cursor/skills/release-quality-gate/SKILL.md)
    slice that applies (at minimum: relevant pytest, frontend lint/test/build,
    and `npm audit --audit-level=high` / `pip-audit` when touching deps).
 5. Update [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
-6. Open a PR using [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
+6. Open a PR against `main` using [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
+   PRs are squash-merged once CI is green and reviewed; the head branch is
+   deleted automatically on merge.
 
 ## Code style
 
