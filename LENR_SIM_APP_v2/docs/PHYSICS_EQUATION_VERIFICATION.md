@@ -1046,6 +1046,43 @@ R_dicke = λ/(2π) ≈ 49 pm; paper domain 6.6 nm > R_dicke ⇒ N² not licensed
 **Status:** APPROXIMATION (sound-speed model assumption; inequality is exact given inputs)
 **Code:** `dicke_radius_m()`; Lean `dickeN2Licensed 6600 48 = false`
 
+### 12.9 Franck-Condon multi-phonon tail (EQ-WH-FC-01)
+```
+hf = h × 10^13 Hz = 41.36 meV (CODATA h); N = Q/(hf) = 23.8 MeV / 41.36 meV ≈ 5.755e8
+log10 P_N = [N ln S − S − lgamma(N+1)] / ln 10   (Poisson / Huang-Rhys, displaced oscillator)
+S = 1 ⇒ −4.79e9; 10 ⇒ −4.22e9; 100 ⇒ −3.64e9; 1e3 ⇒ −3.06e9; 1e4 ⇒ −2.49e9   (target −11 not met)
+S_min for log10 P_N = −11: ≈ 5.7535e8 ≈ 0.9998 N ⇒ S_min·hf ≈ 23.79 MeV ≈ Q
+step ratio t_{N+1}/t_N = S/(N+1) < 1 for N ≥ S ⇒ strictly decreasing tail
+```
+**Status:** ✅ VERIFIED (hf, N, log10 P_N, S_min from CODATA + `math.lgamma`); ⚠️ APPROXIMATION (linear coupling / displaced oscillator is a model assumption; anharmonic, Umklapp, lossy spin-boson boosts are AX hypotheses, not inserted)
+**Code:** `franck_condon_tail()` (`many_body/wh_bounds.py`), `FC_TARGET_LOG10 = -11.0`; Lean `phononOrderN = 575000000`, `log10PN_upper_milli = -700000000` (conservative integer cap, valid for every N ≥ 5.75e5 and S ≤ 1e4), `fc_tail_far_below_target`, `fc_ratio_does_not_close_q2`
+**Independent:** WolframAlpha MCP unavailable; verified with `scipy.constants` (h, e) + `math.lgamma`. Does not close EQ-OPEN-RAD-01 / EQ-OPEN-MEV-01.
+
+### 12.10 Dicke count inside the cooperation sphere (EQ-WH-DICKE-N-01)
+```
+R_dicke = λ/(2π) = (3070 m/s / 1e13 Hz)/(2π) ≈ 48.86 pm
+V_dicke = 4/3 π R_dicke^3 ≈ 4.886e-31 m^3
+n_D = 6.8e28 m^-3 (PdD x≈1) ⇒ n_D V_dicke ≈ 0.0332 < 1 ⇒ N_coh^max = floor(0.0332) = 0
+```
+**Status:** ✅ VERIFIED (volume and count arithmetic); ⚠️ APPROXIMATION (v_s = 3070 m/s and n_D = 6.8e28 m^-3 are model assumptions; f = 10^13 Hz is the paper's phonon scale)
+**Code:** `dicke_count()` (`many_body/wh_bounds.py`), `PD_D_NUMBER_DENSITY_M3 = 6.8e28`; Lean `nWithinRadiusMilli = 33`, `n_coh_licensed_max_zero`, `dicke_n2_not_licensed_for_pairs` (¬(n ≤ 0) for n ≥ 2)
+**Independent:** WolframAlpha MCP unavailable; verified with `scipy.constants` + `math.pi`. Complements §12.8: the domain test and the counting test both deny Dicke N²; engine collective stays linear min(N, 1e6) (EQ-COLL-LIN-01).
+
+### 12.11 Q3 closure demand vs engine cap (EQ-WH-CAP-01)
+```
+R_obs = P/(Q V) = 1 W / (23.8 MeV × 1.602e-13 J/MeV × 1e-6 m^3) ≈ 2.62e17 m^-3 s^-1
+n_sites = 0.5 × (n_e/Z) × loading = 0.5 × (6.8e28/46) × 0.9 ≈ 6.65e26 m^-3   (engine convention)
+Γ_tun(trap 25 pm) ≈ 6.8e-37;  Γ_tun(FCC tetrahedral 137.5 pm) ≈ 1.4e-85
+required P_occ f_nuc C_lin / τ = R_obs / (n_sites Γ_tun) ≈ 5.78e26 s^-1
+engine cap product = 1 × 1 × 1e6 / 1e-20 s = 1e26 s^-1  <  5.78e26 ⇒ demand unmet
+R_max(trap 25 pm) = n_sites Γ_tun × 1e26 ≈ 4.5e16 m^-3 s^-1  (factor ≈ 5.8 short, does not cross)
+R_max(fcc tetrahedral) ≈ 1e-32 m^-3 s^-1                     (≈ 49 decades short)
+scenario grid (θ, τ, f_nuc; C_lin = 1): max log10(R_mode/R_obs) = −7.4
+```
+**Status:** ✅ VERIFIED (R_obs, required product, cap comparison, R_max from CODATA constants); ⚠️ APPROXIMATION (25 pm trap, τ = 1e-20 s, f_nuc, P_occ are model assumptions; n_sites follows the engine's `_reactant_number_density` convention and is ≈ 46× below 0.5 n_D at the physical Pd atom density used in §12.10 — recorded in `closure_demand.n_sites_convention`, not hidden)
+**Code:** `closure_demand()` (`many_body/wh_bounds_q3.py`); caps from `reaction_rate_engine` (`P_occ ≤ 1`, `f_nuc ≤ 1`, `C_lin ≤ 1e6`, `τ ≥ 1e-20 s`); Lean `engine_cap_bound`, `engine_cap_excludes_demand`, `would_close_if_within_cap`
+**Independent:** WolframAlpha MCP unavailable; verified with `scipy.constants` (e, m_p, ħ). The grid is a scenario table, not a posterior; `two_body` baseline (log10 N = −40, §12.2) untouched. Does not close EQ-OPEN-RATE-01.
+
 ---
 
 ## 11. Recommendations

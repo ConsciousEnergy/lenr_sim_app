@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lean `LenrFormal.WorkingHypothesis` identities and non-closure (`EQ-WH-*`); `EQ-OPEN-MEV-01` / `RAD-01` / `RATE-01` stay OPEN; `lenr_proved` stays false
 - Virtual lab panel: channel graph, Dicke-radius license, HE negative control, n-moderation lengths; paper §5A names WH-ENP-01
 
+### WH-ENP-01 v2 derived bounds (2026-09-04)
+- Physics (additive under `working_hypothesis`, same `contract_version`): `q2.franck_condon` displaced-oscillator Poisson tail (\(N=Q/hf\approx5.75\times10^{8}\) at 10 THz; \(\log_{10}P_N\approx-2.5\times10^{9}\) at \(S=10^{4}\); \(S_{\min}\approx0.9998\,N\), relaxation energy \(\approx Q\)); `q1.coupling_scan` conservation-constrained rows (cited remainder stays \(23.8\,\mathrm{MeV}\)); `dicke.n_within_radius` \(\approx0.033<1\Rightarrow n_{\mathrm{coh}}^{\max}=0\); `q3.closure_demand` (\(R_{\mathrm{obs}}\approx2.6\times10^{17}\,\mathrm{m^{-3}s^{-1}}\) for 1 W/cm³ needs \(5.8\times10^{26}\,\mathrm{s^{-1}}\) vs engine cap product \(10^{26}\,\mathrm{s^{-1}}\); 25 pm trap \(\approx5.8\times\) short, FCC tetrahedral \(\approx49\) decades short; scenario grid, not a posterior). Linear coupling, \(v_s\), \(n_D\) and the engine `n_sites` convention are labelled model assumptions; `two_body` baseline untouched
+- Lean `LenrFormal.WorkingHypothesisBounds`: `EQ-WH-FC-01`, `EQ-WH-PART-02`, `EQ-WH-DICKE-N-01`, `EQ-WH-CAP-01`, `EQ-WH-NONCLOSE-02` (\(\neg Q_1\wedge\neg Q_2\wedge\neg Q_3\)); IR YAMLs, `CLAIM_TAXONOMY.md` and `FORMAL_PROOF_STATUS.md` rows
+- UI: lazy `TscClusterScene.jsx` (react-three-fiber, WebGL fallback, reduced-motion), `OpenQuestionsScenarioControls.jsx` lookup-only explorer over server grids, `ChannelDag.jsx` inline SVG, Franck–Condon chart in `OpenQuestionsCharts.jsx`
+- Tests: Playwright `tests/e2e/open-questions-lab.spec.js`, Vitest specs per component, shared fixture `tests/fixtures/open_questions_wh_v2.json`; backend contract test rows for the new blocks
+- CI: `lake build` followed by a no-`sorry` grep gate over `formalization/lean/LenrFormal`
+- Docs: paper §5A / §6.1, `PHYSICS_EQUATION_VERIFICATION.md` §12.9–12.11 (WolframAlpha MCP unavailable; `scipy.constants` + `math.lgamma`), `OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md`, `MEV_GAP_HYPOTHESIS.md`
+- `lenr_proved` remains false; `EQ-OPEN-MEV-01` / `RAD-01` / `RATE-01` stay OPEN; no question is closed
+
 ### Public beta VPS cutover (2026-09-02)
 - Same-origin stack on the Hostinger VPS: Caddy TLS + nginx SPA + FastAPI + Postgres Compose (`infrastructure/vps/`). Intended public URL `https://lenr-simp-app.conscious.energy`; WordPress.com apex/`www` untouched
 - Backend: single uvicorn worker (`LENR_WORKERS=1`), heavy-compute semaphore (`LENR_MAX_CONCURRENT_HEAVY_SIMS=2`) returning 503 + `Retry-After`, multi-physics grid/step caps, WebSocket `duration_steps` cap, `/simulate` and `/bubble-lattice` run in the threadpool. Root `/` no longer advertises OpenAPI in production
