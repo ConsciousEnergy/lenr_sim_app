@@ -1,0 +1,184 @@
+{
+  "schema": "lenr-open-questions-v1",
+  "route_mode": "legacy_unified_model",
+  "rate_mode": "two_body",
+  "lenr_proved": false,
+  "occurrence": { "anchored": false, "emp_gates": [] },
+  "when": {
+    "threshold_crossed": null,
+    "two_body_reference_log10_n": -40,
+    "active_mode_log10_n": -40,
+    "R_obs_per_m3_s": 2.62e17,
+    "R_mode_per_m3_s": 1e-30
+  },
+  "how": {
+    "mechanism_paths": [
+      { "id": "trapped_state", "posterior": 0.1, "lean_ids": ["EQ-NBODY-FGR-01"] },
+      { "id": "phonon_cascade", "posterior": 0.0, "lean_ids": [] },
+      { "id": "three_body", "posterior": 0.05, "lean_ids": [] }
+    ],
+    "active_rate_mode": "two_body",
+    "fgr_parameters": { "P_occ": null, "Gamma_tun": 1e-20 }
+  },
+  "determination": {
+    "status": "RATE_BUDGET_DOES_NOT_CLOSE",
+    "oracle_a": { "two_body_budget_closes": false, "lean_theorems": ["EQ-RATE-2B-NC-01"] },
+    "oracle_b": {
+      "priors_source": "default_skeptical",
+      "hypotheses": [
+        { "id": "chemical_null", "posterior": 0.35, "log10_bayes_vs_two_body": 0 },
+        { "id": "two_body", "posterior": 0.5, "log10_bayes_vs_two_body": 0 },
+        { "id": "trapped_state", "posterior": 0.1, "log10_bayes_vs_two_body": 1.2 },
+        { "id": "phonon_cascade", "posterior": 0.0, "log10_bayes_vs_two_body": -1 },
+        { "id": "three_body", "posterior": 0.05, "log10_bayes_vs_two_body": 0.5 }
+      ]
+    },
+    "next_measurement": [{ "observable": "he4", "rank": 1, "rationale": "Miles EMP" }]
+  },
+  "q_mev_gap": {
+    "id": "EQ-OPEN-MEV-01",
+    "status": "OPEN",
+    "claim_tier": "speculative_exploratory",
+    "working_hypothesis_id": "WH-ENP-01",
+    "energy_partition_mev": { "phonon": 0, "gamma": 0, "recoil": 0, "open_remainder": 23.8, "q_total": 23.8 }
+  },
+  "q_radiation": {
+    "id": "EQ-OPEN-RAD-01",
+    "status": "OPEN",
+    "detector_ul_log10": -8,
+    "branching_is_scenario_input": true
+  },
+  "q_statistical": { "id": "EQ-OPEN-RATE-01", "status": "BUDGET_DOES_NOT_CLOSE", "n_events_log10_two_body": -40 },
+  "q_electron_capture": {
+    "id": "EQ-OPEN-EC-01",
+    "status": "OPEN",
+    "claim_tier": "speculative_exploratory",
+    "dimmed": true,
+    "electron_capture_threshold_mev": 0.782,
+    "mass_renormalization_input_mstar_over_me": 4,
+    "mass_renormalization_threshold_mstar_over_me": 2.531,
+    "mass_renormalization_threshold_met": true,
+    "energy_deficit_mev": 0,
+    "occurrence_claimed": false,
+    "unmet_reason": "Meeting the speculative mass gate is necessary, not sufficient."
+  },
+  "q_integrated_yield": {
+    "id": "EQ-OPEN-YIELD-01",
+    "status": "OPEN",
+    "claim_tier": "empirical_lenr_correlation",
+    "dimmed": true,
+    "expected_he4_rate_per_s": 2.62e11,
+    "duty_adjusted_expected_he4_rate_per_s": 1.31e11,
+    "expected_integrated_he4_yield_atoms": 2.62e12,
+    "observed_integrated_he4_yield_atoms": null,
+    "observed_integrated_yield_note": "No observed integrated yield was supplied.",
+    "reported_integrated_yield_discrepancy": { "factor_band": [100, 10000] },
+    "retention_time_resolved_caveat": "Retention and simultaneous time-resolved accounting remain required.",
+    "occurrence_claimed": false
+  },
+  "composition": { "not_combinable": true, "illegal_product": 1e10, "tsc_enhancement_can_scale_two_body": true },
+  "emp_chips": [{ "id": "miles_q_band", "label": "Miles 24±4 MeV/He EMP" }],
+  "working_hypothesis": {
+    "id": "WH-ENP-01",
+    "status": "OPEN",
+    "lenr_proved": false,
+    "discharges_eq_open": false,
+    "claim_tier": "speculative_exploratory",
+    "statement": "Coupled Hagelstein/TSC ledger; remainders OPEN.",
+    "geometry": "fcc_tetrahedral",
+    "occupation_model": "bernoulli_p4_model_assumption",
+    "P_occ": 0.164,
+    "lean_theorems": [
+      "EQ-WH-ENP-01", "EQ-WH-PART-01", "EQ-WH-BOUND-01", "EQ-WH-FLOOR-01",
+      "EQ-WH-DICKE-01", "EQ-WH-STOP-01", "EQ-WH-NONCLOSE-01",
+      "EQ-WH-FC-01", "EQ-WH-PART-02", "EQ-WH-DICKE-N-01", "EQ-WH-CAP-01"
+    ],
+    "dicke": {
+      "phonon_wavelength_m": 3.07e-10,
+      "dicke_radius_m": 4.886e-11,
+      "paper_domain_m": 6.6e-9,
+      "n2_licensed": false,
+      "n_d_per_m3": 6.8e28,
+      "dicke_volume_m3": 4.886e-31,
+      "n_within_radius": 0.0332,
+      "n_coh_licensed_max": 0,
+      "engine_collective": "linear_min_N_1e6",
+      "lean_theorems": ["EQ-WH-DICKE-01", "EQ-COLL-LIN-01", "EQ-WH-DICKE-N-01"]
+    },
+    "schwinger_he": { "lab_field_v_m": 1e14, "he_factor": 1.0000000000005895, "closes_q1": false, "closes_q2": false },
+    "q1": {
+      "open_remainder_mev": 23.8,
+      "derived_mev": 0,
+      "q_total_mev": 23.8,
+      "status": "OPEN",
+      "alpha_stopping": { "csda_range_pd_m": 4e-5, "ke_per_alpha_mev": 23.8, "q_4d_mev": 47.6, "n_alphas": 2, "counted_in_derived_mev": false },
+      "coupling_scan": {
+        "default_derived_mev": 0,
+        "model": "first_order_fraction_n_coh_g_squared",
+        "n_coh_cited_cap": 0,
+        "rows": [
+          { "g": 1e-4, "n_coh": 0, "derived_mev": 0, "remainder_mev": 23.8, "kind": "cited" },
+          { "g": 1e-4, "n_coh": 1, "derived_mev": 2.38e-7, "remainder_mev": 23.7999998, "kind": "scenario" },
+          { "g": 1e-2, "n_coh": 100, "derived_mev": 0.238, "remainder_mev": 23.562, "kind": "scenario" },
+          { "g": 0.1, "n_coh": 100, "derived_mev": 23.8, "remainder_mev": 0, "kind": "scenario" }
+        ],
+        "conservation_holds": true,
+        "lean_theorems": ["EQ-WH-PART-02"]
+      }
+    },
+    "q2": {
+      "status": "OPEN",
+      "derived_bound": { "derived_gamma_ph_over_gamma_gamma": 0, "lattice_gamma_target": 1e11, "meets_target": false, "branching_is_scenario_input": true },
+      "neutron_moderation": { "media": { "liquid_d2o": { "label": "liquid", "length_m": 0.06 }, "solid_pdh": { "label": "solid", "length_m": 0.08 } } },
+      "franck_condon": {
+        "model": "displaced_oscillator_linear_coupling",
+        "phonon_order_N": 575000,
+        "s_grid": [1, 10, 100, 1000, 10000],
+        "log10_p_n": [-3560000, -2990000, -2410000, -1840000, -760000],
+        "s_min_for_target": 569600,
+        "target_log10": -11,
+        "meets_target": false,
+        "claim_tier": "speculative_exploratory",
+        "provenance": "model assumption (linear coupling; Stirling)",
+        "lean_theorems": ["EQ-WH-FC-01"]
+      }
+    },
+    "q3": {
+      "status": "OPEN",
+      "R_obs_per_m3_s": 2.62e17,
+      "R_mode_per_m3_s": 1e-30,
+      "threshold_crossed": false,
+      "two_body_log10_n_events": -40,
+      "two_body_closes": false,
+      "closure_demand": {
+        "R_obs_per_m3_s": 2.62e17,
+        "required_product": 8.7e-4,
+        "grid": {
+          "theta": [0.6, 0.9, 1.0],
+          "tau_s": [1e-20, 1e-16, 1e-12],
+          "f_nuc": [1e-4, 1],
+          "log10_ratio": [
+            [[-3.1, 0.9], [-7.1, -3.1], [-11.1, -7.1]],
+            [[-2.4, 1.6], [-6.4, -2.4], [-10.4, -6.4]],
+            [[-2.2, 1.8], [-6.2, -2.2], [-10.2, -6.2]]
+          ]
+        },
+        "engine_cap": {
+          "fcc_tetrahedral": { "gamma_tun": 1e-60, "r_max_per_m3_s": 3e-6, "crosses": false },
+          "trap_25pm": { "gamma_tun": 1e-4, "r_max_per_m3_s": 3e50, "crosses": true }
+        },
+        "caps": { "P_occ": 1, "f_nuc": 1, "C_lin": 1e6, "tau_s": 1e-20 },
+        "two_body_untouched": true,
+        "kind": "scenario_table_not_posterior",
+        "lean_theorems": ["EQ-WH-CAP-01"]
+      }
+    },
+    "channels": [
+      { "id": "dd_he4_phonons", "q_mev": 23.8, "primary_gamma_required": "open", "weight_kind": "assumed" },
+      { "id": "tsc_4d_2alpha", "q_mev": 47.6, "primary_gamma_required": false, "weight_kind": "kinematics_only" },
+      { "id": "dd_t_p", "q_mev": 4.03, "primary_gamma_required": false, "weight_kind": "conventional_branch" },
+      { "id": "dd_n_he3", "q_mev": 3.27, "primary_gamma_required": false, "weight_kind": "conventional_branch" }
+    ],
+    "remainder_vector": { "q1_open_remainder_mev": 23.8, "q2_log10_ratio_minus_11": null, "q3_log10_n_two_body": -40 }
+  }
+}
