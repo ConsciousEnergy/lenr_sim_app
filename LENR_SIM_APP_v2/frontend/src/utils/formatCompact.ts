@@ -6,6 +6,8 @@
  * expand to eighteen digits.
  */
 export function formatCompact(value: unknown): string {
+  // null/undefined/'' must read as "not supplied", never as 0.
+  if (value == null || value === '') return '—';
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return '—';
   const magnitude = Math.abs(numeric);

@@ -24,12 +24,13 @@ function ClosureDemandRow({ demand }) {
   const caps = Object.entries(demand.engine_cap || {});
   return (
     <Typography variant="caption" display="block" color="text.secondary" data-testid="wh-closure-demand-row">
-      Closure demand (scenario table, not a posterior): required product {fmt(demand.required_product)}
+      Closure demand (scenario table, not a posterior): required product{' '}
+      {demand.required_product == null ? 'not supplied (no excess-power ingest)' : fmt(demand.required_product)}
       {demand.R_obs_per_m3_s != null ? ` for R_obs ${fmt(demand.R_obs_per_m3_s)} m⁻³ s⁻¹` : ''}
       {caps.map(([geometry, cap]) => (
         <span key={geometry}>
           {' · '}{geometry}: Γ_tun {fmt(cap.gamma_tun)}, R_max {fmt(cap.r_max_per_m3_s)}, crosses R_obs{' '}
-          {cap.crosses ? 'yes' : 'no'}
+          {cap.crosses == null ? 'n/a' : cap.crosses ? 'yes' : 'no'}
         </span>
       ))}
       {' · two-body untouched; EQ-OPEN-RATE-01 remains OPEN'}

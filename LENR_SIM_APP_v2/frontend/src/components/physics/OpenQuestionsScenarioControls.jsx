@@ -47,6 +47,7 @@ export function lookupCouplingRow(rows, g, nCoh) {
 
 export function lookupClosureCell(grid, thetaIdx, tauIdx, fIdx) {
   const value = grid?.log10_ratio?.[thetaIdx]?.[tauIdx]?.[fIdx];
+  if (value == null) return null;
   return Number.isFinite(Number(value)) ? Number(value) : null;
 }
 
@@ -186,8 +187,8 @@ export default function OpenQuestionsScenarioControls({ q1, q2, q3, dicke }) {
           <Typography variant="body2" data-testid="wh-remainder-q3">
             Q3 log10(R_mode/R_obs) = {fmt(cell)} at θ={fmt(thetaOptions[thetaIdx])},
             {' '}τ={fmt(tauOptions[tauIdx])} s, f_nuc={fmt(fOptions[fIdx])}:
-            {' '}{cell == null ? 'cell not supplied' : crosses ? 'crosses R_obs' : 'below R_obs'}
-            {' '}· required product {fmt(demand?.required_product)}
+            {' '}{cell == null ? 'R_obs not supplied (no excess-power ingest)' : crosses ? 'crosses R_obs' : 'below R_obs'}
+            {' '}· required product {demand?.required_product == null ? 'not supplied' : fmt(demand.required_product)}
             {demand?.R_obs_per_m3_s != null ? ` · R_obs ${fmt(demand.R_obs_per_m3_s)} m⁻³ s⁻¹` : ''}
           </Typography>
         )}
