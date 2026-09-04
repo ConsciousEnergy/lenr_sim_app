@@ -1,5 +1,7 @@
 ## Description
 
+<!-- Target branch is `main` (trunk-based; see .github/BRANCHING.md). PRs are squash-merged. -->
+
 <!-- Brief summary of changes and motivation -->
 
 ## Type of Change
@@ -13,13 +15,13 @@
 ## Pre-Merge Checklist
 
 ### Backend
-- [ ] All backend tests passing: `cd backend && python -m pytest tests/ app/tests/ -v -o addopts="" --tb=short`
+- [ ] All backend tests passing: `cd LENR_SIM_APP_v2/backend && python -m pytest tests/ app/tests/ -v -o addopts="" --tb=short`
 - [ ] No placeholder endpoints exposed in production
 - [ ] Physics calculations return physically reasonable results
 - [ ] No new linting errors introduced
 
 ### Frontend
-- [ ] Frontend builds without errors: `cd frontend && npm ci && npm run build`
+- [ ] Frontend builds without errors: `cd LENR_SIM_APP_v2/frontend && npm ci && npm run build`
 - [ ] No console errors in browser dev tools
 - [ ] Dev/debug routes gated behind `IS_PRODUCTION` check
 - [ ] All pages show loading/error states (no blank screens)
@@ -32,7 +34,7 @@
 
 ### Documentation
 - [ ] CHANGELOG.md updated with all notable changes
-- [ ] Version strings consistent across `config.py`, `package.json`, `version.js`, `docker-compose.yml`
+- [ ] Version strings consistent across `config.py`, `package.json`, `version.js`, `Dockerfile.backend` (CI `version-consistency` enforces this)
 - [ ] Deployment docs reference correct version and workflow filenames
 
 ### Deployment

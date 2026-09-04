@@ -1,0 +1,26 @@
+# Code owners are requested for review automatically on every PR that touches
+# the matching paths (once "Require review from Code Owners" is enabled in the
+# main branch ruleset). Later rules override earlier ones.
+# Docs: https://docs.github.com/articles/about-code-owners
+
+# Default owner for everything.
+*                                                   @ConsciousEnergy
+
+# Physics engine, theory modules, and the release-blocking science gates.
+/LENR_SIM_APP_v2/backend/app/physics_engine/        @ConsciousEnergy
+/LENR_SIM_APP_v2/backend/app/physics/               @ConsciousEnergy
+/LENR_SIM_APP_v2/backend/tests/test_physics/        @ConsciousEnergy
+/LENR_SIM_APP_v2/backend/tests/test_integration/    @ConsciousEnergy
+
+# Equation IR + Lean formalization (consistency checks, not LENR proofs).
+/formalization/                                     @ConsciousEnergy
+
+# CI, security policy, dependency policy, and branch model.
+/.github/                                           @ConsciousEnergy
+/SECURITY.md                                        @ConsciousEnergy
+/.gitleaks.toml                                     @ConsciousEnergy
+/.pre-commit-config.yaml                            @ConsciousEnergy
+
+# Public-facing governance and release evidence.
+/LENR_SIM_APP_v2/docs/v0.3.6-beta/                  @ConsciousEnergy
+/CHANGELOG.md                                       @ConsciousEnergy
