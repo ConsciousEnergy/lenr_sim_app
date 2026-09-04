@@ -40,6 +40,7 @@ lake build
 | `CollapseBounds` | EQ-BBL-LIM-01 | Pointwise calculated-bound clamp |
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
+| `WorkingHypothesisBounds` | EQ-WH-FC-01, EQ-WH-PART-02, EQ-WH-DICKE-N-01, EQ-WH-CAP-01, EQ-WH-NONCLOSE-02 | WH-ENP-01 v2 bounds: Poisson multi-phonon tail, general partition, Dicke count, engine-cap product; v2 non-closure |
 | `RealShim` | — | `expZ` mono bridge axiom |
 
 ## Hygiene

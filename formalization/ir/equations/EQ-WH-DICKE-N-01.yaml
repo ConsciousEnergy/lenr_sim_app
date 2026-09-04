@@ -1,0 +1,36 @@
+id: EQ-WH-DICKE-N-01
+latex: "n_D V_{\\mathrm{dicke}}=6.8\\times10^{28}\\,\\mathrm{m^{-3}}\\cdot\\tfrac{4}{3}\\pi(48.86\\,\\mathrm{pm})^{3}\\approx0.033<1\\Rightarrow N_{\\mathrm{coh}}^{\\max}=0"
+symbols:
+  n_D: "PdD deuteron number density 6.8e28 m^-3 (engine electron_density default)"
+  V_dicke: "cooperation sphere 4/3 pi (lambda/2pi)^3 ~ 4.886e-31 m^3"
+  n_within_radius: "expected deuterons inside the cooperation sphere (~0.033)"
+  N_coh_max: "floor(n_within_radius) = 0"
+units: "m^-3, m^3, dimensionless (milli-units in Lean)"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - hagelstein2025
+  - model_assumption_RR006
+lean_target: LenrFormal.WorkingHypothesisBounds
+lean_decls:
+  - "LenrFormal.WorkingHypothesisBounds.nD_1e27_per_m3"
+  - "LenrFormal.WorkingHypothesisBounds.dickeVolume_1e33_m3"
+  - "LenrFormal.WorkingHypothesisBounds.nWithinRadiusMilli"
+  - "LenrFormal.WorkingHypothesisBounds.n_within_radius_from_inputs"
+  - "LenrFormal.WorkingHypothesisBounds.n_within_radius_lt_one"
+  - "LenrFormal.WorkingHypothesisBounds.nCohLicensedMax"
+  - "LenrFormal.WorkingHypothesisBounds.n_coh_licensed_max_zero"
+  - "LenrFormal.WorkingHypothesisBounds.dicke_n2_not_licensed_for_pairs"
+adopted_value:
+  PD_D_NUMBER_DENSITY_M3: 6.8e+28
+  nD_1e27_per_m3: 68
+  nWithinRadiusMilli: 33
+  nCohLicensedMax: 0
+code_symbols:
+  PD_D_NUMBER_DENSITY_M3:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+    symbol: PD_D_NUMBER_DENSITY_M3
+notes: "Counting bound complementing EQ-WH-DICKE-01: fewer than one deuteron sits inside the lambda/(2 pi) cooperation radius at the cited density, so no N >= 2 Dicke enhancement is licensed. Engine collective stays linear min(N, 1e6) (EQ-COLL-LIN-01)."

@@ -1,0 +1,30 @@
+id: EQ-WH-CAP-01
+latex: "P_{\\mathrm{occ}}\\le1,\\ f_{\\mathrm{nuc}}\\le1,\\ C_{\\mathrm{lin}}\\le10^{6}\\Rightarrow N_{\\mathrm{sites}}P_{\\mathrm{occ}}f_{\\mathrm{nuc}}C_{\\mathrm{lin}}\\le N_{\\mathrm{sites}}\\cdot10^{6};\\quad R_{\\mathrm{req}}>\\mathrm{cap}\\Rightarrow\\neg(R_{\\mathrm{req}}\\le P_{\\mathrm{occ}}f_{\\mathrm{nuc}}C_{\\mathrm{lin}})"
+symbols:
+  P_occ: "cluster occupation probability, cap 1 (1000 milli)"
+  f_nuc: "nuclear fusion probability per cluster, cap 1 (1000 milli)"
+  C_lin: "engine collective clamp min(N, 1e6)"
+  base: "N_sites * Gamma_tun / tau prefactor (unconstrained input)"
+  R_req: "closure demand derived from R_obs (scenario table, not posterior)"
+units: "dimensionless (milli-units in Lean)"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: LenrFormal.WorkingHypothesisBounds
+lean_decls:
+  - "LenrFormal.WorkingHypothesisBounds.pOccCapMilli"
+  - "LenrFormal.WorkingHypothesisBounds.fNucCapMilli"
+  - "LenrFormal.WorkingHypothesisBounds.cLinCap"
+  - "LenrFormal.WorkingHypothesisBounds.engine_cap_bound"
+  - "LenrFormal.WorkingHypothesisBounds.collective_within_cap"
+  - "LenrFormal.WorkingHypothesisBounds.engine_cap_excludes_demand"
+  - "LenrFormal.WorkingHypothesisBounds.would_close_if_within_cap"
+adopted_value:
+  P_occ_cap: 1.0
+  f_nuc_cap: 1.0
+  C_lin_cap: 1000000
+notes: "Upper bound only: every capped factor at its cap gives the maximal trapped-state rate; a closure demand above the cap cannot be met (composed with EQ-RATE-COND-01 rateProduct / would_close_if). Two-body baseline untouched. Does not close EQ-OPEN-RATE-01."

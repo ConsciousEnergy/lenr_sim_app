@@ -1,0 +1,43 @@
+id: EQ-WH-FC-01
+latex: "P_N\\propto\\frac{S^{N}}{N!}e^{-S},\\quad \\frac{t_{N+1}}{t_N}=\\frac{S}{N+1}<1\\ (N\\ge S),\\quad \\log_{10}P_N\\le-7\\times10^{5}<-11\\ (S\\le10^{4})"
+symbols:
+  P_N: "N-phonon Franck-Condon (Poisson / Huang-Rhys) emission probability"
+  S: "Huang-Rhys factor (relaxation energy in phonon units); scan grid 1..1e4"
+  N: "phonon order Q/(hbar 2 pi f) at f = 1e13 Hz (~5.75e8)"
+  target_log10: "-11 closure target on log10 P_N"
+units: "dimensionless (log10 in milli-units in Lean)"
+tag: THM
+paper_ref: "§5A.1, §5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_2
+  - model_assumption_displaced_oscillator
+lean_target: LenrFormal.WorkingHypothesisBounds
+lean_decls:
+  - "LenrFormal.WorkingHypothesisBounds.poissonStepNum"
+  - "LenrFormal.WorkingHypothesisBounds.poissonStepDen"
+  - "LenrFormal.WorkingHypothesisBounds.poisson_tail_decreasing"
+  - "LenrFormal.WorkingHypothesisBounds.poisson_tail_not_decreasing_iff"
+  - "LenrFormal.WorkingHypothesisBounds.poisson_recurrence"
+  - "LenrFormal.WorkingHypothesisBounds.poisson_ratio_lt_one_iff"
+  - "LenrFormal.WorkingHypothesisBounds.phononOrderN"
+  - "LenrFormal.WorkingHypothesisBounds.sGridMax"
+  - "LenrFormal.WorkingHypothesisBounds.fcTargetMilli"
+  - "LenrFormal.WorkingHypothesisBounds.log10PN_upper_milli"
+  - "LenrFormal.WorkingHypothesisBounds.fc_tail_far_below_target"
+  - "LenrFormal.WorkingHypothesisBounds.scanned_s_in_decreasing_tail"
+  - "LenrFormal.WorkingHypothesisBounds.fc_does_not_close_q2"
+  - "LenrFormal.WorkingHypothesisBounds.fc_ratio_does_not_close_q2"
+adopted_value:
+  phononOrderN: 575000000
+  sGridMax: 10000
+  FC_TARGET_LOG10: -11.0
+  log10PN_upper: -700000
+code_symbols:
+  FC_TARGET_LOG10:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+    symbol: FC_TARGET_LOG10
+notes: "Displaced-oscillator linear-coupling Poisson tail is a labelled model assumption. Step ratio S/(N+1) < 1 for N >= S, so the tail is strictly decreasing; the integer bound -7.0e5 on log10 P_N at S = 1e4 is conservative (Python lgamma gives ~ -7.66e5 at N = 5.75e5 and ~ -2.5e9 at N = 5.75e8). S_min ~ N (relaxation energy ~ Q) is the honest requirement. Does not close EQ-OPEN-RAD-01 or EQ-OPEN-MEV-01."

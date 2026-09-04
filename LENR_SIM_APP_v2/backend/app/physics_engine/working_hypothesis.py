@@ -380,6 +380,7 @@ def compute_working_hypothesis(
             "EQ-WH-PART-02",
             "EQ-WH-DICKE-N-01",
             "EQ-WH-CAP-01",
+            "EQ-WH-NONCLOSE-02",
         ],
         "q1_closed": q1_closed,
         "q2_closed": q2_closed,
