@@ -35,6 +35,14 @@ const SIMULATION_ONLY = {
       compression_ratio: 1000,
       collapse_time_us: 56.578,
       peak_enhancement: 1e5,
+      mechanism_provenance: {
+        screening: {
+          screening_potential_ev: 800,
+          thermal_energy_ev: 0.05,
+          log10_enhancement_raw: 7.2,
+          is_saturated: true,
+        },
+      },
     },
     peak_conditions: {
       temperature_k: 10000,
@@ -63,6 +71,20 @@ const SIMULATION_ONLY = {
             compression: { value: 1e5, log10_value_raw: 6.0, is_saturated: true, ceiling: 1e5 },
             loading: { value: 2.4621, log10_value_raw: 0.39, is_saturated: false, ceiling: 1e5 },
           },
+        },
+        prediction: {
+          physics_governed: {
+            total_log10: 7.5,
+            groups: [
+              { group: 'barrier_screening', selected: 'screening', log10_value: 4.0, value: 9897 },
+              { group: 'collapse_geometry', selected: 'compression', log10_value: 6.0, value: 1e6 },
+              { group: 'field_coupling', selected: 'rydberg', log10_value: 1.0, value: 10 },
+              { group: 'lattice_coupling', selected: 'phonon', log10_value: 1.74, value: 55 },
+              { group: 'material_loading', selected: 'loading', log10_value: 0.39, value: 2.5 },
+            ],
+          },
+          sensitivity_model: { total_log10: 38.83 },
+          claim_tier_display: { total: 1e5, ceiling: 1e5 },
         },
       },
     },
@@ -151,20 +173,47 @@ describe('AdvancedAnalysisPage saturation reporting', () => {
 
   it('flags that saturated mechanisms are a display ceiling', () => {
     renderPage(SIMULATION_ONLY);
-    expect(screen.getByText(/claim-tier display ceiling/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/claim-tier display ceiling/i).length).toBeGreaterThan(0);
   });
 
-  it('shows the uncapped magnitude so identical values stay distinguishable', () => {
+  it('shows the waterfall chart with governed and sensitivity tiers', () => {
     renderPage(SIMULATION_ONLY);
-    // qed, casimir/compression and rydberg all display 1.0000e+5 but differ in raw
-    // magnitude; the raw annotation is what makes the breakdown informative.
-    expect(screen.getByText(/raw ≈ 10\^12\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/raw ≈ 10\^8\.7/)).toBeInTheDocument();
-    expect(screen.getByText(/raw ≈ 10\^38\.8/)).toBeInTheDocument();
+    expect(screen.getByTestId('enhancement-waterfall')).toBeInTheDocument();
+    expect(screen.getByTestId('prediction-readout-panel')).toBeInTheDocument();
   });
 
   it('does not render the saturation metadata block as a mechanism card', () => {
     renderPage(SIMULATION_ONLY);
     expect(screen.queryByText(/^saturation$/i)).not.toBeInTheDocument();
+  });
+
+  it('renders screening provenance panel from collapse results', () => {
+    renderPage(SIMULATION_ONLY);
+    expect(screen.getByTestId('screening-provenance-panel')).toBeInTheDocument();
+    expect(screen.getByText(/800/)).toBeInTheDocument();
+  });
+});
+
+describe('AdvancedAnalysisPage theory screening observables', () => {
+  afterEach(() => {
+    mockUsePhysics.mockReset();
+  });
+
+  it('reads screening_potential_eV from theory observables', () => {
+    renderPage({
+      simulationResult: null,
+      theoryResult: {
+        combined_enhancement: 1234,
+        per_theory: [
+          {
+            theory_id: 'electron_screening',
+            theory_name: 'Electron Screening',
+            enhancement_factor: 9897,
+            observables: { screening_potential_eV: 27.4 },
+          },
+        ],
+      },
+    });
+    expect(screen.getByText(/27\.4/)).toBeInTheDocument();
   });
 });

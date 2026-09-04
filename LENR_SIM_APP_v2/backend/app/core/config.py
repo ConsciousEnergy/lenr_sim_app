@@ -100,6 +100,8 @@ class Settings(BaseSettings):
     # Security configuration
     SECRET_KEY: Optional[str] = None
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    # Optional dedicated token for Analytics mutate in production. Falls back to SECRET_KEY.
+    ANALYTICS_WRITE_TOKEN: Optional[str] = None
     
     # New security settings
     ENABLE_RATE_LIMITING: bool = True
@@ -167,6 +169,10 @@ class Settings(BaseSettings):
             secret = _read_secret_from_file("JWT_SECRET_KEY_FILE")
             if secret:
                 object.__setattr__(self, "JWT_SECRET_KEY", secret)
+        if not self.ANALYTICS_WRITE_TOKEN:
+            token = _read_secret_from_file("ANALYTICS_WRITE_TOKEN_FILE")
+            if token:
+                object.__setattr__(self, "ANALYTICS_WRITE_TOKEN", token)
 
         # Enforce safe production CORS defaults when local dev origins are left unchanged.
         if self.ENVIRONMENT == EnvironmentType.PRODUCTION:
@@ -189,6 +195,11 @@ class Settings(BaseSettings):
         # attached explicitly, so they are unaffected). See VERIFICATION_GATE_REPORT.md.
         if self.ENVIRONMENT == EnvironmentType.TEST and self.ENABLE_RATE_LIMITING:
             object.__setattr__(self, "ENABLE_RATE_LIMITING", False)
+
+        if self.ENVIRONMENT == EnvironmentType.PRODUCTION and not self.SECRET_KEY:
+            raise ValueError(
+                "LENR_SECRET_KEY is required when LENR_ENVIRONMENT=production"
+            )
         return self
 
     # Pydantic configuration - use environment variable prefix and .env file
@@ -199,6 +210,17 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore"
     )
+
+
+def openapi_surface(environment: EnvironmentType) -> Dict[str, Optional[str]]:
+    """Public OpenAPI URLs. Disabled in production (health stays public)."""
+    if environment == EnvironmentType.PRODUCTION:
+        return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    return {
+        "docs_url": "/api/docs",
+        "redoc_url": "/api/redoc",
+        "openapi_url": "/api/openapi.json",
+    }
 
 
 # Create a global settings instance

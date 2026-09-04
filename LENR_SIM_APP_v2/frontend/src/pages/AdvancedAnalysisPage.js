@@ -16,6 +16,9 @@ import {
 import { useTheme } from '@mui/material/styles';
 import AppLayout from '../components/layout/AppLayout';
 import { usePhysics } from '../contexts/PhysicsContext';
+import EnhancementWaterfallChart from '../components/physics/EnhancementWaterfallChart';
+import PredictionReadoutPanel from '../components/physics/PredictionReadoutPanel';
+import ScreeningProvenancePanel from '../components/physics/ScreeningProvenancePanel';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -92,7 +95,7 @@ const AdvancedAnalysisPage = () => {
     if (!es) return null;
     const obs = es.observables || {};
     return {
-      screenPotentialEV: obs.U_screen_eV ?? obs.screen_potential_eV ?? null,
+      screenPotentialEV: obs.screening_potential_eV ?? obs.U_screen_eV ?? obs.screen_potential_eV ?? null,
       debyeLengthNm: obs.lambda_D_nm ?? obs.debye_length_nm ?? null,
       screeningEnhancement: es.enhancement_factor ?? null,
     };
@@ -123,6 +126,7 @@ const AdvancedAnalysisPage = () => {
       peakFieldVm: cr.peak_field_v_m,
       peakEnhancement: cr.peak_enhancement,
       limits: cr.limits || null,
+      mechanismProvenance: cr.mechanism_provenance || null,
     };
   }, [simulationResult]);
 
@@ -163,15 +167,20 @@ const AdvancedAnalysisPage = () => {
     if (!mechanism?.is_saturated) return null;
     const log10Raw = mechanism.log10_value_raw;
     return (
-      <Tooltip
-        title={
-          `Clamped to the ${formatNumber(mechanism.ceiling)} claim-tier display ceiling. ` +
-          `Uncapped model value is about 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}. ` +
-          'This is a reporting limit, not a physical prediction.'
-        }
-      >
-        <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
-      </Tooltip>
+      <>
+        <Tooltip
+          title={
+            `Clamped to the ${formatNumber(mechanism.ceiling)} claim-tier display ceiling. ` +
+            `Uncapped model value is about 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}. ` +
+            'This is a reporting limit, not a physical prediction.'
+          }
+        >
+          <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
+        </Tooltip>
+        <Typography variant="caption" color="text.secondary" display="block">
+          {`raw ≈ 10^${log10Raw != null ? Number(log10Raw).toFixed(1) : '?'}`}
+        </Typography>
+      </>
     );
   };
 
@@ -420,6 +429,11 @@ const AdvancedAnalysisPage = () => {
                     ? 'Pressure'
                     : 'Compression';
                 const unit = key === 'temperature_k' ? 'K' : key === 'pressure_pa' ? 'Pa' : 'x';
+                const calculatedBound = key === 'temperature_k'
+                  ? lim.calculated_bound_k
+                  : key === 'pressure_pa'
+                    ? lim.calculated_bound_pa
+                    : lim.calculated_bound;
                 return (
                   <Box key={key} sx={{ mb: 1 }}>
                     <Typography variant="body2" component="div">
@@ -428,15 +442,32 @@ const AdvancedAnalysisPage = () => {
                         <Chip label="SATURATED" size="small" color="warning" sx={{ ml: 1 }} />
                       )}
                     </Typography>
-                    {lim.is_saturated && lim.value_raw != null && (
-                      <Typography variant="caption" color="warning.main" display="block">
-                        raw ≈ {formatNumber(lim.value_raw)} {unit} (ceiling {formatNumber(lim.ceiling)})
+                    {lim.value_raw != null && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        raw (adiabatic): {formatNumber(lim.value_raw)} {unit}
+                      </Typography>
+                    )}
+                    {calculatedBound != null && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        calculated bound: {formatNumber(calculatedBound)} {unit}
+                        {lim.basis ? ` · ${lim.basis}` : ''}
+                      </Typography>
+                    )}
+                    {lim.citation && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {lim.citation}
                       </Typography>
                     )}
                   </Box>
                 );
               })}
             </Paper>
+          </Grid>
+        )}
+
+        {collapseData.mechanismProvenance?.screening && (
+          <Grid size={12}>
+            <ScreeningProvenancePanel screening={collapseData.mechanismProvenance.screening} />
           </Grid>
         )}
 
@@ -494,6 +525,7 @@ const AdvancedAnalysisPage = () => {
           <Grid size={12}>
             <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
               <Typography variant="h6" gutterBottom>Enhancement Breakdown</Typography>
+              <PredictionReadoutPanel prediction={enhancementBreakdown.prediction} />
               {saturation?.any_saturated && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
                   {saturation.saturated_mechanisms.length} mechanism(s) reached the{' '}
@@ -501,44 +533,25 @@ const AdvancedAnalysisPage = () => {
                   displayed values are identical by construction. The uncapped magnitude
                   is shown beneath each saturated value; these are reporting limits, not
                   physical predictions.
+                  <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                    {Object.entries(saturation.mechanisms || {})
+                      .filter(([, mechanism]) => mechanism?.is_saturated)
+                      .map(([key, mechanism]) => (
+                        <Typography component="li" variant="caption" key={key}>
+                          {key}: raw ≈ 10^{
+                            mechanism.log10_value_raw != null
+                              ? Number(mechanism.log10_value_raw).toFixed(1)
+                              : '?'
+                          }
+                        </Typography>
+                      ))}
+                  </Box>
                 </Alert>
               )}
-              <Grid container spacing={2}>
-                {Object.entries(enhancementBreakdown)
-                  // `saturation` is provenance metadata, not a mechanism.
-                  .filter(([, value]) => typeof value === 'number')
-                  .map(([mechanism, value]) => {
-                    const detail = saturation?.mechanisms?.[mechanism];
-                    const isSaturated = !!detail?.is_saturated;
-                    return (
-                      <Grid size={{ xs: 6, md: 3 }} key={mechanism}>
-                        <Paper
-                          variant="outlined"
-                          sx={{
-                            p: 1.5,
-                            textAlign: 'center',
-                            borderColor: isSaturated ? 'warning.main' : undefined,
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                            {mechanism.replace(/_/g, ' ')}
-                          </Typography>
-                          <Typography variant="body1" fontWeight={600}>
-                            {formatNumber(value)}
-                          </Typography>
-                          {isSaturated && (
-                            <>
-                              {renderSaturationChip(mechanism)}
-                              <Typography variant="caption" display="block" color="warning.main">
-                                raw ≈ 10^{Number(detail.log10_value_raw).toFixed(1)}
-                              </Typography>
-                            </>
-                          )}
-                        </Paper>
-                      </Grid>
-                    );
-                  })}
-              </Grid>
+              <EnhancementWaterfallChart
+                breakdown={enhancementBreakdown}
+                screeningProvenance={simulationResult?.collapse_results?.mechanism_provenance?.screening}
+              />
             </Paper>
           </Grid>
         )}

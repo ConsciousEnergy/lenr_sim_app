@@ -111,6 +111,16 @@ class TestTakahashiTSC:
         m = self.theory.get_metadata()
         assert isinstance(m, TheoryMetadata)
         assert m.category == "mechanism"
+        refs = " ".join(m.references)
+        assert "takahashi2026brief" in refs
+        assert "4HTSC WS" in refs
+
+    def test_2026_brief_view_is_cite_only(self):
+        result = self.theory.calculate(STANDARD_CONDITIONS)
+        refs = " ".join(result.references)
+        assert "takahashi2026brief" in refs
+        assert result.observables.get("Q_value_MeV") == 47.6
+        assert result.observables.get("product_neutrons") == 0.0
 
 
 class TestHagelsteinPhonon:
@@ -407,6 +417,16 @@ class TestScoringEngine:
             assert "experimental_agreement" in s
             assert 0.0 <= s["final_score"] <= 1.0
 
+    def test_skip_sensitivity_uses_neutral_subscore(self):
+        from app.physics_engine.theory_scoring import compute_theory_scores
+        scores = compute_theory_scores(
+            STANDARD_CONDITIONS,
+            enabled_theories=["electron_screening"],
+            skip_sensitivity=True,
+        )
+        assert scores["electron_screening"]["parameter_sensitivity"] == 0.5
+        assert "final_score" in scores["electron_screening"]
+
     def test_parameter_sweep(self):
         from app.physics_engine.theory_scoring import parameter_sweep
         results = parameter_sweep(
@@ -448,6 +468,9 @@ class TestTheoryGraph:
         from app.physics_engine.theory_relationships import TheoryGraph
         g = TheoryGraph()
         assert len(g.nodes) >= 19  # 19 original + 2 legacy wrappers
+        ids = {n.theory_id for n in g.nodes}
+        assert "stellar_scaling_mhd" in ids
+        assert "takahashi_tsc" in ids
 
     def test_edges_exist(self):
         from app.physics_engine.theory_relationships import TheoryGraph

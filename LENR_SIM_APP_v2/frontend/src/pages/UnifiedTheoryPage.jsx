@@ -6,7 +6,7 @@
  * electrodynamic ionic double-layer collapse onto lattice materials.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import {
   Box,
   Container,
@@ -52,7 +52,7 @@ import IconButton from '@mui/material/IconButton';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
-import VisualizationPanel from '../components/unified-theory/VisualizationPanel';
+const VisualizationPanel = lazy(() => import('../components/unified-theory/VisualizationPanel'));
 import EnhancementTimelinePanel from '../components/unified-theory/EnhancementTimelinePanel';
 import ProtonPhasesPanel from '../components/unified-theory/ProtonPhasesPanel';
 import ResultsPanel from '../components/unified-theory/ResultsPanel';
@@ -70,6 +70,7 @@ import { formatCycleTimeChip } from '../utils/bubblePhaseSchedule';
 import { ENHANCEMENT_THRESHOLDS } from '../utils/unifiedTheoryCharts';
 import { useBubbleLatticeStream, STREAM_STATUS } from '../hooks/useBubbleLatticeStream';
 import { track } from '../analytics/events';
+import { attachTestbedScoresToResults } from '../utils/theoryTestbedScores';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
 const UNIFIED_SIMULATE_ENDPOINT = '/api/unified/simulate';
@@ -521,16 +522,24 @@ function UnifiedTheoryPage() {
         },
         enhancement_factor: simulationData.peak_conditions?.enhancement_factor || 1,
         fusion_rate: simulationData.peak_conditions?.fusion_rate,
-        energy_output_kev: simulationData.total_energy_output || 0,
+        energy_output_kev: Number.isFinite(simulationData.total_energy_output)
+          ? simulationData.total_energy_output
+          : null,
+        excess_heat_watts: Number.isFinite(theoryResult?.total_energy_watts)
+          ? theoryResult.total_energy_watts
+          : null,
         duration_seconds: (simulationData.enhancement_timeline?.length || 0) * 0.001,
-        results: {
-          peak_conditions: simulationData.peak_conditions,
-          enhancement_breakdown:
-            simulationData.peak_conditions?.enhancement_breakdown ||
-            simulationData.enhancement_breakdown ||
-            {},
-          lawson_progress: simulationData.lawson_criterion_progress,
-        },
+        results: attachTestbedScoresToResults(
+          {
+            peak_conditions: simulationData.peak_conditions,
+            enhancement_breakdown:
+              simulationData.peak_conditions?.enhancement_breakdown ||
+              simulationData.enhancement_breakdown ||
+              {},
+            lawson_progress: simulationData.lawson_criterion_progress,
+          },
+          theoryResult,
+        ),
       };
       
       const saved = await analyticsApi.saveExperiment(experimentData);
@@ -539,13 +548,21 @@ function UnifiedTheoryPage() {
       setAlertOpen(true);
     } catch (error) {
       console.error('Failed to save to analytics:', error);
-      setAlertMessage('Failed to save to analytics. Data saved locally.');
-      setAlertSeverity('warning');
+      const status = error.statusCode ?? error.status;
+      if (status === 403 || status === 401) {
+        setAlertMessage(
+          'Shared Analytics writes are operator-gated on the public API (HTTP 403). This run was not saved to shared History.',
+        );
+        setAlertSeverity('warning');
+      } else {
+        setAlertMessage('Failed to save to analytics. Data saved locally.');
+        setAlertSeverity('warning');
+      }
       setAlertOpen(true);
     } finally {
       setIsSaving(false);
     }
-  }, [simulationData, parameters, selectedSystem]);
+  }, [simulationData, parameters, selectedSystem, theoryResult]);
   const [collapseCount, setCollapseCount] = useState(0);
 
   // Handle system preset change
@@ -602,6 +619,7 @@ function UnifiedTheoryPage() {
         includeUncertainty,
         uncertaintySamples,
         randomSeed,
+        theoryResult,
       });
 
       const response = await fetch(apiUrl, {
@@ -708,12 +726,19 @@ function UnifiedTheoryPage() {
         console.error('Fallback calculation failed:', fallbackError);
         setAlertMessage(`Simulation failed: ${fallbackError.message || 'Unknown error'}`);
         setAlertSeverity('error');
+        analyticsApi.saveFailedRun({
+          name: `FAILED ${parameters.name} Simulation`,
+          experiment_type: 'unified_theory',
+          material: parameters.hostMaterial,
+          temperature_k: parameters.temperature,
+          error: fallbackError.message,
+        }).catch(() => {});
       }
     } finally {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed]);
+  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed, theoryResult]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {
@@ -834,6 +859,22 @@ function UnifiedTheoryPage() {
       // Local fallback has no governed reaction-rate engine; the panel renders a
       // clear "no output" state rather than fabricating numbers (dev/offline only).
       reaction_rate_engine: {},
+      open_questions: {
+        schema: 'lenr-open-questions-v1',
+        route_mode: 'local_fallback',
+        determination: {
+          status: 'INCONCLUSIVE',
+          oracle_b: { note: 'UNAVAILABLE on local_fallback' },
+          oracle_emp: { evaluated: false },
+        },
+        emp_chips: [],
+        lenr_proved: false,
+        q_mev_gap: { id: 'EQ-OPEN-MEV-01', status: 'OPEN' },
+        q_radiation: { id: 'EQ-OPEN-RAD-01', status: 'OPEN' },
+        q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'OPEN' },
+        q_electron_capture: { id: 'EQ-OPEN-EC-01', status: 'OPEN', dimmed: true },
+        q_integrated_yield: { id: 'EQ-OPEN-YIELD-01', status: 'OPEN', dimmed: true },
+      },
     };
   };
 
@@ -1710,14 +1751,29 @@ function UnifiedTheoryPage() {
 
             <Box sx={{ mt: 2, minHeight: 500 }}>
               {activeTab === 0 && (
-                <VisualizationPanel
-                  parameters={parameters}
-                  simulationData={simulationData}
-                  streamLatest={streamLatest}
-                  streamStatus={streamStatus}
-                  onPhaseChange={handlePhaseChange}
-                  onCollapseEvent={handleCollapseEvent}
-                />
+                <Suspense
+                  fallback={
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 500,
+                      }}
+                    >
+                      <CircularProgress aria-label="Loading 3D visualization panel" />
+                    </Box>
+                  }
+                >
+                  <VisualizationPanel
+                    parameters={parameters}
+                    simulationData={simulationData}
+                    streamLatest={streamLatest}
+                    streamStatus={streamStatus}
+                    onPhaseChange={handlePhaseChange}
+                    onCollapseEvent={handleCollapseEvent}
+                  />
+                </Suspense>
               )}
 
               {activeTab === 1 && simulationData && (

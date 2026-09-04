@@ -51,12 +51,13 @@ export const analyticsApi = {
    * Get type distribution for pie chart
    * @returns {Promise<Array>} Distribution data
    */
-  getTypeDistribution: async () => {
+  getTypeDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/type', {
-        params: { session_id: sessionId },
+        params: { session_id: sessionId, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -69,12 +70,13 @@ export const analyticsApi = {
    * Get material distribution
    * @returns {Promise<Array>} Material distribution data
    */
-  getMaterialDistribution: async () => {
+  getMaterialDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/material', {
-        params: { session_id: sessionId },
+        params: { session_id: sessionId, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -83,17 +85,34 @@ export const analyticsApi = {
     }
   },
 
+  getSourceDistribution: async (options = {}) => {
+    const { includeBaseline = true } = options;
+    const sessionId = getSessionId();
+
+    try {
+      const response = await api.get('/api/analytics/distribution/source', {
+        params: { session_id: sessionId, include_baseline: includeBaseline },
+      });
+      return response;
+    } catch (error) {
+      console.warn('Source distribution API unavailable:', error.message);
+      return [];
+    }
+  },
+
   /**
    * Get temperature distribution for bar chart
    * @param {number} bins - Number of bins (default: 10)
+   * @param {Object} options - Query options
    * @returns {Promise<Array>} Temperature distribution data
    */
-  getTemperatureDistribution: async (bins = 10) => {
+  getTemperatureDistribution: async (bins = 10, options = {}) => {
+    const { includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/distribution/temperature', {
-        params: { session_id: sessionId, bins },
+        params: { session_id: sessionId, bins, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -109,12 +128,12 @@ export const analyticsApi = {
    * @returns {Promise<Array>} Timeline data
    */
   getTimeline: async (options = {}) => {
-    const { limit = 30 } = options;
+    const { limit = 30, includeBaseline = true } = options;
     const sessionId = getSessionId();
     
     try {
       const response = await api.get('/api/analytics/timeline', {
-        params: { session_id: sessionId, limit },
+        params: { session_id: sessionId, limit, include_baseline: includeBaseline },
       });
       return response;
     } catch (error) {
@@ -138,6 +157,7 @@ export const analyticsApi = {
       sortBy = 'created_at',
       sortOrder = 'desc',
       includeBaseline = true,
+      sourceClass,
     } = options;
     
     const sessionId = getSessionId();
@@ -150,6 +170,7 @@ export const analyticsApi = {
           experiment_type: experimentType,
           status,
           material,
+          source_class: sourceClass,
           limit,
           offset,
           sort_by: sortBy,
@@ -201,9 +222,13 @@ export const analyticsApi = {
       
       return response;
     } catch (error) {
+      const status = error.statusCode ?? error.status;
+      if (status === 403 || status === 401) {
+        throw error;
+      }
       console.warn('Failed to save to API, saving locally:', error.message);
       
-      // Fallback: save to localStorage only
+      // Fallback: save to localStorage only (network / offline — not a 403)
       const localExperiment = {
         ...payload,
         id: `local_${Date.now()}`,
@@ -214,6 +239,32 @@ export const analyticsApi = {
       saveToLocalStorage(localExperiment);
       
       return localExperiment;
+    }
+  },
+
+  /**
+   * Persist a true simulation failure so Analytics can show mixed outcomes.
+   * Best-effort: never throws to the caller.
+   */
+  saveFailedRun: async (partial = {}) => {
+    try {
+      return await analyticsApi.saveExperiment({
+        name: 'Failed simulation',
+        experiment_type: 'unified_theory',
+        material: 'palladium',
+        temperature_k: 300,
+        ...partial,
+        status: 'failed',
+        results: {
+          scientific_outcome: 'failed',
+          error: String(partial.error || 'simulation failed'),
+          is_model_output: true,
+          ...(partial.results || {}),
+        },
+      });
+    } catch (error) {
+      console.warn('Failed to persist failed run:', error.message);
+      return null;
     }
   },
 
@@ -347,6 +398,20 @@ export const analyticsApi = {
   // ==================
   // Theory Network / Scoring endpoints (v0.3.1-beta)
   // ==================
+
+  /**
+   * Aggregate persisted theory_runs for the Relevance Map overlay.
+   * Simulation-derived association; not empirical confidence.
+   */
+  getTheoryRunHistory: async () => {
+    try {
+      const response = await api.get('/api/analytics/theory-run-history');
+      return response;
+    } catch (err) {
+      console.error('[analyticsApi] getTheoryRunHistory error:', err);
+      throw err;
+    }
+  },
 
   /**
    * Get the full theory relationship graph (nodes + edges).
@@ -522,21 +587,50 @@ function removeFromLocalStorage(experimentId) {
 /**
  * Get local statistics (fallback)
  */
+function classifyLocalOutcome(experiment) {
+  const status = String(experiment.status || '').toLowerCase();
+  if (status === 'failed' || status === 'cancelled') {
+    return 'failed';
+  }
+  const results = experiment.results || {};
+  const scores = results.pipeline_scores || {};
+  const applicability = Object.values(scores)
+    .filter((record) => record && Object.prototype.hasOwnProperty.call(record, 'is_applicable'))
+    .map((record) => Boolean(record.is_applicable));
+  if (applicability.length > 0 && applicability.every((flag) => !flag)) {
+    return 'inapplicable';
+  }
+  const heat = experiment.excess_heat_watts ?? experiment.excessHeatWatts
+    ?? results.excess_heat_watts ?? results.observables?.excess_heat_watts;
+  if (heat != null && Number(heat) > 0) {
+    return 'positive';
+  }
+  return 'null';
+}
+
 function getLocalStats() {
   const experiments = getLocalExperimentsRaw();
-  
+
+  const emptyCounts = { positive: 0, null: 0, inapplicable: 0, failed: 0 };
   if (experiments.length === 0) {
     return {
       totalSimulations: 0,
       successRate: 0,
+      completionRate: 0,
+      scientificPositiveRate: 0,
       avgEnhancement: 0,
       totalEnergy: 0,
       maxEnhancement: 0,
       completedCount: 0,
       failedCount: 0,
+      outcomeCounts: emptyCounts,
+      claimTierCounts: {},
+      openQuestionCounts: {},
+      openQuestionCountsCampaign: {},
+      sourceClassCounts: {},
     };
   }
-  
+
   const completed = experiments.filter(e => e.status === 'completed').length;
   const failed = experiments.filter(e => e.status === 'failed').length;
   const enhancementValues = experiments
@@ -545,17 +639,33 @@ function getLocalStats() {
   const energyValues = experiments
     .map(e => e.energyOutput || e.energy_output_kev)
     .filter(v => v != null);
-  
+  const outcomeCounts = { ...emptyCounts };
+  experiments.forEach((experiment) => {
+    const outcome = classifyLocalOutcome(experiment);
+    outcomeCounts[outcome] = (outcomeCounts[outcome] || 0) + 1;
+  });
+  const completionRate = experiments.length > 0 ? (completed / experiments.length * 100) : 0;
+  const scientificPositiveRate = experiments.length > 0
+    ? (outcomeCounts.positive / experiments.length * 100)
+    : 0;
+
   return {
     totalSimulations: experiments.length,
-    successRate: experiments.length > 0 ? (completed / experiments.length * 100) : 0,
-    avgEnhancement: enhancementValues.length > 0 
-      ? enhancementValues.reduce((a, b) => a + b, 0) / enhancementValues.length 
+    successRate: completionRate,
+    completionRate,
+    scientificPositiveRate,
+    avgEnhancement: enhancementValues.length > 0
+      ? enhancementValues.reduce((a, b) => a + b, 0) / enhancementValues.length
       : 0,
     totalEnergy: energyValues.reduce((a, b) => a + b, 0),
     maxEnhancement: enhancementValues.length > 0 ? Math.max(...enhancementValues) : 0,
     completedCount: completed,
     failedCount: failed,
+    outcomeCounts,
+    claimTierCounts: {},
+    openQuestionCounts: {},
+    openQuestionCountsCampaign: {},
+    sourceClassCounts: {},
   };
 }
 
@@ -617,6 +727,9 @@ function getLocalTimeline() {
       energyOutput: exp.energyOutput || exp.energy_output_kev || 0,
       type: exp.type || exp.experiment_type || 'Unknown',
       status: exp.status || 'completed',
+      is_baseline: exp.is_baseline || exp.isBaseline || false,
+      source: exp.source,
+      sourceClass: exp.sourceClass || (exp.is_baseline || exp.isBaseline ? 'Baseline' : 'User'),
     }));
 }
 
@@ -686,5 +799,7 @@ function exportLocalCSV() {
   return new Blob([csv], { type: 'text/csv' });
 }
 
+analyticsApi.getLocalStats = getLocalStats;
+
 export default analyticsApi;
-export { getSessionId };
+export { getSessionId, getLocalStats };

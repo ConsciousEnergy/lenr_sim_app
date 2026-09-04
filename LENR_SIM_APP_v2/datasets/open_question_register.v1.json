@@ -1,0 +1,75 @@
+{
+  "schema": "lenr-app-dataset-v1",
+  "id": "open_question_register.v1",
+  "disclaimer": "Mapping the corpus against Q1-Q5 does not close those questions. Lean certifies mathematical consistency only. There is no theorem lenr_occurs.",
+  "paper_ref": "docs/A_Unified_Theoretical_Framework_for_LENR.md §5A",
+  "companion_docs": [
+    "docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md",
+    "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md",
+    "docs/ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md"
+  ],
+  "questions": [
+    {
+      "id": "EQ-OPEN-MEV-01",
+      "label": "Q1 MeV energy gap",
+      "paper_ref": "§5A.1",
+      "status": "OPEN",
+      "virtual_lab_field": "q_mev_gap",
+      "in_app_handles": ["hagelstein_phonon.py", "MEV_GAP_HYPOTHESIS.md"],
+      "still_missing": "Constrained phonon-nuclear matrix element and occupation probability",
+      "citation_keys": ["hagelstein2025"],
+      "testable_prediction_ids": ["PRED-04"],
+      "lean_target": "LenrFormal.OpenObligations"
+    },
+    {
+      "id": "EQ-OPEN-RAD-01",
+      "label": "Q2 Radiation suppression",
+      "paper_ref": "§5A.2",
+      "status": "OPEN",
+      "virtual_lab_field": "q_radiation",
+      "in_app_handles": ["branching_model.py"],
+      "still_missing": "Quantitative lattice gamma-absorption versus detector upper limits",
+      "citation_keys": ["miles1993"],
+      "testable_prediction_ids": ["PRED-02", "PRED-03"],
+      "lean_target": "LenrFormal.OpenObligations"
+    },
+    {
+      "id": "EQ-OPEN-RATE-01",
+      "label": "Q3 Rate closure",
+      "paper_ref": "§5A.3",
+      "status": "OPEN",
+      "virtual_lab_field": "q_statistical",
+      "in_app_handles": ["reaction_rate_engine.py", "takahashi_tsc.py"],
+      "still_missing": "Experimentally constrained collective factor (not a free 1e6-cap assumption)",
+      "citation_keys": ["takahashi2016", "takahashi2026brief"],
+      "testable_prediction_ids": ["PRED-03"],
+      "lean_target": "LenrFormal.OpenObligations",
+      "notes": "Two-body log10 N_events = -40 is proved as non-closure (EQ-RATE-2B-NC-01). trapped_state remains SPEC."
+    },
+    {
+      "id": "EQ-OPEN-EC-01",
+      "label": "Q4 Electron-capture energy source",
+      "paper_ref": "§5A.4",
+      "status": "OPEN",
+      "virtual_lab_field": "q_electron_capture",
+      "in_app_handles": ["widom_larsen.py"],
+      "still_missing": "Condensed-matter path to E > 0.782 MeV; double-layer is ~0.1 eV",
+      "citation_keys": ["widomlarsen2006", "tennfors2013"],
+      "testable_prediction_ids": ["PRED-07"],
+      "lean_target": "LenrFormal.OpenObligations"
+    },
+    {
+      "id": "EQ-OPEN-YIELD-01",
+      "label": "Q5 Integrated yield discrepancy",
+      "paper_ref": "§5A.5",
+      "status": "OPEN",
+      "virtual_lab_field": "q_integrated_yield",
+      "in_app_handles": ["miles_heat_helium.py"],
+      "still_missing": "Time-resolved simultaneous heat + He; integrated W·hr yields 100-10000× low",
+      "citation_keys": ["miles1993", "mckubre2008"],
+      "testable_prediction_ids": ["PRED-01", "PRED-05"],
+      "lean_target": "LenrFormal.OpenObligations",
+      "notes": "Instantaneous Miles band is EMP (within ~2×). Integrated discrepancy remains OPEN. ISSUE_LEDGER 'FIXED' means a paper section was written, not that the obligation is discharged."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+id: EQ-OPEN-RAD-01
+latex: "Q_2\\text{ closed} \\iff \\mathrm{BR}_{\\gamma} \\le \\mathrm{BR}_{\\gamma,\\mathrm{upper}}"
+symbols:
+  BR_gamma: "gamma branching fraction in integer-scaled bookkeeping"
+  BR_gamma_upper: "supplied detector-derived upper bound"
+units: "dimensionless"
+tag: OPEN
+paper_ref: "§5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - miles1993
+  - paper_5A_2
+testable_prediction_ids:
+  - PRED-02
+  - PRED-03
+still_missing: "Quantitative lattice gamma-absorption versus detector upper limits"
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q2RadiationSuppressionClosed"
+  - "LenrFormal.OpenObligations.gamma_above_bound_implies_q2_not_closed"
+notes: "This obligation remains open. The 10^11 lattice branching target is bookkeeping in OpenQuestionBounds/Branching, not a measured ratio."

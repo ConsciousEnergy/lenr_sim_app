@@ -1,0 +1,48 @@
+# LenrFormal (Lean 4 pilot)
+
+Mechanized **mathematical consistency** checks for the Unified LENR Theory
+adopted core. This is **not** a proof that LENR occurs.
+
+## Design note (mathlib)
+
+The pilot builds on Lean 4 **without** a mathlib dependency so CI stays light
+and deterministic. Algebra uses `Nat`/`Int` with explicit unit scales; Gamow
+monotonicity uses a labelled `RealShim.expZ_strict_mono` bridge axiom. Upgrading
+to mathlib replaces `RealShim` with `Real.exp` lemmas and can restore ℚ/`Real`
+Casimir κ proofs.
+
+## Build
+
+```bash
+# requires elan + Lean 4.14 (see lean-toolchain)
+cd formalization/lean
+lake build
+```
+
+## Modules
+
+| Module | IR IDs | Role |
+|--------|--------|------|
+| `Constants` | — | Integer anchors / caps |
+| `Rydberg` | EQ-RYD-01 | \(E_{10}=-136\,\mathrm{meV}\) |
+| `Field` | EQ-FIELD-01 | \(E=\Delta V/d\) example |
+| `Casimir` | EQ-CAS-01/02 | Check geometry + 1.3 mN band |
+| `Gamow` | EQ-GAMOW-01 | Penetration anti-monotone in η |
+| `Assenbaum` | EQ-ASSEN-* | Domain predicate |
+| `Composition` | EQ-COMP-*, EQ-BBL-COMP-01, EQ-PRED-* | Cap ≤ 1e5; intra-group max; bubble prediction envelope |
+| `Miles` | EQ-QDD/MILES-CONV | Conversion identity band |
+| `Phonon` | EQ-PHONON-N-01, EQ-NAIVE-GN-01 | Phonon order identity; naive \(g^N\) fails |
+| `RateBudget` | EQ-RATE-* | Two-body does-not-close; rival modes |
+| `NBody` | EQ-TSC-*, EQ-TRAP-*, EQ-3B-*, EQ-NBODY-* | Geometry, FGR/trap bookkeeping, ULM domain |
+| `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
+| `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
+| `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
+| `CollapseBounds` | EQ-BBL-LIM-01 | Pointwise calculated-bound clamp |
+| `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
+| `RealShim` | — | `expZ` mono bridge axiom |
+
+## Hygiene
+
+- File headers state claim-tier / non-claims.
+- Speculative physics (MeV gap, TSC, Hagelstein, KG–RP) remains claim-tiered and unproved.
+- There is no `theorem lenr_occurs`. `EQ-OPEN-*` rows stay open.

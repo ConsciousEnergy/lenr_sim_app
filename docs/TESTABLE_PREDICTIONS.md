@@ -24,6 +24,8 @@
 
 **Current Status:** Miles (1993) reported (2.6 ± 0.6) × 10^11 He-4/s/W, consistent with prediction within 2σ. Needs replication with modern instrumentation.
 
+**Virtual lab crosswalk:** `EQ-MILES-EMP-01` → `occurrence.anchored` / `oracle_emp.miles_band_gate` → falsifier: Q outside 24±4 MeV/He with simultaneous calorimetry + MS.
+
 ---
 
 ## Prediction 2: Neutron Energy Spectrum Shape
@@ -149,6 +151,16 @@
 | 5 | Threshold parameters | Loading > 0.9, defects > 10^10/cm³ | Partially confirmed | HIGH |
 | 6 | BEC momentum narrowing | Sub-thermal deuteron distribution | No data yet | LOW |
 | 7 | Isotopic shifts | Pd-105/107 enrichment, Cu appearance | Suggestive SIMS data | MEDIUM |
+
+## Virtual lab crosswalk (open_questions v2)
+
+| Prediction # | EQ / IR id | Virtual lab field / status | Falsifier |
+|--------------|------------|------------------------|-----------|
+| 1 | EQ-MILES-EMP-01 | `occurrence.anchored`, `OCCURRENCE_ANCHORED_EMP` | Q outside 24±4 MeV/He with simultaneous heat + He |
+| 2 | EQ-OPEN-RAD-01 | `q_radiation.detector_ul_log10`, `BRANCHING_INCONSISTENT_WITH_UL` | γ UL violated under assumed branching |
+| 3 | EQ-OPEN-RATE-01 | `when.threshold_crossed`, `RATE_BUDGET_DOES_NOT_CLOSE` (two_body ref) | FGR rate below calorimetric floor under named path |
+| 4 | EQ-OPEN-MEV-01 | `q_mev_gap.energy_partition_mev.open_remainder` | Partition sums without OPEN remainder |
+| 5 | EQ-WHEN-DUTY-01 | `when.duty_cycle_s` | Integrated yield vs duty-cycle mismatch |
 
 ---
 

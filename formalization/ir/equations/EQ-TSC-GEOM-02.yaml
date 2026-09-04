@@ -1,0 +1,18 @@
+id: EQ-TSC-GEOM-02
+latex: "d_DD (FCC ~137 pm) != r_trap (25 pm)"
+symbols:
+  d_DD: "FCC spacing"
+  r_trap: "trapped_state separation"
+units: "pm"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - takahashi2016
+  - model_assumption_RR006
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.geom_neq_trap"
+notes: "Two hypotheses; label both. Does not close EQ-TSC-01."

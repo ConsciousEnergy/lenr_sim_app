@@ -519,6 +519,27 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [takahashi2026brief] Takahashi, A. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                4HTSC WS Fusion Theory in brief view (Weak-Strong protium channel; not Woods–Saxon). ResearchGate publication 412949900. Cited as literature context for the existing Takahashi TSC module; not implemented as a separate theory_id.
+              </Typography>
+              <MuiLink href="https://www.researchgate.net/publication/412949900_4HTSC_WS_Fusion_Theory_in_brief_view" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                ResearchGate 412949900
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                Application datasets and reviewer pack (v1)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Versioned JSON under <code>LENR_SIM_APP_v2/datasets/</code> (literature baselines, screening priors, Parkhomov curated subset, Q1–Q5 register, PRED-01…07). Smoke reviewer pack: <code>datasets/reviewer_packs/smoke/</code>. Guide: <code>LENR_SIM_APP_v2/docs/v0.3.6-beta/RESEARCHER_REVIEW_PACK.md</code>. Lean would-close-if IDs: <code>EQ-OPEN-EC-DEFICIT-01</code>, <code>EQ-OPEN-YIELD-BAND-01</code>; the five <code>EQ-OPEN-*</code> obligations remain OPEN.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [hagelstein2025] Hagelstein, P. L. (2025)
               </Typography>
               <Typography variant="body2" paragraph>

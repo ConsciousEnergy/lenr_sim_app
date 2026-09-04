@@ -23,6 +23,7 @@ const SLUG_TO_TITLE: Record<string, string> = {
   'issue-ledger': 'Issue Ledger',
   'testable-predictions': 'Testable Predictions',
   'reviewer-packets': 'Reviewer Packets',
+  'researcher-review-pack': 'Researcher Review Pack',
 };
 
 export default function DocViewerPage() {

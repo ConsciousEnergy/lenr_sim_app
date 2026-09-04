@@ -1,0 +1,18 @@
+id: EQ-TSC-STOP-01
+latex: "alpha dE/dx thermalization is a different MeV-gap than a 24 MeV photon"
+symbols:
+  dEdx: "stopping power"
+units: "MeV"
+tag: DEF
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.EnergyTransferMode"
+  - "LenrFormal.NBody.tscStoppingMode"
+  - "LenrFormal.NBody.radiativeTransferMode"
+notes: "Easier gap than prompt gamma; still needs OPEN remainder in the UI."

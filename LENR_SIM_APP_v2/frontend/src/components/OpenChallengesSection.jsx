@@ -1,9 +1,8 @@
 /**
  * OpenChallengesSection.jsx
  *
- * Section 5A: Open Theoretical Challenges in LENR.
- * MeV energy gap, radiation suppression, statistical feasibility.
- * Links to ISSUE_LEDGER, TESTABLE_PREDICTIONS, REVIEWER_PACKETS.
+ * Section 5A: when/how LENR occurs under named conditions (static fallback).
+ * Live virtual lab on Unified Results carries occurrence/when/how blocks.
  */
 
 import React from 'react';
@@ -22,7 +21,7 @@ import {
 
 /**
  * @param {Object} props
- * @param {boolean} [props.embedded] - When true, omits the section title (for use inside Accordion where title is in summary).
+ * @param {boolean} [props.embedded] - When true, omits the section title.
  */
 const OpenChallengesSection = ({ embedded = false }) => {
   const Wrapper = embedded ? Box : Paper;
@@ -36,25 +35,33 @@ const OpenChallengesSection = ({ embedded = false }) => {
       </Typography>
     )}
     <Typography variant="body2" paragraph>
-      Key open questions in LENR theory:
+      Occurrence under Miles-class conditions is empirically anchored in parts of the
+      corpus; the open questions are <strong>how</strong> MeV energy partitions,
+      <strong> how</strong> γ is suppressed, and <strong>when</strong> the rate budget
+      closes under a named mechanism path. See the live Open Questions Virtual Lab on
+      Unified Results for Oracle A/B determinations. Formal IDs{' '}
+      <code>EQ-OPEN-MEV-01</code>, <code>EQ-OPEN-RAD-01</code>,{' '}
+      <code>EQ-OPEN-RATE-01</code>, <code>EQ-OPEN-EC-01</code>, and{' '}
+      <code>EQ-OPEN-YIELD-01</code> remain <strong>OPEN</strong>.
+      Lean <code>OpenQuestionBounds</code> lemmas are would-close-if only.
     </Typography>
     <List dense>
       <ListItem>
         <ListItemText
-          primary="MeV energy gap"
+          primary="MeV energy gap (how)"
           secondary="Mechanism for distributing 23.8 MeV into lattice/electronic modes without single gamma emission remains debated."
         />
       </ListItem>
       <ListItem>
         <ListItemText
-          primary="Radiation suppression"
-          secondary="How LENR systems suppress dangerous radiation while releasing nuclear-scale energy."
+          primary="Radiation suppression (how)"
+          secondary="Detector UL and Γ_ph/Γ_γ open targets; assumed branching is scenario input, not derived."
         />
       </ListItem>
       <ListItem>
         <ListItemText
-          primary="Statistical feasibility"
-          secondary="Whether observed excess heat and transmutations are statistically distinguishable from background."
+          primary="Statistical feasibility (when)"
+          secondary="Whether the active FGR rate crosses the calorimetric floor under the selected hypothesis."
         />
       </ListItem>
     </List>
@@ -73,7 +80,18 @@ const OpenChallengesSection = ({ embedded = false }) => {
         <MuiLink href="/docs/reviewer-packets" component={Link} to="/docs/reviewer-packets">
           REVIEWER_PACKETS
         </MuiLink>
-        {' '}for the full mathematical audit and verification framework.
+        ,{' '}
+        <MuiLink
+          href="/docs/researcher-review-pack"
+          component={Link}
+          to="/docs/researcher-review-pack"
+        >
+          researcher review pack
+        </MuiLink>
+        , and application datasets{' '}
+        <code>LENR_SIM_APP_v2/datasets/</code>
+        {' '}for the full mathematical audit and verification framework. Extra
+        simulations are model outputs; they do not close these questions.
       </Typography>
     </Alert>
   </Wrapper>

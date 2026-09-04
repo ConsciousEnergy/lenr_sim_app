@@ -176,6 +176,19 @@ class ScaleState:
         }
         if self.mhd_params:
             d["mhd_parameters"] = self.mhd_params.to_dict()
+        continuum_claimed = self.level in (
+            ScaleLevel.MACRO,
+            ScaleLevel.BUBBLE,
+            ScaleLevel.SURFACE,
+        )
+        d["continuum_mhd_claimed"] = continuum_claimed
+        d["continuum_domain_valid"] = bool(self.L >= 1e-8)
+        d["hartmann_is_nuclear_enhancement"] = False
+        if self.level == ScaleLevel.NUCLEAR:
+            d["mhd_domain_note"] = (
+                "Ha/Rm at nuclear fm are outside the MHD continuum domain; "
+                "not claimed as a nuclear enhancement (EQ-SCALE-MHD-DOM-01)."
+            )
         return d
 
 
@@ -194,6 +207,13 @@ class MultiscaleBridgeResult:
             "dominant_physics": self.dominant_physics,
             "boundary_conditions_down": self.boundary_conditions_down,
             "source_terms_up": self.source_terms_up,
+            "coupling_kind": "mhd_to_mhd_cascade",
+            "qed_operator": "none",
+            "note": (
+                "This bridge is an MHD-to-MHD restriction/cascade (B ∝ 1/L², "
+                "assumed 80% upward efficiency). It is not a QED operator and "
+                "must not be multiplied as f_MHD × f_QED × f_pipe × f_bubble."
+            ),
         }
 
 

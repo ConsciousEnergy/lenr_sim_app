@@ -21,11 +21,20 @@ export { default as QEDVisualization } from './QEDVisualization';
 export { default as PhononNuclearPanel } from './PhononNuclearPanel';
 export { default as ThermodynamicsPanel } from './ThermodynamicsPanel';
 export { default as StatisticalAnalysisPanel } from './StatisticalAnalysisPanel';
+export { default as OpenQuestionsVirtualLab } from './OpenQuestionsVirtualLab';
+/** @deprecated Use OpenQuestionsVirtualLab */
+export { default as OpenQuestionsCockpit } from './OpenQuestionsVirtualLab';
 
 // Theory Testbed (v0.3.0)
 export { default as TheoryTogglePanel } from './TheoryTogglePanel';
 export { default as TheoryTestbedCard } from './TheoryTestbedCard';
 export { default as TheoryDocumentationPanel } from './TheoryDocumentationPanel';
+export { default as OpenQuestionsVirtualLab } from './OpenQuestionsVirtualLab';
+export { default as MechanismPathDiagram } from './MechanismPathDiagram';
+export { default as EnhancementWaterfallChart } from './EnhancementWaterfallChart';
+export { default as EnergyPartitionFlow } from './EnergyPartitionFlow';
+export { default as PredictionReadoutPanel } from './PredictionReadoutPanel';
+export { default as ScreeningProvenancePanel } from './ScreeningProvenancePanel';
 
 // Types
 export type { PhysicsParameter } from './PhysicsParameterInput';

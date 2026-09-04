@@ -1,0 +1,19 @@
+id: EQ-NAIVE-GN-01
+latex: "floor((1/2)^n) = 0 for n >= 1 in Nat"
+symbols:
+  g: "naive coupling < 1"
+  N: "phonon order"
+units: "dimensionless"
+tag: THM
+paper_ref: "§2.8.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/hagelstein_phonon.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - hagelstein2025
+lean_target: "LenrFormal.Phonon"
+lean_decls:
+  - "LenrFormal.Phonon.naiveHalfPowFloor"
+  - "LenrFormal.Phonon.naive_gN_fails_n1"
+  - "LenrFormal.Phonon.naive_gN_fails_n40"
+notes: "Naive independent multi-phonon pathway is negligible. Alias of EQ-PHONON-NAIVE-01."

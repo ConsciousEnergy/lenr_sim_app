@@ -37,8 +37,9 @@ docs/
 *.md
 !README.md
 
-# Frontend (not needed in backend image)
-frontend/
+# Frontend sources are required when building Dockerfile.frontend from this
+# context; Dockerfile.backend does not COPY them. Keep node_modules/ ignored
+# above so the frontend image still runs npm ci inside the builder stage.
 
 # OS
 .DS_Store

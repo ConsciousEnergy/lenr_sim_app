@@ -10,7 +10,7 @@ v0.3.1-beta: Added theory-graph, theory-scores, theory-comparison,
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import io
 
 from app.core.database import get_db_session
+from app.core.analytics_write_guard import require_analytics_write
 from app.services.analytics_service import AnalyticsService, get_analytics_service
 from app.utils.json_safe import to_json_safe
 
@@ -53,6 +54,10 @@ class ExperimentCreate(BaseModel):
     excess_heat_watts: Optional[float] = None
     duration_seconds: Optional[float] = None
     results: Optional[dict] = Field(default_factory=dict)
+    source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source (User Simulation, simulation_campaign, auto_persist).",
+    )
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -96,14 +101,25 @@ class TimelinePointsCreate(BaseModel):
 
 
 class StatsResponse(BaseModel):
-    """Response model for statistics."""
+    """Response model for statistics.
+
+    ``successRate`` is a completion-rate alias kept for older clients.
+    It is *not* a scientific-positive or LENR-validation rate.
+    """
     totalSimulations: int
     successRate: float
+    completionRate: float = 0.0
+    scientificPositiveRate: float = 0.0
     avgEnhancement: float
     totalEnergy: float
     maxEnhancement: float
     completedCount: int
     failedCount: int
+    outcomeCounts: Dict[str, int] = Field(default_factory=dict)
+    claimTierCounts: Dict[str, int] = Field(default_factory=dict)
+    openQuestionCounts: Dict[str, int] = Field(default_factory=dict)
+    openQuestionCountsCampaign: Dict[str, int] = Field(default_factory=dict)
+    sourceClassCounts: Dict[str, int] = Field(default_factory=dict)
 
 
 class ExperimentListResponse(BaseModel):
@@ -131,9 +147,9 @@ async def get_statistics(
 ):
     """
     Get aggregate statistics for the analytics dashboard.
-    
-    Returns total simulations, success rate, average enhancement factor,
-    and total energy output.
+
+    ``successRate`` is a completion-rate alias for older clients. Use
+    ``completionRate`` and ``scientificPositiveRate`` for honest labels.
     """
     service = get_analytics_service(db)
     stats = await service.get_statistics(
@@ -164,17 +180,36 @@ async def get_type_distribution(
 @router.get("/distribution/material")
 async def get_material_distribution(
     session_id: Optional[str] = Query(None),
+    include_baseline: bool = Query(True),
     db: AsyncSession = Depends(get_db_session),
 ):
     """Get distribution of materials used in experiments."""
     service = get_analytics_service(db)
-    return await service.get_material_distribution(session_id=session_id)
+    return await service.get_material_distribution(
+        session_id=session_id,
+        include_baseline=include_baseline,
+    )
+
+
+@router.get("/distribution/source")
+async def get_source_distribution(
+    session_id: Optional[str] = Query(None),
+    include_baseline: bool = Query(True),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Pie of Baseline / Campaign / Auto / User from SQL source flags."""
+    service = get_analytics_service(db)
+    return await service.get_source_distribution(
+        session_id=session_id,
+        include_baseline=include_baseline,
+    )
 
 
 @router.get("/distribution/temperature")
 async def get_temperature_distribution(
     session_id: Optional[str] = Query(None),
     bins: int = Query(10, ge=3, le=20),
+    include_baseline: bool = Query(True),
     db: AsyncSession = Depends(get_db_session),
 ):
     """Get temperature distribution for bar chart."""
@@ -182,6 +217,7 @@ async def get_temperature_distribution(
     return await service.get_temperature_distribution(
         session_id=session_id,
         bins=bins,
+        include_baseline=include_baseline,
     )
 
 
@@ -220,6 +256,10 @@ async def list_experiments(
     experiment_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     material: Optional[str] = Query(None),
+    source_class: Optional[str] = Query(
+        None,
+        description="Filter Baseline, Campaign, Auto, or User (additive).",
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     sort_by: str = Query("created_at"),
@@ -229,7 +269,10 @@ async def list_experiments(
     """
     Get paginated list of experiments with optional filtering.
     
-    Supports filtering by type, status, material, and pagination.
+    Supports filtering by type, status, material, source_class, and pagination.
+    Additive list fields: sourceClass, literatureId, meanFinalScore, topTheoryId,
+    enhancementSaturated, log10EnhancementRaw, excessHeatWatts.
+    sort_by=mean_final_score ranks by five-factor association, not P(LENR).
     """
     service = get_analytics_service(db)
     experiments, total = await service.get_experiments(
@@ -238,6 +281,7 @@ async def list_experiments(
         experiment_type=experiment_type,
         status=status,
         material=material,
+        source_class=source_class,
         limit=limit,
         offset=offset,
         sort_by=sort_by,
@@ -271,6 +315,7 @@ async def get_experiment(
 async def create_experiment(
     experiment: ExperimentCreate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """
     Create a new experiment record.
@@ -297,6 +342,7 @@ async def create_experiment(
         excess_heat_watts=experiment.excess_heat_watts,
         duration_seconds=experiment.duration_seconds,
         results=experiment.results,
+        source=experiment.source or "User Simulation",
     )
     
     return created
@@ -307,6 +353,7 @@ async def update_experiment(
     experiment_id: str,
     update: ExperimentUpdate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Update an existing experiment."""
     service = get_analytics_service(db)
@@ -326,6 +373,7 @@ async def update_experiment(
 async def delete_experiment(
     experiment_id: str,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Delete an experiment."""
     service = get_analytics_service(db)
@@ -363,6 +411,7 @@ async def add_timeline_points(
     experiment_id: str,
     data: TimelinePointsCreate,
     db: AsyncSession = Depends(get_db_session),
+    _: None = Depends(require_analytics_write),
 ):
     """Add timeline data points to an experiment."""
     service = get_analytics_service(db)
@@ -472,6 +521,14 @@ class TheoryConditions(BaseModel):
         default=None,
         description="List of theory_ids to include (None = all)",
     )
+    score_mode: str = Field(
+        default="five_factor",
+        description=(
+            "five_factor (default geometric mean) or "
+            "five_factor_plus_literature (opt-in literature likelihood). "
+            "Does not raise claim_tier."
+        ),
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -516,13 +573,39 @@ async def get_theory_graph():
     """
     Get the full theory relationship network graph.
 
-    Returns nodes (19 theories with properties, categories, predictions)
+    Returns nodes (theories with properties, categories, predictions)
     and edges (relationship types, shared properties, strength) for
     the D3 force-directed Relevance Map.
     """
     from app.physics_engine.theory_relationships import TheoryGraph
     graph = TheoryGraph()
     return graph.to_dict()
+
+
+@router.get("/theory-run-history")
+async def get_theory_run_history(
+    session_id: Optional[str] = Query(None),
+):
+    """
+    Aggregate persisted theory_runs into a Relevance Map overlay.
+
+    This is simulation-derived association, not empirical confidence.
+    Curated edge strength on /theory-graph is not modified.
+    """
+    from app.core.database import db_manager
+    from app.services.theory_run_history import (
+        aggregate_theory_run_history,
+        empty_theory_run_history,
+    )
+
+    if not db_manager._is_initialized:
+        return empty_theory_run_history()
+    try:
+        async with db_manager.session() as session:
+            return await aggregate_theory_run_history(session, session_id=session_id)
+    except Exception:
+        logger.exception("theory-run-history unavailable; returning empty overlay")
+        return empty_theory_run_history()
 
 
 @router.get("/theory-properties")
@@ -562,6 +645,7 @@ async def compute_theory_scores_endpoint(request: TheoryConditions):
         scores = compute_theory_scores(
             conditions=conditions,
             enabled_theories=request.enabled_theories,
+            score_mode=request.score_mode or "five_factor",
         )
     except Exception as exc:
         logger.exception("Error computing theory scores")
@@ -571,6 +655,8 @@ async def compute_theory_scores_endpoint(request: TheoryConditions):
         "conditions": conditions,
         "scores": scores,
         "n_theories": len(scores),
+        "score_mode": request.score_mode or "five_factor",
+        "claim_tiers_raised": False,
     }
 
 
@@ -720,6 +806,14 @@ class CoupledRunRequest(BaseModel):
         default=None,
         description="Per-theory configuration overrides keyed by theory_id",
     )
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
 
 
 @router.post("/theories/run-coupled")
@@ -781,7 +875,7 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
             "references": list(c.references),
         })
 
-    return {
+    payload = {
         "execution_order": result.enabled_theories,
         "contributions": contributions,
         "combined_enhancement": float(result.combined_enhancement),
@@ -790,6 +884,23 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
         "enriched_conditions": to_json_safe(result.conditions),
         "coupling_map": coupling_map,
     }
+    try:
+        from app.services.persist_runs import persist_theory_pipeline
+
+        persistence = await persist_theory_pipeline(
+            {
+                "conditions": conditions,
+                "enabled_theories": enabled,
+            },
+            result,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            payload["analytics_transparency"] = {"persistence": persistence}
+    except Exception:
+        logger.exception("coupled pipeline persist skipped")
+    return payload
 
 
 @router.get("/theories/coupling-graph")

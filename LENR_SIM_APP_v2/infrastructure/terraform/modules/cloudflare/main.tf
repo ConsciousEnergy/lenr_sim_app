@@ -65,14 +65,14 @@ provider "cloudflare" {
 resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = "lenr-sim-${var.environment}"
-  production_branch = "main"
+  production_branch = var.pages_production_branch
   
   source {
     type = "github"
     config {
       owner                         = var.github_owner
       repo_name                     = var.github_repo
-      production_branch             = "main"
+      production_branch             = var.pages_production_branch
       deployments_enabled           = true
       production_deployment_enabled = true
       preview_deployment_setting    = "all"
@@ -82,7 +82,7 @@ resource "cloudflare_pages_project" "frontend" {
   
   build_config {
     build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci && npm run build"
-    destination_dir     = "LENR_SIM_APP_v2/frontend/build"
+    destination_dir     = "LENR_SIM_APP_v2/frontend/dist"
     root_dir            = ""
     web_analytics_token = ""
   }
@@ -91,6 +91,7 @@ resource "cloudflare_pages_project" "frontend" {
     production {
       environment_variables = {
         REACT_APP_API_URL     = "https://api.${var.domain}"
+        VITE_API_URL          = "https://api.${var.domain}"
         REACT_APP_ENVIRONMENT = "production"
         NODE_ENV              = "production"
       }
@@ -99,8 +100,9 @@ resource "cloudflare_pages_project" "frontend" {
     preview {
       environment_variables = {
         REACT_APP_API_URL     = "https://api.${var.domain}"
+        VITE_API_URL          = "https://api.${var.domain}"
         REACT_APP_ENVIRONMENT = "preview"
-        NODE_ENV              = "development"
+        NODE_ENV              = "production"
       }
       compatibility_date = "2024-01-01"
     }

@@ -28,13 +28,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from scipy import constants as const
 
 from .config import SimulationConfig
 from .cross_sections import calculate_reaction_rate as _two_body_rate
+from app.physics_engine.many_body.fgr_model import (
+    GeometryMode,
+    MAX_COLLECTIVE_FACTOR,
+    collective_linear,
+    compute_fgr_volumetric_rate,
+    fcc_d_dd_m,
+    resolve_p_occ,
+    trap_separation_m as fgr_trap_separation_m,
+)
 
 KB = const.k
 E_CHARGE = const.e
@@ -43,10 +52,7 @@ ALPHA = const.alpha
 HBAR = const.hbar
 
 # Hard cap on the coherent many-body enhancement (model assumption, RR-006).
-# Distinct from the phenomenological tunneling band 10³–10⁵ (paper §2.8): this
-# caps linear coherent participation N, not the f_enhancement product.
-MAX_COLLECTIVE_FACTOR: float = 1e6
-# Default transient-cluster parameters (Takahashi TSC), used as UQ priors.
+# Defined in many_body.fgr_model; re-exported for backward compatibility.
 DEFAULT_TRAP_SEPARATION_M: float = 25e-12   # ~25 pm minimum approach in TSC
 DEFAULT_CLUSTER_LIFETIME_S: float = 1e-20   # collapse timescale
 DEFAULT_TRAP_NUCLEAR_RADIUS_M: float = 5e-15
@@ -129,16 +135,17 @@ def _gamow_penetration(config: SimulationConfig, separation_m: float) -> float:
 
 
 def _collective_factor(n_coherent: float) -> float:
-    """Bounded coherent participation factor (model assumption, RR-006).
+    """Bounded coherent participation factor (delegates to FGR library)."""
+    return collective_linear(n_coherent)
 
-    Implemented as a **linear** clamp ``min(N, MAX_COLLECTIVE_FACTOR)``, not N²
-    Dicke superradiance. Paper §5A.1 discusses N² as a hypothesis; this engine
-    intentionally uses the more conservative linear form until that claim is
-    evidenced. Cap is independent of the 10³–10⁵ tunneling-enhancement band.
-    """
-    if n_coherent <= 1.0:
-        return 1.0
-    return float(min(n_coherent, MAX_COLLECTIVE_FACTOR))
+
+def _resolve_trap_separation_m(
+    trap_separation_m: float,
+    geometry_mode: Optional[str],
+) -> float:
+    if geometry_mode in {GeometryMode.FCC_TETRAHEDRAL.value, GeometryMode.TRAP_25PM.value}:
+        return fgr_trap_separation_m(geometry_mode)
+    return float(trap_separation_m)
 
 
 def compute_two_body_rate(
@@ -164,26 +171,37 @@ def compute_trapped_state_rate(
     config: SimulationConfig,
     *,
     trap_separation_m: float = DEFAULT_TRAP_SEPARATION_M,
+    geometry_mode: Optional[str] = None,
     cluster_lifetime_s: float = DEFAULT_CLUSTER_LIFETIME_S,
     n_coherent: float = 1.0,
     fusion_probability: float = 1.0,
+    p4_occupation: Optional[float] = None,
 ) -> ReactionRateResult:
     """Trapped-state (TSC / Fermi-golden-rule) rate. Speculative claim tier.
 
-    Per-cluster rate ≈ ``p_barrier × fusion_probability / lifetime``. The
-    ``fusion_probability`` factor is the unresolved nuclear conversion /
-    optical-potential (MeV-gap) piece: default ``1.0`` preserves prior numerics
-    but makes the assumption visible in provenance and UQ (RR-011).
+    Uses shared FGR bookkeeping (EQ-NBODY-FGR-01). Default ``P_occ=1`` preserves
+    legacy numerics; pass ``p4_occupation`` or ``geometry_mode`` to explore rivals.
     """
     n_reactant = _reactant_number_density(config)
-    # Number density of transient clusters ~ paired reactant sites.
-    n_clusters = 0.5 * n_reactant
-    p_barrier = _gamow_penetration(config, trap_separation_m)
-    lifetime = max(cluster_lifetime_s, 1e-30)
-    f_nuc = float(np.clip(fusion_probability, 0.0, 1.0))
-    per_cluster_rate = p_barrier * f_nuc / lifetime
-    collective = _collective_factor(n_coherent)
-    rate = n_clusters * per_cluster_rate * collective
+    n_sites = 0.5 * n_reactant
+    sep = _resolve_trap_separation_m(trap_separation_m, geometry_mode)
+    if p4_occupation is not None:
+        p_occ, p_occ_model = resolve_p_occ(
+            config.loading_ratio, p4_occupation=p4_occupation
+        )
+    else:
+        p_occ, p_occ_model = 1.0, "unity_default"
+    p_barrier = _gamow_penetration(config, sep)
+    fgr = compute_fgr_volumetric_rate(
+        n_sites=n_sites,
+        p_occ=p_occ,
+        gamma_tun=p_barrier,
+        f_nuc=fusion_probability,
+        cluster_lifetime_s=cluster_lifetime_s,
+        n_coherent=n_coherent,
+    )
+    rate = fgr["rate_per_m3_s"]
+    collective = fgr["C_lin"]
     power_density = float(rate) * _DD_HE4_Q_J
     unphysical = 1.0 if power_density > MAX_PHYSICAL_POWER_DENSITY_W_M3 else 0.0
     return ReactionRateResult(
@@ -193,20 +211,26 @@ def compute_trapped_state_rate(
         collective_factor=collective,
         references=["takahashi2016", "floquetwkb2026"],
         provenance={
-            "trap_separation_m": float(trap_separation_m),
-            "cluster_lifetime_s": float(lifetime),
+            "trap_separation_m": float(sep),
+            "geometry_mode": geometry_mode or "trap_25pm_default",
+            "cluster_lifetime_s": float(fgr["cluster_lifetime_s"]),
             "barrier_penetration": float(p_barrier),
-            "fusion_probability": f_nuc,
-            "n_clusters_m3": float(n_clusters),
+            "fusion_probability": fgr["f_nuc"],
+            "P_occ": fgr["P_occ"],
+            "P_occ_model": 1.0 if p_occ_model == "unity_default" else 0.0,
+            "p_occ_model_id": p_occ_model,
+            "n_sites_m3": fgr["n_sites"],
             "n_coherent": float(n_coherent),
             "power_density_W_m3": power_density,
             "unphysical": unphysical,
+            "fgr_Gamma_tun": fgr["Gamma_tun"],
+            "fgr_C_lin": fgr["C_lin"],
         },
         notes=(
-            "Trapped-state rate evaluated at sub-pm separation (Takahashi TSC). "
-            "Speculative: magnitude depends strongly on trap separation prior. "
-            "fusion_probability defaults to 1.0 (MeV-gap / nuclear matrix element "
-            "unresolved — see MEV_GAP_HYPOTHESIS.md); propagate via UQ."
+            "Trapped-state FGR rate (EQ-NBODY-FGR-01). Speculative: magnitude "
+            "depends on trap geometry and occupation. fusion_probability defaults "
+            "to 1.0 (MeV-gap / nuclear matrix element unresolved). "
+            "P_occ defaults to 1.0 for backward compatibility."
         ),
     )
 
@@ -323,8 +347,10 @@ def compute_reaction_rate(
     mode: RateMode | str = RateMode.TWO_BODY,
     n_coherent: float = 1.0,
     trap_separation_m: float = DEFAULT_TRAP_SEPARATION_M,
+    geometry_mode: Optional[str] = None,
     cluster_lifetime_s: float = DEFAULT_CLUSTER_LIFETIME_S,
     fusion_probability: float = 1.0,
+    p4_occupation: Optional[float] = None,
     compression_ratio: float = DEFAULT_COMPRESSION_RATIO,
     proton_fraction: float = DEFAULT_PROTON_FRACTION,
     conversion_probability: float = DEFAULT_THREE_BODY_CONVERSION,
@@ -339,9 +365,11 @@ def compute_reaction_rate(
         return compute_trapped_state_rate(
             config,
             trap_separation_m=trap_separation_m,
+            geometry_mode=geometry_mode,
             cluster_lifetime_s=cluster_lifetime_s,
             n_coherent=n_coherent,
             fusion_probability=fusion_probability,
+            p4_occupation=p4_occupation,
         )
     if mode_value == RateMode.THREE_BODY.value:
         return compute_three_body_rate(
@@ -363,4 +391,6 @@ __all__ = [
     "compute_trapped_state_rate",
     "compute_three_body_rate",
     "MAX_COLLECTIVE_FACTOR",
+    "fcc_d_dd_m",
+    "GeometryMode",
 ]

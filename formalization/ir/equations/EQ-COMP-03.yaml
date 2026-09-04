@@ -1,0 +1,20 @@
+id: EQ-COMP-03
+latex: "combined_enhancement * peak_enhancement is not a physical observable; at cap = 1e10"
+symbols:
+  MAX_ENHANCEMENT_FACTOR: "1e5"
+units: "dimensionless"
+tag: THM
+paper_ref: "software composition; §2.8 band"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theory_pipeline.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md
+citation_keys:
+  - model_assumption_composition
+lean_target: "LenrFormal.Composition"
+lean_decls:
+  - "LenrFormal.Composition.illegal_engine_product_at_cap"
+  - "LenrFormal.Composition.illegal_product_exceeds_single_cap"
+adopted_value:
+  illegal_product_at_cap: 10000000000
+notes: "Illegal product of two already-capped engine totals."

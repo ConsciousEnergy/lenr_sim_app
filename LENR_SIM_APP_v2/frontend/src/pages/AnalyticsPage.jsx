@@ -35,6 +35,8 @@ import {
   FormControl,
   InputLabel,
   Slider,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -68,6 +70,8 @@ import {
 } from 'recharts';
 import { analyticsApi } from '../services/analyticsApi';
 import RelevanceMap from '../components/analytics/RelevanceMap';
+import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPanels';
+import AssociationRankPanel from '../components/analytics/AssociationRankPanel';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -125,6 +129,121 @@ const StatCard = ({ title, value, unit, icon: Icon, color, trend }) => {
   );
 };
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+const SOURCE_CHIP = {
+  simulation_campaign: { label: 'Campaign', color: 'info', variant: 'outlined' },
+  auto_persist: { label: 'Auto', color: 'secondary', variant: 'outlined' },
+};
+
+function experimentSourceChip(row) {
+  if (row.isBaseline) {
+    return { label: 'Baseline', color: 'primary', variant: 'filled', title: row.source || 'Published Research' };
+  }
+  const mapped = SOURCE_CHIP[row.source];
+  if (mapped) {
+    return { ...mapped, title: row.source };
+  }
+  return { label: 'User', color: 'default', variant: 'outlined', title: row.source || 'User Simulation' };
+}
+
+function ExperimentSourceChip({ row }) {
+  const chip = experimentSourceChip(row);
+  return (
+    <Tooltip title={chip.title}>
+      <Chip size="small" label={chip.label} color={chip.color} variant={chip.variant} />
+    </Tooltip>
+  );
+}
+
+function scoresFromOverlay(overlay) {
+  const scores = {};
+  Object.entries(overlay?.per_theory || {}).forEach(([tid, rec]) => {
+    const finalScore = rec.mean_final_score ?? rec.mean_score ?? 0;
+    scores[tid] = {
+      final_score: finalScore,
+      physical_consistency: rec.mean_physical_consistency ?? 0,
+      experimental_agreement: rec.mean_experimental_agreement ?? 0,
+      parameter_sensitivity: rec.mean_parameter_sensitivity ?? 0,
+      cross_theory_agreement: rec.mean_cross_theory_agreement ?? 0,
+      observables_completeness: rec.mean_observables_completeness ?? 0,
+      n: rec.n ?? rec.n_runs,
+      ci_lo: rec.ci_lo,
+      ci_hi: rec.ci_hi,
+      ci_method: rec.ci_method,
+      score_formula: rec.score_formula || overlay.score_formula,
+    };
+  });
+  return scores;
+}
+
+function formatAssociation(score) {
+  if (!Number.isFinite(score)) return '—';
+  return `${(score * 100).toFixed(0)}%`;
+}
+
+const ENHANCEMENT_CEILING = 1e5;
+
+function isEnhancementCapped(factor, saturated) {
+  if (saturated) return true;
+  return Number.isFinite(factor) && factor >= ENHANCEMENT_CEILING * (1 - 1e-9);
+}
+
+function formatEnhancement(factor, saturated, log10Raw) {
+  if (isEnhancementCapped(factor, saturated)) {
+    const rawHint = Number.isFinite(log10Raw)
+      ? ` Uncapped log10 ≈ ${Number(log10Raw).toFixed(2)}.`
+      : '';
+    return {
+      capped: true,
+      label: '≥1e5 (capped)',
+      title: `Governance ceiling 1e5, not a physical prediction.${rawHint}`,
+    };
+  }
+  if (!Number.isFinite(factor)) {
+    return { capped: false, label: '—', title: '' };
+  }
+  return { capped: false, label: `${factor.toFixed(2)}×`, title: '' };
+}
+
+function formatEnergyKev(value) {
+  if (!Number.isFinite(value)) return '—';
+  return value.toFixed(3);
+}
+
+function formatPowerWatts(value) {
+  if (!Number.isFinite(value)) return '—';
+  const abs = Math.abs(value);
+  if (abs !== 0 && (abs >= 1e4 || abs < 1e-3)) return value.toExponential(2);
+  return Number(value.toPrecision(4)).toString();
+}
+
+function formatCi(lo, hi) {
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
+  return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`;
+}
+
+function SqlChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload || {};
+  return (
+    <Paper sx={{ p: 1.25 }} elevation={3} data-testid="sql-chart-tooltip">
+      <Typography variant="caption" display="block">{label}</Typography>
+      <Typography variant="caption" display="block" sx={{ fontWeight: 600 }}>
+        {row.name}
+      </Typography>
+      {row.sourceClass && (
+        <Typography variant="caption" display="block">{row.sourceClass}</Typography>
+      )}
+      {payload.map((entry) => (
+        <Typography key={entry.dataKey} variant="caption" display="block">
+          {entry.name}: {Number(entry.value).toFixed(2)}
+        </Typography>
+      ))}
+    </Paper>
+  );
+}
+
 const AnalyticsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -145,43 +264,70 @@ const AnalyticsPage = () => {
   // Relevance Map state
   const [graphData, setGraphData] = useState(null);
   const [theoryScores, setTheoryScores] = useState(null);
+  const [campaignOverlay, setCampaignOverlay] = useState(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphError, setGraphError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedProperty, setSelectedProperty] = useState('');
   const [minScoreFilter, setMinScoreFilter] = useState(0);
   const [propertiesTaxonomy, setPropertiesTaxonomy] = useState({});
+  const [includeBaseline, setIncludeBaseline] = useState(true);
+  const [sourcePieData, setSourcePieData] = useState([]);
+  const [scoreMode, setScoreMode] = useState('live');
+  const [literatureScoreMode, setLiteratureScoreMode] = useState('five_factor');
+  const [historySortBy, setHistorySortBy] = useState('created_at');
+  const [historySourceClass, setHistorySourceClass] = useState('');
   
   // Load data from API with localStorage fallback
   const loadData = useCallback(async () => {
     setLoading(true);
+    const queryOpts = { includeBaseline };
     try {
       // Fetch all data in parallel
-      const [statsData, typeDistData, timelineData, experimentsData, tempDistData] = await Promise.all([
-        analyticsApi.getStats(),
-        analyticsApi.getTypeDistribution(),
-        analyticsApi.getTimeline({ limit: 30 }),
-        analyticsApi.getExperiments({ limit: rowsPerPage, offset: page * rowsPerPage }),
-        analyticsApi.getTemperatureDistribution(10),
+      const [statsData, typeDistData, timelineData, experimentsData, tempDistData, sourceDistData] = await Promise.all([
+        analyticsApi.getStats(queryOpts),
+        analyticsApi.getTypeDistribution(queryOpts),
+        analyticsApi.getTimeline({ limit: 30, ...queryOpts }),
+        analyticsApi.getExperiments({
+          limit: rowsPerPage,
+          offset: page * rowsPerPage,
+          sortBy: historySortBy,
+          sortOrder: 'desc',
+          sourceClass: historySourceClass || undefined,
+          ...queryOpts,
+        }),
+        analyticsApi.getTemperatureDistribution(10, queryOpts),
+        analyticsApi.getSourceDistribution(queryOpts),
       ]);
       
       // Update state with fetched data
       setStats({
         totalSimulations: statsData.totalSimulations || 0,
         successRate: statsData.successRate?.toFixed(1) || '0.0',
+        completionRate: (statsData.completionRate ?? statsData.successRate)?.toFixed(1) || '0.0',
+        scientificPositiveRate: statsData.scientificPositiveRate?.toFixed(1) || '0.0',
         avgEnhancement: statsData.avgEnhancement?.toFixed(2) || '0.00',
         totalEnergy: statsData.totalEnergy?.toFixed(2) || '0.00',
         maxEnhancement: statsData.maxEnhancement?.toFixed(2) || '0.00',
+        outcomeCounts: statsData.outcomeCounts || {},
+        claimTierCounts: statsData.claimTierCounts || {},
+        openQuestionCounts: statsData.openQuestionCounts || {},
+        openQuestionCountsCampaign: statsData.openQuestionCountsCampaign || {},
+        sourceClassCounts: statsData.sourceClassCounts || {},
       });
       
       setPieData(typeDistData || []);
+      setSourcePieData(sourceDistData || []);
       
-      // Transform timeline data for charts
-      setChartData(timelineData.map((item, i) => ({
+      // Transform timeline data for charts — date on X, full name in tooltip
+      setChartData((timelineData || []).map((item, i) => ({
         name: item.name || `Sim ${i + 1}`,
         enhancement: item.enhancementFactor || 0,
         energy: item.energyOutput || 0,
         date: item.date,
+        isBaseline: item.is_baseline || false,
+        source: item.source,
+        sourceClass: item.sourceClass,
       })));
       
       // Transform temperature distribution for bar chart
@@ -190,17 +336,25 @@ const AnalyticsPage = () => {
       // Transform experiments for table display
       const transformedExperiments = (experimentsData.experiments || []).map(exp => ({
         id: exp.id,
+        name: exp.name || 'Unnamed',
         type: exp.type || exp.experiment_type || 'Unknown',
         status: exp.status || 'completed',
         material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
         temperature: exp.temperature_k || 300,
         pressure: exp.pressure_bar || 1,
-        enhancementFactor: exp.enhancement_factor || 0,
+        enhancementFactor: exp.enhancement_factor,
         fusionRate: exp.fusion_rate || 0,
-        energyOutput: exp.energy_output_kev || 0,
+        energyOutput: exp.energy_output_kev,
+        excessHeatWatts: exp.excessHeatWatts ?? exp.excess_heat_watts,
+        enhancementSaturated: Boolean(exp.enhancementSaturated),
+        log10EnhancementRaw: exp.log10EnhancementRaw,
         timestamp: exp.created_at,
         isBaseline: exp.is_baseline || false,
         source: exp.source || 'User Simulation',
+        sourceClass: exp.sourceClass,
+        literatureId: exp.literatureId,
+        meanFinalScore: exp.meanFinalScore,
+        topTheoryId: exp.topTheoryId,
         parameters: exp.parameters || {},
       }));
       
@@ -220,16 +374,29 @@ const AnalyticsPage = () => {
           setSimulationHistory(localData);
           setTotalExperiments(localData.length);
           
-          // Calculate local stats
           if (localData.length > 0) {
+            const localStats = typeof analyticsApi.getLocalStats === 'function'
+              ? analyticsApi.getLocalStats()
+              : null;
             const completed = localData.filter(s => s.status === 'completed');
             setStats({
-              totalSimulations: localData.length,
-              successRate: ((completed.length / localData.length) * 100).toFixed(1),
-              avgEnhancement: completed.length > 0 
-                ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
-                : '0.00',
-              totalEnergy: completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              totalSimulations: localStats?.totalSimulations ?? localData.length,
+              successRate: Number(localStats?.successRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              completionRate: Number(localStats?.completionRate ?? ((completed.length / localData.length) * 100)).toFixed(1),
+              scientificPositiveRate: Number(localStats?.scientificPositiveRate ?? 0).toFixed(1),
+              avgEnhancement: localStats
+                ? Number(localStats.avgEnhancement || 0).toFixed(2)
+                : (completed.length > 0
+                  ? (completed.reduce((acc, s) => acc + (s.enhancementFactor || 0), 0) / completed.length).toFixed(2)
+                  : '0.00'),
+              totalEnergy: localStats
+                ? Number(localStats.totalEnergy || 0).toFixed(2)
+                : completed.reduce((acc, s) => acc + (s.energyOutput || 0), 0).toFixed(2),
+              outcomeCounts: localStats?.outcomeCounts || {},
+              claimTierCounts: localStats?.claimTierCounts || {},
+              openQuestionCounts: localStats?.openQuestionCounts || {},
+              openQuestionCountsCampaign: localStats?.openQuestionCountsCampaign || {},
+              sourceClassCounts: localStats?.sourceClassCounts || {},
             });
             
             // Build pie data from local
@@ -254,7 +421,7 @@ const AnalyticsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, includeBaseline, historySortBy, historySourceClass]);
   
   // Load data on mount and when pagination changes
   useEffect(() => {
@@ -263,37 +430,48 @@ const AnalyticsPage = () => {
 
   // Load theory graph data when Relevance Map tab is selected
   const loadTheoryGraph = useCallback(async () => {
-    if (graphData && theoryScores) return; // already loaded
     setGraphLoading(true);
     setGraphError(null);
     try {
-      const [graph, scoresResult, propsResult] = await Promise.all([
+      const [graph, propsResult, historyResult] = await Promise.all([
         analyticsApi.getTheoryGraph(),
-        analyticsApi.computeTheoryScores(),
         analyticsApi.getTheoryProperties(),
+        analyticsApi.getTheoryRunHistory().catch(() => null),
       ]);
       setGraphData(graph);
-      setTheoryScores(scoresResult?.scores || null);
       setPropertiesTaxonomy(propsResult?.properties || {});
+      setCampaignOverlay(historyResult);
+      if (historyResult?.n_runs > 0) {
+        setScoreMode('persisted_mean');
+        setTheoryScores(scoresFromOverlay(historyResult));
+      } else {
+        const scoresResult = await analyticsApi.computeTheoryScores();
+        setScoreMode('live');
+        setTheoryScores(scoresResult?.scores || null);
+      }
     } catch (err) {
       console.error('Failed to load theory graph:', err);
       setGraphError('Failed to load theory network. Is the backend running?');
     } finally {
       setGraphLoading(false);
     }
-  }, [graphData, theoryScores]);
+  }, []);
 
   const handleRunScores = useCallback(async (conditions) => {
     setGraphLoading(true);
     try {
-      const result = await analyticsApi.computeTheoryScores(conditions);
+      const result = await analyticsApi.computeTheoryScores({
+        ...(conditions || {}),
+        score_mode: literatureScoreMode,
+      });
+      setScoreMode('live');
       setTheoryScores(result?.scores || null);
     } catch (err) {
       console.error('Failed to compute scores:', err);
     } finally {
       setGraphLoading(false);
     }
-  }, []);
+  }, [literatureScoreMode]);
 
   // When tab changes to Relevance Map (index 3), load graph data
   useEffect(() => {
@@ -301,8 +479,6 @@ const AnalyticsPage = () => {
       loadTheoryGraph();
     }
   }, [activeTab, loadTheoryGraph]);
-  
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
   
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -343,9 +519,10 @@ const AnalyticsPage = () => {
     } catch (error) {
       console.error('CSV export error:', error);
       // Fallback to local export
-      const headers = ['ID', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (atm)', 'Enhancement Factor', 'Energy Output (keV)', 'Timestamp'];
+      const headers = ['ID', 'Name', 'Type', 'Status', 'Material', 'Temperature (K)', 'Pressure (bar)', 'Enhancement Factor', 'Energy Output (keV)', 'Timestamp'];
       const rows = simulationHistory.map(s => [
         s.id,
+        s.name || '',
         s.type,
         s.status,
         s.material,
@@ -453,25 +630,11 @@ const AnalyticsPage = () => {
     });
   }, [navigate]);
   
-  if (loading) {
+  if (loading && !stats) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <LinearProgress />
         <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading analytics...</Typography>
-      </Container>
-    );
-  }
-  
-  if (!simulationHistory.length) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <AlertTitle>No Simulation Data</AlertTitle>
-          Run some simulations first to see analytics data here. Visit the simulation pages to get started.
-        </Alert>
-        <Button variant="contained" href="/dashboard">
-          Go to Dashboard
-        </Button>
       </Container>
     );
   }
@@ -502,30 +665,64 @@ const AnalyticsPage = () => {
         </Box>
         <Typography variant="body1" color="text.secondary">
           Analyze simulation results, compare experiments, and export data.
-          {!isOffline && ' Includes baseline data from published LENR research.'}
+          Charts plot SQL <code>experiments</code> fields. Auto-saved runs are model outputs.
+        </Typography>
+        <FormControlLabel
+          sx={{ mt: 1 }}
+          control={
+            <Switch
+              checked={includeBaseline}
+              onChange={(event) => {
+                setIncludeBaseline(event.target.checked);
+                setPage(0);
+              }}
+              inputProps={{ 'aria-label': 'Include published literature baselines' }}
+              data-testid="include-baseline-toggle"
+            />
+          }
+          label="Include published literature baselines"
+        />
+        <Typography variant="caption" color="text.secondary" display="block">
+          Off hides literature seeds only. Campaign and auto-persist model outputs stay visible.
         </Typography>
       </Box>
       
+      {!simulationHistory.length && (
+        <Alert severity="info" sx={{ mb: 3 }} data-testid="analytics-empty-state">
+          <AlertTitle>No rows in this SQL filter</AlertTitle>
+          Turn published baselines on, run the Theory Testbed, or start a campaign to persist model-output rows.
+        </Alert>
+      )}
+      
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Total Simulations"
+            title="Total Records"
             value={stats?.totalSimulations || 0}
             icon={ScienceIcon}
             color={theme.palette.primary.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard
-            title="Success Rate"
-            value={stats?.successRate || 0}
+            title="Completion Rate"
+            value={stats?.completionRate || stats?.successRate || 0}
             unit="%"
             icon={TrendingUpIcon}
+            color={theme.palette.info.main}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Scientific-positive"
+            value={stats?.scientificPositiveRate || 0}
+            unit="%"
+            icon={AssessmentIcon}
             color={theme.palette.success.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Avg Enhancement"
             value={stats?.avgEnhancement || 0}
@@ -534,7 +731,7 @@ const AnalyticsPage = () => {
             color={theme.palette.warning.main}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatCard
             title="Total Energy Output"
             value={stats?.totalEnergy || 0}
@@ -544,6 +741,68 @@ const AnalyticsPage = () => {
           />
         </Grid>
       </Grid>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 3 }}
+        data-testid="completion-vs-scientific-note"
+      >
+        Completion rate is SQL/HTTP status (completed ÷ total). Scientific-positive is
+        excess heat &gt; 0 W only. Enhancement-only rows and the Google/ARPA-E null
+        seed count as null, not success. Neither card validates LENR.
+        Total records is the SQL row count (baseline + session + shared). Total energy
+        sums estimated <code>energy_output_kev</code> and is not a conserved physical total.
+        {stats?.outcomeCounts && Object.keys(stats.outcomeCounts).length > 0 && (
+          <> Outcome mix: positive {stats.outcomeCounts.positive || 0}, null {stats.outcomeCounts.null || 0}, inapplicable {stats.outcomeCounts.inapplicable || 0}, failed {stats.outcomeCounts.failed || 0}.</>
+        )}
+        {stats?.claimTierCounts && Object.keys(stats.claimTierCounts).length > 0 && (
+          <>
+            {' '}
+            Claim-tier histogram (popularity is not validation):{' '}
+            {Object.entries(stats.claimTierCounts)
+              .map(([tier, count]) => `${tier} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+        {stats?.openQuestionCounts && Object.keys(stats.openQuestionCounts).length > 0 && (
+          <>
+            {' '}
+            {Number(stats?.sourceClassCounts?.Campaign || 0) > 0
+              ? 'Open-question N on persisted rows (model rows, not closure)'
+              : 'Open-question tags on literature seeds (not a hydrated campaign)'}
+            {': '}
+            {Object.entries(stats.openQuestionCounts)
+              .map(([qid, count]) => `${qid} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+        {stats?.openQuestionCountsCampaign && Object.keys(stats.openQuestionCountsCampaign).length > 0 && (
+          <>
+            {' '}
+            Campaign-only N:{' '}
+            {Object.entries(stats.openQuestionCountsCampaign)
+              .map(([qid, count]) => `${qid} ${count}`)
+              .join(', ')}.
+          </>
+        )}
+      </Typography>
+      {stats?.openQuestionCounts && Object.keys(stats.openQuestionCounts).length > 0 && (
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}
+          data-testid="open-question-n-chips"
+        >
+          {Object.entries(stats.openQuestionCounts).map(([qid, count]) => (
+            <Chip
+              key={qid}
+              size="small"
+              variant="outlined"
+              label={`${qid} N=${count}`}
+            />
+          ))}
+        </Stack>
+      )}
       
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
@@ -558,71 +817,127 @@ const AnalyticsPage = () => {
       
       {/* Overview Tab */}
       <TabPanel value={activeTab} index={0}>
+        <Alert severity="info" sx={{ mb: 2 }} data-testid="model-output-disclaimer">
+          Auto-saved runs are <strong>model outputs</strong>, not laboratory experiments.
+          More simulations do not raise empirical claim tiers or close EQ-OPEN questions.
+        </Alert>
         <Grid container spacing={3}>
-          {/* Enhancement Factor Chart */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 3, height: 400 }}>
-              <Typography variant="h6" gutterBottom>Enhancement Factor Over Time</Typography>
-              <ResponsiveContainer width="100%" height="85%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <RechartsTooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement Factor" />
-                  <Line type="monotone" dataKey="energy" stroke="#82ca9d" name="Energy Output (keV)" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Paper>
+            <Stack spacing={2}>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="enhancement-sql-chart">
+                <Typography variant="h6" gutterBottom>Enhancement factor (SQL)</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  X-axis is created_at date. Experiment name is in the tooltip. Scale is enhancement ×, not keV.
+                </Typography>
+                <ResponsiveContainer width="100%" height="75%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" interval="preserveStartEnd" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      label={{ value: 'Enhancement (×)', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+                    />
+                    <RechartsTooltip content={<SqlChartTooltip />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="enhancement" stroke="#8884d8" name="Enhancement Factor" dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="energy-sql-chart">
+                <Typography variant="h6" gutterBottom>Energy output (SQL keV)</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  Separate scale from enhancement. A 2500 keV Taleyarkhan row must not flatten 5–85× factors.
+                </Typography>
+                <ResponsiveContainer width="100%" height="75%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" interval="preserveStartEnd" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      label={{ value: 'Energy (keV)', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+                    />
+                    <RechartsTooltip content={<SqlChartTooltip />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="energy" stroke="#82ca9d" name="Energy Output (keV)" dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Stack>
           </Grid>
           
-          {/* Type Distribution Pie Chart */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, height: 400 }}>
-              <Typography variant="h6" gutterBottom>Simulation Types</Typography>
-              <ResponsiveContainer width="100%" height="85%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={70}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip formatter={(value, name) => [`${value} simulations`, name]} />
-                  <Legend 
-                    layout="horizontal"
-                    verticalAlign="bottom"
-                    align="center"
-                    wrapperStyle={{ paddingTop: '10px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </Paper>
+            <Stack spacing={2}>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="experiment-type-pie">
+                <Typography variant="h6" gutterBottom>Stored experiment type</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  SQL <code>experiment_type</code> enum, not experiment identity.
+                </Typography>
+                <ResponsiveContainer width="100%" height="70%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value, name) => [`${value} rows`, name]} />
+                    <Legend 
+                      layout="horizontal"
+                      verticalAlign="bottom"
+                      align="center"
+                      wrapperStyle={{ paddingTop: '10px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+              <Paper sx={{ p: 3, height: 280 }} data-testid="source-class-pie">
+                <Typography variant="h6" gutterBottom>Source class</Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                  Baseline / Campaign / Auto / User from SQL source flags.
+                </Typography>
+                <ResponsiveContainer width="100%" height="70%">
+                  <PieChart>
+                    <Pie
+                      data={sourcePieData}
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {sourcePieData.map((entry, index) => (
+                        <Cell key={`source-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value, name) => [`${value} rows`, name]} />
+                    <Legend 
+                      layout="horizontal"
+                      verticalAlign="bottom"
+                      align="center"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Stack>
           </Grid>
           
-          {/* Temperature Distribution Bar Chart */}
           <Grid size={12}>
             <Paper sx={{ p: 3, height: 350 }}>
               <Typography variant="h6" gutterBottom>Temperature Distribution</Typography>
               <ResponsiveContainer width="100%" height="85%">
-                <BarChart data={temperatureData.length > 0 ? temperatureData : chartData}>
+                <BarChart data={temperatureData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey={temperatureData.length > 0 ? 'range' : 'name'} />
+                  <XAxis dataKey="range" />
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar 
-                    dataKey={temperatureData.length > 0 ? 'count' : 'temperature'} 
-                    fill="#8884d8" 
-                    name={temperatureData.length > 0 ? 'Experiment Count' : 'Temperature (K)'} 
-                  />
+                  <Bar dataKey="count" fill="#8884d8" name="Experiment Count" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -633,7 +948,7 @@ const AnalyticsPage = () => {
       {/* Simulation History Tab */}
       <TabPanel value={activeTab} index={1}>
         <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h6">Simulation History</Typography>
             <Stack direction="row" spacing={1}>
               <Button startIcon={<RefreshIcon />} onClick={handleRefresh}>
@@ -644,6 +959,57 @@ const AnalyticsPage = () => {
               </Button>
             </Stack>
           </Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 1 }}
+            data-testid="association-history-caption"
+          >
+            Model association % is five-factor GM × claim-tier, not a laboratory
+            probability that LENR occurs. Huge enhancement is not contribution
+            probability — values at 1e5 are the governance ceiling, not a
+            laboratory tunneling measurement. Energy (keV) is literature-seed
+            estimates; Power (W) is pipeline/excess heat. Units are not converted.
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}
+            data-testid="history-source-class-chips"
+          >
+            {['Campaign', 'Baseline', 'Auto', 'User'].map((label) => (
+              <Chip
+                key={label}
+                size="small"
+                label={label}
+                color={historySourceClass === label ? 'primary' : 'default'}
+                variant={historySourceClass === label ? 'filled' : 'outlined'}
+                onClick={() => {
+                  setPage(0);
+                  setHistorySourceClass((current) => (current === label ? '' : label));
+                }}
+                data-testid={`history-source-chip-${label.toLowerCase()}`}
+              />
+            ))}
+            <FormControl size="small" sx={{ minWidth: 180, ml: 1 }}>
+              <InputLabel id="history-sort-label">Sort</InputLabel>
+              <Select
+                labelId="history-sort-label"
+                label="Sort"
+                value={historySortBy}
+                onChange={(event) => {
+                  setPage(0);
+                  setHistorySortBy(event.target.value);
+                }}
+                data-testid="history-sort-select"
+              >
+                <MenuItem value="created_at">Date (newest)</MenuItem>
+                <MenuItem value="enhancement_factor">Enhancement</MenuItem>
+                <MenuItem value="mean_final_score">Model association %</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
           
           <TableContainer>
             <Table size="small">
@@ -662,13 +1028,20 @@ const AnalyticsPage = () => {
                       }}
                     />
                   </TableCell>
+                  <TableCell>Name</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Source</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Material</TableCell>
                   <TableCell align="right">Temp (K)</TableCell>
                   <TableCell align="right">Enhancement</TableCell>
+                  <TableCell align="right" data-testid="association-percent-header">
+                    Model association %
+                  </TableCell>
+                  <TableCell>Top theory</TableCell>
+                  <TableCell>Literature id</TableCell>
                   <TableCell align="right">Energy (keV)</TableCell>
+                  <TableCell align="right">Power (W)</TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
@@ -682,16 +1055,10 @@ const AnalyticsPage = () => {
                           onChange={() => handleSelectSimulation(row.id)}
                         />
                       </TableCell>
+                      <TableCell>{row.name || 'Unnamed'}</TableCell>
                       <TableCell>{row.type}</TableCell>
                       <TableCell>
-                        <Tooltip title={row.source || (row.isBaseline ? 'Published Research' : 'User Simulation')}>
-                          <Chip
-                            size="small"
-                            label={row.isBaseline ? 'Baseline' : 'User'}
-                            color={row.isBaseline ? 'primary' : 'default'}
-                            variant={row.isBaseline ? 'filled' : 'outlined'}
-                          />
-                        </Tooltip>
+                        <ExperimentSourceChip row={row} />
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -702,8 +1069,36 @@ const AnalyticsPage = () => {
                       </TableCell>
                       <TableCell>{row.material}</TableCell>
                       <TableCell align="right">{row.temperature?.toFixed(1) || 'N/A'}</TableCell>
-                      <TableCell align="right">{row.enhancementFactor?.toFixed(2) || '0.00'}×</TableCell>
-                      <TableCell align="right">{row.energyOutput?.toFixed(3) || '0.000'}</TableCell>
+                      <TableCell align="right">
+                        {(() => {
+                          const shown = formatEnhancement(
+                            row.enhancementFactor,
+                            row.enhancementSaturated,
+                            row.log10EnhancementRaw,
+                          );
+                          if (shown.capped) {
+                            return (
+                              <Tooltip title={shown.title}>
+                                <Chip
+                                  size="small"
+                                  label={shown.label}
+                                  data-testid="history-enhancement-capped"
+                                />
+                              </Tooltip>
+                            );
+                          }
+                          return shown.label;
+                        })()}
+                      </TableCell>
+                      <TableCell align="right">{formatAssociation(row.meanFinalScore)}</TableCell>
+                      <TableCell>{row.topTheoryId ? String(row.topTheoryId).replace(/_/g, ' ') : '—'}</TableCell>
+                      <TableCell>{row.literatureId || '—'}</TableCell>
+                      <TableCell align="right" data-testid="history-energy-kev">
+                        {formatEnergyKev(row.energyOutput)}
+                      </TableCell>
+                      <TableCell align="right" data-testid="history-power-watts">
+                        {formatPowerWatts(row.excessHeatWatts)}
+                      </TableCell>
                       <TableCell>{row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <Tooltip title="View Details">
@@ -752,8 +1147,8 @@ const AnalyticsPage = () => {
               return (
                 <Grid size={{ xs: 12, md: 6, lg: 3 }} key={id}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-                      {sim.type}
+                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+                      {sim.name || sim.type}
                     </Typography>
                     <Divider sx={{ my: 1 }} />
                     <Stack spacing={1}>
@@ -767,17 +1162,25 @@ const AnalyticsPage = () => {
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Pressure:</Typography>
-                        <Typography variant="body2">{sim.pressure.toFixed(2)} atm</Typography>
+                        <Typography variant="body2">{sim.pressure.toFixed(2)} bar</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Enhancement:</Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                          {sim.enhancementFactor.toFixed(2)}×
+                          {formatEnhancement(
+                            sim.enhancementFactor,
+                            sim.enhancementSaturated,
+                            sim.log10EnhancementRaw,
+                          ).label}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">Energy Output:</Typography>
-                        <Typography variant="body2">{sim.energyOutput.toFixed(3)} keV</Typography>
+                        <Typography variant="body2" color="text.secondary">Energy (keV):</Typography>
+                        <Typography variant="body2">{formatEnergyKev(sim.energyOutput)}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">Power (W):</Typography>
+                        <Typography variant="body2">{formatPowerWatts(sim.excessHeatWatts)}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">Fusion Rate:</Typography>
@@ -804,6 +1207,7 @@ const AnalyticsPage = () => {
       
       {/* Relevance Map Tab */}
       <TabPanel value={activeTab} index={3}>
+        <AssociationRankPanel overlay={campaignOverlay} />
         <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', lg: 'row' } }}>
           {/* Main graph area — 75% width with integrated detail panel */}
           <Box sx={{ flex: 3, minWidth: 0 }}>
@@ -853,21 +1257,88 @@ const AnalyticsPage = () => {
                     />
                   </Box>
                   <Button
-                    variant="contained"
+                    variant={scoreMode === 'live' ? 'contained' : 'outlined'}
                     size="small"
                     startIcon={<PlayArrowIcon />}
                     onClick={() => handleRunScores()}
                     disabled={graphLoading}
+                    data-testid="run-live-scores"
                   >
-                    Run Scores
+                    Run live scores
+                  </Button>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={literatureScoreMode === 'five_factor_plus_literature'}
+                        onChange={(event) => {
+                          setLiteratureScoreMode(
+                            event.target.checked
+                              ? 'five_factor_plus_literature'
+                              : 'five_factor'
+                          );
+                        }}
+                        inputProps={{ 'aria-label': 'Literature likelihood' }}
+                      />
+                    }
+                    label="Literature likelihood"
+                  />
+                  <Button
+                    variant={scoreMode === 'persisted_mean' ? 'contained' : 'outlined'}
+                    size="small"
+                    disabled={graphLoading || !(campaignOverlay?.n_runs > 0)}
+                    onClick={() => {
+                      if (campaignOverlay?.n_runs > 0) {
+                        setScoreMode('persisted_mean');
+                        setTheoryScores(scoresFromOverlay(campaignOverlay));
+                      }
+                    }}
+                    data-testid="use-persisted-scores"
+                  >
+                    Use SQL means
                   </Button>
                 </Stack>
               </Box>
               {/* Graph with integrated search, stats, detail panel */}
+              {campaignOverlay?.n_runs > 0 && (
+                <Alert severity="info" sx={{ mb: 1 }} data-testid="campaign-overlay-disclaimer">
+                  {scoreMode === 'persisted_mean'
+                    ? `Node size uses mean final_score from ${campaignOverlay.n_runs} persisted theory_runs (SQL).`
+                    : 'Live five-factor scores at stated conditions. SQL means are available via Use SQL means.'}
+                  {' '}This is model-output association, not empirical confidence. Curated
+                  edge strength is unchanged. SQL mean is not experimental confirmation.
+                </Alert>
+              )}
+              <Stack direction="row" spacing={0.5} sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
+                {campaignOverlay?.score_formula && (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={campaignOverlay.score_formula}
+                    data-testid="score-formula-chip"
+                  />
+                )}
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label="persisted sensitivity = 0.5 unless live"
+                  data-testid="sensitivity-note-chip"
+                />
+                {campaignOverlay?.n_runs > 0 && (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`N=${campaignOverlay.n_runs}`}
+                    data-testid="overlay-n-chip"
+                  />
+                )}
+              </Stack>
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <RelevanceMap
                   graphData={graphData}
                   scores={theoryScores}
+                  campaignOverlay={campaignOverlay}
+                  scoreMode={scoreMode}
                   loading={graphLoading}
                   error={graphError}
                   onNodeClick={(node) => {
@@ -889,7 +1360,22 @@ const AnalyticsPage = () => {
           {/* Right sidebar: Score cards (25%) */}
           <Box sx={{ flex: 1, minWidth: 260 }}>
             <Paper sx={{ p: 2, maxHeight: 720, overflow: 'auto' }}>
-              <Typography variant="h6" gutterBottom>Theory Scores</Typography>
+              <Typography variant="h6" gutterBottom>
+                Theory Scores
+                <Chip
+                  size="small"
+                  sx={{ ml: 1 }}
+                  label={scoreMode === 'persisted_mean' ? 'SQL mean' : 'Live'}
+                  data-testid="score-mode-chip"
+                />
+                <Chip
+                  size="small"
+                  sx={{ ml: 1 }}
+                  variant="outlined"
+                  label={literatureScoreMode}
+                  data-testid="live-score-mode-chip"
+                />
+              </Typography>
               {theoryScores ? (
                 Object.entries(theoryScores)
                   .sort(([, a], [, b]) => (b.final_score || 0) - (a.final_score || 0))
@@ -917,16 +1403,35 @@ const AnalyticsPage = () => {
                           <Chip label={`Phys: ${(s.physical_consistency * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
                           <Chip label={`Exp: ${(s.experimental_agreement * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
                           <Chip label={`Sens: ${(s.parameter_sensitivity * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+                          {Number.isFinite(s.n) && (
+                            <Chip
+                              label={`N=${s.n}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.6rem' }}
+                              data-testid={`score-n-${tid}`}
+                            />
+                          )}
+                          {formatCi(s.ci_lo, s.ci_hi) && (
+                            <Chip
+                              label={`CI ${formatCi(s.ci_lo, s.ci_hi)}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.6rem' }}
+                              data-testid={`score-ci-${tid}`}
+                            />
+                          )}
                         </Stack>
                       </CardContent>
                     </Card>
                   ))
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  {graphLoading ? 'Computing scores...' : 'Click "Run Scores" to compute theory rankings.'}
+                  {graphLoading ? 'Computing scores...' : 'Persisted SQL means appear after Theory Testbed or campaign runs. Click "Run live scores" for the heuristic at default conditions.'}
                 </Typography>
               )}
             </Paper>
+            <ReviewerAnalyticsPanels />
           </Box>
         </Box>
       </TabPanel>

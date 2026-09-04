@@ -384,6 +384,18 @@ class TestMultiscaleBridge:
         assert len(result.boundary_conditions_down) > 0
         assert len(result.source_terms_up) > 0
 
+    def test_bridge_to_dict_is_mhd_cascade_not_qed(self):
+        """Phase F: label the bridge as MHD-to-MHD; Ha at fm is not claimed."""
+        bridge = MultiscaleBridge()
+        payload = bridge.solve(nuclear_energy_W=1.0).to_dict()
+        assert payload["coupling_kind"] == "mhd_to_mhd_cascade"
+        assert payload["qed_operator"] == "none"
+        nuclear = payload["scales"]["NUCLEAR"]
+        assert nuclear["continuum_mhd_claimed"] is False
+        assert nuclear["hartmann_is_nuclear_enhancement"] is False
+        surface = payload["scales"]["SURFACE"]
+        assert surface["continuum_mhd_claimed"] is True
+
     def test_dominant_physics_not_empty(self):
         """Every scale should have a non-empty dominant physics label."""
         bridge = MultiscaleBridge()

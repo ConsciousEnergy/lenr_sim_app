@@ -102,6 +102,14 @@ Canonical: the `unified_lenr_model/` **package**. The legacy
 Phase 8 (RR-014) to avoid import breakage. No equations are unique to the
 monolith; it duplicates the package's Sections 2.1-2.8 implementations.
 
+## Formalization IR / Lean lock (2026-08-23)
+
+Machine-checkable equation IR now lives under `formalization/ir/equations/` (51 YAML rows, including five `EQ-OPEN-*` obligations plus `EQ-OPEN-EC-DEFICIT-01` / `EQ-OPEN-YIELD-BAND-01` would-close-if bookkeeping). Each row names a Lean module (`lean_target`) and at least one fully qualified declaration (`lean_decls`). `python formalization/scripts/check_ir.py` fails if a declared name is missing, if `LenrFormal.lean` does not import the module, or if a runtime `EQ-*` id in the v2 physics engine is unknown.
+
+Numeric anchors (`MAX_ENHANCEMENT_FACTOR`, Miles conversion, Q-value, trap separation, two-body \(\log_{10}N=-40\), Q4 meV deficit integers, Q5 integrated-yield band) are additionally locked by `tests/test_formalization/test_lean_python_agreement.py` and `formalization/scripts/diff_code_literals.py`. These gates certify *consistency*, not experimental truth. The five open obligations remain `OPEN`.
+
 ## Change log
 - 2026-06-04: Matrix created (Phase 0) with core equations and citation register.
 - 2026-06-04: Phase 2 verification log, composition audit, dual-model decision added.
+- 2026-08-23: Formalization IR/Lean lock — `lean_decls`, EQ-OPEN YAML, Lean↔Python numeric gates.
+- 2026-08-26: OpenQuestionBounds would-close-if lemmas; IR citation_keys on EQ-OPEN-*; Q4 deficit THM and Q5 yield-band DEF. Obligations remain OPEN.

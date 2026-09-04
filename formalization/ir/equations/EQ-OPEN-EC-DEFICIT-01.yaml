@@ -1,0 +1,23 @@
+id: EQ-OPEN-EC-DEFICIT-01
+latex: "E_{\\mathrm{EC}}/E_{\\mathrm{dl}} = 0.782\\,\\mathrm{MeV}/0.1\\,\\mathrm{eV} = 7.82\\times 10^{6}"
+symbols:
+  E_dl: "stated double-layer energy 0.1 eV (100 meV)"
+  E_EC: "electron-capture threshold 0.782 MeV"
+units: "millielectronvolt bookkeeping"
+tag: THM
+paper_ref: "§5A.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - widomlarsen2006
+  - tennfors2013
+  - paper_5A_4
+lean_target: "LenrFormal.OpenQuestionBounds"
+lean_decls:
+  - "LenrFormal.OpenQuestionBounds.doubleLayer_meV"
+  - "LenrFormal.OpenQuestionBounds.ecThreshold_meV"
+  - "LenrFormal.OpenQuestionBounds.q4_deficit_factor"
+  - "LenrFormal.OpenQuestionBounds.q4_double_layer_deficit"
+  - "LenrFormal.OpenQuestionBounds.q4_stated_numbers_do_not_close"
+notes: "Integer-scaled deficit under stated double-layer numbers. Does not discharge EQ-OPEN-EC-01. Widom–Larsen mass renormalization remains SPEC."

@@ -1,5 +1,127 @@
 # Verification Gate Report (v0.3.6-beta)
 
+## Public release readiness review (2026-08-31)
+
+Re-ran gates on product HEAD `d6be618` (`lenr_sim_app_v0.3.6-beta`). Specialist ledgers: [review-2026-08/](review-2026-08/). Synthesis: [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
+
+**Public cutover: NO-GO.** Pytest/npm/pip-audit/IR gates are green. Pages branch, GHCR `:latest`, live WordPress.com DNS, Traefik dashboard placeholder auth, and `/bubble-fusion` `1e13` chip fail the go-live rubric.
+
+### Version consistency
+- Markers: `config.py`, `frontend/package.json`, `version.js`, `Dockerfile.backend`
+- Result: all `0.3.6-beta`
+- Status: **PASS**
+
+### Backend security audit
+- Command: `pip-audit -r requirements.txt` with the `test.yml` ignore list
+- Result: `No known vulnerabilities found, 11 ignored`
+- Unfiltered: 11 findings in starlette 0.49.1, vtk 9.4.2, ecdsa 0.19.2 (accepted residual; no new IDs)
+- Status: **PASS** (residuals in `SECURITY_CI_HARDENING.md`)
+
+### Release-blocking science gates
+- V&V `test_physics_benchmark_gates.py`: **3 passed**
+- Experiment-anchored set: **52 passed**
+- Combined: **55 passed** (matches 08-23)
+- Status: **PASS**
+
+### Backend unit
+- Command: `pytest tests/ app/tests/` (coverage on)
+- Result: **1077 passed, 9 skipped**
+- Status: **PASS** (new recorded baseline)
+
+### Formalization
+- `check_ir.py`: IR 51, taxonomy 75, **PASS**
+- `diff_code_literals.py`: **PASS**
+- Local `lake build`: skipped (elan absent on this VM)
+- CI `formalization` job on `d6be618`: **success** (run `33132075488`, 2026-08-28), includes `lake build`
+- Status: **PASS** (CI is the lake oracle)
+
+### Frontend security / quality
+- `npm audit --audit-level=high` → **0 high/critical** (2 moderate `react-router`)
+- `npm run lint` → **0 errors**, 506 warnings (unchanged vs 08-23)
+- `npm test -- --watchAll=false --runInBand` → **210 passed** (32 suites; 08-23 was 201 / 30)
+- `CI=true npm run build` → **PASS**
+- Playwright: **25 passed, 2 failed**, not in `test.yml`
+- Status: **PASS** for Jest/lint/audit/build; **HOLD** for E2E-in-CI
+
+### Analytics honesty
+- `test_production_hardening.py` + honest-metrics + history-honesty + pack size lock: **20 passed**
+- Demo pack: 150 experiments / 132 theory_runs; `lenr_proved: false`
+- Status: **PASS**
+
+### Public deployment (Wave 2 snapshot)
+- Code/infra at review HEAD: **NOT READY** to apply as committed
+- Live Cloudflare/Hostinger cutover: **operator PENDING** and blocked on WordPress.com DNS
+- Science honesty at review HEAD: **NO-GO** until `/bubble-fusion` stops fabricating `1e13`
+
+## Wave 3 code cutover fixes (2026-08-31, same branch)
+
+Implemented confirmed code blockers on `consciousenergy/public-release-review-7a95`. Live DNS remains **NO-GO**.
+
+| Check | Result |
+|---|---|
+| SCI-001 bubble-fusion no `1e13` default | **PASS** — Jest `BubbleFusionPage.test.jsx`; UI chip `Enhancement: not provided` on local fallback |
+| Pages `production_branch` + `BUILD_VERSION=0.3.6-beta` | **PASS** in Terraform + `deploy.yml` |
+| Traefik dashboard / placeholder auth | **PASS** — dashboard off |
+| Dual Traefik CORS | **PASS** — `backend-cors` removed |
+| Playwright Chromium | **27 passed** in 35.1s; job `frontend-e2e` in `test.yml` |
+| Science + production-hardening quiet pytest | **64 passed** in 6.99s |
+| `CI=true npm run build` | **PASS** — `dist/` contains `_headers`, `_redirects`, `robots.txt` |
+
+### What this review did not discharge
+- `EQ-OPEN-MEV-01` … `EQ-OPEN-YIELD-01` remain OPEN (accepted residual)
+- FastAPI/Starlette majors, vtk via PyVista, React Router 7
+- Live `terraform apply` / Hostinger / GHAS enablement
+- `--preset full` / full `diverse`
+
+---
+
+## Public release readiness review (2026-08-23)
+
+### Version consistency
+- Markers: `config.py`, `frontend/package.json`, `version.js`, `Dockerfile.backend`
+- Result: all `0.3.6-beta`
+- Status: **PASS**
+
+### Backend security audit
+- Command: `pip-audit -r requirements.txt` with CI ignore list
+  (`PYSEC-2026-161`, `PYSEC-2026-248`, `PYSEC-2026-249`, `PYSEC-2026-2280`,
+  `PYSEC-2026-2281`, `PYSEC-2025-224`, `PYSEC-2025-225`, `PYSEC-2025-226`,
+  `PYSEC-2026-1325`)
+- Result: `No known vulnerabilities found, 11 ignored`
+- Status: **PASS** (residuals documented in `SECURITY_CI_HARDENING.md`)
+
+### Release-blocking science gates
+- Command: pytest on experiment-anchored gates, rate-engine API, reaction rate
+  engine, cavitation KGRP, shell-pairing prior, run-export, physics benchmark gates
+- Result: **55 passed**
+- Status: **PASS**
+
+### Frontend security / quality
+- `npm audit --audit-level=high` → **0 high/critical** (2 moderate `react-router`
+  advisories remain as documented residual; gate is high+)
+- `npm run lint` → **0 errors**, 506 warnings (legacy residual)
+- `npm test -- --watchAll=false --runInBand` → **201 passed** (30 suites)
+- `CI=true npm run build` → **PASS** (Vite `dist/`)
+- Status: **PASS**
+
+### Docker images
+- `Dockerfile.backend` → `lenr-sim-backend:0.3.6-beta` **PASS**
+- `Dockerfile.frontend` → `lenr-sim-frontend:0.3.6-beta` **PASS**
+  (fixes: Vite `dist/` path, `.npmrc` before `npm ci`, `.dockerignore` allows
+  `frontend/` sources)
+- Status: **PASS**
+
+### UX slice
+- Primary LENR theories **All** / **None** on `TheoryTogglePanel` (primary-scoped)
+- Unit tests: `TheoryTogglePanel.test.jsx` **3 passed**
+
+### Public deployment
+- Code/infra: READY
+- Live Cloudflare/Hostinger cutover: still **operator PENDING**
+  (`PUBLIC_DEPLOYMENT_TRACKER.md`)
+
+---
+
 ## Automated Checks
 
 ### Backend
@@ -287,3 +409,23 @@ branch after the changes.
   this slice; upgrading them is tracked as an operator follow-up because the
   starlette pin is coupled to the FastAPI version.
 - Status: **PASS WITH NOTES** (no new findings introduced)
+
+## Formal proof status (Lean consistency pilot)
+
+Sibling oracle to Wolfram numeric verification and pytest empirical gates.
+**Scope:** mathematical consistency of adopted `THM`/`DEF` identities — **not**
+a proof that LENR occurs or that §5A open problems are closed.
+
+- Taxonomy / audit: `docs/FORMALIZATION/CLAIM_TAXONOMY.md`, `MATH_AUDIT_2026.md`
+- Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`
+- Equation IR: `formalization/ir/equations/*.yaml`
+- Commands:
+  - `python formalization/scripts/check_ir.py`
+  - `python formalization/scripts/diff_code_literals.py`
+  - `cd formalization/lean && lake build`
+- CI job: `formalization` in `.github/workflows/test.yml`
+- Proved pilot IDs: EQ-RYD-01, EQ-FIELD-01, EQ-CAS-01/02, EQ-GAMOW-01,
+  EQ-ASSEN-DOM-01, EQ-COMP-01/02, EQ-QDD-01, EQ-MILES-CONV-01
+- Open obligations (unchanged): EQ-OPEN-MEV-01, EQ-OPEN-RAD-01, EQ-OPEN-RATE-01,
+  EQ-OPEN-EC-01, EQ-OPEN-YIELD-01
+- Status: **PASS** (local `lake build` + IR checks, 2026-08-22)

@@ -1,0 +1,23 @@
+id: EQ-OPEN-YIELD-01
+latex: "Q_5\\text{ closed} \\iff \\Delta N_{^4\\mathrm{He},\\mathrm{integrated}} = 0"
+symbols:
+  Delta_N_He4_integrated: "integrated He-4 yield discrepancy"
+units: "atoms (integer-scaled bookkeeping)"
+tag: OPEN
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+testable_prediction_ids:
+  - PRED-01
+  - PRED-05
+still_missing: "Time-resolved simultaneous heat + He; integrated W·hr yields 100-10000× low"
+lean_target: LenrFormal.OpenObligations
+lean_decls:
+  - "LenrFormal.OpenObligations.q5IntegratedYieldClosed"
+  - "LenrFormal.OpenObligations.positive_yield_discrepancy_implies_q5_not_closed"
+notes: "This obligation remains open. Instantaneous Miles EMP (~2×) is not integrated-yield closure. See EQ-OPEN-YIELD-BAND-01. ISSUE_LEDGER 'FIXED' means a paper section was written, not that this obligation is discharged."

@@ -1,0 +1,15 @@
+id: EQ-MECH-PATH-01
+latex: "\\text{mechanism path} \\in \\{\\mathrm{TSC}, \\mathrm{phonon}, \\mathrm{three\\text{-}body}\\}"
+symbols: {}
+units: "enum"
+tag: DEF
+paper_ref: "§5A"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.WhenHow"
+lean_decls:
+  - "LenrFormal.WhenHow.MechanismPath"
+notes: "Oracle B mechanism-path enum; posteriors are odds not nature theorems."

@@ -52,13 +52,16 @@ backend/app/physics_engine/
 ├── parkhomov_validation.py            Parkhomov (2018) transmutation lookup (v0.3.6-beta)
 ├── theory_pipeline.py                 Theory composition pipeline
 ├── theory_protocol.py                 Protocol that every theory module implements
-├── theories/                          21 theory modules (electron_screening, coherent_qed,
+├── theories/                          22 modules on disk; 21 registered by default
+│                                       (hydroton gated off; stellar_scaling_mhd in).
+│                                       electron_screening, coherent_qed,
 │                                       quantum_tunneling, bubble_mhd_confinement, casimir_confinement,
 │                                       hagelstein_phonon, kim_bec, widom_larsen, nae_model,
 │                                       takahashi_tsc, vysotskii_ccs, chubb_ion_band,
 │                                       iwamura_transmutation, piantelli_ni_h, matsumoto_enc,
-│                                       swartz_nanor, letts_laser, miles_heat_helium, hydroton,
-│                                       non_equilibrium_thermo, phonon_coupling_legacy)
+│                                       swartz_nanor, letts_laser, miles_heat_helium,
+│                                       non_equilibrium_thermo, phonon_coupling_legacy,
+│                                       stellar_scaling_mhd; hydroton.py exists but ENABLE_LEGACY_HYDROTON=false
 ├── mhd/                               MHD solvers (Hartmann flow, induction, multiscale bridge)
 │   ├── hartmann_flow.py               Hartmann / Shercliff / Hunt profile
 │   ├── mhd_induction_solver.py        Induction equation solver
@@ -84,7 +87,7 @@ backend/app/physics_engine/
 
 ## Frontend
 
-Entry point: `LENR_SIM_APP_v2/frontend/src/index.js`
+Entry point: `LENR_SIM_APP_v2/frontend/src/index.jsx`
 
 ### Pages (`frontend/src/pages/`)
 

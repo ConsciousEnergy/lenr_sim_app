@@ -1,0 +1,16 @@
+id: EQ-TSC-CH-01
+latex: "if two on-shell alphas then no primary gamma required"
+symbols:
+  channel: "4D to 2 alpha"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.2 / §5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.requiresPrimaryGamma"
+  - "LenrFormal.NBody.tsc_channel_kin"
+notes: "Conditional kinematics. Does not prove the channel occurs. Does not close EQ-OPEN-RAD-01."

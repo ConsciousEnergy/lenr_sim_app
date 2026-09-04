@@ -4,7 +4,7 @@ Database Seeding Script for LENR Simulation App
 Seeds the database with baseline LENR experiment data from published research.
 Idempotent - safe to run multiple times.
 
-v0.2.3-beta
+v0.3.6-beta
 
 Usage:
     cd backend
@@ -175,13 +175,24 @@ async def seed_timeline_data(session: AsyncSession) -> int:
     return points_created
 
 
-async def main(force: bool = False, skip_timeline: bool = False):
+async def hydrate_demo_pack(session: AsyncSession) -> dict:
+    """Import the committed q_campaign_demo pack (model outputs, not LENR proof)."""
+    from app.data.dataset_io import datasets_root
+    from app.services.reviewer_pack import import_pack_rows
+
+    pack_dir = datasets_root() / "reviewer_packs" / "q_campaign_demo"
+    logger.info("Hydrating demo pack from %s", pack_dir)
+    return await import_pack_rows(session, pack_dir)
+
+
+async def main(force: bool = False, skip_timeline: bool = False, hydrate_demo: bool = False):
     """
     Main seeding function.
     
     Args:
         force: If True, re-seed even if data exists
         skip_timeline: If True, skip timeline data seeding
+        hydrate_demo: If True, import q_campaign_demo after baselines
     """
     logger.info("Starting database seeding...")
     
@@ -205,6 +216,10 @@ async def main(force: bool = False, skip_timeline: bool = False):
             timeline_points = await seed_timeline_data(session)
         else:
             timeline_points = 0
+
+        pack_summary = None
+        if hydrate_demo:
+            pack_summary = await hydrate_demo_pack(session)
     
     # Close database
     await db_manager.close()
@@ -213,6 +228,17 @@ async def main(force: bool = False, skip_timeline: bool = False):
     logger.info("Seeding Summary:")
     logger.info(f"  Baseline experiments seeded: {experiments_seeded}")
     logger.info(f"  Timeline points seeded: {timeline_points}")
+    if pack_summary:
+        logger.info(
+            "  Demo pack experiments: %s inserted / %s updated",
+            pack_summary.get("experiments_inserted"),
+            pack_summary.get("experiments_updated"),
+        )
+        logger.info(
+            "  Demo pack theory_runs: %s inserted / %s updated",
+            pack_summary.get("theory_runs_inserted"),
+            pack_summary.get("theory_runs_updated"),
+        )
     logger.info("=" * 50)
     logger.info("Database seeding complete!")
 
@@ -231,7 +257,16 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip seeding timeline data"
     )
+    parser.add_argument(
+        "--hydrate-demo",
+        action="store_true",
+        help="Import datasets/reviewer_packs/q_campaign_demo after seeding (model outputs, 150 experiments / 132 theory_runs)",
+    )
     
     args = parser.parse_args()
     
-    asyncio.run(main(force=args.force, skip_timeline=args.skip_timeline))
+    asyncio.run(main(
+        force=args.force,
+        skip_timeline=args.skip_timeline,
+        hydrate_demo=args.hydrate_demo,
+    ))

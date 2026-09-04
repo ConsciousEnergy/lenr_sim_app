@@ -1,0 +1,18 @@
+id: EQ-PRED-02
+latex: "b_i \\in \\{\\text{screening}: 10^5, \\text{phonon}: 10^2, \\text{qed}: 2, \\text{compression}: 10^6, \\text{casimir}: 10^6, \\text{rydberg}: 10, \\text{loading}: 3\\}"
+symbols:
+  b_i: "per-mechanism physics bound before claim-tier clamp"
+units: "dimensionless"
+tag: AX
+paper_ref: "PHYSICS_EQUATION_VERIFICATION.md §9A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_mechanism_composition.py
+citation_keys:
+  - assenbaum1993
+  - mckubre2000
+  - model_assumption_RR001
+lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.mechanismPhysicsBound"
+  - "LenrFormal.Composition.respectsPhysicsBound"
+notes: "Bounds are literature/model caps distinct from MAX_ENHANCEMENT_FACTOR governance ceiling."

@@ -508,10 +508,52 @@ conditions are `10^12`, `10^6`, `10^8.7` and `10^6` respectively, with a combine
 raw total of `10^38.8`. Each mechanism now reports `value_raw`,
 `log10_value_raw` and `is_saturated` alongside the clamped display value.
 
+### 9A.4 Three-tier prediction separation (EQ-PRED-01)
+
+The bubble-lattice route now reports three distinct tiers in
+`enhancement_breakdown.prediction` (additive; flat mechanism keys unchanged):
+
+| Tier | Meaning | Falsification handle |
+|---|---|---|
+| `sensitivity_model` | Naive mechanism product (exploratory upper bound) | `total_log10` must exceed governed log10 at peak |
+| `physics_governed` | Grouped max-within-group composition (EQ-BBL-COMP-01) with per-mechanism physics bounds (EQ-PRED-02) | Group winners and bounded magnitudes are independently checkable |
+| `claim_tier_display` | `min(physics_governed, 1e5)` | Never exceeds `MAX_ENHANCEMENT_FACTOR`; labelled as governance ceiling |
+
+**Code:** `app/physics_engine/bubble_mechanism_composition.py`;
+wired in `app/api/routes/unified_simulation.py` via `_finalize_enhancement_breakdown`.
+
 **Verification note:** the `user-wolframalpha` MCP server was not available in this
 environment, so 9A.1 was checked by independent analytic evaluation of the adiabatic
 relation in-repo rather than against WolframAlpha. Re-run the Wolfram check when the
 server is reachable.
+
+### 9A.5 Calculated vs reporting bounds (EQ-BBL-LIM-01)
+
+Collapse limits now distinguish four quantities per observable:
+
+| Field | Meaning |
+|---|---|
+| `value_raw` | Adiabatic closed-form (or integrated peak) from the active solver |
+| `calculated_bound` / `calculated_bound_k` / `calculated_bound_pa` | Literature- or trajectory-derived upper bound |
+| `value` | Reported quantity: `min(value_raw, calculated_bound)` |
+| `is_saturated` | `value_raw` exceeds the calculated bound |
+
+**Temperature bound logic** (`collapse_calculated_bounds.py`):
+
+| Condition | Bound source |
+|---|---|
+| `peak_mach < 0.3`, Rayleigh-Plesset mode | Emission-band upper (1.5×10⁴ K), Flannigan & Suslick |
+| `peak_mach ≥ 0.3` or Keller-Miksis mode | Moss ion ceiling (2×10⁶ K) |
+
+**Pressure bound:** adiabatic value at the hard-core radius; capped at 10¹⁰ Pa only when
+the calculated value exceeds the sonoluminescence shock literature limit.
+
+**Code:** `build_reporting_limits()` in `app/physics_engine/collapse_calculated_bounds.py`;
+wired in `BubbleLatticeInteraction.simulate_collapse()`. Keller-Miksis is auto-selected
+when an initial Rayleigh-Plesset run reaches `peak_mach ≥ 0.3`; reported under
+`collapse_results.bubble_dynamics.bounds_solver_used`.
+
+**Status:** ✅ REFERENCE (literature-anchored bounds, not point predictions)
 
 ---
 
@@ -805,6 +847,37 @@ At peak conditions (`T = 1.16e6 K`, `P = 1e10 Pa`, `E = 1e14 V/m`, `CR = 1000`) 
 | **raw total** | **`log10 ~ 38.8`** | **`log10 = 13.42`** |
 | saturated mechanisms | 5 | 2 (screening, compression) |
 
+### 9C.14 Screening provenance contract
+
+The bubble-lattice route computes screening via `compute_screening_enhancement()`
+(`screening_kernel.py`). Three API surfaces carry related but distinct fields:
+
+| API field | Typical Pd-D default | Meaning |
+|---|---|---|
+| `mechanism_provenance.screening.screening_potential_ev` | 800 eV | Cited material potential (Assenbaum–Rolfs band) |
+| `mechanism_provenance.screening.thermal_energy_ev` | ~0.05 eV at collapse | 1.5 kT |
+| `mechanism_provenance.screening.log10_enhancement_raw` | ~10⁷ | True uncapped magnitude |
+| `enhancement_breakdown.screening` | 1e5 | Claim-tier display ceiling |
+| `saturation.mechanisms.screening.log10_value_raw` | matches provenance | Uncapped log₁₀ (not the capped breakdown input) |
+
+**Screening visibility FAQ — "Why do I see 1e5 and not U_e?"**
+
+At default Pd-D collapse, cited `U_e = 800 eV` ≫ thermal energy even at modest
+compression, so Salpeter validity is broken (`exceeds_adiabatic_limit: true`) and the
+enhancement saturates at the governance ceiling. This is **expected** — the calculation
+runs, but the UI must surface `U_e`, `E`, and `log10_enhancement_raw` via
+`ScreeningProvenancePanel`, not only the saturated `1e5`.
+
+**Dual-model note:** the theory pipeline's `electron_screening` module uses a
+Thomas-Fermi potential from `n_e` (~27 eV for Pd), while the bubble-lattice kernel uses
+the cited material range (800 eV). The kernel is canonical for the bubble route; the
+theory module is parallel and not combinable with it (see
+`THEORY_COMPOSITION_CONTRACT.md`).
+
+**Three-tier prediction cross-ref:** flat `enhancement_breakdown` keys remain
+claim-tier display values; read `enhancement_breakdown.prediction` for the
+sensitivity / physics-governed / claim-tier separation (EQ-PRED-01).
+
 ---
 
 ## 9D. Math-Accuracy Hardening Corrections (2026-08-10)
@@ -905,6 +978,49 @@ E_F = (ħ²/2m_e)(3π² n_e)^(2/3): Pd 6.1 eV (n_e=6.8e28), Ni 7.4 eV (9.1e28), 
 7. **Casimir domain**: at collapse pressures the strained lattice spacing is well
    below the 2 nm continuum floor, so the term is an extrapolation. This is now
    enforced and reported as `domain_valid = false` (§9C.5) rather than silent
+
+---
+
+## 12. Open-questions virtual lab identities (2026-08-22)
+
+WolframAlpha MCP was not available in this environment. Independents below use
+CODATA SI definitions (`scipy.constants`) and paper §5A.3 bookkeeping.
+
+### 12.1 Phonon order N = Q / ħω (EQ-PHONON-N-01)
+```
+N = 23.8e6 eV / 0.05 eV = 4.76e8
+```
+**Status:** VERIFIED (arithmetic)
+**Code:** `phononOrderN = 476000000` (`formalization/lean/LenrFormal/Phonon.lean`); Python `_phonon_order` uses 10 THz (N ~ 5.8e8)
+**Independent:** 23.8 MeV / 50 meV = 4.76e8. Paper §2.8.1 1 MeV / 50 meV = 2e7.
+
+### 12.2 Two-body event count (EQ-RATE-2B-NC-01)
+```
+log10 N_events = 23 + 12 + 5 - 80 = -40
+```
+**Status:** VERIFIED (paper §5A.3 bookkeeping)
+**Code:** `TWO_BODY_LOG10_N_EVENTS = -40` (`decision_oracle.py`)
+
+### 12.3 FCC d_DD vs trap (EQ-TSC-GEOM-01/02)
+```
+d_DD = a/(2√2); a_Pd = 3.89e-10 m ⇒ d_DD ≈ 1.375e-10 m = 137.5 pm ≠ 25 pm
+```
+**Status:** VERIFIED (geometry)
+**Code:** `open_questions._fcc_d_dd_m`; Lean `fcc_dDD_pm = 137`, `trapSep_pm = 25`
+
+### 12.4 TSC Q identity (EQ-TSC-Q-01)
+```
+47.6 MeV = 2 × 23.8 MeV
+```
+**Status:** VERIFIED
+**Code:** `q_4d_mev: 47.6` in `open_questions.py`; Lean `2 * 23800 = 47600`
+
+### 12.5 Heisenberg-Euler lab correction (EQ-QED-HE-NEG-01)
+```
+eps_eff - 1 ≈ 5.9e-13 at E = 1e14 V/m
+```
+**Status:** VERIFIED (see §9C.3)
+**Code:** `HEISENBERG_EULER_LAB_CORRECTION = 5.9e-13`
 
 ---
 

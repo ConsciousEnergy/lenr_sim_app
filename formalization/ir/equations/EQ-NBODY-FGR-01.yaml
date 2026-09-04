@@ -1,0 +1,17 @@
+id: EQ-NBODY-FGR-01
+latex: "R = n_sites P_4_corr Gamma_tun |V_nuc|^2 / hbar  (bookkeeping FGR)"
+symbols:
+  P_4_corr: "correlated occupation (OPEN)"
+units: "s^{-1}"
+tag: DEF
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.BookkeepingRatio"
+  - "LenrFormal.NBody.fgrRateBookkeeping"
+notes: "Bookkeeping Fermi golden rule. Occupation unconstrained."

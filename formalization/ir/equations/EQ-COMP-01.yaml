@@ -1,0 +1,21 @@
+id: EQ-COMP-01
+latex: "f_total = min( product_g max_{i in g}(f_i * c_i), 1e5 )"
+symbols:
+  f_total: "composed enhancement"
+  MAX_ENHANCEMENT_FACTOR: "1e5"
+units: "dimensionless"
+tag: THM
+paper_ref: "software composition; §2.8 band"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theory_pipeline.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/constants.py
+citation_keys:
+  - model_assumption_RR001
+lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.composeCapped"
+  - "LenrFormal.Composition.composeCapped_le_max"
+  - "LenrFormal.Composition.cap_value"
+adopted_value:
+  MAX_ENHANCEMENT_FACTOR: 100000
+notes: "grouped_max_confidence_product + cap."

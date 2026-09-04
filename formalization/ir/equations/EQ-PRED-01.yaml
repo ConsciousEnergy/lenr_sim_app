@@ -1,0 +1,19 @@
+id: EQ-PRED-01
+latex: "\\text{prediction} = \\{\\text{sensitivity\\_model}, \\text{physics\\_governed}, \\text{claim\\_tier\\_display}\\}"
+symbols:
+  sensitivity_model: "naive exploratory product (upper bound)"
+  physics_governed: "grouped composition with physics bounds"
+  claim_tier_display: "min(physics_governed, MAX_ENHANCEMENT_FACTOR)"
+units: "dimensionless"
+tag: DEF
+paper_ref: "RUBRIC_GOVERNANCE.md prediction tiers"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_mechanism_composition.py
+  - LENR_SIM_APP_v2/backend/app/api/routes/unified_simulation.py
+citation_keys:
+  - model_assumption_RR001
+lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.Prediction"
+  - "LenrFormal.Composition.bubblePrediction"
+notes: "Three-tier separation; flat breakdown keys remain claim-tier display values."

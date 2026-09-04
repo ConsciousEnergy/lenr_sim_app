@@ -7,7 +7,8 @@ import {
   Toolbar, 
   List, 
   Typography, 
-  Divider, 
+  Divider,
+  Link as MuiLink,
   IconButton,
   ListItemButton,
   ListItemIcon,
@@ -403,8 +404,25 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
           <Typography variant="caption" color="text.secondary" display="block">
             Version {APP_VERSION}
           </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            © 2025-2026 LENR Simulation App
+          </Typography>
           <Typography variant="caption" color="text.secondary">
-            © 2025 LENR Simulation App
+            GNU{' '}
+            <MuiLink
+              href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/lenr_sim_app_v0.3.6-beta/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer"
+              color="inherit"
+              underline="hover"
+            >
+              GPL-3.0
+            </MuiLink>
+            {' '}copyleft
+            {' · '}
+            <MuiLink component={Link} to="/privacy" color="inherit" underline="hover">
+              Privacy
+            </MuiLink>
           </Typography>
         </Box>
       </Drawer>

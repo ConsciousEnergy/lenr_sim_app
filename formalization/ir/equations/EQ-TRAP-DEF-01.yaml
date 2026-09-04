@@ -1,0 +1,17 @@
+id: EQ-TRAP-DEF-01
+latex: "R = n_cl P_WKB(r) f_nuc / tau * min(N, 1e6)"
+symbols:
+  r: "trap separation"
+  tau: "cluster lifetime"
+units: "m^{-3} s^{-1}"
+tag: DEF
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.BookkeepingRatio"
+  - "LenrFormal.NBody.trappedRateBookkeeping"
+notes: "Engine trapped_state formula. Not a 4-body Schrödinger problem."

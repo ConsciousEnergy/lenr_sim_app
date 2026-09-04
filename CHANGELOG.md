@@ -5,7 +5,165 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.3.6-beta] - 2026-04-18
+## [v0.3.6-beta] - 2026-08-31
+
+### Dependabot majors after slot refill (2026-09-02)
+- Closing skip PRs #135–#138 / #143 / #144 freed Dependabot's 5-PR-per-ecosystem slots. New PRs #147–#152 targeted `lenr_sim_app_v0.3.6-beta`, not `main`
+- Extra ignores so those majors do not refill: pip `prometheus-fastapi-instrumentator` major (v8 wants `starlette>=1`); npm `tailwindcss` 4, `react-router-dom` / `react-router` 7, `recharts` 3. Copy this `dependabot.yml` onto `main` again
+- Suggested take: #147 `asyncpg` 0.31.0 (already fully green); #151 `axios` 1.20.0 after remaining Python jobs; then `@dependabot rebase` #142 / #139+#140 / #141 onto #145
+- Suggested skip/close: #148 instrumentator 8, #149 Tailwind 4, #150 React Router 7, #152 Recharts 3
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
+### Dependabot weekly on beta + npm audit gate (2026-09-02)
+- After copying `dependabot.yml` to default `main` (#131), weekly PRs now target `lenr_sim_app_v0.3.6-beta` (#135–#144)
+- Frontend `npm audit --audit-level=high` was red on those PRs from lockfile pins, not the bumped packages: `browserslist` 4.28.6 (GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g) and `fast-uri` 3.1.5 (SSRF/host-confusion range through 3.1.5). Overrides now `browserslist` ^4.28.7 and `fast-uri` ^3.1.7
+- Extra Dependabot ignores: pip `pandas` major; `uvicorn` major+minor (keep 0.30.x patches until FastAPI/ASGI bump); npm `eslint` major, `@types/node` major, `react-markdown` major. Copy this `dependabot.yml` onto `main` again so GitHub honors the new ignores
+- Suggested take after this audit lands (rebase first): #142 `greenlet` 3.5.5, #139 `pydantic` 2.13.5 with #140 `pydantic-settings` 2.15.0, #141 `@playwright/test` 1.62.1
+- Suggested skip/close: #135 `react-markdown` 10, #136 `eslint` 10, #137 `@types/node` 26, #138 `pandas` 3, #143 `uvicorn` 0.52, #144 `@tanstack/react-query` (declared, unused in `src/`)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
+### Main Dependabot parity (2026-08-31)
+- Safe pins from main PRs #120/#122/#123/#127: `python-multipart` 0.0.32, `pytest-asyncio` 1.4.0, `alembic` 1.19.1, `posthog-js` ^1.422.2. Not physics runtime except multipart/alembic
+- Skipped failing or high-risk majors from #121/#124/#125/#126/#128/#129: Vite 8, `@vitejs/plugin-react` 6, MUI 9, Jest 30/RTL 16, `numba` 0.67, `psutil` 7. Stay on Vite 6.4.3, plugin-react 4.7.0, MUI 7, Jest 29, `numba` 0.60.0, `psutil` 6.1.0
+- Dependabot ignores those majors on the integration branch. GitHub still reads `dependabot.yml` from default `main` until this file is there. Create repo labels `dependencies`, `backend`, `frontend`, `ci`, `docker` or Dependabot cannot apply them
+- Do not merge main PRs #120–#129 into `main`. Close them after these pins exist on the ship line
+- Promotion merge to `main` must keep beta for Virtual Lab files deleted by #94/#95: `OpenQuestionsCharts.jsx`, `OpenQuestionsVirtualLab.jsx` + test, `prediction-waterfall.spec.js`, `EQ-BBL-COMP-01.yaml`, `EQ-BBL-LIM-01.yaml`, `EQ-PRED-01.yaml`, `EQ-PRED-02.yaml`, and resolve `ResultsPanel.jsx` with beta. Do not merge `main` into beta first (that imports the revert commits). When promoting, drop `target-branch` in `dependabot.yml` (or set it to `main`)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
+### Public release Wave 3 cutover fixes (2026-08-31)
+- `/bubble-fusion` no longer defaults missing enhancement to `1e13`; API mapping uses only finite fields; local fallback is a warning without fabricated fusion yield
+- Pages Terraform `production_branch` defaults to `lenr_sim_app_v0.3.6-beta`; preview `NODE_ENV=production`
+- `deploy.yml` runs on the ship branch, stamps `BUILD_VERSION=0.3.6-beta`, tags GHCR `0.3.6-beta` with a lowercase owner
+- Swarm image `ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta`; Traefik dashboard off; Traefik CORS middleware removed (FastAPI CORS remains)
+- `Dockerfile.backend` copies `datasets/`; frontend Docker defaults `VITE_API_URL` to `https://api.conscious.energy`
+- Pages `_headers` / `_redirects` / `robots.txt`; public `/privacy`; PostHog opt-out
+- Playwright `frontend-e2e` job; duplicate prediction readout removed; saturated `raw ≈ 10^` labels restored
+- Operator docs: production `/api/docs` expected **404**. `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
+### Public release review (2026-08-31)
+- Re-ran release gates vs the 2026-08-23 pack: science **55**, Jest **210** (was 201), lint 0/506, pip-audit 11 ignored, npm high=0. IR checkers PASS. CI `formalization`/`lake build` last green on `d6be618`
+- Verdict **NO-GO** for live cutover: Pages `production_branch=main`, `deploy.yml` stamps `BUILD_VERSION` from `github.ref_name` and only runs on `main`+tags, live DNS is WordPress.com, `/bubble-fusion` can show `1e13×`
+- Ledgers: `LENR_SIM_APP_v2/docs/v0.3.6-beta/review-2026-08/`. Synthesis: `PUBLIC_RELEASE_REVIEW_2026-08.md`. Tracker and `VERIFICATION_GATE_REPORT.md` updated
+- Wave 3 on the same review branch implements confirmed **code** blockers. Operator DNS / `terraform apply` stay operator-owned. `EQ-OPEN-*` stay OPEN; `lenr_proved` remains false
+
+### Theory testbed review History honesty (2026-08-27)
+- History shows `≥1e5 (capped)` when enhancement hits the governance ceiling; persist stores `results.enhancement_saturation` without changing the numeric column. Not a laboratory 10^5 tunneling measurement
+- Additive list fields: `enhancementSaturated`, `log10EnhancementRaw`, `excessHeatWatts`. Energy (keV) uses an em dash when `energy_output_kev` is null (no more `0.000`). Power (W) is pipeline/excess heat. Watts and keV are not converted
+- `persist_unified_simulation` copies pipeline watts when observables heat is 0. Bubble Auto may attach labeled Theory Testbed `pipeline_scores` / `literature_id` without multiplying into peak enhancement
+- Designed `testbed_review` campaign: one isolated cell per registered theory plus Miles / McKubre / ARPA-E full-pipeline cells (24 cells). Demo pack refreshed to 150 experiments / 132 theory_runs. Public History still grows via hydrate (`LENR_AUTO_PERSIST=0`)
+- Docs: `ANALYTICS_TRANSPARENCY.md` capped enhancement, keV vs W, bubble vs pipeline scores. `lenr_proved` false; `EQ-OPEN-*` stay OPEN
+
+### Analytics association rank (2026-08-27)
+- Additive experiment list fields: `sourceClass`, `literatureId`, `meanFinalScore`, `topTheoryId`. `sort_by=mean_final_score` and `source_class` filter. This is five-factor association, not P(LENR)
+- History: Model association % / top theory / literature id, sort control, source-class chips
+- Relevance Map **Model association rank** panel (N, CI, claim_tier, `is_empirical_confidence: false`). Overlay adds `ranked_theory_ids`
+- Designed `association_screen` campaign (Miles / McKubre / ARPA-E × 3 T × 2 loading, 18 cells). Demo pack refreshed to 126 experiments / 108 theory_runs. Do not run `full` / full `diverse` in CI
+- Unified Theory Save to Analytics attaches optional Theory Testbed `pipeline_scores` without multiplying into bubble enhancement
+- Theory Paper / Guide / markdown paper Author Contributions list Grok 4.6 and the xAI/Grok family
+
+### Public Analytics harden (2026-08-26)
+- Removed the Analytics seed-only CLI warning banner; seed vs campaign N stays in the caption
+- VPS deploy: `alembic upgrade head` then `seed_database --force --hydrate-demo` into Postgres. Do not write campaign rows into `literature_baselines.v1.json`
+- Swarm `LENR_AUTO_PERSIST=0`; production default is off unless the env flag is set
+- Production Analytics POST/PUT/DELETE require `X-LENR-Write-Token` (dedicated token or `SECRET_KEY`). GET/stats stay public
+- Production hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, and `/metrics`; boot fails without `LENR_SECRET_KEY`
+- Cloudflare Pages output is Vite `dist/`; set `VITE_API_URL` alongside `REACT_APP_API_URL`
+
+### Analytics pack hydrate (2026-08-26)
+- `import_reviewer_pack` upserts JSONL into SQL by id; refuses `lenr_proved` packs
+- Committed demo pack `datasets/reviewer_packs/q_campaign_demo/` (~107 experiments / 89 theory_runs). `seed_database --hydrate-demo` is the clone path to match cloud Analytics N
+- Additive stats: `sourceClassCounts`, `openQuestionCountsCampaign`. Seed-only banner when Campaign N is 0
+- “Include published literature baselines” no longer hides campaign/auto model outputs
+- Docs: clone ≠ 107; `LENR_SQLITE_PATH` must match the API
+
+### Q-anchored theory vs literature campaign (2026-08-26)
+- Persist campaign provenance on **successful** unified and theory-pipeline rows: `parameters_json` keys `campaign_preset`, `tag`, `literature_id`, `claim_tag`, `open_question_ids`; History name prefers `Campaign {tag}`
+- `literature_grid` cells are keyed by `literature_id` so Miles/Chubb are not collapsed into Fleischmann–Pons when T/loading match
+- Miles 1993 EMP seed (`miles-1993`) using in-app 1 W / 23.8 MeV / 2.63e11 He-4 s⁻¹ W⁻¹ handles; Q5 and Q2 tagged; `EQ-OPEN-*` stay OPEN
+- Designed `question_theories` preset: isolated theories at Q-relevant literature cells plus ARPA-E composition-group nulls (~20–45). Do not run `full` / full `diverse` in CI
+- `report_open_question_stress` CLI + smoke fixture; Analytics `openQuestionCounts` chips (model N, not closure)
+- Docs: `Q_THEORY_CAMPAIGN_2026-08-26.md`, researcher pack commands, Analytics transparency
+
+### Theory reviewer campaign: datasets, Analytics N/CI, Lean bounds (2026-08-26)
+- Versioned JSON datasets (`literature_baselines`, screening priors, Parkhomov curated, Q1–Q5 register, PRED-01…07) with Python loaders and stable baseline IDs
+- Campaign preset `literature_grid` (designed, not cartesian) plus `export_reviewer_pack` smoke fixture. Do not run `full` / full `diverse` in CI
+- Analytics Relevance Map: N, percentile CI, score-formula / sensitivity chips; wires existing parameter-sweep and validation-report APIs
+- Opt-in `score_mode=five_factor_plus_literature`; default five-factor GM unchanged; claim tiers are not auto-promoted
+- Lean `OpenQuestionBounds.lean`: would-close-if lemmas; Q4 millielectronvolt deficit THM; Q5 yield-band DEF. `EQ-OPEN-*` stay OPEN
+- Docs: `RESEARCHER_REVIEW_PACK.md`, architecture map 2026-08-26, paper §5.1 N honesty and §6.1 would-close-if note, ISSUE_LEDGER “section written ≠ obligation discharged”
+
+### Analytics SQL match, Relevance Map persisted scores, all-claims collection (2026-08-26)
+- Overview charts plot SQL `experiments` fields on separate enhancement (×) and energy (keV) axes; X-axis is `created_at` date with name/source in the tooltip
+- Cards: **Total Records** (SQL row count); keV sum labelled as estimated, not conserved; **Include published baselines** toggle; stored-type pie plus **Source class** pie
+- History **Name** column; Comparison/CSV pressure is **bar**, not atm
+- Persist attaches additive `final_score` (five-factor GM × claim-tier) beside guardrails `weighted_score`; persist uses `skip_sensitivity=True` (stored sensitivity 0.5). Relevance Map defaults to SQL means when `theory_runs` exist
+- `all_claims` campaign: 4 Pd-D cartesian + 2 occurrence-anchored cells + one unified run per registered theory. Coupled `/theories/run-coupled` now persists
+- Takahashi TSC citations add 2026 brief-view (`takahashi2026brief`); 4H/TSC WS is literature-only (Weak-Strong, not Woods–Saxon). No new theory_id. `EQ-OPEN-*` unchanged
+- Docs: `LENR_SIM_APP_v2/docs/v0.3.6-beta/ANALYTICS_TRANSPARENCY.md`
+
+### Honest analytics metrics and diverse campaign (2026-08-24)
+- Split Analytics Overview: **completion rate** (`completed/total`, still aliased as `successRate`) vs **scientific-positive** (`excess_heat_watts > 0`). Additive `outcomeCounts` and `claimTierCounts`
+- Persist true failures as `status=failed` (campaign try/except and UI true-fail paths)
+- `diverse` campaign preset: designed negative-control grid (~197 unified) plus one run per theory composition group; `python -m app.scripts.run_simulation_campaign --preset diverse`
+- Google/ARPA-E seed counts as scientific **null**; campaigns remain model outputs (`lenr_proved` false, EQ-OPEN-* unchanged)
+- Docs: `LENR_SIM_APP_v2/docs/v0.3.6-beta/ANALYTICS_TRANSPARENCY.md`
+
+### Simulation campaign persistence (2026-08-24)
+- Auto-persist `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run` into SQL (`experiments` + `theory_runs`) as **model outputs**
+- Analytics Overview / History include auto-persisted and campaign rows; Relevance Map overlay from `GET /api/analytics/theory-run-history` does **not** rewrite curated edge strength
+- Campaign CLI `python -m app.scripts.run_simulation_campaign` plus prediction registry `formalization/predictions/campaign_invariants.json` (EQ-OPEN-* stay OPEN; `lenr_proved` remains false)
+- Alembic `002` creates the `theory_runs` table; multi-physics results read `step_count` from `simulation_stats`
+
+### Dependency hygiene (2026-08-24)
+- `pytest-html` 4.1.1 → 4.2.0 (test-report plugin only; not a runtime physics dep)
+- Dependabot now targets `lenr_sim_app_v0.3.6-beta` and ignores NumPy/SciPy/websockets majors plus TypeScript/MUI/`@vitejs/plugin-react` majors until dedicated migrations. Stale CRA/`react-scripts` ignore removed.
+
+### Formalization accuracy pass (2026-08-23)
+- Lean: `CollapseBounds.lean` and `OpenObligations.lean`; missing DEF/THM declarations for bubble composition, prediction envelope, FGR/trap bookkeeping, sequential three-body, Bayes-factor definition, and trap lifetime. No `sorry`; no new axioms; `EQ-OPEN-*` remain undischarged
+- IR: every equation YAML now lists `lean_decls`; five `EQ-OPEN-*.yaml` obligation files; `check_ir.py` resolves Lean modules, imports, and runtime `EQ-*` identifiers
+- Numeric lock: Lean↔Python agreement tests plus generalized `diff_code_literals.py` (`code_symbols` optional bindings)
+- Virtual lab: Q4 electron-capture threshold and Q5 Miles expected-yield blocks are computed and still `OPEN`; mechanism-path diagram specs are wired from the backend
+- Docs: `FORMAL_PROOF_STATUS.md`, `CLAIM_TAXONOMY.md`, and `TRACEABILITY_MATRIX.md` updated; open-obligations table unchanged
+
+### Public release readiness review (2026-08-23)
+- Theory Testbed: primary-scoped **All** / **None** controls beside the glossary on
+  `TheoryTogglePanel` (preserves context-track selections; unit-tested)
+- Docker frontend image: copy Vite `dist/` (not CRA `build/`), include `.npmrc`
+  before `npm ci`, and stop excluding `frontend/` from the shared `.dockerignore`
+- Docs: root `CONTRIBUTING.md`, reframed `RELEASE_CHECKLIST.md` for v0.3.6-beta,
+  refreshed governance evidence pack; theoretical paper revision date synced
+- Release gates re-run: version markers aligned; pip-audit (documented ignores);
+  experiment-anchored science gates; frontend audit (high=0) / lint (0 errors) /
+  tests / production build; backend + frontend Docker images build locally
+
+### Open-questions virtual lab — when/how many-body pass (2026-08-23)
+- Reframe virtual lab from "whether" to **when/how** under named conditions: additive `occurrence`, `when`, `how` blocks on `lenr-open-questions-v1` (no envelope bump)
+- Unified Many-Body FGR library (`many_body/fgr_model.py`, `branching_model.py`); trapped_state rate refactored to shared EQ-NBODY-FGR-01 bookkeeping
+- Oracle B: `phonon_cascade` hypothesis, occurrence-anchored priors, status alphabet (`OCCURRENCE_ANCHORED_EMP`, `MECHANISM_PATH_*`, `THRESHOLD_*`, `BRANCHING_INCONSISTENT_WITH_UL`)
+- API: optional `duty_fraction`, `geometry_mode`, `stimulation` on `/simulate` and `/bubble-lattice`
+- Lean: `WhenHow.lean`, `Branching.lean`; IR `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`
+- UI: Oracle B panel, when/how rows, IVG, charts from API; `OpenQuestionsVirtualLab` component
+- Docs: `MANY_BODY_FGR_MODEL.md`, paper §5A reframe, TESTABLE_PREDICTIONS crosswalk
+
+### Open-questions virtual lab (2026-08-22)
+- Additive `open_questions` (`lenr-open-questions-v1`) on `/api/unified/simulate`, `/api/unified/bubble-lattice`, and `/api/physics/theories/run`: two-oracle determination (Lean identities + skeptical-prior odds), Q1–Q5 ledger with Q4/Q5 dimmed, three-engine composition (pipeline / bubble / legacy) with illegal-product pedagogy, n-body mode ledger, MHD-to-MHD cascade labels
+- Status alphabet includes `RATE_BUDGET_DOES_NOT_CLOSE`; never `LENR_PROVED` / `LENR_DISPROVED_AS_THEOREM`. `local_fallback` stays `INCONCLUSIVE` without EMP chips
+- Optional lab ingest (`excess_power_W`, `he4_atoms_per_s`, `sigma_Q_W`, γ UL, `p_4_occupation`) does **not** auto-flip `rate_mode`; `two_body` reference remains beside SPEC modes
+- Lean: phonon \(N\), naive \(g^N\) fails, two-body does-not-close, would-close-if, `EQ-COMP-03`, n-body geometry vs 25 pm trap, MHD domain, Heisenberg-Euler ≈1. `EQ-OPEN-*` rows unchanged. No version bump; `use_theory_pipeline` still defaults false; `oppenheimer_phillips` still unregistered
+- Unified Results `OpenQuestionsVirtualLab` (formerly cockpit; copyable Lean IDs, OPEN remainder charts). `OpenChallengesSection` remains the static paper fallback
+
+- Theory Guide timeline: Paneth–Peters (retracted), Tandberg (unproven), Miles EMP, acoustic environment, Letts EMP, Huang 2024 **contested EMP** (Scientific Reports editor's note + Fomitchev-Zamilov critique); Takahashi TSC stays **open SPEC**
+- Theory Paper §6.1 TSC labelled `speculative_exploratory`; §6.11 Letts EMP (not "showed" a controlled trigger)
+- Added `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md` living claim register; `EQ-HUANG-EMP-01` in claim taxonomy (no Lean theorem, not a TheoryModule)
+- Nested `React.lazy` of the bubble-lattice Three.js viz inside `VisualizationPanel` so the Unified Theory shell paints before the `three` chunk; Vite `preload-helper` is split out of `three` and `hoistTransitiveImports` is off so the page chunk does not statically import 700kB+ of Three.js
+- Drawer footer: © 2025-2026 plus GNU GPL-3.0 copyleft; ASCII `--` in `start_dev.bat` echo lines (OEM mojibake fix)
+
+### Formal math review + Lean consistency pilot (2026-08-22)
+- Added claim taxonomy, math audit, and formal proof status under `docs/FORMALIZATION/`
+- Added equation IR (`formalization/ir/`) with checker scripts linking paper ↔ code ↔ Lean
+- Added Lean 4 `LenrFormal` pilot theorems for adopted classical core (Casimir band, Gamow, Assenbaum domain, enhancement composition cap, Miles conversion, Rydberg)
+- Wired CI `formalization` job; extended verification gate report
+- Paper §6.1 documents mechanized consistency **non-claims** (does not assert LENR is proven)
 
 ### Unified Theory cycle clock (2026-08-17)
 

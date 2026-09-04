@@ -1,0 +1,15 @@
+id: EQ-TRAP-SEP-01
+latex: "r_trap = 25 pm"
+symbols:
+  r_trap: "assumed trap radius"
+units: "m"
+tag: AX
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.trapSep_pm"
+notes: "Input, not a derivation."

@@ -70,6 +70,8 @@ const MAX_NODE_RADIUS = 40;
 const RelevanceMap = ({
   graphData,
   scores,
+  campaignOverlay = null,
+  scoreMode = 'live',
   loading = false,
   error = null,
   onNodeClick,
@@ -108,7 +110,15 @@ const RelevanceMap = ({
     if (!rawNodes?.length) return { nodes: [], links: [], _nodeScoreMap: {} };
 
     const scoreMap: Record<string, number> = {};
-    if (scores) {
+    const campaignMap: Record<string, number> = {};
+    if (campaignOverlay?.per_theory) {
+      Object.entries(campaignOverlay.per_theory).forEach(([tid, rec]: [string, any]) => {
+        campaignMap[tid] = rec.mean_final_score ?? rec.mean_score ?? rec.mean_confidence ?? 0;
+      });
+    }
+    if (scoreMode === 'persisted_mean' && Object.keys(campaignMap).length > 0) {
+      Object.assign(scoreMap, campaignMap);
+    } else if (scores) {
       Object.entries(scores).forEach(([tid, s]: [string, any]) => {
         scoreMap[tid] = s.final_score ?? 0;
       });
@@ -140,6 +150,7 @@ const RelevanceMap = ({
         ...n,
         id: n.theory_id,
         score: scoreMap[n.theory_id] ?? 0,
+        campaignScore: campaignMap[n.theory_id] ?? null,
       }));
 
     const nodeIdSet = new Set(filteredNodes.map((n: any) => n.id));
@@ -148,7 +159,7 @@ const RelevanceMap = ({
       .map((e: any) => ({ ...e }));
 
     return { nodes: filteredNodes, links: filteredLinks, _nodeScoreMap: scoreMap };
-  }, [graphData, scores, selectedProperty, selectedCategory, minScore]);
+  }, [graphData, scores, campaignOverlay, scoreMode, selectedProperty, selectedCategory, minScore]);
 
   // Network stats
   const stats = useMemo(() => {
@@ -829,6 +840,14 @@ const RelevanceMap = ({
                     })}
                   </Stack>
                 </Box>
+              )}
+
+              {campaignOverlay?.per_theory?.[selectedNode.id] && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Campaign mean score:{' '}
+                  {(campaignOverlay.per_theory[selectedNode.id].mean_score * 100).toFixed(0)}%
+                  {' '}({campaignOverlay.per_theory[selectedNode.id].n} model runs; not empirical)
+                </Typography>
               )}
 
               <Divider sx={{ my: 1.5 }} />

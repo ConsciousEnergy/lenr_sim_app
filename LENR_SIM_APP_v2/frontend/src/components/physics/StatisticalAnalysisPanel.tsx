@@ -2,7 +2,7 @@
  * StatisticalAnalysisPanel Component
  */
 import React from 'react';
-import { Box, Typography, Paper, Chip, Stack, Divider } from '@mui/material';
+import { Box, Typography, Paper, Chip, Stack, Divider, Alert } from '@mui/material';
 
 interface StatisticalMetrics {
   mean: number;
@@ -45,6 +45,11 @@ const StatisticalAnalysisPanel: React.FC<StatisticalAnalysisPanelProps> = ({
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>Statistical Analysis</Typography>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        These zeros are a placeholder. This panel is not calorimetry SNR.
+        Use the Unified Results open-questions virtual lab (Q3 / Oracle B) for
+        rate-budget and next-measurement determinations.
+      </Alert>
       <Box sx={{ mb: 2 }}>
         <Stack direction="row" spacing={1}>
           <Chip label={"Samples: " + sampleCount} size="small" />

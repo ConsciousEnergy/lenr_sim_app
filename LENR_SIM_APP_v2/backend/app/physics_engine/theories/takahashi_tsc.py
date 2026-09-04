@@ -17,10 +17,20 @@ References
 ----------
 [1] Takahashi, A. (2004). "Deuteron cluster fusion and related nuclear
     reactions in metal-deuterium/hydrogen systems". Proc. ICCF-10, 809.
+    — takahashi2004
 [2] Takahashi, A. (2008). "TSC-induced nuclear reactions and cold
     transmutations". J. Condensed Matter Nucl. Sci. 1, 86-96.
+    — takahashi2008
 [3] Takahashi, A. (2013). "Nuclear Products of Cold Fusion by TSC Theory".
-    J. Condensed Matter Nucl. Sci. 12, 26-34.
+    J. Condensed Matter Nucl. Sci. 12, 26-34. — takahashi2013
+[4] Takahashi, A. (2014). "Physics of Cold Fusion by TSC Theory".
+    J. Condensed Matter Nucl. Sci. — takahashi2014
+[5] Takahashi, A. (2016). "Fundamental of Rate Theory for CMNS".
+    J. Condensed Matter Nucl. Sci. 19, 298-315. — takahashi2016
+[6] Takahashi, A. (2026). "4HTSC WS Fusion Theory in brief view".
+    ResearchGate 412949900. Weak-Strong (not Woods-Saxon) protium channel
+    is literature context; this module remains the 4D surrogate.
+    — takahashi2026brief
 """
 
 from __future__ import annotations
@@ -33,6 +43,11 @@ from scipy import constants as const
 
 from app.physics_engine.theory_protocol import TheoryContribution, TheoryMetadata
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.many_body.fgr_model import (
+    TETRAHEDRAL_SITE_FRACTION,
+    bernoulli_p4,
+    fcc_d_dd_m,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +65,6 @@ C = const.c
 # TSC specific constants
 Q_VALUE_4D_MEV = 47.6  # 4D -> 2He4 Q-value in MeV
 Q_VALUE_4D_J = Q_VALUE_4D_MEV * 1e6 * E_CHARGE
-TETRAHEDRAL_SITE_FRACTION = 0.25  # fraction of interstitial sites that are tetrahedral
 
 
 class TakahashiTSCTheory:
@@ -112,15 +126,11 @@ class TakahashiTSCTheory:
         coherence = config.get("coherence_factor", 1.0)
         a_lattice = config.get("lattice_constant_A", 3.89) * 1e-10  # -> metres
 
-        # Tetrahedral site geometry: D-D distance in tetrahedral void
-        # d_DD = a/(2√2) for FCC tetrahedral sites
-        d_DD = a_lattice / (2.0 * math.sqrt(2.0))
+        # Tetrahedral site geometry via shared FGR library (EQ-TSC-GEOM-01).
+        d_DD = fcc_d_dd_m(a_lattice)
 
-        # Occupation probability: probability that 4 deuterons occupy
-        # a single tetrahedral site simultaneously.
-        # P_4 ∝ loading^4 × tetrahedral_fraction
         site_fraction = TETRAHEDRAL_SITE_FRACTION if site_type == "tetrahedral" else 0.5
-        p_4_occupation = loading**4 * site_fraction
+        p_4_occupation = bernoulli_p4(loading, site_fraction)
 
         # 4-body Gamow factor: coherent tunnelling reduces the effective
         # barrier because the 4 deuterons share the Coulomb cost.
@@ -207,9 +217,12 @@ class TakahashiTSCTheory:
             is_applicable=True,
             confidence=confidence,
             references=[
-                "Takahashi A. (2004) Proc. ICCF-10, 809",
-                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86",
-                "Takahashi A. (2013) J. Condensed Matter Nucl. Sci. 12, 26",
+                "Takahashi A. (2004) Proc. ICCF-10, 809 — takahashi2004",
+                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86 — takahashi2008",
+                "Takahashi A. (2013) J. Condensed Matter Nucl. Sci. 12, 26 — takahashi2013",
+                "Takahashi A. (2014) Physics of Cold Fusion by TSC Theory — takahashi2014",
+                "Takahashi A. (2016) JCMNS 19, 298 — takahashi2016",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
         )
 
@@ -220,8 +233,10 @@ class TakahashiTSCTheory:
             description=self.description,
             configurable_parameters=self.configurable_parameters,
             references=[
-                "Takahashi A. (2004) Proc. ICCF-10, 809",
-                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86",
+                "Takahashi A. (2004) Proc. ICCF-10, 809 — takahashi2004",
+                "Takahashi A. (2008) J. Condensed Matter Nucl. Sci. 1, 86 — takahashi2008",
+                "Takahashi A. (2016) JCMNS 19, 298 — takahashi2016",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
             category="mechanism",
         )

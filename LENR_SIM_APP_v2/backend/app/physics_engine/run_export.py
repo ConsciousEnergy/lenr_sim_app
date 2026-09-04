@@ -102,6 +102,11 @@ def build_run_export(
         "seed": seed,
         "deterministic": seed is not None,
     }
+    oq = results.get("open_questions") if isinstance(results, dict) else None
+    if isinstance(oq, dict):
+        ids = list(oq.get("open_ids") or [])
+        if ids:
+            provenance["open_questions_ids"] = ids
     if extra_provenance:
         provenance.update(extra_provenance)
 

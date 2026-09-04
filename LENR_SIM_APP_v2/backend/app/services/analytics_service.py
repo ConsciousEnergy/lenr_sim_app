@@ -24,8 +24,85 @@ from app.models.database_models import (
     ExperimentStatus,
     MaterialType,
 )
+from app.services.simulation_persistence import (
+    SHARED_SOURCES,
+)
+from app.services.experiment_association import (
+    PYTHON_SORT_FIELDS,
+    classify_source_class,
+    enrich_experiment_dict,
+    sort_enriched_rows,
+    source_class_clause,
+)
+from app.services.scientific_outcomes import (
+    OUTCOME_FAILED,
+    OUTCOME_INAPPLICABLE,
+    OUTCOME_NULL,
+    OUTCOME_POSITIVE,
+    classify_experiment,
+    tally_claim_tiers_from_experiment,
+)
+from app.services.open_question_stress import tally_open_question_counts
 
 logger = logging.getLogger(__name__)
+
+
+def _visibility_clause(session_id: Optional[str], include_baseline: bool = True):
+    """Filter experiments visible on the dashboard.
+
+    Auto-persisted and campaign rows are shared model outputs (not user-session
+    private and not literature baselines). They remain visible when published
+    baselines are hidden so a researcher can still see campaign N.
+    """
+    if not session_id:
+        return None
+    shared = Experiment.source.in_(list(SHARED_SOURCES))
+    if not include_baseline:
+        return or_(
+            Experiment.session_id == session_id,
+            shared,
+        )
+    return or_(
+        Experiment.session_id == session_id,
+        Experiment.is_baseline == True,  # noqa: E712
+        shared,
+    )
+
+
+def _source_class_counts(experiments) -> Dict[str, int]:
+    counts: Dict[str, int] = defaultdict(int)
+    for experiment in experiments:
+        counts[
+            classify_source_class(
+                is_baseline=bool(experiment.is_baseline),
+                source=experiment.source,
+            )
+        ] += 1
+    return dict(counts)
+
+
+def _empty_stats() -> Dict[str, Any]:
+    return {
+        "totalSimulations": 0,
+        "successRate": 0.0,
+        "completionRate": 0.0,
+        "scientificPositiveRate": 0.0,
+        "avgEnhancement": 0.0,
+        "totalEnergy": 0.0,
+        "maxEnhancement": 0.0,
+        "completedCount": 0,
+        "failedCount": 0,
+        "outcomeCounts": {
+            OUTCOME_POSITIVE: 0,
+            OUTCOME_NULL: 0,
+            OUTCOME_INAPPLICABLE: 0,
+            OUTCOME_FAILED: 0,
+        },
+        "claimTierCounts": {},
+        "openQuestionCounts": {},
+        "openQuestionCountsCampaign": {},
+        "sourceClassCounts": {},
+    }
 
 
 class AnalyticsService:
@@ -67,16 +144,9 @@ class AnalyticsService:
         query = select(Experiment)
         
         filters = []
-        if session_id and not include_baseline:
-            filters.append(Experiment.session_id == session_id)
-        elif session_id:
-            # Include user's experiments AND baseline
-            filters.append(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            filters.append(visibility)
         
         if filters:
             query = query.where(and_(*filters))
@@ -85,15 +155,7 @@ class AnalyticsService:
         experiments = result.scalars().all()
         
         if not experiments:
-            return {
-                "totalSimulations": 0,
-                "successRate": 0.0,
-                "avgEnhancement": 0.0,
-                "totalEnergy": 0.0,
-                "maxEnhancement": 0.0,
-                "completedCount": 0,
-                "failedCount": 0,
-            }
+            return _empty_stats()
         
         total = len(experiments)
         completed = sum(1 for e in experiments if e.status == ExperimentStatus.COMPLETED.value)
@@ -112,16 +174,53 @@ class AnalyticsService:
         max_enhancement = max(enhancement_values) if enhancement_values else 0.0
         total_energy = sum(energy_values) if energy_values else 0.0
         
-        success_rate = (completed / total * 100) if total > 0 else 0.0
+        completion_rate = (completed / total * 100) if total > 0 else 0.0
+
+        outcome_counts = {
+            OUTCOME_POSITIVE: 0,
+            OUTCOME_NULL: 0,
+            OUTCOME_INAPPLICABLE: 0,
+            OUTCOME_FAILED: 0,
+        }
+        claim_tier_counts: Dict[str, int] = {}
+        for experiment in experiments:
+            outcome = classify_experiment(experiment)
+            outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
+            for tier, count in tally_claim_tiers_from_experiment(experiment).items():
+                claim_tier_counts[tier] = claim_tier_counts.get(tier, 0) + count
+        open_question_counts = tally_open_question_counts(experiments)
+        campaign_rows = [
+            experiment
+            for experiment in experiments
+            if classify_source_class(
+                is_baseline=bool(experiment.is_baseline),
+                source=experiment.source,
+            )
+            == "Campaign"
+        ]
+        open_question_counts_campaign = tally_open_question_counts(campaign_rows)
+        source_class_counts = _source_class_counts(experiments)
+
+        scientific_positive_rate = (
+            (outcome_counts[OUTCOME_POSITIVE] / total * 100) if total > 0 else 0.0
+        )
         
         return {
             "totalSimulations": total,
-            "successRate": round(success_rate, 1),
+            # successRate is a historical alias for completion — not LENR validation.
+            "successRate": round(completion_rate, 1),
+            "completionRate": round(completion_rate, 1),
+            "scientificPositiveRate": round(scientific_positive_rate, 1),
             "avgEnhancement": round(avg_enhancement, 2),
             "totalEnergy": round(total_energy, 2),
             "maxEnhancement": round(max_enhancement, 2),
             "completedCount": completed,
             "failedCount": failed,
+            "outcomeCounts": outcome_counts,
+            "claimTierCounts": claim_tier_counts,
+            "openQuestionCounts": open_question_counts,
+            "openQuestionCountsCampaign": open_question_counts_campaign,
+            "sourceClassCounts": source_class_counts,
         }
     
     async def get_type_distribution(
@@ -139,16 +238,10 @@ class AnalyticsService:
             Experiment.experiment_type,
             func.count(Experiment.id).label('count')
         ).group_by(Experiment.experiment_type)
-        
-        if session_id and not include_baseline:
-            query = query.where(Experiment.session_id == session_id)
-        elif session_id:
-            query = query.where(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            query = query.where(visibility)
         
         result = await self.session.execute(query)
         rows = result.all()
@@ -180,6 +273,7 @@ class AnalyticsService:
     async def get_material_distribution(
         self,
         session_id: Optional[str] = None,
+        include_baseline: bool = True,
     ) -> List[Dict[str, Any]]:
         """Get distribution of materials used."""
         query = select(
@@ -187,13 +281,9 @@ class AnalyticsService:
             func.count(Experiment.id).label('count')
         ).group_by(Experiment.material)
         
-        if session_id:
-            query = query.where(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            query = query.where(visibility)
         
         result = await self.session.execute(query)
         rows = result.all()
@@ -225,16 +315,9 @@ class AnalyticsService:
         Returns experiments sorted by date with enhancement and energy values.
         """
         query = select(Experiment).order_by(desc(Experiment.created_at)).limit(limit)
-        
-        if session_id and not include_baseline:
-            query = query.where(Experiment.session_id == session_id)
-        elif session_id:
-            query = query.where(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            query = query.where(visibility)
         
         result = await self.session.execute(query)
         experiments = result.scalars().all()
@@ -250,14 +333,56 @@ class AnalyticsService:
                 "energyOutput": e.energy_output_kev or 0,
                 "type": e.experiment_type,
                 "status": e.status,
+                "is_baseline": bool(e.is_baseline),
+                "source": e.source,
+                "sourceClass": classify_source_class(
+                    is_baseline=bool(e.is_baseline),
+                    source=e.source,
+                ),
             }
             for e in experiments
         ]
+
+    async def get_source_distribution(
+        self,
+        session_id: Optional[str] = None,
+        include_baseline: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """Pie of Baseline / Campaign / Auto / User from SQL source flags."""
+        query = select(Experiment)
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            query = query.where(visibility)
+
+        result = await self.session.execute(query)
+        experiments = result.scalars().all()
+        counts: Dict[str, int] = defaultdict(int)
+        for experiment in experiments:
+            counts[
+                classify_source_class(
+                    is_baseline=bool(experiment.is_baseline),
+                    source=experiment.source,
+                )
+            ] += 1
+        total = sum(counts.values())
+        return sorted(
+            [
+                {
+                    "name": name,
+                    "value": value,
+                    "percentage": round((value / total * 100) if total else 0.0, 1),
+                }
+                for name, value in counts.items()
+            ],
+            key=lambda row: row["value"],
+            reverse=True,
+        )
     
     async def get_temperature_distribution(
         self,
         session_id: Optional[str] = None,
         bins: int = 10,
+        include_baseline: bool = True,
     ) -> List[Dict[str, Any]]:
         """
         Get temperature distribution for bar chart.
@@ -265,14 +390,9 @@ class AnalyticsService:
         Bins temperatures into ranges.
         """
         query = select(Experiment.temperature_k)
-        
-        if session_id:
-            query = query.where(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            query = query.where(visibility)
         
         result = await self.session.execute(query)
         temperatures = [row[0] for row in result.all() if row[0] is not None]
@@ -307,6 +427,7 @@ class AnalyticsService:
         experiment_type: Optional[str] = None,
         status: Optional[str] = None,
         material: Optional[str] = None,
+        source_class: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
         sort_by: str = "created_at",
@@ -320,16 +441,9 @@ class AnalyticsService:
         """
         # Build filters
         filters = []
-        
-        if session_id and not include_baseline:
-            filters.append(Experiment.session_id == session_id)
-        elif session_id:
-            filters.append(
-                or_(
-                    Experiment.session_id == session_id,
-                    Experiment.is_baseline == True
-                )
-            )
+        visibility = _visibility_clause(session_id, include_baseline)
+        if visibility is not None:
+            filters.append(visibility)
         
         if experiment_type:
             filters.append(Experiment.experiment_type == experiment_type)
@@ -337,6 +451,9 @@ class AnalyticsService:
             filters.append(Experiment.status == status)
         if material:
             filters.append(Experiment.material == material)
+        class_clause = source_class_clause(source_class)
+        if class_clause is not None:
+            filters.append(class_clause)
         
         # Count query
         count_query = select(func.count(Experiment.id))
@@ -346,24 +463,26 @@ class AnalyticsService:
         count_result = await self.session.execute(count_query)
         total = count_result.scalar() or 0
         
-        # Main query with sorting and pagination
         query = select(Experiment)
         if filters:
             query = query.where(and_(*filters))
-        
-        # Sorting
-        sort_column = getattr(Experiment, sort_by, Experiment.created_at)
-        if sort_order == "desc":
-            query = query.order_by(desc(sort_column))
-        else:
-            query = query.order_by(sort_column)
-        
-        query = query.offset(offset).limit(limit)
-        
+
+        use_python_sort = (sort_by or "") in PYTHON_SORT_FIELDS
+        if not use_python_sort:
+            sort_column = getattr(Experiment, sort_by, Experiment.created_at)
+            if sort_order == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(sort_column)
+            query = query.offset(offset).limit(limit)
+            result = await self.session.execute(query)
+            experiments = result.scalars().all()
+            return [enrich_experiment_dict(e.to_dict()) for e in experiments], total
+
         result = await self.session.execute(query)
-        experiments = result.scalars().all()
-        
-        return [e.to_dict() for e in experiments], total
+        rows = [enrich_experiment_dict(e.to_dict()) for e in result.scalars().all()]
+        rows = sort_enriched_rows(rows, sort_by=sort_by, sort_order=sort_order)
+        return rows[offset:offset + limit], total
     
     async def get_experiment(self, experiment_id: str) -> Optional[Dict[str, Any]]:
         """Get a single experiment by ID."""
@@ -372,7 +491,7 @@ class AnalyticsService:
         experiment = result.scalar_one_or_none()
         
         if experiment:
-            return experiment.to_dict()
+            return enrich_experiment_dict(experiment.to_dict())
         return None
     
     async def create_experiment(
@@ -394,12 +513,66 @@ class AnalyticsService:
         Returns:
             Created experiment as dictionary
         """
+        from app.services.scientific_outcomes import (
+            classify_scientific_outcome,
+            tally_claim_tiers,
+        )
+
+        status = kwargs.get('status', ExperimentStatus.COMPLETED.value)
+        results = dict(kwargs.get('results') or {})
+        if not results.get("pipeline_scores"):
+            from app.services.simulation_persistence import _scores_from_pipeline
+
+            attached = results.get("theory_result") or results
+            derived = _scores_from_pipeline(attached)
+            if derived:
+                results["pipeline_scores"] = derived
+        if results.get("pipeline_scores"):
+            records = [
+                record
+                for record in results["pipeline_scores"].values()
+                if isinstance(record, dict)
+            ]
+            needs_final = any(
+                record.get("final_score") is None
+                and (
+                    "score" in record
+                    or "enhancement" in record
+                    or "confidence" in record
+                )
+                for record in records
+            )
+            if needs_final:
+                from app.services.simulation_persistence import _enrich_with_final_scores
+
+                results["pipeline_scores"] = _enrich_with_final_scores(
+                    results["pipeline_scores"],
+                    {
+                        "temperature": kwargs.get("temperature_k"),
+                        "loading_ratio": kwargs.get("loading_ratio"),
+                    },
+                )
+        results.setdefault(
+            "scientific_outcome",
+            classify_scientific_outcome(
+                status=status,
+                excess_heat_watts=kwargs.get('excess_heat_watts'),
+                pipeline_scores=results.get("pipeline_scores"),
+                results=results,
+            ),
+        )
+        results.setdefault(
+            "claim_tier_histogram",
+            tally_claim_tiers(results.get("pipeline_scores")),
+        )
+        results.setdefault("is_model_output", True)
+
         experiment = Experiment(
             id=str(uuid.uuid4()),
             name=name,
             experiment_type=experiment_type,
             session_id=session_id,
-            status=kwargs.get('status', ExperimentStatus.COMPLETED.value),
+            status=status,
             is_baseline=kwargs.get('is_baseline', False),
             source=kwargs.get('source', 'User Simulation'),
             material=kwargs.get('material', MaterialType.PALLADIUM.value),
@@ -414,7 +587,7 @@ class AnalyticsService:
             energy_output_kev=kwargs.get('energy_output_kev'),
             excess_heat_watts=kwargs.get('excess_heat_watts'),
             duration_seconds=kwargs.get('duration_seconds'),
-            results_json=kwargs.get('results', {}),
+            results_json=results,
         )
         
         self.session.add(experiment)
@@ -423,7 +596,7 @@ class AnalyticsService:
         
         logger.info(f"Created experiment: {experiment.id} - {experiment.name}")
         
-        return experiment.to_dict()
+        return enrich_experiment_dict(experiment.to_dict())
     
     async def update_experiment(
         self,

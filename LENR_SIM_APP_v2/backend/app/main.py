@@ -53,7 +53,7 @@ from .api.middleware.timeout import TimeoutMiddleware
 from .core.middleware import setup_middlewares
 
 # Import configuration - using relative imports
-from .core.config import settings, EnvironmentType
+from .core.config import settings, EnvironmentType, openapi_surface
 
 # Import logging - using relative imports
 from .utils.logging import setup_logger
@@ -234,8 +234,10 @@ async def lifespan(app: FastAPI):
             connected = await db_manager.wait_for_connection(retries=5, base_delay=2.0)
             if not connected:
                 app_logger.warning("Database unreachable after retries -- running in degraded mode")
-        # Create tables if they don't exist (development mode)
-        if settings.ENVIRONMENT.value == "development":
+        # Create tables if they don't exist (development / test / sqlite)
+        from app.models import database_models as _database_models  # noqa: F401
+        env_name = getattr(settings.ENVIRONMENT, "value", str(settings.ENVIRONMENT))
+        if env_name in {"development", "test"} or database_url.startswith("sqlite"):
             await db_manager.create_tables()
         app_logger.info("Database initialized successfully")
     except Exception as e:
@@ -267,14 +269,15 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 # redirect_slashes=False avoids 307 redirects that can cause 405 when POST follows redirect
+_openapi = openapi_surface(settings.ENVIRONMENT)
 app = FastAPI(
     title=settings.APP_NAME,
     description="API for Low Energy Nuclear Reaction simulations",
     version=settings.APP_VERSION,
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url=_openapi["docs_url"],
+    redoc_url=_openapi["redoc_url"],
+    openapi_url=_openapi["openapi_url"],
     redirect_slashes=False,
 )
 
@@ -330,14 +333,16 @@ app.add_middleware(
 # Set up all middleware including CORS, request ID, logging, and performance tracking
 setup_middlewares(app)
 
-# Prometheus metrics (optional -- gracefully skip if not installed)
+# Prometheus metrics (optional -- gracefully skip if not installed).
+# Not exposed on the public production API.
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
-    instrumentator = Instrumentator(
-        should_group_status_codes=True,
-        excluded_handlers=["/metrics", "/health", "/api/health", "/docs", "/openapi.json"]
-    )
-    instrumentator.instrument(app).expose(app, endpoint="/metrics")
+    if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+        instrumentator = Instrumentator(
+            should_group_status_codes=True,
+            excluded_handlers=["/metrics", "/health", "/api/health", "/docs", "/openapi.json"]
+        )
+        instrumentator.instrument(app).expose(app, endpoint="/metrics")
 except ImportError:
     pass  # prometheus-fastapi-instrumentator optional
 

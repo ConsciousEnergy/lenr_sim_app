@@ -1,0 +1,30 @@
+{
+  "schema": "lenr-reviewer-pack-v1",
+  "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
+  "lenr_proved": false,
+  "empirical_claim_tiers_raised": false,
+  "git_sha": null,
+  "preset": "smoke",
+  "n_experiments": 1,
+  "n_theory_runs": 1,
+  "claim_tier_histogram": {
+    "established_reference": 1
+  },
+  "source_class_counts": {
+    "Campaign": 1
+  },
+  "open_ids": [
+    "EQ-OPEN-MEV-01",
+    "EQ-OPEN-RAD-01",
+    "EQ-OPEN-RATE-01",
+    "EQ-OPEN-EC-01",
+    "EQ-OPEN-YIELD-01"
+  ],
+  "score_formula": "five_factor_gm_x_claim_tier",
+  "skip_sensitivity_note": "Persisted parameter_sensitivity is 0.5 unless live scores are computed.",
+  "campaign_invariants": {
+    "schema": "lenr-campaign-predictions-v1",
+    "lenr_proved": false,
+    "disclaimer": "These invariants describe LENR_SIM_APP model outputs. They do not prove that LENR occurs in the laboratory. EQ-OPEN-* remain OPEN."
+  }
+}

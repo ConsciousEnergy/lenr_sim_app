@@ -14,6 +14,7 @@ jest.mock('../contexts/PhysicsContext', () => ({
   ...jest.requireActual('../contexts/PhysicsContext'),
   usePhysics: () => ({
     setSimulationResult: mockSetSimulationResult,
+    theoryResult: null,
   }),
 }));
 
@@ -29,7 +30,7 @@ jest.mock('../components/physics/TheoryTogglePanel', () => () => (
 
 // Mock analytics API
 jest.mock('../services/analyticsApi', () => ({
-  analyticsApi: { saveExperiment: jest.fn().mockResolvedValue({ id: 'test-id' }) },
+  analyticsApi: { saveExperiment: jest.fn().mockResolvedValue({ id: 'test-id' }), saveFailedRun: jest.fn().mockResolvedValue({ id: 'failed-id' }) },
 }));
 
 // Mock ErrorBoundary to render children

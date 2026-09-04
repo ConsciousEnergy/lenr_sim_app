@@ -48,12 +48,12 @@ def custom_openapi(app: FastAPI):
     openapi_schema["info"]["contact"] = {
         "name": "LENR Simulation Team",
         "url": "https://github.com/ConsciousEnergy/lenr_sim_app",
-        "email": "support@consciousenergy.io"
+        "email": "info@conscious.energy"
     }
     
     openapi_schema["info"]["license"] = {
-        "name": "MIT License",
-        "url": "https://opensource.org/licenses/MIT"
+        "name": "GNU GPL-3.0",
+        "url": "https://www.gnu.org/licenses/gpl-3.0.html"
     }
     
     # Define tags with descriptions

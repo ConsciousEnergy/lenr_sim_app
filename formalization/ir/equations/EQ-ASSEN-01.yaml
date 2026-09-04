@@ -1,0 +1,21 @@
+id: EQ-ASSEN-01
+latex: "f = exp(pi * eta * U_e / E_kin)"
+symbols:
+  f: "screening enhancement"
+  U_e: "screening energy (eV)"
+  E_kin: "projectile CM energy (eV)"
+  eta: "Sommerfeld parameter"
+units: "dimensionless"
+tag: DEF
+paper_ref: "§2.8; screening_kernel"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/screening_kernel.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/screening.py
+citation_keys:
+  - Assenbaum1987
+  - raiola2002
+lean_target: LenrFormal.Assenbaum
+lean_decls:
+  - "LenrFormal.Assenbaum.applicable"
+  - "LenrFormal.Assenbaum.formulaClaimed"
+notes: "Material U_e from screening_data.py ranges."

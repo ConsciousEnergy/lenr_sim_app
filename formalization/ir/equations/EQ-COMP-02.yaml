@@ -1,0 +1,16 @@
+id: EQ-COMP-02
+latex: "within group g: select max(f*c), do not multiply rivals"
+symbols:
+  THEORY_COMPOSITION_GROUPS: "screening, coherence, confinement, ..."
+units: "dimensionless"
+tag: THM
+paper_ref: "TRACEABILITY_MATRIX composition audit"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theory_pipeline.py
+citation_keys:
+  - model_assumption_composition
+lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.intra_group_is_max"
+  - "LenrFormal.Composition.intra_group_not_product"
+notes: "Intra-group max prevents double-counting rival mechanisms."

@@ -145,7 +145,7 @@ class TheoryPipelineResult:
             }
             for c in self.contributions
         ]
-        return {
+        payload = {
             "combined_enhancement": float(self.combined_enhancement),
             "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
             "total_energy_watts": float(self.total_energy_watts),
@@ -189,6 +189,25 @@ class TheoryPipelineResult:
             },
             "per_theory": per_theory,
         }
+        hag = None
+        for contrib in self.contributions:
+            if contrib.theory_id == "hagelstein_phonon":
+                hag = contrib.observables
+                break
+        try:
+            from app.physics_engine.open_questions import safe_build_open_questions
+
+            payload["open_questions"] = safe_build_open_questions(
+                route_mode="theory_pipeline",
+                rate_mode="two_body",
+                pipeline_combined_enhancement=float(self.combined_enhancement),
+                enabled_theories=list(self.enabled_theories or []),
+                hagelstein_observables=hag,
+            )
+        except Exception:
+            logger.exception("open_questions omitted from theory pipeline payload")
+            payload["open_questions"] = {}
+        return payload
 
 
 class TheoryPipeline:

@@ -4,7 +4,9 @@
 
 **Severity Scale:** C = Critical (invalidates claim), M = Major (significantly impacts framework), m = Minor (editorial/clarity)
 
-**Status:** FIXED = corrected in paper, OPEN = needs further work, NOTED = acknowledged as limitation
+**Status:** FIXED = corrected in paper *text*, ADDRESSED = a §5A section was written, OPEN = needs further work, NOTED = acknowledged as limitation.
+
+**Epistemic note (2026-08-26):** For Q1–Q5, ADDRESSED/FIXED means a paper section exists. It does **not** mean the formal obligation is discharged. `EQ-OPEN-*` remain `OPEN` in Lean, the virtual lab, and `open_question_register.v1.json`. Extra campaign rows are model outputs.
 
 ---
 
@@ -270,25 +272,25 @@
 
 ### Q1 — MeV Energy Gap
 | **Summary** | How do meV phonons bridge to MeV nuclear processes? |
-| **Status** | ADDRESSED — Dedicated section 5A.1 with quantitative analysis of 4 candidate mechanisms |
+| **Status** | ADDRESSED — Dedicated section 5A.1 was written. Formal obligation `EQ-OPEN-MEV-01` remains OPEN. |
 
 ### Q2 — Radiation Suppression
 | **Summary** | How is 23.8 MeV channeled to phonons instead of gamma radiation? |
-| **Status** | ADDRESSED — Section 5A.2 with lattice momentum conservation analysis |
+| **Status** | ADDRESSED — Section 5A.2 was written. Formal obligation `EQ-OPEN-RAD-01` remains OPEN. |
 
 ### Q3 — Statistical Feasibility / Rate Closure
 | **Summary** | Do the numbers close? (Single-pair: no. Collective: possibly.) |
-| **Status** | ADDRESSED — Section 5A.3 with explicit calculation showing gap and resolution pathways |
+| **Status** | ADDRESSED — Section 5A.3 was written; two-body \(\log_{10}N=-40\) is a non-closure theorem. Formal obligation `EQ-OPEN-RATE-01` remains OPEN. |
 
 ### Q4 — Electron Capture Energy Source
 | **Summary** | Where do 0.782 MeV electrons come from? |
-| **Status** | ADDRESSED — Section 5A.4; D+D priming identified as most defensible pathway |
+| **Status** | ADDRESSED — Section 5A.4 was written; Lean proves a stated ~10^7 deficit (`EQ-OPEN-EC-DEFICIT-01`) without closing Q4. Formal obligation `EQ-OPEN-EC-01` remains OPEN. |
 
 ### Q5 — Energy-Product Consistency
 | **Summary** | Do He-4 yields match excess heat at 23.8 MeV/reaction? |
-| **Status** | FIXED — Section 5.2.2; Miles correlation validates within factor of ~2 |
+| **Status** | ADDRESSED (section written) — Section 5.2.2 / 5A.5: instantaneous Miles EMP is within ~2×; integrated yield discrepancy remains OPEN (`EQ-OPEN-YIELD-01`). "FIXED" previously meant the section was drafted, not that the obligation was discharged. |
 
 ---
 
-*Last updated: 2026-02-15*
+*Last updated: 2026-08-26*
 *Generated from: Consolidated Mathematical Review Plan (76bcec90)*

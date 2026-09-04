@@ -4,15 +4,22 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 ## Current Readiness Summary
 
-- **Code/infra artifacts:** READY
-  - Terraform modules for Cloudflare + Hostinger are present.
-  - Ansible playbooks for Docker/Swarm setup and stack deployment are present.
-  - Deployment scripts (`deploy.sh`, `backup-db.sh`, `rollback.sh`) are present.
-  - Docker stack templates include Traefik TLS, backend replicas, and Postgres secret usage.
-- **Release documentation:** READY
-  - `DEPLOYMENT_CHECKLIST.md`, `DEPLOYMENT_QUICK_REFERENCE.md`, and release evidence docs updated for v0.3.6-beta + Vite workflow.
-- **Manual cloud execution:** PENDING
-  - Cloudflare/Hostinger account actions, token creation, terraform apply, and live DNS cutover must still be performed.
+- **Public cutover:** **NO-GO** for live DNS (WordPress.com still authoritative). **Code/infra templates** after Wave 3 (2026-08-31): Pages production branch, deploy version stamp, Traefik dashboard off, single CORS, datasets in the backend image, bubble-fusion `1e13` removed. See [PUBLIC_RELEASE_REVIEW_2026-08.md](PUBLIC_RELEASE_REVIEW_2026-08.md).
+- **Code/infra artifacts:** templates updated 2026-08-31 (Wave 3). Still do **not** `terraform apply` until operator DNS is decided.
+  - Pages Terraform `production_branch` defaults to `lenr_sim_app_v0.3.6-beta`.
+  - `.github/workflows/deploy.yml` runs on that ship branch and stamps `BUILD_VERSION=0.3.6-beta`.
+  - Swarm pulls `ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta` (lowercase, version tag).
+  - `Dockerfile.backend` copies `datasets/` for hydrate.
+  - Traefik dashboard is off; dual Traefik CORS removed.
+- **What already holds in code (do not regress):**
+  - Cloudflare Pages `destination_dir` is Vite `LENR_SIM_APP_v2/frontend/dist` with `VITE_API_URL`.
+  - Swarm backend sets `LENR_ENVIRONMENT=production` and `LENR_AUTO_PERSIST=0`.
+  - Production API hides `/api/docs`, `/api/redoc`, `/api/openapi.json`, `/metrics` (404 is correct; checklists that expect Swagger 200 are wrong).
+  - Analytics POST/PUT/DELETE require `X-LENR-Write-Token`; GET/stats stay public.
+- **Release documentation:** operator probes updated 2026-08-31 (`/api/docs` expected 404).
+- **Manual cloud execution:** PENDING and **blocked on live DNS**.
+  - Authoritative NS are WordPress.com. Apex/`www`/`api`/`app` are Automattic. `api.conscious.energy` TLS SAN mismatch. `lenr-sim-prod.pages.dev` NXDOMAIN.
+  - Do **not** `terraform apply` the documented apex CNAME while WordPress owns the marketing site.
 
 ## Plan Mapping (Phase 4)
 
@@ -37,8 +44,8 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 - **Manual tasks pending:** GHCR login on VPS (or worker manager), secret creation/rotation, stack deployment on live server.
 
 ### 4.5 Verification and go-live
-- **Repo readiness:** health/docs URLs and verification checklist documented.
-- **Manual tasks pending:** DNS propagation, SSL issuance validation, API/Swagger checks, frontend domain verification, WordPress embed and integration test, backup cron confirmation.
+- **Repo readiness:** health URL documented. OpenAPI/Swagger is **hidden** in production.
+- **Manual tasks pending:** DNS propagation, SSL issuance validation, API **health** (not Swagger), frontend domain verification, WordPress embed of the **Pages SPA** (never the API, never today's WordPress apex), backup cron confirmation.
 
 ## Blocking Inputs Required Before Live Apply
 
@@ -58,10 +65,12 @@ This tracker maps the deployment plan (`public_deployment_guide_14b798a5.plan.md
 
 1. Fill `infrastructure/terraform/terraform.tfvars` from example with real values.
 2. Run `infrastructure/scripts/deploy.sh production` (preferred path).
-3. Validate:
-   - `curl https://api.conscious.energy/api/health`
-   - `curl -I https://api.conscious.energy/api/docs`
-   - frontend reachable at configured Cloudflare Pages/custom domain.
+3. Validate (after DNS actually points at Traefik / Pages — today it does not):
+   - `curl https://api.conscious.energy/api/health` → 200, `"version": "0.3.6-beta"`
+   - `curl -I https://api.conscious.energy/api/docs` → **404** (OpenAPI off; this is not a failure)
+   - `curl -I https://api.conscious.energy/metrics` → **404**
+   - frontend reachable at the **chosen Pages host** (not WordPress.com apex unless WordPress has moved)
+   - OPTIONS from that origin returns a **single** `Access-Control-Allow-Origin`
 4. Record outputs and checks in:
    - `docs/v0.3.6-beta/VERIFICATION_GATE_REPORT.md`
    - `docs/v0.3.6-beta/RELEASE_EVIDENCE_PACK.md`
@@ -94,7 +103,6 @@ Still operator-owned:
   token cannot dispatch workflows).
 - Hostinger/Cloudflare apply still needs `terraform.tfvars` plus Hostinger and
   Cloudflare API tokens; unchanged from the prior tracker entry.
-- Confirm the Cloudflare Pages build output directory is `dist` (Vite), not `build`.
 
 ## Math-Accuracy Hardening Slice (2026-08-10)
 

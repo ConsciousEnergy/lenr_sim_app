@@ -1,0 +1,19 @@
+id: EQ-TSC-GEOM-01
+latex: "d_DD = a / (2 sqrt(2)) FCC tetrahedral nearest neighbour"
+symbols:
+  a: "Pd lattice constant"
+  d_DD: "tetrahedral pair spacing"
+units: "m"
+tag: THM
+paper_ref: "§5A.3 / Takahashi TSC"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.fcc_dDD_pm"
+  - "LenrFormal.NBody.fcc_dd_less_than_lattice"
+adopted_value:
+  fcc_dDD_pm: 137
+notes: "Geometry identity. Occupation remains OPEN."

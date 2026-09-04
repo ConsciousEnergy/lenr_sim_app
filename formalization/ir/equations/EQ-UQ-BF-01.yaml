@@ -1,0 +1,16 @@
+id: EQ-UQ-BF-01
+latex: "Bayes factor approx exp(log_evidence_i - log_evidence_j)"
+symbols:
+  BF: "approximate Bayes factor"
+units: "dimensionless"
+tag: DEF
+paper_ref: "software Oracle B"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+citation_keys:
+  - model_assumption_decision_priors
+lean_target: "LenrFormal.Decision"
+lean_decls:
+  - "LenrFormal.Decision.logBayesFactor"
+  - "LenrFormal.Decision.approxBayesFactor"
+notes: "Toy log-evidence softmax. Not MCMC. Odds do not flip EQ-OPEN-* rows."

@@ -1,0 +1,19 @@
+id: EQ-BBL-COMP-01
+latex: "f_{governed} = \\prod_g \\max_{i \\in g}(\\min(f_i, b_i))"
+symbols:
+  f_governed: "physics-governed bubble-lattice enhancement"
+  g: "mechanism composition group"
+  b_i: "per-mechanism physics bound"
+units: "dimensionless"
+tag: THM
+paper_ref: "THEORY_COMPOSITION_CONTRACT.md bubble-lattice section"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_mechanism_composition.py
+citation_keys:
+  - model_assumption_composition
+lean_target: LenrFormal.Composition
+lean_decls:
+  - "LenrFormal.Composition.bubbleGroupScore"
+  - "LenrFormal.Composition.bubblePhysicsGoverned"
+  - "LenrFormal.Composition.bubble_group_pair_is_max"
+notes: "Collapse-correlated groups (compression/casimir, qed/rydberg) use max-within-group; across groups multiply."

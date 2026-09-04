@@ -2,14 +2,16 @@
 
 **Subtitle:** Electron, Neutron, and Proton coupling is all you need
 
-**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Composer (Cursor)
+**Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-07-22, v0.3.6-beta)
+Date: 2026-02-14 (revised 2026-08-23, v0.3.6-beta)
 Organization: Conscious Energies | www.conscious.energy
+
+**Revision note (2026-08-23).** Public-readiness sync with companion software v0.3.6-beta: revision metadata and in-app paper view aligned; §5A companion-app field names (`open_questions`, occurrence/when/how blocks, Oracle A/B) unchanged. No quantitative band changes in this revision.
 
 **Keywords:** LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tunneling; Casimir; claim tiers; condensed-matter nuclear hypotheses
 
-**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, and Gemini model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
 
 **Epistemic posture.** Multi-body lattice–bubble constructions in this framework are **exploratory models**, not empirically validated nuclear-engineering predictions. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
 
@@ -364,7 +366,9 @@ P_{\text{tunnel}} = \exp\left(-\frac{2}{\hbar}\int_{a}^{b}\sqrt{2m\bigl(V(x)-E\b
 * **Enhanced Particle Energy:** Localized heating and lattice phonon interactions can further increase effective particle energies.
 
 **Overall Enhancement**  
- The reported \(10^{3}\)–\(10^{5}\) range is a **bounded phenomenological sensitivity band** implemented in the current LENR_SIM software (independent mechanism multipliers with a hard composition cap), **not** a first-principles prediction of a coupled electron–lattice–nuclear Hamiltonian. Factorization into electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)) is a bookkeeping device: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \), subject to software caps and claim-tier labels. Monte Carlo / Sobol runs in the companion app explore this band; they do not by themselves validate microscopic mechanisms.
+ The reported \(10^{3}\)–\(10^{5}\) range is a **bounded phenomenological sensitivity band** implemented in the current LENR_SIM software (independent mechanism multipliers with a hard composition cap), **not** a first-principles prediction of a coupled electron–lattice–nuclear Hamiltonian. Factorization into electron screening (\( f_{\text{screening}} \sim 10^{1-2} \)), interface electric fields (\( f_{\text{field}} \sim 10^{0.5-1} \)), lattice coherence (\( f_{\text{coherence}} \sim 10^{1-2} \)), and phonon coupling (\( f_{\text{phonon}} \sim 10^{0-0.5} \)) is a bookkeeping device: \( f_{\text{total}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \sim 10^{3} \text{ to } 10^{5} \), subject to software caps and claim-tier labels.[^comp-eq] Monte Carlo / Sobol runs in the companion app explore this band; they do not by themselves validate microscopic mechanisms.
+
+[^comp-eq]: Software composition is **not** this four-factor product. The theory pipeline uses grouped-max then a \(10^{5}\) cap (`EQ-COMP-01`, `EQ-COMP-02`); multiplying that total by the bubble-lattice peak (or the legacy geometric-mean path) is an illegal product (`EQ-COMP-03`). See `LENR_SIM_APP_v2/docs/v0.3.6-beta/THEORY_COMPOSITION_CONTRACT.md`.
 
 #### **2.8.1 Phonon-Nuclear Coupling Strength**
 
@@ -745,6 +749,16 @@ Reaction rate predictions are validated using Monte Carlo sampling:
 3. Build probability distributions for output observables
 4. Compare with experimental data using likelihood ratios
 
+*Honesty on sample size (companion app, 2026-08-26):* default Sobol UQ remains
+**512 samples, opt-in** (API cap 512). Campaign presets that a reviewer can
+actually run are `literature_grid` (~16–32 designed cells), `all_claims`
+(~6 unified + one run per registered theory), and optional `diverse` (~237).
+That corpus is on the order of **hundreds of model-output rows**, not
+\(10^4\)–\(10^6\). The larger Monte Carlo aspiration remains a sensitivity
+method, not a completed campaign. See
+`LENR_SIM_APP_v2/docs/v0.3.6-beta/RESEARCHER_REVIEW_PACK.md`. Extra runs do
+not close §5A or prove LENR.
+
 **Implications:**
 
 1. Proper statistical treatment enables rigorous comparison between theory and experiment
@@ -818,7 +832,7 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 ## **5A. Open Theoretical Challenges and Fundamental Questions**
 
-This section addresses the most critical unresolved theoretical questions facing the unified LENR framework. Rather than dismissing these as fatal flaws, we formulate each as a quantitative challenge with testable implications.
+Occurrence under Miles-class heat–helium correlations is empirically anchored in parts of the corpus; the open theoretical work is **how** MeV energy partitions (Q1), **how** prompt γ is suppressed (Q2), and **when** the rate budget closes under a named mechanism path (Q3). This section formulates each as a quantitative challenge with testable implications. The companion app's **open-questions virtual lab** (`open_questions` on unified / bubble-lattice / theory-pipeline responses) encodes occurrence (`occurrence.anchored`), when (`when.threshold_crossed`, duty cycle, stimulation), and how (`how.mechanism_paths`, FGR parameters) under Oracle A (Lean identities and conditionals) plus Oracle B (mechanism-path odds). It never prints `LENR_PROVED`. See `docs/ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md`, `docs/ARCHITECTURE/MANY_BODY_FGR_MODEL.md`, and `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md`.
 
 ### **5A.1 The MeV Energy Gap Problem (Q1)**
 
@@ -907,6 +921,14 @@ This work presents a unified theoretical and mathematical framework that address
 1. **Refinement of Computational Models:** Incorporate many-body physics, non-linear effects, and real-time electron–phonon coupling.  
 2. **Scaling Reactor Designs:** Develop larger prototypes with real-time neutron/helium monitoring to push toward commercial viability.  
 3. **Interdisciplinary Collaboration:** Encourage a synergy of nuclear engineers, condensed matter physicists, chemists, and computational scientists to expedite the resolution of outstanding LENR challenges.
+
+### **6.1 Mechanized consistency (Lean)**
+
+A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, and n-body geometry vs trap identities. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
+
+**Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
+
+**Would-close-if lemmas (still OPEN).** `LenrFormal.OpenQuestionBounds` records closure *predicates* and integer-scaled implications only: Q1 closes if the energy remainder is identically zero (Hagelstein/Dicke/BEC remain named hypotheses); Q2 would close if the lattice \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma\) bookkeeping ratio meets \(10^{11}\); Q3 occupancy/collective factors are Nat inputs to the existing `RateBudget.would_close_if` product (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a millielectronvolt **deficit** of \(\sim 10^{7}\) between a stated 0.1 eV double-layer and the 0.782 MeV capture threshold (`EQ-OPEN-EC-DEFICIT-01`) without discharging `EQ-OPEN-EC-01`; Q5 distinguishes an instantaneous Miles EMP band from an integrated 100–\(10^{4}\) remainder (`EQ-OPEN-YIELD-BAND-01`). The OPEN table is unchanged. There is no `theorem lenr_occurs`.
 
 ---
 
@@ -1021,6 +1043,8 @@ Below is a reference list defining the primary symbols and terms used in this pa
 * \( \boldsymbol{f_{\text{enhancement}}} \): Cumulative tunneling-enhancement factor, dimensionless; \( f_{\text{enhancement}} = f_{\text{screening}} \times f_{\text{field}} \times f_{\text{coherence}} \times f_{\text{phonon}} \) (§2.8, §5.1.1).
 * \( \boldsymbol{Q_{\text{nuclear}}, Q_{\text{input}}, Q_{\text{excess}}} \): Energy quantities in calorimetry \([\text{J}]\).
 * \( \boldsymbol{\zeta} \): Generic variable for partition functions or the Riemann zeta function, as context requires.
+
+**Formalization symbol map (IL-015).** In the Lean/IR ledger (`docs/FORMALIZATION/CLAIM_TAXONOMY.md`), overloaded symbols are disambiguated as `E_eigen` / `E_field` / `E_kin`, `n_prin` / `n_dens`, and `R_rate` / `R_bubble` / `R_overlap_count`.
 
 ---
 

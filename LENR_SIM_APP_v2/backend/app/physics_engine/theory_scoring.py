@@ -18,6 +18,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.physics_engine.theory_pipeline import TheoryPipeline, get_default_pipeline
 from app.physics_engine.theory_protocol import TheoryContribution
 from app.physics_engine.constants import MILES_HEAT_HELIUM_RATE
+from app.physics_engine.literature_likelihood import (
+    SCORE_MODE_FIVE_FACTOR,
+    blend_experimental_agreement,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -253,8 +257,15 @@ def compute_theory_scores(
     pipeline: Optional[TheoryPipeline] = None,
     enabled_theories: Optional[List[str]] = None,
     config: Optional[Dict[str, Any]] = None,
+    skip_sensitivity: bool = False,
+    score_mode: str = SCORE_MODE_FIVE_FACTOR,
 ) -> Dict[str, Dict[str, float]]:
     """Run all theories and compute probability scores.
+
+    skip_sensitivity:
+        Persist/campaign paths pass True so ``parameter_sensitivity`` is
+        the neutral 0.5 instead of the expensive perturbation loop.
+        Live Relevance Map scoring keeps the default False.
 
     Returns:
         Dict mapping theory_id -> {
@@ -304,12 +315,21 @@ def compute_theory_scores(
                 "enhancement_factor": contrib.enhancement_factor,
                 "is_applicable": False,
                 "energy_output_watts": contrib.energy_output_watts,
+                "score_mode": score_mode or SCORE_MODE_FIVE_FACTOR,
             }
             continue
 
         phys = _physical_consistency_score(contrib)
-        exper = _experimental_agreement_score(contrib)
-        sens = _parameter_sensitivity_score(pipeline, contrib.theory_id, conditions, config)
+        exper = blend_experimental_agreement(
+            contrib,
+            _experimental_agreement_score(contrib),
+            score_mode,
+        )
+        sens = (
+            0.5
+            if skip_sensitivity
+            else _parameter_sensitivity_score(pipeline, contrib.theory_id, conditions, config)
+        )
         cross = _cross_theory_agreement_score(contrib, applicable_contribs)
         compl = _observables_completeness_score(contrib)
 
@@ -346,6 +366,7 @@ def compute_theory_scores(
             "enhancement_factor": contrib.enhancement_factor,
             "is_applicable": contrib.is_applicable,
             "energy_output_watts": contrib.energy_output_watts,
+            "score_mode": score_mode or SCORE_MODE_FIVE_FACTOR,
         }
 
     return results

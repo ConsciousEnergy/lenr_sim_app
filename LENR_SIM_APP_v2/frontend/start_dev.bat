@@ -58,12 +58,12 @@ IF !NEED_SYNC!==1 (
         echo This can take several minutes and uses a few GB of RAM.
         call npm ci --legacy-peer-deps
         IF ERRORLEVEL 1 (
-            echo npm ci failed — falling back to npm install --legacy-peer-deps...
+            echo npm ci failed -- falling back to npm install --legacy-peer-deps...
             call npm install --legacy-peer-deps
             IF ERRORLEVEL 1 goto :npm_fail
         )
     ) ELSE (
-        echo Lockfile changed — updating frontend dependencies via npm install...
+        echo Lockfile changed -- updating frontend dependencies via npm install...
         call npm install --legacy-peer-deps
         IF ERRORLEVEL 1 goto :npm_fail
     )
@@ -76,7 +76,7 @@ IF !NEED_SYNC!==1 (
         >node_modules\.lockfile-hash echo !LOCK_HASH!
     )
 ) ELSE (
-    echo Frontend node_modules matches package-lock.json — skipping install.
+    echo Frontend node_modules matches package-lock.json -- skipping install.
 )
 
 echo.

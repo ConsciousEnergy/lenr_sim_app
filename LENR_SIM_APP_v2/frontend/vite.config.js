@@ -56,11 +56,20 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
+          hoistTransitiveImports: false,
           // Split heavy, stable vendors into their own long-cache chunks so the
           // main app bundle stays small and browser caching survives app-only edits.
           manualChunks(id) {
+            // Keep Vite's import() preload helper off the three.js chunk so
+            // Unified Theory does not statically download 700kB+ before paint.
+            if (id.includes('preload-helper')) return 'preload-helper';
             if (!id.includes('node_modules')) return undefined;
-            if (id.includes('three') || id.includes('@react-three')) return 'three';
+            if (
+              /[\\/]node_modules[\\/]three([\\/]|$)/.test(id) ||
+              id.includes('@react-three')
+            ) {
+              return 'three';
+            }
             if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
             if (
               id.includes('recharts') ||

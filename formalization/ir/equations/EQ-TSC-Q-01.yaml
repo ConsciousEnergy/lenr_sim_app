@@ -1,0 +1,19 @@
+id: EQ-TSC-Q-01
+latex: "Q(4D -> 2 alpha) = 47.6 MeV = 2 * 23.8 MeV"
+symbols:
+  Q_4d: "47.6 MeV"
+  Q_dd: "23.8 MeV"
+units: "keV"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
+  - formalization/lean/LenrFormal/Miles.lean
+citation_keys:
+  - takahashi2016
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.q4d_is_two_qdd"
+adopted_value:
+  q4d_keV: 47600
+notes: "Conversion identity. Does not prove the channel occurs."

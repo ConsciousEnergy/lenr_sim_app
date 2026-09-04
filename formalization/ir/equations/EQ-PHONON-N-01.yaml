@@ -1,0 +1,22 @@
+id: EQ-PHONON-N-01
+latex: "N = Q / (hbar omega) = 2.38e7 eV / 0.05 eV = 4.76e8"
+symbols:
+  N: "phonon order"
+  Q: "23.8 MeV"
+  omega: "phonon angular frequency"
+units: "dimensionless"
+tag: THM
+paper_ref: "§2.8.1, §5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/hagelstein_phonon.py
+citation_keys:
+  - hagelstein2025
+lean_target: "LenrFormal.Phonon"
+lean_decls:
+  - "LenrFormal.Phonon.phononOrderN"
+  - "LenrFormal.Phonon.phonon_order_identity"
+  - "LenrFormal.Phonon.one_MeV_phonon_order"
+adopted_value:
+  phononOrderN: 476000000
+notes: "Identity of definitions. Does not close EQ-OPEN-MEV-01."

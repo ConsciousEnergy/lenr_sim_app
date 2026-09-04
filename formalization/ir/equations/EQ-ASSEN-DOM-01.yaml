@@ -1,0 +1,17 @@
+id: EQ-ASSEN-DOM-01
+latex: "assenbaumApplicable := U_e < E_kin"
+symbols:
+  U_e: "screening energy"
+  E_kin: "projectile energy"
+units: eV
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/screening_kernel.py
+citation_keys:
+  - Assenbaum1987
+lean_target: LenrFormal.Assenbaum
+lean_decls:
+  - "LenrFormal.Assenbaum.applicable"
+  - "LenrFormal.Assenbaum.not_applicable_implies_not_claimed"
+notes: "Strict < as machine-checkable stand-in for ≪; outside domain ⇒ formula not claimed."

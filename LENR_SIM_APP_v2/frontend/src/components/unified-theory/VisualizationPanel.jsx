@@ -1,11 +1,17 @@
-import React from 'react';
-import { Alert, Box, Chip, Stack, Typography } from '@mui/material';
-import UnifiedBubbleLatticeVisualization from '../visualizations/UnifiedBubbleLatticeVisualization';
+import React, { Suspense, lazy } from 'react';
+import { Alert, Box, Chip, CircularProgress, Stack, Typography } from '@mui/material';
 import ErrorBoundary from '../ErrorBoundary';
+
+const UnifiedBubbleLatticeVisualization = lazy(() =>
+  import('../visualizations/UnifiedBubbleLatticeVisualization')
+);
 
 /**
  * 3D visualization tab. Optionally overlays the latest live-stream frame so
  * the unused bubble-lattice WebSocket finally has a consumer.
+ *
+ * The bubble-lattice Three.js module is lazy-loaded so the Unified Theory
+ * shell (presets, Run, tabs) can paint before the `three` chunk arrives.
  */
 export default function VisualizationPanel({
   parameters,
@@ -64,13 +70,28 @@ export default function VisualizationPanel({
         </Stack>
       )}
       <Box>
-        <UnifiedBubbleLatticeVisualization
-          parameters={parameters}
-          simulationData={simulationData}
-          onPhaseChange={onPhaseChange}
-          onCollapseEvent={onCollapseEvent}
-          height={550}
-        />
+        <Suspense
+          fallback={
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 550,
+              }}
+            >
+              <CircularProgress aria-label="Loading 3D visualization" />
+            </Box>
+          }
+        >
+          <UnifiedBubbleLatticeVisualization
+            parameters={parameters}
+            simulationData={simulationData}
+            onPhaseChange={onPhaseChange}
+            onCollapseEvent={onCollapseEvent}
+            height={550}
+          />
+        </Suspense>
       </Box>
     </ErrorBoundary>
   );

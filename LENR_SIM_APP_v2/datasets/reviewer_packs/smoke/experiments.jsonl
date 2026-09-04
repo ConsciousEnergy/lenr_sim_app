@@ -1,0 +1,1 @@
+{"id": "smoke-exp-1", "name": "SMOKE Unified palladium", "type": "unified_theory", "status": "completed", "is_baseline": false, "source": "simulation_campaign", "sourceClass": "Campaign", "material": "palladium", "temperature_k": 300.0, "loading_ratio": 0.85, "enhancement_factor": 1.0, "excess_heat_watts": 0.0, "results": {"is_model_output": true, "lenr_proved": false}}

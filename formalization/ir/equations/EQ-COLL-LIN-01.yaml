@@ -1,0 +1,19 @@
+id: EQ-COLL-LIN-01
+latex: "C = min(N, 1e6) <= 1e6"
+symbols:
+  C: "collective factor"
+  MAX_COLLECTIVE_FACTOR: "1e6"
+units: "dimensionless"
+tag: THM
+paper_ref: "software; paper §5A.1 Dicke N^2 is a rival SPEC"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: "LenrFormal.NBody"
+lean_decls:
+  - "LenrFormal.NBody.collective"
+  - "LenrFormal.NBody.collective_le_cap"
+adopted_value:
+  MAX_COLLECTIVE_FACTOR: 1000000
+notes: "Engine uses linear clamp, not Dicke N^2."

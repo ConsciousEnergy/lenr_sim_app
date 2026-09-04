@@ -1,0 +1,15 @@
+id: EQ-WHEN-DUTY-01
+latex: "t_{\\mathrm{duty}} = t_{\\mathrm{total}} \\cdot f_{\\mathrm{duty}}"
+symbols:
+  f_duty: "duty fraction in [0,1]"
+units: "s"
+tag: DEF
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - paper_5A_5
+lean_target: "LenrFormal.WhenHow"
+lean_decls:
+  - "LenrFormal.WhenHow.dutyCycleYield"
+notes: "Integrated-yield duty-cycle bookkeeping."

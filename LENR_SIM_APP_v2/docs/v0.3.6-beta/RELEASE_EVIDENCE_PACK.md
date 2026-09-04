@@ -1,5 +1,39 @@
 # Release Evidence Pack (v0.3.6-beta)
 
+## Public release readiness review (2026-08-23)
+
+### Theory Testbed UX
+- Added primary-scoped **All** / **None** beside the glossary on
+  `TheoryTogglePanel` (mirrors dashboard `TheoryTestbedCard` labels; does not
+  clear context-track selections).
+- Tests: `frontend/src/components/physics/TheoryTogglePanel.test.jsx`.
+
+### Docker compile evidence
+- Backend: `docker build -f infrastructure/docker/Dockerfile.backend
+  --build-arg BUILD_VERSION=0.3.6-beta -t lenr-sim-backend:0.3.6-beta .` → success.
+- Frontend: `docker build -f infrastructure/docker/Dockerfile.frontend
+  -t lenr-sim-frontend:0.3.6-beta .` → success after:
+  - copying Vite `dist/` into nginx (not CRA `build/`),
+  - copying `frontend/.npmrc` before `npm ci`,
+  - removing the `frontend/` exclude from `.dockerignore`.
+
+### Gate evidence (local CI mirror)
+- Version markers: all `0.3.6-beta`.
+- `pip-audit`: no unignored findings (11 documented ignores).
+- Science gates: 55 passed.
+- Frontend: audit high=0; lint 0 errors / 506 warnings; 201 tests; Vite build PASS.
+- Artifacts under `/opt/cursor/artifacts/` for this agent run
+  (`pip-audit.log`, `science-gates.log`, `npm-*.log`, docker build logs).
+
+### Docs / paper
+- Root `CONTRIBUTING.md` added; `RELEASE_CHECKLIST.md` reframed for v0.3.6-beta.
+- Theoretical paper + in-app `TheoryPaperPage` revision date → 2026-08-23.
+
+### Deployment
+- Live public cutover remains operator-owned; see `PUBLIC_DEPLOYMENT_TRACKER.md`.
+
+---
+
 ## Runtime Parity Evidence
 - Unified Theory route tested at `http://localhost:3000/unified-theory`.
 - Successful simulation run confirmed with `POST /api/unified/bubble-lattice` status `200`.

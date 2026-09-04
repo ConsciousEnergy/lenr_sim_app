@@ -29,7 +29,24 @@ from app.physics_engine.parkhomov_validation import (
     infer_default_reactants,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.bubble_mechanism_composition import build_prediction_report
 from app.physics_engine.enhancement_saturation import build_saturation_report
+
+
+def _finalize_enhancement_breakdown(
+    raw_breakdown: Dict[str, Any],
+    ceiling: float = MAX_ENHANCEMENT_FACTOR,
+    mechanism_raw_log10: Optional[Dict[str, float]] = None,
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Apply saturation reporting and the three-tier prediction block."""
+    capped, saturation = build_saturation_report(
+        raw_breakdown,
+        ceiling,
+        mechanism_raw_log10=mechanism_raw_log10,
+    )
+    capped["saturation"] = saturation
+    capped["prediction"] = build_prediction_report(raw_breakdown, ceiling=ceiling)
+    return capped, saturation
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +169,12 @@ class ElectrolyteConfig(BaseModel):
     ionic_strength_proxy: Optional[float] = Field(default=None, ge=0.0, description="Optional bounded ionic-strength proxy")
 
 
+class StimulationConfig(BaseModel):
+    """Optional stimulation gates for when/how virtual lab (never auto-flips rate_mode)."""
+    letts_laser: bool = Field(default=False)
+    acoustic_drive: bool = Field(default=False)
+
+
 class SimulationRequest(BaseModel):
     """Full simulation request"""
     material: MaterialConfig = Field(default_factory=MaterialConfig)
@@ -181,6 +204,53 @@ class SimulationRequest(BaseModel):
     experimental_band: Optional[List[float]] = Field(
         default=None,
         description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
+    )
+    # Optional lab ingest for Oracle B. None defaults; never auto-flips rate_mode.
+    excess_power_W: Optional[float] = Field(default=None, ge=0)
+    sigma_Q_W: Optional[float] = Field(default=None, ge=0)
+    he4_atoms_per_s: Optional[float] = Field(default=None, ge=0)
+    gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
+    gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
+    p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
+    duty_fraction: Optional[float] = Field(
+        default=None, ge=0, le=1,
+        description="Fraction of total_time with active stimulation (when block).",
+    )
+    geometry_mode: Optional[str] = Field(
+        default=None,
+        description="Trap geometry rival: 'fcc_tetrahedral' or 'trap_25pm'.",
+    )
+    stimulation: Optional[StimulationConfig] = Field(
+        default=None,
+        description="Optional laser/acoustic stimulation flags for when block.",
+    )
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
+    campaign_preset: Optional[str] = Field(
+        default=None,
+        description="Optional campaign preset name stored on persisted rows. Additive.",
+    )
+    campaign_tag: Optional[str] = Field(
+        default=None,
+        description="Optional campaign cell tag stored as parameters.tag. Additive.",
+    )
+    literature_id: Optional[str] = Field(
+        default=None,
+        description="Optional literature_baselines id for Q-anchored campaign cells. Additive.",
+    )
+    claim_tag: Optional[str] = Field(
+        default=None,
+        description="Optional EMP/null/disputed/contested/speculative literature tag. Additive.",
+    )
+    open_question_ids: Optional[List[str]] = Field(
+        default=None,
+        description="Optional EQ-OPEN-* ids this cell is meant to stress. Additive.",
     )
 
 
@@ -248,6 +318,14 @@ class SimulationResponse(BaseModel):
             "optional Sobol/Bayesian uncertainty summary, and shell-pairing "
             "branching prior. Additive; empty unless requested. See "
             "reaction_rate_engine.py / reaction_rate_uq.py / shell_pairing_prior.py."
+        ),
+    )
+    open_questions: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive researcher virtual lab (lenr-open-questions-v1): two-oracle "
+            "determination, Q1–Q5 ledger, three-engine composition. Does not "
+            "change contract_version. Never LENR_PROVED."
         ),
     )
 
@@ -426,8 +504,16 @@ async def run_unified_simulation(request: SimulationRequest):
             config, float(result.tunneling_probability), request,
             transmutation_validation,
         )
+        route_mode = "theory_pipeline" if config.use_theory_pipeline else "legacy_unified_model"
+        open_questions = _build_simulate_open_questions(
+            request=request,
+            model=model,
+            result=result,
+            rate_block=reaction_rate_engine_block,
+            route_mode=route_mode,
+        )
 
-        return SimulationResponse(
+        response = SimulationResponse(
             success=True,
             enhancement={
                 "total": float(result.total_enhancement),
@@ -467,10 +553,70 @@ async def run_unified_simulation(request: SimulationRequest):
             computation_time=float(result.computation_time),
             transmutation_validation=transmutation_validation,
             reaction_rate_engine=reaction_rate_engine_block,
+            open_questions=open_questions,
         )
+        from app.services.persist_runs import persist_unified_simulation
+        persistence = await persist_unified_simulation(
+            request,
+            response,
+            getattr(model, "last_pipeline_result", None),
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            transparency = dict(response.analytics_transparency or {})
+            transparency["persistence"] = persistence
+            response.analytics_transparency = transparency
+        return response
         
     except Exception as e:
         raise _client_safe_error("Unified simulation error", e)
+
+def _build_simulate_open_questions(
+    *,
+    request: "SimulationRequest",
+    model: Any,
+    result: Any,
+    rate_block: Dict[str, Any],
+    route_mode: str,
+) -> Dict[str, Any]:
+    """Additive virtual lab for /simulate. Empty dict on failure."""
+    from app.physics_engine.open_questions import (
+        observations_from_obj,
+        safe_build_open_questions,
+    )
+
+    pipe = getattr(model, "last_pipeline_result", None)
+    pipe_enh = float(pipe.combined_enhancement) if pipe is not None else None
+    legacy = None if pipe is not None else float(result.total_enhancement)
+    enabled = list(request.enabled_theories or [])
+    if not enabled and pipe is not None:
+        enabled = list(pipe.enabled_theories or [])
+    hag = None
+    if pipe is not None:
+        for contrib in pipe.contributions:
+            if getattr(contrib, "theory_id", "") == "hagelstein_phonon":
+                hag = contrib.observables
+                break
+    return safe_build_open_questions(
+        route_mode=route_mode,
+        rate_mode=request.rate_mode,
+        pipeline_combined_enhancement=pipe_enh,
+        legacy_geometric_mean=legacy,
+        rate_block=rate_block,
+        two_body_reference=rate_block.get("two_body_reference"),
+        enabled_theories=enabled,
+        hagelstein_observables=hag,
+        observations=observations_from_obj(request),
+        loading_ratio=float(request.lattice.loading_ratio),
+        total_time=float(request.total_time),
+        duty_fraction=request.duty_fraction,
+        geometry_mode=request.geometry_mode,
+        stimulation=(
+            request.stimulation.model_dump() if request.stimulation else None
+        ),
+    )
+
 
 def _compose_rate_block(
     config: Any,
@@ -483,6 +629,8 @@ def _compose_rate_block(
     experimental_band: Optional[List[float]],
     material_key: str,
     transmutation_validation: Dict[str, Any],
+    geometry_mode: Optional[str] = None,
+    p4_occupation: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Shared reaction-rate engine core (RORO), reused by /simulate and /bubble-lattice.
 
@@ -499,8 +647,20 @@ def _compose_rate_block(
     if mode not in {"two_body", "trapped_state", "three_body"}:
         mode = "two_body"
 
-    rate_result = compute_reaction_rate(config, tunneling_probability, mode=mode)
+    rate_result = compute_reaction_rate(
+        config,
+        tunneling_probability,
+        mode=mode,
+        geometry_mode=geometry_mode,
+        p4_occupation=p4_occupation,
+    )
     block: Dict[str, Any] = {"rate": rate_result.as_dict()}
+
+    if mode != "two_body":
+        two_body_result = compute_reaction_rate(
+            config, tunneling_probability, mode="two_body"
+        )
+        block["two_body_reference"] = two_body_result.as_dict()
 
     if include_uncertainty:
         from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
@@ -549,6 +709,8 @@ def _build_rate_engine_block(
             experimental_band=request.experimental_band,
             material_key=(request.material.host_material or "palladium").lower(),
             transmutation_validation=transmutation_validation,
+            geometry_mode=request.geometry_mode,
+            p4_occupation=request.p_4_occupation,
         )
     except Exception as exc:  # pragma: no cover - defensive, must not break core
         logger.warning("Reaction-rate engine block skipped: %s", exc)
@@ -662,6 +824,8 @@ def build_bubble_rate_engine_block(
             experimental_band=request.experimental_band,
             material_key=hm,
             transmutation_validation=transmutation_validation,
+            geometry_mode=request.geometry_mode,
+            p4_occupation=request.p_4_occupation,
         )
 
         # Transparency: record the collapse-instant inputs used for the rate.
@@ -1018,6 +1182,54 @@ class BubbleLatticeRequest(BaseModel):
         default=None,
         description="Optional [low, high] rate band (m^-3 s^-1) for Bayesian posterior weighting.",
     )
+    excess_power_W: Optional[float] = Field(default=None, ge=0)
+    sigma_Q_W: Optional[float] = Field(default=None, ge=0)
+    he4_atoms_per_s: Optional[float] = Field(default=None, ge=0)
+    gamma_cps_ul: Optional[float] = Field(default=None, ge=0)
+    gamma_efficiency: Optional[float] = Field(default=None, ge=0, le=1)
+    p_4_occupation: Optional[float] = Field(default=None, ge=0, le=1)
+    duty_fraction: Optional[float] = Field(default=None, ge=0, le=1)
+    geometry_mode: Optional[str] = Field(default=None)
+    stimulation: Optional[StimulationConfig] = Field(default=None)
+    persist_session_id: Optional[str] = Field(
+        default=None,
+        description="Optional analytics session id for auto-persist. Additive.",
+    )
+    persist_source: Optional[str] = Field(
+        default=None,
+        description="Optional persist source label (auto_persist or simulation_campaign).",
+    )
+    literature_id: Optional[str] = Field(
+        default=None,
+        description="Optional literature_baselines id stored on persisted rows. Additive.",
+    )
+    campaign_preset: Optional[str] = Field(
+        default=None,
+        description="Optional campaign preset name stored on persisted rows. Additive.",
+    )
+    campaign_tag: Optional[str] = Field(
+        default=None,
+        description="Optional campaign cell tag stored as parameters.tag. Additive.",
+    )
+    claim_tag: Optional[str] = Field(
+        default=None,
+        description="Optional EMP/null/disputed/contested/speculative literature tag. Additive.",
+    )
+    open_question_ids: Optional[List[str]] = Field(
+        default=None,
+        description="Optional EQ-OPEN-* ids this cell is meant to stress. Additive.",
+    )
+    theory_result: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Optional Theory Testbed result already computed in the client. "
+            "Persisted as labeled pipeline_scores; not multiplied into peak enhancement."
+        ),
+    )
+    pipeline_scores: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Optional pre-built pipeline_scores. Not multiplied into peak enhancement.",
+    )
 
 
 class BubbleLatticeResponse(BaseModel):
@@ -1068,6 +1280,13 @@ class BubbleLatticeResponse(BaseModel):
             "labelled), optional Sobol/Bayesian uncertainty summary, shell-pairing "
             "branching prior, and KG-RP harmonic-locking diagnostics. Empty unless "
             "the engine could be evaluated. See build_bubble_rate_engine_block."
+        ),
+    )
+    open_questions: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive researcher virtual lab (lenr-open-questions-v1). "
+            "Does not change contract_version. Never LENR_PROVED."
         ),
     )
 
@@ -1248,9 +1467,27 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             bulk_modulus=base.bulk_modulus,
         )
         
-        # Run bubble collapse simulation
+        # Run bubble collapse simulation. When the caller left the default
+        # Rayleigh-Plesset mode and peak Mach exceeds the compressibility
+        # threshold, re-run with Keller-Miksis so bounds and peak conditions
+        # reflect acoustic radiation damping (EQ-BBL-LIM-01 / §9C.11).
+        _KM_AUTO_MACH_THRESHOLD = 0.3
         model = BubbleLatticeInteraction(bubble_params, lattice_params)
         collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
+        bounds_solver_used = dynamics_mode
+        km_auto_selected = False
+        if (
+            dynamics_mode == "rayleigh_plesset"
+            and float(collapse_result.bubble_dynamics.get("peak_mach", 0.0)) >= _KM_AUTO_MACH_THRESHOLD
+        ):
+            bubble_params.bubble_dynamics_mode = "keller_miksis"
+            model = BubbleLatticeInteraction(bubble_params, lattice_params)
+            collapse_result = model.simulate_collapse(num_cycles=request.num_cycles)
+            bounds_solver_used = "keller_miksis"
+            km_auto_selected = True
+        bubble_dynamics_report = dict(collapse_result.bubble_dynamics or {})
+        bubble_dynamics_report["bounds_solver_used"] = bounds_solver_used
+        bubble_dynamics_report["km_auto_selected"] = km_auto_selected
         
         # Clamp peak enhancement to the theory-level cap (constants.py)
         # Canonical electrolyte source is top-level request.electrolyte; lattice fields
@@ -1345,10 +1582,18 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
         # saturation flag per mechanism. Clamping alone made unrelated mechanisms
         # (qed/casimir/rydberg/compression) all print the ceiling, erasing the
         # breakdown's information content.
-        peak_enhancement_breakdown, peak_saturation = build_saturation_report(
-            peak_enhancement_breakdown, MAX_ENHANCEMENT_FACTOR
+        peak_enhancement_breakdown, peak_saturation = _finalize_enhancement_breakdown(
+            peak_enhancement_breakdown,
+            MAX_ENHANCEMENT_FACTOR,
+            mechanism_raw_log10={
+                "screening": peak_screening["log10_enhancement_raw"],
+            },
         )
-        capped_enhancement = float(peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+        capped_enhancement = float(
+            peak_enhancement_breakdown.get("prediction", {})
+            .get("claim_tier_display", {})
+            .get("total", peak_enhancement_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+        )
         corrected_proton_phases = model._calculate_proton_phases(
             collapse_result.max_temperature,
             collapse_result.double_layer_field_peak,
@@ -1414,12 +1659,22 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 instant["conditions"]["compression"]
             )
             instant_breakdown["electrolyte"] = float(electrolyte_multiplier)
-            capped_instant_breakdown, instant_saturation = build_saturation_report(
-                instant_breakdown, MAX_ENHANCEMENT_FACTOR
+            instant_screening = compute_screening_enhancement(
+                temperature_k=instant["conditions"]["temperature"],
+                material=request.material.host_material,
+                screening_potential_ev=lattice_params.screening_potential,
             )
-            capped_instant_breakdown["saturation"] = instant_saturation
+            capped_instant_breakdown, instant_saturation = _finalize_enhancement_breakdown(
+                instant_breakdown,
+                MAX_ENHANCEMENT_FACTOR,
+                mechanism_raw_log10={
+                    "screening": instant_screening["log10_enhancement_raw"],
+                },
+            )
             capped_instant_enhancement = float(
-                capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR)
+                capped_instant_breakdown.get("prediction", {})
+                .get("claim_tier_display", {})
+                .get("total", capped_instant_breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
             )
             timeline.append({
                 "normalized_time": sanitize_float(t, 0.0),
@@ -1513,9 +1768,32 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             electrolyte_species=species,
             electrolyte_molarity=molarity,
         )
+        from app.physics_engine.open_questions import (
+            observations_from_obj,
+            safe_build_open_questions,
+        )
+        open_questions = safe_build_open_questions(
+            route_mode="bubble_lattice_legacy",
+            rate_mode=request.rate_mode,
+            bubble_peak_enhancement=float(capped_enhancement),
+            rate_block=reaction_rate_engine_block,
+            two_body_reference=reaction_rate_engine_block.get("two_body_reference"),
+            observations=observations_from_obj(request),
+            loading_ratio=float(request.lattice.loading_ratio),
+            total_time=float(request.num_cycles),
+            duty_fraction=request.duty_fraction,
+            geometry_mode=request.geometry_mode,
+            stimulation=(
+                {**(request.stimulation.model_dump() if request.stimulation else {}),
+                 "acoustic_drive": True}
+            ),
+            kgrp_locked=bool(
+                (reaction_rate_engine_block.get("kgrp") or {}).get("is_locked")
+            ),
+        )
 
         # Sanitize all float values to ensure JSON compliance
-        return BubbleLatticeResponse(
+        response = BubbleLatticeResponse(
             success=True,
             contract_version=CONTRACT_VERSION,
             collapse_results={
@@ -1534,7 +1812,7 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
                 "mechanism_provenance": mechanism_provenance,
                 # Solver, dynamics model and peak wall Mach number, so a client can
                 # tell whether the incompressible model was admissible.
-                "bubble_dynamics": sanitize_dict(collapse_result.bubble_dynamics or {}, 0.0),
+                "bubble_dynamics": sanitize_dict(bubble_dynamics_report, 0.0),
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
@@ -1604,7 +1882,20 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             },
             transmutation_validation=transmutation_validation,
             reaction_rate_engine=reaction_rate_engine_block,
+            open_questions=open_questions,
         )
+        from app.services.persist_runs import persist_bubble_lattice
+        persistence = await persist_bubble_lattice(
+            request,
+            response,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            validation = dict(response.validation or {})
+            validation["persistence"] = persistence
+            response.validation = validation
+        return response
         
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors)
@@ -1734,10 +2025,9 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                     instant["conditions"]["compression"]
                 )
                 breakdown["electrolyte"] = float(electrolyte_multiplier)
-                breakdown, breakdown_saturation = build_saturation_report(
+                breakdown, breakdown_saturation = _finalize_enhancement_breakdown(
                     breakdown, MAX_ENHANCEMENT_FACTOR
                 )
-                breakdown["saturation"] = breakdown_saturation
                 
                 # Send update
                 # Additive fields matching the HTTP timeline contract so the
@@ -1747,13 +2037,18 @@ async def bubble_lattice_websocket(websocket: WebSocket):
                 raw_log10 = total_saturation.get("log10_value_raw")
                 if not isinstance(raw_log10, (int, float)) or not math.isfinite(raw_log10):
                     raw_log10 = None
+                claim_total = (
+                    breakdown.get("prediction", {})
+                    .get("claim_tier_display", {})
+                    .get("total", breakdown.get("total", MAX_ENHANCEMENT_FACTOR))
+                )
                 await websocket.send_json({
                     "type": "physics_update",
                     "contract_version": CONTRACT_VERSION,
                     "cycle": cycle,
                     "normalized_time": normalized_time,
                     "phase": instant["phase"],
-                    "enhancement": float(breakdown.get("total", MAX_ENHANCEMENT_FACTOR)),
+                    "enhancement": float(claim_total),
                     "enhancement_log10_raw": raw_log10,
                     "enhancement_is_saturated": bool(
                         total_saturation.get("is_saturated", False)

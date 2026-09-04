@@ -21,9 +21,11 @@ describe('TheoryPaperPage', () => {
     expect(screen.queryByText(/Attention Is All You Need/)).not.toBeInTheDocument();
   });
 
-  test('lists Composer among AI contributors', () => {
+  test('lists Composer and xAI/Grok among AI contributors', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText(/Composer \(Cursor\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Grok 4\.6/)).toBeInTheDocument();
+    expect(screen.getByText(/xAI\/Grok/)).toBeInTheDocument();
   });
 
   test('References tab lists Vaswani homage with a source link', () => {
@@ -44,32 +46,51 @@ describe('TheoryPaperPage', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('MeV energy gap')).toBeInTheDocument();
+    expect(screen.getByText(/MeV energy gap \(how\)/)).toBeInTheDocument();
   });
 
   test('Section 5A shows radiation suppression content when expanded', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('Radiation suppression')).toBeInTheDocument();
+    expect(screen.getByText(/Radiation suppression \(how\)/)).toBeInTheDocument();
   });
 
   test('Section 5A shows statistical feasibility content when expanded', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText('Statistical feasibility')).toBeInTheDocument();
+    expect(screen.getByText(/Statistical feasibility \(when\)/)).toBeInTheDocument();
   });
 
-  test('Section 5A shows Key open questions in LENR theory', () => {
+  test('Section 5A shows when/how framing intro', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText(/Key open questions in LENR theory/)).toBeInTheDocument();
+    expect(screen.getByText(/Open Questions Virtual Lab/i)).toBeInTheDocument();
+    expect(screen.getByText(/closes under a named mechanism path/i)).toBeInTheDocument();
   });
 
   test('renders Key Equations Quick Reference panel', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText('Key Equations Quick Reference')).toBeInTheDocument();
+  });
+
+  test('Section 6.1 TSC is labelled speculative and remains open', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.1 Takahashi Tetrahedral Symmetric Condensate/)).toBeInTheDocument();
+    expect(screen.getByText(/open speculative channel/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/claim tier: speculative_exploratory/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/trapped_state/)).toBeInTheDocument();
+  });
+
+  test('Section 6.11 Letts is EMP, not a shown controlled trigger', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.11 Letts-Cravens Dual-Laser Stimulation/)).toBeInTheDocument();
+    expect(screen.getAllByText(/empirical LENR correlation/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/showed that irradiating/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/controlled triggering mechanism/i)).not.toBeInTheDocument();
   });
 });

@@ -27,8 +27,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List
 
+from app.data.dataset_io import screening_priors
+
 # Adiabatic (gas-target) limit common to all hosts (eV).
-ADIABATIC_LIMIT_EV: float = 25.0
+ADIABATIC_LIMIT_EV: float = float(screening_priors().get("adiabatic_limit_eV", 25.0))
 
 
 @dataclass(frozen=True)
@@ -52,35 +54,27 @@ class ScreeningPotentialRange:
         }
 
 
+def _ranges_from_dataset() -> Dict[str, ScreeningPotentialRange]:
+    rows = screening_priors().get("materials") or []
+    ranges: Dict[str, ScreeningPotentialRange] = {}
+    for row in rows:
+        material = str(row["material"]).strip().lower()
+        ranges[material] = ScreeningPotentialRange(
+            material=material,
+            minimum=float(row["minimum_eV"]),
+            typical=float(row["typical_eV"]),
+            maximum=float(row["maximum_eV"]),
+            citations=list(row.get("citations") or []),
+            note=str(row.get("note") or ""),
+        )
+    return ranges
+
+
 # Material key -> measured range. ``typical`` preserves the legacy scalar
 # defaults used elsewhere in the engine so behavior is unchanged by default.
-MEASURED_SCREENING_POTENTIAL_EV: Dict[str, ScreeningPotentialRange] = {
-    "palladium": ScreeningPotentialRange(
-        material="palladium", minimum=250.0, typical=800.0, maximum=18000.0,
-        citations=["raiola2002", "czerski2023", "screeningreview2024"],
-        note="D-D in Pd; up to ~18 keV reported for 'hard' Pd targets.",
-    ),
-    "nickel": ScreeningPotentialRange(
-        material="nickel", minimum=200.0, typical=500.0, maximum=800.0,
-        citations=["huke2008", "screeningreview2024"],
-        note="H-H in Ni; estimate anchored to metal-host screening trend.",
-    ),
-    "titanium": ScreeningPotentialRange(
-        material="titanium", minimum=35.0, typical=350.0, maximum=600.0,
-        citations=["raiola2002", "huke2008"],
-        note="D-D in Ti; gas-like (~36 eV) to enhanced depending on loading.",
-    ),
-    "erbium": ScreeningPotentialRange(
-        material="erbium", minimum=300.0, typical=347.0, maximum=750.0,
-        citations=["pines2020theory"],
-        note="ErD3 conduction/plasma screening Ue~347 eV (NASA LCF theory).",
-    ),
-    "lithium": ScreeningPotentialRange(
-        material="lithium", minimum=100.0, typical=300.0, maximum=600.0,
-        citations=["huke2008"],
-        note="Li-H / Rydberg-matter regime; estimate.",
-    ),
-}
+MEASURED_SCREENING_POTENTIAL_EV: Dict[str, ScreeningPotentialRange] = (
+    _ranges_from_dataset()
+)
 
 
 def get_screening_potential_range(material: str) -> ScreeningPotentialRange:
