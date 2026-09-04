@@ -5,6 +5,17 @@ All notable changes to the LENR Simulation App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Repository organization and security hardening (2026-09-04)
+- Trunk-based branching adopted: `main` is the only long-lived branch, releases are `v*` tags, features use short-lived branches. Documented in `.github/BRANCHING.md`; `CONTRIBUTING.md` and the PR template now say "branch from `main`"
+- `v0.3.6-beta` promoted to `main` via merge-commit PR #161. Version-named release branches and `master`/`development` archived as `archive/*` tags; `v0.3.5-beta` tagged retroactively at PR #24's merge commit
+- Legacy trees removed from the working tree (`LENR_SIM_APP_v1/`, root `backend/` and `frontend/` mirrors, root `package.json`); snapshot at tag `archive/pre-legacy-removal`. Tracked localhost-only `.env.local` / `.env.development` untracked and `.env.*` gitignored (templates stay)
+- CI: workflows trigger only on `main` and `v*` tags; all actions pinned to commit SHAs; `deploy.yml` reads the image tag and `BUILD_VERSION` from `APP_VERSION` instead of a hardcoded `0.3.6-beta`; concurrency groups cancel superseded runs
+- Security: gitleaks full-history secret scan on every PR and weekly (`.gitleaks.toml` allowlists BibTeX `citation_key` values and a public hCaptcha site key); CodeQL workflow for Python + JS/TS (no-op until the repository is public or GHAS is enabled); `SECURITY.md` gains supported versions, private reporting steps, and the CI control matrix; `CODEOWNERS` added; optional `.pre-commit-config.yaml`
+- Dependabot now targets `main` (no `target-branch`), groups minor/patch updates per ecosystem, and ignores `starlette` majors (blocked by the `fastapi==0.128.0` pin)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
+
 ## [v0.3.6-beta] - 2026-08-31
 
 ### Dependabot majors after slot refill (2026-09-02)

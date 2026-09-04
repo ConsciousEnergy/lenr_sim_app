@@ -95,15 +95,50 @@ LENR_ENVIRONMENT=production
 - **Configuration**: `app/core/config.py`
 - **Middleware Setup**: `app/core/middleware.py`
 
+## Supported Versions
+
+Only the latest release line receives security fixes. Releases are `v*` tags on
+`main` (see [`.github/BRANCHING.md`](.github/BRANCHING.md)).
+
+| Version | Supported |
+|---------|-----------|
+| `v0.3.6-beta` (current, `main`) | Yes |
+| `v0.3.5-beta` and earlier | No, upgrade to the current release |
+
 ## Security Reporting
 
-If you discover a security vulnerability within LENR_SIM_APP, please report it through our [GitHub Security Advisory](https://github.com/ConsciousEnergy/lenr_sim_app/security/advisories/new). All security vulnerabilities will be promptly addressed.
+**Do not open a public issue for a vulnerability.** Report it privately through
+[GitHub private vulnerability reporting](https://github.com/ConsciousEnergy/lenr_sim_app/security/advisories/new)
+(Security → Report a vulnerability). If that form is unavailable, email
+`info@conscious.energy` with the subject `LENR_SIM_APP security report`.
+
+Please include: affected version/commit, a reproduction or proof of concept,
+and the impact you believe it has. You will receive an acknowledgement within
+7 days. We follow coordinated disclosure: a fix is released before details are
+published, and reporters are credited in the release notes unless they prefer
+otherwise.
+
+## Automated Security Controls in CI
+
+These run in GitHub Actions and are required for merging to `main`:
+
+| Control | Where | Cadence |
+|---------|-------|---------|
+| Backend dependency audit (`pip-audit`, documented residual ignores) | `test.yml` | every PR/push |
+| Frontend dependency gate (`npm audit --audit-level=high`) | `test.yml` | every PR/push |
+| Secret scan of full git history (gitleaks, [`.gitleaks.toml`](.gitleaks.toml)) | `security-scan.yml` | every PR + weekly |
+| Scheduled re-audit of already-committed dependencies | `security-scan.yml` | weekly |
+| Dependency Review of PR-introduced packages | `dependency-review.yml` | every PR |
+| CodeQL static analysis (Python, JavaScript/TypeScript) | `codeql.yml` | every PR + weekly (active once the repo is public or GHAS is enabled) |
+| Grouped Dependabot updates against `main` | `dependabot.yml` | weekly |
+
+All third-party actions are pinned to full commit SHAs. Local equivalents are
+available via [`.pre-commit-config.yaml`](.pre-commit-config.yaml).
 
 ## Future Security Roadmap
 
 - Role-based access control
 - API key management
 - OAuth 2.0 integration
-- Automated security scanning in CI/CD
 - Server-side request forgery protection
-- Advanced rate limiting with token bucket algorithm 
+- Advanced rate limiting with token bucket algorithm

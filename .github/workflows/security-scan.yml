@@ -3,29 +3,82 @@ name: Scheduled Security Scan
 # Complements the push/PR audits in test.yml and the PR-only dependency-review:
 # this runs on a cadence so newly-disclosed CVEs against ALREADY-committed
 # dependencies are caught even when no code changes land. Also manually runnable.
+# The secret scan additionally runs on every PR to main so a leaked credential
+# is caught before it is merged.
 
 on:
   schedule:
     # Weekly, Mondays 13:00 UTC (aligns with the Dependabot Monday cadence).
     - cron: '0 13 * * 1'
+  pull_request:
+    branches: [main]
+    # Only the secret scan runs on PRs (see job-level `if`); the dependency
+    # audits already run in test.yml for every PR.
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: security-scan-${{ github.ref }}
+  group: security-scan-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  secret-scan:
+    name: Secret scan (gitleaks, full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so secrets committed in the past (not just the diff)
+          # are detected.
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned, checksum-verified)
+        run: |
+          set -euo pipefail
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfL -o gitleaks.tgz "${base}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o checksums.txt "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" checksums.txt \
+            | sed 's|gitleaks_.*_linux_x64.tar.gz|gitleaks.tgz|' | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+          ./gitleaks version
+
+      - name: Scan repository history
+        run: |
+          set +e
+          ./gitleaks git --config .gitleaks.toml --redact --exit-code 1 \
+            --report-format json --report-path gitleaks-report.json . > gitleaks.txt 2>&1
+          code=$?
+          {
+            echo "## Secret scan (gitleaks v${GITLEAKS_VERSION})";
+            echo '```';
+            tail -n 20 gitleaks.txt;
+            echo '```';
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+
+      - name: Upload redacted report on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          retention-days: 14
+
   backend-audit:
     name: Backend pip-audit
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -49,14 +102,15 @@ jobs:
 
   frontend-audit:
     name: Frontend npm audit (high+)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: LENR_SIM_APP_v2/frontend/package-lock.json
 

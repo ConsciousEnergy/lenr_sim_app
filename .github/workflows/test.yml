@@ -1,22 +1,29 @@
 name: Test and Benchmark
 
+# Trunk-based model (see .github/BRANCHING.md): main is the only long-lived
+# branch, so CI runs on pushes to main and on every PR targeting main.
 on:
   push:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, lenr_sim_app_v0.3.0-beta, lenr_sim_app_v0.3.5-beta, lenr_sim_app_v0.3.6-beta ]
+    branches: [ main ]
   # Allow manual triggering
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Cancel superseded runs on the same PR/branch to save minutes.
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   version-consistency:
     # v0.3.6-beta: fail fast on mixed version markers across runtime surfaces.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check version consistency
         shell: bash
         run: |
@@ -48,10 +55,10 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -115,13 +122,13 @@ jobs:
         python -m pytest tests/performance/ --benchmark-only -v
 
     - name: Upload coverage report
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
       with:
         file: ./LENR_SIM_APP_v2/backend/coverage.xml
         fail_ci_if_error: false
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: benchmark-results
         path: |
@@ -136,10 +143,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -181,10 +188,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -214,10 +221,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
