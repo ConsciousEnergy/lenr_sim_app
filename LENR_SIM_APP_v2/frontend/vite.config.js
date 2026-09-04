@@ -64,9 +64,12 @@ export default defineConfig(({ mode }) => {
             // Unified Theory does not statically download 700kB+ before paint.
             if (id.includes('preload-helper')) return 'preload-helper';
             if (!id.includes('node_modules')) return undefined;
+            // drei's three-ecosystem dependencies must ride with three, or
+            // Rollup reports a three -> vendor -> three circular chunk.
             if (
               /[\\/]node_modules[\\/]three([\\/]|$)/.test(id) ||
-              id.includes('@react-three')
+              id.includes('@react-three') ||
+              /[\\/]node_modules[\\/](three-stdlib|three-mesh-bvh|troika-three-text|troika-three-utils|troika-worker-utils|@monogrid[\\/]gainmap-js|maath|meshline|camera-controls|stats-gl|stats\.js|detect-gpu|glsl-noise|suspend-react|zustand|tunnel-rat|react-composer|@react-spring|@use-gesture|hls\.js|@mediapipe|its-fine|react-reconciler|webgl-sdf-generator|bidi-js)([\\/]|$)/.test(id)
             ) {
               return 'three';
             }
