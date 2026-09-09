@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -50,12 +51,36 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
+const TAB_QUERY = {
+  framework: 0,
+  methods: 1,
+  computational: 1,
+  experimental: 2,
+  validation: 2,
+  mathematics: 3,
+  math: 3,
+};
+
 const TheoryPage = () => {
   const theme = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tabValue, setTabValue] = useState(0);
+
+  useEffect(() => {
+    const raw = (searchParams.get('tab') || '').toLowerCase();
+    if (!raw) return;
+    if (/^\d+$/.test(raw)) {
+      const idx = Number(raw);
+      if (idx >= 0 && idx <= 3) setTabValue(idx);
+      return;
+    }
+    if (raw in TAB_QUERY) setTabValue(TAB_QUERY[raw]);
+  }, [searchParams]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+    const names = ['framework', 'methods', 'experimental', 'mathematics'];
+    setSearchParams({ tab: names[newValue] || String(newValue) }, { replace: true });
   };
 
   return (
@@ -457,10 +482,24 @@ const TheoryPage = () => {
         </TabPanel>
 
         {/* Tab 2: Computational Methods */}
-        <TabPanel value={tabValue} index={1}>
+                <TabPanel value={tabValue} index={1}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-            Computational Framework & Simulations
+            Computational Methods
           </Typography>
+          <Alert severity="info" sx={{ mb: 3 }} data-testid="methods-vps-honesty">
+            <AlertTitle>What the public VPS actually runs</AlertTitle>
+            <Typography variant="body2" paragraph sx={{ mb: 1 }}>
+              Live beta executes the in-repo <strong>physics_engine</strong> pipeline: WKB / Gamow
+              tunneling, Rayleigh–Plesset bubble collapse, and theory scoring over HTTP
+              <code>/api/physics/*</code>. Those paths are what the Tunneling and Bubble Fusion pages call.
+            </Typography>
+            <Typography variant="body2">
+              COMSOL FEM, self-consistent Poisson–Schrödinger, and similar coupled continuum
+              solvers described below are <strong>research / aspirational methods</strong> —
+              not deployed on the public beta stack. Treat them as modeling roadmap, not live
+              production numerics.
+            </Typography>
+          </Alert>
 
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>

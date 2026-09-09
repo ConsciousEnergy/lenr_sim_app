@@ -18,6 +18,25 @@ describe('mapBubbleFusionApiResults', () => {
     expect(mapped.enhancementFactor).toBe(1e5);
     expect(mapped.maxTemperature).toBe(9000);
   });
+
+  it('maps engine GPa pressure, compression_ratio, and peak_velocity_km_s', () => {
+    const mapped = mapBubbleFusionApiResults({
+      collapse_results: {
+        max_temperature_k: 1e6,
+        max_pressure_gpa: 12.5,
+        min_radius_um: 0.4,
+        collapse_time_ns: 12,
+        compression_ratio: 25,
+        peak_velocity_km_s: 1.5,
+        fusion_probability: 1e-20,
+      },
+    });
+    expect(mapped.maxPressureGpa).toBe(12.5);
+    expect(mapped.maxPressure).toBe(12.5 * 1e4);
+    expect(mapped.compressionRatio).toBe(25);
+    expect(mapped.peakVelocityKmS).toBe(1.5);
+    expect(mapped.isLocalFallback).toBe(false);
+  });
 });
 
 describe('pickFiniteNumber', () => {

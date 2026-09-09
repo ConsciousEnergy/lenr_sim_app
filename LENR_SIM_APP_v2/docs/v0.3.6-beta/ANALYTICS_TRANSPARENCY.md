@@ -1,5 +1,18 @@
 # Analytics Transparency Notes
 
+
+## Public beta Total Records (~150)
+
+On the live VPS, **Total Records** is not capped by a SQL `LIMIT 150`. It reflects the
+frozen `datasets/reviewer_packs/q_campaign_demo/` hydrate (150 experiments) plus any
+operator-hydrated rows.
+
+Production compose sets `LENR_AUTO_PERSIST=0`, so `persist_best_effort()` no-ops for
+anonymous SPA runs. `POST /api/analytics/experiments` requires a write token the public
+SPA does not send (403). Source-class chips (Baseline / Campaign / Auto / User) describe
+that hydrate mix. Enabling public auto-persist is a separate product decision — not part
+of the public beta transparency fix.
+
 ## Completion vs scientific outcome
 
 Analytics Overview previously showed a **Success Rate** of 100% because that

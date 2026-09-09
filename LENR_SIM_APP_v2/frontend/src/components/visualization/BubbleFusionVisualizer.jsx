@@ -8,7 +8,7 @@ const BubbleFusionVisualizer = ({
   initialRadius = 10.0,
   drivingPressureAmplitude = 1.2,
   frequency = 20,
-  showPressureField = true,
+  showPressureField = false,
   showTemperatureField = true,
   showCollapse = true,
   width = 800,
@@ -22,6 +22,7 @@ const BubbleFusionVisualizer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [_animationTime, setAnimationTime] = useState(0);
   const [physicsData, setPhysicsData] = useState(null);
+  const [isLocalFallback, setIsLocalFallback] = useState(false);
   const [error, setError] = useState(null);
   const animationRef = useRef(null);
   
@@ -42,7 +43,8 @@ const BubbleFusionVisualizer = ({
       setError(null);
       
       try {
-        const response = await api.post('/physics/bubble-fusion', {
+        // Same-origin Caddy only proxies /api/* — bare /physics misses the backend.
+        const response = await api.post('/api/physics/bubble-fusion', {
           initial_radius_um: initialRadius,
           acoustic_pressure_bar: drivingPressureAmplitude,
           frequency_khz: frequency,
@@ -54,6 +56,7 @@ const BubbleFusionVisualizer = ({
         });
         
         const data = response;
+        setIsLocalFallback(false);
         setPhysicsData(data);
         
         // Update refs with real physics values
@@ -67,11 +70,13 @@ const BubbleFusionVisualizer = ({
       } catch (err) {
         console.warn('API call failed, using fallback calculations', err);
         setError(err.message || 'Failed to fetch physics data');
+        setIsLocalFallback(true);
         
         // Fallback to approximations
         collapseTime.current = 0.5 / frequency;
         maxTemperature.current = (1 + drivingPressureAmplitude) * 1000;
         minRadius.current = initialRadius / (1 + drivingPressureAmplitude * 5);
+        const compressionRatio = initialRadius / Math.max(minRadius.current, 1e-9);
         
         // Create fallback physics data for onRenderComplete
         const fallbackData = {
@@ -79,6 +84,9 @@ const BubbleFusionVisualizer = ({
             max_temperature_k: maxTemperature.current,
             min_radius_um: minRadius.current,
             collapse_time_ns: collapseTime.current * 1e9,
+            max_pressure_gpa: null,
+            compression_ratio: compressionRatio,
+            peak_velocity_km_s: null,
             fusion_probability: 0 // Zero probability for fallback
           }
         };
@@ -131,19 +139,20 @@ const BubbleFusionVisualizer = ({
       const pressureWaveOffset = Math.sin(normalizedTime * 2 * Math.PI);
       const pressureWaveIntensity = 0.5 + 0.5 * pressureWaveOffset;
       
-      pressureGradient.addColorStop(0, `rgba(100, 149, 237, ${pressureWaveIntensity * 0.1})`);
-      pressureGradient.addColorStop(0.7, `rgba(100, 149, 237, ${pressureWaveIntensity * 0.05})`);
+      // Keep rings behind HUD text: low opacity, thin strokes.
+      pressureGradient.addColorStop(0, `rgba(100, 149, 237, ${pressureWaveIntensity * 0.04})`);
+      pressureGradient.addColorStop(0.7, `rgba(100, 149, 237, ${pressureWaveIntensity * 0.02})`);
       pressureGradient.addColorStop(1, 'rgba(100, 149, 237, 0)');
       
       ctx.fillStyle = pressureGradient;
       ctx.fillRect(0, 0, width, height);
       
       // Draw pressure waves
-      ctx.strokeStyle = `rgba(70, 130, 230, ${pressureWaveIntensity * 0.4})`;
+      ctx.strokeStyle = `rgba(70, 130, 230, ${pressureWaveIntensity * 0.12})`;
       ctx.lineWidth = 1;
       
-      for (let i = 0; i < 5; i++) {
-        const radius = (i / 5 + normalizedTime) * height / 2;
+      for (let i = 0; i < 3; i++) {
+        const radius = (i / 3 + normalizedTime) * height / 2;
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
@@ -388,26 +397,42 @@ const BubbleFusionVisualizer = ({
       {physicsData && physicsData.collapse_results && (
         <Paper elevation={2} sx={{ mt: 2, p: 2, width: '100%', maxWidth: 600 }}>
           <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Collapse Results (Real Physics)
+            {isLocalFallback
+              ? 'Collapse Results (Local Schematic Fallback)'
+              : 'Collapse Results (Physics Engine)'}
           </Typography>
+          {isLocalFallback && (
+            <Typography variant="caption" color="warning.main" display="block" sx={{ mb: 1 }}>
+              Backend unreachable — values are approximate and must not be cited as engine output.
+            </Typography>
+          )}
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
             <Typography variant="body2">
-              <strong>Max Temperature:</strong> {physicsData.collapse_results.max_temperature_k?.toFixed(0)} K
+              <strong>Max Temperature:</strong> {physicsData.collapse_results.max_temperature_k?.toFixed(0) ?? 'N/A'} K
             </Typography>
             <Typography variant="body2">
-              <strong>Max Pressure:</strong> {physicsData.collapse_results.max_pressure_gpa?.toFixed(2)} GPa
+              <strong>Max Pressure:</strong>{' '}
+              {physicsData.collapse_results.max_pressure_gpa != null
+                ? `${Number(physicsData.collapse_results.max_pressure_gpa).toFixed(2)} GPa`
+                : 'N/A'}
             </Typography>
             <Typography variant="body2">
-              <strong>Min Radius:</strong> {physicsData.collapse_results.min_radius_um?.toFixed(3)} μm
+              <strong>Min Radius:</strong> {physicsData.collapse_results.min_radius_um?.toFixed(3) ?? 'N/A'} μm
             </Typography>
             <Typography variant="body2">
-              <strong>Compression:</strong> {physicsData.collapse_results.compression_ratio?.toFixed(1)}x
+              <strong>Compression:</strong>{' '}
+              {physicsData.collapse_results.compression_ratio != null
+                ? `${Number(physicsData.collapse_results.compression_ratio).toFixed(1)}×`
+                : 'N/A'}
             </Typography>
             <Typography variant="body2">
-              <strong>Collapse Time:</strong> {physicsData.collapse_results.collapse_time_ns?.toFixed(1)} ns
+              <strong>Collapse Time:</strong> {physicsData.collapse_results.collapse_time_ns?.toFixed(1) ?? 'N/A'} ns
             </Typography>
             <Typography variant="body2">
-              <strong>Peak Velocity:</strong> {physicsData.collapse_results.peak_velocity_km_s?.toFixed(2)} km/s
+              <strong>Peak Velocity:</strong>{' '}
+              {physicsData.collapse_results.peak_velocity_km_s != null
+                ? `${Number(physicsData.collapse_results.peak_velocity_km_s).toFixed(2)} km/s`
+                : 'N/A'}
             </Typography>
           </Box>
           {physicsData.collapse_results.conditions_met && (

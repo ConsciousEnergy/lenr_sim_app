@@ -751,11 +751,11 @@ const TheoryPaperPage = () => {
               <Box sx={{ mt: 3 }}>
                 <Button
                   component={RouterLink}
-                  to="/theory"
+                  to="/theory?tab=methods"
                   variant="outlined"
                   startIcon={<FunctionsIcon />}
                 >
-                  View Computational Details
+                  View Computational Methods
                 </Button>
               </Box>
             </AccordionDetails>
@@ -1410,7 +1410,7 @@ const TheoryPaperPage = () => {
           </Button>
           <Button
             component={RouterLink}
-            to="/theory"
+            to="/theory?tab=methods"
             variant="outlined"
             startIcon={<FunctionsIcon />}
             size="large"
