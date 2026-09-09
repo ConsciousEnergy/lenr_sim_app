@@ -77,6 +77,10 @@ updates:
       - dependency-name: "starlette"
         update-types:
           - "version-update:semver-major"
+      # plotly 7 is a chart-API major (#172). Stay on 5.x until a dedicated migration.
+      - dependency-name: "plotly"
+        update-types:
+          - "version-update:semver-major"
     groups:
       python-minor-patch:
         patterns:
@@ -183,6 +187,27 @@ updates:
       - dependency-name: "recharts"
         update-types:
           - "version-update:semver-major"
+      # cssnano 9 failed frontend CI (#167). Stay on 6.x until a dedicated PostCSS pass.
+      - dependency-name: "cssnano"
+        update-types:
+          - "version-update:semver-major"
+      # Babel 8 is a compiler major (#169). Stay on 7.x with the Jest toolchain.
+      - dependency-name: "@babel/plugin-transform-react-jsx"
+        update-types:
+          - "version-update:semver-major"
+      # React DOM majors must ship with a deliberate React bump (#168 failed e2e).
+      - dependency-name: "react-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/react-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/react"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions workflow versions
   - package-ecosystem: "github-actions"
@@ -217,3 +242,12 @@ updates:
       docker:
         patterns:
           - "*"
+    ignore:
+      # Runtime majors need a deliberate image rebuild + smoke test (#165 proposed
+      # python 3.12→3.14 and node 22→26). Stay on the CI/documented versions.
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
