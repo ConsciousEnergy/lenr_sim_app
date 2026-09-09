@@ -70,27 +70,10 @@ export default defineConfig(({ mode }) => {
             ) {
               return 'three';
             }
-            if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
-            if (
-              id.includes('recharts') ||
-              /[\\/]d3(-[a-z]+)?[\\/]/.test(id) ||
-              id.includes('victory-vendor') ||
-              id.includes('internmap')
-            )
-              return 'charts';
-            if (
-              /(react-markdown|remark|rehype|micromark|mdast|hast|unist|vfile|property-information|character-entities|decode-named-character-reference|comma-separated-tokens|space-separated-tokens)/.test(
-                id,
-              )
-            )
-              return 'markdown';
-            if (
-              id.includes('react-router') ||
-              id.includes('react-dom') ||
-              id.includes('/scheduler/') ||
-              /[\\/]react[\\/]/.test(id)
-            )
-              return 'react-vendor';
+            // A single vendor chunk. Splitting react/mui/charts/markdown
+            // created Rollup circular chunks and a TDZ crash
+            // (`Cannot access 'P' before initialization`) that white-screened
+            // the production SPA.
             return 'vendor';
           },
         },

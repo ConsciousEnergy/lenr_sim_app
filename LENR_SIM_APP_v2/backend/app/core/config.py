@@ -94,6 +94,15 @@ class Settings(BaseSettings):
     
     # Physics simulation configuration
     MAX_SIMULATION_POINTS: int = 1000
+    # Heavy-compute guard (see app/core/compute_guard.py). Sized for the 2 vCPU
+    # public-beta VPS running a single uvicorn worker.
+    MAX_CONCURRENT_HEAVY_SIMS: int = 2
+    HEAVY_SLOT_WAIT_SECONDS: float = 10.0
+    # Upper bounds for unauthenticated compute inputs (multi-physics grid / steps,
+    # legacy WebSocket demo streams). Requests above these are rejected with 422.
+    MAX_MULTI_PHYSICS_GRID_POINTS_PER_AXIS: int = 32
+    MAX_MULTI_PHYSICS_STEPS: int = 20000
+    MAX_WS_DURATION_STEPS: int = 2000
     DEFAULT_TEMPERATURE: float = 300.0  # Kelvin
     DEFAULT_PRESSURE: float = 101325.0  # Pascal (1 atm)
     

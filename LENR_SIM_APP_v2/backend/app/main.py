@@ -435,19 +435,27 @@ if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
 @app.get("/")
 async def root():
     """Root endpoint that returns API information"""
+    endpoints = {
+        "health": "/api/health",
+        "physics": "/api/physics",
+        "unified": "/api/unified",
+        "visualization": "/api/visualization",
+        "multi-physics": "/api/multi-physics",
+        "analytics": "/api/analytics",
+    }
+    # Dev-only routers and OpenAPI are not mounted in production; do not advertise them.
+    if settings.ENVIRONMENT != EnvironmentType.PRODUCTION:
+        endpoints.update({
+            "fitting": "/api/fitting",
+            "logs": "/api/logs",
+            "diagnostics": "/api/diagnostics",
+            "docs": "/api/docs",
+        })
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
-        "endpoints": {
-            "physics": "/api/physics",
-            "fitting": "/api/fitting",
-            "logs": "/api/logs",
-            "diagnostics": "/api/diagnostics",
-            "visualization": "/api/visualization",
-            "multi-physics": "/api/multi-physics",
-            "docs": "/docs"
-        }
+        "endpoints": endpoints,
     }
 
 @app.get("/health")

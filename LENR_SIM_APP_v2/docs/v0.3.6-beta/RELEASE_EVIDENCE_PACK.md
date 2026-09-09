@@ -1,5 +1,23 @@
 # Release Evidence Pack (v0.3.6-beta)
 
+## Public beta VPS slice (2026-09-02)
+
+- Same-origin Hostinger VPS. Intended URL `https://lenr-simp-app.conscious.energy`.
+  WordPress.com apex/`www` unchanged (INF-008 bypassed).
+- Compute hardening: `app/core/compute_guard.py`, Dockerfile `LENR_WORKERS=1`,
+  multi-physics / WS input caps. Export envelope still `lenr-run-export-v1`.
+- Frontend: `VITE_API_URL=same-origin`, `BetaNotice`, nginx headers/caching.
+- Infra: `infrastructure/vps/` Compose + Caddy; GHCR frontend image; manual
+  `deploy-vps` job. Tracker: `PUBLIC_DEPLOYMENT_TRACKER.md`.
+- Gates: science 55; backend 1095 passed / 9 skipped; frontend lint 0 /
+  audit-high 0 / build PASS. `lenr_proved` remains false; `EQ-OPEN-*` OPEN.
+- Live TLS/health probes: `https://srv1280333.hstgr.cloud` and
+  `https://lenr-sim-beta.conscious.energy` (A `185.211.4.66`) after compose
+  `--env-file` interpolation. `lenr-simp-app` TLS waits on replacing the
+  WordPress.com CNAME-to-apex with `A 185.211.4.66`.
+
+---
+
 ## Public release readiness review (2026-08-23)
 
 ### Theory Testbed UX

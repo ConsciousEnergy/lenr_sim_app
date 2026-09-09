@@ -84,7 +84,7 @@ export default function PrivacyPage() {
           GNU GPL-3.0
         </MuiLink>
         . Contact:{' '}
-        <MuiLink href="mailto:info@conscious.energy">info@conscious.energy</MuiLink>.
+        <MuiLink href="mailto:diadon@conscious.energy">diadon@conscious.energy</MuiLink>.
       </Typography>
     </Container>
   );

@@ -76,6 +76,16 @@ def test_empty_manifest_never_claims_proof() -> None:
     assert set(manifest["open_ids"]) == OPEN_IDS
 
 
+def test_repo_root_walker_does_not_require_parents4() -> None:
+    """The backend image lives at /app/app/services, which has no parents[4]."""
+    from app.services.reviewer_pack import INVARIANTS_PATH, _git_sha, _repo_root
+
+    root = _repo_root()
+    assert root.exists()
+    assert _git_sha() is None or isinstance(_git_sha(), str)
+    assert INVARIANTS_PATH.name == "campaign_invariants.json"
+
+
 def test_q_campaign_demo_pack_size_lock() -> None:
     root = datasets_root() / "reviewer_packs" / "q_campaign_demo"
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))

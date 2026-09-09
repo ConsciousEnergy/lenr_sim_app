@@ -14,6 +14,7 @@ import json
 import math
 import time
 from app.core.config import settings
+from app.core.compute_guard import heavy_compute_slot, run_in_threadpool
 from app.physics_engine.scientific_guardrails import (
     build_electrolyte_diagnostics,
     classify_molarity_window,
@@ -392,13 +393,11 @@ def create_simulation_config(request: SimulationRequest) -> Dict[str, Any]:
     }
 
 
-@router.post("/simulate", response_model=SimulationResponse)
-async def run_unified_simulation(request: SimulationRequest):
-    """
-    Run unified LENR theory simulation.
-    
-    Calculates all enhancement factors and observables based on
-    the unified theoretical framework.
+def _compute_unified_simulation(request: SimulationRequest):
+    """Synchronous, CPU-bound part of ``/simulate`` (runs in the threadpool).
+
+    Returns ``(response, model)`` so the async endpoint can attach persistence
+    without blocking the event loop during the physics run.
     """
     try:
         # Import here to avoid circular imports
@@ -555,6 +554,23 @@ async def run_unified_simulation(request: SimulationRequest):
             reaction_rate_engine=reaction_rate_engine_block,
             open_questions=open_questions,
         )
+        return response, model
+        
+    except Exception as e:
+        raise _client_safe_error("Unified simulation error", e)
+
+
+@router.post("/simulate", response_model=SimulationResponse)
+async def run_unified_simulation(request: SimulationRequest):
+    """
+    Run unified LENR theory simulation.
+    
+    Calculates all enhancement factors and observables based on
+    the unified theoretical framework.
+    """
+    async with heavy_compute_slot("unified/simulate"):
+        response, model = await run_in_threadpool(_compute_unified_simulation, request)
+    try:
         from app.services.persist_runs import persist_unified_simulation
         persistence = await persist_unified_simulation(
             request,
@@ -568,7 +584,6 @@ async def run_unified_simulation(request: SimulationRequest):
             transparency["persistence"] = persistence
             response.analytics_transparency = transparency
         return response
-        
     except Exception as e:
         raise _client_safe_error("Unified simulation error", e)
 
@@ -1359,6 +1374,27 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
     - **enhancement_factor**: Peak total enhancement
     - **enhancement_breakdown**: Detailed breakdown of all contributing factors
     """
+    async with heavy_compute_slot("unified/bubble-lattice"):
+        response = await run_in_threadpool(_compute_bubble_lattice_simulation, request)
+    try:
+        from app.services.persist_runs import persist_bubble_lattice
+        persistence = await persist_bubble_lattice(
+            request,
+            response,
+            session_id=request.persist_session_id,
+            source=request.persist_source or "auto_persist",
+        )
+        if persistence:
+            validation = dict(response.validation or {})
+            validation["persistence"] = persistence
+            response.validation = validation
+        return response
+    except Exception as e:
+        raise _client_safe_error("Bubble-lattice simulation error", e)
+
+
+def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleLatticeResponse:
+    """Synchronous, CPU-bound part of ``/bubble-lattice`` (runs in the threadpool)."""
     # Log incoming request for debugging
     logger.info(f"Bubble-lattice request received:")
     logger.info(f"  Bubble: radius={request.bubble.initial_radius_um}μm, pressure={request.bubble.driving_pressure_bar}bar, freq={request.bubble.frequency_khz}kHz, temp={request.bubble.ambient_temperature_k}K")
@@ -1884,17 +1920,6 @@ async def run_bubble_lattice_simulation(request: BubbleLatticeRequest):
             reaction_rate_engine=reaction_rate_engine_block,
             open_questions=open_questions,
         )
-        from app.services.persist_runs import persist_bubble_lattice
-        persistence = await persist_bubble_lattice(
-            request,
-            response,
-            session_id=request.persist_session_id,
-            source=request.persist_source or "auto_persist",
-        )
-        if persistence:
-            validation = dict(response.validation or {})
-            validation["persistence"] = persistence
-            response.validation = validation
         return response
         
     except HTTPException:

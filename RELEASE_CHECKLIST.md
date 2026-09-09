@@ -48,10 +48,17 @@ Evidence pack: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/`](LENR_SIM_APP_v2/docs/v0.3.6
 
 ## Public deploy (operator)
 
-- [ ] Cloudflare / Hostinger credentials and Terraform apply
-- [ ] Swarm secrets + GHCR pull on VPS
-- [ ] Health checks: `https://api.conscious.energy/api/health`
-- [ ] Frontend domain + TLS verified
+Canonical path is the **same-origin VPS** (`https://lenr-simp-app.conscious.energy` once its A record points here; until then `https://lenr-sim-beta.conscious.energy`), not Cloudflare Pages + Swarm.
+
+- [ ] WordPress.com DNS: replace `lenr-simp-app` CNAME-to-apex with `A` → `185.211.4.66` (optional AAAA)
+- [ ] `infrastructure/vps/scripts/bootstrap-host.sh` (SSH key-only, UFW, fail2ban, swap)
+- [ ] `/opt/lenr-sim/.env` filled from `.env.production.example` (mode 0600)
+- [ ] `deploy.sh` (alembic + compose up); `hydrate-demo.sh` once; backup cron
+- [ ] Health: `GET /api/health` → 200 `"status":"healthy"` `"version": "0.3.6-beta"` (`https://lenr-sim-beta.conscious.energy` / `https://srv1280333.hstgr.cloud` until `lenr-simp-app` is an A record)
+- [ ] `GET /api/docs` and `GET /metrics` → **404**
+- [ ] SPA deep link `/unified-theory` → 200; beta banner visible
+- [ ] Root password rotated in hPanel; Actions secrets `VPS_HOST` / `VPS_SSH_KEY` / `GHCR_PULL_TOKEN`
 
 Tracked as **manual PENDING** until operators complete the runbook in
-`PUBLIC_DEPLOYMENT_TRACKER.md`.
+`PUBLIC_DEPLOYMENT_TRACKER.md`. The Terraform/Swarm path is the alternative
+multi-node design; do not apply it while WordPress owns the marketing site.

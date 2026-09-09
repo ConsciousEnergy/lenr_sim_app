@@ -4,8 +4,8 @@
 
 - **Local development UI (Vite):** run frontend with `cd frontend && npm run dev` (or `npm start`) and open `http://localhost:3000`
 - **Local development API (Docker):** run backend with `docker compose up -d --build` and use `http://localhost:8010/api/health`
-- **Production UI (Hostinger/Cloudflare):** serve frontend static build from hosting pipeline, not local Vite dev server
-- **Production API:** public API endpoint is `https://api.conscious.energy` (behind reverse proxy/TLS)
+- **Production UI + API (Hostinger VPS):** `https://lenr-simp-app.conscious.energy` once its A record points here; until then `https://lenr-sim-beta.conscious.energy` (Caddy, same origin). See `infrastructure/vps/README.md`.
+- **Production API (legacy Swarm design):** `https://api.conscious.energy` — not used for the 2026-09 public beta.
 - **Best practice:** do not mix local development-server expectations with production static hosting assumptions
 
 ## Pre-Deployment
@@ -21,7 +21,17 @@
 - [ ] Image pushed to GHCR: `docker push ghcr.io/consciousenergy/lenr-sim-backend:0.3.6-beta`
 - [ ] **VPS has GHCR credentials**: `docker login ghcr.io -u <user> --password-stdin` on the server
 
-## Infrastructure
+## Infrastructure (public beta VPS)
+
+- [ ] Host hardened: `infrastructure/vps/scripts/bootstrap-host.sh`
+- [ ] `/opt/lenr-sim/.env` filled; `deploy.sh` succeeded
+- [ ] Optional: GHCR pull (`docker login ghcr.io`) or `BUILD_LOCALLY=1`
+- [ ] `hydrate-demo.sh` once; `backup-db.sh` cron installed
+
+The Terraform / Ansible / Swarm / Cloudflare Pages path below is the **alternative
+multi-node design**. Skip it for `lenr-simp-app.conscious.energy` / `lenr-sim-beta.conscious.energy`.
+
+## Infrastructure (alternative: Terraform + Swarm)
 
 - [ ] Terraform variables filled in (`terraform.tfvars`)
 - [ ] Terraform applied: `terraform apply`

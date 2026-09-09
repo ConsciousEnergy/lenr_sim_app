@@ -199,6 +199,7 @@ Licensed under **GNU GPL-3.0**. This project is freely available for anyone to u
 
 - **Current release**: `v0.3.6-beta` (see [Changelog](CHANGELOG.md) and the evidence pack under `LENR_SIM_APP_v2/docs/v0.3.6-beta/`)
 - **Development branch**: `main` (trunk-based; releases are `v*` tags)
+- **Public beta**: same-origin Hostinger VPS at `https://lenr-sim-beta.conscious.energy` (Caddy + Compose; see `LENR_SIM_APP_v2/infrastructure/vps/`)
 
 ---
 

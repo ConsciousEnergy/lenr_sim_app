@@ -1,0 +1,157 @@
+# Production Docker Compose for a single Hostinger VPS.
+# Same-origin public beta: Caddy (TLS) -> nginx SPA + FastAPI + Postgres.
+#
+# Run from LENR_SIM_APP_v2/:
+#   docker compose -f infrastructure/vps/docker-compose.prod.yml --env-file /opt/lenr-sim/.env up -d
+#
+# Secrets are interpolated from that --env-file. Do NOT add
+# `env_file: .env.production.example` on services — a later `up` without
+# LENR_ENV_FILE overlays CHANGE_ME and Postgres rejects lenr_app.
+#
+# First boot without GHCR: BUILD_LOCALLY=1 ./infrastructure/vps/scripts/deploy.sh
+
+name: lenr-sim
+
+services:
+  caddy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /opt/lenr-sim/logs/caddy:/var/log/caddy
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - lenr
+    mem_limit: 256m
+
+  frontend:
+    image: ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG:-0.3.6-beta}
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+      args:
+        VITE_API_URL: same-origin
+        REACT_APP_API_URL: same-origin
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - lenr
+    mem_limit: 256m
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /var/log/nginx
+      - /tmp
+
+  backend:
+    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.6-beta}
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+      args:
+        BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
+    restart: unless-stopped
+    environment:
+      LENR_ENVIRONMENT: production
+      LENR_SECRET_KEY: ${LENR_SECRET_KEY:?LENR_SECRET_KEY is required}
+      LENR_JWT_SECRET_KEY: ${LENR_JWT_SECRET_KEY:-}
+      LENR_ANALYTICS_WRITE_TOKEN: ${LENR_ANALYTICS_WRITE_TOKEN:-}
+      LENR_CORS_ORIGINS: ${LENR_CORS_ORIGINS:-["https://lenr-simp-app.conscious.energy","https://lenr-sim-beta.conscious.energy","https://srv1280333.hstgr.cloud"]}
+      LENR_DB_HOST: postgres
+      LENR_DB_PORT: "5432"
+      LENR_DB_USER: ${LENR_DB_USER:-lenr_app}
+      LENR_DB_PASSWORD: ${LENR_DB_PASSWORD:?LENR_DB_PASSWORD is required}
+      LENR_DB_NAME: ${LENR_DB_NAME:-lenr_sim}
+      LENR_WORKERS: ${LENR_WORKERS:-1}
+      LENR_HTTPS_REDIRECT: "false"
+      LENR_AUTO_PERSIST: "0"
+      LENR_LOG_JSON_FORMAT: "true"
+      LENR_LOG_TO_FILE: "true"
+      LENR_LOG_FILE_DIR: /app/logs
+      LENR_ENABLE_RATE_LIMITING: ${LENR_ENABLE_RATE_LIMITING:-true}
+      LENR_MAX_CONCURRENT_HEAVY_SIMS: ${LENR_MAX_CONCURRENT_HEAVY_SIMS:-2}
+      LENR_HEAVY_SLOT_WAIT_SECONDS: ${LENR_HEAVY_SLOT_WAIT_SECONDS:-10}
+    volumes:
+      - /opt/lenr-sim/logs/backend:/app/logs
+      - /opt/lenr-sim/data:/app/data
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health | grep -q '\"status\":\"healthy\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - lenr
+    mem_limit: 3g
+
+  migrate:
+    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.6-beta}
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+      args:
+        BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
+    profiles: ["migrate"]
+    environment:
+      LENR_ENVIRONMENT: production
+      LENR_SECRET_KEY: ${LENR_SECRET_KEY:?LENR_SECRET_KEY is required}
+      LENR_DB_HOST: postgres
+      LENR_DB_PORT: "5432"
+      LENR_DB_USER: ${LENR_DB_USER:-lenr_app}
+      LENR_DB_PASSWORD: ${LENR_DB_PASSWORD:?LENR_DB_PASSWORD is required}
+      LENR_DB_NAME: ${LENR_DB_NAME:-lenr_sim}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    networks:
+      - lenr
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LENR_DB_USER:-lenr_app}
+      POSTGRES_PASSWORD: ${LENR_DB_PASSWORD:?LENR_DB_PASSWORD is required}
+      POSTGRES_DB: ${LENR_DB_NAME:-lenr_sim}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LENR_DB_USER:-lenr_app} -d ${LENR_DB_NAME:-lenr_sim}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lenr
+    mem_limit: 1g
+
+networks:
+  lenr:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

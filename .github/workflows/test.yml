@@ -246,3 +246,18 @@ jobs:
       - name: lake build LenrFormal
         working-directory: formalization/lean
         run: lake build
+
+  compose-config:
+    runs-on: ubuntu-latest
+    needs: version-consistency
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate production compose file
+        run: |
+          docker compose \
+            --env-file LENR_SIM_APP_v2/infrastructure/vps/.env.production.example \
+            -f LENR_SIM_APP_v2/infrastructure/vps/docker-compose.prod.yml \
+            config -q
+
