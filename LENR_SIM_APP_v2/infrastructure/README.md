@@ -1,18 +1,33 @@
 # LENR Simulation App - Infrastructure as Code
 
-**Version:** 0.3.6-beta  
-**Last Updated:** May 2026
+**Version:** 0.3.6-beta
+**Last Updated:** September 2026
 
 ---
 
-## Overview
+## Public beta (use this)
 
-This directory contains all Infrastructure as Code (IaC) configuration for deploying the LENR Simulation App to production. The infrastructure uses:
+Same-origin Docker Compose on the Hostinger VPS:
 
-- **Terraform** - Provisions Cloudflare (Pages, R2, DNS) and Hostinger VPS
-- **Ansible** - Configures server (Docker, Swarm) and deploys application stack
-- **Docker Swarm** - Orchestrates containers (Traefik, FastAPI, PostgreSQL)
-- **Vite static frontend build** - Deployed through Cloudflare Pages in production
+- **Docs:** [`vps/README.md`](vps/README.md)
+- **Stack:** Caddy (Let's Encrypt) → nginx SPA + FastAPI + Postgres 16
+- **Host:** `https://lenr-simp-app.conscious.energy` (intended); live A record `https://lenr-sim-beta.conscious.energy`
+
+```
+infrastructure/vps/
+├── docker-compose.prod.yml
+├── Caddyfile
+├── .env.production.example
+└── scripts/{bootstrap-host,deploy,rollback,backup-db,hydrate-demo}.sh
+```
+
+## Alternative: Terraform + Ansible + Swarm
+
+The rest of this directory provisions Cloudflare Pages + a Docker Swarm API
+(`api.conscious.energy`). That path is **not** what the 2026-09 public beta
+ships. Keep it for a future multi-node move; do not `terraform apply` while
+WordPress.com owns `conscious.energy` / `www`.
+
 
 ---
 

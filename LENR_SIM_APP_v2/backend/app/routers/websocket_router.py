@@ -15,6 +15,22 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import numpy as np
 
+from app.core.config import settings
+
+
+def _coerce_duration_steps(raw: Any) -> Optional[int]:
+    """Validate a client-supplied step count; None means reject.
+
+    Unauthenticated clients drive these demo streams, so the step count is
+    capped at ``LENR_MAX_WS_DURATION_STEPS`` to bound CPU per connection.
+    """
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        return None
+    steps = int(raw)
+    if steps < 1 or steps > settings.MAX_WS_DURATION_STEPS:
+        return None
+    return steps
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -365,7 +381,16 @@ async def websocket_simulation(
         
         if data.get('action') == 'start':
             params = data.get('params', {})
-            duration = data.get('duration_steps', 100)
+            duration = _coerce_duration_steps(data.get('duration_steps', 100))
+            if duration is None:
+                await websocket.send_json({
+                    'type': 'error',
+                    'message': (
+                        f'duration_steps must be an integer between 1 and '
+                        f'{settings.MAX_WS_DURATION_STEPS}'
+                    )
+                })
+                return
             
             # Select simulation type
             if simulation_type == 'quantum-tunneling':

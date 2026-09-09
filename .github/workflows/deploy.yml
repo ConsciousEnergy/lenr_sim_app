@@ -91,8 +91,8 @@ jobs:
       - name: Build frontend
         working-directory: LENR_SIM_APP_v2/frontend
         env:
-          VITE_API_URL: https://api.conscious.energy
-          REACT_APP_API_URL: https://api.conscious.energy
+          VITE_API_URL: same-origin
+          REACT_APP_API_URL: same-origin
         run: npm run build
 
       - name: Upload build artifact
@@ -101,3 +101,89 @@ jobs:
           name: frontend-build
           path: LENR_SIM_APP_v2/frontend/dist/
           retention-days: 7
+
+  build-frontend-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Read APP_VERSION
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          if [ -z "$APP_VERSION" ]; then
+            echo "::error file=LENR_SIM_APP_v2/backend/app/core/config.py::APP_VERSION marker not found"
+            exit 1
+          fi
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase GHCR owner
+        id: image
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ghcr.io/${{ steps.image.outputs.owner }}/lenr-sim-frontend
+          tags: |
+            type=raw,value=${{ steps.version.outputs.app_version }}
+            type=sha,prefix=
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ./LENR_SIM_APP_v2
+          file: ./LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_URL=same-origin
+            REACT_APP_API_URL=same-origin
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-vps:
+    # Manual only. Promote to push-on-ship-branch after two clean runs.
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build-backend, build-frontend-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
+            echo "VPS_HOST / VPS_SSH_KEY secrets are not set; skipping live deploy."
+            exit 1
+          fi
+          umask 077
+          KEY=$(mktemp)
+          printf '%s\n' "$VPS_SSH_KEY" > "$KEY"
+          ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+            "root@${VPS_HOST}" \
+            'set -euo pipefail
+             cd /opt/lenr-sim/src
+             git fetch origin
+             git checkout -q "$(git rev-parse --abbrev-ref HEAD)"
+             git pull --ff-only
+             LENR_ENV_FILE=/opt/lenr-sim/.env \
+               LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh'
+          rm -f "$KEY"
+

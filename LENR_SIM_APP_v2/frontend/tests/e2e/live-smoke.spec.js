@@ -1,0 +1,31 @@
+import { test, expect } from '@playwright/test';
+
+const live = process.env.LIVE_BASE_URL;
+
+test.describe('live VPS smoke', () => {
+  test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://lenr-sim-beta.conscious.energy or https://srv1280333.hstgr.cloud) to run against the deployed beta');
+
+  test('GET /api/health returns 0.3.6-beta', async ({ request }) => {
+    const res = await request.get(`${live}/api/health`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('healthy');
+    expect(body.version).toBe('0.3.6-beta');
+    expect(body.database?.connected).toBe(true);
+  });
+
+  test('production hides OpenAPI and metrics', async ({ request }) => {
+    expect((await request.get(`${live}/api/docs`)).status()).toBe(404);
+    expect((await request.get(`${live}/api/openapi.json`)).status()).toBe(404);
+    expect((await request.get(`${live}/metrics`)).status()).toBe(404);
+  });
+
+  test('SPA deep link and beta banner', async ({ page }) => {
+    const pageErrors = [];
+    page.on('pageerror', (err) => pageErrors.push(err.message));
+    await page.goto(`${live}/unified-theory`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('beta-notice')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('beta-banner')).toBeVisible();
+    expect(pageErrors, pageErrors.join('\n')).toEqual([]);
+  });
+});

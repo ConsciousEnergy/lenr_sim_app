@@ -42,6 +42,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { APP_VERSION } from '../config/version';
+import BetaNotice from './BetaNotice';
 
 const drawerWidth = 260;
 
@@ -429,6 +430,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
       
       <Main open={open}>
         <DrawerHeader />
+        <BetaNotice />
         {children}
       </Main>
     </Box>

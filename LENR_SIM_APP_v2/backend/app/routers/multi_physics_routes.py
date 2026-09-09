@@ -6,7 +6,7 @@ of LENR reactions, including nuclear and thermal phenomena.
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Dict, Any, List, Optional, Tuple
 import numpy as np
 import time
@@ -24,12 +24,33 @@ from app.simulation import (
     DomainCoupler
 )
 from app.simulation.multi_physics.test_coupling import run_coupled_simulation, plot_results
+from app.core.config import settings
 
 # Create router
 router = APIRouter()
 
-# In-memory storage for simulation results
+# In-memory storage for simulation results (single-worker deployment; see
+# compute_guard.py). Bounded so a public client cannot grow it without limit.
 simulation_results = {}
+MAX_STORED_SIMULATIONS = 200
+_ACTIVE_STATUSES = {"pending", "running"}
+
+
+def _active_simulation_count() -> int:
+    return sum(1 for sim in simulation_results.values() if sim.get("status") in _ACTIVE_STATUSES)
+
+
+def _evict_finished_simulations() -> None:
+    """Drop the oldest finished entries once the store exceeds MAX_STORED_SIMULATIONS."""
+    overflow = len(simulation_results) - MAX_STORED_SIMULATIONS
+    if overflow <= 0:
+        return
+    finished = [
+        sim_id for sim_id, sim in simulation_results.items()
+        if sim.get("status") not in _ACTIVE_STATUSES
+    ]
+    for sim_id in finished[:overflow]:
+        simulation_results.pop(sim_id, None)
 
 
 class SimulationRequest(BaseModel):
@@ -84,6 +105,24 @@ class SimulationRequest(BaseModel):
         description="Material density in kg/m^3",
         gt=0
     )
+
+    @model_validator(mode="after")
+    def enforce_compute_bounds(self) -> "SimulationRequest":
+        """Reject grids/step counts that would monopolise the public-beta host."""
+        max_axis = settings.MAX_MULTI_PHYSICS_GRID_POINTS_PER_AXIS
+        if any(n < 2 or n > max_axis for n in self.resolution):
+            raise ValueError(
+                f"resolution must have between 2 and {max_axis} grid points per axis"
+            )
+        if any(size <= 0 for size in self.domain_size):
+            raise ValueError("domain_size components must be positive")
+        step_count = self.simulation_time / self.time_step
+        if step_count > settings.MAX_MULTI_PHYSICS_STEPS:
+            raise ValueError(
+                "simulation_time / time_step exceeds the maximum of "
+                f"{settings.MAX_MULTI_PHYSICS_STEPS} time steps"
+            )
+        return self
 
 
 class SimulationResponse(BaseModel):
@@ -197,6 +236,14 @@ async def start_simulation(
     The simulation will run in the background and the results can be
     retrieved later using the returned simulation ID.
     """
+    if _active_simulation_count() >= settings.MAX_CONCURRENT_HEAVY_SIMS:
+        raise HTTPException(
+            status_code=503,
+            detail="The simulation service is busy. Please retry in a few seconds.",
+            headers={"Retry-After": str(int(max(1.0, settings.HEAVY_SLOT_WAIT_SECONDS)))},
+        )
+    _evict_finished_simulations()
+
     # Generate a unique ID for this simulation
     simulation_id = str(uuid.uuid4())
     

@@ -5,8 +5,11 @@ Full gate inventory and evidence-doc map. Workflow is in [SKILL.md](SKILL.md).
 ## CI jobs (`.github/workflows/test.yml`)
 
 - `version-consistency` (runs first; everything else `needs` it): compares the four version markers and fails on any mismatch.
-- `test` (matrix Python 3.10 / 3.11): `pip-audit`, unit (`tests/ app/tests/` + coverage), integration, deterministic V&V benchmark gates, release-blocking experiment-anchored science gates, optional performance benchmarks, coverage upload.
+- `test` (matrix Python 3.10 / 3.11 / 3.12): `pip-audit`, unit (`tests/ app/tests/` + coverage), integration, deterministic V&V benchmark gates, release-blocking experiment-anchored science gates, optional performance benchmarks, coverage upload.
 - `frontend`: `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm test`, `npm run build`.
+- `frontend-e2e`: Playwright Chromium (`npm run e2e`).
+- `formalization`: equation IR check, IR-vs-Python literal diff, `lake build`.
+- `compose-config`: `docker compose ... config -q` for `infrastructure/vps/docker-compose.prod.yml`.
 
 ## Version markers (must all equal, e.g. `0.3.6-beta`)
 

@@ -1,0 +1,45 @@
+# Same-origin public beta.
+#
+# SITE_ADDRESS must list only names whose A/AAAA (or CNAME-to-this-VPS) records
+# point here. A CNAME to conscious.energy is WordPress.com's own site mapping:
+# HTTP-01 then returns `got "WP.com"` and Let's Encrypt will not issue.
+#
+# Intended public name: lenr-simp-app.conscious.energy
+# Do not add it to SITE_ADDRESS until it resolves to 185.211.4.66
+# (A record, or CNAME to srv1280333.hstgr.cloud — not to conscious.energy).
+
+(app_proxy) {
+	encode zstd gzip
+	request_body {
+		max_size 10MB
+	}
+
+	# FastAPI, including WebSocket upgrades under /api/ws, /api/visualization/ws,
+	# and /api/unified/bubble-lattice/stream. Caddy strips client X-Forwarded-For.
+	handle /api* {
+		reverse_proxy backend:8000
+	}
+
+	# Prometheus /metrics is hidden in production FastAPI; do not SPA-fallback it.
+	handle /metrics {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy frontend:80
+	}
+}
+
+{$SITE_ADDRESS:lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud} {
+	import app_proxy
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 50mb
+			roll_keep 5
+		}
+	}
+}

@@ -344,9 +344,8 @@ const DataExportPanel: React.FC<DataExportPanelProps> = ({
       return;
     }
     
-    // In a real application, you would implement sharing functionality
-    // For this example, we'll just simulate it
-    const shareUrl = `https://lenr-sim.example.com/share/${simulationId}`;
+    // Share links resolve against the deployed origin (same-origin VPS or Pages host).
+    const shareUrl = `${window.location.origin}/share/${simulationId}`;
     
     // Copy the share URL to clipboard
     navigator.clipboard.writeText(shareUrl)

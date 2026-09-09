@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.3.6-beta] - 2026-08-31
 
+### Public beta VPS cutover (2026-09-02)
+- Same-origin stack on the Hostinger VPS: Caddy TLS + nginx SPA + FastAPI + Postgres Compose (`infrastructure/vps/`). Intended public URL `https://lenr-simp-app.conscious.energy`; WordPress.com apex/`www` untouched
+- Backend: single uvicorn worker (`LENR_WORKERS=1`), heavy-compute semaphore (`LENR_MAX_CONCURRENT_HEAVY_SIMS=2`) returning 503 + `Retry-After`, multi-physics grid/step caps, WebSocket `duration_steps` cap, `/simulate` and `/bubble-lattice` run in the threadpool. Root `/` no longer advertises OpenAPI in production
+- Frontend: `VITE_API_URL=same-origin` → relative `/api` and `wss://` from `window.location`; beta research-preview banner + API-unreachable alert; nginx cache/CSP headers
+- CI: GHCR `lenr-sim-frontend` image; `workflow_dispatch` SSH deploy; compose `config` gate
+- Compose interpolates secrets from `--env-file /opt/lenr-sim/.env` (no `env_file` fallback to `.env.production.example`); health probe requires `"status":"healthy"`
+- Production SPA no longer white-screens: Vite `manualChunks` no longer splits react/mui/charts into circular vendor chunks (`Cannot access 'P' before initialization`)
+- `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN; PostHog key stays unset
+
 ### Dependabot majors after slot refill (2026-09-02)
 - Closing skip PRs #135–#138 / #143 / #144 freed Dependabot's 5-PR-per-ecosystem slots. New PRs #147–#152 targeted `lenr_sim_app_v0.3.6-beta`, not `main`
 - Extra ignores so those majors do not refill: pip `prometheus-fastapi-instrumentator` major (v8 wants `starlette>=1`); npm `tailwindcss` 4, `react-router-dom` / `react-router` 7, `recharts` 3. Copy this `dependabot.yml` onto `main` again
