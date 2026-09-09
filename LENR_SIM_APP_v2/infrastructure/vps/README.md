@@ -18,9 +18,10 @@ the browser. Use an **A record to this VPS**, or a CNAME to the VPS hostname.
 | AAAA (optional) | `lenr-simp-app` | `2a02:4780:10:fc6a::1` | |
 | A | `lenr-sim-beta` | `185.211.4.66` | already live; used for TLS until `lenr-simp-app` points here |
 
-`SITE_ADDRESS` must list **only** names that already resolve here. After
+Site hostnames are configured as a **literal comma-separated line in
+`Caddyfile`** (Caddy cannot split multi-host values from env). After
 `lenr-simp-app` is an A record (or CNAME to `srv1280333.hstgr.cloud`), add
-`lenr-simp-app.conscious.energy` to `SITE_ADDRESS` and recreate Caddy.
+`lenr-simp-app.conscious.energy` to that Caddyfile site line and recreate Caddy.
 
 ## Layout
 
