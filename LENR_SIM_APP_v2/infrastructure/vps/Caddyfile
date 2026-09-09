@@ -1,11 +1,16 @@
 # Same-origin public beta.
 #
-# SITE_ADDRESS must list only names whose A/AAAA (or CNAME-to-this-VPS) records
-# point here. A CNAME to conscious.energy is WordPress.com's own site mapping:
-# HTTP-01 then returns `got "WP.com"` and Let's Encrypt will not issue.
+# Hostnames must be written literally here (comma-separated). Caddy's
+# {$ENV:default} substitution treats a multi-host env value as ONE address
+# token, so commas inside SITE_ADDRESS break startup with:
+#   Site addresses cannot contain a comma
+#
+# Only list names whose A/AAAA (or CNAME-to-this-VPS) records point here.
+# A CNAME to conscious.energy is WordPress.com's own site mapping: HTTP-01
+# then returns `got "WP.com"` and Let's Encrypt will not issue.
 #
 # Intended public name: lenr-simp-app.conscious.energy
-# Do not add it to SITE_ADDRESS until it resolves to 185.211.4.66
+# Add it to the site line below only after it resolves to 185.211.4.66
 # (A record, or CNAME to srv1280333.hstgr.cloud — not to conscious.energy).
 
 (app_proxy) {
@@ -30,7 +35,7 @@
 	}
 }
 
-{$SITE_ADDRESS:lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud} {
+lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud {
 	import app_proxy
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"

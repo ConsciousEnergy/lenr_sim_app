@@ -20,8 +20,9 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-    environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud}
+    # Hostnames live in ./Caddyfile (literal comma-separated site line).
+    # Do not inject SITE_ADDRESS here — Caddy env substitution cannot split
+    # multi-host values and will crash-loop on commas.
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

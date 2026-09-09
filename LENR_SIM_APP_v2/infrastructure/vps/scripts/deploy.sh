@@ -18,12 +18,22 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing $ENV_FILE — copy infrastructure/vps/.env.production.example and fill secrets." >&2
   exit 1
 fi
-# shellcheck disable=SC1090
-set -a
-# Export IMAGE_TAG / GHCR_* for compose interpolation without printing secrets.
-# grep filters comments/blank lines.
-eval "$(grep -E '^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|SITE_ADDRESS|LENR_WORKERS)=' "$ENV_FILE" | sed 's/\r$//')"
-set +a
+# Export IMAGE_TAG / GHCR_* / LENR_WORKERS for compose interpolation without
+# printing secrets. Parse line-by-line (avoid eval) so odd values cannot
+# execute as shell words. Site hostnames live in Caddyfile, not SITE_ADDRESS.
+while IFS= read -r line || [[ -n "$line" ]]; do
+  line="${line%$'\r'}"
+  [[ "$line" =~ ^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|LENR_WORKERS)=(.*)$ ]] || continue
+  key="${BASH_REMATCH[1]}"
+  val="${BASH_REMATCH[2]}"
+  if [[ "$val" =~ ^".*"$ ]]; then
+    val="${val:1:-1}"
+  elif [[ "$val" =~ ^'.*'$ ]]; then
+    val="${val:1:-1}"
+  fi
+  printf -v "$key" '%s' "$val"
+  export "$key"
+done < <(grep -E '^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|LENR_WORKERS)=' "$ENV_FILE" || true)
 
 IMAGE_TAG="${IMAGE_TAG:-0.3.6-beta}"
 PREVIOUS_TAG_FILE=/opt/lenr-sim/.previous-image-tag
