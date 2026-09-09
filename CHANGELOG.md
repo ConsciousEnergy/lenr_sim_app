@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Frontend npm overrides: `js-yaml` ^4.3.2, `svgo` ^3.3.5, `qs` ^6.16.0, `colord` ^2.9.4 so `npm audit --audit-level=high` is clean (react-router remains moderate pending intentional v7 migration)
+
 ### Repository organization and security hardening (2026-09-04)
 - Trunk-based branching adopted: `main` is the only long-lived branch, releases are `v*` tags, features use short-lived branches. Documented in `.github/BRANCHING.md`; `CONTRIBUTING.md` and the PR template now say "branch from `main`"
 - `v0.3.6-beta` promoted to `main` via merge-commit PR #161. Version-named release branches and `master`/`development` archived as `archive/*` tags; `v0.3.5-beta` tagged retroactively at PR #24's merge commit
