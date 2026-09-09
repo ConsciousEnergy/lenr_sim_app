@@ -30,6 +30,45 @@ The hypothesis under test: **harmonic locking provides a coherent, high-Q
 channel that, combined with phonon-nuclear coupling, enables MeV->multi-eV
 down-conversion** during the final collapse phase.
 
+For electrolytic PdD, the coupled working hypothesis is **WH-ENP-01**
+(Hagelstein cascade on Takahashi TSC geometry). KG-RP locking is an optional
+cavitation overlay, not the PdD core. See Lean `LenrFormal.WorkingHypothesis`
+and `open_questions.working_hypothesis`. EQ-OPEN-MEV-01 remains OPEN.
+
+### Quantitative status (WH-ENP-01 v2, 2026-09-04) — still OPEN
+
+Two derived bounds now state what the down-conversion hypothesis must supply
+(claim tier `speculative_exploratory`; Lean `LenrFormal.WorkingHypothesisBounds`;
+runtime `working_hypothesis.q2.franck_condon` / `dicke`):
+
+- **Franck-Condon requirement (`EQ-WH-FC-01`).** For linear phonon coupling
+  (displaced-oscillator / Huang-Rhys model, a labelled **model assumption**) the
+  N-phonon emission probability is a Poisson tail with phonon order
+  \(N = Q/hf \approx 5.75\times10^{8}\) at \(f = 10^{13}\,\mathrm{Hz}\)
+  (\(hf \approx 41.4\,\mathrm{meV}\), CODATA). On the scan grid
+  \(S \in \{1,\dots,10^{4}\}\), \(\log_{10}P_N\) lies between \(-4.8\times10^{9}\)
+  and \(-2.5\times10^{9}\) (Lean-certified conservative cap
+  \(\le -7\times10^{5} \ll -11\)). The smallest Huang-Rhys factor reaching the
+  \(10^{-11}\) target is \(S_{\min} \approx 0.9998\,N\), i.e. a lattice relaxation
+  energy \(S_{\min} hf \approx 23.79\,\mathrm{MeV} \approx Q\). This is the
+  quantitative form of the MeV gap: linear coupling closes it only if the lattice
+  already relaxes by the full nuclear quantum. Anharmonic, Umklapp and Hagelstein
+  lossy spin-boson enhancements remain named AX hypotheses and are **not**
+  inserted into the derived bound.
+- **Dicke count (`EQ-WH-DICKE-N-01`).** With \(n_D = 6.8\times10^{28}\,\mathrm{m^{-3}}\)
+  and \(v_s = 3070\,\mathrm{m/s}\) (model assumptions), the cooperation sphere
+  \(\tfrac{4}{3}\pi(\lambda/2\pi)^{3} \approx 4.9\times10^{-31}\,\mathrm{m^{3}}\)
+  holds \(\approx 0.033 < 1\) deuterons, so \(N_{\mathrm{coh}}^{\max} = 0\) and a
+  Dicke \(N^{2}\) enhancement is not licensed for even one coherent pair at the
+  paper's phonon scale. The conservation-constrained coupling scan therefore keeps
+  the cited remainder at \(23.8\,\mathrm{MeV}\) (`EQ-WH-PART-02`).
+
+Neither bound closes EQ-OPEN-MEV-01 or EQ-OPEN-RAD-01 (`EQ-WH-NONCLOSE-02`);
+they bound what a future constrained matrix element must overcome. WolframAlpha
+MCP was unavailable for this pass; numbers were checked with `scipy.constants`
+and `math.lgamma` (see `LENR_SIM_APP_v2/docs/PHYSICS_EQUATION_VERIFICATION.md`
+§12.9-12.10).
+
 ## Falsifiable predictions (encoded as gates / diagnostics)
 
 | # | Prediction | Where checked | Falsifier |
@@ -50,3 +89,4 @@ down-conversion** during the final collapse phase.
 
 ## Change log
 - 2026-06-04: Hypothesis documented (Phase 6) with falsifiable predictions.
+- 2026-09-04: WH-ENP-01 v2 quantitative status added (Franck-Condon requirement, Dicke count); hypothesis remains OPEN.

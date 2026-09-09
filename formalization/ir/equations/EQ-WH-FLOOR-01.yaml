@@ -1,0 +1,19 @@
+id: EQ-WH-FLOOR-01
+latex: "R_{\\mathrm{obs}}=P_{\\mathrm{W}}/(Q V)\\land\\mathrm{threshold}\\iff R_{\\mathrm{mode}}\\ge R_{\\mathrm{obs}}"
+symbols:
+  R_obs: "calorimetric volumetric floor"
+  P_W: "excess power"
+  V: "active volume"
+units: "s^{-1} m^{-3}"
+tag: DEF
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - miles1993
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.floorIdentity"
+  - "LenrFormal.WorkingHypothesis.floor_is_threshold"
+notes: "Floor identity is WhenHow.thresholdCrossed. Two-body log10 N = -40 remains a non-closure theorem."

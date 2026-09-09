@@ -1,0 +1,26 @@
+id: EQ-WH-PART-02
+latex: "E_{\\mathrm{derived}}+(Q-E_{\\mathrm{derived}})=Q\\ (E_{\\mathrm{derived}}\\le Q);\\quad Q-E_{\\mathrm{derived}}=0\\iff E_{\\mathrm{derived}}=Q"
+symbols:
+  E_derived: "energy allocated to derived channels in a coupling-scan row"
+  Q: "D+D to 4He Q-value (23.8 MeV = 23800 keV)"
+  n_coh_cited_cap: "floor(n_D V_dicke) = 0 (EQ-WH-DICKE-N-01); cited row has E_derived = 0"
+units: "keV"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - hagelstein2025
+  - conservation
+lean_target: LenrFormal.WorkingHypothesisBounds
+lean_decls:
+  - "LenrFormal.WorkingHypothesisBounds.partition_general"
+  - "LenrFormal.WorkingHypothesisBounds.remainder_zero_iff"
+  - "LenrFormal.WorkingHypothesisBounds.partial_allocation_leaves_q1_open"
+  - "LenrFormal.WorkingHypothesisBounds.cited_scan_row_remainder"
+  - "LenrFormal.WorkingHypothesisBounds.cited_scan_row_conserved"
+adopted_value:
+  qDD_He4_keV: 23800
+  default_derived_keV: 0
+notes: "Generalises EQ-WH-PART-01 to every coupling-scan row: conservation holds for any derived <= Q and the remainder vanishes only when derived = Q. Scenario rows with n_coh > 0 are model scenarios, not cited values. Does not close EQ-OPEN-MEV-01."

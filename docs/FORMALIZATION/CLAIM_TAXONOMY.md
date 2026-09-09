@@ -111,6 +111,18 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler factor \(\approx 1\) at simulated lab \(E\) | bubble QED term | `bubble_lattice_interaction.py` | HE 1936 | `THM` | `ScaleQED.lean` |
 | EQ-UQ-PRIOR-01 | Oracle B skeptical default priors | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
+| EQ-WH-ENP-01 | Coupled WH-ENP-01 geometry/occupation/operator ledger | §5A | `working_hypothesis.py` | hagelstein2025, takahashi2016 | `DEF` | `WorkingHypothesis.lean` |
+| EQ-WH-PART-01 | Derived + OPEN remainder = 23.8 MeV; remainder > 0 | §5A.1 | `working_hypothesis.py` | conservation | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | §5A.2 | `working_hypothesis.py` | harmonic DOS cutoff | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-FLOOR-01 | \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\); threshold iff \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) | §5A.3 | `working_hypothesis.py` | DEF | `DEF` | `WorkingHypothesis.lean` |
+| EQ-WH-DICKE-01 | Paper domain \(>\) Dicke radius \(\Rightarrow N^2\) not licensed | §5A.1 | `working_hypothesis.py` | constraint | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; alpha stopping \(\neq\) prompt \(\gamma\) | §5A.1 | `working_hypothesis.py` | takahashi2016 | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-NONCLOSE-01 | WH remainders do not discharge Q1–Q3 OPEN predicates | §5A | `working_hypothesis.py` | non-closure | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-FC-01 | Poisson (Huang–Rhys) tail \(t_{N+1}/t_N=S/(N+1)<1\) for \(N\ge S\); \(\log_{10}P_N\le-7\times10^{5}<-11\) at \(S\le10^{4}\) | §5A.1/5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-PART-02 | General partition \(E_{\text{derived}}+(Q-E_{\text{derived}})=Q\); remainder \(=0\iff E_{\text{derived}}=Q\) | §5A.1 | `many_body/wh_bounds.py` | conservation | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-DICKE-N-01 | \(n_D V_{\text{dicke}}\approx0.033<1\Rightarrow N_{\text{coh}}^{\max}=0\); no pair licensed | §5A.1 | `many_body/wh_bounds.py` | counting bound | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-CAP-01 | \(P_{\text{occ}},f_{\text{nuc}}\le1,\ C_{\text{lin}}\le10^{6}\Rightarrow\) capped product bound; demand above cap unmet | §5A.3 | `many_body/wh_bounds.py` | upper bound (RR-006 clamp) | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-NONCLOSE-02 | WH v2 bounds (FC, partition, Dicke count, cap) do not discharge Q1–Q3 | §5A | `many_body/wh_bounds.py` | non-closure | `THM` | `WorkingHypothesisBounds.lean` |
 
 ---
 
@@ -120,6 +132,6 @@ Every row in [TRACEABILITY_MATRIX.md](../REVIEW_2026/TRACEABILITY_MATRIX.md) map
 
 ## Non-claims
 
-No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Huang 2024 cavitation COP/\(^{22}\)Ne, Widom–Larsen mass renormalization, or MeV-gap closure. `EQ-HUANG-EMP-01` is contested EMP and does not close `EQ-TSC-01`. Adding n-body / composition / decision IDs, `EQ-OPEN-EC-DEFICIT-01`, or `EQ-OPEN-YIELD-BAND-01` does **not** flip `EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, `EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, or `EQ-OPEN-YIELD-01`. There is no `theorem lenr_occurs`.
+No taxonomy row tagged `THM` asserts experimental truth of LENR, Miles calorimetry, Huang 2024 cavitation COP/\(^{22}\)Ne, Widom–Larsen mass renormalization, or MeV-gap closure. `EQ-HUANG-EMP-01` is contested EMP and does not close `EQ-TSC-01`. Adding n-body / composition / decision IDs, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01`, or `EQ-WH-*` does **not** flip `EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, `EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, or `EQ-OPEN-YIELD-01`. There is no `theorem lenr_occurs`.
 
 Every IR YAML now carries `lean_decls` (fully qualified Lean names). `check_ir.py` resolves the target module, requires those names to exist, requires a direct import in `LenrFormal.lean`, and requires every `EQ-*` literal in `open_questions.py` / `open_question_details.py` / `decision_oracle.py` to resolve to an IR or taxonomy row.

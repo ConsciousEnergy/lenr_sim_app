@@ -67,6 +67,24 @@ def _assert_open_questions(data: dict, *, route_mode: str) -> None:
         path.get("diagram_spec")
         for path in oq["how"]["mechanism_paths"]
     )
+    wh = oq["working_hypothesis"]
+    assert wh["id"] == "WH-ENP-01"
+    assert wh["status"] == "OPEN"
+    assert wh["lenr_proved"] is False
+    assert wh["discharges_eq_open"] is False
+    assert oq["q_radiation"]["branching_is_scenario_input"] is True
+    assert oq["q_radiation"]["derived_bound"]["meets_target"] is False
+    # WH-ENP-01 v2 additive blocks (schema id above is unchanged).
+    for lean_id in ("EQ-WH-FC-01", "EQ-WH-PART-02", "EQ-WH-DICKE-N-01", "EQ-WH-CAP-01"):
+        assert lean_id in wh["lean_theorems"]
+    assert wh["q2"]["franck_condon"]["meets_target"] is False
+    assert wh["q1"]["coupling_scan"]["default_derived_mev"] == 0.0
+    assert wh["q1"]["coupling_scan"]["conservation_holds"] is True
+    assert wh["dicke"]["n_coh_licensed_max"] == 0
+    closure = wh["q3"]["closure_demand"]
+    assert closure["kind"] == "scenario_table_not_posterior"
+    assert closure["two_body_untouched"] is True
+    assert set(closure["engine_cap"]) == {"fcc_tetrahedral", "trap_25pm"}
 
 
 def test_simulate_default_is_additive_and_does_not_close() -> None:

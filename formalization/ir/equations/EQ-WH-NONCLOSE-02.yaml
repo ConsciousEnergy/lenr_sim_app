@@ -1,0 +1,19 @@
+id: EQ-WH-NONCLOSE-02
+latex: "\\mathrm{WH\\text{-}ENP\\text{-}01\\ v2\\ bounds}\\nvdash Q_1\\land Q_2\\land Q_3\\ \\mathrm{closed}"
+symbols:
+  WH_ENP_01_v2: "coupled working hypothesis with FC / partition / Dicke-count / engine-cap bounds"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/working_hypothesis.py
+citation_keys:
+  - hagelstein2025
+  - takahashi2016
+lean_target: LenrFormal.WorkingHypothesisBounds
+lean_decls:
+  - "LenrFormal.WorkingHypothesisBounds.wh_v2_does_not_discharge_open_obligations"
+  - "LenrFormal.WorkingHypothesisBounds.fcDerivedRatio"
+  - "LenrFormal.WorkingHypothesisBounds.fcGammaBranchingMilli"
+notes: "Composition of EQ-WH-PART-01 remainder, EQ-WH-FC-01 gamma-branching / ratio bounds, and EQ-RATE-2B-NC-01: the three open predicates stay undischarged. Not a nature theorem."

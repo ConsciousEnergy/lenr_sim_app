@@ -9,25 +9,87 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import EnergyPartitionFlow from './EnergyPartitionFlow';
+import { formatCompact } from '../../utils/formatCompact';
 
 const OPEN_COLOR = '#c62828';
 const SPEC_COLOR = '#ef6c00';
 const REF_COLOR = '#1565c0';
 
-function ChartFrame({ title, children }) {
+function ChartFrame({ title, children, testId, caption }) {
   return (
-    <Box sx={{ width: '100%', height: 220, mb: 2 }}>
+    <Box sx={{ width: '100%', height: caption ? 250 : 220, mb: 2 }} data-testid={testId}>
       <Typography variant="caption" color="text.secondary">{title}</Typography>
-      <ResponsiveContainer width="100%" height="90%">
+      <ResponsiveContainer width="100%" height={caption ? '80%' : '90%'}>
         {children}
       </ResponsiveContainer>
+      {caption && (
+        <Typography variant="caption" color="text.secondary" display="block">{caption}</Typography>
+      )}
     </Box>
+  );
+}
+
+/**
+ * Franck–Condon log10 P_N vs Huang–Rhys S, straight from the API arrays.
+ * Renders nothing when the backend did not supply the grid.
+ */
+function FranckCondonChart({ franckCondon }) {
+  const sGrid = franckCondon?.s_grid;
+  const logP = franckCondon?.log10_p_n;
+  if (!Array.isArray(sGrid) || !Array.isArray(logP) || sGrid.length === 0 || sGrid.length !== logP.length) {
+    return null;
+  }
+  const data = sGrid.map((s, index) => ({ s: Number(s), log10_p_n: Number(logP[index]) }));
+  const target = Number(franckCondon.target_log10);
+  const hasTarget = Number.isFinite(target);
+  const caption = [
+    franckCondon.s_min_for_target != null
+      ? `S_min for target ${formatCompact(franckCondon.s_min_for_target)}`
+      : 'S_min for target not supplied',
+    franckCondon.phonon_order_N != null ? `phonon order N ${formatCompact(franckCondon.phonon_order_N)}` : null,
+    'relaxation energy ≈ Q',
+    `meets target: ${franckCondon.meets_target ? 'yes' : 'no'} (OPEN)`,
+  ].filter(Boolean).join(' · ');
+
+  return (
+    <ChartFrame
+      title="Franck–Condon log10 P_N vs Huang–Rhys S (model assumption; target −11)"
+      testId="wh-franck-condon-chart"
+      caption={caption}
+    >
+      <LineChart data={data} margin={{ left: 20, right: 20, top: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="s"
+          type="number"
+          scale="log"
+          domain={['dataMin', 'dataMax']}
+          ticks={data.map((row) => row.s)}
+          tickFormatter={formatCompact}
+        />
+        <YAxis tickFormatter={formatCompact} width={70} />
+        <Tooltip formatter={(value) => formatCompact(value)} labelFormatter={(label) => `S = ${formatCompact(label)}`} />
+        <Line type="monotone" dataKey="log10_p_n" name="log10 P_N" stroke={SPEC_COLOR} dot />
+        {hasTarget && (
+          <ReferenceLine
+            y={target}
+            stroke={OPEN_COLOR}
+            strokeDasharray="4 4"
+            ifOverflow="extendDomain"
+            label={{ value: `target ${formatCompact(target)}`, position: 'insideTopRight', fill: OPEN_COLOR, fontSize: 11 }}
+          />
+        )}
+      </LineChart>
+    </ChartFrame>
   );
 }
 
@@ -44,11 +106,16 @@ export default function OpenQuestionsCharts({ openQuestions }) {
     { name: 'scenario n', log10: Math.log10(Math.max(branch.n || 1e-11, 1e-30)), fill: SPEC_COLOR },
     { name: 'scenario gamma', log10: Math.log10(Math.max(branch.gamma || 1e-12, 1e-30)), fill: SPEC_COLOR },
   ];
+  const boundLog = oq.working_hypothesis?.q2?.derived_bound;
+  if (boundLog && boundLog.meets_target === false) {
+    radData.push({ name: 'derived harmonic Γ', log10: -30, fill: OPEN_COLOR });
+  }
   if (ulLog10 != null && Number.isFinite(ulLog10)) {
     radData.push({ name: 'detector UL', log10: ulLog10, fill: OPEN_COLOR });
   } else {
     radData.push({ name: 'detector UL (no ingest)', log10: -6, fill: OPEN_COLOR });
   }
+  radData.push({ name: 'open target 1e11', log10: 11, fill: REF_COLOR });
 
   const n2 = Number(oq.q_statistical?.n_events_log10_two_body);
   const when = oq.when || {};
@@ -85,7 +152,7 @@ export default function OpenQuestionsCharts({ openQuestions }) {
     <Box>
       <EnergyPartitionFlow partition={part} />
 
-      <ChartFrame title="Q2 log10 branching (assumed / scenario — not a derived Gamma)">
+      <ChartFrame title="Q2 log10 branching (assumed scenario vs derived harmonic bound vs 10^11 target)">
         <BarChart data={radData} layout="vertical" margin={{ left: 110 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />
@@ -112,6 +179,8 @@ export default function OpenQuestionsCharts({ openQuestions }) {
           </Bar>
         </BarChart>
       </ChartFrame>
+
+      <FranckCondonChart franckCondon={oq.working_hypothesis?.q2?.franck_condon} />
 
       {engines.length > 0 && (
         <ChartFrame title="Composition engines (illegal product is pedagogy only)">

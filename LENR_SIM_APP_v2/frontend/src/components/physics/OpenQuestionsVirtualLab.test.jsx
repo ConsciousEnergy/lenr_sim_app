@@ -5,6 +5,13 @@ import React from 'react';
 import { fireEvent, render, screen } from '../../tests/test-utils';
 import OpenQuestionsVirtualLab from './OpenQuestionsVirtualLab';
 import MechanismPathDiagram from './MechanismPathDiagram';
+import whFixture from '../../../tests/fixtures/open_questions_wh_v2.json';
+
+// The lazily-loaded R3F scene pulls in three; it has its own test with mocks.
+jest.mock('./TscClusterScene', () => ({
+  __esModule: true,
+  default: () => <div data-testid="tsc-cluster-scene" />,
+}));
 
 const TWO_BODY_OQ = {
   schema: 'lenr-open-questions-v1',
@@ -86,6 +93,26 @@ const TWO_BODY_OQ = {
     tsc_enhancement_can_scale_two_body: true,
   },
   emp_chips: [{ id: 'miles_q_band', label: 'Miles 24±4 MeV/He EMP' }],
+  working_hypothesis: {
+    id: 'WH-ENP-01',
+    status: 'OPEN',
+    claim_tier: 'speculative_exploratory',
+    statement: 'Coupled Hagelstein/TSC ledger; remainders OPEN.',
+    geometry: 'fcc_tetrahedral',
+    occupation_model: 'bernoulli_p4_model_assumption',
+    lean_theorems: ['EQ-WH-NONCLOSE-01'],
+    dicke: { n2_licensed: false, paper_domain_m: 6.6e-9, dicke_radius_m: 4.9e-11 },
+    schwinger_he: { he_factor: 1 },
+    q1: { alpha_stopping: { csda_range_pd_m: 4e-5, ke_per_alpha_mev: 23.8 } },
+    q2: {
+      derived_bound: { derived_gamma_ph_over_gamma_gamma: 0, lattice_gamma_target: 1e11, meets_target: false },
+      neutron_moderation: { media: { liquid_d2o: { label: 'liquid', length_m: 0.06 } } },
+    },
+    channels: [
+      { id: 'tsc_4d_2alpha', q_mev: 47.6, weight_kind: 'kinematics_only', primary_gamma_required: false },
+    ],
+    remainder_vector: { q1_open_remainder_mev: 23.8, q3_log10_n_two_body: -40 },
+  },
   lenr_proved: false,
 };
 
@@ -168,6 +195,38 @@ describe('OpenQuestionsVirtualLab', () => {
     expect(screen.getAllByText('Speculative / exploratory').length).toBeGreaterThan(0);
     expect(screen.getByText('Empirical LENR correlation')).toBeInTheDocument();
     expect(TWO_BODY_OQ.lenr_proved).toBe(false);
+  });
+
+  test('renders WH-ENP-01 coupled ledger without implying proof', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('wh-enp-01-panel')).toBeInTheDocument();
+    expect(screen.getByText(/Working hypothesis WH-ENP-01/)).toBeInTheDocument();
+    expect(screen.getByText(/EQ-OPEN-MEV-01 \/ RAD-01 \/ RATE-01 remain OPEN/)).toBeInTheDocument();
+    expect(screen.getByTestId('wh-channel-graph')).toBeInTheDocument();
+  });
+
+  test('renders the v2 WH fixture with scenario controls, Franck–Condon chart and DAG', async () => {
+    render(<OpenQuestionsVirtualLab openQuestions={whFixture} />);
+    expect(screen.getByTestId('wh-enp-01-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-scenario-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-remainder-vector')).toHaveTextContent(/Q1 remainder 23\.8 MeV OPEN/);
+    expect(screen.getByTestId('wh-franck-condon-chart')).toHaveTextContent(/S_min for target 575400000/);
+    expect(screen.getByTestId('wh-channel-dag')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-channel-graph')).toBeInTheDocument();
+    expect(screen.getByTestId('wh-closure-demand-row')).toHaveTextContent(
+      /required product 5\.784e26.*fcc_tetrahedral:.*crosses R_obs no.*trap_25pm:.*crosses R_obs no/,
+    );
+    expect(screen.getByTestId('wh-coupling-cited-row')).toHaveTextContent(/g 0\.0001, n_coh 0 → derived 0 MeV/);
+    expect(await screen.findByTestId('tsc-cluster-scene')).toBeInTheDocument();
+    expect(screen.queryByText('LENR_PROVED', { exact: true })).not.toBeInTheDocument();
+    expect(whFixture.lenr_proved).toBe(false);
+  });
+
+  test('older responses without the v2 grids still render without the new panels', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('wh-scenario-controls')).toHaveTextContent(/not supplied by this API response/);
+    expect(screen.queryByTestId('wh-franck-condon-chart')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('wh-closure-demand-row')).not.toBeInTheDocument();
   });
 });
 
