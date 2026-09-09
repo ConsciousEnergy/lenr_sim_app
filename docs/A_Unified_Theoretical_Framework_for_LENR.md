@@ -436,7 +436,13 @@ The resolution of the MeV energy gap through lattice-nuclear coupling remains th
 
 ---
 
-## **3\. Computational Framework**
+## **3\. Computational Methods**
+
+> **Implementation note (public beta):** The live VPS runs the in-repo `physics_engine`
+> pipeline (WKB/Gamow tunneling, Rayleigh–Plesset bubble dynamics, theory scoring via
+> `/api/physics/*`). COMSOL FEM and self-consistent Poisson–Schrödinger treatments in this
+> section are research/aspirational methods — they are **not** deployed on the public beta.
+
 
 ### **3.1 Poisson–Schrödinger Coupled Dynamics**
 
@@ -1267,7 +1273,7 @@ This paper integrates a century of theoretical insights and experimental anomali
 
 \\begin{itemize}  
     \\item \\textbf{Section 2: Theoretical Framework}—Presents a hierarchical model incorporating electron screening, interface electric fields, coherent lattice phenomena, Casimir-like effects, and bubble collapse dynamics.  
-    \\item \\textbf{Section 3: Computational Framework}—Details coupled electrostatic-quantum simulations, uncertainty quantification, and machine-learning-driven parametric exploration.  
+    \\item \\textbf{Section 3: Computational Methods}—Details coupled electrostatic-quantum simulations, uncertainty quantification, and machine-learning-driven parametric exploration.  
     \\item \\textbf{Section 4: Experimental Correlations}—Reanalyzes historical (e.g., EPRI–NSF 1989\) and modern LENR experiments under the unified model, highlighting both consistent patterns and anomalous outliers.  
     \\item \\textbf{Section 5: Results and Interpretation}—Synthesizes mechanistic contributions, correlates predicted observables (e.g., heat, isotopic shifts) with experimental findings, and presents probabilistic confidence bounds.  
     \\item \\textbf{Section 6: Discussion and Implications}—Critically examines limitations of current models, the plausibility of collective coherence bridging the MeV energy gap, and the requirements for LENR to transition from anomaly to physics.  
@@ -1384,7 +1390,7 @@ LENR does not exist in theoretical isolation. Instead, it connects a century-lon
 
 These developments, though dispersed across time and disciplines, converge within modern LENR theory. Our model seeks to unify and operationalize them in a computationally verifiable manner.
 
-\\section{Computational Framework and Uncertainty Quantification}
+\\section{Computational Methods and Uncertainty Quantification}
 
 LENR phenomena—characterized by threshold-sensitive, sub-nuclear energy anomalies—demand modeling techniques capable of bridging atomic, mesoscopic, and statistical scales. This section presents a multi-tier computational approach that integrates first-principles quantum simulations, error propagation, and data-driven explorations of high-dimensional parameter spaces.
 

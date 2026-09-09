@@ -667,6 +667,21 @@ const AnalyticsPage = () => {
           Analyze simulation results, compare experiments, and export data.
           Charts plot SQL <code>experiments</code> fields. Auto-saved runs are model outputs.
         </Typography>
+        <Alert severity="info" sx={{ mt: 2, mb: 1 }} data-testid="analytics-public-beta-hydrate">
+          <AlertTitle>Public beta: demo dataset, closed SQL writes</AlertTitle>
+          <Typography variant="body2" paragraph sx={{ mb: 1 }}>
+            Total Records on the live VPS is dominated by the frozen
+            <code>q_campaign_demo</code> hydrate (~150 experiments). Visitor simulation runs are
+            <strong> not </strong> appended to shared SQL: production sets
+            <code>LENR_AUTO_PERSIST=0</code>, and <code>POST /api/analytics/experiments</code>
+            requires a write token the SPA does not send (403).
+          </Typography>
+          <Typography variant="body2">
+            Source chips (Baseline / Campaign / Auto / User) describe that hydrate mix.
+            Operators grow History via CLI hydrate or authenticated write paths — not anonymous
+            auto-persist. Enabling public persist is a separate product change.
+          </Typography>
+        </Alert>
         <FormControlLabel
           sx={{ mt: 1 }}
           control={

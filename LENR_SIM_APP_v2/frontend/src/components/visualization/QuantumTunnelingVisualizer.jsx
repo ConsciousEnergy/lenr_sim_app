@@ -38,7 +38,7 @@ const QuantumTunnelingVisualizer = ({
     try {
       // Try to fetch from real physics API first
       try {
-        const response = await api.post('/physics/quantum-tunneling', {
+        const response = await api.post('/api/physics/quantum-tunneling', {
           z1,
           z2,
           a1: z1 === 1 ? 2.0 : z1 * 2,  // Approximate mass number
@@ -186,7 +186,8 @@ const QuantumTunnelingVisualizer = ({
       .style('overflow', 'visible');
       
     // Create main group with margin
-    const margin = { top: 40, right: 40, bottom: 40, left: 60 };
+    // Extra bottom margin so Classical Turning Point label sits outside the plot.
+    const margin = { top: 40, right: 40, bottom: 56, left: 60 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
@@ -343,34 +344,41 @@ const QuantumTunnelingVisualizer = ({
         .attr('d', areaGenerator)
         .attr('class', 'tunneling-probability');
         
-      // Add tunneling probability label
+      // Curve fill is |ψ|² density along the barrier — not the scalar P(tunnel).
+      // Keep the label distinct from the top-right P(tunneling) readout.
       g.append('text')
-        .attr('x', xScale(logPositions[Math.floor(positions.length * 0.7)]))
-        .attr('y', yScale(tunnelingProbabilities[Math.floor(positions.length * 0.7)]) - 10)
+        .attr('x', xScale(logPositions[Math.floor(positions.length * 0.55)]))
+        .attr('y', Math.min(innerHeight - 8, yScale(0) - 8))
         .attr('fill', theme.palette.warning.main)
-        .attr('text-anchor', 'middle')
-        .text('Tunneling Probability');
+        .attr('text-anchor', 'start')
+        .attr('font-size', '11px')
+        .text('|ψ|² density');
     }
     
     // Draw classical turning point if enabled
-    if (showClassicalTurningPoint && classicalTurningPoint) {
-      const turningPointIndex = positions.findIndex(p => p >= classicalTurningPoint);
-      if (turningPointIndex >= 0) {
+    if (showClassicalTurningPoint && classicalTurningPoint && classicalTurningPoint > 0) {
+      const turningLog = Math.log10(classicalTurningPoint);
+      const xDomain = xScale.domain();
+      if (turningLog >= xDomain[0] && turningLog <= xDomain[1]) {
+        const turningX = xScale(turningLog);
         g.append('line')
-          .attr('x1', xScale(logPositions[turningPointIndex]))
+          .attr('x1', turningX)
           .attr('y1', 0)
-          .attr('x2', xScale(logPositions[turningPointIndex]))
+          .attr('x2', turningX)
           .attr('y2', innerHeight)
           .attr('stroke', theme.palette.error.main)
           .attr('stroke-width', 2)
           .attr('stroke-dasharray', '5,5')
           .attr('class', 'turning-point');
-          
+
+        // Park label below the plot so it does not collide with energy / P text.
         g.append('text')
-          .attr('x', xScale(logPositions[turningPointIndex]))
-          .attr('y', 15)
+          .attr('x', turningX)
+          .attr('y', innerHeight + 28)
           .attr('fill', theme.palette.error.main)
-          .attr('text-anchor', 'middle')
+          .attr('text-anchor', turningX > innerWidth * 0.7 ? 'end' : 'middle')
+          .attr('font-size', '11px')
+          .attr('font-weight', 600)
           .text('Classical Turning Point');
       }
     }
@@ -395,15 +403,16 @@ const QuantumTunnelingVisualizer = ({
       .attr('text-anchor', 'start')
       .text(`Energy: ${energyKeV} keV`);
     
-    // Add probability text
+    // Single scalar readout — keep clear of in-plot curve labels
     if (calculatedProbability !== null) {
       svg.append('text')
-        .attr('x', width - margin.right)
-        .attr('y', margin.top - 15)
-        .attr('text-anchor', 'end')
+        .attr('x', margin.left)
+        .attr('y', Math.max(14, margin.top - 18))
+        .attr('text-anchor', 'start')
         .attr('fill', theme.palette.success.main)
         .attr('font-weight', 'bold')
-        .text(`P(tunneling): ${calculatedProbability.toExponential(4)}`);
+        .attr('font-size', '12px')
+        .text(`P(tunnel) = ${calculatedProbability.toExponential(4)}`);
     }
     
   }, [tunnelingData, width, height, showWaveFunction, showTunnelingProbability, 
