@@ -314,6 +314,8 @@ const interpolateFromAPITimeline = (timeline, normalizedTime) => {
 const UnifiedBubbleLatticeVisualization = ({
   parameters = {},
   simulationData = null,
+  streamLatest = null,
+  streamStatus = 'idle',
   onPhaseChange = () => {},
   onCollapseEvent = () => {},
   width = '100%',
@@ -404,7 +406,20 @@ const UnifiedBubbleLatticeVisualization = ({
   const [qualitySettings] = useState(() => getRecommendedQualitySettings());
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
-  const animationSpeedRef = useRef(0.1); // Default to slower speed for better observation
+  // Default ~0.45x so a visual cycle is clearly moving (0.1x felt like a stuck video).
+  const [animationSpeed, setAnimationSpeed] = useState(0.45);
+  const animationSpeedRef = useRef(0.45);
+  useEffect(() => {
+    animationSpeedRef.current = animationSpeed;
+  }, [animationSpeed]);
+  const streamLatestRef = useRef(streamLatest);
+  const streamStatusRef = useRef(streamStatus);
+  useEffect(() => {
+    streamLatestRef.current = streamLatest;
+  }, [streamLatest]);
+  useEffect(() => {
+    streamStatusRef.current = streamStatus;
+  }, [streamStatus]);
   const bubbleRadiusRef = useRef(10.0);
   const normalizedTimeRef = useRef(0);
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
@@ -1880,6 +1895,29 @@ const UnifiedBubbleLatticeVisualization = ({
       enhancements = calculateEnhancementFactors(compressionRatio, fieldStrength, temperature, pressure);
     }
     
+    // Live WebSocket frames drive R(t)/phase while streaming (otherwise the
+    // 3D scene keeps its own RAF clock and Live Stream looks like a no-op).
+    const live = streamLatestRef.current;
+    const liveActive = streamStatusRef.current === 'streaming' && live;
+    if (liveActive) {
+      if (typeof live.radius_um === 'number' && Number.isFinite(live.radius_um)) {
+        radius = live.radius_um;
+      }
+      if (live.phase) {
+        phase = normalizePhaseName(String(live.phase).toUpperCase());
+      }
+      if (typeof live.enhancement === 'number' && Number.isFinite(live.enhancement)) {
+        enhancements = {
+          ...enhancements,
+          total: live.enhancement,
+        };
+      }
+      if (typeof live.temperature_k === 'number' && Number.isFinite(live.temperature_k)) {
+        temperature = live.temperature_k;
+      }
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.05);
+    }
+
     bubbleRadiusRef.current = radius;
     
     // Update physics data state
@@ -3321,22 +3359,24 @@ const UnifiedBubbleLatticeVisualization = ({
           
           <Box sx={{ flex: 1, mx: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Animation Speed ({(animationSpeedRef.current * 100).toFixed(0)}%)
+              Animation Speed ({(animationSpeed * 100).toFixed(0)}%)
+              {streamStatus === 'streaming' ? ' · live stream driving scene' : ''}
             </Typography>
             <Slider
-              value={animationSpeedRef.current}
-              onChange={(_, val) => { animationSpeedRef.current = val; }}
-              min={0.01}
+              value={animationSpeed}
+              onChange={(_, val) => setAnimationSpeed(val)}
+              min={0.05}
               max={1.0}
               step={0.01}
               marks={[
                 { value: 0.1, label: '0.1x' },
-                { value: 0.5, label: '0.5x' },
+                { value: 0.45, label: '0.45x' },
                 { value: 1.0, label: '1x' }
               ]}
               size="small"
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => `${v}x`}
+              disabled={streamStatus === 'streaming'}
             />
           </Box>
           
@@ -3372,6 +3412,8 @@ UnifiedBubbleLatticeVisualization.propTypes = {
     latticeSize: PropTypes.number
   }),
   simulationData: PropTypes.object,
+  streamLatest: PropTypes.object,
+  streamStatus: PropTypes.string,
   onPhaseChange: PropTypes.func,
   onCollapseEvent: PropTypes.func,
   width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
