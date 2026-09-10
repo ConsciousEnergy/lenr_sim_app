@@ -26,9 +26,11 @@ const QuantumTunnelingVisualizer = ({
   const stylePlotLabel = (selection) =>
     selection
       .attr('stroke', labelHalo)
-      .attr('stroke-width', 3)
+      .attr('stroke-width', 4)
+      .attr('stroke-opacity', 0.9)
       .attr('stroke-linejoin', 'round')
-      .attr('paint-order', 'stroke fill');
+      .attr('paint-order', 'stroke fill')
+      .style('paint-order', 'stroke fill');
   const svgRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

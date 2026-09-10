@@ -1900,6 +1900,9 @@ const UnifiedBubbleLatticeVisualization = ({
     const live = streamLatestRef.current;
     const liveActive = streamStatusRef.current === 'streaming' && live;
     if (liveActive) {
+      if (typeof live.normalized_time === 'number' && Number.isFinite(live.normalized_time)) {
+        normalizedTimeRef.current = Math.min(1, Math.max(0, live.normalized_time));
+      }
       if (typeof live.radius_um === 'number' && Number.isFinite(live.radius_um)) {
         radius = live.radius_um;
       }
@@ -1914,6 +1917,12 @@ const UnifiedBubbleLatticeVisualization = ({
       }
       if (typeof live.temperature_k === 'number' && Number.isFinite(live.temperature_k)) {
         temperature = live.temperature_k;
+      }
+      if (typeof live.electric_field_v_m === 'number' && Number.isFinite(live.electric_field_v_m)) {
+        fieldStrength = live.electric_field_v_m;
+      }
+      if (typeof live.pressure_bar === 'number' && Number.isFinite(live.pressure_bar)) {
+        pressure = live.pressure_bar;
       }
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.05);
     }
@@ -1957,13 +1966,18 @@ const UnifiedBubbleLatticeVisualization = ({
 
       // Phase progress for nucleation storytelling + scene-safe display scale.
       // Prefer timeline segment progress when API data is driving the mesh.
-      const phaseProgress = phaseProgressInCycle(normalizedTime);
+      const clockForPhase = liveActive ? normalizedTimeRef.current : normalizedTime;
+      const phaseProgress = phaseProgressInCycle(clockForPhase);
       const radiusFactor = radius / Math.max(baseRadius, 1e-12);
-      const displayScale = getBubbleDisplayScale({
-        radiusFactor,
-        phase,
-        phaseProgress,
-      });
+      // While live-streaming, map R/R0 directly so the mesh visibly tracks the
+      // WS frames (phase-envelope blending can hide collapse against a stale RAF clock).
+      const displayScale = liveActive
+        ? clampBubbleRadiusFactor(radiusFactor)
+        : getBubbleDisplayScale({
+          radiusFactor,
+          phase,
+          phaseProgress,
+        });
       
       // Determine which geometry to show based on phase
       // Main bubble visibility is controlled by showBubble toggle

@@ -264,16 +264,17 @@ const BubbleFusionVisualizer = ({
       `Radius: ${currentRadius.toFixed(1)} μm`,
       phaseText,
     ];
+    // Anchor at top-center so a large Expansion radius never covers the HUD.
     const hudPadX = 12;
     const hudPadY = 8;
     const hudLineH = 18;
     const hudW = 168;
     const hudH = hudPadY * 2 + hudLineH * hudLines.length;
     const hudX = Math.max(8, centerX - hudW / 2);
-    const hudY = height - hudH - 12;
+    const hudY = 12;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-    ctx.strokeStyle = 'rgba(30, 40, 80, 0.35)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = 'rgba(30, 40, 80, 0.4)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     if (typeof ctx.roundRect === 'function') {
