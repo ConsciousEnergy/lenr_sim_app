@@ -1,0 +1,9 @@
+# Optional YAML twin of physics_maturity_ledger.json
+schema_version: "0.3.7-beta.1"
+lenr_proved: false
+train: v0.3.7-beta
+narrative: docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md
+# Prefer JSON for UI tooling; this twin is for human diffs.
+note: >
+  Full engine list is maintained in physics_maturity_ledger.json.
+  Keep claim_tier fields identical across md/json/yaml/UI badges.

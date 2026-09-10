@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — v0.3.7-beta governance train
+- Docs pack under `LENR_SIM_APP_v2/docs/v0.3.7-beta/`: GOALS (active + deferred queue), DEFERRED_MULTIPHYSICS_FIDELITY, PHYSICS_MATURITY_LEDGER (`.md` + `.json` + `.yaml`), PROOF_MATRIX (NL/MD/JSON/LaTeX/Lean), BUG_TRIAGE, SECURITY_RESIDUALS, WORKTREE_OOO, BRANCHING_NOTE
+- LaTeX stubs for P0/P1 OPEN/approximate engines under `docs/v0.3.7-beta/latex/`
+- Frontend `EngineMaturityBadge` + `engineMaturity` ledger mirror; wired on Bubble Fusion, Quantum Tunneling, Unified Theory, Theory Methods, and Open Questions virtual lab
+- Site beta banner mentions engine-maturity chips and links to Theory Methods
+- Version markers bumped to `0.3.7-beta` on this train (backend config, frontend package/version.js, Dockerfile.backend)
+- Multiphysics fidelity (KM default, real-gas EOS, FEM, EQ-OPEN closures, analytics auto-persist, freedom claims) explicitly deferred — not implemented here
+
 ### Security
 - Frontend npm overrides: `js-yaml` ^4.3.2, `svgo` ^3.3.5, `qs` ^6.16.0, `colord` ^2.9.4 so `npm audit --audit-level=high` is clean (react-router remains moderate pending intentional v7 migration)
 

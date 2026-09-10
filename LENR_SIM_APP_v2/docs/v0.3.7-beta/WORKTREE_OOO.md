@@ -1,0 +1,30 @@
+# Worktree — order of operations (v0.3.7-beta)
+
+Critical path for responsible progress. Later work waits on earlier exits.
+
+## Now (governance train)
+
+1. **Safety / honesty** — Beta / Approximate / Speculative badges; fallback provenance; Analytics write honesty.
+2. **Security residuals** — Document (this pack); fix only high+ or cheap token-separation.
+3. **Maturity ledger + proof matrix** — P0/P1 rows with MD/JSON/LaTeX/Lean links; `lenr_proved: false`.
+
+## After governance (deferred queue)
+
+4. **Multiphysics fidelity Phase A** — Bubble Fusion API truth + single fetch ([DEFERRED_MULTIPHYSICS_FIDELITY.md](./DEFERRED_MULTIPHYSICS_FIDELITY.md)).
+5. **Multiphysics fidelity Phase B** — Shared RP/KM core; verification gates.
+6. **OPEN scientific obligations** — Research tracks only; status stays OPEN in UI/MD/JSON/Lean.
+7. **Solver stubs / continuum aspirational** — Last (FEM, Poisson–Schrödinger, etc.).
+
+## Permanent non-goals
+
+- Product claims of energetic / practical freedom
+- Declaring `EQ-OPEN-*` closed without new analytical/EMP evidence
+- Public auto-persist without security review
+
+## Suggested git topic branches (after this pack)
+
+| Order | Branch | Purpose |
+|-------|--------|---------|
+| 1 | `consciousenergy/v037-bubble-engine-truth-98d8` | Phase A |
+| 2 | `consciousenergy/v037-bubble-km-bridge-98d8` | Phase B |
+| 3 | `consciousenergy/v037-open-research-<q>-98d8` | Per OPEN question |

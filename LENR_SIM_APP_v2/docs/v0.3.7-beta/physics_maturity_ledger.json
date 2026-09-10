@@ -1,0 +1,203 @@
+{
+  "schema_version": "0.3.7-beta.1",
+  "lenr_proved": false,
+  "train": "v0.3.7-beta",
+  "narrative": "docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md",
+  "engines": [
+    {
+      "id": "EQ-OPEN-MEV-01",
+      "module_path": "backend/app/physics_engine/open_questions.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "open",
+        "lean": "non_closure_only"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "speculative",
+      "priority": "P0",
+      "rd_next": "Analytical phonon-to-nuclear channel"
+    },
+    {
+      "id": "EQ-OPEN-RAD-01",
+      "module_path": "backend/app/physics_engine/open_questions.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "open",
+        "lean": "bounds_only"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "speculative",
+      "priority": "P0",
+      "rd_next": "Analytical Gamma_ph / Gamma_gamma"
+    },
+    {
+      "id": "EQ-OPEN-RATE-01",
+      "module_path": "backend/app/physics_engine/open_questions.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "open",
+        "lean": "two_body_non_closure"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "speculative",
+      "priority": "P0",
+      "rd_next": "Lattice rate under engine caps"
+    },
+    {
+      "id": "EQ-OPEN-EC-01",
+      "module_path": "backend/app/physics_engine/open_question_details.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "open",
+        "lean": "deficit_identity_only"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "speculative",
+      "priority": "P0",
+      "rd_next": "Condensed-matter path to >=0.782 MeV"
+    },
+    {
+      "id": "EQ-OPEN-YIELD-01",
+      "module_path": "backend/app/physics_engine/open_question_details.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "empirical_lenr_correlation",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "open",
+        "lean": "band_def_only"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "beta",
+      "priority": "P0",
+      "rd_next": "Duty-cycle vs Miles band"
+    },
+    {
+      "id": "WH-ENP-01",
+      "module_path": "backend/app/physics_engine/working_hypothesis.py",
+      "ui_surface": "open_questions_wh",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "open",
+        "numerical": "bounds_only",
+        "lean": "non_closure"
+      },
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "speculative",
+      "priority": "P0",
+      "rd_next": "Keep exploratory; no UI closure"
+    },
+    {
+      "id": "ENG-BUBBLE-FUSION-01",
+      "module_path": "backend/app/physics/bubble_fusion.py",
+      "ui_surface": "bubble_fusion",
+      "claim_tier": "approximate",
+      "proof_status": {
+        "analytical": "approximate",
+        "numerical": "schematic_or_simplified",
+        "lean": "absent"
+      },
+      "artifacts": ["md", "json", "tex"],
+      "beta_label": "approximate",
+      "priority": "P1",
+      "rd_next": "Phase A provenance; Phase B KM bridge"
+    },
+    {
+      "id": "ENG-RP-KM-01",
+      "module_path": "backend/app/physics_engine/bubble_solver.py",
+      "ui_surface": "unified_theory",
+      "claim_tier": "approximate",
+      "proof_status": {
+        "analytical": "domain_limited",
+        "numerical": "ode_implemented",
+        "lean": "partial"
+      },
+      "artifacts": ["md", "json", "lean", "tex"],
+      "beta_label": "approximate",
+      "priority": "P1",
+      "rd_next": "KM default when Mach warrants"
+    },
+    {
+      "id": "ENG-WKB-01",
+      "module_path": "backend/app/physics/wkb_tunneling.py",
+      "ui_surface": "quantum_tunneling",
+      "claim_tier": "established_reference",
+      "proof_status": {
+        "analytical": "verified_wkb_gamow",
+        "numerical": "implemented",
+        "lean": "gamow_monotonicity"
+      },
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "beta",
+      "priority": "P1",
+      "rd_next": "Screening domain badges"
+    },
+    {
+      "id": "ENG-THEORY-PIPELINE-01",
+      "module_path": "backend/app/physics_engine/theory_protocol.py",
+      "ui_surface": "theory_methods",
+      "claim_tier": "speculative_exploratory",
+      "proof_status": {
+        "analytical": "per_theory",
+        "numerical": "scoring_only",
+        "lean": "sparse"
+      },
+      "artifacts": ["md", "json"],
+      "beta_label": "speculative",
+      "priority": "P1",
+      "rd_next": "Per-theory claim_tier chips"
+    },
+    {
+      "id": "ENG-SCREEN-CASIMIR-01",
+      "module_path": "backend/app/physics_engine",
+      "ui_surface": "unified_theory",
+      "claim_tier": "approximate",
+      "proof_status": {
+        "analytical": "domain_limited",
+        "numerical": "implemented",
+        "lean": "partial"
+      },
+      "artifacts": ["md", "json"],
+      "beta_label": "approximate",
+      "priority": "P2",
+      "rd_next": "Domain gates in UI"
+    },
+    {
+      "id": "ENG-STUB-EM-MHD-01",
+      "module_path": "backend/app/physics_engine",
+      "ui_surface": "advanced_tools",
+      "claim_tier": "stub",
+      "proof_status": {
+        "analytical": "incomplete",
+        "numerical": "incomplete",
+        "lean": "absent"
+      },
+      "artifacts": ["md", "json"],
+      "beta_label": "beta",
+      "priority": "P2",
+      "rd_next": "Finish or hide from public beta"
+    },
+    {
+      "id": "ENG-ASPIRATIONAL-FEM-01",
+      "module_path": "docs / Theory Methods",
+      "ui_surface": "theory_methods",
+      "claim_tier": "aspirational",
+      "proof_status": {
+        "analytical": "not_on_vps",
+        "numerical": "not_on_vps",
+        "lean": "absent"
+      },
+      "artifacts": ["md", "json"],
+      "beta_label": "speculative",
+      "priority": "P3",
+      "rd_next": "Keep Methods honesty alert"
+    }
+  ]
+}

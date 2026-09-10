@@ -20,6 +20,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 // Import our custom components
 import BubbleFusionVisualizer from '../components/visualization/BubbleFusionVisualizer';
 import BubbleFusionParameterControls from '../components/controls/BubbleFusionParameterControls';
+import EngineMaturityBadge from '../components/EngineMaturityBadge';
 import { API_BASE_URL } from '../config/api';
 
 // API base URL
@@ -264,6 +265,7 @@ const BubbleFusionPage = () => {
         <Typography variant="subtitle1" color="textSecondary" gutterBottom>
           Interactive simulation of sonofusion (bubble fusion) phenomenon
         </Typography>
+        <EngineMaturityBadge engineId="ENG-BUBBLE-FUSION-01" sx={{ mt: 1 }} />
         <Divider sx={{ my: 2 }} />
       </Box>
       

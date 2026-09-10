@@ -151,7 +151,7 @@ class TheoryPipelineResult:
             "total_energy_watts": float(self.total_energy_watts),
             "conditions": to_json_safe(self.conditions),
             "enabled_theories": self.enabled_theories,
-            "contract_version": "v0.3.6-beta-science-gate-1",
+            "contract_version": f"v{settings.APP_VERSION}-science-gate-1",
             "validation": {
                 "miles_heat_helium": {
                     "expected_he4_rate_per_s": expected_he4_rate,
