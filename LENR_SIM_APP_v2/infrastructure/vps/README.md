@@ -31,7 +31,8 @@ Site hostnames are configured as a **literal comma-separated line in
 | `Caddyfile` | TLS, `/api*` -> FastAPI (incl. WebSockets), `/*` -> nginx SPA |
 | `.env.production.example` | copied to `/opt/lenr-sim/.env` (mode 0600) |
 | `scripts/bootstrap-host.sh` | SSH harden, UFW, fail2ban, swap, docker logs, backup cron |
-| `scripts/deploy.sh` | pull or build, alembic, up, health probe |
+| `scripts/deploy.sh` | pull or build, alembic, up, health probe (+ optional share probe) |
+| `scripts/verify-beta-share.sh` | public DNS/TLS/`/api/health` probe (`EXPECT_VERSION`, retries) |
 | `scripts/rollback.sh` | redeploy previous `IMAGE_TAG` |
 | `scripts/backup-db.sh` | `pg_dump` -> `/opt/lenr-sim/backups` (14 days) |
 | `scripts/hydrate-demo.sh` | seed + `--hydrate-demo` |
@@ -48,6 +49,13 @@ Always pass `--env-file /opt/lenr-sim/.env` (deploy.sh does this). Never start
 backend from `.env.production.example` — that sets `LENR_DB_PASSWORD=CHANGE_ME`
 while the Postgres volume keeps the real password.
 
-Probe: `GET /api/health` must return `"status": "healthy"` and `"version": "0.3.6-beta"`.
-`GET /api/docs` and `GET /metrics` must 404. Until `lenr-simp-app` points here, probe
-`https://lenr-sim-beta.conscious.energy` and `https://srv1280333.hstgr.cloud`.
+Probe: `GET /api/health` must return `"status": "healthy"` and `"version"` matching
+tip `APP_VERSION` (see `backend/app/core/config.py`). Prefer:
+
+```bash
+EXPECT_VERSION="$(grep -oP 'APP_VERSION: str = "\K[^"]+' ../../backend/app/core/config.py)" \
+  ./scripts/verify-beta-share.sh
+```
+
+`GET /api/docs` and `GET /metrics` must 404. Until `lenr-simp-app` points here, share
+`https://lenr-sim-beta.conscious.energy` (also `https://srv1280333.hstgr.cloud`).

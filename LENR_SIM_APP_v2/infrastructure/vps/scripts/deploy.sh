@@ -78,13 +78,24 @@ for _ in $(seq 1 40); do
     "${COMPOSE[@]}" exec -T backend curl -fsS http://localhost:8000/api/health || true
     echo "Deploy complete. IMAGE_TAG=$IMAGE_TAG"
     echo "To roll back: $SCRIPT_DIR/rollback.sh"
-    # Optional public share probe (set BETA_SHARE_URL to enforce from the VPS).
+    # Optional public share probe. Soft-fail by default so a transient egress
+    # blip does not undo a healthy local stack; set BETA_SHARE_STRICT=1 to
+    # hard-fail (CI post-deploy already hard-fails via workflow).
     if [[ -x "$SCRIPT_DIR/verify-beta-share.sh" ]]; then
       echo "Public share probe..."
-      BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}" \
-        "$SCRIPT_DIR/verify-beta-share.sh" || {
-          echo "WARN: public share probe failed; stack is up locally — check DNS/Caddy." >&2
-        }
+      share_env=(
+        "BETA_SHARE_URL=${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+      )
+      if [[ -n "${EXPECT_VERSION:-}" ]]; then
+        share_env+=("EXPECT_VERSION=${EXPECT_VERSION}")
+      fi
+      if ! env "${share_env[@]}" "$SCRIPT_DIR/verify-beta-share.sh"; then
+        if [[ "${BETA_SHARE_STRICT:-0}" == "1" ]]; then
+          echo "ERROR: public share probe failed (BETA_SHARE_STRICT=1)." >&2
+          exit 1
+        fi
+        echo "WARN: public share probe failed; stack is up locally — check DNS/Caddy." >&2
+      fi
     fi
     exit 0
   fi
