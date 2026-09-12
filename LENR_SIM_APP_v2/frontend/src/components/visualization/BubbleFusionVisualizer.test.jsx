@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import api from '../../services/api';
 import BubbleFusionVisualizer from './BubbleFusionVisualizer';
 
 jest.mock('../../services/api', () => ({
@@ -9,8 +10,6 @@ jest.mock('../../services/api', () => ({
     get: jest.fn(() => Promise.reject(new Error('visualizer must not GET'))),
   },
 }));
-
-import api from '../../services/api';
 
 describe('BubbleFusionVisualizer Phase A provenance', () => {
   beforeEach(() => {
