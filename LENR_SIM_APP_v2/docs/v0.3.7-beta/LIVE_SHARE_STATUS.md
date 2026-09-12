@@ -1,7 +1,7 @@
 # Live share status (v0.3.7-beta VPS)
 
 Probed from CI agent host on **2026-09-12 ~22:46 UTC** (retries via verify-beta-share.sh).
-Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `dc91e3d` (#190 Test+Benchmark **green** — [run 34724292610](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34724292610); `check-merge-train.sh` → READY; `dry-run-merge-train.sh` FF+VPS rebase OK).
+Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `52ffb6b` (#190 Test+Benchmark **green** — [run 34725341387](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34725341387); `check-merge-train.sh` → READY; browser: local tip has no PostHog empty-client warning, live 0.3.6-beta still warns).
 
 ## What works today (share this)
 
