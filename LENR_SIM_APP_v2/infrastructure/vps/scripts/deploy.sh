@@ -41,7 +41,7 @@ done < <(grep -E '^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|LENR_WORKERS)=' "$ENV_FILE" |
 if [[ -n "$REQUESTED_IMAGE_TAG" ]]; then
   IMAGE_TAG="$REQUESTED_IMAGE_TAG"
 fi
-IMAGE_TAG="${IMAGE_TAG:-0.3.6-beta}"
+IMAGE_TAG="${IMAGE_TAG:-0.3.7-beta}"
 PREVIOUS_TAG_FILE=/opt/lenr-sim/.previous-image-tag
 
 if [[ "${UPDATE_ENV_IMAGE_TAG:-0}" == "1" ]]; then
