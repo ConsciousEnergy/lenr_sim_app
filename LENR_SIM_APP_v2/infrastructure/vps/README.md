@@ -31,7 +31,7 @@ Site hostnames are configured as a **literal comma-separated line in
 | `Caddyfile` | TLS, `/api*` -> FastAPI (incl. WebSockets), `/*` -> nginx SPA |
 | `.env.production.example` | copied to `/opt/lenr-sim/.env` (mode 0600) |
 | `scripts/bootstrap-host.sh` | SSH harden, UFW, fail2ban, swap, docker logs, backup cron |
-| `scripts/deploy.sh` | pull or build, alembic, up, health probe (+ optional share probe) |
+| `scripts/deploy.sh` | pull/build, alembic, up, health (+ share probe); CI pins checkout to workflow SHA and forces `IMAGE_TAG=$APP_VERSION` |
 | `scripts/verify-beta-share.sh` | public DNS/TLS/`/api/health` probe (`EXPECT_VERSION`, retries) |
 | `scripts/rollback.sh` | redeploy previous `IMAGE_TAG` |
 | `scripts/backup-db.sh` | `pg_dump` -> `/opt/lenr-sim/backups` (14 days) |
@@ -48,6 +48,14 @@ Site hostnames are configured as a **literal comma-separated line in
 Always pass `--env-file /opt/lenr-sim/.env` (deploy.sh does this). Never start
 backend from `.env.production.example` — that sets `LENR_DB_PASSWORD=CHANGE_ME`
 while the Postgres volume keeps the real password.
+
+
+## CI deploy pin
+
+`workflow_dispatch` on `.github/workflows/deploy.yml` checks out the **exact**
+`github.sha` on the VPS (not “current branch + ff-pull”), then runs
+`IMAGE_TAG=$APP_VERSION UPDATE_ENV_IMAGE_TAG=1`. That keeps scripts/Caddyfile
+and the running image tag aligned with the tip that built GHCR images.
 
 Probe: `GET /api/health` must return `"status": "healthy"` and `"version"` matching
 tip `APP_VERSION` (see `backend/app/core/config.py`). Prefer:

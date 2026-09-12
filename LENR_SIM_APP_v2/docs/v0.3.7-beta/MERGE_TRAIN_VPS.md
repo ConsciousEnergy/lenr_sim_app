@@ -47,10 +47,11 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | Check | Result |
 |-------|--------|
 | Dynamics-mode pytest | **7 passed** |
-| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** (reconfirmed tip `da98426`: 2/2 PostHog gate) |
+| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** (reconfirmed tip `3a8d193`: 2/2 PostHog gate) |
 | CI preview #190 tip `ce0279f` | **Test and Benchmark full green** (frontend, e2e, py3.10/11/12) |
-| CI preview #190 tip `da98426` | IMAGE_TAG force + SHA-pinned VPS checkout + 0.3.7 defaults; frontend/e2e green; **py matrix in progress** |
+| CI preview #190 tip `3a8d193` | **Test and Benchmark full green** ([run 34720144664](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34720144664): frontend, e2e, py3.10/11/12) — SHA-pin deploy + IMAGE_TAG force + 0.3.7/0.3.8 prep |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
+| Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `3a8d193`) |
 | Deploy harden | CI SSH pins `git checkout $GITHUB_SHA`, forces `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
 | Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
