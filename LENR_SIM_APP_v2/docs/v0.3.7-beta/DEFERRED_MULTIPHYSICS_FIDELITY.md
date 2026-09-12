@@ -29,7 +29,7 @@ claim tiers — then resume this queue.
 1. Diagnose `POST /api/physics/bubble-fusion` on beta (proxy, mount, `API_BASE`).
 2. [x] Unify clients: page owns the request; visualizer consumes props (no duplicate fetch).
 3. [x] Provenance UI: `physics_engine` vs `schematic_fallback`.
-4. Contract test + browser evidence that the unreachable banner is absent on healthy backend (in progress on this branch).
+4. [x] Contract test + browser evidence that the unreachable banner is absent on healthy backend (Phase A branch; Jest single-fetch + headed Playwright/browser demo).
 
 ### Phase B — Fidelity (gated)
 
