@@ -38,31 +38,49 @@ that includes **both** current `main` and the science + share stack.
 |--------|--------|
 | `consciousenergy/vps-public-beta-rebase-98d8` | **Rebased onto `main` (2026-09-12)** — tip == `main` @ `360c94c` (duplicate deps commit dropped). Ready to deploy **current main**; re-pull after #185–#189 land before calling the deploy for 0.3.7. Live share: [LIVE_SHARE_STATUS.md](./LIVE_SHARE_STATUS.md). |
 
-## Local dry-run (2026-09-12)
+## Local dry-run + CI evidence (2026-09-12)
 
 Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
 was **all fast-forward, zero conflicts**. Stack tip is branch
-`consciousenergy/v037-share-uptime-prep-98d8` (20 commits ahead of `main` at dry-run
-follow-up). Dynamics-mode pytest: **7 passed**. Jest `WrapWithPostHog` + Bubble Fusion suites:
-**13 passed**. Live `verify-beta-share.sh`: share host OK; intended host WARN (WP CNAME).
+`consciousenergy/v037-share-uptime-prep-98d8`.
 
-## Merge procedure (human-approved)
+| Check | Result |
+|-------|--------|
+| Dynamics-mode pytest | **7 passed** |
+| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** |
+| CI preview #190 tip `ce0279f` | **Test and Benchmark full green** (frontend, e2e, py3.10/11/12) |
+| Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); intended host WARN (WP CNAME) |
+| Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
-1. Squash-merge **#185** into `main` (CI already green on `main`).
-2. Retarget **#186** to `main` → squash-merge when CI green.
-3. Same for **#187**, then **#188**, then **#189**.
-4. Close **#184** as superseded by #187, or cherry-pick any unique playback bits.
-5. Close the **CI preview** draft PR once the stack is on `main`.
-6. Fast-forward / rebase VPS tip onto updated `main` (already synced once on 2026-09-12):
+## Merge procedure (human-approved only)
 
-   ```bash
-   git fetch origin
-   git checkout consciousenergy/vps-public-beta-rebase-98d8
-   git rebase origin/main
-   git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
-   ```
+Do **not** run these until an operator explicitly authorizes (e.g. “merge the stack”).
 
-7. `workflow_dispatch` deploy from that tip; probe health on **`lenr-sim-beta`** (shareable now). Cut over `lenr-simp-app` DNS A record when ready (see live status doc).
+```bash
+# 1) Squash #185 (already targets main; CI green)
+gh pr merge 185 --squash --delete-branch=false
+
+# 2–5) Retarget each stacked PR to main, wait for CI, squash
+for n in 186 187 188 189; do
+  gh pr edit "$n" --base main
+  gh pr checks "$n" --watch
+  gh pr merge "$n" --squash --delete-branch=false
+done
+
+# 6) Close superseded / preview PRs
+gh pr close 184 --comment "Superseded by #187 BF HUD readability + honesty."
+gh pr close 190 --comment "CI preview only; stack landed via #185–#189."
+
+# 7) Rebase VPS tip and deploy
+git fetch origin
+git checkout consciousenergy/vps-public-beta-rebase-98d8
+git rebase origin/main
+git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
+gh workflow run deploy.yml --ref consciousenergy/vps-public-beta-rebase-98d8
+
+# 8) Prove 0.3.7 on the share host
+EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+```
 
 Do **not** deploy a stale VPS tip that lags `main`.
 Do **not** squash-merge the CI-preview PR — it duplicates the stack tip.
