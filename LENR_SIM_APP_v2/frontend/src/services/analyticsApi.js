@@ -235,6 +235,7 @@ export const analyticsApi = {
         created_at: new Date().toISOString(),
         is_baseline: false,
         source: 'Local Storage (Offline)',
+        local_only: true,
       };
       saveToLocalStorage(localExperiment);
       

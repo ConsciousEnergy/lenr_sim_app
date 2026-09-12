@@ -544,8 +544,20 @@ function UnifiedTheoryPage() {
       };
       
       const saved = await analyticsApi.saveExperiment(experimentData);
-      setAlertMessage(`Simulation saved to analytics! ID: ${saved.id.substring(0, 8)}...`);
-      setAlertSeverity('success');
+      if (saved?.local_only) {
+        setAlertMessage(
+          'Shared Analytics unreachable — this run was kept in browser storage only (not shared History).',
+        );
+        setAlertSeverity('warning');
+      } else {
+        const id = saved?.id || saved?.data?.id || '';
+        setAlertMessage(
+          id
+            ? `Simulation saved to analytics! ID: ${String(id).substring(0, 8)}...`
+            : 'Simulation saved to analytics.',
+        );
+        setAlertSeverity('success');
+      }
       setAlertOpen(true);
     } catch (error) {
       console.error('Failed to save to analytics:', error);
