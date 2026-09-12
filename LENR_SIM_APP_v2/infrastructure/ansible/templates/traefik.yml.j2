@@ -48,15 +48,7 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: web
 
-# Global security headers
-http:
-  middlewares:
-    security-headers:
-      headers:
-        frameDeny: true
-        sslRedirect: true
-        browserXssFilter: true
-        contentTypeNosniff: true
-        referrerPolicy: "strict-origin-when-cross-origin"
-        customResponseHeaders:
-          X-Robots-Tag: "noindex,nofollow"
+# NOTE: Do not put top-level `http:` (middlewares/routers/services) here.
+# Traefik v3 static config rejects `http` (`field not found, node: http`).
+# Security headers, CORS, rate limits live in traefik-dynamic.yml.j2
+# (providers.file.directory = /etc/traefik/dynamic).
