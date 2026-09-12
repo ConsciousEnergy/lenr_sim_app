@@ -1,3 +1,6 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   mapBubbleFusionApiResults,
   pickFiniteNumber,
@@ -85,10 +88,6 @@ describe('mapBubbleFusionApiResults provenance', () => {
  * Page owns a single POST; visualizer must not fetch independently.
  * Mock heavy children so we only exercise fetch + provenance chip wiring.
  */
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-
 jest.mock('../components/visualization/BubbleFusionVisualizer', () => {
   const React = require('react');
   return function MockVisualizer({ provenance, enginePayload }) {
