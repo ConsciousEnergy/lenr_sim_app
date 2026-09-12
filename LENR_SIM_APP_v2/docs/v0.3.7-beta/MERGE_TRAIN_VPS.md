@@ -29,7 +29,7 @@ governance PR (#185) is on `main`. Deploy the VPS only from a tip that includes
 
 | Branch | Status |
 |--------|--------|
-| `consciousenergy/vps-public-beta-rebase-98d8` | **No open PR**; tip is **behind `main`** (missing later main commits). Not a deploy source until rebased. |
+| `consciousenergy/vps-public-beta-rebase-98d8` | **Rebased onto `main` (2026-09-12)** — tip == `main` @ `360c94c` (duplicate deps commit dropped). Ready to deploy **current main**; re-pull after #185–#188 land before calling the deploy 0.3.7. Live share: [LIVE_SHARE_STATUS.md](./LIVE_SHARE_STATUS.md). |
 
 ## Merge procedure (human-approved)
 
@@ -37,30 +37,31 @@ governance PR (#185) is on `main`. Deploy the VPS only from a tip that includes
 2. Retarget **#186** to `main` (or merge via updated base) → squash-merge when CI green.
 3. Same for **#187**, then **#188**.
 4. Close **#184** as superseded by #187, or cherry-pick any unique playback bits.
-5. Rebase VPS tip onto `main`:
+5. Fast-forward / rebase VPS tip onto updated `main` (already synced once on 2026-09-12):
 
    ```bash
    git fetch origin
    git checkout consciousenergy/vps-public-beta-rebase-98d8
    git rebase origin/main
-   # resolve conflicts; keep infrastructure/vps Compose+Caddy as ship path
    git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
    ```
 
-6. Open `consciousenergy/vps-public-beta-rebase-98d8` → `main` (or merge VPS deltas into `main` if already included).
-7. `workflow_dispatch` deploy; probe `https://<beta-host>/api/health`.
+6. `workflow_dispatch` deploy from that tip; probe health on **`lenr-sim-beta`** (shareable now). Cut over `lenr-simp-app` DNS A record when ready (see live status doc).
 
-Do **not** merge the science tip into the stale VPS branch and deploy — rebase VPS onto `main` first.
+Do **not** deploy a stale VPS tip that lags `main`.
 
 ## VPS verify after deploy
 
 ```bash
+# Working share host (A → VPS) — use this until DNS cutover:
 curl -fsS "https://lenr-sim-beta.conscious.energy/api/health"
-# After DNS A cutover for the intended public name:
+# Intended public name — only after A record replaces WP CNAME:
 curl -fsS "https://lenr-simp-app.conscious.energy/api/health"
 ```
 
-SPA load + WebSocket (if used) in a clean browser profile. Console: PostHog provider warning must be absent when analytics is off; MetaMask/`contentscript.js` noise is non-app.
+Live probe log: [LIVE_SHARE_STATUS.md](./LIVE_SHARE_STATUS.md).
+
+SPA load in a clean browser profile. Console: PostHog provider warning must be absent when analytics is off (#189); MetaMask/`contentscript.js` noise is non-app.
 
 ## Explicitly deferred to **v0.3.8-beta**
 
