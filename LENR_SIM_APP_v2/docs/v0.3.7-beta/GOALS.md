@@ -13,9 +13,11 @@
 5. **Critical-path worktree** — `WORKTREE_OOO.md` order of operations.
 6. **Version markers** → `0.3.7-beta` on this branch so testers see the new train.
 
-## In progress (post-governance)
+## Post-governance slices (shipped on tip stack)
 
-7. **Phase A Bubble Fusion engine truth** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`), healthy-backend browser evidence (unreachable banner absent). KM default still deferred.
+7. **Phase A Bubble Fusion engine truth** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`), healthy-backend browser evidence (unreachable banner absent).
+8. **BF UI readability / honesty** — **done** on `consciousenergy/v037-bf-ui-honesty-98d8`: fixed top HUD parity with private-beta readability; analytics empty-state / Lean≠lab-proof residuals.
+9. **Phase B gated KM bridge** — **done** on `consciousenergy/v037-bubble-km-bridge-98d8`: opt-in `dynamics_mode` (legacy|rayleigh_plesset|keller_miksis), Mach diagnostics, `tunneling_handoff` claim tiers, `verification` gates. **KM auto-default on BF remains deferred.**
 
 ## Deferred queue (in the plan, not implemented here)
 
