@@ -41,10 +41,12 @@ Site hostnames are configured as a **literal comma-separated line in
 ## First boot
 
 1. DNS: `A lenr-simp-app.conscious.energy -> 185.211.4.66` (not a CNAME to apex).
-2. `bootstrap-host.sh` as root (install a deploy key first).
-3. Clone this repo to `/opt/lenr-sim/src`, copy `.env.production.example` to `/opt/lenr-sim/.env`, fill `CHANGE_ME`.
-4. `BUILD_LOCALLY=1 LENR_ENV_FILE=/opt/lenr-sim/.env infrastructure/vps/scripts/deploy.sh`
-5. `hydrate-demo.sh` once.
+2. `./LENR_SIM_APP_v2/infrastructure/vps/scripts/bootstrap-host.sh` as root (install a deploy key first).
+3. Clone this monorepo to `/opt/lenr-sim/src`, copy
+   `LENR_SIM_APP_v2/infrastructure/vps/.env.production.example` to `/opt/lenr-sim/.env`, fill `CHANGE_ME`.
+4. From `/opt/lenr-sim/src`:
+   `BUILD_LOCALLY=1 LENR_ENV_FILE=/opt/lenr-sim/.env ./LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh`
+5. `./LENR_SIM_APP_v2/infrastructure/vps/scripts/hydrate-demo.sh` once.
 
 Always pass `--env-file /opt/lenr-sim/.env` (deploy.sh does this). Never start
 backend from `.env.production.example` — that sets `LENR_DB_PASSWORD=CHANGE_ME`
@@ -62,8 +64,8 @@ Probe: `GET /api/health` must return `"status": "healthy"` and `"version"` match
 tip `APP_VERSION` (see `backend/app/core/config.py`). Prefer:
 
 ```bash
-EXPECT_VERSION="$(grep -oP 'APP_VERSION: str = "\K[^"]+' ../../backend/app/core/config.py)" \
-  ./scripts/verify-beta-share.sh
+EXPECT_VERSION="$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)" \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 ```
 
 `GET /api/docs` and `GET /metrics` must 404. Until `lenr-simp-app` points here, share

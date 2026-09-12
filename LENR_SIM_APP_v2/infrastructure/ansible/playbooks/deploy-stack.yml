@@ -57,7 +57,15 @@
         dest: /opt/lenr-sim/docker-stack.yml
         mode: '0644'
         
-    - name: Copy Traefik configuration
+    - name: Ensure Traefik dynamic config directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/dynamic
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Copy Traefik static configuration
       ansible.builtin.template:
         src: ../templates/traefik.yml.j2
         dest: /opt/lenr-sim/traefik/traefik.yml
@@ -66,7 +74,7 @@
     - name: Create Traefik dynamic configuration
       ansible.builtin.template:
         src: ../templates/traefik-dynamic.yml.j2
-        dest: /opt/lenr-sim/traefik/dynamic.yml
+        dest: /opt/lenr-sim/traefik/dynamic/dynamic.yml
         mode: '0644'
         
     # ==========================================================================

@@ -1,7 +1,8 @@
 #!/bin/bash
 # Deploy (or refresh) the same-origin VPS stack.
-# Usage (on the VPS, from the repo checkout):
-#   LENR_ENV_FILE=/opt/lenr-sim/.env ./infrastructure/vps/scripts/deploy.sh
+# Usage (on the VPS, from the monorepo checkout root):
+#   LENR_ENV_FILE=/opt/lenr-sim/.env \
+#     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 # Optional:
 #   BUILD_LOCALLY=1        build images on the host instead of pulling GHCR
 #   IMAGE_TAG=0.3.7-beta   override tag (wins over .env; use for tip deploys)

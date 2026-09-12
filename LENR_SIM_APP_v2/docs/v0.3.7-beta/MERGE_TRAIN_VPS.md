@@ -57,6 +57,7 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | CI preview #190 tip `ce0279f` | **Test and Benchmark full green** (frontend, e2e, py3.10/11/12) |
 | CI preview #190 tip `3a8d193` | **Test and Benchmark full green** ([run 34720144664](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34720144664): frontend, e2e, py3.10/11/12) — SHA-pin deploy + IMAGE_TAG force + 0.3.7/0.3.8 prep |
 | CI preview #190 tip `1252ab5` (docs evidence) | **Test and Benchmark full green** ([run 34720558740](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34720558740)) — MERGE_TRAIN/LIVE_SHARE/VPS README evidence refresh |
+| CI preview #190 tip `049fef9` | **Test and Benchmark full green** ([run 34721847767](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34721847767)) — check-merge-train.sh READY |
 | CI preview #190 tip `5193a66` | **Test and Benchmark full green** ([run 34721395036](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34721395036)) — codecov-action v7 `files:` fix (no more Unexpected `file` annotations) |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
 | Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `3a8d193`) |
