@@ -3,8 +3,9 @@
 # Usage (on the VPS, from the repo checkout):
 #   LENR_ENV_FILE=/opt/lenr-sim/.env ./infrastructure/vps/scripts/deploy.sh
 # Optional:
-#   BUILD_LOCALLY=1   build images on the host instead of pulling GHCR
-#   IMAGE_TAG=sha-... pin a previously built/pushed tag (rollback helper)
+#   BUILD_LOCALLY=1        build images on the host instead of pulling GHCR
+#   IMAGE_TAG=0.3.7-beta   override tag (wins over .env; use for tip deploys)
+#   UPDATE_ENV_IMAGE_TAG=1 persist IMAGE_TAG back into LENR_ENV_FILE
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,6 +14,8 @@ APP_ROOT="$(cd "$VPS_DIR/../.." && pwd)"   # LENR_SIM_APP_v2
 ENV_FILE="${LENR_ENV_FILE:-/opt/lenr-sim/.env}"
 COMPOSE=(docker compose -f "$VPS_DIR/docker-compose.prod.yml" --env-file "$ENV_FILE")
 BUILD_LOCALLY="${BUILD_LOCALLY:-0}"
+# Capture caller-provided tag before .env parsing so CI can force APP_VERSION.
+REQUESTED_IMAGE_TAG="${IMAGE_TAG:-}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing $ENV_FILE — copy infrastructure/vps/.env.production.example and fill secrets." >&2
@@ -35,8 +38,22 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   export "$key"
 done < <(grep -E '^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|LENR_WORKERS)=' "$ENV_FILE" || true)
 
+if [[ -n "$REQUESTED_IMAGE_TAG" ]]; then
+  IMAGE_TAG="$REQUESTED_IMAGE_TAG"
+fi
 IMAGE_TAG="${IMAGE_TAG:-0.3.6-beta}"
 PREVIOUS_TAG_FILE=/opt/lenr-sim/.previous-image-tag
+
+if [[ "${UPDATE_ENV_IMAGE_TAG:-0}" == "1" ]]; then
+  if grep -q '^IMAGE_TAG=' "$ENV_FILE"; then
+    sed -i.bak "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" "$ENV_FILE"
+  else
+    printf '\nIMAGE_TAG=%s\n' "$IMAGE_TAG" >> "$ENV_FILE"
+  fi
+  rm -f "${ENV_FILE}.bak"
+  chmod 600 "$ENV_FILE" || true
+  echo "Persisted IMAGE_TAG=${IMAGE_TAG} into ${ENV_FILE}"
+fi
 
 mkdir -p /opt/lenr-sim/{logs/backend,logs/caddy,data,backups}
 chmod 600 "$ENV_FILE" || true

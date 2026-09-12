@@ -77,6 +77,8 @@ git checkout consciousenergy/vps-public-beta-rebase-98d8
 git rebase origin/main
 git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
 gh workflow run deploy.yml --ref consciousenergy/vps-public-beta-rebase-98d8
+# Deploy workflow now forces IMAGE_TAG=$APP_VERSION onto the VPS (.env updated)
+# so a stale IMAGE_TAG=0.3.6-beta cannot survive a 0.3.7 tip deploy.
 
 # 8) Prove 0.3.7 on the share host
 EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
