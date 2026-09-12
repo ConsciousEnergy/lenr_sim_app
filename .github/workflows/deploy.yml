@@ -187,3 +187,15 @@ jobs:
                LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh'
           rm -f "$KEY"
 
+      - name: Checkout (for share verify script)
+        uses: actions/checkout@v4
+
+      - name: Verify public share health
+        env:
+          BETA_SHARE_URL: ${{ vars.BETA_SHARE_URL }}
+        run: |
+          set -euo pipefail
+          chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+          export BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+          LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+
