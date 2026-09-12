@@ -43,16 +43,19 @@ export const analyticsEnabled = () => enabled;
 export { posthog };
 ```
 
-## Provider wiring (src/index.jsx - wrap the existing tree)
+## Provider wiring (`src/index.jsx` — wrap the existing tree)
+
+Mount `PostHogProvider` only when analytics actually initialized. Passing
+`client={undefined}` triggers PostHog's "No apiKey or client" console warning.
 
 ```jsx
-import { PostHogProvider } from 'posthog-js/react';
-import { initAnalytics, posthog, analyticsEnabled } from './analytics/posthog';
+import { WrapWithPostHog } from './analytics/WrapWithPostHog';
+import { initAnalytics } from './analytics/posthog';
 
 initAnalytics();
 
 root.render(
-  <PostHogProvider client={analyticsEnabled() ? posthog : undefined}>
+  <WrapWithPostHog>
     <OfflineProvider>
       <ThrottleProvider>
         <SnackbarProvider>
@@ -60,9 +63,12 @@ root.render(
         </SnackbarProvider>
       </ThrottleProvider>
     </OfflineProvider>
-  </PostHogProvider>
+  </WrapWithPostHog>
 );
 ```
+
+`WrapWithPostHog` returns `children` when `!analyticsEnabled()`, otherwise
+`<PostHogProvider client={posthog}>…</PostHogProvider>`.
 
 ## Typed taxonomy helper (single source of event names)
 
