@@ -1,7 +1,7 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-12 ~22:15 UTC** (retries via verify-beta-share.sh).
-Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `049fef9` (#190 Test+Benchmark **green**; `check-merge-train.sh` → READY).
+Probed from CI agent host on **2026-09-12 ~22:30 UTC** (retries via verify-beta-share.sh).
+Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `b98e206` (#190 Test+Benchmark **green** — [run 34722505921](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34722505921); `check-merge-train.sh` → READY).
 
 ## What works today (share this)
 
