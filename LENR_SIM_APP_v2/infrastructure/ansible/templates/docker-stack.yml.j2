@@ -70,7 +70,7 @@ services:
   # FastAPI Backend
   # ============================================================================
   backend:
-    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default('0.3.6-beta') }}
+    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default('0.3.8-beta') }}
     environment:
       # LENR_*-prefixed vars feed Pydantic Settings (env_prefix="LENR_").
       - LENR_ENVIRONMENT=production

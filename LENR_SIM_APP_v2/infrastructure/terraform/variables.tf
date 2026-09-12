@@ -88,7 +88,7 @@ variable "github_repo" {
 }
 
 variable "pages_production_branch" {
-  description = "Cloudflare Pages production branch (ship branch; main is behind)"
+  description = "Cloudflare Pages production branch for v0.3.8-beta cutover (do not apply in 0.3.7)"
   type        = string
-  default     = "lenr_sim_app_v0.3.6-beta"
+  default     = "lenr_sim_app_v0.3.8-beta"
 }

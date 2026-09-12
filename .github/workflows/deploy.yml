@@ -183,6 +183,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           IMAGE_TAG: ${{ steps.version.outputs.app_version }}
+          DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
@@ -192,15 +193,19 @@ jobs:
           umask 077
           KEY=$(mktemp)
           printf '%s\n' "$VPS_SSH_KEY" > "$KEY"
-          # Force tip APP_VERSION onto the VPS so a stale .env IMAGE_TAG=0.3.6-beta
-          # cannot silently keep pulling the previous release after GHCR builds 0.3.7.
+          # Pin VPS checkout to the workflow SHA that built GHCR images, and force
+          # tip APP_VERSION into .env so neither scripts/Caddyfile nor IMAGE_TAG
+          # can lag a 0.3.7 tip deploy (stale branch + IMAGE_TAG=0.3.6-beta).
           ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
             "root@${VPS_HOST}" \
             "set -euo pipefail
              cd /opt/lenr-sim/src
-             git fetch origin
-             git checkout -q \"\$(git rev-parse --abbrev-ref HEAD)\"
-             git pull --ff-only
+             git fetch --prune origin
+             if ! git cat-file -e '${DEPLOY_SHA}^{commit}' 2>/dev/null; then
+               git fetch origin '${DEPLOY_SHA}'
+             fi
+             git checkout -qf '${DEPLOY_SHA}'
+             echo \"VPS HEAD=\$(git rev-parse --short HEAD) (pinned to workflow SHA)\"
              LENR_ENV_FILE=/opt/lenr-sim/.env \
                IMAGE_TAG='${IMAGE_TAG}' \
                UPDATE_ENV_IMAGE_TAG=1 \

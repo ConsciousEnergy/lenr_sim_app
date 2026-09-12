@@ -47,11 +47,11 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | Check | Result |
 |-------|--------|
 | Dynamics-mode pytest | **7 passed** |
-| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** (reconfirmed tip `572f314`: 2/2 PostHog gate) |
+| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** (reconfirmed tip `da98426`: 2/2 PostHog gate) |
 | CI preview #190 tip `ce0279f` | **Test and Benchmark full green** (frontend, e2e, py3.10/11/12) |
-| CI preview #190 tip `572f314` | IMAGE_TAG=APP_VERSION force + share retries; **await full Test green** |
+| CI preview #190 tip `da98426` | IMAGE_TAG force + SHA-pinned VPS checkout + 0.3.7 defaults; frontend/e2e green; **py matrix in progress** |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
-| Deploy harden | CI SSH passes `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
+| Deploy harden | CI SSH pins `git checkout $GITHUB_SHA`, forces `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
 | Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
 ## Merge procedure (human-approved only)
@@ -79,8 +79,9 @@ git checkout consciousenergy/vps-public-beta-rebase-98d8
 git rebase origin/main
 git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
 gh workflow run deploy.yml --ref consciousenergy/vps-public-beta-rebase-98d8
-# Deploy workflow now forces IMAGE_TAG=$APP_VERSION onto the VPS (.env updated)
-# so a stale IMAGE_TAG=0.3.6-beta cannot survive a 0.3.7 tip deploy.
+# Deploy workflow pins the VPS git tree to the workflow SHA, then forces
+# IMAGE_TAG=$APP_VERSION into .env — stale checkout + IMAGE_TAG=0.3.6-beta
+# cannot survive a 0.3.7 tip deploy.
 
 # 8) Prove 0.3.7 on the share host
 EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
