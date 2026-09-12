@@ -38,6 +38,41 @@ export function pickFiniteNumber(...values) {
  * Map POST /api/physics/bubble-fusion JSON onto the page model.
  * Do not default missing enhancement to 1e13 (or any other ceiling).
  */
+/** Provenance tokens for Bubble Fusion honesty UI (Phase A). */
+export const BF_PROVENANCE = Object.freeze({
+  PHYSICS_ENGINE: 'physics_engine',
+  SCHEMATIC_FALLBACK: 'schematic_fallback',
+});
+
+/**
+ * Build a collapse_results-shaped payload for the visualizer when the API is down.
+ * Explicitly schematic — never cite as engine output.
+ */
+export function buildSchematicBubbleFusionPayload(parameters, fallback) {
+  return {
+    provenance: BF_PROVENANCE.SCHEMATIC_FALLBACK,
+    collapse_results: {
+      max_temperature_k: fallback.maxTemperature,
+      min_radius_um: fallback.minRadius,
+      collapse_time_ns:
+        typeof fallback.collapseTime === 'number' ? fallback.collapseTime * 1e9 : null,
+      max_pressure_gpa: fallback.maxPressureGpa,
+      max_pressure_bar: fallback.maxPressure,
+      compression_ratio: fallback.compressionRatio,
+      peak_velocity_km_s: null,
+      fusion_probability: 0,
+      peak_enhancement: null,
+    },
+    schematic_note:
+      'Local adiabatic/power-law schematic only. Not POST /api/physics/bubble-fusion engine output.',
+    parameters_echo: {
+      initial_radius_um: parameters.initialRadius,
+      acoustic_pressure_bar: parameters.drivingPressureAmplitude,
+      frequency_khz: parameters.frequency,
+    },
+  };
+}
+
 export function mapBubbleFusionApiResults(apiResults) {
   const collapse = apiResults?.collapse_results || {};
   // Engine reports GPa / Pa; legacy mocks used bar. Prefer engine units.
@@ -93,6 +128,7 @@ export function mapBubbleFusionApiResults(apiResults) {
     ),
     rayleighPlesset: apiResults.rayleigh_plesset_dynamics,
     isLocalFallback: false,
+    provenance: BF_PROVENANCE.PHYSICS_ENGINE,
   };
 }
 
@@ -147,8 +183,10 @@ const BubbleFusionPage = () => {
     totalSimulationTime: 1.0 // μs
   });
   
-  // State for calculation results
+  // State for calculation results — page owns the single POST /api/physics/bubble-fusion
   const [results, setResults] = useState(null);
+  const [enginePayload, setEnginePayload] = useState(null);
+  const [provenance, setProvenance] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [_error, setError] = useState(null);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -163,24 +201,25 @@ const BubbleFusionPage = () => {
     }));
   }, []);
   
-  // Run simulation
+  // Run simulation (single fetch — visualizer must not POST separately)
   const runSimulation = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Try real physics API first
       try {
         const apiResults = await bubbleFusionAPI.simulate(parameters);
-        setResults(mapBubbleFusionApiResults(apiResults));
-        setAlertMessage('Simulation completed using real physics calculations');
+        const mapped = mapBubbleFusionApiResults(apiResults);
+        setResults(mapped);
+        setEnginePayload({ ...apiResults, provenance: BF_PROVENANCE.PHYSICS_ENGINE });
+        setProvenance(BF_PROVENANCE.PHYSICS_ENGINE);
+        setAlertMessage('Simulation completed using physics-engine calculations (Approximate maturity).');
         setAlertSeverity('success');
         setAlertOpen(true);
         
       } catch (apiError) {
         console.warn('Real bubble fusion API unavailable, using fallback:', apiError.message);
         
-        // Fallback to physics-based mock calculations
         const P_ratio = parameters.drivingPressureAmplitude / parameters.ambientPressure;
         const compressionRatio = Math.pow(P_ratio, 0.4);
         const maxTemp = parameters.ambientTemperature * Math.pow(compressionRatio, 1.4);
@@ -199,9 +238,13 @@ const BubbleFusionPage = () => {
           compressionRatio,
           peakVelocityKmS: null,
           isLocalFallback: true,
+          provenance: BF_PROVENANCE.SCHEMATIC_FALLBACK,
         };
         
+        const schematicPayload = buildSchematicBubbleFusionPayload(parameters, fallbackResults);
         setResults(fallbackResults);
+        setEnginePayload(schematicPayload);
+        setProvenance(BF_PROVENANCE.SCHEMATIC_FALLBACK);
         setAlertMessage(
           'Backend unreachable. Schematic local fallback only — not physics-engine output. Do not cite these numbers.',
         );
@@ -219,16 +262,14 @@ const BubbleFusionPage = () => {
     }
   }, [parameters]);
   
-  // Handle probability calculation from visualizer
+  // Optional fusion probability from visualizer HUD (does not trigger a second API call)
   const handleProbabilityCalculated = useCallback((probability) => {
-    if (!results) {
-      // If we don't have full results yet, create a partial result
-      setResults(prev => ({
-        ...prev,
-        fusionProbability: probability,
-      }));
-    }
-  }, [results]);
+    setResults((prev) => {
+      if (!prev) return prev;
+      if (prev.fusionProbability != null) return prev;
+      return { ...prev, fusionProbability: probability };
+    });
+  }, []);
   
   // Download results as JSON
   const handleDownloadResults = () => {
@@ -237,6 +278,8 @@ const BubbleFusionPage = () => {
     const data = {
       parameters,
       results,
+      provenance,
+      engine_payload: enginePayload,
       timestamp: new Date().toISOString()
     };
     
@@ -266,6 +309,19 @@ const BubbleFusionPage = () => {
           Interactive simulation of sonofusion (bubble fusion) phenomenon
         </Typography>
         <EngineMaturityBadge engineId="ENG-BUBBLE-FUSION-01" sx={{ mt: 1 }} />
+        {provenance && (
+          <Chip
+            data-testid="bubble-fusion-provenance-chip"
+            size="small"
+            sx={{ ml: 1, mt: 1 }}
+            color={provenance === BF_PROVENANCE.PHYSICS_ENGINE ? 'success' : 'warning'}
+            label={
+              provenance === BF_PROVENANCE.PHYSICS_ENGINE
+                ? 'Provenance: physics_engine'
+                : 'Provenance: schematic_fallback'
+            }
+          />
+        )}
         <Divider sx={{ my: 2 }} />
       </Box>
       
@@ -429,14 +485,22 @@ const BubbleFusionPage = () => {
               width={800}
               height={500}
               onRenderComplete={handleProbabilityCalculated}
+              enginePayload={enginePayload}
+              provenance={provenance}
             />
             
             <Box sx={{ mt: 2 }}>
-              <Alert severity="info" sx={{ mb: 2 }}>
+              <Alert
+                severity={provenance === BF_PROVENANCE.SCHEMATIC_FALLBACK ? 'warning' : 'info'}
+                sx={{ mb: 2 }}
+                data-testid="bubble-fusion-provenance-alert"
+              >
                 <Typography variant="body2">
-                  This simulation models acoustic cavitation using the Rayleigh-Plesset equation modified to account
-                  for compressibility effects. The model calculates conditions inside the bubble at the moment of collapse
-                  and estimates fusion probabilities based on the achieved temperatures and pressures.
+                  {provenance === BF_PROVENANCE.SCHEMATIC_FALLBACK
+                    ? 'Schematic local fallback is active. Numbers and animation are not physics-engine output and must not be cited.'
+                    : provenance === BF_PROVENANCE.PHYSICS_ENGINE
+                      ? 'Results come from a single page-owned POST /api/physics/bubble-fusion. Maturity is Approximate — Rayleigh–Plesset / adiabatic calculator, not validated laboratory data.'
+                      : 'Run Simulation to load a single page-owned engine response. The visualizer does not fetch independently.'}
                 </Typography>
               </Alert>
             </Box>
