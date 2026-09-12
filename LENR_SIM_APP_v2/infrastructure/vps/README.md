@@ -33,6 +33,7 @@ Site hostnames are configured as a **literal comma-separated line in
 | `scripts/bootstrap-host.sh` | SSH harden, UFW, fail2ban, swap, docker logs, backup cron |
 | `scripts/deploy.sh` | pull/build, alembic, up, health (+ share probe); CI pins checkout to workflow SHA and forces `IMAGE_TAG=$APP_VERSION` |
 | `scripts/check-merge-train.sh` | operator preflight: PR stack, tip==preview, ancestry, tip Test green |
+| `scripts/dry-run-merge-train.sh` | throwaway FF merge #185→#189 onto `main` + VPS rebase simulation (no push) |
 | `scripts/verify-beta-share.sh` | public DNS/TLS/`/api/health` probe (`EXPECT_VERSION`, retries) |
 | `scripts/rollback.sh` | redeploy previous `IMAGE_TAG` |
 | `scripts/backup-db.sh` | `pg_dump` -> `/opt/lenr-sim/backups` (14 days) |

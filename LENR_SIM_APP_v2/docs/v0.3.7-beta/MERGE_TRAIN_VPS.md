@@ -44,11 +44,14 @@ Operator preflight (no merge):
 
 ```bash
 ./LENR_SIM_APP_v2/infrastructure/vps/scripts/check-merge-train.sh
+# Optional: prove FF train + VPS rebase in a throwaway worktree (no push)
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/dry-run-merge-train.sh
 ```
 
 Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
 was **all fast-forward, zero conflicts**. Stack tip is branch
-`consciousenergy/v037-share-uptime-prep-98d8`.
+`consciousenergy/v037-share-uptime-prep-98d8`. Reconfirmed tip `dc91e3d` via
+`dry-run-merge-train.sh` (merged tip == share tip == VPS dry-rebase tip).
 
 | Check | Result |
 |-------|--------|
@@ -61,8 +64,9 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | CI preview #190 tip `5193a66` | **Test and Benchmark full green** ([run 34721395036](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34721395036)) — codecov-action v7 `files:` fix (no more Unexpected `file` annotations) |
 | CI preview #190 tip `b98e206` | **Test and Benchmark full green** ([run 34722505921](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34722505921)) — path/env docs + Traefik static/dynamic split; PostHog Jest 2/2 local |
 | CI preview #190 tip `7650a15` | **Test and Benchmark full green** ([run 34723272272](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34723272272)) — Traefik static http strip + EXPECT_VERSION hard-fail + PostHog skill align; check-merge-train READY |
+| CI preview #190 tip `dc91e3d` | **Test and Benchmark full green** ([run 34724292610](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34724292610)) — Traefik `security-headers@file` on backend; check-merge-train READY |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
-| Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `3a8d193`) |
+| Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `dc91e3d` via `dry-run-merge-train.sh`; VPS rebase tip matches) |
 | Deploy harden | CI SSH pins `git checkout $GITHUB_SHA`, forces `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
 | Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
