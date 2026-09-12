@@ -1,4 +1,9 @@
-import { mapBubbleFusionApiResults, pickFiniteNumber } from './BubbleFusionPage';
+import {
+  mapBubbleFusionApiResults,
+  pickFiniteNumber,
+  buildSchematicBubbleFusionPayload,
+  BF_PROVENANCE,
+} from './BubbleFusionPage';
 
 describe('mapBubbleFusionApiResults', () => {
   it('does not invent 1e13 when the API omits enhancement_factor', () => {
@@ -43,5 +48,35 @@ describe('pickFiniteNumber', () => {
   it('skips null/undefined/NaN', () => {
     expect(pickFiniteNumber(null, undefined, Number.NaN, 3)).toBe(3);
     expect(pickFiniteNumber()).toBeNull();
+  });
+});
+
+
+describe('buildSchematicBubbleFusionPayload', () => {
+  it('marks schematic provenance and zero fusion probability', () => {
+    const payload = buildSchematicBubbleFusionPayload(
+      { initialRadius: 10, drivingPressureAmplitude: 1.2, frequency: 20 },
+      {
+        maxTemperature: 5000,
+        minRadius: 0.5,
+        collapseTime: 1e-6,
+        maxPressureGpa: null,
+        maxPressure: 800,
+        compressionRatio: 20,
+      },
+    );
+    expect(payload.provenance).toBe(BF_PROVENANCE.SCHEMATIC_FALLBACK);
+    expect(payload.collapse_results.fusion_probability).toBe(0);
+    expect(payload.schematic_note).toMatch(/Not POST/i);
+  });
+});
+
+describe('mapBubbleFusionApiResults provenance', () => {
+  it('tags physics_engine provenance', () => {
+    const mapped = mapBubbleFusionApiResults({
+      collapse_results: { max_temperature_k: 1e4 },
+    });
+    expect(mapped.provenance).toBe(BF_PROVENANCE.PHYSICS_ENGINE);
+    expect(mapped.isLocalFallback).toBe(false);
   });
 });

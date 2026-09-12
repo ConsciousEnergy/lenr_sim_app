@@ -27,9 +27,9 @@ claim tiers — then resume this queue.
 ### Phase A — Engine-on-VPS truthfulness (Bubble Fusion)
 
 1. Diagnose `POST /api/physics/bubble-fusion` on beta (proxy, mount, `API_BASE`).
-2. Unify clients: page owns the request; visualizer consumes props (no duplicate fetch).
-3. Provenance UI: `physics_engine` vs `schematic_fallback`.
-4. Contract test + browser evidence that the unreachable banner is absent on healthy backend.
+2. [x] Unify clients: page owns the request; visualizer consumes props (no duplicate fetch).
+3. [x] Provenance UI: `physics_engine` vs `schematic_fallback`.
+4. Contract test + browser evidence that the unreachable banner is absent on healthy backend (in progress on this branch).
 
 ### Phase B — Fidelity (gated)
 
@@ -54,6 +54,6 @@ Fusion numerics in the same PR train as A/B.
 ## Resume checklist
 
 - [ ] Maturity ledger P0/P1 rows complete and badges live
-- [ ] Bubble Fusion dual-fetch bug triaged (see `BUG_TRIAGE.md`)
-- [ ] Open Phase A branch: `consciousenergy/v037-bubble-engine-truth-98d8`
+- [x] Bubble Fusion dual-fetch bug triaged (see `BUG_TRIAGE.md`)
+- [x] Open Phase A branch: `consciousenergy/v037-bubble-engine-truth-98d8`
 - [ ] Then Phase B: `consciousenergy/v037-bubble-km-bridge-98d8`

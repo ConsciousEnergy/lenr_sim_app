@@ -13,6 +13,10 @@
 5. **Critical-path worktree** — `WORKTREE_OOO.md` order of operations.
 6. **Version markers** → `0.3.7-beta` on this branch so testers see the new train.
 
+## In progress (post-governance)
+
+7. **Phase A Bubble Fusion engine truth** — branch `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`). KM default still deferred.
+
 ## Deferred queue (in the plan, not implemented here)
 
 | Goal | Priority | Doc |
