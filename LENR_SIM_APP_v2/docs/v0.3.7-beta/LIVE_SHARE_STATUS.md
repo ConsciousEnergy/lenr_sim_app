@@ -1,6 +1,6 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-12 ~20:40 UTC**.
+Probed from CI agent host on **2026-09-12 ~20:50 UTC**.
 
 ## What works today (share this)
 
@@ -15,8 +15,12 @@ https://lenr-sim-beta.conscious.energy
 Operator probe:
 
 ```bash
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+# or:
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
+
+Latest agent probe: share host **OK**; intended host **WARN** (TLS/DNS still WordPress).
 
 ## Intended public name — still blocked by DNS
 
@@ -44,9 +48,10 @@ Until then, keep sharing **`lenr-sim-beta`**.
 (duplicate deps commit dropped). Tip == `main` @ `360c94c` (includes Caddy multi-host fix #180,
 WH-ENP #182, `/api` path honesty #183).
 
-**Deploy of 0.3.7 science stack still waits on merge train #185→#188**
+**Deploy of 0.3.7 science stack still waits on merge train #185→#189**
 (see [MERGE_TRAIN_VPS.md](./MERGE_TRAIN_VPS.md)). After those land on `main`, pull/rebase
-VPS tip again and `workflow_dispatch` deploy; health should report `0.3.7-beta`.
+VPS tip again and `workflow_dispatch` deploy; health should report `0.3.7-beta`
+(`EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh`).
 
 ## Console noise (testers)
 
