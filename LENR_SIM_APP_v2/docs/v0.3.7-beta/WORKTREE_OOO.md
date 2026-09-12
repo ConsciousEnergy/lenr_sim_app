@@ -11,7 +11,7 @@ Critical path for responsible progress. Later work waits on earlier exits.
 ## After governance (deferred queue)
 
 4. **Multiphysics fidelity Phase A** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8` (single-fetch + provenance). UI readability HUD ported on `consciousenergy/v037-bf-ui-honesty-98d8` (parity with private-beta fixed top HUD). Next: Phase B KM bridge ([DEFERRED_MULTIPHYSICS_FIDELITY.md](./DEFERRED_MULTIPHYSICS_FIDELITY.md)).
-5. **Multiphysics fidelity Phase B** — Shared RP/KM core; verification gates.
+5. **Multiphysics fidelity Phase B** — Opt-in RP/KM + handoff/verification **shipped** on `consciousenergy/v037-bubble-km-bridge-98d8`; KM auto-default still deferred.
 6. **OPEN scientific obligations** — Research tracks only; status stays OPEN in UI/MD/JSON/Lean.
 7. **Solver stubs / continuum aspirational** — Last (FEM, Poisson–Schrödinger, etc.).
 
@@ -27,5 +27,5 @@ Critical path for responsible progress. Later work waits on earlier exits.
 |-------|--------|---------|
 | 1 | `consciousenergy/v037-bubble-engine-truth-98d8` | Phase A **done** (single-fetch + provenance; KM still deferred) |
 | 1b | `consciousenergy/v037-bf-ui-honesty-98d8` | BF HUD readability + honesty residuals (empty Analytics / Lean tooltip) |
-| 2 | `consciousenergy/v037-bubble-km-bridge-98d8` | Phase B **in progress** (opt-in `dynamics_mode` + Mach; KM auto-default still deferred) |
+| 2 | `consciousenergy/v037-bubble-km-bridge-98d8` | Phase B **shipped slice** (opt-in `dynamics_mode` + Mach + tunneling handoff + verification; KM auto-default still deferred) |
 | 3 | `consciousenergy/v037-open-research-<q>-98d8` | Per OPEN question |
