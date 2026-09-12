@@ -124,7 +124,8 @@ jobs:
     - name: Upload coverage report
       uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
-        file: ./LENR_SIM_APP_v2/backend/coverage.xml
+        # codecov-action v7+ accepts `files` (plural); `file` is ignored and warns.
+        files: ./LENR_SIM_APP_v2/backend/coverage.xml
         fail_ci_if_error: false
 
     - name: Upload benchmark results
