@@ -41,8 +41,9 @@ that includes **both** current `main` and the science + share stack.
 ## Local dry-run (2026-09-12)
 
 Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
-was **all fast-forward, zero conflicts**. Final tip `fe65b97` (**19** commits ahead of
-`main`). Dynamics-mode pytest: **7 passed**. Jest `WrapWithPostHog` + Bubble Fusion suites:
+was **all fast-forward, zero conflicts**. Stack tip is branch
+`consciousenergy/v037-share-uptime-prep-98d8` (20 commits ahead of `main` at dry-run
+follow-up). Dynamics-mode pytest: **7 passed**. Jest `WrapWithPostHog` + Bubble Fusion suites:
 **13 passed**. Live `verify-beta-share.sh`: share host OK; intended host WARN (WP CNAME).
 
 ## Merge procedure (human-approved)
