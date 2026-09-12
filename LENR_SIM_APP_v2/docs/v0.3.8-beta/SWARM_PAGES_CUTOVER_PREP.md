@@ -31,7 +31,7 @@ DNS and HA needs justify leaving single-VPS Compose.
 
 **Explicit non-action in 0.3.7:** no `terraform apply`, no `ansible-playbook` against prod, no Swarm init on the live VPS, no Pages project cutover.
 
-**Traefik static vs dynamic:** `traefik.yml.j2` is static only (`--configFile`); middlewares live in `traefik-dynamic.yml.j2` under `providers.file.directory`. Do not put top-level `http:` in the static file (Traefik v3 rejects it).
+**Traefik static vs dynamic:** `traefik.yml.j2` is static only (`--configFile`); middlewares live in `traefik-dynamic.yml.j2` under `providers.file.directory`. Do not put top-level `http:` in the static file (Traefik v3 rejects it). Backend router labels chain `security-headers@file` with the Docker-defined `backend-ratelimit`.
 
 **Prep defaults (placeholders only):** Ansible `app_version` / stack image tag and Terraform `pages_production_branch` default to **`0.3.8-beta`** / `lenr_sim_app_v0.3.8-beta` so a mistaken 0.3.7 apply cannot silently target the live 0.3.6/0.3.7 Compose tag. Still do not apply.
 
