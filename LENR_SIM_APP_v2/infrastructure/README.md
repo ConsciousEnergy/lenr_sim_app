@@ -1,15 +1,16 @@
 # LENR Simulation App - Infrastructure as Code
 
-**Version:** 0.3.6-beta
+**Version:** 0.3.7-beta
 **Last Updated:** September 2026
 
 ---
 
-## Public beta (use this)
+## Public beta (use this) — v0.3.7-beta
 
 Same-origin Docker Compose on the Hostinger VPS:
 
 - **Docs:** [`vps/README.md`](vps/README.md)
+- **Merge train to `main` before VPS rebase:** [`../docs/v0.3.7-beta/MERGE_TRAIN_VPS.md`](../docs/v0.3.7-beta/MERGE_TRAIN_VPS.md)
 - **Stack:** Caddy (Let's Encrypt) → nginx SPA + FastAPI + Postgres 16
 - **Host:** `https://lenr-simp-app.conscious.energy` (intended); live A record `https://lenr-sim-beta.conscious.energy`
 
@@ -21,12 +22,14 @@ infrastructure/vps/
 └── scripts/{bootstrap-host,deploy,rollback,backup-db,hydrate-demo}.sh
 ```
 
-## Alternative: Terraform + Ansible + Swarm
+## Alternative: Terraform + Ansible + Swarm — **v0.3.8-beta**
 
 The rest of this directory provisions Cloudflare Pages + a Docker Swarm API
-(`api.conscious.energy`). That path is **not** what the 2026-09 public beta
-ships. Keep it for a future multi-node move; do not `terraform apply` while
-WordPress.com owns `conscious.energy` / `www`.
+(`api.conscious.energy`). That path is **not** what v0.3.7-beta ships.
+
+- **Do not** `terraform apply` while WordPress.com owns `conscious.energy` / `www`.
+- **Prep checklist (no apply):** [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md)
+- Earliest live cutover target: **v0.3.8-beta**, after the science stack and VPS tip are on `main`.
 
 
 ---
