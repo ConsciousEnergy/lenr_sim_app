@@ -1,6 +1,6 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-12 ~20:50 UTC**.
+Probed from CI agent host on **2026-09-12 ~21:09 UTC** (retries via verify-beta-share.sh).
 
 ## What works today (share this)
 

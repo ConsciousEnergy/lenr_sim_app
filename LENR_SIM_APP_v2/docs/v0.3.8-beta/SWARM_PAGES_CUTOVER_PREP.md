@@ -20,11 +20,16 @@ DNS and HA needs justify leaving single-VPS Compose.
 | Area | Path |
 |------|------|
 | Terraform (Pages / R2 / DNS / VPS) | [`../../infrastructure/terraform/`](../../infrastructure/terraform/) |
+| Terraform modules | [`../../infrastructure/terraform/modules/cloudflare/`](../../infrastructure/terraform/modules/cloudflare/), [`../../infrastructure/terraform/modules/hostinger/`](../../infrastructure/terraform/modules/hostinger/) |
 | Ansible (Swarm, Traefik, stack) | [`../../infrastructure/ansible/`](../../infrastructure/ansible/) |
-| Orchestration scripts | [`../../infrastructure/scripts/`](../../infrastructure/scripts/) |
+| Ansible playbooks | `setup-docker.yml` (Swarm init + Traefik dirs), `deploy-stack.yml`, `backup.yml`, `site.yml` |
+| Traefik templates | [`../../infrastructure/ansible/templates/traefik.yml.j2`](../../infrastructure/ansible/templates/traefik.yml.j2), `traefik-dynamic.yml.j2`, `docker-stack.yml.j2` |
+| Orchestration scripts | [`../../infrastructure/scripts/`](../../infrastructure/scripts/) (`deploy.sh`, `rollback.sh`, `backup-db.sh`) |
 | Step runbook | [`../PHASE4_DOCKER_SWARM_DEPLOYMENT.md`](../PHASE4_DOCKER_SWARM_DEPLOYMENT.md) |
 | Architecture overview | [`../DEPLOYMENT.md`](../DEPLOYMENT.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
-| Authority split | [`../../infrastructure/README.md`](../../infrastructure/README.md) — VPS now; Swarm later |
+| Authority split | [`../../infrastructure/README.md`](../../infrastructure/README.md) — VPS Compose now; Swarm + Traefik + Pages later |
+
+**Explicit non-action in 0.3.7:** no `terraform apply`, no `ansible-playbook` against prod, no Swarm init on the live VPS, no Pages project cutover.
 
 ## Cutover checklist (execute in 0.3.8, not now)
 
