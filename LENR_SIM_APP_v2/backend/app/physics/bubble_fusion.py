@@ -453,6 +453,140 @@ class BubbleFusionCalculator:
         }
 
 
+def _compressibility_regime(peak_mach: float) -> str:
+    if peak_mach >= 0.1:
+        return "compressibility_significant"
+    if peak_mach >= 0.01:
+        return "compressibility_marginal"
+    return "incompressible_valid"
+
+
+def _simulate_bubble_fusion_ode(
+    *,
+    initial_radius_um: float,
+    acoustic_pressure_bar: float,
+    frequency_khz: float,
+    ambient_pressure_bar: float,
+    ambient_temperature_k: float,
+    fluid_type: str,
+    gas_type: str,
+    dynamics_mode: str,
+) -> Dict[str, Any]:
+    """
+    Phase B bridge: run the shared lattice-grade RP/KM ODE core for a single bubble.
+
+    Does not enable KM auto-default. Caller must pass an explicit
+    rayleigh_plesset or keller_miksis mode.
+    """
+    from ..physics_engine.bubble_lattice_interaction import (
+        BubbleLatticeInteraction,
+        BubbleParameters,
+        LatticeParameters,
+    )
+
+    fluid = FLUID_DATA.get(
+        {
+            "water": FluidType.WATER,
+            "d2o": FluidType.DEUTERATED_WATER,
+            "heavy_water": FluidType.DEUTERATED_WATER,
+            "acetone": FluidType.ACETONE,
+            "d_acetone": FluidType.DEUTERATED_ACETONE,
+        }.get(fluid_type.lower(), FluidType.WATER),
+        FLUID_DATA[FluidType.WATER],
+    )
+
+    bubble_params = BubbleParameters(
+        initial_radius=initial_radius_um * 1e-6,
+        ambient_pressure=ambient_pressure_bar * 1e5,
+        driving_pressure=acoustic_pressure_bar * 1e5,
+        frequency=frequency_khz * 1e3,
+        ambient_temperature=ambient_temperature_k,
+        fluid_density=fluid.density,
+        surface_tension=fluid.surface_tension,
+        dynamic_viscosity=fluid.viscosity,
+        gas_type=gas_type,
+        bubble_dynamics_mode=dynamics_mode,
+        sound_speed=fluid.sound_speed,
+    )
+    # Lattice host is unused for BF page peaks; keep defaults for the shared core.
+    model = BubbleLatticeInteraction(bubble_params, LatticeParameters())
+    collapse = model.simulate_collapse(num_cycles=2)
+    dynamics = dict(collapse.bubble_dynamics or {})
+    peak_mach = float(dynamics.get("peak_mach", 0.0))
+    peak_velocity_m_s = peak_mach * float(getattr(bubble_params, "sound_speed", fluid.sound_speed))
+
+    traj = getattr(model, "_trajectory", None) or {}
+    t = traj.get("t")
+    R = traj.get("R")
+    if t is not None and R is not None and len(t) > 1:
+        # Subsample for the BF timeseries contract.
+        step = max(1, len(t) // 200)
+        idx = np.arange(0, len(t), step)
+        time_us = (np.asarray(t)[idx] * 1e6).tolist()
+        radius_um = (np.asarray(R)[idx] * 1e6).tolist()
+        # Temperature/pressure along the full ODE path are not stored; fill peaks only.
+        temperature_k = [ambient_temperature_k] * len(time_us)
+        pressure_bar = [ambient_pressure_bar] * len(time_us)
+        if temperature_k:
+            temperature_k[-1] = float(collapse.max_temperature)
+            pressure_bar[-1] = float(collapse.max_pressure) / 1e5
+    else:
+        time_us, radius_um, temperature_k, pressure_bar = [], [], [], []
+
+    km_recommended = peak_mach >= 0.3
+    return {
+        "collapse_results": {
+            "max_temperature_k": float(collapse.max_temperature),
+            "max_temperature_ev": float(collapse.max_temperature) * K_BOLTZMANN / EV_TO_J,
+            "max_pressure_pa": float(collapse.max_pressure),
+            "max_pressure_gpa": float(collapse.max_pressure) / 1e9,
+            "min_radius_um": float(collapse.min_radius) * 1e6,
+            "compression_ratio": float(collapse.compression_ratio),
+            "collapse_time_ns": float(collapse.collapse_time) * 1e9,
+            "peak_velocity_km_s": peak_velocity_m_s / 1000.0,
+            "fusion_probability": None,
+            "neutron_yield_estimate": None,
+            "energy_density_j_m3": None,
+            "conditions_met": False,
+            "peak_mach": peak_mach,
+            "compressibility_regime": dynamics.get(
+                "compressibility_regime", _compressibility_regime(peak_mach)
+            ),
+        },
+        "timeseries": {
+            "time_us": time_us,
+            "radius_um": radius_um,
+            "temperature_k": temperature_k,
+            "pressure_bar": pressure_bar,
+        },
+        "parameters": {
+            "initial_radius_um": initial_radius_um,
+            "acoustic_pressure_bar": acoustic_pressure_bar,
+            "frequency_khz": frequency_khz,
+            "ambient_pressure_bar": ambient_pressure_bar,
+            "ambient_temperature_k": ambient_temperature_k,
+            "fluid_type": fluid_type,
+            "gas_type": gas_type,
+            "dynamics_mode": dynamics_mode,
+        },
+        "dynamics": {
+            "dynamics_mode_used": dynamics_mode,
+            "bounds_solver_used": dynamics_mode,
+            "km_auto_selected": False,
+            "km_recommended": km_recommended,
+            "peak_mach": peak_mach,
+            "compressibility_regime": dynamics.get(
+                "compressibility_regime", _compressibility_regime(peak_mach)
+            ),
+            "source": "bubble_lattice_interaction",
+            "note": (
+                "Opt-in ODE bridge to the shared RP/KM core. "
+                "KM is not auto-selected on the Bubble Fusion page (Phase B policy)."
+            ),
+        },
+    }
+
+
 def simulate_bubble_fusion(
     initial_radius_um: float = 10.0,
     acoustic_pressure_bar: float = 1.2,
@@ -461,24 +595,29 @@ def simulate_bubble_fusion(
     ambient_temperature_k: float = 298.0,
     fluid_type: str = "water",
     gas_type: str = "deuterium",
-    gas_fraction: float = 0.8
+    gas_fraction: float = 0.8,
+    dynamics_mode: str = "legacy",
 ) -> Dict[str, Any]:
     """
     Convenience function for bubble fusion simulation.
-    
-    Args:
-        initial_radius_um: Initial bubble radius in micrometers
-        acoustic_pressure_bar: Acoustic pressure amplitude in bar
-        frequency_khz: Acoustic frequency in kHz
-        ambient_pressure_bar: Ambient liquid pressure in bar
-        ambient_temperature_k: Ambient temperature in Kelvin
-        fluid_type: Type of working fluid
-        gas_type: Type of bubble gas
-        gas_fraction: Fraction of fusible gas
-        
-    Returns:
-        Dictionary with simulation results
+
+    dynamics_mode:
+      - legacy: adiabatic / quasi-static calculator (default, unchanged)
+      - rayleigh_plesset / keller_miksis: shared ODE core (opt-in Phase B bridge)
     """
+    mode = (dynamics_mode or "legacy").strip().lower()
+    if mode in {"rayleigh_plesset", "keller_miksis"}:
+        return _simulate_bubble_fusion_ode(
+            initial_radius_um=initial_radius_um,
+            acoustic_pressure_bar=acoustic_pressure_bar,
+            frequency_khz=frequency_khz,
+            ambient_pressure_bar=ambient_pressure_bar,
+            ambient_temperature_k=ambient_temperature_k,
+            fluid_type=fluid_type,
+            gas_type=gas_type,
+            dynamics_mode=mode,
+        )
+
     # Map string to enum
     fluid_map = {
         "water": FluidType.WATER,
@@ -512,6 +651,8 @@ def simulate_bubble_fusion(
     calc = BubbleFusionCalculator()
     result = calc.simulate_collapse(params)
     timeseries = calc.calculate_bubble_dynamics_timeseries(params)
+    fluid_props = FLUID_DATA.get(fluid, FLUID_DATA[FluidType.WATER])
+    peak_mach = float(result.peak_velocity_m_s) / max(float(fluid_props.sound_speed), 1.0)
     
     return {
         "collapse_results": {
@@ -526,7 +667,9 @@ def simulate_bubble_fusion(
             "fusion_probability": result.fusion_probability,
             "neutron_yield_estimate": result.neutron_yield_estimate,
             "energy_density_j_m3": result.energy_density_j_m3,
-            "conditions_met": result.conditions_met
+            "conditions_met": result.conditions_met,
+            "peak_mach": peak_mach,
+            "compressibility_regime": _compressibility_regime(peak_mach),
         },
         "timeseries": {
             "time_us": timeseries["time_us"].tolist(),
@@ -542,8 +685,22 @@ def simulate_bubble_fusion(
             "ambient_temperature_k": ambient_temperature_k,
             "fluid_type": fluid_type,
             "gas_type": gas_type,
-            "gas_fraction": gas_fraction
-        }
+            "gas_fraction": gas_fraction,
+            "dynamics_mode": "legacy",
+        },
+        "dynamics": {
+            "dynamics_mode_used": "legacy",
+            "bounds_solver_used": "legacy_adiabatic",
+            "km_auto_selected": False,
+            "km_recommended": peak_mach >= 0.3,
+            "peak_mach": peak_mach,
+            "compressibility_regime": _compressibility_regime(peak_mach),
+            "source": "bubble_fusion_adiabatic",
+            "note": (
+                "Legacy adiabatic / quasi-static calculator. "
+                "Pass dynamics_mode=rayleigh_plesset|keller_miksis for the shared ODE core."
+            ),
+        },
     }
 
 

@@ -567,6 +567,15 @@ class BubbleFusionRequest(BaseModel):
     fluid_type: str = Field(default="water", description="Working fluid type")
     gas_type: str = Field(default="deuterium", description="Bubble gas type")
     gas_fraction: float = Field(default=0.8, description="Fraction of fusible gas")
+    # Phase B opt-in: legacy (default) | rayleigh_plesset | keller_miksis.
+    # KM is never auto-selected here — Unified Theory owns Mach≥0.3 auto-KM.
+    dynamics_mode: str = Field(
+        default="legacy",
+        description=(
+            "Bubble-dynamics model: 'legacy' (adiabatic/quasi-static, default), "
+            "'rayleigh_plesset', or 'keller_miksis' (shared ODE core; opt-in only)."
+        ),
+    )
 
 
 @router.post("/bubble-fusion")
@@ -574,8 +583,8 @@ async def simulate_bubble_fusion_endpoint(request: BubbleFusionRequest):
     """
     Simulate acoustic cavitation (bubble) fusion.
     
-    Calculates bubble dynamics using Rayleigh-Plesset approximation
-    and estimates peak conditions and fusion probability during collapse.
+    Default dynamics_mode=legacy preserves the adiabatic calculator.
+    Pass dynamics_mode=rayleigh_plesset|keller_miksis for the shared ODE core.
     """
     try:
         from ..physics.bubble_fusion import simulate_bubble_fusion
@@ -588,7 +597,8 @@ async def simulate_bubble_fusion_endpoint(request: BubbleFusionRequest):
             ambient_temperature_k=request.ambient_temperature_k,
             fluid_type=request.fluid_type,
             gas_type=request.gas_type,
-            gas_fraction=request.gas_fraction
+            gas_fraction=request.gas_fraction,
+            dynamics_mode=request.dynamics_mode,
         )
         
         return result
@@ -612,11 +622,13 @@ async def get_bubble_fusion_defaults():
             "ambient_temperature_k": 298.0,
             "fluid_type": "water",
             "gas_type": "deuterium",
-            "gas_fraction": 0.8
+            "gas_fraction": 0.8,
+            "dynamics_mode": "legacy",
         },
         "options": {
             "fluid_types": ["water", "d2o", "acetone", "d_acetone"],
-            "gas_types": ["air", "argon", "deuterium", "xenon"]
+            "gas_types": ["air", "argon", "deuterium", "xenon"],
+            "dynamics_modes": ["legacy", "rayleigh_plesset", "keller_miksis"],
         },
         "limits": {
             "initial_radius_um": {"min": 0.1, "max": 1000},

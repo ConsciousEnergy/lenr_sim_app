@@ -33,9 +33,11 @@ claim tiers — then resume this queue.
 
 ### Phase B — Fidelity (gated)
 
-1. Bridge Bubble Fusion route to shared RP/KM core (`bubble_solver` /
-   `bubble_lattice_interaction`) instead of a third adiabatic calculator.
-2. Dynamics mode policy: RP for low Mach; auto/default KM when Mach ≥ 0.3.
+1. [x] Bridge Bubble Fusion route to shared RP/KM core (`bubble_solver` /
+   `bubble_lattice_interaction`) via opt-in `dynamics_mode` (default remains `legacy`).
+2. Dynamics mode policy: RP for low Mach; **auto/default KM when Mach ≥ 0.3 remains deferred**
+   on the Bubble Fusion page (Unified Theory already auto-selects KM for bounds). BF reports
+   `peak_mach` / `km_recommended` only.
 3. Collapse → tunneling handoff with explicit claim-tier labels.
 4. Verification gates: KM→RP limit, thermo consistency, finite P/v, no silent schematic.
 
