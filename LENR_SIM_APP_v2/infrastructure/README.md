@@ -19,7 +19,7 @@ infrastructure/vps/
 ├── docker-compose.prod.yml
 ├── Caddyfile
 ├── .env.production.example
-└── scripts/{bootstrap-host,deploy,verify-beta-share,rollback,backup-db,hydrate-demo}.sh
+└── scripts/{bootstrap-host,deploy,check-merge-train,verify-beta-share,rollback,backup-db,hydrate-demo}.sh
 ```
 
 ## Alternative: Terraform + Ansible + Swarm — **v0.3.8-beta**
