@@ -27,6 +27,7 @@ from .core_constants import (
     K_BOLTZMANN, M_DEUTERON, AMU, KEV_TO_J, EV_TO_J,
     thermal_energy, reduced_mass
 )
+from app.utils.json_safe import to_json_safe
 
 
 class FluidType(Enum):
@@ -461,6 +462,120 @@ def _compressibility_regime(peak_mach: float) -> str:
     return "incompressible_valid"
 
 
+def _build_tunneling_handoff(
+    collapse_results: Dict[str, Any],
+    *,
+    dynamics_mode_used: str,
+) -> Dict[str, Any]:
+    """
+    Collapse → tunneling / fusion handoff labels (Phase B item 3).
+
+    Bubble Fusion does not yet couple a validated tunneling rate engine into the
+    page peaks. Fusion probability from the legacy adiabatic path is an order-
+    of-magnitude sketch only — never raise its claim tier.
+    """
+    fusion_prob = collapse_results.get("fusion_probability")
+    has_fusion_estimate = isinstance(fusion_prob, (int, float)) and np.isfinite(fusion_prob)
+    collapse_claim_tier = "approximate_engine"
+    fusion_claim_tier = "speculative_exploratory" if has_fusion_estimate else None
+    if has_fusion_estimate:
+        status = "estimated_sketch"
+        note = (
+            "Collapse peaks come from an Approximate engine; the fusion/tunneling "
+            "probability is a speculative sketch only — not a laboratory yield claim."
+        )
+    else:
+        status = "not_coupled"
+        note = (
+            "ODE/legacy collapse peaks are labeled Approximate; no tunneling-rate "
+            "engine is coupled on this page (fusion_probability is null)."
+        )
+    return {
+        "status": status,
+        "dynamics_mode_used": dynamics_mode_used,
+        "collapse_claim_tier": collapse_claim_tier,
+        "fusion_claim_tier": fusion_claim_tier,
+        "claim_tier": fusion_claim_tier or collapse_claim_tier,
+        "empirical_claim_tiers_raised": False,
+        "note": note,
+    }
+
+
+def _build_verification_report(
+    collapse_results: Dict[str, Any],
+    timeseries: Dict[str, Any],
+    dynamics: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Finite P/v/T/R checks + schematic-honesty flag (Phase B item 4).
+
+    KM→RP reduction as c→∞ lives in test_bubble_dynamics_gates.py on the shared
+    solver; here we assert the BF response itself stays physical and does not
+    silently present schematic fallback as engine output.
+    """
+    required = (
+        "max_temperature_k",
+        "max_pressure_pa",
+        "min_radius_um",
+        "peak_velocity_km_s",
+        "peak_mach",
+    )
+    finite_fields: Dict[str, bool] = {}
+    for key in required:
+        value = collapse_results.get(key)
+        # Cast explicitly: `x and np.isfinite(x)` yields numpy.bool_, which
+        # FastAPI's jsonable_encoder cannot serialize.
+        finite_fields[key] = bool(
+            isinstance(value, (int, float, np.floating, np.integer))
+            and np.isfinite(value)
+        )
+
+    radii = timeseries.get("radius_um") or []
+    radius_positive = True
+    if radii:
+        arr = np.asarray(radii, dtype=float)
+        radius_positive = bool(np.all(np.isfinite(arr)) and np.all(arr > 0))
+
+    pressures = timeseries.get("pressure_bar") or []
+    pressure_finite = True
+    if pressures:
+        parr = np.asarray(pressures, dtype=float)
+        pressure_finite = bool(np.all(np.isfinite(parr)))
+
+    mode = str(dynamics.get("dynamics_mode_used") or "legacy")
+    source = str(dynamics.get("source") or "")
+    # Silent schematic would claim physics_engine provenance while sourcing schematic.
+    not_silent_schematic = "schematic" not in source.lower()
+
+    all_finite = all(finite_fields.values()) and radius_positive and pressure_finite
+    return {
+        "finite_collapse_fields": finite_fields,
+        "radius_timeseries_positive": radius_positive,
+        "pressure_timeseries_finite": pressure_finite,
+        "not_silent_schematic": not_silent_schematic,
+        "dynamics_mode_used": mode,
+        "passed": bool(all_finite and not_silent_schematic),
+        "gates_note": (
+            "KM→RP c→∞ reduction is enforced in test_bubble_dynamics_gates on the "
+            "shared solver; this report covers BF response finiteness and honesty."
+        ),
+    }
+
+
+def _attach_phase_b_blocks(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Attach tunneling_handoff + verification to a BF response dict."""
+    collapse = payload.get("collapse_results") or {}
+    dynamics = payload.get("dynamics") or {}
+    timeseries = payload.get("timeseries") or {}
+    mode = str(dynamics.get("dynamics_mode_used") or payload.get("parameters", {}).get("dynamics_mode") or "legacy")
+    payload["tunneling_handoff"] = _build_tunneling_handoff(
+        collapse, dynamics_mode_used=mode
+    )
+    payload["verification"] = _build_verification_report(collapse, timeseries, dynamics)
+    # Guarantee no numpy.bool_/scalar leaks into FastAPI JSON encoding.
+    return to_json_safe(payload)
+
+
 def _simulate_bubble_fusion_ode(
     *,
     initial_radius_um: float,
@@ -533,8 +648,8 @@ def _simulate_bubble_fusion_ode(
     else:
         time_us, radius_um, temperature_k, pressure_bar = [], [], [], []
 
-    km_recommended = peak_mach >= 0.3
-    return {
+    km_recommended = bool(peak_mach >= 0.3)
+    return _attach_phase_b_blocks({
         "collapse_results": {
             "max_temperature_k": float(collapse.max_temperature),
             "max_temperature_ev": float(collapse.max_temperature) * K_BOLTZMANN / EV_TO_J,
@@ -584,7 +699,7 @@ def _simulate_bubble_fusion_ode(
                 "KM is not auto-selected on the Bubble Fusion page (Phase B policy)."
             ),
         },
-    }
+    })
 
 
 def simulate_bubble_fusion(
@@ -654,7 +769,7 @@ def simulate_bubble_fusion(
     fluid_props = FLUID_DATA.get(fluid, FLUID_DATA[FluidType.WATER])
     peak_mach = float(result.peak_velocity_m_s) / max(float(fluid_props.sound_speed), 1.0)
     
-    return {
+    return _attach_phase_b_blocks({
         "collapse_results": {
             "max_temperature_k": result.max_temperature_k,
             "max_temperature_ev": result.max_temperature_k * K_BOLTZMANN / EV_TO_J,
@@ -667,7 +782,7 @@ def simulate_bubble_fusion(
             "fusion_probability": result.fusion_probability,
             "neutron_yield_estimate": result.neutron_yield_estimate,
             "energy_density_j_m3": result.energy_density_j_m3,
-            "conditions_met": result.conditions_met,
+            "conditions_met": bool(result.conditions_met),
             "peak_mach": peak_mach,
             "compressibility_regime": _compressibility_regime(peak_mach),
         },
@@ -692,7 +807,7 @@ def simulate_bubble_fusion(
             "dynamics_mode_used": "legacy",
             "bounds_solver_used": "legacy_adiabatic",
             "km_auto_selected": False,
-            "km_recommended": peak_mach >= 0.3,
+            "km_recommended": bool(peak_mach >= 0.3),
             "peak_mach": peak_mach,
             "compressibility_regime": _compressibility_regime(peak_mach),
             "source": "bubble_fusion_adiabatic",
@@ -701,7 +816,7 @@ def simulate_bubble_fusion(
                 "Pass dynamics_mode=rayleigh_plesset|keller_miksis for the shared ODE core."
             ),
         },
-    }
+    })
 
 
 # Export

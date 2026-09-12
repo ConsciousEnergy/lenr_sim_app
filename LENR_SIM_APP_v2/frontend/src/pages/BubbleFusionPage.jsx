@@ -136,6 +136,8 @@ export function mapBubbleFusionApiResults(apiResults) {
       || apiResults?.parameters?.dynamics_mode
       || null,
     kmRecommended: Boolean(apiResults?.dynamics?.km_recommended),
+    tunnelingHandoff: apiResults?.tunneling_handoff || null,
+    verificationPassed: apiResults?.verification?.passed ?? null,
     rayleighPlesset: apiResults.rayleigh_plesset_dynamics,
     isLocalFallback: false,
     provenance: BF_PROVENANCE.PHYSICS_ENGINE,
@@ -440,6 +442,33 @@ const BubbleFusionPage = () => {
                   </Typography>
                 )}
               </Box>
+
+              {results.tunnelingHandoff && (
+                <Alert
+                  severity="info"
+                  sx={{ mb: 1 }}
+                  data-testid="bubble-fusion-tunneling-handoff"
+                >
+                  <Typography variant="body2" component="div">
+                    Tunneling handoff: <strong>{results.tunnelingHandoff.status}</strong>
+                    {' · '}
+                    collapse claim tier{' '}
+                    <code>{results.tunnelingHandoff.collapse_claim_tier}</code>
+                    {results.tunnelingHandoff.fusion_claim_tier && (
+                      <>
+                        {' · '}fusion claim tier{' '}
+                        <code>{results.tunnelingHandoff.fusion_claim_tier}</code>
+                      </>
+                    )}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {results.tunnelingHandoff.note}
+                    {results.verificationPassed === false
+                      ? ' Verification gates reported a problem — do not cite these peaks.'
+                      : ''}
+                  </Typography>
+                </Alert>
+              )}
               
               <Divider sx={{ my: 1 }} />
               <Typography variant="body2" sx={{ mt: 1 }}>

@@ -70,3 +70,60 @@ def test_bubble_fusion_defaults_list_dynamics_modes() -> None:
     assert data["defaults"]["dynamics_mode"] == "legacy"
     assert "keller_miksis" in data["options"]["dynamics_modes"]
     assert "rayleigh_plesset" in data["options"]["dynamics_modes"]
+
+
+def test_bubble_fusion_includes_tunneling_handoff_and_verification() -> None:
+    resp = _client().post("/api/physics/bubble-fusion", json=_payload())
+    assert resp.status_code == 200
+    data = resp.json()
+    handoff = data["tunneling_handoff"]
+    assert handoff["collapse_claim_tier"] == "approximate_engine"
+    assert handoff["empirical_claim_tiers_raised"] is False
+    assert handoff["status"] in {"estimated_sketch", "not_coupled"}
+    verification = data["verification"]
+    assert verification["passed"] is True
+    assert verification["not_silent_schematic"] is True
+    assert verification["finite_collapse_fields"]["peak_mach"] is True
+
+
+def test_bubble_fusion_ode_km_damps_under_mild_drive() -> None:
+    """
+    Acoustic radiation should not harden collapse vs RP under mild drive.
+
+    At the default 1.2 bar / 2-cycle BF bridge, multi-cycle expansion can make a
+    naive min-radius ordering flip even while peak Mach stays lower for KM.
+    The authoritative KM→RP (c→∞) gate lives in test_bubble_dynamics_gates; here
+    we only assert damping on a mild drive where the lattice ODE is comparable.
+    """
+    client = _client()
+    mild = dict(acoustic_pressure_bar=0.5)
+    rp = client.post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="rayleigh_plesset", **mild),
+    ).json()
+    km = client.post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="keller_miksis", **mild),
+    ).json()
+    r_rp = float(rp["collapse_results"]["min_radius_um"])
+    r_km = float(km["collapse_results"]["min_radius_um"])
+    assert r_km >= r_rp * 0.9
+    assert float(km["dynamics"]["peak_mach"]) <= float(rp["dynamics"]["peak_mach"]) * 1.05
+    assert km["dynamics"]["km_auto_selected"] is False
+    assert km["tunneling_handoff"]["empirical_claim_tiers_raised"] is False
+    assert km["verification"]["passed"] is True
+
+
+def test_bubble_fusion_ode_strong_drive_stays_honest() -> None:
+    """Default BF ODE drive: finite peaks, no KM auto-select, verification on."""
+    client = _client()
+    km = client.post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="keller_miksis"),
+    ).json()
+    assert km["dynamics"]["km_auto_selected"] is False
+    assert km["dynamics"]["dynamics_mode_used"] == "keller_miksis"
+    assert float(km["collapse_results"]["min_radius_um"]) > 0
+    assert float(km["collapse_results"]["peak_mach"]) >= 0
+    assert km["verification"]["passed"] is True
+    assert km["tunneling_handoff"]["empirical_claim_tiers_raised"] is False
