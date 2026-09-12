@@ -15,7 +15,7 @@
 
 ## In progress (post-governance)
 
-7. **Phase A Bubble Fusion engine truth** — branch `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`). KM default still deferred.
+7. **Phase A Bubble Fusion engine truth** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`), healthy-backend browser evidence (unreachable banner absent). KM default still deferred.
 
 ## Deferred queue (in the plan, not implemented here)
 
