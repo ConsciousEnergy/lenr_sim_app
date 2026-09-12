@@ -6,18 +6,19 @@ Hostinger VPS can run **0.3.7-beta** without stacking conflicts.
 ## Why this order
 
 GitHub Actions’ full Test workflow only runs on PRs targeting `main`. Stacked
-PRs (#186–#188) base on topic branches and stay CodeRabbit-only until the
-governance PR (#185) is on `main`. Deploy the VPS only from a tip that includes
-**both** current `main` and the science stack.
+PRs (#186–#189) base on topic branches and stay CodeRabbit-only until each is
+retargeted to `main` after the prior PR lands. Deploy the VPS only from a tip
+that includes **both** current `main` and the science + share stack.
 
 ## Open stack (as of 2026-09-12)
 
 | Order | PR | Head | Base | Role |
 |------:|----|------|------|------|
-| 1 | [#185](https://github.com/ConsciousEnergy/lenr_sim_app/pull/185) | `consciousenergy/v0.3.7-beta-98d8` | `main` | Governance, maturity ledger, Beta badges |
+| 1 | [#185](https://github.com/ConsciousEnergy/lenr_sim_app/pull/185) | `consciousenergy/v0.3.7-beta-98d8` | `main` | Governance, maturity ledger, Beta badges (**CI green on `main`**) |
 | 2 | [#186](https://github.com/ConsciousEnergy/lenr_sim_app/pull/186) | `consciousenergy/v037-bubble-engine-truth-98d8` | #185 head | Phase A single-fetch + provenance |
 | 3 | [#187](https://github.com/ConsciousEnergy/lenr_sim_app/pull/187) | `consciousenergy/v037-bf-ui-honesty-98d8` | #186 head | BF HUD readability + honesty |
 | 4 | [#188](https://github.com/ConsciousEnergy/lenr_sim_app/pull/188) | `consciousenergy/v037-bubble-km-bridge-98d8` | #187 head | Phase B opt-in RP/KM + handoff |
+| 5 | [#189](https://github.com/ConsciousEnergy/lenr_sim_app/pull/189) | `consciousenergy/v037-share-uptime-prep-98d8` | #188 head | PostHog gate, merge-train/VPS docs, verify-beta-share, 0.3.8 prep |
 
 **Parallel / conflict risk**
 
@@ -25,19 +26,33 @@ governance PR (#185) is on `main`. Deploy the VPS only from a tip that includes
 |----|--------|
 | [#184](https://github.com/ConsciousEnergy/lenr_sim_app/pull/184) `ui-readability-playback-98d8` → `main` | Overlaps #187. Prefer **close or residual-only rebase after #187**. Do not merge #184 and #187 both blindly. |
 
+**CI preview (do not squash-merge)**
+
+| Branch | Role |
+|--------|------|
+| `consciousenergy/v037-ci-preview-98d8` → `main` (draft PR) | Same tip as #189. Exists only so Actions run the full Test workflow on the **entire** stack before human squash-merges. Close after #185–#189 land. |
+
 **VPS branch**
 
 | Branch | Status |
 |--------|--------|
-| `consciousenergy/vps-public-beta-rebase-98d8` | **Rebased onto `main` (2026-09-12)** — tip == `main` @ `360c94c` (duplicate deps commit dropped). Ready to deploy **current main**; re-pull after #185–#188 land before calling the deploy 0.3.7. Live share: [LIVE_SHARE_STATUS.md](./LIVE_SHARE_STATUS.md). |
+| `consciousenergy/vps-public-beta-rebase-98d8` | **Rebased onto `main` (2026-09-12)** — tip == `main` @ `360c94c` (duplicate deps commit dropped). Ready to deploy **current main**; re-pull after #185–#189 land before calling the deploy for 0.3.7. Live share: [LIVE_SHARE_STATUS.md](./LIVE_SHARE_STATUS.md). |
+
+## Local dry-run (2026-09-12)
+
+Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
+was **all fast-forward, zero conflicts**. Final tip `a438be7` (**18** commits ahead of
+`main`). Dynamics-mode pytest: **7 passed**. Jest `WrapWithPostHog` + Bubble Fusion suites:
+**13 passed**. Live `verify-beta-share.sh`: share host OK; intended host WARN (WP CNAME).
 
 ## Merge procedure (human-approved)
 
 1. Squash-merge **#185** into `main` (CI already green on `main`).
-2. Retarget **#186** to `main` (or merge via updated base) → squash-merge when CI green.
-3. Same for **#187**, then **#188**.
+2. Retarget **#186** to `main` → squash-merge when CI green.
+3. Same for **#187**, then **#188**, then **#189**.
 4. Close **#184** as superseded by #187, or cherry-pick any unique playback bits.
-5. Fast-forward / rebase VPS tip onto updated `main` (already synced once on 2026-09-12):
+5. Close the **CI preview** draft PR once the stack is on `main`.
+6. Fast-forward / rebase VPS tip onto updated `main` (already synced once on 2026-09-12):
 
    ```bash
    git fetch origin
@@ -46,15 +61,18 @@ governance PR (#185) is on `main`. Deploy the VPS only from a tip that includes
    git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
    ```
 
-6. `workflow_dispatch` deploy from that tip; probe health on **`lenr-sim-beta`** (shareable now). Cut over `lenr-simp-app` DNS A record when ready (see live status doc).
+7. `workflow_dispatch` deploy from that tip; probe health on **`lenr-sim-beta`** (shareable now). Cut over `lenr-simp-app` DNS A record when ready (see live status doc).
 
 Do **not** deploy a stale VPS tip that lags `main`.
+Do **not** squash-merge the CI-preview PR — it duplicates the stack tip.
 
 ## VPS verify after deploy
 
 ```bash
 # Working share host (A → VPS) — use this until DNS cutover:
 curl -fsS "https://lenr-sim-beta.conscious.energy/api/health"
+# Wired probe (optional EXPECT_VERSION=0.3.7-beta after deploy):
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 # Intended public name — only after A record replaces WP CNAME:
 curl -fsS "https://lenr-simp-app.conscious.energy/api/health"
 ```
