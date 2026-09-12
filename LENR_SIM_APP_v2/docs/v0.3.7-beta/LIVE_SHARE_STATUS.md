@@ -1,6 +1,7 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-12 ~21:18 UTC** (retries via verify-beta-share.sh).
+Probed from CI agent host on **2026-09-12 ~21:35 UTC** (retries via verify-beta-share.sh).
+Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `3a8d193` (#190 Test+Benchmark **green**).
 
 ## What works today (share this)
 
