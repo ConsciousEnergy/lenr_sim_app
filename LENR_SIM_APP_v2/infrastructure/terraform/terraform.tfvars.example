@@ -52,5 +52,6 @@ data_center_id = 1
 
 github_owner = "ConsciousEnergy"
 github_repo  = "lenr_sim_app"
-# Pages production deploy follows this branch (main is behind the ship branch)
-pages_production_branch = "lenr_sim_app_v0.3.6-beta"
+# Pages production deploy follows this branch in the v0.3.8-beta cutover
+# (do not terraform apply while v0.3.7 is still on VPS Compose).
+pages_production_branch = "lenr_sim_app_v0.3.8-beta"

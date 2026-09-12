@@ -73,7 +73,12 @@ infrastructure/
 
 ---
 
-## Quick Start
+## Quick Start (v0.3.8-beta Swarm/Pages only)
+
+> **v0.3.7-beta stop here.** Public beta runs on **VPS Compose + Caddy**
+> (`vps/`). Do **not** run the Terraform/Ansible steps below against
+> production during 0.3.7. Prep checklist (no apply):
+> [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 ### 1. Prerequisites
 
@@ -95,25 +100,25 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your credentials
 ```
 
-### 3. Provision Infrastructure
+### 3. Provision Infrastructure (**0.3.8+ only — no apply in 0.3.7**)
 
 ```bash
 terraform init
 terraform plan -out=tfplan
-terraform apply tfplan
+# terraform apply tfplan   # intentionally commented for 0.3.7
 ```
 
-### 4. Configure Server
+### 4. Configure Server (**0.3.8+ only**)
 
 ```bash
 cd ../ansible
 cp inventory.yml.example inventory.yml
 # Update inventory.yml with VPS IP from Terraform output
 
-ansible-playbook -i inventory.yml playbooks/setup-docker.yml
+# ansible-playbook -i inventory.yml playbooks/setup-docker.yml  # no prod apply in 0.3.7
 ```
 
-### 5. Deploy Application
+### 5. Deploy Application (**0.3.8+ only**)
 
 ```bash
 # Generate PostgreSQL password and store securely
@@ -122,8 +127,7 @@ echo "POSTGRES_PASSWORD='$POSTGRES_PASSWORD'" > .secrets.env
 chmod 600 .secrets.env
 # ⚠️ IMPORTANT: Save this password securely! Losing it prevents database access.
 
-# Deploy stack (password read from environment, not command line)
-ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
+# ansible-playbook -i inventory.yml playbooks/deploy-stack.yml  # no prod apply in 0.3.7
 ```
 
 ---
