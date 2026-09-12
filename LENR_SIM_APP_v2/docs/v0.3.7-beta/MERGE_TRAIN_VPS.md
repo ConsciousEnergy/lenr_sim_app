@@ -30,7 +30,7 @@ that includes **both** current `main` and the science + share stack.
 
 | Branch | Role |
 |--------|------|
-| `consciousenergy/v037-ci-preview-98d8` → `main` (draft PR) | Same tip as #189. Exists only so Actions run the full Test workflow on the **entire** stack before human squash-merges. Close after #185–#189 land. |
+| `consciousenergy/v037-ci-preview-98d8` → `main` ([#190](https://github.com/ConsciousEnergy/lenr_sim_app/pull/190) draft) | Same tip as #189. Exists only so Actions run the full Test workflow on the **entire** stack before human squash-merges. Close after #185–#189 land. |
 
 **VPS branch**
 
@@ -41,7 +41,7 @@ that includes **both** current `main` and the science + share stack.
 ## Local dry-run (2026-09-12)
 
 Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
-was **all fast-forward, zero conflicts**. Final tip `a438be7` (**18** commits ahead of
+was **all fast-forward, zero conflicts**. Final tip `fe65b97` (**19** commits ahead of
 `main`). Dynamics-mode pytest: **7 passed**. Jest `WrapWithPostHog` + Bubble Fusion suites:
 **13 passed**. Live `verify-beta-share.sh`: share host OK; intended host WARN (WP CNAME).
 
