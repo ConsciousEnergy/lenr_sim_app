@@ -47,9 +47,11 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | Check | Result |
 |-------|--------|
 | Dynamics-mode pytest | **7 passed** |
-| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** |
+| Jest `WrapWithPostHog` + Bubble Fusion | **13 passed** (reconfirmed tip `572f314`: 2/2 PostHog gate) |
 | CI preview #190 tip `ce0279f` | **Test and Benchmark full green** (frontend, e2e, py3.10/11/12) |
-| Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); intended host WARN (WP CNAME) |
+| CI preview #190 tip `572f314` | IMAGE_TAG=APP_VERSION force + share retries; **await full Test green** |
+| Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
+| Deploy harden | CI SSH passes `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
 | Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
 ## Merge procedure (human-approved only)

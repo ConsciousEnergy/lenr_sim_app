@@ -38,7 +38,7 @@ services:
     mem_limit: 256m
 
   frontend:
-    image: ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG:-0.3.6-beta}
+    image: ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG:-0.3.7-beta}
     build:
       context: ../..
       dockerfile: infrastructure/docker/Dockerfile.frontend
@@ -59,12 +59,12 @@ services:
       - /tmp
 
   backend:
-    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.6-beta}
+    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.7-beta}
     build:
       context: ../..
       dockerfile: infrastructure/docker/Dockerfile.backend
       args:
-        BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
+        BUILD_VERSION: ${IMAGE_TAG:-0.3.7-beta}
     restart: unless-stopped
     environment:
       LENR_ENVIRONMENT: production
@@ -105,12 +105,12 @@ services:
     mem_limit: 3g
 
   migrate:
-    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.6-beta}
+    image: ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG:-0.3.7-beta}
     build:
       context: ../..
       dockerfile: infrastructure/docker/Dockerfile.backend
       args:
-        BUILD_VERSION: ${IMAGE_TAG:-0.3.6-beta}
+        BUILD_VERSION: ${IMAGE_TAG:-0.3.7-beta}
     profiles: ["migrate"]
     environment:
       LENR_ENVIRONMENT: production
