@@ -29,7 +29,10 @@ export default function EngineMaturityBadge({
       data-testid={`engine-maturity-${engineId}`}
       sx={sx}
     >
-      <Tooltip title={entry.description} arrow>
+      <Tooltip
+        title={`${entry.description} Lean/formal “proved” rows are mathematical non-closure or bound checks — not laboratory proof that LENR occurs.`}
+        arrow
+      >
         <Chip
           size={size}
           color={chip.color}
@@ -40,7 +43,7 @@ export default function EngineMaturityBadge({
       </Tooltip>
       {showDescription && (
         <Typography variant="caption" color="text.secondary" component="span">
-          {entry.description}
+          {entry.description} Formal Lean checks are not nature/lab proof.
         </Typography>
       )}
     </Stack>

@@ -222,20 +222,50 @@ const BubbleFusionVisualizer = ({
       }
     }
     
-    // Display radius text
-    ctx.fillStyle = 'rgba(50, 50, 100, 0.8)';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`Radius: ${currentRadius.toFixed(1)} μm`, centerX, centerY + radiusPixels + 30);
-    
-    // Display phase information
+    // Fixed HUD (do not track the animating radius — that makes labels bounce
+    // and get covered during Expansion). Matches private-beta readability.
     let phaseText = '';
     if (normalizedTime < 0.4) phaseText = 'Expansion';
     else if (normalizedTime < 0.42) phaseText = 'Collapse';
     else if (normalizedTime < 0.45) phaseText = 'Rebound';
     else phaseText = 'Recovery';
-    
-    ctx.fillText(phaseText, centerX, centerY + radiusPixels + 50);
+
+    const hudLines = [
+      `Radius: ${currentRadius.toFixed(1)} μm`,
+      phaseText,
+    ];
+    const hudPadX = 12;
+    const hudPadY = 8;
+    const hudLineH = 18;
+    const hudW = 168;
+    const hudH = hudPadY * 2 + hudLineH * hudLines.length;
+    const hudX = Math.max(8, centerX - hudW / 2);
+    const hudY = 12;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = 'rgba(30, 40, 80, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(hudX, hudY, hudW, hudH, 6);
+    } else {
+      ctx.rect(hudX, hudY, hudW, hudH);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillStyle = 'rgba(25, 35, 70, 0.95)';
+    hudLines.forEach((line, i) => {
+      const ty = hudY + hudPadY + hudLineH * (i + 0.5);
+      const tx = hudX + hudPadX;
+      ctx.strokeText(line, tx, ty);
+      ctx.fillText(line, tx, ty);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRadius, drivingPressureAmplitude, frequency, animationPeriod, showPressureField, showTemperatureField, showCollapse]);
   
