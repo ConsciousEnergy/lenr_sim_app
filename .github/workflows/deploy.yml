@@ -188,7 +188,7 @@ jobs:
           rm -f "$KEY"
 
       - name: Checkout (for share verify script)
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Verify public share health
         env:
@@ -197,5 +197,10 @@ jobs:
           set -euo pipefail
           chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
           export BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+          # Fail closed on version drift after a tip deploy (APP_VERSION is
+          # the same marker used for GHCR image tags in this workflow).
+          EXPECT_VERSION=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          export EXPECT_VERSION
+          echo "Expecting share host version: ${EXPECT_VERSION}"
           LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 
