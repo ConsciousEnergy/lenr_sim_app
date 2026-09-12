@@ -78,6 +78,14 @@ for _ in $(seq 1 40); do
     "${COMPOSE[@]}" exec -T backend curl -fsS http://localhost:8000/api/health || true
     echo "Deploy complete. IMAGE_TAG=$IMAGE_TAG"
     echo "To roll back: $SCRIPT_DIR/rollback.sh"
+    # Optional public share probe (set BETA_SHARE_URL to enforce from the VPS).
+    if [[ -x "$SCRIPT_DIR/verify-beta-share.sh" ]]; then
+      echo "Public share probe..."
+      BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}" \
+        "$SCRIPT_DIR/verify-beta-share.sh" || {
+          echo "WARN: public share probe failed; stack is up locally — check DNS/Caddy." >&2
+        }
+    fi
     exit 0
   fi
   sleep 3
