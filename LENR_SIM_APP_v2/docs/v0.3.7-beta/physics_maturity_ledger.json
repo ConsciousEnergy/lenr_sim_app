@@ -107,7 +107,7 @@
       "artifacts": ["md", "json", "tex"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "Phase A provenance; Phase B KM bridge"
+      "rd_next": "KM auto-default when Mach warrants (deferred); keep EQ-OPEN-* open"
     },
     {
       "id": "ENG-RP-KM-01",
