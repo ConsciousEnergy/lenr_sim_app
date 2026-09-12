@@ -40,6 +40,12 @@ that includes **both** current `main` and the science + share stack.
 
 ## Local dry-run + CI evidence (2026-09-12)
 
+Operator preflight (no merge):
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/check-merge-train.sh
+```
+
 Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
 was **all fast-forward, zero conflicts**. Stack tip is branch
 `consciousenergy/v037-share-uptime-prep-98d8`.
