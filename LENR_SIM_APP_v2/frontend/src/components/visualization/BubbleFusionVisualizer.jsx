@@ -368,7 +368,7 @@ const BubbleFusionVisualizer = ({
               borderRadius: 1 
             }}
           >
-            Using approximate calculations
+            Schematic fallback — not engine output
           </Typography>
         ) : null}
         
