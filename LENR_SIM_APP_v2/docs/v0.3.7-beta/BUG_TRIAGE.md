@@ -10,8 +10,8 @@ issue tracker — seed for Milestone issues.
 | BUG-ANALYTICS-403 | analytics honesty | Save-to-Analytics without write token must surface 403, not success toast / silent local-only | medium | partially fixed | Audit remaining toast paths |
 | BUG-AUTO-PERSIST | persist coupling | `LENR_AUTO_PERSIST=1` can write without SPA token; public beta relies on flag=0 | high (ops) | mitigated by default | Keep documented; never flip on public VPS casually |
 | BUG-RP-MACH-DOMAIN | physics domain | Default Rayleigh–Plesset may run outside valid Mach band; KM opt-in underused | medium | open | Deferred ENG-RP-KM-01 |
-| BUG-EMPTY-ANALYTICS-COPY | UX | Empty History copy can imply visitors grow shared SQL | low | open | Align with hydrate honesty callout |
-| BUG-LEAN-MISREAD | epistemic | Visitors may read Lean “PROVED” as nature proof | medium | open | Badge + About copy (this train) |
+| BUG-EMPTY-ANALYTICS-COPY | UX | Empty History copy can imply visitors grow shared SQL | low | fixed (v037-bf-ui-honesty) | Empty-state copy states public beta does not auto-persist visitor runs |
+| BUG-LEAN-MISREAD | epistemic | Visitors may read Lean “PROVED” as nature proof | medium | fixed (v037-bf-ui-honesty) | EngineMaturityBadge tooltip: formal Lean ≠ laboratory/nature proof |
 
 ## Related docs
 

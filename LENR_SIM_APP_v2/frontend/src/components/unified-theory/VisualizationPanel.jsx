@@ -87,6 +87,8 @@ export default function VisualizationPanel({
           <UnifiedBubbleLatticeVisualization
             parameters={parameters}
             simulationData={simulationData}
+            streamLatest={streamLatest}
+            streamStatus={streamStatus}
             onPhaseChange={onPhaseChange}
             onCollapseEvent={onCollapseEvent}
             height={550}
