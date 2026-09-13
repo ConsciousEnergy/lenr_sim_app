@@ -76,6 +76,22 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 
 Do **not** run these until an operator explicitly authorizes (e.g. “merge the stack”).
 
+One-shot (preferred after approval):
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/check-merge-train.sh   # must be READY
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/merge-train-execute.sh plan
+CONFIRM=I_MERGE_STACK_0_3_7 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/merge-train-execute.sh merge
+# Then ship (separate confirm):
+CONFIRM=I_SHIP_VPS_0_3_7 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
+EXPECT_VERSION=0.3.7-beta \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+```
+
+Manual equivalent:
+
 ```bash
 # 1) Squash #185 (already targets main; CI green)
 gh pr merge 185 --squash --delete-branch=false
