@@ -21,8 +21,8 @@ need git
 fail=0
 warn=0
 ok() { echo "OK: $*"; }
-bad() { echo "FAIL: $*" >&2; fail=1; }
-note() { echo "WARN: $*" >&2; warn=1; }
+bad() { echo "FAIL: $*" >&2; fail=$((fail + 1)); }
+note() { echo "WARN: $*" >&2; warn=$((warn + 1)); }
 
 echo "==> Fetching origin"
 git fetch --quiet origin main "$SHARE_BRANCH" "$PREVIEW_BRANCH" "$VPS_BRANCH" || true
@@ -108,7 +108,8 @@ run_url="$(echo "$run_json" | python3 -c 'import sys,json;d=json.load(sys.stdin)
 if [[ -z "$run_sha" ]]; then
   bad "no Test and Benchmark runs on $PREVIEW_BRANCH"
 elif [[ "$run_sha" != "$preview_sha" ]]; then
-  note "latest Test run sha=$run_sha status=$run_status/$run_conc (preview tip=$preview_sha) $run_url"
+  # Fail closed: tip-chase docs commits must not report READY on a stale green run.
+  bad "latest Test run sha=$run_sha != preview tip=$preview_sha ($run_status/$run_conc) $run_url"
 elif [[ "$run_status" != "completed" || "$run_conc" != "success" ]]; then
   bad "tip Test run not green yet: $run_status/$run_conc $run_url"
 else
