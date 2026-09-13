@@ -4,6 +4,13 @@
 **Last Updated:** August 2026  
 **Target:** Production deployment on Hostinger VPS with Docker Swarm
 
+> **Stop — v0.3.7-beta:** public beta ships **Compose + Caddy** on the existing VPS
+> ([`infrastructure/vps/`](../infrastructure/vps/)). This Phase 4 Swarm / Terraform /
+> Traefik / Cloudflare Pages path is **prep for v0.3.8-beta only**. Do **not**
+> `terraform apply` or run ungated `./deploy.sh production` against live share.
+> Cutover gate: `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`. Checklist:
+> [`v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+
 ---
 
 ## Overview

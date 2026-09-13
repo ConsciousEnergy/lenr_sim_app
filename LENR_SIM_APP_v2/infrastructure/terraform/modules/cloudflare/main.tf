@@ -10,45 +10,7 @@ terraform {
   }
 }
 
-# ==============================================================================
-# Variables
-# ==============================================================================
-
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token"
-  type        = string
-  sensitive   = true
-}
-
-variable "cloudflare_account_id" {
-  description = "Cloudflare account ID"
-  type        = string
-}
-
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for the domain"
-  type        = string
-}
-
-variable "domain" {
-  description = "Domain name for the application"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name (prod, staging)"
-  type        = string
-}
-
-variable "github_owner" {
-  description = "GitHub repository owner (for Cloudflare Pages)"
-  type        = string
-}
-
-variable "github_repo" {
-  description = "GitHub repository name"
-  type        = string
-}
+# Variables live in variables.tf (do not redeclare here — Terraform rejects duplicates).
 
 # ==============================================================================
 # Provider Configuration
@@ -217,26 +179,3 @@ resource "cloudflare_ruleset" "waf" {
   }
 }
 
-# ==============================================================================
-# Outputs
-# ==============================================================================
-
-output "pages_url" {
-  description = "Cloudflare Pages URL"
-  value       = "https://${cloudflare_pages_project.frontend.subdomain}"
-}
-
-output "custom_domain_url" {
-  description = "Custom domain URL"
-  value       = "https://${cloudflare_pages_domain.frontend.domain}"
-}
-
-output "r2_bucket_name" {
-  description = "R2 bucket name for assets"
-  value       = cloudflare_r2_bucket.assets.name
-}
-
-output "r2_simulations_bucket" {
-  description = "R2 bucket name for simulation data"
-  value       = cloudflare_r2_bucket.simulations.name
-}

@@ -3,6 +3,13 @@
 This tracker maps the deployment plan to the current repository state and
 manual execution status.
 
+> **v0.3.7-beta live share update (2026-09-12):** prefer
+> [`../v0.3.7-beta/LIVE_SHARE_STATUS.md`](../v0.3.7-beta/LIVE_SHARE_STATUS.md) and
+> [`../v0.3.7-beta/MERGE_TRAIN_VPS.md`](../v0.3.7-beta/MERGE_TRAIN_VPS.md).
+> Shareable host today: `https://lenr-sim-beta.conscious.energy` (`/api/health` 200).
+> Intended `lenr-simp-app` still CNAME→WordPress until A→VPS. Swarm/Pages cutover
+> prep is deferred to **v0.3.8-beta**.
+
 ## Current Readiness Summary (2026-09-02)
 
 - **Intended public hostname:** `https://lenr-simp-app.conscious.energy` (same-origin SPA + `/api`

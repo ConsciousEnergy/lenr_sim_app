@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { SnackbarProvider } from 'notistack';
-import { PostHogProvider } from 'posthog-js/react';
 import { ThrottleProvider } from './contexts/ThrottleContext';
 import { OfflineProvider } from './contexts/OfflineContext';
 import App from './App';
-import { initAnalytics, posthog, analyticsEnabled } from './analytics/posthog';
+import { initAnalytics } from './analytics/posthog';
+import { WrapWithPostHog } from './analytics/WrapWithPostHog';
 
 // Self-gates: no-op in dev/test, without a key, or under Do-Not-Track.
 initAnalytics();
@@ -13,7 +13,7 @@ initAnalytics();
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <PostHogProvider client={analyticsEnabled() ? posthog : undefined}>
+    <WrapWithPostHog>
       <OfflineProvider>
         <ThrottleProvider>
           <SnackbarProvider maxSnack={3}>
@@ -21,6 +21,6 @@ root.render(
           </SnackbarProvider>
         </ThrottleProvider>
       </OfflineProvider>
-    </PostHogProvider>
+    </WrapWithPostHog>
   </React.StrictMode>
 );

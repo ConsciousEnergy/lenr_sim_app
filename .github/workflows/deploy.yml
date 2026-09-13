@@ -163,10 +163,27 @@ jobs:
     needs: [build-backend, build-frontend-image]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout (APP_VERSION + share verify)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Read APP_VERSION
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          if [ -z "$APP_VERSION" ]; then
+            echo "::error file=LENR_SIM_APP_v2/backend/app/core/config.py::APP_VERSION marker not found"
+            exit 1
+          fi
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Deploying IMAGE_TAG=${APP_VERSION}"
+
       - name: SSH deploy
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          IMAGE_TAG: ${{ steps.version.outputs.app_version }}
+          DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
@@ -176,14 +193,35 @@ jobs:
           umask 077
           KEY=$(mktemp)
           printf '%s\n' "$VPS_SSH_KEY" > "$KEY"
+          # Pin VPS checkout to the workflow SHA that built GHCR images, and force
+          # tip APP_VERSION into .env so neither scripts/Caddyfile nor IMAGE_TAG
+          # can lag a 0.3.7 tip deploy (stale branch + IMAGE_TAG=0.3.6-beta).
           ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
             "root@${VPS_HOST}" \
-            'set -euo pipefail
+            "set -euo pipefail
              cd /opt/lenr-sim/src
-             git fetch origin
-             git checkout -q "$(git rev-parse --abbrev-ref HEAD)"
-             git pull --ff-only
+             git fetch --prune origin
+             if ! git cat-file -e '${DEPLOY_SHA}^{commit}' 2>/dev/null; then
+               git fetch origin '${DEPLOY_SHA}'
+             fi
+             git checkout -qf '${DEPLOY_SHA}'
+             echo \"VPS HEAD=\$(git rev-parse --short HEAD) (pinned to workflow SHA)\"
              LENR_ENV_FILE=/opt/lenr-sim/.env \
-               LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh'
+               IMAGE_TAG='${IMAGE_TAG}' \
+               UPDATE_ENV_IMAGE_TAG=1 \
+               EXPECT_VERSION='${IMAGE_TAG}' \
+               LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh"
           rm -f "$KEY"
+
+      - name: Verify public share health
+        env:
+          BETA_SHARE_URL: ${{ vars.BETA_SHARE_URL }}
+          EXPECT_VERSION: ${{ steps.version.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+          export BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+          export EXPECT_VERSION
+          echo "Expecting share host version: ${EXPECT_VERSION}"
+          LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 

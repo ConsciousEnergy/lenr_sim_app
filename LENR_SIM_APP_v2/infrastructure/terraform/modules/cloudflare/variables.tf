@@ -41,5 +41,5 @@ variable "github_repo" {
 variable "pages_production_branch" {
   description = "Git branch Cloudflare Pages treats as production (ship branch, not stale main)"
   type        = string
-  default     = "lenr_sim_app_v0.3.6-beta"
+  default     = "lenr_sim_app_v0.3.8-beta"
 }

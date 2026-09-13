@@ -10,48 +10,7 @@ terraform {
   }
 }
 
-# ==============================================================================
-# Variables
-# ==============================================================================
-
-variable "hostinger_api_token" {
-  description = "Hostinger API token"
-  type        = string
-  sensitive   = true
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key for VPS access"
-  type        = string
-}
-
-variable "vps_plan" {
-  description = "Hostinger VPS plan"
-  type        = string
-  # Plans available:
-  # - hostingercom-vps-kvm1-usd-1m: 1 vCPU, 4GB RAM, 50GB NVMe  (~$4.99/mo)
-  # - hostingercom-vps-kvm2-usd-1m: 2 vCPU, 8GB RAM, 100GB NVMe (~$6.99/mo)
-  # - hostingercom-vps-kvm4-usd-1m: 4 vCPU, 16GB RAM, 200GB NVMe (~$12.99/mo)
-}
-
-variable "data_center_id" {
-  description = "Hostinger data center ID"
-  type        = number
-  # Data centers:
-  # 1 = North America
-  # 2 = Europe
-  # 3 = Asia
-}
-
-variable "domain" {
-  description = "Domain name for the application"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name (prod, staging)"
-  type        = string
-}
+# Variables live in variables.tf (do not redeclare here — Terraform rejects duplicates).
 
 # ==============================================================================
 # Provider Configuration
@@ -202,26 +161,3 @@ resource "hostinger_vps" "app" {
   # Wait for the server to be ready before proceeding with Ansible
 }
 
-# ==============================================================================
-# Outputs
-# ==============================================================================
-
-output "vps_id" {
-  description = "VPS instance ID"
-  value       = hostinger_vps.app.id
-}
-
-output "vps_ipv4" {
-  description = "Public IPv4 address of the VPS"
-  value       = hostinger_vps.app.ipv4_address
-}
-
-output "vps_hostname" {
-  description = "VPS hostname"
-  value       = hostinger_vps.app.hostname
-}
-
-output "ssh_connection" {
-  description = "SSH connection command"
-  value       = "ssh root@${hostinger_vps.app.ipv4_address}"
-}

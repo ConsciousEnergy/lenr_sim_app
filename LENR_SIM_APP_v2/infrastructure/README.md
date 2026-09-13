@@ -1,15 +1,16 @@
 # LENR Simulation App - Infrastructure as Code
 
-**Version:** 0.3.6-beta
+**Version:** 0.3.7-beta
 **Last Updated:** September 2026
 
 ---
 
-## Public beta (use this)
+## Public beta (use this) — v0.3.7-beta
 
 Same-origin Docker Compose on the Hostinger VPS:
 
 - **Docs:** [`vps/README.md`](vps/README.md)
+- **Merge train to `main` before VPS rebase:** [`../docs/v0.3.7-beta/MERGE_TRAIN_VPS.md`](../docs/v0.3.7-beta/MERGE_TRAIN_VPS.md)
 - **Stack:** Caddy (Let's Encrypt) → nginx SPA + FastAPI + Postgres 16
 - **Host:** `https://lenr-simp-app.conscious.energy` (intended); live A record `https://lenr-sim-beta.conscious.energy`
 
@@ -18,15 +19,17 @@ infrastructure/vps/
 ├── docker-compose.prod.yml
 ├── Caddyfile
 ├── .env.production.example
-└── scripts/{bootstrap-host,deploy,rollback,backup-db,hydrate-demo}.sh
+└── scripts/{bootstrap-host,deploy,check-merge-train,verify-beta-share,rollback,backup-db,hydrate-demo}.sh
 ```
 
-## Alternative: Terraform + Ansible + Swarm
+## Alternative: Terraform + Ansible + Swarm — **v0.3.8-beta**
 
 The rest of this directory provisions Cloudflare Pages + a Docker Swarm API
-(`api.conscious.energy`). That path is **not** what the 2026-09 public beta
-ships. Keep it for a future multi-node move; do not `terraform apply` while
-WordPress.com owns `conscious.energy` / `www`.
+(`api.conscious.energy`). That path is **not** what v0.3.7-beta ships.
+
+- **Do not** `terraform apply` while WordPress.com owns `conscious.energy` / `www`.
+- **Prep checklist (no apply):** [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md)
+- Earliest live cutover target: **v0.3.8-beta**, after the science stack and VPS tip are on `main`.
 
 
 ---
@@ -70,7 +73,29 @@ infrastructure/
 
 ---
 
-## Quick Start
+## Quick Start (v0.3.8-beta Swarm/Pages only)
+
+> **v0.3.7-beta stop here.** Public beta runs on **VPS Compose + Caddy**
+> (`vps/`). Do **not** run the Terraform/Ansible steps below against
+> production during 0.3.7. Prep checklist (no apply):
+> [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+>
+> `scripts/deploy.sh` is hard-gated: it exits unless
+> `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
+
+### Validate-only (safe during 0.3.7)
+
+```bash
+cd infrastructure/terraform
+terraform init -backend=false
+terraform validate
+
+cd ../ansible
+ansible-playbook --syntax-check playbooks/site.yml
+ansible-playbook --syntax-check playbooks/deploy-stack.yml
+ansible-playbook --syntax-check playbooks/setup-docker.yml
+ansible-playbook --syntax-check playbooks/backup.yml
+```
 
 ### 1. Prerequisites
 
@@ -92,25 +117,25 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your credentials
 ```
 
-### 3. Provision Infrastructure
+### 3. Provision Infrastructure (**0.3.8+ only — no apply in 0.3.7**)
 
 ```bash
 terraform init
 terraform plan -out=tfplan
-terraform apply tfplan
+# terraform apply tfplan   # intentionally commented for 0.3.7
 ```
 
-### 4. Configure Server
+### 4. Configure Server (**0.3.8+ only**)
 
 ```bash
 cd ../ansible
 cp inventory.yml.example inventory.yml
 # Update inventory.yml with VPS IP from Terraform output
 
-ansible-playbook -i inventory.yml playbooks/setup-docker.yml
+# ansible-playbook -i inventory.yml playbooks/setup-docker.yml  # no prod apply in 0.3.7
 ```
 
-### 5. Deploy Application
+### 5. Deploy Application (**0.3.8+ only**)
 
 ```bash
 # Generate PostgreSQL password and store securely
@@ -119,8 +144,7 @@ echo "POSTGRES_PASSWORD='$POSTGRES_PASSWORD'" > .secrets.env
 chmod 600 .secrets.env
 # ⚠️ IMPORTANT: Save this password securely! Losing it prevents database access.
 
-# Deploy stack (password read from environment, not command line)
-ansible-playbook -i inventory.yml playbooks/deploy-stack.yml
+# ansible-playbook -i inventory.yml playbooks/deploy-stack.yml  # no prod apply in 0.3.7
 ```
 
 ---
