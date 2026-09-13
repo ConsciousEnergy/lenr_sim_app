@@ -2,6 +2,12 @@
 
 **Quick Start:** See [README.md](README.md) for overview
 
+> **v0.3.7-beta:** public beta uses **VPS Compose + Caddy** ([`vps/`](vps/)).  
+> Terraform / Ansible / Swarm / Pages steps below are **v0.3.8-beta cutover prep only**.  
+> Do **not** `terraform apply` or run Swarm `scripts/deploy.sh` against production in 0.3.7  
+> (`deploy.sh` requires `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`).  
+> Prep checklist: [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+
 ---
 
 ## Initial Setup

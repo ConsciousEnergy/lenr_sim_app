@@ -1,6 +1,10 @@
 #!/bin/bash
-# LENR Simulation App - Full Deployment Script
+# LENR Simulation App - Full Deployment Script (Swarm / Terraform / Ansible)
 # Usage: ./deploy.sh [production|staging] [--app-only]
+#
+# v0.3.7-beta: public beta ships Hostinger VPS Compose + Caddy (see ../vps/).
+# This Swarm/Pages path is deferred to v0.3.8-beta. Refuse apply unless the
+# operator explicitly opts in (prep docs: docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 set -euo pipefail
 
@@ -12,6 +16,21 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TERRAFORM_DIR="$PROJECT_ROOT/infrastructure/terraform"
 ANSIBLE_DIR="$PROJECT_ROOT/infrastructure/ansible"
 SECRETS_FILE="${SCRIPT_DIR}/.secrets.env"
+
+if [[ "${CONFIRM_SWARM_0_3_8:-}" != "I_CUTOVER_0_3_8" ]]; then
+  cat >&2 <<'EOF'
+ERROR: infrastructure/scripts/deploy.sh is the v0.3.8-beta Swarm/Pages path.
+
+Public beta (v0.3.7) uses:
+  LENR_SIM_APP_v2/infrastructure/vps/scripts/
+
+Prep only (no apply): docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md
+
+To intentionally run this cutover script in a 0.3.8 window:
+  CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh ...
+EOF
+  exit 2
+fi
 
 echo "=========================================="
 echo "LENR Simulation App Deployment"
