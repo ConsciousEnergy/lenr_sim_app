@@ -48,12 +48,13 @@ cp inventory.yml.example inventory.yml
 
 ## Deployment
 
-### Automated (Recommended)
+### Automated (v0.3.8 Swarm/Pages only — gated)
 
 ```bash
 cd infrastructure/scripts
 chmod +x *.sh
-./deploy.sh production
+# Hard-gated; do not run during v0.3.7 VPS beta without an explicit 0.3.8 cutover window:
+CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh production
 ```
 
 ### Manual
