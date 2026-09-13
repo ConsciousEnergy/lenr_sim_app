@@ -13,6 +13,7 @@ import {
 import Grid from '@mui/material/Grid';
 import QuantumTunnelingVisualizer from '../components/visualization/QuantumTunnelingVisualizer';
 import TunnelingParameterControls from '../components/controls/TunnelingParameterControls';
+import EngineMaturityBadge from '../components/EngineMaturityBadge';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CallMadeIcon from '@mui/icons-material/CallMade';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -130,6 +131,7 @@ const QuantumTunnelingPage = () => {
         <Typography variant="subtitle1" color="textSecondary" gutterBottom>
           Interactive visualization of quantum tunneling effects in LENR systems
         </Typography>
+        <EngineMaturityBadge engineId="ENG-WKB-01" sx={{ mt: 1 }} />
         <Divider sx={{ my: 2 }} />
       </Box>
       

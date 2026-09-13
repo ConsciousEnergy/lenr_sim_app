@@ -5,12 +5,12 @@ const live = process.env.LIVE_BASE_URL;
 test.describe('live VPS smoke', () => {
   test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://lenr-sim-beta.conscious.energy or https://srv1280333.hstgr.cloud) to run against the deployed beta');
 
-  test('GET /api/health returns 0.3.6-beta', async ({ request }) => {
+  test('GET /api/health returns 0.3.7-beta', async ({ request }) => {
     const res = await request.get(`${live}/api/health`);
     expect(res.status()).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('healthy');
-    expect(body.version).toBe('0.3.6-beta');
+    expect(body.version).toBe('0.3.7-beta');
     expect(body.database?.connected).toBe(true);
   });
 

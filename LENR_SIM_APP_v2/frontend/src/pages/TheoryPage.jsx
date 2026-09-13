@@ -36,6 +36,7 @@ import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EngineMaturityBadge from '../components/EngineMaturityBadge';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -499,6 +500,11 @@ const TheoryPage = () => {
               not deployed on the public beta stack. Treat them as modeling roadmap, not live
               production numerics.
             </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
+              <EngineMaturityBadge engineId="ENG-WKB-01" />
+              <EngineMaturityBadge engineId="ENG-RP-KM-01" />
+              <EngineMaturityBadge engineId="ENG-ASPIRATIONAL-FEM-01" />
+            </Stack>
           </Alert>
 
           <Grid container spacing={3}>

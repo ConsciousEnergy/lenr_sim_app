@@ -7,7 +7,7 @@ import { test, expect } from './fixtures.js';
 
 const VIRTUAL_LAB_RESPONSE = {
   success: true,
-  contract_version: 'v0.3.6-beta-science-gate-1',
+  contract_version: 'v0.3.7-beta-science-gate-1',
   collapse_results: {
     min_radius_um: 6.0,
     max_temperature_k: 800,

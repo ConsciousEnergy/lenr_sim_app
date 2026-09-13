@@ -38,6 +38,7 @@ import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ScienceIcon from '@mui/icons-material/Science';
 import BoltIcon from '@mui/icons-material/Bolt';
+import EngineMaturityBadge from '../components/EngineMaturityBadge';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -1116,6 +1117,10 @@ function UnifiedTheoryPage() {
             <Typography variant="body1" color="text.secondary">
               Electrodynamic ionic double-layer bubble collapse onto lattice-loaded materials with proton phase transitions
             </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+              <EngineMaturityBadge engineId="ENG-RP-KM-01" />
+              <EngineMaturityBadge engineId="ENG-THEORY-PIPELINE-01" />
+            </Stack>
           </Box>
           <Stack direction="row" spacing={1} alignItems="center">
             <Tooltip title="Governance glossary: claim tiers & evidence classes">

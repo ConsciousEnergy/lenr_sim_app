@@ -25,6 +25,7 @@ import OpenQuestionsWorkingHypothesis from './OpenQuestionsWorkingHypothesis';
 import OpenQuestionsScenarioControls from './OpenQuestionsScenarioControls';
 import TscClusterSceneUnavailable from './TscClusterSceneFallback';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+import EngineMaturityBadge from '../EngineMaturityBadge';
 
 // three / @react-three ship in their own chunk; only load them when a WH with
 // Dicke geometry is actually present. If that chunk fails to evaluate (e.g. the
@@ -344,6 +345,11 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
       </Typography>
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
+        <EngineMaturityBadge engineId="EQ-OPEN-MEV-01" />
+        <EngineMaturityBadge engineId="EQ-OPEN-RATE-01" />
+        <EngineMaturityBadge engineId="WH-ENP-01" />
+      </Stack>
 
       <Alert
         severity={status === 'RATE_BUDGET_DOES_NOT_CLOSE' ? 'warning' : 'info'}
