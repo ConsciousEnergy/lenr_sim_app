@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.backend
       args:
-        BUILD_VERSION: "0.3.6-beta"
+        BUILD_VERSION: "0.3.7-beta"
     ports:
       - "8010:8000"
     environment:
