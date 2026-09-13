@@ -79,6 +79,23 @@ infrastructure/
 > (`vps/`). Do **not** run the Terraform/Ansible steps below against
 > production during 0.3.7. Prep checklist (no apply):
 > [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+>
+> `scripts/deploy.sh` is hard-gated: it exits unless
+> `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
+
+### Validate-only (safe during 0.3.7)
+
+```bash
+cd infrastructure/terraform
+terraform init -backend=false
+terraform validate
+
+cd ../ansible
+ansible-playbook --syntax-check playbooks/site.yml
+ansible-playbook --syntax-check playbooks/deploy-stack.yml
+ansible-playbook --syntax-check playbooks/setup-docker.yml
+ansible-playbook --syntax-check playbooks/backup.yml
+```
 
 ### 1. Prerequisites
 

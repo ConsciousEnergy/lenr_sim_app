@@ -1,13 +1,19 @@
 # LENR Simulation App - Deployment Scripts
 
-**Version:** 0.2.1-beta  
-**Last Updated:** January 2026
+**Version:** 0.3.7-beta (Swarm helpers deferred to 0.3.8)  
+**Last Updated:** September 2026
+
+> **Stop — v0.3.7-beta public beta does not use these scripts.**  
+> Live share/deploy path: [`../vps/`](../vps/) (Compose + Caddy).  
+> Swarm/Terraform/Pages cutover: [`../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md) — **do not apply** until 0.3.8.  
+> `deploy.sh` refuses to run unless `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
 
 ---
 
 ## Overview
 
-Helper scripts for deploying, managing, and maintaining the LENR Simulation App infrastructure.
+Helper scripts for the **v0.3.8-beta** Terraform + Ansible + Docker Swarm path.
+They are retained for cutover prep; they are not the v0.3.7 public-beta ship path.
 
 ---
 

@@ -29,7 +29,8 @@ DNS and HA needs justify leaving single-VPS Compose.
 | Architecture overview | [`../DEPLOYMENT.md`](../DEPLOYMENT.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
 | Authority split | [`../../infrastructure/README.md`](../../infrastructure/README.md) — VPS Compose now; Swarm + Traefik + Pages later |
 
-**Explicit non-action in 0.3.7:** no `terraform apply`, no `ansible-playbook` against prod, no Swarm init on the live VPS, no Pages project cutover.
+**Explicit non-action in 0.3.7:** no `terraform apply`, no `ansible-playbook` against prod, no Swarm init on the live VPS, no Pages project cutover.  
+`infrastructure/scripts/deploy.sh` is **hard-gated** (`CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`) so a mistaken 0.3.7 run cannot apply.
 
 **Traefik static vs dynamic:** `traefik.yml.j2` is static only (`--configFile`); middlewares live in `traefik-dynamic.yml.j2` under `providers.file.directory`. Do not put top-level `http:` in the static file (Traefik v3 rejects it). Backend router labels chain `security-headers@file` with the Docker-defined `backend-ratelimit`.
 
