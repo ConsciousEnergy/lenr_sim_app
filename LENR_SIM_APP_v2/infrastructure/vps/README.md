@@ -34,6 +34,7 @@ Site hostnames are configured as a **literal comma-separated line in
 | `scripts/deploy.sh` | pull/build, alembic, up, health (+ share probe); CI pins checkout to workflow SHA and forces `IMAGE_TAG=$APP_VERSION` |
 | `scripts/check-merge-train.sh` | operator preflight: PR stack, tip==preview, ancestry, tip Test green |
 | `scripts/dry-run-merge-train.sh` | throwaway FF merge #185→#189 onto `main` + VPS rebase simulation (no push) |
+| `scripts/merge-train-execute.sh` | human-gated squash #185→#189 (`CONFIRM=I_MERGE_STACK_0_3_7 EXECUTE=1`) |
 | `scripts/post-merge-vps-ship.sh` | post-merge plan/check/verify; ship only with `CONFIRM=I_SHIP_VPS_0_3_7 EXECUTE=1` |
 | `scripts/verify-beta-share.sh` | public DNS/TLS/`/api/health` probe (`EXPECT_VERSION`, retries) |
 | `scripts/rollback.sh` | redeploy previous `IMAGE_TAG` |
