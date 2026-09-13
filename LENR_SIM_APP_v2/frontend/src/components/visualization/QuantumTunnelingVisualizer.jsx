@@ -21,6 +21,16 @@ const QuantumTunnelingVisualizer = ({
   onProbabilityCalculated = () => {},
 }) => {
   const theme = useTheme();
+  const labelHalo = theme.palette.mode === 'dark' ? '#ffffff' : '#000000';
+  /** Readable plot labels over dense strokes in light and dark themes. */
+  const stylePlotLabel = (selection) =>
+    selection
+      .attr('stroke', labelHalo)
+      .attr('stroke-width', 4)
+      .attr('stroke-opacity', 0.9)
+      .attr('stroke-linejoin', 'round')
+      .attr('paint-order', 'stroke fill')
+      .style('paint-order', 'stroke fill');
   const svgRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -274,12 +284,14 @@ const QuantumTunnelingVisualizer = ({
       .attr('class', 'potential-curve');
       
     // Add potential barrier label
-    g.append('text')
-      .attr('x', xScale(logPositions[Math.floor(positions.length * 0.3)]))
-      .attr('y', yScale(potentialValues[Math.floor(positions.length * 0.3)] / maxPotential) - 10)
-      .attr('fill', theme.palette.primary.main)
-      .attr('text-anchor', 'middle')
-      .text('Potential Barrier');
+    stylePlotLabel(
+      g.append('text')
+        .attr('x', xScale(logPositions[Math.floor(positions.length * 0.3)]))
+        .attr('y', yScale(potentialValues[Math.floor(positions.length * 0.3)] / maxPotential) - 10)
+        .attr('fill', theme.palette.primary.main)
+        .attr('text-anchor', 'middle')
+        .text('Potential Barrier'),
+    );
     
     // Draw wave function if enabled
     if (showWaveFunction && waveFunction.length > 0) {
@@ -301,12 +313,14 @@ const QuantumTunnelingVisualizer = ({
         .attr('class', 'wave-function');
         
       // Add wave function label
-      g.append('text')
-        .attr('x', xScale(logPositions[Math.floor(positions.length * 0.8)]))
-        .attr('y', waveScale(waveFunction[Math.floor(positions.length * 0.8)]) - 10)
-        .attr('fill', theme.palette.secondary.main)
-        .attr('text-anchor', 'middle')
-        .text('Wave Function');
+      stylePlotLabel(
+        g.append('text')
+          .attr('x', xScale(logPositions[Math.floor(positions.length * 0.8)]))
+          .attr('y', waveScale(waveFunction[Math.floor(positions.length * 0.8)]) - 10)
+          .attr('fill', theme.palette.secondary.main)
+          .attr('text-anchor', 'middle')
+          .text('Wave Function'),
+      );
     }
     
     // Draw tunneling probability if enabled
@@ -346,13 +360,15 @@ const QuantumTunnelingVisualizer = ({
         
       // Curve fill is |ψ|² density along the barrier — not the scalar P(tunnel).
       // Keep the label distinct from the top-right P(tunneling) readout.
-      g.append('text')
-        .attr('x', xScale(logPositions[Math.floor(positions.length * 0.55)]))
-        .attr('y', Math.min(innerHeight - 8, yScale(0) - 8))
-        .attr('fill', theme.palette.warning.main)
-        .attr('text-anchor', 'start')
-        .attr('font-size', '11px')
-        .text('|ψ|² density');
+      stylePlotLabel(
+        g.append('text')
+          .attr('x', xScale(logPositions[Math.floor(positions.length * 0.55)]))
+          .attr('y', Math.min(innerHeight - 8, yScale(0) - 8))
+          .attr('fill', theme.palette.warning.main)
+          .attr('text-anchor', 'start')
+          .attr('font-size', '11px')
+          .text('|ψ|² density'),
+      );
     }
     
     // Draw classical turning point if enabled
@@ -372,14 +388,16 @@ const QuantumTunnelingVisualizer = ({
           .attr('class', 'turning-point');
 
         // Park label below the plot so it does not collide with energy / P text.
-        g.append('text')
-          .attr('x', turningX)
-          .attr('y', innerHeight + 28)
-          .attr('fill', theme.palette.error.main)
-          .attr('text-anchor', turningX > innerWidth * 0.7 ? 'end' : 'middle')
-          .attr('font-size', '11px')
-          .attr('font-weight', 600)
-          .text('Classical Turning Point');
+        stylePlotLabel(
+          g.append('text')
+            .attr('x', turningX)
+            .attr('y', innerHeight + 28)
+            .attr('fill', theme.palette.error.main)
+            .attr('text-anchor', turningX > innerWidth * 0.7 ? 'end' : 'middle')
+            .attr('font-size', '11px')
+            .attr('font-weight', 600)
+            .text('Classical Turning Point'),
+        );
       }
     }
     
@@ -396,27 +414,31 @@ const QuantumTunnelingVisualizer = ({
       .attr('stroke-dasharray', '5,5')
       .attr('class', 'energy-line');
       
-    g.append('text')
-      .attr('x', 10)
-      .attr('y', yScale(normalizedEnergy) - 10)
-      .attr('fill', theme.palette.info.main)
-      .attr('text-anchor', 'start')
-      .text(`Energy: ${energyKeV} keV`);
+    stylePlotLabel(
+      g.append('text')
+        .attr('x', 10)
+        .attr('y', yScale(normalizedEnergy) - 10)
+        .attr('fill', theme.palette.info.main)
+        .attr('text-anchor', 'start')
+        .text(`Energy: ${energyKeV} keV`),
+    );
     
     // Single scalar readout — keep clear of in-plot curve labels
     if (calculatedProbability !== null) {
-      svg.append('text')
-        .attr('x', margin.left)
-        .attr('y', Math.max(14, margin.top - 18))
-        .attr('text-anchor', 'start')
-        .attr('fill', theme.palette.success.main)
-        .attr('font-weight', 'bold')
-        .attr('font-size', '12px')
-        .text(`P(tunnel) = ${calculatedProbability.toExponential(4)}`);
+      stylePlotLabel(
+        svg.append('text')
+          .attr('x', margin.left)
+          .attr('y', Math.max(14, margin.top - 18))
+          .attr('text-anchor', 'start')
+          .attr('fill', theme.palette.success.main)
+          .attr('font-weight', 'bold')
+          .attr('font-size', '12px')
+          .text(`P(tunnel) = ${calculatedProbability.toExponential(4)}`),
+      );
     }
     
-  }, [tunnelingData, width, height, showWaveFunction, showTunnelingProbability, 
-      showClassicalTurningPoint, calculatedProbability, energyKeV, theme]);
+  }, [tunnelingData, width, height, showWaveFunction, showTunnelingProbability,
+      showClassicalTurningPoint, calculatedProbability, energyKeV, theme, labelHalo]);
 
   return (
     <Box sx={{ 

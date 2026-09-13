@@ -704,8 +704,11 @@ const AnalyticsPage = () => {
       
       {!simulationHistory.length && (
         <Alert severity="info" sx={{ mb: 3 }} data-testid="analytics-empty-state">
-          <AlertTitle>No rows in this SQL filter</AlertTitle>
-          Turn published baselines on, run the Theory Testbed, or start a campaign to persist model-output rows.
+          <AlertTitle>No rows match this filter</AlertTitle>
+          This list is the shared SQL hydrate (demo / campaign / operator writes), not a live feed of
+          anonymous visitor runs. Public beta keeps <code>LENR_AUTO_PERSIST=0</code> and rejects SPA
+          writes with 403 — running a simulation here does not grow History. Enable baselines above,
+          or ask an operator to hydrate / write via authenticated paths.
         </Alert>
       )}
       

@@ -493,7 +493,16 @@ function FusionSimulationPage() {
       };
       
       const saved = await analyticsApi.saveExperiment(experimentData);
-      setSuccessMessage(`Simulation saved to analytics! ID: ${saved.id.substring(0, 8)}...`);
+      if (saved?.local_only) {
+        setError('Shared Analytics unreachable — this run was kept in browser storage only (not shared History).');
+      } else {
+        const id = saved?.id || saved?.data?.id || '';
+        setSuccessMessage(
+          id
+            ? `Simulation saved to analytics! ID: ${String(id).substring(0, 8)}...`
+            : 'Simulation saved to analytics.',
+        );
+      }
     } catch (err) {
       console.error('Failed to save to analytics:', err);
       const status = err.statusCode ?? err.status;

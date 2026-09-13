@@ -53,7 +53,7 @@ Fusion numerics in the same PR train as A/B.
 
 ## Resume checklist
 
-- [ ] Maturity ledger P0/P1 rows complete and badges live
+- [x] Maturity ledger P0/P1 rows complete and badges live (EngineMaturityBadge on BF/QT/Unified/Theory Methods/Open Questions)
 - [x] Bubble Fusion dual-fetch bug triaged (see `BUG_TRIAGE.md`)
 - [x] Open Phase A branch: `consciousenergy/v037-bubble-engine-truth-98d8`
 - [ ] Then Phase B: `consciousenergy/v037-bubble-km-bridge-98d8`
