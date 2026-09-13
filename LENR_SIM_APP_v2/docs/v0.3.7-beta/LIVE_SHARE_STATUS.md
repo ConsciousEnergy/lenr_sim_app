@@ -1,7 +1,7 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-12 ~22:46 UTC** (retries via verify-beta-share.sh).
-Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `52ffb6b` (#190 Test+Benchmark **green** — [run 34725341387](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34725341387); `check-merge-train.sh` → READY; browser: local tip has no PostHog empty-client warning, live 0.3.6-beta still warns).
+Probed from CI agent host on **2026-09-13 ~00:10 UTC** (retries via verify-beta-share.sh).
+Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `b0ec73d` (#190 Test+Benchmark **green** — [run 34726328172](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34726328172); `check-merge-train.sh` → READY; browser: local tip has no PostHog empty-client warning, live 0.3.6-beta still warns).
 
 ## What works today (share this)
 
@@ -50,8 +50,10 @@ Until then, keep sharing **`lenr-sim-beta`**.
 WH-ENP #182, `/api` path honesty #183).
 
 **Deploy of 0.3.7 science stack still waits on merge train #185→#189**
-(see [MERGE_TRAIN_VPS.md](./MERGE_TRAIN_VPS.md)). After those land on `main`, pull/rebase
-VPS tip again and `workflow_dispatch` deploy; health should report `0.3.7-beta`
+(see [MERGE_TRAIN_VPS.md](./MERGE_TRAIN_VPS.md)). After those land on `main`, use
+`./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh` (`check` then
+human-gated `ship`) or the manual rebase + `workflow_dispatch` steps in the merge
+train doc; health should report `0.3.7-beta`
 (`EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh`).
 
 ## Console noise (testers)

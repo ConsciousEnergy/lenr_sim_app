@@ -66,6 +66,7 @@ was **all fast-forward, zero conflicts**. Stack tip is branch
 | CI preview #190 tip `7650a15` | **Test and Benchmark full green** ([run 34723272272](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34723272272)) — Traefik static http strip + EXPECT_VERSION hard-fail + PostHog skill align; check-merge-train READY |
 | CI preview #190 tip `dc91e3d` | **Test and Benchmark full green** ([run 34724292610](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34724292610)) — Traefik `security-headers@file` on backend; check-merge-train READY |
 | CI preview #190 tip `52ffb6b` | **Test and Benchmark full green** ([run 34725341387](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34725341387)) — Terraform module dedupe `validate` OK + ansible syntax-check; check-merge-train READY; browser PostHog gate verified locally |
+| CI preview #190 tip `b0ec73d` | **Test and Benchmark full green** ([run 34726328172](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34726328172)) — tip evidence + READY; `post-merge-vps-ship.sh` plan/check added for human-gated VPS ship |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
 | Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `dc91e3d` via `dry-run-merge-train.sh`; VPS rebase tip matches) |
 | Deploy harden | CI SSH pins `git checkout $GITHUB_SHA`, forces `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
@@ -90,18 +91,24 @@ done
 gh pr close 184 --comment "Superseded by #187 BF HUD readability + honesty."
 gh pr close 190 --comment "CI preview only; stack landed via #185–#189."
 
-# 7) Rebase VPS tip and deploy
+# 7) Rebase VPS tip and deploy (helper — plan/check safe; ship needs CONFIRM)
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh check
+# Manual equivalent:
 git fetch origin
 git checkout consciousenergy/vps-public-beta-rebase-98d8
 git rebase origin/main
 git push --force-with-lease origin consciousenergy/vps-public-beta-rebase-98d8
 gh workflow run deploy.yml --ref consciousenergy/vps-public-beta-rebase-98d8
+# Or gated helper:
+# CONFIRM=I_SHIP_VPS_0_3_7 EXECUTE=1 \
+#   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
 # Deploy workflow pins the VPS git tree to the workflow SHA, then forces
 # IMAGE_TAG=$APP_VERSION into .env — stale checkout + IMAGE_TAG=0.3.6-beta
 # cannot survive a 0.3.7 tip deploy.
 
 # 8) Prove 0.3.7 on the share host
 EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+# or: ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh verify-live
 ```
 
 Do **not** deploy a stale VPS tip that lags `main`.
