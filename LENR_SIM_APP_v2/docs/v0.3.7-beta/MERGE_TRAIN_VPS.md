@@ -44,14 +44,17 @@ Operator preflight (no merge):
 
 ```bash
 ./LENR_SIM_APP_v2/infrastructure/vps/scripts/check-merge-train.sh
-# Optional: prove FF train + VPS rebase in a throwaway worktree (no push)
+# Prove the *human* path (squash + rebase --onto) in a throwaway worktree (no push).
+# Default mode is squash; `ff` only checks ancestry and does *not* match GitHub squash.
 ./LENR_SIM_APP_v2/infrastructure/vps/scripts/dry-run-merge-train.sh
 ```
 
-Merging `#185 → #186 → #187 → #188 → #189` onto `origin/main` in a detached worktree
-was **all fast-forward, zero conflicts**. Stack tip is branch
-`consciousenergy/v037-share-uptime-prep-98d8`. Reconfirmed tip `dc91e3d` via
-`dry-run-merge-train.sh` (merged tip == share tip == VPS dry-rebase tip).
+**Do not** retarget stacked PRs onto `main` and squash without `git rebase --onto`.
+After `#185` lands as a squash, a naive `#186` merge hits add/add conflicts (docs +
+`BubbleFusionPage.jsx`). The executor rebases each remaining head `--onto origin/main`
+using the **pre-rebase** tip of the previous head as the cutoff, then force-pushes,
+retargets, waits for checks, and squash-merges. Reconfirmed tip `8df757a` via
+`dry-run-merge-train.sh squash` (squash tree == share tip tree == VPS dry-rebase tree).
 
 | Check | Result |
 |-------|--------|
@@ -90,17 +93,31 @@ EXPECT_VERSION=0.3.7-beta \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 ```
 
-Manual equivalent:
+Manual equivalent (must rebase --onto; naive retarget conflicts):
 
 ```bash
 # 1) Squash #185 (already targets main; CI green)
 gh pr merge 185 --squash --delete-branch=false
 
-# 2–5) Retarget each stacked PR to main, wait for CI, squash
-for n in 186 187 188 189; do
+# 2–5) Rebase each stacked head onto main, force-push, retarget, CI, squash.
+# Cutoff for each step is the *pre-rebase* tip of the previous head.
+git fetch origin
+cutoff=$(git rev-parse origin/consciousenergy/v0.3.7-beta-98d8)
+for row in \
+  "186|consciousenergy/v037-bubble-engine-truth-98d8" \
+  "187|consciousenergy/v037-bf-ui-honesty-98d8" \
+  "188|consciousenergy/v037-bubble-km-bridge-98d8" \
+  "189|consciousenergy/v037-share-uptime-prep-98d8"
+do
+  IFS='|' read -r n head <<<"$row"
+  old_head=$(git rev-parse "origin/$head")
+  git checkout -B "$head" "origin/$head"
+  git rebase --onto origin/main "$cutoff" "$head"
+  git push --force-with-lease origin "HEAD:refs/heads/$head"
   gh pr edit "$n" --base main
   gh pr checks "$n" --watch
   gh pr merge "$n" --squash --delete-branch=false
+  cutoff=$old_head
 done
 
 # 6) Close superseded / preview PRs
