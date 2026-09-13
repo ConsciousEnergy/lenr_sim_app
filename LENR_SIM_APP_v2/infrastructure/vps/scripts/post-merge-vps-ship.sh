@@ -62,26 +62,19 @@ print_plan() {
   cat <<EOF
 ==> Post-merge VPS ship plan (human-gated)
 
-# A) After operator says "merge the stack":
-gh pr merge 185 --repo $REPO --squash --delete-branch=false
-for n in 186 187 188 189; do
-  gh pr edit "\$n" --repo $REPO --base main
-  gh pr checks "\$n" --repo $REPO --watch
-  gh pr merge "\$n" --repo $REPO --squash --delete-branch=false
-done
-gh pr close $SUPERSEDE_PR --repo $REPO --comment "Superseded by #187 BF HUD readability + honesty."
-gh pr close $PREVIEW_PR --repo $REPO --comment "CI preview only; stack landed via #185–#189. Do not squash-merge."
+# A) Merge the stack FIRST via rebase --onto (naive retarget conflicts):
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/check-merge-train.sh
+CONFIRM=I_MERGE_STACK_0_3_7 EXECUTE=1 \\
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/merge-train-execute.sh merge
+# That path closes #$SUPERSEDE_PR and #$PREVIEW_PR after #185–#189 land.
+# Do NOT use bare \`gh pr edit --base main\` + squash for #186–#189.
 
-# B) Rebase VPS tip onto updated main and deploy (or run this script with ship):
-git fetch origin
-git checkout $VPS_BRANCH
-git rebase origin/main
-git push --force-with-lease origin $VPS_BRANCH
-gh workflow run deploy.yml --repo $REPO --ref $VPS_BRANCH
-# Wait for the dispatched run, then prove live:
-#   gh run watch <id> --repo $REPO --exit-status
+# B) Then ship VPS (this script):
+CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
+# ship rebases $VPS_BRANCH onto origin/main, dispatches deploy.yml,
+# waits for Build and Deploy (unless SKIP_WAIT=1), then fail-closes:
 #   EXPECT_VERSION=${EXPECT_VERSION} ./${VERIFY_SCRIPT}
-# (post-merge-vps-ship.sh ship does wait+verify unless SKIP_WAIT=1)
 
 # Swarm / Terraform / Pages apply remains deferred to v0.3.8-beta.
 EOF
