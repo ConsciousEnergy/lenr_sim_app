@@ -89,9 +89,8 @@ CONFIRM=I_MERGE_STACK_0_3_7 EXECUTE=1 \
 # Then ship (separate confirm):
 CONFIRM=I_SHIP_VPS_0_3_7 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-EXPECT_VERSION=0.3.7-beta \
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
-```
+# ship waits for Build and Deploy, then fail-closes via verify-beta-share.sh
+# (SKIP_WAIT=1 to dispatch-only)```
 
 Manual equivalent (must rebase --onto; naive retarget conflicts):
 

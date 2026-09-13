@@ -11,6 +11,9 @@
 #   CONFIRM=I_SHIP_VPS_0_3_7 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
 #
+# ship rebases the VPS branch, dispatches Build and Deploy, waits for that run
+# (unless SKIP_WAIT=1), then fail-closes on EXPECT_VERSION via verify-beta-share.sh.
+#
 # Preconditions for ship:
 #   - #185–#189 are MERGED (or ALLOW_UNMERGED=1 for rehearsal against a dry tip)
 #   - origin/main reports APP_VERSION=0.3.7-beta (unless ALLOW_UNMERGED=1)
@@ -75,9 +78,10 @@ git checkout $VPS_BRANCH
 git rebase origin/main
 git push --force-with-lease origin $VPS_BRANCH
 gh workflow run deploy.yml --repo $REPO --ref $VPS_BRANCH
-
-# C) Prove live share reports ${EXPECT_VERSION}:
-EXPECT_VERSION=${EXPECT_VERSION} ./${VERIFY_SCRIPT}
+# Wait for the dispatched run, then prove live:
+#   gh run watch <id> --repo $REPO --exit-status
+#   EXPECT_VERSION=${EXPECT_VERSION} ./${VERIFY_SCRIPT}
+# (post-merge-vps-ship.sh ship does wait+verify unless SKIP_WAIT=1)
 
 # Swarm / Terraform / Pages apply remains deferred to v0.3.8-beta.
 EOF
@@ -173,10 +177,54 @@ cmd_ship() {
     git push --force-with-lease origin "HEAD:refs/heads/$VPS_BRANCH"
   )
 
+  local before_epoch run_id i created_epoch
+  before_epoch="$(date -u +%s)"
   gh workflow run deploy.yml --repo "$REPO" --ref "$VPS_BRANCH"
   echo "Dispatched deploy.yml on $VPS_BRANCH"
-  echo "After Actions finishes:"
-  echo "  EXPECT_VERSION=$EXPECT_VERSION ./$VERIFY_SCRIPT"
+
+  if [[ "${SKIP_WAIT:-0}" == "1" ]]; then
+    echo "SKIP_WAIT=1 — not watching deploy; verify manually:"
+    echo "  EXPECT_VERSION=$EXPECT_VERSION ./$VERIFY_SCRIPT"
+    return 0
+  fi
+
+  echo "==> Waiting for Build and Deploy run on $VPS_BRANCH"
+  run_id=""
+  for i in $(seq 1 45); do
+    # Pick the newest run whose createdAt is at/after dispatch (allow 30s clock skew).
+    run_id="$(
+      gh run list --repo "$REPO" --workflow "Build and Deploy" --branch "$VPS_BRANCH" --limit 5 \
+        --json databaseId,createdAt,status,headSha \
+        | python3 -c "
+import json,sys,datetime
+before=${before_epoch}-30
+rows=json.load(sys.stdin)
+for r in rows:
+    ts=r.get('createdAt') or ''
+    try:
+        epoch=int(datetime.datetime.fromisoformat(ts.replace('Z','+00:00')).timestamp())
+    except Exception:
+        continue
+    if epoch >= before:
+        print(r['databaseId'])
+        break
+"
+    )"
+    if [[ -n "$run_id" ]]; then
+      break
+    fi
+    sleep 4
+  done
+  if [[ -z "$run_id" ]]; then
+    echo "ERROR: could not locate dispatched Build and Deploy run on $VPS_BRANCH" >&2
+    exit 1
+  fi
+  echo "Watching run $run_id"
+  gh run watch "$run_id" --repo "$REPO" --exit-status
+  echo "Deploy run $run_id succeeded"
+
+  echo "==> Prove live share reports $EXPECT_VERSION"
+  cmd_verify_live
 }
 
 case "$MODE" in
