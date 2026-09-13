@@ -78,20 +78,25 @@ fi
 
 echo "==> #185 CI (must be green on main before first squash)"
 if gh pr checks 185 --repo "$REPO" >/tmp/merge-train-185.checks 2>/dev/null; then
-  if grep -E 'fail|pending' /tmp/merge-train-185.checks >/dev/null 2>&1; then
-    # pending/fail lines that aren't skips
-    if awk 'tolower($2) ~ /fail/ {bad=1} tolower($2) ~ /pending/ {pend=1} END{exit (bad?1:0)}' /tmp/merge-train-185.checks; then
-      :
-    else
-      bad "#185 has failing checks"
-    fi
-    if awk 'tolower($2) ~ /pending/ {exit 0} END{exit 1}' /tmp/merge-train-185.checks; then
-      note "#185 still has pending checks"
-    fi
+  # gh pr checks: NAME<TAB>STATUS<TAB>...
+  if awk -F'\t' 'BEGIN{IGNORECASE=1} $2 ~ /fail/ {exit 0} END{exit 1}' /tmp/merge-train-185.checks; then
+    bad "#185 has failing checks"
   fi
-  ok "#185 checks listed (see gh pr checks 185)"
+  if awk -F'\t' 'BEGIN{IGNORECASE=1} $2 ~ /pending|in_progress|queued/ {exit 0} END{exit 1}' /tmp/merge-train-185.checks; then
+    note "#185 still has pending checks"
+  fi
+  if ! awk -F'\t' 'BEGIN{IGNORECASE=1} $1 ~ /^version-consistency$/ && $2 ~ /pass|success/ {found=1} END{exit !found}' /tmp/merge-train-185.checks; then
+    bad "#185 missing passing version-consistency check"
+  fi
+  if ! awk -F'\t' 'BEGIN{IGNORECASE=1} $1 ~ /^test \(/ && $2 ~ /pass|success/ {found=1} END{exit !found}' /tmp/merge-train-185.checks; then
+    bad "#185 missing passing test (3.x) job"
+  fi
+  if ! awk -F'\t' 'BEGIN{IGNORECASE=1} $1 ~ /^frontend$/ && $2 ~ /pass|success/ {found=1} END{exit !found}' /tmp/merge-train-185.checks; then
+    bad "#185 missing passing frontend check"
+  fi
+  ok "#185 required checks green (version-consistency, test, frontend)"
 else
-  note "could not list #185 checks"
+  bad "could not list #185 checks"
 fi
 
 echo "==> CI preview #190 latest Test and Benchmark on tip"
