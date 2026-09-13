@@ -198,7 +198,7 @@ cmd_merge() {
     CONFIRM="$SHIP_CONFIRM_TOKEN" EXECUTE=1 "$SHIP_SCRIPT" ship
   else
     echo "Run: CONFIRM=$SHIP_CONFIRM_TOKEN EXECUTE=1 $SHIP_SCRIPT ship"
-    echo "Then: EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh"
+    echo "ship waits for Build and Deploy then fail-closes on EXPECT_VERSION=0.3.7-beta"
     echo "(Optional one-shot after approval: SHIP=1 SHIP_CONFIRM=$SHIP_CONFIRM_TOKEN with merge)"
   fi
 }
