@@ -132,6 +132,6 @@ if (( fail )); then
   exit 1
 fi
 echo "RESULT: READY for human-gated squash merge #185→#189 ($warn warning(s))"
-echo "Next: optional ./LENR_SIM_APP_v2/infrastructure/vps/scripts/dry-run-merge-train.sh"
+echo "Next: optional ./LENR_SIM_APP_v2/infrastructure/vps/scripts/dry-run-merge-train.sh  # default=squash+rebase-onto"
 echo "Then follow LENR_SIM_APP_v2/docs/v0.3.7-beta/MERGE_TRAIN_VPS.md (do not merge #$PREVIEW_PR)."
 exit 0
