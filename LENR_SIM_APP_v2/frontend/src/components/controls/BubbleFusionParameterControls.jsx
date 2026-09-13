@@ -31,9 +31,11 @@ const PARAMETER_DESCRIPTIONS = {
   ambientTemperature: 'Ambient temperature of the liquid (K)',
   fluidType: 'Type of fluid for cavitation',
   gasType: 'Type of dissolved gas in the fluid',
-  gasFraction: 'Fraction of dissolved gas (0-1)',
-  timeStepSize: 'Time step for simulation (ns)',
-  totalSimulationTime: 'Total simulation time (μs)'
+  gasFraction: 'Fraction of dissolved gas (0–1)',
+  dynamicsMode:
+    'Bubble-dynamics model (legacy adiabatic default; RP/KM opt-in ODE core — KM is never auto-selected here)',
+  timeStepNs: 'Time step for simulation (ns)',
+  totalSimulationTimeUs: 'Total simulation time (μs)',
 };
 
 const DEFAULT_VALUES = {
@@ -48,6 +50,7 @@ const DEFAULT_VALUES = {
   // Gas parameters
   gasType: 'deuterium',
   gasFraction: 0.8, // fraction of dissolved gas
+  dynamicsMode: 'legacy',
   
   // Visualization options
   showPressureField: true,
@@ -270,6 +273,28 @@ const BubbleFusionParameterControls = ({
           </FormControl>
           
           {renderParameterSlider('gasFraction', 0, 1, 0.01, '')}
+
+          <FormControl fullWidth size="small" sx={{ mt: 2 }} id="dynamics-mode-control">
+            <InputLabel id="dynamics-mode-label" htmlFor="dynamics-mode">Dynamics model</InputLabel>
+            <Select
+              labelId="dynamics-mode-label"
+              id="dynamics-mode"
+              name="dynamicsMode"
+              value={params.dynamicsMode || 'legacy'}
+              label="Dynamics model"
+              onChange={handleSelectChange('dynamicsMode')}
+              aria-labelledby="dynamics-mode-label"
+              data-testid="bubble-fusion-dynamics-mode"
+            >
+              <MenuItem value="legacy">Legacy adiabatic (default)</MenuItem>
+              <MenuItem value="rayleigh_plesset">Rayleigh–Plesset ODE (opt-in)</MenuItem>
+              <MenuItem value="keller_miksis">Keller–Miksis ODE (opt-in)</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+            KM is never auto-selected on this page. Peak Mach is reported for honesty; Unified Theory
+            owns Mach≥0.3 auto-KM.
+          </Typography>
         </AccordionDetails>
       </Accordion>
 

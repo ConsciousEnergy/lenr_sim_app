@@ -33,11 +33,17 @@ claim tiers — then resume this queue.
 
 ### Phase B — Fidelity (gated)
 
-1. Bridge Bubble Fusion route to shared RP/KM core (`bubble_solver` /
-   `bubble_lattice_interaction`) instead of a third adiabatic calculator.
-2. Dynamics mode policy: RP for low Mach; auto/default KM when Mach ≥ 0.3.
-3. Collapse → tunneling handoff with explicit claim-tier labels.
-4. Verification gates: KM→RP limit, thermo consistency, finite P/v, no silent schematic.
+1. [x] Bridge Bubble Fusion route to shared RP/KM core (`bubble_solver` /
+   `bubble_lattice_interaction`) via opt-in `dynamics_mode` (default remains `legacy`).
+2. Dynamics mode policy: RP for low Mach; **auto/default KM when Mach ≥ 0.3 remains deferred**
+   on the Bubble Fusion page (Unified Theory already auto-selects KM for bounds). BF reports
+   `peak_mach` / `km_recommended` only.
+3. [x] Collapse → tunneling handoff with explicit claim-tier labels
+   (`tunneling_handoff` on BF response; UI surfaces status + claim tiers; never raises
+   empirical claim tiers).
+4. [x] Verification gates: KM→RP limit in `test_bubble_dynamics_gates`; BF response
+   finiteness + no silent schematic via `verification` block
+   (`test_bubble_fusion_dynamics_mode`).
 
 ### Phase C — Roadmap only (document)
 
@@ -56,4 +62,5 @@ Fusion numerics in the same PR train as A/B.
 - [x] Maturity ledger P0/P1 rows complete and badges live (EngineMaturityBadge on BF/QT/Unified/Theory Methods/Open Questions)
 - [x] Bubble Fusion dual-fetch bug triaged (see `BUG_TRIAGE.md`)
 - [x] Open Phase A branch: `consciousenergy/v037-bubble-engine-truth-98d8`
-- [ ] Then Phase B: `consciousenergy/v037-bubble-km-bridge-98d8`
+- [x] Phase B opt-in bridge + handoff/verification: `consciousenergy/v037-bubble-km-bridge-98d8`
+  (KM auto-default on BF page still deferred)

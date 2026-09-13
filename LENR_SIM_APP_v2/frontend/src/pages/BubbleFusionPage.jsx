@@ -126,6 +126,18 @@ export function mapBubbleFusionApiResults(apiResults) {
       collapse.peak_velocity_km_s,
       apiResults.peak_velocity_km_s,
     ),
+    peakMach: pickFiniteNumber(
+      collapse.peak_mach,
+      apiResults?.dynamics?.peak_mach,
+      apiResults.peak_mach,
+    ),
+    dynamicsModeUsed:
+      apiResults?.dynamics?.dynamics_mode_used
+      || apiResults?.parameters?.dynamics_mode
+      || null,
+    kmRecommended: Boolean(apiResults?.dynamics?.km_recommended),
+    tunnelingHandoff: apiResults?.tunneling_handoff || null,
+    verificationPassed: apiResults?.verification?.passed ?? null,
     rayleighPlesset: apiResults.rayleigh_plesset_dynamics,
     isLocalFallback: false,
     provenance: BF_PROVENANCE.PHYSICS_ENGINE,
@@ -148,7 +160,8 @@ const bubbleFusionAPI = {
         ambient_temperature_k: params.ambientTemperature || 298.0,
         fluid_type: params.fluidType || 'water',
         gas_type: params.gasType || 'deuterium',
-        gas_fraction: params.gasFraction || 0.8
+        gas_fraction: params.gasFraction || 0.8,
+        dynamics_mode: params.dynamicsMode || 'legacy',
       })
     });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -172,6 +185,8 @@ const BubbleFusionPage = () => {
     // Gas parameters
     gasType: 'deuterium',
     gasFraction: 0.8, // fraction of dissolved gas
+    // Phase B opt-in ODE core (legacy remains default; KM never auto-selected here)
+    dynamicsMode: 'legacy',
     
     // Visualization options (pressure rings default off — they obscure radius/phase HUD)
     showPressureField: false,
@@ -402,6 +417,58 @@ const BubbleFusionPage = () => {
                     : 'N/A'}
                 </Typography>
               </Box>
+
+              <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  data-testid="bubble-fusion-dynamics-mode-chip"
+                  label={`Dynamics: ${results.dynamicsModeUsed || parameters.dynamicsMode || 'legacy'}`}
+                />
+                <Chip
+                  size="small"
+                  color={results.kmRecommended ? 'warning' : 'default'}
+                  variant="outlined"
+                  data-testid="bubble-fusion-peak-mach-chip"
+                  label={
+                    results.peakMach != null
+                      ? `Peak Mach: ${Number(results.peakMach).toFixed(3)}`
+                      : 'Peak Mach: N/A'
+                  }
+                />
+                {results.kmRecommended && (
+                  <Typography variant="caption" color="warning.main">
+                    Mach≥0.3 — KM recommended (opt-in only on this page).
+                  </Typography>
+                )}
+              </Box>
+
+              {results.tunnelingHandoff && (
+                <Alert
+                  severity="info"
+                  sx={{ mb: 1 }}
+                  data-testid="bubble-fusion-tunneling-handoff"
+                >
+                  <Typography variant="body2" component="div">
+                    Tunneling handoff: <strong>{results.tunnelingHandoff.status}</strong>
+                    {' · '}
+                    collapse claim tier{' '}
+                    <code>{results.tunnelingHandoff.collapse_claim_tier}</code>
+                    {results.tunnelingHandoff.fusion_claim_tier && (
+                      <>
+                        {' · '}fusion claim tier{' '}
+                        <code>{results.tunnelingHandoff.fusion_claim_tier}</code>
+                      </>
+                    )}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {results.tunnelingHandoff.note}
+                    {results.verificationPassed === false
+                      ? ' Verification gates reported a problem — do not cite these peaks.'
+                      : ''}
+                  </Typography>
+                </Alert>
+              )}
               
               <Divider sx={{ my: 1 }} />
               <Typography variant="body2" sx={{ mt: 1 }}>
