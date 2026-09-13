@@ -71,7 +71,7 @@ retargets, waits for checks, and squash-merges. Reconfirmed tip `8df757a` via
 | CI preview #190 tip `52ffb6b` | **Test and Benchmark full green** ([run 34725341387](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34725341387)) — Terraform module dedupe `validate` OK + ansible syntax-check; check-merge-train READY; browser PostHog gate verified locally |
 | CI preview #190 tip `b0ec73d` | **Test and Benchmark full green** ([run 34726328172](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34726328172)) — tip evidence + READY; `post-merge-vps-ship.sh` plan/check added for human-gated VPS ship |
 | Live `verify-beta-share.sh` | share host OK (`0.3.6-beta`); `EXPECT_VERSION=0.3.7-beta` **fails closed** (exit 1); intended host WARN (WP CNAME) |
-| Dry-run merge #185→#189 onto `main` | **all fast-forward** (reconfirmed tip `dc91e3d` via `dry-run-merge-train.sh`; VPS rebase tip matches) |
+| Dry-run merge #185→#189 onto `main` | **FF ancestry OK**; **squash+rebase-onto OK** (tip `8df757a` via `dry-run-merge-train.sh squash`; tree == share == VPS dry-rebase). Naive retarget after squash **conflicts**. |
 | Deploy harden | CI SSH pins `git checkout $GITHUB_SHA`, forces `IMAGE_TAG=$APP_VERSION` + `UPDATE_ENV_IMAGE_TAG=1`; compose/default fallback `0.3.7-beta` |
 | Stack ancestry | engine ⊂ bf-ui ⊂ km ⊂ share (linear after lint-fix rebase) |
 
