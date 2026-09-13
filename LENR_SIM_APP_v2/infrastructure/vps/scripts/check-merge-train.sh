@@ -77,6 +77,7 @@ else
 fi
 
 echo "==> #185 CI (must be green on main before first squash)"
+fail_before=$fail
 if gh pr checks 185 --repo "$REPO" >/tmp/merge-train-185.checks 2>/dev/null; then
   # gh pr checks: NAME<TAB>STATUS<TAB>...
   if awk -F'\t' 'BEGIN{IGNORECASE=1} $2 ~ /fail/ {exit 0} END{exit 1}' /tmp/merge-train-185.checks; then
@@ -94,7 +95,10 @@ if gh pr checks 185 --repo "$REPO" >/tmp/merge-train-185.checks 2>/dev/null; the
   if ! awk -F'\t' 'BEGIN{IGNORECASE=1} $1 ~ /^frontend$/ && $2 ~ /pass|success/ {found=1} END{exit !found}' /tmp/merge-train-185.checks; then
     bad "#185 missing passing frontend check"
   fi
-  ok "#185 required checks green (version-consistency, test, frontend)"
+  # Only print OK when this section did not register any new FAILs (prior tip always OK'd).
+  if [[ "$fail" -eq "$fail_before" ]]; then
+    ok "#185 required checks green (version-consistency, test, frontend)"
+  fi
 else
   bad "could not list #185 checks"
 fi
