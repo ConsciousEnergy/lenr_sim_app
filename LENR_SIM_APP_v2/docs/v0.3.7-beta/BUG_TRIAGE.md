@@ -5,8 +5,8 @@ issue tracker — seed for Milestone issues.
 
 | id | class | summary | severity | status | next |
 |----|-------|---------|----------|--------|------|
-| BUG-BF-DUAL-FETCH | dual fetch | `BubbleFusionPage` and `BubbleFusionVisualizer` each POST `/api/physics/bubble-fusion`; one can succeed while the other shows schematic fallback | high (honesty) | open | Unify under page-owned fetch (deferred Phase A) |
-| BUG-BF-FALLBACK-COPY | honesty | Footer may still advertise WKB/RP while showing schematic N/A pressure/velocity | medium | open | Drive copy from provenance flag |
+| BUG-BF-DUAL-FETCH | dual fetch | `BubbleFusionPage` and `BubbleFusionVisualizer` each POST `/api/physics/bubble-fusion`; one can succeed while the other shows schematic fallback | high (honesty) | fixed (Phase A) | Page owns single POST; visualizer consumes `enginePayload` / `provenance` props |
+| BUG-BF-FALLBACK-COPY | honesty | Footer may still advertise WKB/RP while showing schematic N/A pressure/velocity | medium | fixed (Phase A) | Footer + alert driven by `provenance` (`physics_engine` vs `schematic_fallback`) |
 | BUG-ANALYTICS-403 | analytics honesty | Save-to-Analytics without write token must surface 403, not success toast / silent local-only | medium | partially fixed | Audit remaining toast paths |
 | BUG-AUTO-PERSIST | persist coupling | `LENR_AUTO_PERSIST=1` can write without SPA token; public beta relies on flag=0 | high (ops) | mitigated by default | Keep documented; never flip on public VPS casually |
 | BUG-RP-MACH-DOMAIN | physics domain | Default Rayleigh–Plesset may run outside valid Mach band; KM opt-in underused | medium | open | Deferred ENG-RP-KM-01 |

@@ -10,7 +10,7 @@ Critical path for responsible progress. Later work waits on earlier exits.
 
 ## After governance (deferred queue)
 
-4. **Multiphysics fidelity Phase A** — Bubble Fusion API truth + single fetch ([DEFERRED_MULTIPHYSICS_FIDELITY.md](./DEFERRED_MULTIPHYSICS_FIDELITY.md)).
+4. **Multiphysics fidelity Phase A** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8` (single-fetch + provenance). Next: Phase B KM bridge ([DEFERRED_MULTIPHYSICS_FIDELITY.md](./DEFERRED_MULTIPHYSICS_FIDELITY.md)).
 5. **Multiphysics fidelity Phase B** — Shared RP/KM core; verification gates.
 6. **OPEN scientific obligations** — Research tracks only; status stays OPEN in UI/MD/JSON/Lean.
 7. **Solver stubs / continuum aspirational** — Last (FEM, Poisson–Schrödinger, etc.).
@@ -25,6 +25,6 @@ Critical path for responsible progress. Later work waits on earlier exits.
 
 | Order | Branch | Purpose |
 |-------|--------|---------|
-| 1 | `consciousenergy/v037-bubble-engine-truth-98d8` | Phase A |
+| 1 | `consciousenergy/v037-bubble-engine-truth-98d8` | Phase A **done** (single-fetch + provenance; KM still deferred) |
 | 2 | `consciousenergy/v037-bubble-km-bridge-98d8` | Phase B |
 | 3 | `consciousenergy/v037-open-research-<q>-98d8` | Per OPEN question |

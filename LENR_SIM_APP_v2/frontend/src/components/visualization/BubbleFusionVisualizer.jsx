@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, CircularProgress, Paper } from '@mui/material';
-import api from '../../services/api';
 
 // Bubble fusion visualization component with real physics calculations
 const BubbleFusionVisualizer = ({
@@ -14,9 +13,12 @@ const BubbleFusionVisualizer = ({
   width = 800,
   height = 600,
   onRenderComplete = () => {},
-  fluidType = 'water',
-  gasType = 'deuterium',
-  gasFraction = 0.8
+  fluidType: _fluidType = 'water',
+  gasType: _gasType = 'deuterium',
+  gasFraction: _gasFraction = 0.8,
+  /** Page-owned engine/schematic payload — visualizer must not POST. */
+  enginePayload = null,
+  provenance = null,
 }) => {
   const canvasRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,79 +39,46 @@ const BubbleFusionVisualizer = ({
   const animationPeriod = 1 / frequency * 1000; // ms
   
   // Fetch physics calculation from backend
+  // Consume page-owned payload only — no duplicate POST /api/physics/bubble-fusion (BUG-BF-DUAL-FETCH).
   useEffect(() => {
-    const fetchPhysicsData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // Same-origin Caddy only proxies /api/* — bare /physics misses the backend.
-        const response = await api.post('/api/physics/bubble-fusion', {
-          initial_radius_um: initialRadius,
-          acoustic_pressure_bar: drivingPressureAmplitude,
-          frequency_khz: frequency,
-          ambient_pressure_bar: 1.0,
-          ambient_temperature_k: 298.0,
-          fluid_type: fluidType,
-          gas_type: gasType,
-          gas_fraction: gasFraction
-        });
-        
-        const data = response;
-        setIsLocalFallback(false);
-        setPhysicsData(data);
-        
-        // Update refs with real physics values
-        if (data.collapse_results) {
-          collapseTime.current = data.collapse_results.collapse_time_ns / 1e9;
-          maxTemperature.current = data.collapse_results.max_temperature_k;
-          minRadius.current = data.collapse_results.min_radius_um;
-        }
-        
-        console.log('Bubble fusion calculation:', data.collapse_results);
-      } catch (err) {
-        console.warn('API call failed, using fallback calculations', err);
-        setError(err.message || 'Failed to fetch physics data');
-        setIsLocalFallback(true);
-        
-        // Fallback to approximations
-        collapseTime.current = 0.5 / frequency;
-        maxTemperature.current = (1 + drivingPressureAmplitude) * 1000;
-        minRadius.current = initialRadius / (1 + drivingPressureAmplitude * 5);
-        const compressionRatio = initialRadius / Math.max(minRadius.current, 1e-9);
-        
-        // Create fallback physics data for onRenderComplete
-        const fallbackData = {
-          collapse_results: {
-            max_temperature_k: maxTemperature.current,
-            min_radius_um: minRadius.current,
-            collapse_time_ns: collapseTime.current * 1e9,
-            max_pressure_gpa: null,
-            compression_ratio: compressionRatio,
-            peak_velocity_km_s: null,
-            fusion_probability: 0 // Zero probability for fallback
-          }
-        };
-        setPhysicsData(fallbackData);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPhysicsData();
-    
-    // Reset animation
     setAnimationTime(0);
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
-    
+
+    if (!enginePayload) {
+      setIsLoading(false);
+      setPhysicsData(null);
+      setIsLocalFallback(false);
+      setError(null);
+      collapseTime.current = null;
+      maxTemperature.current = null;
+      minRadius.current = null;
+      return () => {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      };
+    }
+
+    const isSchematic =
+      provenance === 'schematic_fallback' || enginePayload.provenance === 'schematic_fallback';
+    setIsLocalFallback(isSchematic);
+    setPhysicsData(enginePayload);
+    setError(isSchematic ? 'Schematic fallback — not engine output' : null);
+    setIsLoading(false);
+
+    const collapse = enginePayload.collapse_results || {};
+    if (typeof collapse.collapse_time_ns === 'number') {
+      collapseTime.current = collapse.collapse_time_ns / 1e9;
+    } else if (typeof collapse.collapse_time_s === 'number') {
+      collapseTime.current = collapse.collapse_time_s;
+    }
+    maxTemperature.current = collapse.max_temperature_k ?? null;
+    minRadius.current = collapse.min_radius_um ?? null;
+
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [initialRadius, drivingPressureAmplitude, frequency, fluidType, gasType, gasFraction]);
+  }, [enginePayload, provenance]);
   
   // Function to render a frame
   const renderFrame = useCallback((time) => {
@@ -361,7 +330,27 @@ const BubbleFusionVisualizer = ({
           >
             <CircularProgress />
             <Typography variant="body2" color="textSecondary">
-              Computing bubble dynamics...
+              Waiting for page-owned simulation results...
+            </Typography>
+          </Box>
+        ) : !physicsData ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 2,
+            }}
+            data-testid="bubble-fusion-visualizer-idle"
+          >
+            <Typography variant="body2" color="textSecondary" align="center">
+              Run Simulation to load a single page-owned engine response.
+              This visualizer does not call the API on its own.
             </Typography>
           </Box>
         ) : null}
@@ -379,7 +368,7 @@ const BubbleFusionVisualizer = ({
               borderRadius: 1 
             }}
           >
-            Using approximate calculations
+            Schematic fallback — not engine output
           </Typography>
         ) : null}
         
@@ -454,8 +443,17 @@ const BubbleFusionVisualizer = ({
           Frequency: {frequency} kHz | Pressure: {drivingPressureAmplitude.toFixed(1)} bar | Initial Radius: {initialRadius.toFixed(1)} μm
         </Typography>
         
-        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-          Using WKB approximation with Rayleigh-Plesset dynamics
+        <Typography
+          variant="caption"
+          color={isLocalFallback ? 'warning.main' : 'textSecondary'}
+          sx={{ mt: 0.5 }}
+          data-testid="bubble-fusion-visualizer-provenance"
+        >
+          {!physicsData
+            ? 'Idle — run Simulation on the page to load engine/schematic results (no independent fetch).'
+            : isLocalFallback
+              ? 'Provenance: schematic_fallback — not physics-engine output; do not cite.'
+              : 'Provenance: physics_engine — Approximate Rayleigh–Plesset / adiabatic calculator (not lab data).'}
         </Typography>
       </Box>
     </Box>
@@ -474,7 +472,9 @@ BubbleFusionVisualizer.propTypes = {
   onRenderComplete: PropTypes.func,
   fluidType: PropTypes.string,
   gasType: PropTypes.string,
-  gasFraction: PropTypes.number
+  gasFraction: PropTypes.number,
+  enginePayload: PropTypes.object,
+  provenance: PropTypes.oneOf(['physics_engine', 'schematic_fallback', null]),
 };
 
 
