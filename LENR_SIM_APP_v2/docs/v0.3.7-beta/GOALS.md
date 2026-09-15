@@ -17,7 +17,7 @@
 
 7. **Phase A Bubble Fusion engine truth** — **done** on `consciousenergy/v037-bubble-engine-truth-98d8`: page-owned single fetch, provenance UI (`physics_engine` / `schematic_fallback`), healthy-backend browser evidence (unreachable banner absent).
 8. **BF UI readability / honesty** — **done** on `consciousenergy/v037-bf-ui-honesty-98d8`: fixed top HUD parity with private-beta readability; analytics empty-state / Lean≠lab-proof residuals.
-9. **Phase B gated KM bridge** — **done** on `consciousenergy/v037-bubble-km-bridge-98d8`: opt-in `dynamics_mode` (legacy|rayleigh_plesset|keller_miksis), Mach diagnostics, `tunneling_handoff` claim tiers, `verification` gates. **KM auto-default on BF remains deferred.**
+9. **Phase B gated KM bridge** — **done** on `consciousenergy/v037-bubble-km-bridge-98d8`: opt-in `dynamics_mode` (legacy|rayleigh_plesset|keller_miksis), Mach diagnostics, `tunneling_handoff` claim tiers, `verification` gates. **KM auto-default on BF** shipped on `consciousenergy/v038-km-auto-bf-98d8` (`dynamics_mode=auto`, Mach≥0.3 → KM).
 
 ## Deferred queue (in the plan, not implemented here)
 

@@ -576,6 +576,13 @@ def _attach_phase_b_blocks(payload: Dict[str, Any]) -> Dict[str, Any]:
     return to_json_safe(payload)
 
 
+# Mirror Unified Theory / collapse_calculated_bounds compressibility threshold.
+_KM_AUTO_MACH_THRESHOLD = 0.3
+_VALID_DYNAMICS_MODES = frozenset(
+    {"auto", "legacy", "rayleigh_plesset", "keller_miksis"}
+)
+
+
 def _simulate_bubble_fusion_ode(
     *,
     initial_radius_um: float,
@@ -586,12 +593,15 @@ def _simulate_bubble_fusion_ode(
     fluid_type: str,
     gas_type: str,
     dynamics_mode: str,
+    dynamics_mode_requested: str,
+    km_auto_selected: bool = False,
 ) -> Dict[str, Any]:
     """
     Phase B bridge: run the shared lattice-grade RP/KM ODE core for a single bubble.
 
-    Does not enable KM auto-default. Caller must pass an explicit
-    rayleigh_plesset or keller_miksis mode.
+    Caller passes an explicit rayleigh_plesset or keller_miksis mode. The
+    ``auto`` policy (probe RP → promote to KM when peak Mach ≥ 0.3) lives in
+    ``simulate_bubble_fusion`` and sets ``km_auto_selected`` when it re-runs KM.
     """
     from ..physics_engine.bubble_lattice_interaction import (
         BubbleLatticeInteraction,
@@ -648,7 +658,17 @@ def _simulate_bubble_fusion_ode(
     else:
         time_us, radius_um, temperature_k, pressure_bar = [], [], [], []
 
-    km_recommended = bool(peak_mach >= 0.3)
+    km_recommended = bool(peak_mach >= _KM_AUTO_MACH_THRESHOLD) or bool(km_auto_selected)
+    if dynamics_mode_requested == "auto":
+        note = (
+            "Auto dynamics policy (aligned with Unified Theory): Rayleigh–Plesset "
+            f"probe, then Keller–Miksis when peak Mach ≥ {_KM_AUTO_MACH_THRESHOLD}."
+        )
+    else:
+        note = (
+            "Explicit ODE bridge to the shared RP/KM core. "
+            "Use dynamics_mode=auto for Mach≥0.3 KM auto-default."
+        )
     return _attach_phase_b_blocks({
         "collapse_results": {
             "max_temperature_k": float(collapse.max_temperature),
@@ -682,58 +702,38 @@ def _simulate_bubble_fusion_ode(
             "ambient_temperature_k": ambient_temperature_k,
             "fluid_type": fluid_type,
             "gas_type": gas_type,
-            "dynamics_mode": dynamics_mode,
+            "dynamics_mode": dynamics_mode_requested,
+            "dynamics_mode_used": dynamics_mode,
         },
         "dynamics": {
+            "dynamics_mode_requested": dynamics_mode_requested,
             "dynamics_mode_used": dynamics_mode,
             "bounds_solver_used": dynamics_mode,
-            "km_auto_selected": False,
+            "km_auto_selected": bool(km_auto_selected),
             "km_recommended": km_recommended,
             "peak_mach": peak_mach,
             "compressibility_regime": dynamics.get(
                 "compressibility_regime", _compressibility_regime(peak_mach)
             ),
             "source": "bubble_lattice_interaction",
-            "note": (
-                "Opt-in ODE bridge to the shared RP/KM core. "
-                "KM is not auto-selected on the Bubble Fusion page (Phase B policy)."
-            ),
+            "note": note,
         },
     })
 
 
-def simulate_bubble_fusion(
-    initial_radius_um: float = 10.0,
-    acoustic_pressure_bar: float = 1.2,
-    frequency_khz: float = 20.0,
-    ambient_pressure_bar: float = 1.0,
-    ambient_temperature_k: float = 298.0,
-    fluid_type: str = "water",
-    gas_type: str = "deuterium",
-    gas_fraction: float = 0.8,
-    dynamics_mode: str = "legacy",
+def _simulate_bubble_fusion_legacy(
+    *,
+    initial_radius_um: float,
+    acoustic_pressure_bar: float,
+    frequency_khz: float,
+    ambient_pressure_bar: float,
+    ambient_temperature_k: float,
+    fluid_type: str,
+    gas_type: str,
+    gas_fraction: float,
+    dynamics_mode_requested: str = "legacy",
 ) -> Dict[str, Any]:
-    """
-    Convenience function for bubble fusion simulation.
-
-    dynamics_mode:
-      - legacy: adiabatic / quasi-static calculator (default, unchanged)
-      - rayleigh_plesset / keller_miksis: shared ODE core (opt-in Phase B bridge)
-    """
-    mode = (dynamics_mode or "legacy").strip().lower()
-    if mode in {"rayleigh_plesset", "keller_miksis"}:
-        return _simulate_bubble_fusion_ode(
-            initial_radius_um=initial_radius_um,
-            acoustic_pressure_bar=acoustic_pressure_bar,
-            frequency_khz=frequency_khz,
-            ambient_pressure_bar=ambient_pressure_bar,
-            ambient_temperature_k=ambient_temperature_k,
-            fluid_type=fluid_type,
-            gas_type=gas_type,
-            dynamics_mode=mode,
-        )
-
-    # Map string to enum
+    """Adiabatic / quasi-static calculator (explicit legacy mode)."""
     fluid_map = {
         "water": FluidType.WATER,
         "d2o": FluidType.DEUTERATED_WATER,
@@ -741,17 +741,17 @@ def simulate_bubble_fusion(
         "acetone": FluidType.ACETONE,
         "d_acetone": FluidType.DEUTERATED_ACETONE,
     }
-    
+
     gas_map = {
         "air": GasType.AIR,
         "argon": GasType.ARGON,
         "deuterium": GasType.DEUTERIUM,
         "xenon": GasType.XENON,
     }
-    
+
     fluid = fluid_map.get(fluid_type.lower(), FluidType.WATER)
     gas = gas_map.get(gas_type.lower(), GasType.DEUTERIUM)
-    
+
     params = BubbleSimulationParams(
         initial_radius_um=initial_radius_um,
         acoustic_pressure_bar=acoustic_pressure_bar,
@@ -760,15 +760,15 @@ def simulate_bubble_fusion(
         ambient_temperature_k=ambient_temperature_k,
         fluid_type=fluid,
         gas_type=gas,
-        gas_fraction=gas_fraction
+        gas_fraction=gas_fraction,
     )
-    
+
     calc = BubbleFusionCalculator()
     result = calc.simulate_collapse(params)
     timeseries = calc.calculate_bubble_dynamics_timeseries(params)
     fluid_props = FLUID_DATA.get(fluid, FLUID_DATA[FluidType.WATER])
     peak_mach = float(result.peak_velocity_m_s) / max(float(fluid_props.sound_speed), 1.0)
-    
+
     return _attach_phase_b_blocks({
         "collapse_results": {
             "max_temperature_k": result.max_temperature_k,
@@ -790,7 +790,7 @@ def simulate_bubble_fusion(
             "time_us": timeseries["time_us"].tolist(),
             "radius_um": timeseries["radius_um"].tolist(),
             "temperature_k": timeseries["temperature_k"].tolist(),
-            "pressure_bar": timeseries["pressure_bar"].tolist()
+            "pressure_bar": timeseries["pressure_bar"].tolist(),
         },
         "parameters": {
             "initial_radius_um": initial_radius_um,
@@ -801,22 +801,90 @@ def simulate_bubble_fusion(
             "fluid_type": fluid_type,
             "gas_type": gas_type,
             "gas_fraction": gas_fraction,
-            "dynamics_mode": "legacy",
+            "dynamics_mode": dynamics_mode_requested,
+            "dynamics_mode_used": "legacy",
         },
         "dynamics": {
+            "dynamics_mode_requested": dynamics_mode_requested,
             "dynamics_mode_used": "legacy",
             "bounds_solver_used": "legacy_adiabatic",
             "km_auto_selected": False,
-            "km_recommended": bool(peak_mach >= 0.3),
+            "km_recommended": bool(peak_mach >= _KM_AUTO_MACH_THRESHOLD),
             "peak_mach": peak_mach,
             "compressibility_regime": _compressibility_regime(peak_mach),
             "source": "bubble_fusion_adiabatic",
             "note": (
-                "Legacy adiabatic / quasi-static calculator. "
-                "Pass dynamics_mode=rayleigh_plesset|keller_miksis for the shared ODE core."
+                "Legacy adiabatic / quasi-static calculator (manual override). "
+                "Default dynamics_mode=auto uses the shared RP/KM ODE core."
             ),
         },
     })
+
+
+def simulate_bubble_fusion(
+    initial_radius_um: float = 10.0,
+    acoustic_pressure_bar: float = 1.2,
+    frequency_khz: float = 20.0,
+    ambient_pressure_bar: float = 1.0,
+    ambient_temperature_k: float = 298.0,
+    fluid_type: str = "water",
+    gas_type: str = "deuterium",
+    gas_fraction: float = 0.8,
+    dynamics_mode: str = "auto",
+) -> Dict[str, Any]:
+    """
+    Convenience function for bubble fusion simulation.
+
+    dynamics_mode:
+      - auto (default): Rayleigh–Plesset probe; Keller–Miksis when peak Mach ≥ 0.3
+      - legacy: adiabatic / quasi-static calculator (manual override)
+      - rayleigh_plesset / keller_miksis: shared ODE core (explicit)
+    """
+    requested = (dynamics_mode or "auto").strip().lower()
+    if requested not in _VALID_DYNAMICS_MODES:
+        requested = "auto"
+
+    ode_kwargs = dict(
+        initial_radius_um=initial_radius_um,
+        acoustic_pressure_bar=acoustic_pressure_bar,
+        frequency_khz=frequency_khz,
+        ambient_pressure_bar=ambient_pressure_bar,
+        ambient_temperature_k=ambient_temperature_k,
+        fluid_type=fluid_type,
+        gas_type=gas_type,
+    )
+
+    if requested == "legacy":
+        return _simulate_bubble_fusion_legacy(
+            **ode_kwargs,
+            gas_fraction=gas_fraction,
+            dynamics_mode_requested="legacy",
+        )
+
+    if requested in {"rayleigh_plesset", "keller_miksis"}:
+        return _simulate_bubble_fusion_ode(
+            **ode_kwargs,
+            dynamics_mode=requested,
+            dynamics_mode_requested=requested,
+            km_auto_selected=False,
+        )
+
+    # auto: mirror Unified Theory — RP first, promote to KM when Mach warrants.
+    probe = _simulate_bubble_fusion_ode(
+        **ode_kwargs,
+        dynamics_mode="rayleigh_plesset",
+        dynamics_mode_requested="auto",
+        km_auto_selected=False,
+    )
+    peak_mach = float(probe["dynamics"].get("peak_mach", 0.0))
+    if peak_mach >= _KM_AUTO_MACH_THRESHOLD:
+        return _simulate_bubble_fusion_ode(
+            **ode_kwargs,
+            dynamics_mode="keller_miksis",
+            dynamics_mode_requested="auto",
+            km_auto_selected=True,
+        )
+    return probe
 
 
 # Export

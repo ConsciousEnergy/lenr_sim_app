@@ -21,7 +21,7 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | EQ-OPEN-YIELD-01 | Do **not** claim integrated yield discharge | Ledger | `EQ-OPEN-YIELD-01` | [latex/eq_open_yield_01.tex](./latex/eq_open_yield_01.tex) | Yield-band DEF in FORMAL_PROOF_STATUS — **OPEN** (no discharge) |
 | WH-ENP-01 | Exploratory bounds only | Ledger | `WH-ENP-01` | (see MEV/RAD/RATE stubs) | IR [`EQ-WH-ENP-01.yaml`](../../../formalization/ir/equations/EQ-WH-ENP-01.yaml); Lean WorkingHypothesis* — **does not close OPEN** |
 | ENG-BUBBLE-FUSION-01 | Approximate / schematic unless provenance=`physics_engine` | Ledger + BUG_TRIAGE | `ENG-BUBBLE-FUSION-01` | [latex/eng_bubble_fusion_01.tex](./latex/eng_bubble_fusion_01.tex) | No Lean / IR row yet — numerical/schematic only |
-| ENG-RP-KM-01 | RP domain-limited; KM preferred at high Mach | Ledger + PHYS verification | `ENG-RP-KM-01` | [latex/eng_rp_km_01.tex](./latex/eng_rp_km_01.tex) | Partial / domain (PHYS verification); KM default **deferred** |
+| ENG-RP-KM-01 | RP domain-limited; KM preferred at high Mach | Ledger + PHYS verification | `ENG-RP-KM-01` | [latex/eng_rp_km_01.tex](./latex/eng_rp_km_01.tex) | Partial / domain (PHYS verification); KM auto Mach≥0.3 on Unified + BF |
 | ENG-WKB-01 | Established WKB/Gamow reference; screening domain-limited | Ledger | `ENG-WKB-01` | (existing PHYS docs) | Lean `Gamow` monotonicity **PROVED**; screening still domain-limited |
 | ENG-ASPIRATIONAL-FEM-01 | Not on VPS | Theory Methods honesty | `ENG-ASPIRATIONAL-FEM-01` | — | No Lean / IR — aspirational only |
 

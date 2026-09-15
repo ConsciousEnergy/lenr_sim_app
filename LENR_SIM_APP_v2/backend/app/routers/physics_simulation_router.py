@@ -567,13 +567,13 @@ class BubbleFusionRequest(BaseModel):
     fluid_type: str = Field(default="water", description="Working fluid type")
     gas_type: str = Field(default="deuterium", description="Bubble gas type")
     gas_fraction: float = Field(default=0.8, description="Fraction of fusible gas")
-    # Phase B opt-in: legacy (default) | rayleigh_plesset | keller_miksis.
-    # KM is never auto-selected here — Unified Theory owns Mach≥0.3 auto-KM.
+    # Default auto: RP probe → KM when peak Mach ≥ 0.3 (aligned with Unified).
+    # Explicit legacy | rayleigh_plesset | keller_miksis remain manual overrides.
     dynamics_mode: str = Field(
-        default="legacy",
+        default="auto",
         description=(
-            "Bubble-dynamics model: 'legacy' (adiabatic/quasi-static, default), "
-            "'rayleigh_plesset', or 'keller_miksis' (shared ODE core; opt-in only)."
+            "Bubble-dynamics model: 'auto' (default; KM when peak Mach ≥ 0.3), "
+            "'legacy' (adiabatic/quasi-static), 'rayleigh_plesset', or 'keller_miksis'."
         ),
     )
 
@@ -582,9 +582,10 @@ class BubbleFusionRequest(BaseModel):
 async def simulate_bubble_fusion_endpoint(request: BubbleFusionRequest):
     """
     Simulate acoustic cavitation (bubble) fusion.
-    
-    Default dynamics_mode=legacy preserves the adiabatic calculator.
-    Pass dynamics_mode=rayleigh_plesset|keller_miksis for the shared ODE core.
+
+    Default dynamics_mode=auto uses the shared RP/KM ODE core and selects
+    Keller–Miksis when peak Mach ≥ 0.3. Pass legacy|rayleigh_plesset|keller_miksis
+    for an explicit override.
     """
     try:
         from ..physics.bubble_fusion import simulate_bubble_fusion
@@ -623,12 +624,17 @@ async def get_bubble_fusion_defaults():
             "fluid_type": "water",
             "gas_type": "deuterium",
             "gas_fraction": 0.8,
-            "dynamics_mode": "legacy",
+            "dynamics_mode": "auto",
         },
         "options": {
             "fluid_types": ["water", "d2o", "acetone", "d_acetone"],
             "gas_types": ["air", "argon", "deuterium", "xenon"],
-            "dynamics_modes": ["legacy", "rayleigh_plesset", "keller_miksis"],
+            "dynamics_modes": [
+                "auto",
+                "legacy",
+                "rayleigh_plesset",
+                "keller_miksis",
+            ],
         },
         "limits": {
             "initial_radius_um": {"min": 0.1, "max": 1000},

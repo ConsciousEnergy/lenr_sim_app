@@ -1,4 +1,4 @@
-"""Phase B: Bubble Fusion dynamics_mode opt-in + Mach diagnostics."""
+"""Bubble Fusion dynamics_mode: auto KM policy + explicit overrides + Mach diagnostics."""
 
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ def test_bubble_fusion_legacy_reports_peak_mach_without_auto_km() -> None:
     data = resp.json()
     assert "collapse_results" in data
     assert "dynamics" in data
+    assert data["dynamics"]["dynamics_mode_requested"] == "legacy"
     assert data["dynamics"]["dynamics_mode_used"] == "legacy"
     assert data["dynamics"]["km_auto_selected"] is False
     assert isinstance(data["dynamics"]["peak_mach"], (int, float))
@@ -46,19 +47,21 @@ def test_bubble_fusion_rayleigh_plesset_opt_in_uses_shared_ode() -> None:
     )
     assert resp.status_code == 200
     data = resp.json()
+    assert data["dynamics"]["dynamics_mode_requested"] == "rayleigh_plesset"
     assert data["dynamics"]["dynamics_mode_used"] == "rayleigh_plesset"
     assert data["dynamics"]["source"] == "bubble_lattice_interaction"
     assert data["dynamics"]["km_auto_selected"] is False
     assert data["collapse_results"]["max_temperature_k"] > 0
 
 
-def test_bubble_fusion_keller_miksis_opt_in_not_default() -> None:
+def test_bubble_fusion_keller_miksis_explicit_not_auto() -> None:
     resp = _client().post(
         "/api/physics/bubble-fusion",
         json=_payload(dynamics_mode="keller_miksis"),
     )
     assert resp.status_code == 200
     data = resp.json()
+    assert data["dynamics"]["dynamics_mode_requested"] == "keller_miksis"
     assert data["dynamics"]["dynamics_mode_used"] == "keller_miksis"
     assert data["dynamics"]["km_auto_selected"] is False
 
@@ -67,9 +70,11 @@ def test_bubble_fusion_defaults_list_dynamics_modes() -> None:
     resp = _client().get("/api/physics/bubble-fusion/defaults")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["defaults"]["dynamics_mode"] == "legacy"
+    assert data["defaults"]["dynamics_mode"] == "auto"
+    assert "auto" in data["options"]["dynamics_modes"]
     assert "keller_miksis" in data["options"]["dynamics_modes"]
     assert "rayleigh_plesset" in data["options"]["dynamics_modes"]
+    assert "legacy" in data["options"]["dynamics_modes"]
 
 
 def test_bubble_fusion_includes_tunneling_handoff_and_verification() -> None:
@@ -115,7 +120,7 @@ def test_bubble_fusion_ode_km_damps_under_mild_drive() -> None:
 
 
 def test_bubble_fusion_ode_strong_drive_stays_honest() -> None:
-    """Default BF ODE drive: finite peaks, no KM auto-select, verification on."""
+    """Explicit KM ODE drive: finite peaks, no false auto flag, verification on."""
     client = _client()
     km = client.post(
         "/api/physics/bubble-fusion",
@@ -127,3 +132,68 @@ def test_bubble_fusion_ode_strong_drive_stays_honest() -> None:
     assert float(km["collapse_results"]["peak_mach"]) >= 0
     assert km["verification"]["passed"] is True
     assert km["tunneling_handoff"]["empirical_claim_tiers_raised"] is False
+
+
+def test_bubble_fusion_auto_selects_km_when_mach_high() -> None:
+    """High-drive auto policy mirrors Unified: RP probe Mach≥0.3 → KM auto-selected."""
+    resp = _client().post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="auto", acoustic_pressure_bar=4.0),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    dyn = data["dynamics"]
+    assert dyn["dynamics_mode_requested"] == "auto"
+    assert dyn["dynamics_mode_used"] == "keller_miksis"
+    assert dyn["km_auto_selected"] is True
+    assert dyn["km_recommended"] is True
+    assert dyn["source"] == "bubble_lattice_interaction"
+    assert float(dyn["peak_mach"]) >= 0.0
+    assert data["verification"]["passed"] is True
+    assert data["tunneling_handoff"]["empirical_claim_tiers_raised"] is False
+
+
+def test_bubble_fusion_auto_keeps_rp_at_default_drive() -> None:
+    """Default BF drive stays under Mach 0.3 on the RP probe → no KM auto-select."""
+    resp = _client().post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="auto"),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    dyn = data["dynamics"]
+    assert dyn["dynamics_mode_requested"] == "auto"
+    assert float(dyn["peak_mach"]) < 0.3
+    assert dyn["dynamics_mode_used"] == "rayleigh_plesset"
+    assert dyn["km_auto_selected"] is False
+    assert data["verification"]["passed"] is True
+
+
+def test_bubble_fusion_auto_keeps_rp_when_mach_low() -> None:
+    """Mild drive under auto stays on Rayleigh–Plesset (no KM auto-select)."""
+    resp = _client().post(
+        "/api/physics/bubble-fusion",
+        json=_payload(dynamics_mode="auto", acoustic_pressure_bar=0.3),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    dyn = data["dynamics"]
+    assert dyn["dynamics_mode_requested"] == "auto"
+    assert float(dyn["peak_mach"]) < 0.3
+    assert dyn["dynamics_mode_used"] == "rayleigh_plesset"
+    assert dyn["km_auto_selected"] is False
+    assert data["verification"]["passed"] is True
+
+
+def test_bubble_fusion_omitted_mode_defaults_to_auto_policy() -> None:
+    """Omitting dynamics_mode engages the auto default (additive contract)."""
+    body = _payload()
+    del body["dynamics_mode"]
+    resp = _client().post("/api/physics/bubble-fusion", json=body)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["dynamics"]["dynamics_mode_requested"] == "auto"
+    assert data["dynamics"]["dynamics_mode_used"] in {
+        "rayleigh_plesset",
+        "keller_miksis",
+    }

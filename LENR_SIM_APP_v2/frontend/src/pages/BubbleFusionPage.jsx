@@ -133,9 +133,15 @@ export function mapBubbleFusionApiResults(apiResults) {
     ),
     dynamicsModeUsed:
       apiResults?.dynamics?.dynamics_mode_used
+      || apiResults?.parameters?.dynamics_mode_used
+      || apiResults?.parameters?.dynamics_mode
+      || null,
+    dynamicsModeRequested:
+      apiResults?.dynamics?.dynamics_mode_requested
       || apiResults?.parameters?.dynamics_mode
       || null,
     kmRecommended: Boolean(apiResults?.dynamics?.km_recommended),
+    kmAutoSelected: Boolean(apiResults?.dynamics?.km_auto_selected),
     tunnelingHandoff: apiResults?.tunneling_handoff || null,
     verificationPassed: apiResults?.verification?.passed ?? null,
     rayleighPlesset: apiResults.rayleigh_plesset_dynamics,
@@ -161,7 +167,7 @@ const bubbleFusionAPI = {
         fluid_type: params.fluidType || 'water',
         gas_type: params.gasType || 'deuterium',
         gas_fraction: params.gasFraction || 0.8,
-        dynamics_mode: params.dynamicsMode || 'legacy',
+        dynamics_mode: params.dynamicsMode || 'auto',
       })
     });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -185,8 +191,8 @@ const BubbleFusionPage = () => {
     // Gas parameters
     gasType: 'deuterium',
     gasFraction: 0.8, // fraction of dissolved gas
-    // Phase B opt-in ODE core (legacy remains default; KM never auto-selected here)
-    dynamicsMode: 'legacy',
+    // Auto default: RP probe → KM when Mach≥0.3; legacy/RP/KM remain manual overrides
+    dynamicsMode: 'auto',
     
     // Visualization options (pressure rings default off — they obscure radius/phase HUD)
     showPressureField: false,
@@ -423,7 +429,7 @@ const BubbleFusionPage = () => {
                   size="small"
                   variant="outlined"
                   data-testid="bubble-fusion-dynamics-mode-chip"
-                  label={`Dynamics: ${results.dynamicsModeUsed || parameters.dynamicsMode || 'legacy'}`}
+                  label={`Dynamics: ${results.dynamicsModeUsed || parameters.dynamicsMode || 'auto'}`}
                 />
                 <Chip
                   size="small"
@@ -436,9 +442,22 @@ const BubbleFusionPage = () => {
                       : 'Peak Mach: N/A'
                   }
                 />
-                {results.kmRecommended && (
+                {results.kmAutoSelected && (
+                  <Chip
+                    size="small"
+                    color="info"
+                    data-testid="bubble-fusion-km-auto-chip"
+                    label="KM auto-selected"
+                  />
+                )}
+                {results.kmRecommended && !results.kmAutoSelected && (
                   <Typography variant="caption" color="warning.main">
-                    Mach≥0.3 — KM recommended (opt-in only on this page).
+                    Mach≥0.3 — Keller–Miksis recommended (select Auto or KM).
+                  </Typography>
+                )}
+                {results.kmAutoSelected && (
+                  <Typography variant="caption" color="info.main">
+                    Mach≥0.3 — Keller–Miksis auto-selected (override available).
                   </Typography>
                 )}
               </Box>

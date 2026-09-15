@@ -107,7 +107,7 @@
       "artifacts": ["md", "json", "tex"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "KM auto-default when Mach warrants (deferred); keep EQ-OPEN-* open"
+      "rd_next": "Keep EQ-OPEN-* open; Phase C EOS/FEM still deferred"
     },
     {
       "id": "ENG-RP-KM-01",
@@ -122,7 +122,7 @@
       "artifacts": ["md", "json", "lean", "tex"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "KM default when Mach warrants"
+      "rd_next": "Monitor domain limits; keep EQ-OPEN-* open"
     },
     {
       "id": "ENG-WKB-01",

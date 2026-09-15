@@ -33,7 +33,7 @@ const PARAMETER_DESCRIPTIONS = {
   gasType: 'Type of dissolved gas in the fluid',
   gasFraction: 'Fraction of dissolved gas (0–1)',
   dynamicsMode:
-    'Bubble-dynamics model (legacy adiabatic default; RP/KM opt-in ODE core — KM is never auto-selected here)',
+    'Bubble-dynamics model (auto default: KM when Mach≥0.3; legacy/RP/KM manual overrides)',
   timeStepNs: 'Time step for simulation (ns)',
   totalSimulationTimeUs: 'Total simulation time (μs)',
 };
@@ -50,7 +50,7 @@ const DEFAULT_VALUES = {
   // Gas parameters
   gasType: 'deuterium',
   gasFraction: 0.8, // fraction of dissolved gas
-  dynamicsMode: 'legacy',
+  dynamicsMode: 'auto',
   
   // Visualization options
   showPressureField: true,
@@ -280,20 +280,21 @@ const BubbleFusionParameterControls = ({
               labelId="dynamics-mode-label"
               id="dynamics-mode"
               name="dynamicsMode"
-              value={params.dynamicsMode || 'legacy'}
+              value={params.dynamicsMode || 'auto'}
               label="Dynamics model"
               onChange={handleSelectChange('dynamicsMode')}
               aria-labelledby="dynamics-mode-label"
               data-testid="bubble-fusion-dynamics-mode"
             >
-              <MenuItem value="legacy">Legacy adiabatic (default)</MenuItem>
-              <MenuItem value="rayleigh_plesset">Rayleigh–Plesset ODE (opt-in)</MenuItem>
-              <MenuItem value="keller_miksis">Keller–Miksis ODE (opt-in)</MenuItem>
+              <MenuItem value="auto">Auto (KM when Mach≥0.3)</MenuItem>
+              <MenuItem value="legacy">Legacy adiabatic (override)</MenuItem>
+              <MenuItem value="rayleigh_plesset">Rayleigh–Plesset ODE (override)</MenuItem>
+              <MenuItem value="keller_miksis">Keller–Miksis ODE (override)</MenuItem>
             </Select>
           </FormControl>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-            KM is never auto-selected on this page. Peak Mach is reported for honesty; Unified Theory
-            owns Mach≥0.3 auto-KM.
+            Auto probes Rayleigh–Plesset and selects Keller–Miksis when peak Mach≥0.3
+            (same policy as Unified Theory). Legacy / RP / KM remain manual overrides.
           </Typography>
         </AccordionDetails>
       </Accordion>

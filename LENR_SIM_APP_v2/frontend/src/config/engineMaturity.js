@@ -63,14 +63,14 @@ export const ENGINE_MATURITY = {
     label: 'approximate',
     shortTitle: 'Bubble Fusion engine',
     description:
-      'Simplified / approximate collapse model. Schematic local fallback must not be cited as engine output.',
+      'Approximate collapse model with auto KM when Mach≥0.3. Schematic local fallback must not be cited as engine output.',
   },
   'ENG-RP-KM-01': {
     id: 'ENG-RP-KM-01',
     label: 'approximate',
     shortTitle: 'RP / KM dynamics',
     description:
-      'Rayleigh–Plesset default is domain-limited; Keller–Miksis preferred at higher Mach (deferred default change).',
+      'Rayleigh–Plesset for low Mach; Keller–Miksis auto-selected when peak Mach≥0.3 (Unified + Bubble Fusion).',
   },
   'ENG-WKB-01': {
     id: 'ENG-WKB-01',
