@@ -112,6 +112,28 @@
       no_log: true
       
     # ==========================================================================
+    # GHCR login (required before --with-registry-auth stack deploy)
+    # ==========================================================================
+
+    - name: Require GHCR credentials for private image pulls
+      ansible.builtin.assert:
+        that:
+          - ghcr_username is defined
+          - ghcr_username | length > 0
+          - ghcr_token is defined
+          - ghcr_token | length > 0
+        fail_msg: >-
+          Set ghcr_username + ghcr_token (Ansible Vault or env via
+          --extra-vars) before deploy-stack.yml. Prep docs:
+          docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md
+
+    - name: Log in to GitHub Container Registry
+      ansible.builtin.shell: |
+        echo "{{ ghcr_token }}" | docker login ghcr.io -u "{{ ghcr_username }}" --password-stdin
+      no_log: true
+      changed_when: false
+
+    # ==========================================================================
     # Deploy Stack
     # ==========================================================================
     

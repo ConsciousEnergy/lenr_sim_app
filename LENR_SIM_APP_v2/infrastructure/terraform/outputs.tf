@@ -16,19 +16,19 @@ output "api_url" {
 }
 
 output "vps_ip" {
-  description = "VPS public IPv4 address"
-  value       = module.hostinger.vps_ipv4
+  description = "VPS public IPv4 address (existing live IP unless create_new)"
+  value       = local.vps_ipv4
   sensitive   = false
 }
 
 output "vps_hostname" {
-  description = "VPS hostname"
-  value       = module.hostinger.vps_hostname
+  description = "VPS hostname (create_new only; else empty)"
+  value       = try(module.hostinger[0].vps_hostname, "")
 }
 
 output "ssh_connection" {
   description = "SSH connection command"
-  value       = "ssh -i ~/.ssh/lenr-sim-deploy root@${module.hostinger.vps_ipv4}"
+  value       = "ssh -i ~/.ssh/lenr-sim-deploy root@${local.vps_ipv4}"
 }
 
 output "r2_bucket_name" {
@@ -44,8 +44,10 @@ output "r2_simulations_bucket" {
 output "terraform_state_info" {
   description = "Information about Terraform state"
   value = {
-    environment = var.environment
-    domain      = var.domain
-    region      = "global"
+    environment         = var.environment
+    domain              = var.domain
+    hostinger_vps_mode  = var.hostinger_vps_mode
+    pages_hostname      = var.pages_hostname
+    region              = "global"
   }
 }

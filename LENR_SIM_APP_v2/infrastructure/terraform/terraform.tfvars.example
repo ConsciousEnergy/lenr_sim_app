@@ -55,3 +55,13 @@ github_repo  = "lenr_sim_app"
 # Pages production deploy follows this branch in the v0.3.8-beta cutover
 # (do not terraform apply while v0.3.7 is still on VPS Compose).
 pages_production_branch = "lenr_sim_app_v0.3.8-beta"
+
+# Pages SPA hostname — NEVER @ or www (WordPress keeps marketing apex).
+pages_hostname = "app"
+
+# Hostinger: disabled by default (refuse blind create vs live 185.211.4.66).
+# create_new additionally requires confirm_hostinger_create = "I_CREATE_NEW_VPS"
+hostinger_vps_mode = "disabled"
+existing_vps_ipv4  = "185.211.4.66"
+manage_api_dns     = false
+# confirm_hostinger_create = "I_CREATE_NEW_VPS"
