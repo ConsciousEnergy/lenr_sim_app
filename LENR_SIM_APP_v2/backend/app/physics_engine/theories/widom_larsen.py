@@ -66,6 +66,26 @@ Q_INVERSE_BETA_MEV = Q_INVERSE_BETA_J / (1e6 * E_CHARGE)
 ULM_CHAIN_RATE_TO_ENHANCEMENT = 1e10  # model assumption
 
 
+def electroweak_sequence_stages(
+    *,
+    mass_sufficient: bool,
+    neutron_rate: float,
+    capture_rate: float,
+) -> Dict[str, Any]:
+    """ARA P1 scaffold: expose WL entrance sequence without changing numerics yet.
+
+    Stages are observational bookkeeping for fidelity rebuilds; they do not
+    close EQ-OPEN-EC-01 or endorse the mechanism.
+    """
+    return {
+        "spp_mass_renormalization": "evaluated",
+        "inverse_beta_threshold_met": bool(mass_sufficient),
+        "ulm_neutron_production": float(neutron_rate),
+        "local_capture": float(capture_rate),
+        "p1_rebuild_status": "started_scaffold",
+    }
+
+
 class WidomLarsenTheory:
     """Ultra-low momentum neutron production via weak interaction on surfaces."""
 
@@ -209,6 +229,7 @@ class WidomLarsenTheory:
                 "product_neutrons": 0.0,  # ULM neutrons absorbed locally
                 "product_gamma": 0.0,  # gamma shielded by heavy electrons
                 "product_transmutation": transmutation_fraction,
+                "electroweak_inverse_beta_met": 1.0 if mass_sufficient else 0.0,
             },
             parameters_used={
                 "temperature": T,
@@ -227,6 +248,45 @@ class WidomLarsenTheory:
                 "Tennfors E. (2013) Eur. Phys. J. Plus 128, 15 [critique] "
                 "doi:10.1140/epjp/i2013-13015-3",
             ],
+            primary_sources=[
+                "Widom A. & Larsen L. (2006) Eur. Phys. J. C 46, 107",
+                "Widom A. & Larsen L. (2007) arXiv:nucl-th/0608059v2",
+            ],
+            theory_model_version="widom_larsen_p0_v1",
+            author_equations_vs_simulator_approximations={
+                "entrance_channel": "author_hypothesis_electroweak_ULM",
+                "ULM_CHAIN_RATE_TO_ENHANCEMENT": "simulator_approximation",
+                "not_dd_tunneling": "author_claim",
+            },
+            free_or_fitted_parameters=[
+                {
+                    "name": "ULM_CHAIN_RATE_TO_ENHANCEMENT",
+                    "kind": "free",
+                    "source": "simulator",
+                    "note": "Uncited dimensional bridge; not from Widom–Larsen papers",
+                },
+            ],
+            source_domain_limits=[
+                "Requires collective surface plasmon / heavy-electron threshold for e-+p→n+ν.",
+                "Do not recast as enhanced D-D Coulomb tunneling.",
+            ],
+            model_fidelity="approximate",
+            empirical_support="speculative",
+            falsification_conditions=[
+                "ULM neutron production must turn off when mass-renormalization threshold is unmet.",
+                "Product pattern should resemble neutron-capture network, not D-D branching.",
+            ],
+            provenance={
+                "entrance_channel": "electroweak_ulm_neutron",
+                "not_dd_tunneling": True,
+                "implementation_role": "equation_driven_with_simulator_scale",
+                "p1_rebuild_status": "started_scaffold",
+                "electroweak_sequence": electroweak_sequence_stages(
+                    mass_sufficient=mass_sufficient,
+                    neutron_rate=n_production_rate,
+                    capture_rate=n_production_rate if mass_sufficient else 0.0,
+                ),
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -242,6 +302,13 @@ class WidomLarsenTheory:
                 "doi:10.1140/epjp/i2013-13015-3",
             ],
             category="mechanism",
+            primary_sources=[
+                "Widom A. & Larsen L. (2006) Eur. Phys. J. C 46, 107",
+                "Widom A. & Larsen L. (2007) arXiv:nucl-th/0608059v2",
+            ],
+            theory_model_version="widom_larsen_p0_v1",
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

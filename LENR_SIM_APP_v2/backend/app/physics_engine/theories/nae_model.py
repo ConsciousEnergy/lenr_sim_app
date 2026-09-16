@@ -181,7 +181,41 @@ class NAEModelTheory:
             references=[
                 "Storms E. (2007) The Science of Low Energy Nuclear Reaction",
                 "Storms E. (2014) The Explanation of LENR",
+                "Storms E. (2012) JCMNS 9 — An Explanation of LENR",
+                "Storms E. (2013) JCMNS 11 — Role of Voids",
+                "Storms E. (2026) JCMNS 41 — New and Improved Understanding",
             ],
+            primary_sources=[
+                "Storms E. (2012) JCMNS 9",
+                "Storms E. (2013) JCMNS 11",
+                "Storms E. (2026) JCMNS 41",
+            ],
+            theory_model_version="storms_nae_2012_13",
+            author_equations_vs_simulator_approximations={
+                "crack_width_filter": "simulator_approximation",
+                "site_density_enhancement": "simulator_approximation",
+                "nae_voids_2012_13": "author_hypothesis",
+                "electron_channel_2026": "author_hypothesis_metadata_only_p0",
+            },
+            free_or_fitted_parameters=[
+                {"name": "crack_width_nm", "kind": "free", "source": "user"},
+                {"name": "site_density_m2", "kind": "free", "source": "user"},
+            ],
+            source_domain_limits=[
+                "NAE requires viable nanocrack/void population; no LENR without NAE.",
+                "2026 electron-assisted channel is metadata-tagged; full dynamics = 0.3.9 P1.",
+            ],
+            model_fidelity="approximate",
+            empirical_support="speculative",
+            falsification_conditions=[
+                "Runs with no viable NAE (crack fitness ~0) must predict no LENR activity.",
+            ],
+            provenance={
+                "storms_version_tags": ["storms_nae_2012_13", "storms_nae_2026"],
+                "active_implementation": "storms_nae_2012_13",
+                "not_neutron_chain_model": True,
+                "implementation_role": "versioned_nae_family_p0",
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -195,6 +229,14 @@ class NAEModelTheory:
                 "Storms E. (2014) The Explanation of LENR",
             ],
             category="primary",
+            primary_sources=[
+                "Storms E. (2012) JCMNS 9",
+                "Storms E. (2013) JCMNS 11",
+                "Storms E. (2026) JCMNS 41",
+            ],
+            theory_model_version="storms_nae_2012_13",
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

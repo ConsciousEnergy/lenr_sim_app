@@ -148,6 +148,9 @@ engines:
   module_path: backend/app/physics_engine/theory_protocol.py
   ui_surface: theory_methods
   claim_tier: speculative_exploratory
+  model_fidelity: per_theory
+  empirical_support: per_theory
+  maturity_axes_note: model_fidelity and empirical_support are independent; do not collapse into one score
   proof_status:
     analytical: per_theory
     numerical: scoring_only
@@ -157,7 +160,7 @@ engines:
   - json
   beta_label: speculative
   priority: P1
-  rd_next: Per-theory claim_tier chips
+  rd_next: ARA P1 equation rebuilds (0.3.9); keep fidelity vs empirical axes separate in UI
 - id: ENG-SCREEN-CASIMIR-01
   module_path: backend/app/physics_engine
   ui_surface: unified_theory

@@ -18,8 +18,17 @@
   - `reproducibility_tier`
   - `claim_tier`
   - `provenance`
+  - Additive (v0.3.8 fidelity P0; optional content, keys always present):
+    - `primary_sources`
+    - `theory_model_version`
+    - `author_equations_vs_simulator_approximations`
+    - `free_or_fitted_parameters`
+    - `source_domain_limits`
+    - `model_fidelity` (independent of empirical_support)
+    - `empirical_support` (independent of model_fidelity)
 - `observables_bridge`
 - `analytics_transparency`
+- `composition_provenance.multiplier_stack_warning` (may be empty string)
 
 ## Unified Simulation Required Fields
 - `confidence`

@@ -224,6 +224,35 @@ class TakahashiTSCTheory:
                 "Takahashi A. (2016) JCMNS 19, 298 — takahashi2016",
                 "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
+            primary_sources=[
+                "Takahashi A. (2011) JCMNS 4 — Progress in Condensed Cluster Fusion Theory",
+                "Takahashi A. (2016) JCMNS 19, 298",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view",
+            ],
+            theory_model_version="takahashi_tsc_p0_approx_rate_v1",
+            author_equations_vs_simulator_approximations={
+                "tetrahedral_4D_geometry": "author_hypothesis",
+                "rate_path": "simulator_approximation_not_full_Langevin",
+                "not_generic_BEC_rate": "taxonomy_guard",
+            },
+            free_or_fitted_parameters=[
+                {"name": "cluster_parameters", "kind": "mixed", "source": "module"},
+            ],
+            source_domain_limits=[
+                "P0 uses approximate TSC rate path; full Langevin condensation dynamics = 0.3.9 P1.",
+                "Not a generic Gibbs BEC condensate rate (see kim_bec for Kim BECNF).",
+            ],
+            model_fidelity="approximate",
+            empirical_support="speculative",
+            falsification_conditions=[
+                "Failure to form the tetrahedral TSC state must suppress the claimed 4D pathway.",
+            ],
+            provenance={
+                "geometry": "tetrahedral_4D_TSC",
+                "dynamics_status": "approximate_rate_pending_Langevin_p1",
+                "not_generic_bec": True,
+                "implementation_role": "equation_driven_approximate",
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -239,6 +268,13 @@ class TakahashiTSCTheory:
                 "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view — takahashi2026brief",
             ],
             category="mechanism",
+            primary_sources=[
+                "Takahashi A. (2016) JCMNS 19, 298",
+                "Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view",
+            ],
+            theory_model_version="takahashi_tsc_p0_approx_rate_v1",
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

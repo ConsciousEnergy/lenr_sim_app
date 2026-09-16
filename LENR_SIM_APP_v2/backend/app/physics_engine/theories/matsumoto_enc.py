@@ -185,6 +185,31 @@ class MatsumotoENCTheory:
                 "Matsumoto T. (1992) Fusion Technology 22, 164",
                 "Matsumoto T. (2000) J. New Energy 5(1), 23",
             ],
+            primary_sources=[
+                "Matsumoto T. collected Nattoh / ENR / ENC papers (1989–1999)",
+            ],
+            theory_model_version="matsumoto_enc_p0_pheno_v1",
+            author_equations_vs_simulator_approximations={
+                "branch_network": "phenomenological",
+                "transmutation_cross_section": "simulator_approximation_not_author_formula",
+            },
+            free_or_fitted_parameters=[
+                {"name": "enc_parameters", "kind": "free", "source": "simulator"},
+            ],
+            source_domain_limits=[
+                "Phenomenological branching; black-hole/white-hole interpretation is author speculation.",
+                "Do not invent a de Broglie/threshold formula and attribute it to Matsumoto.",
+            ],
+            model_fidelity="phenomenological",
+            empirical_support="speculative",
+            claim_tier="speculative_exploratory",
+            falsification_conditions=[
+                "Compare claimed signatures against contamination, EDX/SEM artifacts, and ordinary discharge controls.",
+            ],
+            provenance={
+                "implementation_role": "phenomenological_branch_network",
+                "epistemic_warning": "highly_speculative_author_interpretation",
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -198,6 +223,12 @@ class MatsumotoENCTheory:
                 "Matsumoto T. (1992) Fusion Technology 22, 164",
             ],
             category="triggering",
+            primary_sources=[
+                "Matsumoto T. collected Nattoh / ENR / ENC papers (1989–1999)",
+            ],
+            theory_model_version="matsumoto_enc_p0_pheno_v1",
+            model_fidelity="phenomenological",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

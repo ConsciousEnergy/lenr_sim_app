@@ -32,7 +32,9 @@ def _collect_citations(*sources: Any) -> List[str]:
             return
         if isinstance(obj, dict):
             for key, value in obj.items():
-                if key in ("references", "citations") and isinstance(value, (list, tuple)):
+                if key in ("references", "citations", "primary_sources") and isinstance(
+                    value, (list, tuple)
+                ):
                     for ref in value:
                         if isinstance(ref, str) and ref and ref not in seen:
                             seen.append(ref)

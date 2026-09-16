@@ -37,6 +37,24 @@ from app.utils.json_safe import to_json_safe
 
 logger = logging.getLogger(__name__)
 
+
+def _merge_module_provenance(
+    module_provenance: Optional[Dict[str, Any]],
+    *,
+    pipeline_source: str,
+    is_applicable: bool,
+    claim_tier_resolution: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Preserve module fidelity fields; overlay pipeline bookkeeping keys."""
+    merged: Dict[str, Any] = dict(module_provenance or {})
+    merged["source"] = pipeline_source
+    merged["validation_status"] = "applicable" if is_applicable else "not_applicable"
+    merged["model_version"] = settings.APP_VERSION
+    if claim_tier_resolution is not None:
+        merged["claim_tier_resolution"] = claim_tier_resolution
+    return merged
+
+
 THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "electron_screening": "screening",
     "quantum_tunneling": "screening",
@@ -48,6 +66,8 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "coherent_qed": "coherence",
     "vysotskii_ccs": "coherence",
     "kim_bec": "coherence",
+    "holmlid_udh": "ultra_dense",  # Holmlid H(0)/D(0) — distinct from Kim BECNF
+    "null_recombination": "null_control",
     "takahashi_tsc": "coherence",
     # Vacuum-force confinement. bubble_mhd's sigma_screened/sigma_bare ratio is
     # reported as a diagnostic (gamow_enhancement observable), not multiplied
@@ -105,6 +125,7 @@ class TheoryPipelineResult:
         applied_groups: Optional[List[Dict[str, Any]]] = None,
         excluded_theories: Optional[List[Dict[str, str]]] = None,
         ungrouped_theories: Optional[List[str]] = None,
+        multiplier_stack_warning: str = "",
     ):
         self.contributions = contributions
         self.combined_enhancement = combined_enhancement
@@ -116,6 +137,7 @@ class TheoryPipelineResult:
         self.applied_groups = applied_groups or []
         self.excluded_theories = excluded_theories or []
         self.ungrouped_theories = ungrouped_theories or []
+        self.multiplier_stack_warning = multiplier_stack_warning or ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a JSON-friendly dictionary."""
@@ -142,6 +164,18 @@ class TheoryPipelineResult:
                 "claim_tier": c.claim_tier,
                 "provenance": to_json_safe(c.provenance),
                 "references": list(c.references),
+                "primary_sources": list(getattr(c, "primary_sources", None) or []),
+                "theory_model_version": getattr(c, "theory_model_version", "") or "",
+                "author_equations_vs_simulator_approximations": to_json_safe(
+                    getattr(c, "author_equations_vs_simulator_approximations", None) or {}
+                ),
+                "free_or_fitted_parameters": to_json_safe(
+                    getattr(c, "free_or_fitted_parameters", None) or []
+                ),
+                "source_domain_limits": list(getattr(c, "source_domain_limits", None) or []),
+                "model_fidelity": getattr(c, "model_fidelity", "approximate") or "approximate",
+                "empirical_support": getattr(c, "empirical_support", "speculative")
+                or "speculative",
             }
             for c in self.contributions
         ]
@@ -175,6 +209,7 @@ class TheoryPipelineResult:
                 "applied_groups": to_json_safe(self.applied_groups),
                 "excluded_theories": to_json_safe(self.excluded_theories),
                 "ungrouped_theories": list(self.ungrouped_theories),
+                "multiplier_stack_warning": self.multiplier_stack_warning,
                 # Stated on the response so a client cannot treat this total and
                 # the bubble-lattice peak enhancement as factors of one product.
                 "not_combinable_with": [
@@ -257,6 +292,13 @@ class TheoryPipeline:
                     "configurable_parameters": meta.configurable_parameters,
                     "references": meta.references,
                     "category": meta.category,
+                    "primary_sources": list(getattr(meta, "primary_sources", None) or []),
+                    "theory_model_version": getattr(meta, "theory_model_version", "") or "",
+                    "model_fidelity": getattr(meta, "model_fidelity", "approximate")
+                    or "approximate",
+                    "empirical_support": getattr(meta, "empirical_support", "speculative")
+                    or "speculative",
+                    "control_role": getattr(meta, "control_role", "") or "",
                 }
             )
         return results
@@ -343,6 +385,13 @@ class TheoryPipeline:
             "excluded_theories": excluded_theories,
             "combination_rule": combination_rule,
             "ungrouped_theories": sorted(ungrouped),
+            "multiplier_stack_warning": (
+                "Multiple composition groups multiply into combined_enhancement; "
+                "this can double-count related physics. Prefer single-mechanism "
+                "runs for fidelity audits (LENR-ARA P0)."
+                if len(applied_groups) > 1
+                else ""
+            ),
         }
 
     def run(
@@ -406,21 +455,25 @@ class TheoryPipeline:
                 contribution.confidence = weighted_score
                 contribution.confidence_breakdown = confidence_breakdown
                 contribution.uncertainty_interval = build_uncertainty_interval(weighted_score)
-                contribution.falsification_conditions = build_falsification_conditions(contribution.theory_id)
+                module_falsifiers = list(contribution.falsification_conditions or [])
+                pipeline_falsifiers = build_falsification_conditions(contribution.theory_id)
+                contribution.falsification_conditions = list(
+                    dict.fromkeys([*module_falsifiers, *pipeline_falsifiers])
+                )
                 contribution.evidence_class = resolved_evidence_class
                 contribution.reproducibility_tier = resolved_evidence_class
                 contribution.claim_tier = resolved_claim_tier
-                contribution.provenance = {
-                    "source": "theory_pipeline",
-                    "validation_status": "applicable" if contribution.is_applicable else "not_applicable",
-                    "model_version": settings.APP_VERSION,
-                    "claim_tier_resolution": {
+                contribution.provenance = _merge_module_provenance(
+                    contribution.provenance,
+                    pipeline_source="theory_pipeline",
+                    is_applicable=bool(contribution.is_applicable),
+                    claim_tier_resolution={
                         "declared_by_module": declared_claim_tier,
                         "rubric_classification": rubric_claim_tier,
                         "resolved": resolved_claim_tier,
                         "policy": "rubric may downgrade a declared tier, never upgrade it",
                     },
-                }
+                )
                 contributions.append(contribution)
             except Exception:
                 logger.exception("Error running theory '%s'", tid)
@@ -451,6 +504,7 @@ class TheoryPipeline:
             applied_groups=combined["applied_groups"],
             excluded_theories=combined["excluded_theories"],
             ungrouped_theories=combined["ungrouped_theories"],
+            multiplier_stack_warning=combined.get("multiplier_stack_warning", ""),
         )
 
     def run_single(
@@ -546,15 +600,19 @@ class TheoryPipeline:
                 contrib.confidence = weighted_score
                 contrib.confidence_breakdown = confidence_breakdown
                 contrib.uncertainty_interval = build_uncertainty_interval(weighted_score)
-                contrib.falsification_conditions = build_falsification_conditions(contrib.theory_id)
+                module_falsifiers = list(contrib.falsification_conditions or [])
+                pipeline_falsifiers = build_falsification_conditions(contrib.theory_id)
+                contrib.falsification_conditions = list(
+                    dict.fromkeys([*module_falsifiers, *pipeline_falsifiers])
+                )
                 contrib.evidence_class = evidence_class
                 contrib.reproducibility_tier = evidence_class
                 contrib.claim_tier = claim_tier
-                contrib.provenance = {
-                    "source": "theory_pipeline_coupled",
-                    "validation_status": "applicable" if contrib.is_applicable else "not_applicable",
-                    "model_version": settings.APP_VERSION,
-                }
+                contrib.provenance = _merge_module_provenance(
+                    contrib.provenance,
+                    pipeline_source="theory_pipeline_coupled",
+                    is_applicable=bool(contrib.is_applicable),
+                )
             except Exception:
                 logger.exception("Coupled pipeline: error in '%s'", tid)
                 contrib = TheoryContribution(
@@ -590,6 +648,7 @@ class TheoryPipeline:
             combination_rule=combined["combination_rule"],
             applied_groups=combined["applied_groups"],
             excluded_theories=combined["excluded_theories"],
+            multiplier_stack_warning=combined.get("multiplier_stack_warning", ""),
         )
 
 
@@ -697,6 +756,18 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(KimBECTheory())
     except Exception:
         logger.exception("Failed to register KimBECTheory")
+
+    try:
+        from app.physics_engine.theories.holmlid_udh import HolmlidUDHTheory
+        pipeline.register(HolmlidUDHTheory())
+    except Exception:
+        logger.exception("Failed to register HolmlidUDHTheory")
+
+    try:
+        from app.physics_engine.theories.null_recombination import NullRecombinationTheory
+        pipeline.register(NullRecombinationTheory())
+    except Exception:
+        logger.exception("Failed to register NullRecombinationTheory")
 
     try:
         from app.physics_engine.theories.matsumoto_enc import MatsumotoENCTheory

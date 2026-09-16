@@ -182,6 +182,21 @@ class ElectronScreeningTheory:
                 "Assenbaum H.J. et al. (1987), Z. Phys. A 327, 461",
                 "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
             ],
+            primary_sources=[
+                "Assenbaum H.J. et al. (1987), Z. Phys. A 327, 461",
+                "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
+            ],
+            theory_model_version="electron_screening_shared_v1",
+            author_equations_vs_simulator_approximations={
+                "salpeter_screening": "author_equations_approx",
+                "role": "shared_mechanism_not_named_lenr_author",
+            },
+            source_domain_limits=[
+                "Shared condensed-matter screening layer; not a named LENR author theory.",
+                "Anomalous U_e > ~800 eV flagged outside Kasagi Pd-D range.",
+            ],
+            model_fidelity="approximate",
+            empirical_support="domain_limited",
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -195,6 +210,14 @@ class ElectronScreeningTheory:
                 "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
             ],
             category="primary",
+            primary_sources=[
+                "Assenbaum H.J. et al. (1987), Z. Phys. A 327, 461",
+                "Ichimaru S. (1993), Rev. Mod. Phys. 65, 255",
+            ],
+            theory_model_version="electron_screening_shared_v1",
+            model_fidelity="approximate",
+            empirical_support="domain_limited",
+            control_role="shared_mechanism",
         )
 
     # -- Helpers -----------------------------------------------------------
