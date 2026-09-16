@@ -39,6 +39,13 @@ def test_widom_below_threshold_produces_no_ulm_chain() -> None:
         )
 
 
+def test_hagelstein_dd_he4_q_value_mev() -> None:
+    """Hagelstein: D+D→⁴He Q-value ≈ 23.8 MeV (author phonon-coupling context)."""
+    from app.physics_engine.theories.hagelstein_phonon import Q_VALUE_DD_HE4_MEV
+
+    assert Q_VALUE_DD_HE4_MEV == pytest.approx(23.8, abs=0.05)
+
+
 def test_hagelstein_module_exposes_phonon_coupling_identity() -> None:
     """Hagelstein: module must remain phonon–nuclear (not a generic multiplier-only id)."""
     from app.physics_engine.theories.hagelstein_phonon import HagelsteinPhononTheory
@@ -52,9 +59,14 @@ def test_hagelstein_module_exposes_phonon_coupling_identity() -> None:
         config={},
     )
     assert result.is_applicable in (True, False)
-    # Q-value context for D2/4He is ~23.8 MeV in the literature lineage.
     refs = " ".join(result.references or meta.references)
     assert "Hagelstein" in refs or "hagelstein" in refs.lower()
+    assert result.primary_sources
+    assert "simulator" in str(
+        result.author_equations_vs_simulator_approximations.get(
+            "coupling_matrix_element", ""
+        )
+    )
 
 
 def test_holmlid_is_not_kim_bec() -> None:
