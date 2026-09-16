@@ -17,11 +17,14 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 
 ## Agent-executed checks (this branch)
 
+Re-verified **2026-09-16T18:28:12Z** on `consciousenergy/v038-fidelity-p0-98d8`:
+
 | Check | Result |
 |-------|--------|
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
-| `deploy.sh staging` with wrong confirm | Exit **2** — requires `I_STAGING_0_3_8` |
-| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK |
+| `deploy.sh staging` (no/wrong confirm) | Exit **2** — requires `I_STAGING_0_3_8` |
+| `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging` | Gate opens; then exits **1** for missing `terraform.tfvars` (expected without operator secrets) |
+| `ansible-playbook --syntax-check` `deploy-stack.yml` | OK |
 | `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
 | Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs operator `backend.hcl` + cloud credentials |
 | Ansible `--check` against staging inventory | **Not executed** — no staging hosts/credentials in agent |

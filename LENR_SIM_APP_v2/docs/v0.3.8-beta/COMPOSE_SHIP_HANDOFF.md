@@ -27,10 +27,21 @@ runs on push — it requires a manual `workflow_dispatch`.
 - `gh workflow run "Build and Deploy" --ref main` → **HTTP 403** (token cannot dispatch)
 - No `VPS_SSH_KEY` / SSH key mounted in the agent environment
 
-## Operator ship (one command)
+## Operator ship (preferred helper)
 
 From a machine with `workflow_dispatch` rights and repo secrets `VPS_HOST` +
 `VPS_SSH_KEY` set:
+
+```bash
+# Plan / preflight
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh check
+
+# Dispatch deploy-vps on main, wait, verify-beta-share
+CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
+```
+
+Equivalent one-liner:
 
 ```bash
 gh workflow run "Build and Deploy" --ref main

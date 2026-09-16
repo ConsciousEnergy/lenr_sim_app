@@ -1,8 +1,9 @@
 # DNS topology + Hostinger strategy (v0.3.8-beta prep)
 
 **Status:** Decision record for Swarm/Pages cutover prep.  
-**Hard rule:** no `terraform apply`, no Swarm init on live VPS, no Pages cutover until
-`CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8` and an announced window.
+**Hard rule:** no production `terraform apply`, no Swarm init on live VPS, no Pages
+cutover until **v0.3.9** under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` and an announced
+window. Staging plan/check in 0.3.8 uses `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`.
 
 Related: [SWARM_PAGES_CUTOVER_PREP.md](./SWARM_PAGES_CUTOVER_PREP.md),
 [../infrastructure/vps/README.md](../../infrastructure/vps/README.md).
@@ -79,8 +80,8 @@ Prep defaults:
 2. `terraform plan` only; confirm **zero** `hostinger_vps` create/destroy on live IP.
 3. If adopting the live node: `terraform import 'module.hostinger.hostinger_vps.app' <vps-id>`
    after documenting the Hostinger VPS ID from the panel (never guess).
-4. Still require `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8` before any apply that
-   touches DNS or Swarm.
+4. Still require `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` before any **production**
+   apply that touches DNS or Swarm. Staging-only apply uses `I_STAGING_0_3_8`.
 
 ---
 
@@ -88,6 +89,7 @@ Prep defaults:
 
 | Gate | Value | Protects |
 |------|-------|----------|
-| Swarm/Pages deploy script | `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8` | `infrastructure/scripts/deploy.sh` |
+| Staging Swarm dry-run (0.3.8) | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | `deploy.sh staging` |
+| Production Swarm/Pages (0.3.9) | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | `deploy.sh production` |
 | Hostinger create_new | `CONFIRM_HOSTINGER_CREATE=I_CREATE_NEW_VPS` (env / tf var) | Accidental second VPS |
 | This phase | docs + plan/check-mode only | Live Compose share stays up |
