@@ -89,3 +89,15 @@ High drive (~4 bar). Expect:
 
 APP_VERSION may still read `0.3.7-beta` until the 0.3.8 version bump; ship is still
 required for KM auto on the public URL.
+
+## Agent secret injection note
+
+Cursor env secrets added **after** a cloud-agent VM boots may not appear in
+that session. After setting `VPS_SSH_KEY`, **restart/resume the agent** (or run
+`ssh-ship` on an operator machine that already has the key).
+
+Live probe (authoritative):
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh probe-km
+```
