@@ -260,6 +260,16 @@ class HagelsteinPhononTheory:
             ],
             model_fidelity="approximate",
             empirical_support="speculative",
+            provenance={
+                "coupling_matrix_status": "approximate_pending_p1",
+                "excitation_transfer": "deferred_ara_p1",
+                "implementation_role": "equation_driven_approximate",
+                "p1_rebuild_status": "started_scaffold",
+                "p1_rebuild_targets": [
+                    "coupling_matrix_elements",
+                    "excitation_transfer_expansion",
+                ],
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
