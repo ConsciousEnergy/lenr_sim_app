@@ -17,19 +17,37 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 
 ## Agent-executed checks (this branch)
 
-Re-verified **2026-09-16T18:28:12Z** on `consciousenergy/v038-fidelity-p0-98d8`:
+Re-verified **2026-09-16T18:28:12Z** on `consciousenergy/v038-fidelity-p0-98d8`, and
+again via helper on tip:
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
+```
 
 | Check | Result |
 |-------|--------|
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 | `deploy.sh staging` (no/wrong confirm) | Exit **2** — requires `I_STAGING_0_3_8` |
 | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging` | Gate opens; then exits **1** for missing `terraform.tfvars` (expected without operator secrets) |
-| `ansible-playbook --syntax-check` `deploy-stack.yml` | OK |
+| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK |
 | `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
-| Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs operator `backend.hcl` + cloud credentials |
-| Ansible `--check` against staging inventory | **Not executed** — no staging hosts/credentials in agent |
+| Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs `backend.hcl` + `staging.tfvars` |
+| Ansible `--check` against staging inventory | **Not executed** — needs `inventory.staging.yml` + SSH |
 
 ## Operator remaining steps
+
+Preferred helper (credentials on operator/agent machine, **plan + check only**):
+
+```bash
+# Place (untracked) from examples:
+#   infrastructure/terraform/backend.hcl          ← backend.hcl.example
+#   infrastructure/terraform/staging.tfvars       ← staging.tfvars.example
+#   infrastructure/ansible/inventory.staging.yml  ← inventory.staging.yml.example
+CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
+```
+
+Manual equivalent:
 
 1. On operator machine with Cloudflare/R2 credentials:
    - `terraform init -backend-config=backend.hcl`
