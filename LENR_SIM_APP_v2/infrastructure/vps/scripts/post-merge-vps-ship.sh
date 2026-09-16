@@ -10,14 +10,15 @@
 #   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh verify-live
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-#   # Direct SSH when VPS_SSH_KEY is in the environment (preferred; bypasses
-#   # GitHub Actions billing). VPS_HOST defaults to the public share A record.
+#   # Direct SSH when VPS_SSH_KEY or VPS_SSH_IDENTITY_FILE is set (preferred;
+#   # bypasses GitHub Actions billing). VPS_HOST defaults to the public share A.
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 #
 # ship: workflow_dispatch, else repository_dispatch vps-compose-ship.
 # ssh-ship: SSH as root@$VPS_HOST and run infrastructure/vps/scripts/deploy.sh
 #   (same pin/IMAGE_TAG path as Actions deploy-vps).
+#   Identity: VPS_SSH_IDENTITY_FILE=/path/to/key  OR  VPS_SSH_KEY=<pem/openssh>
 set -euo pipefail
 
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
@@ -194,8 +195,9 @@ resolve_vps_host() {
 cmd_ssh_ship() {
   require_confirm_execute
   need ssh
-  if [[ -z "${VPS_SSH_KEY:-}" ]]; then
-    echo "ERROR: ssh-ship requires VPS_SSH_KEY in the environment" >&2
+  # Prefer identity file (agent key on disk) over embedding private key in env.
+  if [[ -z "${VPS_SSH_KEY:-}" && -z "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    echo "ERROR: ssh-ship requires VPS_SSH_KEY or VPS_SSH_IDENTITY_FILE" >&2
     echo "NOTE: VPS_HOST defaults to ${DEFAULT_VPS_HOST} (lenr-sim-beta A record)" >&2
     exit 2
   fi
@@ -221,15 +223,30 @@ cmd_ssh_ship() {
     fi
   fi
 
-  local key
-  key="$(mktemp)"
-  cleanup() { rm -f "$key"; }
-  trap cleanup EXIT
-  umask 077
-  printf '%s\n' "$VPS_SSH_KEY" > "$key"
+  # Global path so EXIT trap is safe under `set -u` after function return.
+  _SSH_KEY_TMP=""
+  _SSH_KEY_OWNED=0
+  if [[ -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    if [[ ! -f "$VPS_SSH_IDENTITY_FILE" ]]; then
+      echo "ERROR: VPS_SSH_IDENTITY_FILE not found: $VPS_SSH_IDENTITY_FILE" >&2
+      exit 2
+    fi
+    _SSH_KEY_TMP="$VPS_SSH_IDENTITY_FILE"
+  else
+    _SSH_KEY_TMP="$(mktemp)"
+    _SSH_KEY_OWNED=1
+    umask 077
+    printf '%s\n' "$VPS_SSH_KEY" > "$_SSH_KEY_TMP"
+  fi
+  cleanup_ssh_key() {
+    if [[ "${_SSH_KEY_OWNED:-0}" == "1" && -n "${_SSH_KEY_TMP:-}" ]]; then
+      rm -f "$_SSH_KEY_TMP"
+    fi
+  }
+  trap cleanup_ssh_key EXIT
 
   echo "==> SSH deploy to root@${vps_host} IMAGE_TAG=${image_tag} SHA=${deploy_sha}"
-  ssh -i "$key" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+  ssh -i "$_SSH_KEY_TMP" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
     "root@${vps_host}" \
     "set -euo pipefail
      cd /opt/lenr-sim/src
@@ -271,8 +288,8 @@ cmd_ship() {
   fi
 
   # Prefer direct SSH when key is present (avoids Actions billing / empty secrets).
-  if [[ -n "${VPS_SSH_KEY:-}" ]]; then
-    echo "NOTE: VPS_SSH_KEY present — using ssh-ship path (host=$(resolve_vps_host))"
+  if [[ -n "${VPS_SSH_KEY:-}" || -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    echo "NOTE: SSH identity present — using ssh-ship path (host=$(resolve_vps_host))"
     cmd_ssh_ship
     return 0
   fi

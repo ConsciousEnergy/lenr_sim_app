@@ -54,10 +54,17 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0. Live pull requires secre
 ### Required operator action
 
 **Preferred (bypasses GitHub Actions billing):** Cursor / agent env secret
-`VPS_SSH_KEY` only. `VPS_HOST` defaults to `185.211.4.66`
-(`lenr-sim-beta.conscious.energy` A record).
+`VPS_SSH_KEY`, or authorize the agent pubkey and use
+`VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519`. `VPS_HOST` defaults to
+`185.211.4.66` (`lenr-sim-beta.conscious.energy` A record).
 
 ```bash
+# Env secret path:
+CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
+
+# Agent identity file (after pubkey is in VPS authorized_keys):
+VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519 \
 CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 ```
