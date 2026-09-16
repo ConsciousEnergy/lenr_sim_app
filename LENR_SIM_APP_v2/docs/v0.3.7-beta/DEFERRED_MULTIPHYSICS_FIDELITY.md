@@ -35,9 +35,10 @@ claim tiers — then resume this queue.
 
 1. [x] Bridge Bubble Fusion route to shared RP/KM core (`bubble_solver` /
    `bubble_lattice_interaction`) via opt-in `dynamics_mode` (default remains `legacy`).
-2. Dynamics mode policy: RP for low Mach; **auto/default KM when Mach ≥ 0.3 remains deferred**
-   on the Bubble Fusion page (Unified Theory already auto-selects KM for bounds). BF reports
-   `peak_mach` / `km_recommended` only.
+2. [x] Dynamics mode policy: **auto default** selects KM when Mach ≥ 0.3
+   (aligned with Unified Theory); explicit `legacy` / RP / KM remain overrides.
+   Response reports `dynamics_mode_requested`, `dynamics_mode_used`,
+   `km_auto_selected`, `peak_mach` / `km_recommended`.
 3. [x] Collapse → tunneling handoff with explicit claim-tier labels
    (`tunneling_handoff` on BF response; UI surfaces status + claim tiers; never raises
    empirical claim tiers).
@@ -63,4 +64,4 @@ Fusion numerics in the same PR train as A/B.
 - [x] Bubble Fusion dual-fetch bug triaged (see `BUG_TRIAGE.md`)
 - [x] Open Phase A branch: `consciousenergy/v037-bubble-engine-truth-98d8`
 - [x] Phase B opt-in bridge + handoff/verification: `consciousenergy/v037-bubble-km-bridge-98d8`
-  (KM auto-default on BF page still deferred)
+- [x] Phase B KM auto-default on BF (Mach≥0.3): `consciousenergy/v038-km-auto-bf-98d8`

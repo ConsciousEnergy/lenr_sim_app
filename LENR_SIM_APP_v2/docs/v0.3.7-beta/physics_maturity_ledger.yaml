@@ -112,7 +112,7 @@ engines:
   - tex
   beta_label: approximate
   priority: P1
-  rd_next: KM auto-default when Mach warrants (deferred); keep EQ-OPEN-* open
+  rd_next: Keep EQ-OPEN-* open; Phase C EOS/FEM still deferred
 - id: ENG-RP-KM-01
   module_path: backend/app/physics_engine/bubble_solver.py
   ui_surface: unified_theory
@@ -128,7 +128,7 @@ engines:
   - tex
   beta_label: approximate
   priority: P1
-  rd_next: KM default when Mach warrants
+  rd_next: Monitor domain limits; keep EQ-OPEN-* open
 - id: ENG-WKB-01
   module_path: backend/app/physics/wkb_tunneling.py
   ui_surface: quantum_tunneling
