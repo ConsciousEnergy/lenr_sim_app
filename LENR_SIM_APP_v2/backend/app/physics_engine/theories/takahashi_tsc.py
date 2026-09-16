@@ -252,6 +252,11 @@ class TakahashiTSCTheory:
                 "dynamics_status": "approximate_rate_pending_Langevin_p1",
                 "not_generic_bec": True,
                 "implementation_role": "equation_driven_approximate",
+                "p1_rebuild_status": "started_scaffold",
+                "p1_rebuild_targets": [
+                    "langevin_tsc_condensation_trajectory",
+                    "4D_geometry_observables",
+                ],
             },
         )
 
