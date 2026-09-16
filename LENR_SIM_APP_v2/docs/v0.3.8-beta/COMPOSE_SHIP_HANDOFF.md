@@ -1,15 +1,18 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#198)
 
-## Live status (agent probe 2026-09-16T18:41Z)
+## Live status (agent probe 2026-09-16T22:37Z)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
 | `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
-| `POST …/bubble-fusion` `dynamics_mode=auto` @ 4 bar | Still `dynamics_mode_used=legacy`, `km_auto_selected=false` |
+| `POST …/bubble-fusion` `dynamics_mode=auto` @ 4 bar | Still `dynamics_mode_used=legacy`, `km_auto_selected=false`, peak Mach ≈0.17 |
+| SSH `root@185.211.4.66` | Permission denied (publickey) — env `VPS_SSH_KEY` is unauthorized agent twin |
+| `HOSTINGER_API_TOKEN` | unset |
+| Actions `vps-compose-ship` dispatch | run [35158459314](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35158459314) — jobs not started (billing/spending limit) |
 | Conclusion | **#196/#198 on `main` + GHCR; Compose share not yet pulled** |
 
-Evidence: `/opt/cursor/artifacts/live_bf_defaults.json`, `live_bf_km_probe_now.json`.
+Evidence: `/opt/cursor/artifacts/live_bf_km_probe_now.json`, `v038_blocker_status.json`, `v038_exit_criteria_audit.md`.
 
 P0 fidelity squash-merged as #198 (`6d1f44d`). Compose ship dispatch path landed as #199 (`7408e18`).
 
