@@ -1,34 +1,53 @@
 # Operator: ship tip of main to Compose share (post #196/#197)
 
-Cloud agents cannot `workflow_dispatch` Build and Deploy (HTTP 403) and have no
-VPS SSH key. After squash-merging science/infra PRs to `main`, an operator must
-ship so KM auto reaches the public Compose URL.
-
 ## Live status (agent probe 2026-09-16)
 
 | Check | Result |
 |-------|--------|
 | `GET /api/health` | `version=0.3.7-beta`, healthy |
 | `POST /api/physics/bubble-fusion` with `dynamics_mode=auto` | Live returns `dynamics_mode_used=legacy`, `km_auto_selected=false` |
-| Conclusion | **#196 KM auto is on `main` but NOT yet live on Compose share** |
+| Conclusion | **#196 KM auto is on `main` and in GHCR; VPS Compose share not yet pulled** |
 
 Evidence: `/opt/cursor/artifacts/live_bf_km_probe.json` (agent workspace).
 
-## Operator ship
+## What already ran automatically on merge
+
+Push to `main` triggers `Build and Deploy` **image build only**:
+
+| Run | Event | build-* | `deploy-vps` |
+|-----|-------|---------|--------------|
+| [#196 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129116154) | push/main | success | **skipped** (`if: workflow_dispatch`) |
+| [#197 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129159390) | push/main | success | **skipped** |
+
+So GHCR tags `0.3.7-beta` / `latest` already contain KM auto. The VPS job never
+runs on push — it requires a manual `workflow_dispatch`.
+
+## Blockers for this cloud agent
+
+- `gh workflow run "Build and Deploy" --ref main` → **HTTP 403** (token cannot dispatch)
+- No `VPS_SSH_KEY` / SSH key mounted in the agent environment
+
+## Operator ship (one command)
+
+From a machine with `workflow_dispatch` rights and repo secrets `VPS_HOST` +
+`VPS_SSH_KEY` set:
 
 ```bash
-# From a machine with deploy rights:
 gh workflow run "Build and Deploy" --ref main
-# or SSH + BUILD_LOCALLY / IMAGE_TAG deploy via infrastructure/vps/scripts/deploy.sh
-
-EXPECT_VERSION="$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)" \
+# Watch: gh run list --workflow "Build and Deploy" --limit 3
+# Verify:
+EXPECT_VERSION=0.3.7-beta \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 ```
 
-After ship, re-probe with high drive (~4 bar) and confirm:
-- `dynamics.dynamics_mode_requested == "auto"`
-- when peak Mach ≥ 0.3: `km_auto_selected` / `dynamics_mode_used == "keller_miksis"`
+(Or SSH + `IMAGE_TAG=0.3.7-beta` via `infrastructure/vps/scripts/deploy.sh`.)
 
-#196 (KM auto) and #197 (infra prep) landed on `main` 2026-09-16.
+### Post-ship probe
+
+High drive (~4 bar). Expect:
+
+- `dynamics.dynamics_mode_requested == "auto"`
+- when peak Mach ≥ 0.3: `km_auto_selected` true / `dynamics_mode_used == "keller_miksis"`
+
 APP_VERSION on tip may still read `0.3.7-beta` until the 0.3.8 version bump;
-ship still required for KM auto behavior.
+ship still required for KM auto behavior on the public URL.
