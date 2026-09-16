@@ -81,10 +81,28 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Coherence',
     has3DOverlay: false,
-    displayName: 'Kim Bose-Einstein Condensate',
+    displayName: 'Kim Bose-Einstein Condensate (BECNF)',
     description:
-      'Deuteron BEC in metal lattice cavities. Future overlay: coherence cloud radius.',
+      'Yeong Kim BECNF — deuteron BEC in nano-grains. Distinct from Holmlid H(0)/D(0).',
     reference: 'Kim et al. (2009)',
+  },
+  holmlid_udh: {
+    vizLayer: null,
+    legendGroup: 'Ultra-dense H',
+    has3DOverlay: false,
+    displayName: 'Holmlid ultra-dense H(0)/D(0)',
+    description:
+      'Phenomenological H(0)/D(0) + laser/TOF regime flags. Not a generic BEC Tc model.',
+    reference: 'Holmlid arXiv:1302.2781 / 1508.01332',
+  },
+  null_recombination: {
+    vizLayer: null,
+    legendGroup: 'Null controls',
+    has3DOverlay: false,
+    displayName: 'Null: chemical recombination',
+    description:
+      'Non-nuclear heat/artifact control under the same experiment inputs. Not LENR.',
+    reference: 'Conventional chemistry / calorimetry control',
   },
   widom_larsen: {
     vizLayer: null,

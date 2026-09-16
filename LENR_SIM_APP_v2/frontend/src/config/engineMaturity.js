@@ -84,7 +84,9 @@ export const ENGINE_MATURITY = {
     label: 'speculative',
     shortTitle: 'Theory pipeline',
     description:
-      'Most theory modules default to speculative / exploratory claim tiers in scoring.',
+      'Most theory modules default to speculative / exploratory claim tiers. Per-theory model_fidelity and empirical_support are independent axes — fidelity ≠ validity; EQ-OPEN-* stay OPEN.',
+    model_fidelity: 'per_theory',
+    empirical_support: 'per_theory',
   },
   'ENG-SCREEN-CASIMIR-01': {
     id: 'ENG-SCREEN-CASIMIR-01',

@@ -209,22 +209,33 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Partition theories into primary LENR tracks and "context tracks".
-  // Context tracks are cross-regime / comparison-only entries (see
-  // backend theory_pipeline.THEORY_COMPOSITION_GROUPS). They are always
-  // visible but visually separated so they cannot be mistaken for
-  // first-class LENR mechanisms.
-  const { primaryTheories, contextTheories } = useMemo(() => {
+  // Partition theories into primary LENR tracks, conventional/null controls,
+  // and "context tracks". Controls must not be mistaken for LENR author theories.
+  const { primaryTheories, controlTheories, contextTheories } = useMemo(() => {
     const primary: typeof availableTheories = [];
+    const controls: typeof availableTheories = [];
     const context: typeof availableTheories = [];
     for (const theory of availableTheories) {
       if (theory.category === 'context_line') {
         context.push(theory);
+      } else if (
+        theory.control_role === 'null' ||
+        theory.control_role === 'baseline' ||
+        theory.control_role === 'shared_mechanism' ||
+        theory.category === 'null_control' ||
+        theory.theory_id === 'null_recombination' ||
+        theory.theory_id === 'quantum_tunneling'
+      ) {
+        controls.push(theory);
       } else {
         primary.push(theory);
       }
     }
-    return { primaryTheories: primary, contextTheories: context };
+    return {
+      primaryTheories: primary,
+      controlTheories: controls,
+      contextTheories: context,
+    };
   }, [availableTheories]);
 
   // Build a lookup from theory_id -> contribution result
@@ -496,6 +507,41 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
         }),
       )}
 
+      {controlTheories.length > 0 && (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2, mb: 1 }}>
+            <ScienceIcon sx={{ fontSize: 16, color: 'success.main' }} />
+            <Typography variant="subtitle2" color="success.main">
+              Conventional / null controls
+            </Typography>
+            <Chip
+              label={`${controlTheories.length}`}
+              size="small"
+              variant="outlined"
+              color="success"
+              sx={{ height: 18, fontSize: '0.65rem' }}
+            />
+            <Tooltip title="Baselines and non-nuclear nulls under the same experiment inputs — not LENR author theories.">
+              <InfoOutlinedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            </Tooltip>
+          </Box>
+          {controlTheories.map((theory) =>
+            renderTheoryAccordion({
+              theory,
+              isEnabled: enabledTheories.includes(theory.theory_id),
+              contribution: contributionMap[theory.theory_id],
+              handleToggle,
+              coupledMode,
+              coupledResult,
+              onOpenGlossary: openGlossary,
+              configOverrides: theoryConfigs[theory.theory_id],
+              onConfigChange: handleConfigChange,
+              onConfigReset: handleConfigReset,
+            }),
+          )}
+        </>
+      )}
+
       {/* Context tracks section (down-weighted comparison theories) */}
       {contextTheories.length > 0 && (
         <>
@@ -577,6 +623,10 @@ interface RenderTheoryAccordionArgs {
     category: string;
     references: string[];
     configurable_parameters?: Record<string, any>;
+    model_fidelity?: string;
+    empirical_support?: string;
+    control_role?: string;
+    primary_sources?: string[];
   };
   isEnabled: boolean;
   contribution: TheoryContributionResult | undefined;
@@ -811,8 +861,44 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
                     />
                   </Tooltip>
                 )}
+                {(contribution.model_fidelity || theory.model_fidelity) && (
+                  <Tooltip
+                    arrow
+                    title="Model fidelity (author equations vs simulator) — independent of empirical support"
+                  >
+                    <Chip
+                      label={`fidelity: ${(contribution.model_fidelity || theory.model_fidelity || '').replace(/_/g, ' ')}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 16, fontSize: '0.55rem' }}
+                    />
+                  </Tooltip>
+                )}
+                {(contribution.empirical_support || theory.empirical_support) && (
+                  <Tooltip
+                    arrow
+                    title="Empirical support for the claim — independent of model fidelity; not a validity endorsement"
+                  >
+                    <Chip
+                      label={`empirical: ${(contribution.empirical_support || theory.empirical_support || '').replace(/_/g, ' ')}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 16, fontSize: '0.55rem' }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
             )}
+            {contribution.author_equations_vs_simulator_approximations &&
+              Object.keys(contribution.author_equations_vs_simulator_approximations).length > 0 && (
+                <Alert severity="info" sx={{ mt: 0.5, py: 0, '& .MuiAlert-message': { fontSize: '0.65rem' } }}>
+                  Simulator approximations:{' '}
+                  {Object.entries(contribution.author_equations_vs_simulator_approximations)
+                    .filter(([, v]) => String(v).includes('simulator') || String(v).includes('approx'))
+                    .map(([k, v]) => `${k}=${v}`)
+                    .join('; ') || 'see provenance'}
+                </Alert>
+              )}
             {contribution.confidence_breakdown?.weighted_score !== undefined && (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                 Weighted confidence: {(Number(contribution.confidence_breakdown.weighted_score) * 100).toFixed(1)}%
@@ -895,6 +981,7 @@ interface CompositionProvenanceProps {
     excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
     ungrouped_theories?: string[];
     not_combinable_with?: string[];
+    multiplier_stack_warning?: string;
     note?: string;
   };
 }
@@ -929,6 +1016,11 @@ const CompositionProvenance: React.FC<CompositionProvenanceProps> = ({ provenanc
         </Typography>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 0 }}>
+        {provenance.multiplier_stack_warning && (
+          <Alert severity="warning" sx={{ mb: 1, py: 0, '& .MuiAlert-message': { py: 0.5, fontSize: '0.65rem' } }}>
+            {provenance.multiplier_stack_warning}
+          </Alert>
+        )}
         {provenance.note && (
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
             {provenance.note}
