@@ -8,6 +8,8 @@ close EQ-OPEN-*, or endorse mechanisms.
 | Hagelstein | `hagelstein_phonon.py` | `started_scaffold` | Coupling matrix elements; excitation-transfer expansion |
 | Storms NAE | `nae_model.py` | `started_scaffold` | 2012–13 void dynamics; 2026 electron-channel dynamics |
 | Takahashi TSC | `takahashi_tsc.py` | `started_scaffold` | Langevin condensation trajectory; 4D geometry observables |
+| Shoulders EVO | `shoulders_evo.py` | `started_scaffold` | Phenomenological branch network; no invented rate laws |
+| Matsumoto ENC | `matsumoto_enc.py` | `started_scaffold` | Branch network; artifact-control falsifiers |
 | Widom–Larsen | `widom_larsen.py` | `started_scaffold` | See [ARA_P1_WIDOM_START.md](./ARA_P1_WIDOM_START.md) |
 
 ## Non-goals for this scaffold PR

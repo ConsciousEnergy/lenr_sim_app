@@ -8,7 +8,7 @@ P0 landed taxonomy/provenance/nulls/benchmarks. Full equation rebuilds:
 | 2 | Hagelstein | Coupling matrix elements / excitation transfer | **Started scaffold** — [ARA_P1_SCAFFOLD_START.md](./ARA_P1_SCAFFOLD_START.md) |
 | 3 | Storms | Versioned NAE 2012–13 + 2026 electron channel dynamics | **Started scaffold** — [ARA_P1_SCAFFOLD_START.md](./ARA_P1_SCAFFOLD_START.md) |
 | 4 | Takahashi | Langevin/TSC condensation trajectory | **Started scaffold** — [ARA_P1_SCAFFOLD_START.md](./ARA_P1_SCAFFOLD_START.md) |
-| 5 | Shoulders / Matsumoto | Phenomenological branch networks | Queued |
+| 5 | Shoulders / Matsumoto | Phenomenological branch networks | **Started scaffold** — [ARA_P1_SCAFFOLD_START.md](./ARA_P1_SCAFFOLD_START.md) |
 | 6 | Optional | Dubinko LAV; NASA/Pines LCF conventional bridge | Queued |
 
 Each rebuild requires: primary sources, paper benchmark, falsifier, maturity axes.

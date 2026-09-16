@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from app.physics_engine.theories.hagelstein_phonon import HagelsteinPhononTheory
+from app.physics_engine.theories.matsumoto_enc import MatsumotoENCTheory
 from app.physics_engine.theories.nae_model import NAEModelTheory
+from app.physics_engine.theories.shoulders_evo import ShouldersEVOTheory
 from app.physics_engine.theories.takahashi_tsc import TakahashiTSCTheory
 from app.physics_engine.theories.widom_larsen import WidomLarsenTheory
 
@@ -43,3 +45,15 @@ def test_takahashi_p1_scaffold_marker() -> None:
     result = TakahashiTSCTheory().calculate(_STANDARD, {})
     assert result.is_applicable
     _assert_p1_started("takahashi_tsc", result.provenance or {})
+
+
+def test_shoulders_p1_scaffold_marker() -> None:
+    result = ShouldersEVOTheory().calculate(_STANDARD, {})
+    assert result.is_applicable
+    _assert_p1_started("shoulders_evo", result.provenance or {})
+
+
+def test_matsumoto_p1_scaffold_marker() -> None:
+    result = MatsumotoENCTheory().calculate(_STANDARD, {})
+    assert result.is_applicable
+    _assert_p1_started("matsumoto_enc", result.provenance or {})
