@@ -8,6 +8,10 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+  # Agent/CI tokens often lack workflow_dispatch; contents:write can still
+  # repository_dispatch. Require client_payload.confirm == I_SHIP_VPS_0_3_8.
+  repository_dispatch:
+    types: [vps-compose-ship]
 
 permissions:
   contents: read
@@ -158,13 +162,29 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-vps:
-    # Manual only. Promote to push-on-ship-branch after two clean runs.
-    if: github.event_name == 'workflow_dispatch'
+    # Manual / gated ship only — never on bare push to main.
+    # Prefer workflow_dispatch; repository_dispatch type vps-compose-ship is the
+    # fallback when the caller cannot create workflow_dispatch events.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'repository_dispatch' && github.event.action == 'vps-compose-ship')
     needs: [build-backend, build-frontend-image]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (APP_VERSION + share verify)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Gate repository_dispatch confirm
+        if: github.event_name == 'repository_dispatch'
+        env:
+          CONFIRM: ${{ github.event.client_payload.confirm }}
+        run: |
+          set -euo pipefail
+          if [[ "${CONFIRM:-}" != "I_SHIP_VPS_0_3_8" ]]; then
+            echo "::error::refuse vps-compose-ship without client_payload.confirm=I_SHIP_VPS_0_3_8"
+            exit 2
+          fi
+          echo "OK: repository_dispatch confirm accepted"
 
       - name: Read APP_VERSION
         id: version

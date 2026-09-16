@@ -1,14 +1,17 @@
 # Operator: ship tip of main to Compose share (post #196/#197)
 
-## Live status (agent probe 2026-09-16)
+## Live status (agent probe 2026-09-16T18:41Z)
 
 | Check | Result |
 |-------|--------|
-| `GET /api/health` | `version=0.3.7-beta`, healthy |
-| `POST /api/physics/bubble-fusion` with `dynamics_mode=auto` | Live returns `dynamics_mode_used=legacy`, `km_auto_selected=false` |
-| Conclusion | **#196 KM auto is on `main` and in GHCR; VPS Compose share not yet pulled** |
+| Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
+| `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
+| `POST …/bubble-fusion` `dynamics_mode=auto` @ 4 bar | Still `dynamics_mode_used=legacy`, `km_auto_selected=false` |
+| Conclusion | **#196/#198 on `main` + GHCR; Compose share not yet pulled** |
 
-Evidence: `/opt/cursor/artifacts/live_bf_km_probe.json` (agent workspace).
+Evidence: `/opt/cursor/artifacts/live_bf_defaults.json`, `live_bf_km_probe_now.json`.
+
+P0 fidelity squash-merged as #198 (`6d1f44d`).
 
 ## What already ran automatically on merge
 

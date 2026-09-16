@@ -178,10 +178,20 @@ cmd_ship() {
     dispatch_ref="$VPS_BRANCH"
   fi
 
-  local before_epoch run_id i
+  local before_epoch run_id i dispatch_mode
   before_epoch="$(date -u +%s)"
-  gh workflow run deploy.yml --repo "$REPO" --ref "$dispatch_ref"
-  echo "Dispatched deploy.yml on $dispatch_ref"
+  dispatch_mode="workflow_dispatch"
+  if gh workflow run deploy.yml --repo "$REPO" --ref "$dispatch_ref" 2>/tmp/vps-ship-dispatch.err; then
+    echo "Dispatched deploy.yml via workflow_dispatch on $dispatch_ref"
+  else
+    echo "WARN: workflow_dispatch failed; trying repository_dispatch vps-compose-ship"
+    cat /tmp/vps-ship-dispatch.err >&2 || true
+    gh api --method POST "repos/${REPO}/dispatches" --input - <<EOF
+{"event_type":"vps-compose-ship","client_payload":{"confirm":"${CONFIRM_TOKEN}","ref":"${dispatch_ref}"}}
+EOF
+    dispatch_mode="repository_dispatch"
+    echo "Dispatched deploy.yml via repository_dispatch (vps-compose-ship)"
+  fi
 
   if [[ "${SKIP_WAIT:-0}" == "1" ]]; then
     echo "SKIP_WAIT=1 — not watching deploy; verify manually:"
@@ -190,25 +200,33 @@ cmd_ship() {
     return 0
   fi
 
-  echo "==> Waiting for Build and Deploy run on $dispatch_ref"
+  echo "==> Waiting for Build and Deploy run (mode=$dispatch_mode)"
   run_id=""
-  for i in $(seq 1 45); do
+  for i in $(seq 1 60); do
     run_id="$(
-      gh run list --repo "$REPO" --workflow "Build and Deploy" --branch "$dispatch_ref" --limit 5 \
-        --json databaseId,createdAt,status,headSha,event \
+      gh run list --repo "$REPO" --workflow "Build and Deploy" --limit 8 \
+        --json databaseId,createdAt,status,headSha,event,displayTitle \
         | python3 -c "
 import json,sys,datetime
 before=${before_epoch}-30
 rows=json.load(sys.stdin)
+want_event='${dispatch_mode}'
 for r in rows:
     ts=r.get('createdAt') or ''
     try:
         epoch=int(datetime.datetime.fromisoformat(ts.replace('Z','+00:00')).timestamp())
     except Exception:
         continue
-    if epoch >= before:
-        print(r['databaseId'])
-        break
+    if epoch < before:
+        continue
+    if want_event == 'repository_dispatch' and r.get('event') != 'repository_dispatch':
+        continue
+    if want_event == 'workflow_dispatch' and r.get('event') not in ('workflow_dispatch','workflow_run'):
+        # workflow_dispatch runs report event=workflow_dispatch
+        if r.get('event') != 'workflow_dispatch':
+            continue
+    print(r['databaseId'])
+    break
 "
     )"
     if [[ -n "$run_id" ]]; then
@@ -217,7 +235,7 @@ for r in rows:
     sleep 4
   done
   if [[ -z "$run_id" ]]; then
-    echo "ERROR: could not locate dispatched Build and Deploy run on $dispatch_ref" >&2
+    echo "ERROR: could not locate dispatched Build and Deploy run (mode=$dispatch_mode)" >&2
     exit 1
   fi
   echo "Watching run $run_id"
