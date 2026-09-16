@@ -10,7 +10,8 @@
 #   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh verify-live
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-#   # Direct SSH when VPS_HOST + VPS_SSH_KEY are in the environment:
+#   # Direct SSH when VPS_SSH_KEY is in the environment (preferred; bypasses
+#   # GitHub Actions billing). VPS_HOST defaults to the public share A record.
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 #
@@ -27,6 +28,8 @@ MODE="${1:-plan}"
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
 SHIP_REF="${SHIP_REF:-main}"
 SHIP_VIA_VPS_BRANCH="${SHIP_VIA_VPS_BRANCH:-0}"
+# Public Compose share A → VPS (lenr-sim-beta.conscious.energy). Override with VPS_HOST.
+DEFAULT_VPS_HOST="185.211.4.66"
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing $1" >&2; exit 2; }; }
 need git
@@ -78,13 +81,13 @@ gh pr view 196 --json state,mergedAt
 gh pr view 197 --json state,mergedAt
 gh pr view 198 --json state,mergedAt
 
-# B) Prefer Actions ship (needs repo secrets VPS_HOST + VPS_SSH_KEY):
-CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-
-# C) Or direct SSH when those vars are in the local/Cursor env:
+# B) Prefer direct SSH when VPS_SSH_KEY is set (host defaults to ${DEFAULT_VPS_HOST}):
 CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
+
+# C) Or Actions ship (needs repo secrets + billing restored):
+CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
 
 # ${PROBE_NOTE}
 # See docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
@@ -104,8 +107,9 @@ cmd_check() {
   echo "main@$main_sha APP_VERSION=${main_ver:-?}"
   echo "vps@$vps_sha"
   echo "EXPECT_VERSION=$EXPECT_VERSION SHIP_REF=$SHIP_REF"
-  echo "VPS_HOST env: ${VPS_HOST:+set}${VPS_HOST:-MISSING}"
+  echo "VPS_HOST env: ${VPS_HOST:+set}${VPS_HOST:-MISSING (default ${DEFAULT_VPS_HOST})}"
   echo "VPS_SSH_KEY env: $([[ -n "${VPS_SSH_KEY:-}" ]] && echo set || echo MISSING)"
+  echo "ssh-ship resolved host: $(resolve_vps_host)"
 
   if train_merged; then
     echo "OK: #196/#197/#198 MERGED"
@@ -178,13 +182,25 @@ print("OK: KM auto live")
 PY
 }
 
+resolve_vps_host() {
+  # Prefer explicit env; else public share A record (not a secret).
+  if [[ -n "${VPS_HOST:-}" ]]; then
+    printf '%s\n' "$VPS_HOST"
+    return 0
+  fi
+  printf '%s\n' "$DEFAULT_VPS_HOST"
+}
+
 cmd_ssh_ship() {
   require_confirm_execute
   need ssh
-  if [[ -z "${VPS_HOST:-}" || -z "${VPS_SSH_KEY:-}" ]]; then
-    echo "ERROR: ssh-ship requires VPS_HOST and VPS_SSH_KEY in the environment" >&2
+  if [[ -z "${VPS_SSH_KEY:-}" ]]; then
+    echo "ERROR: ssh-ship requires VPS_SSH_KEY in the environment" >&2
+    echo "NOTE: VPS_HOST defaults to ${DEFAULT_VPS_HOST} (lenr-sim-beta A record)" >&2
     exit 2
   fi
+  local vps_host
+  vps_host="$(resolve_vps_host)"
 
   git fetch origin main
   local deploy_sha image_tag
@@ -212,9 +228,9 @@ cmd_ssh_ship() {
   umask 077
   printf '%s\n' "$VPS_SSH_KEY" > "$key"
 
-  echo "==> SSH deploy to root@${VPS_HOST} IMAGE_TAG=${image_tag} SHA=${deploy_sha}"
+  echo "==> SSH deploy to root@${vps_host} IMAGE_TAG=${image_tag} SHA=${deploy_sha}"
   ssh -i "$key" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
-    "root@${VPS_HOST}" \
+    "root@${vps_host}" \
     "set -euo pipefail
      cd /opt/lenr-sim/src
      git fetch --prune origin
@@ -254,9 +270,9 @@ cmd_ship() {
     echo "WARN: ALLOW_UNMERGED=1 — skipping MERGED/version gates"
   fi
 
-  # Prefer direct SSH when credentials are present (avoids empty Actions secrets).
-  if [[ -n "${VPS_HOST:-}" && -n "${VPS_SSH_KEY:-}" ]]; then
-    echo "NOTE: VPS_HOST/VPS_SSH_KEY present — using ssh-ship path"
+  # Prefer direct SSH when key is present (avoids Actions billing / empty secrets).
+  if [[ -n "${VPS_SSH_KEY:-}" ]]; then
+    echo "NOTE: VPS_SSH_KEY present — using ssh-ship path (host=$(resolve_vps_host))"
     cmd_ssh_ship
     return 0
   fi
