@@ -53,18 +53,28 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0. Live pull requires secre
 
 ### Required operator action
 
-**Preferred (bypasses GitHub Actions billing):** Cursor / agent env secret
-`VPS_SSH_KEY`, or authorize the agent pubkey and use
-`VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519`. `VPS_HOST` defaults to
-`185.211.4.66` (`lenr-sim-beta.conscious.energy` A record).
+**Fastest (Hostinger browser/VNC console):** as `root` on `185.211.4.66`, append
+the current cloud-agent pubkey (PasswordAuthentication is off — console only):
 
 ```bash
-# Env secret path:
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+```
+
+Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
+
+**Or** set Cursor env secret `VPS_SSH_KEY` to a private key **already** in
+`authorized_keys` (do not paste the agent key twin — it is not authorized yet),
+then **restart** the agent. `VPS_HOST` defaults to `185.211.4.66`.
+
+```bash
+# After pubkey is authorized (agent identity file):
+VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519 \
 CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 
-# Agent identity file (after pubkey is in VPS authorized_keys):
-VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519 \
+# Or with authorized env secret:
 CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 ```
