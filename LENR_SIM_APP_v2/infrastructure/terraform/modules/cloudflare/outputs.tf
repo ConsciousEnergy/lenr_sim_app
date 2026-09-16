@@ -6,8 +6,8 @@ output "pages_url" {
 }
 
 output "custom_domain_url" {
-  description = "Custom domain URL for Cloudflare Pages"
-  value       = var.environment == "prod" ? "https://${var.domain}" : "https://${var.environment}.${var.domain}"
+  description = "Custom domain URL for Cloudflare Pages (subdomain only; never apex)"
+  value       = "https://${var.pages_hostname}.${var.domain}"
 }
 
 output "r2_bucket_name" {

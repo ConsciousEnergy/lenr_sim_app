@@ -52,3 +52,10 @@ backup_schedule: "0 3 * * *"  # Daily at 3 AM
 health_check_interval: 30
 health_check_timeout: 10
 health_check_retries: 3
+
+# GHCR pull auth for Swarm stack deploy (--with-registry-auth).
+# Prefer Ansible Vault or -e @secrets.yml — never commit real tokens.
+# ghcr_username: consciousenergy
+# ghcr_token: "{{ lookup('env', 'GHCR_TOKEN') }}"
+ghcr_username: "{{ lookup('env', 'GHCR_USER') | default('', true) }}"
+ghcr_token: "{{ lookup('env', 'GHCR_TOKEN') | default('', true) }}"

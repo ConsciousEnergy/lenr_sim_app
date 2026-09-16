@@ -43,3 +43,14 @@ variable "pages_production_branch" {
   type        = string
   default     = "lenr_sim_app_v0.3.8-beta"
 }
+
+variable "pages_hostname" {
+  description = "Subdomain for Pages SPA (never @ or www)"
+  type        = string
+  default     = "app"
+
+  validation {
+    condition     = !contains(["@", "www", ""], var.pages_hostname)
+    error_message = "pages_hostname must not be empty, @, or www."
+  }
+}

@@ -1,0 +1,25 @@
+# Partial backend config for terraform init -backend-config=backend.hcl
+# Copy to backend.hcl (do not commit) and fill values.
+#
+# R2 example (S3-compatible):
+#   bucket         = "lenr-sim-terraform-state"
+#   key            = "staging/terraform.tfstate"
+#   region         = "auto"
+#   endpoint       = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+#   access_key     = "..."
+#   secret_key     = "..."
+#   skip_credentials_validation = true
+#   skip_region_validation      = true
+#   skip_requesting_account_id  = true
+#   force_path_style            = true
+#
+# AWS S3 example:
+#   bucket  = "lenr-sim-terraform-state"
+#   key     = "staging/terraform.tfstate"
+#   region  = "us-east-1"
+#   encrypt = true
+
+bucket  = "lenr-sim-terraform-state"
+key     = "staging/terraform.tfstate"
+region  = "us-east-1"
+encrypt = true

@@ -12,13 +12,7 @@ terraform {
 
 # Variables live in variables.tf (do not redeclare here — Terraform rejects duplicates).
 
-# ==============================================================================
-# Provider Configuration
-# ==============================================================================
-
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
-}
+# Provider is configured by the root module (required for count/for_each on this module).
 
 # ==============================================================================
 # Cloudflare Pages Project
@@ -78,13 +72,14 @@ resource "cloudflare_pages_project" "frontend" {
 resource "cloudflare_pages_domain" "frontend" {
   account_id   = var.cloudflare_account_id
   project_name = cloudflare_pages_project.frontend.name
-  domain       = var.environment == "prod" ? var.domain : "${var.environment}.${var.domain}"
+  # Never bind Pages to apex/www — WordPress.com keeps marketing hosts.
+  domain = "${var.pages_hostname}.${var.domain}"
 }
 
-# DNS record for custom domain
+# DNS record for custom domain (subdomain only; refuse @ / www via variable validation)
 resource "cloudflare_record" "pages_cname" {
   zone_id = var.cloudflare_zone_id
-  name    = var.environment == "prod" ? "@" : var.environment
+  name    = var.pages_hostname
   content = cloudflare_pages_project.frontend.subdomain
   type    = "CNAME"
   ttl     = 1  # Auto TTL

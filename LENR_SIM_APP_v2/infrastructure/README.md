@@ -83,12 +83,15 @@ infrastructure/
 > `scripts/deploy.sh` is hard-gated: it exits unless
 > `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
 
-### Validate-only (safe during 0.3.7)
+### Validate-only (safe during prep; no apply)
 
 ```bash
 cd infrastructure/terraform
 terraform init -backend=false
 terraform validate
+# Staging remote state (operator machine only):
+# cp backend.hcl.example backend.hcl && terraform init -backend-config=backend.hcl
+# terraform workspace select staging && terraform plan
 
 cd ../ansible
 ansible-playbook --syntax-check playbooks/site.yml
@@ -96,6 +99,10 @@ ansible-playbook --syntax-check playbooks/deploy-stack.yml
 ansible-playbook --syntax-check playbooks/setup-docker.yml
 ansible-playbook --syntax-check playbooks/backup.yml
 ```
+
+Defaults: `hostinger_vps_mode=disabled`, `pages_hostname=app` (never `@`/`www`),
+GHCR login required before Swarm `--with-registry-auth`. Decision docs under
+`docs/v0.3.8-beta/`.
 
 ### 1. Prerequisites
 

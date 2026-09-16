@@ -34,18 +34,23 @@ variable "cloudflare_zone_id" {
 }
 
 variable "hostinger_api_token" {
-  description = "Hostinger API token"
+  description = "Hostinger API token (required only when hostinger_vps_mode=create_new)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "ssh_public_key" {
-  description = "SSH public key for VPS access (ed25519 recommended)"
+  description = "SSH public key for VPS access (ed25519 recommended; required for create_new)"
   type        = string
-  
+  default     = ""
+
   validation {
-    condition     = can(regex("^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)", var.ssh_public_key))
-    error_message = "SSH public key must be a valid format (ssh-rsa, ssh-ed25519, or ecdsa)"
+    condition = (
+      var.ssh_public_key == ""
+      || can(regex("^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)", var.ssh_public_key))
+    )
+    error_message = "SSH public key must be empty or a valid format (ssh-rsa, ssh-ed25519, or ecdsa)"
   }
 }
 
@@ -91,4 +96,44 @@ variable "pages_production_branch" {
   description = "Cloudflare Pages production branch for v0.3.8-beta cutover (do not apply in 0.3.7)"
   type        = string
   default     = "lenr_sim_app_v0.3.8-beta"
+}
+
+variable "pages_hostname" {
+  description = "DNS name for Pages SPA (never @ or www — keep WordPress on apex/www)"
+  type        = string
+  default     = "app"
+
+  validation {
+    condition     = !contains(["@", "www", ""], var.pages_hostname)
+    error_message = "pages_hostname must not be empty, @, or www (marketing apex stays on WordPress.com)."
+  }
+}
+
+variable "hostinger_vps_mode" {
+  description = "disabled | import_existing | create_new — refuse blind create against live 185.211.4.66"
+  type        = string
+  default     = "disabled"
+
+  validation {
+    condition     = contains(["disabled", "import_existing", "create_new"], var.hostinger_vps_mode)
+    error_message = "hostinger_vps_mode must be disabled, import_existing, or create_new"
+  }
+}
+
+variable "confirm_hostinger_create" {
+  description = "Must be I_CREATE_NEW_VPS when hostinger_vps_mode=create_new"
+  type        = string
+  default     = ""
+}
+
+variable "existing_vps_ipv4" {
+  description = "Live Compose VPS IPv4 when not creating a new Hostinger VPS (default: current public beta)"
+  type        = string
+  default     = "185.211.4.66"
+}
+
+variable "manage_api_dns" {
+  description = "When true, manage api.<domain> A record (off by default during prep)"
+  type        = bool
+  default     = false
 }

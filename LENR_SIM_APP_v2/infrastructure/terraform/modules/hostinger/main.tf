@@ -12,13 +12,7 @@ terraform {
 
 # Variables live in variables.tf (do not redeclare here — Terraform rejects duplicates).
 
-# ==============================================================================
-# Provider Configuration
-# ==============================================================================
-
-provider "hostinger" {
-  api_token = var.hostinger_api_token
-}
+# Provider is configured by the root module (required for count/for_each on this module).
 
 # ==============================================================================
 # SSH Key

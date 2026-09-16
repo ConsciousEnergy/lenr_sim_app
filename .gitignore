@@ -22,6 +22,7 @@ LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/
 
 # Terraform / Ansible operator files (real tokens, live inventory)
 **/terraform.tfvars
+**/backend.hcl
 **/inventory.yml
 
 # VPS runtime env (never commit a filled copy)
