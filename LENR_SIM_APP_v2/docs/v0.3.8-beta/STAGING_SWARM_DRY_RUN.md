@@ -21,9 +21,10 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 |-------|--------|
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 | `deploy.sh staging` with wrong confirm | Exit **2** — requires `I_STAGING_0_3_8` |
-| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK (see `/opt/cursor/artifacts/ansible_syntax_check.log`) |
-| Terraform binary on cloud agent | Not installed — operator runs `terraform plan` on machine with credentials |
-| Remote Cloudflare/Hostinger apply | **Not executed** (no prod/staging cloud credentials in agent) |
+| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK |
+| `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
+| Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs operator `backend.hcl` + cloud credentials |
+| Ansible `--check` against staging inventory | **Not executed** — no staging hosts/credentials in agent |
 
 ## Operator remaining steps
 
