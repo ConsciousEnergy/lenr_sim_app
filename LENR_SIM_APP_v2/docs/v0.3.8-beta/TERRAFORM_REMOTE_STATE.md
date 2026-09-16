@@ -36,8 +36,8 @@ terraform validate
 
 | Workspace | Purpose | Apply? |
 |-----------|---------|--------|
-| `staging` | Non-prod plan / check-mode | Plan only until explicit confirm |
-| `prod` | Future cutover | Blocked without `CONFIRM_SWARM_0_3_8` |
+| `staging` | Non-prod plan / check-mode | Plan / staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` |
+| `prod` | Public cutover (v0.3.9) | Blocked without `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 
 Default Hostinger mode in variables is `disabled` so a staging plan cannot
 blindly create a VPS against live `185.211.4.66`. See
