@@ -39,10 +39,10 @@ again via helper on tip:
 Preferred helper (credentials on operator/agent machine, **plan + check only**):
 
 ```bash
-# Place (untracked):
-#   infrastructure/terraform/backend.hcl
-#   infrastructure/terraform/staging.tfvars
-#   infrastructure/ansible/inventory.staging.yml
+# Place (untracked) from examples:
+#   infrastructure/terraform/backend.hcl          ← backend.hcl.example
+#   infrastructure/terraform/staging.tfvars       ← staging.tfvars.example
+#   infrastructure/ansible/inventory.staging.yml  ← inventory.staging.yml.example
 CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
 ```

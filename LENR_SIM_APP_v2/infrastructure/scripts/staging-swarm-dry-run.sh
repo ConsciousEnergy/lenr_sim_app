@@ -14,6 +14,7 @@
 #   LENR_SIM_APP_v2/infrastructure/terraform/backend.hcl
 #   LENR_SIM_APP_v2/infrastructure/terraform/staging.tfvars
 #   LENR_SIM_APP_v2/infrastructure/ansible/inventory.staging.yml
+# Copy from *.example / staging.tfvars.example / inventory.staging.yml.example.
 # Optional env: CLOUDFLARE_API_TOKEN / HOSTINGER_API_TOKEN if tfvars references them.
 set -euo pipefail
 
