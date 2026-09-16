@@ -121,6 +121,16 @@ CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
 ```
 
+**Poll until authorized** (agent / operator leave this running after requesting
+console pubkey install — ships within one poll interval once SSH works):
+
+```bash
+CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/poll-and-ship.sh
+```
+
+Status JSON: `/opt/cursor/artifacts/poll_and_ship_status.json`.
+
 ## Post-ship probe
 
 High drive (~4 bar). Expect:
