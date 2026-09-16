@@ -52,6 +52,16 @@ class TheoryContribution:
     reproducibility_tier: str = "exploratory"
     claim_tier: str = "speculative_exploratory"
     provenance: Dict[str, Any] = field(default_factory=dict)
+    # ARA P0 additive fidelity / provenance (optional; additive contract).
+    primary_sources: List[str] = field(default_factory=list)
+    theory_model_version: str = ""
+    author_equations_vs_simulator_approximations: Dict[str, str] = field(
+        default_factory=dict
+    )
+    free_or_fitted_parameters: List[Dict[str, Any]] = field(default_factory=list)
+    source_domain_limits: List[str] = field(default_factory=list)
+    model_fidelity: str = "approximate"  # fidelity axis ≠ empirical support
+    empirical_support: str = "speculative"  # independent of model_fidelity
 
 
 @dataclass
@@ -64,6 +74,11 @@ class TheoryMetadata:
     configurable_parameters: Dict[str, Any]
     references: List[str] = field(default_factory=list)
     category: str = "general"
+    primary_sources: List[str] = field(default_factory=list)
+    theory_model_version: str = ""
+    model_fidelity: str = "approximate"
+    empirical_support: str = "speculative"
+    control_role: str = ""  # "", "baseline", "null", "shared_mechanism"
 
 
 @runtime_checkable

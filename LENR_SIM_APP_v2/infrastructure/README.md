@@ -80,9 +80,9 @@ infrastructure/
 > production during 0.3.7. Prep checklist (no apply):
 > [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 >
-> `scripts/deploy.sh` is hard-gated: it exits unless
-> `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
-
+> `scripts/deploy.sh` is hard-gated:
+> - Staging dry-run: `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+> - Production Swarm/Pages cutover (v0.3.9): `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`
 ### Validate-only (safe during prep; no apply)
 
 ```bash

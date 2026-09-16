@@ -3,8 +3,9 @@
 # Usage: ./deploy.sh [production|staging] [--app-only]
 #
 # v0.3.7-beta: public beta ships Hostinger VPS Compose + Caddy (see ../vps/).
-# This Swarm/Pages path is deferred to v0.3.8-beta. Refuse apply unless the
-# operator explicitly opts in (prep docs: docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+# Swarm/Pages public cutover target is v0.3.9-beta.
+# Staging dry-runs in 0.3.8 may use CONFIRM_SWARM_0_3_8; production cutover
+# requires CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 (see docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 set -euo pipefail
 
@@ -17,17 +18,31 @@ TERRAFORM_DIR="$PROJECT_ROOT/infrastructure/terraform"
 ANSIBLE_DIR="$PROJECT_ROOT/infrastructure/ansible"
 SECRETS_FILE="${SCRIPT_DIR}/.secrets.env"
 
-if [[ "${CONFIRM_SWARM_0_3_8:-}" != "I_CUTOVER_0_3_8" ]]; then
-  cat >&2 <<'EOF'
-ERROR: infrastructure/scripts/deploy.sh is the v0.3.8-beta Swarm/Pages path.
+_confirm_038="${CONFIRM_SWARM_0_3_8:-}"
+_confirm_039="${CONFIRM_SWARM_0_3_9:-}"
 
-Public beta (v0.3.7) uses:
+if [[ "$ENVIRONMENT" == "staging" ]]; then
+  if [[ "$_confirm_038" != "I_CUTOVER_0_3_8" && "$_confirm_038" != "I_STAGING_0_3_8" ]]; then
+    cat >&2 <<'EOF'
+ERROR: staging Swarm path requires:
+  CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
+(or legacy I_CUTOVER_0_3_8 for staging-only experiments).
+Public Compose share must remain on infrastructure/vps/scripts/.
+EOF
+    exit 2
+  fi
+elif [[ "$_confirm_039" != "I_CUTOVER_0_3_9" ]]; then
+  cat >&2 <<'EOF'
+ERROR: production Swarm/Pages cutover is gated for v0.3.9-beta.
+
+Public beta Compose path:
   LENR_SIM_APP_v2/infrastructure/vps/scripts/
 
-Prep only (no apply): docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md
+Staging dry-run (0.3.8):
+  CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
 
-To intentionally run this cutover script in a 0.3.8 window:
-  CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh ...
+Production multi-node cutover (0.3.9 target):
+  CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
 EOF
   exit 2
 fi

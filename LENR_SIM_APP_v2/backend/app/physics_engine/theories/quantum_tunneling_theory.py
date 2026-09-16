@@ -146,6 +146,22 @@ class QuantumTunnelingTheory:
                 "Gamow G. (1928), Z. Phys. 51, 204",
                 "Wentzel G. (1926), Z. Phys. 38, 518 (WKB)",
             ],
+            primary_sources=[
+                "Gamow G. (1928), Z. Phys. 51, 204",
+                "Wentzel G. (1926), Z. Phys. 38, 518 (WKB)",
+            ],
+            theory_model_version="quantum_tunneling_baseline_v1",
+            author_equations_vs_simulator_approximations={
+                "gamow_wkb": "author_equations",
+                "role": "conventional_dd_baseline",
+            },
+            source_domain_limits=[
+                "Identity enhancement (baseline); not a LENR mechanism claim.",
+            ],
+            model_fidelity="high",
+            empirical_support="established",
+            claim_tier="established_reference",
+            evidence_class="established_physics",
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -159,6 +175,14 @@ class QuantumTunnelingTheory:
                 "Wentzel (1926) WKB",
             ],
             category="base",
+            primary_sources=[
+                "Gamow G. (1928), Z. Phys. 51, 204",
+                "Wentzel G. (1926), Z. Phys. 38, 518 (WKB)",
+            ],
+            theory_model_version="quantum_tunneling_baseline_v1",
+            model_fidelity="high",
+            empirical_support="established",
+            control_role="baseline",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

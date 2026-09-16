@@ -268,6 +268,24 @@ class KimBECTheory:
                 "Kim Y.E. (2013) J. Condensed Matter Nucl. Sci. 13, 265",
                 "Kim Y.E. & Ward T.E. (2012) JCMNS 6, 101",
             ],
+            primary_sources=[
+                "Kim Y.E. (2009) Naturwissenschaften 96, 803",
+                "Kim Y.E. (2013) J. Condensed Matter Nucl. Sci. 13, 265",
+            ],
+            theory_model_version="kim_becnf_p0_v1",
+            author_equations_vs_simulator_approximations={
+                "bec_tunneling_rate": "author_equations_approx",
+                "not_holmlid_udh": "taxonomy",
+            },
+            source_domain_limits=[
+                "Kim BECNF only — Holmlid H(0)/D(0) is module holmlid_udh, not this id.",
+            ],
+            model_fidelity="approximate",
+            empirical_support="speculative",
+            provenance={
+                "author_family": "kim_becnf",
+                "not_holmlid_udh": True,
+            },
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -281,6 +299,13 @@ class KimBECTheory:
                 "Kim Y.E. (2013) J. Condensed Matter Nucl. Sci. 13, 265",
             ],
             category="mechanism",
+            primary_sources=[
+                "Kim Y.E. (2009) Naturwissenschaften 96, 803",
+                "Kim Y.E. (2013) J. Condensed Matter Nucl. Sci. 13, 265",
+            ],
+            theory_model_version="kim_becnf_p0_v1",
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

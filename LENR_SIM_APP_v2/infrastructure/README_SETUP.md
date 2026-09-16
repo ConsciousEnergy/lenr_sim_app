@@ -2,11 +2,10 @@
 
 **Quick Start:** See [README.md](README.md) for overview
 
-> **v0.3.7-beta:** public beta uses **VPS Compose + Caddy** ([`vps/`](vps/)).  
-> Terraform / Ansible / Swarm / Pages steps below are **v0.3.8-beta cutover prep only**.  
-> Do **not** `terraform apply` or run Swarm `scripts/deploy.sh` against production in 0.3.7  
-> (`deploy.sh` requires `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`).  
-> Prep checklist: [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+> **Public share:** **VPS Compose + Caddy** ([`vps/`](vps/)) through 0.3.8.  
+> Staging Swarm dry-run (0.3.8): `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`.  
+> Production Swarm/Pages cutover (0.3.9): `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.  
+> Prep: [`../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 ---
 
@@ -53,8 +52,10 @@ cp inventory.yml.example inventory.yml
 ```bash
 cd infrastructure/scripts
 chmod +x *.sh
-# Hard-gated; do not run during v0.3.7 VPS beta without an explicit 0.3.8 cutover window:
-CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh production
+# Staging dry-run only in 0.3.8:
+CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
+# Production multi-node cutover is a 0.3.9 gate:
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
 ```
 
 ### Manual

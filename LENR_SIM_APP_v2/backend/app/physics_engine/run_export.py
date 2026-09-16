@@ -32,7 +32,9 @@ def _collect_citations(*sources: Any) -> List[str]:
             return
         if isinstance(obj, dict):
             for key, value in obj.items():
-                if key in ("references", "citations") and isinstance(value, (list, tuple)):
+                if key in ("references", "citations", "primary_sources") and isinstance(
+                    value, (list, tuple)
+                ):
                     for ref in value:
                         if isinstance(ref, str) and ref and ref not in seen:
                             seen.append(ref)
@@ -77,6 +79,7 @@ def build_run_export(
     model_version: Optional[str] = None,
     extra_provenance: Optional[Dict[str, Any]] = None,
     extra_citations: Optional[Iterable[str]] = None,
+    experiment_template_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Build a ``lenr-run-export-v1`` envelope (RORO).
 
@@ -88,6 +91,8 @@ def build_run_export(
         The full results object (e.g. the SimulationResponse payload).
     seed:
         Explicit RNG seed used for any stochastic/UQ step (None if deterministic).
+    experiment_template_id:
+        Optional experiment-template registry id (stub schema in v0.3.8).
     """
     citations = _collect_citations(results, simulation_parameters)
     for extra in extra_citations or []:
@@ -96,11 +101,53 @@ def build_run_export(
 
     claim_tiers = _collect_claim_tiers(results)
 
+    # ARA P0: experiment template stub + enabled theories / seeds / Q audit.
+    template_id = experiment_template_id
+    if not template_id and isinstance(simulation_parameters, dict):
+        template_id = simulation_parameters.get("experiment_template_id")
+    if not template_id:
+        template_id = "experiment_template_stub_v1"
+
+    enabled_theories: List[str] = []
+    if isinstance(simulation_parameters, dict):
+        raw_enabled = simulation_parameters.get("enabled_theories")
+        if isinstance(raw_enabled, (list, tuple)):
+            enabled_theories = [str(x) for x in raw_enabled]
+    if not enabled_theories and isinstance(results, dict):
+        for key in ("enabled_theories", "per_theory"):
+            block = results.get(key)
+            if key == "enabled_theories" and isinstance(block, list):
+                enabled_theories = [str(x) for x in block]
+            elif key == "per_theory" and isinstance(block, list):
+                enabled_theories = [
+                    str(row.get("theory_id"))
+                    for row in block
+                    if isinstance(row, dict) and row.get("theory_id")
+                ]
+
+    conservation_q_audit: Dict[str, Any] = {
+        "status": "stub",
+        "note": (
+            "v0.3.8 additive stub: conservation / Q-value audit summary placeholder. "
+            "Does not close EQ-OPEN-*."
+        ),
+    }
+    if isinstance(results, dict):
+        if isinstance(results.get("conservation_audit"), dict):
+            conservation_q_audit = results["conservation_audit"]
+        elif isinstance(results.get("q_audit"), dict):
+            conservation_q_audit = results["q_audit"]
+
     provenance: Dict[str, Any] = {
         "model_version": model_version,
         "schema_version": SCHEMA_VERSION,
         "seed": seed,
         "deterministic": seed is not None,
+        "experiment_template_id": template_id,
+        "enabled_theories": enabled_theories,
+        "solver_seeds": {"random_seed": seed},
+        "claim_tiers_present": claim_tiers,
+        "conservation_q_audit": conservation_q_audit,
     }
     oq = results.get("open_questions") if isinstance(results, dict) else None
     if isinstance(oq, dict):
@@ -115,16 +162,20 @@ def build_run_export(
         "exported_at": _iso_now(),
         "environment": environment,
         "system_preset": system_preset,
+        "experiment_template_id": template_id,
         "simulation_parameters": simulation_parameters,
         "results": results,
         "reproducibility": {
             "seed": seed,
             "deterministic": seed is not None,
+            "solver_seeds": {"random_seed": seed},
         },
         "claim_tiers_present": claim_tiers,
         "uncertainty": _extract_uncertainty(results),
         "provenance": provenance,
         "citations": citations,
+        "conservation_q_audit": conservation_q_audit,
+        "enabled_theories": enabled_theories,
     }
 
 

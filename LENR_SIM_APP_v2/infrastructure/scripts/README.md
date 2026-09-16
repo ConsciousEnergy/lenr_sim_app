@@ -1,12 +1,12 @@
 # LENR Simulation App - Deployment Scripts
 
-**Version:** 0.3.7-beta (Swarm helpers deferred to 0.3.8)  
+**Version:** 0.3.8-beta (staging Swarm dry-run) / 0.3.9-beta (public cutover)  
 **Last Updated:** September 2026
 
-> **Stop — v0.3.7-beta public beta does not use these scripts.**  
-> Live share/deploy path: [`../vps/`](../vps/) (Compose + Caddy).  
-> Swarm/Terraform/Pages cutover: [`../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md) — **do not apply** until 0.3.8.  
-> `deploy.sh` refuses to run unless `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`.
+> **Stop — public share still uses Compose + Caddy** ([`../vps/`](../vps/)).  
+> Staging dry-run (0.3.8): `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging`  
+> Production Swarm/Pages cutover (0.3.9): `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production`  
+> Prep: [`../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](../../docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 ---
 

@@ -43,5 +43,7 @@ to roll back.
 - [ ] Operator: `ansible-playbook --check --diff playbooks/deploy-stack.yml -i inventory.staging.yml` against a **non-prod** node
 - [ ] Operator: complete Compose rollback steps 2–5 on live VPS once and attach timestamps
 
-Hard gate remains: `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8` for
-`infrastructure/scripts/deploy.sh`.
+Hard gates for `infrastructure/scripts/deploy.sh`:
+
+- Staging: `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` (legacy `I_CUTOVER_0_3_8` accepted for staging-only).
+- Production cutover (v0.3.9): `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.

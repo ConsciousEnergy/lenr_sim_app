@@ -12,6 +12,7 @@ from app.campaign.grid import (
     PRESETS,
     campaign_size,
     describe_preset,
+    diverse_theory_group_count,
     iter_all_claims_single_theory_cases,
     iter_campaign_cases,
     iter_diverse_theory_group_cases,
@@ -44,8 +45,11 @@ def test_diverse_theory_group_axis_hits_multiple_theory_ids() -> None:
         if case.get("enabled_theories")
     }
     groups = {case["composition_group"] for case in cases}
+    # One case per composition-group representative × short condition cells.
+    # Grows when ARA P0 adds groups (ultra_dense, null_control, …).
+    assert len(cases) == diverse_theory_group_count()
     assert len(cases) >= 20
-    assert len(cases) <= 40
+    assert len(cases) <= 64
     assert len(theory_ids) > 1
     assert len(groups) > 1
     assert groups == set(THEORY_COMPOSITION_GROUPS.values())

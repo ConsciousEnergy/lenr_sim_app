@@ -50,7 +50,16 @@ claim tiers — then resume this queue.
 
 Real-gas EOS, heat/mass transfer, continuum FEM / Poisson–Schrödinger as research
 tracks behind Theory Methods aspirational callouts — **not** production Bubble
-Fusion numerics in the same PR train as A/B.
+Fusion numerics in the same PR train as A/B. Remains deferred through **v0.3.8**;
+not a Swarm cutover dependency.
+
+### ARA P1 theory rebuilds (queued for v0.3.9)
+
+Author-faithful equation rebuilds (Widom / Hagelstein / Storms / Takahashi / …)
+are tracked in
+[`docs/v0.3.9-beta/ARA_P1_THEORY_REBUILDS.md`](../v0.3.9-beta/ARA_P1_THEORY_REBUILDS.md).
+P0 integrity (taxonomy, provenance, nulls, paper benchmarks) ships in 0.3.8
+without closing any `EQ-OPEN-*`.
 
 ## Explicit non-goals (still)
 

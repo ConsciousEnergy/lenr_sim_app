@@ -170,7 +170,7 @@ const SYSTEM_PRESETS = {
   },
   li_h: {
     name: 'Lithium-Hydrogen',
-    description: 'Holmlid, Unified Gravity Corp-Rydberg matter',
+    description: 'Li-H systems (Holmlid H(0)/D(0) is a separate theory module; not Kim BEC)',
     hostMaterial: 'lithium',
     reactant: 'hydrogen',
     temperature: 600,

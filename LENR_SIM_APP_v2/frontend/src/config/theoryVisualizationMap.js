@@ -81,10 +81,46 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Coherence',
     has3DOverlay: false,
-    displayName: 'Kim Bose-Einstein Condensate',
+    displayName: 'Kim Bose-Einstein Condensate (BECNF)',
     description:
-      'Deuteron BEC in metal lattice cavities. Future overlay: coherence cloud radius.',
+      'Yeong Kim BECNF — deuteron BEC in nano-grains. Distinct from Holmlid H(0)/D(0).',
     reference: 'Kim et al. (2009)',
+  },
+  holmlid_udh: {
+    vizLayer: null,
+    legendGroup: 'Ultra-dense H',
+    has3DOverlay: false,
+    displayName: 'Holmlid ultra-dense H(0)/D(0)',
+    description:
+      'Phenomenological H(0)/D(0) + laser/TOF regime flags. Not a generic BEC Tc model.',
+    reference: 'Holmlid arXiv:1302.2781 / 1508.01332',
+  },
+  matsumoto_enc: {
+    vizLayer: null,
+    legendGroup: 'Transmutation',
+    has3DOverlay: false,
+    displayName: 'Matsumoto ENC (phenomenological)',
+    description:
+      'Electro-nuclear collapse / itonic clusters — phenomenological labels; no invented author rate law.',
+    reference: 'Matsumoto (1992–2000)',
+  },
+  shoulders_evo: {
+    vizLayer: null,
+    legendGroup: 'Transmutation',
+    has3DOverlay: false,
+    displayName: 'Shoulders EVO / charge clusters (phenomenological)',
+    description:
+      'Registry stub for EVOs / charge clusters. No invented nuclear rate law; P1 branch networks queued.',
+    reference: 'Shoulders (1991+)',
+  },
+  null_recombination: {
+    vizLayer: null,
+    legendGroup: 'Null controls',
+    has3DOverlay: false,
+    displayName: 'Null: chemical recombination',
+    description:
+      'Non-nuclear heat/artifact control under the same experiment inputs. Not LENR.',
+    reference: 'Conventional chemistry / calorimetry control',
   },
   widom_larsen: {
     vizLayer: null,
@@ -144,14 +180,6 @@ export const THEORY_VISUALIZATION_MAP = {
     displayName: 'Piantelli Ni-H',
     description: 'Ni-H reactions with H1-like intermediate. Scalar contribution; requires alkali.',
     reference: 'Piantelli (2010)',
-  },
-  matsumoto_enc: {
-    vizLayer: null,
-    legendGroup: 'Electron Nuclear Capture',
-    has3DOverlay: false,
-    displayName: 'Matsumoto Electron Nuclear Capture',
-    description: 'Electron-nucleus capture analogue. Scalar only.',
-    reference: 'Matsumoto (1989)',
   },
   swartz_nanor: {
     vizLayer: null,

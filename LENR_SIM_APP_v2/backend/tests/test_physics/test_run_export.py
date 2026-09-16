@@ -67,3 +67,21 @@ def test_deterministic_flag_false_when_no_seed() -> None:
     env = build_run_export(simulation_parameters={}, results={}, seed=None)
     assert env["reproducibility"]["deterministic"] is False
     assert env["citations"] == []
+
+
+def test_envelope_includes_experiment_template_stub_and_run_metadata() -> None:
+    env = build_run_export(
+        simulation_parameters={
+            "enabled_theories": ["widom_larsen", "null_recombination"],
+            "experiment_template_id": "pd_d_electrolysis_stub",
+        },
+        results=_results(),
+        seed=7,
+        model_version="0.3.8-beta",
+    )
+    assert env["experiment_template_id"] == "pd_d_electrolysis_stub"
+    assert env["enabled_theories"] == ["widom_larsen", "null_recombination"]
+    assert env["reproducibility"]["solver_seeds"]["random_seed"] == 7
+    assert env["conservation_q_audit"]["status"] == "stub"
+    assert env["provenance"]["experiment_template_id"] == "pd_d_electrolysis_stub"
+    assert "claim_tiers_present" in env["provenance"]

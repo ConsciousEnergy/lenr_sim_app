@@ -239,6 +239,27 @@ class HagelsteinPhononTheory:
                 "Hagelstein P.L. & Chaudhary I.U. (2015) JCMNS 16, 46",
                 "Hagelstein P.L. (2010) Naturwissenschaften 97, 345",
             ],
+            primary_sources=[
+                "Hagelstein P.L. (2012) J. Condensed Matter Nucl. Sci. 12, 18",
+                "Hagelstein P.L. & Chaudhary I.U. (2015) JCMNS 16, 46",
+            ],
+            theory_model_version="hagelstein_phonon_p0_v1",
+            author_equations_vs_simulator_approximations={
+                "coupling_matrix_element": "simulator_approximation",
+                "full_excitation_transfer": "deferred_ara_p1",
+            },
+            free_or_fitted_parameters=[
+                {
+                    "name": "coupling_strength",
+                    "kind": "free",
+                    "source": "simulator",
+                },
+            ],
+            source_domain_limits=[
+                "Phonon–nuclear coupling module; full coupling-matrix rebuild queued for ARA P1 (0.3.9).",
+            ],
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def get_metadata(self) -> TheoryMetadata:
@@ -252,6 +273,13 @@ class HagelsteinPhononTheory:
                 "Hagelstein P.L. & Chaudhary I.U. (2015) JCMNS 16, 46",
             ],
             category="mechanism",
+            primary_sources=[
+                "Hagelstein P.L. (2012) J. Condensed Matter Nucl. Sci. 12, 18",
+                "Hagelstein P.L. & Chaudhary I.U. (2015) JCMNS 16, 46",
+            ],
+            theory_model_version="hagelstein_phonon_p0_v1",
+            model_fidelity="approximate",
+            empirical_support="speculative",
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

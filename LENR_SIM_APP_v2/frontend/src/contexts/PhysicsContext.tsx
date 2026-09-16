@@ -14,6 +14,11 @@ export interface TheoryInfo {
   configurable_parameters: Record<string, any>;
   references: string[];
   category: string;
+  primary_sources?: string[];
+  theory_model_version?: string;
+  model_fidelity?: string;
+  empirical_support?: string;
+  control_role?: string;
 }
 
 /** Per-theory contribution returned after a pipeline run. */
@@ -35,6 +40,13 @@ export interface TheoryContributionResult {
   claim_tier?: string;
   provenance?: Record<string, any>;
   references: string[];
+  primary_sources?: string[];
+  theory_model_version?: string;
+  author_equations_vs_simulator_approximations?: Record<string, string>;
+  free_or_fitted_parameters?: Array<Record<string, any>>;
+  source_domain_limits?: string[];
+  model_fidelity?: string;
+  empirical_support?: string;
 }
 
 /** How the pipeline assembled `combined_enhancement` from group winners. */
@@ -49,6 +61,7 @@ export interface CompositionProvenanceResult {
   excluded_theories?: Array<{ theory_id: string; group: string; excluded_by: string }>;
   ungrouped_theories?: string[];
   not_combinable_with?: string[];
+  multiplier_stack_warning?: string;
   note?: string;
 }
 
