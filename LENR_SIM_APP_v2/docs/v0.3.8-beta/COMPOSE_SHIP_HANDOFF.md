@@ -131,6 +131,10 @@ CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 
 Status JSON: `/opt/cursor/artifacts/poll_and_ship_status.json`.
 
+Without restarting the agent, you can also drop a Hostinger API token (one line,
+token only) at `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` — the poller
+loads it and runs `hostinger-compose-unlock.py unlock`.
+
 ## Post-ship probe
 
 High drive (~4 bar). Expect:

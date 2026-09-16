@@ -14,6 +14,9 @@
 #   POLL_INTERVAL_SEC        default 60
 #   POLL_MAX_ATTEMPTS        default 0 (unlimited until success or kill)
 #   STATUS_FILE              default /opt/cursor/artifacts/poll_and_ship_status.json
+#
+# Token drop (no agent restart): write token-only one line to either
+#   /opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt  or  /tmp/HOSTINGER_API_TOKEN
 set -euo pipefail
 
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
@@ -22,6 +25,10 @@ IDENT="${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr_vps_agent_ed25519}"
 INTERVAL="${POLL_INTERVAL_SEC:-60}"
 MAX="${POLL_MAX_ATTEMPTS:-0}"
 STATUS_FILE="${STATUS_FILE:-/opt/cursor/artifacts/poll_and_ship_status.json}"
+TOKEN_FILES=(
+  "${HOSTINGER_API_TOKEN_FILE:-/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt}"
+  "/tmp/HOSTINGER_API_TOKEN"
+)
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SHIP="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh"
 UNLOCK="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py"
@@ -47,7 +54,21 @@ ssh_ok() {
     -o ConnectTimeout=5 -i "$IDENT" "root@$HOST" 'echo OK' 2>/dev/null | grep -q '^OK'
 }
 
+load_token_file() {
+  local f
+  for f in "${TOKEN_FILES[@]}"; do
+    if [[ -f "$f" && -s "$f" ]]; then
+      # shellcheck disable=SC2155
+      export HOSTINGER_API_TOKEN="$(tr -d '\r\n' <"$f")"
+      echo "loaded HOSTINGER_API_TOKEN from $f (len=${#HOSTINGER_API_TOKEN})"
+      return 0
+    fi
+  done
+  return 1
+}
+
 token_ok() {
+  load_token_file || true
   [[ -n "${HOSTINGER_API_TOKEN:-}" ]]
 }
 
