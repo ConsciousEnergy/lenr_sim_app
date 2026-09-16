@@ -38,10 +38,17 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0. Live pull requires secre
 
 ### Required operator action
 
-1. Add GitHub Actions secrets on the repo:
-   - `VPS_HOST` — live Compose host (e.g. `185.211.4.66`)
-   - `VPS_SSH_KEY` — private key for `root@$VPS_HOST`
-2. Re-dispatch:
+Provide **either**:
+
+**A) Cursor / agent env secrets** (preferred for this agent): `VPS_HOST`, `VPS_SSH_KEY`  
+then:
+
+```bash
+CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
+```
+
+**B) GitHub Actions secrets** with the same names, then:
 
 ```bash
 gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
@@ -49,7 +56,12 @@ gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'
 EOF
 ```
 
-3. Or: `CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship`
+**C) Helper auto-path** when env secrets are present:
+
+```bash
+CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
+```
 
 ## Post-ship probe
 
