@@ -64,6 +64,16 @@ chmod 600 /root/.ssh/authorized_keys
 
 Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
 
+**Or** set Cursor env secret `HOSTINGER_API_TOKEN` (hPanel → API), then:
+
+```bash
+HOSTINGER_API_TOKEN=... \
+  python3 LENR_SIM_APP_v2/infrastructure/vps/scripts/register-agent-pubkey-hostinger.py --ship
+```
+
+(creates/attaches the agent pubkey to the VPS at `185.211.4.66`, then ssh-ships when
+`CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1` are set).
+
 **Or** set Cursor env secret `VPS_SSH_KEY` to a private key **already** in
 `authorized_keys` (do not paste the agent key twin — it is not authorized yet),
 then **restart** the agent. `VPS_HOST` defaults to `185.211.4.66`.
