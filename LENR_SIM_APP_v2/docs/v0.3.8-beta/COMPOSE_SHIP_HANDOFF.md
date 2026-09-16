@@ -85,6 +85,10 @@ HOSTINGER_API_TOKEN=... \
 
 (`register-agent-pubkey-hostinger.py` remains as a thin attach-only helper.)
 
+**Or** set Cursor env secrets `HOSTINGER_HPANEL_EMAIL` + `HOSTINGER_HPANEL_PASSWORD`
+(optional) and **restart** the agent so computer-use can open hPanel → VPS →
+Browser Console and append the pubkey above.
+
 **Or** set Cursor env secret `VPS_SSH_KEY` to a private key **already** in
 `authorized_keys` (do not paste the agent key twin — it is not authorized yet),
 then **restart** the agent. `VPS_HOST` defaults to `185.211.4.66`.
