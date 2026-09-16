@@ -30,6 +30,13 @@
 - `analytics_transparency`
 - `composition_provenance.multiplier_stack_warning` (may be empty string)
 
+## Run export additive fields (v0.3.8)
+- `experiment_template_id` (stub default `experiment_template_stub_v1`)
+- `enabled_theories`
+- `reproducibility.solver_seeds`
+- `conservation_q_audit` (stub until real audit lands)
+- Mirrored under `provenance` for the same keys
+
 ## Unified Simulation Required Fields
 - `confidence`
 - `uncertainty_interval`

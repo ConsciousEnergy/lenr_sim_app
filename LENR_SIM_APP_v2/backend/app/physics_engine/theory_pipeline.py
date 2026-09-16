@@ -89,6 +89,7 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     # by different routes and must not multiply.
     "iwamura_transmutation": "transmutation_route",
     "matsumoto_enc": "transmutation_route",
+    "shoulders_evo": "transmutation_route",  # Shoulders EVOs — phenomenological stub
     # Empirical calorimetric / stimulation correlations. These are observations
     # rather than independent barrier mechanisms, so one representative applies.
     "miles_heat_helium": "empirical_correlation",
@@ -774,6 +775,12 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(MatsumotoENCTheory())
     except Exception:
         logger.exception("Failed to register MatsumotoENCTheory")
+
+    try:
+        from app.physics_engine.theories.shoulders_evo import ShouldersEVOTheory
+        pipeline.register(ShouldersEVOTheory())
+    except Exception:
+        logger.exception("Failed to register ShouldersEVOTheory")
 
     # --- Phase 1C: Extended Theories ---
 

@@ -30,7 +30,7 @@ equations, free parameters, and negative predictions exposed rather than hidden.
 | Storms | Versioned NAE family | `nae_model` carries `storms_nae_2012_13` / `storms_nae_2026` metadata; legacy `hydroton` stays deprecated |
 | Widom–Larsen | Electroweak entrance, not D-D tunneling | Module provenance + falsifiers; entrance channel flagged |
 | Takahashi TSC | ≠ generic condensate rate | Metadata flags approximate rate vs Langevin (full dynamics = 0.3.9) |
-| Matsumoto / Shoulders | Phenomenological | Explicit claim-tier / approximation labels |
+| Matsumoto / Shoulders | Phenomenological | Explicit claim-tier / approximation labels; `shoulders_evo` stub with **no invented rate law** |
 | Multiplier stacks | Avoid un-derived products | Export warns when multiple composition groups multiply; combination redesign deferred |
 
 ## Maturity axes (independent)
@@ -55,6 +55,8 @@ Per-theory contributions now may carry:
 - `free_or_fitted_parameters[]`
 - `source_domain_limits`
 - existing `falsification_conditions`, `claim_tier`, `references`
+- Run export (`lenr-run-export-v1`): additive `experiment_template_id` (stub),
+  `enabled_theories`, `solver_seeds`, `conservation_q_audit` stub
 
 Pipeline **merges** module provenance instead of overwriting it.
 

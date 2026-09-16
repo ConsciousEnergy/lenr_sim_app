@@ -84,6 +84,18 @@ def test_null_recombination_is_non_nuclear_control() -> None:
     assert result.energy_output_watts == pytest.approx(0.11, abs=1e-9)
 
 
+def test_shoulders_stub_has_no_invented_rate_law() -> None:
+    from app.physics_engine.theories.shoulders_evo import ShouldersEVOTheory
+
+    result = ShouldersEVOTheory().calculate({"temperature": 300.0}, {})
+    assert result.enhancement_factor == pytest.approx(1.0)
+    assert result.model_fidelity == "phenomenological"
+    assert result.provenance.get("no_invented_rate_law") is True
+    assert "not_implemented" in result.author_equations_vs_simulator_approximations.get(
+        "nuclear_rate_law", ""
+    )
+
+
 def test_pipeline_preserves_module_fidelity_provenance() -> None:
     import app.physics_engine.theory_pipeline as tp
 
