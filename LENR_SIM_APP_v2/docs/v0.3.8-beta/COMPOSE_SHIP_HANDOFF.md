@@ -13,6 +13,21 @@ Evidence: `/opt/cursor/artifacts/live_bf_defaults.json`, `live_bf_km_probe_now.j
 
 P0 fidelity squash-merged as #198 (`6d1f44d`). Compose ship dispatch path landed as #199 (`7408e18`).
 
+
+## Tip code proof (agent, 2026-09-16T19:25Z)
+
+Local uvicorn from `origin/main` @ `760c97e` on `:18080`:
+
+| Check | Result |
+|-------|--------|
+| defaults `dynamics_mode` | `auto` |
+| options include `auto` | yes |
+| POST auto @ 4 bar | `km_auto_selected=true`, `dynamics_mode_used=keller_miksis`, peak Mach ≈0.61 |
+
+Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`.
+
+**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS SSH secrets.
+
 ## What already ran automatically on merge
 
 Push to `main` triggers `Build and Deploy` **image build only**:
