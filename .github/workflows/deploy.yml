@@ -213,8 +213,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
-            echo "VPS_HOST / VPS_SSH_KEY secrets are not set; skipping live deploy."
-            exit 1
+            chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/print-vps-unlock-hint.sh
+            LENR_SIM_APP_v2/infrastructure/vps/scripts/print-vps-unlock-hint.sh
           fi
           umask 077
           KEY=$(mktemp)
@@ -295,8 +295,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
-            echo "VPS_HOST / VPS_SSH_KEY secrets are not set; skipping live deploy."
-            exit 1
+            chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/print-vps-unlock-hint.sh
+            LENR_SIM_APP_v2/infrastructure/vps/scripts/print-vps-unlock-hint.sh
           fi
           umask 077
           KEY=$(mktemp)
