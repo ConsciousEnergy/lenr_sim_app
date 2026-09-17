@@ -124,26 +124,26 @@ CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 ```
 
-**Alternate:** GitHub Actions secrets `VPS_HOST` + `VPS_SSH_KEY`, then (also needs
-Actions billing restored):
+**Alternate:** GitHub Actions secrets `VPS_HOST=185.211.4.66` + authorized
+`VPS_SSH_KEY`, then:
 
 ```bash
-# Full rebuild + deploy (available on main today):
-gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
-{"event_type":"vps-compose-ship","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
-EOF
-
-# After #204 merges: cheap redeploy (no image rebuild):
+# Cheap redeploy (no image rebuild) — preferred once images exist on GHCR:
 gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
 {"event_type":"vps-compose-redeploy","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
 EOF
+
+# Full rebuild + deploy:
+gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
+{"event_type":"vps-compose-ship","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
+EOF
 ```
 
-The agent poller also tries Actions every ~30 minutes (or immediately if you
-`touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP`) so filling Actions `VPS_*`
-secrets is enough — no agent restart required.
-**Helper auto-path** (`ship`): uses ssh-ship when `VPS_SSH_KEY` is set; otherwise
-repository_dispatch.
+The agent poller watches SSH / Hostinger token / keydrop and will ship within
+~60s of unlock. Force one Actions attempt with
+`touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP` (no agent restart).
+**Helper auto-path** (`ship`): uses ssh-ship when `VPS_SSH_KEY` /
+`VPS_SSH_IDENTITY_FILE` is set; otherwise repository_dispatch.
 
 ```bash
 CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
