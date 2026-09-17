@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Poll VPS SSH / Hostinger token until Compose KM ship can run, then ship + probe.
+# Poll VPS SSH / Hostinger token / Actions secrets until Compose KM ship can run.
 #
 # Plan-only by default. Real ship requires CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1.
 #
@@ -13,10 +13,16 @@
 #   VPS_SSH_IDENTITY_FILE    default ~/.ssh/lenr_vps_agent_ed25519
 #   POLL_INTERVAL_SEC        default 60
 #   POLL_MAX_ATTEMPTS        default 0 (unlimited until success or kill)
+#   ACTIONS_DISPATCH_EVERY   default 30 (try Actions every N polls when SSH denied)
+#   ACTIONS_EVENT_TYPE       default vps-compose-ship (use vps-compose-redeploy after
+#                            that workflow type lands on main — cheaper, no rebuild)
 #   STATUS_FILE              default /opt/cursor/artifacts/poll_and_ship_status.json
 #
 # Token drop (no agent restart): write token-only one line to either
 #   /opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt  or  /tmp/HOSTINGER_API_TOKEN
+#
+# Force one Actions attempt immediately (no restart): touch
+#   /opt/cursor/artifacts/TRY_ACTIONS_SHIP
 set -euo pipefail
 
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
@@ -24,7 +30,10 @@ HOST="${VPS_HOST:-185.211.4.66}"
 IDENT="${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr_vps_agent_ed25519}"
 INTERVAL="${POLL_INTERVAL_SEC:-60}"
 MAX="${POLL_MAX_ATTEMPTS:-0}"
+ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-30}"
+ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-vps-compose-ship}"
 STATUS_FILE="${STATUS_FILE:-/opt/cursor/artifacts/poll_and_ship_status.json}"
+TRY_ACTIONS_FILE="${TRY_ACTIONS_SHIP_FILE:-/opt/cursor/artifacts/TRY_ACTIONS_SHIP}"
 TOKEN_FILES=(
   "${HOSTINGER_API_TOKEN_FILE:-/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt}"
   "/tmp/HOSTINGER_API_TOKEN"
@@ -32,6 +41,7 @@ TOKEN_FILES=(
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SHIP="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh"
 UNLOCK="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py"
+REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
 
 write_status() {
   local phase="$1" detail="${2:-}"
@@ -89,9 +99,89 @@ do_ship() {
   write_status "done" "probe-km finished"
 }
 
+# Try Actions deploy without preferring the (possibly unauthorized) local key.
+# Returns 0 on probe-km success; non-zero on failure (caller continues polling).
+try_actions_ship() {
+  if [[ "${CONFIRM:-}" != "$CONFIRM_TOKEN" || "${EXECUTE:-0}" != "1" ]]; then
+    write_status "actions_plan_only" "would dispatch ${ACTIONS_EVENT}"
+    echo "ACTIONS: plan-only (need CONFIRM=${CONFIRM_TOKEN} EXECUTE=1)"
+    return 2
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "ACTIONS: gh not available" >&2
+    return 1
+  fi
+  write_status "actions_dispatch" "event=${ACTIONS_EVENT}"
+  echo "[actions] dispatching ${ACTIONS_EVENT} (ignoring local VPS_SSH_KEY)"
+  local before_epoch run_id i
+  before_epoch="$(date -u +%s)"
+  if ! gh api --method POST "repos/${REPO}/dispatches" --input - <<EOF
+{"event_type":"${ACTIONS_EVENT}","client_payload":{"confirm":"${CONFIRM_TOKEN}"}}
+EOF
+  then
+    echo "[actions] dispatch failed" >&2
+    write_status "actions_dispatch_failed" "event=${ACTIONS_EVENT}"
+    return 1
+  fi
+  run_id=""
+  for i in $(seq 1 45); do
+    run_id="$(
+      gh run list --repo "$REPO" --workflow "Build and Deploy" --limit 10 \
+        --json databaseId,createdAt,event,displayTitle \
+        | python3 -c "
+import json,sys,datetime
+before=${before_epoch}-30
+rows=json.load(sys.stdin)
+for r in rows:
+    ts=r.get('createdAt') or ''
+    try:
+        epoch=int(datetime.datetime.fromisoformat(ts.replace('Z','+00:00')).timestamp())
+    except Exception:
+        continue
+    if epoch < before:
+        continue
+    if r.get('event') != 'repository_dispatch':
+        continue
+    print(r['databaseId'])
+    break
+"
+    )"
+    if [[ -n "$run_id" ]]; then
+      break
+    fi
+    sleep 4
+  done
+  if [[ -z "$run_id" ]]; then
+    echo "[actions] could not locate run" >&2
+    write_status "actions_run_missing" "event=${ACTIONS_EVENT}"
+    return 1
+  fi
+  echo "[actions] watching run $run_id"
+  if ! gh run watch "$run_id" --repo "$REPO" --exit-status; then
+    echo "[actions] run $run_id failed (secrets empty or SSH denied on runner?)" >&2
+    write_status "actions_run_failed" "run=$run_id"
+    return 1
+  fi
+  if "$SHIP" probe-km; then
+    write_status "done" "actions probe-km ok run=$run_id"
+    return 0
+  fi
+  write_status "actions_probe_failed" "run=$run_id"
+  return 1
+}
+
+want_actions_now() {
+  if [[ -f "$TRY_ACTIONS_FILE" ]]; then
+    rm -f "$TRY_ACTIONS_FILE"
+    return 0
+  fi
+  return 1
+}
+
 attempt=0
-write_status "polling" "interval=${INTERVAL}s ident=$IDENT"
-echo "==> poll-and-ship host=$HOST interval=${INTERVAL}s (CONFIRM=${CONFIRM:-unset} EXECUTE=${EXECUTE:-0})"
+write_status "polling" "interval=${INTERVAL}s ident=$IDENT actions_every=${ACTIONS_EVERY}"
+echo "==> poll-and-ship host=$HOST interval=${INTERVAL}s actions_every=${ACTIONS_EVERY} event=${ACTIONS_EVENT}"
+echo "    CONFIRM=${CONFIRM:-unset} EXECUTE=${EXECUTE:-0}"
 
 while true; do
   attempt=$((attempt + 1))
@@ -104,6 +194,13 @@ while true; do
     echo "[$attempt] HOSTINGER_API_TOKEN set — unlock path"
     do_ship
     exit $?
+  fi
+  if want_actions_now || { [[ "$ACTIONS_EVERY" != "0" ]] && (( attempt % ACTIONS_EVERY == 0 )); }; then
+    echo "[$attempt] trying Actions ${ACTIONS_EVENT}"
+    if try_actions_ship; then
+      exit 0
+    fi
+    echo "[$attempt] Actions path not ready — continue polling"
   fi
   write_status "waiting" "attempt=$attempt ssh=denied token=unset"
   echo "[$attempt] waiting (ssh denied, no Hostinger token)"

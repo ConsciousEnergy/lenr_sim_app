@@ -129,11 +129,20 @@ CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 Actions billing restored):
 
 ```bash
+# Full rebuild + deploy (available on main today):
 gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
 {"event_type":"vps-compose-ship","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
 EOF
+
+# After #204 merges: cheap redeploy (no image rebuild):
+gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
+{"event_type":"vps-compose-redeploy","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
+EOF
 ```
 
+The agent poller also tries Actions every ~30 minutes (or immediately if you
+`touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP`) so filling Actions `VPS_*`
+secrets is enough — no agent restart required.
 **Helper auto-path** (`ship`): uses ssh-ship when `VPS_SSH_KEY` is set; otherwise
 repository_dispatch.
 

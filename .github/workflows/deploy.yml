@@ -11,7 +11,10 @@ on:
   # Agent/CI tokens often lack workflow_dispatch; contents:write can still
   # repository_dispatch. Require client_payload.confirm == I_SHIP_VPS_0_3_8.
   repository_dispatch:
-    types: [vps-compose-ship]
+    # vps-compose-ship: rebuild images + deploy (full path).
+    # vps-compose-redeploy: deploy-only using existing GHCR tags (cheap; for
+    # when Actions VPS_* secrets appear after images are already on GHCR).
+    types: [vps-compose-ship, vps-compose-redeploy]
 
 permissions:
   contents: read
@@ -23,6 +26,7 @@ concurrency:
 
 jobs:
   build-backend:
+    if: github.event_name != 'repository_dispatch' || github.event.action != 'vps-compose-redeploy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -78,6 +82,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-frontend:
+    if: github.event_name != 'repository_dispatch' || github.event.action != 'vps-compose-redeploy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -107,6 +112,7 @@ jobs:
           retention-days: 7
 
   build-frontend-image:
+    if: github.event_name != 'repository_dispatch' || github.event.action != 'vps-compose-redeploy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -216,6 +222,85 @@ jobs:
           # Pin VPS checkout to the workflow SHA that built GHCR images, and force
           # tip APP_VERSION into .env so neither scripts/Caddyfile nor IMAGE_TAG
           # can lag a 0.3.7 tip deploy (stale branch + IMAGE_TAG=0.3.6-beta).
+          ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+            "root@${VPS_HOST}" \
+            "set -euo pipefail
+             cd /opt/lenr-sim/src
+             git fetch --prune origin
+             if ! git cat-file -e '${DEPLOY_SHA}^{commit}' 2>/dev/null; then
+               git fetch origin '${DEPLOY_SHA}'
+             fi
+             git checkout -qf '${DEPLOY_SHA}'
+             echo \"VPS HEAD=\$(git rev-parse --short HEAD) (pinned to workflow SHA)\"
+             LENR_ENV_FILE=/opt/lenr-sim/.env \
+               IMAGE_TAG='${IMAGE_TAG}' \
+               UPDATE_ENV_IMAGE_TAG=1 \
+               EXPECT_VERSION='${IMAGE_TAG}' \
+               LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh"
+          rm -f "$KEY"
+
+      - name: Verify public share health
+        env:
+          BETA_SHARE_URL: ${{ vars.BETA_SHARE_URL }}
+          EXPECT_VERSION: ${{ steps.version.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          chmod +x LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+          export BETA_SHARE_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+          export EXPECT_VERSION
+          echo "Expecting share host version: ${EXPECT_VERSION}"
+          LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+
+  # Cheap path: pull existing GHCR tags to VPS without rebuilding images.
+  # Trigger: repository_dispatch type vps-compose-redeploy + confirm token.
+  # Requires Actions secrets VPS_HOST + VPS_SSH_KEY (same as deploy-vps).
+  deploy-vps-redeploy:
+    if: >
+      github.event_name == 'repository_dispatch' &&
+      github.event.action == 'vps-compose-redeploy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (APP_VERSION + share verify)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Gate repository_dispatch confirm
+        env:
+          CONFIRM: ${{ github.event.client_payload.confirm }}
+        run: |
+          set -euo pipefail
+          if [[ "${CONFIRM:-}" != "I_SHIP_VPS_0_3_8" ]]; then
+            echo "::error::refuse vps-compose-redeploy without client_payload.confirm=I_SHIP_VPS_0_3_8"
+            exit 2
+          fi
+          echo "OK: repository_dispatch redeploy confirm accepted"
+
+      - name: Read APP_VERSION
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          if [ -z "$APP_VERSION" ]; then
+            echo "::error file=LENR_SIM_APP_v2/backend/app/core/config.py::APP_VERSION marker not found"
+            exit 1
+          fi
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Redeploying IMAGE_TAG=${APP_VERSION} (no image rebuild)"
+
+      - name: SSH deploy (existing GHCR tags)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          IMAGE_TAG: ${{ steps.version.outputs.app_version }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VPS_HOST:-}" ] || [ -z "${VPS_SSH_KEY:-}" ]; then
+            echo "VPS_HOST / VPS_SSH_KEY secrets are not set; skipping live deploy."
+            exit 1
+          fi
+          umask 077
+          KEY=$(mktemp)
+          printf '%s\n' "$VPS_SSH_KEY" > "$KEY"
           ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
             "root@${VPS_HOST}" \
             "set -euo pipefail
