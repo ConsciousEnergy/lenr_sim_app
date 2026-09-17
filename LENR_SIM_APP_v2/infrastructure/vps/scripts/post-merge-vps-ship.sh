@@ -288,10 +288,15 @@ cmd_ship() {
   fi
 
   # Prefer direct SSH when key is present (avoids Actions billing / empty secrets).
+  # If the local key is unauthorized (Permission denied), fall through to Actions
+  # so a retry can still succeed once repo VPS_* secrets are set.
   if [[ -n "${VPS_SSH_KEY:-}" || -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
-    echo "NOTE: SSH identity present — using ssh-ship path (host=$(resolve_vps_host))"
-    cmd_ssh_ship
-    return 0
+    echo "NOTE: SSH identity present — trying ssh-ship first (host=$(resolve_vps_host))"
+    if cmd_ssh_ship; then
+      return 0
+    fi
+    ssh_rc=$?
+    echo "WARN: ssh-ship failed (rc=${ssh_rc}); falling back to Actions dispatch" >&2
   fi
 
   local dispatch_ref="$SHIP_REF"
