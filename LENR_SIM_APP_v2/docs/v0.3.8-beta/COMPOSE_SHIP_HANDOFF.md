@@ -161,9 +161,17 @@ CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 
 Status JSON: `/opt/cursor/artifacts/poll_and_ship_status.json`.
 
-Without restarting the agent, you can also drop a Hostinger API token (one line,
-token only) at `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` — the poller
-loads it and runs `hostinger-compose-unlock.py unlock`.
+Without restarting the agent, you can also drop:
+
+- Hostinger API token (one line, token only) at
+  `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` — the poller loads it and runs
+  `hostinger-compose-unlock.py unlock`
+- An **authorized** OpenSSH private key at `/opt/cursor/artifacts/VPS_SSH_KEY`
+  (or `/tmp/VPS_SSH_KEY`) — the poller hot-swaps identity and ssh-ships
+- `touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP` — one-shot Actions dispatch
+
+If live beta already advertises `dynamics_mode=auto` (operator pulled tip), the
+poller runs `probe-km` and exits without needing SSH.
 
 ## Post-ship probe
 

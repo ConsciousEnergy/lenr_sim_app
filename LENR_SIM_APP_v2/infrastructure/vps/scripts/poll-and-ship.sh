@@ -24,6 +24,10 @@
 #
 # Force one Actions attempt immediately (no restart): touch
 #   /opt/cursor/artifacts/TRY_ACTIONS_SHIP
+#
+# Drop an authorized private key (OpenSSH) without restart:
+#   /opt/cursor/artifacts/VPS_SSH_KEY  or  /tmp/VPS_SSH_KEY
+# Live auto already present (manual/operator ship): poller probe-km and exits.
 set -euo pipefail
 
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
@@ -37,14 +41,20 @@ ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-0}"
 ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-}"
 STATUS_FILE="${STATUS_FILE:-/opt/cursor/artifacts/poll_and_ship_status.json}"
 TRY_ACTIONS_FILE="${TRY_ACTIONS_SHIP_FILE:-/opt/cursor/artifacts/TRY_ACTIONS_SHIP}"
+BETA_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
 TOKEN_FILES=(
   "${HOSTINGER_API_TOKEN_FILE:-/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt}"
   "/tmp/HOSTINGER_API_TOKEN"
+)
+KEY_DROP_FILES=(
+  "${VPS_SSH_KEY_FILE:-/opt/cursor/artifacts/VPS_SSH_KEY}"
+  "/tmp/VPS_SSH_KEY"
 )
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SHIP="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh"
 UNLOCK="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py"
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
+_DROPPED_KEY_TMP=""
 
 actions_events() {
   if [[ -n "$ACTIONS_EVENT" ]]; then
@@ -74,6 +84,41 @@ ssh_ok() {
   [[ -f "$IDENT" ]] || return 1
   timeout 8 ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
     -o ConnectTimeout=5 -i "$IDENT" "root@$HOST" 'echo OK' 2>/dev/null | grep -q '^OK'
+}
+
+# Materialize a dropped/env private key into IDENT when present.
+# Prefer file drop over env so operators can hot-swap without restart.
+load_dropped_key() {
+  local f src=""
+  for f in "${KEY_DROP_FILES[@]}"; do
+    if [[ -f "$f" && -s "$f" ]]; then
+      src="$f"
+      break
+    fi
+  done
+  if [[ -z "$src" && -n "${VPS_SSH_KEY:-}" ]]; then
+    if [[ -z "${_DROPPED_KEY_TMP}" ]]; then
+      _DROPPED_KEY_TMP="$(mktemp)"
+      chmod 600 "$_DROPPED_KEY_TMP"
+    fi
+    printf '%s\n' "$VPS_SSH_KEY" >"$_DROPPED_KEY_TMP"
+    src="$_DROPPED_KEY_TMP"
+  fi
+  [[ -n "$src" ]] || return 1
+  if ! ssh-keygen -lf "$src" >/dev/null 2>&1; then
+    echo "WARN: dropped key at $src is not a valid OpenSSH private key" >&2
+    return 1
+  fi
+  IDENT="$src"
+  export VPS_SSH_IDENTITY_FILE="$IDENT"
+  echo "loaded SSH identity from $src ($(ssh-keygen -lf "$src" | awk '{print $2}'))"
+  return 0
+}
+
+live_auto_ok() {
+  curl -fsS --max-time 12 "${BETA_URL}/api/physics/bubble-fusion/defaults" 2>/dev/null \
+    | python3 -c 'import sys,json;d=json.load(sys.stdin);m=((d.get("options")or{}).get("dynamics_modes")or[]);raise SystemExit(0 if "auto" in m else 1)' \
+    2>/dev/null
 }
 
 load_token_file() {
@@ -209,6 +254,17 @@ echo "    CONFIRM=${CONFIRM:-unset} EXECUTE=${EXECUTE:-0}"
 
 while true; do
   attempt=$((attempt + 1))
+  # Hot-swap identity if operator dropped an authorized key.
+  load_dropped_key || true
+  if live_auto_ok; then
+    echo "[$attempt] live already advertises dynamics_mode=auto — probe-km"
+    write_status "live_auto_present" "probing"
+    if "$SHIP" probe-km; then
+      write_status "done" "live auto + probe-km ok"
+      exit 0
+    fi
+    echo "[$attempt] live auto present but probe-km failed — continue"
+  fi
   if ssh_ok; then
     echo "[$attempt] SSH OK — shipping"
     do_ship
@@ -226,8 +282,8 @@ while true; do
     fi
     echo "[$attempt] Actions path not ready — continue polling"
   fi
-  write_status "waiting" "attempt=$attempt ssh=denied token=unset"
-  echo "[$attempt] waiting (ssh denied, no Hostinger token)"
+  write_status "waiting" "attempt=$attempt ssh=denied token=unset live=no-auto"
+  echo "[$attempt] waiting (ssh denied, no Hostinger token, live no-auto)"
   if [[ "$MAX" != "0" && "$attempt" -ge "$MAX" ]]; then
     write_status "timeout" "attempts=$attempt"
     echo "ERROR: max attempts reached" >&2
