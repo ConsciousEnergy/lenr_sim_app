@@ -25,7 +25,14 @@ cd "$ROOT"
 TF_DIR="LENR_SIM_APP_v2/infrastructure/terraform"
 ANSIBLE_DIR="LENR_SIM_APP_v2/infrastructure/ansible"
 DEPLOY_SH="LENR_SIM_APP_v2/infrastructure/scripts/deploy.sh"
-EVIDENCE_DIR="${STAGING_EVIDENCE_DIR:-/opt/cursor/artifacts}"
+# Prefer agent artifact dir when writable; else repo-local / CI temp via STAGING_EVIDENCE_DIR.
+if [[ -n "${STAGING_EVIDENCE_DIR:-}" ]]; then
+  EVIDENCE_DIR="$STAGING_EVIDENCE_DIR"
+elif [[ -d /opt/cursor/artifacts && -w /opt/cursor/artifacts ]]; then
+  EVIDENCE_DIR="/opt/cursor/artifacts"
+else
+  EVIDENCE_DIR="${ROOT}/.staging-evidence"
+fi
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing $1" >&2; exit 2; }; }
 
@@ -73,8 +80,11 @@ cmd_local() {
     echo "== ansible syntax-check =="
     (
       cd "$ANSIBLE_DIR"
-      ansible-playbook --syntax-check playbooks/deploy-stack.yml
-      ansible-playbook --syntax-check playbooks/site.yml
+      # Prefer staging example inventory so CI/local runs are not inventory-empty warnings.
+      inv="inventory.staging.yml.example"
+      [[ -f inventory.staging.yml ]] && inv="inventory.staging.yml"
+      ansible-playbook --syntax-check -i "$inv" playbooks/deploy-stack.yml
+      ansible-playbook --syntax-check -i "$inv" playbooks/site.yml
     )
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"

@@ -17,8 +17,8 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 
 ## Agent-executed checks (this branch)
 
-Re-verified **2026-09-16T18:28:12Z** on `consciousenergy/v038-fidelity-p0-98d8`, and
-again via helper on tip:
+Re-verified **2026-09-17T03:25Z** via helper on tip, and enforced in CI by the
+`staging-swarm-dry-run` job in `.github/workflows/test.yml` (local mode only):
 
 ```bash
 ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
@@ -29,8 +29,9 @@ again via helper on tip:
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 | `deploy.sh staging` (no/wrong confirm) | Exit **2** — requires `I_STAGING_0_3_8` |
 | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging` | Gate opens; then exits **1** for missing `terraform.tfvars` (expected without operator secrets) |
-| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK |
+| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK (uses `inventory.staging.yml.example` when real inventory absent) |
 | `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
+| CI `staging-swarm-dry-run` job | Runs the local helper on every PR/push to `main` |
 | Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs `backend.hcl` + `staging.tfvars` |
 | Ansible `--check` against staging inventory | **Not executed** — needs `inventory.staging.yml` + SSH |
 
