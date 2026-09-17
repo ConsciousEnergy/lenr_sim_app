@@ -1,26 +1,24 @@
-# Operator: ship tip of main to Compose share (post #196/#197/#198)
+# Operator: ship tip of main to Compose share (post #196/#197/#198/#204/#206)
 
-## Live status (agent probe 2026-09-17T02:05Z)
+## Live status (agent probe 2026-09-17T05:10Z)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
 | `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
 | Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
-| SSH `root@185.211.4.66` | Permission denied (publickey) — env `VPS_SSH_KEY` is unauthorized agent twin (`SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`) |
-| `HOSTINGER_API_TOKEN` | unset (no env / no artifact file drop) |
-| Actions billing | PR #204 jobs fail ~2s (“account payments have failed…”) |
-| Conclusion | **#196/#198 on `main` + GHCR; Compose share not yet pulled** |
+| SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
+| `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
+| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty** (redeploy/ship runs fail at SSH gate; billing OK) |
+| Conclusion | **#196–#206 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` |
 
-Evidence: `/opt/cursor/artifacts/live_probe_km_retry.log`, `v038_blocker_status.json`, `v038_exit_criteria_audit.md`.
+Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`.
 
-P0 fidelity squash-merged as #198 (`6d1f44d`). Compose ship dispatch path landed as #199 (`7408e18`).
-Tip of `main` pin for operator self-ship: `8d362b20fbe93bdf097bf11bf2fb2d7c0ae3a0fb` (`APP_VERSION=0.3.7-beta`, KM auto included).
+Tip of `main` pin for operator self-ship: `6ed62613b15a9f77b277ad8f92daff5fb019999f` (`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 scaffolds).
 
+## Tip code proof (agent, 2026-09-16T19:25Z; still valid on tip)
 
-## Tip code proof (agent, 2026-09-16T19:25Z)
-
-Local uvicorn from `origin/main` @ `760c97e` on `:18080`:
+Local uvicorn from tip of `main` (then `760c97e`; tip now `6ed6261`) on `:18080`:
 
 | Check | Result |
 |-------|--------|
@@ -30,7 +28,7 @@ Local uvicorn from `origin/main` @ `760c97e` on `:18080`:
 
 Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`.
 
-**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS SSH secrets.
+**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS SSH unlock.
 
 ## What already ran automatically on merge
 
@@ -41,9 +39,10 @@ Push to `main` triggers `Build and Deploy` **image build only**:
 | [#196 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129116154) | push/main | success | **skipped** |
 | [#197 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129159390) | push/main | success | **skipped** |
 | [#198 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35136116370) | push/main | success | **skipped** |
-| [#199 `vps-compose-ship`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35137191549) | repository_dispatch | success | **failed** — empty secrets |
+| [#206 / #204 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35183252494) | push/main | success | **skipped** (no VPS secrets) |
+| [#35183883264 `vps-compose-ship`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35183883264) | repository_dispatch | builds OK | **failed** — empty `VPS_*` |
 
-GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0. Live pull requires secrets.
+GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull requires secrets or VNC.
 
 ## Blockers
 
@@ -67,10 +66,10 @@ mkdir -p /root/.ssh && chmod 700 /root/.ssh
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 
-# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#202)
+# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#206)
 cd /opt/lenr-sim/src
 git fetch --prune origin
-git checkout -qf 8d362b20fbe93bdf097bf11bf2fb2d7c0ae3a0fb
+git checkout -qf 6ed62613b15a9f77b277ad8f92daff5fb019999f
 LENR_ENV_FILE=/opt/lenr-sim/.env \
   IMAGE_TAG=0.3.7-beta \
   UPDATE_ENV_IMAGE_TAG=1 \
