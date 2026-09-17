@@ -93,4 +93,37 @@ describe('TheoryPaperPage', () => {
     expect(screen.queryByText(/showed that irradiating/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/controlled triggering mechanism/i)).not.toBeInTheDocument();
   });
+
+  test('Section 6 intro is comparative workbench, not unification endorsement', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/comparative scientific workbench/i)).toBeInTheDocument();
+    expect(screen.queryByText(/mathematical unification/i)).not.toBeInTheDocument();
+  });
+
+  test('Section 6.2 Hagelstein is speculative approx and does not close MeV-gap', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.2 Hagelstein Phonon-Nuclear Coupling/)).toBeInTheDocument();
+    expect(screen.queryByText(/is converted into/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/avoiding single high-energy gamma/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/this module does not close them/i)).toBeInTheDocument();
+  });
+
+  test('Section 6.6 Widom does not claim without dangerous radiation', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/6\.6 Widom-Larsen Ultra-Low-Momentum Neutrons/)).toBeInTheDocument();
+    expect(screen.queryByText(/without dangerous radiation/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/electroweak-entrance scaffold/i)).toBeInTheDocument();
+  });
+
+  test('Theory-to-Simulation map separates Holmlid UDH from Kim BEC', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    expect(screen.getByText(/holmlid_udh/)).toBeInTheDocument();
+    expect(screen.getByText(/≠ kim_bec/)).toBeInTheDocument();
+    expect(screen.getByText('null_recombination')).toBeInTheDocument();
+    expect(screen.getByText('shoulders_evo')).toBeInTheDocument();
+  });
 });

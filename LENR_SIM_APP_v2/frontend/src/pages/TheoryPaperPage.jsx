@@ -1007,7 +1007,11 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" paragraph>
-                Beyond the six core mechanisms, our simulation framework incorporates 13 additional peer-reviewed LENR theories as pluggable modules. Each implements a standardized TheoryModule protocol enabling direct comparison, scoring, and mathematical unification.
+                Beyond the core mechanisms, the workbench registers additional peer-reviewed LENR
+                hypotheses as pluggable <code>TheoryModule</code> ids (including conventional controls
+                and nulls). Modules share experiment inputs for comparative scoring — this is a
+                comparative scientific workbench, not an endorsement of contested mechanisms.
+                <code>EQ-OPEN-*</code> remain OPEN.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
@@ -1023,19 +1027,47 @@ const TheoryPaperPage = () => {
                 Criticism of unrelated experiments does not close this class.
               </Typography>
 
-              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.2 Hagelstein Phonon-Nuclear Coupling</Typography>
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
+                6.2 Hagelstein Phonon-Nuclear Coupling
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+                <Chip label="approx" size="small" color="warning" variant="outlined" sx={{ ml: 0.5, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
               <Typography variant="body2" paragraph>
-                Peter Hagelstein's model proposes coherent energy transfer between nuclear and phonon degrees of freedom. The 23.8 MeV released in D+D → He-4 is converted into ~10⁷ phonons (each ~2.5 meV) through a relativistic phonon-nuclear coupling mechanism with coupling strength g_ph-nuc ≈ 0.1–1 eV/Å, avoiding single high-energy gamma emission.
+                Peter Hagelstein's hypothesis proposes coherent energy transfer between nuclear and
+                phonon degrees of freedom as one candidate MeV-gap path: the ~23.8 MeV of D+D → He-4
+                would couple into many soft phonons (order ~meV each) via a relativistic
+                phonon-nuclear coupling with published coupling-strength estimates around
+                g_ph-nuc ≈ 0.1–1 eV/Å. The simulator exposes this as an approximate module with free
+                or fitted parameters. Radiation-suppression and MeV-gap <code>EQ-OPEN-*</code> items
+                remain OPEN — this module does not close them.
               </Typography>
 
-              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.3 Vysotskii Coherent Correlated States (CCS)</Typography>
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
+                6.3 Vysotskii Coherent Correlated States (CCS)
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+                <Chip label="approx" size="small" color="warning" variant="outlined" sx={{ ml: 0.5, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
               <Typography variant="body2" paragraph>
-                Vladimir Vysotskii's CCS theory demonstrates that particles in a non-stationary (time-varying) potential well develop anomalously large nuclear overlap integrals. The CCS wavepacket squeezes position uncertainty by √(1-r²) where r is the position-momentum correlation coefficient. When |r| → 1, tunnelling enhancement can reach 10⁴⁰ compared to standard Gamow. This theory also explains biological transmutation.
+                Vladimir Vysotskii's CCS hypothesis argues that particles in a non-stationary
+                (time-varying) potential well can develop large nuclear overlap integrals when
+                position-momentum correlation |r| approaches 1 (wavepacket squeeze ~√(1−r²)).
+                Extreme literature enhancement figures (up to ~10⁴⁰ vs Gamow) are composition-capped
+                in this app (governed band ~10³–10⁵; see EQ-COMP-01) and treated as speculative
+                upper bounds, not demonstrated rates. Biological-transmutation claims remain
+                contested literature context.
               </Typography>
 
-              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.4 Swartz NANOR/LANR Optimal Operating Point</Typography>
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
+                6.4 Swartz NANOR/LANR Optimal Operating Point
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+                <Chip label="EMP" size="small" color="info" variant="outlined" sx={{ ml: 0.5, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
               <Typography variant="body2" paragraph>
-                Mitchell Swartz identified a sharp Optimal Operating Point (OOP) in the 2D parameter space of deuterium loading ratio vs. applied current density. The NANOR device (ZrO₂-PdD nanomaterial) demonstrated reproducible excess heat at MIT when operated near this OOP, modeled as a 2D Gaussian response surface.
+                Mitchell Swartz reported an Optimal Operating Point (OOP) in deuterium loading vs.
+                applied current density for NANOR (ZrO₂-PdD) devices, including MIT-era excess-heat
+                reports near that OOP. The module models a 2D Gaussian response surface as a
+                phenomenological / empirical LENR correlation (claim-tiered) — not a certified
+                reproducible nuclear result.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.5 Miles Heat-Helium Correlation</Typography>
@@ -1046,9 +1078,17 @@ const TheoryPaperPage = () => {
                 observation is nuclear. Independent reports exist; reproducibility remains contested.
               </Typography>
 
-              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.6 Widom-Larsen Ultra-Low-Momentum Neutrons</Typography>
+              <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>
+                6.6 Widom-Larsen Ultra-Low-Momentum Neutrons
+                <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 18 }} />
+                <Chip label="approx" size="small" color="warning" variant="outlined" sx={{ ml: 0.5, fontSize: '0.65rem', height: 18 }} />
+              </Typography>
               <Typography variant="body2" paragraph>
-                The Widom-Larsen theory proposes that collective surface plasmon polaritons on metal hydride surfaces can renormalize electron mass above the threshold for inverse beta decay (e⁻ + p → n + νₑ), producing ultra-low-momentum neutrons that are immediately captured by nearby nuclei, leading to transmutation and energy release without dangerous radiation.
+                The Widom–Larsen hypothesis proposes that collective surface plasmon polaritons on
+                metal hydride surfaces can renormalize electron mass above the inverse-beta threshold
+                (e⁻ + p → n + νₑ), yielding ultra-low-momentum neutrons that may be captured nearby.
+                Radiation and Q-value questions remain open in the ledger; the module is an
+                approximate electroweak-entrance scaffold, not a solved radiation-free pathway.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.7 Matsumoto Electro-Nuclear Collapse (ENC)</Typography>
@@ -1150,6 +1190,7 @@ const TheoryPaperPage = () => {
                   <tbody>
                     {[
                       ['2.1 Rydberg / Screening', 'electron_screening', '/unified-theory'],
+                      ['2.1 Holmlid H(0)/D(0) UDH', 'holmlid_udh (≠ kim_bec / ≠ generic BEC Tc)', '/unified-theory'],
                       ['2.3 Double-Layer QED', 'coherent_qed', '/unified-theory'],
                       ['2.4 Hydroton / NAE', 'nae_model (hydroton: legacy/deprecated)', '/unified-theory'],
                       ['2.5 Casimir', 'casimir_confinement', '/unified-theory?tab=casimir'],
@@ -1158,6 +1199,8 @@ const TheoryPaperPage = () => {
                       // registered TheoryModule, so it cannot be run from the testbed.
                       ['2.7 Oppenheimer-Phillips', 'oppenheimer_phillips (not registered in pipeline)', 'not runnable'],
                       ['2.8 Tunneling', 'quantum_tunneling', '/unified-theory'],
+                      ['Null control', 'null_recombination', '/unified-theory'],
+                      ['Shoulders EVO (pheno)', 'shoulders_evo', '/unified-theory'],
                       ['6.1 Takahashi TSC', 'takahashi_tsc', '/unified-theory'],
                       ['6.2 Hagelstein Phonon', 'hagelstein_phonon', '/unified-theory'],
                       ['6.3 Vysotskii CCS', 'vysotskii_ccs', '/unified-theory'],

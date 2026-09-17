@@ -162,7 +162,10 @@ function TheoryDocumentationPanel() {
               </Typography>
             </Paper>
             <Typography variant="caption" color="text.secondary">
-              <strong>Citation:</strong> Holmlid, L. (2009). "Rydberg Matter and Mesoscopic Physics"
+              <strong>Citation:</strong> Holmlid, L. (2009). &quot;Rydberg Matter and Mesoscopic Physics&quot;.
+              Holmlid ultra-dense H(0)/D(0) phenomenology is registered separately as
+              <code> holmlid_udh</code> and is <strong>not</strong> Kim BECNF (<code>kim_bec</code>)
+              or a generic BEC Tc model.
             </Typography>
           </AccordionDetails>
         </Accordion>
