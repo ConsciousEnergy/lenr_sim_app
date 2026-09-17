@@ -13,7 +13,8 @@
 #   VPS_SSH_IDENTITY_FILE    default ~/.ssh/lenr_vps_agent_ed25519
 #   POLL_INTERVAL_SEC        default 60
 #   POLL_MAX_ATTEMPTS        default 0 (unlimited until success or kill)
-#   ACTIONS_DISPATCH_EVERY   default 30 (try Actions every N polls when SSH denied)
+#   ACTIONS_DISPATCH_EVERY   default 0 (Actions only when TRY_ACTIONS_SHIP touched;
+#                            set e.g. 30 to retry on an interval once VPS_* secrets exist)
 #   ACTIONS_EVENT_TYPE       default vps-compose-ship (use vps-compose-redeploy after
 #                            that workflow type lands on main — cheaper, no rebuild)
 #   STATUS_FILE              default /opt/cursor/artifacts/poll_and_ship_status.json
