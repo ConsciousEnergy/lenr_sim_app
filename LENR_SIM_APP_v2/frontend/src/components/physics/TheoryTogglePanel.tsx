@@ -899,6 +899,23 @@ function renderTheoryAccordion(args: RenderTheoryAccordionArgs): React.ReactElem
                     .join('; ') || 'see provenance'}
                 </Alert>
               )}
+            {Array.isArray(contribution.free_or_fitted_parameters) &&
+              contribution.free_or_fitted_parameters.length > 0 && (
+                <Alert
+                  severity="warning"
+                  data-testid={`free-fitted-params-${contribution.theory_id}`}
+                  sx={{ mt: 0.5, py: 0, '& .MuiAlert-message': { fontSize: '0.65rem' } }}
+                >
+                  Free/fitted parameters (not author-fixed):{' '}
+                  {contribution.free_or_fitted_parameters
+                    .map((p) => {
+                      const name = typeof p === 'string' ? p : p?.name || 'param';
+                      const kind = typeof p === 'object' && p?.kind ? `:${p.kind}` : '';
+                      return `${name}${kind}`;
+                    })
+                    .join('; ')}
+                </Alert>
+              )}
             {contribution.confidence_breakdown?.weighted_score !== undefined && (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                 Weighted confidence: {(Number(contribution.confidence_breakdown.weighted_score) * 100).toFixed(1)}%

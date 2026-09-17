@@ -209,6 +209,11 @@ class MatsumotoENCTheory:
             provenance={
                 "implementation_role": "phenomenological_branch_network",
                 "epistemic_warning": "highly_speculative_author_interpretation",
+                "p1_rebuild_status": "started_scaffold",
+                "p1_rebuild_targets": [
+                    "phenomenological_branch_network",
+                    "artifact_control_falsifiers",
+                ],
             },
         )
 
