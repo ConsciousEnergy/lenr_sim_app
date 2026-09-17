@@ -93,4 +93,7 @@ LENR_SIM_APP_v2/backend/data/
 *.sqlite3
 
 # Generated / local-only reviewer packs (demo pack q_campaign_demo is committed)
-LENR_SIM_APP_v2/datasets/reviewer_packs/local/ .staging-evidence/
+LENR_SIM_APP_v2/datasets/reviewer_packs/local/
+
+# Local staging dry-run evidence (CI/agent)
+.staging-evidence/

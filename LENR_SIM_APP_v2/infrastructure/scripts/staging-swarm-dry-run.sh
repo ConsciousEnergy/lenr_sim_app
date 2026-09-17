@@ -80,11 +80,16 @@ cmd_local() {
     echo "== ansible syntax-check =="
     (
       cd "$ANSIBLE_DIR"
-      # Prefer staging example inventory so CI/local runs are not inventory-empty warnings.
-      inv="inventory.staging.yml.example"
-      [[ -f inventory.staging.yml ]] && inv="inventory.staging.yml"
-      ansible-playbook --syntax-check -i "$inv" playbooks/deploy-stack.yml
-      ansible-playbook --syntax-check -i "$inv" playbooks/site.yml
+      # .yml.example is not auto-detected as YAML inventory; materialize a temp .yml.
+      inv_tmp="$(mktemp -t staging-inv.XXXXXX.yml)"
+      trap 'rm -f "$inv_tmp"' EXIT
+      if [[ -f inventory.staging.yml ]]; then
+        cp inventory.staging.yml "$inv_tmp"
+      else
+        cp inventory.staging.yml.example "$inv_tmp"
+      fi
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/deploy-stack.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/site.yml
     )
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"
