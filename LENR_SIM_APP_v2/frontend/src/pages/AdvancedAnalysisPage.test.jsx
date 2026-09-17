@@ -194,26 +194,44 @@ describe('AdvancedAnalysisPage saturation reporting', () => {
   });
 });
 
-describe('AdvancedAnalysisPage theory screening observables', () => {
+describe('AdvancedAnalysisPage theory fidelity honesty', () => {
   afterEach(() => {
     mockUsePhysics.mockReset();
   });
 
-  it('reads screening_potential_eV from theory observables', () => {
+  it('replaces hardcoded Hagelstein marketing copy with fidelity axes', () => {
     renderPage({
       simulationResult: null,
       theoryResult: {
-        combined_enhancement: 1234,
+        combined_enhancement: 55,
+        composition_provenance: {
+          multiplier_stack_warning: 'Multiple composition groups multiply',
+        },
         per_theory: [
           {
-            theory_id: 'electron_screening',
-            theory_name: 'Electron Screening',
-            enhancement_factor: 9897,
-            observables: { screening_potential_eV: 27.4 },
+            theory_id: 'hagelstein_phonon',
+            theory_name: 'Hagelstein Phonon',
+            enhancement_factor: 55,
+            model_fidelity: 'approximate',
+            empirical_support: 'speculative',
+            claim_tier: 'speculative_exploratory',
+            free_or_fitted_parameters: [{ name: 'coupling_strength', kind: 'free' }],
+            author_equations_vs_simulator_approximations: {
+              coupling_matrix_element: 'simulator_approximation',
+            },
+            observables: {
+              phonon_number: 1e8,
+              coupling_matrix_element: 1e-6,
+            },
           },
         ],
       },
     });
-    expect(screen.getByText(/27\.4/)).toBeInTheDocument();
+    expect(screen.getByTestId('theory-summary-honesty')).toBeInTheDocument();
+    expect(screen.getByText(/fidelity: approximate/i)).toBeInTheDocument();
+    expect(screen.getByText(/empirical: speculative/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/coupling_strength:free/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/avoiding gamma emission/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('theory-fidelity-honesty-summary')).toBeInTheDocument();
   });
 });
