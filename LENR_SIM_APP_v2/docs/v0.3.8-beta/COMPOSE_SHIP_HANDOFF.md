@@ -1,6 +1,6 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#204/#206/#207/#208)
 
-## Live status (agent probe 2026-09-17T06:40Z)
+## Live status (agent probe 2026-09-17T09:33Z — user try-again)
 
 | Check | Result |
 |-------|--------|
@@ -9,8 +9,8 @@
 | Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
-| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty** (redeploy [35189991153](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35189991153) failed; unlock hint printed via #208) |
-| Hostinger login | **Prefer GitHub SSO** — automation can click GitHub; Google SSO button is anti-automation blocked. Still needs one browser password/2FA |
+| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty**; redeploy also blocked by **org spending limit** (latest try-again [35205242239](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35205242239) failed ~3s / 0ms billable; earlier [35189991153](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35189991153) empty-secrets + unlock hint via #208) |
+| Hostinger login | **Prefer GitHub SSO** — automation can click GitHub (try-again 09:33Z still hits OAuth password wall); Google SSO anti-automation blocked. Needs one browser password/2FA |
 | Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` (exit audit 9/10 PASS) |
 
 Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_colon_audit.json`.
