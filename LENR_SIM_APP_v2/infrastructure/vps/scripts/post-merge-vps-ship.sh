@@ -10,13 +10,15 @@
 #   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh verify-live
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-#   # Direct SSH when VPS_HOST + VPS_SSH_KEY are in the environment:
+#   # Direct SSH when VPS_SSH_KEY or VPS_SSH_IDENTITY_FILE is set (preferred;
+#   # bypasses GitHub Actions billing). VPS_HOST defaults to the public share A.
 #   CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 #
 # ship: workflow_dispatch, else repository_dispatch vps-compose-ship.
 # ssh-ship: SSH as root@$VPS_HOST and run infrastructure/vps/scripts/deploy.sh
 #   (same pin/IMAGE_TAG path as Actions deploy-vps).
+#   Identity: VPS_SSH_IDENTITY_FILE=/path/to/key  OR  VPS_SSH_KEY=<pem/openssh>
 set -euo pipefail
 
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
@@ -27,6 +29,8 @@ MODE="${1:-plan}"
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
 SHIP_REF="${SHIP_REF:-main}"
 SHIP_VIA_VPS_BRANCH="${SHIP_VIA_VPS_BRANCH:-0}"
+# Public Compose share A → VPS (lenr-sim-beta.conscious.energy). Override with VPS_HOST.
+DEFAULT_VPS_HOST="185.211.4.66"
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing $1" >&2; exit 2; }; }
 need git
@@ -78,13 +82,13 @@ gh pr view 196 --json state,mergedAt
 gh pr view 197 --json state,mergedAt
 gh pr view 198 --json state,mergedAt
 
-# B) Prefer Actions ship (needs repo secrets VPS_HOST + VPS_SSH_KEY):
-CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-
-# C) Or direct SSH when those vars are in the local/Cursor env:
+# B) Prefer direct SSH when VPS_SSH_KEY is set (host defaults to ${DEFAULT_VPS_HOST}):
 CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
+
+# C) Or Actions ship (needs repo secrets + billing restored):
+CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
 
 # ${PROBE_NOTE}
 # See docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
@@ -104,8 +108,9 @@ cmd_check() {
   echo "main@$main_sha APP_VERSION=${main_ver:-?}"
   echo "vps@$vps_sha"
   echo "EXPECT_VERSION=$EXPECT_VERSION SHIP_REF=$SHIP_REF"
-  echo "VPS_HOST env: ${VPS_HOST:+set}${VPS_HOST:-MISSING}"
+  echo "VPS_HOST env: ${VPS_HOST:+set}${VPS_HOST:-MISSING (default ${DEFAULT_VPS_HOST})}"
   echo "VPS_SSH_KEY env: $([[ -n "${VPS_SSH_KEY:-}" ]] && echo set || echo MISSING)"
+  echo "ssh-ship resolved host: $(resolve_vps_host)"
 
   if train_merged; then
     echo "OK: #196/#197/#198 MERGED"
@@ -178,13 +183,26 @@ print("OK: KM auto live")
 PY
 }
 
+resolve_vps_host() {
+  # Prefer explicit env; else public share A record (not a secret).
+  if [[ -n "${VPS_HOST:-}" ]]; then
+    printf '%s\n' "$VPS_HOST"
+    return 0
+  fi
+  printf '%s\n' "$DEFAULT_VPS_HOST"
+}
+
 cmd_ssh_ship() {
   require_confirm_execute
   need ssh
-  if [[ -z "${VPS_HOST:-}" || -z "${VPS_SSH_KEY:-}" ]]; then
-    echo "ERROR: ssh-ship requires VPS_HOST and VPS_SSH_KEY in the environment" >&2
+  # Prefer identity file (agent key on disk) over embedding private key in env.
+  if [[ -z "${VPS_SSH_KEY:-}" && -z "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    echo "ERROR: ssh-ship requires VPS_SSH_KEY or VPS_SSH_IDENTITY_FILE" >&2
+    echo "NOTE: VPS_HOST defaults to ${DEFAULT_VPS_HOST} (lenr-sim-beta A record)" >&2
     exit 2
   fi
+  local vps_host
+  vps_host="$(resolve_vps_host)"
 
   git fetch origin main
   local deploy_sha image_tag
@@ -205,16 +223,31 @@ cmd_ssh_ship() {
     fi
   fi
 
-  local key
-  key="$(mktemp)"
-  cleanup() { rm -f "$key"; }
-  trap cleanup EXIT
-  umask 077
-  printf '%s\n' "$VPS_SSH_KEY" > "$key"
+  # Global path so EXIT trap is safe under `set -u` after function return.
+  _SSH_KEY_TMP=""
+  _SSH_KEY_OWNED=0
+  if [[ -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    if [[ ! -f "$VPS_SSH_IDENTITY_FILE" ]]; then
+      echo "ERROR: VPS_SSH_IDENTITY_FILE not found: $VPS_SSH_IDENTITY_FILE" >&2
+      exit 2
+    fi
+    _SSH_KEY_TMP="$VPS_SSH_IDENTITY_FILE"
+  else
+    _SSH_KEY_TMP="$(mktemp)"
+    _SSH_KEY_OWNED=1
+    umask 077
+    printf '%s\n' "$VPS_SSH_KEY" > "$_SSH_KEY_TMP"
+  fi
+  cleanup_ssh_key() {
+    if [[ "${_SSH_KEY_OWNED:-0}" == "1" && -n "${_SSH_KEY_TMP:-}" ]]; then
+      rm -f "$_SSH_KEY_TMP"
+    fi
+  }
+  trap cleanup_ssh_key EXIT
 
-  echo "==> SSH deploy to root@${VPS_HOST} IMAGE_TAG=${image_tag} SHA=${deploy_sha}"
-  ssh -i "$key" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
-    "root@${VPS_HOST}" \
+  echo "==> SSH deploy to root@${vps_host} IMAGE_TAG=${image_tag} SHA=${deploy_sha}"
+  ssh -i "$_SSH_KEY_TMP" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+    "root@${vps_host}" \
     "set -euo pipefail
      cd /opt/lenr-sim/src
      git fetch --prune origin
@@ -254,11 +287,19 @@ cmd_ship() {
     echo "WARN: ALLOW_UNMERGED=1 — skipping MERGED/version gates"
   fi
 
-  # Prefer direct SSH when credentials are present (avoids empty Actions secrets).
-  if [[ -n "${VPS_HOST:-}" && -n "${VPS_SSH_KEY:-}" ]]; then
-    echo "NOTE: VPS_HOST/VPS_SSH_KEY present — using ssh-ship path"
+  # Prefer direct SSH when key is present (avoids Actions billing / empty secrets).
+  # If the local key is unauthorized (Permission denied), fall through to Actions
+  # so a retry can still succeed once repo VPS_* secrets are set.
+  if [[ -n "${VPS_SSH_KEY:-}" || -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
+    echo "NOTE: SSH identity present — trying ssh-ship first (host=$(resolve_vps_host))"
+    set +e
     cmd_ssh_ship
-    return 0
+    local ssh_rc=$?
+    set -e
+    if [[ "$ssh_rc" -eq 0 ]]; then
+      return 0
+    fi
+    echo "WARN: ssh-ship failed (rc=${ssh_rc}); falling back to Actions dispatch" >&2
   fi
 
   local dispatch_ref="$SHIP_REF"
