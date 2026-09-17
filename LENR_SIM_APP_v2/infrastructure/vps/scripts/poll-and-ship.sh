@@ -30,8 +30,10 @@ HOST="${VPS_HOST:-185.211.4.66}"
 IDENT="${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr_vps_agent_ed25519}"
 INTERVAL="${POLL_INTERVAL_SEC:-60}"
 MAX="${POLL_MAX_ATTEMPTS:-0}"
-ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-30}"
-ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-vps-compose-ship}"
+ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-15}"
+# Prefer cheap redeploy (no image rebuild) once that type exists on main (#204);
+# fall back to full vps-compose-ship. Override with ACTIONS_EVENT_TYPE.
+ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-}"
 STATUS_FILE="${STATUS_FILE:-/opt/cursor/artifacts/poll_and_ship_status.json}"
 TRY_ACTIONS_FILE="${TRY_ACTIONS_SHIP_FILE:-/opt/cursor/artifacts/TRY_ACTIONS_SHIP}"
 TOKEN_FILES=(
@@ -42,6 +44,15 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SHIP="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh"
 UNLOCK="$ROOT/LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py"
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
+
+actions_events() {
+  if [[ -n "$ACTIONS_EVENT" ]]; then
+    printf '%s\n' "$ACTIONS_EVENT"
+    return 0
+  fi
+  # Try redeploy first (no-op / unused until workflow type is on default branch).
+  printf '%s\n' "vps-compose-redeploy" "vps-compose-ship"
+}
 
 write_status() {
   local phase="$1" detail="${2:-}"
@@ -99,34 +110,23 @@ do_ship() {
   write_status "done" "probe-km finished"
 }
 
-# Try Actions deploy without preferring the (possibly unauthorized) local key.
-# Returns 0 on probe-km success; non-zero on failure (caller continues polling).
-try_actions_ship() {
-  if [[ "${CONFIRM:-}" != "$CONFIRM_TOKEN" || "${EXECUTE:-0}" != "1" ]]; then
-    write_status "actions_plan_only" "would dispatch ${ACTIONS_EVENT}"
-    echo "ACTIONS: plan-only (need CONFIRM=${CONFIRM_TOKEN} EXECUTE=1)"
-    return 2
-  fi
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "ACTIONS: gh not available" >&2
-    return 1
-  fi
-  write_status "actions_dispatch" "event=${ACTIONS_EVENT}"
-  echo "[actions] dispatching ${ACTIONS_EVENT} (ignoring local VPS_SSH_KEY)"
+# Dispatch one Actions event; returns 0 if a run was found and watched successfully.
+dispatch_and_watch() {
+  local event="$1"
   local before_epoch run_id i
   before_epoch="$(date -u +%s)"
+  echo "[actions] dispatching ${event}"
   if ! gh api --method POST "repos/${REPO}/dispatches" --input - <<EOF
-{"event_type":"${ACTIONS_EVENT}","client_payload":{"confirm":"${CONFIRM_TOKEN}"}}
+{"event_type":"${event}","client_payload":{"confirm":"${CONFIRM_TOKEN}"}}
 EOF
   then
-    echo "[actions] dispatch failed" >&2
-    write_status "actions_dispatch_failed" "event=${ACTIONS_EVENT}"
+    echo "[actions] dispatch HTTP failed for ${event}" >&2
     return 1
   fi
   run_id=""
-  for i in $(seq 1 45); do
+  for i in $(seq 1 30); do
     run_id="$(
-      gh run list --repo "$REPO" --workflow "Build and Deploy" --limit 10 \
+      gh run list --repo "$REPO" --workflow "Build and Deploy" --limit 12 \
         --json databaseId,createdAt,event,displayTitle \
         | python3 -c "
 import json,sys,datetime
@@ -152,21 +152,43 @@ for r in rows:
     sleep 4
   done
   if [[ -z "$run_id" ]]; then
-    echo "[actions] could not locate run" >&2
-    write_status "actions_run_missing" "event=${ACTIONS_EVENT}"
+    echo "[actions] no run for ${event} (type missing on default branch?)" >&2
     return 1
   fi
-  echo "[actions] watching run $run_id"
+  echo "[actions] watching run $run_id (${event})"
   if ! gh run watch "$run_id" --repo "$REPO" --exit-status; then
-    echo "[actions] run $run_id failed (secrets empty or SSH denied on runner?)" >&2
-    write_status "actions_run_failed" "run=$run_id"
+    echo "[actions] run $run_id failed" >&2
+    write_status "actions_run_failed" "event=${event} run=$run_id"
     return 1
   fi
   if "$SHIP" probe-km; then
-    write_status "done" "actions probe-km ok run=$run_id"
+    write_status "done" "actions probe-km ok event=${event} run=$run_id"
     return 0
   fi
-  write_status "actions_probe_failed" "run=$run_id"
+  write_status "actions_probe_failed" "event=${event} run=$run_id"
+  return 1
+}
+
+# Try Actions deploy without preferring the (possibly unauthorized) local key.
+# Returns 0 on probe-km success; non-zero on failure (caller continues polling).
+try_actions_ship() {
+  if [[ "${CONFIRM:-}" != "$CONFIRM_TOKEN" || "${EXECUTE:-0}" != "1" ]]; then
+    write_status "actions_plan_only" "would dispatch actions events"
+    echo "ACTIONS: plan-only (need CONFIRM=${CONFIRM_TOKEN} EXECUTE=1)"
+    return 2
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "ACTIONS: gh not available" >&2
+    return 1
+  fi
+  write_status "actions_dispatch" "trying events"
+  local ev
+  while IFS= read -r ev; do
+    [[ -z "$ev" ]] && continue
+    if dispatch_and_watch "$ev"; then
+      return 0
+    fi
+  done < <(actions_events)
   return 1
 }
 
@@ -180,7 +202,8 @@ want_actions_now() {
 
 attempt=0
 write_status "polling" "interval=${INTERVAL}s ident=$IDENT actions_every=${ACTIONS_EVERY}"
-echo "==> poll-and-ship host=$HOST interval=${INTERVAL}s actions_every=${ACTIONS_EVERY} event=${ACTIONS_EVENT}"
+echo "==> poll-and-ship host=$HOST interval=${INTERVAL}s actions_every=${ACTIONS_EVERY}"
+echo "    actions events: $(actions_events | tr '\n' ' ')"
 echo "    CONFIRM=${CONFIRM:-unset} EXECUTE=${EXECUTE:-0}"
 
 while true; do
@@ -196,7 +219,7 @@ while true; do
     exit $?
   fi
   if want_actions_now || { [[ "$ACTIONS_EVERY" != "0" ]] && (( attempt % ACTIONS_EVERY == 0 )); }; then
-    echo "[$attempt] trying Actions ${ACTIONS_EVENT}"
+    echo "[$attempt] trying Actions dispatch path"
     if try_actions_ship; then
       exit 0
     fi
