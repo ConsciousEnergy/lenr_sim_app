@@ -292,10 +292,13 @@ cmd_ship() {
   # so a retry can still succeed once repo VPS_* secrets are set.
   if [[ -n "${VPS_SSH_KEY:-}" || -n "${VPS_SSH_IDENTITY_FILE:-}" ]]; then
     echo "NOTE: SSH identity present — trying ssh-ship first (host=$(resolve_vps_host))"
-    if cmd_ssh_ship; then
+    set +e
+    cmd_ssh_ship
+    local ssh_rc=$?
+    set -e
+    if [[ "$ssh_rc" -eq 0 ]]; then
       return 0
     fi
-    ssh_rc=$?
     echo "WARN: ssh-ship failed (rc=${ssh_rc}); falling back to Actions dispatch" >&2
   fi
 
