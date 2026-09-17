@@ -61,9 +61,17 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 
 ### Required operator action
 
-**Preferred console path — Hostinger → GitHub SSO → Browser VNC** (then one-shot
-authorize + pull tip of `main`). PasswordAuthentication is off on the VPS
-(publickey only). This unblocks the agent poller **and** ships KM:
+**Preferred — Hostinger → GitHub SSO → Browser VNC**, then one paste as root
+(PasswordAuthentication is off — console only). This authorizes the agent
+poller **and** ships KM in one shot:
+
+```bash
+# From an existing checkout (after fetch), or paste the script body:
+cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
+bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
+```
+
+Equivalent inline (no script file needed):
 
 ```bash
 # A) authorize cloud-agent pubkey (poller can re-verify / re-ship later)
@@ -71,7 +79,7 @@ mkdir -p /root/.ssh && chmod 700 /root/.ssh
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 
-# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#206+)
+# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#208+)
 cd /opt/lenr-sim/src
 git fetch --prune origin
 git checkout -qf origin/main
