@@ -2,7 +2,10 @@
 
 **Source:** LENR-ARA *Model Fidelity & Scientific Architecture Recommendation Report*
 (16 September 2026).  
-**Status:** P0 scientific-integrity foundation in flight on this release line.  
+**Status:** P0 scientific-integrity foundation landed on `main` via `#198`
+(provenance, taxonomy, nulls, paper benchmarks, maturity axes). Remaining
+0.3.8 ship items: Compose KM live pull (operator VPS unlock) and squash-merge
+of honesty UI / staging dry-run helper / ARA P1 scaffolds (`#204`).  
 **Hard line:** Fidelity ≠ validity. `EQ-OPEN-*` remain OPEN. No endorsement of
 contested mechanisms.
 
