@@ -14,7 +14,9 @@
 
 Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`.
 
-Tip of `main` pin for operator self-ship: `6ed62613b15a9f77b277ad8f92daff5fb019999f` (`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 scaffolds).
+Tip of `main` pin for operator self-ship: checkout `origin/main` after fetch
+(`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 scaffolds).
+Current tip at handoff refresh: see `git rev-parse origin/main`.
 
 ## Tip code proof (agent, 2026-09-16T19:25Z; still valid on tip)
 
