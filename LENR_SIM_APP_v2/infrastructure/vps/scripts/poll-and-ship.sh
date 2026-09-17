@@ -31,7 +31,7 @@ HOST="${VPS_HOST:-185.211.4.66}"
 IDENT="${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr_vps_agent_ed25519}"
 INTERVAL="${POLL_INTERVAL_SEC:-60}"
 MAX="${POLL_MAX_ATTEMPTS:-0}"
-ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-15}"
+ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-0}"
 # Prefer cheap redeploy (no image rebuild) once that type exists on main (#204);
 # fall back to full vps-compose-ship. Override with ACTIONS_EVENT_TYPE.
 ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-}"
