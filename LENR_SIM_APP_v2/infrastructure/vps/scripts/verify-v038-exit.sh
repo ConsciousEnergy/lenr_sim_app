@@ -52,6 +52,7 @@ km_live = "auto" in modes
 pr196 = gh_json("pr", "view", "196", "--repo", repo, "--json", "state,mergedAt") or {}
 pr197 = gh_json("pr", "view", "197", "--repo", repo, "--json", "state,mergedAt") or {}
 pr204 = gh_json("pr", "view", "204", "--repo", repo, "--json", "state,mergedAt,headRefOid") or {}
+pr206 = gh_json("pr", "view", "206", "--repo", repo, "--json", "state,mergedAt,headRefOid") or {}
 main_has_ara = file_on_ref("origin/main", "LENR_SIM_APP_v2/backend/tests/test_physics/test_ara_p1_scaffolds.py")
 main_has_staging = file_on_ref("origin/main", "LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh")
 main_has_honesty = file_on_ref(
@@ -106,7 +107,7 @@ items = [
         "id": "staging_swarm_dry_run",
         "requirement": "Staging Swarm dry-run evidence; public still Compose",
         "status": "PASS" if main_has_staging else ("PARTIAL" if file_on_ref("HEAD", "LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh") else "FAIL"),
-        "evidence": f"helper on main={main_has_staging}; on HEAD={file_on_ref('HEAD','LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh')}; remote TF still operator-gated",
+        "evidence": f"helper on main={main_has_staging}; pr206={pr206.get('state')}; remote TF still operator-gated",
     },
     {
         "id": "cutover_docs_gates_039",
@@ -118,7 +119,7 @@ items = [
         "id": "ara_p1_start",
         "requirement": "Start ARA P1 scaffolds",
         "status": "PASS" if main_has_ara else ("PARTIAL" if head_has_ara else "FAIL"),
-        "evidence": f"scaffolds on main={main_has_ara}; on HEAD={head_has_ara}; pr204={pr204.get('state')} {pr204.get('headRefOid','')[:7]}",
+        "evidence": f"scaffolds on main={main_has_ara}; on HEAD={head_has_ara}; pr206={pr206.get('state')} pr204={pr204.get('state')}",
     },
     {
         "id": "eq_open_remain_open",
@@ -138,6 +139,7 @@ audit = {
     "blocking": blocking,
     "live_modes": modes,
     "pr204": pr204,
+    "pr206": pr206,
 }
 Path(out_json).write_text(json.dumps(audit, indent=2) + "\n")
 lines = [
