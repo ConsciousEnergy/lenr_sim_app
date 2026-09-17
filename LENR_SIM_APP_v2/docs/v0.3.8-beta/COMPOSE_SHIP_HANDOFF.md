@@ -124,9 +124,12 @@ HOSTINGER_API_TOKEN=... \
 and append the pubkey above. Prefer GitHub SSO over Google (Google button is
 anti-automation blocked).
 
-**Or** set Cursor env secret `VPS_SSH_KEY` to a private key **already** in
-`authorized_keys` (do not paste the agent key twin — it is not authorized yet),
-then **restart** the agent. `VPS_HOST` defaults to `185.211.4.66`.
+**Or** drop Cursor env secret / file `VPS_SSH_KEY` = a private key **already** in
+VPS `authorized_keys` (historically `lenr-vps-deploy`, fingerprint
+`SHA256:EzrEgmm4zpNUkv9u4vWthhYLFJeRcH1ITUNWyrAFqD0`). Do **not** paste the agent
+ed25519 twin — it is not authorized yet. Poller hot-swaps from
+`/opt/cursor/artifacts/VPS_SSH_KEY` or `/tmp/VPS_SSH_KEY` within ~15s (no agent
+restart). `VPS_HOST` defaults to `185.211.4.66`.
 
 ```bash
 # After pubkey is authorized (agent identity file):
