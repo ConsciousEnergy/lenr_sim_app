@@ -1,20 +1,21 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#198)
 
-## Live status (agent probe 2026-09-16T22:37Z)
+## Live status (agent probe 2026-09-17T02:05Z)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
 | `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
-| `POST …/bubble-fusion` `dynamics_mode=auto` @ 4 bar | Still `dynamics_mode_used=legacy`, `km_auto_selected=false`, peak Mach ≈0.17 |
-| SSH `root@185.211.4.66` | Permission denied (publickey) — env `VPS_SSH_KEY` is unauthorized agent twin |
-| `HOSTINGER_API_TOKEN` | unset |
-| Actions `vps-compose-ship` dispatch | run [35158459314](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35158459314) — jobs not started (billing/spending limit) |
+| Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
+| SSH `root@185.211.4.66` | Permission denied (publickey) — env `VPS_SSH_KEY` is unauthorized agent twin (`SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`) |
+| `HOSTINGER_API_TOKEN` | unset (no env / no artifact file drop) |
+| Actions billing | PR #204 jobs fail ~2s (“account payments have failed…”) |
 | Conclusion | **#196/#198 on `main` + GHCR; Compose share not yet pulled** |
 
-Evidence: `/opt/cursor/artifacts/live_bf_km_probe_now.json`, `v038_blocker_status.json`, `v038_exit_criteria_audit.md`.
+Evidence: `/opt/cursor/artifacts/live_probe_km_retry.log`, `v038_blocker_status.json`, `v038_exit_criteria_audit.md`.
 
 P0 fidelity squash-merged as #198 (`6d1f44d`). Compose ship dispatch path landed as #199 (`7408e18`).
+Tip of `main` pin for operator self-ship: `8d362b20fbe93bdf097bf11bf2fb2d7c0ae3a0fb` (`APP_VERSION=0.3.7-beta`, KM auto included).
 
 
 ## Tip code proof (agent, 2026-09-16T19:25Z)
@@ -56,16 +57,36 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0. Live pull requires secre
 
 ### Required operator action
 
-**Fastest (Hostinger browser/VNC console):** as `root` on `185.211.4.66`, append
-the current cloud-agent pubkey (PasswordAuthentication is off — console only):
+**Fastest — Hostinger VNC one-shot (authorize agent + pull tip of `main`):**
+as `root` on `185.211.4.66` (PasswordAuthentication is off — console only).
+This both unblocks the agent poller **and** ships KM without waiting for SSH:
+
+```bash
+# A) authorize cloud-agent pubkey (poller can re-verify / re-ship later)
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#202)
+cd /opt/lenr-sim/src
+git fetch --prune origin
+git checkout -qf 8d362b20fbe93bdf097bf11bf2fb2d7c0ae3a0fb
+LENR_ENV_FILE=/opt/lenr-sim/.env \
+  IMAGE_TAG=0.3.7-beta \
+  UPDATE_ENV_IMAGE_TAG=1 \
+  EXPECT_VERSION=0.3.7-beta \
+  LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
+```
+
+Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
+
+**Pubkey-only** (if you prefer the agent to run `ssh-ship` after authorize):
 
 ```bash
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 ```
-
-Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
 
 **Or** set Cursor env secret `HOSTINGER_API_TOKEN` (hPanel → API), then:
 
