@@ -1,0 +1,31 @@
+# Staging Swarm dry-run variables (v0.3.8) — copy to staging.tfvars (do not commit).
+# Used by: CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
+#   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
+#
+# Keep environment = "staging". Do not promote the live Compose VPS
+# (existing_vps_ipv4 = 185.211.4.66) to Swarm manager without a written plan.
+
+environment = "staging"
+domain      = "conscious.energy"
+
+cloudflare_api_token  = "your-cloudflare-api-token"
+cloudflare_account_id = "your-cloudflare-account-id"
+cloudflare_zone_id    = "your-cloudflare-zone-id"
+
+hostinger_api_token = "your-hostinger-api-token"
+ssh_public_key      = "ssh-ed25519 AAAA... staging-deploy@conscious.energy"
+
+vps_plan       = "hostingercom-vps-kvm2-usd-1m"
+data_center_id = 1
+
+github_owner = "ConsciousEnergy"
+github_repo  = "lenr_sim_app"
+# Staging Pages host — never @ or www.
+pages_production_branch = "main"
+pages_hostname          = "app-staging"
+
+# Prefer disabled / import-existing for dry-run; set create_new only with confirm.
+hostinger_vps_mode = "disabled"
+existing_vps_ipv4  = "185.211.4.66"
+manage_api_dns     = false
+# confirm_hostinger_create = "I_CREATE_NEW_VPS"

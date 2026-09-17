@@ -1,0 +1,32 @@
+# Staging Swarm inventory (v0.3.8) — copy to inventory.staging.yml (do not commit).
+# Used by staging-swarm-dry-run.sh remote (ansible --check only).
+#
+# Prefer ≥2 dedicated staging nodes. Do not list the live Compose share VPS
+# (185.211.4.66) as Swarm manager without a written migration plan.
+
+all:
+  children:
+    swarm_managers:
+      hosts:
+        staging-manager-1:
+          ansible_host: STAGING_MANAGER_IP
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+    swarm_workers:
+      hosts:
+        staging-worker-1:
+          ansible_host: STAGING_WORKER_IP
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+  vars:
+    app_domain: "conscious.energy"
+    api_subdomain: "api-staging"
+    environment: "staging"
+    docker_compose_version: "2.24.5"
+    traefik_dashboard_auth: true
+    traefik_acme_email: "ops@conscious.energy"
+    postgres_version: "16"
+    postgres_db: "lenr_sim"
+    postgres_user: "lenr_app"
+    fastapi_workers: 2
+    fastapi_log_level: "info"

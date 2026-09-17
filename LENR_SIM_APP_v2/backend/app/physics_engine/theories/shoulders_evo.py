@@ -109,7 +109,11 @@ class ShouldersEVOTheory:
             provenance={
                 "implementation_role": "phenomenological_stub",
                 "no_invented_rate_law": True,
-                "p1_rebuild_status": "queued",
+                "p1_rebuild_status": "started_scaffold",
+                "p1_rebuild_targets": [
+                    "phenomenological_branch_network",
+                    "no_invented_author_rate_laws",
+                ],
             },
         )
 

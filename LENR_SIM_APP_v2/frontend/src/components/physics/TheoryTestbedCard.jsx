@@ -33,6 +33,7 @@ import { usePhysics } from '../../contexts/PhysicsContext';
 import { track } from '../../analytics/events';
 import { buildTheoryConditions } from '../../utils/theoryConditions';
 import { claimTierMultiplier, CLAIM_TIERS } from '../../utils/theoryGovernance';
+import TheoryFidelityHonestySummary from './TheoryFidelityHonestySummary';
 
 /** How many contributions to list before deferring to the full testbed. */
 const TOP_CONTRIBUTION_COUNT = 5;
@@ -225,6 +226,7 @@ function TheoryTestbedCard({ parameters }) {
           <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
             {formatFactor(theoryResult.combined_enhancement)}
           </Typography>
+          <TheoryFidelityHonestySummary theoryResult={theoryResult} />
 
           {topContributions.length > 0 && (
             <Box sx={{ mb: 1.5 }}>

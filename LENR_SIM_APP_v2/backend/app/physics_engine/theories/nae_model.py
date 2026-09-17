@@ -215,6 +215,11 @@ class NAEModelTheory:
                 "active_implementation": "storms_nae_2012_13",
                 "not_neutron_chain_model": True,
                 "implementation_role": "versioned_nae_family_p0",
+                "p1_rebuild_status": "started_scaffold",
+                "p1_rebuild_targets": [
+                    "nae_2012_13_void_dynamics",
+                    "nae_2026_electron_channel_dynamics",
+                ],
             },
         )
 

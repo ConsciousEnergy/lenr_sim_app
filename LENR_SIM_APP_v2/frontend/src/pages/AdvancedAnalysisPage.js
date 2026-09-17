@@ -19,6 +19,7 @@ import { usePhysics } from '../contexts/PhysicsContext';
 import EnhancementWaterfallChart from '../components/physics/EnhancementWaterfallChart';
 import PredictionReadoutPanel from '../components/physics/PredictionReadoutPanel';
 import ScreeningProvenancePanel from '../components/physics/ScreeningProvenancePanel';
+import TheoryFidelityHonestySummary from '../components/physics/TheoryFidelityHonestySummary';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -340,13 +341,54 @@ const AdvancedAnalysisPage = () => {
                 </Paper>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={2} sx={{ p: 2, minHeight: 200 }}>
+                <Paper elevation={2} sx={{ p: 2, minHeight: 200 }} data-testid="theory-summary-honesty">
                   <Typography variant="h6" gutterBottom>Theory Summary</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Hagelstein&#39;s model describes coherent energy transfer between nuclear 
-                    and phonon degrees of freedom. A large quantum (~24 MeV) is distributed 
-                    across ~10&#8312; phonons, avoiding gamma emission.
-                  </Typography>
+                  {(() => {
+                    const hp = findTheory(perTheory, 'hagelstein_phonon');
+                    const fidelity = hp?.model_fidelity || 'approximate';
+                    const empirical = hp?.empirical_support || 'speculative';
+                    const freeParams = Array.isArray(hp?.free_or_fitted_parameters)
+                      ? hp.free_or_fitted_parameters
+                      : [];
+                    const approx = hp?.author_equations_vs_simulator_approximations || {};
+                    const approxBits = Object.entries(approx)
+                      .filter(([, v]) => String(v).includes('simulator') || String(v).includes('approx') || String(v).includes('deferred'))
+                      .map(([k, v]) => `${k}=${v}`);
+                    return (
+                      <>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Hagelstein phonon-nuclear coupling is shown as pipeline observables only.
+                          Model fidelity and empirical support are independent axes — not a validity
+                          endorsement. EQ-OPEN-* stay OPEN.
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                          <Chip size="small" variant="outlined" label={`fidelity: ${String(fidelity).replace(/_/g, ' ')}`} />
+                          <Chip size="small" variant="outlined" label={`empirical: ${String(empirical).replace(/_/g, ' ')}`} />
+                          {hp?.claim_tier && (
+                            <Chip size="small" variant="outlined" label={`tier: ${String(hp.claim_tier).replace(/_/g, ' ')}`} />
+                          )}
+                        </Box>
+                        {approxBits.length > 0 && (
+                          <Alert severity="info" sx={{ mb: 1, py: 0.5 }}>
+                            <Typography variant="caption">
+                              Simulator approximations: {approxBits.join('; ')}
+                            </Typography>
+                          </Alert>
+                        )}
+                        {freeParams.length > 0 && (
+                          <Alert severity="warning" sx={{ mb: 1, py: 0.5 }}>
+                            <Typography variant="caption">
+                              Free/fitted parameters:{' '}
+                              {freeParams
+                                .map((p) => (typeof p === 'string' ? p : `${p?.name || 'param'}${p?.kind ? `:${p.kind}` : ''}`))
+                                .join('; ')}
+                            </Typography>
+                          </Alert>
+                        )}
+                        <TheoryFidelityHonestySummary theoryResult={theoryResult} />
+                      </>
+                    );
+                  })()}
                 </Paper>
               </Grid>
             </>

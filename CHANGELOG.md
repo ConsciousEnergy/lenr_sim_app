@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — v0.3.8-beta fidelity P0 / ARA P1 start (science slice)
+- Fidelity honesty UI: `TheoryFidelityHonestySummary`, free/fitted parameter chips, Advanced Analysis Theory Summary no longer uses hardcoded endorsement copy
+- Theory Paper §6 honesty: Hagelstein / Vysotskii / Swartz / Widom framed as speculative hypotheses; Holmlid `holmlid_udh` ≠ Kim `kim_bec` in Theory-to-Simulation map
+- ARA P1 scaffolds: `started_scaffold` markers on Hagelstein / Storms NAE / Takahashi / Shoulders / Matsumoto (+ Widom start docs); `test_ara_p1_scaffolds.py`
+- Staging Swarm local dry-run helper + CI job `staging-swarm-dry-run` (inventory/tfvars examples); public share remains Compose until 0.3.9 cutover confirm
+- CMNS model fidelity response status updated to P0 landed on main
+- `EQ-OPEN-*` remain OPEN; no theory endorsement; full P1 equation rebuilds deferred
+
 ### Added — v0.3.7-beta governance train
 - Docs pack under `LENR_SIM_APP_v2/docs/v0.3.7-beta/`: GOALS (active + deferred queue), DEFERRED_MULTIPHYSICS_FIDELITY, PHYSICS_MATURITY_LEDGER (`.md` + `.json` + `.yaml`), PROOF_MATRIX (NL/MD/JSON/LaTeX/Lean), BUG_TRIAGE, SECURITY_RESIDUALS, WORKTREE_OOO, BRANCHING_NOTE
 - LaTeX stubs for P0/P1 OPEN/approximate engines under `docs/v0.3.7-beta/latex/`

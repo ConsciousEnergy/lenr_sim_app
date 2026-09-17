@@ -269,3 +269,39 @@ jobs:
             -f LENR_SIM_APP_v2/infrastructure/vps/docker-compose.prod.yml \
             config -q
 
+  # Track C (v0.3.8): keep staging Swarm dry-run gates + terraform/ansible
+  # syntax valid on every PR. Remote plan/check stays operator-credentialed.
+  staging-swarm-dry-run:
+    runs-on: ubuntu-latest
+    needs: version-consistency
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: 1.5.7
+          terraform_wrapper: false
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Local staging dry-run (confirm gates + validate + syntax-check)
+        env:
+          STAGING_EVIDENCE_DIR: ${{ runner.temp }}/staging-evidence
+        run: |
+          mkdir -p "$STAGING_EVIDENCE_DIR"
+          ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
+
+      - name: Upload staging dry-run evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: staging-swarm-local-dry-run
+          path: ${{ runner.temp }}/staging-evidence/
+          if-no-files-found: warn
+
