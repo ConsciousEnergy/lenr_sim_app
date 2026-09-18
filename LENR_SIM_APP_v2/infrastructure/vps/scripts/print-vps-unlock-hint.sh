@@ -10,6 +10,7 @@ Unblock (pick one; no agent tunnel / Actions billing required):
 
 1) FASTEST NOW — Hostinger Browser VNC as root (tunnel unlock verifies auto; rebuilds locally if needed):
    curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
+   Confirm: https://carlo-lap-coaching-audit.trycloudflare.com/live-status.json  (has_auto should become true)
 
 2) In-repo one-shot (PR #210 branch until merged, then main):
    cd /opt/lenr-sim/src
