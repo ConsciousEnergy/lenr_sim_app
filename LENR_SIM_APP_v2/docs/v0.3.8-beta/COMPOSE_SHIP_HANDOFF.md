@@ -1,35 +1,35 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#204/#206/#207/#208)
 
-## Live status (agent probe 2026-09-17T09:33Z — user try-again)
+## Live status (agent probe 2026-09-18T08:28Z — goal wake / try-again)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
-| `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
+| `GET /api/physics/bubble-fusion/defaults` | options **lack** `auto` (`legacy` / `rayleigh_plesset` / `keller_miksis` only) |
 | Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
-| `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
-| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty**; redeploy also blocked by **org spending limit** (latest try-again [35205242239](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35205242239) failed ~3s / 0ms billable; earlier [35189991153](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35189991153) empty-secrets + unlock hint via #208) |
-| Hostinger login | **Prefer GitHub SSO** — automation can click GitHub (try-again 09:33Z still hits OAuth password wall); Google SSO anti-automation blocked. Needs one browser password/2FA |
+| `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset (no keydrop under `/tmp` or `/opt/cursor/artifacts`) |
+| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty**; redeploy blocked by **org spending limit** — [35324665814](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814) and [35323383644](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35323383644) failed ~2–4s / 0ms billable (jobs never start) |
+| Hostinger login | **Prefer GitHub SSO** — 08:25Z try-again reached OAuth password wall again (passkey no dialog); Google SSO anti-automation blocked. Needs one browser password/2FA |
 | Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` (exit audit 9/10 PASS) |
 
-Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_colon_audit.json`.
+Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_completion_audit.json`, `hostinger_try_again_20260918_01_github_password_wall.png`.
 
 Tip of `main` for operator self-ship: `git fetch origin && git checkout -qf origin/main`
 (`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 + unlock hint).
 Handoff refresh tip: `5cdba52` (#208); always prefer `origin/main` over a pinned SHA.
 
-## Tip code proof (agent, 2026-09-16T19:25Z; reconfirmed on tip through #208)
+## Tip code proof (agent, 2026-09-16T19:25Z; reconfirmed 2026-09-18T08:30Z on tip `5cdba52`)
 
-Local uvicorn from tip of `main` (then `760c97e`; tip now `5cdba52`) on `:18080`:
+Local uvicorn from tip of `main` on `:18080`:
 
 | Check | Result |
 |-------|--------|
 | defaults `dynamics_mode` | `auto` |
 | options include `auto` | yes |
-| POST auto @ 4 bar | `km_auto_selected=true`, `dynamics_mode_used=keller_miksis`, peak Mach ≈0.61 |
+| Official `probe-km` @ 4 bar | `km_auto_selected=true`, `dynamics_mode_used=keller_miksis`, peak Mach ≈0.61 |
 
-Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`.
+Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`, `tip_probe_km_goal_wake.log`.
 
 **Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS SSH unlock.
 
@@ -45,6 +45,7 @@ Push to `main` triggers `Build and Deploy` **image build only**:
 | [#206 / #204 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35183252494) | push/main | success | **skipped** (no VPS secrets) |
 | [#208 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35186525459) | push/main | success | **skipped** (no VPS secrets) |
 | [#35189991153 `vps-compose-redeploy`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35189991153) | repository_dispatch | — | **failed** — empty `VPS_*` (prints VNC unlock hint) |
+| [#35323383644 / #35324665814 `vps-compose-redeploy`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814) | repository_dispatch | — | **failed** — org spending limit (jobs never start) |
 
 GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull requires secrets or VNC.
 
