@@ -29,6 +29,12 @@ Browser VNC (or an API token / authorized SSH key).
 ### A1. Open the right login
 
 1. Use Chrome/Firefox on your own machine (**not** an automated/agent session).
+   Agent browsers are blocked by **Cloudflare Turnstile** on `hpanel.hostinger.com`
+   (probed 2026-09-18T22:10Z — checkbox never clears; screenshots
+   `hostinger_goalwake_computeruse_0{1,2}_cloudflare*.png`). Hostinger MCP is also
+   unusable on this Cloud Agent (`Authentication URL unavailable`). Prefer the
+   unlock-portal **API token drop** or your laptop VNC — do not wait on agent
+   automation to open hPanel.
 2. Go to: https://hpanel.hostinger.com/
 3. Prefer **email + Hostinger password** if available. (Agent probe 2026-09-18T20:33Z:
    email/password fields are present on `auth.hostinger.com/login` — use these
