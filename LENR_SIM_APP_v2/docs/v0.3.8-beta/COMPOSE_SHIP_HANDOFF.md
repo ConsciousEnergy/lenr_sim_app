@@ -157,6 +157,12 @@ HOSTINGER_API_TOKEN=... \
 
 (`register-agent-pubkey-hostinger.py` remains as a thin attach-only helper.)
 
+**Hostinger MCP vs API token:** Desktop Hostinger MCP is fine when it authenticates.
+On this Cloud Agent run (2026-09-18T21:51Z), `mcp_auth` fails with
+**Authentication URL unavailable for this cloud MCP server** and Hostinger tools
+never appear in the catalog. Treat `HOSTINGER_API_TOKEN` +
+`hostinger-compose-unlock.py` as the MCP-equivalent unlock; do not block on MCP.
+
 **Or** set Cursor env secrets `HOSTINGER_HPANEL_EMAIL` + `HOSTINGER_HPANEL_PASSWORD`
 (optional) and **restart** the agent so computer-use can open hPanel → VPS →
 Browser Console and append the pubkey above.
