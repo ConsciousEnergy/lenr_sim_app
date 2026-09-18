@@ -89,13 +89,16 @@ Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
 
 **D — No VNC, but hPanel works (preferred over Hostinger MCP on Cloud Agents)**
 
-- hPanel → **API** → create token → Cursor secret `HOSTINGER_API_TOKEN` (restart agent), or
+- hPanel → **API** → create token, then either:
+  - Open the unlock portal home and use **Drop token for agent unlock**, or
+  - `curl -fsS -X POST --data-binary @token.txt https://TUNNEL.trycloudflare.com/drop-hostinger-token`
+  - Or Cursor secret `HOSTINGER_API_TOKEN` (restart agent)
 - Drop a private key **already** in `authorized_keys` as Cursor secret `VPS_SSH_KEY` (restart agent).
 
 **Hostinger MCP note (probed 2026-09-18T21:51Z):** Cloud Agent `mcp_auth` for
 `Hostinger-vps` / `Hostinger-hosting` returns **Authentication URL unavailable
 for this cloud MCP server** (tools also absent from the live catalog). Do **not**
-wait on MCP for this unlock — use `HOSTINGER_API_TOKEN` (same API surface as the
+wait on MCP for this unlock — use portal/API token drop (same API surface as the
 MCP unlock path via `hostinger-compose-unlock.py`) or Browser VNC keydrop.
 
 After unlock, **rotate** the VPS root password if it was shared with the agent.

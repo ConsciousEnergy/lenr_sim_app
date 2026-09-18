@@ -139,6 +139,17 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/
 chmod 600 /root/.ssh/authorized_keys
 ```
 
+**Or** drop a Hostinger API token on the unlock portal (no Cursor secret restart):
+
+```bash
+# Portal home has a form, or:
+curl -fsS -X POST --data-binary @token.txt \
+  "$(cat /opt/cursor/artifacts/v038_unlock_tunnel_url.txt)/drop-hostinger-token"
+```
+
+Poller loads `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` within ~15s and runs
+`hostinger-compose-unlock.py unlock`.
+
 **Or** set Cursor env secret `HOSTINGER_API_TOKEN` (hPanel → API), then:
 
 ```bash

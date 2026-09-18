@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>LENR VPS unlock</title>
+<style>
+  body{font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:1.5rem;max-width:52rem;color:#111;background:#f7f7f5}
+  pre,code{white-space:pre-wrap;word-break:break-word}
+  form{margin:1.25rem 0;padding:1rem;border:1px solid #ccc;background:#fff}
+  label{display:block;margin-bottom:.5rem}
+  input[type=password],textarea{width:100%;box-sizing:border-box;padding:.5rem;font:inherit}
+  button{margin-top:.75rem;padding:.45rem .9rem;font:inherit;cursor:pointer}
+  .ok{color:#0a0} .err{color:#a00}
+  h1{font-size:1.1rem;margin:0 0 .75rem}
+</style>
+<h1>v0.3.8 Compose KM unlock</h1>
+<pre>
+Network SSH is publickey-only. Hostinger MCP auth is unavailable on this Cloud Agent.
+Prefer API token drop (below) or Browser VNC keydrop.
+</pre>
+
+<form id="tok" method="post" action="/drop-hostinger-token">
+  <label for="token"><strong>A — Hostinger API token</strong> (hPanel → API → create token). Poller ships within ~15s.</label>
+  <input id="token" name="token" type="password" autocomplete="off" placeholder="paste HOSTINGER_API_TOKEN" required minlength="20">
+  <button type="submit">Drop token for agent unlock</button>
+  <div id="msg" aria-live="polite"></div>
+</form>
+
+<pre>
+B — Browser VNC as root (you have the console password):
+  curl -fsSL TUNNEL/enable-pw-and-keydrop.sh | bash
+
+C — Pubkey-only:
+  curl -fsSL TUNNEL/unlock.sh | bash
+
+Manual pubkey:
+  mkdir -p /root/.ssh && chmod 700 /root/.ssh
+  echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
+  chmod 600 /root/.ssh/authorized_keys
+
+Confirm: TUNNEL/live-status.json  (has_auto / token_dropped)
+Then rotate the root password if shared.
+</pre>
+<script>
+(function () {
+  var origin = location.origin;
+  document.querySelectorAll('pre').forEach(function (el) {
+    el.textContent = el.textContent.replaceAll('TUNNEL', origin);
+  });
+  var form = document.getElementById('tok');
+  var msg = document.getElementById('msg');
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    msg.className = '';
+    msg.textContent = 'Submitting…';
+    var fd = new FormData(form);
+    fetch('/drop-hostinger-token', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'token=' + encodeURIComponent(fd.get('token') || '')
+    }).then(function (r) { return r.json().then(function (j) { return {ok: r.ok, j: j}; }); })
+      .then(function (x) {
+        if (x.ok && x.j.ok) {
+          msg.className = 'ok';
+          msg.textContent = 'Token accepted (len=' + x.j.token_len + '). Poller will unlock+ship shortly.';
+          form.reset();
+        } else {
+          msg.className = 'err';
+          msg.textContent = (x.j && x.j.error) || 'drop failed';
+        }
+      }).catch(function (e) {
+        msg.className = 'err';
+        msg.textContent = String(e);
+      });
+  });
+})();
+</script>
