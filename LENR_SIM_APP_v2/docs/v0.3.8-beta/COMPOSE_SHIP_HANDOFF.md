@@ -10,7 +10,7 @@
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset (no keydrop under `/tmp` or `/opt/cursor/artifacts`) |
 | Actions redeploy | **billing/spending limit** — [35355962824](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35355962824) annotation: *“The job was not started because recent account payments have failed or your spending limit needs to be increased.”* (also [35324665814](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814)); jobs never start; `VPS_*` secrets still empty when billing allows |
-| Hostinger login | **Prefer GitHub SSO** — 14:24Z try-again reached OAuth password wall again; Google SSO anti-automation blocked. Needs one browser password/2FA |
+| Hostinger login | **Prefer GitHub SSO** — 14:24Z password wall; 14:38Z Google SSO (direct + GitHub→Continue with Google) hit Google email wall — Chrome has **no** Google/GitHub session. Needs one browser login/2FA |
 | Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` (exit audit 9/10 PASS) |
 
 Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_completion_audit.json`, `hostinger_unlock_20260918_1424_github_wall.png`, `hostinger_try_again_20260918_1429_status.txt`.
