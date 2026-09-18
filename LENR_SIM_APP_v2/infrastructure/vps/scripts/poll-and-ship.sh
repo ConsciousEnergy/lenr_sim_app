@@ -48,7 +48,9 @@ BEACON_FAST_INTERVAL_SEC="${BEACON_FAST_INTERVAL_SEC:-5}"
 ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-}"
 STATUS_FILE="${STATUS_FILE:-/opt/cursor/artifacts/poll_and_ship_status.json}"
 TRY_ACTIONS_FILE="${TRY_ACTIONS_SHIP_FILE:-/opt/cursor/artifacts/TRY_ACTIONS_SHIP}"
-BETA_URL="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+# Public Compose share only — never tip/localhost via BETA_SHARE_URL.
+LIVE_COMPOSE_URL="${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}"
+BETA_URL="$LIVE_COMPOSE_URL"
 TOKEN_FILES=(
   "${HOSTINGER_API_TOKEN_FILE:-/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt}"
   "/tmp/HOSTINGER_API_TOKEN"
