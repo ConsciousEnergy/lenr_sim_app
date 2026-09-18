@@ -28,6 +28,8 @@ Unblock (pick one; #1 needs no agent tunnel and no Actions billing):
 
 5) Drop HOSTINGER_API_TOKEN (Cursor secret or /opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt)
 
+Note: vnc-one-shot continues deploy if git fetch fails — IMAGE_TAG GHCR pull lands KM auto.
+
 Docs: LENR_SIM_APP_v2/docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
 Fingerprint: SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10
 EOF
