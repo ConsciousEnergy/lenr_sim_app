@@ -8,7 +8,7 @@
 | `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
 | Official `probe-km` (live) | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | Tip `probe-km` (`:18080`) | **PASS** — `km_auto_selected=true`, peak Mach ≈0.61 |
-| Unlock portal | `https://carlo-lap-coaching-audit.trycloudflare.com/` — `/live-status.json` reports `has_auto` |
+| Unlock portal | `https://subsequently-love-hear-pope.trycloudflare.com/` — `/live-status.json` reports `has_auto` |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
 | Actions `vps-compose-redeploy` | jobs **never start** — org spending limit / failed payments (also historically empty `VPS_*`) |
@@ -64,14 +64,14 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 **PRIMARY (fastest, Actions-free)** — Hostinger Browser VNC as root:
 
 ```bash
-curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
+curl -fsSL https://subsequently-love-hear-pope.trycloudflare.com/unlock.sh | bash
 ```
 
 Confirm success (should flip `has_auto: true` within ~30s):
 
 ```bash
-curl -fsS https://carlo-lap-coaching-audit.trycloudflare.com/live-status.json
-# or open https://carlo-lap-coaching-audit.trycloudflare.com/
+curl -fsS https://subsequently-love-hear-pope.trycloudflare.com/live-status.json
+# or open https://subsequently-love-hear-pope.trycloudflare.com/
 ```
 
 That authorizes the agent pubkey, pins `origin/main`, runs `deploy.sh` for
