@@ -6,7 +6,13 @@ cutover until **v0.3.9** under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` and an anno
 window. Staging plan/check in 0.3.8 uses `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`.
 
 Related: [SWARM_PAGES_CUTOVER_PREP.md](./SWARM_PAGES_CUTOVER_PREP.md),
+[OPERATOR_HOSTINGER_DNS.md](./OPERATOR_HOSTINGER_DNS.md) (operator login + DNS walkthrough),
 [../infrastructure/vps/README.md](../../infrastructure/vps/README.md).
+
+**Live probe (2026-09-18):** apex NS = WordPress.com; `lenr-sim-beta` already
+`A → 185.211.4.66`. Cloudflare production CNAME is **not** the v0.3.8 unlock
+blocker — Hostinger hPanel / VNC / SSH keydrop is. See
+[OPERATOR_HOSTINGER_DNS.md](./OPERATOR_HOSTINGER_DNS.md).
 
 ---
 

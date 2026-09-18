@@ -1,19 +1,35 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#198/#204/#206)
 
-## Live status (agent probe 2026-09-18T19:41Z)
+## Operator first: Hostinger login + DNS (do this on your laptop)
+
+**Blocking path today is Hostinger hPanel access, not Cloudflare DNS.**
+
+| Fact (probed 2026-09-18T20:28Z) | Value |
+|--------------------------------|-------|
+| `dig lenr-sim-beta.conscious.energy` | `A → 185.211.4.66` (already correct) |
+| Apex NS | WordPress.com (`ns1/ns2/ns3.wordpress.com`) — leave alone |
+| Live `/api/health` | 200 / `0.3.7-beta` |
+| Live BF modes | `legacy`, `rayleigh_plesset`, `keller_miksis` — **no `auto`** until VPS unlock + pull |
+| Cloudflare production CNAME | **Not required** to unlock; do **not** move apex NS to Cloudflare this window |
+
+Full checklist: [OPERATOR_HOSTINGER_DNS.md](./OPERATOR_HOSTINGER_DNS.md).
+
+**Your order:** (1) recover hPanel login on a normal browser → (2) Browser VNC as root → (3) run unlock or drop agent pubkey → (4) only touch DNS if `dig` stops showing `185.211.4.66`.
+
+## Live status (agent probe 2026-09-18T20:28Z; earlier 19:41Z still accurate)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
-| `GET /api/physics/bubble-fusion/defaults` | `dynamics_mode=legacy`; options **lack** `auto` |
+| `GET /api/physics/bubble-fusion/defaults` | options **lack** `auto` (`legacy` / RP / KM only) |
 | Official `probe-km` (live) | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | Tip `probe-km` (`:18080`) | **PASS** — tip already has `auto` (do **not** use tip URL for exit audit) |
-| Unlock portal | `https://subsequently-love-hear-pope.trycloudflare.com/` — `/live-status.json` reports `has_auto` |
+| Unlock portal | see `/opt/cursor/artifacts/v038_unlock_tunnel_url.txt` (trycloudflare; rotates) — `/unlock.sh` HTTP 200 |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
-| PasswordAuthentication | **off** (retested 19:41Z with recovered root pw + `sshpass`) |
+| PasswordAuthentication | **off** (retested with recovered root pw + `sshpass`) |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
-| Actions `vps-compose-redeploy` | jobs **never start** — org spending limit / failed payments (latest `35386051294`) |
-| Tip `:18080` / GHCR | **has** `auto` (successful Build and Deploy image push 2026-09-17 for tip `5cdba52`) |
+| Actions CI / redeploy | jobs fail at **0 steps** — org spending limit / failed payments (e.g. `35388304243`) |
+| Tip `:18080` / GHCR | **has** `auto` (successful Build and Deploy image push for tip `5cdba52`) |
 | Exit audit trap | `BETA_SHARE_URL=http://127.0.0.1:18080` previously false-PASSed `km_auto_live_compose` — fixed: `verify-v038-exit.sh` / `poll-and-ship.sh` now force `LIVE_COMPOSE_URL` public share |
 | Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` |
 
