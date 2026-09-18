@@ -58,6 +58,18 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 
 ### Required operator action
 
+**PRIMARY (after this one-shot lands on main)** — Hostinger Browser VNC as root:
+
+```bash
+cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
+bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
+```
+
+**Until/unless that script is present**, use the inline pubkey + `deploy.sh` paste from
+`print-vps-unlock-hint.sh` (Actions empty-secret job log) or the agent tunnel
+`curl -fsSL …/unlock.sh | bash`.
+
+
 **Fastest — Hostinger VNC one-shot (authorize agent + pull tip of `main`):**
 as `root` on `185.211.4.66` (PasswordAuthentication is off — console only).
 This both unblocks the agent poller **and** ships KM without waiting for SSH:
