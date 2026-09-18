@@ -43,9 +43,13 @@ gitGraph
    `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-Keep PRs small. Long-running work is landed behind flags or in additive,
-backward-compatible slices rather than on a long-lived branch (the API
-contract rules in `CONTRIBUTING.md` already require additive changes).
+Prefer **dense, topic-scoped PRs** over many micro-PRs: Actions minutes are
+a real cost (see root [`AGENTS.md`](../AGENTS.md)). Batch related docs,
+scripts, and small helpers for the same milestone into one PR; still avoid
+mixing unrelated features. Long-running work is landed behind flags or in
+additive, backward-compatible slices rather than on a long-lived branch
+(the API contract rules in `CONTRIBUTING.md` already require additive
+changes).
 
 ## Cutting a release
 

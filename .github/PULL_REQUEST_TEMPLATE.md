@@ -1,6 +1,7 @@
 ## Description
 
 <!-- Target branch is `main` (trunk-based; see .github/BRANCHING.md). PRs are squash-merged. -->
+<!-- Prefer dense, topic-scoped PRs (batch related work) to limit Actions spend — see AGENTS.md. -->
 
 <!-- Brief summary of changes and motivation -->
 
