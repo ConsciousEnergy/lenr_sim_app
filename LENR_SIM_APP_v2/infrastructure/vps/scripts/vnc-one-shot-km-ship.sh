@@ -63,6 +63,45 @@ LENR_ENV_FILE="$ENV_FILE" \
   EXPECT_VERSION="$IMAGE_TAG" \
   bash "$DEPLOY_SH"
 
-echo "==> Done. Live probe (from laptop/agent):"
+has_auto() {
+  local url="$1"
+  python3 - "$url" <<'PY'
+import json, sys, urllib.request
+url = sys.argv[1]
+try:
+    with urllib.request.urlopen(url, timeout=20) as resp:
+        d = json.load(resp)
+except Exception as exc:
+    print(f"probe_error:{exc}", file=sys.stderr)
+    raise SystemExit(1)
+modes = ((d.get("options") or {}).get("dynamics_modes") or [])
+print("modes=", modes)
+raise SystemExit(0 if "auto" in modes else 1)
+PY
+}
+
+DEFAULTS_LOCAL="http://127.0.0.1:8000/api/physics/bubble-fusion/defaults"
+DEFAULTS_PUBLIC="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}/api/physics/bubble-fusion/defaults"
+
+echo "==> Verify dynamics_mode=auto after ship"
+if has_auto "$DEFAULTS_LOCAL" || has_auto "$DEFAULTS_PUBLIC"; then
+  echo "OK: auto present after GHCR/deploy path"
+else
+  echo "WARN: auto missing after pull — rebuilding locally from checked-out tree" >&2
+  LENR_ENV_FILE="$ENV_FILE" \
+    IMAGE_TAG="$IMAGE_TAG" \
+    UPDATE_ENV_IMAGE_TAG=1 \
+    EXPECT_VERSION="$IMAGE_TAG" \
+    BUILD_LOCALLY=1 \
+    bash "$DEPLOY_SH"
+  if has_auto "$DEFAULTS_LOCAL" || has_auto "$DEFAULTS_PUBLIC"; then
+    echo "OK: auto present after BUILD_LOCALLY=1"
+  else
+    echo "ERROR: dynamics_mode=auto still missing after local rebuild" >&2
+    exit 5
+  fi
+fi
+
+echo "==> Done. Agent probe:"
 echo "  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh probe-km"
 echo "Expect dynamics_mode=auto in bubble-fusion defaults."
