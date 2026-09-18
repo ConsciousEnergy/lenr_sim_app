@@ -28,6 +28,11 @@
 # Drop an authorized private key (OpenSSH) without restart:
 #   /opt/cursor/artifacts/VPS_SSH_KEY  or  /tmp/VPS_SSH_KEY
 # Live auto already present (manual/operator ship): poller probe-km and exits.
+#
+# Operator unlock beacon (trycloudflare unlock.sh):
+#   BEACON_STATUS_FILE  default …/vnc-unlock-http/beacon_status.json
+#   When a non-localhost beacon_started/done appears, poll faster (5s) until
+#   live auto or SSH succeeds.
 set -euo pipefail
 
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
@@ -36,6 +41,8 @@ IDENT="${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr_vps_agent_ed25519}"
 INTERVAL="${POLL_INTERVAL_SEC:-60}"
 MAX="${POLL_MAX_ATTEMPTS:-0}"
 ACTIONS_EVERY="${ACTIONS_DISPATCH_EVERY:-0}"
+BEACON_STATUS_FILE="${BEACON_STATUS_FILE:-/cursor/stores/bc-aeec1d0b-0867-4723-b983-c995820798d8/artifacts/vnc-unlock-http/beacon_status.json}"
+BEACON_FAST_INTERVAL_SEC="${BEACON_FAST_INTERVAL_SEC:-5}"
 # Prefer cheap redeploy (no image rebuild) once that type exists on main (#204);
 # fall back to full vps-compose-ship. Override with ACTIONS_EVENT_TYPE.
 ACTIONS_EVENT="${ACTIONS_EVENT_TYPE:-}"
@@ -119,6 +126,25 @@ live_auto_ok() {
   curl -fsS --max-time 12 "${BETA_URL}/api/physics/bubble-fusion/defaults" 2>/dev/null \
     | python3 -c 'import sys,json;d=json.load(sys.stdin);m=((d.get("options")or{}).get("dynamics_modes")or[]);raise SystemExit(0 if "auto" in m else 1)' \
     2>/dev/null
+}
+
+# Prints beacon kind (beacon_started|beacon_done|…) if last hit is non-localhost; else empty.
+operator_beacon_kind() {
+  [[ -f "$BEACON_STATUS_FILE" ]] || return 0
+  python3 - "$BEACON_STATUS_FILE" <<'PY'
+import json,sys
+from pathlib import Path
+p=Path(sys.argv[1])
+try:
+    d=json.loads(p.read_text())
+except Exception:
+    raise SystemExit(0)
+last=d.get("last") or {}
+client=str(last.get("client") or "")
+kind=str(last.get("kind") or "")
+if client and client not in ("127.0.0.1", "::1") and kind:
+    print(kind)
+PY
 }
 
 load_token_file() {
@@ -282,12 +308,17 @@ while true; do
     fi
     echo "[$attempt] Actions path not ready — continue polling"
   fi
-  write_status "waiting" "attempt=$attempt ssh=denied token=unset live=no-auto"
-  echo "[$attempt] waiting (ssh denied, no Hostinger token, live no-auto)"
+  beacon="$(operator_beacon_kind || true)"
+  write_status "waiting" "attempt=$attempt ssh=denied token=unset live=no-auto${beacon:+ beacon=$beacon}"
+  echo "[$attempt] waiting (ssh denied, no Hostinger token, live no-auto${beacon:+; operator $beacon})"
   if [[ "$MAX" != "0" && "$attempt" -ge "$MAX" ]]; then
     write_status "timeout" "attempts=$attempt"
     echo "ERROR: max attempts reached" >&2
     exit 1
   fi
-  sleep "$INTERVAL"
+  sleep_for="$INTERVAL"
+  if [[ -n "$beacon" ]]; then
+    sleep_for="$BEACON_FAST_INTERVAL_SEC"
+  fi
+  sleep "$sleep_for"
 done
