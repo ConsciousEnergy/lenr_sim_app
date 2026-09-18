@@ -63,40 +63,36 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 
 ### Required operator action
 
-**Fastest one-liner (Hostinger Browser VNC as root)** — live agent tunnel
-serving the unlock+ship script (ephemeral; poller also accepts pubkey-only):
+**PRIMARY (tunnel-free, Actions-free)** — Hostinger → GitHub/Google SSO →
+Browser VNC as root on `185.211.4.66` (PasswordAuthentication is off), then:
+
+```bash
+cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
+bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
+```
+
+That script authorizes the cloud-agent pubkey, pins `origin/main`, and pulls
+GHCR `0.3.7-beta` (KM auto). No trycloudflare tunnel and no Actions billing required.
+
+**Convenience one-liner** (only if the agent tunnel is up):
 
 ```bash
 curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
 ```
 
-If the tunnel URL is down, **pubkey-only** (poller ships within ~15s):
+**Pubkey-only** (poller ships within ~15s once SSH works):
 
 ```bash
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 ```
 
-**Preferred full path — Hostinger → GitHub/Google SSO → Browser VNC**, then
-checkout tip and run the one-shot (PasswordAuthentication is off — console only):
+Equivalent inline deploy (if `vnc-one-shot-km-ship.sh` is missing on an old checkout):
 
 ```bash
-# From an existing checkout (after fetch), or paste the script body:
-cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
-bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
-```
-
-Equivalent inline (no script file needed):
-
-```bash
-# A) authorize cloud-agent pubkey (poller can re-verify / re-ship later)
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
-
-# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#208+)
-cd /opt/lenr-sim/src
-git fetch --prune origin
-git checkout -qf origin/main
+cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
 LENR_ENV_FILE=/opt/lenr-sim/.env \
   IMAGE_TAG=0.3.7-beta \
   UPDATE_ENV_IMAGE_TAG=1 \
