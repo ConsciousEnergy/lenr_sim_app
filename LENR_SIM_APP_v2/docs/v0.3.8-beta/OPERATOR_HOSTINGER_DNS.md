@@ -30,16 +30,21 @@ Browser VNC (or an API token / authorized SSH key).
 
 1. Use Chrome/Firefox on your own machine (**not** an automated/agent session).
 2. Go to: https://hpanel.hostinger.com/
-3. Prefer **email + Hostinger password** if available.
+3. Prefer **email + Hostinger password** if available. (Agent probe 2026-09-18T20:33Z:
+   email/password fields are present on `auth.hostinger.com/login` — use these
+   instead of Google SSO when you can.)
 4. If the account is **Google-only SSO**:
    - Use the Google button while signed into the correct Google account.
    - Hostinger + Google often block automation / unusual clients.
 5. If login fails:
-   - Hostinger “Forgot password” for the VPS billing email.
+   - Hostinger “Forgot password” for the VPS billing email (fastest if password unset).
    - Check Hostinger mail for suspicious-login / 2FA prompts.
    - Try Incognito, or turn VPN off.
    - If Google SSO loops: approve Hostinger in Google Account security, **or**
      set a Hostinger password so you are not Google-only.
+6. Optional agent unblock: after you set a Hostinger password, drop Cursor env
+   secrets `HOSTINGER_HPANEL_EMAIL` + `HOSTINGER_HPANEL_PASSWORD` and restart the
+   agent — or paste the pubkey / run unlock yourself in Browser VNC.
 
 ### A2. Once inside hPanel
 
