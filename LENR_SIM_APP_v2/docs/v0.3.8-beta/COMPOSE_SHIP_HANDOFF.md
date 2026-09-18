@@ -79,6 +79,8 @@ That authorizes the agent pubkey, pins `origin/main`, runs `deploy.sh` for
 is stale, it retries with `BUILD_LOCALLY=1`. Beacons hit the same tunnel so the
 agent poller can see `beacon-started` / `beacon-done`.
 
+Agent-side tunnel keepalive: `LENR_SIM_APP_v2/infrastructure/vps/scripts/vps-unlock-tunnel-watchdog.sh` (rewrites unlock.sh BEACON on URL rotate; health-checks via 1.1.1.1 to avoid DNS flaps).
+
 **Or** run the in-repo one-shot (on `#210` until merged; then on `main`):
 
 ```bash
