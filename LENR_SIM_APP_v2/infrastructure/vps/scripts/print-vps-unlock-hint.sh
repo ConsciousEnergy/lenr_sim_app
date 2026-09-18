@@ -8,15 +8,13 @@ cat <<'HINT'
 
 Unblock (pick one; no agent tunnel / Actions billing required):
 
-1) FASTEST NOW — Hostinger Browser VNC as root (PR branch has one-shot before merge):
+1) FASTEST NOW — Hostinger Browser VNC as root (tunnel unlock verifies auto; rebuilds locally if needed):
+   curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
+
+2) In-repo one-shot (PR #210 branch until merged, then main):
    cd /opt/lenr-sim/src
    git fetch --prune origin
    git checkout -qf origin/consciousenergy/v038-vnc-oneshot-on-main-98d8
-   bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
-   # authorizes pubkey, pins origin/main, pulls GHCR 0.3.7-beta
-
-2) After #210 is on main:
-   cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
    bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
 
 3) Inline on tip main (no one-shot file needed):

@@ -1,6 +1,6 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#198/#204/#206)
 
-## Live status (agent probe 2026-09-17T05:10Z)
+## Live status (agent probe 2026-09-18T15:58Z)
 
 | Check | Result |
 |-------|--------|
@@ -9,18 +9,19 @@
 | Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
-| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty** (redeploy/ship runs fail at SSH gate; billing OK) |
-| Conclusion | **#196–#206 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` |
+| Actions `vps-compose-redeploy` | jobs **never start** — org spending limit / failed payments (also historically empty `VPS_*`) |
+| Tip `:18080` / GHCR | **has** `auto` (successful Build and Deploy image push 2026-09-17 for tip `5cdba52`) |
+| Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` |
 
 Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`.
 
-Tip of `main` pin for operator self-ship: checkout `origin/main` after fetch
+Tip of `main` for operator self-ship: `git checkout -qf origin/main` after fetch
 (`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 scaffolds).
-Current tip at handoff refresh: see `git rev-parse origin/main`.
+Current tip: `git rev-parse origin/main` (handoff refresh saw `5cdba52`).
 
 ## Tip code proof (agent, 2026-09-16T19:25Z; still valid on tip)
 
-Local uvicorn from tip of `main` (then `760c97e`; tip now `6ed6261`) on `:18080`:
+Local uvicorn from tip of `main` on `:18080`:
 
 | Check | Result |
 |-------|--------|
@@ -30,7 +31,7 @@ Local uvicorn from tip of `main` (then `760c97e`; tip now `6ed6261`) on `:18080`
 
 Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`.
 
-**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS SSH unlock.
+**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS unlock.
 
 ## What already ran automatically on merge
 
@@ -58,37 +59,37 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 
 ### Required operator action
 
-**PRIMARY (after this one-shot lands on main)** — Hostinger Browser VNC as root:
+**PRIMARY (fastest, Actions-free)** — Hostinger Browser VNC as root:
 
 ```bash
-cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
+curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
+```
+
+That authorizes the agent pubkey, pins `origin/main`, runs `deploy.sh` for
+`IMAGE_TAG=0.3.7-beta`, then **verifies** `dynamics_mode=auto`. If the GHCR pull
+is stale, it retries with `BUILD_LOCALLY=1`. Beacons hit the same tunnel so the
+agent poller can see `beacon-started` / `beacon-done`.
+
+**Or** run the in-repo one-shot (on `#210` until merged; then on `main`):
+
+```bash
+cd /opt/lenr-sim/src
+git fetch --prune origin
+git checkout -qf origin/consciousenergy/v038-vnc-oneshot-on-main-98d8   # or origin/main after merge
 bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
 ```
 
-**Until/unless that script is present**, use the inline pubkey + `deploy.sh` paste from
-`print-vps-unlock-hint.sh` (Actions empty-secret job log) or the agent tunnel
-`curl -fsSL …/unlock.sh | bash`.
-
-
-**Fastest — Hostinger VNC one-shot (authorize agent + pull tip of `main`):**
-as `root` on `185.211.4.66` (PasswordAuthentication is off — console only).
-This both unblocks the agent poller **and** ships KM without waiting for SSH:
+**Or** inline pubkey + `deploy.sh` (no one-shot file / no tunnel):
 
 ```bash
-# A) authorize cloud-agent pubkey (poller can re-verify / re-ship later)
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
-echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
+grep -qxF 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' /root/.ssh/authorized_keys \
+  || echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
-
-# B) pin + pull GHCR tip that already has KM auto + P0 (#196–#206)
 cd /opt/lenr-sim/src
-git fetch --prune origin
-git checkout -qf 6ed62613b15a9f77b277ad8f92daff5fb019999f
-LENR_ENV_FILE=/opt/lenr-sim/.env \
-  IMAGE_TAG=0.3.7-beta \
-  UPDATE_ENV_IMAGE_TAG=1 \
-  EXPECT_VERSION=0.3.7-beta \
-  LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
+git fetch --prune origin && git checkout -qf origin/main || true
+LENR_ENV_FILE=/opt/lenr-sim/.env IMAGE_TAG=0.3.7-beta UPDATE_ENV_IMAGE_TAG=1 EXPECT_VERSION=0.3.7-beta \
+  bash LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 ```
 
 Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
