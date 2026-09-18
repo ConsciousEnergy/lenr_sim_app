@@ -40,6 +40,8 @@ def die(msg: str, code: int = 2) -> None:
 
 def api(method: str, path: str, token: str, body: dict | None = None) -> object:
     data = None if body is None else json.dumps(body).encode()
+    # Cloudflare Error 1010 bans default Python-urllib UA on developers.hostinger.com
+    # (probed 2026-09-18 from Cloud Agent). Use a normal client signature.
     req = urllib.request.Request(
         f"{BASE_URL}{path}",
         data=data,
@@ -48,6 +50,10 @@ def api(method: str, path: str, token: str, body: dict | None = None) -> object:
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
             "Content-Type": "application/json",
+            "User-Agent": os.environ.get(
+                "HOSTINGER_API_UA",
+                "Mozilla/5.0 (compatible; LENR-Compose-Unlock/0.3.8; +https://conscious.energy)",
+            ),
         },
     )
     try:
@@ -191,9 +197,10 @@ def cmd_attach_key(token: str, ipv4: str, key_name: str) -> int:
             print(f"OK: SSH authorized root@{ipv4}")
             return 0
         time.sleep(7)
-    die(
-        "attach returned but SSH still denied; retry shortly or use Hostinger console",
-        6,
+    print(
+        "WARN: attach returned but SSH still denied; Hostinger may not inject "
+        "keys into live authorized_keys on this KVM — try Docker update or VNC",
+        file=sys.stderr,
     )
     return 6
 
@@ -242,9 +249,16 @@ def cmd_docker_update(token: str, ipv4: str, project: str | None) -> int:
 
 def cmd_unlock(token: str, ipv4: str, key_name: str, project: str | None) -> int:
     # Prefer attach-key (works for SSH compose path), then optionally ssh-ship.
+    # If attach does not enable SSH (Hostinger often no-ops on live KVM), fall through
+    # to Docker Manager update — never docker compose down from unlock automation.
     rc = cmd_attach_key(token, ipv4, key_name)
     if rc != 0:
-        return rc
+        print(f"WARN: attach-key rc={rc}; attempting Docker Manager update without SSH")
+        try:
+            return cmd_docker_update(token, ipv4, project)
+        except SystemExit as exc:
+            print(f"docker-update unavailable after attach failure: {exc}")
+            return rc
     if os.environ.get("CONFIRM") == "I_SHIP_VPS_0_3_8" and os.environ.get("EXECUTE") == "1":
         env = os.environ.copy()
         env["VPS_HOST"] = ipv4

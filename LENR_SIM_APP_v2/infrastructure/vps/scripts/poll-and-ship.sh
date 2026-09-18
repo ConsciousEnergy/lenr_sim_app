@@ -184,13 +184,17 @@ do_ship() {
     return 2
   fi
   write_status "shipping" "auth ok"
-  if token_ok && [[ ! -f "$IDENT" || ! ssh_ok ]]; then
+  # IMPORTANT: call ssh_ok outside [[ ]] — inside [[ ]], `ssh_ok` is a string test, not a function.
+  if token_ok && { [[ ! -f "$IDENT" ]] || ! ssh_ok; }; then
+    echo "==> Hostinger API unlock (attach-key + ssh-ship)"
     CONFIRM="$CONFIRM_TOKEN" EXECUTE=1 python3 "$UNLOCK" unlock
   else
+    echo "==> SSH ship (identity authorized)"
     VPS_SSH_IDENTITY_FILE="$IDENT" CONFIRM="$CONFIRM_TOKEN" EXECUTE=1 \
       "$SHIP" ssh-ship
   fi
-  "$SHIP" probe-km
+  LIVE_COMPOSE_URL="${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}" \
+    "$SHIP" probe-km
   write_status "done" "probe-km finished"
 }
 
