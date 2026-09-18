@@ -1,6 +1,6 @@
 # Operator: ship tip of main to Compose share (post #196/#197/#204/#206/#207/#208)
 
-## Live status (agent probe 2026-09-18T08:28Z — goal wake / try-again)
+## Live status (agent probe 2026-09-18T14:35Z — goal wake)
 
 | Check | Result |
 |-------|--------|
@@ -9,11 +9,11 @@
 | Official `probe-km` | **FAIL** — live build does not advertise `dynamics_mode=auto` |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
 | `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset (no keydrop under `/tmp` or `/opt/cursor/artifacts`) |
-| Actions `VPS_HOST` / `VPS_SSH_KEY` | **empty**; redeploy blocked by **org spending limit** — [35324665814](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814) and [35323383644](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35323383644) failed ~2–4s / 0ms billable (jobs never start) |
-| Hostinger login | **Prefer GitHub SSO** — 08:25Z try-again reached OAuth password wall again (passkey no dialog); Google SSO anti-automation blocked. Needs one browser password/2FA |
+| Actions redeploy | **billing/spending limit** — [35355962824](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35355962824) annotation: *“The job was not started because recent account payments have failed or your spending limit needs to be increased.”* (also [35324665814](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814)); jobs never start; `VPS_*` secrets still empty when billing allows |
+| Hostinger login | **Prefer GitHub SSO** — 14:24Z try-again reached OAuth password wall again; Google SSO anti-automation blocked. Needs one browser password/2FA |
 | Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` (exit audit 9/10 PASS) |
 
-Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_completion_audit.json`, `hostinger_try_again_20260918_01_github_password_wall.png`.
+Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_objective_completion_audit.json`, `hostinger_unlock_20260918_1424_github_wall.png`, `hostinger_try_again_20260918_1429_status.txt`.
 
 Tip of `main` for operator self-ship: `git fetch origin && git checkout -qf origin/main`
 (`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 + unlock hint).
@@ -46,6 +46,7 @@ Push to `main` triggers `Build and Deploy` **image build only**:
 | [#208 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35186525459) | push/main | success | **skipped** (no VPS secrets) |
 | [#35189991153 `vps-compose-redeploy`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35189991153) | repository_dispatch | — | **failed** — empty `VPS_*` (prints VNC unlock hint) |
 | [#35323383644 / #35324665814 `vps-compose-redeploy`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35324665814) | repository_dispatch | — | **failed** — org spending limit (jobs never start) |
+| [#35355962824 `vps-compose-redeploy`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35355962824) | repository_dispatch | — | **failed** — payments failed / spending limit (confirmed annotation; jobs never start) |
 
 GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull requires secrets or VNC.
 
