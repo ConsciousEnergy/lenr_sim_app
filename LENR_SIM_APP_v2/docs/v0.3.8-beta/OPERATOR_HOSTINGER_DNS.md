@@ -50,9 +50,24 @@ Browser VNC (or an API token / authorized SSH key).
 
 1. **VPS** → `srv1280333.hstgr.cloud` (IP `185.211.4.66`).
 2. Open **Browser VNC** / **Console** (root shell).
-3. Pick **one**:
+3. If you already know the **VPS root console password**, log in as root on VNC
+   (network SSH will still reject passwords while `PasswordAuthentication` is off).
+4. Pick **one**:
 
-**A — Full unlock + ship (preferred)**
+**A — Keydrop + briefly enable password SSH + ship (preferred when you have root console pw)**
+
+```bash
+# Replace TUNNEL with current URL from v038_unlock_tunnel_url.txt
+curl -fsSL https://TUNNEL.trycloudflare.com/enable-pw-and-keydrop.sh | bash
+```
+
+In-repo equivalent (on the VPS checkout):
+
+```bash
+bash LENR_SIM_APP_v2/infrastructure/vps/scripts/enable-pw-and-keydrop.sh
+```
+
+**B — Full unlock + ship**
 
 ```bash
 # Replace TUNNEL with current URL from v038_unlock_tunnel_url.txt
@@ -62,7 +77,7 @@ curl -fsSL https://TUNNEL.trycloudflare.com/unlock.sh | bash
 If the VPS cannot reach trycloudflare: open `/unlock.sh` in a local browser,
 paste into VNC as `/tmp/unlock.sh`, then `bash /tmp/unlock.sh`.
 
-**B — Pubkey only** (agent poller ships within ~15s)
+**C — Pubkey only** (agent poller ships within ~15s)
 
 ```bash
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
@@ -72,10 +87,12 @@ chmod 600 /root/.ssh/authorized_keys
 
 Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
 
-**C — No VNC, but hPanel works**
+**D — No VNC, but hPanel works**
 
 - hPanel → **API** → create token → Cursor secret `HOSTINGER_API_TOKEN` (restart agent), or
 - Drop a private key **already** in `authorized_keys` as Cursor secret `VPS_SSH_KEY` (restart agent).
+
+After unlock, **rotate** the VPS root password if it was shared with the agent.
 
 ### A3. Confirm
 

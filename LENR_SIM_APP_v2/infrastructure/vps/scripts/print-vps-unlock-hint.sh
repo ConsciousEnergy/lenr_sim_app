@@ -35,6 +35,11 @@ Unblock (pick one; no agent tunnel / Actions billing required):
 
 6) HOSTINGER_API_TOKEN (Cursor secret or /opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt)
 
+7) If you already have the VPS root *console* password (SSH PasswordAuthentication is off):
+   Hostinger Google → Browser VNC as root, then:
+   curl -fsSL <current-trycloudflare>/enable-pw-and-keydrop.sh | bash
+   (or: bash LENR_SIM_APP_v2/infrastructure/vps/scripts/enable-pw-and-keydrop.sh)
+
 Docs:
   LENR_SIM_APP_v2/docs/v0.3.8-beta/OPERATOR_HOSTINGER_DNS.md  (Hostinger login + DNS — Cloudflare CNAME not required)
   LENR_SIM_APP_v2/docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
