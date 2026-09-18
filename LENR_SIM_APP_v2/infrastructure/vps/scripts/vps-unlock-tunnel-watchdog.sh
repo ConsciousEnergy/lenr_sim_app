@@ -2,7 +2,16 @@
 # Keep VNC unlock HTTP + cloudflared quick tunnel alive; refresh URL on rotate.
 # Agent-local defaults; override UNLOCK_HTTP_DIR / logs via env.
 set +e
-HTTP_DIR="${UNLOCK_HTTP_DIR:-/opt/cursor/artifacts/vnc-unlock-http}"
+# Prefer the cloud-agent store path; fall back to /opt/cursor/artifacts bind.
+_DEFAULT_HTTP="/cursor/stores/bc-aeec1d0b-0867-4723-b983-c995820798d8/artifacts/vnc-unlock-http"
+if [[ ! -d "${UNLOCK_HTTP_DIR:-}" ]]; then
+  if [[ -d "$_DEFAULT_HTTP" ]]; then
+    UNLOCK_HTTP_DIR="$_DEFAULT_HTTP"
+  else
+    UNLOCK_HTTP_DIR="/opt/cursor/artifacts/vnc-unlock-http"
+  fi
+fi
+HTTP_DIR="${UNLOCK_HTTP_DIR}"
 URL_FILE="${UNLOCK_URL_FILE:-/opt/cursor/artifacts/v038_unlock_tunnel_url.txt}"
 LOG="${UNLOCK_WATCHDOG_LOG:-/opt/cursor/artifacts/v038_tunnel_watchdog.log}"
 CF_LOG="${CLOUDFLARED_LOG:-/opt/cursor/artifacts/cloudflared_tunnel.log}"
