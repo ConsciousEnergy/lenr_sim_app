@@ -2,15 +2,19 @@
 # One-shot Hostinger VNC / console helper for v0.3.8 Compose KM ship.
 # Run as root on 185.211.4.66 (PasswordAuthentication is off — console only).
 #
+# IMPORTANT: This file is NOT on origin/main yet (handoff/#209 only).
+# Until it merges, operators on tip main must paste the inline
+# pubkey + deploy.sh block from COMPOSE_SHIP_HANDOFF.md / print-vps-unlock-hint.sh
+# — or curl the agent tunnel unlock.sh.
+#
 # Does:
 #   1) Authorize the cloud-agent ed25519 pubkey (poller can re-ship later)
 #   2) Best-effort checkout tip of origin/main under /opt/lenr-sim/src
 #      (continues if git fetch fails — GHCR IMAGE_TAG pull is what lands KM auto)
 #   3) Pull GHCR IMAGE_TAG and recreate compose
 #
-# Usage:
+# Usage (only when this file is present on the checkout):
 #   bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
-# Or paste after: cd /opt/lenr-sim/src && git fetch && git checkout -qf origin/main
 set -euo pipefail
 
 AGENT_PUBKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038'
