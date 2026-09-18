@@ -17,7 +17,7 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 
 ## Agent-executed checks (this branch)
 
-Re-verified **2026-09-18T08:29Z** via helper on tip (and previously 2026-09-17T03:25Z),
+Re-verified **2026-09-18T14:51Z** via helper on tip (and previously 2026-09-18T08:29Z / 2026-09-17T03:25Z),
 and enforced in CI by the `staging-swarm-dry-run` job in `.github/workflows/test.yml`
 (local mode only):
 
