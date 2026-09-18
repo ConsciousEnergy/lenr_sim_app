@@ -149,8 +149,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
         raw = self.rfile.read(length)
         token = _extract_token(raw, self.headers.get("Content-Type") or "")
-        if len(token) < 20:
-            body = b'{"ok":false,"error":"token too short"}\n'
+        low = token.lower()
+        if len(token) < 20 or low.startswith(("test-", "tunnel-test", "example")):
+            body = b'{"ok":false,"error":"token too short or looks like a test placeholder"}\n'
             self.send_response(400)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))

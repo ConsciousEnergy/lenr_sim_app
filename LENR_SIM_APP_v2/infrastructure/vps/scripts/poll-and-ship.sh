@@ -167,6 +167,16 @@ token_ok() {
   [[ -n "${HOSTINGER_API_TOKEN:-}" ]]
 }
 
+clear_token_files() {
+  local f
+  for f in "${TOKEN_FILES[@]}"; do
+    [[ -f "$f" ]] || continue
+    rm -f "$f" || true
+    echo "cleared token file $f (failed unlock — drop a real token to retry)"
+  done
+  unset HOSTINGER_API_TOKEN || true
+}
+
 do_ship() {
   if [[ "${CONFIRM:-}" != "$CONFIRM_TOKEN" || "${EXECUTE:-0}" != "1" ]]; then
     write_status "ready_but_plan_only" "SSH/token available; set CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 to ship"
@@ -295,13 +305,19 @@ while true; do
   fi
   if ssh_ok; then
     echo "[$attempt] SSH OK — shipping"
-    do_ship
-    exit $?
-  fi
-  if token_ok; then
+    if do_ship; then
+      exit 0
+    fi
+    echo "[$attempt] SSH ship/probe failed — continue polling" >&2
+    write_status "ship_failed" "attempt=$attempt ssh_ship_failed"
+  elif token_ok; then
     echo "[$attempt] HOSTINGER_API_TOKEN set — unlock path"
-    do_ship
-    exit $?
+    if do_ship; then
+      exit 0
+    fi
+    echo "[$attempt] Hostinger unlock/ship failed — clear token, keep waiting" >&2
+    write_status "token_failed" "attempt=$attempt unlock_failed"
+    clear_token_files
   fi
   if want_actions_now || { [[ "$ACTIONS_EVERY" != "0" ]] && (( attempt % ACTIONS_EVERY == 0 )); }; then
     echo "[$attempt] trying Actions dispatch path"
