@@ -35,7 +35,9 @@ Unblock (pick one; no agent tunnel / Actions billing required):
 
 6) HOSTINGER_API_TOKEN (Cursor secret or /opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt)
 
-Docs: LENR_SIM_APP_v2/docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
+Docs:
+  LENR_SIM_APP_v2/docs/v0.3.8-beta/OPERATOR_HOSTINGER_DNS.md  (Hostinger login + DNS — Cloudflare CNAME not required)
+  LENR_SIM_APP_v2/docs/v0.3.8-beta/COMPOSE_SHIP_HANDOFF.md
 Fingerprint: SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10
 HINT
 exit 1
