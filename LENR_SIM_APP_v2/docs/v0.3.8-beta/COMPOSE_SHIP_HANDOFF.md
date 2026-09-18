@@ -63,18 +63,31 @@ GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull
 
 ### Required operator action
 
-**PRIMARY (tunnel-free, Actions-free)** — Hostinger → GitHub/Google SSO →
-Browser VNC as root on `185.211.4.66` (PasswordAuthentication is off), then:
+> **Note (2026-09-18):** `vnc-one-shot-km-ship.sh` is **not** on `origin/main` yet
+> (only on this handoff branch / #209). Do **not** `bash` that path after
+> `git checkout origin/main` — the file will be missing. Use the inline paste below.
+
+**PRIMARY (works on tip `main` today — tunnel-free, Actions-free)** — Hostinger →
+GitHub/Google SSO → Browser VNC as root on `185.211.4.66`:
 
 ```bash
-cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
-bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+grep -qxF 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' /root/.ssh/authorized_keys \
+  || echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+cd /opt/lenr-sim/src
+git fetch --prune origin && git checkout -qf origin/main || true
+LENR_ENV_FILE=/opt/lenr-sim/.env \
+  IMAGE_TAG=0.3.7-beta \
+  UPDATE_ENV_IMAGE_TAG=1 \
+  EXPECT_VERSION=0.3.7-beta \
+  bash LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 ```
 
-That script authorizes the cloud-agent pubkey, pins `origin/main`, and pulls
-GHCR `0.3.7-beta` (KM auto). No trycloudflare tunnel and no Actions billing required.
+`deploy.sh` is on `main` (`#208`). GHCR pull of `0.3.7-beta` lands KM `auto`.
+`git fetch` soft-fails so a private-repo auth flake does not block the pull.
 
-**Convenience one-liner** (only if the agent tunnel is up):
+**Convenience one-liner** (agent tunnel — embeds the same steps):
 
 ```bash
 curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
@@ -84,20 +97,6 @@ curl -fsSL https://carlo-lap-coaching-audit.trycloudflare.com/unlock.sh | bash
 
 ```bash
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
-```
-
-Equivalent inline deploy (if `vnc-one-shot-km-ship.sh` is missing on an old checkout):
-
-```bash
-mkdir -p /root/.ssh && chmod 700 /root/.ssh
-echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
-chmod 600 /root/.ssh/authorized_keys
-cd /opt/lenr-sim/src && git fetch --prune origin && git checkout -qf origin/main
-LENR_ENV_FILE=/opt/lenr-sim/.env \
-  IMAGE_TAG=0.3.7-beta \
-  UPDATE_ENV_IMAGE_TAG=1 \
-  EXPECT_VERSION=0.3.7-beta \
-  LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 ```
 
 Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
