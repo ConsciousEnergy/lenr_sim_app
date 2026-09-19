@@ -85,7 +85,12 @@ export const simulationApi = {
     api.get<SimulationResult>(`/simulation/${id}/results`),
 
   listSimulations: (status?: 'pending' | 'running' | 'completed' | 'failed') =>
-    api.get<SimulationResult[]>('/simulation/list', { status }),
+    // Same-origin deploys use API_BASE_URL=''; paths must include /api or nginx
+    // serves the SPA HTML (200) and callers blow up on non-array responses.
+    api.get<Array<SimulationResult & { simulation_id?: string }>>(
+      '/api/multi-physics/simulations',
+      status ? { status } : undefined
+    ),
 
   deleteSimulation: (id: string) =>
     api.delete<void>(`/simulation/${id}`),
