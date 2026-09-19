@@ -208,6 +208,15 @@ updates:
       - dependency-name: "@types/react"
         update-types:
           - "version-update:semver-major"
+      # R3F 9 / drei 10 require React 19; #191 white-screened Unified Theory 3D
+      # with TypeError reading 'S' on React 18. Stay on fiber 8 / drei 9 until
+      # a deliberate React 19 migration.
+      - dependency-name: "@react-three/fiber"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@react-three/drei"
+        update-types:
+          - "version-update:semver-major"
 
   # GitHub Actions workflow versions
   - package-ecosystem: "github-actions"
