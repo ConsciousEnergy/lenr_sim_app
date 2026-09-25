@@ -60,7 +60,14 @@ Until payment clears, Hostinger still lists **only** the Compose share VM.
    # Settings → Actions → Runners → New self-hosted runner (never commit)
    export GH_RUNNER_REGISTRATION_TOKEN=...
    ./infrastructure/scripts/register-lenr-ci-runner.sh
-   # or the same config.sh flags documented in the script
+   ```
+
+   From the agent host (after the VM exists), the chained helper is:
+
+   ```bash
+   export HOSTINGER_API_TOKEN=... GH_RUNNER_REGISTRATION_TOKEN=...
+   # optional: CI_VM_SSH_HOST=root@<ip> CI_VM_SSH_KEY='-----BEGIN...'
+   ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
    ```
 
 4. Confirm **Idle** under Settings → Actions → Runners.
