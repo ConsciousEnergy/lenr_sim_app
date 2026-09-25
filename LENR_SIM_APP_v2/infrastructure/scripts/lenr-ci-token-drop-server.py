@@ -54,6 +54,7 @@ def status_dict():
         "drop_received": (DROP_DIR / "token_received").exists(),
         "orders_awaiting_3ds": ["61660939", "61662216", "61663818"],
         "goal_ready": bool(dedicated) and tok_usable,
+        "password_reset_sent": (DROP_DIR / "password_reset_sent.txt").exists(),
     }
 
 def page_html():
@@ -62,7 +63,8 @@ def page_html():
         f"<tr><td>{v.get('id')}</td><td>{v.get('hostname')}</td><td>{v.get('ip')}</td><td>{v.get('state')}</td></tr>"
         for v in st["vms"]
     ) or "<tr><td colspan=4>none</td></tr>"
-    ready = "READY TO MIGRATE" if st["goal_ready"] else "BLOCKED — need 3DS + token"
+    ready = "READY TO MIGRATE" if st["goal_ready"] else ("BLOCKED — need 3DS + token")
+    reset_note = ("<p><b>Password reset email sent</b> to diadonacs@gmail.com — set a password, then paste email+password below.</p>" if st.get("password_reset_sent") else "")
     color = "#0a0" if st["goal_ready"] else "#a40"
     return f"""<!doctype html>
 <html><head><meta charset=utf-8><title>lenr-ci unlock</title>
@@ -79,7 +81,7 @@ a.btn{{display:inline-block;margin:.4rem 0 1rem;padding:.7rem 1rem;background:#0
 <h1>lenr-ci dedicated unlock</h1>
 <p class=banner>{ready}</p>
 <p><a class=btn href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing → complete ONE 3DS</a></p>
-<p>Orders: <b>61660939</b> (KVM2) or <b>61662216</b>/<b>61663818</b> (KVM1). Cancel the other unpaid duplicates. Do not touch share VM 1280333.</p>
+{reset_note}<p>Orders: <b>61660939</b> (KVM2) or <b>61662216</b>/<b>61663818</b> (KVM1). Cancel the other unpaid duplicates. Do not touch share VM 1280333.</p>
 <h2>Live Hostinger VMs</h2>
 <table><tr><th>id</th><th>hostname</th><th>ip</th><th>state</th></tr>{rows}</table>
 <p>dedicated_found=<b>{st['dedicated_found']}</b> · token_usable=<b>{st['token_usable']}</b> · hpanel_creds=<b>{st['hpanel_creds']}</b></p>
