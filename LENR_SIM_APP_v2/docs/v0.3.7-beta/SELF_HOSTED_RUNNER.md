@@ -1,5 +1,10 @@
 # Self-hosted GitHub Actions runner (lenr-ci)
 
+> **OPERATOR ACTION REQUIRED (blocks dedicated CI):**  
+> Complete **one** hPanel 3DS for order **`61660939`** (KVM2) or **`61662216`** (KVM1) at  
+> https://hpanel.hostinger.com/billing — then inject a real  
+> `GH_RUNNER_REGISTRATION_TOKEN` into Cursor secrets. Auto-migrate is armed.
+
 **Train:** v0.3.7-beta ops / CI cost  
 **Goal:** Near-zero GitHub-hosted Actions minutes for PR/test work.
 
