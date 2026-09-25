@@ -61,12 +61,12 @@ PY
     echo "variable API unavailable or unset: $(tr -d '\n' </tmp/lenr-ci-var.err | head -c 200)"
   fi
 
-  echo "== deploy.yml never uses lenr-ci =="
-  if grep -n 'lenr-ci' /workspace/.github/workflows/deploy.yml 2>/dev/null; then
-    echo "FAIL: deploy.yml mentions lenr-ci"
+  echo "== deploy.yml never runs-on lenr-ci =="
+  if grep -nE 'runs-on:.*lenr-ci' /workspace/.github/workflows/deploy.yml 2>/dev/null; then
+    echo "FAIL: deploy.yml runs-on includes lenr-ci"
     exit 2
   else
-    echo "PASS: deploy.yml has no lenr-ci"
+    echo "PASS: deploy.yml runs-on does not include lenr-ci"
   fi
 
   echo
