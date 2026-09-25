@@ -37,9 +37,10 @@ export GH_RUNNER_REGISTRATION_TOKEN=...
 ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh   # no ALLOW_SHARE_RUNNER
 ```
 
-Pending API orders `61650992` / `61651905` were `payment_initiated` only and
-**never created a second VM**. Complete **one** in [hPanel](https://hpanel.hostinger.com/)
-(3DS) with hostname `lenr-ci`, or abandon both and run a fresh gated purchase.
+Pending API orders (complete **one** 3DS in [hPanel](https://hpanel.hostinger.com/), cancel the rest):
+`61650992`, `61651905`, `61656286`, `61656290`. All were `payment_initiated` and have
+**not** created a second VM yet. Prefer hostname `lenr-ci`, template Ubuntu 24.04,
+post-install `5725`.
 
 ### Share KVM2 — do **not** register as a runner (goal invariant)
 
