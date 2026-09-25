@@ -36,6 +36,14 @@ order **`61660939`** (`payment_initiated` → complete **one** 3DS; hostname `le
 After dedicated Idle, remove the share runner with
 `remove-share-lenr-ci-runner.sh` (`CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER`).
 
+Or one-shot (after token is set):
+
+```bash
+export GH_RUNNER_REGISTRATION_TOKEN=...
+export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
+./LENR_SIM_APP_v2/infrastructure/scripts/migrate-to-dedicated-lenr-ci.sh
+```
+
 ### Dedicated CI KVM (optional later)
 
 When budget allows isolation, move `lenr-ci` off the share onto a second Hostinger
