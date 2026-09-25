@@ -82,10 +82,12 @@ def page_html():
     ready = "READY TO MIGRATE" if st["goal_ready"] else "BLOCKED"
     color = "#0a0" if st["goal_ready"] else "#a40"
     reset_note = (
-        "<li><b>Done:</b> Hostinger password-reset email was sent to "
-        "diadonacs@gmail.com — open it, set a password, then paste below.</li>"
+        "<li><b>Fastest path:</b> open the Hostinger password-reset email sent to "
+        "<code>diadonacs@gmail.com</code>, set a password, paste it in "
+        "<b>HOSTINGER_HPANEL_PASSWORD</b> below (email is pre-filled), Submit — "
+        "the agent will attempt the pending 3DS in hPanel.</li>"
         if st.get("password_reset_sent")
-        else "<li>Optional: ask agent to resend Hostinger password reset.</li>"
+        else "<li>Optional: ask agent to send Hostinger password reset to diadonacs@gmail.com.</li>"
     )
     return f"""<!doctype html>
 <html><head><meta charset=utf-8><title>lenr-ci unlock</title>
@@ -101,18 +103,21 @@ a.btn{{display:inline-block;margin:.35rem .5rem .35rem 0;padding:.75rem 1rem;bac
 a.btn2{{background:#673DE6}}
 code{{background:#f4f4f4;padding:.1rem .35rem;border-radius:4px}}
 small{{color:#555}}
+.hi{{background:#fff8e6;border:1px solid #e6c200;padding:.75rem 1rem;border-radius:8px;margin:1rem 0}}
 </style></head><body>
 <h1>Dedicated lenr-ci unlock</h1>
 <p class=banner>{ready} — need Hostinger 3DS + runner token</p>
+<div class=hi><b>Expected:</b> <code>lenr-ci-smoke</code> fails on share
+<code>185.211.4.66</code> until a dedicated VM exists (unless repo var
+<code>LENR_CI_ALLOW_SHARE=1</code>). That failure is intentional.</div>
 <h2>Do these now (≈2 minutes)</h2>
 <ol>
 {reset_note}
-<li><a class="btn btn2" href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing</a>
+<li><b>Or</b> <a class="btn btn2" href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing</a>
 and complete <b>exactly one</b> 3DS for
 <code>61660939</code> / <code>61662216</code> / <code>61663818</code>.
 Cancel the other unpaid duplicates. Do not cancel share VM <code>1280333</code>.</li>
-<li>GitHub → Settings → Actions → Runners → <b>New self-hosted runner</b> → copy the <code>--token</code> value.</li>
-<li>Paste token (and optional hPanel email/password) below, then Submit.</li>
+<li>GitHub → Settings → Actions → Runners → <b>New self-hosted runner</b> → copy the <code>--token</code> value into the form.</li>
 </ol>
 <p>Live status: dedicated_found=<b>{st['dedicated_found']}</b> ·
 token_usable=<b>{st['token_usable']}</b> ·
@@ -121,14 +126,14 @@ hpanel_creds=<b>{st['hpanel_creds']}</b></p>
 <hr>
 <h2>Submit secrets</h2>
 <form method=POST action="/drop/{SECRET}">
-<label>GH_RUNNER_REGISTRATION_TOKEN</label>
+<label>HOSTINGER_HPANEL_EMAIL</label>
+<input name=hpanel_email type=email autocomplete=username value="diadonacs@gmail.com">
+<label>HOSTINGER_HPANEL_PASSWORD (from reset email — enough for agent 3DS assist)</label>
+<input name=hpanel_password type=password autocomplete=current-password autofocus>
+<label>GH_RUNNER_REGISTRATION_TOKEN (needed after VM is up)</label>
 <input name=token autocomplete=off minlength=40 placeholder="from New self-hosted runner">
 <label>Notes (optional)</label>
 <textarea name=notes rows=2 placeholder="3DS done for 61660939"></textarea>
-<label>HOSTINGER_HPANEL_EMAIL (optional — agent can finish 3DS)</label>
-<input name=hpanel_email type=email autocomplete=username placeholder="diadonacs@gmail.com">
-<label>HOSTINGER_HPANEL_PASSWORD (optional)</label>
-<input name=hpanel_password type=password autocomplete=current-password>
 <button type=submit>Submit</button>
 </form>
 <p><small>Auto-refresh 30s. Never register a runner on 185.211.4.66.
@@ -182,11 +187,11 @@ class H(BaseHTTPRequestHandler):
             email = (qs.get("hpanel_email") or [""])[0]
             password = (qs.get("hpanel_password") or [""])[0]
         token = token.strip()
-        email = email.strip()
+        email = email.strip() or "diadonacs@gmail.com"
         password = password.strip()
         DROP_DIR.mkdir(parents=True, exist_ok=True)
         parts = []
-        if email and password:
+        if password:
             HPANEL_ENV.write_text(
                 f"HOSTINGER_HPANEL_EMAIL={email}\nHOSTINGER_HPANEL_PASSWORD={password}\n"
             )
