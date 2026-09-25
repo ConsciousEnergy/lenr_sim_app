@@ -21,7 +21,7 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 
 | Item | Value |
 |------|--------|
-| Order | **`61660939`** (`payment_initiated`) |
+| Orders | **`61660939`** (KVM2) / **`61662216`** (KVM1) — both `payment_initiated`; complete **one** 3DS |
 | Target hostname | `lenr-ci` |
 | Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
 | Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `migrate-to-dedicated-lenr-ci.sh` |
