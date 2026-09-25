@@ -24,44 +24,45 @@
 
 ## Provision (operator)
 
-1. Order a separate Hostinger KVM (~2–4 vCPU, ≥8 GB RAM, ≥50 GB disk,
-   Ubuntu 22.04 or 24.04). Confirm it is **not** VM `1280333`.
-2. Harden baseline:
-   - Create non-root user `github-runner` (docker group if Docker is used).
-   - Enable unattended security updates.
-   - Firewall: allow outbound; SSH only from known admin IPs if practical.
-   - **No** production `docker compose` project on this box.
-3. Install tooling to match CI needs (or rely on `actions/setup-*` on each job):
-   - Docker + Buildx
-   - Node 22
-   - Python 3.10–3.12 (PR matrix is 3.12-only; main still exercises 3.10/3.11)
-   - Playwright OS deps (`npx playwright install-deps` once)
-   - Optional: elan/Lean cache under the runner workdir; Ansible + Terraform 1.5.x
-     for `staging-swarm-dry-run` local validate
-4. Register the runner against `ConsciousEnergy/lenr_sim_app`:
+### In progress — Hostinger order
+
+| Field | Value |
+|-------|--------|
+| API order id | `61650992` |
+| Status (last agent check) | `payment_initiated` (HTTP 202) — confirm payment in [hPanel](https://hpanel.hostinger.com/) / 3DS if still pending |
+| Plan | `hostingercom-vps-kvm2-usd-1m` (2 vCPU / 8 GB / 100 GB) |
+| Hostname | `lenr-ci` |
+| Data center | `24` (Boston) |
+| Template | `1077` (Ubuntu 24.04 LTS) |
+| Post-install script | `5725` (`lenr-ci-runner-bootstrap`) — user, UFW, Docker, Node 22, runner tarball |
+| Must not be | Share VM `1280333` / `185.211.4.66` |
+
+Until payment clears, Hostinger still lists **only** the Compose share VM.
+
+### Steps after the VM is running
+
+1. Confirm the new VM id ≠ `1280333`; attach SSH access if needed.
+2. Wait for post-install (`/var/log/lenr-ci-bootstrap.log` / `/opt/actions-runner`).
+3. Register with labels (helper refuses the share IP/hostname):
 
    ```bash
-   # As github-runner — token from:
-   # Settings → Actions → Runners → New self-hosted runner
-   # (or short-lived registration API token; never commit it)
-   ./config.sh --url https://github.com/ConsciousEnergy/lenr_sim_app \
-     --token "$GH_RUNNER_REGISTRATION_TOKEN" \
-     --labels self-hosted,linux,x64,lenr-ci \
-     --name lenr-ci-1 \
-     --work _work
-   sudo ./svc.sh install github-runner
-   sudo ./svc.sh start
+   # On the CI VM as root — token from:
+   # Settings → Actions → Runners → New self-hosted runner (never commit)
+   export GH_RUNNER_REGISTRATION_TOKEN=...
+   ./infrastructure/scripts/register-lenr-ci-runner.sh
+   # or the same config.sh flags documented in the script
    ```
 
-5. Confirm **Idle** under Settings → Actions → Runners.
-6. Set repository **variable** `LENR_CI_RUNS_ON` to:
+4. Confirm **Idle** under Settings → Actions → Runners.
+5. Set repository **variable** `LENR_CI_RUNS_ON` to:
 
    ```json
    ["self-hosted","linux","x64","lenr-ci"]
    ```
 
-   Until the runner is Idle, **leave the variable unset** so jobs stay on
-   `ubuntu-latest`.
+   Until the runner is Idle, **leave the variable unset**. Note: GitHub-hosted
+   jobs on this repo currently fail with **0 steps** when the Actions spending
+   limit is hit — self-hosted + `LENR_CI_RUNS_ON` is the intended unblock.
 
 ## Secrets that stay in GitHub
 
