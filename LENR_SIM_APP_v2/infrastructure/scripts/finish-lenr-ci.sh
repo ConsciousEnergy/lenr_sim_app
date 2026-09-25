@@ -21,6 +21,11 @@ POLL_SECONDS="${POLL_SECONDS:-20}"
 MAX_POLLS="${MAX_POLLS:-90}"
 
 if [[ -z "${GH_RUNNER_REGISTRATION_TOKEN:-}" && -n "${GH_ADMIN_PAT:-}" ]]; then
+  # Reject obvious placeholders before calling GitHub
+  if [[ "${#GH_ADMIN_PAT}" -lt 40 || "$GH_ADMIN_PAT" == G1th* ]]; then
+    echo "GH_ADMIN_PAT looks like a placeholder (len=${#GH_ADMIN_PAT}). Inject a real fine-grained PAT." >&2
+    exit 1
+  fi
   echo "Minting registration token via GH_ADMIN_PAT..."
   GH_RUNNER_REGISTRATION_TOKEN="$(
     GH_TOKEN="$GH_ADMIN_PAT" gh api -X POST \
@@ -33,6 +38,20 @@ fi
 if [[ -z "${GH_RUNNER_REGISTRATION_TOKEN:-}" ]]; then
   echo "Set GH_RUNNER_REGISTRATION_TOKEN (or GH_ADMIN_PAT) before finish." >&2
   exit 1
+fi
+
+# GitHub registration tokens are typically 50+ chars; reject placeholders early.
+if [[ "${#GH_RUNNER_REGISTRATION_TOKEN}" -lt 40 || "$GH_RUNNER_REGISTRATION_TOKEN" == G1th* ]]; then
+  echo "GH_RUNNER_REGISTRATION_TOKEN looks invalid/placeholder (len=${#GH_RUNNER_REGISTRATION_TOKEN})." >&2
+  echo "Mint from GitHub → Settings → Actions → Runners → New self-hosted runner (copy --token only)." >&2
+  exit 1
+fi
+
+# Goal invariant: never register on the Compose share unless explicitly overridden.
+if [[ "${ALLOW_SHARE_RUNNER:-}" == "1" ]]; then
+  echo "Refusing ALLOW_SHARE_RUNNER=1 while dedicated-CI goal is active." >&2
+  echo "Unset ALLOW_SHARE_RUNNER and wait for a VM id != ${SHARE_VM_ID}." >&2
+  exit 2
 fi
 
 run_remote_register() {
