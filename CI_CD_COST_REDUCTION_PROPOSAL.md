@@ -2,6 +2,14 @@
 ## Alternative Solutions to GitHub Actions
 
 **Date:** September 24, 2026  
+**Status (Sept 2026):** **Superseded for placement.** Adopted path is a
+**dedicated** Hostinger CI VM with labels `self-hosted,linux,x64,lenr-ci` and
+repo variable `LENR_CI_RUNS_ON` — see
+[`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+**Do not** install a runner on the Compose share VPS (`185.211.4.66` / VM
+`1280333`). Early Option 1 draft text below that SSHs to the share host is
+**historical only**.
+
 **Current Problem:** GitHub Actions billing is expensive for frequent PRs and merges  
 **Current Monthly Cost Drivers:**
 - Test suite runs on every PR and push to main (Python 3.10, 3.11, 3.12 matrix)
@@ -12,30 +20,33 @@
 
 ---
 
-## Option 1: Self-Hosted GitHub Actions Runner (RECOMMENDED)
+## Option 1: Self-Hosted GitHub Actions Runner (RECOMMENDED — dedicated VM)
 
 ### ✅ Pros
-- **Zero per-minute cost** - Uses your existing VPS resources
-- **Keeps existing workflows** - No code changes needed
+- **Zero per-minute cost** — dedicated CI KVM (not the live Compose share)
+- **Keeps existing workflows** — `LENR_CI_RUNS_ON` switches `runs-on` without dual-running hosted+self-hosted
 - **Full GitHub integration** - Same UI, same approval flows
-- **Secure** - Runner only accesses your repo
+- **Isolated** - PR code does not share the production Compose host
 - **Fast** - Faster builds due to local cache
 
 ### ⚠️ Cons
-- Requires 2-4 GB RAM and 2+ CPU cores on VPS
+- Requires a separate ~2–4 vCPU / ≥8 GB RAM VM (extra Hostinger line item)
 - Runner maintenance (updates, security)
 - Single point of failure (unless you add more runners)
 
 ### 💰 Cost Analysis
 - **Current:** $0.008/minute × ~30 minutes/PR × 20 PRs/month = **$4.80+/month**
-- **With self-hosted:** **$0** (uses existing VPS)
+- **With self-hosted:** **$0** Actions minutes (VM monthly cost only)
 - **Savings:** ~$58/year minimum (likely more with image builds)
 
 ### 🛠️ Implementation Plan
 
-#### Step 1: Install Runner on VPS (15 minutes)
+> **Authoritative steps:** [`SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+> The sample SSH target below must be the **new CI VM IP**, never `185.211.4.66`.
+
+#### Step 1: Install Runner on the dedicated CI VM (15 minutes)
 ```bash
-ssh root@185.211.4.66
+ssh root@<CI_VM_IP>   # NOT 185.211.4.66
 
 # Create runner user
 useradd -m -s /bin/bash github-runner
@@ -56,7 +67,9 @@ chown -R github-runner:github-runner /opt/actions-runner
 # Configure runner (as github-runner user)
 su - github-runner
 cd /opt/actions-runner
-./config.sh --url https://github.com/ConsciousEnergy/lenr_sim_app --token <GET_FROM_GITHUB>
+./config.sh --url https://github.com/ConsciousEnergy/lenr_sim_app \
+  --token <GET_FROM_GITHUB> \
+  --labels self-hosted,linux,x64,lenr-ci
 ```
 
 **Get registration token:**
@@ -76,17 +89,17 @@ cd /opt/actions-runner
 systemctl status actions.runner.ConsciousEnergy-lenr_sim_app.*
 ```
 
-#### Step 3: Update Workflows (Minimal Changes)
-Only change: `runs-on: self-hosted` instead of `runs-on: ubuntu-latest`
+#### Step 3: Update Workflows (shipped)
 
-**Example:**
+Workflows already use:
+
 ```yaml
-jobs:
-  test:
-    runs-on: self-hosted  # Changed from ubuntu-latest
-    steps:
-      # Everything else stays the same
+runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
 ```
+
+Set `LENR_CI_RUNS_ON` to `["self-hosted","linux","x64","lenr-ci"]` only after the
+runner is Idle. Do **not** dual-run hosted + self-hosted. `deploy.yml` stays on
+`ubuntu-latest`.
 
 #### Step 4: Optimize Runner Performance
 ```bash
@@ -328,56 +341,58 @@ Or create separate workflows:
 
 ## VPS Resource Requirements
 
-### Current VPS Specs (Check first)
+### Dedicated CI VM (not the Compose share)
+
+Do **not** size the runner against `185.211.4.66` (VM `1280333`). Provision a
+separate KVM and check it:
+
 ```bash
-ssh root@185.211.4.66
-free -h        # Check available RAM
-df -h          # Check disk space
-nproc          # Check CPU cores
+ssh root@<CI_VM_IP>   # NOT the share VPS
+free -h
+df -h
+nproc
 ```
 
 ### Minimum Requirements for Runner
-- **RAM:** 2 GB free (4 GB recommended)
-- **Disk:** 20 GB free (50 GB recommended)
-- **CPU:** 2 cores
-- **Network:** 100 Mbps+
+- **RAM:** 8 GB recommended (2–4 GB free under load is too tight for Playwright + Lean)
+- **Disk:** ≥50 GB
+- **CPU:** 2–4 vCPU
+- **Network:** outbound HTTPS to GitHub + package indexes
 
 ### If Resources Are Tight
-Consider upgrading VPS or using lightweight options:
-- Disable parallel test matrix
-- Use Docker layer caching
-- Run E2E tests less frequently
-- Skip formalization checks on self-hosted
+- PR Python matrix is already 3.12-only (full 3.10–3.12 on main push)
+- Path filters skip e2e/matrix for docs-only PRs
+- Keep deploy/image builds on GitHub-hosted
 
 ---
 
-## Quick Start: 30-Minute Self-Hosted Setup
+## Quick Start: Self-Hosted Setup
+
+Follow [`SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
 ```bash
-# 1. SSH to VPS
-ssh root@185.211.4.66
+# 1. SSH to the dedicated CI VM (NOT 185.211.4.66)
+ssh root@<CI_VM_IP>
 
-# 2. Quick install script
-curl -fsSL https://gist.githubusercontent.com/YOUR_GIST/runner-install.sh | bash
+# 2. Install runner per SELF_HOSTED_RUNNER.md (user github-runner, Docker, etc.)
 
-# 3. Get registration token
-gh auth login
-TOKEN=$(gh api repos/ConsciousEnergy/lenr_sim_app/actions/runners/registration-token --jq .token)
+# 3. Registration token from GitHub UI (short-lived; never commit)
+TOKEN=...   # Settings → Actions → Runners → New self-hosted runner
 
-# 4. Configure runner
+# 4. Configure with exact labels
 cd /opt/actions-runner
 sudo -u github-runner ./config.sh \
   --url https://github.com/ConsciousEnergy/lenr_sim_app \
-  --token $TOKEN \
-  --name vps-runner-1 \
-  --labels self-hosted,linux,x64,vps
+  --token "$TOKEN" \
+  --name lenr-ci-1 \
+  --labels self-hosted,linux,x64,lenr-ci
 
 # 5. Start service
 sudo ./svc.sh install github-runner
 sudo ./svc.sh start
 
-# 6. Verify
-curl -s http://localhost:8080  # Should show runner status
+# 6. Set repo variable LENR_CI_RUNS_ON only after Idle:
+#    ["self-hosted","linux","x64","lenr-ci"]
 ```
 
 ---
