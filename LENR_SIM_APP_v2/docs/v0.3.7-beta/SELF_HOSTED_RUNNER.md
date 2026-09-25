@@ -102,6 +102,57 @@ and **not** available to `lenr-ci` PR workflows:
 Registration tokens are single-use / short-lived; rotate by removing the runner
 in the UI and re-running `config.sh`.
 
+## Secure setup: registration token + optional admin PAT
+
+**Threat model:** `lenr-ci` runs untrusted PR code on the same host as live
+Compose. Anything available to that runner pool is in the blast radius. Keep
+deploy credentials off it.
+
+### A) Runner registration token (required once)
+
+1. Repo admin →
+   [Settings → Actions → Runners](https://github.com/ConsciousEnergy/lenr_sim_app/settings/actions/runners)
+   → **New self-hosted runner** → Linux / x64.
+2. Copy only the `--token` value from the configure snippet (~1 hour TTL,
+   single-use). Do **not** paste into chat, commits, Slack, or the PR body.
+3. Prefer injecting as Cursor / agent secret `GH_RUNNER_REGISTRATION_TOKEN`,
+   or run locally and `unset` immediately after:
+
+   ```bash
+   export ALLOW_SHARE_RUNNER=1
+   export GH_RUNNER_REGISTRATION_TOKEN='…'
+   ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
+   unset GH_RUNNER_REGISTRATION_TOKEN
+   ```
+
+4. Confirm **Idle** name `lenr-ci-share-1`, labels
+   `self-hosted,linux,x64,lenr-ci`. If configure fails, remove any half-created
+   runner in the UI and mint a **new** token.
+
+### B) Optional fine-grained admin PAT (`GH_ADMIN_PAT`)
+
+Use only if the agent must mint registration tokens or set `LENR_CI_RUNS_ON`
+via API (Cursor’s default `gh` integration cannot — HTTP 403).
+
+| Setting | Value |
+|---------|--------|
+| Type | Fine-grained PAT (not classic `repo`) |
+| Resource owner | `ConsciousEnergy` |
+| Repository access | **Only** `lenr_sim_app` |
+| Expiration | 7–30 days |
+| Permissions | Administration: R/W · Variables: R/W · Contents: Read · Actions: Read |
+| Avoid | Org-wide access, Secrets write, delete, SSO-everything |
+
+Store as agent secret `GH_ADMIN_PAT` only — never on the VPS disk, never in
+Actions secrets readable by PR jobs on `lenr-ci`. Revoke after cutover.
+
+### C) After Idle
+
+Set repo **variable** (not secret) `LENR_CI_RUNS_ON` to
+`["self-hosted","linux","x64","lenr-ci"]`. Leave unset until Idle.
+Require approval for first-time contributors’ workflows before they run on
+self-hosted. Rotate any root password used for SSH unlock.
+
 ## What not to run here
 
 - Production Compose deploys from **fork/PR** workflows.
