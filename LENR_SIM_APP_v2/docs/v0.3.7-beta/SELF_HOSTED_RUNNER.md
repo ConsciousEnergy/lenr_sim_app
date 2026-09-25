@@ -47,6 +47,8 @@ Operator token/hPanel drop (ephemeral Cloudflare quick tunnel while agent is liv
 `infrastructure/scripts/lenr-ci-token-drop-server.py` — serve locally and
 `cloudflared tunnel --url http://127.0.0.1:8787`, then open `/drop/<secret>`.
 Accepts `GH_RUNNER_REGISTRATION_TOKEN` and optional `HOSTINGER_HPANEL_*`.
+When hPanel email+password are dropped, `watch-hpanel-3ds.sh` uses Playwright
+(email login — not Google SSO) to open billing and attempt pending 3DS.
 
 Or: `provision-dedicated-lenr-ci.sh` (needs `CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`)
 then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
