@@ -30,6 +30,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Prove labels and host identity
+        env:
+          # Repo var must be explicitly "1" for intentional share co-tenant CI.
+          # Interim lenr-ci-share-* names alone are NOT enough — goal evidence
+          # requires a dedicated Hostinger VM ≠ 185.211.4.66.
+          LENR_CI_ALLOW_SHARE: ${{ vars.LENR_CI_ALLOW_SHARE }}
         shell: bash
         run: |
           set -euo pipefail
@@ -41,14 +46,13 @@ jobs:
           if ip -4 addr 2>/dev/null | grep -q '185\.211\.4\.66'; then
             ON_SHARE=1
           fi
-          # Dedicated-VM mode: refuse share. Share override: allow and label clearly.
-          if [[ "$ON_SHARE" -eq 1 && "${LENR_CI_ALLOW_SHARE:-}" != "1" ]]; then
-            # Repo variable LENR_CI_ALLOW_SHARE=1 documents intentional co-tenant CI.
-            # Also accept runner name convention from register script.
-            if [[ "${RUNNER_NAME:-}" == lenr-ci-share* ]]; then
-              echo "Share co-tenant runner detected (name=${RUNNER_NAME})."
+          # Dedicated-VM mode (default): refuse Compose share. Green smoke must
+          # mean dedicated placement — not interim co-tenant on beta host.
+          if [[ "$ON_SHARE" -eq 1 ]]; then
+            if [[ "${LENR_CI_ALLOW_SHARE:-}" == "1" ]]; then
+              echo "Share co-tenant allowed via vars.LENR_CI_ALLOW_SHARE=1 (name=${RUNNER_NAME:-})."
             else
-              echo "::error::Refuse: smoke on Compose share 185.211.4.66 without share override (set runner name lenr-ci-share-* or env LENR_CI_ALLOW_SHARE=1)"
+              echo "::error::Refuse: smoke on Compose share 185.211.4.66. Dedicated CI VM required (complete Hostinger 3DS). Set repo var LENR_CI_ALLOW_SHARE=1 only for intentional interim co-tenant."
               exit 2
             fi
           fi
@@ -59,7 +63,7 @@ jobs:
           echo "- host: $(hostname)" >> "$GITHUB_STEP_SUMMARY"
           echo "- version: ${EXPECTED}" >> "$GITHUB_STEP_SUMMARY"
           if [[ "$ON_SHARE" -eq 1 ]]; then
-            echo "- placement: Compose share KVM2 (ALLOW_SHARE_RUNNER override)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- placement: Compose share KVM2 (LENR_CI_ALLOW_SHARE=1 interim)" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- placement: dedicated CI VM (not 185.211.4.66)" >> "$GITHUB_STEP_SUMMARY"
           fi

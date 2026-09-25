@@ -60,7 +60,12 @@ then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
 |------|--------|
 | Host | `185.211.4.66` / VM `1280333` |
 | Runner | `lenr-ci-share-1` (present until dedicated Idle) |
-| Override used | `ALLOW_SHARE_RUNNER=1` |
+| Register override | `ALLOW_SHARE_RUNNER=1` (bootstrap only; migrate refuses this) |
+| Smoke override | repo var `LENR_CI_ALLOW_SHARE=1` — **required** for share smoke to pass; default is refuse share |
+
+`lenr-ci-smoke` **fails** when the job lands on `185.211.4.66` unless
+`LENR_CI_ALLOW_SHARE=1`. A green smoke check therefore means dedicated placement
+(or an explicit interim override) — not an accidental share co-tenant pass.
 
 **Do not** put `VPS_*` / deploy secrets on `lenr-ci` workflows. Keep `deploy.yml`
 on `ubuntu-latest`. Share bootstrap preinstalls `unzip`, `ansible`, Playwright OS libs.
