@@ -15,10 +15,10 @@ Four markers must stay **`0.3.7-beta`** (do not bump to 0.3.8 in CI/docs PRs):
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy **target**; currently also hosts `lenr-ci` under `ALLOW_SHARE_RUNNER=1`. |
+| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy **target** only — never a GitHub Actions runner while the dedicated-CI goal is active. |
 | Branch tip / `main` | Source of truth for code; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 
-Self-hosted CI (`lenr-ci`) currently co-tenants the Compose share KVM2 (override). Prefer a dedicated CI VM when budget allows. Runbook:
+Dedicated CI VM + labels `self-hosted,linux,x64,lenr-ci`:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 Keep `deploy.yml` off `lenr-ci`. Never expose `VPS_*` to PR jobs.
 

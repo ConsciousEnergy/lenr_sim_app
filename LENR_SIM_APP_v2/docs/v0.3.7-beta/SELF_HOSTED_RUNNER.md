@@ -12,74 +12,80 @@
 
 ---
 
-## Placement: share KVM2 (current) vs dedicated VM
+## Placement: dedicated CI VM (goal) vs share override
 
-### Active cutover — Compose share KVM2 (operator override)
+### Active goal — dedicated Hostinger CI KVM
 
 | Item | Value |
 |------|--------|
-| Host | `185.211.4.66` / VM id `1280333` / hostname `lenr-sim-app.conscious.energy` |
-| Also serves | Live Compose + Caddy private beta https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
-| Runner name | `lenr-ci-share-1` |
-| Override flag | `ALLOW_SHARE_RUNNER=1` on register/bootstrap/finish scripts |
-| Why | Avoid a second Hostinger KVM purchase and extra secrets while Actions spend limit blocks hosted jobs |
-| Tradeoffs | PR job code co-tenants production Compose; CI load can contend with live traffic; blast radius is larger |
+| Labels | `self-hosted`, `linux`, `x64`, `lenr-ci` |
+| Hostname | `lenr-ci` |
+| Plan | KVM2 (`hostingercom-vps-kvm2-usd-1m` or `-1y`) |
+| Template | `1077` (Ubuntu 24.04) |
+| Post-install | `5725` (`lenr-ci-runner-bootstrap`) |
+| Data center | `24` (bos2) preferred |
+| Must not be | Share VM `1280333` / `185.211.4.66` |
+
+Provision (gated purchase — spends money):
+
+```bash
+export HOSTINGER_API_TOKEN=...
+export CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI
+./LENR_SIM_APP_v2/infrastructure/scripts/provision-dedicated-lenr-ci.sh
+# after VM running:
+export GH_RUNNER_REGISTRATION_TOKEN=...
+./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh   # no ALLOW_SHARE_RUNNER
+```
+
+Pending API orders `61650992` / `61651905` were `payment_initiated` only and
+**never created a second VM**. Complete **one** in [hPanel](https://hpanel.hostinger.com/)
+(3DS) with hostname `lenr-ci`, or abandon both and run a fresh gated purchase.
+
+### Share KVM2 — do **not** register as a runner (goal invariant)
+
+| Item | Value |
+|------|--------|
+| Host | `185.211.4.66` / VM `1280333` — live Compose beta only |
+| URL | https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
+
+A runner **tarball** may exist under `/opt/actions-runner` for tooling experiments,
+but the host must stay **GitHub-unregistered** (no `.runner`, no `lenr-ci` labels)
+while this goal is active. `ALLOW_SHARE_RUNNER=1` is an emergency override only
+if the dedicated-VM goal is explicitly waived; it co-tenants untrusted PR code
+with production Compose.
 
 **Do not** put `VPS_*` / deploy secrets on workflows that use `lenr-ci`. Keep
-`deploy.yml` on `ubuntu-latest`. Prefer wiping `_work` (cron installed by
-bootstrap) after jobs.
-
-Abandoned second-KVM path: Hostinger API orders `61650992` / `61651905` were
-`payment_initiated` only — **no second VM was provisioned**. Only subscription
-`AzZiGtV8fVJvR9YlG` (this KVM2, yearly) is active. Cancel/abandon those unpaid
-orders in [hPanel](https://hpanel.hostinger.com/) if they still appear; do not
-complete 3DS.
-
-### Preferred long-term — dedicated CI KVM (Option A)
-
-When budget allows, move `lenr-ci` off the share onto a second Hostinger KVM
-(hostname `lenr-ci`, labels unchanged) and remove `ALLOW_SHARE_RUNNER` usage.
-Post-install script id `5725` (`lenr-ci-runner-bootstrap`) remains for that path.
+`deploy.yml` on `ubuntu-latest`.
 
 ---
 
 ## Why isolation still matters
 
-- PR jobs execute untrusted branch code; co-tenancy with Compose increases blast
-  radius (mitigate with no deploy secrets on `lenr-ci`, workdir cleanup, low
-  concurrency).
+- PR jobs execute untrusted branch code; isolating that from production Compose
+  reduces blast radius.
 - See also [`CI_CD_COST_REDUCTION_PROPOSAL.md`](../../../CI_CD_COST_REDUCTION_PROPOSAL.md).
 
-## Provision (operator) — share override
+## Provision (operator) — dedicated VM
 
-1. SSH to `root@185.211.4.66` (pubkey). Confirm Compose healthy:
-   `curl -fsS https://lenr-sim-beta.conscious.energy/api/health`.
-2. Bootstrap (idempotent):
+1. Pay/provision a **second** Hostinger KVM (not `1280333`):
+   - hPanel: complete **one** pending order `61650992`/`61651905` as hostname
+     `lenr-ci`, **or**
+   - Gated script:
+     ```bash
+     export HOSTINGER_API_TOKEN=...
+     export CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI
+     ./LENR_SIM_APP_v2/infrastructure/scripts/provision-dedicated-lenr-ci.sh
+     ```
+2. Wait until Hostinger lists a VM id ≠ `1280333` with a public IP ≠
+   `185.211.4.66`. Confirm post-install (`/opt/actions-runner` on that host).
+3. Register (**no** `ALLOW_SHARE_RUNNER`):
 
    ```bash
-   export ALLOW_SHARE_RUNNER=1
-   ./LENR_SIM_APP_v2/infrastructure/scripts/bootstrap-share-lenr-ci.sh
-   ```
-
-3. Register (token from Settings → Actions → Runners → New self-hosted runner;
-   never commit):
-
-   ```bash
-   export ALLOW_SHARE_RUNNER=1
    export GH_RUNNER_REGISTRATION_TOKEN=...
-   ./LENR_SIM_APP_v2/infrastructure/scripts/register-lenr-ci-runner.sh
-   ```
-
-   From an agent host with SSH key access:
-
-   ```bash
-   export ALLOW_SHARE_RUNNER=1
-   export GH_RUNNER_REGISTRATION_TOKEN=...
-   # optional: SHARE_SSH_HOST=root@185.211.4.66
    ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
    ```
 
-4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-share-1`).
+4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
 5. Set repository **variable** `LENR_CI_RUNS_ON` to:
 
    ```json
@@ -89,6 +95,7 @@ Post-install script id `5725` (`lenr-ci-runner-bootstrap`) remains for that path
    Until Idle, **leave the variable unset**. Hosted jobs on this repo may fail
    with **0 steps** when the Actions spending limit is hit — self-hosted is the
    unblock.
+6. Confirm share `185.211.4.66` still has **no** GitHub runner registration.
 
 ## Secrets that stay in GitHub
 
@@ -104,9 +111,8 @@ in the UI and re-running `config.sh`.
 
 ## Secure setup: registration token + optional admin PAT
 
-**Threat model:** `lenr-ci` runs untrusted PR code on the same host as live
-Compose. Anything available to that runner pool is in the blast radius. Keep
-deploy credentials off it.
+**Threat model:** `lenr-ci` runs untrusted PR code. Keep it off the live Compose
+share. Keep deploy credentials off the runner pool.
 
 ### A) Runner registration token (required once)
 
@@ -116,18 +122,17 @@ deploy credentials off it.
 2. Copy only the `--token` value from the configure snippet (~1 hour TTL,
    single-use). Do **not** paste into chat, commits, Slack, or the PR body.
 3. Prefer injecting as Cursor / agent secret `GH_RUNNER_REGISTRATION_TOKEN`,
-   or run locally and `unset` immediately after:
+   or run on the **dedicated** CI VM / via finish helper:
 
    ```bash
-   export ALLOW_SHARE_RUNNER=1
    export GH_RUNNER_REGISTRATION_TOKEN='…'
    ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
    unset GH_RUNNER_REGISTRATION_TOKEN
    ```
 
-4. Confirm **Idle** name `lenr-ci-share-1`, labels
-   `self-hosted,linux,x64,lenr-ci`. If configure fails, remove any half-created
-   runner in the UI and mint a **new** token.
+4. Confirm **Idle** name `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`,
+   on a host that is **not** `185.211.4.66`. If configure fails, remove any
+   half-created runner in the UI and mint a **new** token.
 
 ### B) Optional fine-grained admin PAT (`GH_ADMIN_PAT`)
 
@@ -180,10 +185,11 @@ runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
 
 ## Verification checklist
 
-- [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-share-1` for share mode)
+- [ ] Dedicated VM id ≠ `1280333`; IP ≠ `185.211.4.66`
+- [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-1`)
+- [ ] Share `185.211.4.66` has no GitHub runner (`.runner` absent)
 - [ ] `LENR_CI_RUNS_ON` set only after Idle (or run `.github/workflows/lenr-ci-smoke.yml`)
-- [ ] Live beta still healthy after register: https://lenr-sim-beta.conscious.energy/api/health
-- [ ] Unpaid Hostinger KVM orders abandoned in hPanel
-- [ ] Deploy workflow never lists `lenr-ci`
+- [ ] Live beta still healthy: https://lenr-sim-beta.conscious.energy/api/health
+- [ ] Deploy workflow never `runs-on` `lenr-ci`
 - [ ] Four version markers unchanged (`0.3.7-beta`)
 - [ ] Root password rotated if it was shared for unlock

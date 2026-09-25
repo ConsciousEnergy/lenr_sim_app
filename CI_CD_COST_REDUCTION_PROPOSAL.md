@@ -2,14 +2,13 @@
 ## Alternative Solutions to GitHub Actions
 
 **Date:** September 24, 2026  
-**Status (Sept 2026):** **Placement updated.** Active cutover uses the existing
-Compose share KVM2 (`185.211.4.66` / VM `1280333`) with labels
-`self-hosted,linux,x64,lenr-ci`, `ALLOW_SHARE_RUNNER=1`, and repo variable
-`LENR_CI_RUNS_ON` — see
+**Status (Sept 2026):** **Dedicated CI VM is the goal.** Labels
+`self-hosted,linux,x64,lenr-ci` + repo variable `LENR_CI_RUNS_ON` on a Hostinger
+KVM that is **not** the Compose share (`185.211.4.66` / VM `1280333`). See
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
-A dedicated second KVM remains the preferred long-term isolation path; unpaid
-orders `61650992` / `61651905` should be abandoned in hPanel (never provisioned).
-Keep `deploy.yml` on GitHub-hosted runners so `VPS_*` never shares the PR pool.
+Unpaid orders `61650992` / `61651905` need one completed payment (or a fresh
+gated purchase). Keep `deploy.yml` on GitHub-hosted runners so `VPS_*` never
+shares the PR pool. Do **not** register a GitHub runner on the share.
 
 **Current Problem:** GitHub Actions billing is expensive for frequent PRs and merges  
 **Current Monthly Cost Drivers:**
