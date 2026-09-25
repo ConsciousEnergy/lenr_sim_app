@@ -31,7 +31,10 @@ Share bootstrap also installs `unzip`, `ansible`, and Playwright
 Chromium OS libs so jobs need no passwordless sudo.
 
 Unpaid second-KVM orders (`61650992`, `61651905`, `61656286`, `61656290`) were
-`payment_initiated` only — **abandon in hPanel**; co-tenant CI avoids that cost.
+`payment_initiated` only — **abandon in hPanel**. Active purchase for dedicated CI:
+order **`61660939`** (`payment_initiated` → complete **one** 3DS; hostname `lenr-ci`).
+After dedicated Idle, remove the share runner with
+`remove-share-lenr-ci-runner.sh` (`CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER`).
 
 ### Dedicated CI KVM (optional later)
 
