@@ -124,8 +124,9 @@ parallel academic review stays cheap.
 
 - [ ] New VM id ≠ `1280333`; hostname not the Compose share
 - [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci`
-- [ ] `LENR_CI_RUNS_ON` set only after Idle
+- [ ] `LENR_CI_RUNS_ON` set only after Idle (or run `.github/workflows/lenr-ci-smoke.yml` which is hard-pinned to those labels)
 - [ ] Docs-only PR: heavy jobs skipped; `version-consistency` still green
 - [ ] Code-touching PR: jobs land on `lenr-ci`
 - [ ] Deploy workflow never lists `lenr-ci`
 - [ ] Four version markers unchanged (`0.3.7-beta`)
+- [ ] Smoke: Actions → “lenr-ci smoke” → Run workflow (must not show share IP)

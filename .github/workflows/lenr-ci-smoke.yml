@@ -1,0 +1,45 @@
+name: lenr-ci smoke
+
+# Hard-pinned to the dedicated runner labels (no ubuntu-latest fallback).
+# Use this to prove self-hosted after the CI VM registers — does not consume
+# GitHub-hosted minutes. Do not run production deploys here.
+# See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md
+on:
+  # Manual only until the dedicated runner is Idle — avoids forever-queue on PRs
+  # while hosted Actions is spend-limited. After registration, Run workflow here.
+  workflow_dispatch:
+permissions:
+  contents: read
+
+concurrency:
+  group: lenr-ci-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: lenr-ci runner smoke
+    runs-on: [self-hosted, linux, x64, lenr-ci]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prove labels and host identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "runner_name=${RUNNER_NAME:-}"
+          echo "runner_os=${RUNNER_OS:-}"
+          echo "runner_arch=${RUNNER_ARCH:-}"
+          hostname -f || hostname
+          # Refuse if somehow running on the Compose share IP
+          if ip -4 addr 2>/dev/null | grep -q '185\.211\.4\.66'; then
+            echo "::error::Refuse: smoke must not run on Compose share 185.211.4.66"
+            exit 2
+          fi
+          EXPECTED=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          test "$EXPECTED" = "0.3.7-beta"
+          echo "version-consistency smoke: $EXPECTED OK"
+          echo "## lenr-ci smoke" >> "$GITHUB_STEP_SUMMARY"
+          echo "- host: $(hostname)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- version: ${EXPECTED}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- share IP check: PASS (not 185.211.4.66)" >> "$GITHUB_STEP_SUMMARY"
