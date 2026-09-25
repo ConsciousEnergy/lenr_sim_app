@@ -66,6 +66,26 @@ with production Compose.
   reduces blast radius.
 - See also [`CI_CD_COST_REDUCTION_PROPOSAL.md`](../../../CI_CD_COST_REDUCTION_PROPOSAL.md).
 
+## One KVM2 vs two (decision guide)
+
+Hostinger does not “partition” a VPS into isolated tenants. Co-locating means
+the same OS runs Compose/Swarm **and** `actions-runner`.
+
+| | Single KVM2 (co-tenant) | Dedicated CI KVM2 (this goal) |
+|--|--|--|
+| Cost | No new Hostinger line item | Extra monthly/yearly KVM2 |
+| Security | Untrusted PR code next to live stack | Blast radius limited to CI box |
+| Capacity | 2 vCPU / 8 GB shared with app/Swarm | CI load does not starve beta |
+| Swarm later | Possible for light staging; tight for busy CI + prod Swarm | Safer when both grow |
+| Deploy secrets | Must stay off `lenr-ci` either way | Same rule |
+
+**This goal requires the dedicated CI KVM2** and forbids registering a GitHub
+runner on share `185.211.4.66`. A single-box co-tenant is only valid if the
+dedicated-VM goal is explicitly waived.
+
+Pending payments: complete **one** hPanel 3DS (prefer `61656286`, hostname
+`lenr-ci`); cancel duplicate orders `61650992`, `61651905`, `61656290`.
+
 ## Provision (operator) — dedicated VM
 
 1. Pay/provision a **second** Hostinger KVM (not `1280333`):
