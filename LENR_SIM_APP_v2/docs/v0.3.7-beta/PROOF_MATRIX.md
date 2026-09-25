@@ -8,9 +8,10 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | NL + Markdown narrative | [PHYSICS_MATURITY_LEDGER.md](./PHYSICS_MATURITY_LEDGER.md) |
 | JSON ledger twin | [physics_maturity_ledger.json](./physics_maturity_ledger.json) |
 | YAML ledger twin | [physics_maturity_ledger.yaml](./physics_maturity_ledger.yaml) |
+| Unified Theory Paper (MD/TXT/TeX/Lean) | [paper/](./paper/) — canonical MD [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](../../../docs/A_Unified_Theoretical_Framework_for_LENR.md); provenance [`paper/PROVENANCE.md`](./paper/PROVENANCE.md) |
 | Lean proof status table | [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) |
 | Equation IR rows | [`formalization/ir/equations/`](../../../formalization/ir/equations/) |
-| Lean modules | [`formalization/lean/LenrFormal/`](../../../formalization/lean/LenrFormal/) |
+| Lean modules | [`formalization/lean/LenrFormal/`](../../../formalization/lean/LenrFormal/) (+ [`PaperCrosswalk.lean`](../../../formalization/lean/LenrFormal/PaperCrosswalk.lean)) |
 
 | ledger_id | NL claim (do / do not) | Markdown | JSON / YAML id | LaTeX stub | Lean / IR (status) |
 |-----------|------------------------|----------|----------------|------------|--------------------|

@@ -116,7 +116,7 @@ const TheoryPaperPage = () => {
                 variant="outlined"
               />
               <Chip
-                label="Date: 2026-02-14 (revised 2026-08-23, v0.3.6-beta)"
+                label="Date: 2026-02-14 (revised 2026-09-25, v0.3.7-beta)"
                 size="small"
                 variant="outlined"
               />

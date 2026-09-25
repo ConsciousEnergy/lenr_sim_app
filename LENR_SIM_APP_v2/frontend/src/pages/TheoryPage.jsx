@@ -817,7 +817,7 @@ const TheoryPage = () => {
             Sonnet/Opus family, Gemini family, xAI/Grok family, Composer (Cursor)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Date: revised 2026-08-23 (v0.3.6-beta) | Organization: www.conscious.energy
+            Date: revised 2026-09-25 (v0.3.7-beta) | Organization: www.conscious.energy
           </Typography>
         </Box>
       </Paper>
