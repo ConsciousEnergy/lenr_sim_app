@@ -16,6 +16,7 @@ Four markers must stay **`0.3.7-beta`** (do not bump to 0.3.8 in CI/docs PRs):
 | Surface | Meaning |
 |---------|---------|
 | `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** the CI goal host. Interim `lenr-ci-share-1` may still be registered until dedicated Idle + remove-share. |
+| Branch tip / `main` | Source of truth for code; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 
 Self-hosted CI **goal:** dedicated Hostinger VM (`lenr-ci`, id ≠ `1280333`) with
 labels `self-hosted,linux,x64,lenr-ci`, then **no** `.runner` on the share.

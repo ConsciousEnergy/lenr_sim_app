@@ -59,10 +59,12 @@ and root [`../AGENTS.md`](../AGENTS.md).
 
 Heavy PR/test jobs default to
 `["self-hosted","linux","x64","lenr-ci"]`. **Goal:** dedicated Hostinger CI VM
-(not the Compose share). Share `lenr-ci-share-1` is interim until order
-`61660939` 3DS clears and migrate removes it. Optional `LENR_CI_RUNS_ON`
-overrides (e.g. `["ubuntu-latest"]`). **Deploy/ship** (`deploy.yml`) stays on
-GitHub-hosted so `VPS_*` never shares a pool with untrusted PR code. See
+(not the Compose share), then remove share `lenr-ci-share-1`. Pending 3DS
+orders `61660939` / `61662216` / `61663818` (or PayPal/non-card + provision).
+`lenr-ci-smoke` refuses share unless `LENR_CI_ALLOW_SHARE=1`. Optional
+`LENR_CI_RUNS_ON` overrides (e.g. `["ubuntu-latest"]`). **Deploy/ship**
+(`deploy.yml`) stays on GitHub-hosted so `VPS_*` never shares a pool with
+untrusted PR code. See
 [`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
 ## Cutting a release
