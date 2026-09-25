@@ -32,6 +32,9 @@ export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
 ./LENR_SIM_APP_v2/infrastructure/scripts/migrate-to-dedicated-lenr-ci.sh
 ```
 
+Agent/tmux auto-path (when token becomes usable):
+`watch-and-migrate-dedicated-lenr-ci.sh`.
+
 Or: `provision-dedicated-lenr-ci.sh` (needs `CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`)
 then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
 `remove-share-lenr-ci-runner.sh`.
