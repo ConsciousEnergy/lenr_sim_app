@@ -20,6 +20,19 @@ mkdir -p "$(dirname "$LOG")"
 
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*" | tee -a "$LOG"; }
 
+# Re-load secrets each loop so Cursor-injected tokens are picked up without restart.
+ENV_FILE="${ENV_FILE:-/tmp/lenr-ci-watch.env}"
+reload_env() {
+  if [[ -f "$ENV_FILE" ]]; then
+    # shellcheck disable=SC1090
+    set -a
+    # Prefer file values for token fields; keep HOSTINGER_API_TOKEN if already set.
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    set +a
+  fi
+}
+
 token_usable() {
   local t="${GH_RUNNER_REGISTRATION_TOKEN:-}"
   [[ -n "$t" && "$t" != G1th* && "$t" != placeholder* && "${#t}" -ge 40 ]]
@@ -50,6 +63,7 @@ fi
 
 log "auto-migrate watch start (share_vm=${SHARE_VM_ID})"
 while true; do
+  reload_env
   found="$(find_dedicated || true)"
   if [[ -z "$found" ]]; then
     log "wait: no dedicated VM yet (complete 3DS for order 61660939)"
