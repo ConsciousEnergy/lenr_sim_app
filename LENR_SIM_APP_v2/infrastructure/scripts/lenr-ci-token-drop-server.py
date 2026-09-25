@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Operator drop for GH_RUNNER_REGISTRATION_TOKEN + optional hPanel creds."""
+"""Operator drop + live status for dedicated lenr-ci cutover."""
 from __future__ import annotations
-import json, os
+import json, os, urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -11,30 +11,93 @@ WATCH_ENV = Path("/tmp/lenr-ci-watch.env")
 DROP_DIR = Path("/tmp/lenr-ci-drop-artifacts")
 HPANEL_ENV = Path("/tmp/lenr-ci-hpanel.env")
 HOSTINGER = os.environ.get("HOSTINGER_API_TOKEN", "")
+SHARE_VM = 1280333
 
-HTML = f"""<!doctype html>
-<html><head><meta charset=utf-8><title>lenr-ci unlock drop</title>
-<style>body{{font-family:system-ui;max-width:42rem;margin:2rem auto;padding:0 1rem}}
+def hostinger_vms():
+    if not HOSTINGER:
+        return []
+    req = urllib.request.Request(
+        "https://developers.hostinger.com/api/vps/v1/virtual-machines",
+        headers={"Authorization": f"Bearer {HOSTINGER}", "Accept": "application/json", "User-Agent": "lenr-ci-drop"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as r:
+        data = json.loads(r.read().decode())
+    return data if isinstance(data, list) else data.get("data", [])
+
+def status_dict():
+    vms = []
+    try:
+        vms = hostinger_vms()
+    except Exception as e:
+        vms = [{"error": str(e)}]
+    dedicated = [v for v in vms if isinstance(v, dict) and int(v.get("id", 0)) != SHARE_VM]
+    tok_usable = False
+    if WATCH_ENV.exists():
+        for line in WATCH_ENV.read_text().splitlines():
+            if line.startswith("GH_RUNNER_REGISTRATION_TOKEN="):
+                t = line.split("=", 1)[1]
+                tok_usable = len(t) >= 40 and not t.startswith("G1th") and not t.startswith("placeholder")
+    return {
+        "vm_count": len([v for v in vms if isinstance(v, dict) and "id" in v]),
+        "vms": [
+            {
+                "id": v.get("id"),
+                "hostname": v.get("hostname"),
+                "ip": ((v.get("ipv4") or [{}])[0].get("address")),
+                "state": v.get("state"),
+            }
+            for v in vms if isinstance(v, dict) and "id" in v
+        ],
+        "dedicated_found": bool(dedicated),
+        "token_usable": tok_usable,
+        "hpanel_creds": HPANEL_ENV.exists(),
+        "drop_received": (DROP_DIR / "token_received").exists(),
+        "orders_awaiting_3ds": ["61660939", "61662216"],
+        "goal_ready": bool(dedicated) and tok_usable,
+    }
+
+def page_html():
+    st = status_dict()
+    rows = "".join(
+        f"<tr><td>{v.get('id')}</td><td>{v.get('hostname')}</td><td>{v.get('ip')}</td><td>{v.get('state')}</td></tr>"
+        for v in st["vms"]
+    ) or "<tr><td colspan=4>none</td></tr>"
+    ready = "READY TO MIGRATE" if st["goal_ready"] else "BLOCKED — need 3DS + token"
+    color = "#0a0" if st["goal_ready"] else "#a40"
+    return f"""<!doctype html>
+<html><head><meta charset=utf-8><title>lenr-ci unlock</title>
+<meta http-equiv=refresh content=30>
+<style>
+body{{font-family:system-ui;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.4}}
+table{{border-collapse:collapse;width:100%;margin:.5rem 0 1rem}}
+td,th{{border:1px solid #ccc;padding:.4rem .55rem;text-align:left;font-size:.95rem}}
+.banner{{padding:.8rem 1rem;border-radius:8px;background:{color};color:#fff;font-weight:600}}
 input,textarea,button{{width:100%;margin:.35rem 0;padding:.6rem;font-size:1rem}}
-.ok{{color:green}}.err{{color:#a00}}small{{color:#555}}</style></head>
-<body>
-<h1>lenr-ci unlock drop</h1>
-<p>Complete Hostinger 3DS in another tab, then paste a fresh GitHub runner token here.</p>
-<form method=POST action="/drop/{SECRET}">
-<label>GH_RUNNER_REGISTRATION_TOKEN (required for migrate)</label>
-<input name=token autocomplete=off minlength=40 placeholder="AQP... from New self-hosted runner">
-<label>Notes (optional — e.g. 3DS done, VM id/IP)</label>
-<textarea name=notes rows=2 placeholder="3DS done for 61660939"></textarea>
+a.btn{{display:inline-block;margin:.4rem 0 1rem;padding:.7rem 1rem;background:#0b5fff;color:#fff;text-decoration:none;border-radius:8px}}
+.ok{{color:green}}.err{{color:#a00}}small{{color:#555}}
+</style></head><body>
+<h1>lenr-ci dedicated unlock</h1>
+<p class=banner>{ready}</p>
+<p><a class=btn href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing → complete ONE 3DS</a></p>
+<p>Orders: <b>61660939</b> (KVM2) or <b>61662216</b> (KVM1). Cancel the other unpaid duplicates. Do not touch share VM 1280333.</p>
+<h2>Live Hostinger VMs</h2>
+<table><tr><th>id</th><th>hostname</th><th>ip</th><th>state</th></tr>{rows}</table>
+<p>dedicated_found=<b>{st['dedicated_found']}</b> · token_usable=<b>{st['token_usable']}</b> · hpanel_creds=<b>{st['hpanel_creds']}</b></p>
 <hr>
-<label>HOSTINGER_HPANEL_EMAIL (optional — agent-assisted login)</label>
-<input name=hpanel_email autocomplete=username type=email placeholder="you@example.com">
+<h2>Drop secrets</h2>
+<form method=POST action="/drop/{SECRET}">
+<label>GH_RUNNER_REGISTRATION_TOKEN</label>
+<input name=token autocomplete=off minlength=40 placeholder="from GitHub → Runners → New self-hosted runner">
+<label>Notes (optional)</label>
+<textarea name=notes rows=2 placeholder="3DS done for 61660939; new VM id/IP"></textarea>
+<label>HOSTINGER_HPANEL_EMAIL (optional)</label>
+<input name=hpanel_email type=email autocomplete=username>
 <label>HOSTINGER_HPANEL_PASSWORD (optional)</label>
-<input name=hpanel_password autocomplete=current-password type=password>
+<input name=hpanel_password type=password autocomplete=current-password>
 <button type=submit>Submit</button>
 </form>
-<p><small>Orders awaiting 3DS: 61660939 (KVM2) or 61662216 (KVM1). Do not register on 185.211.4.66.</small></p>
-</body></html>
-"""
+<p><small>Auto-refresh 30s. Never register a runner on 185.211.4.66. Beta must stay 0.3.7-beta.</small></p>
+</body></html>"""
 
 class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
@@ -51,21 +114,11 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path in ("/", f"/drop/{SECRET}"):
-            return self._send(200, HTML)
+            return self._send(200, page_html())
         if path == "/health":
             return self._send(200, "ok\n", "text/plain")
         if path == "/status":
-            st = {
-                "token_usable": False,
-                "hpanel_creds": HPANEL_ENV.exists(),
-                "drop_received": (DROP_DIR / "token_received").exists(),
-            }
-            if WATCH_ENV.exists():
-                for line in WATCH_ENV.read_text().splitlines():
-                    if line.startswith("GH_RUNNER_REGISTRATION_TOKEN="):
-                        t = line.split("=", 1)[1]
-                        st["token_usable"] = len(t) >= 40 and not t.startswith("G1th")
-            return self._send(200, json.dumps(st) + "\n", "application/json")
+            return self._send(200, json.dumps(status_dict()) + "\n", "application/json")
         return self._send(404, "not found\n", "text/plain")
 
     def do_POST(self):
@@ -91,31 +144,23 @@ class H(BaseHTTPRequestHandler):
             notes = (qs.get("notes") or [""])[0]
             email = (qs.get("hpanel_email") or [""])[0]
             password = (qs.get("hpanel_password") or [""])[0]
-        token = token.strip()
-        email = email.strip()
-        password = password.strip()
+        token = token.strip(); email = email.strip(); password = password.strip()
         DROP_DIR.mkdir(parents=True, exist_ok=True)
         parts = []
         if email and password:
-            HPANEL_ENV.write_text(
-                f"HOSTINGER_HPANEL_EMAIL={email}\nHOSTINGER_HPANEL_PASSWORD={password}\n"
-            )
+            HPANEL_ENV.write_text(f"HOSTINGER_HPANEL_EMAIL={email}\nHOSTINGER_HPANEL_PASSWORD={password}\n")
             HPANEL_ENV.chmod(0o600)
             (DROP_DIR / "hpanel_creds_received").write_text("ok\n")
             parts.append("hPanel credentials saved")
         if token:
             if len(token) < 40 or token.startswith("G1th") or token.startswith("placeholder"):
-                return self._send(400, HTML.replace("</form>", "<p class=err>Token rejected (need real one-time token, len≥40).</p></form>"))
+                return self._send(400, page_html().replace("</form>", "<p class=err>Token rejected (len≥40, not placeholder).</p></form>"))
             ht = HOSTINGER
             if WATCH_ENV.exists():
                 for line in WATCH_ENV.read_text().splitlines():
                     if line.startswith("HOSTINGER_API_TOKEN="):
                         ht = line.split("=", 1)[1]
-            WATCH_ENV.write_text(
-                f"HOSTINGER_API_TOKEN={ht}\n"
-                f"GH_RUNNER_REGISTRATION_TOKEN={token}\n"
-                f"POLL_SECONDS=20\n"
-            )
+            WATCH_ENV.write_text(f"HOSTINGER_API_TOKEN={ht}\nGH_RUNNER_REGISTRATION_TOKEN={token}\nPOLL_SECONDS=20\n")
             WATCH_ENV.chmod(0o600)
             (DROP_DIR / "token_received").write_text("ok\n")
             parts.append("runner token saved")
@@ -123,8 +168,7 @@ class H(BaseHTTPRequestHandler):
             (DROP_DIR / "notes.txt").write_text(notes.strip() + "\n")
             parts.append("notes saved")
         if not parts:
-            return self._send(400, HTML.replace("</form>", "<p class=err>Provide a token and/or hPanel credentials.</p></form>"))
-        msg = "; ".join(parts)
-        return self._send(200, f"<html><body><h1 class=ok>Accepted</h1><p>{msg}. Watcher / agent will pick this up.</p></body></html>")
+            return self._send(400, page_html().replace("</form>", "<p class=err>Provide a token and/or hPanel credentials.</p></form>"))
+        return self._send(200, f"<html><body><h1 class=ok>Accepted</h1><p>{'; '.join(parts)}</p><p><a href='/'>Back to status</a></p></body></html>")
 
 HTTPServer(("127.0.0.1", 8787), H).serve_forever()
