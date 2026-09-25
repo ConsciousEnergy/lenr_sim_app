@@ -30,8 +30,10 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 | Target hostname | `lenr-ci` |
 | Post-install | Hostinger script **`5725`** (`lenr-ci-runner-bootstrap`) — runner package **2.337.0** + sha256 check |
 | Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
+| Alt (Hostinger API guidance) | Card 3DS often leaves API orders unprocessed — add **PayPal** (or non-card) in hPanel → Billing → Payment methods, set it default, then re-run `provision-dedicated-lenr-ci.sh` (do **not** stack more card orders while 3DS is open) |
 | Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` (real one-time token; not `G1th*` placeholder) → `migrate-to-dedicated-lenr-ci.sh` |
 | Agent cannot mint token | Cursor `gh` integration lacks runner admin; `GH_ADMIN_PAT` must be a real `ghp_`/`github_pat_` if automation should mint tokens |
+| Password assist | Hostinger reset email → set password → paste on unlock drop page (`HOSTINGER_HPANEL_PASSWORD`) so Playwright can open billing |
 
 ```bash
 export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh GitHub one-time token
