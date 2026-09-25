@@ -19,6 +19,7 @@ import LenrFormal.OpenObligations
 import LenrFormal.OpenQuestionBounds
 import LenrFormal.WorkingHypothesis
 import LenrFormal.WorkingHypothesisBounds
+import LenrFormal.PaperCrosswalk
 
 /-!
 # LenrFormal — mechanized consistency pilot for Unified LENR Theory

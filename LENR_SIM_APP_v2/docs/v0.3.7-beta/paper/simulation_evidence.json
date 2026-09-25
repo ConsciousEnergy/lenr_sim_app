@@ -1,0 +1,43 @@
+{
+  "schema": "lenr-paper-simulation-evidence-v1",
+  "train": "v0.3.7-beta",
+  "paper_revision": "2026-09-25",
+  "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
+  "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*.",
+  "lenr_proved": false,
+  "empirical_claim_tiers_raised": false,
+  "open_ids": [
+    "EQ-OPEN-MEV-01",
+    "EQ-OPEN-RAD-01",
+    "EQ-OPEN-RATE-01",
+    "EQ-OPEN-EC-01",
+    "EQ-OPEN-YIELD-01"
+  ],
+  "contract_version": "v0.3.7-beta-science-gate-1",
+  "export_schema": "lenr-run-export-v1",
+  "reviewer_packs": [
+    {
+      "preset": "smoke",
+      "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/smoke/",
+      "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/smoke/manifest.json"
+    },
+    {
+      "preset": "q_campaign_demo",
+      "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/",
+      "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/manifest.json",
+      "n_experiments": 150,
+      "n_theory_runs": 132,
+      "pack_git_sha": "99114db41878dba280ce269633a3cfadb442efb1"
+    }
+  ],
+  "campaign_invariants": "formalization/predictions/campaign_invariants.json",
+  "paper_benchmarks": "LENR_SIM_APP_v2/backend/tests/test_paper_benchmarks/",
+  "lean_crosswalk": "formalization/lean/LenrFormal/PaperCrosswalk.lean",
+  "engine_sync_notes": [
+    "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3",
+    "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback",
+    "WH-ENP-01 / v2 bounds retained in paper section 5A; do not close EQ-OPEN-*"
+  ],
+  "formats": [".md", ".txt", ".tex", ".lean"]
+}
