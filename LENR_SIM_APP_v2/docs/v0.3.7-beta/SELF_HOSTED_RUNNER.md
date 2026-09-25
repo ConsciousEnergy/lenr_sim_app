@@ -12,6 +12,16 @@
 | Deploy / ship jobs | Stay on GitHub-hosted (`ubuntu-latest`) or a future `lenr-deploy` label — **never** on `lenr-ci` with untrusted PR code + `VPS_*` secrets |
 | Share VPS | `185.211.4.66` / VM id `1280333` — **deploy target only**; do **not** register a runner here |
 
+**Share / private beta (do not use as CI):** Hostinger VM `1280333`,
+`root@185.211.4.66`, https://lenr-sim-beta.conscious.energy/ — live Compose +
+Caddy private beta (`0.3.7-beta`). Deploy **target** only. Never install a
+GitHub Actions runner here (PR code isolation + load).
+
+**CI runner (this doc):** a **second** Hostinger KVM with labels
+`self-hosted`, `linux`, `x64`, `lenr-ci`. See provision status below.
+
+---
+
 ## Why a separate VM
 
 - PR jobs execute untrusted branch code; isolating that from production Compose
