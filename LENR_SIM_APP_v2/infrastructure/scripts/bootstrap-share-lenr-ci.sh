@@ -30,6 +30,11 @@ if ! command -v node >/dev/null 2>&1; then
   apt-get install -y -qq nodejs
 fi
 
+# CI job deps the github-runner user cannot sudo-install (no passwordless sudo).
+apt-get update -qq
+apt-get install -y -qq unzip ansible
+npx --yes playwright install-deps chromium >/dev/null
+
 id github-runner >/dev/null 2>&1 || useradd -m -s /bin/bash github-runner
 usermod -aG docker github-runner 2>/dev/null || true
 

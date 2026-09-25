@@ -285,7 +285,13 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           cd LENR_SIM_APP_v2/frontend
-          npx playwright install --with-deps chromium
+          # Self-hosted lenr-ci: OS libs preinstalled by bootstrap (no sudo).
+          # GitHub-hosted: --with-deps installs the libs.
+          if [ "${{ runner.environment }}" = "self-hosted" ]; then
+            npx playwright install chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
 
       - name: Run Playwright (Chromium)
         working-directory: LENR_SIM_APP_v2/frontend
@@ -369,8 +375,15 @@ jobs:
 
       - name: Install Ansible
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
+          if command -v ansible >/dev/null 2>&1; then
+            ansible --version | head -1
+          elif [ "${{ runner.environment }}" = "self-hosted" ]; then
+            echo "ansible missing on self-hosted runner; re-run bootstrap-share-lenr-ci.sh" >&2
+            exit 1
+          else
+            sudo apt-get update
+            sudo apt-get install -y ansible
+          fi
 
       - name: Local staging dry-run (confirm gates + validate + syntax-check)
         env:

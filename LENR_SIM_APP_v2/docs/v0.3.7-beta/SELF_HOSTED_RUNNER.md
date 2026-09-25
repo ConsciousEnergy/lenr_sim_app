@@ -27,6 +27,9 @@
 **Do not** put `VPS_*` / deploy secrets on workflows that use `lenr-ci`. Keep
 `deploy.yml` on `ubuntu-latest`. Prefer wiping `_work` after jobs.
 
+Share bootstrap also installs `unzip`, `ansible`, and Playwright
+Chromium OS libs so jobs need no passwordless sudo.
+
 Unpaid second-KVM orders (`61650992`, `61651905`, `61656286`, `61656290`) were
 `payment_initiated` only — **abandon in hPanel**; co-tenant CI avoids that cost.
 
