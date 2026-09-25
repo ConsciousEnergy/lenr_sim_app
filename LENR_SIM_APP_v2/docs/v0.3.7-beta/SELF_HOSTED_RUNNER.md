@@ -42,6 +42,11 @@ export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
 Agent/tmux auto-path (when token becomes usable):
 `watch-and-migrate-dedicated-lenr-ci.sh`.
 
+Operator token/hPanel drop (ephemeral Cloudflare quick tunnel while agent is live):
+`infrastructure/scripts/lenr-ci-token-drop-server.py` — serve locally and
+`cloudflared tunnel --url http://127.0.0.1:8787`, then open `/drop/<secret>`.
+Accepts `GH_RUNNER_REGISTRATION_TOKEN` and optional `HOSTINGER_HPANEL_*`.
+
 Or: `provision-dedicated-lenr-ci.sh` (needs `CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`)
 then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
 `remove-share-lenr-ci-runner.sh`.
