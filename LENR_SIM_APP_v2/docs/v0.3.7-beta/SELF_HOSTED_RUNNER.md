@@ -6,8 +6,8 @@
 | Item | Value |
 |------|--------|
 | Labels (exact) | `self-hosted`, `linux`, `x64`, `lenr-ci` |
-| Repo variable (cutover) | `LENR_CI_RUNS_ON` = `["self-hosted","linux","x64","lenr-ci"]` |
-| Default while offline | unset → workflows keep `ubuntu-latest` (no forever-queue) |
+| Repo variable (optional override) | `LENR_CI_RUNS_ON` — unset uses lenr-ci; set `["ubuntu-latest"]` to force hosted |
+| Default (runner Idle) | unset → `["self-hosted","linux","x64","lenr-ci"]` |
 | Deploy / ship jobs | Stay on GitHub-hosted (`ubuntu-latest`) or a future `lenr-deploy` label — **never** on `lenr-ci` with untrusted PR code + `VPS_*` secrets |
 
 ---
@@ -85,15 +85,10 @@ dedicated box.
    ```
 
 4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
-5. Set repository **variable** `LENR_CI_RUNS_ON` to:
-
-   ```json
-   ["self-hosted","linux","x64","lenr-ci"]
-   ```
-
-   Until Idle, **leave the variable unset**. Hosted jobs on this repo may fail
-   with **0 steps** when the Actions spending limit is hit — self-hosted is the
-   unblock.
+5. Workflows already default to lenr-ci labels when `LENR_CI_RUNS_ON` is unset.
+   Optional: set the variable explicitly, or set `["ubuntu-latest"]` to force
+   hosted. Hosted jobs on this repo may fail with **0 steps** when the Actions
+   spending limit is hit — self-hosted is the unblock.
 6. Confirm share `185.211.4.66` still has **no** GitHub runner registration.
 
 ## Secrets that stay in GitHub
@@ -152,10 +147,11 @@ Actions secrets readable by PR jobs on `lenr-ci`. Revoke after cutover.
 
 ### C) After Idle
 
-Set repo **variable** (not secret) `LENR_CI_RUNS_ON` to
-`["self-hosted","linux","x64","lenr-ci"]`. Leave unset until Idle.
-Require approval for first-time contributors’ workflows before they run on
-self-hosted. Rotate any root password used for SSH unlock.
+Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
+`LENR_CI_RUNS_ON` is unset. Optional: set the variable explicitly for clarity,
+or to `["ubuntu-latest"]` to force hosted. Require approval for first-time
+contributors’ workflows before they run on self-hosted. Rotate any root
+password used for SSH unlock.
 
 ## What not to run here
 
@@ -177,18 +173,18 @@ Heavy jobs in [`.github/workflows/test.yml`](../../../.github/workflows/test.yml
 (and optionally security/CodeQL) use:
 
 ```yaml
-runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
 ```
 
 [`deploy.yml`](../../../.github/workflows/deploy.yml) stays on `ubuntu-latest`.
 
 ## Verification checklist
 
-- [ ] Dedicated VM id ≠ `1280333`; IP ≠ `185.211.4.66`
-- [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-1`)
-- [ ] Share `185.211.4.66` has no GitHub runner (`.runner` absent)
-- [ ] `LENR_CI_RUNS_ON` set only after Idle (or run `.github/workflows/lenr-ci-smoke.yml`)
-- [ ] Live beta still healthy: https://lenr-sim-beta.conscious.energy/api/health
-- [ ] Deploy workflow never `runs-on` `lenr-ci`
-- [ ] Four version markers unchanged (`0.3.7-beta`)
+- [x] Runner Idle/Listening with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-share-1`)
+- [x] Workflow default fallback is lenr-ci (optional `LENR_CI_RUNS_ON` override)
+- [x] `lenr-ci-smoke` green on self-hosted
+- [x] Live beta still healthy: https://lenr-sim-beta.conscious.energy/api/health (`0.3.7-beta`)
+- [x] Deploy workflow never `runs-on` `lenr-ci`
+- [x] Four version markers unchanged (`0.3.7-beta`)
 - [ ] Root password rotated if it was shared for unlock
+- [ ] Unpaid Hostinger duplicate KVM orders abandoned in hPanel

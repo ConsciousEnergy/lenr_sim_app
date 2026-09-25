@@ -22,7 +22,9 @@ Self-hosted CI (`lenr-ci`) co-tenants the Compose share KVM2 for cost control. K
 `deploy.yml` off `lenr-ci`. Never expose `VPS_*` to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
-Repo variable `LENR_CI_RUNS_ON` → `["self-hosted","linux","x64","lenr-ci"]` only after the runner is Idle; leave unset to keep `ubuntu-latest`.
+Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
+`LENR_CI_RUNS_ON` is unset (runner Idle on share). Set the variable to
+`["ubuntu-latest"]` only to force hosted.
 
 ## Cutover map (Compose now → Swarm later)
 

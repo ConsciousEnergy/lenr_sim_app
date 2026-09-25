@@ -94,12 +94,12 @@ systemctl status actions.runner.ConsciousEnergy-lenr_sim_app.*
 Workflows already use:
 
 ```yaml
-runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
 ```
 
-Set `LENR_CI_RUNS_ON` to `["self-hosted","linux","x64","lenr-ci"]` only after the
-runner is Idle. Do **not** dual-run hosted + self-hosted. `deploy.yml` stays on
-`ubuntu-latest`.
+Default fallback is lenr-ci once the runner is Idle. Optional `LENR_CI_RUNS_ON`
+override (e.g. `["ubuntu-latest"]`). Do **not** dual-run hosted + self-hosted.
+`deploy.yml` stays on `ubuntu-latest`.
 
 #### Step 4: Optimize Runner Performance
 ```bash
