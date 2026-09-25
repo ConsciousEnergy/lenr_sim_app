@@ -6,7 +6,7 @@
 #
 # Env:
 #   HOSTINGER_API_TOKEN              required
-#   GH_RUNNER_REGISTRATION_TOKEN     required (len>=20, not placeholder)
+#   GH_RUNNER_REGISTRATION_TOKEN     required (len>=40, not placeholder)
 #   CONFIRM_REMOVE_SHARE_RUNNER      must be I_REMOVE_SHARE_RUNNER to clear share
 #   POLL_SECONDS / MAX_POLLS         optional (passed to finish-lenr-ci)
 set -euo pipefail
@@ -27,8 +27,8 @@ fi
 if [[ -z "${GH_RUNNER_REGISTRATION_TOKEN:-}" \
    || "$GH_RUNNER_REGISTRATION_TOKEN" == G1th* \
    || "$GH_RUNNER_REGISTRATION_TOKEN" == placeholder* \
-   || "${#GH_RUNNER_REGISTRATION_TOKEN}" -lt 20 ]]; then
-  echo "Usable GH_RUNNER_REGISTRATION_TOKEN required (fresh GitHub one-time token)." >&2
+   || "${#GH_RUNNER_REGISTRATION_TOKEN}" -lt 40 ]]; then
+  echo "Usable GH_RUNNER_REGISTRATION_TOKEN required (fresh GitHub one-time token, len>=40)." >&2
   exit 1
 fi
 

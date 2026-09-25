@@ -23,8 +23,10 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 |------|--------|
 | Orders | **`61660939`** (KVM2) / **`61662216`** (KVM1) — both `payment_initiated`; complete **one** 3DS |
 | Target hostname | `lenr-ci` |
+| Post-install | Hostinger script **`5725`** (`lenr-ci-runner-bootstrap`) — runner package **2.337.0** + sha256 check |
 | Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
-| Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `migrate-to-dedicated-lenr-ci.sh` |
+| Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` (real one-time token; not `G1th*` placeholder) → `migrate-to-dedicated-lenr-ci.sh` |
+| Agent cannot mint token | Cursor `gh` integration lacks runner admin; `GH_ADMIN_PAT` must be a real `ghp_`/`github_pat_` if automation should mint tokens |
 
 ```bash
 export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh GitHub one-time token
