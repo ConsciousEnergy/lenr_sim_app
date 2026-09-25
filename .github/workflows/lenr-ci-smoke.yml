@@ -1,12 +1,10 @@
 name: lenr-ci smoke
 
-# Hard-pinned to the dedicated runner labels (no ubuntu-latest fallback).
-# Use this to prove self-hosted after the CI VM registers — does not consume
-# GitHub-hosted minutes. Do not run production deploys here.
+# Hard-pinned to lenr-ci labels (no ubuntu-latest fallback).
+# Proves self-hosted after registration — does not consume GitHub-hosted minutes.
+# Deploy workflows must never use this runner.
 # See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md
 on:
-  # Manual only until the dedicated runner is Idle — avoids forever-queue on PRs
-  # while hosted Actions is spend-limited. After registration, Run workflow here.
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,10 +29,20 @@ jobs:
           echo "runner_os=${RUNNER_OS:-}"
           echo "runner_arch=${RUNNER_ARCH:-}"
           hostname -f || hostname
-          # Refuse if somehow running on the Compose share IP
+          ON_SHARE=0
           if ip -4 addr 2>/dev/null | grep -q '185\.211\.4\.66'; then
-            echo "::error::Refuse: smoke must not run on Compose share 185.211.4.66"
-            exit 2
+            ON_SHARE=1
+          fi
+          # Dedicated-VM mode: refuse share. Share override: allow and label clearly.
+          if [[ "$ON_SHARE" -eq 1 && "${LENR_CI_ALLOW_SHARE:-}" != "1" ]]; then
+            # Repo variable LENR_CI_ALLOW_SHARE=1 documents intentional co-tenant CI.
+            # Also accept runner name convention from register script.
+            if [[ "${RUNNER_NAME:-}" == lenr-ci-share* ]]; then
+              echo "Share co-tenant runner detected (name=${RUNNER_NAME})."
+            else
+              echo "::error::Refuse: smoke on Compose share 185.211.4.66 without share override (set runner name lenr-ci-share-* or env LENR_CI_ALLOW_SHARE=1)"
+              exit 2
+            fi
           fi
           EXPECTED=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
           test "$EXPECTED" = "0.3.7-beta"
@@ -42,4 +50,8 @@ jobs:
           echo "## lenr-ci smoke" >> "$GITHUB_STEP_SUMMARY"
           echo "- host: $(hostname)" >> "$GITHUB_STEP_SUMMARY"
           echo "- version: ${EXPECTED}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- share IP check: PASS (not 185.211.4.66)" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$ON_SHARE" -eq 1 ]]; then
+            echo "- placement: Compose share KVM2 (ALLOW_SHARE_RUNNER override)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- placement: dedicated CI VM (not 185.211.4.66)" >> "$GITHUB_STEP_SUMMARY"
+          fi

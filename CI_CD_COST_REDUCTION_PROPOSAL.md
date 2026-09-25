@@ -2,13 +2,14 @@
 ## Alternative Solutions to GitHub Actions
 
 **Date:** September 24, 2026  
-**Status (Sept 2026):** **Superseded for placement.** Adopted path is a
-**dedicated** Hostinger CI VM with labels `self-hosted,linux,x64,lenr-ci` and
-repo variable `LENR_CI_RUNS_ON` — see
+**Status (Sept 2026):** **Placement updated.** Active cutover uses the existing
+Compose share KVM2 (`185.211.4.66` / VM `1280333`) with labels
+`self-hosted,linux,x64,lenr-ci`, `ALLOW_SHARE_RUNNER=1`, and repo variable
+`LENR_CI_RUNS_ON` — see
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
-**Do not** install a runner on the Compose share VPS (`185.211.4.66` / VM
-`1280333`). Early Option 1 draft text below that SSHs to the share host is
-**historical only**.
+A dedicated second KVM remains the preferred long-term isolation path; unpaid
+orders `61650992` / `61651905` should be abandoned in hPanel (never provisioned).
+Keep `deploy.yml` on GitHub-hosted runners so `VPS_*` never shares the PR pool.
 
 **Current Problem:** GitHub Actions billing is expensive for frequent PRs and merges  
 **Current Monthly Cost Drivers:**

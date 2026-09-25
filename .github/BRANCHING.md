@@ -58,10 +58,11 @@ and root [`../AGENTS.md`](../AGENTS.md).
 ## Self-hosted CI
 
 Heavy PR/test jobs use repo variable `LENR_CI_RUNS_ON` when set to
-`["self-hosted","linux","x64","lenr-ci"]` (dedicated Hostinger CI VM). Leave
-unset to stay on `ubuntu-latest`. **Deploy/ship** (`deploy.yml`) stays on
+`["self-hosted","linux","x64","lenr-ci"]`. Placement is currently the Compose
+share KVM2 (`185.211.4.66`) under `ALLOW_SHARE_RUNNER=1` (dedicated CI VM later).
+Leave unset to stay on `ubuntu-latest`. **Deploy/ship** (`deploy.yml`) stays on
 GitHub-hosted runners so `VPS_*` never shares a pool with untrusted PR code.
-The Compose share VPS (`185.211.4.66`) is never a runner.
+See [`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
 ## Cutting a release
 

@@ -5,7 +5,7 @@ name: Test and Benchmark
 #
 # Runner: set repo variable LENR_CI_RUNS_ON to
 #   ["self-hosted","linux","x64","lenr-ci"]
-# after the dedicated CI VM is Idle. Leave unset to keep ubuntu-latest
+# after the lenr-ci runner is Idle (share KVM2 or dedicated). Leave unset for ubuntu-latest
 # (avoids forever-queue). See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md.
 # Deploy/ship stays on GitHub-hosted — never mix VPS_* with lenr-ci PR jobs.
 on:

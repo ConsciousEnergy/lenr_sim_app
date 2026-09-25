@@ -1,8 +1,7 @@
 # Self-hosted GitHub Actions runner (lenr-ci)
 
 **Train:** v0.3.7-beta ops / CI cost  
-**Goal:** Near-zero GitHub-hosted Actions minutes for PR/test work via a
-**dedicated** Hostinger KVM — **not** the live Compose share VPS.
+**Goal:** Near-zero GitHub-hosted Actions minutes for PR/test work.
 
 | Item | Value |
 |------|--------|
@@ -10,80 +9,91 @@
 | Repo variable (cutover) | `LENR_CI_RUNS_ON` = `["self-hosted","linux","x64","lenr-ci"]` |
 | Default while offline | unset → workflows keep `ubuntu-latest` (no forever-queue) |
 | Deploy / ship jobs | Stay on GitHub-hosted (`ubuntu-latest`) or a future `lenr-deploy` label — **never** on `lenr-ci` with untrusted PR code + `VPS_*` secrets |
-| Share VPS | `185.211.4.66` / VM id `1280333` — **deploy target only**; do **not** register a runner here |
-
-**Share / private beta (do not use as CI):** Hostinger VM `1280333`,
-`root@185.211.4.66`, https://lenr-sim-beta.conscious.energy/ — live Compose +
-Caddy private beta (`0.3.7-beta`). Deploy **target** only. Never install a
-GitHub Actions runner here (PR code isolation + load).
-
-**CI runner (this doc):** a **second** Hostinger KVM with labels
-`self-hosted`, `linux`, `x64`, `lenr-ci`. See provision status below.
 
 ---
 
-## Why a separate VM
+## Placement: share KVM2 (current) vs dedicated VM
 
-- PR jobs execute untrusted branch code; isolating that from production Compose
-  reduces blast radius.
-- Compose share already runs the public beta stack; CI load must not contend
-  with live traffic or share its SSH/`VPS_*` credentials with general CI.
-- See also [`CI_CD_COST_REDUCTION_PROPOSAL.md`](../../../CI_CD_COST_REDUCTION_PROPOSAL.md)
-  (proposal history). **Authoritative placement is this dedicated VM**, not the
-  share host suggested in early draft Option 1.
+### Active cutover — Compose share KVM2 (operator override)
 
-## Provision (operator)
+| Item | Value |
+|------|--------|
+| Host | `185.211.4.66` / VM id `1280333` / hostname `lenr-sim-app.conscious.energy` |
+| Also serves | Live Compose + Caddy private beta https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
+| Runner name | `lenr-ci-share-1` |
+| Override flag | `ALLOW_SHARE_RUNNER=1` on register/bootstrap/finish scripts |
+| Why | Avoid a second Hostinger KVM purchase and extra secrets while Actions spend limit blocks hosted jobs |
+| Tradeoffs | PR job code co-tenants production Compose; CI load can contend with live traffic; blast radius is larger |
 
-### In progress — Hostinger order
+**Do not** put `VPS_*` / deploy secrets on workflows that use `lenr-ci`. Keep
+`deploy.yml` on `ubuntu-latest`. Prefer wiping `_work` (cron installed by
+bootstrap) after jobs.
 
-| Field | Value |
-|-------|--------|
-| API order ids | `61650992` (monthly KVM2) · `61651905` (yearly KVM2) |
-| Status (last agent check) | both `payment_initiated` (HTTP 202) — confirm **one** in [hPanel](https://hpanel.hostinger.com/) / 3DS; cancel the duplicate |
-| Plan | `hostingercom-vps-kvm2-usd-1m` or `-1y` (2 vCPU / 8 GB / 100 GB) |
-| Hostname | `lenr-ci` |
-| Data center | `24` (Boston) |
-| Template | `1077` (Ubuntu 24.04 LTS) |
-| Post-install script | `5725` (`lenr-ci-runner-bootstrap`) — user, UFW, Docker, Node 22, runner tarball |
-| Must not be | Share VM `1280333` / `185.211.4.66` |
+Abandoned second-KVM path: Hostinger API orders `61650992` / `61651905` were
+`payment_initiated` only — **no second VM was provisioned**. Only subscription
+`AzZiGtV8fVJvR9YlG` (this KVM2, yearly) is active. Cancel/abandon those unpaid
+orders in [hPanel](https://hpanel.hostinger.com/) if they still appear; do not
+complete 3DS.
 
-Until payment clears, Hostinger still lists **only** the Compose share VM.
+### Preferred long-term — dedicated CI KVM (Option A)
 
-### Steps after the VM is running
+When budget allows, move `lenr-ci` off the share onto a second Hostinger KVM
+(hostname `lenr-ci`, labels unchanged) and remove `ALLOW_SHARE_RUNNER` usage.
+Post-install script id `5725` (`lenr-ci-runner-bootstrap`) remains for that path.
 
-1. Confirm the new VM id ≠ `1280333`; attach SSH access if needed.
-2. Wait for post-install (`/var/log/lenr-ci-bootstrap.log` / `/opt/actions-runner`).
-3. Register with labels (helper refuses the share IP/hostname):
+---
+
+## Why isolation still matters
+
+- PR jobs execute untrusted branch code; co-tenancy with Compose increases blast
+  radius (mitigate with no deploy secrets on `lenr-ci`, workdir cleanup, low
+  concurrency).
+- See also [`CI_CD_COST_REDUCTION_PROPOSAL.md`](../../../CI_CD_COST_REDUCTION_PROPOSAL.md).
+
+## Provision (operator) — share override
+
+1. SSH to `root@185.211.4.66` (pubkey). Confirm Compose healthy:
+   `curl -fsS https://lenr-sim-beta.conscious.energy/api/health`.
+2. Bootstrap (idempotent):
 
    ```bash
-   # On the CI VM as root — token from:
-   # Settings → Actions → Runners → New self-hosted runner (never commit)
-   export GH_RUNNER_REGISTRATION_TOKEN=...
-   ./infrastructure/scripts/register-lenr-ci-runner.sh
+   export ALLOW_SHARE_RUNNER=1
+   ./LENR_SIM_APP_v2/infrastructure/scripts/bootstrap-share-lenr-ci.sh
    ```
 
-   From the agent host (after the VM exists), the chained helper is:
+3. Register (token from Settings → Actions → Runners → New self-hosted runner;
+   never commit):
 
    ```bash
-   export HOSTINGER_API_TOKEN=... GH_RUNNER_REGISTRATION_TOKEN=...
-   # optional: CI_VM_SSH_HOST=root@<ip> CI_VM_SSH_KEY='-----BEGIN...'
+   export ALLOW_SHARE_RUNNER=1
+   export GH_RUNNER_REGISTRATION_TOKEN=...
+   ./LENR_SIM_APP_v2/infrastructure/scripts/register-lenr-ci-runner.sh
+   ```
+
+   From an agent host with SSH key access:
+
+   ```bash
+   export ALLOW_SHARE_RUNNER=1
+   export GH_RUNNER_REGISTRATION_TOKEN=...
+   # optional: SHARE_SSH_HOST=root@185.211.4.66
    ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
    ```
 
-4. Confirm **Idle** under Settings → Actions → Runners.
+4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-share-1`).
 5. Set repository **variable** `LENR_CI_RUNS_ON` to:
 
    ```json
    ["self-hosted","linux","x64","lenr-ci"]
    ```
 
-   Until the runner is Idle, **leave the variable unset**. Note: GitHub-hosted
-   jobs on this repo currently fail with **0 steps** when the Actions spending
-   limit is hit — self-hosted + `LENR_CI_RUNS_ON` is the intended unblock.
+   Until Idle, **leave the variable unset**. Hosted jobs on this repo may fail
+   with **0 steps** when the Actions spending limit is hit — self-hosted is the
+   unblock.
 
 ## Secrets that stay in GitHub
 
-Keep these in GitHub Actions secrets / environments — **not** on the CI disk:
+Keep these in GitHub Actions secrets / environments — **not** on the CI disk
+and **not** available to `lenr-ci` PR workflows:
 
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, and any deploy tokens
 - Cloudflare / Hostinger API keys used by ship workflows
@@ -96,22 +106,15 @@ in the UI and re-running `config.sh`.
 
 - Production Compose deploys from **fork/PR** workflows.
 - Mixing `lenr-ci` (general PR CI) with a pool that has `VPS_*` SSH access.
-- Ephemeral workdir cleanup: prefer wiping `_work` after jobs (or ephemeral
-  runners) to reduce PR supply-chain residue.
+- Heavy parallel matrices that starve the live Compose stack (2 vCPU / 8 GB shared).
 
 ## Drain / restart
 
 ```bash
-# Drain: Settings → Runners → … → Disable, or:
-sudo ./svc.sh stop
-
-# Restart after reboot / upgrade:
+sudo ./svc.sh stop   # from /opt/actions-runner
 sudo ./svc.sh start
 sudo ./svc.sh status
 ```
-
-Upgrade the runner binary with GitHub’s documented `./config.sh` / replace
-tarball flow; re-apply labels if reconfiguring.
 
 ## Workflow wiring
 
@@ -122,18 +125,14 @@ Heavy jobs in [`.github/workflows/test.yml`](../../../.github/workflows/test.yml
 runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
 ```
 
-[`deploy.yml`](../../../.github/workflows/deploy.yml) stays on `ubuntu-latest`
-(or a future dedicated `lenr-deploy` label). Path filters skip frontend-e2e /
-full Python matrix / image-adjacent heavy jobs for docs/academic-only PRs so
-parallel academic review stays cheap.
+[`deploy.yml`](../../../.github/workflows/deploy.yml) stays on `ubuntu-latest`.
 
 ## Verification checklist
 
-- [ ] New VM id ≠ `1280333`; hostname not the Compose share
-- [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci`
-- [ ] `LENR_CI_RUNS_ON` set only after Idle (or run `.github/workflows/lenr-ci-smoke.yml` which is hard-pinned to those labels)
-- [ ] Docs-only PR: heavy jobs skipped; `version-consistency` still green
-- [ ] Code-touching PR: jobs land on `lenr-ci`
+- [ ] Runner Idle with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-share-1` for share mode)
+- [ ] `LENR_CI_RUNS_ON` set only after Idle (or run `.github/workflows/lenr-ci-smoke.yml`)
+- [ ] Live beta still healthy after register: https://lenr-sim-beta.conscious.energy/api/health
+- [ ] Unpaid Hostinger KVM orders abandoned in hPanel
 - [ ] Deploy workflow never lists `lenr-ci`
 - [ ] Four version markers unchanged (`0.3.7-beta`)
-- [ ] Smoke: Actions → “lenr-ci smoke” → Run workflow (must not show share IP)
+- [ ] Root password rotated if it was shared for unlock

@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# One-shot finish path for dedicated lenr-ci runner (never the Compose share).
+# Finish path for lenr-ci runner registration.
+#
+# Modes:
+#   Default (dedicated): wait for a Hostinger VM other than SHARE_VM_ID, refuse
+#     share IP, then SSH-register.
+#   Share override: ALLOW_SHARE_RUNNER=1 SHARE_SSH_HOST=root@185.211.4.66
+#     skips dedicated-VM poll and registers on the Compose KVM2.
 #
 # Prerequisites (env):
-#   HOSTINGER_API_TOKEN              — poll for new VM
 #   GH_RUNNER_REGISTRATION_TOKEN    — register runner (or GH_ADMIN_PAT to mint one)
-#   CI_VM_SSH_HOST / CI_VM_SSH_KEY  — optional; if set, SSH and run register remotely
-#
-# Steps:
-#   1) Wait until Hostinger lists a VM other than SHARE_VM_ID (default 1280333)
-#   2) Refuse share IP 185.211.4.66
-#   3) If SSH available: run register-lenr-ci-runner.sh on the CI VM
-#   4) Print next: Idle check + LENR_CI_RUNS_ON + workflow_dispatch lenr-ci-smoke
+#   HOSTINGER_API_TOKEN             — required unless ALLOW_SHARE_RUNNER=1
+#   CI_VM_SSH_HOST / CI_VM_SSH_KEY  — optional dedicated SSH
+#   SHARE_SSH_HOST / SHARE_SSH_KEY  — optional share SSH (defaults root@185.211.4.66)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
@@ -18,11 +19,6 @@ SHARE_VM_ID="${SHARE_VM_ID:-1280333}"
 SHARE_IP="185.211.4.66"
 POLL_SECONDS="${POLL_SECONDS:-20}"
 MAX_POLLS="${MAX_POLLS:-90}"
-
-if [[ -z "${HOSTINGER_API_TOKEN:-}" ]]; then
-  echo "HOSTINGER_API_TOKEN required" >&2
-  exit 1
-fi
 
 if [[ -z "${GH_RUNNER_REGISTRATION_TOKEN:-}" && -n "${GH_ADMIN_PAT:-}" ]]; then
   echo "Minting registration token via GH_ADMIN_PAT..."
@@ -39,11 +35,66 @@ if [[ -z "${GH_RUNNER_REGISTRATION_TOKEN:-}" ]]; then
   exit 1
 fi
 
+run_remote_register() {
+  local SSH_HOST="$1"
+  local SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15)
+  local KEYFILE=""
+  if [[ -n "${2:-}" ]]; then
+    KEYFILE=$(mktemp)
+    printf '%s\n' "$2" >"$KEYFILE"
+    chmod 600 "$KEYFILE"
+    SSH_OPTS+=(-i "$KEYFILE")
+  elif [[ -f "${HOME}/.ssh/id_ed25519" ]]; then
+    SSH_OPTS+=(-i "${HOME}/.ssh/id_ed25519")
+  fi
+  if ! ssh "${SSH_OPTS[@]}" "$SSH_HOST" 'echo ssh_ok' 2>/dev/null; then
+    echo "SSH to $SSH_HOST failed — register manually:" >&2
+    echo "  export GH_RUNNER_REGISTRATION_TOKEN=... ALLOW_SHARE_RUNNER=${ALLOW_SHARE_RUNNER:-0}" >&2
+    echo "  bash register-lenr-ci-runner.sh" >&2
+    [[ -n "$KEYFILE" ]] && rm -f "$KEYFILE"
+    return 1
+  fi
+  scp "${SSH_OPTS[@]}" \
+    "$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/register-lenr-ci-runner.sh" \
+    "$SSH_HOST:/tmp/register-lenr-ci-runner.sh"
+  if [[ "${ALLOW_SHARE_RUNNER:-}" == "1" ]]; then
+    scp "${SSH_OPTS[@]}" \
+      "$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/bootstrap-share-lenr-ci.sh" \
+      "$SSH_HOST:/tmp/bootstrap-share-lenr-ci.sh" || true
+    ssh "${SSH_OPTS[@]}" "$SSH_HOST" \
+      "export ALLOW_SHARE_RUNNER=1; bash /tmp/bootstrap-share-lenr-ci.sh || true"
+  fi
+  ssh "${SSH_OPTS[@]}" "$SSH_HOST" \
+    "export GH_RUNNER_REGISTRATION_TOKEN=$(printf %q "$GH_RUNNER_REGISTRATION_TOKEN"); export ALLOW_SHARE_RUNNER=$(printf %q "${ALLOW_SHARE_RUNNER:-0}"); bash /tmp/register-lenr-ci-runner.sh"
+  [[ -n "$KEYFILE" ]] && rm -f "$KEYFILE"
+}
+
+if [[ "${ALLOW_SHARE_RUNNER:-}" == "1" ]]; then
+  echo "== Share override: register on ${SHARE_IP} =="
+  SSH_HOST="${SHARE_SSH_HOST:-root@${SHARE_IP}}"
+  run_remote_register "$SSH_HOST" "${SHARE_SSH_KEY:-${CI_VM_SSH_KEY:-}}"
+  cat <<EOF
+
+== Next ==
+1. GitHub → Settings → Actions → Runners → confirm Idle (labels self-hosted,linux,x64,lenr-ci)
+2. Set repo variable LENR_CI_RUNS_ON=["self-hosted","linux","x64","lenr-ci"]
+3. Run workflow_dispatch: lenr-ci smoke (share IP check is informational under share mode)
+4. Keep deploy.yml on ubuntu-latest; rotate any root password used for unlock
+5. Abandon unpaid Hostinger KVM orders 61650992 / 61651905 in hPanel if still pending
+6. Do not apply CONFIRM_SWARM_0_3_9; leave EQ-OPEN-* OPEN
+EOF
+  exit 0
+fi
+
+if [[ -z "${HOSTINGER_API_TOKEN:-}" ]]; then
+  echo "HOSTINGER_API_TOKEN required (or set ALLOW_SHARE_RUNNER=1)" >&2
+  exit 1
+fi
+
 echo "== 1) Wait for dedicated CI VM =="
 MAX_POLLS="$MAX_POLLS" POLL_SECONDS="$POLL_SECONDS" SHARE_VM_ID="$SHARE_VM_ID" \
   "$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/poll-lenr-ci-vm.sh" \
   | tee /tmp/lenr-ci-poll.out
-# Re-resolve VM details
 OUT=/tmp/lenr-ci-vms.json
 curl -fsS -H "Authorization: Bearer ${HOSTINGER_API_TOKEN}" \
   -H "User-Agent: lenr-ci-finish" -H "Accept: application/json" \
@@ -66,6 +117,7 @@ VM_STATE="${FOUND[2]:-}"
 VM_IP="${FOUND[3]:-}"
 if [[ -z "$VM_ID" || "$VM_IP" == "$SHARE_IP" ]]; then
   echo "No dedicated CI VM yet (or matched share). Abort." >&2
+  echo "To use the Compose KVM2 instead: ALLOW_SHARE_RUNNER=1 $0" >&2
   exit 3
 fi
 echo "CI VM id=$VM_ID hostname=$VM_HOST state=$VM_STATE ip=$VM_IP"
@@ -73,25 +125,7 @@ echo "CI VM id=$VM_ID hostname=$VM_HOST state=$VM_STATE ip=$VM_IP"
 echo "== 2) Register runner =="
 if [[ -n "${CI_VM_SSH_HOST:-}" || -n "$VM_IP" ]]; then
   SSH_HOST="${CI_VM_SSH_HOST:-root@$VM_IP}"
-  SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15)
-  if [[ -n "${CI_VM_SSH_KEY:-}" ]]; then
-    KEYFILE=$(mktemp)
-    printf '%s\n' "$CI_VM_SSH_KEY" >"$KEYFILE"
-    chmod 600 "$KEYFILE"
-    SSH_OPTS+=(-i "$KEYFILE")
-  fi
-  if ssh "${SSH_OPTS[@]}" "$SSH_HOST" 'echo ssh_ok' 2>/dev/null; then
-    scp "${SSH_OPTS[@]}" \
-      "$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/register-lenr-ci-runner.sh" \
-      "$SSH_HOST:/tmp/register-lenr-ci-runner.sh"
-    ssh "${SSH_OPTS[@]}" "$SSH_HOST" \
-      "export GH_RUNNER_REGISTRATION_TOKEN=$(printf %q "$GH_RUNNER_REGISTRATION_TOKEN"); bash /tmp/register-lenr-ci-runner.sh"
-  else
-    echo "SSH to $SSH_HOST failed — register manually on the CI VM:"
-    echo "  export GH_RUNNER_REGISTRATION_TOKEN=..."
-    echo "  bash register-lenr-ci-runner.sh"
-  fi
-  [[ -n "${KEYFILE:-}" ]] && rm -f "$KEYFILE"
+  run_remote_register "$SSH_HOST" "${CI_VM_SSH_KEY:-}" || true
 else
   echo "No SSH — print manual register commands only."
 fi
@@ -102,6 +136,6 @@ cat <<EOF
 1. GitHub → Settings → Actions → Runners → confirm Idle (labels self-hosted,linux,x64,lenr-ci)
 2. Set repo variable LENR_CI_RUNS_ON=["self-hosted","linux","x64","lenr-ci"]
    (optional if you only need smoke: Actions → lenr-ci smoke → Run workflow)
-3. Confirm share $SHARE_IP never appears as a runner
+3. Confirm share $SHARE_IP is not a runner unless ALLOW_SHARE_RUNNER was intentional
 4. Do not apply CONFIRM_SWARM_0_3_9; leave EQ-OPEN-* OPEN
 EOF
