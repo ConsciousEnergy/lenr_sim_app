@@ -1,13 +1,21 @@
 # LENR Simulation App v2
 
-**Advanced modeling and visualization of Low Energy Nuclear Reactions**
+**Advanced modeling and visualization of Low Energy Nuclear Reactions** *(research preview — model output, not laboratory measurement)*
 
+<<<<<<< HEAD
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
 [![Version](https://img.shields.io/badge/version-0.3.7--beta-blue.svg)]()
+=======
+[![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
+[![Version](https://img.shields.io/badge/version-0.3.7--beta-blue.svg)](../CHANGELOG.md)
+>>>>>>> a64a6da (docs(readme): clarify product scope for v0.3.7-beta with screenshots)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+> Looking for the project-level overview with screenshots? Start at the repository root [`README.md`](../README.md).
 
 ---
 
+<<<<<<< HEAD
 ## Current truth (v0.3.7-beta)
 
 | Topic | Where |
@@ -23,6 +31,8 @@
 
 **Cutover map:** Compose share (now) → staging Swarm (0.3.8 confirm) → public Swarm+Pages (0.3.9 confirm). Do not apply Swarm without the matching env confirm. Academic review is a parallel v0.3.7-beta track; CI/infra PRs must not rewrite those claims.
 
+=======
+>>>>>>> a64a6da (docs(readme): clarify product scope for v0.3.7-beta with screenshots)
 ## 🧭 Architecture & Onboarding (v0.3.7-beta)
 
 New to the codebase? Start with the curated maps below before diving into files.
@@ -71,17 +81,16 @@ for the canonical port matrix.
 
 ---
 
-## 📊 Project Status (August 2026)
+## 📊 Project Status (v0.3.7-beta)
 
-### ✅ **App is Running Successfully**
+### Public beta research preview
 
-- ✓ Builds without errors (Vite 6.4.3)
-- ✓ All core features functional
-- ✓ UI/UX improvements applied
-- ✓ Accessibility enhanced
-- ✓ Documentation complete
+- Version markers: `0.3.7-beta` (see root [`CHANGELOG.md`](../CHANGELOG.md))
+- Live share: [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy)
+- Engine maturity chips and claim tiers are first-class; FEM remains aspirational on VPS
+- `lenr_proved` stays false; `EQ-OPEN-*` stay OPEN
 
-### ⚠️ Known Non-Critical Warnings
+### Known Non-Critical Warnings
 
 - 2 moderate npm advisories (`react-router` 6.x; needs a v7 migration).
   `npm audit --audit-level=high` exits `0`.

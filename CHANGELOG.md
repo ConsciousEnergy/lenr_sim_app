@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — GitHub landing docs (v0.3.7-beta merge readiness)
+- Root [`README.md`](README.md) rewritten for product scope: what the app is for, honesty invariants, v0.3.7-beta feature boundary, architecture sketch
+- Screenshots of the public beta under [`docs/assets/readme/`](docs/assets/readme/) (dashboard, Unified Theory, Bubble Fusion, Quantum Tunneling, Theory Paper, Theory Methods)
+- App README version badge / status aligned to `0.3.7-beta` with link to the root overview
+- Demo video intentionally deferred (owner-provided later)
+
 ### Added — v0.3.8-beta fidelity P0 / ARA P1 start (science slice)
 - Fidelity honesty UI: `TheoryFidelityHonestySummary`, free/fitted parameter chips, Advanced Analysis Theory Summary no longer uses hardcoded endorsement copy
 - Theory Paper §6 honesty: Hagelstein / Vysotskii / Swartz / Widom framed as speculative hypotheses; Holmlid `holmlid_udh` ≠ Kim `kim_bec` in Theory-to-Simulation map
