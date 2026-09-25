@@ -4,14 +4,14 @@
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-08-23, v0.3.6-beta)
+Date: 2026-02-14 (revised 2026-09-25, v0.3.7-beta)
 Organization: Conscious Energies | www.conscious.energy
 
-**Revision note (2026-08-23).** Public-readiness sync with companion software v0.3.6-beta: revision metadata and in-app paper view aligned; §5A companion-app field names (`open_questions`, occurrence/when/how blocks, Oracle A/B) unchanged. No quantitative band changes in this revision.
+**Revision note (2026-09-25, v0.3.7-beta).** Companion-software sync with the v0.3.7-beta governance train: §3.2 documents Rayleigh–Plesset vs Keller–Miksis auto-select (Mach ≥ 0.3) and engine/schematic provenance; §3.8 cites pinned reviewer-pack simulation evidence; §6.1 points at the multi-format paper pack (`.md` / `.txt` / `.tex` / `.lean`) under `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/`. Prior WH-ENP-01 / v2 bounds in §5A retained. No quantitative band changes (tunneling \(10^{3}\)–\(10^{5}\); Casimir \(-1.3\,\mathrm{mN}\); Miles \(24\pm4\,\mathrm{MeV}\)); `lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN.
 
 **Keywords:** LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tunneling; Casimir; claim tiers; condensed-matter nuclear hypotheses
 
-**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`.
+**Author Contributions & AI Assistance.** Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in `docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md` (maturity ledger / proof matrix: `docs/v0.3.7-beta/`).
 
 **Epistemic posture.** Multi-body lattice–bubble constructions in this framework are **exploratory models**, not empirically validated nuclear-engineering predictions. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
 
@@ -438,10 +438,13 @@ The resolution of the MeV energy gap through lattice-nuclear coupling remains th
 
 ## **3\. Computational Methods**
 
-> **Implementation note (public beta):** The live VPS runs the in-repo `physics_engine`
-> pipeline (WKB/Gamow tunneling, Rayleigh–Plesset bubble dynamics, theory scoring via
-> `/api/physics/*`). COMSOL FEM and self-consistent Poisson–Schrödinger treatments in this
-> section are research/aspirational methods — they are **not** deployed on the public beta.
+> **Implementation note (public beta, v0.3.7-beta):** The live VPS runs the in-repo
+> `physics_engine` pipeline (WKB/Gamow tunneling, bubble dynamics with Rayleigh–Plesset
+> and Keller–Miksis auto-select when peak Mach \(\ge 0.3\), theory scoring via
+> `/api/physics/*` and `/api/unified/*`). Outputs carry provenance
+> (`physics_engine` vs schematic fallback). COMSOL FEM and self-consistent
+> Poisson–Schrödinger treatments in this section are research/aspirational methods —
+> they are **not** deployed on the public beta (`ENG-ASPIRATIONAL-FEM-01`).
 
 
 ### **3.1 Poisson–Schrödinger Coupled Dynamics**
@@ -469,17 +472,21 @@ which governs the quantum state \( \psi \) under potential \( V(\mathbf{r}) \).
 
 ### **3.2 Bubble Collapse Dynamics**
 
-**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\].
+**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof).
 
-1. **Modified Rayleigh–Plesset Equation:**
+1. **Modified Rayleigh–Plesset Equation** (incompressible / low-Mach baseline):
 \[
 R\,\ddot{R} + \frac{3}{2}\dot{R}^{2} = \frac{1}{\rho}\left(P_{\text{bubble}} - P_{\infty} - \frac{2\sigma_{\text{surf}}}{R} - \frac{4\mu\,\dot{R}}{R} + \frac{\epsilon_0 E^{2}}{2}\right),
 \]
 where \( R \) is bubble radius, \( \rho \) fluid density, \( \sigma_{\text{surf}} \) surface tension, \( \mu \) viscosity, and \( E \) external electric field.
 
-    *Note:* The electric pressure term \( \epsilon_0 E^2 / 2 \approx 4.4 \times 10^4 \) Pa at \( E = 10^8 \) V/m is negligible compared to collapse pressures of ~GPa. This term primarily influences bubble initiation and early-stage dynamics rather than peak collapse conditions.
+    *Note:* The electric pressure term \( \epsilon_0 E^2 / 2 \approx 4.4 \times 10^4 \) Pa at \( E = 10^8 \) V/m is negligible compared to collapse pressures of ~GPa. This term primarily influences bubble initiation and early-stage dynamics rather than peak collapse conditions. Rayleigh–Plesset is **domain-limited** when peak Mach numbers are not \(\ll 1\).
 
-2. **Simulation Outcomes:**
+2. **Keller–Miksis compressibility correction (companion software, v0.3.7-beta):** When liquid compressibility / acoustic radiation matters, the Unified and Bubble Fusion paths may use `dynamics_mode=auto` and select Keller–Miksis when peak Mach \(\ge 0.3\). Explicit overrides (`legacy` / `rayleigh_plesset` / `keller_miksis`) remain available. Making KM the unconditional default, real-gas EOS, and FEM remain deferred (`DEFERRED_MULTIPHYSICS_FIDELITY.md`). LaTeX stub: `docs/v0.3.7-beta/latex/eng_rp_km_01.tex`.
+
+3. **Provenance honesty:** UI and export envelopes must distinguish `provenance=physics_engine` ODE trajectories from schematic / local fallbacks. Schematic output must never be presented as validated engine numerics.
+
+4. **Simulation Outcomes:**
 
    * **Temperature Peaks:** Localized temperatures can exceed 10⁵ K in extreme regimes. *Note:* Peak temperatures depend strongly on the collapse regime. Single-bubble sonoluminescence in water typically achieves ~10⁴ K, while the 10⁵ K figure applies to extreme multi-bubble collapse or laser-driven cavitation conditions. The relevant regime for LENR electrolysis systems should be specified when applying these estimates.  
    * **Pressure Increases:** Collapsing bubbles can produce pressures of multiple GPa. These collapse conditions may alter interfacial transport and material microstructure, but do not by themselves establish an appreciable nuclear reaction rate.
@@ -618,6 +625,18 @@ where \( UA \) is the overall heat transfer coefficient-area product.
 1. Non-equilibrium thermodynamics provides the framework for interpreting calorimetric data
 2. Entropy production constraints help identify physically plausible energy flow patterns
 3. Transient analysis can distinguish between nuclear and chemical heat sources based on temporal signatures
+
+---
+
+### **3.8 Companion-software simulation evidence (v0.3.7-beta)**
+
+Pinned, version-controlled model runs—not laboratory experiments—anchor the quantitative claims in this revision. Authoritative evidence lives under `LENR_SIM_APP_v2/datasets/reviewer_packs/` and the paper multi-format pack provenance file.
+
+1. **Reviewer packs:** `smoke/` (CI smoke) and `q_campaign_demo/` (larger campaign: 150 experiments / 132 theory runs in the recorded manifest). Schema `lenr-reviewer-pack-v1`. Disclaimer on every pack: model output only; additional runs do **not** raise empirical claim tiers or close `EQ-OPEN-*`.
+2. **Campaign invariants:** `formalization/predictions/campaign_invariants.json` and pack-embedded invariants enforce `open_questions.lenr_proved = false`, the five OPEN IDs, two-body \(\log_{10}N_{\mathrm{events}}\approx-40\), and `contract_version = v0.3.7-beta-science-gate-1`.
+3. **Export envelope:** `/api/unified/export` uses `lenr-run-export-v1` with claim-tier / provenance fields required by the data contract.
+4. **Paper benchmarks:** `backend/tests/test_paper_benchmarks/` locks selected theory numeric/regime targets in CI.
+5. **Non-claims:** Larger \(N\) in a campaign does not convert speculative mechanism labels into empirical validation. Maturity axes (`model_fidelity`, `empirical_support`, `claim_tier`) remain independent (`PHYSICS_MATURITY_LEDGER.md`).
 
 ---
 
@@ -935,6 +954,13 @@ This work presents a unified theoretical and mathematical framework that address
 ### **6.1 Mechanized consistency (Lean)**
 
 A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, and n-body geometry vs trap identities. An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
+
+**Multi-format paper pack (v0.3.7-beta).** Academic archival copies of this manuscript and the Lean section→theorem crosswalk ship as:
+
+- Markdown / plain text / LaTeX: `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/`
+- Lean crosswalk module: `formalization/lean/LenrFormal/PaperCrosswalk.lean` (mirrored in the paper pack)
+- Equation LaTeX stubs: `LENR_SIM_APP_v2/docs/v0.3.7-beta/latex/`
+- NL↔MD↔JSON↔LaTeX↔Lean matrix: `LENR_SIM_APP_v2/docs/v0.3.7-beta/PROOF_MATRIX.md`
 
 **Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
 
