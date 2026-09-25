@@ -23,7 +23,7 @@ BILLING_URLS = [
     "https://hpanel.hostinger.com/",
 ]
 
-ORDER_IDS = ["61660939", "61662216", "61663818"]
+ORDER_IDS = ["61660939", "61662216", "61663818", "61665445"]
 
 CLICK_TEXTS = [
     "Complete payment", "Pay now", "Confirm payment", "Complete order",

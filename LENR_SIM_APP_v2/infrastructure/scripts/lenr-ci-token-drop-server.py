@@ -66,7 +66,7 @@ def status_dict():
         "token_usable": tok_usable,
         "hpanel_creds": HPANEL_ENV.exists(),
         "drop_received": (DROP_DIR / "token_received").exists(),
-        "orders_awaiting_3ds": ["61660939", "61662216", "61663818"],
+        "orders_awaiting_3ds": ["61660939", "61662216", "61663818", "61665445"],
         "goal_ready": bool(dedicated) and tok_usable,
         "password_reset_sent": (DROP_DIR / "password_reset_sent.txt").exists(),
     }
@@ -115,7 +115,7 @@ small{{color:#555}}
 {reset_note}
 <li><b>Or</b> <a class="btn btn2" href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing</a>
 and complete <b>exactly one</b> 3DS for
-<code>61660939</code> / <code>61662216</code> / <code>61663818</code>.
+<code>61660939</code> / <code>61662216</code> / <code>61663818", "61665445</code>.
 Cancel the other unpaid duplicates. Do not cancel share VM <code>1280333</code>.</li>
 <li>GitHub → Settings → Actions → Runners → <b>New self-hosted runner</b> → copy the <code>--token</code> value into the form.</li>
 </ol>

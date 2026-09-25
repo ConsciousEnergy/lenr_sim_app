@@ -26,7 +26,7 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 
 | Item | Value |
 |------|--------|
-| Orders | **`61660939`** (KVM2) / **`61662216`** / **`61663818`** (KVM1) — all `payment_initiated`; complete **one** 3DS |
+| Orders | **`61660939`** / **`61662216`** / **`61663818`** / **`61665445`** — all `payment_initiated`; complete **one** 3DS; cancel the rest. **Stop further card API purchases.** |
 | Target hostname | `lenr-ci` |
 | Post-install | Hostinger script **`5725`** (`lenr-ci-runner-bootstrap`) — runner package **2.337.0** + sha256 check |
 | Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
