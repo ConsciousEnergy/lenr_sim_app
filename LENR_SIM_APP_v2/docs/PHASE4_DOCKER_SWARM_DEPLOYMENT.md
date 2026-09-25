@@ -1,15 +1,20 @@
-# Phase 4: Docker Swarm Deployment Guide (v0.3.6-beta)
+# Phase 4: Docker Swarm Deployment Guide (v0.3.7-beta prep → 0.3.9 cutover)
 
-**Version:** 0.3.6-beta  
-**Last Updated:** August 2026  
-**Target:** Production deployment on Hostinger VPS with Docker Swarm
+**Version:** 0.3.7-beta (prep docs; public share remains Compose)  
+**Last Updated:** September 2026  
+**Target:** Staging Swarm under 0.3.8 confirm; production Swarm/Pages under 0.3.9 confirm
 
 > **Stop — v0.3.7-beta:** public beta ships **Compose + Caddy** on the existing VPS
 > ([`infrastructure/vps/`](../infrastructure/vps/)). This Phase 4 Swarm / Terraform /
-> Traefik / Cloudflare Pages path is **prep for v0.3.8-beta only**. Do **not**
+> Traefik / Cloudflare Pages path is **prep only**. Do **not**
 > `terraform apply` or run ungated `./deploy.sh production` against live share.
-> Cutover gate: `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`. Checklist:
-> [`v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+>
+> Confirm gates (must match `infrastructure/scripts/deploy.sh`):
+> - Staging: `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+> - Production / public cutover: `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`
+>
+> Checklist: [`v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md)  
+> Public cutover: [`v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)
 
 ---
 
