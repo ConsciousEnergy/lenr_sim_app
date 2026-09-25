@@ -43,6 +43,12 @@ if [[ "${CONFIRM_REMOVE_SHARE_RUNNER:-}" != "I_REMOVE_SHARE_RUNNER" ]]; then
 fi
 "$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/remove-share-lenr-ci-runner.sh"
 
-echo "== C) Done =="
+echo "== C) Prove dedicated end-state =="
+"$ROOT/LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh" || {
+  echo "Proof failed — dedicated may be registered but evidence incomplete." >&2
+  exit 1
+}
+
+echo "== D) Done =="
 echo "Confirm GitHub Runners: dedicated Idle; no lenr-ci-share-* on 185.211.4.66"
-echo "Dispatch lenr-ci-smoke or push to prove green on dedicated."
+echo "Evidence: /opt/cursor/artifacts/lenr-ci-dedicated-proof.log"

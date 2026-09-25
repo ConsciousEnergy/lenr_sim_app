@@ -37,6 +37,7 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh GitHub one-time token
 export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
 ./LENR_SIM_APP_v2/infrastructure/scripts/migrate-to-dedicated-lenr-ci.sh
+# migrate ends with prove-dedicated-lenr-ci.sh (share clean + smoke)
 ```
 
 Agent/tmux auto-path (when token becomes usable):
