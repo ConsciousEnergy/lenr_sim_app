@@ -18,13 +18,14 @@ Four markers must stay **`0.3.7-beta`** (do not bump to 0.3.8 in CI/docs PRs):
 | `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target; also hosts `lenr-ci-share-1` under co-tenant override. |
 | Branch tip / `main` | Source of truth for code; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 
-Self-hosted CI (`lenr-ci`) co-tenants the Compose share KVM2 for cost control. Keep
-`deploy.yml` off `lenr-ci`. Never expose `VPS_*` to PR jobs. Runbook:
+Self-hosted CI goal: dedicated Hostinger VM (`lenr-ci`, id ≠ `1280333`) with
+labels `self-hosted,linux,x64,lenr-ci`. Share co-tenant (`lenr-ci-share-1`) is
+**interim only** until order `61660939` 3DS clears and migrate removes the share
+runner. Keep `deploy.yml` off `lenr-ci`. Never expose `VPS_*` to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
-`LENR_CI_RUNS_ON` is unset (runner Idle on share). Set the variable to
-`["ubuntu-latest"]` only to force hosted.
+`LENR_CI_RUNS_ON` is unset. Set the variable to `["ubuntu-latest"]` only to force hosted.
 
 ## Cutover map (Compose now → Swarm later)
 

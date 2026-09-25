@@ -12,47 +12,47 @@
 
 ---
 
-## Placement: share KVM2 co-tenant (active) vs dedicated VM
+## Placement: dedicated CI VM (required) vs share interim
 
-### Active cutover — Compose share KVM2 (operator override)
+**Required end state:** runner on a Hostinger VM **≠** `1280333` / `185.211.4.66`,
+labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose share.
+
+### Blocked — dedicated purchase awaiting 3DS
 
 | Item | Value |
 |------|--------|
-| Host | `185.211.4.66` / VM `1280333` / `lenr-sim-app.conscious.energy` |
-| Also serves | Live Compose beta https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
-| Runner name | `lenr-ci-share-1` (registered; systemd enabled) |
-| Labels | `self-hosted`, `linux`, `x64`, `lenr-ci` |
-| Override | `ALLOW_SHARE_RUNNER=1` |
-
-**Do not** put `VPS_*` / deploy secrets on workflows that use `lenr-ci`. Keep
-`deploy.yml` on `ubuntu-latest`. Prefer wiping `_work` after jobs.
-
-Share bootstrap also installs `unzip`, `ansible`, and Playwright
-Chromium OS libs so jobs need no passwordless sudo.
-
-Unpaid second-KVM orders (`61650992`, `61651905`, `61656286`, `61656290`) were
-`payment_initiated` only — **abandon in hPanel**. Active purchase for dedicated CI:
-order **`61660939`** (`payment_initiated` → complete **one** 3DS; hostname `lenr-ci`).
-After dedicated Idle, remove the share runner with
-`remove-share-lenr-ci-runner.sh` (`CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER`).
-
-Or one-shot (after token is set):
+| Order | **`61660939`** (`payment_initiated`) |
+| Target hostname | `lenr-ci` |
+| Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
+| Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `migrate-to-dedicated-lenr-ci.sh` |
 
 ```bash
-export GH_RUNNER_REGISTRATION_TOKEN=...
+export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh GitHub one-time token
 export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
 ./LENR_SIM_APP_v2/infrastructure/scripts/migrate-to-dedicated-lenr-ci.sh
 ```
 
-### Dedicated CI KVM (optional later)
+Or: `provision-dedicated-lenr-ci.sh` (needs `CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`)
+then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
+`remove-share-lenr-ci-runner.sh`.
 
-When budget allows isolation, move `lenr-ci` off the share onto a second Hostinger
-KVM (hostname `lenr-ci`) via `provision-dedicated-lenr-ci.sh` +
-`CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`, then remove the share runner.
+### Interim only — Compose share co-tenant (must be removed)
+
+| Item | Value |
+|------|--------|
+| Host | `185.211.4.66` / VM `1280333` |
+| Runner | `lenr-ci-share-1` (present until dedicated Idle) |
+| Override used | `ALLOW_SHARE_RUNNER=1` |
+
+**Do not** put `VPS_*` / deploy secrets on `lenr-ci` workflows. Keep `deploy.yml`
+on `ubuntu-latest`. Share bootstrap preinstalls `unzip`, `ansible`, Playwright OS libs.
+
+Abandon unpaid duplicates in hPanel: `61650992`, `61651905`, `61656286`, `61656290`
+(keep only **61660939** until it clears or is cancelled).
 
 ---
 
-## Why isolation still matters
+## Why isolation matters
 
 - PR jobs execute untrusted branch code; isolating that from production Compose
   reduces blast radius.
@@ -63,26 +63,21 @@ KVM (hostname `lenr-ci`) via `provision-dedicated-lenr-ci.sh` +
 Hostinger does not “partition” a VPS into isolated tenants. Co-locating means
 the same OS runs Compose/Swarm **and** `actions-runner`.
 
-| | Single KVM2 (co-tenant) | Dedicated CI KVM2 (this goal) |
+| | Single KVM2 (co-tenant interim) | Dedicated CI KVM2 (**goal**) |
 |--|--|--|
-| Cost | No new Hostinger line item | Extra monthly/yearly KVM2 |
+| Cost | No new Hostinger line item | Extra KVM2 (order 61660939) |
 | Security | Untrusted PR code next to live stack | Blast radius limited to CI box |
 | Capacity | 2 vCPU / 8 GB shared with app/Swarm | CI load does not starve beta |
 | Swarm later | Possible for light staging; tight for busy CI + prod Swarm | Safer when both grow |
 | Deploy secrets | Must stay off `lenr-ci` either way | Same rule |
 
-**Active placement is single-KVM2 co-tenant** (`lenr-ci-share-1` on the Compose
-share). A dedicated CI KVM remains optional for stronger isolation later.
-
-Pending second-KVM payments: **abandon** unpaid orders in hPanel
-(`61650992`, `61651905`, `61656286`, `61656290`) unless you later choose a
-dedicated box.
+**Goal placement is dedicated CI KVM.** Share runner is interim until 3DS on
+`61660939` completes and migrate/remove-share runs.
 
 ## Provision (operator) — dedicated VM
 
 1. Pay/provision a **second** Hostinger KVM (not `1280333`):
-   - hPanel: complete **one** pending order `61650992`/`61651905` as hostname
-     `lenr-ci`, **or**
+   - hPanel: complete 3DS for order **`61660939`** (hostname `lenr-ci`), **or**
    - Gated script:
      ```bash
      export HOSTINGER_API_TOKEN=...
@@ -96,6 +91,7 @@ dedicated box.
    ```bash
    export GH_RUNNER_REGISTRATION_TOKEN=...
    ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
+   # or migrate-to-dedicated-lenr-ci.sh with CONFIRM_REMOVE_SHARE_RUNNER
    ```
 
 4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
@@ -194,10 +190,16 @@ runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","len
 
 ## Verification checklist
 
-- [x] Runner Idle/Listening with labels `self-hosted`, `linux`, `x64`, `lenr-ci` (name `lenr-ci-share-1`)
+### Goal (dedicated)
+- [ ] Hostinger VM id ≠ `1280333` (hostname `lenr-ci`; order `61660939` 3DS done)
+- [ ] Runner Idle on dedicated only (`lenr-ci-1`); labels `self-hosted,linux,x64,lenr-ci`
+- [ ] Share `185.211.4.66` has **no** `.runner` / no `lenr-ci-share-*`
+- [ ] Smoke/PR jobs green on dedicated
+
+### Interim / invariants
 - [x] Workflow default fallback is lenr-ci (optional `LENR_CI_RUNS_ON` override)
-- [x] `lenr-ci-smoke` green on self-hosted
-- [x] Live beta still healthy: https://lenr-sim-beta.conscious.energy/api/health (`0.3.7-beta`)
+- [x] Interim share smoke/suite green (until migrate)
+- [x] Live beta healthy: https://lenr-sim-beta.conscious.energy/api/health (`0.3.7-beta`)
 - [x] Deploy workflow never `runs-on` `lenr-ci`
 - [x] Four version markers unchanged (`0.3.7-beta`)
 - [ ] Root password rotated if it was shared for unlock
