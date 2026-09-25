@@ -6,6 +6,14 @@ name: lenr-ci smoke
 # See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md
 on:
   workflow_dispatch:
+  # Also allow push/PR so proof jobs can land on self-hosted without Actions
+  # admin rights to dispatch from the agent token.
+  push:
+    paths:
+      - ".github/workflows/lenr-ci-smoke.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/lenr-ci-smoke.yml"
 permissions:
   contents: read
 

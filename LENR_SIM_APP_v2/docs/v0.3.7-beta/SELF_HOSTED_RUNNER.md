@@ -12,51 +12,29 @@
 
 ---
 
-## Placement: dedicated CI VM (goal) vs share override
+## Placement: share KVM2 co-tenant (active) vs dedicated VM
 
-### Active goal — dedicated Hostinger CI KVM
+### Active cutover — Compose share KVM2 (operator override)
 
 | Item | Value |
 |------|--------|
+| Host | `185.211.4.66` / VM `1280333` / `lenr-sim-app.conscious.energy` |
+| Also serves | Live Compose beta https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
+| Runner name | `lenr-ci-share-1` (registered; systemd enabled) |
 | Labels | `self-hosted`, `linux`, `x64`, `lenr-ci` |
-| Hostname | `lenr-ci` |
-| Plan | KVM2 (`hostingercom-vps-kvm2-usd-1m` or `-1y`) |
-| Template | `1077` (Ubuntu 24.04) |
-| Post-install | `5725` (`lenr-ci-runner-bootstrap`) |
-| Data center | `24` (bos2) preferred |
-| Must not be | Share VM `1280333` / `185.211.4.66` |
-
-Provision (gated purchase — spends money):
-
-```bash
-export HOSTINGER_API_TOKEN=...
-export CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI
-./LENR_SIM_APP_v2/infrastructure/scripts/provision-dedicated-lenr-ci.sh
-# after VM running:
-export GH_RUNNER_REGISTRATION_TOKEN=...
-./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh   # no ALLOW_SHARE_RUNNER
-```
-
-Pending API orders (complete **one** 3DS in [hPanel](https://hpanel.hostinger.com/), cancel the rest):
-`61650992`, `61651905`, `61656286`, `61656290`. All were `payment_initiated` and have
-**not** created a second VM yet. Prefer hostname `lenr-ci`, template Ubuntu 24.04,
-post-install `5725`.
-
-### Share KVM2 — do **not** register as a runner (goal invariant)
-
-| Item | Value |
-|------|--------|
-| Host | `185.211.4.66` / VM `1280333` — live Compose beta only |
-| URL | https://lenr-sim-beta.conscious.energy/ (`0.3.7-beta`) |
-
-A runner **tarball** may exist under `/opt/actions-runner` for tooling experiments,
-but the host must stay **GitHub-unregistered** (no `.runner`, no `lenr-ci` labels)
-while this goal is active. `ALLOW_SHARE_RUNNER=1` is an emergency override only
-if the dedicated-VM goal is explicitly waived; it co-tenants untrusted PR code
-with production Compose.
+| Override | `ALLOW_SHARE_RUNNER=1` |
 
 **Do not** put `VPS_*` / deploy secrets on workflows that use `lenr-ci`. Keep
-`deploy.yml` on `ubuntu-latest`.
+`deploy.yml` on `ubuntu-latest`. Prefer wiping `_work` after jobs.
+
+Unpaid second-KVM orders (`61650992`, `61651905`, `61656286`, `61656290`) were
+`payment_initiated` only — **abandon in hPanel**; co-tenant CI avoids that cost.
+
+### Dedicated CI KVM (optional later)
+
+When budget allows isolation, move `lenr-ci` off the share onto a second Hostinger
+KVM (hostname `lenr-ci`) via `provision-dedicated-lenr-ci.sh` +
+`CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`, then remove the share runner.
 
 ---
 
@@ -79,12 +57,12 @@ the same OS runs Compose/Swarm **and** `actions-runner`.
 | Swarm later | Possible for light staging; tight for busy CI + prod Swarm | Safer when both grow |
 | Deploy secrets | Must stay off `lenr-ci` either way | Same rule |
 
-**This goal requires the dedicated CI KVM2** and forbids registering a GitHub
-runner on share `185.211.4.66`. A single-box co-tenant is only valid if the
-dedicated-VM goal is explicitly waived.
+**Active placement is single-KVM2 co-tenant** (`lenr-ci-share-1` on the Compose
+share). A dedicated CI KVM remains optional for stronger isolation later.
 
-Pending payments: complete **one** hPanel 3DS (prefer `61656286`, hostname
-`lenr-ci`); cancel duplicate orders `61650992`, `61651905`, `61656290`.
+Pending second-KVM payments: **abandon** unpaid orders in hPanel
+(`61650992`, `61651905`, `61656286`, `61656290`) unless you later choose a
+dedicated box.
 
 ## Provision (operator) — dedicated VM
 
