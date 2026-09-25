@@ -28,9 +28,9 @@
 
 | Field | Value |
 |-------|--------|
-| API order id | `61650992` |
-| Status (last agent check) | `payment_initiated` (HTTP 202) — confirm payment in [hPanel](https://hpanel.hostinger.com/) / 3DS if still pending |
-| Plan | `hostingercom-vps-kvm2-usd-1m` (2 vCPU / 8 GB / 100 GB) |
+| API order ids | `61650992` (monthly KVM2) · `61651905` (yearly KVM2) |
+| Status (last agent check) | both `payment_initiated` (HTTP 202) — confirm **one** in [hPanel](https://hpanel.hostinger.com/) / 3DS; cancel the duplicate |
+| Plan | `hostingercom-vps-kvm2-usd-1m` or `-1y` (2 vCPU / 8 GB / 100 GB) |
 | Hostname | `lenr-ci` |
 | Data center | `24` (Boston) |
 | Template | `1077` (Ubuntu 24.04 LTS) |
