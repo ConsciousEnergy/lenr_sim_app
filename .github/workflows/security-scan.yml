@@ -23,10 +23,12 @@ concurrency:
   group: security-scan-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Heavy scheduled audits prefer LENR_CI_RUNS_ON (dedicated lenr-ci VM) when set.
+# See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md. Deploy secrets never land here.
 jobs:
   secret-scan:
     name: Secret scan (gitleaks, full history)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
     timeout-minutes: 10
     env:
       GITLEAKS_VERSION: 8.30.1
@@ -73,7 +75,7 @@ jobs:
   backend-audit:
     name: Backend pip-audit
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -103,7 +105,7 @@ jobs:
   frontend-audit:
     name: Frontend npm audit (high+)
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

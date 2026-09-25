@@ -24,6 +24,10 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
+# Ship/build jobs stay on GitHub-hosted ubuntu-latest (or a future restricted
+# lenr-deploy label). Never use the general lenr-ci PR runner pool — that pool
+# must not hold VPS_* SSH credentials. See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md.
+
 jobs:
   build-backend:
     if: github.event_name != 'repository_dispatch' || github.event.action != 'vps-compose-redeploy'

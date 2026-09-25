@@ -2,12 +2,17 @@ name: Test and Benchmark
 
 # Trunk-based model (see .github/BRANCHING.md): main is the only long-lived
 # branch, so CI runs on pushes to main and on every PR targeting main.
+#
+# Runner: set repo variable LENR_CI_RUNS_ON to
+#   ["self-hosted","linux","x64","lenr-ci"]
+# after the dedicated CI VM is Idle. Leave unset to keep ubuntu-latest
+# (avoids forever-queue). See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md.
+# Deploy/ship stays on GitHub-hosted — never mix VPS_* with lenr-ci PR jobs.
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  # Allow manual triggering
   workflow_dispatch:
 
 permissions:
@@ -20,8 +25,8 @@ concurrency:
 
 jobs:
   version-consistency:
-    # v0.3.6-beta: fail fast on mixed version markers across runtime surfaces.
-    runs-on: ubuntu-latest
+    # Fail fast on mixed version markers across runtime surfaces.
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check version consistency
@@ -43,16 +48,89 @@ jobs:
           done
           exit $FAIL
 
+  detect-changes:
+    # Path filters: docs/academic-only PRs skip heavy jobs so parallel academic
+    # review stays cheap. Push/main and workflow_dispatch always run all.
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      formalization: ${{ steps.filter.outputs.formalization }}
+      infra: ${{ steps.filter.outputs.infra }}
+      run_all: ${{ steps.filter.outputs.run_all }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+          set_all_true() {
+            echo "run_all=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "formalization=true" >> "$GITHUB_OUTPUT"
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+          }
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            set_all_true
+            exit 0
+          fi
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t FILES < <(git diff --name-only "$BASE"..."$HEAD")
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            set_all_true
+            exit 0
+          fi
+          backend=false
+          frontend=false
+          formalization=false
+          infra=false
+          for f in "${FILES[@]}"; do
+            case "$f" in
+              LENR_SIM_APP_v2/backend/*|LENR_SIM_APP_v2/backend) backend=true ;;
+            esac
+            case "$f" in
+              LENR_SIM_APP_v2/frontend/*|LENR_SIM_APP_v2/frontend) frontend=true ;;
+            esac
+            case "$f" in
+              formalization/*|docs/FORMALIZATION/*|LENR_SIM_APP_v2/docs/FORMALIZATION/*) formalization=true ;;
+            esac
+            case "$f" in
+              LENR_SIM_APP_v2/infrastructure/*|.github/workflows/*|.github/workflows) infra=true ;;
+            esac
+            # Workflow or lockfile changes must still exercise relevant gates.
+            case "$f" in
+              .github/workflows/test.yml|LENR_SIM_APP_v2/backend/requirements*.txt|LENR_SIM_APP_v2/frontend/package-lock.json)
+                backend=true
+                frontend=true
+                ;;
+            esac
+          done
+          echo "run_all=false" >> "$GITHUB_OUTPUT"
+          echo "backend=${backend}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${frontend}" >> "$GITHUB_OUTPUT"
+          echo "formalization=${formalization}" >> "$GITHUB_OUTPUT"
+          echo "infra=${infra}" >> "$GITHUB_OUTPUT"
+          {
+            echo "Changed files (${#FILES[@]}):"
+            printf '%s\n' "${FILES[@]}"
+            echo "backend=${backend} frontend=${frontend} formalization=${formalization} infra=${infra}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   test:
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
     strategy:
       matrix:
-        # 3.12 matches the runtime shipped by Dockerfile.backend; keeping 3.10/3.11
-        # guards the documented minimum-supported range.
-        python-version: ["3.10", "3.11", "3.12"]
+        # PRs: 3.12 only (matches Dockerfile.backend). Push/main + dispatch:
+        # keep 3.10/3.11 for the documented minimum-supported range.
+        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.12"]') || fromJSON('["3.10", "3.11", "3.12"]') }}
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,7 +148,7 @@ jobs:
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
 
     - name: Backend dependency audit
-      # v0.3.6-beta residual-risk policy: fail on any new/fixable advisory, but tolerate the
+      # Residual-risk policy: fail on any new/fixable advisory, but tolerate the
       # documented, out-of-beta-scope transitive residuals below (see
       # docs/v0.3.6-beta/SECURITY_CI_HARDENING.md for rationale + tracking):
       #   starlette PYSEC-2026-161/248/249/2280/2281  - fix only in 1.x, blocked by fastapi<0.51 pin
@@ -131,7 +209,7 @@ jobs:
     - name: Upload benchmark results
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: benchmark-results
+        name: benchmark-results-${{ matrix.python-version }}
         path: |
           LENR_SIM_APP_v2/backend/benchmarks/
           LENR_SIM_APP_v2/backend/tests/performance/*.png
@@ -139,8 +217,9 @@ jobs:
         retention-days: 90
 
   frontend:
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.frontend == 'true'
     permissions:
       contents: read
     steps:
@@ -184,8 +263,9 @@ jobs:
           npm run build
 
   frontend-e2e:
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.frontend == 'true'
     permissions:
       contents: read
     steps:
@@ -217,8 +297,9 @@ jobs:
   formalization:
     # Equation IR + Lean 4 consistency pilot (sibling to Wolfram/pytest science gates).
     # Does NOT claim LENR is proven — only mathematical consistency of adopted THM/DEF core.
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.formalization == 'true'
     permissions:
       contents: read
     steps:
@@ -256,8 +337,9 @@ jobs:
             formalization/lean/LenrFormal --include='*.lean'
 
   compose-config:
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.infra == 'true'
     permissions:
       contents: read
     steps:
@@ -270,10 +352,11 @@ jobs:
             config -q
 
   # Track C (v0.3.8): keep staging Swarm dry-run gates + terraform/ansible
-  # syntax valid on every PR. Remote plan/check stays operator-credentialed.
+  # syntax valid on every infra-touching PR. Remote plan/check stays operator-credentialed.
   staging-swarm-dry-run:
-    runs-on: ubuntu-latest
-    needs: version-consistency
+    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["ubuntu-latest"]') }}
+    needs: [version-consistency, detect-changes]
+    if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.infra == 'true'
     permissions:
       contents: read
     steps:
@@ -304,4 +387,3 @@ jobs:
           name: staging-swarm-local-dry-run
           path: ${{ runner.temp }}/staging-evidence/
           if-no-files-found: warn
-
