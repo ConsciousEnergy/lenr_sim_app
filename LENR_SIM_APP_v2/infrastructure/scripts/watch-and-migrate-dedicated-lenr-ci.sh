@@ -66,7 +66,7 @@ while true; do
   reload_env
   found="$(find_dedicated || true)"
   if [[ -z "$found" ]]; then
-    log "wait: no dedicated VM yet (complete 3DS for order 61660939 or 61662216)"
+    log "wait: no dedicated VM yet (complete 3DS for order 61660939 / 61662216 / 61663818)"
   elif ! token_usable; then
     log "wait: dedicated FOUND ($found) but GH_RUNNER_REGISTRATION_TOKEN not usable (len=${#GH_RUNNER_REGISTRATION_TOKEN})"
   else

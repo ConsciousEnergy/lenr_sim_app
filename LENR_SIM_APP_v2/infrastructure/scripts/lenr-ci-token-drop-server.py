@@ -52,7 +52,7 @@ def status_dict():
         "token_usable": tok_usable,
         "hpanel_creds": HPANEL_ENV.exists(),
         "drop_received": (DROP_DIR / "token_received").exists(),
-        "orders_awaiting_3ds": ["61660939", "61662216"],
+        "orders_awaiting_3ds": ["61660939", "61662216", "61663818"],
         "goal_ready": bool(dedicated) and tok_usable,
     }
 
@@ -79,7 +79,7 @@ a.btn{{display:inline-block;margin:.4rem 0 1rem;padding:.7rem 1rem;background:#0
 <h1>lenr-ci dedicated unlock</h1>
 <p class=banner>{ready}</p>
 <p><a class=btn href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing → complete ONE 3DS</a></p>
-<p>Orders: <b>61660939</b> (KVM2) or <b>61662216</b> (KVM1). Cancel the other unpaid duplicates. Do not touch share VM 1280333.</p>
+<p>Orders: <b>61660939</b> (KVM2) or <b>61662216</b>/<b>61663818</b> (KVM1). Cancel the other unpaid duplicates. Do not touch share VM 1280333.</p>
 <h2>Live Hostinger VMs</h2>
 <table><tr><th>id</th><th>hostname</th><th>ip</th><th>state</th></tr>{rows}</table>
 <p>dedicated_found=<b>{st['dedicated_found']}</b> · token_usable=<b>{st['token_usable']}</b> · hpanel_creds=<b>{st['hpanel_creds']}</b></p>
