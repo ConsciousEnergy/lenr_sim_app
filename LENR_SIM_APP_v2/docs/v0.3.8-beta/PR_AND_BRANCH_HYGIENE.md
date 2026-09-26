@@ -9,45 +9,33 @@ review. Prefer **rebase onto `main`** then re-run CI on `lenr-ci` (hosted
 checks on older tips often look “failed” from spend-limit / share-refuse noise).
 **Merges require an explicit operator ask** — agents prepare and verify only.
 
-## Open PRs — disposition
+## Open PRs — disposition (live 2026-09-26T21:17Z)
 
 | PR | Draft | CI on tip | Disposition |
 |----|-------|-----------|-------------|
-| [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) `self-hosted-ci-docs-98d8` | yes → **ready** | **CLEAN** (full suite green on `lenr-ci-1`) | **Merge first** — lands dedicated CI docs + smoke gate + Chrome-on-Ubuntu-26 e2e |
-| [#220](https://github.com/ConsciousEnergy/lenr_sim_app/pull/220) `release-hygiene-swarm-readiness-98d8` | yes | **CLEAN** (full Test + smoke on `lenr-ci-1`, tip `9a2bf70`) | **Merge second** — hygiene inventory + dual-KVM2 Swarm honesty (no cutover) |
-| [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) `v038-handoff-github-sso-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #210 (stale probe notes; VNC/unlock lives on #210) |
-| [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | yes | Rebased onto #220 tip `938ff28` | **Merge third** (after #218/#220) — VNC one-shot + unlock portal; CI should use `lenr-ci-1` |
-| [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) `dense-prs-agents-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #218/#220; remote head deleted |
-| [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | yes | Rebased onto #220 tip | **Merge fifth** — R3F fiber 8 / drei 9 pin + realtime sim API; keep separate from academic |
-| [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | Rebased onto #220 tip | **Academic train** — keep split; merge after infra (#218/#220/#210/#219/#212) |
-| [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | yes | Rebased onto #220 tip | **Merge fourth** — public README + screenshots + docs map / cutover honesty retained |
-| [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | no | UNSTABLE | Batch-rebase after #218; merge only with green `lenr-ci` + dependency-review |
+| [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) `self-hosted-ci-docs-98d8` | **ready** | **CLEAN** on `lenr-ci-1` | **Merge first** |
+| [#220](https://github.com/ConsciousEnergy/lenr_sim_app/pull/220) `release-hygiene-swarm-readiness-98d8` | **ready** | **CLEAN** at `9a2bf70` (docs follow-ups re-queued) | **Merge second** |
+| [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | **ready** | **CLEAN** (rebased onto #220) | **Merge third** |
+| [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | **ready** | **CLEAN** (rebased; public README + screenshots) | **Merge fourth** |
+| [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | yes | Rebased; suite nearly green | **Merge fifth** — R3F fiber 8 / drei 9 |
+| [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | Rebased onto #220 tip | **Academic train** — after infra |
+| [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | no | **Rebased 2026-09-26** onto #220 tip | Merge last with green `lenr-ci` + dependency-review |
+| [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) / [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) | closed | — | Closed superseded; remote heads deleted |
 
 ## Remote branches without an open PR
 
-**Deleted 2026-09-26** (heads of already-MERGED PRs / tip fully on `main`):
+**None** for `consciousenergy/*` after 2026-09-26 cleanup (10 merged-PR orphans deleted).
 
-- `consciousenergy/vps-public-beta-rebase-98d8` (PR #178 MERGED; tip ⊆ `main`)
-- `consciousenergy/v038-compose-ship-dispatch-98d8` (#199)
-- `consciousenergy/v038-compose-ship-secrets-handoff-98d8` (#200)
-- `consciousenergy/v038-ssh-ship-helper-98d8` (#201)
-- `consciousenergy/v038-km-tip-proof-docs-98d8` (#202)
-- `consciousenergy/v038-ship-host-default-98d8` (#204)
-- `consciousenergy/v038-fidelity-honesty-ara-98d8` (#206)
-- `consciousenergy/v038-km-auto-bf-98d8` (#196)
-- `consciousenergy/v038-infra-prep-98d8` (#197)
-- `consciousenergy/v038-fidelity-p0-98d8` (#198)
-
-Keep deleting merged heads promptly (`delete branch on merge` in GitHub settings)
-so the open-PR list stays the only remote `consciousenergy/*` noise.
+Keep deleting merged heads promptly (`delete branch on merge` in GitHub settings).
 
 ## Merge order (safe)
 
-1. **#218** (dedicated CI) — unblocks truthful green CI for everyone else.
-2. **#220** (hygiene + Swarm readiness docs) — after #218 lands on `main` (or squash with #218 if preferred).
-3. **#210** (VNC/unlock — already rebased onto #220 tip).
-4. **#219** (public README — rebased onto #220 tip).
-5. **#212** (frontend) then **#217** (academic); Dependabot last.
+1. **#218** (dedicated CI)
+2. **#220** (hygiene + Swarm readiness)
+3. **#210** (VNC/unlock)
+4. **#219** (public README)
+5. **#212** (frontend R3F) then **#217** (academic)
+6. Dependabot **#213–#216** last
 
 ## Public vs team docs
 
