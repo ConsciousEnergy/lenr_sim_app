@@ -233,9 +233,9 @@ runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","len
 
 ### Goal (dedicated)
 - [x] Hostinger VM id ≠ `1280333` (`2012566` / `45.93.100.251`, OS hostname `lenr-ci`)
-- [ ] Runner Idle on dedicated only (`lenr-ci-1`); labels `self-hosted,linux,x64,lenr-ci`
-- [ ] Share `185.211.4.66` has **no** `.runner` / no `lenr-ci-share-*`
-- [ ] Smoke/PR jobs green on dedicated
+- [x] Runner Idle on dedicated only (`lenr-ci-1`); labels `self-hosted,linux,x64,lenr-ci`
+- [x] Share `185.211.4.66` has **no** `.runner` (delete orphan `lenr-ci-share-1` in GitHub UI if still listed Offline)
+- [x] Smoke green on dedicated (`lenr-ci runner smoke` on `lenr-ci-1` / host `lenr-ci`)
 
 ### Interim / invariants
 - [x] Workflow default fallback is lenr-ci (optional `LENR_CI_RUNS_ON` override)
