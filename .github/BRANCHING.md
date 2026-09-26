@@ -67,6 +67,24 @@ orders `61660939` / `61662216` / `61663818` (or PayPal/non-card + provision).
 untrusted PR code. See
 [`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
+**Split trains:** CI/infra/onboarding PRs must not edit academic claim text.
+Keep academic review on separate PRs (see
+[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md)).
+
+## Self-hosted CI
+
+Heavy PR/test jobs should use labels
+`self-hosted,linux,x64,lenr-ci` on the **dedicated** Hostinger CI KVM2
+(`2012566` / `45.93.100.251`, runner `lenr-ci-1`). The Compose share
+(`185.211.4.66`) must **not** register a runner. Deploy/ship stays on
+GitHub-hosted so `VPS_*` never shares a pool with untrusted PR code.
+
+Dual KVM2 (share + CI) does **not** by itself authorize Swarm/Traefik/Cloudflare
+public cutover — see
+[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+Land [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) for the
+full runner runbook on `main`.
+
 ## Cutting a release
 
 Releases are tags, not branches.
