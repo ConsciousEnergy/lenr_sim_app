@@ -12,7 +12,8 @@ checks on older tips often look “failed” from spend-limit / share-refuse noi
 
 | PR | Draft | CI on tip | Disposition |
 |----|-------|-----------|-------------|
-| [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) `self-hosted-ci-docs-98d8` | yes → **ready** | **CLEAN** (15/15 green on dedicated) | **Merge first** — lands dedicated CI docs + smoke gate + Chrome-on-Ubuntu-26 e2e |
+| [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) `self-hosted-ci-docs-98d8` | yes → **ready** | **CLEAN** (full suite green on `lenr-ci-1`) | **Merge first** — lands dedicated CI docs + smoke gate + Chrome-on-Ubuntu-26 e2e |
+| [#220](https://github.com/ConsciousEnergy/lenr_sim_app/pull/220) `release-hygiene-swarm-readiness-98d8` | yes | Rebased onto #218; await green on `lenr-ci` | **Merge second** — hygiene inventory + dual-KVM2 Swarm honesty (no cutover) |
 | [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) `v038-handoff-github-sso-98d8` | no | UNSTABLE (stale tip) | Rebase after #218 or close if superseded by Compose handoff already on `main` (`5cdba52`) |
 | [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | yes | UNSTABLE | Rebase onto post-#218 `main`; keep if VNC one-shot not fully on `main` |
 | [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) `dense-prs-agents-98d8` | yes | UNSTABLE | Squash into BRANCHING/AGENTS via small follow-up or rebase; close if #218 already covers spend guidance |
@@ -46,9 +47,10 @@ git push origin --delete consciousenergy/<branch>-98d8
 ## Merge order (safe)
 
 1. **#218** (dedicated CI) — unblocks truthful green CI for everyone else.
-2. Rebase **#209 / #210 / #211** (ops/docs) or close superseded ones.
-3. **#219** (public README) then **#212** (frontend) then **#217** (academic).
-4. Dependabot group last.
+2. **#220** (hygiene + Swarm readiness docs) — after #218 lands on `main` (or squash with #218 if preferred).
+3. Rebase **#209 / #210 / #211** (ops/docs) or close superseded ones.
+4. **#219** (public README) then **#212** (frontend) then **#217** (academic).
+5. Dependabot group last.
 
 ## Public vs team docs
 
