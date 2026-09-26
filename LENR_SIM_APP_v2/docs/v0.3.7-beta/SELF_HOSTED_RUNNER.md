@@ -32,7 +32,9 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 | VM id | **`2012566`** |
 | IP | **`45.93.100.251`** |
 | Hostname | `lenr-ci` |
+| OS | Ubuntu 26.04 (Hostinger default) — Playwright e2e uses **system Google Chrome** (`LENR_CI_SYSTEM_CHROME=1`), not bundled Chromium |
 | Runner package | 2.337.0 bootstrapped at `/opt/actions-runner` |
+| CI deps | `bootstrap-dedicated-lenr-ci.sh` (ansible, unzip, Chrome, Playwright OS libs, docker group) |
 | Access | Agent SSH key installed; root password rotated; password SSH disabled |
 | Next | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `finish-lenr-ci.sh` / migrate |
 | Then | `CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER` remove share `lenr-ci-share-1` |

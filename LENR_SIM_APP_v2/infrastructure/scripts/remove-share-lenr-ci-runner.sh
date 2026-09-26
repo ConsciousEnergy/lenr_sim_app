@@ -30,13 +30,14 @@ if [[ "${REQUIRE_DEDICATED_IDLE:-1}" == "1" ]]; then
     "https://developers.hostinger.com/api/vps/v1/virtual-machines" \
     | SHARE_VM_ID="$SHARE_VM_ID" python3 -c '
 import json, os, sys
-share=int(os.environ["SHARE_VM_ID"])
-data=json.load(sys.stdin)
-vms=data if isinstance(data,list) else data.get("data",[])
+share = int(os.environ["SHARE_VM_ID"])
+data = json.load(sys.stdin)
+vms = data if isinstance(data, list) else data.get("data", [])
 for vm in vms:
-    if int(vm.get("id",0))==share: continue
-    ip=(vm.get("ipv4") or [{}])[0].get("address","")
-    print(f"{vm.get('id')}|{vm.get('hostname')}|{ip}|{vm.get('state')}")
+    if int(vm.get("id", 0)) == share:
+        continue
+    ip = (vm.get("ipv4") or [{}])[0].get("address", "")
+    print("%s|%s|%s|%s" % (vm.get("id"), vm.get("hostname"), ip, vm.get("state")))
     break
 ')"
   if [[ -z "$other" ]]; then

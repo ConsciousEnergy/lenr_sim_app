@@ -285,10 +285,17 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           cd LENR_SIM_APP_v2/frontend
-          # Self-hosted lenr-ci: OS libs preinstalled by bootstrap (no sudo).
-          # GitHub-hosted: --with-deps installs the libs.
+          # Self-hosted lenr-ci: OS libs + Google Chrome preinstalled by
+          # bootstrap-dedicated-lenr-ci.sh. Ubuntu 26 Hostinger images reject
+          # Playwright's bundled Chromium — use system Chrome instead.
+          # GitHub-hosted: --with-deps installs the libs + bundled browser.
           if [ "${{ runner.environment }}" = "self-hosted" ]; then
-            npx playwright install chromium
+            echo "LENR_CI_SYSTEM_CHROME=1" >> "$GITHUB_ENV"
+            if ! command -v google-chrome >/dev/null 2>&1; then
+              echo "::error::google-chrome missing on self-hosted runner (install via bootstrap-dedicated-lenr-ci.sh)"
+              exit 1
+            fi
+            google-chrome --version
           else
             npx playwright install --with-deps chromium
           fi
@@ -297,6 +304,7 @@ jobs:
         working-directory: LENR_SIM_APP_v2/frontend
         env:
           CI: true
+          LENR_CI_SYSTEM_CHROME: ${{ env.LENR_CI_SYSTEM_CHROME }}
         run: npm run e2e
 
   formalization:
