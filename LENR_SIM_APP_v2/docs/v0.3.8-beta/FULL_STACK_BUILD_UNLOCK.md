@@ -63,6 +63,10 @@ Copy examples → **untracked** files (never commit):
 - Put `VPS_*` or deploy secrets on `lenr-ci`
 - Set `CONFIRM_SWARM_0_3_9`
 
+**Ops exception (already authorized by dedicated-CI goal):** if `lenr-ci` shows a
+queued backlog with zero in-progress jobs, Hostinger-restart **only** VM
+`2012566` to restore the runner (share `1280333` untouched).
+
 ## Merge queue (blocks nothing technical, but unblocks trunk)
 
 See [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md): **#218 → #220 → #210 → #219 → #212 → #217 → Dependabot**.

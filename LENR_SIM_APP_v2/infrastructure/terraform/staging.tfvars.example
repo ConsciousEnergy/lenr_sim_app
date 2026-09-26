@@ -16,7 +16,9 @@ hostinger_api_token = "your-hostinger-api-token"
 ssh_public_key      = "ssh-ed25519 AAAA... staging-deploy@conscious.energy"
 
 vps_plan       = "hostingercom-vps-kvm2-usd-1m"
-data_center_id = 1
+# Live share+CI KVM2s report data_center_id=9 via Hostinger VM API (2026-09-26).
+# Prefer co-locating a new staging node with that DC; confirm in hPanel before create.
+data_center_id = 9
 
 github_owner = "ConsciousEnergy"
 github_repo  = "lenr_sim_app"

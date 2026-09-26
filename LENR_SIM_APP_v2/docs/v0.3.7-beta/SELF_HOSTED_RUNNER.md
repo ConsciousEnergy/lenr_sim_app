@@ -171,6 +171,12 @@ sudo ./svc.sh start
 sudo ./svc.sh status
 ```
 
+If GitHub shows a long **queued** backlog with **zero** `in_progress` jobs on
+`lenr-ci` labels, the runner process is likely wedged. From Hostinger (hPanel or
+API) **restart only** VM `2012566` (`45.93.100.251`) — never the Compose share
+`1280333`. systemd should bring `actions.runner.*` back on boot; confirm smoke
+picks up within a few minutes.
+
 ## Workflow wiring
 
 Heavy jobs in [`.github/workflows/test.yml`](../../../.github/workflows/test.yml)

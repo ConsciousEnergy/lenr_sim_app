@@ -49,7 +49,7 @@ Local stack gate (agent, 2026-09-26T21:24:11Z):
 | Component | In-repo ready? | Live / operator gate |
 |-----------|----------------|----------------------|
 | **Compose share** | Yes — live on `1280333` (`running(4)`, healthy backend) | Keep until v0.3.9; see [`COMPOSE_SHIP_HANDOFF.md`](COMPOSE_SHIP_HANDOFF.md) |
-| **Dedicated CI (`lenr-ci`)** | Yes — runner `lenr-ci-1` on `2012566` | Merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218); never put `VPS_*` on this host |
+| **Dedicated CI (`lenr-ci`)** | Yes — runner `lenr-ci-1` on `2012566` | Merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218); never put `VPS_*` on this host. Stalled queue (queued, no in_progress) → Hostinger-restart **only** `2012566` ([`../v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../v0.3.7-beta/SELF_HOSTED_RUNNER.md)) |
 | **Docker Swarm** | Playbooks + dry-run script | Needs staging nodes ≠ CI VM; `CONFIRM_SWARM_0_3_8` then `0_3_9` ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md), [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)) |
 | **Ansible** | `infrastructure/ansible/playbooks/{site,deploy-stack,setup-docker}.yml` + `inventory.staging.yml.example` | Copy example → untracked `inventory.staging.yml`; `--check` then apply under staging confirm |
 | **Traefik** | `ansible/templates/traefik.yml.j2` + `traefik-dynamic.yml.j2` (wired in `deploy-stack.yml`) | Staging TLS/ACME + stack deploy after Swarm nodes exist |
