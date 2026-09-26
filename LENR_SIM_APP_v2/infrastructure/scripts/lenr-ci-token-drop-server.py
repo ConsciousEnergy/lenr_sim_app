@@ -106,18 +106,19 @@ small{{color:#555}}
 .hi{{background:#fff8e6;border:1px solid #e6c200;padding:.75rem 1rem;border-radius:8px;margin:1rem 0}}
 </style></head><body>
 <h1>Dedicated lenr-ci unlock</h1>
-<p class=banner>{ready} — need Hostinger 3DS + runner token</p>
-<div class=hi><b>Expected:</b> <code>lenr-ci-smoke</code> fails on share
-<code>185.211.4.66</code> until a dedicated VM exists (unless repo var
-<code>LENR_CI_ALLOW_SHARE=1</code>). That failure is intentional.</div>
-<h2>Do these now (≈2 minutes)</h2>
+<p class=banner>{ready} — dedicated VM online; need runner registration token only</p>
+<div class=hi><b>Dedicated ready:</b> VM <code>2012566</code> /
+<code>45.93.100.251</code>. Paste a fresh GitHub registration token below
+(≥40 chars). <code>lenr-ci-smoke</code> fails on share
+<code>185.211.4.66</code> until dedicated is registered — intentional.</div>
+<h2>Do this now (≈1 minute)</h2>
 <ol>
+<li><a class="btn" href="https://github.com/ConsciousEnergy/lenr_sim_app/settings/actions/runners/new" target=_blank rel=noopener>Open New self-hosted runner</a>
+→ Linux/x64 → copy the <code>./config.sh --token …</code> value into the form below (or Cursor secret <code>GH_RUNNER_REGISTRATION_TOKEN</code>).</li>
+<li>Optional cleanup: <a class="btn btn2" href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>hPanel billing</a>
+— cancel unpaid duplicates <code>61660939</code> / <code>61662216</code> /
+<code>61663818</code> / <code>61665445</code>. Do not cancel share VM <code>1280333</code>.</li>
 {reset_note}
-<li><b>Or</b> <a class="btn btn2" href="https://hpanel.hostinger.com/billing" target=_blank rel=noopener>Open hPanel billing</a>
-and complete <b>exactly one</b> 3DS for
-<code>61660939</code> / <code>61662216</code> / <code>61663818", "61665445</code>.
-Cancel the other unpaid duplicates. Do not cancel share VM <code>1280333</code>.</li>
-<li>GitHub → Settings → Actions → Runners → <b>New self-hosted runner</b> → copy the <code>--token</code> value into the form.</li>
 </ol>
 <p>Live status: dedicated_found=<b>{st['dedicated_found']}</b> ·
 token_usable=<b>{st['token_usable']}</b> ·

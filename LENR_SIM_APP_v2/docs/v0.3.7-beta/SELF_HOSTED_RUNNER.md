@@ -1,9 +1,12 @@
 # Self-hosted GitHub Actions runner (lenr-ci)
 
 > **OPERATOR ACTION REQUIRED (blocks dedicated CI):**  
-> Complete **one** hPanel 3DS for order **`61660939`** (KVM2) or **`61662216`** (KVM1) at  
-> https://hpanel.hostinger.com/billing — then inject a real  
-> `GH_RUNNER_REGISTRATION_TOKEN` into Cursor secrets. Auto-migrate is armed.
+> Dedicated KVM2 **`2012566` / `45.93.100.251`** is online and bootstrapped.  
+> Inject a **real** `GH_RUNNER_REGISTRATION_TOKEN` (≥40 chars; not a `G1th*`  
+> placeholder) into Cursor secrets, or paste it on the agent unlock drop page.  
+> Mint at [New self-hosted runner](https://github.com/ConsciousEnergy/lenr_sim_app/settings/actions/runners/new).  
+> Auto-register waiter is armed. Cancel unpaid Hostinger orders  
+> `61660939` / `61662216` / `61663818` / `61665445` in hPanel (VM already exists).
 
 **Train:** v0.3.7-beta ops / CI cost  
 **Goal:** Near-zero GitHub-hosted Actions minutes for PR/test work.
@@ -109,35 +112,33 @@ the same OS runs Compose/Swarm **and** `actions-runner`.
 | Swarm later | Possible for light staging; tight for busy CI + prod Swarm | Safer when both grow |
 | Deploy secrets | Must stay off `lenr-ci` either way | Same rule |
 
-**Goal placement is dedicated CI KVM.** Share runner is interim until 3DS on
-`61660939` completes and migrate/remove-share runs.
+**Goal placement is dedicated CI KVM.** Share runner `lenr-ci-share-1` is interim
+until dedicated registers Idle and `remove-share-lenr-ci-runner.sh` runs.
+**Do not** purchase more Hostinger VMs — dedicated `2012566` already exists.
 
 ## Provision (operator) — dedicated VM
 
-1. Pay/provision a **second** Hostinger KVM (not `1280333`):
-   - hPanel: complete 3DS for order **`61660939`** (hostname `lenr-ci`), **or**
-   - Gated script:
-     ```bash
-     export HOSTINGER_API_TOKEN=...
-     export CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI
-     ./LENR_SIM_APP_v2/infrastructure/scripts/provision-dedicated-lenr-ci.sh
-     ```
-2. Wait until Hostinger lists a VM id ≠ `1280333` with a public IP ≠
-   `185.211.4.66`. Confirm post-install (`/opt/actions-runner` on that host).
-3. Register (**no** `ALLOW_SHARE_RUNNER`):
+1. **Done:** dedicated Hostinger KVM2 `2012566` at `45.93.100.251` (OS hostname
+   `lenr-ci`; runner package 2.337.0 at `/opt/actions-runner`). Cancel unpaid
+   duplicate orders in hPanel. Do **not** run
+   `CONFIRM_PURCHASE_LENR_CI` again.
+2. Register on dedicated only (**no** `ALLOW_SHARE_RUNNER`):
 
    ```bash
-   export GH_RUNNER_REGISTRATION_TOKEN=...
+   export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh one-time token, len≥40
+   export CI_VM_SSH_HOST=root@45.93.100.251
    ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
-   # or migrate-to-dedicated-lenr-ci.sh with CONFIRM_REMOVE_SHARE_RUNNER
+   export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
+   ./LENR_SIM_APP_v2/infrastructure/scripts/remove-share-lenr-ci-runner.sh
+   ./LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh
    ```
 
-4. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
-5. Workflows already default to lenr-ci labels when `LENR_CI_RUNS_ON` is unset.
+3. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
+4. Workflows already default to lenr-ci labels when `LENR_CI_RUNS_ON` is unset.
    Optional: set the variable explicitly, or set `["ubuntu-latest"]` to force
    hosted. Hosted jobs on this repo may fail with **0 steps** when the Actions
    spending limit is hit — self-hosted is the unblock.
-6. Confirm share `185.211.4.66` still has **no** GitHub runner registration.
+5. Confirm share `185.211.4.66` has **no** GitHub runner registration.
 
 ## Secrets that stay in GitHub
 
@@ -229,16 +230,16 @@ runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","len
 ## Verification checklist
 
 ### Goal (dedicated)
-- [ ] Hostinger VM id ≠ `1280333` (hostname `lenr-ci`; order `61660939` 3DS done)
+- [x] Hostinger VM id ≠ `1280333` (`2012566` / `45.93.100.251`, OS hostname `lenr-ci`)
 - [ ] Runner Idle on dedicated only (`lenr-ci-1`); labels `self-hosted,linux,x64,lenr-ci`
 - [ ] Share `185.211.4.66` has **no** `.runner` / no `lenr-ci-share-*`
 - [ ] Smoke/PR jobs green on dedicated
 
 ### Interim / invariants
 - [x] Workflow default fallback is lenr-ci (optional `LENR_CI_RUNS_ON` override)
-- [x] Interim share smoke/suite green (until migrate)
+- [x] Smoke refuses share by default (`LENR_CI_ALLOW_SHARE` gate) — share smoke fails intentionally
 - [x] Live beta healthy: https://lenr-sim-beta.conscious.energy/api/health (`0.3.7-beta`)
 - [x] Deploy workflow never `runs-on` `lenr-ci`
 - [x] Four version markers unchanged (`0.3.7-beta`)
-- [ ] Root password rotated if it was shared for unlock
+- [x] Root password rotated; password SSH disabled on dedicated
 - [ ] Unpaid Hostinger duplicate KVM orders abandoned in hPanel
