@@ -1,12 +1,10 @@
 # Self-hosted GitHub Actions runner (lenr-ci)
 
-> **OPERATOR ACTION REQUIRED (blocks dedicated CI):**  
-> Dedicated KVM2 **`2012566` / `45.93.100.251`** is online and bootstrapped.  
-> Inject a **real** `GH_RUNNER_REGISTRATION_TOKEN` (≥40 chars; not a `G1th*`  
-> placeholder) into Cursor secrets, or paste it on the agent unlock drop page.  
-> Mint at [New self-hosted runner](https://github.com/ConsciousEnergy/lenr_sim_app/settings/actions/runners/new).  
-> Auto-register waiter is armed. Cancel unpaid Hostinger orders  
-> `61660939` / `61662216` / `61663818` / `61665445` in hPanel (VM already exists).
+> **Status (2026-09-26):** Dedicated KVM2 **`2012566` / `45.93.100.251`** is registered
+> as **`lenr-ci-1`** (Listening). Share `.runner` cleared. `lenr-ci runner smoke` green on
+> dedicated. Cancel unpaid Hostinger orders
+> `61660939` / `61662216` / `61663818` / `61665445` in hPanel if still pending.
+> If GitHub still lists Offline `lenr-ci-share-1`, delete that orphan in the Runners UI.
 
 **Train:** v0.3.7-beta ops / CI cost  
 **Goal:** Near-zero GitHub-hosted Actions minutes for PR/test work.
