@@ -25,7 +25,9 @@ Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 Dual KVM2 ≠ Swarm cutover — see
-[`docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+[`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
+and [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+Docs map: [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 `LENR_CI_RUNS_ON` is unset. Set the variable to `["ubuntu-latest"]` only to force hosted.

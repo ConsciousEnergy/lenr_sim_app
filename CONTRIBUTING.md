@@ -96,9 +96,11 @@ Use GitHub Discussions/Issues for product questions.
 
 Dual KVM2 (Compose share + dedicated `lenr-ci`) does **not** authorize public
 Swarm/Traefik/Cloudflare cutover by itself — see
-[`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+[`FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
+and the [v0.3.8 docs map](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 Open-PR cleanup order:
 [`PR_AND_BRANCH_HYGIENE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md).
+Merges need an explicit operator ask (Slack alone is not authorization).
 
 | Stage | Confirm | Notes |
 |-------|---------|-------|

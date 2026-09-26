@@ -1,26 +1,32 @@
 # Dual KVM2 ≠ production Swarm cutover (readiness audit)
 
-**Date:** 2026-09-26  
+**Date:** 2026-09-26 (re-verified)  
 **Question:** Now that both Hostinger KVM2s exist, can we complete the full
 build with Docker Swarm, Ansible, Traefik, and Cloudflare?
 
-**Short answer:** **Not yet for public cutover.** Dual KVM2s unlock **Compose
-share + isolated CI**. Full Swarm + Traefik + Cloudflare Pages remains a
-**gated v0.3.8 staging / v0.3.9 production** path. Do **not** set
-`CONFIRM_SWARM_0_3_9` without an announced window and live credentials.
+**Short answer:** **In-repo stack validates; live staging/public apply does not.**
+Dual KVM2s unlock **Compose share + isolated CI**. Full Swarm + Traefik +
+Cloudflare Pages remains a **gated v0.3.8 staging / v0.3.9 production** path.
+Operator unlock list: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
+Do **not** set `CONFIRM_SWARM_0_3_9` without an announced window and live credentials.
 
 ## What we have now
 
-Verified via Hostinger VPS API (2026-09-26): both **KVM 2**, `state=running`.
+Verified via Hostinger VPS API (2026-09-26T21:24Z): both **KVM 2**, `state=running`.
 
 | VM | Id | IP | Hostname (Hostinger) | Role **today** |
 |----|----|----|----------------------|----------------|
-| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Production-like **Compose + Caddy** (`lenr-sim-beta`, `0.3.7-beta`) |
-| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`) |
+| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose project `lenr-sim` **running(4)** — backend/postgres healthy, Caddy 80/443, images `0.3.7-beta` |
+| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`); **zero** Compose projects |
 
 Evidence CI is landable: dedicated runner online; smoke + Test jobs on
 `lenr-ci-1`; merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218)
 for the canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
+
+Local stack gate (agent, 2026-09-26T21:24:11Z):
+`./infrastructure/scripts/staging-swarm-dry-run.sh local` — confirm gates exit 2,
+`terraform validate` OK, Ansible syntax-check OK
+(`/opt/cursor/artifacts/staging_swarm_local_dry_run.log`).
 
 ## What dual KVM2 enables
 
@@ -42,24 +48,20 @@ for the canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
 
 | Component | In-repo ready? | Live / operator gate |
 |-----------|----------------|----------------------|
-| **Compose share** | Yes — live on `1280333` | Keep until v0.3.9; see [`COMPOSE_SHIP_HANDOFF.md`](COMPOSE_SHIP_HANDOFF.md) |
+| **Compose share** | Yes — live on `1280333` (`running(4)`, healthy backend) | Keep until v0.3.9; see [`COMPOSE_SHIP_HANDOFF.md`](COMPOSE_SHIP_HANDOFF.md) |
 | **Dedicated CI (`lenr-ci`)** | Yes — runner `lenr-ci-1` on `2012566` | Merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218); never put `VPS_*` on this host |
 | **Docker Swarm** | Playbooks + dry-run script | Needs staging nodes ≠ CI VM; `CONFIRM_SWARM_0_3_8` then `0_3_9` ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md), [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)) |
 | **Ansible** | `infrastructure/ansible/playbooks/{site,deploy-stack,setup-docker}.yml` + `inventory.staging.yml.example` | Copy example → untracked `inventory.staging.yml`; `--check` then apply under staging confirm |
 | **Traefik** | `ansible/templates/traefik.yml.j2` + `traefik-dynamic.yml.j2` (wired in `deploy-stack.yml`) | Staging TLS/ACME + stack deploy after Swarm nodes exist |
 | **Cloudflare** | Terraform Cloudflare module + [`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md) | Untracked `backend.hcl` / `staging.tfvars`; Pages on `app.`; `api.` A `proxied=false` |
 
-**Full build complete?** Only when the right-hand column is satisfied under the confirm strings — **not** merely because two KVM2s exist.
+**Full build complete?** Only when the right-hand column is satisfied under the confirm strings — **not** merely because two KVM2s exist. Step-by-step unlock: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
 
 ## Recommended next milestones (ordered)
 
 1. **Merge dedicated CI docs/PR (#218)** so all subsequent rebases see green `lenr-ci`.
-2. **Operator staging remote dry-run** (plan/check only):
-   ```bash
-   CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
-     ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
-   ```
-   Requires untracked `backend.hcl`, `staging.tfvars`, `inventory.staging.yml`.
+2. **Operator staging remote dry-run** (plan/check only) — needs untracked
+   `backend.hcl`, `staging.tfvars`, `inventory.staging.yml` (see unlock doc).
 3. **Provision staging Swarm nodes** (new VMs or documented single-node staging
    caveats) — **not** the CI KVM2; **not** blind promote of live Compose.
 4. Validate Traefik → API replicas, Pages CORS/WS, health.

@@ -15,6 +15,8 @@
 | Agent / contributor map | Root [`AGENTS.md`](../AGENTS.md) |
 | Live Compose share | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) → https://lenr-sim-beta.conscious.energy |
 | Staging Swarm | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — dual KVM2 ≠ cutover |
+| Ops docs map | [`docs/v0.3.8-beta/README.md`](docs/v0.3.8-beta/README.md) |
 | Public Swarm + Pages | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` — [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
 | Self-hosted CI (`lenr-ci`) | [`docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md) |
 | Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) (`EQ-OPEN-*` stay OPEN) |
