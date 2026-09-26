@@ -20,7 +20,7 @@ checks on older tips often look “failed” from spend-limit / share-refuse noi
 | [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) `dense-prs-agents-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #218/#220; remote head deleted |
 | [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | yes | UNSTABLE | **Keep separate** (frontend R3F pin) — rebase, do not mix with CI/infra |
 | [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | UNSTABLE | **Academic train** — keep split; rebase only after infra merges |
-| [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | yes | UNSTABLE | Public README polish — rebase after #218; good candidate for next docs merge |
+| [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | yes | Rebased onto #220 tip | **Merge fourth** — public README + screenshots + docs map / cutover honesty retained |
 | [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | no | UNSTABLE | Batch-rebase after #218; merge only with green `lenr-ci` + dependency-review |
 
 ## Remote branches without an open PR
@@ -46,8 +46,8 @@ so the open-PR list stays the only remote `consciousenergy/*` noise.
 1. **#218** (dedicated CI) — unblocks truthful green CI for everyone else.
 2. **#220** (hygiene + Swarm readiness docs) — after #218 lands on `main` (or squash with #218 if preferred).
 3. **#210** (VNC/unlock — already rebased onto #220 tip).
-4. **#219** (public README) then **#212** (frontend) then **#217** (academic).
-5. Dependabot group last.
+4. **#219** (public README — rebased onto #220 tip).
+5. **#212** (frontend) then **#217** (academic); Dependabot last.
 
 ## Public vs team docs
 
