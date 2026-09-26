@@ -15,8 +15,8 @@ checks on older tips often look “failed” from spend-limit / share-refuse noi
 |----|-------|-----------|-------------|
 | [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) `self-hosted-ci-docs-98d8` | yes → **ready** | **CLEAN** (full suite green on `lenr-ci-1`) | **Merge first** — lands dedicated CI docs + smoke gate + Chrome-on-Ubuntu-26 e2e |
 | [#220](https://github.com/ConsciousEnergy/lenr_sim_app/pull/220) `release-hygiene-swarm-readiness-98d8` | yes | Rebased onto #218; CI on `lenr-ci-1` | **Merge second** — hygiene inventory + dual-KVM2 Swarm honesty (no cutover) |
-| [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) `v038-handoff-github-sso-98d8` | no | UNSTABLE (stale tip) | **Keep** — still carries `vnc-one-shot-km-ship.sh` missing from `main`; rebase after #218 (overlaps handoff docs already updated via #207/#208) |
-| [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | yes | UNSTABLE | **Keep** — unlock portal + VNC one-shot still missing from `main`; rebase after #218; prefer over duplicating #209 scripts |
+| [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) `v038-handoff-github-sso-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #210 (stale probe notes; VNC/unlock lives on #210) |
+| [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | yes | Rebased onto #220 tip `938ff28` | **Merge third** (after #218/#220) — VNC one-shot + unlock portal; CI should use `lenr-ci-1` |
 | [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) `dense-prs-agents-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #218/#220; remote head deleted |
 | [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | yes | UNSTABLE | **Keep separate** (frontend R3F pin) — rebase, do not mix with CI/infra |
 | [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | UNSTABLE | **Academic train** — keep split; rebase only after infra merges |
@@ -45,7 +45,7 @@ so the open-PR list stays the only remote `consciousenergy/*` noise.
 
 1. **#218** (dedicated CI) — unblocks truthful green CI for everyone else.
 2. **#220** (hygiene + Swarm readiness docs) — after #218 lands on `main` (or squash with #218 if preferred).
-3. Rebase **#210** (VNC/unlock) then close or rebase **#209** / **#211**.
+3. **#210** (VNC/unlock — already rebased onto #220 tip).
 4. **#219** (public README) then **#212** (frontend) then **#217** (academic).
 5. Dependabot group last.
 
