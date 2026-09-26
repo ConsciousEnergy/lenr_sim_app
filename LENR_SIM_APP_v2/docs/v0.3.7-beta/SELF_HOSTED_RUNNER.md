@@ -22,7 +22,20 @@
 **Required end state:** runner on a Hostinger VM **≠** `1280333` / `185.211.4.66`,
 labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose share.
 
-### Blocked — dedicated purchase awaiting 3DS
+### Dedicated VM online — awaiting runner registration token
+
+| Item | Value |
+|------|--------|
+| VM id | **`2012566`** |
+| IP | **`45.93.100.251`** |
+| Hostname | `lenr-ci` |
+| Runner package | 2.337.0 bootstrapped at `/opt/actions-runner` |
+| Access | Agent SSH key installed; root password rotated; password SSH disabled |
+| Next | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `finish-lenr-ci.sh` / migrate |
+| Then | `CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER` remove share `lenr-ci-share-1` |
+
+### Prior card orders (cancel unpaid)
+
 
 | Item | Value |
 |------|--------|
