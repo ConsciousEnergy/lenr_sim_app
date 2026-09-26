@@ -11,14 +11,16 @@ share + isolated CI**. Full Swarm + Traefik + Cloudflare Pages remains a
 
 ## What we have now
 
-| VM | Id | IP | Role **today** |
-|----|----|----|----------------|
-| Compose share / beta | `1280333` | `185.211.4.66` | Production-like **Compose + Caddy** (`lenr-sim-beta`, `0.3.7-beta`) |
-| Dedicated CI | `2012566` | `45.93.100.251` | **GitHub Actions only** (`lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`) |
+Verified via Hostinger VPS API (2026-09-26): both **KVM 2**, `state=running`.
 
-Evidence CI is landable: dedicated runner online; merge
-[#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) for the
-canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
+| VM | Id | IP | Hostname (Hostinger) | Role **today** |
+|----|----|----|----------------------|----------------|
+| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Production-like **Compose + Caddy** (`lenr-sim-beta`, `0.3.7-beta`) |
+| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`) |
+
+Evidence CI is landable: dedicated runner online; smoke + Test jobs on
+`lenr-ci-1`; merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218)
+for the canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
 
 ## What dual KVM2 enables
 
