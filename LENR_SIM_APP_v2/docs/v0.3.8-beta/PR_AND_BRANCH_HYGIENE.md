@@ -20,7 +20,7 @@ Slack context alone is not merge authorization.
 | [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | **ready** | **CLEAN** (rebased; public README + screenshots) | **Merge fourth** |
 | [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | **ready** | Suite green / finishing on `lenr-ci` | **Merge fifth** — R3F fiber 8 / drei 9 |
 | [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | **ready** | Rebased; suite queued behind FIFO | **Academic train** — after infra |
-| [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | **ready** | Rebased onto hygiene tip; FIFO queue | Merge last with green `lenr-ci` + dependency-review |
+| [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | **ready** | Rebased onto hygiene tip; FIFO queue | Merge last with green `lenr-ci` + dependency-review. **`#216` blocked:** `scipy 1.18.1` needs `numpy>=2.0` vs pin `numpy==1.26.4` (`ResolutionImpossible`) |
 | [#209](https://github.com/ConsciousEnergy/lenr_sim_app/pull/209) / [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) | closed | — | Closed superseded; remote heads deleted |
 
 All listed heads report `mergeable=MERGEABLE` against `main` (agent check).

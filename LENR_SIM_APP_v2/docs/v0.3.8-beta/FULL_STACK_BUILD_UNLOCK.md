@@ -30,6 +30,7 @@ Re-run **2026-09-26T21:24:11Z**:
 | `deploy.sh` confirm gates | Exit 2 without `CONFIRM_SWARM_0_3_8` / `0_3_9` |
 | `terraform init -backend=false` + `validate` | Success (Cloudflare + Hostinger providers) |
 | `ansible-playbook --syntax-check` `deploy-stack.yml` + `site.yml` | OK (Traefik templates wired) |
+| Traefik + `docker-stack` Jinja render (local) | OK — valid YAML; `api-staging` host; ACME present (`/opt/cursor/artifacts/swarm-template-render/`) |
 | Evidence log | `/opt/cursor/artifacts/staging_swarm_local_dry_run.log` |
 
 ## Operator unlock checklist (do these to finish staging build)
