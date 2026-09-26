@@ -172,10 +172,14 @@ sudo ./svc.sh status
 ```
 
 If GitHub shows a long **queued** backlog with **zero** `in_progress` jobs on
-`lenr-ci` labels, the runner process is likely wedged. From Hostinger (hPanel or
-API) **restart only** VM `2012566` (`45.93.100.251`) — never the Compose share
-`1280333`. systemd should bring `actions.runner.*` back on boot; confirm smoke
-picks up within a few minutes.
+`lenr-ci` labels, the runner is wedged or has a **session conflict**
+(`A session for this runner already exists` in `journalctl -u actions.runner.*`).
+
+1. Prefer SSH to CI host `45.93.100.251` and `./svc.sh stop && ./svc.sh start`
+   until logs show `Listening for Jobs` without conflict errors.
+2. If SSH is unavailable, Hostinger-restart **only** VM `2012566` — never the
+   Compose share `1280333`. After reboot, confirm the service is `Listening`
+   (a bare reboot can reconnect with a stale session and still not claim jobs).
 
 ## Workflow wiring
 
