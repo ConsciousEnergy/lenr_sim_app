@@ -18,76 +18,39 @@
 
 ---
 
-## Placement: dedicated CI VM (required) vs share interim
+## Placement: dedicated CI VM (required) vs share
 
-**Required end state:** runner on a Hostinger VM **≠** `1280333` / `185.211.4.66`,
+**Current end state (met):** runner on Hostinger VM **≠** `1280333` / `185.211.4.66`,
 labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose share.
 
-### Dedicated VM online — awaiting runner registration token
+### Dedicated VM — registered
 
 | Item | Value |
 |------|--------|
 | VM id | **`2012566`** |
 | IP | **`45.93.100.251`** |
-| Hostname | `lenr-ci` |
-| OS | Ubuntu 26.04 (Hostinger default) — Playwright e2e uses **system Google Chrome** (`LENR_CI_SYSTEM_CHROME=1`), not bundled Chromium |
-| Runner package | 2.337.0 bootstrapped at `/opt/actions-runner` |
-| CI deps | `bootstrap-dedicated-lenr-ci.sh` (ansible, unzip, Chrome, Playwright OS libs, docker group) |
-| Access | Agent SSH key installed; root password rotated; password SSH disabled |
-| Next | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` → `finish-lenr-ci.sh` / migrate |
-| Then | `CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER` remove share `lenr-ci-share-1` |
+| OS hostname | `lenr-ci` |
+| Runner name | `lenr-ci-1` (Listening) |
+| OS | Ubuntu 26.04 — Playwright e2e uses **system Google Chrome** (`LENR_CI_SYSTEM_CHROME=1`) |
+| Runner package | 2.337.0 at `/opt/actions-runner` |
+| CI deps | `bootstrap-dedicated-lenr-ci.sh` |
+| Access | Agent SSH key; password SSH disabled |
+| Share | No `.runner` on `185.211.4.66` |
 
-### Prior card orders (cancel unpaid)
+Cancel any leftover unpaid Hostinger orders
+(`61660939` / `61662216` / `61663818` / `61665445`) in hPanel if still listed.
 
-
-| Item | Value |
-|------|--------|
-| Orders | **`61660939`** / **`61662216`** / **`61663818`** / **`61665445`** — all `payment_initiated`; complete **one** 3DS; cancel the rest. **Stop further card API purchases.** |
-| Target hostname | `lenr-ci` |
-| Post-install | Hostinger script **`5725`** (`lenr-ci-runner-bootstrap`) — runner package **2.337.0** + sha256 check |
-| Next human step | Complete **one** 3DS in hPanel; abandon older unpaid duplicates |
-| Alt (Hostinger API guidance) | Card 3DS often leaves API orders unprocessed — add **PayPal** (or non-card) in hPanel → Billing → Payment methods, set it default, then re-run `provision-dedicated-lenr-ci.sh` (do **not** stack more card orders while 3DS is open). Agent watcher: `watch-paypal-and-provision.sh` attempts **one** KVM1 purchase automatically when a non-card method appears. |
-| Then | Inject fresh `GH_RUNNER_REGISTRATION_TOKEN` (real one-time token; not `G1th*` placeholder) → `migrate-to-dedicated-lenr-ci.sh` |
-| Agent cannot mint token | Cursor `gh` integration lacks runner admin; `GH_ADMIN_PAT` must be a real `ghp_`/`github_pat_` if automation should mint tokens |
-| Password assist | Hostinger reset email → set password → paste on unlock drop page (`HOSTINGER_HPANEL_PASSWORD`) so Playwright can open billing |
-
-```bash
-export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh GitHub one-time token
-export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
-./LENR_SIM_APP_v2/infrastructure/scripts/migrate-to-dedicated-lenr-ci.sh
-# migrate ends with prove-dedicated-lenr-ci.sh (share clean + smoke)
-```
-
-Agent/tmux auto-path (when token becomes usable):
-`watch-and-migrate-dedicated-lenr-ci.sh`.
-
-Operator token/hPanel drop (ephemeral Cloudflare quick tunnel while agent is live):
-`infrastructure/scripts/lenr-ci-token-drop-server.py` — serve locally and
-`cloudflared tunnel --url http://127.0.0.1:8787`, then open `/drop/<secret>`.
-Accepts `GH_RUNNER_REGISTRATION_TOKEN` and optional `HOSTINGER_HPANEL_*`.
-When hPanel email+password are dropped, `watch-hpanel-3ds.sh` uses Playwright
-(email login — not Google SSO) to open billing and attempt pending 3DS.
-
-Or: `provision-dedicated-lenr-ci.sh` (needs `CONFIRM_PURCHASE_LENR_CI=I_BUY_DEDICATED_CI`)
-then `finish-lenr-ci.sh` (**never** `ALLOW_SHARE_RUNNER`) then
-`remove-share-lenr-ci-runner.sh`.
-
-### Interim only — Compose share co-tenant (must be removed)
+### Share must never be a runner
 
 | Item | Value |
 |------|--------|
-| Host | `185.211.4.66` / VM `1280333` |
-| Runner | `lenr-ci-share-1` (present until dedicated Idle) |
-| Register override | `ALLOW_SHARE_RUNNER=1` (bootstrap only; migrate refuses this) |
-| Smoke override | repo var `LENR_CI_ALLOW_SHARE=1` — **required** for share smoke to pass; default is refuse share |
-
-`lenr-ci-smoke` **fails** when the job lands on `185.211.4.66` unless
-`LENR_CI_ALLOW_SHARE=1`. A green smoke check therefore means dedicated placement
-(or an explicit interim override) — not an accidental share co-tenant pass.
+| Host | `185.211.4.66` / VM `1280333` — Compose beta only |
+| Smoke | Fails on share unless repo var `LENR_CI_ALLOW_SHARE=1` |
 
 **Do not** put `VPS_*` / deploy secrets on `lenr-ci` workflows. Keep `deploy.yml`
-on `ubuntu-latest`. Share bootstrap preinstalls `unzip`, `ansible`, Playwright OS libs.
+on `ubuntu-latest`.
 
+---
 Abandon unpaid duplicates in hPanel: `61650992`, `61651905`, `61656286`, `61656290`
 (keep only **61660939** until it clears or is cancelled).
 
@@ -112,33 +75,25 @@ the same OS runs Compose/Swarm **and** `actions-runner`.
 | Swarm later | Possible for light staging; tight for busy CI + prod Swarm | Safer when both grow |
 | Deploy secrets | Must stay off `lenr-ci` either way | Same rule |
 
-**Goal placement is dedicated CI KVM.** Share runner `lenr-ci-share-1` is interim
-until dedicated registers Idle and `remove-share-lenr-ci-runner.sh` runs.
-**Do not** purchase more Hostinger VMs — dedicated `2012566` already exists.
+**Placement is dedicated CI KVM `2012566`.** Share must not register a runner.
+**Do not** purchase more Hostinger CI VMs — dedicated already exists.
 
-## Provision (operator) — dedicated VM
+## Re-register (recovery only)
 
-1. **Done:** dedicated Hostinger KVM2 `2012566` at `45.93.100.251` (OS hostname
-   `lenr-ci`; runner package 2.337.0 at `/opt/actions-runner`). Cancel unpaid
-   duplicate orders in hPanel. Do **not** run
-   `CONFIRM_PURCHASE_LENR_CI` again.
-2. Register on dedicated only (**no** `ALLOW_SHARE_RUNNER`):
+Registration already completed for `lenr-ci-1`. Use this only after removing
+the runner in GitHub UI or rebuilding the VM:
 
-   ```bash
-   export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh one-time token, len≥40
-   export CI_VM_SSH_HOST=root@45.93.100.251
-   ./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
-   export CONFIRM_REMOVE_SHARE_RUNNER=I_REMOVE_SHARE_RUNNER
-   ./LENR_SIM_APP_v2/infrastructure/scripts/remove-share-lenr-ci-runner.sh
-   ./LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh
-   ```
+```bash
+export GH_RUNNER_REGISTRATION_TOKEN=...   # fresh one-time token, len≥40
+export CI_VM_SSH_HOST=root@45.93.100.251
+./LENR_SIM_APP_v2/infrastructure/scripts/finish-lenr-ci.sh
+./LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh
+```
 
-3. Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
-4. Workflows already default to lenr-ci labels when `LENR_CI_RUNS_ON` is unset.
-   Optional: set the variable explicitly, or set `["ubuntu-latest"]` to force
-   hosted. Hosted jobs on this repo may fail with **0 steps** when the Actions
-   spending limit is hit — self-hosted is the unblock.
-5. Confirm share `185.211.4.66` has **no** GitHub runner registration.
+Confirm **Idle** under Settings → Actions → Runners (`lenr-ci-1`).
+Workflows already default to lenr-ci labels when `LENR_CI_RUNS_ON` is unset.
+Hosted jobs may fail with **0 steps** when the Actions spending limit is hit.
+Confirm share `185.211.4.66` has **no** GitHub runner registration.
 
 ## Secrets that stay in GitHub
 
