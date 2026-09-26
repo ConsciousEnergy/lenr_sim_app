@@ -94,6 +94,12 @@ Use GitHub Discussions/Issues for product questions.
 
 ## Cutover & deployment (current truth)
 
+Dual KVM2 (Compose share + dedicated `lenr-ci`) does **not** authorize public
+Swarm/Traefik/Cloudflare cutover by itself — see
+[`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+Open-PR cleanup order:
+[`PR_AND_BRANCH_HYGIENE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md).
+
 | Stage | Confirm | Notes |
 |-------|---------|-------|
 | Live Compose share (now) | Operator `VPS_*` / SSH | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
