@@ -19,7 +19,7 @@ checks on older tips often look “failed” from spend-limit / share-refuse noi
 | [#210](https://github.com/ConsciousEnergy/lenr_sim_app/pull/210) `v038-vnc-oneshot-on-main-98d8` | yes | Rebased onto #220 tip `938ff28` | **Merge third** (after #218/#220) — VNC one-shot + unlock portal; CI should use `lenr-ci-1` |
 | [#211](https://github.com/ConsciousEnergy/lenr_sim_app/pull/211) `dense-prs-agents-98d8` | closed | — | **CLOSED 2026-09-26** — superseded by #218/#220; remote head deleted |
 | [#212](https://github.com/ConsciousEnergy/lenr_sim_app/pull/212) `viz-error-instrument-26dd` | yes | Rebased onto #220 tip | **Merge fifth** — R3F fiber 8 / drei 9 pin + realtime sim API; keep separate from academic |
-| [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | UNSTABLE | **Academic train** — keep split; rebase only after infra merges |
+| [#217](https://github.com/ConsciousEnergy/lenr_sim_app/pull/217) `unified-paper-v037-962f` | yes | Rebased onto #220 tip | **Academic train** — keep split; merge after infra (#218/#220/#210/#219/#212) |
 | [#219](https://github.com/ConsciousEnergy/lenr_sim_app/pull/219) `readme-scope-docs-962f` | yes | Rebased onto #220 tip | **Merge fourth** — public README + screenshots + docs map / cutover honesty retained |
 | [#213](https://github.com/ConsciousEnergy/lenr_sim_app/pull/213)–[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) Dependabot | no | UNSTABLE | Batch-rebase after #218; merge only with green `lenr-ci` + dependency-review |
 
