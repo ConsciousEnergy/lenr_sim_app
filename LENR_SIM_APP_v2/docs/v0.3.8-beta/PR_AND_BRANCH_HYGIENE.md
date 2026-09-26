@@ -45,4 +45,4 @@ Keep deleting merged heads promptly (`delete branch on merge` in GitHub settings
 | Team / operators | `docs/v0.3.7-beta/` (train), `docs/v0.3.8-beta/` (Compose ship + staging Swarm), `docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`, `.github/BRANCHING.md`, `AGENTS.md` | Gates, confirm strings, rollback, no secret material |
 | Academic parallel | `PHYSICS_MATURITY_LEDGER.md`, `PROOF_MATRIX.md`, Theory Paper PRs | Stay on separate PRs; `EQ-OPEN-*` remain OPEN |
 
-See also [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md).
+See also [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md) (component matrix: Compose / CI / Swarm / Ansible / Traefik / Cloudflare).

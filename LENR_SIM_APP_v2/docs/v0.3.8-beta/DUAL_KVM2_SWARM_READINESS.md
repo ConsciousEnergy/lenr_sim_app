@@ -38,6 +38,19 @@ for the canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
 | Cloudflare Pages SPA + DNS | Terraform `backend.hcl` + `staging.tfvars` / prod vars; Pages on `app.` only; `api.` A `proxied=false` ([`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md)) |
 | Production cutover | Version bump to `0.3.9-beta` + `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` ([`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)) |
 
+## Component readiness matrix (repo artifacts vs live apply)
+
+| Component | In-repo ready? | Live / operator gate |
+|-----------|----------------|----------------------|
+| **Compose share** | Yes — live on `1280333` | Keep until v0.3.9; see [`COMPOSE_SHIP_HANDOFF.md`](COMPOSE_SHIP_HANDOFF.md) |
+| **Dedicated CI (`lenr-ci`)** | Yes — runner `lenr-ci-1` on `2012566` | Merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218); never put `VPS_*` on this host |
+| **Docker Swarm** | Playbooks + dry-run script | Needs staging nodes ≠ CI VM; `CONFIRM_SWARM_0_3_8` then `0_3_9` ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md), [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)) |
+| **Ansible** | `infrastructure/ansible/playbooks/{site,deploy-stack,setup-docker}.yml` + `inventory.staging.yml.example` | Copy example → untracked `inventory.staging.yml`; `--check` then apply under staging confirm |
+| **Traefik** | `ansible/templates/traefik.yml.j2` + `traefik-dynamic.yml.j2` (wired in `deploy-stack.yml`) | Staging TLS/ACME + stack deploy after Swarm nodes exist |
+| **Cloudflare** | Terraform Cloudflare module + [`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md) | Untracked `backend.hcl` / `staging.tfvars`; Pages on `app.`; `api.` A `proxied=false` |
+
+**Full build complete?** Only when the right-hand column is satisfied under the confirm strings — **not** merely because two KVM2s exist.
+
 ## Recommended next milestones (ordered)
 
 1. **Merge dedicated CI docs/PR (#218)** so all subsequent rebases see green `lenr-ci`.
