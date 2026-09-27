@@ -33,12 +33,13 @@ labels `self-hosted,linux,x64,lenr-ci`, and **no** `.runner` on the Compose shar
 | Runner name | `lenr-ci-1` (Listening) |
 | OS | Ubuntu 26.04 — Playwright e2e uses **system Google Chrome** (`LENR_CI_SYSTEM_CHROME=1`) |
 | Runner package | 2.337.0 at `/opt/actions-runner` |
-| CI deps | `bootstrap-dedicated-lenr-ci.sh` |
+| CI deps | `bootstrap-dedicated-lenr-ci.sh` (ansible, unzip, Chrome, Playwright OS libs, docker group) |
 | Access | Agent SSH key; password SSH disabled |
 | Share | No `.runner` on `185.211.4.66` |
 
 Cancel any leftover unpaid Hostinger orders
 (`61660939` / `61662216` / `61663818` / `61665445`) in hPanel if still listed.
+Also abandon older unpaid duplicates: `61650992`, `61651905`, `61656286`, `61656290`.
 
 ### Share must never be a runner
 
@@ -49,10 +50,6 @@ Cancel any leftover unpaid Hostinger orders
 
 **Do not** put `VPS_*` / deploy secrets on `lenr-ci` workflows. Keep `deploy.yml`
 on `ubuntu-latest`.
-
----
-Abandon unpaid duplicates in hPanel: `61650992`, `61651905`, `61656286`, `61656290`
-(keep only **61660939** until it clears or is cancelled).
 
 ---
 

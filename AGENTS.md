@@ -24,6 +24,8 @@ Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 `LENR_CI_ALLOW_SHARE=1`. Keep `deploy.yml` off `lenr-ci`. Never expose `VPS_*`
 to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+Proof: `LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh`
+(exit 0 only when dedicated exists, share clean, beta healthy, smoke on dedicated).
 Dual KVM2 ≠ Swarm cutover — see
 [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
 and [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).

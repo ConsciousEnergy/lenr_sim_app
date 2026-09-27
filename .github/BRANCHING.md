@@ -64,17 +64,14 @@ Heavy PR/test jobs default to labels
 share unless `LENR_CI_ALLOW_SHARE=1`. Optional `LENR_CI_RUNS_ON` overrides
 (e.g. `["ubuntu-latest"]`). **Deploy/ship** (`deploy.yml`) stays on
 GitHub-hosted so `VPS_*` never shares a pool with untrusted PR code. See
-[`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+[`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md)
+(runner cutover landed via [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218)).
 
 Dual KVM2 (share + CI) does **not** by itself authorize Swarm/Traefik/Cloudflare
 public cutover — see
-[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
-Land [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218) for the
-full runner runbook on `main`.
-
-**Split trains:** CI/infra/onboarding PRs must not edit academic claim text.
-Keep academic review on separate PRs (see
-[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md)).
+[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md)
+and
+[`../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md).
 
 ## Cutting a release
 
