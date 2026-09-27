@@ -15,18 +15,21 @@ Four markers must stay **`0.3.7-beta`** (do not bump to 0.3.8 in CI/docs PRs):
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** the CI goal host. Interim `lenr-ci-share-1` may still be registered until dedicated Idle + remove-share. |
+| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. |
 | Branch tip / `main` | Source of truth for code; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 
-Self-hosted CI **goal:** dedicated Hostinger VM (`lenr-ci`, id ≠ `1280333`) with
-labels `self-hosted,linux,x64,lenr-ci`, then **no** `.runner` on the share.
-Blocked on Hostinger payment (`payment_initiated` / 3DS for orders
-`61660939` / `61662216` / `61663818`) or PayPal/non-card payment method.
-`lenr-ci-smoke` **fails** on share unless repo var `LENR_CI_ALLOW_SHARE=1`.
-Keep `deploy.yml` off `lenr-ci`. Never expose `VPS_*` to PR jobs. Runbook:
+Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
+(runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`). Share must keep
+**no** `.runner`. `lenr-ci-smoke` **fails** on share unless repo var
+`LENR_CI_ALLOW_SHARE=1`. Keep `deploy.yml` off `lenr-ci`. Never expose `VPS_*`
+to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
-Proof: `infrastructure/scripts/prove-dedicated-lenr-ci.sh` (exit 0 only when
-dedicated exists, share clean, beta healthy, smoke on dedicated).
+Proof: `LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh`
+(exit 0 only when dedicated exists, share clean, beta healthy, smoke on dedicated).
+Dual KVM2 ≠ Swarm cutover — see
+[`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
+and [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+Docs map: [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 `LENR_CI_RUNS_ON` is unset. Set the variable to `["ubuntu-latest"]` only to force hosted.

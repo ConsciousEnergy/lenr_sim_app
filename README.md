@@ -24,6 +24,17 @@ The application features:
 
 👉 **[Go to the application README](LENR_SIM_APP_v2/README.md)** for installation and usage instructions.
 
+### Docs map (public vs team)
+
+| Audience | Start here |
+|----------|------------|
+| Public / contributors | This README, [`CONTRIBUTING.md`](CONTRIBUTING.md), [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) |
+| Branching / releases | [`.github/BRANCHING.md`](.github/BRANCHING.md) |
+| Operators (Compose now, Swarm later) | [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md) — start with [`FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md), [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md), [`PR_AND_BRANCH_HYGIENE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md) |
+| Academic parallel train | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) (`EQ-OPEN-*` stay OPEN) |
+
+**Live share today:** Compose + Caddy on the beta VPS. Dual KVM2 (app + dedicated CI) does **not** by itself complete Swarm + Traefik + Cloudflare cutover — that stays behind `CONFIRM_SWARM_0_3_8` (staging) / `CONFIRM_SWARM_0_3_9` (production).
+
 ### Legacy code
 
 The original `LENR_SIM_APP_v1/` tree and the root `backend/` / `frontend/` mirrors were removed from the working tree in September 2026. They remain available in git history at the annotated tag `archive/pre-legacy-removal` (for example `git show archive/pre-legacy-removal:LENR_SIM_APP_v1/README.md`).
