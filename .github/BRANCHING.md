@@ -39,13 +39,33 @@ gitGraph
 2. Commit focused changes with tests; run the relevant
    [release quality gate](../.cursor/skills/release-quality-gate/SKILL.md) slice.
 3. Open a PR against `main` using the PR template. CI must be green:
-   `version-consistency`, `test`, `frontend`, `frontend-e2e`, `formalization`,
-   `Secret scan`, `Dependency Review`.
+   `version-consistency`, plus path-filtered jobs (`test`, `frontend`,
+   `frontend-e2e`, `formalization`, `compose-config`, `staging-swarm-dry-run`)
+   when those paths change; also `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-Keep PRs small. Long-running work is landed behind flags or in additive,
-backward-compatible slices rather than on a long-lived branch (the API
-contract rules in `CONTRIBUTING.md` already require additive changes).
+Keep PRs small and **topic-dense**. Long-running work is landed behind flags or
+in additive, backward-compatible slices rather than on a long-lived branch (the
+API contract rules in `CONTRIBUTING.md` already require additive changes).
+
+**Split trains:** CI/infra/onboarding PRs must not edit academic claim text
+(ledger rows, proof-matrix cells, Theory Paper honesty, Lean obligations). Keep
+academic review on separate PRs. Docs under `docs/v0.3.7-beta/` /
+`formalization/` skip heavy CI via path filters — see
+[`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md)
+and root [`../AGENTS.md`](../AGENTS.md).
+
+## Self-hosted CI
+
+Heavy PR/test jobs default to
+`["self-hosted","linux","x64","lenr-ci"]`. **Goal:** dedicated Hostinger CI VM
+(not the Compose share), then remove share `lenr-ci-share-1`. Pending 3DS
+orders `61660939` / `61662216` / `61663818` (or PayPal/non-card + provision).
+`lenr-ci-smoke` refuses share unless `LENR_CI_ALLOW_SHARE=1`. Optional
+`LENR_CI_RUNS_ON` overrides (e.g. `["ubuntu-latest"]`). **Deploy/ship**
+(`deploy.yml`) stays on GitHub-hosted so `VPS_*` never shares a pool with
+untrusted PR code. See
+[`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
 ## Cutting a release
 

@@ -1,25 +1,29 @@
 # LENR Simulation App - Deployment Quick Reference
 
-**Version:** 0.3.6-beta  
-**Last Updated:** May 2026
+**Version:** 0.3.7-beta  
+**Last Updated:** September 2026
 
 > **v0.3.7-beta public share** uses **VPS Compose + Caddy** — see
 > [`infrastructure/vps/`](../infrastructure/vps/) and
 > [`docs/v0.3.7-beta/MERGE_TRAIN_VPS.md`](v0.3.7-beta/MERGE_TRAIN_VPS.md).
 >
-> The one-command Swarm/Pages path below is **v0.3.8-beta cutover only**.
-> `infrastructure/scripts/deploy.sh` refuses to run unless
-> `CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8`. Do **not** apply in 0.3.7.
-> Prep: [`v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+> Swarm/Pages path is gated. `infrastructure/scripts/deploy.sh` refuses without:
+> - Staging: `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+> - Production: `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`
+>
+> Do **not** apply public Swarm in 0.3.7. Prep:
+> [`v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md`](v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
 
 ---
 
-## One-Command Deployment (v0.3.8 Swarm/Pages — gated)
+## One-Command Deployment (gated Swarm)
 
 ```bash
 cd LENR_SIM_APP_v2/infrastructure/scripts
-# Refuses without the cutover confirm (prevents accidental 0.3.7 apply):
-CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh production
+# Staging dry-run / staging apply:
+CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
+# Production cutover (v0.3.9 — do not run without announced window):
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
 ```
 
 ---
@@ -68,11 +72,13 @@ cp inventory.yml.example inventory.yml
 # Will be updated automatically by deploy.sh
 ```
 
-### 3. Provision & Deploy (v0.3.8 gated)
+### 3. Provision & Deploy (gated)
 
 ```bash
 cd ../scripts
-CONFIRM_SWARM_0_3_8=I_CUTOVER_0_3_8 ./deploy.sh production
+CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
+# Production only with announced cutover:
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
 ```
 
 ---

@@ -3,12 +3,25 @@
 **Advanced modeling and visualization of Low Energy Nuclear Reactions**
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![Version](https://img.shields.io/badge/version-0.3.6--beta-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-0.3.7--beta-blue.svg)]()
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
 
-## 🧭 Architecture & Onboarding (v0.3.6-beta)
+## Current truth (v0.3.7-beta)
+
+| Topic | Where |
+|-------|--------|
+| Agent / contributor map | Root [`AGENTS.md`](../AGENTS.md) |
+| Live Compose share | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) → https://lenr-sim-beta.conscious.energy |
+| Staging Swarm | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Public Swarm + Pages | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` — [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Self-hosted CI (`lenr-ci`) | [`docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md) |
+| Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) (`EQ-OPEN-*` stay OPEN) |
+
+**Cutover map:** Compose share (now) → staging Swarm (0.3.8 confirm) → public Swarm+Pages (0.3.9 confirm). Do not apply Swarm without the matching env confirm. Academic review is a parallel v0.3.7-beta track; CI/infra PRs must not rewrite those claims.
+
+## 🧭 Architecture & Onboarding (v0.3.7-beta)
 
 New to the codebase? Start with the curated maps below before diving into files.
 
@@ -19,13 +32,13 @@ New to the codebase? Start with the curated maps below before diving into files.
 - `frontend/src/components/physics/` — governance UI (`ReactionRateGovernancePanel`, `GovernanceGlossaryDrawer`, `TheoryTogglePanel`) backed by the shared source of truth `frontend/src/utils/theoryGovernance.ts`.
 
 **Read these first**
-- [`docs/v0.3.6-beta/CODEBASE_MAP.md`](docs/v0.3.6-beta/CODEBASE_MAP.md) — annotated module-by-module map.
-- [`docs/v0.3.6-beta/CONSISTENCY_SOURCE_OF_TRUTH.md`](docs/v0.3.6-beta/CONSISTENCY_SOURCE_OF_TRUTH.md) and [`DATA_CONTRACT_LOCK.md`](docs/v0.3.6-beta/DATA_CONTRACT_LOCK.md) — API/version contracts.
+- [`docs/v0.3.6-beta/CODEBASE_MAP.md`](docs/v0.3.6-beta/CODEBASE_MAP.md) — annotated module-by-module map (still accurate for layout).
+- [`docs/v0.3.7-beta/DATA_CONTRACT_LOCK.md`](docs/v0.3.7-beta/DATA_CONTRACT_LOCK.md) — API/version contracts for this train.
 - [`docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md`](docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md) — claim tiers / evidence classes (mirrored in the in-app glossary).
 - [`docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md) — canonical dev/prod ports (frontend `:3000`, backend `:8010`).
 - Scientific review & evidence: [`../docs/REVIEW_2026/`](../docs/REVIEW_2026) (citation standard, MeV-gap hypothesis, evidence matrices).
 
-**Deferred restructure backlog** (intentionally out of scope for v0.3.6-beta; tracked for a later, dedicated refactor pass so this release stays additive and low-risk):
+**Deferred restructure backlog** (intentionally out of scope for v0.3.7-beta; tracked for a later, dedicated refactor pass so this release stays additive and low-risk):
 - Unify the mixed `.js`/`.jsx`/`.tsx` frontend file extensions onto a single convention.
 - Split oversized modules (`UnifiedTheoryPage.jsx`, `unified_simulation.py`) into smaller route/handler/util units (<300 lines per the project style rule).
 - Consolidate the legacy `electrolyte`-in-`lattice` fallback fields once all clients send the canonical top-level `electrolyte` object.

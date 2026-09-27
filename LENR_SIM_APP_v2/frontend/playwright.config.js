@@ -17,7 +17,17 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Hostinger dedicated CI (Ubuntu 26+) has no Playwright-bundled
+        // Chromium yet — use system Google Chrome when gated.
+        ...(process.env.LENR_CI_SYSTEM_CHROME === '1'
+          ? { channel: 'chrome' }
+          : {}),
+      },
+    },
     // Add more browsers once their binaries are installed:
     //   npx playwright install firefox webkit
     // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

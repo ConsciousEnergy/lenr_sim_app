@@ -90,6 +90,24 @@ Keep these four strings identical when bumping a release:
 
 ## Questions
 
-Use GitHub Discussions/Issues for product questions. For deployment cutover,
-see `LENR_SIM_APP_v2/docs/DEPLOYMENT_CHECKLIST.md` and
-`docs/v0.3.6-beta/PUBLIC_DEPLOYMENT_TRACKER.md`.
+Use GitHub Discussions/Issues for product questions.
+
+## Cutover & deployment (current truth)
+
+| Stage | Confirm | Notes |
+|-------|---------|-------|
+| Live Compose share (now) | Operator `VPS_*` / SSH | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
+| Staging Swarm | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Public Swarm + Pages | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+
+Do not apply public Swarm without the 0.3.9 confirm. Checklist overview:
+[`LENR_SIM_APP_v2/docs/DEPLOYMENT_QUICK_REFERENCE.md`](LENR_SIM_APP_v2/docs/DEPLOYMENT_QUICK_REFERENCE.md).
+
+## CI expectations
+
+- Prefer dense, single-topic PRs ([`.github/BRANCHING.md`](.github/BRANCHING.md)).
+- Self-hosted runner labels and `LENR_CI_RUNS_ON`:
+  [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+- Academic / ledger / proof-matrix edits belong on a **separate** PR from
+  CI/infra changes. Never close `EQ-OPEN-*` in drive-by docs.
+- Agent orientation: root [`AGENTS.md`](AGENTS.md).

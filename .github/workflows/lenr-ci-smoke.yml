@@ -1,0 +1,69 @@
+name: lenr-ci smoke
+
+# Hard-pinned to lenr-ci labels (no ubuntu-latest fallback).
+# Proves self-hosted after registration — does not consume GitHub-hosted minutes.
+# Deploy workflows must never use this runner.
+# See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md
+on:
+  workflow_dispatch:
+  # Also allow push/PR so proof jobs can land on self-hosted without Actions
+  # admin rights to dispatch from the agent token.
+  push:
+    paths:
+      - ".github/workflows/lenr-ci-smoke.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/lenr-ci-smoke.yml"
+permissions:
+  contents: read
+
+concurrency:
+  group: lenr-ci-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: lenr-ci runner smoke
+    runs-on: [self-hosted, linux, x64, lenr-ci]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prove labels and host identity
+        env:
+          # Repo var must be explicitly "1" for intentional share co-tenant CI.
+          # Interim lenr-ci-share-* names alone are NOT enough — goal evidence
+          # requires a dedicated Hostinger VM ≠ 185.211.4.66.
+          LENR_CI_ALLOW_SHARE: ${{ vars.LENR_CI_ALLOW_SHARE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "runner_name=${RUNNER_NAME:-}"
+          echo "runner_os=${RUNNER_OS:-}"
+          echo "runner_arch=${RUNNER_ARCH:-}"
+          hostname -f || hostname
+          ON_SHARE=0
+          if ip -4 addr 2>/dev/null | grep -q '185\.211\.4\.66'; then
+            ON_SHARE=1
+          fi
+          # Dedicated-VM mode (default): refuse Compose share. Green smoke must
+          # mean dedicated placement — not interim co-tenant on beta host.
+          if [[ "$ON_SHARE" -eq 1 ]]; then
+            if [[ "${LENR_CI_ALLOW_SHARE:-}" == "1" ]]; then
+              echo "Share co-tenant allowed via vars.LENR_CI_ALLOW_SHARE=1 (name=${RUNNER_NAME:-})."
+            else
+              echo "::error::Refuse: smoke on Compose share 185.211.4.66. Dedicated CI VM required (complete Hostinger 3DS). Set repo var LENR_CI_ALLOW_SHARE=1 only for intentional interim co-tenant."
+              exit 2
+            fi
+          fi
+          EXPECTED=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
+          test "$EXPECTED" = "0.3.7-beta"
+          echo "version-consistency smoke: $EXPECTED OK"
+          echo "## lenr-ci smoke" >> "$GITHUB_STEP_SUMMARY"
+          echo "- host: $(hostname)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- version: ${EXPECTED}" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$ON_SHARE" -eq 1 ]]; then
+            echo "- placement: Compose share KVM2 (LENR_CI_ALLOW_SHARE=1 interim)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- placement: dedicated CI VM (not 185.211.4.66)" >> "$GITHUB_STEP_SUMMARY"
+          fi
