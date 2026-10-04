@@ -17,6 +17,7 @@ duplicating long tables in the root README.
 | Doc | Use when |
 |-----|----------|
 | [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md) | “Can we finish Swarm/Ansible/Traefik/Cloudflare?” — unlock checklist |
+| [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md) | **Start here to learn** — Mermaid maps, 2-VPS Swarm options, security, UMLENR/ARA |
 | [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md) | Dual-KVM2 inventory + component matrix |
 | [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md) | Open PR merge order; agents prepare, humans merge |
 | [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md) | Local/remote dry-run helper + evidence |

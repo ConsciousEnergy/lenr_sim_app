@@ -78,8 +78,12 @@ rebase/review new Dependabot [#226](https://github.com/ConsciousEnergy/lenr_sim_
 
 ## Immediate next steps (ordered)
 
+0. **Learn the topology (two KVM2s):** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
+   — Mermaid maps, Compose-vs-Swarm, why CI ≠ Swarm, single-node beta path,
+   UMLENR / LENR-ARA trust planes.
 1. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
-2. **Operator:** provision staging Swarm node(s) ≠ `2012566` (or accept single-node caveat).
+2. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
+   staging manager ≠ `2012566` / accept single-node cutover rehearsal on share.
 3. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
 4. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
 5. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).
