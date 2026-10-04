@@ -7,17 +7,21 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
-BETA="${BETA_SHARE_URL:-https://lenr-sim-beta.conscious.energy}"
+# km_auto_live_compose MUST hit the public Compose share — never tip/localhost.
+# BETA_SHARE_URL is often set to http://127.0.0.1:18080 for tip probe-km and would
+# false-PASS this gate (tip already advertises auto while live still does not).
+LIVE_COMPOSE="${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}"
 OUT_JSON="${EXIT_AUDIT_JSON:-/opt/cursor/artifacts/v038_exit_criteria_audit.json}"
 OUT_MD="${EXIT_AUDIT_MD:-/opt/cursor/artifacts/v038_exit_criteria_audit.md}"
 mkdir -p "$(dirname "$OUT_JSON")"
 
-python3 - "$REPO" "$BETA" "$OUT_JSON" "$OUT_MD" <<'PY'
+python3 - "$REPO" "$LIVE_COMPOSE" "$OUT_JSON" "$OUT_MD" <<'PY'
 import json, os, subprocess, sys, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
-repo, beta, out_json, out_md = sys.argv[1:5]
+repo, live_compose, out_json, out_md = sys.argv[1:5]
 
 def sh(*args, check=False):
     r = subprocess.run(args, capture_output=True, text=True)
@@ -38,16 +42,36 @@ def file_on_ref(ref, path):
     r = sh("git", "cat-file", "-e", f"{ref}:{path}")
     return r.returncode == 0
 
-def live_modes():
+def is_public_compose_url(url: str) -> bool:
+    """Reject tip/local overrides so km_auto cannot false-PASS."""
     try:
-        with urllib.request.urlopen(f"{beta.rstrip('/')}/api/physics/bubble-fusion/defaults", timeout=20) as resp:
+        u = urlparse(url)
+    except Exception:
+        return False
+    host = (u.hostname or "").lower()
+    if u.scheme not in ("http", "https"):
+        return False
+    if host in ("localhost", "127.0.0.1", "::1") or host.endswith(".local"):
+        return False
+    if host.startswith("10.") or host.startswith("192.168.") or host.startswith("172."):
+        # private / link-local ranges — not the public Compose share
+        return False
+    return bool(host)
+
+def live_modes(base: str):
+    try:
+        with urllib.request.urlopen(f"{base.rstrip('/')}/api/physics/bubble-fusion/defaults", timeout=20) as resp:
             d = json.load(resp)
         return ((d.get("options") or {}).get("dynamics_modes") or [])
     except Exception as e:
         return [f"error:{e}"]
 
-modes = live_modes()
-km_live = "auto" in modes
+if not is_public_compose_url(live_compose):
+    modes = [f"error:LIVE_COMPOSE_URL_not_public:{live_compose}"]
+    km_live = False
+else:
+    modes = live_modes(live_compose)
+    km_live = "auto" in modes
 
 pr196 = gh_json("pr", "view", "196", "--repo", repo, "--json", "state,mergedAt") or {}
 pr197 = gh_json("pr", "view", "197", "--repo", repo, "--json", "state,mergedAt") or {}
@@ -77,7 +101,7 @@ items = [
         "id": "km_auto_live_compose",
         "requirement": "KM auto live on Compose share",
         "status": "PASS" if km_live else "FAIL",
-        "evidence": f"live modes={modes}",
+        "evidence": f"LIVE_COMPOSE_URL={live_compose} modes={modes} (ignores BETA_SHARE_URL tip override)",
     },
     {
         "id": "cmns_fidelity_doc_axes",
@@ -137,6 +161,7 @@ audit = {
     "reason": "all PASS" if complete else f"blocking={blocking}",
     "items": items,
     "blocking": blocking,
+    "live_compose_url": live_compose,
     "live_modes": modes,
     "pr204": pr204,
     "pr206": pr206,
