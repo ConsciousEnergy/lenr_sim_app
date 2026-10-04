@@ -1,28 +1,14 @@
 # LENR Simulation Application
 
-A comprehensive application for simulating Low Energy Nuclear Reaction (LENR) phenomena with advanced physics models, multi-physics coupling, and interactive 3D visualizations.
+**Research-preview software for modeling and visualizing Low-Energy Nuclear Reaction (LENR) hypotheses** — with claim-tiered physics engines, interactive 3D views, and a companion theoretical framework.
 
-## Project Organization
+[![Version](https://img.shields.io/badge/version-0.3.7--beta-blue.svg)](CHANGELOG.md)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
 
-The application lives under **[`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/)** (backend, frontend, infrastructure, docs). Everything else at the repository root is shared tooling and governance:
+> **Epistemic honesty.** Every number in this app is **model output**, not a laboratory measurement. Lean formalization checks *mathematical consistency* only — it does **not** prove that LENR occurs. `lenr_proved` stays `false`; the five `EQ-OPEN-*` obligations remain **OPEN**.
 
-| Path | Purpose |
-|------|---------|
-| `LENR_SIM_APP_v2/` | The application: FastAPI backend, React/Vite frontend, Docker/Terraform infrastructure, release evidence docs |
-| `formalization/` | Equation IR and Lean 4 consistency checks (mathematical consistency only, not a proof that LENR occurs) |
-| `docs/` | Repository-level documentation, including [`docs/releases/`](docs/releases/) (release notes and merge instructions) |
-| `archive/status-reports/` | Historical status reports kept for provenance |
-| `.github/` | CI workflows, Dependabot, PR template, CODEOWNERS |
-| `.cursor/` | Shared agent rules and skills |
-
-The application features:
-- Advanced multi-physics coupling (thermal, nuclear, electromagnetic)
-- Complete FEM implementation
-- Comprehensive physics models (quantum tunneling, electron screening, phonon interactions)
-- Full-featured React frontend with Three.js 3D visualizations
-- Extensive API and test suite with release-blocking, experiment-anchored science gates
-
-👉 **[Go to the application README](LENR_SIM_APP_v2/README.md)** for installation and usage instructions.
+**Public beta:** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) (Compose + Caddy on Hostinger VPS)
 
 ### Docs map (public vs team)
 
@@ -35,184 +21,190 @@ The application features:
 
 **Live share today:** Compose + Caddy on the beta VPS. Dual KVM2 (app + dedicated CI) does **not** by itself complete Swarm + Traefik + Cloudflare cutover — that stays behind `CONFIRM_SWARM_0_3_8` (staging) / `CONFIRM_SWARM_0_3_9` (production).
 
-### Legacy code
+---
 
-The original `LENR_SIM_APP_v1/` tree and the root `backend/` / `frontend/` mirrors were removed from the working tree in September 2026. They remain available in git history at the annotated tag `archive/pre-legacy-removal` (for example `git show archive/pre-legacy-removal:LENR_SIM_APP_v1/README.md`).
+## What this application is for
 
-## Quick Start
+LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore contested LENR mechanisms under explicit claim tiers** — without conflating simulation with experiment.
 
-### For New Users
+| You can… | You cannot (by design)… |
+|----------|-------------------------|
+| Run unified bubble–lattice, quantum tunneling, and bubble-fusion *models* | Treat UI numbers as lab measurements |
+| Compare theory modules with provenance and maturity badges | Close `EQ-OPEN-*` or claim `LENR_PROVED` |
+| Export runs (`lenr-run-export-v1`) for review packs | Get a deployed FEM / COMSOL stack on the public beta |
+| Read the in-app theory paper and methods honesty | Assume speculative mechanisms are validated |
 
-```bash
-cd LENR_SIM_APP_v2
-```
-
-Then follow the instructions in [LENR_SIM_APP_v2/README.md](LENR_SIM_APP_v2/README.md)
-
-### Windows Quick Start
-
-```batch
-cd LENR_SIM_APP_v2
-start_app.bat
-```
-
-### Linux/Mac Quick Start
-
-```bash
-cd LENR_SIM_APP_v2
-chmod +x start_app.sh  # First time only
-./start_app.sh
-```
-
-## Documentation
-
-### Essential Documentation
-
-- **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Initial setup guide
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution workflow and code style
-- **[.github/BRANCHING.md](.github/BRANCHING.md)** - Branching model, release tagging, and hotfix flow
-- **[SECURITY.md](SECURITY.md)** - Security practices and vulnerability reporting
-- **[docs/releases/](docs/releases/)** - Release notes and merge instructions
-- **[REORGANIZATION_PLAN.md](archive/status-reports/REORGANIZATION_PLAN.md)** - Project reorganization details (archived)
-
-### Application Documentation
-
-- [Application README](LENR_SIM_APP_v2/README.md) - Complete guide
-- [Development Plan](LENR_SIM_APP_v2/DEV_PLAN.md) - Roadmap and status
-- [Changelog](CHANGELOG.md) - Current progress and version history
-- [Test Plan](LENR_SIM_APP_v2/TEST_PLAN.md) - Testing strategy
-- [API Documentation](LENR_SIM_APP_v2/docs/api/) - API reference
-- [Tutorials](LENR_SIM_APP_v2/docs/tutorials/) - Usage guides
-
-## Architecture Overview
-
-### LENR_SIM_APP_v2 Architecture
-
-```
-┌─────────────────────────────────────────┐
-│     React Frontend (Port 3000)          │
-│  - Parameter Controls                   │
-│  - 3D Visualizations (Three.js)         │
-│  - Real-time Results Display            │
-└──────────────┬──────────────────────────┘
-               │ REST API / WebSocket
-┌──────────────┴──────────────────────────┐
-│    FastAPI Backend (Port 8000)          │
-│  - Physics Engine API                   │
-│  - Multi-Physics Coupling               │
-│  - Data Streaming                       │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────┴──────────────────────────┐
-│         Physics Core                    │
-│  ┌─────────────────────────────────┐   │
-│  │  Unified LENR Solver            │   │
-│  │  - Lattice Dynamics             │   │
-│  │  - Fusion Processor             │   │
-│  │  - Enhancement Calculator       │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  Multi-Physics Coupling         │   │
-│  │  - Thermal Domain               │   │
-│  │  - Nuclear Domain               │   │
-│  │  - EM Domain                    │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  Physics Models                 │   │
-│  │  - Quantum Tunneling            │   │
-│  │  - Electron Screening           │   │
-│  │  - Phonon Interactions          │   │
-│  │  - FEM Solver                   │   │
-│  │  - And more...                  │   │
-│  └─────────────────────────────────┘   │
-└─────────────────────────────────────────┘
-```
-
-## Requirements
-
-### System Requirements
-- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
-- **RAM**: 8GB minimum, 16GB recommended
-- **CPU**: Multi-core processor recommended for parallel simulations
-- **GPU**: WebGL-capable graphics for 3D visualizations
-
-### Software Requirements
-- **Python**: 3.8 or higher
-- **Node.js**: 14.x or higher  
-- **npm**: 6.x or higher
-
-## Development
-
-### Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. In short:
-
-1. **Branch from `main`** using a short-lived branch (`feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`); see [.github/BRANCHING.md](.github/BRANCHING.md).
-
-2. **Work inside `LENR_SIM_APP_v2/`**:
-   ```bash
-   cd LENR_SIM_APP_v2
-   node scripts/dev.js list  # See available tasks
-   node scripts/dev.js next  # Get next task to work on
-   ```
-
-3. **Test your changes**:
-   ```bash
-   # Backend tests
-   cd LENR_SIM_APP_v2/backend
-   pytest
-
-   # Frontend tests
-   cd LENR_SIM_APP_v2/frontend
-   npm test
-   ```
-
-4. **Submit a pull request to `main`** using the PR template; it is squash-merged once CI (including the science gates) is green.
-
-### Development Tools
-
-The application includes a comprehensive task management system:
-
-```bash
-cd LENR_SIM_APP_v2
-node scripts/dev.js --help  # See all available commands
-```
-
-## License
-
-Licensed under **GNU GPL-3.0**. This project is freely available for anyone to use, study, modify, and distribute. See [LICENSE](LICENSE) for full terms.
-
-## Acknowledgments
-
-- Contributors to the LENR research community
-- FastAPI, React, and Three.js communities
-- All open-source contributors
-
-## Support
-
-### Getting Help
-
-1. **Check the documentation**:
-   - Start with the [application README](LENR_SIM_APP_v2/README.md)
-   - Review [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-   - Check the [application docs](LENR_SIM_APP_v2/docs/)
-
-2. **Common Issues**:
-   - See the troubleshooting section in the [application README](LENR_SIM_APP_v2/README.md#troubleshooting)
-
-3. **Report Issues**:
-   - Open an issue on GitHub (for security vulnerabilities, follow [SECURITY.md](SECURITY.md) instead)
-   - Include version number, OS, and error logs
-
-## Project Status
-
-- **Current release**: `v0.3.6-beta` (see [Changelog](CHANGELOG.md) and the evidence pack under `LENR_SIM_APP_v2/docs/v0.3.6-beta/`)
-- **Development branch**: `main` (trunk-based; releases are `v*` tags)
-- **Public beta**: same-origin Hostinger VPS at `https://lenr-sim-beta.conscious.energy` (Caddy + Compose; see `LENR_SIM_APP_v2/infrastructure/vps/`)
+**Primary audiences:** condensed-matter / nuclear-adjacent researchers, CMNS reviewers, and contributors who need a reproducible software companion to the [Unified Theory Paper](docs/A_Unified_Theoretical_Framework_for_LENR.md).
 
 ---
 
-**Last Updated**: September 2026  
-**Maintainers**: See [CODEOWNERS](.github/CODEOWNERS)
+## Screenshots (v0.3.7-beta public beta)
+
+<p align="center">
+  <img src="docs/assets/readme/01-home.png" alt="Dashboard — LENR Simulation Platform home" width="800" />
+</p>
+
+<p align="center"><em>Dashboard — quick entry to Unified Theory, Quantum Tunneling, and Bubble Fusion</em></p>
+
+<p align="center">
+  <img src="docs/assets/readme/02-unified-theory.png" alt="Unified Bubble-Lattice LENR Simulation" width="800" />
+</p>
+
+<p align="center"><em>Unified Theory — material/electrolyte config, parameters, and 3D lattice–bubble workspace</em></p>
+
+<p align="center">
+  <img src="docs/assets/readme/03-bubble-fusion.png" alt="Bubble Fusion / acoustic cavitation simulation" width="800" />
+</p>
+
+<p align="center"><em>Bubble Fusion — acoustic cavitation controls with engine-maturity labeling</em></p>
+
+<p align="center">
+  <img src="docs/assets/readme/04-quantum-tunneling.png" alt="Quantum Tunneling visualization" width="800" />
+</p>
+
+<p align="center"><em>Quantum Tunneling — WKB / Gamow barrier exploration</em></p>
+
+<p align="center">
+  <img src="docs/assets/readme/05-theory-paper.png" alt="In-app Unified Theory Paper view" width="800" />
+</p>
+
+<p align="center"><em>Theory Paper — curated in-app view of the unified LENR framework</em></p>
+
+<p align="center">
+  <img src="docs/assets/readme/06-theory-methods.png" alt="Theory Methods — computational honesty" width="800" />
+</p>
+
+<p align="center"><em>Theory Methods — what the public beta actually runs vs aspirational FEM</em></p>
+
+> **Demo video.** A walkthrough video will be linked here when available (owned separately from this docs pack).
+
+---
+
+## Scope of the v0.3.7-beta train
+
+**Shipped / live on the public beta**
+
+- Unified bubble–lattice simulation API (`/api/unified/*`) with claim-tiered theory pipeline
+- Bubble dynamics: Rayleigh–Plesset baseline; Keller–Miksis auto-select when Mach ≥ 0.3 (approximate maturity)
+- Quantum tunneling (WKB/Gamow) reference path with domain-limited screening honesty
+- Engine maturity badges (Beta / Approximate / Speculative / Aspirational)
+- Open-questions / working-hypothesis surfaces; export envelope `lenr-run-export-v1`
+- Lean 4 + equation IR under [`formalization/`](formalization/) for consistency / non-closure lemmas
+- Multi-format governance docs under [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/)
+
+**Explicitly not on the public beta (deferred / aspirational)**
+
+- Full FEM / Poisson–Schrödinger / COMSOL-class continuum solvers
+- Declaring any `EQ-OPEN-*` closed
+- Energetic or “practical freedom” product claims
+
+Adopted sensitivity bands (do not reintroduce superseded values): tunneling enhancement \(10^{3}\)–\(10^{5}\); Casimir check geometry \(\approx -1.3\,\mathrm{mN}\); Miles He-4/heat band \(24\pm4\,\mathrm{MeV}\).
+
+---
+
+## Project layout
+
+| Path | Purpose |
+|------|---------|
+| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, VPS Compose infrastructure, release docs |
+| [`formalization/`](formalization/) | Equation IR + Lean 4 consistency checks (not a nature proof) |
+| [`docs/`](docs/) | Repository docs, Unified Theory Paper, formalization status, README screenshots |
+| [`archive/status-reports/`](archive/status-reports/) | Historical status reports (provenance) |
+| [`.github/`](.github/) | CI workflows, Dependabot, PR template, CODEOWNERS |
+
+👉 **Install & run:** see [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
+
+---
+
+## Quick start
+
+```bash
+cd LENR_SIM_APP_v2
+# Windows: start_app.bat
+# Linux/macOS:
+chmod +x start_app.sh && ./start_app.sh
+```
+
+- Frontend: http://localhost:3000  
+- Backend API: http://localhost:8010 (`/api/docs`)
+
+Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md)
+
+---
+
+## Architecture (high level)
+
+```
+┌─────────────────────────────────────────┐
+│  React / Vite frontend (:3000)          │
+│  Dashboard · Unified Theory · QT · BF   │
+│  Theory Paper / Methods · Analytics     │
+└──────────────────┬──────────────────────┘
+                   │ REST + WebSocket
+┌──────────────────┴──────────────────────┐
+│  FastAPI backend (:8010)                │
+│  /api/unified/* · /api/physics/*        │
+│  Theory pipeline · run export           │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────┴──────────────────────┐
+│  Physics engines (claim-tiered)         │
+│  WKB/Gamow · bubble RP/KM · theories/*  │
+│  Open questions / WH-ENP · guardrails   │
+└─────────────────────────────────────────┘
+         │
+         ▼
+  formalization/  (Lean + IR — consistency only)
+```
+
+---
+
+## Documentation map
+
+| Doc | Use when |
+|-----|----------|
+| [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) | Local install, features, troubleshooting |
+| [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](docs/A_Unified_Theoretical_Framework_for_LENR.md) | Canonical theory paper |
+| [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) | Maturity ledger, proof matrix, goals |
+| [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | Lean theorem status |
+| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) / [`.github/BRANCHING.md`](.github/BRANCHING.md) | How to contribute |
+| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting |
+
+---
+
+## Development
+
+Branch from **`main`** (trunk-based; releases are `v*` tags). See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+```bash
+# Backend
+cd LENR_SIM_APP_v2/backend && python -m pytest tests/ app/tests/ -o addopts="" --tb=short
+
+# Frontend
+cd LENR_SIM_APP_v2/frontend && npm ci && npm test
+```
+
+CI includes release-blocking science gates and (where configured) `lake build` over `formalization/lean`.
+
+---
+
+## License
+
+**GNU GPL-3.0** — see [LICENSE](LICENSE).
+
+## Support
+
+1. Application README troubleshooting: [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
+2. Beta feedback: email linked from the public beta banner (`diadon@conscious.energy`)
+3. Security issues: [SECURITY.md](SECURITY.md) (not public GitHub issues)
+
+## Project status
+
+- **Current app version markers:** `0.3.7-beta`
+- **Trunk:** `main`
+- **Public share:** Compose + Caddy (Swarm cutover is a later train; not applied here)
+
+---
+
+**Last updated:** 2026-09-25 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)
