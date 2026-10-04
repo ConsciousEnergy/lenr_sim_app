@@ -2,24 +2,24 @@
 
 **Question:** With both Hostinger KVM2s online, can we complete the full build?
 
-**Answer (2026-09-26):** **Repo artifacts + local gates are ready.** Live
-**staging apply** and **public cutover** are **not**. Dual KVM2 = Compose share
-+ isolated CI. Completing Swarm/Traefik/Cloudflare still needs operator
-credentials, ≥1 staging Swarm node that is **not** the CI box, then confirm
-strings.
+**Answer (2026-10-04):** **Repo artifacts + local gates are ready. Merge queue
+done. Live staging apply and public cutover are still not.** Dual KVM2 =
+Compose share + isolated CI. Completing Swarm/Traefik/Cloudflare still needs
+operator credentials, ≥1 staging Swarm node that is **not** the CI box, then
+confirm strings.
 
-## Live inventory (Hostinger API, 2026-09-26T21:24Z)
+## Live inventory (Hostinger API, 2026-10-04T15:48Z)
 
 | VM | Id | IP | Role now | Swarm role |
 |----|----|----|----------|------------|
-| Share | `1280333` | `185.211.4.66` | Compose `lenr-sim` **running(4)** — backend/postgres healthy, Caddy 80/443, images `0.3.7-beta` | **Keep Compose** until v0.3.9 cutover |
+| Share | `1280333` | `185.211.4.66` | Compose beta healthy `0.3.7-beta`; BF defaults advertise `dynamics_mode=auto` | **Keep Compose** until v0.3.9 cutover |
 | CI | `2012566` | `45.93.100.251` | GitHub runner `lenr-ci-1` only (no Compose projects) | **Forbidden** as Swarm worker |
 
 No third VPS exists yet for staging Swarm.
 
 ## In-repo readiness (agent local dry-run)
 
-Re-run **2026-09-26T21:24:11Z**:
+Re-run **2026-10-04T15:48:57Z** on `main` tip `695a882`:
 
 ```bash
 ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
@@ -30,8 +30,9 @@ Re-run **2026-09-26T21:24:11Z**:
 | `deploy.sh` confirm gates | Exit 2 without `CONFIRM_SWARM_0_3_8` / `0_3_9` |
 | `terraform init -backend=false` + `validate` | Success (Cloudflare + Hostinger providers) |
 | `ansible-playbook --syntax-check` `deploy-stack.yml` + `site.yml` | OK (Traefik templates wired) |
-| Traefik + `docker-stack` Jinja render (local) | OK — valid YAML; `api-staging` host; ACME present (`/opt/cursor/artifacts/swarm-template-render/`) |
-| Evidence log | `/opt/cursor/artifacts/staging_swarm_local_dry_run.log` |
+| Traefik Jinja render (local) | OK — `/tmp/swarm-template-render/traefik.yml` |
+| Evidence log | `/opt/cursor/artifacts/staging_swarm_local_dry_run_2026-10-04.log` |
+| Recommended merge queue | **Complete** — see [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md) |
 
 ## Operator unlock checklist (do these to finish staging build)
 
@@ -68,6 +69,17 @@ Copy examples → **untracked** files (never commit):
 queued backlog with zero in-progress jobs, Hostinger-restart **only** VM
 `2012566` to restore the runner (share `1280333` untouched).
 
-## Merge queue (blocks nothing technical, but unblocks trunk)
+## Merge queue
 
-See [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md): **#218 → #220 → #210 → #219 → #212 → #217 → Dependabot**.
+**Complete (2026-10-04).** See [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md).
+Remaining: close redundant [#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221);
+hold [#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) (numpy/scipy);
+rebase/review new Dependabot [#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226)–[#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228).
+
+## Immediate next steps (ordered)
+
+1. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
+2. **Operator:** provision staging Swarm node(s) ≠ `2012566` (or accept single-node caveat).
+3. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
+4. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
+5. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).

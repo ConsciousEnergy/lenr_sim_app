@@ -16,13 +16,20 @@ Full checklist: [OPERATOR_HOSTINGER_DNS.md](./OPERATOR_HOSTINGER_DNS.md).
 
 **Your order:** (1) recover hPanel login on a normal browser → (2) Browser VNC as root → (3) run unlock or drop agent pubkey → (4) only touch DNS if `dig` stops showing `185.211.4.66`.
 
-## Live status (agent probe 2026-09-18T20:28Z; earlier 19:41Z still accurate)
+## Live status (agent probe 2026-10-04T15:48Z)
 
 | Check | Result |
 |-------|--------|
 | Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
-| `GET /api/physics/bubble-fusion/defaults` | options **lack** `auto` (`legacy` / RP / KM only) |
-| Official `probe-km` (live) | **FAIL** — live build does not advertise `dynamics_mode=auto` |
+| `GET /api/physics/bubble-fusion/defaults` | **`dynamics_mode=auto` present**; options include `auto` / `legacy` / RP / KM |
+| Official `probe-km` (live) | Re-run after any Compose pull; prior FAIL (2026-09-18) was pre-`auto` ship |
+
+### Prior probe (2026-09-18T20:28Z) — historical
+
+| Check | Result |
+|-------|--------|
+| `GET /api/physics/bubble-fusion/defaults` | options **lacked** `auto` (`legacy` / RP / KM only) |
+| Official `probe-km` (live) | **FAIL** — live build did not advertise `dynamics_mode=auto` |
 | Tip `probe-km` (`:18080`) | **PASS** — tip already has `auto` (do **not** use tip URL for exit audit) |
 | Unlock portal | see `/opt/cursor/artifacts/v038_unlock_tunnel_url.txt` (trycloudflare; rotates) — `/unlock.sh` HTTP 200 |
 | SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
