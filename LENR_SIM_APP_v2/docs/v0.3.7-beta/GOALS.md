@@ -9,6 +9,7 @@
 1. **Maturity ledger** — inventory incomplete / approximate engines lacking analytical, numerical, or Lean proof (`PHYSICS_MATURITY_LEDGER.md` + `.json`).
 2. **Frontend Beta labels** — `EngineMaturityBadge` on Bubble Fusion, Quantum Tunneling, Unified Theory, Theory Methods, Open Questions.
 3. **Multi-format proof matrix** — NL + Markdown + JSON + LaTeX + Lean crosswalk (`PROOF_MATRIX.md`); no `EQ-OPEN-*` closures.
+3b. **Unified Theory Paper pack** — manuscript synced to v0.3.7-beta sim/math evidence in `.md` / `.txt` / `.tex` / `.lean` under [`paper/`](./paper/) with `PROVENANCE.md` + `simulation_evidence.json`.
 4. **Bug + security triage docs** — `BUG_TRIAGE.md`, `SECURITY_RESIDUALS.md`.
 5. **Critical-path worktree** — `WORKTREE_OOO.md` order of operations.
 6. **Version markers** → `0.3.7-beta` on this branch so testers see the new train.

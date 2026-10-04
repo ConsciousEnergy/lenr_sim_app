@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Version markers bumped to `0.3.7-beta` on this train (backend config, frontend package/version.js, Dockerfile.backend)
 - Multiphysics fidelity (KM default, real-gas EOS, FEM, EQ-OPEN closures, analytics auto-persist, freedom claims) explicitly deferred — not implemented here
 
+### Added — Unified Theory Paper multi-format pack (v0.3.7-beta, 2026-09-25)
+- Canonical paper [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](docs/A_Unified_Theoretical_Framework_for_LENR.md) revised to v0.3.7-beta: §3.2 RP/KM auto + provenance honesty; §3.8 pinned reviewer-pack simulation evidence; §6.1 multi-format pack pointers
+- Archival pack `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/` in `.md` / `.txt` / `.tex` / `.lean` with `PROVENANCE.md` + `simulation_evidence.json`
+- Lean `LenrFormal.PaperCrosswalk` section→module map (sanity theorems only; does not close `EQ-OPEN-*`)
+- In-app Theory Paper / Theory Methods revision chips updated to 2026-09-25, v0.3.7-beta
+- `lenr_proved` remains false; no quantitative band changes
+
 ### Security
 - Frontend npm overrides: `js-yaml` ^4.3.2, `svgo` ^3.3.5, `qs` ^6.16.0, `colord` ^2.9.4 so `npm audit --audit-level=high` is clean (react-router remains moderate pending intentional v7 migration)
 

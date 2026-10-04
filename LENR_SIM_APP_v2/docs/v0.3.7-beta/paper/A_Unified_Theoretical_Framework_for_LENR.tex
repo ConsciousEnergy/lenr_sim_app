@@ -1,0 +1,86 @@
+% A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
+% v0.3.7-beta archival LaTeX skeleton (Part 1-facing).
+% Canonical narrative: docs/A_Unified_Theoretical_Framework_for_LENR.md
+% Equation OPEN/ENG stubs: ../latex/
+% Epistemic: lenr_proved remains false; EQ-OPEN-* remain OPEN.
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{A Unified Theoretical and Mathematical Framework\\
+for Low-Energy Nuclear Reactions (LENR)}
+\author{Diadon Acs (lead, Conscious Energies)\\
+\small Contributing AIs disclosed in the Markdown canonical manuscript}
+\date{2026-02-14 (revised 2026-09-25, v0.3.7-beta)}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Low-Energy Nuclear Reactions (LENR) are investigated under a unified theoretical
+and mathematical framework integrating Rydberg Matter, delocalized interface
+electrons, double-layer QED, Casimir, Oppenheimer--Phillips, and quantum tunneling
+enhancements, plus lattice--bubble interaction physics. Companion software
+implements a phenomenological tunneling-enhancement band of
+\(10^{3}\)--\(10^{5}\) (software sensitivity envelope, not a first-principles
+prediction). Multi-format archival pack:
+\texttt{LENR\_SIM\_APP\_v2/docs/v0.3.7-beta/paper/}.
+\end{abstract}
+
+\section*{Epistemic posture}
+Exploratory models only. Claim-tiered outputs. No \texttt{LENR\_PROVED}.
+All five \texttt{EQ-OPEN-*} obligations remain OPEN.
+
+\section{Computational methods (v0.3.7-beta sync)}
+Public beta runs the in-repo \texttt{physics\_engine}: WKB/Gamow tunneling;
+bubble dynamics with Rayleigh--Plesset baseline and Keller--Miksis auto-select
+when peak Mach \(\ge 0.3\) (\texttt{ENG-RP-KM-01}, \texttt{ENG-BUBBLE-FUSION-01}).
+Provenance distinguishes \texttt{physics\_engine} from schematic fallback.
+FEM / Poisson--Schr\"odinger remain aspirational (\texttt{ENG-ASPIRATIONAL-FEM-01}).
+
+\subsection{Rayleigh--Plesset (low-Mach baseline)}
+\begin{equation}
+R\,\ddot{R} + \tfrac{3}{2}\dot{R}^{2}
+=
+\frac{1}{\rho}\Bigl(
+P_{\mathrm{bubble}}-P_{\infty}
+-\frac{2\sigma_{\mathrm{surf}}}{R}
+-\frac{4\mu\,\dot{R}}{R}
++\frac{\epsilon_0 E^{2}}{2}
+\Bigr).
+\end{equation}
+
+\subsection{OPEN / ENG LaTeX stubs}
+Standalone, per-obligation stubs (each is its own mini-document under
+\texttt{../latex/}; compile separately; do not treat as closures):
+\begin{itemize}
+  \item \texttt{eq\_open\_mev\_01.tex} --- \texttt{EQ-OPEN-MEV-01}
+  \item \texttt{eq\_open\_rad\_01.tex} --- \texttt{EQ-OPEN-RAD-01}
+  \item \texttt{eq\_open\_rate\_01.tex} --- \texttt{EQ-OPEN-RATE-01}
+  \item \texttt{eq\_open\_ec\_01.tex} --- \texttt{EQ-OPEN-EC-01}
+  \item \texttt{eq\_open\_yield\_01.tex} --- \texttt{EQ-OPEN-YIELD-01}
+  \item \texttt{eng\_bubble\_fusion\_01.tex} --- \texttt{ENG-BUBBLE-FUSION-01}
+  \item \texttt{eng\_rp\_km\_01.tex} --- \texttt{ENG-RP-KM-01}
+\end{itemize}
+
+\section{Companion-software simulation evidence}
+Pinned reviewer packs under
+\texttt{LENR\_SIM\_APP\_v2/datasets/reviewer\_packs/}
+(\texttt{smoke}, \texttt{q\_campaign\_demo}) and campaign invariants enforce
+\texttt{lenr\_proved=false}, the five OPEN IDs, and
+\texttt{contract\_version=v0.3.7-beta-science-gate-1}.
+See \texttt{PROVENANCE.md} and \texttt{simulation\_evidence.json} in this directory.
+Larger campaigns do not raise empirical claim tiers.
+
+\section{Mechanized consistency (Lean)}
+Lean~4 modules in \texttt{formalization/lean/LenrFormal/} certify mathematical
+consistency / non-closure lemmas only.
+Paper section\(\to\)theorem map:
+\texttt{PaperCrosswalk.lean} (also under \texttt{formalization/lean/LenrFormal/}).
+Status ledger: \texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}.
+
+\section*{Non-claims}
+These artifacts do not prove that LENR occurs in nature, close any
+\texttt{EQ-OPEN-*}, or elevate speculative mechanisms to empirical validation.
+
+\end{document}
