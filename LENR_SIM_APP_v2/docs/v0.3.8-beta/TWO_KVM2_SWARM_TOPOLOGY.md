@@ -267,6 +267,9 @@ boundary (private network / separate VPS), consuming shared **schemas** only.
 
 ## 8. Suggested learning lab (one sitting, no cutover)
 
+**Full step-by-step with file paths and CLI viz:**
+[`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md).
+
 1. Sketch the two boxes on paper; label “untrusted CI” vs “trusted runtime”.
 2. Run `staging-swarm-dry-run.sh local` and read the log.
 3. Fill `inventory.staging.yml` with **fake** IPs and run
@@ -276,6 +279,9 @@ boundary (private network / separate VPS), consuming shared **schemas** only.
 5. Read Cloudflare module vars; confirm Pages hostname default is `app`, not `@`.
 6. Decide: stay Compose for public beta until you either (a) buy a staging VPS,
    or (b) schedule a 0.3.9 cutover rehearsal on the share host.
+7. Review the portable UMLENR Goal 1 pack
+   ([`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md))
+   and open that PR from an account with write access to `UMLENR`.
 
 ---
 

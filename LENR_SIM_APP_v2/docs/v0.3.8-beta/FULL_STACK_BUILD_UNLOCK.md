@@ -80,10 +80,15 @@ rebase/review new Dependabot [#226](https://github.com/ConsciousEnergy/lenr_sim_
 
 0. **Learn the topology (two KVM2s):** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
    — Mermaid maps, Compose-vs-Swarm, why CI ≠ Swarm, single-node beta path,
-   UMLENR / LENR-ARA trust planes.
-1. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
-2. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
+   UMLENR / LENR-ARA trust planes. Hands-on:
+   [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md).
+1. **Program hub (parallel):** copy
+   [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md)
+   into `ConsciousEnergy/UMLENR` and open Goal 1 docs PR (needs write access on
+   UMLENR — not available to this agent’s token).
+2. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
+3. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
    staging manager ≠ `2012566` / accept single-node cutover rehearsal on share.
-3. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
-4. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
-5. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).
+4. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
+5. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
+6. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).
