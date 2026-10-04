@@ -24,12 +24,23 @@ const RealTimeVisualizationPage: React.FC = () => {
       
       try {
         const response = await simulationApi.listSimulations();
+        const rows: Array<{ id?: string; simulation_id?: string; status?: string }> =
+          Array.isArray(response)
+            ? response
+            : Array.isArray((response as { items?: unknown } | null)?.items)
+              ? ((response as { items: Array<{ id?: string; simulation_id?: string; status?: string }> }).items)
+              : [];
         setSimulations(
-          response.map(sim => ({
-            id: sim.id,
-            name: `Simulation ${sim.id.slice(0, 8)}`,
-            status: sim.status
-          }))
+          rows
+            .map((sim) => {
+              const id = String(sim.id || sim.simulation_id || '');
+              return {
+                id,
+                name: id ? `Simulation ${id.slice(0, 8)}` : 'Simulation',
+                status: sim.status || 'unknown',
+              };
+            })
+            .filter((sim) => Boolean(sim.id))
         );
       } catch (err) {
         setError('Failed to load simulations. Please try again.');
