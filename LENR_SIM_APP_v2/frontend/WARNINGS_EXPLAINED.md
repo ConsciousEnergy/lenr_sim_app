@@ -36,17 +36,18 @@ The funding line is unconditional noise; it has nothing to do with security.
 
 ## 2. Current audit posture
 
-On `development` tip a clean install reports **2 moderate, 0 high**:
+On tip a clean install reports **2 moderate** plus one **allowlisted high**:
 
 | Package | Advisories | Why not fixed |
 |---|---|---|
 | `react-router`, `react-router-dom` | GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg, GHSA-jjmj-jmhj-qwj2 (all moderate) | Fixed only in `react-router >= 7.18.0`. This is a major-version migration touching every route, deferred to its own slice. |
+| `braces` (via `micromatch` / `chokidar` / Tailwind 3 / Jest) | GHSA-vfj7-8cjw-p6xm (high) | No patched `braces` release (`first_patched_version` null). Clearing it needs Tailwind v4 / chokidar v4 (or an upstream braces fix). Allowlisted in `scripts/audit-high-gate.js` until then. |
 
-The CI gate is `npm audit --audit-level=high`, which exits `0`. Read it by exit
-code, never through a pipe:
+The CI gate is `node scripts/audit-high-gate.js` (high/critical, with the
+explicit allowlist above). Read it by exit code, never through a pipe:
 
 ```bash
-npm audit --audit-level=high > /dev/null 2>&1; echo "gate exit: $?"
+node scripts/audit-high-gate.js > /dev/null 2>&1; echo "gate exit: $?"
 ```
 
 Exposure from the residual moderates is limited: both advisories need an
