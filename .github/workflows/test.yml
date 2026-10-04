@@ -239,7 +239,8 @@ jobs:
       - name: Security gate (high and critical)
         run: |
           cd LENR_SIM_APP_v2/frontend
-          npm audit --audit-level=high
+          # Allowlists unfixed advisories (see scripts/audit-high-gate.js).
+          node scripts/audit-high-gate.js
 
       - name: Lint frontend
         run: |
