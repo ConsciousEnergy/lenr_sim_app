@@ -126,3 +126,19 @@ def test_pipeline_preserves_module_fidelity_provenance() -> None:
     per = next(p for p in d["per_theory"] if p["theory_id"] == "widom_larsen")
     assert per["primary_sources"]
     assert per["model_fidelity"]
+
+
+def test_czerski_phonon_energy_and_not_a_lenr_proof() -> None:
+    from app.physics_engine.theories.czerski_thermal_spike import (
+        PHONON_ENERGY_EV,
+        CzerskiThermalSpikeTheory,
+    )
+
+    assert PHONON_ENERGY_EV == pytest.approx(0.100, abs=0.001)
+    contrib = CzerskiThermalSpikeTheory().calculate(
+        {"temperature": 300.0, "beam_energy_kev": 2.0, "host_material": "zirconium"}
+    )
+    assert contrib.provenance.get("not_electrolytic_lenr_proof") is True
+    assert contrib.enhancement_factor <= 1e5
+    refs = " ".join(contrib.references)
+    assert "czerski2024a" in refs

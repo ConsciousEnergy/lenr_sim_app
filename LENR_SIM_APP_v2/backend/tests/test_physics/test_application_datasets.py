@@ -5,6 +5,7 @@ from __future__ import annotations
 from app.data.baseline_experiments import get_baseline_experiments
 from app.data.dataset_io import (
     SCHEMA,
+    iccf27_literature_records,
     literature_records,
     open_question_register,
     parkhomov_curated,
@@ -53,7 +54,10 @@ def test_screening_priors_match_legacy_typical_values() -> None:
     assert get_screening_potential("palladium") == 800.0
     assert get_screening_potential("erbium") == 347.0
     materials = {row["material"] for row in payload["materials"]}
-    assert materials == {"palladium", "nickel", "titanium", "erbium", "lithium"}
+    assert {"palladium", "nickel", "titanium", "erbium", "lithium"} <= materials
+    assert {"graphite", "silicon_carbide", "zirconium", "iridium"} <= materials
+    assert get_screening_potential("zirconium") == 120.0
+    assert get_screening_potential("graphite") == 80.0
 
 
 def test_parkhomov_curated_does_not_claim_full_database() -> None:
@@ -90,3 +94,17 @@ def test_testable_predictions_cover_seven_falsifiers() -> None:
         "PRED-07",
     ]
     assert all(row.get("falsifier") for row in preds)
+
+
+def test_iccf27_extension_does_not_mutate_locked_baselines() -> None:
+    records = iccf27_literature_records()
+    assert len(records) == 6
+    ids = {row["literature_id"] for row in records}
+    assert "kasagi-nicu-radiant-2026" in ids
+    assert "czerski-thermal-spike-zr-2024" in ids
+    kasagi = next(row for row in records if row["literature_id"] == "kasagi-nicu-radiant-2026")
+    assert kasagi["claim_tag"] == "EMP"
+    assert kasagi["citation_key"] == "kasagi2026"
+    hylenr = next(row for row in records if row["literature_id"] == "hylenr-tamu-phase1-2026")
+    assert hylenr["claim_tag"] == "contested"
+    assert literature_records()[0]["literature_id"] != "kasagi-nicu-radiant-2026"

@@ -82,6 +82,10 @@ class TestCompositionGroupAssignment:
     def test_context_line_stays_isolated(self):
         assert THEORY_COMPOSITION_GROUPS["stellar_scaling_mhd"] == "context_line"
 
+    def test_thermal_spike_has_its_own_group(self):
+        assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
+        assert THEORY_COMPOSITION_GROUPS["electron_screening"] == "screening"
+
 
 class TestCompositionRun:
     def test_only_one_winner_per_group_contributes(self):

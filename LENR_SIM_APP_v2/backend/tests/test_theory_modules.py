@@ -810,3 +810,48 @@ class TestStellarScalingMHD:
         assert entry["claim_tier"] == "speculative_exploratory"
         assert entry["claim_tier_multiplier"] <= 0.5
         assert entry["final_score"] <= entry["raw_score_pre_tier"] + 1e-6
+
+
+class TestCzerskiThermalSpike:
+    def setup_method(self):
+        from app.physics_engine.theories.czerski_thermal_spike import (
+            CzerskiThermalSpikeTheory,
+        )
+        self.theory = CzerskiThermalSpikeTheory()
+
+    def test_protocol_and_cap(self):
+        assert_theory_protocol(self.theory)
+        contrib = self.theory.calculate(
+            {**STANDARD_CONDITIONS, "beam_energy_kev": 2.0, "host_material": "zirconium"}
+        )
+        assert_valid_contribution(contrib)
+        assert contrib.enhancement_factor <= 1e5
+        assert contrib.claim_tier == "speculative_exploratory"
+        assert contrib.theory_id == "czerski_thermal_spike"
+        assert contrib.is_applicable
+
+    def test_inert_without_beam_on_electrolytic_pd(self):
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.is_applicable is False
+
+    def test_beam_raises_track_temperature(self):
+        analog = self.theory.calculate(
+            {**STANDARD_CONDITIONS, "analog_cascade": True, "host_material": "zirconium"}
+        )
+        beamed = self.theory.calculate(
+            {**STANDARD_CONDITIONS, "beam_energy_kev": 2.0, "host_material": "zirconium"},
+        )
+        assert beamed.observables["T_track_K"] > analog.observables["T_track_K"]
+        assert beamed.confidence > analog.confidence
+        assert beamed.enhancement_factor >= 1.0
+
+    def test_pipeline_registers(self):
+        from app.physics_engine.theory_pipeline import (
+            THEORY_COMPOSITION_GROUPS,
+            get_default_pipeline,
+        )
+        import app.physics_engine.theory_pipeline as tp
+        tp._default_pipeline = None
+        ids = get_default_pipeline().registered_ids
+        assert "czerski_thermal_spike" in ids
+        assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
