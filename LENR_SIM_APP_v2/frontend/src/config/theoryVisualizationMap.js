@@ -240,6 +240,16 @@ export const THEORY_VISUALIZATION_MAP = {
       'Astrophysical MHD scaling shown for cross-regime comparison only; strongly down-weighted, not a direct LENR claim.',
     reference: 'Parkin & Pudritz (2004); Shercliff (1953)',
   },
+  czerski_thermal_spike: {
+    vizLayer: null,
+    legendGroup: 'Ion tracks',
+    has3DOverlay: false,
+    claimTier: 'speculative_exploratory',
+    displayName: 'Czerski thermal spike (ion tracks)',
+    description:
+      'Accelerator ion-track thermal DD fusion. Complements screening; not an electrolytic LENR proof.',
+    reference: 'Czerski et al., arXiv:2409.02112',
+  },
 };
 
 /**

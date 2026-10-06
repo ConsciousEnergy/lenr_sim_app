@@ -531,6 +531,51 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [czerski2024a] Czerski, K. et al. (2024)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Observation of Thermal Deuteron-Deuteron Fusion in Ion Tracks. <em>arXiv:2409.02112</em>.
+              </Typography>
+              <MuiLink href="https://arxiv.org/abs/2409.02112" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                arXiv:2409.02112
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [kasagi2026] Kasagi, J., Itoh, T., Shibasaki, Y., Iwamura, Y. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Measurement of Radiant Spectrum for Excess Heat Generation in NiCu and Ni Thin Film During Hydrogen Gas Desorption. <em>Journal of Condensed Matter Nuclear Science</em>, 41, 62–72.
+              </Typography>
+              <MuiLink href="https://doi.org/10.70923/001c.163335" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.70923/001c.163335
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [czerski2022] Czerski, K. et al. (2022)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Threshold resonance in the ⁴He compound nucleus and DD fusion at thermal energies. <em>Physical Review C</em> 106, L011601.
+              </Typography>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [engrxiv6438] Surface Ir/Rh screening DFT (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Enhancement of Electronic Screening and Coulomb Barrier Suppression in D-Pd LENR Systems through Ir and Rh Surface Engineering. <em>engrXiv</em> doi:10.31224/6438. Theoretical prior only.
+              </Typography>
+              <MuiLink href="https://doi.org/10.31224/6438" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.31224/6438
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 Application datasets and reviewer pack (v1)
               </Typography>
               <Typography variant="body2" paragraph>

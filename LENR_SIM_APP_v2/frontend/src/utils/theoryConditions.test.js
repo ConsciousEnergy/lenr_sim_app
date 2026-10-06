@@ -73,4 +73,20 @@ describe('buildTheoryConditions', () => {
     // Unspecified values still fall back to the reference case.
     expect(conditions.loading_ratio).toBe(DEFAULT_THEORY_PARAMETERS.loadingRatio);
   });
+
+  it('omits optional beam and host keys unless the caller sets them', () => {
+    const baseline = buildTheoryConditions();
+    expect(baseline.beam_energy_kev).toBeUndefined();
+    expect(baseline.host_material).toBeUndefined();
+    const zr = buildTheoryConditions({
+      parameters: {
+        hostMaterial: 'zirconium',
+        beamEnergyKev: 2,
+        molecularBeamSpecies: 'D1',
+      },
+    });
+    expect(zr.host_material).toBe('zirconium');
+    expect(zr.beam_energy_kev).toBe(2);
+    expect(zr.molecular_beam_species).toBe('D1');
+  });
 });
