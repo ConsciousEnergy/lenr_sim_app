@@ -1,8 +1,9 @@
-# PR and branch hygiene (2026-10-04)
+# PR and branch hygiene (2026-10-06)
 
-**Purpose:** Disposition for open PRs after the v0.3.7-beta merge queue landed.
-Trunk-based rules in [`.github/BRANCHING.md`](../../../.github/BRANCHING.md)
-still apply: short-lived heads, squash-merge, delete on merge.
+**Purpose:** Disposition for open PRs after the v0.3.7-beta merge queue landed
+and the 2026-10-06 audit-gate / hygiene pass. Trunk-based rules in
+[`.github/BRANCHING.md`](../../../.github/BRANCHING.md) still apply: short-lived
+heads, squash-merge, delete on merge.
 
 **Operator rule:** Do not bulk-merge Dependabot or academic-claim PRs without
 review. Prefer **rebase onto `main`** then re-run CI on `lenr-ci`.
@@ -24,31 +25,53 @@ Slack context alone is not merge authorization.
 
 `main` tip after queue: `695a882` (verify with `git rev-parse origin/main`).
 
-## Remaining open PRs (2026-10-04T15:49Z)
+## Open PRs — disposition (2026-10-06)
 
 | PR | Disposition |
 |----|-------------|
-| [#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221) draft | **Close** — redundant after #218 |
-| [#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) | **Hold** — `scipy 1.18.1` needs `numpy>=2` vs pin `numpy==1.26.4` |
-| [#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226) Actions deps | Rebase onto tip (needs audit-high-gate from #224) then review |
-| [#227](https://github.com/ConsciousEnergy/lenr_sim_app/pull/227) react-three | **Hold / careful** — may fight #212 fiber 8 / drei 9 pin |
-| [#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228) npm-minor-patch | Rebase onto tip; review after #224 gate |
+| [#232](https://github.com/ConsciousEnergy/lenr_sim_app/pull/232) audit gates | **Merge first (ask)** — `source-map-js` 1.2.2 + `CVE-2026-85394` ignore; aligns scheduled `security-scan.yml` |
+| [#233](https://github.com/ConsciousEnergy/lenr_sim_app/pull/233) Actions deps | **Merge second (ask)** — topic rebuild of #226 on audit tip; keeps `audit-high-gate.js` |
+| [#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228) npm-minor-patch | **Merge after #232** (ask) — CLEAN on tip |
+| [#229](https://github.com/ConsciousEnergy/lenr_sim_app/pull/229) `three` 0.186.1 | **Merge after #228** (ask) — CLEAN on tip |
+| [#230](https://github.com/ConsciousEnergy/lenr_sim_app/pull/230) this PR (ops docs) | **Merge after deps** (ask) — Swarm lab + UMLENR Goal 1 pack pointers |
+| [#231](https://github.com/ConsciousEnergy/lenr_sim_app/pull/231) ICCF-27 science | **Merge last of this ladder (ask)** — rebased onto #232 tip; `EQ-OPEN-*` stay OPEN |
+| [#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226) Actions Dependabot | **Superseded by #233** — close after #233 lands |
+| [#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221) | **Closed** (2026-10-06) — redundant after #218 |
+| [#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) | **Hold** — `scipy 1.18.1` needs `numpy>=2` vs pin `numpy==1.26.4`; polluted file list |
 
-## Next plan track (ops)
+## Suggested merge order (when operator asks)
 
-See [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md):
+1. **#232** (security baseline — unblocks main Scheduled Security Scan)
+2. **#233** (Actions bumps)
+3. **#228** then **#229**
+4. **#230** (ops docs / learning / Goal 1 pack)
+5. **#231** (science train)
 
-1. Operator credentials for remote staging dry-run (`backend.hcl`, `staging.tfvars`, `inventory.staging.yml`)
-2. Staging Swarm node(s) ≠ CI `2012566` / ≠ blind promote of share `1280333`
-3. Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
-4. Public cutover later under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`
+## Progressive next steps (after this ladder)
+
+See [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md) and
+[`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md):
+
+1. **Operator (parallel):** copy
+   [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md)
+   into `ConsciousEnergy/UMLENR` and open Goal 1 docs PR (needs write access —
+   agents on `lenr_sim_app` cannot push UMLENR).
+2. **Operator:** untracked staging credentials (`backend.hcl`, `staging.tfvars`,
+   `inventory.staging.yml`).
+3. **Remote dry-run:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
+4. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+5. **Public cutover** later under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`
+
+Do **not** jump to Swarm while audit gates are red. Do **not** mix ops merges
+with claim-tier / `EQ-OPEN-*` edits.
 
 ## Public vs team docs
 
 | Audience | Home | Standard |
 |----------|------|----------|
 | Public / contributors | root `README.md`, `CONTRIBUTING.md`, `LENR_SIM_APP_v2/README.md` | Scope, how to run, what is **not** claimed; link maturity ledger |
-| Team / operators | [`README.md`](README.md), [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md), `docs/v0.3.7-beta/`, `docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`, `.github/BRANCHING.md`, `AGENTS.md` | Gates, confirm strings, rollback, no secret material |
-| Academic parallel | `PHYSICS_MATURITY_LEDGER.md`, `PROOF_MATRIX.md`, Theory Paper | Stay on separate PRs; `EQ-OPEN-*` remain OPEN |
+| Team / operators | [`README.md`](README.md), [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md), [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md), [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md), `docs/v0.3.7-beta/`, `docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`, `.github/BRANCHING.md`, `AGENTS.md` | Gates, confirm strings, rollback, no secret material |
+| Academic parallel | `PHYSICS_MATURITY_LEDGER.md`, `PROOF_MATRIX.md`, Theory Paper, `#231` | Stay on separate PRs; `EQ-OPEN-*` remain OPEN |
+| Program hub | [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md) | Portable pack for UMLENR Goal 1 PR |
 
 See also [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md).

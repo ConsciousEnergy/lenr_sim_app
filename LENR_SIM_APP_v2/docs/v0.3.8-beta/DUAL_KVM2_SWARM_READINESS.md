@@ -60,18 +60,20 @@ Local stack gate (agent, 2026-10-04T15:48:57Z):
 
 1. ~~Merge dedicated CI docs/PR (#218)~~ **done**
 2. ~~Land hygiene + product/ops merge queue~~ **done** (see hygiene doc)
-3. **Learn + rehearse locally:** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
+3. **Merge ladder (ask):** #232 audit gates → #233 Actions → #228/#229 → #230 docs
+   → #231 science — see [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md)
+4. **Learn + rehearse locally:** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
    + [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md); keep running
    `staging-swarm-dry-run.sh local`.
-4. **UMLENR Goal 1 (parallel):** open docs hub PR from
+5. **UMLENR Goal 1 (parallel):** open docs hub PR from
    [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md)
    (needs write access on `UMLENR`).
-5. **Operator staging remote dry-run** (plan/check only) — needs untracked
+6. **Operator staging remote dry-run** (plan/check only) — needs untracked
    `backend.hcl`, `staging.tfvars`, `inventory.staging.yml` (see unlock doc).
-6. **Provision staging Swarm nodes** (new VMs or documented single-node staging
+7. **Provision staging Swarm nodes** (new VMs or documented single-node staging
    caveats) — **not** the CI KVM2; **not** blind promote of live Compose.
-7. Validate Traefik → API replicas, Pages CORS/WS, health.
-8. Only then schedule **v0.3.9** public cutover under `CONFIRM_SWARM_0_3_9`.
+8. Validate Traefik → API replicas, Pages CORS/WS, health.
+9. Only then schedule **v0.3.9** public cutover under `CONFIRM_SWARM_0_3_9`.
 
 ## Invariants (do not weaken)
 

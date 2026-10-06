@@ -71,24 +71,31 @@ queued backlog with zero in-progress jobs, Hostinger-restart **only** VM
 
 ## Merge queue
 
-**Complete (2026-10-04).** See [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md).
-Remaining: close redundant [#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221);
-hold [#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) (numpy/scipy);
-rebase/review new Dependabot [#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226)–[#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228).
+**Complete (2026-10-04).** Hygiene refresh **2026-10-06** — see
+[`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md).
+
+Prepared (merge on ask): [#232](https://github.com/ConsciousEnergy/lenr_sim_app/pull/232)
+audit gates → [#233](https://github.com/ConsciousEnergy/lenr_sim_app/pull/233) Actions
+→ [#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228)/[#229](https://github.com/ConsciousEnergy/lenr_sim_app/pull/229)
+→ [#230](https://github.com/ConsciousEnergy/lenr_sim_app/pull/230) docs →
+[#231](https://github.com/ConsciousEnergy/lenr_sim_app/pull/231) science.
+[#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221) **closed**.
+[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) **hold**.
+[#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226) superseded by #233.
 
 ## Immediate next steps (ordered)
 
-0. **Learn the topology (two KVM2s):** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
-   — Mermaid maps, Compose-vs-Swarm, why CI ≠ Swarm, single-node beta path,
-   UMLENR / LENR-ARA trust planes. Hands-on:
-   [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md).
-1. **Program hub (parallel):** copy
+0. **Merge ladder (ask):** #232 → #233 → #228 → #229 → #230 → #231
+   (security baseline before science / Swarm work).
+1. **Learn the topology (two KVM2s):** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
+   + [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md).
+2. **Program hub (parallel):** copy
    [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md)
    into `ConsciousEnergy/UMLENR` and open Goal 1 docs PR (needs write access on
    UMLENR — not available to this agent’s token).
-2. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
-3. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
+3. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
+4. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
    staging manager ≠ `2012566` / accept single-node cutover rehearsal on share.
-4. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
-5. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
-6. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).
+5. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
+6. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
+7. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).
