@@ -78,6 +78,7 @@ describe('UnifiedTheoryPage', () => {
     expect(payload.lattice.electrolyte_family).toBeDefined();
     expect(payload.lattice.electrolyte_species).toBeDefined();
     expect(payload.lattice.electrolyte_molarity_mol_l).toBeDefined();
+    expect(payload.include_uncertainty).toBe(false);
   });
 
   test('graphite host chip sends graphite without rewriting Pd-D defaults', async () => {
@@ -102,6 +103,8 @@ describe('UnifiedTheoryPage', () => {
     expect(payload.material.host_material).toBe('graphite');
     expect(payload.material.reactant).toBe('hydrogen');
     expect(payload.lattice.radiant_calorimetry).toBe(true);
+    expect(payload.include_uncertainty).toBe(true);
+    expect(payload.uncertainty_samples).toBe(64);
   });
 
   test('displays ENHANCEMENT_THRESHOLDS.observable (1e5) after running simulation', async () => {
