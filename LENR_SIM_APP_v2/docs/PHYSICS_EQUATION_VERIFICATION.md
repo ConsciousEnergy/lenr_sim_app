@@ -1085,6 +1085,33 @@ scenario grid (θ, τ, f_nuc; C_lin = 1): max log10(R_mode/R_obs) = −7.4
 
 ---
 
+## 13. Czerski thermal-spike identities (ICCF-27 / 2026)
+
+### 13.1 Track temperature scale (EQ-TRACK-T-01)
+
+```
+T_track(E_beam) ≈ 2540 K × (E_beam / 2 keV)   (ZrD2 reference)
+T_eff = T_bulk + f_{e-ph} (T_track − T_bulk),   f_{e-ph} ≈ 0.1
+E_phonon(ZrD2) ≈ 100 meV
+```
+
+**Status:** 🔬 EXPERIMENTAL (cited 2540 K / 100 meV from arXiv:2409.02112); ⚠️ APPROXIMATION (linear energy scale and f_e-ph are simulator assumptions)
+**Code:** `CzerskiThermalSpikeTheory.calculate` (`theories/czerski_thermal_spike.py`)
+**Reference:** czerski2024a
+**Validity:** UHV accelerator metal hydrides. Does not close EQ-OPEN-RATE-01.
+
+### 13.2 Molecular-beam plateau factor (EQ-TRACK-MOL-01)
+
+```
+Y(D3+) / Y(D2+) ≈ 1.5   (Zakopane / ICCF-27 2026 talk)
+```
+
+**Status:** 📖 REFERENCE (awaiting proceedings DOI as czerski2026)
+**Code:** `D3_OVER_D2_FACTOR` in `czerski_thermal_spike.py`
+**Does not close EQ-OPEN-RATE-01.**
+
+---
+
 ## 11. Recommendations
 
 1. Use CODATA 2018 constants (current implementation ✅)
