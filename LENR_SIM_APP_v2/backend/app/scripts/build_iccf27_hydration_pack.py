@@ -60,6 +60,9 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         request = _simulate_payload(case, "iccf27_hydration", "carbon_silicate_uq")
         request.time_steps = 10
         request.total_time = 1.0
+        # Pack is a committed JSONL fixture; skip live SQL auto-persist.
+        request.persist_session_id = None
+        request.persist_source = None
         response = await run_unified_simulation(request)
         body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
         enhancement = body.get("enhancement") if isinstance(body.get("enhancement"), dict) else {}
