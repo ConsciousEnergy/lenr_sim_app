@@ -80,6 +80,11 @@ def test_open_questions_remain_open() -> None:
         "EQ-OPEN-YIELD-01",
     }
     assert all(row["status"] == "OPEN" for row in questions)
+    by_id = {row["id"]: row for row in questions}
+    assert "czerski2024a" in by_id["EQ-OPEN-RATE-01"]["citation_keys"]
+    assert "kasagi2026" in by_id["EQ-OPEN-YIELD-01"]["citation_keys"]
+    assert "hylenr2026" in by_id["EQ-OPEN-RAD-01"]["citation_keys"]
+    assert "PRED-02" in by_id["EQ-OPEN-RATE-01"]["testable_prediction_ids"]
 
 
 def test_testable_predictions_cover_seven_falsifiers() -> None:
@@ -94,6 +99,10 @@ def test_testable_predictions_cover_seven_falsifiers() -> None:
         "PRED-07",
     ]
     assert all(row.get("falsifier") for row in preds)
+    pred03 = next(row for row in preds if row["id"] == "PRED-03")
+    assert "hylenr2026" in pred03["citation_keys"]
+    pred07 = next(row for row in preds if row["id"] == "PRED-07")
+    assert "hylenr2026" in pred07["citation_keys"]
 
 
 def test_iccf27_extension_does_not_mutate_locked_baselines() -> None:

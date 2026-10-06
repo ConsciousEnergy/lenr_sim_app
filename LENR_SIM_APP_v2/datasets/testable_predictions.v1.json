@@ -72,7 +72,7 @@
       "virtual_lab_fields": ["q_electron_capture"],
       "observable": "Pd-105/107 enrichment; possible Cu appearance in Ni-H",
       "falsifier": "No isotopic shifts beyond natural variation (2 sigma) after prolonged active runs",
-      "citation_keys": ["iwamura2002", "steinetz2020exp"]
+      "citation_keys": ["iwamura2002", "steinetz2020exp", "hylenr2026"]
     }
   ]
 }
