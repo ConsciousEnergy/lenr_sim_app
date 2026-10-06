@@ -421,6 +421,16 @@ class TheoryConditions(BaseModel):
         description="Electrolyte molarity in mol/L. Validated window 0.01-1.0.",
         ge=0.0,
     )
+    beam_energy_kev: Optional[float] = Field(
+        None, ge=0.0,
+        description="Optional accelerator beam energy (keV) for ion-track theories.",
+    )
+    molecular_beam_species: Optional[str] = Field(
+        None, description="Optional D1/D2/D3 molecular projectile label.",
+    )
+    host_material: Optional[str] = Field(
+        None, description="Optional host key (palladium, graphite, silicon_carbide, ...).",
+    )
 
 class TheoryRunRequest(BaseModel):
     """Request to run one or more theories."""

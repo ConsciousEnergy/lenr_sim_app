@@ -17,7 +17,8 @@ References:
 - huke2008: Huke et al., enhanced screening across the periodic table (2008).
 - czerski2023: Electron screening in palladium, doi:10.1016/j.physletb.2023.137750.
 - screeningreview2024: Particles 7(3):50 (2024), doi:10.3390/particles7030050.
-- pines2020theory: Pines et al., Phys. Rev. C 101, 044609 (2020) (Ue~347 eV ErD3).
+- czerski2024a: Thermal DD fusion in ion tracks, arXiv:2409.02112.
+- engrxiv6438: Ir/Rh surface screening DFT prior, doi:10.31224/6438.
 
 These ranges are intended as priors for the Phase 5 uncertainty quantification,
 not as single deterministic constants.
@@ -83,6 +84,13 @@ def get_screening_potential_range(material: str) -> ScreeningPotentialRange:
     Falls back to palladium (the best-characterised host) for unknown materials.
     """
     key = (material or "").strip().lower()
+    aliases = {
+        "carbon": "graphite",
+        "sic": "silicon_carbide",
+        "zr": "zirconium",
+        "zrd2": "zirconium",
+    }
+    key = aliases.get(key, key)
     return MEASURED_SCREENING_POTENTIAL_EV.get(
         key, MEASURED_SCREENING_POTENTIAL_EV["palladium"]
     )

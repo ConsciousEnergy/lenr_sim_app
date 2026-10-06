@@ -43,6 +43,38 @@
       "maximum_eV": 600.0,
       "citations": ["huke2008"],
       "note": "Li-H / Rydberg-matter regime; estimate."
+    },
+    {
+      "material": "zirconium",
+      "minimum_eV": 110.0,
+      "typical_eV": 120.0,
+      "maximum_eV": 340.0,
+      "citations": ["czerski2024a", "czerski2023"],
+      "note": "UHV defect-free Zr ~120 eV; defect-enhanced tracks ~340 eV (Czerski)."
+    },
+    {
+      "material": "graphite",
+      "minimum_eV": 25.0,
+      "typical_eV": 80.0,
+      "maximum_eV": 200.0,
+      "citations": ["huke2008"],
+      "note": "Cross-regime theoretical prior for carbon hosts; not an EMP LENR U_e. Adiabatic floor 25 eV."
+    },
+    {
+      "material": "silicon_carbide",
+      "minimum_eV": 25.0,
+      "typical_eV": 100.0,
+      "maximum_eV": 250.0,
+      "citations": ["huke2008"],
+      "note": "Cross-regime theoretical prior for SiC; not EMP. Wide-gap semiconductor screening."
+    },
+    {
+      "material": "iridium",
+      "minimum_eV": 600.0,
+      "typical_eV": 1000.0,
+      "maximum_eV": 1400.0,
+      "citations": ["engrxiv6438"],
+      "note": "DFT / modified Thomas-Fermi surface-alloy prior (doi:10.31224/6438). Theoretical, not EMP."
     }
   ]
 }

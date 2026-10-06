@@ -40,8 +40,8 @@
       "status": "OPEN",
       "virtual_lab_field": "q_statistical",
       "in_app_handles": ["reaction_rate_engine.py", "takahashi_tsc.py"],
-      "still_missing": "Experimentally constrained collective factor (not a free 1e6-cap assumption)",
-      "citation_keys": ["takahashi2016", "takahashi2026brief"],
+      "still_missing": "Experimentally constrained collective factor (not a free 1e6-cap assumption). ICCF-27 thermal-spike plateau is accelerator EMP, not electrolytic rate closure.",
+      "citation_keys": ["takahashi2016", "takahashi2026brief", "czerski2024a"],
       "testable_prediction_ids": ["PRED-03"],
       "lean_target": "LenrFormal.OpenObligations",
       "notes": "Two-body log10 N_events = -40 is proved as non-closure (EQ-RATE-2B-NC-01). trapped_state remains SPEC."
@@ -65,8 +65,8 @@
       "status": "OPEN",
       "virtual_lab_field": "q_integrated_yield",
       "in_app_handles": ["miles_heat_helium.py"],
-      "still_missing": "Time-resolved simultaneous heat + He; integrated W·hr yields 100-10000× low",
-      "citation_keys": ["miles1993", "mckubre2008"],
+      "still_missing": "Time-resolved simultaneous heat + He; integrated W·hr yields 100-10000× low. Kasagi 2026 radiant Q_ex ≈ 1.1 W over ≥215 h is an EMP duration anchor, not Q5 closure.",
+      "citation_keys": ["miles1993", "mckubre2008", "kasagi2026"],
       "testable_prediction_ids": ["PRED-01", "PRED-05"],
       "lean_target": "LenrFormal.OpenObligations",
       "notes": "Instantaneous Miles band is EMP (within ~2×). Integrated discrepancy remains OPEN. ISSUE_LEDGER 'FIXED' means a paper section was written, not that the obligation is discharged."

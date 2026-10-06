@@ -71,6 +71,18 @@ def testable_predictions() -> Dict[str, Any]:
     return load_dataset("testable_predictions.v1.json")
 
 
+@lru_cache(maxsize=8)
+def literature_iccf27() -> Dict[str, Any]:
+    return load_dataset("literature_iccf27.v1.json")
+
+
+def iccf27_literature_records() -> List[Dict[str, Any]]:
+    records = literature_iccf27().get("records") or []
+    if not isinstance(records, list):
+        raise ValueError("literature_iccf27.v1.json records must be a list")
+    return records
+
+
 def literature_records() -> List[Dict[str, Any]]:
     records = literature_baselines().get("records") or []
     if not isinstance(records, list):

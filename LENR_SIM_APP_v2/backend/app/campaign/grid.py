@@ -92,6 +92,30 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    "iccf27_grid": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
+    "parameter_map_grid": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
+    "carbon_silicate_uq": {
+        "temperatures": [300.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
 }
 
 AXIS_KEYS = (
@@ -241,6 +265,21 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_testbed_review_cases()
         return
+    if preset == "iccf27_grid":
+        from app.campaign.iccf27 import iter_iccf27_grid_cases
+
+        yield from iter_iccf27_grid_cases()
+        return
+    if preset == "parameter_map_grid":
+        from app.campaign.parameter_map import iter_parameter_map_cases
+
+        yield from iter_parameter_map_cases()
+        return
+    if preset == "carbon_silicate_uq":
+        from app.campaign.carbon_silicate import iter_carbon_silicate_uq_cases
+
+        yield from iter_carbon_silicate_uq_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -269,6 +308,18 @@ def campaign_size(preset: str) -> int:
         from app.campaign.testbed_review import testbed_review_count
 
         return testbed_review_count()
+    if preset == "iccf27_grid":
+        from app.campaign.iccf27 import iccf27_grid_count
+
+        return iccf27_grid_count()
+    if preset == "parameter_map_grid":
+        from app.campaign.parameter_map import parameter_map_count
+
+        return parameter_map_count()
+    if preset == "carbon_silicate_uq":
+        from app.campaign.carbon_silicate import carbon_silicate_uq_count
+
+        return carbon_silicate_uq_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -414,5 +465,21 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
             "Isolated registered theories plus Miles / McKubre / ARPA-E "
             "full-pipeline cells. Model association, not P(LENR). Does not "
             "prove LENR. Do not run full or diverse in CI."
+        )
+    if preset == "iccf27_grid":
+        payload["note"] = (
+            "ICCF-27 / Sept 2026 literature extension plus graphite/SiC "
+            "controls. Does not mutate the locked 17-row seed set. Does not "
+            "prove LENR."
+        )
+    if preset == "parameter_map_grid":
+        payload["note"] = (
+            "Designed DeCapua/Metzler-style parameter map (loading × T × host). "
+            "Not a cartesian. Does not prove LENR."
+        )
+    if preset == "carbon_silicate_uq":
+        payload["note"] = (
+            "Pd/Ni plus graphite/SiC UQ cells for probabilistic outcomes. "
+            "Model output only. Does not prove LENR."
         )
     return payload
