@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — audit gates (2026-10-06)
+- Frontend: override `source-map-js` to `^1.2.2` (GHSA-68fv-2mgg-jv7q)
+- Backend CI: ignore `CVE-2026-85394` on `python-jose==3.5.0` until a patched release or PyJWT migration (no newer PyPI version)
+- Align scheduled `security-scan.yml` with PR gates (`pip-audit` ignore list + `audit-high-gate.js`)
+
 ### Changed — GitHub landing docs (v0.3.7-beta merge readiness)
 - Root [`README.md`](README.md) rewritten for product scope: what the app is for, honesty invariants, v0.3.7-beta feature boundary, architecture sketch
 - Screenshots of the public beta under [`docs/assets/readme/`](docs/assets/readme/) (dashboard, Unified Theory, Bubble Fusion, Quantum Tunneling, Theory Paper, Theory Methods)
