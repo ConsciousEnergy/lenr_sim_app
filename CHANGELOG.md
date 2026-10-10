@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Notes
+- Integration work for **v0.3.8-beta** continues on the long-lived `dev` branch
+  (see `.github/BRANCHING.md`). `main` remains the live **v0.3.7-beta** Compose
+  share line until a future cutover PR.
+
+## [v0.3.7-beta] - 2026-10-10
+
+Public Compose share: https://lenr-sim-beta.conscious.energy  
+Tag target: `main` @ ICCF-27 science enrichment (#231).  
+`lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN.
+
 ### Security — audit gates (2026-10-06)
 - Frontend: override `source-map-js` to `^1.2.2` (GHSA-68fv-2mgg-jv7q)
 - Backend CI: ignore `CVE-2026-85394` on `python-jose==3.5.0` until a patched release or PyJWT migration (no newer PyPI version)
 - Align scheduled `security-scan.yml` with PR gates (`pip-audit` ignore list + `audit-high-gate.js`)
 
-### Added — ICCF-27 / Sept 2026 science enrichment (APP_VERSION stays 0.3.7-beta)
+### Added — ICCF-27 / Sept 2026 science enrichment
 - Companion literature file `literature_iccf27.v1.json` (6 rows). Locked 17-row `literature_baselines.v1.json` is unchanged
 - First-class graphite, silicon carbide, and zirconium hosts (MaterialProperties, screening priors, bubble-lattice parameters)
 - Beam-gated `czerski_thermal_spike` theory in composition group `ion_track` (speculative; not an electrolytic LENR proof)
@@ -27,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - App README version badge / status aligned to `0.3.7-beta` with link to the root overview
 - Demo video intentionally deferred (owner-provided later)
 
-### Added — v0.3.8-beta fidelity P0 / ARA P1 start (science slice)
+### Added — fidelity P0 / ARA P1 start (landed on 0.3.7 line; docs under v0.3.8-beta/)
 - Fidelity honesty UI: `TheoryFidelityHonestySummary`, free/fitted parameter chips, Advanced Analysis Theory Summary no longer uses hardcoded endorsement copy
 - Theory Paper §6 honesty: Hagelstein / Vysotskii / Swartz / Widom framed as speculative hypotheses; Holmlid `holmlid_udh` ≠ Kim `kim_bec` in Theory-to-Simulation map
 - ARA P1 scaffolds: `started_scaffold` markers on Hagelstein / Storms NAE / Takahashi / Shoulders / Matsumoto (+ Widom start docs); `test_ara_p1_scaffolds.py`
@@ -54,12 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend npm overrides: `js-yaml` ^4.3.2, `svgo` ^3.3.5, `qs` ^6.16.0, `colord` ^2.9.4 so `npm audit --audit-level=high` is clean (react-router remains moderate pending intentional v7 migration)
 
 ### Repository organization and security hardening (2026-09-04)
-- Trunk-based branching adopted: `main` is the only long-lived branch, releases are `v*` tags, features use short-lived branches. Documented in `.github/BRANCHING.md`; `CONTRIBUTING.md` and the PR template now say "branch from `main`"
+- Trunk-based branching adopted for the 0.3.6→0.3.7 era: `main` integration + `v*` tags (later extended to long-lived `dev` for 0.3.8 — see BRANCHING.md)
 - `v0.3.6-beta` promoted to `main` via merge-commit PR #161. Version-named release branches and `master`/`development` archived as `archive/*` tags; `v0.3.5-beta` tagged retroactively at PR #24's merge commit
 - Legacy trees removed from the working tree (`LENR_SIM_APP_v1/`, root `backend/` and `frontend/` mirrors, root `package.json`); snapshot at tag `archive/pre-legacy-removal`. Tracked localhost-only `.env.local` / `.env.development` untracked and `.env.*` gitignored (templates stay)
-- CI: workflows trigger only on `main` and `v*` tags; all actions pinned to commit SHAs; `deploy.yml` reads the image tag and `BUILD_VERSION` from `APP_VERSION` instead of a hardcoded `0.3.6-beta`; concurrency groups cancel superseded runs
+- CI: workflows trigger on `main` and `v*` tags; all actions pinned to commit SHAs; `deploy.yml` reads the image tag and `BUILD_VERSION` from `APP_VERSION` instead of a hardcoded `0.3.6-beta`; concurrency groups cancel superseded runs
 - Security: gitleaks full-history secret scan on every PR and weekly (`.gitleaks.toml` allowlists BibTeX `citation_key` values and a public hCaptcha site key); CodeQL workflow for Python + JS/TS (no-op until the repository is public or GHAS is enabled); `SECURITY.md` gains supported versions, private reporting steps, and the CI control matrix; `CODEOWNERS` added; optional `.pre-commit-config.yaml`
-- Dependabot now targets `main` (no `target-branch`), groups minor/patch updates per ecosystem, and ignores `starlette` majors (blocked by the `fastapi==0.128.0` pin)
+- Dependabot groups minor/patch updates per ecosystem, and ignores `starlette` majors (blocked by the `fastapi==0.128.0` pin)
 - `lenr_proved` remains false; `EQ-OPEN-*` stay OPEN
 
 ## [v0.3.6-beta] - 2026-08-31
