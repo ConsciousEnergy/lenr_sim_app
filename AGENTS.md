@@ -27,8 +27,14 @@ to PR jobs. Runbook:
 Proof: `LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh`
 (exit 0 only when dedicated exists, share clean, beta healthy, smoke on dedicated).
 Dual KVM2 ≠ Swarm cutover — see
-[`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
-and [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+[`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md),
+[`TWO_KVM2_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/TWO_KVM2_SWARM_TOPOLOGY.md)
+(learning maps + 2-VPS options),
+[`SWARM_OPERATOR_LAB.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/SWARM_OPERATOR_LAB.md)
+(hands-on file walkthrough), and
+[`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
+UMLENR Goal 1 pack (portable hub PR):
+[`docs/program/UMLENR_GOAL1_HUB_PACK/`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/README.md).
 Docs map: [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when

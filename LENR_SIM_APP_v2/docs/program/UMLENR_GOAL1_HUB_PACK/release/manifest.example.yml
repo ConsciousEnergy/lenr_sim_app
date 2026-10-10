@@ -1,0 +1,38 @@
+# umlenr-release-manifest-v1 (example — not a live release)
+# Copy and fill when cutting a program-level release train.
+
+schema: umlenr-release-manifest-v1
+program: conscious-energy
+manifest_version: "0.1.0-draft"
+created: "2026-10-04"
+
+components:
+  - id: lenr-sim
+    github: ConsciousEnergy/lenr_sim_app
+    app_version: "0.3.7-beta"
+    git_sha: "REPLACE_WITH_MAIN_TIP"
+    surfaces:
+      compose_share: "https://lenr-sim-beta.conscious.energy"
+      swarm_api: null          # set after CONFIRM_SWARM_0_3_9
+      pages_app: null          # set when Pages hostname live
+    honesty:
+      eq_open_closed: false    # must remain false until science PRs say otherwise
+
+  - id: umlenr-hub
+    github: ConsciousEnergy/UMLENR
+    docs_ref: "docs/program/"
+    git_sha: "REPLACE"
+
+  - id: lenr-ara
+    visibility: private
+    status: not_in_public_train
+
+gates:
+  confirm_swarm_0_3_8_required_for_staging: true
+  confirm_swarm_0_3_9_required_for_public_swarm: true
+  ci_holds_vps_secrets: false
+
+notes: >
+  Example only. Program releases should list exact SHAs and which DNS hosts
+  flipped. Do not claim Swarm/Pages live until confirm-gated cutover evidence
+  exists in lenr_sim_app ops docs.

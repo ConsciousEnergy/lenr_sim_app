@@ -1,0 +1,59 @@
+# Conscious Energy — child repository registry (Goal 1)
+# Consumed by humans and future release tooling. Keep YAML additive.
+
+version: 1
+updated: "2026-10-04"
+owner_org: ConsciousEnergy
+
+repos:
+  - id: umlenr-hub
+    github: ConsciousEnergy/UMLENR
+    role: program_hub
+    visibility: public
+    trust_plane: docs
+    notes: "Umbrella docs, schemas, registries, release manifests"
+
+  - id: lenr-sim
+    github: ConsciousEnergy/lenr_sim_app
+    role: public_simulation
+    visibility: public
+    trust_plane: runtime
+    infra_reference: true
+    live_compose_url: "https://lenr-sim-beta.conscious.energy"
+    notes: "Reference Swarm/Ansible/Traefik/Terraform/Cloudflare stack"
+
+  - id: lenr-ara
+    github: null  # private path TBD
+    role: private_daq
+    visibility: private
+    trust_plane: daq
+    notes: "Low-cost DAQ; never co-tenant with lenr-ci or public Sim DB"
+
+  - id: project-proteus
+    github: null  # refresh after hub baseline
+    role: research_refresh
+    visibility: mixed
+    trust_plane: docs
+    notes: "Align release manifests with hub after Goal 1 lands"
+
+  - id: conscious-energy-site
+    github: null  # Astro front end TBD
+    role: marketing_site
+    visibility: public
+    trust_plane: pages
+    notes: "WP.com CMS → Astro on Cloudflare Pages; apex phase-1 stays WP.com"
+
+hosts:
+  - id: compose-share
+    provider: hostinger
+    vm_id: "1280333"
+    ipv4: "185.211.4.66"
+    role: public_runtime
+    swarm: "future_single_node_manager_at_0_3_9"
+
+  - id: lenr-ci
+    provider: hostinger
+    vm_id: "2012566"
+    ipv4: "45.93.100.251"
+    role: untrusted_ci
+    swarm: forbidden

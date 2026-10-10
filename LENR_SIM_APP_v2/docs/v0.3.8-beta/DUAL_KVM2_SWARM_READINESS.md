@@ -1,6 +1,6 @@
 # Dual KVM2 ≠ production Swarm cutover (readiness audit)
 
-**Date:** 2026-09-26 (re-verified)  
+**Date:** 2026-10-04 (re-verified)  
 **Question:** Now that both Hostinger KVM2s exist, can we complete the full
 build with Docker Swarm, Ansible, Traefik, and Cloudflare?
 
@@ -12,21 +12,20 @@ Do **not** set `CONFIRM_SWARM_0_3_9` without an announced window and live creden
 
 ## What we have now
 
-Verified via Hostinger VPS API (2026-09-26T21:24Z): both **KVM 2**, `state=running`.
+Verified via Hostinger VPS API (2026-10-04T15:48Z): both **KVM 2**, `state=running`.
 
 | VM | Id | IP | Hostname (Hostinger) | Role **today** |
 |----|----|----|----------------------|----------------|
-| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose project `lenr-sim` **running(4)** — backend/postgres healthy, Caddy 80/443, images `0.3.7-beta` |
-| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`); **zero** Compose projects |
+| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose beta healthy `0.3.7-beta`; BF defaults include `dynamics_mode=auto` |
+| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`); **zero** Compose projects |
 
-Evidence CI is landable: dedicated runner online; smoke + Test jobs on
-`lenr-ci-1`; merge [#218](https://github.com/ConsciousEnergy/lenr_sim_app/pull/218)
-for the canonical `SELF_HOSTED_RUNNER.md` + smoke refuse-share gate on `main`.
+Dedicated CI docs/workflows are on `main` (#218). Recommended PR merge queue is
+**complete** (#218→#220→#210→#219→#212→#217→#215→#224).
 
-Local stack gate (agent, 2026-09-26T21:24:11Z):
+Local stack gate (agent, 2026-10-04T15:48:57Z):
 `./infrastructure/scripts/staging-swarm-dry-run.sh local` — confirm gates exit 2,
 `terraform validate` OK, Ansible syntax-check OK
-(`/opt/cursor/artifacts/staging_swarm_local_dry_run.log`).
+(`/opt/cursor/artifacts/staging_swarm_local_dry_run_2026-10-04.log`).
 
 ## What dual KVM2 enables
 
@@ -59,13 +58,22 @@ Local stack gate (agent, 2026-09-26T21:24:11Z):
 
 ## Recommended next milestones (ordered)
 
-1. **Merge dedicated CI docs/PR (#218)** so all subsequent rebases see green `lenr-ci`.
-2. **Operator staging remote dry-run** (plan/check only) — needs untracked
+1. ~~Merge dedicated CI docs/PR (#218)~~ **done**
+2. ~~Land hygiene + product/ops merge queue~~ **done** (see hygiene doc)
+3. **Merge ladder (ask):** #232 audit gates → #233 Actions → #228/#229 → #230 docs
+   → #231 science — see [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md)
+4. **Learn + rehearse locally:** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
+   + [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md); keep running
+   `staging-swarm-dry-run.sh local`.
+5. **UMLENR Goal 1 (parallel):** open docs hub PR from
+   [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md)
+   (needs write access on `UMLENR`).
+6. **Operator staging remote dry-run** (plan/check only) — needs untracked
    `backend.hcl`, `staging.tfvars`, `inventory.staging.yml` (see unlock doc).
-3. **Provision staging Swarm nodes** (new VMs or documented single-node staging
+7. **Provision staging Swarm nodes** (new VMs or documented single-node staging
    caveats) — **not** the CI KVM2; **not** blind promote of live Compose.
-4. Validate Traefik → API replicas, Pages CORS/WS, health.
-5. Only then schedule **v0.3.9** public cutover under `CONFIRM_SWARM_0_3_9`.
+8. Validate Traefik → API replicas, Pages CORS/WS, health.
+9. Only then schedule **v0.3.9** public cutover under `CONFIRM_SWARM_0_3_9`.
 
 ## Invariants (do not weaken)
 
