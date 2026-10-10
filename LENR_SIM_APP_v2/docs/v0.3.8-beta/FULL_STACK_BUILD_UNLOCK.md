@@ -67,7 +67,10 @@ Copy examples → **untracked** files (never commit):
 
 **Ops exception (already authorized by dedicated-CI goal):** if `lenr-ci` shows a
 queued backlog with zero in-progress jobs, Hostinger-restart **only** VM
-`2012566` to restore the runner (share `1280333` untouched).
+`2012566` to restore the runner (share `1280333` untouched). After reboot, if
+the service logs `A session for this runner already exists`, stop the
+`actions.runner…lenr-ci-1` unit, wait ~90s for the GitHub session to expire,
+then start it again until the journal shows `Listening for Jobs`.
 
 ## Merge queue / branch model
 
