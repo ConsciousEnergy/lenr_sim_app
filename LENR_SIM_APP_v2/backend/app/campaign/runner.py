@@ -37,10 +37,23 @@ def _simulate_payload(
     }
     if "electric_field" in case:
         environmental["electric_field"] = case["electric_field"]
+    lattice: Dict[str, Any] = {
+        "loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)
+    }
+    for key in (
+        "beam_energy_kev",
+        "molecular_beam_species",
+        "h2_absorb_pressure_pa",
+        "radiant_calorimetry",
+        "multilayer_stack",
+        "desorption_heater_voltage_v",
+    ):
+        if case.get(key) is not None:
+            lattice[key] = case[key]
     kwargs: Dict[str, Any] = dict(
         material={"host_material": case["host_material"], "reactant": case["reactant"]},
         environmental=environmental,
-        lattice={"loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)},
+        lattice=lattice,
         rate_mode=case["rate_mode"],
         use_theory_pipeline=case["use_theory_pipeline"],
         time_steps=10,
@@ -150,12 +163,16 @@ async def run_campaign(
         "testbed_review",
     }:
         representative = next(iter_campaign_cases(preset))
-        loading = float(representative["loading_ratio"])
+        loading = min(max(float(representative.get("loading_ratio") or 0.9), 0.0), 1.0)
+        theory_conditions = TheoryConditions(
+            temperature=min(max(float(representative["temperature"]), 1.0), 2000.0),
+            loading_ratio=loading,
+            host_material=representative.get("host_material"),
+            beam_energy_kev=representative.get("beam_energy_kev"),
+            molecular_beam_species=representative.get("molecular_beam_species"),
+        )
         theory_request = TheoryRunRequest(
-            conditions=TheoryConditions(
-                temperature=min(max(float(representative["temperature"]), 1.0), 2000.0),
-                loading_ratio=min(max(float(representative.get("loading_ratio") or 0.9), 0.0), 1.0),
-            ),
+            conditions=theory_conditions,
             persist_session_id=session_id,
             persist_source=SOURCE_CAMPAIGN,
             campaign_preset=preset,

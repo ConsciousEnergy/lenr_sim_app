@@ -103,6 +103,30 @@ def test_q_campaign_demo_pack_size_lock() -> None:
     assert set(manifest["open_ids"]) == OPEN_IDS
 
 
+def test_iccf27_hydration_pack_stays_open_and_does_not_replace_demo() -> None:
+    root = datasets_root() / "reviewer_packs" / "iccf27_hydration"
+    demo = datasets_root() / "reviewer_packs" / "q_campaign_demo"
+    demo_manifest = json.loads((demo / "manifest.json").read_text(encoding="utf-8"))
+    assert demo_manifest["n_experiments"] == 150
+    assert demo_manifest["source_class_counts"]["Baseline"] == 17
+
+    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == PACK_SCHEMA
+    assert manifest["lenr_proved"] is False
+    assert manifest["empirical_claim_tiers_raised"] is False
+    assert manifest["preset"] == "iccf27_hydration"
+    assert set(manifest["open_ids"]) == OPEN_IDS
+    experiments = (root / "experiments.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    runs = (root / "theory_runs.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    assert 8 <= len(experiments) <= 16
+    assert len(experiments) == manifest["n_experiments"]
+    assert len(runs) == manifest["n_theory_runs"]
+    hosts = set(manifest.get("hosts") or [])
+    assert "graphite" in hosts
+    assert "silicon_carbide" in hosts
+    assert "Baseline" not in (manifest.get("source_class_counts") or {})
+
+
 def test_import_smoke_pack_is_idempotent_and_stays_unproved(tmp_path: Path) -> None:
     import asyncio
 

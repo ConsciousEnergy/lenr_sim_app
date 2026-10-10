@@ -70,6 +70,19 @@ export function buildBubbleLatticePayload(parameters, options = {}) {
     num_cycles: parameters.numCycles || 2,
   };
 
+  if (parameters.beamEnergyKev != null) {
+    payload.lattice.beam_energy_kev = parameters.beamEnergyKev;
+  }
+  if (parameters.molecularBeamSpecies) {
+    payload.lattice.molecular_beam_species = parameters.molecularBeamSpecies;
+  }
+  if (parameters.h2AbsorbPressurePa != null) {
+    payload.lattice.h2_absorb_pressure_pa = parameters.h2AbsorbPressurePa;
+  }
+  if (parameters.radiantCalorimetry) {
+    payload.lattice.radiant_calorimetry = true;
+  }
+
   if (options.rateMode !== undefined) {
     payload.rate_mode = options.rateMode;
   }

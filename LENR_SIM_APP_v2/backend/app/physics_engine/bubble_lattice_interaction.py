@@ -231,8 +231,37 @@ class LatticeParameters:
                 "screening_potential": 300.0,   # eV (Li-H Rydberg matter, estimate)
                 "bulk_modulus": 1.10e10,        # Pa (CRC Handbook)
             },
+            "graphite": {
+                "lattice_constant": 2.46e-10,   # m (in-plane a)
+                "electron_density": 1.13e29,    # m^-3 (π-electron estimate)
+                "debye_temperature": 413.0,     # K
+                "work_function": 4.6,           # eV
+                "fermi_energy": 5.0,            # eV
+                "screening_potential": 80.0,    # eV (cross-regime prior)
+                "bulk_modulus": 3.30e10,        # Pa (basal; model assumption)
+            },
+            "silicon_carbide": {
+                "lattice_constant": 4.36e-10,   # m (3C-SiC)
+                "electron_density": 9.6e28,     # m^-3 (valence estimate)
+                "debye_temperature": 1200.0,    # K
+                "work_function": 4.6,           # eV
+                "fermi_energy": 4.5,            # eV
+                "screening_potential": 100.0,   # eV (cross-regime prior)
+                "bulk_modulus": 2.50e11,        # Pa
+            },
+            "zirconium": {
+                "lattice_constant": 3.23e-10,   # m (HCP)
+                "electron_density": 4.3e28,     # m^-3
+                "debye_temperature": 291.0,     # K
+                "work_function": 4.05,          # eV
+                "fermi_energy": 4.0,            # eV
+                "screening_potential": 120.0,   # eV (Czerski UHV Zr)
+                "bulk_modulus": 9.10e10,        # Pa
+            },
         }
         mat_key = (material or "").strip().lower()
+        aliases = {"carbon": "graphite", "sic": "silicon_carbide", "zr": "zirconium"}
+        mat_key = aliases.get(mat_key, mat_key)
         if mat_key in material_data:
             data = material_data[mat_key].copy()
         else:

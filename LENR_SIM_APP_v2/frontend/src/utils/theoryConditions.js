@@ -62,7 +62,7 @@ export const buildTheoryConditions = ({ parameters } = {}) => {
   const roughnessNm = Math.max(0.5, (params.surfaceRoughness || 5e-9) * 1e9);
   const family = params.electrolyteFamily || 'li';
 
-  return {
+  const conditions = {
     temperature: params.temperature || 300,
     pressure: (params.drivingPressure || 1.5) * 101325,
     electron_density: ELECTRON_DENSITY_M3,
@@ -77,4 +77,14 @@ export const buildTheoryConditions = ({ parameters } = {}) => {
     electrolyte_species: resolveElectrolyteSpecies(family, params.electrolyteSpecies),
     electrolyte_molarity_mol_l: params.electrolyteMolarityMolL || 0.3,
   };
+  if (params.beamEnergyKev != null) {
+    conditions.beam_energy_kev = params.beamEnergyKev;
+  }
+  if (params.molecularBeamSpecies) {
+    conditions.molecular_beam_species = params.molecularBeamSpecies;
+  }
+  if (params.hostMaterial) {
+    conditions.host_material = params.hostMaterial;
+  }
+  return conditions;
 };

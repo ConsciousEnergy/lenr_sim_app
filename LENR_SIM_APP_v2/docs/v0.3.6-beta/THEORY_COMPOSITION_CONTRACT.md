@@ -48,7 +48,7 @@ descriptions of a single effect.
 | `transmutation_route` | `iwamura_transmutation`, `matsumoto_enc` | Predict the same product spectra by different routes |
 | `empirical_correlation` | `miles_heat_helium`, `letts_laser`, `piantelli_ni_h` | Observed correlations, not independent barrier mechanisms |
 | `thermodynamic_framing` | `non_equilibrium_thermo` | A framing of the energetics, not an extra channel |
-| `context_line` | `stellar_scaling_mhd` | Non-LENR regime, comparison only |
+| `ion_track` | `czerski_thermal_spike` | Accelerator thermal-spike / ion-track rate path; complements `screening` and must not multiply with it |
 
 ### The `independent` fallback is a bug, not a design
 

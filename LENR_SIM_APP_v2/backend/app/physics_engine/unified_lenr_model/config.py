@@ -21,6 +21,11 @@ def get_material_work_function(material_name: str) -> float:
         "nickel": 5.15,
         "titanium": 4.33,
         "lithium": 2.9,
+        "graphite": 4.6,  # polycrystalline graphite; CRC handbook
+        "carbon": 4.6,
+        "silicon_carbide": 4.6,  # 4H/3C-SiC typical; model assumption band
+        "zirconium": 4.05,
+        "iridium": 5.27,
     }
     return lookup.get((material_name or "").strip().lower(), 5.0)
 
@@ -84,6 +89,48 @@ class MaterialProperties:
             electron_density=4.7e28)
 
     @classmethod
+    def graphite(cls) -> "MaterialProperties":
+        # In-plane a = 2.46 Å; n from graphite density 2.26 g cm^-3 (model assumption
+        # for π-electron screening, not a metal-like free-electron gas).
+        return cls(name="Graphite", atomic_number=6, atomic_mass=12.011,
+            lattice_constant=2.46e-10, debye_temperature=413, work_function=4.6,
+            electron_density=1.13e29)
+
+    @classmethod
+    def silicon_carbide(cls) -> "MaterialProperties":
+        # 3C-SiC a = 4.36 Å; Debye ~1200 K. Electron density is a valence estimate
+        # (model assumption), labelled cross-regime for LENR rates.
+        return cls(name="Silicon Carbide", atomic_number=14, atomic_mass=40.1,
+            lattice_constant=4.36e-10, debye_temperature=1200, work_function=4.6,
+            electron_density=9.6e28)
+
+    @classmethod
+    def zirconium(cls) -> "MaterialProperties":
+        return cls(name="Zirconium", atomic_number=40, atomic_mass=91.224,
+            lattice_constant=3.23e-10, debye_temperature=291, work_function=4.05,
+            electron_density=4.3e28)
+
+    @classmethod
+    def from_name(cls, material_name: str) -> "MaterialProperties":
+        """Resolve a host key to cited properties; unknown names use generic()."""
+        key = (material_name or "palladium").strip().lower()
+        aliases = {"carbon": "graphite", "sic": "silicon_carbide", "zr": "zirconium"}
+        key = aliases.get(key, key)
+        factories = {
+            "palladium": cls.palladium,
+            "nickel": cls.nickel,
+            "titanium": cls.titanium,
+            "lithium": cls.lithium,
+            "graphite": cls.graphite,
+            "silicon_carbide": cls.silicon_carbide,
+            "zirconium": cls.zirconium,
+        }
+        factory = factories.get(key)
+        if factory is not None:
+            return factory()
+        return cls.generic(material_name)
+
+    @classmethod
     def generic(cls, material_name: str) -> "MaterialProperties":
         """Generic/custom material using work-function lookup. Unknown materials fallback to 5.0 eV."""
         name = (material_name or "custom").strip()
@@ -141,6 +188,11 @@ class SimulationConfig:
     electrolyte_family: str = "li"
     electrolyte_species: str = "lioh"
     electrolyte_molarity_mol_l: float = 0.3
+    # Additive ICCF-27 protocol fields (legacy None / False).
+    beam_energy_kev: Optional[float] = None
+    molecular_beam_species: Optional[str] = None
+    h2_absorb_pressure_pa: Optional[float] = None
+    radiant_calorimetry: bool = False
 
 
 @dataclass

@@ -273,6 +273,45 @@ MATERIALS = {
         fermi_energy=6.0,  # free-electron model from electron_density
         screening_potential=750.0
     ),
+    'graphite': MaterialProperties(
+        name='Graphite',
+        symbol='C',
+        atomic_number=6,
+        atomic_mass=12.011,
+        density=2260.0,
+        lattice_constant=2.46,
+        lattice_type='hex',
+        debye_temperature=413.0,
+        electron_density=1.13e29,
+        fermi_energy=5.0,
+        screening_potential=80.0
+    ),
+    'silicon_carbide': MaterialProperties(
+        name='Silicon Carbide',
+        symbol='SiC',
+        atomic_number=14,
+        atomic_mass=40.1,
+        density=3210.0,
+        lattice_constant=4.36,
+        lattice_type='zincblende',
+        debye_temperature=1200.0,
+        electron_density=9.6e28,
+        fermi_energy=4.5,
+        screening_potential=100.0
+    ),
+    'zirconium': MaterialProperties(
+        name='Zirconium',
+        symbol='Zr',
+        atomic_number=40,
+        atomic_mass=91.224,
+        density=6511.0,
+        lattice_constant=3.23,
+        lattice_type='hcp',
+        debye_temperature=291.0,
+        electron_density=4.3e28,
+        fermi_energy=4.0,
+        screening_potential=120.0
+    ),
 }
 
 # ============================================================================

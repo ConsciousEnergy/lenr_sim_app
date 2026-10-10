@@ -101,6 +101,9 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     # group so that grouped_max_confidence_product composition never lets
     # it dominate empirically-grounded LENR tracks.
     "stellar_scaling_mhd": "context_line",
+    # Accelerator ion-track thermal spike (Czerski). Complements screening
+    # rather than multiplying with Debye/Thomas-Fermi U_e.
+    "czerski_thermal_spike": "ion_track",
 }
 
 DEFAULT_COMBINATION_RULE = "grouped_max_confidence_product"
@@ -831,6 +834,14 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(StellarScalingMHDTheory())
     except Exception:
         logger.exception("Failed to register StellarScalingMHDTheory")
+
+    try:
+        from app.physics_engine.theories.czerski_thermal_spike import (
+            CzerskiThermalSpikeTheory,
+        )
+        pipeline.register(CzerskiThermalSpikeTheory())
+    except Exception:
+        logger.exception("Failed to register CzerskiThermalSpikeTheory")
 
     _default_pipeline = pipeline
     logger.info(

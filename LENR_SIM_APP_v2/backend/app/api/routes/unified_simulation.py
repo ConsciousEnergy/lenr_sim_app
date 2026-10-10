@@ -120,7 +120,8 @@ class MaterialConfig(BaseModel):
     """Material system configuration"""
     host_material: str = Field(
         default="palladium",
-        description="Host material: palladium, nickel, titanium, lithium, or custom (generic fallback)"
+        description="Host material: palladium, nickel, titanium, lithium, "
+        "graphite, silicon_carbide, zirconium, or custom (generic fallback)",
     )
     reactant: str = Field(default="deuterium", description="Reactant: deuterium, hydrogen")
 
@@ -144,6 +145,30 @@ class LatticeConfig(BaseModel):
     solvent_type: str = Field(default="d2o", description="Electrolyte solvent type: d2o, h2o, mixed")
     ph_proxy: Optional[float] = Field(default=None, ge=0.0, le=14.0, description="Optional bounded pH proxy (0-14)")
     ionic_strength_proxy: Optional[float] = Field(default=None, ge=0.0, description="Optional bounded ionic-strength proxy")
+    h2_absorb_pressure_pa: Optional[float] = Field(
+        default=None, ge=0.0,
+        description="Optional H2/D2 absorb pressure (Pa) for gas-loading / desorption protocols.",
+    )
+    desorption_heater_voltage_v: Optional[float] = Field(
+        default=None, ge=0.0,
+        description="Optional heater voltage for radiant-desorption calorimetry.",
+    )
+    multilayer_stack: Optional[str] = Field(
+        default=None,
+        description="Optional multilayer description, e.g. NiCu 6x(Cu 3.8 nm / Ni 20 nm).",
+    )
+    radiant_calorimetry: bool = Field(
+        default=False,
+        description="If true, treat heat flow as radiant-spectrum calorimetry (Kasagi BREMS).",
+    )
+    beam_energy_kev: Optional[float] = Field(
+        default=None, ge=0.0,
+        description="Optional accelerator beam energy (keV) for thermal-spike / ion-track theories.",
+    )
+    molecular_beam_species: Optional[str] = Field(
+        default=None,
+        description="Optional molecular projectile label: D1, D2, or D3.",
+    )
 
 
 class QuantumEffectsConfig(BaseModel):
@@ -409,17 +434,7 @@ def _compute_unified_simulation(request: SimulationRequest):
         config = SimulationConfig()
         
         # Set material
-        hm = request.material.host_material.lower()
-        if hm == "palladium":
-            config.host_material = MaterialProperties.palladium()
-        elif hm == "nickel":
-            config.host_material = MaterialProperties.nickel()
-        elif hm == "titanium":
-            config.host_material = MaterialProperties.titanium()
-        elif hm == "lithium":
-            config.host_material = MaterialProperties.lithium()
-        else:
-            config.host_material = MaterialProperties.generic(request.material.host_material)
+        config.host_material = MaterialProperties.from_name(request.material.host_material)
         
         # Set reactant
         if request.material.reactant.lower() == "deuterium":
@@ -437,6 +452,10 @@ def _compute_unified_simulation(request: SimulationRequest):
         config.defect_density = request.lattice.defect_density
         config.grain_size = request.lattice.grain_size
         config.surface_roughness = request.lattice.surface_roughness
+        config.beam_energy_kev = request.lattice.beam_energy_kev
+        config.molecular_beam_species = request.lattice.molecular_beam_species
+        config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
+        config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
         
         # Set quantum effect toggles
         config.enable_screening = request.quantum_effects.enable_screening
@@ -792,16 +811,7 @@ def build_bubble_rate_engine_block(
 
         config = SimulationConfig()
         hm = (request.material.host_material or "palladium").strip().lower()
-        if hm == "palladium":
-            config.host_material = MaterialProperties.palladium()
-        elif hm == "nickel":
-            config.host_material = MaterialProperties.nickel()
-        elif hm == "titanium":
-            config.host_material = MaterialProperties.titanium()
-        elif hm == "lithium":
-            config.host_material = MaterialProperties.lithium()
-        else:
-            config.host_material = MaterialProperties.generic(request.material.host_material)
+        config.host_material = MaterialProperties.from_name(hm)
 
         reactant = (request.material.reactant or "deuterium").strip().lower()
         if reactant == "deuterium":
@@ -824,6 +834,10 @@ def build_bubble_rate_engine_block(
         config.electrolyte_species = electrolyte_species
         config.electrolyte_molarity_mol_l = electrolyte_molarity
         config.random_seed = request.random_seed
+        config.beam_energy_kev = request.lattice.beam_energy_kev
+        config.molecular_beam_species = request.lattice.molecular_beam_species
+        config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
+        config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
 
         tunneling_probability = float(
             calculate_tunneling_probability(config, max(float(peak_enhancement), 1.0))
@@ -910,16 +924,7 @@ async def get_mechanisms(
         
         # Set material
         hm = host_material.lower()
-        if hm == "palladium":
-            config.host_material = MaterialProperties.palladium()
-        elif hm == "nickel":
-            config.host_material = MaterialProperties.nickel()
-        elif hm == "titanium":
-            config.host_material = MaterialProperties.titanium()
-        elif hm == "lithium":
-            config.host_material = MaterialProperties.lithium()
-        else:
-            config.host_material = MaterialProperties.generic(host_material)
+        config.host_material = MaterialProperties.from_name(hm)
         
         # Set reactant
         if reactant.lower() == "deuterium":

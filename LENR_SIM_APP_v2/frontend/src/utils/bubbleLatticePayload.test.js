@@ -51,6 +51,22 @@ describe('buildBubbleLatticePayload', () => {
     expect(payload.theory_result).toEqual(theoryResult);
     expect(payload.bubble.initial_radius_um).toBe(10.0);
   });
+
+  it('forwards optional accelerator and radiant protocol fields', () => {
+    const payload = buildBubbleLatticePayload({
+      ...parameters,
+      hostMaterial: 'zirconium',
+      beamEnergyKev: 2.0,
+      molecularBeamSpecies: 'D1',
+      radiantCalorimetry: true,
+      h2AbsorbPressurePa: 250,
+    });
+    expect(payload.material.host_material).toBe('zirconium');
+    expect(payload.lattice.beam_energy_kev).toBe(2.0);
+    expect(payload.lattice.molecular_beam_species).toBe('D1');
+    expect(payload.lattice.radiant_calorimetry).toBe(true);
+    expect(payload.lattice.h2_absorb_pressure_pa).toBe(250);
+  });
 });
 
 describe('framesToStreamPreview', () => {

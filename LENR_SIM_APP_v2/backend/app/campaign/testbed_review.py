@@ -32,6 +32,15 @@ THEORY_HOST_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "hagelstein_phonon": {"literature_id": "hagelstein-phonon-2010"},
     "chubb_ion_band": {"literature_id": "chubb-lattice-tunneling-2004"},
     "miles_heat_helium": {"literature_id": "miles-1993"},
+    "czerski_thermal_spike": {
+        "host_material": "zirconium",
+        "reactant": "deuterium",
+        "literature_id": "czerski-thermal-spike-zr-2024",
+        "temperature": 300.0,
+        "loading_ratio": 0.90,
+        "beam_energy_kev": 2.0,
+        "molecular_beam_species": "D1",
+    },
 }
 
 DEFAULT_ISOLATED: Dict[str, Any] = {
@@ -56,7 +65,7 @@ def iter_testbed_review_isolated_cases() -> Iterator[Dict[str, Any]]:
         spec.update(THEORY_HOST_OVERRIDES.get(theory_id) or {})
         literature_id = str(spec.get("literature_id") or "miles-1993")
         record = records.get(literature_id) or {}
-        yield {
+        case = {
             "temperature": float(spec["temperature"]),
             "loading_ratio": float(spec["loading_ratio"]),
             "host_material": str(spec["host_material"]),
@@ -71,6 +80,11 @@ def iter_testbed_review_isolated_cases() -> Iterator[Dict[str, Any]]:
             "open_question_ids": list(record.get("open_question_ids") or []),
             "campaign_preset": "testbed_review",
         }
+        if spec.get("beam_energy_kev") is not None:
+            case["beam_energy_kev"] = float(spec["beam_energy_kev"])
+        if spec.get("molecular_beam_species"):
+            case["molecular_beam_species"] = str(spec["molecular_beam_species"])
+        yield case
 
 
 def iter_testbed_review_literature_cases() -> Iterator[Dict[str, Any]]:

@@ -260,6 +260,23 @@ def _build_default_nodes() -> List[TheoryNode]:
             physical_properties=["flux_compression"],
             material_systems=["context"],
         ),
+        TheoryNode(
+            theory_id="czerski_thermal_spike",
+            theory_name="Czerski Thermal Spike",
+            researcher="Konrad Czerski",
+            year=2024,
+            category="mechanism",
+            key_predictions=[
+                "Thermal DD fusion in ion tracks",
+                "Yield plateau below ~2.5 keV",
+            ],
+            physical_properties=[
+                "coulomb_barrier_reduction",
+                "he4_production",
+                "phonon_coupling",
+            ],
+            material_systems=["Zr-D", "Ti-D", "Pd-D"],
+        ),
     ]
 
 
@@ -286,7 +303,7 @@ def _build_default_edges() -> List[TheoryEdge]:
     barrier_theories = [
         "electron_screening", "coherent_qed", "takahashi_tsc",
         "vysotskii_ccs", "kim_bec", "chubb_ion_band", "quantum_tunneling",
-        "bubble_mhd_confinement",
+        "bubble_mhd_confinement", "czerski_thermal_spike",
     ]
     for i, t1 in enumerate(barrier_theories):
         for t2 in barrier_theories[i + 1:]:
@@ -388,6 +405,13 @@ def _build_default_edges() -> List[TheoryEdge]:
         shared_properties=["flux_compression"],
         strength=0.3,
         description="Stellar MHD scaling is a cross-regime context line, not an LENR mechanism",
+    ))
+    edges.append(TheoryEdge(
+        source_id="czerski_thermal_spike", target_id="electron_screening",
+        relationship_type="complements",
+        shared_properties=["coulomb_barrier_reduction"],
+        strength=0.6,
+        description="Thermal-spike local T multiplies a screened DD cross-section; groups stay distinct so they do not compound",
     ))
     edges.append(TheoryEdge(
         source_id="casimir_confinement", target_id="nae_model",

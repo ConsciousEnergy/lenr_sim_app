@@ -12,7 +12,7 @@
       "virtual_lab_fields": ["occurrence.anchored", "oracle_emp.miles_band_gate"],
       "observable": "2.63e11 He-4 atoms/s/W",
       "falsifier": "He-4/heat ratio differs from predicted value by > factor of 10 across independent experiments",
-      "citation_keys": ["miles1993", "mckubre2008"]
+      "citation_keys": ["miles1993", "mckubre2008", "kasagi2026"]
     },
     {
       "id": "PRED-02",
@@ -22,7 +22,7 @@
       "virtual_lab_fields": ["q_radiation.detector_ul_log10"],
       "observable": "Peak near 2.45 MeV with FWHM > 100 keV; flux < 1e3 n/s per ~1 W",
       "falsifier": "Sharp 2.45 MeV peak with no broadening, or no neutrons above background at >5 sigma for >100 hours",
-      "citation_keys": []
+      "citation_keys": ["czerski2024a"]
     },
     {
       "id": "PRED-03",
@@ -32,7 +32,7 @@
       "virtual_lab_fields": ["q_radiation.detector_ul_log10", "BRANCHING_INCONSISTENT_WITH_UL"],
       "observable": "< 1e-8 gamma/s/W at 23.8 MeV",
       "falsifier": "Detection of 23.8 MeV gammas at rate > 1e-5 gamma/s/W",
-      "citation_keys": []
+      "citation_keys": ["hylenr2026"]
     },
     {
       "id": "PRED-04",
@@ -72,7 +72,7 @@
       "virtual_lab_fields": ["q_electron_capture"],
       "observable": "Pd-105/107 enrichment; possible Cu appearance in Ni-H",
       "falsifier": "No isotopic shifts beyond natural variation (2 sigma) after prolonged active runs",
-      "citation_keys": ["iwamura2002", "steinetz2020exp"]
+      "citation_keys": ["iwamura2002", "steinetz2020exp", "hylenr2026"]
     }
   ]
 }

@@ -167,7 +167,15 @@ class UnifiedLENRModel:
             "electrolyte_family": self.config.electrolyte_family,
             "electrolyte_species": self.config.electrolyte_species,
             "electrolyte_molarity_mol_l": self.config.electrolyte_molarity_mol_l,
+            "host_material": (self.config.host_material.name or "palladium").lower().replace(" ", "_"),
         }
+        if self.config.beam_energy_kev is not None:
+            conditions["beam_energy_kev"] = float(self.config.beam_energy_kev)
+        if self.config.molecular_beam_species:
+            conditions["molecular_beam_species"] = self.config.molecular_beam_species
+        if self.config.h2_absorb_pressure_pa is not None:
+            conditions["h2_absorb_pressure_pa"] = float(self.config.h2_absorb_pressure_pa)
+        conditions["radiant_calorimetry"] = 1.0 if self.config.radiant_calorimetry else 0.0
         pipeline_result = pipeline.run(
             conditions=conditions,
             enabled_theories=self.config.enabled_theories,

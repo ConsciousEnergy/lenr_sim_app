@@ -186,6 +186,64 @@ const SYSTEM_PRESETS = {
     electrolyteSpecies: 'li2co3',
     electrolyteMolarityMolL: 0.4,
   },
+  graphite_h: {
+    name: 'Graphite-Hydrogen',
+    description: 'Carbon-host analog for high-T desorption / radiant calorimetry. Cross-regime model output only — not EMP LENR. Sobol UQ is enabled so rate bands can be inspected.',
+    hostMaterial: 'graphite',
+    reactant: 'hydrogen',
+    temperature: 1100,
+    loadingRatio: 0.4,
+    initialBubbleRadius: 10.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+    electrolyteFamily: 'other',
+    electrolyteSpecies: 'other',
+    electrolyteMolarityMolL: 0.3,
+    radiantCalorimetry: true,
+    h2AbsorbPressurePa: 250,
+  },
+  sic_h: {
+    name: 'Silicon Carbide-Hydrogen',
+    description: 'Silicate-class wide-gap host analog. Cross-regime screening prior; model output only. Sobol UQ is enabled so rate bands can be inspected.',
+    hostMaterial: 'silicon_carbide',
+    reactant: 'hydrogen',
+    temperature: 500,
+    loadingRatio: 0.3,
+    initialBubbleRadius: 10.0,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+    electrolyteFamily: 'other',
+    electrolyteSpecies: 'other',
+    electrolyteMolarityMolL: 0.3,
+  },
+  zr_d: {
+    name: 'Zirconium-Deuterium (ion track)',
+    description: 'Czerski accelerator ZrD2 host analog. Beam-gated thermal-spike theory; not an electrolytic LENR proof. Sobol UQ is enabled so rate bands can be inspected.',
+    hostMaterial: 'zirconium',
+    reactant: 'deuterium',
+    temperature: 300,
+    loadingRatio: 0.9,
+    initialBubbleRadius: 8.3,
+    drivingPressure: 1.5,
+    frequency: 20,
+    defectDensity: 1e16,
+    surfaceRoughness: 5e-9,
+    grainSize: 50e-9,
+    numCycles: 2,
+    electrolyteFamily: 'other',
+    electrolyteSpecies: 'other',
+    electrolyteMolarityMolL: 0.3,
+    beamEnergyKev: 2.0,
+    molecularBeamSpecies: 'D1',
+  },
   zro2_pd: {
     name: 'ZrO2-Pd',
     description: 'Swartz nanostructured palladium in ZrO2 matrix',
@@ -223,6 +281,17 @@ const SYSTEM_PRESETS = {
     electrolyteMolarityMolL: 0.3,
   }
 };
+
+/** Carbon / silicate / ion-track analogs auto-enable Sobol UQ at campaign sample count. */
+const ANALOG_UQ_SYSTEMS = ['graphite_h', 'sic_h', 'zr_d'];
+const ANALOG_UQ_SAMPLES = 64;
+
+function applyAnalogHostUncertainty(systemKey, setIncludeUncertainty, setUncertaintySamples) {
+  if (ANALOG_UQ_SYSTEMS.includes(systemKey)) {
+    setIncludeUncertainty(true);
+    setUncertaintySamples(ANALOG_UQ_SAMPLES);
+  }
+}
 
 const ELECTROLYTE_SPECIES_BY_FAMILY = {
   li: [
@@ -447,6 +516,7 @@ function UnifiedTheoryPage() {
     if (systemParam && SYSTEM_PRESETS[systemParam]) {
       setSelectedSystem(systemParam);
       setParameters(SYSTEM_PRESETS[systemParam]);
+      applyAnalogHostUncertainty(systemParam, setIncludeUncertainty, setUncertaintySamples);
     }
   }, [searchParams]);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -583,6 +653,7 @@ function UnifiedTheoryPage() {
     setSelectedSystem(systemKey);
     setParameters(SYSTEM_PRESETS[systemKey]);
     setSimulationData(null);
+    applyAnalogHostUncertainty(systemKey, setIncludeUncertainty, setUncertaintySamples);
   }, []);
 
   // Handle parameter changes

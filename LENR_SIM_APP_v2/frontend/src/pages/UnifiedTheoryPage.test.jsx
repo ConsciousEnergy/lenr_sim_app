@@ -78,6 +78,33 @@ describe('UnifiedTheoryPage', () => {
     expect(payload.lattice.electrolyte_family).toBeDefined();
     expect(payload.lattice.electrolyte_species).toBeDefined();
     expect(payload.lattice.electrolyte_molarity_mol_l).toBeDefined();
+    expect(payload.include_uncertainty).toBe(false);
+  });
+
+  test('graphite host chip sends graphite without rewriting Pd-D defaults', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        collapse_results: { max_temperature_k: 300, compression_ratio: 2, min_radius_um: 1, max_pressure_bar: 100 },
+        proton_phases: { FREE: 0.5, SCREENED: 0.3, CAPTURE_READY: 0.15, NUCLEAR: 0.05 },
+        enhancement_timeline: [{ normalized_time: 0, phase: 'EXPANSION', enhancement: 1, radius_factor: 1, temperature: 300 }],
+        peak_conditions: { enhancement_factor: 1 },
+      }),
+    });
+    render(<UnifiedTheoryPage />);
+    fireEvent.click(screen.getByText('Graphite-Hydrogen'));
+    fireEvent.click(screen.getByRole('button', { name: /Run Physics Simulation/i }));
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+    const [, requestInit] = global.fetch.mock.calls[0];
+    const payload = JSON.parse(requestInit.body);
+    expect(payload.material.host_material).toBe('graphite');
+    expect(payload.material.reactant).toBe('hydrogen');
+    expect(payload.lattice.radiant_calorimetry).toBe(true);
+    expect(payload.include_uncertainty).toBe(true);
+    expect(payload.uncertainty_samples).toBe(64);
   });
 
   test('displays ENHANCEMENT_THRESHOLDS.observable (1e5) after running simulation', async () => {

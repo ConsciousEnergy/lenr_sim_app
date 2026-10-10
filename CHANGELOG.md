@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend CI: ignore `CVE-2026-85394` on `python-jose==3.5.0` until a patched release or PyJWT migration (no newer PyPI version)
 - Align scheduled `security-scan.yml` with PR gates (`pip-audit` ignore list + `audit-high-gate.js`)
 
+### Added — ICCF-27 / Sept 2026 science enrichment (APP_VERSION stays 0.3.7-beta)
+- Companion literature file `literature_iccf27.v1.json` (6 rows). Locked 17-row `literature_baselines.v1.json` is unchanged
+- First-class graphite, silicon carbide, and zirconium hosts (MaterialProperties, screening priors, bubble-lattice parameters)
+- Beam-gated `czerski_thermal_spike` theory in composition group `ion_track` (speculative; not an electrolytic LENR proof)
+- Campaign presets `iccf27_grid`, `parameter_map_grid`, `carbon_silicate_uq` plus Unified Theory chips for C/SiC/Zr
+- Graphite / SiC / Zr Unified Theory chips (and `?system=` deep links) auto-enable Sobol UQ at 64 samples so p05/p50/p95 rate bands can be inspected without opening the accordion; Pd-D default remains `two_body` without UQ
+- Additive protocol fields: `beam_energy_kev`, `molecular_beam_species`, `radiant_calorimetry`, `h2_absorb_pressure_pa`
+- Does not close any `EQ-OPEN-*`; extra simulations do not raise `claim_tier`
+
 ### Changed — GitHub landing docs (v0.3.7-beta merge readiness)
 - Root [`README.md`](README.md) rewritten for product scope: what the app is for, honesty invariants, v0.3.7-beta feature boundary, architecture sketch
 - Screenshots of the public beta under [`docs/assets/readme/`](docs/assets/readme/) (dashboard, Unified Theory, Bubble Fusion, Quantum Tunneling, Theory Paper, Theory Methods)

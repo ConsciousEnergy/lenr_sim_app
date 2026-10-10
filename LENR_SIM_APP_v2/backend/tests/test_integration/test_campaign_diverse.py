@@ -241,5 +241,61 @@ def test_testbed_review_is_designed_not_cartesian() -> None:
     assert described["n_cases"] == n
     assert "Does not prove LENR" in described["note"]
     assert "P(LENR)" in described["note"]
+    czerski = next(
+        case for case in isolated if case["enabled_theories"] == ["czerski_thermal_spike"]
+    )
+    assert czerski["host_material"] == "zirconium"
+    assert czerski["beam_energy_kev"] == 2.0
+
+
+def test_iccf27_and_carbon_silicate_presets_are_designed() -> None:
+    from app.campaign.carbon_silicate import carbon_silicate_uq_count
+    from app.campaign.iccf27 import iccf27_grid_count
+    from app.campaign.parameter_map import parameter_map_count
+    from app.data.dataset_io import literature_records
+
+    assert len(literature_records()) == 17
+    n_iccf = campaign_size("iccf27_grid")
+    assert n_iccf == iccf27_grid_count()
+    assert 6 <= n_iccf <= 16
+    iccf_cases = list(iter_campaign_cases("iccf27_grid"))
+    iccf_hosts = {case["host_material"] for case in iccf_cases}
+    assert "nickel" in iccf_hosts
+    assert "zirconium" in iccf_hosts
+    assert "graphite" in iccf_hosts
+    assert "silicon_carbide" in iccf_hosts
+    kasagi = next(
+        case for case in iccf_cases if case.get("literature_id") == "kasagi-nicu-radiant-2026"
+    )
+    assert kasagi["host_material"] == "nickel"
+    assert kasagi["radiant_calorimetry"] is True
+    czerski = next(
+        case
+        for case in iccf_cases
+        if case.get("literature_id") == "czerski-thermal-spike-zr-2024"
+    )
+    assert czerski["beam_energy_kev"] == 2.0
+    described_iccf = describe_preset("iccf27_grid")
+    assert "Does not prove LENR" in described_iccf["note"]
+    assert "17-row" in described_iccf["note"]
+
+    n_uq = campaign_size("carbon_silicate_uq")
+    assert n_uq == carbon_silicate_uq_count()
+    assert 6 <= n_uq <= 16
+    uq_cases = list(iter_campaign_cases("carbon_silicate_uq"))
+    uq_hosts = {case["host_material"] for case in uq_cases}
+    assert {"palladium", "nickel", "graphite", "silicon_carbide"} <= uq_hosts
+    assert any(case.get("include_uncertainty") for case in uq_cases)
+    described_uq = describe_preset("carbon_silicate_uq")
+    assert "Does not prove LENR" in described_uq["note"]
+
+    n_map = campaign_size("parameter_map_grid")
+    assert n_map == parameter_map_count()
+    assert 5 <= n_map <= 16
+    map_tags = {case.get("tag") for case in iter_campaign_cases("parameter_map_grid")}
+    assert "pmap:graphite_h_hot" in map_tags
+    assert "pmap:zr_d_beam" in map_tags
+    described_map = describe_preset("parameter_map_grid")
+    assert "Does not prove LENR" in described_map["note"]
 
 
