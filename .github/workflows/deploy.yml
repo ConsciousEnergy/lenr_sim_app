@@ -1,8 +1,7 @@
 name: Build and Deploy
 
-# Trunk-based model (see .github/BRANCHING.md): images are built from main and
-# from release tags. The image version tag and BUILD_VERSION are read from the
-# canonical APP_VERSION marker so they can never drift from the code.
+# Images are built from main and release tags only — never from `dev`
+# (v0.3.8 integration). BUILD_VERSION is read from the APP_VERSION marker.
 on:
   push:
     branches: [main]

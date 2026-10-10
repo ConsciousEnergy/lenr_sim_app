@@ -3,15 +3,15 @@ name: Scheduled Security Scan
 # Complements the push/PR audits in test.yml and the PR-only dependency-review:
 # this runs on a cadence so newly-disclosed CVEs against ALREADY-committed
 # dependencies are caught even when no code changes land. Also manually runnable.
-# The secret scan additionally runs on every PR to main so a leaked credential
-# is caught before it is merged.
+# The secret scan additionally runs on every PR to main/dev so a leaked
+# credential is caught before it is merged.
 
 on:
   schedule:
     # Weekly, Mondays 13:00 UTC (aligns with the Dependabot Monday cadence).
     - cron: '0 13 * * 1'
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     # Only the secret scan runs on PRs (see job-level `if`); the dependency
     # audits already run in test.yml for every PR.
   workflow_dispatch:

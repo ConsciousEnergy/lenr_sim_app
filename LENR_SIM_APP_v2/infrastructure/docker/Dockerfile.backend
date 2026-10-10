@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==============================================================================
 FROM python:3.12-slim AS production
 
-ARG BUILD_VERSION=0.3.7-beta
+ARG BUILD_VERSION=0.3.8-beta
 
 # Labels
 LABEL org.opencontainers.image.title="LENR Simulation App Backend"

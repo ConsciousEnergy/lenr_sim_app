@@ -69,24 +69,18 @@ Copy examples → **untracked** files (never commit):
 queued backlog with zero in-progress jobs, Hostinger-restart **only** VM
 `2012566` to restore the runner (share `1280333` untouched).
 
-## Merge queue
+## Merge queue / branch model
 
-**Complete (2026-10-04).** Hygiene refresh **2026-10-06** — see
-[`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md).
+**0.3.7 ladder complete** (#218→#231). Consolidation **2026-10-10**:
 
-Prepared (merge on ask): [#232](https://github.com/ConsciousEnergy/lenr_sim_app/pull/232)
-audit gates → [#233](https://github.com/ConsciousEnergy/lenr_sim_app/pull/233) Actions
-→ [#228](https://github.com/ConsciousEnergy/lenr_sim_app/pull/228)/[#229](https://github.com/ConsciousEnergy/lenr_sim_app/pull/229)
-→ [#230](https://github.com/ConsciousEnergy/lenr_sim_app/pull/230) docs →
-[#231](https://github.com/ConsciousEnergy/lenr_sim_app/pull/231) science.
-[#221](https://github.com/ConsciousEnergy/lenr_sim_app/pull/221) **closed**.
-[#216](https://github.com/ConsciousEnergy/lenr_sim_app/pull/216) **hold**.
-[#226](https://github.com/ConsciousEnergy/lenr_sim_app/pull/226) superseded by #233.
+- `main` = live **v0.3.7-beta** (Compose share; tag `v0.3.7-beta`)
+- `dev` = **v0.3.8-beta** integration (markers bumped; no auto deploy)
+- See [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md) and
+  [`.github/BRANCHING.md`](../../../.github/BRANCHING.md)
 
 ## Immediate next steps (ordered)
 
-0. **Merge ladder (ask):** #232 → #233 → #228 → #229 → #230 → #231
-   (security baseline before science / Swarm work).
+0. **New work defaults to `dev`** (0.3.8 markers). Hotfix 0.3.7 only on `main`.
 1. **Learn the topology (two KVM2s):** [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
    + [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md).
 2. **Program hub (parallel):** copy
