@@ -1,10 +1,11 @@
 name: Dependency Review
 
-# Trunk-based model (see .github/BRANCHING.md): every PR targets main.
+# PRs targeting main (0.3.7 hotfixes) or dev (0.3.8 integration).
 on:
   pull_request:
     branches:
       - main
+      - dev
 
 permissions:
   contents: read

@@ -3,6 +3,10 @@
 Audience split for release / ops communication. Prefer linking here over
 duplicating long tables in the root README.
 
+**Start here for version control + Swarm prep:**
+[`VERSION_CONTROL.md`](VERSION_CONTROL.md).  
+**Future UI locales (FR/ES/IT/JA/ZH/RU):** [`I18N_FUTURE.md`](I18N_FUTURE.md).
+
 ## Public / contributors
 
 | Doc | Use when |
@@ -10,12 +14,15 @@ duplicating long tables in the root README.
 | Root [`README.md`](../../../README.md) | Product scope, how to run, what is not claimed |
 | [`CONTRIBUTING.md`](../../../CONTRIBUTING.md) | PR workflow, scientific honesty, confirm-string map |
 | [`LENR_SIM_APP_v2/README.md`](../../README.md) | App-local setup + cutover table |
-| [`.github/BRANCHING.md`](../../../.github/BRANCHING.md) | Trunk-based naming; self-hosted CI labels |
+| [`.github/BRANCHING.md`](../../../.github/BRANCHING.md) | `main` (0.3.7) + `dev` (0.3.8); self-hosted CI labels |
+| [`VERSION_CONTROL.md`](VERSION_CONTROL.md) | Implementation phases for Swarm/Ansible/Traefik/Cloudflare prep |
 
 ## Team / operators
 
 | Doc | Use when |
 |-----|----------|
+| [`VERSION_CONTROL.md`](VERSION_CONTROL.md) | Branch trains + ordered 0.3.8 implementation phases |
+| [`I18N_FUTURE.md`](I18N_FUTURE.md) | Planned translations (not a cutover blocker) |
 | [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md) | “Can we finish Swarm/Ansible/Traefik/Cloudflare?” — unlock checklist |
 | [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md) | **Start here to learn** — Mermaid maps, 2-VPS Swarm options, security, UMLENR/ARA |
 | [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md) | Hands-on file walkthrough + CLI visualization + security checklist |

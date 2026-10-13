@@ -1,7 +1,7 @@
 name: Test and Benchmark
 
-# Trunk-based model (see .github/BRANCHING.md): main is the only long-lived
-# branch, so CI runs on pushes to main and on every PR targeting main.
+# Long-lived branches: main (0.3.7 release) + dev (0.3.8 integration).
+# CI runs on pushes/PRs to both. Deploy stays main + v* tags only.
 #
 # Runner: default falls back to lenr-ci (Idle on share KVM2). Override with repo
 # variable LENR_CI_RUNS_ON if needed (e.g. ["ubuntu-latest"] after spend-limit reset).
@@ -9,9 +9,9 @@ name: Test and Benchmark
 # Deploy/ship stays on GitHub-hosted — never mix VPS_* with lenr-ci PR jobs.
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
 
 permissions:

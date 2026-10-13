@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (see `.github/BRANCHING.md`). `main` remains the live **v0.3.7-beta** Compose
   share line until a future cutover PR.
 
+### Changed — complete v0.3.7 version control on default branch (2026-10-13)
+- Promote main+`dev` BRANCHING / AGENTS / CONTRIBUTING / Dependabot `target-branch: dev` / CI branch filters onto `main` tip (markers stay **`0.3.7-beta`**)
+- Refresh `LIVE_SHARE_STATUS.md` + `GOALS.md` for the completed Compose beta train
+- Add [`docs/v0.3.8-beta/VERSION_CONTROL.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/VERSION_CONTROL.md) (Swarm/Ansible/Traefik/Cloudflare prep phases) and [`I18N_FUTURE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/I18N_FUTURE.md) (FR/ES/IT/JA/ZH/RU)
+- `EQ-OPEN-*` remain OPEN; no Swarm public cutover in this change
+
 ## [v0.3.7-beta] - 2026-10-10
 
 Public Compose share: https://lenr-sim-beta.conscious.energy  

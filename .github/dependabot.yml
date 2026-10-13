@@ -1,9 +1,9 @@
 # Dependabot configuration for the LENR Simulation App
 # See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
-# Trunk-based model (see .github/BRANCHING.md): no `target-branch` is set, so
-# every update PR targets the default branch (main). GitHub reads this file
-# from main only.
+# GitHub reads this file from the default branch (main). Updates target `dev`
+# (v0.3.8 integration) so weekly noise does not churn the 0.3.7 release line.
+# See .github/BRANCHING.md.
 #
 # Minor/patch updates are grouped into one PR per ecosystem per week to keep
 # the PR list short; majors stay as individual PRs (or are ignored below with
@@ -17,6 +17,7 @@ updates:
   # Backend Python (FastAPI) dependencies
   - package-ecosystem: "pip"
     directory: "/LENR_SIM_APP_v2/backend"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -92,6 +93,7 @@ updates:
   # Frontend npm dependencies (Vite + React 18).
   - package-ecosystem: "npm"
     directory: "/LENR_SIM_APP_v2/frontend"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -221,6 +223,7 @@ updates:
   # GitHub Actions workflow versions
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
@@ -238,6 +241,7 @@ updates:
   # Docker base image updates
   - package-ecosystem: "docker"
     directory: "/LENR_SIM_APP_v2/infrastructure/docker"
+    target-branch: "dev"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3

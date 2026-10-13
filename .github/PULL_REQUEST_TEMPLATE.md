@@ -1,6 +1,6 @@
 ## Description
 
-<!-- Target branch is `main` (trunk-based; see .github/BRANCHING.md). PRs are squash-merged. -->
+<!-- Default target branch is `dev` (v0.3.8-beta integration). Use `main` only for v0.3.7-beta hotfixes. See .github/BRANCHING.md. PRs are squash-merged. -->
 <!-- Prefer dense, topic-scoped PRs (batch related work) to limit Actions spend — see AGENTS.md / BRANCHING.md. -->
 
 <!-- Brief summary of changes and motivation -->
