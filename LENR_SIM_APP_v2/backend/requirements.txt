@@ -1,50 +1,50 @@
 # Core dependencies (pinned for reproducible builds)
-fastapi==0.128.0
-starlette==0.49.1
+fastapi==0.143.0
+starlette==0.52.1
 uvicorn==0.30.6
 # Required for WebSocket upgrades (Live Stream Collapse). Bare uvicorn prints
 # "No supported WebSocket library detected" and the stream path 404s as HTTP GET.
 websockets==14.2
-pydantic==2.10.3
+pydantic==2.14.0
 numpy==1.26.4
 # Pin SciPy with NumPy 1.26.x. A floating upper bound let Windows venvs drift into
 # hybrid NumPy 1/2 trees that 500 bubble-lattice with:
 #   RuntimeError: Unable to configure default ndarray.__repr__
-scipy==1.14.1
-sympy==1.12
-pyvista==0.45.2
-pandas==2.2.3
+scipy==1.18.1
+sympy==1.14.0
+pyvista==0.49.0
+pandas==2.3.3
 plotly==5.24.1
 python-multipart==0.0.32
-pytest==9.0.3
+pytest==9.1.1
 httpx==0.28.1
 pytest-asyncio==1.4.0
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
-python-dotenv==1.2.2
-pydantic-settings==2.14.2
+python-dotenv==1.2.4
+pydantic-settings==2.15.0
 aiofiles==24.1.0
 jinja2==3.1.6
-numba==0.60.0
+numba==0.68.0
 memory-profiler==0.61.0
-psutil==6.1.0
+psutil==6.1.1
 
 # Database dependencies (v0.2.3-beta)
-sqlalchemy==2.0.36
-asyncpg==0.30.0
+sqlalchemy==2.1.4
+asyncpg==0.32.0
 aiosqlite==0.22.1
-alembic==1.19.1
-greenlet==3.5.3
+alembic==1.20.0
+greenlet==3.5.6
 
 # Observability
 prometheus-client==0.26.0
-prometheus-fastapi-instrumentator==7.0.0
+prometheus-fastapi-instrumentator==7.1.0
 
 # Testing dependencies
 pytest-cov==7.1.0
 pytest-xdist==3.8.0
-pytest-benchmark==5.2.3
-matplotlib==3.9.2
+pytest-benchmark==5.3.0
+matplotlib==3.11.2
 snakeviz==2.2.2
 pytest-profiling==1.8.1
 pytest-html==4.2.0
