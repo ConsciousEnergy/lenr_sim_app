@@ -50,7 +50,7 @@ Ordered for progressive delivery. Each phase is a PR (or short PR ladder) into *
 ### Phase A — Version control + hygiene (docs/policy)
 
 - [x] Long-lived `dev` at `0.3.8-beta` (consolidation)
-- [ ] Promote BRANCHING / Dependabot / CI `dev` filters onto default-branch `main` tip (this completion PR)
+- [x] Promote BRANCHING / Dependabot / CI `dev` filters onto default-branch `main` tip (#240)
 - [ ] Keep `PR_AND_BRANCH_HYGIENE.md` current after each ladder
 
 ### Phase B — Staging Swarm dry-run (no public traffic)
