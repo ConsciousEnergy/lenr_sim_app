@@ -1,22 +1,31 @@
-# Agent and contributor current truth (v0.3.7-beta)
+# Agent and contributor current truth (main = v0.3.7-beta, dev = v0.3.8-beta)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
-## Version
+## Version trains
 
-Four markers must stay **`0.3.7-beta`** (do not bump to 0.3.8 in CI/docs PRs):
+| Branch | Markers must be | Role |
+|--------|-----------------|------|
+| `main` | **`0.3.7-beta`** | Live Compose public beta; ship / hotfix only |
+| `dev` | **`0.3.8-beta`** | Default integration for new work |
+
+Four markers (must match within a branch):
 
 - `LENR_SIM_APP_v2/backend/app/core/config.py` → `APP_VERSION`
 - `LENR_SIM_APP_v2/frontend/package.json` → `"version"`
 - `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
 - `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
 
+Do **not** bump `main` to 0.3.8 except via a controlled `dev` → `main` promote PR.
+Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
+
 ## Live share vs tip
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. |
-| Branch tip / `main` | Source of truth for code; may be ahead of live until an operator ships with `VPS_*` / SSH. |
+| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.7-beta**. |
+| `main` | Release line matching the share train; may be ahead of live until an operator ships with `VPS_*` / SSH. |
+| `dev` | v0.3.8-beta integration tip; **never** auto-deployed by `deploy.yml`. |
 
 Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`). Share must keep
@@ -28,10 +37,9 @@ Proof: `LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh`
 (exit 0 only when dedicated exists, share clean, beta healthy, smoke on dedicated).
 Dual KVM2 ≠ Swarm cutover — see
 [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md),
-[`TWO_KVM2_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/TWO_KVM2_SWARM_TOPOLOGY.md)
-(learning maps + 2-VPS options),
-[`SWARM_OPERATOR_LAB.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/SWARM_OPERATOR_LAB.md)
-(hands-on file walkthrough), and
+[`TWO_KVM2_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/TWO_KVM2_SWARM_TOPOLOGY.md),
+[`SWARM_OPERATOR_LAB.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/SWARM_OPERATOR_LAB.md),
+and
 [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
 UMLENR Goal 1 pack (portable hub PR):
 [`docs/program/UMLENR_GOAL1_HUB_PACK/`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/README.md).
@@ -44,15 +52,16 @@ Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 
 | Stage | When | Confirm env | Doc |
 |-------|------|-------------|-----|
-| Compose share (now) | v0.3.7-beta public | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
-| Staging Swarm | prep / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Compose share (now) | v0.3.7-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
+| Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
 | Public Swarm + Pages | later | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
 
 Do **not** apply public Swarm without the 0.3.9 confirm. Do **not** close any `EQ-OPEN-*`.
 
 ## Dense PRs
 
-Trunk-based: short-lived branches → squash to `main`. Prefer **one topic per PR**.
+Short-lived branches → squash to **`dev`** (default) or `main` (0.3.7 hotfix).
+Prefer **one topic per PR**.
 
 - **CI / ops / onboarding** PRs: workflows, runner runbook, cutover docs — this track.
 - **Academic review** PRs: ledger, proof matrix, CMNS/Theory Paper honesty, Lean — **separate** branches; do not rewrite claim text from CI/infra PRs.
@@ -71,7 +80,7 @@ Point here; do not duplicate claim rows in ops PRs:
 
 - Backend slice: `cd LENR_SIM_APP_v2/backend && python -m pytest …` for touched tests
 - Frontend: `npm ci && npm run lint && npm test && npm run build` when UI changes
-- Version consistency: all four markers identical
+- Version consistency: all four markers identical **on the PR’s base train**
 - Release skill: [`.cursor/skills/release-quality-gate/SKILL.md`](.cursor/skills/release-quality-gate/SKILL.md)
 
 Docs/academic-only PRs intentionally skip frontend-e2e / full Python matrix once path filters land in `test.yml`.

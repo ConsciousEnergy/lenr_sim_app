@@ -1,64 +1,62 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed from CI agent host on **2026-09-13 ~00:10 UTC** (retries via verify-beta-share.sh).
-Stack tip ready to merge: `consciousenergy/v037-share-uptime-prep-98d8` @ `b0ec73d` (#190 Test+Benchmark **green** — [run 34726328172](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/34726328172); `check-merge-train.sh` → READY; browser: local tip has no PostHog empty-client warning, live 0.3.6-beta still warns).
+Probed **2026-10-13** from Cursor cloud agent. Public Compose+Caddy share is the
+**v0.3.7-beta** release line. Swarm / Traefik / Cloudflare Pages cutover remains
+**out of scope** until `CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
 
 ## What works today (share this)
 
 | URL | DNS | `/api/health` | App version reported |
 |-----|-----|---------------|----------------------|
-| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS) | **200** healthy, DB connected | `0.3.6-beta` |
-| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** healthy | `0.3.6-beta` |
+| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** healthy, DB connected | **`0.3.7-beta`** |
+| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** healthy | **`0.3.7-beta`** |
 
-**Shareable link for testers right now:**  
+**Shareable link for testers:**  
 https://lenr-sim-beta.conscious.energy  
 
 Operator probe:
 
 ```bash
-./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+EXPECT_VERSION=0.3.7-beta \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 # or:
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
 
-Latest agent probe: share host **OK**; intended host **WARN** (TLS/DNS still WordPress).
+Latest agent probe (2026-10-13): `status=healthy`, `version=0.3.7-beta`,
+`database.connected=true`.
+
+## Release line vs tip
+
+| Surface | Ref | Notes |
+|---------|-----|-------|
+| Git tag / Release | `v0.3.7-beta` | Published prerelease on GitHub (target `04543b3` + CHANGELOG #234) |
+| `main` tip | may be ahead of tag | Hotfix / docs only (e.g. CI re-trigger #236); markers stay `0.3.7-beta` |
+| Live Compose share | operator-shipped from `main` / tags | Deploy via `VPS_*` / SSH — **not** auto from bare push |
+| `dev` | `0.3.8-beta` integration | Never auto-deployed; Swarm prep only |
 
 ## Intended public name — still blocked by DNS
 
 | URL | DNS today | Result |
 |-----|-----------|--------|
-| `https://lenr-simp-app.conscious.energy` | **CNAME → `conscious.energy`** (WordPress `192.0.78.x`) | Does **not** reach the VPS; TLS/health fail for the app stack |
+| `https://lenr-simp-app.conscious.energy` | **CNAME → `conscious.energy`** (WordPress) | Does **not** reach the VPS |
 
-### Cutover (WordPress.com DNS UI)
+Keep sharing **`lenr-sim-beta`** until an announced apex cutover under the
+v0.3.9 confirm path. See
+[`../v0.3.8-beta/DNS_AND_HOSTINGER_DECISIONS.md`](../v0.3.8-beta/DNS_AND_HOSTINGER_DECISIONS.md).
 
-1. Delete the CNAME `lenr-simp-app` → `conscious.energy`.
-2. Create **A** `lenr-simp-app` → `185.211.4.66` (optional AAAA per VPS README).
-3. Add `lenr-simp-app.conscious.energy` to the Caddy site line; recreate Caddy.
-4. Confirm:
+## CI placement (must stay true)
 
-```bash
-dig +short lenr-simp-app.conscious.energy A   # expect 185.211.4.66
-curl -fsS https://lenr-simp-app.conscious.energy/api/health
-```
+| Host | Role |
+|------|------|
+| Share `1280333` / `185.211.4.66` | Compose beta only — **no** `.runner` |
+| CI `2012566` / `45.93.100.251` | `lenr-ci-1` (`self-hosted,linux,x64,lenr-ci`) |
 
-Until then, keep sharing **`lenr-sim-beta`**.
+Never put `VPS_*` on `lenr-ci` PR jobs. Runbook:
+[`SELF_HOSTED_RUNNER.md`](./SELF_HOSTED_RUNNER.md).
 
-## VPS git tip
+## Honesty (unchanged)
 
-`consciousenergy/vps-public-beta-rebase-98d8` was **rebased onto `origin/main`** on 2026-09-12
-(duplicate deps commit dropped). Tip == `main` @ `360c94c` (includes Caddy multi-host fix #180,
-WH-ENP #182, `/api` path honesty #183).
-
-**Deploy of 0.3.7 science stack still waits on merge train #185→#189**
-(see [MERGE_TRAIN_VPS.md](./MERGE_TRAIN_VPS.md)). After those land on `main`, use
-`./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh` (`check` then
-human-gated `ship`) or the manual rebase + `workflow_dispatch` steps in the merge
-train doc; health should report `0.3.7-beta`
-(`EXPECT_VERSION=0.3.7-beta ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh`).
-
-## Console noise (testers)
-
-| Message | Action |
-|---------|--------|
-| PostHog “No apiKey or client” | Fixed in #189 (`WrapWithPostHog`) once that PR is on the deployed tip |
-| `contentscript.js` MaxListeners / ObjectMultiplex / phishing URL check | Browser extension — ignore; use a clean profile to verify |
+- `lenr_proved` remains **false**
+- All `EQ-OPEN-*` stay **OPEN**
+- Research-preview only — not a laboratory or energetic-freedom claim
