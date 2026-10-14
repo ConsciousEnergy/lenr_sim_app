@@ -26,6 +26,15 @@
     - `source_domain_limits`
     - `model_fidelity` (independent of empirical_support)
     - `empirical_support` (independent of model_fidelity)
+  - Additive (v0.3.8 ARA Oct 2026 workbench Wave 1; keys always present):
+    - `predicted_signatures` (list of dicts)
+    - `falsifiers` (structured; keep string `falsification_conditions`)
+    - `taxonomy_kind` (`named_theory` | `known_mechanism` | `proposed_state` | `experiment_env` | `observed_output`)
+    - `equation_citations`
+    - `identifiability_warnings`
+    - `historical_parents`
+    - `display_model_version`
+    - `control_role` (on `per_theory` and list metadata)
 - `observables_bridge`
 - `analytics_transparency`
 - `composition_provenance.multiplier_stack_warning` (may be empty string)
