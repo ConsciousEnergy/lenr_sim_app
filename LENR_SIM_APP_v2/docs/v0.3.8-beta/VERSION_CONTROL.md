@@ -53,6 +53,16 @@ Ordered for progressive delivery. Each phase is a PR (or short PR ladder) into *
 - [x] Promote BRANCHING / Dependabot / CI `dev` filters onto default-branch `main` tip (#240)
 - [ ] Keep `PR_AND_BRANCH_HYGIENE.md` current after each ladder
 
+### Phase A2 — ARA Oct 2026 workbench Wave 1 (science; parallel to Swarm)
+
+Owner doc: [`ARA_OCT2026_WORKBENCH.md`](ARA_OCT2026_WORKBENCH.md).
+
+- Static crawler-readable `/models/*` (+ methodology/validation/sources/experiments)
+- Additive predicted signatures / falsifiers / equation citations / taxonomy
+- Storms / Takahashi / Hagelstein version headers; Schwinger lattice scaffold
+- Model 0 baselines featured; Conscious Energy WP supersession = operator handoff
+- Does **not** authorize Swarm apply or public cutover
+
 ### Phase B — Staging Swarm dry-run (no public traffic)
 
 Owner docs: [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md),
