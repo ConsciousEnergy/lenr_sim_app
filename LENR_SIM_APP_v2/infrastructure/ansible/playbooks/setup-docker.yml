@@ -177,6 +177,10 @@
         - /opt/lenr-sim/backups
         - /opt/lenr-sim/traefik
         - /opt/lenr-sim/traefik/certs
+        - /opt/lenr-sim/observability
+        - /opt/lenr-sim/observability/prometheus
+        - /opt/lenr-sim/observability/grafana
+        - /opt/lenr-sim/observability/grafana/provisioning
         
     - name: Set secure permissions on Traefik certs directory
       ansible.builtin.file:

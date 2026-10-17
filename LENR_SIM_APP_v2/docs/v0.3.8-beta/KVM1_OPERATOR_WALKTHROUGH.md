@@ -14,14 +14,18 @@ Unlock checklist: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
    - VPS id
    - Public IPv4
    - Hostname (`srv….hstgr.cloud`)
-3. Firewall (Hostinger firewall or `ufw`):
+3. **First login security (do this before anything else):**
+   - Rotate the panel/root password immediately (do not paste passwords into chat,
+     git, Slack, or inventory files).
+   - From your laptop: `ssh-copy-id -i ~/.ssh/lenr-sim-staging.pub root@<KVM1_IP>`
+   - Then disable password auth (`PasswordAuthentication no` in
+     `/etc/ssh/sshd_config`) and `systemctl reload ssh`.
+4. Firewall (Hostinger firewall or `ufw`):
    - **22/tcp** — your admin IP only
    - **2377/tcp**, **7946/tcp+udp**, **4789/udp** — Swarm (manager↔worker)
    - **80/443** — only if this node is temporarily the staging Traefik edge
    - Do **not** publish Grafana (3000) or Prometheus (9090) to the public internet
-4. Create a deploy user (or use root only for bootstrap), install your SSH key,
-   disable password authentication.
-5. Confirm from laptop: `ssh -i ~/.ssh/lenr-sim-staging <user>@<KVM1_IP>`.
+5. Confirm from laptop: `ssh -i ~/.ssh/lenr-sim-staging root@<KVM1_IP>` (key only).
 
 ## Phase 1 — Staging Swarm on KVM1 (v0.3.8)
 

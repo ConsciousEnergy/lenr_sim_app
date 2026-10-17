@@ -76,6 +76,31 @@
         src: ../templates/traefik-dynamic.yml.j2
         dest: /opt/lenr-sim/traefik/dynamic/dynamic.yml
         mode: '0644'
+
+    # ==========================================================================
+    # Observability configs (Prometheus + Grafana provisioning)
+    # ==========================================================================
+
+    - name: Ensure observability directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      loop:
+        - /opt/lenr-sim/observability
+        - /opt/lenr-sim/observability/prometheus
+        - /opt/lenr-sim/observability/grafana
+      when: observability_enabled | default(true)
+
+    - name: Sync observability scaffolds to host
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../observability/"
+        dest: /opt/lenr-sim/observability/
+        mode: '0644'
+        directory_mode: '0755'
+      when: observability_enabled | default(true)
         
     # ==========================================================================
     # Create Docker Secrets
