@@ -23,6 +23,9 @@ LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/
 # Terraform / Ansible operator files (real tokens, live inventory)
 **/terraform.tfvars
 **/backend.hcl
+# Local Swarm staging inventory (may contain real IPs) — never commit
+**/ansible/inventory.staging.yml
+**/ansible/inventory.prod.yml
 **/inventory.yml
 
 # VPS runtime env (never commit a filled copy)
