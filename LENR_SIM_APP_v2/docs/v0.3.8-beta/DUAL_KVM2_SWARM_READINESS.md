@@ -1,23 +1,28 @@
 # Dual KVM2 ≠ production Swarm cutover (readiness audit)
 
-**Date:** 2026-10-04 (re-verified)  
+**Date:** 2026-10-17 (re-verified; KVM1 recorded)  
 **Question:** Now that both Hostinger KVM2s exist, can we complete the full
 build with Docker Swarm, Ansible, Traefik, and Cloudflare?
 
 **Short answer:** **In-repo stack validates; live staging/public apply does not.**
-Dual KVM2s unlock **Compose share + isolated CI**. Full Swarm + Traefik +
+Dual KVM2s unlock **Compose share + isolated CI**. A third **KVM1**
+(`2071323` / `31.220.55.113`) is bootstrapped for staging Swarm but
+**not** Swarm-inited until `CONFIRM_SWARM_0_3_8`. Full Swarm + Traefik +
 Cloudflare Pages remains a **gated v0.3.8 staging / v0.3.9 production** path.
 Operator unlock list: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
+Topology: [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).
 Do **not** set `CONFIRM_SWARM_0_3_9` without an announced window and live credentials.
 
 ## What we have now
 
-Verified via Hostinger VPS API (2026-10-04T15:48Z): both **KVM 2**, `state=running`.
+Verified via Hostinger VPS API (2026-10-04T15:48Z) for KVM2s; KVM1 SSH
+probe 2026-10-17 (`Docker` installed, `Swarm=inactive`).
 
 | VM | Id | IP | Hostname (Hostinger) | Role **today** |
 |----|----|----|----------------------|----------------|
-| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose beta healthy `0.3.7-beta`; BF defaults include `dynamics_mode=auto` |
-| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`); **zero** Compose projects |
+| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose beta; keep until v0.3.9 |
+| Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`); **zero** Compose projects; **never** Swarm |
+| Staging / data KVM1 | `2071323` | `31.220.55.113` | `srv2071323` (Ubuntu; Docker 29.x) | **0.3.8 staging manager** (await confirm); **0.3.9+** prod worker + observability — [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md) |
 
 Dedicated CI docs/workflows are on `main` (#218). Recommended PR merge queue is
 **complete** (#218→#220→#210→#219→#212→#217→#215→#224).
@@ -70,9 +75,10 @@ Local stack gate (agent, 2026-10-04T15:48:57Z):
    (needs write access on `UMLENR`).
 6. **Operator staging remote dry-run** (plan/check only) — needs untracked
    `backend.hcl`, `staging.tfvars`, `inventory.staging.yml` (see unlock doc).
-7. **Provision staging Swarm nodes** (new VMs or documented single-node staging
-   caveats) — **not** the CI KVM2; **not** blind promote of live Compose.
-8. Validate Traefik → API replicas, Pages CORS/WS, health.
+7. **~~Order / bootstrap KVM1~~** — **done** (`2071323` / `31.220.55.113`);
+   Swarm init still blocked on `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+   ([`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md)).
+8. Validate Traefik → API replicas, Pages CORS/WS, health on staging.
 9. Only then schedule **v0.3.9** public cutover under `CONFIRM_SWARM_0_3_9`.
 
 ## Invariants (do not weaken)

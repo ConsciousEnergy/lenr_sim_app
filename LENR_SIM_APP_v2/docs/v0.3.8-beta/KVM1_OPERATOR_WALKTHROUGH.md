@@ -10,22 +10,26 @@ Unlock checklist: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
 
 1. Hostinger → VPS → order **KVM 1**, Ubuntu **24.04 LTS**, same region as share
    (`1280333`) if possible.
-2. Record in your private ops notes (do **not** commit):
-   - VPS id
-   - Public IPv4
-   - Hostname (`srv….hstgr.cloud`)
+2. Record in your private ops notes (panel password stays private — never commit):
+   - VPS id: `2071323`
+   - Public IPv4: `31.220.55.113`
+   - Hostname: `srv2071323`
 3. **First login security (do this before anything else):**
    - Rotate the panel/root password immediately (do not paste passwords into chat,
-     git, Slack, or inventory files).
-   - From your laptop: `ssh-copy-id -i ~/.ssh/lenr-sim-staging.pub root@<KVM1_IP>`
+     git, Slack, or inventory files). **Still required** if the panel password
+     was ever shared in chat.
+   - From your laptop: `ssh-copy-id -i ~/.ssh/lenr-sim-staging.pub root@31.220.55.113`
+     (cloud-agent key is already on the host; add your laptop key before
+     relying on this machine alone).
    - Then disable password auth (`PasswordAuthentication no` in
-     `/etc/ssh/sshd_config`) and `systemctl reload ssh`.
+     `/etc/ssh/sshd_config`) and `systemctl reload ssh`. Root is already
+     `PermitRootLogin prohibit-password`.
 4. Firewall (Hostinger firewall or `ufw`):
-   - **22/tcp** — your admin IP only
-   - **2377/tcp**, **7946/tcp+udp**, **4789/udp** — Swarm (manager↔worker)
-   - **80/443** — only if this node is temporarily the staging Traefik edge
+   - **22/tcp** — prefer your admin IP only (currently open Anywhere; tighten)
+   - **2377/tcp**, **7946/tcp+udp**, **4789/udp** — Swarm (manager↔worker) — **open**
+   - **80/443** — only if this node is temporarily the staging Traefik edge — **open**
    - Do **not** publish Grafana (3000) or Prometheus (9090) to the public internet
-5. Confirm from laptop: `ssh -i ~/.ssh/lenr-sim-staging root@<KVM1_IP>` (key only).
+5. Confirm from laptop: `ssh -i ~/.ssh/lenr-sim-staging root@31.220.55.113` (key only).
 
 ## Phase 1 — Staging Swarm on KVM1 (v0.3.8)
 
@@ -120,10 +124,11 @@ separate staging cluster later, order another small VPS — do not reuse CI.
 
 ## Checklist (operator)
 
-- [ ] KVM1 ordered; id/IP recorded privately
-- [ ] Firewall + SSH hardened
-- [ ] Untracked `inventory.staging.yml` points at KVM1 only
-- [ ] `staging-swarm-dry-run.sh local` exit 0 / expected confirm exits
-- [ ] Staging apply under `CONFIRM_SWARM_0_3_8` only
+- [x] KVM1 ordered; id/IP recorded (`2071323` / `31.220.55.113` / `srv2071323`)
+- [x] Docker installed; UFW Swarm + HTTP ports; root SSH key-only (`prohibit-password`)
+- [ ] Laptop SSH key installed + panel password rotated + `PasswordAuthentication no`
+- [x] Untracked `inventory.staging.yml` points at KVM1 only (gitignored)
+- [x] `staging-swarm-dry-run.sh local` exit 0 / expected confirm exits
+- [ ] Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` only (Swarm still **inactive**)
 - [ ] Rollback drill documented with timestamps
 - [ ] Public cutover deferred until `CONFIRM_SWARM_0_3_9` + announced window

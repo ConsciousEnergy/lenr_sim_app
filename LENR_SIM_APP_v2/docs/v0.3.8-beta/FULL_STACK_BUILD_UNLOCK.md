@@ -15,8 +15,9 @@ confirm strings.
 | Share | `1280333` | `185.211.4.66` | Compose beta healthy `0.3.7-beta`; BF defaults advertise `dynamics_mode=auto` | **Keep Compose** until v0.3.9 cutover |
 | CI | `2012566` | `45.93.100.251` | GitHub runner `lenr-ci-1` only (no Compose projects) | **Forbidden** as Swarm worker |
 
-Third VPS: operator orders Hostinger **KVM1** as staging Swarm manager
-(then prod worker). Walkthrough:
+Third VPS: Hostinger **KVM1** `2071323` / `31.220.55.113` (`srv2071323`) —
+Docker installed, UFW/SSH hardened; Swarm init awaits
+`CONFIRM_SWARM_0_3_8`. Walkthrough:
 [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md).
 Topology: [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).
 

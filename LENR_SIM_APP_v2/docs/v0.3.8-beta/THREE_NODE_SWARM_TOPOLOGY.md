@@ -14,7 +14,7 @@ Learning map (two KVM2s only): [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOP
 |------|-----------------|--------------|------------|
 | Compose share | `1280333` / `185.211.4.66` | Public app host | **0.3.8:** Compose. **0.3.9:** Swarm **manager** (Traefik + Postgres + ≥1 API) |
 | Dedicated CI | `2012566` / `45.93.100.251` | `lenr-ci-1` only | **Never** Swarm; **never** `VPS_*` |
-| New KVM1 | TBD after order | Lightweight data + redundancy | **0.3.8:** staging **manager**. **0.3.9+:** **worker** (`role=app` + `role=observability`) |
+| Staging / data KVM1 | `2071323` / `31.220.55.113` (`srv2071323`) | Lightweight data + redundancy | **0.3.8:** staging **manager** (Docker installed; Swarm init awaits `CONFIRM_SWARM_0_3_8`). **0.3.9+:** **worker** (`role=app` + `role=observability`) |
 
 ## Why this shape
 
