@@ -1,24 +1,35 @@
 # Staging Swarm inventory (v0.3.8) — copy to inventory.staging.yml (do not commit).
 # Used by staging-swarm-dry-run.sh remote (ansible --check only).
 #
-# Prefer ≥2 dedicated staging nodes. Do not list the live Compose share VPS
-# (185.211.4.66) as Swarm manager without a written migration plan.
+# Preferred topology (2×KVM2 + 1×KVM1):
+#   - staging-manager-1 = NEW Hostinger KVM1 IP (see docs/v0.3.8-beta/KVM1_OPERATOR_WALKTHROUGH.md)
+#   - swarm_workers optional for multi-node staging; at 0.3.9 cutover KVM1 becomes a prod worker
+#
+# Do not list the live Compose share VPS (185.211.4.66) as Swarm manager without
+# a written migration plan / CONFIRM_SWARM_0_3_9 cutover window.
 # Do NOT use CI KVM2 45.93.100.251 / 2012566 as a Swarm node (untrusted PR code).
+#
+# After join, apply labels (manager shell):
+#   docker node update --label-add role=app <manager_or_share>
+#   docker node update --label-add role=app --label-add role=observability <kvm1>
 
 all:
   children:
     swarm_managers:
       hosts:
         staging-manager-1:
-          ansible_host: STAGING_MANAGER_IP  # new staging IP — never 185.211.4.66 / 45.93.100.251
+          ansible_host: STAGING_MANAGER_IP  # KVM1 IP — never 185.211.4.66 / 45.93.100.251
           ansible_user: root
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+          # Intended labels after swarm init (document only; apply via docker node update):
+          # node_labels: ["role=app", "role=observability"]
     swarm_workers:
       hosts:
-        staging-worker-1:
-          ansible_host: STAGING_WORKER_IP  # optional second node; omit for single-node caveat
-          ansible_user: root
-          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+        # Optional second staging node. Omit / comment for single-node staging caveat.
+        # staging-worker-1:
+        #   ansible_host: STAGING_WORKER_IP
+        #   ansible_user: root
+        #   ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
   vars:
     app_domain: "conscious.energy"
     api_subdomain: "api-staging"
@@ -31,3 +42,7 @@ all:
     postgres_user: "lenr_app"
     fastapi_workers: 2
     fastapi_log_level: "info"
+    # Prometheus + Grafana on nodes labeled role=observability
+    observability_enabled: true
+    grafana_admin_user: "admin"
+    # Set grafana_admin_password via Ansible vault / Swarm secret — never commit.

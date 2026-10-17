@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (see `.github/BRANCHING.md`). `main` remains the live **v0.3.7-beta** Compose
   share line until a future cutover PR.
 
+### Added — three-node Swarm prep (2×KVM2 + 1×KVM1)
+- Docs: `THREE_NODE_SWARM_TOPOLOGY.md`, `KVM1_OPERATOR_WALKTHROUGH.md`, `OBSERVABILITY_GRAFANA.md`
+- Staging inventory example + stack: Prometheus/Grafana services; rolling update `order: start-first`; optional `require_app_label` / `require_observability_label`
+- `infrastructure/observability/` Grafana+Prometheus scaffolds (no secrets)
+- No public Swarm apply; CI remains isolated; `EQ-OPEN-*` stay OPEN
+
 ### Changed — main + `dev` version trains (2026-10-10)
 - Long-lived **`dev`** branch is the v0.3.8-beta integration line; **`main`** stays the live v0.3.7-beta Compose release line
 - Four version markers on `dev` bumped to **`0.3.8-beta`**

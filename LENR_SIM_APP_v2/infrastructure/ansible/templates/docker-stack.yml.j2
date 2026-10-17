@@ -107,13 +107,26 @@ services:
     # Note: depends_on is ignored in Docker Swarm; backend should implement DB connection retry logic
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: {{ fastapi_workers | default(2) }}
+      # Production (require_app_label=true): pin to nodes labeled role=app
+      # (share manager + KVM1 worker). Staging default leaves unconstrained so
+      # single-node KVM1 works before labels are applied.
+      placement:
+        preferences:
+          - spread: node.labels.role
+{% if require_app_label | default(false) %}
+        constraints:
+          - node.labels.role == app
+{% endif %}
       update_config:
         parallelism: 1
         delay: 10s
+        order: start-first
         failure_action: rollback
+        monitor: 30s
       rollback_config:
         parallelism: 1
+        order: stop-first
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -176,6 +189,89 @@ services:
       timeout: 5s
       retries: 5
 
+{% if observability_enabled | default(true) %}
+  # ============================================================================
+  # Prometheus (overlay scrape; not public)
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - /opt/lenr-sim/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: replicated
+      replicas: 1
+{% if require_observability_label | default(false) %}
+      placement:
+        constraints:
+          - node.labels.role == observability
+{% endif %}
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ============================================================================
+  # Grafana (private / Traefik+auth; see OBSERVABILITY_GRAFANA.md)
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ grafana_admin_user | default('admin') }}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - /opt/lenr-sim/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: replicated
+      replicas: 1
+{% if require_observability_label | default(false) %}
+      placement:
+        constraints:
+          - node.labels.role == observability
+{% endif %}
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - "traefik.enable={{ 'true' if (grafana_traefik_enabled | default(false)) else 'false' }}"
+{% if grafana_traefik_enabled | default(false) %}
+        - "traefik.http.routers.grafana.rule=Host(`{{ grafana_subdomain | default('grafana-staging') }}.{{ app_domain }}`)"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.grafana.middlewares=grafana-auth"
+        - "traefik.http.middlewares.grafana-auth.basicauth.users={{ grafana_basic_auth }}"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+{% endif %}
+{% endif %}
+
 # ==============================================================================
 # Networks
 # ==============================================================================
@@ -189,6 +285,12 @@ networks:
 volumes:
   postgres_data:
     driver: local
+{% if observability_enabled | default(true) %}
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+{% endif %}
 
 # ==============================================================================
 # Secrets
