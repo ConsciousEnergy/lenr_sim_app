@@ -39,10 +39,13 @@ const AboutPage = () => {
             Overview
           </Typography>
           <Typography variant="body1" paragraph>
-            The LENR Simulation App is an advanced, open-source tool developed by <Link href="https://www.conscious.energy" target="_blank" rel="noopener noreferrer">Conscious Energy</Link> for simulating and analyzing Low Energy Nuclear Reaction (LENR) processes. This application combines cutting-edge physics models with an intuitive user interface to help researchers, students, and enthusiasts explore the fascinating field of LENR phenomena.
+            The LENR Simulation App is an open-source comparative scientific workbench developed by <Link href="https://www.conscious.energy" target="_blank" rel="noopener noreferrer">Conscious Energy</Link>. LENR/CMNS refers to a class of reported anomalous thermal, nuclear and isotopic observations in hydrogen-loaded condensed-matter systems. The interpretation, reproducibility and underlying mechanism of these observations remain disputed.
           </Typography>
           <Typography variant="body1" paragraph>
-            Licensed under <strong>GNU GPL-3.0</strong>, this project is freely available for anyone to use, study, modify, and distribute.
+            LENR-Sim helps researchers instantiate competing theories under shared experiment conditions, compare predicted signatures against Model&nbsp;0 established-physics baselines, and inspect falsifiers — rather than asserting that any single mechanism is proven. Potential energy applications have been proposed if reported effects can be demonstrated reproducibly and engineered reliably.
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Crawler-readable model pages (no JavaScript required) are published at <Link href="/models/">/models/</Link>. Licensed under <strong>GNU GPL-3.0</strong>, this project is freely available for anyone to use, study, modify, and distribute.
           </Typography>
         </Box>
 

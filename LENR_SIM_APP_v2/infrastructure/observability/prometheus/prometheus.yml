@@ -12,20 +12,35 @@ scrape_configs:
     static_configs:
       - targets: ["localhost:9090"]
 
-  # Swarm service DNS (tasks resolved on overlay). Health is the stable signal.
+  # HTTP probe of backend /api/health via blackbox (returns probe_success, etc.)
   - job_name: lenr_backend_health
-    metrics_path: /api/health
-    # /api/health returns JSON, not Prometheus text — use blackbox exporter for
-    # probe_* metrics in a follow-up, or scrape Traefik metrics instead.
-    # Placeholder static target for operators wiring blackbox:
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
     static_configs:
-      - targets: ["backend:8000"]
+      - targets:
+          - http://backend:8000/api/health
         labels:
           service: backend
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
 
+  # Traefik request / entrypoint metrics (overlay :8082 — not public)
   - job_name: traefik
-    # Enable Traefik metrics in traefik.yml before scraping.
     static_configs:
-      - targets: ["traefik:8080"]
+      - targets: ["traefik:8082"]
         labels:
           service: traefik
+
+  # Host CPU / mem / disk — Swarm DNS for global node-exporter tasks
+  - job_name: node
+    dns_sd_configs:
+      - names:
+          - tasks.node-exporter
+        type: A
+        port: 9100

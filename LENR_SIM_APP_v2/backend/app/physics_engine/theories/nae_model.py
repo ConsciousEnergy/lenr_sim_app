@@ -48,14 +48,16 @@ class NAEModelTheory:
 
     @property
     def theory_name(self) -> str:
-        return "Nuclear Active Environment (NAE)"
+        return "Storms NAE"
 
     @property
     def description(self) -> str:
         return (
-            "Statistical model of NAE site density based on crack-width "
-            "filtering, hydrogen loading purity, oxide coverage, and "
-            "simultaneity of multiple activation conditions."
+            "Storms Nuclear Active Environment (NAE): statistical model of NAE "
+            "site density based on crack-width filtering, hydrogen loading purity, "
+            "oxide coverage, and simultaneity. Active implementation "
+            "storms_nae_2012_13; 2026 electron-assisted channel is metadata-tagged "
+            "pending ARA P1. Not a neutron-chain model."
         )
 
     @property
@@ -224,9 +226,12 @@ class NAEModelTheory:
         )
 
     def get_metadata(self) -> TheoryMetadata:
+        from app.physics_engine.workbench_enrichment import catalog_entry
+
+        wb = catalog_entry("nae_model")
         return TheoryMetadata(
             theory_id=self.theory_id,
-            theory_name=self.theory_name,
+            theory_name="Storms NAE",
             description=self.description,
             configurable_parameters=self.configurable_parameters,
             references=[
@@ -242,6 +247,13 @@ class NAEModelTheory:
             theory_model_version="storms_nae_2012_13",
             model_fidelity="approximate",
             empirical_support="speculative",
+            taxonomy_kind="named_theory",
+            display_model_version=str(wb.get("display_model_version", "")),
+            historical_parents=list(wb.get("historical_parents", [])),
+            predicted_signatures=list(wb.get("predicted_signatures", [])),
+            falsifiers=list(wb.get("falsifiers", [])),
+            equation_citations=list(wb.get("equation_citations", [])),
+            identifiability_warnings=list(wb.get("identifiability_warnings", [])),
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

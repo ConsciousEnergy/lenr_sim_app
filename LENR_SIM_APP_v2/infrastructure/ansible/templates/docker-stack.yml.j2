@@ -18,6 +18,9 @@ services:
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.metrics.address=:8082"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=metrics"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
@@ -270,6 +273,67 @@ services:
         - "traefik.http.middlewares.grafana-auth.basicauth.users={{ grafana_basic_auth }}"
         - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 {% endif %}
+
+  # ============================================================================
+  # blackbox exporter — probe /api/health over the overlay (JSON → probe_* metrics)
+  # ============================================================================
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    command:
+      - "--config.file=/etc/blackbox/blackbox.yml"
+    volumes:
+      - /opt/lenr-sim/observability/prometheus/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: replicated
+      replicas: 1
+{% if require_observability_label | default(false) %}
+      placement:
+        constraints:
+          - node.labels.role == observability
+{% endif %}
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ============================================================================
+  # node_exporter — global, one task per Swarm node (host performance)
+  # ============================================================================
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/host/root"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 {% endif %}
 
 # ==============================================================================

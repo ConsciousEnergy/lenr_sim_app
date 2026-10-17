@@ -19,9 +19,10 @@ equations, free parameters, and negative predictions exposed rather than hidden.
 
 | ARA tier | Intent | Repo action |
 |----------|--------|-------------|
-| **P0** | Registry/provenance, taxonomy, nulls, paper benchmarks, conservation | **This release (0.3.8)** |
-| **P1** | Rebuild Widom / Hagelstein / Storms / Takahashi; phenomenological Shoulders/Matsumoto; add Dubinko/Kim/Chubb/… | Queued **0.3.9** |
-| **P2** | Comparative workbench, discriminators, Research Mode + LENR-ARA | Post-0.3.9 |
+| **P0** | Registry/provenance, taxonomy, nulls, paper benchmarks, conservation | **Landed (0.3.8)** |
+| **Wave 1 (Oct 2026 ARA)** | Static `/models` pages, predicted signatures / falsifiers, equation citations, Schwinger scaffold, Model 0 prominence | **`dev` train** — see [`ARA_OCT2026_WORKBENCH.md`](ARA_OCT2026_WORKBENCH.md) |
+| **P1** | Rebuild Widom / Hagelstein / Storms / Takahashi; phenomenological Shoulders/Matsumoto; add Dubinko/… | Queued **0.3.9** |
+| **P2** | Comparative workbench UI, discriminators, Research Mode + LENR-ARA | Post-0.3.9 |
 | **P3** | Public research platform / community modules | Later |
 
 ## Taxonomy corrections (P0)
@@ -70,6 +71,14 @@ Pipeline **merges** module provenance instead of overwriting it.
 | `quantum_tunneling` | Established WKB/Gamow baseline (identity enhancement) |
 | `electron_screening` | Shared mechanism layer (not a named LENR author theory) |
 | `null_recombination` | Non-nuclear heat/artifact null under same experiment inputs |
+
+Featured as **Model 0** on the static `/models/` index (Wave 1).
+
+## Schwinger historical control (Wave 1)
+
+| Module | Role |
+|--------|------|
+| `schwinger_lattice` | Schwinger — Nuclear Energy in an Atomic Lattice scaffold; HD/H₂O admixture knob; **no invented rate law** |
 
 ## Paper benchmarks
 

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Takahashi TSC (Tetrahedral Symmetric Condensate) — LENR-Sim model</title>
+  <meta name="description" content="Four deuterons simultaneously tunnel at a tetrahedral interstitial site in the FCC lattice via a coherent 4-body quantum state (TSC). Produces 2 He-4 + 47.6 MeV with no neutrons or gamma rays." />
+  <link rel="canonical" href="/models/takahashi_tsc.html" />
+  <style>
+    :root {
+      --ink: #1a1f24;
+      --muted: #4a5560;
+      --line: #d5dbe0;
+      --bg: #f7f5f1;
+      --panel: #ffffff;
+      --accent: #0b5f4b;
+    }
+    body {
+      margin: 0;
+      font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #e7efe9 0%, transparent 55%),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 100%);
+      line-height: 1.55;
+    }
+    header, main, footer {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+    }
+    h1, h2, h3 {
+      font-family: "IBM Plex Sans", "Source Sans 3", "Helvetica Neue", sans-serif;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    h1 { font-size: 1.85rem; margin: 0.2rem 0 0.5rem; }
+    h2 { font-size: 1.25rem; margin-top: 1.75rem; color: var(--accent); }
+    .brand {
+      font-family: "IBM Plex Sans", sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta, .note { color: var(--muted); font-size: 0.95rem; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 1rem 1.1rem;
+      margin: 1rem 0;
+    }
+    a { color: var(--accent); }
+    nav a { margin-right: 0.85rem; }
+    code, .mono {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.92em;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    th { background: #eef3f0; font-family: "IBM Plex Sans", sans-serif; }
+    footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/models/">LENR-Sim</a>
+    <nav>
+      <a href="/models/">Models</a>
+      <a href="/experiments/">Experiments</a>
+      <a href="/methodology.html">Methodology</a>
+      <a href="/validation.html">Validation</a>
+      <a href="/sources.html">Sources</a>
+      <a href="/">Interactive app</a>
+    </nav>
+    <h1>Takahashi TSC (Tetrahedral Symmetric Condensate) — LENR-Sim model</h1>
+    <p class="meta">Four deuterons simultaneously tunnel at a tetrahedral interstitial site in the FCC lattice via a coherent 4-body quantum state (TSC). Produces 2 He-4 + 47.6 MeV with no neutrons or gamma rays.</p>
+  </header>
+  <main>
+
+
+<section class="panel">
+  <p><strong>Theory id:</strong> <span class="mono">takahashi_tsc</span></p>
+  <p><strong>Model version:</strong> 4H/TSC–MHE lineage (P0 approx rate); historical parent 4D/TSC 2011</p>
+  <p><strong>Simulation implementation:</strong> <span class="mono">takahashi_tsc_p0_approx_rate_v1</span></p>
+  <p><strong>Taxonomy:</strong> named_theory ·
+     <strong>Control role:</strong> —</p>
+  <p><strong>Model fidelity:</strong> approximate ·
+     <strong>Empirical support:</strong> speculative</p>
+  <p><strong>Historical parents:</strong> 4D/TSC 2011, 4H/TSC–MHE 2024</p>
+</section>
+
+<h2>What does this theory claim?</h2>
+<p>Four deuterons simultaneously tunnel at a tetrahedral interstitial site in the FCC lattice via a coherent 4-body quantum state (TSC). Produces 2 He-4 + 47.6 MeV with no neutrons or gamma rays.</p>
+
+<h2>Predicted signatures</h2>
+<ul>
+<li><strong>id</strong>: tetrahedral_cluster; <strong>polarity</strong>: required; <strong>regime</strong>: T_sites_nanosites</li>
+<li><strong>id</strong>: He4; <strong>polarity</strong>: positive; <strong>regime</strong>: 4D_formulation</li>
+<li><strong>id</strong>: time_dependent_condensation; <strong>polarity</strong>: positive; <strong>regime</strong>: Langevin_P1</li>
+<li><strong>id</strong>: neutrons; <strong>polarity</strong>: absent_or_low; <strong>regime</strong>: primary_claim</li>
+</ul>
+
+<h2>What would falsify this?</h2>
+<ul>
+<li><strong>required_condition</strong>: Formation of the tetrahedral condensed cluster (TSC); <strong>prediction</strong>: Reaction path suppressed without tetrahedral state; <strong>contradicting_observation</strong>: Same rate regardless of whether the tetrahedral state exists</li>
+</ul>
+
+<h2>Equation / source citations</h2>
+<ul>
+<li><strong>source</strong>: Takahashi A. (2011) JCMNS 4 — Progress in Condensed Cluster Fusion Theory; <strong>equation_label</strong>: 4D/TSC condensation geometry; <strong>model_version</strong>: takahashi_tsc_p0_approx_rate_v1; <strong>lenr_sim_modification</strong>: Approximate rate path; full Langevin deferred to ARA P1; <strong>inputs_from_paper</strong>: [&#x27;tetrahedral geometry&#x27;, &#x27;He-4 dominated products&#x27;]; <strong>inputs_added_by_simulator</strong>: [&#x27;coherence_factor&#x27;, &#x27;approx rate bridge&#x27;]</li>
+</ul>
+
+<h2>Identifiability warnings</h2>
+<ul>
+<li>Coherence factor and approximate rate bridge are not uniquely constrained by calorimetry alone.</li>
+</ul>
+
+<h2>Primary sources</h2>
+<ul>
+<li>Takahashi A. (2016) JCMNS 19, 298</li>
+<li>Takahashi A. (2026) 4HTSC WS Fusion Theory in brief view</li>
+</ul>
+
+<h2>Epistemic status</h2>
+<p>Independent maturity axes — not a single credibility percentage.
+Fidelity describes simulator faithfulness to the named account; empirical
+support describes evidence for the claim. Neither proves LENR.</p>
+
+<p class="note">Interactive run: open the SPA Theory Testbed and enable
+<span class="mono">takahashi_tsc</span>. Static page is the no-JS audit surface.</p>
+
+  </main>
+  <footer>
+    <p>Static documentation surface for independent audit and indexing.
+    LENR-Sim is a comparative hypothesis workbench — not a proof of LENR.
+    Generated 2026-10-14 20:00Z.</p>
+  </footer>
+</body>
+</html>

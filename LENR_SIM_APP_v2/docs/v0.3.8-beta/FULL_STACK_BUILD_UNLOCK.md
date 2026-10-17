@@ -12,7 +12,7 @@ confirm strings.
 
 | VM | Id | IP | Role now | Swarm role |
 |----|----|----|----------|------------|
-| Share | `1280333` | `185.211.4.66` | Compose beta; **Hostinger maintenance 2026-10-17** (SSH/HTTPS unreachable — see [`../v0.3.7-beta/LIVE_SHARE_STATUS.md`](../v0.3.7-beta/LIVE_SHARE_STATUS.md)) | **Keep Compose** until v0.3.9; no ship/Swarm-touch during maintenance |
+| Share | `1280333` | `185.211.4.66` | Compose beta healthy `0.3.7-beta` (restored after brief Hostinger maintenance 2026-10-17) | **Keep Compose** until v0.3.9 cutover |
 | CI | `2012566` | `45.93.100.251` | GitHub runner `lenr-ci-1` only (no Compose projects) | **Forbidden** as Swarm worker |
 
 Third VPS: Hostinger **KVM1** `2071323` / `31.220.55.113` (`srv2071323`) —

@@ -23,7 +23,7 @@ Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.7-beta**. **2026-10-17:** Hostinger maintenance — SSH/HTTPS unreachable; do not `VPS_*` ship until restored ([`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md)). |
+| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.7-beta**. Restored after brief Hostinger maintenance 2026-10-17 ([`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md)). |
 | `main` | Release line matching the share train; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 | `dev` | v0.3.8-beta integration tip; **never** auto-deployed by `deploy.yml`. |
 

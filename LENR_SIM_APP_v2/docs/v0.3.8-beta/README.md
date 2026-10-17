@@ -5,6 +5,7 @@ duplicating long tables in the root README.
 
 **Start here for version control + Swarm prep:**
 [`VERSION_CONTROL.md`](VERSION_CONTROL.md).  
+**ARA Oct 2026 workbench Wave 1:** [`ARA_OCT2026_WORKBENCH.md`](ARA_OCT2026_WORKBENCH.md).  
 **Future UI locales (FR/ES/IT/JA/ZH/RU):** [`I18N_FUTURE.md`](I18N_FUTURE.md).
 
 ## Public / contributors
@@ -16,6 +17,8 @@ duplicating long tables in the root README.
 | [`LENR_SIM_APP_v2/README.md`](../../README.md) | App-local setup + cutover table |
 | [`.github/BRANCHING.md`](../../../.github/BRANCHING.md) | `main` (0.3.7) + `dev` (0.3.8); self-hosted CI labels |
 | [`VERSION_CONTROL.md`](VERSION_CONTROL.md) | Implementation phases for Swarm/Ansible/Traefik/Cloudflare prep |
+| [`ARA_OCT2026_WORKBENCH.md`](ARA_OCT2026_WORKBENCH.md) | Oct 14 ARA review → Wave 1 static models / schema / Schwinger |
+| [`CMNS_MODEL_FIDELITY_RESPONSE.md`](CMNS_MODEL_FIDELITY_RESPONSE.md) | P0 fidelity map + Wave 1 pointer |
 
 ## Team / operators
 

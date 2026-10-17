@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Widom-Larsen ULM Neutrons — LENR-Sim model</title>
+  <meta name="description" content="Collective surface plasmon oscillations renormalize the electron mass, enabling inverse beta decay (eâ» + pâº â†’ n + Î½_e) on metal hydride surfaces. The resulting ultra-low momentum neutrons have enormous capture cross-sections, producing transmutations and heat." />
+  <link rel="canonical" href="/models/widom_larsen.html" />
+  <style>
+    :root {
+      --ink: #1a1f24;
+      --muted: #4a5560;
+      --line: #d5dbe0;
+      --bg: #f7f5f1;
+      --panel: #ffffff;
+      --accent: #0b5f4b;
+    }
+    body {
+      margin: 0;
+      font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #e7efe9 0%, transparent 55%),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 100%);
+      line-height: 1.55;
+    }
+    header, main, footer {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+    }
+    h1, h2, h3 {
+      font-family: "IBM Plex Sans", "Source Sans 3", "Helvetica Neue", sans-serif;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    h1 { font-size: 1.85rem; margin: 0.2rem 0 0.5rem; }
+    h2 { font-size: 1.25rem; margin-top: 1.75rem; color: var(--accent); }
+    .brand {
+      font-family: "IBM Plex Sans", sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta, .note { color: var(--muted); font-size: 0.95rem; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 1rem 1.1rem;
+      margin: 1rem 0;
+    }
+    a { color: var(--accent); }
+    nav a { margin-right: 0.85rem; }
+    code, .mono {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.92em;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    th { background: #eef3f0; font-family: "IBM Plex Sans", sans-serif; }
+    footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/models/">LENR-Sim</a>
+    <nav>
+      <a href="/models/">Models</a>
+      <a href="/experiments/">Experiments</a>
+      <a href="/methodology.html">Methodology</a>
+      <a href="/validation.html">Validation</a>
+      <a href="/sources.html">Sources</a>
+      <a href="/">Interactive app</a>
+    </nav>
+    <h1>Widom-Larsen ULM Neutrons — LENR-Sim model</h1>
+    <p class="meta">Collective surface plasmon oscillations renormalize the electron mass, enabling inverse beta decay (eâ» + pâº â†’ n + Î½_e) on metal hydride surfaces. The resulting ultra-low momentum neutrons have enormous capture cross-sections, producing transmutations and heat.</p>
+  </header>
+  <main>
+
+
+<section class="panel">
+  <p><strong>Theory id:</strong> <span class="mono">widom_larsen</span></p>
+  <p><strong>Model version:</strong> widom_larsen_p0_v1 (electroweak entrance)</p>
+  <p><strong>Simulation implementation:</strong> <span class="mono">widom_larsen_p0_v1</span></p>
+  <p><strong>Taxonomy:</strong> named_theory ·
+     <strong>Control role:</strong> —</p>
+  <p><strong>Model fidelity:</strong> approximate ·
+     <strong>Empirical support:</strong> speculative</p>
+  <p><strong>Historical parents:</strong> widom_larsen_2006</p>
+</section>
+
+<h2>What does this theory claim?</h2>
+<p>Collective surface plasmon oscillations renormalize the electron mass, enabling inverse beta decay (eâ» + pâº â†’ n + Î½_e) on metal hydride surfaces. The resulting ultra-low momentum neutrons have enormous capture cross-sections, producing transmutations and heat.</p>
+
+<h2>Predicted signatures</h2>
+<ul>
+<li><strong>id</strong>: collective_surface_EM; <strong>polarity</strong>: positive; <strong>regime</strong>: hydride_surface</li>
+<li><strong>id</strong>: electron_capture_on_proton; <strong>polarity</strong>: positive; <strong>regime</strong>: mass_threshold</li>
+<li><strong>id</strong>: ULM_neutrons; <strong>polarity</strong>: positive; <strong>regime</strong>: above_threshold</li>
+<li><strong>id</strong>: neutron_capture_isotopes; <strong>polarity</strong>: positive; <strong>regime</strong>: local_capture</li>
+<li><strong>id</strong>: He4; <strong>polarity</strong>: not_primary; <strong>regime</strong>: entrance_channel</li>
+</ul>
+
+<h2>What would falsify this?</h2>
+<ul>
+<li><strong>required_condition</strong>: Electron/proton state satisfying weak-capture threshold; <strong>prediction</strong>: ULM neutron production turns on above mass/threshold condition; <strong>contradicting_observation</strong>: Neutron/transmutation signatures continue below the proposed threshold</li>
+</ul>
+
+<h2>Equation / source citations</h2>
+<ul>
+<li><strong>source</strong>: Widom A. &amp; Larsen L. (2006) Eur. Phys. J. C 46, 107; <strong>equation_label</strong>: e− + p → n + ν_e (ULM neutrons); <strong>model_version</strong>: widom_larsen_p0_v1; <strong>lenr_sim_modification</strong>: ULM chain rate→enhancement scale is simulator assumption; <strong>inputs_from_paper</strong>: [&#x27;inverse beta threshold&#x27;, &#x27;ULM capture idea&#x27;]; <strong>inputs_added_by_simulator</strong>: [&#x27;ULM_CHAIN_RATE_TO_ENHANCEMENT&#x27;]</li>
+</ul>
+
+<h2>Identifiability warnings</h2>
+<ul>
+<li>Mass-renormalization scale and ULM→enhancement bridge are non-identifiable from heat alone.</li>
+</ul>
+
+<h2>Primary sources</h2>
+<ul>
+<li>Widom A. &amp; Larsen L. (2006) Eur. Phys. J. C 46, 107</li>
+<li>Widom A. &amp; Larsen L. (2007) arXiv:nucl-th/0608059v2</li>
+</ul>
+
+<h2>Epistemic status</h2>
+<p>Independent maturity axes — not a single credibility percentage.
+Fidelity describes simulator faithfulness to the named account; empirical
+support describes evidence for the claim. Neither proves LENR.</p>
+
+<p class="note">Interactive run: open the SPA Theory Testbed and enable
+<span class="mono">widom_larsen</span>. Static page is the no-JS audit surface.</p>
+
+  </main>
+  <footer>
+    <p>Static documentation surface for independent audit and indexing.
+    LENR-Sim is a comparative hypothesis workbench — not a proof of LENR.
+    Generated 2026-10-14 20:00Z.</p>
+  </footer>
+</body>
+</html>

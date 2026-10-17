@@ -273,6 +273,9 @@ class HagelsteinPhononTheory:
         )
 
     def get_metadata(self) -> TheoryMetadata:
+        from app.physics_engine.workbench_enrichment import catalog_entry
+
+        wb = catalog_entry("hagelstein_phonon")
         return TheoryMetadata(
             theory_id=self.theory_id,
             theory_name=self.theory_name,
@@ -290,6 +293,13 @@ class HagelsteinPhononTheory:
             theory_model_version="hagelstein_phonon_p0_v1",
             model_fidelity="approximate",
             empirical_support="speculative",
+            taxonomy_kind="named_theory",
+            display_model_version=str(wb.get("display_model_version", "")),
+            historical_parents=list(wb.get("historical_parents", [])),
+            predicted_signatures=list(wb.get("predicted_signatures", [])),
+            falsifiers=list(wb.get("falsifiers", [])),
+            equation_citations=list(wb.get("equation_citations", [])),
+            identifiability_warnings=list(wb.get("identifiability_warnings", [])),
         )
 
     def _neutral(self, reason: str) -> TheoryContribution:

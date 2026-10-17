@@ -20,7 +20,7 @@ probe 2026-10-17 (`Docker` installed, `Swarm=inactive`).
 
 | VM | Id | IP | Hostname (Hostinger) | Role **today** |
 |----|----|----|----------------------|----------------|
-| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose beta; **Hostinger maintenance 2026-10-17** (SSH/HTTPS down) — keep until v0.3.9; no ship during maintenance |
+| Compose share / beta | `1280333` | `185.211.4.66` | `lenr-sim-app.conscious.energy` (Ubuntu 24.04) | Compose beta healthy `0.3.7-beta` (restored 2026-10-17); keep until v0.3.9 |
 | Dedicated CI | `2012566` | `45.93.100.251` | `srv2012566.hstgr.cloud` (Ubuntu 26.04) | **GitHub Actions only** (runner `lenr-ci-1`); **zero** Compose projects; **never** Swarm |
 | Staging / data KVM1 | `2071323` | `31.220.55.113` | `srv2071323` (Ubuntu; Docker 29.x) | **0.3.8 staging manager** (await confirm); **0.3.9+** prod worker + observability — [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md) |
 
