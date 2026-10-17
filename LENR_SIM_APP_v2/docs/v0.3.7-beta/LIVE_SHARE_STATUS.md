@@ -1,17 +1,34 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed **2026-10-13** from Cursor cloud agent. Public Compose+Caddy share is the
-**v0.3.7-beta** release line. Swarm / Traefik / Cloudflare Pages cutover remains
-**out of scope** until `CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
+Probed **2026-10-13** (healthy) and **2026-10-17** (Hostinger maintenance).
+Public Compose+Caddy share is the **v0.3.7-beta** release line. Swarm /
+Traefik / Cloudflare Pages cutover remains **out of scope** until
+`CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
 
-## What works today (share this)
+## Current: Hostinger maintenance (2026-10-17)
+
+Operator report + agent probe **2026-10-17T14:33Z**:
+
+| Check | Result |
+|-------|--------|
+| `185.211.4.66` ICMP | 100% loss |
+| `tcp/22` SSH | timeout |
+| `https://lenr-sim-beta.conscious.energy/api/health` | SSL connect timeout |
+| Staging KVM1 `31.220.55.113` | SSH OK; Docker up; **Swarm=inactive** |
+| CI `45.93.100.251` | SSH port OK (isolated; not share) |
+
+**Do not** run `VPS_*` Compose ship, SSH deploy, or Swarm init/join against
+share `1280333` while Hostinger shows maintenance. Staging work stays on
+KVM1 only (`CONFIRM_SWARM_0_3_8` still required before Swarm init).
+
+## What works when share is healthy (share this)
 
 | URL | DNS | `/api/health` | App version reported |
 |-----|-----|---------------|----------------------|
-| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** healthy, DB connected | **`0.3.7-beta`** |
-| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** healthy | **`0.3.7-beta`** |
+| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** when healthy | **`0.3.7-beta`** |
+| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** when healthy | **`0.3.7-beta`** |
 
-**Shareable link for testers:**  
+**Shareable link for testers (when out of maintenance):**  
 https://lenr-sim-beta.conscious.energy  
 
 Operator probe:
@@ -23,8 +40,8 @@ EXPECT_VERSION=0.3.7-beta \
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
 
-Latest agent probe (2026-10-13): `status=healthy`, `version=0.3.7-beta`,
-`database.connected=true`.
+Last healthy agent probe (2026-10-13): `status=healthy`, `version=0.3.7-beta`,
+`database.connected=true`. Re-run after Hostinger clears maintenance.
 
 ## Release line vs tip
 
