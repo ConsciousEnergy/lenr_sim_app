@@ -19,7 +19,8 @@ Third VPS: Hostinger **KVM1** `2071323` / `31.220.55.113` (`srv2071323`) —
 Docker installed, UFW/SSH hardened; Swarm init awaits
 `CONFIRM_SWARM_0_3_8`. Walkthrough:
 [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md).
-Topology: [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).
+Topology diagrams (SOT): [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(physical / environments / containers + persistent storage).
 
 ## In-repo readiness (agent local dry-run)
 

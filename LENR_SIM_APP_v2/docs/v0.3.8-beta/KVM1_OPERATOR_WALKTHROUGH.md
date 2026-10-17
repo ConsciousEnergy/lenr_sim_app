@@ -3,7 +3,9 @@
 **Audience:** human operator. Agents do **not** purchase VMs or Swarm-init the
 live share without explicit confirm strings.
 
-Topology contract: [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).  
+Topology contract + architecture diagrams (SOT):
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(environments-on-hardware + persistent storage).  
 Unlock checklist: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
 
 ## Phase 0 — Order and harden KVM1

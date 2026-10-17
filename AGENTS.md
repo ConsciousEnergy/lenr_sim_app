@@ -56,6 +56,9 @@ Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 | Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
 | Public Swarm + Pages | later | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
 
+Topology diagrams (hardware ↔ Swarm, legends, storage):
+[`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
+
 Do **not** apply public Swarm without the 0.3.9 confirm. Do **not** close any `EQ-OPEN-*`.
 
 ## Dense PRs

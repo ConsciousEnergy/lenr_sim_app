@@ -28,7 +28,7 @@ duplicating long tables in the root README.
 | [`I18N_FUTURE.md`](I18N_FUTURE.md) | Planned translations (not a cutover blocker) |
 | [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md) | “Can we finish Swarm/Ansible/Traefik/Cloudflare?” — unlock checklist |
 | [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md) | **Start here to learn** — Mermaid maps, 2-VPS Swarm options, security, UMLENR/ARA |
-| [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md) | **2×KVM2 + 1×KVM1** locked roles, labels, failure domains |
+| [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md) | **2×KVM2 + 1×KVM1** — diagram SOT (physical / environments / containers + legends), storage, labels, gates |
 | [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md) | Manual Hostinger KVM1 order → staging → cutover join |
 | [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md) | Prometheus/Grafana placement + trust boundaries |
 | [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md) | Hands-on file walkthrough + CLI visualization + security checklist |

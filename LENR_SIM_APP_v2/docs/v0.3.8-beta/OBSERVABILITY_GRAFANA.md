@@ -4,8 +4,10 @@
 split for **user metrics** (PostHog). Not a second product-analytics warehouse.
 Product events stay in **PostHog** (env-gated, no PII in Prometheus).
 
-Placement: KVM1 worker with `node.labels.role == observability`
-([`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)).
+Placement: KVM1 worker with `node.labels.role == observability`.
+Hardware ↔ Swarm diagrams (SOT):
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(Architecture diagrams — Container view + Persistent storage).
 
 ## What we monitor
 

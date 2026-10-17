@@ -77,5 +77,19 @@ docker service rollback lenr_backend
 ```
 
 Public Compose share keeps using `vps/scripts/rollback.sh` until
-`CONFIRM_SWARM_0_3_9`. Topology:
-[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).
+`CONFIRM_SWARM_0_3_9`. Topology + storage contract:
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(Persistent storage — no Longhorn; pin + off-box backup).
+
+## Swarm volume backup (pin + off-box; not Longhorn)
+
+Swarm volumes are **node-local**. Do not put Postgres datadir on NFS.
+
+| Data | Host after cutover | Backup approach | RPO target (ops) |
+|------|--------------------|-----------------|------------------|
+| `postgres_data` | Share manager | Scheduled `pg_dump` / basebackup to off-box object storage or Hostinger snapshot | ≤ 24 h until tighter SLA |
+| `prometheus_data` / `grafana_data` | KVM1 | Hostinger snapshot or rsync of `/var/lib/docker/volumes/…` | Best-effort (rebuildable) |
+| ACME certs | Share manager Traefik disk | Included in host snapshot; Let’s Encrypt re-issue OK | n/a |
+
+Operator: record first successful backup timestamps here before public cutover.
+Staging single-node (KVM1) still uses local volumes — same backup discipline.
