@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LENR-Sim model registry</title>
+  <meta name="description" content="Crawler-readable registry of LENR/CMNS theories, Model 0 baselines, and epistemic status." />
+  <link rel="canonical" href="/models/" />
+  <style>
+    :root {
+      --ink: #1a1f24;
+      --muted: #4a5560;
+      --line: #d5dbe0;
+      --bg: #f7f5f1;
+      --panel: #ffffff;
+      --accent: #0b5f4b;
+    }
+    body {
+      margin: 0;
+      font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #e7efe9 0%, transparent 55%),
+        linear-gradient(180deg, #fbfaf7 0%, var(--bg) 100%);
+      line-height: 1.55;
+    }
+    header, main, footer {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+    }
+    h1, h2, h3 {
+      font-family: "IBM Plex Sans", "Source Sans 3", "Helvetica Neue", sans-serif;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    h1 { font-size: 1.85rem; margin: 0.2rem 0 0.5rem; }
+    h2 { font-size: 1.25rem; margin-top: 1.75rem; color: var(--accent); }
+    .brand {
+      font-family: "IBM Plex Sans", sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta, .note { color: var(--muted); font-size: 0.95rem; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 1rem 1.1rem;
+      margin: 1rem 0;
+    }
+    a { color: var(--accent); }
+    nav a { margin-right: 0.85rem; }
+    code, .mono {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.92em;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    th { background: #eef3f0; font-family: "IBM Plex Sans", sans-serif; }
+    footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/models/">LENR-Sim</a>
+    <nav>
+      <a href="/models/">Models</a>
+      <a href="/experiments/">Experiments</a>
+      <a href="/methodology.html">Methodology</a>
+      <a href="/validation.html">Validation</a>
+      <a href="/sources.html">Sources</a>
+      <a href="/">Interactive app</a>
+    </nav>
+    <h1>LENR-Sim model registry</h1>
+    <p class="meta">Crawler-readable registry of LENR/CMNS theories, Model 0 baselines, and epistemic status.</p>
+  </header>
+  <main>
+
+<div class="panel">
+  <p><strong>Comparative scientific workbench.</strong> LENR/CMNS refers to a
+  class of reported anomalous thermal, nuclear and isotopic observations in
+  hydrogen-loaded condensed-matter systems. The interpretation, reproducibility
+  and underlying mechanism of these observations remain disputed. LENR-Sim makes
+  competing explanations precise enough that they can fail.</p>
+</div>
+
+<h2>Model 0 — established-physics controls (required comparison set)</h2>
+<p>Every experiment comparison should include these baselines.</p>
+<table><thead><tr><th>Model</th><th>Version</th><th>Taxonomy</th><th>Role</th></tr></thead><tbody>
+<tr><td><a href="/models/electron_screening.html">Electron Screening</a> <span class="mono">(electron_screening)</span></td><td>Shared established-physics screening layer</td><td>known_mechanism</td><td>shared_mechanism</td></tr>
+<tr><td><a href="/models/null_recombination.html">Null: chemical recombination / artifact heat</a> <span class="mono">(null_recombination)</span></td><td>Model 0 — non-nuclear heat/artifact null</td><td>known_mechanism</td><td>null</td></tr>
+<tr><td><a href="/models/quantum_tunneling.html">Quantum Tunneling (Base Rate)</a> <span class="mono">(quantum_tunneling)</span></td><td>Model 0 — conventional WKB/Gamow baseline</td><td>known_mechanism</td><td>baseline</td></tr>
+</tbody></table>
+
+<h2>Named theories, mechanisms, and experiment-linked modules</h2>
+<table><thead><tr><th>Model</th><th>Version</th><th>Taxonomy</th><th>Role</th></tr></thead><tbody>
+<tr><td><a href="/models/bubble_mhd_confinement.html">Bubble-MHD Nano-Confinement</a> <span class="mono">(bubble_mhd_confinement)</span></td><td>—</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/casimir_confinement.html">Casimir Confinement</a> <span class="mono">(casimir_confinement)</span></td><td>—</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/chubb_ion_band.html">Chubb &amp; Chubb Ion Band State</a> <span class="mono">(chubb_ion_band)</span></td><td>—</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/coherent_qed.html">Confined-Mode QED / Coherent Domains</a> <span class="mono">(coherent_qed)</span></td><td>—</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/czerski_thermal_spike.html">Czerski Thermal Spike (ion tracks)</a> <span class="mono">(czerski_thermal_spike)</span></td><td>czerski_thermal_spike_p0_v1</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/hagelstein_phonon.html">Hagelstein Phonon-Nuclear Coupling</a> <span class="mono">(hagelstein_phonon)</span></td><td>hagelstein_phonon_p0_v1 (2025 matrix-element path = P1 target)</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/holmlid_udh.html">Holmlid ultra-dense H(0)/D(0)</a> <span class="mono">(holmlid_udh)</span></td><td>holmlid_udh_p0_pheno_v1 (H(0)/D(0); not Kim BEC)</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/iwamura_transmutation.html">Iwamura Transmutation (D Permeation)</a> <span class="mono">(iwamura_transmutation)</span></td><td>—</td><td>experiment_env</td><td>—</td></tr>
+<tr><td><a href="/models/kim_bec.html">Kim BEC Nuclear Fusion</a> <span class="mono">(kim_bec)</span></td><td>kim_becnf_p0_v1 (Bose–Einstein Condensate Nuclear Fusion)</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/letts_laser.html">Letts &amp; Cravens Dual-Laser Stimulation</a> <span class="mono">(letts_laser)</span></td><td>—</td><td>experiment_env</td><td>—</td></tr>
+<tr><td><a href="/models/matsumoto_enc.html">Matsumoto Electro-Nuclear Collapse</a> <span class="mono">(matsumoto_enc)</span></td><td>matsumoto_enc_p0_pheno_v1</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/miles_heat_helium.html">Miles Heat-Helium Correlation</a> <span class="mono">(miles_heat_helium)</span></td><td>—</td><td>observed_output</td><td>—</td></tr>
+<tr><td><a href="/models/non_equilibrium_thermo.html">Non-Equilibrium Thermodynamics</a> <span class="mono">(non_equilibrium_thermo)</span></td><td>—</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/phonon_coupling_legacy.html">Phonon-Nuclear Coupling</a> <span class="mono">(phonon_coupling_legacy)</span></td><td>—</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/piantelli_ni_h.html">Piantelli Ni-H Thermal Activation</a> <span class="mono">(piantelli_ni_h)</span></td><td>—</td><td>experiment_env</td><td>—</td></tr>
+<tr><td><a href="/models/schwinger_lattice.html">Schwinger — Nuclear Energy in an Atomic Lattice</a> <span class="mono">(schwinger_lattice)</span></td><td>Schwinger — Nuclear Energy in an Atomic Lattice (scaffold)</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/shoulders_evo.html">Shoulders EVO / charge clusters (phenomenological)</a> <span class="mono">(shoulders_evo)</span></td><td>shoulders_evo_p0_pheno_v1</td><td>proposed_state</td><td>—</td></tr>
+<tr><td><a href="/models/stellar_scaling_mhd.html">Stellar-Scaling MHD (Context Line)</a> <span class="mono">(stellar_scaling_mhd)</span></td><td>—</td><td>known_mechanism</td><td>—</td></tr>
+<tr><td><a href="/models/nae_model.html">Storms NAE</a> <span class="mono">(nae_model)</span></td><td>Storms NAE 2012–13 (active); 2026 electron channel tagged</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/swartz_nanor.html">Swartz NANOR/LANR Optimal Operating Point</a> <span class="mono">(swartz_nanor)</span></td><td>—</td><td>experiment_env</td><td>—</td></tr>
+<tr><td><a href="/models/takahashi_tsc.html">Takahashi TSC (Tetrahedral Symmetric Condensate)</a> <span class="mono">(takahashi_tsc)</span></td><td>4H/TSC–MHE lineage (P0 approx rate); historical parent 4D/TSC 2011</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/vysotskii_ccs.html">Vysotskii Coherent Correlated States (CCS)</a> <span class="mono">(vysotskii_ccs)</span></td><td>—</td><td>named_theory</td><td>—</td></tr>
+<tr><td><a href="/models/widom_larsen.html">Widom-Larsen ULM Neutrons</a> <span class="mono">(widom_larsen)</span></td><td>widom_larsen_p0_v1 (electroweak entrance)</td><td>named_theory</td><td>—</td></tr>
+</tbody></table>
+
+<h2>Related static pages</h2>
+<ul>
+  <li><a href="/methodology.html">Methodology</a></li>
+  <li><a href="/validation.html">Validation</a></li>
+  <li><a href="/sources.html">Sources</a></li>
+  <li><a href="/experiments/">Experiments</a></li>
+</ul>
+
+  </main>
+  <footer>
+    <p>Static documentation surface for independent audit and indexing.
+    LENR-Sim is a comparative hypothesis workbench — not a proof of LENR.
+    Generated 2026-10-14 20:00Z.</p>
+  </footer>
+</body>
+</html>

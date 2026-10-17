@@ -62,6 +62,14 @@ class TheoryContribution:
     source_domain_limits: List[str] = field(default_factory=list)
     model_fidelity: str = "approximate"  # fidelity axis ≠ empirical support
     empirical_support: str = "speculative"  # independent of model_fidelity
+    # ARA Oct 2026 workbench (additive; optional content, keys always exported).
+    predicted_signatures: List[Dict[str, Any]] = field(default_factory=list)
+    falsifiers: List[Dict[str, Any]] = field(default_factory=list)
+    taxonomy_kind: str = ""  # named_theory|known_mechanism|proposed_state|experiment_env|observed_output
+    equation_citations: List[Dict[str, Any]] = field(default_factory=list)
+    identifiability_warnings: List[str] = field(default_factory=list)
+    historical_parents: List[str] = field(default_factory=list)
+    display_model_version: str = ""  # human header, e.g. "4H/TSC–MHE 2024"
 
 
 @dataclass
@@ -79,6 +87,14 @@ class TheoryMetadata:
     model_fidelity: str = "approximate"
     empirical_support: str = "speculative"
     control_role: str = ""  # "", "baseline", "null", "shared_mechanism"
+    # ARA Oct 2026 workbench (additive).
+    predicted_signatures: List[Dict[str, Any]] = field(default_factory=list)
+    falsifiers: List[Dict[str, Any]] = field(default_factory=list)
+    taxonomy_kind: str = ""
+    equation_citations: List[Dict[str, Any]] = field(default_factory=list)
+    identifiability_warnings: List[str] = field(default_factory=list)
+    historical_parents: List[str] = field(default_factory=list)
+    display_model_version: str = ""
 
 
 @runtime_checkable

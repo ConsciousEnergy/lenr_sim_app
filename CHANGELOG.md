@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (see `.github/BRANCHING.md`). `main` remains the live **v0.3.7-beta** Compose
   share line until a future cutover PR.
 
+### Added — ARA Oct 2026 workbench Wave 1 (`dev` / 0.3.8-beta)
+- Crawler-readable static pages: `/models/`, `/models/<id>.html`, `/methodology.html`, `/validation.html`, `/sources.html`, `/experiments/` (generator `LENR_SIM_APP_v2/scripts/generate_static_model_pages.py`)
+- Additive workbench fields on theory protocol / list / `per_theory`: `predicted_signatures`, `falsifiers`, `taxonomy_kind`, `equation_citations`, `identifiability_warnings`, `historical_parents`, `display_model_version`, `control_role`
+- `schwinger_lattice` historical-control scaffold (Nuclear Energy in an Atomic Lattice; HD/H₂O knob; no invented rate law)
+- Storms NAE / Takahashi / Hagelstein version headers; Model 0 baselines featured on `/models/`
+- Docs: `docs/v0.3.8-beta/ARA_OCT2026_WORKBENCH.md` (+ VERSION_CONTROL Phase A2); CE WordPress supersession = operator handoff
+- Neutral About-page framing; `EQ-OPEN-*` remain OPEN; no public Swarm cutover
+
 ### Changed — main + `dev` version trains (2026-10-10)
 - Long-lived **`dev`** branch is the v0.3.8-beta integration line; **`main`** stays the live v0.3.7-beta Compose release line
 - Four version markers on `dev` bumped to **`0.3.8-beta`**

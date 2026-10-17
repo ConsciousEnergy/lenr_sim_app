@@ -166,7 +166,9 @@ def test_question_theories_is_designed_not_cartesian() -> None:
 
     n = campaign_size("question_theories")
     assert n == question_theories_count()
-    assert 20 <= n <= 45
+    # Upper bound grows when THEORY_COMPOSITION_GROUPS gains a representative
+    # (each group adds one ARPA-E null case). Wave 1: historical_lattice / Schwinger.
+    assert 20 <= n <= 55
     cases = list(iter_campaign_cases("question_theories"))
     assert len(cases) == n
     tags = {case.get("tag") for case in cases}
