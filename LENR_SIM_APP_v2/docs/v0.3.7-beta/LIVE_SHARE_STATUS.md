@@ -1,15 +1,16 @@
 # Live share status (v0.3.7-beta VPS)
 
-Probed **2026-10-13** from Cursor cloud agent. Public Compose+Caddy share is the
-**v0.3.7-beta** release line. Swarm / Traefik / Cloudflare Pages cutover remains
-**out of scope** until `CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
+Probed **2026-10-13** and **2026-10-17** (restored after brief Hostinger
+maintenance). Public Compose+Caddy share is the **v0.3.7-beta** release line.
+Swarm / Traefik / Cloudflare Pages cutover remains **out of scope** until
+`CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
 
 ## What works today (share this)
 
 | URL | DNS | `/api/health` | App version reported |
 |-----|-----|---------------|----------------------|
 | `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** healthy, DB connected | **`0.3.7-beta`** |
-| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** healthy | **`0.3.7-beta`** |
+| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** when healthy | **`0.3.7-beta`** |
 
 **Shareable link for testers:**  
 https://lenr-sim-beta.conscious.energy  
@@ -23,8 +24,10 @@ EXPECT_VERSION=0.3.7-beta \
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
 
-Latest agent probe (2026-10-13): `status=healthy`, `version=0.3.7-beta`,
-`database.connected=true`.
+Latest agent probe (2026-10-17T14:35Z): `status=healthy`, `version=0.3.7-beta`,
+`database.connected=true` (recovered after same-day Hostinger maintenance window
+where SSH/HTTPS briefly timed out). Staging KVM1 `31.220.55.113` remains
+Docker-ready with **Swarm=inactive** until `CONFIRM_SWARM_0_3_8`.
 
 ## Release line vs tip
 

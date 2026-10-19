@@ -66,25 +66,36 @@ Owner doc: [`ARA_OCT2026_WORKBENCH.md`](ARA_OCT2026_WORKBENCH.md).
 ### Phase B — Staging Swarm dry-run (no public traffic)
 
 Owner docs: [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md),
-[`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
+[`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md),
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(diagram + storage SOT),
+[`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md),
+[`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md).
 
-1. Operator copies untracked Terraform/Ansible examples → real credentials
-2. Local: `./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local`
-3. Remote dry-run only with `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 … remote`
-4. Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
-5. Validate Traefik → API, Pages CORS/WS on **staging** host ≠ CI box `2012566`
+1. Operator orders Hostinger **KVM1** (staging manager → later prod worker)
+2. Operator copies untracked Terraform/Ansible examples → real credentials
+   (inventory manager IP = **KVM1**, never CI / never blind share promote)
+3. Local: `./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local`
+4. Remote dry-run only with `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 … remote`
+5. Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+6. Validate Traefik → API, Pages CORS/WS on **staging** host ≠ CI box `2012566`
+7. Optional: enable Prometheus/Grafana on `role=observability` (private access)
 
 **Components in scope for staging:** Docker Swarm, Ansible playbooks, Traefik
-ingress, Cloudflare DNS/Pages wiring (staging), Terraform remote state.
+ingress, Cloudflare DNS/Pages wiring (staging), Terraform remote state,
+observability scaffolds.
 
 **Forbidden without explicit ask:** Swarm init on live share `185.211.4.66`,
-third-VPS purchase, `CONFIRM_SWARM_0_3_9`, putting `VPS_*` on `lenr-ci`.
+`CONFIRM_SWARM_0_3_9`, putting `VPS_*` on `lenr-ci`.
 
 ### Phase C — Learning / operator readiness
 
 1. [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md)
-2. [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md)
-3. UMLENR Goal 1 pack → separate hub repo PR
+2. [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+   (Architecture diagrams 1–3 + Persistent storage) +
+   [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md)
+3. [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md)
+4. UMLENR Goal 1 pack → separate hub repo PR
    ([`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md))
 
 ### Phase D — Public cutover (v0.3.9 — not 0.3.8)

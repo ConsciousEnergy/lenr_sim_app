@@ -1,7 +1,10 @@
 # Staging Swarm dry-run evidence (v0.3.8)
 
 **Goal:** Complete non-prod Swarm/Pages prep without public cutover.  
-**Live share:** Compose + Caddy on `lenr-sim-beta` remains authoritative.
+**Live share:** Compose + Caddy on `lenr-sim-beta` remains authoritative.  
+**Topology / gates:** [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(Phased rollout — Phase 1 only under staging confirm; no public Swarm;
+`EQ-OPEN-*` stay OPEN).
 
 ## Confirm string
 
@@ -9,7 +12,7 @@
 CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./infrastructure/scripts/deploy.sh staging
 ```
 
-Production path requires a different variable:
+Production path requires a different variable (**do not set from staging docs PRs**):
 
 ```bash
 CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh production

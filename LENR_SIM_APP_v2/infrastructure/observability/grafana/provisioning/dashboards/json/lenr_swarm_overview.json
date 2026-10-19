@@ -1,0 +1,130 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "LENR-Sim Swarm overview",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Infra + performance (Prometheus)\n\n- Health: blackbox → `probe_success` on `/api/health`\n- Edge: Traefik metrics on overlay `:8082`\n- Hosts: `node_exporter` (global)\n- **User / product metrics:** PostHog (env-gated) — not scraped here\n- Do **not** treat uptime as closing `EQ-OPEN-*`\n\nTopology: `docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus up",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 3 },
+      "targets": [{ "expr": "up{job=\"prometheus\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "API health probe",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_backend_health\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Traefik scrape up",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 3 },
+      "targets": [{ "expr": "up{job=\"traefik\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "node_exporter targets up",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 3 },
+      "targets": [{ "expr": "count(up{job=\"node\"} == 1) or vector(0)", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "API probe latency (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{job=\"lenr_backend_health\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Host CPU (busy ratio)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "targets": [
+        {
+          "expr": "1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Host memory available ratio",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "targets": [
+        {
+          "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Traefik requests / s (entrypoint)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "targets": [
+        {
+          "expr": "sum by (entrypoint) (rate(traefik_entrypoint_requests_total[5m]))",
+          "legendFormat": "{{entrypoint}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "title": "User / product metrics (PostHog)",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 23 },
+      "options": {
+        "mode": "markdown",
+        "content": "Product funnels, SPA navigation, and feature flags stay in **PostHog** (env-gated; no PII in Prometheus).\n\nCross-check: Grafana = infra SLO / host / edge latency; PostHog = user behavior. Do not scrape session replay or identify payloads into Prom."
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["lenr-sim", "swarm", "performance"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "LENR-Sim Swarm Overview",
+  "uid": "lenr-swarm-overview",
+  "version": 2
+}
