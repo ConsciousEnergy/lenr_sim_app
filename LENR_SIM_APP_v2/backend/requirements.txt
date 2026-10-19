@@ -10,7 +10,9 @@ numpy==1.26.4
 # Pin SciPy with NumPy 1.26.x. A floating upper bound let Windows venvs drift into
 # hybrid NumPy 1/2 trees that 500 bubble-lattice with:
 #   RuntimeError: Unable to configure default ndarray.__repr__
-scipy==1.18.1
+# SciPy 1.16+ requires numpy>=2.0 — do not bump scipy without a coordinated
+# NumPy 2.x migration PR (Dependabot must not group that into minor-patch).
+scipy==1.14.1
 sympy==1.14.0
 pyvista==0.49.1
 pandas==2.3.3
