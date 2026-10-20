@@ -40,6 +40,12 @@ Promote: controlled `dev` → `main` (no Swarm cutover).
 - Backend Docker base held on **`python:3.12-slim`** (scipy 1.14.1 has no cp314 wheel; Dependabot 3.14 bump reverted for this ship)
 - Frontend/backend minor dependency bumps + FastAPI/Starlette/matplotlib holds for instrumentator 7
 
+### Changed — complete v0.3.7 version control on default branch (2026-10-13)
+- Promote main+`dev` BRANCHING / AGENTS / CONTRIBUTING / Dependabot `target-branch: dev` / CI branch filters onto `main` tip (markers stay **`0.3.7-beta`**)
+- Refresh `LIVE_SHARE_STATUS.md` + `GOALS.md` for the completed Compose beta train
+- Add [`docs/v0.3.8-beta/VERSION_CONTROL.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/VERSION_CONTROL.md) (Swarm/Ansible/Traefik/Cloudflare prep phases) and [`I18N_FUTURE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/I18N_FUTURE.md) (FR/ES/IT/JA/ZH/RU)
+- `EQ-OPEN-*` remain OPEN; no Swarm public cutover in this change
+
 ## [v0.3.7-beta] - 2026-10-10
 
 Public Compose share: https://lenr-sim-beta.conscious.energy  
