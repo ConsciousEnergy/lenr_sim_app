@@ -4,24 +4,25 @@ This repository uses **two long-lived branches** aligned to version trains:
 
 | Branch | `APP_VERSION` | Purpose |
 |--------|---------------|---------|
-| `main` | `0.3.7-beta` | Live public Compose beta release line. Protected. Tagged with `v0.3.7-beta`. |
-| `dev` | `0.3.8-beta` | Integration line for v0.3.8-beta work (Swarm prep, science, deps). No auto VPS deploy. |
+| `main` | `0.3.8-beta` | Live public Compose beta release line. Protected. Tagged with `v0.3.8-beta`. |
+| `dev` | `0.3.8-beta` | Integration line for Swarm staging prep, science, deps. No auto VPS deploy. |
 
 Releases remain annotated `v*` tags (normally cut from `main` when a train
 ships). Short-lived topic branches are deleted on squash-merge.
 
-Adopted October 2026 for the v0.3.7 / v0.3.8 split. Prior pure trunk-only policy
-(September 2026 / PR #161) still applies to feature lifetime and squash merges;
-only the long-lived set grew to include `dev`. Old version-named release branches
-remain as `archive/*` tags only.
+Adopted October 2026 for the v0.3.7 / v0.3.8 split; Compose promote of
+**v0.3.8-beta** landed on `main` without Swarm cutover. Prior pure trunk-only
+policy (September 2026 / PR #161) still applies to feature lifetime and squash
+merges; only the long-lived set grew to include `dev`. Old version-named release
+branches remain as `archive/*` tags only.
 
 ## Branches
 
 | Branch | Lifetime | Purpose |
 |--------|----------|---------|
-| `main` | permanent | v0.3.7-beta release / Compose share ship line |
+| `main` | permanent | v0.3.8-beta release / Compose share ship line |
 | `dev` | permanent | v0.3.8-beta integration; default base for new work |
-| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.3.7 hotfixes only); squash-merged; auto-deleted |
+| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for Compose hotfixes only); squash-merged; auto-deleted |
 | `consciousenergy/<topic>-<id>` | days | Same as above (Cursor agents) |
 | `dependabot/**` | days | Automated dependency PRs against **`dev`** |
 | `release/X.Y` | only while a hotfix is open | Created **from a tag** when a fix must ship against an older release. Forward-port to `main` and `dev`, then delete |
@@ -30,13 +31,13 @@ Naming rules: lowercase, hyphen-separated, no version numbers in feature
 branch names (the version lives in the four `APP_VERSION` markers, not in git
 refs).
 
-## Day-to-day flow (v0.3.8 on `dev`)
+## Day-to-day flow (v0.3.8 on `dev`; Compose on `main`)
 
 ```mermaid
 gitGraph
-  commit id: "main_0_3_7"
+  commit id: "main_0_3_8_compose"
   branch dev
-  commit id: "bump_0_3_8"
+  commit id: "swarm_prep"
   branch feat_topic
   commit id: "work"
   checkout dev
@@ -51,12 +52,13 @@ gitGraph
    also `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-**0.3.7 hotfixes:** branch from `main` (or `v0.3.7-beta`), PR into `main`, then
-cherry-pick / forward-port to `dev`.
+**0.3.8 Compose hotfixes:** branch from `main` (or `v0.3.8-beta`), PR into
+`main`, then cherry-pick / forward-port to `dev`.
 
-**Promote 0.3.8 → public:** when ready, open a controlled PR `dev` → `main`
-(version markers already `0.3.8-beta` on `dev`), then tag `v0.3.8-beta` on
-`main` after merge. Do **not** continuously merge `dev` into `main`.
+**Promote next train → public:** when ready, open a controlled PR `dev` → `main`
+(markers already bumped on `dev`), then tag on `main` after merge. Do **not**
+continuously merge `dev` into `main`. Public Swarm cutover stays gated by
+`CONFIRM_SWARM_0_3_9`.
 
 Keep PRs small and **topic-dense**. Split CI/infra PRs from academic claim edits.
 `EQ-OPEN-*` stay OPEN unless a dedicated science PR says otherwise.
@@ -77,7 +79,7 @@ Dual KVM2 ≠ Swarm cutover — see
 ## Cutting a release
 
 1. Land the version bump + CHANGELOG section on the train branch (`dev` for
-   0.3.8; already done for 0.3.7 on `main`).
+   the next train; `v0.3.8-beta` CHANGELOG is on `main` after the Compose promote).
 2. Promote to `main` if needed (`dev` → `main` PR for a new public train).
 3. Tag the release commit on `main`:
 
@@ -93,9 +95,9 @@ Dual KVM2 ≠ Swarm cutover — see
 
 ## Hotfixes against an older release
 
-1. `git switch -c release/0.3.7 v0.3.7-beta`
-2. Land the fix via PR (base = `release/0.3.7`), bump patch if needed, tag.
-3. Forward-port to `main` and `dev`, then delete `release/0.3.7`.
+1. `git switch -c release/0.3.8 v0.3.8-beta` (or `release/0.3.7 v0.3.7-beta`)
+2. Land the fix via PR (base = that release branch), bump patch if needed, tag.
+3. Forward-port to `main` and `dev`, then delete the short-lived release branch.
 
 ## Tags
 
