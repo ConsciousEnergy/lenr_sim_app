@@ -12,10 +12,15 @@ confirm strings.
 
 | VM | Id | IP | Role now | Swarm role |
 |----|----|----|----------|------------|
-| Share | `1280333` | `185.211.4.66` | Compose beta healthy `0.3.7-beta`; BF defaults advertise `dynamics_mode=auto` | **Keep Compose** until v0.3.9 cutover |
+| Share | `1280333` | `185.211.4.66` | Compose beta healthy `0.3.7-beta` (restored after brief Hostinger maintenance 2026-10-17) | **Keep Compose** until v0.3.9 cutover |
 | CI | `2012566` | `45.93.100.251` | GitHub runner `lenr-ci-1` only (no Compose projects) | **Forbidden** as Swarm worker |
 
-No third VPS exists yet for staging Swarm.
+Third VPS: Hostinger **KVM1** `2071323` / `31.220.55.113` (`srv2071323`) —
+Docker installed, UFW/SSH hardened; Swarm init awaits
+`CONFIRM_SWARM_0_3_8`. Walkthrough:
+[`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md).
+Topology diagrams (SOT): [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(physical / environments / containers + persistent storage).
 
 ## In-repo readiness (agent local dry-run)
 
@@ -45,8 +50,9 @@ Copy examples → **untracked** files (never commit):
    - Do **not** point Swarm manager at `185.211.4.66` without a written migration plan
 3. `infrastructure/ansible/inventory.staging.yml` ← `inventory.staging.yml.example`
    - `STAGING_MANAGER_IP` / worker IPs ≠ CI `45.93.100.251`
-4. Provision staging node(s): new KVM **or** accepted single-node staging caveat
-   ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md))
+4. Provision staging node: new **KVM1** (preferred) —
+   [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md) —
+   or accepted single-node caveat ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md))
 5. Plan/check only:
    ```bash
    CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \

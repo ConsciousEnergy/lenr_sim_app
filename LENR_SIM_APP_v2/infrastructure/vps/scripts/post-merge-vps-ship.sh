@@ -24,7 +24,7 @@ set -euo pipefail
 REPO="${MERGE_TRAIN_REPO:-ConsciousEnergy/lenr_sim_app}"
 VPS_BRANCH="${MERGE_TRAIN_VPS_BRANCH:-consciousenergy/vps-public-beta-rebase-98d8}"
 TRAIN_PRS=(196 197 198)
-EXPECT_VERSION="${EXPECT_VERSION:-0.3.7-beta}"
+EXPECT_VERSION="${EXPECT_VERSION:-0.3.8-beta}"
 MODE="${1:-plan}"
 CONFIRM_TOKEN="I_SHIP_VPS_0_3_8"
 SHIP_REF="${SHIP_REF:-main}"
@@ -204,12 +204,21 @@ cmd_ssh_ship() {
   local vps_host
   vps_host="$(resolve_vps_host)"
 
-  git fetch origin main
-  local deploy_sha image_tag
-  deploy_sha="$(git rev-parse origin/main)"
-  image_tag="$(read_app_version_at origin/main)"
+  git fetch origin "$SHIP_REF" 2>/dev/null || git fetch origin
+  local deploy_sha image_tag ship_rev
+  # SHIP_REF may be a branch name (main), remote ref (origin/main), or SHA.
+  if git rev-parse --verify -q "origin/${SHIP_REF}" >/dev/null; then
+    ship_rev="origin/${SHIP_REF}"
+  elif git rev-parse --verify -q "${SHIP_REF}" >/dev/null; then
+    ship_rev="${SHIP_REF}"
+  else
+    echo "ERROR: cannot resolve SHIP_REF=${SHIP_REF}" >&2
+    exit 1
+  fi
+  deploy_sha="$(git rev-parse "${ship_rev}")"
+  image_tag="$(read_app_version_at "${ship_rev}")"
   if [[ -z "$image_tag" ]]; then
-    echo "ERROR: could not read APP_VERSION from origin/main" >&2
+    echo "ERROR: could not read APP_VERSION from ${ship_rev}" >&2
     exit 1
   fi
   if [[ "${ALLOW_UNMERGED:-0}" != "1" ]]; then
@@ -218,9 +227,11 @@ cmd_ssh_ship() {
       exit 1
     }
     if [[ "$image_tag" != "$EXPECT_VERSION" ]]; then
-      echo "ERROR: origin/main APP_VERSION=$image_tag (want $EXPECT_VERSION)" >&2
+      echo "ERROR: ${ship_rev} APP_VERSION=$image_tag (want $EXPECT_VERSION)" >&2
       exit 1
     fi
+  else
+    echo "WARN: ALLOW_UNMERGED=1 — shipping ${ship_rev} (@${deploy_sha}) IMAGE_TAG=${image_tag}"
   fi
 
   # Global path so EXIT trap is safe under `set -u` after function return.

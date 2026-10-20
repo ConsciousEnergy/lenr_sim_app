@@ -32,6 +32,10 @@ from app.physics_engine.scientific_guardrails import (
     resolve_claim_tier,
     resolve_evidence_class,
 )
+from app.physics_engine.workbench_enrichment import (
+    enrich_contribution_dict,
+    enrich_metadata_dict,
+)
 from app.core.config import settings
 from app.utils.json_safe import to_json_safe
 
@@ -104,6 +108,8 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     # Accelerator ion-track thermal spike (Czerski). Complements screening
     # rather than multiplying with Debye/Thomas-Fermi U_e.
     "czerski_thermal_spike": "ion_track",
+    # Schwinger NEAL — historical-control lattice coupling (scaffold).
+    "schwinger_lattice": "historical_lattice",
 }
 
 DEFAULT_COMBINATION_RULE = "grouped_max_confidence_product"
@@ -149,8 +155,11 @@ class TheoryPipelineResult:
         # 1 W excess heat ≈ 2.6×10^11 He-4 atoms/s
         expected_he4_rate = self.total_energy_watts * MILES_HEAT_HELIUM_RATE
 
-        per_theory = [
-            {
+        per_theory = []
+        for c in self.contributions:
+            prov = getattr(c, "provenance", None) or {}
+            control_role = str(prov.get("control_role", "") or "")
+            row = {
                 "theory_id": c.theory_id,
                 "theory_name": c.theory_name,
                 "enhancement_factor": float(c.enhancement_factor),
@@ -180,9 +189,24 @@ class TheoryPipelineResult:
                 "model_fidelity": getattr(c, "model_fidelity", "approximate") or "approximate",
                 "empirical_support": getattr(c, "empirical_support", "speculative")
                 or "speculative",
+                "control_role": control_role,
+                "predicted_signatures": list(
+                    getattr(c, "predicted_signatures", None) or []
+                ),
+                "falsifiers": list(getattr(c, "falsifiers", None) or []),
+                "taxonomy_kind": getattr(c, "taxonomy_kind", "") or "",
+                "equation_citations": list(
+                    getattr(c, "equation_citations", None) or []
+                ),
+                "identifiability_warnings": list(
+                    getattr(c, "identifiability_warnings", None) or []
+                ),
+                "historical_parents": list(
+                    getattr(c, "historical_parents", None) or []
+                ),
+                "display_model_version": getattr(c, "display_model_version", "") or "",
             }
-            for c in self.contributions
-        ]
+            per_theory.append(enrich_contribution_dict(row, control_role=control_role))
         payload = {
             "combined_enhancement": float(self.combined_enhancement),
             "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
@@ -288,23 +312,37 @@ class TheoryPipeline:
         results: List[Dict[str, Any]] = []
         for module in self._registry.values():
             meta = module.get_metadata()
-            results.append(
-                {
-                    "theory_id": meta.theory_id,
-                    "theory_name": meta.theory_name,
-                    "description": meta.description,
-                    "configurable_parameters": meta.configurable_parameters,
-                    "references": meta.references,
-                    "category": meta.category,
-                    "primary_sources": list(getattr(meta, "primary_sources", None) or []),
-                    "theory_model_version": getattr(meta, "theory_model_version", "") or "",
-                    "model_fidelity": getattr(meta, "model_fidelity", "approximate")
-                    or "approximate",
-                    "empirical_support": getattr(meta, "empirical_support", "speculative")
-                    or "speculative",
-                    "control_role": getattr(meta, "control_role", "") or "",
-                }
-            )
+            row = {
+                "theory_id": meta.theory_id,
+                "theory_name": meta.theory_name,
+                "description": meta.description,
+                "configurable_parameters": meta.configurable_parameters,
+                "references": meta.references,
+                "category": meta.category,
+                "primary_sources": list(getattr(meta, "primary_sources", None) or []),
+                "theory_model_version": getattr(meta, "theory_model_version", "") or "",
+                "model_fidelity": getattr(meta, "model_fidelity", "approximate")
+                or "approximate",
+                "empirical_support": getattr(meta, "empirical_support", "speculative")
+                or "speculative",
+                "control_role": getattr(meta, "control_role", "") or "",
+                "predicted_signatures": list(
+                    getattr(meta, "predicted_signatures", None) or []
+                ),
+                "falsifiers": list(getattr(meta, "falsifiers", None) or []),
+                "taxonomy_kind": getattr(meta, "taxonomy_kind", "") or "",
+                "equation_citations": list(
+                    getattr(meta, "equation_citations", None) or []
+                ),
+                "identifiability_warnings": list(
+                    getattr(meta, "identifiability_warnings", None) or []
+                ),
+                "historical_parents": list(
+                    getattr(meta, "historical_parents", None) or []
+                ),
+                "display_model_version": getattr(meta, "display_model_version", "") or "",
+            }
+            results.append(enrich_metadata_dict(row))
         return results
 
     # ------------------------------------------------------------------
@@ -434,6 +472,30 @@ class TheoryPipeline:
 
             try:
                 contribution = module.calculate(conditions, config)
+                try:
+                    meta = module.get_metadata()
+                    control_role = getattr(meta, "control_role", "") or ""
+                    if control_role:
+                        contribution.provenance = {
+                            **(contribution.provenance or {}),
+                            "control_role": control_role,
+                        }
+                    # Copy workbench fields from metadata when contribution left them empty.
+                    for _wb_key in (
+                        "predicted_signatures",
+                        "falsifiers",
+                        "taxonomy_kind",
+                        "equation_citations",
+                        "identifiability_warnings",
+                        "historical_parents",
+                        "display_model_version",
+                    ):
+                        cur = getattr(contribution, _wb_key, None)
+                        meta_val = getattr(meta, _wb_key, None)
+                        if not cur and meta_val:
+                            setattr(contribution, _wb_key, meta_val)
+                except Exception:
+                    logger.debug("Workbench metadata copy skipped for %s", tid, exc_info=True)
                 electrolyte_family = str(conditions.get("electrolyte_family", "li")).lower()
                 electrolyte_molarity_mol_l = float(conditions.get("electrolyte_molarity_mol_l", 0.3))
                 loading_ratio = float(conditions.get("loading_ratio", 0.9))
@@ -784,6 +846,12 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(ShouldersEVOTheory())
     except Exception:
         logger.exception("Failed to register ShouldersEVOTheory")
+
+    try:
+        from app.physics_engine.theories.schwinger_lattice import SchwingerLatticeTheory
+        pipeline.register(SchwingerLatticeTheory())
+    except Exception:
+        logger.exception("Failed to register SchwingerLatticeTheory")
 
     # --- Phase 1C: Extended Theories ---
 

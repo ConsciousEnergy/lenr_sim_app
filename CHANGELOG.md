@@ -8,9 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Integration work for **v0.3.8-beta** continues on the long-lived `dev` branch
-  (see `.github/BRANCHING.md`). `main` remains the live **v0.3.7-beta** Compose
-  share line until a future cutover PR.
+- Swarm **staging** dry-run and public Swarm + Pages cutover remain gated
+  (`CONFIRM_SWARM_0_3_8` / `CONFIRM_SWARM_0_3_9`). Compose share stays the
+  public surface on `main` at **v0.3.8-beta**.
+
+## [v0.3.8-beta] - 2026-10-20
+
+Public Compose share: https://lenr-sim-beta.conscious.energy  
+Promote: controlled `dev` → `main` (no Swarm cutover).  
+`lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN.
+
+### Added — ARA Oct 2026 workbench Wave 1
+- Crawler-readable static pages: `/models/`, `/models/<id>.html`, `/methodology.html`, `/validation.html`, `/sources.html`, `/experiments/` (generator `LENR_SIM_APP_v2/scripts/generate_static_model_pages.py`)
+- Additive workbench fields on theory protocol / list / `per_theory`: `predicted_signatures`, `falsifiers`, `taxonomy_kind`, `equation_citations`, `identifiability_warnings`, `historical_parents`, `display_model_version`, `control_role`
+- `schwinger_lattice` historical-control scaffold (Nuclear Energy in an Atomic Lattice; HD/H₂O knob; no invented rate law)
+- Storms NAE / Takahashi / Hagelstein version headers; Model 0 baselines featured on `/models/`
+- Docs: `docs/v0.3.8-beta/ARA_OCT2026_WORKBENCH.md` (+ VERSION_CONTROL Phase A2); CE WordPress supersession = operator handoff
+- Neutral About-page framing; `EQ-OPEN-*` remain OPEN; no public Swarm cutover
+
+### Added — three-node Swarm prep scaffolds (docs only; not applied)
+- Docs: `THREE_NODE_SWARM_TOPOLOGY.md`, `KVM1_OPERATOR_WALKTHROUGH.md`, `OBSERVABILITY_GRAFANA.md`
+- Staging inventory example + stack: Prometheus/Grafana/blackbox/node_exporter; rolling update `order: start-first` + `failure_action: rollback`
+- Optional `require_app_label` / `require_observability_label`; Traefik Prometheus metrics entrypoint
+- `infrastructure/observability/` Grafana+Prometheus scaffolds (no secrets)
+- No public Swarm apply; CI remains isolated; `EQ-OPEN-*` stay OPEN
+
+### Changed — Compose promote + version trains
+- Four version markers on `main` are **`0.3.8-beta`** after this promote
+- `main` is the live Compose+Caddy share line; `dev` remains integration for Swarm staging prep / science / deps (same markers until a new train)
+- BRANCHING / AGENTS / Dependabot / CI branch filters: new topic work still defaults to **`dev`**; Compose ship only from `main` + `v*` tags
+- Backend Docker base held on **`python:3.12-slim`** (scipy 1.14.1 has no cp314 wheel; Dependabot 3.14 bump reverted for this ship)
+- Frontend/backend minor dependency bumps + FastAPI/Starlette/matplotlib holds for instrumentator 7
 
 ### Changed — complete v0.3.7 version control on default branch (2026-10-13)
 - Promote main+`dev` BRANCHING / AGENTS / CONTRIBUTING / Dependabot `target-branch: dev` / CI branch filters onto `main` tip (markers stay **`0.3.7-beta`**)

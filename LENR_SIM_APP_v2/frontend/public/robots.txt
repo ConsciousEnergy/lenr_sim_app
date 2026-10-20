@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
+Allow: /models/
+Allow: /experiments/
+Allow: /methodology.html
+Allow: /validation.html
+Allow: /sources.html
 Disallow: /diagnostics
 Disallow: /visualization-test
 Disallow: /visualization-debug

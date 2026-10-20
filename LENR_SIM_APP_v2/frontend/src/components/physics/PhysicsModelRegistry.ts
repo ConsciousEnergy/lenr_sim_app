@@ -176,10 +176,19 @@ const fallbackModels: PhysicsModel[] = [
   },
   {
     id: 'nae_model',
-    name: 'Nuclear Active Environment (NAE)',
-    description: 'Statistical model of NAE site density.',
+    name: 'Storms NAE',
+    description:
+      'Storms Nuclear Active Environment (NAE); versioned 2012–13 active, 2026 channel tagged.',
     category: 'primary',
     tags: ['nae', 'storms'],
+  },
+  {
+    id: 'schwinger_lattice',
+    name: 'Schwinger — Nuclear Energy in an Atomic Lattice',
+    description:
+      'Historical-control scaffold: lattice energy uptake and H₂O/D₂O HD sensitivity; no invented rate law.',
+    category: 'secondary',
+    tags: ['schwinger', 'historical', 'lattice'],
   },
   {
     id: 'bubble_mhd_confinement',

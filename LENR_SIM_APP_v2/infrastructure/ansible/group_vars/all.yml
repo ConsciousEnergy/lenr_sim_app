@@ -48,10 +48,17 @@ backup_enabled: true
 backup_retention_days: 7
 backup_schedule: "0 3 * * *"  # Daily at 3 AM
 
-# Monitoring
+# Monitoring / observability (see docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md)
 health_check_interval: 30
 health_check_timeout: 10
 health_check_retries: 3
+observability_enabled: true
+# Set true after node labels exist (prod / multi-node). Staging single-node: false.
+require_app_label: false
+require_observability_label: false
+grafana_admin_user: admin
+grafana_traefik_enabled: false
+grafana_subdomain: grafana-staging
 
 # GHCR pull auth for Swarm stack deploy (--with-registry-auth).
 # Prefer Ansible Vault or -e @secrets.yml — never commit real tokens.

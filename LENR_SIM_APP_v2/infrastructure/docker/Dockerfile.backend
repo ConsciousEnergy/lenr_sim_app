@@ -4,6 +4,8 @@
 # ==============================================================================
 # Stage 1: Build dependencies
 # ==============================================================================
+# Hold 3.12 for Compose ship: scipy==1.14.1 has no cp314 wheel and
+# source builds need gfortran (Dependabot #243 3.14 bump fails pip install).
 FROM python:3.12-slim AS builder
 
 WORKDIR /build
@@ -28,7 +30,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==============================================================================
 FROM python:3.12-slim AS production
 
-ARG BUILD_VERSION=0.3.7-beta
+ARG BUILD_VERSION=0.3.8-beta
 
 # Labels
 LABEL org.opencontainers.image.title="LENR Simulation App Backend"

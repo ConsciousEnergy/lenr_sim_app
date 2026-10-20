@@ -1,0 +1,46 @@
+# Prometheus scrape config — copy to /opt/lenr-sim/observability/prometheus/ on
+# the observability node. No secrets. Overlay DNS names match docker-stack.yml.j2.
+#
+# See docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # HTTP probe of backend /api/health via blackbox (returns probe_success, etc.)
+  - job_name: lenr_backend_health
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://backend:8000/api/health
+        labels:
+          service: backend
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  # Traefik request / entrypoint metrics (overlay :8082 — not public)
+  - job_name: traefik
+    static_configs:
+      - targets: ["traefik:8082"]
+        labels:
+          service: traefik
+
+  # Host CPU / mem / disk — Swarm DNS for global node-exporter tasks
+  - job_name: node
+    dns_sd_configs:
+      - names:
+          - tasks.node-exporter
+        type: A
+        port: 9100

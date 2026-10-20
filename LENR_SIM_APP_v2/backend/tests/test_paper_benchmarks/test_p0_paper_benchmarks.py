@@ -108,6 +108,22 @@ def test_shoulders_stub_has_no_invented_rate_law() -> None:
     )
 
 
+def test_schwinger_lattice_scaffold_has_no_invented_rate_law() -> None:
+    from app.physics_engine.theories.schwinger_lattice import SchwingerLatticeTheory
+
+    result = SchwingerLatticeTheory().calculate(
+        {"temperature": 300.0, "loading_ratio": 0.9},
+        {"h_fraction_in_d2o": 0.02},
+    )
+    assert result.enhancement_factor == pytest.approx(1.0)
+    assert result.model_fidelity == "phenomenological"
+    assert result.provenance.get("no_invented_rate_law") is True
+    assert result.predicted_signatures
+    assert result.falsifiers
+    assert "hd_sensitivity_index" in result.observables
+    assert "Nuclear Energy in an Atomic Lattice" in result.theory_name
+
+
 def test_pipeline_preserves_module_fidelity_provenance() -> None:
     import app.physics_engine.theory_pipeline as tp
 

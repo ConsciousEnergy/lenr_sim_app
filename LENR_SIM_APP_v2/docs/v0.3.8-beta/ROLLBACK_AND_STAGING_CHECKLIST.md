@@ -47,3 +47,49 @@ Hard gates for `infrastructure/scripts/deploy.sh`:
 
 - Staging: `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` (legacy `I_CUTOVER_0_3_8` accepted for staging-only).
 - Production cutover (v0.3.9): `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
+
+## Swarm rolling update + rollback (prep — do not apply on public share)
+
+Backend service in `docker-stack.yml.j2` ships zero-downtime defaults:
+
+| Setting | Value | Intent |
+|---------|-------|--------|
+| `update_config.order` | `start-first` | New task healthy before old stops |
+| `update_config.parallelism` | `1` | One replica at a time |
+| `update_config.failure_action` | `rollback` | Auto revert on monitor failure |
+| `update_config.monitor` | `30s` | Watch window after each task |
+| `rollback_config.order` | `stop-first` | Conservative rollback path |
+
+Operator drill (staging Swarm only, after `CONFIRM_SWARM_0_3_8`):
+
+```bash
+# Record baseline
+docker service ps lenr_backend --no-trunc | head
+curl -fsS https://api-staging.conscious.energy/api/health | jq .version
+
+# Intentional bad image → expect auto rollback
+docker service update --image ghcr.io/consciousenergy/lenr-sim-backend:does-not-exist \
+  lenr_backend
+# Watch: docker service ps lenr_backend  → Rollback complete
+
+# Manual rollback if needed
+docker service rollback lenr_backend
+```
+
+Public Compose share keeps using `vps/scripts/rollback.sh` until
+`CONFIRM_SWARM_0_3_9`. Topology + storage contract:
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(Persistent storage — no Longhorn; pin + off-box backup).
+
+## Swarm volume backup (pin + off-box; not Longhorn)
+
+Swarm volumes are **node-local**. Do not put Postgres datadir on NFS.
+
+| Data | Host after cutover | Backup approach | RPO target (ops) |
+|------|--------------------|-----------------|------------------|
+| `postgres_data` | Share manager | Scheduled `pg_dump` / basebackup to off-box object storage or Hostinger snapshot | ≤ 24 h until tighter SLA |
+| `prometheus_data` / `grafana_data` | KVM1 | Hostinger snapshot or rsync of `/var/lib/docker/volumes/…` | Best-effort (rebuildable) |
+| ACME certs | Share manager Traefik disk | Included in host snapshot; Let’s Encrypt re-issue OK | n/a |
+
+Operator: record first successful backup timestamps here before public cutover.
+Staging single-node (KVM1) still uses local volumes — same backup discipline.

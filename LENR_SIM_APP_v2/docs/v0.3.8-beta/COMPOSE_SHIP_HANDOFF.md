@@ -1,210 +1,47 @@
-# Operator: ship tip of main to Compose share (post #196/#197/#198/#204/#206)
+# Operator: ship tip of main to Compose share (v0.3.8-beta)
 
-## Operator first: Hostinger login + DNS (do this on your laptop)
+**Goal:** pull GHCR `IMAGE_TAG=0.3.8-beta` onto the public Compose+Caddy share
+at `https://lenr-sim-beta.conscious.energy`. **No Swarm apply.** Confirm string
+`I_SHIP_VPS_0_3_8` is historical naming for Compose ship, not Swarm cutover.
 
-**Blocking path today is Hostinger hPanel access, not Cloudflare DNS.**
+## Current target (2026-10-20)
 
-| Fact (probed 2026-09-18T20:28Z) | Value |
-|--------------------------------|-------|
-| `dig lenr-sim-beta.conscious.energy` | `A → 185.211.4.66` (already correct) |
-| Apex NS | WordPress.com (`ns1/ns2/ns3.wordpress.com`) — leave alone |
-| Live `/api/health` | 200 / `0.3.7-beta` |
-| Live BF modes | `legacy`, `rayleigh_plesset`, `keller_miksis` — **no `auto`** until VPS unlock + pull |
-| Cloudflare production CNAME | **Not required** to unlock; do **not** move apex NS to Cloudflare this window |
+| Item | Value |
+|------|-------|
+| Share URL | `https://lenr-sim-beta.conscious.energy` |
+| DNS | `A → 185.211.4.66` (VPS `1280333`) — leave alone |
+| Expected `/api/health` version after ship | **`0.3.8-beta`** |
+| BF defaults | already includes `dynamics_mode=auto` on live 0.3.7 |
+| Compose/Caddy topology | unchanged vs 0.3.7 (no `docker-compose` / Caddy diff in promote) |
+| Backend image base | **`python:3.12-slim`** (3.14 Dependabot bump held — scipy wheels) |
+| Swarm | **do not** run `CONFIRM_SWARM_0_3_8` / `CONFIRM_SWARM_0_3_9` against share |
 
-Full checklist: [OPERATOR_HOSTINGER_DNS.md](./OPERATOR_HOSTINGER_DNS.md).
+Rollback: [`ROLLBACK_AND_STAGING_CHECKLIST.md`](./ROLLBACK_AND_STAGING_CHECKLIST.md)
+(prior tag / `.rollback-image-tag`).
 
-**Your order:** (1) recover hPanel login on a normal browser → (2) Browser VNC as root → (3) run unlock or drop agent pubkey → (4) only touch DNS if `dig` stops showing `185.211.4.66`.
+## Preferred ship paths
 
-## Live status (agent probe 2026-10-04T15:48Z)
-
-| Check | Result |
-|-------|--------|
-| Share host | `https://lenr-sim-beta.conscious.energy` (healthy, `version=0.3.7-beta`) |
-| `GET /api/physics/bubble-fusion/defaults` | **`dynamics_mode=auto` present**; options include `auto` / `legacy` / RP / KM |
-| Official `probe-km` (live) | Re-run after any Compose pull; prior FAIL (2026-09-18) was pre-`auto` ship |
-
-### Prior probe (2026-09-18T20:28Z) — historical
-
-| Check | Result |
-|-------|--------|
-| `GET /api/physics/bubble-fusion/defaults` | options **lacked** `auto` (`legacy` / RP / KM only) |
-| Official `probe-km` (live) | **FAIL** — live build did not advertise `dynamics_mode=auto` |
-| Tip `probe-km` (`:18080`) | **PASS** — tip already has `auto` (do **not** use tip URL for exit audit) |
-| Unlock portal | see `/opt/cursor/artifacts/v038_unlock_tunnel_url.txt` (trycloudflare; rotates) — `/unlock.sh` HTTP 200 |
-| SSH `root@185.211.4.66` | Permission denied (publickey) — agent ed25519 twin `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10` not in `authorized_keys` |
-| PasswordAuthentication | **off** (retested with recovered root pw + `sshpass`) |
-| `HOSTINGER_API_TOKEN` / Cursor `VPS_SSH_KEY` | unset |
-| Actions CI / redeploy | jobs fail at **0 steps** — org spending limit / failed payments (e.g. `35388304243`) |
-| Tip `:18080` / GHCR | **has** `auto` (successful Build and Deploy image push for tip `5cdba52`) |
-| Exit audit trap | `BETA_SHARE_URL=http://127.0.0.1:18080` previously false-PASSed `km_auto_live_compose` — fixed: `verify-v038-exit.sh` / `poll-and-ship.sh` now force `LIVE_COMPOSE_URL` public share |
-| Conclusion | **#196–#208 on `main` + GHCR; Compose share not yet pulled** — sole v0.3.8 exit FAIL is `km_auto_live_compose` |
-
-Evidence: `/opt/cursor/artifacts/v038_exit_criteria_audit.md`, `v038_blocker_status.json`, `v038_verifier_hardened_proof.log`.
-
-Tip of `main` for operator self-ship: `git checkout -qf origin/main` after fetch
-(`APP_VERSION=0.3.7-beta`, KM auto + P0 + ship helpers + ARA P1 scaffolds).
-Current tip: `git rev-parse origin/main` (handoff refresh saw `5cdba52`).
-
-## Tip code proof (agent, 2026-09-16T19:25Z; still valid on tip)
-
-Local uvicorn from tip of `main` on `:18080`:
-
-| Check | Result |
-|-------|--------|
-| defaults `dynamics_mode` | `auto` |
-| options include `auto` | yes |
-| POST auto @ 4 bar | `km_auto_selected=true`, `dynamics_mode_used=keller_miksis`, peak Mach ≈0.61 |
-
-Evidence: `/opt/cursor/artifacts/local_tip_km_prove.json`.
-
-**Conclusion:** tip/GHCR code path is correct; only the live Compose pull is blocked on VPS unlock.
-
-## What already ran automatically on merge
-
-Push to `main` triggers `Build and Deploy` **image build only**:
-
-| Run | Event | build-* | `deploy-vps` |
-|-----|-------|---------|--------------|
-| [#196 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129116154) | push/main | success | **skipped** |
-| [#197 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35129159390) | push/main | success | **skipped** |
-| [#198 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35136116370) | push/main | success | **skipped** |
-| [#206 / #204 merge](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35183252494) | push/main | success | **skipped** (no VPS secrets) |
-| [#35183883264 `vps-compose-ship`](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35183883264) | repository_dispatch | builds OK | **failed** — empty `VPS_*` |
-
-GHCR tags `0.3.7-beta` / `latest` contain KM auto + P0 + ship helpers. Live pull requires secrets or VNC.
-
-## Blockers
-
-- `gh workflow run` → **HTTP 403** for agent token (expected)
-- **Mitigation (#199):** `repository_dispatch` type `vps-compose-ship` with
-  `client_payload.confirm=I_SHIP_VPS_0_3_8` — agent can fire (HTTP 204)
-- Ship attempt [35137191549](https://github.com/ConsciousEnergy/lenr_sim_app/actions/runs/35137191549):
-  builds OK; **`deploy-vps` failed** because Actions secrets `VPS_HOST` and
-  `VPS_SSH_KEY` were **empty** in the job environment
-- No SSH key in the agent VM (`Permission denied (publickey)` to `185.211.4.66`)
-
-### Required operator action
-
-**PRIMARY (fastest, Actions-free)** — Hostinger Browser VNC as root:
-
-```bash
-curl -fsSL https://subsequently-love-hear-pope.trycloudflare.com/unlock.sh | bash
-```
-
-If the VPS cannot reach trycloudflare, open
-`https://subsequently-love-hear-pope.trycloudflare.com/unlock.sh` in a local
-browser, paste into the VNC console, save as `/tmp/unlock.sh`, then `bash /tmp/unlock.sh`.
-Portal home also shows a pubkey-only one-liner.
-
-Confirm success (should flip `has_auto: true` within ~30s):
-
-```bash
-curl -fsS https://subsequently-love-hear-pope.trycloudflare.com/live-status.json
-# or open https://subsequently-love-hear-pope.trycloudflare.com/
-```
-
-That authorizes the agent pubkey, pins `origin/main`, runs `deploy.sh` for
-`IMAGE_TAG=0.3.7-beta`, then **verifies** `dynamics_mode=auto`. If the GHCR pull
-is stale, it retries with `BUILD_LOCALLY=1`. Beacons hit the same tunnel so the
-agent poller can see `beacon-started` / `beacon-done`.
-
-Exit gate: always probe the public share (`LIVE_COMPOSE_URL`), never tip
-`BETA_SHARE_URL` / `:18080`, when deciding `km_auto_live_compose`.
-
-Agent-side tunnel keepalive: `LENR_SIM_APP_v2/infrastructure/vps/scripts/vps-unlock-tunnel-watchdog.sh` (rewrites unlock.sh BEACON on URL rotate; health-checks via 1.1.1.1 to avoid DNS flaps).
-
-**Or** run the in-repo one-shot (on `#210` until merged; then on `main`):
+### A. SSH deploy on share (after `main` has 0.3.8 markers + GHCR images)
 
 ```bash
 cd /opt/lenr-sim/src
-git fetch --prune origin
-git checkout -qf origin/consciousenergy/v038-vnc-oneshot-on-main-98d8   # or origin/main after merge
-bash LENR_SIM_APP_v2/infrastructure/vps/scripts/vnc-one-shot-km-ship.sh
-```
-
-**Or** inline pubkey + `deploy.sh` (no one-shot file / no tunnel):
-
-```bash
-mkdir -p /root/.ssh && chmod 700 /root/.ssh
-grep -qxF 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' /root/.ssh/authorized_keys \
-  || echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
-chmod 600 /root/.ssh/authorized_keys
-cd /opt/lenr-sim/src
-git fetch --prune origin && git checkout -qf origin/main || true
-LENR_ENV_FILE=/opt/lenr-sim/.env IMAGE_TAG=0.3.7-beta UPDATE_ENV_IMAGE_TAG=1 EXPECT_VERSION=0.3.7-beta \
+git fetch --prune origin && git checkout -qf origin/main
+LENR_ENV_FILE=/opt/lenr-sim/.env \
+  IMAGE_TAG=0.3.8-beta UPDATE_ENV_IMAGE_TAG=1 EXPECT_VERSION=0.3.8-beta \
   bash LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 ```
 
-Fingerprint: `SHA256:HaidEon7f5LFkr7+R2aaURHrOa84/dVhljOy0DKK+10`
-
-**Pubkey-only** (if you prefer the agent to run `ssh-ship` after authorize):
+### B. Agent / laptop helper (requires authorized `VPS_SSH_KEY` or identity file)
 
 ```bash
-mkdir -p /root/.ssh && chmod 700 /root/.ssh
-echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPBJI+cf2cRAQHU8K7NSk63gc1oOkRFqQDJzD/ees/K5 cursor-agent-compose-ship-v038' >> /root/.ssh/authorized_keys
-chmod 600 /root/.ssh/authorized_keys
-```
-
-**Or** drop a Hostinger API token on the unlock portal (no Cursor secret restart):
-
-```bash
-# Portal home has a form, or:
-curl -fsS -X POST --data-binary @token.txt \
-  "$(cat /opt/cursor/artifacts/v038_unlock_tunnel_url.txt)/drop-hostinger-token"
-```
-
-Poller loads `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` within ~15s and runs
-`hostinger-compose-unlock.py unlock`.
-
-**Or** set Cursor env secret `HOSTINGER_API_TOKEN` (hPanel → API), then:
-
-```bash
-# Inspect VM + Docker Manager projects (may be empty for SSH-managed compose):
-HOSTINGER_API_TOKEN=... \
-  python3 LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py list
-
-# Attach agent pubkey, then ship:
-HOSTINGER_API_TOKEN=... CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
-  python3 LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py unlock
-
-# Optional: if stack is registered in Hostinger Docker Manager:
-HOSTINGER_API_TOKEN=... \
-  python3 LENR_SIM_APP_v2/infrastructure/vps/scripts/hostinger-compose-unlock.py docker-update
-```
-
-(`register-agent-pubkey-hostinger.py` remains as a thin attach-only helper.)
-
-**Hostinger MCP vs API token:** Desktop Hostinger MCP is fine when it authenticates.
-On this Cloud Agent run (2026-09-18T21:51Z), `mcp_auth` fails with
-**Authentication URL unavailable for this cloud MCP server** and Hostinger tools
-never appear in the catalog. Treat `HOSTINGER_API_TOKEN` +
-`hostinger-compose-unlock.py` as the MCP-equivalent unlock; do not block on MCP.
-
-**Or** set Cursor env secrets `HOSTINGER_HPANEL_EMAIL` + `HOSTINGER_HPANEL_PASSWORD`
-(optional) and **restart** the agent so computer-use can open hPanel → VPS →
-Browser Console and append the pubkey above.
-
-**Or** set Cursor env secret `VPS_SSH_KEY` to a private key **already** in
-`authorized_keys` (do not paste the agent key twin — it is not authorized yet),
-then **restart** the agent. `VPS_HOST` defaults to `185.211.4.66`.
-
-```bash
-# After pubkey is authorized (agent identity file):
-VPS_SSH_IDENTITY_FILE=~/.ssh/lenr_vps_agent_ed25519 \
-CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
-
-# Or with authorized env secret:
 CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ssh-ship
 ```
 
-**Alternate:** GitHub Actions secrets `VPS_HOST=185.211.4.66` + authorized
-`VPS_SSH_KEY`, then:
+### C. GitHub Actions (secrets `VPS_HOST` + `VPS_SSH_KEY`)
 
 ```bash
-# Cheap redeploy (no image rebuild) — preferred once images exist on GHCR:
+# Cheap redeploy when GHCR already has 0.3.8-beta:
 gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'EOF'
 {"event_type":"vps-compose-redeploy","client_payload":{"confirm":"I_SHIP_VPS_0_3_8"}}
 EOF
@@ -215,65 +52,28 @@ gh api --method POST repos/ConsciousEnergy/lenr_sim_app/dispatches --input - <<'
 EOF
 ```
 
-The agent poller watches SSH / Hostinger token / keydrop and will ship within
-~60s of unlock. Force one Actions attempt with
-`touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP` (no agent restart).
-**Helper auto-path** (`ship`): uses ssh-ship when `VPS_SSH_KEY` /
-`VPS_SSH_IDENTITY_FILE` is set; otherwise repository_dispatch.
+Push to `main` / tag `v0.3.8-beta` builds GHCR images; `deploy-vps` still needs
+secrets or path A/B.
+
+## Post-ship verification
 
 ```bash
-CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh ship
-```
-
-**Poll until authorized** (agent / operator leave this running after requesting
-console pubkey install — ships within one poll interval once SSH works):
-
-```bash
-CONFIRM=I_SHIP_VPS_0_3_8 EXECUTE=1 \
-  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/poll-and-ship.sh
-```
-
-Status JSON: `/opt/cursor/artifacts/poll_and_ship_status.json`.
-
-Without restarting the agent, you can also drop:
-
-- Hostinger API token (one line, token only) at
-  `/opt/cursor/artifacts/HOSTINGER_API_TOKEN.txt` — the poller loads it and runs
-  `hostinger-compose-unlock.py unlock`
-- An **authorized** OpenSSH private key at `/opt/cursor/artifacts/VPS_SSH_KEY`
-  (or `/tmp/VPS_SSH_KEY`) — the poller hot-swaps identity and ssh-ships
-- `touch /opt/cursor/artifacts/TRY_ACTIONS_SHIP` — one-shot Actions dispatch
-
-If live beta already advertises `dynamics_mode=auto` (operator pulled tip), the
-poller runs `probe-km` and exits without needing SSH.
-
-## Post-ship probe
-
-High drive (~4 bar). Expect:
-
-- defaults list includes `auto` (default `dynamics_mode=auto`)
-- `dynamics.dynamics_mode_requested == "auto"`
-- when peak Mach ≥ 0.3: `km_auto_selected` true / `dynamics_mode_used == "keller_miksis"`
-
-APP_VERSION may still read `0.3.7-beta` until the 0.3.8 version bump; ship is still
-required for KM auto on the public URL.
-
-## Exit audit (goal complete only when all PASS)
-
-```bash
-./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-v038-exit.sh
-# writes /opt/cursor/artifacts/v038_exit_criteria_audit.{json,md}; exit 0 iff all PASS
-```
-
-## Agent secret injection note
-
-Cursor env secrets added **after** a cloud-agent VM boots may not appear in
-that session. After setting `VPS_SSH_KEY`, **restart/resume the agent** (or run
-`ssh-ship` on an operator machine that already has the key).
-
-Live probe (authoritative):
-
-```bash
+EXPECT_VERSION=0.3.8-beta \
+  ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
+curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .version
+curl -fsSI https://lenr-sim-beta.conscious.energy/models/ | head -5
 ./LENR_SIM_APP_v2/infrastructure/vps/scripts/post-merge-vps-ship.sh probe-km
 ```
+
+Expect: `version=0.3.8-beta`, `/models/` 200, BF `dynamics_mode=auto` still present.
+
+## Historical notes (0.3.7 / KM auto unlock)
+
+Earlier windows (2026-09) blocked on VPS pubkey unlock while tip already had
+`dynamics_mode=auto`. By 2026-10-04 live share advertised `auto` while markers
+still read `0.3.7-beta`. The remaining gap for this handoff is the **0.3.8
+marker + ARA/static pages + deps** Compose pull — not KM auto discovery.
+
+Legacy unlock portal / pubkey one-liners / Hostinger token drop paths remain in
+git history and older agent artifacts; prefer paths A–C above once `VPS_*` or
+SSH works.

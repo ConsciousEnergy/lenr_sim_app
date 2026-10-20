@@ -40,6 +40,17 @@ entryPoints:
       tls:
         certResolver: letsencrypt
 
+  # Overlay-only Prometheus scrape (do not publish 8082 on the host firewall).
+  metrics:
+    address: ":8082"
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true
+
 certificatesResolvers:
   letsencrypt:
     acme:

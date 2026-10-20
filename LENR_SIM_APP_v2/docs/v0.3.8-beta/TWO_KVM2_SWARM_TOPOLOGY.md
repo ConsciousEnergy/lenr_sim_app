@@ -122,6 +122,12 @@ flowchart TB
 When UMLENR / LENR-ARA need more isolation, **add a third KVM** (or larger
 plan) as a dedicated Swarm worker or separate DAQ host — do not put DAQ on CI.
 
+**Locked three-node product plan (2×KVM2 + 1×KVM1):** diagram source of truth is
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
+(Architecture diagrams + storage decision — not Longhorn). Walkthrough:
+[`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md). Observability:
+[`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md).
+
 ---
 
 ## 4. Staging without a third VPS (what you can do now)

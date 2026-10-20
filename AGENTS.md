@@ -1,4 +1,4 @@
-# Agent and contributor current truth (main = v0.3.7-beta, dev = v0.3.8-beta)
+# Agent and contributor current truth (main = v0.3.8-beta Compose, dev = v0.3.8-beta integration)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
@@ -6,8 +6,8 @@ Short map for humans and Cursor agents. Prefer this over stale trackers.
 
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
-| `main` | **`0.3.7-beta`** | Live Compose public beta; ship / hotfix only |
-| `dev` | **`0.3.8-beta`** | Default integration for new work |
+| `main` | **`0.3.8-beta`** | Live Compose public beta; ship / hotfix only |
+| `dev` | **`0.3.8-beta`** | Default integration for Swarm staging prep / science / deps |
 
 Four markers (must match within a branch):
 
@@ -16,14 +16,14 @@ Four markers (must match within a branch):
 - `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
 - `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
 
-Do **not** bump `main` to 0.3.8 except via a controlled `dev` → `main` promote PR.
+Do **not** bump `main` markers except via a controlled promote PR from `dev`.
 Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 ## Live share vs tip
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.7-beta**. |
+| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.8-beta** after Compose promote ship ([`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md)). |
 | `main` | Release line matching the share train; may be ahead of live until an operator ships with `VPS_*` / SSH. |
 | `dev` | v0.3.8-beta integration tip; **never** auto-deployed by `deploy.yml`. |
 
@@ -52,15 +52,18 @@ Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 
 | Stage | When | Confirm env | Doc |
 |-------|------|-------------|-----|
-| Compose share (now) | v0.3.7-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
+| Compose share (now) | v0.3.8-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
 | Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
 | Public Swarm + Pages | later | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+
+Topology diagrams (hardware ↔ Swarm, legends, storage):
+[`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
 
 Do **not** apply public Swarm without the 0.3.9 confirm. Do **not** close any `EQ-OPEN-*`.
 
 ## Dense PRs
 
-Short-lived branches → squash to **`dev`** (default) or `main` (0.3.7 hotfix).
+Short-lived branches → squash to **`dev`** (default) or `main` (0.3.8 Compose hotfix).
 Prefer **one topic per PR**.
 
 - **CI / ops / onboarding** PRs: workflows, runner runbook, cutover docs — this track.
