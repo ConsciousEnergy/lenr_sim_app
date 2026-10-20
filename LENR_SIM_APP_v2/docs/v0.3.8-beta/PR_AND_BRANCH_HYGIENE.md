@@ -5,14 +5,14 @@
 
 **Operator rule:** Merges require an explicit ask. Agents prepare and verify.
 Default new work targets **`dev`** (0.3.8-beta). Use **`main`** only for
-0.3.7-beta hotfixes / release-line docs.
+0.3.8-beta Compose hotfixes / release-line docs.
 
 ## Version trains
 
 | Branch | Markers | Role |
 |--------|---------|------|
-| `main` | `0.3.7-beta` | Live Compose share; tag `v0.3.7-beta` |
-| `dev` | `0.3.8-beta` | Integration for Swarm prep / science / deps |
+| `main` | `0.3.8-beta` | Live Compose share; tag `v0.3.8-beta` |
+| `dev` | `0.3.8-beta` | Integration for Swarm staging prep / science / deps |
 
 ## Completed on `main` (0.3.7 line)
 
