@@ -1,16 +1,16 @@
-# Live share status (v0.3.7-beta VPS)
+# Live share status (v0.3.8-beta Compose VPS)
 
-Probed **2026-10-13** and **2026-10-17** (restored after brief Hostinger
-maintenance). Public Compose+Caddy share is the **v0.3.7-beta** release line.
-Swarm / Traefik / Cloudflare Pages cutover remains **out of scope** until
+Probed **2026-10-20** during the Compose promote to **v0.3.8-beta**. Public
+Compose+Caddy share is the **v0.3.8-beta** release line on `main`. Swarm /
+Traefik / Cloudflare Pages cutover remains **out of scope** until
 `CONFIRM_SWARM_0_3_9` (see v0.3.8 / v0.3.9 docs).
 
 ## What works today (share this)
 
 | URL | DNS | `/api/health` | App version reported |
 |-----|-----|---------------|----------------------|
-| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** healthy, DB connected | **`0.3.7-beta`** |
-| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** when healthy | **`0.3.7-beta`** |
+| `https://lenr-sim-beta.conscious.energy` | **A → `185.211.4.66`** (VPS `1280333`) | **200** healthy, DB connected | **`0.3.8-beta`** after ship (was `0.3.7-beta` pre-promote) |
+| `https://srv1280333.hstgr.cloud` | Hostinger host | **200** when healthy | same as share |
 
 **Shareable link for testers:**  
 https://lenr-sim-beta.conscious.energy  
@@ -18,25 +18,24 @@ https://lenr-sim-beta.conscious.energy
 Operator probe:
 
 ```bash
-EXPECT_VERSION=0.3.7-beta \
+EXPECT_VERSION=0.3.8-beta \
   ./LENR_SIM_APP_v2/infrastructure/vps/scripts/verify-beta-share.sh
 # or:
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
 
-Latest agent probe (2026-10-17T14:35Z): `status=healthy`, `version=0.3.7-beta`,
-`database.connected=true` (recovered after same-day Hostinger maintenance window
-where SSH/HTTPS briefly timed out). Staging KVM1 `31.220.55.113` remains
-Docker-ready with **Swarm=inactive** until `CONFIRM_SWARM_0_3_8`.
+Pre-promote probe (2026-10-20): `status=healthy`, `version=0.3.7-beta`,
+`database.connected=true`; BF defaults already included `dynamics_mode=auto`.
+Post-ship expect `version=0.3.8-beta` and `/models/` static pages.
 
 ## Release line vs tip
 
 | Surface | Ref | Notes |
 |---------|-----|-------|
-| Git tag / Release | `v0.3.7-beta` | Published prerelease on GitHub (target `04543b3` + CHANGELOG #234) |
-| `main` tip | may be ahead of tag | Hotfix / docs only (e.g. CI re-trigger #236); markers stay `0.3.7-beta` |
+| Git tag / Release | `v0.3.8-beta` | Annotated tag on `main` after Compose promote |
+| `main` tip | `0.3.8-beta` markers | Compose share ship line; ARA Wave 1 + deps |
 | Live Compose share | operator-shipped from `main` / tags | Deploy via `VPS_*` / SSH — **not** auto from bare push |
-| `dev` | `0.3.8-beta` integration | Never auto-deployed; Swarm prep only |
+| `dev` | `0.3.8-beta` integration | Never auto-deployed; Swarm staging prep / science |
 
 ## Intended public name — still blocked by DNS
 

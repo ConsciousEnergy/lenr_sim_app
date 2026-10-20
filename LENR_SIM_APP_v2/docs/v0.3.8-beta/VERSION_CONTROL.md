@@ -9,9 +9,9 @@ It does **not** authorize public Swarm cutover. Cutover remains gated by
 
 | Ref | Markers | Deploy | Purpose |
 |-----|---------|--------|---------|
-| `main` + tag `v0.3.7-beta` | `0.3.7-beta` | Compose share ship only (`deploy.yml` on `main` + `v*` tags) | Live public beta |
-| `dev` | `0.3.8-beta` | **No** auto VPS ship | Integration for Swarm prep, science, deps |
-| Short-lived `consciousenergy/*` / `feat/*` | inherit base | PR → **`dev`** (default) or `main` (0.3.7 hotfix only) | Topic changes |
+| `main` + tag `v0.3.8-beta` | `0.3.8-beta` | Compose share ship only (`deploy.yml` on `main` + `v*` tags) | Live public beta |
+| `dev` | `0.3.8-beta` | **No** auto VPS ship | Integration for Swarm staging prep, science, deps |
+| Short-lived `consciousenergy/*` / `feat/*` | inherit base | PR → **`dev`** (default) or `main` (Compose hotfix only) | Topic changes |
 
 Policy source of truth: [`.github/BRANCHING.md`](../../../.github/BRANCHING.md).  
 Agent map: [`AGENTS.md`](../../../AGENTS.md).  
@@ -20,14 +20,13 @@ Dependabot: `target-branch: dev` in [`.github/dependabot.yml`](../../../.github/
 
 ```mermaid
 flowchart LR
-  mainLine[main_0_3_7_beta]
-  tag037[tag_v0_3_7_beta]
+  mainLine[main_0_3_8_beta_Compose]
+  tag038[tag_v0_3_8_beta]
   devLine[dev_0_3_8_beta]
   feat[short_lived_PRs]
   staging[staging_Swarm_dry_run]
   public[public_Swarm_0_3_9]
-  mainLine --> tag037
-  mainLine --> devLine
+  mainLine --> tag038
   feat --> devLine
   feat -.->|hotfix_only| mainLine
   devLine --> staging
@@ -41,7 +40,8 @@ flowchart LR
 - `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
 - `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
 
-On `dev`, all four are `0.3.8-beta`. Do not bump `main` until a promote PR.
+On `main` and `dev`, all four are `0.3.8-beta` after the Compose promote.
+Do not bump markers except via a controlled promote / train-cut PR.
 
 ## Implementation phases (0.3.8 train)
 
@@ -51,6 +51,7 @@ Ordered for progressive delivery. Each phase is a PR (or short PR ladder) into *
 
 - [x] Long-lived `dev` at `0.3.8-beta` (consolidation)
 - [x] Promote BRANCHING / Dependabot / CI `dev` filters onto default-branch `main` tip (#240)
+- [x] Controlled `dev` → `main` Compose promote to **v0.3.8-beta** (no Swarm cutover)
 - [ ] Keep `PR_AND_BRANCH_HYGIENE.md` current after each ladder
 
 ### Phase A2 — ARA Oct 2026 workbench Wave 1 (science; parallel to Swarm)

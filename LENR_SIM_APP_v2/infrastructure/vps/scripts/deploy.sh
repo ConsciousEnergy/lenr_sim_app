@@ -5,7 +5,7 @@
 #     ./LENR_SIM_APP_v2/infrastructure/vps/scripts/deploy.sh
 # Optional:
 #   BUILD_LOCALLY=1        build images on the host instead of pulling GHCR
-#   IMAGE_TAG=0.3.7-beta   override tag (wins over .env; use for tip deploys)
+#   IMAGE_TAG=0.3.8-beta   override tag (wins over .env; use for tip deploys)
 #   UPDATE_ENV_IMAGE_TAG=1 persist IMAGE_TAG back into LENR_ENV_FILE
 set -euo pipefail
 
@@ -42,7 +42,7 @@ done < <(grep -E '^(IMAGE_TAG|GHCR_USER|GHCR_TOKEN|LENR_WORKERS)=' "$ENV_FILE" |
 if [[ -n "$REQUESTED_IMAGE_TAG" ]]; then
   IMAGE_TAG="$REQUESTED_IMAGE_TAG"
 fi
-IMAGE_TAG="${IMAGE_TAG:-0.3.7-beta}"
+IMAGE_TAG="${IMAGE_TAG:-0.3.8-beta}"
 PREVIOUS_TAG_FILE=/opt/lenr-sim/.previous-image-tag
 
 if [[ "${UPDATE_ENV_IMAGE_TAG:-0}" == "1" ]]; then
