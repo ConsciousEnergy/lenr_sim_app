@@ -4,7 +4,9 @@
 # ==============================================================================
 # Stage 1: Build dependencies
 # ==============================================================================
-FROM python:3.14-slim AS builder
+# Hold 3.12 for Compose ship: scipy==1.14.1 has no cp314 wheel and
+# source builds need gfortran (Dependabot #243 3.14 bump fails pip install).
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -26,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ==============================================================================
 # Stage 2: Production image
 # ==============================================================================
-FROM python:3.14-slim AS production
+FROM python:3.12-slim AS production
 
 ARG BUILD_VERSION=0.3.8-beta
 
