@@ -2,12 +2,13 @@
 # Staging Swarm dry-run helper (v0.3.8) — never public cutover.
 #
 # Default: plan-only. Remote terraform plan / ansible --check require
-# EXECUTE=1 and CONFIRM=I_STAGING_0_3_8 plus local credential files.
+# EXECUTE=1 and CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 plus local credential files.
+# Legacy alias: CONFIRM=I_STAGING_0_3_8 (still accepted).
 #
 # Usage (repo root):
 #   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh
 #   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
-#   CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
+#   CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 EXECUTE=1 \
 #     ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
 #
 # remote expects (do not commit):
@@ -19,6 +20,8 @@
 set -euo pipefail
 
 CONFIRM_TOKEN="I_STAGING_0_3_8"
+# Primary: CONFIRM_SWARM_0_3_8 (matches deploy.sh). Alias: CONFIRM.
+_EFFECTIVE_CONFIRM="${CONFIRM_SWARM_0_3_8:-${CONFIRM:-}}"
 MODE="${1:-plan}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -45,13 +48,16 @@ print_plan() {
 
 # Remote plan + ansible --check (credentials on operator/agent machine):
 #   copy backend.hcl.example → backend.hcl
-#   copy terraform.tfvars.example → staging.tfvars (staging-safe values)
-#   copy inventory.yml.example → inventory.staging.yml
-CONFIRM=${CONFIRM_TOKEN} EXECUTE=1 \\
+#   copy staging.tfvars.example → staging.tfvars (staging-safe values)
+#   copy inventory.staging.yml.example → inventory.staging.yml
+CONFIRM_SWARM_0_3_8=${CONFIRM_TOKEN} EXECUTE=1 \\
   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
 
-# Production cutover remains separate:
-CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh production
+# Staging apply (separate; not this helper):
+CONFIRM_SWARM_0_3_8=${CONFIRM_TOKEN} ./LENR_SIM_APP_v2/infrastructure/scripts/deploy.sh staging
+
+# Production cutover remains separate (v0.3.9 train):
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./LENR_SIM_APP_v2/infrastructure/scripts/deploy.sh production
 EOF
 }
 
@@ -90,14 +96,17 @@ cmd_local() {
       fi
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/deploy-stack.yml
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/site.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/join-workers.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/setup-docker.yml
     )
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"
 }
 
 cmd_remote() {
-  if [[ "${CONFIRM:-}" != "$CONFIRM_TOKEN" ]]; then
-    echo "ERROR: refuse remote without CONFIRM=${CONFIRM_TOKEN}" >&2
+  if [[ "$_EFFECTIVE_CONFIRM" != "$CONFIRM_TOKEN" ]]; then
+    echo "ERROR: refuse remote without CONFIRM_SWARM_0_3_8=${CONFIRM_TOKEN}" >&2
+    echo "(legacy alias CONFIRM=${CONFIRM_TOKEN} is also accepted)" >&2
     exit 2
   fi
   if [[ "${EXECUTE:-0}" != "1" ]]; then
@@ -115,6 +124,7 @@ cmd_remote() {
   ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   {
     echo "timestamp_utc=$ts"
+    echo "confirm_source=${CONFIRM_SWARM_0_3_8:+CONFIRM_SWARM_0_3_8}${CONFIRM_SWARM_0_3_8:-${CONFIRM:+CONFIRM}}"
     echo "== terraform init (remote backend) + workspace staging + plan =="
     (
       cd "$TF_DIR"
@@ -122,14 +132,15 @@ cmd_remote() {
       terraform workspace select staging 2>/dev/null || terraform workspace new staging
       terraform plan -var-file=staging.tfvars -out="$EVIDENCE_DIR/staging.tfplan"
     )
-    echo "== ansible-playbook --check --diff =="
+    echo "== ansible-playbook --check --diff (setup-docker + join-workers + deploy-stack) =="
     (
       cd "$ANSIBLE_DIR"
+      ansible-playbook --syntax-check -i inventory.staging.yml playbooks/join-workers.yml
       ansible-playbook --check --diff \
         -i inventory.staging.yml \
         playbooks/deploy-stack.yml
     )
-    echo "NOTE: no terraform apply / no public cutover performed"
+    echo "NOTE: no terraform apply / no Swarm apply / no public cutover performed"
   } | tee "$EVIDENCE_DIR/staging_swarm_remote_dry_run.log"
   echo "OK: remote staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_remote_dry_run.log"
 }
