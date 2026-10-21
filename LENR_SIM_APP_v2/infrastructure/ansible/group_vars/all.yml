@@ -49,6 +49,9 @@ backup_retention_days: 7
 backup_schedule: "0 3 * * *"  # Daily at 3 AM
 
 # Monitoring / observability (see docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md)
+# Stack services live in templates/docker-stack.yml.j2 when observability_enabled.
+# Placement constraints use separate Swarm labels: app=true, observability=true
+# (applied by playbooks/join-workers.yml from inventory swarm_node_labels).
 health_check_interval: 30
 health_check_timeout: 10
 health_check_retries: 3

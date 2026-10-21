@@ -2,13 +2,23 @@
 # LENR Simulation App - Docker + Swarm Setup Playbook
 # Installs Docker, configures Swarm mode, and prepares for deployment
 
+# Install Docker on every inventory host. Swarm *init* runs only on managers
+# (group swarm_managers when present; otherwise hosts: all for flat inventories).
+# Worker join + labels: playbooks/join-workers.yml
+
 - name: Setup Docker and Docker Swarm
   hosts: all
   become: true
   vars:
     docker_users:
       - root
-    swarm_init: true
+    # Init only on managers — workers join via join-workers.yml.
+    # Flat inventories (no swarm_managers group): init on every host (single-node).
+    swarm_init: >-
+      {{
+        true if ((groups['swarm_managers'] | default([])) | length == 0)
+        else (inventory_hostname in groups['swarm_managers'])
+      }}
     
   tasks:
     # ==========================================================================
@@ -135,10 +145,10 @@
       register: swarm_status
       changed_when: false
       
-    - name: Initialize Docker Swarm
+    - name: Initialize Docker Swarm (managers only)
       ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address | default(ansible_host) }}
       when: 
-        - swarm_init
+        - swarm_init | bool
         - swarm_status.stdout != "active"
         - (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) or ansible_host is defined
       register: swarm_init_result
@@ -146,20 +156,11 @@
         swarm_init_result.rc != 0 and
         ("already part of a swarm" not in swarm_init_result.stderr | default("") and
          "already part of a swarm" not in swarm_init_result.stdout | default(""))
-      
-    - name: Get Swarm join token for workers
-      ansible.builtin.command: docker swarm join-token -q worker
-      register: swarm_worker_token
-      when: 
-        - swarm_status.stdout == "active" or (swarm_init_result is defined and swarm_init_result.changed)
-      changed_when: false
-      
-    - name: Store Swarm join token
-      ansible.builtin.set_fact:
-        swarm_token: "{{ swarm_worker_token.stdout }}"
-      when: 
-        - swarm_worker_token is defined
-        - swarm_worker_token.stdout is defined
+
+    - name: Skip Swarm init on workers (joined by join-workers.yml)
+      ansible.builtin.debug:
+        msg: "Skipping swarm init on {{ inventory_hostname }} (not in swarm_managers); use join-workers.yml"
+      when: not (swarm_init | bool)
       
     # ==========================================================================
     # Prepare Application Directories
@@ -196,7 +197,10 @@
         driver: overlay
         attachable: true
         scope: swarm
-      when: swarm_status.stdout == "active" or swarm_init_result.changed
+      when: >
+        (swarm_init | bool) and
+        (swarm_status.stdout == "active" or
+         (swarm_init_result is defined and swarm_init_result is changed))
       
     # ==========================================================================
     # System Tuning

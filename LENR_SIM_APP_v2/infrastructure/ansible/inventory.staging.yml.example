@@ -1,17 +1,22 @@
 # Staging Swarm inventory (v0.3.8) — copy to inventory.staging.yml (do not commit).
-# Used by staging-swarm-dry-run.sh remote (ansible --check only).
+# Used by staging-swarm-dry-run.sh remote and deploy.sh staging.
 #
 # Preferred topology (2×KVM2 + 1×KVM1):
-#   - staging-manager-1 = NEW Hostinger KVM1 IP (see docs/v0.3.8-beta/KVM1_OPERATOR_WALKTHROUGH.md)
-#   - swarm_workers optional for multi-node staging; at 0.3.9 cutover KVM1 becomes a prod worker
+#   - staging-manager-1 = Hostinger KVM1 IP
+#     (docs/v0.3.8-beta/KVM1_OPERATOR_WALKTHROUGH.md,
+#      docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md)
+#   - swarm_workers optional for multi-node staging; at 0.3.9 cutover KVM1
+#     becomes a prod worker with app=true + observability=true
 #
 # Do not list the live Compose share VPS (185.211.4.66) as Swarm manager without
 # a written migration plan / CONFIRM_SWARM_0_3_9 cutover window.
 # Do NOT use CI KVM2 45.93.100.251 / 2012566 as a Swarm node (untrusted PR code).
 #
-# After join, apply labels (manager shell):
-#   docker node update --label-add role=app <manager_or_share>
-#   docker node update --label-add role=app --label-add role=observability <kvm1>
+# Labels use separate keys (Swarm: one value per key). Applied by join-workers.yml:
+#   app=true
+#   observability=true
+# Manual equivalent on manager:
+#   docker node update --label-add app=true --label-add observability=true <node_id>
 
 all:
   children:
@@ -21,8 +26,10 @@ all:
           ansible_host: STAGING_MANAGER_IP  # KVM1 IP — never 185.211.4.66 / 45.93.100.251
           ansible_user: root
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
-          # Intended labels after swarm init (document only; apply via docker node update):
-          # node_labels: ["role=app", "role=observability"]
+          # Single-node staging: app + observability on the manager.
+          swarm_node_labels:
+            - app=true
+            - observability=true
     swarm_workers:
       hosts:
         # Optional second staging node. Omit / comment for single-node staging caveat.
@@ -30,6 +37,8 @@ all:
         #   ansible_host: STAGING_WORKER_IP
         #   ansible_user: root
         #   ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+        #   swarm_node_labels:
+        #     - app=true
   vars:
     app_domain: "conscious.energy"
     api_subdomain: "api-staging"
@@ -42,7 +51,10 @@ all:
     postgres_user: "lenr_app"
     fastapi_workers: 2
     fastapi_log_level: "info"
-    # Prometheus + Grafana on nodes labeled role=observability
+    # Prometheus + Grafana (see OBSERVABILITY_GRAFANA.md). Staging: labels optional.
     observability_enabled: true
+    require_app_label: false
+    require_observability_label: false
     grafana_admin_user: "admin"
-    # Set grafana_admin_password via Ansible vault / Swarm secret — never commit.
+    grafana_traefik_enabled: false
+    # Set grafana_admin_password / grafana_basic_auth via Ansible vault — never commit.

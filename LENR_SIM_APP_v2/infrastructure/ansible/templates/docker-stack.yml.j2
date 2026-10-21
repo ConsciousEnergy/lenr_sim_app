@@ -111,15 +111,16 @@ services:
     deploy:
       mode: replicated
       replicas: {{ fastapi_workers | default(2) }}
-      # Production (require_app_label=true): pin to nodes labeled role=app
+      # Production (require_app_label=true): pin to nodes labeled app=true
       # (share manager + KVM1 worker). Staging default leaves unconstrained so
       # single-node KVM1 works before labels are applied.
+      # Use separate label keys (app / observability) — Swarm allows one value per key.
       placement:
         preferences:
-          - spread: node.labels.role
+          - spread: node.labels.app
 {% if require_app_label | default(false) %}
         constraints:
-          - node.labels.role == app
+          - node.labels.app == true
 {% endif %}
       update_config:
         parallelism: 1
@@ -213,7 +214,7 @@ services:
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
@@ -250,7 +251,7 @@ services:
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
@@ -291,7 +292,7 @@ services:
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
