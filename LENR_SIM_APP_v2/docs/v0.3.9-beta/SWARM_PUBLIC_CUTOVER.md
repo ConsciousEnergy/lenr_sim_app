@@ -4,6 +4,10 @@
 Traefik (+ Cloudflare Pages SPA host), replacing single-VPS Compose+Caddy as the
 primary share URL.
 
+**This is a separate train from v0.3.8 staging.** Do not mix
+`CONFIRM_SWARM_0_3_8` (staging / KVM1 only) with this cutover. Topology SOT:
+[`../v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](../v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
+
 **Hard gate:**
 
 ```bash
@@ -13,23 +17,50 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 Do not weaken this string. Staging experiments continue to use
 `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` only.
 
+`deploy.sh production` uses **prod** files only:
+
+| File | Source example |
+|------|----------------|
+| `infrastructure/ansible/inventory.yml` | `inventory.yml.example` |
+| `infrastructure/terraform/terraform.tfvars` | `terraform.tfvars.example` |
+
+## Prerequisites before the window
+
+1. Staging barcode green ([`STAGING_SWARM_DRY_RUN.md`](../v0.3.8-beta/STAGING_SWARM_DRY_RUN.md)).
+2. Compose rollback rehearsed once on live share
+   ([`ROLLBACK_AND_STAGING_CHECKLIST.md`](../v0.3.8-beta/ROLLBACK_AND_STAGING_CHECKLIST.md)).
+3. Node label contract understood: `app=true` / `observability=true`
+   ([`join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml)).
+4. Announced maintenance window; DNS TTLs lowered if needed.
+5. Version markers prepared for `0.3.9-beta` (release-quality-gate).
+
 ## Cutover sequence
 
-1. Version bump to `0.3.9-beta` across version surfaces (release-quality-gate).
-2. Maintenance window; lower DNS TTLs if needed.
+1. Version bump to `0.3.9-beta` across four version surfaces; run
+   release-quality-gate.
+2. Maintenance window open.
 3. Apply prod Terraform: Pages on `app.` (never `@`/`www`); `api.` A
    `proxied=false`; Hostinger **import/existing** only
    ([DNS_AND_HOSTINGER_DECISIONS.md](../v0.3.8-beta/DNS_AND_HOSTINGER_DECISIONS.md)).
-4. Ansible Swarm multi-node + Traefik stack; GHCR auth; rolling update.
-5. Flip public share hostname(s); watch `/api/health` + error rate.
-6. Keep Compose artifacts + rollback tag for ≥ one release; document RTO.
+4. Promote **share** (`185.211.4.66`) to Swarm manager; leave CI
+   (`45.93.100.251`) forever outside the cluster.
+5. On KVM1: leave staging Swarm if still a staging manager, then
+   `docker swarm join` as **worker**; apply labels via inventory /
+   `join-workers.yml` (`app=true` + `observability=true`).
+6. Ansible Traefik stack; GHCR auth; rolling update
+   (`require_app_label=true`, `require_observability_label=true` in prod).
+7. Flip public share hostname(s); watch `/api/health` + error rate + Grafana.
+8. Keep Compose artifacts + rollback tag for ≥ one release; document RTO.
 
 ## Status on this train
 
 | Item | State |
 |------|-------|
 | Confirm gate in `deploy.sh` | Implemented |
+| Staging path uses staging inventory/tfvars | Implemented (0.3.8 tooling) |
 | Operator production apply | **Blocked** until human sets `CONFIRM_SWARM_0_3_9` with live credentials |
 | Compose retained for rollback | Required |
+| Manager raft quorum (≥3 managers) | **Out of scope** for this cutover |
 
 EQ-OPEN-* remain OPEN; fidelity work does not authorize theory endorsement.
+Agents must not set `CONFIRM_SWARM_0_3_9` without an explicit human ask.
