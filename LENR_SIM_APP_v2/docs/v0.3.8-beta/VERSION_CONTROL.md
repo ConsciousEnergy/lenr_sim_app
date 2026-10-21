@@ -77,10 +77,15 @@ Owner docs: [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md),
 2. Operator copies untracked Terraform/Ansible examples → real credentials
    (inventory manager IP = **KVM1**, never CI / never blind share promote)
 3. Local: `./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local`
-4. Remote dry-run only with `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 … remote`
+4. Remote dry-run only with
+   `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 EXECUTE=1 … remote`
+   (legacy alias `CONFIRM=` still accepted)
 5. Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
+   (`deploy.sh staging` uses `inventory.staging.yml` + `staging.tfvars`)
 6. Validate Traefik → API, Pages CORS/WS on **staging** host ≠ CI box `2012566`
-7. Optional: enable Prometheus/Grafana on `role=observability` (private access)
+   (barcode in [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md))
+7. Optional: pin Prometheus/Grafana with `observability=true` (private access;
+   [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md))
 
 **Components in scope for staging:** Docker Swarm, Ansible playbooks, Traefik
 ingress, Cloudflare DNS/Pages wiring (staging), Terraform remote state,

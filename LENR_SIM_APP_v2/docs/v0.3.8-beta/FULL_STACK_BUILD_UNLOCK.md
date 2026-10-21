@@ -55,7 +55,7 @@ Copy examples → **untracked** files (never commit):
    or accepted single-node caveat ([`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md))
 5. Plan/check only:
    ```bash
-   CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
+   CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 EXECUTE=1 \
      ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
    ```
 6. Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — validate Traefik
@@ -99,6 +99,6 @@ then start it again until the journal shows `Listening for Jobs`.
 3. **Operator:** drop untracked Terraform/Ansible staging credentials (checklist above).
 4. **Operator:** either stay on **local dry-run** (no 3rd VPS) or provision a
    staging manager ≠ `2012566` / accept single-node cutover rehearsal on share.
-5. **Remote dry-run only:** `CONFIRM=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote`
+5. **Remote dry-run only:** `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 EXECUTE=1 ./…/staging-swarm-dry-run.sh remote` (legacy `CONFIRM=` alias accepted)
 6. **Staging apply** under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — Traefik → API, Pages CORS/WS.
 7. **Public cutover** later under `CONFIRM_SWARM_0_3_9` (do not set without an announced window).

@@ -4,10 +4,12 @@
 split for **user metrics** (PostHog). Not a second product-analytics warehouse.
 Product events stay in **PostHog** (env-gated, no PII in Prometheus).
 
-Placement: KVM1 worker with `node.labels.role == observability`.
+Placement: KVM1 worker with `node.labels.observability == true`
+(separate from `app=true` — Swarm allows one value per label key).
 Hardware ↔ Swarm diagrams (SOT):
 [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md)
 (Architecture diagrams — Container view + Persistent storage).
+Labels applied by [`join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml).
 
 ## What we monitor
 
@@ -45,9 +47,12 @@ Services in
 [`docker-stack.yml.j2`](../../infrastructure/ansible/templates/docker-stack.yml.j2)
 behind `observability_enabled | default(true)`:
 
-- `prometheus`, `grafana` — pin with `require_observability_label` in prod
-- `blackbox` — health probes
+- `prometheus`, `grafana` — pin with `require_observability_label` →
+  `node.labels.observability == true` in prod
+- `blackbox` — health probes (same observability constraint when required)
 - `node-exporter` — `deploy.mode: global`
+- Staging default: `observability_enabled=true`,
+  `require_observability_label=false` (single-node KVM1)
 
 Config skeletons (no secrets):
 

@@ -53,11 +53,13 @@ Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 | Stage | When | Confirm env | Doc |
 |-------|------|-------------|-----|
 | Compose share (now) | v0.3.8-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
-| Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
-| Public Swarm + Pages | later | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) — uses `inventory.staging.yml` + `staging.tfvars` only |
+| Public Swarm + Pages | later (**separate 0.3.9 train**) | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
 
-Topology diagrams (hardware ↔ Swarm, legends, storage):
+Topology diagrams (hardware ↔ Swarm, legends, storage) — diagram SOT:
 [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
+Node labels: `app=true` / `observability=true` via
+[`join-workers.yml`](LENR_SIM_APP_v2/infrastructure/ansible/playbooks/join-workers.yml).
 
 Do **not** apply public Swarm without the 0.3.9 confirm. Do **not** close any `EQ-OPEN-*`.
 

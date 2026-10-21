@@ -3,6 +3,8 @@
 Copied by Ansible `deploy-stack.yml` (and operators) to
 `/opt/lenr-sim/observability/` on Swarm nodes. Stack services are defined in
 `ansible/templates/docker-stack.yml.j2` when `observability_enabled=true`.
+Pin with `require_observability_label=true` → Swarm label `observability=true`
+(applied by `playbooks/join-workers.yml`; separate from `app=true`).
 
 | Path | Role |
 |------|------|
