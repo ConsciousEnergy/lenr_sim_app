@@ -38,12 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover prep asserts ≥5GiB free on share + KVM1 `/` (`CUTOVER_MIN_FREE_GIB`)
 - Post-cutover verify + prod stack render gate cover Grafana/Prometheus
   observability services (skip with `SKIP_OBSERVABILITY_CHECK=1`)
-- Docs: `D4S_DFORCE_OPERATOR.md` — optional D-Force (`d4s`) Swarm/Compose TUI
-  (k9s-like; not a cutover gate)
+- Docs: `D4S_DFORCE_OPERATOR.md` — optional D-Force / D4S (`d4s`) Swarm/Compose
+  TUI (k9s-like; not a cutover gate); linked from `AGENTS.md`, topology,
+  operator lab, and public cutover status table
 - Cutover prep asserts Prometheus/Grafana scaffolds on share + KVM1
   (`ALLOW_OBS_PRESTAGE_GAP=1` to defer to deploy-stack sync)
 - Grafana admin via Swarm secret `grafana_admin_password` (file env); cutover
   imports/mints before deploy; post-cutover checks secret + KVM1 placement
+- Cutover prep notes Grafana admin password source (`.env` / file / mint-on-cutover)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

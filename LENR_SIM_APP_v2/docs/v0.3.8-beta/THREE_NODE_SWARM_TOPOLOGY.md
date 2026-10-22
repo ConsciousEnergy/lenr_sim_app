@@ -6,6 +6,8 @@ CI KVM2 never joins Swarm. `EQ-OPEN-*` stay OPEN.
 
 Companion walkthrough: [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md).  
 Observability: [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md).  
+Operator TUI (optional): [`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md) —
+D-Force (`d4s`), k9s-like Swarm/Compose browser; not a cutover gate.  
 DNS: [`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md).  
 Learning map (two KVM2s only): [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md).
 
@@ -382,5 +384,7 @@ Do **not** set `CONFIRM_SWARM_0_3_9` from CI/docs PRs. Do **not** close any
 - Swarm join / init on CI `2012566`
 - Putting `VPS_*` or deploy secrets on `lenr-ci`
 - Swarm init on live share without announced cutover + `CONFIRM_SWARM_0_3_9`
+- Pointing D-Force (`d4s`) / Docker contexts at the CI host (or baking `d4s` into app images)
+- Using `d4s` destructive actions to replace gated cutover / restore scripts
 - Unauthenticated Grafana or Traefik dashboard on `0.0.0.0`
 - Longhorn / NFS-as-Postgres-datadir on this Swarm train

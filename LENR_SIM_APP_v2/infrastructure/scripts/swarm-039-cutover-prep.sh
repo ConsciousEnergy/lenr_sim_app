@@ -297,6 +297,25 @@ else
   bad "share /opt/lenr-sim/.env missing LENR_DB_PASSWORD or LENR_SECRET_KEY"
 fi
 
+# 7e2) Grafana admin password source (cutover mints Swarm secret if absent)
+if [[ -f "$SHARE_KEY" ]]; then
+  gf_src="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || true
+f=/opt/lenr-sim/.env
+p=/opt/lenr-sim/.grafana-admin-password
+if [[ -f "$p" ]] && [[ -s "$p" ]]; then echo file; exit 0; fi
+if [[ -f "$f" ]] && grep -qE '^GRAFANA_ADMIN_PASSWORD=.+' "$f"; then echo env; exit 0; fi
+echo missing
+EOS
+)"
+  gf_src="$(printf '%s' "$gf_src" | tr -d '\r' | tail -1)"
+  case "$gf_src" in
+    env) ok "share GRAFANA_ADMIN_PASSWORD present in .env (cutover → Swarm secret)" ;;
+    file) ok "share /opt/lenr-sim/.grafana-admin-password present (cutover → Swarm secret)" ;;
+    *) note "share GRAFANA_ADMIN_PASSWORD unset — cutover will mint + write .env + Swarm secret" ;;
+  esac
+fi
+
 # 7f) Observability scaffolds on share + KVM1 (deploy-stack also syncs; prestage shortens window)
 obs_check='test -f /opt/lenr-sim/observability/prometheus/prometheus.yml \
   && test -d /opt/lenr-sim/observability/grafana/provisioning'
