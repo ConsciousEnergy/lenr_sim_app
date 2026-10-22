@@ -98,6 +98,8 @@ cmd_local() {
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/site.yml
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/join-workers.yml
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/setup-docker.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/leave-staging-swarm.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/backup.yml
     )
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"

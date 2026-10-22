@@ -42,17 +42,31 @@ Do not weaken this string. Staging experiments continue to use
 
 ## Cutover sequence
 
+**Preferred executor** (dry-run by default; never auto-sets confirm):
+
+```bash
+# Plan + prep only:
+./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
+
+# Live (human-armed confirm + EXECUTE=1):
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \
+  ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
+```
+
+Manual checklist (same order as the script):
+
 1. Version bump to `0.3.9-beta` across four version surfaces; run
    release-quality-gate.
 2. Maintenance window open.
-3. Apply prod Terraform: Pages on `app.` (never `@`/`www`); `api.` A
-   `proxied=false`; Hostinger **import/existing** only
+3. WordPress.com DNS (apex NS): `A api → <share/Swarm VIP>`; keep
+   `lenr-sim-beta` for Compose rollback. Staging used `A api-staging → KVM1`.
    ([DNS_AND_HOSTINGER_DECISIONS.md](../v0.3.8-beta/DNS_AND_HOSTINGER_DECISIONS.md)).
 4. Promote **share** (`185.211.4.66`) to Swarm manager; leave CI
    (`45.93.100.251`) forever outside the cluster.
-5. On KVM1: leave staging Swarm if still a staging manager, then
-   `docker swarm join` as **worker**; apply labels via inventory /
-   `join-workers.yml` (`app=true` + `observability=true`).
+5. On KVM1: leave staging Swarm
+   (`playbooks/leave-staging-swarm.yml` + `CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING`),
+   then join as **worker**; labels via `join-workers.yml`
+   (`app=true` + `observability=true`).
 6. Ansible Traefik stack; GHCR auth; rolling update
    (`require_app_label=true`, `require_observability_label=true` in prod).
 7. Flip public share hostname(s); watch `/api/health` + error rate + Grafana.
