@@ -47,14 +47,24 @@ Public beta Compose path:
 Staging dry-run (0.3.8):
   CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
 
-Production multi-node cutover (0.3.9 target):
-  CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
+Production multi-node cutover (0.3.9 target) — use the cutover executor
+(drain Compose, leave staging, import .env secrets, join worker):
+  CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \
+    ./infrastructure/scripts/swarm-039-cutover.sh
 EOF
     exit 2
   fi
-  INVENTORY_FILE="$ANSIBLE_DIR/inventory.yml"
-  TFVARS_FILE="$TERRAFORM_DIR/terraform.tfvars"
-  TF_WORKSPACE="default"
+  # Do NOT run Terraform + random POSTGRES_PASSWORD against the live share.
+  # That path skips drain/leave/secret-import and breaks postgres_volume_external.
+  cat <<EOF
+==========================================
+Production cutover → swarm-039-cutover.sh
+==========================================
+Delegating (CONFIRM set). Set EXECUTE=0 for dry-run plan only.
+EOF
+  export CONFIRM_SWARM_0_3_9="$_confirm_039"
+  export EXECUTE="${EXECUTE:-1}"
+  exec "$SCRIPT_DIR/swarm-039-cutover.sh"
 else
   echo "ERROR: ENVIRONMENT must be staging or production (got: $ENVIRONMENT)" >&2
   exit 2

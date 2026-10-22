@@ -3,9 +3,12 @@
 
 # Application settings
 app_name: lenr-sim
-# Placeholder for the v0.3.8-beta Swarm path (do not ansible-playbook prod in 0.3.7).
-app_version: "0.3.8-beta"
+# Swarm image tags (bump with the four version surfaces for a release cutover).
+app_version: "0.3.9-beta"
 backend_image_tag: "{{ app_version }}"
+frontend_image_tag: "{{ app_version }}"
+swarm_frontend_enabled: false
+frontend_replicas: 2
 app_domain: "conscious.energy"
 api_subdomain: "api"
 
@@ -16,7 +19,7 @@ docker_users:
   # Note: root access should use become: true in playbooks, not persistent group membership
 
 # Traefik settings
-traefik_version: "v3.0"
+traefik_version: "v3.6.1"
 traefik_dashboard_enabled: false
 traefik_dashboard_auth: true
 traefik_acme_email: "diadon@conscious.energy"
@@ -38,6 +41,13 @@ ufw_allowed_ports:
   - 22   # SSH
   - 80   # HTTP (for Let's Encrypt)
   - 443  # HTTPS
+# Docker Swarm (control / gossip / overlay data) — required for multi-node join
+ufw_swarm_ports_tcp:
+  - 2377
+  - 7946
+ufw_swarm_ports_udp:
+  - 7946
+  - 4789
 
 fail2ban_enabled: true
 fail2ban_sshd_maxretry: 3

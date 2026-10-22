@@ -1,6 +1,6 @@
 {
   "name": "lenr-sim-frontend",
-  "version": "0.3.8-beta",
+  "version": "0.3.9-beta",
   "private": true,
   "license": "GPL-3.0",
   "repository": {
@@ -74,8 +74,9 @@
     "nanoid": "^3.3.18",
     "fast-uri": "^3.1.7",
     "browserslist": "^4.28.7",
-    "dompurify": "^3.4.16",
-    "source-map-js": "^1.2.2"
+    "dompurify": "^3.4.17",
+    "source-map-js": "^1.2.2",
+    "follow-redirects": "^1.16.1"
   },
   "scripts": {
     "start": "vite",

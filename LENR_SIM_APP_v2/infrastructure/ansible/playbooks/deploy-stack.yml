@@ -7,11 +7,27 @@
   become: true
   vars:
     stack_name: lenr-sim
-    app_domain: "{{ app_domain | default('conscious.energy') }}"
-    api_subdomain: "{{ api_subdomain | default('api') }}"
-    traefik_acme_email: "{{ traefik_acme_email | default('diadon@conscious.energy') }}"
+    # Defaults live in group_vars/all.yml + inventory — do not self-reference here
+    # (Ansible recursive loop on app_domain / traefik_acme_email).
     
   tasks:
+    - name: Apply deploy defaults when inventory omitted them
+      ansible.builtin.set_fact:
+        app_domain: "{{ app_domain | default('conscious.energy', true) }}"
+        api_subdomain: "{{ api_subdomain | default('api', true) }}"
+        traefik_acme_email: "{{ traefik_acme_email | default('diadon@conscious.energy', true) }}"
+
+    # Flat inventories (no swarm_managers group): every host is treated as manager.
+    # Multi-node prod: stack/secret ops run only on swarm_managers; workers still
+    # receive bind-mount dirs + observability scaffolds for placement constraints.
+    - name: Decide if this host is a Swarm manager for stack ops
+      ansible.builtin.set_fact:
+        _is_swarm_manager: >-
+          {{
+            true if ((groups['swarm_managers'] | default([])) | length == 0)
+            else (inventory_hostname in groups['swarm_managers'])
+          }}
+
     # ==========================================================================
     # Pre-deployment Validation
     # ==========================================================================
@@ -26,6 +42,7 @@
       ansible.builtin.command: docker stack ls --format '{{ "{{.Name}}" }}'
       register: existing_stacks
       changed_when: false
+      when: _is_swarm_manager | bool
       
     # ==========================================================================
     # Create Required Directories
@@ -46,6 +63,39 @@
         mode: '0755'
         owner: root
         group: root
+
+    # ACME storage bind-mount target. setup-docker.yml also creates this, but
+    # cutover / redeploy may run deploy-stack alone — Traefik refuses to start
+    # (or loses certs) if /certs is missing or acme.json is world-readable.
+    - name: Ensure Traefik ACME certs directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/certs
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+
+    - name: Ensure Traefik acme.json exists with restrictive mode
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/certs/acme.json
+        state: touch
+        mode: '0600'
+        owner: root
+        group: root
+        modification_time: preserve
+        access_time: preserve
+
+    # Backend runs as uid/gid 1000 (appuser); bind mounts must be writable.
+    - name: Ensure backend bind-mount dirs are writable by appuser
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: "1000"
+        group: "1000"
+      loop:
+        - /opt/lenr-sim/logs
+        - /opt/lenr-sim/data
     
     # ==========================================================================
     # Copy Stack Files
@@ -103,89 +153,176 @@
       when: observability_enabled | default(true)
         
     # ==========================================================================
-    # Create Docker Secrets
+    # Create Docker Secrets (managers only)
     # ==========================================================================
     
-    - name: Generate PostgreSQL password if not set
-      ansible.builtin.set_fact:
-        postgres_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
-      when: postgres_password is not defined
-      
     - name: Check if postgres_password secret exists
       ansible.builtin.command: docker secret ls --format '{{ "{{.Name}}" }}'
       register: existing_secrets
       changed_when: false
+      when: _is_swarm_manager | bool
+
+    - name: Refuse random DB password when reusing Compose volume
+      ansible.builtin.assert:
+        that:
+          - >-
+            ('postgres_password' in (existing_secrets.stdout | default('')))
+            or (postgres_password is defined and (postgres_password | length) > 0)
+        fail_msg: >-
+          postgres_volume_external requires an existing docker secret
+          postgres_password (import LENR_DB_PASSWORD from Compose .env) or
+          -e postgres_password=... matching the volume. Refusing to mint a
+          random password that would break the DB.
+      when:
+        - _is_swarm_manager | bool
+        - postgres_volume_external | default(false)
+    
+    - name: Generate PostgreSQL password if not set (fresh stacks only)
+      ansible.builtin.set_fact:
+        postgres_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when:
+        - _is_swarm_manager | bool
+        - postgres_password is not defined
+        - not (postgres_volume_external | default(false))
+        - "'postgres_password' not in (existing_secrets.stdout | default(''))"
       
     - name: Create PostgreSQL password secret
       ansible.builtin.command:
         cmd: docker secret create postgres_password -
         stdin: "{{ postgres_password }}"
-      when: "'postgres_password' not in existing_secrets.stdout"
+      when:
+        - _is_swarm_manager | bool
+        - "'postgres_password' not in (existing_secrets.stdout | default(''))"
+        - postgres_password is defined
       no_log: true
       
     - name: Generate API secret key if not set
       ansible.builtin.set_fact:
         api_secret_key: "{{ lookup('password', '/dev/null length=48 chars=ascii_letters,digits') }}"
-      when: api_secret_key is not defined
+      when:
+        - _is_swarm_manager | bool
+        - api_secret_key is not defined
+        - "'api_secret_key' not in (existing_secrets.stdout | default(''))"
       no_log: true
       
     - name: Create API secret key secret
       ansible.builtin.command:
         cmd: docker secret create api_secret_key -
         stdin: "{{ api_secret_key }}"
-      when: "'api_secret_key' not in existing_secrets.stdout"
+      when:
+        - _is_swarm_manager | bool
+        - "'api_secret_key' not in (existing_secrets.stdout | default(''))"
+        - api_secret_key is defined
+      no_log: true
+
+    - name: Generate Grafana admin password if not set (observability stacks)
+      ansible.builtin.set_fact:
+        grafana_admin_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - grafana_admin_password is not defined
+        - "'grafana_admin_password' not in (existing_secrets.stdout | default(''))"
+      no_log: true
+
+    - name: Create Grafana admin password secret
+      ansible.builtin.command:
+        cmd: docker secret create grafana_admin_password -
+        stdin: "{{ grafana_admin_password }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - "'grafana_admin_password' not in (existing_secrets.stdout | default(''))"
+        - grafana_admin_password is defined
       no_log: true
       
     # ==========================================================================
-    # GHCR login (required before --with-registry-auth stack deploy)
+    # GHCR login + stack deploy (managers only)
     # ==========================================================================
 
-    - name: Require GHCR credentials for private image pulls
+    - name: Decide whether GHCR login is required
+      ansible.builtin.set_fact:
+        _skip_ghcr_login: "{{ (skip_ghcr_login | default(false)) | bool }}"
+        _have_ghcr: >-
+          {{
+            (ghcr_username | default('') | length > 0) and
+            (ghcr_token | default('') | length > 0)
+          }}
+      when: _is_swarm_manager | bool
+
+    - name: Require GHCR credentials unless skip_ghcr_login (local images)
       ansible.builtin.assert:
         that:
-          - ghcr_username is defined
-          - ghcr_username | length > 0
-          - ghcr_token is defined
-          - ghcr_token | length > 0
+          - _skip_ghcr_login or _have_ghcr
         fail_msg: >-
           Set ghcr_username + ghcr_token (Ansible Vault or env via
-          --extra-vars) before deploy-stack.yml. Prep docs:
-          docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md
+          --extra-vars) before deploy-stack.yml, or pass
+          -e skip_ghcr_login=true after loading images locally.
+          Prep docs: docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md
+      when: _is_swarm_manager | bool
 
     - name: Log in to GitHub Container Registry
       ansible.builtin.shell: |
         echo "{{ ghcr_token }}" | docker login ghcr.io -u "{{ ghcr_username }}" --password-stdin
       no_log: true
       changed_when: false
+      when:
+        - _is_swarm_manager | bool
+        - _have_ghcr | bool
 
-    # ==========================================================================
-    # Deploy Stack
-    # ==========================================================================
-    
-    - name: Deploy Docker stack
+    - name: Deploy Docker stack (with registry auth)
       ansible.builtin.command: >
-        docker stack deploy 
-        --compose-file /opt/lenr-sim/docker-stack.yml 
+        docker stack deploy
+        --compose-file /opt/lenr-sim/docker-stack.yml
         --with-registry-auth
         {{ stack_name }}
       register: deploy_result
+      when:
+        - _is_swarm_manager | bool
+        - _have_ghcr | bool
+
+    - name: Deploy Docker stack (local images, no registry auth)
+      ansible.builtin.command: >
+        docker stack deploy
+        --compose-file /opt/lenr-sim/docker-stack.yml
+        --resolve-image never
+        {{ stack_name }}
+      register: deploy_result_local
+      when:
+        - _is_swarm_manager | bool
+        - not (_have_ghcr | bool)
       
     - name: Wait for services to start
-      ansible.builtin.command: docker stack services {{ stack_name }} --format '{{ "{{.Replicas}}" }}'
+      ansible.builtin.shell: |
+        set -eu
+        bad=0
+        while read -r reps; do
+          [ -n "$reps" ] || continue
+          cur="${reps%%/*}"
+          want="${reps##*/}"
+          if [ "$cur" != "$want" ]; then
+            bad=1
+          fi
+        done <<< "$(docker stack services {{ stack_name }} --format '{{ "{{.Replicas}}" }}')"
+        exit "$bad"
+      args:
+        executable: /bin/bash
       register: services_status
-      until: "'0/' not in services_status.stdout"
-      retries: 30
+      until: services_status.rc == 0
+      retries: 36
       delay: 10
       changed_when: false
+      when: _is_swarm_manager | bool
       
     # ==========================================================================
-    # Verification
+    # Verification (managers only)
     # ==========================================================================
     
     - name: Get stack services status
       ansible.builtin.command: docker stack services {{ stack_name }}
       register: stack_services
       changed_when: false
+      when: _is_swarm_manager | bool
       
     - name: Print deployment summary
       ansible.builtin.debug:
@@ -203,18 +340,19 @@
           1. Verify DNS records point to this server
           2. Wait for Let's Encrypt certificates
           3. Test API endpoints
+      when: _is_swarm_manager | bool
           
     # ==========================================================================
     # Optional: Backup Database
     # ==========================================================================
     
-    - name: Ensure logs directory exists
+    - name: Ensure logs directory exists (appuser uid 1000 — keep writable)
       ansible.builtin.file:
         path: /opt/lenr-sim/logs
         state: directory
         mode: '0755'
-        owner: root
-        group: root
+        owner: "1000"
+        group: "1000"
         
     - name: Create backup script
       ansible.builtin.copy:
@@ -254,6 +392,7 @@
           echo "Backup created: ${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
         dest: /opt/lenr-sim/backup.sh
         mode: '0755'
+      when: _is_swarm_manager | bool
         
     - name: Setup daily backup cron job
       ansible.builtin.cron:
@@ -261,3 +400,4 @@
         minute: "0"
         hour: "3"
         job: "/opt/lenr-sim/backup.sh >> /opt/lenr-sim/logs/backup.log 2>&1"
+      when: _is_swarm_manager | bool

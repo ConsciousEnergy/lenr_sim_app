@@ -31,6 +31,7 @@ duplicating long tables in the root README.
 | [`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md) | **2×KVM2 + 1×KVM1** — diagram SOT (physical / environments / containers + legends), storage, labels, gates |
 | [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md) | Manual Hostinger KVM1 order → staging → cutover join |
 | [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md) | Prometheus/Grafana placement + trust boundaries |
+| [`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md) | Optional D-Force (`d4s`) TUI — k9s-like Swarm/Compose ops (not a cutover gate) |
 | [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md) | Hands-on file walkthrough + CLI visualization + security checklist |
 | [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md) | Portable Goal 1 pack for UMLENR hub PR (copy into `UMLENR`) |
 | [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md) | Dual-KVM2 inventory + component matrix |

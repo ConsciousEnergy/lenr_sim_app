@@ -14,7 +14,7 @@ const openQuestionsFixture = require('../fixtures/open_questions_wh_v2.json');
 
 const LAB_RESPONSE = {
   success: true,
-  contract_version: 'v0.3.8-beta-science-gate-1',
+  contract_version: 'v0.3.9-beta-science-gate-1',
   collapse_results: {
     min_radius_um: 6.0,
     max_temperature_k: 2539,

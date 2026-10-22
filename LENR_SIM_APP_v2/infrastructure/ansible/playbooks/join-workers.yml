@@ -4,6 +4,7 @@
 # Label contract — separate keys (Swarm allows one value per key):
 #   app=true            → API replica placement when require_app_label=true
 #   observability=true  → Prometheus/Grafana/blackbox when require_observability_label=true
+#   postgres=true       → external Compose DB volume pin (share manager only)
 #
 # Inventory host vars:
 #   swarm_node_labels:
@@ -133,17 +134,21 @@
         set -euo pipefail
         TARGET_NAME="{{ item }}"
         TARGET_IP="{{ hostvars[item].get('ansible_host', '') }}"
+        TARGET_ADV="{{ hostvars[item].get('swarm_advertise_addr', '') }}"
         NODE_ID="$(docker node ls -q | while read -r id; do
           host="$(docker node inspect "$id" --format '{% raw %}{{.Description.Hostname}}{% endraw %}')"
           addr="$(docker node inspect "$id" --format '{% raw %}{{.Status.Addr}}{% endraw %}')"
-          if [ "$host" = "$TARGET_NAME" ] || [ "$addr" = "$TARGET_IP" ]; then
+          if [ "$host" = "$TARGET_NAME" ] \
+            || { [ -n "$TARGET_IP" ] && [ "$addr" = "$TARGET_IP" ]; } \
+            || { [ -n "$TARGET_ADV" ] && [ "$addr" = "$TARGET_ADV" ]; }; then
             echo "$id"
             break
           fi
         done)"
         if [ -z "$NODE_ID" ]; then
-          echo "WARN: could not resolve Swarm node for $TARGET_NAME ($TARGET_IP) — skip labels" >&2
-          exit 0
+          echo "ERROR: could not resolve Swarm node for $TARGET_NAME (ip=$TARGET_IP adv=$TARGET_ADV) — labels required" >&2
+          docker node ls >&2 || true
+          exit 1
         fi
         {% for label in hostvars[item].get('swarm_node_labels', []) %}
         docker node update --label-add {{ label | quote }} "$NODE_ID"
@@ -158,6 +163,11 @@
       run_once: true
       register: label_result
       changed_when: "'Labeled' in (label_result.results | default([]) | map(attribute='stdout', default='') | join('\n'))"
+      # Inventory hostname (e.g. share-manager-1) often ≠ Docker Hostname (srv…).
+      # Match also uses ansible_host IP against node Status.Addr — fail hard if neither hits.
+      failed_when: >
+        (label_result.results | default([]) | selectattr('rc', 'defined')
+         | selectattr('rc', 'ne', 0) | list | length) > 0
 
     - name: Show current node labels
       ansible.builtin.shell: |
@@ -178,3 +188,42 @@
         - _is_swarm_manager | bool
         - node_labels_dump.stdout_lines is defined
       run_once: true
+
+    - name: Collect required label keys from inventory
+      ansible.builtin.set_fact:
+        _required_label_keys: >-
+          {{
+            groups['all']
+            | map('extract', hostvars)
+            | map(attribute='swarm_node_labels', default=[])
+            | flatten
+            | map('regex_replace', '=.*$', '')
+            | unique
+            | list
+          }}
+      when: _is_swarm_manager | bool
+      run_once: true
+
+    - name: Assert each required label key exists on at least one Swarm node
+      ansible.builtin.shell: |
+        set -euo pipefail
+        dump="$(docker node ls -q | while read -r id; do
+          docker node inspect "$id" --format '{% raw %}{{json .Spec.Labels}}{% endraw %}'
+        done)"
+        missing=0
+        for key in {{ _required_label_keys | join(' ') }}; do
+          if ! echo "$dump" | grep -q "\"${key}\""; then
+            echo "ERROR: no Swarm node has label key '${key}'" >&2
+            missing=1
+          else
+            echo "OK label key present: ${key}"
+          fi
+        done
+        exit "$missing"
+      args:
+        executable: /bin/bash
+      when:
+        - _is_swarm_manager | bool
+        - (_required_label_keys | default([]) | length) > 0
+      run_once: true
+      changed_when: false

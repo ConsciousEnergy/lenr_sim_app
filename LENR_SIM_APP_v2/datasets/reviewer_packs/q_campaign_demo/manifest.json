@@ -97,7 +97,7 @@
       {
         "id": "INV-CONTRACT-VERSION",
         "field": "contract_version",
-        "equals": "v0.3.8-beta-science-gate-1"
+        "equals": "v0.3.9-beta-science-gate-1"
       }
     ]
   },

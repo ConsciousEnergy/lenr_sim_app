@@ -8,9 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Swarm **staging** dry-run and public Swarm + Pages cutover remain gated
-  (`CONFIRM_SWARM_0_3_8` / `CONFIRM_SWARM_0_3_9`). Compose share stays the
-  public surface on `main` at **v0.3.8-beta**.
+- Public Swarm cutover remains gated on `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
+  Compose share on `main` stays **v0.3.8-beta** until the cutover window.
+- Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
+
+### Added — v0.3.9 Swarm cutover train (not live until confirm)
+- Swarm stack SPA service (`swarm_frontend_enabled`) with Traefik `PathPrefix(/api)`
+  on shared hosts (`lenr-sim-beta`) so Compose drain does not drop the UI
+- `traefik_extra_api_hosts` / `ALLOW_API_DNS_GAP` / `SKIP_IMAGE_BUILD` cutover helpers
+- Gated Compose drain + staging leave playbooks; local-image cutover path
+- Readiness barcode / window card / post-cutover verify / Compose restore (+ KVM1 leave)
+- CI/local prod stack render gate (`swarm-039-assert-prod-stack-render.sh`, wired into
+  `staging-swarm-dry-run.sh local` + cutover prep) — postgres pin, external volume, SPA PathPrefix
+- `swarm-039-prestage-images.sh` — refresh LOCAL_IMAGES on share+KVM1 without Compose drain
+- Cutover prep: KVM1→share Swarm TCP path probe (temp listeners on 2377/7946)
+- Cutover executor: post-`swarm init` manager/:2377 gate before join-workers
+- Cutover executor: LOCAL_IMAGES before Compose drain; assert :80/:443 free post-drain
+- Cutover: wait for replicas + SPA/API health (ACME settle) before post-verify
+- `deploy-stack.yml` ensures `/opt/lenr-sim/traefik/certs` (`0700`) + `acme.json`
+  (`0600`) before Traefik starts (idempotent; preserves existing cert store)
+- Cutover + post-cutover verify assert ACME store mode `0600` on the share manager
+- Cutover prep asserts Compose `.rollback-image-tag` matches live `IMAGE_TAG`
+- Cutover prep asserts Traefik ACME store pre-created on share (`0700`/`0600`)
+- Cutover: assert KVM1 left staging before Compose drain; assert Postgres
+  volume survived `compose down` (drain playbook + executor)
+- Cutover: assert Ready≥2 + app/observability/postgres labels + KVM1 worker
+  before `deploy-stack.yml` (postgres=true must be on the share manager IP)
+- Frontend `overrides.dompurify` → `^3.4.17` (GHSA-cg2g-xh64-v4q7 and related)
+- Cutover prep asserts ≥5GiB free on share + KVM1 `/` (`CUTOVER_MIN_FREE_GIB`)
+- Post-cutover verify + prod stack render gate cover Grafana/Prometheus
+  observability services (skip with `SKIP_OBSERVABILITY_CHECK=1`)
+- Docs: `D4S_DFORCE_OPERATOR.md` — optional D-Force / D4S (`d4s`) Swarm/Compose
+  TUI (k9s-like; not a cutover gate); linked from `AGENTS.md`, topology,
+  operator lab, and public cutover status table
+- Cutover prep asserts Prometheus/Grafana scaffolds on share + KVM1
+  (`ALLOW_OBS_PRESTAGE_GAP=1` to defer to deploy-stack sync)
+- Grafana admin via Swarm secret `grafana_admin_password` (file env); cutover
+  imports/mints before deploy; post-cutover checks secret + KVM1 placement
+- Cutover prep notes Grafana admin password source (`.env` / file / mint-on-cutover)
+- `SKIP_IMAGE_BUILD=1` hard-requires prestaged `:IMAGE_TAG` on share + KVM1
+  (prep BAD unless `ALLOW_IMAGE_PRESTAGE_GAP=1`; cutover skips redundant save|load)
+- Post-cutover verify asserts Traefik task on share manager (with Postgres pin)
+- Cutover hard-fails after health-wait timeout (still runs verify for evidence)
+- `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
 

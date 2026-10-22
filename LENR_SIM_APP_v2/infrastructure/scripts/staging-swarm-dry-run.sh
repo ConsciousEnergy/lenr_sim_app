@@ -83,7 +83,7 @@ cmd_local() {
       terraform init -backend=false -input=false
       terraform validate
     )
-    echo "== ansible syntax-check =="
+    echo "== ansible syntax-check (staging inventory) =="
     (
       cd "$ANSIBLE_DIR"
       # .yml.example is not auto-detected as YAML inventory; materialize a temp .yml.
@@ -98,7 +98,29 @@ cmd_local() {
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/site.yml
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/join-workers.yml
       ansible-playbook --syntax-check -i "$inv_tmp" playbooks/setup-docker.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/leave-staging-swarm.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/backup.yml
+      ansible-playbook --syntax-check -i "$inv_tmp" playbooks/drain-compose-share.yml
     )
+    echo "== ansible syntax-check (prod inventory.yml.example) =="
+    (
+      cd "$ANSIBLE_DIR"
+      prod_inv="$(mktemp -t prod-inv.XXXXXX.yml)"
+      trap 'rm -f "$prod_inv"' EXIT
+      cp inventory.yml.example "$prod_inv"
+      if grep -vE '^[[:space:]]*#' "$prod_inv" | grep -qE '45\.93\.100\.251|2012566'; then
+        echo "ERROR: prod inventory.yml.example lists CI node — refuse" >&2
+        exit 1
+      fi
+      ansible-playbook --syntax-check -i "$prod_inv" playbooks/deploy-stack.yml
+      ansible-playbook --syntax-check -i "$prod_inv" playbooks/join-workers.yml
+      ansible-playbook --syntax-check -i "$prod_inv" playbooks/setup-docker.yml
+      ansible-playbook --syntax-check -i "$prod_inv" playbooks/drain-compose-share.yml
+    )
+    echo "== prod stack render invariants =="
+    STAGING_EVIDENCE_DIR="$EVIDENCE_DIR" \
+      STACK_RENDER_OUT="$EVIDENCE_DIR/docker-stack-prod-render.yml" \
+      bash "$(dirname "$DEPLOY_SH")/swarm-039-assert-prod-stack-render.sh"
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"
 }
