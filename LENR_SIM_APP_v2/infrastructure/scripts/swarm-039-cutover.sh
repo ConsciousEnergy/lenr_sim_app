@@ -73,8 +73,9 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
   5. Optional LOCAL_IMAGES=1: build backend+frontend on share, then
        docker save|load onto KVM1 (SKIP_IMAGE_BUILD=1 reuses share tags)
-  6. setup-docker.yml (swarm init on share) + join-workers.yml (KVM1 + labels)
-  7. deploy-stack.yml (--resolve-image never when local; SPA + PathPrefix /api)
+  6. setup-docker.yml (swarm init on share); import Compose .env → Swarm secrets
+       (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
+  7. join-workers.yml + deploy-stack.yml (--resolve-image never; SPA + PathPrefix /api)
   8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
   9. Keep Compose volumes for rollback ≥ one release
 
@@ -187,6 +188,44 @@ fi
 
 yel "Step 6–7: Swarm init + join + stack deploy"
 ansible-playbook -i "$PROD_INV" playbooks/setup-docker.yml
+
+yel "Step 6b: import Compose .env into Swarm secrets (reuse DB password for external volume)"
+[[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
+# Secrets must exist before deploy-stack; do not let Ansible mint a new random
+# postgres_password against lenr-sim_postgres_data.
+ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<'EOS'
+set -euo pipefail
+ENV_FILE=/opt/lenr-sim/.env
+[[ -f "$ENV_FILE" ]] || { echo "missing $ENV_FILE"; exit 1; }
+get_env() {
+  local key="$1" line val
+  line="$(grep -E "^${key}=" "$ENV_FILE" | tail -1 || true)"
+  [[ -n "$line" ]] || { echo "missing ${key} in $ENV_FILE"; exit 1; }
+  val="${line#*=}"
+  val="${val%\"}"
+  val="${val#\"}"
+  val="${val%\'}"
+  val="${val#\'}"
+  printf '%s' "$val"
+}
+db_pass="$(get_env LENR_DB_PASSWORD)"
+api_key="$(get_env LENR_SECRET_KEY)"
+[[ -n "$db_pass" && -n "$api_key" ]] || { echo "empty LENR_DB_PASSWORD or LENR_SECRET_KEY"; exit 1; }
+if ! docker secret inspect postgres_password >/dev/null 2>&1; then
+  printf '%s' "$db_pass" | docker secret create postgres_password -
+  echo "created secret postgres_password from Compose .env"
+else
+  echo "secret postgres_password already exists — leaving unchanged"
+fi
+if ! docker secret inspect api_secret_key >/dev/null 2>&1; then
+  printf '%s' "$api_key" | docker secret create api_secret_key -
+  echo "created secret api_secret_key from Compose .env"
+else
+  echo "secret api_secret_key already exists — leaving unchanged"
+fi
+EOS
+grn "Swarm secrets ready (Compose DB password preserved)"
+
 ansible-playbook -i "$PROD_INV" playbooks/join-workers.yml
 
 deploy_extra=(-e "require_app_label=true" -e "require_observability_label=true")

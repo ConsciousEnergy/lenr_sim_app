@@ -138,6 +138,18 @@ else
   bad "share missing docker volume lenr-sim_postgres_data"
 fi
 
+# 7d) Compose .env has DB + API secrets (values not printed)
+if [[ -f "$SHARE_KEY" ]] \
+  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       "root@${SHARE_IP}" \
+       'f=/opt/lenr-sim/.env; test -f "$f" \
+         && grep -qE "^LENR_DB_PASSWORD=.+" "$f" \
+         && grep -qE "^LENR_SECRET_KEY=.+" "$f"'; then
+  ok "share /opt/lenr-sim/.env has LENR_DB_PASSWORD + LENR_SECRET_KEY (for Swarm secrets)"
+else
+  bad "share /opt/lenr-sim/.env missing LENR_DB_PASSWORD or LENR_SECRET_KEY"
+fi
+
 # 8) Confirm gate reminder (never auto-set)
 if [[ "${CONFIRM_SWARM_0_3_9:-}" == "I_CUTOVER_0_3_9" ]]; then
   note "CONFIRM_SWARM_0_3_9 is set — human cutover window armed"

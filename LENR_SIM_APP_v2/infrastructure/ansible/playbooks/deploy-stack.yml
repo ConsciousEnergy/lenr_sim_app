@@ -123,34 +123,56 @@
     # Create Docker Secrets
     # ==========================================================================
     
-    - name: Generate PostgreSQL password if not set
-      ansible.builtin.set_fact:
-        postgres_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
-      when: postgres_password is not defined
-      
     - name: Check if postgres_password secret exists
       ansible.builtin.command: docker secret ls --format '{{ "{{.Name}}" }}'
       register: existing_secrets
       changed_when: false
+
+    - name: Refuse random DB password when reusing Compose volume
+      ansible.builtin.assert:
+        that:
+          - >-
+            ('postgres_password' in existing_secrets.stdout)
+            or (postgres_password is defined and (postgres_password | length) > 0)
+        fail_msg: >-
+          postgres_volume_external requires an existing docker secret
+          postgres_password (import LENR_DB_PASSWORD from Compose .env) or
+          -e postgres_password=... matching the volume. Refusing to mint a
+          random password that would break the DB.
+      when: postgres_volume_external | default(false)
+    
+    - name: Generate PostgreSQL password if not set (fresh stacks only)
+      ansible.builtin.set_fact:
+        postgres_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when:
+        - postgres_password is not defined
+        - not (postgres_volume_external | default(false))
+        - "'postgres_password' not in existing_secrets.stdout"
       
     - name: Create PostgreSQL password secret
       ansible.builtin.command:
         cmd: docker secret create postgres_password -
         stdin: "{{ postgres_password }}"
-      when: "'postgres_password' not in existing_secrets.stdout"
+      when:
+        - "'postgres_password' not in existing_secrets.stdout"
+        - postgres_password is defined
       no_log: true
       
     - name: Generate API secret key if not set
       ansible.builtin.set_fact:
         api_secret_key: "{{ lookup('password', '/dev/null length=48 chars=ascii_letters,digits') }}"
-      when: api_secret_key is not defined
+      when:
+        - api_secret_key is not defined
+        - "'api_secret_key' not in existing_secrets.stdout"
       no_log: true
       
     - name: Create API secret key secret
       ansible.builtin.command:
         cmd: docker secret create api_secret_key -
         stdin: "{{ api_secret_key }}"
-      when: "'api_secret_key' not in existing_secrets.stdout"
+      when:
+        - "'api_secret_key' not in existing_secrets.stdout"
+        - api_secret_key is defined
       no_log: true
       
     # ==========================================================================
