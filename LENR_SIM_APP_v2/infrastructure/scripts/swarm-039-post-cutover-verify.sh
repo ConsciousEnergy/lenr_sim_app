@@ -102,6 +102,26 @@ else
   bad "no stack services for ${STACK}"
 fi
 
+# 5b) Observability stack present (Grafana + Prometheus + blackbox + node-exporter)
+if [[ "${SKIP_OBSERVABILITY_CHECK:-0}" == "1" ]]; then
+  yel "SKIP_OBSERVABILITY_CHECK=1 — skip Grafana/Prometheus replica checks"
+else
+  for name in grafana prometheus blackbox node-exporter; do
+    line="$(echo "$svc" | grep -E "^${STACK}_${name}=" || true)"
+    if [[ -z "$line" ]]; then
+      bad "missing observability service ${STACK}_${name}"
+      continue
+    fi
+    reps="${line#*=}"
+    cur="${reps%%/*}"; want="${reps##*/}"
+    if [[ "$cur" == "$want" && -n "$want" ]]; then
+      ok "observability ${name} ${reps}"
+    else
+      bad "observability ${name} not fully replicated (${reps})"
+    fi
+  done
+fi
+
 # 6) Postgres task on share (Compose volume is node-local there)
 pg_node="$(ssh_share "docker service ps ${STACK}_postgres --filter desired-state=running --format '{{.Node}}' | head -1" || true)"
 share_host="$(ssh_share 'hostname')"

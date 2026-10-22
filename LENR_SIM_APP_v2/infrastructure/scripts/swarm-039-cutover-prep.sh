@@ -301,7 +301,7 @@ fi
 # Prefer example inventory in CI; use live inventory.yml when present (operator).
 if command -v ansible-playbook >/dev/null 2>&1; then
   if bash "$(dirname "${BASH_SOURCE[0]}")/swarm-039-assert-prod-stack-render.sh"; then
-    ok "prod stack render invariants (postgres pin, external volume, SPA PathPrefix, ACME certs mount)"
+    ok "prod stack render invariants (postgres/SPA/ACME + Grafana/Prometheus)"
   else
     bad "prod stack render invariants failed (see swarm-039-assert-prod-stack-render.sh)"
   fi

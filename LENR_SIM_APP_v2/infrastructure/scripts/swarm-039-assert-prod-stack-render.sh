@@ -84,6 +84,12 @@ grep -qF '/opt/lenr-sim/traefik/certs:/certs' "$stack_tmp" \
   || { echo "FAIL: missing Traefik ACME bind /opt/lenr-sim/traefik/certs:/certs"; fail=1; }
 grep -qE 'acme\.storage[=:].*/certs/acme\.json' "$stack_tmp" \
   || { echo "FAIL: missing ACME storage path /certs/acme.json"; fail=1; }
+grep -qE '^\s+grafana:' "$stack_tmp" \
+  || { echo "FAIL: missing grafana service in prod stack render"; fail=1; }
+grep -qE '^\s+prometheus:' "$stack_tmp" \
+  || { echo "FAIL: missing prometheus service in prod stack render"; fail=1; }
+grep -q 'node.labels.observability == true' "$stack_tmp" \
+  || { echo "FAIL: missing observability placement constraint"; fail=1; }
 
 if [[ "$fail" -ne 0 ]]; then
   echo "ERROR: prod stack render invariants failed — see $stack_tmp" >&2
@@ -91,5 +97,5 @@ if [[ "$fail" -ne 0 ]]; then
 fi
 
 cp -f "$stack_tmp" "$stack_out"
-echo "OK: prod stack render invariants (postgres pin, external volume, SPA PathPrefix, ACME certs mount)"
+echo "OK: prod stack render invariants (postgres pin, external volume, SPA PathPrefix, ACME, Grafana/Prometheus)"
 echo "rendered_stack=$stack_out"
