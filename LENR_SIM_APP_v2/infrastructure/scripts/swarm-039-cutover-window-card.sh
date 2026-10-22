@@ -15,6 +15,13 @@ LOCAL_IMAGES=1 SKIP_IMAGE_BUILD=1 ALLOW_API_DNS_GAP=1 ALLOW_STAGING_DNS_GAP=1 \
   bash "${SCRIPT_DIR}/swarm-039-readiness-barcode.sh" || true
 
 echo
+echo "=== optional: refresh LOCAL_IMAGES before the window (no CONFIRM) ==="
+cat <<EOF
+EXECUTE=1 ${SCRIPT_DIR}/swarm-039-prestage-images.sh
+# or reuse tags: SKIP_IMAGE_BUILD=1 EXECUTE=1 ${SCRIPT_DIR}/swarm-039-prestage-images.sh
+EOF
+
+echo
 echo "=== arm live cutover (human only) ==="
 cat <<EOF
 CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \\
