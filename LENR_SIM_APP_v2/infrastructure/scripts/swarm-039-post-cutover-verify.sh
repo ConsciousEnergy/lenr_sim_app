@@ -144,12 +144,19 @@ else
   ssh_share 'docker secret inspect grafana_admin_password >/dev/null' \
     && ok "docker secret grafana_admin_password present" \
     || bad "missing docker secret grafana_admin_password"
-  # Host-mode publish + UFW-closed :3000 — same path operators use via SSH tunnel.
+  # Host-mode publish bound to 127.0.0.1 — same path operators use via SSH tunnel.
   gf_code="$(ssh_kvm1 'curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1:3000/login' || echo fail)"
   if [[ "$gf_code" == "200" ]]; then
     ok "grafana login HTTP 200 on KVM1 :3000 (SSH tunnel path)"
   else
     bad "grafana login HTTP ${gf_code} on KVM1 :3000 — expected 200"
+  fi
+  # Docker host-mode bypasses UFW — public IP must not serve Grafana.
+  ext_gf="$(ssh_share "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 http://${KVM1_IP}:3000/login" || echo fail)"
+  if [[ "$ext_gf" == "200" ]]; then
+    bad "grafana :3000 reachable from share on ${KVM1_IP} — expected host_ip 127.0.0.1 only"
+  else
+    ok "grafana :3000 not reachable from share (${ext_gf})"
   fi
 fi
 

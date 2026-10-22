@@ -371,6 +371,19 @@ EOS
       fi
       ;;
   esac
+  # Docker host-mode publishes bypass UFW — Grafana must not answer on the public IP.
+  if [[ -f "$SHARE_KEY" ]]; then
+    ext_gf="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+      "root@${SHARE_IP}" \
+      "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 http://${KVM1_IP}:3000/login" \
+      2>/dev/null || echo fail)"
+    ext_gf="$(printf '%s' "$ext_gf" | tr -d '\r' | tail -1)"
+    if [[ "$ext_gf" == "200" ]]; then
+      bad "Grafana :3000 reachable from share on ${KVM1_IP} — bind host_ip 127.0.0.1 (Docker bypasses UFW)"
+    else
+      ok "Grafana :3000 not reachable from share (${ext_gf}) — localhost/SSH tunnel only"
+    fi
+  fi
   # Optional: D-Force present on operator PATH (not required on VMs)
   if command -v d4s >/dev/null 2>&1; then
     d4s_ver="$(d4s version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '/Version:/{print $2; exit}')"

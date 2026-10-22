@@ -97,11 +97,13 @@ grep -qE 'grafana_admin_password:' "$stack_tmp" \
 # Official image runs as uid 472 — root-only secret mounts fail at boot.
 grep -qE 'uid:[[:space:]]*"?472"?' "$stack_tmp" \
   || { echo "FAIL: grafana_admin_password secret mount must set uid 472"; fail=1; }
-# Host-mode :3000 for SSH tunnel (UFW must stay closed on that port).
+# Host-mode :3000 for SSH tunnel — must bind 127.0.0.1 (Docker bypasses UFW).
 grep -qE 'published:[[:space:]]*3000' "$stack_tmp" \
   || { echo "FAIL: missing Grafana host publish 3000 (grafana_publish_host_port)"; fail=1; }
 grep -qE 'mode:[[:space:]]*host' "$stack_tmp" \
   || { echo "FAIL: Grafana publish must use mode host for localhost SSH tunnel"; fail=1; }
+grep -qE 'host_ip:[[:space:]]*127\.0\.0\.1' "$stack_tmp" \
+  || { echo "FAIL: Grafana publish must set host_ip 127.0.0.1 (not 0.0.0.0)"; fail=1; }
 
 if [[ "$fail" -ne 0 ]]; then
   echo "ERROR: prod stack render invariants failed — see $stack_tmp" >&2
