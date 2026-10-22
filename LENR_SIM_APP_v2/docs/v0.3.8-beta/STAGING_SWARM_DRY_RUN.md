@@ -87,6 +87,7 @@ Paste timestamps into release notes when green. Keep Compose share URL unchanged
 | # | Check | Command / proof |
 |---|--------|-----------------|
 | 1 | Traefik TLS + health on staging API | `curl -sS -o /dev/null -w '%{http_code}' https://api-staging.conscious.energy/api/health` → `200` |
+| 1a | TLS bootstrap (while WP DNS lags) | Apex NS is WordPress.com — until `api-staging` A → KVM1, prove ACME with `https://api-staging.31.220.55.113.sslip.io/api/health` → `200` (`traefik_acme_bootstrap_host` in inventory). Remove bootstrap host after WP DNS flips. |
 | 2 | API replicas scheduled | `ssh kvm1 'docker service ls'` — backend replicas ≥ 1 |
 | 3 | Postgres on manager only | `ssh kvm1 'docker service ps <stack>_postgres'` — node = manager |
 | 4 | Pages CORS against staging origin | Browser or curl preflight from `app-staging` origin succeeds |
@@ -94,6 +95,10 @@ Paste timestamps into release notes when green. Keep Compose share URL unchanged
 | 6 | Compose share still healthy | `curl -sS https://lenr-sim-beta.conscious.energy/api/health` → `200` |
 | 7 | Backup playbook dry-run | `ansible-playbook --check -i inventory.staging.yml playbooks/backup.yml` |
 | 8 | Observability (optional B3) | `docker service ls \| grep -E 'prometheus\|grafana\|blackbox'` when `observability_enabled=true`; Grafana **not** public without auth |
+
+**Operator DNS (required for barcode #1):** WordPress.com DNS panel → create
+`A api-staging 31.220.55.113` (leave `@`/`www` alone). See
+[`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md).
 
 **Forbidden:** Swarm init on share `185.211.4.66`; `VPS_*` on `lenr-ci`;
 `CONFIRM_SWARM_0_3_9`; closing `EQ-OPEN-*`.

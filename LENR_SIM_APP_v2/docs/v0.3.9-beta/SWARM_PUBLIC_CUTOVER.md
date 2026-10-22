@@ -33,6 +33,12 @@ Do not weaken this string. Staging experiments continue to use
    ([`join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml)).
 4. Announced maintenance window; DNS TTLs lowered if needed.
 5. Version markers prepared for `0.3.9-beta` (release-quality-gate).
+6. Read-only prep script green:
+   `./infrastructure/scripts/swarm-039-cutover-prep.sh`
+   (checks share health, staging TLS/DNS, GHCR env, prod inventory; never arms confirm).
+7. Prod inventory copied from
+   [`inventory.yml.example`](../../infrastructure/ansible/inventory.yml.example)
+   (share manager + KVM1 worker; no CI node).
 
 ## Cutover sequence
 

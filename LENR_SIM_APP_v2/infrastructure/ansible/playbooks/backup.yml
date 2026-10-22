@@ -41,13 +41,16 @@
         mode: '0600'
         owner: root
         group: root
-      when: backup_result is defined and backup_result.rc == 0
+      when: >
+        backup_result is defined
+        and backup_result is not skipped
+        and (backup_result.rc | default(1)) == 0
       
     - name: Clean up old backups
       ansible.builtin.find:
         paths: "{{ backup_dir }}"
         patterns: "*.sql.gz"
-        age: "+{{ backup_retention_days | default(7) }}d"
+        age: "{{ backup_retention_days | default(7) }}d"
       register: old_backups
       
     - name: Remove old backup files

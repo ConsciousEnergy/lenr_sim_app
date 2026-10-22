@@ -1,32 +1,49 @@
-# LENR Simulation App - Ansible Inventory
-# Copy to inventory.yml and update with your VPS IP
+# Production Swarm inventory (v0.3.9 cutover) — copy to inventory.yml (do not commit).
+# Used by: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh production
+#
+# Topology SOT: docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md
+#   - swarm_managers: share KVM2 185.211.4.66 (Compose → Swarm manager)
+#   - swarm_workers:  KVM1 31.220.55.113 (leave staging Swarm, join as worker)
+#   - NEVER list CI KVM2 45.93.100.251 / 2012566
+#
+# Host vars beat playbook group_vars/all.yml. Use lenr_environment (not
+# Ansible-reserved key "environment"). Labels: app=true / observability=true.
 
 all:
-  hosts:
-    lenr-sim-prod:
-      ansible_host: YOUR_VPS_IP_HERE  # From Terraform output
-      ansible_user: root
-      ansible_ssh_private_key_file: ~/.ssh/lenr-sim-deploy
-      
+  children:
+    swarm_managers:
+      hosts:
+        share-manager-1:
+          ansible_host: 185.211.4.66
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-deploy
+          swarm_node_labels:
+            - app=true
+          app_domain: "conscious.energy"
+          api_subdomain: "api"
+          lenr_environment: "production"
+          traefik_acme_email: "ops@conscious.energy"
+          traefik_acme_staging: false
+          traefik_force_https: true
+          fastapi_workers: 2
+          fastapi_log_level: "info"
+          observability_enabled: true
+          require_app_label: true
+          require_observability_label: true
+          grafana_admin_user: "admin"
+          grafana_traefik_enabled: false
+    swarm_workers:
+      hosts:
+        kvm1-worker-1:
+          ansible_host: 31.220.55.113
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
+          swarm_node_labels:
+            - app=true
+            - observability=true
   vars:
-    # Application settings
-    app_domain: "conscious.energy"
-    api_subdomain: "api"
-    environment: "prod"
-    
-    # Docker settings
     docker_compose_version: "2.24.5"
-    
-    # Traefik settings
-    traefik_dashboard_auth: true
-    traefik_acme_email: "diadon@conscious.energy"
-    
-    # Database settings
     postgres_version: "16"
     postgres_db: "lenr_sim"
     postgres_user: "lenr_app"
-    # postgres_password: Set via environment variable or vault
-    
-    # Application settings
-    fastapi_workers: 4
-    fastapi_log_level: "info"
+    # ghcr_username / ghcr_token via vault or -e / env GHCR_USER + GHCR_TOKEN

@@ -164,6 +164,18 @@ services:
         - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-ratelimit"
         - "traefik.http.routers.backend-http.service=backend"
 {% endif %}
+{% if traefik_acme_bootstrap_host is defined and (traefik_acme_bootstrap_host | length > 0) %}
+        # Temporary TLS host (e.g. sslip.io) while WordPress.com DNS lags for api-staging.
+        - "traefik.http.routers.backend-bootstrap.rule=Host(`{{ traefik_acme_bootstrap_host }}`)"
+        - "traefik.http.routers.backend-bootstrap.entrypoints=websecure"
+        - "traefik.http.routers.backend-bootstrap.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-bootstrap.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-bootstrap.service=backend"
+        - "traefik.http.routers.backend-bootstrap-http.rule=Host(`{{ traefik_acme_bootstrap_host }}`)"
+        - "traefik.http.routers.backend-bootstrap-http.entrypoints=web"
+        - "traefik.http.routers.backend-bootstrap-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-bootstrap-http.service=backend"
+{% endif %}
         # security-headers is defined in traefik-dynamic.yml.j2 (file provider).
         - "traefik.http.routers.backend.middlewares=security-headers@file,backend-ratelimit"
         # Service

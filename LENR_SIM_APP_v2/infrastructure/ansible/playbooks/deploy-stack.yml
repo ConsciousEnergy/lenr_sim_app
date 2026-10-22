@@ -255,13 +255,13 @@
     # Optional: Backup Database
     # ==========================================================================
     
-    - name: Ensure logs directory exists
+    - name: Ensure logs directory exists (appuser uid 1000 — keep writable)
       ansible.builtin.file:
         path: /opt/lenr-sim/logs
         state: directory
         mode: '0755'
-        owner: root
-        group: root
+        owner: "1000"
+        group: "1000"
         
     - name: Create backup script
       ansible.builtin.copy:
