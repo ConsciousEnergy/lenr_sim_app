@@ -64,6 +64,27 @@
         owner: root
         group: root
 
+    # ACME storage bind-mount target. setup-docker.yml also creates this, but
+    # cutover / redeploy may run deploy-stack alone — Traefik refuses to start
+    # (or loses certs) if /certs is missing or acme.json is world-readable.
+    - name: Ensure Traefik ACME certs directory exists
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/certs
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+
+    - name: Ensure Traefik acme.json exists with restrictive mode
+      ansible.builtin.file:
+        path: /opt/lenr-sim/traefik/certs/acme.json
+        state: touch
+        mode: '0600'
+        owner: root
+        group: root
+        modification_time: preserve
+        access_time: preserve
+
     # Backend runs as uid/gid 1000 (appuser); bind mounts must be writable.
     - name: Ensure backend bind-mount dirs are writable by appuser
       ansible.builtin.file:

@@ -80,6 +80,10 @@ grep -qF 'Host(`lenr-sim-beta.conscious.energy`)' "$stack_tmp" \
   || { echo "FAIL: missing SPA host lenr-sim-beta.conscious.energy"; fail=1; }
 grep -qE 'lenr-sim-frontend|routers\.frontend' "$stack_tmp" \
   || { echo "FAIL: frontend/SPA service missing from render"; fail=1; }
+grep -qF '/opt/lenr-sim/traefik/certs:/certs' "$stack_tmp" \
+  || { echo "FAIL: missing Traefik ACME bind /opt/lenr-sim/traefik/certs:/certs"; fail=1; }
+grep -qE 'acme\.storage[=:].*/certs/acme\.json' "$stack_tmp" \
+  || { echo "FAIL: missing ACME storage path /certs/acme.json"; fail=1; }
 
 if [[ "$fail" -ne 0 ]]; then
   echo "ERROR: prod stack render invariants failed — see $stack_tmp" >&2
@@ -87,5 +91,5 @@ if [[ "$fail" -ne 0 ]]; then
 fi
 
 cp -f "$stack_tmp" "$stack_out"
-echo "OK: prod stack render invariants (postgres pin, external volume, SPA PathPrefix)"
+echo "OK: prod stack render invariants (postgres pin, external volume, SPA PathPrefix, ACME certs mount)"
 echo "rendered_stack=$stack_out"
