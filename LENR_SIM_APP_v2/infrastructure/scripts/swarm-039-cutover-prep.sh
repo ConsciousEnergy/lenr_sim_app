@@ -72,6 +72,16 @@ else
   bad "GHCR_USER / GHCR_TOKEN unset (required for prod --with-registry-auth)"
 fi
 
+# 6) Share SSH (manager target)
+SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
+if [[ -f "$SHARE_KEY" ]] \
+  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       -o StrictHostKeyChecking=accept-new "root@${SHARE_IP}" 'echo ok' >/dev/null 2>&1; then
+  ok "share SSH root@${SHARE_IP} via ${SHARE_KEY}"
+else
+  bad "share SSH unavailable (set SHARE_SSH_KEY or run hostinger-compose-unlock.py attach-key with AGENT_* paths)"
+fi
+
 # 6) Confirm gate reminder (never auto-set)
 if [[ "${CONFIRM_SWARM_0_3_9:-}" == "I_CUTOVER_0_3_9" ]]; then
   note "CONFIRM_SWARM_0_3_9 is set — human cutover window armed"

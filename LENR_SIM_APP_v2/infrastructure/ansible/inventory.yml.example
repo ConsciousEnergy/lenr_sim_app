@@ -16,7 +16,8 @@ all:
         share-manager-1:
           ansible_host: 185.211.4.66
           ansible_user: root
-          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-deploy
+          # Prefer key injected via Hostinger POST .../ssh-keys (see hostinger-compose-unlock.py).
+          ansible_ssh_private_key_file: ~/.ssh/lenr-sim-share
           swarm_node_labels:
             - app=true
           app_domain: "conscious.energy"
