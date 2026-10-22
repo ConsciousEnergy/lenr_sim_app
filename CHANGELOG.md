@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover prep: KVM1→share Swarm TCP path probe (temp listeners on 2377/7946)
 - Cutover executor: post-`swarm init` manager/:2377 gate before join-workers
 - Cutover executor: LOCAL_IMAGES before Compose drain; assert :80/:443 free post-drain
+- Cutover: wait for replicas + SPA/API health (ACME settle) before post-verify
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

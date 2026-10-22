@@ -78,6 +78,7 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
        import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
   7. join-workers.yml + deploy-stack.yml (--resolve-image never; SPA + PathPrefix /api)
+  7b. Wait for stack replicas + SPA/API 200 (ACME settle; CUTOVER_HEALTH_WAIT_SECS)
   8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
   9. Keep Compose volumes for rollback ≥ one release
 
@@ -271,6 +272,44 @@ else
   deploy_extra+=(-e "skip_ghcr_login=true")
 fi
 ansible-playbook -i "$PROD_INV" playbooks/deploy-stack.yml "${deploy_extra[@]}"
+
+yel "Step 7b: wait for stack replicas + SPA/API health (ACME settle)"
+STACK_NAME="${STACK_NAME:-lenr-sim}"
+WAIT_SECS="${CUTOVER_HEALTH_WAIT_SECS:-300}"
+deadline=$((SECONDS + WAIT_SECS))
+replicas_ok=0
+http_ok=0
+while (( SECONDS < deadline )); do
+  svc_out="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+    "docker stack services ${STACK_NAME} --format '{{.Name}}={{.Replicas}}' 2>/dev/null" || true)"
+  if [[ -n "$svc_out" ]]; then
+    bad_reps=0
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      reps="${line#*=}"
+      cur="${reps%%/*}"; want="${reps##*/}"
+      [[ "$cur" == "$want" && -n "$want" ]] || bad_reps=1
+    done <<< "$svc_out"
+    if [[ "$bad_reps" -eq 0 ]]; then
+      replicas_ok=1
+    fi
+  fi
+  code_api="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/api/health" || echo 000)"
+  code_spa="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/" || echo 000)"
+  if [[ "$code_api" == "200" && "$code_spa" == "200" ]]; then
+    http_ok=1
+  fi
+  if [[ "$replicas_ok" -eq 1 && "$http_ok" -eq 1 ]]; then
+    grn "stack replicas ready + SPA/API 200"
+    break
+  fi
+  echo "waiting… replicas_ok=${replicas_ok} api=${code_api} spa=${code_spa} (${SECONDS}s/${WAIT_SECS}s)"
+  sleep 10
+done
+if [[ "$replicas_ok" -ne 1 || "$http_ok" -ne 1 ]]; then
+  red "timed out after ${WAIT_SECS}s waiting for replicas+health (replicas_ok=${replicas_ok} http_ok=${http_ok})"
+  yel "continuing to post-cutover verify for full evidence / restore guidance"
+fi
 
 yel "Step 8: post-cutover verify (topology + labels + health)"
 # Full evidence: 2-node Swarm, postgres on share, SPA+/api 200, CI outside.

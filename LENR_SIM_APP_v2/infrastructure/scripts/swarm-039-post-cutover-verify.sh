@@ -117,9 +117,20 @@ else
   bad "postgres on ${pg_node:-none}/${pg_addr:-?} — must be share ${SHARE_IP} (${share_host}) for external volume"
 fi
 
-# 7) HTTP health
-share_api="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/api/health" || echo 000)"
-spa="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/" || echo 000)"
+# 7) HTTP health (retry briefly — Traefik ACME / task start can lag)
+HTTP_RETRIES="${HTTP_RETRIES:-12}"
+HTTP_SLEEP="${HTTP_SLEEP:-10}"
+share_api=000
+spa=000
+for ((i=1; i<=HTTP_RETRIES; i++)); do
+  share_api="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/api/health" || echo 000)"
+  spa="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/" || echo 000)"
+  if [[ "$share_api" == "200" && "$spa" == "200" ]]; then
+    break
+  fi
+  yel "HTTP not ready yet api=${share_api} spa=${spa} (try ${i}/${HTTP_RETRIES})"
+  sleep "$HTTP_SLEEP"
+done
 api_prod="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 https://api.conscious.energy/api/health || echo 000)"
 echo "share /api/health → ${share_api}"
 echo "share SPA / → ${spa}"
