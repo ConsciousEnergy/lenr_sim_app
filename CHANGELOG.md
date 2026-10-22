@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Window card notes DOCKER-USER / public Grafana :3000 must stay closed
 - Seed Traefik `acme.json` as `{}` when missing/zero-length; prep rejects empty ACME store
 - D4S / window card: `lenr-staging` + `lenr-share` docker contexts for operator TUI
+- Prep/post-verify: CI IP must be absent from Swarm `docker node` addrs (not only inventory/SSH)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

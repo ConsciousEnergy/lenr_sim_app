@@ -60,14 +60,25 @@ else
   bad "kvm1 Swarm expected 'active false', got '${kvm1_state}'"
 fi
 
-# 3) CI never joined
+# 3) CI never joined — authoritative: CI IP must not appear in Swarm node addrs.
+# Optional SSH probe to CI is best-effort (share key often cannot log into CI).
+ci_in_nodes="$(ssh_share "docker node ls -q | while read -r id; do
+  docker node inspect \"\$id\" --format '{{.Status.Addr}}'
+done" 2>/dev/null | grep -F "$CI_IP" || true)"
+if [[ -z "$ci_in_nodes" ]]; then
+  ok "CI IP ${CI_IP} absent from Swarm node addrs"
+else
+  bad "CI IP ${CI_IP} present in Swarm node addrs — CI must never join"
+fi
 ci_probe="$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
   -i "$SHARE_KEY" "root@${CI_IP}" \
   'docker info --format "{{.Swarm.LocalNodeState}}"' 2>/dev/null || echo unreachable)"
 if [[ "$ci_probe" == "inactive" || "$ci_probe" == "unreachable" ]]; then
-  ok "CI Swarm state=${ci_probe} (outside cluster)"
+  ok "CI Swarm state=${ci_probe} (outside cluster; SSH optional)"
+elif [[ "$ci_probe" == "active" ]]; then
+  bad "CI Swarm state=active — CI must never join Swarm"
 else
-  bad "CI Swarm state=${ci_probe} — CI must never join Swarm"
+  yel "CI Swarm state=${ci_probe} (non-authoritative; node-addr check above is SOT)"
 fi
 
 # 4) Two Ready nodes; labels present

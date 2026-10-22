@@ -133,6 +133,16 @@ if [[ -f "$KVM1_KEY" ]] \
   && ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
        -o StrictHostKeyChecking=accept-new "root@${KVM1_IP}" 'echo ok' >/dev/null 2>&1; then
   ok "kvm1 SSH root@${KVM1_IP} via ${KVM1_KEY}"
+  # Staging Swarm must not already contain the CI host (inventory alone is not enough).
+  ci_in_staging="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" "docker node ls -q 2>/dev/null | while read -r id; do
+      docker node inspect \"\$id\" --format '{{.Status.Addr}}'
+    done" 2>/dev/null | grep -F "$CI_IP" || true)"
+  if [[ -z "$ci_in_staging" ]]; then
+    ok "staging Swarm node addrs exclude CI IP ${CI_IP}"
+  else
+    bad "staging Swarm lists CI IP ${CI_IP} — CI must never join Swarm"
+  fi
 else
   bad "kvm1 SSH unavailable (set KVM1_SSH_KEY; needed for leave-staging + docker save|load)"
 fi
