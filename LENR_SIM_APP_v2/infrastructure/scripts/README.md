@@ -19,15 +19,21 @@ They are retained for cutover prep; they are not the v0.3.7 public-beta ship pat
 
 ## Scripts
 
-### swarm-039-cutover.sh / swarm-039-cutover-prep.sh / swarm-039-readiness-barcode.sh / swarm-039-post-cutover-verify.sh / swarm-039-restore-compose.sh
+### swarm-039-* cutover scripts
 
-v0.3.9 public cutover path. Prep and barcode are read-only; the executor never
-sets `CONFIRM_SWARM_0_3_9` (human-armed). After live apply, `swarm-039-cutover.sh`
-runs `swarm-039-post-cutover-verify.sh` (2-node topology, labels, postgres on
-share, SPA+/api health, CI outside Swarm). Mid-window abort:
-`swarm-039-restore-compose.sh` (gated) leaves Swarm on share and brings
-Compose+Caddy back on the same volumes. See
-[`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
+v0.3.9 public cutover path. Prep/barcode/window-card are read-only; the executor
+never sets `CONFIRM_SWARM_0_3_9` (human-armed).
+
+| Script | Role |
+|--------|------|
+| `swarm-039-cutover-prep.sh` | Read-only prerequisites |
+| `swarm-039-readiness-barcode.sh` | Prep + topology + version markers |
+| `swarm-039-cutover-window-card.sh` | Operator card: evidence + arming commands |
+| `swarm-039-cutover.sh` | Live cutover (confirm + `EXECUTE=1`) |
+| `swarm-039-post-cutover-verify.sh` | Post-apply topology/health evidence |
+| `swarm-039-restore-compose.sh` | Mid-window abort → Compose restore (+ KVM1 leave) |
+
+See [`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
 ### unclog-lenr-ci.sh
 

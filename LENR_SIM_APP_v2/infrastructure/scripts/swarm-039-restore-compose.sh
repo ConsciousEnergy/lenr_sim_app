@@ -5,25 +5,31 @@
 # NEVER auto-runs. Requires:
 #   CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM
 #
-# If share is still a Swarm manager with the lenr-sim stack:
-#   CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE  (stack rm + swarm leave --force)
+# If share and/or KVM1 are still in Swarm:
+#   CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE
+#     → share: stack rm + swarm leave --force
+#     → kvm1: swarm leave --force (orphaned worker after manager dies)
 #
 # Usage:
 #   CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \
+#     CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE \
 #     ./swarm-039-restore-compose.sh
 #
 # Optional:
 #   IMAGE_TAG=0.3.7-beta   (default: /opt/lenr-sim/.rollback-image-tag or .env)
 #   BUILD_LOCALLY=1
 #   SKIP_SWARM_LEAVE=1     (only compose up; refuse if Swarm still active)
+#   SKIP_KVM1_LEAVE=1      (do not touch KVM1 even if it is in a Swarm)
 #
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHARE_IP="${SHARE_IP:-185.211.4.66}"
+KVM1_IP="${KVM1_IP:-31.220.55.113}"
 CI_IP="${CI_IP:-45.93.100.251}"
 SHARE_URL="${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}"
 SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
+KVM1_KEY="${KVM1_SSH_KEY:-$HOME/.ssh/lenr-sim-staging}"
 CONFIRM="${CONFIRM_RESTORE_COMPOSE:-}"
 LEAVE="${CONFIRM_LEAVE_SWARM:-}"
 STACK="${STACK_NAME:-lenr-sim}"
@@ -36,8 +42,8 @@ echo "=== swarm-039 restore Compose on share ${SHARE_IP} ==="
 
 if [[ "$CONFIRM" != "I_RESTORE_COMPOSE_AFTER_SWARM" ]]; then
   yel "CONFIRM_RESTORE_COMPOSE unset — refusing (expected until operator arms restore)."
-  yel "Arm with: CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM $0"
-  yel "If Swarm is still active on share, also set CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE"
+  yel "Arm with: CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \\"
+  yel "  CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE $0"
   exit 0
 fi
 
@@ -47,6 +53,10 @@ fi
 ssh_share() {
   ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=20 -o IdentitiesOnly=yes \
     -o StrictHostKeyChecking=accept-new "root@${SHARE_IP}" "$@"
+}
+ssh_kvm1() {
+  ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=20 -o IdentitiesOnly=yes \
+    -o StrictHostKeyChecking=accept-new "root@${KVM1_IP}" "$@"
 }
 
 swarm_state="$(ssh_share 'docker info --format "{{.Swarm.LocalNodeState}}"')"
@@ -79,6 +89,23 @@ EOS
   grn "Share left Swarm"
 elif [[ "$swarm_state" != "inactive" ]]; then
   yel "Unexpected Swarm state=${swarm_state} — continuing cautiously"
+fi
+
+# KVM1 may still be a worker of a dead manager after share leave — force-leave.
+if [[ "${SKIP_KVM1_LEAVE:-0}" != "1" && -f "$KVM1_KEY" ]]; then
+  kvm1_state="$(ssh_kvm1 'docker info --format "{{.Swarm.LocalNodeState}}"' 2>/dev/null || echo unreachable)"
+  echo "kvm1 Swarm=${kvm1_state}"
+  if [[ "$kvm1_state" == "active" ]]; then
+    if [[ "$LEAVE" != "I_LEAVE_SWARM_FOR_COMPOSE" ]]; then
+      red "kvm1 still in Swarm — set CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE (or SKIP_KVM1_LEAVE=1)"
+      exit 1
+    fi
+    yel "Force-leaving Swarm on KVM1 ${KVM1_IP} (orphaned worker cleanup)"
+    ssh_kvm1 'docker swarm leave --force; docker info --format "Swarm={{.Swarm.LocalNodeState}}"'
+    grn "KVM1 left Swarm"
+  fi
+else
+  yel "Skipping KVM1 leave (SKIP_KVM1_LEAVE=1 or missing KVM1_SSH_KEY)"
 fi
 
 # Refuse if Swarm tasks / Traefik still hold 80/443

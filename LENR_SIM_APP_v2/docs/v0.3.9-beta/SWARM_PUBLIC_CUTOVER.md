@@ -115,6 +115,9 @@ CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-restore-compose.sh
 ```
 
+`CONFIRM_LEAVE_SWARM` also force-leaves KVM1 if it is still an orphaned
+worker after the share manager is torn down (set `SKIP_KVM1_LEAVE=1` to skip).
+
 
 ## Status on this train
 
