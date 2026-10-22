@@ -129,6 +129,21 @@ else
   bad "kvm1 SSH unavailable (set KVM1_SSH_KEY; needed for leave-staging + docker save|load)"
 fi
 
+# 7a2) Disk headroom for image load / Traefik + stack (GiB free on /)
+MIN_FREE_GIB="${CUTOVER_MIN_FREE_GIB:-5}"
+for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
+  role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
+  [[ -f "$key" ]] || continue
+  avail_kib="$(ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${host}" "df -Pk / | awk 'NR==2{print \$4}'" 2>/dev/null || echo 0)"
+  avail_gib=$(( ${avail_kib:-0} / 1024 / 1024 ))
+  if [[ "$avail_gib" -ge "$MIN_FREE_GIB" ]]; then
+    ok "${role} disk free ${avail_gib}GiB on / (≥${MIN_FREE_GIB})"
+  else
+    bad "${role} disk free ${avail_gib}GiB on / (need ≥${MIN_FREE_GIB}; docker system prune or raise CUTOVER_MIN_FREE_GIB)"
+  fi
+done
+
 # 7b) SPA still served on share (Compose today; Swarm after cutover)
 spa="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/" || echo 000)"
 if [[ "$spa" == "200" ]]; then
