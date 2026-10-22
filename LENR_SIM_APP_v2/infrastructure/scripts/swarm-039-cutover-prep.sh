@@ -164,6 +164,55 @@ else
   bad "share UFW missing Swarm ports (setup-docker.yml opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
 fi
 
+# 7d2) KVM1 → share TCP path for Swarm control/gossip (temp listeners; nothing
+# listens until swarm init, so a plain nc to closed ports would false-fail).
+# Skip with SKIP_SWARM_PORT_PROBE=1. UDP 4789 (VXLAN) not probed here.
+# OpenBSD netcat: listen is `nc -l PORT` ( -p is source port).
+if [[ "${SKIP_SWARM_PORT_PROBE:-0}" == "1" ]]; then
+  note "SKIP_SWARM_PORT_PROBE=1 — skip KVM1→share Swarm TCP path probe"
+elif [[ -f "$SHARE_KEY" && -f "$KVM1_KEY" ]]; then
+  path_ok=1
+  for port in 2377 7946; do
+    # Expand $port into the remote script (unquoted heredoc delimiter).
+    if ! ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+      "root@${SHARE_IP}" bash -s <<EOS
+set -euo pipefail
+port=${port}
+pkill -f "nc -l \${port}" 2>/dev/null || true
+pkill -f "nc -l -p \${port}" 2>/dev/null || true
+# Prefer OpenBSD positional listen; fall back to -p for GNU-ish builds.
+( timeout 20 nc -l "\$port" || timeout 20 nc -l -p "\$port" ) >/dev/null 2>&1 &
+sleep 1
+ss -lnt | grep -q ":\${port} "
+EOS
+    then
+      path_ok=0
+      note "share could not bind temp listener on ${port}"
+      ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+        "root@${SHARE_IP}" "pkill -f 'nc -l ${port}' 2>/dev/null || true; pkill -f 'nc -l -p ${port}' 2>/dev/null || true" \
+        >/dev/null 2>&1 || true
+      continue
+    fi
+    if ! ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+         "root@${KVM1_IP}" \
+         "timeout 5 nc -zw3 ${SHARE_IP} ${port}" >/dev/null 2>&1; then
+      path_ok=0
+      note "KVM1 cannot reach share TCP ${port} (firewall/path)"
+    fi
+    ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+      "root@${SHARE_IP}" \
+      "pkill -f 'nc -l ${port}' 2>/dev/null || true; pkill -f 'nc -l -p ${port}' 2>/dev/null || true" \
+      >/dev/null 2>&1 || true
+  done
+  if [[ "$path_ok" -eq 1 ]]; then
+    ok "KVM1→share Swarm TCP path (2377/7946) reachable via temp listeners"
+  else
+    bad "KVM1→share Swarm TCP path blocked (need 2377/tcp + 7946/tcp from ${KVM1_IP} → ${SHARE_IP})"
+  fi
+else
+  note "SSH keys missing — skip KVM1→share Swarm TCP path probe"
+fi
+
 # 7e) Compose .env has DB + API secrets (values not printed)
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \

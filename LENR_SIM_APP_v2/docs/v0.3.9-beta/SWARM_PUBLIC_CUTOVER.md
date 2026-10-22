@@ -92,6 +92,8 @@ from `/opt/lenr-sim/.env` into Docker secrets **before** `deploy-stack.yml` so
 Ansible does not mint a new random DB password against the existing volume.
 `setup-docker.yml` advertises `ansible_host` and opens UFW Swarm ports
 (`2377/tcp`, `7946/tcp+udp`, `4789/udp`) so KVM1 can join.
+Cutover prep probes KVM1→share TCP `2377`/`7946` with short-lived listeners
+(nothing listens until `swarm init`; set `SKIP_SWARM_PORT_PROBE=1` to skip).
 
 Manual checklist (same order as the script):
 

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/local prod stack render gate (`swarm-039-assert-prod-stack-render.sh`, wired into
   `staging-swarm-dry-run.sh local` + cutover prep) — postgres pin, external volume, SPA PathPrefix
 - `swarm-039-prestage-images.sh` — refresh LOCAL_IMAGES on share+KVM1 without Compose drain
+- Cutover prep: KVM1→share Swarm TCP path probe (temp listeners on 2377/7946)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
