@@ -90,9 +90,28 @@
           with Swarm Traefik (publish mode: host). Re-run compose down or
           docker rm -f the leftovers before stack deploy.
 
+    - name: Check host :80/:443 listeners after drain
+      ansible.builtin.shell: |
+        set -euo pipefail
+        ss -lnt | grep -E ':80 |:443 ' || true
+      args:
+        executable: /bin/bash
+      register: host_web_ports
+      changed_when: false
+
+    - name: Fail if :80/:443 still bound (Traefik publish mode host)
+      ansible.builtin.assert:
+        that:
+          - (host_web_ports.stdout | trim | length) == 0
+        fail_msg: >-
+          Host still listening on :80/:443 after Compose drain:
+          {{ host_web_ports.stdout }}. Free those ports before Swarm Traefik
+          stack deploy (publish mode: host).
+
     - name: Report drain result
       ansible.builtin.debug:
         msg: |
           Compose drained on {{ inventory_hostname }} ({{ ansible_host }}).
           remaining_lenr_sim_containers=0
+          host_80_443_free=yes
           Volumes under /opt/lenr-sim/data preserved for rollback.

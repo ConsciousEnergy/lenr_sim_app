@@ -65,6 +65,8 @@ Prod inventory (required by the executor):
 # docker build on the share manager when registry auth is unavailable.
 # ALLOW_API_DNS_GAP=1: accept https://lenr-sim-beta…/api/health when WordPress
 # A api is still parking (Traefik traefik_extra_api_hosts on the share manager).
+# Prefer prestaging images first so the drain window stays short:
+#   EXECUTE=1 ./infrastructure/scripts/swarm-039-prestage-images.sh
 CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
   ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
@@ -73,8 +75,10 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
 `SKIP_IMAGE_BUILD=1` reuses prebuilt
 `ghcr.io/consciousenergy/lenr-sim-backend:<tag>` and
 `…/lenr-sim-frontend:<tag>` on the share manager (omit it to force a fresh
-`docker build`). With `LOCAL_IMAGES=1`, the executor then `docker save|load`s
-both tags onto KVM1 and deploys with `--resolve-image never`.
+`docker build`). With `LOCAL_IMAGES=1`, the executor builds/loads **before**
+Compose drain (Compose stays up during the long step), then
+`docker save|load`s onto KVM1 and deploys with `--resolve-image never`.
+After drain, cutover refuses to continue if host `:80`/`:443` are still bound.
 
 Preferred at the window: WordPress.com `A api → <share IP>` for
 `https://api.conscious.energy/api/health`. Until that record exists, prod inventory

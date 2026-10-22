@@ -69,10 +69,11 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   1. WordPress.com DNS: A api → ${SHARE_IP} (preferred); Traefik also serves
        lenr-sim-beta via traefik_extra_api_hosts until api DNS flips
   2. Version markers at 0.3.9-beta (release-quality-gate) — separate PR if still 0.3.8
-  3. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
-  4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
-  5. Optional LOCAL_IMAGES=1: build backend+frontend on share, then
-       docker save|load onto KVM1 (SKIP_IMAGE_BUILD=1 reuses share tags)
+  3. Optional LOCAL_IMAGES=1: build/load images WHILE Compose still serves
+       (SKIP_IMAGE_BUILD=1 reuses tags; prefer swarm-039-prestage-images.sh)
+  4. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
+  5. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM);
+       assert :80/:443 free for Traefik
   6. setup-docker.yml (swarm init on share); verify manager + :2377 from KVM1;
        import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
@@ -121,26 +122,9 @@ grn "Share health 200 — proceeding"
 
 cd "$ANSIBLE"
 
-yel "Step 3: leave staging Swarm on KVM1"
-ansible-playbook -i "$STAGING_INV" playbooks/leave-staging-swarm.yml \
-  -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING
-
-yel "Step 4: drain Compose on share"
-# Compose project lenr-sim + volume postgres_data → lenr-sim_postgres_data.
-# Swarm stack lenr-sim + volume postgres_data reuses the same named volume when
-# compose down keeps volumes (drain playbook does not pass -v).
-if [[ -f "$SHARE_KEY" ]]; then
-  vol_ok="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-    "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
-  [[ "$vol_ok" == "yes" ]] || { red "missing volume lenr-sim_postgres_data — abort before drain"; exit 1; }
-  grn "Postgres volume lenr-sim_postgres_data present (will be reused by Swarm stack)"
-fi
-ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
-  --limit swarm_managers \
-  -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
-
+# Build/load images before drain so public Compose stays up during the long step.
 if [[ "$LOCAL_IMAGES" == "1" ]]; then
-  yel "Step 5: backend + frontend images on share (LOCAL_IMAGES=1)"
+  yel "Step 3: backend + frontend images on share (LOCAL_IMAGES=1, Compose still up)"
   [[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
   have_backend=0
   have_frontend=0
@@ -177,15 +161,48 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
     fi
   fi
 
-  # Workers cannot pull without GHCR — pipe images share → KVM1.
-  yel "Step 5b: distribute local images share → KVM1 (${KVM1_IP})"
+  # Workers cannot pull without GHCR — pipe images share → KVM1 (before leave).
+  yel "Step 3b: distribute local images share → KVM1 (${KVM1_IP})"
   [[ -f "$KVM1_KEY" ]] || { red "missing KVM1_SSH_KEY ${KVM1_KEY}"; exit 1; }
   ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
     "docker save ${BACKEND_IMG} ${FRONTEND_IMG}" \
     | ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
       "docker load"
   grn "KVM1 loaded ${BACKEND_IMG} + ${FRONTEND_IMG}"
+  # Compose must still be healthy after the prestage window.
+  share_health2="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/api/health" || echo 000)"
+  [[ "$share_health2" == "200" ]] || { red "share health ${share_health2} after image prep — abort before drain"; exit 1; }
+  grn "Compose still healthy after image prep — starting downtime window"
 fi
+
+yel "Step 4: leave staging Swarm on KVM1"
+ansible-playbook -i "$STAGING_INV" playbooks/leave-staging-swarm.yml \
+  -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING
+
+yel "Step 5: drain Compose on share"
+# Compose project lenr-sim + volume postgres_data → lenr-sim_postgres_data.
+# Swarm stack lenr-sim + volume postgres_data reuses the same named volume when
+# compose down keeps volumes (drain playbook does not pass -v).
+if [[ -f "$SHARE_KEY" ]]; then
+  vol_ok="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+    "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
+  [[ "$vol_ok" == "yes" ]] || { red "missing volume lenr-sim_postgres_data — abort before drain"; exit 1; }
+  grn "Postgres volume lenr-sim_postgres_data present (will be reused by Swarm stack)"
+fi
+ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
+  --limit swarm_managers \
+  -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
+
+yel "Step 5b: assert host :80/:443 free for Traefik (publish mode: host)"
+[[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
+ports_busy="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+  'ss -lnt | grep -E ":80 |:443 " || true')"
+if [[ -n "$ports_busy" ]]; then
+  red "host :80/:443 still bound after Compose drain — Traefik would fail:"
+  echo "$ports_busy"
+  exit 1
+fi
+grn "host :80/:443 free after drain"
 
 yel "Step 6–7: Swarm init + join + stack deploy"
 ansible-playbook -i "$PROD_INV" playbooks/setup-docker.yml
