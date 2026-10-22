@@ -84,17 +84,23 @@ This runs Terraform workspace `staging`, `setup-docker.yml`,
 
 Paste timestamps into release notes when green. Keep Compose share URL unchanged.
 
+**Recorded (agent, 2026-10-22 UTC):** sslip bootstrap **200**; stack 7/7
+(`backend`, `postgres`, `traefik`, `prometheus`, `grafana`, `blackbox`,
+`node-exporter`); Compose share **200**; WordPress `api-staging` still parking
+(ALLOW_STAGING_DNS_GAP). Pages CORS / WS against canonical `api-staging` still
+open until WP DNS flips.
+
 | # | Check | Command / proof |
 |---|--------|-----------------|
 | 1 | Traefik TLS + health on staging API | `curl -sS -o /dev/null -w '%{http_code}' https://api-staging.conscious.energy/api/health` → `200` |
-| 1a | TLS bootstrap (while WP DNS lags) | Apex NS is WordPress.com — until `api-staging` A → KVM1, prove ACME with `https://api-staging.31.220.55.113.sslip.io/api/health` → `200` (`traefik_acme_bootstrap_host` in inventory). Remove bootstrap host after WP DNS flips. |
-| 2 | API replicas scheduled | `ssh kvm1 'docker service ls'` — backend replicas ≥ 1 |
+| 1a | TLS bootstrap (while WP DNS lags) | Apex NS is WordPress.com — until `api-staging` A → KVM1, prove ACME with `https://api-staging.31.220.55.113.sslip.io/api/health` → `200` (`traefik_acme_bootstrap_host` in inventory). Remove bootstrap host after WP DNS flips. **Green on sslip.** |
+| 2 | API replicas scheduled | `ssh kvm1 'docker service ls'` — backend replicas ≥ 1 — **1/1** |
 | 3 | Postgres on manager only | `ssh kvm1 'docker service ps <stack>_postgres'` — node = manager |
 | 4 | Pages CORS against staging origin | Browser or curl preflight from `app-staging` origin succeeds |
 | 5 | WebSocket path (if used) | Live-stream / WS upgrade against `api-staging` (DNS-only, not orange-cloud) |
-| 6 | Compose share still healthy | `curl -sS https://lenr-sim-beta.conscious.energy/api/health` → `200` |
+| 6 | Compose share still healthy | `curl -sS https://lenr-sim-beta.conscious.energy/api/health` → `200` — **green** |
 | 7 | Backup playbook dry-run | `ansible-playbook --check -i inventory.staging.yml playbooks/backup.yml` |
-| 8 | Observability (optional B3) | `docker service ls \| grep -E 'prometheus\|grafana\|blackbox'` when `observability_enabled=true`; Grafana **not** public without auth |
+| 8 | Observability (optional B3) | `docker service ls \| grep -E 'prometheus\|grafana\|blackbox'` when `observability_enabled=true`; Grafana **not** public without auth — **prometheus/grafana/blackbox/node-exporter 1/1** |
 
 **Operator DNS (required for barcode #1):** WordPress.com DNS panel → create
 `A api-staging 31.220.55.113` (leave `@`/`www` alone). See

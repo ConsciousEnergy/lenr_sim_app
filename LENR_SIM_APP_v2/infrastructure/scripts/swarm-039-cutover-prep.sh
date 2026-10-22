@@ -128,6 +128,16 @@ else
   bad "share SPA → ${spa}"
 fi
 
+# 7c) Compose Postgres volume that Swarm will reuse (external name)
+if [[ -f "$SHARE_KEY" ]] \
+  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       "root@${SHARE_IP}" \
+       'docker volume inspect lenr-sim_postgres_data >/dev/null'; then
+  ok "share volume lenr-sim_postgres_data present (Swarm postgres_volume_external)"
+else
+  bad "share missing docker volume lenr-sim_postgres_data"
+fi
+
 # 8) Confirm gate reminder (never auto-set)
 if [[ "${CONFIRM_SWARM_0_3_9:-}" == "I_CUTOVER_0_3_9" ]]; then
   note "CONFIRM_SWARM_0_3_9 is set — human cutover window armed"

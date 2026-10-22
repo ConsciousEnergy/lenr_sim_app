@@ -68,6 +68,8 @@ Preferred at the window: WordPress.com `A api → <share IP>` for
 must list `traefik_extra_api_hosts: [lenr-sim-beta.conscious.energy]` and the
 executor may pass `ALLOW_API_DNS_GAP=1`. Compose drain uses
 `drain-compose-share.yml` (`CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM`).
+Compose and Swarm both name the DB volume `lenr-sim_postgres_data` (project/stack
+`lenr-sim` + `postgres_data`); drain keeps volumes so Swarm reuses that data.
 
 Manual checklist (same order as the script):
 

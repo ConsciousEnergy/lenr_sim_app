@@ -33,6 +33,9 @@ all:
           # API PathPrefix(`/api`) on that host (ACME independent of api.*).
           traefik_extra_api_hosts:
             - "lenr-sim-beta.conscious.energy"
+          # Reuse Compose DB volume after drain (do not create an empty postgres_data).
+          postgres_volume_external: true
+          postgres_volume_name: "lenr-sim_postgres_data"
           fastapi_workers: 2
           fastapi_log_level: "info"
           observability_enabled: true

@@ -124,6 +124,15 @@ ansible-playbook -i "$STAGING_INV" playbooks/leave-staging-swarm.yml \
   -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING
 
 yel "Step 4: drain Compose on share"
+# Compose project lenr-sim + volume postgres_data → lenr-sim_postgres_data.
+# Swarm stack lenr-sim + volume postgres_data reuses the same named volume when
+# compose down keeps volumes (drain playbook does not pass -v).
+if [[ -f "$SHARE_KEY" ]]; then
+  vol_ok="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+    "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
+  [[ "$vol_ok" == "yes" ]] || { red "missing volume lenr-sim_postgres_data — abort before drain"; exit 1; }
+  grn "Postgres volume lenr-sim_postgres_data present (will be reused by Swarm stack)"
+fi
 ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
   --limit swarm_managers \
   -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM

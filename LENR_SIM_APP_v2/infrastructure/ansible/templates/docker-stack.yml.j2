@@ -451,8 +451,15 @@ networks:
 # Volumes
 # ==============================================================================
 volumes:
+{% if postgres_volume_external | default(false) %}
+  # Reuse Compose named volume (project/stack lenr-sim → lenr-sim_postgres_data).
+  postgres_data:
+    external: true
+    name: "{{ postgres_volume_name | default('lenr-sim_postgres_data') }}"
+{% else %}
   postgres_data:
     driver: local
+{% endif %}
 {% if observability_enabled | default(true) %}
   prometheus_data:
     driver: local
