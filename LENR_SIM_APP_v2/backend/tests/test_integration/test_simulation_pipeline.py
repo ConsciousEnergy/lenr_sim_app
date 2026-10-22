@@ -203,7 +203,7 @@ class TestSimulationAPI:
         data = response.json()
         assert "combined_enhancement" in data
         assert "per_theory" in data
-        assert data.get("contract_version") == "v0.3.8-beta-science-gate-1"
+        assert data.get("contract_version") == "v0.3.9-beta-science-gate-1"
         assert "validation" in data
         assert "observables_bridge" in data
         assert data["combined_enhancement"] >= 1.0
@@ -234,7 +234,7 @@ class TestSimulationAPI:
         assert response.status_code == 200
         data = response.json()
         assert data.get("success") is True
-        assert data.get("contract_version") == "v0.3.8-beta-science-gate-1"
+        assert data.get("contract_version") == "v0.3.9-beta-science-gate-1"
         assert data.get("validation", {}).get("route_mode") == "theory_pipeline"
         assert data.get("analytics_transparency", {}).get("electrolyte_family") == "li"
         assert data.get("analytics_transparency", {}).get("electrolyte_species") == "lioh"

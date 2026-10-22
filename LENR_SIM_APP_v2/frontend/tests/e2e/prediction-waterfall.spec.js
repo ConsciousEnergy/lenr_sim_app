@@ -2,7 +2,7 @@ import { test, expect } from './fixtures.js';
 
 const RESPONSE_WITH_PREDICTION = {
   success: true,
-  contract_version: 'v0.3.8-beta-science-gate-1',
+  contract_version: 'v0.3.9-beta-science-gate-1',
   collapse_results: {
     min_radius_um: 6.0,
     max_temperature_k: 2539,
