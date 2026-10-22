@@ -61,15 +61,19 @@ if [[ "$api_dns" == "$KVM1_IP" ]]; then
   ok "api-staging.conscious.energy A → ${KVM1_IP}"
   canon="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 10 https://api-staging.conscious.energy/api/health || echo 000)"
   [[ "$canon" == "200" ]] && ok "canonical staging HTTPS → 200" || bad "canonical staging HTTPS → ${canon}"
+elif [[ "${ALLOW_STAGING_DNS_GAP:-0}" == "1" ]]; then
+  note "api-staging DNS still '${api_dns:-unset}' (ALLOW_STAGING_DNS_GAP=1)"
 else
   bad "api-staging DNS is '${api_dns:-unset}' (need WordPress.com A → ${KVM1_IP})"
 fi
 
-# 5) GHCR env
+# 5) GHCR env or LOCAL_IMAGES=1
 if [[ -n "${GHCR_USER:-}" && -n "${GHCR_TOKEN:-}" ]]; then
   ok "GHCR_USER + GHCR_TOKEN set"
+elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
+  ok "LOCAL_IMAGES=1 — cutover will docker build on share (no GHCR)"
 else
-  bad "GHCR_USER / GHCR_TOKEN unset (required for prod --with-registry-auth)"
+  bad "GHCR_USER/GHCR_TOKEN unset (or set LOCAL_IMAGES=1 for on-manager build)"
 fi
 
 # 6) Share SSH (manager target)

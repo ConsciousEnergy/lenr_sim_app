@@ -1,0 +1,88 @@
+---
+# Drain the live Compose stack on the share VPS before Swarm init.
+# Does NOT delete named volumes / data dirs (rollback path).
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbooks/drain-compose-share.yml \
+#     -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
+#
+# Limit to share manager host(s) only.
+
+- name: Drain Compose share stack (pre-Swarm)
+  hosts: swarm_managers
+  become: true
+  gather_facts: false
+  vars:
+    confirm_drain: "{{ CONFIRM_DRAIN_COMPOSE | default('') }}"
+    compose_project_dir: /opt/lenr-sim/src/LENR_SIM_APP_v2
+    compose_file: infrastructure/vps/docker-compose.prod.yml
+    compose_env_file: /opt/lenr-sim/.env
+
+  tasks:
+    - name: Require explicit drain confirm
+      ansible.builtin.assert:
+        that:
+          - confirm_drain == 'I_DRAIN_COMPOSE_FOR_SWARM'
+        fail_msg: >-
+          Refusing to stop the public Compose stack without
+          -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
+
+    - name: Refuse if this host looks like CI
+      ansible.builtin.assert:
+        that:
+          - ansible_host | default('') != '45.93.100.251'
+        fail_msg: "Refuse Compose drain on CI node"
+
+    - name: Check Swarm state (should be inactive before cutover)
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_state
+      changed_when: false
+
+    - name: Warn if Swarm already active
+      ansible.builtin.debug:
+        msg: >-
+          Swarm LocalNodeState={{ swarm_state.stdout }} — Compose drain may still
+          be needed if Compose and Swarm coexist briefly.
+      when: swarm_state.stdout == 'active'
+
+    - name: Locate compose file
+      ansible.builtin.stat:
+        path: "{{ compose_project_dir }}/{{ compose_file }}"
+      register: compose_stat
+
+    - name: Fail if compose file missing
+      ansible.builtin.fail:
+        msg: "Missing {{ compose_project_dir }}/{{ compose_file }}"
+      when: not compose_stat.stat.exists
+
+    - name: docker compose ps (before)
+      ansible.builtin.command: >
+        docker compose -f {{ compose_file }}
+        {% if compose_env_file %}--env-file {{ compose_env_file }}{% endif %}
+        ps
+      args:
+        chdir: "{{ compose_project_dir }}"
+      register: compose_before
+      changed_when: false
+      failed_when: false
+
+    - name: Stop Compose stack (keep volumes)
+      ansible.builtin.command: >
+        docker compose -f {{ compose_file }}
+        {% if compose_env_file %}--env-file {{ compose_env_file }}{% endif %}
+        down --remove-orphans
+      args:
+        chdir: "{{ compose_project_dir }}"
+      register: compose_down
+
+    - name: Confirm no compose project containers remain
+      ansible.builtin.command: docker ps -q -f name=lenr-sim
+      register: remaining
+      changed_when: false
+
+    - name: Report drain result
+      ansible.builtin.debug:
+        msg: |
+          Compose drained on {{ inventory_hostname }} ({{ ansible_host }}).
+          remaining_lenr_sim_containers={{ remaining.stdout_lines | length }}
+          Volumes under /opt/lenr-sim/data preserved for rollback.

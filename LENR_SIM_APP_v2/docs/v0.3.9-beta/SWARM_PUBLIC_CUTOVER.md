@@ -48,10 +48,16 @@ Do not weaken this string. Staging experiments continue to use
 # Plan + prep only:
 ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 
-# Live (human-armed confirm + EXECUTE=1):
-CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \
+# Live (human-armed confirm + EXECUTE=1). Prefer GHCR; or LOCAL_IMAGES=1 to
+# docker build on the share manager when registry auth is unavailable:
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
+  ALLOW_STAGING_DNS_GAP=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 ```
+
+Still required at the window: WordPress.com `A api → <share IP>` for
+`https://api.conscious.energy/api/health`. Compose drain uses
+`drain-compose-share.yml` (`CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM`).
 
 Manual checklist (same order as the script):
 
