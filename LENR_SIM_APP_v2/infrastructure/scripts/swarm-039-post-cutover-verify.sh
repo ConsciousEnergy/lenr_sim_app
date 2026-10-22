@@ -158,6 +158,12 @@ else
   else
     ok "grafana :3000 not reachable from share (${ext_gf})"
   fi
+  gf_unit="$(ssh_kvm1 'systemctl is-enabled lenr-grafana-localhost.service 2>/dev/null || echo missing')"
+  if [[ "$gf_unit" == "enabled" ]]; then
+    ok "KVM1 lenr-grafana-localhost.service enabled (DOCKER-USER persist)"
+  else
+    bad "KVM1 lenr-grafana-localhost.service not enabled (${gf_unit})"
+  fi
 fi
 
 # 6) Postgres task on share (Compose volume is node-local there)

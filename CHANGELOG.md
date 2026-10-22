@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post-cutover verify asserts Grafana login HTTP 200 on KVM1 :3000
 - Grafana :3000 closed to public via DOCKER-USER (Docker bypasses UFW); prep/post-verify assert
 - Prod inventory: `grafana_publish_host_port` on `all.vars` so DOCKER-USER installs on KVM1 worker
+- Prep asserts inventory `grafana_publish_host_port`; post-cutover asserts grafana localhost unit enabled
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

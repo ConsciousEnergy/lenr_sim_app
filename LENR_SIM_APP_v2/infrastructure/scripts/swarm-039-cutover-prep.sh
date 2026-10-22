@@ -36,6 +36,12 @@ if [[ -f "$PROD_INV" ]]; then
   else
     ok "prod inventory does not list CI node as a host"
   fi
+  # Must be on all.vars (or every host) so deploy-stack installs DOCKER-USER on KVM1.
+  if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -qE 'grafana_publish_host_port:[[:space:]]*[1-9]'; then
+    ok "prod inventory sets grafana_publish_host_port (DOCKER-USER on observability node)"
+  else
+    bad "prod inventory missing grafana_publish_host_port — copy inventory.yml.example all.vars"
+  fi
 else
   bad "missing ${PROD_INV} — copy inventory.yml.example before cutover window"
 fi
