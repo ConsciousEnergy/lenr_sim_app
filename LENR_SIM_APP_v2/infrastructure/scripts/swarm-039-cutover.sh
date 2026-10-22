@@ -36,7 +36,7 @@ CONFIRM="${CONFIRM_SWARM_0_3_9:-}"
 EXECUTE="${EXECUTE:-0}"
 LOCAL_IMAGES="${LOCAL_IMAGES:-0}"
 SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
-IMAGE_TAG="${BACKEND_IMAGE_TAG:-0.3.8-beta}"
+IMAGE_TAG="${BACKEND_IMAGE_TAG:-0.3.9-beta}"
 
 red() { printf '\033[0;31m%s\033[0m\n' "$*"; }
 yel() { printf '\033[0;33m%s\033[0m\n' "$*"; }
@@ -68,12 +68,11 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   2. Version markers at 0.3.9-beta (release-quality-gate) — separate PR if still 0.3.8
   3. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
   4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
-  5. Optional LOCAL_IMAGES=1: docker build backend on share as
-       ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}
+  5. Optional LOCAL_IMAGES=1: docker build backend + frontend on share
+       (SKIP_IMAGE_BUILD=1 reuses tags if present)
   6. setup-docker.yml (swarm init on share) + join-workers.yml (KVM1 + labels)
-  7. deploy-stack.yml (GHCR or skip_ghcr_login=true)
-  8. Verify health: api.conscious.energy and/or ${SHARE_URL}
-       (ALLOW_API_DNS_GAP=1 accepts lenr-sim-beta alone)
+  7. deploy-stack.yml (SPA via swarm_frontend_enabled + Traefik PathPrefix /api)
+  8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
   9. Keep Compose volumes for rollback ≥ one release
 
 EOF
@@ -127,22 +126,42 @@ ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
   -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
 
 if [[ "$LOCAL_IMAGES" == "1" ]]; then
-  yel "Step 5: backend image on share (LOCAL_IMAGES=1)"
+  yel "Step 5: backend + frontend images on share (LOCAL_IMAGES=1)"
   [[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
-  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" ]] \
-    && ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-         "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}" >/dev/null 2>&1; then
-    grn "SKIP_IMAGE_BUILD=1 — reusing existing ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}"
+  have_backend=0
+  have_frontend=0
+  if ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+       "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}" >/dev/null 2>&1; then
+    have_backend=1
+  fi
+  if ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+       "docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG}" >/dev/null 2>&1; then
+    have_frontend=1
+  fi
+  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" && "$have_backend" -eq 1 && "$have_frontend" -eq 1 ]]; then
+    grn "SKIP_IMAGE_BUILD=1 — reusing backend+frontend :${IMAGE_TAG}"
   else
     rsync -az --delete \
       --exclude '.git' --exclude 'frontend/node_modules' --exclude '**/__pycache__' \
       --exclude 'backend/.venv' --exclude 'frontend/dist' \
       -e "ssh -i ${SHARE_KEY} -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
       "${ROOT}/LENR_SIM_APP_v2/" "root@${SHARE_IP}:/opt/lenr-sim/src/LENR_SIM_APP_v2/"
-    ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-      "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
-        -t ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} \
-        --build-arg BUILD_VERSION=${IMAGE_TAG} ."
+    if [[ "$have_backend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
+      ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+        "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
+          -t ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} \
+          --build-arg BUILD_VERSION=${IMAGE_TAG} ."
+    else
+      grn "reusing existing backend :${IMAGE_TAG}"
+    fi
+    if [[ "$have_frontend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
+      ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+        "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.frontend \
+          -t ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} \
+          --build-arg VITE_API_URL=same-origin --build-arg REACT_APP_API_URL=same-origin ."
+    else
+      grn "reusing existing frontend :${IMAGE_TAG}"
+    fi
   fi
 fi
 
@@ -161,16 +180,18 @@ ansible-playbook -i "$PROD_INV" playbooks/deploy-stack.yml "${deploy_extra[@]}"
 yel "Step 8: health probes"
 api_code="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 https://api.conscious.energy/api/health || echo 000)"
 share_after="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/api/health" || echo 000)"
+spa_after="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/" || echo 000)"
 echo "api.conscious.energy → ${api_code}"
-echo "share/lenr-sim-beta after → ${share_after}"
+echo "share/lenr-sim-beta /api/health → ${share_after}"
+echo "share/lenr-sim-beta SPA / → ${spa_after}"
 
-if [[ "$api_code" == "200" ]]; then
-  grn "Cutover health probe green (api=${api_code} share=${share_after})"
-elif [[ "${ALLOW_API_DNS_GAP:-0}" == "1" && "$share_after" == "200" ]]; then
-  yel "api.conscious.energy → ${api_code} (WP DNS lag); accepting ${SHARE_URL} → 200 (ALLOW_API_DNS_GAP=1)"
-  grn "Cutover health probe green via lenr-sim-beta (traefik_extra_api_hosts)"
+if [[ "$api_code" == "200" && "$spa_after" == "200" ]]; then
+  grn "Cutover health probe green (api=${api_code} spa=${spa_after})"
+elif [[ "${ALLOW_API_DNS_GAP:-0}" == "1" && "$share_after" == "200" && "$spa_after" == "200" ]]; then
+  yel "api.conscious.energy → ${api_code} (WP DNS lag); accepting ${SHARE_URL} api+spa → 200 (ALLOW_API_DNS_GAP=1)"
+  grn "Cutover health probe green via lenr-sim-beta (SPA + PathPrefix /api)"
 else
-  red "API health not 200 (api=${api_code} share=${share_after}) — set WordPress A api → ${SHARE_IP} or ALLOW_API_DNS_GAP=1 with working lenr-sim-beta; Compose volumes still on disk for rollback"
+  red "Health not green (api=${api_code} share_api=${share_after} spa=${spa_after}) — need Swarm frontend+backend on share or WordPress A api; Compose volumes still on disk for rollback"
   exit 1
 fi
 

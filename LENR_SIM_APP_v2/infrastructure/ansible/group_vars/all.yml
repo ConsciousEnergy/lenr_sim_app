@@ -3,9 +3,12 @@
 
 # Application settings
 app_name: lenr-sim
-# Placeholder for the v0.3.8-beta Swarm path (do not ansible-playbook prod in 0.3.7).
-app_version: "0.3.8-beta"
+# Swarm image tags (bump with the four version surfaces for a release cutover).
+app_version: "0.3.9-beta"
 backend_image_tag: "{{ app_version }}"
+frontend_image_tag: "{{ app_version }}"
+swarm_frontend_enabled: false
+frontend_replicas: 2
 app_domain: "conscious.energy"
 api_subdomain: "api"
 

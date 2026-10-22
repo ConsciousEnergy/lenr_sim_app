@@ -91,7 +91,10 @@ Manual checklist (same order as the script):
 | Item | State |
 |------|-------|
 | Confirm gate in `deploy.sh` | Implemented |
-| Staging path uses staging inventory/tfvars | Implemented (0.3.8 tooling) |
+| Staging path uses staging inventory/tfvars | Implemented (0.3.8 tooling); KVM1 Swarm live (sslip) |
+| Swarm SPA on share host | `swarm_frontend_enabled` + `traefik_spa_hosts` + API `PathPrefix(/api)` |
+| Version markers | `0.3.9-beta` on this train (four surfaces + ansible `app_version`) |
+| Cloudflare Pages (`app.`) | Optional later; same-origin Traefik SPA unblocks cutover without CF apply |
 | Operator production apply | **Blocked** until human sets `CONFIRM_SWARM_0_3_9` with live credentials |
 | Compose retained for rollback | Required |
 | Manager raft quorum (≥3 managers) | **Out of scope** for this cutover |

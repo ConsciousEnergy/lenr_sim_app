@@ -84,7 +84,7 @@ services:
   # FastAPI Backend
   # ============================================================================
   backend:
-    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default(app_version) | default('0.3.8-beta') }}
+    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default(app_version) | default('0.3.9-beta') }}
     environment:
       # LENR_*-prefixed vars feed Pydantic Settings (env_prefix="LENR_").
       # Use lenr_environment — Ansible's built-in `environment` is a reserved mapping.
@@ -96,7 +96,8 @@ services:
       - LENR_LOG_LEVEL={{ fastapi_log_level | default('info') }}
       - LENR_LOG_TO_FILE={{ 'true' if (lenr_log_to_file | default(true)) else 'false' }}
       - LENR_LOG_JSON_FORMAT=true
-      - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"]
+      - >-
+        LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"{% for _h in (traefik_spa_hosts | default([])) %},"https://{{ _h }}"{% endfor %}]
       - LENR_ENABLE_RATE_LIMITING=true
       - LENR_HTTPS_REDIRECT=false
       - LENR_AUTO_PERSIST=0
@@ -178,12 +179,15 @@ services:
 {% set _ = _extra_ns.hosts.append(traefik_acme_bootstrap_host) %}
 {% endif %}
 {% for _host in _extra_ns.hosts | unique %}
-        - "traefik.http.routers.backend-extra-{{ loop.index }}.rule=Host(`{{ _host }}`)"
+        # PathPrefix so SPA can share the host (e.g. lenr-sim-beta) with the API.
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.entrypoints=websecure"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.tls.certresolver=letsencrypt"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares=security-headers@file,backend-ratelimit"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.service=backend"
-        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.rule=Host(`{{ _host }}`)"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.entrypoints=web"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares=security-headers@file,backend-ratelimit"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.service=backend"
@@ -198,6 +202,65 @@ services:
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
+
+{% if swarm_frontend_enabled | default(false) %}
+  # ============================================================================
+  # Frontend SPA (nginx) — same-origin with /api on traefik_spa_hosts
+  # ============================================================================
+  frontend:
+    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-frontend:{{ frontend_image_tag | default(app_version) | default('0.3.9-beta') }}
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: replicated
+      replicas: {{ frontend_replicas | default(2) }}
+      placement:
+        preferences:
+          - spread: node.labels.app
+{% if require_app_label | default(false) %}
+        constraints:
+          - node.labels.app == true
+{% endif %}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+        monitor: 30s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      labels:
+        - "traefik.enable=true"
+{% set _raw_spa = traefik_spa_hosts | default([]) %}
+{% if _raw_spa is string %}
+{% set _spa_ns = namespace(hosts=([_raw_spa] if (_raw_spa | length > 0) else [])) %}
+{% else %}
+{% set _spa_ns = namespace(hosts=(_raw_spa | list)) %}
+{% endif %}
+{% for _host in _spa_ns.hosts | unique %}
+        - "traefik.http.routers.frontend-{{ loop.index }}.rule=Host(`{{ _host }}`)"
+        - "traefik.http.routers.frontend-{{ loop.index }}.priority=10"
+        - "traefik.http.routers.frontend-{{ loop.index }}.entrypoints=websecure"
+        - "traefik.http.routers.frontend-{{ loop.index }}.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.frontend-{{ loop.index }}.middlewares=security-headers@file"
+        - "traefik.http.routers.frontend-{{ loop.index }}.service=frontend"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.rule=Host(`{{ _host }}`)"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.priority=10"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.entrypoints=web"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.middlewares=security-headers@file"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.service=frontend"
+{% endfor %}
+        - "traefik.http.services.frontend.loadbalancer.server.port=80"
+{% endif %}
 
   # ============================================================================
   # PostgreSQL Database
