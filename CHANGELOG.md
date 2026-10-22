@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: Grafana + D-Force pre-arm checklist before `CONFIRM_SWARM_0_3_9`
 - Prod stack render gate asserts Grafana secret uid 472 + host publish 3000
 - Cutover window card prints Grafana tunnel + D-Force pre-arm reminders
+- Post-cutover verify asserts Grafana login HTTP 200 on KVM1 :3000
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
