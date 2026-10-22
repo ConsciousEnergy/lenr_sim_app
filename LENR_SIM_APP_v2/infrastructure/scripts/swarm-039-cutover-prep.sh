@@ -172,12 +172,34 @@ if [[ ! -d "$d" || ! -f "$p" ]]; then
   echo missing
   exit 0
 fi
-python3 -c "import os,stat; m=stat.S_IMODE(os.stat('$p').st_mode); d=stat.S_IMODE(os.stat('$d').st_mode); print(f'ok dir={d:04o} file={m:04o}')"
+python3 - <<'PY'
+import os, stat, json
+p = "/opt/lenr-sim/traefik/certs/acme.json"
+d = "/opt/lenr-sim/traefik/certs"
+fm = stat.S_IMODE(os.stat(p).st_mode)
+dm = stat.S_IMODE(os.stat(d).st_mode)
+sz = os.path.getsize(p)
+if sz == 0:
+    print(f"empty dir={dm:04o} file={fm:04o}")
+    raise SystemExit(0)
+try:
+    json.load(open(p))
+except Exception:
+    print(f"badjson dir={dm:04o} file={fm:04o} size={sz}")
+    raise SystemExit(0)
+print(f"ok dir={dm:04o} file={fm:04o}")
+PY
 EOS
 )"
   acme_prep="$(printf '%s' "$acme_prep" | tr -d '\r' | tail -1)"
   case "$acme_prep" in
-    ok\ dir=0700\ file=0600) ok "share Traefik ACME store ready (certs 0700, acme.json 0600)" ;;
+    ok\ dir=0700\ file=0600) ok "share Traefik ACME store ready (certs 0700, acme.json 0600, non-empty JSON)" ;;
+    empty\ *)
+      bad "share acme.json is zero-length — seed '{}' (deploy-stack) or ALLOW_ACME_PRESTAGE_GAP=1"
+      ;;
+    badjson\ *)
+      bad "share acme.json is not valid JSON (${acme_prep})"
+      ;;
     ok\ *)
       if [[ "${ALLOW_ACME_MODE_GAP:-0}" == "1" ]]; then
         note "share ACME store modes ${acme_prep} (ALLOW_ACME_MODE_GAP=1)"
@@ -189,7 +211,7 @@ EOS
       if [[ "${ALLOW_ACME_PRESTAGE_GAP:-0}" == "1" ]]; then
         note "share ACME store missing (ALLOW_ACME_PRESTAGE_GAP=1 — deploy-stack will create)"
       else
-        bad "share ACME store missing under /opt/lenr-sim/traefik/certs (mkdir+touch or ALLOW_ACME_PRESTAGE_GAP=1)"
+        bad "share ACME store missing under /opt/lenr-sim/traefik/certs (mkdir+seed '{}' or ALLOW_ACME_PRESTAGE_GAP=1)"
       fi
       ;;
   esac

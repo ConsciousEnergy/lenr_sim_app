@@ -75,10 +75,28 @@
         owner: root
         group: root
 
-    - name: Ensure Traefik acme.json exists with restrictive mode
+    - name: Stat Traefik acme.json
+      ansible.builtin.stat:
+        path: /opt/lenr-sim/traefik/certs/acme.json
+      register: traefik_acme_json
+
+    # Traefik expects a JSON object store. A zero-byte touch leaves an invalid
+    # file; seed "{}" only when missing or empty so we never wipe live certs.
+    - name: Seed Traefik acme.json when missing or zero-length
+      ansible.builtin.copy:
+        dest: /opt/lenr-sim/traefik/certs/acme.json
+        content: "{}"
+        mode: '0600'
+        owner: root
+        group: root
+      when: >-
+        (not traefik_acme_json.stat.exists)
+        or ((traefik_acme_json.stat.size | default(0) | int) == 0)
+
+    - name: Ensure Traefik acme.json mode is restrictive
       ansible.builtin.file:
         path: /opt/lenr-sim/traefik/certs/acme.json
-        state: touch
+        state: file
         mode: '0600'
         owner: root
         group: root
