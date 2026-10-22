@@ -15,6 +15,8 @@ all:
       hosts:
         share-manager-1:
           ansible_host: 185.211.4.66
+          # Pin advertise-addr to public IP (not NAT/default iface) for multi-node join.
+          swarm_advertise_addr: "185.211.4.66"
           ansible_user: root
           # Prefer key injected via Hostinger POST .../ssh-keys (see hostinger-compose-unlock.py).
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-share
@@ -47,6 +49,7 @@ all:
       hosts:
         kvm1-worker-1:
           ansible_host: 31.220.55.113
+          swarm_advertise_addr: "31.220.55.113"
           ansible_user: root
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
           swarm_node_labels:

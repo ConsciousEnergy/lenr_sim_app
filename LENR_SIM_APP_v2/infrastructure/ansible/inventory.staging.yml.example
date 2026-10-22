@@ -24,6 +24,8 @@ all:
       hosts:
         staging-manager-1:
           ansible_host: STAGING_MANAGER_IP  # KVM1 IP — never 185.211.4.66 / 45.93.100.251
+          # Pin advertise-addr to the public IP (matches ansible_host).
+          swarm_advertise_addr: STAGING_MANAGER_IP
           ansible_user: root
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-staging
           # Single-node staging: app + observability on the manager.

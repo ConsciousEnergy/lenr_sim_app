@@ -208,6 +208,24 @@
       ansible.builtin.debug:
         msg: "Skipping swarm init on {{ inventory_hostname }} (not in swarm_managers); use join-workers.yml"
       when: not (swarm_init | bool)
+
+    # Re-check after init: pre-init swarm_status is stale when we just joined/created.
+    - name: Re-check Swarm state after init (managers)
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_status_after
+      changed_when: false
+      when: swarm_init | bool
+
+    - name: Fail if manager Swarm is not active after init
+      ansible.builtin.fail:
+        msg: >-
+          Manager {{ inventory_hostname }} Swarm state is
+          '{{ swarm_status_after.stdout | default("unknown") }}'
+          (advertise-addr={{ _swarm_advertise_addr }}).
+          Fix UFW/advertise-addr and re-run setup-docker.yml.
+      when:
+        - swarm_init | bool
+        - (swarm_status_after.stdout | default("")) != "active"
       
     # ==========================================================================
     # Prepare Application Directories
@@ -240,6 +258,9 @@
         
     - name: Create Docker network for the application
       # Prefer CLI: community.docker can fail on newer Docker Engine URL schemes.
+      # Gate on post-init swarm_status_after so overlay is created on first init
+      # (pre-init swarm_status is still inactive and "is changed" can miss
+      # already-part-of-swarm / skipped edge cases).
       ansible.builtin.command: >
         docker network create
         --driver overlay
@@ -251,10 +272,9 @@
       failed_when: >
         overlay_create.rc != 0 and
         ("already exists" not in (overlay_create.stderr | default("")))
-      when: >
-        (swarm_init | bool) and
-        (swarm_status.stdout == "active" or
-         (swarm_init_result is defined and swarm_init_result is changed))
+      when:
+        - swarm_init | bool
+        - (swarm_status_after.stdout | default("")) == "active"
       
     # ==========================================================================
     # System Tuning

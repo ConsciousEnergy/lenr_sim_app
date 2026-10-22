@@ -19,6 +19,18 @@ They are retained for cutover prep; they are not the v0.3.7 public-beta ship pat
 
 ## Scripts
 
+### swarm-039-cutover.sh / swarm-039-cutover-prep.sh / swarm-039-readiness-barcode.sh
+
+v0.3.9 public cutover path. Prep and barcode are read-only; the executor never
+sets `CONFIRM_SWARM_0_3_9` (human-armed). See
+[`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
+
+### unclog-lenr-ci.sh
+
+Recover wedged dedicated runner `2012566` / `45.93.100.251` (Hostinger restart,
+SSH key attach, verify `Listening for Jobs`). Never touches Compose share
+`1280333`. See [`../../docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../../docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+
 ### deploy.sh
 
 Full deployment script that orchestrates Terraform, Ansible, and Docker Swarm.
