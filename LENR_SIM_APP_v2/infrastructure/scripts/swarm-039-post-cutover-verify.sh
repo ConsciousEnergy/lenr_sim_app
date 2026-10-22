@@ -120,6 +120,24 @@ else
       bad "observability ${name} not fully replicated (${reps})"
     fi
   done
+  # Grafana pin to observability=true (KVM1 in prod inventory).
+  gf_node="$(ssh_share "docker service ps ${STACK}_grafana --filter desired-state=running --format '{{.Node}}' | head -1" || true)"
+  gf_addr="$(ssh_share "docker node ls -q | while read -r id; do
+    h=\$(docker node inspect \"\$id\" --format '{{.Description.Hostname}}')
+    a=\$(docker node inspect \"\$id\" --format '{{.Status.Addr}}')
+    if [ \"\$h\" = '${gf_node}' ]; then echo \"\$a\"; break; fi
+  done" || true)"
+  echo "grafana running on node=${gf_node:-none} addr=${gf_addr:-?}"
+  if [[ "$gf_addr" == "$KVM1_IP" ]]; then
+    ok "grafana task on KVM1 (${gf_node} / ${gf_addr})"
+  elif [[ -n "$gf_node" && "$gf_addr" != "$SHARE_IP" ]]; then
+    yel "grafana on ${gf_node}/${gf_addr:-?} (expected KVM1 ${KVM1_IP})"
+  else
+    bad "grafana on ${gf_node:-none}/${gf_addr:-?} — expected KVM1 ${KVM1_IP} (observability=true)"
+  fi
+  ssh_share 'docker secret inspect grafana_admin_password >/dev/null' \
+    && ok "docker secret grafana_admin_password present" \
+    || bad "missing docker secret grafana_admin_password"
 fi
 
 # 6) Postgres task on share (Compose volume is node-local there)

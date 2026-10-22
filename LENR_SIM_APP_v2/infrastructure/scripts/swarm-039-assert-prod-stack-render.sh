@@ -90,6 +90,10 @@ grep -qE '^\s+prometheus:' "$stack_tmp" \
   || { echo "FAIL: missing prometheus service in prod stack render"; fail=1; }
 grep -q 'node.labels.observability == true' "$stack_tmp" \
   || { echo "FAIL: missing observability placement constraint"; fail=1; }
+grep -qF 'GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password' "$stack_tmp" \
+  || { echo "FAIL: Grafana admin password must come from Swarm secret file"; fail=1; }
+grep -qE 'grafana_admin_password:' "$stack_tmp" \
+  || { echo "FAIL: missing external secret grafana_admin_password"; fail=1; }
 
 if [[ "$fail" -ne 0 ]]; then
   echo "ERROR: prod stack render invariants failed — see $stack_tmp" >&2

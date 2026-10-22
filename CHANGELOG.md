@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (k9s-like; not a cutover gate)
 - Cutover prep asserts Prometheus/Grafana scaffolds on share + KVM1
   (`ALLOW_OBS_PRESTAGE_GAP=1` to defer to deploy-stack sync)
+- Grafana admin via Swarm secret `grafana_admin_password` (file env); cutover
+  imports/mints before deploy; post-cutover checks secret + KVM1 placement
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

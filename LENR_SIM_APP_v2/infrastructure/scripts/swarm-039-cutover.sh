@@ -279,8 +279,29 @@ if ! docker secret inspect api_secret_key >/dev/null 2>&1; then
 else
   echo "secret api_secret_key already exists — leaving unchanged"
 fi
+# Grafana admin (first boot on new grafana_data). Prefer .env; else mint once.
+if ! docker secret inspect grafana_admin_password >/dev/null 2>&1; then
+  gf_line="$(grep -E '^GRAFANA_ADMIN_PASSWORD=' "$ENV_FILE" | tail -1 || true)"
+  if [[ -n "$gf_line" ]]; then
+    gf_pass="${gf_line#*=}"
+    gf_pass="${gf_pass%\"}"; gf_pass="${gf_pass#\"}"
+    gf_pass="${gf_pass%\'}"; gf_pass="${gf_pass#\'}"
+  else
+    gf_pass="$(openssl rand -base64 24 | tr -d '=+/' | head -c 32)"
+    umask 077
+    printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$gf_pass" >> "$ENV_FILE"
+    echo "appended GRAFANA_ADMIN_PASSWORD to $ENV_FILE (mode preserved)"
+  fi
+  [[ -n "$gf_pass" ]] || { echo "empty GRAFANA_ADMIN_PASSWORD"; exit 1; }
+  printf '%s' "$gf_pass" | docker secret create grafana_admin_password -
+  printf '%s\n' "$gf_pass" > /opt/lenr-sim/.grafana-admin-password
+  chmod 600 /opt/lenr-sim/.grafana-admin-password
+  echo "created secret grafana_admin_password (also /opt/lenr-sim/.grafana-admin-password)"
+else
+  echo "secret grafana_admin_password already exists — leaving unchanged"
+fi
 EOS
-grn "Swarm secrets ready (Compose DB password preserved)"
+grn "Swarm secrets ready (Compose DB password preserved; Grafana admin secret present)"
 
 ansible-playbook -i "$PROD_INV" playbooks/join-workers.yml
 

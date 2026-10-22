@@ -214,6 +214,27 @@
         - "'api_secret_key' not in (existing_secrets.stdout | default(''))"
         - api_secret_key is defined
       no_log: true
+
+    - name: Generate Grafana admin password if not set (observability stacks)
+      ansible.builtin.set_fact:
+        grafana_admin_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - grafana_admin_password is not defined
+        - "'grafana_admin_password' not in (existing_secrets.stdout | default(''))"
+      no_log: true
+
+    - name: Create Grafana admin password secret
+      ansible.builtin.command:
+        cmd: docker secret create grafana_admin_password -
+        stdin: "{{ grafana_admin_password }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - "'grafana_admin_password' not in (existing_secrets.stdout | default(''))"
+        - grafana_admin_password is defined
+      no_log: true
       
     # ==========================================================================
     # GHCR login + stack deploy (managers only)

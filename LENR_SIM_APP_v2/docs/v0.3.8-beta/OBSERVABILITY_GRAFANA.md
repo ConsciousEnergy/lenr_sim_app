@@ -36,7 +36,10 @@ Dashboards must not invent LENR claim scores from uptime. Closing
 
 - Grafana and Prometheus bind to the **overlay / localhost**; expose via
   Traefik only with Basic Auth or SSO, or SSH tunnel for staging.
-- Never put Grafana credentials in git. Use Swarm secrets / Ansible vault.
+- Never put Grafana credentials in git. Use Swarm secret `grafana_admin_password`
+  (`GF_SECURITY_ADMIN_PASSWORD__FILE`). Cutover imports `GRAFANA_ADMIN_PASSWORD`
+  from share `.env` or mints one into `/opt/lenr-sim/.grafana-admin-password`
+  (mode `600`). Ansible `deploy-stack.yml` can mint if the secret is missing.
 - CI host (`2012566`) is not scraped as a Swarm node (it is not in the cluster).
 - Do not publish Traefik `:8082`, Prometheus `:9090`, or Grafana `:3000` on the
   public Hostinger firewall.
