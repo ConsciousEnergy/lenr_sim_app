@@ -273,6 +273,14 @@ else
 fi
 ansible-playbook -i "$PROD_INV" playbooks/deploy-stack.yml "${deploy_extra[@]}"
 
+yel "Step 7a: assert Traefik ACME store on share (certs dir + acme.json 0600)"
+acme_check="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+  'test -d /opt/lenr-sim/traefik/certs && test -f /opt/lenr-sim/traefik/certs/acme.json \
+   && python3 -c "import os,stat; m=stat.S_IMODE(os.stat(\"/opt/lenr-sim/traefik/certs/acme.json\").st_mode); raise SystemExit(0 if m==0o600 else 1)"' \
+  && echo ok || echo bad)"
+[[ "$acme_check" == "ok" ]] || { red "Traefik ACME store missing or acme.json not mode 0600"; exit 1; }
+grn "ACME store ready (/opt/lenr-sim/traefik/certs/acme.json mode 0600)"
+
 yel "Step 7b: wait for stack replicas + SPA/API health (ACME settle)"
 STACK_NAME="${STACK_NAME:-lenr-sim}"
 WAIT_SECS="${CUTOVER_HEALTH_WAIT_SECS:-300}"

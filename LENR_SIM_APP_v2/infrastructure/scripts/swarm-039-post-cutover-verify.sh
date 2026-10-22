@@ -149,7 +149,25 @@ else
   bad "api.conscious.energy → ${api_prod} (set ALLOW_API_DNS_GAP=1 if WP DNS lags)"
 fi
 
-# 8) Compose project should be down on share (no name=lenr-sim leftovers from compose)
+# 8) Traefik ACME persist on share manager (host bind for /certs/acme.json)
+acme_meta="$(ssh_share 'python3 -c "
+import os, stat
+p = \"/opt/lenr-sim/traefik/certs/acme.json\"
+if not os.path.isfile(p):
+    print(\"missing\")
+else:
+    mode = stat.S_IMODE(os.stat(p).st_mode)
+    size = os.path.getsize(p)
+    print(f\"ok mode={mode:04o} size={size}\")
+"' 2>/dev/null || echo unreachable)"
+echo "acme.json → ${acme_meta}"
+case "$acme_meta" in
+  ok\ mode=0600*) ok "Traefik acme.json present mode 0600 on share" ;;
+  ok\ mode=*) bad "acme.json mode not 0600 (${acme_meta})" ;;
+  *) bad "acme.json missing or unreadable (${acme_meta})" ;;
+esac
+
+# 9) Compose project should be down on share (no name=lenr-sim leftovers from compose)
 compose_left="$(ssh_share 'docker ps -q -f name=lenr-sim | wc -l')"
 # Swarm tasks also match name=lenr-sim — count only compose-style project labels if possible
 compose_proj="$(ssh_share 'docker ps -q -f label=com.docker.compose.project=lenr-sim | wc -l')"
