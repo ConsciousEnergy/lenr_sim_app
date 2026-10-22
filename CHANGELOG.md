@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prod inventory: `grafana_publish_host_port` on `all.vars` so DOCKER-USER installs on KVM1 worker
 - Prep asserts inventory `grafana_publish_host_port`; post-cutover asserts grafana localhost unit enabled
 - `deploy.sh --app-only` health-checks via inventory/env URL when Terraform state is absent
+- Window card notes DOCKER-USER / public Grafana :3000 must stay closed
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

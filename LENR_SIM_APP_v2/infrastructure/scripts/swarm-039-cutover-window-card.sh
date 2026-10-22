@@ -17,9 +17,10 @@ LOCAL_IMAGES=1 SKIP_IMAGE_BUILD=1 ALLOW_API_DNS_GAP=1 ALLOW_STAGING_DNS_GAP=1 \
 echo
 echo "=== pre-arm observability (Grafana + optional D-Force) ==="
 cat <<EOF
-# Staging Grafana SSH tunnel (UFW must NOT allow :3000 publicly):
+# Staging Grafana SSH tunnel (Docker host-mode bypasses UFW — DOCKER-USER DROP required):
 ssh -i "\${KVM1_SSH_KEY:-\$HOME/.ssh/lenr-sim-staging}" -L 3000:127.0.0.1:3000 root@31.220.55.113
 # browser → http://127.0.0.1:3000  (password: /opt/lenr-sim/.grafana-admin-password on KVM1)
+# Public kvm1:3000 must NOT return 200 (lenr-grafana-localhost.service / DOCKER-USER).
 # Optional TUI (operator laptop): d4s --context <ssh-context-to-staging-or-share-manager>
 # Docs: docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md + D4S_DFORCE_OPERATOR.md
 EOF
