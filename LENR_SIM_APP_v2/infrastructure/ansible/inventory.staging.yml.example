@@ -30,6 +30,22 @@ all:
           swarm_node_labels:
             - app=true
             - observability=true
+          # Host vars beat playbook group_vars/all.yml (api_subdomain=api, workers=4).
+          app_domain: "conscious.energy"
+          api_subdomain: "api-staging"
+          # App Settings enum is development|test|production (not "staging").
+          # Deployment plane is staging; app runtime uses production for cutover parity.
+          lenr_environment: "production"
+          traefik_acme_email: "ops@conscious.energy"
+          traefik_acme_staging: true
+          fastapi_workers: 1
+          fastapi_log_level: "info"
+          observability_enabled: true
+          require_app_label: false
+          require_observability_label: false
+          grafana_admin_user: "admin"
+          grafana_traefik_enabled: false
+          skip_ghcr_login: true
     swarm_workers:
       hosts:
         # Optional second staging node. Omit / comment for single-node staging caveat.
@@ -40,21 +56,8 @@ all:
         #   swarm_node_labels:
         #     - app=true
   vars:
-    app_domain: "conscious.energy"
-    api_subdomain: "api-staging"
-    environment: "staging"
     docker_compose_version: "2.24.5"
-    traefik_dashboard_auth: true
-    traefik_acme_email: "ops@conscious.energy"
     postgres_version: "16"
     postgres_db: "lenr_sim"
     postgres_user: "lenr_app"
-    fastapi_workers: 2
-    fastapi_log_level: "info"
-    # Prometheus + Grafana (see OBSERVABILITY_GRAFANA.md). Staging: labels optional.
-    observability_enabled: true
-    require_app_label: false
-    require_observability_label: false
-    grafana_admin_user: "admin"
-    grafana_traefik_enabled: false
     # Set grafana_admin_password / grafana_basic_auth via Ansible vault — never commit.

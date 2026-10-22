@@ -8,22 +8,26 @@ services:
   # Traefik - Reverse Proxy & SSL
   # ============================================================================
   traefik:
-    image: traefik:v3.0
+    # v3.6.1+ negotiates Docker API (required for Engine 29; v3.0 hardcodes 1.24).
+    image: traefik:{{ traefik_version | default('v3.6.1') }}
     command:
       - "--configFile=/etc/traefik/traefik.yml"
-      - "--providers.docker=true"
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=lenr-sim-network"
+      # Traefik v3: Swarm is a separate provider (swarmMode removed from docker).
+      - "--providers.swarm=true"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--providers.swarm.network=lenr-sim-network"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.metrics.address=:8082"
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.entrypoint=metrics"
+{% if traefik_force_https | default(true) %}
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+{% endif %}
       - "--certificatesresolvers.letsencrypt.acme.email={{ traefik_acme_email | quote }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
@@ -59,7 +63,9 @@ services:
         constraints:
           - node.role == manager
       labels:
-        - "traefik.enable=true"
+        # Keep Traefik itself off the Swarm provider unless dashboard is enabled
+        # (avoids "port is missing" when only ACME labels are present).
+        - "traefik.enable={{ 'true' if (traefik_dashboard_enabled | default(false)) else 'false' }}"
         # ACME challenge router (exclude from HTTPS redirect)
         - "traefik.http.routers.acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
         - "traefik.http.routers.acme.entrypoints=web"
@@ -81,15 +87,16 @@ services:
     image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default(app_version) | default('0.3.8-beta') }}
     environment:
       # LENR_*-prefixed vars feed Pydantic Settings (env_prefix="LENR_").
-      - LENR_ENVIRONMENT=production
+      # Use lenr_environment — Ansible's built-in `environment` is a reserved mapping.
+      - LENR_ENVIRONMENT={{ lenr_environment | default('production') }}
       - LENR_DB_HOST=postgres
       - LENR_DB_PORT=5432
       - LENR_DB_USER={{ postgres_user | default('lenr_app') }}
       - LENR_DB_NAME={{ postgres_db | default('lenr_sim') }}
       - LENR_LOG_LEVEL={{ fastapi_log_level | default('info') }}
-      - LENR_LOG_TO_FILE=true
+      - LENR_LOG_TO_FILE={{ 'true' if (lenr_log_to_file | default(true)) else 'false' }}
       - LENR_LOG_JSON_FORMAT=true
-      - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}"]
+      - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"]
       - LENR_ENABLE_RATE_LIMITING=true
       - LENR_HTTPS_REDIRECT=false
       - LENR_AUTO_PERSIST=0
@@ -147,10 +154,16 @@ services:
           memory: 512M
       labels:
         - "traefik.enable=true"
-        # API Router
+        # API Router (HTTPS). Staging may also expose HTTP until DNS/ACME is ready.
         - "traefik.http.routers.backend.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+{% if not (traefik_force_https | default(true)) %}
+        - "traefik.http.routers.backend-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
+        - "traefik.http.routers.backend-http.entrypoints=web"
+        - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-http.service=backend"
+{% endif %}
         # security-headers is defined in traefik-dynamic.yml.j2 (file provider).
         - "traefik.http.routers.backend.middlewares=security-headers@file,backend-ratelimit"
         # Service

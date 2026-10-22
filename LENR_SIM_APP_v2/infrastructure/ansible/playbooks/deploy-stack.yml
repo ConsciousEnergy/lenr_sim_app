@@ -7,11 +7,16 @@
   become: true
   vars:
     stack_name: lenr-sim
-    app_domain: "{{ app_domain | default('conscious.energy') }}"
-    api_subdomain: "{{ api_subdomain | default('api') }}"
-    traefik_acme_email: "{{ traefik_acme_email | default('diadon@conscious.energy') }}"
+    # Defaults live in group_vars/all.yml + inventory — do not self-reference here
+    # (Ansible recursive loop on app_domain / traefik_acme_email).
     
   tasks:
+    - name: Apply deploy defaults when inventory omitted them
+      ansible.builtin.set_fact:
+        app_domain: "{{ app_domain | default('conscious.energy', true) }}"
+        api_subdomain: "{{ api_subdomain | default('api', true) }}"
+        traefik_acme_email: "{{ traefik_acme_email | default('diadon@conscious.energy', true) }}"
+
     # ==========================================================================
     # Pre-deployment Validation
     # ==========================================================================
@@ -46,6 +51,18 @@
         mode: '0755'
         owner: root
         group: root
+
+    # Backend runs as uid/gid 1000 (appuser); bind mounts must be writable.
+    - name: Ensure backend bind-mount dirs are writable by appuser
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: "1000"
+        group: "1000"
+      loop:
+        - /opt/lenr-sim/logs
+        - /opt/lenr-sim/data
     
     # ==========================================================================
     # Copy Stack Files
@@ -188,10 +205,23 @@
       when: not (_have_ghcr | bool)
       
     - name: Wait for services to start
-      ansible.builtin.command: docker stack services {{ stack_name }} --format '{{ "{{.Replicas}}" }}'
+      ansible.builtin.shell: |
+        set -eu
+        bad=0
+        while read -r reps; do
+          [ -n "$reps" ] || continue
+          cur="${reps%%/*}"
+          want="${reps##*/}"
+          if [ "$cur" != "$want" ]; then
+            bad=1
+          fi
+        done <<< "$(docker stack services {{ stack_name }} --format '{{ "{{.Replicas}}" }}')"
+        exit "$bad"
+      args:
+        executable: /bin/bash
       register: services_status
-      until: "'0/' not in services_status.stdout"
-      retries: 30
+      until: services_status.rc == 0
+      retries: 36
       delay: 10
       changed_when: false
       

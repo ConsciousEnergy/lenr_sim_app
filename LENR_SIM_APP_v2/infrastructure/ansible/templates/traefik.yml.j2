@@ -17,8 +17,9 @@ accessLog:
       - "400-599"
 
 providers:
-  docker:
-    swarmMode: true
+  # Traefik v3: use Swarm provider (docker.swarmMode was removed).
+  swarm:
+    endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: lenr-sim-network
   file:
@@ -28,11 +29,13 @@ providers:
 entryPoints:
   web:
     address: ":80"
+{% if traefik_force_https | default(true) %}
     http:
       redirections:
         entryPoint:
           to: websecure
           scheme: https
+{% endif %}
           
   websecure:
     address: ":443"

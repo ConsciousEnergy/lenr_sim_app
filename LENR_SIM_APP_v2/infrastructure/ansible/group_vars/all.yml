@@ -16,7 +16,7 @@ docker_users:
   # Note: root access should use become: true in playbooks, not persistent group membership
 
 # Traefik settings
-traefik_version: "v3.0"
+traefik_version: "v3.6.1"
 traefik_dashboard_enabled: false
 traefik_dashboard_auth: true
 traefik_acme_email: "diadon@conscious.energy"
