@@ -30,10 +30,12 @@ fi
 # 2) Prod inventory present (required for deploy.sh production)
 if [[ -f "$PROD_INV" ]]; then
   ok "prod inventory.yml present"
-  if grep -q "$CI_IP" "$PROD_INV" 2>/dev/null; then
-    bad "prod inventory must not include CI node ${CI_IP}"
+  # Ignore comments; only flag live ansible_host / IP assignments.
+  if grep -E "^[[:space:]]*(ansible_host:|[[:alnum:]_-]+:)[[:space:]]*${CI_IP//./\\.}" "$PROD_INV" >/dev/null 2>&1 \
+     || grep -E "^[[:space:]]*ansible_host:[[:space:]]*${CI_IP//./\\.}" "$PROD_INV" >/dev/null 2>&1; then
+    bad "prod inventory must not include CI node ${CI_IP} as a host"
   else
-    ok "prod inventory does not list CI node"
+    ok "prod inventory does not list CI node as a host"
   fi
 else
   bad "missing ${PROD_INV} — copy inventory.yml.example before cutover window"
