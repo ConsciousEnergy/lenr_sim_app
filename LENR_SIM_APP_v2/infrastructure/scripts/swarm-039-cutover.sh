@@ -127,17 +127,23 @@ ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
   -e CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM
 
 if [[ "$LOCAL_IMAGES" == "1" ]]; then
-  yel "Step 5: build backend image on share (LOCAL_IMAGES=1)"
+  yel "Step 5: backend image on share (LOCAL_IMAGES=1)"
   [[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
-  rsync -az --delete \
-    --exclude '.git' --exclude 'frontend/node_modules' --exclude '**/__pycache__' \
-    --exclude 'backend/.venv' --exclude 'frontend/dist' \
-    -e "ssh -i ${SHARE_KEY} -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-    "${ROOT}/LENR_SIM_APP_v2/" "root@${SHARE_IP}:/opt/lenr-sim/src/LENR_SIM_APP_v2/"
-  ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-    "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
-      -t ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} \
-      --build-arg BUILD_VERSION=${IMAGE_TAG} ."
+  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" ]] \
+    && ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+         "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}" >/dev/null 2>&1; then
+    grn "SKIP_IMAGE_BUILD=1 — reusing existing ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}"
+  else
+    rsync -az --delete \
+      --exclude '.git' --exclude 'frontend/node_modules' --exclude '**/__pycache__' \
+      --exclude 'backend/.venv' --exclude 'frontend/dist' \
+      -e "ssh -i ${SHARE_KEY} -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+      "${ROOT}/LENR_SIM_APP_v2/" "root@${SHARE_IP}:/opt/lenr-sim/src/LENR_SIM_APP_v2/"
+    ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+      "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
+        -t ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} \
+        --build-arg BUILD_VERSION=${IMAGE_TAG} ."
+  fi
 fi
 
 yel "Step 6–7: Swarm init + join + stack deploy"

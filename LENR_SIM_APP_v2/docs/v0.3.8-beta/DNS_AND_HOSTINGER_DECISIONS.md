@@ -60,6 +60,11 @@ Staging TLS can be proven before the WP record exists via
 `api-staging.<kvm1-ip>.sslip.io` (`traefik_acme_bootstrap_host` in
 `inventory.staging.yml`).
 
+Public cutover can similarly prove Traefik TLS on the existing share host
+`lenr-sim-beta.conscious.energy` via `traefik_extra_api_hosts` in
+`inventory.yml` / `inventory.yml.example` before WordPress
+`A api → 185.211.4.66` exists. Executor flag: `ALLOW_API_DNS_GAP=1`.
+
 ---
 
 ## Hostinger strategy (import vs new)
