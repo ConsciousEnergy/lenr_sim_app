@@ -128,8 +128,9 @@ jobs:
     strategy:
       matrix:
         # PRs: 3.12 only (matches Dockerfile.backend). Push/main + dispatch:
-        # keep 3.10/3.11 for the documented minimum-supported range.
-        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.12"]') || fromJSON('["3.10", "3.11", "3.12"]') }}
+        # 3.11+ — pydantic-settings==2.16.0 (and peers) require >=3.11; 3.10
+        # fails pip install on branch pushes (seen on dev after #254).
+        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.12"]') || fromJSON('["3.11", "3.12"]') }}
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover hard-fails after health-wait timeout (still runs verify for evidence)
 - Cutover prep asserts KVM1 UFW Swarm ports (not only share)
 - Post-cutover verify requires `${STACK}_frontend` SPA service
+- CI push matrix drops Python 3.10 (`pydantic-settings==2.16.0` needs ≥3.11;
+  PRs stay 3.12-only matching Dockerfile.backend)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
