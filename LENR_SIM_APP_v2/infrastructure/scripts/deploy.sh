@@ -244,16 +244,32 @@ deploy_stack() {
     echo -e "${GREEN}Application stack deployed${NC}"
 }
 
+# Resolve a health base URL without requiring Terraform state (--app-only / local).
+resolve_health_base_url() {
+    if [[ -n "${DEPLOY_HEALTH_URL:-}" ]]; then
+        echo "${DEPLOY_HEALTH_URL}"
+        return 0
+    fi
+    if [[ "$ENVIRONMENT" == "staging" ]]; then
+        # Staging bootstrap TLS host (inventory traefik_acme_bootstrap_host).
+        echo "${STAGING_HEALTH_URL:-https://api-staging.31.220.55.113.sslip.io}"
+        return 0
+    fi
+    echo "${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}"
+}
+
 # Verify deployment
 verify_deployment() {
     echo -e "${YELLOW}Verifying deployment...${NC}"
 
-    # Get API URL from Terraform output
-    cd "$TERRAFORM_DIR"
-    API_URL=$(terraform output -raw api_url || echo "")
-    if [ -z "$API_URL" ]; then
-        echo -e "${RED}Error: Failed to get API URL from Terraform output${NC}"
-        return 1
+    local API_URL=""
+    if [[ "$APP_ONLY" != "--app-only" ]]; then
+        cd "$TERRAFORM_DIR"
+        API_URL=$(terraform output -raw api_url 2>/dev/null || echo "")
+    fi
+    if [[ -z "$API_URL" ]]; then
+        API_URL="$(resolve_health_base_url)"
+        echo -e "${YELLOW}Using inventory/env health URL (no Terraform api_url): ${API_URL}${NC}"
     fi
 
     echo "Waiting for services to start..."
@@ -262,9 +278,14 @@ verify_deployment() {
     MAX_RETRIES=30
     RETRY_COUNT=0
     HEALTH_CHECK_PASSED=false
+    # Staging sslip often needs -k until SANs settle; production should be strict.
+    CURL_INSECURE=()
+    if [[ "$ENVIRONMENT" == "staging" || "${DEPLOY_HEALTH_INSECURE:-0}" == "1" ]]; then
+        CURL_INSECURE=(-k)
+    fi
 
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if curl -f -s --connect-timeout 5 --max-time 10 "$API_URL/api/health" > /dev/null 2>&1; then
+        if curl -f -s "${CURL_INSECURE[@]}" --connect-timeout 5 --max-time 10 "$API_URL/api/health" > /dev/null 2>&1; then
             echo -e "${GREEN}✓ API health check passed${NC}"
             HEALTH_CHECK_PASSED=true
             break
@@ -281,12 +302,16 @@ verify_deployment() {
         return 1
     fi
 
-    # Check SSL certificate validity
-    echo -e "${YELLOW}Verifying SSL certificate...${NC}"
-    if echo | openssl s_client -servername "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1)" -connect "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1):443" 2>/dev/null | openssl x509 -noout -dates > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ SSL certificate valid${NC}"
+    # Check SSL certificate validity (skip when using insecure staging probe)
+    if [[ ${#CURL_INSECURE[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}Verifying SSL certificate...${NC}"
+        if echo | openssl s_client -servername "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1)" -connect "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1):443" 2>/dev/null | openssl x509 -noout -dates > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ SSL certificate valid${NC}"
+        else
+            echo -e "${YELLOW}⚠ SSL certificate validation failed (may still be provisioning)${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠ SSL certificate validation failed (may still be provisioning)${NC}"
+        echo -e "${YELLOW}⚠ Skipping strict SSL verify (staging / DEPLOY_HEALTH_INSECURE)${NC}"
     fi
 
     echo -e "${GREEN}Deployment verification complete${NC}"
@@ -305,10 +330,15 @@ main() {
     echo "Deployment Complete!"
     echo "==========================================${NC}"
 
-    cd "$TERRAFORM_DIR"
-    echo "Frontend URL: $(terraform output -raw frontend_url)"
-    echo "API URL: $(terraform output -raw api_url)"
-    echo "VPS IP: $(terraform output -raw vps_ip)"
+    if [[ "$APP_ONLY" == "--app-only" ]]; then
+        echo "Health URL: $(resolve_health_base_url)"
+        echo "(--app-only: skipped Terraform frontend/api/vps outputs)"
+    else
+        cd "$TERRAFORM_DIR"
+        echo "Frontend URL: $(terraform output -raw frontend_url)"
+        echo "API URL: $(terraform output -raw api_url)"
+        echo "VPS IP: $(terraform output -raw vps_ip)"
+    fi
 }
 
 main "$@"
