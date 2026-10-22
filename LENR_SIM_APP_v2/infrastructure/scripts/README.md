@@ -26,7 +26,8 @@ never sets `CONFIRM_SWARM_0_3_9` (human-armed).
 
 | Script | Role |
 |--------|------|
-| `swarm-039-cutover-prep.sh` | Read-only prerequisites |
+| `swarm-039-cutover-prep.sh` | Read-only prerequisites (+ stack render assert) |
+| `swarm-039-assert-prod-stack-render.sh` | Render prod stack; assert postgres pin / SPA PathPrefix |
 | `swarm-039-readiness-barcode.sh` | Prep + topology + version markers |
 | `swarm-039-cutover-window-card.sh` | Operator card: evidence + arming commands |
 | `swarm-039-cutover.sh` | Live cutover (confirm + `EXECUTE=1`) |

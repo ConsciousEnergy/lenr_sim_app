@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on shared hosts (`lenr-sim-beta`) so Compose drain does not drop the UI
 - `traefik_extra_api_hosts` / `ALLOW_API_DNS_GAP` / `SKIP_IMAGE_BUILD` cutover helpers
 - Gated Compose drain + staging leave playbooks; local-image cutover path
+- Readiness barcode / window card / post-cutover verify / Compose restore (+ KVM1 leave)
+- CI/local prod stack render gate (`swarm-039-assert-prod-stack-render.sh`, wired into
+  `staging-swarm-dry-run.sh local` + cutover prep) — postgres pin, external volume, SPA PathPrefix
+- `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
 

@@ -176,7 +176,19 @@ else
   bad "share /opt/lenr-sim/.env missing LENR_DB_PASSWORD or LENR_SECRET_KEY"
 fi
 
-# 8) Confirm gate reminder (never auto-set)
+# 8) Prod stack render invariants (postgres pin, external volume, SPA PathPrefix)
+# Prefer example inventory in CI; use live inventory.yml when present (operator).
+if command -v ansible-playbook >/dev/null 2>&1; then
+  if bash "$(dirname "${BASH_SOURCE[0]}")/swarm-039-assert-prod-stack-render.sh"; then
+    ok "prod stack render invariants (postgres pin, external volume, SPA PathPrefix)"
+  else
+    bad "prod stack render invariants failed (see swarm-039-assert-prod-stack-render.sh)"
+  fi
+else
+  note "ansible-playbook missing — skip prod stack render assert (CI/local dry-run covers this)"
+fi
+
+# 9) Confirm gate reminder (never auto-set)
 if [[ "${CONFIRM_SWARM_0_3_9:-}" == "I_CUTOVER_0_3_9" ]]; then
   note "CONFIRM_SWARM_0_3_9 is set — human cutover window armed"
 else
