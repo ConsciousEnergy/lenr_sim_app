@@ -351,8 +351,11 @@ services:
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     secrets:
+      # Official grafana image runs as uid 472 — root-only 0400 → Permission denied.
       - source: grafana_admin_password
         target: grafana_admin_password
+        uid: "472"
+        gid: "0"
         mode: 0400
     volumes:
       - grafana_data:/var/lib/grafana

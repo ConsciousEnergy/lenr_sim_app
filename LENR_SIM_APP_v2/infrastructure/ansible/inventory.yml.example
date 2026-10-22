@@ -47,6 +47,8 @@ all:
           require_observability_label: true
           grafana_admin_user: "admin"
           grafana_traefik_enabled: false
+          # Published on observability node (KVM1) for SSH tunnel; keep UFW closed.
+          grafana_publish_host_port: 3000
     swarm_workers:
       hosts:
         kvm1-worker-1:
