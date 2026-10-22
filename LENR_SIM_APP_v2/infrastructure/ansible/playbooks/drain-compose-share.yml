@@ -108,10 +108,18 @@
           {{ host_web_ports.stdout }}. Free those ports before Swarm Traefik
           stack deploy (publish mode: host).
 
+    # Named volume is node-local and must survive for Swarm postgres_volume_external.
+    - name: Confirm external Postgres volume still exists after drain
+      ansible.builtin.command: docker volume inspect lenr-sim_postgres_data
+      register: postgres_vol_after
+      changed_when: false
+      failed_when: postgres_vol_after.rc != 0
+
     - name: Report drain result
       ansible.builtin.debug:
         msg: |
           Compose drained on {{ inventory_hostname }} ({{ ansible_host }}).
           remaining_lenr_sim_containers=0
           host_80_443_free=yes
+          postgres_volume=lenr-sim_postgres_data present
           Volumes under /opt/lenr-sim/data preserved for rollback.

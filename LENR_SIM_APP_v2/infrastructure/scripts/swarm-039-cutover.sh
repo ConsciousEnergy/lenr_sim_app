@@ -71,9 +71,10 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   2. Version markers at 0.3.9-beta (release-quality-gate) — separate PR if still 0.3.8
   3. Optional LOCAL_IMAGES=1: build/load images WHILE Compose still serves
        (SKIP_IMAGE_BUILD=1 reuses tags; prefer swarm-039-prestage-images.sh)
-  4. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
+  4. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING);
+       assert KVM1 Swarm inactive before share downtime
   5. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM);
-       assert :80/:443 free for Traefik
+       assert :80/:443 free + lenr-sim_postgres_data volume survived
   6. setup-docker.yml (swarm init on share); verify manager + :2377 from KVM1;
        import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
@@ -181,6 +182,15 @@ yel "Step 4: leave staging Swarm on KVM1"
 ansible-playbook -i "$STAGING_INV" playbooks/leave-staging-swarm.yml \
   -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING
 
+yel "Step 4a: assert KVM1 Swarm inactive before Compose drain"
+[[ -f "$KVM1_KEY" ]] || { red "missing KVM1_SSH_KEY ${KVM1_KEY}"; exit 1; }
+kvm1_after_leave="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
+  'docker info --format "{{.Swarm.LocalNodeState}}"')"
+echo "kvm1 swarm after leave: ${kvm1_after_leave}"
+[[ "$kvm1_after_leave" != "active" ]] \
+  || { red "KVM1 still Swarm-active after leave-staging — refuse Compose drain"; exit 1; }
+grn "KVM1 Swarm inactive — safe to open share downtime window"
+
 yel "Step 5: drain Compose on share"
 # Compose project lenr-sim + volume postgres_data → lenr-sim_postgres_data.
 # Swarm stack lenr-sim + volume postgres_data reuses the same named volume when
@@ -205,6 +215,13 @@ if [[ -n "$ports_busy" ]]; then
   exit 1
 fi
 grn "host :80/:443 free after drain"
+
+yel "Step 5c: assert Compose Postgres volume survived drain (no -v)"
+vol_after="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+  "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
+[[ "$vol_after" == "yes" ]] \
+  || { red "lenr-sim_postgres_data missing after Compose drain — abort (data loss risk)"; exit 1; }
+grn "Postgres volume lenr-sim_postgres_data still present after drain"
 
 yel "Step 6–7: Swarm init + join + stack deploy"
 ansible-playbook -i "$PROD_INV" playbooks/setup-docker.yml
