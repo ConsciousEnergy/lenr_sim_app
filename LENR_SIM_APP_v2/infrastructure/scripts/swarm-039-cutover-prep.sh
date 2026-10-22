@@ -384,6 +384,15 @@ EOS
       ok "Grafana :3000 not reachable from share (${ext_gf}) — localhost/SSH tunnel only"
     fi
   fi
+  # Guard unit must be enabled on the node that hosts Grafana (staging=KVM1 manager).
+  gf_unit="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" 'systemctl is-enabled lenr-grafana-localhost.service 2>/dev/null || echo missing' \
+    2>/dev/null | tr -d '\r' | tail -1)"
+  if [[ "$gf_unit" == "enabled" ]]; then
+    ok "KVM1 lenr-grafana-localhost.service enabled (DOCKER-USER persist)"
+  else
+    bad "KVM1 lenr-grafana-localhost.service not enabled (${gf_unit}) — redeploy staging under CONFIRM_SWARM_0_3_8"
+  fi
   # Optional: D-Force present on operator PATH (not required on VMs)
   if command -v d4s >/dev/null 2>&1; then
     d4s_ver="$(d4s version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '/Version:/{print $2; exit}')"
