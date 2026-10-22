@@ -36,7 +36,9 @@ Do not weaken this string. Staging experiments continue to use
 6. Read-only prep script green:
    `./infrastructure/scripts/swarm-039-cutover-prep.sh`
    (checks share health, staging TLS/DNS, GHCR env, prod inventory; never arms confirm).
-7. Prod inventory copied from
+7. Full readiness barcode (prep + topology + version markers):
+   `./infrastructure/scripts/swarm-039-readiness-barcode.sh`
+8. Prod inventory copied from
    [`inventory.yml.example`](../../infrastructure/ansible/inventory.yml.example)
    (share manager + KVM1 worker; no CI node).
 
