@@ -41,6 +41,7 @@ Local helper (CI `staging-swarm-dry-run` job in `.github/workflows/test.yml`):
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 | `deploy.sh staging` (no/wrong confirm) | Exit **2** — requires `I_STAGING_0_3_8` |
 | `ansible-playbook --syntax-check` `setup-docker` / `join-workers` / `deploy-stack` / `site` | OK (uses `inventory.staging.yml.example` when real inventory absent) |
+| Prod inventory syntax-check + stack render | Renders `docker-stack.yml.j2` from `inventory.yml.example`; asserts `postgres=true` pin, external `lenr-sim_postgres_data`, SPA `PathPrefix(/api)` + `lenr-sim-beta` host; refuses CI IP in inventory |
 | `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
 | CI `staging-swarm-dry-run` job | Runs the local helper on infra path changes |
 | Remote Cloudflare/Hostinger `terraform plan` | **Operator** — needs `backend.hcl` + `staging.tfvars` |
