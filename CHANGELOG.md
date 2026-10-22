@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   volume survived `compose down` (drain playbook + executor)
 - Cutover: assert Ready≥2 + app/observability/postgres labels + KVM1 worker
   before `deploy-stack.yml`
+- Frontend `overrides.dompurify` → `^3.4.17` (GHSA-cg2g-xh64-v4q7 and related)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
