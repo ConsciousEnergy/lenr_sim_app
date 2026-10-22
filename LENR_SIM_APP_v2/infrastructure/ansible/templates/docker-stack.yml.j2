@@ -283,6 +283,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+{% if postgres_volume_external | default(false) %}
+          # Named volumes are node-local — pin to the share manager that holds
+          # lenr-sim_postgres_data (label set in inventory.yml.example).
+          - node.labels.postgres == true
+{% endif %}
       resources:
         limits:
           cpus: '1.0'

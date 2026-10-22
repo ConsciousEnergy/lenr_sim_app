@@ -4,6 +4,7 @@
 # Label contract — separate keys (Swarm allows one value per key):
 #   app=true            → API replica placement when require_app_label=true
 #   observability=true  → Prometheus/Grafana/blackbox when require_observability_label=true
+#   postgres=true       → external Compose DB volume pin (share manager only)
 #
 # Inventory host vars:
 #   swarm_node_labels:
@@ -187,3 +188,42 @@
         - _is_swarm_manager | bool
         - node_labels_dump.stdout_lines is defined
       run_once: true
+
+    - name: Collect required label keys from inventory
+      ansible.builtin.set_fact:
+        _required_label_keys: >-
+          {{
+            groups['all']
+            | map('extract', hostvars)
+            | map(attribute='swarm_node_labels', default=[])
+            | flatten
+            | map('regex_replace', '=.*$', '')
+            | unique
+            | list
+          }}
+      when: _is_swarm_manager | bool
+      run_once: true
+
+    - name: Assert each required label key exists on at least one Swarm node
+      ansible.builtin.shell: |
+        set -euo pipefail
+        dump="$(docker node ls -q | while read -r id; do
+          docker node inspect "$id" --format '{% raw %}{{json .Spec.Labels}}{% endraw %}'
+        done)"
+        missing=0
+        for key in {{ _required_label_keys | join(' ') }}; do
+          if ! echo "$dump" | grep -q "\"${key}\""; then
+            echo "ERROR: no Swarm node has label key '${key}'" >&2
+            missing=1
+          else
+            echo "OK label key present: ${key}"
+          fi
+        done
+        exit "$missing"
+      args:
+        executable: /bin/bash
+      when:
+        - _is_swarm_manager | bool
+        - (_required_label_keys | default([]) | length) > 0
+      run_once: true
+      changed_when: false

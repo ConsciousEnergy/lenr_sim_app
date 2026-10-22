@@ -77,6 +77,10 @@ executor may pass `ALLOW_API_DNS_GAP=1`. Compose drain uses
 `drain-compose-share.yml` (`CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM`).
 Compose and Swarm both name the DB volume `lenr-sim_postgres_data` (project/stack
 `lenr-sim` + `postgres_data`); drain keeps volumes so Swarm reuses that data.
+Named volumes are **node-local**: prod inventory labels the share manager
+`postgres=true`, and the stack constrains Postgres to
+`node.role == manager` **and** `node.labels.postgres == true` when
+`postgres_volume_external` is set (so the task cannot land on KVM1).
 After `swarm init`, the executor imports `LENR_DB_PASSWORD` / `LENR_SECRET_KEY`
 from `/opt/lenr-sim/.env` into Docker secrets **before** `deploy-stack.yml` so
 Ansible does not mint a new random DB password against the existing volume.

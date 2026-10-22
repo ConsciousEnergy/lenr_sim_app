@@ -22,6 +22,8 @@ all:
           ansible_ssh_private_key_file: ~/.ssh/lenr-sim-share
           swarm_node_labels:
             - app=true
+            # Compose postgres volume lives on this node only (node-local).
+            - postgres=true
           app_domain: "conscious.energy"
           api_subdomain: "api"
           lenr_environment: "production"

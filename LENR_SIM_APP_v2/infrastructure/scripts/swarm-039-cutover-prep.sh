@@ -147,6 +147,13 @@ else
   bad "share missing docker volume lenr-sim_postgres_data"
 fi
 
+# 7c2) Prod inventory pins Postgres to share via postgres=true label
+if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -qE 'postgres=true'; then
+  ok "prod inventory includes postgres=true label (pin external DB volume to share)"
+else
+  bad "prod inventory missing postgres=true on share manager (required with postgres_volume_external)"
+fi
+
 # 7d) Share UFW allows Swarm ports (worker join)
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
