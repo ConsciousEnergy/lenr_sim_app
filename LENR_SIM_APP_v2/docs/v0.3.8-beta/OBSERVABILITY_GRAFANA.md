@@ -61,7 +61,9 @@ Config skeletons (no secrets):
 - [`infrastructure/observability/grafana/provisioning/`](../../infrastructure/observability/grafana/provisioning/)
 
 Ansible `deploy-stack.yml` rsyncs `infrastructure/observability/` →
-`/opt/lenr-sim/observability/` before `docker stack deploy`.
+`/opt/lenr-sim/observability/` before `docker stack deploy`. Prefer prestaging
+that tree onto share + KVM1 before the cutover window; cutover prep asserts the
+files exist (override with `ALLOW_OBS_PRESTAGE_GAP=1`).
 
 ## Staging vs production
 

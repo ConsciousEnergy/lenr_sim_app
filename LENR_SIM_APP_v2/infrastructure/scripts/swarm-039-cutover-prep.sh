@@ -297,6 +297,22 @@ else
   bad "share /opt/lenr-sim/.env missing LENR_DB_PASSWORD or LENR_SECRET_KEY"
 fi
 
+# 7f) Observability scaffolds on share + KVM1 (deploy-stack also syncs; prestage shortens window)
+obs_check='test -f /opt/lenr-sim/observability/prometheus/prometheus.yml \
+  && test -d /opt/lenr-sim/observability/grafana/provisioning'
+for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
+  role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
+  [[ -f "$key" ]] || continue
+  if ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       "root@${host}" "$obs_check" >/dev/null 2>&1; then
+    ok "${role} observability scaffolds present (/opt/lenr-sim/observability)"
+  elif [[ "${ALLOW_OBS_PRESTAGE_GAP:-0}" == "1" ]]; then
+    note "${role} observability scaffolds missing (ALLOW_OBS_PRESTAGE_GAP=1 — deploy-stack will sync)"
+  else
+    bad "${role} missing /opt/lenr-sim/observability scaffolds (rsync infrastructure/observability/ or ALLOW_OBS_PRESTAGE_GAP=1)"
+  fi
+done
+
 # 8) Prod stack render invariants (postgres pin, external volume, SPA PathPrefix)
 # Prefer example inventory in CI; use live inventory.yml when present (operator).
 if command -v ansible-playbook >/dev/null 2>&1; then

@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   observability services (skip with `SKIP_OBSERVABILITY_CHECK=1`)
 - Docs: `D4S_DFORCE_OPERATOR.md` — optional D-Force (`d4s`) Swarm/Compose TUI
   (k9s-like; not a cutover gate)
+- Cutover prep asserts Prometheus/Grafana scaffolds on share + KVM1
+  (`ALLOW_OBS_PRESTAGE_GAP=1` to defer to deploy-stack sync)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
