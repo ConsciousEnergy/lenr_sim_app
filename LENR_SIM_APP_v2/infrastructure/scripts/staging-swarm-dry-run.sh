@@ -153,6 +153,7 @@ cmd_local() {
 - hosts: swarm_managers
   connection: local
   gather_facts: false
+  become: false
   tasks:
     - name: Render production Docker stack from inventory host vars
       ansible.builtin.template:
