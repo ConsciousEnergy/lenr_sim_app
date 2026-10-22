@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grafana `grafana_publish_host_port` (host-mode :3000) for SSH-tunnel access;
   staging + prod inventories set `3000`; cutover prep asserts staging login 200
 - Docs: Grafana + D-Force pre-arm checklist before `CONFIRM_SWARM_0_3_9`
+- Prod stack render gate asserts Grafana secret uid 472 + host publish 3000
+- Cutover window card prints Grafana tunnel + D-Force pre-arm reminders
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

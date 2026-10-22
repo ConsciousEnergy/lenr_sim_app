@@ -15,6 +15,16 @@ LOCAL_IMAGES=1 SKIP_IMAGE_BUILD=1 ALLOW_API_DNS_GAP=1 ALLOW_STAGING_DNS_GAP=1 \
   bash "${SCRIPT_DIR}/swarm-039-readiness-barcode.sh" || true
 
 echo
+echo "=== pre-arm observability (Grafana + optional D-Force) ==="
+cat <<EOF
+# Staging Grafana SSH tunnel (UFW must NOT allow :3000 publicly):
+ssh -i "\${KVM1_SSH_KEY:-\$HOME/.ssh/lenr-sim-staging}" -L 3000:127.0.0.1:3000 root@31.220.55.113
+# browser → http://127.0.0.1:3000  (password: /opt/lenr-sim/.grafana-admin-password on KVM1)
+# Optional TUI (operator laptop): d4s --context <ssh-context-to-staging-or-share-manager>
+# Docs: docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md + D4S_DFORCE_OPERATOR.md
+EOF
+
+echo
 echo "=== optional: refresh LOCAL_IMAGES before the window (no CONFIRM) ==="
 cat <<EOF
 EXECUTE=1 ${SCRIPT_DIR}/swarm-039-prestage-images.sh
