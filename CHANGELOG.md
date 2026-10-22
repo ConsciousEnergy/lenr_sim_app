@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deploy-stack.yml` ensures `/opt/lenr-sim/traefik/certs` (`0700`) + `acme.json`
   (`0600`) before Traefik starts (idempotent; preserves existing cert store)
 - Cutover + post-cutover verify assert ACME store mode `0600` on the share manager
+- Cutover prep asserts Compose `.rollback-image-tag` matches live `IMAGE_TAG`
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

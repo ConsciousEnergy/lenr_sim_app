@@ -34,6 +34,8 @@ Prod inventory (required by the executor):
 1. Staging barcode green ([`STAGING_SWARM_DRY_RUN.md`](../v0.3.8-beta/STAGING_SWARM_DRY_RUN.md)).
 2. Compose rollback rehearsed once on live share
    ([`ROLLBACK_AND_STAGING_CHECKLIST.md`](../v0.3.8-beta/ROLLBACK_AND_STAGING_CHECKLIST.md)).
+   Keep `/opt/lenr-sim/.rollback-image-tag` equal to live Compose `IMAGE_TAG`
+   (prep refuses otherwise unless `ALLOW_ROLLBACK_TAG_GAP=1`).
 3. Node label contract understood: `app=true` / `observability=true`
    ([`join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml)).
 4. Announced maintenance window; DNS TTLs lowered if needed.
@@ -50,8 +52,9 @@ Prod inventory (required by the executor):
    `./infrastructure/scripts/swarm-039-assert-prod-stack-render.sh`
    or `./infrastructure/scripts/staging-swarm-dry-run.sh local`
    (asserts rendered `docker-stack.yml.j2` has `node.labels.postgres == true`,
-   external `lenr-sim_postgres_data`, and SPA `PathPrefix(/api)` on
-   `lenr-sim-beta.conscious.energy`).
+   external `lenr-sim_postgres_data`, SPA `PathPrefix(/api)` on
+   `lenr-sim-beta.conscious.energy`, and Traefik ACME bind
+   `/opt/lenr-sim/traefik/certs` → `/certs/acme.json`).
 
 ## Cutover sequence
 

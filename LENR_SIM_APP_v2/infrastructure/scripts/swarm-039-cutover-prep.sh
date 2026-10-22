@@ -137,6 +137,28 @@ else
   bad "share SPA → ${spa}"
 fi
 
+# 7b2) Compose rollback tag matches live IMAGE_TAG (restore path after abort)
+if [[ -f "$SHARE_KEY" ]]; then
+  rb_meta="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || echo 'missing|missing'
+set -euo pipefail
+env_tag="$(grep -E '^IMAGE_TAG=' /opt/lenr-sim/.env 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'" || true)"
+rb="$(cat /opt/lenr-sim/.rollback-image-tag 2>/dev/null || echo missing)"
+printf '%s|%s\n' "${env_tag:-missing}" "$rb"
+EOS
+)"
+  env_tag="${rb_meta%%|*}"; rb_tag="${rb_meta#*|}"
+  env_tag="$(printf '%s' "$env_tag" | tr -d '\r\n')"
+  rb_tag="$(printf '%s' "$rb_tag" | tr -d '\r\n')"
+  if [[ -n "$env_tag" && "$env_tag" != "missing" && "$env_tag" == "$rb_tag" ]]; then
+    ok "share rollback tag ${rb_tag} matches IMAGE_TAG (Compose restore)"
+  elif [[ "${ALLOW_ROLLBACK_TAG_GAP:-0}" == "1" ]]; then
+    note "rollback tag '${rb_tag}' != IMAGE_TAG '${env_tag}' (ALLOW_ROLLBACK_TAG_GAP=1)"
+  else
+    bad "share rollback tag '${rb_tag}' != IMAGE_TAG '${env_tag}' (set .rollback-image-tag or ALLOW_ROLLBACK_TAG_GAP=1)"
+  fi
+fi
+
 # 7c) Compose Postgres volume that Swarm will reuse (external name)
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
