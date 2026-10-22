@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`0600`) before Traefik starts (idempotent; preserves existing cert store)
 - Cutover + post-cutover verify assert ACME store mode `0600` on the share manager
 - Cutover prep asserts Compose `.rollback-image-tag` matches live `IMAGE_TAG`
+- Cutover prep asserts Traefik ACME store pre-created on share (`0700`/`0600`)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

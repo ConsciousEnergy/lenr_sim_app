@@ -137,6 +137,41 @@ else
   bad "share SPA → ${spa}"
 fi
 
+# 7b1) Traefik ACME host store pre-created on share (deploy-stack also ensures;
+#      creating early shortens the cutover window and catches permission issues).
+if [[ -f "$SHARE_KEY" ]]; then
+  acme_prep="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || echo missing
+set -euo pipefail
+p=/opt/lenr-sim/traefik/certs/acme.json
+d=/opt/lenr-sim/traefik/certs
+if [[ ! -d "$d" || ! -f "$p" ]]; then
+  echo missing
+  exit 0
+fi
+python3 -c "import os,stat; m=stat.S_IMODE(os.stat('$p').st_mode); d=stat.S_IMODE(os.stat('$d').st_mode); print(f'ok dir={d:04o} file={m:04o}')"
+EOS
+)"
+  acme_prep="$(printf '%s' "$acme_prep" | tr -d '\r' | tail -1)"
+  case "$acme_prep" in
+    ok\ dir=0700\ file=0600) ok "share Traefik ACME store ready (certs 0700, acme.json 0600)" ;;
+    ok\ *)
+      if [[ "${ALLOW_ACME_MODE_GAP:-0}" == "1" ]]; then
+        note "share ACME store modes ${acme_prep} (ALLOW_ACME_MODE_GAP=1)"
+      else
+        bad "share ACME store modes not 0700/0600 (${acme_prep})"
+      fi
+      ;;
+    *)
+      if [[ "${ALLOW_ACME_PRESTAGE_GAP:-0}" == "1" ]]; then
+        note "share ACME store missing (ALLOW_ACME_PRESTAGE_GAP=1 — deploy-stack will create)"
+      else
+        bad "share ACME store missing under /opt/lenr-sim/traefik/certs (mkdir+touch or ALLOW_ACME_PRESTAGE_GAP=1)"
+      fi
+      ;;
+  esac
+fi
+
 # 7b2) Compose rollback tag matches live IMAGE_TAG (restore path after abort)
 if [[ -f "$SHARE_KEY" ]]; then
   rb_meta="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
