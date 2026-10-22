@@ -35,6 +35,17 @@ never sets `CONFIRM_SWARM_0_3_9` (human-armed).
 
 See [`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
+### staging-swarm-dry-run.sh
+
+Local CI gate (no cloud creds): confirm-string exits, `terraform validate`,
+staging ansible syntax-check, and **prod** `inventory.yml.example` stack render
+invariants (postgres pin, external volume, SPA `PathPrefix(/api)`). Remote mode
+needs `CONFIRM_SWARM_0_3_8` + `EXECUTE=1` + staging credentials.
+
+```bash
+./staging-swarm-dry-run.sh local
+```
+
 ### unclog-lenr-ci.sh
 
 Recover wedged dedicated runner `2012566` / `45.93.100.251` (Hostinger restart,

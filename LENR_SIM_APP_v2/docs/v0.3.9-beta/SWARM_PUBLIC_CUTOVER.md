@@ -46,6 +46,12 @@ Prod inventory (required by the executor):
 8. Prod inventory copied from
    [`inventory.yml.example`](../../infrastructure/ansible/inventory.yml.example)
    (share manager + KVM1 worker; no CI node).
+9. CI/local stack render gate green:
+   `./infrastructure/scripts/staging-swarm-dry-run.sh local`
+   (syntax-checks prod inventory example and asserts rendered
+   `docker-stack.yml.j2` has `node.labels.postgres == true`, external
+   `lenr-sim_postgres_data`, and SPA `PathPrefix(/api)` on
+   `lenr-sim-beta.conscious.energy`).
 
 ## Cutover sequence
 
