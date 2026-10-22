@@ -359,6 +359,15 @@ services:
       - /opt/lenr-sim/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - lenr-sim-network
+{% if (grafana_publish_host_port | default(0) | int) > 0 %}
+    # Host-mode publish for SSH tunnel (ssh -L 3000:127.0.0.1:3000).
+    # Keep UFW from allowing this port publicly — trust boundary is localhost/SSH.
+    ports:
+      - target: 3000
+        published: {{ grafana_publish_host_port | int }}
+        protocol: tcp
+        mode: host
+{% endif %}
     deploy:
       mode: replicated
       replicas: 1

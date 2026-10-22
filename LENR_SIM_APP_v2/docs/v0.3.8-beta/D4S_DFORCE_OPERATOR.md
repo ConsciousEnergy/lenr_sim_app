@@ -21,6 +21,11 @@ Canonical apply path remains gated scripts + playbooks under
 | Product / API SLOs | Grafana + Prometheus (overlay; not public) |
 | PR CI host | **Never** — CI node must not join Swarm and must not get deploy sockets |
 
+**Before arming `CONFIRM_SWARM_0_3_9`:** install `d4s` on the operator
+workstation and confirm it can list the staging stack (nodes/services). Pair with
+Grafana login via SSH tunnel ([`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md)
+pre-arm checklist). Cutover prep notes whether `d4s` is on PATH (optional OK).
+
 ## Install (operator laptop or bastion)
 
 Official quick install (places binary in the path you pass):

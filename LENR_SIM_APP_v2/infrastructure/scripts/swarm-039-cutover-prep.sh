@@ -337,6 +337,48 @@ for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
   fi
 done
 
+# 7g) Staging Grafana reachable on KVM1 (prove obs before 0.3.9 arming)
+# Prefer host-published :3000 (SSH tunnel target); fall back to docker exec.
+if [[ -f "$KVM1_KEY" ]]; then
+  gf_code="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" bash -s <<'EOS' 2>/dev/null || true
+set -euo pipefail
+code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 http://127.0.0.1:3000/login 2>/dev/null || echo 000)
+if [[ "$code" == "200" ]]; then echo "$code"; exit 0; fi
+cid=$(docker ps -q -f name=lenr-sim_grafana | head -1 || true)
+if [[ -n "$cid" ]]; then
+  docker exec "$cid" wget -qO- -S http://127.0.0.1:3000/login 2>&1 | head -1 | grep -q '200\|HTTP' \
+    && echo exec-ok && exit 0
+fi
+echo "$code"
+EOS
+)"
+  gf_code="$(printf '%s' "$gf_code" | tr -d '\r' | tail -1)"
+  case "$gf_code" in
+    200) ok "staging Grafana login HTTP 200 on KVM1 :3000 (SSH tunnel ready)" ;;
+    exec-ok)
+      if [[ "${ALLOW_GRAFANA_PUBLISH_GAP:-0}" == "1" ]]; then
+        note "staging Grafana up in-container only (ALLOW_GRAFANA_PUBLISH_GAP=1 — redeploy with grafana_publish_host_port)"
+      else
+        bad "staging Grafana not on KVM1 :3000 (redeploy staging stack with grafana_publish_host_port=3000 or ALLOW_GRAFANA_PUBLISH_GAP=1)"
+      fi
+      ;;
+    *)
+      if [[ "${ALLOW_GRAFANA_PUBLISH_GAP:-0}" == "1" ]]; then
+        note "staging Grafana not reachable (${gf_code}; ALLOW_GRAFANA_PUBLISH_GAP=1)"
+      else
+        bad "staging Grafana not reachable on KVM1 (${gf_code}) — refresh under CONFIRM_SWARM_0_3_8 before cutover"
+      fi
+      ;;
+  esac
+  # Optional: D-Force present on operator PATH (not required on VMs)
+  if command -v d4s >/dev/null 2>&1; then
+    ok "D-Force (d4s) on PATH ($(d4s version 2>/dev/null | head -1 || echo present)) — operator TUI"
+  else
+    note "D-Force (d4s) not on PATH — optional; see docs/v0.3.8-beta/D4S_DFORCE_OPERATOR.md"
+  fi
+fi
+
 # 8) Prod stack render invariants (postgres pin, external volume, SPA PathPrefix)
 # Prefer example inventory in CI; use live inventory.yml when present (operator).
 if command -v ansible-playbook >/dev/null 2>&1; then

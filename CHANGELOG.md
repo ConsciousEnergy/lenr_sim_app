@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post-cutover verify requires `${STACK}_frontend` SPA service
 - CI push matrix drops Python 3.10 (`pydantic-settings==2.16.0` needs ≥3.11;
   PRs stay 3.12-only matching Dockerfile.backend)
+- Grafana `grafana_publish_host_port` (host-mode :3000) for SSH-tunnel access;
+  staging + prod inventories set `3000`; cutover prep asserts staging login 200
+- Docs: Grafana + D-Force pre-arm checklist before `CONFIRM_SWARM_0_3_9`
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20
