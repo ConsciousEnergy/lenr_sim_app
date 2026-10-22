@@ -67,7 +67,25 @@ else
   bad "api-staging DNS is '${api_dns:-unset}' (need WordPress.com A → ${KVM1_IP})"
 fi
 
-# 5) GHCR env or LOCAL_IMAGES=1
+# 5) Public API DNS (WordPress) — optional when Traefik serves lenr-sim-beta
+api_prod_dns="$(dig +short api.conscious.energy A | grep -E '^[0-9.]+$' | head -1 || true)"
+# dig may follow CNAME to WP parking; prefer answers that match share.
+api_prod_all="$(dig +short api.conscious.energy A | tr '\n' ' ')"
+if [[ "$api_prod_dns" == "$SHARE_IP" ]] || echo "$api_prod_all" | grep -Fq "$SHARE_IP"; then
+  ok "api.conscious.energy A includes ${SHARE_IP}"
+elif [[ "${ALLOW_API_DNS_GAP:-0}" == "1" ]]; then
+  note "api.conscious.energy still '${api_prod_all:-unset}' (ALLOW_API_DNS_GAP=1 — Traefik traefik_extra_api_hosts / lenr-sim-beta)"
+  beta_dns="$(dig +short lenr-sim-beta.conscious.energy A | grep -E '^[0-9.]+$' | head -1 || true)"
+  if [[ "$beta_dns" == "$SHARE_IP" ]]; then
+    ok "lenr-sim-beta.conscious.energy A → ${SHARE_IP} (cutover TLS path)"
+  else
+    bad "lenr-sim-beta DNS is '${beta_dns:-unset}' (need A → ${SHARE_IP} when api DNS lags)"
+  fi
+else
+  bad "api.conscious.energy DNS is '${api_prod_all:-unset}' (need WordPress A → ${SHARE_IP} or ALLOW_API_DNS_GAP=1)"
+fi
+
+# 6) GHCR env or LOCAL_IMAGES=1
 if [[ -n "${GHCR_USER:-}" && -n "${GHCR_TOKEN:-}" ]]; then
   ok "GHCR_USER + GHCR_TOKEN set"
 elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
@@ -76,7 +94,7 @@ else
   bad "GHCR_USER/GHCR_TOKEN unset (or set LOCAL_IMAGES=1 for on-manager build)"
 fi
 
-# 6) Share SSH (manager target)
+# 7) Share SSH (manager target)
 SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
@@ -86,7 +104,7 @@ else
   bad "share SSH unavailable (set SHARE_SSH_KEY or run hostinger-compose-unlock.py attach-key with AGENT_* paths)"
 fi
 
-# 6) Confirm gate reminder (never auto-set)
+# 8) Confirm gate reminder (never auto-set)
 if [[ "${CONFIRM_SWARM_0_3_9:-}" == "I_CUTOVER_0_3_9" ]]; then
   note "CONFIRM_SWARM_0_3_9 is set — human cutover window armed"
 else

@@ -26,6 +26,10 @@ all:
           traefik_acme_email: "ops@conscious.energy"
           traefik_acme_staging: false
           traefik_force_https: true
+          # Serve API on existing share DNS while WordPress A api → share is pending.
+          # Separate Traefik router (ACME independent of api.conscious.energy).
+          traefik_extra_api_hosts:
+            - "lenr-sim-beta.conscious.energy"
           fastapi_workers: 2
           fastapi_log_level: "info"
           observability_enabled: true

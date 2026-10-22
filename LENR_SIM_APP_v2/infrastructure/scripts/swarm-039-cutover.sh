@@ -45,7 +45,9 @@ grn() { printf '\033[0;32m%s\033[0m\n' "$*"; }
 echo "=== v0.3.9 Swarm public cutover ==="
 echo "EXECUTE=${EXECUTE}  CONFIRM_SWARM_0_3_9=${CONFIRM:+set}  LOCAL_IMAGES=${LOCAL_IMAGES}"
 
-export LOCAL_IMAGES ALLOW_STAGING_DNS_GAP="${ALLOW_STAGING_DNS_GAP:-0}"
+export LOCAL_IMAGES \
+  ALLOW_STAGING_DNS_GAP="${ALLOW_STAGING_DNS_GAP:-0}" \
+  ALLOW_API_DNS_GAP="${ALLOW_API_DNS_GAP:-0}"
 bash "${SCRIPT_DIR}/swarm-039-cutover-prep.sh" || {
   red "Prep incomplete — fix BAD lines before cutover."
   if [[ "$EXECUTE" != "1" ]]; then
@@ -61,7 +63,8 @@ plan() {
 Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} never joins):
 
   0. Confirm share Compose health + rollback tag documented
-  1. WordPress.com DNS: A api → ${SHARE_IP} (cutover window; keep lenr-sim-beta)
+  1. WordPress.com DNS: A api → ${SHARE_IP} (preferred); Traefik also serves
+       lenr-sim-beta via traefik_extra_api_hosts until api DNS flips
   2. Version markers at 0.3.9-beta (release-quality-gate) — separate PR if still 0.3.8
   3. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
   4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
@@ -69,7 +72,8 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
        ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}
   6. setup-docker.yml (swarm init on share) + join-workers.yml (KVM1 + labels)
   7. deploy-stack.yml (GHCR or skip_ghcr_login=true)
-  8. Verify https://api.conscious.energy/api/health (+ share SPA)
+  8. Verify health: api.conscious.energy and/or ${SHARE_URL}
+       (ALLOW_API_DNS_GAP=1 accepts lenr-sim-beta alone)
   9. Keep Compose volumes for rollback ≥ one release
 
 EOF
@@ -150,14 +154,18 @@ ansible-playbook -i "$PROD_INV" playbooks/deploy-stack.yml "${deploy_extra[@]}"
 
 yel "Step 8: health probes"
 api_code="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 https://api.conscious.energy/api/health || echo 000)"
-share_after="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/api/health" || echo 000)"
+share_after="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/api/health" || echo 000)"
 echo "api.conscious.energy → ${api_code}"
 echo "share/lenr-sim-beta after → ${share_after}"
 
-if [[ "$api_code" != "200" ]]; then
-  red "API health not 200 — check WordPress A api → ${SHARE_IP}; Compose volumes still on disk for rollback"
+if [[ "$api_code" == "200" ]]; then
+  grn "Cutover health probe green (api=${api_code} share=${share_after})"
+elif [[ "${ALLOW_API_DNS_GAP:-0}" == "1" && "$share_after" == "200" ]]; then
+  yel "api.conscious.energy → ${api_code} (WP DNS lag); accepting ${SHARE_URL} → 200 (ALLOW_API_DNS_GAP=1)"
+  grn "Cutover health probe green via lenr-sim-beta (traefik_extra_api_hosts)"
+else
+  red "API health not 200 (api=${api_code} share=${share_after}) — set WordPress A api → ${SHARE_IP} or ALLOW_API_DNS_GAP=1 with working lenr-sim-beta; Compose volumes still on disk for rollback"
   exit 1
 fi
 
-grn "Cutover health probe green (api=${api_code})"
 echo "Document rollback tag + keep Compose artifacts. Do not close EQ-OPEN-*."

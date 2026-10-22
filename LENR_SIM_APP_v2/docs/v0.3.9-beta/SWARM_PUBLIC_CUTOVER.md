@@ -49,14 +49,18 @@ Do not weaken this string. Staging experiments continue to use
 ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 
 # Live (human-armed confirm + EXECUTE=1). Prefer GHCR; or LOCAL_IMAGES=1 to
-# docker build on the share manager when registry auth is unavailable:
+# docker build on the share manager when registry auth is unavailable.
+# ALLOW_API_DNS_GAP=1: accept https://lenr-sim-beta…/api/health when WordPress
+# A api is still parking (Traefik traefik_extra_api_hosts on the share manager).
 CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
-  ALLOW_STAGING_DNS_GAP=1 \
+  ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 ```
 
-Still required at the window: WordPress.com `A api → <share IP>` for
-`https://api.conscious.energy/api/health`. Compose drain uses
+Preferred at the window: WordPress.com `A api → <share IP>` for
+`https://api.conscious.energy/api/health`. Until that record exists, prod inventory
+must list `traefik_extra_api_hosts: [lenr-sim-beta.conscious.energy]` and the
+executor may pass `ALLOW_API_DNS_GAP=1`. Compose drain uses
 `drain-compose-share.yml` (`CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM`).
 
 Manual checklist (same order as the script):
