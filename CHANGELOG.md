@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover prep notes Grafana admin password source (`.env` / file / mint-on-cutover)
 - `SKIP_IMAGE_BUILD=1` hard-requires prestaged `:IMAGE_TAG` on share + KVM1
   (prep BAD unless `ALLOW_IMAGE_PRESTAGE_GAP=1`; cutover skips redundant save|load)
+- Post-cutover verify asserts Traefik task on share manager (with Postgres pin)
+- Cutover hard-fails after health-wait timeout (still runs verify for evidence)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

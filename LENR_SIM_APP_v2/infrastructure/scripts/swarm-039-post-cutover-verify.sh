@@ -155,6 +155,20 @@ else
   bad "postgres on ${pg_node:-none}/${pg_addr:-?} — must be share ${SHARE_IP} (${share_host}) for external volume"
 fi
 
+# 6b) Traefik on share manager (host-mode :80/:443 + ACME store)
+tr_node="$(ssh_share "docker service ps ${STACK}_traefik --filter desired-state=running --format '{{.Node}}' | head -1" || true)"
+tr_addr="$(ssh_share "docker node ls -q | while read -r id; do
+  h=\$(docker node inspect \"\$id\" --format '{{.Description.Hostname}}')
+  a=\$(docker node inspect \"\$id\" --format '{{.Status.Addr}}')
+  if [ \"\$h\" = '${tr_node}' ]; then echo \"\$a\"; break; fi
+done" || true)"
+echo "traefik running on node=${tr_node:-none} addr=${tr_addr:-?}"
+if [[ -n "$tr_node" && ( "$tr_addr" == "$SHARE_IP" || "$tr_node" == "$share_host" ) ]]; then
+  ok "traefik task on share manager (${tr_node} / ${tr_addr:-hostname})"
+else
+  bad "traefik on ${tr_node:-none}/${tr_addr:-?} — must be share manager ${SHARE_IP} (${share_host})"
+fi
+
 # 7) HTTP health (retry briefly — Traefik ACME / task start can lag)
 HTTP_RETRIES="${HTTP_RETRIES:-12}"
 HTTP_SLEEP="${HTTP_SLEEP:-10}"

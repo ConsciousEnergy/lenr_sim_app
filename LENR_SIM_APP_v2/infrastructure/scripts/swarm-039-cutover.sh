@@ -404,16 +404,27 @@ while (( SECONDS < deadline )); do
   echo "waiting… replicas_ok=${replicas_ok} api=${code_api} spa=${code_spa} (${SECONDS}s/${WAIT_SECS}s)"
   sleep 10
 done
+health_wait_failed=0
 if [[ "$replicas_ok" -ne 1 || "$http_ok" -ne 1 ]]; then
   red "timed out after ${WAIT_SECS}s waiting for replicas+health (replicas_ok=${replicas_ok} http_ok=${http_ok})"
-  yel "continuing to post-cutover verify for full evidence / restore guidance"
+  yel "running post-cutover verify for evidence, then failing cutover (restore Compose if needed)"
+  health_wait_failed=1
 fi
 
 yel "Step 8: post-cutover verify (topology + labels + health)"
 # Full evidence: 2-node Swarm, postgres on share, SPA+/api 200, CI outside.
 export ALLOW_API_DNS_GAP="${ALLOW_API_DNS_GAP:-0}"
 export SHARE_IP KVM1_IP CI_IP SHARE_URL SHARE_SSH_KEY="$SHARE_KEY" KVM1_SSH_KEY="$KVM1_KEY"
-bash "${SCRIPT_DIR}/swarm-039-post-cutover-verify.sh"
+verify_rc=0
+bash "${SCRIPT_DIR}/swarm-039-post-cutover-verify.sh" || verify_rc=$?
+if [[ "$health_wait_failed" -ne 0 || "$verify_rc" -ne 0 ]]; then
+  red "cutover incomplete (health_wait_failed=${health_wait_failed} verify_rc=${verify_rc})"
+  yel "Restore Compose with:"
+  yel "  CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \\"
+  yel "    CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE \\"
+  yel "    ${SCRIPT_DIR}/swarm-039-restore-compose.sh"
+  exit 1
+fi
 
 echo "Document rollback tag + keep Compose artifacts. Do not close EQ-OPEN-*."
 echo "If cutover fails mid-window, restore Compose with:"
