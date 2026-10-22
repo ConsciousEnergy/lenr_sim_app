@@ -56,6 +56,10 @@ certificatesResolvers:
     acme:
       email: "{{ traefik_acme_email }}"
       storage: /certs/acme.json
+{% if traefik_acme_staging | default(false) %}
+      # Let's Encrypt staging CA — use until public DNS for api-staging is correct.
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+{% endif %}
       httpChallenge:
         entryPoint: web
 

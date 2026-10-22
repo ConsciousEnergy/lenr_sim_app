@@ -27,6 +27,9 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.email={{ traefik_acme_email | quote }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+{% if traefik_acme_staging | default(false) %}
+      - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
       # Dashboard is off by default. Do not publish traefik.{{ app_domain }}
       # with placeholder basic-auth. Operators who need it must set
       # traefik_dashboard_enabled and a real traefik_dashboard_basic_auth.
