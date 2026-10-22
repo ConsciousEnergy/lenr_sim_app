@@ -35,8 +35,8 @@ updates:
       - dependency-name: "pydantic"
         update-types:
           - "version-update:semver-major"
-      # NumPy 2.5+ drops Python 3.10/3.11; CI matrix is 3.10-3.12. The
-      # stack is also pinned to NumPy 1.26 to avoid hybrid 1/2 Windows breakage.
+      # NumPy 2.5+ drops Python 3.11; CI push matrix is 3.11–3.12 (PRs 3.12).
+      # The stack is also pinned to NumPy 1.26 to avoid hybrid 1/2 Windows breakage.
       - dependency-name: "numpy"
         update-types:
           - "version-update:semver-major"
