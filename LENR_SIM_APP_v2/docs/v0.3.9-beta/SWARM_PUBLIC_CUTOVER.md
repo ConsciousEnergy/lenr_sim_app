@@ -104,6 +104,8 @@ Manual checklist (same order as the script):
 6. Ansible Traefik stack; GHCR auth; rolling update
    (`require_app_label=true`, `require_observability_label=true` in prod).
 7. Flip public share hostname(s); watch `/api/health` + error rate + Grafana.
+   Re-run evidence anytime:
+   `ALLOW_API_DNS_GAP=1 ./infrastructure/scripts/swarm-039-post-cutover-verify.sh`
 8. Keep Compose artifacts + rollback tag for ≥ one release; document RTO.
 
 ## Status on this train

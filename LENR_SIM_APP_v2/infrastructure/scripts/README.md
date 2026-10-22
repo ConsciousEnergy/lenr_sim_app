@@ -19,10 +19,12 @@ They are retained for cutover prep; they are not the v0.3.7 public-beta ship pat
 
 ## Scripts
 
-### swarm-039-cutover.sh / swarm-039-cutover-prep.sh / swarm-039-readiness-barcode.sh
+### swarm-039-cutover.sh / swarm-039-cutover-prep.sh / swarm-039-readiness-barcode.sh / swarm-039-post-cutover-verify.sh
 
 v0.3.9 public cutover path. Prep and barcode are read-only; the executor never
-sets `CONFIRM_SWARM_0_3_9` (human-armed). See
+sets `CONFIRM_SWARM_0_3_9` (human-armed). After live apply, `swarm-039-cutover.sh`
+runs `swarm-039-post-cutover-verify.sh` (2-node topology, labels, postgres on
+share, SPA+/api health, CI outside Swarm). See
 [`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
 ### unclog-lenr-ci.sh

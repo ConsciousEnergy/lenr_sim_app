@@ -236,22 +236,10 @@ else
 fi
 ansible-playbook -i "$PROD_INV" playbooks/deploy-stack.yml "${deploy_extra[@]}"
 
-yel "Step 8: health probes"
-api_code="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 https://api.conscious.energy/api/health || echo 000)"
-share_after="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/api/health" || echo 000)"
-spa_after="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 15 "${SHARE_URL}/" || echo 000)"
-echo "api.conscious.energy → ${api_code}"
-echo "share/lenr-sim-beta /api/health → ${share_after}"
-echo "share/lenr-sim-beta SPA / → ${spa_after}"
-
-if [[ "$api_code" == "200" && "$spa_after" == "200" ]]; then
-  grn "Cutover health probe green (api=${api_code} spa=${spa_after})"
-elif [[ "${ALLOW_API_DNS_GAP:-0}" == "1" && "$share_after" == "200" && "$spa_after" == "200" ]]; then
-  yel "api.conscious.energy → ${api_code} (WP DNS lag); accepting ${SHARE_URL} api+spa → 200 (ALLOW_API_DNS_GAP=1)"
-  grn "Cutover health probe green via lenr-sim-beta (SPA + PathPrefix /api)"
-else
-  red "Health not green (api=${api_code} share_api=${share_after} spa=${spa_after}) — need Swarm frontend+backend on share or WordPress A api; Compose volumes still on disk for rollback"
-  exit 1
-fi
+yel "Step 8: post-cutover verify (topology + labels + health)"
+# Full evidence: 2-node Swarm, postgres on share, SPA+/api 200, CI outside.
+export ALLOW_API_DNS_GAP="${ALLOW_API_DNS_GAP:-0}"
+export SHARE_IP KVM1_IP CI_IP SHARE_URL SHARE_SSH_KEY="$SHARE_KEY" KVM1_SSH_KEY="$KVM1_KEY"
+bash "${SCRIPT_DIR}/swarm-039-post-cutover-verify.sh"
 
 echo "Document rollback tag + keep Compose artifacts. Do not close EQ-OPEN-*."
