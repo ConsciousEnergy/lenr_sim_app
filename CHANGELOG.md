@@ -8,9 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Swarm **staging** dry-run and public Swarm + Pages cutover remain gated
-  (`CONFIRM_SWARM_0_3_8` / `CONFIRM_SWARM_0_3_9`). Compose share stays the
-  public surface on `main` at **v0.3.8-beta**.
+- Public Swarm cutover remains gated on `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
+  Compose share on `main` stays **v0.3.8-beta** until the cutover window.
+- Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
+
+### Added — v0.3.9 Swarm cutover train (not live until confirm)
+- Swarm stack SPA service (`swarm_frontend_enabled`) with Traefik `PathPrefix(/api)`
+  on shared hosts (`lenr-sim-beta`) so Compose drain does not drop the UI
+- `traefik_extra_api_hosts` / `ALLOW_API_DNS_GAP` / `SKIP_IMAGE_BUILD` cutover helpers
+- Gated Compose drain + staging leave playbooks; local-image cutover path
 
 ## [v0.3.8-beta] - 2026-10-20
 

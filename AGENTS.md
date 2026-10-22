@@ -1,4 +1,4 @@
-# Agent and contributor current truth (main = v0.3.8-beta Compose, dev = v0.3.8-beta integration)
+# Agent and contributor current truth (main = v0.3.8-beta Compose; cutover train = v0.3.9-beta)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
@@ -7,7 +7,7 @@ Short map for humans and Cursor agents. Prefer this over stale trackers.
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
 | `main` | **`0.3.8-beta`** | Live Compose public beta; ship / hotfix only |
-| `dev` | **`0.3.8-beta`** | Default integration for Swarm staging prep / science / deps |
+| `dev` / Swarm cutover PRs | **`0.3.9-beta`** | Public Swarm cutover train (Traefik SPA + API); not live until `CONFIRM_SWARM_0_3_9` |
 
 Four markers (must match within a branch):
 
@@ -25,7 +25,7 @@ Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 |---------|---------|
 | `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.8-beta** after Compose promote ship ([`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md)). |
 | `main` | Release line matching the share train; may be ahead of live until an operator ships with `VPS_*` / SSH. |
-| `dev` | v0.3.8-beta integration tip; **never** auto-deployed by `deploy.yml`. |
+| `dev` | Cutover integration tip (`0.3.9-beta` markers); **never** auto-deployed by `deploy.yml`. |
 
 Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`). Share must keep
@@ -54,7 +54,7 @@ Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 |-------|------|-------------|-----|
 | Compose share (now) | v0.3.8-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
 | Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) — uses `inventory.staging.yml` + `staging.tfvars` only |
-| Public Swarm + Pages | later (**separate 0.3.9 train**) | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Public Swarm (+ optional Pages) | v0.3.9-beta cutover window | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — same-origin Traefik SPA on `lenr-sim-beta` unblocks without CF Pages first |
 
 Topology diagrams (hardware ↔ Swarm, legends, storage) — diagram SOT:
 [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
