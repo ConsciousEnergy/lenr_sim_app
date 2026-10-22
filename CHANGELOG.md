@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover: assert KVM1 left staging before Compose drain; assert Postgres
   volume survived `compose down` (drain playbook + executor)
 - Cutover: assert Ready≥2 + app/observability/postgres labels + KVM1 worker
-  before `deploy-stack.yml`
+  before `deploy-stack.yml` (postgres=true must be on the share manager IP)
 - Frontend `overrides.dompurify` → `^3.4.17` (GHSA-cg2g-xh64-v4q7 and related)
 - Cutover prep asserts ≥5GiB free on share + KVM1 `/` (`CUTOVER_MIN_FREE_GIB`)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)

@@ -285,12 +285,22 @@ grn "Swarm secrets ready (Compose DB password preserved)"
 ansible-playbook -i "$PROD_INV" playbooks/join-workers.yml
 
 yel "Step 7pre: assert 2-node Ready + required labels before stack deploy"
-topo="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<'EOS'
+topo="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<EOS
 set -euo pipefail
-ready=$(docker node ls --format '{{.Status}}' | grep -c '^Ready$' || true)
-echo "ready=${ready}"
+ready=\$(docker node ls --format '{{.Status}}' | grep -c '^Ready\$' || true)
+echo "ready=\${ready}"
 docker node ls -q | while read -r id; do
-  docker node inspect "$id" --format '{{.Description.Hostname}} {{.Status.Addr}} {{json .Spec.Labels}} {{.Spec.Role}}'
+  docker node inspect "\$id" --format '{{.Description.Hostname}} {{.Status.Addr}} {{json .Spec.Labels}} {{.Spec.Role}}'
+done
+# Pin: postgres=true must be on the share manager (external volume is node-local there).
+share_ip='${SHARE_IP}'
+docker node ls -q | while read -r id; do
+  addr=\$(docker node inspect "\$id" --format '{{.Status.Addr}}')
+  role=\$(docker node inspect "\$id" --format '{{.Spec.Role}}')
+  labels=\$(docker node inspect "\$id" --format '{{json .Spec.Labels}}')
+  [[ "\$addr" == "\$share_ip" && "\$role" == "manager" ]] || continue
+  echo "\$labels" | grep -q '"postgres":"true"' || continue
+  echo "postgres_on_share=yes"
 done
 EOS
 )"
@@ -299,12 +309,13 @@ ready_n="$(echo "$topo" | sed -n 's/^ready=//p' | head -1)"
 [[ "${ready_n:-0}" -ge 2 ]] || { red "expected ≥2 Ready Swarm nodes before deploy, got ${ready_n:-0}"; exit 1; }
 echo "$topo" | grep -q '"app":"true"' || { red "missing app=true label before deploy"; exit 1; }
 echo "$topo" | grep -q '"observability":"true"' || { red "missing observability=true label before deploy"; exit 1; }
-echo "$topo" | grep -q '"postgres":"true"' || { red "missing postgres=true label before deploy"; exit 1; }
+echo "$topo" | grep -q 'postgres_on_share=yes' \
+  || { red "postgres=true not on share manager ${SHARE_IP} — refuse deploy (volume pin)"; exit 1; }
 kvm1_role="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
   'docker info --format "{{.Swarm.LocalNodeState}} {{.Swarm.ControlAvailable}}"')"
 [[ "$kvm1_role" == "active false" ]] \
   || { red "KVM1 expected active worker (active false), got '${kvm1_role}'"; exit 1; }
-grn "topology ready for deploy (Ready≥2, labels app/observability/postgres, KVM1 worker)"
+grn "topology ready for deploy (Ready≥2, postgres on share, KVM1 worker)"
 
 deploy_extra=(-e "require_app_label=true" -e "require_observability_label=true")
 if [[ "$have_ghcr" -eq 1 ]]; then
