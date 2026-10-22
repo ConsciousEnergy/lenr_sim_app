@@ -41,6 +41,13 @@ ufw_allowed_ports:
   - 22   # SSH
   - 80   # HTTP (for Let's Encrypt)
   - 443  # HTTPS
+# Docker Swarm (control / gossip / overlay data) — required for multi-node join
+ufw_swarm_ports_tcp:
+  - 2377
+  - 7946
+ufw_swarm_ports_udp:
+  - 7946
+  - 4789
 
 fail2ban_enabled: true
 fail2ban_sshd_maxretry: 3

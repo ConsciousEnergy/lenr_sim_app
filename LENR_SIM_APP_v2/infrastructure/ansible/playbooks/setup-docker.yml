@@ -167,18 +167,37 @@
     # ==========================================================================
     # Docker Swarm Initialization
     # ==========================================================================
+
+    - name: Resolve Swarm advertise address (prefer inventory ansible_host)
+      ansible.builtin.set_fact:
+        _swarm_advertise_addr: "{{ swarm_advertise_addr | default(ansible_host) | default(ansible_default_ipv4.address) }}"
     
     - name: Check if Swarm is already initialized
       ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
       register: swarm_status
       changed_when: false
+
+    - name: Allow Swarm TCP ports in UFW (multi-node join)
+      ansible.builtin.command: ufw allow {{ item }}/tcp comment 'Docker Swarm'
+      loop: "{{ ufw_swarm_ports_tcp | default([2377, 7946]) }}"
+      register: ufw_tcp
+      changed_when: "'Skipping' not in (ufw_tcp.stdout | default(''))"
+      failed_when: false
+
+    - name: Allow Swarm UDP ports in UFW (gossip / overlay)
+      ansible.builtin.command: ufw allow {{ item }}/udp comment 'Docker Swarm'
+      loop: "{{ ufw_swarm_ports_udp | default([7946, 4789]) }}"
+      register: ufw_udp
+      changed_when: "'Skipping' not in (ufw_udp.stdout | default(''))"
+      failed_when: false
       
     - name: Initialize Docker Swarm (managers only)
-      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address | default(ansible_host) }}
+      ansible.builtin.command: >-
+        docker swarm init --advertise-addr {{ _swarm_advertise_addr }}
       when: 
         - swarm_init | bool
         - swarm_status.stdout != "active"
-        - (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) or ansible_host is defined
+        - (_swarm_advertise_addr | string | length) > 0
       register: swarm_init_result
       failed_when: >
         swarm_init_result.rc != 0 and

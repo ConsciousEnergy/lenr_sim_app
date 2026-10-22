@@ -138,7 +138,17 @@ else
   bad "share missing docker volume lenr-sim_postgres_data"
 fi
 
-# 7d) Compose .env has DB + API secrets (values not printed)
+# 7d) Share UFW allows Swarm ports (worker join)
+if [[ -f "$SHARE_KEY" ]] \
+  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       "root@${SHARE_IP}" \
+       'ufw status | grep -q "2377/tcp" && ufw status | grep -q "7946" && ufw status | grep -q "4789/udp"'; then
+  ok "share UFW allows Swarm ports 2377/7946/4789"
+else
+  bad "share UFW missing Swarm ports (setup-docker.yml opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
+fi
+
+# 7e) Compose .env has DB + API secrets (values not printed)
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
        "root@${SHARE_IP}" \

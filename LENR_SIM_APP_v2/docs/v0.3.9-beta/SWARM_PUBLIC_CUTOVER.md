@@ -73,6 +73,8 @@ Compose and Swarm both name the DB volume `lenr-sim_postgres_data` (project/stac
 After `swarm init`, the executor imports `LENR_DB_PASSWORD` / `LENR_SECRET_KEY`
 from `/opt/lenr-sim/.env` into Docker secrets **before** `deploy-stack.yml` so
 Ansible does not mint a new random DB password against the existing volume.
+`setup-docker.yml` advertises `ansible_host` and opens UFW Swarm ports
+(`2377/tcp`, `7946/tcp+udp`, `4789/udp`) so KVM1 can join.
 
 Manual checklist (same order as the script):
 
