@@ -21,7 +21,9 @@ cat <<EOF
 ssh -i "\${KVM1_SSH_KEY:-\$HOME/.ssh/lenr-sim-staging}" -L 3000:127.0.0.1:3000 root@31.220.55.113
 # browser → http://127.0.0.1:3000  (password: /opt/lenr-sim/.grafana-admin-password on KVM1)
 # Public kvm1:3000 must NOT return 200 (lenr-grafana-localhost.service / DOCKER-USER).
-# Optional TUI (operator laptop): d4s --context <ssh-context-to-staging-or-share-manager>
+# Optional TUI (operator laptop):
+#   d4s --context lenr-staging   # pre-cutover (KVM1 manager)
+#   d4s --context lenr-share     # post-cutover (share manager)
 # Docs: docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md + D4S_DFORCE_OPERATOR.md
 EOF
 
