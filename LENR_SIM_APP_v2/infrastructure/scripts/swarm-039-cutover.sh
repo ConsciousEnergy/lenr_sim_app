@@ -243,3 +243,7 @@ export SHARE_IP KVM1_IP CI_IP SHARE_URL SHARE_SSH_KEY="$SHARE_KEY" KVM1_SSH_KEY=
 bash "${SCRIPT_DIR}/swarm-039-post-cutover-verify.sh"
 
 echo "Document rollback tag + keep Compose artifacts. Do not close EQ-OPEN-*."
+echo "If cutover fails mid-window, restore Compose with:"
+echo "  CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \\"
+echo "    CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE \\"
+echo "    ${SCRIPT_DIR}/swarm-039-restore-compose.sh"

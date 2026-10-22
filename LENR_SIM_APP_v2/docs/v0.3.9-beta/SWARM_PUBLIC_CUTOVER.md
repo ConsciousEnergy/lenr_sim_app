@@ -107,6 +107,14 @@ Manual checklist (same order as the script):
    Re-run evidence anytime:
    `ALLOW_API_DNS_GAP=1 ./infrastructure/scripts/swarm-039-post-cutover-verify.sh`
 8. Keep Compose artifacts + rollback tag for ≥ one release; document RTO.
+   Mid-window abort / failed verify → restore Compose (keeps volumes):
+
+```bash
+CONFIRM_RESTORE_COMPOSE=I_RESTORE_COMPOSE_AFTER_SWARM \
+  CONFIRM_LEAVE_SWARM=I_LEAVE_SWARM_FOR_COMPOSE \
+  ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-restore-compose.sh
+```
+
 
 ## Status on this train
 
