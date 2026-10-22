@@ -75,13 +75,14 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 ```
 
-`SKIP_IMAGE_BUILD=1` reuses prebuilt
+`SKIP_IMAGE_BUILD=1` requires prebuilt
 `ghcr.io/consciousenergy/lenr-sim-backend:<tag>` and
-`…/lenr-sim-frontend:<tag>` on the share manager (omit it to force a fresh
-`docker build`). With `LOCAL_IMAGES=1`, the executor builds/loads **before**
-Compose drain (Compose stays up during the long step), then
-`docker save|load`s onto KVM1 and deploys with `--resolve-image never`.
-After drain, cutover refuses to continue if host `:80`/`:443` are still bound.
+`…/lenr-sim-frontend:<tag>` on **both** share and KVM1 (prep BAD otherwise;
+cutover aborts rather than building). Omit it to force a fresh `docker build`
+on share then `docker save|load` onto KVM1. With `LOCAL_IMAGES=1`, image work
+runs **before** Compose drain. When both hosts already have the tag, cutover
+skips the save|load pipe. Deploy uses `--resolve-image never`. After drain,
+cutover refuses to continue if host `:80`/`:443` are still bound.
 
 Preferred at the window: WordPress.com `A api → <share IP>` for
 `https://api.conscious.energy/api/health`. Until that record exists, prod inventory

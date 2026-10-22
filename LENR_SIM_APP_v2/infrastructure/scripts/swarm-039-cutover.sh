@@ -140,7 +140,11 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
        "docker image inspect ${FRONTEND_IMG}" >/dev/null 2>&1; then
     have_frontend=1
   fi
-  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" && "$have_backend" -eq 1 && "$have_frontend" -eq 1 ]]; then
+  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" ]]; then
+    if [[ "$have_backend" -ne 1 || "$have_frontend" -ne 1 ]]; then
+      red "SKIP_IMAGE_BUILD=1 but share missing :${IMAGE_TAG} images — run swarm-039-prestage-images.sh (or unset SKIP_IMAGE_BUILD)"
+      exit 1
+    fi
     grn "SKIP_IMAGE_BUILD=1 — reusing backend+frontend :${IMAGE_TAG} on share"
   else
     rsync -az --delete \
@@ -148,14 +152,14 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
       --exclude 'backend/.venv' --exclude 'frontend/dist' \
       -e "ssh -i ${SHARE_KEY} -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
       "${ROOT}/LENR_SIM_APP_v2/" "root@${SHARE_IP}:/opt/lenr-sim/src/LENR_SIM_APP_v2/"
-    if [[ "$have_backend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
+    if [[ "$have_backend" -ne 1 ]]; then
       ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
         "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
           -t ${BACKEND_IMG} --build-arg BUILD_VERSION=${IMAGE_TAG} ."
     else
       grn "reusing existing backend :${IMAGE_TAG}"
     fi
-    if [[ "$have_frontend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
+    if [[ "$have_frontend" -ne 1 ]]; then
       ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
         "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.frontend \
           -t ${FRONTEND_IMG} \
@@ -168,11 +172,24 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
   # Workers cannot pull without GHCR — pipe images share → KVM1 (before leave).
   yel "Step 3b: distribute local images share → KVM1 (${KVM1_IP})"
   [[ -f "$KVM1_KEY" ]] || { red "missing KVM1_SSH_KEY ${KVM1_KEY}"; exit 1; }
-  ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-    "docker save ${BACKEND_IMG} ${FRONTEND_IMG}" \
-    | ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
-      "docker load"
-  grn "KVM1 loaded ${BACKEND_IMG} + ${FRONTEND_IMG}"
+  kvm1_have=0
+  if ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
+       "docker image inspect ${BACKEND_IMG} >/dev/null \
+        && docker image inspect ${FRONTEND_IMG} >/dev/null" >/dev/null 2>&1; then
+    kvm1_have=1
+  fi
+  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" && "$kvm1_have" -eq 1 ]]; then
+    grn "SKIP_IMAGE_BUILD=1 — KVM1 already has :${IMAGE_TAG} (skip save|load)"
+  elif [[ "${SKIP_IMAGE_BUILD:-0}" == "1" && "$kvm1_have" -ne 1 ]]; then
+    red "SKIP_IMAGE_BUILD=1 but KVM1 missing :${IMAGE_TAG} — run swarm-039-prestage-images.sh"
+    exit 1
+  else
+    ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+      "docker save ${BACKEND_IMG} ${FRONTEND_IMG}" \
+      | ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
+        "docker load"
+    grn "KVM1 loaded ${BACKEND_IMG} + ${FRONTEND_IMG}"
+  fi
   # Compose must still be healthy after the prestage window.
   share_health2="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/api/health" || echo 000)"
   [[ "$share_health2" == "200" ]] || { red "share health ${share_health2} after image prep — abort before drain"; exit 1; }

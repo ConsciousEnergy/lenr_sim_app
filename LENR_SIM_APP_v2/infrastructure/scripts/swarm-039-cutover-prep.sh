@@ -102,8 +102,10 @@ elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
              "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} >/dev/null \
               && docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} >/dev/null"; then
         ok "${role} has local backend+frontend :${IMAGE_TAG}"
+      elif [[ "${ALLOW_IMAGE_PRESTAGE_GAP:-0}" == "1" ]]; then
+        note "${role} missing :${IMAGE_TAG} (ALLOW_IMAGE_PRESTAGE_GAP=1 — cutover refuses SKIP_IMAGE_BUILD without images)"
       else
-        note "${role} missing :${IMAGE_TAG} images (cutover will build/xfer)"
+        bad "${role} missing :${IMAGE_TAG} for SKIP_IMAGE_BUILD=1 (swarm-039-prestage-images.sh or ALLOW_IMAGE_PRESTAGE_GAP=1)"
       fi
     done
   fi
