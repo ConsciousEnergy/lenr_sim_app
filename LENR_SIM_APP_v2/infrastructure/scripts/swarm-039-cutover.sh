@@ -73,7 +73,8 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
   5. Optional LOCAL_IMAGES=1: build backend+frontend on share, then
        docker save|load onto KVM1 (SKIP_IMAGE_BUILD=1 reuses share tags)
-  6. setup-docker.yml (swarm init on share); import Compose .env → Swarm secrets
+  6. setup-docker.yml (swarm init on share); verify manager + :2377 from KVM1;
+       import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
   7. join-workers.yml + deploy-stack.yml (--resolve-image never; SPA + PathPrefix /api)
   8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
@@ -188,6 +189,24 @@ fi
 
 yel "Step 6–7: Swarm init + join + stack deploy"
 ansible-playbook -i "$PROD_INV" playbooks/setup-docker.yml
+
+yel "Step 6a: verify share is Swarm manager listening before worker join"
+[[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
+mgr_info="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+  'docker info --format "{{.Swarm.LocalNodeState}} {{.Swarm.ControlAvailable}}"')"
+echo "share swarm: ${mgr_info}"
+[[ "$mgr_info" == "active true" ]] || { red "share not active manager after setup-docker (${mgr_info})"; exit 1; }
+ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+  'ss -lnt | grep -q ":2377 "' \
+  || { red "share not listening on 2377/tcp after swarm init"; exit 1; }
+if [[ -f "$KVM1_KEY" ]]; then
+  ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
+    "timeout 5 nc -zw3 ${SHARE_IP} 2377" >/dev/null 2>&1 \
+    || { red "KVM1 cannot reach share:2377 after swarm init — abort before join"; exit 1; }
+  grn "KVM1→share:2377 reachable (manager ready for join-workers)"
+else
+  yel "KVM1_SSH_KEY missing — skip post-init 2377 path check"
+fi
 
 yel "Step 6b: import Compose .env into Swarm secrets (reuse DB password for external volume)"
 [[ -f "$SHARE_KEY" ]] || { red "missing SHARE_SSH_KEY ${SHARE_KEY}"; exit 1; }
