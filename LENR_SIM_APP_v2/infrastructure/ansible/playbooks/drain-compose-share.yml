@@ -80,9 +80,19 @@
       register: remaining
       changed_when: false
 
+    - name: Fail if Compose/Caddy still holds host ports
+      ansible.builtin.assert:
+        that:
+          - (remaining.stdout_lines | default([]) | length) == 0
+        fail_msg: >-
+          Compose drain incomplete — {{ remaining.stdout_lines | length }}
+          container(s) still match name=lenr-sim. Host :80/:443 would clash
+          with Swarm Traefik (publish mode: host). Re-run compose down or
+          docker rm -f the leftovers before stack deploy.
+
     - name: Report drain result
       ansible.builtin.debug:
         msg: |
           Compose drained on {{ inventory_hostname }} ({{ ansible_host }}).
-          remaining_lenr_sim_containers={{ remaining.stdout_lines | length }}
+          remaining_lenr_sim_containers=0
           Volumes under /opt/lenr-sim/data preserved for rollback.

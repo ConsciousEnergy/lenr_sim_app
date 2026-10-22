@@ -133,17 +133,21 @@
         set -euo pipefail
         TARGET_NAME="{{ item }}"
         TARGET_IP="{{ hostvars[item].get('ansible_host', '') }}"
+        TARGET_ADV="{{ hostvars[item].get('swarm_advertise_addr', '') }}"
         NODE_ID="$(docker node ls -q | while read -r id; do
           host="$(docker node inspect "$id" --format '{% raw %}{{.Description.Hostname}}{% endraw %}')"
           addr="$(docker node inspect "$id" --format '{% raw %}{{.Status.Addr}}{% endraw %}')"
-          if [ "$host" = "$TARGET_NAME" ] || [ "$addr" = "$TARGET_IP" ]; then
+          if [ "$host" = "$TARGET_NAME" ] \
+            || { [ -n "$TARGET_IP" ] && [ "$addr" = "$TARGET_IP" ]; } \
+            || { [ -n "$TARGET_ADV" ] && [ "$addr" = "$TARGET_ADV" ]; }; then
             echo "$id"
             break
           fi
         done)"
         if [ -z "$NODE_ID" ]; then
-          echo "WARN: could not resolve Swarm node for $TARGET_NAME ($TARGET_IP) — skip labels" >&2
-          exit 0
+          echo "ERROR: could not resolve Swarm node for $TARGET_NAME (ip=$TARGET_IP adv=$TARGET_ADV) — labels required" >&2
+          docker node ls >&2 || true
+          exit 1
         fi
         {% for label in hostvars[item].get('swarm_node_labels', []) %}
         docker node update --label-add {{ label | quote }} "$NODE_ID"
@@ -158,6 +162,11 @@
       run_once: true
       register: label_result
       changed_when: "'Labeled' in (label_result.results | default([]) | map(attribute='stdout', default='') | join('\n'))"
+      # Inventory hostname (e.g. share-manager-1) often ≠ Docker Hostname (srv…).
+      # Match also uses ansible_host IP against node Status.Addr — fail hard if neither hits.
+      failed_when: >
+        (label_result.results | default([]) | selectattr('rc', 'defined')
+         | selectattr('rc', 'ne', 0) | list | length) > 0
 
     - name: Show current node labels
       ansible.builtin.shell: |

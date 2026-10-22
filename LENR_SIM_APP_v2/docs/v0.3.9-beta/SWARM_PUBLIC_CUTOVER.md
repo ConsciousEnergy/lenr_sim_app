@@ -11,18 +11,23 @@ primary share URL.
 **Hard gate:**
 
 ```bash
-CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh production
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \
+  ./infrastructure/scripts/swarm-039-cutover.sh
 ```
 
-Do not weaken this string. Staging experiments continue to use
+`deploy.sh production` with the same confirm **delegates** to
+`swarm-039-cutover.sh` (drain / leave staging / import Compose `.env` secrets /
+join worker). Do not use a bare Terraform+Ansible production path against the
+live share — it would mint a random DB password and skip Compose drain.
+
+Do not weaken the confirm string. Staging experiments continue to use
 `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` only.
 
-`deploy.sh production` uses **prod** files only:
+Prod inventory (required by the executor):
 
 | File | Source example |
 |------|----------------|
 | `infrastructure/ansible/inventory.yml` | `inventory.yml.example` |
-| `infrastructure/terraform/terraform.tfvars` | `terraform.tfvars.example` |
 
 ## Prerequisites before the window
 

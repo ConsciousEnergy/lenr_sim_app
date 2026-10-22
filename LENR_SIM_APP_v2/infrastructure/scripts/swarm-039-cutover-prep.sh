@@ -120,6 +120,15 @@ else
   bad "share SSH unavailable (set SHARE_SSH_KEY or run hostinger-compose-unlock.py attach-key with AGENT_* paths)"
 fi
 
+# 7a) KVM1 SSH (leave staging + image load + worker join)
+if [[ -f "$KVM1_KEY" ]] \
+  && ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+       -o StrictHostKeyChecking=accept-new "root@${KVM1_IP}" 'echo ok' >/dev/null 2>&1; then
+  ok "kvm1 SSH root@${KVM1_IP} via ${KVM1_KEY}"
+else
+  bad "kvm1 SSH unavailable (set KVM1_SSH_KEY; needed for leave-staging + docker save|load)"
+fi
+
 # 7b) SPA still served on share (Compose today; Swarm after cutover)
 spa="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/" || echo 000)"
 if [[ "$spa" == "200" ]]; then
