@@ -98,6 +98,12 @@ if echo "$svc" | grep -q .; then
     fi
   done <<< "$svc"
   [[ "$bad_reps" -eq 0 ]] && ok "all ${STACK} services fully replicated"
+  # SPA frontend service required for same-origin Traefik cutover (swarm_frontend_enabled)
+  if echo "$svc" | grep -qE "^${STACK}_frontend="; then
+    ok "SPA frontend service present (${STACK}_frontend)"
+  else
+    bad "missing ${STACK}_frontend — prod inventory must set swarm_frontend_enabled"
+  fi
 else
   bad "no stack services for ${STACK}"
 fi

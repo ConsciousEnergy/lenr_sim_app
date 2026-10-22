@@ -228,15 +228,18 @@ else
   bad "prod inventory missing postgres=true on share manager (required with postgres_volume_external)"
 fi
 
-# 7d) Share UFW allows Swarm ports (worker join)
-if [[ -f "$SHARE_KEY" ]] \
-  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
-       "root@${SHARE_IP}" \
-       'ufw status | grep -q "2377/tcp" && ufw status | grep -q "7946" && ufw status | grep -q "4789/udp"'; then
-  ok "share UFW allows Swarm ports 2377/7946/4789"
-else
-  bad "share UFW missing Swarm ports (setup-docker.yml opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
-fi
+# 7d) Share + KVM1 UFW allow Swarm ports (manager↔worker gossip / overlay)
+ufw_swarm_check='ufw status | grep -q "2377/tcp" && ufw status | grep -q "7946" && ufw status | grep -q "4789/udp"'
+for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
+  role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
+  if [[ -f "$key" ]] \
+    && ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+         "root@${host}" "$ufw_swarm_check" >/dev/null 2>&1; then
+    ok "${role} UFW allows Swarm ports 2377/7946/4789"
+  elif [[ -f "$key" ]]; then
+    bad "${role} UFW missing Swarm ports (setup-docker.yml / join-workers opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
+  fi
+done
 
 # 7d2) KVM1 → share TCP path for Swarm control/gossip (temp listeners; nothing
 # listens until swarm init, so a plain nc to closed ports would false-fail).
