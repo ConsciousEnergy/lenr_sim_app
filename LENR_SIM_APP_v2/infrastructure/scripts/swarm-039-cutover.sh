@@ -78,6 +78,7 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
        import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
   7. join-workers.yml + deploy-stack.yml (--resolve-image never; SPA + PathPrefix /api)
+  7a. Assert Traefik ACME store on share (/opt/lenr-sim/traefik/certs/acme.json mode 0600)
   7b. Wait for stack replicas + SPA/API 200 (ACME settle; CUTOVER_HEALTH_WAIT_SECS)
   8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
   9. Keep Compose volumes for rollback ≥ one release
@@ -89,7 +90,7 @@ plan
 
 if [[ "$CONFIRM" != "I_CUTOVER_0_3_9" ]]; then
   yel "CONFIRM_SWARM_0_3_9 unset — refusing live apply (expected)."
-  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 $0"
+  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 $0"
   exit 0
 fi
 
