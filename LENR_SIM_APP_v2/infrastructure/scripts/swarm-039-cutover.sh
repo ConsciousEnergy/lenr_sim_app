@@ -36,7 +36,10 @@ CONFIRM="${CONFIRM_SWARM_0_3_9:-}"
 EXECUTE="${EXECUTE:-0}"
 LOCAL_IMAGES="${LOCAL_IMAGES:-0}"
 SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
+KVM1_KEY="${KVM1_SSH_KEY:-$HOME/.ssh/lenr-sim-staging}"
 IMAGE_TAG="${BACKEND_IMAGE_TAG:-0.3.9-beta}"
+BACKEND_IMG="ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}"
+FRONTEND_IMG="ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG}"
 
 red() { printf '\033[0;31m%s\033[0m\n' "$*"; }
 yel() { printf '\033[0;33m%s\033[0m\n' "$*"; }
@@ -68,10 +71,10 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
   2. Version markers at 0.3.9-beta (release-quality-gate) — separate PR if still 0.3.8
   3. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING)
   4. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM)
-  5. Optional LOCAL_IMAGES=1: docker build backend + frontend on share
-       (SKIP_IMAGE_BUILD=1 reuses tags if present)
+  5. Optional LOCAL_IMAGES=1: build backend+frontend on share, then
+       docker save|load onto KVM1 (SKIP_IMAGE_BUILD=1 reuses share tags)
   6. setup-docker.yml (swarm init on share) + join-workers.yml (KVM1 + labels)
-  7. deploy-stack.yml (SPA via swarm_frontend_enabled + Traefik PathPrefix /api)
+  7. deploy-stack.yml (--resolve-image never when local; SPA + PathPrefix /api)
   8. Verify ${SHARE_URL}/api/health (+ SPA /) and/or api.conscious.energy
   9. Keep Compose volumes for rollback ≥ one release
 
@@ -131,15 +134,15 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
   have_backend=0
   have_frontend=0
   if ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-       "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}" >/dev/null 2>&1; then
+       "docker image inspect ${BACKEND_IMG}" >/dev/null 2>&1; then
     have_backend=1
   fi
   if ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
-       "docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG}" >/dev/null 2>&1; then
+       "docker image inspect ${FRONTEND_IMG}" >/dev/null 2>&1; then
     have_frontend=1
   fi
   if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" && "$have_backend" -eq 1 && "$have_frontend" -eq 1 ]]; then
-    grn "SKIP_IMAGE_BUILD=1 — reusing backend+frontend :${IMAGE_TAG}"
+    grn "SKIP_IMAGE_BUILD=1 — reusing backend+frontend :${IMAGE_TAG} on share"
   else
     rsync -az --delete \
       --exclude '.git' --exclude 'frontend/node_modules' --exclude '**/__pycache__' \
@@ -149,20 +152,28 @@ if [[ "$LOCAL_IMAGES" == "1" ]]; then
     if [[ "$have_backend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
       ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
         "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.backend \
-          -t ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} \
-          --build-arg BUILD_VERSION=${IMAGE_TAG} ."
+          -t ${BACKEND_IMG} --build-arg BUILD_VERSION=${IMAGE_TAG} ."
     else
       grn "reusing existing backend :${IMAGE_TAG}"
     fi
     if [[ "$have_frontend" -ne 1 || "${SKIP_IMAGE_BUILD:-0}" != "1" ]]; then
       ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
         "cd /opt/lenr-sim/src/LENR_SIM_APP_v2 && docker build -f infrastructure/docker/Dockerfile.frontend \
-          -t ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} \
+          -t ${FRONTEND_IMG} \
           --build-arg VITE_API_URL=same-origin --build-arg REACT_APP_API_URL=same-origin ."
     else
       grn "reusing existing frontend :${IMAGE_TAG}"
     fi
   fi
+
+  # Workers cannot pull without GHCR — pipe images share → KVM1.
+  yel "Step 5b: distribute local images share → KVM1 (${KVM1_IP})"
+  [[ -f "$KVM1_KEY" ]] || { red "missing KVM1_SSH_KEY ${KVM1_KEY}"; exit 1; }
+  ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" \
+    "docker save ${BACKEND_IMG} ${FRONTEND_IMG}" \
+    | ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${KVM1_IP}" \
+      "docker load"
+  grn "KVM1 loaded ${BACKEND_IMG} + ${FRONTEND_IMG}"
 fi
 
 yel "Step 6–7: Swarm init + join + stack deploy"

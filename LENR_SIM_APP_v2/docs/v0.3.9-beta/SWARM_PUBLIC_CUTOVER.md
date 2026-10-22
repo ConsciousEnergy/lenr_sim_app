@@ -57,9 +57,11 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/swarm-039-cutover.sh
 ```
 
-`SKIP_IMAGE_BUILD=1` reuses a prebuilt
-`ghcr.io/consciousenergy/lenr-sim-backend:<tag>` on the share manager (omit it
-to force a fresh `docker build`).
+`SKIP_IMAGE_BUILD=1` reuses prebuilt
+`ghcr.io/consciousenergy/lenr-sim-backend:<tag>` and
+`…/lenr-sim-frontend:<tag>` on the share manager (omit it to force a fresh
+`docker build`). With `LOCAL_IMAGES=1`, the executor then `docker save|load`s
+both tags onto KVM1 and deploys with `--resolve-image never`.
 
 Preferred at the window: WordPress.com `A api → <share IP>` for
 `https://api.conscious.energy/api/health`. Until that record exists, prod inventory

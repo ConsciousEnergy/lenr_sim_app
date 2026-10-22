@@ -86,22 +86,46 @@ else
 fi
 
 # 6) GHCR env or LOCAL_IMAGES=1
+IMAGE_TAG="${BACKEND_IMAGE_TAG:-0.3.9-beta}"
+SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
+KVM1_KEY="${KVM1_SSH_KEY:-$HOME/.ssh/lenr-sim-staging}"
 if [[ -n "${GHCR_USER:-}" && -n "${GHCR_TOKEN:-}" ]]; then
   ok "GHCR_USER + GHCR_TOKEN set"
 elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
-  ok "LOCAL_IMAGES=1 — cutover will docker build on share (no GHCR)"
+  ok "LOCAL_IMAGES=1 — cutover will docker build on share + load onto KVM1 (no GHCR)"
+  if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" ]]; then
+    for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
+      role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
+      if [[ -f "$key" ]] \
+        && ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+             "root@${host}" \
+             "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} >/dev/null \
+              && docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} >/dev/null"; then
+        ok "${role} has local backend+frontend :${IMAGE_TAG}"
+      else
+        note "${role} missing :${IMAGE_TAG} images (cutover will build/xfer)"
+      fi
+    done
+  fi
 else
   bad "GHCR_USER/GHCR_TOKEN unset (or set LOCAL_IMAGES=1 for on-manager build)"
 fi
 
 # 7) Share SSH (manager target)
-SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
 if [[ -f "$SHARE_KEY" ]] \
   && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
        -o StrictHostKeyChecking=accept-new "root@${SHARE_IP}" 'echo ok' >/dev/null 2>&1; then
   ok "share SSH root@${SHARE_IP} via ${SHARE_KEY}"
 else
   bad "share SSH unavailable (set SHARE_SSH_KEY or run hostinger-compose-unlock.py attach-key with AGENT_* paths)"
+fi
+
+# 7b) SPA still served on share (Compose today; Swarm after cutover)
+spa="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 "${SHARE_URL}/" || echo 000)"
+if [[ "$spa" == "200" ]]; then
+  ok "share SPA ${SHARE_URL}/ → 200"
+else
+  bad "share SPA → ${spa}"
 fi
 
 # 8) Confirm gate reminder (never auto-set)

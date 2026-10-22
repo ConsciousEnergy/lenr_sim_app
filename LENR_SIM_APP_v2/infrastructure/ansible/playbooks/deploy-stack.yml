@@ -200,6 +200,7 @@
       ansible.builtin.command: >
         docker stack deploy
         --compose-file /opt/lenr-sim/docker-stack.yml
+        --resolve-image never
         {{ stack_name }}
       register: deploy_result_local
       when: not (_have_ghcr | bool)
