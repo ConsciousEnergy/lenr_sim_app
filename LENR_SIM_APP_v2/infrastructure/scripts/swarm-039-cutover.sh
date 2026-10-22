@@ -83,7 +83,7 @@ plan
 
 if [[ "$CONFIRM" != "I_CUTOVER_0_3_9" ]]; then
   yel "CONFIRM_SWARM_0_3_9 unset — refusing live apply (expected)."
-  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 $0"
+  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 $0"
   exit 0
 fi
 
