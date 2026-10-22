@@ -364,13 +364,13 @@ services:
       - lenr-sim-network
 {% if (grafana_publish_host_port | default(0) | int) > 0 %}
     # Host-mode publish for SSH tunnel (ssh -L 3000:127.0.0.1:3000).
-    # Bind 127.0.0.1 only — Docker host-mode publishes bypass UFW via DOCKER-USER.
+    # docker stack deploy rejects host_ip — Docker still binds 0.0.0.0 and bypasses
+    # UFW. deploy-stack.yml installs DOCKER-USER DROP for this port on the host.
     ports:
       - target: 3000
         published: {{ grafana_publish_host_port | int }}
         protocol: tcp
         mode: host
-        host_ip: 127.0.0.1
 {% endif %}
     deploy:
       mode: replicated

@@ -72,15 +72,15 @@ files exist (override with `ALLOW_OBS_PRESTAGE_GAP=1`).
 
 | Env | Access |
 |-----|--------|
-| Staging (KVM1 manager) | SSH tunnel `ssh -L 3000:127.0.0.1:3000 …` — requires `grafana_publish_host_port: 3000` with **`host_ip: 127.0.0.1`** (Docker host-mode bypasses UFW) |
-| Production (after 0.3.9) | Same localhost-only publish on the observability worker (KVM1); Traefik `grafana.` stays off by default |
+| Staging (KVM1 manager) | SSH tunnel `ssh -L 3000:127.0.0.1:3000 …` — `grafana_publish_host_port: 3000` (host-mode). Docker bypasses UFW; `deploy-stack.yml` installs **DOCKER-USER DROP** for :3000 from non-`lo`. |
+| Production (after 0.3.9) | Same localhost tunnel path on the observability worker (KVM1); Traefik `grafana.` stays off by default |
 
 ### Pre-arm checklist (before `CONFIRM_SWARM_0_3_9`)
 
 1. Staging stack has Grafana **1/1** and Prometheus **1/1** on KVM1.
 2. Swarm secret `grafana_admin_password` exists (mint via `deploy-stack.yml`).
 3. `curl … http://127.0.0.1:3000/login` on KVM1 → **200** (SSH tunnel target).
-4. From outside KVM1, `http://<kvm1-public-ip>:3000` must **not** return 200 (host_ip bind / DOCKER-USER).
+4. From outside KVM1, `http://<kvm1-public-ip>:3000` must **not** return 200 (DOCKER-USER / cutover prep asserts).
 5. Share + KVM1 have `/opt/lenr-sim/observability/` scaffolds (cutover prep asserts).
 6. Optional: install D-Force (`d4s`) on the **operator laptop** — see [`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md). Not a VM package.
 

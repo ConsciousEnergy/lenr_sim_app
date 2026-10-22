@@ -379,7 +379,7 @@ EOS
       2>/dev/null || echo fail)"
     ext_gf="$(printf '%s' "$ext_gf" | tr -d '\r' | tail -1)"
     if [[ "$ext_gf" == "200" ]]; then
-      bad "Grafana :3000 reachable from share on ${KVM1_IP} — bind host_ip 127.0.0.1 (Docker bypasses UFW)"
+      bad "Grafana :3000 reachable from share on ${KVM1_IP} — install DOCKER-USER DROP (Docker bypasses UFW)"
     else
       ok "Grafana :3000 not reachable from share (${ext_gf}) — localhost/SSH tunnel only"
     fi

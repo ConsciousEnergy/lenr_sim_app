@@ -151,6 +151,39 @@
         mode: '0644'
         directory_mode: '0755'
       when: observability_enabled | default(true)
+
+    # Host-mode Grafana publish binds 0.0.0.0 and bypasses UFW. Drop non-lo :3000
+    # in DOCKER-USER so only ssh -L / localhost can reach the login page.
+    - name: Install Grafana localhost-only DOCKER-USER guard
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/lenr-grafana-localhost.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Drop non-localhost Docker publishes to Grafana :3000
+          After=docker.service
+          Requires=docker.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c 'iptables -C DOCKER-USER -p tcp --dport {{ grafana_publish_host_port | int }} ! -i lo -j DROP 2>/dev/null || iptables -I DOCKER-USER 1 -p tcp --dport {{ grafana_publish_host_port | int }} ! -i lo -j DROP'
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+      when:
+        - observability_enabled | default(true)
+        - (grafana_publish_host_port | default(0) | int) > 0
+
+    - name: Enable Grafana localhost-only DOCKER-USER guard
+      ansible.builtin.systemd:
+        name: lenr-grafana-localhost.service
+        enabled: true
+        state: started
+        daemon_reload: true
+      when:
+        - observability_enabled | default(true)
+        - (grafana_publish_host_port | default(0) | int) > 0
         
     # ==========================================================================
     # Create Docker Secrets (managers only)

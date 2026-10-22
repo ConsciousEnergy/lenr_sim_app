@@ -154,7 +154,7 @@ else
   # Docker host-mode bypasses UFW — public IP must not serve Grafana.
   ext_gf="$(ssh_share "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 http://${KVM1_IP}:3000/login" || echo fail)"
   if [[ "$ext_gf" == "200" ]]; then
-    bad "grafana :3000 reachable from share on ${KVM1_IP} — expected host_ip 127.0.0.1 only"
+    bad "grafana :3000 reachable from share on ${KVM1_IP} — expected DOCKER-USER DROP / localhost-only"
   else
     ok "grafana :3000 not reachable from share (${ext_gf})"
   fi
