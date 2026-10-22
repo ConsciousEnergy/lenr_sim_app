@@ -143,6 +143,7 @@ worker after the share manager is torn down (set `SKIP_KVM1_LEAVE=1` to skip).
 | Swarm SPA on share host | `swarm_frontend_enabled` + `traefik_spa_hosts` + API `PathPrefix(/api)` |
 | Traefik ACME persist | `deploy-stack.yml` creates `/opt/lenr-sim/traefik/certs` + `acme.json` (`0700`/`0600`); prep asserts store pre-created on share |
 | Observability (Grafana/Prom) | Stack services on KVM1 `observability=true`; post-cutover verify checks replicas; Traefik public Grafana off by default |
+| Operator TUI (optional) | D-Force (`d4s`) — see [`../v0.3.8-beta/D4S_DFORCE_OPERATOR.md`](../v0.3.8-beta/D4S_DFORCE_OPERATOR.md); not a cutover dependency |
 | Version markers | `0.3.9-beta` on this train (four surfaces + ansible `app_version`) |
 | Cloudflare Pages (`app.`) | Optional later; same-origin Traefik SPA unblocks cutover without CF apply |
 | Operator production apply | **Blocked** until human sets `CONFIRM_SWARM_0_3_9` with live credentials |
