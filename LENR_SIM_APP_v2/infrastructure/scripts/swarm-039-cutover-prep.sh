@@ -373,7 +373,8 @@ EOS
   esac
   # Optional: D-Force present on operator PATH (not required on VMs)
   if command -v d4s >/dev/null 2>&1; then
-    ok "D-Force (d4s) on PATH ($(d4s version 2>/dev/null | head -1 || echo present)) — operator TUI"
+    d4s_ver="$(d4s version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '/Version:/{print $2; exit}')"
+    ok "D-Force (d4s) on PATH (${d4s_ver:-present}) — operator TUI"
   else
     note "D-Force (d4s) not on PATH — optional; see docs/v0.3.8-beta/D4S_DFORCE_OPERATOR.md"
   fi
