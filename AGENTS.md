@@ -39,7 +39,8 @@ Dual KVM2 ≠ Swarm cutover — see
 [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md),
 [`TWO_KVM2_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/TWO_KVM2_SWARM_TOPOLOGY.md),
 [`SWARM_OPERATOR_LAB.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/SWARM_OPERATOR_LAB.md),
-and
+[`D4S_DFORCE_OPERATOR.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/D4S_DFORCE_OPERATOR.md)
+(optional D-Force/`d4s` Swarm TUI), and
 [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
 UMLENR Goal 1 pack (portable hub PR):
 [`docs/program/UMLENR_GOAL1_HUB_PACK/`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/README.md).
