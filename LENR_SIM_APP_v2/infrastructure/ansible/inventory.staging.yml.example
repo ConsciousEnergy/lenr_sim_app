@@ -35,6 +35,9 @@ all:
           # Host vars beat playbook group_vars/all.yml (api_subdomain=api, workers=4).
           app_domain: "conscious.energy"
           api_subdomain: "api-staging"
+          # Pages SPA origin (CORS only — not a Traefik SPA host).
+          cors_extra_origins:
+            - "https://app-staging.conscious.energy"
           # App Settings enum is development|test|production (not "staging").
           # Deployment plane is staging; app runtime uses production for cutover parity.
           lenr_environment: "production"
