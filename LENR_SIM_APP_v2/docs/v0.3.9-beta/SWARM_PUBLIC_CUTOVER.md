@@ -87,7 +87,9 @@ cutover refuses to continue if host `:80`/`:443` are still bound.
 Preferred at the window: WordPress.com `A api → <share IP>` for
 `https://api.conscious.energy/api/health`. Until that record exists, prod inventory
 must list `traefik_extra_api_hosts: [lenr-sim-beta.conscious.energy]` and the
-executor may pass `ALLOW_API_DNS_GAP=1`. Compose drain uses
+executor may pass `ALLOW_API_DNS_GAP=1`. Immediately before drain, the executor
+refreshes `postgres-pre-cutover-*.{sql.gz,tgz}` on the share (Compose postgres
+still up) so a late window cannot fail the 48h freshness gate. Compose drain uses
 `drain-compose-share.yml` (`CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM`).
 Compose and Swarm both name the DB volume `lenr-sim_postgres_data` (project/stack
 `lenr-sim` + `postgres_data`); drain keeps volumes so Swarm reuses that data.
