@@ -121,6 +121,8 @@ cmd_local() {
     STAGING_EVIDENCE_DIR="$EVIDENCE_DIR" \
       STACK_RENDER_OUT="$EVIDENCE_DIR/docker-stack-prod-render.yml" \
       bash "$(dirname "$DEPLOY_SH")/swarm-039-assert-prod-stack-render.sh"
+    echo "== bash -n staging-swarm-ops-verify.sh (live probes are agent/operator-only) =="
+    bash -n "$(dirname "$DEPLOY_SH")/staging-swarm-ops-verify.sh"
   } | tee "$EVIDENCE_DIR/staging_swarm_local_dry_run.log"
   echo "OK: local staging dry-run evidence → $EVIDENCE_DIR/staging_swarm_local_dry_run.log"
 }

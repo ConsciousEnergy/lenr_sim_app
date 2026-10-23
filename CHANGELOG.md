@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
 ### Added — v0.3.9 Swarm cutover train (not live until confirm)
+- `staging-swarm-ops-verify.sh` — live STAGING_SWARM_DRY_RUN checklist barcode
+  (sslip, CORS, backup `--check`, obs, share, CI-absent; WP DNS noted)
+- Staging inventory `cors_extra_origins` + stack/Traefik CORS for Pages
+  `app-staging` (no Traefik SPA routers); `swarm_update_order: stop-first` for
+  single-node KVM1 (avoids start-first “insufficient resources”)
 - Swarm stack SPA service (`swarm_frontend_enabled`) with Traefik `PathPrefix(/api)`
   on shared hosts (`lenr-sim-beta`) so Compose drain does not drop the UI
 - `traefik_extra_api_hosts` / `ALLOW_API_DNS_GAP` / `SKIP_IMAGE_BUILD` cutover helpers
@@ -72,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prep notes recent share Postgres pre-cutover backup; window card shows dump recipe
 - Cutover aborts before Compose drain without a fresh Postgres pre-cutover backup (or `ALLOW_BACKUP_GAP=1`)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
+- `backup.yml --check` no longer crashes on skipped `backup_result.rc` (staging checklist #7)
 
 ## [v0.3.8-beta] - 2026-10-20
 

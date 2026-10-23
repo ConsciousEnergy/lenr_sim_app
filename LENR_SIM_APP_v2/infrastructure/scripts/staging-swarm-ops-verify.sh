@@ -84,11 +84,14 @@ echo "$opt" | grep -qi "access-control-allow-origin: ${APP_ORIGIN}" \
   && grn "4 CORS preflight ACAO=${APP_ORIGIN} (sslip)" \
   || bad "4 CORS preflight missing ACAO for ${APP_ORIGIN}"
 
-# 5) WS path reaches Traefik/backend (not Cloudflare) — 4xx from app is OK
+# 5) WS path reaches Traefik/backend (not Cloudflare) — 4xx from app is OK.
+# Generate Sec-WebSocket-Key at runtime (do not embed RFC6455 sample — gitleaks).
+ws_key="$(openssl rand -base64 16 2>/dev/null || head -c 16 /dev/urandom | base64)"
 ws=$(curl -skS -o /dev/null -w '%{http_code}' --max-time 10 \
   -H "Connection: Upgrade" -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-  "${STAGING_SSLIP_API}/ws" || echo 000)
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: ${ws_key}" \
+  "${STAGING_SSLIP_API}/ws" || true)
+ws="${ws:-000}"
 [[ "$ws" =~ ^(101|4[0-9][0-9])$ ]] \
   && grn "5 WS upgrade path reaches edge/app (HTTP ${ws}, not CF park)" \
   || yel "5 WS probe HTTP ${ws} (optional if unused)"
