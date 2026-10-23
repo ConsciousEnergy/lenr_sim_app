@@ -30,6 +30,14 @@ else
 fi
 
 echo
+echo "=== pre-arm staging ops barcode (no CONFIRM) ==="
+cat <<EOF
+${SCRIPT_DIR}/staging-swarm-ops-verify.sh
+# Expect STAGING OPS BARCODE GREEN (WP api-staging A may still lag).
+# Docs: docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md
+EOF
+
+echo
 echo "=== pre-arm observability (Grafana + optional D-Force) ==="
 cat <<EOF
 # Staging Grafana SSH tunnel (Docker host-mode bypasses UFW — DOCKER-USER DROP required):
