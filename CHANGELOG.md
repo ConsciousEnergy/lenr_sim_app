@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutover prep asserts Traefik ACME store pre-created on share (`0700`/`0600`)
 - Cutover: assert KVM1 left staging before Compose drain; assert Postgres
   volume survived `compose down` (drain playbook + executor)
+- Cutover executor: auto-refresh `postgres-pre-cutover-*.{sql.gz,tgz}` on share
+  immediately before Compose drain (Compose postgres still up; 48h freshness gate)
 - Cutover: assert Ready≥2 + app/observability/postgres labels + KVM1 worker
   before `deploy-stack.yml` (postgres=true must be on the share manager IP)
 - Frontend `overrides.dompurify` → `^3.4.17` (GHSA-cg2g-xh64-v4q7 and related)
