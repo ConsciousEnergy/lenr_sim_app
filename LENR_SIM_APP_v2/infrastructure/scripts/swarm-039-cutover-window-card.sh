@@ -45,6 +45,7 @@ EOF
 echo
 echo "=== optional: Postgres backup on share before the window (no CONFIRM) ==="
 cat <<EOF
+# Live cutover also auto-refreshes dump+tgz immediately before Compose drain.
 # Logical dump (Compose postgres still up) + volume tarball under /opt/lenr-sim/backups/
 ssh -i "\${SHARE_SSH_KEY:-\$HOME/.ssh/lenr-sim-share}" root@185.211.4.66 \\
   'mkdir -p /opt/lenr-sim/backups && ts=\$(date -u +%Y%m%dT%H%M%SZ) && \\
