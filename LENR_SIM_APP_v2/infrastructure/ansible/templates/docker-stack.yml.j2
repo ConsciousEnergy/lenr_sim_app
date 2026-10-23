@@ -135,10 +135,12 @@ services:
         constraints:
           - node.labels.app == true
 {% endif %}
+      # start-first needs headroom for two replicas; single-node staging (3.8Gi)
+      # must use stop-first or updates hang on "insufficient resources".
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
+        order: {{ swarm_update_order | default('start-first') }}
         failure_action: rollback
         monitor: 30s
       rollback_config:
@@ -226,7 +228,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
+        order: {{ swarm_update_order | default('start-first') }}
         failure_action: rollback
         monitor: 30s
       restart_policy:

@@ -38,6 +38,8 @@ all:
           # Pages SPA origin (CORS only — not a Traefik SPA host).
           cors_extra_origins:
             - "https://app-staging.conscious.energy"
+          # Single-node KVM1 cannot run start-first rolling updates (OOM/resource).
+          swarm_update_order: stop-first
           # App Settings enum is development|test|production (not "staging").
           # Deployment plane is staging; app runtime uses production for cutover parity.
           lenr_environment: "production"
