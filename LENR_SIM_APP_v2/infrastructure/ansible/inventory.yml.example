@@ -62,4 +62,7 @@ all:
     postgres_version: "16"
     postgres_db: "lenr_sim"
     postgres_user: "lenr_app"
+    # On all hosts so DOCKER-USER DROP installs on the observability worker
+    # (Grafana task), not only the manager that renders the stack file.
+    grafana_publish_host_port: 3000
     # ghcr_username / ghcr_token via vault or -e / env GHCR_USER + GHCR_TOKEN

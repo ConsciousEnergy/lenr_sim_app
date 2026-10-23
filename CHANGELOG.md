@@ -50,6 +50,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (prep BAD unless `ALLOW_IMAGE_PRESTAGE_GAP=1`; cutover skips redundant save|load)
 - Post-cutover verify asserts Traefik task on share manager (with Postgres pin)
 - Cutover hard-fails after health-wait timeout (still runs verify for evidence)
+- Cutover prep asserts KVM1 UFW Swarm ports (not only share)
+- Post-cutover verify requires `${STACK}_frontend` SPA service
+- CI push matrix drops Python 3.10 (`pydantic-settings==2.16.0` needs ≥3.11;
+  PRs stay 3.12-only matching Dockerfile.backend)
+- Grafana `grafana_publish_host_port` (host-mode :3000) for SSH-tunnel access;
+  staging + prod inventories set `3000`; cutover prep asserts staging login 200
+- Docs: Grafana + D-Force pre-arm checklist before `CONFIRM_SWARM_0_3_9`
+- Prod stack render gate asserts Grafana secret uid 472 + host publish 3000
+- Cutover window card prints Grafana tunnel + D-Force pre-arm reminders
+- Post-cutover verify asserts Grafana login HTTP 200 on KVM1 :3000
+- Grafana :3000 closed to public via DOCKER-USER (Docker bypasses UFW); prep/post-verify assert
+- Prod inventory: `grafana_publish_host_port` on `all.vars` so DOCKER-USER installs on KVM1 worker
+- Prep asserts inventory `grafana_publish_host_port`; post-cutover asserts grafana localhost unit enabled
+- `deploy.sh --app-only` health-checks via inventory/env URL when Terraform state is absent
+- Window card notes DOCKER-USER / public Grafana :3000 must stay closed
+- Seed Traefik `acme.json` as `{}` when missing/zero-length; prep rejects empty ACME store
+- D4S / window card: `lenr-staging` + `lenr-share` docker contexts for operator TUI
+- Prep/post-verify: CI IP must be absent from Swarm `docker node` addrs (not only inventory/SSH)
+- Cutover window card prints live DNS (api still on WordPress vs share)
+- Prep notes recent share Postgres pre-cutover backup; window card shows dump recipe
+- Cutover aborts before Compose drain without a fresh Postgres pre-cutover backup (or `ALLOW_BACKUP_GAP=1`)
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

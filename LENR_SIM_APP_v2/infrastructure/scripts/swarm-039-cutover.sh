@@ -218,6 +218,31 @@ if [[ -f "$SHARE_KEY" ]]; then
     "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
   [[ "$vol_ok" == "yes" ]] || { red "missing volume lenr-sim_postgres_data — abort before drain"; exit 1; }
   grn "Postgres volume lenr-sim_postgres_data present (will be reused by Swarm stack)"
+  # Require a fresh pre-cutover backup before opening the downtime window.
+  bk="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || true
+set -euo pipefail
+d=/opt/lenr-sim/backups
+[[ -d "$d" ]] || { echo none; exit 0; }
+newest=$(ls -1t "$d"/postgres-pre-cutover-*.sql.gz "$d"/postgres-pre-cutover-*.tgz 2>/dev/null | head -1 || true)
+[[ -n "$newest" ]] || { echo none; exit 0; }
+age=$(( $(date +%s) - $(stat -c %Y "$newest") ))
+if [[ "$age" -le 172800 ]]; then
+  echo "ok $(basename "$newest") age=${age}s"
+else
+  echo "stale $(basename "$newest") age=${age}s"
+fi
+EOS
+)"
+  bk="$(printf '%s' "$bk" | tr -d '\r' | tail -1)"
+  if [[ "$bk" == ok\ * ]]; then
+    grn "Postgres pre-cutover backup present (${bk#ok })"
+  elif [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+    yel "Postgres pre-cutover backup ${bk:-missing} (ALLOW_BACKUP_GAP=1 — continuing)"
+  else
+    red "Postgres pre-cutover backup missing/stale (${bk:-none}) — abort before drain"
+    yel "Create /opt/lenr-sim/backups/postgres-pre-cutover-*.sql.gz (see window card) or ALLOW_BACKUP_GAP=1"
+    exit 1
+  fi
 fi
 ansible-playbook -i "$PROD_INV" playbooks/drain-compose-share.yml \
   --limit swarm_managers \

@@ -36,6 +36,12 @@ if [[ -f "$PROD_INV" ]]; then
   else
     ok "prod inventory does not list CI node as a host"
   fi
+  # Must be on all.vars (or every host) so deploy-stack installs DOCKER-USER on KVM1.
+  if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -qE 'grafana_publish_host_port:[[:space:]]*[1-9]'; then
+    ok "prod inventory sets grafana_publish_host_port (DOCKER-USER on observability node)"
+  else
+    bad "prod inventory missing grafana_publish_host_port — copy inventory.yml.example all.vars"
+  fi
 else
   bad "missing ${PROD_INV} — copy inventory.yml.example before cutover window"
 fi
@@ -127,6 +133,16 @@ if [[ -f "$KVM1_KEY" ]] \
   && ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
        -o StrictHostKeyChecking=accept-new "root@${KVM1_IP}" 'echo ok' >/dev/null 2>&1; then
   ok "kvm1 SSH root@${KVM1_IP} via ${KVM1_KEY}"
+  # Staging Swarm must not already contain the CI host (inventory alone is not enough).
+  ci_in_staging="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" "docker node ls -q 2>/dev/null | while read -r id; do
+      docker node inspect \"\$id\" --format '{{.Status.Addr}}'
+    done" 2>/dev/null | grep -F "$CI_IP" || true)"
+  if [[ -z "$ci_in_staging" ]]; then
+    ok "staging Swarm node addrs exclude CI IP ${CI_IP}"
+  else
+    bad "staging Swarm lists CI IP ${CI_IP} — CI must never join Swarm"
+  fi
 else
   bad "kvm1 SSH unavailable (set KVM1_SSH_KEY; needed for leave-staging + docker save|load)"
 fi
@@ -166,12 +182,34 @@ if [[ ! -d "$d" || ! -f "$p" ]]; then
   echo missing
   exit 0
 fi
-python3 -c "import os,stat; m=stat.S_IMODE(os.stat('$p').st_mode); d=stat.S_IMODE(os.stat('$d').st_mode); print(f'ok dir={d:04o} file={m:04o}')"
+python3 - <<'PY'
+import os, stat, json
+p = "/opt/lenr-sim/traefik/certs/acme.json"
+d = "/opt/lenr-sim/traefik/certs"
+fm = stat.S_IMODE(os.stat(p).st_mode)
+dm = stat.S_IMODE(os.stat(d).st_mode)
+sz = os.path.getsize(p)
+if sz == 0:
+    print(f"empty dir={dm:04o} file={fm:04o}")
+    raise SystemExit(0)
+try:
+    json.load(open(p))
+except Exception:
+    print(f"badjson dir={dm:04o} file={fm:04o} size={sz}")
+    raise SystemExit(0)
+print(f"ok dir={dm:04o} file={fm:04o}")
+PY
 EOS
 )"
   acme_prep="$(printf '%s' "$acme_prep" | tr -d '\r' | tail -1)"
   case "$acme_prep" in
-    ok\ dir=0700\ file=0600) ok "share Traefik ACME store ready (certs 0700, acme.json 0600)" ;;
+    ok\ dir=0700\ file=0600) ok "share Traefik ACME store ready (certs 0700, acme.json 0600, non-empty JSON)" ;;
+    empty\ *)
+      bad "share acme.json is zero-length — seed '{}' (deploy-stack) or ALLOW_ACME_PRESTAGE_GAP=1"
+      ;;
+    badjson\ *)
+      bad "share acme.json is not valid JSON (${acme_prep})"
+      ;;
     ok\ *)
       if [[ "${ALLOW_ACME_MODE_GAP:-0}" == "1" ]]; then
         note "share ACME store modes ${acme_prep} (ALLOW_ACME_MODE_GAP=1)"
@@ -183,7 +221,7 @@ EOS
       if [[ "${ALLOW_ACME_PRESTAGE_GAP:-0}" == "1" ]]; then
         note "share ACME store missing (ALLOW_ACME_PRESTAGE_GAP=1 — deploy-stack will create)"
       else
-        bad "share ACME store missing under /opt/lenr-sim/traefik/certs (mkdir+touch or ALLOW_ACME_PRESTAGE_GAP=1)"
+        bad "share ACME store missing under /opt/lenr-sim/traefik/certs (mkdir+seed '{}' or ALLOW_ACME_PRESTAGE_GAP=1)"
       fi
       ;;
   esac
@@ -220,6 +258,43 @@ if [[ -f "$SHARE_KEY" ]] \
 else
   bad "share missing docker volume lenr-sim_postgres_data"
 fi
+# Optional but strongly recommended: recent logical/volume backup before drain.
+if [[ -f "$SHARE_KEY" ]]; then
+  bk="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || true
+set -euo pipefail
+d=/opt/lenr-sim/backups
+[[ -d "$d" ]] || { echo none; exit 0; }
+# Prefer a postgres-pre-cutover-* newer than 48h
+newest=$(ls -1t "$d"/postgres-pre-cutover-*.sql.gz "$d"/postgres-pre-cutover-*.tgz 2>/dev/null | head -1 || true)
+[[ -n "$newest" ]] || { echo none; exit 0; }
+age=$(( $(date +%s) - $(stat -c %Y "$newest") ))
+if [[ "$age" -le 172800 ]]; then
+  echo "ok age=${age}s file=$(basename "$newest")"
+else
+  echo "stale age=${age}s file=$(basename "$newest")"
+fi
+EOS
+)"
+  bk="$(printf '%s' "$bk" | tr -d '\r' | tail -1)"
+  case "$bk" in
+    ok\ *) ok "share postgres pre-cutover backup present (${bk#ok })" ;;
+    stale\ *)
+      if [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+        note "share postgres backup stale (${bk}; ALLOW_BACKUP_GAP=1)"
+      else
+        note "share postgres backup stale (${bk}) — refresh before arming (or ALLOW_BACKUP_GAP=1)"
+      fi
+      ;;
+    *)
+      if [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+        note "share postgres pre-cutover backup missing (ALLOW_BACKUP_GAP=1)"
+      else
+        note "share postgres pre-cutover backup missing under /opt/lenr-sim/backups (recommended before drain)"
+      fi
+      ;;
+  esac
+fi
 
 # 7c2) Prod inventory pins Postgres to share via postgres=true label
 if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -qE 'postgres=true'; then
@@ -228,15 +303,18 @@ else
   bad "prod inventory missing postgres=true on share manager (required with postgres_volume_external)"
 fi
 
-# 7d) Share UFW allows Swarm ports (worker join)
-if [[ -f "$SHARE_KEY" ]] \
-  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
-       "root@${SHARE_IP}" \
-       'ufw status | grep -q "2377/tcp" && ufw status | grep -q "7946" && ufw status | grep -q "4789/udp"'; then
-  ok "share UFW allows Swarm ports 2377/7946/4789"
-else
-  bad "share UFW missing Swarm ports (setup-docker.yml opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
-fi
+# 7d) Share + KVM1 UFW allow Swarm ports (manager↔worker gossip / overlay)
+ufw_swarm_check='ufw status | grep -q "2377/tcp" && ufw status | grep -q "7946" && ufw status | grep -q "4789/udp"'
+for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
+  role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
+  if [[ -f "$key" ]] \
+    && ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+         "root@${host}" "$ufw_swarm_check" >/dev/null 2>&1; then
+    ok "${role} UFW allows Swarm ports 2377/7946/4789"
+  elif [[ -f "$key" ]]; then
+    bad "${role} UFW missing Swarm ports (setup-docker.yml / join-workers opens them; or ufw allow 2377/tcp 7946/tcp 7946/udp 4789/udp)"
+  fi
+done
 
 # 7d2) KVM1 → share TCP path for Swarm control/gossip (temp listeners; nothing
 # listens until swarm init, so a plain nc to closed ports would false-fail).
@@ -333,6 +411,71 @@ for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
     bad "${role} missing /opt/lenr-sim/observability scaffolds (rsync infrastructure/observability/ or ALLOW_OBS_PRESTAGE_GAP=1)"
   fi
 done
+
+# 7g) Staging Grafana reachable on KVM1 (prove obs before 0.3.9 arming)
+# Prefer host-published :3000 (SSH tunnel target); fall back to docker exec.
+if [[ -f "$KVM1_KEY" ]]; then
+  gf_code="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" bash -s <<'EOS' 2>/dev/null || true
+set -euo pipefail
+code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 http://127.0.0.1:3000/login 2>/dev/null || echo 000)
+if [[ "$code" == "200" ]]; then echo "$code"; exit 0; fi
+cid=$(docker ps -q -f name=lenr-sim_grafana | head -1 || true)
+if [[ -n "$cid" ]]; then
+  docker exec "$cid" wget -qO- -S http://127.0.0.1:3000/login 2>&1 | head -1 | grep -q '200\|HTTP' \
+    && echo exec-ok && exit 0
+fi
+echo "$code"
+EOS
+)"
+  gf_code="$(printf '%s' "$gf_code" | tr -d '\r' | tail -1)"
+  case "$gf_code" in
+    200) ok "staging Grafana login HTTP 200 on KVM1 :3000 (SSH tunnel ready)" ;;
+    exec-ok)
+      if [[ "${ALLOW_GRAFANA_PUBLISH_GAP:-0}" == "1" ]]; then
+        note "staging Grafana up in-container only (ALLOW_GRAFANA_PUBLISH_GAP=1 — redeploy with grafana_publish_host_port)"
+      else
+        bad "staging Grafana not on KVM1 :3000 (redeploy staging stack with grafana_publish_host_port=3000 or ALLOW_GRAFANA_PUBLISH_GAP=1)"
+      fi
+      ;;
+    *)
+      if [[ "${ALLOW_GRAFANA_PUBLISH_GAP:-0}" == "1" ]]; then
+        note "staging Grafana not reachable (${gf_code}; ALLOW_GRAFANA_PUBLISH_GAP=1)"
+      else
+        bad "staging Grafana not reachable on KVM1 (${gf_code}) — refresh under CONFIRM_SWARM_0_3_8 before cutover"
+      fi
+      ;;
+  esac
+  # Docker host-mode publishes bypass UFW — Grafana must not answer on the public IP.
+  if [[ -f "$SHARE_KEY" ]]; then
+    ext_gf="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+      "root@${SHARE_IP}" \
+      "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 http://${KVM1_IP}:3000/login" \
+      2>/dev/null || echo fail)"
+    ext_gf="$(printf '%s' "$ext_gf" | tr -d '\r' | tail -1)"
+    if [[ "$ext_gf" == "200" ]]; then
+      bad "Grafana :3000 reachable from share on ${KVM1_IP} — install DOCKER-USER DROP (Docker bypasses UFW)"
+    else
+      ok "Grafana :3000 not reachable from share (${ext_gf}) — localhost/SSH tunnel only"
+    fi
+  fi
+  # Guard unit must be enabled on the node that hosts Grafana (staging=KVM1 manager).
+  gf_unit="$(ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${KVM1_IP}" 'systemctl is-enabled lenr-grafana-localhost.service 2>/dev/null || echo missing' \
+    2>/dev/null | tr -d '\r' | tail -1)"
+  if [[ "$gf_unit" == "enabled" ]]; then
+    ok "KVM1 lenr-grafana-localhost.service enabled (DOCKER-USER persist)"
+  else
+    bad "KVM1 lenr-grafana-localhost.service not enabled (${gf_unit}) — redeploy staging under CONFIRM_SWARM_0_3_8"
+  fi
+  # Optional: D-Force present on operator PATH (not required on VMs)
+  if command -v d4s >/dev/null 2>&1; then
+    d4s_ver="$(d4s version 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '/Version:/{print $2; exit}')"
+    ok "D-Force (d4s) on PATH (${d4s_ver:-present}) — operator TUI"
+  else
+    note "D-Force (d4s) not on PATH — optional; see docs/v0.3.8-beta/D4S_DFORCE_OPERATOR.md"
+  fi
+fi
 
 # 8) Prod stack render invariants (postgres pin, external volume, SPA PathPrefix)
 # Prefer example inventory in CI; use live inventory.yml when present (operator).

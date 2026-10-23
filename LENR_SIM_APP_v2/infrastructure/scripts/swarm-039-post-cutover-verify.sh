@@ -60,14 +60,25 @@ else
   bad "kvm1 Swarm expected 'active false', got '${kvm1_state}'"
 fi
 
-# 3) CI never joined
+# 3) CI never joined — authoritative: CI IP must not appear in Swarm node addrs.
+# Optional SSH probe to CI is best-effort (share key often cannot log into CI).
+ci_in_nodes="$(ssh_share "docker node ls -q | while read -r id; do
+  docker node inspect \"\$id\" --format '{{.Status.Addr}}'
+done" 2>/dev/null | grep -F "$CI_IP" || true)"
+if [[ -z "$ci_in_nodes" ]]; then
+  ok "CI IP ${CI_IP} absent from Swarm node addrs"
+else
+  bad "CI IP ${CI_IP} present in Swarm node addrs — CI must never join"
+fi
 ci_probe="$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
   -i "$SHARE_KEY" "root@${CI_IP}" \
   'docker info --format "{{.Swarm.LocalNodeState}}"' 2>/dev/null || echo unreachable)"
 if [[ "$ci_probe" == "inactive" || "$ci_probe" == "unreachable" ]]; then
-  ok "CI Swarm state=${ci_probe} (outside cluster)"
+  ok "CI Swarm state=${ci_probe} (outside cluster; SSH optional)"
+elif [[ "$ci_probe" == "active" ]]; then
+  bad "CI Swarm state=active — CI must never join Swarm"
 else
-  bad "CI Swarm state=${ci_probe} — CI must never join Swarm"
+  yel "CI Swarm state=${ci_probe} (non-authoritative; node-addr check above is SOT)"
 fi
 
 # 4) Two Ready nodes; labels present
@@ -98,6 +109,12 @@ if echo "$svc" | grep -q .; then
     fi
   done <<< "$svc"
   [[ "$bad_reps" -eq 0 ]] && ok "all ${STACK} services fully replicated"
+  # SPA frontend service required for same-origin Traefik cutover (swarm_frontend_enabled)
+  if echo "$svc" | grep -qE "^${STACK}_frontend="; then
+    ok "SPA frontend service present (${STACK}_frontend)"
+  else
+    bad "missing ${STACK}_frontend — prod inventory must set swarm_frontend_enabled"
+  fi
 else
   bad "no stack services for ${STACK}"
 fi
@@ -138,6 +155,26 @@ else
   ssh_share 'docker secret inspect grafana_admin_password >/dev/null' \
     && ok "docker secret grafana_admin_password present" \
     || bad "missing docker secret grafana_admin_password"
+  # Host-mode publish bound to 127.0.0.1 — same path operators use via SSH tunnel.
+  gf_code="$(ssh_kvm1 'curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1:3000/login' || echo fail)"
+  if [[ "$gf_code" == "200" ]]; then
+    ok "grafana login HTTP 200 on KVM1 :3000 (SSH tunnel path)"
+  else
+    bad "grafana login HTTP ${gf_code} on KVM1 :3000 — expected 200"
+  fi
+  # Docker host-mode bypasses UFW — public IP must not serve Grafana.
+  ext_gf="$(ssh_share "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 5 http://${KVM1_IP}:3000/login" || echo fail)"
+  if [[ "$ext_gf" == "200" ]]; then
+    bad "grafana :3000 reachable from share on ${KVM1_IP} — expected DOCKER-USER DROP / localhost-only"
+  else
+    ok "grafana :3000 not reachable from share (${ext_gf})"
+  fi
+  gf_unit="$(ssh_kvm1 'systemctl is-enabled lenr-grafana-localhost.service 2>/dev/null || echo missing')"
+  if [[ "$gf_unit" == "enabled" ]]; then
+    ok "KVM1 lenr-grafana-localhost.service enabled (DOCKER-USER persist)"
+  else
+    bad "KVM1 lenr-grafana-localhost.service not enabled (${gf_unit})"
+  fi
 fi
 
 # 6) Postgres task on share (Compose volume is node-local there)

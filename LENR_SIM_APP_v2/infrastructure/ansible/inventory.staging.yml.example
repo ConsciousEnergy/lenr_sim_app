@@ -47,6 +47,8 @@ all:
           require_observability_label: false
           grafana_admin_user: "admin"
           grafana_traefik_enabled: false
+          # Host-mode :3000 for SSH tunnel; do not ufw-allow publicly.
+          grafana_publish_host_port: 3000
           skip_ghcr_login: true
           # Optional ACME proof while WordPress.com DNS lags:
           # traefik_acme_bootstrap_host: "api-staging.STAGING_MANAGER_IP.sslip.io"

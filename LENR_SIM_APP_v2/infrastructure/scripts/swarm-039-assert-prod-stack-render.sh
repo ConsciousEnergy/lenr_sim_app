@@ -94,6 +94,14 @@ grep -qF 'GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password' 
   || { echo "FAIL: Grafana admin password must come from Swarm secret file"; fail=1; }
 grep -qE 'grafana_admin_password:' "$stack_tmp" \
   || { echo "FAIL: missing external secret grafana_admin_password"; fail=1; }
+# Official image runs as uid 472 — root-only secret mounts fail at boot.
+grep -qE 'uid:[[:space:]]*"?472"?' "$stack_tmp" \
+  || { echo "FAIL: grafana_admin_password secret mount must set uid 472"; fail=1; }
+# Host-mode :3000 for SSH tunnel (DOCKER-USER must DROP non-lo — Docker bypasses UFW).
+grep -qE 'published:[[:space:]]*3000' "$stack_tmp" \
+  || { echo "FAIL: missing Grafana host publish 3000 (grafana_publish_host_port)"; fail=1; }
+grep -qE 'mode:[[:space:]]*host' "$stack_tmp" \
+  || { echo "FAIL: Grafana publish must use mode host for localhost SSH tunnel"; fail=1; }
 
 if [[ "$fail" -ne 0 ]]; then
   echo "ERROR: prod stack render invariants failed — see $stack_tmp" >&2

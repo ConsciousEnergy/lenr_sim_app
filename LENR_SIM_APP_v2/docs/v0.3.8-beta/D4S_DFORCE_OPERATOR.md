@@ -21,6 +21,11 @@ Canonical apply path remains gated scripts + playbooks under
 | Product / API SLOs | Grafana + Prometheus (overlay; not public) |
 | PR CI host | **Never** — CI node must not join Swarm and must not get deploy sockets |
 
+**Before arming `CONFIRM_SWARM_0_3_9`:** install `d4s` on the operator
+workstation and confirm it can list the staging stack (nodes/services). Pair with
+Grafana login via SSH tunnel ([`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md)
+pre-arm checklist). Cutover prep notes whether `d4s` is on PATH (optional OK).
+
 ## Install (operator laptop or bastion)
 
 Official quick install (places binary in the path you pass):
@@ -57,8 +62,15 @@ ssh -i "$HOME/.ssh/lenr-sim-share" -L 2375:/var/run/docker.sock \
 DOCKER_HOST=tcp://127.0.0.1:2375 d4s
 ```
 
-Safer long-term: a named `docker context` with `ssh://root@185.211.4.66` (or
-staging IP) and `d4s --context <name>` so the socket never listens on TCP.
+Safer long-term: named `docker context` entries (SSH, no TCP socket listen):
+
+```bash
+# ~/.ssh/config should map HostName + IdentityFile for these IPs (see inventory).
+docker context create lenr-staging --docker host=ssh://root@31.220.55.113
+docker context create lenr-share   --docker host=ssh://root@185.211.4.66
+d4s --context lenr-staging   # pre-cutover (KVM1 is staging manager)
+d4s --context lenr-share     # post-cutover (share is Swarm manager)
+```
 
 ## What to look at for LENR Swarm
 

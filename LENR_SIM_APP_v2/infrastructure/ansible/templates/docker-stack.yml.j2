@@ -351,14 +351,27 @@ services:
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     secrets:
+      # Official grafana image runs as uid 472 — root-only 0400 → Permission denied.
       - source: grafana_admin_password
         target: grafana_admin_password
+        uid: "472"
+        gid: "0"
         mode: 0400
     volumes:
       - grafana_data:/var/lib/grafana
       - /opt/lenr-sim/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - lenr-sim-network
+{% if (grafana_publish_host_port | default(0) | int) > 0 %}
+    # Host-mode publish for SSH tunnel (ssh -L 3000:127.0.0.1:3000).
+    # docker stack deploy rejects host_ip — Docker still binds 0.0.0.0 and bypasses
+    # UFW. deploy-stack.yml installs DOCKER-USER DROP for this port on the host.
+    ports:
+      - target: 3000
+        published: {{ grafana_publish_host_port | int }}
+        protocol: tcp
+        mode: host
+{% endif %}
     deploy:
       mode: replicated
       replicas: 1
