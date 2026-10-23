@@ -83,6 +83,12 @@ This runs Terraform workspace `staging`, `setup-docker.yml`,
 
 ### Validation barcode (must all pass)
 
+Live barcode (sslip CORS, backup `--check`, obs, share, CI-absent):
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-ops-verify.sh
+```
+
 Paste timestamps into release notes when green. Keep Compose share URL unchanged.
 
 **Recorded (agent, 2026-10-23 UTC):** sslip bootstrap **200** (`curl -sk`); stack 7/7
