@@ -149,6 +149,7 @@ worker after the share manager is torn down (set `SKIP_KVM1_LEAVE=1` to skip).
 | Operator TUI (optional) | D-Force / D4S (`d4s`) — k9s-like Swarm TUI; [`../v0.3.8-beta/D4S_DFORCE_OPERATOR.md`](../v0.3.8-beta/D4S_DFORCE_OPERATOR.md); also linked from topology + `AGENTS.md`; not a cutover dependency |
 | Version markers | `0.3.9-beta` on this train (four surfaces + ansible `app_version`) |
 | Cloudflare Pages (`app.`) | Optional later; same-origin Traefik SPA unblocks cutover without CF apply |
+| Pre-drain Postgres backup | Executor auto-refreshes `postgres-pre-cutover-*.{sql.gz,tgz}` on share before Compose drain (48h freshness gate) |
 | Operator production apply | **Blocked** until human sets `CONFIRM_SWARM_0_3_9` with live credentials |
 | Compose retained for rollback | Required |
 | Manager raft quorum (≥3 managers) | **Out of scope** for this cutover |
