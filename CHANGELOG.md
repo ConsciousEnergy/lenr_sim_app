@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Public Swarm cutover remains gated on `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
+- `.gitleaks.toml`: allowlist RFC6455 `Sec-WebSocket-Key` probe headers (not credentials).
 
 ### Added — v0.3.9 Swarm cutover train (not live until confirm)
 - Swarm stack SPA service (`swarm_frontend_enabled`) with Traefik `PathPrefix(/api)`
