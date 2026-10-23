@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - D4S / window card: `lenr-staging` + `lenr-share` docker contexts for operator TUI
 - Prep/post-verify: CI IP must be absent from Swarm `docker node` addrs (not only inventory/SSH)
 - Cutover window card prints live DNS (api still on WordPress vs share)
+- Prep notes recent share Postgres pre-cutover backup; window card shows dump recipe
 - `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
 
 ## [v0.3.8-beta] - 2026-10-20

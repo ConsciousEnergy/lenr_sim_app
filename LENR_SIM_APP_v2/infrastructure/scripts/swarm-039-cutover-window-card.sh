@@ -43,6 +43,17 @@ ssh -i "\${KVM1_SSH_KEY:-\$HOME/.ssh/lenr-sim-staging}" -L 3000:127.0.0.1:3000 r
 EOF
 
 echo
+echo "=== optional: Postgres backup on share before the window (no CONFIRM) ==="
+cat <<EOF
+# Logical dump (Compose postgres still up) + volume tarball under /opt/lenr-sim/backups/
+ssh -i "\${SHARE_SSH_KEY:-\$HOME/.ssh/lenr-sim-share}" root@185.211.4.66 \\
+  'mkdir -p /opt/lenr-sim/backups && ts=\$(date -u +%Y%m%dT%H%M%SZ) && \\
+   docker exec \$(docker ps -q -f name=lenr-sim-postgres | head -1) \\
+     pg_dump -U lenr_app -d lenr_sim --no-owner --no-acl | gzip -c \\
+     > /opt/lenr-sim/backups/postgres-pre-cutover-\$ts.sql.gz && chmod 600 /opt/lenr-sim/backups/postgres-pre-cutover-\$ts.sql.gz'
+EOF
+
+echo
 echo "=== optional: refresh LOCAL_IMAGES before the window (no CONFIRM) ==="
 cat <<EOF
 EXECUTE=1 ${SCRIPT_DIR}/swarm-039-prestage-images.sh

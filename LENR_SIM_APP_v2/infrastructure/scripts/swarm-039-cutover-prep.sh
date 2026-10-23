@@ -258,6 +258,43 @@ if [[ -f "$SHARE_KEY" ]] \
 else
   bad "share missing docker volume lenr-sim_postgres_data"
 fi
+# Optional but strongly recommended: recent logical/volume backup before drain.
+if [[ -f "$SHARE_KEY" ]]; then
+  bk="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || true
+set -euo pipefail
+d=/opt/lenr-sim/backups
+[[ -d "$d" ]] || { echo none; exit 0; }
+# Prefer a postgres-pre-cutover-* newer than 48h
+newest=$(ls -1t "$d"/postgres-pre-cutover-*.sql.gz "$d"/postgres-pre-cutover-*.tgz 2>/dev/null | head -1 || true)
+[[ -n "$newest" ]] || { echo none; exit 0; }
+age=$(( $(date +%s) - $(stat -c %Y "$newest") ))
+if [[ "$age" -le 172800 ]]; then
+  echo "ok age=${age}s file=$(basename "$newest")"
+else
+  echo "stale age=${age}s file=$(basename "$newest")"
+fi
+EOS
+)"
+  bk="$(printf '%s' "$bk" | tr -d '\r' | tail -1)"
+  case "$bk" in
+    ok\ *) ok "share postgres pre-cutover backup present (${bk#ok })" ;;
+    stale\ *)
+      if [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+        note "share postgres backup stale (${bk}; ALLOW_BACKUP_GAP=1)"
+      else
+        note "share postgres backup stale (${bk}) — refresh before arming (or ALLOW_BACKUP_GAP=1)"
+      fi
+      ;;
+    *)
+      if [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+        note "share postgres pre-cutover backup missing (ALLOW_BACKUP_GAP=1)"
+      else
+        note "share postgres pre-cutover backup missing under /opt/lenr-sim/backups (recommended before drain)"
+      fi
+      ;;
+  esac
+fi
 
 # 7c2) Prod inventory pins Postgres to share via postgres=true label
 if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -qE 'postgres=true'; then
