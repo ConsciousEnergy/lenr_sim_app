@@ -15,6 +15,21 @@ LOCAL_IMAGES=1 SKIP_IMAGE_BUILD=1 ALLOW_API_DNS_GAP=1 ALLOW_STAGING_DNS_GAP=1 \
   bash "${SCRIPT_DIR}/swarm-039-readiness-barcode.sh" || true
 
 echo
+echo "=== live DNS (WordPress.com apex; cutover can proceed with ALLOW_API_DNS_GAP) ==="
+SHARE_IP="${SHARE_IP:-185.211.4.66}"
+KVM1_IP="${KVM1_IP:-31.220.55.113}"
+for host in lenr-sim-beta.conscious.energy api.conscious.energy api-staging.conscious.energy; do
+  ips="$(dig +short "$host" A 2>/dev/null | grep -E '^[0-9.]+$' | tr '\n' ' ' || true)"
+  echo "${host} A → ${ips:-none}"
+done
+echo "share=${SHARE_IP} kvm1=${KVM1_IP}"
+if dig +short api.conscious.energy A 2>/dev/null | grep -qxF "$SHARE_IP"; then
+  echo "api.conscious.energy already includes share — full API hostname ready"
+else
+  echo "api.conscious.energy still on WordPress — cutover serves API via lenr-sim-beta (traefik_extra_api_hosts); flip A api → ${SHARE_IP} in the window when ready"
+fi
+
+echo
 echo "=== pre-arm observability (Grafana + optional D-Force) ==="
 cat <<EOF
 # Staging Grafana SSH tunnel (Docker host-mode bypasses UFW — DOCKER-USER DROP required):
