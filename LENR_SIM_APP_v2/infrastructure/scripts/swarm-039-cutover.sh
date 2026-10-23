@@ -73,8 +73,9 @@ Cutover plan (share=${SHARE_IP} manager, kvm1=${KVM1_IP} worker; CI ${CI_IP} nev
        (SKIP_IMAGE_BUILD=1 reuses tags; prefer swarm-039-prestage-images.sh)
   4. On KVM1: leave staging Swarm (CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING);
        assert KVM1 Swarm inactive before share downtime
-  5. On share: drain Compose (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM);
-       assert :80/:443 free + lenr-sim_postgres_data volume survived
+  5. On share: refresh postgres-pre-cutover backup (dump+tgz), then drain Compose
+       (CONFIRM_DRAIN_COMPOSE=I_DRAIN_COMPOSE_FOR_SWARM); assert :80/:443 free +
+       lenr-sim_postgres_data volume survived
   6. setup-docker.yml (swarm init on share); verify manager + :2377 from KVM1;
        import Compose .env → Swarm secrets
        (LENR_DB_PASSWORD / LENR_SECRET_KEY — required for external postgres volume)
@@ -218,6 +219,38 @@ if [[ -f "$SHARE_KEY" ]]; then
     "docker volume inspect lenr-sim_postgres_data >/dev/null 2>&1 && echo yes || echo no")"
   [[ "$vol_ok" == "yes" ]] || { red "missing volume lenr-sim_postgres_data — abort before drain"; exit 1; }
   grn "Postgres volume lenr-sim_postgres_data present (will be reused by Swarm stack)"
+
+  # Always refresh a pre-cutover backup while Compose postgres is still up.
+  # Avoids a late CONFIRM window failing the 48h freshness gate.
+  yel "Step 5a0: refresh Postgres pre-cutover backup (logical dump + volume tarball)"
+  bk_refresh="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<'EOS' || true
+set -euo pipefail
+mkdir -p /opt/lenr-sim/backups
+ts=$(date -u +%Y%m%dT%H%M%SZ)
+cid=$(docker ps -q -f name=lenr-sim-postgres | head -1)
+[[ -n "$cid" ]] || { echo "fail no-postgres-container"; exit 1; }
+docker exec "$cid" pg_dump -U lenr_app -d lenr_sim --no-owner --no-acl | gzip -c \
+  > "/opt/lenr-sim/backups/postgres-pre-cutover-${ts}.sql.gz"
+chmod 600 "/opt/lenr-sim/backups/postgres-pre-cutover-${ts}.sql.gz"
+docker run --rm -v lenr-sim_postgres_data:/v:ro -v /opt/lenr-sim/backups:/b alpine \
+  tar czf "/b/postgres-pre-cutover-${ts}.tgz" -C /v .
+chmod 600 "/opt/lenr-sim/backups/postgres-pre-cutover-${ts}.tgz"
+# Keep the newest four pairs (sql.gz + tgz).
+ls -1t /opt/lenr-sim/backups/postgres-pre-cutover-*.tgz 2>/dev/null | tail -n +5 | xargs -r rm -f
+ls -1t /opt/lenr-sim/backups/postgres-pre-cutover-*.sql.gz 2>/dev/null | tail -n +5 | xargs -r rm -f
+echo "ok postgres-pre-cutover-${ts}.tgz"
+EOS
+)"
+  bk_refresh="$(printf '%s' "$bk_refresh" | tr -d '\r' | tail -1)"
+  if [[ "$bk_refresh" == ok\ * ]]; then
+    grn "Postgres pre-cutover backup refreshed (${bk_refresh#ok })"
+  elif [[ "${ALLOW_BACKUP_GAP:-0}" == "1" ]]; then
+    yel "Postgres pre-cutover backup refresh failed (${bk_refresh:-none}) — ALLOW_BACKUP_GAP=1 continuing"
+  else
+    red "Postgres pre-cutover backup refresh failed (${bk_refresh:-none}) — abort before drain"
+    exit 1
+  fi
+
   # Require a fresh pre-cutover backup before opening the downtime window.
   bk="$(ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes "root@${SHARE_IP}" bash -s <<'EOS' 2>/dev/null || true
 set -euo pipefail
