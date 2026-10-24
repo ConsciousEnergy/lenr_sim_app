@@ -30,6 +30,14 @@ else
 fi
 
 echo
+echo "=== pre-arm staging ops barcode (no CONFIRM) ==="
+cat <<EOF
+${SCRIPT_DIR}/staging-swarm-ops-verify.sh
+# Expect STAGING OPS BARCODE GREEN (WP api-staging A may still lag).
+# Docs: docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md
+EOF
+
+echo
 echo "=== pre-arm observability (Grafana + optional D-Force) ==="
 cat <<EOF
 # Staging Grafana SSH tunnel (Docker host-mode bypasses UFW — DOCKER-USER DROP required):
@@ -45,6 +53,7 @@ EOF
 echo
 echo "=== optional: Postgres backup on share before the window (no CONFIRM) ==="
 cat <<EOF
+# Live cutover also auto-refreshes dump+tgz immediately before Compose drain.
 # Logical dump (Compose postgres still up) + volume tarball under /opt/lenr-sim/backups/
 ssh -i "\${SHARE_SSH_KEY:-\$HOME/.ssh/lenr-sim-share}" root@185.211.4.66 \\
   'mkdir -p /opt/lenr-sim/backups && ts=\$(date -u +%Y%m%dT%H%M%SZ) && \\

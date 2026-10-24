@@ -96,8 +96,10 @@ services:
       - LENR_LOG_LEVEL={{ fastapi_log_level | default('info') }}
       - LENR_LOG_TO_FILE={{ 'true' if (lenr_log_to_file | default(true)) else 'false' }}
       - LENR_LOG_JSON_FORMAT=true
+      # traefik_spa_hosts → same-origin SPA hosts; cors_extra_origins → CORS-only
+      # (e.g. Cloudflare Pages app-staging without Traefik SPA routers).
       - >-
-        LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"{% for _h in (traefik_spa_hosts | default([])) %},"https://{{ _h }}"{% endfor %}]
+        LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"{% for _h in (traefik_spa_hosts | default([])) %},"https://{{ _h }}"{% endfor %}{% for _o in (cors_extra_origins | default([])) %},"{{ _o }}"{% endfor %}]
       - LENR_ENABLE_RATE_LIMITING=true
       - LENR_HTTPS_REDIRECT=false
       - LENR_AUTO_PERSIST=0
@@ -133,10 +135,12 @@ services:
         constraints:
           - node.labels.app == true
 {% endif %}
+      # start-first needs headroom for two replicas; single-node staging (3.8Gi)
+      # must use stop-first or updates hang on "insufficient resources".
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
+        order: {{ swarm_update_order | default('start-first') }}
         failure_action: rollback
         monitor: 30s
       rollback_config:
@@ -224,7 +228,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
+        order: {{ swarm_update_order | default('start-first') }}
         failure_action: rollback
         monitor: 30s
       restart_policy:
