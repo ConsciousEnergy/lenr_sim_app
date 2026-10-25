@@ -18,6 +18,15 @@ terraform {
 # Cloudflare Pages Project
 # ==============================================================================
 
+locals {
+  # Staging SPA must call api-staging; prod/cutover uses api.
+  pages_api_base_url = (
+    var.environment == "staging"
+    ? "https://api-staging.${var.domain}"
+    : "https://api.${var.domain}"
+  )
+}
+
 resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = "lenr-sim-${var.environment}"
@@ -36,29 +45,31 @@ resource "cloudflare_pages_project" "frontend" {
     }
   }
   
+  # CF Pages often injects NODE_ENV=production before install; that omits
+  # devDependencies (vite). Always --include=dev so `npm run build` finds vite.
   build_config {
-    build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci && npm run build"
+    build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci --include=dev && npm run build"
     destination_dir     = "LENR_SIM_APP_v2/frontend/dist"
     root_dir            = ""
     web_analytics_token = ""
   }
   
   deployment_configs {
+    # Do not set NODE_ENV here — it makes `npm ci` skip vite (devDependency).
+    # Vite sets production mode during `vite build`.
     production {
       environment_variables = {
-        REACT_APP_API_URL     = "https://api.${var.domain}"
-        VITE_API_URL          = "https://api.${var.domain}"
-        REACT_APP_ENVIRONMENT = "production"
-        NODE_ENV              = "production"
+        REACT_APP_API_URL     = local.pages_api_base_url
+        VITE_API_URL          = local.pages_api_base_url
+        REACT_APP_ENVIRONMENT = var.environment == "staging" ? "staging" : "production"
       }
       compatibility_date = "2024-01-01"
     }
     preview {
       environment_variables = {
-        REACT_APP_API_URL     = "https://api.${var.domain}"
-        VITE_API_URL          = "https://api.${var.domain}"
+        REACT_APP_API_URL     = local.pages_api_base_url
+        VITE_API_URL          = local.pages_api_base_url
         REACT_APP_ENVIRONMENT = "preview"
-        NODE_ENV              = "production"
       }
       compatibility_date = "2024-01-01"
     }
