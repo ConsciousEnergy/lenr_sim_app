@@ -354,6 +354,18 @@ services:
       - GF_ANALYTICS_REPORTING_ENABLED=false
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      # Unified alerting email (optional — enable via grafana_smtp_enabled + secret).
+{% if grafana_smtp_enabled | default(false) %}
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST={{ grafana_smtp_host | default('smtp.example.com:587') }}
+      - GF_SMTP_USER={{ grafana_smtp_user | default('') }}
+      - GF_SMTP_FROM_ADDRESS={{ grafana_smtp_from | default(grafana_alert_to | default('ops@conscious.energy')) }}
+      - GF_SMTP_FROM_NAME={{ grafana_smtp_from_name | default('LENR-Sim Grafana') }}
+      - GF_SMTP_PASSWORD__FILE=/run/secrets/grafana_smtp_password
+      - GF_SMTP_STARTTLS_POLICY={{ grafana_smtp_starttls_policy | default('OpportunisticStartTLS') }}
+{% else %}
+      - GF_SMTP_ENABLED=false
+{% endif %}
     secrets:
       # Official grafana image runs as uid 472 — root-only 0400 → Permission denied.
       - source: grafana_admin_password
@@ -361,6 +373,13 @@ services:
         uid: "472"
         gid: "0"
         mode: 0400
+{% if grafana_smtp_enabled | default(false) %}
+      - source: grafana_smtp_password
+        target: grafana_smtp_password
+        uid: "472"
+        gid: "0"
+        mode: 0400
+{% endif %}
     volumes:
       - grafana_data:/var/lib/grafana
       - /opt/lenr-sim/observability/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -466,6 +485,37 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+
+  # ============================================================================
+  # cAdvisor — global, per-container CPU/mem for Swarm service panels
+  # ============================================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    command:
+      - "--docker_only=true"
+      - "--housekeeping_interval=30s"
+      - "--store_container_labels=true"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 {% endif %}
 
 # ==============================================================================
@@ -506,4 +556,8 @@ secrets:
 {% if observability_enabled | default(true) %}
   grafana_admin_password:
     external: true
+{% if grafana_smtp_enabled | default(false) %}
+  grafana_smtp_password:
+    external: true
+{% endif %}
 {% endif %}

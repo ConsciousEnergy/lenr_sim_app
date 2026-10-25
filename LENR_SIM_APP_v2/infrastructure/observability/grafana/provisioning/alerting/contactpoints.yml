@@ -1,0 +1,15 @@
+# Grafana unified alerting — email contact point.
+# Delivery requires grafana_smtp_enabled=true + Swarm secret grafana_smtp_password
+# (see OBSERVABILITY_GRAFANA.md). Rules still appear under Alerting → Firing without SMTP.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: lenr-ops-email
+    receivers:
+      - uid: lenr-ops-email
+        type: email
+        settings:
+          addresses: ops@conscious.energy
+          singleEmail: true
+        disableResolveMessage: false

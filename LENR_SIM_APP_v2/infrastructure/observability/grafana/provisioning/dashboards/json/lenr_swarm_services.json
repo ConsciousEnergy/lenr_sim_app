@@ -1,0 +1,97 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "Swarm services (cAdvisor)",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Per-service containers\n\nMetrics from global **cAdvisor**. For task lists / logs / rollbacks use **D4S** (`d4s --context lenr-staging`) — do not delete services from the TUI during readiness.\n\nTrust: container CPU/mem ≠ science claim scores; do not close `EQ-OPEN-*`."
+      }
+    },
+    {
+      "type": "stat",
+      "title": "cAdvisor targets up",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 3 },
+      "targets": [{ "expr": "count(up{job=\"cadvisor\"} == 1) or vector(0)", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "stat",
+      "title": "lenr-sim services seen",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 3 },
+      "targets": [
+        {
+          "expr": "count(count by (container_label_com_docker_swarm_service_name) (container_last_seen{container_label_com_docker_swarm_service_name=~\"lenr-sim_.+\"})) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Service CPU (cores)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "targets": [
+        {
+          "expr": "sum by (container_label_com_docker_swarm_service_name) (rate(container_cpu_usage_seconds_total{container_label_com_docker_swarm_service_name=~\"lenr-sim_.+\"}[5m]))",
+          "legendFormat": "{{container_label_com_docker_swarm_service_name}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Service memory working set",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "targets": [
+        {
+          "expr": "sum by (container_label_com_docker_swarm_service_name) (container_memory_working_set_bytes{container_label_com_docker_swarm_service_name=~\"lenr-sim_.+\"})",
+          "legendFormat": "{{container_label_com_docker_swarm_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend / Traefik memory",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (container_label_com_docker_swarm_service_name) (container_memory_working_set_bytes{container_label_com_docker_swarm_service_name=~\"lenr-sim_(backend|traefik)\"})",
+          "legendFormat": "{{container_label_com_docker_swarm_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Obs stack memory (prom/grafana/cadvisor)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (container_label_com_docker_swarm_service_name) (container_memory_working_set_bytes{container_label_com_docker_swarm_service_name=~\"lenr-sim_(prometheus|grafana|cadvisor|blackbox|node-exporter)\"})",
+          "legendFormat": "{{container_label_com_docker_swarm_service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["lenr-sim", "swarm", "cadvisor"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "LENR-Sim Swarm Services",
+  "uid": "lenr-swarm-services",
+  "version": 1
+}

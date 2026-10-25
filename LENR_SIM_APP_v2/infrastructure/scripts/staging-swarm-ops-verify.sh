@@ -118,7 +118,7 @@ else
 fi
 
 # 8) observability + Grafana not public
-for s in prometheus grafana blackbox node-exporter; do
+for s in prometheus grafana blackbox node-exporter cadvisor; do
   echo "$svcs" | grep -q "${STACK}_${s}" && grn "8 ${s} present" || bad "8 missing ${s}"
 done
 # curl --max-time still prints %{http_code}=000 on timeout (exit 28); do not append another 000.
