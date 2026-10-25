@@ -79,6 +79,7 @@ htmlcov/
 # IDE (ignore .cursor internals, but share project skills, rules + the memory decision log)
 .cursor/*
 !.cursor/skills/
+!.cursor/mcp.json
 !.cursor/rules/
 !.cursor/memory/
 .cursor/memory/chroma/
@@ -104,3 +105,6 @@ LENR_SIM_APP_v2/datasets/reviewer_packs/local/
 
 # Local staging dry-run evidence (CI/agent)
 .staging-evidence/
+
+# Cloudflare / skills.sh local skill copies (use skills-lock + npx skills add)
+.agents/
