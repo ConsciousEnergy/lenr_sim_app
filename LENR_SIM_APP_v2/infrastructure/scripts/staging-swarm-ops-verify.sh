@@ -29,11 +29,15 @@ bad() { red "FAIL $*" ; FAIL=1; }
 FAIL=0
 
 docker_staging() {
-  if docker context ls --format '{{.Name}}' 2>/dev/null | grep -qx 'lenr-staging'; then
+  if command -v docker >/dev/null 2>&1 \
+    && docker context ls --format '{{.Name}}' 2>/dev/null | grep -qx 'lenr-staging'; then
     docker --context lenr-staging "$@"
   else
+    # Quote the remote argv so Go templates like {{.Name}} survive SSH.
+    local remote
+    remote=$(printf '%q ' "$@")
     ssh -i "$STAGING_SSH_KEY" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=15 \
-      "root@${STAGING_IP}" docker "$@"
+      "root@${STAGING_IP}" "docker ${remote}"
   fi
 }
 

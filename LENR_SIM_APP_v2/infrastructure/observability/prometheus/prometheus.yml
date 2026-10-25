@@ -30,6 +30,24 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox:9115
 
+  # Public staging hostname (after Traefik ACME) — TLS path users hit
+  - job_name: lenr_api_staging_public
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://api-staging.conscious.energy/api/health
+        labels:
+          service: api-staging-public
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
   # Traefik request / entrypoint metrics (overlay :8082 — not public)
   - job_name: traefik
     static_configs:
