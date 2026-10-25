@@ -22,12 +22,13 @@ data_center_id = 9
 
 github_owner = "ConsciousEnergy"
 github_repo  = "lenr_sim_app"
-# Staging Pages host — never @ or www.
-pages_production_branch = "main"
+# Staging Pages: ship from integration tip (dev), never @/www hostname.
+pages_production_branch = "dev"
 pages_hostname          = "app-staging"
 
 # Prefer disabled / import-existing for dry-run; set create_new only with confirm.
+# Staging Swarm manager is KVM1 — never the live Compose share IP.
 hostinger_vps_mode = "disabled"
-existing_vps_ipv4  = "185.211.4.66"
+existing_vps_ipv4  = "31.220.55.113"
 manage_api_dns     = false
 # confirm_hostinger_create = "I_CREATE_NEW_VPS"
