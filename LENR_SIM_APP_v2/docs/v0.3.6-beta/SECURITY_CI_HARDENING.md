@@ -29,7 +29,7 @@ fails the build. Revisit each in the post-beta maintenance slice.
 | `starlette 0.49.1` | PYSEC-2026-161, PYSEC-2026-248, PYSEC-2026-249, PYSEC-2026-2280, PYSEC-2026-2281 | Fix only in starlette `1.x`; blocked by `fastapi==0.128.0` pin (`starlette<0.51.0`). Requires a coordinated FastAPI major upgrade. |
 | `vtk 9.4.2` | PYSEC-2025-224, PYSEC-2025-225, PYSEC-2025-226 | Transitive via `pyvista`; fix in `vtk 9.5.1`. Deferred pending PyVista rendering revalidation. |
 | `ecdsa 0.19.2` | PYSEC-2026-1325 | Transitive via `python-jose[cryptography]`; no upstream fix released. Track `python-jose` replacement. |
-| `python-jose 3.5.0` | CVE-2026-85394 | No PyPI release newer than `3.5.0` (2026-10-06). Track PyJWT (or drop unused jose) in a dedicated maintenance slice — not a silent pin bump. |
+| `python-jose 3.5.0` | CVE-2026-85394 (OSV / pip-audit may also surface as **PYSEC-2026-4298**) | No PyPI release newer than `3.5.0` (2026-10-06). Track PyJWT (or drop unused jose) in a dedicated maintenance slice — not a silent pin bump. CI ignore of `CVE-2026-85394` clears the aliased `PYSEC-2026-4298` finding (verified 2026-10-26 H2c RQG). |
 
 ## Residual Risk Policy
 - Release-blocking: any high/critical vulnerability, and any *new* or *fixable* backend advisory.

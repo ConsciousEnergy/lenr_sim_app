@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Changed — v0.3.9 H2c RQG + governance promote pack (2026-10-26)
+- Re-ran release-quality-gate on `dev` tip (markers `0.3.9-beta`): version
+  consistency PASS; science+V&V **56** passed; full backend pytest **1170**
+  passed / 9 skipped; frontend audit-high / lint / Jest **264** / Vite build
+  PASS; CI-aligned `pip-audit` PASS (13 ignored residuals triaged in
+  `SECURITY_CI_HARDENING.md`).
+- Refreshed `docs/v0.3.6-beta/{VERIFICATION_GATE_REPORT,RELEASE_EVIDENCE_PACK,RUBRIC_GOVERNANCE}.md`
+  with dated 0.3.9 pre-launch sections. **No** science claim / `EQ-OPEN-*`
+  rewrite; **no** `main`/share bump; confirm still unset.
+
 ### Added — v0.3.9 Swarm cutover train (not live until confirm)
 - `staging-swarm-ops-verify.sh` — live STAGING_SWARM_DRY_RUN checklist barcode
   (sslip, CORS, backup `--check`, obs, share, CI-absent; WP DNS noted)
