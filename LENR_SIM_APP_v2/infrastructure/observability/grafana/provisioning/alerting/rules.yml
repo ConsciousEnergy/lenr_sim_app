@@ -60,7 +60,7 @@ groups:
             relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: probe_success{job="lenr_share_public"}
+              expr: min(probe_success{job="lenr_share_public"})
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
