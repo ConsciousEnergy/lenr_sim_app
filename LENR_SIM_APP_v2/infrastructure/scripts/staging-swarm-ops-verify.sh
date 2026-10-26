@@ -44,20 +44,31 @@ docker_staging() {
 echo "=== staging Swarm ops verify $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
 echo "CONFIRM_SWARM_0_3_9=${CONFIRM_SWARM_0_3_9:-unset} (must stay unset here)"
 
-# 1a) sslip TLS bootstrap
-code=$(curl -skS -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_SSLIP_API}/api/health" || echo 000)
-[[ "$code" == "200" ]] && grn "1a sslip API health → 200 (${STAGING_SSLIP_API})" \
-  || bad "1a sslip API health → ${code}"
-
-# 1) canonical api-staging (WP DNS often lagging)
+# 1) canonical api-staging (primary once WP DNS points at KVM1)
 api_dns=$(dig +short api-staging.conscious.energy A 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+CANON_API="https://api-staging.conscious.energy"
+CANON_OK=0
 if echo " ${api_dns} " | grep -q " ${STAGING_IP} "; then
   code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
-    "https://api-staging.conscious.energy/api/health" || echo 000)
-  [[ "$code" == "200" ]] && grn "1 api-staging.conscious.energy → 200 (A=${api_dns})" \
-    || bad "1 api-staging A→${STAGING_IP} but health ${code}"
+    "${CANON_API}/api/health" || echo 000)
+  if [[ "$code" == "200" ]]; then
+    grn "1 api-staging.conscious.energy → 200 (A=${api_dns})"
+    CANON_OK=1
+  else
+    bad "1 api-staging A→${STAGING_IP} but health ${code}"
+  fi
 else
   yel "1 api-staging DNS still '${api_dns:-unset}' (WordPress.com — operator A → ${STAGING_IP})"
+fi
+
+# 1a) sslip TLS bootstrap — soft when canonical already green (Host rule may omit sslip)
+code=$(curl -skS -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_SSLIP_API}/api/health" || echo 000)
+if [[ "$code" == "200" ]]; then
+  grn "1a sslip API health → 200 (${STAGING_SSLIP_API})"
+elif [[ "$CANON_OK" -eq 1 ]]; then
+  yel "1a sslip API health → ${code} (canonical api-staging OK — sslip Host optional)"
+else
+  bad "1a sslip API health → ${code}"
 fi
 
 # 2–3) stack replicas + postgres on manager
@@ -79,22 +90,34 @@ done || true)
 echo "$addrs" | grep -qF "$CI_IP" && bad "CI IP ${CI_IP} present in Swarm node addrs" \
   || grn "CI IP ${CI_IP} absent from Swarm"
 
-# 4) Pages CORS via sslip
-opt=$(curl -skS -D - -o /dev/null -X OPTIONS --max-time 20 \
+# 4) Pages CORS — prefer canonical when DNS is live; else sslip bootstrap
+CORS_URL="${STAGING_SSLIP_API}"
+CORS_CURL=(curl -skS)
+if [[ "$CANON_OK" -eq 1 ]]; then
+  CORS_URL="${CANON_API}"
+  CORS_CURL=(curl -sS)
+fi
+opt=$("${CORS_CURL[@]}" -D - -o /dev/null -X OPTIONS --max-time 20 \
   -H "Origin: ${APP_ORIGIN}" \
   -H "Access-Control-Request-Method: GET" \
-  "${STAGING_SSLIP_API}/api/health" || true)
+  "${CORS_URL}/api/health" || true)
 echo "$opt" | grep -qi "access-control-allow-origin: ${APP_ORIGIN}" \
-  && grn "4 CORS preflight ACAO=${APP_ORIGIN} (sslip)" \
+  && grn "4 CORS preflight ACAO=${APP_ORIGIN} (${CORS_URL})" \
   || bad "4 CORS preflight missing ACAO for ${APP_ORIGIN}"
 
 # 5) WS path reaches Traefik/backend (not Cloudflare) — 4xx from app is OK.
 # Generate Sec-WebSocket-Key at runtime (do not embed RFC6455 sample — gitleaks).
 ws_key="$(openssl rand -base64 16 2>/dev/null || head -c 16 /dev/urandom | base64)"
-ws=$(curl -skS -o /dev/null -w '%{http_code}' --max-time 10 \
+WS_URL="${STAGING_SSLIP_API}"
+WS_CURL=(curl -skS)
+if [[ "$CANON_OK" -eq 1 ]]; then
+  WS_URL="${CANON_API}"
+  WS_CURL=(curl -sS)
+fi
+ws=$("${WS_CURL[@]}" -o /dev/null -w '%{http_code}' --max-time 10 \
   -H "Connection: Upgrade" -H "Upgrade: websocket" \
   -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: ${ws_key}" \
-  "${STAGING_SSLIP_API}/ws" || true)
+  "${WS_URL}/ws" || true)
 ws="${ws:-000}"
 [[ "$ws" =~ ^(101|4[0-9][0-9])$ ]] \
   && grn "5 WS upgrade path reaches edge/app (HTTP ${ws}, not CF park)" \

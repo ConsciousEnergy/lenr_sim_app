@@ -11,6 +11,7 @@
 #
 # Image source (one of):
 #   GHCR_USER + GHCR_TOKEN                 # pull from ghcr.io
+#   prestaged :BACKEND_IMAGE_TAG on share + kvm1  # SKIP_IMAGE_BUILD implied
 #   LOCAL_IMAGES=1                         # docker build on share manager (no GHCR)
 #
 # SSH:
@@ -93,7 +94,8 @@ plan
 
 if [[ "$CONFIRM" != "I_CUTOVER_0_3_9" ]]; then
   yel "CONFIRM_SWARM_0_3_9 unset — refusing live apply (expected)."
-  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 $0"
+  yel "Arm with: CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 $0"
+  yel "(add LOCAL_IMAGES=1 only if tags are not prestaged and GHCR_* unset)"
   exit 0
 fi
 
@@ -111,9 +113,33 @@ have_ghcr=0
 if [[ -n "${GHCR_USER:-}" && -n "${GHCR_TOKEN:-}" ]]; then
   have_ghcr=1
 fi
-if [[ "$have_ghcr" -ne 1 && "$LOCAL_IMAGES" != "1" ]]; then
-  red "Need GHCR_USER/GHCR_TOKEN or LOCAL_IMAGES=1"
+# Honest barcode: prestaged tags on share+kvm1 satisfy image gate without LOCAL_IMAGES.
+prestaged_both=0
+if [[ -f "$SHARE_KEY" && -f "$KVM1_KEY" ]] \
+  && ssh -i "$SHARE_KEY" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=8 \
+       "root@${SHARE_IP}" \
+       "docker image inspect ${BACKEND_IMG} >/dev/null \
+        && docker image inspect ${FRONTEND_IMG} >/dev/null" >/dev/null 2>&1 \
+  && ssh -i "$KVM1_KEY" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=8 \
+       "root@${KVM1_IP}" \
+       "docker image inspect ${BACKEND_IMG} >/dev/null \
+        && docker image inspect ${FRONTEND_IMG} >/dev/null" >/dev/null 2>&1; then
+  prestaged_both=1
+fi
+if [[ "$have_ghcr" -ne 1 && "$LOCAL_IMAGES" != "1" && "$prestaged_both" -ne 1 \
+      && "${PRESTAGED_IMAGES:-0}" != "1" ]]; then
+  red "Need GHCR_USER/GHCR_TOKEN, prestaged :${IMAGE_TAG} on share+kvm1, or LOCAL_IMAGES=1"
   exit 1
+fi
+if [[ "$LOCAL_IMAGES" != "1" && "$have_ghcr" -ne 1 && "$prestaged_both" -eq 1 ]]; then
+  grn "Using prestaged :${IMAGE_TAG} on share+kvm1 (SKIP_IMAGE_BUILD implied)"
+  SKIP_IMAGE_BUILD=1
+  LOCAL_IMAGES=1
+fi
+if [[ "$LOCAL_IMAGES" != "1" && "$have_ghcr" -ne 1 && "${PRESTAGED_IMAGES:-0}" == "1" ]]; then
+  yel "PRESTAGED_IMAGES=1 — treating as LOCAL_IMAGES + SKIP_IMAGE_BUILD"
+  SKIP_IMAGE_BUILD=1
+  LOCAL_IMAGES=1
 fi
 
 if grep -vE '^[[:space:]]*#' "$PROD_INV" | grep -Fq "$CI_IP"; then
