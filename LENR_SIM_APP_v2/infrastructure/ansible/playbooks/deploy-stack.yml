@@ -286,6 +286,45 @@
         - "'grafana_admin_password' not in (existing_secrets.stdout | default(''))"
         - grafana_admin_password is defined
       no_log: true
+
+    # SMTP password for Grafana unified alerting email. Only when
+    # grafana_smtp_enabled=true — never commit the value; mint via vault / -e
+    # or let this task generate once and persist as Swarm secret.
+    - name: Generate Grafana SMTP password if SMTP enabled and secret missing
+      ansible.builtin.set_fact:
+        grafana_smtp_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - grafana_smtp_enabled | default(false)
+        - grafana_smtp_password is not defined
+        - "'grafana_smtp_password' not in (existing_secrets.stdout | default(''))"
+      no_log: true
+
+    - name: Create Grafana SMTP password secret
+      ansible.builtin.command:
+        cmd: docker secret create grafana_smtp_password -
+        stdin: "{{ grafana_smtp_password }}"
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - grafana_smtp_enabled | default(false)
+        - "'grafana_smtp_password' not in (existing_secrets.stdout | default(''))"
+        - grafana_smtp_password is defined
+      no_log: true
+
+    - name: Fail when SMTP enabled but secret still missing
+      ansible.builtin.assert:
+        that:
+          - "'grafana_smtp_password' in (existing_secrets.stdout | default('')) or grafana_smtp_password is defined"
+        fail_msg: >-
+          grafana_smtp_enabled=true but grafana_smtp_password Swarm secret is
+          missing. Pass -e grafana_smtp_password=... (vault) or remove the
+          enable flag until the secret is minted.
+      when:
+        - _is_swarm_manager | bool
+        - observability_enabled | default(true)
+        - grafana_smtp_enabled | default(false)
       
     # ==========================================================================
     # GHCR login + stack deploy (managers only)

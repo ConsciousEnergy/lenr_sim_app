@@ -2,7 +2,7 @@
   "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
@@ -12,13 +12,13 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
       "options": {
         "mode": "markdown",
-        "content": "## Infra + performance (Prometheus)\n\n- Health: blackbox → `probe_success` on `/api/health`\n- Edge: Traefik metrics on overlay `:8082`\n- Hosts: `node_exporter` (global)\n- **User / product metrics:** PostHog (env-gated) — not scraped here\n- Do **not** treat uptime as closing `EQ-OPEN-*`\n\nTopology: `docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`"
+        "content": "## Infra + performance (Prometheus)\n\n- Health: blackbox → overlay backend, `api-staging`, Compose share\n- Edge: Traefik metrics on overlay `:8082`\n- Hosts: `node_exporter` (global) · Containers: `cadvisor` (global)\n- **User / product metrics:** PostHog (env-gated) — not scraped here\n- Do **not** treat uptime as closing `EQ-OPEN-*`\n\nTopology: `docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md` · D4S for task detail"
       }
     },
     {
       "type": "stat",
       "title": "Prometheus up",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 3 },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 3 },
       "targets": [{ "expr": "up{job=\"prometheus\"}", "refId": "A" }],
       "fieldConfig": {
         "defaults": {
@@ -30,8 +30,8 @@
     },
     {
       "type": "stat",
-      "title": "API health probe",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 3 },
+      "title": "API overlay probe",
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 3 },
       "targets": [{ "expr": "probe_success{job=\"lenr_backend_health\"}", "refId": "A" }],
       "fieldConfig": {
         "defaults": {
@@ -43,8 +43,34 @@
     },
     {
       "type": "stat",
-      "title": "Traefik scrape up",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 3 },
+      "title": "api-staging TLS",
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_api_staging_public\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Share public probe",
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_share_public\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Traefik scrape",
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 3 },
       "targets": [{ "expr": "up{job=\"traefik\"}", "refId": "A" }],
       "fieldConfig": {
         "defaults": {
@@ -56,9 +82,16 @@
     },
     {
       "type": "stat",
-      "title": "node_exporter targets up",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 3 },
+      "title": "node_exporter up",
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 3 },
       "targets": [{ "expr": "count(up{job=\"node\"} == 1) or vector(0)", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "stat",
+      "title": "cadvisor up",
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 3 },
+      "targets": [{ "expr": "count(up{job=\"cadvisor\"} == 1) or vector(0)", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "short" } }
     },
     {
@@ -67,8 +100,8 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "targets": [
         {
-          "expr": "probe_duration_seconds{job=\"lenr_backend_health\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "probe_duration_seconds{job=~\"lenr_backend_health|lenr_api_staging_public|lenr_share_public\"}",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ]
@@ -88,7 +121,7 @@
     {
       "type": "timeseries",
       "title": "Host memory available ratio",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
       "targets": [
         {
           "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes",
@@ -99,8 +132,20 @@
     },
     {
       "type": "timeseries",
+      "title": "Root filesystem free ratio",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
+      "targets": [
+        {
+          "expr": "node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
       "title": "Traefik requests / s (entrypoint)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
       "targets": [
         {
           "expr": "sum by (entrypoint) (rate(traefik_entrypoint_requests_total[5m]))",
@@ -110,12 +155,36 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Traefik 5xx / s",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "targets": [
+        {
+          "expr": "sum(rate(traefik_entrypoint_requests_total{code=~\"5..\"}[5m])) or vector(0)",
+          "legendFormat": "5xx",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "lenr-sim container CPU (cAdvisor)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "targets": [
+        {
+          "expr": "sum by (container_label_com_docker_swarm_service_name) (rate(container_cpu_usage_seconds_total{container_label_com_docker_swarm_service_name=~\"lenr-sim_.+\"}[5m]))",
+          "legendFormat": "{{container_label_com_docker_swarm_service_name}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
       "type": "text",
       "title": "User / product metrics (PostHog)",
-      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 23 },
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 31 },
       "options": {
         "mode": "markdown",
-        "content": "Product funnels, SPA navigation, and feature flags stay in **PostHog** (env-gated; no PII in Prometheus).\n\nCross-check: Grafana = infra SLO / host / edge latency; PostHog = user behavior. Do not scrape session replay or identify payloads into Prom."
+        "content": "Product funnels, SPA navigation, and feature flags stay in **PostHog** (env-gated; no PII in Prometheus).\n\nCross-check: Grafana = infra SLO / host / edge / container; PostHog = user behavior. Do not scrape session replay or identify payloads into Prom."
       }
     }
   ],
@@ -126,5 +195,5 @@
   "timezone": "browser",
   "title": "LENR-Sim Swarm Overview",
   "uid": "lenr-swarm-overview",
-  "version": 2
+  "version": 3
 }
