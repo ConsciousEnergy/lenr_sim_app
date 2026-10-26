@@ -24,9 +24,29 @@ echo
 
 export ALLOW_API_DNS_GAP="${ALLOW_API_DNS_GAP:-1}"
 export ALLOW_STAGING_DNS_GAP="${ALLOW_STAGING_DNS_GAP:-1}"
-export LOCAL_IMAGES="${LOCAL_IMAGES:-1}"
+# Prefer GHCR or already-prestaged tags; do not force LOCAL_IMAGES=1 by default.
+# Cutover-prep auto-OKs when share+kvm1 already have :IMAGE_TAG.
 export SKIP_IMAGE_BUILD="${SKIP_IMAGE_BUILD:-1}"
 export BACKEND_IMAGE_TAG="$IMAGE_TAG"
+if [[ -z "${GHCR_USER:-}" || -z "${GHCR_TOKEN:-}" ]]; then
+  if [[ -z "${LOCAL_IMAGES:-}" && -z "${PRESTAGED_IMAGES:-}" ]]; then
+    # Probe once; if tags missing, leave unset so prep reports an honest BAD.
+    if [[ -f "$SHARE_KEY" && -f "$KVM1_KEY" ]] \
+      && ssh -i "$SHARE_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+           "root@${SHARE_IP}" \
+           "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} >/dev/null \
+            && docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} >/dev/null" >/dev/null 2>&1 \
+      && ssh -i "$KVM1_KEY" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+           "root@${KVM1_IP}" \
+           "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} >/dev/null \
+            && docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} >/dev/null" >/dev/null 2>&1; then
+      export PRESTAGED_IMAGES=1
+      echo "image gate: prestaged :${IMAGE_TAG} detected (no LOCAL_IMAGES default)"
+    else
+      echo "image gate: no GHCR / no prestaged tags — set GHCR_* or run swarm-039-prestage-images.sh"
+    fi
+  fi
+fi
 
 fail=0
 bash "${SCRIPT_DIR}/swarm-039-cutover-prep.sh" || fail=1
@@ -70,9 +90,11 @@ PY
 echo
 echo "=== human arming (not executed here) ==="
 cat <<EOF
-CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 LOCAL_IMAGES=1 \\
+# Prefer GHCR_USER/TOKEN or prestaged tags; LOCAL_IMAGES=1 only if building on share.
+CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \\
   ALLOW_STAGING_DNS_GAP=1 ALLOW_API_DNS_GAP=1 SKIP_IMAGE_BUILD=1 \\
   ${SCRIPT_DIR}/swarm-039-cutover.sh
+# If images not prestaged and no GHCR: add LOCAL_IMAGES=1 (or run prestage first).
 EOF
 
 echo

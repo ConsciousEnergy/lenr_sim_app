@@ -91,22 +91,43 @@ else
   bad "api.conscious.energy DNS is '${api_prod_all:-unset}' (need WordPress A → ${SHARE_IP} or ALLOW_API_DNS_GAP=1)"
 fi
 
-# 6) GHCR env or LOCAL_IMAGES=1
+# 6) GHCR env, prestaged images, or LOCAL_IMAGES=1
 IMAGE_TAG="${BACKEND_IMAGE_TAG:-0.3.9-beta}"
 SHARE_KEY="${SHARE_SSH_KEY:-${VPS_SSH_IDENTITY_FILE:-$HOME/.ssh/lenr-sim-share}}"
 KVM1_KEY="${KVM1_SSH_KEY:-$HOME/.ssh/lenr-sim-staging}"
+BACKEND_IMG="ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG}"
+FRONTEND_IMG="ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG}"
+
+host_has_images() {
+  local key="$1" host="$2"
+  [[ -f "$key" ]] || return 1
+  ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
+    "root@${host}" \
+    "docker image inspect ${BACKEND_IMG} >/dev/null \
+     && docker image inspect ${FRONTEND_IMG} >/dev/null" >/dev/null 2>&1
+}
+
+prestaged_both=0
+if host_has_images "$SHARE_KEY" "$SHARE_IP" && host_has_images "$KVM1_KEY" "$KVM1_IP"; then
+  prestaged_both=1
+fi
+
 if [[ -n "${GHCR_USER:-}" && -n "${GHCR_TOKEN:-}" ]]; then
   ok "GHCR_USER + GHCR_TOKEN set"
+elif [[ "$prestaged_both" -eq 1 || "${PRESTAGED_IMAGES:-0}" == "1" ]]; then
+  if [[ "$prestaged_both" -eq 1 ]]; then
+    ok "prestaged backend+frontend :${IMAGE_TAG} on share + kvm1 (LOCAL_IMAGES/GHCR not required)"
+  elif [[ "${ALLOW_IMAGE_PRESTAGE_GAP:-0}" == "1" ]]; then
+    note "PRESTAGED_IMAGES=1 but hosts missing tags (ALLOW_IMAGE_PRESTAGE_GAP=1)"
+  else
+    bad "PRESTAGED_IMAGES=1 but share/kvm1 missing :${IMAGE_TAG} (run swarm-039-prestage-images.sh)"
+  fi
 elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
   ok "LOCAL_IMAGES=1 — cutover will docker build on share + load onto KVM1 (no GHCR)"
   if [[ "${SKIP_IMAGE_BUILD:-0}" == "1" ]]; then
     for pair in "share:${SHARE_KEY}:${SHARE_IP}" "kvm1:${KVM1_KEY}:${KVM1_IP}"; do
       role="${pair%%:*}"; rest="${pair#*:}"; key="${rest%%:*}"; host="${rest##*:}"
-      if [[ -f "$key" ]] \
-        && ssh -i "$key" -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes \
-             "root@${host}" \
-             "docker image inspect ghcr.io/consciousenergy/lenr-sim-backend:${IMAGE_TAG} >/dev/null \
-              && docker image inspect ghcr.io/consciousenergy/lenr-sim-frontend:${IMAGE_TAG} >/dev/null"; then
+      if host_has_images "$key" "$host"; then
         ok "${role} has local backend+frontend :${IMAGE_TAG}"
       elif [[ "${ALLOW_IMAGE_PRESTAGE_GAP:-0}" == "1" ]]; then
         note "${role} missing :${IMAGE_TAG} (ALLOW_IMAGE_PRESTAGE_GAP=1 — cutover refuses SKIP_IMAGE_BUILD without images)"
@@ -116,7 +137,7 @@ elif [[ "${LOCAL_IMAGES:-0}" == "1" ]]; then
     done
   fi
 else
-  bad "GHCR_USER/GHCR_TOKEN unset (or set LOCAL_IMAGES=1 for on-manager build)"
+  bad "Need GHCR_USER/GHCR_TOKEN, prestaged :${IMAGE_TAG} on share+kvm1, or LOCAL_IMAGES=1"
 fi
 
 # 7) Share SSH (manager target)
