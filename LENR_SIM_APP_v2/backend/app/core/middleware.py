@@ -9,10 +9,11 @@ This module provides middleware components for:
 - Security (rate limiting, secure headers, content validation)
 """
 
+import re
 import time
 import uuid
 import logging
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,25 +25,48 @@ from app.api.middleware.secure_headers import SecureHeadersMiddleware
 from app.api.middleware.content_validation import ContentTypeValidationMiddleware
 from app.api.middleware.request_size_limit import RequestSizeLimitMiddleware
 from app.api.errors.handlers import register_exception_handlers
+from app.utils.logging import request_log_extra
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
+# Safe inbound correlation tokens only (reject log-injection / oversize values).
+_SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{8,128}$")
+
+
+def resolve_request_id(request: Request) -> str:
+    """
+    Prefer a client/edge correlation id when present and safe; else mint a UUID.
+
+    Accepts ``X-Request-ID`` or ``X-Correlation-ID``. Never reads Authorization,
+    Cookie, or other secret-bearing headers.
+    """
+    for header_name in (settings.REQUEST_ID_HEADER, settings.CORRELATION_ID_HEADER):
+        raw: Optional[str] = request.headers.get(header_name)
+        if not raw:
+            continue
+        candidate = raw.strip()
+        if _SAFE_REQUEST_ID.match(candidate):
+            return candidate
+    return str(uuid.uuid4())
+
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """
-    Middleware that adds a unique request ID to each request.
-    
-    The request ID is added to the request state and returned in the response headers.
+    Middleware that attaches a request/correlation ID to each request.
+
+    The id is stored on ``request.state.request_id``, echoed on the response as
+    ``X-Request-ID`` (and ``X-Correlation-ID``), and used on API error paths.
     """
-    
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        request_id = str(uuid.uuid4())
+        request_id = resolve_request_id(request)
         request.state.request_id = request_id
-        
+
         response = await call_next(request)
         response.headers[settings.REQUEST_ID_HEADER] = request_id
-        
+        response.headers[settings.CORRELATION_ID_HEADER] = request_id
+
         return response
 
 
@@ -66,12 +90,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Get request ID if available
         request_id = getattr(request.state, "request_id", "unknown")
         
-        # Log request details
+        # Structured request_id for JSON logs; message stays human-readable.
+        # Do not log headers, query strings with tokens, or bodies.
         logger.info(
-            f"RequestID: {request_id} | "
             f"{request.method} {request.url.path} | "
             f"Status: {response.status_code} | "
-            f"Time: {formatted_process_time}"
+            f"Time: {formatted_process_time}",
+            extra=request_log_extra(request_id, path=request.url.path),
         )
         
         return response
@@ -101,9 +126,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             request_id = getattr(request.state, "request_id", "unknown")
             logger.warning(
                 f"Slow request detected | "
-                f"RequestID: {request_id} | "
                 f"{request.method} {request.url.path} | "
-                f"Time: {formatted_process_time}"
+                f"Time: {formatted_process_time}",
+                extra=request_log_extra(request_id, path=request.url.path),
             )
         
         return response
