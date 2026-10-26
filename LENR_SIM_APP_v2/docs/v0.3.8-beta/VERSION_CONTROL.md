@@ -1,16 +1,20 @@
-# Version control for v0.3.8-beta (Swarm migration prep)
+# Version control for v0.3.8-beta (Compose freeze) → v0.3.9 cutover on `dev`
 
-This document is the **implementation map** for the `dev` integration train.
-It does **not** authorize public Swarm cutover. Cutover remains gated by
-`CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` in
+**Freeze:** `main` stays **`0.3.8-beta`** (live Compose share). Do **not** bump
+`main` markers or land Swarm dashboards/stack changes on the share train here.
+
+**Cutover train:** Swarm staging + post-cutover work lives on **`dev`** with
+**`0.3.9-beta`** markers. This document remains the 0.3.8 implementation map and
+freeze note; it does **not** authorize public Swarm cutover. Cutover remains
+gated by `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` in
 [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
 ## Branch and version model
 
 | Ref | Markers | Deploy | Purpose |
 |-----|---------|--------|---------|
-| `main` + tag `v0.3.8-beta` | `0.3.8-beta` | Compose share ship only (`deploy.yml` on `main` + `v*` tags) | Live public beta |
-| `dev` | `0.3.8-beta` | **No** auto VPS ship | Integration for Swarm staging prep, science, deps |
+| `main` + tag `v0.3.8-beta` | `0.3.8-beta` | Compose share ship only (`deploy.yml` on `main` + `v*` tags) | Live public beta **freeze** |
+| `dev` | `0.3.9-beta` | **No** auto VPS ship | Swarm cutover integration (Traefik SPA + API) |
 | Short-lived `consciousenergy/*` / `feat/*` | inherit base | PR → **`dev`** (default) or `main` (Compose hotfix only) | Topic changes |
 
 Policy source of truth: [`.github/BRANCHING.md`](../../../.github/BRANCHING.md).  
@@ -20,9 +24,9 @@ Dependabot: `target-branch: dev` in [`.github/dependabot.yml`](../../../.github/
 
 ```mermaid
 flowchart LR
-  mainLine[main_0_3_8_beta_Compose]
+  mainLine[main_0_3_8_beta_Compose_freeze]
   tag038[tag_v0_3_8_beta]
-  devLine[dev_0_3_8_beta]
+  devLine[dev_0_3_9_beta]
   feat[short_lived_PRs]
   staging[staging_Swarm_dry_run]
   public[public_Swarm_0_3_9]
@@ -40,8 +44,9 @@ flowchart LR
 - `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
 - `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
 
-On `main` and `dev`, all four are `0.3.8-beta` after the Compose promote.
-Do not bump markers except via a controlled promote / train-cut PR.
+On `main`, all four stay `0.3.8-beta` (Compose freeze). On `dev`, all four are
+`0.3.9-beta` for the cutover train. Do not bump `main` markers except via a
+controlled promote / train-cut PR from `dev`.
 
 ## Implementation phases (0.3.8 train)
 
@@ -104,8 +109,9 @@ observability scaffolds.
 Only under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` with an announced window:
 [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
-Promote path: squash `dev` → `main` with marker bump to the cutover train,
-retag, ship. Compose share stays until that confirm.
+Promote path: squash `dev` (`0.3.9-beta` markers already on tip) → `main`,
+retag, ship. Compose share stays **0.3.8-beta** until that confirm. Never arm
+`CONFIRM_SWARM_0_3_9` from staging-only ops or docs hygiene PRs.
 
 ## Science / security invariants (carry forward)
 
