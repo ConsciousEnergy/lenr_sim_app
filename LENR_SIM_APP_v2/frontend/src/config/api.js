@@ -17,6 +17,12 @@
  * URL then resolves to '' so `/api/...` and `wss://` follow `window.location`.
  * An empty/unset value keeps the historical split-host default for backwards
  * compatibility with Cloudflare Pages builds.
+ *
+ * Staging split-origin (Pages/app-staging → api-staging) must set an explicit
+ * absolute `VITE_API_URL=https://api-staging.conscious.energy` so fetch and
+ * `getWebSocketUrl` target the Swarm API host. CORS on that API must allow the
+ * SPA origin; transport failures must be surfaced as connectivity issues, never
+ * as scientific outcomes (see `utils/apiUserFacingError.js`).
  */
 const SAME_ORIGIN_SENTINELS = new Set(['same-origin', '/']);
 const SPLIT_HOST_DEFAULT_API_URL = 'https://api.conscious.energy';

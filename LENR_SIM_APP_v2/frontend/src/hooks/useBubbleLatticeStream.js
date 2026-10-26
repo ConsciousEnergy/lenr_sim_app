@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getWebSocketUrl } from '../config/api';
+import { streamFailureMessage } from '../utils/apiUserFacingError';
 
 /** Cap retained frames so a long run cannot grow memory without bound. */
 export const MAX_RETAINED_FRAMES = 400;
@@ -57,7 +58,7 @@ export function useBubbleLatticeStream({ parameters } = {}) {
     try {
       socket = new WebSocket(getWebSocketUrl('/api/unified/bubble-lattice/stream'));
     } catch (openError) {
-      setError(openError?.message || 'Unable to open stream');
+      setError(streamFailureMessage(openError || 'Unable to open stream'));
       setStatus(STREAM_STATUS.error);
       return;
     }
@@ -91,13 +92,14 @@ export function useBubbleLatticeStream({ parameters } = {}) {
         return;
       }
       if (payload.type === 'error') {
-        setError(payload.message || 'Stream reported an error');
+        setError(streamFailureMessage(payload.message || 'Stream reported an error'));
         setStatus(STREAM_STATUS.error);
       }
     };
 
     socket.onerror = () => {
-      setError('Stream connection failed');
+      // Browser WS errors are opaque; phrase as transport, never as physics falsification.
+      setError(streamFailureMessage('WebSocket connection failed'));
       setStatus(STREAM_STATUS.error);
     };
 

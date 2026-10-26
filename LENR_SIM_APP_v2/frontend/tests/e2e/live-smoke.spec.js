@@ -1,16 +1,23 @@
 import { test, expect } from '@playwright/test';
 
 const live = process.env.LIVE_BASE_URL;
+/**
+ * Expected API/SPA version string. Defaults to the current Compose share train
+ * so `LIVE_BASE_URL=https://lenr-sim-beta.conscious.energy npm run e2e:live`
+ * keeps working without edits. Override for staging/cutover:
+ *   EXPECT_VERSION=0.3.9-beta LIVE_BASE_URL=https://app-staging.conscious.energy …
+ */
+const expectVersion = process.env.EXPECT_VERSION || '0.3.8-beta';
 
 test.describe('live VPS smoke', () => {
-  test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://lenr-sim-beta.conscious.energy or https://srv1280333.hstgr.cloud) to run against the deployed beta');
+  test.skip(!live, 'Set LIVE_BASE_URL (e.g. https://lenr-sim-beta.conscious.energy or https://app-staging.conscious.energy) to run against a deployed surface');
 
-  test('GET /api/health returns 0.3.7-beta', async ({ request }) => {
+  test(`GET /api/health returns ${expectVersion}`, async ({ request }) => {
     const res = await request.get(`${live}/api/health`);
     expect(res.status()).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('healthy');
-    expect(body.version).toBe('0.3.7-beta');
+    expect(body.version).toBe(expectVersion);
     expect(body.database?.connected).toBe(true);
   });
 

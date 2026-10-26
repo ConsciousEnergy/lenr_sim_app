@@ -3,7 +3,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Alert, AlertTitle, Box, Button, Collapse, Link, Typography } from '@mui/material';
 import ScienceIcon from '@mui/icons-material/Science';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
+import ConstructionIcon from '@mui/icons-material/Construction';
 import { useApiHealth } from '../hooks/useApiHealth';
+import { useMaintenanceHideRun } from '../analytics/flags';
 import { APP_VERSION } from '../config/version';
 
 const DISMISS_KEY = 'lenr-beta-notice-dismissed';
@@ -25,10 +27,12 @@ function readDismissed() {
  * - A non-dismissible "API unreachable" alert driven by useApiHealth. Several
  *   simulation pages fall back to schematic local calculations when the
  *   backend is down; this makes that state impossible to miss.
+ * - Optional PostHog `maintenance-hide-run` soft kill-switch (default OFF).
  */
 export default function BetaNotice({ monitorApi = true }) {
   const [dismissed, setDismissed] = useState(readDismissed);
   const { isOnline, consecutiveFailures } = useApiHealth({ autoMonitor: monitorApi });
+  const maintenanceHideRun = useMaintenanceHideRun();
 
   const dismiss = () => {
     setDismissed(true);
@@ -43,6 +47,18 @@ export default function BetaNotice({ monitorApi = true }) {
 
   return (
     <Box data-testid="beta-notice" sx={{ mb: 2 }}>
+      {maintenanceHideRun && (
+        <Alert
+          severity="warning"
+          icon={<ConstructionIcon fontSize="inherit" />}
+          data-testid="maintenance-hide-run-alert"
+          sx={{ mb: 1 }}
+        >
+          <AlertTitle>Runs temporarily unavailable</AlertTitle>
+          Simulation run controls are soft-disabled for maintenance. This is an
+          operator flag, not a physics result — existing views remain readable.
+        </Alert>
+      )}
       {apiDown && (
         <Alert
           severity="error"
@@ -51,9 +67,11 @@ export default function BetaNotice({ monitorApi = true }) {
           sx={{ mb: 1 }}
         >
           <AlertTitle>Simulation API unreachable</AlertTitle>
-          The backend has not answered {consecutiveFailures || 'recent'} health checks. Pages
-          may show <strong>schematic placeholder values</strong> until it recovers; do not cite
-          anything computed while this notice is visible.
+          The backend has not answered {consecutiveFailures || 'recent'} health checks
+          (check <code>VITE_API_URL</code> / CORS for split-origin staging). Pages may show{' '}
+          <strong>schematic placeholder values</strong> until it recovers; do not cite
+          anything computed while this notice is visible — connectivity failures are not
+          scientific outcomes.
         </Alert>
       )}
       <Collapse in={!dismissed} unmountOnExit>

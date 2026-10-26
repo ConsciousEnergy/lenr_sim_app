@@ -71,6 +71,11 @@ import { formatCycleTimeChip } from '../utils/bubblePhaseSchedule';
 import { ENHANCEMENT_THRESHOLDS } from '../utils/unifiedTheoryCharts';
 import { useBubbleLatticeStream, STREAM_STATUS } from '../hooks/useBubbleLatticeStream';
 import { track } from '../analytics/events';
+import { useMaintenanceHideRun } from '../analytics/flags';
+import {
+  classifyTransportError,
+  schematicFallbackMessage,
+} from '../utils/apiUserFacingError';
 import { attachTestbedScoresToResults } from '../utils/theoryTestbedScores';
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
@@ -524,6 +529,7 @@ function UnifiedTheoryPage() {
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [isSaving, setIsSaving] = useState(false);
+  const maintenanceHideRun = useMaintenanceHideRun();
   const derivedState = deriveSimulationHeadlineState({ simulationData, theoryResult });
   const streamPayload = React.useMemo(
     () => buildBubbleLatticePayload(parameters),
@@ -553,9 +559,14 @@ function UnifiedTheoryPage() {
 
   useEffect(() => {
     if (streamStatus === STREAM_STATUS.error && streamError) {
-      setAlertMessage(`Live stream failed: ${streamError}`);
+      // Hook already applies streamFailureMessage — do not wrap twice.
+      setAlertMessage(streamError);
       setAlertSeverity('error');
       setAlertOpen(true);
+      track.clientError({
+        error_kind: 'websocket',
+        surface: 'unified_theory_stream',
+      });
     }
   }, [streamStatus, streamError]);
 
@@ -671,6 +682,12 @@ function UnifiedTheoryPage() {
 
   // Run simulation via API
   const runSimulation = useCallback(async () => {
+    if (maintenanceHideRun) {
+      setAlertMessage('Runs are temporarily unavailable (maintenance). This is not a physics result.');
+      setAlertSeverity('warning');
+      setAlertOpen(true);
+      return;
+    }
     setIsLoading(true);
     setAlertOpen(false);
     const simStartedAt = Date.now();
@@ -722,7 +739,9 @@ function UnifiedTheoryPage() {
           route_mode: data.validation?.route_mode || 'api',
           duration_ms: Date.now() - simStartedAt,
         });
-        setAlertMessage('Simulation completed with real physics calculations');
+        setAlertMessage(
+          'Simulation completed with backend physics calculations (model output, not a laboratory measurement).',
+        );
         setAlertSeverity('success');
       } else {
         // Handle specific HTTP status codes with clear user messaging
@@ -757,18 +776,20 @@ function UnifiedTheoryPage() {
         throw new Error(`[${errorType}] ${errorMessage}`);
       }
     } catch (error) {
-      // Handle network errors and API failures gracefully
+      // Handle network errors and API failures gracefully — never overclaim science.
       const errorMessage = error.message || 'Unknown error occurred';
-      
-      // Determine error type for appropriate messaging
-      const isNetworkError = error.name === 'TypeError' && errorMessage.includes('fetch');
-      const isConnectionRefused = errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError');
-      const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('Timeout');
+      const transport = classifyTransportError(error);
       
       // Log unexpected errors
       if (!errorMessage.includes('endpoint_not_found')) {
         console.warn('Simulation API issue:', errorMessage);
       }
+
+      track.clientError({
+        error_kind: transport.kind === 'other' ? 'api_or_client' : transport.kind,
+        surface: 'unified_theory_run',
+        route_mode: 'local_fallback',
+      });
       
       // Fallback to local mock calculations
       try {
@@ -783,17 +804,18 @@ function UnifiedTheoryPage() {
         });
         
         // Provide specific user-friendly messages based on error type
-        if (isConnectionRefused || isNetworkError) {
-          setAlertMessage('Backend not running. Using local calculations (limited accuracy).');
-          setAlertSeverity('warning');
-        } else if (isTimeout) {
-          setAlertMessage('Backend request timed out. Using local calculations.');
+        if (transport.isTransport) {
+          setAlertMessage(schematicFallbackMessage(error));
           setAlertSeverity('warning');
         } else if (errorMessage.includes('endpoint_not_found')) {
-          setAlertMessage('Backend API endpoint not found. Using local calculations.');
+          setAlertMessage(
+            'Backend API endpoint not found. Using schematic local calculations — not validated physics.',
+          );
           setAlertSeverity('info');
         } else if (errorMessage.includes('server_error')) {
-          setAlertMessage('Backend calculation error. Using local fallback calculations.');
+          setAlertMessage(
+            'Backend calculation error. Using schematic local fallback — not a scientific confirmation.',
+          );
           setAlertSeverity('warning');
         } else if (errorMessage.includes('method_not_allowed')) {
           setAlertMessage(`Backend route mismatch (405). Check backend restart and route mount. ${errorMessage.replace(/\[.*?\]\s*/, '')}`);
@@ -803,13 +825,19 @@ function UnifiedTheoryPage() {
           setAlertSeverity('error');
           return; // Don't use fallback for validation errors
         } else {
-          setAlertMessage(`Using local calculations. API issue: ${errorMessage.replace(/\[.*?\]\s*/, '')}`);
+          setAlertMessage(
+            `Using schematic local calculations (not a lab measurement). API issue: ${errorMessage.replace(/\[.*?\]\s*/, '')}`,
+          );
           setAlertSeverity('warning');
         }
       } catch (fallbackError) {
         console.error('Fallback calculation failed:', fallbackError);
         setAlertMessage(`Simulation failed: ${fallbackError.message || 'Unknown error'}`);
         setAlertSeverity('error');
+        track.clientError({
+          error_kind: 'fallback_failed',
+          surface: 'unified_theory_run',
+        });
         analyticsApi.saveFailedRun({
           name: `FAILED ${parameters.name} Simulation`,
           experiment_type: 'unified_theory',
@@ -822,7 +850,7 @@ function UnifiedTheoryPage() {
       setIsLoading(false);
       setAlertOpen(true);
     }
-  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed, theoryResult]);
+  }, [parameters, setSimulationResult, rateMode, includeUncertainty, uncertaintySamples, randomSeed, theoryResult, maintenanceHideRun]);
 
   // Generate local fallback results
   const generateLocalResults = (params) => {
@@ -1639,10 +1667,15 @@ function UnifiedTheoryPage() {
               fullWidth
               startIcon={isLoading ? <CircularProgress size={20} /> : <PlayArrowIcon />}
               onClick={runSimulation}
-              disabled={isLoading}
+              disabled={isLoading || maintenanceHideRun}
+              data-testid="run-physics-simulation"
               sx={{ mt: 2 }}
             >
-              {isLoading ? 'Calculating...' : 'Run Physics Simulation'}
+              {isLoading
+                ? 'Calculating...'
+                : maintenanceHideRun
+                  ? 'Runs paused (maintenance)'
+                  : 'Run Physics Simulation'}
             </Button>
             <Button
               variant="outlined"
@@ -1659,14 +1692,23 @@ function UnifiedTheoryPage() {
                   stopStream();
                   return;
                 }
+                if (maintenanceHideRun) {
+                  setAlertMessage('Live stream is paused during maintenance. Not a physics result.');
+                  setAlertSeverity('warning');
+                  setAlertOpen(true);
+                  return;
+                }
                 setActiveTab(0);
                 startStream();
               }}
-              disabled={isLoading}
+              disabled={isLoading || maintenanceHideRun}
+              data-testid="live-stream-collapse"
             >
               {streamStatus === STREAM_STATUS.streaming || streamStatus === STREAM_STATUS.connecting
                 ? 'Stop Live Stream'
-                : 'Live Stream Collapse'}
+                : maintenanceHideRun
+                  ? 'Live stream paused'
+                  : 'Live Stream Collapse'}
             </Button>
 
             
