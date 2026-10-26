@@ -138,3 +138,21 @@ Residual to 5/5: legacy `app/physics` modules still duplicate some barrier /
 rate formalisms (each now individually correct and gated); trapped-state
 rectangular-barrier model in `reaction_rate_engine` remains a documented
 approximation pending a Coulomb-WKB integral treatment.
+
+## v0.3.9-beta pre-launch RQG / H2c ops delta (2026-10-26)
+
+Ops/governance slice only. **Scoring axes, claim tiers, and `EQ-OPEN-*` text
+are unchanged** — this pack does not rewrite science claims.
+
+| Dimension | Pre (promote readiness) | Post (this pack) | Falsification / evidence |
+|---|---|---|---|
+| Reproducibility pipeline | Markers on `dev` already `0.3.9-beta`; governance docs lagged tip | Four markers verified identical; VERIFICATION / RELEASE evidence refreshed | Version-consistency check + dated sections in `VERIFICATION_GATE_REPORT.md` / `RELEASE_EVIDENCE_PACK.md` |
+| Method transparency | Residual pip-audit IDs documented for 0.3.6 train | Residuals re-triaged vs current `security-scan.yml` ignore list; jose ID alias noted | `SECURITY_CI_HARDENING.md`; CI-aligned `pip-audit` exit 0 |
+| Empirical anchoring | Experiment-anchored gates release-blocking | **56** science+V&V gates passed on tip `64d0157` (unchanged claim baselines) | `test_experiment_anchored_gates` + companions; no xfail/skip |
+| Research UX / honesty | Export envelope locked | `lenr-run-export-v1` still required | `test_run_export.py` |
+
+### Residual risk note
+- Public cutover remains **HOLD** until H2 remainder + operator gaps + announced
+  window; do not treat this rubric delta as cutover authorization.
+- Accepted transitive CVEs (starlette / python-jose / ecdsa) remain
+  upstream-constrained; any *new* fixable advisory still blocks release.

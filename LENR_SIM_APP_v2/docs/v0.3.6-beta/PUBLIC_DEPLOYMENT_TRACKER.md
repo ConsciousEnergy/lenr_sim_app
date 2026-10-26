@@ -9,6 +9,13 @@ manual execution status.
 > Shareable host today: `https://lenr-sim-beta.conscious.energy` (`/api/health` 200).
 > Intended `lenr-simp-app` still CNAME→WordPress until A→VPS. Swarm/Pages cutover
 > prep is deferred to **v0.3.8-beta**.
+>
+> **v0.3.9-beta H2c RQG (2026-10-26):** `dev` markers are `0.3.9-beta`; live
+> Compose share / `main` stay **0.3.8-beta**. Pre-launch gate evidence:
+> [`VERIFICATION_GATE_REPORT.md`](./VERIFICATION_GATE_REPORT.md) /
+> [`RELEASE_EVIDENCE_PACK.md`](./RELEASE_EVIDENCE_PACK.md) /
+> [`../v0.3.9-beta/RQG_PRELAUNCH_EVIDENCE.md`](../v0.3.9-beta/RQG_PRELAUNCH_EVIDENCE.md).
+> Do **not** arm `CONFIRM_SWARM_0_3_9` from that pack alone.
 
 ## Current Readiness Summary (2026-09-02)
 
