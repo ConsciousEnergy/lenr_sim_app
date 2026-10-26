@@ -75,7 +75,13 @@ class SimulationWebSocket {
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         if (this.callbacks.onError) {
-          this.callbacks.onError(error);
+          // Opaque browser WS failures — treat as transport, never as physics proof/falsification.
+          this.callbacks.onError({
+            ...((error && typeof error === 'object') ? error : {}),
+            message:
+              'WebSocket connection failed (check VITE_API_URL / proxy for split-origin staging). ' +
+              'Not a scientific result.',
+          });
         }
       };
 

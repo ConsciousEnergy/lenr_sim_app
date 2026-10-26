@@ -31,6 +31,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Link as RouterLink } from 'react-router-dom';
 import { usePhysics } from '../../contexts/PhysicsContext';
 import { track } from '../../analytics/events';
+import { useMaintenanceHideRun } from '../../analytics/flags';
 import { buildTheoryConditions } from '../../utils/theoryConditions';
 import { claimTierMultiplier, CLAIM_TIERS } from '../../utils/theoryGovernance';
 import TheoryFidelityHonestySummary from './TheoryFidelityHonestySummary';
@@ -55,6 +56,7 @@ function TheoryTestbedCard({ parameters }) {
   } = usePhysics();
 
   const [isRunning, setIsRunning] = useState(false);
+  const maintenanceHideRun = useMaintenanceHideRun();
   const [runError, setRunError] = useState(null);
 
   useEffect(() => {
@@ -83,15 +85,24 @@ function TheoryTestbedCard({ parameters }) {
   );
 
   const handleRun = useCallback(async () => {
+    if (maintenanceHideRun) {
+      setRunError('Runs are temporarily unavailable (maintenance). Not a physics result.');
+      return;
+    }
     setIsRunning(true);
     setRunError(null);
     try {
       const result = await runTheories(conditions);
-      if (!result) setRunError('Theory run failed. Check that the backend is reachable.');
+      if (!result) {
+        setRunError(
+          'Theory run failed. Check that the backend is reachable (VITE_API_URL / CORS). ' +
+            'A failed request is not a scientific null result.',
+        );
+      }
     } finally {
       setIsRunning(false);
     }
-  }, [conditions, runTheories]);
+  }, [conditions, runTheories, maintenanceHideRun]);
 
   const topContributions = useMemo(() => {
     const perTheory = theoryResult?.per_theory || [];
@@ -203,10 +214,15 @@ function TheoryTestbedCard({ parameters }) {
             fullWidth
             startIcon={isRunning ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
             onClick={handleRun}
-            disabled={isRunning || enabledTheories.length === 0}
+            disabled={isRunning || enabledTheories.length === 0 || maintenanceHideRun}
+            data-testid="theory-testbed-run"
             sx={{ mb: 1 }}
           >
-            {isRunning ? 'Running pipeline...' : 'Run Selected Theories'}
+            {isRunning
+              ? 'Running pipeline...'
+              : maintenanceHideRun
+                ? 'Runs paused (maintenance)'
+                : 'Run Selected Theories'}
           </Button>
         </>
       )}

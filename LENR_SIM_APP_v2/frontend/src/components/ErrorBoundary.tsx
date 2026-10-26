@@ -1,6 +1,7 @@
 import React, { Component, ReactNode, ErrorInfo } from "react";
 import { Box, Paper, Typography, Button, Collapse, Alert, AlertTitle } from '@mui/material';
 import { Refresh as RefreshIcon, ExpandMore as ExpandMoreIcon, BugReport as BugIcon } from '@mui/icons-material';
+import { track } from '../analytics/events';
 
 interface ErrorBoundaryProps {
   fallback?: ReactNode;
@@ -32,6 +33,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
     this.setState({ errorInfo });
+    // Dimensional-only product analytics — never stack, props, or PII.
+    const name = error?.name || 'Error';
+    track.clientError({
+      error_kind: 'react_boundary',
+      error_name: String(name).slice(0, 64),
+      surface: 'app_shell',
+    });
   }
 
   handleReset = (): void => {

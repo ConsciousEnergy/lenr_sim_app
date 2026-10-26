@@ -2,10 +2,21 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import BetaNotice from './BetaNotice';
 
+jest.mock('../analytics/flags', () => {
+  const actual = jest.requireActual('../analytics/flags');
+  return {
+    ...actual,
+    useMaintenanceHideRun: jest.fn(() => false),
+  };
+});
+
+const { useMaintenanceHideRun } = require('../analytics/flags');
+
 const DISMISS_KEY = 'lenr-beta-notice-dismissed';
 
 beforeEach(() => {
   window.localStorage.removeItem(DISMISS_KEY);
+  useMaintenanceHideRun.mockReturnValue(false);
 });
 
 describe('BetaNotice', () => {
@@ -38,5 +49,16 @@ describe('BetaNotice', () => {
   it('does not show the API-unreachable alert when monitoring is off', () => {
     render(<BetaNotice monitorApi={false} />);
     expect(screen.queryByTestId('api-unreachable-alert')).not.toBeInTheDocument();
+  });
+
+  it('shows maintenance hide-run alert when the kill-switch flag is on', () => {
+    useMaintenanceHideRun.mockReturnValue(true);
+    render(<BetaNotice monitorApi={false} />);
+    expect(screen.getByTestId('maintenance-hide-run-alert')).toHaveTextContent(
+      /Runs temporarily unavailable/,
+    );
+    expect(screen.getByTestId('maintenance-hide-run-alert')).toHaveTextContent(
+      /not a physics result/,
+    );
   });
 });

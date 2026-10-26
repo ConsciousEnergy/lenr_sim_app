@@ -17,6 +17,15 @@ describe('resolveProductionApiBase', () => {
     expect(resolveProductionApiBase('https://beta.example.org/')).toBe('https://beta.example.org');
     expect(resolveProductionApiBase('http://127.0.0.1:8010')).toBe('http://127.0.0.1:8010');
   });
+
+  it('keeps staging split-origin api-staging absolute', () => {
+    expect(resolveProductionApiBase('https://api-staging.conscious.energy')).toBe(
+      'https://api-staging.conscious.energy',
+    );
+    expect(resolveProductionApiBase('https://api-staging.conscious.energy/')).toBe(
+      'https://api-staging.conscious.energy',
+    );
+  });
 });
 
 describe('dev/test base URL helpers', () => {
