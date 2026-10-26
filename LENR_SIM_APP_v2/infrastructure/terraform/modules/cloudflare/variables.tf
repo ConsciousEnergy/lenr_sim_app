@@ -54,3 +54,39 @@ variable "pages_hostname" {
     error_message = "pages_hostname must not be empty, @, or www."
   }
 }
+
+variable "enable_api_rate_limit" {
+  description = "Create host-scoped http_ratelimit ruleset for api + api-staging"
+  type        = bool
+  default     = true
+}
+
+variable "extra_api_rate_limit_hosts" {
+  description = "Additional FQDNs to include in the host-scoped API rate-limit expression"
+  type        = list(string)
+  default     = []
+}
+
+variable "api_rate_limit_period" {
+  description = "Rate-limit window seconds (Free plan: only 10 is entitled)"
+  type        = number
+  default     = 10
+}
+
+variable "api_rate_limit_requests_per_period" {
+  description = "Max requests per IP per period (~100/min ≈ 17/10s; default 20/10s)"
+  type        = number
+  default     = 20
+}
+
+variable "api_rate_limit_mitigation_timeout" {
+  description = "Seconds to block after rate-limit threshold (Cloudflare block action)"
+  type        = number
+  default     = 10
+}
+
+variable "enable_zone_waf" {
+  description = "Opt-in zone managed+custom WAF rulesets (default off; not part of host-scoped RL)"
+  type        = bool
+  default     = false
+}
