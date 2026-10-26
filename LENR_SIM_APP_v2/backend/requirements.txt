@@ -24,8 +24,9 @@ python-multipart==0.0.32
 pytest==9.1.1
 httpx==0.28.1
 pytest-asyncio==1.4.0
-python-jose[cryptography]==3.5.0
-passlib[bcrypt]==1.7.4
+# python-jose / passlib removed (unused; no from jose / passlib in app/).
+# Cleared transitive ecdsa PYSEC-2026-1325 and python-jose CVE/PYSEC advisories.
+# Re-add only with a real auth slice (prefer PyJWT), never as a silent pin.
 python-dotenv==1.2.4
 pydantic-settings==2.16.1
 aiofiles==24.1.0
