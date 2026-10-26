@@ -2,8 +2,8 @@
 # FastAPI ≥0.143 nests _IncludedRouter (no .path) in app.routes; prometheus-
 # fastapi-instrumentator 7.x reads route.path and 500s every instrumented request.
 # Bump only with Starlette 1 + instrumentator ≥8 (separate migration PR).
-fastapi==0.161.1
-starlette==0.52.1
+fastapi==0.128.0
+starlette==0.49.1
 uvicorn==0.30.6
 # Required for WebSocket upgrades (Live Stream Collapse). Bare uvicorn prints
 # "No supported WebSocket library detected" and the stream path 404s as HTTP GET.
@@ -15,7 +15,7 @@ numpy==1.26.4
 #   RuntimeError: Unable to configure default ndarray.__repr__
 # SciPy 1.16+ requires numpy>=2.0 — do not bump scipy without a coordinated
 # NumPy 2.x migration PR (Dependabot must not group that into minor-patch).
-scipy==1.18.1
+scipy==1.14.1
 sympy==1.14.0
 pyvista==0.49.1
 pandas==2.3.3
@@ -43,14 +43,14 @@ greenlet==3.5.6
 
 # Observability
 prometheus-client==0.26.0
-prometheus-fastapi-instrumentator==7.1.0
+prometheus-fastapi-instrumentator==7.0.0
 
 # Testing dependencies
 pytest-cov==7.1.0
 pytest-xdist==3.8.0
 pytest-benchmark==5.3.0
 # Matplotlib 3.11+ raises on empty pie wedges (test_combined_enhancement).
-matplotlib==3.11.2
+matplotlib==3.9.2
 snakeviz==2.2.2
 pytest-profiling==1.8.1
 pytest-html==4.2.0
