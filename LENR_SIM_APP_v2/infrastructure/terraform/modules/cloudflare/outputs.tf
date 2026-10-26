@@ -19,3 +19,13 @@ output "r2_simulations_bucket" {
   description = "R2 bucket name for simulation data"
   value       = cloudflare_r2_bucket.simulations.name
 }
+
+output "api_rate_limit_expression" {
+  description = "Cloudflare expression for host-scoped API rate limiting"
+  value       = var.enable_api_rate_limit ? "(${local.api_rate_limit_host_expression})" : null
+}
+
+output "api_rate_limit_ruleset_id" {
+  description = "Zone http_ratelimit ruleset id when enabled"
+  value       = var.enable_api_rate_limit ? cloudflare_ruleset.rate_limiting[0].id : null
+}

@@ -32,3 +32,8 @@ hostinger_vps_mode = "disabled"
 existing_vps_ipv4  = "31.220.55.113"
 manage_api_dns     = false
 # confirm_hostinger_create = "I_CREATE_NEW_VPS"
+
+# Host-scoped Cloudflare rate-limit (module defaults): api-staging + api hosts
+# only — never zone-wide path contains "/api/". Zone WAF stays off unless
+# enable_zone_waf is wired true at the root module. Edge RL only counts for
+# orange-cloud hosts; DNS-only api-staging stays Traefik-protected until proxied.
