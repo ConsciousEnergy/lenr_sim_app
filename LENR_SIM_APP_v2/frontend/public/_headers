@@ -1,3 +1,5 @@
+# SPA only: allow WP apex/www to embed. Do not set X-Frame-Options (SAMEORIGIN
+# would override frame-ancestors). API keeps DENY / frame-ancestors 'none'.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

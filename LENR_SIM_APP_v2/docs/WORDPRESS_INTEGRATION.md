@@ -1,22 +1,59 @@
 # WordPress Integration Guide
 
-**Version:** 0.3.6-beta  
-**Last Updated:** August 2026
+**Version:** 0.3.9-beta (docs; SPA host is live Compose 0.3.8 until Swarm cutover)  
+**Last Updated:** October 2026
 
 ---
 
 ## Overview
 
-This guide explains how to integrate the LENR Simulation App into a WordPress site at `www.conscious.energy`.
+This guide explains how to integrate the LENR Simulation App into the WordPress site at `https://conscious.energy` / `https://www.conscious.energy`.
+
+**SPA embed host (current):** `https://lenr-sim-beta.conscious.energy`  
+**Never iframe the marketing apex** `https://conscious.energy` — that host is WordPress, not the Sim SPA.  
+**Future optional host:** `https://app.conscious.energy` (after CNAME cutover).  
+**Never iframe the API** (`api.*` / backend origin).
+
+Compose → Swarm cutover may keep the same SPA hostname (`lenr-sim-beta.conscious.energy`); Traefik same-origin SPA+API does not require changing WordPress iframe `src` solely for that cutover.
+
+---
+
+## Preferred integration (until framing is verified)
+
+**Prefer a link-out** (menu / CTA / button) to `https://lenr-sim-beta.conscious.energy` until operators verify live response headers after Swarm (or after a Compose hotfix that ships the nginx framing change):
+
+- SPA must **not** send `X-Frame-Options: SAMEORIGIN` / `DENY` (legacy XFO can win over CSP allowlists).
+- SPA should send  
+  `Content-Security-Policy: frame-ancestors 'self' https://conscious.energy https://www.conscious.energy`
+- API must keep `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'`.
+
+Verify before relying on an iframe:
+
+```bash
+curl -sI https://lenr-sim-beta.conscious.energy/ | grep -iE 'x-frame-options|content-security-policy'
+```
+
+Expect: no blocking `X-Frame-Options`, and `frame-ancestors` listing the WordPress origins.
 
 ---
 
 ## Integration Options
 
-### Option 1: Iframe Embed (Recommended)
+### Option 1: Link-out (recommended now)
 
-**Live DNS note (2026-08-31):** `conscious.energy` apex is currently the WordPress.com marketing site. Do **not** iframe `https://conscious.energy` until the SPA lives on a Pages host. Iframe the Cloudflare Pages origin (or `app.conscious.energy` after that CNAME is cut over), never `api.conscious.energy`.
+Add a WordPress menu item or button:
 
+| Label | URL |
+|-------|-----|
+| Open LENR Simulation | `https://lenr-sim-beta.conscious.energy` |
+
+Optional future label target: `https://app.conscious.energy` once that host serves the SPA.
+
+---
+
+### Option 2: Iframe Embed (after framing verified)
+
+Use only after the header probe above succeeds. Iframe the **beta SPA host** (or future `app.`), never apex WordPress and never the API.
 
 #### Step 1: Create a New Page in WordPress
 
@@ -27,10 +64,10 @@ This guide explains how to integrate the LENR Simulation App into a WordPress si
 #### Step 2: Add the Embed Code
 
 ```html
-<!-- LENR Simulation App Embed -->
+<!-- LENR Simulation App Embed — SPA host only; never conscious.energy apex -->
 <div class="lenr-sim-wrapper" style="position: relative; width: 100%; padding-bottom: 75%; height: 0; overflow: hidden;">
   <iframe 
-    src="https://conscious.energy"
+    src="https://lenr-sim-beta.conscious.energy"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
     title="LENR Simulation Platform"
     allowfullscreen
@@ -61,7 +98,7 @@ This guide explains how to integrate the LENR Simulation App into a WordPress si
 For a dedicated simulation page without WordPress chrome:
 
 ```html
-<!-- Full Page LENR Sim -->
+<!-- Full Page LENR Sim — src must be the SPA host, not marketing apex -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,7 +121,7 @@ For a dedicated simulation page without WordPress chrome:
 </head>
 <body>
   <iframe 
-    src="https://conscious.energy" 
+    src="https://lenr-sim-beta.conscious.energy" 
     title="LENR Simulation Platform"
     allowfullscreen>
   </iframe>
@@ -94,26 +131,25 @@ For a dedicated simulation page without WordPress chrome:
 
 ---
 
-### Option 2: Subdomain Integration
+### Option 3: Subdomain Integration (`app.`)
 
-Point a subdomain to the React app while keeping WordPress on the main domain.
+Optional later: point `app.conscious.energy` at the SPA while WordPress stays on apex/`www`.
 
-#### DNS Configuration
+#### DNS Configuration (operator; not Terraform in this guide)
 
-Add these DNS records in Cloudflare:
-
-| Type | Name | Value | Proxy |
+| Type | Name | Value | Notes |
 |------|------|-------|-------|
-| CNAME | `app` | `lenr-sim-prod.pages.dev` | Yes |
-| CNAME | `www` | `conscious.energy` | Yes |
+| CNAME | `app` | SPA target (Pages or same host as beta after cutover) | Do **not** point apex away from WordPress in this flow |
+
+Compose → Swarm may keep `lenr-sim-beta` as the public SPA URL; `app.` is optional polish, not required for cutover.
 
 #### WordPress Menu Link
 
-Add a menu item linking to `https://app.conscious.energy`
+Prefer linking to `https://lenr-sim-beta.conscious.energy` now; switch menu to `https://app.conscious.energy` only after that host serves the SPA.
 
 ---
 
-### Option 3: WordPress Plugin (Advanced)
+### Option 4: WordPress Plugin (Advanced)
 
 Create a custom WordPress plugin for deeper integration.
 
@@ -157,7 +193,8 @@ class LENR_Sim_Integration {
             'page' => ''
         ), $atts);
         
-        $base_url = 'https://conscious.energy';
+        // SPA host only — never marketing apex https://conscious.energy
+        $base_url = 'https://lenr-sim-beta.conscious.energy';
         
         // Sanitize and validate page parameter to prevent path traversal and injection
         $page = isset($atts['page']) ? sanitize_text_field($atts['page']) : '';
@@ -213,43 +250,47 @@ new LENR_Sim_Integration();
 [lenr_sim page="theory-paper" width="100%" height="1200px"]
 ```
 
+Use shortcodes only after framing is verified; otherwise prefer Option 1 (link-out).
+
 ---
 
 ## Security Considerations
 
 ### CORS Configuration
 
-The backend is configured to allow requests from your WordPress domain:
+The backend should allow requests from the WordPress domain (and the SPA origin when browsers call the API):
 
 ```python
-# backend/app/core/config.py
+# backend/app/core/config.py (illustrative)
 CORS_ORIGINS = [
     "https://conscious.energy",
     "https://www.conscious.energy",
+    "https://lenr-sim-beta.conscious.energy",
 ]
 ```
 
-### Content Security Policy
+### Who may iframe the SPA
 
-Add to WordPress `.htaccess` or nginx config:
+Framing policy belongs on the **SPA** host (`nginx.frontend.conf` / Pages `_headers`), not on WordPress `.htaccess`:
 
-```apache
-# .htaccess
-<IfModule mod_headers.c>
-    Header set Content-Security-Policy "frame-ancestors 'self' https://conscious.energy https://www.conscious.energy"
-</IfModule>
+```
+Content-Security-Policy: frame-ancestors 'self' https://conscious.energy https://www.conscious.energy
 ```
 
-### X-Frame-Options (Legacy - Deprecated)
+Do **not** set `X-Frame-Options: SAMEORIGIN` or `DENY` on the SPA — those conflict with a CSP allowlist that includes WordPress.
 
-**Note:** The `X-Frame-Options: ALLOW-FROM` directive is deprecated and not supported by modern browsers. Use `Content-Security-Policy: frame-ancestors` instead (see above).
+### API must remain unframed
 
-For legacy browser compatibility, you may use:
-```
-X-Frame-Options: SAMEORIGIN
-```
+Backend `SecureHeadersMiddleware` keeps:
 
-However, the `Content-Security-Policy: frame-ancestors` header (configured above) is the recommended modern approach and provides better control over iframe embedding.
+- `X-Frame-Options: DENY`
+- CSP `frame-ancestors 'none'`
+
+Never embed `api.*` in WordPress.
+
+### X-Frame-Options (legacy)
+
+`ALLOW-FROM` is deprecated. Prefer CSP `frame-ancestors` on the SPA. Omit XFO on the SPA so the CSP allowlist can win.
 
 ---
 
@@ -317,12 +358,12 @@ Add `/lenr-simulation/` to "Never cache the following pages"
 
 ### Google Analytics
 
-Track simulation usage with events:
+Track simulation usage with events (postMessage `origin` must match the SPA host):
 
 ```javascript
 // Add to your WordPress theme
 window.addEventListener('message', function(event) {
-    if (event.origin !== 'https://conscious.energy') return;
+    if (event.origin !== 'https://lenr-sim-beta.conscious.energy') return;
     
     if (event.data.type === 'simulation_started') {
         gtag('event', 'simulation_started', {
@@ -339,9 +380,10 @@ window.addEventListener('message', function(event) {
 
 ### Iframe Not Loading
 
-1. Check browser console for CORS errors
-2. Verify `X-Frame-Options` header allows your domain
-3. Ensure HTTPS is used everywhere
+1. Prefer link-out until framing is verified post-Swarm (or Compose nginx hotfix)
+2. `curl -sI` the SPA: ensure **no** blocking `X-Frame-Options` and CSP `frame-ancestors` lists WordPress
+3. Confirm `src` is `https://lenr-sim-beta.conscious.energy` (or future `app.`), **not** apex `https://conscious.energy`
+4. Ensure HTTPS is used everywhere; never iframe the API
 
 ### Mobile Display Issues
 
@@ -356,8 +398,7 @@ window.addEventListener('message', function(event) {
 3. Consider preconnect hints:
 
 ```html
-<link rel="preconnect" href="https://conscious.energy">
-<link rel="dns-prefetch" href="https://api.conscious.energy">
+<link rel="preconnect" href="https://lenr-sim-beta.conscious.energy">
 ```
 
 ---
