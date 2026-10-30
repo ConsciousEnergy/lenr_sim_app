@@ -2,30 +2,33 @@
 
 **Advanced modeling and visualization of Low Energy Nuclear Reactions** *(research preview — model output, not laboratory measurement)*
 
-[![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
-[![Version](https://img.shields.io/badge/version-0.3.7--beta-blue.svg)](../CHANGELOG.md)
+[![Live share](https://img.shields.io/badge/live%20share-0.3.8--beta%20Compose-orange.svg)](https://lenr-sim-beta.conscious.energy)
+[![Cutover train](https://img.shields.io/badge/dev%20tip-0.3.9--beta-blue.svg)](../CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-> Looking for the project-level overview with screenshots? Start at the repository root [`README.md`](../README.md).
+> Looking for the project-level overview with screenshots and version trains? Start at the repository root [`README.md`](../README.md).
 
 ---
 
-## Current truth (v0.3.7-beta)
+## Current truth (live 0.3.8 Compose · tip 0.3.9 cutover)
 
 | Topic | Where |
 |-------|--------|
 | Agent / contributor map | Root [`AGENTS.md`](../AGENTS.md) |
-| Live Compose share | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) → https://lenr-sim-beta.conscious.energy |
-| Staging Swarm | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` — [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
-| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — dual KVM2 ≠ cutover |
+| Version trains | `main` = **0.3.8-beta** Compose live share; `dev` = **0.3.9-beta** cutover train — four markers must match within a branch |
+| Live Compose share | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) → https://lenr-sim-beta.conscious.energy (**still Compose** until 0.3.9 window) |
+| Staging Swarm (KVM1) | https://api-staging.conscious.energy — [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Topology diagram SOT | [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) |
+| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — dual KVM2 ≠ cutover; CI never Swarm |
 | Ops docs map | [`docs/v0.3.8-beta/README.md`](docs/v0.3.8-beta/README.md) |
-| Public Swarm + Pages | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` — [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Public Swarm cutover gate | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — operator confirm only; not armed from docs |
+| CF Pages (optional SPA) | `app.` / `app-staging` — marketing `conscious.energy` ≠ sim |
 | Self-hosted CI (`lenr-ci`) | [`docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md) |
 | Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) (`EQ-OPEN-*` stay OPEN) |
 
-**Cutover map:** Compose share (now) → staging Swarm (0.3.8 confirm) → public Swarm+Pages (0.3.9 confirm). Do not apply Swarm without the matching env confirm. Academic review is a parallel v0.3.7-beta track; CI/infra PRs must not rewrite those claims.
+**Cutover map:** Compose share (now, 0.3.8) → staging Swarm on KVM1 → public Swarm + Traefik on share+KVM1 worker (0.3.9 announced window). Do not apply public Swarm without the matching operator confirm. Academic review is a parallel track; CI/infra PRs must not rewrite those claims.
 
-## 🧭 Architecture & Onboarding (v0.3.7-beta)
+## 🧭 Architecture & Onboarding
 
 New to the codebase? Start with the curated maps below before diving into files.
 
@@ -42,7 +45,7 @@ New to the codebase? Start with the curated maps below before diving into files.
 - [`docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md) — canonical dev/prod ports (frontend `:3000`, backend `:8010`).
 - Scientific review & evidence: [`../docs/REVIEW_2026/`](../docs/REVIEW_2026) (citation standard, MeV-gap hypothesis, evidence matrices).
 
-**Deferred restructure backlog** (intentionally out of scope for v0.3.7-beta; tracked for a later, dedicated refactor pass so this release stays additive and low-risk):
+**Deferred restructure backlog** (intentionally out of scope for the public beta trains; tracked for a later, dedicated refactor pass so releases stay additive and low-risk):
 - Unify the mixed `.js`/`.jsx`/`.tsx` frontend file extensions onto a single convention.
 - Split oversized modules (`UnifiedTheoryPage.jsx`, `unified_simulation.py`) into smaller route/handler/util units (<300 lines per the project style rule).
 - Consolidate the legacy `electrolyte`-in-`lattice` fallback fields once all clients send the canonical top-level `electrolyte` object.
@@ -73,12 +76,12 @@ for the canonical port matrix.
 
 ---
 
-## 📊 Project Status (v0.3.7-beta)
+## 📊 Project Status
 
 ### Public beta research preview
 
-- Version markers: `0.3.7-beta` (see root [`CHANGELOG.md`](../CHANGELOG.md))
-- Live share: [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy)
+- Live share markers: **`0.3.8-beta`** Compose + Caddy at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy)
+- `dev` tip markers: **`0.3.9-beta`** (Swarm cutover train — not live until announced window)
 - Engine maturity chips and claim tiers are first-class; FEM remains aspirational on VPS
 - `lenr_proved` stays false; `EQ-OPEN-*` stay OPEN
 
