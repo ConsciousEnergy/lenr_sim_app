@@ -30,16 +30,20 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox:9115
 
-  # Public staging hostname (after Traefik ACME) — TLS path users hit
-  - job_name: lenr_api_staging_public
+  # Retired after 0.3.9 cutover: staging Swarm left; api-staging TLS correctly
+  # FAILs and must not page. Do not re-add lenr_api_staging_public unless
+  # staging Swarm is stood up again under CONFIRM_SWARM_0_3_8.
+
+  # Public prod API hostname (post-0.3.9 Swarm) — TLS path users hit
+  - job_name: lenr_api_public
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - https://api-staging.conscious.energy/api/health
+          - https://api.conscious.energy/api/health
         labels:
-          service: api-staging-public
+          service: api-public
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -48,7 +52,7 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox:9115
 
-  # Compose share (0.3.8) public health — stays useful until Swarm cutover
+  # Same-origin Traefik SPA/API on lenr-sim-beta (was Compose share; keep after cutover)
   - job_name: lenr_share_public
     metrics_path: /probe
     params:

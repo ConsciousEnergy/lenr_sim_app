@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Changed — mute api-staging blackbox after 0.3.9 cutover (BDS-52)
+- Removed Prometheus job `lenr_api_staging_public` (staging Swarm left; TLS
+  correctly FAILs). Added `lenr_api_public` → `https://api.conscious.energy/api/health`.
+- Kept overlay (`lenr_backend_health`) and share (`lenr_share_public`) probes.
+- Updated Grafana `LenrApiHealthDown` + Overview/Edge dashboards accordingly.
+- Roll live bind-mounts via rsync + `docker service update --force` on
+  prometheus/grafana — see `docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md`
+  (no cutover re-arm required).
+
 ### Changed — v0.3.9 H2c RQG + governance promote pack (2026-10-26)
 - Re-ran release-quality-gate on `dev` tip (markers `0.3.9-beta`): version
   consistency PASS; science+V&V **56** passed; full backend pytest **1170**

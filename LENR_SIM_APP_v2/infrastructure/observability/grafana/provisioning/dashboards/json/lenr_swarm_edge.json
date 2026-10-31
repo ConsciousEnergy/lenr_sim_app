@@ -12,14 +12,14 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
       "options": {
         "mode": "markdown",
-        "content": "## Traefik + blackbox\n\n- Overlay Traefik scrape `:8082` (not public)\n- Public: `api-staging.conscious.energy` + Compose share `lenr-sim-beta`\n- After 0.3.9 cutover, share host becomes Traefik SPA/API — keep this probe"
+        "content": "## Traefik + blackbox\n\n- Overlay Traefik scrape `:8082` (not public)\n- Public: `api.conscious.energy` + same-origin `lenr-sim-beta`\n- `api-staging` TLS probe **retired** after 0.3.9 cutover (staging Swarm left)"
       }
     },
     {
       "type": "stat",
-      "title": "api-staging probe",
+      "title": "api.conscious.energy probe",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 3 },
-      "targets": [{ "expr": "probe_success{job=\"lenr_api_staging_public\"}", "refId": "A" }],
+      "targets": [{ "expr": "probe_success{job=\"lenr_api_public\"}", "refId": "A" }],
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -73,7 +73,7 @@
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
       "targets": [
         {
-          "expr": "probe_duration_seconds{job=~\"lenr_backend_health|lenr_api_staging_public|lenr_share_public\"}",
+          "expr": "probe_duration_seconds{job=~\"lenr_backend_health|lenr_api_public|lenr_share_public\"}",
           "legendFormat": "{{job}}",
           "refId": "A"
         }
@@ -123,5 +123,5 @@
   "timezone": "browser",
   "title": "LENR-Sim Swarm Edge",
   "uid": "lenr-swarm-edge",
-  "version": 1
+  "version": 2
 }
