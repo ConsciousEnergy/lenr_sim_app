@@ -45,6 +45,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import { Link as RouterLink } from 'react-router-dom';
 import { usePhysics, TheoryContributionResult } from '../../contexts/PhysicsContext';
 import { track } from '../../analytics/events';
+import { useMaintenanceHideRun } from '../../analytics/flags';
 import {
   claimTierMultiplier,
   buildRegimeGateReason,
@@ -195,6 +196,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
   const [coupledMode, setCoupledMode] = useState(false);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [glossaryAnchor, setGlossaryAnchor] = useState<'evidence' | 'claim' | null>(null);
+  const maintenanceHideRun = useMaintenanceHideRun();
 
   const openGlossary = useCallback((anchor: 'evidence' | 'claim' | null) => {
     setGlossaryAnchor(anchor);
@@ -320,6 +322,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
 
   // Run theories with current conditions (coupled or independent)
   const handleRun = useCallback(() => {
+    if (maintenanceHideRun) return;
     if (conditions) {
       if (coupledMode) {
         runCoupledTheories(conditions);
@@ -327,7 +330,7 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
         runTheories(conditions);
       }
     }
-  }, [conditions, runTheories, runCoupledTheories, coupledMode]);
+  }, [conditions, runTheories, runCoupledTheories, coupledMode, maintenanceHideRun]);
 
   if (isLoadingTheories) {
     return (
@@ -423,11 +426,16 @@ const TheoryTogglePanel: React.FC<TheoryTogglePanelProps> = ({ conditions }) => 
         fullWidth
         startIcon={coupledMode ? <LinkIcon /> : <PlayArrowIcon />}
         onClick={handleRun}
-        disabled={!conditions || enabledTheories.length === 0}
+        disabled={!conditions || enabledTheories.length === 0 || maintenanceHideRun}
         color={coupledMode ? 'success' : 'primary'}
+        data-testid="theory-toggle-run"
         sx={{ mb: theoryResult?.per_theory?.length ? 1 : 2 }}
       >
-        {coupledMode ? 'Run Coupled Pipeline' : 'Run Selected Theories'}
+        {maintenanceHideRun
+          ? 'Runs paused (maintenance)'
+          : coupledMode
+            ? 'Run Coupled Pipeline'
+            : 'Run Selected Theories'}
       </Button>
 
       {/* Closes the loop: without a route back, users returned to Advanced Analysis

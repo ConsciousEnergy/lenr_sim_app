@@ -18,9 +18,19 @@ class ErrorBoundary extends Component {
     // Log the error to console
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
     this.setState({ errorInfo });
-    
-    // You could also log to an error reporting service here
-    // logErrorToService(error, errorInfo);
+
+    // Dimensional-only product analytics — never stack, props, or PII.
+    try {
+      // Lazy require keeps this legacy .jsx file free of circular init issues.
+      const { track } = require('../analytics/events');
+      track.clientError({
+        error_kind: 'react_boundary',
+        error_name: String(error?.name || 'Error').slice(0, 64),
+        surface: 'app_shell',
+      });
+    } catch (_) {
+      /* analytics must never break the UX */
+    }
   }
 
   render() {

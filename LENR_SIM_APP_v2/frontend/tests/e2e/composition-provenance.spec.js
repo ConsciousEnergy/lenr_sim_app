@@ -44,7 +44,7 @@ const THEORY_LIST_RESPONSE = [
  * must be reported as excluded.
  */
 const THEORY_RUN_RESPONSE = {
-  contract_version: 'v0.3.8-beta-science-gate-1',
+  contract_version: 'v0.3.9-beta-science-gate-1',
   combined_enhancement: 4200.0,
   combined_reaction_rate_modifier: 1.0,
   total_energy_watts: 0.2,

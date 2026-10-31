@@ -165,10 +165,29 @@ def cmd_attach_key(token: str, ipv4: str, key_name: str) -> int:
     vm_id = find_vm_id(vms, ipv4)
     print(f"VM_ID={vm_id}")
 
+    # Prefer non-deprecated VM ssh-keys endpoint (injects into root authorized_keys).
+    # Legacy public-keys/attach often no-ops on live KVMs.
+    print(f"==> POST /virtual-machines/{vm_id}/ssh-keys (inject root authorized_keys)")
+    injected = api(
+        "POST",
+        f"/api/vps/v1/virtual-machines/{vm_id}/ssh-keys",
+        token,
+        {"keys": [pubkey]},
+    )
+    print(json.dumps(injected)[:500] if not isinstance(injected, list) else f"keys_on_vm={len(injected)}")
+
+    print("==> Waiting for SSH auth (up to ~90s)")
+    for _ in range(12):
+        if ssh_ok(identity_path, ipv4):
+            print(f"OK: SSH authorized root@{ipv4}")
+            return 0
+        time.sleep(7)
+
+    # Fallback: account-level public key + deprecated attach
     keys = as_list(api("GET", "/api/vps/v1/public-keys", token))
     key_id = find_key_id(keys, pubkey, key_name)
     if key_id is None:
-        print(f"==> Creating public key {key_name!r}")
+        print(f"==> Creating account public key {key_name!r}")
         created = api(
             "POST",
             "/api/vps/v1/public-keys",
@@ -180,9 +199,7 @@ def cmd_attach_key(token: str, ipv4: str, key_name: str) -> int:
         if key_id is None:
             die(f"create pubkey failed: {created}", 5)
         key_id = int(key_id)
-    print(f"KEY_ID={key_id}")
-
-    print(f"==> Attaching key {key_id} to VM {vm_id}")
+    print(f"KEY_ID={key_id} — fallback attach")
     attach = api(
         "POST",
         f"/api/vps/v1/public-keys/attach/{vm_id}",
@@ -190,16 +207,13 @@ def cmd_attach_key(token: str, ipv4: str, key_name: str) -> int:
         {"ids": [key_id]},
     )
     print(json.dumps(attach)[:500])
-
-    print("==> Waiting for SSH auth (up to ~90s)")
-    for _ in range(12):
+    for _ in range(6):
         if ssh_ok(identity_path, ipv4):
-            print(f"OK: SSH authorized root@{ipv4}")
+            print(f"OK: SSH authorized root@{ipv4} (fallback attach)")
             return 0
         time.sleep(7)
     print(
-        "WARN: attach returned but SSH still denied; Hostinger may not inject "
-        "keys into live authorized_keys on this KVM — try Docker update or VNC",
+        "WARN: SSH still denied after ssh-keys + attach — use VNC keydrop",
         file=sys.stderr,
     )
     return 6

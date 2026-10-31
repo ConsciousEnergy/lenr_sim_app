@@ -16,9 +16,7 @@ regexes = [
   '''"citation_key":\s*"[A-Za-z0-9_\-]+"''',
   # hCaptcha public site keys are public by design (legacy saved HTML page).
   '''data-sitekey="[0-9a-f\-]{36}"''',
-  # WebSocket handshake nonces (RFC6455) — not credentials; historical curl
-  # probes embedded a sample Sec-WebSocket-Key (commit 0608f8ee). Tip on
-  # main never shipped that script; allowlist keeps full-history scan green.
+  # WebSocket handshake nonces (RFC6455) — not credentials; curl probes embed them.
   '''Sec-WebSocket-Key:\s*[A-Za-z0-9+/=]+''',
 ]
 paths = [

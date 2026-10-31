@@ -24,17 +24,17 @@ The CI `Backend dependency audit` step keeps `pip-audit` strict but ignores the 
 documented, upstream-constrained transitive advisories. Any *new* or *fixable* advisory still
 fails the build. Revisit each in the post-beta maintenance slice.
 
-| Package | Advisory IDs | Why not fixed in v0.3.6-beta |
+| Package | Advisory IDs | Why not fixed yet |
 |---|---|---|
-| `starlette 0.49.1` | PYSEC-2026-161, PYSEC-2026-248, PYSEC-2026-249, PYSEC-2026-2280, PYSEC-2026-2281 | Fix only in starlette `1.x`; blocked by `fastapi==0.128.0` pin (`starlette<0.51.0`). Requires a coordinated FastAPI major upgrade. |
-| `vtk 9.4.2` | PYSEC-2025-224, PYSEC-2025-225, PYSEC-2025-226 | Transitive via `pyvista`; fix in `vtk 9.5.1`. Deferred pending PyVista rendering revalidation. |
-| `ecdsa 0.19.2` | PYSEC-2026-1325 | Transitive via `python-jose[cryptography]`; no upstream fix released. Track `python-jose` replacement. |
-| `python-jose 3.5.0` | CVE-2026-85394 | No PyPI release newer than `3.5.0` (2026-10-06). Track PyJWT (or drop unused jose) in a dedicated maintenance slice — not a silent pin bump. |
+| `starlette 0.49.1` | PYSEC-2026-161, PYSEC-2026-248, PYSEC-2026-249, PYSEC-2026-2280, PYSEC-2026-2281 | Fix only in starlette `1.x`; needs FastAPI ≥0.133.1 + `prometheus-fastapi-instrumentator` ≥8 (app pinned `fastapi==0.128.0` / instrumentator 7.x for science-gate stability). Dedicated migration PR. |
+| `vtk` (via pyvista) | PYSEC-2025-224, PYSEC-2025-225, PYSEC-2025-226 | Transitive via `pyvista`; fix needs vtk bump + rendering revalidation. |
+
+**Cleared (H2 / 0.3.9-beta train):** removed unused `python-jose[cryptography]` and `passlib[bcrypt]` from `requirements.txt` (no `from jose` / `passlib` imports in `app/`). That drops transitive `ecdsa` (`PYSEC-2026-1325`) and `python-jose` (`CVE-2026-85394` / OSV alias `PYSEC-2026-4298`). Re-add auth deps only with a real auth slice (prefer PyJWT).
 
 ## Residual Risk Policy
 - Release-blocking: any high/critical vulnerability, and any *new* or *fixable* backend advisory.
 - Accepted temporarily (with tracking): the backend transitive advisories tabled above (upstream-constrained), documented and ignored explicitly in the CI `pip-audit` step.
-- Follow-up: coordinated FastAPI/Starlette major upgrade, `vtk 9.5.1` via PyVista revalidation, and `python-jose` replacement (clears PYSEC-2026-1325 + CVE-2026-85394) in a dedicated post-beta maintenance slice.
+- Follow-up: coordinated FastAPI/Starlette 1.x + instrumentator ≥8 upgrade, and `vtk` via PyVista revalidation.
 - Scheduled `security-scan.yml` uses the **same** `pip-audit` ignore list and `node scripts/audit-high-gate.js` as PR `test.yml` (SEC-015 alignment, 2026-10-06).
 - Dependency Review targets high severity for PRs into `main`, `development`, and `lenr_sim_app_v0.3.6-beta`. It currently uses `continue-on-error: true` because Dependency graph / GitHub Advanced Security is not enabled on this repository (the action otherwise fails with "Dependency review is not supported"). Once Dependency graph + GHAS are enabled under Settings → Code security and analysis, remove `continue-on-error` so the check becomes a hard blocker again.
 - Frontend `npm audit --audit-level=high` is a hard CI gate; residual **moderate** `react-router` / `react-router-dom` advisories are tracked for a coordinated upgrade.

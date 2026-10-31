@@ -40,6 +40,13 @@ http:
         accessControlAllowOriginList:
           - "https://{{ app_domain }}"
           - "https://www.{{ app_domain }}"
+          - "https://{{ api_subdomain }}.{{ app_domain }}"
+{% for _h in (traefik_spa_hosts | default([])) %}
+          - "https://{{ _h }}"
+{% endfor %}
+{% for _o in (cors_extra_origins | default([])) %}
+          - "{{ _o }}"
+{% endfor %}
         accessControlMaxAge: 3600
         addVaryHeader: true
         

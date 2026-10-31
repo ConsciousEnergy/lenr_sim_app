@@ -19,6 +19,41 @@ They are retained for cutover prep; they are not the v0.3.7 public-beta ship pat
 
 ## Scripts
 
+### swarm-039-* cutover scripts
+
+v0.3.9 public cutover path. Prep/barcode/window-card are read-only; the executor
+never sets `CONFIRM_SWARM_0_3_9` (human-armed).
+
+| Script | Role |
+|--------|------|
+| `swarm-039-cutover-prep.sh` | Read-only prerequisites (+ stack render assert) |
+| `swarm-039-assert-prod-stack-render.sh` | Render prod stack; assert postgres pin / SPA PathPrefix |
+| `swarm-039-prestage-images.sh` | Rsync+build `:0.3.9-beta` on share, load → KVM1 (no drain/Swarm) |
+| `swarm-039-readiness-barcode.sh` | Prep + topology + version markers |
+| `swarm-039-cutover-window-card.sh` | Operator card: evidence + arming commands |
+| `swarm-039-cutover.sh` | Live cutover (confirm + `EXECUTE=1`) |
+| `swarm-039-post-cutover-verify.sh` | Post-apply topology/health evidence |
+| `swarm-039-restore-compose.sh` | Mid-window abort → Compose restore (+ KVM1 leave) |
+
+See [`../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../../docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
+
+### staging-swarm-dry-run.sh
+
+Local CI gate (no cloud creds): confirm-string exits, `terraform validate`,
+staging ansible syntax-check, and **prod** `inventory.yml.example` stack render
+invariants (postgres pin, external volume, SPA `PathPrefix(/api)`). Remote mode
+needs `CONFIRM_SWARM_0_3_8` + `EXECUTE=1` + staging credentials.
+
+```bash
+./staging-swarm-dry-run.sh local
+```
+
+### unclog-lenr-ci.sh
+
+Recover wedged dedicated runner `2012566` / `45.93.100.251` (Hostinger restart,
+SSH key attach, verify `Listening for Jobs`). Never touches Compose share
+`1280333`. See [`../../docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../../docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
+
 ### deploy.sh
 
 Full deployment script that orchestrates Terraform, Ansible, and Docker Swarm.

@@ -177,6 +177,21 @@ If GitHub shows a long **queued** backlog with **zero** `in_progress` jobs on
 2. If SSH is unavailable, Hostinger-restart **only** VM `2012566` — never the
    Compose share `1280333`. After reboot, confirm the service is `Listening`
    (a bare reboot can reconnect with a stale session and still not claim jobs).
+3. Agent helper (API restart + pubkey attach + verify Listening):
+
+```bash
+# From repo root; never touches share 1280333
+HOSTINGER_API_TOKEN=... CI_SSH_KEY=~/.ssh/lenr-sim-share \
+  RESTART=1 ./LENR_SIM_APP_v2/infrastructure/scripts/unclog-lenr-ci.sh
+```
+
+Hostinger API (developers.hostinger.com):
+
+| Action | Call |
+|--------|------|
+| Restart CI VM | `POST /api/vps/v1/virtual-machines/2012566/restart` |
+| Attach agent pubkey | `POST .../2012566/ssh-keys` body `{"keys":["ssh-ed25519 AAAA... comment"]}` |
+| List VMs | `GET /api/vps/v1/virtual-machines` |
 
 ## Workflow wiring
 

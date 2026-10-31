@@ -22,11 +22,15 @@ LENR_SIM_APP_v2/frontend/LENR_SIM_APP_v2/
 
 # Terraform / Ansible operator files (real tokens, live inventory)
 **/terraform.tfvars
+**/staging.tfvars
 **/backend.hcl
 # Local Swarm staging inventory (may contain real IPs) — never commit
 **/ansible/inventory.staging.yml
 **/ansible/inventory.prod.yml
 **/inventory.yml
+# Swarm deploy.sh generated DB password (never commit)
+LENR_SIM_APP_v2/infrastructure/scripts/.secrets.env
+**/.secrets.env
 
 # VPS runtime env (never commit a filled copy)
 LENR_SIM_APP_v2/infrastructure/vps/.env

@@ -17,12 +17,15 @@
         owner: root
         group: root
         
+    # check_mode: false — shell is skipped in --check otherwise, which hides
+    # whether Compose/Swarm postgres is discoverable (STAGING_SWARM_DRY_RUN #7).
     - name: Find PostgreSQL container
       ansible.builtin.shell: |
         docker ps -q -f name=lenr-sim_postgres
       register: postgres_container
       changed_when: false
-      
+      check_mode: false
+
     - name: Create database backup
       ansible.builtin.shell: |
         set -o pipefail
@@ -34,47 +37,56 @@
         executable: /bin/bash
       when: postgres_container.stdout is defined and postgres_container.stdout != ""
       register: backup_result
-      
+
     - name: Set secure permissions on backup file
       ansible.builtin.file:
         path: "{{ backup_dir }}/lenr_sim_{{ timestamp }}.sql.gz"
         mode: '0600'
         owner: root
         group: root
-      when: backup_result is defined and backup_result.rc == 0
-      
+      when: >
+        backup_result is defined
+        and backup_result is not skipped
+        and (backup_result.rc | default(1)) == 0
+
     - name: Clean up old backups
       ansible.builtin.find:
         paths: "{{ backup_dir }}"
         patterns: "*.sql.gz"
-        age: "+{{ backup_retention_days | default(7) }}d"
+        age: "{{ backup_retention_days | default(7) }}d"
       register: old_backups
-      
+
     - name: Remove old backup files
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ old_backups.files }}"
       when: old_backups.matched > 0
-      
+
     - name: List recent backups
       ansible.builtin.shell: |
         ls -lh {{ backup_dir }}/*.sql.gz 2>/dev/null | tail -5 || true
       register: backup_list
       changed_when: false
       failed_when: false
-      
+      check_mode: false
+
+    # Skipped register results have no .rc — guard before access (--check / no container).
     - name: Display backup information
       ansible.builtin.debug:
         msg: |
-          {% if backup_result is defined and backup_result.rc == 0 %}
+          {% if backup_result is defined
+               and backup_result is not skipped
+               and (backup_result.rc | default(1)) == 0 %}
           Backup complete!
-          
+
           Recent backups:
           {{ backup_list.stdout if backup_list.stdout else 'No backups found' }}
-          
+
           Backup location: {{ backup_dir }}
           {% else %}
-          Backup skipped or failed. Check logs for details.
+          Backup skipped or failed (check mode skips pg_dump; or no postgres container).
           Backup location: {{ backup_dir }}
+          Recent backups:
+          {{ backup_list.stdout if (backup_list is defined and backup_list.stdout) else 'No backups found' }}
           {% endif %}

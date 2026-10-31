@@ -2,10 +2,12 @@
 # LENR Simulation App - Full Deployment Script (Swarm / Terraform / Ansible)
 # Usage: ./deploy.sh [production|staging] [--app-only]
 #
-# v0.3.7-beta: public beta ships Hostinger VPS Compose + Caddy (see ../vps/).
+# v0.3.7-beta / Compose share: infrastructure/vps/ (not this script).
 # Swarm/Pages public cutover target is v0.3.9-beta.
-# Staging dry-runs in 0.3.8 may use CONFIRM_SWARM_0_3_8; production cutover
-# requires CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 (see docs/v0.3.8-beta/SWARM_PAGES_CUTOVER_PREP.md).
+# Staging (0.3.8): CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
+# Production:     CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
+#
+# Staging uses inventory.staging.yml + staging.tfvars (never prod inventory/tfvars).
 
 set -euo pipefail
 
@@ -31,8 +33,12 @@ Public Compose share must remain on infrastructure/vps/scripts/.
 EOF
     exit 2
   fi
-elif [[ "$_confirm_039" != "I_CUTOVER_0_3_9" ]]; then
-  cat >&2 <<'EOF'
+  INVENTORY_FILE="$ANSIBLE_DIR/inventory.staging.yml"
+  TFVARS_FILE="$TERRAFORM_DIR/staging.tfvars"
+  TF_WORKSPACE="staging"
+elif [[ "$ENVIRONMENT" == "production" ]]; then
+  if [[ "$_confirm_039" != "I_CUTOVER_0_3_9" ]]; then
+    cat >&2 <<'EOF'
 ERROR: production Swarm/Pages cutover is gated for v0.3.9-beta.
 
 Public beta Compose path:
@@ -41,15 +47,35 @@ Public beta Compose path:
 Staging dry-run (0.3.8):
   CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./deploy.sh staging
 
-Production multi-node cutover (0.3.9 target):
-  CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./deploy.sh production
+Production multi-node cutover (0.3.9 target) — use the cutover executor
+(drain Compose, leave staging, import .env secrets, join worker):
+  CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 EXECUTE=1 \
+    ./infrastructure/scripts/swarm-039-cutover.sh
 EOF
+    exit 2
+  fi
+  # Do NOT run Terraform + random POSTGRES_PASSWORD against the live share.
+  # That path skips drain/leave/secret-import and breaks postgres_volume_external.
+  cat <<EOF
+==========================================
+Production cutover → swarm-039-cutover.sh
+==========================================
+Delegating (CONFIRM set). Set EXECUTE=0 for dry-run plan only.
+EOF
+  export CONFIRM_SWARM_0_3_9="$_confirm_039"
+  export EXECUTE="${EXECUTE:-1}"
+  exec "$SCRIPT_DIR/swarm-039-cutover.sh"
+else
+  echo "ERROR: ENVIRONMENT must be staging or production (got: $ENVIRONMENT)" >&2
   exit 2
 fi
 
 echo "=========================================="
 echo "LENR Simulation App Deployment"
 echo "Environment: $ENVIRONMENT"
+echo "Inventory:   $INVENTORY_FILE"
+echo "Tfvars:      $TFVARS_FILE"
+echo "Workspace:   $TF_WORKSPACE"
 echo "=========================================="
 
 # Colors for output
@@ -61,27 +87,37 @@ NC='\033[0m' # No Color
 # Check prerequisites
 check_prerequisites() {
     echo -e "${YELLOW}Checking prerequisites...${NC}"
-    
+
     if ! command -v terraform &> /dev/null; then
         echo -e "${RED}Error: terraform not found. Please install Terraform >= 1.5.0${NC}"
         exit 1
     fi
-    
+
     if ! command -v ansible-playbook &> /dev/null; then
         echo -e "${RED}Error: ansible-playbook not found. Please install Ansible >= 2.15${NC}"
         exit 1
     fi
-    
-    if [ ! -f "$TERRAFORM_DIR/terraform.tfvars" ]; then
-        echo -e "${RED}Error: terraform.tfvars not found. Copy from terraform.tfvars.example${NC}"
+
+    if [ ! -f "$TFVARS_FILE" ]; then
+        echo -e "${RED}Error: $TFVARS_FILE not found.${NC}"
+        if [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo -e "${RED}Copy from staging.tfvars.example (do not commit).${NC}"
+        else
+            echo -e "${RED}Copy from terraform.tfvars.example (do not commit).${NC}"
+        fi
         exit 1
     fi
-    
-    if [ ! -f "$ANSIBLE_DIR/inventory.yml" ]; then
-        echo -e "${RED}Error: inventory.yml not found. Copy from inventory.yml.example${NC}"
+
+    if [ ! -f "$INVENTORY_FILE" ]; then
+        echo -e "${RED}Error: $INVENTORY_FILE not found.${NC}"
+        if [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo -e "${RED}Copy from inventory.staging.yml.example (do not commit).${NC}"
+        else
+            echo -e "${RED}Copy from inventory.yml.example (do not commit).${NC}"
+        fi
         exit 1
     fi
-    
+
     echo -e "${GREEN}Prerequisites check passed${NC}"
 }
 
@@ -91,14 +127,25 @@ provision_infrastructure() {
         echo -e "${YELLOW}Skipping infrastructure provisioning (--app-only flag)${NC}"
         return
     fi
-    
+
     echo -e "${YELLOW}Provisioning infrastructure with Terraform...${NC}"
     cd "$TERRAFORM_DIR"
-    
-    terraform init
-    terraform plan -out=tfplan
+
+    if [ -f "$TERRAFORM_DIR/backend.hcl" ]; then
+        terraform init -backend-config=backend.hcl -input=false
+    else
+        terraform init -input=false
+    fi
+
+    if [[ "$TF_WORKSPACE" != "default" ]]; then
+        terraform workspace select "$TF_WORKSPACE" 2>/dev/null || terraform workspace new "$TF_WORKSPACE"
+    else
+        terraform workspace select default 2>/dev/null || true
+    fi
+
+    terraform plan -var-file="$TFVARS_FILE" -out=tfplan
     terraform apply tfplan
-    
+
     # Get VPS IP from output and validate
     VPS_IP=$(terraform output -raw vps_ip || echo "")
     if [ -z "$VPS_IP" ]; then
@@ -107,25 +154,33 @@ provision_infrastructure() {
     fi
     export VPS_IP
     echo -e "${GREEN}Infrastructure provisioned. VPS IP: $VPS_IP${NC}"
-    
-    # Update Ansible inventory with VPS IP (use temp file to avoid modifying repo)
-    echo -e "${YELLOW}Updating Ansible inventory...${NC}"
+
+    # Update a *working copy* of inventory (never rewrite operator's source file in-place
+    # when ansible_host is already set — sed only patches STAGING_MANAGER_IP / placeholders).
+    echo -e "${YELLOW}Patching inventory ansible_host placeholders if present...${NC}"
     INVENTORY_TEMP=$(mktemp)
-    sed "s/ansible_host:.*/ansible_host: $VPS_IP/" "$ANSIBLE_DIR/inventory.yml" > "$INVENTORY_TEMP"
-    mv "$INVENTORY_TEMP" "$ANSIBLE_DIR/inventory.yml"
+    sed -E "s/(ansible_host:[[:space:]]*)(STAGING_MANAGER_IP|STAGING_WORKER_IP|VPS_IP|CHANGE_ME)/\\1${VPS_IP}/" \
+      "$INVENTORY_FILE" > "$INVENTORY_TEMP"
+    # Only replace if sed changed something; keep original path for ansible -i
+    if ! cmp -s "$INVENTORY_FILE" "$INVENTORY_TEMP"; then
+        mv "$INVENTORY_TEMP" "$INVENTORY_FILE"
+        echo -e "${YELLOW}Updated placeholder host(s) in $INVENTORY_FILE${NC}"
+    else
+        rm -f "$INVENTORY_TEMP"
+    fi
 }
 
 # Configure server with Ansible
 configure_server() {
     echo -e "${YELLOW}Configuring server with Ansible...${NC}"
     cd "$ANSIBLE_DIR"
-    
+
     # Test connection with retry loop
     echo -e "${YELLOW}Testing Ansible connection (with retries)...${NC}"
     MAX_RETRIES=10
     RETRY_COUNT=0
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if ansible all -i inventory.yml -m ping > /dev/null 2>&1; then
+        if ansible all -i "$INVENTORY_FILE" -m ping > /dev/null 2>&1; then
             echo -e "${GREEN}✓ Ansible connection successful${NC}"
             break
         fi
@@ -138,10 +193,11 @@ configure_server() {
             exit 1
         fi
     done
-    
-    # Setup Docker
-    ansible-playbook -i inventory.yml playbooks/setup-docker.yml
-    
+
+    # Setup Docker + Swarm init on managers; join workers + labels
+    ansible-playbook -i "$INVENTORY_FILE" playbooks/setup-docker.yml
+    ansible-playbook -i "$INVENTORY_FILE" playbooks/join-workers.yml
+
     echo -e "${GREEN}Server configuration complete${NC}"
 }
 
@@ -149,14 +205,14 @@ configure_server() {
 deploy_stack() {
     echo -e "${YELLOW}Deploying application stack...${NC}"
     cd "$ANSIBLE_DIR"
-    
+
     # Load or generate PostgreSQL password
     if [ -f "$SECRETS_FILE" ]; then
         echo -e "${YELLOW}Loading secrets from $SECRETS_FILE${NC}"
         # shellcheck source=/dev/null
         source "$SECRETS_FILE"
     fi
-    
+
     if [ -z "${POSTGRES_PASSWORD:-}" ]; then
         # Generate shell-safe password (hex avoids +/=/ characters)
         POSTGRES_PASSWORD=$(openssl rand -hex 32)
@@ -171,44 +227,65 @@ deploy_stack() {
         chmod 600 "$SECRETS_FILE"
         echo -e "${YELLOW}⚠ IMPORTANT: Save this password securely! File: $SECRETS_FILE${NC}"
     fi
-    
+
     # Deploy stack using extra-vars file to avoid command-line exposure
     EXTRA_VARS_FILE=$(mktemp)
     {
         echo "postgres_password: '$POSTGRES_PASSWORD'"
     } > "$EXTRA_VARS_FILE"
     chmod 600 "$EXTRA_VARS_FILE"
-    
-    ansible-playbook -i inventory.yml playbooks/deploy-stack.yml \
+
+    ansible-playbook -i "$INVENTORY_FILE" playbooks/deploy-stack.yml \
         --extra-vars "@$EXTRA_VARS_FILE"
-    
+
     # Clean up temp file
     rm -f "$EXTRA_VARS_FILE"
-    
+
     echo -e "${GREEN}Application stack deployed${NC}"
+}
+
+# Resolve a health base URL without requiring Terraform state (--app-only / local).
+resolve_health_base_url() {
+    if [[ -n "${DEPLOY_HEALTH_URL:-}" ]]; then
+        echo "${DEPLOY_HEALTH_URL}"
+        return 0
+    fi
+    if [[ "$ENVIRONMENT" == "staging" ]]; then
+        # Staging bootstrap TLS host (inventory traefik_acme_bootstrap_host).
+        echo "${STAGING_HEALTH_URL:-https://api-staging.31.220.55.113.sslip.io}"
+        return 0
+    fi
+    echo "${LIVE_COMPOSE_URL:-https://lenr-sim-beta.conscious.energy}"
 }
 
 # Verify deployment
 verify_deployment() {
     echo -e "${YELLOW}Verifying deployment...${NC}"
-    
-    # Get API URL from Terraform output
-    cd "$TERRAFORM_DIR"
-    API_URL=$(terraform output -raw api_url || echo "")
-    if [ -z "$API_URL" ]; then
-        echo -e "${RED}Error: Failed to get API URL from Terraform output${NC}"
-        return 1
+
+    local API_URL=""
+    if [[ "$APP_ONLY" != "--app-only" ]]; then
+        cd "$TERRAFORM_DIR"
+        API_URL=$(terraform output -raw api_url 2>/dev/null || echo "")
     fi
-    
+    if [[ -z "$API_URL" ]]; then
+        API_URL="$(resolve_health_base_url)"
+        echo -e "${YELLOW}Using inventory/env health URL (no Terraform api_url): ${API_URL}${NC}"
+    fi
+
     echo "Waiting for services to start..."
-    
+
     # Retry health check with polling
     MAX_RETRIES=30
     RETRY_COUNT=0
     HEALTH_CHECK_PASSED=false
-    
+    # Staging sslip often needs -k until SANs settle; production should be strict.
+    CURL_INSECURE=()
+    if [[ "$ENVIRONMENT" == "staging" || "${DEPLOY_HEALTH_INSECURE:-0}" == "1" ]]; then
+        CURL_INSECURE=(-k)
+    fi
+
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if curl -f -s --connect-timeout 5 --max-time 10 "$API_URL/api/health" > /dev/null 2>&1; then
+        if curl -f -s "${CURL_INSECURE[@]}" --connect-timeout 5 --max-time 10 "$API_URL/api/health" > /dev/null 2>&1; then
             echo -e "${GREEN}✓ API health check passed${NC}"
             HEALTH_CHECK_PASSED=true
             break
@@ -219,20 +296,24 @@ verify_deployment() {
             sleep 10
         fi
     done
-    
+
     if [ "$HEALTH_CHECK_PASSED" = false ]; then
         echo -e "${RED}✗ API health check failed after $MAX_RETRIES attempts${NC}"
         return 1
     fi
-    
-    # Check SSL certificate validity
-    echo -e "${YELLOW}Verifying SSL certificate...${NC}"
-    if echo | openssl s_client -servername "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1)" -connect "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1):443" 2>/dev/null | openssl x509 -noout -dates > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ SSL certificate valid${NC}"
+
+    # Check SSL certificate validity (skip when using insecure staging probe)
+    if [[ ${#CURL_INSECURE[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}Verifying SSL certificate...${NC}"
+        if echo | openssl s_client -servername "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1)" -connect "$(echo "$API_URL" | sed 's|https\?://||' | cut -d'/' -f1):443" 2>/dev/null | openssl x509 -noout -dates > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ SSL certificate valid${NC}"
+        else
+            echo -e "${YELLOW}⚠ SSL certificate validation failed (may still be provisioning)${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠ SSL certificate validation failed (may still be provisioning)${NC}"
+        echo -e "${YELLOW}⚠ Skipping strict SSL verify (staging / DEPLOY_HEALTH_INSECURE)${NC}"
     fi
-    
+
     echo -e "${GREEN}Deployment verification complete${NC}"
 }
 
@@ -243,16 +324,21 @@ main() {
     configure_server
     deploy_stack
     verify_deployment
-    
+
     echo ""
     echo -e "${GREEN}=========================================="
     echo "Deployment Complete!"
     echo "==========================================${NC}"
-    
-    cd "$TERRAFORM_DIR"
-    echo "Frontend URL: $(terraform output -raw frontend_url)"
-    echo "API URL: $(terraform output -raw api_url)"
-    echo "VPS IP: $(terraform output -raw vps_ip)"
+
+    if [[ "$APP_ONLY" == "--app-only" ]]; then
+        echo "Health URL: $(resolve_health_base_url)"
+        echo "(--app-only: skipped Terraform frontend/api/vps outputs)"
+    else
+        cd "$TERRAFORM_DIR"
+        echo "Frontend URL: $(terraform output -raw frontend_url)"
+        echo "API URL: $(terraform output -raw api_url)"
+        echo "VPS IP: $(terraform output -raw vps_ip)"
+    fi
 }
 
 main "$@"

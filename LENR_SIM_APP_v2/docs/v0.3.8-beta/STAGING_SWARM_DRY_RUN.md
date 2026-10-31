@@ -12,6 +12,16 @@
 CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 ./infrastructure/scripts/deploy.sh staging
 ```
 
+`deploy.sh staging` requires **staging** credentials only:
+
+| File | Source example |
+|------|----------------|
+| `infrastructure/ansible/inventory.staging.yml` | `inventory.staging.yml.example` |
+| `infrastructure/terraform/staging.tfvars` | `staging.tfvars.example` |
+| `infrastructure/terraform/backend.hcl` | `backend.hcl.example` (optional for remote state) |
+
+Do **not** point staging apply at prod `inventory.yml` / `terraform.tfvars`.
+
 Production path requires a different variable (**do not set from staging docs PRs**):
 
 ```bash
@@ -20,9 +30,7 @@ CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9 ./infrastructure/scripts/deploy.sh productio
 
 ## Agent-executed checks (this branch)
 
-Re-verified **2026-10-04T15:48:57Z** via helper on `main` tip `695a882`
-(Terraform 1.9.8, Ansible present), and enforced in CI by the
-`staging-swarm-dry-run` job in `.github/workflows/test.yml` (local mode only):
+Local helper (CI `staging-swarm-dry-run` job in `.github/workflows/test.yml`):
 
 ```bash
 ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh local
@@ -32,16 +40,17 @@ Re-verified **2026-10-04T15:48:57Z** via helper on `main` tip `695a882`
 |-------|--------|
 | `deploy.sh production` (no confirm) | Exit **2** — requires `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` |
 | `deploy.sh staging` (no/wrong confirm) | Exit **2** — requires `I_STAGING_0_3_8` |
-| `ansible-playbook --syntax-check` `deploy-stack.yml` / `site.yml` | OK (uses `inventory.staging.yml.example` when real inventory absent) |
+| `ansible-playbook --syntax-check` `setup-docker` / `join-workers` / `deploy-stack` / `site` | OK (uses `inventory.staging.yml.example` when real inventory absent) |
+| Prod inventory syntax-check + stack render | Renders `docker-stack.yml.j2` from `inventory.yml.example`; asserts `postgres=true` pin, external `lenr-sim_postgres_data`, SPA `PathPrefix(/api)` + `lenr-sim-beta` host; refuses CI IP in inventory |
 | `terraform init -backend=false` + `terraform validate` | **Success** (config valid; no credentials / no apply) |
-| CI `staging-swarm-dry-run` job | Runs the local helper on every PR/push to `main` |
-| Remote Cloudflare/Hostinger `terraform plan` | **Not executed** — needs `backend.hcl` + `staging.tfvars` |
-| Ansible `--check` against staging inventory | **Not executed** — needs `inventory.staging.yml` + SSH |
-| Evidence | `/opt/cursor/artifacts/staging_swarm_local_dry_run_2026-10-04.log` |
+| CI `staging-swarm-dry-run` job | Runs the local helper on infra path changes |
+| Remote Cloudflare/Hostinger `terraform plan` | **Operator** — needs `backend.hcl` + `staging.tfvars` |
+| Ansible `--check` against staging inventory | **Operator** — needs `inventory.staging.yml` + SSH to KVM1 |
+| Swarm apply / public cutover | **Not** performed by agents without explicit ask |
 
 Operator unlock for remote plan/check: [`FULL_STACK_BUILD_UNLOCK.md`](FULL_STACK_BUILD_UNLOCK.md).
 
-## Operator remaining steps
+## Operator remaining steps — remote dry-run (B1)
 
 Preferred helper (credentials on operator/agent machine, **plan + check only**):
 
@@ -50,25 +59,74 @@ Preferred helper (credentials on operator/agent machine, **plan + check only**):
 #   infrastructure/terraform/backend.hcl          ← backend.hcl.example
 #   infrastructure/terraform/staging.tfvars       ← staging.tfvars.example
 #   infrastructure/ansible/inventory.staging.yml  ← inventory.staging.yml.example
-CONFIRM=I_STAGING_0_3_8 EXECUTE=1 \
+#   (manager IP = KVM1 31.220.55.113 — never CI / never blind share promote)
+CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 EXECUTE=1 \
   ./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-dry-run.sh remote
 ```
 
-Manual equivalent:
+Legacy alias `CONFIRM=I_STAGING_0_3_8` is still accepted by the helper.
 
-1. On operator machine with Cloudflare/R2 credentials:
-   - `terraform init -backend-config=backend.hcl`
-   - `terraform workspace select staging`
-   - `terraform plan -var-file=staging.tfvars` (plan only)
-2. Provision or designate ≥2 Swarm nodes (or document single-node staging caveats).
-   Do **not** promote the live Compose VPS to Swarm manager without a written migration plan.
-3. `ansible-playbook --check --diff playbooks/deploy-stack.yml -i inventory.staging.yml`
-4. Staging apply only under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`.
-5. Validate Traefik `api.<staging>` → replicas; Pages/static SPA; CORS/WS.
-6. Paste plan/check timestamps into release notes; keep Compose share URL unchanged.
+**Exit criteria (B1):** terraform plan succeeds; ansible `--check` shows expected
+Traefik/stack changes; SSH target is KVM1 only; Compose share URL unchanged.
+
+## Staging apply (B2) — human-gated
+
+Only after B1 green and explicit operator intent:
+
+```bash
+CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8 \
+  ./LENR_SIM_APP_v2/infrastructure/scripts/deploy.sh staging
+```
+
+This runs Terraform workspace `staging`, `setup-docker.yml`,
+`join-workers.yml` (join + `swarm_node_labels`), then `deploy-stack.yml`.
+
+### Validation barcode (must all pass)
+
+Live barcode (sslip CORS, backup `--check`, obs, share, CI-absent):
+
+```bash
+./LENR_SIM_APP_v2/infrastructure/scripts/staging-swarm-ops-verify.sh
+```
+
+Paste timestamps into release notes when green. Keep Compose share URL unchanged.
+
+**Recorded (agent, 2026-10-23 UTC):** sslip bootstrap **200** (`curl -sk`); stack 7/7
+(`backend`, `postgres`, `traefik`, `prometheus`, `grafana`, `blackbox`,
+`node-exporter`); Compose share **200**; WordPress `api-staging` / `api` still
+parking (ALLOW_*_DNS_GAP). Checklist **#7** green after `backup.yml` `--check`
+guard. Checklist **#4** needs `cors_extra_origins` incl.
+`https://app-staging.conscious.energy` (inventory + stack template) then
+`deploy-stack` / service update — preflight via sslip until WP DNS flips.
+
+| # | Check | Command / proof |
+|---|--------|-----------------|
+| 1 | Traefik TLS + health on staging API | `curl -sS -o /dev/null -w '%{http_code}' https://api-staging.conscious.energy/api/health` → `200` — **blocked on WP A → KVM1** |
+| 1a | TLS bootstrap (while WP DNS lags) | Apex NS is WordPress.com — until `api-staging` A → KVM1, prove ACME with `https://api-staging.31.220.55.113.sslip.io/api/health` → `200` (`traefik_acme_bootstrap_host` in inventory). Remove bootstrap host after WP DNS flips. **Green on sslip (`curl -sk`).** |
+| 2 | API replicas scheduled | `ssh kvm1 'docker service ls'` — backend replicas ≥ 1 — **1/1** |
+| 3 | Postgres on manager only | `ssh kvm1 'docker service ps <stack>_postgres'` — node = manager — **green** |
+| 4 | Pages CORS against staging origin | `OPTIONS`/`GET` with `Origin: https://app-staging.conscious.energy` → `Access-Control-Allow-Origin` echo (probe sslip while WP lags). Inventory: `cors_extra_origins`. **Green on sslip (2026-10-23).** |
+| 5 | WebSocket path (if used) | Live-stream / WS upgrade against `api-staging` (DNS-only, not orange-cloud). sslip Upgrade reaches Traefik/backend (**404** on unused paths — not CF). |
+| 6 | Compose share still healthy | `curl -sS https://lenr-sim-beta.conscious.energy/api/health` → `200` — **green** |
+| 7 | Backup playbook dry-run | `ansible-playbook --check -i inventory.staging.yml playbooks/backup.yml` — **green** (skipped `backup_result.rc` guarded) |
+| 8 | Observability (optional B3) | `docker service ls \| grep -E 'prometheus\|grafana\|blackbox'` when `observability_enabled=true`; Grafana **not** public without auth — **prometheus/grafana/blackbox/node-exporter 1/1**; public `:3000` closed (DOCKER-USER) |
+
+**Operator DNS (required for barcode #1):** WordPress.com DNS panel → create
+`A api-staging 31.220.55.113` (leave `@`/`www` alone). See
+[`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md).
+
+**Forbidden:** Swarm init on share `185.211.4.66`; `VPS_*` on `lenr-ci`;
+`CONFIRM_SWARM_0_3_9`; closing `EQ-OPEN-*`.
 
 ## Single-node staging caveat
 
 A one-node Swarm validates Traefik routing and stack deploy but does **not**
 prove multi-node HA. Public cutover (0.3.9) requires ≥2 nodes or an explicit
-accepted single-node risk sign-off.
+accepted single-node risk sign-off. See
+[`THREE_NODE_SWARM_TOPOLOGY.md`](THREE_NODE_SWARM_TOPOLOGY.md).
+
+## Related
+
+- Join + labels: [`../../infrastructure/ansible/playbooks/join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml)
+- Observability: [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md)
+- Public cutover (separate train): [`../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](../v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md)
