@@ -42,7 +42,7 @@ const teamMembers = [
 
 // Contributor data
 const contributors = [
-  { name: 'Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
+  { name: 'Diadon Acs with Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
   { name: 'Physics Contributors', contributions: 'Theoretical Framework', avatar: 'PC' },
   { name: 'Open Source Community', contributions: 'Bug Reports & Features', avatar: 'OS' }
 ];

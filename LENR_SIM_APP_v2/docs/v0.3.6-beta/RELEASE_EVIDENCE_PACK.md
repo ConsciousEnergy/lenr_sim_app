@@ -1,5 +1,29 @@
 # Release Evidence Pack (v0.3.6-beta)
 
+## v0.3.9-beta pre-launch RQG (2026-10-26) — H2c promote pack
+
+**Scope:** release-quality-gate mirror on `dev` @ `64d0157` with markers
+`0.3.9-beta`. Governance refresh only — **no** science claim / `EQ-OPEN-*`
+rewrite; **no** `main` / Compose share bump; **no** `CONFIRM_SWARM_0_3_9`.
+
+| Gate | Result |
+|------|--------|
+| Version consistency (4 surfaces) | **PASS** — all `0.3.9-beta` |
+| `pip-audit` (CI ignore list) | **PASS** — 13 ignored residuals (see `SECURITY_CI_HARDENING.md`) |
+| Science + V&V release-blocking | **PASS** — 53 + 3 = 56 |
+| Full `pytest tests/ app/tests/` | **PASS** — 1170 passed, 9 skipped |
+| Frontend audit high / lint / Jest / build | **PASS** — high=0; lint 0e/506w; 264 tests; Vite build OK |
+| Export envelope `lenr-run-export-v1` | **PASS** — `test_run_export` 5 passed |
+| Public Swarm cutover arm | **HOLD** — confirm unset; share remains 0.3.8-beta |
+
+Local artifact logs (agent run): `/opt/cursor/artifacts/rqg/`
+(`pip-audit-*.txt`, `science-gates.txt`, `benchmark-gates.txt`, `npm-*.txt`).
+
+Cross-links: `VERIFICATION_GATE_REPORT.md` (same date section),
+`RUBRIC_GOVERNANCE.md` (H2c ops delta), root `CHANGELOG.md` Unreleased notes.
+
+---
+
 ## Public beta VPS slice (2026-09-02)
 
 - Same-origin Hostinger VPS. Intended URL `https://lenr-simp-app.conscious.energy`.

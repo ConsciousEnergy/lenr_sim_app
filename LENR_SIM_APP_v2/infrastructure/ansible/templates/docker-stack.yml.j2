@@ -8,25 +8,32 @@ services:
   # Traefik - Reverse Proxy & SSL
   # ============================================================================
   traefik:
-    image: traefik:v3.0
+    # v3.6.1+ negotiates Docker API (required for Engine 29; v3.0 hardcodes 1.24).
+    image: traefik:{{ traefik_version | default('v3.6.1') }}
     command:
       - "--configFile=/etc/traefik/traefik.yml"
-      - "--providers.docker=true"
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=lenr-sim-network"
+      # Traefik v3: Swarm is a separate provider (swarmMode removed from docker).
+      - "--providers.swarm=true"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--providers.swarm.network=lenr-sim-network"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.metrics.address=:8082"
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.entrypoint=metrics"
+{% if traefik_force_https | default(true) %}
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+{% endif %}
       - "--certificatesresolvers.letsencrypt.acme.email={{ traefik_acme_email | quote }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+{% if traefik_acme_staging | default(false) %}
+      - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
       # Dashboard is off by default. Do not publish traefik.{{ app_domain }}
       # with placeholder basic-auth. Operators who need it must set
       # traefik_dashboard_enabled and a real traefik_dashboard_basic_auth.
@@ -56,7 +63,9 @@ services:
         constraints:
           - node.role == manager
       labels:
-        - "traefik.enable=true"
+        # Keep Traefik itself off the Swarm provider unless dashboard is enabled
+        # (avoids "port is missing" when only ACME labels are present).
+        - "traefik.enable={{ 'true' if (traefik_dashboard_enabled | default(false)) else 'false' }}"
         # ACME challenge router (exclude from HTTPS redirect)
         - "traefik.http.routers.acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
         - "traefik.http.routers.acme.entrypoints=web"
@@ -75,18 +84,22 @@ services:
   # FastAPI Backend
   # ============================================================================
   backend:
-    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default(app_version) | default('0.3.8-beta') }}
+    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-backend:{{ backend_image_tag | default(app_version) | default('0.3.9-beta') }}
     environment:
       # LENR_*-prefixed vars feed Pydantic Settings (env_prefix="LENR_").
-      - LENR_ENVIRONMENT=production
+      # Use lenr_environment — Ansible's built-in `environment` is a reserved mapping.
+      - LENR_ENVIRONMENT={{ lenr_environment | default('production') }}
       - LENR_DB_HOST=postgres
       - LENR_DB_PORT=5432
       - LENR_DB_USER={{ postgres_user | default('lenr_app') }}
       - LENR_DB_NAME={{ postgres_db | default('lenr_sim') }}
       - LENR_LOG_LEVEL={{ fastapi_log_level | default('info') }}
-      - LENR_LOG_TO_FILE=true
+      - LENR_LOG_TO_FILE={{ 'true' if (lenr_log_to_file | default(true)) else 'false' }}
       - LENR_LOG_JSON_FORMAT=true
-      - LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}"]
+      # traefik_spa_hosts → same-origin SPA hosts; cors_extra_origins → CORS-only
+      # (e.g. Cloudflare Pages app-staging without Traefik SPA routers).
+      - >-
+        LENR_CORS_ORIGINS=["https://{{ app_domain }}","https://www.{{ app_domain }}","https://{{ api_subdomain }}.{{ app_domain }}"{% for _h in (traefik_spa_hosts | default([])) %},"https://{{ _h }}"{% endfor %}{% for _o in (cors_extra_origins | default([])) %},"{{ _o }}"{% endfor %}]
       - LENR_ENABLE_RATE_LIMITING=true
       - LENR_HTTPS_REDIRECT=false
       - LENR_AUTO_PERSIST=0
@@ -111,20 +124,23 @@ services:
     deploy:
       mode: replicated
       replicas: {{ fastapi_workers | default(2) }}
-      # Production (require_app_label=true): pin to nodes labeled role=app
+      # Production (require_app_label=true): pin to nodes labeled app=true
       # (share manager + KVM1 worker). Staging default leaves unconstrained so
       # single-node KVM1 works before labels are applied.
+      # Use separate label keys (app / observability) — Swarm allows one value per key.
       placement:
         preferences:
-          - spread: node.labels.role
+          - spread: node.labels.app
 {% if require_app_label | default(false) %}
         constraints:
-          - node.labels.role == app
+          - node.labels.app == true
 {% endif %}
+      # start-first needs headroom for two replicas; single-node staging (3.8Gi)
+      # must use stop-first or updates hang on "insufficient resources".
       update_config:
         parallelism: 1
         delay: 10s
-        order: start-first
+        order: {{ swarm_update_order | default('start-first') }}
         failure_action: rollback
         monitor: 30s
       rollback_config:
@@ -143,10 +159,43 @@ services:
           memory: 512M
       labels:
         - "traefik.enable=true"
-        # API Router
+        # API Router (HTTPS). Staging may also expose HTTP until DNS/ACME is ready.
         - "traefik.http.routers.backend.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+{% if not (traefik_force_https | default(true)) %}
+        - "traefik.http.routers.backend-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
+        - "traefik.http.routers.backend-http.entrypoints=web"
+        - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-http.service=backend"
+{% endif %}
+{# Extra API Host() routers: sslip bootstrap and/or lenr-sim-beta during WP DNS lag.
+   Separate routers so ACME can succeed on hosts that already resolve even when
+   api.* still parks at WordPress. Guard strings so CLI -e '["host"]' is not
+   character-iterated. #}
+{% set _raw_extra = traefik_extra_api_hosts | default([]) %}
+{% if _raw_extra is string %}
+{% set _extra_ns = namespace(hosts=([_raw_extra] if (_raw_extra | length > 0) else [])) %}
+{% else %}
+{% set _extra_ns = namespace(hosts=(_raw_extra | list)) %}
+{% endif %}
+{% if traefik_acme_bootstrap_host is defined and (traefik_acme_bootstrap_host | length > 0) %}
+{% set _ = _extra_ns.hosts.append(traefik_acme_bootstrap_host) %}
+{% endif %}
+{% for _host in _extra_ns.hosts | unique %}
+        # PathPrefix so SPA can share the host (e.g. lenr-sim-beta) with the API.
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.priority=100"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.entrypoints=websecure"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.service=backend"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.priority=100"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.entrypoints=web"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.service=backend"
+{% endfor %}
         # security-headers is defined in traefik-dynamic.yml.j2 (file provider).
         - "traefik.http.routers.backend.middlewares=security-headers@file,backend-ratelimit"
         # Service
@@ -157,6 +206,65 @@ services:
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
+
+{% if swarm_frontend_enabled | default(false) %}
+  # ============================================================================
+  # Frontend SPA (nginx) — same-origin with /api on traefik_spa_hosts
+  # ============================================================================
+  frontend:
+    image: ghcr.io/{{ github_owner | default('consciousenergy') | lower }}/lenr-sim-frontend:{{ frontend_image_tag | default(app_version) | default('0.3.9-beta') }}
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: replicated
+      replicas: {{ frontend_replicas | default(2) }}
+      placement:
+        preferences:
+          - spread: node.labels.app
+{% if require_app_label | default(false) %}
+        constraints:
+          - node.labels.app == true
+{% endif %}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: {{ swarm_update_order | default('start-first') }}
+        failure_action: rollback
+        monitor: 30s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      labels:
+        - "traefik.enable=true"
+{% set _raw_spa = traefik_spa_hosts | default([]) %}
+{% if _raw_spa is string %}
+{% set _spa_ns = namespace(hosts=([_raw_spa] if (_raw_spa | length > 0) else [])) %}
+{% else %}
+{% set _spa_ns = namespace(hosts=(_raw_spa | list)) %}
+{% endif %}
+{% for _host in _spa_ns.hosts | unique %}
+        - "traefik.http.routers.frontend-{{ loop.index }}.rule=Host(`{{ _host }}`)"
+        - "traefik.http.routers.frontend-{{ loop.index }}.priority=10"
+        - "traefik.http.routers.frontend-{{ loop.index }}.entrypoints=websecure"
+        - "traefik.http.routers.frontend-{{ loop.index }}.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.frontend-{{ loop.index }}.middlewares=security-headers@file"
+        - "traefik.http.routers.frontend-{{ loop.index }}.service=frontend"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.rule=Host(`{{ _host }}`)"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.priority=10"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.entrypoints=web"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.middlewares=security-headers@file"
+        - "traefik.http.routers.frontend-{{ loop.index }}-http.service=frontend"
+{% endfor %}
+        - "traefik.http.services.frontend.loadbalancer.server.port=80"
+{% endif %}
 
   # ============================================================================
   # PostgreSQL Database
@@ -179,6 +287,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+{% if postgres_volume_external | default(false) %}
+          # Named volumes are node-local — pin to the share manager that holds
+          # lenr-sim_postgres_data (label set in inventory.yml.example).
+          - node.labels.postgres == true
+{% endif %}
       resources:
         limits:
           cpus: '1.0'
@@ -213,7 +326,7 @@ services:
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
@@ -234,23 +347,61 @@ services:
     image: grafana/grafana:11.2.0
     environment:
       - GF_SECURITY_ADMIN_USER={{ grafana_admin_user | default('admin') }}
+      # File provider — never bake the password into the stack YAML.
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/
       - GF_ANALYTICS_REPORTING_ENABLED=false
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      # Unified alerting email (optional — enable via grafana_smtp_enabled + secret).
+{% if grafana_smtp_enabled | default(false) %}
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST={{ grafana_smtp_host | default('smtp.example.com:587') }}
+      - GF_SMTP_USER={{ grafana_smtp_user | default('') }}
+      - GF_SMTP_FROM_ADDRESS={{ grafana_smtp_from | default(grafana_alert_to | default('ops@conscious.energy')) }}
+      - GF_SMTP_FROM_NAME={{ grafana_smtp_from_name | default('LENR-Sim Grafana') }}
+      - GF_SMTP_PASSWORD__FILE=/run/secrets/grafana_smtp_password
+      - GF_SMTP_STARTTLS_POLICY={{ grafana_smtp_starttls_policy | default('OpportunisticStartTLS') }}
+{% else %}
+      - GF_SMTP_ENABLED=false
+{% endif %}
+    secrets:
+      # Official grafana image runs as uid 472 — root-only 0400 → Permission denied.
+      - source: grafana_admin_password
+        target: grafana_admin_password
+        uid: "472"
+        gid: "0"
+        mode: 0400
+{% if grafana_smtp_enabled | default(false) %}
+      - source: grafana_smtp_password
+        target: grafana_smtp_password
+        uid: "472"
+        gid: "0"
+        mode: 0400
+{% endif %}
     volumes:
       - grafana_data:/var/lib/grafana
       - /opt/lenr-sim/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - lenr-sim-network
+{% if (grafana_publish_host_port | default(0) | int) > 0 %}
+    # Host-mode publish for SSH tunnel (ssh -L 3000:127.0.0.1:3000).
+    # docker stack deploy rejects host_ip — Docker still binds 0.0.0.0 and bypasses
+    # UFW. deploy-stack.yml installs DOCKER-USER DROP for this port on the host.
+    ports:
+      - target: 3000
+        published: {{ grafana_publish_host_port | int }}
+        protocol: tcp
+        mode: host
+{% endif %}
     deploy:
       mode: replicated
       replicas: 1
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
@@ -291,7 +442,7 @@ services:
 {% if require_observability_label | default(false) %}
       placement:
         constraints:
-          - node.labels.role == observability
+          - node.labels.observability == true
 {% endif %}
       resources:
         limits:
@@ -334,6 +485,37 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+
+  # ============================================================================
+  # cAdvisor — global, per-container CPU/mem for Swarm service panels
+  # ============================================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    command:
+      - "--docker_only=true"
+      - "--housekeeping_interval=30s"
+      - "--store_container_labels=true"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - lenr-sim-network
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 {% endif %}
 
 # ==============================================================================
@@ -347,8 +529,15 @@ networks:
 # Volumes
 # ==============================================================================
 volumes:
+{% if postgres_volume_external | default(false) %}
+  # Reuse Compose named volume (project/stack lenr-sim → lenr-sim_postgres_data).
+  postgres_data:
+    external: true
+    name: "{{ postgres_volume_name | default('lenr-sim_postgres_data') }}"
+{% else %}
   postgres_data:
     driver: local
+{% endif %}
 {% if observability_enabled | default(true) %}
   prometheus_data:
     driver: local
@@ -364,3 +553,11 @@ secrets:
     external: true
   api_secret_key:
     external: true
+{% if observability_enabled | default(true) %}
+  grafana_admin_password:
+    external: true
+{% if grafana_smtp_enabled | default(false) %}
+  grafana_smtp_password:
+    external: true
+{% endif %}
+{% endif %}

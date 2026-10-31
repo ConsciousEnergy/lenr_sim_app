@@ -54,12 +54,16 @@ existing modules and the taxonomy in [reference.md](reference.md).
 
 | Event | When | Key properties |
 |-------|------|----------------|
+| `app_loaded` | SPA boot (once) | `app_version`, `api_mode` |
 | `simulation_started` | user starts a run | `sim_type`, `host_material`, `reactant`, `rate_mode` |
 | `simulation_completed` | run finishes | `sim_type`, `duration_ms`, `success` |
 | `theory_toggled` | theory enabled/disabled | `theory_id`, `enabled` |
 | `export_downloaded` | export envelope downloaded | `schema_version`, `claim_tiers_present` |
 | `visualization_viewed` | a viz surface opens | `viz_type` |
 | `docs_viewed` | a docs/theory page opens | `slug` |
+| `client_error` | boundary / transport failure | `error_kind`, `surface` (no stacks/PII) |
+
+Soft kill-switch flag: `maintenance-hide-run` (default OFF).
 
 ```js
 // ✅ DO: one typed helper module, called from flows

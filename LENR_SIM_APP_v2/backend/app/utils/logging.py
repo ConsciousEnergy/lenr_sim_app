@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 import tempfile
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 
 class JsonFormatter(logging.Formatter):
@@ -26,9 +26,26 @@ class JsonFormatter(logging.Formatter):
         }
         if record.exc_info:
             log_obj["exception"] = self.formatException(record.exc_info)
-        if hasattr(record, "request_id"):
-            log_obj["request_id"] = record.request_id
+        request_id = getattr(record, "request_id", None)
+        if request_id:
+            log_obj["request_id"] = request_id
+        path = getattr(record, "path", None)
+        if path:
+            log_obj["path"] = path
         return json.dumps(log_obj, default=str)
+
+
+def request_log_extra(request_id: str, *, path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Structured extras for API logs. Pass via logger.*(..., extra=...).
+
+    Puts request_id on the LogRecord so JsonFormatter emits a top-level field
+    (not only embedded in the message string). Do not put secrets here.
+    """
+    extra: Dict[str, Any] = {"request_id": request_id}
+    if path is not None:
+        extra["path"] = path
+    return extra
 
 
 def setup_logger(

@@ -83,8 +83,11 @@ curl -sS https://api-staging.conscious.energy/api/health
 Label the staging manager for observability when you enable the stack extras:
 
 ```bash
-docker node update --label-add role=app --label-add role=observability <node_id>
+docker node update --label-add app=true --label-add observability=true <node_id>
 ```
+
+Or set `swarm_node_labels` in `inventory.staging.yml` and run
+`playbooks/join-workers.yml` (preferred).
 
 ## Phase 2 — Cutover rehearsal (still no public Swarm)
 
@@ -109,12 +112,12 @@ Only under `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` —
 3. Labels:
 
 ```bash
-docker node update --label-add role=app <share_node>
-docker node update --label-add role=app --label-add role=observability <kvm1_node>
+docker node update --label-add app=true <share_node>
+docker node update --label-add app=true --label-add observability=true <kvm1_node>
 ```
 
-4. Deploy stack (Traefik+Postgres on manager; API on `role=app`;
-   Prometheus+Grafana on `role=observability`).
+4. Deploy stack (Traefik+Postgres on manager; API on `app=true`;
+   Prometheus+Grafana on `observability=true`).
 5. Point `api.` at share Traefik; Pages on `app.`; keep Compose rollback tag
    ≥ one release.
 6. Smoke health + intentional bad image → auto rollback.

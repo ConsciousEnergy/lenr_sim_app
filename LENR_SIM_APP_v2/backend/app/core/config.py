@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     
     # Base configuration
     APP_NAME: str = "LENR_Sim_App"
-    APP_VERSION: str = "0.3.8-beta"
+    APP_VERSION: str = "0.3.9-beta"
     API_PREFIX: str = "/api"
     DEBUG: bool = False
     
@@ -63,10 +63,13 @@ class Settings(BaseSettings):
     DB_ECHO_SQL: bool = False  # Log SQL statements (debug only)
     
     # Logging configuration
+    # Staging (api-staging Swarm): LENR_LOG_LEVEL=INFO (DEBUG only for short
+    # triage windows), LENR_LOG_JSON_FORMAT=true so request_id is a JSON field.
+    # Never log Authorization, Cookie, SECRET_KEY, tokens, or DB passwords.
     LOG_LEVEL: str = "INFO"
     LOG_TO_FILE: bool = True
     LOG_FILE_DIR: str = "logs"
-    LOG_JSON_FORMAT: bool = False  # Set True in production for structured JSON logging
+    LOG_JSON_FORMAT: bool = False  # Set True in staging/production for structured JSON logging
     
     # Cache configuration
     CACHE_ENABLED: bool = True
@@ -90,6 +93,8 @@ class Settings(BaseSettings):
     ENABLE_LOGGING_MIDDLEWARE: bool = True
     ENABLE_PERFORMANCE_MIDDLEWARE: bool = True
     REQUEST_ID_HEADER: str = "X-Request-ID"
+    # Inbound alias accepted by RequestIDMiddleware (same value echoed as X-Request-ID).
+    CORRELATION_ID_HEADER: str = "X-Correlation-ID"
     PROCESS_TIME_HEADER: str = "X-Process-Time"
     
     # Physics simulation configuration

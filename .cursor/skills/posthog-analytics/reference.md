@@ -81,12 +81,14 @@ const capture = (name, props = {}) => {
 };
 
 export const track = {
+  appLoaded: (p) => capture('app_loaded', p),
   simulationStarted: (p) => capture('simulation_started', p),
   simulationCompleted: (p) => capture('simulation_completed', p),
   theoryToggled: (p) => capture('theory_toggled', p),
   exportDownloaded: (p) => capture('export_downloaded', p),
   visualizationViewed: (p) => capture('visualization_viewed', p),
   docsViewed: (p) => capture('docs_viewed', p),
+  clientError: (p) => capture('client_error', p),
 };
 ```
 
@@ -103,6 +105,11 @@ posthog?.stopSessionRecording?.();
 ```jsx
 import { useFeatureFlagEnabled } from 'posthog-js/react';
 const showUqPanel = useFeatureFlagEnabled('rate-engine-uq-panel') ?? false;
+
+// Soft kill-switch (wired): maintenance-hide-run — prefer useMaintenanceHideRun()
+// from analytics/flags.jsx so missing PostHog still defaults OFF.
+import { useMaintenanceHideRun } from '@/analytics/flags';
+const hideRun = useMaintenanceHideRun(); // false unless flag explicitly true
 ```
 
 ## Env + gitignore

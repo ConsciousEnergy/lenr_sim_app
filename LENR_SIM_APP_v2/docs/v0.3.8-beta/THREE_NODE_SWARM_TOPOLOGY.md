@@ -6,6 +6,8 @@ CI KVM2 never joins Swarm. `EQ-OPEN-*` stay OPEN.
 
 Companion walkthrough: [`KVM1_OPERATOR_WALKTHROUGH.md`](KVM1_OPERATOR_WALKTHROUGH.md).  
 Observability: [`OBSERVABILITY_GRAFANA.md`](OBSERVABILITY_GRAFANA.md).  
+Operator TUI (optional): [`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md) —
+D-Force (`d4s`), k9s-like Swarm/Compose browser; not a cutover gate.  
 DNS: [`DNS_AND_HOSTINGER_DECISIONS.md`](DNS_AND_HOSTINGER_DECISIONS.md).  
 Learning map (two KVM2s only): [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOPOLOGY.md).
 
@@ -19,14 +21,14 @@ Learning map (two KVM2s only): [`TWO_KVM2_SWARM_TOPOLOGY.md`](TWO_KVM2_SWARM_TOP
 |------|-----------------|--------------|------------|
 | Compose share | `1280333` / `185.211.4.66` | Public app host | **0.3.8:** Compose (healthy after brief Hostinger maintenance 2026-10-17). **0.3.9:** Swarm **manager** (Traefik + Postgres + ≥1 API) |
 | Dedicated CI | `2012566` / `45.93.100.251` | `lenr-ci-1` only | **Never** Swarm; **never** `VPS_*` |
-| Staging / data KVM1 | `2071323` / `31.220.55.113` (`srv2071323`) | Lightweight data + redundancy | **0.3.8:** staging **manager** (Docker installed; Swarm init awaits `CONFIRM_SWARM_0_3_8`). **0.3.9+:** **worker** (`role=app` + `role=observability`) |
+| Staging / data KVM1 | `2071323` / `31.220.55.113` (`srv2071323`) | Lightweight data + redundancy | **0.3.8:** staging **manager** (Docker installed; Swarm init awaits `CONFIRM_SWARM_0_3_8`). **0.3.9+:** **worker** (`app=true` + `observability=true`) |
 
 ## Why this shape
 
 With one of two KVM2s reserved for untrusted PR CI, container rolling updates
 alone cannot survive a manager host reboot. The KVM1 joins as a second
 app-capable worker so Traefik can keep routing while one API replica drains.
-Grafana/Prometheus run on the same worker under `role=observability` so scrapes
+Grafana/Prometheus run on the same worker under `observability=true` so scrapes
 and dashboards do not starve Traefik/API/Postgres on the manager.
 
 Frontend stays on **Cloudflare Pages** (`app.` / `app-staging`) — not on Swarm.
@@ -52,8 +54,8 @@ Stable Mermaid node IDs (do not rename lightly): `shareMeta`, `ciMeta`,
 | KVM1 | Hostinger KVM1 `2071323` / `31.220.55.113` — staging mgr → prod worker+obs |
 | Compose env | Docker Compose + Caddy on Share (live `0.3.7-beta` today) |
 | Swarm env | Docker Swarm cluster + stack on labeled nodes |
-| `role=app` | Swarm node label — API replica placement |
-| `role=observability` | Swarm node label — Prometheus/Grafana/blackbox |
+| `app=true` | Swarm node label — API replica placement |
+| `observability=true` | Swarm node label — Prometheus/Grafana/blackbox |
 | `node.role=manager` | Swarm raft role — Traefik + Postgres in our stack |
 | `api.` / `api-staging.` | Traefik `Host()` rules — **only** public L7 API ingress |
 | Pages | Cloudflare Pages SPA (`app.` / `app-staging`) — **not** Traefik ingress |
@@ -274,9 +276,9 @@ flowchart TB
 | Service | Placement | Public ports | Persistence |
 |---------|-----------|--------------|-------------|
 | Traefik | Share `node.role=manager` | host 80/443; metrics overlay 8082 | ACME on manager disk |
-| Backend | `role=app` spread | via Traefik only | bind mounts logs/data |
+| Backend | `app=true` spread | via Traefik only | bind mounts logs/data |
 | Postgres | manager | overlay only | `postgres_data` (local) |
-| Prometheus / Grafana / blackbox | KVM1 `role=observability` | not public | prom/grafana volumes (local) |
+| Prometheus / Grafana / blackbox | KVM1 `observability=true` | not public | prom/grafana volumes (local) |
 | node-exporter | global | overlay 9100 | none |
 | CI runner | CI KVM2 | n/a | not a Swarm service |
 
@@ -330,18 +332,21 @@ flowchart LR
 
 ## Node labels (contract)
 
-Apply after join (manager runs these):
+Swarm allows **one value per label key**. Use separate keys so a node can be
+both API and observability (KVM1). Prefer Ansible
+[`join-workers.yml`](../../infrastructure/ansible/playbooks/join-workers.yml)
+with inventory `swarm_node_labels`, or apply manually after join:
 
 ```bash
-docker node update --label-add role=app <share_node_id>
-docker node update --label-add role=app --label-add role=observability <kvm1_node_id>
+docker node update --label-add app=true <share_node_id>
+docker node update --label-add app=true --label-add observability=true <kvm1_node_id>
 ```
 
 | Label | Services |
 |-------|----------|
 | `node.role == manager` | Traefik, Postgres (stack default) |
-| `node.labels.role == app` | Backend API replicas (spread) |
-| `node.labels.role == observability` | Prometheus, Grafana, blackbox |
+| `node.labels.app == true` | Backend API replicas (spread) |
+| `node.labels.observability == true` | Prometheus, Grafana, blackbox |
 
 Stack template: [`docker-stack.yml.j2`](../../infrastructure/ansible/templates/docker-stack.yml.j2).  
 Staging inventory example: [`inventory.staging.yml.example`](../../infrastructure/ansible/inventory.staging.yml.example).
@@ -379,5 +384,7 @@ Do **not** set `CONFIRM_SWARM_0_3_9` from CI/docs PRs. Do **not** close any
 - Swarm join / init on CI `2012566`
 - Putting `VPS_*` or deploy secrets on `lenr-ci`
 - Swarm init on live share without announced cutover + `CONFIRM_SWARM_0_3_9`
+- Pointing D-Force (`d4s`) / Docker contexts at the CI host (or baking `d4s` into app images)
+- Using `d4s` destructive actions to replace gated cutover / restore scripts
 - Unauthenticated Grafana or Traefik dashboard on `0.0.0.0`
 - Longhorn / NFS-as-Postgres-datadir on this Swarm train

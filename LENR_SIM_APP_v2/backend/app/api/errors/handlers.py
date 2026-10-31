@@ -7,6 +7,8 @@ are formatted consistently and securely.
 
 import traceback
 import json
+from typing import Any, Dict
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -14,10 +16,33 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import ValidationError
 
 from app.core.config import settings, EnvironmentType
-from app.utils.logging import setup_logger
+from app.utils.logging import setup_logger, request_log_extra
 
-# Set up logger
-logger = setup_logger("error_handlers", "logs/errors.log")
+# Set up logger (level/format follow LENR_LOG_* — staging: INFO + JSON)
+logger = setup_logger(
+    "error_handlers",
+    "logs/errors.log",
+    level=settings.LOG_LEVEL,
+    json_format=settings.LOG_JSON_FORMAT,
+)
+
+
+def _request_id(request: Request) -> str:
+    return getattr(request.state, "request_id", "unknown")
+
+
+def _error_content(
+    *,
+    error: str,
+    detail: Any,
+    request_id: str,
+) -> Dict[str, Any]:
+    """Always include request_id so clients can correlate with staging logs."""
+    return {
+        "error": error,
+        "detail": detail,
+        "request_id": request_id,
+    }
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -32,10 +57,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     Returns:
         JSONResponse with error details
     """
-    # Log the error with request details
-    error_id = request.state.request_id if hasattr(request.state, "request_id") else "unknown"
-    
-    # Extract relevant error information
+    error_id = _request_id(request)
+
+    # Extract relevant error information (locs/types/msgs only — no bodies)
     errors = []
     for error in exc.errors():
         error_loc = " -> ".join([str(loc) for loc in error["loc"]])
@@ -45,26 +69,28 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error["msg"]
         }
         errors.append(error_detail)
-    
-    # Log detailed error for debugging
+
     logger.error(
-        f"Validation error | RequestID: {error_id} | "
-        f"Path: {request.url.path} | "
-        f"Errors: {json.dumps(errors)}"
+        f"Validation error | Path: {request.url.path} | Errors: {json.dumps(errors)}",
+        extra=request_log_extra(error_id, path=request.url.path),
     )
-    
-    # Create response with appropriate level of detail
+
     response_detail = {
         "type": "validation_error",
         "errors": errors
     }
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "error": "Validation Error",
-            "detail": response_detail
-        }
+        content=_error_content(
+            error="Validation Error",
+            detail=response_detail,
+            request_id=error_id,
+        ),
+        headers={
+            settings.REQUEST_ID_HEADER: error_id,
+            settings.CORRELATION_ID_HEADER: error_id,
+        },
     )
 
 
@@ -80,36 +106,33 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     Returns:
         JSONResponse with error details
     """
-    error_id = request.state.request_id if hasattr(request.state, "request_id") else "unknown"
-    
-    # Log the error (level depends on status code)
+    error_id = _request_id(request)
+
+    # Log status/path/detail only — never Authorization, Cookie, or secret env.
+    log_kwargs = {"extra": request_log_extra(error_id, path=request.url.path)}
     if exc.status_code >= 500:
         logger.error(
-            f"HTTP {exc.status_code} error | RequestID: {error_id} | "
-            f"Path: {request.url.path} | "
-            f"Details: {exc.detail}"
+            f"HTTP {exc.status_code} error | Path: {request.url.path} | Details: {exc.detail}",
+            **log_kwargs,
         )
     else:
         logger.warning(
-            f"HTTP {exc.status_code} error | RequestID: {error_id} | "
-            f"Path: {request.url.path} | "
-            f"Details: {exc.detail}"
+            f"HTTP {exc.status_code} error | Path: {request.url.path} | Details: {exc.detail}",
+            **log_kwargs,
         )
-    
-    # Create response
-    content = {
-        "error": f"HTTP {exc.status_code}",
-        "detail": exc.detail
-    }
-    
-    # Include request ID for tracking
-    if hasattr(request.state, "request_id"):
-        content["request_id"] = request.state.request_id
-    
+
+    headers = dict(exc.headers or {})
+    headers[settings.REQUEST_ID_HEADER] = error_id
+    headers[settings.CORRELATION_ID_HEADER] = error_id
+
     return JSONResponse(
         status_code=exc.status_code,
-        headers=exc.headers or {},
-        content=content
+        headers=headers,
+        content=_error_content(
+            error=f"HTTP {exc.status_code}",
+            detail=exc.detail,
+            request_id=error_id,
+        ),
     )
 
 
@@ -125,21 +148,22 @@ async def internal_exception_handler(request: Request, exc: Exception):
     Returns:
         JSONResponse with error details
     """
-    error_id = request.state.request_id if hasattr(request.state, "request_id") else "unknown"
-    
+    error_id = _request_id(request)
+
     # Get full exception details for logging
     trace = traceback.format_exc()
-    
-    # Log the full error
+
     logger.error(
-        f"Internal server error | RequestID: {error_id} | "
-        f"Path: {request.url.path} | "
-        f"Exception: {str(exc)}"
+        f"Internal server error | Path: {request.url.path} | "
+        f"Exception: {exc.__class__.__name__}: {exc}",
+        extra=request_log_extra(error_id, path=request.url.path),
     )
-    
-    # Log the stack trace separately
-    logger.debug(f"Stack trace for error {error_id}:\n{trace}")
-    
+    # Stack traces only at DEBUG; still omit request bodies / secrets.
+    logger.debug(
+        f"Stack trace for error {error_id}:\n{trace}",
+        extra=request_log_extra(error_id, path=request.url.path),
+    )
+
     # Create response with appropriate level of detail
     # In development mode, include more details
     if settings.ENVIRONMENT == EnvironmentType.DEVELOPMENT:
@@ -149,21 +173,20 @@ async def internal_exception_handler(request: Request, exc: Exception):
             "trace": trace.split("\n")
         }
     else:
-        # In production, don't expose internal details
+        # In production/staging/test, don't expose internal details
         detail = "An internal server error occurred. Please try again later."
-    
-    content = {
-        "error": "Internal Server Error",
-        "detail": detail
-    }
-    
-    # Include request ID for tracking
-    if hasattr(request.state, "request_id"):
-        content["request_id"] = request.state.request_id
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=content
+        content=_error_content(
+            error="Internal Server Error",
+            detail=detail,
+            request_id=error_id,
+        ),
+        headers={
+            settings.REQUEST_ID_HEADER: error_id,
+            settings.CORRELATION_ID_HEADER: error_id,
+        },
     )
 
 
@@ -179,4 +202,4 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(Exception, internal_exception_handler)
     
-    logger.info("Exception handlers registered with FastAPI application") 
+    logger.info("Exception handlers registered with FastAPI application")

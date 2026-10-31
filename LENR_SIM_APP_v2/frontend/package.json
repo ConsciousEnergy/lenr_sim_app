@@ -1,6 +1,6 @@
 {
   "name": "lenr-sim-frontend",
-  "version": "0.3.8-beta",
+  "version": "0.3.9-beta",
   "private": true,
   "license": "GPL-3.0",
   "repository": {
@@ -17,12 +17,12 @@
     "@mui/material": "^7.0.2",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
-    "@tanstack/react-query": "^5.104.3",
+    "@tanstack/react-query": "^5.104.5",
     "axios": "^1.20.0",
     "d3": "^7.8.4",
-    "dotenv": "^18.0.8",
+    "dotenv": "^18.0.9",
     "notistack": "^3.0.1",
-    "posthog-js": "^1.438.12",
+    "posthog-js": "^1.438.20",
     "qs": "^6.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -57,7 +57,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.5.23",
     "tailwindcss": "^3.3.3",
-    "vite": "^6.4.4"
+    "vite": "^6.4.5"
   },
   "overrides": {
     "@tootallnate/once": "^2.0.1",
@@ -74,8 +74,9 @@
     "nanoid": "^3.3.18",
     "fast-uri": "^3.1.7",
     "browserslist": "^4.28.7",
-    "dompurify": "^3.4.16",
-    "source-map-js": "^1.2.2"
+    "dompurify": "^3.4.17",
+    "source-map-js": "^1.2.2",
+    "follow-redirects": "^1.16.1"
   },
   "scripts": {
     "start": "vite",

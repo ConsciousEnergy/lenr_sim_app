@@ -4,15 +4,15 @@
 [`.github/BRANCHING.md`](../../../.github/BRANCHING.md).
 
 **Operator rule:** Merges require an explicit ask. Agents prepare and verify.
-Default new work targets **`dev`** (0.3.9-beta cutover train). Use **`main`**
-only for 0.3.8-beta Compose hotfixes / release-line docs (**freeze**).
+Default new work targets **`dev`** (0.3.8-beta). Use **`main`** only for
+0.3.8-beta Compose hotfixes / release-line docs.
 
 ## Version trains
 
 | Branch | Markers | Role |
 |--------|---------|------|
-| `main` | `0.3.8-beta` | Live Compose share freeze; tag `v0.3.8-beta` |
-| `dev` | `0.3.9-beta` | Swarm cutover integration; not live until `CONFIRM_SWARM_0_3_9` |
+| `main` | `0.3.8-beta` | Live Compose share; tag `v0.3.8-beta` |
+| `dev` | `0.3.8-beta` | Integration for Swarm staging prep / science / deps |
 
 ## Completed on `main` (0.3.7 line)
 

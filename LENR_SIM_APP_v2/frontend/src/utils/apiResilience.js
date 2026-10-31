@@ -75,11 +75,26 @@ function categorizeError(error) {
     };
   }
   
+  if (
+    errorMessage.includes('cors') ||
+    errorMessage.includes('cross-origin') ||
+    errorMessage.includes('access-control-allow-origin')
+  ) {
+    return {
+      category: 'CORS',
+      retryable: false,
+      userMessage:
+        'API blocked by CORS or split-origin misconfiguration (check VITE_API_URL). ' +
+        'This is not a scientific outcome.',
+    };
+  }
+
   if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('failed to fetch')) {
     return {
       category: 'NETWORK',
       retryable: true,
-      userMessage: 'Network error. Check your connection and try again.',
+      userMessage:
+        'Network error reaching the simulation API. Schematic placeholders are not lab measurements.',
     };
   }
   

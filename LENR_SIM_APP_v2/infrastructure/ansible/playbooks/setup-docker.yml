@@ -2,24 +2,48 @@
 # LENR Simulation App - Docker + Swarm Setup Playbook
 # Installs Docker, configures Swarm mode, and prepares for deployment
 
+# Install Docker on every inventory host. Swarm *init* runs only on managers
+# (group swarm_managers when present; otherwise hosts: all for flat inventories).
+# Worker join + labels: playbooks/join-workers.yml
+
 - name: Setup Docker and Docker Swarm
   hosts: all
   become: true
   vars:
     docker_users:
       - root
-    swarm_init: true
+    # Init only on managers — workers join via join-workers.yml.
+    # Flat inventories (no swarm_managers group): init on every host (single-node).
+    swarm_init: >-
+      {{
+        true if ((groups['swarm_managers'] | default([])) | length == 0)
+        else (inventory_hostname in groups['swarm_managers'])
+      }}
     
   tasks:
     # ==========================================================================
     # Pre-flight Checks
     # ==========================================================================
     
-    - name: Wait for post-install script to complete
+    - name: Check whether Docker is already installed
+      ansible.builtin.command: docker --version
+      register: docker_precheck
+      changed_when: false
+      failed_when: false
+
+    - name: Wait for post-install marker when Docker is not yet installed
       ansible.builtin.wait_for:
         path: /root/.lenr-sim-postinstall-complete
         state: present
         timeout: 300
+      when: docker_precheck.rc != 0
+
+    - name: Record skip of post-install wait (Docker already present)
+      ansible.builtin.debug:
+        msg: >-
+          Docker already available ({{ docker_precheck.stdout | default('ok') }});
+          skipping wait for /root/.lenr-sim-postinstall-complete
+      when: docker_precheck.rc == 0
       
     - name: Gather facts
       ansible.builtin.setup:
@@ -29,9 +53,9 @@
         msg: "Running on {{ ansible_distribution }} {{ ansible_distribution_version }}"
         
     # ==========================================================================
-    # Docker Installation
+    # Docker Installation (skip when Docker already present — e.g. prebaked KVM1)
     # ==========================================================================
-    
+
     - name: Remove old Docker packages
       ansible.builtin.apt:
         name:
@@ -41,6 +65,7 @@
           - containerd
           - runc
         state: absent
+      when: docker_precheck.rc != 0
         
     - name: Install Docker prerequisites
       ansible.builtin.apt:
@@ -53,18 +78,28 @@
           - python3-pip
         state: present
         update_cache: true
+      when: docker_precheck.rc != 0
+
+    - name: Ensure keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      when: docker_precheck.rc != 0
         
-    - name: Add Docker GPG key
-      ansible.builtin.apt_key:
+    - name: Add Docker GPG key (signed-by keyring; apt-key removed on Ubuntu 24+)
+      ansible.builtin.get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-        keyring: /etc/apt/keyrings/docker.gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+      when: docker_precheck.rc != 0
         
     - name: Add Docker repository
       ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
+      when: docker_precheck.rc != 0
         
     - name: Install Docker packages
       ansible.builtin.apt:
@@ -76,6 +111,7 @@
           - docker-compose-plugin
         state: present
         update_cache: true
+      when: docker_precheck.rc != 0
         
     - name: Ensure Docker service is running
       ansible.builtin.systemd:
@@ -95,6 +131,7 @@
         
     - name: Configure Docker daemon
       ansible.builtin.copy:
+        # NOTE: live-restore is incompatible with Swarm mode — do not enable.
         content: |
           {
             "log-driver": "json-file",
@@ -102,7 +139,6 @@
               "max-size": "10m",
               "max-file": "3"
             },
-            "live-restore": true,
             "default-ulimits": {
               "nofile": {
                 "Name": "nofile",
@@ -125,41 +161,71 @@
         groups: docker
         append: true
       loop: "{{ docker_users }}"
+      when: docker_users | length > 0
+      failed_when: false
       
     # ==========================================================================
     # Docker Swarm Initialization
     # ==========================================================================
+
+    - name: Resolve Swarm advertise address (prefer inventory ansible_host)
+      ansible.builtin.set_fact:
+        _swarm_advertise_addr: "{{ swarm_advertise_addr | default(ansible_host) | default(ansible_default_ipv4.address) }}"
     
     - name: Check if Swarm is already initialized
       ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
       register: swarm_status
       changed_when: false
+
+    - name: Allow Swarm TCP ports in UFW (multi-node join)
+      ansible.builtin.command: ufw allow {{ item }}/tcp comment 'Docker Swarm'
+      loop: "{{ ufw_swarm_ports_tcp | default([2377, 7946]) }}"
+      register: ufw_tcp
+      changed_when: "'Skipping' not in (ufw_tcp.stdout | default(''))"
+      failed_when: false
+
+    - name: Allow Swarm UDP ports in UFW (gossip / overlay)
+      ansible.builtin.command: ufw allow {{ item }}/udp comment 'Docker Swarm'
+      loop: "{{ ufw_swarm_ports_udp | default([7946, 4789]) }}"
+      register: ufw_udp
+      changed_when: "'Skipping' not in (ufw_udp.stdout | default(''))"
+      failed_when: false
       
-    - name: Initialize Docker Swarm
-      ansible.builtin.command: docker swarm init --advertise-addr {{ ansible_default_ipv4.address | default(ansible_host) }}
+    - name: Initialize Docker Swarm (managers only)
+      ansible.builtin.command: >-
+        docker swarm init --advertise-addr {{ _swarm_advertise_addr }}
       when: 
-        - swarm_init
+        - swarm_init | bool
         - swarm_status.stdout != "active"
-        - (ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined) or ansible_host is defined
+        - (_swarm_advertise_addr | string | length) > 0
       register: swarm_init_result
       failed_when: >
         swarm_init_result.rc != 0 and
         ("already part of a swarm" not in swarm_init_result.stderr | default("") and
          "already part of a swarm" not in swarm_init_result.stdout | default(""))
-      
-    - name: Get Swarm join token for workers
-      ansible.builtin.command: docker swarm join-token -q worker
-      register: swarm_worker_token
-      when: 
-        - swarm_status.stdout == "active" or (swarm_init_result is defined and swarm_init_result.changed)
+
+    - name: Skip Swarm init on workers (joined by join-workers.yml)
+      ansible.builtin.debug:
+        msg: "Skipping swarm init on {{ inventory_hostname }} (not in swarm_managers); use join-workers.yml"
+      when: not (swarm_init | bool)
+
+    # Re-check after init: pre-init swarm_status is stale when we just joined/created.
+    - name: Re-check Swarm state after init (managers)
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_status_after
       changed_when: false
-      
-    - name: Store Swarm join token
-      ansible.builtin.set_fact:
-        swarm_token: "{{ swarm_worker_token.stdout }}"
-      when: 
-        - swarm_worker_token is defined
-        - swarm_worker_token.stdout is defined
+      when: swarm_init | bool
+
+    - name: Fail if manager Swarm is not active after init
+      ansible.builtin.fail:
+        msg: >-
+          Manager {{ inventory_hostname }} Swarm state is
+          '{{ swarm_status_after.stdout | default("unknown") }}'
+          (advertise-addr={{ _swarm_advertise_addr }}).
+          Fix UFW/advertise-addr and re-run setup-docker.yml.
+      when:
+        - swarm_init | bool
+        - (swarm_status_after.stdout | default("")) != "active"
       
     # ==========================================================================
     # Prepare Application Directories
@@ -191,12 +257,24 @@
         group: root
         
     - name: Create Docker network for the application
-      community.docker.docker_network:
-        name: lenr-sim-network
-        driver: overlay
-        attachable: true
-        scope: swarm
-      when: swarm_status.stdout == "active" or swarm_init_result.changed
+      # Prefer CLI: community.docker can fail on newer Docker Engine URL schemes.
+      # Gate on post-init swarm_status_after so overlay is created on first init
+      # (pre-init swarm_status is still inactive and "is changed" can miss
+      # already-part-of-swarm / skipped edge cases).
+      ansible.builtin.command: >
+        docker network create
+        --driver overlay
+        --attachable
+        --scope swarm
+        lenr-sim-network
+      register: overlay_create
+      changed_when: overlay_create.rc == 0
+      failed_when: >
+        overlay_create.rc != 0 and
+        ("already exists" not in (overlay_create.stderr | default("")))
+      when:
+        - swarm_init | bool
+        - (swarm_status_after.stdout | default("")) == "active"
       
     # ==========================================================================
     # System Tuning

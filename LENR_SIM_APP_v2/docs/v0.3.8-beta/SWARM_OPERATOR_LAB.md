@@ -20,6 +20,11 @@ guard live apply — without initializing Swarm on the public beta host.
 | Copy `*.example` → **untracked** local files only | Secrets never enter git / PR / Slack |
 | Prefer `staging-swarm-dry-run.sh local` until credentials exist | Proves gates without cloud write |
 
+Optional day-2 cluster browser (not required for this lab): **D-Force**
+(`d4s`) — k9s-style TUI for Compose/Swarm. See
+[`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md). Do not point it at the CI
+node; do not use it to bypass `CONFIRM_SWARM_*` scripts.
+
 ---
 
 ## Step 0 — Sketch the two boxes

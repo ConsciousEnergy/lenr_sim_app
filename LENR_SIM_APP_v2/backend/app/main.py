@@ -81,18 +81,31 @@ except ImportError:
 from .api.openapi import custom_openapi
 from .api.routes.physics import preload_physics_components
 
-# Set up loggers (JSON format in production for log aggregation)
+# Set up loggers (JSON format in staging/production for log aggregation).
+# Level from LENR_LOG_LEVEL; never log secrets in these streams.
 app_logger = setup_logger(
-    "app", "logs/app.log", json_format=settings.LOG_JSON_FORMAT
+    "app",
+    "logs/app.log",
+    level=settings.LOG_LEVEL,
+    json_format=settings.LOG_JSON_FORMAT,
 )
 error_logger = setup_logger(
-    "error", "logs/errors.log", level="ERROR", json_format=settings.LOG_JSON_FORMAT
+    "error",
+    "logs/errors.log",
+    level="ERROR",
+    json_format=settings.LOG_JSON_FORMAT,
 )
 fitting_logger = setup_logger(
-    "fitting", "logs/fitting.log", json_format=settings.LOG_JSON_FORMAT
+    "fitting",
+    "logs/fitting.log",
+    level=settings.LOG_LEVEL,
+    json_format=settings.LOG_JSON_FORMAT,
 )
 performance_logger = setup_logger(
-    "performance", "logs/performance.log", json_format=settings.LOG_JSON_FORMAT
+    "performance",
+    "logs/performance.log",
+    level=settings.LOG_LEVEL,
+    json_format=settings.LOG_JSON_FORMAT,
 )
 
 # Performance monitoring middleware

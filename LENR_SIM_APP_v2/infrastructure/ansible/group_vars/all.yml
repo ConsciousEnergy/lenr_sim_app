@@ -3,9 +3,12 @@
 
 # Application settings
 app_name: lenr-sim
-# Placeholder for the v0.3.8-beta Swarm path (do not ansible-playbook prod in 0.3.7).
-app_version: "0.3.8-beta"
+# Swarm image tags (bump with the four version surfaces for a release cutover).
+app_version: "0.3.9-beta"
 backend_image_tag: "{{ app_version }}"
+frontend_image_tag: "{{ app_version }}"
+swarm_frontend_enabled: false
+frontend_replicas: 2
 app_domain: "conscious.energy"
 api_subdomain: "api"
 
@@ -16,7 +19,7 @@ docker_users:
   # Note: root access should use become: true in playbooks, not persistent group membership
 
 # Traefik settings
-traefik_version: "v3.0"
+traefik_version: "v3.6.1"
 traefik_dashboard_enabled: false
 traefik_dashboard_auth: true
 traefik_acme_email: "diadon@conscious.energy"
@@ -38,6 +41,13 @@ ufw_allowed_ports:
   - 22   # SSH
   - 80   # HTTP (for Let's Encrypt)
   - 443  # HTTPS
+# Docker Swarm (control / gossip / overlay data) — required for multi-node join
+ufw_swarm_ports_tcp:
+  - 2377
+  - 7946
+ufw_swarm_ports_udp:
+  - 7946
+  - 4789
 
 fail2ban_enabled: true
 fail2ban_sshd_maxretry: 3
@@ -49,6 +59,9 @@ backup_retention_days: 7
 backup_schedule: "0 3 * * *"  # Daily at 3 AM
 
 # Monitoring / observability (see docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md)
+# Stack services live in templates/docker-stack.yml.j2 when observability_enabled.
+# Placement constraints use separate Swarm labels: app=true, observability=true
+# (applied by playbooks/join-workers.yml from inventory swarm_node_labels).
 health_check_interval: 30
 health_check_timeout: 10
 health_check_retries: 3
@@ -59,6 +72,14 @@ require_observability_label: false
 grafana_admin_user: admin
 grafana_traefik_enabled: false
 grafana_subdomain: grafana-staging
+# Unified alerting email — leave false until SMTP secret + host are set on the
+# observability node (never commit passwords). See OBSERVABILITY_GRAFANA.md.
+grafana_smtp_enabled: false
+grafana_smtp_host: "smtp.example.com:587"
+grafana_smtp_user: ""
+grafana_smtp_from: "ops@conscious.energy"
+grafana_smtp_from_name: "LENR-Sim Grafana"
+grafana_alert_to: "ops@conscious.energy"
 
 # GHCR pull auth for Swarm stack deploy (--with-registry-auth).
 # Prefer Ansible Vault or -e @secrets.yml — never commit real tokens.

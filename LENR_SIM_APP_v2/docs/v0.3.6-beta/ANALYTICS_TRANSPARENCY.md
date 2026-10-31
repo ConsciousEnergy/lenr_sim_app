@@ -1,5 +1,24 @@
 # Analytics Transparency Notes
 
+## Product analytics (PostHog) — separate from scientific AnalyticsPage
+
+Env-gated `posthog-js` usage tracking (see `frontend/src/analytics/`). **Not**
+`services/analyticsApi.js` / Analytics Overview. No PII, no raw physics
+payloads, no claim-tier influence. Init requires production + `VITE_POSTHOG_KEY`
++ DNT off + no opt-out.
+
+| Event | When | Properties (dimensional only) |
+|-------|------|-------------------------------|
+| `app_loaded` | SPA boot | `app_version`, `api_mode` |
+| `simulation_started` / `simulation_completed` | run lifecycle | `sim_type`, materials, `duration_ms`, `success`, `route_mode` |
+| `theory_toggled` | theory enable/disable | `theory_id`, `enabled` |
+| `export_downloaded` | JSON/CSV export | `schema_version`, `format`, `route_mode` |
+| `visualization_viewed` / `docs_viewed` | surface open | `viz_type` / `slug` |
+| `client_error` | boundary / transport | `error_kind`, `surface` (no stacks) |
+
+Soft kill-switch feature flag: **`maintenance-hide-run`** (safe default OFF via
+`useFeatureFlagEnabled` → context). Soft-disables Run / Live Stream UI without
+Compose restore.
 
 ## Public beta Total Records (~150)
 

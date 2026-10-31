@@ -24,11 +24,9 @@ EXPECT_VERSION=0.3.8-beta \
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health | jq .
 ```
 
-Post-ship probe (2026-10-20T23:24Z): `status=healthy`, `version=0.3.8-beta`,
-`database.connected=true`; `/models/` and `/methodology.html` HTTP 200; BF
-`dynamics_mode=auto` with KM auto selected at high drive. Compose pull used
-`BUILD_LOCALLY=1` on VPS from promote tip (PR #251); tag `v0.3.8-beta` on
-`main` still pending merge for GHCR Actions publish.
+Pre-promote probe (2026-10-20): `status=healthy`, `version=0.3.7-beta`,
+`database.connected=true`; BF defaults already included `dynamics_mode=auto`.
+Post-ship expect `version=0.3.8-beta` and `/models/` static pages.
 
 ## Release line vs tip
 

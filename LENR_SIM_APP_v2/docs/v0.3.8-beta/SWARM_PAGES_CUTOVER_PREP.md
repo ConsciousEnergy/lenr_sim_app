@@ -56,10 +56,11 @@ without `CONFIRM_SWARM_0_3_9` exits before Terraform/Ansible apply.
 - [x] Deploy script dual-gate (`I_STAGING_0_3_8` vs `I_CUTOVER_0_3_9`)
 - [x] Ansible `--syntax-check` evidence recorded (see STAGING_SWARM_DRY_RUN.md)
 - [ ] Operator: `terraform plan` against **staging** workspace (credentials on operator machine)
-- [ ] Operator: Ansible `--check` then staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8`
-- [ ] Traefik `api.<staging>` → backend replicas; Pages/static SPA on staging host
-- [ ] CORS / WS split-origin validated
-- [ ] Live share remains Compose (`lenr-sim-beta`)
+- [x] Operator/agent: staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` (KVM1; sslip TLS 200)
+- [x] Traefik staging bootstrap (`api-staging.<ip>.sslip.io`) → backend 1/1
+- [ ] CORS / WS split-origin validated (Pages `app.` still optional)
+- [x] Live share remains Compose (`lenr-sim-beta`) until `CONFIRM_SWARM_0_3_9`
+- [x] Prod stack template includes SPA + `/api` PathPrefix for same-origin cutover
 
 ## Production cutover checklist (0.3.9 only)
 

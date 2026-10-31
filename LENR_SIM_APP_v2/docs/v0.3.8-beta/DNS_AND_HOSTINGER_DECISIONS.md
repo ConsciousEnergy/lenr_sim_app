@@ -49,10 +49,21 @@ Leave `@` and `www` alone. App hosts stay **A records to the VPS** (or CNAME to
 ```
 A     lenr-simp-app   185.211.4.66
 A     lenr-sim-beta   185.211.4.66
-# Future Swarm only (do not create until cutover):
-# A   api             <swarm-or-vps-ipv4>   (Cloudflare DNS, proxied=false)
+# Staging Swarm (0.3.8) — create now in WordPress.com DNS (apex NS = wordpress.com):
+A     api-staging     31.220.55.113
+# Future public Swarm only (do not create until CONFIRM_SWARM_0_3_9 cutover):
+# A   api             185.211.4.66   (or Swarm VIP; keep DNS-only / no CDN proxy for WS)
 # CNAME app           <pages-subdomain>     (Pages SPA host — not apex)
 ```
+
+Staging TLS can be proven before the WP record exists via
+`api-staging.<kvm1-ip>.sslip.io` (`traefik_acme_bootstrap_host` in
+`inventory.staging.yml`).
+
+Public cutover can similarly prove Traefik TLS on the existing share host
+`lenr-sim-beta.conscious.energy` via `traefik_extra_api_hosts` in
+`inventory.yml` / `inventory.yml.example` before WordPress
+`A api → 185.211.4.66` exists. Executor flag: `ALLOW_API_DNS_GAP=1`.
 
 ---
 

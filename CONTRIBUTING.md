@@ -48,21 +48,21 @@ See `LENR_SIM_APP_v2/docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md` and
 
 ## Development workflow
 
-The repository has two long-lived branches: `main` (v0.3.8-beta Compose share
-**freeze**) and `dev` (v0.3.9-beta Swarm cutover integration). Releases are `v*`
-tags. See [`.github/BRANCHING.md`](.github/BRANCHING.md) for the full model,
-naming rules, and the hotfix flow. Agent map: [`AGENTS.md`](AGENTS.md).
+The repository has two long-lived branches: `main` (v0.3.7-beta release /
+Compose share) and `dev` (v0.3.8-beta integration). Releases are `v*` tags.
+See [`.github/BRANCHING.md`](.github/BRANCHING.md) for the full model, naming
+rules, and the hotfix flow.
 
 1. Create a short-lived branch from **`dev`** (default) or from `main` for
-   0.3.8 Compose hotfixes only: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`,
-   or `docs/<topic>`.
+   0.3.7 hotfixes only: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, or
+   `docs/<topic>`.
 2. Keep changes focused; do not mix unrelated refactors.
 3. Add or update tests for behaviour you change.
 4. Before opening a PR, run the [release quality gate](.cursor/skills/release-quality-gate/SKILL.md)
    slice that applies (at minimum: relevant pytest, frontend lint/test/build,
    and `npm audit --audit-level=high` / `pip-audit` when touching deps).
 5. Update [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
-6. Open a PR against **`dev`** (or `main` for 0.3.8 Compose hotfixes) using
+6. Open a PR against **`dev`** (or `main` for 0.3.7 hotfixes) using
    [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
    PRs are squash-merged once CI is green and reviewed; the head branch is
    deleted automatically on merge.

@@ -18,6 +18,26 @@ terraform {
 # Cloudflare Pages Project
 # ==============================================================================
 
+locals {
+  # Staging SPA must call api-staging; prod/cutover uses api.
+  pages_api_base_url = (
+    var.environment == "staging"
+    ? "https://api-staging.${var.domain}"
+    : "https://api.${var.domain}"
+  )
+
+  # Edge rate-limit hosts only — never zone-wide path contains "/api/"
+  # (that would hit Compose share PathPrefix). Draft api. for 0.3.9 cutover.
+  api_rate_limit_hosts = distinct(concat(
+    ["api-staging.${var.domain}", "api.${var.domain}"],
+    var.extra_api_rate_limit_hosts,
+  ))
+  api_rate_limit_host_expression = join(
+    " or ",
+    [for host in local.api_rate_limit_hosts : "(http.host eq \"${host}\")"]
+  )
+}
+
 resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = "lenr-sim-${var.environment}"
@@ -36,29 +56,31 @@ resource "cloudflare_pages_project" "frontend" {
     }
   }
   
+  # CF Pages often injects NODE_ENV=production before install; that omits
+  # devDependencies (vite). Always --include=dev so `npm run build` finds vite.
   build_config {
-    build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci && npm run build"
+    build_command       = "cd LENR_SIM_APP_v2/frontend && npm ci --include=dev && npm run build"
     destination_dir     = "LENR_SIM_APP_v2/frontend/dist"
     root_dir            = ""
     web_analytics_token = ""
   }
   
   deployment_configs {
+    # Do not set NODE_ENV here — it makes `npm ci` skip vite (devDependency).
+    # Vite sets production mode during `vite build`.
     production {
       environment_variables = {
-        REACT_APP_API_URL     = "https://api.${var.domain}"
-        VITE_API_URL          = "https://api.${var.domain}"
-        REACT_APP_ENVIRONMENT = "production"
-        NODE_ENV              = "production"
+        REACT_APP_API_URL     = local.pages_api_base_url
+        VITE_API_URL          = local.pages_api_base_url
+        REACT_APP_ENVIRONMENT = var.environment == "staging" ? "staging" : "production"
       }
       compatibility_date = "2024-01-01"
     }
     preview {
       environment_variables = {
-        REACT_APP_API_URL     = "https://api.${var.domain}"
-        VITE_API_URL          = "https://api.${var.domain}"
+        REACT_APP_API_URL     = local.pages_api_base_url
+        VITE_API_URL          = local.pages_api_base_url
         REACT_APP_ENVIRONMENT = "preview"
-        NODE_ENV              = "production"
       }
       compatibility_date = "2024-01-01"
     }
@@ -107,30 +129,36 @@ resource "cloudflare_r2_bucket" "simulations" {
 # Security Rules
 # ==============================================================================
 
-# Rate limiting rule
+# Host-scoped edge rate limit (api-staging + draft api. only).
+# Requires cf.colo.id in characteristics (CF error 20155).
+# Edge enforcement only for orange-cloud (proxied) hosts; DNS-only
+# api-staging remains origin/Traefik-protected until intentionally proxied.
 resource "cloudflare_ruleset" "rate_limiting" {
+  count = var.enable_api_rate_limit ? 1 : 0
+
   zone_id     = var.cloudflare_zone_id
-  name        = "LENR Sim Rate Limiting"
-  description = "Rate limiting for API endpoints"
+  name        = "LENR Sim API Host Rate Limiting"
+  description = "Host-scoped rate limiting for api-staging and api (not zone-wide /api/)"
   kind        = "zone"
   phase       = "http_ratelimit"
-  
+
   rules {
     action = "block"
     ratelimit {
-      characteristics     = ["ip.src"]
-      period              = 60
-      requests_per_period = 100
+      characteristics     = ["cf.colo.id", "ip.src"]
+      # Free plan entitlement: period may only be 10 (not 60).
+      period              = var.api_rate_limit_period
+      requests_per_period = var.api_rate_limit_requests_per_period
+      mitigation_timeout  = var.api_rate_limit_mitigation_timeout
     }
-    expression  = "(http.request.uri.path contains \"/api/\")"
-    description = "API rate limit: 100 req/min per IP"
+    expression  = "(${local.api_rate_limit_host_expression})"
+    description = "API host rate limit: ${var.api_rate_limit_requests_per_period} req/${var.api_rate_limit_period}s per IP (api + api-staging only)"
     enabled     = true
   }
 }
 
-# Managed WAF Ruleset (Cloudflare Managed Ruleset)
-# Note: Using Cloudflare Managed Ruleset (ID: efb7b8c949ac4650a09736fc376e9aee)
-# For OWASP Core Ruleset, use ID: 4814384a9e5d4991b9815dcfc25d2f1f
+# Managed + custom WAF stay opt-in (default off). Zone-wide WAF is out of
+# scope for H2 host-scoped rate-limit; enable only with explicit operator go.
 locals {
   # Cloudflare Managed Ruleset ID (default security rules)
   # Source: https://developers.cloudflare.com/waf/managed-rulesets/
@@ -138,12 +166,14 @@ locals {
 }
 
 resource "cloudflare_ruleset" "managed_waf" {
+  count = var.enable_zone_waf ? 1 : 0
+
   zone_id     = var.cloudflare_zone_id
   name        = "LENR Sim Managed WAF"
   description = "Cloudflare Managed Ruleset (default security rules)"
   kind        = "zone"
   phase       = "http_request_firewall_managed"
-  
+
   rules {
     action = "execute"
     action_parameters {
@@ -158,19 +188,20 @@ resource "cloudflare_ruleset" "managed_waf" {
   }
 }
 
-# Custom WAF Rule for additional protection
 resource "cloudflare_ruleset" "waf" {
+  count = var.enable_zone_waf ? 1 : 0
+
   zone_id     = var.cloudflare_zone_id
   name        = "LENR Sim Custom WAF"
   description = "Custom Web Application Firewall rules"
   kind        = "zone"
   phase       = "http_request_firewall_custom"
-  
+
   rules {
-    action     = "block"
-    expression = "(http.request.uri.query contains \"<script\" or http.request.uri.query contains \"javascript:\")"
+    action      = "block"
+    expression  = "(http.request.uri.query contains \"<script\" or http.request.uri.query contains \"javascript:\")"
     description = "Block XSS attempts"
-    enabled    = true
+    enabled     = true
   }
 }
 

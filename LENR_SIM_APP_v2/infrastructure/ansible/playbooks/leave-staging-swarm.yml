@@ -1,0 +1,76 @@
+---
+# Leave a staging Swarm on KVM1 before joining the production Swarm as a worker.
+# Safe to re-run. Does NOT touch the Compose share VPS.
+#
+# Usage (from infrastructure/ansible):
+#   ansible-playbook -i inventory.staging.yml playbooks/leave-staging-swarm.yml
+#
+# Requires explicit extra-var when swarm is active with a stack:
+#   -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING
+
+- name: Leave staging Swarm (KVM1)
+  hosts: swarm_managers:swarm_workers
+  become: true
+  gather_facts: false
+  vars:
+    stack_name: lenr-sim
+    confirm_leave: "{{ CONFIRM_LEAVE_STAGING | default('') }}"
+
+  tasks:
+    - name: Check Swarm state
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_state
+      changed_when: false
+      failed_when: false
+
+    - name: Skip when Swarm inactive
+      ansible.builtin.debug:
+        msg: "Swarm LocalNodeState={{ swarm_state.stdout | default('unknown') }} — nothing to leave"
+      when: swarm_state.stdout | default('') != 'active'
+
+    - name: Require confirm when Swarm is active
+      ansible.builtin.assert:
+        that:
+          - confirm_leave == 'I_LEAVE_STAGING'
+        fail_msg: >-
+          Active Swarm detected. Re-run with
+          -e CONFIRM_LEAVE_STAGING=I_LEAVE_STAGING to remove the staging
+          stack and leave the swarm (KVM1 only).
+      when: swarm_state.stdout | default('') == 'active'
+
+    - name: List stacks
+      ansible.builtin.command: docker stack ls --format '{{ "{{.Name}}" }}'
+      register: stacks
+      changed_when: false
+      when: swarm_state.stdout | default('') == 'active'
+
+    - name: Remove application stack
+      ansible.builtin.command: docker stack rm {{ stack_name }}
+      when:
+        - swarm_state.stdout | default('') == 'active'
+        - stack_name in (stacks.stdout_lines | default([]))
+      register: stack_rm
+      failed_when: false
+
+    - name: Wait for stack tasks to drain
+      ansible.builtin.command: docker stack ls
+      register: stack_ls
+      until: stack_name not in stack_ls.stdout
+      retries: 30
+      delay: 2
+      changed_when: false
+      when:
+        - swarm_state.stdout | default('') == 'active'
+        - stack_rm is changed or (stack_name in (stacks.stdout_lines | default([])))
+
+    - name: Leave Swarm (force — staging single-node / worker demote)
+      ansible.builtin.command: docker swarm leave --force
+      when: swarm_state.stdout | default('') == 'active'
+      register: leave_result
+
+    - name: Confirm Swarm inactive
+      ansible.builtin.command: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
+      register: swarm_after
+      changed_when: false
+      failed_when: swarm_after.stdout == 'active'
+      when: leave_result is changed

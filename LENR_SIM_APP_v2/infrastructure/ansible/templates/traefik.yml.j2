@@ -17,8 +17,9 @@ accessLog:
       - "400-599"
 
 providers:
-  docker:
-    swarmMode: true
+  # Traefik v3: use Swarm provider (docker.swarmMode was removed).
+  swarm:
+    endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: lenr-sim-network
   file:
@@ -28,11 +29,13 @@ providers:
 entryPoints:
   web:
     address: ":80"
+{% if traefik_force_https | default(true) %}
     http:
       redirections:
         entryPoint:
           to: websecure
           scheme: https
+{% endif %}
           
   websecure:
     address: ":443"
@@ -56,6 +59,10 @@ certificatesResolvers:
     acme:
       email: "{{ traefik_acme_email }}"
       storage: /certs/acme.json
+{% if traefik_acme_staging | default(false) %}
+      # Let's Encrypt staging CA — use until public DNS for api-staging is correct.
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+{% endif %}
       httpChallenge:
         entryPoint: web
 

@@ -1,0 +1,127 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "title": "Edge + public probes",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Traefik + blackbox\n\n- Overlay Traefik scrape `:8082` (not public)\n- Public: `api-staging.conscious.energy` + Compose share `lenr-sim-beta`\n- After 0.3.9 cutover, share host becomes Traefik SPA/API — keep this probe"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "api-staging probe",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_api_staging_public\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Share probe",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_share_public\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Overlay backend probe",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 3 },
+      "targets": [{ "expr": "probe_success{job=\"lenr_backend_health\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "OK" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Traefik up",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 3 },
+      "targets": [{ "expr": "up{job=\"traefik\"}", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Public / overlay probe latency (s)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{job=~\"lenr_backend_health|lenr_api_staging_public|lenr_share_public\"}",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Traefik RPS by entrypoint",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "targets": [
+        {
+          "expr": "sum by (entrypoint) (rate(traefik_entrypoint_requests_total[5m]))",
+          "legendFormat": "{{entrypoint}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Traefik requests by code class",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (code) (rate(traefik_entrypoint_requests_total[5m]))",
+          "legendFormat": "{{code}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Traefik 5xx rate",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(rate(traefik_entrypoint_requests_total{code=~\"5..\"}[5m])) or vector(0)",
+          "legendFormat": "5xx/s",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["lenr-sim", "swarm", "edge", "traefik"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "LENR-Sim Swarm Edge",
+  "uid": "lenr-swarm-edge",
+  "version": 1
+}

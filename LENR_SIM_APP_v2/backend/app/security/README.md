@@ -38,7 +38,15 @@ Prevents sensitive information leakage in error responses:
 - Implemented in `app/api/errors/handlers.py`
 - Custom exception handlers for validation errors, HTTP exceptions, and internal errors
 - Different error detail level based on environment (more details in development, limited in production)
-- Includes request ID for tracking
+- Every error JSON includes `request_id`; response also sets `X-Request-ID` / `X-Correlation-ID`
+- Structured logs pass `request_id` via logging `extra=` (JSON field when `LENR_LOG_JSON_FORMAT=true`)
+- Do **not** log Authorization, Cookie, bodies with tokens, `SECRET_KEY`, or DB passwords
+
+### Request / correlation IDs
+
+- `RequestIDMiddleware` (`app/core/middleware.py`) mints or accepts a safe inbound id
+- Accepted inbound headers: `X-Request-ID`, `X-Correlation-ID` (8–128 chars `[A-Za-z0-9._-]`)
+- Staging Swarm tip: `LENR_LOG_LEVEL=INFO` (short `DEBUG` triage only), `LENR_LOG_JSON_FORMAT=true`
 
 ## HTTP Security Headers
 

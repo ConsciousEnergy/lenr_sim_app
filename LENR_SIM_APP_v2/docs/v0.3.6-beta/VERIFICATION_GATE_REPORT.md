@@ -1,5 +1,61 @@
 # Verification Gate Report (v0.3.6-beta)
 
+## v0.3.9-beta pre-launch RQG (2026-10-26) — H2c promote pack
+
+Train: `dev` tip `64d0157` (markers **`0.3.9-beta`**). Live Compose share /
+`main` remain **0.3.8-beta**. **`CONFIRM_SWARM_0_3_9` unset** — this section is
+governance evidence for a future promote, not a cutover arm.
+
+Science claim text / `EQ-OPEN-*` rows were **not** rewritten in this ops pack.
+
+### Version consistency
+- Four markers: `config.py`, `frontend/package.json`, `version.js`,
+  `Dockerfile.backend` → all `0.3.9-beta`
+- Status: **PASS**
+
+### Backend dependency audit
+- Command: `pip-audit -r requirements.txt` with the `test.yml` /
+  `security-scan.yml` ignore list
+- Result: `No known vulnerabilities found, 13 ignored`
+- Raw (unignored) residuals: `starlette 0.49.1` (PYSEC-2026-161/248/249/2280/2281),
+  `python-jose 3.5.0` (`CVE-2026-85394` / alias `PYSEC-2026-4298`),
+  `ecdsa 0.19.2` (PYSEC-2026-1325). Triaged in `SECURITY_CI_HARDENING.md`
+  (upstream-constrained; not waived silently).
+- Status: **PASS** (CI-aligned ignores)
+
+### Release-blocking science gates
+- `test_physics_benchmark_gates.py`: **3 passed**
+- Experiment-anchored set (`test_experiment_anchored_gates`, `test_rate_engine_api`,
+  `test_reaction_rate_engine`, `test_cavitation_kgrp`, `test_shell_pairing_prior`,
+  `test_run_export`): **53 passed**
+- Combined: **56 passed**; none skipped / xfailed
+- Status: **PASS**
+
+### Backend unit
+- Command: `pytest tests/ app/tests/ -q -o addopts=""`
+- Result: **1170 passed, 9 skipped** (~24 min)
+- Status: **PASS**
+
+### Frontend
+- `npm audit --audit-level=high`: **exit 0** (4 moderate residuals: `fast-uri`,
+  `postcss-selector-parser`, `react-router` / `react-router-dom`)
+- `npm run lint`: **0 errors** / 506 warnings
+- `npm test`: **42 suites / 264 tests passed**
+- `npm run build`: **PASS**
+- Status: **PASS**
+
+### Reproducibility contract
+- Export envelope remains `schema_version: lenr-run-export-v1`
+  (`test_run_export.py` **5 passed**). No non-additive `contract_version` change
+  in this pack.
+- Status: **PASS**
+
+### Cutover / share posture
+- Do **not** arm `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` from this evidence alone.
+- Public Compose share stays **0.3.8-beta** until an announced cutover window.
+
+---
+
 ## Public beta VPS slice (2026-09-02)
 
 Ship branch `consciousenergy/vps-public-beta-e822`. Topology:

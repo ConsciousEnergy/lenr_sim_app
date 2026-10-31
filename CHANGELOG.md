@@ -8,9 +8,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Swarm **staging** dry-run and public Swarm + Pages cutover remain gated
-  (`CONFIRM_SWARM_0_3_8` / `CONFIRM_SWARM_0_3_9`). Compose share stays the
-  public surface on `main` at **v0.3.8-beta**.
+- Public Swarm cutover remains gated on `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
+  Compose share on `main` stays **v0.3.8-beta** until the cutover window.
+- Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
+
+### Changed — v0.3.9 H2c RQG + governance promote pack (2026-10-26)
+- Re-ran release-quality-gate on `dev` tip (markers `0.3.9-beta`): version
+  consistency PASS; science+V&V **56** passed; full backend pytest **1170**
+  passed / 9 skipped; frontend audit-high / lint / Jest **264** / Vite build
+  PASS; CI-aligned `pip-audit` PASS (13 ignored residuals triaged in
+  `SECURITY_CI_HARDENING.md`).
+- Refreshed `docs/v0.3.6-beta/{VERIFICATION_GATE_REPORT,RELEASE_EVIDENCE_PACK,RUBRIC_GOVERNANCE}.md`
+  with dated 0.3.9 pre-launch sections. **No** science claim / `EQ-OPEN-*`
+  rewrite; **no** `main`/share bump; confirm still unset.
+
+### Added — v0.3.9 Swarm cutover train (not live until confirm)
+- `staging-swarm-ops-verify.sh` — live STAGING_SWARM_DRY_RUN checklist barcode
+  (sslip, CORS, backup `--check`, obs, share, CI-absent; WP DNS noted)
+- Staging inventory `cors_extra_origins` + stack/Traefik CORS for Pages
+  `app-staging` (no Traefik SPA routers); `swarm_update_order: stop-first` for
+  single-node KVM1 (avoids start-first “insufficient resources”)
+- Swarm stack SPA service (`swarm_frontend_enabled`) with Traefik `PathPrefix(/api)`
+  on shared hosts (`lenr-sim-beta`) so Compose drain does not drop the UI
+- `traefik_extra_api_hosts` / `ALLOW_API_DNS_GAP` / `SKIP_IMAGE_BUILD` cutover helpers
+- Gated Compose drain + staging leave playbooks; local-image cutover path
+- Readiness barcode / window card / post-cutover verify / Compose restore (+ KVM1 leave)
+- CI/local prod stack render gate (`swarm-039-assert-prod-stack-render.sh`, wired into
+  `staging-swarm-dry-run.sh local` + cutover prep) — postgres pin, external volume, SPA PathPrefix
+- `swarm-039-prestage-images.sh` — refresh LOCAL_IMAGES on share+KVM1 without Compose drain
+- Cutover prep: KVM1→share Swarm TCP path probe (temp listeners on 2377/7946)
+- Cutover executor: post-`swarm init` manager/:2377 gate before join-workers
+- Cutover executor: LOCAL_IMAGES before Compose drain; assert :80/:443 free post-drain
+- Cutover: wait for replicas + SPA/API health (ACME settle) before post-verify
+- `deploy-stack.yml` ensures `/opt/lenr-sim/traefik/certs` (`0700`) + `acme.json`
+  (`0600`) before Traefik starts (idempotent; preserves existing cert store)
+- Cutover + post-cutover verify assert ACME store mode `0600` on the share manager
+- Cutover prep asserts Compose `.rollback-image-tag` matches live `IMAGE_TAG`
+- Cutover prep asserts Traefik ACME store pre-created on share (`0700`/`0600`)
+- Cutover: assert KVM1 left staging before Compose drain; assert Postgres
+  volume survived `compose down` (drain playbook + executor)
+- Cutover executor: auto-refresh `postgres-pre-cutover-*.{sql.gz,tgz}` on share
+  immediately before Compose drain (Compose postgres still up; 48h freshness gate)
+- Cutover: assert Ready≥2 + app/observability/postgres labels + KVM1 worker
+  before `deploy-stack.yml` (postgres=true must be on the share manager IP)
+- Frontend `overrides.dompurify` → `^3.4.17` (GHSA-cg2g-xh64-v4q7 and related)
+- Cutover prep asserts ≥5GiB free on share + KVM1 `/` (`CUTOVER_MIN_FREE_GIB`)
+- Post-cutover verify + prod stack render gate cover Grafana/Prometheus
+  observability services (skip with `SKIP_OBSERVABILITY_CHECK=1`)
+- Docs: `D4S_DFORCE_OPERATOR.md` — optional D-Force / D4S (`d4s`) Swarm/Compose
+  TUI (k9s-like; not a cutover gate); linked from `AGENTS.md`, topology,
+  operator lab, and public cutover status table
+- Cutover prep asserts Prometheus/Grafana scaffolds on share + KVM1
+  (`ALLOW_OBS_PRESTAGE_GAP=1` to defer to deploy-stack sync)
+- Grafana admin via Swarm secret `grafana_admin_password` (file env); cutover
+  imports/mints before deploy; post-cutover checks secret + KVM1 placement
+- Cutover prep notes Grafana admin password source (`.env` / file / mint-on-cutover)
+- `SKIP_IMAGE_BUILD=1` hard-requires prestaged `:IMAGE_TAG` on share + KVM1
+  (prep BAD unless `ALLOW_IMAGE_PRESTAGE_GAP=1`; cutover skips redundant save|load)
+- Post-cutover verify asserts Traefik task on share manager (with Postgres pin)
+- Cutover hard-fails after health-wait timeout (still runs verify for evidence)
+- Cutover prep asserts KVM1 UFW Swarm ports (not only share)
+- Post-cutover verify requires `${STACK}_frontend` SPA service
+- CI push matrix drops Python 3.10 (`pydantic-settings==2.16.0` needs ≥3.11;
+  PRs stay 3.12-only matching Dockerfile.backend)
+- Grafana `grafana_publish_host_port` (host-mode :3000) for SSH-tunnel access;
+  staging + prod inventories set `3000`; cutover prep asserts staging login 200
+- Docs: Grafana + D-Force pre-arm checklist before `CONFIRM_SWARM_0_3_9`
+- Prod stack render gate asserts Grafana secret uid 472 + host publish 3000
+- Cutover window card prints Grafana tunnel + D-Force pre-arm reminders
+- Post-cutover verify asserts Grafana login HTTP 200 on KVM1 :3000
+- Grafana :3000 closed to public via DOCKER-USER (Docker bypasses UFW); prep/post-verify assert
+- Prod inventory: `grafana_publish_host_port` on `all.vars` so DOCKER-USER installs on KVM1 worker
+- Prep asserts inventory `grafana_publish_host_port`; post-cutover asserts grafana localhost unit enabled
+- `deploy.sh --app-only` health-checks via inventory/env URL when Terraform state is absent
+- Window card notes DOCKER-USER / public Grafana :3000 must stay closed
+- Seed Traefik `acme.json` as `{}` when missing/zero-length; prep rejects empty ACME store
+- D4S / window card: `lenr-staging` + `lenr-share` docker contexts for operator TUI
+- Prep/post-verify: CI IP must be absent from Swarm `docker node` addrs (not only inventory/SSH)
+- Cutover window card prints live DNS (api still on WordPress vs share)
+- Prep notes recent share Postgres pre-cutover backup; window card shows dump recipe
+- Cutover aborts before Compose drain without a fresh Postgres pre-cutover backup (or `ALLOW_BACKUP_GAP=1`)
+- `ansible.cfg` uses `default` callback + `result_format=yaml` (community.general 12 compat)
+- `backup.yml --check` no longer crashes on skipped `backup_result.rc` (staging checklist #7)
 
 ## [v0.3.8-beta] - 2026-10-20
 
@@ -39,12 +118,6 @@ Promote: controlled `dev` → `main` (no Swarm cutover).
 - BRANCHING / AGENTS / Dependabot / CI branch filters: new topic work still defaults to **`dev`**; Compose ship only from `main` + `v*` tags
 - Backend Docker base held on **`python:3.12-slim`** (scipy 1.14.1 has no cp314 wheel; Dependabot 3.14 bump reverted for this ship)
 - Frontend/backend minor dependency bumps + FastAPI/Starlette/matplotlib holds for instrumentator 7
-
-### Changed — complete v0.3.7 version control on default branch (2026-10-13)
-- Promote main+`dev` BRANCHING / AGENTS / CONTRIBUTING / Dependabot `target-branch: dev` / CI branch filters onto `main` tip (markers stay **`0.3.7-beta`**)
-- Refresh `LIVE_SHARE_STATUS.md` + `GOALS.md` for the completed Compose beta train
-- Add [`docs/v0.3.8-beta/VERSION_CONTROL.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/VERSION_CONTROL.md) (Swarm/Ansible/Traefik/Cloudflare prep phases) and [`I18N_FUTURE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/I18N_FUTURE.md) (FR/ES/IT/JA/ZH/RU)
-- `EQ-OPEN-*` remain OPEN; no Swarm public cutover in this change
 
 ## [v0.3.7-beta] - 2026-10-10
 

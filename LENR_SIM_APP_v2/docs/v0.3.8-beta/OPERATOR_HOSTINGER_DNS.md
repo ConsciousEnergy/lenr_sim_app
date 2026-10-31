@@ -147,28 +147,31 @@ CNAME lenr-sim-beta    srv1280333.hstgr.cloud
    NS stay on WordPress.com.
 3. If Cloudflare becomes authoritative for app hosts: grey-cloud **A** to
    `185.211.4.66` for `lenr-sim-beta` / `lenr-simp-app`.
-4. Do **not** create `api.` or Pages `app.` until the v0.3.9 cutover gate.
+4. Do **not** create public `api.` or Pages `app.` until the v0.3.9 cutover gate.
+5. **Do** create staging Swarm DNS in WordPress.com (apex NS = wordpress.com):
+   `A api-staging → 31.220.55.113` (leave `@` / `www` / `lenr-sim-beta` alone).
 
 ### Verify
 
 ```bash
 dig +short lenr-sim-beta.conscious.energy A   # expect 185.211.4.66
 curl -fsS https://lenr-sim-beta.conscious.energy/api/health
+dig +short api-staging.conscious.energy A     # expect 31.220.55.113 after WP DNS
 ```
 
 ---
 
 ## Part C — Recommended order today
 
-1. Recover Hostinger hPanel login.
-2. Browser VNC → unlock **or** pubkey drop.
-3. Confirm live defaults include `auto`.
-4. Touch DNS **only** if `dig` no longer shows `185.211.4.66`.
-5. Optional: restore GitHub org Actions spending limit (CI currently dies at 0 steps).
+1. Recover Hostinger hPanel login / share SSH private key for agents.
+2. Browser VNC → unlock **or** pubkey drop on share VPS.
+3. WordPress.com DNS: `A api-staging → 31.220.55.113` (staging barcode #1).
+4. Touch other DNS **only** if `dig` no longer shows `lenr-sim-beta → 185.211.4.66`.
+5. Public `api.` / Pages `app.` only under `CONFIRM_SWARM_0_3_9`.
 
 ## Do **not** do right now
 
 - Migrate `conscious.energy` NS to Cloudflare
 - CNAME apex / `www`
-- Swarm / Pages / `api.` DNS
+- Public Swarm / Pages / `api.` DNS before `CONFIRM_SWARM_0_3_9`
 - Edit WordPress marketing `@` / `www`
