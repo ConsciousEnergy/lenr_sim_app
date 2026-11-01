@@ -16,7 +16,7 @@ groups:
             relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: min(probe_success{job=~"lenr_backend_health|lenr_api_staging_public"})
+              expr: min(probe_success{job=~"lenr_backend_health|lenr_api_public"})
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -45,8 +45,8 @@ groups:
         execErrState: Alerting
         for: 2m
         annotations:
-          summary: LENR API health probe failed (overlay and/or api-staging)
-          description: probe_success dropped below 1 for job lenr_backend_health or lenr_api_staging_public.
+          summary: LENR API health probe failed (overlay and/or api.conscious.energy)
+          description: probe_success dropped below 1 for job lenr_backend_health or lenr_api_public.
         labels:
           severity: critical
           team: lenr-ops
