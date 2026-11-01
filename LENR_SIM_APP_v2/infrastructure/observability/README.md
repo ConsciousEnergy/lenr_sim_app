@@ -8,7 +8,7 @@ Pin with `require_observability_label=true` → Swarm label `observability=true`
 
 | Path | Role |
 |------|------|
-| `prometheus/prometheus.yml` | Scrape jobs (health probes, Traefik, node, cAdvisor, share) |
+| `prometheus/prometheus.yml` | Scrape jobs (overlay + `api.conscious.energy` + share; staging TLS retired) |
 | `prometheus/blackbox.yml` | HTTP 2xx + healthy-body module |
 | `grafana/provisioning/datasources/` | Prometheus datasource (`uid: prometheus`) |
 | `grafana/provisioning/dashboards/json/` | Overview, Services, Edge dashboards |

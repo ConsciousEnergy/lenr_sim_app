@@ -19,7 +19,7 @@ Labels applied by [`join-workers.yml`](../../infrastructure/ansible/playbooks/jo
 
 | Signal | Source | Notes |
 |--------|--------|-------|
-| API liveness + latency | blackbox → `GET /api/health` | Overlay `backend`, `api-staging` TLS, Compose share |
+| API liveness + latency | blackbox → `GET /api/health` | Overlay `backend`, `api.conscious.energy` TLS, `lenr-sim-beta` (staging TLS probe retired post-0.3.9) |
 | Edge request rates / 5xx | Traefik Prometheus on overlay `:8082` | Not public |
 | Host CPU / mem / disk | `node-exporter` **global** | One task per Swarm node |
 | Container CPU / mem | `cadvisor` **global** | Swarm service name labels |
@@ -45,7 +45,7 @@ They appear in **Alerting → Firing** over the SSH tunnel.
 
 | Rule | Severity | Intent |
 |------|----------|--------|
-| `LenrApiHealthDown` | critical | Overlay and/or api-staging probe fail 2m |
+| `LenrApiHealthDown` | critical | Overlay and/or `api.conscious.energy` probe fail 2m |
 | `LenrShareProbeDown` | warning | Share public probe fail 5m |
 | `LenrTraefikScrapeDown` | critical | Traefik scrape `up != 1` |
 | `LenrTraefik5xxHigh` | warning | 5xx rate > 0.5/s for 5m |
@@ -119,6 +119,28 @@ Ansible `deploy-stack.yml` rsyncs `infrastructure/observability/` →
 `/opt/lenr-sim/observability/` before `docker stack deploy`. Prefer prestaging
 that tree onto share + KVM1 before the cutover window; cutover prep asserts the
 files exist (override with `ALLOW_OBS_PRESTAGE_GAP=1`).
+
+### Roll obs config to live Swarm (no cutover re-arm)
+
+After merge to `dev` (and promote if needed), Diadon can refresh Prometheus /
+Grafana bind-mounts **without** setting `CONFIRM_SWARM_0_3_9` again:
+
+```bash
+# From a checkout with the merged observability tree — on the Swarm manager
+# (share / Diadon path). Adjust SRC to the repo path on the operator machine.
+rsync -a --delete \
+  LENR_SIM_APP_v2/infrastructure/observability/ \
+  /opt/lenr-sim/observability/
+
+# Prometheus picks up prometheus.yml via --web.enable-lifecycle (if enabled)
+# or a one-shot service update; Grafana reloads provisioning on restart:
+docker service update --force lenr-sim_prometheus
+docker service update --force lenr-sim_grafana
+```
+
+Confirm blackbox jobs: overlay + `lenr_api_public` + `lenr_share_public` only
+(no `lenr_api_staging_public`). Prefer this lightweight roll over a full
+`deploy.sh production` / cutover re-arm.
 
 ## Staging vs production
 
