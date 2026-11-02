@@ -1,4 +1,4 @@
-# Agent and contributor current truth (main = v0.3.8-beta Compose; cutover train = v0.3.9-beta)
+# Agent and contributor current truth (live = v0.3.9-beta Swarm; `dev`/`main` markers match)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
@@ -6,8 +6,8 @@ Short map for humans and Cursor agents. Prefer this over stale trackers.
 
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
-| `main` | **`0.3.8-beta`** | Live Compose public beta; ship / hotfix only |
-| `dev` / Swarm cutover PRs | **`0.3.9-beta`** | Public Swarm cutover train (Traefik SPA + API); not live until `CONFIRM_SWARM_0_3_9` |
+| `main` | **`0.3.9-beta`** | Live public Swarm release line (Traefik SPA + API); ship / hotfix |
+| `dev` | **`0.3.9-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
 
 Four markers (must match within a branch):
 
@@ -23,9 +23,11 @@ Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 | Surface | Meaning |
 |---------|---------|
-| `LIVE_COMPOSE_URL` / `https://lenr-sim-beta.conscious.energy` | Public Compose+Caddy share on Hostinger VM `1280333` (`185.211.4.66`). Deploy target only — **not** a GitHub Actions runner. Version **0.3.8-beta** after Compose promote ship ([`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md)). |
-| `main` | Release line matching the share train; may be ahead of live until an operator ships with `VPS_*` / SSH. |
-| `dev` | Cutover integration tip (`0.3.9-beta` markers); **never** auto-deployed by `deploy.yml`. |
+| `https://api.conscious.energy` | Public Swarm API (Traefik on share manager `1280333` / `185.211.4.66`). Version **0.3.9-beta**. |
+| `https://lenr-sim-beta.conscious.energy` | Same-origin Traefik SPA + API on the Swarm share host (Compose stack retired; keep Compose rollback tag/images ≥1 release). See [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md). |
+| `https://app.conscious.energy` | Cloudflare Pages SPA → API at `api.conscious.energy` (split-origin; apex/`www` stay WordPress). |
+| `main` | Release line matching live Swarm; ship via Ansible / SSH — **not** auto from bare push. |
+| `dev` | Integration tip (`0.3.9-beta` markers); **never** auto-deployed by `deploy.yml`. |
 
 Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`). Share must keep
@@ -35,7 +37,7 @@ to PR jobs. Runbook:
 [`LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 Proof: `LENR_SIM_APP_v2/infrastructure/scripts/prove-dedicated-lenr-ci.sh`
 (exit 0 only when dedicated exists, share clean, beta healthy, smoke on dedicated).
-Dual KVM2 ≠ Swarm cutover — see
+Dual KVM2 topology + operator lab — see
 [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md),
 [`TWO_KVM2_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/TWO_KVM2_SWARM_TOPOLOGY.md),
 [`SWARM_OPERATOR_LAB.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/SWARM_OPERATOR_LAB.md),
@@ -49,24 +51,25 @@ Docs map: [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when
 `LENR_CI_RUNS_ON` is unset. Set the variable to `["ubuntu-latest"]` only to force hosted.
 
-## Cutover map (Compose now → Swarm later)
+## Cutover map (historical → live)
 
 | Stage | When | Confirm env | Doc |
 |-------|------|-------------|-----|
-| Compose share (now) | v0.3.8-beta public on `main` | `VPS_*` / SSH ship — not Swarm | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
-| Staging Swarm | prep on `dev` / dry-run | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) — uses `inventory.staging.yml` + `staging.tfvars` only |
-| Public Swarm (+ optional Pages) | v0.3.9-beta cutover window | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — same-origin Traefik SPA on `lenr-sim-beta` unblocks without CF Pages first |
+| Compose share (retired) | was v0.3.8-beta public on `main` | `VPS_*` / SSH ship — Compose stack down; rollback tag retained | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
+| Staging Swarm (retired) | prep / dry-run on KVM1 | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) — KVM1 now prod worker+obs |
+| **Public Swarm (live)** | **v0.3.9-beta** cutover **2026-10-31** | was `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` (unset post-window) | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — Traefik SPA on `lenr-sim-beta` + API on `api.`; Pages `app.` optional/active |
 
 Topology diagrams (hardware ↔ Swarm, legends, storage) — diagram SOT:
 [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md).
 Node labels: `app=true` / `observability=true` via
 [`join-workers.yml`](LENR_SIM_APP_v2/infrastructure/ansible/playbooks/join-workers.yml).
 
-Do **not** apply public Swarm without the 0.3.9 confirm. Do **not** close any `EQ-OPEN-*`.
+Do **not** re-arm public Swarm apply without a new announced window + confirm.
+Do **not** close any `EQ-OPEN-*`.
 
 ## Dense PRs
 
-Short-lived branches → squash to **`dev`** (default) or `main` (0.3.8 Compose hotfix).
+Short-lived branches → squash to **`dev`** (default) or `main` (0.3.9 hotfix).
 Prefer **one topic per PR**.
 
 - **CI / ops / onboarding** PRs: workflows, runner runbook, cutover docs — this track.
