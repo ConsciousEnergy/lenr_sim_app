@@ -87,9 +87,12 @@ Swarm volumes are **node-local**. Do not put Postgres datadir on NFS.
 
 | Data | Host after cutover | Backup approach | RPO target (ops) |
 |------|--------------------|-----------------|------------------|
-| `postgres_data` | Share manager | Scheduled `pg_dump` / basebackup to off-box object storage or Hostinger snapshot | ≤ 24 h until tighter SLA |
+| `postgres_data` | Share manager | Daily `pg_dump` via `/opt/lenr-sim/backup.sh` (cron 03:00 UTC); optional off-box mirror when `backup_offbox_dir` / `BACKUP_OFFBOX_DIR` is set; Hostinger weekly VPS backups as host-level safety net | ≤ 24 h until tighter SLA |
 | `prometheus_data` / `grafana_data` | KVM1 | Hostinger snapshot or rsync of `/var/lib/docker/volumes/…` | Best-effort (rebuildable) |
 | ACME certs | Share manager Traefik disk | Included in host snapshot; Let’s Encrypt re-issue OK | n/a |
 
-Operator: record first successful backup timestamps here before public cutover.
-Staging single-node (KVM1) still uses local volumes — same backup discipline.
+`deploy-stack.yml` installs `backup.sh` **only on Swarm managers**. After 0.3.9,
+KVM1 is a worker — do not leave a staging-era backup cron there (no local
+Postgres). Optional off-box: set inventory `backup_offbox_dir` (or env
+`BACKUP_OFFBOX_DIR`) to a mounted directory; the script copies each successful
+dump and applies the same retention.
