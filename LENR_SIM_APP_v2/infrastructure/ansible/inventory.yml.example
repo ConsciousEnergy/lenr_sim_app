@@ -26,6 +26,9 @@ all:
             - postgres=true
           app_domain: "conscious.energy"
           api_subdomain: "api"
+          # Pages SPA origin (CORS only — not a Traefik SPA host).
+          cors_extra_origins:
+            - "https://app.conscious.energy"
           lenr_environment: "production"
           traefik_acme_email: "ops@conscious.energy"
           traefik_acme_staging: false
