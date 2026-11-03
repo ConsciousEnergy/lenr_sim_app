@@ -127,6 +127,12 @@ docker node update --label-add app=true --label-add observability=true <kvm1_nod
 KVM1 stops being “staging manager” and remains a **worker**. If you need a
 separate staging cluster later, order another small VPS — do not reuse CI.
 
+**Live (post-0.3.9, probed 2026-11-02):** KVM1 is Swarm **worker**
+(`ControlAvailable=false`), labels `app=true` + `observability=true`, hostname
+`kvm1`. Staging Swarm left; `api-staging` TLS correctly fails. Stale
+staging-era Postgres backup cron on the worker should be absent (manager-only
+`backup.sh` after cutover).
+
 ## Checklist (operator)
 
 - [x] KVM1 ordered; id/IP recorded (`2071323` / `31.220.55.113` / `srv2071323`)
@@ -134,6 +140,6 @@ separate staging cluster later, order another small VPS — do not reuse CI.
 - [ ] Laptop SSH key installed + panel password rotated + `PasswordAuthentication no`
 - [x] Untracked `inventory.staging.yml` points at KVM1 only (gitignored)
 - [x] `staging-swarm-dry-run.sh local` exit 0 / expected confirm exits
-- [ ] Staging apply under `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` only (Swarm still **inactive**)
-- [ ] Rollback drill documented with timestamps
-- [ ] Public cutover deferred until `CONFIRM_SWARM_0_3_9` + announced window
+- [x] Staging Swarm applied then **left**; KVM1 joined prod as **worker** + obs
+- [x] Public cutover completed under `CONFIRM_SWARM_0_3_9` (window 2026-10-31); confirm unset after
+- [ ] Optional: rotate leftover agent SSH pubkeys on share/KVM1 authorized_keys

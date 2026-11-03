@@ -57,6 +57,9 @@ fail2ban_sshd_bantime: 24h
 backup_enabled: true
 backup_retention_days: 7
 backup_schedule: "0 3 * * *"  # Daily at 3 AM
+# Optional off-box mirror for manager backup.sh (empty = on-box only).
+# Set to a mounted path (NFS / object-fuse / rsync target); never commit secrets.
+backup_offbox_dir: ""
 
 # Monitoring / observability (see docs/v0.3.8-beta/OBSERVABILITY_GRAFANA.md)
 # Stack services live in templates/docker-stack.yml.j2 when observability_enabled.

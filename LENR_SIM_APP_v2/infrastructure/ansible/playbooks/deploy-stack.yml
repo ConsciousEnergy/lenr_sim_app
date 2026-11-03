@@ -449,15 +449,19 @@
         content: |
           #!/bin/bash
           # LENR Sim Database Backup Script
+          # Optional off-box mirror: set BACKUP_OFFBOX_DIR to a mounted path
+          # (NFS/object-fuse/rsync target). Empty/unset = on-box only.
           set -euo pipefail
           
           BACKUP_DIR="/opt/lenr-sim/backups"
+          OFFBOX_DIR="${BACKUP_OFFBOX_DIR:-{{ backup_offbox_dir | default('') }}}"
+          RETENTION_DAYS="{{ backup_retention_days | default(7) }}"
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           
           # Create backup directory if it doesn't exist
           mkdir -p "$BACKUP_DIR"
           
-          # Find postgres container
+          # Find postgres container (Swarm task name on the manager)
           CONTAINER=$(docker ps -q -f name={{ stack_name }}_postgres)
           
           if [ -z "$CONTAINER" ]; then
@@ -466,7 +470,8 @@
           fi
           
           # Create backup with error checking
-          TEMP_FILE="${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz.tmp"
+          BACKUP_FILE="${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+          TEMP_FILE="${BACKUP_FILE}.tmp"
           if ! docker exec "$CONTAINER" pg_dump -U {{ postgres_user | default('lenr_app') }} {{ postgres_db | default('lenr_sim') }} | gzip > "$TEMP_FILE"; then
             echo "Error: pg_dump or gzip failed" >&2
             rm -f "$TEMP_FILE"
@@ -474,12 +479,20 @@
           fi
           
           # Only move temp file to final location on success
-          mv "$TEMP_FILE" "${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+          mv "$TEMP_FILE" "$BACKUP_FILE"
           
-          # Keep only last 7 days of backups
-          find "$BACKUP_DIR" -name "*.sql.gz" -mtime +7 -delete || true
+          # Optional off-box copy (best-effort; on-box success already recorded)
+          if [ -n "$OFFBOX_DIR" ] && [ -d "$OFFBOX_DIR" ]; then
+            cp -a "$BACKUP_FILE" "$OFFBOX_DIR/" || echo "WARN: off-box copy to $OFFBOX_DIR failed" >&2
+            find "$OFFBOX_DIR" -name "lenr_sim_*.sql.gz" -mtime +"${RETENTION_DAYS}" -delete || true
+          elif [ -n "$OFFBOX_DIR" ]; then
+            echo "WARN: BACKUP_OFFBOX_DIR=$OFFBOX_DIR missing; skipped off-box copy" >&2
+          fi
           
-          echo "Backup created: ${BACKUP_DIR}/lenr_sim_${TIMESTAMP}.sql.gz"
+          # Keep only last N days of on-box backups
+          find "$BACKUP_DIR" -name "*.sql.gz" -mtime +"${RETENTION_DAYS}" -delete || true
+          
+          echo "Backup created: ${BACKUP_FILE}"
         dest: /opt/lenr-sim/backup.sh
         mode: '0755'
       when: _is_swarm_manager | bool
