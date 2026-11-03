@@ -56,8 +56,30 @@ jobs:
               exit 2
             fi
           fi
+          # Derive EXPECTED from repo markers (same four surfaces as test.yml
+          # version-consistency). Do not hard-pin a train string here — that
+          # stale-pin pattern failed tip/v0.3.9-beta when markers moved past
+          # 0.3.7-beta (e.g. actions run 41724267828).
           EXPECTED=$(grep -oP 'APP_VERSION: str = "\K[^"]+' LENR_SIM_APP_v2/backend/app/core/config.py)
-          test "$EXPECTED" = "0.3.7-beta"
+          if [[ -z "$EXPECTED" ]]; then
+            echo "::error file=LENR_SIM_APP_v2/backend/app/core/config.py::APP_VERSION marker not found"
+            exit 1
+          fi
+          FRONT_PKG=$(jq -r '.version' LENR_SIM_APP_v2/frontend/package.json)
+          FRONT_CFG=$(grep -oP "APP_VERSION = '\K[^']+" LENR_SIM_APP_v2/frontend/src/config/version.js)
+          DOCKER_VER=$(grep -oP 'BUILD_VERSION=\K[^\s]+' LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend)
+          FAIL=0
+          for pair in "frontend/package.json:${FRONT_PKG}" "frontend/config/version.js:${FRONT_CFG}" "Dockerfile.backend:${DOCKER_VER}"; do
+            name="${pair%%:*}"
+            val="${pair##*:}"
+            if [[ "$val" != "$EXPECTED" ]]; then
+              echo "::error file=${name}::expected ${EXPECTED} but found ${val}"
+              FAIL=1
+            fi
+          done
+          if [[ "$FAIL" -ne 0 ]]; then
+            exit 1
+          fi
           echo "version-consistency smoke: $EXPECTED OK"
           echo "## lenr-ci smoke" >> "$GITHUB_STEP_SUMMARY"
           echo "- host: $(hostname)" >> "$GITHUB_STEP_SUMMARY"
