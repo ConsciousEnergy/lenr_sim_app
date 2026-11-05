@@ -14,7 +14,8 @@
 - `lenr_proved: false`
 - All five `EQ-OPEN-*` remain **OPEN**
 - No quantitative band changes in the 2026-09-25 revision (tunneling \(10^3\)–\(10^5\); Casimir \(-1.3\,\mathrm{mN}\); Miles \(24\pm4\,\mathrm{MeV}\))
-- Lean PROVED rows document identities / non-closure — they do **not** discharge scientific obligations
+- **2026-11-05 honesty sync:** cavitation–collapse labelled **modelled enhancement / contested hydro**; Lean clamp / non-closure language cited; still **no** OPEN closures
+- Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
 ## Simulation evidence sources
 
@@ -22,19 +23,35 @@
 |--------|------|
 | [`datasets/reviewer_packs/smoke/`](../../../datasets/reviewer_packs/smoke/) | CI smoke pack |
 | [`datasets/reviewer_packs/q_campaign_demo/`](../../../datasets/reviewer_packs/q_campaign_demo/) | Larger pinned campaign |
+| [`datasets/reviewer_packs/cavitation_collapse_campaign/`](../../../datasets/reviewer_packs/cavitation_collapse_campaign/) | Phase A cavitation/collapse bubble-lattice campaign (model output; EQ-OPEN-* stay OPEN) — **on `dev`** via #299 |
 | [`formalization/predictions/campaign_invariants.json`](../../../../formalization/predictions/campaign_invariants.json) | Campaign invariant schema |
+| [`backend/app/physics_engine/collapse_uq.py`](../../../backend/app/physics_engine/collapse_uq.py) | Collapse Sobol UQ (modelled percentiles only) |
 | [`backend/tests/test_paper_benchmarks/`](../../../backend/tests/test_paper_benchmarks/) | CI paper-reproduction gates |
 | [`simulation_evidence.json`](./simulation_evidence.json) | Machine-readable summary for this pack |
+
+## Phase B / F science notes (on `dev`)
+
+| Note | Path | Status |
+|------|------|--------|
+| Avenue ranking (campaign + UQ) | [`../../v0.3.9-beta/AVENUE_RANKING.md`](../../v0.3.9-beta/AVENUE_RANKING.md) | **on `dev`** via #301 (Phase B) |
+| EQ-OPEN closure/falsification runway | [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) | **on `dev`** via #297 (Phase F) — criteria draft only; rows stay OPEN |
+
+Do **not** treat these paths as laboratory evidence. Live links do not change claim tiers, close `EQ-OPEN-*`, or set `lenr_proved`.
+
+## Lean clamp / non-closure pointers
+
+- [`formalization/lean/LenrFormal/CollapseBounds.lean`](../../../../formalization/lean/LenrFormal/CollapseBounds.lean) — `EQ-BBL-LIM-01` pointwise clamp algebra (not cavitation dynamics)
+- [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](../../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) — WH / OpenObligations non-closure; OPEN table unchanged
 
 ## Related governance
 
 - [`../PROOF_MATRIX.md`](../PROOF_MATRIX.md)
 - [`../PHYSICS_MATURITY_LEDGER.md`](../PHYSICS_MATURITY_LEDGER.md)
 - [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](../../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md)
+- [`../../v0.3.6-beta/PROVENANCE_GOVERNANCE.md`](../../v0.3.6-beta/PROVENANCE_GOVERNANCE.md)
 
 ## Parallel work (non-goals for this pack)
 
-This paper pack does **not** change GitHub Actions runners, Hostinger CI VMs,
-Compose↔Swarm cutover docs, deploy workflows, or `APP_VERSION`. Those tracks
-(self-hosted runner cost reduction; Compose-now / Swarm-later contributor truth)
-are owned by parallel agents and remain out of scope here.
+This paper pack does **not** change Theory Paper frontend, GitHub Actions runners, Hostinger CI VMs,
+Compose↔Swarm cutover docs, deploy workflows, or `APP_VERSION` / version markers. Those tracks
+remain out of scope here.

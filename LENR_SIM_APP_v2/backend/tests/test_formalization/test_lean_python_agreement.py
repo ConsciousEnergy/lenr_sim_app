@@ -258,3 +258,100 @@ def test_q5_integrated_yield_band_agrees_with_lean() -> None:
         python_value=INTEGRATED_YIELD_DISCREPANCY_HI,
         expected_value=10_000,
     )
+
+
+def test_collapse_bound_ceilings_agree_with_lean() -> None:
+    from app.physics_engine.collapse_calculated_bounds import (
+        COMPRESSIBILITY_MACH_THRESHOLD,
+        EMISSION_BAND_UPPER_K,
+        MOSS_ION_CEILING_K,
+        SHOCK_PRESSURE_CEILING_PA,
+    )
+
+    lean_path = LEAN_DIR / "CollapseBounds.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="emissionBandUpper_K",
+        lean_value=_evaluate_lean_integer(lean_path, "emissionBandUpper_K"),
+        python_symbol="EMISSION_BAND_UPPER_K",
+        python_value=_scaled_python_integer(
+            EMISSION_BAND_UPPER_K, 1.0, "EMISSION_BAND_UPPER_K"
+        ),
+        expected_value=15_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="mossIonCeiling_K",
+        lean_value=_evaluate_lean_integer(lean_path, "mossIonCeiling_K"),
+        python_symbol="MOSS_ION_CEILING_K",
+        python_value=_scaled_python_integer(
+            MOSS_ION_CEILING_K, 1.0, "MOSS_ION_CEILING_K"
+        ),
+        expected_value=2_000_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="shockPressureCeiling_Pa",
+        lean_value=_evaluate_lean_integer(lean_path, "shockPressureCeiling_Pa"),
+        python_symbol="SHOCK_PRESSURE_CEILING_PA",
+        python_value=_scaled_python_integer(
+            SHOCK_PRESSURE_CEILING_PA, 1.0, "SHOCK_PRESSURE_CEILING_PA"
+        ),
+        expected_value=10_000_000_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="compressibilityMachThreshold_x10",
+        lean_value=_evaluate_lean_integer(
+            lean_path, "compressibilityMachThreshold_x10"
+        ),
+        python_symbol="COMPRESSIBILITY_MACH_THRESHOLD * 10",
+        python_value=_scaled_python_integer(
+            COMPRESSIBILITY_MACH_THRESHOLD, 10.0, "COMPRESSIBILITY_MACH_THRESHOLD"
+        ),
+        expected_value=3,
+    )
+
+
+def test_collapse_uq_percentiles_agree_with_lean() -> None:
+    from app.physics_engine.collapse_uq import (
+        COMPRESSION_RATIO_TOLERANCE,
+        PERCENTILES,
+        POLYTROPIC_INDEX_TOLERANCE,
+    )
+
+    lean_path = LEAN_DIR / "CollapseBounds.lean"
+    lean_percentiles = [
+        _evaluate_lean_integer(lean_path, "uqPercentileP05"),
+        _evaluate_lean_integer(lean_path, "uqPercentileP25"),
+        _evaluate_lean_integer(lean_path, "uqPercentileP50"),
+        _evaluate_lean_integer(lean_path, "uqPercentileP75"),
+        _evaluate_lean_integer(lean_path, "uqPercentileP95"),
+    ]
+    python_percentiles = [
+        _scaled_python_integer(value, 1.0, f"PERCENTILES[{index}]")
+        for index, value in enumerate(PERCENTILES)
+    ]
+    assert python_percentiles == [5, 25, 50, 75, 95]
+    assert lean_percentiles == python_percentiles
+
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="compressionRatioTolerancePct",
+        lean_value=_evaluate_lean_integer(lean_path, "compressionRatioTolerancePct"),
+        python_symbol="COMPRESSION_RATIO_TOLERANCE * 100",
+        python_value=_scaled_python_integer(
+            COMPRESSION_RATIO_TOLERANCE, 100.0, "COMPRESSION_RATIO_TOLERANCE"
+        ),
+        expected_value=20,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="polytropicIndexTolerancePct",
+        lean_value=_evaluate_lean_integer(lean_path, "polytropicIndexTolerancePct"),
+        python_symbol="POLYTROPIC_INDEX_TOLERANCE * 100",
+        python_value=_scaled_python_integer(
+            POLYTROPIC_INDEX_TOLERANCE, 100.0, "POLYTROPIC_INDEX_TOLERANCE"
+        ),
+        expected_value=5,
+    )

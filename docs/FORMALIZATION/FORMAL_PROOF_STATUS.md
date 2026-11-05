@@ -1,7 +1,7 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-08-26  
-**Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved.
+**Updated:** 2026-11-05  
+**Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved. `lenr_proved` stays **false**; no `EQ-OPEN-*` closures in this pass.
 
 ## Oracle stack (siblings, not substitutes)
 
@@ -40,7 +40,7 @@
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler milli-unit identity \(\equiv 1\) | `ScaleQED` | **PROVED** |
 | EQ-BBL-COMP-01 | Intra-group max of per-mechanism clamps; groups multiply | `Composition` | **PROVED** (algebra) |
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
-| EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | `Decision` | **DEF** mechanized |
+| EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0 | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
@@ -57,7 +57,9 @@
 
 | ID | Lean module | What is encoded |
 |----|-------------|-----------------|
-| EQ-BBL-LIM-01 | `CollapseBounds` | Pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\) |
+| EQ-BBL-LIM-01 | `CollapseBounds` | Pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\); reported \(T\)/\(P\) under calculated ceilings |
+| EQ-BBL-BOUND-01 | `CollapseBounds` | Emission-band / Moss-ion / shock-pressure ceilings + Mach×10 regime selector (ENG-BUBBLE-FUSION-01 scaffold) |
+| EQ-BBL-UQ-01 | `CollapseBounds` | UQ percentile keys \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerance percents as definitions |
 | EQ-PRED-02 | `Composition` | Per-mechanism bound table (model input) |
 | EQ-3B-SEQ-01 | `NBody` | Sequential two-stage chain, not Faddeev |
 | EQ-NBODY-FGR-01 | `NBody` | Unnormalized FGR bookkeeping ratio |
@@ -78,7 +80,7 @@
 | EQ-TUN-BAND-01 | Enhancement band / cap is a **model assumption** (RR-001) |
 | EQ-MILES-EMP-01 | Miles heat–helium correlation remains `EMP` |
 | EQ-TRAP-SEP-01 / EQ-TRAP-TAU-01 | 25 pm and \(10^{-20}\,\mathrm{s}\) are inputs, not derivations |
-| EQ-UQ-PRIOR-01 / EQ-UQ-BF-01 | Oracle B priors and approximate Bayes factor are definitions |
+| EQ-UQ-PRIOR-01 / EQ-UQ-BF-01 | Oracle B priors and approximate Bayes factor are definitions; proved Int identities (self-zero, antisymm, cocycle) do **not** flip OPEN rows |
 | `RealShim.expZ_strict_mono` | Analysis bridge until mathlib upgrade |
 
 ## Open obligations (unchanged)

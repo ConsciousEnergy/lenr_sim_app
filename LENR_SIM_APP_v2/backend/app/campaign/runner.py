@@ -9,7 +9,13 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from app.api.routes.unified_simulation import SimulationRequest, run_unified_simulation
+from app.api.routes.unified_simulation import (
+    BubbleConfig,
+    BubbleLatticeRequest,
+    SimulationRequest,
+    run_bubble_lattice_simulation,
+    run_unified_simulation,
+)
 from app.api.routes.physics import TheoryConditions, TheoryRunRequest, run_theories
 from app.campaign.grid import (
     campaign_size,
@@ -25,6 +31,11 @@ from app.services.simulation_persistence import SOURCE_CAMPAIGN
 logger = logging.getLogger(__name__)
 
 CAMPAIGN_SESSION = "simulation_campaign"
+
+
+def _is_bubble_lattice_case(case: Dict[str, Any]) -> bool:
+    route = str(case.get("route") or "").lower()
+    return route == "bubble_lattice" or isinstance(case.get("bubble"), dict)
 
 
 def _simulate_payload(
@@ -75,7 +86,59 @@ def _simulate_payload(
         kwargs["uncertainty_samples"] = int(case.get("uncertainty_samples") or 256)
         if case.get("random_seed") is not None:
             kwargs["random_seed"] = int(case["random_seed"])
+    if case.get("stimulation"):
+        kwargs["stimulation"] = dict(case["stimulation"])
     return SimulationRequest(**kwargs)
+
+
+def _bubble_lattice_payload(
+    case: Dict[str, Any],
+    session_id: str | None,
+    preset: str,
+) -> BubbleLatticeRequest:
+    bubble_raw = dict(case.get("bubble") or {})
+    ambient = float(
+        bubble_raw.get("ambient_temperature_k")
+        or case.get("temperature")
+        or 298.0
+    )
+    bubble_raw["ambient_temperature_k"] = min(max(ambient, 0.0), 2000.0)
+    lattice: Dict[str, Any] = {
+        "loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)
+    }
+    for key in (
+        "beam_energy_kev",
+        "molecular_beam_species",
+        "h2_absorb_pressure_pa",
+        "radiant_calorimetry",
+    ):
+        if case.get(key) is not None:
+            lattice[key] = case[key]
+    kwargs: Dict[str, Any] = dict(
+        bubble=BubbleConfig(**bubble_raw),
+        material={"host_material": case["host_material"], "reactant": case["reactant"]},
+        lattice=lattice,
+        rate_mode=case.get("rate_mode") or "two_body",
+        num_cycles=int(case.get("num_cycles") or 2),
+        campaign_preset=preset,
+        campaign_tag=case.get("tag"),
+        literature_id=case.get("literature_id"),
+        claim_tag=case.get("claim_tag"),
+        open_question_ids=list(case.get("open_question_ids") or []) or None,
+    )
+    if session_id is not None:
+        kwargs["persist_session_id"] = session_id
+        kwargs["persist_source"] = SOURCE_CAMPAIGN
+    if case.get("electrolyte_family"):
+        kwargs["electrolyte"] = {"family": case["electrolyte_family"]}
+    if case.get("include_uncertainty"):
+        kwargs["include_uncertainty"] = True
+        kwargs["uncertainty_samples"] = int(case.get("uncertainty_samples") or 64)
+        if case.get("random_seed") is not None:
+            kwargs["random_seed"] = int(case["random_seed"])
+    if case.get("stimulation"):
+        kwargs["stimulation"] = dict(case["stimulation"])
+    return BubbleLatticeRequest(**kwargs)
 
 
 async def _run_unified_case(
@@ -85,20 +148,28 @@ async def _run_unified_case(
     total: int,
     preset: str,
 ) -> tuple[Dict[str, Any] | None, Dict[str, Any]]:
-    request = _simulate_payload(case, session_id, preset)
     try:
-        response = await run_unified_simulation(request)
+        if _is_bubble_lattice_case(case):
+            request = _bubble_lattice_payload(case, session_id, preset)
+            response = await run_bubble_lattice_simulation(request)
+        else:
+            request = _simulate_payload(case, session_id, preset)
+            response = await run_unified_simulation(request)
         body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
-        body["rate_mode"] = case["rate_mode"]
-        persist = (body.get("analytics_transparency") or {}).get("persistence") or {}
+        body["rate_mode"] = case.get("rate_mode") or "two_body"
+        persist = (
+            (body.get("analytics_transparency") or {}).get("persistence")
+            or (body.get("validation") or {}).get("persistence")
+            or {}
+        )
         logger.info(
-            "campaign %s %s/%s %s T=%.0f pipeline=%s tag=%s",
+            "campaign %s %s/%s %s T=%.0f route=%s tag=%s",
             preset,
             index + 1,
             total,
             case["host_material"],
-            case["temperature"],
-            case["use_theory_pipeline"],
+            float(case.get("temperature") or 0.0),
+            "bubble_lattice" if _is_bubble_lattice_case(case) else "simulate",
             case.get("tag"),
         )
         return body, persist
@@ -161,6 +232,7 @@ async def run_campaign(
         "diverse",
         "question_theories",
         "testbed_review",
+        "cavitation_collapse",
     }:
         representative = next(iter_campaign_cases(preset))
         loading = min(max(float(representative.get("loading_ratio") or 0.9), 0.0), 1.0)

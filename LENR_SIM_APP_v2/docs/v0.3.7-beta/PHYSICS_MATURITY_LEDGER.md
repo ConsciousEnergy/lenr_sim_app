@@ -3,6 +3,10 @@
 **Narrative source of truth.** Machine twin: [`physics_maturity_ledger.json`](./physics_maturity_ledger.json).  
 **Hard line:** Lean / algebra proving non-closure or bounds ≠ proving LENR in nature (`lenr_proved: false`).
 
+**Closure runway (draft only):** what would later discharge or falsify each
+`EQ-OPEN-*` — rows stay **OPEN** — see
+[`../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md).
+
 ## Independent maturity axes (do not collapse)
 
 | Axis | Meaning | Where surfaced |
@@ -22,7 +26,7 @@ Fidelity ≠ validity. `EQ-OPEN-*` remain OPEN.
 | EQ-OPEN-EC-01 | `open_question_details.py`, `theories/widom_larsen.py` | Open Questions / Theory | speculative_exploratory | n/a | speculative | OPEN — Lean deficit identity only | md,json,lean,tex | Speculative | Condensed-matter ≥0.782 MeV path | P0 |
 | EQ-OPEN-YIELD-01 | `open_question_details.py` | Open Questions | empirical_lenr_correlation | n/a | empirical_band | OPEN — EMP band DEF, not discharge | md,json,lean,tex | Beta | Duty-cycle vs Miles band | P0 |
 | WH-ENP-01 | `working_hypothesis.py`, `many_body/wh_bounds*.py` | Open Questions WH | speculative_exploratory | exploratory | speculative | Does not close OPEN | md,json,lean | Speculative | Keep exploratory; no UI closure | P0 |
-| ENG-BUBBLE-FUSION-01 | `backend/app/physics/bubble_fusion.py` + Bubble Fusion UI | `/bubble-fusion` | approximate | approximate | contested | Auto RP/KM ODE (`dynamics_mode=auto`; KM when Mach≥0.3) + handoff/verification | md,json,tex | Approximate / Beta | Keep EQ-OPEN-* open; Phase C EOS/FEM deferred | P1 |
+| ENG-BUBBLE-FUSION-01 | `backend/app/physics/bubble_fusion.py` + Bubble Fusion UI | `/bubble-fusion` | approximate | approximate | contested | Clamp/UQ DEF Lean (`EQ-BBL-LIM/BOUND/UQ-01`); dynamics still approximate — **not** nature proof | md,json,tex,lean | Approximate / Beta | Keep EQ-OPEN-* open; EOS/FEM still deferred | P1 |
 | ENG-RP-KM-01 | `physics_engine/bubble_solver.py`, `bubble_lattice_interaction.py` | Unified `/unified-theory` + BF | approximate | approximate | established_hydro | RP for low Mach; KM auto when Mach≥0.3 | md,json,lean,tex | Approximate | Monitor domain limits; keep EQ-OPEN-* open | P1 |
 | ENG-WKB-01 | `physics/wkb_tunneling.py`, Quantum Tunneling UI | `/quantum-tunneling` | established_reference | high | established | WKB/Gamow verified algebraically; screening domain-limited | md,json,lean | Beta | Domain badges for screening | P1 |
 | ENG-THEORY-PIPELINE-01 | `theory_protocol.py` + theories/* | Theory Methods / Unified | speculative_exploratory (default) | per-theory | per-theory | Per-theory Lean/analytics sparse; Holmlid≠Kim; null controls | md,json | Speculative | ARA P1 rebuilds (0.3.9); keep axes separate | P1 |

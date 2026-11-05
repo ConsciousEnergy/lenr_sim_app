@@ -3,6 +3,7 @@
 % Canonical narrative: docs/A_Unified_Theoretical_Framework_for_LENR.md
 % Equation OPEN/ENG stubs: ../latex/
 % Epistemic: lenr_proved remains false; EQ-OPEN-* remain OPEN.
+% Phase D (2026-11-05): cavitation--collapse = modelled enhancement / contested hydro.
 \documentclass[11pt]{article}
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
@@ -12,7 +13,7 @@
 for Low-Energy Nuclear Reactions (LENR)}
 \author{Diadon Acs (lead, Conscious Energies)\\
 \small Contributing AIs disclosed in the Markdown canonical manuscript}
-\date{2026-02-14 (revised 2026-09-25, v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-05 honesty sync; prior 2026-09-25, v0.3.7-beta)}
 \begin{document}
 \maketitle
 
@@ -20,8 +21,9 @@ for Low-Energy Nuclear Reactions (LENR)}
 Low-Energy Nuclear Reactions (LENR) are investigated under a unified theoretical
 and mathematical framework integrating Rydberg Matter, delocalized interface
 electrons, double-layer QED, Casimir, Oppenheimer--Phillips, and quantum tunneling
-enhancements, plus lattice--bubble interaction physics. Companion software
-implements a phenomenological tunneling-enhancement band of
+enhancements, plus lattice--bubble interaction physics treated as
+\textbf{modelled enhancement / contested hydro} (not nuclear-rate proof).
+Companion software implements a phenomenological tunneling-enhancement band of
 \(10^{3}\)--\(10^{5}\) (software sensitivity envelope, not a first-principles
 prediction). Multi-format archival pack:
 \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.7-beta/paper/}.
@@ -30,12 +32,16 @@ prediction). Multi-format archival pack:
 \section*{Epistemic posture}
 Exploratory models only. Claim-tiered outputs. No \texttt{LENR\_PROVED}.
 All five \texttt{EQ-OPEN-*} obligations remain OPEN.
+Cavitation--collapse hydrodynamics is \textbf{modelled enhancement / contested
+hydro}: companion ODEs, clamps, and UQ explore interfacial conditions; they do
+not establish nuclear rates or close open obligations.
 
 \section{Computational methods (v0.3.7-beta sync)}
 Public beta runs the in-repo \texttt{physics\_engine}: WKB/Gamow tunneling;
 bubble dynamics with Rayleigh--Plesset baseline and Keller--Miksis auto-select
 when peak Mach \(\ge 0.3\) (\texttt{ENG-RP-KM-01}, \texttt{ENG-BUBBLE-FUSION-01}).
 Provenance distinguishes \texttt{physics\_engine} from schematic fallback.
+Collapse UQ (\texttt{collapse\_uq.py}) reports modelled percentiles only.
 FEM / Poisson--Schr\"odinger remain aspirational (\texttt{ENG-ASPIRATIONAL-FEM-01}).
 
 \subsection{Rayleigh--Plesset (low-Mach baseline)}
@@ -69,18 +75,31 @@ Pinned reviewer packs under
 (\texttt{smoke}, \texttt{q\_campaign\_demo}) and campaign invariants enforce
 \texttt{lenr\_proved=false}, the five OPEN IDs, and
 \texttt{contract\_version=v0.3.7-beta-science-gate-1}.
-See \texttt{PROVENANCE.md} and \texttt{simulation\_evidence.json} in this directory.
-Larger campaigns do not raise empirical claim tiers.
+Cavitation--collapse pack
+\texttt{datasets/reviewer\_packs/cavitation\_collapse\_campaign/}
+is on \texttt{dev} (Phase~A / \#299; model output only).
+Avenue ranking note
+\texttt{docs/v0.3.9-beta/AVENUE\_RANKING.md} (Phase~B / \#301) and
+closure-runway draft
+\texttt{docs/v0.3.9-beta/EQ\_OPEN\_CLOSURE\_RUNWAY.md} (Phase~F / \#297)
+are on \texttt{dev}; neither closes \texttt{EQ-OPEN-*} nor sets
+\texttt{lenr\_proved}. See \texttt{PROVENANCE.md} and
+\texttt{simulation\_evidence.json}.
+Larger campaigns and UQ ranking do not raise empirical claim tiers.
 
 \section{Mechanized consistency (Lean)}
 Lean~4 modules in \texttt{formalization/lean/LenrFormal/} certify mathematical
-consistency / non-closure lemmas only.
+consistency / clamp / non-closure lemmas only.
+\texttt{CollapseBounds} encodes \texttt{EQ-BBL-LIM-01} (pointwise clamp algebra;
+not a cavitation-dynamics theorem). WH-ENP-01 / OpenObligations prove
+non-closure under stated deficits without flipping the OPEN table.
 Paper section\(\to\)theorem map:
 \texttt{PaperCrosswalk.lean} (also under \texttt{formalization/lean/LenrFormal/}).
 Status ledger: \texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}.
 
 \section*{Non-claims}
 These artifacts do not prove that LENR occurs in nature, close any
-\texttt{EQ-OPEN-*}, or elevate speculative mechanisms to empirical validation.
+\texttt{EQ-OPEN-*}, set \texttt{lenr\_proved}, or elevate speculative
+cavitation--collapse mechanisms to empirical validation.
 
 \end{document}

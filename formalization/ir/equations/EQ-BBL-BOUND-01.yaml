@@ -1,0 +1,24 @@
+id: EQ-BBL-BOUND-01
+latex: "T_{\\mathrm{bound}}\\in\\{1.5\\times10^{4},\\,2\\times10^{6}\\}\\,\\mathrm{K};\\; P_{\\mathrm{shock}}\\le 10^{10}\\,\\mathrm{Pa};\\; \\mathrm{Ma}_{\\mathrm{th}}=0.3"
+symbols:
+  emission_band_upper_K: "Flannigan & Suslick emission-band upper (K)"
+  moss_ion_ceiling_K: "Moss et al. peak ion temperature ceiling (K)"
+  shock_pressure_ceiling_Pa: "Sonoluminescence shock-pressure literature bound (Pa)"
+  compressibility_mach_threshold: "RP→KM compressibility threshold (Mach)"
+units: "K, Pa, dimensionless Mach"
+tag: DEF
+paper_ref: "PHYSICS_EQUATION_VERIFICATION.md §9A.5; ENG-BUBBLE-FUSION-01 ledger"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_calculated_bounds.py
+citation_keys:
+  - moss_ion_ceiling_jasa_1996
+  - flannigan_suslick_nature_2005
+  - brenner_sbsl_rev_mod_phys_2002
+lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.emissionBandUpper_K"
+  - "LenrFormal.CollapseBounds.mossIonCeiling_K"
+  - "LenrFormal.CollapseBounds.shockPressureCeiling_Pa"
+  - "LenrFormal.CollapseBounds.compressibilityMachThreshold_x10"
+  - "LenrFormal.CollapseBounds.temperatureBound_K"
+notes: "Integer-scaled literature ceilings mirrored in Lean. Regime selection is bookkeeping, not a hydrodynamics theorem. Does not close EQ-OPEN-* or set lenr_proved."
