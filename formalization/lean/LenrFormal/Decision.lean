@@ -39,4 +39,25 @@ theorem approx_bayes_factor_self_consistent
     approxBayesFactor expApprox logEvidence logEvidence = expApprox 0 := by
   simp [approxBayesFactor, logBayesFactor]
 
+/-- Algebraic identity: self log-Bayes factor is zero (not an empirical prior). -/
+theorem log_bayes_factor_self_zero (logEvidence : Int) :
+    logBayesFactor logEvidence logEvidence = 0 := by
+  simp [logBayesFactor]
+
+/-- Algebraic antisymmetry of the log-evidence difference. -/
+theorem log_bayes_factor_antisymm (logEvidenceI logEvidenceJ : Int) :
+    logBayesFactor logEvidenceI logEvidenceJ
+      = -logBayesFactor logEvidenceJ logEvidenceI := by
+  simp [logBayesFactor]
+  omega
+
+/-- Algebraic telescoping / cocycle identity for three log-evidence inputs. -/
+theorem log_bayes_factor_cocycle
+    (logEvidenceI logEvidenceJ logEvidenceK : Int) :
+    logBayesFactor logEvidenceI logEvidenceJ
+      + logBayesFactor logEvidenceJ logEvidenceK
+      = logBayesFactor logEvidenceI logEvidenceK := by
+  simp [logBayesFactor]
+  omega
+
 end LenrFormal.Decision

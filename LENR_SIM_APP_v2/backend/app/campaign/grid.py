@@ -116,6 +116,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    # Designed cavitation / collapse–heavy grid (not a cartesian). Axes unused.
+    "cavitation_collapse": {
+        "temperatures": [298.0],
+        "loading_ratios": [0.90],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
 }
 
 AXIS_KEYS = (
@@ -280,6 +289,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_carbon_silicate_uq_cases()
         return
+    if preset == "cavitation_collapse":
+        from app.campaign.cavitation_collapse import iter_cavitation_collapse_cases
+
+        yield from iter_cavitation_collapse_cases()
+        return
     axes = [spec[key] for key in AXIS_KEYS]
     for temp, loading, material, reactant, rate_mode, pipeline in product(*axes):
         yield _case_from_axes(temp, loading, material, reactant, rate_mode, pipeline)
@@ -320,6 +334,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.carbon_silicate import carbon_silicate_uq_count
 
         return carbon_silicate_uq_count()
+    if preset == "cavitation_collapse":
+        from app.campaign.cavitation_collapse import cavitation_collapse_count
+
+        return cavitation_collapse_count()
     spec = PRESETS[preset]
     n = 1
     for key in AXIS_KEYS:
@@ -481,5 +499,15 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["note"] = (
             "Pd/Ni plus graphite/SiC UQ cells for probabilistic outcomes. "
             "Model output only. Does not prove LENR."
+        )
+    if preset == "cavitation_collapse":
+        from app.campaign.cavitation_collapse import cavitation_collapse_count
+
+        payload["n_collapse_cells"] = cavitation_collapse_count()
+        payload["note"] = (
+            "Cavitation / collapse–heavy bubble-lattice cells: host × loading × "
+            "drive × dynamics_mode with include_uncertainty and literature "
+            "anchors. Model output only. Does not prove LENR. Do not run full "
+            "or diverse in CI."
         )
     return payload

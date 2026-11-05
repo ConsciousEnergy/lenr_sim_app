@@ -29,7 +29,7 @@ narrative, schemas, registries, and release manifests.
 |---------|-------------|---------|-------|
 | Program hub | `ConsciousEnergy/UMLENR` | Yes | Docs, schemas, registries |
 | LENR-Sim app | `ConsciousEnergy/lenr_sim_app` | Yes | Public beta Compose → Swarm |
-| LENR-ARA DAQ | Private (TBD path) | No | Separate host/secrets |
+| LENR-ARA DAQ | Private early `LENR_ARA` (hub registry `lenr-ara`) | No | Separate host/secrets; DAQ trust plane |
 | Project Proteus | TBD under org | Mixed | Refresh after hub baseline |
 | Marketing site | WordPress.com → Astro/Pages | Yes | Apex phase-1 stays WP.com |
 

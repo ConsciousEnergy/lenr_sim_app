@@ -102,12 +102,12 @@
       "proof_status": {
         "analytical": "approximate",
         "numerical": "schematic_or_simplified",
-        "lean": "absent"
+        "lean": "clamp_uq_defs"
       },
-      "artifacts": ["md", "json", "tex"],
+      "artifacts": ["md", "json", "tex", "lean"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "Keep EQ-OPEN-* open; Phase C EOS/FEM still deferred"
+      "rd_next": "Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ-01 are DEF only"
     },
     {
       "id": "ENG-RP-KM-01",

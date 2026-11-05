@@ -301,3 +301,31 @@ def test_iccf27_and_carbon_silicate_presets_are_designed() -> None:
     assert "Does not prove LENR" in described_map["note"]
 
 
+def test_cavitation_collapse_preset_is_designed() -> None:
+    from app.campaign.cavitation_collapse import cavitation_collapse_count
+
+    n = campaign_size("cavitation_collapse")
+    assert n == cavitation_collapse_count()
+    assert 8 <= n <= 16
+    cases = list(iter_campaign_cases("cavitation_collapse"))
+    assert all(case.get("route") == "bubble_lattice" for case in cases)
+    assert all(isinstance(case.get("bubble"), dict) for case in cases)
+    modes = {
+        (case.get("bubble") or {}).get("bubble_dynamics_mode") for case in cases
+    }
+    assert "rayleigh_plesset" in modes
+    assert "keller_miksis" in modes
+    assert any(case.get("include_uncertainty") for case in cases)
+    assert any(
+        case.get("literature_id") == "taleyarkhan-sonofusion-2002" for case in cases
+    )
+    hosts = {case["host_material"] for case in cases}
+    assert {"palladium", "nickel", "titanium"} <= hosts
+    assert any(case.get("claim_tag") == "null" for case in cases)
+    assert any(case.get("rate_mode") == "three_body" for case in cases)
+    described = describe_preset("cavitation_collapse")
+    assert described["n_cases"] == n
+    assert "Does not prove LENR" in described["note"]
+    assert "dynamics_mode" in described["note"]
+
+

@@ -23,20 +23,20 @@
 |--------|------|
 | [`datasets/reviewer_packs/smoke/`](../../../datasets/reviewer_packs/smoke/) | CI smoke pack |
 | [`datasets/reviewer_packs/q_campaign_demo/`](../../../datasets/reviewer_packs/q_campaign_demo/) | Larger pinned campaign |
-| [`datasets/reviewer_packs/cavitation_collapse/`](../../../datasets/reviewer_packs/cavitation_collapse/) | Phase A cavitation/collapse-heavy pack — **pending merge** if absent on `dev` (expected path; do not invent lab data) |
+| [`datasets/reviewer_packs/cavitation_collapse_campaign/`](../../../datasets/reviewer_packs/cavitation_collapse_campaign/) | Phase A cavitation/collapse bubble-lattice campaign (model output; EQ-OPEN-* stay OPEN) — **on `dev`** via #299 |
 | [`formalization/predictions/campaign_invariants.json`](../../../../formalization/predictions/campaign_invariants.json) | Campaign invariant schema |
 | [`backend/app/physics_engine/collapse_uq.py`](../../../backend/app/physics_engine/collapse_uq.py) | Collapse Sobol UQ (modelled percentiles only) |
 | [`backend/tests/test_paper_benchmarks/`](../../../backend/tests/test_paper_benchmarks/) | CI paper-reproduction gates |
 | [`simulation_evidence.json`](./simulation_evidence.json) | Machine-readable summary for this pack |
 
-## Phase B / F science notes (link when on `dev`)
+## Phase B / F science notes (on `dev`)
 
-| Note | Expected path | Status on `origin/dev` at Phase D sync |
-|------|---------------|----------------------------------------|
-| Avenue ranking (campaign + UQ) | [`../../v0.3.9-beta/AVENUE_RANKING.md`](../../v0.3.9-beta/AVENUE_RANKING.md) | **pending merge** (Phase B) if file absent |
-| EQ-OPEN closure/falsification runway | [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) | **pending merge** (Phase F) if file absent — criteria draft only; rows stay OPEN |
+| Note | Path | Status |
+|------|------|--------|
+| Avenue ranking (campaign + UQ) | [`../../v0.3.9-beta/AVENUE_RANKING.md`](../../v0.3.9-beta/AVENUE_RANKING.md) | **on `dev`** via #301 (Phase B) |
+| EQ-OPEN closure/falsification runway | [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) | **on `dev`** via #297 (Phase F) — criteria draft only; rows stay OPEN |
 
-Do **not** treat pending paths as laboratory evidence. When those files land on `dev`, this table’s “pending merge” rows become live links without changing claim tiers.
+Do **not** treat these paths as laboratory evidence. Live links do not change claim tiers, close `EQ-OPEN-*`, or set `lenr_proved`.
 
 ## Lean clamp / non-closure pointers
 

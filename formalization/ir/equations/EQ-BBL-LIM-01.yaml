@@ -18,4 +18,7 @@ lean_target: LenrFormal.CollapseBounds
 lean_decls:
   - "LenrFormal.CollapseBounds.clamped"
   - "LenrFormal.CollapseBounds.saturated"
-notes: "Replaces static-only ceilings with regime-aware calculated bounds; KM auto-selected at peak_mach >= 0.3."
+  - "LenrFormal.CollapseBounds.clamped_le_bound"
+  - "LenrFormal.CollapseBounds.reportedTemperature_K"
+  - "LenrFormal.CollapseBounds.reportedPressure_Pa"
+notes: "Replaces static-only ceilings with regime-aware calculated bounds; KM auto-selected at peak_mach >= 0.3. Related DEF rows: EQ-BBL-BOUND-01, EQ-BBL-UQ-01 (ENG-BUBBLE-FUSION-01 scaffold)."

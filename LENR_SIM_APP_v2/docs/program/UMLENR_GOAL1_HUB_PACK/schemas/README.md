@@ -15,7 +15,7 @@
 |-----------|------------|--------|-------|
 | `lenr-run-export-v1` | `lenr_sim_app` | live | Simulation run export envelope |
 | `umlenr-release-manifest-v1` | `UMLENR` (this hub) | stub | See `../release/manifest.example.yml` |
-| `lenr-ara-daq-sample-v1` | LENR-ARA (private) | planned | Public fields only in hub later |
+| `lenr-ara-daq-sample-v1` | LENR-ARA (private) | planned | Public fields only in hub later; ingest sketch in [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) (does not close EQ-OPEN-*) |
 
 ## How to add a schema
 
