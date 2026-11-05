@@ -3,6 +3,10 @@
 **Narrative source of truth.** Machine twin: [`physics_maturity_ledger.json`](./physics_maturity_ledger.json).  
 **Hard line:** Lean / algebra proving non-closure or bounds ≠ proving LENR in nature (`lenr_proved: false`).
 
+**Closure runway (draft only):** what would later discharge or falsify each
+`EQ-OPEN-*` — rows stay **OPEN** — see
+[`../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md).
+
 ## Independent maturity axes (do not collapse)
 
 | Axis | Meaning | Where surfaced |
