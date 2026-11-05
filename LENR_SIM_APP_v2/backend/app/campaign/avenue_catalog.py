@@ -16,14 +16,15 @@ OPEN_IDS: Tuple[str, ...] = (
     "EQ-OPEN-YIELD-01",
 )
 
-# Optional Phase A pack id; discovery is soft when the pack is absent.
+# Phase A pack id (PR #299). Preferred ranking seed when present on disk.
 CAVITATION_PACK_ID = "cavitation_collapse_campaign"
+FALLBACK_PACK_ID = "q_campaign_demo"
 
-# Seed packs always available on this train; Phase A pack plugs in when present.
+# Discovery order: prefer Phase A cavitation pack, else q_campaign_demo, else smoke.
 DEFAULT_SEED_PACKS: Tuple[str, ...] = (
-    "smoke",
-    "q_campaign_demo",
     CAVITATION_PACK_ID,
+    FALLBACK_PACK_ID,
+    "smoke",
 )
 
 #: Miles-class EMP heat–He conversion band (MeV/He4); decision_oracle twin.

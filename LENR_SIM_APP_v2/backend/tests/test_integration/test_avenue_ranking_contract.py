@@ -2,21 +2,32 @@
 
 from __future__ import annotations
 
-from app.campaign.avenue_catalog import CAVITATION_PACK_ID, OPEN_IDS, avenue_definitions
+from app.campaign.avenue_catalog import (
+    CAVITATION_PACK_ID,
+    FALLBACK_PACK_ID,
+    OPEN_IDS,
+    avenue_definitions,
+)
 from app.campaign.avenue_ranking import (
     SCHEMA,
     assert_ranking_honesty,
     discover_seed_packs,
+    prefer_ranking_packs,
     rank_avenues,
 )
 
 
-def test_ranking_from_smoke_and_q_demo_never_proves_or_closes() -> None:
-    payload = rank_avenues(
-        pack_ids=["smoke", "q_campaign_demo", CAVITATION_PACK_ID],
-        n_uq_samples=16,
-        seed=7,
-    )
+def test_default_prefers_cavitation_pack_when_present() -> None:
+    preferred = prefer_ranking_packs()
+    assert preferred, "expected at least one seed pack"
+    if CAVITATION_PACK_ID in discover_seed_packs():
+        assert preferred == [CAVITATION_PACK_ID]
+    else:
+        assert preferred[0] == FALLBACK_PACK_ID
+
+
+def test_ranking_from_preferred_pack_never_proves_or_closes() -> None:
+    payload = rank_avenues(n_uq_samples=16, seed=7)
     assert_ranking_honesty(payload)
     assert payload["schema"] == SCHEMA
     assert payload["lenr_proved"] is False
@@ -25,11 +36,21 @@ def test_ranking_from_smoke_and_q_demo_never_proves_or_closes() -> None:
     assert all(payload["open_status"][oid] == "OPEN" for oid in OPEN_IDS)
     assert "LENR_PROVED" in payload["forbidden"]
     assert payload["n_experiments"] >= 1
-    assert "smoke" in payload["pack_sources"]
-    assert "q_campaign_demo" in payload["pack_sources"]
-    # Phase A pack soft-plugs; absence must not break honesty.
+    assert payload["preferred_pack"] in {
+        CAVITATION_PACK_ID,
+        FALLBACK_PACK_ID,
+        "smoke",
+    }
     assert payload["phase_a_pack_id"] == CAVITATION_PACK_ID
-    assert isinstance(payload["phase_a_pack_present"], bool)
+    if CAVITATION_PACK_ID in discover_seed_packs():
+        assert payload["phase_a_pack_present"] is True
+        assert payload["preferred_pack"] == CAVITATION_PACK_ID
+        assert payload["pack_sources"] == [CAVITATION_PACK_ID]
+    else:
+        assert payload["phase_a_pack_present"] is False
+        assert FALLBACK_PACK_ID in payload["pack_sources"] or "smoke" in payload[
+            "pack_sources"
+        ]
 
     avenues = payload["avenues"]
     assert len(avenues) == len(avenue_definitions())
@@ -46,12 +67,20 @@ def test_ranking_from_smoke_and_q_demo_never_proves_or_closes() -> None:
             assert oid in OPEN_IDS or oid.startswith("EQ-OPEN-")
 
 
-def test_discover_seed_packs_skips_missing_phase_a() -> None:
+def test_explicit_pack_ids_still_filtered_for_honesty() -> None:
+    payload = rank_avenues(
+        pack_ids=["smoke", FALLBACK_PACK_ID, CAVITATION_PACK_ID],
+        n_uq_samples=8,
+        seed=3,
+    )
+    assert_ranking_honesty(payload)
+    assert payload["lenr_proved"] is False
+
+
+def test_discover_seed_packs_skips_missing() -> None:
     found = discover_seed_packs(["smoke", CAVITATION_PACK_ID, "does_not_exist"])
     assert "smoke" in found
     assert "does_not_exist" not in found
-    # cavitation pack may or may not be present; discovery must not raise.
-    assert CAVITATION_PACK_ID in found or CAVITATION_PACK_ID not in found
 
 
 def test_assert_ranking_honesty_rejects_proved_flip() -> None:

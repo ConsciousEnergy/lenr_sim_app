@@ -44,12 +44,14 @@ Contract tests:
 ```python
 from app.campaign.avenue_ranking import rank_avenues
 
-table = rank_avenues()  # smoke + q_campaign_demo; cavitation pack if present
+table = rank_avenues()  # prefers cavitation_collapse_campaign; else q_campaign_demo
 ```
 
-- Always seeds from `datasets/reviewer_packs/smoke` and `q_campaign_demo` when present.
-- Soft-discovers `cavitation_collapse_campaign` (Phase A). Absence is fine;
-  presence boosts the cavitation/collapse avenue score without changing honesty.
+- **Preferred:** `datasets/reviewer_packs/cavitation_collapse_campaign/` (Phase A / PR #299)
+  when present — including pack-embedded `collapse_uq` percentiles.
+- **Fallback:** `q_campaign_demo` (then `smoke` if nothing else is on disk).
+- Presence of the cavitation pack also soft-boosts the `cavitation_collapse_uq`
+  avenue score. Honesty fields are unchanged either way.
 
 ## Scoring (toy, labelled)
 

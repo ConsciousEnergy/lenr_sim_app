@@ -29,6 +29,7 @@ from app.campaign.avenue_pack_io import (
     discover_seed_packs,
     load_pack_experiments,
     pack_coverage,
+    prefer_ranking_packs,
     representative_row,
 )
 from app.physics_engine.decision_oracle import (
@@ -74,7 +75,8 @@ def _score_rate_uq(
 ) -> Dict[str, Any]:
     config = config_from_row(row)
     params = row.get("parameters") or {}
-    mode = str(params.get("rate_mode") or "two_body")
+    results = row.get("results") or {}
+    mode = str(params.get("rate_mode") or results.get("rate_mode") or "two_body")
     band = _rate_band_from_row(row)
     material_key = str(config.host_material.name).lower()
     prior = propagate_rate_uncertainty(
@@ -142,12 +144,37 @@ def _score_oracle_separation() -> Dict[str, Any]:
     }
 
 
+def _collapse_from_pack_row(row: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    """Reuse Phase A embedded collapse_uq percentiles when present."""
+    results = row.get("results") or {}
+    collapse = results.get("collapse") or {}
+    embedded = collapse.get("collapse_uq") or {}
+    temp = embedded.get("peak_temperature_k") or {}
+    if not {"p05", "p95"} <= set(temp):
+        return None
+    width = max(float(temp["p95"]) - float(temp["p05"]), 0.0)
+    return {
+        "interval_kind": "predictive",
+        "peak_temperature_width_k": width,
+        "top_sensitivity": None,
+        "kind": "scenario_table_not_posterior",
+        "source": "pack_embedded_collapse_uq",
+        "pack_tag": results.get("tag"),
+    }
+
+
 def _score_collapse_uq(
     *,
     n_samples: int,
     seed: int,
     material: str = "palladium",
+    pack_row: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
+    if pack_row is not None:
+        embedded = _collapse_from_pack_row(pack_row)
+        if embedded is not None:
+            return embedded
+
     from app.physics_engine.bubble_lattice_interaction import (
         BubbleLatticeInteraction,
         BubbleParameters,
@@ -185,6 +212,7 @@ def _score_collapse_uq(
         "peak_temperature_width_k": width,
         "top_sensitivity": top_sens,
         "kind": "scenario_table_not_posterior",
+        "source": "live_collapse_uq",
     }
 
 
@@ -215,7 +243,7 @@ def rank_avenues(
     seed: int = 42,
 ) -> Dict[str, Any]:
     """Build campaign-level avenue ranking table (RORO). Never sets lenr_proved."""
-    packs = discover_seed_packs(pack_ids)
+    packs = prefer_ranking_packs(pack_ids)
     experiments: List[Dict[str, Any]] = []
     for pack_id in packs:
         experiments.extend(load_pack_experiments(pack_id))
@@ -223,7 +251,14 @@ def rank_avenues(
     oracle = _score_oracle_separation()
     separation = float(oracle["log10_hypothesis_separation"])
     has_cavitation_pack = CAVITATION_PACK_ID in packs
-    collapse = _score_collapse_uq(n_samples=n_uq_samples, seed=seed)
+    preferred_row = representative_row(
+        experiments, ["EQ-OPEN-RATE-01", "EQ-OPEN-MEV-01"]
+    )
+    collapse = _score_collapse_uq(
+        n_samples=n_uq_samples,
+        seed=seed,
+        pack_row=preferred_row,
+    )
     collapse_score = min(
         math.log10(max(collapse["peak_temperature_width_k"], 1.0)) / 6.0, 1.0
     )
@@ -298,6 +333,7 @@ def rank_avenues(
         "open_ids": list(OPEN_IDS),
         "open_status": {oid: "OPEN" for oid in OPEN_IDS},
         "pack_sources": packs,
+        "preferred_pack": packs[0] if packs else None,
         "n_experiments": len(experiments),
         "phase_a_pack_id": CAVITATION_PACK_ID,
         "phase_a_pack_present": has_cavitation_pack,
@@ -316,10 +352,11 @@ def rank_avenues(
         "avenues": ranked,
         "claim_tier": "speculative_exploratory",
         "notes": (
-            "Scores blend decision_oracle next_measurement rank, pack OPEN-id "
-            "coverage, reaction_rate UQ band-shrink, oracle hypothesis "
-            "separation, and collapse UQ predictive width. Soft-boosts "
-            f"{CAVITATION_PACK_ID} when that pack is on disk."
+            "Prefers cavitation_collapse_campaign when present (else "
+            "q_campaign_demo). Scores blend decision_oracle next_measurement "
+            "rank, pack OPEN-id coverage, reaction_rate UQ band-shrink, oracle "
+            "hypothesis separation, and collapse UQ width (pack-embedded when "
+            "available)."
         ),
     }
 
@@ -349,5 +386,6 @@ __all__ = [
     "rank_avenues",
     "assert_ranking_honesty",
     "discover_seed_packs",
+    "prefer_ranking_packs",
     "load_pack_experiments",
 ]

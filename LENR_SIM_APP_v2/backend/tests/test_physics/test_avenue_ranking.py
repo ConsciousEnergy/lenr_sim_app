@@ -39,14 +39,19 @@ def test_rate_uq_layer_applies_experimental_band() -> None:
 
 
 def test_collapse_uq_summary_is_predictive_scenario() -> None:
-    payload = rank_avenues(pack_ids=["smoke"], n_uq_samples=16, seed=5)
+    payload = rank_avenues(n_uq_samples=16, seed=5)
     summary = payload["collapse_uq_summary"]
     assert summary["interval_kind"] == "predictive"
     assert summary["kind"] == "scenario_table_not_posterior"
-    assert summary["peak_temperature_width_k"] > 0.0
+    assert summary["peak_temperature_width_k"] >= 0.0
+    if payload["phase_a_pack_present"]:
+        assert summary.get("source") == "pack_embedded_collapse_uq"
+        assert payload["preferred_pack"] == "cavitation_collapse_campaign"
+    else:
+        assert summary.get("source") in {"live_collapse_uq", None}
     cav = next(row for row in payload["avenues"] if row["id"] == "cavitation_collapse_uq")
     assert cav["collapse_uq"] is not None
-    assert cav["optional_pack_present"] is False
+    assert cav["optional_pack_present"] is payload["phase_a_pack_present"]
 
 
 def test_oracle_priors_are_surfaced() -> None:
