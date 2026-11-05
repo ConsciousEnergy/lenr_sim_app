@@ -78,6 +78,13 @@ jest.mock('three', () => {
   function MockClock() {
     this.getElapsedTime = jest.fn().mockReturnValue(0);
   }
+  function MockTimer() {
+    this.update = jest.fn();
+    this.getDelta = jest.fn().mockReturnValue(0);
+    this.getElapsed = jest.fn().mockReturnValue(0);
+    this.connect = jest.fn();
+    this.disconnect = jest.fn();
+  }
   function MockAmbientLight() { this.isLight = true; }
   function MockDirectionalLight() {
     this.isLight = true;
@@ -95,6 +102,7 @@ jest.mock('three', () => {
     PerspectiveCamera: MockPerspectiveCamera,
     Scene: MockScene,
     Clock: MockClock,
+    Timer: MockTimer,
     Color: jest.fn(),
     Group: jest.fn(),
     Mesh: jest.fn(),

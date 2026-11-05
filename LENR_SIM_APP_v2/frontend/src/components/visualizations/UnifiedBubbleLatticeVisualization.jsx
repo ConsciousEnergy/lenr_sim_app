@@ -32,6 +32,7 @@ import {
   getBubbleDisplayScale,
   getBubbleScaleFromPhase,
 } from '../../utils/bubbleVisualScale';
+import { useStableThreeTimer } from '../../visualization/utils/threeTimer';
 import {
   normalizePhaseName,
   phaseFromCycleFraction,
@@ -329,7 +330,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const cameraRef = useRef(null);
   const controlsRef = useRef(null);
   const frameIdRef = useRef(null);
-  const clockRef = useRef(new THREE.Clock());
+  const timerRef = useStableThreeTimer();
 
   // Fire a single product-analytics view event when this visualization mounts.
   useEffect(() => {
@@ -2835,11 +2836,15 @@ const UnifiedBubbleLatticeVisualization = ({
     createHaloElectrons(scene);
     createScaleBar(scene);
 
-    // Animation loop - uses ref to avoid re-initialization when animation function changes
-    const animate = () => {
+    // Animation loop - uses ref to avoid re-initialization when animation function changes.
+    // Prime the timer so the first frame delta is one frame, matching Clock's
+    // first getDelta() which returned 0.
+    timerRef.current.update();
+    const animate = (timestamp) => {
       frameIdRef.current = requestAnimationFrame(animate);
 
-      const deltaTime = clockRef.current.getDelta();
+      timerRef.current.update(timestamp);
+      const deltaTime = timerRef.current.getDelta();
       if (updateAnimationRef.current) {
         updateAnimationRef.current(deltaTime);
       }
