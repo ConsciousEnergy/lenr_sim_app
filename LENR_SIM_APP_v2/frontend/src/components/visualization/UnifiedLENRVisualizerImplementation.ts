@@ -488,7 +488,7 @@ export const addGlowEffect = (
  * Adds a fusion effect to a position in the scene
  * @param scene - The Three.js scene
  * @param position - The position to add the fusion effect to
- * @param clock - The Three.js clock for timing
+ * @param timer - The Three.js timer for timing. Updated once before the start time is read.
  * @param color - The color of the fusion effect
  * @param duration - The duration of the fusion effect
  * @returns The created fusion effect object
@@ -496,7 +496,7 @@ export const addGlowEffect = (
 export const addFusionEffect = (
   scene: THREE.Scene,
   position: THREE.Vector3,
-  clock: THREE.Clock,
+  timer: THREE.Timer,
   color: number | string = 0xffaa00,
   duration: number = 2.0
 ): FusionEffect | null => {
@@ -514,7 +514,8 @@ export const addFusionEffect = (
   sphere.position.copy(position);
   scene.add(sphere);
   
-  const startTime = clock.getElapsedTime();
+  timer.update();
+  const startTime = timer.getElapsed();
   const fusionEffect: FusionEffect = {
     mesh: sphere,
     startTime,
