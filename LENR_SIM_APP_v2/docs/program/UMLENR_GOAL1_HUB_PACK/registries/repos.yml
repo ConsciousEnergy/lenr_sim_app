@@ -23,11 +23,11 @@ repos:
     notes: "Reference Swarm/Ansible/Traefik/Terraform/Cloudflare stack"
 
   - id: lenr-ara
-    github: null  # private path TBD
+    github: null  # early/private LENR_ARA; org path in operator registry only
     role: private_daq
     visibility: private
     trust_plane: daq
-    notes: "Low-cost DAQ; never co-tenant with lenr-ci or public Sim DB"
+    notes: "Low-cost DAQ; never co-tenant with lenr-ci or public Sim DB; schemas only via hub"
 
   - id: project-proteus
     github: null  # refresh after hub baseline

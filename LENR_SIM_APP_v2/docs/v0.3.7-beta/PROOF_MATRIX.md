@@ -32,3 +32,9 @@ If Lean status is “PROVED” for an identity or non-closure lemma, UI claim_ti
 remains `OPEN` / `speculative` for the scientific obligation. JSON field
 `lenr_proved` must stay `false`. Proved IR rows that *document* non-closure do
 **not** discharge the corresponding `EQ-OPEN-*` row.
+
+## Closure runway (draft; status still OPEN)
+
+Draft affirmative / falsification criteria, UMLENR → LENR-ARA data path, and
+`lenr-ara-daq-sample-v1` ingest sketch (no row flips, `lenr_proved` remains
+false): [`../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md).
