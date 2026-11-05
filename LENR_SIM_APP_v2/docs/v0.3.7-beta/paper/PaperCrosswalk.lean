@@ -4,6 +4,8 @@ import LenrFormal.Casimir
 import LenrFormal.Gamow
 import LenrFormal.Assenbaum
 import LenrFormal.Composition
+import LenrFormal.CollapseBounds
+import LenrFormal.Decision
 import LenrFormal.Miles
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
@@ -55,6 +57,9 @@ def sectionModuleMap : List (String × String) :=
   , ("§2.8 / Gamow tunneling", "LenrFormal.Gamow")
   , ("§2.8 Assenbaum domain", "LenrFormal.Assenbaum")
   , ("§2.8 Composition cap 1e5", "LenrFormal.Composition")
+  , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
+  , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
+  , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")

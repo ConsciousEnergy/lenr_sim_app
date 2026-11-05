@@ -1,0 +1,24 @@
+id: EQ-BBL-UQ-01
+latex: "\\mathrm{percentiles}=\\{5,25,50,75,95\\};\\; \\delta_{\\mathrm{CR}}=0.20;\\; \\delta_{\\gamma}=0.05"
+symbols:
+  percentiles: "Reported collapse UQ percentile levels (p05..p95)"
+  compression_ratio_tolerance: "Fractional CR tolerance (model assumption)"
+  polytropic_index_tolerance: "Fractional polytropic-index tolerance (model assumption)"
+units: "percent / fraction"
+tag: DEF
+paper_ref: "PHYSICS_EQUATION_VERIFICATION.md collapse UQ; ENG-BUBBLE-FUSION-01"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_uq.py
+citation_keys:
+  - model_assumption_collapse_uq
+lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.uqPercentileP05"
+  - "LenrFormal.CollapseBounds.uqPercentileP25"
+  - "LenrFormal.CollapseBounds.uqPercentileP50"
+  - "LenrFormal.CollapseBounds.uqPercentileP75"
+  - "LenrFormal.CollapseBounds.uqPercentileP95"
+  - "LenrFormal.CollapseBounds.uqPercentiles"
+  - "LenrFormal.CollapseBounds.compressionRatioTolerancePct"
+  - "LenrFormal.CollapseBounds.polytropicIndexTolerancePct"
+notes: "Sobol UQ reporting keys and tolerance percents as definitions. Predictive intervals are model outputs, not lab posteriors. Does not close EQ-OPEN-*."

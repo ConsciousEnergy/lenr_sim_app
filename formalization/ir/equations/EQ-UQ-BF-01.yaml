@@ -13,4 +13,7 @@ lean_target: "LenrFormal.Decision"
 lean_decls:
   - "LenrFormal.Decision.logBayesFactor"
   - "LenrFormal.Decision.approxBayesFactor"
-notes: "Toy log-evidence softmax. Not MCMC. Odds do not flip EQ-OPEN-* rows."
+  - "LenrFormal.Decision.log_bayes_factor_self_zero"
+  - "LenrFormal.Decision.log_bayes_factor_antisymm"
+  - "LenrFormal.Decision.log_bayes_factor_cocycle"
+notes: "Toy log-evidence softmax. Algebraic self/antisymm/cocycle identities are proved under the DEF; still not MCMC or empirical proof. Odds do not flip EQ-OPEN-* rows."
