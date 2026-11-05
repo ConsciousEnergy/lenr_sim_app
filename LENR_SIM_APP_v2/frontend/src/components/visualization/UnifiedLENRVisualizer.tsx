@@ -46,6 +46,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { usePhysics } from "../../contexts/PhysicsContext";
+import { useStableThreeTimer } from "../../visualization/utils/threeTimer";
 import { ErrorBoundary } from "../ErrorBoundary";
 import type {
   WebGLCapabilities,
@@ -76,7 +77,6 @@ import type {
   ThreeObject3D,
   ThreeMesh,
   ThreeLight,
-  ThreeClock,
   ThreeTexture,
   ThreeSprite,
   ThreeVector3,
@@ -551,7 +551,9 @@ const UnifiedLENRVisualizer: React.FC<UnifiedLENRVisualizerProps> = ({
   const timeRef = useRef<number>(0);
   const fpsCounterRef = useRef<{ frames: number; lastTime: number }>({ frames: 0, lastTime: 0 });
   const objectsRef = useRef<THREE.Object3D[]>([]);
-  const clockRef = useRef<THREE.Clock>(new THREE.Clock());
+  // The JSX twin samples this timer. This stub must still own one so a
+  // rerender does not construct the deprecated THREE.Clock.
+  useStableThreeTimer();
   const frameCountRef = useRef<number>(0);
   const timeSinceLastFpsRef = useRef<number>(0);
   const animationRef = useRef<number | null>(null);

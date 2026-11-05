@@ -282,14 +282,15 @@ export const createAdaptiveQuality = (
   renderer: THREE.WebGLRenderer,
   camera: THREE.Camera
 ) => {
-  const clock = new THREE.Clock();
+  const timer = new THREE.Timer();
   let frameCounter = 0;
   let frameTime = 0;
   const frameTimeHistory: number[] = [];
   let qualityLevel = 1.0; // 1.0 is full quality
   
-  return () => {
-    const delta = clock.getDelta();
+  return (timestamp?: number) => {
+    timer.update(timestamp);
+    const delta = timer.getDelta();
     frameTime += delta;
     frameCounter++;
     

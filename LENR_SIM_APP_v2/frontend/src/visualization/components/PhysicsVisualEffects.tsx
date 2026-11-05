@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { useStableThreeTimer } from '../utils/threeTimer';
 import { SimulationUpdateMessage, LatticePoint as PhysicsLatticePoint } from '../../api/physics/types';
 import { getColorFromMap, getDefaultColorMapForType } from '../utils/colorMaps'; // Assuming color map utility exists
 
@@ -46,7 +47,7 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
   });
 
   const animationFrameRef = useRef<number | null>(null);
-  const clockRef = useRef(new THREE.Clock());
+  const timerRef = useStableThreeTimer();
 
   // --- Initialization Effect --- 
   // Create object pools and texture once on mount
@@ -309,15 +310,18 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
   };
 
   // --- Animation Loop --- 
-  const animate = () => {
-    const deltaTime = clockRef.current.getDelta();
+  const animate = (timestamp?: number) => {
+    const timer = timerRef.current;
+    timer.update(timestamp);
+    const deltaTime = timer.getDelta();
+    const elapsed = timer.getElapsed();
 
     // Animate active energy waves
     if (showWaveAnimations) {
       effectsRef.current.energyWaves.forEach(wave => {
         if (wave.visible && wave.userData.active) {
           const userData = wave.userData;
-          const time = clockRef.current.getElapsedTime() * userData.growSpeed;
+          const time = elapsed * userData.growSpeed;
           const pulse = Math.sin(time) * 0.5 + 0.5;
           const scale = userData.baseSize + pulse * (userData.maxSize - userData.baseSize) * intensity;
           wave.scale.set(scale, scale, scale);
@@ -331,7 +335,7 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
         effectsRef.current.reactionPoints.forEach(sprite => {
             if (sprite.visible && sprite.userData.active) {
                 const userData = sprite.userData;
-                const time = clockRef.current.getElapsedTime() * userData.flashSpeed;
+                const time = elapsed * userData.flashSpeed;
                 const flash = 0.3 + (Math.sin(time) * 0.5 + 0.5) * 0.7;
                 (sprite.material as THREE.SpriteMaterial).opacity = flash;
             }
@@ -395,7 +399,7 @@ const PhysicsVisualEffects: React.FC<PhysicsVisualEffectsProps> = ({
 
     // Start animation loop if not running
     if (animationFrameRef.current === null) {
-      clockRef.current.start(); // Ensure clock is running
+      timerRef.current.update();
       animate();
     }
 
