@@ -29,6 +29,15 @@
       "n_experiments": 150,
       "n_theory_runs": 132,
       "pack_git_sha": "99114db41878dba280ce269633a3cfadb442efb1"
+    },
+    {
+      "preset": "cavitation_collapse",
+      "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/",
+      "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/manifest.json",
+      "n_experiments": 10,
+      "n_theory_runs": 10,
+      "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
+      "note": "Bubble-lattice host×loading×drive×dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only."
     }
   ],
   "campaign_invariants": "formalization/predictions/campaign_invariants.json",
@@ -37,7 +46,8 @@
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3",
     "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback",
-    "WH-ENP-01 / v2 bounds retained in paper section 5A; do not close EQ-OPEN-*"
+    "WH-ENP-01 / v2 bounds retained in paper section 5A; do not close EQ-OPEN-*",
+    "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false"
   ],
   "formats": [".md", ".txt", ".tex", ".lean"]
 }
