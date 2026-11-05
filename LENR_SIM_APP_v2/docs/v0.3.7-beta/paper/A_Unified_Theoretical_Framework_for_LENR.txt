@@ -1,8 +1,9 @@
 A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
-Plain-text archival export — v0.3.7-beta (2026-09-25)
+Plain-text archival export — honesty sync 2026-11-05 (train v0.3.7-beta paper pack)
 Canonical Markdown: docs/A_Unified_Theoretical_Framework_for_LENR.md
 Multi-format pack: LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/
 Disclaimer: Model/framework manuscript. lenr_proved remains false. EQ-OPEN-* remain OPEN.
+Cavitation-collapse = modelled enhancement / contested hydro (not nuclear-rate proof).
 ========================================================================
 
 A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
@@ -11,8 +12,10 @@ Subtitle: Electron, Neutron, and Proton coupling is all you need
 
 Authors: Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-09-25, v0.3.7-beta)
+Date: 2026-02-14 (revised 2026-11-05, honesty sync; prior 2026-09-25, v0.3.7-beta)
 Organization: Conscious Energies | www.conscious.energy
+
+Revision note (2026-11-05, Phase D honesty sync). Labels cavitation–collapse (ENC / bubble-lattice hydro) as modelled enhancement / contested hydro—not an empirically validated nuclear pathway. Points §3.2 / §3.8 / §6.1 at companion-software campaign + collapse UQ evidence and Lean clamp / non-closure language (CollapseBounds / EQ-BBL-LIM-01, WH-ENP-01 non-closure). No quantitative band changes; lenr_proved remains false; all EQ-OPEN-* stay OPEN. No Theory Paper frontend changes in this sync.
 
 Revision note (2026-09-25, v0.3.7-beta). Companion-software sync with the v0.3.7-beta governance train: §3.2 documents Rayleigh–Plesset vs Keller–Miksis auto-select (Mach ≥ 0.3) and engine/schematic provenance; §3.8 cites pinned reviewer-pack simulation evidence; §6.1 points at the multi-format paper pack (.md / .txt / .tex / .lean) under LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/. Prior WH-ENP-01 / v2 bounds in §5A retained. No quantitative band changes (tunneling 10^{3}–10^{5}; Casimir -1.3\,\mathrm{mN}; Miles 24\pm4\,\mathrm{MeV}); lenr_proved remains false; all EQ-OPEN- stay OPEN.
 
@@ -20,10 +23,10 @@ Keywords: LENR; electron–neutron–proton coupling; Rydberg Matter; quantum tu
 
 Author Contributions & AI Assistance. Diadon Acs (Conscious Energies) directs this research, sets its scientific direction, and is solely accountable for its content, claims, and conclusions. The listed Autonomous Intelligences (the GPT, Claude/Sonnet/Opus, Gemini, and xAI/Grok model families, and Composer in Cursor) assisted with literature compilation, mathematical derivation and verification, simulation code, manuscript drafting, and multi-agent review under the human author's direction and review. Listing AI systems as contributors is unconventional and not accepted by all venues; it is disclosed here deliberately, in the interest of honesty, credit, and reproducibility, rather than to assert independent agency or authorship rights. All AI-assisted derivations were checked by the human author, and every quantitative claim carries the claim-tier / evidence-class governance described in the simulation app and in docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md (maturity ledger / proof matrix: docs/v0.3.7-beta/).
 
-Epistemic posture. Multi-body lattice–bubble constructions in this framework are exploratory models, not empirically validated nuclear-engineering predictions. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
+Epistemic posture. Multi-body lattice–bubble constructions in this framework are exploratory models, not empirically validated nuclear-engineering predictions. Cavitation–collapse hydrodynamics is treated throughout as modelled enhancement / contested hydro: companion-software ODEs, clamps, and UQ explore interfacial conditions; they do not establish nuclear rates or close EQ-OPEN-*. Experimental correlations and speculative mechanisms are labeled separately. Where the companion software reports enhancement bands or scenario rates, those outputs are claim-tiered sensitivity explorations unless an independent experimental constraint is cited.
 
 Abstract
-Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentially consequential pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), delocalized interface electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated as a candidate environment for cavitation-assisted interfacial conditions—not as proof of nuclear rates. In tandem, we detail mathematical tools and simulations that quantify these LENR hypotheses under explicit claim tiers. Computational explorations in the companion LENR_SIM software implement a phenomenological tunneling-enhancement band of 10^{3}–10^{5} (revised downward from earlier 10^{8} estimates; see Section 5.1); this band is a software sensitivity envelope, not a first-principles prediction. Reported isotopic shifts, neutron signals, and excess heat remain disputed empirical correlations that motivate—but do not validate—the framework.
+Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentially consequential pathway toward clean and sustainable energy. Despite decades of experimental findings indicating anomalous heat generation, isotopic transmutations, and minimal radiation, the field lacks a comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical elements—including Rydberg Matter (RM), delocalized interface electrons, double-layer Quantum Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum tunneling enhancements—under a single model. Lattice-bubble interaction physics (heterogeneous nucleation at surfaces, bubble–surface coupling, thermal and diffusion boundary layers, and acoustic/ultrasonic forcing) is integrated as a modelled enhancement / contested hydro candidate environment for cavitation-assisted interfacial conditions—not as proof of nuclear rates, and not as a claim that laboratory cavitation establishes LENR. In tandem, we detail mathematical tools and simulations that quantify these LENR hypotheses under explicit claim tiers. Computational explorations in the companion LENR_SIM software implement a phenomenological tunneling-enhancement band of 10^{3}–10^{5} (revised downward from earlier 10^{8} estimates; see Section 5.1); this band is a software sensitivity envelope, not a first-principles prediction. Reported isotopic shifts, neutron signals, and excess heat remain disputed empirical correlations that motivate—but do not validate—the framework.
 
 ---
 
@@ -437,7 +440,9 @@ which governs the quantum state  \psi  under potential  V(\mathbf{r}) .
 
 3.2 Bubble Collapse Dynamics
 
-Context: During electrolysis, microbubbles can form and then collapse, concentrating energy 26. Ledger IDs: ENG-BUBBLE-FUSION-01, ENG-RP-KM-01 (claim tier approximate; do not treat collapse numerics as nuclear-rate proof).
+Honesty label: Cavitation–collapse in this framework is modelled enhancement / contested hydro. Rayleigh–Plesset / Keller–Miksis trajectories, surface-proximity factors, and collapse UQ percentiles are companion-software sensitivity explorations under claim-tier governance. They are not laboratory proof of nuclear rates, not a discharge of any EQ-OPEN-*, and not a physical-necessity theorem. Lean LenrFormal.CollapseBounds encodes only the pointwise clamp algebra EQ-BBL-LIM-01 (min(raw,bound)); WH-ENP-01 / OpenObligations prove non-closure implications under stated deficits—not affirmative LENR (docs/FORMALIZATION/FORMAL_PROOF_STATUS.md).
+
+Context: During electrolysis, microbubbles can form and then collapse, concentrating energy 26. Ledger IDs: ENG-BUBBLE-FUSION-01, ENG-RP-KM-01 (claim tier approximate; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (collapse_uq.py, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
 
 1. Modified Rayleigh–Plesset Equation (incompressible / low-Mach baseline):
 
@@ -476,8 +481,8 @@ The physical coupling between a cavitation bubble and the lattice surface determ
 1. Equilibrium distance: Balance of Casimir (vacuum energy), van der Waals, and thermal forces sets the equilibrium separation between bubble and surface; standoff ratio γ = h/R (gap/radius) affects collapse symmetry.
 2. Van der Waals (sphere–plate): Derjaguin approximation gives the force between a bubble and a flat surface; Hamaker constants for water–metal systems determine attraction at nanoscale gaps.
 3. Detachment radius: Fritz-style relations describe bubble departure size when buoyancy and dynamic forces overcome attachment (surface tension, contact line).
-4. Microjet formation: Asymmetric collapse near a rigid boundary produces a high-speed jet toward the surface; jet velocity and impact pressure scale with standoff and drive localized energy deposition and possible LENR-relevant conditions.
-5. Surface proximity enhancement: For γ < 2, collapse pressure and temperature are amplified relative to spherical collapse; integrated models use surface-proximity factors in reaction-rate estimates.
+4. Microjet formation: Asymmetric collapse near a rigid boundary produces a high-speed jet toward the surface; jet velocity and impact pressure scale with standoff and drive localized energy deposition. Any link from microjets to nuclear rates remains modelled enhancement / contested hydro, not an empirical LENR claim.
+5. Surface proximity enhancement: For γ < 2, collapse pressure and temperature are amplified relative to spherical collapse in the hydro models; integrated software may apply surface-proximity factors inside claim-tiered rate scenarios. Those factors do not close EQ-OPEN-RATE-01 or raise empirical claim tiers.
 
 ---
 
@@ -582,13 +587,16 @@ Implications:
 
 3.8 Companion-software simulation evidence (v0.3.7-beta)
 
-Pinned, version-controlled model runs—not laboratory experiments—anchor the quantitative claims in this revision. Authoritative evidence lives under LENR_SIM_APP_v2/datasets/reviewer_packs/ and the paper multi-format pack provenance file.
+Pinned, version-controlled model runs—not laboratory experiments—anchor the quantitative claims in this revision. Authoritative evidence lives under LENR_SIM_APP_v2/datasets/reviewer_packs/ and the paper multi-format pack provenance file (PROVENANCE.md).
 
-1. Reviewer packs: smoke/ (CI smoke) and q_campaign_demo/ (larger campaign: 150 experiments / 132 theory runs in the recorded manifest). Schema lenr-reviewer-pack-v1. Disclaimer on every pack: model output only; additional runs do not raise empirical claim tiers or close EQ-OPEN-.
-2. Campaign invariants: formalization/predictions/campaign_invariants.json and pack-embedded invariants enforce open_questions.lenr_proved = false, the five OPEN IDs, two-body \log_{10}N_{\mathrm{events}}\approx-40, and contract_version = v0.3.7-beta-science-gate-1.
-3. Export envelope: /api/unified/export uses lenr-run-export-v1 with claim-tier / provenance fields required by the data contract.
-4. Paper benchmarks: backend/tests/test_paper_benchmarks/ locks selected theory numeric/regime targets in CI.
-5. Non-claims: Larger N in a campaign does not convert speculative mechanism labels into empirical validation. Maturity axes (model_fidelity, empirical_support, claim_tier) remain independent (PHYSICS_MATURITY_LEDGER.md).
+1. Reviewer packs: smoke/ (CI smoke) and q_campaign_demo/ (larger campaign: 150 experiments / 132 theory runs in the recorded manifest). Schema lenr-reviewer-pack-v1. Disclaimer on every pack: model output only; additional runs do not raise empirical claim tiers or close EQ-OPEN-*.
+2. Cavitation / collapse campaign pack: Expected path LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse/ (Phase A science PR). As of this honesty sync that pack is not yet on dev—pending merge. Until merged, cavitation–collapse evidence remains the engine modules (collapse_uq.py, RP/KM paths) plus the pinned packs above—still model-only.
+3. Campaign + UQ / avenue ranking: Rate and collapse UQ feed Bayesian-style avenue ranking artifacts when present (expected: LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md, Phase B). Pending merge if absent on dev. Ranking prioritizes which lab avenues look informative next; it does not set lenr_proved or close OPEN ids.
+4. Campaign invariants: formalization/predictions/campaign_invariants.json and pack-embedded invariants enforce open_questions.lenr_proved = false, the five OPEN IDs, two-body \log_{10}N_{\mathrm{events}}\approx-40, and contract_version = v0.3.7-beta-science-gate-1.
+5. Export envelope: /api/unified/export uses lenr-run-export-v1 with claim-tier / provenance fields required by the data contract.
+6. Paper benchmarks: backend/tests/test_paper_benchmarks/ locks selected theory numeric/regime targets in CI.
+7. Lean clamp / non-closure (not closure): CollapseBounds (EQ-BBL-LIM-01) and WH / OpenObligations non-closure theorems constrain bookkeeping; they do not discharge EQ-OPEN-*. Draft closure/falsification criteria (still OPEN) live at LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md when that Phase F note is merged—pending merge if absent on dev.
+8. Non-claims: Larger N in a campaign does not convert speculative mechanism labels into empirical validation. Maturity axes (model_fidelity, empirical_support, claim_tier) remain independent (PHYSICS_MATURITY_LEDGER.md).
 
 ---
 
@@ -881,7 +889,7 @@ Future Directions
 
 6.1 Mechanized consistency (Lean)
 
-A companion formalization pilot (formalization/lean, Lean 4) mechanically checks mathematical consistency of the adopted classical core: Rydberg n=10 identity, Casimir check-geometry band (\lvert F\rvert\approx 1.3\,\mathrm{mN}), Gamow penetration anti-monotonicity, Assenbaum domain predicate (U_e < E_{\mathrm{kin}}), enhancement composition with cap 10^{5} and the illegal two-engine product (EQ-COMP-03), the Miles Q-value conversion identity, phonon order N=Q/\hbar\omega, two-body rate-budget does-not-close, and n-body geometry vs trap identities. An equation intermediate representation (formalization/ir/) links paper statements, Python literals, Wolfram numeric checks, and Lean targets.
+A companion formalization pilot (formalization/lean, Lean 4) mechanically checks mathematical consistency of the adopted classical core: Rydberg n=10 identity, Casimir check-geometry band (\lvert F\rvert\approx 1.3\,\mathrm{mN}), Gamow penetration anti-monotonicity, Assenbaum domain predicate (U_e < E_{\mathrm{kin}}), enhancement composition with cap 10^{5} and the illegal two-engine product (EQ-COMP-03), the Miles Q-value conversion identity, phonon order N=Q/\hbar\omega, two-body rate-budget does-not-close, n-body geometry vs trap identities, and collapse clamp bookkeeping (CollapseBounds / EQ-BBL-LIM-01—not a cavitation-dynamics theorem). An equation intermediate representation (formalization/ir/) links paper statements, Python literals, Wolfram numeric checks, and Lean targets. Lean non-closure language (WH-ENP-01, OpenObligations) remains the honesty floor: lenr_proved stays false and every EQ-OPEN-* stays OPEN until a later evidence-backed closure PR.
 
 Multi-format paper pack (v0.3.7-beta). Academic archival copies of this manuscript and the Lean section→theorem crosswalk ship as:
 
