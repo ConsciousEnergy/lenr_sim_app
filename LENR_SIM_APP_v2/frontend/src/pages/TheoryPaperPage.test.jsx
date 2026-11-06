@@ -67,7 +67,7 @@ describe('TheoryPaperPage', () => {
     render(<TheoryPaperPage />);
     const section5a = screen.getByText('5A. Open Theoretical Challenges');
     fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
-    expect(screen.getByText(/Open Questions Virtual Lab/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Open Questions Virtual Lab/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/closes under a named mechanism path/i)).toBeInTheDocument();
   });
 
@@ -125,5 +125,34 @@ describe('TheoryPaperPage', () => {
     expect(screen.getByText(/≠ kim_bec/)).toBeInTheDocument();
     expect(screen.getByText('null_recombination')).toBeInTheDocument();
     expect(screen.getByText('shoulders_evo')).toBeInTheDocument();
+  });
+
+  test('Section 5B Science Evidence accordion surfaces Phase E honesty', () => {
+    render(<TheoryPaperPage />);
+    const section5b = screen.getByText(
+      '5B. Science Evidence (Campaign, Ranking, Formalization)',
+    );
+    fireEvent.click(section5b.closest('[class*="MuiAccordionSummary"]') || section5b.parentElement);
+    expect(screen.getByTestId('theory-paper-science-evidence')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-lenr-proved')).toHaveTextContent(
+      'lenr_proved: false',
+    );
+    expect(screen.getByTestId('science-evidence-campaign')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-avenue-ranking')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-formalization')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-eq-open-runway')).toBeInTheDocument();
+    expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
+  });
+
+  test('Section 5A honesty chips include avenue ranking and runway non-closure', () => {
+    render(<TheoryPaperPage />);
+    const section5a = screen.getByText('5A. Open Theoretical Challenges');
+    fireEvent.click(section5a.closest('[class*="MuiAccordionSummary"]') || section5a.parentElement);
+    expect(screen.getByTestId('open-challenges-honesty-chips')).toBeInTheDocument();
+    expect(screen.getByText(/avenue ranking ≠ proof/i)).toBeInTheDocument();
+    expect(screen.getByText(/closure runway: criteria only/i)).toBeInTheDocument();
+    expect(
+      screen.getByText('5B. Science Evidence (Campaign, Ranking, Formalization)'),
+    ).toBeInTheDocument();
   });
 });

@@ -17,7 +17,10 @@ import {
   Alert,
   AlertTitle,
   Link as MuiLink,
+  Chip,
+  Stack,
 } from '@mui/material';
+import { OPEN_EQ_IDS } from '../config/unifiedTheoryScienceEvidence';
 
 /**
  * @param {Object} props
@@ -48,6 +51,44 @@ const OpenChallengesSection = ({ embedded = false }) => {
         discharge those obligations. Lean <code>OpenQuestionBounds</code> lemmas are
         would-close-if only.
       </Typography>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        useFlexGap
+        flexWrap="wrap"
+        sx={{ mb: 1.5 }}
+        data-testid="open-challenges-honesty-chips"
+      >
+        <Chip
+          label="lenr_proved: false"
+          size="small"
+          color="warning"
+          variant="outlined"
+          sx={{ fontSize: '0.65rem', height: 20 }}
+        />
+        <Chip
+          label="avenue ranking ≠ proof"
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: '0.65rem', height: 20 }}
+        />
+        <Chip
+          label="closure runway: criteria only"
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: '0.65rem', height: 20 }}
+        />
+        {OPEN_EQ_IDS.map((id) => (
+          <Chip
+            key={id}
+            label={`${id}: OPEN`}
+            size="small"
+            color="warning"
+            variant="outlined"
+            sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 20 }}
+          />
+        ))}
+      </Stack>
     <List dense>
       <ListItem>
         <ListItemText
@@ -95,6 +136,9 @@ const OpenChallengesSection = ({ embedded = false }) => {
         <code>LENR_SIM_APP_v2/datasets/</code>
         {' '}for the full mathematical audit and verification framework. Extra
         simulations are model outputs; they do not close these questions.
+        Campaign / avenue-ranking / Lean / EQ-OPEN runway pointers live in Theory
+        Paper section <strong>5B. Science Evidence</strong> (still{' '}
+        <code>lenr_proved: false</code>; all <code>EQ-OPEN-*</code> OPEN).
       </Typography>
     </Alert>
   </Wrapper>

@@ -46,6 +46,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
 import ReferencesSection from './theory-paper/ReferencesSection';
+import ScienceEvidenceSection from './theory-paper/ScienceEvidenceSection';
 import OpenChallengesSection from '../components/OpenChallengesSection';
 import { track } from '../analytics/events';
 
@@ -998,6 +999,34 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <OpenChallengesSection embedded />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Section 5B: Science evidence (Phase E — campaign / ranking / Lean / runway) */}
+          <Accordion expanded={expandedSection === 'section5b'} onChange={handleChange('section5b')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  5B. Science Evidence (Campaign, Ranking, Formalization)
+                </Typography>
+                <Chip
+                  label="lenr_proved: false"
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ fontSize: '0.65rem', height: 20 }}
+                />
+                <Chip
+                  label="EQ-OPEN OPEN"
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ fontSize: '0.65rem', height: 20 }}
+                />
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <ScienceEvidenceSection embedded />
             </AccordionDetails>
           </Accordion>
 
