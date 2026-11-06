@@ -108,6 +108,9 @@ class Settings(BaseSettings):
     MAX_MULTI_PHYSICS_GRID_POINTS_PER_AXIS: int = 32
     MAX_MULTI_PHYSICS_STEPS: int = 20000
     MAX_WS_DURATION_STEPS: int = 2000
+    # Global caps for unauthenticated WebSocket endpoints (per process).
+    MAX_VIS_WS_CONNECTIONS: int = 16
+    MAX_LEGACY_WS_CONNECTIONS: int = 16
     DEFAULT_TEMPERATURE: float = 300.0  # Kelvin
     DEFAULT_PRESSURE: float = 101325.0  # Pascal (1 atm)
     

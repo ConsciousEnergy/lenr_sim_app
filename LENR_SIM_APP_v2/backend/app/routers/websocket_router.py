@@ -42,14 +42,21 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
         self.simulation_tasks: Dict[str, asyncio.Task] = {}
+
+    def total_connections(self) -> int:
+        return sum(len(conns) for conns in self.active_connections.values())
     
-    async def connect(self, websocket: WebSocket, simulation_id: str):
-        """Accept a new WebSocket connection."""
+    async def connect(self, websocket: WebSocket, simulation_id: str) -> bool:
+        """Accept a new WebSocket connection. Returns False if at global cap."""
+        if self.total_connections() >= settings.MAX_LEGACY_WS_CONNECTIONS:
+            await websocket.close(code=1013, reason="Too many concurrent simulation streams")
+            return False
         await websocket.accept()
         if simulation_id not in self.active_connections:
             self.active_connections[simulation_id] = set()
         self.active_connections[simulation_id].add(websocket)
         logger.info(f"Client connected to simulation {simulation_id}")
+        return True
     
     def disconnect(self, websocket: WebSocket, simulation_id: str):
         """Remove a WebSocket connection."""
@@ -363,7 +370,8 @@ async def websocket_simulation(
         simulation_type: Type of simulation (quantum-tunneling, lenr, bubble-fusion)
         simulation_id: Unique identifier for the simulation session
     """
-    await manager.connect(websocket, simulation_id)
+    if not await manager.connect(websocket, simulation_id):
+        return
     
     try:
         # Wait for start message with parameters (with timeout)

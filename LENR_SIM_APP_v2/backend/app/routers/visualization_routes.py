@@ -12,6 +12,7 @@ import asyncio
 import logging
 from datetime import datetime
 
+from app.core.config import settings
 from app.utils.logging import setup_logger
 from app.simulation.multi_physics import (
     VisualizationEvent, 
@@ -90,6 +91,10 @@ async def visualization_websocket(websocket: WebSocket, client_id: str):
         websocket: WebSocket connection
         client_id: Unique client identifier
     """
+    if len(active_connections) >= settings.MAX_VIS_WS_CONNECTIONS:
+        await websocket.close(code=1013, reason="Too many concurrent visualization streams")
+        return
+
     # Accept the connection
     await websocket.accept()
     connection_id = f"{client_id}_{datetime.now().timestamp()}"
