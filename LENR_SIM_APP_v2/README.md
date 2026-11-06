@@ -2,31 +2,31 @@
 
 **Advanced modeling and visualization of Low Energy Nuclear Reactions** *(research preview — model output, not laboratory measurement)*
 
-[![Live share](https://img.shields.io/badge/live%20share-0.3.8--beta%20Compose-orange.svg)](https://lenr-sim-beta.conscious.energy)
-[![Cutover train](https://img.shields.io/badge/dev%20tip-0.3.9--beta-blue.svg)](../CHANGELOG.md)
+[![Live share](https://img.shields.io/badge/live%20share-0.3.9--beta%20Swarm-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
+[![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](../CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 > Looking for the project-level overview with screenshots and version trains? Start at the repository root [`README.md`](../README.md).
 
 ---
 
-## Current truth (live 0.3.8 Compose · tip 0.3.9 cutover)
+## Current truth (live 0.3.9-beta Swarm · `main`/`dev` markers match)
 
 | Topic | Where |
 |-------|--------|
 | Agent / contributor map | Root [`AGENTS.md`](../AGENTS.md) |
-| Version trains | `main` = **0.3.8-beta** Compose live share; `dev` = **0.3.9-beta** cutover train — four markers must match within a branch |
-| Live Compose share | [`docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) → https://lenr-sim-beta.conscious.energy (**still Compose** until 0.3.9 window) |
-| Staging Swarm (KVM1) | https://api-staging.conscious.energy — [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Version trains | `main` and `dev` both **`0.3.9-beta`** — four markers must match within a branch |
+| Live public share | https://lenr-sim-beta.conscious.energy — Traefik SPA + API on Swarm (**0.3.9-beta**; Compose stack retired) — [`LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
+| Live public API | https://api.conscious.energy — Traefik API **0.3.9-beta** |
 | Topology diagram SOT | [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) |
-| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — dual KVM2 ≠ cutover; CI never Swarm |
+| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — CI never Swarm |
 | Ops docs map | [`docs/v0.3.8-beta/README.md`](docs/v0.3.8-beta/README.md) |
-| Public Swarm cutover gate | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — operator confirm only; not armed from docs |
+| Public Swarm cutover (historical) | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — cutover landed 2026-10-31; do not re-arm without a new announced window |
 | CF Pages (optional SPA) | `app.` / `app-staging` — marketing `conscious.energy` ≠ sim |
 | Self-hosted CI (`lenr-ci`) | [`docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md) |
 | Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) (`EQ-OPEN-*` stay OPEN) |
 
-**Cutover map:** Compose share (now, 0.3.8) → staging Swarm on KVM1 → public Swarm + Traefik on share+KVM1 worker (0.3.9 announced window). Do not apply public Swarm without the matching operator confirm. Academic review is a parallel track; CI/infra PRs must not rewrite those claims.
+**Live topology:** public Swarm Traefik on the share host (SPA + API at `lenr-sim-beta`, API at `api.`). Staging Swarm dry-run on KVM1 is retired (KVM1 is now prod worker+obs). Do not re-arm public Swarm apply without a new announced window + confirm. Academic review is a parallel track; CI/infra PRs must not rewrite those claims.
 
 ## 🧭 Architecture & Onboarding
 
@@ -80,9 +80,9 @@ for the canonical port matrix.
 
 ### Public beta research preview
 
-- Live share markers: **`0.3.8-beta`** Compose + Caddy at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy)
-- `dev` tip markers: **`0.3.9-beta`** (Swarm cutover train — not live until announced window)
-- Engine maturity chips and claim tiers are first-class; FEM remains aspirational on VPS
+- Live share markers: **`0.3.9-beta`** Swarm Traefik at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) (Compose stack retired)
+- `main` and `dev` markers: **`0.3.9-beta`** (`dev` is integration tip; never auto-deployed by `deploy.yml`)
+- Engine maturity chips and claim tiers are first-class; FEM remains aspirational on the public beta
 - `lenr_proved` stays false; `EQ-OPEN-*` stay OPEN
 
 ### Known Non-Critical Warnings
