@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import ThreeJsLoader from './ThreeJsLoader';
+import { useStableThreeTimer } from '../utils/threeTimer';
 import { Box, CircularProgress, Typography, Slider, FormControlLabel, Switch, Paper, Button } from '@mui/material';
 
 // Simulation parameters interface
@@ -65,7 +66,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
   const streamlinesRef = useRef<THREE.LineSegments | null>(null);
   const temperatureMapRef = useRef<THREE.Mesh | null>(null);
   const pressureMapRef = useRef<THREE.Mesh | null>(null);
-  const clockRef = useRef<THREE.Clock>(new THREE.Clock());
+  const timerRef = useStableThreeTimer();
   
   // Color maps for visualization
   const colorMaps = {
@@ -525,14 +526,17 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     
-    // Animation loop
-    const animate = () => {
+    // Animation loop. Prime so the first sampled elapsed time is ~0.
+    timerRef.current.update();
+    const animate = (timestamp: number) => {
       requestAnimationFrame(animate);
       controls.update();
+      timerRef.current.update(timestamp);
+      const elapsed = timerRef.current.getElapsed();
       
       // Rotate vector field arrows slightly for fluid motion appearance
       if (vectorFieldRef.current && !isPaused) {
-        const time = clockRef.current.getElapsedTime() * 0.2 * timeScale;
+        const time = elapsed * 0.2 * timeScale;
         
         // Slightly rotate instancedMesh for fluid appearance
         vectorFieldRef.current.rotation.y = Math.sin(time * 0.2) * 0.05;
@@ -541,7 +545,7 @@ const MHDFluidSimulation: React.FC<MHDFluidSimulationProps> = ({
       // Animate streamlines
       if (streamlinesRef.current && !isPaused) {
         // Pulse opacity for streamlines
-        const time = clockRef.current.getElapsedTime() * timeScale;
+        const time = elapsed * timeScale;
         const opacity = 0.5 + Math.sin(time) * 0.3;
         
         if (streamlinesRef.current.material instanceof THREE.LineBasicMaterial) {

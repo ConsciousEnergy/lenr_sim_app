@@ -44,6 +44,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { usePhysics } from "../../contexts/PhysicsContext";
+import { useStableThreeTimer } from "../../visualization/utils/threeTimer";
 import { ErrorBoundary } from "../ErrorBoundary";
 
 // Use antd Typography components
@@ -403,7 +404,7 @@ const UnifiedLENRVisualizer = ({
   const timeRef = useRef(0);
   const fpsCounterRef = useRef({ frames: 0, lastTime: 0 });
   const objectsRef = useRef([]);
-  const clockRef = useRef(new THREE.Clock());
+  const timerRef = useStableThreeTimer();
   const frameCountRef = useRef(0);
   const timeSinceLastFpsRef = useRef(0);
   const animationRef = useRef(null);
@@ -1445,7 +1446,8 @@ const UnifiedLENRVisualizer = ({
     // Add to objects ref for cleanup
     objectsRef.current.push(sphere);
     
-    const startTime = clockRef.current.getElapsedTime();
+    timerRef.current.update();
+    const startTime = timerRef.current.getElapsed();
     const fusionEffect = {
       mesh: sphere,
       startTime,
