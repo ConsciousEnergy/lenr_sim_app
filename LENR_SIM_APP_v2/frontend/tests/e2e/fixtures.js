@@ -3,6 +3,7 @@ import { HomePage } from './pages/HomePage.js';
 import { UnifiedTheoryPage } from './pages/UnifiedTheoryPage.js';
 import { AdvancedAnalysisPage } from './pages/AdvancedAnalysisPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
+import { TheoryPaperPage } from './pages/TheoryPaperPage.js';
 
 /**
  * Shared fixtures. Extend with more page objects as E2E coverage grows.
@@ -19,6 +20,9 @@ export const test = base.extend({
   },
   dashboardPage: async ({ page }, use) => {
     await use(new DashboardPage(page));
+  },
+  theoryPaperPage: async ({ page }, use) => {
+    await use(new TheoryPaperPage(page));
   },
 });
 
