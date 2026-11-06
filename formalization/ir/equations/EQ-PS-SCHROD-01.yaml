@@ -1,0 +1,19 @@
+id: EQ-PS-SCHROD-01
+latex: "r_S = |Hpsi - Epsi|; schrodingerSatisfied := (r_S = 0)"
+symbols:
+  Hpsi: "discrete Hψ magnitude (bookkeeping Nat)"
+  Epsi: "discrete Eψ magnitude; E is E_eigen not E_field (IL-015)"
+  r_S: "Schrödinger residual"
+units: "dimensionless bookkeeping"
+tag: DEF
+paper_ref: "§3.1 Schrödinger; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.schrodingerResidual"
+  - "LenrFormal.PoissonSchrodinger.schrodingerSatisfied"
+  - "LenrFormal.PoissonSchrodinger.schrodinger_satisfied_of_equal"
+notes: "Discrete residual DEF only. Aspirational continuum sketch — not public-beta numerics."

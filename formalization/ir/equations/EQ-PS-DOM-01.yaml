@@ -1,0 +1,17 @@
+id: EQ-PS-DOM-01
+latex: "poissonFormulaClaimed := (0 < eps)"
+symbols:
+  eps: "permittivity bookkeeping (Nat); must be positive"
+units: "dimensionless bookkeeping"
+tag: THM
+paper_ref: "§3.1 domain; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.permittivityPositive"
+  - "LenrFormal.PoissonSchrodinger.poissonFormulaClaimed"
+  - "LenrFormal.PoissonSchrodinger.zero_permittivity_not_claimed"
+notes: "Assenbaum-style domain honesty: zero permittivity ⇒ Poisson formula not claimed."
