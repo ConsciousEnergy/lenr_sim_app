@@ -139,19 +139,13 @@ class Species:
                 concentration = background + amplitude * np.exp(-rel_pos / scale)
                 
             elif dist_type == 'custom':
-                # Custom function provided as a string to be evaluated
-                function_str = self._initial_concentration_spec.get('function', '0.0')
-                try:
-                    # Create local variables for the domain grids, normalized to [0,1]
-                    x = domain.x_grid / domain.dimensions[0]
-                    y = domain.y_grid / domain.dimensions[1]
-                    z = domain.z_grid / domain.dimensions[2]
-                    
-                    # Evaluate the function string
-                    concentration = eval(function_str)
-                except Exception as e:
-                    logger.error(f"Error evaluating custom distribution function: {e}")
-                    concentration = np.zeros(domain.resolution)
+                # Reject string eval — latent RCE if any API path feeds user input here.
+                # Use typed distributions (uniform / gaussian / exponential) instead.
+                logger.error(
+                    "Custom concentration functions are disabled for security; "
+                    "use type=uniform|gaussian|exponential"
+                )
+                concentration = np.zeros(domain.resolution)
             else:
                 logger.warning(f"Unknown distribution type: {dist_type}, using uniform zero")
                 concentration = np.zeros(domain.resolution)

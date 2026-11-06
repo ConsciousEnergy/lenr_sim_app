@@ -531,7 +531,25 @@ async def health_check():
     all_physics_ok = all(physics_status.values())
     overall_healthy = all_physics_ok and db_status["connected"]
     status = "healthy" if overall_healthy else "degraded"
-    
+
+    # Production: omit host memory / DB latency / error strings (recon for DoS).
+    # Keep connected bool so Traefik/LB healthchecks still see DB state.
+    if settings.ENVIRONMENT == EnvironmentType.PRODUCTION:
+        public_db = {"connected": bool(db_status["connected"])}
+        return {
+            "status": status,
+            "timestamp": time_module.time(),
+            "version": settings.APP_VERSION,
+            "environment": settings.ENVIRONMENT,
+            "database": public_db,
+            "physics_engine": physics_status,
+            "api_endpoints": {
+                "physics": unified_simulation_router is not None,
+                "visualization": True,
+                "multi_physics": True,
+            },
+        }
+
     return {
         "status": status,
         "timestamp": time_module.time(),
