@@ -73,3 +73,33 @@ describe('TheoryPage historical timeline', () => {
     expect(gapLink.getAttribute('href')).toBe('/docs/issue-ledger');
   });
 });
+
+describe('TheoryPage Computational Methods claim-tier honesty', () => {
+  function openMethodsTab() {
+    fireEvent.click(screen.getByRole('tab', { name: /Computational Methods/i }));
+  }
+
+  test('shows VPS honesty alert, legend, and aspirational Poisson–Schrödinger card', () => {
+    render(<TheoryPage />);
+    openMethodsTab();
+    expect(screen.getByTestId('methods-vps-honesty')).toHaveTextContent(
+      /aspirational research methods/i,
+    );
+    expect(screen.getByTestId('engine-maturity-legend')).toBeInTheDocument();
+    expect(screen.getByTestId('methods-poisson-schrodinger-card')).toHaveTextContent(
+      /aspirational research formulation/i,
+    );
+    expect(screen.getByTestId('methods-poisson-aspirational-note')).toHaveTextContent(
+      /does not run a self-consistent/i,
+    );
+    expect(screen.queryByText(/we solve the coupled Poisson/i)).not.toBeInTheDocument();
+  });
+
+  test('marks bubble collapse as Approximate live numerics, not FEM', () => {
+    render(<TheoryPage />);
+    openMethodsTab();
+    expect(screen.getByTestId('methods-bubble-collapse-card')).toHaveTextContent(
+      /not a continuum FEM solve/i,
+    );
+  });
+});

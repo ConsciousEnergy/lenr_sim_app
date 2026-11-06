@@ -39,6 +39,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ScienceIcon from '@mui/icons-material/Science';
 import BoltIcon from '@mui/icons-material/Bolt';
 import EngineMaturityBadge from '../components/EngineMaturityBadge';
+import EngineMaturityLegend from '../components/EngineMaturityLegend';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -1229,9 +1230,15 @@ function UnifiedTheoryPage() {
               Electrodynamic ionic double-layer bubble collapse onto lattice-loaded materials with proton phase transitions
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+              <EngineMaturityBadge engineId="ENG-WKB-01" />
               <EngineMaturityBadge engineId="ENG-RP-KM-01" />
               <EngineMaturityBadge engineId="ENG-THEORY-PIPELINE-01" />
+              <EngineMaturityBadge engineId="ENG-ASPIRATIONAL-FEM-01" />
             </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }} data-testid="unified-aspirational-note">
+              FEM / Poisson–Schrödinger continuum solvers are aspirational — not running on this page.
+            </Typography>
+            <EngineMaturityLegend dense sx={{ mt: 1.5, maxWidth: 720 }} />
           </Box>
           <Stack direction="row" spacing={1} alignItems="center">
             <Tooltip title="Governance glossary: claim tiers & evidence classes">

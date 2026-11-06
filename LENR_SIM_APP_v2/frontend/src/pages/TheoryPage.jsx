@@ -37,6 +37,7 @@ import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EngineMaturityBadge from '../components/EngineMaturityBadge';
+import EngineMaturityLegend from '../components/EngineMaturityLegend';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -491,59 +492,70 @@ const TheoryPage = () => {
             <AlertTitle>What the public VPS actually runs</AlertTitle>
             <Typography variant="body2" paragraph sx={{ mb: 1 }}>
               Live beta executes the in-repo <strong>physics_engine</strong> pipeline: WKB / Gamow
-              tunneling, Rayleigh–Plesset bubble collapse, and theory scoring over HTTP
+              tunneling, Rayleigh–Plesset / Keller–Miksis bubble collapse, and theory scoring over HTTP
               <code>/api/physics/*</code>. Those paths are what the Tunneling and Bubble Fusion pages call.
             </Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" paragraph sx={{ mb: 1 }}>
               COMSOL FEM, self-consistent Poisson–Schrödinger, and similar coupled continuum
-              solvers described below are <strong>research / aspirational methods</strong> —
-              not deployed on the public beta stack. Treat them as modeling roadmap, not live
-              production numerics.
+              solvers described below are <strong>aspirational research methods</strong> —
+              not deployed on the public beta stack. Treat them as a modeling roadmap, not live
+              production numerics. EQ-OPEN-* remain OPEN.
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1.5, mb: 1.5 }}>
               <EngineMaturityBadge engineId="ENG-WKB-01" />
               <EngineMaturityBadge engineId="ENG-RP-KM-01" />
               <EngineMaturityBadge engineId="ENG-ASPIRATIONAL-FEM-01" />
             </Stack>
+            <EngineMaturityLegend dense />
           </Alert>
 
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
-              <Card>
+              <Card data-testid="methods-poisson-schrodinger-card">
                 <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    Poisson–Schrödinger Coupled Dynamics
-                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Poisson–Schrödinger Coupled Dynamics
+                    </Typography>
+                    <EngineMaturityBadge engineId="ENG-ASPIRATIONAL-FEM-01" />
+                  </Stack>
                   <Typography variant="body2" paragraph>
-                    To evaluate electron distribution and field dynamics near metal–hydrogen interfaces, 
-                    we solve the coupled Poisson–Schrödinger system:
+                    As an <strong>aspirational research formulation</strong> (not a solver running on
+                    this beta), continuum FEM / COMSOL-class work would evaluate electron
+                    distribution and field dynamics near metal–hydrogen interfaces via the coupled
+                    Poisson–Schrödinger system:
                   </Typography>
                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 1 }}>
-                      ∇²φ = -ρ/ε₀ &nbsp;&nbsp;&nbsp; (Poisson's Equation)
+                      ∇²φ = -ρ/ε₀ &nbsp;&nbsp;&nbsp; (Poisson&apos;s Equation)
                     </Typography>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                      -ℏ²/2m ∇²ψ + V(r)ψ = Eψ &nbsp;&nbsp;&nbsp; (Schrödinger's Equation)
+                      -ℏ²/2m ∇²ψ + V(r)ψ = Eψ &nbsp;&nbsp;&nbsp; (Schrödinger&apos;s Equation)
                     </Typography>
                   </Box>
                   <Typography variant="body2" paragraph>
-                    <strong>Simulation Parameters:</strong>
+                    <strong>Illustrative research targets</strong> (not live VPS parameters):
                   </Typography>
                   <List dense>
                     <ListItem>
-                      <ListItemText primary="Grid Size: ~0.1 nm" secondary="Atomic-scale resolution" />
+                      <ListItemText primary="Grid Size: ~0.1 nm" secondary="Atomic-scale resolution (aspirational)" />
                     </ListItem>
                     <ListItem>
-                      <ListItemText primary="Time Steps: ~1 fs" secondary="Femtosecond precision" />
+                      <ListItemText primary="Time Steps: ~1 fs" secondary="Femtosecond precision (aspirational)" />
                     </ListItem>
                     <ListItem>
-                      <ListItemText primary="Software: COMSOL Multiphysics, Python (NumPy, SciPy)" secondary="Finite-element and finite-difference methods" />
+                      <ListItemText
+                        primary="Software roadmap: COMSOL Multiphysics, Python (NumPy, SciPy)"
+                        secondary="Finite-element / finite-difference methods — not deployed here"
+                      />
                     </ListItem>
                   </List>
-                  <Alert severity="info" sx={{ mt: 2 }}>
+                  <Alert severity="warning" sx={{ mt: 2 }} data-testid="methods-poisson-aspirational-note">
                     <Typography variant="body2">
-                      <strong>Key Results:</strong> Electric fields in interfacial regions exceed 10⁸ V/m; 
-                      wavefunction solutions show significant electron density near protons, supporting neutron formation pathways.
+                      <strong>Not live numerics:</strong> Interfacial field estimates of order 10⁸ V/m
+                      and qualitative electron-density narratives below are research hypotheses from
+                      the paper roadmap. This public beta does <em>not</em> run a self-consistent
+                      Poisson–Schrödinger or FEM continuum solve.
                     </Typography>
                   </Alert>
                 </CardContent>
@@ -551,24 +563,29 @@ const TheoryPage = () => {
             </Grid>
 
             <Grid size={{ xs: 12 }}>
-              <Card>
+              <Card data-testid="methods-bubble-collapse-card">
                 <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    Bubble Collapse Dynamics
-                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Bubble Collapse Dynamics
+                    </Typography>
+                    <EngineMaturityBadge engineId="ENG-RP-KM-01" />
+                  </Stack>
                   <Typography variant="body2" paragraph>
-                    During electrolysis, microbubbles form and collapse, concentrating energy through the 
-                    modified Rayleigh–Plesset equation:
+                    Live public-beta numerics integrate approximate Rayleigh–Plesset / Keller–Miksis
+                    ODEs (auto KM when Mach≥0.3). During electrolysis, microbubbles form and collapse,
+                    concentrating energy through the modified Rayleigh–Plesset form:
                   </Typography>
                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                       R R̈ + 3/2 Ṙ² = 1/ρ(P<sub>bubble</sub> - P<sub>∞</sub> - 2σ/R - 4μṘ/R + ε₀E²/2)
                     </Typography>
                   </Box>
-                  <Alert severity="success" sx={{ mt: 2 }}>
+                  <Alert severity="info" sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      <strong>Simulation Outcomes:</strong> Temperature peaks exceed 10⁵ K; collapsing bubbles produce 
-                      pressures of multiple GPa, indicating extreme local conditions in the model.
+                      <strong>Approximate model outcomes:</strong> Temperature peaks can exceed 10⁵ K;
+                      collapsing bubbles produce pressures of multiple GPa in the ODE model —
+                      not laboratory measurements, and not a continuum FEM solve.
                     </Typography>
                   </Alert>
                 </CardContent>

@@ -190,7 +190,7 @@ const TheoryPaperPage = () => {
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Key Equations Quick Reference
               </Typography>
-              <Tooltip title="Most of these equations have a direct counterpart in the simulation engine; some mechanisms are represented by phenomenological multipliers rather than a literal solve, and the Poisson-Schrodinger coupling is not yet solved self-consistently. Click 'Try it' to run the implemented path.">
+              <Tooltip title="Most of these equations have a direct counterpart in the live beta engine (WKB/Gamow, RP/KM). Some mechanisms use phenomenological multipliers. Poisson–Schrödinger / FEM continuum coupling is aspirational research — not solved self-consistently and not deployed on the public beta. Click 'Try it' only for implemented paths.">
                 <InfoOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
               </Tooltip>
             </Box>
@@ -391,13 +391,14 @@ const TheoryPaperPage = () => {
                 tunneling enhancements—under a single model.
               </Typography>
               <Typography variant="body1" paragraph>
-                In tandem, we detail the mathematical tools and simulations (e.g., Poisson–Schrödinger coupling,
-                finite-element analysis, thermodynamic models, and statistical methods) that quantify these LENR
-                hypotheses under explicit claim tiers. Computational results predict tunneling enhancements of
-                10³ to 10⁵, while experimental reports include isotopic shifts, neutron signals, and measurable
-                excess heat under disputed reproducibility. This work proposes a reproducible, claim-tiered
-                methodology for LENR research; scaling to practical energy applications remains contingent on
-                independent experimental validation.
+                In tandem, we detail mathematical tools under explicit claim tiers. Live public-beta numerics
+                center on WKB/Gamow tunneling and approximate Rayleigh–Plesset / Keller–Miksis collapse;
+                Poisson–Schrödinger coupling and finite-element continuum analysis remain{' '}
+                <strong>aspirational research methods</strong> (not deployed solvers). WKB-path model
+                results predict tunneling enhancements of 10³ to 10⁵, while experimental reports include
+                isotopic shifts, neutron signals, and measurable excess heat under disputed reproducibility.
+                This work proposes a reproducible, claim-tiered methodology for LENR research; scaling to
+                practical energy applications remains contingent on independent experimental validation.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -749,9 +750,20 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body1" paragraph>
-                This section details the mathematical tools and simulations used to validate and quantify LENR processes, 
-                including Poisson–Schrödinger coupling, finite-element analysis, thermodynamic models, and statistical methods.
+                This section separates live public-beta numerics (WKB/Gamow, approximate RP/KM, thermodynamic
+                and statistical helpers) from <strong>aspirational</strong> continuum methods —
+                Poisson–Schrödinger coupling and COMSOL-class FEM — which are research formulations
+                documented for honesty, not solvers running on this beta. EQ-OPEN-* remain OPEN.
               </Typography>
+
+              <Alert severity="warning" sx={{ mt: 2 }} data-testid="theory-paper-methods-aspirational">
+                <AlertTitle>Aspirational — not live on public beta</AlertTitle>
+                <Typography variant="body2">
+                  Poisson–Schrödinger / FEM continuum work is a modeling roadmap. Do not treat Theory
+                  Methods write-ups of those equations as evidence that a continuum solver executed
+                  on the VPS.
+                </Typography>
+              </Alert>
 
               <Alert severity="info" sx={{ mt: 2 }}>
                 <AlertTitle><strong>Non-Equilibrium Thermodynamics</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
