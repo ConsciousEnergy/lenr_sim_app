@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import { Alert, Box, Button, Container, Link as MuiLink, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   isAnalyticsOptedOut,
   isProductAnalyticsConfigured,
@@ -76,11 +77,7 @@ export default function PrivacyPage() {
       <Typography variant="h6" gutterBottom>License</Typography>
       <Typography variant="body2" paragraph>
         The application is licensed under{' '}
-        <MuiLink
-          href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/lenr_sim_app_v0.3.6-beta/LICENSE"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <MuiLink component={RouterLink} to="/about">
           GNU GPL-3.0
         </MuiLink>
         . Contact:{' '}

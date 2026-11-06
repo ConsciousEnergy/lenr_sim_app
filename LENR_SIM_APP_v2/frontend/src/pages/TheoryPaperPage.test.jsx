@@ -155,4 +155,25 @@ describe('TheoryPaperPage', () => {
       screen.getByText('5B. Science Evidence (Campaign, Ranking, Formalization)'),
     ).toBeInTheDocument();
   });
+
+  test('shows app/manuscript version map without inventing a new paper revision', () => {
+    render(<TheoryPaperPage />);
+    expect(screen.getByTestId('manuscript-revision-chip')).toHaveTextContent(
+      /v0\.3\.7-beta/,
+    );
+    expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
+      /0\.3\.9-beta/,
+    );
+    expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
+      /v0\.3\.7-beta \(revised 2026-09-25\)/,
+    );
+  });
+
+  test('Section 4.2 Typical Results are labelled literature reports', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText(/4\. Experimental Validation/i));
+    const block = screen.getByTestId('section-42-typical-results');
+    expect(block).toHaveTextContent(/literature reports/i);
+    expect(block).toHaveTextContent(/not measurements produced or validated/i);
+  });
 });

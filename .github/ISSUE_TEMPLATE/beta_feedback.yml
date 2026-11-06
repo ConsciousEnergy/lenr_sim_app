@@ -38,7 +38,7 @@ body:
     id: version
     attributes:
       label: App version shown in the sidebar
-      placeholder: 0.3.6-beta
+      placeholder: 0.3.9-beta
   - type: input
     id: browser
     attributes:

@@ -405,7 +405,7 @@ const TheoryPage = () => {
                   does not close a mechanism class: the two-body rate remains the default
                   reference baseline; trapped-state / TSC stays an open SPEC channel (RR-006).{' '}
                   <MuiLink
-                    href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/lenr_sim_app_v0.3.6-beta/docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md"
+                    href="/docs/issue-ledger"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

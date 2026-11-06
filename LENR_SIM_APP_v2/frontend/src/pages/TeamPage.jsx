@@ -84,9 +84,10 @@ const TeamPage = () => {
           Our Mission
         </Typography>
         <Typography variant="body1" paragraph>
-          We are building open-source computational tools to advance the understanding and research 
-          of Low Energy Nuclear Reactions (LENR). Our platform provides scientists and researchers 
-          with sophisticated simulation capabilities based on the Unified LENR Theory framework.
+          We are building computational research tools to advance the understanding and research
+          of Low Energy Nuclear Reactions (LENR). This public research preview provides scientists
+          and researchers with simulation capabilities based on the Unified LENR Theory framework;
+          public source release under GPL-3.0 is planned.
         </Typography>
         <Typography variant="body1">
           By combining quantum mechanical modeling, condensed matter physics, and nuclear interaction 
