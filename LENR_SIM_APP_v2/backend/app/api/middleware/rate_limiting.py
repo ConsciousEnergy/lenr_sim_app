@@ -11,6 +11,7 @@ from fastapi import Request, Response, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
+from app.security.client_ip import client_ip_from_request
 from app.utils.logging import setup_logger
 
 # Set up logger
@@ -94,14 +95,8 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         return response
     
     def _get_client_ip(self, request: Request) -> str:
-        """Get the client IP address from the request."""
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            # X-Forwarded-For can contain multiple IPs, take the first one
-            return forwarded.split(",")[0].strip()
-        
-        client_host = request.client.host if request.client else "unknown"
-        return client_host
+        """Get the client IP address from the request (spoof-resistant behind Traefik)."""
+        return client_ip_from_request(request)
     
     def _cleanup_old_entries(self, current_time: float) -> None:
         """Remove expired entries from the clients dictionary."""

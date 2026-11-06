@@ -81,11 +81,9 @@ def _enforce_export_rate_limit(request: Request) -> None:
     """Stricter per-IP budget for /export (full simulate + envelope)."""
     if not settings.ENABLE_RATE_LIMITING:
         return
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        client_ip = forwarded.split(",")[0].strip()
-    else:
-        client_ip = request.client.host if request.client else "unknown"
+    from app.security.client_ip import client_ip_from_request
+
+    client_ip = client_ip_from_request(request)
     if client_ip in settings.RATE_LIMIT_WHITELIST_IPS:
         return
 
