@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Changed — invited public-beta honesty / access (pre-cohort)
+- Beta banner: email-first feedback (`mailto:diadon@conscious.energy`) while the
+  repository stays private; GitHub Issues CTA removed from the banner.
+- About: research-preview wording (no current “freely modify” / public OSS claim);
+  known-limitations disclosure (10⁵ ceiling, heat–He EMP, §4.2 literature reports,
+  model count ≠ validated mechanisms); app↔manuscript version map.
+- Stale `v0.3.6-beta` LICENSE / review deep-links retargeted to in-app
+  `/about` and `/docs/issue-ledger` (avoids private-repo 404s during invited beta).
+- Docs API: bundle `backend/app/served_docs/` so `/api/docs/researcher-review-pack`
+  (and sibling slugs) resolve inside Docker images that omit repository-root `docs/`.
+- Theory Paper: version-map alert; §4.2 “Typical Results” labelled literature reports.
+
+- README live-share badges/wording synced to **0.3.9-beta Swarm** (Compose retired).
+- Issue template host → `lenr-sim-beta.conscious.energy`.
+- In-app static `/LICENSE` (frontend `public/LICENSE`) for signed-out GPL access.
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change; **no** version-marker bump.
+
 ### Changed — mute api-staging blackbox after 0.3.9 cutover (BDS-52)
 - Removed Prometheus job `lenr_api_staging_public` (staging Swarm left; TLS
   correctly FAILs). Added `lenr_api_public` → `https://api.conscious.energy/api/health`.

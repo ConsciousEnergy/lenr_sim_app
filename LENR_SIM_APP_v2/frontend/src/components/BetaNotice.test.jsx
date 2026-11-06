@@ -27,14 +27,14 @@ describe('BetaNotice', () => {
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(
       /LENR is still an experimental inquiry/,
     );
-    expect(screen.getByRole('link', { name: /Send beta feedback/i })).toHaveAttribute(
-      'href',
-      expect.stringContaining('github.com/ConsciousEnergy/lenr_sim_app/issues/new'),
-    );
     expect(screen.getByRole('link', { name: 'diadon@conscious.energy' })).toHaveAttribute(
       'href',
       'mailto:diadon@conscious.energy',
     );
+    expect(screen.getByTestId('beta-banner')).toHaveTextContent(/while the repository is private/);
+    expect(
+      screen.queryByRole('link', { name: /Send beta feedback/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides the banner after dismiss and remembers it in localStorage', async () => {
