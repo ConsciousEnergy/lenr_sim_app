@@ -68,6 +68,8 @@ describe('TheoryPage historical timeline', () => {
       screen.getByText(/does not close a mechanism class/i)
     ).toBeInTheDocument();
     const gapLink = screen.getByRole('link', { name: /Open-question corpus gaps/i });
-    expect(gapLink.getAttribute('href')).toContain('OPEN_QUESTION_CORPUS_GAPS.md');
+    // Soft-gated away from private GitHub blob OPEN_QUESTION_CORPUS_GAPS.md
+    // during invite beta (same honesty pattern as Theory Paper CTAs).
+    expect(gapLink.getAttribute('href')).toBe('/docs/issue-ledger');
   });
 });
