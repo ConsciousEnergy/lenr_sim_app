@@ -24,6 +24,13 @@ import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import TheoryTestbedCard from '../components/physics/TheoryTestbedCard';
+import {
+  FEEDBACK_MAILTO,
+  GITHUB_REPO_URL,
+  LICENSE_HREF,
+  isSourcePublic,
+} from '../config/sourceAccess';
+import EmailIcon from '@mui/icons-material/Email';
 
 // Icons
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
@@ -415,17 +422,37 @@ function DashboardNew() {
                 Settings
               </Button>
               <Divider />
-              <Button
-                fullWidth
-                variant="text"
-                startIcon={<GitHubIcon />}
-                href="https://github.com/ConsciousEnergy/lenr_sim_app"
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<LaunchIcon fontSize="small" />}
-              >
-                GitHub Repository
-              </Button>
+              {isSourcePublic() ? (
+                <Button
+                  fullWidth
+                  variant="text"
+                  startIcon={<GitHubIcon />}
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  endIcon={<LaunchIcon fontSize="small" />}
+                >
+                  GitHub Repository
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    fullWidth
+                    variant="text"
+                    startIcon={<EmailIcon />}
+                    href={FEEDBACK_MAILTO}
+                  >
+                    Email feedback / source access
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="text"
+                    href={LICENSE_HREF}
+                  >
+                    GPL-3.0 /LICENSE
+                  </Button>
+                </>
+              )}
             </Stack>
           </Paper>
         </Grid>

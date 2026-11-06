@@ -17,6 +17,13 @@ import {
 import Grid from '@mui/material/Grid';
 import { APP_VERSION } from '../config/version';
 import {
+  FEEDBACK_EMAIL,
+  FEEDBACK_MAILTO,
+  GITHUB_REPO_URL,
+  LICENSE_HREF,
+  isSourcePublic,
+} from '../config/sourceAccess';
+import {
   GitHub as GitHubIcon,
   Email as EmailIcon,
   Language as WebsiteIcon,
@@ -34,7 +41,7 @@ const teamMembers = [
     bio: 'Our team is dedicated to advancing Low Energy Nuclear Reaction research through computational simulation and theoretical modeling.',
     expertise: ['Physics Simulation', 'Quantum Mechanics', 'Condensed Matter'],
     links: {
-      github: 'https://github.com/ConsciousEnergy/lenr_sim_app',
+      github: isSourcePublic() ? GITHUB_REPO_URL : null,
       website: 'https://conscious.energy'
     }
   }
@@ -52,7 +59,7 @@ const projectInfo = {
   name: 'LENR Simulation Platform',
   version: APP_VERSION,
   license: 'GPL-3.0',
-  repository: 'https://github.com/ConsciousEnergy/lenr_sim_app',
+  repository: isSourcePublic() ? GITHUB_REPO_URL : null,
   website: 'https://conscious.energy'
 };
 
@@ -234,15 +241,33 @@ const TeamPage = () => {
           
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
+              {projectInfo.repository ? (
+                <Button
+                  variant="outlined"
+                  startIcon={<GitHubIcon />}
+                  href={projectInfo.repository}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  fullWidth
+                >
+                  View on GitHub
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  startIcon={<EmailIcon />}
+                  href={FEEDBACK_MAILTO}
+                  fullWidth
+                >
+                  Email for source access
+                </Button>
+              )}
               <Button
                 variant="outlined"
-                startIcon={<GitHubIcon />}
-                href={projectInfo.repository}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={LICENSE_HREF}
                 fullWidth
               >
-                View on GitHub
+                GPL-3.0 /LICENSE
               </Button>
               
               <Button
@@ -263,7 +288,9 @@ const TeamPage = () => {
         
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Want to contribute? Check out our GitHub repository or get in touch!
+            Want to contribute? Email {FEEDBACK_EMAIL} while the repository is private
+            (public source under GPL-3.0 is planned), or read the in-app{' '}
+            <a href={LICENSE_HREF}>/LICENSE</a>.
           </Typography>
           <Button
             variant="contained"

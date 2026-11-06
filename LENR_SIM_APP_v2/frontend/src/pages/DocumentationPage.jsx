@@ -30,6 +30,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import EmailIcon from '@mui/icons-material/Email';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SecurityIcon from '@mui/icons-material/Security';
 import ApiIcon from '@mui/icons-material/Api';
@@ -39,12 +40,21 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
 import { API_BASE_URL } from '../config/api';
+import {
+  FEEDBACK_EMAIL,
+  FEEDBACK_MAILTO,
+  GITHUB_ISSUES_URL,
+  GITHUB_REPO_URL,
+  LICENSE_HREF,
+  isSourcePublic,
+} from '../config/sourceAccess';
 import { track } from '../analytics/events';
 
 const DocumentationPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState('getting-started');
+  const sourcePublic = isSourcePublic();
 
   useEffect(() => {
     track.docsViewed({ slug: 'documentation', source: 'documentation-hub' });
@@ -106,16 +116,34 @@ const DocumentationPage = () => {
           <Typography variant="h6" color="text.secondary" paragraph>
             Complete guide to the LENR Simulation Platform
           </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3 }}>
+          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3 }} flexWrap="wrap" useFlexGap>
+            {sourcePublic ? (
+              <Button
+                variant="outlined"
+                startIcon={<GitHubIcon />}
+                component={MuiLink}
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub Repository
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                startIcon={<EmailIcon />}
+                component={MuiLink}
+                href={FEEDBACK_MAILTO}
+              >
+                Email for source access
+              </Button>
+            )}
             <Button
               variant="outlined"
-              startIcon={<GitHubIcon />}
               component={MuiLink}
-              href="https://github.com/ConsciousEnergy/lenr_sim_app"
-              target="_blank"
-              rel="noopener noreferrer"
+              href={LICENSE_HREF}
             >
-              GitHub Repository
+              GPL-3.0 /LICENSE
             </Button>
             <Button
               variant="outlined"
@@ -322,10 +350,11 @@ const DocumentationPage = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mt: 3 }}>
               Installation
             </Typography>
-            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace' }}>
-              <Typography variant="body2" component="pre" sx={{ m: 0 }}>
+            {sourcePublic ? (
+              <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace' }}>
+                <Typography variant="body2" component="pre" sx={{ m: 0 }}>
 {`# Clone the repository
-git clone https://github.com/ConsciousEnergy/lenr_sim_app.git
+git clone ${GITHUB_REPO_URL}.git
 cd lenr_sim_app
 
 # Install frontend dependencies
@@ -339,12 +368,23 @@ pip install -r requirements.txt
 # Start the application
 npm run dev  # Frontend
 python -m uvicorn app.main:app --reload  # Backend`}
-              </Typography>
-            </Box>
+                </Typography>
+              </Box>
+            ) : (
+              <Alert severity="info" sx={{ mb: 2 }} data-testid="docs-source-private-notice">
+                <AlertTitle><strong>Source access (invited beta)</strong></AlertTitle>
+                The application repository is still private. Public <code>git clone</code> is not available yet.
+                Use this hosted research preview, read the license in-app at{' '}
+                <MuiLink href={LICENSE_HREF}>/LICENSE</MuiLink>, and request source access or send feedback by
+                emailing <MuiLink href={FEEDBACK_MAILTO}>{FEEDBACK_EMAIL}</MuiLink>.
+              </Alert>
+            )}
 
             <Alert severity="info" sx={{ mt: 2 }}>
               <AlertTitle><strong>Quick Tip</strong></AlertTitle>
-              Use the provided <code>start_app.bat</code> script to launch both frontend and backend simultaneously!
+              {sourcePublic
+                ? <>Use the provided <code>start_app.bat</code> script to launch both frontend and backend simultaneously!</>
+                : <>Local install steps ship with the repository after public release (or after you receive source access).</>}
             </Alert>
           </AccordionDetails>
         </Accordion>
@@ -600,8 +640,11 @@ LOG_LEVEL=info`}
           </AccordionSummary>
           <AccordionDetails>
             <Alert severity="success" sx={{ mb: 3 }}>
-              <AlertTitle><strong>Open Source License</strong></AlertTitle>
-              This project is licensed under the <strong>GNU General Public License v3.0</strong>
+              <AlertTitle><strong>Intended license: GNU GPL-3.0</strong></AlertTitle>
+              Read the full text in-app at <MuiLink href={LICENSE_HREF}>/LICENSE</MuiLink>.
+              {sourcePublic
+                ? ' The repository is public under GPL-3.0.'
+                : ' Public source release under GPL-3.0 is planned; the repository remains private during invited beta.'}
             </Alert>
 
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -641,52 +684,61 @@ LOG_LEVEL=info`}
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mt: 3 }}>
               Contributing
             </Typography>
-            <Typography variant="body2" paragraph>
-              We welcome contributions! Please follow these steps:
-            </Typography>
-            <List>
-              <ListItem>
-                <ListItemText 
-                  primary="1. Fork the repository" 
-                  secondary="Create your own fork on GitHub" 
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText 
-                  primary="2. Create a feature branch" 
-                  secondary="git checkout -b feature/amazing-feature" 
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText 
-                  primary="3. Commit your changes" 
-                  secondary="git commit -m 'Add amazing feature'" 
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText 
-                  primary="4. Push to your branch" 
-                  secondary="git push origin feature/amazing-feature" 
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText 
-                  primary="5. Open a Pull Request" 
-                  secondary="Submit your PR for review" 
-                />
-              </ListItem>
-            </List>
+            {sourcePublic ? (
+              <>
+                <Typography variant="body2" paragraph>
+                  We welcome contributions! Please follow these steps:
+                </Typography>
+                <List>
+                  <ListItem>
+                    <ListItemText 
+                      primary="1. Fork the repository" 
+                      secondary="Create your own fork on GitHub" 
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      primary="2. Create a feature branch" 
+                      secondary="git checkout -b feature/amazing-feature" 
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      primary="3. Commit your changes" 
+                      secondary="git commit -m 'Add amazing feature'" 
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      primary="4. Push to your branch" 
+                      secondary="git push origin feature/amazing-feature" 
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      primary="5. Open a Pull Request" 
+                      secondary="Submit your PR for review" 
+                    />
+                  </ListItem>
+                </List>
+              </>
+            ) : (
+              <Typography variant="body2" paragraph>
+                During invited beta, send feedback or contribution ideas by emailing{' '}
+                <MuiLink href={FEEDBACK_MAILTO}>{FEEDBACK_EMAIL}</MuiLink>.
+                Fork / PR workflows will open with the planned public source release.
+              </Typography>
+            )}
 
             <Box sx={{ mt: 3 }}>
               <Button
                 variant="contained"
-                startIcon={<GitHubIcon />}
+                startIcon={sourcePublic ? <GitHubIcon /> : <EmailIcon />}
                 component={MuiLink}
-                href="/documentation"
-                target="_blank"
-                rel="noopener noreferrer"
+                href={sourcePublic ? GITHUB_REPO_URL : FEEDBACK_MAILTO}
+                {...(sourcePublic ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
-                Contribution Guidelines
+                {sourcePublic ? 'Contribution Guidelines' : 'Email feedback'}
               </Button>
             </Box>
           </AccordionDetails>
@@ -758,8 +810,21 @@ LOG_LEVEL=info`}
 
             <Alert severity="info" sx={{ mt: 3 }}>
               <AlertTitle><strong>Need More Help?</strong></AlertTitle>
-              Check our <MuiLink href="https://github.com/ConsciousEnergy/lenr_sim_app/issues" target="_blank" rel="noopener noreferrer">
-              GitHub Issues</MuiLink> or create a new issue for support.
+              {sourcePublic ? (
+                <>
+                  Check our{' '}
+                  <MuiLink href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
+                    GitHub Issues
+                  </MuiLink>{' '}
+                  or create a new issue for support.
+                </>
+              ) : (
+                <>
+                  Email{' '}
+                  <MuiLink href={FEEDBACK_MAILTO}>{FEEDBACK_EMAIL}</MuiLink>
+                  {' '}(primary feedback while the repository is private).
+                </>
+              )}
             </Alert>
           </AccordionDetails>
         </Accordion>

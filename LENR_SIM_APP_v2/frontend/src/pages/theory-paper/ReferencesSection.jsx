@@ -302,12 +302,12 @@ export default function ReferencesSection() {
                 <em> Conscious Energies</em> (v0.3.6-beta, revised 2026-07-22).
               </Typography>
               <MuiLink 
-                href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/main/docs/A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum%2C%20Nuclear%2C%20and%20Condensed%20Matter%20Phenomena%20(1).md" 
+                href="/theory-paper" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 sx={{ fontSize: '0.875rem' }}
               >
-                Full Paper on GitHub
+                Theory Paper (in app)
               </MuiLink>
             </ListItem>
 

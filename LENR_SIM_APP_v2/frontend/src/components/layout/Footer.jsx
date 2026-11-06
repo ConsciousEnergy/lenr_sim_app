@@ -3,6 +3,13 @@ import { Box, Container, Typography, Link, Divider } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
 import { APP_VERSION } from '../../config/version';
+import {
+  FEEDBACK_MAILTO,
+  GITHUB_REPO_URL,
+  LICENSE_HREF,
+  isSourcePublic,
+} from '../../config/sourceAccess';
+import EmailIcon from '@mui/icons-material/Email';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -34,10 +41,22 @@ const Footer = () => {
               <LanguageIcon fontSize="small" sx={{ mr: 0.5 }} />
               Website
             </Link>
-            <Link href="https://github.com/ConsciousEnergy/lenr_sim_app" target="_blank" rel="noopener noreferrer" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
-              <GitHubIcon fontSize="small" sx={{ mr: 0.5 }} />
-              GitHub
-            </Link>
+            {isSourcePublic() ? (
+              <Link href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+                <GitHubIcon fontSize="small" sx={{ mr: 0.5 }} />
+                GitHub
+              </Link>
+            ) : (
+              <>
+                <Link href={FEEDBACK_MAILTO} color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+                  <EmailIcon fontSize="small" sx={{ mr: 0.5 }} />
+                  Email
+                </Link>
+                <Link href={LICENSE_HREF} color="text.secondary" underline="hover">
+                  LICENSE
+                </Link>
+              </>
+            )}
             <Link href="#" color="text.secondary" underline="hover">
               Documentation
             </Link>
