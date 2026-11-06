@@ -2,69 +2,26 @@
 
 **Research-preview software for modeling and visualizing Low-Energy Nuclear Reaction (LENR) hypotheses** — with claim-tiered physics engines, interactive 3D views, and a companion theoretical framework. Built by **Diadon / Conscious Energy**.
 
-[![Live share](https://img.shields.io/badge/live%20share-0.3.9--beta%20Swarm-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
+[![Live beta](https://img.shields.io/badge/live%20beta-0.3.9--beta-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
 [![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
 
-> **Epistemic honesty.** Every number in this app is **model output**, not a laboratory measurement. Lean formalization checks *mathematical consistency* only — it does **not** prove that LENR occurs. `lenr_proved` stays `false`; the five `EQ-OPEN-*` obligations remain **OPEN**.
+> **Epistemic honesty.** Every number in this app is **model output**, not a laboratory measurement. Lean formalization checks *mathematical consistency* only — it does **not** prove that LENR occurs. `lenr_proved` stays `false`; the five `EQ-OPEN-*` obligations remain **OPEN**. Do not treat UI results as experimental proof.
 
-**Public beta (live):** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) — Traefik SPA + API on the Swarm share host, version **0.3.9-beta** (Compose stack retired; see [`AGENTS.md`](AGENTS.md)). API: [https://api.conscious.energy](https://api.conscious.energy).
+**Try the public beta (no install):** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) · version **0.3.9-beta** · API docs via the same origin `/api/docs`. Optional SPA mirror: [https://app.conscious.energy](https://app.conscious.energy). Marketing site [conscious.energy](https://conscious.energy) is WordPress — not the sim.
+
+Operators and agents: current live/ops truth lives in [`AGENTS.md`](AGENTS.md) and the versioned ops docs under `LENR_SIM_APP_v2/docs/` — not in this README.
 
 ### Docs map (public vs team)
 
 | Audience | Start here |
 |----------|------------|
+| Invited beta visitors | This README (walkthrough below) |
 | Public / contributors | This README, [`CONTRIBUTING.md`](CONTRIBUTING.md), [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) |
-| Agents / current truth | [`AGENTS.md`](AGENTS.md) |
+| Agents / operators | [`AGENTS.md`](AGENTS.md) |
 | Branching / releases | [`.github/BRANCHING.md`](.github/BRANCHING.md) |
-| Topology (diagram SOT) | [`THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) |
-| Public Swarm cutover gate | [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
-| Operators (live Swarm) | [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md), [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
 | Academic parallel train | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) (`EQ-OPEN-*` stay OPEN) |
-
----
-
-## Version trains
-
-| Branch | Markers must be | Role |
-|--------|-----------------|------|
-| `main` | **`0.3.9-beta`** | Live public Swarm release line (Traefik SPA + API); ship / hotfix |
-| `dev` | **`0.3.9-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
-
-Four version markers must match **within** a branch:
-
-- `LENR_SIM_APP_v2/backend/app/core/config.py` → `APP_VERSION`
-- `LENR_SIM_APP_v2/frontend/package.json` → `"version"`
-- `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
-- `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
-
-Default PR base is **`dev`**. Promote to public with a controlled `dev` → `main` PR (do not continuously merge). Do **not** bump `main` markers except via that promote. Full policy: [`.github/BRANCHING.md`](.github/BRANCHING.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
----
-
-## Deployment architecture
-
-**Live today:** Swarm Traefik on the share manager serves same-origin SPA + API at `lenr-sim-beta.conscious.energy` and API at `api.conscious.energy` (**0.3.9-beta**). Compose share is retired (rollback images retained). CI is a dedicated host and is **never** part of Swarm. Marketing site `conscious.energy` / `www` is WordPress — **not** the sim. Optional Cloudflare Pages host: `app.conscious.energy` → API.
-
-```mermaid
-flowchart LR
-  users[Users] --> beta["lenr-sim-beta<br/>Traefik SPA 0.3.9"]
-  users --> api["api.conscious.energy<br/>Traefik API 0.3.9"]
-  pages["CF Pages app."] -.->|"optional SPA"| api
-  marketing["conscious.energy www"] -.->|"≠ sim"| wp[WordPress]
-  ci[lenr-ci KVM2] -.->|"never Swarm"| beta
-```
-
-| Surface | URL / host | Meaning |
-|---------|------------|---------|
-| Live public share | https://lenr-sim-beta.conscious.energy | Traefik SPA + API **0.3.9-beta** (Swarm) |
-| Live public API | https://api.conscious.energy | Traefik API **0.3.9-beta** |
-| Prod SPA (Pages) | `app.conscious.energy` | Cloudflare Pages — optional split-origin |
-| Marketing | https://conscious.energy | WordPress — separate from the sim |
-| Self-hosted CI | dedicated KVM2 `lenr-ci` | PR/test runner only; share must keep **no** `.runner` |
-
-Do **not** re-arm public Swarm apply without a new announced window + confirm. See [`AGENTS.md`](AGENTS.md) and [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
 ---
 
@@ -75,11 +32,39 @@ LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore conte
 | You can… | You cannot (by design)… |
 |----------|-------------------------|
 | Run unified bubble–lattice, quantum tunneling, and bubble-fusion *models* | Treat UI numbers as lab measurements |
-| Compare theory modules with provenance and maturity badges | Close `EQ-OPEN-*` or claim `LENR_PROVED` |
+| Compare theory modules with provenance and maturity badges | Close `EQ-OPEN-*` or claim `lenr_proved` / `LENR_PROVED` |
 | Export runs (`lenr-run-export-v1`) for review packs | Get a deployed FEM / COMSOL stack on the public beta |
 | Read the in-app theory paper and methods honesty | Assume speculative mechanisms are validated |
 
-**Primary audiences:** condensed-matter / nuclear-adjacent researchers, CMNS reviewers, and contributors who need a reproducible software companion to the [Unified Theory Paper](docs/A_Unified_Theoretical_Framework_for_LENR.md).
+**Primary audiences:** condensed-matter / nuclear-adjacent researchers, CMNS reviewers, invited public-beta visitors, and contributors who need a reproducible software companion to the [Unified Theory Paper](docs/A_Unified_Theoretical_Framework_for_LENR.md).
+
+---
+
+## Honesty invariants (do not relax)
+
+These stay true on every surface (UI, API, docs, Lean):
+
+1. **`lenr_proved` is `false`** — the software never asserts that LENR is experimentally proved.
+2. **`EQ-OPEN-*` stay OPEN** — open equation / proof obligations are not closed by this release train.
+3. **Model ≠ measurement** — every plotted or exported number is simulation / model output.
+4. **Lean = consistency, not nature** — formalization under [`formalization/`](formalization/) checks math; it does not prove physical occurrence.
+5. **Claim tiers are first-class** — Beta / Approximate / Speculative / Aspirational badges mean what they say; aspirational FEM is not on the public beta.
+
+Science track sources of truth: [`PHYSICS_MATURITY_LEDGER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/GOALS.md).
+
+---
+
+## Try the live beta (signed-out walkthrough)
+
+Open [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) in a modern browser (no account required for the public preview).
+
+1. **Home** — confirm the beta / research-preview banner and version chip (**0.3.9-beta**). Feedback should point to email (`diadon@conscious.energy`), not a broken Issues CTA.
+2. **Unified Theory** — open Unified Theory (or Run from the dashboard). Leave defaults; press **Run** once. When it finishes, open the **3D Visualization** tab and confirm the canvas mounts (no “Visualization Error”).
+3. **Theory Paper** — skim the in-app Theory Paper and Theory Methods pages for honesty / known-limitations language. Open questions stay open.
+4. **Optional** — try Bubble Fusion or Quantum Tunneling from the home dashboard; export JSON/CSV once if you want a reproducible review pack.
+5. **Feedback** — email `diadon@conscious.energy` with page URL, browser/OS, app version, settings (if not default), what you expected, and what you saw.
+
+Participation is not an endorsement. Do not quote results as laboratory measurements.
 
 ---
 
@@ -127,7 +112,7 @@ LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore conte
 
 ## Scope of the public beta
 
-**Shipped / live on the public share (0.3.9-beta Swarm)**
+**Shipped / live on the public beta (0.3.9-beta)**
 
 - Unified bubble–lattice simulation API (`/api/unified/*`) with claim-tiered theory pipeline
 - Bubble dynamics: Rayleigh–Plesset baseline; Keller–Miksis auto-select when Mach ≥ 0.3 (approximate maturity)
@@ -151,13 +136,13 @@ Adopted sensitivity bands (do not reintroduce superseded values): tunneling enha
 
 | Path | Purpose |
 |------|---------|
-| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, Swarm infrastructure, release docs |
+| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, infrastructure, release docs |
 | [`formalization/`](formalization/) | Equation IR + Lean 4 consistency checks (not a nature proof) |
 | [`docs/`](docs/) | Repository docs, Unified Theory Paper, formalization status, README screenshots |
 | [`archive/status-reports/`](archive/status-reports/) | Historical status reports (provenance) |
 | [`.github/`](.github/) | CI workflows, Dependabot, PR template, CODEOWNERS |
 
-👉 **Install & run:** see [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
+👉 **Install & run locally:** see [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
 
 ---
 
@@ -174,14 +159,6 @@ chmod +x start_app.sh && ./start_app.sh
 - Backend API: http://localhost:8010 (`/api/docs`)
 
 Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md)
-
-**Where to try it without installing**
-
-| Environment | URL |
-|-------------|-----|
-| Live public beta | https://lenr-sim-beta.conscious.energy |
-| Staging API | https://api-staging.conscious.energy/api/health |
-| Staging SPA (Pages, when configured) | https://app-staging.conscious.energy |
 
 ---
 
@@ -212,14 +189,30 @@ Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LE
 
 ---
 
+## Version trains
+
+| Branch | Markers must be | Role |
+|--------|-----------------|------|
+| `main` | **`0.3.9-beta`** | Live public beta release line; ship / hotfix |
+| `dev` | **`0.3.9-beta`** | Integration tip; default PR base |
+
+Four version markers must match **within** a branch:
+
+- `LENR_SIM_APP_v2/backend/app/core/config.py` → `APP_VERSION`
+- `LENR_SIM_APP_v2/frontend/package.json` → `"version"`
+- `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
+- `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
+
+Default PR base is **`dev`**. Promote to public with a controlled `dev` → `main` PR. Do **not** bump `main` markers except via that promote. Full policy: [`.github/BRANCHING.md`](.github/BRANCHING.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+---
+
 ## Documentation map
 
 | Doc | Use when |
 |-----|----------|
-| [`AGENTS.md`](AGENTS.md) | Short current-truth map for humans and agents |
+| [`AGENTS.md`](AGENTS.md) | Short current-truth map for humans and agents (ops detail) |
 | [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) | Local install, features, troubleshooting |
-| [`THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) | Hardware ↔ Swarm diagram SOT |
-| [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) | 0.3.9 public cutover gate (operator) |
 | [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](docs/A_Unified_Theoretical_Framework_for_LENR.md) | Canonical theory paper |
 | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) | Maturity ledger, proof matrix, goals |
 | [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | Lean theorem status |
@@ -231,7 +224,7 @@ Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LE
 
 ## Development
 
-Branch from **`dev`** by default. Use **`main`** only for live **0.3.9-beta** Swarm ship / hotfix. See [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
+Branch from **`dev`** by default. Use **`main`** only for live **0.3.9-beta** ship / hotfix. See [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 ```bash
 # Backend
@@ -259,11 +252,12 @@ CI includes release-blocking science gates and (where configured) `lake build` o
 
 | Item | State |
 |------|-------|
-| Live public share | **0.3.9-beta** Swarm (Traefik SPA + API) |
+| Live public beta | **0.3.9-beta** at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) |
 | Current app version markers | **`0.3.9-beta`** (`main` and `dev`) |
-| `main` | Live Swarm release line; ship via Ansible / SSH — not auto from bare push |
-| `dev` | Integration tip; **never** auto-deployed by `deploy.yml` |
+| `main` | Live release line |
+| `dev` | Integration tip; default PR base |
+| `lenr_proved` / `EQ-OPEN-*` | `false` / stay **OPEN** |
 
 ---
 
-**Last updated:** 2026-11-05 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)
+**Last updated:** 2026-11-06 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)

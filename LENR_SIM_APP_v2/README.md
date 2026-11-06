@@ -2,31 +2,24 @@
 
 **Advanced modeling and visualization of Low Energy Nuclear Reactions** *(research preview — model output, not laboratory measurement)*
 
-[![Live share](https://img.shields.io/badge/live%20share-0.3.9--beta%20Swarm-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
+[![Live beta](https://img.shields.io/badge/live%20beta-0.3.9--beta-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
 [![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](../CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-> Looking for the project-level overview with screenshots and version trains? Start at the repository root [`README.md`](../README.md).
+> Looking for the project-level overview, honesty invariants, and signed-out beta walkthrough? Start at the repository root [`README.md`](../README.md).
 
 ---
 
-## Current truth (live 0.3.9-beta Swarm · `main`/`dev` markers match)
+## Current truth (public)
 
 | Topic | Where |
 |-------|--------|
-| Agent / contributor map | Root [`AGENTS.md`](../AGENTS.md) |
+| Live public beta | https://lenr-sim-beta.conscious.energy — **0.3.9-beta** |
+| Public API | https://api.conscious.energy |
 | Version trains | `main` and `dev` both **`0.3.9-beta`** — four markers must match within a branch |
-| Live public share | https://lenr-sim-beta.conscious.energy — Traefik SPA + API on Swarm (**0.3.9-beta**; Compose stack retired) — [`LIVE_SHARE_STATUS.md`](docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
-| Live public API | https://api.conscious.energy — Traefik API **0.3.9-beta** |
-| Topology diagram SOT | [`docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md`](docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) |
-| Full stack unlock (Swarm/Ansible/Traefik/CF) | [`docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md) — CI never Swarm |
-| Ops docs map | [`docs/v0.3.8-beta/README.md`](docs/v0.3.8-beta/README.md) |
-| Public Swarm cutover (historical) | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) — cutover landed 2026-10-31; do not re-arm without a new announced window |
-| CF Pages (optional SPA) | `app.` / `app-staging` — marketing `conscious.energy` ≠ sim |
-| Self-hosted CI (`lenr-ci`) | [`docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md) |
-| Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) (`EQ-OPEN-*` stay OPEN) |
-
-**Live topology:** public Swarm Traefik on the share host (SPA + API at `lenr-sim-beta`, API at `api.`). Staging Swarm dry-run on KVM1 is retired (KVM1 is now prod worker+obs). Do not re-arm public Swarm apply without a new announced window + confirm. Academic review is a parallel track; CI/infra PRs must not rewrite those claims.
+| Honesty | `lenr_proved` stays `false`; `EQ-OPEN-*` stay **OPEN** — see root README |
+| Science / academic review | [`PHYSICS_MATURITY_LEDGER.md`](docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](docs/v0.3.7-beta/GOALS.md) |
+| Operators / agents | Root [`AGENTS.md`](../AGENTS.md) and versioned ops docs under `docs/v0.3.*` (not duplicated here) |
 
 ## 🧭 Architecture & Onboarding
 
@@ -80,10 +73,11 @@ for the canonical port matrix.
 
 ### Public beta research preview
 
-- Live share markers: **`0.3.9-beta`** Swarm Traefik at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) (Compose stack retired)
-- `main` and `dev` markers: **`0.3.9-beta`** (`dev` is integration tip; never auto-deployed by `deploy.yml`)
+- Live beta: **`0.3.9-beta`** at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy)
+- `main` and `dev` markers: **`0.3.9-beta`** (`dev` is the default PR base / integration tip)
 - Engine maturity chips and claim tiers are first-class; FEM remains aspirational on the public beta
-- `lenr_proved` stays false; `EQ-OPEN-*` stay OPEN
+- `lenr_proved` stays `false`; `EQ-OPEN-*` stay **OPEN**
+- Signed-out walkthrough and honesty invariants: root [`README.md`](../README.md)
 
 ### Known Non-Critical Warnings
 
