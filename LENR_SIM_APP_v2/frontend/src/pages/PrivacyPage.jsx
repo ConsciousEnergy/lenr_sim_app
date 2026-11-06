@@ -4,7 +4,6 @@
  */
 import React, { useState } from 'react';
 import { Alert, Box, Button, Container, Link as MuiLink, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
 import {
   isAnalyticsOptedOut,
   isProductAnalyticsConfigured,
@@ -77,7 +76,7 @@ export default function PrivacyPage() {
       <Typography variant="h6" gutterBottom>License</Typography>
       <Typography variant="body2" paragraph>
         The application is licensed under{' '}
-        <MuiLink component={RouterLink} to="/about">
+        <MuiLink href="/LICENSE">
           GNU GPL-3.0
         </MuiLink>
         . Contact:{' '}

@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs API: bundle `backend/app/served_docs/` so `/api/docs/researcher-review-pack`
   (and sibling slugs) resolve inside Docker images that omit repository-root `docs/`.
 - Theory Paper: version-map alert; §4.2 “Typical Results” labelled literature reports.
+
+- README live-share badges/wording synced to **0.3.9-beta Swarm** (Compose retired).
+- Issue template host → `lenr-sim-beta.conscious.energy`.
+- In-app static `/LICENSE` (frontend `public/LICENSE`) for signed-out GPL access.
 - **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change; **no** version-marker bump.
 
 ### Changed — mute api-staging blackbox after 0.3.9 cutover (BDS-52)

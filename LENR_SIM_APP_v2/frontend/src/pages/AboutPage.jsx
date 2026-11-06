@@ -54,7 +54,8 @@ const AboutPage = () => {
           </Typography>
           <Typography variant="body1" paragraph>
             Crawler-readable model pages (no JavaScript required) are published at <Link href="/models/">/models/</Link>.
-            The intended license is <strong>GNU GPL-3.0</strong>. The application repository is still
+            The intended license is <strong>GNU GPL-3.0</strong> (read in-app at{' '}
+            <Link href="/LICENSE">/LICENSE</Link>). The application repository is still
             private during invited beta; public source access for study and modification is planned at
             release. Until then, request access or send feedback by emailing{' '}
             <Link href="mailto:diadon@conscious.energy">diadon@conscious.energy</Link>.

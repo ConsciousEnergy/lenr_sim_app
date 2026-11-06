@@ -682,7 +682,7 @@ LOG_LEVEL=info`}
                 variant="contained"
                 startIcon={<GitHubIcon />}
                 component={MuiLink}
-                href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/main/CONTRIBUTING.md"
+                href="/documentation"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -775,9 +775,9 @@ LOG_LEVEL=info`}
             Conscious Energy</MuiLink>
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Licensed under GNU GPL-3.0 | <MuiLink href="https://github.com/ConsciousEnergy/lenr_sim_app" target="_blank" rel="noopener noreferrer">
-            View on GitHub
-            </MuiLink>
+            Licensed under GNU GPL-3.0 — <MuiLink href="/LICENSE">/LICENSE</MuiLink>
+            {' · '}
+            <MuiLink href="mailto:diadon@conscious.energy">email feedback</MuiLink>
           </Typography>
         </Box>
       </Paper>

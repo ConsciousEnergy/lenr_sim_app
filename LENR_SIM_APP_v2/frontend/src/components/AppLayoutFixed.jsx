@@ -410,7 +410,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
           </Typography>
           <Typography variant="caption" color="text.secondary">
             GNU{' '}
-            <MuiLink component={Link} to="/about" color="inherit" underline="hover">
+            <MuiLink href="/LICENSE" color="inherit" underline="hover">
               GPL-3.0
             </MuiLink>
             {' '}copyleft
