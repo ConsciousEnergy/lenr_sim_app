@@ -34,10 +34,8 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import DocumentationIcon from '@mui/icons-material/MenuBook';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TeamIcon from '@mui/icons-material/Groups';
-import LaunchIcon from '@mui/icons-material/Launch';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import GitHubIcon from '@mui/icons-material/GitHub';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 // import PendingIcon from '@mui/icons-material/Pending'; // Not currently used
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -418,13 +416,9 @@ function DashboardNew() {
               <Button
                 fullWidth
                 variant="text"
-                startIcon={<GitHubIcon />}
-                href="https://github.com/ConsciousEnergy/lenr_sim_app"
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<LaunchIcon fontSize="small" />}
+                href="mailto:diadon@conscious.energy"
               >
-                GitHub Repository
+                Email feedback / source access
               </Button>
             </Stack>
           </Paper>

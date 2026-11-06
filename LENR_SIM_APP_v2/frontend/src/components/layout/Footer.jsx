@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Container, Typography, Link, Divider } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
 import { APP_VERSION } from '../../config/version';
 
@@ -34,9 +33,8 @@ const Footer = () => {
               <LanguageIcon fontSize="small" sx={{ mr: 0.5 }} />
               Website
             </Link>
-            <Link href="https://github.com/ConsciousEnergy/lenr_sim_app" target="_blank" rel="noopener noreferrer" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
-              <GitHubIcon fontSize="small" sx={{ mr: 0.5 }} />
-              GitHub
+            <Link href="mailto:diadon@conscious.energy" color="text.secondary" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+              Email feedback
             </Link>
             <Link href="#" color="text.secondary" underline="hover">
               Documentation
