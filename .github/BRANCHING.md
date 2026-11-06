@@ -4,25 +4,27 @@ This repository uses **two long-lived branches** aligned to version trains:
 
 | Branch | `APP_VERSION` | Purpose |
 |--------|---------------|---------|
-| `main` | `0.3.8-beta` | Live public Compose beta release line. Protected. Tagged with `v0.3.8-beta`. |
-| `dev` | `0.3.8-beta` | Integration line for Swarm staging prep, science, deps. No auto VPS deploy. |
+| `main` | `0.3.9-beta` | Live public Swarm release line (Traefik SPA + API). Protected. Tagged with `v0.3.9-beta`. |
+| `dev` | `0.3.9-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
 
 Releases remain annotated `v*` tags (normally cut from `main` when a train
 ships). Short-lived topic branches are deleted on squash-merge.
 
 Adopted October 2026 for the v0.3.7 / v0.3.8 split; Compose promote of
-**v0.3.8-beta** landed on `main` without Swarm cutover. Prior pure trunk-only
-policy (September 2026 / PR #161) still applies to feature lifetime and squash
-merges; only the long-lived set grew to include `dev`. Old version-named release
-branches remain as `archive/*` tags only.
+**v0.3.8-beta** landed on `main` without Swarm cutover. Public Swarm
+**v0.3.9-beta** cutover landed **2026-10-31** — both trains now mark
+`0.3.9-beta`. Prior pure trunk-only policy (September 2026 / PR #161) still
+applies to feature lifetime and squash merges; only the long-lived set grew to
+include `dev`. Old version-named release branches remain as `archive/*` tags
+only.
 
 ## Branches
 
 | Branch | Lifetime | Purpose |
 |--------|----------|---------|
-| `main` | permanent | v0.3.8-beta release / Compose share ship line |
-| `dev` | permanent | v0.3.8-beta integration; default base for new work |
-| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for Compose hotfixes only); squash-merged; auto-deleted |
+| `main` | permanent | v0.3.9-beta Swarm release / ship line |
+| `dev` | permanent | v0.3.9-beta integration; default base for new work |
+| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.3.9 hotfixes only); squash-merged; auto-deleted |
 | `consciousenergy/<topic>-<id>` | days | Same as above (Cursor agents) |
 | `dependabot/**` | days | Automated dependency PRs against **`dev`** |
 | `release/X.Y` | only while a hotfix is open | Created **from a tag** when a fix must ship against an older release. Forward-port to `main` and `dev`, then delete |
@@ -31,13 +33,13 @@ Naming rules: lowercase, hyphen-separated, no version numbers in feature
 branch names (the version lives in the four `APP_VERSION` markers, not in git
 refs).
 
-## Day-to-day flow (v0.3.8 on `dev`; Compose on `main`)
+## Day-to-day flow (both trains `0.3.9-beta`)
 
 ```mermaid
 gitGraph
-  commit id: "main_0_3_8_compose"
+  commit id: "main_0_3_9_swarm"
   branch dev
-  commit id: "swarm_prep"
+  commit id: "integration"
   branch feat_topic
   commit id: "work"
   checkout dev
@@ -52,13 +54,13 @@ gitGraph
    also `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-**0.3.8 Compose hotfixes:** branch from `main` (or `v0.3.8-beta`), PR into
+**0.3.9 Swarm hotfixes:** branch from `main` (or `v0.3.9-beta`), PR into
 `main`, then cherry-pick / forward-port to `dev`.
 
 **Promote next train → public:** when ready, open a controlled PR `dev` → `main`
 (markers already bumped on `dev`), then tag on `main` after merge. Do **not**
-continuously merge `dev` into `main`. Public Swarm cutover stays gated by
-`CONFIRM_SWARM_0_3_9`.
+continuously merge `dev` into `main`. Do **not** re-arm public Swarm apply
+without a new announced window + confirm.
 
 Keep PRs small and **topic-dense**. Split CI/infra PRs from academic claim edits.
 `EQ-OPEN-*` stay OPEN unless a dedicated science PR says otherwise.
@@ -67,19 +69,19 @@ Keep PRs small and **topic-dense**. Split CI/infra PRs from academic claim edits
 
 Heavy PR/test jobs default to labels
 `self-hosted,linux,x64,lenr-ci` on the **dedicated** Hostinger CI KVM2
-(`2012566` / `45.93.100.251`, runner `lenr-ci-1`). The Compose share
+(`2012566` / `45.93.100.251`, runner `lenr-ci-1`). The share host
 (`185.211.4.66`) must **not** register a runner. **Deploy/ship** (`deploy.yml`)
 stays on GitHub-hosted and triggers only for **`main` + `v*` tags** — never for
 pushes to `dev`. See
 [`../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md`](../LENR_SIM_APP_v2/docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md).
 
-Dual KVM2 ≠ Swarm cutover — see
+Dual KVM2 topology + operator lab — see
 [`../LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md`](../LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md).
 
 ## Cutting a release
 
 1. Land the version bump + CHANGELOG section on the train branch (`dev` for
-   the next train; `v0.3.8-beta` CHANGELOG is on `main` after the Compose promote).
+   the next train; `v0.3.9-beta` CHANGELOG is on `main` after the Swarm cutover).
 2. Promote to `main` if needed (`dev` → `main` PR for a new public train).
 3. Tag the release commit on `main`:
 
@@ -95,7 +97,7 @@ Dual KVM2 ≠ Swarm cutover — see
 
 ## Hotfixes against an older release
 
-1. `git switch -c release/0.3.8 v0.3.8-beta` (or `release/0.3.7 v0.3.7-beta`)
+1. `git switch -c release/0.3.9 v0.3.9-beta` (or `release/0.3.8 v0.3.8-beta`)
 2. Land the fix via PR (base = that release branch), bump patch if needed, tag.
 3. Forward-port to `main` and `dev`, then delete the short-lived release branch.
 
