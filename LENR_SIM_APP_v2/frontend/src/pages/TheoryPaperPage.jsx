@@ -41,7 +41,7 @@ import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import DownloadIcon from '@mui/icons-material/Download';
+import EmailIcon from '@mui/icons-material/Email';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
@@ -1465,15 +1465,18 @@ const TheoryPaperPage = () => {
           </Grid>
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              The manuscript source repository is private during invited beta.
+              Use the in-app Full Paper tab, or email for manuscript / source access.
+              License text: <MuiLink href="/LICENSE">/LICENSE</MuiLink>.
+            </Typography>
             <Button
               variant="outlined"
-              startIcon={<DownloadIcon />}
-              href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/main/docs/A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum%2C%20Nuclear%2C%20and%20Condensed%20Matter%20Phenomena%20(1).md"
-              target="_blank"
-              rel="noopener noreferrer"
+              startIcon={<EmailIcon />}
+              href="mailto:diadon@conscious.energy"
               component={MuiLink}
             >
-              View Full Paper on GitHub
+              Email feedback / source access
             </Button>
           </Box>
         </TabPanel>
