@@ -1,0 +1,22 @@
+id: EQ-PS-NONDEPLOY-01
+latex: "publicBetaDeployed = false; lenrProved = false"
+symbols:
+  publicBetaDeployed: "whether COMSOL-class / PS continuum solvers run on public beta"
+  lenrProved: "nature-proof token (must remain false)"
+units: "boolean honesty flags"
+tag: THM
+paper_ref: "§3 implementation note; ENG-ASPIRATIONAL-FEM-01"
+code_refs:
+  - LENR_SIM_APP_v2/frontend/src/pages/TheoryPage.jsx
+  - LENR_SIM_APP_v2/frontend/src/config/engineMaturity.js
+  - LENR_SIM_APP_v2/docs/v0.3.7-beta/DEFERRED_MULTIPHYSICS_FIDELITY.md
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.publicBetaDeployed"
+  - "LenrFormal.PoissonSchrodinger.lenrProved"
+  - "LenrFormal.PoissonSchrodinger.not_public_beta_deployed"
+  - "LenrFormal.PoissonSchrodinger.lenr_proved_false"
+  - "LenrFormal.PoissonSchrodinger.public_beta_false_implies_not_true"
+notes: "Honesty invariant for aspirational FEM/PS. Research code in-repo ≠ VPS deployment. Does not close EQ-OPEN-*."

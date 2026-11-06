@@ -1,0 +1,21 @@
+id: EQ-PS-COUPLE-01
+latex: "r = max(r_P, r_S); selfConsistent := (r = 0)"
+symbols:
+  r_P: "Poisson residual"
+  r_S: "Schrödinger residual"
+  r: "coupling-loop residual"
+units: "dimensionless bookkeeping"
+tag: THM
+paper_ref: "§3.1 coupling loop; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.couplingResidual"
+  - "LenrFormal.PoissonSchrodinger.selfConsistent"
+  - "LenrFormal.PoissonSchrodinger.positive_poisson_residual_not_self_consistent"
+  - "LenrFormal.PoissonSchrodinger.positive_schrodinger_residual_not_self_consistent"
+  - "LenrFormal.PoissonSchrodinger.both_zero_self_consistent"
+notes: "Proves residual algebra only. Does not prove continuum fixed-point existence, LENR, or any EQ-OPEN-* discharge."

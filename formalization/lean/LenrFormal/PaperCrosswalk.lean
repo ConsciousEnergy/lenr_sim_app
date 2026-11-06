@@ -11,6 +11,7 @@ import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
 import LenrFormal.ScaleQED
+import LenrFormal.PoissonSchrodinger
 import LenrFormal.WorkingHypothesis
 import LenrFormal.WorkingHypothesisBounds
 import LenrFormal.OpenObligations
@@ -57,6 +58,8 @@ def sectionModuleMap : List (String × String) :=
   , ("§2.8 / Gamow tunneling", "LenrFormal.Gamow")
   , ("§2.8 Assenbaum domain", "LenrFormal.Assenbaum")
   , ("§2.8 Composition cap 1e5", "LenrFormal.Composition")
+  , ("§3.1 / ENG-ASPIRATIONAL-FEM-01 Poisson–Schrödinger residuals", "LenrFormal.PoissonSchrodinger")
+  , ("§3.1 aspirational non-deployment honesty", "LenrFormal.PoissonSchrodinger")
   , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
