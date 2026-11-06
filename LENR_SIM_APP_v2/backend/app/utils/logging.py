@@ -66,9 +66,16 @@ def setup_logger(
     Returns:
         Configured logger instance
     """
-    # Convert string level to logging level
+    # Convert string level to logging level.
+    # Uppercase first: getattr(logging, "info") returns the logging.info
+    # *function*, not the INFO int constant — that crashes setLevel.
     if isinstance(level, str):
-        numeric_level = getattr(logging, level)
+        resolved = getattr(logging, level.upper(), None)
+        numeric_level = (
+            resolved
+            if isinstance(resolved, int)
+            else logging.INFO
+        )
     else:
         numeric_level = level if level is not None else logging.INFO
     
