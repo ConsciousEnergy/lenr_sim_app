@@ -176,4 +176,13 @@ describe('TheoryPaperPage', () => {
     expect(block).toHaveTextContent(/literature reports/i);
     expect(block).toHaveTextContent(/not measurements produced or validated/i);
   });
+
+  test('Section 3 marks Poisson–Schrödinger / FEM as aspirational not live', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText(/3\. Computational Methods/i));
+    expect(screen.getByTestId('theory-paper-methods-aspirational')).toHaveTextContent(
+      /not live on public beta/i,
+    );
+    expect(screen.getByText(/aspirational research methods/i)).toBeInTheDocument();
+  });
 });

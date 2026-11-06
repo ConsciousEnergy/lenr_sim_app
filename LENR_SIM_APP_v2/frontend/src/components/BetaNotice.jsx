@@ -89,7 +89,7 @@ export default function BetaNotice({ monitorApi = true }) {
           <AlertTitle>Public beta {APP_VERSION} - research preview</AlertTitle>
           <Typography variant="body2" component="span">
             Every number here is a <strong>model output</strong>, not a laboratory measurement.
-            Engine maturity chips (Beta / Approximate / Speculative) mark incomplete proofs — see{' '}
+            Engine maturity chips (Beta / Approximate / Aspirational) mark what is live vs research-only — see{' '}
             <Link component={RouterLink} to="/theory?tab=methods">Theory Methods</Link>.
             LENR is still an experimental inquiry; open questions and claim tiers are on the{' '}
             <Link component={RouterLink} to="/about">About</Link> page. Found a problem? Email{' '}

@@ -189,18 +189,18 @@
     },
     {
       "id": "ENG-ASPIRATIONAL-FEM-01",
-      "module_path": "docs / Theory Methods",
+      "module_path": "docs / Theory Methods / paper §3.1",
       "ui_surface": "theory_methods",
       "claim_tier": "aspirational",
       "proof_status": {
         "analytical": "not_on_vps",
         "numerical": "not_on_vps",
-        "lean": "absent"
+        "lean": "ps_residual_domain_nondeploy"
       },
-      "artifacts": ["md", "json"],
-      "beta_label": "speculative",
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "aspirational",
       "priority": "P3",
-      "rd_next": "Keep Methods honesty alert"
+      "rd_next": "Keep Methods honesty alert; Phase C roadmap only; never public-beta numerics; EQ-OPEN-* stay OPEN"
     }
   ]
 }

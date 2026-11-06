@@ -105,7 +105,7 @@ export const ENGINE_MATURITY = {
     label: 'aspirational',
     shortTitle: 'FEM / continuum',
     description:
-      'COMSOL-class / Poisson–Schrödinger continuum methods are aspirational — not running on the public VPS.',
+      'COMSOL-class / Poisson–Schrödinger continuum methods are aspirational research roadmap — not public-beta numerics (ENG-ASPIRATIONAL-FEM-01).',
   },
 };
 

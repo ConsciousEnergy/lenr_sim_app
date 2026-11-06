@@ -25,6 +25,9 @@ describe('BetaNotice', () => {
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(/Public beta/);
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(/model output/);
     expect(screen.getByTestId('beta-banner')).toHaveTextContent(
+      /Beta \/ Approximate \/ Aspirational/,
+    );
+    expect(screen.getByTestId('beta-banner')).toHaveTextContent(
       /LENR is still an experimental inquiry/,
     );
     expect(screen.getByRole('link', { name: 'diadon@conscious.energy' })).toHaveAttribute(
