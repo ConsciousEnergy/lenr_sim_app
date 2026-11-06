@@ -410,13 +410,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
           </Typography>
           <Typography variant="caption" color="text.secondary">
             GNU{' '}
-            <MuiLink
-              href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/lenr_sim_app_v0.3.6-beta/LICENSE"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="inherit"
-              underline="hover"
-            >
+            <MuiLink href="/LICENSE" color="inherit" underline="hover">
               GPL-3.0
             </MuiLink>
             {' '}copyleft

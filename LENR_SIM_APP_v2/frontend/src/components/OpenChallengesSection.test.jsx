@@ -36,4 +36,15 @@ describe('OpenChallengesSection', () => {
     render(<OpenChallengesSection />);
     expect(screen.getByText('Companion Documents')).toBeInTheDocument();
   });
+
+  test('renders honesty chips without claiming proof or closure', () => {
+    render(<OpenChallengesSection />);
+    const chips = screen.getByTestId('open-challenges-honesty-chips');
+    expect(chips).toBeInTheDocument();
+    expect(chips).toHaveTextContent(/lenr_proved: false/i);
+    expect(chips).toHaveTextContent(/avenue ranking ≠ proof/i);
+    expect(chips).toHaveTextContent(/closure runway: criteria only/i);
+    expect(chips).toHaveTextContent(/EQ-OPEN-MEV-01: OPEN/);
+    expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
+  });
 });

@@ -46,7 +46,9 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
 import ReferencesSection from './theory-paper/ReferencesSection';
+import ScienceEvidenceSection from './theory-paper/ScienceEvidenceSection';
 import OpenChallengesSection from '../components/OpenChallengesSection';
+import { APP_VERSION } from '../config/version';
 import { track } from '../analytics/events';
 
 function TabPanel({ children, value, index, ...other }) {
@@ -119,6 +121,7 @@ const TheoryPaperPage = () => {
                 label="Date: 2026-02-14 (revised 2026-09-25, v0.3.7-beta)"
                 size="small"
                 variant="outlined"
+                data-testid="manuscript-revision-chip"
               />
             </Stack>
           </Box>
@@ -127,6 +130,16 @@ const TheoryPaperPage = () => {
             <Chip label="Empirical LENR Correlation" size="small" color="warning" variant="outlined" />
             <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
           </Stack>
+
+          <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }} data-testid="app-manuscript-version-map">
+            <AlertTitle><strong>App / manuscript version map</strong></AlertTitle>
+            <Typography variant="body2">
+              Hosted application build: <strong>{APP_VERSION}</strong>. This manuscript revision
+              label remains <strong>v0.3.7-beta (revised 2026-09-25)</strong> — cite both when
+              reporting results; the labels are paired for compatibility, not identical trains.
+              Do not treat the manuscript chip as the live app version.
+            </Typography>
+          </Alert>
 
           <Alert severity="info" sx={{ mt: 3, textAlign: 'left' }}>
             <AlertTitle><strong>Note for Contributors</strong></AlertTitle>
@@ -912,11 +925,13 @@ const TheoryPaperPage = () => {
                 </ListItem>
               </List>
 
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <AlertTitle><strong>Typical Results</strong></AlertTitle>
+              <Alert severity="info" sx={{ mt: 2 }} data-testid="section-42-typical-results">
+                <AlertTitle><strong>Typical Results (literature reports)</strong></AlertTitle>
                 <Typography variant="body2">
-                  Anomalous heat up to 1 kW in certain high-surface-area setups. Rydberg Matter detection via 
-                  spectroscopic signatures. Evidence of transmutations with new elemental species on nickel surfaces.
+                  Literature reports in this corpus include anomalous heat up to 1 kW in certain
+                  high-surface-area setups, Rydberg Matter detection via spectroscopic signatures,
+                  and claimed transmutations with new elemental species on nickel surfaces. These
+                  are external reports — not measurements produced or validated by this simulator.
                 </Typography>
               </Alert>
             </AccordionDetails>
@@ -998,6 +1013,34 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <OpenChallengesSection embedded />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Section 5B: Science evidence (Phase E — campaign / ranking / Lean / runway) */}
+          <Accordion expanded={expandedSection === 'section5b'} onChange={handleChange('section5b')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  5B. Science Evidence (Campaign, Ranking, Formalization)
+                </Typography>
+                <Chip
+                  label="lenr_proved: false"
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ fontSize: '0.65rem', height: 20 }}
+                />
+                <Chip
+                  label="EQ-OPEN OPEN"
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ fontSize: '0.65rem', height: 20 }}
+                />
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <ScienceEvidenceSection embedded />
             </AccordionDetails>
           </Accordion>
 

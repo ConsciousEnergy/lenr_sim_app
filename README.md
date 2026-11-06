@@ -2,14 +2,14 @@
 
 **Research-preview software for modeling and visualizing Low-Energy Nuclear Reaction (LENR) hypotheses** — with claim-tiered physics engines, interactive 3D views, and a companion theoretical framework. Built by **Diadon / Conscious Energy**.
 
-[![Live share](https://img.shields.io/badge/live%20share-0.3.8--beta%20Compose-orange.svg)](https://lenr-sim-beta.conscious.energy)
-[![Cutover train](https://img.shields.io/badge/dev%20tip-0.3.9--beta-blue.svg)](CHANGELOG.md)
+[![Live share](https://img.shields.io/badge/live%20share-0.3.9--beta%20Swarm-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
+[![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
 
 > **Epistemic honesty.** Every number in this app is **model output**, not a laboratory measurement. Lean formalization checks *mathematical consistency* only — it does **not** prove that LENR occurs. `lenr_proved` stays `false`; the five `EQ-OPEN-*` obligations remain **OPEN**.
 
-**Public beta (still live):** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) — Compose + Caddy on the Hostinger share, version **0.3.8-beta**. Public Swarm (0.3.9) is the cutover train on `dev`; it is **not** live until an announced window completes.
+**Public beta (live):** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) — Traefik SPA + API on the Swarm share host, version **0.3.9-beta** (Compose stack retired; see [`AGENTS.md`](AGENTS.md)). API: [https://api.conscious.energy](https://api.conscious.energy).
 
 ### Docs map (public vs team)
 
@@ -20,7 +20,7 @@
 | Branching / releases | [`.github/BRANCHING.md`](.github/BRANCHING.md) |
 | Topology (diagram SOT) | [`THREE_NODE_SWARM_TOPOLOGY.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/THREE_NODE_SWARM_TOPOLOGY.md) |
 | Public Swarm cutover gate | [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
-| Operators (Compose now, Swarm later) | [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md) |
+| Operators (live Swarm) | [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md), [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
 | Academic parallel train | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) (`EQ-OPEN-*` stay OPEN) |
 
 ---
@@ -29,8 +29,8 @@
 
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
-| `main` | **`0.3.8-beta`** | Live Compose public beta; ship / hotfix only |
-| `dev` | **`0.3.9-beta`** | Public Swarm cutover train (Traefik SPA + API); not live until cutover |
+| `main` | **`0.3.9-beta`** | Live public Swarm release line (Traefik SPA + API); ship / hotfix |
+| `dev` | **`0.3.9-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
 
 Four version markers must match **within** a branch:
 
@@ -45,29 +45,26 @@ Default PR base is **`dev`**. Promote to public with a controlled `dev` → `mai
 
 ## Deployment architecture
 
-**Today (cutover not applied):** public traffic stays on Compose + Caddy at `lenr-sim-beta.conscious.energy` (**0.3.8-beta**). Staging Swarm runs on KVM1. CI is a dedicated host and is **never** part of Swarm. Marketing site `conscious.energy` / `www` is WordPress — **not** the sim.
-
-**After the announced 0.3.9 window:** share becomes Swarm manager (Traefik); KVM1 joins as worker (+ observability). Same-origin Traefik SPA on `lenr-sim-beta` can ship without Cloudflare Pages first; optional Pages hosts are `app.` / `app-staging`.
+**Live today:** Swarm Traefik on the share manager serves same-origin SPA + API at `lenr-sim-beta.conscious.energy` and API at `api.conscious.energy` (**0.3.9-beta**). Compose share is retired (rollback images retained). CI is a dedicated host and is **never** part of Swarm. Marketing site `conscious.energy` / `www` is WordPress — **not** the sim. Optional Cloudflare Pages host: `app.conscious.energy` → API.
 
 ```mermaid
 flowchart LR
-  users[Users] --> beta["lenr-sim-beta<br/>Compose+Caddy 0.3.8"]
-  users -.->|"after 0.3.9 window"| swarm["Share manager + KVM1 worker<br/>Traefik Swarm"]
-  staging["api-staging / app-staging"] --> kvm1[KVM1 staging Swarm]
-  pages["CF Pages app. / app-staging"] -.->|"optional SPA"| apiHosts[API hosts]
+  users[Users] --> beta["lenr-sim-beta<br/>Traefik SPA 0.3.9"]
+  users --> api["api.conscious.energy<br/>Traefik API 0.3.9"]
+  pages["CF Pages app."] -.->|"optional SPA"| api
   marketing["conscious.energy www"] -.->|"≠ sim"| wp[WordPress]
   ci[lenr-ci KVM2] -.->|"never Swarm"| beta
 ```
 
 | Surface | URL / host | Meaning |
 |---------|------------|---------|
-| Live public share | https://lenr-sim-beta.conscious.energy | Compose + Caddy **0.3.8-beta** until cutover |
-| Staging API | https://api-staging.conscious.energy | Traefik on KVM1 (staging Swarm) |
-| Staging / prod SPA (Pages) | `app-staging.` / `app.` | Cloudflare Pages — optional; not required for same-origin Traefik cutover |
+| Live public share | https://lenr-sim-beta.conscious.energy | Traefik SPA + API **0.3.9-beta** (Swarm) |
+| Live public API | https://api.conscious.energy | Traefik API **0.3.9-beta** |
+| Prod SPA (Pages) | `app.conscious.energy` | Cloudflare Pages — optional split-origin |
 | Marketing | https://conscious.energy | WordPress — separate from the sim |
 | Self-hosted CI | dedicated KVM2 `lenr-ci` | PR/test runner only; share must keep **no** `.runner` |
 
-Cutover confirms (`CONFIRM_SWARM_0_3_8` staging / `CONFIRM_SWARM_0_3_9` public) are **operator-gated** and are never set from README or CI. See [`AGENTS.md`](AGENTS.md) and [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
+Do **not** re-arm public Swarm apply without a new announced window + confirm. See [`AGENTS.md`](AGENTS.md) and [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md).
 
 ---
 
@@ -130,7 +127,7 @@ LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore conte
 
 ## Scope of the public beta
 
-**Shipped / live on the public share (0.3.8-beta Compose)**
+**Shipped / live on the public share (0.3.9-beta Swarm)**
 
 - Unified bubble–lattice simulation API (`/api/unified/*`) with claim-tiered theory pipeline
 - Bubble dynamics: Rayleigh–Plesset baseline; Keller–Miksis auto-select when Mach ≥ 0.3 (approximate maturity)
@@ -154,7 +151,7 @@ Adopted sensitivity bands (do not reintroduce superseded values): tunneling enha
 
 | Path | Purpose |
 |------|---------|
-| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, VPS Compose / Swarm infrastructure, release docs |
+| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, Swarm infrastructure, release docs |
 | [`formalization/`](formalization/) | Equation IR + Lean 4 consistency checks (not a nature proof) |
 | [`docs/`](docs/) | Repository docs, Unified Theory Paper, formalization status, README screenshots |
 | [`archive/status-reports/`](archive/status-reports/) | Historical status reports (provenance) |
@@ -234,7 +231,7 @@ Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LE
 
 ## Development
 
-Branch from **`dev`** by default (0.3.9 cutover train). Use **`main`** only for 0.3.8 Compose share hotfixes. See [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
+Branch from **`dev`** by default. Use **`main`** only for live **0.3.9-beta** Swarm ship / hotfix. See [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 ```bash
 # Backend
@@ -262,11 +259,11 @@ CI includes release-blocking science gates and (where configured) `lake build` o
 
 | Item | State |
 |------|-------|
-| Live public share | **0.3.8-beta** Compose + Caddy |
-| `main` markers | `0.3.8-beta` |
-| `dev` markers | `0.3.9-beta` (cutover train; not auto-deployed) |
-| Public Swarm | Gated; **not live** until announced 0.3.9 window completes |
+| Live public share | **0.3.9-beta** Swarm (Traefik SPA + API) |
+| Current app version markers | **`0.3.9-beta`** (`main` and `dev`) |
+| `main` | Live Swarm release line; ship via Ansible / SSH — not auto from bare push |
+| `dev` | Integration tip; **never** auto-deployed by `deploy.yml` |
 
 ---
 
-**Last updated:** 2026-10-30 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)
+**Last updated:** 2026-11-05 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)
