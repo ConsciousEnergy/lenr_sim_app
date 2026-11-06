@@ -301,14 +301,16 @@ export default function ReferencesSection() {
                 Electron, Neutron, and Proton coupling is all you need.
                 <em> Conscious Energies</em> (v0.3.6-beta, revised 2026-07-22).
               </Typography>
-              <MuiLink 
-                href="https://github.com/ConsciousEnergy/lenr_sim_app/blob/main/docs/A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum%2C%20Nuclear%2C%20and%20Condensed%20Matter%20Phenomena%20(1).md" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <MuiLink
+                href="mailto:diadon@conscious.energy"
                 sx={{ fontSize: '0.875rem' }}
               >
-                Full Paper on GitHub
+                Email feedback / source access
               </MuiLink>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                Private repository during invited beta — curated paper is in-app; GPL at{' '}
+                <MuiLink href="/LICENSE">/LICENSE</MuiLink>.
+              </Typography>
             </ListItem>
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
