@@ -17,7 +17,6 @@ import {
 import Grid from '@mui/material/Grid';
 import { APP_VERSION } from '../config/version';
 import {
-  GitHub as GitHubIcon,
   Email as EmailIcon,
   Language as WebsiteIcon,
   Science as ScienceIcon,
@@ -34,7 +33,7 @@ const teamMembers = [
     bio: 'Our team is dedicated to advancing Low Energy Nuclear Reaction research through computational simulation and theoretical modeling.',
     expertise: ['Physics Simulation', 'Quantum Mechanics', 'Condensed Matter'],
     links: {
-      github: 'https://github.com/ConsciousEnergy/lenr_sim_app',
+      email: 'mailto:diadon@conscious.energy',
       website: 'https://conscious.energy'
     }
   }
@@ -44,7 +43,7 @@ const teamMembers = [
 const contributors = [
   { name: 'Diadon Acs with Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
   { name: 'Physics Contributors', contributions: 'Theoretical Framework', avatar: 'PC' },
-  { name: 'Open Source Community', contributions: 'Bug Reports & Features', avatar: 'OS' }
+  { name: 'Research Community', contributions: 'Bug Reports & Features', avatar: 'RC' }
 ];
 
 // Project info
@@ -52,7 +51,7 @@ const projectInfo = {
   name: 'LENR Simulation Platform',
   version: APP_VERSION,
   license: 'GPL-3.0',
-  repository: 'https://github.com/ConsciousEnergy/lenr_sim_app',
+  feedback: 'mailto:diadon@conscious.energy',
   website: 'https://conscious.energy'
 };
 
@@ -144,15 +143,13 @@ const TeamPage = () => {
                 </Stack>
                 
                 <Stack direction="row" spacing={1}>
-                  {member.links.github && (
-                    <Button 
-                      size="small" 
-                      startIcon={<GitHubIcon />}
-                      href={member.links.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {member.links.email && (
+                    <Button
+                      size="small"
+                      startIcon={<EmailIcon />}
+                      href={member.links.email}
                     >
-                      GitHub
+                      Email
                     </Button>
                   )}
                   {member.links.website && (
@@ -236,13 +233,11 @@ const TeamPage = () => {
             <Stack spacing={2}>
               <Button
                 variant="outlined"
-                startIcon={<GitHubIcon />}
-                href={projectInfo.repository}
-                target="_blank"
-                rel="noopener noreferrer"
+                startIcon={<EmailIcon />}
+                href={projectInfo.feedback}
                 fullWidth
               >
-                View on GitHub
+                Email feedback / source access
               </Button>
               
               <Button
@@ -263,7 +258,8 @@ const TeamPage = () => {
         
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Want to contribute? Check out our GitHub repository or get in touch!
+            Want to contribute? The repository is private during invited beta —
+            email for source access or feedback. Public GPL-3.0 release is planned.
           </Typography>
           <Button
             variant="contained"

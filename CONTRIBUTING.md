@@ -48,13 +48,13 @@ See `LENR_SIM_APP_v2/docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md` and
 
 ## Development workflow
 
-The repository has two long-lived branches: `main` (v0.3.7-beta release /
-Compose share) and `dev` (v0.3.8-beta integration). Releases are `v*` tags.
-See [`.github/BRANCHING.md`](.github/BRANCHING.md) for the full model, naming
-rules, and the hotfix flow.
+The repository has two long-lived branches: `main` (v0.3.9-beta live Swarm
+release line) and `dev` (v0.3.9-beta integration tip; never auto-deployed).
+Releases are `v*` tags. See [`.github/BRANCHING.md`](.github/BRANCHING.md) for
+the full model, naming rules, and the hotfix flow.
 
 1. Create a short-lived branch from **`dev`** (default) or from `main` for
-   0.3.7 hotfixes only: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, or
+   0.3.9 hotfixes only: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, or
    `docs/<topic>`.
 2. Keep changes focused; do not mix unrelated refactors.
 3. Add or update tests for behaviour you change.
@@ -62,7 +62,7 @@ rules, and the hotfix flow.
    slice that applies (at minimum: relevant pytest, frontend lint/test/build,
    and `npm audit --audit-level=high` / `pip-audit` when touching deps).
 5. Update [`CHANGELOG.md`](CHANGELOG.md) for user-visible changes.
-6. Open a PR against **`dev`** (or `main` for 0.3.7 hotfixes) using
+6. Open a PR against **`dev`** (or `main` for 0.3.9 hotfixes) using
    [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
    PRs are squash-merged once CI is green and reviewed; the head branch is
    deleted automatically on merge.
@@ -95,23 +95,25 @@ Keep these four strings identical when bumping a release:
 
 Use GitHub Discussions/Issues for product questions.
 
-## Cutover & deployment (current truth)
+## Deployment (current truth)
 
-Dual KVM2 (Compose share + dedicated `lenr-ci`) does **not** authorize public
-Swarm/Traefik/Cloudflare cutover by itself — see
-[`FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md)
+**Live today:** Swarm Traefik serves `lenr-sim-beta.conscious.energy` (SPA + API)
+and `api.conscious.energy` at **0.3.9-beta**. Compose share is retired. Dedicated
+`lenr-ci` is never part of Swarm. See root [`AGENTS.md`](AGENTS.md),
+[`FULL_STACK_BUILD_UNLOCK.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/FULL_STACK_BUILD_UNLOCK.md),
 and the [v0.3.8 docs map](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 Open-PR cleanup order:
 [`PR_AND_BRANCH_HYGIENE.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/PR_AND_BRANCH_HYGIENE.md).
 Merges need an explicit operator ask (Slack alone is not authorization).
 
-| Stage | Confirm | Notes |
-|-------|---------|-------|
-| Live Compose share (now) | Operator `VPS_*` / SSH | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md) |
-| Staging Swarm | `CONFIRM_SWARM_0_3_8=I_STAGING_0_3_8` | [`docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
-| Public Swarm + Pages | `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9` | [`docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Stage | Status | Notes |
+|-------|--------|-------|
+| Live public Swarm | **Live** (cutover 2026-10-31) | [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md), [`SWARM_PUBLIC_CUTOVER.md`](LENR_SIM_APP_v2/docs/v0.3.9-beta/SWARM_PUBLIC_CUTOVER.md) |
+| Staging Swarm (KVM1) | Retired | KVM1 is now prod worker+obs — [`STAGING_SWARM_DRY_RUN.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/STAGING_SWARM_DRY_RUN.md) |
+| Compose share | Retired | Rollback images retained |
 
-Do not apply public Swarm without the 0.3.9 confirm. Checklist overview:
+Do **not** re-arm public Swarm apply without a new announced window + confirm.
+Checklist overview:
 [`LENR_SIM_APP_v2/docs/DEPLOYMENT_QUICK_REFERENCE.md`](LENR_SIM_APP_v2/docs/DEPLOYMENT_QUICK_REFERENCE.md).
 
 ## CI expectations

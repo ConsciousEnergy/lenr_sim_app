@@ -29,7 +29,6 @@ import { APP_VERSION } from '../config/version';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
-import GitHubIcon from '@mui/icons-material/GitHub';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SecurityIcon from '@mui/icons-material/Security';
 import ApiIcon from '@mui/icons-material/Api';
@@ -109,13 +108,10 @@ const DocumentationPage = () => {
           <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3 }}>
             <Button
               variant="outlined"
-              startIcon={<GitHubIcon />}
               component={MuiLink}
-              href="https://github.com/ConsciousEnergy/lenr_sim_app"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:diadon@conscious.energy"
             >
-              GitHub Repository
+              Email feedback / source access
             </Button>
             <Button
               variant="outlined"
@@ -322,11 +318,18 @@ const DocumentationPage = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mt: 3 }}>
               Installation
             </Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <AlertTitle><strong>Source access during invited beta</strong></AlertTitle>
+              The GitHub repository remains <strong>private</strong> during invited beta.
+              Request source access or clone credentials via{' '}
+              <MuiLink href="mailto:diadon@conscious.energy">diadon@conscious.energy</MuiLink>.
+              Public GPL-3.0 source release is planned; do not expect a public
+              <code> git clone </code> URL to work signed-out.
+            </Alert>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace' }}>
               <Typography variant="body2" component="pre" sx={{ m: 0 }}>
-{`# Clone the repository
-git clone https://github.com/ConsciousEnergy/lenr_sim_app.git
-cd lenr_sim_app
+{`# After source access is granted (private clone URL or archive):
+cd LENR_SIM_APP_v2
 
 # Install frontend dependencies
 cd frontend
@@ -642,13 +645,14 @@ LOG_LEVEL=info`}
               Contributing
             </Typography>
             <Typography variant="body2" paragraph>
-              We welcome contributions! Please follow these steps:
+              Contributions are welcome once source access is granted. During invited
+              beta the repository is private — email first, then use the normal branch/PR flow.
             </Typography>
             <List>
               <ListItem>
                 <ListItemText 
-                  primary="1. Fork the repository" 
-                  secondary="Create your own fork on GitHub" 
+                  primary="1. Request source access" 
+                  secondary="Email diadon@conscious.energy (repo is private during invited beta)" 
                 />
               </ListItem>
               <ListItem>
@@ -672,7 +676,7 @@ LOG_LEVEL=info`}
               <ListItem>
                 <ListItemText 
                   primary="5. Open a Pull Request" 
-                  secondary="Submit your PR for review" 
+                  secondary="Submit your PR for review after access is granted" 
                 />
               </ListItem>
             </List>
@@ -680,13 +684,10 @@ LOG_LEVEL=info`}
             <Box sx={{ mt: 3 }}>
               <Button
                 variant="contained"
-                startIcon={<GitHubIcon />}
                 component={MuiLink}
-                href="/documentation"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:diadon@conscious.energy"
               >
-                Contribution Guidelines
+                Email for source access
               </Button>
             </Box>
           </AccordionDetails>
@@ -758,8 +759,9 @@ LOG_LEVEL=info`}
 
             <Alert severity="info" sx={{ mt: 3 }}>
               <AlertTitle><strong>Need More Help?</strong></AlertTitle>
-              Check our <MuiLink href="https://github.com/ConsciousEnergy/lenr_sim_app/issues" target="_blank" rel="noopener noreferrer">
-              GitHub Issues</MuiLink> or create a new issue for support.
+              Email beta feedback to{' '}
+              <MuiLink href="mailto:diadon@conscious.energy">diadon@conscious.energy</MuiLink>.
+              Public GitHub Issues are unavailable while the repository is private.
             </Alert>
           </AccordionDetails>
         </Accordion>
