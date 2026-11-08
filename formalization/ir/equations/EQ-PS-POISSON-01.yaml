@@ -1,0 +1,19 @@
+id: EQ-PS-POISSON-01
+latex: "r_P = |lapPhi - rhoOverEps|; poissonSatisfied := (r_P = 0)"
+symbols:
+  lapPhi: "discrete Laplacian magnitude of potential (bookkeeping Nat)"
+  rhoOverEps: "charge density over permittivity (bookkeeping Nat)"
+  r_P: "Poisson residual"
+units: "dimensionless bookkeeping"
+tag: DEF
+paper_ref: "§3.1 Poisson; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.poissonResidual"
+  - "LenrFormal.PoissonSchrodinger.poissonSatisfied"
+  - "LenrFormal.PoissonSchrodinger.poisson_satisfied_of_equal"
+notes: "Discrete residual DEF only. Does not claim continuum FEM solution, VPS deployment, or EQ-OPEN closure."

@@ -15,6 +15,7 @@ import LenrFormal.ScaleQED
 import LenrFormal.Decision
 import LenrFormal.WhenHow
 import LenrFormal.Branching
+import LenrFormal.PoissonSchrodinger
 import LenrFormal.OpenObligations
 import LenrFormal.OpenQuestionBounds
 import LenrFormal.WorkingHypothesis

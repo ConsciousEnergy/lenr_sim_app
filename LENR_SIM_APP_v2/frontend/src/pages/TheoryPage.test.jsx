@@ -73,3 +73,46 @@ describe('TheoryPage historical timeline', () => {
     expect(gapLink.getAttribute('href')).toBe('/docs/issue-ledger');
   });
 });
+
+describe('TheoryPage Computational Methods claim-tier honesty', () => {
+  function openMethodsTab() {
+    fireEvent.click(screen.getByRole('tab', { name: /Computational Methods/i }));
+  }
+
+  test('methods alert locks Beta WKB, Approximate RP/KM, aspirational FEM', () => {
+    render(<TheoryPage />);
+    openMethodsTab();
+    const alert = screen.getByTestId('methods-vps-honesty');
+    expect(alert).toHaveTextContent(/Beta/i);
+    expect(alert).toHaveTextContent(/WKB/i);
+    expect(alert).toHaveTextContent(/Approximate/i);
+    expect(alert).toHaveTextContent(/Keller–Miksis|Keller-Miksis|Rayleigh/i);
+    expect(alert).toHaveTextContent(/aspirational \(NOT live\)/i);
+    expect(alert).toHaveTextContent(/ENG-ASPIRATIONAL-FEM-01/);
+    expect(screen.getByTestId('engine-maturity-legend')).toBeInTheDocument();
+  });
+
+  test('Poisson–Schrödinger card is labelled not-live aspirational', () => {
+    render(<TheoryPage />);
+    openMethodsTab();
+    expect(screen.getByTestId('methods-poisson-schrodinger-aspirational')).toHaveTextContent(
+      /aspirational research formulation/i,
+    );
+    const psAlert = screen.getByTestId('methods-ps-not-live');
+    expect(psAlert).toHaveTextContent(/not/i);
+    expect(psAlert).toHaveTextContent(/live public-beta solver/i);
+    expect(psAlert).toHaveTextContent(/EQ-OPEN/);
+    expect(screen.getByTestId('methods-poisson-aspirational-note')).toHaveTextContent(
+      /does not run a self-consistent/i,
+    );
+    expect(screen.queryByText(/we solve the coupled Poisson/i)).not.toBeInTheDocument();
+  });
+
+  test('marks bubble collapse as Approximate live numerics, not FEM', () => {
+    render(<TheoryPage />);
+    openMethodsTab();
+    expect(screen.getByTestId('methods-bubble-collapse-card')).toHaveTextContent(
+      /not a continuum FEM solve/i,
+    );
+  });
+});

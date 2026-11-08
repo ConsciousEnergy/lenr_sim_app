@@ -121,18 +121,20 @@ function RegisteredTheoryModules() {
 function TheoryDocumentationPanel() {
   return (
     <Box>
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity="info" sx={{ mb: 3 }} data-testid="theory-docs-honesty">
         <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
           Unified LENR Theoretical Framework
         </Typography>
         <Typography variant="body2">
           The sections below document the mechanisms the bubble-lattice simulation
           models directly: Rydberg Matter, Delocalized Interface Electrons,
-          double-layer QED effects, the Casimir effect, and quantum tunneling.
-          Several are phenomenological multipliers rather than literal ports of the
-          paper&apos;s equations, and the framework&apos;s Poisson-Schrodinger coupling is
-          documented but not yet solved self-consistently. The full set of runnable
-          theory modules is listed at the end.
+          double-layer QED effects, the Casimir effect, and quantum tunneling
+          (live beta: WKB/Gamow; approximate: RP/KM collapse). Several are
+          phenomenological multipliers rather than literal ports of the
+          paper&apos;s equations. Poisson–Schrödinger / FEM continuum coupling is an
+          <strong> aspirational research method</strong> — documented in the paper
+          roadmap, not solved self-consistently, and <em>not deployed</em> on the
+          public beta. The full set of runnable theory modules is listed at the end.
         </Typography>
       </Alert>
 
@@ -239,13 +241,14 @@ function TheoryDocumentationPanel() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <BubbleChartIcon sx={{ color: '#00bcd4' }} />
               <Typography variant="h6">4. Bubble Collapse (Rayleigh-Plesset)</Typography>
-              <Chip label="Compression" size="small" sx={{ bgcolor: '#00bcd4', color: 'white', ml: 'auto' }} />
+              <Chip label="Approximate · live" size="small" sx={{ bgcolor: '#00bcd4', color: 'white', ml: 'auto' }} />
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" paragraph>
-              The modified Rayleigh-Plesset equation describes bubble dynamics with an additional electric field term.
-              During collapse, extreme pressures and temperatures are achieved at the bubble minimum.
+              Live beta uses approximate Rayleigh–Plesset / Keller–Miksis ODEs (not continuum FEM).
+              The modified Rayleigh–Plesset equation describes bubble dynamics with an additional electric field term.
+              During collapse, extreme pressures and temperatures appear at the bubble minimum in the model.
             </Typography>
             <Paper sx={{ p: 2, bgcolor: 'grey.100', mb: 2 }}>
               <Typography variant="caption" color="text.secondary">Modified Rayleigh-Plesset:</Typography>
@@ -297,13 +300,15 @@ function TheoryDocumentationPanel() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ThermostatIcon sx={{ color: '#ff5722' }} />
               <Typography variant="h6">6. Quantum Tunneling Enhancement</Typography>
-              <Chip label="Gamow Factor" size="small" sx={{ bgcolor: '#ff5722', color: 'white', ml: 'auto' }} />
+              <Chip label="Beta · WKB/Gamow" size="small" sx={{ bgcolor: '#ff5722', color: 'white', ml: 'auto' }} />
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" paragraph>
-              Combined effects of electron screening, phonon coupling, and QED enhancement can increase tunneling
-              probability by factors of 10³ to 10⁵ compared to bare Coulomb barrier calculations.
+              Live beta tunneling uses established WKB/Gamow reference numerics. Combined effects of
+              electron screening, phonon coupling, and QED enhancement can increase tunneling
+              probability by factors of 10³ to 10⁵ compared to bare Coulomb barrier calculations
+              (claim-tiered model output, not laboratory proof).
             </Typography>
             <Paper sx={{ p: 2, bgcolor: 'grey.100', mb: 2 }}>
               <Typography variant="caption" color="text.secondary">WKB Tunneling Probability:</Typography>

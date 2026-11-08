@@ -22,9 +22,9 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | EQ-OPEN-YIELD-01 | Do **not** claim integrated yield discharge | Ledger | `EQ-OPEN-YIELD-01` | [latex/eq_open_yield_01.tex](./latex/eq_open_yield_01.tex) | Yield-band DEF in FORMAL_PROOF_STATUS — **OPEN** (no discharge) |
 | WH-ENP-01 | Exploratory bounds only | Ledger | `WH-ENP-01` | (see MEV/RAD/RATE stubs) | IR [`EQ-WH-ENP-01.yaml`](../../../formalization/ir/equations/EQ-WH-ENP-01.yaml); Lean WorkingHypothesis* — **does not close OPEN** |
 | ENG-BUBBLE-FUSION-01 | Approximate / schematic unless provenance=`physics_engine` | Ledger + BUG_TRIAGE | `ENG-BUBBLE-FUSION-01` | [latex/eng_bubble_fusion_01.tex](./latex/eng_bubble_fusion_01.tex) | IR [`EQ-BBL-LIM-01`](../../../formalization/ir/equations/EQ-BBL-LIM-01.yaml) / [`EQ-BBL-BOUND-01`](../../../formalization/ir/equations/EQ-BBL-BOUND-01.yaml) / [`EQ-BBL-UQ-01`](../../../formalization/ir/equations/EQ-BBL-UQ-01.yaml); Lean `CollapseBounds` — **DEF clamp/UQ bookkeeping only** (dynamics still approximate; does **not** close OPEN) |
-| ENG-RP-KM-01 | RP domain-limited; KM preferred at high Mach | Ledger + PHYS verification | `ENG-RP-KM-01` | [latex/eng_rp_km_01.tex](./latex/eng_rp_km_01.tex) | Partial / domain (PHYS verification); KM auto Mach≥0.3 on Unified + BF |
-| ENG-WKB-01 | Established WKB/Gamow reference; screening domain-limited | Ledger | `ENG-WKB-01` | (existing PHYS docs) | Lean `Gamow` monotonicity **PROVED**; screening still domain-limited |
-| ENG-ASPIRATIONAL-FEM-01 | Not on VPS | Theory Methods honesty | `ENG-ASPIRATIONAL-FEM-01` | — | No Lean / IR — aspirational only |
+| ENG-RP-KM-01 | **Approximate (live):** RP domain-limited; KM preferred at high Mach — do **not** treat as nuclear-rate proof | Ledger + PHYS verification | `ENG-RP-KM-01` | [latex/eng_rp_km_01.tex](./latex/eng_rp_km_01.tex) | Partial / domain (PHYS verification); KM auto Mach≥0.3 on Unified + BF |
+| ENG-WKB-01 | **Beta (live):** Established WKB/Gamow reference; screening domain-limited | Ledger | `ENG-WKB-01` | (existing PHYS docs) | Lean `Gamow` monotonicity **PROVED** (`EQ-GAMOW-01`); screening still domain-limited |
+| ENG-ASPIRATIONAL-FEM-01 | **Aspirational (NOT live):** COMSOL FEM / PS continuum — research roadmap only; never public-beta numerics | Theory Methods honesty + paper §3.1 | `ENG-ASPIRATIONAL-FEM-01` | — | IR `EQ-PS-POISSON/SCHROD/COUPLE/DOM/NONDEPLOY-01`; Lean `PoissonSchrodinger` residual/domain/honesty **PROVED** — **≠** continuum FEM, **≠** nature proof, **≠** EQ-OPEN closure |
 
 ## Honesty rule
 

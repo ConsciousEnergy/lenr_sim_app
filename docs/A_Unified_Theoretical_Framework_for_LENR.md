@@ -440,35 +440,53 @@ The resolution of the MeV energy gap through lattice-nuclear coupling remains th
 
 ## **3\. Computational Methods**
 
-> **Implementation note (public beta, v0.3.7-beta):** The live VPS runs the in-repo
-> `physics_engine` pipeline (WKB/Gamow tunneling, bubble dynamics with Rayleigh–Plesset
-> and Keller–Miksis auto-select when peak Mach \(\ge 0.3\), theory scoring via
-> `/api/physics/*` and `/api/unified/*`). Outputs carry provenance
-> (`physics_engine` vs schematic fallback). COMSOL FEM and self-consistent
-> Poisson–Schrödinger treatments in this section are research/aspirational methods —
-> they are **not** deployed on the public beta (`ENG-ASPIRATIONAL-FEM-01`).
+> **Implementation note (public beta, v0.3.7-beta):** Locked live claim tiers —
+> **Beta:** WKB/Gamow tunneling (`ENG-WKB-01`); **Approximate:** Rayleigh–Plesset /
+> Keller–Miksis bubble dynamics with KM auto-select when peak Mach \(\ge 0.3\)
+> (`ENG-RP-KM-01`). The live VPS runs the in-repo `physics_engine` pipeline via
+> `/api/physics/*` and `/api/unified/*`. Outputs carry provenance
+> (`physics_engine` vs schematic fallback). **Aspirational (NOT live):** COMSOL-class
+> FEM, self-consistent Poisson–Schrödinger, and coupled continuum solvers
+> (`ENG-ASPIRATIONAL-FEM-01`) are research methods only — never public-beta numerics.
+> Lean `PoissonSchrodinger` / IR `EQ-PS-*` encode residual, domain, and non-deployment
+> honesty only; they do **not** prove LENR or close any `EQ-OPEN-*`.
 
 
 ### **3.1 Poisson–Schrödinger Coupled Dynamics**
+
+**Honesty label:** Continuum FEM / self-consistent Poisson–Schrödinger below is an
+**aspirational modeling roadmap** (`ENG-ASPIRATIONAL-FEM-01`). It is **not** executed
+on the public beta, **not** a COMSOL production path in this release, and **not** a
+discharge of any `EQ-OPEN-*`. Formalization covers discrete residual algebra and
+non-deployment flags only (`EQ-PS-POISSON-01`, `EQ-PS-SCHROD-01`, `EQ-PS-COUPLE-01`,
+`EQ-PS-DOM-01`, `EQ-PS-NONDEPLOY-01`).
 
 1. **Poisson's Equation:**
 \[
 \nabla^{2}\phi = -\frac{\rho}{\epsilon_0},
 \]
 where \( \phi \) is the electric potential and \( \rho \) is the charge density.
+Domain: permittivity must be positive wherever the formula is claimed (`EQ-PS-DOM-01`).
 
 2. **Schrödinger's Equation:**
 \[
 -\frac{\hbar^{2}}{2m}\nabla^{2}\psi + V(\mathbf{r})\psi = E\psi,
 \]
 which governs the quantum state \( \psi \) under potential \( V(\mathbf{r}) \).
+Here \( E \) is the energy eigenvalue (`E_eigen`), not the electric field (`E_field`).
 
-3. **Simulation Details**
+3. **Self-consistent coupling (roadmap):** iterate Poisson \(\to\) update
+   \(V\leftarrow V_{\mathrm{ext}}-e\phi\) \(\to\) Schrödinger \(\to\) update \(\rho\) from
+   \(|\psi|^{2}\) until residual \(r=\max(r_{\mathrm{P}},r_{\mathrm{S}})\) vanishes in the
+   discrete bookkeeping sense (`EQ-PS-COUPLE-01`). Continuum existence / FEM convergence
+   are **not** theorems of this pilot.
 
-   * **Software:** COMSOL Multiphysics and custom Python scripts (NumPy, SciPy) for finite-element and finite-difference methods.  
+4. **Simulation Details (research targets, not VPS execution)**
+
+   * **Software target:** COMSOL Multiphysics and custom Python scripts (NumPy, SciPy) for finite-element and finite-difference methods — aspirational.  
    * **Grid Size:** \( \sim 0.1\,\text{nm} \).  
-   * **Time Steps:** \( \sim 1\,\text{fs} \).  
-   * **Results:** Electric fields in interfacial regions can exceed \( 10^{8}\,\text{V/m} \); wavefunction solutions can show elevated electron density near protons. Any link to neutron-formation pathways remains claim-tiered and speculative.
+   * **Time Steps:** \( \sim 1\,\text{fs} \) (time-dependent extensions).  
+   * **Illustrative expectations:** Electric fields in interfacial regions can exceed \( 10^{8}\,\text{V/m} \); wavefunction solutions can show elevated electron density near protons. Any link to neutron-formation pathways remains claim-tiered and speculative — **not** nuclear-rate proof.
 
 ---
 

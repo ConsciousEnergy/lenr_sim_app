@@ -38,4 +38,12 @@ describe('TheoryDocumentationPanel', () => {
     render(<TheoryDocumentationPanel />);
     expect(screen.getByText('Unified LENR Theoretical Framework')).toBeInTheDocument();
   });
+
+  test('marks Poisson–Schrödinger / FEM as aspirational, not live on beta', () => {
+    render(<TheoryDocumentationPanel />);
+    const honesty = screen.getByTestId('theory-docs-honesty');
+    expect(honesty).toHaveTextContent(/aspirational research method/i);
+    expect(honesty).toHaveTextContent(/not deployed/i);
+    expect(honesty).toHaveTextContent(/WKB\/Gamow/i);
+  });
 });

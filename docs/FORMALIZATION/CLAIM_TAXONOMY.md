@@ -54,7 +54,12 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-PHONON-N-01 | Naive \(N\sim\Delta E/\hbar\omega_{\mathrm{ph}}\sim 2\times 10^7\) for 1 MeV / 50 meV | §2.8.1 | — | kinematics | `THM` | arithmetic |
 | EQ-PHONON-NAIVE-01 | Independent multi-phonon pathway probability ~0 for \(g<\hbar\omega\) | §2.8.1 | — | analysis | `THM` | note / OPEN link |
 | EQ-HAG-01 | Relativistic phonon–nuclear matrix / lossy spin-boson | §2.8.1, §5A.1 | `hagelstein_phonon.py` | hagelstein2025 | `SPEC` | axiom stub |
-| EQ-PS-01 | Coupled Poisson–Schrödinger sketch | §3.1 | computational | DEF only | `DEF` | out of pilot |
+| EQ-PS-01 | Coupled Poisson–Schrödinger sketch (parent; aspirational) | §3.1 | Theory Methods / paper only | DEF only | `DEF` | `PoissonSchrodinger.lean` (scaffold parent) |
+| EQ-PS-POISSON-01 | Discrete Poisson residual \(r_P=\lvert\mathrm{lap}\,\phi-\rho/\varepsilon\rvert\) | §3.1 | paper / Methods honesty | bookkeeping | `DEF` | `PoissonSchrodinger.lean` |
+| EQ-PS-SCHROD-01 | Discrete Schrödinger residual \(r_S=\lvert H\psi-E\psi\rvert\) (`E_eigen`) | §3.1 | paper / Methods honesty | bookkeeping | `DEF` | `PoissonSchrodinger.lean` |
+| EQ-PS-COUPLE-01 | Coupling residual \(r=\max(r_P,r_S)\); positive \(r\Rightarrow\neg\) self-consistent | §3.1 | paper / Methods honesty | residual algebra | `THM` | `PoissonSchrodinger.lean` |
+| EQ-PS-DOM-01 | \(\varepsilon=0\Rightarrow\) Poisson formula not claimed | §3.1 | domain honesty | Assenbaum-style | `THM` | `PoissonSchrodinger.lean` |
+| EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` for FEM/PS continuum | §3 / ENG-ASPIRATIONAL-FEM-01 | Theory Methods | honesty | `THM` | `PoissonSchrodinger.lean` |
 | EQ-RP-01 | Modified Rayleigh–Plesset (+ electrostatic pressure) | §3.2 | `bubble_lattice_interaction.py` | paper 3.2 | `DEF` | out of pilot |
 | EQ-KGRP-01 | KG–RP harmonic locking / detuning | §6 hyp. | `cavitation_kgrp.py` | mulnix2026 | `SPEC` | out of pilot |
 | EQ-RATE-2B-01 | Two-body \(R_V=\tfrac12 n^2\langle\sigma v\rangle P\) | §5.1.1 | `cross_sections.py`, rate engine | baseline / model | `DEF` | `Gamow.lean` |
