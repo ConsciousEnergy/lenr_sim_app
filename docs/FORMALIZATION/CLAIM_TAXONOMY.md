@@ -94,7 +94,9 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-PRED-02 | Per-mechanism physics bounds \(b_i\) before claim-tier clamp | software | `bubble_mechanism_composition.py` | model assumption | `AX` | `Composition.lean` |
 | EQ-BBL-LIM-01 | Collapse reporting: \(\text{value}=\min(\text{value\_raw},\text{calculated\_bound})\) | §3.2 | `collapse_calculated_bounds.py` | Moss / Flannigan bounds | `DEF` | `CollapseBounds.lean` |
 | EQ-BBL-BOUND-01 | Literature collapse ceilings \(T\in\{1.5\times10^4,2\times10^6\}\,\mathrm{K}\), \(P\le10^{10}\,\mathrm{Pa}\), \(\mathrm{Ma}_{\mathrm{th}}=0.3\) | §3.2 / ENG-BUBBLE-FUSION-01 | `collapse_calculated_bounds.py` | Moss / Flannigan / Brenner | `DEF` | `CollapseBounds.lean` |
-| EQ-BBL-UQ-01 | Collapse UQ percentiles \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerance percents | software | `collapse_uq.py` | model assumption | `DEF` | `CollapseBounds.lean` |
+| EQ-BBL-UQ-01 | Collapse UQ percentiles \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerances + Sobol dim count | software | `collapse_uq.py` | model assumption | `DEF` | `CollapseBounds.lean` |
+| EQ-BBL-RP-DOM-01 | RP domain \(\mathrm{Ma}<0.3\); KM preferred otherwise; RP claim needs RP mode ∧ domain | §3.2 / ENG-RP-KM-01 | `collapse_calculated_bounds.py`, `bubble_solver.py` | Brenner SBSL | `THM` | `CollapseBounds.lean` |
+| EQ-BBL-CR-CAP-01 | Hard-core compression cap \(C_{\max}=1000\); reported \(C=\min(C_{\mathrm{raw}},C_{\max})\) | §3.2 / ENG-BUBBLE-FUSION-01 | `bubble_lattice_interaction.py` | model assumption | `DEF` | `CollapseBounds.lean` |
 | EQ-RATE-REPLACE-01 | `two_body` / `trapped_state` / `three_body` are alternatives, not factors | RR-006 | rate engine | governance | `THM` | `RateBudget.lean` |
 | EQ-TSC-GEOM-01 | FCC \(d_{DD}=a/(2\sqrt{2})\) identity (~137 pm for Pd) | §5A.3 | `takahashi_tsc.py` | takahashi2016 | `THM` | `NBody.lean` |
 | EQ-TSC-GEOM-02 | FCC \(d_{DD}\) is not the 25 pm trap radius | §5A.3 | TSC + trapped_state | two hypotheses | `THM` | `NBody.lean` |

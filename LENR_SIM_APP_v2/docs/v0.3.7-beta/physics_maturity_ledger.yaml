@@ -105,7 +105,7 @@ engines:
   proof_status:
     analytical: approximate
     numerical: schematic_or_simplified
-    lean: clamp_uq_defs
+    lean: clamp_uq_cr_cap_defs
   artifacts:
   - md
   - json
@@ -113,7 +113,7 @@ engines:
   - lean
   beta_label: approximate
   priority: P1
-  rd_next: Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ-01 are DEF only
+  rd_next: Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ/CR-CAP-01 are DEF only
 - id: ENG-RP-KM-01
   module_path: backend/app/physics_engine/bubble_solver.py
   ui_surface: unified_theory
@@ -121,7 +121,7 @@ engines:
   proof_status:
     analytical: domain_limited
     numerical: ode_implemented
-    lean: partial
+    lean: rp_km_domain_lemmas
   artifacts:
   - md
   - json
@@ -129,7 +129,7 @@ engines:
   - tex
   beta_label: approximate
   priority: P1
-  rd_next: Monitor domain limits; keep EQ-OPEN-* open
+  rd_next: Monitor domain limits; keep EQ-OPEN-* open; EQ-BBL-RP-DOM-01 is domain-only
 - id: ENG-WKB-01
   module_path: backend/app/physics/wkb_tunneling.py
   ui_surface: quantum_tunneling

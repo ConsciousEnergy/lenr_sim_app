@@ -1,0 +1,20 @@
+id: EQ-BBL-CR-CAP-01
+latex: "R_{\\mathrm{min}}\\ge R_0/C_{\\max};\\; C_{\\mathrm{reported}}=\\min(C_{\\mathrm{raw}},C_{\\max});\\; C_{\\max}=1000"
+symbols:
+  max_compression_ratio: "Van der Waals hard-core compression-ratio floor"
+  reported_compression_ratio: "min(raw, max_compression_ratio) reporting clamp"
+units: "dimensionless"
+tag: DEF
+paper_ref: "PHYSICS_EQUATION_VERIFICATION.md §9A.5; ENG-BUBBLE-FUSION-01"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_lattice_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_calculated_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_uq.py
+citation_keys:
+  - model_assumption_hard_core_floor
+lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.maxCompressionRatio"
+  - "LenrFormal.CollapseBounds.reportedCompressionRatio"
+  - "LenrFormal.CollapseBounds.reported_compression_le_cap"
+notes: "Hard-core CR cap mirrored as Nat bookkeeping. Clamp identity only — does not prove EOS fidelity or discharge EQ-OPEN-*."

@@ -37,7 +37,7 @@ lake build
 | `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
 | `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
-| `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01 | Pointwise clamp; literature ceilings; UQ percentile/tolerance defs |
+| `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01, EQ-BBL-RP-DOM-01, EQ-BBL-CR-CAP-01 | Pointwise clamp; literature ceilings; UQ defs; RP/KM domain; CR hard-core cap |
 | `PoissonSchrodinger` | EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-NONDEPLOY-01 | Discrete PS residual / domain / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
