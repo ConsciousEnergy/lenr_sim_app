@@ -54,6 +54,12 @@ def calculate_electron_screening(config: "SimulationConfig") -> EnhancementResul
             "U_screen_eV": U_screen_ev,
             "screening_model": SCREENING_MODEL_ID,
             "log10_enhancement_raw": result.get("log10_enhancement_raw"),
+            # EQ-ASSEN-DOM-01 / Lean Assenbaum: formula not claimed when U_e ≥ E.
+            "assenbaum_applicable": result.get("assenbaum_applicable"),
+            "formula_claimed": result.get("formula_claimed"),
+            "domain_equation_id": result.get("domain_equation_id"),
+            "exceeds_adiabatic_limit": result.get("exceeds_adiabatic_limit"),
+            "thermal_energy_ev": result.get("thermal_energy_ev"),
         },
         category="primary",
     )

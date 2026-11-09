@@ -1,5 +1,8 @@
 /**
  * Renders electron-screening provenance from mechanism_provenance.screening.
+ *
+ * Distinguishes Assenbaum domain (EQ-ASSEN-DOM-01: Uₑ < E) from the RR-007
+ * adiabatic metal/gas-target floor — those must not be conflated in UI copy.
  */
 import React from 'react';
 import {
@@ -32,17 +35,25 @@ export default function ScreeningProvenancePanel({ screening, title = 'Electron 
     sommerfeld_parameter: eta,
     log10_enhancement_raw: log10Raw,
     is_saturated: isSaturated,
+    assenbaum_applicable: assenbaumApplicable,
+    formula_claimed: formulaClaimed,
+    domain_equation_id: domainEquationId,
     exceeds_adiabatic_limit: exceedsAdiabatic,
     model,
     citations,
   } = screening;
 
+  const isFormulaClaimed = formulaClaimed ?? assenbaumApplicable;
+  const outsideAssenbaumDomain = isFormulaClaimed === false;
+
   return (
     <Paper variant="outlined" sx={{ p: 2 }} data-testid="screening-provenance-panel">
       <Typography variant="h6" gutterBottom>{title}</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Canonical Assenbaum–Rolfs kernel with cited material potential. The claim-tier
-        display ceiling (10⁵) may hide the true magnitude — read log₁₀(raw) below.
+        Canonical Assenbaum–Rolfs kernel with cited material potential (RR-007).
+        The claim-tier display ceiling (10⁵) may hide the true magnitude — read
+        log₁₀(raw) below. Assenbaum formula claim requires Uₑ &lt; E
+        ({domainEquationId || 'EQ-ASSEN-DOM-01'}).
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Stack spacing={1}>
@@ -58,6 +69,22 @@ export default function ScreeningProvenancePanel({ screening, title = 'Electron 
             />
           )}
           {model && <Chip size="small" label={model} />}
+          {outsideAssenbaumDomain ? (
+            <Chip
+              size="small"
+              color="warning"
+              label="Assenbaum domain: not claimed"
+              data-testid="assenbaum-domain-chip"
+            />
+          ) : isFormulaClaimed === true ? (
+            <Chip
+              size="small"
+              color="success"
+              variant="outlined"
+              label="Assenbaum domain: applicable"
+              data-testid="assenbaum-domain-chip"
+            />
+          ) : null}
         </Box>
         <Typography variant="body2">
           Thermal energy E: <strong>{formatNumber(thermalEv, 3)} eV</strong>
@@ -71,10 +98,18 @@ export default function ScreeningProvenancePanel({ screening, title = 'Electron 
             <Chip label="SATURATED AT CEILING" size="small" color="warning" sx={{ ml: 1 }} />
           )}
         </Typography>
+        {outsideAssenbaumDomain && (
+          <Alert severity="warning" sx={{ py: 0 }} data-testid="assenbaum-domain-alert">
+            Assenbaum domain ({domainEquationId || 'EQ-ASSEN-DOM-01'}): formula not claimed
+            when U<sub>e</sub> ≥ E. Reported factor is capped sensitivity bookkeeping,
+            not a physical Assenbaum enhancement.
+          </Alert>
+        )}
         {exceedsAdiabatic && (
-          <Alert severity="warning" sx={{ py: 0 }}>
-            Salpeter validity broken (U<sub>e</sub> ≫ E): enhancement is a reporting-limit
-            extrapolation, not a measured cross-section.
+          <Alert severity="info" sx={{ py: 0 }} data-testid="adiabatic-limit-alert">
+            Metal-host U<sub>e</sub> exceeds the ~25 eV adiabatic gas-target floor
+            (RR-007 anomalous screening). This is separate from Assenbaum domain
+            validity (U<sub>e</sub> &lt; E).
           </Alert>
         )}
         {Array.isArray(citations) && citations.length > 0 && (

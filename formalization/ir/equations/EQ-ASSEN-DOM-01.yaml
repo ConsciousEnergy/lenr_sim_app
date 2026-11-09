@@ -8,10 +8,17 @@ tag: THM
 paper_ref: "§5A.3"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/screening_kernel.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/screening.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/screening_data.py
 citation_keys:
   - Assenbaum1987
 lean_target: LenrFormal.Assenbaum
 lean_decls:
   - "LenrFormal.Assenbaum.applicable"
   - "LenrFormal.Assenbaum.not_applicable_implies_not_claimed"
-notes: "Strict < as machine-checkable stand-in for ≪; outside domain ⇒ formula not claimed."
+  - "LenrFormal.Assenbaum.formulaClaimed"
+  - "LenrFormal.Assenbaum.thermal_not_applicable"
+notes: >
+  Strict < as machine-checkable stand-in for ≪; outside domain ⇒ formula not claimed.
+  Python emits assenbaum_applicable / formula_claimed (same predicate). Distinct from
+  RR-007 adiabatic gas-target floor (ADIABATIC_LIMIT_EV). Does not close EQ-OPEN-*.
