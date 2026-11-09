@@ -25,8 +25,8 @@ export default function ReferencesSection() {
               </Typography>
               <Typography variant="body2" paragraph>
                 Attention Is All You Need. <em>Advances in Neural Information Processing Systems</em> 30.
-                Methodological metaphor only—not a LENR physics source. The paper subtitle echoes this
-                framing of coupled multi-agent representations.
+                Methodological metaphor only—not a LENR physics source. The subtitle &quot;Coupling is all you need&quot;
+                deliberately echoes this framing of coupled multi-agent representations.
               </Typography>
               <MuiLink
                 href="https://arxiv.org/abs/1706.03762"
@@ -298,7 +298,7 @@ export default function ReferencesSection() {
               </Typography>
               <Typography variant="body2" paragraph>
                 A Unified Theoretical Framework for Low-Energy Nuclear Reactions:
-                Electron, Neutron, and Proton coupling is all you need.
+                Coupling is all you need.
                 <em> Conscious Energies</em> (v0.3.6-beta, revised 2026-07-22).
               </Typography>
               <MuiLink

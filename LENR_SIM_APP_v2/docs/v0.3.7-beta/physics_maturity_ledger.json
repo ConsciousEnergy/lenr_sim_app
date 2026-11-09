@@ -195,7 +195,7 @@
       "proof_status": {
         "analytical": "not_on_vps",
         "numerical": "not_on_vps",
-        "lean": "ps_residual_domain_nondeploy"
+        "lean": "ps_continuum_def_residual_domain_tol_nondeploy"
       },
       "artifacts": ["md", "json", "lean"],
       "beta_label": "aspirational",

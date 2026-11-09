@@ -56,6 +56,7 @@
 | EQ-PS-COUPLE-01 | Coupling residual \(\max(r_P,r_S)=0\) iff both residuals vanish; positive residual ⇒ not self-consistent | `PoissonSchrodinger` | **PROVED** (residual algebra only; aspirational; does **not** deploy FEM) |
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |
+| EQ-PS-TOL-01 | Exact self-consistency ⇒ within any \(\tau\); \(r>0\) never silently equals exact | `PoissonSchrodinger` | **PROVED** (tolerance axiom bookkeeping; does **not** deploy FEM) |
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -66,8 +67,11 @@
 | EQ-BBL-UQ-01 | `CollapseBounds` | UQ percentile keys \(\{5,25,50,75,95\}\), CR/\(\gamma\) tolerance percents, Sobol dim count |
 | EQ-BBL-RP-DOM-01 | `CollapseBounds` | RP domain / KM-preferred / `rpFormulaClaimed` Assenbaum-style lemmas (ENG-RP-KM-01; **not** dynamics proof) |
 | EQ-BBL-CR-CAP-01 | `CollapseBounds` | Hard-core \(C_{\max}=1000\) reporting clamp |
+| EQ-PS-01 | `PoissonSchrodinger` | Parent continuum PS / FEM coupling sketch DEF (`ENG-ASPIRATIONAL-FEM-01`; paper-only) |
+
 | EQ-PS-POISSON-01 | `PoissonSchrodinger` | Discrete Poisson residual bookkeeping (`ENG-ASPIRATIONAL-FEM-01`) |
 | EQ-PS-SCHROD-01 | `PoissonSchrodinger` | Discrete Schrödinger residual bookkeeping (`E_eigen`) |
+| EQ-PS-TOL-01 | `PoissonSchrodinger` | Explicit residual tolerance axiom \(r\le\tau\) (never silent \(r=0\)) |
 | EQ-PRED-02 | `Composition` | Per-mechanism bound table (model input) |
 | EQ-3B-SEQ-01 | `NBody` | Sequential two-stage chain, not Faddeev |
 | EQ-NBODY-FGR-01 | `NBody` | Unnormalized FGR bookkeeping ratio |
