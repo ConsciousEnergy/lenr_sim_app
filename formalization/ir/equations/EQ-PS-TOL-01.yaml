@@ -1,0 +1,23 @@
+id: EQ-PS-TOL-01
+latex: "approximatelySelfConsistent := (max(r_P, r_S) \\le \\tau);\\quad \\tau\\text{ is an explicit tolerance axiom (never silent promotion to }r=0\\text{)}"
+symbols:
+  r_P: "Poisson residual"
+  r_S: "Schrödinger residual"
+  tau: "explicit residual tolerance (model axiom; Nat bookkeeping)"
+units: "dimensionless bookkeeping"
+tag: DEF
+paper_ref: "§3.1 coupling loop tolerance axiom; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.withinTolerance"
+  - "LenrFormal.PoissonSchrodinger.approximatelySelfConsistent"
+  - "LenrFormal.PoissonSchrodinger.exact_implies_within_any_tolerance"
+  - "LenrFormal.PoissonSchrodinger.approx_does_not_imply_exact"
+notes: >
+  Tolerance is an explicit axiom for declaring approximate self-consistency.
+  Never silently promote r≤τ to exact residual zero. Does not prove continuum
+  convergence, deploy FEM, flip lenr_proved, or close EQ-OPEN-*.

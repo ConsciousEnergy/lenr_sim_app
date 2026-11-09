@@ -1,8 +1,9 @@
 /-!
 PoissonSchrodinger — ENG-ASPIRATIONAL-FEM-01 scaffold
 
-Discrete residual / domain / non-deployment honesty lemmas for the
-aspirational Poisson–Schrödinger coupling sketch (paper §3.1).
+Parent continuum DEF (`EQ-PS-01`), discrete residual / domain / tolerance /
+non-deployment honesty lemmas for the aspirational Poisson–Schrödinger
+coupling sketch (paper §3.1).
 
 **Claim tier:** mathematical bookkeeping + public-beta honesty only.
 These definitions do **not** prove continuum FEM well-posedness, do **not**
@@ -11,6 +12,20 @@ any `EQ-OPEN-*`.
 -/
 
 namespace LenrFormal.PoissonSchrodinger
+
+/-- EQ-PS-01: parent continuum Poisson–Schrödinger / FEM coupling sketch
+    is declared as aspirational paper math only (not a deployed solver). -/
+def parentId : String := "EQ-PS-01"
+
+def continuumSketchDeclared : Bool := true
+
+def continuumSketchAspirational : Bool := true
+
+theorem continuum_sketch_is_aspirational :
+    continuumSketchDeclared = true ∧ continuumSketchAspirational = true := by
+  simp [continuumSketchDeclared, continuumSketchAspirational]
+
+theorem parent_id_value : parentId = "EQ-PS-01" := rfl
 
 /-- Absolute difference on Nat (discrete residual magnitude). -/
 def absDiff (a b : Nat) : Nat :=
@@ -102,6 +117,31 @@ theorem both_zero_self_consistent :
   unfold selfConsistent couplingResidual
   rfl
 
+/-- EQ-PS-TOL-01: tolerance axiom — approximate self-consistency is `r ≤ τ`
+    under an **explicit** tolerance, never a silent promotion to `r = 0`. -/
+def withinTolerance (r tau : Nat) : Prop := r ≤ tau
+
+def approximatelySelfConsistent (rP rS tau : Nat) : Prop :=
+  withinTolerance (couplingResidual rP rS) tau
+
+theorem exact_implies_within_any_tolerance
+    {rP rS tau : Nat}
+    (h : selfConsistent rP rS) :
+    approximatelySelfConsistent rP rS tau := by
+  unfold approximatelySelfConsistent withinTolerance selfConsistent at *
+  have hz : couplingResidual rP rS = 0 := h
+  have hle : (0 : Nat) ≤ tau := Nat.zero_le tau
+  simpa [hz] using hle
+
+theorem approx_does_not_imply_exact
+    {rP rS tau : Nat}
+    (hpos : 0 < couplingResidual rP rS)
+    (_hle : approximatelySelfConsistent rP rS tau) :
+    ¬ selfConsistent rP rS := by
+  intro hSC
+  unfold selfConsistent at hSC
+  exact (Nat.ne_of_gt hpos) hSC
+
 /-- EQ-PS-DOM-01: permittivity must be positive wherever Poisson is claimed. -/
 def permittivityPositive (eps : Nat) : Prop := 0 < eps
 
@@ -137,5 +177,10 @@ theorem lenr_proved_false : lenrProved = false := rfl
 theorem public_beta_false_implies_not_true :
     ¬ (publicBetaDeployed = true) := by
   simp [publicBetaDeployed]
+
+/-- Tolerance axiom (EQ-PS-TOL-01) never authorizes public-beta FEM deployment. -/
+theorem tolerance_axiom_does_not_deploy_fem :
+    publicBetaDeployed = false :=
+  not_public_beta_deployed
 
 end LenrFormal.PoissonSchrodinger
