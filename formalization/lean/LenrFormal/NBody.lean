@@ -3,10 +3,11 @@ import LenrFormal.Constants
 /-!
 NBody — EQ-TSC-GEOM-01/02, EQ-TSC-Q-01, EQ-COLL-LIN-01, EQ-3B-MASS-DOM-01,
 EQ-TSC-CH-01, EQ-TSC-STOP-01, EQ-TRAP-DEF-01, EQ-3B-SEQ-01,
-and EQ-NBODY-FGR-01.
+and EQ-NBODY-FGR-01 (volumetric FGR + linear-collective lemmas).
 
 FCC tetrahedral d_DD = a/(2√2) is angstrom-scale (~137 pm), not the 25 pm
 trap radius. Q(4D→2α) = 2 × 23.8 MeV. Collective clamp is min(N, 10^6).
+FGR bookkeeping does **not** discharge EQ-OPEN-RATE-01.
 -/
 
 namespace LenrFormal.NBody
@@ -50,6 +51,43 @@ def fgrRateBookkeeping
     numerator := nSites * p4Corr * gammaTun * vNucSq
     denominator := hbarScaled
   }
+
+/-- EQ-NBODY-FGR-01: engine volumetric form
+    \(R = n_{\mathrm{sites}} P_{\mathrm{occ}} \Gamma_{\mathrm{tun}} f_{\mathrm{nuc}} C_{\mathrm{lin}} / \tau\)
+    (`many_body.fgr_model.compute_fgr_volumetric_rate`).
+    |V_nuc|² is absorbed into \(f_{\mathrm{nuc}}\); collective is the linear clamp. -/
+def fgrVolumetricBookkeeping
+    (nSites pOcc gammaTun fNuc tauScaled nCoherent : Nat) :
+    BookkeepingRatio :=
+  {
+    numerator := nSites * pOcc * gammaTun * fNuc * collective nCoherent
+    denominator := tauScaled
+  }
+
+/-- Zero occupation zeroes the correlated-condensate FGR numerator. -/
+theorem fgr_zero_occupation
+    (nSites gammaTun vNucSq hbarScaled : Nat) :
+    (fgrRateBookkeeping nSites 0 gammaTun vNucSq hbarScaled).numerator = 0 := by
+  simp [fgrRateBookkeeping]
+
+/-- Zero occupation zeroes the volumetric FGR numerator. -/
+theorem fgr_volumetric_zero_occupation
+    (nSites gammaTun fNuc tauScaled nCoherent : Nat) :
+    (fgrVolumetricBookkeeping nSites 0 gammaTun fNuc tauScaled nCoherent).numerator = 0 := by
+  simp [fgrVolumetricBookkeeping]
+
+/-- Volumetric FGR uses the linear collective clamp (EQ-COLL-LIN-01), not Dicke \(N^2\). -/
+theorem fgr_volumetric_uses_linear_collective
+    (nSites pOcc gammaTun fNuc tauScaled nCoherent : Nat) :
+    (fgrVolumetricBookkeeping nSites pOcc gammaTun fNuc tauScaled nCoherent).numerator =
+      nSites * pOcc * gammaTun * fNuc * collective nCoherent := rfl
+
+/-- Volumetric FGR numerator is bounded by the linear collective cap. -/
+theorem fgr_volumetric_collective_le_cap
+    (nSites pOcc gammaTun fNuc tauScaled nCoherent : Nat) :
+    (fgrVolumetricBookkeeping nSites pOcc gammaTun fNuc tauScaled nCoherent).numerator ≤
+      nSites * pOcc * gammaTun * fNuc * 1000000 :=
+  Nat.mul_le_mul_left _ (collective_le_cap nCoherent)
 
 /-- EQ-TRAP-DEF-01 bookkeeping only; `fNuc` is intentionally unconstrained. -/
 def trappedRateBookkeeping
