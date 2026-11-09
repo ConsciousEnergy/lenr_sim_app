@@ -1,6 +1,6 @@
 # **A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)**
 
-**Subtitle:** Electron, Neutron, and Proton coupling is all you need
+**Subtitle:** Coupling is all you need
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
@@ -1116,7 +1116,7 @@ Citations below support the mathematical modeling in this paper. Preference is g
 ### Subtitle homage
 
 **[vaswani2017]** Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems* 30.  
-*Methodological metaphor only—not a LENR physics source.* The subtitle "Electron, Neutron, and Proton coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
+*Methodological metaphor only—not a LENR physics source.* The subtitle "Coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
 **Link:** [https://arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762) · [NeurIPS 2017](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html)
 
 ### Primary sources for mathematical modeling (replicable evidence & established mechanisms)
