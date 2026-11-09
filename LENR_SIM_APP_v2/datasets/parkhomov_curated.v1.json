@@ -1,12 +1,12 @@
 {
   "schema": "lenr-app-dataset-v1",
   "id": "parkhomov_curated.v1",
-  "disclaimer": "Curated subset for in-process validation. Full Parkhomov database is ~518995 entries / ~161 MB SQLite and is not shipped.",
+  "disclaimer": "Curated subset for in-process validation. Full Parkhomov database is ~518995 entries / ~161 MB SQLite and is not shipped. Rows with category detector_gas_speculative / feeds_production_rate=false are SPEC storytelling only (Parkhomov detector-gas ν/ν̄ hypotheses); they never feed production rate magnitudes and do not discharge EQ-OPEN-EC-01.",
   "source": "Parkhomov, A. G. (2018) Nuclear Reactions in LENR: Review of Experimental Results, via LENR Academy",
   "citation_key": "parkhomov2018",
   "table_version": "v0.3.6-beta-curated-subset",
   "atomic_number": {
-    "H": 1, "D": 1, "T": 1,
+    "H": 1, "D": 1, "T": 1, "e": 0, "n": 0,
     "He": 2, "Li": 3, "Be": 4, "B": 5, "C": 6, "N": 7, "O": 8,
     "F": 9, "Ne": 10, "Na": 11, "Mg": 12, "Al": 13, "Si": 14,
     "P": 15, "S": 16, "Cl": 17, "Ar": 18, "K": 19, "Ca": 20,
@@ -42,6 +42,8 @@
     {"reactants": [{"symbol": "Ba", "A": 138}, {"symbol": "D", "A": 2}, {"symbol": "D", "A": 2}, {"symbol": "D", "A": 2}], "products": [{"symbol": "Sm", "A": 150}], "energy_mev": 49.123, "category": "transmutation", "classification": "mixed", "neutrino": "none", "notes": "Iwamura Ba->Sm 6D transfer"},
     {"reactants": [{"symbol": "H", "A": 1}, {"symbol": "H", "A": 1}], "products": [{"symbol": "D", "A": 2}], "energy_mev": 1.442, "category": "fusion", "classification": "fermion-fermion", "neutrino": "nu", "notes": "pp-chain step; requires weak interaction"},
     {"reactants": [{"symbol": "H", "A": 1}, {"symbol": "D", "A": 2}], "products": [{"symbol": "He", "A": 3}], "energy_mev": 5.493, "category": "fusion", "classification": "fermion-boson", "neutrino": "none", "notes": ""},
-    {"reactants": [{"symbol": "He", "A": 3}, {"symbol": "He", "A": 3}], "products": [{"symbol": "He", "A": 4}, {"symbol": "H", "A": 1}, {"symbol": "H", "A": 1}], "energy_mev": 12.86, "category": "fusion", "classification": "boson-boson", "neutrino": "none", "notes": ""}
+    {"reactants": [{"symbol": "He", "A": 3}, {"symbol": "He", "A": 3}], "products": [{"symbol": "He", "A": 4}, {"symbol": "H", "A": 1}, {"symbol": "H", "A": 1}], "energy_mev": 12.86, "category": "fusion", "classification": "boson-boson", "neutrino": "none", "notes": ""},
+    {"reactants": [{"symbol": "He", "A": 3}, {"symbol": "He", "A": 3}, {"symbol": "e", "A": 0}], "products": [{"symbol": "D", "A": 2}, {"symbol": "He", "A": 4}], "energy_mev": 14.0, "category": "detector_gas_speculative", "classification": "mixed", "neutrino": "anti-nu", "feeds_production_rate": false, "claim_tier": "speculative_exploratory", "notes": "SPEC only — Parkhomov SNM-14/3He detector-gas hypothesis (2 3He + e + anti-nu -> d + alpha). NOT neutron proof; NOT EQ-OPEN-EC-01 discharge; excluded from production matching."},
+    {"reactants": [{"symbol": "B", "A": 10}, {"symbol": "B", "A": 10}, {"symbol": "e", "A": 0}], "products": [{"symbol": "D", "A": 2}, {"symbol": "O", "A": 16}], "energy_mev": 11.0, "category": "detector_gas_speculative", "classification": "mixed", "neutrino": "anti-nu", "feeds_production_rate": false, "claim_tier": "speculative_exploratory", "notes": "SPEC only — Parkhomov 10B-lined counter gas hypothesis (2 10B + e + anti-nu -> d + O). Bookkeeping row; never feeds rates; never closes Q4."}
   ]
 }

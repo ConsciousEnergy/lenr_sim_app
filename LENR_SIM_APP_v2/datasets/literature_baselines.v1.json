@@ -417,6 +417,42 @@
         "observable": "heat_helium_correlation",
         "note": "1 W is the Miles module definition scale, not a single-run calorimetry integral"
       }
+    },
+    {
+      "literature_id": "parkhomov-cd-wrapped-snm14-contested",
+      "citation_key": "parkhomov2018",
+      "claim_tag": "contested",
+      "reactant": "hydrogen",
+      "open_question_ids": ["EQ-OPEN-RAD-01", "EQ-OPEN-RATE-01"],
+      "created_at_offset_days": 2920,
+      "name": "Parkhomov Cd-wrapped SNM-14 detector talk (contested)",
+      "description": "Literature/talk anchor for Cd-foil SNM-14 corona-counter differentials near overdriven halogen-lamp / water reactors. Cd wrap drops background ~10× when reading slow neutrons; under Cd near the reactor, large rates / bursts / delayed onset / afterglow were claimed, with day-scale vanish. Soft-X present with hard-γ absent motivates BRANCHING_INCONSISTENT_WITH_NEUTRON_INTERPRETATION as a detector-interpretation falsifier — never neutron proof, never ν→EQ-OPEN-EC closure. Extra simulations do not raise claim_tier.",
+      "experiment_type": "lenr",
+      "status": "completed",
+      "is_baseline": true,
+      "source": "Parkhomov, Neutron detectors and LENR (talk / LENR Academy lineage); contested instrument interpretation",
+      "material": "nickel",
+      "temperature_k": 373.0,
+      "pressure_bar": 1.0,
+      "loading_ratio": 0.5,
+      "parameters": {
+        "detector": "SNM-14",
+        "cd_foil": true,
+        "disclaimer": "contested; Cd-wrap is calibration / interpretation, not proof of neutrons",
+        "soft_x_present": true,
+        "hard_gamma_absent": true,
+        "not_eq_open_discharge": true
+      },
+      "enhancement_factor": 1.0,
+      "energy_output_kev": 0.0,
+      "excess_heat_watts": 0.0,
+      "duration_seconds": 86400,
+      "results": {
+        "observable": "cd_ratio_and_multi_messenger",
+        "cd_background_drop_factor_approx": 10,
+        "controversial": true,
+        "note": "Contested detector-interpretation row only; do not treat as neutron proof or EC closure"
+      }
     }
   ]
 }
