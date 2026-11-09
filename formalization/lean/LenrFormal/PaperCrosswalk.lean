@@ -10,6 +10,7 @@ import LenrFormal.Miles
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
+import LenrFormal.Overlap
 import LenrFormal.ScaleQED
 import LenrFormal.PoissonSchrodinger
 import LenrFormal.WorkingHypothesis
@@ -53,6 +54,7 @@ def openObligationIds : List String :=
 /-- Section → primary Lean module name (documentation strings). -/
 def sectionModuleMap : List (String × String) :=
   [ ("§2.1 Rydberg", "LenrFormal.Rydberg")
+  , ("§2.2 Overlap / ensemble count", "LenrFormal.Overlap")
   , ("§2.4 Field / double-layer", "LenrFormal.Field")
   , ("§2.5 Casimir", "LenrFormal.Casimir")
   , ("§2.8 / Gamow tunneling", "LenrFormal.Gamow")
@@ -68,7 +70,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
-  , ("§5A n-body / TSC geometry", "LenrFormal.NBody")
+  , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")
   , ("§5A HE negative control", "LenrFormal.ScaleQED")
   , ("§5A WH-ENP-01", "LenrFormal.WorkingHypothesis")
   , ("§5A WH-ENP-01 v2 bounds", "LenrFormal.WorkingHypothesisBounds")

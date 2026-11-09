@@ -39,7 +39,7 @@ No new internal contradiction requiring a paper numeric correction was found bey
 ## Finding F-05 — Overlap ensemble counting (§2.2)
 
 **Claim:** \(P_{\mathrm{overlap}}\sim 10^{-16}\) (or \(10^{-10}\)–\(10^{-12}\) alternate \(r_0\)); macroscopic products are **upper-bound counting arguments**, not rates.  
-**Formalization:** Encode as `AX` + theorem that interpreting the product as \(R_{\mathrm{rate}}\) requires an unspecified matrix element (obligation).  
+**Formalization:** `LenrFormal.Overlap` (`EQ-OVERLAP-01` DEF skeleton + `EQ-OVERLAP-02` AX honesty: ensemble product ≠ nuclear rate). IR `EQ-OVERLAP-01.yaml` / `EQ-OVERLAP-02.yaml`. Does **not** discharge `EQ-OPEN-*`.  
 **Paper:** Already correctly worded; no edit.
 
 ## Finding F-06 — Open problems stay open

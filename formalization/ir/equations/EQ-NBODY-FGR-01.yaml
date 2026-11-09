@@ -1,12 +1,17 @@
 id: EQ-NBODY-FGR-01
-latex: "R = n_sites P_4_corr Gamma_tun |V_nuc|^2 / hbar  (bookkeeping FGR)"
+latex: "R = n_sites P_occ Gamma_tun f_nuc C_lin / tau  (bookkeeping FGR; |V|^2 absorbed in f_nuc)"
 symbols:
-  P_4_corr: "correlated occupation (OPEN)"
+  P_occ: "cluster occupation (Bernoulli or correlated condensate; OPEN)"
+  Gamma_tun: "tunneling width / barrier penetration"
+  f_nuc: "nuclear fusion probability per cluster (absorbs |V_nuc|^2)"
+  C_lin: "linear collective clamp min(N, 1e6) — not Dicke N^2"
+  tau: "cluster lifetime scale"
 units: "s^{-1}"
 tag: DEF
 paper_ref: "§5A.3"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/fgr_model.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/theories/takahashi_tsc.py
 citation_keys:
   - takahashi2016
@@ -14,4 +19,9 @@ lean_target: "LenrFormal.NBody"
 lean_decls:
   - "LenrFormal.NBody.BookkeepingRatio"
   - "LenrFormal.NBody.fgrRateBookkeeping"
-notes: "Bookkeeping Fermi golden rule. Occupation unconstrained."
+  - "LenrFormal.NBody.fgrVolumetricBookkeeping"
+  - "LenrFormal.NBody.fgr_zero_occupation"
+  - "LenrFormal.NBody.fgr_volumetric_zero_occupation"
+  - "LenrFormal.NBody.fgr_volumetric_uses_linear_collective"
+  - "LenrFormal.NBody.fgr_volumetric_collective_le_cap"
+notes: "Bookkeeping Fermi golden rule aligned with compute_fgr_volumetric_rate. Occupation unconstrained. Linear collective only (EQ-COLL-LIN-01). Does not close EQ-OPEN-RATE-01."

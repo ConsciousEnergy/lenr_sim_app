@@ -18,4 +18,5 @@ lean_decls:
   - "LenrFormal.WorkingHypothesis.remainder_positive"
   - "LenrFormal.WorkingHypothesis.remainder_implies_q1_open"
   - "LenrFormal.WorkingHypothesis.naive_gN_does_not_close"
-notes: "Conservation identity with positive remainder. Does not close EQ-OPEN-MEV-01."
+  - "LenrFormal.WorkingHypothesis.partition_and_fgr_do_not_close_mev_rate"
+notes: "Conservation identity with positive remainder. Composed with same-cluster FGR bookkeeping still leaves Q1/Q3 open. Does not close EQ-OPEN-MEV-01 or EQ-OPEN-RATE-01."

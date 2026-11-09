@@ -1,0 +1,21 @@
+id: EQ-OVERLAP-02
+latex: "R_{\\mathrm{overlap\\ count}} = N_{\\mathrm{atoms}} f_{\\mathrm{attempt}} P_{\\mathrm{overlap}}\\quad\\text{(upper-bound count, not }R_{\\mathrm{rate}}\\text{)}"
+symbols:
+  N_atoms: "macroscopic atom count (~10^23 order-of-magnitude)"
+  f_attempt: "attempt frequency (model input)"
+  P_overlap: "single-site overlap probability (EQ-OVERLAP-01)"
+  R_overlap_count: "ensemble upper-bound count of overlap events"
+units: "s^{-1} (count rate stand-in; not a nuclear reaction rate)"
+tag: AX
+paper_ref: "§2.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/proton_phase_model.py
+citation_keys:
+  - model_assumption_overlap
+lean_target: LenrFormal.Overlap
+lean_decls:
+  - "LenrFormal.Overlap.ensembleProductKind"
+  - "LenrFormal.Overlap.ensemble_product_is_upper_bound_count"
+  - "LenrFormal.Overlap.ensemble_product_not_nuclear_rate"
+  - "LenrFormal.Overlap.lenr_proved_false"
+notes: "AX honesty: the macroscopic product is an upper-bound counting argument. Interpreting it as a nuclear rate requires an unspecified matrix element (MATH_AUDIT F-05). Does not discharge any EQ-OPEN-*."

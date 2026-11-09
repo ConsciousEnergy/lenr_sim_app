@@ -1,0 +1,23 @@
+id: EQ-OVERLAP-01
+latex: "P_{\\mathrm{overlap}} \\approx (r_0/a)^3 e^{-2r_0/a}"
+symbols:
+  r_0: "nuclear interaction radius (~5 fm)"
+  a: "characteristic orbital scale (paper: 10 a_0 ≈ 0.529 nm)"
+  P_overlap: "halo/interface electron–nucleus overlap probability (model construct)"
+units: "dimensionless"
+tag: DEF
+paper_ref: "§2.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/constants.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/proton_phase_model.py
+citation_keys:
+  - model_assumption_overlap
+lean_target: LenrFormal.Overlap
+lean_decls:
+  - "LenrFormal.Overlap.nuclearRadius_fm"
+  - "LenrFormal.Overlap.orbitalScale_pm"
+  - "LenrFormal.Overlap.overlapRatioBookkeeping"
+  - "LenrFormal.Overlap.overlap_ratio_num"
+  - "LenrFormal.Overlap.zero_radius_zero_overlap_num"
+  - "LenrFormal.Overlap.nuclear_radius_is_five_fm"
+notes: "DEF bookkeeping only. Integer (r0/a)^3 skeleton; Real exponential factor remains a model input. Does not prove electron capture or discharge EQ-OPEN-EC-01 / MEV / RAD / RATE."
