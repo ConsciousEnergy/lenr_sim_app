@@ -162,6 +162,22 @@ def test_max_collective_factor_agrees_with_lean() -> None:
     )
 
 
+def test_nuclear_radius_agrees_with_lean_overlap_anchor() -> None:
+    from app.physics_engine.constants import NUCLEAR_RADIUS_FM
+
+    lean_path = LEAN_DIR / "Overlap.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="nuclearRadius_fm",
+        lean_value=_evaluate_lean_integer(lean_path, "nuclearRadius_fm"),
+        python_symbol="NUCLEAR_RADIUS_FM",
+        python_value=_scaled_python_integer(
+            NUCLEAR_RADIUS_FM, 1.0, "NUCLEAR_RADIUS_FM"
+        ),
+        expected_value=5,
+    )
+
+
 def test_dd_he4_q_value_agrees_with_lean_kev_anchor() -> None:
     lean_path = LEAN_DIR / "Constants.lean"
     _assert_agreement(

@@ -43,11 +43,13 @@
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
-| EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0 | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
+| EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
-| EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\) | `WorkingHypothesis` | **PROVED** (constraint) |
+| EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
+| EQ-OVERLAP-01 | \((r_0/a)^3\) overlap bookkeeping skeleton | `Overlap` | **DEF** mechanized |
+| EQ-OVERLAP-02 | Ensemble product ≠ nuclear rate | `Overlap` | **AX** honesty tag (DEF module) |
 | EQ-WH-FC-01 | Poisson tail \(S/(N+1)<1\) for \(N\ge S\); \(\log_{10}P_N\le-7\times10^{5}<-11\) on the scan grid | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q2) |
 | EQ-WH-PART-02 | \(E_{\text{derived}}+(Q-E_{\text{derived}})=Q\); remainder \(=0\iff E_{\text{derived}}=Q\) | `WorkingHypothesisBounds` | **PROVED** (identity; does **not** close Q1) |
 | EQ-WH-DICKE-N-01 | \(\lfloor n_D V_{\text{dicke}}\rfloor=0\); no \(N\ge2\) Dicke count licensed | `WorkingHypothesisBounds` | **PROVED** (bound) |
@@ -74,10 +76,12 @@
 | EQ-PS-TOL-01 | `PoissonSchrodinger` | Explicit residual tolerance axiom \(r\le\tau\) (never silent \(r=0\)) |
 | EQ-PRED-02 | `Composition` | Per-mechanism bound table (model input) |
 | EQ-3B-SEQ-01 | `NBody` | Sequential two-stage chain, not Faddeev |
-| EQ-NBODY-FGR-01 | `NBody` | Unnormalized FGR bookkeeping ratio |
+| EQ-NBODY-FGR-01 | `NBody` | Volumetric FGR bookkeeping \(n P\Gamma f C_{\mathrm{lin}}/\tau\); zero-occ and linear-collective lemmas |
 | EQ-TRAP-DEF-01 | `NBody` | Trapped-state bookkeeping; \(f_{\mathrm{nuc}}\) unconstrained |
 | EQ-TSC-STOP-01 | `NBody` | Alpha stopping \(\neq\) prompt-photon transfer mode |
 | EQ-TRAP-TAU-01 | `Constants` | \(\tau=10^{-20}\,\mathrm{s}\) integer-scaled input |
+| EQ-OVERLAP-01 | `Overlap` | \((r_0/a)^3\) bookkeeping skeleton; nuclear-radius / orbital-scale anchors |
+| EQ-OVERLAP-02 | `Overlap` | Ensemble product tagged upper-bound count \(\neq\) nuclear rate |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
