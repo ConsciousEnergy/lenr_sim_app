@@ -1,0 +1,25 @@
+id: EQ-PS-01
+latex: "\\nabla\\cdot(\\varepsilon\\nabla\\phi)=-\\rho;\\quad -(\\hbar^{2}/2m)\\nabla^{2}\\psi+V\\psi=E\\psi;\\quad V=V_{ext}-e\\phi;\\quad \\rho\\leftarrow\\rho_{bg}-e|\\psi|^{2}"
+symbols:
+  phi: "electrostatic potential (continuum sketch)"
+  rho: "charge density"
+  eps: "permittivity (must be positive; see EQ-PS-DOM-01)"
+  psi: "electronic wavefunction"
+  V: "effective single-particle potential"
+  E: "energy eigenvalue (E_eigen, not E_field; IL-015)"
+units: "SI continuum sketch (paper-only)"
+tag: DEF
+paper_ref: "§3.1 continuum Poisson–Schrödinger / FEM coupling; ENG-ASPIRATIONAL-FEM-01"
+code_refs: []
+paper_only: true
+citation_keys:
+  - model_assumption_poisson_schrodinger
+lean_target: LenrFormal.PoissonSchrodinger
+lean_decls:
+  - "LenrFormal.PoissonSchrodinger.continuumSketchDeclared"
+  - "LenrFormal.PoissonSchrodinger.parentId"
+  - "LenrFormal.PoissonSchrodinger.continuum_sketch_is_aspirational"
+notes: >
+  Parent DEF for the aspirational continuum PS / FEM coupling sketch in paper §3.1.
+  Discrete residual children: EQ-PS-POISSON/SCHROD/COUPLE/DOM/NONDEPLOY/TOL-01.
+  Does not authorize VPS deployment, continuum well-posedness, LENR proof, or EQ-OPEN closure.
