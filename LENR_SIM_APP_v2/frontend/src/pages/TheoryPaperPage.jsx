@@ -100,7 +100,7 @@ const TheoryPaperPage = () => {
             A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
           </Typography>
           <Typography variant="h6" color="text.secondary" paragraph sx={{ fontStyle: 'italic' }}>
-            Electron, Neutron, and Proton coupling is all you need
+            Coupling is all you need
           </Typography>
           
           <Box sx={{ mt: 3, mb: 2, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
