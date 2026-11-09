@@ -41,3 +41,25 @@ def test_rejects_junk_real_ip():
         client_host="10.0.0.2",
     )
     assert client_ip_from_request(req) == "198.51.100.30"
+
+
+def test_prefers_cf_connecting_ip_when_no_real_ip():
+    req = _FakeRequest(
+        headers={
+            "CF-Connecting-IP": "198.51.100.40",
+            "X-Forwarded-For": "203.0.113.1, 198.51.100.40",
+        },
+        client_host="10.0.0.2",
+    )
+    assert client_ip_from_request(req) == "198.51.100.40"
+
+
+def test_prefers_cf_connecting_ip_when_no_real_ip():
+    req = _FakeRequest(
+        headers={
+            "CF-Connecting-IP": "198.51.100.40",
+            "X-Forwarded-For": "203.0.113.1, 198.51.100.40",
+        },
+        client_host="10.0.0.2",
+    )
+    assert client_ip_from_request(req) == "198.51.100.40"
