@@ -352,6 +352,75 @@ def test_collapse_bound_ceilings_agree_with_lean() -> None:
     )
 
 
+def test_weak_interaction_anchors_agree_with_lean() -> None:
+    """Fermi G_F / threshold / Boltzmann / σ envelope vs WeakInteraction.lean."""
+    from app.physics.weak_interaction import (
+        G_F_GEV_INV2,
+        THRESHOLD_ELECTRON_MEV,
+        calculate_weak_interaction_cross_section,
+    )
+
+    lean_path = LEAN_DIR / "WeakInteraction.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="gF_x1e8",
+        lean_value=_evaluate_lean_integer(lean_path, "gF_x1e8"),
+        python_symbol="G_F_GEV_INV2 * 1e8",
+        python_value=_scaled_python_integer(G_F_GEV_INV2, 1e8, "G_F_GEV_INV2"),
+        expected_value=1166,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="threshold_eV",
+        lean_value=_evaluate_lean_integer(lean_path, "threshold_eV"),
+        python_symbol="THRESHOLD_ELECTRON_MEV * 1e6",
+        python_value=_scaled_python_integer(
+            THRESHOLD_ELECTRON_MEV, 1e6, "THRESHOLD_ELECTRON_MEV"
+        ),
+        expected_value=782_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="threshold_keV",
+        lean_value=_evaluate_lean_integer(lean_path, "threshold_keV"),
+        python_symbol="THRESHOLD_ELECTRON_MEV * 1e3",
+        python_value=_scaled_python_integer(
+            THRESHOLD_ELECTRON_MEV, 1e3, "THRESHOLD_ELECTRON_MEV"
+        ),
+        expected_value=782,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="boltzmannExponentFloor",
+        lean_value=_evaluate_lean_integer(lean_path, "boltzmannExponentFloor"),
+        python_symbol="taxonomy Boltzmann exponent floor",
+        python_value=30_000,
+        expected_value=30_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="kT_room_meV",
+        lean_value=_evaluate_lean_integer(lean_path, "kT_room_meV"),
+        python_symbol="room-temperature kT bookkeeping (meV)",
+        python_value=26,
+        expected_value=26,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="thermalExponentRoom",
+        lean_value=_evaluate_lean_integer(lean_path, "thermalExponentRoom"),
+        python_symbol="threshold_eV * 1000 // kT_room_meV",
+        python_value=(782_000 * 1000) // 26,
+        expected_value=30_076_923,
+    )
+
+    sigma_m2 = calculate_weak_interaction_cross_section(1e6)
+    assert 0.0 < sigma_m2 < 1e-47
+    lean_ceiling = _evaluate_lean_integer(lean_path, "sigma1MeV_negLog10Ceiling")
+    assert lean_ceiling == 47
+    assert -math.log10(sigma_m2) > lean_ceiling
+
+
 def test_collapse_uq_percentiles_agree_with_lean() -> None:
     from app.physics_engine.collapse_uq import (
         COMPRESSION_RATIO_TOLERANCE,

@@ -59,6 +59,11 @@
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |
 | EQ-PS-TOL-01 | Exact self-consistency ⇒ within any \(\tau\); \(r>0\) never silently equals exact | `PoissonSchrodinger` | **PROVED** (tolerance axiom bookkeeping; does **not** deploy FEM) |
+| EQ-EC-THRESH-01 | \(p+e^-\to n+\nu_e\) threshold \(0.782\,\mathrm{MeV}\) (eV Nat lock) | `WeakInteraction` | **PROVED** (identity; does **not** close Q4) |
+| EQ-EC-GF-01 | \(G_F\times 10^{8}=1166\) PDG lock; \(G_F^2\) Nat square | `WeakInteraction` | **PROVED** (constant lock) |
+| EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
+| EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
+
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -110,6 +115,8 @@
 | EQ-OPEN-YIELD-01 | Integrated yield discrepancy |
 
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
+
+**WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 

@@ -1,0 +1,26 @@
+id: EQ-EC-GF-01
+latex: "G_F \\approx 1.166\\times 10^{-5}\\,\\mathrm{GeV}^{-2}"
+symbols:
+  G_F: "Fermi coupling constant (PDG)"
+units: "GeV^{-2}; Lean stores G_F × 10^8 as Nat 1166"
+tag: THM
+paper_ref: "§2.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+citation_keys:
+  - paper_2_4
+  - pdg_fermi_constant
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.gF_x1e8"
+  - "LenrFormal.WeakInteraction.gF_anchor"
+  - "LenrFormal.WeakInteraction.gF2_x1e16"
+  - "LenrFormal.WeakInteraction.gF2_is_square"
+adopted_value:
+  G_F_GEV_INV2: 1.166e-5
+  gF_x1e8: 1166
+code_symbols:
+  G_F_GEV_INV2:
+    path: LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+    symbol: G_F_GEV_INV2
+notes: "Integer lock of the PDG Fermi constant used by weak_interaction.py. Algebraic bookkeeping only; not a proof of condensed-matter EC or LENR."
