@@ -33,11 +33,12 @@ lake build
 | `Miles` | EQ-QDD/MILES-CONV | Conversion identity band |
 | `Phonon` | EQ-PHONON-N-01, EQ-NAIVE-GN-01 | Phonon order identity; naive \(g^N\) fails |
 | `RateBudget` | EQ-RATE-* | Two-body does-not-close; rival modes |
-| `NBody` | EQ-TSC-*, EQ-TRAP-*, EQ-3B-*, EQ-NBODY-* | Geometry, FGR/trap bookkeeping, ULM domain |
+| `NBody` | EQ-TSC-*, EQ-TRAP-*, EQ-3B-*, EQ-NBODY-* | Geometry, FGR/trap bookkeeping (volumetric + linear collective), ULM domain |
+| `Overlap` | EQ-OVERLAP-01, EQ-OVERLAP-02 | Halo overlap \((r_0/a)^3\) DEF; ensemble count ≠ nuclear rate |
 | `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
 | `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
-| `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01 | Pointwise clamp; literature ceilings; UQ percentile/tolerance defs |
+| `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01, EQ-BBL-RP-DOM-01, EQ-BBL-CR-CAP-01 | Pointwise clamp; literature ceilings; UQ defs; RP/KM domain; CR hard-core cap |
 | `PoissonSchrodinger` | EQ-PS-01, EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-TOL-01, EQ-PS-NONDEPLOY-01 | Continuum PS DEF parent + discrete residual / domain / tolerance / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
 | `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; **does not** close `EQ-OPEN-EC-01` |
 

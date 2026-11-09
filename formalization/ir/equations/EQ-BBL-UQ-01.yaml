@@ -21,4 +21,5 @@ lean_decls:
   - "LenrFormal.CollapseBounds.uqPercentiles"
   - "LenrFormal.CollapseBounds.compressionRatioTolerancePct"
   - "LenrFormal.CollapseBounds.polytropicIndexTolerancePct"
-notes: "Sobol UQ reporting keys and tolerance percents as definitions. Predictive intervals are model outputs, not lab posteriors. Does not close EQ-OPEN-*."
+  - "LenrFormal.CollapseBounds.uqSampledDimensionCount"
+notes: "Sobol UQ reporting keys, sampled-dimension count, and tolerance percents as definitions. Predictive intervals are model outputs, not lab posteriors. Does not close EQ-OPEN-*."

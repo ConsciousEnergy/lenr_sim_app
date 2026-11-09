@@ -233,6 +233,7 @@ async def run_campaign(
         "question_theories",
         "testbed_review",
         "cavitation_collapse",
+        "detector_weak_screen",
     }:
         representative = next(iter_campaign_cases(preset))
         loading = min(max(float(representative.get("loading_ratio") or 0.9), 0.0), 1.0)

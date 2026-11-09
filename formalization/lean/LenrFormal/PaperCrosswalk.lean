@@ -10,6 +10,7 @@ import LenrFormal.Miles
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
+import LenrFormal.Overlap
 import LenrFormal.ScaleQED
 import LenrFormal.PoissonSchrodinger
 import LenrFormal.WeakInteraction
@@ -54,6 +55,7 @@ def openObligationIds : List String :=
 /-- Section → primary Lean module name (documentation strings). -/
 def sectionModuleMap : List (String × String) :=
   [ ("§2.1 Rydberg", "LenrFormal.Rydberg")
+  , ("§2.2 Overlap / ensemble count", "LenrFormal.Overlap")
   , ("§2.4 Field / double-layer", "LenrFormal.Field")
   , ("§2.4 weak / Fermi G_F / σ / Boltzmann EC bounds", "LenrFormal.WeakInteraction")
   , ("§2.5 Casimir", "LenrFormal.Casimir")
@@ -66,11 +68,13 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.1 aspirational non-deployment honesty", "LenrFormal.PoissonSchrodinger")
   , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
+  , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
+  , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
-  , ("§5A n-body / TSC geometry", "LenrFormal.NBody")
+  , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")
   , ("§5A HE negative control", "LenrFormal.ScaleQED")
   , ("§5A WH-ENP-01", "LenrFormal.WorkingHypothesis")
   , ("§5A WH-ENP-01 v2 bounds", "LenrFormal.WorkingHypothesisBounds")

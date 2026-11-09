@@ -278,5 +278,11 @@ def test_theory_pipeline_persist_accepts_literature_id() -> None:
             assert row["literatureId"] == "miles-1993"
             assert row["energy_output_kev"] is None
             assert data.get("open_questions", {}).get("lenr_proved") is not True
+            history = client.get("/api/analytics/theory-run-history").json()
+            assert history["schema"] == "lenr-theory-run-history-v1"
+            assert history["is_empirical_confidence"] is False
+            assert history["score_field"] == "final_score_preferred"
+            # SQL mean_final_score is Approximate association, not lab proof.
+            assert "mean_final_score" in history or "per_theory" in history
         finally:
             client.delete(f"/api/analytics/experiments/{experiment_id}")

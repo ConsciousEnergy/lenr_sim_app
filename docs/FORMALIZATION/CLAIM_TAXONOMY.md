@@ -37,8 +37,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | ID | Claim (short) | Paper | Code | Citation / label | Tag | Lean / IR |
 |----|---------------|-------|------|------------------|-----|-----------|
 | EQ-RYD-01 | \(E_n = -13.6\,\mathrm{eV}/n_{\mathrm{prin}}^2\); at \(n=10\), \(E=-0.136\,\mathrm{eV}\) | §2.1 | `physics/rydberg_matter.py` | hydrogen Rydberg (CODATA) | `THM` | `Rydberg.lean` / `rydberg.yaml` |
-| EQ-OVERLAP-01 | \(P_{\mathrm{overlap}} \approx (r_0/a)^3 e^{-2r_0/a}\) | §2.2 | `constants.py` `NUCLEAR_RADIUS_*` | model construct | `DEF` | `Overlap.lean` |
-| EQ-OVERLAP-02 | Ensemble \(N_{\mathrm{atoms}} \times f_{\mathrm{attempt}} \times P\) is an **upper-bound count**, not a nuclear rate | §2.2 | — | model assumption | `AX` | obligation text |
+| EQ-OVERLAP-01 | \(P_{\mathrm{overlap}} \approx (r_0/a)^3 e^{-2r_0/a}\) | §2.2 | `constants.py` `NUCLEAR_RADIUS_*` | model construct | `DEF` | `Overlap.lean` / `EQ-OVERLAP-01.yaml` |
+| EQ-OVERLAP-02 | Ensemble \(N_{\mathrm{atoms}} \times f_{\mathrm{attempt}} \times P\) is an **upper-bound count**, not a nuclear rate | §2.2 | `proton_phase_model.py` | model assumption | `AX` | `Overlap.lean` / `EQ-OVERLAP-02.yaml` |
 | EQ-FIELD-01 | \(E_{\mathrm{field}}=\Delta V/d\) (e.g. \(0.1\,\mathrm{V}/1\,\mathrm{nm}=10^8\,\mathrm{V/m}\)) | §2.3 | double-layer / QED paths | [23],[33] | `THM` | algebraic |
 | EQ-EC-THRESH-01 | \(p+e^-\to n+\nu_e\) threshold \(\Delta E\approx 0.782\,\mathrm{MeV}\) | §2.4 | `weak_interaction.py` | CODATA mass defect | `THM` | `WeakInteraction.lean` / `EQ-EC-THRESH-01.yaml` |
 | EQ-EC-GF-01 | Fermi \(G_F\approx 1.166\times 10^{-5}\,\mathrm{GeV}^{-2}\) (×10⁸ Nat lock) | §2.4 | `weak_interaction.py` | PDG | `THM` | `WeakInteraction.lean` / `EQ-EC-GF-01.yaml` |
@@ -97,7 +97,9 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-PRED-02 | Per-mechanism physics bounds \(b_i\) before claim-tier clamp | software | `bubble_mechanism_composition.py` | model assumption | `AX` | `Composition.lean` |
 | EQ-BBL-LIM-01 | Collapse reporting: \(\text{value}=\min(\text{value\_raw},\text{calculated\_bound})\) | §3.2 | `collapse_calculated_bounds.py` | Moss / Flannigan bounds | `DEF` | `CollapseBounds.lean` |
 | EQ-BBL-BOUND-01 | Literature collapse ceilings \(T\in\{1.5\times10^4,2\times10^6\}\,\mathrm{K}\), \(P\le10^{10}\,\mathrm{Pa}\), \(\mathrm{Ma}_{\mathrm{th}}=0.3\) | §3.2 / ENG-BUBBLE-FUSION-01 | `collapse_calculated_bounds.py` | Moss / Flannigan / Brenner | `DEF` | `CollapseBounds.lean` |
-| EQ-BBL-UQ-01 | Collapse UQ percentiles \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerance percents | software | `collapse_uq.py` | model assumption | `DEF` | `CollapseBounds.lean` |
+| EQ-BBL-UQ-01 | Collapse UQ percentiles \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerances + Sobol dim count | software | `collapse_uq.py` | model assumption | `DEF` | `CollapseBounds.lean` |
+| EQ-BBL-RP-DOM-01 | RP domain \(\mathrm{Ma}<0.3\); KM preferred otherwise; RP claim needs RP mode ∧ domain | §3.2 / ENG-RP-KM-01 | `collapse_calculated_bounds.py`, `bubble_solver.py` | Brenner SBSL | `THM` | `CollapseBounds.lean` |
+| EQ-BBL-CR-CAP-01 | Hard-core compression cap \(C_{\max}=1000\); reported \(C=\min(C_{\mathrm{raw}},C_{\max})\) | §3.2 / ENG-BUBBLE-FUSION-01 | `bubble_lattice_interaction.py` | model assumption | `DEF` | `CollapseBounds.lean` |
 | EQ-RATE-REPLACE-01 | `two_body` / `trapped_state` / `three_body` are alternatives, not factors | RR-006 | rate engine | governance | `THM` | `RateBudget.lean` |
 | EQ-TSC-GEOM-01 | FCC \(d_{DD}=a/(2\sqrt{2})\) identity (~137 pm for Pd) | §5A.3 | `takahashi_tsc.py` | takahashi2016 | `THM` | `NBody.lean` |
 | EQ-TSC-GEOM-02 | FCC \(d_{DD}\) is not the 25 pm trap radius | §5A.3 | TSC + trapped_state | two hypotheses | `THM` | `NBody.lean` |
@@ -112,7 +114,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-TRAP-FNUC-01 | \(f_{\mathrm{nuc}}\) unconstrained (Q1) | §5A.1/3 | rate engine | OPEN | `OPEN` | obligation |
 | EQ-3B-SEQ-01 | Sequential Widom–OP chain, not Faddeev | §2.4, §5A.4 | rate engine | DEF | `DEF` | `NBody.lean` |
 | EQ-3B-MASS-DOM-01 | ULM factor claimed only if \(m^*/m_e\ge 2.53\) | §2.4, §5A.4 | `widom_larsen.py` | tennfors2013 domain | `THM` | `NBody.lean` |
-| EQ-NBODY-FGR-01 | Bookkeeping FGR for a correlated 4-body condensate | §5A.3 | TSC / rate | DEF | `DEF` | `NBody.lean` |
+| EQ-NBODY-FGR-01 | Bookkeeping FGR \(n P\Gamma f C_{\mathrm{lin}}/\tau\) (linear collective) | §5A.3 | `fgr_model.py` / rate engine | DEF | `DEF` | `NBody.lean` / `EQ-NBODY-FGR-01.yaml` |
 | EQ-BRANCH-LATTICE-01 | Lattice Γ_ph/Γ_γ > 10^11 open target | §5A.2 | `branching_model.py` | paper §5A.2 | `DEF` | `Branching.lean` |
 | EQ-WHEN-THRESH-01 | Threshold predicate R_mode ≥ R_obs | §5A.3 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-WHEN-DUTY-01 | Duty-cycle integrated yield t_duty = t_total f_duty | §5A.5 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
@@ -122,10 +124,10 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-UQ-PRIOR-01 | Oracle B skeptical default priors | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
 | EQ-WH-ENP-01 | Coupled WH-ENP-01 geometry/occupation/operator ledger | §5A | `working_hypothesis.py` | hagelstein2025, takahashi2016 | `DEF` | `WorkingHypothesis.lean` |
-| EQ-WH-PART-01 | Derived + OPEN remainder = 23.8 MeV; remainder > 0 | §5A.1 | `working_hypothesis.py` | conservation | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-PART-01 | Derived + OPEN remainder = 23.8 MeV; remainder > 0; + FGR leaves Q1/Q3 open | §5A.1 | `working_hypothesis.py` | conservation | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | §5A.2 | `working_hypothesis.py` | harmonic DOS cutoff | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-FLOOR-01 | \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\); threshold iff \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) | §5A.3 | `working_hypothesis.py` | DEF | `DEF` | `WorkingHypothesis.lean` |
-| EQ-WH-DICKE-01 | Paper domain \(>\) Dicke radius \(\Rightarrow N^2\) not licensed | §5A.1 | `working_hypothesis.py` | constraint | `THM` | `WorkingHypothesis.lean` |
+| EQ-WH-DICKE-01 | Paper domain \(>\) Dicke radius \(\Rightarrow N^2\) not licensed; engine stays linear \(C\) | §5A.1 | `working_hypothesis.py` | constraint | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; alpha stopping \(\neq\) prompt \(\gamma\) | §5A.1 | `working_hypothesis.py` | takahashi2016 | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-NONCLOSE-01 | WH remainders do not discharge Q1–Q3 OPEN predicates | §5A | `working_hypothesis.py` | non-closure | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-FC-01 | Poisson (Huang–Rhys) tail \(t_{N+1}/t_N=S/(N+1)<1\) for \(N\ge S\); \(\log_{10}P_N\le-7\times10^{5}<-11\) at \(S\le10^{4}\) | §5A.1/5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `WorkingHypothesisBounds.lean` |

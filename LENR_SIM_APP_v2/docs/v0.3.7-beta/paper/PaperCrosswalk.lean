@@ -59,6 +59,8 @@ def sectionModuleMap : List (String × String) :=
   , ("§2.8 Composition cap 1e5", "LenrFormal.Composition")
   , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
+  , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
+  , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")

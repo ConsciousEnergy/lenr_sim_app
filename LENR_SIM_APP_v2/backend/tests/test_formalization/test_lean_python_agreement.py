@@ -162,6 +162,22 @@ def test_max_collective_factor_agrees_with_lean() -> None:
     )
 
 
+def test_nuclear_radius_agrees_with_lean_overlap_anchor() -> None:
+    from app.physics_engine.constants import NUCLEAR_RADIUS_FM
+
+    lean_path = LEAN_DIR / "Overlap.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="nuclearRadius_fm",
+        lean_value=_evaluate_lean_integer(lean_path, "nuclearRadius_fm"),
+        python_symbol="NUCLEAR_RADIUS_FM",
+        python_value=_scaled_python_integer(
+            NUCLEAR_RADIUS_FM, 1.0, "NUCLEAR_RADIUS_FM"
+        ),
+        expected_value=5,
+    )
+
+
 def test_dd_he4_q_value_agrees_with_lean_kev_anchor() -> None:
     lean_path = LEAN_DIR / "Constants.lean"
     _assert_agreement(
@@ -263,9 +279,12 @@ def test_q5_integrated_yield_band_agrees_with_lean() -> None:
 def test_collapse_bound_ceilings_agree_with_lean() -> None:
     from app.physics_engine.collapse_calculated_bounds import (
         COMPRESSIBILITY_MACH_THRESHOLD,
+        COMPRESSIBILITY_MACH_THRESHOLD_X10,
         EMISSION_BAND_UPPER_K,
+        MAX_COMPRESSION_RATIO,
         MOSS_ION_CEILING_K,
         SHOCK_PRESSURE_CEILING_PA,
+        temperature_bound_k_nat,
     )
 
     lean_path = LEAN_DIR / "CollapseBounds.lean"
@@ -305,11 +324,31 @@ def test_collapse_bound_ceilings_agree_with_lean() -> None:
         lean_value=_evaluate_lean_integer(
             lean_path, "compressibilityMachThreshold_x10"
         ),
-        python_symbol="COMPRESSIBILITY_MACH_THRESHOLD * 10",
-        python_value=_scaled_python_integer(
-            COMPRESSIBILITY_MACH_THRESHOLD, 10.0, "COMPRESSIBILITY_MACH_THRESHOLD"
-        ),
+        python_symbol="COMPRESSIBILITY_MACH_THRESHOLD_X10",
+        python_value=COMPRESSIBILITY_MACH_THRESHOLD_X10,
         expected_value=3,
+    )
+    assert COMPRESSIBILITY_MACH_THRESHOLD_X10 == _scaled_python_integer(
+        COMPRESSIBILITY_MACH_THRESHOLD, 10.0, "COMPRESSIBILITY_MACH_THRESHOLD"
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="maxCompressionRatio",
+        lean_value=_evaluate_lean_integer(lean_path, "maxCompressionRatio"),
+        python_symbol="MAX_COMPRESSION_RATIO",
+        python_value=MAX_COMPRESSION_RATIO,
+        expected_value=1_000,
+    )
+
+    # Regime selector: Lean native_decide cases ↔ Python Nat mirror.
+    assert temperature_bound_k_nat(peak_mach_x10=2, is_rayleigh_plesset=True) == int(
+        EMISSION_BAND_UPPER_K
+    )
+    assert temperature_bound_k_nat(peak_mach_x10=3, is_rayleigh_plesset=True) == int(
+        MOSS_ION_CEILING_K
+    )
+    assert temperature_bound_k_nat(peak_mach_x10=2, is_rayleigh_plesset=False) == int(
+        MOSS_ION_CEILING_K
     )
 
 
@@ -385,8 +424,11 @@ def test_weak_interaction_anchors_agree_with_lean() -> None:
 def test_collapse_uq_percentiles_agree_with_lean() -> None:
     from app.physics_engine.collapse_uq import (
         COMPRESSION_RATIO_TOLERANCE,
+        PERCENTILE_KEYS,
         PERCENTILES,
         POLYTROPIC_INDEX_TOLERANCE,
+        SAMPLED_DIMENSION_COUNT,
+        SAMPLED_DIMENSIONS,
     )
 
     lean_path = LEAN_DIR / "CollapseBounds.lean"
@@ -403,6 +445,8 @@ def test_collapse_uq_percentiles_agree_with_lean() -> None:
     ]
     assert python_percentiles == [5, 25, 50, 75, 95]
     assert lean_percentiles == python_percentiles
+    assert PERCENTILE_KEYS == ("p05", "p25", "p50", "p75", "p95")
+    assert len(PERCENTILE_KEYS) == len(PERCENTILES)
 
     _assert_agreement(
         lean_path=lean_path,
@@ -424,3 +468,60 @@ def test_collapse_uq_percentiles_agree_with_lean() -> None:
         ),
         expected_value=5,
     )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="uqSampledDimensionCount",
+        lean_value=_evaluate_lean_integer(lean_path, "uqSampledDimensionCount"),
+        python_symbol="SAMPLED_DIMENSION_COUNT",
+        python_value=SAMPLED_DIMENSION_COUNT,
+        expected_value=3,
+    )
+    assert SAMPLED_DIMENSIONS == (
+        "screening_potential_ev",
+        "compression_ratio",
+        "polytropic_index",
+    )
+
+
+def test_collapse_rp_domain_and_reporting_clamp_agree_with_lean() -> None:
+    """EQ-BBL-RP-DOM-01 / EQ-BBL-LIM-01 bookkeeping vs Python clamps."""
+    from app.physics_engine.bubble_lattice_interaction import BubbleLatticeInteraction
+    from app.physics_engine.collapse_calculated_bounds import (
+        COMPRESSIBILITY_MACH_THRESHOLD,
+        MAX_COMPRESSION_RATIO,
+        MOSS_ION_CEILING_K,
+        SHOCK_PRESSURE_CEILING_PA,
+        build_reporting_limits,
+        is_rp_domain,
+        temperature_bound_k_nat,
+    )
+
+    lean_path = LEAN_DIR / "CollapseBounds.lean"
+    assert is_rp_domain(peak_mach=0.2) is True
+    assert is_rp_domain(peak_mach=COMPRESSIBILITY_MACH_THRESHOLD) is False
+    assert is_rp_domain(peak_mach=0.5) is False
+
+    assert BubbleLatticeInteraction.MAX_COMPRESSION_RATIO == MAX_COMPRESSION_RATIO
+    assert _evaluate_lean_integer(lean_path, "maxCompressionRatio") == (
+        BubbleLatticeInteraction.MAX_COMPRESSION_RATIO
+    )
+
+    # Saturated temperature under Moss ceiling clamps to the bound.
+    limits = build_reporting_limits(
+        temperature_raw_k=3.0e8,
+        pressure_raw_pa=5.0e10,
+        compression_ratio=2_000.0,
+        max_compression_ratio=float(MAX_COMPRESSION_RATIO),
+        peak_mach=0.5,
+        dynamics_mode="keller_miksis",
+    )
+    assert limits["temperature_k"]["value"] == MOSS_ION_CEILING_K
+    assert limits["temperature_k"]["is_saturated"] is True
+    assert limits["pressure_pa"]["value"] == SHOCK_PRESSURE_CEILING_PA
+    assert limits["pressure_pa"]["is_saturated"] is True
+    assert limits["compression_ratio"]["calculated_bound"] == float(
+        MAX_COMPRESSION_RATIO
+    )
+    assert temperature_bound_k_nat(
+        peak_mach_x10=5, is_rayleigh_plesset=False
+    ) == int(MOSS_ION_CEILING_K)

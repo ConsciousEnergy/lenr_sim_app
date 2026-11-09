@@ -26,11 +26,35 @@ _SHOCK_PRESSURE_CEILING_PA = 1.0e10
 
 _COMPRESSIBILITY_MACH_THRESHOLD = 0.3
 
-# Public Nat-scale anchors for Lean ↔ Python agreement (EQ-BBL-BOUND-01).
+# Public Nat-scale anchors for Lean ↔ Python agreement (EQ-BBL-BOUND-01 /
+# EQ-BBL-RP-DOM-01). Mach×10 matches CollapseBounds.compressibilityMachThreshold_x10.
 EMISSION_BAND_UPPER_K = _EMISSION_BAND_UPPER_K
 MOSS_ION_CEILING_K = _MOSS_ION_CEILING_K
 SHOCK_PRESSURE_CEILING_PA = _SHOCK_PRESSURE_CEILING_PA
 COMPRESSIBILITY_MACH_THRESHOLD = _COMPRESSIBILITY_MACH_THRESHOLD
+COMPRESSIBILITY_MACH_THRESHOLD_X10 = int(round(COMPRESSIBILITY_MACH_THRESHOLD * 10.0))
+
+# Hard-core CR floor mirrored from BubbleLatticeInteraction (EQ-BBL-CR-CAP-01).
+MAX_COMPRESSION_RATIO = 1000
+
+
+def is_rp_domain(*, peak_mach: float) -> bool:
+    """True when peak Mach is strictly below the RP compressibility threshold."""
+    return float(peak_mach) < _COMPRESSIBILITY_MACH_THRESHOLD
+
+
+def temperature_bound_k_nat(
+    *,
+    peak_mach_x10: int,
+    is_rayleigh_plesset: bool,
+) -> int:
+    """Integer mirror of Lean ``temperatureBound_K`` (EQ-BBL-BOUND-01)."""
+    if (
+        int(peak_mach_x10) < COMPRESSIBILITY_MACH_THRESHOLD_X10
+        and bool(is_rayleigh_plesset)
+    ):
+        return int(EMISSION_BAND_UPPER_K)
+    return int(MOSS_ION_CEILING_K)
 
 
 def temperature_calculated_bound_k(
