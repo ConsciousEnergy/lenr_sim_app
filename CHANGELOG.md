@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — WS8 WH-ENP-01 / NBody remainder + Overlap DEF (academic)
+- Lean `LenrFormal.Overlap`: `EQ-OVERLAP-01` \((r_0/a)^3\) bookkeeping; `EQ-OVERLAP-02` ensemble count ≠ nuclear rate; IR YAMLs
+- Sharpened `NBody` volumetric FGR (`fgrVolumetricBookkeeping`) + zero-occ / linear-collective lemmas
+- Sharpened `WorkingHypothesis` partition∘FGR and Dicke∘linear-collective non-closure compositions
+- Taxonomy / FORMAL_PROOF_STATUS / PaperCrosswalk / MATH_AUDIT F-05 cite now resolve to landed `Overlap.lean`
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Changed — invited public-beta honesty / access (pre-cohort)
 - Beta banner: email-first feedback (`mailto:diadon@conscious.energy`) while the
   repository stays private; GitHub Issues CTA removed from the banner.

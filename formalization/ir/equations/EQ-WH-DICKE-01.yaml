@@ -14,4 +14,6 @@ lean_target: LenrFormal.WorkingHypothesis
 lean_decls:
   - "LenrFormal.WorkingHypothesis.dickeN2Licensed"
   - "LenrFormal.WorkingHypothesis.paper_domain_not_dicke_licensed"
-notes: "Constraint only. Engine collective remains linear min(N,1e6) (EQ-COLL-LIN-01)."
+  - "LenrFormal.WorkingHypothesis.dicke_unlicensed_and_engine_linear"
+  - "LenrFormal.WorkingHypothesis.same_cluster_fgr_uses_linear_collective"
+notes: "Constraint only. Engine collective remains linear min(N,1e6) (EQ-COLL-LIN-01); same-cluster FGR inherits that clamp. Does not discharge EQ-OPEN-MEV-01 / RAD-01 / RATE-01."
