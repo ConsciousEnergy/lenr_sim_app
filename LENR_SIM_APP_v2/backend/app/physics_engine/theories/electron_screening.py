@@ -193,6 +193,10 @@ class ElectronScreeningTheory:
             },
             source_domain_limits=[
                 "Shared condensed-matter screening layer; not a named LENR author theory.",
+                "Assenbaum form claimed only when U_e < E_kin (EQ-ASSEN-DOM-01 / Lean Assenbaum); "
+                "outside that domain the capped factor is sensitivity bookkeeping, not a claimed enhancement.",
+                "Anomalous metal U_e above the ~25 eV adiabatic gas-target floor is RR-007 "
+                "cited-range physics, distinct from Assenbaum domain validity.",
                 "Anomalous U_e > ~800 eV flagged outside Kasagi Pd-D range.",
             ],
             model_fidelity="approximate",
