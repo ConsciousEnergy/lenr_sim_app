@@ -32,6 +32,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from scipy.stats import qmc
 
+from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
 from .config import SimulationConfig
 from .cross_sections import calculate_reaction_rate as _two_body_rate
 from .reaction_rate_engine import (
@@ -45,6 +47,11 @@ from .reaction_rate_engine import (
     DEFAULT_MASS_RENORMALIZATION,
 )
 from .screening_data import get_screening_potential_range
+
+# Paper-adopted tunneling enhancement prior band (RR-001). Upper edge is the
+# governance composition / display ceiling — honesty floor, not a lab 10^5.
+ENHANCEMENT_PRIOR_LO: float = 1e3
+ENHANCEMENT_PRIOR_HI: float = float(MAX_ENHANCEMENT_FACTOR)
 
 
 @dataclass(frozen=True)
@@ -149,9 +156,9 @@ def propagate_rate_uncertainty(
         if not is_three
         else np.full(n_samples, scr.typical)
     )
-    # Tunneling enhancement prior: 1e3-1e5 (paper-adopted band, RR-001).
+    # Tunneling enhancement prior: 1e3–MAX_ENHANCEMENT_FACTOR (RR-001 band).
     enhancement = (
-        _loguniform(unit[:, 1], 1e3, 1e5)
+        _loguniform(unit[:, 1], ENHANCEMENT_PRIOR_LO, ENHANCEMENT_PRIOR_HI)
         if not is_three
         else np.ones(n_samples)
     )
@@ -324,4 +331,9 @@ def _first_order_sensitivity(
     return {k: v / total for k, v in out.items()}
 
 
-__all__ = ["UQResult", "propagate_rate_uncertainty"]
+__all__ = [
+    "UQResult",
+    "propagate_rate_uncertainty",
+    "ENHANCEMENT_PRIOR_LO",
+    "ENHANCEMENT_PRIOR_HI",
+]
