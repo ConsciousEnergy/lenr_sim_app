@@ -27,6 +27,18 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
+def _sync_available() -> int:
+    """Best-effort count of free slots on the process-wide BoundedSemaphore."""
+    sem = compute_guard._get_sync_semaphore()
+    # threading.BoundedSemaphore has no public counter; probe with non-blocking acquire.
+    held = 0
+    while sem.acquire(blocking=False):
+        held += 1
+    for _ in range(held):
+        sem.release()
+    return held
+
+
 # --------------------------------------------------------------------------- #
 # heavy_compute_slot
 # --------------------------------------------------------------------------- #
@@ -36,8 +48,7 @@ def test_heavy_compute_slot_releases_after_use() -> None:
     async def scenario() -> None:
         async with compute_guard.heavy_compute_slot("t"):
             pass
-        sem = compute_guard._get_semaphore()
-        assert sem._value == max(1, settings.MAX_CONCURRENT_HEAVY_SIMS)
+        assert _sync_available() == max(1, settings.MAX_CONCURRENT_HEAVY_SIMS)
 
     asyncio.run(scenario())
     compute_guard.reset_heavy_compute_slots()
@@ -91,9 +102,13 @@ def test_simulate_endpoint_returns_503_when_saturated(monkeypatch) -> None:
         import time
 
         deadline = time.time() + 3
-        while time.time() < deadline and compute_guard._semaphore is None:
+        while time.time() < deadline and compute_guard._sync_semaphore is None:
             time.sleep(0.01)
-        while time.time() < deadline and compute_guard._semaphore._value != 0:
+        while time.time() < deadline and _sync_available() != 0:
+            time.sleep(0.01)
+        # Slot held by first request → available == 0
+        deadline = time.time() + 3
+        while time.time() < deadline and _sync_available() != 0:
             time.sleep(0.01)
         second = client.post("/api/unified/simulate", json=payload)
         release.set()
@@ -102,6 +117,23 @@ def test_simulate_endpoint_returns_503_when_saturated(monkeypatch) -> None:
     assert second.status_code == 503, second.text
     assert "Retry-After" in second.headers
     assert results["first"].status_code == 200, results["first"].text
+    compute_guard.reset_heavy_compute_slots()
+
+
+def test_sync_and_async_slots_share_one_pool(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "MAX_CONCURRENT_HEAVY_SIMS", 1)
+    monkeypatch.setattr(settings, "HEAVY_SLOT_WAIT_SECONDS", 0.05)
+    compute_guard.reset_heavy_compute_slots()
+    assert compute_guard.try_acquire_heavy_slot_sync(timeout=0) is True
+
+    async def scenario() -> None:
+        with pytest.raises(HTTPException) as exc_info:
+            async with compute_guard.heavy_compute_slot("blocked"):
+                pass
+        assert exc_info.value.status_code == 503
+
+    asyncio.run(scenario())
+    compute_guard.release_heavy_slot_sync()
     compute_guard.reset_heavy_compute_slots()
 
 
@@ -131,6 +163,8 @@ def test_multi_physics_accepts_limits() -> None:
 
 def test_multi_physics_endpoint_422_and_503(monkeypatch) -> None:
     monkeypatch.setattr(settings, "MAX_CONCURRENT_HEAVY_SIMS", 1)
+    monkeypatch.setattr(settings, "HEAVY_SLOT_WAIT_SECONDS", 0.05)
+    compute_guard.reset_heavy_compute_slots()
     mp_routes.simulation_results.clear()
     with _client() as client:
         bad = client.post(
@@ -139,11 +173,15 @@ def test_multi_physics_endpoint_422_and_503(monkeypatch) -> None:
         )
         assert bad.status_code == 422
 
-        mp_routes.simulation_results["busy"] = {"status": "running"}
-        busy = client.post("/api/multi-physics/simulations", json={})
-        assert busy.status_code == 503
-        assert "Retry-After" in busy.headers
+        assert compute_guard.try_acquire_heavy_slot_sync(timeout=0) is True
+        try:
+            busy = client.post("/api/multi-physics/simulations", json={})
+            assert busy.status_code == 503
+            assert "Retry-After" in busy.headers
+        finally:
+            compute_guard.release_heavy_slot_sync()
     mp_routes.simulation_results.clear()
+    compute_guard.reset_heavy_compute_slots()
 
 
 def test_multi_physics_store_is_bounded() -> None:

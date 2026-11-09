@@ -969,49 +969,50 @@ async def compare_systems(request: CompareRequest):
     """
     try:
         from app.physics_engine.unified_lenr_model import create_simulation
-        
-        # Create simulations for both systems
-        model1 = create_simulation(
-            request.system1,
-            temperature=request.temperature,
-            pressure=request.pressure
-        )
-        model2 = create_simulation(
-            request.system2,
-            temperature=request.temperature,
-            pressure=request.pressure
-        )
-        
-        # Run both simulations
-        result1 = model1.run_simulation()
-        result2 = model2.run_simulation()
-        
-        # Format results
-        def format_result(result, system_name):
-            return {
-                "system": system_name,
-                "total_enhancement": result.total_enhancement,
-                "excess_heat_watts": result.excess_heat_watts,
-                "tunneling_probability": result.tunneling_probability,
-                "confidence": result.confidence
+
+        def _compare() -> CompareResponse:
+            model1 = create_simulation(
+                request.system1,
+                temperature=request.temperature,
+                pressure=request.pressure,
+            )
+            model2 = create_simulation(
+                request.system2,
+                temperature=request.temperature,
+                pressure=request.pressure,
+            )
+            result1 = model1.run_simulation()
+            result2 = model2.run_simulation()
+
+            def format_result(result, system_name):
+                return {
+                    "system": system_name,
+                    "total_enhancement": result.total_enhancement,
+                    "excess_heat_watts": result.excess_heat_watts,
+                    "tunneling_probability": result.tunneling_probability,
+                    "confidence": result.confidence,
+                }
+
+            comparison = {
+                "enhancement_ratio": result1.total_enhancement
+                / max(result2.total_enhancement, 1e-10),
+                "heat_ratio": result1.excess_heat_watts
+                / max(result2.excess_heat_watts, 1e-10),
+                "recommended_system": request.system1
+                if result1.total_enhancement > result2.total_enhancement
+                else request.system2,
             }
-        
-        sys1_data = format_result(result1, request.system1)
-        sys2_data = format_result(result2, request.system2)
-        
-        # Calculate comparison metrics
-        comparison = {
-            "enhancement_ratio": result1.total_enhancement / max(result2.total_enhancement, 1e-10),
-            "heat_ratio": result1.excess_heat_watts / max(result2.excess_heat_watts, 1e-10),
-            "recommended_system": request.system1 if result1.total_enhancement > result2.total_enhancement else request.system2
-        }
-        
-        return CompareResponse(
-            system1=sys1_data,
-            system2=sys2_data,
-            comparison=comparison
-        )
-        
+            return CompareResponse(
+                system1=format_result(result1, request.system1),
+                system2=format_result(result2, request.system2),
+                comparison=comparison,
+            )
+
+        async with heavy_compute_slot("unified/compare"):
+            return await run_in_threadpool(_compare)
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise _client_safe_error("Compare systems error", e)
 

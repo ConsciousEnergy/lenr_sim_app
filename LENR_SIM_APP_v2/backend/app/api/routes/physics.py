@@ -25,6 +25,7 @@ from ...models.simulation_models import SimulationParameters, SimulationResponse
 from ...services.simulation_store import SimulationStore
 from ...physics_engine.theory_pipeline import get_default_pipeline
 from ...utils.json_safe import to_json_safe
+from app.core.compute_guard import heavy_compute_slot, run_in_threadpool
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -509,11 +510,14 @@ async def run_theories(request: TheoryRunRequest) -> Dict[str, Any]:
         if v is not None
     }
     try:
-        result = pipeline.run(
-            conditions=conditions,
-            enabled_theories=request.enabled_theories,
-            theory_configs=request.theory_configs,
-        )
+        async with heavy_compute_slot("physics/theories/run"):
+            result = await run_in_threadpool(
+                lambda: pipeline.run(
+                    conditions=conditions,
+                    enabled_theories=request.enabled_theories,
+                    theory_configs=request.theory_configs,
+                )
+            )
         payload = result.to_dict()
         from app.services.persist_runs import persist_theory_pipeline
         persistence = await persist_theory_pipeline(
@@ -527,6 +531,8 @@ async def run_theories(request: TheoryRunRequest) -> Dict[str, Any]:
             transparency["persistence"] = persistence
             payload["analytics_transparency"] = transparency
         return payload
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Theory pipeline run error: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -548,11 +554,14 @@ async def run_single_theory(
         if v is not None
     }
     try:
-        contribution = pipeline.run_single(
-            theory_id=theory_id,
-            conditions=conditions,
-            config=request.config,
-        )
+        async with heavy_compute_slot(f"physics/theories/{theory_id}/run"):
+            contribution = await run_in_threadpool(
+                lambda: pipeline.run_single(
+                    theory_id=theory_id,
+                    conditions=conditions,
+                    config=request.config,
+                )
+            )
         return {
             "theory_id": contribution.theory_id,
             "theory_name": contribution.theory_name,
@@ -565,6 +574,8 @@ async def run_single_theory(
             "confidence": float(contribution.confidence),
             "references": list(contribution.references),
         }
+    except HTTPException:
+        raise
     except KeyError:
         raise HTTPException(
             status_code=404,

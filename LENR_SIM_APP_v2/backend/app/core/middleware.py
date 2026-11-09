@@ -175,9 +175,15 @@ def setup_middlewares(app: FastAPI) -> None:
         app.add_middleware(
             RateLimitingMiddleware,
             rate_limit_per_minute=settings.RATE_LIMIT_PER_MINUTE,
-            whitelist_ips=settings.RATE_LIMIT_WHITELIST_IPS
+            heavy_rate_limit_per_minute=settings.HEAVY_RATE_LIMIT_PER_MINUTE,
+            heavy_path_prefixes=settings.HEAVY_RATE_LIMIT_PATH_PREFIXES,
+            whitelist_ips=settings.RATE_LIMIT_WHITELIST_IPS,
         )
-        logger.info(f"Rate limiting middleware enabled with limit: {settings.RATE_LIMIT_PER_MINUTE} requests/minute")
+        logger.info(
+            "Rate limiting middleware enabled: general=%s/min heavy=%s/min",
+            settings.RATE_LIMIT_PER_MINUTE,
+            settings.HEAVY_RATE_LIMIT_PER_MINUTE,
+        )
     
     # Add request size limit middleware
     app.add_middleware(

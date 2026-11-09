@@ -29,6 +29,8 @@ providers:
 entryPoints:
   web:
     address: ":80"
+    forwardedHeaders:
+      insecure: false
 {% if traefik_force_https | default(true) %}
     http:
       redirections:
@@ -39,6 +41,13 @@ entryPoints:
           
   websecure:
     address: ":443"
+    # Traefik is the TLS edge (DNS-only / not behind another proxy). Keep
+    # forwardedHeaders insecure=false so client-supplied XFF is not trusted
+    # wholesale; Traefik appends the TCP peer. FastAPI prefers X-Real-IP when
+    # present (nginx SPA path) else rightmost XFF — stock Traefik does not emit
+    # X-Real-IP without a plugin.
+    forwardedHeaders:
+      insecure: false
     http:
       tls:
         certResolver: letsencrypt
