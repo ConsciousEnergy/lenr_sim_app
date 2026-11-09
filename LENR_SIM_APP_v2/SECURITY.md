@@ -20,9 +20,19 @@ This document outlines the security features, policies, and best practices imple
 - **Permissions-Policy**: Restricts browser features
 
 ### Authentication & Authorization
-- **JWT-based Authentication**: Framework for secure token-based authentication
-- **Password Hashing**: Secure password handling with salt generation
-- **CSRF Protection**: Protection against cross-site request forgery
+- **No end-user login on the public beta.** Simulation, export, and WebSocket
+  endpoints are unauthenticated and protected by per-IP rate limits, reverse-proxy
+  body size limits, and a heavy-compute semaphore (503 when saturated).
+- **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
+  in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
+  GET/stats stay public.
+- **JWT settings exist in config** (`LENR_JWT_SECRET_KEY`) for a future auth
+  layer; they are **not** wired to routes. Do not describe the API as
+  JWT-authenticated.
+- Shared-simulation `session_id` is an unguessable client string, not a
+  cryptographic credential — treat `/api/simulations/save` as public-beta risk.
+- Password-hash helpers exist in `app/security/utils.py` but are unused on the
+  live beta surface; prefer argon2/bcrypt if wiring login later.
 
 ### Environment & Configuration Security
 - **Environment Variables**: Secure configuration using environment variables

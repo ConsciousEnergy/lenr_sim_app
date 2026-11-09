@@ -1,7 +1,9 @@
-# SPA only: allow WP apex/www to embed. Do not set X-Frame-Options (SAMEORIGIN
-# would override frame-ancestors). API keeps DENY / frame-ancestors 'none'.
+# SPA security headers (Cloudflare Pages). Swarm nginx mirrors these in
+# infrastructure/docker/nginx.frontend.conf. Do not set X-Frame-Options —
+# SAMEORIGIN would override frame-ancestors for WordPress apex/www embeds.
+# API framing stays DENY / frame-ancestors 'none' via SecureHeadersMiddleware.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: frame-ancestors 'self' https://conscious.energy https://www.conscious.energy
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://conscious.energy https://www.conscious.energy; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.conscious.energy https://us.i.posthog.com wss: https://lenr-sim-beta.conscious.energy https://app.conscious.energy; worker-src 'self' blob:; form-action 'self'
