@@ -13,6 +13,7 @@ import LenrFormal.NBody
 import LenrFormal.Overlap
 import LenrFormal.ScaleQED
 import LenrFormal.PoissonSchrodinger
+import LenrFormal.WeakInteraction
 import LenrFormal.WorkingHypothesis
 import LenrFormal.WorkingHypothesisBounds
 import LenrFormal.OpenObligations
@@ -56,6 +57,7 @@ def sectionModuleMap : List (String × String) :=
   [ ("§2.1 Rydberg", "LenrFormal.Rydberg")
   , ("§2.2 Overlap / ensemble count", "LenrFormal.Overlap")
   , ("§2.4 Field / double-layer", "LenrFormal.Field")
+  , ("§2.4 weak / Fermi G_F / σ / Boltzmann EC bounds", "LenrFormal.WeakInteraction")
   , ("§2.5 Casimir", "LenrFormal.Casimir")
   , ("§2.8 / Gamow tunneling", "LenrFormal.Gamow")
   , ("§2.8 Assenbaum domain", "LenrFormal.Assenbaum")
@@ -68,7 +70,8 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
   , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
   , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
-  , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
+  , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
+
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")

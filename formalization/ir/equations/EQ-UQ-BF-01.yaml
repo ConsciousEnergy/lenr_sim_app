@@ -13,7 +13,16 @@ lean_target: "LenrFormal.Decision"
 lean_decls:
   - "LenrFormal.Decision.logBayesFactor"
   - "LenrFormal.Decision.approxBayesFactor"
+  - "LenrFormal.Decision.ExpHom"
   - "LenrFormal.Decision.log_bayes_factor_self_zero"
   - "LenrFormal.Decision.log_bayes_factor_antisymm"
   - "LenrFormal.Decision.log_bayes_factor_cocycle"
-notes: "Toy log-evidence softmax. Algebraic self/antisymm/cocycle identities are proved under the DEF; still not MCMC or empirical proof. Odds do not flip EQ-OPEN-* rows."
+  - "LenrFormal.Decision.approx_bayes_factor_self_consistent"
+  - "LenrFormal.Decision.approx_bayes_factor_multiplicative_cocycle"
+  - "LenrFormal.Decision.approx_bayes_factor_reciprocal"
+  - "LenrFormal.Decision.approx_bayes_factor_swap"
+notes: >
+  Toy log-evidence softmax. Algebraic self/antisymm/cocycle identities plus
+  ExpHom-conditioned multiplicative cocycle / reciprocal / swap identities are
+  proved under the DEF; still not MCMC or empirical proof. Odds do not flip
+  EQ-OPEN-* rows or set lenr_proved.

@@ -1,0 +1,29 @@
+id: EQ-EC-THRESH-01
+latex: "\\Delta E = (m_n - m_p - m_e)c^2 \\approx 0.782\\,\\mathrm{MeV}"
+symbols:
+  Delta_E: "electron-capture / inverse-beta threshold energy"
+  m_n: "neutron mass"
+  m_p: "proton mass"
+  m_e: "electron mass"
+units: "eV (integer); 0.782 MeV = 782000 eV"
+tag: THM
+paper_ref: "§2.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+citation_keys:
+  - widomlarsen2006
+  - paper_2_4
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.threshold_eV"
+  - "LenrFormal.WeakInteraction.threshold_keV"
+  - "LenrFormal.WeakInteraction.threshold_is_782000_eV"
+  - "LenrFormal.WeakInteraction.threshold_eV_from_keV"
+adopted_value:
+  THRESHOLD_ELECTRON_MEV: 0.782
+  threshold_eV: 782000
+code_symbols:
+  THRESHOLD_ELECTRON_MEV:
+    path: LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+    symbol: THRESHOLD_ELECTRON_MEV
+notes: "CODATA mass-defect threshold lock matching Python THRESHOLD_ELECTRON_MEV. Does not supply a condensed-matter path and does not discharge EQ-OPEN-EC-01."

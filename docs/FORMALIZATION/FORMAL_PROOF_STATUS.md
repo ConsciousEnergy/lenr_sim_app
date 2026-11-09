@@ -1,6 +1,6 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-11-05  
+**Updated:** 2026-11-09  
 **Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved. `lenr_proved` stays **false**; no `EQ-OPEN-*` closures in this pass.
 
 ## Oracle stack (siblings, not substitutes)
@@ -41,7 +41,7 @@
 | EQ-BBL-COMP-01 | Intra-group max of per-mechanism clamps; groups multiply | `Composition` | **PROVED** (algebra) |
 | EQ-BBL-RP-DOM-01 | RP domain \(\mathrm{Ma}<0.3\); KM preferred otherwise; RP claim needs mode∧domain | `CollapseBounds` | **PROVED** (domain; **not** dynamics / LENR) |
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
-| EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
+| EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative cocycle / reciprocal / swap identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
@@ -59,6 +59,11 @@
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |
 | EQ-PS-TOL-01 | Exact self-consistency ⇒ within any \(\tau\); \(r>0\) never silently equals exact | `PoissonSchrodinger` | **PROVED** (tolerance axiom bookkeeping; does **not** deploy FEM) |
+| EQ-EC-THRESH-01 | \(p+e^-\to n+\nu_e\) threshold \(0.782\,\mathrm{MeV}\) (eV Nat lock) | `WeakInteraction` | **PROVED** (identity; does **not** close Q4) |
+| EQ-EC-GF-01 | \(G_F\times 10^{8}=1166\) PDG lock; \(G_F^2\) Nat square | `WeakInteraction` | **PROVED** (constant lock) |
+| EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
+| EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
+
 
 ## Definitions mechanized in this pass (not nature theorems)
 
@@ -96,7 +101,7 @@
 | EQ-TUN-BAND-01 | Enhancement band / cap is a **model assumption** (RR-001) |
 | EQ-MILES-EMP-01 | Miles heat–helium correlation remains `EMP` |
 | EQ-TRAP-SEP-01 / EQ-TRAP-TAU-01 | 25 pm and \(10^{-20}\,\mathrm{s}\) are inputs, not derivations |
-| EQ-UQ-PRIOR-01 / EQ-UQ-BF-01 | Oracle B priors and approximate Bayes factor are definitions; proved Int identities (self-zero, antisymm, cocycle) do **not** flip OPEN rows |
+| EQ-UQ-PRIOR-01 / EQ-UQ-BF-01 | Oracle B priors and approximate Bayes factor are definitions; proved Int/Nat identities (self-zero, antisymm, cocycle, ExpHom multiplicative cocycle / reciprocal / swap) do **not** flip OPEN rows |
 | `RealShim.expZ_strict_mono` | Analysis bridge until mathlib upgrade |
 
 ## Open obligations (unchanged)
@@ -110,6 +115,8 @@
 | EQ-OPEN-YIELD-01 | Integrated yield discrepancy |
 
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
+
+**WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 
