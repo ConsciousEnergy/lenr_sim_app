@@ -15,7 +15,7 @@
 - All five `EQ-OPEN-*` remain **OPEN**
 - No quantitative band changes in the 2026-09-25 revision (tunneling \(10^3\)–\(10^5\); Casimir \(-1.3\,\mathrm{mN}\); Miles \(24\pm4\,\mathrm{MeV}\))
 - **2026-11-05 honesty sync:** cavitation–collapse labelled **modelled enhancement / contested hydro**; Lean clamp / non-closure language cited; still **no** OPEN closures
-- **2026-11-09 WS pack (0.3.9 public-testing):** FEM DEF / Overlap / CollapseBounds deepen / weight surfaces / Assenbaum domain honesty landed on `dev` — identities, DEFs, and campaign inventory only; still **no** OPEN closures
+- **2026-11-09 WS pack (0.3.9 public-testing):** FEM DEF / Overlap / CollapseBounds deepen / weight surfaces / Assenbaum / detector RAD / WeakInteraction / rate-UQ floors landed on `dev` (#326–#334) — identities, DEFs, and campaign inventory only; still **no** OPEN closures
 - Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
 ## Simulation evidence sources
@@ -50,7 +50,8 @@ Do **not** treat these paths as laboratory evidence. Live links do not change cl
 | FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean) | `EQ-PS-01` + `EQ-PS-TOL-01` — aspirational continuum sketch; **not** live FEM (#327) |
 | Assenbaum domain | [`EQ-ASSEN-DOM-01.yaml`](../../../../formalization/ir/equations/EQ-ASSEN-DOM-01.yaml) | Screening domain honesty; formula not claimed outside validity (#333) |
 | Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline | **on `dev`** via #329 — `detector_ul_not_proof`; **≠** `EQ-OPEN-RAD/RATE` closure |
-| WeakInteraction | [`WeakInteraction.lean`](../../../../formalization/lean/LenrFormal/WeakInteraction.lean) | Pending land of #332 — Fermi \(G_F\)/σ/Boltzmann identities only; **≠** `EQ-OPEN-EC-01` closure |
+| WeakInteraction | [`WeakInteraction.lean`](../../../../formalization/lean/LenrFormal/WeakInteraction.lean) | **on `dev`** via #332 — Fermi \(G_F\)/σ/Boltzmann identities only; **≠** `EQ-OPEN-EC-01` closure |
+| Rate UQ floors | [`Decision.lean`](../../../../formalization/lean/LenrFormal/Decision.lean) ExpHom | **on `dev`** via #334 — `EQ-UQ-BF-01` algebra honesty only; **≠** empirical Bayes factor |
 | Formal proof status | [`FORMAL_PROOF_STATUS.md`](../../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | WH / OpenObligations non-closure; OPEN table unchanged |
 | Proof matrix twin | [`../PROOF_MATRIX.md`](../PROOF_MATRIX.md) | Ledger ↔ Lean/IR crosswalk; honesty-only |
 

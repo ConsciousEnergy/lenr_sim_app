@@ -79,30 +79,34 @@
     "formalization/lean/LenrFormal/CollapseBounds.lean (EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01 clamp/domain/UQ bookkeeping; #328)",
     "formalization/lean/LenrFormal/Overlap.lean (EQ-OVERLAP-01/02 DEF; ensemble \u2260 rate; #330)",
     "formalization/lean/LenrFormal/PoissonSchrodinger.lean (EQ-PS-01/TOL continuum DEF; aspirational; #327)",
+    "formalization/lean/LenrFormal/WeakInteraction.lean (EQ-EC-* Fermi G_F/\u03c3/Boltzmann identities; #332; \u2260 EQ-OPEN-EC-01 closure)",
+    "formalization/lean/LenrFormal/Decision.lean (EQ-UQ-BF-01 ExpHom algebra honesty floors; #334; not empirical BF)",
     "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure; OPEN table unchanged)"
   ],
-  "ws_pack_pending": [
-    {
-      "id": "weak_interaction",
-      "pr": 332,
-      "note": "WeakInteraction.lean EQ-EC-* Fermi identities pending land; EQ-OPEN-EC-01 stays OPEN"
-    },
-    {
-      "id": "rate_uq_floors",
-      "pr": 334,
-      "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors pending land; not empirical BF"
-    }
+  "ws_pack_landed": [
+    {"id": "theory_paper_subtitle", "pr": 326, "note": "Coupling is all you need subtitle rename"},
+    {"id": "fem_continuum_def", "pr": 327, "note": "EQ-PS-01/TOL aspirational continuum DEF"},
+    {"id": "collapse_bounds_deepen", "pr": 328, "note": "EQ-BBL-* clamp/UQ/RP domain bookkeeping"},
+    {"id": "detector_rad_honesty", "pr": 329, "note": "detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN"},
+    {"id": "overlap_wh_nbody", "pr": 330, "note": "Overlap DEF + WH/NBody FGR sharpening"},
+    {"id": "weight_surfaces", "pr": 331, "note": "THEORY_WEIGHT_SURFACES + detector_weak_screen inventory"},
+    {"id": "weak_interaction", "pr": 332, "note": "WeakInteraction.lean EQ-EC-* Fermi identities; EQ-OPEN-EC-01 stays OPEN"},
+    {"id": "assenbaum_domain", "pr": 333, "note": "EQ-ASSEN-DOM-01 screening domain honesty"},
+    {"id": "rate_uq_floors", "pr": 334, "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors; not empirical BF"}
   ],
+  "ws_pack_pending": [],
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
     "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback; CR-cap DEF (#328)",
     "ENG-ASPIRATIONAL-FEM-01: continuum DEF EQ-PS-01/TOL; never public-beta numerics (#327)",
+    "ENG-WEAK-01: Fermi G_F/\u03c3/Boltzmann bookkeeping only; not Q4/EC closure (#332)",
     "Cavitation-collapse: modelled enhancement / contested hydro; collapse_uq.py percentiles are model-only",
     "WH-ENP-01 / Overlap / NBody FGR retained; do not close EQ-OPEN-* (#330)",
     "WS7 detector_weak_screen + THEORY_WEIGHT_SURFACES: inventory only; dual score honesty; lenr_proved false (#331)",
     "Assenbaum screening domain honesty (#333); formula not claimed outside validity",
     "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false",
-    "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)"
+    "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)",
+    "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false"
   ],
   "formats": [
     ".md",
