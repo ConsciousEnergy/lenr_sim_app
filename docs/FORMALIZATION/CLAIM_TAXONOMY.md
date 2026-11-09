@@ -66,7 +66,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-GAMOW-01 | \(\eta=Z_1 Z_2 e^2/(4\pi\varepsilon_0\hbar v)\); \(P=e^{-2\pi\eta}\) | §5.1.1 | `cross_sections.py`, `wkb_tunneling.py` | gamow1928 | `DEF`+`THM` | `Gamow.lean` |
 | EQ-SFACT-01 | \(\sigma(E)=S(E)e^{-2\pi\eta}/E\) | §5.1.1 | `mhd/nuclear_force_coupling.py` | nacreii | `DEF` | — |
 | EQ-ASSEN-01 | Assenbaum \(f=\exp(\pi\eta U_e/E)\) | §2.8, kernel | `screening_kernel.py` | Assenbaum 1987 | `DEF` | `Assenbaum.lean` |
-| EQ-ASSEN-DOM-01 | Applicability requires \(U_e \ll E\) (code/paper: do not use outside domain) | §5A.3 | `screening_kernel.py` | Assenbaum domain | `THM` | `Assenbaum.lean` |
+| EQ-ASSEN-DOM-01 | Applicability requires \(U_e \ll E\) (Lean/code: \(U_e < E_{\mathrm{kin}}\); outside ⇒ `formula_claimed=false`) | §5A.3 | `screening_kernel.py`, `unified_lenr_model/screening.py` | Assenbaum domain | `THM` | `Assenbaum.lean` |
 | EQ-SCR-UE-01 | Material-dependent \(U_e\) ranges (not single 800 eV) | §2.1/2.8 | `screening_data.py` | raiola2002, … | `EMP`/`AX` | data |
 | EQ-COMP-01 | `grouped_max_confidence_product` then cap at \(10^5\) | software | `theory_pipeline.py` | RR composition | `THM` | `Composition.lean` |
 | EQ-COMP-02 | Intra-group mechanisms: max only (no product) | software | `THEORY_COMPOSITION_GROUPS` | RR | `THM` | `Composition.lean` |

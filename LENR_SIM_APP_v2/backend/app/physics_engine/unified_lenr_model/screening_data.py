@@ -4,6 +4,17 @@ Single source of truth for screening-potential values, replacing scattered
 hardcoded scalars (e.g. ``screening_potential = 800.0``) with cited,
 material-dependent *ranges*. Addresses finding RR-007 / IL-004.
 
+Domain honesty (do not conflate):
+- **RR-007 / this module:** material-dependent cited ``U_e`` ranges and the
+  adiabatic gas-target floor (``ADIABATIC_LIMIT_EV`` ~ 25 eV).
+- **EQ-ASSEN-DOM-01 / Lean Assenbaum:** the Assenbaum–Rolfs form
+  ``f = exp(pi eta U_e / E)`` is claimed only when ``U_e < E_kin`` (strict
+  stand-in for ≪). Thermal metal hosts routinely violate that domain; the
+  kernel still reports a capped sensitivity factor but sets
+  ``formula_claimed=False``.
+- **IL-004 (historical):** early consistency notes used a simplified
+  ``exp(U_e/E)``; production code and paper use the Assenbaum form above.
+
 Experimental context (see docs/REVIEW_2026/TRACEABILITY_MATRIX.md):
 - Gas-target d(d,p)t screening sits at the adiabatic limit U_e ~ 20-25 eV.
 - Deuterated metals show strongly enhanced, material- and site-dependent values:

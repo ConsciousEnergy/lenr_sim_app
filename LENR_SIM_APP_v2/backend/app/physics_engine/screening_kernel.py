@@ -69,6 +69,28 @@ DEFAULT_MASS_AMU = 2.014
 #: Floor on thermal energy (eV) so the exponent cannot divide by zero.
 _MIN_THERMAL_ENERGY_EV = 1e-6
 
+#: Lean ``Assenbaum.thermal_not_applicable`` anchors (meV → eV).
+#: U_e = 300000 meV (300 eV), E_kin = 100 meV (0.1 eV).
+LEAN_THERMAL_U_E_EV = 300.0
+LEAN_THERMAL_E_KIN_EV = 0.1
+
+
+def assenbaum_applicable(u_e_ev: float, e_kin_ev: float) -> bool:
+    """EQ-ASSEN-DOM-01 / Lean ``Assenbaum.applicable``: ``U_e < E_kin``.
+
+    Strict ``<`` is the machine-checkable stand-in for the physical ≪ domain of
+    the Assenbaum–Rolfs screened-cross-section expansion. Outside this
+    predicate the formula is computed for sensitivity bookkeeping but is
+    **not claimed** as a physical Assenbaum enhancement (see
+    ``formula_claimed``).
+    """
+    return float(u_e_ev) < float(e_kin_ev)
+
+
+def assenbaum_formula_claimed(u_e_ev: float, e_kin_ev: float) -> bool:
+    """Lean ``Assenbaum.formulaClaimed`` — identical to ``assenbaum_applicable``."""
+    return assenbaum_applicable(u_e_ev, e_kin_ev)
+
 
 def thermal_energy_ev(temperature_k: float) -> float:
     """Mean thermal energy ``1.5 kT`` in eV, floored for numerical safety."""
@@ -127,8 +149,10 @@ def compute_screening_enhancement(
         Dict with the enhancement plus every input and diagnostic needed to
         reproduce it: ``screening_potential_ev``, ``thermal_energy_ev``,
         ``sommerfeld_parameter``, ``exponent_raw``, ``exponent_applied``,
-        ``is_saturated``, ``exceeds_adiabatic_limit``, ``model`` and
-        ``citations``.
+        ``is_saturated``, ``assenbaum_applicable`` / ``formula_claimed``
+        (EQ-ASSEN-DOM-01), ``exceeds_adiabatic_limit`` (RR-007 anomalous
+        metal vs gas-target adiabatic floor — distinct from Assenbaum domain),
+        ``model`` and ``citations``.
     """
     potential_range = get_screening_potential_range(material)
     u_screen_ev = (
@@ -156,6 +180,10 @@ def compute_screening_enhancement(
     # screening term looks identical for every material.
     log10_enhancement_raw = exponent_raw / math.log(10.0)
 
+    # Lean Assenbaum domain (EQ-ASSEN-DOM-01). Independent of the adiabatic
+    # metal/gas floor (RR-007 / screening_data.ADIABATIC_LIMIT_EV).
+    is_assenbaum_applicable = assenbaum_applicable(u_screen_ev, energy_ev)
+
     return {
         "enhancement": float(enhancement),
         "log10_enhancement_raw": float(log10_enhancement_raw),
@@ -167,9 +195,13 @@ def compute_screening_enhancement(
         "exponent_applied": float(exponent_applied),
         "exponent_cap": float(exponent_cap),
         "is_saturated": bool(exponent_raw > exponent_cap),
+        "assenbaum_applicable": bool(is_assenbaum_applicable),
+        "formula_claimed": bool(is_assenbaum_applicable),
+        "domain_equation_id": "EQ-ASSEN-DOM-01",
         # Gas-target screening sits at the adiabatic limit; a metal-host value far
         # above it is the "anomalous screening" regime, which static Thomas-Fermi
-        # theory does not explain. Flagged rather than silently assumed.
+        # theory does not explain. Flagged rather than silently assumed — and
+        # must not be conflated with Assenbaum domain validity above.
         "exceeds_adiabatic_limit": bool(u_screen_ev > ADIABATIC_LIMIT_EV),
         "adiabatic_limit_ev": float(ADIABATIC_LIMIT_EV),
         "model": SCREENING_MODEL_ID,
