@@ -32,7 +32,7 @@ Fidelity ≠ validity. `EQ-OPEN-*` remain OPEN.
 | ENG-THEORY-PIPELINE-01 | `theory_protocol.py` + theories/* | Theory Methods / Unified | speculative_exploratory (default) | per-theory | per-theory | Per-theory Lean/analytics sparse; Holmlid≠Kim; null controls | md,json | Speculative | ARA P1 rebuilds (0.3.9); keep axes separate | P1 |
 | ENG-SCREEN-CASIMIR-01 | screening / Casimir / CR² composition | Unified / Theory | approximate | approximate | domain_limited | Domain validity gaps (§9C) | md,json | Approximate | Domain gates in UI | P2 |
 | ENG-STUB-EM-MHD-01 | EM PML, MHD two-fluid TODO, heat grid, n/γ | Advanced / internal | stub | incomplete | n/a | Incomplete solvers | md,json | Beta | Finish or hide from public beta | P2 |
-| ENG-ASPIRATIONAL-FEM-01 | FEM / Poisson–Schrödinger / COMSOL-class | Theory Methods / paper §3.1 | aspirational | aspirational | n/a | **Aspirational (NOT live):** residual/domain/non-deploy Lean (`EQ-PS-*`); never public-beta numerics; does **not** close EQ-OPEN-* | md,json,lean | Aspirational | Keep Methods honesty alert; Phase C roadmap only | P3 |
+| ENG-ASPIRATIONAL-FEM-01 | FEM / Poisson–Schrödinger / COMSOL-class | Theory Methods / paper §3.1 | aspirational | aspirational | n/a | **Aspirational (NOT live):** continuum DEF `EQ-PS-01` + residual/domain/tolerance/non-deploy Lean (`EQ-PS-*`); never public-beta numerics; does **not** close EQ-OPEN-* | md,json,lean | Aspirational | Keep Methods honesty alert; Phase C roadmap only | P3 |
 
 ## Seed sources
 
