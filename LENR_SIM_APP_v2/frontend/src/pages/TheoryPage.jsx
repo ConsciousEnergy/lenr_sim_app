@@ -103,7 +103,7 @@ const TheoryPage = () => {
             Unified LENR Theoretical Framework
           </Typography>
           <Typography variant="h6" color="text.secondary" paragraph sx={{ fontStyle: 'italic' }}>
-            Electron, Neutron, and Proton coupling is all you need
+            Coupling is all you need
           </Typography>
           <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
             <Chip label="Rydberg Matter" size="small" color="primary" />
