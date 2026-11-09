@@ -50,6 +50,19 @@ MECHANISM_STATUS_MAP = {
 }
 
 
+def log_bayes_factor(log_evidence_i: float, log_evidence_j: float) -> float:
+    """EQ-UQ-BF-01 log-evidence difference (Lean ``logBayesFactor`` mirror)."""
+    return float(log_evidence_i) - float(log_evidence_j)
+
+
+def approx_bayes_factor(log_evidence_i: float, log_evidence_j: float) -> float:
+    """EQ-UQ-BF-01 approximate Bayes factor ``exp(Δlog_evidence)``.
+
+    Algebraic bookkeeping only — not an empirical posterior and not a LENR proof.
+    """
+    return float(math.exp(log_bayes_factor(log_evidence_i, log_evidence_j)))
+
+
 def occurrence_anchored(observations: Mapping[str, Any]) -> bool:
     """True when Miles-band heat–He data anchor occurrence (EMP, not mechanism)."""
     power = observations.get("excess_power_W")
@@ -226,7 +239,7 @@ def evaluate_determination(
     posterior = _softmax(log_ev, pi)
 
     def bayes_factor(num: str, den: str) -> float:
-        return float(math.exp(log_ev[num] - log_ev[den]))
+        return approx_bayes_factor(log_ev[num], log_ev[den])
 
     miles_in_band = q_mev is not None and MILES_MEV_MIN <= q_mev <= MILES_MEV_MAX
     has_lab = any(
