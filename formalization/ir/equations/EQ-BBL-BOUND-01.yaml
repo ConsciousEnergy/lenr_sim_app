@@ -21,4 +21,7 @@ lean_decls:
   - "LenrFormal.CollapseBounds.shockPressureCeiling_Pa"
   - "LenrFormal.CollapseBounds.compressibilityMachThreshold_x10"
   - "LenrFormal.CollapseBounds.temperatureBound_K"
-notes: "Integer-scaled literature ceilings mirrored in Lean. Regime selection is bookkeeping, not a hydrodynamics theorem. Does not close EQ-OPEN-* or set lenr_proved."
+  - "LenrFormal.CollapseBounds.temperature_bound_rp_subsonic"
+  - "LenrFormal.CollapseBounds.temperature_bound_supersonic"
+  - "LenrFormal.CollapseBounds.temperature_bound_km_subsonic"
+notes: "Integer-scaled literature ceilings mirrored in Lean. Regime selection is bookkeeping, not a hydrodynamics theorem. Related domain row: EQ-BBL-RP-DOM-01. Does not close EQ-OPEN-* or set lenr_proved."

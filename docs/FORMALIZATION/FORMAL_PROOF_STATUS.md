@@ -39,6 +39,7 @@
 | EQ-SCALE-MHD-DOM-01 | MHD formulas not claimed at nuclear fm | `ScaleQED` | **PROVED** |
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler milli-unit identity \(\equiv 1\) | `ScaleQED` | **PROVED** |
 | EQ-BBL-COMP-01 | Intra-group max of per-mechanism clamps; groups multiply | `Composition` | **PROVED** (algebra) |
+| EQ-BBL-RP-DOM-01 | RP domain \(\mathrm{Ma}<0.3\); KM preferred otherwise; RP claim needs mode∧domain | `CollapseBounds` | **PROVED** (domain; **not** dynamics / LENR) |
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
@@ -63,10 +64,13 @@
 
 | ID | Lean module | What is encoded |
 |----|-------------|-----------------|
-| EQ-BBL-LIM-01 | `CollapseBounds` | Pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\); reported \(T\)/\(P\) under calculated ceilings |
-| EQ-BBL-BOUND-01 | `CollapseBounds` | Emission-band / Moss-ion / shock-pressure ceilings + Mach×10 regime selector (ENG-BUBBLE-FUSION-01 scaffold) |
-| EQ-BBL-UQ-01 | `CollapseBounds` | UQ percentile keys \(\{5,25,50,75,95\}\) + CR/\(\gamma\) tolerance percents as definitions |
+| EQ-BBL-LIM-01 | `CollapseBounds` | Pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\); reported \(T\)/\(P\) saturation identities |
+| EQ-BBL-BOUND-01 | `CollapseBounds` | Emission-band / Moss-ion / shock-pressure ceilings + Mach×10 regime selector (ENG-BUBBLE-FUSION-01) |
+| EQ-BBL-UQ-01 | `CollapseBounds` | UQ percentile keys \(\{5,25,50,75,95\}\), CR/\(\gamma\) tolerance percents, Sobol dim count |
+| EQ-BBL-RP-DOM-01 | `CollapseBounds` | RP domain / KM-preferred / `rpFormulaClaimed` Assenbaum-style lemmas (ENG-RP-KM-01; **not** dynamics proof) |
+| EQ-BBL-CR-CAP-01 | `CollapseBounds` | Hard-core \(C_{\max}=1000\) reporting clamp |
 | EQ-PS-01 | `PoissonSchrodinger` | Parent continuum PS / FEM coupling sketch DEF (`ENG-ASPIRATIONAL-FEM-01`; paper-only) |
+
 | EQ-PS-POISSON-01 | `PoissonSchrodinger` | Discrete Poisson residual bookkeeping (`ENG-ASPIRATIONAL-FEM-01`) |
 | EQ-PS-SCHROD-01 | `PoissonSchrodinger` | Discrete Schrödinger residual bookkeeping (`E_eigen`) |
 | EQ-PS-TOL-01 | `PoissonSchrodinger` | Explicit residual tolerance axiom \(r\le\tau\) (never silent \(r=0\)) |
