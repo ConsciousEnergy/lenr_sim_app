@@ -23,9 +23,21 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | WH-ENP-01 | Exploratory bounds only | Ledger | `WH-ENP-01` | (see MEV/RAD/RATE stubs) | IR [`EQ-WH-ENP-01.yaml`](../../../formalization/ir/equations/EQ-WH-ENP-01.yaml), [`EQ-WH-PART-01`](../../../formalization/ir/equations/EQ-WH-PART-01.yaml), [`EQ-WH-DICKE-01`](../../../formalization/ir/equations/EQ-WH-DICKE-01.yaml), [`EQ-NBODY-FGR-01`](../../../formalization/ir/equations/EQ-NBODY-FGR-01.yaml), [`EQ-OVERLAP-01`](../../../formalization/ir/equations/EQ-OVERLAP-01.yaml); Lean WorkingHypothesis* / NBody / Overlap — **does not close OPEN** |
 | ENG-BUBBLE-FUSION-01 | Approximate / schematic unless provenance=`physics_engine` | Ledger + BUG_TRIAGE | `ENG-BUBBLE-FUSION-01` | [latex/eng_bubble_fusion_01.tex](./latex/eng_bubble_fusion_01.tex) | IR [`EQ-BBL-LIM-01`](../../../formalization/ir/equations/EQ-BBL-LIM-01.yaml) / [`EQ-BBL-BOUND-01`](../../../formalization/ir/equations/EQ-BBL-BOUND-01.yaml) / [`EQ-BBL-UQ-01`](../../../formalization/ir/equations/EQ-BBL-UQ-01.yaml) / [`EQ-BBL-CR-CAP-01`](../../../formalization/ir/equations/EQ-BBL-CR-CAP-01.yaml); Lean `CollapseBounds` — **DEF clamp/UQ/CR-cap bookkeeping only** (dynamics still approximate; does **not** close OPEN) |
 | ENG-RP-KM-01 | **Approximate (live):** RP domain-limited; KM preferred at high Mach — do **not** treat as nuclear-rate proof | Ledger + PHYS verification | `ENG-RP-KM-01` | [latex/eng_rp_km_01.tex](./latex/eng_rp_km_01.tex) | IR [`EQ-BBL-RP-DOM-01`](../../../formalization/ir/equations/EQ-BBL-RP-DOM-01.yaml); Lean `CollapseBounds` RP/KM domain lemmas — **not** nuclear-rate proof; KM auto Mach≥0.3 on Unified + BF |
-
-| ENG-WKB-01 | **Beta (live):** Established WKB/Gamow reference; screening domain-limited | Ledger | `ENG-WKB-01` | (existing PHYS docs) | Lean `Gamow` monotonicity **PROVED** (`EQ-GAMOW-01`); screening still domain-limited |
+| ENG-WKB-01 | **Beta (live):** Established WKB/Gamow reference; screening domain-limited | Ledger | `ENG-WKB-01` | (existing PHYS docs) | Lean `Gamow` monotonicity **PROVED** (`EQ-GAMOW-01`); screening Assenbaum domain-limited (`EQ-ASSEN-DOM-01`) |
 | ENG-ASPIRATIONAL-FEM-01 | **Aspirational (NOT live):** COMSOL FEM / PS continuum — research roadmap only; never public-beta numerics | Theory Methods honesty + paper §3.1 | `ENG-ASPIRATIONAL-FEM-01` | — | IR `EQ-PS-01` + `EQ-PS-POISSON/SCHROD/COUPLE/DOM/TOL/NONDEPLOY-01`; Lean `PoissonSchrodinger` continuum DEF / residual / domain / tolerance / honesty **PROVED** — **≠** continuum FEM, **≠** nature proof, **≠** EQ-OPEN closure |
+
+## WS pack crosswalk (0.3.9 public-testing; honesty only)
+
+| Surface | Artifact | Status |
+|---------|----------|--------|
+| Overlap DEF | [`Overlap.lean`](../../../formalization/lean/LenrFormal/Overlap.lean), IR `EQ-OVERLAP-01/02` | **on `dev`** (#330) — ensemble ≠ rate |
+| CollapseBounds deepen | [`CollapseBounds.lean`](../../../formalization/lean/LenrFormal/CollapseBounds.lean), IR `EQ-BBL-RP-DOM/CR-CAP-01` | **on `dev`** (#328) — domain/clamp only |
+| FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean), IR `EQ-PS-01`/`TOL` | **on `dev`** (#327) — aspirational |
+| Weight surfaces | [`THEORY_WEIGHT_SURFACES.md`](../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md), pack `detector_weak_screen/` | **on `dev`** (#331) — Approximate/Aspirational inventory |
+| Detector RAD honesty | neutron UL / Cd / moderator PREDs | pending #329 re-CI — **≠** RAD/RATE closure |
+| WeakInteraction | `WeakInteraction.lean`, IR `EQ-EC-*` | pending #332 — **≠** EC closure |
+| Rate UQ floors | `Decision.lean` ExpHom identities | pending #334 — algebraic only |
+| Paper provenance twin | [`paper/PROVENANCE.md`](./paper/PROVENANCE.md), [`simulation_evidence.json`](./paper/simulation_evidence.json) | WS10 refresh |
 
 ## Honesty rule
 
