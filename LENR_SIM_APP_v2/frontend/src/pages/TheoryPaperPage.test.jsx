@@ -16,7 +16,7 @@ describe('TheoryPaperPage', () => {
 
   test('renders Transformer-inspired subtitle without front-matter homage', () => {
     render(<TheoryPaperPage />);
-    expect(screen.getByText(/Electron, Neutron, and Proton coupling is all you need/)).toBeInTheDocument();
+    expect(screen.getByText(/Coupling is all you need/)).toBeInTheDocument();
     // Vaswani homage lives in References only (not the hero / title block).
     expect(screen.queryByText(/Attention Is All You Need/)).not.toBeInTheDocument();
   });
