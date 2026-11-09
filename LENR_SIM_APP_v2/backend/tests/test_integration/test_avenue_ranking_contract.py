@@ -105,3 +105,16 @@ def test_assert_ranking_honesty_rejects_open_close() -> None:
         assert "EQ-OPEN-RATE-01" in str(exc)
     else:
         raise AssertionError("expected honesty guard to reject CLOSED OPEN id")
+
+
+def test_ranking_priors_are_scenario_aids_not_lenr_posterior() -> None:
+    """Miles-anchored oracle priors must not be readable as P(LENR)."""
+    from app.physics_engine.decision_oracle import ANCHORED_PRIORS, DEFAULT_PRIORS
+
+    payload = rank_avenues(pack_ids=["smoke"], n_uq_samples=8, seed=2)
+    assert_ranking_honesty(payload)
+    assert payload["kind"] == "scenario_table_not_posterior"
+    assert payload["lenr_proved"] is False
+    assert payload["priors"]["default_skeptical"] == dict(DEFAULT_PRIORS)
+    assert payload["priors"]["occurrence_anchored"] == dict(ANCHORED_PRIORS)
+    assert payload["claim_tier"] == "speculative_exploratory"
