@@ -514,7 +514,7 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
     if preset == "iccf27_grid":
         payload["note"] = (
             "ICCF-27 / Sept 2026 literature extension plus graphite/SiC "
-            "controls. Does not mutate the locked 17-row seed set. Does not "
+            "controls. Does not mutate the locked 18-row seed set. Does not "
             "prove LENR."
         )
     if preset == "parameter_map_grid":

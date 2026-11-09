@@ -59,6 +59,8 @@ def _load_reactions() -> Tuple[ParkhomovReaction, ...]:
                 classification=str(row["classification"]),
                 neutrino=str(row.get("neutrino") or "none"),
                 notes=str(row.get("notes") or ""),
+                feeds_production_rate=bool(row.get("feeds_production_rate", True)),
+                claim_tier=str(row.get("claim_tier") or ""),
             )
         )
     return tuple(loaded)
@@ -74,10 +76,13 @@ class ParkhomovReaction:
     reactants: Tuple[Tuple[str, int], ...]
     products: Tuple[Tuple[str, int], ...]
     energy_mev: float
-    category: str  # "fusion" | "transmutation" | "fission"
+    category: str  # "fusion" | "transmutation" | "fission" | "detector_gas_speculative"
     classification: str  # "boson-boson" | "fermion-fermion" | "mixed"
     neutrino: str  # "none" | "nu" | "anti-nu"
     notes: str = ""
+    # Detector-gas SPEC rows must never feed production rate magnitudes.
+    feeds_production_rate: bool = True
+    claim_tier: str = ""
 
 
 # Compact curated table loaded from parkhomov_curated.v1.json.
@@ -223,10 +228,16 @@ def validate_transmutation(
         else:
             normalised_products.append(_normalise_element(entry))
 
-    # Score every row, keep best bucket
+    # Score every row, keep best bucket. Detector-gas SPEC / ν-flagged
+    # storytelling rows never enter production matching (no rate magnitudes,
+    # no EQ-OPEN-EC discharge via curated table hits).
     exact: List[ParkhomovReaction] = []
     partial: List[ParkhomovReaction] = []
     for row in _REACTIONS:
+        if not row.feeds_production_rate:
+            continue
+        if row.category == "detector_gas_speculative":
+            continue
         score = _match_score(normalised_reactants, normalised_products, row)
         if score == "exact":
             exact.append(row)
@@ -284,6 +295,15 @@ def _serialise_row(row: ParkhomovReaction) -> Dict[str, Any]:
     return data
 
 
+def list_detector_gas_speculative_rows() -> List[Dict[str, Any]]:
+    """Return curated detector-gas SPEC rows (bookkeeping only; not rate inputs)."""
+    return [
+        _serialise_row(row)
+        for row in _REACTIONS
+        if row.category == "detector_gas_speculative" or not row.feeds_production_rate
+    ]
+
+
 def infer_default_reactants(host: str, reactant: str) -> List[Tuple[str, int]]:
     """Heuristic: pick the dominant nuclear-active reactant pair.
 
@@ -326,6 +346,7 @@ def infer_default_products(host: str, reactant: str) -> List[Tuple[str, int]]:
 
 __all__ = [
     "validate_transmutation",
+    "list_detector_gas_speculative_rows",
     "infer_default_products",
     "infer_default_reactants",
     "ParkhomovReaction",
