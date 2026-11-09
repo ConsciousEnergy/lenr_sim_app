@@ -260,3 +260,76 @@ def test_uq_three_body_exposes_conversion_sensitivity() -> None:
     assert res.claim_tier == "speculative_exploratory"
     assert "conversion_probability" in res.sensitivity
     assert "widomlarsen2006" in res.references
+
+
+def test_uq_enhancement_prior_respects_composition_cap_honesty_floor() -> None:
+    """RR-001 / EQ-COMP-01 honesty: UQ two-body enhancement prior ≤ 1e5 ceiling."""
+    from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+    from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
+        ENHANCEMENT_PRIOR_HI,
+        ENHANCEMENT_PRIOR_LO,
+    )
+
+    assert ENHANCEMENT_PRIOR_LO == pytest.approx(1e3)
+    assert ENHANCEMENT_PRIOR_HI == pytest.approx(MAX_ENHANCEMENT_FACTOR)
+    assert ENHANCEMENT_PRIOR_HI == pytest.approx(1e5)
+
+
+def test_two_body_notes_are_non_closure_honest() -> None:
+    """Two-body is a reference formalism, not a lattice-LENR closure claim."""
+    cfg = _config()
+    res = compute_two_body_rate(cfg, tunneling_prob=1.0)
+    notes = res.notes.lower()
+    assert "not a validated lattice-lenr" in notes
+    assert "lenr_proved" not in notes
+    assert res.claim_tier == "established_reference"
+
+
+def test_eq_uq_bf_01_algebraic_identities_mirror_lean() -> None:
+    """EQ-UQ-BF-01 Python mirrors Lean self/antisymm/cocycle + ExpHom products."""
+    from app.physics_engine.decision_oracle import (
+        approx_bayes_factor,
+        log_bayes_factor,
+    )
+
+    samples = (-3.0, -1.0, 0.0, 0.5, 2.0, 4.0)
+    for log_ev in samples:
+        assert log_bayes_factor(log_ev, log_ev) == pytest.approx(0.0)
+        assert approx_bayes_factor(log_ev, log_ev) == pytest.approx(1.0)
+
+    for i in samples:
+        for j in samples:
+            assert log_bayes_factor(i, j) == pytest.approx(-log_bayes_factor(j, i))
+            bf_ij = approx_bayes_factor(i, j)
+            bf_ji = approx_bayes_factor(j, i)
+            assert bf_ij * bf_ji == pytest.approx(1.0, rel=1e-12)
+            assert bf_ij == pytest.approx(math.exp(-log_bayes_factor(j, i)))
+
+    for i in samples:
+        for j in samples:
+            for k in samples:
+                assert log_bayes_factor(i, j) + log_bayes_factor(j, k) == pytest.approx(
+                    log_bayes_factor(i, k)
+                )
+                assert approx_bayes_factor(i, j) * approx_bayes_factor(j, k) == pytest.approx(
+                    approx_bayes_factor(i, k), rel=1e-12
+                )
+
+
+def test_decision_oracle_bayes_factors_obey_reciprocal_identity() -> None:
+    """Oracle B reported BF pairs stay algebraically reciprocal (not empirical)."""
+    from app.physics_engine.decision_oracle import evaluate_determination
+
+    det = evaluate_determination(rate_mode="two_body")
+    assert det["oracle_a"]["two_body_budget_closes"] is False
+    assert det["oracle_a"]["log10_n_events_two_body"] == pytest.approx(-40.0)
+    assert "LENR_PROVED" in det["forbidden"]
+    assert det["status"] != "LENR_PROVED"
+
+    oracle_b = det["oracle_b"]
+    hyps = {row["id"]: row for row in oracle_b["hypotheses"]}
+    bf_trap = oracle_b["bayes_factor_trapped_vs_two_body"]
+    log_trap = hyps["trapped_state"]["log_evidence"]
+    log_two = hyps["two_body"]["log_evidence"]
+    assert bf_trap == pytest.approx(math.exp(log_trap - log_two), rel=1e-12)
+    assert bf_trap * math.exp(log_two - log_trap) == pytest.approx(1.0, rel=1e-12)

@@ -1,5 +1,7 @@
 """API integration tests for the additive reaction-rate engine block (Phase 8)."""
 
+import math
+
 from fastapi.testclient import TestClient
 
 
@@ -152,3 +154,59 @@ def test_bubble_lattice_response_is_backward_compatible() -> None:
     assert "collapse_results" in data
     assert "peak_conditions" in data
     assert "reaction_rate_engine" in data
+
+
+def test_simulate_rate_uq_honesty_floors_and_eq_uq_bf_contract() -> None:
+    """WS6 contract: two-body non-closure, 1e5 cap, BF algebra, no lenr_proved."""
+    from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+
+    client = _client()
+    payload = {
+        **_base_payload(),
+        "include_uncertainty": True,
+        "uncertainty_samples": 64,
+        "random_seed": 17,
+    }
+    resp = client.post("/api/unified/simulate", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    rate_block = data["reaction_rate_engine"]
+    assert rate_block["rate"]["mode"] == "two_body"
+    assert rate_block["rate"]["claim_tier"] == "established_reference"
+    uq = rate_block["uncertainty"]
+    assert uq["seed"] == 17
+    assert uq["interval_kind"] in {"predictive", "posterior_credible"}
+    ci = uq["credible_interval"]
+    assert ci["p05"] <= ci["p50"] <= ci["p95"]
+
+    oq = data["open_questions"]
+    assert oq["determination"]["status"] == "RATE_BUDGET_DOES_NOT_CLOSE"
+    oracle_a = oq["determination"]["oracle_a"]
+    assert oracle_a["two_body_budget_closes"] is False
+    assert oracle_a["log10_n_events_two_body"] == -40.0
+
+    oracle_b = oq["determination"]["oracle_b"]
+    hyps = {row["id"]: row for row in oracle_b["hypotheses"]}
+    bf = oracle_b["bayes_factor_two_body_vs_null"]
+    expected = math.exp(
+        hyps["two_body"]["log_evidence"] - hyps["chemical_null"]["log_evidence"]
+    )
+    assert math.isclose(bf, expected, rel_tol=1e-12)
+    assert "LENR_PROVED" in oq["determination"]["forbidden"]
+    assert oq["determination"]["status"] != "LENR_PROVED"
+
+    # Composition / enhancement honesty floor remains the governance 1e5 ceiling.
+    assert MAX_ENHANCEMENT_FACTOR == 1e5
+    if "composition" in oq and oq["composition"].get("pipeline_combined_enhancement") is not None:
+        assert oq["composition"]["pipeline_combined_enhancement"] <= MAX_ENHANCEMENT_FACTOR
+
+
+def test_uq_opt_in_stays_opt_in_on_simulate() -> None:
+    """UQ remains absent unless include_uncertainty is requested."""
+    client = _client()
+    block = client.post("/api/unified/simulate", json=_base_payload()).json()[
+        "reaction_rate_engine"
+    ]
+    assert "uncertainty" not in block
+    assert block["rate"]["mode"] == "two_body"

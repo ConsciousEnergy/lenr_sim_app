@@ -59,7 +59,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§2.8 Composition cap 1e5", "LenrFormal.Composition")
   , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
-  , ("Oracle B / EQ-UQ-BF-01 algebraic BF", "LenrFormal.Decision")
+  , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
