@@ -1,11 +1,11 @@
 {
   "schema": "lenr-paper-simulation-evidence-v1",
   "train": "v0.3.7-beta",
-  "paper_revision": "2026-11-05-honesty-sync",
-  "prior_paper_revision": "2026-09-25",
+  "paper_revision": "2026-11-09-ws-pack-honesty",
+  "prior_paper_revision": "2026-11-05-honesty-sync",
   "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
   "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
-  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro.",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. WS pack adds Lean DEF/clamp/domain honesty and campaign inventory only.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
   "open_ids": [
@@ -39,7 +39,14 @@
       "n_theory_runs": 10,
       "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
       "status": "on_dev",
-      "note": "Bubble-lattice host×loading×drive×dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
+      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
+    },
+    {
+      "preset": "detector_weak_screen",
+      "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/",
+      "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/manifest.json",
+      "status": "on_dev",
+      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
     }
   ],
   "science_notes": [
@@ -56,21 +63,55 @@
       "status": "on_dev",
       "phase": "F",
       "note": "Merged via #297; draft criteria only; EQ-OPEN-* remain OPEN"
+    },
+    {
+      "id": "theory_weight_surfaces",
+      "path": "LENR_SIM_APP_v2/docs/v0.3.9-beta/THEORY_WEIGHT_SURFACES.md",
+      "status": "on_dev",
+      "phase": "WS7",
+      "note": "Merged via #331; Approximate/Aspirational inventory; not lab posteriors; EQ-OPEN-* remain OPEN"
     }
   ],
   "campaign_invariants": "formalization/predictions/campaign_invariants.json",
   "paper_benchmarks": "LENR_SIM_APP_v2/backend/tests/test_paper_benchmarks/",
   "lean_crosswalk": "formalization/lean/LenrFormal/PaperCrosswalk.lean",
   "lean_clamp_nonclosure": [
-    "formalization/lean/LenrFormal/CollapseBounds.lean (EQ-BBL-LIM-01 clamp algebra)",
-    "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure)"
+    "formalization/lean/LenrFormal/CollapseBounds.lean (EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01 clamp/domain/UQ bookkeeping; #328)",
+    "formalization/lean/LenrFormal/Overlap.lean (EQ-OVERLAP-01/02 DEF; ensemble \u2260 rate; #330)",
+    "formalization/lean/LenrFormal/PoissonSchrodinger.lean (EQ-PS-01/TOL continuum DEF; aspirational; #327)",
+    "formalization/lean/LenrFormal/WeakInteraction.lean (EQ-EC-* Fermi G_F/\u03c3/Boltzmann identities; #332; \u2260 EQ-OPEN-EC-01 closure)",
+    "formalization/lean/LenrFormal/Decision.lean (EQ-UQ-BF-01 ExpHom algebra honesty floors; #334; not empirical BF)",
+    "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure; OPEN table unchanged)"
   ],
+  "ws_pack_landed": [
+    {"id": "theory_paper_subtitle", "pr": 326, "note": "Coupling is all you need subtitle rename"},
+    {"id": "fem_continuum_def", "pr": 327, "note": "EQ-PS-01/TOL aspirational continuum DEF"},
+    {"id": "collapse_bounds_deepen", "pr": 328, "note": "EQ-BBL-* clamp/UQ/RP domain bookkeeping"},
+    {"id": "detector_rad_honesty", "pr": 329, "note": "detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN"},
+    {"id": "overlap_wh_nbody", "pr": 330, "note": "Overlap DEF + WH/NBody FGR sharpening"},
+    {"id": "weight_surfaces", "pr": 331, "note": "THEORY_WEIGHT_SURFACES + detector_weak_screen inventory"},
+    {"id": "weak_interaction", "pr": 332, "note": "WeakInteraction.lean EQ-EC-* Fermi identities; EQ-OPEN-EC-01 stays OPEN"},
+    {"id": "assenbaum_domain", "pr": 333, "note": "EQ-ASSEN-DOM-01 screening domain honesty"},
+    {"id": "rate_uq_floors", "pr": 334, "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors; not empirical BF"}
+  ],
+  "ws_pack_pending": [],
   "engine_sync_notes": [
-    "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3",
-    "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback",
+    "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
+    "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback; CR-cap DEF (#328)",
+    "ENG-ASPIRATIONAL-FEM-01: continuum DEF EQ-PS-01/TOL; never public-beta numerics (#327)",
+    "ENG-WEAK-01: Fermi G_F/\u03c3/Boltzmann bookkeeping only; not Q4/EC closure (#332)",
     "Cavitation-collapse: modelled enhancement / contested hydro; collapse_uq.py percentiles are model-only",
-    "WH-ENP-01 / v2 bounds retained in paper section 5A; do not close EQ-OPEN-*",
-    "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false"
+    "WH-ENP-01 / Overlap / NBody FGR retained; do not close EQ-OPEN-* (#330)",
+    "WS7 detector_weak_screen + THEORY_WEIGHT_SURFACES: inventory only; dual score honesty; lenr_proved false (#331)",
+    "Assenbaum screening domain honesty (#333); formula not claimed outside validity",
+    "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false",
+    "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)",
+    "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false"
   ],
-  "formats": [".md", ".txt", ".tex", ".lean"]
+  "formats": [
+    ".md",
+    ".txt",
+    ".tex",
+    ".lean"
+  ]
 }
