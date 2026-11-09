@@ -49,6 +49,7 @@ Do **not** treat these paths as laboratory evidence. Live links do not change cl
 | Overlap DEF | [`Overlap.lean`](../../../../formalization/lean/LenrFormal/Overlap.lean) | `EQ-OVERLAP-01/02` — \((r_0/a)^3\) skeleton; ensemble count ≠ nuclear rate (#330) |
 | FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean) | `EQ-PS-01` + `EQ-PS-TOL-01` — aspirational continuum sketch; **not** live FEM (#327) |
 | Assenbaum domain | [`EQ-ASSEN-DOM-01.yaml`](../../../../formalization/ir/equations/EQ-ASSEN-DOM-01.yaml) | Screening domain honesty; formula not claimed outside validity (#333) |
+| Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline | **on `dev`** via #329 — `detector_ul_not_proof`; **≠** `EQ-OPEN-RAD/RATE` closure |
 | WeakInteraction | [`WeakInteraction.lean`](../../../../formalization/lean/LenrFormal/WeakInteraction.lean) | Pending land of #332 — Fermi \(G_F\)/σ/Boltzmann identities only; **≠** `EQ-OPEN-EC-01` closure |
 | Formal proof status | [`FORMAL_PROOF_STATUS.md`](../../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | WH / OpenObligations non-closure; OPEN table unchanged |
 | Proof matrix twin | [`../PROOF_MATRIX.md`](../PROOF_MATRIX.md) | Ledger ↔ Lean/IR crosswalk; honesty-only |

@@ -39,7 +39,7 @@
       "n_theory_runs": 10,
       "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
       "status": "on_dev",
-      "note": "Bubble-lattice host×loading×drive×dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
+      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
     },
     {
       "preset": "detector_weak_screen",
@@ -77,7 +77,7 @@
   "lean_crosswalk": "formalization/lean/LenrFormal/PaperCrosswalk.lean",
   "lean_clamp_nonclosure": [
     "formalization/lean/LenrFormal/CollapseBounds.lean (EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01 clamp/domain/UQ bookkeeping; #328)",
-    "formalization/lean/LenrFormal/Overlap.lean (EQ-OVERLAP-01/02 DEF; ensemble ≠ rate; #330)",
+    "formalization/lean/LenrFormal/Overlap.lean (EQ-OVERLAP-01/02 DEF; ensemble \u2260 rate; #330)",
     "formalization/lean/LenrFormal/PoissonSchrodinger.lean (EQ-PS-01/TOL continuum DEF; aspirational; #327)",
     "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure; OPEN table unchanged)"
   ],
@@ -86,11 +86,6 @@
       "id": "weak_interaction",
       "pr": 332,
       "note": "WeakInteraction.lean EQ-EC-* Fermi identities pending land; EQ-OPEN-EC-01 stays OPEN"
-    },
-    {
-      "id": "detector_rad_honesty",
-      "pr": 329,
-      "note": "Neutron detector / branching honesty (RAD+RATE) pending re-CI; EQ-OPEN-RAD/RATE stay OPEN"
     },
     {
       "id": "rate_uq_floors",
@@ -106,7 +101,13 @@
     "WH-ENP-01 / Overlap / NBody FGR retained; do not close EQ-OPEN-* (#330)",
     "WS7 detector_weak_screen + THEORY_WEIGHT_SURFACES: inventory only; dual score honesty; lenr_proved false (#331)",
     "Assenbaum screening domain honesty (#333); formula not claimed outside validity",
-    "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false"
+    "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false",
+    "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)"
   ],
-  "formats": [".md", ".txt", ".tex", ".lean"]
+  "formats": [
+    ".md",
+    ".txt",
+    ".tex",
+    ".lean"
+  ]
 }

@@ -34,7 +34,7 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | CollapseBounds deepen | [`CollapseBounds.lean`](../../../formalization/lean/LenrFormal/CollapseBounds.lean), IR `EQ-BBL-RP-DOM/CR-CAP-01` | **on `dev`** (#328) — domain/clamp only |
 | FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean), IR `EQ-PS-01`/`TOL` | **on `dev`** (#327) — aspirational |
 | Weight surfaces | [`THEORY_WEIGHT_SURFACES.md`](../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md), pack `detector_weak_screen/` | **on `dev`** (#331) — Approximate/Aspirational inventory |
-| Detector RAD honesty | neutron UL / Cd / moderator PREDs | pending #329 re-CI — **≠** RAD/RATE closure |
+| Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline | **on `dev`** (#329) — `detector_ul_not_proof`; **≠** RAD/RATE closure |
 | WeakInteraction | `WeakInteraction.lean`, IR `EQ-EC-*` | pending #332 — **≠** EC closure |
 | Rate UQ floors | `Decision.lean` ExpHom identities | pending #334 — algebraic only |
 | Paper provenance twin | [`paper/PROVENANCE.md`](./paper/PROVENANCE.md), [`simulation_evidence.json`](./paper/simulation_evidence.json) | WS10 refresh |
