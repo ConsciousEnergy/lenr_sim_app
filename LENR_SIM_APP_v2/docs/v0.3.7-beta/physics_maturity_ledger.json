@@ -57,7 +57,7 @@
       "proof_status": {
         "analytical": "open",
         "numerical": "open",
-        "lean": "deficit_identity_only"
+        "lean": "deficit_and_weak_bounds_only"
       },
       "artifacts": ["md", "json", "lean", "tex"],
       "beta_label": "speculative",
@@ -201,6 +201,21 @@
       "beta_label": "aspirational",
       "priority": "P3",
       "rd_next": "Keep Methods honesty alert; Phase C roadmap only; never public-beta numerics; EQ-OPEN-* stay OPEN"
+    },
+    {
+      "id": "ENG-WEAK-01",
+      "module_path": "backend/app/physics/weak_interaction.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "established_reference",
+      "proof_status": {
+        "analytical": "fermi_bookkeeping",
+        "numerical": "python_fermi_sigma_boltzmann",
+        "lean": "ec_thresh_gf_sigma_rate_proved"
+      },
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "reference",
+      "priority": "P1",
+      "rd_next": "Keep EQ-OPEN-EC-01 OPEN; no Widom SPEC promotion; lenr_proved false"
     }
   ]
 }

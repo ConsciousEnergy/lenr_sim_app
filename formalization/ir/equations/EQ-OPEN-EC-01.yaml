@@ -20,4 +20,4 @@ lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q4ElectronCaptureSourceClosed"
   - "LenrFormal.OpenObligations.energy_deficit_implies_q4_not_closed"
-notes: "This obligation remains open. The millielectronvolt deficit theorem (EQ-OPEN-EC-DEFICIT-01) uses stated double-layer numbers only; Widom–Larsen mass renormalization stays SPEC."
+notes: "This obligation remains OPEN. Companion bookkeeping: EQ-OPEN-EC-DEFICIT-01 (meV deficit) and WeakInteraction EQ-EC-THRESH/GF/SIGMA/RATE-01 (Fermi G_F / σ / Boltzmann bounds vs weak_interaction.py). None of those discharge Q4. Widom–Larsen mass renormalization stays SPEC. lenr_proved stays false."
