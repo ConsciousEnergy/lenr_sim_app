@@ -8,7 +8,7 @@
 simulations do not raise `claim_tier`. Official ICCF-27 proceedings were still
 under construction at harvest; talk-only rows stay `awaiting_proceedings`.
 
-Locked seeds (`literature_baselines.v1.json`, 17 rows, demo pack Baseline=17)
+Locked seeds (`literature_baselines.v1.json`, 18 rows; demo pack Baseline=17 is a frozen hydrate artifact)
 are **not** rewritten. New literature lives in
 [`literature_iccf27.v1.json`](../../datasets/literature_iccf27.v1.json) and the
 `iccf27_grid` campaign preset.

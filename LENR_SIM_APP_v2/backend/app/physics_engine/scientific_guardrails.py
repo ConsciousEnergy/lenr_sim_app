@@ -220,10 +220,27 @@ def build_observables_bridge(
     *,
     total_energy_watts: float,
     expected_he4_rate_per_s: float,
+    neutron_cps_ul: Optional[float] = None,
+    neutron_efficiency: Optional[float] = None,
+    neutron_live_time_s: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Canonical observable map with explicit units and provenance class.
+
+    ``neutron_rate_bound`` shares the γ UL honesty class
+    (``detector_ul_not_proof``): efficiency-corrected bookkeeping only,
+    never neutron proof or EQ-OPEN discharge.
     """
+    from app.physics_engine.many_body.branching_model import (
+        DETECTOR_UL_HONESTY_CLASS,
+        neutron_rate_bound_payload,
+    )
+
+    neutron_bound = neutron_rate_bound_payload(
+        neutron_cps_ul=neutron_cps_ul,
+        neutron_efficiency=neutron_efficiency,
+        live_time_s=neutron_live_time_s,
+    )
     return {
         "excess_heat": {
             "value": float(total_energy_watts),
@@ -235,19 +252,18 @@ def build_observables_bridge(
             "unit": "atoms/s",
             "type": "predicted_proxy",
         },
-        "neutron_rate_bound": {
-            "value": 0.0,
-            "unit": "counts/s",
-            "type": "upper_bound_proxy",
-            "proxy_not_computed": True,
-            "note": "Neutron transport is not solved in this route; treat value as placeholder.",
-        },
+        "neutron_rate_bound": neutron_bound,
         "gamma_rate_bound": {
             "value": 0.0,
             "unit": "counts/s",
             "type": "upper_bound_proxy",
+            "honesty_class": DETECTOR_UL_HONESTY_CLASS,
             "proxy_not_computed": True,
-            "note": "Gamma transport is not solved in this route; treat value as placeholder.",
+            "not_gamma_proof": True,
+            "note": (
+                "Gamma transport is not solved in this route; placeholder UL "
+                "shares honesty class with neutron_rate_bound (not proof)."
+            ),
         },
         "isotopic_shift_indicator": {
             "value": 0.0,
