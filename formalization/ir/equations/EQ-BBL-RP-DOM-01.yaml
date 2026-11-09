@@ -1,0 +1,27 @@
+id: EQ-BBL-RP-DOM-01
+latex: "\\mathrm{rpDomain}:=(\\mathrm{Ma}_{\\times10}<3);\\; \\mathrm{rpFormulaClaimed}:=(\\mathrm{RP}\\land\\mathrm{rpDomain})"
+symbols:
+  peakMach_x10: "Peak wall Mach ×10 bookkeeping (0.3 → 3)"
+  rpDomain: "Strictly sub-threshold Mach domain for Rayleigh–Plesset claim"
+  kmPreferred: "Mach at/above threshold ⇒ Keller–Miksis preferred"
+  rpFormulaClaimed: "RP mode and rpDomain both required"
+units: "dimensionless Mach×10"
+tag: THM
+paper_ref: "ENG-RP-KM-01; PHYSICS_EQUATION_VERIFICATION.md §9A.5; ENG-BUBBLE-FUSION-01"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_calculated_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/bubble_solver.py
+citation_keys:
+  - brenner_sbsl_rev_mod_phys_2002
+  - model_assumption_rp_km_domain
+lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.rpDomain"
+  - "LenrFormal.CollapseBounds.kmPreferred"
+  - "LenrFormal.CollapseBounds.rpFormulaClaimed"
+  - "LenrFormal.CollapseBounds.km_preferred_iff_not_rp_domain"
+  - "LenrFormal.CollapseBounds.high_mach_not_rp_domain"
+  - "LenrFormal.CollapseBounds.km_mode_not_rp_claimed"
+  - "LenrFormal.CollapseBounds.temperature_bound_eq_emission_of_rp_claimed"
+  - "LenrFormal.CollapseBounds.temperature_bound_eq_moss_of_km_preferred"
+notes: "Assenbaum-style domain honesty for RP vs KM. Domain lemmas only — not cavitation-dynamics existence, not nuclear-rate proof, does not close EQ-OPEN-*."

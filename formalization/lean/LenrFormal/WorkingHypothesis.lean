@@ -91,6 +91,20 @@ def dickeN2Licensed (domainPm dickePm : Nat) : Bool :=
 theorem paper_domain_not_dicke_licensed :
     dickeN2Licensed paperDomain_pm dickeRadius_pm = false := rfl
 
+/-- EQ-WH-DICKE-01 ∘ EQ-COLL-LIN-01: Dicke \(N^2\) is unlicensed **and** the
+    engine collective remains the linear clamp \(\min(N,10^6)\). -/
+theorem dicke_unlicensed_and_engine_linear :
+    dickeN2Licensed paperDomain_pm dickeRadius_pm = false ∧
+      (∀ n, collective n ≤ 1000000) :=
+  ⟨paper_domain_not_dicke_licensed, collective_le_cap⟩
+
+/-- Same-cluster FGR (EQ-NBODY-FGR-01) inherits the linear collective clamp. -/
+theorem same_cluster_fgr_uses_linear_collective
+    (nSites pOcc gammaTun fNuc tauScaled nCoherent : Nat) :
+    (fgrVolumetricBookkeeping nSites pOcc gammaTun fNuc tauScaled nCoherent).numerator =
+      nSites * pOcc * gammaTun * fNuc * collective nCoherent :=
+  fgr_volumetric_uses_linear_collective nSites pOcc gammaTun fNuc tauScaled nCoherent
+
 /-- EQ-WH-FLOOR-01: calorimetric threshold is R_mode ≥ R_obs (WhenHow). -/
 def floorIdentity (rateObs rateMode : Nat) : Prop :=
   thresholdCrossed rateObs rateMode
@@ -103,6 +117,13 @@ theorem floor_is_threshold (rateObs rateMode : Nat) :
 theorem he_identity_does_not_zero_remainder :
     heFactorMilli = 1000 ∧ 0 < openRemainderKeV :=
   ⟨he_is_identity_milli, remainder_positive⟩
+
+/-- Partition remainder + same-cluster FGR bookkeeping still leave Q1/Q3 open.
+    Does **not** discharge EQ-OPEN-MEV-01 or EQ-OPEN-RATE-01. -/
+theorem partition_and_fgr_do_not_close_mev_rate :
+    ¬ q1MeVEnergyGapClosed openRemainderKeV ∧
+      ¬ q3RateBudgetClosed log10NEvents :=
+  ⟨remainder_implies_q1_open, two_body_q3_not_closed⟩
 
 /-- EQ-WH-NONCLOSE-01: WH bookkeeping does not discharge the three open obligations. -/
 theorem wh_does_not_discharge_open_obligations :
