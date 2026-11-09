@@ -56,6 +56,10 @@ def test_literature_mode_does_not_raise_claim_tier() -> None:
     for theory_id in baseline:
         assert literature[theory_id]["claim_tier"] == baseline[theory_id]["claim_tier"]
         assert literature[theory_id]["score_mode"] == SCORE_MODE_PLUS_LITERATURE
+        # Literature blend may move experimental_agreement / final_score but
+        # cannot invent proof or erase dual score honesty.
+        assert "final_score" in literature[theory_id]
+        assert literature[theory_id].get("lenr_proved") is not True
 
 
 def test_theory_scores_endpoint_default_is_additive() -> None:
