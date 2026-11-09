@@ -1,4 +1,4 @@
-"""ICCF-27 literature extension campaign (does not mutate the locked 17-row seed set)."""
+"""ICCF-27 literature extension campaign (does not mutate the locked 18-row seed set)."""
 
 from __future__ import annotations
 

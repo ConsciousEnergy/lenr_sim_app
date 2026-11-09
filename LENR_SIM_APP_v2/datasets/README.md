@@ -9,12 +9,12 @@ simulations do not raise `claim_tier` or close `EQ-OPEN-*`.
 
 | File | Rows | Loaded by |
 |------|------|-----------|
-| `literature_baselines.v1.json` | 17 | `app.data.baseline_experiments` |
-| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 17) |
+| `literature_baselines.v1.json` | 18 | `app.data.baseline_experiments` |
+| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 18) |
 | `screening_priors.v1.json` | 9 hosts | `unified_lenr_model.screening_data` |
 | `parkhomov_curated.v1.json` | curated subset | `parkhomov_validation.py` |
 | `open_question_register.v1.json` | Q1–Q5 | campaigns / docs / Lean IR |
-| `testable_predictions.v1.json` | Predictions 1–7 | virtual-lab crosswalk |
+| `testable_predictions.v1.json` | Predictions 1–10 | virtual-lab crosswalk |
 | `reviewer_packs/` | export envelopes | `export_reviewer_pack` |
 
 The full Parkhomov SQLite (~519k rows, ~161 MB) is **not** shipped.
