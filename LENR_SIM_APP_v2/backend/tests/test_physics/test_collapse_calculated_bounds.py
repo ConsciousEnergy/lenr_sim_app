@@ -1,7 +1,13 @@
 """Tests for literature-anchored collapse reporting bounds (EQ-BBL-LIM-01)."""
 
 from app.physics_engine.collapse_calculated_bounds import (
+    COMPRESSIBILITY_MACH_THRESHOLD_X10,
+    EMISSION_BAND_UPPER_K,
+    MAX_COMPRESSION_RATIO,
+    MOSS_ION_CEILING_K,
     build_reporting_limits,
+    is_rp_domain,
+    temperature_bound_k_nat,
     temperature_calculated_bound_k,
 )
 
@@ -60,3 +66,20 @@ def test_km_peak_t_below_adiabatic_raw_at_high_cr() -> None:
     assert limits["temperature_k"]["calculated_bound_k"] == 2.0e6
     assert limits["temperature_k"]["value"] == 2.0e6
     assert limits["temperature_k"]["is_saturated"] is True
+
+
+def test_rp_domain_and_nat_temperature_bound_mirror_lean() -> None:
+    """EQ-BBL-RP-DOM-01 / EQ-BBL-BOUND-01 public Nat anchors."""
+    assert COMPRESSIBILITY_MACH_THRESHOLD_X10 == 3
+    assert MAX_COMPRESSION_RATIO == 1000
+    assert is_rp_domain(peak_mach=0.29) is True
+    assert is_rp_domain(peak_mach=0.3) is False
+    assert temperature_bound_k_nat(
+        peak_mach_x10=2, is_rayleigh_plesset=True
+    ) == int(EMISSION_BAND_UPPER_K)
+    assert temperature_bound_k_nat(
+        peak_mach_x10=3, is_rayleigh_plesset=True
+    ) == int(MOSS_ION_CEILING_K)
+    assert temperature_bound_k_nat(
+        peak_mach_x10=2, is_rayleigh_plesset=False
+    ) == int(MOSS_ION_CEILING_K)
