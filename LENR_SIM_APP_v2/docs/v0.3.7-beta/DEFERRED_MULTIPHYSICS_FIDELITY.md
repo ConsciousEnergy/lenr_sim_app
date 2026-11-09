@@ -54,8 +54,9 @@ Fusion numerics in the same PR train as A/B. Remains deferred through **v0.3.8+*
 not a Swarm cutover dependency.
 
 **Formalization (science track, non-deploy):** Lean `PoissonSchrodinger` + IR
-`EQ-PS-*` encode discrete residual / domain / non-deployment honesty for
-`ENG-ASPIRATIONAL-FEM-01` only. That does **not** ship continuum solvers on the
+`EQ-PS-01` (continuum parent DEF) and `EQ-PS-*` children encode discrete residual /
+domain / tolerance / non-deployment honesty for `ENG-ASPIRATIONAL-FEM-01` only.
+That does **not** ship continuum solvers on the
 public beta, does **not** flip `lenr_proved`, and does **not** close any
 `EQ-OPEN-*`.
 

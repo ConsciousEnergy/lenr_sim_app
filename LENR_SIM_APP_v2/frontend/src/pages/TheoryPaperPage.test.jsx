@@ -16,7 +16,7 @@ describe('TheoryPaperPage', () => {
 
   test('renders Transformer-inspired subtitle without front-matter homage', () => {
     render(<TheoryPaperPage />);
-    expect(screen.getByText(/Electron, Neutron, and Proton coupling is all you need/)).toBeInTheDocument();
+    expect(screen.getByText(/Coupling is all you need/)).toBeInTheDocument();
     // Vaswani homage lives in References only (not the hero / title block).
     expect(screen.queryByText(/Attention Is All You Need/)).not.toBeInTheDocument();
   });
@@ -74,6 +74,22 @@ describe('TheoryPaperPage', () => {
   test('renders Key Equations Quick Reference panel', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByText('Key Equations Quick Reference')).toBeInTheDocument();
+  });
+
+  test('screening equation card states Assenbaum domain limit', () => {
+    render(<TheoryPaperPage />);
+    expect(screen.getByText('Screening Enhancement')).toBeInTheDocument();
+    expect(screen.getByText(/Claimed only when Uₑ < E \(EQ-ASSEN-DOM-01\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Material Uₑ ranges are RR-007/i)).toBeInTheDocument();
+  });
+
+  test('section 2.1 screening alert separates Assenbaum domain from adiabatic floor', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText('2. Theoretical Framework'));
+    const alert = screen.getByTestId('screening-domain-honesty-alert');
+    expect(alert).toHaveTextContent(/EQ-ASSEN-DOM-01/);
+    expect(alert).toHaveTextContent(/adiabatic gas-target floor/);
+    expect(alert).toHaveTextContent(/not the Assenbaum predicate/);
   });
 
   test('Section 6.1 TSC is labelled speculative and remains open', () => {

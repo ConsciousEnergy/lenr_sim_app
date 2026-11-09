@@ -1,0 +1,121 @@
+{
+  "schema": "lenr-reviewer-pack-v1",
+  "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
+  "lenr_proved": false,
+  "empirical_claim_tiers_raised": false,
+  "git_sha": "cad304e3e255c697177e0b7e72bf5537033e95a7",
+  "preset": "detector_weak_screen",
+  "n_experiments": 15,
+  "n_theory_runs": 15,
+  "claim_tier_histogram": {
+    "speculative_exploratory": 314,
+    "established_reference": 26
+  },
+  "source_class_counts": {
+    "Campaign": 15
+  },
+  "open_ids": [
+    "EQ-OPEN-MEV-01",
+    "EQ-OPEN-RAD-01",
+    "EQ-OPEN-RATE-01",
+    "EQ-OPEN-EC-01",
+    "EQ-OPEN-YIELD-01"
+  ],
+  "campaign_invariants": {
+    "schema": "lenr-campaign-predictions-v1",
+    "disclaimer": "These invariants describe LENR_SIM_APP model outputs. They do not prove that LENR occurs in the laboratory. EQ-OPEN-* remain OPEN. A larger campaign does not raise empirical claim tiers.",
+    "lenr_proved": false,
+    "invariants": [
+      {
+        "id": "INV-LENR-NOT-PROVED",
+        "field": "open_questions.lenr_proved",
+        "equals": false
+      },
+      {
+        "id": "INV-OPEN-IDS",
+        "field": "open_questions.open_ids",
+        "contains": [
+          "EQ-OPEN-MEV-01",
+          "EQ-OPEN-RAD-01",
+          "EQ-OPEN-RATE-01",
+          "EQ-OPEN-EC-01",
+          "EQ-OPEN-YIELD-01"
+        ]
+      },
+      {
+        "id": "INV-Q4-OPEN",
+        "field": "open_questions.q_electron_capture.status",
+        "equals": "OPEN"
+      },
+      {
+        "id": "INV-Q4-NOT-CLAIMED",
+        "field": "open_questions.q_electron_capture.occurrence_claimed",
+        "equals": false
+      },
+      {
+        "id": "INV-Q5-OPEN",
+        "field": "open_questions.q_integrated_yield.status",
+        "equals": "OPEN"
+      },
+      {
+        "id": "INV-Q5-NOT-CLAIMED",
+        "field": "open_questions.q_integrated_yield.occurrence_claimed",
+        "equals": false
+      },
+      {
+        "id": "INV-Q1-OPEN",
+        "field": "open_questions.q_mev_gap.status",
+        "equals": "OPEN"
+      },
+      {
+        "id": "INV-Q2-OPEN",
+        "field": "open_questions.q_radiation.status",
+        "equals": "OPEN"
+      },
+      {
+        "id": "INV-TWO-BODY-LOG10N",
+        "when": {
+          "open_questions.rate_mode": "two_body"
+        },
+        "field": "open_questions.q_statistical.n_events_log10_two_body",
+        "approx": -40.0,
+        "abs_tol": 0.5
+      },
+      {
+        "id": "INV-TWO-BODY-BUDGET",
+        "when": {
+          "open_questions.rate_mode": "two_body"
+        },
+        "field": "open_questions.q_statistical.status",
+        "equals": "BUDGET_DOES_NOT_CLOSE"
+      },
+      {
+        "id": "INV-ENGINES-NOT-COMBINABLE",
+        "field": "open_questions.composition.not_combinable",
+        "equals": true
+      },
+      {
+        "id": "INV-CONTRACT-VERSION",
+        "field": "contract_version",
+        "equals": "v0.3.9-beta-science-gate-1"
+      }
+    ]
+  },
+  "score_formula": "five_factor_gm_x_claim_tier",
+  "skip_sensitivity_note": "Persisted parameter_sensitivity is 0.5 unless live scores are computed.",
+  "literature_ids": [
+    "berlinguette-arpa-e-2019",
+    "safire-plasma-2020",
+    "spawar-cr39-2007",
+    "spawar-dpf-2009",
+    "taleyarkhan-sonofusion-2002"
+  ],
+  "stressed_open_ids": [
+    "EQ-OPEN-EC-01",
+    "EQ-OPEN-RAD-01",
+    "EQ-OPEN-RATE-01",
+    "EQ-OPEN-YIELD-01"
+  ],
+  "kind": "scenario_table_not_posterior",
+  "note": "Model-output detector UL / Cd-ratio, weak EC-threshold, and moderator-null scenario cells. Dual score/final_score preserved. Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior."
+}

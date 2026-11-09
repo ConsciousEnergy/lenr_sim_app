@@ -1,0 +1,24 @@
+id: EQ-EC-SIGMA-01
+latex: "\\sigma \\sim \\frac{G_F^2 E_\\nu^2}{\\pi}\\,(\\hbar c)^2 \\lesssim 10^{-47}\\,\\mathrm{m}^2\\ (E_\\nu\\sim 1\\,\\mathrm{MeV})"
+symbols:
+  sigma: "weak inverse-beta cross-section"
+  E_nu: "neutrino / equivalent energy"
+  G_F: "Fermi constant"
+units: "m^2; Lean locks −log10 envelope 47"
+tag: THM
+paper_ref: "§2.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+citation_keys:
+  - paper_2_4
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.eNu_1MeV_eV"
+  - "LenrFormal.WeakInteraction.sigma1MeV_negLog10Ceiling"
+  - "LenrFormal.WeakInteraction.sigma_envelope_is_1e_minus_47"
+  - "LenrFormal.WeakInteraction.sigma_monotone_in_energy_sq"
+  - "LenrFormal.WeakInteraction.sigma_at_1MeV_energy_sq"
+adopted_value:
+  sigma1MeV_negLog10Ceiling: 47
+  eNu_1MeV_eV: 1000000
+notes: "Paper envelope σ ≲ 10^{-47} m^2 near 1 MeV; Python Fermi evaluation is ~10^{-48} m^2 (stricter). Lean proves E^2 monotonicity and locks the envelope integer. Does not close EQ-OPEN-EC-01."

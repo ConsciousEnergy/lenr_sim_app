@@ -100,7 +100,7 @@ const TheoryPaperPage = () => {
             A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
           </Typography>
           <Typography variant="h6" color="text.secondary" paragraph sx={{ fontStyle: 'italic' }}>
-            Electron, Neutron, and Proton coupling is all you need
+            Coupling is all you need
           </Typography>
           
           <Box sx={{ mt: 3, mb: 2, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
@@ -230,7 +230,10 @@ const TheoryPaperPage = () => {
                     f = exp(πη·Uₑ/E)
                   </Box>
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                    Uₑ = screening potential (eV), E = particle energy (eV)
+                    Assenbaum–Rolfs form. Claimed only when Uₑ &lt; E (EQ-ASSEN-DOM-01);
+                    outside that domain the software reports a capped sensitivity factor,
+                    not a physical Assenbaum enhancement. Material Uₑ ranges are RR-007
+                    cited priors (distinct from domain validity).
                   </Typography>
                   <Button 
                     size="small" 
@@ -523,16 +526,24 @@ const TheoryPaperPage = () => {
                   </Typography>
                 </Paper>
 
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  <AlertTitle><strong>Strong Screening (Thomas-Fermi)</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
+                <Alert severity="info" sx={{ mt: 2 }} data-testid="screening-domain-honesty-alert">
+                  <AlertTitle><strong>Strong Screening (Thomas-Fermi) — domain-limited</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
                   <Typography variant="body2" paragraph>
                     In LENR host materials, electron screening is typically <strong>strong</strong> (not Salpeter weak screening). Thomas-Fermi theory applies:
                   </Typography>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}>
                     V_screened(r) = (Ze²/4πε₀r) × exp(-k_TF × r)
                   </Box>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
+                  <Typography variant="body2" sx={{ mt: 1 }} paragraph>
                     where k_TF ≈ 10¹⁰ m⁻¹, giving a screening length λ_TF ≈ 0.1 nm for typical metal densities.
+                  </Typography>
+                  <Typography variant="body2">
+                    Companion software uses the Assenbaum–Rolfs form f = exp(πη·Uₑ/E) with
+                    cited material Uₑ ranges (RR-007), claimed only for Uₑ &lt; E
+                    (EQ-ASSEN-DOM-01 / Lean Assenbaum). Thermal metal hosts usually sit
+                    outside that domain; reported factors are capped sensitivity
+                    bookkeeping. The adiabatic gas-target floor (~25 eV) is a separate
+                    RR-007 anomalous-screening flag, not the Assenbaum predicate.
                   </Typography>
                 </Alert>
               </Box>

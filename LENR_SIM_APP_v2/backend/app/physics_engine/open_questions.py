@@ -19,9 +19,16 @@ from app.physics_engine.decision_oracle import (
     occurrence_anchored,
 )
 from app.physics_engine.many_body.branching_model import (
+    BRANCHING_INCONSISTENT_WITH_NEUTRON_INTERPRETATION,
+    DETECTOR_UL_HONESTY_CLASS,
+    branching_inconsistent_with_neutron_interpretation,
+    branching_inconsistent_with_neutron_ul,
     branching_inconsistent_with_ul,
+    cd_ratio,
     compute_branching_partition,
     detector_gamma_ul_log10,
+    detector_neutron_ul_log10,
+    moderator_null_ratio,
 )
 from app.physics_engine.many_body.fgr_model import (
     GeometryMode,
@@ -238,6 +245,27 @@ def build_open_questions(
         float(branch_part["gamma_fraction"]),
         ul_log10,
     )
+    n_ul_log10 = detector_neutron_ul_log10(
+        obs.get("neutron_cps_ul"),
+        obs.get("neutron_efficiency"),
+        obs.get("he4_atoms_per_s"),
+    )
+    n_branch_inconsistent = branching_inconsistent_with_neutron_ul(
+        float(branch_part["n_fraction"]),
+        n_ul_log10,
+    )
+    cd_ratio_value = cd_ratio(obs.get("neutron_bare_cps"), obs.get("neutron_cd_cps"))
+    moderator_ratio = moderator_null_ratio(
+        obs.get("neutron_with_moderator_cps"),
+        obs.get("neutron_bare_cps"),
+    )
+    neutron_interp_inconsistent = branching_inconsistent_with_neutron_interpretation(
+        soft_x_present=obs.get("soft_x_present"),
+        hard_gamma_absent=obs.get("hard_gamma_absent"),
+        cd_wrapped_cps=obs.get("neutron_cd_cps"),
+        cd_ratio_value=cd_ratio_value,
+        moderator_ratio=moderator_ratio,
+    )
 
     engines_present = []
     if pipeline_combined_enhancement is not None:
@@ -370,6 +398,23 @@ def build_open_questions(
         "detection_limit_note": "Publish BR_gamma < U/epsilon; do not cite product_gamma=0.",
         "detector_ul_log10": ul_log10,
         "branching_inconsistent_with_ul": branch_inconsistent,
+        "detector_neutron_ul_log10": n_ul_log10,
+        "branching_inconsistent_with_neutron_ul": n_branch_inconsistent,
+        "detector_ul_honesty_class": DETECTOR_UL_HONESTY_CLASS,
+        "cd_ratio": cd_ratio_value,
+        "moderator_null_ratio": moderator_ratio,
+        "branching_inconsistent_with_neutron_interpretation": (
+            neutron_interp_inconsistent
+        ),
+        "neutron_interpretation_status": (
+            BRANCHING_INCONSISTENT_WITH_NEUTRON_INTERPRETATION
+            if neutron_interp_inconsistent
+            else None
+        ),
+        "neutron_interpretation_note": (
+            "Cd-ratio / moderator-null / soft-X∧¬hard-γ flags are detector-"
+            "interpretation falsifiers only — not neutron proof, not ν→EC closure."
+        ),
         "lattice_gamma_target": branch_part["lattice_gamma_target"],
         "lattice_gamma_target_label": branch_part["lattice_gamma_target_label"],
         "lean_theorems": list(branch_part["lean_theorems"]),

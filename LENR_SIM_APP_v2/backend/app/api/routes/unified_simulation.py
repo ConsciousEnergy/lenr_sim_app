@@ -1602,6 +1602,11 @@ def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleL
                 # overflows float64 at collapse temperatures.
                 "log10_enhancement_raw": peak_screening["log10_enhancement_raw"],
                 "is_saturated": peak_screening["is_saturated"],
+                # EQ-ASSEN-DOM-01 / Lean Assenbaum.applicable — distinct from
+                # exceeds_adiabatic_limit (RR-007 metal vs gas-target floor).
+                "assenbaum_applicable": peak_screening["assenbaum_applicable"],
+                "formula_claimed": peak_screening["formula_claimed"],
+                "domain_equation_id": peak_screening["domain_equation_id"],
                 "exceeds_adiabatic_limit": peak_screening["exceeds_adiabatic_limit"],
                 "citations": peak_screening["citations"],
             },

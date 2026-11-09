@@ -8,7 +8,7 @@ Cavitation-collapse = modelled enhancement / contested hydro (not nuclear-rate p
 
 A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)
 
-Subtitle: Electron, Neutron, and Proton coupling is all you need
+Subtitle: Coupling is all you need
 
 Authors: Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
@@ -847,7 +847,7 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 Resolution pathways:
 
-1. Enhancement factors are vastly underestimated: The screening enhancement alone, if calculated with measured anomalous screening energies ( U_e \sim 300\text{-}800  eV per Raiola et al.), evaluated with the Assenbaum screened-cross-section form  f = \exp(\pi \eta U_e / E)  at thermal energies, is formally enormous. The issue is that this expansion is only valid for  U_e \ll E ; converting the screening potential to a tunneling enhancement through the proper Gamow integral may yield enhancement factors exceeding the adopted  10^3\text{-}10^5  band, which is why reported values are capped there.
+1. Enhancement factors are vastly underestimated: The screening enhancement alone, if calculated with measured anomalous screening energies ( U_e \sim 300\text{-}800  eV per Raiola et al.; RR-007 material-dependent cited ranges), evaluated with the Assenbaum screened-cross-section form  f = \exp(\pi \eta U_e / E)  at thermal energies, is formally enormous. That expansion is only valid for  U_e \ll E  (Lean/IR machine check:  U_e < E_{\mathrm{kin}} , EQ-ASSEN-DOM-01); outside the domain the companion software still emits a capped sensitivity factor but sets formula_claimed=false — it does not claim a physical Assenbaum enhancement. Converting the screening potential to a tunneling enhancement through the proper Gamow integral may yield factors exceeding the adopted  10^3\text{-}10^5  band, which is why reported values are capped there. Do not conflate Assenbaum domain validity with the separate RR-007 adiabatic gas-target floor ( U_e \sim 20\text{-}25  eV).
 
 2. Collective/coherent multi-body processes: If LENR proceeds through coherent multi-body tunneling (Takahashi's TSC model) or condensate transitions (Section 2.6), the bare probability is not  P_{\text{bare}} = e^{-2\pi\eta}  for a single pair, but a collective probability with fundamentally different scaling.
 
@@ -1027,7 +1027,7 @@ Citations below support the mathematical modeling in this paper. Preference is g
 Subtitle homage
 
 [vaswani2017] Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention Is All You Need. Advances in Neural Information Processing Systems 30.  
-Methodological metaphor only—not a LENR physics source. The subtitle "Electron, Neutron, and Proton coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
+Methodological metaphor only—not a LENR physics source. The subtitle "Coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
 Link: https://arxiv.org/abs/1706.03762 · NeurIPS 2017
 
 Primary sources for mathematical modeling (replicable evidence & established mechanisms)

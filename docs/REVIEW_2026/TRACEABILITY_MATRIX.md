@@ -15,8 +15,8 @@ model assumption).
 
 | Equation / model | Paper section | Code location | Citation key(s) | Test | Finding |
 |------------------|---------------|---------------|-----------------|------|---------|
-| Debye/Thomas-Fermi screening length lambda_D | 2.1 | `unified_lenr_model/screening.py` | huke2008, pines2020theory | test_paper_corrections.py | RR-007 |
-| Screening energy U_s; enhancement f = exp(pi*eta*U_s/E) | 2.1, 2.8 | `unified_lenr_model/screening.py` | raiola2002, czerski2023, screeningreview2024 | test_simulation_pipeline.py | RR-007 |
+| Debye/Thomas-Fermi screening length lambda_D (context only) | 2.1 | `theories/electron_screening.py` (Debye length diagnostic); potentials from `screening_data.py` | huke2008, pines2020theory | test_paper_corrections.py | RR-007 |
+| Screening energy U_e; Assenbaum f = exp(pi*eta*U_e/E); domain U_e < E (EQ-ASSEN-DOM-01) | 2.1, 2.8, 5A.3 | `screening_kernel.py` → `unified_lenr_model/screening.py`; ranges in `screening_data.py` | raiola2002, czerski2023, screeningreview2024, Assenbaum1987 | test_assenbaum_domain_honesty.py | RR-007 / IL-004 |
 | Gamow factor / eta; P = exp(-2*pi*eta) | 2.8, 5.1.1 | `unified_lenr_model/cross_sections.py`, `mhd/nuclear_force_coupling.py` | gamow1928 | test_wkb_tunneling.py | — |
 | Astrophysical S-factor sigma(E)=S(E)exp(-2*pi*eta)/E | 5.1.1 | `mhd/nuclear_force_coupling.py` | nacreii, caughlanfowler | test_mhd_physics.py | — |
 | Two-body reaction rate 0.5 n^2 sigma v_th P | 5.1.1 | `unified_lenr_model/cross_sections.py` | (baseline; model assumption) | test_lenr_enhancement.py | RR-006 |

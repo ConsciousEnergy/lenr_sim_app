@@ -27,10 +27,10 @@
       "paper_ref": "§5A.2",
       "status": "OPEN",
       "virtual_lab_field": "q_radiation",
-      "in_app_handles": ["branching_model.py"],
-      "still_missing": "Quantitative lattice gamma-absorption versus detector upper limits",
-      "citation_keys": ["miles1993", "hylenr2026"],
-      "testable_prediction_ids": ["PRED-02", "PRED-03"],
+      "in_app_handles": ["branching_model.py", "scientific_guardrails.py"],
+      "still_missing": "Quantitative lattice gamma-absorption versus detector upper limits; neutron-detector interpretation (Cd-ratio, moderator-null, soft-X∧¬hard-γ) versus efficiency-corrected neutron_rate_bound honesty class — Cd-wrap is not neutron proof",
+      "citation_keys": ["miles1993", "hylenr2026", "parkhomov2018"],
+      "testable_prediction_ids": ["PRED-02", "PRED-03", "PRED-08", "PRED-09", "PRED-10"],
       "lean_target": "LenrFormal.OpenObligations"
     },
     {

@@ -1,6 +1,6 @@
 # **A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)**
 
-**Subtitle:** Electron, Neutron, and Proton coupling is all you need
+**Subtitle:** Coupling is all you need
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
@@ -457,15 +457,19 @@ The resolution of the MeV energy gap through lattice-nuclear coupling remains th
 **Honesty label:** Continuum FEM / self-consistent Poisson–Schrödinger below is an
 **aspirational modeling roadmap** (`ENG-ASPIRATIONAL-FEM-01`). It is **not** executed
 on the public beta, **not** a COMSOL production path in this release, and **not** a
-discharge of any `EQ-OPEN-*`. Formalization covers discrete residual algebra and
-non-deployment flags only (`EQ-PS-POISSON-01`, `EQ-PS-SCHROD-01`, `EQ-PS-COUPLE-01`,
-`EQ-PS-DOM-01`, `EQ-PS-NONDEPLOY-01`).
+discharge of any `EQ-OPEN-*`. Formalization locks parent continuum DEF `EQ-PS-01`,
+discrete residual algebra, permittivity domain, explicit tolerance axiom, and
+non-deployment flags (`EQ-PS-POISSON-01`, `EQ-PS-SCHROD-01`, `EQ-PS-COUPLE-01`,
+`EQ-PS-DOM-01`, `EQ-PS-TOL-01`, `EQ-PS-NONDEPLOY-01`).
 
-1. **Poisson's Equation:**
+1. **Poisson's Equation** (parent continuum DEF `EQ-PS-01`):
 \[
-\nabla^{2}\phi = -\frac{\rho}{\epsilon_0},
+\nabla^{2}\phi = -\frac{\rho}{\epsilon_0}
+\quad\text{or more generally}\quad
+\nabla\cdot\bigl(\varepsilon\nabla\phi\bigr)=-\rho,
 \]
-where \( \phi \) is the electric potential and \( \rho \) is the charge density.
+where \( \phi \) is the electric potential, \( \rho \) is the charge density, and
+\(\varepsilon\) is a (possibly spatially varying) permittivity.
 Domain: permittivity must be positive wherever the formula is claimed (`EQ-PS-DOM-01`).
 
 2. **Schrödinger's Equation:**
@@ -478,8 +482,9 @@ Here \( E \) is the energy eigenvalue (`E_eigen`), not the electric field (`E_fi
 3. **Self-consistent coupling (roadmap):** iterate Poisson \(\to\) update
    \(V\leftarrow V_{\mathrm{ext}}-e\phi\) \(\to\) Schrödinger \(\to\) update \(\rho\) from
    \(|\psi|^{2}\) until residual \(r=\max(r_{\mathrm{P}},r_{\mathrm{S}})\) vanishes in the
-   discrete bookkeeping sense (`EQ-PS-COUPLE-01`). Continuum existence / FEM convergence
-   are **not** theorems of this pilot.
+   discrete bookkeeping sense (`EQ-PS-COUPLE-01`), or \(r\le\tau\) under an **explicit**
+   tolerance axiom (`EQ-PS-TOL-01` — never silently promoted to exact \(r=0\)).
+   Continuum existence / FEM convergence are **not** theorems of this pilot.
 
 4. **Simulation Details (research targets, not VPS execution)**
 
@@ -936,7 +941,7 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 **Resolution pathways:**
 
-1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al.), evaluated with the Assenbaum screened-cross-section form \( f = \exp(\pi \eta U_e / E) \) at thermal energies, is formally enormous. The issue is that this expansion is only valid for \( U_e \ll E \); converting the screening potential to a tunneling enhancement through the proper Gamow integral may yield enhancement factors exceeding the adopted \( 10^3\text{-}10^5 \) band, which is why reported values are capped there.
+1. **Enhancement factors are vastly underestimated:** The screening enhancement alone, if calculated with measured anomalous screening energies (\( U_e \sim 300\text{-}800 \) eV per Raiola et al.; RR-007 material-dependent cited ranges), evaluated with the Assenbaum screened-cross-section form \( f = \exp(\pi \eta U_e / E) \) at thermal energies, is formally enormous. That expansion is only valid for \( U_e \ll E \) (Lean/IR machine check: \( U_e < E_{\mathrm{kin}} \), `EQ-ASSEN-DOM-01`); outside the domain the companion software still emits a capped sensitivity factor but sets `formula_claimed=false` — it does **not** claim a physical Assenbaum enhancement. Converting the screening potential to a tunneling enhancement through the proper Gamow integral may yield factors exceeding the adopted \( 10^3\text{-}10^5 \) band, which is why reported values are capped there. Do not conflate Assenbaum domain validity with the separate RR-007 adiabatic gas-target floor (\( U_e \sim 20\text{-}25 \) eV).
 
 2. **Collective/coherent multi-body processes:** If LENR proceeds through coherent multi-body tunneling (Takahashi's TSC model) or condensate transitions (Section 2.6), the bare probability is not \( P_{\text{bare}} = e^{-2\pi\eta} \) for a single pair, but a collective probability with fundamentally different scaling.
 
@@ -1116,7 +1121,7 @@ Citations below support the mathematical modeling in this paper. Preference is g
 ### Subtitle homage
 
 **[vaswani2017]** Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention Is All You Need. *Advances in Neural Information Processing Systems* 30.  
-*Methodological metaphor only—not a LENR physics source.* The subtitle "Electron, Neutron, and Proton coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
+*Methodological metaphor only—not a LENR physics source.* The subtitle "Coupling is all you need" deliberately echoes this work's framing of coupled multi-agent representations.  
 **Link:** [https://arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762) · [NeurIPS 2017](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html)
 
 ### Primary sources for mathematical modeling (replicable evidence & established mechanisms)
@@ -1449,26 +1454,36 @@ These developments, though dispersed across time and disciplines, converge withi
 
 LENR phenomena—characterized by threshold-sensitive, sub-nuclear energy anomalies—demand modeling techniques capable of bridging atomic, mesoscopic, and statistical scales. This section presents a multi-tier computational approach that integrates first-principles quantum simulations, error propagation, and data-driven explorations of high-dimensional parameter spaces.
 
-\\subsection{3.1 Coupled Poisson–Schrödinger Solver}
+\\subsection{3.1 Coupled Poisson–Schrödinger Solver (aspirational roadmap)}
 
-To evaluate electron distribution and field dynamics near metal–hydrogen interfaces, we solve the coupled Poisson–Schrödinger system:
+\\textbf{Honesty label (ENG-ASPIRATIONAL-FEM-01).} Continuum FEM / self-consistent
+Poisson–Schrödinger coupling is an \\textbf{aspirational modeling roadmap} — not
+executed on the public beta, not a COMSOL production path in this release, and not
+a discharge of any EQ-OPEN-*. Lean \\texttt{PoissonSchrodinger} / IR
+\\texttt{EQ-PS-01}, \\texttt{EQ-PS-POISSON/SCHROD/COUPLE/DOM/TOL/NONDEPLOY-01}
+encode residual algebra, permittivity domain, an explicit tolerance axiom, and
+non-deployment honesty only.
 
-\\begin{align}  
-\\nabla^2 \\phi(\\mathbf{r}) &= \-\\frac{\\rho(\\mathbf{r})}{\\epsilon\_0} \\\\  
-\-\\frac{\\hbar^2}{2m} \\nabla^2 \\psi(\\mathbf{r}) \+ V(\\mathbf{r}) \\psi(\\mathbf{r}) &= E \\psi(\\mathbf{r})  
+The continuum sketch (parent DEF \\texttt{EQ-PS-01}) is:
+
+\\begin{align}
+\\nabla\\cdot\\bigl(\\varepsilon\\nabla\\phi(\\mathbf{r})\\bigr) &= -\\rho(\\mathbf{r}) \\\\
+-\\frac{\\hbar^2}{2m}\\nabla^2\\psi(\\mathbf{r}) + V(\\mathbf{r})\\psi(\\mathbf{r}) &= E\\psi(\\mathbf{r})
 \\end{align}
 
-where $\\phi$ is the electrostatic potential, $\\rho$ the charge density, $\\psi$ the electronic wavefunction, and $V(\\mathbf{r})$ encodes contributions from interface fields, screening clouds, Casimir-induced potentials, and defect strain fields.
+with vacuum specialization $\\nabla^2\\phi=-\\rho/\\epsilon_0$ when $\\varepsilon=\\epsilon_0$.
+Here $\\phi$ is the electrostatic potential, $\\rho$ the charge density, $\\psi$ the
+electronic wavefunction, $E$ the energy eigenvalue (\\texttt{E\\_eigen}, not
+\\texttt{E\\_field}), and $V(\\mathbf{r})$ may encode interface fields, screening,
+Casimir-induced potentials, and defect strain — labelled model assumptions.
+Domain: $\\varepsilon>0$ wherever the Poisson formula is claimed (\\texttt{EQ-PS-DOM-01}).
 
-Numerical implementation utilizes finite-difference and finite-element solvers (COMSOL Multiphysics, custom Python/SciPy modules). Mesh resolution is refined to 0.01 nm near lattice sites and interfaces. Boundary conditions reflect realistic metal–electrolyte (or gas) discontinuities, including Debye shielding and defect-induced asymmetry. Attosecond-scale time stepping ensures resolution of rapid field fluctuations.
-
-Key outputs include:
-
-\\begin{itemize}  
-    \\item Localized field intensities: $10^8$–$10^9$ V/m (±15\\% confidence).  
-    \\item Charge density clustering near dislocation–void junctions.  
-    \\item Increased electron probability densities near interstitial deuterons by factors of 10–100 relative to free-atom cases.  
-\\end{itemize}
+\\textbf{Research targets (not VPS execution):} finite-difference / finite-element
+solvers (COMSOL Multiphysics, custom Python/SciPy), mesh refinement near lattice
+sites, and discrete residual loop $r=\\max(r_P,r_S)$ with exact ($r=0$) or
+tolerance-axiom ($r\\le\\tau$; \\texttt{EQ-PS-TOL-01}) self-consistency bookkeeping.
+Illustrative interfacial fields $\\sim 10^8$–$10^9$ V/m remain claim-tiered
+illustrations — not nuclear-rate proof and not continuum well-posedness theorems.
 
 \\subsection{3.2 Monte Carlo Error Propagation}
 
@@ -1481,7 +1496,10 @@ To assess confidence bounds in tunneling probabilities and reaction energetics, 
     \\item Screening and effective barrier shape ($V(x)$).  
 \\end{itemize}
 
-Each sample instance propagates through the full Poisson–Schrödinger–tunneling computation stack. Distributions are derived for tunneling rates, interfacial energy densities, and effective nuclear overlap probabilities.
+Each sample instance propagates through the live WKB/tunneling stack (and, where
+aspirational continuum PS is sketched, through residual bookkeeping only —
+never as a deployed FEM solve). Distributions are derived for tunneling rates,
+interfacial energy densities, and effective nuclear overlap probabilities.
 
 We use bootstrapped confidence intervals and Kullback–Leibler divergence to assess the impact of parametric shifts. Results suggest that under optimal local configurations, enhancement factors of $10^3$–$10^5$ occur with 90\\% confidence within specific material and field ranges.
 

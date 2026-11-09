@@ -22,11 +22,11 @@ from app.physics_engine.unified_lenr_model.screening_data import (
 
 def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     records = literature_records()
-    assert len(records) == 17
+    assert len(records) == 18
     experiments = get_baseline_experiments()
-    assert len(experiments) == 17
+    assert len(experiments) == 18
     ids = {row["id"] for row in experiments}
-    assert len(ids) == 17
+    assert len(ids) == 18
     assert all(len(row["id"]) == 36 for row in experiments)
     arpa = next(row for row in experiments if "ARPA-E" in row["name"])
     assert arpa["claim_tag"] == "null"
@@ -97,12 +97,18 @@ def test_testable_predictions_cover_seven_falsifiers() -> None:
         "PRED-05",
         "PRED-06",
         "PRED-07",
+        "PRED-08",
+        "PRED-09",
+        "PRED-10",
     ]
     assert all(row.get("falsifier") for row in preds)
     pred03 = next(row for row in preds if row["id"] == "PRED-03")
     assert "hylenr2026" in pred03["citation_keys"]
     pred07 = next(row for row in preds if row["id"] == "PRED-07")
     assert "hylenr2026" in pred07["citation_keys"]
+    pred08 = next(row for row in preds if row["id"] == "PRED-08")
+    assert "parkhomov2018" in pred08["citation_keys"]
+    assert "Cd" in pred08["title"] or "Cd" in pred08["falsifier"]
 
 
 def test_iccf27_extension_does_not_mutate_locked_baselines() -> None:

@@ -82,7 +82,7 @@ unless you click **Run live scores**.
 
 Versioned JSON under `LENR_SIM_APP_v2/datasets/` (Python modules are loaders):
 
-- `literature_baselines.v1.json` — 17 cited seeds (includes Miles 1993 EMP), stable UUID5 ids
+- `literature_baselines.v1.json` — 18 cited seeds (includes Miles 1993 EMP + contested Parkhomov Cd SNM-14), stable UUID5 ids
 - `screening_priors.v1.json` — material \(U_e\) ranges
 - `parkhomov_curated.v1.json` — curated subset; full ~519k SQLite is not shipped
 - `open_question_register.v1.json` — Q1–Q5 still `OPEN`

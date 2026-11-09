@@ -57,7 +57,7 @@
       "proof_status": {
         "analytical": "open",
         "numerical": "open",
-        "lean": "deficit_identity_only"
+        "lean": "deficit_and_weak_bounds_only"
       },
       "artifacts": ["md", "json", "lean", "tex"],
       "beta_label": "speculative",
@@ -102,12 +102,12 @@
       "proof_status": {
         "analytical": "approximate",
         "numerical": "schematic_or_simplified",
-        "lean": "clamp_uq_defs"
+        "lean": "clamp_uq_cr_cap_defs"
       },
       "artifacts": ["md", "json", "tex", "lean"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ-01 are DEF only"
+      "rd_next": "Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ/CR-CAP-01 are DEF only"
     },
     {
       "id": "ENG-RP-KM-01",
@@ -117,12 +117,12 @@
       "proof_status": {
         "analytical": "domain_limited",
         "numerical": "ode_implemented",
-        "lean": "partial"
+        "lean": "rp_km_domain_lemmas"
       },
       "artifacts": ["md", "json", "lean", "tex"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "Monitor domain limits; keep EQ-OPEN-* open"
+      "rd_next": "Monitor domain limits; keep EQ-OPEN-* open; EQ-BBL-RP-DOM-01 is domain-only"
     },
     {
       "id": "ENG-WKB-01",
@@ -195,12 +195,27 @@
       "proof_status": {
         "analytical": "not_on_vps",
         "numerical": "not_on_vps",
-        "lean": "ps_residual_domain_nondeploy"
+        "lean": "ps_continuum_def_residual_domain_tol_nondeploy"
       },
       "artifacts": ["md", "json", "lean"],
       "beta_label": "aspirational",
       "priority": "P3",
       "rd_next": "Keep Methods honesty alert; Phase C roadmap only; never public-beta numerics; EQ-OPEN-* stay OPEN"
+    },
+    {
+      "id": "ENG-WEAK-01",
+      "module_path": "backend/app/physics/weak_interaction.py",
+      "ui_surface": "open_questions",
+      "claim_tier": "established_reference",
+      "proof_status": {
+        "analytical": "fermi_bookkeeping",
+        "numerical": "python_fermi_sigma_boltzmann",
+        "lean": "ec_thresh_gf_sigma_rate_proved"
+      },
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "reference",
+      "priority": "P1",
+      "rd_next": "Keep EQ-OPEN-EC-01 OPEN; no Widom SPEC promotion; lenr_proved false"
     }
   ]
 }

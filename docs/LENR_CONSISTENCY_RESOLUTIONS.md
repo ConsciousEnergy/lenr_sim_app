@@ -58,25 +58,23 @@
 
 **Problem:** Exponent Z₁Z₂e²k_TF/(4πϵ₀E) in eV units gives ~144 for E=0.1 eV, not 0.1–1.
 
-**Resolved:** Use the *adiabatic screening energy* Ue (eV) in place of incident energy E. Standard form for enhancement:
+**Resolved (aligned with RR-007 / Assenbaum):** Do **not** use the raw TF Coulomb exponent with incident energy as \(E\). Production code and the paper use the Assenbaum–Rolfs screened-cross-section form with **cited, material-dependent** \(U_e\) ranges (`screening_data.py` / RR-007):
 
 \[
-f_{\text{screening}} = \exp\left( \frac{U_e}{E} \right)
+f_{\text{screening}} = \exp\left( \frac{\pi\,\eta\,U_e}{E_{\mathrm{kin}}} \right)
 \]
 
-where Ue is the electron screening energy (measured ~10–300 eV in some metal-hydride experiments). For Ue ≈ 10–30 eV and E ≈ 0.1 eV:
+**Domain honesty (EQ-ASSEN-DOM-01 / Lean `Assenbaum`):** the expansion is claimed only when \(U_e < E_{\mathrm{kin}}\) (machine stand-in for ≪). Thermal metal hosts with \(U_e\sim 300\text{–}800\,\mathrm{eV}\) and \(E\sim 0.1\,\mathrm{eV}\) are outside that domain; the software still reports a capped sensitivity factor (\(10^3\text{–}10^5\), IL-002) but sets `formula_claimed=false`.
 
-- Ue/E ≈ 100–300 → f_screening very large (overclaiming)
-
-**Conservative parameterization:**
+**Do not conflate** Assenbaum domain validity with the separate RR-007 adiabatic gas-target floor (\(U_e\sim 20\text{–}25\,\mathrm{eV}\)).
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| Ue | 10 – 100 eV | From literature (Schwinger, etc.); barrier reduction |
-| E | 0.01 – 0.1 eV | Effective deuteron kinetic energy |
-| f_screening | exp(Ue/E) | Can exceed 10⁴; cap at 10³–10⁵ for consistency with IL-002 |
+| \(U_e\) | cited material ranges (e.g. Pd typical 800 eV) | RR-007 / `screening_data.py` |
+| \(E_{\mathrm{kin}}\) | collision / thermal CM energy | Lean compares against \(U_e\) |
+| \(f_{\text{screening}}\) | Assenbaum form, governance-capped | Not claimed outside \(U_e < E\) |
 
-**Recommended:** Do not use the raw formula f = exp(Z₁Z₂e²k_TF/(4πϵ₀E)) with E as incident energy. Use f_screening = exp(Ue/E) with Ue as fitted/measured screening energy, and impose f_screening ≤ f_enhancement_max (e.g. 10⁵) to avoid double counting with other mechanisms.
+**Historical note:** An earlier IL-004 draft used the simplified \(f=\exp(U_e/E)\). That form is superseded; keep Assenbaum + domain predicate as the single SOT so RR/IL no longer diverge.
 
 ---
 

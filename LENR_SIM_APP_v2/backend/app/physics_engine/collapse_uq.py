@@ -32,7 +32,8 @@ from app.physics_engine.unified_lenr_model.screening_data import (
 
 #: Reported percentiles, matching reaction_rate_uq.UQResult.credible_interval.
 PERCENTILES = (5.0, 25.0, 50.0, 75.0, 95.0)
-_PERCENTILE_KEYS = ("p05", "p25", "p50", "p75", "p95")
+PERCENTILE_KEYS = ("p05", "p25", "p50", "p75", "p95")
+_PERCENTILE_KEYS = PERCENTILE_KEYS
 
 #: Fractional tolerance on the compression ratio returned by the ODE solve.
 #: Model assumption, not a measurement: it stands in for sensitivity to the
@@ -44,7 +45,14 @@ COMPRESSION_RATIO_TOLERANCE = 0.20
 #: ~1.33 (vapour) to ~1.67 (monatomic). Model assumption.
 POLYTROPIC_INDEX_TOLERANCE = 0.05
 
-_SAMPLED_DIMENSIONS = ("screening_potential_ev", "compression_ratio", "polytropic_index")
+#: Public Nat-scale anchors for Lean ↔ Python agreement (EQ-BBL-UQ-01).
+SAMPLED_DIMENSIONS = (
+    "screening_potential_ev",
+    "compression_ratio",
+    "polytropic_index",
+)
+_SAMPLED_DIMENSIONS = SAMPLED_DIMENSIONS
+SAMPLED_DIMENSION_COUNT = len(SAMPLED_DIMENSIONS)
 
 
 def _sample_unit(n_samples: int, n_dims: int, seed: int) -> np.ndarray:

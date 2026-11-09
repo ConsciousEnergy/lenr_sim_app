@@ -1,0 +1,28 @@
+id: EQ-EC-RATE-01
+latex: "\\exp(-\\Delta E / k_B T) \\sim e^{-3\\times 10^{4}}\\ \\Rightarrow\\ \\Gamma_{\\mathrm{EC,thermal}}\\approx 0"
+symbols:
+  Delta_E: "0.782 MeV EC threshold"
+  k_B_T: "thermal energy (~0.026 eV at room temperature)"
+  Gamma_EC_thermal: "thermal free-electron capture rate scale"
+units: "dimensionless Boltzmann exponent (Nat)"
+tag: THM
+paper_ref: "§2.4, §5A.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+citation_keys:
+  - paper_2_4
+  - paper_5A_4
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.kT_room_meV"
+  - "LenrFormal.WeakInteraction.thermalExponentRoom"
+  - "LenrFormal.WeakInteraction.boltzmannExponentFloor"
+  - "LenrFormal.WeakInteraction.thermal_exponent_room_from_inputs"
+  - "LenrFormal.WeakInteraction.thermal_boltzmann_exponent_meets_floor"
+  - "LenrFormal.WeakInteraction.thermal_ec_rate_negligible"
+  - "LenrFormal.WeakInteraction.lenr_proved_false"
+adopted_value:
+  kT_room_meV: 26
+  boltzmannExponentFloor: 30000
+  thermalExponentRoom: 30076923
+notes: "Room-temperature Boltzmann exponent floor matching taxonomy ~3e4 (Python SI at 300 K is ~3e7; floor remains valid). Proves thermal free EC is suppressed under stated numbers. Does not discharge EQ-OPEN-EC-01 or set lenr_proved."

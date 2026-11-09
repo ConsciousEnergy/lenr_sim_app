@@ -15,4 +15,6 @@ lean_target: LenrFormal.WorkingHypothesis
 lean_decls:
   - "LenrFormal.WorkingHypothesis.wh_does_not_discharge_open_obligations"
   - "LenrFormal.WorkingHypothesis.he_identity_does_not_zero_remainder"
-notes: "Proves WH remainders imply the three open predicates stay undischarged. Not a nature theorem."
+  - "LenrFormal.WorkingHypothesis.partition_and_fgr_do_not_close_mev_rate"
+  - "LenrFormal.WorkingHypothesis.dicke_unlicensed_and_engine_linear"
+notes: "Proves WH remainders / Dicke-unlicensed linear FGR imply the three open predicates stay undischarged. Not a nature theorem. Does not flip EQ-OPEN-MEV-01 / RAD-01 / RATE-01."

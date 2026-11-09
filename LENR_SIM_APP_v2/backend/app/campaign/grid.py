@@ -83,6 +83,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    # Detector UL / weak-EC / moderator-null screen (not a cartesian). Axes unused.
+    "detector_weak_screen": {
+        "temperatures": [300.0, 350.0],
+        "loading_ratios": [0.85, 0.95],
+        "materials": ["palladium"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
     # Isolated registered theories + three literature full-pipeline cells.
     "testbed_review": {
         "temperatures": [300.0],
@@ -269,6 +278,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_association_screen_cases()
         return
+    if preset == "detector_weak_screen":
+        from app.campaign.detector_weak_screen import iter_detector_weak_screen_cases
+
+        yield from iter_detector_weak_screen_cases()
+        return
     if preset == "testbed_review":
         from app.campaign.testbed_review import iter_testbed_review_cases
 
@@ -318,6 +332,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.association_screen import association_screen_count
 
         return association_screen_count()
+    if preset == "detector_weak_screen":
+        from app.campaign.detector_weak_screen import detector_weak_screen_count
+
+        return detector_weak_screen_count()
     if preset == "testbed_review":
         from app.campaign.testbed_review import testbed_review_count
 
@@ -475,6 +493,15 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
             "Ranks five-factor association, not P(LENR). Does not prove LENR. "
             "Do not run full or diverse in CI."
         )
+    if preset == "detector_weak_screen":
+        from app.campaign.detector_weak_screen import detector_weak_screen_axes
+
+        payload["axes"] = detector_weak_screen_axes()
+        payload["note"] = (
+            "Detector UL / Cd-ratio, weak EC-threshold, and moderator-null "
+            "scenario cells. Scenario table not posterior; not P(LENR). "
+            "Does not prove LENR. Do not run full or diverse in CI."
+        )
     if preset == "testbed_review":
         from app.campaign.testbed_review import testbed_review_axes
 
@@ -487,7 +514,7 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
     if preset == "iccf27_grid":
         payload["note"] = (
             "ICCF-27 / Sept 2026 literature extension plus graphite/SiC "
-            "controls. Does not mutate the locked 17-row seed set. Does not "
+            "controls. Does not mutate the locked 18-row seed set. Does not "
             "prove LENR."
         )
     if preset == "parameter_map_grid":
