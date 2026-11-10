@@ -32,14 +32,11 @@ http:
         contentSecurityPolicy: "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://conscious.energy https://www.conscious.energy; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.conscious.energy https://us.i.posthog.com wss: https://lenr-sim-beta.conscious.energy https://app.conscious.energy; worker-src 'self' blob:; form-action 'self'"
         customResponseHeaders:
           X-Robots-Tag: "noindex,nofollow"
-          
-    # Rate limiting for API
-    api-ratelimit:
-      rateLimit:
-        average: 100
-        burst: 50
-        period: 1m
-        
+
+    # NOTE: API rate limiting lives on Swarm service labels as `backend-ratelimit`
+    # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. A prior
+    # unused `api-ratelimit` file middleware was removed to avoid drift.
+
     # CORS configuration
     cors:
       headers:

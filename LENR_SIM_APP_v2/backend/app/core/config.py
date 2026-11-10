@@ -123,7 +123,24 @@ class Settings(BaseSettings):
     # New security settings
     ENABLE_RATE_LIMITING: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60  # 60 requests per minute per IP
+    # Stricter budget for unauthenticated heavy POST paths (simulate / sweep / …).
+    HEAVY_RATE_LIMIT_PER_MINUTE: int = 10
     RATE_LIMIT_WHITELIST_IPS: List[str] = ["127.0.0.1", "::1"]
+    # Prefixes matched for HEAVY_RATE_LIMIT_PER_MINUTE (POST/PUT/PATCH only).
+    HEAVY_RATE_LIMIT_PATH_PREFIXES: List[str] = [
+        "/api/unified/simulate",
+        "/api/unified/export",
+        "/api/unified/compare",
+        "/api/unified/bubble-lattice",
+        "/api/physics/theories/run",
+        "/api/physics/theories/",
+        "/api/analytics/parameter-sweep",
+        "/api/analytics/theories/run-coupled",
+        "/api/analytics/compare",
+        "/api/analytics/theory-scores",
+        "/api/analytics/theory-comparison",
+        "/api/multi-physics/simulations",
+    ]
     
     ENABLE_SECURE_HEADERS: bool = True 
     ENABLE_CSP: bool = True
