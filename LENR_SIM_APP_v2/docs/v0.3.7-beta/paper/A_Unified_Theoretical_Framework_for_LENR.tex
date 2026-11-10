@@ -1,6 +1,7 @@
 % Auto-generated full Part-1 manuscript (pandoc + academic.latex).
 % Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (Part 1 only; Part 2 appendix excluded).
-% Build: ./build_pdf.sh  (requires pandoc + XeLaTeX).
+% Build: ./build_pdf.sh  (requires pandoc + XeLaTeX + xurl).
+% Overflow fix: breakable \texttt via \allowbreak; wrapped AI contributor block; secnumdepth=-1.
 % Epistemic: lenr_proved=false; all EQ-OPEN-* remain OPEN; no live ship / public flip.
 %
 \documentclass[11pt,a4paper]{article}
@@ -10,14 +11,16 @@
 \usepackage{fontspec}
 \setmainfont{Latin Modern Roman}
 \setsansfont{Latin Modern Sans}
-\setmonofont{Latin Modern Mono}
+\setmonofont[Scale=0.90]{Latin Modern Mono}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{enumitem}
-\usepackage{url}
+% xurl helps \url/\href; body paths use explicit \allowbreak via build_pdf.sh
+\usepackage{xurl}
+\urlstyle{tt}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -27,6 +30,14 @@
   pdftitle={A Unified Theoretical and Mathematical Framework for LENR},
   pdfauthor={Diadon Acs}
 }
+
+% Manuscript headings already carry Part-1 numbers (1, 1.1, …).
+\setcounter{secnumdepth}{-1}
+
+% Prefer wrapping long identifiers/paths over margin overflow.
+\tolerance=2500
+\setlength{\emergencystretch}{4em}
+\hbadness=10000
 
 
 \setlength{\parskip}{0.35em}
@@ -38,12 +49,9 @@
 
 \title{A Unified Theoretical and Mathematical Framework for Low-Energy
 Nuclear Reactions (LENR)\\\large\textit{Coupling is all you need}}
-\author{Diadon Acs (lead, Conscious Energies) \\ Contributing AIs
-(disclosed): LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5/4.6, Opus 4.5/4.6/4.8,
-Gemini 2.5/3.0, Grok 4.6, Composer (Cursor); human author solely
-accountable}
-\date{2026-02-14 (revised 2026-11-10, WS findings refresh; prior
-2026-11-05 honesty sync; 2026-09-25, v0.3.7-beta)}
+\author{Diadon Acs (lead, Conscious Energies)}
+\date{2026-02-14 (revised 2026-11-10, WS findings refresh;~prior
+2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
 
 \begin{document}
 \maketitle
@@ -51,6 +59,17 @@ accountable}
 \begin{center}
 \small Conscious Energies \textbar{} www.conscious.energy
 \end{center}
+\begin{center}
+\footnotesize
+Contributing Autonomous Intelligences (disclosed):\\[0.25em]
+LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6,\\*
+Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0,\\*
+Grok 4.6, Composer (Cursor)\\[0.35em]
+\textit{Human author solely accountable for content and claims.}
+\end{center}
+\vspace{0.5em}
+
+
 
 \begin{abstract}
 Low-Energy Nuclear Reactions (LENR) are investigated as a contested but
@@ -480,7 +499,7 @@ momentum, coherent excitation, or effective mass renormalization).
   threshold is overcome---whether through coherent many-body effects,
   mass renormalization, or other non-equilibrium mechanisms. Companion
   Lean \texttt{LenrFormal.WeakInteraction} / IR
-  \texttt{EQ-EC-THRESH/GF/SIGMA/RATE-01} and ledger \texttt{ENG-WEAK-01}
+  {\ttfamily EQ-\allowbreak{}EC-\allowbreak{}THRESH/\allowbreak{}GF/\allowbreak{}SIGMA/\allowbreak{}RATE-\allowbreak{}01} and ledger \texttt{ENG-WEAK-01}
   lock PDG \(G_F\), a \(\sigma\lesssim 10^{-47}\,\mathrm{m}^{2}\)
   envelope, and a Boltzmann-exponent floor as \textbf{identities /
   bounds only}---they do \textbf{not} discharge \texttt{EQ-OPEN-EC-01},
@@ -775,7 +794,7 @@ subject to software caps and claim-tier labels.\footnote{Software
   \texttt{EQ-COMP-02}); multiplying that total by the bubble-lattice
   peak (or the legacy geometric-mean path) is an illegal product
   (\texttt{EQ-COMP-03}). See
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.6-beta/THEORY\_COMPOSITION\_CONTRACT.md}.}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}6-\allowbreak{}beta/\allowbreak{}THEORY\_\allowbreak{}COMPOSITION\_\allowbreak{}CONTRACT.\allowbreak{}md}.}
 Monte Carlo / Sobol runs in the companion app explore this band; they do
 not by themselves validate microscopic mechanisms.
 
@@ -895,7 +914,7 @@ Keller--Miksis bubble dynamics with KM auto-select when peak Mach
 \texttt{/api/unified/*}. Outputs carry provenance
 (\texttt{physics\_engine} vs schematic fallback). \textbf{Aspirational
 (NOT live):} COMSOL-class FEM, self-consistent Poisson--Schrödinger, and
-coupled continuum solvers (\texttt{ENG-ASPIRATIONAL-FEM-01}) are
+coupled continuum solvers ({\ttfamily ENG-\allowbreak{}ASPIRATIONAL-\allowbreak{}FEM-\allowbreak{}01}) are
 research methods only --- never public-beta numerics. Lean
 \texttt{PoissonSchrodinger} / IR \texttt{EQ-PS-*} encode residual,
 domain, and non-deployment honesty only; they do \textbf{not} prove LENR
@@ -908,14 +927,14 @@ Dynamics}\label{poissonschruxf6dinger-coupled-dynamics}}
 
 \textbf{Honesty label:} Continuum FEM / self-consistent
 Poisson--Schrödinger below is an \textbf{aspirational modeling roadmap}
-(\texttt{ENG-ASPIRATIONAL-FEM-01}). It is \textbf{not} executed on the
+({\ttfamily ENG-\allowbreak{}ASPIRATIONAL-\allowbreak{}FEM-\allowbreak{}01}). It is \textbf{not} executed on the
 public beta, \textbf{not} a COMSOL production path in this release, and
 \textbf{not} a discharge of any \texttt{EQ-OPEN-*}. Formalization locks
 parent continuum DEF \texttt{EQ-PS-01}, discrete residual algebra,
 permittivity domain, explicit tolerance axiom, and non-deployment flags
 (\texttt{EQ-PS-POISSON-01}, \texttt{EQ-PS-SCHROD-01},
 \texttt{EQ-PS-COUPLE-01}, \texttt{EQ-PS-DOM-01}, \texttt{EQ-PS-TOL-01},
-\texttt{EQ-PS-NONDEPLOY-01}).
+{\ttfamily EQ-\allowbreak{}PS-\allowbreak{}NONDEPLOY-\allowbreak{}01}).
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -988,11 +1007,11 @@ pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\)---not
 cavitation-dynamics theorems that prove LENR. WH-ENP-01 /
 OpenObligations prove \textbf{non-closure} implications under stated
 deficits---not affirmative LENR
-(\texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}).
+({\ttfamily docs/\allowbreak{}FORMALIZATION/\allowbreak{}FORMAL\_\allowbreak{}PROOF\_\allowbreak{}STATUS.\allowbreak{}md}).
 
 \textbf{Context:} During electrolysis, microbubbles can form and then
 collapse, concentrating energy \[26\]. Ledger IDs:
-\texttt{ENG-BUBBLE-FUSION-01}, \texttt{ENG-RP-KM-01} (claim tier
+{\ttfamily ENG-\allowbreak{}BUBBLE-\allowbreak{}FUSION-\allowbreak{}01}, \texttt{ENG-RP-KM-01} (claim tier
 \textbf{approximate}; do not treat collapse numerics as nuclear-rate
 proof). Collapse UQ in the companion engine (\texttt{collapse\_uq.py},
 Sobol) reports modelled percentiles; campaign grids that stress
@@ -1018,15 +1037,15 @@ cavitation/collapse cells remain model output only (see §3.8).
   \textbf{Keller--Miksis compressibility correction (companion software,
   v0.3.7-beta):} When liquid compressibility / acoustic radiation
   matters, the Unified and Bubble Fusion paths may use
-  \texttt{dynamics\_mode=auto} and select Keller--Miksis when peak Mach
+  {\ttfamily dynamics\_\allowbreak{}mode=\allowbreak{}auto} and select Keller--Miksis when peak Mach
   \(\ge 0.3\). Explicit overrides (\texttt{legacy} /
   \texttt{rayleigh\_plesset} / \texttt{keller\_miksis}) remain
   available. Making KM the unconditional default, real-gas EOS, and FEM
-  remain deferred (\texttt{DEFERRED\_MULTIPHYSICS\_FIDELITY.md}). LaTeX
-  stub: \texttt{docs/v0.3.7-beta/latex/eng\_rp\_km\_01.tex}.
+  remain deferred ({\ttfamily DEFERRED\_\allowbreak{}MULTIPHYSICS\_\allowbreak{}FIDELITY.\allowbreak{}md}). LaTeX
+  stub: {\ttfamily docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}latex/\allowbreak{}eng\_\allowbreak{}rp\_\allowbreak{}km\_\allowbreak{}01.\allowbreak{}tex}.
 \item
   \textbf{Provenance honesty:} UI and export envelopes must distinguish
-  \texttt{provenance=physics\_engine} ODE trajectories from schematic /
+  {\ttfamily provenance=\allowbreak{}physics\_\allowbreak{}engine} ODE trajectories from schematic /
   local fallbacks. Schematic output must never be presented as validated
   engine numerics.
 \item
@@ -1317,7 +1336,7 @@ where \(UA\) is the overall heat transfer coefficient-area product.
 Pinned, version-controlled model runs---not laboratory
 experiments---anchor the quantitative claims in this revision.
 Authoritative evidence lives under
-\texttt{LENR\_SIM\_APP\_v2/datasets/reviewer\_packs/} and the paper
+{\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}datasets/\allowbreak{}reviewer\_\allowbreak{}packs/\allowbreak{}} and the paper
 multi-format pack provenance file (\texttt{PROVENANCE.md}).
 
 \begin{enumerate}
@@ -1327,19 +1346,19 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
   \textbf{Reviewer packs:} \texttt{smoke/} (CI smoke) and
   \texttt{q\_campaign\_demo/} (larger campaign: 150 experiments / 132
   theory runs in the recorded manifest). Schema
-  \texttt{lenr-reviewer-pack-v1}. Disclaimer on every pack: model output
+  {\ttfamily lenr-\allowbreak{}reviewer-\allowbreak{}pack-\allowbreak{}v1}. Disclaimer on every pack: model output
   only; additional runs do \textbf{not} raise empirical claim tiers or
   close \texttt{EQ-OPEN-*}.
 \item
   \textbf{Cavitation / collapse campaign pack:}
-  \texttt{LENR\_SIM\_APP\_v2/datasets/reviewer\_packs/cavitation\_collapse\_campaign/}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}datasets/\allowbreak{}reviewer\_\allowbreak{}packs/\allowbreak{}cavitation\_\allowbreak{}collapse\_\allowbreak{}campaign/\allowbreak{}}
   (Phase A; on \texttt{dev} via \#299). Model-only bubble-lattice
   host×loading×drive×dynamics\_mode cells with collapse UQ; complements
   engine modules (\texttt{collapse\_uq.py}, RP/KM paths). Contested
   Taleyarkhan sonofusion literature is an anchor, not laboratory proof.
 \item
   \textbf{Detector / weak screen campaign pack:}
-  \texttt{LENR\_SIM\_APP\_v2/datasets/reviewer\_packs/detector\_weak\_screen/}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}datasets/\allowbreak{}reviewer\_\allowbreak{}packs/\allowbreak{}detector\_\allowbreak{}weak\_\allowbreak{}screen/\allowbreak{}}
   (WS7; on \texttt{dev} via \#331). Model-only cells for
   detector/weak/screening inventory; dual
   \texttt{score}/\texttt{final\_score} honesty preserved; does
@@ -1347,7 +1366,7 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
 \item
   \textbf{Campaign + UQ / avenue ranking:} Rate and collapse UQ feed
   decision-support avenue ranking at
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.9-beta/AVENUE\_RANKING.md} (Phase
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}9-\allowbreak{}beta/\allowbreak{}AVENUE\_\allowbreak{}RANKING.\allowbreak{}md} (Phase
   B; on \texttt{dev} via \#301). Ranking prioritizes which lab avenues
   look informative next; it does \textbf{not} set \texttt{lenr\_proved}
   or close OPEN ids. Companion Lean \texttt{Decision} / IR
@@ -1355,42 +1374,42 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
   floors only}---not empirical Bayes factors or laboratory posteriors.
 \item
   \textbf{Theory weight surfaces:}
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.9-beta/THEORY\_WEIGHT\_SURFACES.md}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}9-\allowbreak{}beta/\allowbreak{}THEORY\_\allowbreak{}WEIGHT\_\allowbreak{}SURFACES.\allowbreak{}md}
   (WS7; on \texttt{dev} via \#331) inventories
-  \texttt{CLAIM\_TIER\_MULTIPLIER}, oracle priors, and avenue blends as
+  {\ttfamily CLAIM\_\allowbreak{}TIER\_\allowbreak{}MULTIPLIER}, oracle priors, and avenue blends as
   \textbf{Approximate / Aspirational} governance weights---not measured
   lab posteriors.
 \item
   \textbf{Campaign invariants:}
-  \texttt{formalization/predictions/campaign\_invariants.json} and
+  {\ttfamily formalization/\allowbreak{}predictions/\allowbreak{}campaign\_\allowbreak{}invariants.\allowbreak{}json} and
   pack-embedded invariants enforce
-  \texttt{open\_questions.lenr\_proved\ =\ false}, the five OPEN IDs,
+  {\ttfamily open\_\allowbreak{}questions.\allowbreak{}lenr\_\allowbreak{}proved\ =\allowbreak{}\ false}, the five OPEN IDs,
   two-body \(\log_{10}N_{\mathrm{events}}\approx-40\), and
-  \texttt{contract\_version\ =\ v0.3.7-beta-science-gate-1}.
+  {\ttfamily contract\_\allowbreak{}version\ =\allowbreak{}\ v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta-\allowbreak{}science-\allowbreak{}gate-\allowbreak{}1}.
 \item
-  \textbf{Export envelope:} \texttt{/api/unified/export} uses
-  \texttt{lenr-run-export-v1} with claim-tier / provenance fields
+  \textbf{Export envelope:} {\ttfamily /\allowbreak{}api/\allowbreak{}unified/\allowbreak{}export} uses
+  {\ttfamily lenr-\allowbreak{}run-\allowbreak{}export-\allowbreak{}v1} with claim-tier / provenance fields
   required by the data contract.
 \item
   \textbf{Paper benchmarks:}
-  \texttt{backend/tests/test\_paper\_benchmarks/} locks selected theory
+  {\ttfamily backend/\allowbreak{}tests/\allowbreak{}test\_\allowbreak{}paper\_\allowbreak{}benchmarks/\allowbreak{}} locks selected theory
   numeric/regime targets in CI.
 \item
   \textbf{Lean clamp / non-closure (not closure):}
   \texttt{CollapseBounds}
-  (\texttt{EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01}),
+  ({\ttfamily EQ-\allowbreak{}BBL-\allowbreak{}LIM/\allowbreak{}BOUND/\allowbreak{}UQ/\allowbreak{}RP-\allowbreak{}DOM/\allowbreak{}CR-\allowbreak{}CAP-\allowbreak{}01}),
   \texttt{WeakInteraction} (\texttt{EQ-EC-*}; ≠ EC closure),
   \texttt{Overlap} (\texttt{EQ-OVERLAP-01/02}; ensemble ≠ rate),
   \texttt{PoissonSchrodinger} (\texttt{EQ-PS-01}/\texttt{EQ-PS-TOL-01};
   aspirational FEM), and WH / OpenObligations non-closure theorems
   constrain bookkeeping; they do not discharge \texttt{EQ-OPEN-*}. Draft
   closure/falsification criteria (still OPEN) live at
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.9-beta/EQ\_OPEN\_CLOSURE\_RUNWAY.md}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}9-\allowbreak{}beta/\allowbreak{}EQ\_\allowbreak{}OPEN\_\allowbreak{}CLOSURE\_\allowbreak{}RUNWAY.\allowbreak{}md}
   (Phase F; on \texttt{dev} via \#297).
 \item
   \textbf{Neutron-detector honesty (RAD/RATE):} Companion
-  \texttt{neutron\_rate\_bound} carries honesty class
-  \texttt{detector\_ul\_not\_proof}. Cd-ratio / moderator-null /
+  {\ttfamily neutron\_\allowbreak{}rate\_\allowbreak{}bound} carries honesty class
+  {\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof}. Cd-ratio / moderator-null /
   soft-X∧¬hard-γ PREDs (PRED-08/09/10) and contested Parkhomov curated
   rows are falsifiers / literature anchors---they do \textbf{not} close
   \texttt{EQ-OPEN-RAD-01} or \texttt{EQ-OPEN-RATE-01}, and ν/anti-ν
@@ -1400,7 +1419,7 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
   speculative mechanism labels into empirical validation. Maturity axes
   (\texttt{model\_fidelity}, \texttt{empirical\_support},
   \texttt{claim\_tier}) remain independent
-  (\texttt{PHYSICS\_MATURITY\_LEDGER.md}).
+  ({\ttfamily PHYSICS\_\allowbreak{}MATURITY\_\allowbreak{}LEDGER.\allowbreak{}md}).
 \end{enumerate}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
@@ -1441,7 +1460,7 @@ Correlations}\label{experimental-context-and-reported-correlations}}
   \item
     \textbf{Neutron Counters:} Helium-3 or \(\text{BF}_3\) detectors
     above background sensitivity. Detector upper limits in the companion
-    software are honesty-classed \texttt{detector\_ul\_not\_proof};
+    software are honesty-classed {\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof};
     Cd-ratio / moderator-null / soft-X∧¬hard-γ PREDs (PRED-08/09/10) are
     branching falsifiers, not closures of \texttt{EQ-OPEN-RAD-01} /
     \texttt{EQ-OPEN-RATE-01}.\\
@@ -1538,7 +1557,7 @@ Correlation}\label{computationalexperimental-correlation}}
 \item
   \textbf{Neutron Formation:} Scenario neutron-rate bands in the
   companion software are claim-tiered sensitivity explorations under
-  \texttt{detector\_ul\_not\_proof} honesty; they may be \emph{compared}
+  {\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof} honesty; they may be \emph{compared}
   to occasionally reported low-level neutron signals but do \textbf{not}
   validate those signals, close \texttt{EQ-OPEN-RAD-01} /
   \texttt{EQ-OPEN-RATE-01}, or establish routine LENR neutron
@@ -1563,7 +1582,7 @@ R = \frac{n_1 n_2}{1+\delta_{12}} \langle \sigma v \rangle_{\text{thermal}} \tim
 
 where \(\delta_{12} = 1\) for identical reacting species (e.g., D+D
 self-fusion, giving the familiar \(\tfrac{1}{2}n^2\) form used by
-\texttt{reaction\_rate\_engine.py::compute\_two\_body\_rate}) and
+{\ttfamily reaction\_\allowbreak{}rate\_\allowbreak{}engine.\allowbreak{}py:\allowbreak{}:\allowbreak{}compute\_\allowbreak{}two\_\allowbreak{}body\_\allowbreak{}rate}) and
 \(\delta_{12} = 0\) for distinct species. This is the \emph{thermal
 self-fusion} rate and is distinct from the Oppenheimer--Phillips capture
 rate \(R_{\text{rate}} = \sigma_{\text{OP}}\Phi_n N\) (§2.7, a
@@ -1655,7 +1674,7 @@ that a reviewer can actually run are \texttt{literature\_grid}
 \textbf{hundreds of model-output rows}, not \(10^4\)--\(10^6\). The
 larger Monte Carlo aspiration remains a sensitivity method, not a
 completed campaign. See
-\texttt{LENR\_SIM\_APP\_v2/docs/v0.3.6-beta/RESEARCHER\_REVIEW\_PACK.md}.
+{\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}6-\allowbreak{}beta/\allowbreak{}RESEARCHER\_\allowbreak{}REVIEW\_\allowbreak{}PACK.\allowbreak{}md}.
 Extra runs do not close §5A or prove LENR.
 
 \textbf{Implications:}
@@ -1692,7 +1711,7 @@ Products}\label{validation-of-nuclear-products}}
   consistent in magnitude with the hypothesized nuclear energy
   contributions once purely chemical avenues are discounted; this
   remains a disputed empirical correlation (claim tier:
-  \texttt{empirical\_lenr\_correlation}), not an established result.
+  {\ttfamily empirical\_\allowbreak{}lenr\_\allowbreak{}correlation}), not an established result.
 \end{itemize}
 
 \hypertarget{detailed-energy-accounting}{%
@@ -1850,23 +1869,23 @@ mechanism path (Q3). This section formulates each as a quantitative
 challenge with testable implications. The companion app's
 \textbf{open-questions virtual lab} (\texttt{open\_questions} on unified
 / bubble-lattice / theory-pipeline responses) encodes occurrence
-(\texttt{occurrence.anchored}), when (\texttt{when.threshold\_crossed},
-duty cycle, stimulation), and how (\texttt{how.mechanism\_paths}, FGR
+(\texttt{occurrence.anchored}), when ({\ttfamily when.\allowbreak{}threshold\_\allowbreak{}crossed},
+duty cycle, stimulation), and how ({\ttfamily how.\allowbreak{}mechanism\_\allowbreak{}paths}, FGR
 parameters) under Oracle A (Lean identities and conditionals) plus
 Oracle B (mechanism-path odds). Oracle B Bayes-factor algebra
 (\texttt{EQ-UQ-BF-01} ExpHom cocycle in \texttt{LenrFormal.Decision}) is
 an \textbf{algebraic honesty floor} under stated inputs---not an
 empirical posterior---and theory-weight surfaces remain
 Approximate/Aspirational inventory
-(\texttt{THEORY\_WEIGHT\_SURFACES.md}). It never prints
+({\ttfamily THEORY\_\allowbreak{}WEIGHT\_\allowbreak{}SURFACES.\allowbreak{}md}). It never prints
 \texttt{LENR\_PROVED}. See
-\texttt{docs/ARCHITECTURE/OPEN\_QUESTIONS\_VIRTUAL\_LAB\_2026-08-22.md},
-\texttt{docs/ARCHITECTURE/MANY\_BODY\_FGR\_MODEL.md}, and
-\texttt{docs/REVIEW\_2026/OPEN\_QUESTION\_CORPUS\_GAPS.md}.
+{\ttfamily docs/\allowbreak{}ARCHITECTURE/\allowbreak{}OPEN\_\allowbreak{}QUESTIONS\_\allowbreak{}VIRTUAL\_\allowbreak{}LAB\_\allowbreak{}2026-\allowbreak{}08-\allowbreak{}22.\allowbreak{}md},
+{\ttfamily docs/\allowbreak{}ARCHITECTURE/\allowbreak{}MANY\_\allowbreak{}BODY\_\allowbreak{}FGR\_\allowbreak{}MODEL.\allowbreak{}md}, and
+{\ttfamily docs/\allowbreak{}REVIEW\_\allowbreak{}2026/\allowbreak{}OPEN\_\allowbreak{}QUESTION\_\allowbreak{}CORPUS\_\allowbreak{}GAPS.\allowbreak{}md}.
 
 \textbf{Working hypothesis WH-ENP-01} (claim tier
-\texttt{speculative\_exploratory}; Lean
-\texttt{LenrFormal.WorkingHypothesis}). Electron--neutron--proton
+{\ttfamily speculative\_\allowbreak{}exploratory}; Lean
+{\ttfamily LenrFormal.\allowbreak{}WorkingHypothesis}). Electron--neutron--proton
 coupling in a deuteron cluster is treated as one object: a Hagelstein
 coherent virtual-phonon cascade on Takahashi TSC 4D geometry, with a
 derived harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\) bound and the
@@ -1887,9 +1906,9 @@ conservation and \textbf{non-closure} (\texttt{EQ-WH-PART-01},
 \texttt{EQ-OPEN-RATE-01} stay OPEN.
 
 \textbf{WH-ENP-01 v2 derived bounds} (same claim tier; Lean
-\texttt{LenrFormal.WorkingHypothesisBounds}; runtime blocks
+{\ttfamily LenrFormal.\allowbreak{}WorkingHypothesisBounds}; runtime blocks
 \texttt{q2.franck\_condon}, \texttt{q1.coupling\_scan},
-\texttt{dicke.n\_within\_radius}, \texttt{q3.closure\_demand}). Four
+{\ttfamily dicke.\allowbreak{}n\_\allowbreak{}within\_\allowbreak{}radius}, \texttt{q3.closure\_demand}). Four
 quantitative bounds sharpen the remainder without discharging it. (i) A
 displaced-oscillator (Huang--Rhys, linear-coupling) Franck--Condon
 tail---a labelled model assumption---at phonon order
@@ -2054,7 +2073,7 @@ Anharmonic, Umklapp, and Hagelstein lossy spin-boson boosts remain named
 hypotheses and are not inserted into the derived bound. Residual
 \(2.45\,\mathrm{MeV}\) neutron thermalization lengths in H-rich
 liquid/gas/solid/plasma media are tabulated as detector-UL bookkeeping
-(\texttt{detector\_ul\_not\_proof}) and do not partition the
+({\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof}) and do not partition the
 \(^4\mathrm{He}\) Q-value. Cd-ratio / moderator-null / soft-X∧¬hard-γ
 PREDs (PRED-08/09/10) are branching falsifiers for
 neutron-interpretation claims---they do \textbf{not} close
@@ -2098,7 +2117,7 @@ any detection threshold.
   \(U_e \ll E\) (Lean/IR machine check: \(U_e < E_{\mathrm{kin}}\),
   \texttt{EQ-ASSEN-DOM-01}); outside the domain the companion software
   still emits a capped sensitivity factor but sets
-  \texttt{formula\_claimed=false} --- it does \textbf{not} claim a
+  {\ttfamily formula\_\allowbreak{}claimed=\allowbreak{}false} --- it does \textbf{not} claim a
   physical Assenbaum enhancement. Converting the screening potential to
   a tunneling enhancement through the proper Gamow integral may yield
   factors exceeding the adopted \(10^3\text{-}10^5\) band, which is why
@@ -2124,7 +2143,7 @@ quantitative test of the framework. If single-pair enhancement factors
 are the only mechanism, the numbers do not close
 (\texttt{EQ-RATE-2B-NC-01}, \(\log_{10}N=-40\)). WH-ENP-01 uses the
 same-cluster FGR versus \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\)
-(\texttt{EQ-WH-FLOOR-01}); \texttt{when.threshold\_crossed} is true only
+(\texttt{EQ-WH-FLOOR-01}); {\ttfamily when.\allowbreak{}threshold\_\allowbreak{}crossed} is true only
 when \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) with \(V\), \(\tau\),
 \(P_{\mathrm{occ}}\), and \(f_{\mathrm{nuc}}\) labeled cited vs model
 assumption. The v2 closure demand makes the shortfall explicit: for
@@ -2213,7 +2232,7 @@ to neutron production. The Widom-Larsen mechanism, while elegant,
 requires independent experimental verification of the mass
 renormalization claim. Lean \texttt{WeakInteraction} / IR
 \texttt{EQ-EC-*} and the millielectronvolt deficit lemma
-(\texttt{EQ-OPEN-EC-DEFICIT-01}) document Fermi bookkeeping and the
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}) document Fermi bookkeeping and the
 stated threshold gap; they do \textbf{not} discharge
 \texttt{EQ-OPEN-EC-01}. Contested Parkhomov / detector-gas SPEC curated
 rows never feed production rates and are not EC closure.
@@ -2276,7 +2295,7 @@ remain disputed and are not treated as validation of the framework.
 \subsubsection{6.1 Mechanized consistency
 (Lean)}\label{mechanized-consistency-lean}}
 
-A companion formalization pilot (\texttt{formalization/lean}, Lean 4)
+A companion formalization pilot ({\ttfamily formalization/\allowbreak{}lean}, Lean 4)
 mechanically checks \textbf{mathematical consistency} of the adopted
 classical core: Rydberg \(n=10\) identity, Casimir check-geometry band
 (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration
@@ -2306,17 +2325,17 @@ of this manuscript and the Lean section→theorem crosswalk ship as:
 \tightlist
 \item
   Markdown / plain text / LaTeX:
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.7-beta/paper/}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}paper/\allowbreak{}}
 \item
   Lean crosswalk module:
-  \texttt{formalization/lean/LenrFormal/PaperCrosswalk.lean} (mirrored
+  {\ttfamily formalization/\allowbreak{}lean/\allowbreak{}LenrFormal/\allowbreak{}PaperCrosswalk.\allowbreak{}lean} (mirrored
   in the paper pack)
 \item
   Equation LaTeX stubs:
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.7-beta/latex/}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}latex/\allowbreak{}}
 \item
   NL↔MD↔JSON↔LaTeX↔Lean matrix:
-  \texttt{LENR\_SIM\_APP\_v2/docs/v0.3.7-beta/PROOF\_MATRIX.md}
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}PROOF\_\allowbreak{}MATRIX.\allowbreak{}md}
 \end{itemize}
 
 \textbf{Non-claims.} These theorems do \textbf{not} prove that LENR
@@ -2324,26 +2343,26 @@ occurs, that contested calorimetry is experimentally true, or that the
 open challenges of §5A (MeV gap, radiation suppression, rate closure,
 electron-capture threshold, integrated yield) are solved. Speculative
 mechanisms remain claim-tiered. Status ledger:
-\texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}.
+{\ttfamily docs/\allowbreak{}FORMALIZATION/\allowbreak{}FORMAL\_\allowbreak{}PROOF\_\allowbreak{}STATUS.\allowbreak{}md}.
 
 \textbf{Would-close-if lemmas (still OPEN).}
-\texttt{LenrFormal.OpenQuestionBounds} records closure \emph{predicates}
+{\ttfamily LenrFormal.\allowbreak{}OpenQuestionBounds} records closure \emph{predicates}
 and integer-scaled implications only: Q1 closes if the energy remainder
 is identically zero (Hagelstein/Dicke/BEC remain named hypotheses); Q2
 would close if the lattice \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\)
 bookkeeping ratio meets \(10^{11}\); Q3 occupancy/collective factors are
-Nat inputs to the existing \texttt{RateBudget.would\_close\_if} product
+Nat inputs to the existing {\ttfamily RateBudget.\allowbreak{}would\_\allowbreak{}close\_\allowbreak{}if} product
 (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a
 millielectronvolt \textbf{deficit} of \(\sim 10^{7}\) between a stated
 0.1 eV double-layer and the 0.782 MeV capture threshold
-(\texttt{EQ-OPEN-EC-DEFICIT-01}) without discharging
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}) without discharging
 \texttt{EQ-OPEN-EC-01}; Q5 distinguishes an instantaneous Miles EMP band
-vs integrated 100--\(10^{4}\) remainder (\texttt{EQ-OPEN-YIELD-BAND-01})
+vs integrated 100--\(10^{4}\) remainder ({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}BAND-\allowbreak{}01})
 without discharging parent obligation \texttt{EQ-OPEN-YIELD-01}.
-\texttt{LenrFormal.WorkingHypothesis} (WH-ENP-01) proves a coupled
+{\ttfamily LenrFormal.\allowbreak{}WorkingHypothesis} (WH-ENP-01) proves a coupled
 remainder vector and \textbf{non-closure} (\texttt{EQ-WH-NONCLOSE-01})
 without flipping the OPEN table.
-\texttt{LenrFormal.WorkingHypothesisBounds} (WH-ENP-01 v2) adds
+{\ttfamily LenrFormal.\allowbreak{}WorkingHypothesisBounds} (WH-ENP-01 v2) adds
 integer-scaled bounds: the Poisson step ratio \(S/(N+1)<1\) for
 \(N\ge S\) with \(\log_{10}P_N\le-7\times10^{5}<-11\) on the
 \(S\le10^{4}\) grid (\texttt{EQ-WH-FC-01}; conservative cap on the
@@ -2357,7 +2376,7 @@ so a demand above the cap is unmet (\texttt{EQ-WH-CAP-01}); and the
 conjunction \(\neg Q_1\wedge\neg Q_2\wedge\neg Q_3\)
 (\texttt{EQ-WH-NONCLOSE-02}). The Franck--Condon model is a labelled
 model assumption, not a nature theorem. There is no
-\texttt{theorem\ lenr\_occurs}.
+{\ttfamily theorem\ lenr\_\allowbreak{}occurs}.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
@@ -2658,7 +2677,7 @@ this paper:
 \end{itemize}
 
 \textbf{Formalization symbol map (IL-015).} In the Lean/IR ledger
-(\texttt{docs/FORMALIZATION/CLAIM\_TAXONOMY.md}), overloaded symbols are
+({\ttfamily docs/\allowbreak{}FORMALIZATION/\allowbreak{}CLAIM\_\allowbreak{}TAXONOMY.\allowbreak{}md}), overloaded symbols are
 disambiguated as \texttt{E\_eigen} / \texttt{E\_field} /
 \texttt{E\_kin}, \texttt{n\_prin} / \texttt{n\_dens}, and
 \texttt{R\_rate} / \texttt{R\_bubble} / \texttt{R\_overlap\_count}.
@@ -2695,7 +2714,7 @@ evidence \& established
 mechanisms)}\label{primary-sources-for-mathematical-modeling-replicable-evidence-established-mechanisms}}
 
 Drawn from the project's evidence-base bibliography
-(\texttt{Unified\_LENR\_Theory\_D.Acs.docx.md}) and from DOI-backed
+({\ttfamily Unified\_\allowbreak{}LENR\_\allowbreak{}Theory\_\allowbreak{}D.\allowbreak{}Acs.\allowbreak{}docx.\allowbreak{}md}) and from DOI-backed
 screening / heat--helium constraints used by the companion simulation.
 
 \begin{enumerate}
@@ -2872,7 +2891,7 @@ screening / heat--helium constraints used by the companion simulation.
 traceability)}\label{supplementary-keys-software-uq-traceability}}
 
 These \texttt{AuthorYear} keys resolve claims in the companion app and
-\texttt{docs/REVIEW\_2026/TRACEABILITY\_MATRIX.md}:
+{\ttfamily docs/\allowbreak{}REVIEW\_\allowbreak{}2026/\allowbreak{}TRACEABILITY\_\allowbreak{}MATRIX.\allowbreak{}md}:
 
 \begin{itemize}
 \tightlist

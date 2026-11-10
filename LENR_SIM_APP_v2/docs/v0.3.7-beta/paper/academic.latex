@@ -5,14 +5,16 @@
 \usepackage{fontspec}
 \setmainfont{Latin Modern Roman}
 \setsansfont{Latin Modern Sans}
-\setmonofont{Latin Modern Mono}
+\setmonofont[Scale=0.90]{Latin Modern Mono}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{enumitem}
-\usepackage{url}
+% xurl helps \url/\href; body paths use explicit \allowbreak via build_pdf.sh
+\usepackage{xurl}
+\urlstyle{tt}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -22,6 +24,14 @@
   pdftitle={A Unified Theoretical and Mathematical Framework for LENR},
   pdfauthor={Diadon Acs}
 }
+
+% Manuscript headings already carry Part-1 numbers (1, 1.1, …).
+\setcounter{secnumdepth}{-1}
+
+% Prefer wrapping long identifiers/paths over margin overflow.
+\tolerance=2500
+\setlength{\emergencystretch}{4em}
+\hbadness=10000
 
 $if(highlighting-macros)$
 $highlighting-macros$
@@ -49,6 +59,14 @@ $if(institute)$
 \begin{center}
 \small $institute$
 \end{center}
+$endif$
+
+$if(contributors)$
+\begin{center}
+\footnotesize
+$contributors$
+\end{center}
+\vspace{0.5em}
 $endif$
 
 \begin{abstract}
