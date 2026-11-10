@@ -4,6 +4,9 @@
 % Equation OPEN/ENG stubs: ../latex/
 % Epistemic: lenr_proved remains false; EQ-OPEN-* remain OPEN.
 % Phase D (2026-11-05): cavitation--collapse = modelled enhancement / contested hydro.
+% WS findings refresh (2026-11-10): WeakInteraction ≠ EC closure; detector UL ≠ RAD/RATE;
+% Assenbaum domain; CollapseBounds clamp/UQ/RP/CR-cap; EQ-UQ-BF-01 algebraic only;
+% weights Approximate not posteriors; FEM continuum DEF aspirational.
 \documentclass[11pt]{article}
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
@@ -15,7 +18,7 @@ for Low-Energy Nuclear Reactions (LENR)}
 % Transformer homage / methodological metaphor only — see Markdown References (vaswani2017).
 \author{Diadon Acs (lead, Conscious Energies)\\
 \small Contributing AIs disclosed in the Markdown canonical manuscript}
-\date{2026-02-14 (revised 2026-11-05 honesty sync; prior 2026-09-25, v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-10 WS findings refresh; prior 2026-11-05 honesty sync; 2026-09-25, v0.3.7-beta)}
 \begin{document}
 \maketitle
 
@@ -41,14 +44,22 @@ All five \texttt{EQ-OPEN-*} obligations remain OPEN.
 Cavitation--collapse hydrodynamics is \textbf{modelled enhancement / contested
 hydro}: companion ODEs, clamps, and UQ explore interfacial conditions; they do
 not establish nuclear rates or close open obligations.
+Theory weight surfaces are Approximate/Aspirational inventory --- not laboratory
+posteriors. Oracle~B / \texttt{EQ-UQ-BF-01} ExpHom identities are algebraic
+honesty floors only.
 
 \section{Computational methods (v0.3.7-beta sync)}
 Public beta runs the in-repo \texttt{physics\_engine}: WKB/Gamow tunneling;
 bubble dynamics with Rayleigh--Plesset baseline and Keller--Miksis auto-select
 when peak Mach \(\ge 0.3\) (\texttt{ENG-RP-KM-01}, \texttt{ENG-BUBBLE-FUSION-01}).
 Provenance distinguishes \texttt{physics\_engine} from schematic fallback.
-Collapse UQ (\texttt{collapse\_uq.py}) reports modelled percentiles only.
-FEM / Poisson--Schr\"odinger remain aspirational (\texttt{ENG-ASPIRATIONAL-FEM-01}).
+Collapse UQ (\texttt{collapse\_uq.py}) reports modelled percentiles only;
+Lean \texttt{CollapseBounds} locks clamp/UQ/RP-domain/CR-cap bookkeeping
+(\texttt{EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01}) --- not cavitation-dynamics proof.
+Assenbaum screening domain honesty: formula claimed only for \(U_e < E_{\mathrm{kin}}\)
+(\texttt{EQ-ASSEN-DOM-01}).
+FEM / Poisson--Schr\"odinger remain aspirational continuum DEF
+(\texttt{ENG-ASPIRATIONAL-FEM-01}, \texttt{EQ-PS-01}/\texttt{EQ-PS-TOL-01}).
 
 \subsection{Rayleigh--Plesset (low-Mach baseline)}
 \begin{equation}
@@ -78,27 +89,35 @@ Standalone, per-obligation stubs (each is its own mini-document under
 \section{Companion-software simulation evidence}
 Pinned reviewer packs under
 \texttt{LENR\_SIM\_APP\_v2/datasets/reviewer\_packs/}
-(\texttt{smoke}, \texttt{q\_campaign\_demo}) and campaign invariants enforce
+(\texttt{smoke}, \texttt{q\_campaign\_demo},
+\texttt{cavitation\_collapse\_campaign},
+\texttt{detector\_weak\_screen}) and campaign invariants enforce
 \texttt{lenr\_proved=false}, the five OPEN IDs, and
 \texttt{contract\_version=v0.3.7-beta-science-gate-1}.
-Cavitation--collapse pack
-\texttt{datasets/reviewer\_packs/cavitation\_collapse\_campaign/}
-is on \texttt{dev} (Phase~A / \#299; model output only).
 Avenue ranking note
-\texttt{docs/v0.3.9-beta/AVENUE\_RANKING.md} (Phase~B / \#301) and
-closure-runway draft
+\texttt{docs/v0.3.9-beta/AVENUE\_RANKING.md} (Phase~B / \#301),
+weight-surface inventory
+\texttt{docs/v0.3.9-beta/THEORY\_WEIGHT\_SURFACES.md} (WS7 / \#331),
+and closure-runway draft
 \texttt{docs/v0.3.9-beta/EQ\_OPEN\_CLOSURE\_RUNWAY.md} (Phase~F / \#297)
-are on \texttt{dev}; neither closes \texttt{EQ-OPEN-*} nor sets
-\texttt{lenr\_proved}. See \texttt{PROVENANCE.md} and
-\texttt{simulation\_evidence.json}.
-Larger campaigns and UQ ranking do not raise empirical claim tiers.
+are on \texttt{dev}; none closes \texttt{EQ-OPEN-*} nor sets
+\texttt{lenr\_proved}.
+Neutron detector UL honesty class \texttt{detector\_ul\_not\_proof} and
+PRED-08/09/10 falsifiers do \textbf{not} close \texttt{EQ-OPEN-RAD/RATE}.
+See \texttt{PROVENANCE.md} and \texttt{simulation\_evidence.json}.
 
 \section{Mechanized consistency (Lean)}
 Lean~4 modules in \texttt{formalization/lean/LenrFormal/} certify mathematical
 consistency / clamp / non-closure lemmas only.
-\texttt{CollapseBounds} encodes \texttt{EQ-BBL-LIM-01} (pointwise clamp algebra;
-not a cavitation-dynamics theorem). WH-ENP-01 / OpenObligations prove
-non-closure under stated deficits without flipping the OPEN table.
+\texttt{CollapseBounds} encodes \texttt{EQ-BBL-*} clamp/UQ/domain bookkeeping
+(not a cavitation-dynamics theorem).
+\texttt{WeakInteraction} encodes Fermi \(G_F\)/\(\sigma\)/Boltzmann identities
+(\texttt{EQ-EC-*}) --- \textbf{not} \texttt{EQ-OPEN-EC-01} closure.
+\texttt{Decision} ExpHom / \texttt{EQ-UQ-BF-01} is algebraic only (not empirical BF).
+\texttt{Overlap} ensemble count \(\neq\) nuclear rate; \texttt{PoissonSchrodinger}
+continuum DEF stays aspirational.
+WH-ENP-01 / OpenObligations prove non-closure under stated deficits without
+flipping the OPEN table.
 Paper section\(\to\)theorem map:
 \texttt{PaperCrosswalk.lean} (also under \texttt{formalization/lean/LenrFormal/}).
 Status ledger: \texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}.
@@ -107,5 +126,6 @@ Status ledger: \texttt{docs/FORMALIZATION/FORMAL\_PROOF\_STATUS.md}.
 These artifacts do not prove that LENR occurs in nature, close any
 \texttt{EQ-OPEN-*}, set \texttt{lenr\_proved}, or elevate speculative
 cavitation--collapse mechanisms to empirical validation.
+No live Swarm ship, public flip, or invites from this archival pack sync.
 
 \end{document}

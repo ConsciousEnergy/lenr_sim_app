@@ -16,6 +16,7 @@
 - No quantitative band changes in the 2026-09-25 revision (tunneling \(10^3\)–\(10^5\); Casimir \(-1.3\,\mathrm{mN}\); Miles \(24\pm4\,\mathrm{MeV}\))
 - **2026-11-05 honesty sync:** cavitation–collapse labelled **modelled enhancement / contested hydro**; Lean clamp / non-closure language cited; still **no** OPEN closures
 - **2026-11-09 WS pack (0.3.9 public-testing):** FEM DEF / Overlap / CollapseBounds deepen / weight surfaces / Assenbaum / detector RAD / WeakInteraction / rate-UQ floors landed on `dev` (#326–#334) — identities, DEFs, and campaign inventory only; still **no** OPEN closures
+- **2026-11-10 Theory Paper WS findings refresh:** Canonical MD + pack MD/TXT/TEX + Lean `PaperCrosswalk` revision tag synced to tip-`dev` honesty citations (WeakInteraction ≠ EC closure; detector UL/PRED ≠ RAD/RATE closure; Assenbaum domain; CollapseBounds clamp/UQ/RP/CR-cap; `EQ-UQ-BF-01` algebraic only; weights Approximate not posteriors; FEM DEF aspirational). No band changes; still **no** OPEN closures; `lenr_proved` false; no live Swarm ship / public flip / invites
 - Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
 ## Simulation evidence sources
