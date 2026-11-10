@@ -1,13 +1,16 @@
 # Unified Theory Paper — provenance (v0.3.7-beta)
 
-**Purpose.** Academic archival pack for *A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)* in four formats, aligned with companion-software simulation evidence and Lean/IR mathematical modeling.
+**Purpose.** Academic archival pack for *A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)* in five formats, aligned with companion-software simulation evidence and Lean/IR mathematical modeling.
 
 | Format | Path |
 |--------|------|
 | Markdown | [`A_Unified_Theoretical_Framework_for_LENR.md`](./A_Unified_Theoretical_Framework_for_LENR.md) (synced from [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](../../../../docs/A_Unified_Theoretical_Framework_for_LENR.md)) |
 | Plain text | [`A_Unified_Theoretical_Framework_for_LENR.txt`](./A_Unified_Theoretical_Framework_for_LENR.txt) |
-| LaTeX | [`A_Unified_Theoretical_Framework_for_LENR.tex`](./A_Unified_Theoretical_Framework_for_LENR.tex) (+ [`../latex/`](../latex/) stubs) |
+| LaTeX | [`A_Unified_Theoretical_Framework_for_LENR.tex`](./A_Unified_Theoretical_Framework_for_LENR.tex) — **full Part 1 manuscript** (pandoc + [`academic.latex`](./academic.latex); rebuild via [`build_pdf.sh`](./build_pdf.sh)); OPEN/ENG stubs remain under [`../latex/`](../latex/) |
+| PDF | [`A_Unified_Theoretical_Framework_for_LENR.pdf`](./A_Unified_Theoretical_Framework_for_LENR.pdf) — submission-quality XeLaTeX build of Part 1 (title + subtitle *Coupling is all you need*, authors, abstract, honesty footnotes; Part 2 escaped-LaTeX appendix excluded) |
 | Lean crosswalk | [`PaperCrosswalk.lean`](./PaperCrosswalk.lean) (authoritative build: [`formalization/lean/LenrFormal/PaperCrosswalk.lean`](../../../../formalization/lean/LenrFormal/PaperCrosswalk.lean)) |
+
+**2026-11-10 PDF submission build.** Pack `.tex` expanded from short skeleton → compileable full Part 1 manuscript via pandoc from the canonical MD (Part 1 only), academic `article` class template, XeLaTeX. Committed PDF ≈ 0.27 MB / ~40 pages. Does **not** close `EQ-OPEN-*`, set `lenr_proved`, or imply live ship / public flip.
 
 ## Hard invariants
 
@@ -17,6 +20,7 @@
 - **2026-11-05 honesty sync:** cavitation–collapse labelled **modelled enhancement / contested hydro**; Lean clamp / non-closure language cited; still **no** OPEN closures
 - **2026-11-09 WS pack (0.3.9 public-testing):** FEM DEF / Overlap / CollapseBounds deepen / weight surfaces / Assenbaum / detector RAD / WeakInteraction / rate-UQ floors landed on `dev` (#326–#334) — identities, DEFs, and campaign inventory only; still **no** OPEN closures
 - **2026-11-10 Theory Paper WS findings refresh:** Canonical MD + pack MD/TXT/TEX + Lean `PaperCrosswalk` revision tag synced to tip-`dev` honesty citations (WeakInteraction ≠ EC closure; detector UL/PRED ≠ RAD/RATE closure; Assenbaum domain; CollapseBounds clamp/UQ/RP/CR-cap; `EQ-UQ-BF-01` algebraic only; weights Approximate not posteriors; FEM DEF aspirational). No band changes; still **no** OPEN closures; `lenr_proved` false; no live Swarm ship / public flip / invites
+- **2026-11-10 PDF academic submission:** Full Part 1 PDF (+ expanded TEX, `academic.latex`, `build_pdf.sh`) added to this pack; Part 2 appendix excluded from PDF; honesty footnotes retained; still **no** OPEN closures
 - Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
 ## Simulation evidence sources
