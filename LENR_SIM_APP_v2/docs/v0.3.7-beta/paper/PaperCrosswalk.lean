@@ -34,7 +34,7 @@ There is no `theorem lenr_occurs`.
 namespace LenrFormal.PaperCrosswalk
 
 /-- Paper revision tag for this crosswalk. -/
-def paperRevision : String := "v0.3.7-beta-2026-11-10-ws-findings"
+def paperRevision : String := "v0.3.7-beta-2026-11-10-pyyhtia-cr39"
 
 /-- Companion manuscript path (repo-relative). -/
 def canonicalPaperPath : String :=

@@ -54,11 +54,13 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
   n_experiments: 10,
   n_theory_runs: 10,
-  literature_anchor: 'Taleyarkhan-class sonofusion (contested)',
+  literature_anchor: 'Taleyarkhan-class sonofusion (contested); Pyyhtiä 2026 CR-39 cavitation confounder',
   hydro_label: 'modelled enhancement / contested hydro',
   note:
     'Bubble-lattice host × loading × drive × dynamics_mode cells with include_uncertainty. ' +
-    'Model output only; does not raise empirical claim tiers.',
+    'Model output only; does not raise empirical claim tiers. '
+    + 'Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104) is an electrolytic CR-39 '
+    + 'cavitation / detector-confounder peer — not LENR-rate proof.',
 });
 
 /**

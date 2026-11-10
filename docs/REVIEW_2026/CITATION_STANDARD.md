@@ -24,7 +24,7 @@ Every reference must additionally carry: **author(s), year, title, venue**
 
 Use `AuthorYear` BibTeX keys, lowercased author surname + 4-digit year, with a
 disambiguating letter when needed: `takahashi2016`, `hagelstein2025a`,
-`steinetz2020exp`, `pines2020theory`, `tennfors2013`, `mulnix2026`,
+`steinetz2020exp`, `pines2020theory`, `tennfors2013`, `mulnix2026`, `pyyhtia2026`,
 `nguyen2026`. The same key is used in the paper BibTeX, the
 [traceability matrix](TRACEABILITY_MATRIX.md), and code `references` lists.
 

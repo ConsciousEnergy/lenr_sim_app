@@ -113,7 +113,8 @@
     "rayleigh_plesset"
   ],
   "literature_ids": [
-    "taleyarkhan-sonofusion-2002"
+    "taleyarkhan-sonofusion-2002",
+    "pyyhtia-cr39-cavitation-2026"
   ],
-  "note": "Model-output cavitation/collapse campaign: bubble-lattice cells varying host, loading, acoustic drive, and dynamics_mode with include_uncertainty. Contested sonofusion literature anchor included. Does not prove LENR; EQ-OPEN-* stay OPEN."
+  "note": "Model-output cavitation/collapse campaign: bubble-lattice cells varying host, loading, acoustic drive, and dynamics_mode with include_uncertainty. Contested sonofusion literature anchor included. Does not prove LENR; EQ-OPEN-* stay OPEN. Pyyhti\u00e4 2026 (pyyhtia-cr39-cavitation-2026) electrolytic CR-39 cavitation confounder peer included; not nuclear proof."
 }

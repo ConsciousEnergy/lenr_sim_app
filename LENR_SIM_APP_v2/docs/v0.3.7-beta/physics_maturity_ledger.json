@@ -32,7 +32,8 @@
       "artifacts": ["md", "json", "lean", "tex"],
       "beta_label": "speculative",
       "priority": "P0",
-      "rd_next": "Analytical Gamma_ph / Gamma_gamma"
+      "rd_next": "Analytical Gamma_ph / Gamma_gamma",
+      "literature_honesty_note": "Pyyhtiä et al. 2026 (pyyhtia2026) electrolytic CR-39 cavitation confounder; obligation remains OPEN."
     },
     {
       "id": "EQ-OPEN-RATE-01",
@@ -107,7 +108,8 @@
       "artifacts": ["md", "json", "tex", "lean"],
       "beta_label": "approximate",
       "priority": "P1",
-      "rd_next": "Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ/CR-CAP-01 are DEF only"
+      "rd_next": "Keep EQ-OPEN-* open; EOS/FEM still deferred; EQ-BBL-LIM/BOUND/UQ/CR-CAP-01 are DEF only",
+      "literature_honesty_note": "Cite pyyhtia2026 beside Taleyarkhan/Mulnix peers; nuclear pathway remains modelled enhancement / contested hydro."
     },
     {
       "id": "ENG-RP-KM-01",

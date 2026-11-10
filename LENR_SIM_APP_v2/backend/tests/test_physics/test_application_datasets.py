@@ -22,11 +22,11 @@ from app.physics_engine.unified_lenr_model.screening_data import (
 
 def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     records = literature_records()
-    assert len(records) == 18
+    assert len(records) == 19
     experiments = get_baseline_experiments()
-    assert len(experiments) == 18
+    assert len(experiments) == 19
     ids = {row["id"] for row in experiments}
-    assert len(ids) == 18
+    assert len(ids) == 19
     assert all(len(row["id"]) == 36 for row in experiments)
     arpa = next(row for row in experiments if "ARPA-E" in row["name"])
     assert arpa["claim_tag"] == "null"
@@ -44,6 +44,13 @@ def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     ]
     assert get_baseline_experiments()[0]["id"] == experiments[0]["id"]
     tagged = {row["claim_tag"] for row in records}
+    
+    pyy = next(row for row in experiments if row["literature_id"] == "pyyhtia-cr39-cavitation-2026")
+    assert pyy["claim_tag"] == "contested"
+    assert pyy["citation_key"] == "pyyhtia2026"
+    assert pyy["doi"] == "10.1016/j.jelechem.2026.120104"
+    assert pyy["open_question_ids"] == ["EQ-OPEN-RAD-01"]
+
     assert {"EMP", "null", "disputed", "contested", "speculative"} <= tagged
 
 

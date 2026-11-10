@@ -4,8 +4,10 @@
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-11-10, WS findings refresh; prior 2026-11-05 honesty sync; 2026-09-25, v0.3.7-beta)
+Date: 2026-02-14 (revised 2026-11-10, Pyyhtiä CR-39 cite + WS findings refresh; prior 2026-11-05 honesty sync; 2026-09-25, v0.3.7-beta)
 Organization: Conscious Energies | www.conscious.energy
+
+**Revision note (2026-11-10, Pyyhtiä CR-39 cavitation cite).** Adds Pyyhtiä et al. (*J. Electroanal. Chem.* 1013, 120104; DOI 10.1016/j.jelechem.2026.120104; key `pyyhtia2026`) beside Taleyarkhan / Mulnix / SPAWAR CR-39 peers: electrolytic HER nanobubble cavitation damages CR-39 and confounds pit=nuclear interpretations. Cavitation–collapse nuclear pathway remains **modelled enhancement / contested hydro**. Does **not** close any `EQ-OPEN-*` or set `lenr_proved`. No version-marker bump / live ship.
 
 **Revision note (2026-11-10, WS findings refresh).** Manuscript prose/math citations synced to tip-`dev` WS1–WS10 honesty after #326–#334: subtitle **Coupling is all you need**; WeakInteraction Fermi \(G_F\)/σ/Boltzmann identities ≠ `EQ-OPEN-EC-01` closure; neutron detector UL / PRED-08/09/10 falsifiers ≠ RAD/RATE closure; Assenbaum domain `formula_claimed=false` outside validity; CollapseBounds clamp/UQ/RP-domain/CR-cap only; rate UQ `EQ-UQ-BF-01` ExpHom algebra ≠ empirical Bayes; theory weights Approximate/Aspirational (not lab posteriors); Overlap DEF ensemble ≠ rate; FEM continuum DEF aspirational (`EQ-PS-01`/`EQ-PS-TOL-01`). No quantitative band changes; `lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN. No live Swarm ship / public flip / invites.
 
@@ -501,7 +503,7 @@ Here \( E \) is the energy eigenvalue (`E_eigen`), not the electric field (`E_fi
 
 **Honesty label:** Cavitation–collapse in this framework is **modelled enhancement / contested hydro**. Rayleigh–Plesset / Keller–Miksis trajectories, surface-proximity factors, and collapse UQ percentiles are companion-software sensitivity explorations under claim-tier governance. They are **not** laboratory proof of nuclear rates, **not** a discharge of any `EQ-OPEN-*`, and **not** a physical-necessity theorem. Lean `LenrFormal.CollapseBounds` encodes only clamp / bound / UQ / RP-domain / hard-core CR-cap bookkeeping (`EQ-BBL-LIM-01`, `EQ-BBL-BOUND-01`, `EQ-BBL-UQ-01`, `EQ-BBL-RP-DOM-01`, `EQ-BBL-CR-CAP-01`)—including the pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\)—not cavitation-dynamics theorems that prove LENR. WH-ENP-01 / OpenObligations prove **non-closure** implications under stated deficits—not affirmative LENR (`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`).
 
-**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
+**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Pyyhtiä et al. (2026) (`pyyhtia2026`) provide OA experimental support that HER-driven nanobubble cavitation damages CR-39 and confounds SPAWAR-class pit=nuclear detector interpretations (pits without Pd and/or D₂O under suitable geometry; HIFU control; shallow polymer pits vs deep α tracks)—**not** LENR-rate proof; `EQ-OPEN-RAD-01` stays OPEN. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
 
 1. **Modified Rayleigh–Plesset Equation** (incompressible / low-Mach baseline):
 \[
@@ -662,7 +664,7 @@ where \( UA \) is the overall heat transfer coefficient-area product.
 Pinned, version-controlled model runs—not laboratory experiments—anchor the quantitative claims in this revision. Authoritative evidence lives under `LENR_SIM_APP_v2/datasets/reviewer_packs/` and the paper multi-format pack provenance file (`PROVENANCE.md`).
 
 1. **Reviewer packs:** `smoke/` (CI smoke) and `q_campaign_demo/` (larger campaign: 150 experiments / 132 theory runs in the recorded manifest). Schema `lenr-reviewer-pack-v1`. Disclaimer on every pack: model output only; additional runs do **not** raise empirical claim tiers or close `EQ-OPEN-*`.
-2. **Cavitation / collapse campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/` (Phase A; on `dev` via #299). Model-only bubble-lattice host×loading×drive×dynamics_mode cells with collapse UQ; complements engine modules (`collapse_uq.py`, RP/KM paths). Contested Taleyarkhan sonofusion literature is an anchor, not laboratory proof.
+2. **Cavitation / collapse campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/` (Phase A; on `dev` via #299). Model-only bubble-lattice host×loading×drive×dynamics_mode cells with collapse UQ; complements engine modules (`collapse_uq.py`, RP/KM paths). Contested Taleyarkhan sonofusion literature is an anchor, not laboratory proof. Pyyhtiä et al. 2026 (`pyyhtia2026`) sits alongside as an electrolytic CR-39 cavitation / detector-confounder peer—not a nuclear-rate proof.
 3. **Detector / weak screen campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/` (WS7; on `dev` via #331). Model-only cells for detector/weak/screening inventory; dual `score`/`final_score` honesty preserved; does **not** close `EQ-OPEN-*` or set `lenr_proved`.
 4. **Campaign + UQ / avenue ranking:** Rate and collapse UQ feed decision-support avenue ranking at `LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md` (Phase B; on `dev` via #301). Ranking prioritizes which lab avenues look informative next; it does **not** set `lenr_proved` or close OPEN ids. Companion Lean `Decision` / IR `EQ-UQ-BF-01` ExpHom identities are **algebraic honesty floors only**—not empirical Bayes factors or laboratory posteriors.
 5. **Theory weight surfaces:** `LENR_SIM_APP_v2/docs/v0.3.9-beta/THEORY_WEIGHT_SURFACES.md` (WS7; on `dev` via #331) inventories `CLAIM_TIER_MULTIPLIER`, oracle priors, and avenue blends as **Approximate / Aspirational** governance weights—not measured lab posteriors.
@@ -1209,6 +1211,7 @@ Drawn from the project's evidence-base bibliography (`Unified_LENR_Theory_D.Acs.
 
 26. Taleyarkhan, R. P., et al. (2002). Evidence for nuclear emissions during acoustic cavitation. *Science*, 295(5561), 1868–1873.  
     **Link:** [https://doi.org/10.1126/science.1067589](https://doi.org/10.1126/science.1067589)
+    *Honesty:* Contested / disputed nuclear-emission claim; retained as acoustic-cavitation literature anchor only—not laboratory LENR proof. See also `pyyhtia2026` (electrolytic CR-39 cavitation confounder).
 
 27. Menlove, H. O., et al. (1989). Neutron emission from titanium exposed to deuterium gas at high pressure. Los Alamos National Laboratory Report.  
     **Link:** [https://www.osti.gov/biblio/5039188](https://www.osti.gov/biblio/5039188)
@@ -1250,6 +1253,7 @@ These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_202
 - **[storms2015]** Storms, E. (2015). Efficient production of energy from the LENR effect. *Current Science*, 108(4), 574–577.  
 - **[tennfors2013]** Tennfors, E. (2013). On the assumptions for an effective electron mass. *European Physical Journal Plus*, 128, 15. DOI: [10.1140/epjp/i2013-13015-3](https://doi.org/10.1140/epjp/i2013-13015-3)  
 - **[mulnix2026]** Mulnix, A. (2026). Structural theory of sonoluminescence via Klein–Gordon / Rayleigh–Plesset harmonic locking. Zenodo. DOI: [10.5281/zenodo.19079074](https://doi.org/10.5281/zenodo.19079074)  
+- **[pyyhtia2026]** Pyyhtiä, K., et al. (2026). Investigation of CR-39 damaging mechanisms in electrochemical environments. *Journal of Electroanalytical Chemistry*, 1013, 120104. DOI: [10.1016/j.jelechem.2026.120104](https://doi.org/10.1016/j.jelechem.2026.120104). OA experimental support that HER nanobubble cavitation damages CR-39 and confounds pit=nuclear interpretations; does **not** prove LENR.  
 - **[nguyen2026]** Nguyen, T., et al. (2026). Quantum shell structure of proton–neutron pairing. *Nature*. DOI: [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)  
 - **[floquetwkb2026]** Floquet–WKB analysis of lattice confinement fusion under a driven barrier (2026). DOI: [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)  
 - **[parkhomov2018]** Parkhomov, A. G. (2018). Nuclear reactions in LENR: review of experimental results (LENR Academy curated subset).  

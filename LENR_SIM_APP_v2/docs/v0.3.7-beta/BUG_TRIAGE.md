@@ -17,3 +17,7 @@ issue tracker — seed for Milestone issues.
 
 - `docs/v0.3.6-beta/MASTER_PROGRESS_AND_KNOWN_ISSUES.md`
 - `BUG_TRIAGE` follow-ups belong in GitHub Milestone `v0.3.7-beta` when created
+
+## Literature cite note (2026-11-10)
+
+Pyyhtiä et al. 2026 (`pyyhtia2026`, DOI 10.1016/j.jelechem.2026.120104) is cited beside Taleyarkhan / SPAWAR CR-39 peers as electrolytic cavitation / detector-confounder evidence. Does not close `EQ-OPEN-RAD-01` or reclassify Bubble Fusion nuclear claims.
