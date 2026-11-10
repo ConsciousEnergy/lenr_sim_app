@@ -19,6 +19,7 @@ import io
 
 from app.core.database import get_db_session
 from app.core.analytics_write_guard import require_analytics_write
+from app.core.compute_guard import heavy_compute_slot, run_in_threadpool
 from app.services.analytics_service import AnalyticsService, get_analytics_service
 from app.utils.json_safe import to_json_safe
 
@@ -738,12 +739,17 @@ async def run_parameter_sweep(request: ParameterSweepRequest):
     )
 
     try:
-        results = parameter_sweep(
-            base_conditions=base,
-            sweep_param=request.sweep_param,
-            sweep_values=sweep_values,
-            enabled_theories=request.enabled_theories,
-        )
+        async with heavy_compute_slot("analytics/parameter-sweep"):
+            results = await run_in_threadpool(
+                lambda: parameter_sweep(
+                    base_conditions=base,
+                    sweep_param=request.sweep_param,
+                    sweep_values=sweep_values,
+                    enabled_theories=request.enabled_theories,
+                )
+            )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Error running parameter sweep")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -848,11 +854,16 @@ async def run_coupled_pipeline(request: CoupledRunRequest):
     enabled = request.enabled_theories
 
     try:
-        result = pipeline.run_coupled(
-            conditions=conditions,
-            enabled_theories=enabled,
-            theory_configs=request.theory_configs,
-        )
+        async with heavy_compute_slot("analytics/theories/run-coupled"):
+            result = await run_in_threadpool(
+                lambda: pipeline.run_coupled(
+                    conditions=conditions,
+                    enabled_theories=enabled,
+                    theory_configs=request.theory_configs,
+                )
+            )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Error in coupled pipeline")
         raise HTTPException(status_code=500, detail=str(exc))

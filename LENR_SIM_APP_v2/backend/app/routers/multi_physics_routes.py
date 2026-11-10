@@ -25,6 +25,10 @@ from app.simulation import (
 )
 from app.simulation.multi_physics.test_coupling import run_coupled_simulation, plot_results
 from app.core.config import settings
+from app.core.compute_guard import (
+    release_heavy_slot_sync,
+    try_acquire_heavy_slot_sync,
+)
 
 # Create router
 router = APIRouter()
@@ -165,6 +169,7 @@ def run_simulation_task(
         simulation_id: Unique ID for the simulation
         params: Simulation parameters
     """
+    # Slot was reserved in start_simulation; always release in finally.
     try:
         # Update simulation status to running
         simulation_results[simulation_id]["status"] = "running"
@@ -223,6 +228,8 @@ def run_simulation_task(
         simulation_results[simulation_id]["status"] = "failed"
         simulation_results[simulation_id]["error"] = str(e)
         simulation_results[simulation_id]["message"] = f"Simulation failed: {str(e)}"
+    finally:
+        release_heavy_slot_sync()
 
 
 @router.post("/simulations", response_model=SimulationResponse)
@@ -236,7 +243,9 @@ async def start_simulation(
     The simulation will run in the background and the results can be
     retrieved later using the returned simulation ID.
     """
-    if _active_simulation_count() >= settings.MAX_CONCURRENT_HEAVY_SIMS:
+    # Share the process-wide heavy slot with async compute_guard paths so
+    # BackgroundTasks cannot stack on top of unified/theory heavy POSTs.
+    if not try_acquire_heavy_slot_sync(timeout=0):
         raise HTTPException(
             status_code=503,
             detail="The simulation service is busy. Please retry in a few seconds.",
@@ -262,7 +271,7 @@ async def start_simulation(
         "progress": 0.0
     }
     
-    # Start the simulation in the background
+    # Start the simulation in the background (releases slot in finally)
     background_tasks.add_task(run_simulation_task, simulation_id, params)
     
     return SimulationResponse(

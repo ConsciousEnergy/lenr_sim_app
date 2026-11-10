@@ -202,10 +202,13 @@ services:
         - "traefik.http.services.backend.loadbalancer.server.port=8000"
         - "traefik.http.services.backend.loadbalancer.healthcheck.path=/api/health"
         - "traefik.http.services.backend.loadbalancer.healthcheck.interval=30s"
-        # Rate Limiting
+        # Rate Limiting — depth=1 = rightmost XFF hop (TCP peer Traefik appended).
+        # Stock Traefik does not set X-Real-IP; FastAPI client_ip falls back to the
+        # same hop. Do not attach the unused file-provider api-ratelimit middleware.
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
+        - "traefik.http.middlewares.backend-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1"
 
 {% if swarm_frontend_enabled | default(false) %}
   # ============================================================================

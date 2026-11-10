@@ -1,9 +1,16 @@
 """
 Client IP extraction for rate limits and abuse controls.
 
-Behind Traefik/nginx, prefer X-Real-IP (set by the edge from the TCP peer).
-Fall back to the rightmost X-Forwarded-For hop (appended by a trusted proxy)
-rather than the leftmost hop, which a client can spoof to dilute per-IP budgets.
+Preference order:
+1. ``X-Real-IP`` — set by nginx (SPA) or an operator-added Traefik plugin; Traefik
+   stock does **not** emit this header on the Swarm edge.
+2. ``CF-Connecting-IP`` — present only if ``api.`` is orange-clouded later.
+3. Rightmost ``X-Forwarded-For`` hop — Traefik (edge) appends the TCP peer; this
+   is the authoritative key for the current DNS-only Swarm path.
+4. Direct peer ``request.client.host``.
+
+Never prefer the leftmost XFF hop — clients can spoof it to dilute per-IP budgets.
+Traefik ``backend-ratelimit`` uses ``sourceCriterion.ipStrategy.depth=1`` (same hop).
 """
 
 from __future__ import annotations
@@ -16,6 +23,10 @@ def client_ip_from_request(request: Request) -> str:
     real_ip = (request.headers.get("X-Real-IP") or "").strip()
     if real_ip and _looks_like_ip(real_ip):
         return real_ip
+
+    cf_ip = (request.headers.get("CF-Connecting-IP") or "").strip()
+    if cf_ip and _looks_like_ip(cf_ip):
+        return cf_ip
 
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
