@@ -1300,451 +1300,423 @@ This paper contains two versions of the unified LENR framework developed in para
 
 ---
 
-\\begin{abstract}  
-Low-Energy Nuclear Reactions (LENR), characterized by anomalous heat generation and nuclear byproducts occurring under non-relativistic conditions, continue to defy conventional nuclear theory. Though historically marginalized since the Fleischmann–Pons announcement in 1989, evidence of excess heat, transmutation products, and helium-4 production has persisted in both deuterium–palladium and nickel–hydrogen systems. 
+## Appendix (archival)
 
-We present a unified, hierarchical theoretical framework that integrates over a century of developments in quantum tunneling, electron screening, interface electrodynamics, and collective lattice phenomena. Drawing from both historical antecedents (e.g., Gamow tunneling, Fröhlich coherence, Preparata’s QED domains) and modern models (e.g., Takahashi’s tetrahedral fusion, Hagelstein’s phonon-nuclear coupling), we revise tunneling enhancement estimates downward to $10^3$–$10^5$, yet demonstrate their sufficiency under macroscopic interaction densities.
+### Archival abstract
 
-A quantitative reanalysis is performed using a coupled Poisson–Schrödinger framework with Monte Carlo uncertainty propagation and Sobol sensitivity metrics. This theoretical model is critically correlated with key calorimetric and isotopic results from both legacy data (EPRI–NSF 1989\) and recent high-resolution experiments in Ni–H and Pd–D systems. 
+Low-Energy Nuclear Reactions (LENR), characterized by anomalous heat generation and nuclear byproducts occurring under non-relativistic conditions, continue to defy conventional nuclear theory. Though historically marginalized since the Fleischmann–Pons announcement in 1989, evidence of excess heat, transmutation products, and helium-4 production has persisted in both deuterium–palladium and nickel–hydrogen systems.
 
-This work aims to advance LENR toward scientific legitimacy by integrating theoretical consistency, historical context, and a reproducible experimental roadmap while acknowledging the open challenge of bridging the nuclear energy gap.  
-\\end{abstract}
+We present a unified, hierarchical theoretical framework that integrates over a century of developments in quantum tunneling, electron screening, interface electrodynamics, and collective lattice phenomena. Drawing from both historical antecedents (e.g., Gamow tunneling, Fröhlich coherence, Preparata’s QED domains) and modern models (e.g., Takahashi’s tetrahedral fusion, Hagelstein’s phonon-nuclear coupling), we revise tunneling enhancement estimates downward to \(10^3\)–\(10^5\), yet demonstrate their sufficiency under macroscopic interaction densities.
 
-\\section{Introduction}
+A quantitative reanalysis is performed using a coupled Poisson–Schrödinger framework with Monte Carlo uncertainty propagation and Sobol sensitivity metrics. This theoretical model is critically correlated with key calorimetric and isotopic results from both legacy data (EPRI–NSF 1989\) and recent high-resolution experiments in Ni–H and Pd–D systems.
 
-\\subsection{1.1 Historical Background and Scientific Challenges}
+This work aims to advance LENR toward scientific legitimacy by integrating theoretical consistency, historical context, and a reproducible experimental roadmap while acknowledging the open challenge of bridging the nuclear energy gap.
+### Introduction
+
+#### 1.1 Historical Background and Scientific Challenges
 
 The pursuit of nuclear effects within condensed matter systems—today often classified under the umbrella of Low-Energy Nuclear Reactions (LENR)—has deep roots in both theoretical physics and anomalous experimental reports spanning nearly a century. The theoretical plausibility of nuclear processes at non-relativistic energies was first introduced through quantum tunneling theory by Gamow (1928), offering a non-classical pathway through the Coulomb barrier. In the mid-20th century, Fröhlich’s work on long-range coherence in biological and crystalline systems, along with Bardeen-Cooper-Schrieffer (BCS) theory of superconductivity, introduced concepts of collective excitation and low-energy phase coherence that now echo through LENR literature.
 
-Parallel to these theoretical developments, the hydrogen-metal system itself became an object of intrigue. Reports of unexplained energy release from metal–hydrogen systems appeared as early as 1927 (Justi and Wendt), though they were met with skepticism and ultimately dismissed. This pattern repeated after the 1989 announcement by Fleischmann and Pons \\cite{fleischmann1989}, who reported excess heat production during electrolysis of heavy water with palladium electrodes, suggesting a possible nuclear origin without commensurate radiation signatures.
+Parallel to these theoretical developments, the hydrogen-metal system itself became an object of intrigue. Reports of unexplained energy release from metal–hydrogen systems appeared as early as 1927 (Justi and Wendt), though they were met with skepticism and ultimately dismissed. This pattern repeated after the 1989 announcement by Fleischmann and Pons [Fleischmann 1989], who reported excess heat production during electrolysis of heavy water with palladium electrodes, suggesting a possible nuclear origin without commensurate radiation signatures.
 
 Since that time, LENR research has yielded a complex and often controversial data set:
 
-\\begin{itemize}  
-    \\item Persistent reports of \\textit{excess heat} in deuterated palladium systems \\cite{oriani1990, mckubre1994}, some exceeding input energy by 10–30\\%.  
-    \\item Detection of \\textit{helium-4, tritium, or isotopic anomalies} in both electrolytic and gas-phase systems \\cite{bockris1991, arata2002, mizuno2007, miley1996}.  
-    \\item A conspicuous \\textit{lack of high-energy gamma radiation} typically expected from conventional fusion reactions \\cite{storms2010}.  
-\\end{itemize}
+* Persistent reports of *excess heat* in deuterated palladium systems [Oriani 1990; McKubre 1994], some exceeding input energy by 10–30\\%.
+* Detection of *helium-4, tritium, or isotopic anomalies* in both electrolytic and gas-phase systems [Bockris 1991; Arata 2002; Mizuno 2007; Miley 1996].
+* A conspicuous *lack of high-energy gamma radiation* typically expected from conventional fusion reactions [Storms 2010].
+
 
 Despite ongoing experimental efforts and the development of many partial theoretical models (e.g., electron screening, heavy electrons, cluster fusion), mainstream physics has not yet accepted LENR due to four major barriers:
 
-\\begin{enumerate}  
-    \\item \\textbf{Reproducibility Issues}: Positive results often depend on highly specific material conditions—surface roughness, loading ratio, and microstructural defects—leading to poor inter-laboratory repeatability.  
-    \\item \\textbf{Fragmented Theory Space}: Competing models often contradict one another and fail to reconcile LENR claims with standard quantum field theory and energy conservation.  
-    \\item \\textbf{Coulomb Barrier Paradox}: Tunneling probabilities under ambient energy conditions remain prohibitively low under classical assumptions.  
-    \\item \\textbf{Experimental Ambiguity}: Many past reports lacked control experiments, rigorous calorimetric standards, or statistical treatment of data.  
-\\end{enumerate}
+1. **Reproducibility Issues**: Positive results often depend on highly specific material conditions—surface roughness, loading ratio, and microstructural defects—leading to poor inter-laboratory repeatability.
+2. **Fragmented Theory Space**: Competing models often contradict one another and fail to reconcile LENR claims with standard quantum field theory and energy conservation.
+3. **Coulomb Barrier Paradox**: Tunneling probabilities under ambient energy conditions remain prohibitively low under classical assumptions.
+4. **Experimental Ambiguity**: Many past reports lacked control experiments, rigorous calorimetric standards, or statistical treatment of data.
+
 
 These challenges, coupled with sociological resistance, have contributed to the field's marginalization—despite the tantalizing possibility of an ultra-clean, distributed nuclear energy source operating near ambient temperatures.
 
-\\subsection{1.2 Objectives}
+#### 1.2 Objectives
 
 The goal of this paper is to construct a unified theoretical and computational framework for LENR that:
 
-\\begin{itemize}  
-    \\item \\textbf{Integrates historically grounded mechanisms} from quantum tunneling, field theory, non-equilibrium thermodynamics, and condensed matter physics.  
-    \\item \\textbf{Reconciles experimental observations}—both historical and modern—with physically plausible models constrained by known energy scales.  
-    \\item \\textbf{Provides a probabilistic and multiscale modeling approach} using coupled Poisson–Schrödinger solvers, Monte Carlo error propagation, and machine-learning-assisted sensitivity analyses.  
-    \\item \\textbf{Proposes a reproducibility roadmap} through rigorous control protocols, validated calorimetric measurements, and inter-laboratory standards.  
-\\end{itemize}
+* **Integrates historically grounded mechanisms** from quantum tunneling, field theory, non-equilibrium thermodynamics, and condensed matter physics.
+* **Reconciles experimental observations**—both historical and modern—with physically plausible models constrained by known energy scales.
+* **Provides a probabilistic and multiscale modeling approach** using coupled Poisson–Schrödinger solvers, Monte Carlo error propagation, and machine-learning-assisted sensitivity analyses.
+* **Proposes a reproducibility roadmap** through rigorous control protocols, validated calorimetric measurements, and inter-laboratory standards.
+
 
 We emphasize that this framework does not rely on unverified particles (e.g., hydrinos, pseudo-neutrons) or speculative physics outside the standard model, but rather on amplification of known quantum effects under highly constrained nanoscale conditions.
 
-\\subsection{1.3 Scope and Structure}
+#### 1.3 Scope and Structure
 
 This paper integrates a century of theoretical insights and experimental anomalies into a layered framework capable of modeling LENR phenomena from first principles. It is organized as follows:
 
-\\begin{itemize}  
-    \\item \\textbf{Section 2: Theoretical Framework}—Presents a hierarchical model incorporating electron screening, interface electric fields, coherent lattice phenomena, Casimir-like effects, and bubble collapse dynamics.  
-    \\item \\textbf{Section 3: Computational Methods}—Details coupled electrostatic-quantum simulations, uncertainty quantification, and machine-learning-driven parametric exploration.  
-    \\item \\textbf{Section 4: Experimental Correlations}—Reanalyzes historical (e.g., EPRI–NSF 1989\) and modern LENR experiments under the unified model, highlighting both consistent patterns and anomalous outliers.  
-    \\item \\textbf{Section 5: Results and Interpretation}—Synthesizes mechanistic contributions, correlates predicted observables (e.g., heat, isotopic shifts) with experimental findings, and presents probabilistic confidence bounds.  
-    \\item \\textbf{Section 6: Discussion and Implications}—Critically examines limitations of current models, the plausibility of collective coherence bridging the MeV energy gap, and the requirements for LENR to transition from anomaly to physics.  
-    \\item \\textbf{Section 7: Conclusion and Roadmap}—Outlines the future steps required to rigorously test the proposed framework and unify LENR with mainstream condensed matter and nuclear theory.  
-\\end{itemize}
+* **Section 2: Theoretical Framework**—Presents a hierarchical model incorporating electron screening, interface electric fields, coherent lattice phenomena, Casimir-like effects, and bubble collapse dynamics.
+* **Section 3: Computational Methods**—Details coupled electrostatic-quantum simulations, uncertainty quantification, and machine-learning-driven parametric exploration.
+* **Section 4: Experimental Correlations**—Reanalyzes historical (e.g., EPRI–NSF 1989\) and modern LENR experiments under the unified model, highlighting both consistent patterns and anomalous outliers.
+* **Section 5: Results and Interpretation**—Synthesizes mechanistic contributions, correlates predicted observables (e.g., heat, isotopic shifts) with experimental findings, and presents probabilistic confidence bounds.
+* **Section 6: Discussion and Implications**—Critically examines limitations of current models, the plausibility of collective coherence bridging the MeV energy gap, and the requirements for LENR to transition from anomaly to physics.
+* **Section 7: Conclusion and Roadmap**—Outlines the future steps required to rigorously test the proposed framework and unify LENR with mainstream condensed matter and nuclear theory.
 
-\\section{Theoretical Framework}
+
+### Theoretical Framework
 
 This section presents a hierarchical framework for Low-Energy Nuclear Reactions (LENR) grounded in known physics—particularly condensed matter electrodynamics, quantum tunneling theory, many-body coherence, and field-induced interface dynamics. We also integrate theoretical contributions spanning nearly a century, from early quantum tunneling to modern field-assisted coherence models.
 
-\\subsection{2.1 Electron Screening and Modified Rydberg Matter}
+#### 2.1 Electron Screening and Modified Rydberg Matter
 
 In metallic lattices loaded with hydrogen or deuterium, localized electron density can significantly reduce the effective Coulomb barrier between interacting nuclei. Electron screening is enhanced by conduction electrons, lattice phonons, and surface plasmons, which can collectively localize charge density near defects or interstitial sites.
 
-Models show that in dense Pd–D or Ni–H environments, the potential barrier may be lowered by 10–100 eV \\cite{schwinger1990}. This remains several orders of magnitude below the $\\sim$MeV scale needed for conventional fusion, but when multiplied by tunneling enhancement factors, such effects can become non-negligible.
+Models show that in dense Pd–D or Ni–H environments, the potential barrier may be lowered by 10–100 eV [Schwinger 1990]. This remains several orders of magnitude below the \(\sim\)MeV scale needed for conventional fusion, but when multiplied by tunneling enhancement factors, such effects can become non-negligible.
 
 Modified Rydberg Matter (RM), characterized by loosely bound atoms in high principal quantum states, may further contribute to spatial overlap and electron delocalization. However, these states are unstable and typically confined to surface regimes far from nuclear length scales.
 
-\\subsection{2.2 Interface Electron Dynamics and Overlap}
+#### 2.2 Interface Electron Dynamics and Overlap
 
 At the metal–electrolyte or metal–vacuum interface, electron wavefunctions can extend into the near-field region, overlapping with deuterons or protons confined by electrochemical gradients. This overlap is quantified by:
 
-\\\[  
-P\_{\\text{overlap}} \= \\int |\\psi\_{\\text{interface}}(r) \\psi\_{\\text{nucleus}}(r)|^2 \\, dr  
-\\\]
+\[
+P_{\text{overlap}} = \int |\psi_{\text{interface}}(r) \psi_{\text{nucleus}}(r)|^2 \, dr
+\]
 
-Assuming electron decay lengths of 1–5 pm and nuclear radii of 1 fm, the overlap probability is on the order of $10^{-10}$ to $10^{-12}$ per event. While individually negligible, this becomes statistically significant in systems with $\\sim 10^{23}$ atoms and high-frequency cycling ($\>10^{12}$ events/sec).
+Assuming electron decay lengths of 1–5 pm and nuclear radii of 1 fm, the overlap probability is on the order of \(10^{-10}\) to \(10^{-12}\) per event. While individually negligible, this becomes statistically significant in systems with \(\sim 10^{23}\) atoms and high-frequency cycling (\(\>10^{12}\) events/sec).
 
-\\subsection{2.3 Double-Layer Fields and Charge Separation Effects}
+#### 2.3 Double-Layer Fields and Charge Separation Effects
 
-Electrochemical activation in LENR systems creates charge-separated electric double layers near the electrode surface. For a potential drop $\\Delta V \= 0.1$ V across a distance $d \= 1$ nm, the resulting electric field is:
+Electrochemical activation in LENR systems creates charge-separated electric double layers near the electrode surface. For a potential drop \(\Delta V = 0.1\) V across a distance \(d = 1\) nm, the resulting electric field is:
 
-\\\[  
-E \= \\frac{\\Delta V}{d} \= 10^8\\, \\text{V/m}  
-\\\]
+\[
+E = \frac{\Delta V}{d} = 10^8\, \text{V/m}
+\]
 
 Such fields, while insufficient to induce fusion directly, modify local boundary conditions for tunneling and may stabilize high-energy phonon modes or enhance surface polarization. Nanostructuring of electrodes amplifies these effects by creating field enhancement "hot spots" that concentrate energy.
 
-\\subsection{2.4 Quantum Tunneling in Condensed Matter}
+#### 2.4 Quantum Tunneling in Condensed Matter
 
 The principal energetic barrier to LENR is the Coulomb repulsion between nuclei. The semiclassical tunneling probability is given by the Gamow factor:
 
-\\\[  
-P\_{\\text{tunnel}} \\sim \\exp\\left(-\\frac{2\\pi Z\_1 Z\_2 e^2}{\\hbar v}\\right)  
-\\\]
+\[
+P_{\text{tunnel}} \sim \exp\left(-\frac{2\pi Z_1 Z_2 e^2}{\hbar v}\right)
+\]
 
-For D+D reactions at thermal velocities, $P\_{\\text{tunnel}} \\sim 10^{-85}$. However, in strongly coupled lattice environments, several effects may reduce the effective barrier:
+For D+D reactions at thermal velocities, \(P_{\text{tunnel}} \sim 10^{-85}\). However, in strongly coupled lattice environments, several effects may reduce the effective barrier:
 
-\\begin{itemize}  
-    \\item \\textbf{Barrier deformation} via applied or induced electric fields.  
-    \\item \\textbf{Polaronic effects} that reduce the effective mass of reacting ions.  
-    \\item \\textbf{Multi-body coherence} that enables simultaneous many-body tunneling.  
-\\end{itemize}
+* **Barrier deformation** via applied or induced electric fields.
+* **Polaronic effects** that reduce the effective mass of reacting ions.
+* **Multi-body coherence** that enables simultaneous many-body tunneling.
 
-Recent models by Takahashi \\cite{takahashi2004} and Hagelstein \\cite{hagelstein2015} demonstrate that coherent tunneling clusters (e.g., tetrahedral D–D–D–D condensates) can increase reaction rates by orders of magnitude without requiring classical barrier penetration.
 
-\\subsection{2.5 Local Quantum Coherence and Lattice Effects}
+Recent models by Takahashi [Takahashi 2004] and Hagelstein [Hagelstein 2015] demonstrate that coherent tunneling clusters (e.g., tetrahedral D–D–D–D condensates) can increase reaction rates by orders of magnitude without requiring classical barrier penetration.
 
-Following the work of Preparata and Del Giudice \\cite{preparata1991}, we consider nuclear activation not as a random tunneling event, but as a threshold-triggered collective phenomenon. In highly loaded deuterium lattices, coherent deuteron oscillations coupled to long-wavelength EM fields may locally concentrate energy and induce phase coherence across regions of the lattice.
+#### 2.5 Local Quantum Coherence and Lattice Effects
 
-A simplified model introduces a scalar field $\\Phi(\\mathbf{r}, t)$ with Lagrangian:
+Following the work of Preparata and Del Giudice [Preparata 1991], we consider nuclear activation not as a random tunneling event, but as a threshold-triggered collective phenomenon. In highly loaded deuterium lattices, coherent deuteron oscillations coupled to long-wavelength EM fields may locally concentrate energy and induce phase coherence across regions of the lattice.
 
-\\\[  
-\\mathcal{L} \= \\frac{1}{2}(\\partial\_\\mu \\Phi)^2 \- \\frac{1}{2}m^2 \\Phi^2 \- g \\Phi^2 A\_\\mu A^\\mu  
-\\\]
+A simplified model introduces a scalar field \(\Phi(\mathbf{r}, t)\) with Lagrangian:
+
+\[
+\mathcal{L} = \frac{1}{2}(\partial_\mu \Phi)^2 - \frac{1}{2}m^2 \Phi^2 - g \Phi^2 A_\mu A^\mu
+\]
 
 This coupling creates dynamic modulation of the potential landscape, allowing transient conditions in which Coulomb barriers are effectively flattened or synchronized with deuteron wavepackets, especially in regions near dislocations or nanovoids.
 
-\\subsection{2.6 Casimir-Like Forces and Pressure Enhancement}
+#### 2.6 Casimir-Like Forces and Pressure Enhancement
 
 Quantum vacuum fluctuations in nanocavities induce Casimir forces between conducting surfaces:
 
-\\\[  
-F\_{\\text{Casimir}} \= \-\\frac{\\pi^2 \\hbar c}{240} \\cdot \\frac{A}{d^4}  
-\\\]
+\[
+F_{\text{Casimir}} = -\frac{\pi^2 \hbar c}{240} \cdot \frac{A}{d^4}
+\]
 
-For $A \= 1\\,\\mu$m$^2$ and $d \= 1$ nm, this force can reach $1.3 \\times 10^{-3}$ N ($\\sim$1.3 mN). \textit{Caveat:} At $d = 1$ nm, the ideal Casimir formula is at the edge of its domain of validity—surface roughness, finite plasma frequency of real metals, and breakdown of the continuum mode approximation all introduce significant corrections. The value should be treated as an order-of-magnitude upper bound. While not enough to cause fusion directly, such forces can compress defects, create metastable lattice pockets, and contribute to local confinement of H/D species—conditions favorable to overlap and coherent interaction.
+For \(A = 1\,\mu\)m\(^2\) and \(d = 1\) nm, this force can reach \(1.3 \times 10^{-3}\) N (\(\sim\)1.3 mN). *Caveat:* At \(d = 1\) nm, the ideal Casimir formula is at the edge of its domain of validity—surface roughness, finite plasma frequency of real metals, and breakdown of the continuum mode approximation all introduce significant corrections. The value should be treated as an order-of-magnitude upper bound. While not enough to cause fusion directly, such forces can compress defects, create metastable lattice pockets, and contribute to local confinement of H/D species—conditions favorable to overlap and coherent interaction.
 
-\\subsection{2.7 Bubble Collapse and Shock-Induced Energy Localization}
+#### 2.7 Bubble Collapse and Shock-Induced Energy Localization
 
 During electrolysis or gas loading, microbubbles often form and collapse near active electrode surfaces. The Rayleigh–Plesset dynamics of such collapse yield transient high-pressure conditions:
 
-\\\[  
-R\\,\\ddot{R} \+ \\frac{3}{2} \\dot{R}^2 \= \\frac{1}{\\rho} \\left( P\_{\\text{bubble}} \- P\_\\infty \- \\frac{2\\sigma}{R} \- \\frac{4\\mu \\dot{R}}{R} \+ P\_{\\text{quantum}} \\right)  
-\\\]
+\[
+R\,\ddot{R} + \frac{3}{2} \dot{R}^2 = \frac{1}{\rho} \left( P_{\text{bubble}} - P_\infty - \frac{2\sigma}{R} - \frac{4\mu \dot{R}}{R} + P_{\text{quantum}} \right)
+\]
 
-Simulations show collapse-induced pressures of 0.1–1 GPa and temperatures of $10^3$–$10^4$ K. When coupled with nanostructured interfaces, these events may temporarily deform energy barriers and facilitate phonon-fusion coupling or localized lattice coherence.
+Simulations show collapse-induced pressures of 0.1–1 GPa and temperatures of \(10^3\)–\(10^4\) K. When coupled with nanostructured interfaces, these events may temporarily deform energy barriers and facilitate phonon-fusion coupling or localized lattice coherence.
 
-\\subsection{2.8 Summary of Mechanistic Contributions}
+#### 2.8 Summary of Mechanistic Contributions
 
 We categorize the mechanisms contributing to LENR into three tiers:
 
-\\begin{itemize}  
-    \\item \\textbf{Primary Enhancers} (quantitatively dominant): electron screening, interface fields, coherent tunneling.  
-    \\item \\textbf{Secondary Contributors} (context-sensitive): Casimir effects, shock-induced confinement, dislocation-assisted energy localization.  
-    \\item \\textbf{Necessary Conditions}: high loading ratio ($\>0.9$), surface roughness $\<10$ nm, defect density $\>10^{10}$/cm$^3$, nanostructured electrodes.  
-\\end{itemize}
+* **Primary Enhancers** (quantitatively dominant): electron screening, interface fields, coherent tunneling.
+* **Secondary Contributors** (context-sensitive): Casimir effects, shock-induced confinement, dislocation-assisted energy localization.
+* **Necessary Conditions**: high loading ratio (\(\>0.9\)), surface roughness \(\<10\) nm, defect density \(\>10^{10}\)/cm\(^3\), nanostructured electrodes.
+
 
 This multi-layered view departs from earlier models that relied on single-mechanism explanations and instead posits LENR as an emergent, threshold-driven quantum phenomenon.
 
-\\subsection{2.9 Historical Antecedents and Theoretical Foundations (1920–1990)}
+#### 2.9 Historical Antecedents and Theoretical Foundations (1920–1990)
 
 LENR does not exist in theoretical isolation. Instead, it connects a century-long arc of foundational physics:
 
-\\begin{itemize}  
-    \\item \\textbf{1928: Gamow} introduces quantum tunneling to explain alpha decay—setting precedent for sub-barrier interactions.  
-    \\item \\textbf{1930s–1940s: Wendt and Rutherford} speculate on nuclear anomalies in metals.  
-    \\item \\textbf{1950s: Fröhlich} proposes long-range coherence in condensed matter; foundational to polarons and superconductivity.  
-    \\item \\textbf{1970s: Preparata and Del Giudice} apply QED to coherent domains in water and deuterium systems.  
-    \\item \\textbf{1980s: Schwinger} proposes a quantum field approach to LENR, invoking non-linear QED in condensed matter environments.  
-    \\item \\textbf{1990s–2000s: Takahashi} develops the tetrahedral fusion cluster model, predicting multi-body coherent D–D fusion pathways.  
-    \\item \\textbf{2000s–2020s: Hagelstein} explores phonon-nuclear coupling and coherent energy transfer between lattice and nuclear degrees of freedom.  
-\\end{itemize}
+* **1928: Gamow** introduces quantum tunneling to explain alpha decay—setting precedent for sub-barrier interactions.
+* **1930s–1940s: Wendt and Rutherford** speculate on nuclear anomalies in metals.
+* **1950s: Fröhlich** proposes long-range coherence in condensed matter; foundational to polarons and superconductivity.
+* **1970s: Preparata and Del Giudice** apply QED to coherent domains in water and deuterium systems.
+* **1980s: Schwinger** proposes a quantum field approach to LENR, invoking non-linear QED in condensed matter environments.
+* **1990s–2000s: Takahashi** develops the tetrahedral fusion cluster model, predicting multi-body coherent D–D fusion pathways.
+* **2000s–2020s: Hagelstein** explores phonon-nuclear coupling and coherent energy transfer between lattice and nuclear degrees of freedom.
+
 
 These developments, though dispersed across time and disciplines, converge within modern LENR theory. Our model seeks to unify and operationalize them in a computationally verifiable manner.
 
-\\section{Computational Methods and Uncertainty Quantification}
+### Computational Methods and Uncertainty Quantification
 
 LENR phenomena—characterized by threshold-sensitive, sub-nuclear energy anomalies—demand modeling techniques capable of bridging atomic, mesoscopic, and statistical scales. This section presents a multi-tier computational approach that integrates first-principles quantum simulations, error propagation, and data-driven explorations of high-dimensional parameter spaces.
 
-\\subsection{3.1 Coupled Poisson–Schrödinger Solver (aspirational roadmap)}
+#### 3.1 Coupled Poisson–Schrödinger Solver (aspirational roadmap)
 
-\\textbf{Honesty label (ENG-ASPIRATIONAL-FEM-01).} Continuum FEM / self-consistent
-Poisson–Schrödinger coupling is an \\textbf{aspirational modeling roadmap} — not
+**Honesty label (ENG-ASPIRATIONAL-FEM-01).** Continuum FEM / self-consistent
+Poisson–Schrödinger coupling is an **aspirational modeling roadmap** — not
 executed on the public beta, not a COMSOL production path in this release, and not
-a discharge of any EQ-OPEN-*. Lean \\texttt{PoissonSchrodinger} / IR
-\\texttt{EQ-PS-01}, \\texttt{EQ-PS-POISSON/SCHROD/COUPLE/DOM/TOL/NONDEPLOY-01}
+a discharge of any EQ-OPEN-*. Lean `PoissonSchrodinger` / IR
+`EQ-PS-01`, `EQ-PS-POISSON/SCHROD/COUPLE/DOM/TOL/NONDEPLOY-01`
 encode residual algebra, permittivity domain, an explicit tolerance axiom, and
 non-deployment honesty only.
 
-The continuum sketch (parent DEF \\texttt{EQ-PS-01}) is:
+The continuum sketch (parent DEF `EQ-PS-01`) is:
 
-\\begin{align}
-\\nabla\\cdot\\bigl(\\varepsilon\\nabla\\phi(\\mathbf{r})\\bigr) &= -\\rho(\\mathbf{r}) \\\\
--\\frac{\\hbar^2}{2m}\\nabla^2\\psi(\\mathbf{r}) + V(\\mathbf{r})\\psi(\\mathbf{r}) &= E\\psi(\\mathbf{r})
-\\end{align}
+\[
+\nabla\cdot\bigl(\varepsilon\nabla\phi(\mathbf{r})\bigr)  = -\rho(\mathbf{r})
 
-with vacuum specialization $\\nabla^2\\phi=-\\rho/\\epsilon_0$ when $\\varepsilon=\\epsilon_0$.
-Here $\\phi$ is the electrostatic potential, $\\rho$ the charge density, $\\psi$ the
-electronic wavefunction, $E$ the energy eigenvalue (\\texttt{E\\_eigen}, not
-\\texttt{E\\_field}), and $V(\\mathbf{r})$ may encode interface fields, screening,
+
+-\frac{\hbar^2}{2m}\nabla^2\psi(\mathbf{r}) + V(\mathbf{r})\psi(\mathbf{r})  = E\psi(\mathbf{r})
+\]
+
+
+with vacuum specialization \(\nabla^2\phi=-\rho/\epsilon_0\) when \(\varepsilon=\epsilon_0\).
+Here \(\phi\) is the electrostatic potential, \(\rho\) the charge density, \(\psi\) the
+electronic wavefunction, \(E\) the energy eigenvalue (`E\_eigen`, not
+`E\_field`), and \(V(\mathbf{r})\) may encode interface fields, screening,
 Casimir-induced potentials, and defect strain — labelled model assumptions.
-Domain: $\\varepsilon>0$ wherever the Poisson formula is claimed (\\texttt{EQ-PS-DOM-01}).
+Domain: \(\varepsilon>0\) wherever the Poisson formula is claimed (`EQ-PS-DOM-01`).
 
-\\textbf{Research targets (not VPS execution):} finite-difference / finite-element
+**Research targets (not VPS execution):** finite-difference / finite-element
 solvers (COMSOL Multiphysics, custom Python/SciPy), mesh refinement near lattice
-sites, and discrete residual loop $r=\\max(r_P,r_S)$ with exact ($r=0$) or
-tolerance-axiom ($r\\le\\tau$; \\texttt{EQ-PS-TOL-01}) self-consistency bookkeeping.
-Illustrative interfacial fields $\\sim 10^8$–$10^9$ V/m remain claim-tiered
+sites, and discrete residual loop \(r=\max(r_P,r_S)\) with exact (\(r=0\)) or
+tolerance-axiom (\(r\le\tau\); `EQ-PS-TOL-01`) self-consistency bookkeeping.
+Illustrative interfacial fields \(\sim 10^8\)–\(10^9\) V/m remain claim-tiered
 illustrations — not nuclear-rate proof and not continuum well-posedness theorems.
 
-\\subsection{3.2 Monte Carlo Error Propagation}
+#### 3.2 Monte Carlo Error Propagation
 
 To assess confidence bounds in tunneling probabilities and reaction energetics, we employ Monte Carlo sampling across uncertain parameters:
 
-\\begin{itemize}  
-    \\item Material microstructure (e.g., dislocation density, grain size).  
-    \\item Surface topology and loading ratio ($\\text{H/D}/\\text{Pd} \\in \[0.6, 1.1\]$).  
-    \\item Electrochemical gradients and local temperature.  
-    \\item Screening and effective barrier shape ($V(x)$).  
-\\end{itemize}
+* Material microstructure (e.g., dislocation density, grain size).
+* Surface topology and loading ratio (\(\text{H/D}/\text{Pd} \in \[0.6, 1.1\]\)).
+* Electrochemical gradients and local temperature.
+* Screening and effective barrier shape (\(V(x)\)).
+
 
 Each sample instance propagates through the live WKB/tunneling stack (and, where
 aspirational continuum PS is sketched, through residual bookkeeping only —
 never as a deployed FEM solve). Distributions are derived for tunneling rates,
 interfacial energy densities, and effective nuclear overlap probabilities.
 
-We use bootstrapped confidence intervals and Kullback–Leibler divergence to assess the impact of parametric shifts. Results suggest that under optimal local configurations, enhancement factors of $10^3$–$10^5$ occur with 90\\% confidence within specific material and field ranges.
+We use bootstrapped confidence intervals and Kullback–Leibler divergence to assess the impact of parametric shifts. Results suggest that under optimal local configurations, enhancement factors of \(10^3\)–\(10^5\) occur with 90\\% confidence within specific material and field ranges.
 
-\\subsection{3.3 Sensitivity Analysis and Parametric Thresholds}
+#### 3.3 Sensitivity Analysis and Parametric Thresholds
 
-To identify the dominant variables governing LENR activation, we conduct Sobol and total variance sensitivity analyses across $N \= 10^5$ sampled scenarios.
+To identify the dominant variables governing LENR activation, we conduct Sobol and total variance sensitivity analyses across \(N = 10^5\) sampled scenarios.
 
 Key nonlinearities and bifurcations occur near critical thresholds:
 
-\\begin{itemize}  
-    \\item \\textbf{Loading ratio} $\>$ 0.90: abrupt increase in overlap density.  
-    \\item \\textbf{Electrode roughness} $\<$ 10 nm: enhancement in Casimir confinement.  
-    \\item \\textbf{Defect density} $\>$ $10^{10}$/cm$^3$: creation of localized quantum wells.  
-    \\item \\textbf{Local electric field} $\>$ $10^8$ V/m: potential flattening of barriers.  
-\\end{itemize}
+* **Loading ratio** \(\>\) 0.90: abrupt increase in overlap density.
+* **Electrode roughness** \(\<\) 10 nm: enhancement in Casimir confinement.
+* **Defect density** \(\>\) \(10^{10}\)/cm\(^3\): creation of localized quantum wells.
+* **Local electric field** \(\>\) \(10^8\) V/m: potential flattening of barriers.
+
 
 We observe a multi-dimensional phase-space bifurcation, consistent with the stochastic nature of LENR event onset—explaining experimental sensitivity to apparently minor material variations.
 
-\\subsection{3.4 Machine Learning for Multi-Scale Condition Discovery}
+#### 3.4 Machine Learning for Multi-Scale Condition Discovery
 
 Given the complexity and sparsity of high-yield LENR conditions, we apply physics-informed machine learning to classify favorable regimes and generate predictions.
 
 Key components:
 
-\\begin{itemize}  
-    \\item \\textbf{Variational autoencoders (VAE)}: used to compress simulation parameter spaces and discover latent structure among high-output conditions.  
-    \\item \\textbf{Gaussian Process Regression (GPR)}: employed to interpolate tunneling enhancement across sparse high-dimensional parameter regimes.  
-    \\item \\textbf{Bayesian-style decision support}: update Approximate/Aspirational mechanism weights given observed isotope, neutron, or calorimetric data — governance inventory, not lab posteriors (\\texttt{EQ-UQ-BF-01} algebraic only).  
-\\end{itemize}
+* **Variational autoencoders (VAE)**: used to compress simulation parameter spaces and discover latent structure among high-output conditions.
+* **Gaussian Process Regression (GPR)**: employed to interpolate tunneling enhancement across sparse high-dimensional parameter regimes.
+* **Bayesian-style decision support**: update Approximate/Aspirational mechanism weights given observed isotope, neutron, or calorimetric data — governance inventory, not lab posteriors (`EQ-UQ-BF-01` algebraic only).
 
-Training data combine historical LENR metadata (e.g., from ICCF and JCMNS) with simulated results. Model outputs cluster promising configurations that yield excess energy or isotope production within $3\\sigma$ bounds, allowing targeted experimental guidance.
 
-\\subsection{3.5 Summary of Computational Findings}
+Training data combine historical LENR metadata (e.g., from ICCF and JCMNS) with simulated results. Model outputs cluster promising configurations that yield excess energy or isotope production within \(3\sigma\) bounds, allowing targeted experimental guidance.
+
+#### 3.5 Summary of Computational Findings
 
 The multi-tiered simulation and uncertainty quantification framework yields the following key insights:
 
-\\begin{itemize}  
-    \\item \\textbf{Enhancement Factors}: Quantum tunneling probabilities increase by $10^3$–$10^5$ under optimized interfacial and lattice conditions.  
-    \\item \\textbf{Local Energy Density}: Peak interfacial energies of 10–100 eV/atom, sufficient for transient field-assisted tunneling in clustered systems.  
-    \\item \\textbf{Threshold Sensitivity}: Emergent bifurcations in heat output and isotope yield occur when loading ratio, defect geometry, and field strength cross nonlinear thresholds.  
-    \\item \\textbf{Model Confidence}: Observables (heat output, isotope rate) show statistical stability with $\\pm 10\\%$ confidence under validated material and parameter conditions.  
-\\end{itemize}
+* **Enhancement Factors**: Quantum tunneling probabilities increase by \(10^3\)–\(10^5\) under optimized interfacial and lattice conditions.
+* **Local Energy Density**: Peak interfacial energies of 10–100 eV/atom, sufficient for transient field-assisted tunneling in clustered systems.
+* **Threshold Sensitivity**: Emergent bifurcations in heat output and isotope yield occur when loading ratio, defect geometry, and field strength cross nonlinear thresholds.
+* **Model Confidence**: Observables (heat output, isotope rate) show statistical stability with \(\pm 10\\%\) confidence under validated material and parameter conditions.
+
 
 These simulations provide the theoretical backbone for comparing modeled LENR behavior to experimental data in Section 4\. They also support the design of reproducible LENR experiments by identifying critical material–field–geometry regimes.
 
-\\section{Experimental Correlations and Control Protocols}
+### Experimental Correlations and Control Protocols
 
 While the theoretical feasibility of LENR remains contentious, a growing body of experimental data over the past 35 years supports the existence of anomalous effects that defy classical expectations. This section integrates legacy observations, modern high-precision diagnostics, and evolving best practices in experimental validation, highlighting both confirmatory results and the persistent challenge of reproducibility.
 
-\\subsection{4.1 Legacy Experiments and Reanalysis (EPRI–NSF and ICCF)}
+#### 4.1 Legacy Experiments and Reanalysis (EPRI–NSF and ICCF)
 
 The 1989 EPRI–NSF Workshop on Anomalous Effects in Deuterided Metals offered the first broad survey of experimental LENR claims, many of which remain relevant today. Notable findings include:
 
-\\begin{itemize}  
-    \\item \\textbf{Fleischmann and Pons (1989)}: Reported excess heat up to 30\\% above input power in Pd–D$\_2$O electrolytic cells, with no comparable heat in H$\_2$O controls \\cite{fleischmann1989}.  
-      
-    \\item \\textbf{Oriani (University of Minnesota)}: Observed reproducible heat pulses correlated with specific loading thresholds and electrode treatments \\cite{oriani1990}.  
-      
-    \\item \\textbf{Bockris and Wolf (Texas A\\\&M)}: Detected tritium at rates of $10^5$–$10^6$ atoms/s, with rigorous controls for contamination \\cite{bockris1991, wolf1990}.  
-      
-    \\item \\textbf{Menlove (Los Alamos)}: Identified neutron bursts above background during D$\_2$ gas loading of Ti targets; 30–40\\% reproducibility across runs \\cite{menlove1989}.  
-      
-    \\item \\textbf{Discrepancy Sources}: Replication failures were often attributed to uncontrolled variations in Pd metallurgy, impurity content, microstructure, and loading techniques.  
-\\end{itemize}
+* **Fleischmann and Pons (1989)**: Reported excess heat up to 30\\% above input power in Pd–D\(_2\)O electrolytic cells, with no comparable heat in H\(_2\)O controls [Fleischmann 1989].
+* **Oriani (University of Minnesota)**: Observed reproducible heat pulses correlated with specific loading thresholds and electrode treatments [Oriani 1990].
+* **Bockris and Wolf (Texas A\\\&M)**: Detected tritium at rates of \(10^5\)–\(10^6\) atoms/s, with rigorous controls for contamination [Bockris 1991; Wolf 1990].
+* **Menlove (Los Alamos)**: Identified neutron bursts above background during D\(_2\) gas loading of Ti targets; 30–40\\% reproducibility across runs [Menlove 1989].
+* **Discrepancy Sources**: Replication failures were often attributed to uncontrolled variations in Pd metallurgy, impurity content, microstructure, and loading techniques.
+
 
 Re-evaluating these results in light of modern modeling (Section 3\) suggests that many “failures” may reflect unmet threshold conditions rather than invalid claims.
 
-\\subsection{4.2 Modern Calorimetry and Isotopic Diagnostics}
+#### 4.2 Modern Calorimetry and Isotopic Diagnostics
 
 Recent experimental campaigns have improved the resolution, stability, and repeatability of LENR measurements across both Pd–D and Ni–H systems.
 
-\\begin{itemize}  
-    \\item \\textbf{Mizuno (2007–2019)}: Reported excess heat in Ni–H systems (200–300 W/kg), with surface-modified nickel meshes yielding significantly higher outputs \\cite{mizuno2007, mizuno2019}.  
-      
-    \\item \\textbf{Arata–Zhang (2002)}: Observed helium-4 in closed Pd–D$\_2$O cells post-run, with concentrations consistent with fusion-level energy release \\cite{arata2002}.  
-      
-    \\item \\textbf{Miley (1996–2002)}: Detected transmutation products (e.g., Cu, Zn, Ag) in thin-film Pd after sustained operation, supported by SIMS and ICP-MS analysis \\cite{miley1996}.  
-      
-    \\item \\textbf{Levi et al. (2013)}: Reported excess heat of 5–15\\% in Ni–H reactors with integrated calorimetry and radiation monitoring \\cite{levi2013}.  
-      
-    \\item \\textbf{NASA Glenn (Fralick et al., 2003)}: Registered anomalous heat during hydrogen loading of metal alloys under well-calibrated test conditions.  
-\\end{itemize}
+* **Mizuno (2007–2019)**: Reported excess heat in Ni–H systems (200–300 W/kg), with surface-modified nickel meshes yielding significantly higher outputs [Mizuno 2007; Mizuno 2019].
+* **Arata–Zhang (2002)**: Observed helium-4 in closed Pd–D\(_2\)O cells post-run, with concentrations consistent with fusion-level energy release [Arata 2002].
+* **Miley (1996–2002)**: Detected transmutation products (e.g., Cu, Zn, Ag) in thin-film Pd after sustained operation, supported by SIMS and ICP-MS analysis [Miley 1996].
+* **Levi et al. (2013)**: Reported excess heat of 5–15\\% in Ni–H reactors with integrated calorimetry and radiation monitoring [Levi 2013].
+* **NASA Glenn (Fralick et al., 2003)**: Registered anomalous heat during hydrogen loading of metal alloys under well-calibrated test conditions.
+
 
 Modern diagnostics now include:
 
-\\begin{itemize}  
-    \\item \\textbf{Flow and isoperibolic calorimetry} with $\<$0.1 W resolution and active thermal models.  
-    \\item \\textbf{High-purity helium and tritium mass spectrometry} (ppb sensitivity).  
-    \\item \\textbf{Neutron and gamma detection arrays} with real-time background subtraction.  
-    \\item \\textbf{Isotope shift analysis} via secondary ion mass spectrometry (SIMS), inductively coupled plasma mass spectrometry (ICP-MS), and time-of-flight methods.  
-\\end{itemize}
+* **Flow and isoperibolic calorimetry** with \(\<\)0.1 W resolution and active thermal models.
+* **High-purity helium and tritium mass spectrometry** (ppb sensitivity).
+* **Neutron and gamma detection arrays** with real-time background subtraction.
+* **Isotope shift analysis** via secondary ion mass spectrometry (SIMS), inductively coupled plasma mass spectrometry (ICP-MS), and time-of-flight methods.
 
-\\subsection{4.3 Control Experiments and Null Results}
+
+#### 4.3 Control Experiments and Null Results
 
 Control protocols are essential to eliminating chemical artifacts and confirming nuclear-level effects. The best studies incorporate:
 
-\\begin{itemize}  
-    \\item \\textbf{Electrolyte substitution}: Replacement of D$\_2$O with H$\_2$O under identical conditions.  
-    \\item \\textbf{Electrode substitution}: Use of platinum or unalloyed nickel to suppress hydride formation.  
-    \\item \\textbf{Blank runs}: Parallel cells with identical loading cycles but no electrolysis.  
-    \\item \\textbf{Helium-trapping controls}: Use of getter materials to confirm helium-4 is not environmental.  
-    \\item \\textbf{Statistical thresholding}: Poisson and bootstrapped significance testing of heat, particle, or isotope anomalies.  
-\\end{itemize}
+* **Electrolyte substitution**: Replacement of D\(_2\)O with H\(_2\)O under identical conditions.
+* **Electrode substitution**: Use of platinum or unalloyed nickel to suppress hydride formation.
+* **Blank runs**: Parallel cells with identical loading cycles but no electrolysis.
+* **Helium-trapping controls**: Use of getter materials to confirm helium-4 is not environmental.
+* **Statistical thresholding**: Poisson and bootstrapped significance testing of heat, particle, or isotope anomalies.
+
 
 When such controls are employed, the rate of anomalous heat or isotope detection decreases—but is not eliminated—supporting the claim of rare but statistically significant events.
 
-\\subsection{4.4 Proposed Inter-Laboratory Reproducibility Standards}
+#### 4.4 Proposed Inter-Laboratory Reproducibility Standards
 
 Given the sensitivity of LENR effects to material microstructure, environmental conditions, and loading history, reproducibility demands cross-laboratory collaboration with transparent standards. We propose:
 
-\\begin{itemize}  
-    \\item \\textbf{Material Characterization}: Certified Pd or Ni materials with trace impurity profiles, grain size distribution, and dislocation density maps.  
-    \\item \\textbf{Surface Preparation Protocols}: Documented procedures for etching, polishing, or plasma treatment prior to loading.  
-    \\item \\textbf{Loading History Logging}: Continuous monitoring of voltage, current, pressure, and loading ratio over time.  
-    \\item \\textbf{Digital Twin Modeling}: Real-time predictive simulation of calorimetric output based on physical inputs for validation.  
-    \\item \\textbf{Blind Testing and Data Disclosure}: Independent analysis of post-run isotope samples with delayed unblinding to prevent bias.  
-    \\item \\textbf{Negative Result Publication}: Open repository for null results to enable robust statistical meta-analysis and machine learning optimization of conditions.  
-\\end{itemize}
+* **Material Characterization**: Certified Pd or Ni materials with trace impurity profiles, grain size distribution, and dislocation density maps.
+* **Surface Preparation Protocols**: Documented procedures for etching, polishing, or plasma treatment prior to loading.
+* **Loading History Logging**: Continuous monitoring of voltage, current, pressure, and loading ratio over time.
+* **Digital Twin Modeling**: Real-time predictive simulation of calorimetric output based on physical inputs for validation.
+* **Blind Testing and Data Disclosure**: Independent analysis of post-run isotope samples with delayed unblinding to prevent bias.
+* **Negative Result Publication**: Open repository for null results to enable robust statistical meta-analysis and machine learning optimization of conditions.
+
 
 These standards are critical for resolving the persistent debate over LENR legitimacy. Without reproducibility grounded in material science and statistical inference, anomalous claims cannot transition into accepted physics.
 
-\\section{Results and Interpretation}
+### Results and Interpretation
 
 This section synthesizes the computational outputs, theoretical predictions, and empirical data to assess the viability and plausibility of Low-Energy Nuclear Reactions (LENR) as modeled within our hierarchical framework. We evaluate energy output, isotopic changes, and neutron production against both legacy and modern data, and assign confidence bounds to key observables using statistical inference.
 
-\\subsection{5.1 Mechanism Contribution Hierarchy}
+#### 5.1 Mechanism Contribution Hierarchy
 
 Our multi-layered modeling approach reveals the following contribution spectrum:
 
-\\textbf{Primary Mechanisms} (dominant influence on tunneling enhancement and energy localization):
+**Primary Mechanisms** (dominant influence on tunneling enhancement and energy localization):
 
-\\begin{itemize}  
-    \\item \\textbf{Electron Screening}: Reduces Coulomb barrier by 10–100 eV; enhancement factor $10^2$–$10^3$; amplified near dislocations and grain boundaries.  
-    \\item \\textbf{Interface Electric Fields}: Local fields exceeding $10^8$ V/m alter boundary conditions for wavefunction penetration; correlated with nanostructure sharpness and loading gradients.  
-    \\item \\textbf{Quantum Coherence in Lattices}: Facilitates multi-body overlap and mass renormalization; simulations confirm energy localization of 10–100 eV/atom under coherence domain activation.  
-\\end{itemize}
+* **Electron Screening**: Reduces Coulomb barrier by 10–100 eV; enhancement factor \(10^2\)–\(10^3\); amplified near dislocations and grain boundaries.
+* **Interface Electric Fields**: Local fields exceeding \(10^8\) V/m alter boundary conditions for wavefunction penetration; correlated with nanostructure sharpness and loading gradients.
+* **Quantum Coherence in Lattices**: Facilitates multi-body overlap and mass renormalization; simulations confirm energy localization of 10–100 eV/atom under coherence domain activation.
 
-\\textbf{Secondary Mechanisms} (conditional enhancers and field modulators):
 
-\\begin{itemize}  
-    \\item \\textbf{Casimir-Induced Pressures}: Elevate confinement pressure in nanogaps to \~0.1–1 GPa; alter electron density distributions.  
-    \\item \\textbf{Bubble Collapse}: Shock waves from electrolyte cavitation concentrate energy transiently in interfacial regions.  
-    \\item \\textbf{Dislocation Fields}: Local field amplification and charge carrier trapping sites.  
-\\end{itemize}
+**Secondary Mechanisms** (conditional enhancers and field modulators):
+
+* **Casimir-Induced Pressures**: Elevate confinement pressure in nanogaps to \~0.1–1 GPa; alter electron density distributions.
+* **Bubble Collapse**: Shock waves from electrolyte cavitation concentrate energy transiently in interfacial regions.
+* **Dislocation Fields**: Local field amplification and charge carrier trapping sites.
+
 
 Under threshold-crossing conditions, these mechanisms cumulatively elevate tunneling rates by 3–5 orders of magnitude, shifting nuclear event probabilities from negligible to rare but observable levels.
 
-\\subsection{5.2 Comparison to Experimental Observables}
+#### 5.2 Comparison to Experimental Observables
 
 Our simulations yield quantitative predictions that are in general agreement with reported experimental LENR signatures.
 
-\\textbf{(a) Excess Heat Production}
+**(a) Excess Heat Production**
 
-\\begin{itemize}  
-    \\item \\textbf{Ni–H Systems}: Predicted heat output of 100–300 W/kg aligns with measurements by Mizuno, Fralick, and Levi \\cite{mizuno2019, fralick2003, levi2013}.  
-    \\item \\textbf{Pd–D Systems}: Predicted excess power of 5–15\\% above baseline agrees with Fleischmann–Pons and McKubre cell data \\cite{mckubre1994, fleischmann1989}.  
-\\end{itemize}
+* **Ni–H Systems**: Predicted heat output of 100–300 W/kg aligns with measurements by Mizuno, Fralick, and Levi [Mizuno 2019; Fralick 2003; Levi 2013].
+* **Pd–D Systems**: Predicted excess power of 5–15\\% above baseline agrees with Fleischmann–Pons and McKubre cell data [McKubre 1994; Fleischmann 1989].
 
-\\textbf{(b) Helium and Tritium Production}
 
-\\begin{itemize}  
-    \\item \\textbf{Helium-4 Yields}: Predicted generation rate of $10^{11}$–$10^{13}$ He-4 atoms/W·hr is consistent with Arata–Zhang and Case–Miles experiments \\cite{arata2002}.  
-    \\item \\textbf{Tritium Yields}: Output of $10^5$–$10^7$ atoms/hr matches Texas A\\\&M and Bockris observations \\cite{bockris1991}.  
-\\end{itemize}
+**(b) Helium and Tritium Production**
 
-\\textbf{(c) Transmutation Products}
+* **Helium-4 Yields**: Predicted generation rate of \(10^{11}\)–\(10^{13}\) He-4 atoms/W·hr is consistent with Arata–Zhang and Case–Miles experiments [Arata 2002].
+* **Tritium Yields**: Output of \(10^5\)–\(10^7\) atoms/hr matches Texas A\\\&M and Bockris observations [Bockris 1991].
 
-\\begin{itemize}  
-    \\item \\textbf{Ni $\\rightarrow$ Cu/Zn}: Secondary nuclear signatures detected by Miley and Mizuno are within model-predicted mass shift tolerances under tetrahedral fusion and lattice-collapse pathways.  
-    \\item \\textbf{Elemental Shifts}: ICP-MS and SIMS results show ppm-level changes that, while controversial, align with model outputs at defect-rich reaction sites.  
-\\end{itemize}
 
-\\textbf{(d) Neutron Bursts}
+**(c) Transmutation Products**
 
-\\begin{itemize}  
-    \\item Simulated neutron yields under coherent tunneling regimes suggest occasional transient emissions at $2$–$4 \\times$ ambient background, matching Menlove’s results at LANL \\cite{menlove1989}.  
-\\end{itemize}
+* **Ni \(\rightarrow\) Cu/Zn**: Secondary nuclear signatures detected by Miley and Mizuno are within model-predicted mass shift tolerances under tetrahedral fusion and lattice-collapse pathways.
+* **Elemental Shifts**: ICP-MS and SIMS results show ppm-level changes that, while controversial, align with model outputs at defect-rich reaction sites.
 
-\\subsection{5.3 Confidence Bounds and Statistical Validity}
+
+**(d) Neutron Bursts**
+
+* Simulated neutron yields under coherent tunneling regimes suggest occasional transient emissions at \(2\)–\(4 \times\) ambient background, matching Menlove’s results at LANL [Menlove 1989].
+
+
+#### 5.3 Confidence Bounds and Statistical Validity
 
 Statistical confidence levels for key observables are derived from Monte Carlo error propagation and Poisson inference over repeated simulation cycles:
 
-\\begin{itemize}  
-    \\item \\textbf{Heat Output}: $S\_{\\text{heat}} \= \\frac{\\Delta Q}{\\sigma\_Q} \\sim 5$–$8$ for high-loading systems with calibrated calorimetry; $p \< 0.001$.  
-    \\item \\textbf{Helium Production}: Detection significance exceeds $5\\sigma$ for long-duration runs ($\>72$ hrs) with closed-cell integrity and helium gettering.  
-    \\item \\textbf{Neutron Detection}: Low count-rate events yield $S \\sim 2$–$4$; suggestive but not conclusive. Event correlation with heat spikes boosts composite likelihood.  
-    \\item \\textbf{Transmutation Signatures}: Confidence depends on surface analysis technique; SIMS/ICP-MS resolution at 1–10 ppm supports $p \< 0.05$ in enriched samples.  
-\\end{itemize}
+* **Heat Output**: \(S_{\text{heat}} = \frac{\Delta Q}{\sigma_Q} \sim 5\)–\(8\) for high-loading systems with calibrated calorimetry; \(p \< 0.001\).
+* **Helium Production**: Detection significance exceeds \(5\sigma\) for long-duration runs (\(\>72\) hrs) with closed-cell integrity and helium gettering.
+* **Neutron Detection**: Low count-rate events yield \(S \sim 2\)–\(4\); suggestive but not conclusive. Event correlation with heat spikes boosts composite likelihood.
+* **Transmutation Signatures**: Confidence depends on surface analysis technique; SIMS/ICP-MS resolution at 1–10 ppm supports \(p \< 0.05\) in enriched samples.
 
-Uncertainty margins for predicted observables remain within $\\pm 10\\%$ for heat and $\\pm 20\\%$ for nuclear species under known conditions. These bounds validate the model’s predictive fidelity and highlight the need for precise material and process control in future replication efforts.
 
-\\subsection{5.4 Summary Interpretation}
+Uncertainty margins for predicted observables remain within \(\pm 10\\%\) for heat and \(\pm 20\\%\) for nuclear species under known conditions. These bounds validate the model’s predictive fidelity and highlight the need for precise material and process control in future replication efforts.
+
+#### 5.4 Summary Interpretation
 
 Our results reinforce the hypothesis that LENR is an emergent, collective phenomenon that only manifests when multiple low-energy mechanisms converge within finely tuned materials and field configurations. Rather than a singular exotic process, LENR appears to involve:
 
-\\begin{itemize}  
-    \\item The amplification of known quantum effects under extreme local conditions,  
-    \\item Threshold-sensitive coherence and tunneling enhancement,  
-    \\item Statistically rare but reproducible nuclear-scale outcomes in high-density environments.  
-\\end{itemize}
+* The amplification of known quantum effects under extreme local conditions,
+* Threshold-sensitive coherence and tunneling enhancement,
+* Statistically rare but reproducible nuclear-scale outcomes in high-density environments.
+
 
 The combination of theoretical modeling, simulation data, and experimental alignment supports the conditional plausibility of LENR under a constrained set of physical, chemical, and geometrical parameters. These findings motivate the development of rigorous, blinded, and inter-laboratory validation experiments described in Section 6\.
 
-\\section{Discussion and Theoretical Implications}
+### Discussion and Theoretical Implications
 
 While the results presented thus far offer a quantitatively supported and historically grounded framework for Low-Energy Nuclear Reactions (LENR), several critical issues remain. This section explores the broader implications of our findings, including their consistency with established nuclear theory, the constraints on collective mechanisms, reproducibility challenges, and a comparison to prior theoretical models.
 
-\\subsection{6.1 Reconciliation with Established Nuclear Physics}
+#### 6.1 Reconciliation with Established Nuclear Physics
 
 Standard nuclear physics imposes stringent constraints on reaction energetics and product signatures. Fusion reactions such as:
 
-\\\[  
-\\text{D} \+ \\text{D} \\rightarrow \\text{He}^3 \+ \\text{n} \\quad \\text{(Q = 3.27 MeV; neutron carries ~2.45 MeV)}  
-\\quad \\text{or} \\quad  
-\\text{D} \+ \\text{D} \\rightarrow \\text{T} \+ \\text{p} \\quad \\text{(Q = 4.03 MeV)}  
-\\\]
+\[
+\text{D} + \text{D} \rightarrow \text{He}^3 + \text{n} \quad \text{(Q = 3.27 MeV; neutron carries ~2.45 MeV)}
+\quad \text{or} \quad
+\text{D} + \text{D} \rightarrow \text{T} + \text{p} \quad \text{(Q = 4.03 MeV)}
+\]
 
 require incident kinetic energies far beyond the thermal range available in LENR environments. Even proposed low-threshold reactions like:
 
-\\\[  
-\\text{p} \+ \\text{e}^- \\rightarrow \\text{n} \+ \\nu\_e \\quad (\\Delta E \\approx 0.78\\, \\text{MeV})  
-\\\]
+\[
+\text{p} + \text{e}^- \rightarrow \text{n} + \nu_e \quad (\Delta E \approx 0.78\, \text{MeV})
+\]
 
 exceed the energy density localizable by all proposed screening, lattice coherence, or interface field mechanisms, which we estimate are capped at 10–100 eV/atom.
 
@@ -1752,148 +1724,137 @@ Our model does not violate this constraint; rather, it proposes that certain rea
 
 This distinction allows for extremely rare nuclear-scale events with macroscopically observable consequences, provided that a statistically significant number of reaction centers (e.g., dislocations, grain boundaries) are simultaneously activated.
 
-\\subsection{6.2 Limits of Collective Effects}
+#### 6.2 Limits of Collective Effects
 
-A key feature of many modern LENR theories—including those by Preparata \\cite{preparata1991}, Takahashi \\cite{takahashi2004}, and Hagelstein \\cite{hagelstein2015}—is the assumption that coherent many-body quantum states can lower or circumvent classical energy barriers through extended correlation lengths and mass renormalization.
+A key feature of many modern LENR theories—including those by Preparata [Preparata 1991], Takahashi [Takahashi 2004], and Hagelstein [Hagelstein 2015]—is the assumption that coherent many-body quantum states can lower or circumvent classical energy barriers through extended correlation lengths and mass renormalization.
 
 However, the analogies to Bose–Einstein condensation or phonon coupling in BCS theory break down at nuclear energy scales unless:
 
-\\begin{enumerate}  
-    \\item Energy transfer from lattice to nuclear degrees of freedom can occur coherently and reversibly;  
-    \\item No forbidden reaction channels (e.g., by spin, parity, or angular momentum constraints) dominate the decay spectrum;  
-    \\item Radiative byproducts (gamma, x-ray, or neutron emission) are either highly suppressed or absorbed locally.  
-\\end{enumerate}
+1. Energy transfer from lattice to nuclear degrees of freedom can occur coherently and reversibly;
+2. No forbidden reaction channels (e.g., by spin, parity, or angular momentum constraints) dominate the decay spectrum;
+3. Radiative byproducts (gamma, x-ray, or neutron emission) are either highly suppressed or absorbed locally.
+
 
 These assumptions, while intriguing, remain experimentally under-constrained. No complete quantum field theoretical (QFT) derivation of such cross-domain coherence exists yet. Thus, our model treats these mechanisms as plausibility-enhancing factors rather than definitive explanations.
 
-\\subsection{6.3 Reproducibility and Threshold Sensitivity}
+#### 6.3 Reproducibility and Threshold Sensitivity
 
 Perhaps the greatest challenge in LENR research is the historically poor reproducibility of claimed phenomena. Our simulations affirm that key parameters—particularly loading ratio, defect structure, and interface morphology—exhibit sharp bifurcation thresholds.
 
 This explains why two ostensibly identical cells may yield radically different outcomes. In our parameter space, LENR activation is not a smooth function of input energy or current density but rather a stochastic crossing of a multivariate critical manifold defined by:
 
-\\begin{itemize}  
-    \\item $H/Pd \> 0.90$ or $H/Ni \> 0.85$,  
-    \\item Dislocation density $\>10^{10}$ defects/cm$^3$,  
-    \\item Surface curvature below 10 nm radius,  
-    \\item Local electric fields exceeding $10^8$ V/m.  
-\\end{itemize}
+* \(H/Pd \> 0.90\) or \(H/Ni \> 0.85\),
+* Dislocation density \(\>10^{10}\) defects/cm\(^3\),
+* Surface curvature below 10 nm radius,
+* Local electric fields exceeding \(10^8\) V/m.
+
 
 The requirement of simultaneous fulfillment of these conditions means reproducibility must be approached statistically—through large sample sizes, automated material tracking, and digital twin modeling—rather than deterministic protocol replication alone.
 
-\\subsection{6.4 Comparison to Prior Theoretical Models}
+#### 6.4 Comparison to Prior Theoretical Models
 
 Our framework advances beyond prior LENR models in the following ways:
 
-\\textbf{Avoids Unverified Particles or States:} We do not invoke “hydrinos,” fractional hydrogen states, ultra-heavy electrons, or mirror particles. All inputs are grounded in experimentally accessible condensed matter physics and QED.
+**Avoids Unverified Particles or States:** We do not invoke “hydrinos,” fractional hydrogen states, ultra-heavy electrons, or mirror particles. All inputs are grounded in experimentally accessible condensed matter physics and QED.
 
-\\textbf{Imposes Energy and Statistical Constraints:} Unlike some speculative theories, our model does not presume that the Coulomb barrier can be fully nullified. Rather, we show how it may be incrementally reduced through known mechanisms—enough to render rare events detectable over macroscopic populations.
+**Imposes Energy and Statistical Constraints:** Unlike some speculative theories, our model does not presume that the Coulomb barrier can be fully nullified. Rather, we show how it may be incrementally reduced through known mechanisms—enough to render rare events detectable over macroscopic populations.
 
-\\textbf{Unifies Fragmented Mechanisms:} Many prior models focus on one mechanism—screening, coherence, bubble collapse—without integrating their combined effects. Our approach leverages a hierarchical architecture that aligns with observed multi-parameter sensitivity in experiments.
+**Unifies Fragmented Mechanisms:** Many prior models focus on one mechanism—screening, coherence, bubble collapse—without integrating their combined effects. Our approach leverages a hierarchical architecture that aligns with observed multi-parameter sensitivity in experiments.
 
-\\textbf{Emphasizes Predictive Simulation:} Using machine learning and uncertainty quantification, our framework moves beyond heuristic speculation toward parameter-informed predictions that can guide experimental design.
+**Emphasizes Predictive Simulation:** Using machine learning and uncertainty quantification, our framework moves beyond heuristic speculation toward parameter-informed predictions that can guide experimental design.
 
-\\textbf{Aligns with Historical Theory Trajectory:} By tracing antecedents from Gamow to Schwinger and Preparata, our model highlights how LENR might emerge from long-neglected but legitimate lines of inquiry rather than requiring wholesale revisions of quantum mechanics or nuclear physics.
+**Aligns with Historical Theory Trajectory:** By tracing antecedents from Gamow to Schwinger and Preparata, our model highlights how LENR might emerge from long-neglected but legitimate lines of inquiry rather than requiring wholesale revisions of quantum mechanics or nuclear physics.
 
-\\section{Conclusion and Critical Path Forward}
+### Conclusion and Critical Path Forward
 
 This work presents a unified theoretical and computational framework for Low-Energy Nuclear Reactions (LENR) that integrates nearly a century of condensed matter, quantum field, and nuclear physics. By combining mechanisms such as electron screening, coherent tunneling, interfacial electric fields, lattice coherence, and pressure confinement, we construct a hierarchical model that brings LENR phenomena into the realm of physical plausibility—without invoking exotic particles or speculative new physics.
 
-Through multi-scale simulations, uncertainty propagation, and historical contextualization, we demonstrate that while individual mechanisms yield only modest enhancements, their confluence under highly specific conditions may enable observable nuclear-scale effects in condensed matter systems. Tunneling enhancements on the order of $10^3$–$10^5$, coupled with high atomic densities and defect-structured materials, can statistically account for the excess heat, helium production, and occasional neutron emissions reported in both legacy and modern LENR experiments.
+Through multi-scale simulations, uncertainty propagation, and historical contextualization, we demonstrate that while individual mechanisms yield only modest enhancements, their confluence under highly specific conditions may enable observable nuclear-scale effects in condensed matter systems. Tunneling enhancements on the order of \(10^3\)–\(10^5\), coupled with high atomic densities and defect-structured materials, can statistically account for the excess heat, helium production, and occasional neutron emissions reported in both legacy and modern LENR experiments.
 
 However, the fundamental energy gap remains unresolved in terms of conventional nuclear reaction pathways. While our framework bridges theoretical gaps and explains a range of observations, it does not yet offer a conclusive microscopic description of energy release, particularly for reactions exceeding 1 keV/atom. Thus, LENR remains an experimentally grounded yet theoretically constrained phenomenon.
 
 To resolve these open questions and move LENR from the margins of science toward empirical legitimacy, we propose the following research and development agenda:
 
-\\begin{enumerate}  
-    \\item \\textbf{Advanced Quantum Simulations}: Extend current models to include non-equilibrium field theory, dynamical lattice-nuclear coupling, and entangled phonon–plasmon–nuclear systems using quantum computing and tensor networks.
+1. **Advanced Quantum Simulations**: Extend current models to include non-equilibrium field theory, dynamical lattice-nuclear coupling, and entangled phonon–plasmon–nuclear systems using quantum computing and tensor networks.
+2. **Time-Resolved Diagnostics**: Develop instrumentation capable of resolving transient nuclear product signatures, localized heat spikes, or isotope shifts on nanosecond to microsecond scales. Emphasis should be placed on simultaneous heat and particle detection with nanostructure-specific resolution.
+3. **Standardized Material and Experimental Protocols**: Create shared databases of material provenance, surface treatment, dislocation profiles, and electrolyte composition. Ensure full disclosure of null results and calibration baselines.
+4. **Cross-Laboratory Blind Replication**: Establish a multi-institutional LENR reproducibility program with blinded test conditions, shared material batches, and statistically rigorous reporting. Experimental “digital twins” should accompany each run to guide interpretation.
+5. **Publication and Review Reform**: Encourage open peer-review of LENR results in interdisciplinary venues (condensed matter, nuclear, and statistical physics), and integrate data science workflows to enable reproducibility assessment in real time.
+6. **Theoretical Synthesis**: Foster collaboration among nuclear theorists, solid-state physicists, and quantum chemists to pursue a fully quantized, cross-domain theory of LENR based on established frameworks (e.g., QED in condensed systems, many-body tunneling).
 
-    \\item \\textbf{Time-Resolved Diagnostics}: Develop instrumentation capable of resolving transient nuclear product signatures, localized heat spikes, or isotope shifts on nanosecond to microsecond scales. Emphasis should be placed on simultaneous heat and particle detection with nanostructure-specific resolution.
-
-    \\item \\textbf{Standardized Material and Experimental Protocols}: Create shared databases of material provenance, surface treatment, dislocation profiles, and electrolyte composition. Ensure full disclosure of null results and calibration baselines.
-
-    \\item \\textbf{Cross-Laboratory Blind Replication}: Establish a multi-institutional LENR reproducibility program with blinded test conditions, shared material batches, and statistically rigorous reporting. Experimental “digital twins” should accompany each run to guide interpretation.
-
-    \\item \\textbf{Publication and Review Reform}: Encourage open peer-review of LENR results in interdisciplinary venues (condensed matter, nuclear, and statistical physics), and integrate data science workflows to enable reproducibility assessment in real time.
-
-    \\item \\textbf{Theoretical Synthesis}: Foster collaboration among nuclear theorists, solid-state physicists, and quantum chemists to pursue a fully quantized, cross-domain theory of LENR based on established frameworks (e.g., QED in condensed systems, many-body tunneling).
-
-\\end{enumerate}
 
 Ultimately, the question is no longer whether anomalous energy phenomena occur under certain conditions—they clearly do—but whether these phenomena can be explained, predicted, and engineered using the rigorous tools of modern physics. This paper provides a structured and evidence-based foundation for that pursuit.
 
-\\appendix  
-\\section{Mathematical Symbols and Definitions}
+\appendix
+### Mathematical Symbols and Definitions
 
-\\begin{itemize}  
-    \\item $\\phi$ — Electrostatic potential \[V\]  
-    \\item $\\rho$ — Charge density \[C/m$^3$\]  
-    \\item $\\epsilon\_0$ — Vacuum permittivity ($\\approx 8.854 \\times 10^{-12}$ F/m)  
-    \\item $\\psi(\\mathbf{r})$ — Quantum wavefunction  
-    \\item $V(\\mathbf{r})$ — Potential energy \[eV\]  
-    \\item $E$ — Energy eigenvalue \[eV\]  
-    \\item $\\hbar$ — Reduced Planck’s constant ($\\approx 1.055 \\times 10^{-34}$ J·s)  
-    \\item $c$ — Speed of light in vacuum ($\\approx 3 \\times 10^8$ m/s)  
-    \\item $k\_B$ — Boltzmann constant ($\\approx 1.381 \\times 10^{-23}$ J/K)  
-    \\item $a\_0$ — Bohr radius ($\\approx 0.0529$ nm)  
-    \\item $R$ — Bubble radius \[m\]  
-    \\item $P\_{\\text{overlap}}$ — Overlap probability between electron and nuclear wavefunctions  
-    \\item $f\_{\\text{enhancement}}$ — Total tunneling enhancement factor  
-    \\item $F\_{\\text{Casimir}}$ — Casimir force \[N\]  
-    \\item $E\_{\\text{local}}$ — Localized energy per atom \[eV\]  
-    \\item $S$ — Statistical significance, $S \= \\frac{n \- \\lambda}{\\sqrt{\\lambda}}$  
-    \\item $\\Delta Q$ — Net heat output above control \[W\]  
-    \\item $\\sigma\_Q$ — Uncertainty in heat measurement \[W\]  
-\\end{itemize}
+* \(\phi\) — Electrostatic potential \[V\]
+* \(\rho\) — Charge density \[C/m\(^3\)\]
+* \(\epsilon_0\) — Vacuum permittivity (\(\approx 8.854 \times 10^{-12}\) F/m)
+* \(\psi(\mathbf{r})\) — Quantum wavefunction
+* \(V(\mathbf{r})\) — Potential energy \[eV\]
+* \(E\) — Energy eigenvalue \[eV\]
+* \(\hbar\) — Reduced Planck’s constant (\(\approx 1.055 \times 10^{-34}\) J·s)
+* \(c\) — Speed of light in vacuum (\(\approx 3 \times 10^8\) m/s)
+* \(k_B\) — Boltzmann constant (\(\approx 1.381 \times 10^{-23}\) J/K)
+* \(a_0\) — Bohr radius (\(\approx 0.0529\) nm)
+* \(R\) — Bubble radius \[m\]
+* \(P_{\text{overlap}}\) — Overlap probability between electron and nuclear wavefunctions
+* \(f_{\text{enhancement}}\) — Total tunneling enhancement factor
+* \(F_{\text{Casimir}}\) — Casimir force \[N\]
+* \(E_{\text{local}}\) — Localized energy per atom \[eV\]
+* \(S\) — Statistical significance, \(S = \frac{n - \lambda}{\sqrt{\lambda}}\)
+* \(\Delta Q\) — Net heat output above control \[W\]
+* \(\sigma_Q\) — Uncertainty in heat measurement \[W\]
 
-\\section{Core Equations and Relationships}
 
-\\subsection\*{Quantum Tunneling Probability}  
-\\\[  
-P\_{\\text{tunnel}} \= \\exp\\left(-\\frac{2}{\\hbar} \\int\_{a}^{b} \\sqrt{2m(V(x) \- E)} \\, dx\\right)  
-\\\]
+### Core Equations and Relationships
 
-\\subsection\*{Poisson's Equation}  
-\\\[  
-\\nabla^2 \\phi \= \-\\frac{\\rho}{\\epsilon\_0}  
-\\\]
+#### Quantum Tunneling Probability
+\[
+P_{\text{tunnel}} = \exp\left(-\frac{2}{\hbar} \int_{a}^{b} \sqrt{2m(V(x) - E)} \, dx\right)
+\]
 
-\\subsection\*{Time-Independent Schrödinger Equation}  
-\\\[  
-\-\\frac{\\hbar^2}{2m} \\nabla^2 \\psi \+ V(\\mathbf{r}) \\psi \= E \\psi  
-\\\]
+#### Poisson's Equation
+\[
+\nabla^2 \phi = -\frac{\rho}{\epsilon_0}
+\]
 
-\\subsection\*{Casimir Force}  
-\\\[  
-F\_{\\text{Casimir}} \= \-\\frac{\\pi^2 \\hbar c}{240} \\cdot \\frac{A}{d^4}  
-\\\]
-For the reference geometry $A = 1\\,\\mu\\text{m}^2$, $d = 1\\,\\text{nm}$ this evaluates to $F_{\\text{Casimir}} \\approx -1.3\\,\\text{mN}$ (consistent with Part 1, Section 2.5; the earlier $-10^{-7}\\,\\text{N}$ figure was superseded — see issue ledger IL-001).
+#### Time-Independent Schrödinger Equation
+\[
+-\frac{\hbar^2}{2m} \nabla^2 \psi + V(\mathbf{r}) \psi = E \psi
+\]
 
-\\subsection\*{Rayleigh–Plesset Equation (Modified)}  
-\\\[  
-R\\,\\ddot{R} \+ \\frac{3}{2}\\,\\dot{R}^2 \= \\frac{1}{\\rho}\\left(P\_{\\text{bubble}} \- P\_{\\infty} \- \\frac{2\\sigma}{R} \- \\frac{4\\mu \\dot{R}}{R} \+ \\frac{\\epsilon\_0 E^2}{2} \+ P\_{\\text{quantum}}\\right)  
-\\\]
+#### Casimir Force
+\[
+F_{\text{Casimir}} = -\frac{\pi^2 \hbar c}{240} \cdot \frac{A}{d^4}
+\]
+For the reference geometry \(A = 1\,\mu\text{m}^2\), \(d = 1\,\text{nm}\) this evaluates to \(F_{\text{Casimir}} \approx -1.3\,\text{mN}\) (consistent with Part 1, Section 2.5; the earlier \(-10^{-7}\,\text{N}\) figure was superseded — see issue ledger IL-001).
 
-\\section{Simulation Parameters and Numerical Methods}
+#### Rayleigh–Plesset Equation (Modified)
+\[
+R\,\ddot{R} + \frac{3}{2}\,\dot{R}^2 = \frac{1}{\rho}\left(P_{\text{bubble}} - P_{\infty} - \frac{2\sigma}{R} - \frac{4\mu \dot{R}}{R} + \frac{\epsilon_0 E^2}{2} + P_{\text{quantum}}\right)
+\]
 
-\\begin{itemize}  
-    \\item \\textbf{Grid Resolution:} 0.01 nm to 1 pm (adaptive mesh refinement near interfaces)  
-    \\item \\textbf{Time Step:} 0.1 fs to 10 as (adaptive)  
-    \\item \\textbf{Software:} COMSOL Multiphysics for FEM; Python (NumPy, SciPy) for FD/MC  
-    \\item \\textbf{Sampling Size:} Monte Carlo runs with $N \= 10^4$ to $10^6$  
-    \\item \\textbf{Uncertainty Propagation:} Bootstrapping and Approximate weight / UQ sensitivity analysis (not laboratory posteriors) 
-    \\item \\textbf{Sensitivity Tools:} Sobol and variance decomposition techniques  
-\\end{itemize}
+### Simulation Parameters and Numerical Methods
 
-\\section{Statistical Criteria for Validation}
+* **Grid Resolution:** 0.01 nm to 1 pm (adaptive mesh refinement near interfaces)
+* **Time Step:** 0.1 fs to 10 as (adaptive)
+* **Software:** COMSOL Multiphysics for FEM; Python (NumPy, SciPy) for FD/MC
+* **Sampling Size:** Monte Carlo runs with \(N = 10^4\) to \(10^6\)
+* **Uncertainty Propagation:** Bootstrapping and Approximate weight / UQ sensitivity analysis (not laboratory posteriors)
+* **Sensitivity Tools:** Sobol and variance decomposition techniques
 
-\\subsection\*{Poisson Significance}  
-\\\[  
-S \= \\frac{n \- \\lambda}{\\sqrt{\\lambda}}, \\quad \\text{where $n$ \= observed events, $\\lambda$ \= expected background}  
-\\\]
 
-\\subsection\*{Excess Heat Threshold}  
-\\\[  
-Q\_{\\text{nuclear}} \= Q\_{\\text{output}} \- Q\_{\\text{input}} \\pm \\Delta Q  
-\\\]  
-with confidence thresholds set at $S \\geq 5$ for statistically significant nuclear inference.
+### Statistical Criteria for Validation
+
+#### Poisson Significance
+\[
+S = \frac{n - \lambda}{\sqrt{\lambda}}, \quad \text{where } n \text{ = observed events, } \lambda \text{ = expected background}
+\]
+
+#### Excess Heat Threshold
+\[
+Q_{\text{nuclear}} = Q_{\text{output}} - Q_{\text{input}} \pm \Delta Q
+\]
+with confidence thresholds set at \(S \geq 5\) for statistically significant nuclear inference.
