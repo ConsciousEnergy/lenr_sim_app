@@ -86,6 +86,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-OPEN-YIELD-01 | Integrated He yield vs heat duty-cycle discrepancy | §5A.5 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-YIELD-01.yaml` (undischarged) |
 | EQ-OPEN-EC-DEFICIT-01 | Stated 0.1 eV vs 0.782 MeV deficit factor \(\sim 10^7\) (meV integers) | §5A.4 | `open_question_details.py` | would-close-if bookkeeping | `THM` | `OpenQuestionBounds.lean` (does **not** close Q4) |
 | EQ-OPEN-YIELD-BAND-01 | Instantaneous Miles EMP band vs integrated \(10^2\)–\(10^4\) remainder | §5A.5 | `open_question_details.py` | miles1993 | `DEF` | `OpenQuestionBounds.lean` (does **not** close Q5) |
+| EQ-OPEN-YIELD-NC-01 | Instantaneous Miles EMP band membership does not imply integrated-yield closure; integrated-band remainder ⇒ Q5 not closed | §5A.5 | `open_question_details.py` | miles1993 | `THM` | `OpenQuestionBounds.lean` (honesty lock; does **not** close Q5) |
+| EQ-YIELD-ACCT-01 | Expected He-4 yield \(\dot N_{\mathrm{Miles}} P\,t\,f_{\mathrm{duty}}\) duty-cycle bookkeeping | §5A.5 | `open_question_details.py` | miles1993 | `DEF` | `YieldAccounting.lean` (expected only; does **not** close Q5) |
 | EQ-TSC-01 | Takahashi trapped-state / TSC rate | §5A.3 | `takahashi_tsc.py`, trapped_state mode | takahashi2016 | `SPEC` | separate mode |
 | EQ-BASE-2B-01 | `two_body` remains default baseline; never silently replaced | RR-006 | rate engine | governance | `AX` | contract |
 | EQ-NAIVE-GN-01 | Nat-floor of independent \(g^N\) is 0 for \(n\ge 1\) (naive multi-phonon fails) | §2.8.1 | `hagelstein_phonon.py`, `open_questions.py` | analysis | `THM` | `Phonon.lean` |

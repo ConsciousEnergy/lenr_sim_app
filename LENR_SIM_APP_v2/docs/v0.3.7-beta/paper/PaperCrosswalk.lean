@@ -82,6 +82,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5A WH-ENP-01 v2 bounds", "LenrFormal.WorkingHypothesisBounds")
   , ("§5A OPEN obligations", "LenrFormal.OpenObligations")
   , ("§6.1 would-close-if", "LenrFormal.OpenQuestionBounds")
+  , ("§5A.5 expected-yield duty bookkeeping", "LenrFormal.YieldAccounting")
   ]
 
 /-- Sanity: crosswalk records exactly five OPEN IDs. -/

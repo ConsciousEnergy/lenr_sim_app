@@ -1,0 +1,21 @@
+id: EQ-OPEN-YIELD-NC-01
+latex: "f_{\\mathrm{Miles}}\\in[1,3]\\;\\not\\Rightarrow\\;\\Delta N_{^4\\mathrm{He},\\mathrm{int}}=0;\\quad \\Delta N\\in[10^{2},10^{4}]\\Rightarrow \\neg Q_5"
+symbols:
+  f_Miles: "instantaneous Miles EMP heat/He factor (integer band)"
+  Delta_N_He_int: "integrated He-4 yield discrepancy (integer-scaled)"
+units: "dimensionless"
+tag: THM
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+lean_target: "LenrFormal.OpenQuestionBounds"
+lean_decls:
+  - "LenrFormal.OpenQuestionBounds.q5IntegratedRemainderInBand"
+  - "LenrFormal.OpenQuestionBounds.q5_integrated_band_remainder_not_closed"
+  - "LenrFormal.OpenQuestionBounds.instantaneous_miles_band_does_not_discharge_q5"
+  - "LenrFormal.OpenQuestionBounds.miles_band_does_not_imply_q5_closed"
+notes: "Honesty lock (BOUNDED, not CLOSED): instantaneous Miles EMP band membership does not discharge EQ-OPEN-YIELD-01, and any remainder in the integrated 100–10000 DEF band leaves Q5 not closed. The band is a DEF over reported literature, not a data discharge. Collapse UQ power percentiles are not He-4 yield closure. EQ-OPEN-YIELD-01 stays OPEN."

@@ -20,4 +20,4 @@ lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q5IntegratedYieldClosed"
   - "LenrFormal.OpenObligations.positive_yield_discrepancy_implies_q5_not_closed"
-notes: "This obligation remains open. Instantaneous Miles EMP (~2×) is not integrated-yield closure. See EQ-OPEN-YIELD-BAND-01. ISSUE_LEDGER 'FIXED' means a paper section was written, not that this obligation is discharged."
+notes: "This obligation remains open. Instantaneous Miles EMP (~2×) is not integrated-yield closure. See EQ-OPEN-YIELD-BAND-01; EQ-OPEN-YIELD-NC-01 proves Miles band membership does not discharge Q5 (bound, not closure); EQ-YIELD-ACCT-01 is expected-yield duty bookkeeping only. ISSUE_LEDGER 'FIXED' means a paper section was written, not that this obligation is discharged."
