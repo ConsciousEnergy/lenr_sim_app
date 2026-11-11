@@ -123,6 +123,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-3B-MASS-DOM-01 | ULM factor claimed only if \(m^*/m_e\ge 2.53\) | §2.4, §5A.4 | `widom_larsen.py` | tennfors2013 domain | `THM` | `NBody.lean` |
 | EQ-NBODY-FGR-01 | Bookkeeping FGR \(n P\Gamma f C_{\mathrm{lin}}/\tau\) (linear collective) | §5A.3 | `fgr_model.py` / rate engine | DEF | `DEF` | `NBody.lean` / `EQ-NBODY-FGR-01.yaml` |
 | EQ-BRANCH-LATTICE-01 | Lattice Γ_ph/Γ_γ > 10^11 open target | §5A.2 | `branching_model.py` | paper §5A.2 | `DEF` | `Branching.lean` |
+| EQ-WH-FC-02 | FC class bound: \(\forall S\le10^{4},\,N\ge300048\): \(S^N/N!<10^{-11}\); \(\lfloor t/(1-t)\rfloor=0<10^{11}\); derives EQ-WH-FC-01 literals; alias `harmonic_dos_non_closure` | §5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `RadiationBounds.lean` (BOUNDED / class-DISPROVEN; does **not** close Q2) |
+| EQ-RAD-DET-01 | Detector-UL honesty flag mirrors (Cd-ratio, moderator-null, soft-X∧¬hard-γ, assumed BR\(_\gamma\)>UL) | §5A.2 | `many_body/branching_model.py` | `detector_ul_not_proof`; pyyhtia2026 confounder | `DEF` | `RadiationBounds.lean` (falsifiers only; does **not** close Q2) |
 | EQ-WHEN-THRESH-01 | Threshold predicate R_mode ≥ R_obs | §5A.3 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-WHEN-DUTY-01 | Duty-cycle integrated yield t_duty = t_total f_duty | §5A.5 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-MECH-PATH-01 | Mechanism path enum (TSC / phonon / three_body) | §5A | `decision_oracle.py` | Oracle B odds | `DEF` | `WhenHow.lean` |

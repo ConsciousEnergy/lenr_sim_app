@@ -38,6 +38,7 @@ lake build
 | `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
 | `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
+| `RadiationBounds` | EQ-WH-FC-02, EQ-RAD-DET-01 | FC class bound \(S^N/N!<10^{-11}\) over the licensed \(S\)/\(N\) domain; detector-UL flag mirrors; alias `harmonic_dos_non_closure`; does **not** close `EQ-OPEN-RAD-01` |
 | `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01, EQ-BBL-RP-DOM-01, EQ-BBL-CR-CAP-01 | Pointwise clamp; literature ceilings; UQ defs; RP/KM domain; CR hard-core cap |
 | `PoissonSchrodinger` | EQ-PS-01, EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-TOL-01, EQ-PS-NONDEPLOY-01 | Continuum PS DEF parent + discrete residual / domain / tolerance / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
 | `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01, EQ-OPEN-EC-BOUND-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; CM energy-budget deficit family (BOUNDED, form-DISPROVEN under AX caps); **does not** close `EQ-OPEN-EC-01` |

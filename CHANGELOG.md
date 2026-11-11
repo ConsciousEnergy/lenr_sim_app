@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
 - **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
 
+### Added — EQ-OPEN-RAD-01 Lean bounds (academic; stays OPEN)
+- Lean `RadiationBounds`: `EQ-WH-FC-02` FC class bound — \(S^N/N!<10^{-11}\) for every \(S\le10^4\), \(N\ge300048\); FC ratio floor \(0<10^{11}\); derives the EQ-WH-FC-01 literals; paper §5A.2 alias `harmonic_dos_non_closure`
+- Lean `RadiationBounds`: `EQ-RAD-DET-01` detector-UL honesty flag DEF mirrors of `branching_model.py` (falsifiers only)
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — WS8 WH-ENP-01 / NBody remainder + Overlap DEF (academic)
 - Lean `LenrFormal.Overlap`: `EQ-OVERLAP-01` \((r_0/a)^3\) bookkeeping; `EQ-OVERLAP-02` ensemble count ≠ nuclear rate; IR YAMLs
 - Sharpened `NBody` volumetric FGR (`fgrVolumetricBookkeeping`) + zero-occ / linear-collective lemmas

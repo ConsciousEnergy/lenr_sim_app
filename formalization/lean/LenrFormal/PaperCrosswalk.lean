@@ -76,6 +76,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
+  , ("§5A.2 harmonic / FC class bound + detector-UL DEF (harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
   , ("§5A.3 Q3 scenario cap bounds / gaps (EQ-RATE-CAP-*)", "LenrFormal.RateBudget")
   , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")
