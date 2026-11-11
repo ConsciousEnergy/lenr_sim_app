@@ -187,11 +187,23 @@ def protect_math(md: str) -> tuple[str, list[str]]:
         # Manuscript uses \[n\] / \[n,m\] for bibliography pointers, not math.
         if _CITE_ONLY.match(inner):
             return f"[{inner}]"
-        # Unit brackets like \[C/m$^3$\] → upright units, not display math.
-        if re.match(r"^[A-Za-z0-9/$.\\^{}_\\-]+$", inner) and (
-            "/" in inner or inner.startswith("C/") or "$" in inner
-        ) and len(inner) < 40 and "=" not in inner and r"\frac" not in inner:
-            unit = normalize_tex(inner)
+        # Unit brackets like \[C/m$^3$\] or \[C/m\(^3\)\] → upright units.
+        unit_inner = re.sub(r"\\\(([^)]+)\\\)", r"\1", inner)
+        unit_inner = unit_inner.replace("$", "")
+        if (
+            len(inner) < 40
+            and "=" not in inner
+            and r"\frac" not in inner
+            and (
+                "/" in inner
+                or inner.startswith("C/")
+                or "$" in inner
+                or "\(" in inner
+            )
+            and re.match(r"^[A-Za-z0-9/$.\\^{}_\\()\\\-]+$", inner)
+        ):
+            unit = normalize_tex(unit_inner)
+            unit = re.sub(r"\^(\d+)", r"^{\1}", unit)
             return f"`[{unit}]`"
         slots.append("\\[" + normalize_tex(inner) + "\\]")
         return f"@@MATH{len(slots)-1}@@"

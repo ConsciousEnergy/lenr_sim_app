@@ -185,6 +185,25 @@ def cleanup_leftover_structure(s: str) -> str:
     return s.strip() + "\n"
 
 
+
+def cleanup_unit_displays(s: str) -> str:
+    """Structural: short \[unit\] / nested \(^*\) unit brackets → Part-1-style inline units."""
+    def gen(m: re.Match) -> str:
+        inner = m.group(1)
+        if "=" in inner or "frac" in inner:
+            return m.group(0)
+        inner2 = re.sub(r"\\\(([^)]+)\\\)", r"\1", inner)
+        inner2 = re.sub(r"\s+", "", inner2)
+        if re.fullmatch(r"[A-Za-z0-9/^{}\\]+", inner2) and len(inner2) < 30:
+            mm = re.match(r"^([A-Za-z/]+)(\^.+)$", inner2)
+            if mm:
+                return f"\\([\\text{{{mm.group(1)}}}{mm.group(2)}]\\)"
+            return f"\\([\\text{{{inner2}}}]\\)"
+        return m.group(0)
+
+    return re.sub(r"\\\[([^\]]{1,40})\\\]", gen, s)
+
+
 def convert_latex_appendix(raw_appendix: str) -> str:
     """Convert only the escaped-LaTeX appendix body (from \\begin{abstract})."""
     s = collapse_double_escapes(raw_appendix)
@@ -193,6 +212,7 @@ def convert_latex_appendix(raw_appendix: str) -> str:
     s = latex_sections_to_md(s)
     s = latex_inline_to_md(s)
     s = remove_md_escapes_inside_math(s)
+    s = cleanup_unit_displays(s)
     s = cleanup_leftover_structure(s)
     header = (
         "## Appendix (archival)\n\n"

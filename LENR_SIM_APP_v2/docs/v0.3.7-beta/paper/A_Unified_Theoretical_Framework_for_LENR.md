@@ -1788,24 +1788,24 @@ Ultimately, the question is no longer whether anomalous energy phenomena occur u
 \appendix
 ### Mathematical Symbols and Definitions
 
-* \(\phi\) — Electrostatic potential \[V\]
-* \(\rho\) — Charge density \[C/m\(^3\)\]
+* \(\phi\) — Electrostatic potential \([\text{V}]\)
+* \(\rho\) — Charge density \([\text{C/m}^3]\)
 * \(\epsilon_0\) — Vacuum permittivity (\(\approx 8.854 \times 10^{-12}\) F/m)
 * \(\psi(\mathbf{r})\) — Quantum wavefunction
-* \(V(\mathbf{r})\) — Potential energy \[eV\]
-* \(E\) — Energy eigenvalue \[eV\]
+* \(V(\mathbf{r})\) — Potential energy \([\text{eV}]\)
+* \(E\) — Energy eigenvalue \([\text{eV}]\)
 * \(\hbar\) — Reduced Planck’s constant (\(\approx 1.055 \times 10^{-34}\) J·s)
 * \(c\) — Speed of light in vacuum (\(\approx 3 \times 10^8\) m/s)
 * \(k_B\) — Boltzmann constant (\(\approx 1.381 \times 10^{-23}\) J/K)
 * \(a_0\) — Bohr radius (\(\approx 0.0529\) nm)
-* \(R\) — Bubble radius \[m\]
+* \(R\) — Bubble radius \([\text{m}]\)
 * \(P_{\text{overlap}}\) — Overlap probability between electron and nuclear wavefunctions
 * \(f_{\text{enhancement}}\) — Total tunneling enhancement factor
-* \(F_{\text{Casimir}}\) — Casimir force \[N\]
-* \(E_{\text{local}}\) — Localized energy per atom \[eV\]
+* \(F_{\text{Casimir}}\) — Casimir force \([\text{N}]\)
+* \(E_{\text{local}}\) — Localized energy per atom \([\text{eV}]\)
 * \(S\) — Statistical significance, \(S = \frac{n - \lambda}{\sqrt{\lambda}}\)
-* \(\Delta Q\) — Net heat output above control \[W\]
-* \(\sigma_Q\) — Uncertainty in heat measurement \[W\]
+* \(\Delta Q\) — Net heat output above control \([\text{W}]\)
+* \(\sigma_Q\) — Uncertainty in heat measurement \([\text{W}]\)
 
 
 ### Core Equations and Relationships
