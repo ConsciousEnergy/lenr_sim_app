@@ -497,6 +497,21 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [pyyhtia2026] Pyyhtiä, K. et al. (2026)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Investigation of CR-39 damaging mechanisms in electrochemical environments.
+                <em> Journal of Electroanalytical Chemistry</em>, 1013, 120104.
+                OA experimental support that HER nanobubble cavitation damages CR-39 and confounds
+                pit=nuclear interpretations; does not prove LENR. Cite beside Taleyarkhan / SPAWAR CR-39 peers.
+              </Typography>
+              <MuiLink href="https://doi.org/10.1016/j.jelechem.2026.120104" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.1016/j.jelechem.2026.120104
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [nguyen2026] Nguyen, T. et al. (2026)
               </Typography>
               <Typography variant="body2" paragraph>

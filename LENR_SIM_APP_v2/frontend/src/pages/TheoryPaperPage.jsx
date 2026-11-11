@@ -1204,6 +1204,12 @@ const TheoryPaperPage = () => {
                 reaction-rate magnitude. Surfaced on <code>/unified-theory</code> (Results tab). <em>Claim tier:
                 speculative_exploratory.</em>
               </Typography>
+              <Typography variant="body2" paragraph>
+                Detector honesty peer: Pyyhtiä et al. 2026 (<code>pyyhtia2026</code>, DOI 10.1016/j.jelechem.2026.120104)
+                show electrolytic HER nanobubble cavitation damages CR-39 and confounds pit=nuclear SPAWAR-class
+                interpretations. Cite beside Mulnix / Taleyarkhan cavitation literature; does not prove LENR or
+                close EQ-OPEN-RAD-01. Collapse hydro remains modelled enhancement / contested hydro.
+              </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.13 Shell-Structure Nucleon Pairing (Nguyen et al., Nature 2026)</Typography>
               <Typography variant="body2" paragraph>

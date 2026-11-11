@@ -108,7 +108,8 @@
     "safire-plasma-2020",
     "spawar-cr39-2007",
     "spawar-dpf-2009",
-    "taleyarkhan-sonofusion-2002"
+    "taleyarkhan-sonofusion-2002",
+    "pyyhtia-cr39-cavitation-2026"
   ],
   "stressed_open_ids": [
     "EQ-OPEN-EC-01",
@@ -117,5 +118,5 @@
     "EQ-OPEN-YIELD-01"
   ],
   "kind": "scenario_table_not_posterior",
-  "note": "Model-output detector UL / Cd-ratio, weak EC-threshold, and moderator-null scenario cells. Dual score/final_score preserved. Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior."
+  "note": "Model-output detector UL / Cd-ratio, weak EC-threshold, and moderator-null scenario cells. Dual score/final_score preserved. Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior. Pyyhti\u00e4 2026 CR-39 cavitation confounder peer alongside SPAWAR/Taleyarkhan; EQ-OPEN-RAD-01 stays OPEN."
 }

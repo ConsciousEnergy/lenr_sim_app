@@ -108,6 +108,7 @@ formatting + keys live in [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
 | storms2015 | Storms review, Curr. Sci. 108, 574 (2015) | RR-010 He/heat band |
 | tennfors2013 | Tennfors, EPJ Plus 128:15 (2013), doi:10.1140/epjp/i2013-13015-3 | RR-008 Widom-Larsen critique |
 | mulnix2026 | Mulnix, KG-RP structural theory, doi:10.5281/zenodo.19079074 | RR-012 cavitation coupling |
+| pyyhtia2026 | Pyyhtiä et al., CR-39 electrolytic cavitation confounder, doi:10.1016/j.jelechem.2026.120104 | Detector / RAD honesty (≠ LENR proof) |
 | nguyen2026 | Nguyen et al., Nature (2026), doi:10.1038/s41586-026-10616-2 | RR-013 shell-pairing prior |
 | floquetwkb2026 | Floquet-WKB lattice confinement fusion, doi:10.14293/PR2199.002776.v1 | RR-006/RR-011 driven barrier + Bayesian UQ |
 
