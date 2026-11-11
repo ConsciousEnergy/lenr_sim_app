@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — EQ-OPEN-EC-BOUND-01 CM energy-budget deficit family (academic; Q4 stays OPEN)
+- Lean `WeakInteraction`: `EQ-OPEN-EC-BOUND-01` parameterized CM-budget / double-layer deficit family — any \(E\le\) AX cap \(<0.782\,\mathrm{MeV}\) ⇒ ¬Q4; named form-DISPROVEN (`cm_budget_form_cannot_close`); closing needs \(\ge 7820\) concentrated 100 eV budgets; `q4_not_refuted_outright` keeps the obligation logically open
+- Cross-locks in `OpenQuestionBounds` so deficit constants cannot drift; honesty locks keep `condensedMatterPathToThreshold` / `lenrProved` false
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — EQ-OPEN-YIELD-01 Lean bounds (academic; stays OPEN)
 - Lean `OpenQuestionBounds`: `EQ-OPEN-YIELD-NC-01` honesty lock — instantaneous Miles EMP band membership does not imply `q5IntegratedYieldClosed`; integrated 100–10⁴ band remainder ⇒ Q5 not closed (band stays DEF, not data discharge)
 - Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
