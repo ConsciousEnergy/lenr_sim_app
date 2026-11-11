@@ -50,8 +50,9 @@
 \title{A Unified Theoretical and Mathematical Framework for Low-Energy
 Nuclear Reactions (LENR)\\\large\textit{Coupling is all you need}}
 \author{Diadon Acs (lead, Conscious Energies)}
-\date{2026-02-14 (revised 2026-11-10, Pyyhtiä CR-39 cite + WS findings
-refresh;~prior 2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-11, multidisciplinary coherence
+pass;~prior 2026-11-10 Pyyhtiä CR-39 cite + WS findings
+refresh;~2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
 
 \begin{document}
 \maketitle
@@ -144,7 +145,10 @@ fission. Over the past several decades, experiments have reported:
   high-energy nuclear by-products usually observed \[2,5\].\\
 \item
   \textbf{Minimal Radiation:} Comparatively negligible ionizing
-  radiation despite evidence of nuclear-scale events \[3,6\].
+  radiation despite \emph{reported} nuclear-scale heat / isotopic
+  correlations \[3,6\]---reports that remain disputed and do not by
+  themselves establish nuclear events (\texttt{EQ-OPEN-RAD-01} stays
+  OPEN).
 \end{itemize}
 
 However, the field faces two major hurdles:
@@ -160,9 +164,10 @@ However, the field faces two major hurdles:
   observed phenomena \[18,22\].
 \end{itemize}
 
-Given LENR's potential for clean, virtually limitless energy, resolving
-these issues remains a priority for both scientific understanding and
-practical commercialization.
+Given LENR's contested energy relevance, resolving these issues remains
+a priority for scientific understanding. Energetic / practical freedom
+outcomes stay a permanent non-goal of the companion software governance
+(see \texttt{GOALS.md}).
 
 \hypertarget{objectives}{%
 \subsubsection{1.2 Objectives}\label{objectives}}
@@ -176,15 +181,17 @@ This paper aims to:
   \textbf{Unify Diverse Phenomena:} Integrate Rydberg Matter (RM), halo
   electrons, double-layer QED, Casimir forces, the Oppenheimer-Phillips
   process, and quantum tunneling enhancements into a single LENR
-  model.\\
+  \textbf{hypothesis stack} under explicit claim tiers.\\
 \item
   \textbf{Quantify Mechanisms:} Use detailed mathematical formulations,
   computational simulations, and statistical analysis to quantify each
-  key mechanism.\\
+  key mechanism as \textbf{modelled} sensitivity exploration unless an
+  independent experimental constraint is cited.\\
 \item
   \textbf{Propose Reproducible Protocols:} Offer experimental procedures
-  and theoretical guidelines that can be scaled for industrial or
-  commercial LENR applications.
+  and theoretical guidelines that improve laboratory reproducibility and
+  independent falsification---not industrial or commercial LENR
+  applications.
 \end{enumerate}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
@@ -194,6 +201,10 @@ This paper aims to:
 
 \hypertarget{rydberg-matter-rm}{%
 \subsubsection{2.1 Rydberg Matter (RM)}\label{rydberg-matter-rm}}
+
+\textbf{Claim tier:} speculative / exploratory mechanism (lattice--RM
+hypothesis stack). Lean \texttt{LenrFormal.Rydberg} locks the \(n=10\)
+energy identity only---not a nature proof that RM mediates LENR.
 
 \textbf{Definition:} Rydberg Matter is a phase in which atoms or
 molecules occupy highly excited electronic states with extended orbitals
@@ -208,10 +219,10 @@ molecules occupy highly excited electronic states with extended orbitals
   \tightlist
   \item
     \textbf{Enhanced Energy Localization:} Extended orbitals allow more
-    efficient concentration of energy, effectively lowering the Coulomb
-    barrier for nuclear processes.\\
+    efficient concentration of energy, \emph{hypothesized} to lower the
+    Coulomb barrier for nuclear processes.\\
   \item
-    \textbf{Formation Sites:} Commonly formed at metal--hydrogen
+    \textbf{Formation Sites:} Commonly proposed at metal--hydrogen
     interfaces during electrolysis or near catalytic surfaces in gaseous
     systems under specific pressures and temperatures.\\
   \item
@@ -233,6 +244,10 @@ molecules occupy highly excited electronic states with extended orbitals
 \hypertarget{delocalized-interface-electrons-extended-electronic-states}{%
 \subsubsection{2.2 Delocalized Interface Electrons (Extended Electronic
 States)}\label{delocalized-interface-electrons-extended-electronic-states}}
+
+\textbf{Claim tier:} modelled / exploratory construct. Lean
+\texttt{LenrFormal.Overlap} records ensemble-count bookkeeping
+(\texttt{EQ-OVERLAP-01/02}); ensemble product ≠ nuclear rate.
 
 \textbf{Definition:} In metallic hydrides and at metal-hydrogen
 interfaces, electrons can occupy extended or delocalized quantum states
@@ -318,6 +333,11 @@ Section 5.1 rather than asserted from \[12\].)
 \hypertarget{double-layer-qed-effects}{%
 \subsubsection{2.3 Double-Layer QED
 Effects}\label{double-layer-qed-effects}}
+
+\textbf{Claim tier:} speculative / exploratory QED--lattice coupling.
+Lean \texttt{LenrFormal.Field} / \texttt{ScaleQED} document identities
+and negative controls; bulk HE vacuum polarisation remains a negative
+control (\texttt{EQ-QED-HE-NEG-01}), not LENR proof.
 
 \textbf{Definition:} Charge separation at electrolyte or lattice
 interfaces can form high electric fields in thin double layers
@@ -1705,16 +1725,25 @@ Extra runs do not close §5A or prove LENR.
   identification of optimal conditions
 \end{enumerate}
 
-\hypertarget{validation-of-nuclear-products}{%
-\subsubsection{5.2 Validation of Nuclear
-Products}\label{validation-of-nuclear-products}}
+\hypertarget{reported-nuclear-product-correlations-contested}{%
+\subsubsection{5.2 Reported Nuclear-Product Correlations
+(contested)}\label{reported-nuclear-product-correlations-contested}}
+
+\emph{Claim-tier note.} This subsection inventories \textbf{reported}
+isotopic / heat correlations from the contested LENR corpus. It does
+\textbf{not} validate nuclear product detection, close
+\texttt{EQ-OPEN-YIELD-01} / \texttt{EQ-OPEN-RAD-01}, or flip
+\texttt{lenr\_proved}.
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Isotopic Shifts:} Detection of helium-4, tritium, and heavier
-  isotopes supports multi-step nuclear processes (e.g.,
-  Oppenheimer-Phillips).\\
+  \textbf{Isotopic Shifts:} Reports of helium-4, tritium, and heavier
+  isotopes are sometimes \emph{interpreted as} multi-step nuclear
+  processes (e.g., Oppenheimer-Phillips); alternative chemical /
+  contamination / detector-confounder explanations remain open, and
+  Pyyhtiä 2026 (\texttt{pyyhtia2026}) strengthens the CR-39 cavitation
+  confounder beside SPAWAR-class pit claims.\\
 \item
   \textbf{Excess Heat Consistency:} Reported experimental outputs are
   consistent in magnitude with the hypothesized nuclear energy
@@ -1768,11 +1797,12 @@ For LENR, the suppression of high-energy gamma emission suggests:
 E_\gamma \ll E_{\text{nuclear}}
 \]
 
-implying that most energy is channeled into lattice and electronic
-degrees of freedom. This energy distribution mechanism explains the
-observed excess heat without commensurate high-energy radiation,
-consistent with the LENR signature of nuclear-scale energy release with
-minimal ionizing radiation.
+implying that, \emph{if} a lattice-phonon channel dominated, most energy
+would be channeled into lattice and electronic degrees of freedom. That
+\textbf{hypothesis} is offered as one claim-tiered scenario for reported
+excess heat without commensurate high-energy radiation; it does
+\textbf{not} establish that observed heat is nuclear, does \textbf{not}
+close \texttt{EQ-OPEN-RAD-01}, and is not a validated LENR signature.
 
 \hypertarget{energy-product-yield-reconciliation}{%
 \paragraph{5.2.2 Energy-Product Yield
@@ -1834,17 +1864,20 @@ fundamental inconsistency.
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Tritium:} Reported yields of \(10^5\)--\(10^7\) atoms/hr
-  represent a branching ratio of \(\lesssim 10^{-9}\) relative to the
-  ⁴He channel, consistent with the LENR observation that the D+D → T+p
-  branch is heavily suppressed relative to the dominant D+D → ⁴He +
-  phonons pathway.
+  \textbf{Tritium:} Reported yields of \(10^5\)--\(10^7\) atoms/hr,
+  \emph{if taken at face value}, imply a branching ratio of
+  \(\lesssim 10^{-9}\) relative to a putative ⁴He channel. That is a
+  contested corpus pattern---not proof that D+D → T+p is suppressed by a
+  lattice-phonon pathway.
 \item
-  \textbf{Neutrons:} Detected neutron fluxes are typically \(< 10^3\)/s,
-  corresponding to a branching ratio of \(\lesssim 10^{-11}\). This
-  extreme suppression of the D+D → ³He + n channel is one of the
-  defining signatures of LENR and must be explained by the radiation
-  suppression mechanism (Section 6.1).
+  \textbf{Neutrons:} Reported neutron fluxes are typically \(< 10^3\)/s,
+  corresponding to a branching ratio of \(\lesssim 10^{-11}\) under the
+  same conditional framing. Companion-software detector upper limits and
+  PRED-08/09/10 falsifiers are bookkeeping
+  ({\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof}); they do \textbf{not} define a
+  LENR signature and do \textbf{not} close \texttt{EQ-OPEN-RAD-01} /
+  \texttt{EQ-OPEN-RATE-01}. Radiation-suppression hypotheses remain OPEN
+  (§5A.2 / §6.1).
 \end{itemize}
 
 \hypertarget{implications-for-lenr}{%
@@ -2252,16 +2285,22 @@ rows never feed production rates and are not EC closure.
 
 As detailed in Section 5.2.2, the Miles heat-helium correlation
 \((2.6 \pm 0.6) \times 10^{11}\) ⁴He/s/W is within a factor of
-\textasciitilde2 of the 23.8 MeV/⁴He prediction, providing the strongest
-quantitative evidence for the D+D → ⁴He + lattice heat channel. The
-remaining discrepancy (factor of \textasciitilde2) is within systematic
-uncertainties of helium collection efficiency.
+\textasciitilde2 of the 23.8 MeV/⁴He prediction. Under claim tier
+{\ttfamily empirical\_\allowbreak{}lenr\_\allowbreak{}correlation}, that band is the
+\textbf{best-studied quantitative EMP correlation} motivating a D+D →
+⁴He + lattice-heat \emph{hypothesis}---not discharged proof of the
+channel, and not closure of \texttt{EQ-OPEN-YIELD-01} (Lean
+{\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}BAND-\allowbreak{}01} still OPEN). The remaining
+factor-of-\textasciitilde2 discrepancy sits inside systematic
+uncertainties of helium collection efficiency if the underlying
+measurements are accepted.
 
 However, integrated yields per W·hr are 100-10,000× lower than expected
 (Section 5.2.2), indicating either: (a) time-varying reaction rates with
 duty cycles, (b) incomplete helium collection, or (c) contributions from
 non-helium-producing channels. This accounting must be resolved with
-time-resolved simultaneous heat-helium measurements.
+time-resolved simultaneous heat-helium measurements before any yield
+obligation can close.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
@@ -2287,17 +2326,19 @@ remain disputed and are not treated as validation of the framework.
 \tightlist
 \item
   \textbf{Refinement of Computational Models:} Incorporate many-body
-  physics, non-linear effects, and real-time electron--phonon
-  coupling.\\
+  physics, non-linear effects, and real-time electron--phonon coupling
+  under explicit claim tiers (modelled vs aspirational).\\
 \item
-  \textbf{Scaling Reactor Designs:} Develop larger prototypes with
-  real-time neutron/helium monitoring to push toward commercial
-  viability.\\
+  \textbf{Independent Falsification Campaigns:} Expand simultaneous
+  heat--helium / detector campaigns and PRED falsifiers so OPEN
+  obligations can be closed or rejected on evidence---not scaled toward
+  commercial viability (energetic/practical freedom remains a permanent
+  non-goal).\\
 \item
   \textbf{Interdisciplinary Collaboration:} Encourage a synergy of
-  nuclear engineers, condensed matter physicists, chemists, and
-  computational scientists to expedite the resolution of outstanding
-  LENR challenges.
+  nuclear engineers, condensed matter physicists, chemists,
+  experimentalists, and computational scientists to resolve outstanding
+  LENR challenges without overclaiming nuclear detection.
 \end{enumerate}
 
 \hypertarget{mechanized-consistency-lean}{%
@@ -2333,8 +2374,9 @@ of this manuscript and the Lean section→theorem crosswalk ship as:
 \begin{itemize}
 \tightlist
 \item
-  Markdown / plain text / LaTeX:
-  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}paper/\allowbreak{}}
+  Markdown / plain text / LaTeX / PDF:
+  {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}7-\allowbreak{}beta/\allowbreak{}paper/\allowbreak{}} (rebuild via
+  \texttt{build\_pdf.sh})
 \item
   Lean crosswalk module:
   {\ttfamily formalization/\allowbreak{}lean/\allowbreak{}LenrFormal/\allowbreak{}PaperCrosswalk.\allowbreak{}lean} (mirrored

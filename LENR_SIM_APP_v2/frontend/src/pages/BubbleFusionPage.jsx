@@ -547,20 +547,22 @@ const BubbleFusionPage = () => {
               </Typography>
             </Box>
             <Typography variant="body2" paragraph>
-              Bubble fusion (sonofusion) is a proposed form of nuclear fusion that uses acoustic waves to 
-              induce rapid compression and heating of gas bubbles in a liquid. This creates extreme conditions 
-              inside the collapsing bubbles that may potentially overcome the Coulomb barrier for fusion.
+              Bubble fusion (sonofusion) is the in-dev Bubble Fusion surface (ENG-BUBBLE-FUSION-01;
+              existing engines only). Claim tier: <strong>approximate</strong>; empirical support:{' '}
+              <strong>contested</strong>. Acoustic driving explores modelled collapse hydro — not a
+              validated nuclear pathway.
             </Typography>
             <Typography variant="body2">
-              When bubbles collapse, temperatures can briefly reach millions of degrees and pressures can 
-              exceed thousands of atmospheres. This phenomena, called sonoluminescence when light is emitted, 
-              might create conditions suitable for nuclear fusion reactions under specific circumstances.
+              Companion-software Rayleigh–Plesset / Keller–Miksis trajectories can reach extreme modelled
+              temperatures and pressures (and sonoluminescence when light is emitted). Those conditions are
+              a sensitivity exploration of interfacial environments; they do not establish that laboratory
+              cavitation overcomes the Coulomb barrier or produces fusion rates.
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
               Honesty: Taleyarkhan-class sonofusion nuclear claims remain disputed. Pyyhtiä et al. 2026
-              (DOI 10.1016/j.jelechem.2026.120104) support electrolytic nanobubble cavitation as a CR-39
-              damage / pit confounder — not proof of LENR rates. Collapse hydro here stays modelled
-              enhancement / contested hydro.
+              (DOI 10.1016/j.jelechem.2026.120104) sit beside Mulnix / SPAWAR CR-39 peers as an electrolytic
+              nanobubble cavitation / detector-confounder cite — not proof of LENR rates. Collapse hydro
+              remains modelled enhancement / contested hydro; EQ-OPEN-* stay OPEN; lenr_proved stays false.
             </Typography>
           </Paper>
         </Grid>

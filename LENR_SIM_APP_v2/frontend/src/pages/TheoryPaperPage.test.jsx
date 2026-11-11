@@ -94,7 +94,7 @@ describe('TheoryPaperPage', () => {
 
   test('Section 6.1 TSC is labelled speculative and remains open', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/6\.1 Takahashi Tetrahedral Symmetric Condensate/)).toBeInTheDocument();
     expect(screen.getByText(/open speculative channel/i)).toBeInTheDocument();
     expect(screen.getAllByText(/claim tier: speculative_exploratory/i).length).toBeGreaterThan(0);
@@ -103,7 +103,7 @@ describe('TheoryPaperPage', () => {
 
   test('Section 6.11 Letts is EMP, not a shown controlled trigger', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/6\.11 Letts-Cravens Dual-Laser Stimulation/)).toBeInTheDocument();
     expect(screen.getAllByText(/empirical LENR correlation/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/showed that irradiating/i)).not.toBeInTheDocument();
@@ -112,14 +112,14 @@ describe('TheoryPaperPage', () => {
 
   test('Section 6 intro is comparative workbench, not unification endorsement', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/comparative scientific workbench/i)).toBeInTheDocument();
     expect(screen.queryByText(/mathematical unification/i)).not.toBeInTheDocument();
   });
 
   test('Section 6.2 Hagelstein is speculative approx and does not close MeV-gap', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/6\.2 Hagelstein Phonon-Nuclear Coupling/)).toBeInTheDocument();
     expect(screen.queryByText(/is converted into/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/avoiding single high-energy gamma/i)).not.toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('TheoryPaperPage', () => {
 
   test('Section 6.6 Widom does not claim without dangerous radiation', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/6\.6 Widom-Larsen Ultra-Low-Momentum Neutrons/)).toBeInTheDocument();
     expect(screen.queryByText(/without dangerous radiation/i)).not.toBeInTheDocument();
     expect(screen.getByText(/electroweak-entrance scaffold/i)).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('TheoryPaperPage', () => {
 
   test('Theory-to-Simulation map separates Holmlid UDH from Kim BEC', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText('6. Extended Theoretical Models'));
+    fireEvent.click(screen.getByText('6. Conclusion & Extended Theoretical Models'));
     expect(screen.getByText(/holmlid_udh/)).toBeInTheDocument();
     expect(screen.getByText(/≠ kim_bec/)).toBeInTheDocument();
     expect(screen.getByText('null_recombination')).toBeInTheDocument();
@@ -181,13 +181,13 @@ describe('TheoryPaperPage', () => {
       /0\.3\.9-beta/,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
-      /v0\.3\.7-beta \(revised 2026-09-25\)/,
+      /v0\.3\.7-beta \(revised 2026-11-11\)/,
     );
   });
 
   test('Section 4.2 Typical Results are labelled literature reports', () => {
     render(<TheoryPaperPage />);
-    fireEvent.click(screen.getByText(/4\. Experimental Validation/i));
+    fireEvent.click(screen.getByText(/4\. Experimental Context and Reported Correlations/i));
     const block = screen.getByTestId('section-42-typical-results');
     expect(block).toHaveTextContent(/literature reports/i);
     expect(block).toHaveTextContent(/not measurements produced or validated/i);
@@ -200,5 +200,8 @@ describe('TheoryPaperPage', () => {
       /not live on public beta/i,
     );
     expect(screen.getByText(/aspirational research methods/i)).toBeInTheDocument();
+    expect(screen.getByTestId('theory-paper-methods-bubble-collapse')).toHaveTextContent(
+      /modelled \/ contested hydro/i,
+    );
   });
 });
