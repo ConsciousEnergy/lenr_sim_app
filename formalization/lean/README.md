@@ -46,6 +46,7 @@ lake build
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
 | `WorkingHypothesisBounds` | EQ-WH-FC-01, EQ-WH-PART-02, EQ-WH-DICKE-N-01, EQ-WH-CAP-01, EQ-WH-NONCLOSE-02 | WH-ENP-01 v2 bounds: Poisson multi-phonon tail, general partition, Dicke count, engine-cap product; v2 non-closure |
+| `MeVRemainderCaps` | EQ-WH-MEV-CAP-01 | Q1 remainder floor \(R_{\min}\) under engine channel caps; collapse/ENC hydro allocate none of the MeV remainder; does **not** close `EQ-OPEN-MEV-01` |
 | `RealShim` | — | `expZ` mono bridge axiom |
 
 ## Hygiene

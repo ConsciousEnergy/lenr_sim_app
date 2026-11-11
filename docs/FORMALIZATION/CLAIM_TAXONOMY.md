@@ -144,6 +144,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-WH-DICKE-N-01 | \(n_D V_{\text{dicke}}\approx0.033<1\Rightarrow N_{\text{coh}}^{\max}=0\); no pair licensed | §5A.1 | `many_body/wh_bounds.py` | counting bound | `THM` | `WorkingHypothesisBounds.lean` |
 | EQ-WH-CAP-01 | \(P_{\text{occ}},f_{\text{nuc}}\le1,\ C_{\text{lin}}\le10^{6}\Rightarrow\) capped product bound; demand above cap unmet | §5A.3 | `many_body/wh_bounds.py` | upper bound (RR-006 clamp) | `THM` | `WorkingHypothesisBounds.lean` |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds (FC, partition, Dicke count, cap) do not discharge Q1–Q3 | §5A | `many_body/wh_bounds.py` | non-closure | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-MEV-CAP-01 | Capped licensed channels (phonon \(\le\lceil Q\cdot10^{-3}\rceil\), \(\gamma\le\lceil Q\,\mathrm{BR}_\gamma\rceil\), recoil \(=0\)) leave remainder \(\ge R_{\min}=Q-\sum C>0\) (\(23776\) keV at \(\mathrm{BR}_\gamma=0\)); collapse/ENC hydro allocate 0 | §5A.1 | `open_questions.py`, `many_body/branching_model.py` | bound under stated caps | `THM` | `MeVRemainderCaps.lean` |
 
 ---
 
