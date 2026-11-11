@@ -56,6 +56,7 @@
 | EQ-WH-DICKE-N-01 | \(\lfloor n_D V_{\text{dicke}}\rfloor=0\); no \(N\ge2\) Dicke count licensed | `WorkingHypothesisBounds` | **PROVED** (bound) |
 | EQ-WH-CAP-01 | Capped \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}\) product bound; demand above cap unmet | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q3) |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds do not discharge Q1–Q3 OPEN predicates | `WorkingHypothesisBounds` | **PROVED** (does **not** close) |
+| EQ-WH-MEV-CAP-01 | Engine-capped licensed channels leave remainder \(\ge R_{\min}>0\) (\(\mathrm{BR}_\gamma\le0.998\)); \(\gamma\)-route closure fails Q2; collapse/ENC hydro allocate 0 | `MeVRemainderCaps` | **PROVED** (bound; EQ-OPEN-MEV-01 stays **OPEN**) |
 | EQ-PS-COUPLE-01 | Coupling residual \(\max(r_P,r_S)=0\) iff both residuals vanish; positive residual ⇒ not self-consistent | `PoissonSchrodinger` | **PROVED** (residual algebra only; aspirational; does **not** deploy FEM) |
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |

@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — EQ-OPEN-MEV-01 remainder floor under engine caps (academic, BOUNDED)
+- Lean `LenrFormal.MeVRemainderCaps` + IR `EQ-WH-MEV-CAP-01`: capped licensed channels
+  (phonon ≤ 24 keV, γ ≤ ⌈Q·BR_γ⌉, recoil 0) leave remainder ≥ `R_min` (23776 keV at the
+  engine default BR_γ = 0; > 0 for BR_γ ≤ 0.998) ⇒ `¬ q1MeVEnergyGapClosed`; γ-route
+  closure fails Q2 below 0.999; collapse/ENC hydro claims allocate 0 keV of the remainder
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — EQ-OPEN-YIELD-01 Lean bounds (academic; stays OPEN)
 - Lean `OpenQuestionBounds`: `EQ-OPEN-YIELD-NC-01` honesty lock — instantaneous Miles EMP band membership does not imply `q5IntegratedYieldClosed`; integrated 100–10⁴ band remainder ⇒ Q5 not closed (band stays DEF, not data discharge)
 - Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
