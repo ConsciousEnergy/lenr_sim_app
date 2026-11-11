@@ -1,0 +1,25 @@
+id: EQ-BBL-NR-01
+latex: "\\mathrm{hydro} \\in F \\Rightarrow \\neg\\,\\mathrm{NuclearRateProof}(F);\\quad \\mathrm{NuclearRateProof}(F) \\iff F\\neq\\emptyset\\wedge\\forall k\\in F,\\ k=\\mathrm{labConstrained}"
+symbols:
+  F: "provenance kinds of the factors in a reported rate scenario"
+  hydro: "collapse / cavitation clamp output or surface-proximity enhancement"
+  labConstrained: "governed laboratory constraint (none in-repo)"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§3.2, §5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_calculated_bounds.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+citation_keys:
+  - model_assumption_RR006
+lean_target: LenrFormal.CollapseBounds
+lean_decls:
+  - "LenrFormal.CollapseBounds.RateFactorKind"
+  - "LenrFormal.CollapseBounds.NuclearRateProof"
+  - "LenrFormal.CollapseBounds.collapseOutputKind"
+  - "LenrFormal.CollapseBounds.collapse_output_is_hydro_enhancement"
+  - "LenrFormal.CollapseBounds.non_lab_factor_blocks_nuclear_rate_proof"
+  - "LenrFormal.CollapseBounds.hydro_enhancement_does_not_entail_nuclear_rate"
+  - "LenrFormal.CollapseBounds.collapse_output_does_not_entail_nuclear_rate"
+  - "LenrFormal.CollapseBounds.scenario_prior_does_not_entail_nuclear_rate"
+notes: "AX honesty tag: collapse clamp outputs and collapse / surface-proximity enhancement are modelled / contested hydro. Any rate scenario containing one, or an engine-capped scenario prior, is not a nuclear-rate proof regardless of magnitude. Does not discharge EQ-OPEN-RATE-01 or any EQ-OPEN-*; lenr_proved stays false."

@@ -1,6 +1,6 @@
 /-!
 CollapseBounds — EQ-BBL-LIM-01 / EQ-BBL-BOUND-01 / EQ-BBL-UQ-01 /
-EQ-BBL-RP-DOM-01 / EQ-BBL-CR-CAP-01.
+EQ-BBL-RP-DOM-01 / EQ-BBL-CR-CAP-01 / EQ-BBL-NR-01.
 
 Calculated collapse outputs are reported through a pointwise upper clamp.
 Literature ceilings, UQ percentile keys, RP/KM Mach-domain gates, and the
@@ -277,5 +277,62 @@ def reportedCompressionRatio (raw : Nat) : Nat :=
 theorem reported_compression_le_cap (raw : Nat) :
     reportedCompressionRatio raw ≤ maxCompressionRatio :=
   clamped_le_bound _ _
+
+/-! ### EQ-BBL-NR-01 — contested hydro enhancement ≠ nuclear-rate proof -/
+
+/-- Provenance kind of one factor entering a reported reaction-rate scenario. -/
+inductive RateFactorKind where
+  /-- Collapse / cavitation clamp output or surface-proximity enhancement
+      (modelled / contested hydro). -/
+  | hydroEnhancement
+  /-- Engine-capped free prior (`P_occ`, `f_nuc`, `C_lin ≤ 10⁶`, trap
+      separation, `m*/m_e`, `η_conv`, `τ`). -/
+  | scenarioPrior
+  /-- Governed laboratory constraint. No factor in this repository has it. -/
+  | labConstrained
+  deriving DecidableEq, Repr
+
+/-- UNDISCHARGED: a nuclear-rate proof needs a nonempty factor list in which
+    every factor is lab-constrained. -/
+def NuclearRateProof (factors : List RateFactorKind) : Prop :=
+  factors ≠ [] ∧ ∀ k ∈ factors, k = RateFactorKind.labConstrained
+
+/-- Every CollapseBounds output (clamped T, P, compression ratio) and every
+    collapse / surface-proximity enhancement factor is tagged hydro. -/
+def collapseOutputKind : RateFactorKind := .hydroEnhancement
+
+theorem collapse_output_is_hydro_enhancement :
+    collapseOutputKind = RateFactorKind.hydroEnhancement := rfl
+
+/-- Any factor that is not lab-constrained blocks a nuclear-rate proof. -/
+theorem non_lab_factor_blocks_nuclear_rate_proof
+    {factors : List RateFactorKind} {k : RateFactorKind}
+    (hk : k ∈ factors)
+    (hNotLab : k ≠ RateFactorKind.labConstrained) :
+    ¬ NuclearRateProof factors := by
+  intro h
+  exact hNotLab (h.2 k hk)
+
+/-- EQ-BBL-NR-01: a rate scenario containing a hydro enhancement factor is not
+    a nuclear-rate proof, however large the enhancement. -/
+theorem hydro_enhancement_does_not_entail_nuclear_rate
+    {factors : List RateFactorKind}
+    (h : RateFactorKind.hydroEnhancement ∈ factors) :
+    ¬ NuclearRateProof factors :=
+  non_lab_factor_blocks_nuclear_rate_proof h (by decide)
+
+/-- EQ-BBL-NR-01: collapse clamp outputs never enter a nuclear-rate proof. -/
+theorem collapse_output_does_not_entail_nuclear_rate
+    {factors : List RateFactorKind}
+    (h : collapseOutputKind ∈ factors) :
+    ¬ NuclearRateProof factors :=
+  hydro_enhancement_does_not_entail_nuclear_rate h
+
+/-- EQ-BBL-NR-01: engine-capped scenario priors are not lab constraints. -/
+theorem scenario_prior_does_not_entail_nuclear_rate
+    {factors : List RateFactorKind}
+    (h : RateFactorKind.scenarioPrior ∈ factors) :
+    ¬ NuclearRateProof factors :=
+  non_lab_factor_blocks_nuclear_rate_proof h (by decide)
 
 end LenrFormal.CollapseBounds

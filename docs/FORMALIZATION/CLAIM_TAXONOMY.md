@@ -78,13 +78,14 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-MILES-CONV-01 | \(N_{\mathrm{He}}\approx P_{\mathrm{W}}/Q\) ⇒ \(\sim 2.63\times 10^{11}\) atoms/s/W at 23.8 MeV | §5.2.2 | `MILES_HEAT_HELIUM_RATE` | conversion identity | `THM` | `Miles.lean` |
 | EQ-MILES-EMP-01 | Miles correlation \(24\pm 4\,\mathrm{MeV}/^4\mathrm{He}\) band | §5.2.2 | gates | miles1993, mckubre2008 | `EMP` | hypothesis |
 | EQ-HUANG-EMP-01 | Huang et al. water-cavitation COP / \(^{22}\)Ne MS claims (contested; *Sci. Rep.* 14, 214) | — | timeline + gap doc only (not a TheoryModule) | huang2024; Fomitchev-Zamilov 2024-05-29 critique | contested `EMP` | no Lean |
-| EQ-CM-BUDGET-01 | Condensed-matter budget capped ~10–100 eV/atom without MeV channel | IL-017 | guardrails | governance | `AX` | — |
+| EQ-CM-BUDGET-01 | Condensed-matter budget capped ~10–100 eV/atom without MeV channel | IL-017 | guardrails | governance | `AX` | `WeakInteraction.lean` cap defs (hypothesis input to EQ-OPEN-EC-BOUND-01) |
 | EQ-OPEN-MEV-01 | MeV energy gap (phonon→nuclear) unsolved | §5A.1 | MEV_GAP_HYPOTHESIS | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-MEV-01.yaml` (undischarged) |
 | EQ-OPEN-RAD-01 | Radiation suppression / no prompt γ | §5A.2 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RAD-01.yaml` (undischarged) |
 | EQ-OPEN-RATE-01 | Rate closure with single-pair enhancements | §5A.3 | two_body vs trapped_state | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RATE-01.yaml` (undischarged) |
 | EQ-OPEN-EC-01 | No convincing condensed-matter path to \(E_e>0.782\,\mathrm{MeV}\) | §5A.4 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-EC-01.yaml` (undischarged) |
 | EQ-OPEN-YIELD-01 | Integrated He yield vs heat duty-cycle discrepancy | §5A.5 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-YIELD-01.yaml` (undischarged) |
 | EQ-OPEN-EC-DEFICIT-01 | Stated 0.1 eV vs 0.782 MeV deficit factor \(\sim 10^7\) (meV integers) | §5A.4 | `open_question_details.py` | would-close-if bookkeeping | `THM` | `OpenQuestionBounds.lean` (does **not** close Q4) |
+| EQ-OPEN-EC-BOUND-01 | CM energy-budget deficit family: \(E\le\) cap \(<0.782\,\mathrm{MeV}\Rightarrow\neg Q_4\) for double-layer 0.1–1 eV and 10–100 eV/atom caps; closing needs \(\ge 7820\) budgets concentrated | §5A.4, IL-017 | `weak_interaction.py`, `open_question_details.py`, `unified_lenr_model/config.py` | BOUNDED / form-DISPROVEN under AX caps | `THM` | `WeakInteraction.lean` / `EQ-OPEN-EC-BOUND-01.yaml` (does **not** close Q4) |
 | EQ-OPEN-YIELD-BAND-01 | Instantaneous Miles EMP band vs integrated \(10^2\)–\(10^4\) remainder | §5A.5 | `open_question_details.py` | miles1993 | `DEF` | `OpenQuestionBounds.lean` (does **not** close Q5) |
 | EQ-OPEN-YIELD-NC-01 | Instantaneous Miles EMP band membership does not imply integrated-yield closure; integrated-band remainder ⇒ Q5 not closed | §5A.5 | `open_question_details.py` | miles1993 | `THM` | `OpenQuestionBounds.lean` (honesty lock; does **not** close Q5) |
 | EQ-YIELD-ACCT-01 | Expected He-4 yield \(\dot N_{\mathrm{Miles}} P\,t\,f_{\mathrm{duty}}\) duty-cycle bookkeeping | §5A.5 | `open_question_details.py` | miles1993 | `DEF` | `YieldAccounting.lean` (expected only; does **not** close Q5) |
@@ -93,6 +94,10 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-NAIVE-GN-01 | Nat-floor of independent \(g^N\) is 0 for \(n\ge 1\) (naive multi-phonon fails) | §2.8.1 | `hagelstein_phonon.py`, `open_questions.py` | analysis | `THM` | `Phonon.lean` |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) under \(f\le 10^5\) | §5A.3 | rate engine / decision oracle | paper bookkeeping | `THM` | `RateBudget.lean` |
 | EQ-RATE-COND-01 | If \(n_{\mathrm{occ}}\ge n_0\land f_{\mathrm{nuc}}\ge f_0\) then product \(\ge n_0 f_0\) | §5A.3 | decision oracle | would-close-if | `THM` | `RateBudget.lean` |
+| EQ-RATE-CAP-NC-01 | D–D `trapped_state` at FCC tetrahedral spacing (or wider), every engine cap saturated: \(\log_{10}N\le-15<0\) | §5A.3 | rate engine / `fgr_model.py` | scenario / cap bound | `THM` | `RateBudget.lean` (DISPROVEN under caps; does **not** close Q3) |
+| EQ-RATE-CAP-NC-02 | `three_body` outside ULM (\(m^*/m_e<2.53\)), compression at hard-core cap, every engine cap saturated: \(\log_{10}N\le-266<0\) | §5A.3, §5A.4 | rate engine / `weak_interaction.py` | tennfors2013 domain | `THM` | `RateBudget.lean` (DISPROVEN under caps; does **not** close Q3) |
+| EQ-RATE-CAP-GAP-01 | Engine caps do **not** certify non-closure for 25 pm TSC or ULM `three_body`; 25 pm non-closure needs \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}E_{\text{enh}}\le10^{-23}\) | §5A.3 | rate engine / `open_questions.py` | honesty gap | `THM` | `RateBudget.lean` (gap, not closure) |
+| EQ-BBL-NR-01 | Rate scenario containing a hydro / collapse enhancement or scenario prior is not a nuclear-rate proof | §3.2, §5A.3 | `collapse_calculated_bounds.py`, rate engine | model assumption | `AX` | `CollapseBounds.lean` (honesty tag) |
 | EQ-COMP-03 | Pipeline \(\times\) bubble totals are not a physical observable; at cap \(=10^{10}\) | software | `theory_pipeline.py`, virtual lab | RR composition | `THM` | `Composition.lean` |
 | EQ-BBL-COMP-01 | Bubble-lattice grouped max-within-group then multiply across groups | software | `bubble_mechanism_composition.py` | RR bubble route | `THM` | `Composition.lean` |
 | EQ-PRED-01 | Three-tier prediction: sensitivity / physics_governed / claim_tier_display | software | `unified_simulation.py` | governance | `DEF` | `Composition.lean` |
@@ -118,6 +123,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-3B-MASS-DOM-01 | ULM factor claimed only if \(m^*/m_e\ge 2.53\) | §2.4, §5A.4 | `widom_larsen.py` | tennfors2013 domain | `THM` | `NBody.lean` |
 | EQ-NBODY-FGR-01 | Bookkeeping FGR \(n P\Gamma f C_{\mathrm{lin}}/\tau\) (linear collective) | §5A.3 | `fgr_model.py` / rate engine | DEF | `DEF` | `NBody.lean` / `EQ-NBODY-FGR-01.yaml` |
 | EQ-BRANCH-LATTICE-01 | Lattice Γ_ph/Γ_γ > 10^11 open target | §5A.2 | `branching_model.py` | paper §5A.2 | `DEF` | `Branching.lean` |
+| EQ-WH-FC-02 | FC class bound: \(\forall S\le10^{4},\,N\ge300048\): \(S^N/N!<10^{-11}\); \(\lfloor t/(1-t)\rfloor=0<10^{11}\); derives EQ-WH-FC-01 literals; alias `harmonic_dos_non_closure` | §5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `RadiationBounds.lean` (BOUNDED / class-DISPROVEN; does **not** close Q2) |
+| EQ-RAD-DET-01 | Detector-UL honesty flag mirrors (Cd-ratio, moderator-null, soft-X∧¬hard-γ, assumed BR\(_\gamma\)>UL) | §5A.2 | `many_body/branching_model.py` | `detector_ul_not_proof`; pyyhtia2026 confounder | `DEF` | `RadiationBounds.lean` (falsifiers only; does **not** close Q2) |
 | EQ-WHEN-THRESH-01 | Threshold predicate R_mode ≥ R_obs | §5A.3 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-WHEN-DUTY-01 | Duty-cycle integrated yield t_duty = t_total f_duty | §5A.5 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-MECH-PATH-01 | Mechanism path enum (TSC / phonon / three_body) | §5A | `decision_oracle.py` | Oracle B odds | `DEF` | `WhenHow.lean` |
@@ -137,6 +144,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-WH-DICKE-N-01 | \(n_D V_{\text{dicke}}\approx0.033<1\Rightarrow N_{\text{coh}}^{\max}=0\); no pair licensed | §5A.1 | `many_body/wh_bounds.py` | counting bound | `THM` | `WorkingHypothesisBounds.lean` |
 | EQ-WH-CAP-01 | \(P_{\text{occ}},f_{\text{nuc}}\le1,\ C_{\text{lin}}\le10^{6}\Rightarrow\) capped product bound; demand above cap unmet | §5A.3 | `many_body/wh_bounds.py` | upper bound (RR-006 clamp) | `THM` | `WorkingHypothesisBounds.lean` |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds (FC, partition, Dicke count, cap) do not discharge Q1–Q3 | §5A | `many_body/wh_bounds.py` | non-closure | `THM` | `WorkingHypothesisBounds.lean` |
+| EQ-WH-MEV-CAP-01 | Capped licensed channels (phonon \(\le\lceil Q\cdot10^{-3}\rceil\), \(\gamma\le\lceil Q\,\mathrm{BR}_\gamma\rceil\), recoil \(=0\)) leave remainder \(\ge R_{\min}=Q-\sum C>0\) (\(23776\) keV at \(\mathrm{BR}_\gamma=0\)); collapse/ENC hydro allocate 0 | §5A.1 | `open_questions.py`, `many_body/branching_model.py` | bound under stated caps | `THM` | `MeVRemainderCaps.lean` |
 
 ---
 

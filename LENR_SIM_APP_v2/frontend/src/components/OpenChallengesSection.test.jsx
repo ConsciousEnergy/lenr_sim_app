@@ -47,4 +47,17 @@ describe('OpenChallengesSection', () => {
     expect(chips).toHaveTextContent(/EQ-OPEN-MEV-01: OPEN/);
     expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
   });
+
+  test('lists all five open questions with claim tiers and hydro caveat', () => {
+    render(<OpenChallengesSection />);
+    const rows = screen.getByTestId('open-challenges-rows');
+    expect(rows).toHaveTextContent(/Electron-capture energy path \(how\)/);
+    expect(rows).toHaveTextContent(/EQ-OPEN-EC-DEFICIT-01/);
+    expect(rows).toHaveTextContent(/Integrated heat–helium yield \(when\)/);
+    expect(rows).toHaveTextContent(/Tier: empirical LENR correlation/);
+    expect(rows).toHaveTextContent(/BUDGET_DOES_NOT_CLOSE\), not closure/);
+    expect(screen.getAllByText(/Tier: speculative \/ exploratory/).length).toBe(3);
+    expect(screen.getByText(/modelled enhancement \/ contested hydro; it does not close/i)).toBeInTheDocument();
+    expect(screen.queryByText(/EQ-OPEN-[A-Z]+-01: CLOSED/)).not.toBeInTheDocument();
+  });
 });

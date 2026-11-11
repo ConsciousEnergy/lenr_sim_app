@@ -20,4 +20,7 @@ lean_decls:
   - "LenrFormal.OpenQuestionBounds.q4_deficit_factor"
   - "LenrFormal.OpenQuestionBounds.q4_double_layer_deficit"
   - "LenrFormal.OpenQuestionBounds.q4_stated_numbers_do_not_close"
-notes: "Integer-scaled deficit under stated double-layer numbers. Does not discharge EQ-OPEN-EC-01. Widom–Larsen mass renormalization remains SPEC."
+  - "LenrFormal.OpenQuestionBounds.ecThreshold_meV_matches_weak_interaction"
+  - "LenrFormal.OpenQuestionBounds.doubleLayer_meV_is_weak_band_lo"
+  - "LenrFormal.OpenQuestionBounds.q4_stated_numbers_instance_of_cm_family"
+notes: "Integer-scaled deficit under stated double-layer numbers; the 0.1 eV instance of the EQ-OPEN-EC-BOUND-01 family. Does not discharge EQ-OPEN-EC-01. Widom–Larsen mass renormalization remains SPEC."

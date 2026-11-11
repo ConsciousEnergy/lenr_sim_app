@@ -77,6 +77,16 @@ def build_electron_capture_question(
             "the renormalization and electron-capture occurrence remain unvalidated."
         )
 
+    stated_deficit_factor = ELECTRON_CAPTURE_THRESHOLD_MEV / DOUBLE_LAYER_STATED_MEV
+    zero_deficit_note = (
+        "A 0 MeV deficit here follows from the assumed m*/m_e scenario input, "
+        "not from a derived condensed-matter electron source. The stated 0.1 eV "
+        f"double-layer budget is still ~{stated_deficit_factor:.2e}x below the "
+        "0.782 MeV threshold (EQ-OPEN-EC-DEFICIT-01); EQ-OPEN-EC-01 stays OPEN."
+        if threshold_met
+        else None
+    )
+
     return {
         "id": "EQ-OPEN-EC-01",
         "status": "OPEN",
@@ -94,6 +104,8 @@ def build_electron_capture_question(
         "mass_renormalization_threshold_met": threshold_met,
         "mass_renormalization_gap_mstar_over_me": threshold_gap,
         "energy_deficit_mev": float(energy_deficit_mev),
+        "stated_double_layer_deficit_factor": float(stated_deficit_factor),
+        "zero_deficit_note": zero_deficit_note,
         "unmet_reason": unmet_reason,
         "occurrence_claimed": False,
         "provenance": {
@@ -104,7 +116,7 @@ def build_electron_capture_question(
             "validation_status": "open_speculative_threshold_only",
         },
         "references": ["widomlarsen2006", "tennfors2013"],
-        "lean_theorems": ["EQ-3B-MASS-DOM-01"],
+        "lean_theorems": ["EQ-3B-MASS-DOM-01", "EQ-OPEN-EC-DEFICIT-01"],
     }
 
 

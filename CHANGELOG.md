@@ -12,9 +12,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — EQ-OPEN-RATE-01 Lean cap bounds + hydro ≠ nuclear-rate lock (academic; stays OPEN)
+- Lean `RateBudget`: `EQ-RATE-CAP-NC-01` FCC-lattice D–D `trapped_state` and `EQ-RATE-CAP-NC-02` non-ULM `three_body` scenario log budgets stay negative with every engine cap saturated (DISPROVEN under caps, not nature); `OpenObligations` wraps both as ¬Q3
+- Lean `RateBudget`: `EQ-RATE-CAP-GAP-01` engine caps do **not** certify non-closure for the 25 pm TSC trap or ULM `three_body` (gap, not closure) + free-factor demand \(\le10^{-23}\)
+- Lean `CollapseBounds`: `EQ-BBL-NR-01` `hydro_enhancement_does_not_entail_nuclear_rate` — collapse / hydro enhancement and scenario priors are never a nuclear-rate proof
+- Two-body `EQ-RATE-2B-NC-01` unchanged; **no** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
+### Added — EQ-OPEN-EC-BOUND-01 CM energy-budget deficit family (academic; Q4 stays OPEN)
+- Lean `WeakInteraction`: `EQ-OPEN-EC-BOUND-01` parameterized CM-budget / double-layer deficit family — any \(E\le\) AX cap \(<0.782\,\mathrm{MeV}\) ⇒ ¬Q4; named form-DISPROVEN (`cm_budget_form_cannot_close`); closing needs \(\ge 7820\) concentrated 100 eV budgets; `q4_not_refuted_outright` keeps the obligation logically open
+- Cross-locks in `OpenQuestionBounds` so deficit constants cannot drift; honesty locks keep `condensedMatterPathToThreshold` / `lenrProved` false
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
+### Added — EQ-OPEN-MEV-01 remainder floor under engine caps (academic, BOUNDED)
+- Lean `LenrFormal.MeVRemainderCaps` + IR `EQ-WH-MEV-CAP-01`: capped licensed channels
+  (phonon ≤ 24 keV, γ ≤ ⌈Q·BR_γ⌉, recoil 0) leave remainder ≥ `R_min` (23776 keV at the
+  engine default BR_γ = 0; > 0 for BR_γ ≤ 0.998) ⇒ `¬ q1MeVEnergyGapClosed`; γ-route
+  closure fails Q2 below 0.999; collapse/ENC hydro claims allocate 0 keV of the remainder
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — EQ-OPEN-YIELD-01 Lean bounds (academic; stays OPEN)
 - Lean `OpenQuestionBounds`: `EQ-OPEN-YIELD-NC-01` honesty lock — instantaneous Miles EMP band membership does not imply `q5IntegratedYieldClosed`; integrated 100–10⁴ band remainder ⇒ Q5 not closed (band stays DEF, not data discharge)
 - Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
+### Added — EQ-OPEN-RAD-01 Lean bounds (academic; stays OPEN)
+- Lean `RadiationBounds`: `EQ-WH-FC-02` FC class bound — \(S^N/N!<10^{-11}\) for every \(S\le10^4\), \(N\ge300048\); FC ratio floor \(0<10^{11}\); derives the EQ-WH-FC-01 literals; paper §5A.2 alias `harmonic_dos_non_closure`
+- Lean `RadiationBounds`: `EQ-RAD-DET-01` detector-UL honesty flag DEF mirrors of `branching_model.py` (falsifiers only)
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
+### Changed — EQ-OPEN claim-tier sync / contested-hydro honesty (academic)
+- Q4 `q_electron_capture`: additive `zero_deficit_note` + `stated_double_layer_deficit_factor`
+  (7.82e6, mirrors Lean `EQ-OPEN-EC-DEFICIT-01`); UI caption when the assumed-m*/mₑ scenario shows 0 MeV deficit
+- Virtual lab: `obligation OPEN` chip beside non-OPEN EQ-OPEN statuses (two-body `BUDGET_DOES_NOT_CLOSE`);
+  local-fallback Q3 tier aligned to backend (`speculative_exploratory` while OPEN)
+- Unified Results: collapse card labelled modelled enhancement / contested hydro; force-regime note framed as exploratory model
+- §5A Open Challenges: Q4/Q5 rows + per-row claim tiers; cavitation–collapse caveat
 - **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
 
 ### Added — WS8 WH-ENP-01 / NBody remainder + Overlap DEF (academic)

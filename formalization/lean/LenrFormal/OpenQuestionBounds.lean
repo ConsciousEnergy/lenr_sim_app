@@ -2,6 +2,7 @@ import LenrFormal.OpenObligations
 import LenrFormal.Branching
 import LenrFormal.RateBudget
 import LenrFormal.NBody
+import LenrFormal.WeakInteraction
 
 /-!
 OpenQuestionBounds — would-close-if bookkeeping for paper §5A.
@@ -73,6 +74,20 @@ theorem q4_double_layer_deficit :
 theorem q4_stated_numbers_do_not_close :
     ¬ q4ElectronCaptureSourceClosed doubleLayer_meV ecThreshold_meV :=
   energy_deficit_implies_q4_not_closed (by native_decide)
+
+theorem ecThreshold_meV_matches_weak_interaction :
+    ecThreshold_meV = WeakInteraction.threshold_meV := rfl
+
+theorem doubleLayer_meV_is_weak_band_lo :
+    doubleLayer_meV = WeakInteraction.doubleLayerLo_meV := rfl
+
+/-- The stated 0.1 eV deficit is one instance of the EQ-OPEN-EC-BOUND-01
+    family; still does not close Q4. -/
+theorem q4_stated_numbers_instance_of_cm_family :
+    ¬ q4ElectronCaptureSourceClosed doubleLayer_meV ecThreshold_meV :=
+  WeakInteraction.double_layer_band_does_not_close
+    (Nat.le_trans (Nat.le_of_eq doubleLayer_meV_is_weak_band_lo)
+      WeakInteraction.double_layer_band_ordered)
 
 /-- Instantaneous Miles EMP band (~2×) as integer factors. -/
 def milesInstantaneousBandLo : Nat := 1

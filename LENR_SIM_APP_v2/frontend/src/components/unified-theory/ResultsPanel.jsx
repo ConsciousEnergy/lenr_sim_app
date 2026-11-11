@@ -27,6 +27,7 @@ import PredictionReadoutPanel from '../physics/PredictionReadoutPanel';
 import EnhancementWaterfallChart from '../physics/EnhancementWaterfallChart';
 import ScreeningProvenancePanel from '../physics/ScreeningProvenancePanel';
 import { resolveElectrolyteSpecies } from '../../utils/theoryConditions';
+import { CAMPAIGN_EVIDENCE } from '../../config/unifiedTheoryScienceEvidence';
 import {
   PHASE_COLORS,
   getMechanismUncertaintyFanData,
@@ -70,7 +71,20 @@ export default function ResultsPanel({
   </Grid>
   <Grid size={{ xs: 12, md: 6 }}>
     <Paper sx={{ p: 2 }} variant="outlined">
-      <Typography variant="h6" gutterBottom>Collapse Results</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h6" gutterBottom>Collapse Results</Typography>
+        <Chip
+          label="Modelled / Contested Hydro"
+          size="small"
+          color="info"
+          variant="outlined"
+          data-testid="collapse-hydro-chip"
+        />
+      </Box>
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+        Hydrodynamic collapse outputs are {CAMPAIGN_EVIDENCE.hydro_label} — not nuclear-rate
+        evidence. EQ-OPEN-* stay OPEN.
+      </Typography>
       <Divider sx={{ mb: 2 }} />
       <Box sx={{ display: 'grid', gap: 1 }}>
         <Typography>Min Radius: <strong>{simulationData.collapse_results?.min_radius_um?.toFixed(2)} μm</strong></Typography>
@@ -383,10 +397,13 @@ export default function ResultsPanel({
 
   <Grid size={12}>
     <Alert severity="info">
-      <Typography variant="body2">
-        The visualization shows how ionic double-layer bubbles collapse onto hydrogen-loaded lattice materials.
-        Protons transition through force regimes: <strong>EM {'->'} Screened {'->'} Weak Capture {'->'} Nuclear</strong>.
-        Peak enhancement occurs at minimum bubble radius when compression maximizes field strength.
+      <Typography variant="body2" data-testid="results-exploratory-model-note">
+        The visualization shows an <strong>exploratory model</strong> of ionic double-layer bubbles
+        collapsing onto hydrogen-loaded lattice materials. In this model, protons are labelled by
+        force regime: <strong>EM {'->'} Screened {'->'} Weak Capture {'->'} Nuclear</strong>.
+        Modelled enhancement peaks at minimum bubble radius when compression maximizes field strength.
+        Collapse hydro is {CAMPAIGN_EVIDENCE.hydro_label}, not proof of nuclear rates; EQ-OPEN-* stay
+        OPEN and lenr_proved stays false.
       </Typography>
     </Alert>
   </Grid>

@@ -168,6 +168,10 @@ def test_q4_q5_are_dimmed_and_open() -> None:
     )
     assert q_ec["mass_renormalization_threshold_met"] is True
     assert q_ec["energy_deficit_mev"] == 0.0
+    assert "scenario input" in q_ec["zero_deficit_note"]
+    assert "EQ-OPEN-EC-DEFICIT-01" in q_ec["zero_deficit_note"]
+    assert q_ec["stated_double_layer_deficit_factor"] == pytest.approx(7.82e6)
+    assert "EQ-OPEN-EC-DEFICIT-01" in q_ec["lean_theorems"]
     assert q_ec["occurrence_claimed"] is False
     assert q_ec["unmet_reason"]
     assert q_yield["dimmed"] is True
@@ -201,8 +205,36 @@ def test_q4_reports_mass_and_energy_gaps_below_threshold() -> None:
     assert q_ec["mass_renormalization_gap_mstar_over_me"] > 0
     assert q_ec["energy_deficit_mev"] > 0
     assert "below" in q_ec["unmet_reason"]
+    assert q_ec["zero_deficit_note"] is None
     assert q_ec["occurrence_claimed"] is False
     assert block["lenr_proved"] is False
+
+
+@pytest.mark.parametrize("rate_mode", ["two_body", "trapped_state", "three_body"])
+def test_all_five_eq_open_rows_stay_open_with_locked_tiers(rate_mode: str) -> None:
+    block = build_open_questions(route_mode="legacy_unified_model", rate_mode=rate_mode)
+    assert block["open_ids"] == [
+        "EQ-OPEN-MEV-01",
+        "EQ-OPEN-RAD-01",
+        "EQ-OPEN-RATE-01",
+        "EQ-OPEN-EC-01",
+        "EQ-OPEN-YIELD-01",
+    ]
+    assert block["lenr_proved"] is False
+    for key in ("q_mev_gap", "q_radiation", "q_electron_capture"):
+        assert block[key]["status"] == "OPEN"
+        assert block[key]["claim_tier"] == "speculative_exploratory"
+    assert block["q_integrated_yield"]["status"] == "OPEN"
+    assert block["q_integrated_yield"]["claim_tier"] == "empirical_lenr_correlation"
+    q_stat = block["q_statistical"]
+    assert q_stat["id"] in block["open_ids"]
+    assert q_stat["status"] != "CLOSED"
+    if rate_mode == "two_body":
+        assert q_stat["status"] == "BUDGET_DOES_NOT_CLOSE"
+        assert q_stat["claim_tier"] == "established_reference"
+    else:
+        assert q_stat["status"] == "OPEN"
+        assert q_stat["claim_tier"] == "speculative_exploratory"
 
 
 def test_q5_computes_miles_rate_and_duty_adjusted_yield() -> None:

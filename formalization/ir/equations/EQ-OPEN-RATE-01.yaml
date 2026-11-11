@@ -20,4 +20,7 @@ lean_decls:
   - "LenrFormal.OpenObligations.q3RateBudgetClosed"
   - "LenrFormal.OpenObligations.two_body_log_budget_is_negative"
   - "LenrFormal.OpenObligations.two_body_q3_not_closed"
-notes: "This obligation remains open. Two-body log10 N_events = -40 is proved as non-closure (EQ-RATE-2B-NC-01). Occupancy/collective Nat inputs live in OpenQuestionBounds; they do not discharge this row."
+  - "LenrFormal.OpenObligations.negative_log_budget_implies_q3_not_closed"
+  - "LenrFormal.OpenObligations.trapped_fcc_caps_q3_not_closed"
+  - "LenrFormal.OpenObligations.three_body_non_ulm_caps_q3_not_closed"
+notes: "This obligation remains open. Two-body log10 N_events = -40 is proved as non-closure (EQ-RATE-2B-NC-01). Scenario / cap bounds (BOUNDED, DISPROVEN-under-caps only): FCC-lattice D-D trapped_state (EQ-RATE-CAP-NC-01) and non-ULM three_body (EQ-RATE-CAP-NC-02) stay below closure with every engine cap saturated. Engine caps do not certify non-closure for the 25 pm TSC trap or ULM three_body (EQ-RATE-CAP-GAP-01); those scenario budgets are not nuclear-rate proofs, and collapse / hydro enhancement is not a rate proof (EQ-BBL-NR-01). Occupancy/collective Nat inputs live in OpenQuestionBounds; none of this discharges this row."

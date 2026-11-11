@@ -1,0 +1,42 @@
+id: EQ-WH-FC-02
+latex: "\\forall S\\le10^{4},\\ \\forall N\\ge 300048:\\ \\frac{S^{N}}{N!}<10^{-11},\\quad \\Big\\lfloor\\frac{t}{1-t}\\Big\\rfloor=0<10^{11}\\quad\\big(S\\le2^{b},\\ N\\ge2S(b+1)+4j\\Rightarrow S^{N}10^{j}\\le N!\\big)"
+symbols:
+  S: "Huang-Rhys factor; licensed domain S <= sGridMax = 1e4 (engine DEFAULT_S_GRID max; model assumption)"
+  N: "phonon order Q/(hbar omega); licensed floor fcOrderMin = 300048 (any hbar omega <= ~79 eV)"
+  t: "un-normalised Poisson term S^N / N!; P_N = e^{-S} t <= t"
+  j: "log10 depth of the bound (log10 t <= -j)"
+  b: "log2 cap on S (S <= 2^b)"
+units: "dimensionless (Nat cross-multiplied)"
+tag: THM
+paper_ref: "§5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_2
+  - model_assumption_displaced_oscillator
+lean_target: LenrFormal.RadiationBounds
+lean_decls:
+  - "LenrFormal.RadiationBounds.poisson_tail_halving"
+  - "LenrFormal.RadiationBounds.fc_tail_pow10_bound"
+  - "LenrFormal.RadiationBounds.fc_grid_tail_bound"
+  - "LenrFormal.RadiationBounds.fcOrderMin"
+  - "LenrFormal.RadiationBounds.fc_order_min_covers_phonon_order"
+  - "LenrFormal.RadiationBounds.fc_upper_cap_derived"
+  - "LenrFormal.RadiationBounds.fc_class_misses_fc_target"
+  - "LenrFormal.RadiationBounds.fcRatioFloor"
+  - "LenrFormal.RadiationBounds.fc_wh01_literals_derived"
+  - "LenrFormal.RadiationBounds.fc_class_below_lattice_target"
+  - "LenrFormal.RadiationBounds.fc_class_does_not_close_q2"
+  - "LenrFormal.RadiationBounds.fc_envelope_misses_fc_target"
+  - "LenrFormal.RadiationBounds.harmonic_dos_non_closure"
+adopted_value:
+  sGridMax: 10000
+  fcOrderMin: 300048
+  sEnvelopeMax: 8388608
+  FC_TARGET_LOG10: -11.0
+code_symbols:
+  FC_TARGET_LOG10:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+    symbol: FC_TARGET_LOG10
+notes: "Universalises EQ-WH-FC-01 over the licensed S grid and every N >= 300048 via a halving lemma (step S/(n+1) <= 1/2 once n >= 2S), and derives the EQ-WH-FC-01 literals (fcDerivedRatio = 0, gamma branching 1000 milli, log10 P_N <= -7e5 cap) instead of asserting them. Envelope corollary: at N = 5.75e8 the bound holds for S <= 2^23 (relaxation <= ~0.35 MeV); Python lgamma puts S_min near 0.9998 N. Only unmechanized step: e^{-S} <= 1. Model class: single displaced oscillator, linear coupling; anharmonic / Umklapp / lossy spin-boson are outside it. harmonic_dos_non_closure is the paper §5A.2 alias. BOUNDED / class-DISPROVEN only; does not close EQ-OPEN-RAD-01."

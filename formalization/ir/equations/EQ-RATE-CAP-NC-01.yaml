@@ -1,0 +1,33 @@
+id: EQ-RATE-CAP-NC-01
+latex: "\\log_{10}N=\\log_{10}n_{\\mathrm{sites}}+\\log_{10}P_{\\mathrm{occ}}+\\log_{10}\\Gamma_{\\mathrm{tun}}+\\log_{10}f_{\\mathrm{nuc}}-\\log_{10}\\tau+\\log_{10}C_{\\mathrm{lin}}+\\log_{10}E_{\\mathrm{enh}}+\\log_{10}(Vt)\\le 29+0-84+0+30+6+5-1=-15<0\\ (d\\ge d_{\\mathrm{FCC}})"
+symbols:
+  n_sites: "trapped-state site density, cap 1e29 m^-3 (Pd atoms 6.8e28)"
+  P_occ: "occupation, cap 1"
+  Gamma_tun: "engine WKB penetration, D-D at FCC tetrahedral 137.5 pm (1.44e-85)"
+  f_nuc: "nuclear probability per cluster, cap 1 (unconstrained input)"
+  tau: "cluster lifetime, engine floor 1e-30 s"
+  C_lin: "linear collective clamp, cap 1e6 (EQ-COLL-LIN-01)"
+  E_enh: "composed enhancement cap 1e5 (EQ-COMP-01); engine trapped path applies none"
+  V_t: "exposure window 1e-6 m^3 x 1e5 s (paper §5A.3 N_atoms / t)"
+units: "dimensionless (integer log10 terms)"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/fgr_model.py
+citation_keys:
+  - takahashi2016
+  - model_assumption_RR006
+lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.TrappedLogTerms"
+  - "LenrFormal.RateBudget.TrappedLogTerms.log10N"
+  - "LenrFormal.RateBudget.TrappedLogTerms.withinCaps"
+  - "LenrFormal.RateBudget.tunLog10CapFcc"
+  - "LenrFormal.RateBudget.trapped_fcc_under_caps_does_not_close"
+  - "LenrFormal.RateBudget.trappedFccAtCaps"
+  - "LenrFormal.RateBudget.trapped_fcc_at_caps_log10"
+adopted_value:
+  tunLog10CapFcc: -84
+  log10N_at_caps: -15
+notes: "Scenario / cap bound (DISPROVEN under caps), not a theorem of nature. D-D trapped state at the lattice FCC tetrahedral spacing or wider stays >= 15 orders below closure with every factor at its engine cap; engine evaluation at the same caps is log10 N ~ -23. Q3 wrapper: OpenObligations.trapped_fcc_caps_q3_not_closed. Collapse / hydro enhancement enters only as a capped upper term and cannot close it. Does not close EQ-OPEN-RATE-01."

@@ -1,0 +1,38 @@
+id: EQ-WH-MEV-CAP-01
+latex: "E_{\\mathrm{ch}}\\le C_{\\mathrm{ch}}\\ (\\mathrm{ch}\\in\\{\\mathrm{ph},\\gamma,\\mathrm{rec}\\}),\\ R_{\\min}=Q-\\sum_{\\mathrm{ch}}C_{\\mathrm{ch}}>0\\Rightarrow E_{\\mathrm{open\\ remainder}}\\ge R_{\\min}\\Rightarrow\\neg Q_1;\\quad C_{\\mathrm{ph}}=\\lceil Q\\cdot10^{-3}\\rceil,\\ C_\\gamma=\\lceil Q\\,\\mathrm{BR}_\\gamma\\rceil,\\ C_{\\mathrm{rec}}=0"
+symbols:
+  E_ch: "licensed Q1 channel allocation (keV): phonon, gamma, recoil"
+  C_ch: "per-channel engine cap (keV)"
+  R_min: "open-remainder floor Q - sum of caps (keV)"
+  BR_gamma: "stated gamma branching input, milli (engine default assumed 0); not derived or measured"
+  Q: "Q(D+D->4He) = 23800 keV"
+units: "keV (Nat); branching in milli-units"
+tag: THM
+paper_ref: "§5A.1"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
+citation_keys:
+  - hagelstein2025
+  - model_assumption_RR006
+lean_target: LenrFormal.MeVRemainderCaps
+lean_decls:
+  - "LenrFormal.MeVRemainderCaps.caps_leave_positive_remainder"
+  - "LenrFormal.MeVRemainderCaps.q1_closed_under_caps_requires_cap_sum"
+  - "LenrFormal.MeVRemainderCaps.phononCapKeV"
+  - "LenrFormal.MeVRemainderCaps.engineCaps"
+  - "LenrFormal.MeVRemainderCaps.engineRemainderFloor"
+  - "LenrFormal.MeVRemainderCaps.engine_floor_at_default_branching"
+  - "LenrFormal.MeVRemainderCaps.engine_licensed_channels_leave_positive_remainder"
+  - "LenrFormal.MeVRemainderCaps.engine_default_remainder_floor"
+  - "LenrFormal.MeVRemainderCaps.q1_closure_under_engine_caps_forces_gamma_route"
+  - "LenrFormal.MeVRemainderCaps.gamma_route_closure_fails_q2"
+  - "LenrFormal.MeVRemainderCaps.hydro_claims_do_not_change_remainder"
+  - "LenrFormal.MeVRemainderCaps.hydro_claims_keep_q1_open"
+adopted_value:
+  phonon_cap_keV: 24
+  recoil_cap_keV: 0
+  R_min_default_keV: 23776
+  BR_gamma_max_open_milli: 998
+notes: "BOUNDED, not CLOSED: EQ-OPEN-MEV-01 stays OPEN. Under engine caps (phonon <= ceil(Q*1e-3) from the EQ-WH-FC-01 weight floor, gamma <= ceil(Q*BR_gamma), recoil = 0) every licensed allocation leaves remainder >= R_min (23776 keV at the engine default BR_gamma = 0; > 0 for BR_gamma <= 0.998). Zeroing the remainder within caps forces BR_gamma >= 0.999, which fails Q2 against any detector bound < 0.999. Collapse / ENC hydro claims allocate 0 keV of the MeV nuclear remainder. No phonon-nuclear matrix element or occupation probability is supplied."
