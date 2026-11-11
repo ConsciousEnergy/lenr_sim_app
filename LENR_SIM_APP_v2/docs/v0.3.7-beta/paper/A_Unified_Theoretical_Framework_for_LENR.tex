@@ -50,9 +50,9 @@
 \title{A Unified Theoretical and Mathematical Framework for Low-Energy
 Nuclear Reactions (LENR)\\\large\textit{Coupling is all you need}}
 \author{Diadon Acs (lead, Conscious Energies)}
-\date{2026-02-14 (revised 2026-11-11, multidisciplinary coherence
-pass;~prior 2026-11-10 Pyyhtiä CR-39 cite + WS findings
-refresh;~2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-11, EQ-OPEN peer-review refresh;~prior
+2026-11-11 multidisciplinary coherence;~2026-11-10 Pyyhtiä CR-39 cite +
+WS findings;~2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
 
 \begin{document}
 \maketitle
@@ -96,7 +96,13 @@ phenomenological tunneling-enhancement band of \(10^{3}\)--\(10^{5}\)
 this band is a software sensitivity envelope, not a first-principles
 prediction. Reported isotopic shifts, neutron signals, and excess heat
 remain disputed empirical correlations that motivate---but do not
-validate---the framework.
+validate---the framework. A companion Lean 4 formalization (no mathlib;
+no \texttt{sorry}; one labelled RealShim axiom) records identities, DEF
+clamps, and negative/bound results under stated assumptions; it does
+\textbf{not} prove LENR ({\ttfamily lenr\_\allowbreak{}proved\ =\allowbreak{}\ false}). All five
+\texttt{EQ-OPEN-*} obligations remain open: affirmative closure requires
+governed experimental evidence with calibration and provenance, not Lean
+alone.
 \end{abstract}
 
 \noindent\textit{Keywords:} LENR; electron--neutron--proton
@@ -924,6 +930,22 @@ for further discussion.
 \hypertarget{computational-methods}{%
 \subsection{3. Computational Methods}\label{computational-methods}}
 
+\textbf{Methods epistemic map (peer-review).} Four layers are kept
+distinct throughout this section and §5A: (i) \textbf{exploratory
+models} --- labelled hypotheses (Hagelstein / TSC / Widom--Larsen /
+trapped-state / three-body) with stated would-close conditions; (ii)
+\textbf{conjectures / SPEC} --- mechanism forms not yet licensed by
+governed data; (iii) \textbf{Lean theorems} --- identities, non-closure,
+and BOUNDED / form- or class-DISPROVEN / proved-GAP results under
+\emph{stated} caps or model classes (Lean 4 without mathlib; no
+\texttt{sorry}; one labelled bridge axiom); (iv) \textbf{DEF
+bookkeeping} --- clamps, bands, detector-flag mirrors, expected-yield
+accounting that do not allocate MeV remainder, derive γ suppression,
+close a rate budget, supply the EC threshold, or account for integrated
+\(^4\mathrm{He}\). Simulation outputs remain claim-tiered sensitivity
+analyses, never empirical posteriors. Affirmative closure of any
+\texttt{EQ-OPEN-*} requires governed lab evidence.
+
 \begin{quote}
 \textbf{Implementation note (public beta, v0.3.7-beta):} Locked live
 claim tiers --- \textbf{Beta:} WKB/Gamow tunneling
@@ -1024,7 +1046,10 @@ RP-domain / hard-core CR-cap bookkeeping (\texttt{EQ-BBL-LIM-01},
 \texttt{EQ-BBL-BOUND-01}, \texttt{EQ-BBL-UQ-01},
 \texttt{EQ-BBL-RP-DOM-01}, \texttt{EQ-BBL-CR-CAP-01})---including the
 pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\)---not
-cavitation-dynamics theorems that prove LENR. WH-ENP-01 /
+cavitation-dynamics theorems that prove LENR. \texttt{EQ-BBL-NR-01}
+proves {\ttfamily hydro\_\allowbreak{}enhancement\_\allowbreak{}does\_\allowbreak{}not\_\allowbreak{}entail\_\allowbreak{}nuclear\_\allowbreak{}rate}: a
+rate scenario containing a hydro/collapse enhancement or scenario prior
+is definitionally \textbf{not} a nuclear-rate proof. WH-ENP-01 /
 OpenObligations prove \textbf{non-closure} implications under stated
 deficits---not affirmative LENR
 ({\ttfamily docs/\allowbreak{}FORMALIZATION/\allowbreak{}FORMAL\_\allowbreak{}PROOF\_\allowbreak{}STATUS.\allowbreak{}md}).
@@ -1424,15 +1449,23 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
   {\ttfamily backend/\allowbreak{}tests/\allowbreak{}test\_\allowbreak{}paper\_\allowbreak{}benchmarks/\allowbreak{}} locks selected theory
   numeric/regime targets in CI.
 \item
-  \textbf{Lean clamp / non-closure (not closure):}
+  \textbf{Lean clamp / non-closure / bounds (not closure):}
   \texttt{CollapseBounds}
-  ({\ttfamily EQ-\allowbreak{}BBL-\allowbreak{}LIM/\allowbreak{}BOUND/\allowbreak{}UQ/\allowbreak{}RP-\allowbreak{}DOM/\allowbreak{}CR-\allowbreak{}CAP-\allowbreak{}01}),
-  \texttt{WeakInteraction} (\texttt{EQ-EC-*}; ≠ EC closure),
+  ({\ttfamily EQ-\allowbreak{}BBL-\allowbreak{}LIM/\allowbreak{}BOUND/\allowbreak{}UQ/\allowbreak{}RP-\allowbreak{}DOM/\allowbreak{}CR-\allowbreak{}CAP-\allowbreak{}01}, \texttt{EQ-BBL-NR-01}
+  hydro≠nuclear), \texttt{MeVRemainderCaps} (\texttt{EQ-WH-MEV-CAP-01};
+  BOUNDED Q1), \texttt{RadiationBounds} (\texttt{EQ-WH-FC-02}
+  class-DISPROVEN; \texttt{EQ-RAD-DET-01} DEF only), \texttt{RateBudget}
+  (\texttt{EQ-RATE-2B-NC-01}, {\ttfamily EQ-\allowbreak{}RATE-\allowbreak{}CAP-\allowbreak{}NC-\allowbreak{}01/\allowbreak{}02},
+  {\ttfamily EQ-\allowbreak{}RATE-\allowbreak{}CAP-\allowbreak{}GAP-\allowbreak{}01}), \texttt{WeakInteraction}
+  (\texttt{EQ-EC-*}, {\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}BOUND-\allowbreak{}01}; ≠ EC closure),
+  \texttt{OpenQuestionBounds} / \texttt{YieldAccounting}
+  ({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}NC-\allowbreak{}01}; instantaneous ≠ integrated),
   \texttt{Overlap} (\texttt{EQ-OVERLAP-01/02}; ensemble ≠ rate),
   \texttt{PoissonSchrodinger} (\texttt{EQ-PS-01}/\texttt{EQ-PS-TOL-01};
   aspirational FEM), and WH / OpenObligations non-closure theorems
-  constrain bookkeeping; they do not discharge \texttt{EQ-OPEN-*}. Draft
-  closure/falsification criteria (still OPEN) live at
+  constrain bookkeeping; they do \textbf{not} discharge
+  \texttt{EQ-OPEN-*}. Draft closure/falsification criteria (still OPEN)
+  live at
   {\ttfamily LENR\_\allowbreak{}SIM\_\allowbreak{}APP\_\allowbreak{}v2/\allowbreak{}docs/\allowbreak{}v0.\allowbreak{}3.\allowbreak{}9-\allowbreak{}beta/\allowbreak{}EQ\_\allowbreak{}OPEN\_\allowbreak{}CLOSURE\_\allowbreak{}RUNWAY.\allowbreak{}md}
   (Phase F; on \texttt{dev} via \#297).
 \item
@@ -1906,9 +1939,15 @@ Questions}\label{a.-open-theoretical-challenges-and-fundamental-questions}}
 Occurrence under Miles-class heat--helium correlations is empirically
 anchored in parts of the corpus; the open theoretical work is
 \textbf{how} MeV energy partitions (Q1), \textbf{how} prompt γ is
-suppressed (Q2), and \textbf{when} the rate budget closes under a named
-mechanism path (Q3). This section formulates each as a quantitative
-challenge with testable implications. The companion app's
+suppressed (Q2), \textbf{when} the rate budget closes under a named
+mechanism path (Q3), \textbf{how} an electron-capture energy source
+might reach threshold (Q4), and \textbf{when} integrated
+heat--\(^4\mathrm{He}\) yield closes (Q5). \textbf{All five obligations
+remain OPEN.} Formal Lean postures (BOUNDED / form- or class-DISPROVEN /
+proved GAP) under stated assumptions narrow mechanism \emph{forms}; they
+do \textbf{not} close any row and do \textbf{not} set
+\texttt{lenr\_proved}. This section formulates each challenge with
+testable falsifiers and closure predicates. The companion app's
 \textbf{open-questions virtual lab} (\texttt{open\_questions} on unified
 / bubble-lattice / theory-pipeline responses) encodes occurrence
 (\texttt{occurrence.anchored}), when ({\ttfamily when.\allowbreak{}threshold\_\allowbreak{}crossed},
@@ -2034,11 +2073,22 @@ MeV)?
   rate of the condensate has not been calculated.
 \end{enumerate}
 
-\textbf{Conclusion on Q1:} The MeV energy gap is not bridged. WH-ENP-01
-ranks Hagelstein+TSC above ruled-out \(g^N\) and above bulk
-Schwinger/HE, but the derived energy remainder remains
-\(23.8\,\mathrm{MeV}\) until a constrained phonon-nuclear matrix element
-is supplied (\texttt{EQ-WH-PART-01}). TSC two-alpha kinematics and an
+\textbf{Conclusion on Q1 (\texttt{EQ-OPEN-MEV-01} stays OPEN; Lean
+posture BOUNDED):} The MeV energy gap is not bridged. Under the engine's
+stated channel caps (phonon, γ, recoil), Lean \texttt{MeVRemainderCaps}
+/ \texttt{EQ-WH-MEV-CAP-01} proves the remainder stays strictly positive
+(\(R_{\min}=23776\) keV at \(\mathrm{BR}_\gamma=0\); \(R_{\min}>0\) for
+any stated \(\mathrm{BR}_\gamma\le0.998\)); the only capped route to
+zero remainder requires \(\mathrm{BR}_\gamma\ge0.999\), which
+contradicts radiation suppression
+({\ttfamily q1\_\allowbreak{}closure\_\allowbreak{}under\_\allowbreak{}engine\_\allowbreak{}caps\_\allowbreak{}forces\_\allowbreak{}gamma\_\allowbreak{}route} +
+{\ttfamily gamma\_\allowbreak{}route\_\allowbreak{}closure\_\allowbreak{}fails\_\allowbreak{}q2}). Collapse/ENC hydro channels
+allocate 0 MeV remainder ({\ttfamily hydro\_\allowbreak{}claims\_\allowbreak{}keep\_\allowbreak{}q1\_\allowbreak{}open}). This
+is a \textbf{conditional bound}, not closure. WH-ENP-01 ranks
+Hagelstein+TSC above ruled-out \(g^N\) and above bulk Schwinger/HE, but
+the derived energy remainder remains \(23.8\,\mathrm{MeV}\) until a
+constrained phonon-nuclear matrix element is supplied
+(\texttt{EQ-WH-PART-01}). TSC two-alpha kinematics and an
 order-of-magnitude Pd CSDA range for \(23.8\,\mathrm{MeV}\) \(\alpha\)
 are bookkeeping, not closure. Dicke \(N^2\) is not licensed at the paper
 domain, and the counting bound is stricter: fewer than one deuteron
@@ -2052,8 +2102,11 @@ relaxation energy would have to equal essentially the full \(Q\)
 conservation-constrained coupling scan keeps the cited remainder at
 \(23.8\,\mathrm{MeV}\); only the unlicensed corner
 \(g=0.1,\ n_{\mathrm{coh}}=100\) would zero it (\texttt{EQ-WH-PART-02}).
-The critical next step remains an explicit, experimentally constrained
-coupling matrix element.
+\textbf{Falsifier / closure:} a named phonon→nuclear (or ENC) mechanism
+with a constrained nuclear matrix element and occupation probability
+that drives \(E_{\text{open remainder}}\) to 0, \textbf{plus}
+experimental licensing. The critical next step remains an explicit,
+experimentally constrained coupling matrix element.
 
 \hypertarget{a.2-radiation-suppression-mechanism-q2}{%
 \subsubsection{5A.2 Radiation Suppression Mechanism
@@ -2099,28 +2152,30 @@ conventional D+D fusion would produce).
   PdD lattices remains an open calculation.
 \end{enumerate}
 
-\textbf{Conclusion on Q2:} A harmonic first-principles bound gives
-\(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}=0\) because the Pd Debye cutoff
-(\(\sim 24\,\mathrm{meV}\)) lies far below \(23.8\,\mathrm{MeV}\)
-(\texttt{EQ-WH-BOUND-01}). The \(10^{11}\) lattice target remains an
-open target; assumed branching fractions stay scenario input. Beyond the
-harmonic cutoff, a displaced-oscillator Franck--Condon tail (linear
-coupling; model assumption) at \(N\approx5.75\times10^{8}\) gives
-\(\log_{10}P_N\) between \(-4.8\times10^{9}\) (\(S=1\)) and
-\(-2.5\times10^{9}\) (\(S=10^{4}\)), with the Lean-certified
-conservative cap \(\log_{10}P_N\le-7\times10^{5}\ll-11\)
-(\texttt{EQ-WH-FC-01}); reaching \(10^{-11}\) needs
-\(S_{\min}\approx0.9998\,N\), i.e.~relaxation energy \(\approx Q\).
-Anharmonic, Umklapp, and Hagelstein lossy spin-boson boosts remain named
-hypotheses and are not inserted into the derived bound. Residual
-\(2.45\,\mathrm{MeV}\) neutron thermalization lengths in H-rich
-liquid/gas/solid/plasma media are tabulated as detector-UL bookkeeping
-({\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof}) and do not partition the
-\(^4\mathrm{He}\) Q-value. Cd-ratio / moderator-null / soft-X∧¬hard-γ
-PREDs (PRED-08/09/10) are branching falsifiers for
-neutron-interpretation claims---they do \textbf{not} close
-\texttt{EQ-OPEN-RAD-01}. Lattice Umklapp/defect DOS at nuclear energy is
-still missing.
+\textbf{Conclusion on Q2 (\texttt{EQ-OPEN-RAD-01} stays OPEN; Lean
+posture BOUNDED / class-DISPROVEN):} A harmonic first-principles bound
+gives \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}=0\) because the Pd Debye
+cutoff (\(\sim 24\,\mathrm{meV}\)) lies far below \(23.8\,\mathrm{MeV}\)
+(\texttt{EQ-WH-BOUND-01}). Lean \texttt{RadiationBounds} /
+\texttt{EQ-WH-FC-02} further proves the single-mode displaced-oscillator
+Franck--Condon class misses the target: \(S^N/N! < 10^{-11}\) for
+\textbf{all} \(S\le10^{4}\), \(N\ge300048\) (alias
+{\ttfamily harmonic\_\allowbreak{}dos\_\allowbreak{}non\_\allowbreak{}closure}); the lattice
+\(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\ge10^{11}\) target is not reached
+by harmonic DOS or this FC class. This is a \textbf{model-class
+non-closure} result---not a proof that radiation suppression is
+impossible. Beyond those classes, anharmonic, Umklapp/defect,
+multi-mode, and Hagelstein lossy spin-boson mechanisms remain named open
+hypotheses. Detector upper limits (\texttt{EQ-RAD-DET-01} DEF mirrors)
+rule out only \emph{assumed} branching scenarios; they do not supply a
+measured branching ratio ({\ttfamily detector\_\allowbreak{}ul\_\allowbreak{}not\_\allowbreak{}proof}). Cd-ratio /
+moderator-null / soft-X∧¬hard-γ PREDs (PRED-08/09/10) are branching
+falsifiers---they do \textbf{not} close \texttt{EQ-OPEN-RAD-01}.
+\textbf{Falsifier / closure:} a licensed absorption model outside the
+bounded classes giving
+\(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\ge10^{11}\), \textbf{or} measured
+\(\mathrm{BR}_{\gamma}\le\) UL with calibrated efficiency + coincidence
+provenance.
 
 \hypertarget{a.3-statistical-feasibility-and-rate-closure-q3}{%
 \subsubsection{5A.3 Statistical Feasibility and Rate Closure
@@ -2180,13 +2235,30 @@ any detection threshold.
   experiments are below threshold.
 \end{enumerate}
 
-\textbf{Conclusion on Q3:} Rate closure is the most stringent
-quantitative test of the framework. If single-pair enhancement factors
-are the only mechanism, the numbers do not close
-(\texttt{EQ-RATE-2B-NC-01}, \(\log_{10}N=-40\)). WH-ENP-01 uses the
-same-cluster FGR versus \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\)
-(\texttt{EQ-WH-FLOOR-01}); {\ttfamily when.\allowbreak{}threshold\_\allowbreak{}crossed} is true only
-when \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) with \(V\), \(\tau\),
+\textbf{Conclusion on Q3 (\texttt{EQ-OPEN-RATE-01} stays OPEN; Lean
+posture mixed):} Rate closure is the most stringent quantitative test of
+the framework. Under vacuum-like two-body bookkeeping the lattice rate
+budget does not close (\texttt{EQ-RATE-2B-NC-01},
+\(\log_{10}N=-40\))---a \textbf{negative determination for that
+mechanism form}, not for LENR in general (UI may show
+{\ttfamily BUDGET\_\allowbreak{}DOES\_\allowbreak{}NOT\_\allowbreak{}CLOSE} with {\ttfamily established\_\allowbreak{}reference}
+tier; the obligation remains OPEN). Under stated engine caps, D--D
+trapped states at FCC tetrahedral spacing (or wider) and three-body
+capture outside the Widom--Larsen mass-renormalization domain also do
+not close (\texttt{EQ-RATE-CAP-NC-01} \(\log_{10}N\le-15\);
+\texttt{EQ-RATE-CAP-NC-02} \(\log_{10}N\le-266\); form-DISPROVEN under
+caps). For a 25 pm trapped state and for three-body capture at
+\(m^*/m_e=4\), engine defaults give \textbf{positive} budgets
+(\(\log_{10}N\approx+9.7\) and \(\approx+7.1\)), so caps cannot certify
+non-closure there ({\ttfamily EQ-\allowbreak{}RATE-\allowbreak{}CAP-\allowbreak{}GAP-\allowbreak{}01}---a \textbf{proved gap},
+not closure); those positives rest entirely on unconstrained inputs (25
+pm separation, \(f_{\mathrm{nuc}}=1\), assumed \(m^*/m_e=4\)).
+Hydrodynamic collapse enhancement and scenario priors are formally
+excluded from counting as nuclear-rate proof (\texttt{EQ-BBL-NR-01}).
+WH-ENP-01 uses the same-cluster FGR versus
+\(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\) (\texttt{EQ-WH-FLOOR-01});
+{\ttfamily when.\allowbreak{}threshold\_\allowbreak{}crossed} is true only when
+\(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) with \(V\), \(\tau\),
 \(P_{\mathrm{occ}}\), and \(f_{\mathrm{nuc}}\) labeled cited vs model
 assumption. The v2 closure demand makes the shortfall explicit: for
 \(1\,\mathrm{W}\) in a nominal \(1\,\mathrm{cm^{3}}\),
@@ -2220,7 +2292,11 @@ trapped separation, lifetime, and collective factor, multi-body
 than predictions.} The software default remains the conservative
 \textbf{standard two-body reference baseline} (\texttt{two\_body}):
 established free-particle formalism used as a reference, \emph{not} a
-validated lattice-LENR mechanism.
+validated lattice-LENR mechanism. \textbf{Falsifier / closure:} a named
+rate mode giving \(\log_{10}N_{\mathrm{events}}\ge0\) with
+\textbf{lab-constrained} \(P_{\mathrm{occ}}\cdot f_{\mathrm{nuc}}\) (or
+measured trap separation / matrix element), then governed data +
+ledger/matrix PR + sign-off.
 
 \hypertarget{a.4-electron-capture-energy-source-q4}{%
 \subsubsection{5A.4 Electron Capture Energy Source
@@ -2266,18 +2342,32 @@ provide \(\sim 0.1\) eV---a factor of \(\sim 10^7\) deficit.
   far below 0.782 MeV.
 \end{enumerate}
 
-\textbf{Conclusion on Q4:} No currently proposed mechanism provides a
-convincing quantitative pathway to produce electrons with \(E > 0.782\)
-MeV in condensed matter systems. The D+D priming pathway (option 2)
-avoids this problem entirely and is the most physically defensible route
-to neutron production. The Widom-Larsen mechanism, while elegant,
-requires independent experimental verification of the mass
-renormalization claim. Lean \texttt{WeakInteraction} / IR
-\texttt{EQ-EC-*} and the millielectronvolt deficit lemma
-({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}) document Fermi bookkeeping and the
-stated threshold gap; they do \textbf{not} discharge
-\texttt{EQ-OPEN-EC-01}. Contested Parkhomov / detector-gas SPEC curated
-rows never feed production rates and are not EC closure.
+\textbf{Conclusion on Q4 (\texttt{EQ-OPEN-EC-01} stays OPEN; Lean
+posture BOUNDED / form-DISPROVEN):} No currently proposed mechanism
+provides a convincing quantitative pathway to produce electrons with
+\(E > 0.782\) MeV in condensed matter systems. A \textasciitilde0.1 eV
+double-layer source falls short of the 0.782 MeV threshold by
+\(\sim7.8\times10^{6}\) ({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}); no
+condensed-matter path to the threshold is claimed. Under the stated
+per-atom condensed-matter budget (10--100 eV/atom, an assumed AX cap),
+Lean {\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}BOUND-\allowbreak{}01} proves no source in that form closes
+the threshold; closure would require coherently concentrating at least
+7,820 such budgets onto one capture
+({\ttfamily sub\_\allowbreak{}minimum\_\allowbreak{}concentration\_\allowbreak{}does\_\allowbreak{}not\_\allowbreak{}close}), which no
+mechanism in the framework establishes. This rules out the
+\textbf{per-atom form only}; {\ttfamily q4\_\allowbreak{}not\_\allowbreak{}refuted\_\allowbreak{}outright} keeps
+the obligation itself open. The D+D priming pathway (option 2) avoids
+this problem entirely and is the most physically defensible route to
+neutron production. The Widom-Larsen mechanism, while elegant, requires
+independent experimental verification of the mass renormalization claim
+(UI ``0.000 MeV remaining'' under assumed \(m^*/m_e\) is scenario
+bookkeeping, not discharge). Lean \texttt{WeakInteraction} / IR
+\texttt{EQ-EC-*} document Fermi identities only. Contested Parkhomov /
+detector-gas SPEC curated rows never feed production rates and are not
+EC closure. \textbf{Falsifier / closure:} a licensed source outside the
+per-atom form delivering \(\ge0.782\,\mathrm{MeV}\) to one capture (or
+physical \(m^*/m_e\ge2.53\) within Tennfors domain if Widom--Larsen),
+then governed evidence + ledger/matrix PR + sign-off.
 
 \hypertarget{a.5-energy-product-consistency-q5}{%
 \subsubsection{5A.5 Energy-Product Consistency
@@ -2290,17 +2380,26 @@ As detailed in Section 5.2.2, the Miles heat-helium correlation
 \textbf{best-studied quantitative EMP correlation} motivating a D+D →
 ⁴He + lattice-heat \emph{hypothesis}---not discharged proof of the
 channel, and not closure of \texttt{EQ-OPEN-YIELD-01} (Lean
-{\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}BAND-\allowbreak{}01} still OPEN). The remaining
-factor-of-\textasciitilde2 discrepancy sits inside systematic
-uncertainties of helium collection efficiency if the underlying
-measurements are accepted.
+{\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}BAND-\allowbreak{}01} DEF still OPEN).
 
-However, integrated yields per W·hr are 100-10,000× lower than expected
-(Section 5.2.2), indicating either: (a) time-varying reaction rates with
-duty cycles, (b) incomplete helium collection, or (c) contributions from
-non-helium-producing channels. This accounting must be resolved with
-time-resolved simultaneous heat-helium measurements before any yield
-obligation can close.
+\textbf{Conclusion on Q5 (\texttt{EQ-OPEN-YIELD-01} stays OPEN; Lean
+posture BOUNDED):} Instantaneous Miles heat--helium correlation
+(\textasciitilde2×) is distinct from integrated yield, which remains
+\(10^{2}\)--\(10^{4}\times\) low. Lean {\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}NC-\allowbreak{}01}
+proves that membership in the instantaneous Miles band does \textbf{not}
+discharge the integrated-yield obligation
+({\ttfamily instantaneous\_\allowbreak{}miles\_\allowbreak{}band\_\allowbreak{}does\_\allowbreak{}not\_\allowbreak{}discharge\_\allowbreak{}q5},
+{\ttfamily miles\_\allowbreak{}band\_\allowbreak{}does\_\allowbreak{}not\_\allowbreak{}imply\_\allowbreak{}q5\_\allowbreak{}closed});
+\texttt{YieldAccounting} (\texttt{EQ-YIELD-ACCT-01}) mirrors
+expected-yield duty-cycle bookkeeping with no observed-yield input.
+Integrated yields per W·hr are 100--10,000× lower than expected (Section
+5.2.2), indicating either: (a) time-varying reaction rates with duty
+cycles, (b) incomplete helium collection, or (c) contributions from
+non-helium-producing channels. \textbf{Falsifier / closure:}
+time-resolved simultaneous heat + \(^4\mathrm{He}\) with calorimetry and
+He-assay efficiency/retention provenance yielding integrated
+\(\Delta N_{^4\mathrm{He}}=0\) shortfall (or equivalent licensed
+discharge); instantaneous band membership provably does not count.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
@@ -2345,7 +2444,11 @@ remain disputed and are not treated as validation of the framework.
 \subsubsection{6.1 Mechanized consistency
 (Lean)}\label{mechanized-consistency-lean}}
 
-A companion formalization pilot ({\ttfamily formalization/\allowbreak{}lean}, Lean 4)
+A companion formalization pilot ({\ttfamily formalization/\allowbreak{}lean}, Lean 4
+\textbf{without mathlib}; \textbf{no \texttt{sorry}}; exactly
+\textbf{one} explicitly labelled bridge axiom
+{\ttfamily RealShim.\allowbreak{}expZ\_\allowbreak{}strict\_\allowbreak{}mono}, plus finite
+\texttt{native\_decide} checks that trust the Lean compiler)
 mechanically checks \textbf{mathematical consistency} of the adopted
 classical core: Rydberg \(n=10\) identity, Casimir check-geometry band
 (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration
@@ -2353,20 +2456,30 @@ anti-monotonicity, Assenbaum domain predicate
 (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap
 \(10^{5}\) and the illegal two-engine product (\texttt{EQ-COMP-03}), the
 Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\),
-two-body rate-budget does-not-close, n-body / Overlap geometry vs trap
-identities (\texttt{EQ-OVERLAP-01/02}; ensemble ≠ rate), collapse
-\textbf{clamp / UQ / RP-domain / CR-cap} bookkeeping
-(\texttt{CollapseBounds} / \texttt{EQ-BBL-*}---not a cavitation-dynamics
-theorem), WeakInteraction Fermi \(G_F\)/σ/Boltzmann bounds
-(\texttt{EQ-EC-*}; ≠ \texttt{EQ-OPEN-EC-01} closure), Decision ExpHom /
-\texttt{EQ-UQ-BF-01} algebraic BF floors (not empirical Bayes), and
-aspirational Poisson--Schrödinger continuum DEF
+two-body rate-budget does-not-close (\texttt{EQ-RATE-2B-NC-01}),
+scenario cap bounds / gaps ({\ttfamily EQ-\allowbreak{}RATE-\allowbreak{}CAP-\allowbreak{}NC-\allowbreak{}01/\allowbreak{}02},
+{\ttfamily EQ-\allowbreak{}RATE-\allowbreak{}CAP-\allowbreak{}GAP-\allowbreak{}01}), MeV remainder caps
+(\texttt{EQ-WH-MEV-CAP-01}), FC/harmonic class radiation bounds
+(\texttt{EQ-WH-FC-02}), EC CM-budget family
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}BOUND-\allowbreak{}01}), yield instantaneous≠integrated
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}NC-\allowbreak{}01}), hydro≠nuclear-rate
+(\texttt{EQ-BBL-NR-01}), n-body / Overlap geometry vs trap identities
+(\texttt{EQ-OVERLAP-01/02}; ensemble ≠ rate), collapse \textbf{clamp /
+UQ / RP-domain / CR-cap} bookkeeping (\texttt{CollapseBounds} /
+\texttt{EQ-BBL-*}---not a cavitation-dynamics theorem), WeakInteraction
+Fermi \(G_F\)/σ/Boltzmann bounds (\texttt{EQ-EC-*}; ≠
+\texttt{EQ-OPEN-EC-01} closure), Decision ExpHom / \texttt{EQ-UQ-BF-01}
+algebraic BF floors (not empirical Bayes), and aspirational
+Poisson--Schrödinger continuum DEF
 (\texttt{EQ-PS-01}/\texttt{EQ-PS-TOL-01}; never public-beta FEM). An
 equation intermediate representation (\texttt{formalization/ir/}) links
 paper statements, Python literals, Wolfram numeric checks, and Lean
-targets. Lean non-closure language (WH-ENP-01, OpenObligations) remains
-the honesty floor: \texttt{lenr\_proved} stays false and every
-\texttt{EQ-OPEN-*} stays OPEN until a later evidence-backed closure PR.
+targets. Lean non-closure / bound language (WH-ENP-01, OpenObligations,
+OpenQuestionBounds) remains the honesty floor: \texttt{lenr\_proved}
+stays false and every \texttt{EQ-OPEN-*} stays OPEN until a later
+evidence-backed closure PR. Theorem names that mention ``closure'' prove
+non-closure or contrapositives under stated caps/classes; none
+discharges an obligation.
 
 \textbf{Multi-format paper pack (v0.3.7-beta).} Academic archival copies
 of this manuscript and the Lean section→theorem crosswalk ship as:
@@ -2406,10 +2519,13 @@ Nat inputs to the existing {\ttfamily RateBudget.\allowbreak{}would\_\allowbreak
 (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a
 millielectronvolt \textbf{deficit} of \(\sim 10^{7}\) between a stated
 0.1 eV double-layer and the 0.782 MeV capture threshold
-({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}) without discharging
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}DEFICIT-\allowbreak{}01}) and a CM-budget form-DISPROVEN family
+({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}EC-\allowbreak{}BOUND-\allowbreak{}01}) without discharging
 \texttt{EQ-OPEN-EC-01}; Q5 distinguishes an instantaneous Miles EMP band
 vs integrated 100--\(10^{4}\) remainder ({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}BAND-\allowbreak{}01})
-without discharging parent obligation \texttt{EQ-OPEN-YIELD-01}.
+and proves instantaneous band membership does not discharge integrated
+yield ({\ttfamily EQ-\allowbreak{}OPEN-\allowbreak{}YIELD-\allowbreak{}NC-\allowbreak{}01}) without discharging parent
+obligation \texttt{EQ-OPEN-YIELD-01}.
 {\ttfamily LenrFormal.\allowbreak{}WorkingHypothesis} (WH-ENP-01) proves a coupled
 remainder vector and \textbf{non-closure} (\texttt{EQ-WH-NONCLOSE-01})
 without flipping the OPEN table.
