@@ -85,6 +85,29 @@ out.write_text(yaml + body, encoding="utf-8")
 print(f"wrote {out} ({out.stat().st_size} bytes)")
 PY
 
+# Pre-pandoc: numeric-only \[n\] / \[n,m\] are bibliography pointers, not math.
+python3 - "$BUILD/part1.md" <<'PY'
+import re, sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+cite_only = re.compile(r"^[\d,\s\-–—]+$")
+
+def repl(m: re.Match) -> str:
+    inner = m.group(1).strip()
+    if cite_only.match(inner):
+        return f"[{inner}]"
+    return m.group(0)
+
+new, n = re.subn(r"\\\[(.+?)\\\]", repl, text, flags=re.S)
+path.write_text(new, encoding="utf-8")
+print(f"citation-bracket pass: converted {n and new.count('[') - text.count('[')} numeric citations (file rewritten)")
+# Count how many numeric citations remain as display vs brackets
+left = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", new, flags=re.S) if cite_only.match(m.group(1).strip())]
+print(f"numeric-only display math remaining: {len(left)}")
+PY
+
 pandoc "$BUILD/part1.md" \
   -f markdown+tex_math_single_backslash+pipe_tables+strikeout \
   -t latex \
@@ -196,11 +219,14 @@ PY
 } > "$BUILD/with_header.tex"
 mv "$BUILD/with_header.tex" "$PAPER/A_Unified_Theoretical_Framework_for_LENR.tex"
 
+JOB="A_Unified_Theoretical_Framework_for_LENR_submission"
 (
   cd "$PAPER"
   set +e
-  xelatex -interaction=nonstopmode A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex1.log"
-  xelatex -interaction=nonstopmode A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex2.log"
+  xelatex -interaction=nonstopmode -jobname="$JOB" \
+    A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex1.log"
+  xelatex -interaction=nonstopmode -jobname="$JOB" \
+    A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex2.log"
   set -e
   if rg -q 'Fatal error|Emergency stop' "$BUILD/xelatex2.log"; then
     echo "XeLaTeX failed:" >&2
@@ -212,10 +238,7 @@ mv "$BUILD/with_header.tex" "$PAPER/A_Unified_Theoretical_Framework_for_LENR.tex
     rg -n 'Undefined control sequence' -A2 "$BUILD/xelatex2.log" | head -30 >&2
     exit 1
   fi
-  rm -f A_Unified_Theoretical_Framework_for_LENR.aux \
-        A_Unified_Theoretical_Framework_for_LENR.log \
-        A_Unified_Theoretical_Framework_for_LENR.out \
-        A_Unified_Theoretical_Framework_for_LENR.toc
+  rm -f "${JOB}.aux" "${JOB}.log" "${JOB}.out" "${JOB}.toc"
   echo "Overfull summary:"
   rg -n 'Overfull \\hbox \(([0-9.]+)pt' "$BUILD/xelatex2.log" || echo "(none > threshold logged)"
   # Also show any overfulls over 5pt
@@ -233,5 +256,5 @@ print("overfull >=5pt:", rows[:20] if rows else "none")
 PY
 )
 
-echo "PDF: $PAPER/A_Unified_Theoretical_Framework_for_LENR.pdf"
-ls -la "$PAPER/A_Unified_Theoretical_Framework_for_LENR.pdf"
+echo "PDF: $PAPER/${JOB}.pdf"
+ls -la "$PAPER/${JOB}.pdf"

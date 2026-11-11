@@ -1,0 +1,11 @@
+{
+  "name": "lenr-theory-paper-pack",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Build helpers for the Unified Theory Paper branded HTML/PDF pack",
+  "dependencies": {
+    "katex": "^0.16.47",
+    "puppeteer-core": "^23.11.1"
+  }
+}
