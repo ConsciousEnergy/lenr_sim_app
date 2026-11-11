@@ -52,7 +52,7 @@ export const LOCAL_FALLBACK_OPEN_QUESTIONS = {
   lenr_proved: false,
   q_mev_gap: { id: 'EQ-OPEN-MEV-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
   q_radiation: { id: 'EQ-OPEN-RAD-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
-  q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'OPEN', claim_tier: 'established_reference' },
+  q_statistical: { id: 'EQ-OPEN-RATE-01', status: 'OPEN', claim_tier: 'speculative_exploratory' },
   q_electron_capture: {
     id: 'EQ-OPEN-EC-01',
     status: 'OPEN',
@@ -117,11 +117,24 @@ function TierChip({ tier }) {
 
 function QuestionRow({ title, block, dimmed = false, children }) {
   if (!block) return null;
+  const isOpenObligation = String(block.id || '').startsWith('EQ-OPEN-');
+  const showObligationOpen = isOpenObligation && block.status && block.status !== 'OPEN';
   return (
     <Box sx={{ opacity: dimmed || block.dimmed ? 0.55 : 1, mb: 1.5 }}>
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
         <Typography variant="subtitle2">{title}</Typography>
         <Chip label={block.status || 'OPEN'} size="small" color={block.status === 'OPEN' ? 'warning' : 'default'} />
+        {showObligationOpen && (
+          <Tooltip title="Negative determination for this mode only; the EQ-OPEN obligation is not closed.">
+            <Chip
+              label="obligation OPEN"
+              size="small"
+              color="warning"
+              variant="outlined"
+              data-testid={`obligation-open-${block.id}`}
+            />
+          </Tooltip>
+        )}
         <TierChip tier={block.claim_tier} />
         {block.id && <LeanId id={block.id} />}
         {(block.lean_theorems || []).map((id) => (
@@ -137,6 +150,12 @@ function formatScientific(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric.toExponential(2) : '—';
 }
+
+const Q4_ZERO_DEFICIT_FALLBACK_NOTE = (
+  'A 0 MeV deficit follows from the assumed m*/mₑ scenario input, not a derived '
+  + 'condensed-matter electron source; the stated 0.1 eV double-layer budget is still '
+  + '~7.8e6× below 0.782 MeV (EQ-OPEN-EC-DEFICIT-01). EQ-OPEN-EC-01 stays OPEN.'
+);
 
 function ElectronCaptureDetails({ block }) {
   if (!block) return null;
@@ -158,6 +177,16 @@ function ElectronCaptureDetails({ block }) {
         <Typography variant="caption" color="text.secondary" display="block">
           Remaining energy deficit: {Number(block.energy_deficit_mev).toFixed(3)} MeV.
           {' '}Threshold status does not establish capture occurrence.
+        </Typography>
+      )}
+      {block.energy_deficit_mev != null && Number(block.energy_deficit_mev) <= 0 && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="q4-zero-deficit-note"
+        >
+          {block.zero_deficit_note || Q4_ZERO_DEFICIT_FALLBACK_NOTE}
         </Typography>
       )}
       {block.unmet_reason && (
