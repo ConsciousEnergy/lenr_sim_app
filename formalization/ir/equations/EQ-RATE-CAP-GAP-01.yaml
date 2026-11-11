@@ -1,0 +1,32 @@
+id: EQ-RATE-CAP-GAP-01
+latex: "\\neg\\,\\forall t\\in\\mathrm{Caps}_{25\\,\\mathrm{pm}}:\\log_{10}N<0;\\ \\neg\\,\\forall t\\in\\mathrm{Caps}_{m^*/m_e=4}:\\log_{10}N_{3B}<0;\\ P_{\\mathrm{occ}}f_{\\mathrm{nuc}}C_{\\mathrm{lin}}E_{\\mathrm{enh}}\\le10^{-23}\\Rightarrow\\log_{10}N_{25\\,\\mathrm{pm}}<0"
+symbols:
+  Caps_25pm: "trapped-state engine cap box at the 25 pm TSC trap (EQ-TRAP-SEP-01)"
+  Caps_ULM: "three-body engine cap box at the default m*/m_e = 4 (Widom-Larsen SPEC)"
+  free_factors: "P_occ f_nuc C_lin E_enh (no lab constraint exists)"
+units: "dimensionless (integer log10 terms)"
+tag: THM
+paper_ref: "§5A.3"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+citation_keys:
+  - takahashi2016
+  - widomlarsen2006
+  - tennfors2013
+  - model_assumption_RR006
+lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.tunLog10Cap25pm"
+  - "LenrFormal.RateBudget.trapped25pmEngineDefault"
+  - "LenrFormal.RateBudget.trapped_25pm_engine_default_log10"
+  - "LenrFormal.RateBudget.trapped_25pm_caps_do_not_certify_non_closure"
+  - "LenrFormal.RateBudget.trapped_25pm_does_not_close_if_free_factors_below"
+  - "LenrFormal.RateBudget.threeBodyEngineDefault"
+  - "LenrFormal.RateBudget.three_body_engine_default_log10"
+  - "LenrFormal.RateBudget.three_body_ulm_caps_do_not_certify_non_closure"
+  - "LenrFormal.RateBudget.cap_gaps_are_not_nuclear_rate_proofs"
+adopted_value:
+  tunLog10Cap25pm: -36
+  free_factor_demand_log10: -23
+notes: "Honesty gap, not closure. Engine caps do NOT certify non-closure for the 25 pm TSC trap or for three-body with ULM mass renormalization: engine defaults already give log10 N ~ +9.7 / +7.1 over the paper window, driven by the unconstrained 25 pm separation, f_nuc = 1, and m*/m_e = 4. These scenario budgets are not nuclear-rate proofs (EQ-BBL-NR-01: scenario priors / hydro compression are not lab constraints). Certifying non-closure at 25 pm would need P_occ f_nuc C_lin E_enh <= 1e-23 from experiment. EQ-OPEN-RATE-01 stays OPEN."

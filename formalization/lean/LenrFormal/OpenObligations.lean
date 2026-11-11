@@ -63,6 +63,34 @@ theorem two_body_q3_not_closed :
     (Int.lt_irrefl log10NEvents)
     (Int.lt_of_lt_of_le two_body_budget_does_not_close hClosed)
 
+theorem negative_log_budget_implies_q3_not_closed
+    {log10Events : Int}
+    (h : log10Events < 0) :
+    ¬ q3RateBudgetClosed log10Events := by
+  intro hClosed
+  unfold q3RateBudgetClosed at hClosed
+  exact (Int.lt_irrefl log10Events) (Int.lt_of_lt_of_le h hClosed)
+
+/-- EQ-RATE-CAP-NC-01: lattice-geometry trapped state under engine caps does
+    not close Q3. Scenario / cap bound; EQ-OPEN-RATE-01 stays OPEN. -/
+theorem trapped_fcc_caps_q3_not_closed
+    (t : TrappedLogTerms)
+    (h : t.withinCaps tunLog10CapFcc) :
+    ¬ q3RateBudgetClosed t.log10N :=
+  negative_log_budget_implies_q3_not_closed
+    (trapped_fcc_under_caps_does_not_close t h)
+
+/-- EQ-RATE-CAP-NC-02: three-body outside the ULM domain under engine caps
+    does not close Q3. Scenario / cap bound; EQ-OPEN-RATE-01 stays OPEN. -/
+theorem three_body_non_ulm_caps_q3_not_closed
+    {m : Nat}
+    (hm : ¬ LenrFormal.NBody.ulmApplicable m)
+    (t : ThreeBodyLogTerms)
+    (h : t.withinCaps m) :
+    ¬ q3RateBudgetClosed t.log10N :=
+  negative_log_budget_implies_q3_not_closed
+    (three_body_non_ulm_under_caps_does_not_close hm t h)
+
 theorem energy_deficit_implies_q4_not_closed
     {availableEnergy thresholdEnergy : Nat}
     (h : availableEnergy < thresholdEnergy) :

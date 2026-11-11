@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — EQ-OPEN-RATE-01 Lean cap bounds + hydro ≠ nuclear-rate lock (academic; stays OPEN)
+- Lean `RateBudget`: `EQ-RATE-CAP-NC-01` FCC-lattice D–D `trapped_state` and `EQ-RATE-CAP-NC-02` non-ULM `three_body` scenario log budgets stay negative with every engine cap saturated (DISPROVEN under caps, not nature); `OpenObligations` wraps both as ¬Q3
+- Lean `RateBudget`: `EQ-RATE-CAP-GAP-01` engine caps do **not** certify non-closure for the 25 pm TSC trap or ULM `three_body` (gap, not closure) + free-factor demand \(\le10^{-23}\)
+- Lean `CollapseBounds`: `EQ-BBL-NR-01` `hydro_enhancement_does_not_entail_nuclear_rate` — collapse / hydro enhancement and scenario priors are never a nuclear-rate proof
+- Two-body `EQ-RATE-2B-NC-01` unchanged; **no** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — EQ-OPEN-YIELD-01 Lean bounds (academic; stays OPEN)
 - Lean `OpenQuestionBounds`: `EQ-OPEN-YIELD-NC-01` honesty lock — instantaneous Miles EMP band membership does not imply `q5IntegratedYieldClosed`; integrated 100–10⁴ band remainder ⇒ Q5 not closed (band stays DEF, not data discharge)
 - Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
