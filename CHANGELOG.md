@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lean `RadiationBounds`: `EQ-RAD-DET-01` detector-UL honesty flag DEF mirrors of `branching_model.py` (falsifiers only)
 - **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
 
+### Changed — EQ-OPEN claim-tier sync / contested-hydro honesty (academic)
+- Q4 `q_electron_capture`: additive `zero_deficit_note` + `stated_double_layer_deficit_factor`
+  (7.82e6, mirrors Lean `EQ-OPEN-EC-DEFICIT-01`); UI caption when the assumed-m*/mₑ scenario shows 0 MeV deficit
+- Virtual lab: `obligation OPEN` chip beside non-OPEN EQ-OPEN statuses (two-body `BUDGET_DOES_NOT_CLOSE`);
+  local-fallback Q3 tier aligned to backend (`speculative_exploratory` while OPEN)
+- Unified Results: collapse card labelled modelled enhancement / contested hydro; force-regime note framed as exploratory model
+- §5A Open Challenges: Q4/Q5 rows + per-row claim tiers; cavitation–collapse caveat
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — WS8 WH-ENP-01 / NBody remainder + Overlap DEF (academic)
 - Lean `LenrFormal.Overlap`: `EQ-OVERLAP-01` \((r_0/a)^3\) bookkeeping; `EQ-OVERLAP-02` ensemble count ≠ nuclear rate; IR YAMLs
 - Sharpened `NBody` volumetric FGR (`fgrVolumetricBookkeeping`) + zero-occ / linear-collective lemmas
