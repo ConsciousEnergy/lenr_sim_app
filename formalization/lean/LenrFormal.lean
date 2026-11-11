@@ -16,6 +16,7 @@ import LenrFormal.ScaleQED
 import LenrFormal.Decision
 import LenrFormal.WhenHow
 import LenrFormal.Branching
+import LenrFormal.RadiationBounds
 import LenrFormal.PoissonSchrodinger
 import LenrFormal.WeakInteraction
 import LenrFormal.OpenObligations

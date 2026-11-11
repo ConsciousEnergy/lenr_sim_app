@@ -46,6 +46,7 @@
 | EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
+| EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
@@ -89,6 +90,7 @@
 | EQ-OVERLAP-01 | `Overlap` | \((r_0/a)^3\) bookkeeping skeleton; nuclear-radius / orbital-scale anchors |
 | EQ-OVERLAP-02 | `Overlap` | Ensemble product tagged upper-bound count \(\neq\) nuclear rate |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
+| EQ-RAD-DET-01 | `RadiationBounds` | Detector-UL flag mirrors (`detector_ul_not_proof`); UL flag falsifies assumed branch only |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
 | EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
@@ -119,6 +121,8 @@
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
 
 **WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
+
+**RAD FC class pass (still OPEN Q2):** `EQ-WH-FC-02`, `EQ-RAD-DET-01` — Lean `RadiationBounds.lean` proves the displaced-oscillator FC tail below \(10^{-11}\) over the whole licensed \(S\)/\(N\) domain (deriving the EQ-WH-FC-01 cap and literals) and mirrors `branching_model.py` detector flags. Only unmechanized step: \(e^{-S}\le1\). BOUNDED / class-DISPROVEN for harmonic + FC model classes only; does **not** discharge `EQ-OPEN-RAD-01`.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 

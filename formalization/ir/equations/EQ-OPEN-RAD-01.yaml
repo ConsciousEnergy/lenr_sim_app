@@ -19,4 +19,4 @@ lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q2RadiationSuppressionClosed"
   - "LenrFormal.OpenObligations.gamma_above_bound_implies_q2_not_closed"
-notes: "This obligation remains open. The 10^11 lattice branching target is bookkeeping in OpenQuestionBounds/Branching, not a measured ratio."
+notes: "This obligation remains open. The 10^11 lattice branching target is bookkeeping in OpenQuestionBounds/Branching, not a measured ratio. RadiationBounds (EQ-WH-FC-02 class bound, EQ-RAD-DET-01 detector-flag DEFs, alias harmonic_dos_non_closure) is BOUNDED / class-DISPROVEN for harmonic and displaced-oscillator FC classes only; it does not discharge Q2."
