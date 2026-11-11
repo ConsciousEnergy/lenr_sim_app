@@ -1,6 +1,6 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-11-09  
+**Updated:** 2026-11-11  
 **Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved. `lenr_proved` stays **false**; no `EQ-OPEN-*` closures in this pass.
 
 ## Oracle stack (siblings, not substitutes)
@@ -64,6 +64,7 @@
 | EQ-EC-GF-01 | \(G_F\times 10^{8}=1166\) PDG lock; \(G_F^2\) Nat square | `WeakInteraction` | **PROVED** (constant lock) |
 | EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
 | EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
+| EQ-OPEN-EC-BOUND-01 | \(E\le\) cap \(<0.782\,\mathrm{MeV}\Rightarrow\neg Q_4\) for 0.1–1 eV double-layer, 26 meV \(k_BT\), and 10–100 eV/atom caps; closing needs \(\ge 7820\) concentrated budgets; Q4 not refuted outright | `WeakInteraction` | **BOUNDED** (form-DISPROVEN under AX caps; does **not** close Q4) |
 
 
 ## Definitions mechanized in this pass (not nature theorems)
@@ -119,6 +120,8 @@
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
 
 **WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
+
+**EC bound pass (still OPEN Q4):** `EQ-OPEN-EC-BOUND-01` — `WeakInteraction.lean` proves that per-atom electrostatic / thermal reservoirs under the `EQ-CM-BUDGET-01` cap (10–100 eV/atom) and the 0.1–1 eV double-layer band cannot satisfy `q4ElectronCaptureSourceClosed` (`cm_budget_form_cannot_close`). This is BOUNDED / form-DISPROVEN under those `AX` caps, not CLOSED: `q4_not_refuted_outright` keeps the obligation logically open, Widom–Larsen mass renormalization stays SPEC, and `ec_bounds_keep_honesty_locks` keeps `condensedMatterPathToThreshold` and `lenrProved` false.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 

@@ -1,0 +1,72 @@
+id: EQ-OPEN-EC-BOUND-01
+latex: "E_{\\mathrm{available}} \\le E_{\\mathrm{cap}} < E_{\\mathrm{EC}} = 0.782\\,\\mathrm{MeV} \\Rightarrow \\neg Q_4;\\quad E_{\\mathrm{cap}} \\in \\{0.1\\text{--}1\\,\\mathrm{eV}\\ (\\text{double layer}),\\ 10\\text{--}100\\,\\mathrm{eV/atom}\\ (\\text{CM budget})\\};\\quad E_{\\mathrm{EC}} = 7820 \\times 100\\,\\mathrm{eV}"
+symbols:
+  E_available: "energy supplied to one capture event by a per-atom condensed-matter reservoir"
+  E_cap: "AX cap: double-layer band (0.1-1 eV) or EQ-CM-BUDGET-01 per-atom budget (10-100 eV/atom)"
+  E_EC: "electron-capture threshold 0.782 MeV (EQ-EC-THRESH-01)"
+  k: "number of per-atom budgets concentrated onto one capture (closing needs k >= 7820 at 100 eV)"
+units: "millielectronvolt (Nat); 0.782 MeV = 782000000 meV; 100 eV = 100000 meV"
+tag: THM
+paper_ref: "§5A.4, §6.1 (IL-017)"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/config.py
+citation_keys:
+  - paper_5A_4
+  - widomlarsen2006
+  - tennfors2013
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.threshold_meV"
+  - "LenrFormal.WeakInteraction.threshold_meV_from_eV"
+  - "LenrFormal.WeakInteraction.cmBudgetLo_meV"
+  - "LenrFormal.WeakInteraction.cmBudgetHi_meV"
+  - "LenrFormal.WeakInteraction.doubleLayerLo_meV"
+  - "LenrFormal.WeakInteraction.doubleLayerHi_meV"
+  - "LenrFormal.WeakInteraction.work_function_difference_in_double_layer_band"
+  - "LenrFormal.WeakInteraction.double_layer_band_within_cm_budget"
+  - "LenrFormal.WeakInteraction.cm_budget_cap_below_threshold"
+  - "LenrFormal.WeakInteraction.available_below_threshold_not_closed"
+  - "LenrFormal.WeakInteraction.cm_budget_does_not_close"
+  - "LenrFormal.WeakInteraction.double_layer_band_does_not_close"
+  - "LenrFormal.WeakInteraction.thermal_room_does_not_close"
+  - "LenrFormal.WeakInteraction.cmBudgetFormCannotClose"
+  - "LenrFormal.WeakInteraction.cm_budget_form_cannot_close"
+  - "LenrFormal.WeakInteraction.cm_budget_hi_deficit_factor"
+  - "LenrFormal.WeakInteraction.cm_budget_lo_deficit_factor"
+  - "LenrFormal.WeakInteraction.double_layer_hi_deficit_factor"
+  - "LenrFormal.WeakInteraction.minConcentrationAtCmCap"
+  - "LenrFormal.WeakInteraction.sub_minimum_concentration_does_not_close"
+  - "LenrFormal.WeakInteraction.closing_source_exceeds_cm_budget"
+  - "LenrFormal.WeakInteraction.q4_not_refuted_outright"
+  - "LenrFormal.WeakInteraction.ec_bounds_keep_honesty_locks"
+adopted_value:
+  THRESHOLD_ELECTRON_MEV: 0.782
+  ELECTRON_CAPTURE_THRESHOLD_MEV: 782000000
+  DOUBLE_LAYER_STATED_MEV: 100
+  DEFAULT_DELTA_V_FALLBACK_V: 0.1
+  H2_WORK_FUNCTION_EV: 4.5
+  threshold_meV: 782000000
+  cmBudgetLo_meV: 10000
+  cmBudgetHi_meV: 100000
+  doubleLayerLo_meV: 100
+  doubleLayerHi_meV: 1000
+  minConcentrationAtCmCap: 7820
+code_symbols:
+  THRESHOLD_ELECTRON_MEV:
+    path: LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+    symbol: THRESHOLD_ELECTRON_MEV
+  ELECTRON_CAPTURE_THRESHOLD_MEV:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+    symbol: ELECTRON_CAPTURE_THRESHOLD_MEV
+  DOUBLE_LAYER_STATED_MEV:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+    symbol: DOUBLE_LAYER_STATED_MEV
+  DEFAULT_DELTA_V_FALLBACK_V:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/config.py
+    symbol: DEFAULT_DELTA_V_FALLBACK_V
+  H2_WORK_FUNCTION_EV:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/config.py
+    symbol: H2_WORK_FUNCTION_EV
+notes: "BOUNDED / form-DISPROVEN under AX caps (EQ-CM-BUDGET-01 10-100 eV/atom; double-layer band 0.1-1 eV); never CLOSED. Proves per-atom electrostatic / thermal reservoirs cannot satisfy q4ElectronCaptureSourceClosed, and that the Q4 predicate itself is not refuted outright (q4_not_refuted_outright), so EQ-OPEN-EC-01 stays OPEN. Does not address Widom-Larsen mass renormalization (EQ-WL-MASS-01, SPEC) or other collective concentration channels; closing would need k >= 7820 per-atom budgets concentrated onto one capture plus governed evidence. Cavitation / collapse hydro is orthogonal and not an input. condensedMatterPathToThreshold and lenrProved stay false (ec_bounds_keep_honesty_locks)."
