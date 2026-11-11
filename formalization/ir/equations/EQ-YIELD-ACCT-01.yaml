@@ -1,0 +1,24 @@
+id: EQ-YIELD-ACCT-01
+latex: "N_{^4\\mathrm{He},\\mathrm{exp}} = \\dot N_{\\mathrm{Miles}}\\,P_{\\mathrm{W}}\\,t_{\\mathrm{total}}\\,f_{\\mathrm{duty}}"
+symbols:
+  N_He4_exp: "expected integrated He-4 yield (atoms; Lean scaled ÷10^9)"
+  Ndot_Miles: "Miles conversion 2.63e11 atoms/s/W"
+  P_W: "supplied excess power (W)"
+  t_total: "total run time (s)"
+  f_duty: "duty fraction (Lean: hundredths)"
+units: "atoms (integer-scaled ÷10^9)"
+tag: DEF
+paper_ref: "§5A.5"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - miles1993
+  - paper_5A_5
+lean_target: "LenrFormal.YieldAccounting"
+lean_decls:
+  - "LenrFormal.YieldAccounting.expectedHeYield_div_1e9"
+  - "LenrFormal.YieldAccounting.full_duty_active_time"
+  - "LenrFormal.YieldAccounting.zero_duty_active_time"
+  - "LenrFormal.YieldAccounting.expected_yield_full_duty"
+  - "LenrFormal.YieldAccounting.expected_yield_zero_duty"
+notes: "Expected-yield duty-cycle bookkeeping mirroring build_integrated_yield_question. No observed integrated yield is an input, so this cannot witness ΔN_He,integrated = 0. Does not discharge EQ-OPEN-YIELD-01."

@@ -43,6 +43,7 @@
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative cocycle / reciprocal / swap identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
+| EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
@@ -89,6 +90,7 @@
 | EQ-OVERLAP-02 | `Overlap` | Ensemble product tagged upper-bound count \(\neq\) nuclear rate |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
+| EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
 | EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 
