@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — EQ-OPEN-YIELD-01 Lean bounds (academic; stays OPEN)
+- Lean `OpenQuestionBounds`: `EQ-OPEN-YIELD-NC-01` honesty lock — instantaneous Miles EMP band membership does not imply `q5IntegratedYieldClosed`; integrated 100–10⁴ band remainder ⇒ Q5 not closed (band stays DEF, not data discharge)
+- Lean `YieldAccounting`: `EQ-YIELD-ACCT-01` expected-yield duty-cycle bookkeeping (no observed-yield input)
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
+
 ### Added — WS8 WH-ENP-01 / NBody remainder + Overlap DEF (academic)
 - Lean `LenrFormal.Overlap`: `EQ-OVERLAP-01` \((r_0/a)^3\) bookkeeping; `EQ-OVERLAP-02` ensemble count ≠ nuclear rate; IR YAMLs
 - Sharpened `NBody` volumetric FGR (`fgrVolumetricBookkeeping`) + zero-occ / linear-collective lemmas
