@@ -181,6 +181,13 @@ def protect_math(md: str) -> tuple[str, list[str]]:
     slots: list[str] = []
     md = convert_dollar_math(md)
     md = merge_unit_exponent_fragments(md)
+    # Interval notation mistakenly written as display math inside inline math,
+    # e.g. \( x \in \[0.6, 1.1\] \) → \( x \in [0.6, 1.1] \) (builder-only).
+    md = re.sub(
+        r"\\\[(\d+\.\d+\s*,\s*\d+\.\d+)\\\]",
+        r"[\1]",
+        md,
+    )
 
     def stash_display(m: re.Match) -> str:
         inner = m.group(1).strip()
@@ -198,7 +205,7 @@ def protect_math(md: str) -> tuple[str, list[str]]:
                 "/" in inner
                 or inner.startswith("C/")
                 or "$" in inner
-                or "\(" in inner
+                or "\\(" in inner
             )
             and re.match(r"^[A-Za-z0-9/$.\\^{}_\\()\\\-]+$", inner)
         ):

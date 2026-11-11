@@ -127,21 +127,25 @@ def check_no_raw_latex_in_md() -> None:
 
 
 def extract_source_math_spans(md: str) -> list[str]:
-    """Apply the same protect_math pipeline and return normalized TeX inners."""
-    # Body only (matches HTML builder extract_front body)
-    body_start = md.find("## **1")
-    if body_start < 0:
-        body_start = md.find("## 1")
-    body = md[body_start:] if body_start >= 0 else md
-    # Include appendix / reconciliation (full document after front matter is safer:
-    # builder uses meta['body'] from ## **1 onward, which includes Part 2).
-    _text, slots = branded.protect_math(body)
+    """Apply the same protect_math pipeline used by every md_to_html call."""
+    meta = branded.extract_front(md)
+    regions = [meta["body"], meta.get("abstract") or ""]
+    if meta.get("epistemic"):
+        regions.append(meta["epistemic"])
+    if meta.get("contrib"):
+        regions.append(meta["contrib"])
+    for _rev_date, note in meta.get("revisions") or []:
+        regions.append(note)
     inners: list[str] = []
-    for slot in slots:
-        if slot.startswith("\\["):
-            inners.append(slot[2:-2].strip())
-        elif slot.startswith("\\("):
-            inners.append(slot[2:-2].strip())
+    for region in regions:
+        if not region.strip():
+            continue
+        _text, slots = branded.protect_math(region)
+        for slot in slots:
+            if slot.startswith("\\["):
+                inners.append(slot[2:-2].strip())
+            elif slot.startswith("\\("):
+                inners.append(slot[2:-2].strip())
     return inners
 
 

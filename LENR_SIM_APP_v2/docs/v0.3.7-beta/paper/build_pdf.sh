@@ -101,10 +101,11 @@ def repl(m: re.Match) -> str:
     return m.group(0)
 
 new, n = re.subn(r"\\\[(.+?)\\\]", repl, text, flags=re.S)
+# Count numeric conversions specifically
+before = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", text, flags=re.S) if cite_only.match(m.group(1).strip())]
 path.write_text(new, encoding="utf-8")
-print(f"citation-bracket pass: converted {n and new.count('[') - text.count('[')} numeric citations (file rewritten)")
-# Count how many numeric citations remain as display vs brackets
 left = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", new, flags=re.S) if cite_only.match(m.group(1).strip())]
+print(f"citation-bracket pass: converted {len(before) - len(left)} numeric citations (saw {len(before)})")
 print(f"numeric-only display math remaining: {len(left)}")
 PY
 
