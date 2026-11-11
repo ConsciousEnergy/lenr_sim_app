@@ -1,6 +1,6 @@
 # Formal Proof Status — Unified LENR Theory
 
-**Updated:** 2026-11-09  
+**Updated:** 2026-11-11  
 **Epistemic scope:** Lean certifies *mathematical consistency* of tagged claims under stated definitions and axioms. It does **not** prove that LENR occurs in nature, that contested experiments are correct, or that §5A open challenges are solved. `lenr_proved` stays **false**; no `EQ-OPEN-*` closures in this pass.
 
 ## Oracle stack (siblings, not substitutes)
@@ -30,6 +30,10 @@
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |
 | EQ-RATE-COND-01 | Occupation/fusion would-close-if product bound | `RateBudget` | **PROVED** |
 | EQ-RATE-REPLACE-01 | Rival rate modes: max, not product | `RateBudget` | **PROVED** |
+| EQ-RATE-CAP-NC-01 | FCC-lattice D–D `trapped_state`, all engine caps: \(\log_{10}N\le-15<0\) ⇒ ¬Q3 | `RateBudget` / `OpenObligations` | **PROVED** (scenario / cap bound; DISPROVEN under caps; does **not** close Q3) |
+| EQ-RATE-CAP-NC-02 | Non-ULM `three_body`, all engine caps: \(\log_{10}N\le-266<0\) ⇒ ¬Q3 | `RateBudget` / `OpenObligations` | **PROVED** (scenario / cap bound; DISPROVEN under caps; does **not** close Q3) |
+| EQ-RATE-CAP-GAP-01 | Caps do **not** certify non-closure for 25 pm TSC / ULM `three_body`; demand \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}E_{\text{enh}}\le10^{-23}\) | `RateBudget` | **PROVED** (honesty gap; not closure) |
+| EQ-BBL-NR-01 | Hydro / collapse enhancement or scenario prior in a rate scenario ⇒ not a nuclear-rate proof | `CollapseBounds` | **AX** honesty tag (does **not** close any `EQ-OPEN-*`) |
 | EQ-COMP-03 | Illegal product of two capped engine totals \(=10^{10}\) | `Composition` | **PROVED** |
 | EQ-TSC-GEOM-01/02 | FCC \(d_{DD}\) identity; \(\neq 25\,\mathrm{pm}\) trap | `NBody` | **PROVED** |
 | EQ-TSC-Q-01 | \(47.6=2\times 23.8\) keV conversion | `NBody` | **PROVED** |
@@ -43,8 +47,10 @@
 | EQ-PRED-01 | Three-tier bubble prediction envelope | `Composition` | **DEF** mechanized |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative cocycle / reciprocal / swap identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
+| EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
+| EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
@@ -55,6 +61,7 @@
 | EQ-WH-DICKE-N-01 | \(\lfloor n_D V_{\text{dicke}}\rfloor=0\); no \(N\ge2\) Dicke count licensed | `WorkingHypothesisBounds` | **PROVED** (bound) |
 | EQ-WH-CAP-01 | Capped \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}\) product bound; demand above cap unmet | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q3) |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds do not discharge Q1–Q3 OPEN predicates | `WorkingHypothesisBounds` | **PROVED** (does **not** close) |
+| EQ-WH-MEV-CAP-01 | Engine-capped licensed channels leave remainder \(\ge R_{\min}>0\) (\(\mathrm{BR}_\gamma\le0.998\)); \(\gamma\)-route closure fails Q2; collapse/ENC hydro allocate 0 | `MeVRemainderCaps` | **PROVED** (bound; EQ-OPEN-MEV-01 stays **OPEN**) |
 | EQ-PS-COUPLE-01 | Coupling residual \(\max(r_P,r_S)=0\) iff both residuals vanish; positive residual ⇒ not self-consistent | `PoissonSchrodinger` | **PROVED** (residual algebra only; aspirational; does **not** deploy FEM) |
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |
@@ -63,6 +70,7 @@
 | EQ-EC-GF-01 | \(G_F\times 10^{8}=1166\) PDG lock; \(G_F^2\) Nat square | `WeakInteraction` | **PROVED** (constant lock) |
 | EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
 | EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
+| EQ-OPEN-EC-BOUND-01 | \(E\le\) cap \(<0.782\,\mathrm{MeV}\Rightarrow\neg Q_4\) for 0.1–1 eV double-layer, 26 meV \(k_BT\), and 10–100 eV/atom caps; closing needs \(\ge 7820\) concentrated budgets; Q4 not refuted outright | `WeakInteraction` | **BOUNDED** (form-DISPROVEN under AX caps; does **not** close Q4) |
 
 
 ## Definitions mechanized in this pass (not nature theorems)
@@ -88,7 +96,9 @@
 | EQ-OVERLAP-01 | `Overlap` | \((r_0/a)^3\) bookkeeping skeleton; nuclear-radius / orbital-scale anchors |
 | EQ-OVERLAP-02 | `Overlap` | Ensemble product tagged upper-bound count \(\neq\) nuclear rate |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
+| EQ-RAD-DET-01 | `RadiationBounds` | Detector-UL flag mirrors (`detector_ul_not_proof`); UL flag falsifies assumed branch only |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
+| EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
 | EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 
@@ -117,6 +127,10 @@
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
 
 **WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
+
+**EC bound pass (still OPEN Q4):** `EQ-OPEN-EC-BOUND-01` — `WeakInteraction.lean` proves that per-atom electrostatic / thermal reservoirs under the `EQ-CM-BUDGET-01` cap (10–100 eV/atom) and the 0.1–1 eV double-layer band cannot satisfy `q4ElectronCaptureSourceClosed` (`cm_budget_form_cannot_close`). This is BOUNDED / form-DISPROVEN under those `AX` caps, not CLOSED: `q4_not_refuted_outright` keeps the obligation logically open, Widom–Larsen mass renormalization stays SPEC, and `ec_bounds_keep_honesty_locks` keeps `condensedMatterPathToThreshold` and `lenrProved` false.
+
+**RAD FC class pass (still OPEN Q2):** `EQ-WH-FC-02`, `EQ-RAD-DET-01` — Lean `RadiationBounds.lean` proves the displaced-oscillator FC tail below \(10^{-11}\) over the whole licensed \(S\)/\(N\) domain (deriving the EQ-WH-FC-01 cap and literals) and mirrors `branching_model.py` detector flags. Only unmechanized step: \(e^{-S}\le1\). BOUNDED / class-DISPROVEN for harmonic + FC model classes only; does **not** discharge `EQ-OPEN-RAD-01`.
 
 SPEC mechanisms (TSC, Hagelstein, KG–RP, Widom–Larsen mass renormalization) remain claim-tiered speculative modules — not Lean theorems. N-body IR (`EQ-TSC-*`, `EQ-TRAP-*`, `EQ-3B-*`, `EQ-NBODY-*`) does **not** change the OPEN table. There is no `theorem lenr_occurs`. Auto-persisted simulation campaigns (`formalization/predictions/campaign_invariants.json`) are **model outputs**; more runs do not discharge this table or set `lenr_proved`.
 

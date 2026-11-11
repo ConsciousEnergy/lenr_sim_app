@@ -1,0 +1,35 @@
+id: EQ-RATE-CAP-NC-02
+latex: "m^*/m_e<2.53\\Rightarrow\\log_{10}N_{3B}\\le 32+34-47+9-304+0+0+6+5-1=-266<0"
+symbols:
+  n_p: "proton density, cap 1e29 m^-3 x hard-core CR 1e3 (EQ-BBL-CR-CAP-01)"
+  n_e: "electron density, cap 1e31 m^-3 x CR 1e3"
+  sigma: "weak cross-section at 1 MeV, cap 1e-47 m^2 (EQ-EC-SIGMA-01)"
+  v: "electron speed, cap c < 1e9 m/s"
+  channel: "p + e- -> n + nu channel factor; engine Boltzmann clip exp(-700) outside ULM"
+  f_capture: "n + d capture fraction, cap 1"
+  eta_conv: "chain conversion probability, cap 1"
+  C_lin: "linear collective clamp, cap 1e6"
+  E_enh: "composed enhancement cap 1e5 (EQ-COMP-01)"
+  V_t: "exposure window 1e-6 m^3 x 1e5 s"
+units: "dimensionless (integer log10 terms)"
+tag: THM
+paper_ref: "§5A.3, §5A.4"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/unified_lenr_model/reaction_rate_engine.py
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+citation_keys:
+  - widomlarsen2006
+  - tennfors2013
+  - model_assumption_RR006
+lean_target: "LenrFormal.RateBudget"
+lean_decls:
+  - "LenrFormal.RateBudget.ThreeBodyLogTerms"
+  - "LenrFormal.RateBudget.ThreeBodyLogTerms.log10N"
+  - "LenrFormal.RateBudget.ThreeBodyLogTerms.withinCaps"
+  - "LenrFormal.RateBudget.channelLog10CapNonUlm"
+  - "LenrFormal.RateBudget.threeBodyChannelLog10Cap"
+  - "LenrFormal.RateBudget.channel_cap_of_not_ulm"
+  - "LenrFormal.RateBudget.three_body_non_ulm_under_caps_does_not_close"
+adopted_value:
+  channelLog10CapNonUlm: -304
+notes: "Scenario / cap bound (DISPROVEN under caps), not a theorem of nature. Outside the ULM domain (EQ-3B-MASS-DOM-01; Tennfors critique) the three-body budget is negative even with cavitation compression at its hard-core cap; the engine Boltzmann clip exp(-700) upper-bounds the true thermal factor for T <= 1.29e7 K. Q3 wrapper: OpenObligations.three_body_non_ulm_caps_q3_not_closed. Collapse compression is a capped hydro input, not a rate proof. Does not close EQ-OPEN-RATE-01."

@@ -2,6 +2,7 @@ import LenrFormal.OpenObligations
 import LenrFormal.Branching
 import LenrFormal.RateBudget
 import LenrFormal.NBody
+import LenrFormal.WeakInteraction
 
 /-!
 OpenQuestionBounds — would-close-if bookkeeping for paper §5A.
@@ -74,6 +75,20 @@ theorem q4_stated_numbers_do_not_close :
     ¬ q4ElectronCaptureSourceClosed doubleLayer_meV ecThreshold_meV :=
   energy_deficit_implies_q4_not_closed (by native_decide)
 
+theorem ecThreshold_meV_matches_weak_interaction :
+    ecThreshold_meV = WeakInteraction.threshold_meV := rfl
+
+theorem doubleLayer_meV_is_weak_band_lo :
+    doubleLayer_meV = WeakInteraction.doubleLayerLo_meV := rfl
+
+/-- The stated 0.1 eV deficit is one instance of the EQ-OPEN-EC-BOUND-01
+    family; still does not close Q4. -/
+theorem q4_stated_numbers_instance_of_cm_family :
+    ¬ q4ElectronCaptureSourceClosed doubleLayer_meV ecThreshold_meV :=
+  WeakInteraction.double_layer_band_does_not_close
+    (Nat.le_trans (Nat.le_of_eq doubleLayer_meV_is_weak_band_lo)
+      WeakInteraction.double_layer_band_ordered)
+
 /-- Instantaneous Miles EMP band (~2×) as integer factors. -/
 def milesInstantaneousBandLo : Nat := 1
 def milesInstantaneousBandHi : Nat := 3
@@ -93,5 +108,43 @@ theorem q5_integrated_band_is_open_remainder :
   native_decide
 
 theorem q5_would_close_if_zero_remainder : q5WouldCloseIf 0 := rfl
+
+/-- Integrated remainder lies in the reported 100–10000 band (DEF, not a measurement). -/
+def q5IntegratedRemainderInBand (integratedRemainder : Nat) : Prop :=
+  integratedYieldDiscrepancyLo ≤ integratedRemainder ∧
+    integratedRemainder ≤ integratedYieldDiscrepancyHi
+
+theorem q5_integrated_band_lo_in_band :
+    q5IntegratedRemainderInBand integratedYieldDiscrepancyLo :=
+  ⟨Nat.le_refl _, by decide⟩
+
+/-- EQ-OPEN-YIELD-NC-01: any remainder in the integrated band leaves Q5 not closed. -/
+theorem q5_integrated_band_remainder_not_closed
+    {integratedRemainder : Nat}
+    (h : q5IntegratedRemainderInBand integratedRemainder) :
+    ¬ q5WouldCloseIf integratedRemainder :=
+  positive_yield_discrepancy_implies_q5_not_closed
+    (Nat.lt_of_lt_of_le (by decide) h.1)
+
+/--
+EQ-OPEN-YIELD-NC-01 honesty lock: instantaneous Miles EMP band membership does
+not discharge Q5 over the integrated band. The `factor` hypothesis is unused by
+design — it carries no information about the integrated remainder.
+-/
+theorem instantaneous_miles_band_does_not_discharge_q5
+    {factor : Nat}
+    (_hMiles : q5InstantaneousMilesInBand factor) :
+    ¬ (∀ integratedRemainder, q5IntegratedRemainderInBand integratedRemainder →
+        q5WouldCloseIf integratedRemainder) := fun hAll =>
+  q5_integrated_band_remainder_not_closed q5_integrated_band_lo_in_band
+    (hAll _ q5_integrated_band_lo_in_band)
+
+/-- EQ-OPEN-YIELD-NC-01: Miles band membership does not imply `q5IntegratedYieldClosed`. -/
+theorem miles_band_does_not_imply_q5_closed :
+    ¬ (∀ factor integratedRemainder, q5InstantaneousMilesInBand factor →
+        q5IntegratedYieldClosed integratedRemainder) := fun hAll =>
+  q5_integrated_band_remainder_not_closed q5_integrated_band_lo_in_band
+    (hAll milesInstantaneousBandLo integratedYieldDiscrepancyLo
+      ⟨Nat.le_refl _, by decide⟩)
 
 end LenrFormal.OpenQuestionBounds

@@ -20,7 +20,7 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
-import { OPEN_EQ_IDS } from '../config/unifiedTheoryScienceEvidence';
+import { CAMPAIGN_EVIDENCE, OPEN_EQ_IDS } from '../config/unifiedTheoryScienceEvidence';
 
 /**
  * @param {Object} props
@@ -49,7 +49,8 @@ const OpenChallengesSection = ({ embedded = false }) => {
         Working hypothesis <code>WH-ENP-01</code> (Lean <code>WorkingHypothesis</code>)
         is a coupled Hagelstein/TSC ledger with derived remainders; it does not
         discharge those obligations. Lean <code>OpenQuestionBounds</code> lemmas are
-        would-close-if only.
+        would-close-if only. Tip Lean bounds (#356) are BOUNDED / form- or class-DISPROVEN /
+        proved-GAP under stated assumptions — still not CLOSED.
       </Typography>
       <Stack
         direction="row"
@@ -89,26 +90,42 @@ const OpenChallengesSection = ({ embedded = false }) => {
           />
         ))}
       </Stack>
-    <List dense>
+    <List dense data-testid="open-challenges-rows">
       <ListItem>
         <ListItemText
           primary="MeV energy gap (how)"
-          secondary="Mechanism for distributing 23.8 MeV into lattice/electronic modes without single gamma emission remains debated."
+          secondary="Mechanism for distributing 23.8 MeV into lattice/electronic modes without single gamma emission remains debated. Tier: speculative / exploratory."
         />
       </ListItem>
       <ListItem>
         <ListItemText
           primary="Radiation suppression (how)"
-          secondary="Detector UL and Γ_ph/Γ_γ open targets; assumed branching is scenario input, not derived."
+          secondary="Detector UL and Γ_ph/Γ_γ open targets; assumed branching is scenario input, not derived. Tier: speculative / exploratory."
         />
       </ListItem>
       <ListItem>
         <ListItemText
           primary="Statistical feasibility (when)"
-          secondary="Whether the active FGR rate crosses the calorimetric floor under the selected hypothesis."
+          secondary="Whether the active FGR rate crosses the calorimetric floor under the selected hypothesis. Two-body reference (log10 N = −40) is a negative determination (BUDGET_DOES_NOT_CLOSE), not closure; other modes are speculative / exploratory."
+        />
+      </ListItem>
+      <ListItem>
+        <ListItemText
+          primary="Electron-capture energy path (how)"
+          secondary="No derived condensed-matter source reaches 0.782 MeV; the stated 0.1 eV double-layer budget is ~10^7 short (EQ-OPEN-EC-DEFICIT-01). A 0 MeV deficit under an assumed m*/mₑ is scenario bookkeeping. Tier: speculative / exploratory."
+        />
+      </ListItem>
+      <ListItem>
+        <ListItemText
+          primary="Integrated heat–helium yield (when)"
+          secondary="Instantaneous Miles 24±4 MeV/He band is an empirical correlation; integrated yields remain 10^2–10^4× low without time-resolved retention accounting. Tier: empirical LENR correlation."
         />
       </ListItem>
     </List>
+    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+      Cavitation–collapse enhancement is {CAMPAIGN_EVIDENCE.hydro_label}; it does not close any
+      of these questions.
+    </Typography>
     <Alert severity="info" sx={{ mt: 2 }}>
       <AlertTitle>Companion Documents</AlertTitle>
       <Typography variant="body2" component="span">

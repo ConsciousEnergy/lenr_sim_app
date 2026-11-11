@@ -204,6 +204,85 @@ def test_trap_separation_agrees_with_lean_pm_anchor() -> None:
     )
 
 
+def test_fc_class_domain_covers_python_franck_condon_scan() -> None:
+    """EQ-WH-FC-02: Python S grid / phonon order sit inside the Lean domain."""
+    from app.physics_engine.many_body.wh_bounds import (
+        DEFAULT_S_GRID,
+        FC_TARGET_LOG10,
+        franck_condon_tail,
+    )
+
+    lean_path = LEAN_DIR / "RadiationBounds.lean"
+    s_grid_max = _evaluate_lean_integer(
+        LEAN_DIR / "WorkingHypothesisBounds.lean", "sGridMax"
+    )
+    order_min = _evaluate_lean_integer(lean_path, "fcOrderMin")
+    assert order_min == 300_048
+    assert max(DEFAULT_S_GRID) <= s_grid_max
+
+    fc = franck_condon_tail(q_mev=Q_DD_HE4_MEV, phonon_hz=1e13)
+    assert fc["phonon_order_N"] >= order_min
+    assert fc["target_log10"] == FC_TARGET_LOG10 == -11.0
+    assert fc["meets_target"] is False
+    assert max(fc["log10_p_n"]) < FC_TARGET_LOG10
+
+
+def test_detector_flag_thresholds_agree_with_lean_rad_mirrors() -> None:
+    """EQ-RAD-DET-01: Lean Bool mirrors share thresholds with branching_model."""
+    import inspect
+
+    from app.physics_engine.many_body.branching_model import (
+        CD_RATIO_THERMAL_FLOOR,
+        DETECTOR_UL_HONESTY_CLASS,
+        MODERATOR_NULL_THERMAL_CEILING,
+        branching_inconsistent_with_neutron_interpretation,
+        branching_inconsistent_with_ul,
+    )
+
+    lean_path = LEAN_DIR / "RadiationBounds.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="cdRatioThermalFloorMilli",
+        lean_value=_evaluate_lean_integer(lean_path, "cdRatioThermalFloorMilli"),
+        python_symbol="CD_RATIO_THERMAL_FLOOR * 1000",
+        python_value=_scaled_python_integer(
+            CD_RATIO_THERMAL_FLOOR, 1_000.0, "CD_RATIO_THERMAL_FLOOR"
+        ),
+        expected_value=5_000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="moderatorNullThermalCeilingMilli",
+        lean_value=_evaluate_lean_integer(
+            lean_path, "moderatorNullThermalCeilingMilli"
+        ),
+        python_symbol="MODERATOR_NULL_THERMAL_CEILING * 1000",
+        python_value=_scaled_python_integer(
+            MODERATOR_NULL_THERMAL_CEILING, 1_000.0, "MODERATOR_NULL_THERMAL_CEILING"
+        ),
+        expected_value=1_000,
+    )
+    cd_high_default = inspect.signature(
+        branching_inconsistent_with_neutron_interpretation
+    ).parameters["cd_wrapped_high_cps"].default
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="cdWrappedHighMilliCps",
+        lean_value=_evaluate_lean_integer(lean_path, "cdWrappedHighMilliCps"),
+        python_symbol="cd_wrapped_high_cps default * 1000",
+        python_value=_scaled_python_integer(
+            cd_high_default, 1_000.0, "cd_wrapped_high_cps"
+        ),
+        expected_value=1_000,
+    )
+    assert _lean_definition_rhs(lean_path, "detectorUlHonestyClass") == (
+        f'"{DETECTOR_UL_HONESTY_CLASS}"'
+    )
+    # Twins of no_observation_no_neutron_flag / no_ul_no_branching_flag.
+    assert branching_inconsistent_with_neutron_interpretation() is False
+    assert branching_inconsistent_with_ul(0.5, None) is False
+
+
 def test_two_body_event_budget_agrees_with_lean() -> None:
     lean_path = LEAN_DIR / "RateBudget.lean"
     oracle_result = evaluate_determination(rate_mode="two_body")
@@ -419,6 +498,69 @@ def test_weak_interaction_anchors_agree_with_lean() -> None:
     lean_ceiling = _evaluate_lean_integer(lean_path, "sigma1MeV_negLog10Ceiling")
     assert lean_ceiling == 47
     assert -math.log10(sigma_m2) > lean_ceiling
+
+
+def test_ec_cm_budget_bound_anchors_agree_with_lean() -> None:
+    """EQ-OPEN-EC-BOUND-01 caps vs engine; BOUNDED only, Q4 stays OPEN."""
+    from app.physics_engine.open_question_details import (
+        DOUBLE_LAYER_STATED_MEV,
+        ELECTRON_CAPTURE_THRESHOLD_MEV,
+        build_electron_capture_question,
+        ElectronCaptureQuestionInput,
+    )
+    from app.physics_engine.unified_lenr_model.config import (
+        DEFAULT_DELTA_V_FALLBACK_V,
+        H2_WORK_FUNCTION_EV,
+        get_double_layer_potential,
+        get_material_work_function,
+    )
+
+    lean_path = LEAN_DIR / "WeakInteraction.lean"
+    lean = {
+        symbol: _evaluate_lean_integer(lean_path, symbol)
+        for symbol in (
+            "threshold_meV",
+            "cmBudgetLo_meV",
+            "cmBudgetHi_meV",
+            "doubleLayerLo_meV",
+            "doubleLayerHi_meV",
+            "workFunctionMaxLookup_meV",
+            "h2WorkFunction_meV",
+            "minConcentrationAtCmCap",
+        )
+    }
+    assert lean["threshold_meV"] == ELECTRON_CAPTURE_THRESHOLD_MEV
+    assert lean["doubleLayerLo_meV"] == DOUBLE_LAYER_STATED_MEV
+    assert lean["doubleLayerLo_meV"] == _scaled_python_integer(
+        DEFAULT_DELTA_V_FALLBACK_V, 1e3, "DEFAULT_DELTA_V_FALLBACK_V"
+    )
+    assert lean["h2WorkFunction_meV"] == _scaled_python_integer(
+        H2_WORK_FUNCTION_EV, 1e3, "H2_WORK_FUNCTION_EV"
+    )
+    lookup_materials = (
+        "palladium", "nickel", "titanium", "lithium", "graphite",
+        "carbon", "silicon_carbide", "zirconium", "iridium",
+    )
+    max_lookup_ev = max(get_material_work_function(m) for m in lookup_materials)
+    assert lean["workFunctionMaxLookup_meV"] == _scaled_python_integer(
+        max_lookup_ev, 1e3, "max lookup work function"
+    )
+    assert (lean["cmBudgetLo_meV"], lean["cmBudgetHi_meV"]) == (10_000, 100_000)
+    assert lean["doubleLayerHi_meV"] <= lean["cmBudgetHi_meV"] < lean["threshold_meV"]
+    assert lean["minConcentrationAtCmCap"] * lean["cmBudgetHi_meV"] == lean["threshold_meV"]
+
+    # Engine double-layer potentials for lookup materials at room temperature
+    # stay inside the Lean band (eV per electron == V for unit charge).
+    for material in lookup_materials:
+        delta_v_mev = get_double_layer_potential(material, 1e29, 300.0) * 1e3
+        assert lean["doubleLayerLo_meV"] <= delta_v_mev + 1e-9
+        assert delta_v_mev <= lean["doubleLayerHi_meV"]
+
+    q_ec = build_electron_capture_question(
+        ElectronCaptureQuestionInput(mode="two_body", rate_provenance={})
+    )
+    assert q_ec["status"] == "OPEN"
+    assert q_ec["occurrence_claimed"] is False
 
 
 def test_collapse_uq_percentiles_agree_with_lean() -> None:

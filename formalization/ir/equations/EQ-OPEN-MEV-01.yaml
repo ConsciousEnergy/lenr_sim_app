@@ -17,4 +17,4 @@ lean_target: LenrFormal.OpenObligations
 lean_decls:
   - "LenrFormal.OpenObligations.q1MeVEnergyGapClosed"
   - "LenrFormal.OpenObligations.positive_remainder_implies_q1_not_closed"
-notes: "This obligation remains open. Named Hagelstein/Dicke/BEC hypotheses in OpenQuestionBounds are labels, not theorems. There is no proof of occurrence."
+notes: "This obligation remains open. Named Hagelstein/Dicke/BEC hypotheses in OpenQuestionBounds are labels, not theorems. There is no proof of occurrence. BOUNDED companion EQ-WH-MEV-CAP-01 (MeVRemainderCaps): positive remainder floor under engine caps; collapse/ENC hydro allocate none of the remainder."

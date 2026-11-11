@@ -18,6 +18,9 @@ import LenrFormal.WorkingHypothesis
 import LenrFormal.WorkingHypothesisBounds
 import LenrFormal.OpenObligations
 import LenrFormal.OpenQuestionBounds
+import LenrFormal.MeVRemainderCaps
+import LenrFormal.RadiationBounds
+import LenrFormal.YieldAccounting
 
 /-!
 # PaperCrosswalk — Unified Theory Paper § → Lean module map (v0.3.7-beta)
@@ -26,15 +29,15 @@ Archival companion to
 `docs/A_Unified_Theoretical_Framework_for_LENR.md`
 and `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/`.
 
-**Claim tier:** mathematical consistency / non-closure documentation only.
+**Claim tier:** mathematical consistency / non-closure / bound documentation only.
 Does **not** prove that LENR occurs. Does **not** discharge any `EQ-OPEN-*`.
-There is no `theorem lenr_occurs`.
+There is no `theorem lenr_occurs`. Hydro enhancement ≠ nuclear-rate proof (`EQ-BBL-NR-01`).
 -/
 
 namespace LenrFormal.PaperCrosswalk
 
 /-- Paper revision tag for this crosswalk. -/
-def paperRevision : String := "v0.3.7-beta-2026-11-11-coherence"
+def paperRevision : String := "v0.3.7-beta-2026-11-11-eq-open-peer-review"
 
 /-- Companion manuscript path (repo-relative). -/
 def canonicalPaperPath : String :=
@@ -70,12 +73,19 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
   , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
   , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
+  , ("§3.2 hydro enhancement ≠ nuclear-rate proof (EQ-BBL-NR-01)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
 
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
+  , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
+  , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
+  , ("§5A.3 Q3 scenario cap bounds / gaps (EQ-RATE-CAP-*)", "LenrFormal.RateBudget")
+  , ("§5A.4 Q4 EC CM-budget bounds (EQ-OPEN-EC-BOUND-01; BOUNDED / form-DISPROVEN)", "LenrFormal.WeakInteraction")
+  , ("§5A.5 Q5 instantaneous ≠ integrated (EQ-OPEN-YIELD-NC-01)", "LenrFormal.OpenQuestionBounds")
+  , ("§5A.5 expected-yield duty bookkeeping (EQ-YIELD-ACCT-01)", "LenrFormal.YieldAccounting")
   , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")
   , ("§5A HE negative control", "LenrFormal.ScaleQED")
   , ("§5A WH-ENP-01", "LenrFormal.WorkingHypothesis")
