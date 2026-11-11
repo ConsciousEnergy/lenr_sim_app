@@ -1,0 +1,41 @@
+id: EQ-RAD-DET-01
+latex: "\\mathrm{flag}_{n}=(X_{\\mathrm{soft}}\\wedge\\neg\\gamma_{\\mathrm{hard}}\\wedge(C_{\\mathrm{high}}\\vee R_{\\mathrm{Cd}}<5))\\vee(R_{\\mathrm{mod}}<1\\wedge(C_{\\mathrm{high}}\\vee X_{\\mathrm{soft}})),\\quad \\mathrm{flag}_{\\gamma}=\\mathrm{BR}_{\\gamma,\\mathrm{assumed}}>\\mathrm{UL}"
+symbols:
+  X_soft: "soft-X observed (None -> false)"
+  gamma_hard: "hard gamma observed; hard_gamma_absent = not gamma_hard (None -> false)"
+  C_high: "Cd-wrapped count rate >= 1 cps (milli-cps in Lean)"
+  R_Cd: "bare / Cd-wrapped count ratio; thermal floor 5 (milli-units in Lean)"
+  R_mod: "with-moderator / bare count ratio; thermal ceiling 1 (milli-units in Lean)"
+  UL: "efficiency-corrected detector upper bound on BR_gamma (detector_ul_not_proof)"
+units: "Bool flags over integer-scaled inputs"
+tag: DEF
+paper_ref: "§5A.2"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+citation_keys:
+  - paper_5A_2
+  - pyyhtia2026
+lean_target: LenrFormal.RadiationBounds
+lean_decls:
+  - "LenrFormal.RadiationBounds.detectorUlHonestyClass"
+  - "LenrFormal.RadiationBounds.detectorUlNotEqOpenDischarge"
+  - "LenrFormal.RadiationBounds.cdRatioThermalFloorMilli"
+  - "LenrFormal.RadiationBounds.moderatorNullThermalCeilingMilli"
+  - "LenrFormal.RadiationBounds.cdWrappedHighMilliCps"
+  - "LenrFormal.RadiationBounds.neutronInterpretationInconsistent"
+  - "LenrFormal.RadiationBounds.branchingInconsistentWithUl"
+  - "LenrFormal.RadiationBounds.detector_honesty_locks"
+  - "LenrFormal.RadiationBounds.no_observation_no_neutron_flag"
+  - "LenrFormal.RadiationBounds.ul_flag_falsifies_assumed_branch"
+  - "LenrFormal.RadiationBounds.fc_class_trips_sub_unity_ul"
+adopted_value:
+  CD_RATIO_THERMAL_FLOOR: 5.0
+  MODERATOR_NULL_THERMAL_CEILING: 1.0
+code_symbols:
+  CD_RATIO_THERMAL_FLOOR:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+    symbol: CD_RATIO_THERMAL_FLOOR
+  MODERATOR_NULL_THERMAL_CEILING:
+    path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+    symbol: MODERATOR_NULL_THERMAL_CEILING
+notes: "Bool mirrors of branching_model.py detector flags (detector_ul_not_proof). They falsify assumed-scenario branching or a thermal-neutron reading; they supply no measured BR_gamma and do not discharge EQ-OPEN-RAD-01. CR-39 pits under electrolytic cavitation (pyyhtia2026) are a detector confounder peer, not an input; collapse hydro is not gamma-suppression proof."

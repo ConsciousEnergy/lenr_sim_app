@@ -197,6 +197,55 @@ describe('OpenQuestionsVirtualLab', () => {
     expect(TWO_BODY_OQ.lenr_proved).toBe(false);
   });
 
+  test('zero Q4 deficit carries the scenario-input / deficit-identity caveat', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('q4-zero-deficit-note')).toHaveTextContent(
+      /assumed m\*\/mₑ scenario input.*EQ-OPEN-EC-DEFICIT-01.*EQ-OPEN-EC-01 stays OPEN/,
+    );
+  });
+
+  test('Q4 prefers the backend zero-deficit note and hides it when a deficit remains', () => {
+    const backendNote = 'Backend zero-deficit note (EQ-OPEN-EC-DEFICIT-01).';
+    const { unmount } = render(
+      <OpenQuestionsVirtualLab
+        openQuestions={{
+          ...TWO_BODY_OQ,
+          q_electron_capture: { ...TWO_BODY_OQ.q_electron_capture, zero_deficit_note: backendNote },
+        }}
+      />,
+    );
+    expect(screen.getByTestId('q4-zero-deficit-note')).toHaveTextContent(backendNote);
+    unmount();
+    render(
+      <OpenQuestionsVirtualLab
+        openQuestions={{
+          ...TWO_BODY_OQ,
+          q_electron_capture: { ...TWO_BODY_OQ.q_electron_capture, energy_deficit_mev: 0.27 },
+        }}
+      />,
+    );
+    expect(screen.queryByTestId('q4-zero-deficit-note')).not.toBeInTheDocument();
+  });
+
+  test('two-body BUDGET_DOES_NOT_CLOSE row still shows the obligation as OPEN', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByText('BUDGET_DOES_NOT_CLOSE')).toBeInTheDocument();
+    expect(screen.getByTestId('obligation-open-EQ-OPEN-RATE-01')).toHaveTextContent('obligation OPEN');
+    expect(screen.queryByTestId('obligation-open-EQ-OPEN-MEV-01')).not.toBeInTheDocument();
+  });
+
+  test('local fallback keeps every EQ-OPEN row OPEN with backend-aligned tiers', () => {
+    render(
+      <OpenQuestionsVirtualLab
+        simulationData={{ validation: { route_mode: 'local_fallback' } }}
+      />,
+    );
+    expect(screen.getAllByText('OPEN').length).toBe(5);
+    expect(screen.getAllByText('Speculative / exploratory').length).toBe(4);
+    expect(screen.getByText('Empirical LENR correlation')).toBeInTheDocument();
+    expect(screen.queryByTestId(/^obligation-open-/)).not.toBeInTheDocument();
+  });
+
   test('renders WH-ENP-01 coupled ledger without implying proof', () => {
     render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
     expect(screen.getByTestId('wh-enp-01-panel')).toBeInTheDocument();
