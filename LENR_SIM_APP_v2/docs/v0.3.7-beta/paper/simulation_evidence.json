@@ -138,7 +138,7 @@
   "manuscript_refresh": {
     "id": "theory_paper_eq_open_peer_review",
     "date": "2026-11-11",
-    "note": "EQ-OPEN Lean bounds peer-review language in Part 1 MD/TXT + PaperCrosswalk; PDF deferred; all EQ-OPEN-* OPEN; lenr_proved false; hydro\u2260nuclear"
+    "note": "EQ-OPEN Lean bounds peer-review language in Part 1 MD/TXT/TEX/PDF + PaperCrosswalk; all EQ-OPEN-* OPEN; lenr_proved false; hydro\u2260nuclear"
   },
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
@@ -154,7 +154,7 @@
     "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false",
     "2026-11-10 Theory Paper refresh: manuscript formats cite WS honesty + Pyyhti\u00e4 CR-39 confounder; prior PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-10-pyyhtia-cr39; no OPEN closures",
     "2026-11-11 multidisciplinary coherence: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; \u00a75.2 / UI claim-tier sync; no OPEN closures",
-    "2026-11-11 EQ-OPEN peer-review: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review; \u00a75A bound postures; no OPEN closures; PDF twin deferred"
+    "2026-11-11 EQ-OPEN peer-review: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review; \u00a75A bound postures; TEX/PDF rebuilt via build_pdf.sh; no OPEN closures"
   ],
   "formats": [
     ".md",
