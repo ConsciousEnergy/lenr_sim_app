@@ -1,11 +1,11 @@
 {
   "schema": "lenr-paper-simulation-evidence-v1",
   "train": "v0.3.7-beta",
-  "paper_revision": "2026-11-11-multidisciplinary-coherence",
-  "prior_paper_revision": "2026-11-10-pyyhtia-cr39-cite",
+  "paper_revision": "2026-11-11-eq-open-peer-review",
+  "prior_paper_revision": "2026-11-11-multidisciplinary-coherence",
   "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
   "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
-  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhtiä et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR.",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhti\u00e4 et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
   "open_ids": [
@@ -39,14 +39,14 @@
       "n_theory_runs": 10,
       "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
       "status": "on_dev",
-      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhtiä 2026 CR-39 cavitation confounder peer (pyyhtia2026). Model output only. Merged via #299."
+      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhti\u00e4 2026 CR-39 cavitation confounder peer (pyyhtia2026). Model output only. Merged via #299."
     },
     {
       "preset": "detector_weak_screen",
       "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/",
       "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/manifest.json",
       "status": "on_dev",
-      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only; literature peers include SPAWAR CR-39 + Pyyhtiä 2026 cavitation confounder. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
+      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only; literature peers include SPAWAR CR-39 + Pyyhti\u00e4 2026 cavitation confounder. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
     }
   ],
   "science_notes": [
@@ -81,24 +81,64 @@
     "formalization/lean/LenrFormal/PoissonSchrodinger.lean (EQ-PS-01/TOL continuum DEF; aspirational; #327)",
     "formalization/lean/LenrFormal/WeakInteraction.lean (EQ-EC-* Fermi G_F/\u03c3/Boltzmann identities; #332; \u2260 EQ-OPEN-EC-01 closure)",
     "formalization/lean/LenrFormal/Decision.lean (EQ-UQ-BF-01 ExpHom algebra honesty floors; #334; not empirical BF)",
-    "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure; OPEN table unchanged)"
+    "docs/FORMALIZATION/FORMAL_PROOF_STATUS.md (WH / OpenObligations non-closure; OPEN table unchanged)",
+    "formalization/lean/LenrFormal/MeVRemainderCaps.lean (EQ-WH-MEV-CAP-01; BOUNDED Q1; #356)",
+    "formalization/lean/LenrFormal/RadiationBounds.lean (EQ-WH-FC-02 / EQ-RAD-DET-01; #356)",
+    "formalization/lean/LenrFormal/RateBudget.lean (EQ-RATE-CAP-NC/GAP; #356)",
+    "formalization/lean/LenrFormal/YieldAccounting.lean (EQ-YIELD-ACCT-01; #350)"
   ],
   "ws_pack_landed": [
-    {"id": "theory_paper_subtitle", "pr": 326, "note": "Coupling is all you need subtitle rename"},
-    {"id": "fem_continuum_def", "pr": 327, "note": "EQ-PS-01/TOL aspirational continuum DEF"},
-    {"id": "collapse_bounds_deepen", "pr": 328, "note": "EQ-BBL-* clamp/UQ/RP domain bookkeeping"},
-    {"id": "detector_rad_honesty", "pr": 329, "note": "detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN"},
-    {"id": "overlap_wh_nbody", "pr": 330, "note": "Overlap DEF + WH/NBody FGR sharpening"},
-    {"id": "weight_surfaces", "pr": 331, "note": "THEORY_WEIGHT_SURFACES + detector_weak_screen inventory"},
-    {"id": "weak_interaction", "pr": 332, "note": "WeakInteraction.lean EQ-EC-* Fermi identities; EQ-OPEN-EC-01 stays OPEN"},
-    {"id": "assenbaum_domain", "pr": 333, "note": "EQ-ASSEN-DOM-01 screening domain honesty"},
-    {"id": "rate_uq_floors", "pr": 334, "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors; not empirical BF"}
+    {
+      "id": "theory_paper_subtitle",
+      "pr": 326,
+      "note": "Coupling is all you need subtitle rename"
+    },
+    {
+      "id": "fem_continuum_def",
+      "pr": 327,
+      "note": "EQ-PS-01/TOL aspirational continuum DEF"
+    },
+    {
+      "id": "collapse_bounds_deepen",
+      "pr": 328,
+      "note": "EQ-BBL-* clamp/UQ/RP domain bookkeeping"
+    },
+    {
+      "id": "detector_rad_honesty",
+      "pr": 329,
+      "note": "detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN"
+    },
+    {
+      "id": "overlap_wh_nbody",
+      "pr": 330,
+      "note": "Overlap DEF + WH/NBody FGR sharpening"
+    },
+    {
+      "id": "weight_surfaces",
+      "pr": 331,
+      "note": "THEORY_WEIGHT_SURFACES + detector_weak_screen inventory"
+    },
+    {
+      "id": "weak_interaction",
+      "pr": 332,
+      "note": "WeakInteraction.lean EQ-EC-* Fermi identities; EQ-OPEN-EC-01 stays OPEN"
+    },
+    {
+      "id": "assenbaum_domain",
+      "pr": 333,
+      "note": "EQ-ASSEN-DOM-01 screening domain honesty"
+    },
+    {
+      "id": "rate_uq_floors",
+      "pr": 334,
+      "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors; not empirical BF"
+    }
   ],
   "ws_pack_pending": [],
   "manuscript_refresh": {
-    "id": "theory_paper_multidisciplinary_coherence",
+    "id": "theory_paper_eq_open_peer_review",
     "date": "2026-11-11",
-    "note": "Coherence pass: claim-tier voice across academic/experimental/software; §5.2 contested correlations; Pyyhtiä beside Taleyarkhan/Mulnix/SPAWAR without nuclear overclaim; PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; no band changes; EQ-OPEN-* stay OPEN; lenr_proved false; no live ship"
+    "note": "EQ-OPEN Lean bounds peer-review language in Part 1 MD/TXT + PaperCrosswalk; PDF deferred; all EQ-OPEN-* OPEN; lenr_proved false; hydro\u2260nuclear"
   },
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
@@ -112,8 +152,9 @@
     "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false",
     "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)",
     "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false",
-    "2026-11-10 Theory Paper refresh: manuscript formats cite WS honesty + Pyyhtiä CR-39 confounder; prior PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-10-pyyhtia-cr39; no OPEN closures",
-    "2026-11-11 multidisciplinary coherence: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; §5.2 / UI claim-tier sync; no OPEN closures"
+    "2026-11-10 Theory Paper refresh: manuscript formats cite WS honesty + Pyyhti\u00e4 CR-39 confounder; prior PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-10-pyyhtia-cr39; no OPEN closures",
+    "2026-11-11 multidisciplinary coherence: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; \u00a75.2 / UI claim-tier sync; no OPEN closures",
+    "2026-11-11 EQ-OPEN peer-review: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review; \u00a75A bound postures; no OPEN closures; PDF twin deferred"
   ],
   "formats": [
     ".md",

@@ -49,7 +49,8 @@ const OpenChallengesSection = ({ embedded = false }) => {
         Working hypothesis <code>WH-ENP-01</code> (Lean <code>WorkingHypothesis</code>)
         is a coupled Hagelstein/TSC ledger with derived remainders; it does not
         discharge those obligations. Lean <code>OpenQuestionBounds</code> lemmas are
-        would-close-if only.
+        would-close-if only. Tip Lean bounds (#356) are BOUNDED / form- or class-DISPROVEN /
+        proved-GAP under stated assumptions — still not CLOSED.
       </Typography>
       <Stack
         direction="row"

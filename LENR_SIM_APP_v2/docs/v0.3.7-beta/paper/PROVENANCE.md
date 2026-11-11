@@ -12,6 +12,8 @@
 
 **2026-11-10 PDF submission build.** Pack `.tex` expanded from short skeleton → compileable full Part 1 manuscript via pandoc from the canonical MD (Part 1 only), academic `article` class template, XeLaTeX. Committed PDF ≈ 0.27 MB / ~40 pages. Does **not** close `EQ-OPEN-*`, set `lenr_proved`, or imply live ship / public flip.
 
+**2026-11-11 EQ-OPEN peer-review refresh.** Part 1 MD/TXT + Lean `PaperCrosswalk` synced to EQ-OPEN bound swarm honesty (#356/#350): §5A BOUNDED/form-/class-DISPROVEN/GAP language; methods epistemic map; `paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review`. PDF twin deferred to follow-up on same PR if rebuild tooling lags. Still **no** OPEN closures; `lenr_proved` false; hydro≠nuclear; no version-marker bump / live ship.
+
 **2026-11-11 multidisciplinary coherence pass.** Part 1 prose claim-tier voice aligned (academic + experimental + software): §5.2 retitled to reported/contested correlations; experimental vs modelled vs aspirational labels tightened; Pyyhtiä kept beside Taleyarkhan/Mulnix/SPAWAR without nuclear overclaim; Lean `paperRevision=v0.3.7-beta-2026-11-11-coherence`; formats list includes PDF. Still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship.
 
 ## Hard invariants
@@ -24,6 +26,7 @@
 - **2026-11-10 Theory Paper WS findings refresh:** Canonical MD + pack MD/TXT/TEX + Lean `PaperCrosswalk` revision tag synced to tip-`dev` honesty citations (WeakInteraction ≠ EC closure; detector UL/PRED ≠ RAD/RATE closure; Assenbaum domain; CollapseBounds clamp/UQ/RP/CR-cap; `EQ-UQ-BF-01` algebraic only; weights Approximate not posteriors; FEM DEF aspirational). No band changes; still **no** OPEN closures; `lenr_proved` false; no live Swarm ship / public flip / invites
 - **2026-11-10 Pyyhtiä CR-39 cavitation cite:** Adds `pyyhtia2026` (DOI 10.1016/j.jelechem.2026.120104) beside Taleyarkhan / Mulnix / SPAWAR CR-39 peers as electrolytic HER nanobubble cavitation / detector-confounder evidence; cavitation nuclear pathway remains **modelled enhancement / contested hydro**; still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship
 - **2026-11-10 PDF academic submission:** Full Part 1 PDF (+ expanded TEX, `academic.latex`, `build_pdf.sh`) added to this pack; Part 2 appendix excluded from PDF; honesty footnotes retained; still **no** OPEN closures
+- **2026-11-11 EQ-OPEN peer-review refresh:** §5A/abstract/methods/§6.1 cite Lean bounds from #356; all five OPEN; `lenr_proved` false; PDF may lag MD
 - **2026-11-11 multidisciplinary coherence pass:** Claim-tier narrative sync across MD/TXT/TEX/PDF/Lean/provenance/evidence + Theory Paper / Bubble Fusion UI drift; still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship
 - Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
