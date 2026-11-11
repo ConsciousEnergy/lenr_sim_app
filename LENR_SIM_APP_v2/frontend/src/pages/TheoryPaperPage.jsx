@@ -395,7 +395,9 @@ const TheoryPaperPage = () => {
                 Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum
                 tunneling enhancements—under a single model. Lattice-bubble interaction physics is integrated as
                 a <strong>modelled enhancement / contested hydro</strong> candidate environment—not as proof of
-                nuclear rates.
+                nuclear rates. Lean records non-closure / bounds under stated assumptions; it does{' '}
+                <strong>not</strong> prove LENR (<code>lenr_proved = false</code>). All five{' '}
+                <code>EQ-OPEN-*</code> obligations remain open.
               </Typography>
               <Typography variant="body1" paragraph>
                 In tandem, we detail mathematical tools under explicit claim tiers. Live public-beta numerics
