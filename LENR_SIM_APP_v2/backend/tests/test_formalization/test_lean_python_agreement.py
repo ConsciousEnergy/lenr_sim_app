@@ -421,6 +421,69 @@ def test_weak_interaction_anchors_agree_with_lean() -> None:
     assert -math.log10(sigma_m2) > lean_ceiling
 
 
+def test_ec_cm_budget_bound_anchors_agree_with_lean() -> None:
+    """EQ-OPEN-EC-BOUND-01 caps vs engine; BOUNDED only, Q4 stays OPEN."""
+    from app.physics_engine.open_question_details import (
+        DOUBLE_LAYER_STATED_MEV,
+        ELECTRON_CAPTURE_THRESHOLD_MEV,
+        build_electron_capture_question,
+        ElectronCaptureQuestionInput,
+    )
+    from app.physics_engine.unified_lenr_model.config import (
+        DEFAULT_DELTA_V_FALLBACK_V,
+        H2_WORK_FUNCTION_EV,
+        get_double_layer_potential,
+        get_material_work_function,
+    )
+
+    lean_path = LEAN_DIR / "WeakInteraction.lean"
+    lean = {
+        symbol: _evaluate_lean_integer(lean_path, symbol)
+        for symbol in (
+            "threshold_meV",
+            "cmBudgetLo_meV",
+            "cmBudgetHi_meV",
+            "doubleLayerLo_meV",
+            "doubleLayerHi_meV",
+            "workFunctionMaxLookup_meV",
+            "h2WorkFunction_meV",
+            "minConcentrationAtCmCap",
+        )
+    }
+    assert lean["threshold_meV"] == ELECTRON_CAPTURE_THRESHOLD_MEV
+    assert lean["doubleLayerLo_meV"] == DOUBLE_LAYER_STATED_MEV
+    assert lean["doubleLayerLo_meV"] == _scaled_python_integer(
+        DEFAULT_DELTA_V_FALLBACK_V, 1e3, "DEFAULT_DELTA_V_FALLBACK_V"
+    )
+    assert lean["h2WorkFunction_meV"] == _scaled_python_integer(
+        H2_WORK_FUNCTION_EV, 1e3, "H2_WORK_FUNCTION_EV"
+    )
+    lookup_materials = (
+        "palladium", "nickel", "titanium", "lithium", "graphite",
+        "carbon", "silicon_carbide", "zirconium", "iridium",
+    )
+    max_lookup_ev = max(get_material_work_function(m) for m in lookup_materials)
+    assert lean["workFunctionMaxLookup_meV"] == _scaled_python_integer(
+        max_lookup_ev, 1e3, "max lookup work function"
+    )
+    assert (lean["cmBudgetLo_meV"], lean["cmBudgetHi_meV"]) == (10_000, 100_000)
+    assert lean["doubleLayerHi_meV"] <= lean["cmBudgetHi_meV"] < lean["threshold_meV"]
+    assert lean["minConcentrationAtCmCap"] * lean["cmBudgetHi_meV"] == lean["threshold_meV"]
+
+    # Engine double-layer potentials for lookup materials at room temperature
+    # stay inside the Lean band (eV per electron == V for unit charge).
+    for material in lookup_materials:
+        delta_v_mev = get_double_layer_potential(material, 1e29, 300.0) * 1e3
+        assert lean["doubleLayerLo_meV"] <= delta_v_mev + 1e-9
+        assert delta_v_mev <= lean["doubleLayerHi_meV"]
+
+    q_ec = build_electron_capture_question(
+        ElectronCaptureQuestionInput(mode="two_body", rate_provenance={})
+    )
+    assert q_ec["status"] == "OPEN"
+    assert q_ec["occurrence_claimed"] is False
+
+
 def test_collapse_uq_percentiles_agree_with_lean() -> None:
     from app.physics_engine.collapse_uq import (
         COMPRESSION_RATIO_TOLERANCE,

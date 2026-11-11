@@ -40,7 +40,7 @@ lake build
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
 | `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01, EQ-BBL-RP-DOM-01, EQ-BBL-CR-CAP-01 | Pointwise clamp; literature ceilings; UQ defs; RP/KM domain; CR hard-core cap |
 | `PoissonSchrodinger` | EQ-PS-01, EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-TOL-01, EQ-PS-NONDEPLOY-01 | Continuum PS DEF parent + discrete residual / domain / tolerance / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
-| `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; **does not** close `EQ-OPEN-EC-01` |
+| `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01, EQ-OPEN-EC-BOUND-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; CM energy-budget deficit family (BOUNDED, form-DISPROVEN under AX caps); **does not** close `EQ-OPEN-EC-01` |
 
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
