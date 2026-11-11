@@ -91,3 +91,11 @@ Requires model for g.
 | Nucleation rate (ΔG*, θ) | Bubble population | Affects active volume |
 
 **Recommendation:** Implement bubble dynamics module; output P_max, T_max, τ. Use as modifier to P_threshold or separate f_cavitation. Do not add to f_screening or f_field to avoid double counting.
+
+## 8. Detector honesty peer (Pyyhtiä 2026)
+
+**Citation:** Pyyhtiä et al., *J. Electroanal. Chem.* 1013, 120104 (2026), DOI 10.1016/j.jelechem.2026.120104 (`pyyhtia2026`).
+
+**Finding:** Electrolytic HER nanobubble cavitation damages CR-39; pits are not reliable nuclear-track proof under gas evolution (SPAWAR-class confounder).
+
+**Resolution for this audit:** Cite as experimental cavitation / detector-confounder support. Do **not** retune nuclear-rate bands from CR-39 pit diameters; keep cavitation–nuclear coupling as modelled enhancement / contested hydro; `EQ-OPEN-RAD-01` stays OPEN.

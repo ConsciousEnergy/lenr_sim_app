@@ -40,7 +40,7 @@ That is compatible with keeping multi-body (`trapped_state` / TSC) **open** besi
 | Channel | Experiment | In formalism today | Honest gap |
 |---------|------------|--------------------|------------|
 | Laser | Letts & Cravens dual-beam ~670–685 nm on Pd-D; Lorentzian ~682 nm; EMP heat vs unstimulated | `letts_laser.py`; `when.stimulation.letts_laser` | Beat frequency → optical phonons is docstring-only, not in `calculate()` |
-| Acoustic / kinetic | Ultrasonic forcing; Minnaert / Bjerknes / streaming; RP + Keller–Miksis in bubble-lattice. Taleyarkhan-type nuclear claims **disputed EMP**. Huang 2024 **contested EMP** (below) | Paper §3.6; bubble-lattice; `when.stimulation_active` (acoustic/bubble) | Environmental **drive**, not a named TheoryModule |
+| Acoustic / kinetic | Ultrasonic forcing; Minnaert / Bjerknes / streaming; RP + Keller–Miksis in bubble-lattice. Taleyarkhan-type nuclear claims **disputed EMP**. Huang 2024 **contested EMP** (below). Pyyhtiä 2026 (`pyyhtia2026`) electrolytic CR-39 cavitation **detector confounder** (not nuclear proof) | Paper §3.2/§3.6; bubble-lattice; `when.stimulation_active` (acoustic/bubble) | Environmental **drive** + detector honesty; not a named TheoryModule |
 | Maser | No CMNS-class experimental track comparable to Letts | No `maser` module (correct) | Paper §2.8.1 “phonon maser” is an **analogy**. Do not invent a maser milestone |
 
 Do not multiply laser × acoustic enhancement factors.
@@ -70,6 +70,7 @@ Tags match [CLAIM_TAXONOMY.md](../FORMALIZATION/CLAIM_TAXONOMY.md): `EMP` empiri
 | Widom–Larsen ULM neutrons | SPEC | Tennfors 2013 critique in module refs | `widom_larsen.py` |
 | Hagelstein phonon–nuclear | SPEC | MeV-gap matrix element unconstrained (Q1) | `hagelstein_phonon.py` |
 | Taleyarkhan acoustic cavitation nuclear | disputed EMP | Highly disputed bubble-fusion claims | Timeline environment line only |
+| Pyyhtiä CR-39 electrolytic cavitation | contested (confounder) | HER nanobubble cavitation damages CR-39; confounds pit=nuclear | Paper §3.2; baselines `pyyhtia-cr39-cavitation-2026`; EQ-OPEN-RAD-01 stays OPEN |
 | Huang et al. 2024 water cavitation COP / ²²Ne | contested EMP | Editor’s note + Fomitchev COP/`m/z` critique. **Not** Miles ⁴He | Timeline + this doc; **not** a TheoryModule (`EQ-HUANG-EMP-01`) |
 | Fomitchev-Zamilov 2024 Ti-D cavitation neutrons | EMP | Author: spallation not ruled out | This register only |
 | Hydrino / Mills | excluded | Not CMNS nuclear; not modeled | None |

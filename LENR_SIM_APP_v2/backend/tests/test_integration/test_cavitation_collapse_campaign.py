@@ -52,6 +52,7 @@ def test_cavitation_collapse_pack_honesty_lock() -> None:
     assert "rayleigh_plesset" in manifest.get("dynamics_modes", [])
     assert "keller_miksis" in manifest.get("dynamics_modes", [])
     assert "taleyarkhan-sonofusion-2002" in manifest.get("literature_ids", [])
+    assert "pyyhtia-cr39-cavitation-2026" in manifest.get("literature_ids", [])
 
     experiments = [
         json.loads(line)

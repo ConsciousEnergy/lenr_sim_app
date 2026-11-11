@@ -283,7 +283,7 @@ export const HEURISTIC_OVERLAYS = {
     displayName: 'KG-RP harmonic locking',
     description:
       'Speculative cavitation diagnostic (Mulnix KG-RP): collapse-vs-drive locking ratio and detuning. Diagnostic overlay, not a rate driver.',
-    reference: 'Mulnix (2026) doi:10.5281/zenodo.19079074',
+    reference: 'Mulnix (2026) doi:10.5281/zenodo.19079074; Pyyhtiä et al. (2026) doi:10.1016/j.jelechem.2026.120104 (CR-39 cavitation confounder)',
   },
 };
 

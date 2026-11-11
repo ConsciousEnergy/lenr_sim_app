@@ -20,6 +20,7 @@
 - **2026-11-05 honesty sync:** cavitation–collapse labelled **modelled enhancement / contested hydro**; Lean clamp / non-closure language cited; still **no** OPEN closures
 - **2026-11-09 WS pack (0.3.9 public-testing):** FEM DEF / Overlap / CollapseBounds deepen / weight surfaces / Assenbaum / detector RAD / WeakInteraction / rate-UQ floors landed on `dev` (#326–#334) — identities, DEFs, and campaign inventory only; still **no** OPEN closures
 - **2026-11-10 Theory Paper WS findings refresh:** Canonical MD + pack MD/TXT/TEX + Lean `PaperCrosswalk` revision tag synced to tip-`dev` honesty citations (WeakInteraction ≠ EC closure; detector UL/PRED ≠ RAD/RATE closure; Assenbaum domain; CollapseBounds clamp/UQ/RP/CR-cap; `EQ-UQ-BF-01` algebraic only; weights Approximate not posteriors; FEM DEF aspirational). No band changes; still **no** OPEN closures; `lenr_proved` false; no live Swarm ship / public flip / invites
+- **2026-11-10 Pyyhtiä CR-39 cavitation cite:** Adds `pyyhtia2026` (DOI 10.1016/j.jelechem.2026.120104) beside Taleyarkhan / Mulnix / SPAWAR CR-39 peers as electrolytic HER nanobubble cavitation / detector-confounder evidence; cavitation nuclear pathway remains **modelled enhancement / contested hydro**; still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship
 - **2026-11-10 PDF academic submission:** Full Part 1 PDF (+ expanded TEX, `academic.latex`, `build_pdf.sh`) added to this pack; Part 2 appendix excluded from PDF; honesty footnotes retained; still **no** OPEN closures
 - Lean PROVED rows document identities / clamps / non-closure — they do **not** discharge scientific obligations
 
@@ -29,7 +30,7 @@
 |--------|------|
 | [`datasets/reviewer_packs/smoke/`](../../../datasets/reviewer_packs/smoke/) | CI smoke pack |
 | [`datasets/reviewer_packs/q_campaign_demo/`](../../../datasets/reviewer_packs/q_campaign_demo/) | Larger pinned campaign |
-| [`datasets/reviewer_packs/cavitation_collapse_campaign/`](../../../datasets/reviewer_packs/cavitation_collapse_campaign/) | Phase A cavitation/collapse bubble-lattice campaign (model output; EQ-OPEN-* stay OPEN) — **on `dev`** via #299 |
+| [`datasets/reviewer_packs/cavitation_collapse_campaign/`](../../../datasets/reviewer_packs/cavitation_collapse_campaign/) | Phase A cavitation/collapse bubble-lattice campaign (model output; Taleyarkhan contested + Pyyhtiä 2026 CR-39 confounder peers; EQ-OPEN-* stay OPEN) — **on `dev`** via #299 |
 | [`datasets/reviewer_packs/detector_weak_screen/`](../../../datasets/reviewer_packs/detector_weak_screen/) | WS7 detector/weak screen campaign pack (model output; weight surfaces Approximate/Aspirational; EQ-OPEN-* stay OPEN) — **on `dev`** via #331 |
 | [`formalization/predictions/campaign_invariants.json`](../../../../formalization/predictions/campaign_invariants.json) | Campaign invariant schema |
 | [`backend/app/physics_engine/collapse_uq.py`](../../../backend/app/physics_engine/collapse_uq.py) | Collapse Sobol UQ (modelled percentiles only) |
@@ -54,7 +55,7 @@ Do **not** treat these paths as laboratory evidence. Live links do not change cl
 | Overlap DEF | [`Overlap.lean`](../../../../formalization/lean/LenrFormal/Overlap.lean) | `EQ-OVERLAP-01/02` — \((r_0/a)^3\) skeleton; ensemble count ≠ nuclear rate (#330) |
 | FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean) | `EQ-PS-01` + `EQ-PS-TOL-01` — aspirational continuum sketch; **not** live FEM (#327) |
 | Assenbaum domain | [`EQ-ASSEN-DOM-01.yaml`](../../../../formalization/ir/equations/EQ-ASSEN-DOM-01.yaml) | Screening domain honesty; formula not claimed outside validity (#333) |
-| Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline | **on `dev`** via #329 — `detector_ul_not_proof`; **≠** `EQ-OPEN-RAD/RATE` closure |
+| Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline + Pyyhtiä 2026 CR-39 cavitation confounder (`pyyhtia2026`) | **on `dev`** via #329 (+ cite PR) — `detector_ul_not_proof`; **≠** `EQ-OPEN-RAD/RATE` closure |
 | WeakInteraction | [`WeakInteraction.lean`](../../../../formalization/lean/LenrFormal/WeakInteraction.lean) | **on `dev`** via #332 — Fermi \(G_F\)/σ/Boltzmann identities only; **≠** `EQ-OPEN-EC-01` closure |
 | Rate UQ floors | [`Decision.lean`](../../../../formalization/lean/LenrFormal/Decision.lean) ExpHom | **on `dev`** via #334 — `EQ-UQ-BF-01` algebra honesty only; **≠** empirical Bayes factor |
 | Formal proof status | [`FORMAL_PROOF_STATUS.md`](../../../../docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | WH / OpenObligations non-closure; OPEN table unchanged |

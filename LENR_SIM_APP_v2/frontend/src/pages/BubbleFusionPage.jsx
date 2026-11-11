@@ -556,6 +556,12 @@ const BubbleFusionPage = () => {
               exceed thousands of atmospheres. This phenomena, called sonoluminescence when light is emitted, 
               might create conditions suitable for nuclear fusion reactions under specific circumstances.
             </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Honesty: Taleyarkhan-class sonofusion nuclear claims remain disputed. Pyyhtiä et al. 2026
+              (DOI 10.1016/j.jelechem.2026.120104) support electrolytic nanobubble cavitation as a CR-39
+              damage / pit confounder — not proof of LENR rates. Collapse hydro here stays modelled
+              enhancement / contested hydro.
+            </Typography>
           </Paper>
         </Grid>
         

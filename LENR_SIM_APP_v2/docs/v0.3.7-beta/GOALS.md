@@ -40,3 +40,7 @@
 - Public SQL writes stay token-gated; SPA must not embed write tokens.
 - Schematic / local fallback must never look like validated engine output.
 - Do **not** bump `main` markers to `0.3.8-beta` except via a controlled promote PR from `dev`.
+
+### Cite note (RAD / cavitation)
+
+Pyyhtiä et al. 2026 (`pyyhtia2026`, DOI 10.1016/j.jelechem.2026.120104) — electrolytic HER nanobubble cavitation damages CR-39 / confounds pit=nuclear readings. Does **not** close `EQ-OPEN-RAD-01` or flip `lenr_proved`.

@@ -220,3 +220,6 @@ engines:
   beta_label: reference
   priority: P1
   rd_next: Keep EQ-OPEN-EC-01 OPEN; no Widom SPEC promotion; lenr_proved false
+
+# Literature honesty notes (cite-only; status unchanged)
+# EQ-OPEN-RAD-01 / ENG-BUBBLE-FUSION-01: Pyyhtiä et al. 2026 (pyyhtia2026) electrolytic CR-39 cavitation confounder; EQ-OPEN-* stay OPEN; lenr_proved false.

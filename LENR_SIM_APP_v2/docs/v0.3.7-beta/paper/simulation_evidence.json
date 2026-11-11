@@ -1,11 +1,11 @@
 {
   "schema": "lenr-paper-simulation-evidence-v1",
   "train": "v0.3.7-beta",
-  "paper_revision": "2026-11-10-ws-findings-refresh",
-  "prior_paper_revision": "2026-11-09-ws-pack-honesty",
+  "paper_revision": "2026-11-10-pyyhtia-cr39-cite",
+  "prior_paper_revision": "2026-11-10-ws-findings-refresh",
   "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
   "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
-  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. WS pack Lean DEF/clamp/domain honesty retained. 2026-11-10 refresh syncs manuscript prose across MD/TXT/TEX/Lean crosswalk only.",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhtiä et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
   "open_ids": [
@@ -39,14 +39,14 @@
       "n_theory_runs": 10,
       "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
       "status": "on_dev",
-      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
+      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhtiä 2026 CR-39 cavitation confounder peer (pyyhtia2026). Model output only. Merged via #299."
     },
     {
       "preset": "detector_weak_screen",
       "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/",
       "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/manifest.json",
       "status": "on_dev",
-      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
+      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only; literature peers include SPAWAR CR-39 + Pyyhtiä 2026 cavitation confounder. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
     }
   ],
   "science_notes": [
@@ -98,7 +98,7 @@
   "manuscript_refresh": {
     "id": "theory_paper_ws_findings_refresh",
     "date": "2026-11-10",
-    "note": "Canonical MD + pack MD/TXT/TEX + PaperCrosswalk revision tag cite tip-dev WS1–WS10 honesty; no band changes; EQ-OPEN-* stay OPEN; lenr_proved false; no live ship"
+    "note": "Canonical MD + pack MD/TXT/TEX/PDF + PaperCrosswalk cite Pyyhtiä 2026 (pyyhtia2026) CR-39 cavitation confounder beside Taleyarkhan/Mulnix/SPAWAR peers; no band changes; EQ-OPEN-* stay OPEN; lenr_proved false; no live ship"
   },
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
