@@ -142,7 +142,7 @@ def test_literature_grid_is_designed_not_cartesian() -> None:
     assert described["n_negative_controls"] == len(LITERATURE_NEGATIVE_CONTROLS)
     assert "Does not prove LENR" in described["note"]
     records = literature_records()
-    assert len(records) == 18
+    assert len(records) == 19
     miles = next(case for case in cases if case.get("literature_id") == "miles-1993")
     assert miles["claim_tag"] == "EMP"
     assert "EQ-OPEN-YIELD-01" in miles["open_question_ids"]
@@ -154,7 +154,7 @@ def test_literature_grid_is_designed_not_cartesian() -> None:
     literature_ids = {
         case.get("literature_id") for case in cases if case.get("literature_id")
     }
-    assert len(literature_ids) == 18
+    assert len(literature_ids) == 19
     assert "parkhomov-cd-wrapped-snm14-contested" in literature_ids
 
 
@@ -257,7 +257,7 @@ def test_iccf27_and_carbon_silicate_presets_are_designed() -> None:
     from app.campaign.parameter_map import parameter_map_count
     from app.data.dataset_io import literature_records
 
-    assert len(literature_records()) == 18
+    assert len(literature_records()) == 19
     n_iccf = campaign_size("iccf27_grid")
     assert n_iccf == iccf27_grid_count()
     assert 6 <= n_iccf <= 16

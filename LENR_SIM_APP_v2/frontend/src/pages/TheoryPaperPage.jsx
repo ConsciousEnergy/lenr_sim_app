@@ -118,7 +118,7 @@ const TheoryPaperPage = () => {
                 variant="outlined"
               />
               <Chip
-                label="Date: 2026-02-14 (revised 2026-09-25, v0.3.7-beta)"
+                label="Date: 2026-02-14 (revised 2026-11-11, v0.3.7-beta)"
                 size="small"
                 variant="outlined"
                 data-testid="manuscript-revision-chip"
@@ -129,13 +129,15 @@ const TheoryPaperPage = () => {
             <Chip label="Established Physics" size="small" color="success" variant="outlined" />
             <Chip label="Empirical LENR Correlation" size="small" color="warning" variant="outlined" />
             <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
+            <Chip label="Modelled / Contested Hydro" size="small" color="info" variant="outlined" />
+            <Chip label="Aspirational" size="small" color="default" variant="outlined" />
           </Stack>
 
           <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }} data-testid="app-manuscript-version-map">
             <AlertTitle><strong>App / manuscript version map</strong></AlertTitle>
             <Typography variant="body2">
               Hosted application build: <strong>{APP_VERSION}</strong>. This manuscript revision
-              label remains <strong>v0.3.7-beta (revised 2026-09-25)</strong> — cite both when
+              label remains <strong>v0.3.7-beta (revised 2026-11-11)</strong> — cite both when
               reporting results; the labels are paired for compatibility, not identical trains.
               Do not treat the manuscript chip as the live app version.
             </Typography>
@@ -391,17 +393,20 @@ const TheoryPaperPage = () => {
                 comprehensive theoretical and mathematical framework. This paper aims to unify major theoretical
                 elements—including Rydberg Matter (RM), delocalized interface electrons, double-layer Quantum
                 Electrodynamics (QED) effects, Casimir effect, the Oppenheimer-Phillips process, and quantum
-                tunneling enhancements—under a single model.
+                tunneling enhancements—under a single model. Lattice-bubble interaction physics is integrated as
+                a <strong>modelled enhancement / contested hydro</strong> candidate environment—not as proof of
+                nuclear rates.
               </Typography>
               <Typography variant="body1" paragraph>
                 In tandem, we detail mathematical tools under explicit claim tiers. Live public-beta numerics
                 center on WKB/Gamow tunneling and approximate Rayleigh–Plesset / Keller–Miksis collapse;
                 Poisson–Schrödinger coupling and finite-element continuum analysis remain{' '}
                 <strong>aspirational research methods</strong> (not deployed solvers). WKB-path model
-                results predict tunneling enhancements of 10³ to 10⁵, while experimental reports include
-                isotopic shifts, neutron signals, and measurable excess heat under disputed reproducibility.
-                This work proposes a reproducible, claim-tiered methodology for LENR research; scaling to
-                practical energy applications remains contingent on independent experimental validation.
+                results explore a tunneling-enhancement sensitivity band of 10³ to 10⁵ (not a first-principles
+                prediction), while experimental reports include isotopic shifts, neutron signals, and measurable
+                excess heat under disputed reproducibility. This work proposes a reproducible, claim-tiered
+                methodology for LENR research; practical energy applications remain a permanent non-goal until
+                independent experimental validation closes the OPEN obligations.
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -776,6 +781,17 @@ const TheoryPaperPage = () => {
                 </Typography>
               </Alert>
 
+              <Alert severity="info" sx={{ mt: 2 }} data-testid="theory-paper-methods-bubble-collapse">
+                <AlertTitle><strong>3.2 Bubble Collapse Dynamics</strong> — modelled / contested hydro</AlertTitle>
+                <Typography variant="body2">
+                  Sonofusion is the in-dev Bubble Fusion feature (ENG-BUBBLE-FUSION-01; existing engines
+                  only). Rayleigh–Plesset / Keller–Miksis trajectories and collapse UQ are companion-software
+                  sensitivity explorations. Taleyarkhan-class nuclear claims remain disputed; Pyyhtiä et al.
+                  2026 cite electrolytic HER nanobubble cavitation as a CR-39 pit confounder beside
+                  Mulnix / SPAWAR peers—not LENR-rate proof. EQ-OPEN-* stay OPEN; lenr_proved stays false.
+                </Typography>
+              </Alert>
+
               <Alert severity="info" sx={{ mt: 2 }}>
                 <AlertTitle><strong>Non-Equilibrium Thermodynamics</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
                 <Typography variant="body2">
@@ -797,13 +813,13 @@ const TheoryPaperPage = () => {
             </AccordionDetails>
           </Accordion>
 
-          {/* Section 4: Experimental Validation */}
+          {/* Section 4: Experimental Context and Reported Correlations */}
           <Accordion expanded={expandedSection === 'section4'} onChange={handleChange('section4')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ScienceIcon color="primary" />
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  4. Experimental Validation
+                  4. Experimental Context and Reported Correlations
                 </Typography>
               </Box>
             </AccordionSummary>
@@ -1069,11 +1085,13 @@ const TheoryPaperPage = () => {
 
           <Accordion expanded={expandedSection === 'extended'} onChange={handleChange('extended')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h5">6. Extended Theoretical Models</Typography>
+              <Typography variant="h5">6. Conclusion &amp; Extended Theoretical Models</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" paragraph>
-                Beyond the core mechanisms, the workbench registers additional peer-reviewed LENR
+                Manuscript §6 concludes the claim-tiered framework and points at Lean mechanized
+                consistency (§6.1): identities / clamps / non-closure only — not nature proof.
+                Beyond the core mechanisms, the workbench also registers additional peer-reviewed LENR
                 hypotheses as pluggable <code>TheoryModule</code> ids (including conventional controls
                 and nulls). Modules share experiment inputs for comparative scoring — this is a
                 comparative scientific workbench, not an endorsement of contested mechanisms.
@@ -1203,6 +1221,12 @@ const TheoryPaperPage = () => {
                 detuning, and dimensionless compression/Mach invariants without altering the collapse dynamics or
                 reaction-rate magnitude. Surfaced on <code>/unified-theory</code> (Results tab). <em>Claim tier:
                 speculative_exploratory.</em>
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Detector honesty peer: Pyyhtiä et al. 2026 (<code>pyyhtia2026</code>, DOI 10.1016/j.jelechem.2026.120104)
+                show electrolytic HER nanobubble cavitation damages CR-39 and confounds pit=nuclear SPAWAR-class
+                interpretations. Cite beside Mulnix / Taleyarkhan cavitation literature; does not prove LENR or
+                close EQ-OPEN-RAD-01. Collapse hydro remains modelled enhancement / contested hydro.
               </Typography>
 
               <Typography variant="h6" sx={{ mt: 2, color: 'primary.main' }}>6.13 Shell-Structure Nucleon Pairing (Nguyen et al., Nature 2026)</Typography>

@@ -124,9 +124,11 @@
 10. [ ] Check P_quantum term in RP equation: physical origin and magnitude
 11. [ ] How does cavitation enter R = n²⟨σv⟩ f P_threshold? (direct f_cavitation vs trigger P_threshold)
 
+12. [ ] Account for Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104; `pyyhtia2026`): electrolytic HER nanobubble cavitation damages CR-39 and confounds pit=nuclear SPAWAR-class readings — detector honesty peer beside Taleyarkhan / sonoluminescence literature; not LENR-rate proof.
+
 **Output format:** Return {claim, recomputed_value, plausible, rate_equation_usage}.
 
-**Pass Criteria:** Bubble collapse physics consistent with established sonoluminescence literature. ENC model identified as speculative with explicit constraints needed.
+**Pass Criteria:** Bubble collapse physics consistent with established sonoluminescence literature; CR-39 electrolytic cavitation confounder (Pyyhtiä 2026) acknowledged. ENC model identified as speculative with explicit constraints needed.
 
 ---
 

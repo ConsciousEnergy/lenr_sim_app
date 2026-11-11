@@ -1,0 +1,91 @@
+\documentclass[11pt,a4paper]{article}
+
+% Submission-oriented academic preamble (XeLaTeX; clean article class)
+\usepackage[margin=1in]{geometry}
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}
+\setsansfont{Latin Modern Sans}
+\setmonofont[Scale=0.90]{Latin Modern Mono}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{enumitem}
+% xurl helps \url/\href; body paths use explicit \allowbreak via build_pdf.sh
+\usepackage{xurl}
+\urlstyle{tt}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdftitle={A Unified Theoretical and Mathematical Framework for LENR},
+  pdfauthor={Diadon Acs}
+}
+
+% Manuscript headings already carry Part-1 numbers (1, 1.1, …).
+\setcounter{secnumdepth}{-1}
+
+% Prefer wrapping long identifiers/paths over margin overflow.
+\tolerance=2500
+\setlength{\emergencystretch}{4em}
+\hbadness=10000
+
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{1.2em}
+\setlist{nosep,leftmargin=*}
+\onehalfspacing
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\title{$title$$if(subtitle)$\\\large\textit{$subtitle$}$endif$}
+$if(author)$
+\author{$for(author)$$author$$sep$ \\ $endfor$}
+$endif$
+$if(date)$
+\date{$date$}
+$endif$
+
+\begin{document}
+\maketitle
+
+$if(institute)$
+\begin{center}
+\small $institute$
+\end{center}
+$endif$
+
+$if(contributors)$
+\begin{center}
+\footnotesize
+$contributors$
+\end{center}
+\vspace{0.5em}
+$endif$
+
+\begin{abstract}
+$abstract$
+\end{abstract}
+
+\noindent\textit{Keywords:} $for(keywords)$$keywords$$sep$; $endfor$.
+
+\vspace{0.75em}
+\noindent\footnotesize
+\textbf{Honesty footnotes.}
+\texttt{lenr\_proved} remains false.
+All five \texttt{EQ-OPEN-*} obligations remain OPEN
+(\texttt{EQ-OPEN-MEV-01}, \texttt{EQ-OPEN-RAD-01}, \texttt{EQ-OPEN-RATE-01},
+\texttt{EQ-OPEN-EC-01}, \texttt{EQ-OPEN-YIELD-01}).
+Cavitation--collapse is modelled enhancement / contested hydro only.
+No live ship / public flip is implied by this archival PDF.
+\normalsize
+
+$body$
+
+\end{document}

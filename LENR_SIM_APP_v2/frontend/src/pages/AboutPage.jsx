@@ -22,7 +22,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { APP_VERSION } from '../config/version';
 
 /** Manuscript chip on Theory Paper — do not invent a newer paper revision here. */
-const MANUSCRIPT_REVISION_LABEL = 'v0.3.7-beta (revised 2026-09-25)';
+const MANUSCRIPT_REVISION_LABEL = 'v0.3.7-beta (revised 2026-11-11)';
 
 const AboutPage = () => {
   return (

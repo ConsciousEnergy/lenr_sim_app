@@ -52,6 +52,7 @@ model assumption).
 | tennfors2013 | doi:10.1140/epjp/i2013-13015-3 | E. Tennfors, critique of Widom-Larsen, Eur. Phys. J. Plus 128, 15 (2013). |
 | widomlarsen2006 | arXiv:nucl-th/0608059 | A. Widom, L. Larsen, ultra-low-momentum neutron catalyzed reactions (2006). |
 | mulnix2026 | doi:10.5281/zenodo.19079074 | D. Mulnix, "A Unified Structural Theory of the Hybrid Klein-Gordon / Rayleigh-Plesset System" (2026). |
+| pyyhtia2026 | doi:10.1016/j.jelechem.2026.120104 | K. Pyyhtiä et al., "Investigation of CR-39 damaging mechanisms in electrochemical environments," J. Electroanal. Chem. 1013, 120104 (2026). Electrolytic cavitation / CR-39 confounder; not LENR proof. |
 | nguyen2026 | doi:10.1038/s41586-026-10616-2 | D. Nguyen et al., "Nuclear shell structure governs short-range nucleon pairing," Nature (2026). |
 | floquetwkb2026 | doi:10.14293/PR2199.002776.v1 | "Electro-Mechanically Enhanced Lattice Confinement Fusion via Resonant THz-Driven Phonon Modulation (Floquet-WKB)" (2026). |
 | casimir1948 | — | H. B. G. Casimir, Proc. K. Ned. Akad. Wet. 51, 793 (1948). |

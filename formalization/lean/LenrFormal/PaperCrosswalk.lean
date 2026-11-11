@@ -34,7 +34,7 @@ There is no `theorem lenr_occurs`.
 namespace LenrFormal.PaperCrosswalk
 
 /-- Paper revision tag for this crosswalk. -/
-def paperRevision : String := "v0.3.7-beta-2026-09-25"
+def paperRevision : String := "v0.3.7-beta-2026-11-11-coherence"
 
 /-- Companion manuscript path (repo-relative). -/
 def canonicalPaperPath : String :=
@@ -54,9 +54,9 @@ def openObligationIds : List String :=
 
 /-- Section → primary Lean module name (documentation strings). -/
 def sectionModuleMap : List (String × String) :=
-  [ ("§2.1 Rydberg", "LenrFormal.Rydberg")
-  , ("§2.2 Overlap / ensemble count", "LenrFormal.Overlap")
-  , ("§2.4 Field / double-layer", "LenrFormal.Field")
+  [ ("§2.1 Rydberg (speculative / exploratory)", "LenrFormal.Rydberg")
+  , ("§2.2 Overlap / ensemble count (modelled)", "LenrFormal.Overlap")
+  , ("§2.3 Field / double-layer QED (speculative)", "LenrFormal.Field")
   , ("§2.4 weak / Fermi G_F / σ / Boltzmann EC bounds", "LenrFormal.WeakInteraction")
   , ("§2.5 Casimir", "LenrFormal.Casimir")
   , ("§2.8 / Gamow tunneling", "LenrFormal.Gamow")
@@ -66,13 +66,14 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.1 / ENG-ASPIRATIONAL-FEM-01 Poisson–Schrödinger residuals", "LenrFormal.PoissonSchrodinger")
   , ("§3.1 tolerance axiom EQ-PS-TOL-01", "LenrFormal.PoissonSchrodinger")
   , ("§3.1 aspirational non-deployment honesty", "LenrFormal.PoissonSchrodinger")
-  , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps", "LenrFormal.CollapseBounds")
+  , ("§3.2 / ENG-BUBBLE-FUSION-01 collapse clamps (modelled / contested hydro)", "LenrFormal.CollapseBounds")
   , ("§3.2 collapse UQ percentiles (DEF)", "LenrFormal.CollapseBounds")
   , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
   , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
 
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
+  , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
   , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")

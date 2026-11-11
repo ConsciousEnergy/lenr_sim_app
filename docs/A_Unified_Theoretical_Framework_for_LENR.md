@@ -4,8 +4,14 @@
 
 **Authors:** Diadon Acs (lead, Conscious Energies); contributing Autonomous Intelligences: LENR-ARA/GPT-4, GPT-5.2, Sonnet 4.5, Sonnet 4.6, Opus 4.5, Opus 4.6, Opus 4.8, Gemini 2.5, Gemini 3.0, Grok 4.6, Composer (Cursor)
 
-Date: 2026-02-14 (revised 2026-11-05, honesty sync; prior 2026-09-25, v0.3.7-beta)
+Date: 2026-02-14 (revised 2026-11-11, multidisciplinary coherence pass; prior 2026-11-10 Pyyhtiä CR-39 cite + WS findings refresh; 2026-11-05 honesty sync; 2026-09-25, v0.3.7-beta)
 Organization: Conscious Energies | www.conscious.energy
+
+**Revision note (2026-11-11, multidisciplinary coherence pass).** Academic + experimental + software claim-tier voice aligned across Part 1: §5.2 retitled away from “Validation”; experimental reports vs modelled hydro vs aspirational FEM labeled explicitly; Pyyhtiä 2026 kept beside Taleyarkhan / Mulnix / SPAWAR without nuclear overclaim; §1.2 / §6 future directions de-emphasize commercial scaling (GOALS permanent non-goal). No quantitative band changes; `lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN. No version-marker bump / live Swarm ship / public flip.
+
+**Revision note (2026-11-10, Pyyhtiä CR-39 cavitation cite).** Adds Pyyhtiä et al. (*J. Electroanal. Chem.* 1013, 120104; DOI 10.1016/j.jelechem.2026.120104; key `pyyhtia2026`) beside Taleyarkhan / Mulnix / SPAWAR CR-39 peers: electrolytic HER nanobubble cavitation damages CR-39 and confounds pit=nuclear interpretations. Cavitation–collapse nuclear pathway remains **modelled enhancement / contested hydro**. Does **not** close any `EQ-OPEN-*` or set `lenr_proved`. No version-marker bump / live ship.
+
+**Revision note (2026-11-10, WS findings refresh).** Manuscript prose/math citations synced to tip-`dev` WS1–WS10 honesty after #326–#334: subtitle **Coupling is all you need**; WeakInteraction Fermi \(G_F\)/σ/Boltzmann identities ≠ `EQ-OPEN-EC-01` closure; neutron detector UL / PRED-08/09/10 falsifiers ≠ RAD/RATE closure; Assenbaum domain `formula_claimed=false` outside validity; CollapseBounds clamp/UQ/RP-domain/CR-cap only; rate UQ `EQ-UQ-BF-01` ExpHom algebra ≠ empirical Bayes; theory weights Approximate/Aspirational (not lab posteriors); Overlap DEF ensemble ≠ rate; FEM continuum DEF aspirational (`EQ-PS-01`/`EQ-PS-TOL-01`). No quantitative band changes; `lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN. No live Swarm ship / public flip / invites.
 
 **Revision note (2026-11-05, Phase D honesty sync).** Labels cavitation–collapse (ENC / bubble-lattice hydro) as **modelled enhancement / contested hydro**—not an empirically validated nuclear pathway. Points §3.2 / §3.8 / §6.1 at companion-software campaign + collapse UQ evidence and Lean clamp / non-closure language (`CollapseBounds` / `EQ-BBL-LIM-01`, WH-ENP-01 non-closure). No quantitative band changes; `lenr_proved` remains false; all `EQ-OPEN-*` stay OPEN. No Theory Paper frontend changes in this sync.
 
@@ -31,22 +37,22 @@ Low-Energy Nuclear Reactions (LENR) refer to nuclear processes hypothesized to o
 
 * **Anomalous Heat Generation:** Measured energy outputs exceeding what chemical processes alone can produce \[1,4\].  
 * **Isotopic Transmutations:** Conversion of elements without the high-energy nuclear by-products usually observed \[2,5\].  
-* **Minimal Radiation:** Comparatively negligible ionizing radiation despite evidence of nuclear-scale events \[3,6\].
+* **Minimal Radiation:** Comparatively negligible ionizing radiation despite *reported* nuclear-scale heat / isotopic correlations \[3,6\]—reports that remain disputed and do not by themselves establish nuclear events (`EQ-OPEN-RAD-01` stays OPEN).
 
 However, the field faces two major hurdles:
 
 * **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[3,15\].  
 * **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena \[18,22\].
 
-Given LENR’s potential for clean, virtually limitless energy, resolving these issues remains a priority for both scientific understanding and practical commercialization.
+Given LENR’s contested energy relevance, resolving these issues remains a priority for scientific understanding. Energetic / practical freedom outcomes stay a permanent non-goal of the companion software governance (see `GOALS.md`).
 
 ### **1.2 Objectives**
 
 This paper aims to:
 
-1. **Unify Diverse Phenomena:** Integrate Rydberg Matter (RM), halo electrons, double-layer QED, Casimir forces, the Oppenheimer-Phillips process, and quantum tunneling enhancements into a single LENR model.  
-2. **Quantify Mechanisms:** Use detailed mathematical formulations, computational simulations, and statistical analysis to quantify each key mechanism.  
-3. **Propose Reproducible Protocols:** Offer experimental procedures and theoretical guidelines that can be scaled for industrial or commercial LENR applications.
+1. **Unify Diverse Phenomena:** Integrate Rydberg Matter (RM), halo electrons, double-layer QED, Casimir forces, the Oppenheimer-Phillips process, and quantum tunneling enhancements into a single LENR **hypothesis stack** under explicit claim tiers.  
+2. **Quantify Mechanisms:** Use detailed mathematical formulations, computational simulations, and statistical analysis to quantify each key mechanism as **modelled** sensitivity exploration unless an independent experimental constraint is cited.  
+3. **Propose Reproducible Protocols:** Offer experimental procedures and theoretical guidelines that improve laboratory reproducibility and independent falsification—not industrial or commercial LENR applications.
 
 ---
 
@@ -54,12 +60,14 @@ This paper aims to:
 
 ### **2.1 Rydberg Matter (RM)**
 
+**Claim tier:** speculative / exploratory mechanism (lattice–RM hypothesis stack). Lean `LenrFormal.Rydberg` locks the \(n=10\) energy identity only—not a nature proof that RM mediates LENR.
+
 **Definition:** Rydberg Matter is a phase in which atoms or molecules occupy highly excited electronic states with extended orbitals \[21\].
 
 1. **Role in LENR**
 
-   * **Enhanced Energy Localization:** Extended orbitals allow more efficient concentration of energy, effectively lowering the Coulomb barrier for nuclear processes.  
-   * **Formation Sites:** Commonly formed at metal–hydrogen interfaces during electrolysis or near catalytic surfaces in gaseous systems under specific pressures and temperatures.  
+   * **Enhanced Energy Localization:** Extended orbitals allow more efficient concentration of energy, *hypothesized* to lower the Coulomb barrier for nuclear processes.  
+   * **Formation Sites:** Commonly proposed at metal–hydrogen interfaces during electrolysis or near catalytic surfaces in gaseous systems under specific pressures and temperatures.  
    *   
 2. **Energy Calculation**  
     For an atom at principal quantum number \( n = 10 \):
@@ -73,6 +81,8 @@ This paper aims to:
 ---
 
 ### **2.2 Delocalized Interface Electrons (Extended Electronic States)**
+
+**Claim tier:** modelled / exploratory construct. Lean `LenrFormal.Overlap` records ensemble-count bookkeeping (`EQ-OVERLAP-01/02`); ensemble product ≠ nuclear rate.
 
 **Definition:** In metallic hydrides and at metal-hydrogen interfaces, electrons can occupy extended or delocalized quantum states with wavefunctions that have non-negligible amplitude at nuclear length scales. These "extended electronic states" arise from band-structure effects, surface states, and hybridization in the condensed matter environment. (Citation correction: an earlier draft cited reference \[12\] (Meng et al. 2013) here, but that work concerns *halo nuclei*—nuclei with weakly bound nucleons extending beyond the nuclear core—and does **not** support a claim about electrons. Reference \[12\] is therefore *not* cited as evidence for delocalized interface electrons; this concept rests instead on standard condensed-matter band-structure and surface-state physics, and is treated here as a model construct whose overlap magnitude is bounded in Section 5.1 rather than asserted from \[12\].)
 
@@ -111,6 +121,8 @@ This paper aims to:
 ---
 
 ### **2.3 Double-Layer QED Effects**
+
+**Claim tier:** speculative / exploratory QED–lattice coupling. Lean `LenrFormal.Field` / `ScaleQED` document identities and negative controls; bulk HE vacuum polarisation remains a negative control (`EQ-QED-HE-NEG-01`), not LENR proof.
 
 **Definition:** Charge separation at electrolyte or lattice interfaces can form high electric fields in thin double layers \[23,33\].
 
@@ -221,7 +233,7 @@ This threshold means free electrons at thermal energies cannot drive this reacti
     
     where \( n_p \) and \( n_e \) are the proton and electron number densities and the thermal average \( \langle \sigma v \rangle \) accounts for the energy threshold. For standard thermal electrons, the Boltzmann suppression factor \( \exp(-\Delta E / k_B T) \sim \exp(-0.782 \text{ MeV} / 0.026 \text{ eV}) \sim e^{-3 \times 10^{4}} \) renders this rate effectively zero, underscoring that some non-equilibrium or collective mechanism is required if this process is to contribute meaningfully to LENR.
 
-* **Implications:** The extreme smallness of the weak-interaction cross-section and the energy threshold make neutron formation via simple electron capture negligible under ordinary conditions. Any viable LENR model invoking this pathway must explain how the effective threshold is overcome—whether through coherent many-body effects, mass renormalization, or other non-equilibrium mechanisms.
+* **Implications:** The extreme smallness of the weak-interaction cross-section and the energy threshold make neutron formation via simple electron capture negligible under ordinary conditions. Any viable LENR model invoking this pathway must explain how the effective threshold is overcome—whether through coherent many-body effects, mass renormalization, or other non-equilibrium mechanisms. Companion Lean `LenrFormal.WeakInteraction` / IR `EQ-EC-THRESH/GF/SIGMA/RATE-01` and ledger `ENG-WEAK-01` lock PDG \(G_F\), a \(\sigma\lesssim 10^{-47}\,\mathrm{m}^{2}\) envelope, and a Boltzmann-exponent floor as **identities / bounds only**—they do **not** discharge `EQ-OPEN-EC-01`, assert a condensed-matter EC path, or flip `lenr_proved`.
 
 ---
 
@@ -497,9 +509,9 @@ Here \( E \) is the energy eigenvalue (`E_eigen`), not the electric field (`E_fi
 
 ### **3.2 Bubble Collapse Dynamics**
 
-**Honesty label:** Cavitation–collapse in this framework is **modelled enhancement / contested hydro**. Rayleigh–Plesset / Keller–Miksis trajectories, surface-proximity factors, and collapse UQ percentiles are companion-software sensitivity explorations under claim-tier governance. They are **not** laboratory proof of nuclear rates, **not** a discharge of any `EQ-OPEN-*`, and **not** a physical-necessity theorem. Lean `LenrFormal.CollapseBounds` encodes only the pointwise clamp algebra `EQ-BBL-LIM-01` (\(\min(\mathrm{raw},\mathrm{bound})\)); WH-ENP-01 / OpenObligations prove **non-closure** implications under stated deficits—not affirmative LENR (`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`).
+**Honesty label:** Cavitation–collapse in this framework is **modelled enhancement / contested hydro**. Rayleigh–Plesset / Keller–Miksis trajectories, surface-proximity factors, and collapse UQ percentiles are companion-software sensitivity explorations under claim-tier governance. They are **not** laboratory proof of nuclear rates, **not** a discharge of any `EQ-OPEN-*`, and **not** a physical-necessity theorem. Lean `LenrFormal.CollapseBounds` encodes only clamp / bound / UQ / RP-domain / hard-core CR-cap bookkeeping (`EQ-BBL-LIM-01`, `EQ-BBL-BOUND-01`, `EQ-BBL-UQ-01`, `EQ-BBL-RP-DOM-01`, `EQ-BBL-CR-CAP-01`)—including the pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\)—not cavitation-dynamics theorems that prove LENR. WH-ENP-01 / OpenObligations prove **non-closure** implications under stated deficits—not affirmative LENR (`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`).
 
-**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
+**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Pyyhtiä et al. (2026) (`pyyhtia2026`) provide OA experimental support that HER-driven nanobubble cavitation damages CR-39 and confounds SPAWAR-class pit=nuclear detector interpretations (pits without Pd and/or D₂O under suitable geometry; HIFU control; shallow polymer pits vs deep α tracks)—**not** LENR-rate proof; `EQ-OPEN-RAD-01` stays OPEN. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
 
 1. **Modified Rayleigh–Plesset Equation** (incompressible / low-Mach baseline):
 \[
@@ -660,13 +672,16 @@ where \( UA \) is the overall heat transfer coefficient-area product.
 Pinned, version-controlled model runs—not laboratory experiments—anchor the quantitative claims in this revision. Authoritative evidence lives under `LENR_SIM_APP_v2/datasets/reviewer_packs/` and the paper multi-format pack provenance file (`PROVENANCE.md`).
 
 1. **Reviewer packs:** `smoke/` (CI smoke) and `q_campaign_demo/` (larger campaign: 150 experiments / 132 theory runs in the recorded manifest). Schema `lenr-reviewer-pack-v1`. Disclaimer on every pack: model output only; additional runs do **not** raise empirical claim tiers or close `EQ-OPEN-*`.
-2. **Cavitation / collapse campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/` (Phase A; on `dev` via #299). Model-only bubble-lattice host×loading×drive×dynamics_mode cells with collapse UQ; complements engine modules (`collapse_uq.py`, RP/KM paths). Contested Taleyarkhan sonofusion literature is an anchor, not laboratory proof.
-3. **Campaign + UQ / avenue ranking:** Rate and collapse UQ feed Bayesian-style avenue ranking at `LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md` (Phase B; on `dev` via #301). Ranking prioritizes which lab avenues look informative next; it does **not** set `lenr_proved` or close OPEN ids.
-4. **Campaign invariants:** `formalization/predictions/campaign_invariants.json` and pack-embedded invariants enforce `open_questions.lenr_proved = false`, the five OPEN IDs, two-body \(\log_{10}N_{\mathrm{events}}\approx-40\), and `contract_version = v0.3.7-beta-science-gate-1`.
-5. **Export envelope:** `/api/unified/export` uses `lenr-run-export-v1` with claim-tier / provenance fields required by the data contract.
-6. **Paper benchmarks:** `backend/tests/test_paper_benchmarks/` locks selected theory numeric/regime targets in CI.
-7. **Lean clamp / non-closure (not closure):** `CollapseBounds` (`EQ-BBL-LIM-01`) and WH / OpenObligations non-closure theorems constrain bookkeeping; they do not discharge `EQ-OPEN-*`. Draft closure/falsification criteria (still OPEN) live at `LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md` (Phase F; on `dev` via #297).
-8. **Non-claims:** Larger \(N\) in a campaign does not convert speculative mechanism labels into empirical validation. Maturity axes (`model_fidelity`, `empirical_support`, `claim_tier`) remain independent (`PHYSICS_MATURITY_LEDGER.md`).
+2. **Cavitation / collapse campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/` (Phase A; on `dev` via #299). Model-only bubble-lattice host×loading×drive×dynamics_mode cells with collapse UQ; complements engine modules (`collapse_uq.py`, RP/KM paths). Contested Taleyarkhan sonofusion literature is an anchor, not laboratory proof. Pyyhtiä et al. 2026 (`pyyhtia2026`) sits alongside as an electrolytic CR-39 cavitation / detector-confounder peer—not a nuclear-rate proof.
+3. **Detector / weak screen campaign pack:** `LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/` (WS7; on `dev` via #331). Model-only cells for detector/weak/screening inventory; dual `score`/`final_score` honesty preserved; does **not** close `EQ-OPEN-*` or set `lenr_proved`.
+4. **Campaign + UQ / avenue ranking:** Rate and collapse UQ feed decision-support avenue ranking at `LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md` (Phase B; on `dev` via #301). Ranking prioritizes which lab avenues look informative next; it does **not** set `lenr_proved` or close OPEN ids. Companion Lean `Decision` / IR `EQ-UQ-BF-01` ExpHom identities are **algebraic honesty floors only**—not empirical Bayes factors or laboratory posteriors.
+5. **Theory weight surfaces:** `LENR_SIM_APP_v2/docs/v0.3.9-beta/THEORY_WEIGHT_SURFACES.md` (WS7; on `dev` via #331) inventories `CLAIM_TIER_MULTIPLIER`, oracle priors, and avenue blends as **Approximate / Aspirational** governance weights—not measured lab posteriors.
+6. **Campaign invariants:** `formalization/predictions/campaign_invariants.json` and pack-embedded invariants enforce `open_questions.lenr_proved = false`, the five OPEN IDs, two-body \(\log_{10}N_{\mathrm{events}}\approx-40\), and `contract_version = v0.3.7-beta-science-gate-1`.
+7. **Export envelope:** `/api/unified/export` uses `lenr-run-export-v1` with claim-tier / provenance fields required by the data contract.
+8. **Paper benchmarks:** `backend/tests/test_paper_benchmarks/` locks selected theory numeric/regime targets in CI.
+9. **Lean clamp / non-closure (not closure):** `CollapseBounds` (`EQ-BBL-LIM/BOUND/UQ/RP-DOM/CR-CAP-01`), `WeakInteraction` (`EQ-EC-*`; ≠ EC closure), `Overlap` (`EQ-OVERLAP-01/02`; ensemble ≠ rate), `PoissonSchrodinger` (`EQ-PS-01`/`EQ-PS-TOL-01`; aspirational FEM), and WH / OpenObligations non-closure theorems constrain bookkeeping; they do not discharge `EQ-OPEN-*`. Draft closure/falsification criteria (still OPEN) live at `LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md` (Phase F; on `dev` via #297).
+10. **Neutron-detector honesty (RAD/RATE):** Companion `neutron_rate_bound` carries honesty class `detector_ul_not_proof`. Cd-ratio / moderator-null / soft-X∧¬hard-γ PREDs (PRED-08/09/10) and contested Parkhomov curated rows are falsifiers / literature anchors—they do **not** close `EQ-OPEN-RAD-01` or `EQ-OPEN-RATE-01`, and ν/anti-ν detector-gas SPEC rows do not discharge `EQ-OPEN-EC-01`.
+11. **Non-claims:** Larger \(N\) in a campaign does not convert speculative mechanism labels into empirical validation. Maturity axes (`model_fidelity`, `empirical_support`, `claim_tier`) remain independent (`PHYSICS_MATURITY_LEDGER.md`).
 
 ---
 
@@ -683,12 +698,12 @@ Pinned, version-controlled model runs—not laboratory experiments—anchor the 
 
    * **Calorimetry:** Input power (voltage \(\times\) current) vs. output power via isoperibolic or flow calorimeters.  
    * **Mass Spectrometry:** Detection of helium-4, tritium, or other isotopes in off-gas.  
-   * **Neutron Counters:** Helium-3 or \(\text{BF}_3\) detectors above background sensitivity.  
+   * **Neutron Counters:** Helium-3 or \(\text{BF}_3\) detectors above background sensitivity. Detector upper limits in the companion software are honesty-classed `detector_ul_not_proof`; Cd-ratio / moderator-null / soft-X∧¬hard-γ PREDs (PRED-08/09/10) are branching falsifiers, not closures of `EQ-OPEN-RAD-01` / `EQ-OPEN-RATE-01`.  
 3. **Reported outcomes (disputed; claim-tier: empirical correlation):**
 
    * Excess heat relative to electrical input has been reported in some electrolytic campaigns (often cited near tens of percent); replication and calorimetry systematics remain contested.  
    * Helium-4 and tritium signals have been reported in a subset of studies; collection efficiency and blank controls vary.  
-   * Low-level neutron signals are occasionally reported above background; they are not established as routine LENR signatures.
+   * Low-level neutron signals are occasionally reported above background; they are not established as routine LENR signatures, and a Cd-wrapped count is **not** neutron proof.
 
 ---
 
@@ -717,7 +732,7 @@ Pinned, version-controlled model runs—not laboratory experiments—anchor the 
 ### **5.1 Computational–Experimental Correlation**
 
 * **Tunneling Enhancements:** Calculations show up to 10^3 to 10^5-fold increases in tunneling probability under combined RM, halo electron, and high-field environments.  
-* **Neutron Formation:** The estimated neutron production rates align with the low-level neutron signatures found experimentally.
+* **Neutron Formation:** Scenario neutron-rate bands in the companion software are claim-tiered sensitivity explorations under `detector_ul_not_proof` honesty; they may be *compared* to occasionally reported low-level neutron signals but do **not** validate those signals, close `EQ-OPEN-RAD-01` / `EQ-OPEN-RATE-01`, or establish routine LENR neutron production.
 
 #### **5.1.1 Statistical Mechanics of Reaction Rates**
 
@@ -821,9 +836,11 @@ not close §5A or prove LENR.
 3. Statistical significance criteria provide objective standards for experimental claims
 4. Monte Carlo methods enable exploration of parameter space and identification of optimal conditions
 
-### **5.2 Validation of Nuclear Products**
+### **5.2 Reported Nuclear-Product Correlations (contested)**
 
-* **Isotopic Shifts:** Detection of helium-4, tritium, and heavier isotopes supports multi-step nuclear processes (e.g., Oppenheimer-Phillips).  
+*Claim-tier note.* This subsection inventories **reported** isotopic / heat correlations from the contested LENR corpus. It does **not** validate nuclear product detection, close `EQ-OPEN-YIELD-01` / `EQ-OPEN-RAD-01`, or flip `lenr_proved`.
+
+* **Isotopic Shifts:** Reports of helium-4, tritium, and heavier isotopes are sometimes *interpreted as* multi-step nuclear processes (e.g., Oppenheimer-Phillips); alternative chemical / contamination / detector-confounder explanations remain open, and Pyyhtiä 2026 (`pyyhtia2026`) strengthens the CR-39 cavitation confounder beside SPAWAR-class pit claims.  
 * **Excess Heat Consistency:** Reported experimental outputs are consistent in magnitude with the hypothesized nuclear energy contributions once purely chemical avenues are discounted; this remains a disputed empirical correlation (claim tier: `empirical_lenr_correlation`), not an established result.
 
 #### **5.2.1 Detailed Energy Accounting**
@@ -853,7 +870,7 @@ For LENR, the suppression of high-energy gamma emission suggests:
 E_\gamma \ll E_{\text{nuclear}}
 \]
 
-implying that most energy is channeled into lattice and electronic degrees of freedom. This energy distribution mechanism explains the observed excess heat without commensurate high-energy radiation, consistent with the LENR signature of nuclear-scale energy release with minimal ionizing radiation.
+implying that, *if* a lattice-phonon channel dominated, most energy would be channeled into lattice and electronic degrees of freedom. That **hypothesis** is offered as one claim-tiered scenario for reported excess heat without commensurate high-energy radiation; it does **not** establish that observed heat is nuclear, does **not** close `EQ-OPEN-RAD-01`, and is not a validated LENR signature.
 
 #### **5.2.2 Energy-Product Yield Reconciliation**
 
@@ -875,8 +892,8 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 **Tritium and neutron accounting:**
 
-- **Tritium:** Reported yields of \( 10^5 \)–\( 10^7 \) atoms/hr represent a branching ratio of \( \lesssim 10^{-9} \) relative to the ⁴He channel, consistent with the LENR observation that the D+D → T+p branch is heavily suppressed relative to the dominant D+D → ⁴He + phonons pathway.
-- **Neutrons:** Detected neutron fluxes are typically \( < 10^3 \)/s, corresponding to a branching ratio of \( \lesssim 10^{-11} \). This extreme suppression of the D+D → ³He + n channel is one of the defining signatures of LENR and must be explained by the radiation suppression mechanism (Section 6.1).
+- **Tritium:** Reported yields of \( 10^5 \)–\( 10^7 \) atoms/hr, *if taken at face value*, imply a branching ratio of \( \lesssim 10^{-9} \) relative to a putative ⁴He channel. That is a contested corpus pattern—not proof that D+D → T+p is suppressed by a lattice-phonon pathway.
+- **Neutrons:** Reported neutron fluxes are typically \( < 10^3 \)/s, corresponding to a branching ratio of \( \lesssim 10^{-11} \) under the same conditional framing. Companion-software detector upper limits and PRED-08/09/10 falsifiers are bookkeeping (`detector_ul_not_proof`); they do **not** define a LENR signature and do **not** close `EQ-OPEN-RAD-01` / `EQ-OPEN-RATE-01`. Radiation-suppression hypotheses remain OPEN (§5A.2 / §6.1).
 
 ### **5.3 Implications for LENR**
 
@@ -887,7 +904,7 @@ The Miles heat-helium correlation—\( (2.6 \pm 0.6) \times 10^{11} \) ⁴He ato
 
 ## **5A. Open Theoretical Challenges and Fundamental Questions**
 
-Occurrence under Miles-class heat–helium correlations is empirically anchored in parts of the corpus; the open theoretical work is **how** MeV energy partitions (Q1), **how** prompt γ is suppressed (Q2), and **when** the rate budget closes under a named mechanism path (Q3). This section formulates each as a quantitative challenge with testable implications. The companion app's **open-questions virtual lab** (`open_questions` on unified / bubble-lattice / theory-pipeline responses) encodes occurrence (`occurrence.anchored`), when (`when.threshold_crossed`, duty cycle, stimulation), and how (`how.mechanism_paths`, FGR parameters) under Oracle A (Lean identities and conditionals) plus Oracle B (mechanism-path odds). It never prints `LENR_PROVED`. See `docs/ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md`, `docs/ARCHITECTURE/MANY_BODY_FGR_MODEL.md`, and `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md`.
+Occurrence under Miles-class heat–helium correlations is empirically anchored in parts of the corpus; the open theoretical work is **how** MeV energy partitions (Q1), **how** prompt γ is suppressed (Q2), and **when** the rate budget closes under a named mechanism path (Q3). This section formulates each as a quantitative challenge with testable implications. The companion app's **open-questions virtual lab** (`open_questions` on unified / bubble-lattice / theory-pipeline responses) encodes occurrence (`occurrence.anchored`), when (`when.threshold_crossed`, duty cycle, stimulation), and how (`how.mechanism_paths`, FGR parameters) under Oracle A (Lean identities and conditionals) plus Oracle B (mechanism-path odds). Oracle B Bayes-factor algebra (`EQ-UQ-BF-01` ExpHom cocycle in `LenrFormal.Decision`) is an **algebraic honesty floor** under stated inputs—not an empirical posterior—and theory-weight surfaces remain Approximate/Aspirational inventory (`THEORY_WEIGHT_SURFACES.md`). It never prints `LENR_PROVED`. See `docs/ARCHITECTURE/OPEN_QUESTIONS_VIRTUAL_LAB_2026-08-22.md`, `docs/ARCHITECTURE/MANY_BODY_FGR_MODEL.md`, and `docs/REVIEW_2026/OPEN_QUESTION_CORPUS_GAPS.md`.
 
 **Working hypothesis WH-ENP-01** (claim tier `speculative_exploratory`; Lean `LenrFormal.WorkingHypothesis`). Electron–neutron–proton coupling in a deuteron cluster is treated as one object: a Hagelstein coherent virtual-phonon cascade on Takahashi TSC 4D geometry, with a derived harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\) bound and the same-cluster FGR versus \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\). Independent multi-phonon \(g^N\) remains ruled out (`EQ-NAIVE-GN-01`). Bulk Heisenberg–Euler vacuum polarisation is a negative control (`EQ-QED-HE-NEG-01`: lab-field factor \(\equiv 1\)). Dicke \(N^2\) is **not** the engine rate law (`EQ-COLL-LIN-01`); the paper's \(\sim 6.6\,\mathrm{nm}\) domain is larger than the phonon cooperation radius \(\lambda/2\pi\), so \(N^2\) is not licensed (`EQ-WH-DICKE-01`). Two on-shell alphas remove a *primary* 24 MeV \(\gamma\) kinematically (`EQ-TSC-CH-01`) but do not close the MeV-gap (`EQ-TSC-STOP-01`, `EQ-WH-STOP-01`). Lean proves conservation and **non-closure** (`EQ-WH-PART-01`, `EQ-WH-BOUND-01`, `EQ-WH-NONCLOSE-01`). `EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, and `EQ-OPEN-RATE-01` stay OPEN.
 
@@ -921,7 +938,7 @@ If D+D → ⁴He releases 23.8 MeV, standard nuclear physics predicts a 23.8 MeV
 
 3. **Quantitative constraint:** For the observed \( \Gamma_{\text{phonon}}/\Gamma_{\gamma} > 10^{11} \), the lattice coupling must be at least \( \sim 10^{5.5} \times \alpha \approx 10^{3.2} \) times the electromagnetic coupling, or the lattice density of states must exceed the photon density of states by a comparable factor, or some combination thereof. Whether these conditions are achievable in real PdD lattices remains an open calculation.
 
-**Conclusion on Q2:** A harmonic first-principles bound gives \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}=0\) because the Pd Debye cutoff (\(\sim 24\,\mathrm{meV}\)) lies far below \(23.8\,\mathrm{MeV}\) (`EQ-WH-BOUND-01`). The \(10^{11}\) lattice target remains an open target; assumed branching fractions stay scenario input. Beyond the harmonic cutoff, a displaced-oscillator Franck–Condon tail (linear coupling; model assumption) at \(N\approx5.75\times10^{8}\) gives \(\log_{10}P_N\) between \(-4.8\times10^{9}\) (\(S=1\)) and \(-2.5\times10^{9}\) (\(S=10^{4}\)), with the Lean-certified conservative cap \(\log_{10}P_N\le-7\times10^{5}\ll-11\) (`EQ-WH-FC-01`); reaching \(10^{-11}\) needs \(S_{\min}\approx0.9998\,N\), i.e. relaxation energy \(\approx Q\). Anharmonic, Umklapp, and Hagelstein lossy spin-boson boosts remain named hypotheses and are not inserted into the derived bound. Residual \(2.45\,\mathrm{MeV}\) neutron thermalization lengths in H-rich liquid/gas/solid/plasma media are tabulated as detector-UL bookkeeping and do not partition the \(^4\mathrm{He}\) Q-value. Lattice Umklapp/defect DOS at nuclear energy is still missing.
+**Conclusion on Q2:** A harmonic first-principles bound gives \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}=0\) because the Pd Debye cutoff (\(\sim 24\,\mathrm{meV}\)) lies far below \(23.8\,\mathrm{MeV}\) (`EQ-WH-BOUND-01`). The \(10^{11}\) lattice target remains an open target; assumed branching fractions stay scenario input. Beyond the harmonic cutoff, a displaced-oscillator Franck–Condon tail (linear coupling; model assumption) at \(N\approx5.75\times10^{8}\) gives \(\log_{10}P_N\) between \(-4.8\times10^{9}\) (\(S=1\)) and \(-2.5\times10^{9}\) (\(S=10^{4}\)), with the Lean-certified conservative cap \(\log_{10}P_N\le-7\times10^{5}\ll-11\) (`EQ-WH-FC-01`); reaching \(10^{-11}\) needs \(S_{\min}\approx0.9998\,N\), i.e. relaxation energy \(\approx Q\). Anharmonic, Umklapp, and Hagelstein lossy spin-boson boosts remain named hypotheses and are not inserted into the derived bound. Residual \(2.45\,\mathrm{MeV}\) neutron thermalization lengths in H-rich liquid/gas/solid/plasma media are tabulated as detector-UL bookkeeping (`detector_ul_not_proof`) and do not partition the \(^4\mathrm{He}\) Q-value. Cd-ratio / moderator-null / soft-X∧¬hard-γ PREDs (PRED-08/09/10) are branching falsifiers for neutron-interpretation claims—they do **not** close `EQ-OPEN-RAD-01`. Lattice Umklapp/defect DOS at nuclear energy is still missing.
 
 ### **5A.3 Statistical Feasibility and Rate Closure (Q3)**
 
@@ -947,7 +964,7 @@ This predicts zero observable events—many orders of magnitude below any detect
 
 3. **Threshold behavior:** The system may exhibit sharp phase-transition-like behavior where below a critical condition the rate is essentially zero, but above it the rate jumps discontinuously. This is consistent with the observed poor reproducibility—most experiments are below threshold.
 
-**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close (`EQ-RATE-2B-NC-01`, \(\log_{10}N=-40\)). WH-ENP-01 uses the same-cluster FGR versus \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\) (`EQ-WH-FLOOR-01`); `when.threshold_crossed` is true only when \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) with \(V\), \(\tau\), \(P_{\mathrm{occ}}\), and \(f_{\mathrm{nuc}}\) labeled cited vs model assumption. The v2 closure demand makes the shortfall explicit: for \(1\,\mathrm{W}\) in a nominal \(1\,\mathrm{cm^{3}}\), \(R_{\mathrm{obs}}\approx2.6\times10^{17}\,\mathrm{m^{-3}s^{-1}}\); with the rate engine's own site convention \(n_{\mathrm{sites}}=0.5\,(n_e/Z)\,\theta\approx6.7\times10^{26}\,\mathrm{m^{-3}}\) (about \(46\times\) below \(0.5\,n_D\) at the physical Pd atom density; recorded, not hidden) and \(\Gamma_{\mathrm{tun}}(25\,\mathrm{pm})\approx6.8\times10^{-37}\), the required \(P_{\mathrm{occ}}f_{\mathrm{nuc}}C_{\mathrm{lin}}/\tau\approx5.8\times10^{26}\,\mathrm{s^{-1}}\) exceeds the engine cap product \(10^{26}\,\mathrm{s^{-1}}\) (`EQ-WH-CAP-01`). At every cap the assumed 25 pm trap reaches \(R_{\max}\approx4.5\times10^{16}\,\mathrm{m^{-3}s^{-1}}\) (factor \(\approx5.8\) short) and FCC tetrahedral geometry (\(137.5\,\mathrm{pm}\), \(\Gamma_{\mathrm{tun}}\approx1.4\times10^{-85}\)) reaches \(\approx10^{-32}\,\mathrm{m^{-3}s^{-1}}\) (\(\approx49\) decades short); neither crosses \(R_{\mathrm{obs}}\). The \((\theta,\tau,f_{\mathrm{nuc}})\) grid peaks at \(\log_{10}(R_{\mathrm{mode}}/R_{\mathrm{obs}})=-7.4\) and is a scenario table, not a posterior. **Until an experimentally constrained matrix element and state-occupation probability replace the assumed trapped separation, lifetime, and collective factor, multi-body (`trapped_state`) rate outputs are scenario explorations rather than predictions.** The software default remains the conservative **standard two-body reference baseline** (`two_body`): established free-particle formalism used as a reference, *not* a validated lattice-LENR mechanism.
+**Conclusion on Q3:** Rate closure is the most stringent quantitative test of the framework. If single-pair enhancement factors are the only mechanism, the numbers do not close (`EQ-RATE-2B-NC-01`, \(\log_{10}N=-40\)). WH-ENP-01 uses the same-cluster FGR versus \(R_{\mathrm{obs}}=P_{\mathrm{W}}/(QV)\) (`EQ-WH-FLOOR-01`); `when.threshold_crossed` is true only when \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) with \(V\), \(\tau\), \(P_{\mathrm{occ}}\), and \(f_{\mathrm{nuc}}\) labeled cited vs model assumption. The v2 closure demand makes the shortfall explicit: for \(1\,\mathrm{W}\) in a nominal \(1\,\mathrm{cm^{3}}\), \(R_{\mathrm{obs}}\approx2.6\times10^{17}\,\mathrm{m^{-3}s^{-1}}\); with the rate engine's own site convention \(n_{\mathrm{sites}}=0.5\,(n_e/Z)\,\theta\approx6.7\times10^{26}\,\mathrm{m^{-3}}\) (about \(46\times\) below \(0.5\,n_D\) at the physical Pd atom density; recorded, not hidden) and \(\Gamma_{\mathrm{tun}}(25\,\mathrm{pm})\approx6.8\times10^{-37}\), the required \(P_{\mathrm{occ}}f_{\mathrm{nuc}}C_{\mathrm{lin}}/\tau\approx5.8\times10^{26}\,\mathrm{s^{-1}}\) exceeds the engine cap product \(10^{26}\,\mathrm{s^{-1}}\) (`EQ-WH-CAP-01`). At every cap the assumed 25 pm trap reaches \(R_{\max}\approx4.5\times10^{16}\,\mathrm{m^{-3}s^{-1}}\) (factor \(\approx5.8\) short) and FCC tetrahedral geometry (\(137.5\,\mathrm{pm}\), \(\Gamma_{\mathrm{tun}}\approx1.4\times10^{-85}\)) reaches \(\approx10^{-32}\,\mathrm{m^{-3}s^{-1}}\) (\(\approx49\) decades short); neither crosses \(R_{\mathrm{obs}}\). The \((\theta,\tau,f_{\mathrm{nuc}})\) grid peaks at \(\log_{10}(R_{\mathrm{mode}}/R_{\mathrm{obs}})=-7.4\) and is a scenario table, not a posterior. Rate-UQ / Oracle B ExpHom identities (`EQ-UQ-BF-01`) and the governance enhancement prior upper edge \(10^{5}\) remain algebraic honesty floors—not laboratory tunneling measurements or empirical Bayes factors. Overlap DEF (`EQ-OVERLAP-01/02`) records ensemble-count bookkeeping; ensemble product ≠ nuclear rate. **Until an experimentally constrained matrix element and state-occupation probability replace the assumed trapped separation, lifetime, and collective factor, multi-body (`trapped_state`) rate outputs are scenario explorations rather than predictions.** The software default remains the conservative **standard two-body reference baseline** (`two_body`): established free-particle formalism used as a reference, *not* a validated lattice-LENR mechanism.
 
 ### **5A.4 Electron Capture Energy Source (Q4)**
 
@@ -961,13 +978,13 @@ The Widom-Larsen mechanism requires electrons with kinetic energy \( > 0.782 \) 
 
 3. **Coherent lattice excitation:** If a lattice phonon field achieves sufficient coherence (e.g., through the mechanisms in Section 2.6), the collective energy available at a single site could in principle exceed the single-phonon energy by a factor of \( \sqrt{N_{\text{coherent}}} \). For \( N \sim 10^8 \) coherent phonons, this gives \( \sqrt{10^8} \times 50 \) meV \( \approx 500 \) eV—still far below 0.782 MeV.
 
-**Conclusion on Q4:** No currently proposed mechanism provides a convincing quantitative pathway to produce electrons with \( E > 0.782 \) MeV in condensed matter systems. The D+D priming pathway (option 2) avoids this problem entirely and is the most physically defensible route to neutron production. The Widom-Larsen mechanism, while elegant, requires independent experimental verification of the mass renormalization claim.
+**Conclusion on Q4:** No currently proposed mechanism provides a convincing quantitative pathway to produce electrons with \( E > 0.782 \) MeV in condensed matter systems. The D+D priming pathway (option 2) avoids this problem entirely and is the most physically defensible route to neutron production. The Widom-Larsen mechanism, while elegant, requires independent experimental verification of the mass renormalization claim. Lean `WeakInteraction` / IR `EQ-EC-*` and the millielectronvolt deficit lemma (`EQ-OPEN-EC-DEFICIT-01`) document Fermi bookkeeping and the stated threshold gap; they do **not** discharge `EQ-OPEN-EC-01`. Contested Parkhomov / detector-gas SPEC curated rows never feed production rates and are not EC closure.
 
 ### **5A.5 Energy-Product Consistency (Q5)**
 
-As detailed in Section 5.2.2, the Miles heat-helium correlation \( (2.6 \pm 0.6) \times 10^{11} \) ⁴He/s/W is within a factor of ~2 of the 23.8 MeV/⁴He prediction, providing the strongest quantitative evidence for the D+D → ⁴He + lattice heat channel. The remaining discrepancy (factor of ~2) is within systematic uncertainties of helium collection efficiency.
+As detailed in Section 5.2.2, the Miles heat-helium correlation \( (2.6 \pm 0.6) \times 10^{11} \) ⁴He/s/W is within a factor of ~2 of the 23.8 MeV/⁴He prediction. Under claim tier `empirical_lenr_correlation`, that band is the **best-studied quantitative EMP correlation** motivating a D+D → ⁴He + lattice-heat *hypothesis*—not discharged proof of the channel, and not closure of `EQ-OPEN-YIELD-01` (Lean `EQ-OPEN-YIELD-BAND-01` still OPEN). The remaining factor-of-~2 discrepancy sits inside systematic uncertainties of helium collection efficiency if the underlying measurements are accepted.
 
-However, integrated yields per W·hr are 100-10,000× lower than expected (Section 5.2.2), indicating either: (a) time-varying reaction rates with duty cycles, (b) incomplete helium collection, or (c) contributions from non-helium-producing channels. This accounting must be resolved with time-resolved simultaneous heat-helium measurements.
+However, integrated yields per W·hr are 100-10,000× lower than expected (Section 5.2.2), indicating either: (a) time-varying reaction rates with duty cycles, (b) incomplete helium collection, or (c) contributions from non-helium-producing channels. This accounting must be resolved with time-resolved simultaneous heat-helium measurements before any yield obligation can close.
 
 ---
 
@@ -977,24 +994,24 @@ This work presents a unified theoretical and mathematical framework that address
 
 **Future Directions**
 
-1. **Refinement of Computational Models:** Incorporate many-body physics, non-linear effects, and real-time electron–phonon coupling.  
-2. **Scaling Reactor Designs:** Develop larger prototypes with real-time neutron/helium monitoring to push toward commercial viability.  
-3. **Interdisciplinary Collaboration:** Encourage a synergy of nuclear engineers, condensed matter physicists, chemists, and computational scientists to expedite the resolution of outstanding LENR challenges.
+1. **Refinement of Computational Models:** Incorporate many-body physics, non-linear effects, and real-time electron–phonon coupling under explicit claim tiers (modelled vs aspirational).  
+2. **Independent Falsification Campaigns:** Expand simultaneous heat–helium / detector campaigns and PRED falsifiers so OPEN obligations can be closed or rejected on evidence—not scaled toward commercial viability (energetic/practical freedom remains a permanent non-goal).  
+3. **Interdisciplinary Collaboration:** Encourage a synergy of nuclear engineers, condensed matter physicists, chemists, experimentalists, and computational scientists to resolve outstanding LENR challenges without overclaiming nuclear detection.
 
 ### **6.1 Mechanized consistency (Lean)**
 
-A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, n-body geometry vs trap identities, and collapse **clamp** bookkeeping (`CollapseBounds` / `EQ-BBL-LIM-01`—not a cavitation-dynamics theorem). An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets. Lean non-closure language (WH-ENP-01, OpenObligations) remains the honesty floor: `lenr_proved` stays false and every `EQ-OPEN-*` stays OPEN until a later evidence-backed closure PR.
+A companion formalization pilot (`formalization/lean`, Lean 4) mechanically checks **mathematical consistency** of the adopted classical core: Rydberg \(n=10\) identity, Casimir check-geometry band (\(\lvert F\rvert\approx 1.3\,\mathrm{mN}\)), Gamow penetration anti-monotonicity, Assenbaum domain predicate (\(U_e < E_{\mathrm{kin}}\)), enhancement composition with cap \(10^{5}\) and the illegal two-engine product (`EQ-COMP-03`), the Miles \(Q\)-value conversion identity, phonon order \(N=Q/\hbar\omega\), two-body rate-budget does-not-close, n-body / Overlap geometry vs trap identities (`EQ-OVERLAP-01/02`; ensemble ≠ rate), collapse **clamp / UQ / RP-domain / CR-cap** bookkeeping (`CollapseBounds` / `EQ-BBL-*`—not a cavitation-dynamics theorem), WeakInteraction Fermi \(G_F\)/σ/Boltzmann bounds (`EQ-EC-*`; ≠ `EQ-OPEN-EC-01` closure), Decision ExpHom / `EQ-UQ-BF-01` algebraic BF floors (not empirical Bayes), and aspirational Poisson–Schrödinger continuum DEF (`EQ-PS-01`/`EQ-PS-TOL-01`; never public-beta FEM). An equation intermediate representation (`formalization/ir/`) links paper statements, Python literals, Wolfram numeric checks, and Lean targets. Lean non-closure language (WH-ENP-01, OpenObligations) remains the honesty floor: `lenr_proved` stays false and every `EQ-OPEN-*` stays OPEN until a later evidence-backed closure PR.
 
 **Multi-format paper pack (v0.3.7-beta).** Academic archival copies of this manuscript and the Lean section→theorem crosswalk ship as:
 
-- Markdown / plain text / LaTeX: `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/`
+- Markdown / plain text / LaTeX / PDF: `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/` (rebuild via `build_pdf.sh`)
 - Lean crosswalk module: `formalization/lean/LenrFormal/PaperCrosswalk.lean` (mirrored in the paper pack)
 - Equation LaTeX stubs: `LENR_SIM_APP_v2/docs/v0.3.7-beta/latex/`
 - NL↔MD↔JSON↔LaTeX↔Lean matrix: `LENR_SIM_APP_v2/docs/v0.3.7-beta/PROOF_MATRIX.md`
 
 **Non-claims.** These theorems do **not** prove that LENR occurs, that contested calorimetry is experimentally true, or that the open challenges of §5A (MeV gap, radiation suppression, rate closure, electron-capture threshold, integrated yield) are solved. Speculative mechanisms remain claim-tiered. Status ledger: `docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`.
 
-**Would-close-if lemmas (still OPEN).** `LenrFormal.OpenQuestionBounds` records closure *predicates* and integer-scaled implications only: Q1 closes if the energy remainder is identically zero (Hagelstein/Dicke/BEC remain named hypotheses); Q2 would close if the lattice \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\) bookkeeping ratio meets \(10^{11}\); Q3 occupancy/collective factors are Nat inputs to the existing `RateBudget.would_close_if` product (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a millielectronvolt **deficit** of \(\sim 10^{7}\) between a stated 0.1 eV double-layer and the 0.782 MeV capture threshold (`EQ-OPEN-EC-DEFICIT-01`) without discharging `EQ-OPEN-EC-01`; Q5 distinguishes an instantaneous Miles EMP band vs integrated 100–\(10^{4}\) remainder (`EQ-OPEN-YIELD-BAND-01`). `LenrFormal.WorkingHypothesis` (WH-ENP-01) proves a coupled remainder vector and **non-closure** (`EQ-WH-NONCLOSE-01`) without flipping the OPEN table. `LenrFormal.WorkingHypothesisBounds` (WH-ENP-01 v2) adds integer-scaled bounds: the Poisson step ratio \(S/(N+1)<1\) for \(N\ge S\) with \(\log_{10}P_N\le-7\times10^{5}<-11\) on the \(S\le10^{4}\) grid (`EQ-WH-FC-01`; conservative cap on the `lgamma` value); the general partition \(E_{\mathrm{derived}}+(Q-E_{\mathrm{derived}})=Q\) with remainder \(=0\iff E_{\mathrm{derived}}=Q\) (`EQ-WH-PART-02`); \(\lfloor n_D V_{\mathrm{dicke}}\rfloor=0\), hence \(\neg(n\le0)\) for \(n\ge2\) (`EQ-WH-DICKE-N-01`); the capped product \(P_{\mathrm{occ}}f_{\mathrm{nuc}}C_{\mathrm{lin}}\le1\cdot1\cdot10^{6}\) so a demand above the cap is unmet (`EQ-WH-CAP-01`); and the conjunction \(\neg Q_1\wedge\neg Q_2\wedge\neg Q_3\) (`EQ-WH-NONCLOSE-02`). The Franck–Condon model is a labelled model assumption, not a nature theorem. There is no `theorem lenr_occurs`.
+**Would-close-if lemmas (still OPEN).** `LenrFormal.OpenQuestionBounds` records closure *predicates* and integer-scaled implications only: Q1 closes if the energy remainder is identically zero (Hagelstein/Dicke/BEC remain named hypotheses); Q2 would close if the lattice \(\Gamma_{\mathrm{ph}}/\Gamma_{\gamma}\) bookkeeping ratio meets \(10^{11}\); Q3 occupancy/collective factors are Nat inputs to the existing `RateBudget.would_close_if` product (two-body \(\log_{10}N=-40\) remains a non-closure theorem); Q4 proves a millielectronvolt **deficit** of \(\sim 10^{7}\) between a stated 0.1 eV double-layer and the 0.782 MeV capture threshold (`EQ-OPEN-EC-DEFICIT-01`) without discharging `EQ-OPEN-EC-01`; Q5 distinguishes an instantaneous Miles EMP band vs integrated 100–\(10^{4}\) remainder (`EQ-OPEN-YIELD-BAND-01`) without discharging parent obligation `EQ-OPEN-YIELD-01`. `LenrFormal.WorkingHypothesis` (WH-ENP-01) proves a coupled remainder vector and **non-closure** (`EQ-WH-NONCLOSE-01`) without flipping the OPEN table. `LenrFormal.WorkingHypothesisBounds` (WH-ENP-01 v2) adds integer-scaled bounds: the Poisson step ratio \(S/(N+1)<1\) for \(N\ge S\) with \(\log_{10}P_N\le-7\times10^{5}<-11\) on the \(S\le10^{4}\) grid (`EQ-WH-FC-01`; conservative cap on the `lgamma` value); the general partition \(E_{\mathrm{derived}}+(Q-E_{\mathrm{derived}})=Q\) with remainder \(=0\iff E_{\mathrm{derived}}=Q\) (`EQ-WH-PART-02`); \(\lfloor n_D V_{\mathrm{dicke}}\rfloor=0\), hence \(\neg(n\le0)\) for \(n\ge2\) (`EQ-WH-DICKE-N-01`); the capped product \(P_{\mathrm{occ}}f_{\mathrm{nuc}}C_{\mathrm{lin}}\le1\cdot1\cdot10^{6}\) so a demand above the cap is unmet (`EQ-WH-CAP-01`); and the conjunction \(\neg Q_1\wedge\neg Q_2\wedge\neg Q_3\) (`EQ-WH-NONCLOSE-02`). The Franck–Condon model is a labelled model assumption, not a nature theorem. There is no `theorem lenr_occurs`.
 
 ---
 
@@ -1204,6 +1221,7 @@ Drawn from the project's evidence-base bibliography (`Unified_LENR_Theory_D.Acs.
 
 26. Taleyarkhan, R. P., et al. (2002). Evidence for nuclear emissions during acoustic cavitation. *Science*, 295(5561), 1868–1873.  
     **Link:** [https://doi.org/10.1126/science.1067589](https://doi.org/10.1126/science.1067589)
+    *Honesty:* Contested / disputed nuclear-emission claim; retained as acoustic-cavitation literature anchor only—not laboratory LENR proof. See also `pyyhtia2026` (electrolytic CR-39 cavitation confounder).
 
 27. Menlove, H. O., et al. (1989). Neutron emission from titanium exposed to deuterium gas at high pressure. Los Alamos National Laboratory Report.  
     **Link:** [https://www.osti.gov/biblio/5039188](https://www.osti.gov/biblio/5039188)
@@ -1245,6 +1263,7 @@ These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_202
 - **[storms2015]** Storms, E. (2015). Efficient production of energy from the LENR effect. *Current Science*, 108(4), 574–577.  
 - **[tennfors2013]** Tennfors, E. (2013). On the assumptions for an effective electron mass. *European Physical Journal Plus*, 128, 15. DOI: [10.1140/epjp/i2013-13015-3](https://doi.org/10.1140/epjp/i2013-13015-3)  
 - **[mulnix2026]** Mulnix, A. (2026). Structural theory of sonoluminescence via Klein–Gordon / Rayleigh–Plesset harmonic locking. Zenodo. DOI: [10.5281/zenodo.19079074](https://doi.org/10.5281/zenodo.19079074)  
+- **[pyyhtia2026]** Pyyhtiä, K., et al. (2026). Investigation of CR-39 damaging mechanisms in electrochemical environments. *Journal of Electroanalytical Chemistry*, 1013, 120104. DOI: [10.1016/j.jelechem.2026.120104](https://doi.org/10.1016/j.jelechem.2026.120104). OA experimental support that HER nanobubble cavitation damages CR-39 and confounds pit=nuclear interpretations; does **not** prove LENR.  
 - **[nguyen2026]** Nguyen, T., et al. (2026). Quantum shell structure of proton–neutron pairing. *Nature*. DOI: [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)  
 - **[floquetwkb2026]** Floquet–WKB analysis of lattice confinement fusion under a driven barrier (2026). DOI: [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)  
 - **[parkhomov2018]** Parkhomov, A. G. (2018). Nuclear reactions in LENR: review of experimental results (LENR Academy curated subset).  
@@ -1527,7 +1546,7 @@ Key components:
 \\begin{itemize}  
     \\item \\textbf{Variational autoencoders (VAE)}: used to compress simulation parameter spaces and discover latent structure among high-output conditions.  
     \\item \\textbf{Gaussian Process Regression (GPR)}: employed to interpolate tunneling enhancement across sparse high-dimensional parameter regimes.  
-    \\item \\textbf{Bayesian inference models}: update priors on mechanism contribution given observed isotope, neutron, or calorimetric data.  
+    \\item \\textbf{Bayesian-style decision support}: update Approximate/Aspirational mechanism weights given observed isotope, neutron, or calorimetric data — governance inventory, not lab posteriors (\\texttt{EQ-UQ-BF-01} algebraic only).  
 \\end{itemize}
 
 Training data combine historical LENR metadata (e.g., from ICCF and JCMNS) with simulated results. Model outputs cluster promising configurations that yield excess energy or isotope production within $3\\sigma$ bounds, allowing targeted experimental guidance.
@@ -1858,7 +1877,7 @@ R\\,\\ddot{R} \+ \\frac{3}{2}\\,\\dot{R}^2 \= \\frac{1}{\\rho}\\left(P\_{\\text{
     \\item \\textbf{Time Step:} 0.1 fs to 10 as (adaptive)  
     \\item \\textbf{Software:} COMSOL Multiphysics for FEM; Python (NumPy, SciPy) for FD/MC  
     \\item \\textbf{Sampling Size:} Monte Carlo runs with $N \= 10^4$ to $10^6$  
-    \\item \\textbf{Uncertainty Propagation:} Bootstrapping and Bayesian posterior analysis  
+    \\item \\textbf{Uncertainty Propagation:} Bootstrapping and Approximate weight / UQ sensitivity analysis (not laboratory posteriors) 
     \\item \\textbf{Sensitivity Tools:} Sobol and variance decomposition techniques  
 \\end{itemize}
 

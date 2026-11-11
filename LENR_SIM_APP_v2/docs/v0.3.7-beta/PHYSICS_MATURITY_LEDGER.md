@@ -43,3 +43,8 @@ Fidelity ≠ validity. `EQ-OPEN-*` remain OPEN.
 - `LENR_SIM_APP_v2/docs/PHYSICS_EQUATION_VERIFICATION.md`
 - Theory Methods honesty alert on `TheoryPage.jsx`
 - `docs/v0.3.8-beta/CMNS_MODEL_FIDELITY_RESPONSE.md`
+
+## Literature honesty notes (cite-only; status unchanged)
+
+- **EQ-OPEN-RAD-01:** Pyyhtiä et al. 2026 (`pyyhtia2026`, DOI 10.1016/j.jelechem.2026.120104) strengthens experimental support that electrolytic HER nanobubble cavitation damages CR-39 and confounds SPAWAR/Mosier-Boss-class pit=nuclear interpretations. Obligation remains **OPEN**; `lenr_proved` false.
+- **ENG-BUBBLE-FUSION-01:** Cite Pyyhtiä 2026 beside Taleyarkhan / Mulnix cavitation peers as electrolytic cavitation / detector-confounder evidence. Nuclear pathway remains **modelled enhancement / contested hydro**; clamp/UQ Lean DEFs unchanged; EQ-OPEN-* stay OPEN.

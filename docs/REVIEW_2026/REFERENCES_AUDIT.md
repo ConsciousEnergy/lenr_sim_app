@@ -47,7 +47,7 @@ identifiable source.
 
 **Orphan check (bibliography -> code):** CLOSED for the deep-research sources.
 takahashi2016 + floquetwkb2026 (`reaction_rate_engine.py`, `reaction_rate_uq.py`),
-hagelstein2025 + mulnix2026 (`cavitation_kgrp.py`), nguyen2026
+hagelstein2025 + mulnix2026 (`cavitation_kgrp.py`), pyyhtia2026 (CR-39 cavitation confounder), nguyen2026
 (`shell_pairing_prior.py`), and raiola2002/huke2008/czerski2023/screeningreview2024
 (`unified_lenr_model/screening_data.py`) are now emitted by code. steinetz2020exp,
 pines2020theory, storms2015, tennfors2013, parkhomov2018, and miles1993 are
@@ -100,6 +100,7 @@ Canonical key -> resolution map (single source of truth):
 | takahashi2016 | reaction_rate_engine, reaction_rate_uq | [18] | yes (keyed) |
 | floquetwkb2026 | reaction_rate_engine, reaction_rate_uq | [30] | yes (keyed) |
 | mulnix2026 | cavitation_kgrp | [28] | yes (keyed) |
+| pyyhtia2026 | CR-39 / SPAWAR honesty; paper §3.2; literature_baselines | keyed | yes (keyed) |
 | hagelstein2025 | cavitation_kgrp | [19] | yes (keyed) |
 | nguyen2026 | shell_pairing_prior | [29] | yes (keyed) |
 | raiola2002 / huke2008 / czerski2023 / screeningreview2024 | screening_data | [22]-[25] | yes (grouped) |

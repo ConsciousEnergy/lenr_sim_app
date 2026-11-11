@@ -1,11 +1,11 @@
 {
   "schema": "lenr-paper-simulation-evidence-v1",
   "train": "v0.3.7-beta",
-  "paper_revision": "2026-11-09-ws-pack-honesty",
-  "prior_paper_revision": "2026-11-05-honesty-sync",
+  "paper_revision": "2026-11-11-multidisciplinary-coherence",
+  "prior_paper_revision": "2026-11-10-pyyhtia-cr39-cite",
   "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
   "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
-  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. WS pack adds Lean DEF/clamp/domain honesty and campaign inventory only.",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhtiä et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
   "open_ids": [
@@ -39,14 +39,14 @@
       "n_theory_runs": 10,
       "pack_git_sha": "05dbeaf6d776e36c03419185a429907063e38f06",
       "status": "on_dev",
-      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor. Model output only. Merged via #299."
+      "note": "Bubble-lattice host\u00d7loading\u00d7drive\u00d7dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhtiä 2026 CR-39 cavitation confounder peer (pyyhtia2026). Model output only. Merged via #299."
     },
     {
       "preset": "detector_weak_screen",
       "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/",
       "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/detector_weak_screen/manifest.json",
       "status": "on_dev",
-      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
+      "note": "WS7 detector/weak screen cells; weight surfaces Approximate/Aspirational inventory only; literature peers include SPAWAR CR-39 + Pyyhtiä 2026 cavitation confounder. Merged via #331. Does not close EQ-OPEN-* or set lenr_proved."
     }
   ],
   "science_notes": [
@@ -95,9 +95,14 @@
     {"id": "rate_uq_floors", "pr": 334, "note": "EQ-UQ-BF-01 ExpHom algebra honesty floors; not empirical BF"}
   ],
   "ws_pack_pending": [],
+  "manuscript_refresh": {
+    "id": "theory_paper_multidisciplinary_coherence",
+    "date": "2026-11-11",
+    "note": "Coherence pass: claim-tier voice across academic/experimental/software; §5.2 contested correlations; Pyyhtiä beside Taleyarkhan/Mulnix/SPAWAR without nuclear overclaim; PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; no band changes; EQ-OPEN-* stay OPEN; lenr_proved false; no live ship"
+  },
   "engine_sync_notes": [
     "ENG-RP-KM-01: Rayleigh-Plesset domain-limited; Keller-Miksis auto when Mach >= 0.3; Lean EQ-BBL-RP-DOM-01 (#328)",
-    "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback; CR-cap DEF (#328)",
+    "ENG-BUBBLE-FUSION-01: approximate; provenance physics_engine vs schematic_fallback; CR-cap DEF (#328); sonofusion = Bubble Fusion in-dev",
     "ENG-ASPIRATIONAL-FEM-01: continuum DEF EQ-PS-01/TOL; never public-beta numerics (#327)",
     "ENG-WEAK-01: Fermi G_F/\u03c3/Boltzmann bookkeeping only; not Q4/EC closure (#332)",
     "Cavitation-collapse: modelled enhancement / contested hydro; collapse_uq.py percentiles are model-only",
@@ -106,12 +111,15 @@
     "Assenbaum screening domain honesty (#333); formula not claimed outside validity",
     "Phase A cavitation_collapse campaign: collapse UQ + RP/KM dynamics_mode contrast; EQ-OPEN-* remain OPEN; lenr_proved stays false",
     "WS3 neutron detector / branching honesty (RAD+RATE): detector_ul_not_proof; EQ-OPEN-RAD/RATE stay OPEN (#329)",
-    "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false"
+    "WS6 rate UQ algebra honesty floors (#334); EQ-UQ-BF-01 not empirical BF; lenr_proved stays false",
+    "2026-11-10 Theory Paper refresh: manuscript formats cite WS honesty + Pyyhtiä CR-39 confounder; prior PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-10-pyyhtia-cr39; no OPEN closures",
+    "2026-11-11 multidisciplinary coherence: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; §5.2 / UI claim-tier sync; no OPEN closures"
   ],
   "formats": [
     ".md",
     ".txt",
     ".tex",
+    ".pdf",
     ".lean"
   ]
 }

@@ -457,7 +457,9 @@ const TheoryPage = () => {
                     Ultrasonic and cavitation forcing (Minnaert, Bjerknes, streaming, rectified
                     diffusion) as the computational environment for bubble-lattice coupling.
                     Taleyarkhan-type acoustic-cavitation nuclear claims remain disputed EMP; not a
-                    validated LENR rate.
+                    validated LENR rate. Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104)
+                    show electrolytic HER nanobubble cavitation damages CR-39 and confounds
+                    pit=nuclear SPAWAR-class readings — detector honesty, not LENR proof.
                   </TimelineItem>
                   <TimelineItem year="2003-09" author="Letts & Cravens">
                     Dual-laser stimulation of loaded Pd-D near ~682 nm as an empirical correlation
@@ -846,7 +848,7 @@ const TheoryPage = () => {
             Sonnet/Opus family, Gemini family, xAI/Grok family, Composer (Cursor)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Date: revised 2026-09-25 (v0.3.7-beta) | Organization: www.conscious.energy
+            Date: revised 2026-11-11 (v0.3.7-beta) | Organization: www.conscious.energy
           </Typography>
         </Box>
       </Paper>
