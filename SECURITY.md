@@ -23,6 +23,9 @@ This document outlines the security features, policies, and best practices imple
 - **No end-user login on the public beta.** Simulation, export, and WebSocket
   endpoints are unauthenticated and protected by per-IP rate limits, reverse-proxy
   body size limits, and a heavy-compute semaphore (503 when saturated).
+- **Edge body limit:** Caddy / Traefik / SPA nginx reject bodies over **10 MiB**
+  with **413** before FastAPI (`REQUEST_MAX_BODY_SIZE`); see
+  `LENR_SIM_APP_v2/SECURITY.md`.
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.

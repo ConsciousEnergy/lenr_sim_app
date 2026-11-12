@@ -1,14 +1,6 @@
+# Public beta: noindex until Diadon flips SEO.
+# Aligns with Traefik/nginx x-robots-tag: noindex,nofollow on the live SPA.
+# When public SEO is intentional, replace Disallow:/ with Allow:/ (+ path rules)
+# and drop X-Robots-Tag noindex from spa-security-headers / edge.
 User-agent: *
-Allow: /
-Allow: /models/
-Allow: /experiments/
-Allow: /methodology.html
-Allow: /validation.html
-Allow: /sources.html
-Disallow: /diagnostics
-Disallow: /visualization-test
-Disallow: /visualization-debug
-Disallow: /three-test
-Disallow: /lattice-test
-Disallow: /component-showcase
-Disallow: /api/
+Disallow: /

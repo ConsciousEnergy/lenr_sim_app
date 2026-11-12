@@ -41,6 +41,13 @@ http:
     # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. A prior
     # unused `api-ratelimit` file middleware was removed to avoid drift.
 
+    # LP-M1: 413 oversized bodies before FastAPI (matches REQUEST_MAX_BODY_SIZE /
+    # Caddy request_body 10MB). Wired on backend routers in docker-stack.yml.j2.
+    backend-bodylimit:
+      buffering:
+        maxRequestBodyBytes: 10485760
+        memRequestBodyBytes: 1048576
+
     # CORS configuration
     cors:
       headers:

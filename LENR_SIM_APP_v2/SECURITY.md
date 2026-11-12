@@ -23,6 +23,11 @@ This document outlines the security features, policies, and best practices imple
 - **No end-user login on the public beta.** Simulation, export, and WebSocket
   endpoints are unauthenticated and protected by per-IP rate limits, reverse-proxy
   body size limits, and a heavy-compute semaphore (503 when saturated).
+- **Edge body limit (LP-M1):** keep edge and app caps aligned at **10 MiB** so
+  oversized POSTs return **413** before upstream (avoids Traefik/nginx **502** /
+  disconnect). Compose: Caddy `request_body max_size 10MB`. Swarm: Traefik
+  `backend-bodylimit` (`maxRequestBodyBytes: 10485760`). App:
+  `REQUEST_MAX_BODY_SIZE`. SPA nginx also sets `client_max_body_size 10m`.
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.
