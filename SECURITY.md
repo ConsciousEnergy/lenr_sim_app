@@ -30,7 +30,9 @@ This document outlines the security features, policies, and best practices imple
   layer; they are **not** wired to routes. Do not describe the API as
   JWT-authenticated.
 - Shared-simulation `session_id` is an unguessable client string, not a
-  cryptographic credential — treat `/api/simulations/save` as public-beta risk.
+  cryptographic credential. Production `POST /api/simulations/save` and
+  `/share` require `X-LENR-Write-Token` (fail-closed; SPA does not call them
+  today — operator-only); browse/search stay public.
 
 ### Environment & Configuration Security
 - **Environment Variables**: Secure configuration using environment variables
