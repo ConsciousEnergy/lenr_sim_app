@@ -1,0 +1,2 @@
+# Paper pack build (build_branded.py). Pin for reproducible CI.
+markdown==3.7
