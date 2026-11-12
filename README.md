@@ -171,26 +171,37 @@ Screenshots captured from **0.3.9-beta** live beta UI (app chrome only, no brows
 
 
 <p align="center"><em>Home → first simulation</em></p>
-<!-- <p align="center"><video src="docs/assets/readme/videos/01-home-walkthrough.mp4" controls width="800"></video></p> -->
-<!-- Download: [01-home-walkthrough.mp4](docs/assets/readme/videos/01-home-walkthrough.mp4) -->
+<p align="center">
+  <video src="docs/assets/readme/videos/01-home-walkthrough.mp4" controls width="800"></video>
+</p>
 
-<p align="center"><em>Unified Theory run + export)</em></p>
-<docs/assets/readme/videos/01-home-walkthrough.mp4>
+
+<p align="center"><em>Unified Theory Simulation</em></p>
+<p align="center">
+  <video src="docs/assets/readme/videos/02-unified-theory.mp4" controls width="800"></video>
+</p>  
+
 
 <p align="center"><em>Quantum Tunneling</em></p>
-<docs/assets/readme/videos/02-unified-theory.mp4>
+<p align="center">
+  <video src="docs/assets/readme/videos/03-quantum-tunneling.mp4" controls width="800"></video>
+</p> 
 
 <p align="center"><em>Theory Paper / Methods honesty</em></p>
-<docs/assets/readme/videos/03-quantum-tunneling.mp4>
-
-<p align="center"><em>Theory Paper / Methods honesty</em></p>
-<docs/assets/readme/videos/04-theory-paper.mp4>
+<p align="center">
+  <video src="docs/assets/readme/videos/04-theory-paper.mp4" controls width="800"></video>
+</p> 
 
 <p align="center"><em>Analytics</em></p>
-<docs/assets/readme/videos/05-analytics.mp4>
+<p align="center">
+  <video src="docs/assets/readme/videos/05-analytics.mp4" controls width="800"></video>
+</p> 
 
 <p align="center"><em>Bubble Fusion -beta-</em></p>
-<docs/assets/readme/videos/06-bubble-fusion-beta.mp4>
+<p align="center">
+  <video src="docs/assets/readme/videos/06-bubble-fusion-beta.mp4" controls width="800"></video>
+</p> 
+
 ---
 
 ## Limitations and open questions
