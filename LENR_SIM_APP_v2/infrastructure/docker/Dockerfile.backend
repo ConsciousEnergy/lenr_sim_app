@@ -78,11 +78,17 @@ RUN mkdir -p /app/logs /app/data /app/static /app/static/cluster_fields && \
 # Environment variables. LENR_WORKERS defaults to 1: rate-limit, WebSocket and
 # shared-simulation state is per-process (see app/core/compute_guard.py), so
 # extra workers would fragment it. Raise only with a shared store in place.
+#
+# FORWARDED_ALLOW_IPS: never default to '*'. Trust only private/docker/Swarm
+# overlay peers that terminate TLS (Traefik/Caddy). Abuse budgeting still uses
+# app/security/client_ip.py (X-Real-IP / rightmost XFF); this flag only controls
+# uvicorn's ProxyHeadersMiddleware for scheme/client.host.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PORT=8000 \
-    LENR_WORKERS=1
+    LENR_WORKERS=1 \
+    FORWARDED_ALLOW_IPS=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1
 
 # Switch to non-root user
 USER appuser
@@ -99,4 +105,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Run with uvicorn behind a reverse proxy (Caddy/Traefik terminate TLS and set
 # X-Forwarded-*; the proxy strips client-supplied forwarding headers).
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${LENR_WORKERS:-1} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${LENR_WORKERS:-1} --proxy-headers --forwarded-allow-ips=\"${FORWARDED_ALLOW_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1}\""]

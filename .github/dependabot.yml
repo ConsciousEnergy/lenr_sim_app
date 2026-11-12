@@ -2,7 +2,7 @@
 # See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
 # GitHub reads this file from the default branch (main). Updates target `dev`
-# (v0.3.8 integration) so weekly noise does not churn the 0.3.7 release line.
+# (0.3.9-beta integration) so weekly noise does not churn the main release line.
 # See .github/BRANCHING.md.
 #
 # Minor/patch updates are grouped into one PR per ecosystem per week to keep

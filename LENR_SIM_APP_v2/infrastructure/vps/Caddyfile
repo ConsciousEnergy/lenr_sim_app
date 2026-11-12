@@ -39,6 +39,9 @@ lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud {
 	import app_proxy
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# Strip XFO so CSP frame-ancestors can allow WordPress embeds (SEC-01).
+		# Compose rollback path only — Swarm Traefik uses spa-security-headers.
+		-X-Frame-Options
 		-Server
 	}
 	log {

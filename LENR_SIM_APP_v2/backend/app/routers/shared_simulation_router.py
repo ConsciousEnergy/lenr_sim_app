@@ -8,10 +8,13 @@ and find matches for experimental replication.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
-from pydantic import BaseModel, Field
+import json
 import logging
 
+from fastapi import APIRouter, HTTPException, Query, Depends
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from app.core.write_token_guard import require_shared_simulation_write
 from app.models.simulation_models import (
     SharedSimulation, MatchResult, SimulationSearchParams,
     MaterialType, ReactantType
@@ -22,17 +25,46 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/simulations", tags=["simulations"])
 
+# Keep save payloads small even when the global body limit is 10 MB.
+_MAX_SAVE_JSON_BYTES = 64 * 1024
+_MAX_SAVE_NAME_LEN = 200
+_MAX_SAVE_DESCRIPTION_LEN = 2000
+_MAX_SAVE_TAGS = 20
+_MAX_SAVE_TAG_LEN = 64
+_MAX_SAVE_SESSION_ID_LEN = 128
+
 
 # Pydantic models for API requests/responses
 class SaveSimulationRequest(BaseModel):
     """Request to save a simulation"""
-    name: str = Field(..., description="Name for the simulation")
-    description: str = Field("", description="Optional description")
-    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
+    name: str = Field(..., min_length=1, max_length=_MAX_SAVE_NAME_LEN, description="Name for the simulation")
+    description: str = Field("", max_length=_MAX_SAVE_DESCRIPTION_LEN, description="Optional description")
+    tags: List[str] = Field(default_factory=list, max_length=_MAX_SAVE_TAGS, description="Tags for categorization")
     is_public: bool = Field(False, description="Whether to share publicly")
     parameters: Dict[str, Any] = Field(..., description="Full simulation configuration")
     results: Dict[str, Any] = Field(..., description="Simulation results")
-    session_id: str = Field("", description="Browser session ID for anonymous users")
+    session_id: str = Field("", max_length=_MAX_SAVE_SESSION_ID_LEN, description="Browser session ID for anonymous users")
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tag_lengths(cls, tags: List[str]) -> List[str]:
+        for tag in tags:
+            if len(tag) > _MAX_SAVE_TAG_LEN:
+                raise ValueError(f"Each tag must be at most {_MAX_SAVE_TAG_LEN} characters")
+        return tags
+
+    @model_validator(mode="after")
+    def validate_payload_budget(self) -> "SaveSimulationRequest":
+        encoded = json.dumps(
+            {"parameters": self.parameters, "results": self.results},
+            default=str,
+            separators=(",", ":"),
+        )
+        if len(encoded.encode("utf-8")) > _MAX_SAVE_JSON_BYTES:
+            raise ValueError(
+                f"parameters+results must be at most {_MAX_SAVE_JSON_BYTES} bytes when JSON-encoded"
+            )
+        return self
 
 
 class ShareSimulationRequest(BaseModel):
@@ -84,11 +116,13 @@ class MatchResponse(BaseModel):
 @router.post("/save", response_model=SimulationResponse, status_code=201)
 async def save_simulation(
     request: SaveSimulationRequest,
-    service: SharedSimulationService = Depends(get_simulation_service)
+    service: SharedSimulationService = Depends(get_simulation_service),
+    _: None = Depends(require_shared_simulation_write),
 ):
     """
     Save a simulation for the current user.
-    
+
+    Production requires ``X-LENR-Write-Token`` (same pattern as Analytics writes).
     Can be saved as private (only visible to creator) or public (shared with community).
     """
     try:
@@ -202,9 +236,10 @@ async def get_my_simulations(
 async def share_simulation(
     request: ShareSimulationRequest,
     session_id: str = Query(..., description="Browser session ID"),
-    service: SharedSimulationService = Depends(get_simulation_service)
+    service: SharedSimulationService = Depends(get_simulation_service),
+    _: None = Depends(require_shared_simulation_write),
 ):
-    """Change the sharing status of a simulation"""
+    """Change the sharing status of a simulation (production write-token gated)."""
     try:
         simulation = await service.update_sharing_status(
             request.simulation_id,

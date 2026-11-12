@@ -26,13 +26,21 @@ This document outlines the security features, policies, and best practices imple
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.
+- **Shared-simulation writes** (`POST /api/simulations/save`, `POST /api/simulations/share`)
+  use the same production write-token gate (fail-closed). Public browse/search
+  stay available. The SPA does not currently call these persist routes; treat
+  them as operator-only. Payloads are capped (~64 KiB JSON) and hit a tighter
+  write rate-limit tier (default 3/min/IP, process-local).
 - **JWT settings exist in config** (`LENR_JWT_SECRET_KEY`) for a future auth
   layer; they are **not** wired to routes. Do not describe the API as
   JWT-authenticated.
 - Shared-simulation `session_id` is an unguessable client string, not a
-  cryptographic credential — treat `/api/simulations/save` as public-beta risk.
+  cryptographic credential — it does **not** authorize writes in production.
 - Password-hash helpers exist in `app/security/utils.py` but are unused on the
   live beta surface; prefer argon2/bcrypt if wiring login later.
+- **SPA framing:** CSP `frame-ancestors` allowlists WordPress apex/www. The SPA
+  edge must **not** emit `X-Frame-Options: DENY` (Traefik `spa-security-headers`
+  keeps `frameDeny: false`; nginx/Caddy omit/strip XFO).
 
 ### Environment & Configuration Security
 - **Environment Variables**: Secure configuration using environment variables

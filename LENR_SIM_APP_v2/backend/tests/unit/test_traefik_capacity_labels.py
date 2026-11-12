@@ -24,3 +24,44 @@ def test_traefik_forwarded_headers_insecure_false():
     text = STATIC.read_text(encoding="utf-8")
     assert "forwardedHeaders:" in text
     assert "insecure: false" in text
+
+
+def test_spa_security_headers_disable_frame_deny():
+    """SEC-01: SPA must not emit X-Frame-Options DENY (CSP frame-ancestors only)."""
+    text = DYNAMIC.read_text(encoding="utf-8")
+    # Isolate the spa-security-headers block before the next middleware key.
+    start = text.index("spa-security-headers:")
+    rest = text[start:]
+    end = rest.find("\n    # NOTE:")
+    if end == -1:
+        end = rest.find("\n    cors:")
+    block = rest[: end if end != -1 else len(rest)]
+    assert "frameDeny: false" in block
+    assert "frameDeny: true" not in block
+    assert "customFrameOptionsValue" not in block
+    assert "frame-ancestors" in block
+    assert "X-Frame-Policy" in block
+
+
+def test_nginx_spa_omits_x_frame_options():
+    nginx = (ROOT / "infrastructure" / "docker" / "nginx.frontend.conf").read_text(
+        encoding="utf-8"
+    )
+    # Comments may mention XFO; ensure no active add_header sets it.
+    active_headers = [
+        line.strip()
+        for line in nginx.splitlines()
+        if line.strip().startswith("add_header")
+    ]
+    assert not any("X-Frame-Options" in line for line in active_headers)
+    assert "frame-ancestors" in nginx
+    assert any('X-Frame-Policy "csp-frame-ancestors"' in line for line in active_headers)
+
+
+def test_dockerfile_backend_restricts_forwarded_allow_ips():
+    dockerfile = (ROOT / "infrastructure" / "docker" / "Dockerfile.backend").read_text(
+        encoding="utf-8"
+    )
+    assert "forwarded-allow-ips='*'" not in dockerfile
+    assert "FORWARDED_ALLOW_IPS" in dockerfile
+    assert "10.0.0.0/8" in dockerfile
