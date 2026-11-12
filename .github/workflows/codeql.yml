@@ -31,7 +31,7 @@ jobs:
     name: Analyze (${{ matrix.language }})
     if: ${{ !github.event.repository.private }}
     # Default: lenr-ci self-hosted. Fork PRs → ubuntu-latest (public-repo safe).
-    runs-on: ubuntu-latest  # TEMP #370 option 3: force hosted while lenr-ci stalled; REVERT after merge
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     timeout-minutes: 30
     permissions:
       contents: read
