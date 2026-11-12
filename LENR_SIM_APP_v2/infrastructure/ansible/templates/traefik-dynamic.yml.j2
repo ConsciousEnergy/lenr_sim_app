@@ -31,7 +31,8 @@ http:
         stsPreload: true
         stsSeconds: 31536000
         referrerPolicy: "strict-origin-when-cross-origin"
-        contentSecurityPolicy: "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://conscious.energy https://www.conscious.energy; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.conscious.energy https://us.i.posthog.com wss: https://lenr-sim-beta.conscious.energy https://app.conscious.energy; worker-src 'self' blob:; form-action 'self'"
+        # DAS-M1: drop bare wss: and img-src https:; allow explicit api wss only.
+        contentSecurityPolicy: "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://conscious.energy https://www.conscious.energy; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.conscious.energy wss://api.conscious.energy https://us.i.posthog.com https://lenr-sim-beta.conscious.energy https://app.conscious.energy; worker-src 'self' blob:; form-action 'self'"
         customResponseHeaders:
           X-Robots-Tag: "noindex,nofollow"
           # Ops canary after Swarm apply: SPA must NOT emit X-Frame-Options.
