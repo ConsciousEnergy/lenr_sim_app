@@ -15,7 +15,7 @@ import {
   AlertTitle,
   Button,
 } from '@mui/material';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import { API_BASE_URL } from '../config/api';
 import { track } from '../analytics/events';
 
@@ -106,7 +106,9 @@ export default function DocViewerPage() {
           '& code': { fontSize: '0.9em' },
         }}
       >
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown skipHtml urlTransform={defaultUrlTransform}>
+          {content}
+        </ReactMarkdown>
       </Paper>
     </Container>
   );

@@ -91,15 +91,23 @@ def _get_log_file_path(log_name: str) -> str:
     Returns:
         Absolute path to the log file
     """
+    # Basename-only: block path separators / traversal even though this router
+    # is production-gated (defense in depth for misconfigured environments).
+    safe_name = os.path.basename(log_name or "")
+    if not safe_name or safe_name != log_name or ".." in safe_name:
+        raise HTTPException(status_code=400, detail="Invalid log name")
+
     # Ensure the name has .log extension
-    if not log_name.endswith(".log"):
-        log_name = f"{log_name}.log"
+    if not safe_name.endswith(".log"):
+        safe_name = f"{safe_name}.log"
     
     # Get logs directory path
     logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logs")
-    
-    # Return full path
-    return os.path.join(logs_dir, log_name)
+    logs_dir_real = os.path.realpath(logs_dir)
+    candidate = os.path.realpath(os.path.join(logs_dir, safe_name))
+    if not candidate.startswith(logs_dir_real + os.sep) and candidate != logs_dir_real:
+        raise HTTPException(status_code=400, detail="Invalid log path")
+    return candidate
 
 def _read_log_file(file_path: str, max_lines: int = 1000, 
                   filter_params: Optional[LogFilter] = None) -> List[LogEntry]:
