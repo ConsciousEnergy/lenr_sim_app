@@ -213,7 +213,7 @@ const AboutPage = () => {
             Special Thanks
           </Typography>
           <Typography variant="body1" paragraph>
-            Special thanks go to the{' '}
+            Special thanks goes to the{' '}
             <Link
               href="https://www.lenr-forum.com/"
               target="_blank"

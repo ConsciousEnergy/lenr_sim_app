@@ -36,6 +36,7 @@ describe('AboutPage honesty copy', () => {
     render(<AboutPage />);
     const block = screen.getByTestId('about-special-thanks');
     expect(block).toHaveTextContent(/Special Thanks/);
+    expect(block).toHaveTextContent(/Special thanks goes to the/);
     expect(block).toHaveTextContent(/loving memory of Alan Smith, Melvin Miles, and Michael McKubre/);
     expect(block).toHaveTextContent('Abiit autem non sum oblitus');
     const forumLink = screen.getByRole('link', { name: /LENR-Forum\.com/i });
@@ -44,3 +45,4 @@ describe('AboutPage honesty copy', () => {
     expect(forumLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
+
