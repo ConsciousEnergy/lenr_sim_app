@@ -24,6 +24,8 @@ concurrency:
 jobs:
   smoke:
     name: lenr-ci runner smoke
+    # Hard-pinned self-hosted: never run untrusted fork PR code on lenr-ci.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, linux, x64, lenr-ci]
     timeout-minutes: 10
     steps:

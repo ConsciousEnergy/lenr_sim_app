@@ -3,10 +3,11 @@ name: Test and Benchmark
 # Long-lived branches: main (0.3.7 release) + dev (0.3.8 integration).
 # CI runs on pushes/PRs to both. Deploy stays main + v* tags only.
 #
-# Runner: default falls back to lenr-ci (Idle on share KVM2). Override with repo
-# variable LENR_CI_RUNS_ON if needed (e.g. ["ubuntu-latest"] after spend-limit reset).
-# See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md.
+# Runner: default falls back to lenr-ci. Override with repo variable LENR_CI_RUNS_ON
+# (e.g. ["ubuntu-latest"]). See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md.
 # Deploy/ship stays on GitHub-hosted — never mix VPS_* with lenr-ci PR jobs.
+# Public-repo: fork PRs must not execute on self-hosted (untrusted code). Each
+# job routes forks to ubuntu-latest; same-repo PRs/pushes keep LENR_CI_RUNS_ON.
 on:
   push:
     branches: [ main, dev ]
@@ -25,7 +26,7 @@ concurrency:
 jobs:
   version-consistency:
     # Fail fast on mixed version markers across runtime surfaces.
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check version consistency
@@ -50,7 +51,7 @@ jobs:
   detect-changes:
     # Path filters: docs/academic-only PRs skip heavy jobs so parallel academic
     # review stays cheap. Push/main and workflow_dispatch always run all.
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -120,7 +121,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   test:
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.backend == 'true'
     permissions:
@@ -218,7 +219,7 @@ jobs:
         retention-days: 90
 
   frontend:
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.frontend == 'true'
     permissions:
@@ -265,7 +266,7 @@ jobs:
           npm run build
 
   frontend-e2e:
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.frontend == 'true'
     permissions:
@@ -313,7 +314,7 @@ jobs:
   formalization:
     # Equation IR + Lean 4 consistency pilot (sibling to Wolfram/pytest science gates).
     # Does NOT claim LENR is proven — only mathematical consistency of adopted THM/DEF core.
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.formalization == 'true'
     permissions:
@@ -353,7 +354,7 @@ jobs:
             formalization/lean/LenrFormal --include='*.lean'
 
   compose-config:
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.infra == 'true'
     permissions:
@@ -370,7 +371,7 @@ jobs:
   # Track C (v0.3.8): keep staging Swarm dry-run gates + terraform/ansible
   # syntax valid on every infra-touching PR. Remote plan/check stays operator-credentialed.
   staging-swarm-dry-run:
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     needs: [version-consistency, detect-changes]
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.infra == 'true'
     permissions:

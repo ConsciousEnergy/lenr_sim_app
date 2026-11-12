@@ -25,10 +25,11 @@ concurrency:
 
 # Default: lenr-ci self-hosted. Override via LENR_CI_RUNS_ON if needed.
 # See docs/v0.3.7-beta/SELF_HOSTED_RUNNER.md. Deploy secrets never land here.
+# Public-repo: fork PRs route to ubuntu-latest (never self-hosted).
 jobs:
   secret-scan:
     name: Secret scan (gitleaks, full history)
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     timeout-minutes: 10
     env:
       GITLEAKS_VERSION: 8.30.1
@@ -75,7 +76,7 @@ jobs:
   backend-audit:
     name: Backend pip-audit
     if: github.event_name != 'pull_request'
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -116,7 +117,7 @@ jobs:
   frontend-audit:
     name: Frontend npm audit (high+)
     if: github.event_name != 'pull_request'
-    runs-on: ${{ fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
