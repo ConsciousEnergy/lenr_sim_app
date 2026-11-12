@@ -44,5 +44,17 @@ describe('AboutPage honesty copy', () => {
     expect(forumLink).toHaveAttribute('target', '_blank');
     expect(forumLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
+
+  it('places Special Thanks immediately after the Conscious Energy action bar', () => {
+    render(<AboutPage />);
+    const actions = screen.getByTestId('about-conscious-energy-actions');
+    const thanks = screen.getByTestId('about-special-thanks');
+    expect(actions.compareDocumentPosition(thanks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(actions.nextElementSibling?.tagName).toBe('HR');
+    expect(actions.nextElementSibling?.nextElementSibling).toBe(thanks);
+    expect(screen.getByRole('link', { name: /Visit Website/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+  });
 });
+
 
