@@ -125,12 +125,21 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     headers[settings.REQUEST_ID_HEADER] = error_id
     headers[settings.CORRELATION_ID_HEADER] = error_id
 
+    # Production/staging: never echo raw 5xx exception strings from
+    # HTTPException(detail=str(e)) — log above already captured them.
+    detail = exc.detail
+    if (
+        exc.status_code >= 500
+        and settings.ENVIRONMENT != EnvironmentType.DEVELOPMENT
+    ):
+        detail = "An internal server error occurred. Please try again later."
+
     return JSONResponse(
         status_code=exc.status_code,
         headers=headers,
         content=_error_content(
             error=f"HTTP {exc.status_code}",
-            detail=exc.detail,
+            detail=detail,
             request_id=error_id,
         ),
     )
