@@ -30,6 +30,11 @@ only — do not duplicate tables there.)
   Compose: Caddy `request_body max_size 10MB`. Swarm: Traefik `backend-bodylimit`
   (`maxRequestBodyBytes: 10485760`). App: `REQUEST_MAX_BODY_SIZE`. SPA nginx also
   sets `client_max_body_size 10m`.
+- **Edge rate limit (LP-H2 mitigate):** Traefik Swarm labels apply shared per-IP
+  budgets (general 60/min, heavy mutate 10/min, save/share write 3/min) before
+  API replicas (`backend-ratelimit(-heavy|-write)`, `ipStrategy.depth=1`). FastAPI
+  process-local RL still dilutes with workers — keep replicas ≤2 until Redis or
+  Cloudflare orange-cloud; LP-H2 not fully closed.
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.

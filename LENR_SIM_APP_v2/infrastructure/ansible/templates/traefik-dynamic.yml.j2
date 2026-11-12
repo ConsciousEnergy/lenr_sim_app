@@ -37,9 +37,11 @@ http:
           # Ops canary after Swarm apply: SPA must NOT emit X-Frame-Options.
           X-Frame-Policy: "csp-frame-ancestors"
 
-    # NOTE: API rate limiting lives on Swarm service labels as `backend-ratelimit`
-    # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. A prior
-    # unused `api-ratelimit` file middleware was removed to avoid drift.
+    # NOTE: API rate limiting lives on Swarm service labels as
+    # `backend-ratelimit` / `backend-ratelimit-heavy` / `backend-ratelimit-write`
+    # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. Path routers
+    # apply heavy/write budgets on mutate methods. A prior unused `api-ratelimit`
+    # file middleware was removed to avoid drift.
 
     # LP-M1: 413 oversized bodies before FastAPI (matches REQUEST_MAX_BODY_SIZE /
     # Caddy request_body 10MB). Wired on backend routers in docker-stack.yml.j2.
