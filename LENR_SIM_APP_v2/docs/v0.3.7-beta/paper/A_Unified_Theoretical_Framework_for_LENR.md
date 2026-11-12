@@ -37,14 +37,14 @@ Low-Energy Nuclear Reactions (LENR) are investigated as a contested but potentia
 
 Low-Energy Nuclear Reactions (LENR) refer to nuclear processes hypothesized to occur at or near room temperature and pressure, challenging the conventional high-energy paradigm of nuclear fusion or fission. Over the past several decades, experiments have reported:
 
-* **Anomalous Heat Generation:** Measured energy outputs exceeding what chemical processes alone can produce \[1,4\].  
-* **Isotopic Transmutations:** Conversion of elements without the high-energy nuclear by-products usually observed \[2,5\].  
-* **Minimal Radiation:** Comparatively negligible ionizing radiation despite *reported* nuclear-scale heat / isotopic correlations \[3,6\]—reports that remain disputed and do not by themselves establish nuclear events (`EQ-OPEN-RAD-01` stays OPEN).
+* **Anomalous Heat Generation:** Measured energy outputs exceeding what chemical processes alone can produce [1,4].  
+* **Isotopic Transmutations:** Conversion of elements without the high-energy nuclear by-products usually observed [2,5].  
+* **Minimal Radiation:** Comparatively negligible ionizing radiation despite *reported* nuclear-scale heat / isotopic correlations [3,6]—reports that remain disputed and do not by themselves establish nuclear events (`EQ-OPEN-RAD-01` stays OPEN).
 
 However, the field faces two major hurdles:
 
-* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories \[3,15\].  
-* **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena \[18,22\].
+* **Reproducibility:** Varying experimental conditions lead to inconsistent results across different laboratories [3,15].  
+* **Theoretical Fragmentation:** Absence of a unifying theoretical and mathematical framework that convincingly explains the diverse observed phenomena [18,22].
 
 Given LENR’s contested energy relevance, resolving these issues remains a priority for scientific understanding. Energetic / practical freedom outcomes stay a permanent non-goal of the companion software governance (see `GOALS.md`).
 
@@ -64,7 +64,7 @@ This paper aims to:
 
 **Claim tier:** speculative / exploratory mechanism (lattice–RM hypothesis stack). Lean `LenrFormal.Rydberg` locks the \(n=10\) energy identity only—not a nature proof that RM mediates LENR.
 
-**Definition:** Rydberg Matter is a phase in which atoms or molecules occupy highly excited electronic states with extended orbitals \[21\].
+**Definition:** Rydberg Matter is a phase in which atoms or molecules occupy highly excited electronic states with extended orbitals [21].
 
 1. **Role in LENR**
 
@@ -86,7 +86,7 @@ This paper aims to:
 
 **Claim tier:** modelled / exploratory construct. Lean `LenrFormal.Overlap` records ensemble-count bookkeeping (`EQ-OVERLAP-01/02`); ensemble product ≠ nuclear rate.
 
-**Definition:** In metallic hydrides and at metal-hydrogen interfaces, electrons can occupy extended or delocalized quantum states with wavefunctions that have non-negligible amplitude at nuclear length scales. These "extended electronic states" arise from band-structure effects, surface states, and hybridization in the condensed matter environment. (Citation correction: an earlier draft cited reference \[12\] (Meng et al. 2013) here, but that work concerns *halo nuclei*—nuclei with weakly bound nucleons extending beyond the nuclear core—and does **not** support a claim about electrons. Reference \[12\] is therefore *not* cited as evidence for delocalized interface electrons; this concept rests instead on standard condensed-matter band-structure and surface-state physics, and is treated here as a model construct whose overlap magnitude is bounded in Section 5.1 rather than asserted from \[12\].)
+**Definition:** In metallic hydrides and at metal-hydrogen interfaces, electrons can occupy extended or delocalized quantum states with wavefunctions that have non-negligible amplitude at nuclear length scales. These "extended electronic states" arise from band-structure effects, surface states, and hybridization in the condensed matter environment. (Citation correction: an earlier draft cited reference [12] (Meng et al. 2013) here, but that work concerns *halo nuclei*—nuclei with weakly bound nucleons extending beyond the nuclear core—and does **not** support a claim about electrons. Reference [12] is therefore *not* cited as evidence for delocalized interface electrons; this concept rests instead on standard condensed-matter band-structure and surface-state physics, and is treated here as a model construct whose overlap magnitude is bounded in Section 5.1 rather than asserted from [12].)
 
 1. **Overlap Probability**  
     The probability of an electronic wavefunction overlapping with the nuclear volume is:
@@ -126,7 +126,7 @@ This paper aims to:
 
 **Claim tier:** speculative / exploratory QED–lattice coupling. Lean `LenrFormal.Field` / `ScaleQED` document identities and negative controls; bulk HE vacuum polarisation remains a negative control (`EQ-QED-HE-NEG-01`), not LENR proof.
 
-**Definition:** Charge separation at electrolyte or lattice interfaces can form high electric fields in thin double layers \[23,33\].
+**Definition:** Charge separation at electrolyte or lattice interfaces can form high electric fields in thin double layers [23,33].
 
 * **Field Calculation:** For a potential difference of \( \Delta V = 0.1\,\text{V} \) over a distance \( d = 1\,\text{nm} \):
 
@@ -241,7 +241,7 @@ This threshold means free electrons at thermal energies cannot drive this reacti
 
 ### **2.5 Casimir Effect**
 
-**Definition:** Quantum vacuum fluctuations produce an attractive force between closely spaced conductive or dielectric surfaces \[17\].
+**Definition:** Quantum vacuum fluctuations produce an attractive force between closely spaced conductive or dielectric surfaces [17].
 
 * **Force Calculation:** For area \( A = 1\,\mu\text{m}^2 \) and separation \( d = 1\,\text{nm} \):
    \[
@@ -301,7 +301,7 @@ This sub-angstrom coherence length implies that deuteron-deuteron quantum cohere
 
 ### **2.6 Bose-Einstein Condensation (BEC)**
 
-**Definition:** BEC occurs when particles coalesce into a single quantum state, enabling coherent interactions \[25\].
+**Definition:** BEC occurs when particles coalesce into a single quantum state, enabling coherent interactions [25].
 
 * **Critical Temperature Estimate:**
  For a density \( n = 1 \times 10^{28} \) m⁻³ of deuterons (mass \( m = 3.344 \times 10^{-27} \) kg):
@@ -348,7 +348,7 @@ Since \( T_{\text{deuteron}}^{\text{eff}} < T_c^{\text{eff}} \), BEC becomes for
 
 ### **2.7 Oppenheimer-Phillips Process**
 
-**Definition:** A mechanism where a deuteron interacts with a nucleus at low energies, resulting in neutron capture and proton emission \[16\].
+**Definition:** A mechanism where a deuteron interacts with a nucleus at low energies, resulting in neutron capture and proton emission [16].
 
 \[
 d + {}^{A}_{Z}\text{X} \longrightarrow {}^{A+1}_{Z}\text{Y} + p.
@@ -515,7 +515,7 @@ Here \( E \) is the energy eigenvalue (`E_eigen`), not the electric field (`E_fi
 
 **Honesty label:** Cavitation–collapse in this framework is **modelled enhancement / contested hydro**. Rayleigh–Plesset / Keller–Miksis trajectories, surface-proximity factors, and collapse UQ percentiles are companion-software sensitivity explorations under claim-tier governance. They are **not** laboratory proof of nuclear rates, **not** a discharge of any `EQ-OPEN-*`, and **not** a physical-necessity theorem. Lean `LenrFormal.CollapseBounds` encodes only clamp / bound / UQ / RP-domain / hard-core CR-cap bookkeeping (`EQ-BBL-LIM-01`, `EQ-BBL-BOUND-01`, `EQ-BBL-UQ-01`, `EQ-BBL-RP-DOM-01`, `EQ-BBL-CR-CAP-01`)—including the pointwise clamp \(\min(\mathrm{raw},\mathrm{bound})\)—not cavitation-dynamics theorems that prove LENR. `EQ-BBL-NR-01` proves `hydro_enhancement_does_not_entail_nuclear_rate`: a rate scenario containing a hydro/collapse enhancement or scenario prior is definitionally **not** a nuclear-rate proof. WH-ENP-01 / OpenObligations prove **non-closure** implications under stated deficits—not affirmative LENR (`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`).
 
-**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy \[26\]. Pyyhtiä et al. (2026) (`pyyhtia2026`) provide OA experimental support that HER-driven nanobubble cavitation damages CR-39 and confounds SPAWAR-class pit=nuclear detector interpretations (pits without Pd and/or D₂O under suitable geometry; HIFU control; shallow polymer pits vs deep α tracks)—**not** LENR-rate proof; `EQ-OPEN-RAD-01` stays OPEN. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
+**Context:** During electrolysis, microbubbles can form and then collapse, concentrating energy [26]. Pyyhtiä et al. (2026) (`pyyhtia2026`) provide OA experimental support that HER-driven nanobubble cavitation damages CR-39 and confounds SPAWAR-class pit=nuclear detector interpretations (pits without Pd and/or D₂O under suitable geometry; HIFU control; shallow polymer pits vs deep α tracks)—**not** LENR-rate proof; `EQ-OPEN-RAD-01` stays OPEN. Ledger IDs: `ENG-BUBBLE-FUSION-01`, `ENG-RP-KM-01` (claim tier **approximate**; do not treat collapse numerics as nuclear-rate proof). Collapse UQ in the companion engine (`collapse_uq.py`, Sobol) reports modelled percentiles; campaign grids that stress cavitation/collapse cells remain model output only (see §3.8).
 
 1. **Modified Rayleigh–Plesset Equation** (incompressible / low-Mach baseline):
 \[
@@ -1785,7 +1785,6 @@ To resolve these open questions and move LENR from the margins of science toward
 
 Ultimately, the question is no longer whether anomalous energy phenomena occur under certain conditions—they clearly do—but whether these phenomena can be explained, predicted, and engineered using the rigorous tools of modern physics. This paper provides a structured and evidence-based foundation for that pursuit.
 
-\appendix
 ### Mathematical Symbols and Definitions
 
 * \(\phi\) — Electrostatic potential \([\text{V}]\)
