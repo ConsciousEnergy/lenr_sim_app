@@ -1,0 +1,29 @@
+id: EQ-WT-SCENARIO-01
+latex: "kind = scenario\\_table\\_not\\_posterior;\\quad lenr\\_proved = false;\\quad \\neg(final\\_score \\Rightarrow LENR)"
+symbols:
+  kind: "avenue / oracle / pack ranking envelope label"
+  final_score: "model association score (not P(LENR))"
+  lenr_proved: "nature-proof token; stays false"
+units: "Bool / String honesty locks"
+tag: DEF
+paper_ref: "software Avenue Ranking / Oracle B; AVENUE_RANKING.md"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/campaign/avenue_ranking.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/decision_oracle.py
+  - LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md
+  - LENR_SIM_APP_v2/docs/v0.3.9-beta/THEORY_WEIGHT_SURFACES.md
+citation_keys:
+  - model_assumption_scenario_table
+lean_target: LenrFormal.WeightHonesty
+lean_decls:
+  - "LenrFormal.WeightHonesty.lenrProved"
+  - "LenrFormal.WeightHonesty.lenr_proved_false"
+  - "LenrFormal.WeightHonesty.scenarioTableKind"
+  - "LenrFormal.WeightHonesty.scenario_table_kind_lock"
+  - "LenrFormal.WeightHonesty.high_score_does_not_prove_lenr"
+  - "LenrFormal.WeightHonesty.scenario_table_keeps_lenr_unproved"
+notes: >
+  DEF-only honesty IR for scenario-table ranking and claim-tier association
+  scores. High final_score / SQL means / avenue informativeness are
+  model-output association aids, never laboratory posteriors that prove LENR
+  or flip EQ-OPEN-*.

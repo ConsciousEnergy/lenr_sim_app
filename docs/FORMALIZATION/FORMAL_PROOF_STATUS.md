@@ -97,6 +97,8 @@
 | EQ-OVERLAP-02 | `Overlap` | Ensemble product tagged upper-bound count \(\neq\) nuclear rate |
 | EQ-OPEN-MEV-01 … EQ-OPEN-YIELD-01 | `OpenObligations` | Undischarged closure predicates + non-closure implications |
 | EQ-RAD-DET-01 | `RadiationBounds` | Detector-UL flag mirrors (`detector_ul_not_proof`); UL flag falsifies assumed branch only |
+| EQ-WT-TIER-01 | `WeightHonesty` | Claim-tier ×100 locks + five-factor \(W_*\) sum; Approximate scores ≠ lab posteriors |
+| EQ-WT-SCENARIO-01 | `WeightHonesty` | `scenario_table_not_posterior` + `lenr_proved=false`; high `final_score` ⇏ nature proof |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
 | EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
@@ -127,6 +129,8 @@
 **New DEF/THM rows (reviewer-pack pass, still OPEN obligations):** `EQ-BRANCH-LATTICE-01`, `EQ-WHEN-THRESH-01`, `EQ-WHEN-DUTY-01`, `EQ-MECH-PATH-01`, `EQ-OPEN-EC-DEFICIT-01`, `EQ-OPEN-YIELD-BAND-01` — Lean `WhenHow.lean` / `Branching.lean` / `OpenQuestionBounds.lean`; no measured branching or nature theorem.
 
 **WeakInteraction pass (still OPEN Q4):** `EQ-EC-THRESH-01`, `EQ-EC-GF-01`, `EQ-EC-SIGMA-01`, `EQ-EC-RATE-01` — Lean `WeakInteraction.lean` locks Fermi \(G_F\), \(\sigma\) envelope, and Boltzmann thermal-rate bound against `weak_interaction.py`. These are honest identities / bounds only; they do **not** discharge `EQ-OPEN-EC-01`.
+
+**Weight-honesty pass (still OPEN obligations):** `EQ-WT-TIER-01`, `EQ-WT-SCENARIO-01` — Lean `WeightHonesty.lean` locks claim-tier multipliers, five-factor \(W_*\) sum, and the `scenario_table_not_posterior` ranking envelope. DEF / Approximate bookkeeping only; high `final_score` does **not** prove LENR or flip any `EQ-OPEN-*`.
 
 **EC bound pass (still OPEN Q4):** `EQ-OPEN-EC-BOUND-01` — `WeakInteraction.lean` proves that per-atom electrostatic / thermal reservoirs under the `EQ-CM-BUDGET-01` cap (10–100 eV/atom) and the 0.1–1 eV double-layer band cannot satisfy `q4ElectronCaptureSourceClosed` (`cm_budget_form_cannot_close`). This is BOUNDED / form-DISPROVEN under those `AX` caps, not CLOSED: `q4_not_refuted_outright` keeps the obligation logically open, Widom–Larsen mass renormalization stays SPEC, and `ec_bounds_keep_honesty_locks` keeps `condensedMatterPathToThreshold` and `lenrProved` false.
 

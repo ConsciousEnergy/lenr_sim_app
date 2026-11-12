@@ -51,7 +51,8 @@ confirmation. `is_empirical_confidence` stays `false` on model packs.
 
 ## Claim-tier multiply honesty (DEF)
 
-Definition only — not a laboratory theorem:
+Definition only — not a laboratory theorem. Mechanized twin:
+Lean `LenrFormal.WeightHonesty` / IR [`EQ-WT-TIER-01`](../../../../formalization/ir/equations/EQ-WT-TIER-01.yaml).
 
 1. `raw_score_pre_tier` = weighted geometric mean of the five sub-scores (with floor).
 2. `final_score = raw_score_pre_tier × CLAIM_TIER_MULTIPLIER[claim_tier]`.
@@ -62,7 +63,9 @@ Definition only — not a laboratory theorem:
 
 ## Scenario-table honesty (DEF)
 
-Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**:
+Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**.
+Mechanized twin: Lean `LenrFormal.WeightHonesty` / IR
+[`EQ-WT-SCENARIO-01`](../../../../formalization/ir/equations/EQ-WT-SCENARIO-01.yaml).
 
 - Lab-design informativeness / mechanism-path odds under stated priors.
 - Miles-anchored priors are occurrence-scenario aids, **not** P(LENR).
@@ -71,7 +74,9 @@ Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**:
 
 Contract tests:
 [`test_avenue_ranking_contract.py`](../../backend/tests/test_integration/test_avenue_ranking_contract.py),
-[`test_weight_surface_honesty.py`](../../backend/tests/test_integration/test_weight_surface_honesty.py).
+[`test_weight_surface_honesty.py`](../../backend/tests/test_integration/test_weight_surface_honesty.py),
+[`test_lean_python_agreement.py`](../../backend/tests/test_formalization/test_lean_python_agreement.py)
+(`test_weight_honesty_locks_agree_with_lean`).
 
 ## SQL / pack enrichment (model-only)
 
