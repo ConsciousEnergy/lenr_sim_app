@@ -1,4 +1,4 @@
-# README demo videos (Diadon-owned captures)
+# README demo videos (Original captures)
 
 Cloud-agent screen recordings can pick up Cursor or tooling chrome. **Do not** commit agent-captured MP4s here. Diadon records clean walkthroughs locally (1080p, muted or soft VO, no browser update UI).
 
