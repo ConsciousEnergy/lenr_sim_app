@@ -101,6 +101,53 @@ def test_nginx_spa_omits_x_frame_options():
     assert any('X-Frame-Policy "csp-frame-ancestors"' in line for line in active_headers)
 
 
+def _spa_csp_sources():
+    """Pages _headers, Swarm nginx, and Traefik SPA middleware must stay in lockstep."""
+    headers = (ROOT / "frontend" / "public" / "_headers").read_text(encoding="utf-8")
+    nginx = (ROOT / "infrastructure" / "docker" / "nginx.frontend.conf").read_text(
+        encoding="utf-8"
+    )
+    dynamic = DYNAMIC.read_text(encoding="utf-8")
+    header_csp = next(
+        line.split(":", 1)[1].strip()
+        for line in headers.splitlines()
+        if "Content-Security-Policy:" in line
+    )
+    nginx_csp = next(
+        line.split('"')[1]
+        for line in nginx.splitlines()
+        if "set $spa_csp" in line
+    )
+    start = dynamic.index("spa-security-headers:")
+    rest = dynamic[start:]
+    end = rest.find("\n    # NOTE:")
+    if end == -1:
+        end = rest.find("\n    cors:")
+    block = rest[: end if end != -1 else len(rest)]
+    traefik_csp = next(
+        line.split('contentSecurityPolicy:', 1)[1].strip().strip('"')
+        for line in block.splitlines()
+        if "contentSecurityPolicy:" in line
+    )
+    return header_csp, nginx_csp, traefik_csp
+
+
+def test_spa_csp_das_m1_tightened_and_mirrored():
+    """DAS-M1: no bare wss: / img-src https:; explicit api wss; three surfaces match."""
+    header_csp, nginx_csp, traefik_csp = _spa_csp_sources()
+    assert header_csp == nginx_csp == traefik_csp
+    csp = header_csp
+    assert "img-src 'self' data: blob:;" in csp
+    assert "img-src" in csp and "https:" not in csp.split("img-src", 1)[1].split(";", 1)[0]
+    assert " wss: " not in f" {csp} "
+    assert "wss://api.conscious.energy" in csp
+    assert "https://api.conscious.energy" in csp
+    assert "https://us.i.posthog.com" in csp
+    assert "https://lenr-sim-beta.conscious.energy" in csp
+    assert "https://app.conscious.energy" in csp
+    assert "script-src 'self'" in csp
+
+
 def test_dockerfile_backend_restricts_forwarded_allow_ips():
     dockerfile = (ROOT / "infrastructure" / "docker" / "Dockerfile.backend").read_text(
         encoding="utf-8"
