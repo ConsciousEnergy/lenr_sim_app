@@ -13,6 +13,7 @@ import logging
 from datetime import datetime
 
 from app.core.config import settings
+from app.security.websocket_origin import is_allowed_websocket_origin
 from app.utils.logging import setup_logger
 from app.simulation.multi_physics import (
     VisualizationEvent, 
@@ -91,6 +92,17 @@ async def visualization_websocket(websocket: WebSocket, client_id: str):
         websocket: WebSocket connection
         client_id: Unique client identifier
     """
+    # LRS-M1: reject before accept when Origin is missing or not CORS-allowlisted.
+    origin = websocket.headers.get("origin")
+    if not is_allowed_websocket_origin(origin, settings.CORS_ORIGINS):
+        logger.warning(
+            "Rejected visualization WebSocket Origin=%r (client_id=%s)",
+            origin,
+            client_id,
+        )
+        await websocket.close(code=1008, reason="Origin not allowed")
+        return
+
     if len(active_connections) >= settings.MAX_VIS_WS_CONNECTIONS:
         await websocket.close(code=1013, reason="Too many concurrent visualization streams")
         return
