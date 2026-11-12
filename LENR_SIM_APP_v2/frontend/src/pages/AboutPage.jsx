@@ -177,7 +177,7 @@ const AboutPage = () => {
 
         <Divider sx={{ my: 4 }} />
 
-        <Box>
+        <Box sx={{ mb: 4 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
             <BusinessIcon color="primary" sx={{ mr: 1 }} />
             About Conscious Energy
@@ -204,6 +204,42 @@ const AboutPage = () => {
               Email feedback / source access
             </Button>
           </Box>
+        </Box>
+
+        <Divider sx={{ my: 4 }} />
+
+        <Box data-testid="about-special-thanks">
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Special Thanks
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Special thanks go to the{' '}
+            <Link
+              href="https://www.lenr-forum.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              LENR-Forum.com
+            </Link>
+            {' '}team for their support, the countless researchers who have made this field their
+            life&apos;s work, and to all of those who have supported my research at Conscious Energies
+            over the last decade. This work is in loving memory of Alan Smith, Melvin Miles, and
+            Michael McKubre.
+          </Typography>
+          <Typography
+            variant="body1"
+            component="blockquote"
+            sx={{
+              m: 0,
+              pl: 2,
+              borderLeft: 2,
+              borderColor: 'divider',
+              fontStyle: 'italic',
+              color: 'text.secondary',
+            }}
+          >
+            &ldquo;Abiit autem non sum oblitus&rdquo;
+          </Typography>
         </Box>
       </Paper>
     </Container>

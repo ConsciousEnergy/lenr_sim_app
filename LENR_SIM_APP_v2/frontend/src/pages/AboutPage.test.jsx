@@ -31,4 +31,16 @@ describe('AboutPage honesty copy', () => {
     expect(block).toHaveTextContent(/literature reports/i);
     expect(block).toHaveTextContent(/not a count of validated mechanisms/i);
   });
+
+  it('ends with a Special Thanks memorial section', () => {
+    render(<AboutPage />);
+    const block = screen.getByTestId('about-special-thanks');
+    expect(block).toHaveTextContent(/Special Thanks/);
+    expect(block).toHaveTextContent(/loving memory of Alan Smith, Melvin Miles, and Michael McKubre/);
+    expect(block).toHaveTextContent('Abiit autem non sum oblitus');
+    const forumLink = screen.getByRole('link', { name: /LENR-Forum\.com/i });
+    expect(forumLink).toHaveAttribute('href', 'https://www.lenr-forum.com/');
+    expect(forumLink).toHaveAttribute('target', '_blank');
+    expect(forumLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
 });
