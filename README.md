@@ -169,23 +169,28 @@ Screenshots captured from **0.3.9-beta** live beta UI (app chrome only, no brows
 
 ## Demo videos
 
-Agent screen recordings can include watermarked tooling chrome. **Public README clips are captured by Diadon**, not cloud agents. Drop files under [`docs/assets/readme/videos/`](docs/assets/readme/videos/) using the naming convention in that folder’s README.
 
-<!-- Diadon: drop MP4 at docs/assets/readme/videos/01-home-walkthrough.mp4 -->
-
-<p align="center"><em>Video coming soon — home → first simulation (60–90s)</em></p>
+<p align="center"><em>Home → first simulation</em></p>
 <!-- <p align="center"><video src="docs/assets/readme/videos/01-home-walkthrough.mp4" controls width="800"></video></p> -->
 <!-- Download: [01-home-walkthrough.mp4](docs/assets/readme/videos/01-home-walkthrough.mp4) -->
 
-<p align="center"><em>Video coming soon — Unified Theory run + export (60–90s)</em></p>
-<!-- Diadon: docs/assets/readme/videos/02-unified-theory.mp4 -->
+<p align="center"><em>Unified Theory run + export)</em></p>
+<docs/assets/readme/videos/01-home-walkthrough.mp4>
 
-<p align="center"><em>Video coming soon — Quantum Tunneling (60–90s)</em></p>
-<!-- Diadon: docs/assets/readme/videos/03-quantum-tunneling.mp4 -->
+<p align="center"><em>Quantum Tunneling</em></p>
+<docs/assets/readme/videos/02-unified-theory.mp4>
 
-<p align="center"><em>Video coming soon — Theory Paper / Methods honesty (60–90s)</em></p>
-<!-- Diadon: docs/assets/readme/videos/04-theory-paper-methods.mp4 -->
+<p align="center"><em>Theory Paper / Methods honesty</em></p>
+<docs/assets/readme/videos/03-quantum-tunneling.mp4>
 
+<p align="center"><em>Theory Paper / Methods honesty</em></p>
+<docs/assets/readme/videos/04-theory-paper.mp4>
+
+<p align="center"><em>Analytics</em></p>
+<docs/assets/readme/videos/05-analytics.mp4>
+
+<p align="center"><em>Bubble Fusion -beta-</em></p>
+<docs/assets/readme/videos/06-bubble-fusion-beta.mp4>
 ---
 
 ## Limitations and open questions
