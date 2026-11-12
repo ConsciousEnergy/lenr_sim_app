@@ -19,7 +19,7 @@ concurrency:
 # Public-repo: fork PRs route to ubuntu-latest (never self-hosted).
 jobs:
   dependency-review:
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
+    runs-on: ubuntu-latest  # TEMP #370 option 3: force hosted while lenr-ci stalled; REVERT after merge
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
