@@ -2,9 +2,9 @@
 
 **Advanced modeling and visualization of Low Energy Nuclear Reactions** *(research preview — model output, not laboratory measurement)*
 
-[![Live beta](https://img.shields.io/badge/live%20beta-0.3.9--beta-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
-[![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](../CHANGELOG.md)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Live beta](https://img.shields.io/badge/live%20beta-0.3.9--beta-005490?style=flat-square)](https://lenr-sim-beta.conscious.energy)
+[![Markers](https://img.shields.io/badge/markers-0.3.9--beta-185f97?style=flat-square)](../CHANGELOG.md)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-002454?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
 
 > Looking for the project-level overview, honesty invariants, and signed-out beta walkthrough? Start at the repository root [`README.md`](../README.md).
 

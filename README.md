@@ -1,31 +1,50 @@
-# LENR Simulation Application
+<p align="center">
+  <img src="LENR_SIM_APP_v2/frontend/public/images/ce-logo.png" alt="Conscious Energy — hex mark" width="72" />
+</p>
 
-**Research-preview software for modeling and visualizing Low-Energy Nuclear Reaction (LENR) hypotheses** — with claim-tiered physics engines, interactive 3D views, and a companion theoretical framework. Built by **Diadon / Conscious Energy**.
+<h1 align="center">LENR Simulation Application</h1>
 
-[![Live beta](https://img.shields.io/badge/live%20beta-0.3.9--beta-brightgreen.svg)](https://lenr-sim-beta.conscious.energy)
-[![Markers](https://img.shields.io/badge/markers-0.3.9--beta-blue.svg)](CHANGELOG.md)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://lenr-sim-beta.conscious.energy)
+<p align="center">
+  <strong>Research-preview software for modeling and visualizing Low-Energy Nuclear Reaction (LENR) hypotheses</strong> — with claim-tiered physics engines, interactive 3D views, and a companion theoretical framework. Built by <strong>Diadon / Conscious Energy</strong>.
+</p>
+
+<p align="center">
+  <img src="docs/assets/readme/00-hero.png" alt="LENR Simulation Platform dashboard — Unified Theory, Quantum Tunneling, and Bubble Fusion entry points" width="860" />
+</p>
+
+<p align="center">
+  <a href="https://lenr-sim-beta.conscious.energy"><img src="https://img.shields.io/badge/live%20beta-0.3.9--beta-005490?style=flat-square" alt="Live beta 0.3.9-beta" /></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/markers-0.3.9--beta-185f97?style=flat-square" alt="Version markers 0.3.9-beta" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-002454?style=flat-square" alt="License GPL v3" /></a>
+  <a href="https://lenr-sim-beta.conscious.energy"><img src="https://img.shields.io/badge/status-public%20beta-e87722?style=flat-square" alt="Public beta" /></a>
+</p>
 
 > **Epistemic honesty.** Every number in this app is **model output**, not a laboratory measurement. Lean formalization checks *mathematical consistency* only — it does **not** prove that LENR occurs. `lenr_proved` stays `false`; the five `EQ-OPEN-*` obligations remain **OPEN**. Do not treat UI results as experimental proof.
 
-**Try the public beta (no install):** [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) · version **0.3.9-beta** · API docs via the same origin `/api/docs`. Optional SPA mirror: [https://app.conscious.energy](https://app.conscious.energy). Marketing site [conscious.energy](https://conscious.energy) is WordPress — not the sim.
-
-Operators and agents: current live/ops truth lives in [`AGENTS.md`](AGENTS.md) and the versioned ops docs under `LENR_SIM_APP_v2/docs/` — not in this README.
-
-### Docs map (public vs team)
-
-| Audience | Start here |
-|----------|------------|
-| Invited beta visitors | This README (walkthrough below) |
-| Public / contributors | This README, [`CONTRIBUTING.md`](CONTRIBUTING.md), [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) |
-| Agents / operators | [`AGENTS.md`](AGENTS.md) |
-| Branching / releases | [`.github/BRANCHING.md`](.github/BRANCHING.md) |
-| Academic parallel train | [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) (`EQ-OPEN-*` stay OPEN) |
+**At a glance:** claim-tiered engines · interactive 3D · in-app Theory Paper · public beta at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) (**0.3.9-beta**)
 
 ---
 
-## What this application is for
+## Table of contents
+
+- [Purpose](#purpose)
+- [How the models work](#how-the-models-work)
+- [What’s in 0.3.9-beta](#whats-in-039-beta)
+- [Try the live beta](#try-the-live-beta)
+- [Demo gallery](#demo-gallery)
+- [Demo videos](#demo-videos)
+- [Limitations and open questions](#limitations-and-open-questions)
+- [Cite this work](#cite-this-work)
+- [FAQ](#faq)
+- [Quick start (local)](#quick-start-local)
+- [Project layout](#project-layout)
+- [Support / Donate](#support--donate)
+- [Contribute / License](#contribute--license)
+- [For maintainers](#for-maintainers)
+
+---
+
+## Purpose
 
 LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore contested LENR mechanisms under explicit claim tiers** — without conflating simulation with experiment.
 
@@ -38,111 +57,180 @@ LENR_SIM_APP helps researchers, reviewers, and curious engineers **explore conte
 
 **Primary audiences:** condensed-matter / nuclear-adjacent researchers, CMNS reviewers, invited public-beta visitors, and contributors who need a reproducible software companion to the [Unified Theory Paper](docs/A_Unified_Theoretical_Framework_for_LENR.md).
 
----
-
-## Honesty invariants (do not relax)
-
-These stay true on every surface (UI, API, docs, Lean):
-
-1. **`lenr_proved` is `false`** — the software never asserts that LENR is experimentally proved.
-2. **`EQ-OPEN-*` stay OPEN** — open equation / proof obligations are not closed by this release train.
-3. **Model ≠ measurement** — every plotted or exported number is simulation / model output.
-4. **Lean = consistency, not nature** — formalization under [`formalization/`](formalization/) checks math; it does not prove physical occurrence.
-5. **Claim tiers are first-class** — Beta / Approximate / Speculative / Aspirational badges mean what they say; aspirational FEM is not on the public beta.
-
 Science track sources of truth: [`PHYSICS_MATURITY_LEDGER.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md), [`PROOF_MATRIX.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/PROOF_MATRIX.md), [`GOALS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/GOALS.md).
 
 ---
 
-## Try the live beta (signed-out walkthrough)
+## How the models work
 
-Open [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) in a modern browser (no account required for the public preview).
+Three interactive modules cover the main public-beta surfaces. Each path labels outputs with **maturity badges** (Beta / Approximate / Speculative / Aspirational) so you know what tier of claim you are viewing.
 
-1. **Home** — confirm the beta / research-preview banner and version chip (**0.3.9-beta**). Feedback should point to email (`diadon@conscious.energy`), not a broken Issues CTA.
-2. **Unified Theory** — open Unified Theory (or Run from the dashboard). Leave defaults; press **Run** once. When it finishes, open the **3D Visualization** tab and confirm the canvas mounts (no “Visualization Error”).
-3. **Theory Paper** — skim the in-app Theory Paper and Theory Methods pages for honesty / known-limitations language. Open questions stay open.
-4. **Optional** — try Bubble Fusion or Quantum Tunneling from the home dashboard; export JSON/CSV once if you want a reproducible review pack.
-5. **Feedback** — email `diadon@conscious.energy` with page URL, browser/OS, app version, settings (if not default), what you expected, and what you saw.
+| Module | Plain-language role | Typical use |
+|--------|---------------------|-------------|
+| **Unified Theory** | Couples bubble cavitation, lattice / electrolyte context, and a claim-tiered reaction-rate stack | End-to-end “what-if” runs with 3D lattice–bubble workspace and export |
+| **Quantum Tunneling** | WKB / Gamow-style barrier penetration with explicit screening honesty | Order-of-magnitude tunneling sensitivity without implying lab validation |
+| **Bubble Fusion** | Rayleigh–Plesset (and selected higher-Mach paths) bubble collapse calculators | Explore sonofusion-style *models* — outputs are engine math, not cavitation lab data |
 
-Participation is not an endorsement. Do not quote results as laboratory measurements.
+**Claim tiers** flow from governance docs into the UI glossary. **Aspirational** finite-element or continuum solvers are documented but **not** shipped on the public beta.
 
----
-
-## Screenshots (public beta UI)
-
-<p align="center">
-  <img src="docs/assets/readme/01-home.png" alt="Dashboard — LENR Simulation Platform home" width="800" />
-</p>
-
-<p align="center"><em>Dashboard — quick entry to Unified Theory, Quantum Tunneling, and Bubble Fusion</em></p>
-
-<p align="center">
-  <img src="docs/assets/readme/02-unified-theory.png" alt="Unified Bubble-Lattice LENR Simulation" width="800" />
-</p>
-
-<p align="center"><em>Unified Theory — material/electrolyte config, parameters, and 3D lattice–bubble workspace</em></p>
-
-<p align="center">
-  <img src="docs/assets/readme/03-bubble-fusion.png" alt="Bubble Fusion / acoustic cavitation simulation" width="800" />
-</p>
-
-<p align="center"><em>Bubble Fusion — acoustic cavitation controls with engine-maturity labeling</em></p>
-
-<p align="center">
-  <img src="docs/assets/readme/04-quantum-tunneling.png" alt="Quantum Tunneling visualization" width="800" />
-</p>
-
-<p align="center"><em>Quantum Tunneling — WKB / Gamow barrier exploration</em></p>
-
-<p align="center">
-  <img src="docs/assets/readme/05-theory-paper.png" alt="In-app Unified Theory Paper view" width="800" />
-</p>
-
-<p align="center"><em>Theory Paper — curated in-app view of the unified LENR framework</em></p>
-
-<p align="center">
-  <img src="docs/assets/readme/06-theory-methods.png" alt="Theory Methods — computational honesty" width="800" />
-</p>
-
-<p align="center"><em>Theory Methods — what the public beta actually runs vs aspirational FEM</em></p>
-
-> **Demo video.** A walkthrough video will be linked here when available (owned separately from this docs pack).
+Deep theory: [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](docs/A_Unified_Theoretical_Framework_for_LENR.md) (also rendered in-app under **Theory Paper**). Branded HTML/PDF builds live under `LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/` when present in your checkout.
 
 ---
 
-## Scope of the public beta
+## What’s in 0.3.9-beta
 
-**Shipped / live on the public beta (0.3.9-beta)**
-
-- Unified bubble–lattice simulation API (`/api/unified/*`) with claim-tiered theory pipeline
-- Bubble dynamics: Rayleigh–Plesset baseline; Keller–Miksis auto-select when Mach ≥ 0.3 (approximate maturity)
-- Quantum tunneling (WKB/Gamow) reference path with domain-limited screening honesty
-- Engine maturity badges (Beta / Approximate / Speculative / Aspirational)
-- Open-questions / working-hypothesis surfaces; export envelope `lenr-run-export-v1`
-- Lean 4 + equation IR under [`formalization/`](formalization/) for consistency / non-closure lemmas
-- Multi-format governance docs under [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/)
-
-**Explicitly not on the public beta (deferred / aspirational)**
-
-- Full FEM / Poisson–Schrödinger / COMSOL-class continuum solvers
-- Declaring any `EQ-OPEN-*` closed
-- Energetic or “practical freedom” product claims
+- **Public Swarm share** — same-origin SPA + API at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy); split-origin mirror at [app.conscious.energy](https://app.conscious.energy) (API at [api.conscious.energy](https://api.conscious.energy)).
+- Unified bubble–lattice API, bubble dynamics (RP / KM auto-select), quantum tunneling reference path, Bubble Fusion calculator.
+- Engine maturity badges, open-questions surfaces, `lenr-run-export-v1` export envelope.
+- Lean 4 consistency checks under [`formalization/`](formalization/) — **not** a nature proof.
+- Honesty invariants unchanged: `lenr_proved` **false**, all `EQ-OPEN-*` **OPEN**, no FEM on the public beta.
 
 Adopted sensitivity bands (do not reintroduce superseded values): tunneling enhancement \(10^{3}\)–\(10^{5}\); Casimir check geometry \(\approx -1.3\,\mathrm{mN}\); Miles He-4/heat band \(24\pm4\,\mathrm{MeV}\).
 
 ---
 
-## Project layout
+## Try the live beta
 
-| Path | Purpose |
-|------|---------|
-| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | Application: FastAPI backend, React/Vite frontend, infrastructure, release docs |
-| [`formalization/`](formalization/) | Equation IR + Lean 4 consistency checks (not a nature proof) |
-| [`docs/`](docs/) | Repository docs, Unified Theory Paper, formalization status, README screenshots |
-| [`archive/status-reports/`](archive/status-reports/) | Historical status reports (provenance) |
-| [`.github/`](.github/) | CI workflows, Dependabot, PR template, CODEOWNERS |
+**CTA:** [Try live beta](https://lenr-sim-beta.conscious.energy) · [Demo videos](#demo-videos) · [Read the Theory Paper](docs/A_Unified_Theoretical_Framework_for_LENR.md)
 
-👉 **Install & run locally:** see [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
+Open [https://lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) in a modern browser (no account required for the public preview).
+
+1. **Home** — confirm the research-preview banner and version chip (**0.3.9-beta**).
+2. **Unified Theory** — open Unified Theory, leave defaults, press **Run**. When complete, open **3D Visualization** and confirm the canvas mounts.
+3. **Theory Paper** — skim in-app **Theory Paper** and **Theory Methods** for limitations language; open questions stay open.
+4. **Optional** — run **Bubble Fusion** or **Quantum Tunneling**; export JSON/CSV once for a review pack.
+5. **Feedback** — email [diadon@conscious.energy](mailto:diadon@conscious.energy) with page URL, browser/OS, app version, settings (if not default), what you expected, and what you saw.
+
+Participation is not an endorsement. Do not quote results as laboratory measurements.
+
+Interactive OpenAPI: `https://lenr-sim-beta.conscious.energy/api/docs` (same origin as the beta SPA).
+
+---
+
+## Demo gallery
+
+<details>
+<summary><strong>Home dashboard</strong> — quick entry to Unified Theory, Quantum Tunneling, and Bubble Fusion</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/01-home.png" alt="Dashboard — module cards for Unified LENR Theory, Quantum Tunneling, and Bubble Fusion" width="800" />
+</p>
+
+</details>
+
+<details>
+<summary><strong>Unified Theory</strong> — material config, parameters, and 3D lattice–bubble workspace</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/02-unified-theory.png" alt="Unified Bubble-Lattice simulation — configuration tabs and 3D workspace" width="800" />
+</p>
+
+</details>
+
+<details>
+<summary><strong>Bubble Fusion</strong> — acoustic cavitation controls with post-run collapse metrics (model output)</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/03-bubble-fusion.png" alt="Bubble Fusion module after a run — temperature, pressure, and Rayleigh–Plesset provenance" width="800" />
+</p>
+
+</details>
+
+<details>
+<summary><strong>Quantum Tunneling</strong> — WKB / Gamow barrier exploration</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/04-quantum-tunneling.png" alt="Quantum Tunneling — barrier parameters and enhancement honesty" width="800" />
+</p>
+
+</details>
+
+<details>
+<summary><strong>Theory Paper</strong> — curated in-app view of the unified LENR framework</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/05-theory-paper.png" alt="In-app Theory Paper reader with section navigation" width="800" />
+</p>
+
+</details>
+
+<details>
+<summary><strong>Theory Methods</strong> — what the public beta runs vs aspirational FEM</summary>
+
+<p align="center">
+  <img src="docs/assets/readme/06-theory-methods.png" alt="Theory Methods — computational honesty and engine scope" width="800" />
+</p>
+
+</details>
+
+Screenshots captured from **0.3.9-beta** live beta UI (app chrome only, no browser frame). See [`docs/assets/readme/videos/README.md`](docs/assets/readme/videos/README.md) for video naming.
+
+---
+
+## Demo videos
+
+Agent screen recordings can include watermarked tooling chrome. **Public README clips are captured by Diadon**, not cloud agents. Drop files under [`docs/assets/readme/videos/`](docs/assets/readme/videos/) using the naming convention in that folder’s README.
+
+<!-- Diadon: drop MP4 at docs/assets/readme/videos/01-home-walkthrough.mp4 -->
+
+<p align="center"><em>Video coming soon — home → first simulation (60–90s)</em></p>
+<!-- <p align="center"><video src="docs/assets/readme/videos/01-home-walkthrough.mp4" controls width="800"></video></p> -->
+<!-- Download: [01-home-walkthrough.mp4](docs/assets/readme/videos/01-home-walkthrough.mp4) -->
+
+<p align="center"><em>Video coming soon — Unified Theory run + export (60–90s)</em></p>
+<!-- Diadon: docs/assets/readme/videos/02-unified-theory.mp4 -->
+
+<p align="center"><em>Video coming soon — Quantum Tunneling (60–90s)</em></p>
+<!-- Diadon: docs/assets/readme/videos/03-quantum-tunneling.mp4 -->
+
+<p align="center"><em>Video coming soon — Theory Paper / Methods honesty (60–90s)</em></p>
+<!-- Diadon: docs/assets/readme/videos/04-theory-paper-methods.mp4 -->
+
+---
+
+## Limitations and open questions
+
+- **`lenr_proved` is `false`** everywhere (UI, API, docs).
+- **Five `EQ-OPEN-*` obligations stay OPEN** — this release does not close them.
+- **Model ≠ measurement** — plots and exports are simulation output.
+- **Lean** under [`formalization/`](formalization/) checks consistency lemmas only; it does not prove LENR in nature.
+- **No full FEM / Poisson–Schrödinger / COMSOL-class stack** on the public beta (aspirational tier only in docs).
+
+---
+
+## Cite this work
+
+If you use the software or framework in academic writing, please cite the theory paper and name the software version.
+
+**Software (0.3.9-beta):** Conscious Energy. *LENR Simulation Application.* Research-preview release 0.3.9-beta. Repository: this GitHub project (root of the checkout you cloned).
+
+```bibtex
+@software{lenr_sim_app_039,
+  author       = {{Conscious Energy}},
+  title        = {LENR Simulation Application},
+  year         = {2026},
+  version      = {0.3.9-beta},
+  howpublished = {GitHub repository — \texttt{lenr\_sim\_app}},
+  note         = {Research preview; model output is not laboratory data.}
+}
+@article{unified_lenr_framework,
+  author       = {Conscious Energy and Diadon},
+  title        = {A Unified Theoretical Framework for Low-Energy Nuclear Reactions},
+  year         = {2026},
+  howpublished = {In-repo path \texttt{docs/A\_Unified\_Theoretical\_Framework\_for\_LENR.md}},
+  note         = {Companion to LENR Simulation Application 0.3.9-beta.}
+}
+```
+
+---
+
+## FAQ
+
+**Is LENR proven here?** No. The app explicitly keeps `lenr_proved` false and labels outputs as models. Lean checks math consistency, not physical occurrence.
+
+**Do I need an account?** No, for the public beta preview at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy).
+
+**What do the maturity badges mean?** They encode claim tier (Beta / Approximate / Speculative / Aspirational). See the in-app glossary and [`RUBRIC_GOVERNANCE`](LENR_SIM_APP_v2/docs/v0.3.6-beta/RUBRIC_GOVERNANCE.md).
 
 ---
 
@@ -155,109 +243,59 @@ cd LENR_SIM_APP_v2
 chmod +x start_app.sh && ./start_app.sh
 ```
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3000  
 - Backend API: http://localhost:8010 (`/api/docs`)
 
-Canonical ports: [`LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md`](LENR_SIM_APP_v2/docs/v0.3.6-beta/PORT_TOPOLOGY_POLICY.md)
+Full install, ports, and troubleshooting: [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md).
 
 ---
 
-## Application architecture (high level)
+## Project layout
 
-```
-┌─────────────────────────────────────────┐
-│  React / Vite frontend (:3000)          │
-│  Dashboard · Unified Theory · QT · BF   │
-│  Theory Paper / Methods · Analytics     │
-└──────────────────┬──────────────────────┘
-                   │ REST + WebSocket
-┌──────────────────┴──────────────────────┐
-│  FastAPI backend (:8010)                │
-│  /api/unified/* · /api/physics/*        │
-│  Theory pipeline · run export           │
-└──────────────────┬──────────────────────┘
-                   │
-┌──────────────────┴──────────────────────┐
-│  Physics engines (claim-tiered)         │
-│  WKB/Gamow · bubble RP/KM · theories/*  │
-│  Open questions / WH-ENP · guardrails   │
-└─────────────────────────────────────────┘
-         │
-         ▼
-  formalization/  (Lean + IR — consistency only)
-```
+| Path | Purpose |
+|------|---------|
+| [`LENR_SIM_APP_v2/`](LENR_SIM_APP_v2/) | FastAPI backend, React/Vite frontend, infrastructure |
+| [`formalization/`](formalization/) | Equation IR + Lean 4 consistency checks |
+| [`docs/`](docs/) | Theory paper, formalization status, README media |
+| [`.github/`](.github/) | CI, Dependabot, contributing templates |
 
 ---
 
-## Version trains
+## Support / Donate
 
-| Branch | Markers must be | Role |
-|--------|-----------------|------|
-| `main` | **`0.3.9-beta`** | Live public beta release line; ship / hotfix |
-| `dev` | **`0.3.9-beta`** | Integration tip; default PR base |
+**Feedback:** [diadon@conscious.energy](mailto:diadon@conscious.energy) (include URL, browser/OS, version, and repro steps).  
+**Security:** [SECURITY.md](SECURITY.md) — not public GitHub issues.  
+**Application help:** [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) troubleshooting section.
 
-Four version markers must match **within** a branch:
+**Donations** fund independent LENR modeling and open-science tooling. They do **not** buy claim closure or `EQ-OPEN-*` resolution.
 
-- `LENR_SIM_APP_v2/backend/app/core/config.py` → `APP_VERSION`
-- `LENR_SIM_APP_v2/frontend/package.json` → `"version"`
-- `LENR_SIM_APP_v2/frontend/src/config/version.js` → `APP_VERSION`
-- `LENR_SIM_APP_v2/infrastructure/docker/Dockerfile.backend` → `BUILD_VERSION`
-
-Default PR base is **`dev`**. Promote to public with a controlled `dev` → `main` PR. Do **not** bump `main` markers except via that promote. Full policy: [`.github/BRANCHING.md`](.github/BRANCHING.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+| Channel | Link |
+|---------|------|
+| Conscious Energy (primary) | *TODO — Diadon to confirm live donations URL on [conscious.energy](https://conscious.energy)* |
+| GitHub Sponsors (optional) | *TODO if enabled* |
 
 ---
 
-## Documentation map
+## Contribute / License
 
-| Doc | Use when |
-|-----|----------|
-| [`AGENTS.md`](AGENTS.md) | Short current-truth map for humans and agents (ops detail) |
-| [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md) | Local install, features, troubleshooting |
-| [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](docs/A_Unified_Theoretical_Framework_for_LENR.md) | Canonical theory paper |
-| [`LENR_SIM_APP_v2/docs/v0.3.7-beta/`](LENR_SIM_APP_v2/docs/v0.3.7-beta/) | Maturity ledger, proof matrix, goals |
-| [`docs/FORMALIZATION/FORMAL_PROOF_STATUS.md`](docs/FORMALIZATION/FORMAL_PROOF_STATUS.md) | Lean theorem status |
-| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) / [`.github/BRANCHING.md`](.github/BRANCHING.md) | How to contribute |
-| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting |
+Contributions welcome on branch **`dev`** by default — see [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
+
+**License:** [GNU GPL-3.0](LICENSE) — use, study, modify, and distribute under the same terms.
 
 ---
 
-## Development
+<details>
+<summary><strong>For maintainers</strong> — ops, CI, and version trains (not the public onboarding path)</summary>
 
-Branch from **`dev`** by default. Use **`main`** only for live **0.3.9-beta** ship / hotfix. See [CONTRIBUTING.md](CONTRIBUTING.md) and [`.github/BRANCHING.md`](.github/BRANCHING.md).
+Live share, Swarm topology, marker policy, and agent maps live in **[`AGENTS.md`](AGENTS.md)** and versioned docs under `LENR_SIM_APP_v2/docs/v0.3.*`. Do not duplicate that ops wall here.
 
-```bash
-# Backend
-cd LENR_SIM_APP_v2/backend && python -m pytest tests/ app/tests/ -o addopts="" --tb=short
+| Need | Doc |
+|------|-----|
+| Current truth / deploy | [`AGENTS.md`](AGENTS.md) |
+| Branching & promote | [`.github/BRANCHING.md`](.github/BRANCHING.md) |
+| Release quality gate | [`.cursor/skills/release-quality-gate/SKILL.md`](.cursor/skills/release-quality-gate/SKILL.md) |
 
-# Frontend
-cd LENR_SIM_APP_v2/frontend && npm ci && npm test
-```
+**Maintainers:** see [CODEOWNERS](.github/CODEOWNERS).  
+**Last updated:** 2026-11-12 (README educational refresh; screenshots 0.3.9-beta).
 
-CI includes release-blocking science gates and (where configured) `lake build` over `formalization/lean`. Prefer **one topic per PR**; keep CI/ops PRs separate from academic claim edits (`EQ-OPEN-*` stay OPEN).
-
----
-
-## License
-
-**GNU GPL-3.0** — see [LICENSE](LICENSE). Free to use, study, modify, and distribute under the same terms.
-
-## Support
-
-1. Application README troubleshooting: [`LENR_SIM_APP_v2/README.md`](LENR_SIM_APP_v2/README.md)
-2. Beta feedback: email linked from the public beta banner (`diadon@conscious.energy`)
-3. Security issues: [SECURITY.md](SECURITY.md) (not public GitHub issues)
-
-## Project status
-
-| Item | State |
-|------|-------|
-| Live public beta | **0.3.9-beta** at [lenr-sim-beta.conscious.energy](https://lenr-sim-beta.conscious.energy) |
-| Current app version markers | **`0.3.9-beta`** (`main` and `dev`) |
-| `main` | Live release line |
-| `dev` | Integration tip; default PR base |
-| `lenr_proved` / `EQ-OPEN-*` | `false` / stay **OPEN** |
-
----
-
-**Last updated:** 2026-11-06 · Maintainers: [CODEOWNERS](.github/CODEOWNERS)
+</details>
