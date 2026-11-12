@@ -13,6 +13,15 @@ NODE="/exec-daemon/node"
 
 cd "$PAPER"
 
+PAPER_VENV="$PAPER/.venv-paper"
+if [[ -f "$PAPER/requirements.txt" ]]; then
+  if [[ ! -x "$PAPER_VENV/bin/python" ]]; then
+    python3 -m venv "$PAPER_VENV"
+    "$PAPER_VENV/bin/pip" install -q -r "$PAPER/requirements.txt"
+  fi
+  export PATH="$PAPER_VENV/bin:$PATH"
+fi
+
 echo "==> 0. Sync pack MD/TXT twins from canonical"
 python3 - <<PY
 from pathlib import Path

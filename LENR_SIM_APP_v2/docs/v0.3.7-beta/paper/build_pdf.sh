@@ -55,7 +55,9 @@ honesty = (
     "`EQ-OPEN-*` obligations (`EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, "
     "`EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, `EQ-OPEN-YIELD-01`) remain **OPEN**. "
     "Cavitation–collapse hydrodynamics is **modelled enhancement / contested hydro**, "
-    "not nuclear-rate proof.\n\n"
+    "not nuclear-rate proof. "
+    "No quantitative band changes (tunneling \\(10^{3}\\)–\\(10^{5}\\); "
+    "Casimir \\(-1.3\\,\\mathrm{mN}\\); Miles \\(24\\pm4\\,\\mathrm{MeV}\\)).\n\n"
 )
 body = honesty + body
 abs_yaml = "\n".join(("  " + ln) if ln else "  " for ln in abstract.splitlines())
@@ -100,7 +102,7 @@ def repl(m: re.Match) -> str:
         return f"[{inner}]"
     return m.group(0)
 
-new, n = re.subn(r"\\\[(.+?)\\\]", repl, text, flags=re.S)
+new, n = re.subn(r"\\\[(.+?)\\\]", repl, text)
 # Count numeric conversions specifically
 before = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", text, flags=re.S) if cite_only.match(m.group(1).strip())]
 path.write_text(new, encoding="utf-8")

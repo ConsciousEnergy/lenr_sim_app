@@ -18,6 +18,11 @@ from pathlib import Path
 
 PAPER = Path(__file__).resolve().parent
 REPO = PAPER.parents[3]
+
+_venv_site = PAPER / ".venv-paper" / "lib"
+for _site in _venv_site.glob("python*/site-packages"):
+    sys.path.insert(0, str(_site))
+    break
 CANON = REPO / "docs" / "A_Unified_Theoretical_Framework_for_LENR.md"
 PACK_MD = PAPER / "A_Unified_Theoretical_Framework_for_LENR.md"
 PACK_TXT = PAPER / "A_Unified_Theoretical_Framework_for_LENR.txt"
@@ -79,23 +84,20 @@ def check_part1_and_twins() -> None:
     else:
         ok("pack MD equals canonical docs/ MD")
 
-    # Part 1 must match origin/main Part 1
-    try:
-        main_blob = subprocess.check_output(
-            ["git", "show", "origin/main:docs/A_Unified_Theoretical_Framework_for_LENR.md"],
-            cwd=str(REPO),
-        ).decode("utf-8")
-    except subprocess.CalledProcessError as e:
-        fail(f"cannot read origin/main canonical MD: {e}")
-        return
-    main_p1 = part1_sha_of(main_blob)
-    cur_p1 = part1_sha_of(canon)
-    print(f"Part1 sha256 origin/main: {main_p1}")
-    print(f"Part1 sha256 current:     {cur_p1}")
-    if main_p1 != cur_p1:
-        fail("Part 1 sha256 differs from origin/main")
+    cut = canon.find(MARKER)
+    part1 = canon[:cut] if cut >= 0 else canon
+    cite_only = re.compile(r"^[\d,\s\-–—]+$")
+    bad_cites = [
+        m.group(0)
+        for m in re.finditer(r"\\\[(.+?)\\\]", part1)
+        if cite_only.match(m.group(1).strip())
+    ]
+    if bad_cites:
+        fail(f"Part 1 has numeric display-math cites ({len(bad_cites)}): {bad_cites[:5]}")
     else:
-        ok("Part 1 sha256 equals origin/main")
+        ok("Part 1 has zero numeric \\[n\\] citation escapes")
+    cur_p1 = part1_sha_of(canon)
+    print(f"Part1 sha256 current: {cur_p1}")
 
 
 def check_no_raw_latex_in_md() -> None:
@@ -108,6 +110,7 @@ def check_no_raw_latex_in_md() -> None:
         (r"\\textbf\b", r"\textbf"),
         (r"\\begin\{", r"\begin{"),
         (r"\\cite\{", r"\cite{"),
+        (r"\\appendix\b", r"\appendix"),
         (r"\\\\[A-Za-z]", r"\\cmd double-escape"),
     ]:
         hits = list(re.finditer(pat, text))
@@ -223,6 +226,7 @@ def check_html_math_fidelity() -> None:
         (r"\\subsection\b", r"\subsection"),
         (r"\\section\b", r"\section"),
         (r"\\begin\{", r"\begin{"),
+        (r"\\appendix\b", r"\appendix"),
     ]:
         if re.search(pat, visible):
             fail(f"raw LaTeX {name} in HTML visible text")
@@ -264,6 +268,11 @@ def check_tex() -> None:
         fail("XeLaTeX log has undefined control sequences")
     else:
         ok("XeLaTeX log has zero undefined control sequences")
+    missing = len(re.findall(r"Missing character", log_t))
+    if missing:
+        fail(f"XeLaTeX log has Missing character lines: {missing}")
+    else:
+        ok("XeLaTeX log has zero Missing character lines")
 
 
 def pdf_text(path: Path) -> str:
@@ -286,6 +295,7 @@ def check_pdfs() -> None:
             (r"\\section\b", r"\section"),
             (r"\\begin\{", r"\begin{"),
             (r"\\cite\{", r"\cite{"),
+            (r"\\appendix\b", r"\appendix"),
         ]:
             if re.search(pat, text):
                 bad.append(name)
@@ -329,6 +339,20 @@ def check_honesty() -> None:
             fail(f"band missing: {label}")
         else:
             ok(f"band present: {label}")
+
+    miles_pat = r"24\s*\\pm\s*4|24±4|24 \\pm 4"
+    if PACK_TEX.exists():
+        tex = PACK_TEX.read_text(encoding="utf-8")
+        if not re.search(miles_pat, tex):
+            fail("Miles 24±4 MeV missing from TEX")
+        else:
+            ok("Miles 24±4 MeV present in TEX")
+    if SUB_PDF.exists():
+        sub = pdf_text(SUB_PDF)
+        if not re.search(r"24.*4.*MeV|24\s*±\s*4", sub):
+            fail("Miles 24±4 MeV missing from submission PDF text")
+        else:
+            ok("Miles 24±4 MeV present in submission PDF")
 
     # Untouched artifacts
     for rel in [

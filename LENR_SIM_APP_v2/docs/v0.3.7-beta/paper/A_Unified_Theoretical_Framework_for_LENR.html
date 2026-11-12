@@ -88,7 +88,7 @@
 </script>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"/>
 
 <style>
@@ -109,9 +109,11 @@
   --side: 16rem;
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 body {
   margin: 0;
+  overflow-x: clip;
+  max-width: 100%;
   color: var(--ce-ink);
   background:
     radial-gradient(1200px 500px at 10% -10%, rgba(126, 182, 212, 0.35), transparent 60%),
@@ -209,11 +211,11 @@ code, .tt {
 }
 .honesty-banner strong { color: var(--ce-navy); }
 .layout {
-  max-width: calc(var(--max) + var(--side) + 4rem);
+  max-width: min(calc(var(--max) + var(--side) + 4rem), 100%);
   margin: 0 auto;
   padding: 0 1.25rem 3rem;
   display: grid;
-  grid-template-columns: var(--side) minmax(0, var(--max));
+  grid-template-columns: var(--side) minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
 }
@@ -248,6 +250,9 @@ main.paper {
   padding: 1.75rem 1.6rem 2.25rem;
   box-shadow: 0 10px 30px rgba(0, 24, 72, 0.06);
   max-width: 42rem;
+  min-width: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
 }
 .paper .body-sections p,
 .paper .abstract p,
@@ -309,12 +314,14 @@ section.abstract h2 {
 }
 .paper th { background: #e8f1f7; color: var(--ce-navy); }
 .math-display {
-  display: block; overflow-x: auto; margin: 1.1rem 0; padding: 0.85rem 0.75rem;
+  display: block; overflow-x: auto; max-width: 100%; margin: 1.1rem 0; padding: 0.85rem 0.75rem;
   text-align: center; background: #f5f9fc; border-radius: 0.4rem;
   border: 1px solid rgba(0, 84, 144, 0.08);
   line-height: 1.55;
+  -webkit-overflow-scrolling: touch;
 }
-.math-display .katex-display { margin: 0; }
+.math-display .katex-display { margin: 0; max-width: 100%; overflow-x: auto; }
+.math-display .katex { max-width: 100%; }
 .math-inline {
   white-space: nowrap; padding: 0 0.05em;
 }
@@ -343,8 +350,12 @@ section.abstract h2 {
 .cta-row a:hover { background: rgba(255,255,255,0.18); }
 .footer-note { font-size: 0.88rem; opacity: 0.9; max-width: 46rem; }
 @media (max-width: 960px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout { grid-template-columns: 1fr; padding: 0 0.75rem 2rem; gap: 1rem; }
   .sidebar { position: static; max-height: none; }
+  main.paper { padding: 1.1rem 1rem 1.75rem; }
+  .masthead, .site-header-inner {
+    padding-left: 0.75rem; padding-right: 0.75rem;
+  }
 }
 @media print {
   body {
@@ -2053,7 +2064,6 @@ interfacial energy densities, and effective nuclear overlap probabilities.</p>
 <li><strong>Theoretical Synthesis</strong>: Foster collaboration among nuclear theorists, solid-state physicists, and quantum chemists to pursue a fully quantized, cross-domain theory of LENR based on established frameworks (e.g., QED in condensed systems, many-body tunneling).</li>
 </ol>
 <p>Ultimately, the question is no longer whether anomalous energy phenomena occur under certain conditions—they clearly do—but whether these phenomena can be explained, predicted, and engineered using the rigorous tools of modern physics. This paper provides a structured and evidence-based foundation for that pursuit.</p>
-<p>\appendix</p>
 <h3 id="mathematical-symbols-and-definitions">Mathematical Symbols and Definitions</h3>
 <ul>
 <li><span class="math-inline" role="math" data-tex="\phi" data-display="0" aria-label="Inline equation"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">ϕ</span></span></span></span></span> — Electrostatic potential <span class="math-inline" role="math" data-tex="[\text{V}]" data-display="0" aria-label="Inline equation"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord text"><span class="mord">V</span></span><span class="mclose">]</span></span></span></span></span></li>
@@ -2184,7 +2194,7 @@ with confidence thresholds set at <span class="math-inline" role="math" data-tex
     });
   }
   var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+  s.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js';
   s.crossOrigin = 'anonymous';
   s.onload = paint;
   s.onerror = paint;

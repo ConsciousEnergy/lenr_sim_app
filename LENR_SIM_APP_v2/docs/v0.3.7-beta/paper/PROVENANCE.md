@@ -21,6 +21,19 @@
 
 **2026-11-11 Part 2 appendix formatting (structure only).** Canonical MD Part 2 escaped-LaTeX appendix normalized to Markdown math via Part-2-only [`normalize_appendix.py`](./normalize_appendix.py). Part 1 sha256 unchanged vs `origin/main` (`33c7796ac9e8a36b42a00d6592fd122188990161d470354ffc3e4312149291af`). No wording changes in Part 2 (word-level markup-stripped diff empty aside from `\cite{key}` → `[Author Year]` labels). Reconciliation note sentence that Part 2 “may render poorly in Markdown viewers” is **retained as written** (now historically stale after normalization; flagged, not edited). Branded HTML/PDF builders + [`verify_paper.py`](./verify_paper.py) + [`build_all.sh`](./build_all.sh) committed. Submission PDF moved to `_submission.pdf` so it no longer collides with the branded `.pdf`. Still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship.
 
+### Phase 1 formatting fixes (2026-11-12)
+
+Part 1 only: 14 numeric `\[n,m\]` bibliography escapes → plain `[n,m]` in canonical MD + pack twins (display math `\[...\]` unchanged; `re.S` disabled on citation passes). Part 2: removed stray `\appendix` before “Mathematical Symbols…”. Submission: `newunicodechar` map in [`academic.latex`](./academic.latex) for Greek/superscripts/subscripts; Miles \(24\pm4\,\mathrm{MeV}\) in honesty block + template footnotes. HTML: KaTeX CDN **0.16.47** (pinned in `package.json`); mobile/wide-eq overflow CSS. Repro: [`requirements.txt`](./requirements.txt) + `.venv-paper` in [`build_all.sh`](./build_all.sh). Part 1 sha256 (post cite fix): `59f8bf5a6d33257576877ab0ef6fde685cfd39b95fbd98694ba7f24af1ca82bd`. Still **no** OPEN closures; `lenr_proved` false.
+
+### verify_paper.py (2026-11-12)
+
+```
+=== verify_paper.py ===
+ALL CHECKS PASSED
+```
+
+(Full log: `build_all.sh` → step 5; includes zero `\appendix`, zero numeric Part 1 cite escapes, zero XeLaTeX Missing character, Miles band in TEX + submission PDF, 658/658 HTML math fidelity.)
+
 ### verify_paper.py (2026-11-11)
 
 ```
