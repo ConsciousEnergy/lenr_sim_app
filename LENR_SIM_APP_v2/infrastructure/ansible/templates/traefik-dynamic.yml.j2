@@ -18,10 +18,12 @@ http:
           X-Robots-Tag: "noindex,nofollow"
 
     # SPA only — allow WordPress apex/www to iframe the beta UI.
-    # Do not set frameDeny / X-Frame-Options; CSP frame-ancestors is the allowlist
-    # (also set by nginx.frontend.conf). Keep HSTS/nosniff/XSS filter.
+    # Explicitly disable frameDeny: live probes showed X-Frame-Options: DENY
+    # fighting CSP frame-ancestors (SEC-01). Do NOT set customFrameOptionsValue.
+    # CSP frame-ancestors is the allowlist (also set by nginx.frontend.conf).
     spa-security-headers:
       headers:
+        frameDeny: false
         sslRedirect: true
         browserXssFilter: true
         contentTypeNosniff: true
@@ -32,10 +34,19 @@ http:
         contentSecurityPolicy: "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://conscious.energy https://www.conscious.energy; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.conscious.energy https://us.i.posthog.com wss: https://lenr-sim-beta.conscious.energy https://app.conscious.energy; worker-src 'self' blob:; form-action 'self'"
         customResponseHeaders:
           X-Robots-Tag: "noindex,nofollow"
+          # Ops canary after Swarm apply: SPA must NOT emit X-Frame-Options.
+          X-Frame-Policy: "csp-frame-ancestors"
 
     # NOTE: API rate limiting lives on Swarm service labels as `backend-ratelimit`
     # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. A prior
     # unused `api-ratelimit` file middleware was removed to avoid drift.
+
+    # LP-M1: 413 oversized bodies before FastAPI (matches REQUEST_MAX_BODY_SIZE /
+    # Caddy request_body 10MB). Wired on backend routers in docker-stack.yml.j2.
+    backend-bodylimit:
+      buffering:
+        maxRequestBodyBytes: 10485760
+        memRequestBodyBytes: 1048576
 
     # CORS configuration
     cors:

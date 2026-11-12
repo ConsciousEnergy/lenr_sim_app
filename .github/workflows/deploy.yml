@@ -1,7 +1,7 @@
 name: Build and Deploy
 
 # Images are built from main and release tags only — never from `dev`
-# (v0.3.8 integration). BUILD_VERSION is read from the APP_VERSION marker.
+# (0.3.9-beta integration tip). BUILD_VERSION is read from the APP_VERSION marker.
 on:
   push:
     branches: [main]

@@ -23,6 +23,9 @@ This document outlines the security features, policies, and best practices imple
 - **No end-user login on the public beta.** Simulation, export, and WebSocket
   endpoints are unauthenticated and protected by per-IP rate limits, reverse-proxy
   body size limits, and a heavy-compute semaphore (503 when saturated).
+- **Edge body limit:** Caddy / Traefik / SPA nginx reject bodies over **10 MiB**
+  with **413** before FastAPI (`REQUEST_MAX_BODY_SIZE`); see
+  `LENR_SIM_APP_v2/SECURITY.md`.
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.
@@ -30,7 +33,9 @@ This document outlines the security features, policies, and best practices imple
   layer; they are **not** wired to routes. Do not describe the API as
   JWT-authenticated.
 - Shared-simulation `session_id` is an unguessable client string, not a
-  cryptographic credential — treat `/api/simulations/save` as public-beta risk.
+  cryptographic credential. Production `POST /api/simulations/save` and
+  `/share` require `X-LENR-Write-Token` (fail-closed; SPA does not call them
+  today — operator-only); browse/search stay public.
 
 ### Environment & Configuration Security
 - **Environment Variables**: Secure configuration using environment variables
@@ -110,8 +115,8 @@ Only the latest release line receives security fixes. Releases are `v*` tags on
 
 | Version | Supported |
 |---------|-----------|
-| `v0.3.6-beta` (current, `main`) | Yes |
-| `v0.3.5-beta` and earlier | No, upgrade to the current release |
+| `v0.3.9-beta` (current, `main` / `dev`) | Yes |
+| `v0.3.8-beta` and earlier | No, upgrade to the current release |
 
 ## Security Reporting
 
@@ -138,7 +143,12 @@ These run in GitHub Actions and are required for merging to `main`:
 | Scheduled re-audit of already-committed dependencies | `security-scan.yml` | weekly |
 | Dependency Review of PR-introduced packages | `dependency-review.yml` | every PR |
 | CodeQL static analysis (Python, JavaScript/TypeScript) | `codeql.yml` | every PR + weekly (active once the repo is public or GHAS is enabled) |
-| Grouped Dependabot updates against `main` | `dependabot.yml` | weekly |
+| Grouped Dependabot updates against `dev` | `dependabot.yml` | weekly |
+
+Self-hosted `lenr-ci` jobs route **fork** pull requests to `ubuntu-latest` (or
+skip for `lenr-ci-smoke`) so untrusted PR code never executes on the dedicated
+CI VM. `deploy.yml` stays on GitHub-hosted and is the only workflow that may
+read `VPS_*` secrets.
 
 All third-party actions are pinned to full commit SHAs. Local equivalents are
 available via [`.pre-commit-config.yaml`](.pre-commit-config.yaml).

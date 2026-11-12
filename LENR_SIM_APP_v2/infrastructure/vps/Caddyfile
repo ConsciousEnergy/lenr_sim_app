@@ -15,8 +15,17 @@
 
 (app_proxy) {
 	encode zstd gzip
+	# LP-M1: reject oversized bodies with 413 before upstream (Compose share path).
+	# Keep in sync with FastAPI REQUEST_MAX_BODY_SIZE (10 MiB) and Traefik
+	# backend-bodylimit maxRequestBodyBytes=10485760 on Swarm.
 	request_body {
 		max_size 10MB
+	}
+
+	# LP-L2: quiet scanner noise before SPA reverse_proxy fallback.
+	@scanner_noise path /.env /.git /.git/*
+	handle @scanner_noise {
+		respond 404
 	}
 
 	# FastAPI, including WebSocket upgrades under /api/ws, /api/visualization/ws,
@@ -39,6 +48,9 @@ lenr-sim-beta.conscious.energy, srv1280333.hstgr.cloud {
 	import app_proxy
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# Strip XFO so CSP frame-ancestors can allow WordPress embeds (SEC-01).
+		# Compose rollback path only — Swarm Traefik uses spa-security-headers.
+		-X-Frame-Options
 		-Server
 	}
 	log {

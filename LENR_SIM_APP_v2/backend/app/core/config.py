@@ -125,21 +125,29 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 60  # 60 requests per minute per IP
     # Stricter budget for unauthenticated heavy POST paths (simulate / sweep / …).
     HEAVY_RATE_LIMIT_PER_MINUTE: int = 10
+    # Persistence / storage-abuse paths (shared-sim save/share). Process-local.
+    WRITE_RATE_LIMIT_PER_MINUTE: int = 3
     RATE_LIMIT_WHITELIST_IPS: List[str] = ["127.0.0.1", "::1"]
-    # Prefixes matched for HEAVY_RATE_LIMIT_PER_MINUTE (POST/PUT/PATCH only).
+    # Prefixes matched for HEAVY_RATE_LIMIT_PER_MINUTE (mutate methods only).
+    # Broad /api/physics/ + /api/multi-physics/ catch live LP-H3 paths
+    # (quantum-tunneling, bubble-fusion, multi-physics create, …).
     HEAVY_RATE_LIMIT_PATH_PREFIXES: List[str] = [
         "/api/unified/simulate",
         "/api/unified/export",
         "/api/unified/compare",
         "/api/unified/bubble-lattice",
-        "/api/physics/theories/run",
-        "/api/physics/theories/",
+        "/api/physics/",
         "/api/analytics/parameter-sweep",
         "/api/analytics/theories/run-coupled",
         "/api/analytics/compare",
         "/api/analytics/theory-scores",
         "/api/analytics/theory-comparison",
-        "/api/multi-physics/simulations",
+        "/api/multi-physics/",
+    ]
+    # Prefixes matched for WRITE_RATE_LIMIT_PER_MINUTE (mutate methods only).
+    WRITE_RATE_LIMIT_PATH_PREFIXES: List[str] = [
+        "/api/simulations/save",
+        "/api/simulations/share",
     ]
     
     ENABLE_SECURE_HEADERS: bool = True 

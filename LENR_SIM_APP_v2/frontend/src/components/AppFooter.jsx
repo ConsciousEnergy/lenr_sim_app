@@ -7,7 +7,7 @@ function AppFooter() {
       <div className="flex flex-col md:flex-row md:justify-between items-center text-sm text-neutral-600 dark:text-gray-400">
         <div>
           &copy; {currentYear} LENR Simulation App.{' '}
-          <a href="/LICENSE" className="hover:text-primary-600">GPL-3.0</a>.
+          <a href="/license" className="hover:text-primary-600">GPL-3.0</a>.
         </div>
         <div className="mt-2 md:mt-0">
           <a href="/about" className="hover:text-primary-600 mr-4">About</a>

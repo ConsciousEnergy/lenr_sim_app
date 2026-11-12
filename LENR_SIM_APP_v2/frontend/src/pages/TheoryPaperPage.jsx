@@ -118,7 +118,7 @@ const TheoryPaperPage = () => {
                 variant="outlined"
               />
               <Chip
-                label="Date: 2026-02-14 (revised 2026-11-11, v0.3.7-beta)"
+                label={`Date: 2026-02-14 (revised 2026-11-11, v${APP_VERSION})`}
                 size="small"
                 variant="outlined"
                 data-testid="manuscript-revision-chip"
@@ -137,9 +137,8 @@ const TheoryPaperPage = () => {
             <AlertTitle><strong>App / manuscript version map</strong></AlertTitle>
             <Typography variant="body2">
               Hosted application build: <strong>{APP_VERSION}</strong>. This manuscript revision
-              label remains <strong>v0.3.7-beta (revised 2026-11-11)</strong> — cite both when
-              reporting results; the labels are paired for compatibility, not identical trains.
-              Do not treat the manuscript chip as the live app version.
+              label is <strong>v{APP_VERSION} (revised 2026-11-11)</strong> — cite the build and
+              revision date when reporting results.
             </Typography>
           </Alert>
 

@@ -11,6 +11,12 @@ removed from the working tree; they remain in history at the
 This project is licensed under **GNU GPL-3.0**. By contributing you agree that
 your contributions are licensed under the same terms. See [`LICENSE`](LICENSE).
 
+## Code of Conduct
+
+Participation is governed by [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+(Contributor Covenant). Report unacceptable behavior to
+**diadon@conscious.energy**.
+
 ## Security
 
 Do **not** open public issues for vulnerabilities that could be exploited in
