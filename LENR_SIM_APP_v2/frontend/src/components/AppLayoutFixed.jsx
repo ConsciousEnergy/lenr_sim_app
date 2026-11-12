@@ -283,16 +283,17 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
       );
     }
 
+    const itemIsSelected = isSelected(item.path);
     return (
       <StyledListItemButton
         key={item.id}
         component={Link}
         to={item.path}
-        selected={isSelected(item.path)}
-        sx={item.highlight ? {
-          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+        selected={itemIsSelected}
+        sx={item.highlight && !itemIsSelected ? {
+          // Promote without mimicking the selected/active nav state on unrelated routes (e.g. 404).
           '&:hover': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.12),
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
           },
         } : {}}
       >
@@ -410,7 +411,7 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
           </Typography>
           <Typography variant="caption" color="text.secondary">
             GNU{' '}
-            <MuiLink href="/LICENSE" color="inherit" underline="hover">
+            <MuiLink component={Link} to="/license" color="inherit" underline="hover">
               GPL-3.0
             </MuiLink>
             {' '}copyleft

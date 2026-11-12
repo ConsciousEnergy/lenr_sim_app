@@ -76,7 +76,7 @@ export default function PrivacyPage() {
       <Typography variant="h6" gutterBottom>License</Typography>
       <Typography variant="body2" paragraph>
         The application is licensed under{' '}
-        <MuiLink href="/LICENSE">
+        <MuiLink href="/license">
           GNU GPL-3.0
         </MuiLink>
         . Contact:{' '}
