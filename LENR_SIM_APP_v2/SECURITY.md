@@ -28,8 +28,9 @@ This document outlines the security features, policies, and best practices imple
   GET/stats stay public.
 - **Shared-simulation writes** (`POST /api/simulations/save`, `POST /api/simulations/share`)
   use the same production write-token gate (fail-closed). Public browse/search
-  stay available. Payloads are capped (~64 KiB JSON) and hit a tighter write
-  rate-limit tier (default 3/min/IP, process-local).
+  stay available. The SPA does not currently call these persist routes; treat
+  them as operator-only. Payloads are capped (~64 KiB JSON) and hit a tighter
+  write rate-limit tier (default 3/min/IP, process-local).
 - **JWT settings exist in config** (`LENR_JWT_SECRET_KEY`) for a future auth
   layer; they are **not** wired to routes. Do not describe the API as
   JWT-authenticated.

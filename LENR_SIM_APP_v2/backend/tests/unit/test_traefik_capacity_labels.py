@@ -47,11 +47,15 @@ def test_nginx_spa_omits_x_frame_options():
     nginx = (ROOT / "infrastructure" / "docker" / "nginx.frontend.conf").read_text(
         encoding="utf-8"
     )
-    assert "X-Frame-Options" not in nginx or "omit X-Frame-Options" in nginx
-    assert "X-Frame-Options: DENY" not in nginx
-    assert "X-Frame-Options: SAMEORIGIN" not in nginx
+    # Comments may mention XFO; ensure no active add_header sets it.
+    active_headers = [
+        line.strip()
+        for line in nginx.splitlines()
+        if line.strip().startswith("add_header")
+    ]
+    assert not any("X-Frame-Options" in line for line in active_headers)
     assert "frame-ancestors" in nginx
-    assert 'X-Frame-Policy "csp-frame-ancestors"' in nginx
+    assert any('X-Frame-Policy "csp-frame-ancestors"' in line for line in active_headers)
 
 
 def test_dockerfile_backend_restricts_forwarded_allow_ips():

@@ -1,6 +1,6 @@
 name: Test and Benchmark
 
-# Long-lived branches: main (0.3.7 release) + dev (0.3.8 integration).
+# Long-lived branches: main + dev (both 0.3.9-beta markers; see AGENTS.md).
 # CI runs on pushes/PRs to both. Deploy stays main + v* tags only.
 #
 # Runner: default falls back to lenr-ci (Idle on share KVM2). Override with repo

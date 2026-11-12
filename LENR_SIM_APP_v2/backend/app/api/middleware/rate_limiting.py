@@ -24,21 +24,19 @@ from app.utils.logging import setup_logger
 logger = setup_logger("rate_limiting", "logs/security.log")
 
 # Default paths that burn CPU / threadpool without auth (prefix match).
+# Broad physics/multi-physics prefixes cover live LP-H3 compute POSTs.
 _DEFAULT_HEAVY_PATH_PREFIXES: List[str] = [
     "/api/unified/simulate",
     "/api/unified/export",
     "/api/unified/compare",
     "/api/unified/bubble-lattice",
-    "/api/physics/theories/run",
-    "/api/physics/theories/",  # /theories/{id}/run
-    "/api/physics/bubble-fusion",
-    "/api/physics/quantum-tunneling",
+    "/api/physics/",
     "/api/analytics/parameter-sweep",
     "/api/analytics/theories/run-coupled",
     "/api/analytics/compare",
     "/api/analytics/theory-scores",
     "/api/analytics/theory-comparison",
-    "/api/multi-physics/simulations",
+    "/api/multi-physics/",
 ]
 
 # Persistence / storage-abuse paths — tighter than heavy compute.

@@ -31,7 +31,8 @@ This document outlines the security features, policies, and best practices imple
   JWT-authenticated.
 - Shared-simulation `session_id` is an unguessable client string, not a
   cryptographic credential. Production `POST /api/simulations/save` and
-  `/share` require `X-LENR-Write-Token` (fail-closed); browse/search stay public.
+  `/share` require `X-LENR-Write-Token` (fail-closed; SPA does not call them
+  today — operator-only); browse/search stay public.
 
 ### Environment & Configuration Security
 - **Environment Variables**: Secure configuration using environment variables
