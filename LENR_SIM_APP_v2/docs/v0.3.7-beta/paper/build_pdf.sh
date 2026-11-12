@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rebuild submission PDF from canonical Part 1 Markdown.
-# Choice: pandoc Part 1 → academic article TEX → XeLaTeX PDF
+# Rebuild submission PDF from canonical unified Markdown (full manuscript).
+# Choice: pandoc → academic article TEX → XeLaTeX PDF
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
@@ -9,16 +9,15 @@ CANON="$ROOT/docs/A_Unified_Theoretical_Framework_for_LENR.md"
 BUILD="${TMPDIR:-/tmp}/lenr-theory-paper-pdf-build"
 mkdir -p "$BUILD"
 
-python3 - "$CANON" "$BUILD/part1.md" <<'PY'
+python3 - "$CANON" "$BUILD/manuscript.md" <<'PY'
 import re, sys
 from pathlib import Path
 
 src = Path(sys.argv[1]).read_text(encoding="utf-8")
 out = Path(sys.argv[2])
-cut = src.find("## **Document Structure and Reconciliation Note**")
-if cut < 0:
-    raise SystemExit("Part 1 boundary (Document Structure note) not found")
-part1 = src[:cut].rstrip() + "\n"
+if "## **Document Structure and Reconciliation Note**" in src:
+    raise SystemExit("legacy Part 1/Part 2 reconciliation block still present in canonical MD")
+part1 = src.rstrip() + "\n"
 
 def grab(label: str, text: str) -> str:
     m = re.search(rf"\*\*{re.escape(label)}:\*\*\s*(.+)", text)
@@ -88,7 +87,7 @@ print(f"wrote {out} ({out.stat().st_size} bytes)")
 PY
 
 # Pre-pandoc: numeric-only \[n\] / \[n,m\] are bibliography pointers, not math.
-python3 - "$BUILD/part1.md" <<'PY'
+python3 - "$BUILD/manuscript.md" <<'PY'
 import re, sys
 from pathlib import Path
 
@@ -111,7 +110,7 @@ print(f"citation-bracket pass: converted {len(before) - len(left)} numeric citat
 print(f"numeric-only display math remaining: {len(left)}")
 PY
 
-pandoc "$BUILD/part1.md" \
+pandoc "$BUILD/manuscript.md" \
   -f markdown+tex_math_single_backslash+pipe_tables+strikeout \
   -t latex \
   --template="$PAPER/academic.latex" \
@@ -212,8 +211,8 @@ PY
 
 # Header provenance
 {
-  echo "% Auto-generated full Part-1 manuscript (pandoc + academic.latex)."
-  echo "% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (Part 1 only; Part 2 appendix excluded)."
+  echo "% Auto-generated unified manuscript (pandoc + academic.latex)."
+  echo "% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (single-document structure)."
   echo "% Build: ./build_pdf.sh  (requires pandoc + XeLaTeX + xurl)."
   echo "% Overflow fix: breakable \\texttt via \\allowbreak; wrapped AI contributor block; secnumdepth=-1."
   echo "% Epistemic: lenr_proved=false; all EQ-OPEN-* remain OPEN; no live ship / public flip."

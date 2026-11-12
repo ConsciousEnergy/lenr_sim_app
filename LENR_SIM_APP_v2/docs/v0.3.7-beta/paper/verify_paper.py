@@ -30,7 +30,7 @@ PACK_TEX = PAPER / "A_Unified_Theoretical_Framework_for_LENR.tex"
 PACK_HTML = PAPER / "A_Unified_Theoretical_Framework_for_LENR.html"
 PACK_PDF = PAPER / "A_Unified_Theoretical_Framework_for_LENR.pdf"
 SUB_PDF = PAPER / "A_Unified_Theoretical_Framework_for_LENR_submission.pdf"
-MARKER = "## **Document Structure and Reconciliation Note**"
+LEGACY_MARKER = "## **Document Structure and Reconciliation Note**"
 
 # Import builder normalize/merge helpers (same transforms HTML uses).
 sys.path.insert(0, str(PAPER))
@@ -63,15 +63,7 @@ def sha256_file(p: Path) -> str:
     return sha256_bytes(p.read_bytes())
 
 
-def part1_sha_of(text: str) -> str:
-    cut = text.find(MARKER)
-    if cut < 0:
-        fail("Document Structure marker missing")
-        return ""
-    return sha256_bytes(text[:cut].encode("utf-8"))
-
-
-def check_part1_and_twins() -> None:
+def check_twins_and_structure() -> None:
     canon = CANON.read_text(encoding="utf-8")
     md = PACK_MD.read_text(encoding="utf-8")
     txt = PACK_TXT.read_text(encoding="utf-8")
@@ -84,20 +76,27 @@ def check_part1_and_twins() -> None:
     else:
         ok("pack MD equals canonical docs/ MD")
 
-    cut = canon.find(MARKER)
-    part1 = canon[:cut] if cut >= 0 else canon
+    if LEGACY_MARKER in canon:
+        fail("legacy Document Structure / Part 2 reconciliation block still present")
+    else:
+        ok("no legacy Part 1/Part 2 reconciliation block")
+    if "## Appendix (archival)" in canon:
+        fail("archival Part 2 appendix heading still present")
+    else:
+        ok("no archival Part 2 appendix")
+
     cite_only = re.compile(r"^[\d,\s\-–—]+$")
     bad_cites = [
         m.group(0)
-        for m in re.finditer(r"\\\[(.+?)\\\]", part1)
+        for m in re.finditer(r"\\\[(.+?)\\\]", canon)
         if cite_only.match(m.group(1).strip())
     ]
     if bad_cites:
-        fail(f"Part 1 has numeric display-math cites ({len(bad_cites)}): {bad_cites[:5]}")
+        fail(f"manuscript has numeric display-math cites ({len(bad_cites)}): {bad_cites[:5]}")
     else:
-        ok("Part 1 has zero numeric \\[n\\] citation escapes")
-    cur_p1 = part1_sha_of(canon)
-    print(f"Part1 sha256 current: {cur_p1}")
+        ok("manuscript has zero numeric \\[n\\] citation escapes")
+    cur_sha = sha256_bytes(canon.encode("utf-8"))
+    print(f"manuscript sha256: {cur_sha}")
 
 
 def check_no_raw_latex_in_md() -> None:
@@ -393,7 +392,7 @@ def check_screenshots_note() -> None:
 def main() -> int:
     print("=== verify_paper.py ===")
     print(f"PAPER={PAPER}")
-    check_part1_and_twins()
+    check_twins_and_structure()
     check_no_raw_latex_in_md()
     check_html_math_fidelity()
     check_tex()

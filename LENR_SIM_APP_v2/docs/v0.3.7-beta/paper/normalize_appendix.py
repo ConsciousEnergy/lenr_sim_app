@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Normalize Part 2 escaped-LaTeX appendix to Markdown. Structure only; no wording changes.
 
+**Deprecated (2026-11-12):** The canonical manuscript no longer ships a Part 2 appendix or
+Document Structure reconciliation block. Retained for historical one-off migrations only.
+
 Hard rules:
 - Caller must pass ONLY the text at/after the Document Structure marker (or this
   script splits on that marker itself and leaves Part 1 untouched).

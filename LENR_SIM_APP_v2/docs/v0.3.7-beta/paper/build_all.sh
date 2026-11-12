@@ -31,7 +31,7 @@ Path("$PAPER/A_Unified_Theoretical_Framework_for_LENR.txt").write_text(canon, en
 print("twins synced", len(canon))
 PY
 
-echo "==> 1. Submission TEX + _submission.pdf (Part 1 only)"
+echo "==> 1. Submission TEX + _submission.pdf (unified manuscript)"
 bash "$PAPER/build_pdf.sh"
 
 echo "==> 2. Branded HTML (KaTeX pre-render)"

@@ -35,7 +35,7 @@ SITE = "https://www.conscious.energy"
 BETA = "https://lenr-sim-beta.conscious.energy"
 BETA_PAPER = f"{BETA}/theory-paper"
 DATE_PUBLISHED = "2026-02-14"
-DATE_MODIFIED = "2026-11-11"
+DATE_MODIFIED = "2026-11-12"
 
 # Brand from live CE favicon / featured image (oceanic blue, energy accent)
 CE_NAVY = "#001848"
