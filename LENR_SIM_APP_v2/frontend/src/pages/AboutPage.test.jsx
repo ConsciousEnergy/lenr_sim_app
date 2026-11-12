@@ -16,10 +16,11 @@ describe('AboutPage honesty copy', () => {
     );
   });
 
-  it('maps app build to manuscript revision without inventing a new paper train', () => {
+  it('maps app build to manuscript revision aligned to the live train', () => {
     render(<AboutPage />);
-    expect(screen.getByText(new RegExp(APP_VERSION))).toBeInTheDocument();
-    expect(screen.getByText(/v0\.3\.7-beta \(revised 2026-11-11\)/)).toBeInTheDocument();
+    const versionMap = screen.getByText(/Version map:/i);
+    expect(versionMap).toHaveTextContent(APP_VERSION);
+    expect(versionMap).toHaveTextContent(`v${APP_VERSION} (revised 2026-11-11)`);
   });
 
   it('discloses invited-beta science-copy limitations', () => {
