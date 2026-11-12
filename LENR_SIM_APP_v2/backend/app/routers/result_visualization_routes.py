@@ -36,6 +36,19 @@ RESULTS_DIR = Path("output/simulation_results")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _safe_result_path(simulation_id: str) -> Path:
+    """Resolve a results JSON path under RESULTS_DIR; reject traversal."""
+    if not simulation_id or simulation_id != Path(simulation_id).name:
+        raise HTTPException(status_code=400, detail="Invalid simulation_id")
+    if ".." in simulation_id or "/" in simulation_id or "\\" in simulation_id:
+        raise HTTPException(status_code=400, detail="Invalid simulation_id")
+    base = RESULTS_DIR.resolve()
+    candidate = (RESULTS_DIR / f"{simulation_id}.json").resolve()
+    if not str(candidate).startswith(str(base) + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid simulation_id")
+    return candidate
+
+
 @router.get("/simulations")
 async def list_simulations():
     """
@@ -105,7 +118,7 @@ async def get_simulation_metadata(simulation_id: str):
         }
     
     # Check saved results
-    result_file = RESULTS_DIR / f"{simulation_id}.json"
+    result_file = _safe_result_path(simulation_id)
     if result_file.exists():
         try:
             with open(result_file, "r") as f:
@@ -202,7 +215,7 @@ async def get_simulation_results(
         return results
     
     # Check saved results
-    result_file = RESULTS_DIR / f"{simulation_id}.json"
+    result_file = _safe_result_path(simulation_id)
     if result_file.exists():
         try:
             with open(result_file, "r") as f:
@@ -244,7 +257,7 @@ async def analyze_simulation_results(
     # Check if simulation exists
     if simulation_id not in simulation_results_cache:
         # Check saved results
-        result_file = RESULTS_DIR / f"{simulation_id}.json"
+        result_file = _safe_result_path(simulation_id)
         if not result_file.exists():
             raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
         
@@ -345,7 +358,7 @@ async def get_analysis_results(
             return simulation_results_cache[simulation_id]["analysis_results"][analysis_id]
     
     # Check saved results
-    result_file = RESULTS_DIR / f"{simulation_id}.json"
+    result_file = _safe_result_path(simulation_id)
     if result_file.exists():
         try:
             with open(result_file, "r") as f:
@@ -381,7 +394,7 @@ async def save_simulation_results(
     # Save in background to avoid blocking
     def save_results():
         try:
-            result_file = RESULTS_DIR / f"{simulation_id}.json"
+            result_file = _safe_result_path(simulation_id)
             with open(result_file, "w") as f:
                 json.dump(simulation_results_cache[simulation_id], f)
             
@@ -412,7 +425,7 @@ async def export_simulation_results(
     # Check if simulation exists
     if simulation_id not in simulation_results_cache:
         # Check saved results
-        result_file = RESULTS_DIR / f"{simulation_id}.json"
+        result_file = _safe_result_path(simulation_id)
         if not result_file.exists():
             raise HTTPException(status_code=404, detail=f"Simulation {simulation_id} not found")
         
@@ -490,7 +503,7 @@ async def delete_simulation_results(simulation_id: str):
         deleted = True
     
     # Remove saved file if present
-    result_file = RESULTS_DIR / f"{simulation_id}.json"
+    result_file = _safe_result_path(simulation_id)
     if result_file.exists():
         try:
             result_file.unlink()
