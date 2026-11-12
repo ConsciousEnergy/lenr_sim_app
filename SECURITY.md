@@ -26,6 +26,11 @@ This document outlines the security features, policies, and best practices imple
 - **Edge body limit:** Caddy / Traefik / SPA nginx reject bodies over **10 MiB**
   with **413** before FastAPI (`REQUEST_MAX_BODY_SIZE`); see
   `LENR_SIM_APP_v2/SECURITY.md`.
+- **Edge rate limit (LP-H2 mitigate):** Traefik Swarm labels apply shared per-IP
+  budgets (general 60/min, heavy mutate 10/min, save/share write 3/min) before
+  API replicas (`backend-ratelimit(-heavy|-write)`, `ipStrategy.depth=1`). FastAPI
+  process-local RL still dilutes with workers — keep replicas ≤2 until Redis or
+  Cloudflare orange-cloud; LP-H2 not fully closed.
 - **Analytics writes** (POST/PUT/DELETE) require the `X-LENR-Write-Token` header
   in production (`LENR_ANALYTICS_WRITE_TOKEN`, falling back to `LENR_SECRET_KEY`).
   GET/stats stay public.
