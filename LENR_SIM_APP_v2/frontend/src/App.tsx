@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider as MuiThemeProvider, createTheme, Theme, PaletteMode } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarProvider } from 'notistack';
@@ -14,6 +14,7 @@ import SimulationDetail from './pages/SimulationDetail';
 import AboutPage from './pages/AboutPage';
 import TeamPage from './pages/TeamPage';
 import PrivacyPage from './pages/PrivacyPage';
+import LicensePage from './pages/LicensePage';
 import './App.css';
 
 // Development-only routes are hidden in production
@@ -21,7 +22,6 @@ const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production' ||
   process.env.NODE_ENV === 'production';
 
 // Pages - Simulation Workflow (Lazy load heavy pages)
-const NewSimulation = lazy(() => import('./pages/NewSimulation'));
 const QuantumTunnelingPage = lazy(() => import('./pages/QuantumTunnelingPage'));
 const FusionSimulationPage = lazy(() => import('./pages/FusionSimulationPage'));
 const LENRSimulationPage = lazy(() => import('./pages/LENRSimulationPage'));
@@ -130,20 +130,9 @@ const AppContent = () => {
                 <Dashboard />
               </AppLayoutFixed>
             } />
-            <Route path="/simulations" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <NewSimulation />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
-            <Route path="/new-simulation" element={
-              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <NewSimulation />
-                </Suspense>
-              </AppLayoutFixed>
-            } />
+            {/* Canonical start flow is Unified Theory; keep legacy paths as redirects */}
+            <Route path="/simulations" element={<Navigate to="/unified-theory" replace />} />
+            <Route path="/new-simulation" element={<Navigate to="/unified-theory" replace />} />
             <Route path="/simulation/:simulationId" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <SimulationDetail />
@@ -211,6 +200,11 @@ const AppContent = () => {
             <Route path="/privacy" element={
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <PrivacyPage />
+              </AppLayoutFixed>
+            } />
+            <Route path="/license" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <LicensePage />
               </AppLayoutFixed>
             } />
             <Route path="/theory" element={
@@ -282,7 +276,7 @@ const AppContent = () => {
               </AppLayoutFixed>
             } />
             
-            {/* Development & Testing Pages -- hidden in production */}
+            {/* Development & Testing Pages -- available in non-production builds only */}
             {!IS_PRODUCTION && (
               <>
                 <Route path="/diagnostics" element={
@@ -327,6 +321,18 @@ const AppContent = () => {
                     </Suspense>
                   </AppLayoutFixed>
                 } />
+              </>
+            )}
+
+            {/* Public beta: send stale debug URLs home instead of a confusing in-app 404 */}
+            {IS_PRODUCTION && (
+              <>
+                <Route path="/diagnostics" element={<Navigate to="/" replace />} />
+                <Route path="/visualization-debug" element={<Navigate to="/" replace />} />
+                <Route path="/visualization-test" element={<Navigate to="/" replace />} />
+                <Route path="/three-test" element={<Navigate to="/" replace />} />
+                <Route path="/lattice-test" element={<Navigate to="/" replace />} />
+                <Route path="/component-showcase" element={<Navigate to="/" replace />} />
               </>
             )}
 

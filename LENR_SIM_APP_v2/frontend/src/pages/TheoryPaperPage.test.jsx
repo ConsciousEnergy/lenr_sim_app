@@ -172,16 +172,16 @@ describe('TheoryPaperPage', () => {
     ).toBeInTheDocument();
   });
 
-  test('shows app/manuscript version map without inventing a new paper revision', () => {
+  test('shows app/manuscript version map aligned to the live train', () => {
     render(<TheoryPaperPage />);
     expect(screen.getByTestId('manuscript-revision-chip')).toHaveTextContent(
-      /v0\.3\.7-beta/,
+      /v0\.3\.9-beta/,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
       /0\.3\.9-beta/,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
-      /v0\.3\.7-beta \(revised 2026-11-11\)/,
+      /v0\.3\.9-beta \(revised 2026-11-11\)/,
     );
   });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 
 jest.mock('./contexts/ThemeContext', () => ({
@@ -18,9 +18,13 @@ jest.mock('./pages/SimulationDetail', () => ({
   __esModule: true,
   default: () => <div data-testid="simulation-detail">Simulation detail</div>,
 }));
-jest.mock('./pages/NewSimulation', () => ({
+jest.mock('./pages/UnifiedTheoryPage', () => ({
   __esModule: true,
-  default: () => <div data-testid="new-simulation">New simulation</div>,
+  default: () => <div data-testid="unified-theory">Unified theory</div>,
+}));
+jest.mock('./pages/LicensePage', () => ({
+  __esModule: true,
+  default: () => <div data-testid="license-page">License page</div>,
 }));
 jest.mock('./pages/QuantumTunnelingPage', () => ({
   __esModule: true,
@@ -84,13 +88,34 @@ jest.mock('./debug/DiagnosticTool', () => ({
 }));
 
 describe('simulation routes', () => {
-  test('/simulations renders the new simulation workflow', async () => {
+  test('/new-simulation redirects to the unified-theory start flow', async () => {
+    window.history.pushState({}, '', '/new-simulation');
+
+    render(<App />);
+
+    expect(await screen.findByTestId('unified-theory')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/unified-theory');
+    });
+  });
+
+  test('/simulations redirects to the unified-theory start flow', async () => {
     window.history.pushState({}, '', '/simulations');
 
     render(<App />);
 
-    expect(await screen.findByTestId('new-simulation')).toBeInTheDocument();
-    expect(screen.queryByTestId('simulation-detail')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('unified-theory')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/unified-theory');
+    });
+  });
+
+  test('/license renders the in-app license page', async () => {
+    window.history.pushState({}, '', '/license');
+
+    render(<App />);
+
+    expect(await screen.findByTestId('license-page')).toBeInTheDocument();
   });
 
   test('/simulation/:simulationId retains the simulation detail workflow', async () => {
@@ -99,6 +124,6 @@ describe('simulation routes', () => {
     render(<App />);
 
     expect(await screen.findByTestId('simulation-detail')).toBeInTheDocument();
-    expect(screen.queryByTestId('new-simulation')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('unified-theory')).not.toBeInTheDocument();
   });
 });
