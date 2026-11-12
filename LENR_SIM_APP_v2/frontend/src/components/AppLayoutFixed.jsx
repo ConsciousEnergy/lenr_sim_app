@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Box, 
@@ -16,6 +16,8 @@ import {
   useTheme,
   useMediaQuery,
   Collapse,
+  Fab,
+  Zoom,
   alpha
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -36,6 +38,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import InfoIcon from '@mui/icons-material/Info';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 // User profile icons removed - app is open access without authentication
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -215,9 +218,11 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+  const mainRef = useRef(null);
   
   const [open, setOpen] = useState(!isMobile);
   const [submenuOpen, setSubmenuOpen] = useState({});
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     // Auto-close drawer on mobile when route changes
@@ -226,6 +231,28 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
     }
   }, [location.pathname, isMobile]);
 
+  // Reset Main scroll on route change (scroll lives on Main, not window)
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    setShowBackToTop(false);
+  }, [location.pathname, location.search]);
+
+  // Show back-to-top FAB after ~2 viewport heights of Main scroll
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return undefined;
+
+    const onScroll = () => {
+      // Guard clientHeight === 0 (jsdom / pre-layout) so FAB stays hidden
+      const threshold = 2 * el.clientHeight;
+      setShowBackToTop(threshold > 0 && el.scrollTop >= threshold);
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   useEffect(() => {
     // Update drawer state when screen size changes
     setOpen(!isMobile);
@@ -233,6 +260,10 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
 
   const handleDrawerToggle = () => {
     setOpen(!open);
+  };
+
+  const handleBackToTop = () => {
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmenuToggle = (id) => {
@@ -423,11 +454,36 @@ function AppLayoutFixed({ children, darkMode = false, toggleDarkMode = null }) {
         </Box>
       </Drawer>
       
-      <Main open={open}>
+      <Main ref={mainRef} open={open}>
         <DrawerHeader />
         <BetaNotice />
         {children}
       </Main>
+
+      <Zoom in={showBackToTop} unmountOnExit>
+        <Fab
+          color="primary"
+          size="small"
+          aria-label="Back to top"
+          onClick={handleBackToTop}
+          sx={{
+            position: 'fixed',
+            bottom: (t) => t.spacing(2),
+            right: (t) => t.spacing(2),
+            zIndex: 1000,
+            bgcolor: (t) => alpha(t.palette.background.paper, 0.95),
+            color: 'primary.main',
+            border: (t) => `1px solid ${alpha(t.palette.divider, 0.3)}`,
+            backdropFilter: 'blur(10px)',
+            boxShadow: 4,
+            '&:hover': {
+              bgcolor: (t) => alpha(t.palette.primary.main, 0.12),
+            },
+          }}
+        >
+          <KeyboardArrowUpIcon />
+        </Fab>
+      </Zoom>
     </Box>
   );
 }
