@@ -112,8 +112,8 @@ Only the latest release line receives security fixes. Releases are `v*` tags on
 
 | Version | Supported |
 |---------|-----------|
-| `v0.3.6-beta` (current, `main`) | Yes |
-| `v0.3.5-beta` and earlier | No, upgrade to the current release |
+| `v0.3.9-beta` (current, `main` / `dev`) | Yes |
+| `v0.3.8-beta` and earlier | No, upgrade to the current release |
 
 ## Security Reporting
 
@@ -140,7 +140,12 @@ These run in GitHub Actions and are required for merging to `main`:
 | Scheduled re-audit of already-committed dependencies | `security-scan.yml` | weekly |
 | Dependency Review of PR-introduced packages | `dependency-review.yml` | every PR |
 | CodeQL static analysis (Python, JavaScript/TypeScript) | `codeql.yml` | every PR + weekly (active once the repo is public or GHAS is enabled) |
-| Grouped Dependabot updates against `main` | `dependabot.yml` | weekly |
+| Grouped Dependabot updates against `dev` | `dependabot.yml` | weekly |
+
+Self-hosted `lenr-ci` jobs route **fork** pull requests to `ubuntu-latest` (or
+skip for `lenr-ci-smoke`) so untrusted PR code never executes on the dedicated
+CI VM. `deploy.yml` stays on GitHub-hosted and is the only workflow that may
+read `VPS_*` secrets.
 
 All third-party actions are pinned to full commit SHAs. Local equivalents are
 available via [`.pre-commit-config.yaml`](.pre-commit-config.yaml).
