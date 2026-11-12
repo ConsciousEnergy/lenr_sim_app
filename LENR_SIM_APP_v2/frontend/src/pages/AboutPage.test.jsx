@@ -31,4 +31,30 @@ describe('AboutPage honesty copy', () => {
     expect(block).toHaveTextContent(/literature reports/i);
     expect(block).toHaveTextContent(/not a count of validated mechanisms/i);
   });
+
+  it('ends with a Special Thanks memorial section', () => {
+    render(<AboutPage />);
+    const block = screen.getByTestId('about-special-thanks');
+    expect(block).toHaveTextContent(/Special Thanks/);
+    expect(block).toHaveTextContent(/Special thanks goes to the/);
+    expect(block).toHaveTextContent(/loving memory of Alan Smith, Melvin Miles, and Michael McKubre/);
+    expect(block).toHaveTextContent('Abiit autem non sum oblitus');
+    const forumLink = screen.getByRole('link', { name: /LENR-Forum\.com/i });
+    expect(forumLink).toHaveAttribute('href', 'https://www.lenr-forum.com/');
+    expect(forumLink).toHaveAttribute('target', '_blank');
+    expect(forumLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('places Special Thanks immediately after the Conscious Energy action bar', () => {
+    render(<AboutPage />);
+    const actions = screen.getByTestId('about-conscious-energy-actions');
+    const thanks = screen.getByTestId('about-special-thanks');
+    expect(actions.compareDocumentPosition(thanks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(actions.nextElementSibling?.tagName).toBe('HR');
+    expect(actions.nextElementSibling?.nextElementSibling).toBe(thanks);
+    expect(screen.getByRole('link', { name: /Visit Website/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+  });
 });
+
+

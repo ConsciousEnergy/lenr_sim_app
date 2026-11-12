@@ -185,7 +185,10 @@ const AboutPage = () => {
           <Typography variant="body1" paragraph>
             Conscious Energy is dedicated to researching and developing innovative solutions in the field of advanced energy technologies. We focus on exploring and advancing breakthrough energy concepts, including Low Energy Nuclear Reactions (LENR).
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+          <Box
+            data-testid="about-conscious-energy-actions"
+            sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}
+          >
             <Button 
               variant="outlined" 
               startIcon={<PublicIcon />} 
@@ -203,6 +206,43 @@ const AboutPage = () => {
             >
               Email feedback / source access
             </Button>
+          </Box>
+
+          {/* Immediately after Visit Website / Email action bar */}
+          <Divider sx={{ my: 4 }} />
+
+          <Box data-testid="about-special-thanks">
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Special Thanks
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Special thanks goes to the{' '}
+              <Link
+                href="https://www.lenr-forum.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LENR-Forum.com
+              </Link>
+              {' '}team for their support, the countless researchers who have made this field their
+              life&apos;s work, and to all of those who have supported my research at Conscious Energies
+              over the last decade. This work is in loving memory of Alan Smith, Melvin Miles, and
+              Michael McKubre.
+            </Typography>
+            <Typography
+              variant="body1"
+              component="blockquote"
+              sx={{
+                m: 0,
+                pl: 2,
+                borderLeft: 2,
+                borderColor: 'divider',
+                fontStyle: 'italic',
+                color: 'text.secondary',
+              }}
+            >
+              &ldquo;Abiit autem non sum oblitus&rdquo;
+            </Typography>
           </Box>
         </Box>
       </Paper>
