@@ -21,8 +21,8 @@ import BusinessIcon from '@mui/icons-material/Business';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { APP_VERSION } from '../config/version';
 
-/** Manuscript chip on Theory Paper — do not invent a newer paper revision here. */
-const MANUSCRIPT_REVISION_LABEL = 'v0.3.7-beta (revised 2026-11-11)';
+/** Manuscript chip on Theory Paper — aligned to live app train for public visitors. */
+const MANUSCRIPT_REVISION_LABEL = `v${APP_VERSION} (revised 2026-11-11)`;
 
 const AboutPage = () => {
   return (
@@ -55,15 +55,14 @@ const AboutPage = () => {
           <Typography variant="body1" paragraph>
             Crawler-readable model pages (no JavaScript required) are published at <Link href="/models/">/models/</Link>.
             The intended license is <strong>GNU GPL-3.0</strong> (read in-app at{' '}
-            <Link href="/LICENSE">/LICENSE</Link>). The application repository is still
+            <Link href="/license">/license</Link>). The application repository is still
             private during invited beta; public source access for study and modification is planned at
             release. Until then, request access or send feedback by emailing{' '}
             <Link href="mailto:diadon@conscious.energy">diadon@conscious.energy</Link>.
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             Version map: hosted app build <strong>{APP_VERSION}</strong>; companion manuscript revision
-            label remains <strong>{MANUSCRIPT_REVISION_LABEL}</strong> on the Theory Paper page (labels
-            are paired for citation, not identical trains).
+            label is <strong>{MANUSCRIPT_REVISION_LABEL}</strong> on the Theory Paper page.
           </Typography>
         </Box>
 

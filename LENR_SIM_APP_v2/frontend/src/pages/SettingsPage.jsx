@@ -622,28 +622,31 @@ const SettingsPage = () => {
             </Paper>
           </Grid>
           
-          {/* Quick Links */}
-          <Grid size={12}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>Debug Tools</Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                <Button variant="outlined" href="/visualization-test">
-                  Visualization Test
-                </Button>
-                <Button variant="outlined" href="/diagnostics">
-                  Diagnostics
-                </Button>
-                <Button variant="outlined" href="/three-test">
-                  Three.js Test
-                </Button>
-                <Button variant="outlined" href="/visualization-debug">
-                  Visualization Debug
-                </Button>
-              </Stack>
-            </Paper>
-          </Grid>
+          {/* Debug tools are local-dev only; hide on public production builds */}
+          {(process.env.REACT_APP_ENVIRONMENT !== 'production' &&
+            process.env.NODE_ENV !== 'production') && (
+            <Grid size={12}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>Debug Tools</Typography>
+                <Divider sx={{ mb: 2 }} />
+                
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  <Button variant="outlined" href="/visualization-test">
+                    Visualization Test
+                  </Button>
+                  <Button variant="outlined" href="/diagnostics">
+                    Diagnostics
+                  </Button>
+                  <Button variant="outlined" href="/three-test">
+                    Three.js Test
+                  </Button>
+                  <Button variant="outlined" href="/visualization-debug">
+                    Visualization Debug
+                  </Button>
+                </Stack>
+              </Paper>
+            </Grid>
+          )}
         </Grid>
       </TabPanel>
       
