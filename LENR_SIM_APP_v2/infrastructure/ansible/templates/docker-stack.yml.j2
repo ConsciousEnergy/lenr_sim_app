@@ -157,17 +157,50 @@ services:
         reservations:
           cpus: '0.25'
           memory: 512M
+{# LP-H2: Traefik edge RL is shared across API replicas (unlike process-local
+   FastAPI counters). Path routers below apply tighter budgets on abuse families
+   (physics/compute + save/share writes). Mitigates dilution; does not fully
+   close LP-H2 without Redis shared store or Cloudflare orange-cloud. #}
+{% set _mutate = "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" %}
+{% set _heavy_paths = "(PathPrefix(`/api/physics/`) || PathPrefix(`/api/multi-physics/`) || PathPrefix(`/api/unified/`) || PathPrefix(`/api/analytics/`))" %}
+{% set _write_paths = "(PathPrefix(`/api/simulations/save`) || PathPrefix(`/api/simulations/share`))" %}
+{% set _mw_general = "security-headers@file,backend-bodylimit@file,backend-ratelimit" %}
+{% set _mw_heavy = "security-headers@file,backend-bodylimit@file,backend-ratelimit-heavy" %}
+{% set _mw_write = "security-headers@file,backend-bodylimit@file,backend-ratelimit-write" %}
       labels:
         - "traefik.enable=true"
         # API Router (HTTPS). Staging may also expose HTTP until DNS/ACME is ready.
         - "traefik.http.routers.backend.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+        # Higher priority than general API: edge write/heavy RL (mutate methods).
+        - "traefik.http.routers.backend-write.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`) && {{ _mutate }} && {{ _write_paths }}"
+        - "traefik.http.routers.backend-write.priority=300"
+        - "traefik.http.routers.backend-write.entrypoints=websecure"
+        - "traefik.http.routers.backend-write.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-write.middlewares={{ _mw_write }}"
+        - "traefik.http.routers.backend-write.service=backend"
+        - "traefik.http.routers.backend-heavy.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`) && {{ _mutate }} && {{ _heavy_paths }}"
+        - "traefik.http.routers.backend-heavy.priority=200"
+        - "traefik.http.routers.backend-heavy.entrypoints=websecure"
+        - "traefik.http.routers.backend-heavy.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-heavy.middlewares={{ _mw_heavy }}"
+        - "traefik.http.routers.backend-heavy.service=backend"
 {% if not (traefik_force_https | default(true)) %}
         - "traefik.http.routers.backend-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
         - "traefik.http.routers.backend-http.entrypoints=web"
-        - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
+        - "traefik.http.routers.backend-http.middlewares={{ _mw_general }}"
         - "traefik.http.routers.backend-http.service=backend"
+        - "traefik.http.routers.backend-write-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`) && {{ _mutate }} && {{ _write_paths }}"
+        - "traefik.http.routers.backend-write-http.priority=300"
+        - "traefik.http.routers.backend-write-http.entrypoints=web"
+        - "traefik.http.routers.backend-write-http.middlewares={{ _mw_write }}"
+        - "traefik.http.routers.backend-write-http.service=backend"
+        - "traefik.http.routers.backend-heavy-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`) && {{ _mutate }} && {{ _heavy_paths }}"
+        - "traefik.http.routers.backend-heavy-http.priority=200"
+        - "traefik.http.routers.backend-heavy-http.entrypoints=web"
+        - "traefik.http.routers.backend-heavy-http.middlewares={{ _mw_heavy }}"
+        - "traefik.http.routers.backend-heavy-http.service=backend"
 {% endif %}
 {# Extra API Host() routers: sslip bootstrap and/or lenr-sim-beta during WP DNS lag.
    Separate routers so ACME can succeed on hosts that already resolve even when
@@ -188,16 +221,39 @@ services:
         - "traefik.http.routers.backend-extra-{{ loop.index }}.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.entrypoints=websecure"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.tls.certresolver=letsencrypt"
-        - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares={{ _mw_general }}"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.service=backend"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.entrypoints=web"
-        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares={{ _mw_general }}"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.service=backend"
+        # Same-origin abuse paths (priority > PathPrefix(`/api`)=100).
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.rule=Host(`{{ _host }}`) && {{ _mutate }} && {{ _write_paths }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.priority=300"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.entrypoints=websecure"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.middlewares={{ _mw_write }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write.service=backend"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write-http.rule=Host(`{{ _host }}`) && {{ _mutate }} && {{ _write_paths }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write-http.priority=300"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write-http.entrypoints=web"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write-http.middlewares={{ _mw_write }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-write-http.service=backend"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.rule=Host(`{{ _host }}`) && {{ _mutate }} && {{ _heavy_paths }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.priority=200"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.entrypoints=websecure"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.middlewares={{ _mw_heavy }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy.service=backend"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy-http.rule=Host(`{{ _host }}`) && {{ _mutate }} && {{ _heavy_paths }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy-http.priority=200"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy-http.entrypoints=web"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy-http.middlewares={{ _mw_heavy }}"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-heavy-http.service=backend"
 {% endfor %}
         # security-headers + backend-bodylimit are in traefik-dynamic.yml.j2 (file provider).
-        - "traefik.http.routers.backend.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
+        - "traefik.http.routers.backend.middlewares={{ _mw_general }}"
         # Service
         - "traefik.http.services.backend.loadbalancer.server.port=8000"
         - "traefik.http.services.backend.loadbalancer.healthcheck.path=/api/health"
@@ -205,10 +261,21 @@ services:
         # Rate Limiting — depth=1 = rightmost XFF hop (TCP peer Traefik appended).
         # Stock Traefik does not set X-Real-IP; FastAPI client_ip falls back to the
         # same hop. Do not attach the unused file-provider api-ratelimit middleware.
-        - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
-        - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
+        # General API budget aligned with FastAPI RATE_LIMIT_PER_MINUTE (edge-shared).
+        - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=60"
+        - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=30"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
         - "traefik.http.middlewares.backend-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1"
+        # Heavy compute (physics / multi-physics / unified / analytics mutates).
+        - "traefik.http.middlewares.backend-ratelimit-heavy.ratelimit.average=10"
+        - "traefik.http.middlewares.backend-ratelimit-heavy.ratelimit.burst=5"
+        - "traefik.http.middlewares.backend-ratelimit-heavy.ratelimit.period=1m"
+        - "traefik.http.middlewares.backend-ratelimit-heavy.ratelimit.sourcecriterion.ipstrategy.depth=1"
+        # Persistence writes (save/share) — tightest edge budget.
+        - "traefik.http.middlewares.backend-ratelimit-write.ratelimit.average=3"
+        - "traefik.http.middlewares.backend-ratelimit-write.ratelimit.burst=3"
+        - "traefik.http.middlewares.backend-ratelimit-write.ratelimit.period=1m"
+        - "traefik.http.middlewares.backend-ratelimit-write.ratelimit.sourcecriterion.ipstrategy.depth=1"
 
 {% if swarm_frontend_enabled | default(false) %}
   # ============================================================================

@@ -32,7 +32,11 @@ postgres_user: "lenr_app"
 # postgres_password: Set via environment variable or vault
 
 # FastAPI settings
-fastapi_workers: 4
+# Swarm backend replicas (docker-stack uses fastapi_workers). Keep ≤2 until a
+# shared RL store (Redis) or Cloudflare orange-cloud edge RL is live — process-
+# local FastAPI budgets dilute linearly with replicas (LP-H2). Inventory may
+# override (staging example uses 1; prod example uses 2).
+fastapi_workers: 2
 fastapi_log_level: "info"
 fastapi_replicas: 2
 

@@ -11,7 +11,50 @@ STATIC = ROOT / "infrastructure" / "ansible" / "templates" / "traefik.yml.j2"
 def test_backend_ratelimit_uses_ipstrategy_depth():
     text = STACK.read_text(encoding="utf-8")
     assert "backend-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1" in text
-    assert "backend-ratelimit.ratelimit.average=100" in text
+    # General edge budget aligned with FastAPI RATE_LIMIT_PER_MINUTE (shared).
+    assert "backend-ratelimit.ratelimit.average=60" in text
+    assert "backend-ratelimit.ratelimit.burst=30" in text
+
+
+def test_backend_path_ratelimit_heavy_and_write_tiers():
+    """LP-H2: Traefik path routers apply shared heavy/write budgets (not Redis)."""
+    text = STACK.read_text(encoding="utf-8")
+    assert "backend-ratelimit-heavy.ratelimit.average=10" in text
+    assert "backend-ratelimit-heavy.ratelimit.burst=5" in text
+    assert (
+        "backend-ratelimit-heavy.ratelimit.sourcecriterion.ipstrategy.depth=1"
+        in text
+    )
+    assert "backend-ratelimit-write.ratelimit.average=3" in text
+    assert "backend-ratelimit-write.ratelimit.burst=3" in text
+    assert (
+        "backend-ratelimit-write.ratelimit.sourcecriterion.ipstrategy.depth=1"
+        in text
+    )
+    # Mutate-only path families for compute + persistence abuse.
+    assert "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" in text
+    assert "PathPrefix(`/api/physics/`)" in text
+    assert "PathPrefix(`/api/multi-physics/`)" in text
+    assert "PathPrefix(`/api/unified/`)" in text
+    assert "PathPrefix(`/api/analytics/`)" in text
+    assert "PathPrefix(`/api/simulations/save`)" in text
+    assert "PathPrefix(`/api/simulations/share`)" in text
+    assert "routers.backend-heavy.priority=200" in text
+    assert "routers.backend-write.priority=300" in text
+    assert "backend-ratelimit-heavy" in text
+    assert "backend-ratelimit-write" in text
+    # Extra-host (lenr-sim-beta) same-origin routers also get path RL.
+    assert "backend-extra-{{ loop.index }}-heavy.middlewares=" in text
+    assert "backend-extra-{{ loop.index }}-write.middlewares=" in text
+
+
+def test_group_vars_fastapi_workers_pinned_for_lp_h2():
+    """Default Swarm replicas ≤2 until shared RL store — honest dilution budget."""
+    group_vars = (
+        ROOT / "infrastructure" / "ansible" / "group_vars" / "all.yml"
+    ).read_text(encoding="utf-8")
+    assert "fastapi_workers: 2" in group_vars
+    assert "fastapi_workers: 4" not in group_vars
 
 
 def test_dead_api_ratelimit_file_middleware_removed():
@@ -74,10 +117,27 @@ def test_backend_bodylimit_matches_request_max_body_size():
     assert "backend-bodylimit:" in dynamic
     assert "maxRequestBodyBytes: 10485760" in dynamic
     assert "backend-bodylimit@file" in stack
-    # Every backend middleware chain must include the bodylimit before ratelimit.
+    # Middleware chains are Jinja macros (_mw_*) shared by general/heavy/write routers.
+    assert (
+        'set _mw_general = "security-headers@file,backend-bodylimit@file,backend-ratelimit"'
+        in stack
+    )
+    assert (
+        'set _mw_heavy = "security-headers@file,backend-bodylimit@file,backend-ratelimit-heavy"'
+        in stack
+    )
+    assert (
+        'set _mw_write = "security-headers@file,backend-bodylimit@file,backend-ratelimit-write"'
+        in stack
+    )
     for line in stack.splitlines():
         if "routers.backend" in line and ".middlewares=" in line:
-            assert "backend-bodylimit@file" in line
+            assert (
+                "backend-bodylimit@file" in line
+                or "_mw_general" in line
+                or "_mw_heavy" in line
+                or "_mw_write" in line
+            )
 
 
 def test_nginx_spa_body_limit_and_scanner_exact_404():
