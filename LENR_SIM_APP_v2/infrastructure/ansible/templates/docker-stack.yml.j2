@@ -166,7 +166,7 @@ services:
 {% if not (traefik_force_https | default(true)) %}
         - "traefik.http.routers.backend-http.rule=Host(`{{ api_subdomain }}.{{ app_domain }}`)"
         - "traefik.http.routers.backend-http.entrypoints=web"
-        - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-http.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
         - "traefik.http.routers.backend-http.service=backend"
 {% endif %}
 {# Extra API Host() routers: sslip bootstrap and/or lenr-sim-beta during WP DNS lag.
@@ -188,16 +188,16 @@ services:
         - "traefik.http.routers.backend-extra-{{ loop.index }}.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.entrypoints=websecure"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.tls.certresolver=letsencrypt"
-        - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
         - "traefik.http.routers.backend-extra-{{ loop.index }}.service=backend"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.rule=Host(`{{ _host }}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.priority=100"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.entrypoints=web"
-        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares=security-headers@file,backend-ratelimit"
+        - "traefik.http.routers.backend-extra-{{ loop.index }}-http.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
         - "traefik.http.routers.backend-extra-{{ loop.index }}-http.service=backend"
 {% endfor %}
-        # security-headers is defined in traefik-dynamic.yml.j2 (file provider).
-        - "traefik.http.routers.backend.middlewares=security-headers@file,backend-ratelimit"
+        # security-headers + backend-bodylimit are in traefik-dynamic.yml.j2 (file provider).
+        - "traefik.http.routers.backend.middlewares=security-headers@file,backend-bodylimit@file,backend-ratelimit"
         # Service
         - "traefik.http.services.backend.loadbalancer.server.port=8000"
         - "traefik.http.services.backend.loadbalancer.healthcheck.path=/api/health"
