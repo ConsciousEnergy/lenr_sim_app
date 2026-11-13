@@ -199,6 +199,16 @@ def test_literature_baseline_parkhomov_cd_wrap_contested() -> None:
     )
     assert row["claim_tag"] == "contested"
     assert "EQ-OPEN-RAD-01" in row["open_question_ids"]
+    assert "EQ-OPEN-RATE-01" in row["open_question_ids"]
     assert row["parameters"]["not_eq_open_discharge"] is True
     note = row["results"]["note"].lower()
     assert "not" in note or "never" in note
+
+
+def test_parkhomov_detector_gas_disclaimer_and_neutrino_flag() -> None:
+    payload = parkhomov_curated()
+    assert "detector_gas_speculative" in payload["disclaimer"]
+    assert "EQ-OPEN-EC-01" in payload["disclaimer"]
+    listed = list_detector_gas_speculative_rows()
+    assert {row["neutrino"] for row in listed} == {"anti-nu"}
+    assert all(row["category"] == "detector_gas_speculative" for row in listed)

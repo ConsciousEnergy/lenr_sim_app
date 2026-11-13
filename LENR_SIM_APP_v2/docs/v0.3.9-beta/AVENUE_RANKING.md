@@ -55,7 +55,10 @@ table = rank_avenues()  # prefers cavitation_collapse_campaign; else q_campaign_
 
 ## Scoring (toy, labelled)
 
-Informativeness blends (weights fixed in code):
+Informativeness blends (weights fixed in code as Approximate coeffs —
+`INFORM_W_ORACLE_RANK=0.35`, `INFORM_W_COVERAGE=0.25`, `INFORM_W_UQ_SHRINK=0.20`,
+`INFORM_W_SEPARATION=0.15`, `INFORM_W_COLLAPSE=0.05`; optional
+`CAVITATION_PACK_BOOST=0.15`):
 
 1. Inverse `decision_oracle.next_measurement` rank (Miles heat–He first).
 2. Pack coverage: fraction of cells tagging the avenue’s `EQ-OPEN-*` ids.
@@ -63,7 +66,8 @@ Informativeness blends (weights fixed in code):
    (cell `fusion_rate` / observables, else a labelled default band).
 4. Oracle log10 hypothesis separation under Miles-band vs null observations.
 5. Collapse-UQ predictive peak-temperature width (cavitation avenue).
-6. Soft boost when the Phase A cavitation pack is on disk.
+6. Soft boost when the Phase A cavitation pack is among ranked pack sources
+   (Slice C A-C4 — **not** a laboratory ranking proof).
 
 Outputs remain `claim_tier: speculative_exploratory` at the table level.
 
@@ -78,6 +82,46 @@ Outputs remain `claim_tier: speculative_exploratory` at the table level.
 | `rate_budget_loading` | `EQ-OPEN-RATE-01` |
 | `electron_capture_threshold` | `EQ-OPEN-EC-01` |
 | `cavitation_collapse_uq` | `EQ-OPEN-RATE-01`, `EQ-OPEN-MEV-01`, `ENG-BUBBLE-FUSION-01`, `EQ-BBL-LIM-01` |
+
+## Detector / weak screen pack → Q4 / RAD / RATE (Slice B note)
+
+Reviewer pack
+[`datasets/reviewer_packs/detector_weak_screen/`](../../datasets/reviewer_packs/detector_weak_screen/)
+(`preset=detector_weak_screen`) is a **lab-design coverage seed**, not a
+posterior:
+
+| Pack cell family | Stresses (still OPEN) | Honesty |
+|------------------|-----------------------|---------|
+| Detector UL / Cd-ratio (SPAWAR, Taleyarkhan, Parkhomov Cd-wrapped SNM-14) | `EQ-OPEN-RAD-01`, and Parkhomov also `EQ-OPEN-RATE-01` | Contested / EMP anchors; Cd-wrap ≠ neutron proof |
+| Weak EC-threshold (SAFIRE × Widom–Larsen) | `EQ-OPEN-EC-01` (Q4) | Contested SPEC path; deficit / bound companions stay OPEN |
+| Moderator-null (ARPA-E) | `EQ-OPEN-RAD-01`, `EQ-OPEN-YIELD-01` | Negative-control style cell |
+
+Re-ranking with `rank_avenues(pack_ids=["detector_weak_screen"])` may change
+informativeness **ordering** among avenues that already stress these OPEN ids
+(e.g. `gamma_ul_23p8`, `electron_capture_threshold`, `rate_budget_loading`).
+That delta is a **design aid only** — it does **not** flip any `EQ-OPEN-*`
+status, raise claim tiers, or set `lenr_proved`. Parkhomov detector-gas ν/ν̄
+SPEC curated rows (`neutrino: anti-nu`, `feeds_production_rate: false`) never
+enter production magnitudes or discharge Q4.
+
+### Slice C — pack-growth informativeness delta (design aid)
+
+Comparing `rank_avenues(pack_ids=["smoke"])` vs
+`rank_avenues(pack_ids=["smoke", "detector_weak_screen"])` records a finite
+per-avenue informativeness **delta**. Gate treats that delta as a **lab-design
+coverage signal** only (Slice C A-C4 / A-C6 / A-C7):
+
+| Lock | Value |
+|------|--------|
+| `kind` | `scenario_table_not_posterior` |
+| `lenr_proved` | `false` |
+| `open_status[*]` | stay `OPEN` |
+| Cavitation boost | **off** unless `cavitation_collapse_campaign` is in `pack_sources` |
+| SQL association | `mean_final_score` remains Approximate (`is_empirical_confidence=false`) |
+
+Contract tests:
+[`test_pack_growth_rerank_delta_is_design_aid_only`](../../backend/tests/test_integration/test_weight_surface_honesty.py),
+[`test_dual_pack_rank_keeps_open_after_detector_weak_growth`](../../backend/tests/test_integration/test_avenue_ranking_contract.py).
 
 ## Phase A plug-in
 

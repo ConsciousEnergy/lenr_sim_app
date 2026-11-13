@@ -125,6 +125,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-BRANCH-LATTICE-01 | Lattice Γ_ph/Γ_γ > 10^11 open target | §5A.2 | `branching_model.py` | paper §5A.2 | `DEF` | `Branching.lean` |
 | EQ-WH-FC-02 | FC class bound: \(\forall S\le10^{4},\,N\ge300048\): \(S^N/N!<10^{-11}\); \(\lfloor t/(1-t)\rfloor=0<10^{11}\); derives EQ-WH-FC-01 literals; alias `harmonic_dos_non_closure` | §5A.2 | `many_body/wh_bounds.py` | displaced-oscillator **model assumption** | `THM` | `RadiationBounds.lean` (BOUNDED / class-DISPROVEN; does **not** close Q2) |
 | EQ-RAD-DET-01 | Detector-UL honesty flag mirrors (Cd-ratio, moderator-null, soft-X∧¬hard-γ, assumed BR\(_\gamma\)>UL) | §5A.2 | `many_body/branching_model.py` | `detector_ul_not_proof`; pyyhtia2026 confounder | `DEF` | `RadiationBounds.lean` (falsifiers only; does **not** close Q2) |
+| EQ-PHM-DET-HE3-01 | Parkhomov SPEC detector-gas \(2\,{}^{3}\mathrm{He}+e+\bar\nu\to d+\alpha\) (~14 MeV) curated row | talk / curated | `parkhomov_curated.v1.json` + `parkhomov_validation.py` | parkhomov2018; `neutrino: anti-nu`; `feeds_production_rate: false` | `SPEC` | curated only — **≠** neutron proof; **≠** `EQ-OPEN-EC-01` discharge |
+| EQ-PHM-DET-B10-01 | Parkhomov SPEC detector-gas \(2\,{}^{10}\mathrm{B}+e+\bar\nu\to d+\mathrm{O}\) (>11 MeV) curated row | talk / curated | `parkhomov_curated.v1.json` + `parkhomov_validation.py` | parkhomov2018; `neutrino: anti-nu`; `feeds_production_rate: false` | `SPEC` | curated only — **≠** neutron proof; **≠** `EQ-OPEN-EC-01` discharge |
 | EQ-WHEN-THRESH-01 | Threshold predicate R_mode ≥ R_obs | §5A.3 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-WHEN-DUTY-01 | Duty-cycle integrated yield t_duty = t_total f_duty | §5A.5 | `open_questions.when` | DEF | `DEF` | `WhenHow.lean` |
 | EQ-MECH-PATH-01 | Mechanism path enum (TSC / phonon / three_body) | §5A | `decision_oracle.py` | Oracle B odds | `DEF` | `WhenHow.lean` |
@@ -132,6 +134,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler factor \(\approx 1\) at simulated lab \(E\) | bubble QED term | `bubble_lattice_interaction.py` | HE 1936 | `THM` | `ScaleQED.lean` |
 | EQ-UQ-PRIOR-01 | Oracle B skeptical default priors | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative identities | software | `decision_oracle.py` | DEF | `DEF` + algebraic `THM` | `Decision.lean` |
+| EQ-WT-TIER-01 | Claim-tier multiply + five-factor \(W_*\) sum locks (`final_score = raw × CLAIM_TIER_MULTIPLIER`) | software | `theory_scoring.py` | Approximate governance weights | `DEF` | `WeightHonesty.lean` (≠ lab posterior; ≠ OPEN discharge) |
+| EQ-WT-SCENARIO-01 | Ranking envelope `kind=scenario_table_not_posterior`; high `final_score` ⇏ `lenr_proved` | software | `avenue_ranking.py` / Oracle B | Honesty contract | `DEF` | `WeightHonesty.lean` (≠ P(LENR); ≠ OPEN discharge) |
 | EQ-WH-ENP-01 | Coupled WH-ENP-01 geometry/occupation/operator ledger | §5A | `working_hypothesis.py` | hagelstein2025, takahashi2016 | `DEF` | `WorkingHypothesis.lean` |
 | EQ-WH-PART-01 | Derived + OPEN remainder = 23.8 MeV; remainder > 0; + FGR leaves Q1/Q3 open | §5A.1 | `working_hypothesis.py` | conservation | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | §5A.2 | `working_hypothesis.py` | harmonic DOS cutoff | `THM` | `WorkingHypothesis.lean` |

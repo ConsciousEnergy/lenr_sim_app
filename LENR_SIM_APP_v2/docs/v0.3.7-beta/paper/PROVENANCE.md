@@ -37,7 +37,7 @@
 | [`datasets/reviewer_packs/smoke/`](../../../datasets/reviewer_packs/smoke/) | CI smoke pack |
 | [`datasets/reviewer_packs/q_campaign_demo/`](../../../datasets/reviewer_packs/q_campaign_demo/) | Larger pinned campaign |
 | [`datasets/reviewer_packs/cavitation_collapse_campaign/`](../../../datasets/reviewer_packs/cavitation_collapse_campaign/) | Phase A cavitation/collapse bubble-lattice campaign (model output; Taleyarkhan contested + Pyyhtiä 2026 CR-39 confounder peers; EQ-OPEN-* stay OPEN) — **on `dev`** via #299 |
-| [`datasets/reviewer_packs/detector_weak_screen/`](../../../datasets/reviewer_packs/detector_weak_screen/) | WS7 detector/weak screen campaign pack (model output; weight surfaces Approximate/Aspirational; EQ-OPEN-* stay OPEN) — **on `dev`** via #331 |
+| [`datasets/reviewer_packs/detector_weak_screen/`](../../../datasets/reviewer_packs/detector_weak_screen/) | Detector/weak screen campaign pack (model output; Q4/RAD/RATE lab-design stress incl. Parkhomov Cd-wrapped SNM-14; weight surfaces Approximate/Aspirational; EQ-OPEN-* stay OPEN) — WS7 #331 + Slice B enrichment |
 | [`formalization/predictions/campaign_invariants.json`](../../../../formalization/predictions/campaign_invariants.json) | Campaign invariant schema |
 | [`backend/app/physics_engine/collapse_uq.py`](../../../backend/app/physics_engine/collapse_uq.py) | Collapse Sobol UQ (modelled percentiles only) |
 | [`backend/tests/test_paper_benchmarks/`](../../../backend/tests/test_paper_benchmarks/) | CI paper-reproduction gates |
@@ -48,7 +48,7 @@
 | Note | Path | Status |
 |------|------|--------|
 | Avenue ranking (campaign + UQ) | [`../../v0.3.9-beta/AVENUE_RANKING.md`](../../v0.3.9-beta/AVENUE_RANKING.md) | **on `dev`** via #301 (Phase B) |
-| EQ-OPEN closure/falsification runway | [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) | **on `dev`** via #297 (Phase F) — criteria draft only; rows stay OPEN |
+| EQ-OPEN closure/falsification runway | [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) | **on `dev`** via #297 (Phase F) + Slice B dual-counter instrument sketch — criteria draft only; rows stay OPEN |
 | Theory weight surfaces inventory | [`../../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md`](../../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md) | **on `dev`** via #331 (WS7) — Approximate/Aspirational labels; not lab posteriors |
 
 Do **not** treat these paths as laboratory evidence. Live links do not change claim tiers, close `EQ-OPEN-*`, or set `lenr_proved`.

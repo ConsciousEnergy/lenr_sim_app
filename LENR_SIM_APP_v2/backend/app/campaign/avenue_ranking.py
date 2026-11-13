@@ -45,6 +45,17 @@ from app.physics_engine.unified_lenr_model.reaction_rate_uq import (
 )
 
 SCHEMA = "lenr-avenue-ranking-v1"
+
+# Approximate informativeness blend (Slice C A-C4). Lab-design aid only —
+# not a laboratory ranking proof. Optional cavitation boost applies solely
+# when the Phase A cavitation pack is among the ranked pack sources.
+INFORM_W_ORACLE_RANK = 0.35
+INFORM_W_COVERAGE = 0.25
+INFORM_W_UQ_SHRINK = 0.20
+INFORM_W_SEPARATION = 0.15
+INFORM_W_COLLAPSE = 0.05
+CAVITATION_PACK_BOOST = 0.15
+
 DISCLAIMER = (
     "Campaign-level avenue ranking over model-output packs and UQ/oracle "
     "machinery. Scenario table, not a laboratory posterior. Does not prove "
@@ -227,11 +238,11 @@ def _informativeness(
 ) -> float:
     rank_score = 1.0 / float(max(oracle_rank, 1))
     return (
-        0.35 * rank_score
-        + 0.25 * min(coverage, 1.0)
-        + 0.20 * min(uq_shrink / 5.0, 1.0)
-        + 0.15 * min(separation / 5.0, 1.0)
-        + 0.05 * min(collapse_width_score, 1.0)
+        INFORM_W_ORACLE_RANK * rank_score
+        + INFORM_W_COVERAGE * min(coverage, 1.0)
+        + INFORM_W_UQ_SHRINK * min(uq_shrink / 5.0, 1.0)
+        + INFORM_W_SEPARATION * min(separation / 5.0, 1.0)
+        + INFORM_W_COLLAPSE * min(collapse_width_score, 1.0)
         + cavitation_boost
     )
 
@@ -276,7 +287,7 @@ def rank_avenues(
                 uq_meta["applied"] = True
                 uq_shrink = float(uq_meta.get("width_shrink_log10") or 0.0)
         cav_boost = (
-            0.15
+            CAVITATION_PACK_BOOST
             if avenue["id"] == "cavitation_collapse_uq" and has_cavitation_pack
             else 0.0
         )

@@ -498,9 +498,10 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
 
         payload["axes"] = detector_weak_screen_axes()
         payload["note"] = (
-            "Detector UL / Cd-ratio, weak EC-threshold, and moderator-null "
-            "scenario cells. Scenario table not posterior; not P(LENR). "
-            "Does not prove LENR. Do not run full or diverse in CI."
+            "Detector UL / Cd-ratio (RAD/RATE), weak EC-threshold (Q4), and "
+            "moderator-null scenario cells including Parkhomov Cd-wrapped "
+            "SNM-14 contested anchor. Scenario table not posterior; not "
+            "P(LENR). Does not prove LENR. Do not run full or diverse in CI."
         )
     if preset == "testbed_review":
         from app.campaign.testbed_review import testbed_review_axes

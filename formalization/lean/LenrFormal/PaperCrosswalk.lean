@@ -6,6 +6,7 @@ import LenrFormal.Assenbaum
 import LenrFormal.Composition
 import LenrFormal.CollapseBounds
 import LenrFormal.Decision
+import LenrFormal.WeightHonesty
 import LenrFormal.Miles
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
@@ -75,6 +76,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
   , ("§3.2 hydro enhancement ≠ nuclear-rate proof (EQ-BBL-NR-01)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
+  , ("Theory weights / EQ-WT-TIER-01 + EQ-WT-SCENARIO-01 (Approximate; ≠ lab posterior)", "LenrFormal.WeightHonesty")
 
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")

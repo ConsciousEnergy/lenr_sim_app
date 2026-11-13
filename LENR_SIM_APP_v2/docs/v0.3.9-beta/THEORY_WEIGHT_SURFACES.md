@@ -22,7 +22,9 @@ association under identical conditions.
 |---------|----------------|----------|------|
 | Claim-tier multipliers | `CLAIM_TIER_MULTIPLIER` (`validated_lenr_mechanism`/`established_reference` ×1.0 … `speculative_exploratory` ×0.30 … `cross_regime_extrapolation` ×0.20) | **Approximate** | [`theory_scoring.py`](../../backend/app/physics_engine/theory_scoring.py); frontend mirror [`theoryGovernance.ts`](../../frontend/src/utils/theoryGovernance.ts) |
 | Five-factor geometric-mean weights | `W_PHYSICAL`, `W_EXPERIMENTAL`, `W_SENSITIVITY`, `W_CROSS_THEORY`, `W_COMPLETENESS` (sum = 1) | **Approximate** | `theory_scoring.py` |
-| Geometric-mean floor | `FLOOR = 0.05` per sub-score | **Approximate** | `theory_scoring.py` — prevents single-factor collapse; can soften penalties (score-game surface) |
+| Geometric-mean floor | `GEOMETRIC_MEAN_FLOOR = 0.05` per sub-score | **Approximate** | `theory_scoring.py` — softens single-factor collapse; **must not** erase claim-tier multiply (Slice C A-C1) |
+| Literature blend coeffs | `LITERATURE_HEURISTIC_WEIGHT=0.7`, `LITERATURE_CORPUS_WEIGHT=0.3` | **Approximate** | `literature_likelihood.py` — experimental agreement only |
+| Avenue informativeness coeffs | `INFORM_W_*` sum=1; `CAVITATION_PACK_BOOST=0.15` | **Approximate** | `avenue_ranking.py` — design aid; boost only with cavitation pack |
 | Persist sensitivity shortcut | `skip_sensitivity=True` → `parameter_sensitivity = 0.5` | **Approximate** | Persist enrichment; live Relevance Map still computes sensitivity |
 | Guardrails `weighted_score` | Rubric confidence → pipeline `score` | **Approximate** | [`scientific_guardrails.py`](../../backend/app/physics_engine/scientific_guardrails.py) |
 | Opt-in literature blend | `SCORE_MODE_PLUS_LITERATURE` → `0.7 * heuristic + 0.3 * literature` into experimental agreement | **Approximate** (blend coeffs); **Aspirational** if later fitted to EMP corpora | [`literature_likelihood.py`](../../backend/app/physics_engine/literature_likelihood.py) — **must not** promote `claim_tier` |
@@ -51,7 +53,8 @@ confirmation. `is_empirical_confidence` stays `false` on model packs.
 
 ## Claim-tier multiply honesty (DEF)
 
-Definition only — not a laboratory theorem:
+Definition only — not a laboratory theorem. Mechanized twin:
+Lean `LenrFormal.WeightHonesty` / IR [`EQ-WT-TIER-01`](../../../../formalization/ir/equations/EQ-WT-TIER-01.yaml).
 
 1. `raw_score_pre_tier` = weighted geometric mean of the five sub-scores (with floor).
 2. `final_score = raw_score_pre_tier × CLAIM_TIER_MULTIPLIER[claim_tier]`.
@@ -62,7 +65,9 @@ Definition only — not a laboratory theorem:
 
 ## Scenario-table honesty (DEF)
 
-Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**:
+Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**.
+Mechanized twin: Lean `LenrFormal.WeightHonesty` / IR
+[`EQ-WT-SCENARIO-01`](../../../../formalization/ir/equations/EQ-WT-SCENARIO-01.yaml).
 
 - Lab-design informativeness / mechanism-path odds under stated priors.
 - Miles-anchored priors are occurrence-scenario aids, **not** P(LENR).
@@ -71,16 +76,38 @@ Avenue ranking and oracle prior tables are **`scenario_table_not_posterior`**:
 
 Contract tests:
 [`test_avenue_ranking_contract.py`](../../backend/tests/test_integration/test_avenue_ranking_contract.py),
-[`test_weight_surface_honesty.py`](../../backend/tests/test_integration/test_weight_surface_honesty.py).
+[`test_weight_surface_honesty.py`](../../backend/tests/test_integration/test_weight_surface_honesty.py),
+[`test_lean_python_agreement.py`](../../backend/tests/test_formalization/test_lean_python_agreement.py)
+(`test_weight_honesty_locks_agree_with_lean`).
 
 ## SQL / pack enrichment (model-only)
 
 Reviewer packs under [`datasets/reviewer_packs/`](../../datasets/reviewer_packs/)
 keep `lenr_proved: false` and `empirical_claim_tiers_raised: false`. Detector /
-weak screen cells (`detector_weak_screen` preset + pack) tag RAD/EC OPEN stress
-for lab-design coverage; they do **not** import ARA laboratory DB or full
-Parkhomov SQLite. See runway stage constraints in
-[`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md).
+weak screen cells (`detector_weak_screen` preset + pack, Slice B) tag Q4 / RAD /
+RATE OPEN stress (incl. Parkhomov Cd-wrapped SNM-14 contested) for lab-design
+coverage; they do **not** import ARA laboratory DB or full Parkhomov SQLite.
+Avenue note: [`AVENUE_RANKING.md`](./AVENUE_RANKING.md). See runway dual-counter
+sketch in [`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md).
+SQL `mean_final_score` / association rank remains **Approximate association**
+(`is_empirical_confidence=false`) — Slice C A-C5.
+
+## Slice C attacker checklist (score-game pack)
+
+Same Propose → Attack → Formalize → Gate regime as the physics track. Attacker
+kills score-gaming; survivors stay Approximate / scenario-table.
+
+| Attack | Killer claim | Contract lock |
+|--------|--------------|---------------|
+| **A-C1** | Speculative dominates via `GEOMETRIC_MEAN_FLOOR` + `skip_sensitivity` | `test_score_gaming_skip_sensitivity_still_applies_claim_tier` — tier ×0.30 still applies |
+| **A-C2** | Literature blend promotes `claim_tier` / invents proof | `test_literature_*` — 0.7/0.3 locked; tiers unchanged |
+| **A-C3** | Miles `ANCHORED_PRIORS` = P(LENR) | Avenue / weight honesty — priors scenario aids; `LENR_PROVED` forbidden |
+| **A-C4** | Informativeness / cavitation boost = lab ranking proof | Blend coeffs bounded; boost only with cavitation pack; dual-pack OPEN unchanged |
+| **A-C5** | SQL `mean_final_score` = empirical confirmation | `test_mean_final_score_is_approximate_association_not_empirical` |
+| **A-C6** | Pack growth sets `lenr_proved` / raises tiers | Detector-weak manifest + pack-growth re-rank delta design-aid only |
+| **A-C7** | Re-rank flips any `EQ-OPEN-*` | Ledger twins + `assert_ranking_honesty` — all OPEN remain OPEN |
+| **A-C8** | Parkhomov ν SPEC → production magnitudes / ARA co-tenancy | JSON-only; `feeds_production_rate=false` |
+| **A-C9** | Optional YM Lean borrow closes RATE/EC | Cite-only; **no** TheoryModule |
 
 ## Non-goals
 
@@ -88,3 +115,4 @@ Parkhomov SQLite. See runway stage constraints in
 - Treating SQL means / association ranks / avenue scores as laboratory Bayesian proof
 - Shipping ARA acquisition DB or full Parkhomov SQLite co-tenant with public Postgres
 - Claiming Approximate toy weights are trained posteriors
+- Yang–Mills / gauge TheoryModule productization
