@@ -144,10 +144,12 @@ def test_detector_weak_screen_preset_is_designed_not_cartesian() -> None:
     assert set(DETECTOR_LITERATURE_IDS) <= literature_ids
     assert WEAK_EC_LITERATURE_ID in literature_ids
     assert MODERATOR_NULL_LITERATURE_ID in literature_ids
+    assert "parkhomov-cd-wrapped-snm14-contested" in literature_ids
     tags = {str(case.get("tag")) for case in cases}
     assert any("detector_cd_ratio" in tag for tag in tags)
     assert any("weak_ec_threshold" in tag for tag in tags)
     assert any("moderator_null" in tag for tag in tags)
+    assert any("parkhomov-cd-wrapped-snm14-contested" in tag for tag in tags)
     assert all(case.get("lenr_proved") is False for case in cases)
     assert all(
         case.get("scenario_kind") == "scenario_table_not_posterior" for case in cases
@@ -157,6 +159,7 @@ def test_detector_weak_screen_preset_is_designed_not_cartesian() -> None:
     }
     assert "EQ-OPEN-RAD-01" in stressed
     assert "EQ-OPEN-EC-01" in stressed
+    assert "EQ-OPEN-RATE-01" in stressed
     described = describe_preset("detector_weak_screen")
     assert described["n_cases"] == n
     assert "Does not prove LENR" in described["note"]

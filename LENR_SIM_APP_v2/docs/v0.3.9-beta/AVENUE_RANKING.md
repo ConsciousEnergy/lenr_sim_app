@@ -79,6 +79,27 @@ Outputs remain `claim_tier: speculative_exploratory` at the table level.
 | `electron_capture_threshold` | `EQ-OPEN-EC-01` |
 | `cavitation_collapse_uq` | `EQ-OPEN-RATE-01`, `EQ-OPEN-MEV-01`, `ENG-BUBBLE-FUSION-01`, `EQ-BBL-LIM-01` |
 
+## Detector / weak screen pack → Q4 / RAD / RATE (Slice B note)
+
+Reviewer pack
+[`datasets/reviewer_packs/detector_weak_screen/`](../../datasets/reviewer_packs/detector_weak_screen/)
+(`preset=detector_weak_screen`) is a **lab-design coverage seed**, not a
+posterior:
+
+| Pack cell family | Stresses (still OPEN) | Honesty |
+|------------------|-----------------------|---------|
+| Detector UL / Cd-ratio (SPAWAR, Taleyarkhan, Parkhomov Cd-wrapped SNM-14) | `EQ-OPEN-RAD-01`, and Parkhomov also `EQ-OPEN-RATE-01` | Contested / EMP anchors; Cd-wrap ≠ neutron proof |
+| Weak EC-threshold (SAFIRE × Widom–Larsen) | `EQ-OPEN-EC-01` (Q4) | Contested SPEC path; deficit / bound companions stay OPEN |
+| Moderator-null (ARPA-E) | `EQ-OPEN-RAD-01`, `EQ-OPEN-YIELD-01` | Negative-control style cell |
+
+Re-ranking with `rank_avenues(pack_ids=["detector_weak_screen"])` may change
+informativeness **ordering** among avenues that already stress these OPEN ids
+(e.g. `gamma_ul_23p8`, `electron_capture_threshold`, `rate_budget_loading`).
+That delta is a **design aid only** — it does **not** flip any `EQ-OPEN-*`
+status, raise claim tiers, or set `lenr_proved`. Parkhomov detector-gas ν/ν̄
+SPEC curated rows (`neutrino: anti-nu`, `feeds_production_rate: false`) never
+enter production magnitudes or discharge Q4.
+
 ## Phase A plug-in
 
 Drop a reviewer pack at
