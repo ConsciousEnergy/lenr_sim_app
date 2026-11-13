@@ -136,6 +136,28 @@ flowchart LR
 
 Cross-links: campaign runner / grids under `backend/app/campaign/`; oracle optional lab ingest fields already documented as **not** auto-flipping `rate_mode` (CHANGELOG); ARA theory rebuilds remain separate from DAQ ([`ARA_P1_THEORY_REBUILDS.md`](./ARA_P1_THEORY_REBUILDS.md)).
 
+### Instrument plan sketch — dual-counter + Cd differential (docs only)
+
+Operator-owned LENR-ARA / private DAQ sketch for radiation honesty under
+`EQ-OPEN-RAD-01` / `EQ-OPEN-RATE-01`. **Does not** discharge either obligation;
+**does not** prove neutrons, neutrinos, or LENR.
+
+| Element | Intent | Honesty lock |
+|---------|--------|--------------|
+| **Near counter** | SNM-14 / ³He (or equivalent) at working distance from the active volume | Count rate alone ≠ neutron proof |
+| **Far counter** | Same detector class at a larger baseline (Klimov-style geometry) | Differential isolates local vs room / cosmic background |
+| **Cd differential** | Bare vs Cd-wrapped on the near counter (background drop ~10× when reading true slow-n) | Cd-wrap is a **calibration / interpretation** observable; high rate under Cd is a falsifier of “thermal neutron” interpretation, not proof of a ν agent |
+| **γ / soft-X companion** | Hard-γ UL + soft-X channel when claimed | Soft-X∧¬hard-γ ∧ Cd-high → `BRANCHING_INCONSISTENT_WITH_NEUTRON_INTERPRETATION` (scenario diagnostic only) |
+| **Dual-counter coincidence** | Optional AND/OR timing between near and far | EMI / pulse-shape confounders stay first-class covariates |
+
+Parkhomov detector-gas ν/ν̄ hypotheses stay **SPEC curated storytelling**
+(`parkhomov_curated` `detector_gas_speculative` rows; `feeds_production_rate=false`)
+and must **not** be treated as an `EQ-OPEN-EC-01` entrance channel. Efficiency-corrected
+neutron UL geometry remains a proxy until wired (`neutron_rate_bound` honesty class
+`detector_ul_not_proof`). See avenue note in
+[`AVENUE_RANKING.md`](./AVENUE_RANKING.md) for the `detector_weak_screen` pack →
+Q4/RAD/RATE lab-design link (no status flips).
+
 ---
 
 ## Ingest contract sketch vs `lenr-ara-daq-sample-v1`
