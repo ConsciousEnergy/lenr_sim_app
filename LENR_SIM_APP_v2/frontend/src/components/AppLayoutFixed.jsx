@@ -33,6 +33,7 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import DescriptionIcon from '@mui/icons-material/Description';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -180,6 +181,12 @@ const menuItems = [
     path: '/documentation',
     icon: <DescriptionIcon />,
     children: [
+      {
+        id: 'documentation-hub',
+        title: 'Overview',
+        path: '/documentation',
+        icon: <MenuBookIcon />
+      },
       {
         id: 'theory-paper',
         title: 'Theory Paper',

@@ -2,17 +2,29 @@ import { screen } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import AboutPage from './AboutPage';
 import { APP_VERSION } from '../config/version';
+import {
+  DONATIONS_URL,
+  FEEDBACK_EMAIL,
+  PUBLIC_GITHUB_MAIN,
+  PUBLIC_GITHUB_REPO_LABEL,
+} from '../config/publicLinks';
 
 describe('AboutPage honesty copy', () => {
-  it('describes a research preview without claiming current public open-source access', () => {
+  it('describes a research preview with public GitHub source access', () => {
     render(<AboutPage />);
     expect(screen.getByText(/public research preview/i)).toBeInTheDocument();
-    expect(screen.getByText(/repository is still private/i)).toBeInTheDocument();
-    expect(screen.queryByText(/freely available for anyone to use, study, modify/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /GitHub Repository/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i })).toHaveAttribute(
+    expect(screen.queryByText(/repository is still private/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: PUBLIC_GITHUB_REPO_LABEL })).toHaveAttribute(
       'href',
-      'mailto:diadon@conscious.energy',
+      PUBLIC_GITHUB_MAIN,
+    );
+    expect(screen.getByRole('link', { name: /Source on GitHub/i })).toHaveAttribute(
+      'href',
+      PUBLIC_GITHUB_MAIN,
+    );
+    expect(screen.getByRole('link', { name: /Email feedback$/i })).toHaveAttribute(
+      'href',
+      FEEDBACK_EMAIL,
     );
   });
 
@@ -53,8 +65,8 @@ describe('AboutPage honesty copy', () => {
     expect(actions.nextElementSibling?.tagName).toBe('HR');
     expect(actions.nextElementSibling?.nextElementSibling).toBe(thanks);
     expect(screen.getByRole('link', { name: /Visit Website/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
-    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+    expect(screen.getByRole('link', { name: /Email feedback$/i }).closest('[data-testid="about-conscious-energy-actions"]')).toBe(actions);
+    expect(screen.getByRole('link', { name: /Donations/i })).toHaveAttribute('href', DONATIONS_URL);
+    expect(screen.getByRole('link', { name: /Donations/i })).toHaveAttribute('target', '_blank');
   });
 });
-
-

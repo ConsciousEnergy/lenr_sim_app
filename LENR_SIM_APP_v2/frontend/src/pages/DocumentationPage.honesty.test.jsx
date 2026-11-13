@@ -1,21 +1,30 @@
 import { screen } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import DocumentationPage from './DocumentationPage';
+import { FEEDBACK_EMAIL, PUBLIC_GITHUB_MAIN } from '../config/publicLinks';
 
-describe('DocumentationPage honesty CTAs (invited beta)', () => {
-  it('does not advertise private-repo GitHub Repository / Issues CTAs', () => {
+describe('DocumentationPage honesty CTAs (public beta)', () => {
+  it('points source access to the public GitHub main branch', () => {
     render(<DocumentationPage />);
-    expect(screen.queryByRole('link', { name: /GitHub Repository/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /GitHub Issues/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i })).toHaveAttribute(
+    const sourceLinks = screen.getAllByRole('link', { name: /Source on GitHub/i });
+    expect(sourceLinks.length).toBeGreaterThan(0);
+    sourceLinks.forEach((link) => {
+      expect(link).toHaveAttribute('href', PUBLIC_GITHUB_MAIN);
+    });
+    expect(screen.getAllByRole('link', { name: /^Email feedback$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /^Email feedback$/i })[0]).toHaveAttribute(
       'href',
-      'mailto:diadon@conscious.energy',
+      FEEDBACK_EMAIL,
     );
+    expect(screen.queryByRole('link', { name: /Email feedback \/ source access/i })).not.toBeInTheDocument();
   });
 
-  it('states the repository is private during invited beta', () => {
+  it('does not claim the repository is private or advertise Swagger UI', () => {
     render(<DocumentationPage />);
-    expect(screen.getByText(/private during invited beta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Public GitHub Issues are unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/private during invited beta/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Source access during invited beta/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open Swagger UI/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open Swagger UI/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Public source on GitHub/i)).toBeInTheDocument();
   });
 });
