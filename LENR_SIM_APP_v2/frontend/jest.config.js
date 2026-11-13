@@ -16,6 +16,10 @@ module.exports = {
     'node_modules/(?!@three|three)/',
   ],
   testEnvironment: 'jsdom',
+  // Must run before test imports: react-router v7 needs TextEncoder at load time.
+  setupFiles: [
+    '<rootDir>/src/tests/jest.polyfills.js',
+  ],
   setupFilesAfterEnv: [
     '<rootDir>/src/setupTests.js',
   ],
