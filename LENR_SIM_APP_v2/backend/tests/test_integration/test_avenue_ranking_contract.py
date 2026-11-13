@@ -9,6 +9,12 @@ from app.campaign.avenue_catalog import (
     avenue_definitions,
 )
 from app.campaign.avenue_ranking import (
+    CAVITATION_PACK_BOOST,
+    INFORM_W_COLLAPSE,
+    INFORM_W_COVERAGE,
+    INFORM_W_ORACLE_RANK,
+    INFORM_W_SEPARATION,
+    INFORM_W_UQ_SHRINK,
     SCHEMA,
     assert_ranking_honesty,
     discover_seed_packs,
@@ -108,7 +114,7 @@ def test_assert_ranking_honesty_rejects_open_close() -> None:
 
 
 def test_ranking_priors_are_scenario_aids_not_lenr_posterior() -> None:
-    """Miles-anchored oracle priors must not be readable as P(LENR)."""
+    """A-C3: Miles-anchored oracle priors must not be readable as P(LENR)."""
     from app.physics_engine.decision_oracle import ANCHORED_PRIORS, DEFAULT_PRIORS
 
     payload = rank_avenues(pack_ids=["smoke"], n_uq_samples=8, seed=2)
@@ -118,3 +124,64 @@ def test_ranking_priors_are_scenario_aids_not_lenr_posterior() -> None:
     assert payload["priors"]["default_skeptical"] == dict(DEFAULT_PRIORS)
     assert payload["priors"]["occurrence_anchored"] == dict(ANCHORED_PRIORS)
     assert payload["claim_tier"] == "speculative_exploratory"
+    assert "LENR_PROVED" in payload["forbidden"]
+    # Anchored priors remain a scenario table; never discharge YIELD/EC.
+    assert all(payload["open_status"][oid] == "OPEN" for oid in OPEN_IDS)
+
+
+def test_informativeness_blend_coeffs_bounded_and_documented() -> None:
+    """A-C4: informativeness blend stays Approximate / bounded (not lab proof)."""
+    blend = (
+        INFORM_W_ORACLE_RANK,
+        INFORM_W_COVERAGE,
+        INFORM_W_UQ_SHRINK,
+        INFORM_W_SEPARATION,
+        INFORM_W_COLLAPSE,
+    )
+    assert abs(sum(blend) - 1.0) < 1e-9
+    assert all(0.0 < weight < 1.0 for weight in blend)
+    assert CAVITATION_PACK_BOOST == 0.15
+    assert 0.0 < CAVITATION_PACK_BOOST < 0.5
+
+
+def test_cavitation_boost_only_with_cavitation_pack() -> None:
+    """A-C4: +0.15 cavitation boost present only when cavitation pack is ranked."""
+    without = rank_avenues(pack_ids=["smoke"], n_uq_samples=8, seed=5)
+    assert_ranking_honesty(without)
+    assert CAVITATION_PACK_ID not in without["pack_sources"]
+    without_cav = next(
+        row for row in without["avenues"] if row["id"] == "cavitation_collapse_uq"
+    )
+    assert without["phase_a_pack_present"] is False
+    assert without_cav["optional_pack_present"] is False
+
+    if CAVITATION_PACK_ID not in discover_seed_packs():
+        return
+
+    with_cav = rank_avenues(pack_ids=[CAVITATION_PACK_ID], n_uq_samples=8, seed=5)
+    assert_ranking_honesty(with_cav)
+    assert with_cav["phase_a_pack_present"] is True
+    cav_row = next(
+        row for row in with_cav["avenues"] if row["id"] == "cavitation_collapse_uq"
+    )
+    smoke_row = without_cav
+    # Soft boost raises cavitation avenue informativeness vs smoke-only; still not proof.
+    assert cav_row["informativeness_score"] >= smoke_row["informativeness_score"]
+    assert with_cav["lenr_proved"] is False
+    assert all(with_cav["open_status"][oid] == "OPEN" for oid in OPEN_IDS)
+
+
+def test_dual_pack_rank_keeps_open_after_detector_weak_growth() -> None:
+    """A-C4 / A-C7: OPEN status unchanged after smoke + detector_weak_screen rank."""
+    payload = rank_avenues(
+        pack_ids=["smoke", "detector_weak_screen"],
+        n_uq_samples=8,
+        seed=9,
+    )
+    assert_ranking_honesty(payload)
+    assert payload["kind"] == "scenario_table_not_posterior"
+    assert payload["lenr_proved"] is False
+    assert set(payload["open_ids"]) == set(OPEN_IDS)
+    assert all(payload["open_status"][oid] == "OPEN" for oid in OPEN_IDS)
+    assert "detector_weak_screen" in payload["pack_sources"]
+    assert "smoke" in payload["pack_sources"]

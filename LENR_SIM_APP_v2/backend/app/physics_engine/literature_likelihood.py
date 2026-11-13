@@ -14,6 +14,11 @@ SCORE_MODE_FIVE_FACTOR = "five_factor"
 SCORE_MODE_PLUS_LITERATURE = "five_factor_plus_literature"
 VALID_SCORE_MODES = (SCORE_MODE_FIVE_FACTOR, SCORE_MODE_PLUS_LITERATURE)
 
+# Approximate blend into experimental agreement only (Slice C A-C2).
+# Must not promote claim_tier or invent lenr_proved.
+LITERATURE_HEURISTIC_WEIGHT = 0.7
+LITERATURE_CORPUS_WEIGHT = 0.3
+
 
 def _he4_fraction(contrib: TheoryContribution) -> float:
     value = contrib.observables.get("product_He4", 0)
@@ -68,4 +73,11 @@ def blend_experimental_agreement(
     if mode != SCORE_MODE_PLUS_LITERATURE:
         return heuristic
     literature = literature_likelihood_score(contrib)
-    return max(0.0, min(1.0, 0.7 * heuristic + 0.3 * literature))
+    return max(
+        0.0,
+        min(
+            1.0,
+            LITERATURE_HEURISTIC_WEIGHT * heuristic
+            + LITERATURE_CORPUS_WEIGHT * literature,
+        ),
+    )

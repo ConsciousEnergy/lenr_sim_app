@@ -32,6 +32,11 @@ W_SENSITIVITY = 0.15
 W_CROSS_THEORY = 0.15
 W_COMPLETENESS = 0.20
 
+# Soft floor on each sub-score before the weighted geometric mean.
+# Approximate honesty lock: softens single-factor collapse but must never
+# erase claim-tier multiply (Slice C / A-C1 score-game surface).
+GEOMETRIC_MEAN_FLOOR = 0.05
+
 # v0.3.6-beta claim-tier down-weighting.
 # Applied as a multiplicative factor on the final score so exploratory
 # cross-regime tracks (e.g. stellar-scaling) are visible in the output but
@@ -333,16 +338,16 @@ def compute_theory_scores(
         cross = _cross_theory_agreement_score(contrib, applicable_contribs)
         compl = _observables_completeness_score(contrib)
 
-        # Weighted geometric mean with a floor of 0.05 per sub-score.
-        # This prevents a single weak sub-score from collapsing the
-        # entire final score to near-zero (the "geometric mean catastrophe").
-        FLOOR = 0.05
+        # Weighted geometric mean with GEOMETRIC_MEAN_FLOOR per sub-score.
+        # Softens single-factor collapse ("geometric mean catastrophe") but
+        # claim-tier multiply still applies afterward (Slice C A-C1).
+        floor = GEOMETRIC_MEAN_FLOOR
         scores = [
-            (max(phys, FLOOR), W_PHYSICAL),
-            (max(exper, FLOOR), W_EXPERIMENTAL),
-            (max(sens, FLOOR), W_SENSITIVITY),
-            (max(cross, FLOOR), W_CROSS_THEORY),
-            (max(compl, FLOOR), W_COMPLETENESS),
+            (max(phys, floor), W_PHYSICAL),
+            (max(exper, floor), W_EXPERIMENTAL),
+            (max(sens, floor), W_SENSITIVITY),
+            (max(cross, floor), W_CROSS_THEORY),
+            (max(compl, floor), W_COMPLETENESS),
         ]
         log_sum = sum(w * math.log(s) for s, w in scores)
         raw_final = math.exp(log_sum)
