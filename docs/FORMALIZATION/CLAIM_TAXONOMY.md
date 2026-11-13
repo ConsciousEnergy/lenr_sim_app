@@ -132,6 +132,8 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-QED-HE-NEG-01 | Heisenberg–Euler factor \(\approx 1\) at simulated lab \(E\) | bubble QED term | `bubble_lattice_interaction.py` | HE 1936 | `THM` | `ScaleQED.lean` |
 | EQ-UQ-PRIOR-01 | Oracle B skeptical default priors | software | `decision_oracle.py` | DEF | `DEF` | `Decision.lean` |
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative identities | software | `decision_oracle.py` | DEF | `DEF` + algebraic `THM` | `Decision.lean` |
+| EQ-WT-TIER-01 | Claim-tier multiply + five-factor \(W_*\) sum locks (`final_score = raw × CLAIM_TIER_MULTIPLIER`) | software | `theory_scoring.py` | Approximate governance weights | `DEF` | `WeightHonesty.lean` (≠ lab posterior; ≠ OPEN discharge) |
+| EQ-WT-SCENARIO-01 | Ranking envelope `kind=scenario_table_not_posterior`; high `final_score` ⇏ `lenr_proved` | software | `avenue_ranking.py` / Oracle B | Honesty contract | `DEF` | `WeightHonesty.lean` (≠ P(LENR); ≠ OPEN discharge) |
 | EQ-WH-ENP-01 | Coupled WH-ENP-01 geometry/occupation/operator ledger | §5A | `working_hypothesis.py` | hagelstein2025, takahashi2016 | `DEF` | `WorkingHypothesis.lean` |
 | EQ-WH-PART-01 | Derived + OPEN remainder = 23.8 MeV; remainder > 0; + FGR leaves Q1/Q3 open | §5A.1 | `working_hypothesis.py` | conservation | `THM` | `WorkingHypothesis.lean` |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | §5A.2 | `working_hypothesis.py` | harmonic DOS cutoff | `THM` | `WorkingHypothesis.lean` |
