@@ -169,55 +169,17 @@ Screenshots captured from **0.3.9-beta** live beta UI (app chrome only, no brows
 
 ## Demo videos
 
-GitHub README markdown **strips** HTML `<video>` tags, so clips are shown as clickable posters. Click a poster (or **▶ Play**) to open the MP4 on GitHub (plays in-browser on the public repo).
+https://github.com/user-attachments/assets/10721e58-5b3f-4fae-b74c-0cdd02492e25
 
-<p align="center"><em>Home → first simulation</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/01-home-walkthrough.mp4">
-    <img src="docs/assets/readme/videos/01-home-walkthrough-poster.jpg" alt="Demo video: Home → first simulation" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/01-home-walkthrough.mp4"><strong>▶ Play MP4</strong></a></p>
+https://github.com/user-attachments/assets/48c46205-571d-40b5-b339-4e7bbc0c8718
 
-<p align="center"><em>Unified Theory Simulation</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/02-unified-theory.mp4">
-    <img src="docs/assets/readme/videos/02-unified-theory-poster.jpg" alt="Demo video: Unified Theory Simulation" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/02-unified-theory.mp4"><strong>▶ Play MP4</strong></a></p>
+https://github.com/user-attachments/assets/26f03280-6914-4e50-8542-74d98f999979
 
-<p align="center"><em>Quantum Tunneling</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/03-quantum-tunneling.mp4">
-    <img src="docs/assets/readme/videos/03-quantum-tunneling-poster.jpg" alt="Demo video: Quantum Tunneling" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/03-quantum-tunneling.mp4"><strong>▶ Play MP4</strong></a></p>
+https://github.com/user-attachments/assets/6cbdfd07-79d4-453d-9cfc-5485ee15ba94
 
-<p align="center"><em>Theory Paper / Methods honesty</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/04-theory-paper.mp4">
-    <img src="docs/assets/readme/videos/04-theory-paper-poster.jpg" alt="Demo video: Theory Paper / Methods honesty" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/04-theory-paper.mp4"><strong>▶ Play MP4</strong></a></p>
+https://github.com/user-attachments/assets/afb45b32-54b1-4849-acf3-3da4c05d58d8
 
-<p align="center"><em>Analytics</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/05-analytics.mp4">
-    <img src="docs/assets/readme/videos/05-analytics-poster.jpg" alt="Demo video: Analytics" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/05-analytics.mp4"><strong>▶ Play MP4</strong></a></p>
-
-<p align="center"><em>Bubble Fusion -beta-</em></p>
-<p align="center">
-  <a href="docs/assets/readme/videos/06-bubble-fusion-beta.mp4">
-    <img src="docs/assets/readme/videos/06-bubble-fusion-beta-poster.jpg" alt="Demo video: Bubble Fusion beta" width="800" />
-  </a>
-</p>
-<p align="center"><a href="docs/assets/readme/videos/06-bubble-fusion-beta.mp4"><strong>▶ Play MP4</strong></a></p>
+https://github.com/user-attachments/assets/26f0b0dd-6a1f-4563-8203-ba9dde0b7e35
 
 ---
 
