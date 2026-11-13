@@ -62,6 +62,17 @@ function mockMainScrollMetrics(main, { scrollTop = 0, clientHeight = 400 } = {})
   };
 }
 
+describe('AppLayoutFixed documentation nav', () => {
+  it('exposes Overview under Documentation pointing at /documentation', async () => {
+    renderLayout('/');
+    fireEvent.click(screen.getByRole('button', { name: /Documentation/i }));
+    const overview = await screen.findByRole('link', { name: /Overview/i });
+    expect(overview).toHaveAttribute('href', '/documentation');
+    expect(screen.getByRole('link', { name: /Theory Paper/i })).toHaveAttribute('href', '/theory-paper');
+    expect(screen.getByRole('link', { name: /Theory Guide/i })).toHaveAttribute('href', '/theory');
+  });
+});
+
 describe('AppLayoutFixed scroll UX', () => {
   it('resets Main scroll on pathname change', async () => {
     renderLayout('/');

@@ -11,6 +11,7 @@ import {
   Stack,
   Divider,
   Button,
+  Link,
   useTheme,
   alpha
 } from '@mui/material';
@@ -21,8 +22,16 @@ import {
   Language as WebsiteIcon,
   Science as ScienceIcon,
   Code as CodeIcon,
-  School as SchoolIcon
+  School as SchoolIcon,
+  GitHub as GitHubIcon,
+  FavoriteBorder as FavoriteBorderIcon
 } from '@mui/icons-material';
+
+import {
+  DONATIONS_URL,
+  FEEDBACK_EMAIL,
+  PUBLIC_GITHUB_MAIN,
+} from '../config/publicLinks';
 
 // Team member data
 const teamMembers = [
@@ -33,7 +42,7 @@ const teamMembers = [
     bio: 'Our team is dedicated to advancing Low Energy Nuclear Reaction research through computational simulation and theoretical modeling.',
     expertise: ['Physics Simulation', 'Quantum Mechanics', 'Condensed Matter'],
     links: {
-      email: 'mailto:diadon@conscious.energy',
+      email: FEEDBACK_EMAIL,
       website: 'https://conscious.energy'
     }
   }
@@ -51,8 +60,10 @@ const projectInfo = {
   name: 'LENR Simulation Platform',
   version: APP_VERSION,
   license: 'GPL-3.0',
-  feedback: 'mailto:diadon@conscious.energy',
-  website: 'https://conscious.energy'
+  feedback: FEEDBACK_EMAIL,
+  website: 'https://conscious.energy',
+  source: PUBLIC_GITHUB_MAIN,
+  donations: DONATIONS_URL,
 };
 
 const TeamPage = () => {
@@ -86,7 +97,7 @@ const TeamPage = () => {
           We are building computational research tools to advance the understanding and research
           of Low Energy Nuclear Reactions (LENR). This public research preview provides scientists
           and researchers with simulation capabilities based on the Unified LENR Theory framework;
-          public source release under GPL-3.0 is planned.
+          source is public under GPL-3.0 on GitHub.
         </Typography>
         <Typography variant="body1">
           By combining quantum mechanical modeling, condensed matter physics, and nuclear interaction 
@@ -233,11 +244,22 @@ const TeamPage = () => {
             <Stack spacing={2}>
               <Button
                 variant="outlined"
+                startIcon={<GitHubIcon />}
+                href={projectInfo.source}
+                target="_blank"
+                rel="noopener noreferrer"
+                fullWidth
+              >
+                Source on GitHub
+              </Button>
+
+              <Button
+                variant="outlined"
                 startIcon={<EmailIcon />}
                 href={projectInfo.feedback}
                 fullWidth
               >
-                Email feedback / source access
+                Email feedback
               </Button>
               
               <Button
@@ -250,6 +272,17 @@ const TeamPage = () => {
               >
                 Visit Website
               </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<FavoriteBorderIcon />}
+                href={projectInfo.donations}
+                target="_blank"
+                rel="noopener noreferrer"
+                fullWidth
+              >
+                Donations
+              </Button>
             </Stack>
           </Grid>
         </Grid>
@@ -258,17 +291,35 @@ const TeamPage = () => {
         
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Want to contribute? The repository is private during invited beta —
-            email for source access or feedback. Public GPL-3.0 release is planned.
+            Want to contribute? Clone the public repository on{' '}
+            <Link href={PUBLIC_GITHUB_MAIN} target="_blank" rel="noopener noreferrer">
+              GitHub main
+            </Link>
+            {' '}and open a PR, or email feedback anytime.
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<EmailIcon />}
-            href="mailto:diadon@conscious.energy"
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            justifyContent="center"
             sx={{ mt: 2 }}
           >
-            Contact Us
-          </Button>
+            <Button
+              variant="contained"
+              startIcon={<GitHubIcon />}
+              href={PUBLIC_GITHUB_MAIN}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open GitHub
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<EmailIcon />}
+              href={FEEDBACK_EMAIL}
+            >
+              Contact Us
+            </Button>
+          </Stack>
         </Box>
       </Paper>
     </Container>

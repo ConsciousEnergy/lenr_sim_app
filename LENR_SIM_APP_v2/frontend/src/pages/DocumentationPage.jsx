@@ -37,8 +37,17 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
-import { API_BASE_URL } from '../config/api';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import EmailIcon from '@mui/icons-material/Email';
 import { track } from '../analytics/events';
+import {
+  CONSCIOUS_ENERGY_SITE,
+  FEEDBACK_EMAIL,
+  PUBLIC_GITHUB_ISSUES,
+  PUBLIC_GITHUB_MAIN,
+  PUBLIC_GITHUB_README,
+  PUBLIC_GITHUB_REPO,
+} from '../config/publicLinks';
 
 const DocumentationPage = () => {
   const theme = useTheme();
@@ -105,19 +114,30 @@ const DocumentationPage = () => {
           <Typography variant="h6" color="text.secondary" paragraph>
             Complete guide to the LENR Simulation Platform
           </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3 }}>
+          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap sx={{ mt: 3 }}>
             <Button
               variant="outlined"
+              startIcon={<EmailIcon />}
               component={MuiLink}
-              href="mailto:diadon@conscious.energy"
+              href={FEEDBACK_EMAIL}
             >
-              Email feedback / source access
+              Email feedback
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<GitHubIcon />}
+              component={MuiLink}
+              href={PUBLIC_GITHUB_MAIN}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Source on GitHub
             </Button>
             <Button
               variant="outlined"
               startIcon={<PublicIcon />}
               component={MuiLink}
-              href="https://www.conscious.energy"
+              href={CONSCIOUS_ENERGY_SITE}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -174,19 +194,8 @@ const DocumentationPage = () => {
                 <ApiIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
                 <Typography variant="h6" gutterBottom>API Reference</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Complete API documentation
+                  Core endpoints documented below
                 </Typography>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  sx={{ mt: 1 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(`${API_BASE_URL}/api/docs`, '_blank', 'noopener,noreferrer');
-                  }}
-                >
-                  Open Swagger UI (dev only)
-                </Button>
               </CardContent>
             </Card>
           </Grid>
@@ -319,17 +328,26 @@ const DocumentationPage = () => {
               Installation
             </Typography>
             <Alert severity="info" sx={{ mb: 2 }}>
-              <AlertTitle><strong>Source access during invited beta</strong></AlertTitle>
-              The GitHub repository remains <strong>private</strong> during invited beta.
-              Request source access or clone credentials via{' '}
-              <MuiLink href="mailto:diadon@conscious.energy">diadon@conscious.energy</MuiLink>.
-              Public GPL-3.0 source release is planned; do not expect a public
-              <code> git clone </code> URL to work signed-out.
+              <AlertTitle><strong>Public source on GitHub</strong></AlertTitle>
+              Clone from the public repository on the{' '}
+              <MuiLink href={PUBLIC_GITHUB_MAIN} target="_blank" rel="noopener noreferrer">
+                main
+              </MuiLink>
+              {' '}branch:{' '}
+              <MuiLink href={PUBLIC_GITHUB_REPO} target="_blank" rel="noopener noreferrer">
+                {PUBLIC_GITHUB_REPO}
+              </MuiLink>
+              . See the{' '}
+              <MuiLink href={PUBLIC_GITHUB_README} target="_blank" rel="noopener noreferrer">
+                README
+              </MuiLink>
+              {' '}for setup notes. Send product feedback to{' '}
+              <MuiLink href={FEEDBACK_EMAIL}>diadon@conscious.energy</MuiLink>.
             </Alert>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace' }}>
               <Typography variant="body2" component="pre" sx={{ m: 0 }}>
-{`# After source access is granted (private clone URL or archive):
-cd LENR_SIM_APP_v2
+{`git clone ${PUBLIC_GITHUB_REPO}.git
+cd lenr_sim_app/LENR_SIM_APP_v2
 
 # Install frontend dependencies
 cd frontend
@@ -533,16 +551,16 @@ python -m uvicorn app.main:app --reload  # Backend`}
             </Card>
 
             <Alert severity="info" sx={{ mt: 2 }}>
-              <AlertTitle><strong>Interactive API Docs</strong></AlertTitle>
+              <AlertTitle><strong>In-app API &amp; governance docs</strong></AlertTitle>
               <Typography variant="body2" paragraph>
-                Swagger UI is available at <MuiLink href={`${API_BASE_URL}/api/docs`} target="_blank" rel="noopener noreferrer">{API_BASE_URL}/api/docs</MuiLink>
-                {' '}in <strong>development</strong> only. Production returns <strong>404</strong> for
-                `/api/docs` (no slug), `/api/redoc`, `/api/openapi.json`, and `/metrics`.
+                Use the Core Endpoints list above for the public simulation API surface.
+                Scientific governance markdown (issue ledger, testable predictions, reviewer
+                packets) is linked from Scientific Governance Documents on this page and
+                rendered in-app at <code>/docs/{'{slug}'}</code>.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Public markdown docs remain at <code>/api/docs/{'{slug}'}</code> (issue-ledger,
-                testable-predictions, reviewer-packets, researcher-review-pack). Local backend
-                default is port 8010.
+                Local backend default is port 8010. OpenAPI/Swagger UI is not exposed on the
+                public beta hosts.
               </Typography>
             </Alert>
           </AccordionDetails>
@@ -645,14 +663,19 @@ LOG_LEVEL=info`}
               Contributing
             </Typography>
             <Typography variant="body2" paragraph>
-              Contributions are welcome once source access is granted. During invited
-              beta the repository is private — email first, then use the normal branch/PR flow.
+              Contributions are welcome via the public GitHub repository. Prefer PRs against
+              the project&apos;s integration branch after reading CONTRIBUTING.md on{' '}
+              <MuiLink href={PUBLIC_GITHUB_MAIN} target="_blank" rel="noopener noreferrer">
+                main
+              </MuiLink>
+              . Product feedback can still go to{' '}
+              <MuiLink href={FEEDBACK_EMAIL}>diadon@conscious.energy</MuiLink>.
             </Typography>
             <List>
               <ListItem>
                 <ListItemText 
-                  primary="1. Request source access" 
-                  secondary="Email diadon@conscious.energy (repo is private during invited beta)" 
+                  primary="1. Clone the public repository" 
+                  secondary={PUBLIC_GITHUB_REPO}
                 />
               </ListItem>
               <ListItem>
@@ -676,20 +699,31 @@ LOG_LEVEL=info`}
               <ListItem>
                 <ListItemText 
                   primary="5. Open a Pull Request" 
-                  secondary="Submit your PR for review after access is granted" 
+                  secondary="Submit your PR for review on GitHub" 
                 />
               </ListItem>
             </List>
 
-            <Box sx={{ mt: 3 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
               <Button
                 variant="contained"
+                startIcon={<GitHubIcon />}
                 component={MuiLink}
-                href="mailto:diadon@conscious.energy"
+                href={PUBLIC_GITHUB_MAIN}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Email for source access
+                Open GitHub (main)
               </Button>
-            </Box>
+              <Button
+                variant="outlined"
+                startIcon={<EmailIcon />}
+                component={MuiLink}
+                href={FEEDBACK_EMAIL}
+              >
+                Email feedback
+              </Button>
+            </Stack>
           </AccordionDetails>
         </Accordion>
 
@@ -759,9 +793,13 @@ LOG_LEVEL=info`}
 
             <Alert severity="info" sx={{ mt: 3 }}>
               <AlertTitle><strong>Need More Help?</strong></AlertTitle>
-              Email beta feedback to{' '}
-              <MuiLink href="mailto:diadon@conscious.energy">diadon@conscious.energy</MuiLink>.
-              Public GitHub Issues are unavailable while the repository is private.
+              Email feedback to{' '}
+              <MuiLink href={FEEDBACK_EMAIL}>diadon@conscious.energy</MuiLink>
+              {' '}or open an issue on the{' '}
+              <MuiLink href={PUBLIC_GITHUB_ISSUES} target="_blank" rel="noopener noreferrer">
+                public GitHub repository
+              </MuiLink>
+              .
             </Alert>
           </AccordionDetails>
         </Accordion>
@@ -779,7 +817,11 @@ LOG_LEVEL=info`}
           <Typography variant="body2" color="text.secondary">
             Licensed under GNU GPL-3.0 — <MuiLink href="/LICENSE">/LICENSE</MuiLink>
             {' · '}
-            <MuiLink href="mailto:diadon@conscious.energy">email feedback</MuiLink>
+            <MuiLink href={FEEDBACK_EMAIL}>email feedback</MuiLink>
+            {' · '}
+            <MuiLink href={PUBLIC_GITHUB_MAIN} target="_blank" rel="noopener noreferrer">
+              source on GitHub
+            </MuiLink>
           </Typography>
         </Box>
       </Paper>
