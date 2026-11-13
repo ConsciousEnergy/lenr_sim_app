@@ -29,7 +29,13 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    if: ${{ !github.event.repository.private }}
+    # Post-public: GitHub Code Scanning *default setup* is enabled (dynamic
+    # Analyze runs succeed). Advanced workflow SARIF upload fails with:
+    # "CodeQL analyses from advanced configurations cannot be processed when
+    # the default setup is enabled" (run 43506076134). Skip advanced jobs so
+    # default-setup covers python/js/actions. Do NOT run both. Follow-up:
+    # delete this workflow OR disable default setup — pick one.
+    if: false
     # Default: lenr-ci self-hosted. Fork PRs → ubuntu-latest (public-repo safe).
     runs-on: ubuntu-latest
     timeout-minutes: 30
