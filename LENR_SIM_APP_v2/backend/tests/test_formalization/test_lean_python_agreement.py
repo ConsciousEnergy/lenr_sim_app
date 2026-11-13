@@ -667,3 +667,109 @@ def test_collapse_rp_domain_and_reporting_clamp_agree_with_lean() -> None:
     assert temperature_bound_k_nat(
         peak_mach_x10=5, is_rayleigh_plesset=False
     ) == int(MOSS_ION_CEILING_K)
+
+
+def test_weight_honesty_locks_agree_with_lean() -> None:
+    """EQ-WT-TIER-01 / EQ-WT-SCENARIO-01: Lean percent locks mirror theory_scoring."""
+    from app.physics_engine.theory_scoring import (
+        CLAIM_TIER_MULTIPLIER,
+        W_COMPLETENESS,
+        W_CROSS_THEORY,
+        W_EXPERIMENTAL,
+        W_PHYSICAL,
+        W_SENSITIVITY,
+    )
+
+    lean_path = LEAN_DIR / "WeightHonesty.lean"
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="tierValidatedPct",
+        lean_value=_evaluate_lean_integer(lean_path, "tierValidatedPct"),
+        python_symbol="CLAIM_TIER_MULTIPLIER[validated_lenr_mechanism]*100",
+        python_value=_scaled_python_integer(
+            CLAIM_TIER_MULTIPLIER["validated_lenr_mechanism"],
+            100.0,
+            "validated_lenr_mechanism",
+        ),
+        expected_value=100,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="tierEmpiricalPct",
+        lean_value=_evaluate_lean_integer(lean_path, "tierEmpiricalPct"),
+        python_symbol="CLAIM_TIER_MULTIPLIER[empirical_lenr_correlation]*100",
+        python_value=_scaled_python_integer(
+            CLAIM_TIER_MULTIPLIER["empirical_lenr_correlation"],
+            100.0,
+            "empirical_lenr_correlation",
+        ),
+        expected_value=90,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="tierSpeculativePct",
+        lean_value=_evaluate_lean_integer(lean_path, "tierSpeculativePct"),
+        python_symbol="CLAIM_TIER_MULTIPLIER[speculative_exploratory]*100",
+        python_value=_scaled_python_integer(
+            CLAIM_TIER_MULTIPLIER["speculative_exploratory"],
+            100.0,
+            "speculative_exploratory",
+        ),
+        expected_value=30,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="tierCrossRegimePct",
+        lean_value=_evaluate_lean_integer(lean_path, "tierCrossRegimePct"),
+        python_symbol="CLAIM_TIER_MULTIPLIER[cross_regime_extrapolation]*100",
+        python_value=_scaled_python_integer(
+            CLAIM_TIER_MULTIPLIER["cross_regime_extrapolation"],
+            100.0,
+            "cross_regime_extrapolation",
+        ),
+        expected_value=20,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="wPhysicalPct",
+        lean_value=_evaluate_lean_integer(lean_path, "wPhysicalPct"),
+        python_symbol="W_PHYSICAL*100",
+        python_value=_scaled_python_integer(W_PHYSICAL, 100.0, "W_PHYSICAL"),
+        expected_value=25,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="wExperimentalPct",
+        lean_value=_evaluate_lean_integer(lean_path, "wExperimentalPct"),
+        python_symbol="W_EXPERIMENTAL*100",
+        python_value=_scaled_python_integer(W_EXPERIMENTAL, 100.0, "W_EXPERIMENTAL"),
+        expected_value=25,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="wSensitivityPct",
+        lean_value=_evaluate_lean_integer(lean_path, "wSensitivityPct"),
+        python_symbol="W_SENSITIVITY*100",
+        python_value=_scaled_python_integer(W_SENSITIVITY, 100.0, "W_SENSITIVITY"),
+        expected_value=15,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="wCrossTheoryPct",
+        lean_value=_evaluate_lean_integer(lean_path, "wCrossTheoryPct"),
+        python_symbol="W_CROSS_THEORY*100",
+        python_value=_scaled_python_integer(W_CROSS_THEORY, 100.0, "W_CROSS_THEORY"),
+        expected_value=15,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="wCompletenessPct",
+        lean_value=_evaluate_lean_integer(lean_path, "wCompletenessPct"),
+        python_symbol="W_COMPLETENESS*100",
+        python_value=_scaled_python_integer(W_COMPLETENESS, 100.0, "W_COMPLETENESS"),
+        expected_value=20,
+    )
+    assert _lean_definition_rhs(lean_path, "scenarioTableKind") == (
+        '"scenario_table_not_posterior"'
+    )
+    assert _lean_definition_rhs(lean_path, "lenrProved") == "false"

@@ -14,6 +14,7 @@ import LenrFormal.NBody
 import LenrFormal.Overlap
 import LenrFormal.ScaleQED
 import LenrFormal.Decision
+import LenrFormal.WeightHonesty
 import LenrFormal.WhenHow
 import LenrFormal.Branching
 import LenrFormal.RadiationBounds
