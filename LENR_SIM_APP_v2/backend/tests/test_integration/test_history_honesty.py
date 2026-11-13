@@ -8,6 +8,10 @@ from fastapi.testclient import TestClient
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 from app.services.simulation_persistence import SOURCE_AUTO_PERSIST
+from app.services.theory_run_history import (
+    HISTORY_SCHEMA,
+    empty_theory_run_history,
+)
 
 
 def _client() -> TestClient:
@@ -279,10 +283,64 @@ def test_theory_pipeline_persist_accepts_literature_id() -> None:
             assert row["energy_output_kev"] is None
             assert data.get("open_questions", {}).get("lenr_proved") is not True
             history = client.get("/api/analytics/theory-run-history").json()
-            assert history["schema"] == "lenr-theory-run-history-v1"
+            assert history["schema"] == HISTORY_SCHEMA
             assert history["is_empirical_confidence"] is False
             assert history["score_field"] == "final_score_preferred"
             # SQL mean_final_score is Approximate association, not lab proof.
             assert "mean_final_score" in history or "per_theory" in history
+            per_theory = history.get("per_theory") or {}
+            if per_theory:
+                sample = next(iter(per_theory.values()))
+                assert "mean_final_score" in sample
+                assert history["is_empirical_confidence"] is False
+                assert history.get("curated_edge_strength_unchanged") is True
+        finally:
+            client.delete(f"/api/analytics/experiments/{experiment_id}")
+
+
+def test_mean_final_score_is_approximate_association_not_empirical() -> None:
+    """A-C5: SQL / history mean_final_score ≠ laboratory confirmation."""
+    empty = empty_theory_run_history()
+    assert empty["schema"] == HISTORY_SCHEMA
+    assert empty["is_empirical_confidence"] is False
+    assert empty["score_field"] == "final_score_preferred"
+    assert empty["score_formula"] == "five_factor_gm_x_claim_tier"
+    assert empty["curated_edge_strength_unchanged"] is True
+    assert "simulation" in (empty.get("score_source") or "")
+
+    session_id = f"assoc-honesty-{uuid.uuid4().hex}"
+    with _client() as client:
+        resp = client.post(
+            "/api/physics/theories/run",
+            json={
+                "conditions": {"temperature": 300.0, "loading_ratio": 0.9},
+                "enabled_theories": ["electron_screening", "miles_heat_helium"],
+                "persist_session_id": session_id,
+                "persist_source": SOURCE_AUTO_PERSIST,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("open_questions", {}).get("lenr_proved") is not True
+        experiment_id = _persistence(data).get("experiment_id")
+        assert experiment_id
+        try:
+            history = client.get(
+                "/api/analytics/theory-run-history",
+                params={"session_id": session_id},
+            ).json()
+            assert history["is_empirical_confidence"] is False
+            assert history["n_runs"] >= 1
+            ranked = history.get("ranked_theory_ids") or []
+            per_theory = history.get("per_theory") or {}
+            assert ranked
+            for theory_id in ranked:
+                entry = per_theory[theory_id]
+                assert "mean_final_score" in entry
+                # Association ranking by mean final score — model overlay only.
+                assert isinstance(entry["mean_final_score"], (int, float))
+            # Empty overlay contract matches live honesty floor.
+            assert history["schema"] == empty["schema"]
+            assert history["is_empirical_confidence"] == empty["is_empirical_confidence"]
         finally:
             client.delete(f"/api/analytics/experiments/{experiment_id}")

@@ -34,8 +34,10 @@ Crosswalk of claim status across **natural language**, **Markdown**, **JSON** /
 | Overlap DEF | [`Overlap.lean`](../../../formalization/lean/LenrFormal/Overlap.lean), IR `EQ-OVERLAP-01/02` | **on `dev`** (#330) — ensemble ≠ rate |
 | CollapseBounds deepen | [`CollapseBounds.lean`](../../../formalization/lean/LenrFormal/CollapseBounds.lean), IR `EQ-BBL-RP-DOM/CR-CAP-01` | **on `dev`** (#328) — domain/clamp only |
 | FEM continuum DEF | [`PoissonSchrodinger.lean`](../../../formalization/lean/LenrFormal/PoissonSchrodinger.lean), IR `EQ-PS-01`/`TOL` | **on `dev`** (#327) — aspirational |
-| Weight surfaces | [`THEORY_WEIGHT_SURFACES.md`](../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md), pack `detector_weak_screen/` | **on `dev`** (#331) — Approximate/Aspirational inventory |
+| Weight surfaces | [`THEORY_WEIGHT_SURFACES.md`](../v0.3.9-beta/THEORY_WEIGHT_SURFACES.md), pack `detector_weak_screen/`, Lean `WeightHonesty` / IR `EQ-WT-TIER-01` + `EQ-WT-SCENARIO-01` | **on `dev`** (#331 + Slice A Cycle 1) — Approximate/Aspirational inventory + DEF locks; **≠** lab posterior |
 | Detector RAD honesty | neutron UL / Cd / moderator PREDs + contested Parkhomov baseline | **on `dev`** (#329) — `detector_ul_not_proof`; **≠** RAD/RATE closure |
+| Slice B campaign / curated | `detector_weak_screen` + Parkhomov Cd cells; SPEC `EQ-PHM-DET-*`; runway dual-counter note; avenue Q4/RAD/RATE note | **#388** — pack enrichment + docs only; **≠** OPEN flip; `lenr_proved` false |
+| Slice C weight / SQL honesty | `GEOMETRIC_MEAN_FLOOR` + literature/avenue blend coeff locks; score-game contract tests A-C1…A-C9; pack-growth informativeness delta design aid | **this PR** — Approximate honesty only; **≠** OPEN flip; `lenr_proved` false; no TheoryModule |
 | Pyyhtiä 2026 CR-39 cavitation confounder | DOI 10.1016/j.jelechem.2026.120104 (`pyyhtia2026`); baselines + paper §3.2 | **cite-only** — electrolytic HER cavitation damages CR-39; **≠** RAD closure; **≠** LENR proof |
 | WeakInteraction | `WeakInteraction.lean`, IR `EQ-EC-*` | **on `dev`** (#332) — **≠** EC closure |
 | Rate UQ floors | `Decision.lean` ExpHom identities | **on `dev`** (#334) — algebraic only |

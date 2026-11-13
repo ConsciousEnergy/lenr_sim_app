@@ -7,6 +7,7 @@ Never flips EQ-OPEN-* or sets lenr_proved.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from app.campaign.avenue_ranking import assert_ranking_honesty, rank_avenues
@@ -20,12 +21,16 @@ from app.campaign.detector_weak_screen import (
 from app.campaign.grid import campaign_size, describe_preset, iter_campaign_cases
 from app.data.dataset_io import datasets_root
 from app.physics_engine.decision_oracle import ANCHORED_PRIORS, DEFAULT_PRIORS
+from app.campaign.avenue_catalog import CAVITATION_PACK_ID
 from app.physics_engine.literature_likelihood import (
+    LITERATURE_CORPUS_WEIGHT,
+    LITERATURE_HEURISTIC_WEIGHT,
     SCORE_MODE_FIVE_FACTOR,
     SCORE_MODE_PLUS_LITERATURE,
 )
 from app.physics_engine.theory_scoring import (
     CLAIM_TIER_MULTIPLIER,
+    GEOMETRIC_MEAN_FLOOR,
     W_COMPLETENESS,
     W_CROSS_THEORY,
     W_EXPERIMENTAL,
@@ -62,6 +67,8 @@ def test_weight_surfaces_are_approximate_toy_coefficients() -> None:
     )
     assert abs(sum(weights) - 1.0) < 1e-9
     assert all(w > 0.0 for w in weights)
+    assert GEOMETRIC_MEAN_FLOOR == 0.05
+    assert 0.0 < GEOMETRIC_MEAN_FLOOR < 0.2
     assert CLAIM_TIER_MULTIPLIER["validated_lenr_mechanism"] == 1.0
     assert CLAIM_TIER_MULTIPLIER["speculative_exploratory"] == 0.30
     assert CLAIM_TIER_MULTIPLIER["cross_regime_extrapolation"] == 0.20
@@ -71,10 +78,14 @@ def test_weight_surfaces_are_approximate_toy_coefficients() -> None:
     # Anchored priors are a scenario table, not P(LENR).
     assert ANCHORED_PRIORS["chemical_null"] < DEFAULT_PRIORS["chemical_null"]
     assert ANCHORED_PRIORS != DEFAULT_PRIORS
+    # Literature blend coeffs stay Approximate (Slice C A-C2 lock).
+    assert abs(LITERATURE_HEURISTIC_WEIGHT + LITERATURE_CORPUS_WEIGHT - 1.0) < 1e-9
+    assert LITERATURE_HEURISTIC_WEIGHT == 0.7
+    assert LITERATURE_CORPUS_WEIGHT == 0.3
 
 
 def test_score_gaming_skip_sensitivity_still_applies_claim_tier() -> None:
-    """Floors + skip_sensitivity must not erase claim-tier multiply honesty."""
+    """A-C1: FLOOR + skip_sensitivity must not erase claim-tier multiply honesty."""
     scores = compute_theory_scores(
         _CONDITIONS,
         enabled_theories=["stellar_scaling_mhd", "electron_screening", "miles_heat_helium"],
@@ -94,6 +105,9 @@ def test_score_gaming_skip_sensitivity_still_applies_claim_tier() -> None:
     )
     # Speculative track remains down-weighted relative to its raw geometric mean.
     assert stellar["final_score"] < stellar["raw_score_pre_tier"] * 0.5
+    # Floor softens collapse but speculative still cannot outrank tier ×0.30.
+    assert stellar["claim_tier_multiplier"] == 0.30
+    assert GEOMETRIC_MEAN_FLOOR <= stellar["parameter_sensitivity"]
 
 
 def test_literature_mode_cannot_promote_claim_tier_or_prove_lenr() -> None:
@@ -144,10 +158,12 @@ def test_detector_weak_screen_preset_is_designed_not_cartesian() -> None:
     assert set(DETECTOR_LITERATURE_IDS) <= literature_ids
     assert WEAK_EC_LITERATURE_ID in literature_ids
     assert MODERATOR_NULL_LITERATURE_ID in literature_ids
+    assert "parkhomov-cd-wrapped-snm14-contested" in literature_ids
     tags = {str(case.get("tag")) for case in cases}
     assert any("detector_cd_ratio" in tag for tag in tags)
     assert any("weak_ec_threshold" in tag for tag in tags)
     assert any("moderator_null" in tag for tag in tags)
+    assert any("parkhomov-cd-wrapped-snm14-contested" in tag for tag in tags)
     assert all(case.get("lenr_proved") is False for case in cases)
     assert all(
         case.get("scenario_kind") == "scenario_table_not_posterior" for case in cases
@@ -157,6 +173,7 @@ def test_detector_weak_screen_preset_is_designed_not_cartesian() -> None:
     }
     assert "EQ-OPEN-RAD-01" in stressed
     assert "EQ-OPEN-EC-01" in stressed
+    assert "EQ-OPEN-RATE-01" in stressed
     described = describe_preset("detector_weak_screen")
     assert described["n_cases"] == n
     assert "Does not prove LENR" in described["note"]
@@ -231,3 +248,41 @@ def test_weight_surface_doc_inventory_exists() -> None:
     assert "not laboratory Bayesian" in text.lower() or "not a lab posterior" in text.lower()
     assert "final_score" in text
     assert "lenr_proved" in text
+    assert "GEOMETRIC_MEAN_FLOOR" in text or "FLOOR" in text
+    assert "Slice C" in text
+    assert "score-game" in text.lower() or "A-C1" in text
+
+
+def test_pack_growth_rerank_delta_is_design_aid_only() -> None:
+    """A-C4 / A-C6: dual-pack re-rank records informativeness delta without proof flags."""
+    baseline = rank_avenues(pack_ids=["smoke"], n_uq_samples=8, seed=11)
+    grown = rank_avenues(
+        pack_ids=["smoke", "detector_weak_screen"],
+        n_uq_samples=8,
+        seed=11,
+    )
+    assert_ranking_honesty(baseline)
+    assert_ranking_honesty(grown)
+    assert baseline["lenr_proved"] is False
+    assert grown["lenr_proved"] is False
+    assert grown["kind"] == "scenario_table_not_posterior"
+    assert all(grown["open_status"][oid] == "OPEN" for oid in OPEN_IDS)
+    assert set(grown["open_ids"]) == OPEN_IDS
+    assert "LENR_PROVED" in grown["forbidden"]
+    # Cavitation boost must not fire without the cavitation pack in sources.
+    assert CAVITATION_PACK_ID not in grown["pack_sources"]
+
+    baseline_by_id = {row["id"]: row["informativeness_score"] for row in baseline["avenues"]}
+    grown_by_id = {row["id"]: row["informativeness_score"] for row in grown["avenues"]}
+    deltas = {
+        avenue_id: grown_by_id[avenue_id] - baseline_by_id[avenue_id]
+        for avenue_id in baseline_by_id
+        if avenue_id in grown_by_id
+    }
+    # Delta is recorded as a finite design-aid map; never a proof flag.
+    assert deltas
+    assert all(isinstance(value, float) for value in deltas.values())
+    assert all(math.isfinite(value) for value in deltas.values())
+    # Cover avenues stressed by detector_weak_screen growth.
+    assert "electron_capture_threshold" in deltas
+    assert "gamma_ul_23p8" in deltas

@@ -176,9 +176,14 @@ def write_pack(
         "stressed_open_ids": stressed,
         "kind": "scenario_table_not_posterior",
         "note": (
-            "Model-output detector UL / Cd-ratio, weak EC-threshold, and "
-            "moderator-null scenario cells. Dual score/final_score preserved. "
-            "Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior."
+            "Model-output detector UL / Cd-ratio (RAD/RATE), weak EC-threshold "
+            "(Q4), and moderator-null scenario cells, including Parkhomov "
+            "Cd-wrapped SNM-14 contested anchor. Dual score/final_score "
+            "preserved. Links lab-design avenues for EQ-OPEN-EC-01 / "
+            "EQ-OPEN-RAD-01 / EQ-OPEN-RATE-01 without status flips. Does not "
+            "prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior. Parkhomov "
+            "ν/anti-ν detector-gas SPEC curated rows stay feeds_production_rate="
+            "false and do not discharge Q4."
         ),
     }
     (out / "manifest.json").write_text(

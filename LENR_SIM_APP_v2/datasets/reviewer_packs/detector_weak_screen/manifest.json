@@ -3,16 +3,16 @@
   "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
-  "git_sha": "cad304e3e255c697177e0b7e72bf5537033e95a7",
+  "git_sha": "d632c9d315bc6611d3da4f1a8a3a428ba043dd86",
   "preset": "detector_weak_screen",
-  "n_experiments": 15,
-  "n_theory_runs": 15,
+  "n_experiments": 19,
+  "n_theory_runs": 19,
   "claim_tier_histogram": {
-    "speculative_exploratory": 314,
-    "established_reference": 26
+    "speculative_exploratory": 410,
+    "established_reference": 34
   },
   "source_class_counts": {
-    "Campaign": 15
+    "Campaign": 19
   },
   "open_ids": [
     "EQ-OPEN-MEV-01",
@@ -105,11 +105,11 @@
   "skip_sensitivity_note": "Persisted parameter_sensitivity is 0.5 unless live scores are computed.",
   "literature_ids": [
     "berlinguette-arpa-e-2019",
+    "parkhomov-cd-wrapped-snm14-contested",
     "safire-plasma-2020",
     "spawar-cr39-2007",
     "spawar-dpf-2009",
-    "taleyarkhan-sonofusion-2002",
-    "pyyhtia-cr39-cavitation-2026"
+    "taleyarkhan-sonofusion-2002"
   ],
   "stressed_open_ids": [
     "EQ-OPEN-EC-01",
@@ -118,5 +118,5 @@
     "EQ-OPEN-YIELD-01"
   ],
   "kind": "scenario_table_not_posterior",
-  "note": "Model-output detector UL / Cd-ratio, weak EC-threshold, and moderator-null scenario cells. Dual score/final_score preserved. Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior. Pyyhti\u00e4 2026 CR-39 cavitation confounder peer alongside SPAWAR/Taleyarkhan; EQ-OPEN-RAD-01 stays OPEN."
+  "note": "Model-output detector UL / Cd-ratio (RAD/RATE), weak EC-threshold (Q4), and moderator-null scenario cells, including Parkhomov Cd-wrapped SNM-14 contested anchor. Dual score/final_score preserved. Links lab-design avenues for EQ-OPEN-EC-01 / EQ-OPEN-RAD-01 / EQ-OPEN-RATE-01 without status flips. Does not prove LENR; EQ-OPEN-* stay OPEN. Not a lab posterior. Parkhomov \u03bd/anti-\u03bd detector-gas SPEC curated rows stay feeds_production_rate=false and do not discharge Q4."
 }
