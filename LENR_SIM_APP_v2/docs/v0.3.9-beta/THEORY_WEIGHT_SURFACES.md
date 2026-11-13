@@ -82,10 +82,11 @@ Contract tests:
 
 Reviewer packs under [`datasets/reviewer_packs/`](../../datasets/reviewer_packs/)
 keep `lenr_proved: false` and `empirical_claim_tiers_raised: false`. Detector /
-weak screen cells (`detector_weak_screen` preset + pack) tag RAD/EC OPEN stress
-for lab-design coverage; they do **not** import ARA laboratory DB or full
-Parkhomov SQLite. See runway stage constraints in
-[`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md).
+weak screen cells (`detector_weak_screen` preset + pack, Slice B) tag Q4 / RAD /
+RATE OPEN stress (incl. Parkhomov Cd-wrapped SNM-14 contested) for lab-design
+coverage; they do **not** import ARA laboratory DB or full Parkhomov SQLite.
+Avenue note: [`AVENUE_RANKING.md`](./AVENUE_RANKING.md). See runway dual-counter
+sketch in [`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md).
 
 ## Non-goals
 

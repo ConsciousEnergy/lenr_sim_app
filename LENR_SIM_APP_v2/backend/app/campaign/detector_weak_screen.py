@@ -11,11 +11,13 @@ from typing import Any, Dict, Iterator, List, Tuple
 
 from app.data.dataset_io import literature_records
 
-# Detector UL / Cd-ratio style (RAD stress) + contested sonofusion neutron claim.
+# Detector UL / Cd-ratio style (RAD + RATE stress) + contested sonofusion /
+# Parkhomov Cd-wrapped SNM-14 anchors. Parkhomov row tags RAD+RATE; never ν proof.
 DETECTOR_LITERATURE_IDS: Tuple[str, ...] = (
     "spawar-cr39-2007",
     "spawar-dpf-2009",
     "taleyarkhan-sonofusion-2002",
+    "parkhomov-cd-wrapped-snm14-contested",
 )
 
 # Weak / EC threshold path (Widom–Larsen contested).
