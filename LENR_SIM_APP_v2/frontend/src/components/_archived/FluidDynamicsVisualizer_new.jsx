@@ -1811,5 +1811,3 @@ FluidDynamicsVisualizer.propTypes = {
 };
 
 export default FluidDynamicsVisualizer;
-
-};
