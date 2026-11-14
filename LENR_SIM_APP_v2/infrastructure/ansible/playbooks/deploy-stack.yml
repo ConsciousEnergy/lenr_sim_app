@@ -413,6 +413,38 @@
       register: stack_services
       changed_when: false
       when: _is_swarm_manager | bool
+
+    - name: Assert Traefik file provider carries LP-H2 path rate limits
+      ansible.builtin.shell: |
+        set -eu
+        dyn=/opt/lenr-sim/traefik/dynamic/dynamic.yml
+        test -f "$dyn"
+        grep -q 'backend-ratelimit-heavy:' "$dyn"
+        grep -q 'backend-ratelimit-write:' "$dyn"
+        grep -q 'backend-heavy:' "$dyn"
+        grep -q 'backend-write:' "$dyn"
+        grep -q 'depth: 1' "$dyn"
+        grep -q 'service: backend@swarm' "$dyn"
+      args:
+        executable: /bin/bash
+      changed_when: false
+      when: _is_swarm_manager | bool
+
+    - name: Assert backend Swarm labels attach general @file rate limit
+      ansible.builtin.shell: |
+        set -eu
+        svc="{{ stack_name }}_backend"
+        labels="$(docker service inspect "$svc" --format '{{ '{{json .Spec.Labels}}' }}')"
+        echo "$labels" | grep -q 'backend-ratelimit@file'
+        # Heavy/write routers must not be reintroduced as Swarm labels.
+        if echo "$labels" | grep -q 'routers.backend-heavy.rule'; then
+          echo "unexpected Swarm backend-heavy router labels" >&2
+          exit 1
+        fi
+      args:
+        executable: /bin/bash
+      changed_when: false
+      when: _is_swarm_manager | bool
       
     - name: Print deployment summary
       ansible.builtin.debug:

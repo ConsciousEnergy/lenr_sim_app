@@ -643,11 +643,15 @@ async def compute_theory_scores_endpoint(request: TheoryConditions):
     }
 
     try:
-        scores = compute_theory_scores(
-            conditions=conditions,
-            enabled_theories=request.enabled_theories,
-            score_mode=request.score_mode or "five_factor",
-        )
+        async with heavy_compute_slot("analytics/theory-scores"):
+            scores = await run_in_threadpool(
+                compute_theory_scores,
+                conditions=conditions,
+                enabled_theories=request.enabled_theories,
+                score_mode=request.score_mode or "five_factor",
+            )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Error computing theory scores")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -682,32 +686,36 @@ async def compare_theories(request: TheoryComparisonRequest):
         "crack_width_nm": request.conditions.crack_width_nm,
     }
 
-    pipeline = get_default_pipeline()
-    contributions = []
-    for tid in request.theory_ids:
-        try:
-            contrib = pipeline.run_single(tid, conditions)
-            contributions.append({
-                "theory_id": contrib.theory_id,
-                "theory_name": contrib.theory_name,
-                "enhancement_factor": contrib.enhancement_factor,
-                "reaction_rate_modifier": contrib.reaction_rate_modifier,
-                "energy_output_watts": contrib.energy_output_watts,
-                "observables": contrib.observables,
-                "confidence": contrib.confidence,
-                "is_applicable": contrib.is_applicable,
-                "references": contrib.references,
-            })
-        except KeyError:
-            raise HTTPException(status_code=404, detail=f"Theory '{tid}' not found")
-        except Exception as exc:
-            logger.exception("Error running theory %s", tid)
-            raise HTTPException(status_code=500, detail=str(exc))
+    async with heavy_compute_slot("analytics/theory-comparison"):
+        pipeline = get_default_pipeline()
+        contributions = []
+        for tid in request.theory_ids:
+            try:
+                contrib = await run_in_threadpool(pipeline.run_single, tid, conditions)
+                contributions.append({
+                    "theory_id": contrib.theory_id,
+                    "theory_name": contrib.theory_name,
+                    "enhancement_factor": contrib.enhancement_factor,
+                    "reaction_rate_modifier": contrib.reaction_rate_modifier,
+                    "energy_output_watts": contrib.energy_output_watts,
+                    "observables": contrib.observables,
+                    "confidence": contrib.confidence,
+                    "is_applicable": contrib.is_applicable,
+                    "references": contrib.references,
+                })
+            except KeyError:
+                raise HTTPException(status_code=404, detail=f"Theory '{tid}' not found")
+            except HTTPException:
+                raise
+            except Exception as exc:
+                logger.exception("Error running theory %s", tid)
+                raise HTTPException(status_code=500, detail=str(exc))
 
-    scores = compute_theory_scores(
-        conditions=conditions,
-        enabled_theories=request.theory_ids,
-    )
+        scores = await run_in_threadpool(
+            compute_theory_scores,
+            conditions=conditions,
+            enabled_theories=request.theory_ids,
+        )
 
     return {
         "conditions": conditions,
