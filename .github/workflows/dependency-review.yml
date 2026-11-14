@@ -15,12 +15,11 @@ concurrency:
   group: dependency-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-# TEMP #396: ubuntu-latest while lenr-ci queued; REVERT after merge.
 # Prefer lenr-ci (spend-limit on hosted). Override via LENR_CI_RUNS_ON if needed.
 # Public-repo: fork PRs route to ubuntu-latest (never self-hosted).
 jobs:
   dependency-review:
-    runs-on: ubuntu-latest  # TEMP #396: hosted while lenr-ci queued; REVERT after merge
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
