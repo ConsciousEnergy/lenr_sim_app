@@ -117,7 +117,8 @@ http:
 {% set _api_host = api_subdomain ~ '.' ~ app_domain %}
 {% set _heavy_rule = "(PathPrefix(`/api/physics/`) || PathPrefix(`/api/multi-physics/`) || PathPrefix(`/api/unified/`) || PathPrefix(`/api/analytics/`))" %}
 {% set _write_rule = "(PathPrefix(`/api/simulations/save`) || PathPrefix(`/api/simulations/share`))" %}
-{% set _mutate_rule = "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" %}
+{# Traefik v3 Method() accepts exactly one arg; OR the verbs (live v3.6.1). #}
+{% set _mutate_rule = "(Method(`POST`) || Method(`PUT`) || Method(`PATCH`) || Method(`DELETE`))" %}
 {% set _raw_extra = traefik_extra_api_hosts | default([]) %}
 {% if _raw_extra is string %}
 {% set _extra_ns = namespace(hosts=([_raw_extra] if (_raw_extra | length > 0) else [])) %}
