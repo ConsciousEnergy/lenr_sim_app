@@ -19,7 +19,16 @@ import SchoolIcon from '@mui/icons-material/School';
 import PublicIcon from '@mui/icons-material/Public';
 import BusinessIcon from '@mui/icons-material/Business';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { APP_VERSION } from '../config/version';
+import {
+  CONSCIOUS_ENERGY_SITE,
+  DONATIONS_URL,
+  FEEDBACK_EMAIL,
+  PUBLIC_GITHUB_MAIN,
+  PUBLIC_GITHUB_REPO_LABEL,
+} from '../config/publicLinks';
 
 /** Manuscript chip on Theory Paper — aligned to live app train for public visitors. */
 const MANUSCRIPT_REVISION_LABEL = `v${APP_VERSION} (revised 2026-11-11)`;
@@ -55,10 +64,12 @@ const AboutPage = () => {
           <Typography variant="body1" paragraph>
             Crawler-readable model pages (no JavaScript required) are published at <Link href="/models/">/models/</Link>.
             The intended license is <strong>GNU GPL-3.0</strong> (read in-app at{' '}
-            <Link href="/license">/license</Link>). The application repository is still
-            private during invited beta; public source access for study and modification is planned at
-            release. Until then, request access or send feedback by emailing{' '}
-            <Link href="mailto:diadon@conscious.energy">diadon@conscious.energy</Link>.
+            <Link href="/license">/license</Link>).             Source is public on GitHub (
+            <Link href={PUBLIC_GITHUB_MAIN} target="_blank" rel="noopener noreferrer">
+              {PUBLIC_GITHUB_REPO_LABEL}
+            </Link>
+            , <strong>main</strong>). Send product feedback to{' '}
+            <Link href={FEEDBACK_EMAIL}>diadon@conscious.energy</Link>.
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
             Version map: hosted app build <strong>{APP_VERSION}</strong>; companion manuscript revision
@@ -193,7 +204,7 @@ const AboutPage = () => {
               variant="outlined" 
               startIcon={<PublicIcon />} 
               component={Link}
-              href="https://www.conscious.energy"
+              href={CONSCIOUS_ENERGY_SITE}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -201,10 +212,30 @@ const AboutPage = () => {
             </Button>
             <Button 
               variant="outlined" 
+              startIcon={<GitHubIcon />}
               component={Link}
-              href="mailto:diadon@conscious.energy"
+              href={PUBLIC_GITHUB_MAIN}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Email feedback / source access
+              Source on GitHub
+            </Button>
+            <Button 
+              variant="outlined" 
+              component={Link}
+              href={FEEDBACK_EMAIL}
+            >
+              Email feedback
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FavoriteBorderIcon />}
+              component={Link}
+              href={DONATIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Donations
             </Button>
           </Box>
 

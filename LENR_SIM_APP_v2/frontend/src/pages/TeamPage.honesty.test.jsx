@@ -1,20 +1,28 @@
 import { screen } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import TeamPage from './TeamPage';
+import { DONATIONS_URL, FEEDBACK_EMAIL, PUBLIC_GITHUB_MAIN } from '../config/publicLinks';
 
-describe('TeamPage honesty CTAs (invited beta)', () => {
-  it('replaces View on GitHub with email source-access CTA', () => {
+describe('TeamPage honesty CTAs (public beta)', () => {
+  it('points source access to the public GitHub main branch', () => {
     render(<TeamPage />);
-    expect(screen.queryByRole('link', { name: /View on GitHub/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /^GitHub$/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Email feedback \/ source access/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Source on GitHub/i })).toHaveAttribute(
       'href',
-      'mailto:diadon@conscious.energy',
+      PUBLIC_GITHUB_MAIN,
     );
+    expect(screen.getByRole('link', { name: /Email feedback$/i })).toHaveAttribute(
+      'href',
+      FEEDBACK_EMAIL,
+    );
+    expect(screen.queryByRole('link', { name: /Email feedback \/ source access/i })).not.toBeInTheDocument();
   });
 
-  it('notes the repository is private during invited beta', () => {
+  it('links donations externally and no longer claims a private repo', () => {
     render(<TeamPage />);
-    expect(screen.getByText(/private during invited beta/i)).toBeInTheDocument();
+    expect(screen.queryByText(/private during invited beta/i)).not.toBeInTheDocument();
+    const donations = screen.getByRole('link', { name: /Donations/i });
+    expect(donations).toHaveAttribute('href', DONATIONS_URL);
+    expect(donations).toHaveAttribute('target', '_blank');
+    expect(donations).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
