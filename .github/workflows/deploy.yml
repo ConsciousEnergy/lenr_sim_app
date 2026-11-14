@@ -164,9 +164,17 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # VITE_POSTHOG_KEY: repository Actions secret (name only). Empty when
+          # unset — image builds safely; SPA analytics stays a no-op.
+          # Do not echo or log the value. Host defaults to us.i.posthog.com in
+          # posthog.js when VITE_POSTHOG_HOST is empty.
           build-args: |
             VITE_API_URL=same-origin
             REACT_APP_API_URL=same-origin
+            VITE_POSTHOG_KEY=${{ secrets.VITE_POSTHOG_KEY }}
+            REACT_APP_POSTHOG_KEY=${{ secrets.VITE_POSTHOG_KEY }}
+            VITE_POSTHOG_HOST=${{ secrets.VITE_POSTHOG_HOST }}
+            REACT_APP_POSTHOG_HOST=${{ secrets.VITE_POSTHOG_HOST }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
