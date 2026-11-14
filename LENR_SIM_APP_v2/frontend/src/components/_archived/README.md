@@ -10,7 +10,7 @@ imported.
 
 | File | Lines | Why archived |
 |---|---:|---|
-| `FluidDynamicsVisualizer_new.jsx` | 1815 | Duplicate of `visualization/FluidDynamicsVisualizer.jsx`, which is the one exported by the barrel |
+| `FluidDynamicsVisualizer_new.jsx` | 1813 | Duplicate of `visualization/FluidDynamicsVisualizer.jsx`, which is the one exported by the barrel |
 | `FluidDynamicsVisualizer_fixed.jsx` | 1814 | Third copy of the same component |
 | `EnhancedFusionVisualization.js` | 997 | Only ever imported by the archived `pages/_archived/Dashboard.js` |
 | `UnifiedLENRVisualizer.js` | 870 | Superseded by `visualization/UnifiedLENRVisualizer.jsx`; the `./UnifiedLENRVisualizer` imports elsewhere resolve to that file, not this one |
