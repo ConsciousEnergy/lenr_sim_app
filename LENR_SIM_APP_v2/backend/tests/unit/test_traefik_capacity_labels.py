@@ -9,43 +9,49 @@ STATIC = ROOT / "infrastructure" / "ansible" / "templates" / "traefik.yml.j2"
 
 
 def test_backend_ratelimit_uses_ipstrategy_depth():
-    text = STACK.read_text(encoding="utf-8")
-    assert "backend-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1" in text
+    """LP-H2: rateLimit middlewares live on the file provider (dynamic.yml)."""
+    dynamic = DYNAMIC.read_text(encoding="utf-8")
+    stack = STACK.read_text(encoding="utf-8")
+    assert "backend-ratelimit:" in dynamic
+    assert "ipStrategy:" in dynamic
+    assert "depth: 1" in dynamic
     # General edge budget aligned with FastAPI RATE_LIMIT_PER_MINUTE (shared).
-    assert "backend-ratelimit.ratelimit.average=60" in text
-    assert "backend-ratelimit.ratelimit.burst=30" in text
+    assert "average: 60" in dynamic
+    assert "burst: 30" in dynamic
+    # Swarm general router attaches the file middleware (not Swarm-defined RL).
+    assert "backend-ratelimit@file" in stack
+    assert "backend-ratelimit.ratelimit.average=" not in stack
 
 
 def test_backend_path_ratelimit_heavy_and_write_tiers():
-    """LP-H2: Traefik path routers apply shared heavy/write budgets (not Redis)."""
-    text = STACK.read_text(encoding="utf-8")
-    assert "backend-ratelimit-heavy.ratelimit.average=10" in text
-    assert "backend-ratelimit-heavy.ratelimit.burst=5" in text
-    assert (
-        "backend-ratelimit-heavy.ratelimit.sourcecriterion.ipstrategy.depth=1"
-        in text
-    )
-    assert "backend-ratelimit-write.ratelimit.average=3" in text
-    assert "backend-ratelimit-write.ratelimit.burst=3" in text
-    assert (
-        "backend-ratelimit-write.ratelimit.sourcecriterion.ipstrategy.depth=1"
-        in text
-    )
+    """LP-H2: file-provider path routers apply shared heavy/write budgets."""
+    dynamic = DYNAMIC.read_text(encoding="utf-8")
+    stack = STACK.read_text(encoding="utf-8")
+    assert "backend-ratelimit-heavy:" in dynamic
+    assert "backend-ratelimit-write:" in dynamic
+    assert "average: 10" in dynamic
+    assert "burst: 5" in dynamic
+    assert "average: 3" in dynamic
     # Mutate-only path families for compute + persistence abuse.
-    assert "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" in text
-    assert "PathPrefix(`/api/physics/`)" in text
-    assert "PathPrefix(`/api/multi-physics/`)" in text
-    assert "PathPrefix(`/api/unified/`)" in text
-    assert "PathPrefix(`/api/analytics/`)" in text
-    assert "PathPrefix(`/api/simulations/save`)" in text
-    assert "PathPrefix(`/api/simulations/share`)" in text
-    assert "routers.backend-heavy.priority=200" in text
-    assert "routers.backend-write.priority=300" in text
-    assert "backend-ratelimit-heavy" in text
-    assert "backend-ratelimit-write" in text
-    # Extra-host (lenr-sim-beta) same-origin routers also get path RL.
-    assert "backend-extra-{{ loop.index }}-heavy.middlewares=" in text
-    assert "backend-extra-{{ loop.index }}-write.middlewares=" in text
+    assert "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" in dynamic
+    assert "PathPrefix(`/api/physics/`)" in dynamic
+    assert "PathPrefix(`/api/multi-physics/`)" in dynamic
+    assert "PathPrefix(`/api/unified/`)" in dynamic
+    assert "PathPrefix(`/api/analytics/`)" in dynamic
+    assert "PathPrefix(`/api/simulations/save`)" in dynamic
+    assert "PathPrefix(`/api/simulations/share`)" in dynamic
+    assert "backend-heavy:" in dynamic
+    assert "backend-write:" in dynamic
+    assert "priority: 200" in dynamic
+    assert "priority: 300" in dynamic
+    assert "service: backend@swarm" in dynamic
+    # Extra-host (lenr-sim-beta) same-origin routers also get path RL in file.
+    assert "backend-extra-{{ loop.index }}-heavy:" in dynamic
+    assert "backend-extra-{{ loop.index }}-write:" in dynamic
+    # Swarm labels must not redefine heavy/write routers (avoid provider clash).
+    assert "routers.backend-heavy.rule=" not in stack
+    assert "routers.backend-write.rule=" not in stack
+    assert "backend-ratelimit-heavy.ratelimit.average=" not in stack
 
 
 def test_group_vars_fastapi_workers_pinned_for_lp_h2():
@@ -57,10 +63,13 @@ def test_group_vars_fastapi_workers_pinned_for_lp_h2():
     assert "fastapi_workers: 4" not in group_vars
 
 
-def test_dead_api_ratelimit_file_middleware_removed():
+def test_legacy_api_ratelimit_name_not_reintroduced():
+    """Old unused `api-ratelimit` name stays gone; live names are backend-ratelimit*."""
     text = DYNAMIC.read_text(encoding="utf-8")
     assert "api-ratelimit:" not in text
-    assert "unused `api-ratelimit`" in text or "api-ratelimit" in text.lower()
+    assert "backend-ratelimit:" in text
+    assert "backend-ratelimit-heavy:" in text
+    assert "backend-ratelimit-write:" in text
 
 
 def test_traefik_forwarded_headers_insecure_false():
@@ -164,27 +173,14 @@ def test_backend_bodylimit_matches_request_max_body_size():
     assert "backend-bodylimit:" in dynamic
     assert "maxRequestBodyBytes: 10485760" in dynamic
     assert "backend-bodylimit@file" in stack
-    # Middleware chains are Jinja macros (_mw_*) shared by general/heavy/write routers.
+    # General Swarm router chain uses file-provider middlewares only.
     assert (
-        'set _mw_general = "security-headers@file,backend-bodylimit@file,backend-ratelimit"'
-        in stack
-    )
-    assert (
-        'set _mw_heavy = "security-headers@file,backend-bodylimit@file,backend-ratelimit-heavy"'
-        in stack
-    )
-    assert (
-        'set _mw_write = "security-headers@file,backend-bodylimit@file,backend-ratelimit-write"'
+        'set _mw_general = "security-headers@file,backend-bodylimit@file,backend-ratelimit@file"'
         in stack
     )
     for line in stack.splitlines():
         if "routers.backend" in line and ".middlewares=" in line:
-            assert (
-                "backend-bodylimit@file" in line
-                or "_mw_general" in line
-                or "_mw_heavy" in line
-                or "_mw_write" in line
-            )
+            assert "backend-bodylimit@file" in line or "_mw_general" in line
 
 
 def test_nginx_spa_body_limit_and_scanner_exact_404():

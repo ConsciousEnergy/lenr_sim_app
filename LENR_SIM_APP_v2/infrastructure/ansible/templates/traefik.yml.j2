@@ -77,5 +77,6 @@ certificatesResolvers:
 
 # NOTE: Do not put top-level `http:` (middlewares/routers/services) here.
 # Traefik v3 static config rejects `http` (`field not found, node: http`).
-# Security headers, CORS, rate limits live in traefik-dynamic.yml.j2
+# Security headers, CORS, bodylimit, and LP-H2 path rate limits (general /
+# heavy / write + path routers) live in traefik-dynamic.yml.j2
 # (providers.file.directory = /etc/traefik/dynamic).

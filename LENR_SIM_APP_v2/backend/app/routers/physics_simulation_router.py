@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import numpy as np
 
+from app.core.compute_guard import heavy_compute_slot, run_in_threadpool
 from ..physics.core_constants import (
     MATERIALS, SCREENING_POTENTIALS, REACTION_Q_VALUES, S_FACTORS,
     coulomb_barrier, gamow_energy, thermal_energy
@@ -123,81 +124,74 @@ async def calculate_quantum_tunneling(request: QuantumTunnelingRequest):
         )
     
     try:
-        
-        # Get base screening energy from material
-        base_screening_ev = SCREENING_POTENTIALS.get(request.material, 0)
-        
-        # Apply enhancement factor
-        effective_screening_ev = base_screening_ev * request.screening_enhancement
-        
-        # Create calculator
-        calc = WKBTunnelingCalculator()
-        
-        # Calculate tunneling
-        result = calc.calculate_tunneling_probability(
-            z1=request.z1,
-            z2=request.z2,
-            a1=request.a1,
-            a2=request.a2,
-            energy_kev=request.energy_kev,
-            potential_type=request.potential_type,
-            screening_energy_ev=effective_screening_ev,
-            temperature_k=request.temperature_k,
-            material=request.material
-        )
-        
-            # Calculate individual enhancement factors
-        electron_enhancement = 1.0
-        if effective_screening_ev > 0 and request.energy_kev > 0:
-            from ..physics.core_constants import AMU, sommerfeld_parameter
-            # Guard against division by zero (already validated above, but double-check)
-            mass_sum = request.a1 + request.a2
-            if mass_sum == 0:
-                raise HTTPException(status_code=422, detail="Sum of mass numbers cannot be zero")
-            mu = (request.a1 * request.a2 * AMU) / mass_sum
-            eta = sommerfeld_parameter(request.z1, request.z2, request.energy_kev, mu)
-            # Clip exponent to prevent overflow (max safe exp arg ~700)
-            exponent = np.pi * eta * (effective_screening_ev/1000) / request.energy_kev
-            exponent = np.clip(exponent, -700, 700)
-            electron_enhancement = np.exp(exponent)
-            electron_enhancement = min(electron_enhancement, 1e10)
-        
-        temp_enhancement = 1.0 + 0.001 * (request.temperature_k - 300.0) / 300.0
-        temp_enhancement = max(temp_enhancement, 0.5)
-        
-        # Generate visualization data
-        potential_curve = _generate_potential_curve(
-            request.z1, request.z2, 
-            request.energy_kev, 
-            effective_screening_ev
-        )
-        
-        wave_function = _generate_wave_function(
-            request.energy_kev,
-            result.barrier_height,
-            result.classical_turning_point
-        )
-        
-        return QuantumTunnelingResponse(
-            tunneling_probability=result.probability,
-            gamow_factor=result.gamow_factor,
-            barrier_height_kev=result.barrier_height,
-            classical_turning_point_m=result.classical_turning_point,
-            screening_energy_kev=result.screening_energy,
-            enhancement_factor=result.enhancement_factor,
-            electron_screening_enhancement=float(electron_enhancement),
-            temperature_enhancement=float(temp_enhancement),
-            method=result.method,
-            potential_curve=potential_curve,
-            wave_function=wave_function,
-            parameters=result.parameters
-        )
-        
+        async with heavy_compute_slot("physics/quantum-tunneling"):
+            return await run_in_threadpool(_compute_quantum_tunneling_response, request)
     except HTTPException:
         # Re-raise HTTPException to preserve status codes
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
+
+
+def _compute_quantum_tunneling_response(
+    request: QuantumTunnelingRequest,
+) -> QuantumTunnelingResponse:
+    """Sync WKB body for quantum-tunneling (runs under heavy_compute_slot)."""
+    base_screening_ev = SCREENING_POTENTIALS.get(request.material, 0)
+    effective_screening_ev = base_screening_ev * request.screening_enhancement
+    calc = WKBTunnelingCalculator()
+    result = calc.calculate_tunneling_probability(
+        z1=request.z1,
+        z2=request.z2,
+        a1=request.a1,
+        a2=request.a2,
+        energy_kev=request.energy_kev,
+        potential_type=request.potential_type,
+        screening_energy_ev=effective_screening_ev,
+        temperature_k=request.temperature_k,
+        material=request.material,
+    )
+
+    electron_enhancement = 1.0
+    if effective_screening_ev > 0 and request.energy_kev > 0:
+        from ..physics.core_constants import AMU, sommerfeld_parameter
+
+        mass_sum = request.a1 + request.a2
+        if mass_sum == 0:
+            raise HTTPException(status_code=422, detail="Sum of mass numbers cannot be zero")
+        mu = (request.a1 * request.a2 * AMU) / mass_sum
+        eta = sommerfeld_parameter(request.z1, request.z2, request.energy_kev, mu)
+        exponent = np.pi * eta * (effective_screening_ev / 1000) / request.energy_kev
+        exponent = np.clip(exponent, -700, 700)
+        electron_enhancement = np.exp(exponent)
+        electron_enhancement = min(electron_enhancement, 1e10)
+
+    temp_enhancement = 1.0 + 0.001 * (request.temperature_k - 300.0) / 300.0
+    temp_enhancement = max(temp_enhancement, 0.5)
+
+    potential_curve = _generate_potential_curve(
+        request.z1, request.z2, request.energy_kev, effective_screening_ev
+    )
+    wave_function = _generate_wave_function(
+        request.energy_kev,
+        result.barrier_height,
+        result.classical_turning_point,
+    )
+
+    return QuantumTunnelingResponse(
+        tunneling_probability=result.probability,
+        gamow_factor=result.gamow_factor,
+        barrier_height_kev=result.barrier_height,
+        classical_turning_point_m=result.classical_turning_point,
+        screening_energy_kev=result.screening_energy,
+        enhancement_factor=result.enhancement_factor,
+        electron_screening_enhancement=float(electron_enhancement),
+        temperature_enhancement=float(temp_enhancement),
+        method=result.method,
+        potential_curve=potential_curve,
+        wave_function=wave_function,
+        parameters=result.parameters,
+    )
 
 
 @router.get("/quantum-tunneling/defaults")

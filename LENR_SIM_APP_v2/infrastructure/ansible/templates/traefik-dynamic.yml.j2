@@ -38,11 +38,38 @@ http:
           # Ops canary after Swarm apply: SPA must NOT emit X-Frame-Options.
           X-Frame-Policy: "csp-frame-ancestors"
 
-    # NOTE: API rate limiting lives on Swarm service labels as
-    # `backend-ratelimit` / `backend-ratelimit-heavy` / `backend-ratelimit-write`
-    # (docker-stack.yml.j2) with sourceCriterion.ipStrategy.depth=1. Path routers
-    # apply heavy/write budgets on mutate methods. A prior unused `api-ratelimit`
-    # file middleware was removed to avoid drift.
+    # LP-H2: edge rate limits live HERE (file provider) so a Traefik dynamic
+    # reload fences compute/write paths without depending on Swarm service
+    # label-adds surviving image-only updates. Swarm labels only attach the
+    # general API router to `@file` middlewares; heavy/write routers are below.
+    # depth=1 = rightmost XFF hop (TCP peer Traefik appended). Budgets match
+    # FastAPI RATE_LIMIT / HEAVY / WRITE per-minute settings.
+    backend-ratelimit:
+      rateLimit:
+        average: 60
+        burst: 30
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    backend-ratelimit-heavy:
+      rateLimit:
+        average: 10
+        burst: 5
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    backend-ratelimit-write:
+      rateLimit:
+        average: 3
+        burst: 3
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
 
     # LP-M1: 413 oversized bodies before FastAPI (matches REQUEST_MAX_BODY_SIZE /
     # Caddy request_body 10MB). Wired on backend routers in docker-stack.yml.j2.
@@ -86,6 +113,117 @@ http:
       stripPrefix:
         prefixes:
           - "/api"
+
+{% set _api_host = api_subdomain ~ '.' ~ app_domain %}
+{% set _heavy_rule = "(PathPrefix(`/api/physics/`) || PathPrefix(`/api/multi-physics/`) || PathPrefix(`/api/unified/`) || PathPrefix(`/api/analytics/`))" %}
+{% set _write_rule = "(PathPrefix(`/api/simulations/save`) || PathPrefix(`/api/simulations/share`))" %}
+{% set _mutate_rule = "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" %}
+{% set _raw_extra = traefik_extra_api_hosts | default([]) %}
+{% if _raw_extra is string %}
+{% set _extra_ns = namespace(hosts=([_raw_extra] if (_raw_extra | length > 0) else [])) %}
+{% else %}
+{% set _extra_ns = namespace(hosts=(_raw_extra | list)) %}
+{% endif %}
+{% if traefik_acme_bootstrap_host is defined and (traefik_acme_bootstrap_host | length > 0) %}
+{% set _ = _extra_ns.hosts.append(traefik_acme_bootstrap_host) %}
+{% endif %}
+  # Path RL routers (priority > Swarm general backend / backend-extra=100).
+  # Service `backend@swarm` is defined on the backend Swarm service labels.
+  routers:
+    backend-write:
+      rule: "Host(`{{ _api_host }}`) && {{ _mutate_rule }} && {{ _write_rule }}"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-write
+      service: backend@swarm
+      priority: 300
+      tls:
+        certResolver: letsencrypt
+    backend-heavy:
+      rule: "Host(`{{ _api_host }}`) && {{ _mutate_rule }} && {{ _heavy_rule }}"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-heavy
+      service: backend@swarm
+      priority: 200
+      tls:
+        certResolver: letsencrypt
+{% if not (traefik_force_https | default(true)) %}
+    backend-write-http:
+      rule: "Host(`{{ _api_host }}`) && {{ _mutate_rule }} && {{ _write_rule }}"
+      entryPoints:
+        - web
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-write
+      service: backend@swarm
+      priority: 300
+    backend-heavy-http:
+      rule: "Host(`{{ _api_host }}`) && {{ _mutate_rule }} && {{ _heavy_rule }}"
+      entryPoints:
+        - web
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-heavy
+      service: backend@swarm
+      priority: 200
+{% endif %}
+{% for _host in _extra_ns.hosts | unique %}
+    backend-extra-{{ loop.index }}-write:
+      rule: "Host(`{{ _host }}`) && {{ _mutate_rule }} && {{ _write_rule }}"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-write
+      service: backend@swarm
+      priority: 300
+      tls:
+        certResolver: letsencrypt
+    backend-extra-{{ loop.index }}-heavy:
+      rule: "Host(`{{ _host }}`) && {{ _mutate_rule }} && {{ _heavy_rule }}"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-heavy
+      service: backend@swarm
+      priority: 200
+      tls:
+        certResolver: letsencrypt
+{% if not (traefik_force_https | default(true)) %}
+    backend-extra-{{ loop.index }}-write-http:
+      rule: "Host(`{{ _host }}`) && {{ _mutate_rule }} && {{ _write_rule }}"
+      entryPoints:
+        - web
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-write
+      service: backend@swarm
+      priority: 300
+    backend-extra-{{ loop.index }}-heavy-http:
+      rule: "Host(`{{ _host }}`) && {{ _mutate_rule }} && {{ _heavy_rule }}"
+      entryPoints:
+        - web
+      middlewares:
+        - security-headers
+        - backend-bodylimit
+        - backend-ratelimit-heavy
+      service: backend@swarm
+      priority: 200
+{% endif %}
+{% endfor %}
 
 tls:
   options:
