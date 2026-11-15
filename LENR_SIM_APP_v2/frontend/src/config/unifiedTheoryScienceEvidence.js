@@ -210,6 +210,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-MEV-01',
       label: 'MeV energy-partition channel',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Governed experiment/corpus zeros open MeV remainder under a named mechanism + cited bounds.',
       falsification:
@@ -219,6 +220,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-RAD-01',
       label: 'Radiation / γ suppression',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Calibrated heat+γ (or UL) with efficiency meets IR bound + lattice absorption target.',
       falsification:
@@ -229,6 +231,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-RATE-01',
       label: 'Lattice rate budget',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Named rate_mode closes log10(N) with experimentally constrained occupancy/collective factors.',
       falsification:
@@ -238,6 +241,9 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-EC-01',
       label: 'Electron-capture energy path',
+      claim_tier: 'speculative_exploratory',
+      /** Sourced threshold / domain critique (AuthorYear keys). */
+      citations: Object.freeze(['tennfors2013', 'widomlarsen2006']),
       affirmative:
         'Independent CM path supplies ≥0.782 MeV in the licensed material/field regime (Tennfors domain).',
       falsification:
@@ -247,6 +253,8 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-YIELD-01',
       label: 'Integrated heat–helium yield',
+      claim_tier: 'empirical_lenr_correlation',
+      citations: Object.freeze(['miles1993']),
       affirmative:
         'Time-resolved heat+He with recovery efficiency closes integrated ΔN; prefer ≥5σ heat MoE where claimed.',
       falsification:
@@ -277,5 +285,10 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (EQ_OPEN_RUNWAY.status !== 'OPEN') {
     throw new Error('Science evidence UI must keep EQ_OPEN_RUNWAY.status OPEN');
+  }
+  for (const row of EQ_OPEN_RUNWAY.criteria) {
+    if (!row.claim_tier || typeof row.claim_tier !== 'string') {
+      throw new Error(`Science evidence runway ${row.id} must declare claim_tier`);
+    }
   }
 }

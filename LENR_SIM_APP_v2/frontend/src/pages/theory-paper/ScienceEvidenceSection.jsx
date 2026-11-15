@@ -26,6 +26,7 @@ import {
   FORMALIZATION_STATUS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 function OpenIdChips({ ids }) {
   return (
@@ -41,6 +42,24 @@ function OpenIdChips({ ids }) {
         />
       ))}
     </Stack>
+  );
+}
+
+/** Claim-tier chip (distinct from EQ-OPEN obligation OPEN chips). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
   );
 }
 
@@ -319,14 +338,42 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                     color="warning"
                     variant="outlined"
                     sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 18 }}
+                    data-testid={`runway-obligation-${row.id}`}
+                  />
+                  <ClaimTierChip
+                    tier={row.claim_tier}
+                    testId={`runway-claim-tier-${row.id}`}
                   />
                 </Stack>
               }
               secondary={
                 <Box component="span">
-                  <Typography variant="caption" display="block" color="text.secondary">
-                    Affirmative: {row.affirmative}
-                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                    alignItems="center"
+                    sx={{ mb: 0.25 }}
+                  >
+                    <Typography variant="caption" color="text.secondary" component="span">
+                      Affirmative: {row.affirmative}
+                    </Typography>
+                    <ClaimTierChip
+                      tier={row.claim_tier}
+                      testId={`runway-affirmative-tier-${row.id}`}
+                    />
+                    {(row.citations || []).map((key) => (
+                      <Chip
+                        key={key}
+                        label={key}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 18 }}
+                        data-testid={`runway-citation-${row.id}-${key}`}
+                      />
+                    ))}
+                  </Stack>
                   <Typography variant="caption" display="block" color="text.secondary">
                     Falsification: {row.falsification}
                   </Typography>

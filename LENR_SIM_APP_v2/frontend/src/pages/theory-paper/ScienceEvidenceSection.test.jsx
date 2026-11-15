@@ -58,6 +58,9 @@ describe('ScienceEvidenceSection', () => {
     ).toBeInTheDocument();
     OPEN_EQ_IDS.forEach((id) => {
       expect(screen.getAllByText(new RegExp(`${id}: OPEN`)).length).toBeGreaterThan(0);
+      expect(screen.getByTestId(`runway-obligation-${id}`)).toHaveTextContent(/OPEN/);
+      expect(screen.getByTestId(`runway-claim-tier-${id}`)).toBeInTheDocument();
+      expect(screen.getByTestId(`runway-affirmative-tier-${id}`)).toBeInTheDocument();
     });
     expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
     expect(screen.getByTestId('science-evidence-runway-criteria')).toHaveTextContent(
@@ -65,6 +68,20 @@ describe('ScienceEvidenceSection', () => {
     );
     expect(screen.getByTestId('science-evidence-runway-criteria')).toHaveTextContent(
       /Falsification:/i,
+    );
+    expect(
+      screen.getByTestId('runway-citation-EQ-OPEN-EC-01-tennfors2013'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('runway-citation-EQ-OPEN-YIELD-01-miles1993'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('runway-claim-tier-EQ-OPEN-EC-01')).toHaveAttribute(
+      'data-claim-tier',
+      'speculative_exploratory',
+    );
+    expect(screen.getByTestId('runway-claim-tier-EQ-OPEN-YIELD-01')).toHaveAttribute(
+      'data-claim-tier',
+      'empirical_lenr_correlation',
     );
   });
 
