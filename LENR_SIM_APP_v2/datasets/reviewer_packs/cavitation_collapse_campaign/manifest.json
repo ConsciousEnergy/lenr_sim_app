@@ -3,16 +3,16 @@
   "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
-  "git_sha": "8459ecb45e7c463787010898254fa866c379f3ce",
+  "git_sha": "d4ce4620cbab43561f4fab9bf26ff1f11966c4b9",
   "preset": "cavitation_collapse",
-  "n_experiments": 18,
-  "n_theory_runs": 18,
+  "n_experiments": 20,
+  "n_theory_runs": 20,
   "claim_tier_histogram": {
-    "speculative_exploratory": 432,
-    "empirical_lenr_correlation": 36
+    "speculative_exploratory": 480,
+    "empirical_lenr_correlation": 40
   },
   "source_class_counts": {
-    "Campaign": 18
+    "Campaign": 20
   },
   "open_ids": [
     "EQ-OPEN-MEV-01",

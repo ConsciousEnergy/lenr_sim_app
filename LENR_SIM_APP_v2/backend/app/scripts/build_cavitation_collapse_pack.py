@@ -34,8 +34,8 @@ OPEN_IDS = [
 
 PRESET = "cavitation_collapse"
 PACK_DIRNAME = "cavitation_collapse_campaign"
-# Pinned fixture: keep Sobol samples modest for committed JSONL size/runtime.
-PACK_UQ_SAMPLES = 16
+# Pinned fixture: Sobol samples for committed JSONL (BDS-323 UQ deepen 16→32).
+PACK_UQ_SAMPLES = 32
 
 
 def _cells() -> List[Dict[str, Any]]:
