@@ -17,6 +17,8 @@ citation_keys:
   - model_assumption_displaced_oscillator
 lean_target: LenrFormal.RadiationBounds
 lean_decls:
+  - "LenrFormal.RadiationBounds.poisson_exp_neg_le_one"
+  - "LenrFormal.RadiationBounds.poisson_weight_factor_mul_le"
   - "LenrFormal.RadiationBounds.poisson_tail_halving"
   - "LenrFormal.RadiationBounds.fc_tail_pow10_bound"
   - "LenrFormal.RadiationBounds.fc_grid_tail_bound"
@@ -39,4 +41,4 @@ code_symbols:
   FC_TARGET_LOG10:
     path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/wh_bounds.py
     symbol: FC_TARGET_LOG10
-notes: "Universalises EQ-WH-FC-01 over the licensed S grid and every N >= 300048 via a halving lemma (step S/(n+1) <= 1/2 once n >= 2S), and derives the EQ-WH-FC-01 literals (fcDerivedRatio = 0, gamma branching 1000 milli, log10 P_N <= -7e5 cap) instead of asserting them. Envelope corollary: at N = 5.75e8 the bound holds for S <= 2^23 (relaxation <= ~0.35 MeV); Python lgamma puts S_min near 0.9998 N. Only unmechanized step: e^{-S} <= 1. Model class: single displaced oscillator, linear coupling; anharmonic / Umklapp / lossy spin-boson are outside it. harmonic_dos_non_closure is the paper §5A.2 alias. BOUNDED / class-DISPROVEN only; does not close EQ-OPEN-RAD-01."
+notes: "Universalises EQ-WH-FC-01 over the licensed S grid and every N >= 300048 via a halving lemma (step S/(n+1) <= 1/2 once n >= 2S), and derives the EQ-WH-FC-01 literals (fcDerivedRatio = 0, gamma branching 1000 milli, log10 P_N <= -7e5 cap) instead of asserting them. Envelope corollary: at N = 5.75e8 the bound holds for S <= 2^23 (relaxation <= ~0.35 MeV); Python lgamma puts S_min near 0.9998 N. The e^{-S} <= 1 bridge is mechanized (RealShim.expZ_neg_le_one + RadiationBounds.poisson_exp_neg_le_one / poisson_weight_factor_mul_le; labelled expZ_zero + mono axioms until mathlib). Model class: single displaced oscillator, linear coupling; anharmonic / Umklapp / lossy spin-boson are outside it. harmonic_dos_non_closure is the paper §5A.2 alias. BOUNDED / class-DISPROVEN only; does not close EQ-OPEN-RAD-01."
