@@ -17,4 +17,15 @@ simulations do not raise `claim_tier` or close `EQ-OPEN-*`.
 | `testable_predictions.v1.json` | Predictions 1–10 | virtual-lab crosswalk |
 | `reviewer_packs/` | export envelopes | `export_reviewer_pack` |
 
+Optional cite-gated calorimetry MoE on EMP rows: `sigma_Q_W`,
+`sigma_Q_statistical_W`, `sigma_Q_systematic_W`,
+`sigma_Q_instrument_floor_W`, `sigma_Q_relative_fraction`,
+`moe_provenance` (`literature_reported` |
+`literature_reported_instrument_precision` |
+`literature_reported_instrument_floor` | `model_assumption`),
+`moe_citation_keys`, `moe_notes`. Refuse fabricated `literature_reported`
+σ_Q; instrument-floor rows may omit `sigma_Q_W` until Pin-scaled. Analytics
+`S_heat = Q/σ_Q` and `discovery_grade_eligible` never close `EQ-OPEN-*` or
+set `lenr_proved` (see `app.physics_engine.calorimetry_significance`).
+
 The full Parkhomov SQLite (~519k rows, ~161 MB) is **not** shipped.
