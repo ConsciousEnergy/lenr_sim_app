@@ -33,7 +33,12 @@ def test_backend_path_ratelimit_heavy_and_write_tiers():
     assert "burst: 5" in dynamic
     assert "average: 3" in dynamic
     # Mutate-only path families for compute + persistence abuse.
-    assert "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" in dynamic
+    # Traefik v3: Method() is unary — multi-arg form fails router load.
+    assert (
+        "(Method(`POST`) || Method(`PUT`) || Method(`PATCH`) || Method(`DELETE`))"
+        in dynamic
+    )
+    assert "Method(`POST`,`PUT`,`PATCH`,`DELETE`)" not in dynamic
     assert "PathPrefix(`/api/physics/`)" in dynamic
     assert "PathPrefix(`/api/multi-physics/`)" in dynamic
     assert "PathPrefix(`/api/unified/`)" in dynamic
