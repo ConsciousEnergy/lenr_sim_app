@@ -1,9 +1,10 @@
 """B1: S_heat / σ_Q MoE + discovery_grade_eligible honesty locks.
 
-MoE from cite-gated hydrate (PR #406 tip): Miles 0.02 literature_reported
-(paired with literature_peak_excess_power_W); De Ninno instrument_precision
-(exploratory only); Kasagi 0.08 + results.q_ex_w; McKubre instrument floor
-metadata only (no sigma_Q_W).
+MoE from cite-gated hydrate (PR #406 tip ``0fa710e``): Miles ±0.02 is
+``literature_reported_instrument_precision`` (follow-on calorimetric error;
+peak+σ pairing unverified → exploratory S_heat only, not discovery).
+De Ninno instrument_precision (exploratory); Kasagi 0.08 + results.q_ex_w;
+McKubre instrument floor metadata only (no sigma_Q_W).
 """
 
 from __future__ import annotations
@@ -184,14 +185,22 @@ def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
     assert {row["id"] for row in register} == set(OPEN_IDS)
 
 
-def test_miles_peak_exploratory_until_sigma_pairing_verified() -> None:
-    """Miles ±0.02 is not verified 1σ for peak 0.52 — exploratory S_heat only."""
+def test_miles_uses_literature_peak_not_seed_scale_q() -> None:
+    """Miles: peak Q for exploratory S_heat; instrument_precision → not discovery.
+
+    ±0.02 W is follow-on calorimetric error (miles_calorimetric_error_followon),
+    not a verified total 1σ for the 1993 JEAC 0.52 W peak. Prefer peak over
+    seed excess_heat_watts=1.0; discovery_grade_eligible stays False.
+    """
     miles = next(
         row for row in literature_records() if row["literature_id"] == "miles-1993"
     )
     assert float(miles["sigma_Q_W"]) == 0.02
     assert float(miles["excess_heat_watts"]) == 1.0
     assert float(miles["parameters"]["literature_peak_excess_power_W"]) == 0.52
+    assert miles["moe_provenance"] == "literature_reported_instrument_precision"
+    assert "miles1993" in miles["moe_citation_keys"]
+    assert "miles_calorimetric_error_followon" in miles["moe_citation_keys"]
     assert miles.get("moe_sigma_q_pairing_verified") is not True
 
     seeded = next(
@@ -200,13 +209,19 @@ def test_miles_peak_exploratory_until_sigma_pairing_verified() -> None:
         if row["literature_id"] == "miles-1993"
     )
     assert float(seeded["sigma_Q_W"]) == 0.02
+    assert seeded["moe_provenance"] == "literature_reported_instrument_precision"
+    assert seeded["parameters"]["moe_provenance"] == (
+        "literature_reported_instrument_precision"
+    )
 
     report = discovery_grade_from_literature_record(miles)
     assert report["q_source"] == "literature_peak_excess_power_W"
     assert report["q_is_seed_scale"] is False
     assert report["excess_power_w"] == 0.52
-    assert report["s_heat"] == 26.0
+    assert report["s_heat"] == 26.0  # exploratory arithmetic only
     assert report["exploratory_snr_eligible"] is True
+    assert report["moe_provenance"] == "literature_reported_instrument_precision"
+    assert report["discovery_provenance_ok"] is False
     assert report["moe_sigma_q_pairing_verified"] is False
     assert report["discovery_grade_eligible"] is False
     assert report["lenr_proved"] is False
