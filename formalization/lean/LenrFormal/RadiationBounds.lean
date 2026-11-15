@@ -1,4 +1,5 @@
 import LenrFormal.WorkingHypothesisBounds
+import LenrFormal.RealShim
 
 /-!
 RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound) and EQ-RAD-DET-01
@@ -8,11 +9,12 @@ EQ-WH-FC-02 universalises EQ-WH-FC-01: for every Huang–Rhys factor on the
 licensed scan domain and every phonon order above a stated floor, the
 un-normalised Poisson tail `t(N) = S^N / N!` is proved below `10⁻¹¹` (not just
 asserted via a Python `lgamma` value). Because `P_N = e^{-S}·t(N) ≤ t(N)`
-(`e^{-S} ≤ 1`, the one unmechanized analysis step) and `t` is monotone in `S`
-(so `⌈S⌉` covers real `S`), the FC-derived phonon weight, `Γ_ph/Γ_γ` floor, and
-γ branching follow for the whole class. Displaced-oscillator linear coupling
-stays a labelled model assumption; anharmonic / Umklapp / lossy spin-boson
-boosts are not this class.
+(`e^{-S} ≤ 1`, mechanized via `RealShim.expZ_neg_le_one` +
+`poisson_exp_neg_le_one` / `poisson_weight_factor_mul_le`) and `t` is monotone
+in `S` (so `⌈S⌉` covers real `S`), the FC-derived phonon weight, `Γ_ph/Γ_γ`
+floor, and γ branching follow for the whole class. Displaced-oscillator linear
+coupling stays a labelled model assumption; anharmonic / Umklapp / lossy
+spin-boson boosts are not this class.
 
 EQ-RAD-DET-01 mirrors `branching_model.py` detector flags as Bool defs. They
 are interpretation falsifiers (`detector_ul_not_proof`), not measured
@@ -30,6 +32,22 @@ open LenrFormal.OpenQuestionBounds
 open LenrFormal.Branching
 open LenrFormal.WorkingHypothesis
 open LenrFormal.WorkingHypothesisBounds
+open LenrFormal.RealShim
+
+/-! ### EQ-WH-FC-02 — `e^{-S} ≤ 1` bridge (Huang–Rhys `S ≥ 0`) -/
+
+/-- EQ-WH-FC-02 analysis bridge: for every Nat Huang–Rhys factor,
+    `e^{-S} ≤ 1` (`RealShim.expZ_neg_le_one`). Math identity only —
+    does **not** discharge `EQ-OPEN-RAD-01`. -/
+theorem poisson_exp_neg_le_one (S : Nat) : expZ (-(S : Int)) ≤ 1 :=
+  expZ_neg_le_one (Int.ofNat_nonneg S)
+
+/-- EQ-WH-FC-02: multiplicative transfer `e^{-S} · t ≤ t` for `t ≥ 0`.
+    Justifies reading Nat bounds on the un-normalised tail `t(N)` as bounds
+    on the Poisson weight `P_N = e^{-S}·t(N)`. -/
+theorem poisson_weight_factor_mul_le (S : Nat) (t : Int) (ht : 0 ≤ t) :
+    expZ (-(S : Int)) * t ≤ t :=
+  expZ_neg_mul_le (Int.ofNat_nonneg S) ht
 
 /-! ### EQ-WH-FC-02 — Poisson tail bound over the licensed `S` / `N` domain -/
 
@@ -131,7 +149,7 @@ theorem fc_class_misses_fc_target (S N : Nat) (hS : S ≤ sGridMax)
   omega
 
 /-- EQ-WH-FC-02: Nat floor of `t/(1−t)`, an upper bound on the FC-derived
-    `Γ_ph/Γ_γ = P_N/(1−P_N)` because `P_N ≤ t`. -/
+    `Γ_ph/Γ_γ = P_N/(1−P_N)` because `P_N ≤ t` via `poisson_exp_neg_le_one`. -/
 def fcRatioFloor (S N : Nat) : Nat := S ^ N / (factorial N - S ^ N)
 
 /-- EQ-WH-FC-02: floor of `1000·t`, the FC phonon-channel weight in milli-units. -/

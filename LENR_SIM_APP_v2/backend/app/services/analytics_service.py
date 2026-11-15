@@ -567,6 +567,59 @@ class AnalyticsService:
         )
         results.setdefault("is_model_output", True)
 
+        from app.services.literature_moe_persistence import (
+            literature_moe_columns_from_record,
+            merge_bayesian_into_results,
+        )
+
+        # Prefer parameters for MoE when top-level kwargs are absent; do not
+        # inject explicit None (that used to block parameter fallbacks).
+        moe_record: Dict[str, Any] = {
+            "excess_heat_watts": kwargs.get("excess_heat_watts"),
+            "parameters": kwargs.get("parameters") or {},
+            "results": results,
+        }
+        for key in (
+            "literature_id",
+            "claim_tag",
+            "citation_key",
+            "doi",
+            "open_question_ids",
+            "moe_provenance",
+            "moe_citation_keys",
+            "moe_notes",
+            "moe_sigma_q_pairing_verified",
+            "literature_peak_excess_power_W",
+            "measured_excess_power_W",
+            "excess_heat_watts_reported",
+        ):
+            if key in kwargs and kwargs[key] is not None:
+                moe_record[key] = kwargs[key]
+        for key, alt in (
+            ("sigma_Q_W", "sigma_q_w"),
+            ("sigma_Q_statistical_W", None),
+            ("sigma_Q_systematic_W", None),
+            ("sigma_Q_instrument_floor_W", None),
+            ("sigma_Q_relative_fraction", None),
+        ):
+            value = kwargs.get(key)
+            if value is None and alt:
+                value = kwargs.get(alt)
+            if value is not None:
+                moe_record[key] = value
+        moe_columns = literature_moe_columns_from_record(moe_record)
+        # User / sim creates never claim discovery of LENR via this path.
+        if not kwargs.get("is_baseline"):
+            moe_columns = dict(moe_columns)
+            moe_columns["discovery_grade_eligible"] = False
+            if isinstance(moe_columns.get("bayesian_summary"), dict):
+                summary = dict(moe_columns["bayesian_summary"])
+                summary["discovery_grade_eligible"] = False
+                summary["lenr_proved"] = False
+                moe_columns["bayesian_summary"] = summary
+        results = merge_bayesian_into_results(results, moe_columns)
+        results["lenr_proved"] = False
+
         experiment = Experiment(
             id=str(uuid.uuid4()),
             name=name,
@@ -588,6 +641,31 @@ class AnalyticsService:
             excess_heat_watts=kwargs.get('excess_heat_watts'),
             duration_seconds=kwargs.get('duration_seconds'),
             results_json=results,
+            literature_id=moe_columns.get("literature_id"),
+            claim_tag=moe_columns.get("claim_tag"),
+            citation_key=moe_columns.get("citation_key"),
+            doi=moe_columns.get("doi"),
+            open_question_ids=moe_columns.get("open_question_ids"),
+            sigma_q_w=moe_columns.get("sigma_q_w"),
+            sigma_q_statistical_w=moe_columns.get("sigma_q_statistical_w"),
+            sigma_q_systematic_w=moe_columns.get("sigma_q_systematic_w"),
+            sigma_q_instrument_floor_w=moe_columns.get(
+                "sigma_q_instrument_floor_w"
+            ),
+            sigma_q_relative_fraction=moe_columns.get(
+                "sigma_q_relative_fraction"
+            ),
+            moe_provenance=moe_columns.get("moe_provenance"),
+            moe_citation_keys=moe_columns.get("moe_citation_keys"),
+            moe_notes=moe_columns.get("moe_notes"),
+            moe_sigma_q_pairing_verified=moe_columns.get(
+                "moe_sigma_q_pairing_verified"
+            ),
+            s_heat=moe_columns.get("s_heat"),
+            discovery_grade_eligible=bool(
+                moe_columns.get("discovery_grade_eligible")
+            ),
+            bayesian_summary=moe_columns.get("bayesian_summary"),
         )
         
         self.session.add(experiment)

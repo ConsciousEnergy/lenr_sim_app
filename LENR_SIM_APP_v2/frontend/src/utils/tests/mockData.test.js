@@ -1,4 +1,8 @@
-import { mockFusionSimulation } from '../mockData';
+import {
+  mockFusionSimulation,
+  generateFusionTimeSteps,
+  SCHEMATIC_FALLBACK_PROVENANCE,
+} from '../mockData';
 
 describe('mockFusionSimulation', () => {
   beforeEach(() => {
@@ -74,5 +78,26 @@ describe('mockFusionSimulation', () => {
 
     expect(simulation.timeSteps).toHaveLength(1);
     expect(simulation.timeSteps[0].particles).toHaveLength(200);
+  });
+
+  test('marks schematic provenance so callers cannot treat output as measured', async () => {
+    const simulationPromise = mockFusionSimulation({
+      timeStepSize: 0.1,
+      totalSimulationTime: 0.1,
+    });
+    jest.advanceTimersByTime(1000);
+    const simulation = await simulationPromise;
+    expect(simulation.provenance).toBe(SCHEMATIC_FALLBACK_PROVENANCE);
+  });
+});
+
+describe('generateFusionTimeSteps', () => {
+  test('labels client-synthesized viz as schematic_fallback', () => {
+    const data = generateFusionTimeSteps({
+      timeStepSize: 0.1,
+      totalSimulationTime: 0.2,
+    });
+    expect(data.provenance).toBe(SCHEMATIC_FALLBACK_PROVENANCE);
+    expect(data.metadata.data_origin).toBe('client_schematic_visualization');
   });
 });

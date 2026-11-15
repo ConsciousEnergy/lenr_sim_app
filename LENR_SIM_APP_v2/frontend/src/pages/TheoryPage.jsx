@@ -144,7 +144,7 @@ const TheoryPage = () => {
           >
             <Tab icon={<ScienceIcon />} label="Theoretical Framework" iconPosition="start" />
             <Tab icon={<FunctionsIcon />} label="Computational Methods" iconPosition="start" />
-            <Tab icon={<AutoGraphIcon />} label="Experimental Validation" iconPosition="start" />
+            <Tab icon={<AutoGraphIcon />} label="Experimental Correlations" iconPosition="start" />
             <Tab icon={<LibraryBooksIcon />} label="Mathematics" iconPosition="start" />
           </Tabs>
         </Box>
@@ -646,10 +646,10 @@ const TheoryPage = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 3: Experimental Validation */}
+        {/* Tab 3: Experimental Correlations (reported literature — not model validation proof) */}
         <TabPanel value={tabValue} index={2}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-            Experimental Correlations & Validation
+            Experimental Correlations (literature-reported; not model proof)
           </Typography>
 
           <Grid container spacing={3}>

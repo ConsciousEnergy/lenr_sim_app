@@ -163,7 +163,7 @@ These run in GitHub Actions and are required for merging to `main`:
 | Secret scan of full git history (gitleaks, [`.gitleaks.toml`](.gitleaks.toml)) | `security-scan.yml` | every PR + weekly |
 | Scheduled re-audit of already-committed dependencies | `security-scan.yml` | weekly |
 | Dependency Review of PR-introduced packages | `dependency-review.yml` | every PR |
-| CodeQL static analysis (Python, JavaScript/TypeScript) | `codeql.yml` | every PR + weekly (active once the repo is public or GHAS is enabled) |
+| CodeQL static analysis (Python, JavaScript/TypeScript) | GitHub Code Scanning default setup (advanced `codeql.yml` intentionally `if: false` to avoid dual-setup conflict) | continuous on the public repository |
 | Grouped Dependabot updates against `dev` | `dependabot.yml` | weekly |
 
 Self-hosted `lenr-ci` jobs route **fork** pull requests to `ubuntu-latest` (or
@@ -174,15 +174,15 @@ read `VPS_*` secrets.
 All third-party actions are pinned to full commit SHAs. Local equivalents are
 available via [`.pre-commit-config.yaml`](.pre-commit-config.yaml).
 
-## Before flipping the repository public
+## Public-repository security checklist
 
-Repo is **private today**. Org/repo setting toggles cannot be applied from this
-docs PR — do these in GitHub UI (or confirm already on) **before** the B-flip:
+This repository is **public** on GitHub. Confirm these org/repo settings remain
+on in the GitHub UI (they are not toggled from docs PRs):
 
 - [ ] **Dependabot alerts** enabled (Dependency graph + Dependabot alerts; updates
       already configured in `.github/dependabot.yml` → `dev`).
-- [ ] **Code scanning / GHAS** enabled so CodeQL runs (workflow currently skips
-      when `repository.private`; see `codeql.yml` `if: !github.event.repository.private`).
+- [ ] **Code scanning** enabled (default setup covers the public repository;
+      advanced `codeql.yml` stays disabled while default setup is active).
 - [ ] **Secret scanning** (+ push protection if available) confirmed on.
 - [ ] **Fork → not on self-hosted** still present: `head.repo.full_name` guard from
       PR #368 in `test.yml`, `security-scan.yml`, `codeql.yml`,

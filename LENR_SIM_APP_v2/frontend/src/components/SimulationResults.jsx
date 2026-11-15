@@ -77,10 +77,19 @@ const SimulationResults = ({
   // States
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(initialData || {
-    timeSeriesData: [],
-    tableData: [],
-    statistics: {}
+  const [data, setData] = useState(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        provenance: initialData.provenance || 'schematic_fallback',
+      };
+    }
+    return {
+      timeSeriesData: [],
+      tableData: [],
+      statistics: {},
+      provenance: 'schematic_fallback',
+    };
   });
   const [isUpdating, setIsUpdating] = useState(autoUpdate);
   const [selectedVariable, setSelectedVariable] = useState('temperature');
@@ -109,7 +118,7 @@ const SimulationResults = ({
     { key: 'deuteriumConcentration', label: 'Deuterium Concentration', color: '#9c27b0' }
   ];
 
-  // Generate mock data for demonstration
+  // Generate schematic demo series (NOT measured heat / neutrons)
   const generateMockData = () => {
     const mockTimeSeriesData = [];
     const now = new Date();
@@ -138,6 +147,7 @@ const SimulationResults = ({
       const pressure = basePressure + pressureNoise + (i > 30 ? i * 0.005 : 0);
       const energy = baseEnergy + energyNoise + energySpike;
       const reactionRate = Math.max(0, (energy * temperature) / (1000 * pressure) + Math.random() * 0.1);
+      // Schematic neutron counts for UI demo only — never experimental corroboration
       const neutronCount = Math.floor(reactionRate * 100) + Math.floor(Math.random() * 5);
       const deuteriumConcentration = 0.8 - i * 0.001 - Math.random() * 0.02;
 
@@ -156,6 +166,7 @@ const SimulationResults = ({
     return {
       timeSeriesData: mockTimeSeriesData,
       tableData: mockTimeSeriesData.filter((_, i) => i % 10 === 0), // Subset for table display
+      provenance: 'schematic_fallback',
       statistics: {
         maxTemperature: Math.max(...mockTimeSeriesData.map(d => d.temperature)),
         minTemperature: Math.min(...mockTimeSeriesData.map(d => d.temperature)),
@@ -264,10 +275,13 @@ const SimulationResults = ({
             peakReactionRate: Math.max(...updatedTimeSeries.map(d => d.reactionRate))
           };
 
+          // Local synthetic appends are always schematic — never keep API provenance
+          // that would hide the schematic-data warning while neutron traces stay fake.
           return {
             timeSeriesData: updatedTimeSeries,
             tableData: updatedTimeSeries.filter((_, i) => i % 10 === 0), // Update table data too
-            statistics
+            statistics,
+            provenance: 'schematic_fallback',
           };
         });
       }
@@ -684,6 +698,19 @@ const SimulationResults = ({
           <Alert severity="error" sx={{ mb: 2 }}>
             <AlertTitle>Error</AlertTitle>
             {error}
+          </Alert>
+        )}
+
+        {data?.provenance === 'schematic_fallback' && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            data-testid="simulation-results-schematic-banner"
+          >
+            <AlertTitle>Schematic / demo series</AlertTitle>
+            Charts include client-synthesized temperature, energy, reaction-rate,
+            and neutron-count traces. These are model-output UI aids — not laboratory
+            measurements and not experimental corroboration of LENR.
           </Alert>
         )}
 

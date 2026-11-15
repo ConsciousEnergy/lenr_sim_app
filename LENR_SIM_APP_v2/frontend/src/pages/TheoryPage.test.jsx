@@ -68,8 +68,7 @@ describe('TheoryPage historical timeline', () => {
       screen.getByText(/does not close a mechanism class/i)
     ).toBeInTheDocument();
     const gapLink = screen.getByRole('link', { name: /Open-question corpus gaps/i });
-    // Soft-gated away from private GitHub blob OPEN_QUESTION_CORPUS_GAPS.md
-    // during invite beta (same honesty pattern as Theory Paper CTAs).
+    // In-app issue ledger (not a raw GitHub blob link).
     expect(gapLink.getAttribute('href')).toBe('/docs/issue-ledger');
   });
 });

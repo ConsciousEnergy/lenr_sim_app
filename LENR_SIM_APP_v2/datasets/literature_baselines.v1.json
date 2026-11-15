@@ -80,6 +80,11 @@
       "energy_output_kev": 150.0,
       "excess_heat_watts": 15.0,
       "duration_seconds": 720000,
+      "sigma_Q_instrument_floor_W": 0.01,
+      "sigma_Q_relative_fraction": 0.001,
+      "moe_provenance": "literature_reported_instrument_floor",
+      "moe_citation_keys": ["mckubre2008", "miles1993"],
+      "moe_notes": "SRI mass-flow / isothermal design precision is max(10 mW, 0.1% of Pin) (CANR McKubre; Miles 1993 cites 0.010 W or 0.1%). Instrument floor and relative fraction are stored separately; sigma_Q_W is intentionally absent until a Pin-resolved episode uncertainty is established. Do not use the floor alone as S_heat σ_Q (understates for Pin>10 W). excess_heat_reproducibility=0.7 is not σ_Q. EQ-OPEN-YIELD-01 stays OPEN.",
       "results": {"excess_heat_reproducibility": 0.7, "loading_threshold": 0.9}
     },
     {
@@ -102,7 +107,12 @@
       "enhancement_factor": 58.0,
       "energy_output_kev": 200.0,
       "excess_heat_watts": 25.0,
-      "duration_seconds": 540000
+      "duration_seconds": 540000,
+      "sigma_Q_instrument_floor_W": 0.01,
+      "sigma_Q_relative_fraction": 0.001,
+      "moe_provenance": "literature_reported_instrument_floor",
+      "moe_citation_keys": ["mckubre2008", "miles1993"],
+      "moe_notes": "Same SRI instrument floor + 0.1% Pin rule as P13/P14. sigma_Q_W left absent until Pin-resolved uncertainty is known; floor alone must not be published as measured σ_Q. Seed Q is an EMP anchor. EQ-OPEN-YIELD-01 stays OPEN."
     },
     {
       "literature_id": "spawar-cr39-2007",
@@ -424,7 +434,12 @@
       "enhancement_factor": 32.0,
       "energy_output_kev": 60.0,
       "excess_heat_watts": 5.0,
-      "duration_seconds": 86400
+      "duration_seconds": 86400,
+      "sigma_Q_W": 0.02,
+      "sigma_Q_systematic_W": null,
+      "moe_provenance": "literature_reported_instrument_precision",
+      "moe_citation_keys": ["deninno1995"],
+      "moe_notes": "ENEA Frascati flow-mass calorimetry stated precision ~20 mW over 0–20 W (De Ninno progress report lineage). This is instrument precision, not a peer-reviewed episode MoE for the seed Q=5 W anchor. Do not treat as discovery-grade; EQ-OPEN-YIELD-01 stays OPEN."
     },
     {
       "literature_id": "miles-1993",
@@ -449,13 +464,20 @@
       "parameters": {
         "q_value_mev": 23.8,
         "miles_rate_per_watt": 2.63e11,
-        "miles_band_mev_per_he": "24±4"
+        "miles_band_mev_per_he": "24±4",
+        "literature_peak_excess_power_W": 0.52
       },
       "excess_heat_watts": 1.0,
       "duration_seconds": 86400,
+      "sigma_Q_W": 0.02,
+      "sigma_Q_systematic_W": null,
+      "moe_provenance": "literature_reported_instrument_precision",
+      "moe_citation_keys": ["miles1993", "miles_calorimetric_error_followon"],
+      "moe_notes": "EXPLORATORY MoE only — not discovery-grade. ±0.020 W is the author-stated China Lake calorimetric error from Miles metal-flask / anomalous-effects follow-on (CANR MilesManomalouse.pdf; restated in NRL Dominguez summary as ±20 mW). Citation key miles_calorimetric_error_followon names that follow-on source; miles1993 (JEAC 346) reports peak excess ≈0.52 W but does not establish ±0.020 W as the total 1σ uncertainty for that paired peak episode. Do not treat S_heat=0.52/0.02 as discovery-eligible until peak+σ pairing is verified in a primary source. Seed excess_heat_watts=1.0 remains the Miles module definition scale. He retention/contamination caveats apply; EQ-OPEN-YIELD-01 and EQ-OPEN-RAD-01 stay OPEN.",
       "results": {
         "observable": "heat_helium_correlation",
-        "note": "1 W is the Miles module definition scale, not a single-run calorimetry integral"
+        "note": "1 W is the Miles module definition scale, not a single-run calorimetry integral",
+        "literature_peak_excess_power_W": 0.52
       }
     },
     {

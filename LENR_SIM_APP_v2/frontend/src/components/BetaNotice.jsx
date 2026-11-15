@@ -7,10 +7,9 @@ import ConstructionIcon from '@mui/icons-material/Construction';
 import { useApiHealth } from '../hooks/useApiHealth';
 import { useMaintenanceHideRun } from '../analytics/flags';
 import { APP_VERSION } from '../config/version';
+import { FEEDBACK_EMAIL, PUBLIC_GITHUB_ISSUES } from '../config/publicLinks';
 
 const DISMISS_KEY = 'lenr-beta-notice-dismissed';
-/** Email-first while the application repository remains private. */
-const FEEDBACK_EMAIL = 'mailto:diadon@conscious.energy';
 
 function readDismissed() {
   try {
@@ -94,7 +93,11 @@ export default function BetaNotice({ monitorApi = true }) {
             LENR is still an experimental inquiry; open questions and claim tiers are on the{' '}
             <Link component={RouterLink} to="/about">About</Link> page. Found a problem? Email{' '}
             <Link href={FEEDBACK_EMAIL}>diadon@conscious.energy</Link>
-            {' '}(primary feedback while the repository is private).{' '}
+            {' '}or open a{' '}
+            <Link href={PUBLIC_GITHUB_ISSUES} target="_blank" rel="noopener noreferrer">
+              GitHub issue
+            </Link>
+            .{' '}
             <Link component={RouterLink} to="/privacy">Privacy</Link>
           </Typography>
         </Alert>

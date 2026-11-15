@@ -4,6 +4,11 @@
 import React from 'react';
 import { Typography, Box, List, ListItem, Divider, Alert, AlertTitle } from '@mui/material';
 import { Link as MuiLink } from '@mui/material';
+import {
+  FEEDBACK_EMAIL,
+  PUBLIC_GITHUB_MAIN,
+  PUBLIC_GITHUB_REPO_LABEL,
+} from '../../config/publicLinks';
 
 export default function ReferencesSection() {
   return (<><Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
@@ -302,13 +307,21 @@ export default function ReferencesSection() {
                 <em> Conscious Energies</em> (v0.3.6-beta, revised 2026-07-22).
               </Typography>
               <MuiLink
-                href="mailto:diadon@conscious.energy"
+                href={PUBLIC_GITHUB_MAIN}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem', mr: 2 }}
+              >
+                Source on GitHub
+              </MuiLink>
+              <MuiLink
+                href={FEEDBACK_EMAIL}
                 sx={{ fontSize: '0.875rem' }}
               >
-                Email feedback / source access
+                Email feedback
               </MuiLink>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                Private repository during invited beta — curated paper is in-app; GPL at{' '}
+                Public repository ({PUBLIC_GITHUB_REPO_LABEL}) — curated paper is in-app; GPL at{' '}
                 <MuiLink href="/LICENSE">/LICENSE</MuiLink>.
               </Typography>
             </ListItem>

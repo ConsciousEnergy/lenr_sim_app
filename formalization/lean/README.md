@@ -7,9 +7,9 @@ adopted core. This is **not** a proof that LENR occurs.
 
 The pilot builds on Lean 4 **without** a mathlib dependency so CI stays light
 and deterministic. Algebra uses `Nat`/`Int` with explicit unit scales; Gamow
-monotonicity uses a labelled `RealShim.expZ_strict_mono` bridge axiom. Upgrading
-to mathlib replaces `RealShim` with `Real.exp` lemmas and can restore ℚ/`Real`
-Casimir κ proofs.
+monotonicity and the FC \(e^{-S}\le1\) bridge use labelled `RealShim`
+axioms (`expZ_strict_mono`, `expZ_zero`). Upgrading to mathlib replaces
+`RealShim` with `Real.exp` lemmas and can restore ℚ/`Real` Casimir κ proofs.
 
 ## Build
 
@@ -38,7 +38,7 @@ lake build
 | `ScaleQED` | EQ-SCALE-MHD-DOM-01, EQ-QED-HE-NEG-01 | MHD domain; HE ≈ 1 |
 | `Decision` | EQ-UQ-PRIOR-01, EQ-UQ-BF-01 | Skeptical priors; Bayes-factor bookkeeping |
 | `WhenHow` / `Branching` | EQ-WHEN-*, EQ-MECH-PATH-01, EQ-BRANCH-* | Threshold/duty/path definitions |
-| `RadiationBounds` | EQ-WH-FC-02, EQ-RAD-DET-01 | FC class bound \(S^N/N!<10^{-11}\) over the licensed \(S\)/\(N\) domain; detector-UL flag mirrors; alias `harmonic_dos_non_closure`; does **not** close `EQ-OPEN-RAD-01` |
+| `RadiationBounds` | EQ-WH-FC-02, EQ-RAD-DET-01 | FC class bound \(S^N/N!<10^{-11}\) over the licensed \(S\)/\(N\) domain; \(e^{-S}\le1\) bridge; detector-UL flag mirrors; alias `harmonic_dos_non_closure`; does **not** close `EQ-OPEN-RAD-01` |
 | `CollapseBounds` | EQ-BBL-LIM-01, EQ-BBL-BOUND-01, EQ-BBL-UQ-01, EQ-BBL-RP-DOM-01, EQ-BBL-CR-CAP-01 | Pointwise clamp; literature ceilings; UQ defs; RP/KM domain; CR hard-core cap |
 | `PoissonSchrodinger` | EQ-PS-01, EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-TOL-01, EQ-PS-NONDEPLOY-01 | Continuum PS DEF parent + discrete residual / domain / tolerance / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
 | `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01, EQ-OPEN-EC-BOUND-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; CM energy-budget deficit family (BOUNDED, form-DISPROVEN under AX caps); **does not** close `EQ-OPEN-EC-01` |
@@ -47,7 +47,7 @@ lake build
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
 | `WorkingHypothesisBounds` | EQ-WH-FC-01, EQ-WH-PART-02, EQ-WH-DICKE-N-01, EQ-WH-CAP-01, EQ-WH-NONCLOSE-02 | WH-ENP-01 v2 bounds: Poisson multi-phonon tail, general partition, Dicke count, engine-cap product; v2 non-closure |
 | `MeVRemainderCaps` | EQ-WH-MEV-CAP-01 | Q1 remainder floor \(R_{\min}\) under engine channel caps; collapse/ENC hydro allocate none of the MeV remainder; does **not** close `EQ-OPEN-MEV-01` |
-| `RealShim` | — | `expZ` mono bridge axiom |
+| `RealShim` | — | `expZ` mono + `expZ_zero` bridges; proves `expZ_neg_le_one` |
 
 ## Hygiene
 

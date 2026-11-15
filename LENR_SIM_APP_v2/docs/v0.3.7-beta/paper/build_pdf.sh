@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rebuild submission PDF from canonical Part 1 Markdown.
-# Choice: pandoc Part 1 → academic article TEX → XeLaTeX PDF
+# Rebuild submission PDF from canonical unified Markdown (full manuscript).
+# Choice: pandoc → academic article TEX → XeLaTeX PDF
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
@@ -9,16 +9,15 @@ CANON="$ROOT/docs/A_Unified_Theoretical_Framework_for_LENR.md"
 BUILD="${TMPDIR:-/tmp}/lenr-theory-paper-pdf-build"
 mkdir -p "$BUILD"
 
-python3 - "$CANON" "$BUILD/part1.md" <<'PY'
+python3 - "$CANON" "$BUILD/manuscript.md" <<'PY'
 import re, sys
 from pathlib import Path
 
 src = Path(sys.argv[1]).read_text(encoding="utf-8")
 out = Path(sys.argv[2])
-cut = src.find("## **Document Structure and Reconciliation Note**")
-if cut < 0:
-    raise SystemExit("Part 1 boundary (Document Structure note) not found")
-part1 = src[:cut].rstrip() + "\n"
+if "## **Document Structure and Reconciliation Note**" in src:
+    raise SystemExit("legacy Part 1/Part 2 reconciliation block still present in canonical MD")
+part1 = src.rstrip() + "\n"
 
 def grab(label: str, text: str) -> str:
     m = re.search(rf"\*\*{re.escape(label)}:\*\*\s*(.+)", text)
@@ -55,7 +54,9 @@ honesty = (
     "`EQ-OPEN-*` obligations (`EQ-OPEN-MEV-01`, `EQ-OPEN-RAD-01`, "
     "`EQ-OPEN-RATE-01`, `EQ-OPEN-EC-01`, `EQ-OPEN-YIELD-01`) remain **OPEN**. "
     "Cavitation–collapse hydrodynamics is **modelled enhancement / contested hydro**, "
-    "not nuclear-rate proof.\n\n"
+    "not nuclear-rate proof. "
+    "No quantitative band changes (tunneling \\(10^{3}\\)–\\(10^{5}\\); "
+    "Casimir \\(-1.3\\,\\mathrm{mN}\\); Miles \\(24\\pm4\\,\\mathrm{MeV}\\)).\n\n"
 )
 body = honesty + body
 abs_yaml = "\n".join(("  " + ln) if ln else "  " for ln in abstract.splitlines())
@@ -85,7 +86,31 @@ out.write_text(yaml + body, encoding="utf-8")
 print(f"wrote {out} ({out.stat().st_size} bytes)")
 PY
 
-pandoc "$BUILD/part1.md" \
+# Pre-pandoc: numeric-only \[n\] / \[n,m\] are bibliography pointers, not math.
+python3 - "$BUILD/manuscript.md" <<'PY'
+import re, sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+cite_only = re.compile(r"^[\d,\s\-–—]+$")
+
+def repl(m: re.Match) -> str:
+    inner = m.group(1).strip()
+    if cite_only.match(inner):
+        return f"[{inner}]"
+    return m.group(0)
+
+new, n = re.subn(r"\\\[(.+?)\\\]", repl, text)
+# Count numeric conversions specifically
+before = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", text, flags=re.S) if cite_only.match(m.group(1).strip())]
+path.write_text(new, encoding="utf-8")
+left = [m.group(1).strip() for m in re.finditer(r"\\\[(.+?)\\\]", new, flags=re.S) if cite_only.match(m.group(1).strip())]
+print(f"citation-bracket pass: converted {len(before) - len(left)} numeric citations (saw {len(before)})")
+print(f"numeric-only display math remaining: {len(left)}")
+PY
+
+pandoc "$BUILD/manuscript.md" \
   -f markdown+tex_math_single_backslash+pipe_tables+strikeout \
   -t latex \
   --template="$PAPER/academic.latex" \
@@ -186,8 +211,8 @@ PY
 
 # Header provenance
 {
-  echo "% Auto-generated full Part-1 manuscript (pandoc + academic.latex)."
-  echo "% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (Part 1 only; Part 2 appendix excluded)."
+  echo "% Auto-generated unified manuscript (pandoc + academic.latex)."
+  echo "% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (single-document structure)."
   echo "% Build: ./build_pdf.sh  (requires pandoc + XeLaTeX + xurl)."
   echo "% Overflow fix: breakable \\texttt via \\allowbreak; wrapped AI contributor block; secnumdepth=-1."
   echo "% Epistemic: lenr_proved=false; all EQ-OPEN-* remain OPEN; no live ship / public flip."
@@ -196,11 +221,14 @@ PY
 } > "$BUILD/with_header.tex"
 mv "$BUILD/with_header.tex" "$PAPER/A_Unified_Theoretical_Framework_for_LENR.tex"
 
+JOB="A_Unified_Theoretical_Framework_for_LENR_submission"
 (
   cd "$PAPER"
   set +e
-  xelatex -interaction=nonstopmode A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex1.log"
-  xelatex -interaction=nonstopmode A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex2.log"
+  xelatex -interaction=nonstopmode -jobname="$JOB" \
+    A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex1.log"
+  xelatex -interaction=nonstopmode -jobname="$JOB" \
+    A_Unified_Theoretical_Framework_for_LENR.tex >"$BUILD/xelatex2.log"
   set -e
   if rg -q 'Fatal error|Emergency stop' "$BUILD/xelatex2.log"; then
     echo "XeLaTeX failed:" >&2
@@ -212,10 +240,7 @@ mv "$BUILD/with_header.tex" "$PAPER/A_Unified_Theoretical_Framework_for_LENR.tex
     rg -n 'Undefined control sequence' -A2 "$BUILD/xelatex2.log" | head -30 >&2
     exit 1
   fi
-  rm -f A_Unified_Theoretical_Framework_for_LENR.aux \
-        A_Unified_Theoretical_Framework_for_LENR.log \
-        A_Unified_Theoretical_Framework_for_LENR.out \
-        A_Unified_Theoretical_Framework_for_LENR.toc
+  rm -f "${JOB}.aux" "${JOB}.log" "${JOB}.out" "${JOB}.toc"
   echo "Overfull summary:"
   rg -n 'Overfull \\hbox \(([0-9.]+)pt' "$BUILD/xelatex2.log" || echo "(none > threshold logged)"
   # Also show any overfulls over 5pt
@@ -233,5 +258,5 @@ print("overfull >=5pt:", rows[:20] if rows else "none")
 PY
 )
 
-echo "PDF: $PAPER/A_Unified_Theoretical_Framework_for_LENR.pdf"
-ls -la "$PAPER/A_Unified_Theoretical_Framework_for_LENR.pdf"
+echo "PDF: $PAPER/${JOB}.pdf"
+ls -la "$PAPER/${JOB}.pdf"

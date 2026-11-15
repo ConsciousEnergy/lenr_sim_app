@@ -3,6 +3,12 @@
 Scores chemical/null vs two_body vs trapped_state vs phonon_cascade vs three_body
 under explicit priors. Occurrence-anchored priors apply when Miles-class lab
 data are present. Never emits LENR_PROVED or P(LENR)=x% as a fact of nature.
+
+SNR / significance honesty:
+- ``null_excess_falsified`` uses exploratory SNR ≥ 3 (not discovery-grade).
+- Paper discovery bar is S_heat = Q/σ_Q ≥ 5 — see
+  ``calorimetry_significance.DISCOVERY_GRADE_SIGMA`` /
+  ``discovery_grade_eligible`` (analytics flag only; never closes EQ-OPEN-*).
 """
 from __future__ import annotations
 
@@ -252,6 +258,8 @@ def evaluate_determination(
     snr = None
     if sigma_q_f is not None and sigma_q_f > 0 and power_w is not None:
         snr = abs(power_w) / sigma_q_f
+    # Exploratory SNR≥3 (Oracle B). Distinct from discovery-grade S_heat≥5
+    # in calorimetry_significance — do not treat this as ≥5σ proof.
     null_excess_falsified = (
         miles_in_band
         and snr is not None

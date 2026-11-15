@@ -5,16 +5,85 @@
 | Format | Path |
 |--------|------|
 | Markdown | [`A_Unified_Theoretical_Framework_for_LENR.md`](./A_Unified_Theoretical_Framework_for_LENR.md) (synced from [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](../../../../docs/A_Unified_Theoretical_Framework_for_LENR.md)) |
-| Plain text | [`A_Unified_Theoretical_Framework_for_LENR.txt`](./A_Unified_Theoretical_Framework_for_LENR.txt) |
-| LaTeX | [`A_Unified_Theoretical_Framework_for_LENR.tex`](./A_Unified_Theoretical_Framework_for_LENR.tex) — **full Part 1 manuscript** (pandoc + [`academic.latex`](./academic.latex); rebuild via [`build_pdf.sh`](./build_pdf.sh)); OPEN/ENG stubs remain under [`../latex/`](../latex/) |
-| PDF | [`A_Unified_Theoretical_Framework_for_LENR.pdf`](./A_Unified_Theoretical_Framework_for_LENR.pdf) — submission-quality XeLaTeX build of Part 1 (title + subtitle *Coupling is all you need*, authors, abstract, honesty footnotes; Part 2 escaped-LaTeX appendix excluded) |
+| Plain text | [`A_Unified_Theoretical_Framework_for_LENR.txt`](./A_Unified_Theoretical_Framework_for_LENR.txt) (byte twin of the Markdown) |
+| HTML | [`A_Unified_Theoretical_Framework_for_LENR.html`](./A_Unified_Theoretical_Framework_for_LENR.html) — Conscious Energies branded, KaTeX pre-rendered (`build_branded.py`) |
+| LaTeX | [`A_Unified_Theoretical_Framework_for_LENR.tex`](./A_Unified_Theoretical_Framework_for_LENR.tex) — **unified manuscript** (pandoc + [`academic.latex`](./academic.latex); rebuild via [`build_pdf.sh`](./build_pdf.sh)); OPEN/ENG stubs remain under [`../latex/`](../latex/) |
+| PDF (branded) | [`A_Unified_Theoretical_Framework_for_LENR.pdf`](./A_Unified_Theoretical_Framework_for_LENR.pdf) — Chrome print of branded HTML (full unified manuscript) |
+| PDF (submission) | [`A_Unified_Theoretical_Framework_for_LENR_submission.pdf`](./A_Unified_Theoretical_Framework_for_LENR_submission.pdf) — XeLaTeX submission build (title + subtitle *Coupling is all you need*; same body as MD) |
 | Lean crosswalk | [`PaperCrosswalk.lean`](./PaperCrosswalk.lean) (authoritative build: [`formalization/lean/LenrFormal/PaperCrosswalk.lean`](../../../../formalization/lean/LenrFormal/PaperCrosswalk.lean)) |
 
-**2026-11-10 PDF submission build.** Pack `.tex` expanded from short skeleton → compileable full Part 1 manuscript via pandoc from the canonical MD (Part 1 only), academic `article` class template, XeLaTeX. Committed PDF ≈ 0.27 MB / ~40 pages. Does **not** close `EQ-OPEN-*`, set `lenr_proved`, or imply live ship / public flip.
+**2026-11-12 unified single-document structure.** Removed the Document Structure / Reconciliation Note, retired the dual Part 1 / Part 2 layout, and deleted the archival LaTeX-export appendix (~584 lines of overlapping content). One continuous outline: Abstract → §§1–8 → References. Submission and branded PDFs now share the same manuscript body; `build_pdf.sh` and `verify_paper.py` no longer split on a Part 1 boundary. Companion software train referenced in the paper: **0.3.9-beta** (`PaperCrosswalk.lean` unchanged). Still **no** OPEN closures; `lenr_proved` false; bands unchanged (tunneling \(10^{3}\)–\(10^{5}\); Casimir \(-1.3\,\mathrm{mN}\); Miles \(24\pm4\,\mathrm{MeV}\)); no app version-marker bump / live ship.
+
+**2026-11-10 PDF submission build.** Pack `.tex` expanded from short skeleton → compileable full manuscript via pandoc from the canonical MD, academic `article` class template, XeLaTeX. Committed PDF ≈ 0.27 MB / ~40 pages. Does **not** close `EQ-OPEN-*`, set `lenr_proved`, or imply live ship / public flip.
 
 **2026-11-11 EQ-OPEN peer-review refresh.** Part 1 MD/TXT + Lean `PaperCrosswalk` synced to EQ-OPEN bound swarm honesty (#356/#350): §5A BOUNDED/form-/class-DISPROVEN/GAP language; methods epistemic map; `paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review`. Pack TEX/PDF rebuilt via `build_pdf.sh` on the same PR. Still **no** OPEN closures; `lenr_proved` false; hydro≠nuclear; no version-marker bump / live ship.
 
 **2026-11-11 multidisciplinary coherence pass.** Part 1 prose claim-tier voice aligned (academic + experimental + software): §5.2 retitled to reported/contested correlations; experimental vs modelled vs aspirational labels tightened; Pyyhtiä kept beside Taleyarkhan/Mulnix/SPAWAR without nuclear overclaim; Lean `paperRevision=v0.3.7-beta-2026-11-11-coherence`; formats list includes PDF. Still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship.
+
+
+**2026-11-11 Part 2 appendix formatting (structure only).** Canonical MD Part 2 escaped-LaTeX appendix normalized to Markdown math via Part-2-only [`normalize_appendix.py`](./normalize_appendix.py). Part 1 sha256 unchanged vs `origin/main` (`33c7796ac9e8a36b42a00d6592fd122188990161d470354ffc3e4312149291af`). No wording changes in Part 2 (word-level markup-stripped diff empty aside from `\cite{key}` → `[Author Year]` labels). Reconciliation note sentence that Part 2 “may render poorly in Markdown viewers” is **retained as written** (now historically stale after normalization; flagged, not edited). Branded HTML/PDF builders + [`verify_paper.py`](./verify_paper.py) + [`build_all.sh`](./build_all.sh) committed. Submission PDF moved to `_submission.pdf` so it no longer collides with the branded `.pdf`. Still **no** OPEN closures; `lenr_proved` false; no version-marker bump / live ship.
+
+### Phase 1 formatting fixes (2026-11-12)
+
+Part 1 only: 14 numeric `\[n,m\]` bibliography escapes → plain `[n,m]` in canonical MD + pack twins (display math `\[...\]` unchanged; `re.S` disabled on citation passes). Part 2: removed stray `\appendix` before “Mathematical Symbols…”. Submission: `newunicodechar` map in [`academic.latex`](./academic.latex) for Greek/superscripts/subscripts; Miles \(24\pm4\,\mathrm{MeV}\) in honesty block + template footnotes. HTML: KaTeX CDN **0.16.47** (pinned in `package.json`); mobile/wide-eq overflow CSS. Repro: [`requirements.txt`](./requirements.txt) + `.venv-paper` in [`build_all.sh`](./build_all.sh). Part 1 sha256 (post cite fix): `59f8bf5a6d33257576877ab0ef6fde685cfd39b95fbd98694ba7f24af1ca82bd`. Still **no** OPEN closures; `lenr_proved` false.
+
+### verify_paper.py (2026-11-12)
+
+```
+=== verify_paper.py ===
+ALL CHECKS PASSED
+```
+
+(Full log: `build_all.sh` → step 5; includes zero `\appendix`, zero numeric Part 1 cite escapes, zero XeLaTeX Missing character, Miles band in TEX + submission PDF, 658/658 HTML math fidelity.)
+
+### verify_paper.py (2026-11-11)
+
+```
+=== verify_paper.py ===
+PAPER=/agent/repos/lenr_sim_app/LENR_SIM_APP_v2/docs/v0.3.7-beta/paper
+OK: MD equals TXT (byte twins)
+OK: pack MD equals canonical docs/ MD
+Part1 sha256 origin/main: 33c7796ac9e8a36b42a00d6592fd122188990161d470354ffc3e4312149291af
+Part1 sha256 current:     33c7796ac9e8a36b42a00d6592fd122188990161d470354ffc3e4312149291af
+OK: Part 1 sha256 equals origin/main
+OK: MD has zero \section
+OK: MD has zero \subsection
+OK: MD has zero \item
+OK: MD has zero \textbf
+OK: MD has zero \begin{
+OK: MD has zero \cite{
+OK: MD has zero \\cmd double-escape
+OK: MD has zero bare $ outside math
+source math spans: 658
+HTML data-tex annotations: 658
+Allowed unit merges:
+  - \(tex\) UNIT \(^{n|/n}\) → single inline math with \mathrm{UNIT}
+  - \(tex\) \(^{n}\) → concatenated exponent on prior atom
+  - \(10^{a}\)–\(10^{b}\) → single range span with \text{–}
+OK: every HTML TeX annotation maps 1:1 to a source math span
+OK: zero katex-error nodes
+OK: HTML visible text has zero \item
+OK: HTML visible text has zero \textbf
+OK: HTML visible text has zero \cite{
+OK: HTML visible text has zero \subsection
+OK: HTML visible text has zero \section
+OK: HTML visible text has zero \begin{
+OK: TEX has zero numeric-only display math
+OK: XeLaTeX log has zero fatal/emergency errors
+OK: XeLaTeX log has zero undefined control sequences
+OK: branded PDF text has zero raw LaTeX structural commands
+OK: submission PDF text has zero raw LaTeX structural commands
+OK: lenr_proved false language present
+OK: band present: tunneling 10^3–10^5
+OK: band present: Casimir 1.3 mN
+OK: band present: Miles 24±4 MeV
+OK: untouched: LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/PaperCrosswalk.lean
+OK: untouched: LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json
+OK: page screenshots present: 113 PNGs in /tmp/lenr-paper-verify-shots
+=== summary ===
+ALL CHECKS PASSED
+```
+
 
 ## Hard invariants
 

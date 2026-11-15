@@ -1,5 +1,5 @@
-% Auto-generated full Part-1 manuscript (pandoc + academic.latex).
-% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (Part 1 only; Part 2 appendix excluded).
+% Auto-generated unified manuscript (pandoc + academic.latex).
+% Source: docs/A_Unified_Theoretical_Framework_for_LENR.md (single-document structure).
 % Build: ./build_pdf.sh  (requires pandoc + XeLaTeX + xurl).
 % Overflow fix: breakable \texttt via \allowbreak; wrapped AI contributor block; secnumdepth=-1.
 % Epistemic: lenr_proved=false; all EQ-OPEN-* remain OPEN; no live ship / public flip.
@@ -13,6 +13,28 @@
 \setsansfont{Latin Modern Sans}
 \setmonofont[Scale=0.90]{Latin Modern Mono}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{newunicodechar}
+\newunicodechar{θ}{\ensuremath{\theta}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{δ}{\ensuremath{\delta}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{π}{\ensuremath{\pi}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{ρ}{\ensuremath{\rho}}
+\newunicodechar{ν}{\ensuremath{\nu}}
+\newunicodechar{κ}{\ensuremath{\kappa}}
+\newunicodechar{≠}{\ensuremath{\neq}}
+\newunicodechar{∝}{\ensuremath{\propto}}
+\newunicodechar{⁻}{\textsuperscript{-}}
+\newunicodechar{⁰}{\textsuperscript{0}}
+\newunicodechar{²}{\textsuperscript{2}}
+\newunicodechar{⁴}{\textsuperscript{4}}
+\newunicodechar{⁵}{\textsuperscript{5}}
+\newunicodechar{₀}{\textsubscript{0}}
+\newunicodechar{₂}{\textsubscript{2}}
+\newunicodechar{∧}{\ensuremath{\wedge}}
+\newunicodechar{↔}{\ensuremath{\leftrightarrow}}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
@@ -50,9 +72,11 @@
 \title{A Unified Theoretical and Mathematical Framework for Low-Energy
 Nuclear Reactions (LENR)\\\large\textit{Coupling is all you need}}
 \author{Diadon Acs (lead, Conscious Energies)}
-\date{2026-02-14 (revised 2026-11-11, EQ-OPEN peer-review refresh;~prior
-2026-11-11 multidisciplinary coherence;~2026-11-10 Pyyhtiä CR-39 cite +
-WS findings;~2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-12, unified single-document structure
+/ companion software 0.3.9-beta;~prior 2026-11-11 EQ-OPEN peer-review
+refresh;~2026-11-11 multidisciplinary coherence;~2026-11-10 Pyyhtiä
+CR-39 cite + WS findings;~2026-11-05 honesty sync;~2026-09-25,
+v0.3.7-beta)}
 
 \begin{document}
 \maketitle
@@ -116,6 +140,8 @@ All five \texttt{EQ-OPEN-*} obligations remain OPEN
 (\texttt{EQ-OPEN-MEV-01}, \texttt{EQ-OPEN-RAD-01}, \texttt{EQ-OPEN-RATE-01},
 \texttt{EQ-OPEN-EC-01}, \texttt{EQ-OPEN-YIELD-01}).
 Cavitation--collapse is modelled enhancement / contested hydro only.
+Quantitative bands unchanged: tunneling $10^{3}$--$10^{5}$;
+Casimir $-1.3\,\mathrm{mN}$; Miles $24\pm4\,\mathrm{MeV}$.
 No live ship / public flip is implied by this archival PDF.
 \normalsize
 
@@ -126,7 +152,9 @@ five \texttt{EQ-OPEN-*} obligations (\texttt{EQ-OPEN-MEV-01},
 \texttt{EQ-OPEN-RAD-01}, \texttt{EQ-OPEN-RATE-01},
 \texttt{EQ-OPEN-EC-01}, \texttt{EQ-OPEN-YIELD-01}) remain \textbf{OPEN}.
 Cavitation--collapse hydrodynamics is \textbf{modelled enhancement /
-contested hydro}, not nuclear-rate proof.
+contested hydro}, not nuclear-rate proof. No quantitative band changes
+(tunneling \(10^{3}\)--\(10^{5}\); Casimir \(-1.3\,\mathrm{mN}\); Miles
+\(24\pm4\,\mathrm{MeV}\)).
 \end{quote}
 
 \hypertarget{introduction}{%
@@ -145,14 +173,14 @@ fission. Over the past several decades, experiments have reported:
 \tightlist
 \item
   \textbf{Anomalous Heat Generation:} Measured energy outputs exceeding
-  what chemical processes alone can produce \[1,4\].\\
+  what chemical processes alone can produce {[}1,4{]}.\\
 \item
   \textbf{Isotopic Transmutations:} Conversion of elements without the
-  high-energy nuclear by-products usually observed \[2,5\].\\
+  high-energy nuclear by-products usually observed {[}2,5{]}.\\
 \item
   \textbf{Minimal Radiation:} Comparatively negligible ionizing
   radiation despite \emph{reported} nuclear-scale heat / isotopic
-  correlations \[3,6\]---reports that remain disputed and do not by
+  correlations {[}3,6{]}---reports that remain disputed and do not by
   themselves establish nuclear events (\texttt{EQ-OPEN-RAD-01} stays
   OPEN).
 \end{itemize}
@@ -163,11 +191,11 @@ However, the field faces two major hurdles:
 \tightlist
 \item
   \textbf{Reproducibility:} Varying experimental conditions lead to
-  inconsistent results across different laboratories \[3,15\].\\
+  inconsistent results across different laboratories {[}3,15{]}.\\
 \item
   \textbf{Theoretical Fragmentation:} Absence of a unifying theoretical
   and mathematical framework that convincingly explains the diverse
-  observed phenomena \[18,22\].
+  observed phenomena {[}18,22{]}.
 \end{itemize}
 
 Given LENR's contested energy relevance, resolving these issues remains
@@ -214,7 +242,7 @@ energy identity only---not a nature proof that RM mediates LENR.
 
 \textbf{Definition:} Rydberg Matter is a phase in which atoms or
 molecules occupy highly excited electronic states with extended orbitals
-\[21\].
+{[}21{]}.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -261,14 +289,14 @@ with wavefunctions that have non-negligible amplitude at nuclear length
 scales. These ``extended electronic states'' arise from band-structure
 effects, surface states, and hybridization in the condensed matter
 environment. (Citation correction: an earlier draft cited reference
-\[12\] (Meng et al.~2013) here, but that work concerns \emph{halo
+{[}12{]} (Meng et al.~2013) here, but that work concerns \emph{halo
 nuclei}---nuclei with weakly bound nucleons extending beyond the nuclear
 core---and does \textbf{not} support a claim about electrons. Reference
-\[12\] is therefore \emph{not} cited as evidence for delocalized
+{[}12{]} is therefore \emph{not} cited as evidence for delocalized
 interface electrons; this concept rests instead on standard
 condensed-matter band-structure and surface-state physics, and is
 treated here as a model construct whose overlap magnitude is bounded in
-Section 5.1 rather than asserted from \[12\].)
+Section 5.1 rather than asserted from {[}12{]}.)
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -300,11 +328,11 @@ Section 5.1 rather than asserted from \[12\].)
    P_{\text{overlap}} \approx (9.45 \times 10^{-6})^3 \approx 8.5 \times 10^{-16}
    \]
 
-  This is consistent with the Part 2 LaTeX analysis of this paper, which
-  uses \(\sim 1\) fm scales and obtains \(P \sim 10^{-10}\) to
-  \(10^{-12}\) per event (the difference reflecting different
-  assumptions about the effective wavefunction amplitude at the
-  nucleus).
+  This is consistent with an alternate fm-scale overlap estimate in the
+  same framework, which uses \(\sim 1\) fm scales and obtains
+  \(P \sim 10^{-10}\) to \(10^{-12}\) per event (the difference
+  reflecting different assumptions about the effective wavefunction
+  amplitude at the nucleus).
 
   \textbf{Ensemble scaling (order-of-magnitude only).} Individually,
   \(P_{\text{overlap}} \sim 10^{-16}\) (or \(10^{-10}\)--\(10^{-12}\)
@@ -347,7 +375,7 @@ control (\texttt{EQ-QED-HE-NEG-01}), not LENR proof.
 
 \textbf{Definition:} Charge separation at electrolyte or lattice
 interfaces can form high electric fields in thin double layers
-\[23,33\].
+{[}23,33{]}.
 
 \begin{itemize}
 \tightlist
@@ -538,7 +566,7 @@ momentum, coherent excitation, or effective mass renormalization).
 \subsubsection{2.5 Casimir Effect}\label{casimir-effect}}
 
 \textbf{Definition:} Quantum vacuum fluctuations produce an attractive
-force between closely spaced conductive or dielectric surfaces \[17\].
+force between closely spaced conductive or dielectric surfaces {[}17{]}.
 
 \begin{itemize}
 \item
@@ -647,7 +675,7 @@ may extend to the electronic scale.
 (BEC)}\label{bose-einstein-condensation-bec}}
 
 \textbf{Definition:} BEC occurs when particles coalesce into a single
-quantum state, enabling coherent interactions \[25\].
+quantum state, enabling coherent interactions {[}25{]}.
 
 \begin{itemize}
 \item
@@ -746,7 +774,7 @@ Process}\label{oppenheimer-phillips-process}}
 
 \textbf{Definition:} A mechanism where a deuteron interacts with a
 nucleus at low energies, resulting in neutron capture and proton
-emission \[16\].
+emission {[}16{]}.
 
 \[
 d + {}^{A}_{Z}\text{X} \longrightarrow {}^{A+1}_{Z}\text{Y} + p.
@@ -1055,7 +1083,7 @@ deficits---not affirmative LENR
 ({\ttfamily docs/\allowbreak{}FORMALIZATION/\allowbreak{}FORMAL\_\allowbreak{}PROOF\_\allowbreak{}STATUS.\allowbreak{}md}).
 
 \textbf{Context:} During electrolysis, microbubbles can form and then
-collapse, concentrating energy \[26\]. Pyyhtiä et al.~(2026)
+collapse, concentrating energy {[}26{]}. Pyyhtiä et al.~(2026)
 (\texttt{pyyhtia2026}) provide OA experimental support that HER-driven
 nanobubble cavitation damages CR-39 and confounds SPAWAR-class
 pit=nuclear detector interpretations (pits without Pd and/or D₂O under
@@ -2481,8 +2509,9 @@ evidence-backed closure PR. Theorem names that mention ``closure'' prove
 non-closure or contrapositives under stated caps/classes; none
 discharges an obligation.
 
-\textbf{Multi-format paper pack (v0.3.7-beta).} Academic archival copies
-of this manuscript and the Lean section→theorem crosswalk ship as:
+\textbf{Multi-format paper pack (companion software train 0.3.9-beta;
+paper pack path v0.3.7-beta).} Academic archival copies of this
+manuscript and the Lean section→theorem crosswalk ship as:
 
 \begin{itemize}
 \tightlist
@@ -3123,7 +3152,5 @@ These \texttt{AuthorYear} keys resolve claims in the companion app and
   reactions in LENR: review of experimental results (LENR Academy
   curated subset).
 \end{itemize}
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \end{document}
