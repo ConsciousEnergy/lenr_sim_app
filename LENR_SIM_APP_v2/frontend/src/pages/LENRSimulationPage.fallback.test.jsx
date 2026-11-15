@@ -4,6 +4,7 @@
  */
 import {
   generateFallbackResults,
+  generateTimeSeriesFromPhysics,
   pickLenrReactionRate,
 } from './LENRSimulationPage';
 
@@ -88,5 +89,29 @@ describe('pickLenrReactionRate', () => {
     expect(pickLenrReactionRate({ rate: 42 })).toBe(42);
     expect(pickLenrReactionRate({})).toBeNull();
     expect(pickLenrReactionRate(null)).toBeNull();
+  });
+});
+
+describe('generateTimeSeriesFromPhysics', () => {
+  test('includes short-run endpoints at 0 and totalSimulationTime', () => {
+    const series = generateTimeSeriesFromPhysics(
+      { total_enhancement: 10 },
+      { total_reaction_rate_s: 0 },
+      { timeStepSize: 0.25, totalSimulationTime: 1, temperature: 300 },
+    );
+    expect(series.time[0]).toBe(0);
+    expect(series.time.at(-1)).toBeCloseTo(1, 5);
+    expect(series.rate_used_toy_default).toBe(false);
+    expect(series.enhancement_clipped_to_ceiling).toBe(false);
+  });
+
+  test('flags silent ceiling clipping of schematic enhancement series', () => {
+    const series = generateTimeSeriesFromPhysics(
+      { total_enhancement: 1e6 },
+      { total_reaction_rate_s: 1 },
+      { timeStepSize: 0.1, totalSimulationTime: 10, temperature: 300 },
+    );
+    expect(series.enhancement_clipped_to_ceiling).toBe(true);
+    expect(Math.max(...series.enhancement)).toBeLessThanOrEqual(1e5);
   });
 });

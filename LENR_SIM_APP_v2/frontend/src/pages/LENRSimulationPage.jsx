@@ -92,13 +92,19 @@ export function pickLenrReactionRate(reactionRateResult) {
   return Number(raw);
 }
 
-function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
-  const timeSteps = params.totalSimulationTime / params.timeStepSize || 100;
-  const dt = params.timeStepSize || 0.1;
+export function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
+  const dtRequested = Math.max(Number(params.timeStepSize) || 0.1, 1e-6);
+  const totalTime = Math.max(Number(params.totalSimulationTime) || 10, dtRequested);
+  const idealSteps = Math.floor(totalTime / dtRequested) + 1;
+  // Cap sample count but always include t=0 and t=totalTime endpoints.
+  const timeSteps = Math.max(2, Math.min(500, idealSteps));
+  const dt = timeSteps > 1 ? totalTime / (timeSteps - 1) : totalTime;
   // Use returned rate when present (including 0). Toy 1e10 only for missing API field.
   const baseRate = pickLenrReactionRate(reactionRate);
   const rateScalar = baseRate == null ? 1e10 : baseRate;
   const usedToyDefault = baseRate == null;
+  const baseEnhancement = enhancement?.total_enhancement || 1;
+  let enhancementClipped = false;
   
   const timePoints = [];
   const enhancementHistory = [];
@@ -110,14 +116,12 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     // Illustrative variation for UI series — not measured time series
     const tempVariation = 1 + 0.05 * Math.sin(2 * Math.PI * t / 5);
     const rampUp = 1 - Math.exp(-t / 2);
+    const rawEnhancement = baseEnhancement * rampUp * tempVariation;
+    const cappedEnhancement = Math.min(SCHEMATIC_ENHANCEMENT_CEILING, rawEnhancement);
+    if (cappedEnhancement < rawEnhancement) enhancementClipped = true;
     
     timePoints.push(t);
-    enhancementHistory.push(
-      Math.min(
-        SCHEMATIC_ENHANCEMENT_CEILING,
-        (enhancement?.total_enhancement || 1) * rampUp * tempVariation,
-      ),
-    );
+    enhancementHistory.push(cappedEnhancement);
     reactionRateHistory.push(rateScalar * rampUp * tempVariation);
     temperatureHistory.push((params.temperature || 300) * tempVariation);
   }
@@ -131,6 +135,8 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     data_origin: 'api_scalars_with_client_time_series',
     rate_units: 'reactions_per_s',
     rate_used_toy_default: usedToyDefault,
+    enhancement_clipped_to_ceiling: enhancementClipped,
+    duration_s: totalTime,
   };
 }
 
@@ -429,6 +435,9 @@ function LENRSimulationPage() {
               'Chart ramps are schematic interpolations of API scalars — not measured lab traces',
               nestedSeries.rate_used_toy_default
                 ? 'API omitted total_reaction_rate_s; series used toy rate default 1e10'
+                : null,
+              nestedSeries.enhancement_clipped_to_ceiling
+                ? `Schematic enhancement series clipped to governance ceiling ${SCHEMATIC_ENHANCEMENT_CEILING}`
                 : null,
             ].filter(Boolean),
           },
@@ -985,7 +994,34 @@ function LENRSimulationPage() {
           <Typography variant="body2">
             Enhancement/rate scalars from the physics API. Plotted Energy / Temperature /
             Reaction Rate charts are schematic client ramps of those scalars (via{' '}
-            <code>summary</code>), not measured lab traces.
+            <code>summary</code> / nested series), not measured lab traces.
+          </Typography>
+        </Alert>
+      )}
+      {comparisonData?.provenance === SCHEMATIC_FALLBACK_PROVENANCE && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          data-testid="lenr-comparison-schematic-banner"
+        >
+          <Typography variant="body2">
+            Comparison series provenance: <code>schematic_fallback</code> — not the same
+            as a physics-API primary run. Do not treat comparison curves as laboratory
+            corroboration.
+          </Typography>
+        </Alert>
+      )}
+      {comparisonData?.provenance === 'physics_api_with_schematic_viz' &&
+        simulationData?.provenance === SCHEMATIC_FALLBACK_PROVENANCE && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          data-testid="lenr-mixed-provenance-banner"
+        >
+          <Typography variant="body2">
+            Mixed provenance: primary is schematic fallback while comparison used API
+            scalars (still with schematic chart ramps). Read the curves as model-output
+            UI aids only.
           </Typography>
         </Alert>
       )}
