@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Build helpers for the Unified Theory Paper branded HTML/PDF pack",
   "dependencies": {
-    "katex": "0.16.47",
-    "puppeteer-core": "^23.11.1"
+    "katex": "0.19.1",
+    "puppeteer-core": "^25.17.0"
   }
 }

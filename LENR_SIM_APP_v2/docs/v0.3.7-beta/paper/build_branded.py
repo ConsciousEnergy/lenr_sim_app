@@ -578,7 +578,7 @@ def build_html(meta: dict, body_html: str, toc_html: str) -> str:
 </script>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.css" crossorigin="anonymous"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap"/>
 
 <style>
@@ -1068,7 +1068,7 @@ section.abstract h2 {{
     }});
   }}
   var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js';
+  s.src = 'https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.js';
   s.crossOrigin = 'anonymous';
   s.onload = paint;
   s.onerror = paint;
