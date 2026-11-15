@@ -178,7 +178,9 @@ updates:
       - dependency-name: "tailwindcss"
         update-types:
           - "version-update:semver-major"
-      # React Router 7 is a dedicated data-router migration. Stay on 6.x (#150).
+      # React Router 7.18.5+ is the security baseline (GHSA-wrjc-x8rr-h8h6 /
+      # GHSA-337j-9hxr-rhxg). Ignore further majors (8+) until an explicit
+      # data-router migration; patches/minors on 7.x still open.
       - dependency-name: "react-router-dom"
         update-types:
           - "version-update:semver-major"
