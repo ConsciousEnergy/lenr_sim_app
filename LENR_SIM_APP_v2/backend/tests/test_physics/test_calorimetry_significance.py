@@ -67,6 +67,7 @@ def test_discovery_grade_eligible_at_five_sigma_only() -> None:
         sigma_q_w=0.02,
         moe_provenance="literature_reported",
         moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
     )
     assert below["s_heat"] == 4.0
     assert below["discovery_grade_eligible"] is False
@@ -77,11 +78,27 @@ def test_discovery_grade_eligible_at_five_sigma_only() -> None:
         sigma_q_w=0.02,
         moe_provenance="literature_reported",
         moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
     )
     assert at_bar["s_heat"] == 5.0
     assert at_bar["discovery_grade_eligible"] is True
     assert DISCOVERY_GRADE_SIGMA == 5.0
     assert EXPLORATORY_NULL_FALSIFY_SNR == 3.0
+
+
+def test_unverified_pairing_blocks_discovery_even_when_s_heat_high() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.52,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=False,
+    )
+    assert report["s_heat"] == 26.0
+    assert report["exploratory_snr_eligible"] is True
+    assert report["discovery_grade_eligible"] is False
+    assert report["moe_sigma_q_pairing_verified"] is False
+    assert report["lenr_proved"] is False
 
 
 def test_refuse_fabricated_literature_reported_without_citations() -> None:
@@ -154,6 +171,7 @@ def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
         literature_id="miles-1993",
         q_source="literature_peak_excess_power_W",
         q_is_seed_scale=False,
+        moe_sigma_q_pairing_verified=True,
     )
     assert report["s_heat"] == 26.0
     assert report["discovery_grade_eligible"] is True
@@ -166,14 +184,15 @@ def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
     assert {row["id"] for row in register} == set(OPEN_IDS)
 
 
-def test_miles_uses_literature_peak_not_seed_scale_q() -> None:
+def test_miles_peak_exploratory_until_sigma_pairing_verified() -> None:
+    """Miles ±0.02 is not verified 1σ for peak 0.52 — exploratory S_heat only."""
     miles = next(
         row for row in literature_records() if row["literature_id"] == "miles-1993"
     )
-    assert miles["moe_provenance"] == "literature_reported"
     assert float(miles["sigma_Q_W"]) == 0.02
     assert float(miles["excess_heat_watts"]) == 1.0
     assert float(miles["parameters"]["literature_peak_excess_power_W"]) == 0.52
+    assert miles.get("moe_sigma_q_pairing_verified") is not True
 
     seeded = next(
         row
@@ -181,14 +200,15 @@ def test_miles_uses_literature_peak_not_seed_scale_q() -> None:
         if row["literature_id"] == "miles-1993"
     )
     assert float(seeded["sigma_Q_W"]) == 0.02
-    assert seeded["moe_provenance"] == "literature_reported"
 
     report = discovery_grade_from_literature_record(miles)
     assert report["q_source"] == "literature_peak_excess_power_W"
     assert report["q_is_seed_scale"] is False
     assert report["excess_power_w"] == 0.52
     assert report["s_heat"] == 26.0
-    assert report["discovery_grade_eligible"] is True
+    assert report["exploratory_snr_eligible"] is True
+    assert report["moe_sigma_q_pairing_verified"] is False
+    assert report["discovery_grade_eligible"] is False
     assert report["lenr_proved"] is False
     assert all(v == "OPEN" for v in report["eq_open_status"].values())
 
@@ -244,30 +264,36 @@ def test_deninno_instrument_precision_exploratory_only() -> None:
     assert all(v == "OPEN" for v in den_report["eq_open_status"].values())
 
 
-def test_kasagi_uses_reported_q_ex_with_literature_reported_sigma() -> None:
-    kasagi_rows = [
+def test_kasagi_nicu_same_results_envelope_pairing_can_discover() -> None:
+    """NiCu results carry q_ex_w + sigma_Q_W together → pairing verified."""
+    nicu = next(
         row
         for row in iccf27_literature_records()
-        if row["literature_id"].startswith("kasagi-")
-    ]
-    assert len(kasagi_rows) == 2
-    for row in kasagi_rows:
-        assert float(row["sigma_Q_W"]) == 0.08
-        assert row["moe_provenance"] == "literature_reported"
-        report = discovery_grade_from_literature_record(row)
-        assert report["q_is_seed_scale"] is False
-        assert report["q_source"] in {
-            "results.q_ex_w",
-            "excess_heat_watts_reported",
-        }
-        assert report["s_heat"] is not None
-        assert report["s_heat"] >= DISCOVERY_GRADE_SIGMA
-        assert report["discovery_grade_eligible"] is True
-        assert report["lenr_proved"] is False
-        assert all(v == "OPEN" for v in report["eq_open_status"].values())
-    nicu = next(
-        row for row in kasagi_rows if row["literature_id"] == "kasagi-nicu-radiant-2026"
+        if row["literature_id"] == "kasagi-nicu-radiant-2026"
     )
-    nicu_report = discovery_grade_from_literature_record(nicu)
-    assert nicu_report["excess_power_w"] == 1.1
-    assert nicu_report["s_heat"] == 1.1 / 0.08
+    assert float(nicu["sigma_Q_W"]) == 0.08
+    assert nicu["moe_provenance"] == "literature_reported"
+    report = discovery_grade_from_literature_record(nicu)
+    assert report["q_source"] == "results.q_ex_w"
+    assert report["q_is_seed_scale"] is False
+    assert report["excess_power_w"] == 1.1
+    assert report["s_heat"] == 1.1 / 0.08
+    assert report["moe_sigma_q_pairing_verified"] is True
+    assert report["discovery_grade_eligible"] is True
+    assert report["lenr_proved"] is False
+    assert all(v == "OPEN" for v in report["eq_open_status"].values())
+
+
+def test_kasagi_ni_control_exploratory_without_verified_pairing() -> None:
+    ni = next(
+        row
+        for row in iccf27_literature_records()
+        if row["literature_id"] == "kasagi-ni-radiant-2026"
+    )
+    report = discovery_grade_from_literature_record(ni)
+    assert report["q_is_seed_scale"] is False
+    assert report["s_heat"] == 0.9 / 0.08
+    assert report["exploratory_snr_eligible"] is True
+    assert report["moe_sigma_q_pairing_verified"] is False
+    assert report["discovery_grade_eligible"] is False
+    assert report["lenr_proved"] is False

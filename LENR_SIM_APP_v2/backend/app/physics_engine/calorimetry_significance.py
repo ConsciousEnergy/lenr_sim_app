@@ -15,6 +15,8 @@ Hard honesty:
 - instrument precision / floor MoE is exploratory only (not discovery)
 - literature adapter prefers measured Q (e.g. ``literature_peak_excess_power_W``);
   seed-scale ``excess_heat_watts`` alone does not grant discovery
+- discovery requires verified Q↔σ_Q pairing (``moe_sigma_q_pairing_verified``
+  or same-results envelope); Miles peak + follow-on ±0.02 stays exploratory
 - Oracle B null-falsify SNR≥3 remains **exploratory**, distinct from ≥5σ
 """
 
@@ -149,21 +151,47 @@ def resolve_measured_excess_power_w(
     params = record.get("parameters") or {}
     results = record.get("results") or {}
     bags: Tuple[Mapping[str, Any], ...] = (record, params, results)
-    for key in (
-        "literature_peak_excess_power_W",
-        "measured_excess_power_W",
-        "excess_heat_watts_reported",
-    ):
+    for key in ("literature_peak_excess_power_W", "measured_excess_power_W"):
         for bag in bags:
             value = bag.get(key)
             if value is not None:
                 return float(value), key, False
+    # Prefer results.q_ex_w before parameters.*_reported so same-envelope σ pairs.
     if results.get("q_ex_w") is not None:
         return float(results["q_ex_w"]), "results.q_ex_w", False
+    for bag in bags:
+        value = bag.get("excess_heat_watts_reported")
+        if value is not None:
+            return float(value), "excess_heat_watts_reported", False
     seed = record.get("excess_heat_watts")
     if seed is not None:
         return float(seed), "excess_heat_watts", True
     return None, None, False
+
+
+def is_sigma_q_pairing_verified(
+    record: Mapping[str, Any],
+    *,
+    q_source: Optional[str] = None,
+) -> bool:
+    """True only when Q and σ_Q are an explicitly verified measurement pair.
+
+    Explicit ``moe_sigma_q_pairing_verified`` wins. Otherwise, same-results
+    envelope with both ``q_ex_w`` and ``sigma_Q_W`` counts as verified.
+    Miles peak + follow-on ±0.02 without the flag stays unverified.
+    """
+    bags: Tuple[Mapping[str, Any], ...] = (
+        record,
+        record.get("parameters") or {},
+        record.get("results") or {},
+    )
+    for bag in bags:
+        if "moe_sigma_q_pairing_verified" in bag:
+            return bool(bag["moe_sigma_q_pairing_verified"])
+    results = record.get("results") or {}
+    if q_source == "results.q_ex_w" and results.get("sigma_Q_W") is not None:
+        return True
+    return False
 
 
 def discovery_grade_analytics(
@@ -178,6 +206,7 @@ def discovery_grade_analytics(
     literature_id: Optional[str] = None,
     q_source: Optional[str] = None,
     q_is_seed_scale: bool = False,
+    moe_sigma_q_pairing_verified: bool = False,
 ) -> Dict[str, Any]:
     """Compute S_heat and discovery_grade_eligible analytics flag (RORO).
 
@@ -185,10 +214,12 @@ def discovery_grade_analytics(
     - S_heat ≥ 5 (signed; deficits fail)
     - MoE provenance is ``literature_reported`` (measurement-specific total σ_Q)
     - Q is not a simulation seed-scale anchor
+    - Q↔σ_Q pairing is verified
     - provenance citation gate passes
 
     It does **not** prove LENR or close EQ-OPEN-*.
-    Instrument precision / floor may still yield exploratory S_heat.
+    Instrument precision / floor and unverified pairings may still yield
+    exploratory S_heat.
     """
     sigma = combine_sigma_q_w(
         sigma_q_w=sigma_q_w,
@@ -205,9 +236,11 @@ def discovery_grade_analytics(
         significance is not None and significance >= EXPLORATORY_NULL_FALSIFY_SNR
     )
     discovery_provenance_ok = moe_provenance in DISCOVERY_ELIGIBLE_PROVENANCE
+    pairing_ok = bool(moe_sigma_q_pairing_verified)
     discovery = (
         provenance_gate["ok"]
         and discovery_provenance_ok
+        and pairing_ok
         and not q_is_seed_scale
         and significance is not None
         and significance >= DISCOVERY_GRADE_SIGMA
@@ -219,6 +252,7 @@ def discovery_grade_analytics(
         ),
         "q_source": q_source,
         "q_is_seed_scale": bool(q_is_seed_scale),
+        "moe_sigma_q_pairing_verified": pairing_ok,
         "sigma_q_w": sigma,
         "sigma_q_statistical_w": (
             float(sigma_q_statistical_w)
@@ -247,8 +281,9 @@ def discovery_grade_analytics(
         "honesty": (
             "discovery_grade_eligible is an analytics flag only "
             "(signed S_heat≥5 with literature_reported measurement-specific "
-            "σ_Q and non-seed Q). Instrument precision/floor and seed-scale "
-            "Q stay exploratory. It does not set lenr_proved, does not close "
+            "σ_Q, verified Q↔σ pairing, and non-seed Q). Instrument "
+            "precision/floor, unverified pairings, and seed-scale Q stay "
+            "exploratory. It does not set lenr_proved, does not close "
             "EQ-OPEN-*, and does not raise claim_tier. Oracle B "
             "null_excess_falsified uses exploratory SNR≥3, distinct from "
             "this discovery-grade bar."
@@ -262,10 +297,12 @@ def moe_fields_from_record(record: Mapping[str, Any]) -> Dict[str, Any]:
     if keys is None and record.get("citation_key"):
         keys = []
     q_w, q_source, is_seed = resolve_measured_excess_power_w(record)
+    pairing = is_sigma_q_pairing_verified(record, q_source=q_source)
     return {
         "excess_power_w": q_w,
         "q_source": q_source,
         "q_is_seed_scale": is_seed,
+        "moe_sigma_q_pairing_verified": pairing,
         "sigma_q_w": record.get("sigma_Q_W"),
         "sigma_q_statistical_w": record.get("sigma_Q_statistical_W"),
         "sigma_q_systematic_w": record.get("sigma_Q_systematic_W"),
