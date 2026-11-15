@@ -31,15 +31,19 @@ ALLOWED_MOE_PROVENANCE = frozenset(
     {
         "literature_reported",
         "literature_reported_instrument_precision",
+        "literature_reported_instrument_floor",
         "model_assumption",
     }
 )
 
 #: Provenance labels that require citation keys (refuse fabricated lab MoE).
+#: ``literature_reported_instrument_floor`` is metadata-only (no sigma_Q_W)
+#: until Pin-scaled uncertainty is known — still cite-gated when present.
 CITED_MOE_PROVENANCE = frozenset(
     {
         "literature_reported",
         "literature_reported_instrument_precision",
+        "literature_reported_instrument_floor",
     }
 )
 

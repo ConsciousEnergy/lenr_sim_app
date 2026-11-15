@@ -1,8 +1,10 @@
 """B1: S_heat / σ_Q MoE + discovery_grade_eligible honesty locks.
 
-MoE numeric values come from the cite-gated hydrate (PR #406):
-Miles 0.02 literature_reported, McKubre 0.01, De Ninno 0.02 instrument,
-Kasagi 0.08. This module only computes S_heat / discovery flags.
+MoE numeric values come from the cite-gated hydrate (PR #406 tip):
+Miles 0.02 literature_reported; De Ninno 0.02 instrument_precision;
+Kasagi 0.08 literature_reported. McKubre keeps instrument floor + 0.1% Pin
+metadata only (``sigma_Q_W`` absent until Pin-scaled uncertainty is known).
+This module only computes S_heat / discovery flags.
 """
 
 from __future__ import annotations
@@ -91,9 +93,10 @@ def test_refuse_fabricated_literature_reported_without_citations() -> None:
     assert report["lenr_proved"] is False
 
 
-def test_allowed_moe_provenance_includes_instrument_precision() -> None:
+def test_allowed_moe_provenance_includes_instrument_labels() -> None:
     assert "literature_reported" in ALLOWED_MOE_PROVENANCE
     assert "literature_reported_instrument_precision" in ALLOWED_MOE_PROVENANCE
+    assert "literature_reported_instrument_floor" in ALLOWED_MOE_PROVENANCE
     assert "model_assumption" in ALLOWED_MOE_PROVENANCE
 
 
@@ -140,28 +143,37 @@ def test_miles_uses_cite_gated_literature_reported_not_model_assumption() -> Non
     assert all(v == "OPEN" for v in report["eq_open_status"].values())
 
 
-def test_mckubre_peers_use_cite_gated_literature_reported() -> None:
-    mck = next(
-        row
-        for row in literature_records()
-        if row["literature_id"] == "mckubre-sri-p13-p14-1992"
-    )
-    assert mck["moe_provenance"] == "literature_reported"
-    assert float(mck["sigma_Q_W"]) == 0.01
-    assert mck["sigma_Q_W"] != 0.1
-    assert mck["results"]["excess_heat_reproducibility"] == 0.7
-    report = discovery_grade_from_literature_record(mck)
-    assert report["s_heat"] == 1500.0
-    assert report["discovery_grade_eligible"] is True
-    assert report["lenr_proved"] is False
+def test_mckubre_peers_have_instrument_floor_metadata_not_sigma_q() -> None:
+    """McKubre: floor + relative fraction only; no published sigma_Q_W for S_heat."""
+    for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
+        mck = next(
+            row for row in literature_records() if row["literature_id"] == lit_id
+        )
+        assert "sigma_Q_W" not in mck or mck.get("sigma_Q_W") is None
+        assert float(mck["sigma_Q_instrument_floor_W"]) == 0.01
+        assert float(mck["sigma_Q_relative_fraction"]) == 0.001
+        assert mck["moe_provenance"] == "literature_reported_instrument_floor"
+        assert "mckubre2008" in mck["moe_citation_keys"]
+        if lit_id == "mckubre-sri-p13-p14-1992":
+            assert mck["results"]["excess_heat_reproducibility"] == 0.7
 
-    high = next(
-        row
-        for row in literature_records()
-        if row["literature_id"] == "mckubre-high-loading-1998"
-    )
-    assert float(high["sigma_Q_W"]) == 0.01
-    assert high["moe_provenance"] == "literature_reported"
+        seeded = next(
+            row
+            for row in get_baseline_experiments()
+            if row["literature_id"] == lit_id
+        )
+        assert "sigma_Q_W" not in seeded
+        assert "sigma_Q_W" not in seeded["parameters"]
+        assert float(seeded["sigma_Q_instrument_floor_W"]) == 0.01
+        assert float(seeded["parameters"]["sigma_Q_instrument_floor_W"]) == 0.01
+
+        # Floor alone must not drive discovery_grade S_heat
+        report = discovery_grade_from_literature_record(mck)
+        assert report["sigma_q_w"] is None
+        assert report["s_heat"] is None
+        assert report["discovery_grade_eligible"] is False
+        assert report["lenr_proved"] is False
+        assert all(v == "OPEN" for v in report["eq_open_status"].values())
 
 
 def test_deninno_instrument_precision_and_kasagi_literature_reported() -> None:
