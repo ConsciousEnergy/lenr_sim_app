@@ -722,13 +722,31 @@ const LENRVisualization = ({
     const nested = timeSeriesData?.timeSeriesData;
     const cmpNested = comparisonData?.timeSeriesData;
 
-    const sampleAt = (series, index, primaryLen) => {
-      if (!series || !Array.isArray(series) || series.length === 0) return undefined;
-      if (series.length === primaryLen) return series[index];
-      // Align comparison onto primary timestamps by fractional index
-      const frac = primaryLen > 1 ? index / (primaryLen - 1) : 0;
-      const j = Math.min(series.length - 1, Math.round(frac * (series.length - 1)));
-      return series[j];
+    /**
+     * Resample comparison series onto a primary timestamp.
+     * Returns undefined outside the comparison time range (leave chart gaps).
+     */
+    const sampleAtTime = (cmpTimes, series, t) => {
+      if (!cmpTimes?.length || !series?.length) return undefined;
+      const t0 = Number(cmpTimes[0]);
+      const tN = Number(cmpTimes[cmpTimes.length - 1]);
+      if (!Number.isFinite(t) || t < t0 || t > tN) return undefined;
+      // Find bracketing indices and linearly interpolate
+      let lo = 0;
+      let hi = cmpTimes.length - 1;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (Number(cmpTimes[mid]) <= t) lo = mid;
+        else hi = mid;
+      }
+      const tLo = Number(cmpTimes[lo]);
+      const tHi = Number(cmpTimes[hi]);
+      const vLo = Number(series[lo]);
+      const vHi = Number(series[hi]);
+      if (!Number.isFinite(vLo) || !Number.isFinite(vHi)) return undefined;
+      if (tHi === tLo) return vLo;
+      const w = (t - tLo) / (tHi - tLo);
+      return vLo + (vHi - vLo) * w;
     };
 
     // Prefer explicit nested series when the page supplies them (API/fallback paths).
@@ -749,13 +767,20 @@ const LENRVisualization = ({
       );
       const rateScale = scaleMax > 0 ? scaleMax : 1;
       const comparisonSummary = comparisonData?.summary;
+      const cmpTimes = Array.isArray(cmpNested?.time) ? cmpNested.time : null;
 
       return nested.time.map((t, index) => {
         const progress = primaryLen > 1 ? index / (primaryLen - 1) : 1;
         const rawRate = Number(nested.reactionRate?.[index] ?? 0);
-        const rawCmp = cmpNested
-          ? Number(sampleAt(cmpNested.reactionRate, index, primaryLen) ?? NaN)
-          : NaN;
+        const rawCmp = cmpTimes
+          ? sampleAtTime(cmpTimes, cmpNested.reactionRate, Number(t))
+          : undefined;
+        const rawCmpEnh = cmpTimes
+          ? sampleAtTime(cmpTimes, cmpNested.enhancement, Number(t))
+          : undefined;
+        const rawCmpTemp = cmpTimes
+          ? sampleAtTime(cmpTimes, cmpNested.temperature, Number(t))
+          : undefined;
         return {
           time: Number(Number(t).toFixed(2)),
           energyOutput: Number(
@@ -769,21 +794,26 @@ const LENRVisualization = ({
           reactionRate: Number((rawRate / rateScale).toFixed(4)),
           reactionRateAbsolute: rawRate,
           rateScaleMax: rateScale,
-          comparisonEnergy: cmpNested?.enhancement
-            ? Number(((sampleAt(cmpNested.enhancement, index, primaryLen) || 0) * 1e-3).toFixed(2))
-            : comparisonSummary
+          comparisonEnergy: rawCmpEnh != null
+            ? Number((rawCmpEnh * 1e-3).toFixed(2))
+            : (!cmpTimes && comparisonSummary
               ? Number((comparisonSummary.total_energy * progress).toFixed(2))
-              : undefined,
-          comparisonTemp: cmpNested?.temperature
-            ? Number((sampleAt(cmpNested.temperature, index, primaryLen) || 0).toFixed(2))
-            : comparisonSummary
+              : undefined),
+          comparisonTemp: rawCmpTemp != null
+            ? Number(rawCmpTemp.toFixed(2))
+            : (!cmpTimes && comparisonSummary
               ? Number(comparisonSummary.average_temperature.toFixed(2))
-              : undefined,
-          comparisonRate: cmpNested?.reactionRate
+              : undefined),
+          comparisonRate: rawCmp != null
             ? Number((rawCmp / rateScale).toFixed(4))
-            : comparisonSummary?.reaction_rate != null
+            : (!cmpTimes && comparisonSummary?.reaction_rate != null
               ? Number((Number(comparisonSummary.reaction_rate) / rateScale).toFixed(4))
-              : undefined,
+              : undefined),
+          comparisonRateAbsolute: rawCmp != null
+            ? rawCmp
+            : (!cmpTimes && comparisonSummary?.reaction_rate != null
+              ? Number(comparisonSummary.reaction_rate) * progress
+              : undefined),
         };
       });
     }
@@ -822,7 +852,10 @@ const LENRVisualization = ({
           : undefined,
         comparisonRate: comparisonSummary
           ? Number(((cmpSummaryRate * progress) / rateScale).toFixed(4))
-          : undefined
+          : undefined,
+        comparisonRateAbsolute: comparisonSummary
+          ? cmpSummaryRate * progress
+          : undefined,
       };
     });
   }, [timeSeriesData, comparisonData]);
@@ -1236,11 +1269,13 @@ const LENRVisualization = ({
             <Tooltip
               formatter={(value, name, props) => {
                 if (name === 'Current Simulation' || name === 'Comparison Simulation') {
-                  const abs = props?.payload?.reactionRateAbsolute;
+                  const abs = name === 'Comparison Simulation'
+                    ? props?.payload?.comparisonRateAbsolute
+                    : props?.payload?.reactionRateAbsolute;
                   const max = props?.payload?.rateScaleMax;
                   const absLabel = Number.isFinite(abs)
                     ? `${Number(abs).toExponential(2)} /s`
-                    : `${value}`;
+                    : 'n/a';
                   return [
                     `${value} (norm.; max ${Number(max || 0).toExponential(2)} /s; abs ${absLabel})`,
                     name,

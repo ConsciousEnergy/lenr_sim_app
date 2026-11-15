@@ -42,6 +42,23 @@ describe('LENRSimulationPage schematic fallback', () => {
     expect(result.results.formula_claimed).toBe(false);
     expect(result.results.warnings.join(' ')).toMatch(/do not cite/i);
   });
+
+  test('fallback series duration follows requested timeStepSize and totalSimulationTime', () => {
+    const result = generateFallbackResults(
+      {
+        temperature: 300,
+        loadingRatio: 0.5,
+        defectDensity: 0,
+        timeStepSize: 0.25,
+        totalSimulationTime: 1,
+      },
+      { lattice_parameters: {} },
+    );
+    expect(result.timeSeriesData.time[0]).toBe(0);
+    expect(result.timeSeriesData.time.at(-1)).toBeCloseTo(1, 5);
+    expect(result.time).toBeCloseTo(1, 5);
+    expect(result.timeSeriesData.time).toHaveLength(5); // 0, 0.25, 0.5, 0.75, 1
+  });
 });
 
 describe('pickLenrReactionRate', () => {

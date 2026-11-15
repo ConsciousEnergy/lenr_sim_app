@@ -158,8 +158,10 @@ export function generateFallbackResults(params, config) {
     rawScreening > SCHEMATIC_ENHANCEMENT_CEILING ||
     uncappedProduct > SCHEMATIC_ENHANCEMENT_CEILING;
   
-  const timeSteps = 100;
-  const dt = 0.1;
+  const dt = Math.max(Number(params.timeStepSize) || 0.1, 1e-6);
+  const totalTime = Math.max(Number(params.totalSimulationTime) || 10, dt);
+  const timeSteps = Math.max(2, Math.min(500, Math.floor(totalTime / dt) + 1));
+  const seriesDuration = (timeSteps - 1) * dt;
   
   return {
     simulation_id: `fallback-${Date.now()}`,
@@ -206,7 +208,7 @@ export function generateFallbackResults(params, config) {
       provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     },
     // Top-level fields LENRVisualization actually reads for charts / lattice
-    time: timeSteps * dt,
+    time: seriesDuration,
     lattice: config.lattice_parameters || null,
     summary: {
       total_energy: totalEnhancement * 1e-3, // schematic proxy, not calorimetry
