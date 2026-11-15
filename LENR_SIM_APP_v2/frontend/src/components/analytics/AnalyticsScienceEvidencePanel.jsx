@@ -74,9 +74,31 @@ export default function AnalyticsScienceEvidencePanel() {
         <Typography variant="body2">
           <strong>Campaign pack</strong> <code>{CAMPAIGN_EVIDENCE.preset}</code>:{' '}
           {CAMPAIGN_EVIDENCE.n_experiments} experiments / {CAMPAIGN_EVIDENCE.n_theory_runs}{' '}
-          theory runs ({CAMPAIGN_EVIDENCE.hydro_label}). Literature:{' '}
-          {CAMPAIGN_EVIDENCE.literature_anchor}.
+          theory runs · UQ samples{' '}
+          <code>{CAMPAIGN_EVIDENCE.uq_samples}</code> ({CAMPAIGN_EVIDENCE.hydro_label}).
+          Literature: {CAMPAIGN_EVIDENCE.literature_anchor}.
         </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 0.5 }}>
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
+            data-testid="analytics-5b-campaign-n"
+          />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`UQ=${CAMPAIGN_EVIDENCE.uq_samples}`}
+            data-testid="analytics-5b-uq-samples"
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`MoE pairing: ${DISCOVERY_GRADE_BAR.moe_pairing_status}`}
+            data-testid="analytics-5b-moe-pairing"
+          />
+        </Stack>
         <Typography variant="body2">
           <strong>Avenue ranking</strong>: <code>{AVENUE_RANKING_SUMMARY.kind}</code>,{' '}
           {AVENUE_RANKING_SUMMARY.avenues.length} stress avenues, claim tier{' '}
@@ -93,6 +115,9 @@ export default function AnalyticsScienceEvidencePanel() {
           ≥5σ heat criterion <code>{DISCOVERY_GRADE_BAR.heat_formula}</code> (BDS-302). Campaign
           History rows and Relevance Map overlays are model outputs; they do not satisfy
           discovery-grade closure.
+        </Typography>
+        <Typography variant="body2" color="text.secondary" data-testid="analytics-5b-discovery-gap">
+          {DISCOVERY_GRADE_BAR.gap_note}
         </Typography>
       </Stack>
 

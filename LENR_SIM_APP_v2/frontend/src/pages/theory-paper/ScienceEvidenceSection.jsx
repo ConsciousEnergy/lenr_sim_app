@@ -140,6 +140,12 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
           data-testid="science-evidence-campaign-n"
         />
+        <Chip
+          size="small"
+          variant="outlined"
+          label={`UQ=${CAMPAIGN_EVIDENCE.uq_samples}`}
+          data-testid="science-evidence-uq-samples"
+        />
         {CAMPAIGN_EVIDENCE.hosts.map((host) => (
           <Chip key={host} size="small" variant="outlined" label={host} />
         ))}
@@ -201,6 +207,25 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         <Typography variant="body2" paragraph sx={{ mb: 1 }}>
           {DISCOVERY_GRADE_BAR.note}
         </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 1 }}>
+          {DISCOVERY_GRADE_BAR.gap_note}
+        </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`MoE pairing: ${DISCOVERY_GRADE_BAR.moe_pairing_status}`}
+            data-testid="science-evidence-moe-pairing"
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`cite-gated σ_Q: ${DISCOVERY_GRADE_BAR.cite_gated_sigma_q}`}
+            data-testid="science-evidence-cite-gated-sigma"
+          />
+        </Stack>
         <Typography variant="body2" color="text.secondary">
           Heat criterion: <code>{DISCOVERY_GRADE_BAR.heat_formula}</code>. Helper:{' '}
           <code>{DISCOVERY_GRADE_BAR.helper_module}</code>.
