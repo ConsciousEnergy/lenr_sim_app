@@ -67,6 +67,10 @@ def test_cavitation_collapse_pack_honesty_lock() -> None:
     assert any(
         row.get("literature_id") == "taleyarkhan-sonofusion-2002" for row in experiments
     )
+    assert any(
+        row.get("literature_id") == "pyyhtia-cr39-cavitation-2026" for row in experiments
+    )
+    assert manifest["n_experiments"] >= 18
     uq_rows = [
         row
         for row in experiments

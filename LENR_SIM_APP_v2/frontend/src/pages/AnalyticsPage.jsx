@@ -72,6 +72,7 @@ import { analyticsApi } from '../services/analyticsApi';
 import RelevanceMap from '../components/analytics/RelevanceMap';
 import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPanels';
 import AssociationRankPanel from '../components/analytics/AssociationRankPanel';
+import AnalyticsScienceEvidencePanel from '../components/analytics/AnalyticsScienceEvidencePanel';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -838,7 +839,9 @@ const AnalyticsPage = () => {
         <Alert severity="info" sx={{ mb: 2 }} data-testid="model-output-disclaimer">
           Auto-saved runs are <strong>model outputs</strong>, not laboratory experiments.
           More simulations do not raise empirical claim tiers or close EQ-OPEN questions.
+          They also do not meet the ≥5σ discovery-grade bar (cite-gated σ_Q / BDS-302).
         </Alert>
+        <AnalyticsScienceEvidencePanel />
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Stack spacing={2}>
