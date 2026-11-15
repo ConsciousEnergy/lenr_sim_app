@@ -80,11 +80,11 @@
       "energy_output_kev": 150.0,
       "excess_heat_watts": 15.0,
       "duration_seconds": 720000,
-      "sigma_Q_W": 0.01,
-      "sigma_Q_systematic_W": null,
-      "moe_provenance": "literature_reported",
+      "sigma_Q_instrument_floor_W": 0.01,
+      "sigma_Q_relative_fraction": 0.001,
+      "moe_provenance": "literature_reported_instrument_floor",
       "moe_citation_keys": ["mckubre2008", "miles1993"],
-      "moe_notes": "SRI mass-flow / isothermal design precision: greater of 10 mW or 0.1% of input (CANR McKubre calorimetry). Miles 1993 cites closed-system precision 0.010 W or 0.1%. Hydrated value is the 10 mW instrument floor; at high Pin, 0.1% may dominate. excess_heat_reproducibility=0.7 is not σ_Q. Not nuclear proof; EQ-OPEN-YIELD-01 stays OPEN.",
+      "moe_notes": "SRI mass-flow / isothermal design precision is max(10 mW, 0.1% of Pin) (CANR McKubre; Miles 1993 cites 0.010 W or 0.1%). Instrument floor and relative fraction are stored separately; sigma_Q_W is intentionally absent until a Pin-resolved episode uncertainty is established. Do not use the floor alone as S_heat σ_Q (understates for Pin>10 W). excess_heat_reproducibility=0.7 is not σ_Q. EQ-OPEN-YIELD-01 stays OPEN.",
       "results": {"excess_heat_reproducibility": 0.7, "loading_threshold": 0.9}
     },
     {
@@ -108,11 +108,11 @@
       "energy_output_kev": 200.0,
       "excess_heat_watts": 25.0,
       "duration_seconds": 540000,
-      "sigma_Q_W": 0.01,
-      "sigma_Q_systematic_W": null,
-      "moe_provenance": "literature_reported",
+      "sigma_Q_instrument_floor_W": 0.01,
+      "sigma_Q_relative_fraction": 0.001,
+      "moe_provenance": "literature_reported_instrument_floor",
       "moe_citation_keys": ["mckubre2008", "miles1993"],
-      "moe_notes": "Same SRI instrument-floor MoE as P13/P14 (greater of 10 mW or 0.1% Pin). Seed Q is an EMP anchor, not a single published episode with full uncertainty budget. EQ-OPEN-YIELD-01 stays OPEN."
+      "moe_notes": "Same SRI instrument floor + 0.1% Pin rule as P13/P14. sigma_Q_W left absent until Pin-resolved uncertainty is known; floor alone must not be published as measured σ_Q. Seed Q is an EMP anchor. EQ-OPEN-YIELD-01 stays OPEN."
     },
     {
       "literature_id": "spawar-cr39-2007",

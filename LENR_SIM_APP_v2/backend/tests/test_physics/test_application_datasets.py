@@ -54,6 +54,15 @@ def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     assert {"EMP", "null", "disputed", "contested", "speculative"} <= tagged
 
 
+# Rows with a first-class literature-reported (or instrument-precision) sigma_Q_W.
+_HYDRATED_SIGMA_Q_IDS = frozenset(
+    {
+        "miles-1993",
+        "deninno-tid-1995",
+    }
+)
+
+
 def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
     """Hydrated σ_Q must carry provenance; never invent MoE or flip claim honesty."""
     experiments = {row["literature_id"]: row for row in get_baseline_experiments()}
@@ -63,26 +72,32 @@ def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
     assert "miles1993" in miles["moe_citation_keys"]
     assert miles["claim_tag"] == "EMP"
     assert "EQ-OPEN-YIELD-01" in miles["open_question_ids"]
+    # Seed path persists MoE via parameters_json
+    assert float(miles["parameters"]["sigma_Q_W"]) == 0.02
+    assert miles["parameters"]["moe_provenance"] == "literature_reported"
 
-    mckubre = experiments["mckubre-sri-p13-p14-1992"]
-    assert float(mckubre["sigma_Q_W"]) == 0.01
-    assert mckubre["moe_provenance"] == "literature_reported"
-    assert mckubre["claim_tag"] == "EMP"
+    # McKubre: instrument floor only — do not publish floor as measured sigma_Q_W
+    for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
+        mckubre = experiments[lit_id]
+        assert "sigma_Q_W" not in mckubre
+        assert "sigma_Q_W" not in mckubre["parameters"]
+        assert float(mckubre["sigma_Q_instrument_floor_W"]) == 0.01
+        assert float(mckubre["sigma_Q_relative_fraction"]) == 0.001
+        assert mckubre["moe_provenance"] == "literature_reported_instrument_floor"
+        assert float(mckubre["parameters"]["sigma_Q_instrument_floor_W"]) == 0.01
+        assert mckubre["claim_tag"] == "EMP"
 
     deninno = experiments["deninno-tid-1995"]
     assert float(deninno["sigma_Q_W"]) == 0.02
     assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
+    assert float(deninno["parameters"]["sigma_Q_W"]) == 0.02
 
-    # Rows without published MoE must not gain fabricated sigma_Q
-    hydrated_ids = {
-        "miles-1993",
-        "mckubre-sri-p13-p14-1992",
-        "mckubre-high-loading-1998",
-        "deninno-tid-1995",
-    }
+    # Every baseline outside the hydrated sigma_Q set must lack fabricated sigma_Q_W
     for lit_id, row in experiments.items():
-        if lit_id not in hydrated_ids:
-            assert "sigma_Q_W" not in row
+        if lit_id in _HYDRATED_SIGMA_Q_IDS:
+            continue
+        assert "sigma_Q_W" not in row, f"unexpected sigma_Q_W on {lit_id}"
+        assert "sigma_Q_W" not in (row.get("parameters") or {}), lit_id
 
     kasagi_rows = [
         row
@@ -97,6 +112,32 @@ def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
 
     questions = open_question_register()["questions"]
     assert all(row["status"] == "OPEN" for row in questions)
+
+
+def test_moe_fields_are_copied_into_seed_parameters() -> None:
+    """seed_database persists extras only via parameters/results — MoE must be in parameters."""
+    miles = next(
+        row
+        for row in get_baseline_experiments()
+        if row["literature_id"] == "miles-1993"
+    )
+    params = miles["parameters"]
+    assert params["sigma_Q_W"] == miles["sigma_Q_W"]
+    assert params["moe_provenance"] == miles["moe_provenance"]
+    assert params["moe_citation_keys"] == miles["moe_citation_keys"]
+    assert "moe_notes" in params
+
+    mckubre = next(
+        row
+        for row in get_baseline_experiments()
+        if row["literature_id"] == "mckubre-sri-p13-p14-1992"
+    )
+    assert "sigma_Q_W" not in mckubre["parameters"]
+    assert mckubre["parameters"]["sigma_Q_instrument_floor_W"] == 0.01
+    assert mckubre["parameters"]["sigma_Q_relative_fraction"] == 0.001
+    assert mckubre["parameters"]["moe_provenance"] == (
+        "literature_reported_instrument_floor"
+    )
 
 
 def test_screening_priors_match_legacy_typical_values() -> None:
