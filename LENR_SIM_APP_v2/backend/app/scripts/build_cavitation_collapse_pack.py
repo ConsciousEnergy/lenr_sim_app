@@ -212,8 +212,11 @@ def _write(experiments: List[Dict[str, Any]], runs: List[Dict[str, Any]]) -> Pat
         "note": (
             "Model-output cavitation/collapse campaign: bubble-lattice cells "
             "varying host, loading, acoustic drive, and dynamics_mode with "
-            "include_uncertainty. Contested sonofusion literature anchor "
-            "included. Does not prove LENR; EQ-OPEN-* stay OPEN."
+            "include_uncertainty. Contested Taleyarkhan sonofusion literature "
+            "anchor and Pyyhtiä 2026 (pyyhtia-cr39-cavitation-2026) electrolytic "
+            "CR-39 cavitation / detector-confounder peer included; not nuclear "
+            "proof. Does not prove LENR; EQ-OPEN-* stay OPEN. Additional runs do "
+            "not raise empirical claim tiers or meet ≥5σ discovery-grade closure."
         ),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

@@ -307,7 +307,9 @@ def test_cavitation_collapse_preset_is_designed() -> None:
 
     n = campaign_size("cavitation_collapse")
     assert n == cavitation_collapse_count()
-    assert 8 <= n <= 16
+    # BDS-322: designed enrichment to 18 cells (Pyyhtiä lit + RP/KM contrasts).
+    # Keep an upper bound so CI UQ cost stays bounded — not a product ceiling of 16.
+    assert 8 <= n <= 24
     cases = list(iter_campaign_cases("cavitation_collapse"))
     assert all(case.get("route") == "bubble_lattice" for case in cases)
     assert all(isinstance(case.get("bubble"), dict) for case in cases)
@@ -319,6 +321,9 @@ def test_cavitation_collapse_preset_is_designed() -> None:
     assert any(case.get("include_uncertainty") for case in cases)
     assert any(
         case.get("literature_id") == "taleyarkhan-sonofusion-2002" for case in cases
+    )
+    assert any(
+        case.get("literature_id") == "pyyhtia-cr39-cavitation-2026" for case in cases
     )
     hosts = {case["host_material"] for case in cases}
     assert {"palladium", "nickel", "titanium"} <= hosts

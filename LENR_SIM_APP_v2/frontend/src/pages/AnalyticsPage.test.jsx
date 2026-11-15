@@ -235,6 +235,17 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByTestId('model-output-disclaimer')).toHaveTextContent(
       /model outputs/i
     );
+    expect(screen.getByTestId('model-output-disclaimer')).toHaveTextContent(/5σ/i);
+    expect(screen.getByTestId('analytics-science-evidence-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('analytics-5b-honesty')).toHaveTextContent(
+      /lenr_proved: false/i,
+    );
+    expect(screen.getByTestId('analytics-5b-5sigma')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('analytics-5b-theory-paper-link')).toHaveAttribute(
+      'href',
+      '/theory-paper',
+    );
+    expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
     expect(screen.getByTestId('enhancement-sql-chart')).toHaveTextContent(
       /Enhancement factor \(SQL\)/
     );

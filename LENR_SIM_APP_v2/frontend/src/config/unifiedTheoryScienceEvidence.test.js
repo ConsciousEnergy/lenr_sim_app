@@ -4,6 +4,7 @@
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
+  DISCOVERY_GRADE_BAR,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
   OPEN_EQ_IDS,
@@ -26,6 +27,21 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CAMPAIGN_EVIDENCE.pack_path).toMatch(/cavitation_collapse_campaign/);
     expect(CAMPAIGN_EVIDENCE.hydro_label).toMatch(/contested hydro/i);
     expect(CAMPAIGN_EVIDENCE.note).toMatch(/model output only/i);
+    expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(18);
+    expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(CAMPAIGN_EVIDENCE.n_experiments);
+    expect(CAMPAIGN_EVIDENCE.literature_ids).toEqual(
+      expect.arrayContaining([
+        'taleyarkhan-sonofusion-2002',
+        'pyyhtia-cr39-cavitation-2026',
+      ]),
+    );
+  });
+
+  test('discovery-grade ≥5σ bar stays not_met', () => {
+    expect(DISCOVERY_GRADE_BAR.sigma_threshold).toBe(5);
+    expect(DISCOVERY_GRADE_BAR.status).toBe('not_met');
+    expect(DISCOVERY_GRADE_BAR.note).toMatch(/cite-gated/i);
+    expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(/campaign/i);
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {
@@ -54,5 +70,20 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(EQ_OPEN_RUNWAY.note).toMatch(/no obligation is closed/i);
     expect(EQ_OPEN_RUNWAY.open_ids).toEqual([...OPEN_EQ_IDS]);
     expect(EQ_OPEN_RUNWAY.doc_path).toMatch(/EQ_OPEN_CLOSURE_RUNWAY\.md/);
+    expect(EQ_OPEN_RUNWAY.criteria).toHaveLength(OPEN_EQ_IDS.length);
+    EQ_OPEN_RUNWAY.criteria.forEach((row) => {
+      expect(OPEN_EQ_IDS).toContain(row.id);
+      expect(row.affirmative).toBeTruthy();
+      expect(row.falsification).toBeTruthy();
+      expect(row.does_not_count).toBeTruthy();
+      expect(typeof row.claim_tier).toBe('string');
+      expect(row.claim_tier.length).toBeGreaterThan(0);
+    });
+    const ec = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-EC-01');
+    expect(ec.claim_tier).toBe('speculative_exploratory');
+    expect(ec.citations).toEqual(expect.arrayContaining(['tennfors2013']));
+    const yieldRow = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-YIELD-01');
+    expect(yieldRow.claim_tier).toBe('empirical_lenr_correlation');
+    expect(yieldRow.citations).toEqual(expect.arrayContaining(['miles1993']));
   });
 });
