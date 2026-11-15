@@ -106,7 +106,10 @@ def enrich_experiment_dict(payload: Dict[str, Any]) -> Dict[str, Any]:
     )
     params = row.get("parameters") or {}
     if "literatureId" not in row:
-        row["literatureId"] = params.get("literature_id")
+        # Prefer first-class SQL column (Alembic 003); fall back for older rows.
+        row["literatureId"] = row.get("literature_id") or params.get(
+            "literature_id"
+        )
     results = row.get("results") or {}
     scores = results.get("pipeline_scores") or {}
     mean, top_id = association_from_scores(scores)

@@ -243,6 +243,57 @@ def test_results_envelope_sigma_preferred_over_parameter_sigma() -> None:
     assert columns["discovery_grade_eligible"] is False
 
 
+def test_measured_q_keeps_parameter_sigma_not_results_sigma() -> None:
+    """When measured Q wins, do not steal results envelope σ (would inflate S_heat)."""
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 99.0,
+            "parameters": {
+                "measured_excess_power_W": 0.4,
+                "sigma_Q_W": 0.2,
+                "moe_provenance": "literature_reported",
+                "moe_citation_keys": ["miles1993"],
+                "moe_sigma_q_pairing_verified": True,
+            },
+            "results": {
+                "q_ex_w": 0.1,
+                "sigma_Q_W": 0.01,
+                "moe_provenance": "literature_reported",
+            },
+        }
+    )
+    assert columns["bayesian_summary"]["q_source"] == "measured_excess_power_W"
+    assert columns["sigma_q_w"] == 0.2
+    assert columns["s_heat"] == 0.4 / 0.2  # not 0.4/0.01 = 40
+
+
+def test_results_instrument_precision_not_relabeled_by_params() -> None:
+    """Results σ + instrument_precision must not inherit params literature_reported."""
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 0.0,
+            "parameters": {
+                "sigma_Q_W": 0.01,
+                "moe_provenance": "literature_reported",
+                "moe_citation_keys": ["miles1993"],
+                "moe_sigma_q_pairing_verified": True,
+            },
+            "results": {
+                "q_ex_w": 1.0,
+                "sigma_Q_W": 0.02,
+                "moe_provenance": "literature_reported_instrument_precision",
+                "moe_citation_keys": ["deninno1995"],
+            },
+        }
+    )
+    assert columns["sigma_q_w"] == 0.02
+    assert (
+        columns["moe_provenance"]
+        == "literature_reported_instrument_precision"
+    )
+    assert columns["discovery_grade_eligible"] is False
+
+
 def test_mismatched_top_level_sigma_blocks_implicit_pairing() -> None:
     columns = literature_moe_columns_from_record(
         {
@@ -342,6 +393,22 @@ def test_to_dict_falls_back_to_parameter_lists_when_sql_null() -> None:
     payload = experiment.to_dict()
     assert payload["open_question_ids"] == ["EQ-OPEN-YIELD-01"]
     assert payload["moe_citation_keys"] == ["miles1993"]
+
+
+def test_to_dict_ignores_non_list_parameter_fallbacks() -> None:
+    experiment = Experiment(
+        id="00000000-0000-0000-0000-000000000097",
+        name="bad param lists",
+        open_question_ids=None,
+        moe_citation_keys=None,
+        parameters_json={
+            "open_question_ids": 7,
+            "moe_citation_keys": 7,
+        },
+    )
+    payload = experiment.to_dict()
+    assert payload["open_question_ids"] == []
+    assert payload["moe_citation_keys"] == []
 
 
 def test_merge_overwrites_caller_supplied_significance() -> None:

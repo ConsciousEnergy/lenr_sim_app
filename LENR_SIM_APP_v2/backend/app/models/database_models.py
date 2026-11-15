@@ -243,10 +243,12 @@ class Experiment(Base):
         # parameters_json still holds the seeded lists — fall back then.
         open_ids = self.open_question_ids
         if open_ids is None:
-            open_ids = params.get("open_question_ids") or []
+            fallback = params.get("open_question_ids")
+            open_ids = fallback if isinstance(fallback, list) else []
         moe_keys = self.moe_citation_keys
         if moe_keys is None:
-            moe_keys = params.get("moe_citation_keys") or []
+            fallback = params.get("moe_citation_keys")
+            moe_keys = fallback if isinstance(fallback, list) else []
 
         payload: Dict[str, Any] = {
             "id": self.id,

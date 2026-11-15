@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from app.physics_engine.calorimetry_significance import (
     discovery_grade_from_literature_record,
+    resolve_measured_excess_power_w,
 )
 
 _MEASURED_Q_KEYS = (
@@ -125,7 +126,7 @@ def literature_moe_columns_from_record(
     Missing MoE stays ``None`` (refuse fabrication). Bayesian summary is the
     calorimetry_significance analytics payload with hard honesty locks.
     Explicit ``None`` on the record does not block parameter/results fallbacks.
-    When ``results`` carries ``q_ex_w`` + ``sigma_Q_W``, prefer that envelope's σ.
+    Resolve measured Q first; σ and provenance follow that envelope only.
     """
     params = record.get("parameters") if isinstance(record.get("parameters"), dict) else {}
     results_raw = (
@@ -164,29 +165,127 @@ def literature_moe_columns_from_record(
         else None
     )
 
-    results_has_q = results.get("q_ex_w") is not None
+    excess_heat = _optional_float(record.get("excess_heat_watts"))
+
+    # Resolve Q first so σ / provenance follow the same envelope.
+    q_probe: Dict[str, Any] = {
+        "parameters": params,
+        "results": results,
+    }
+    if excess_heat is not None:
+        q_probe["excess_heat_watts"] = excess_heat
+    _copy_measured_q_fields(q_probe, record, params, results)
+    prior_summary = results.get("bayesian_summary")
+    if isinstance(prior_summary, dict):
+        _copy_measured_q_fields(
+            q_probe,
+            _restore_measured_q_from_summary(prior_summary),
+        )
+    _q_w, q_source, _q_seed = resolve_measured_excess_power_w(q_probe)
+
     results_sigma = _optional_float(results.get("sigma_Q_W"))
-    # Same-envelope preference: results Q + σ beat parameter σ for pairing.
-    if results_has_q and results_sigma is not None:
+    params_sigma = _optional_float(params.get("sigma_Q_W"))
+    record_sigma = _optional_float(record.get("sigma_Q_W"))
+
+    if q_source == "results.q_ex_w":
+        # Results Q → prefer results σ; explicit top-level may override.
+        sigma_q_w = _first_present_float(record_sigma, results_sigma, params_sigma)
+        envelope = results
+        envelope_sigma = results_sigma
+    elif q_source in (
+        "measured_excess_power_W",
+        "literature_peak_excess_power_W",
+        "excess_heat_watts_reported",
+    ):
+        # Measured-Q lives on record/params — do not steal results σ.
+        if _optional_float(record.get(q_source)) is not None:
+            q_bag = record
+        elif _optional_float(params.get(q_source)) is not None:
+            q_bag = params
+        else:
+            q_bag = results
         sigma_q_w = _first_present_float(
-            record.get("sigma_Q_W"),
-            results_sigma,
-            params.get("sigma_Q_W"),
+            record_sigma,
+            _optional_float(q_bag.get("sigma_Q_W")),
+            params_sigma,
         )
+        envelope = q_bag
+        envelope_sigma = _optional_float(q_bag.get("sigma_Q_W"))
     else:
-        sigma_q_w = _first_present_float(
-            record.get("sigma_Q_W"),
-            params.get("sigma_Q_W"),
-            results.get("sigma_Q_W"),
+        # Seed-scale / unknown — generic fallback order.
+        sigma_q_w = _first_present_float(record_sigma, params_sigma, results_sigma)
+        if (
+            record_sigma is not None
+            and sigma_q_w is not None
+            and abs(record_sigma - sigma_q_w) <= 1e-12
+        ):
+            envelope = record
+        elif (
+            params_sigma is not None
+            and sigma_q_w is not None
+            and abs(params_sigma - sigma_q_w) <= 1e-12
+        ):
+            envelope = params
+        else:
+            envelope = results
+        envelope_sigma = _optional_float(envelope.get("sigma_Q_W"))
+
+    def _sigma_matches(candidate: Optional[float]) -> bool:
+        return (
+            candidate is not None
+            and sigma_q_w is not None
+            and abs(float(candidate) - float(sigma_q_w)) <= 1e-12
         )
+
+    # Provenance / citations / notes must travel with the selected σ envelope.
+    if _sigma_matches(record_sigma):
+        meta_bags: tuple[Mapping[str, Any], ...] = (record, params, results)
+    elif _sigma_matches(envelope_sigma):
+        meta_bags = (envelope, record)
+    elif _sigma_matches(params_sigma):
+        meta_bags = (params, record)
+    elif _sigma_matches(results_sigma):
+        meta_bags = (results, record)
+    else:
+        meta_bags = (record,)
+
+    moe_provenance = _first_present_str(
+        *(bag.get("moe_provenance") for bag in meta_bags),
+        max_len=80,
+    )
+    moe_citation_keys = _first_present_str_list(
+        *(bag.get("moe_citation_keys") for bag in meta_bags)
+    )
+    moe_notes = _first_present_str(*(bag.get("moe_notes") for bag in meta_bags))
+    pairing_raw = None
+    for bag in meta_bags:
+        if "moe_sigma_q_pairing_verified" in bag:
+            pairing_raw = bag.get("moe_sigma_q_pairing_verified")
+            break
+
+    moe_sigma_q_pairing_verified = (
+        bool(pairing_raw) if pairing_raw is not None else None
+    )
+
+    # Block implicit pairing when selected σ ≠ results envelope σ for results Q.
+    if (
+        moe_sigma_q_pairing_verified is None
+        and q_source == "results.q_ex_w"
+        and results_sigma is not None
+        and sigma_q_w is not None
+        and abs(float(sigma_q_w) - float(results_sigma)) > 1e-12
+    ):
+        moe_sigma_q_pairing_verified = False
 
     sigma_q_statistical_w = _first_present_float(
         record.get("sigma_Q_statistical_W"),
+        envelope.get("sigma_Q_statistical_W"),
         params.get("sigma_Q_statistical_W"),
         results.get("sigma_Q_statistical_W"),
     )
     sigma_q_systematic_w = _first_present_float(
         record.get("sigma_Q_systematic_W"),
+        envelope.get("sigma_Q_systematic_W"),
         params.get("sigma_Q_systematic_W"),
         results.get("sigma_Q_systematic_W"),
     )
@@ -198,43 +297,6 @@ def literature_moe_columns_from_record(
         record.get("sigma_Q_relative_fraction"),
         params.get("sigma_Q_relative_fraction"),
     )
-    moe_provenance = _first_present_str(
-        record.get("moe_provenance"),
-        params.get("moe_provenance"),
-        results.get("moe_provenance"),
-        max_len=80,
-    )
-    moe_citation_keys = _first_present_str_list(
-        record.get("moe_citation_keys"),
-        params.get("moe_citation_keys"),
-        results.get("moe_citation_keys"),
-    )
-    moe_notes = _first_present_str(
-        record.get("moe_notes"),
-        params.get("moe_notes"),
-        results.get("moe_notes"),
-    )
-
-    pairing_raw = record.get("moe_sigma_q_pairing_verified")
-    if pairing_raw is None:
-        pairing_raw = params.get("moe_sigma_q_pairing_verified")
-    if pairing_raw is None:
-        pairing_raw = results.get("moe_sigma_q_pairing_verified")
-    moe_sigma_q_pairing_verified = (
-        bool(pairing_raw) if pairing_raw is not None else None
-    )
-
-    # If results Q is paired with a different selected σ, do not claim verified.
-    if (
-        moe_sigma_q_pairing_verified is None
-        and results_has_q
-        and results_sigma is not None
-        and sigma_q_w is not None
-        and abs(float(sigma_q_w) - float(results_sigma)) > 1e-12
-    ):
-        moe_sigma_q_pairing_verified = False
-
-    excess_heat = _optional_float(record.get("excess_heat_watts"))
 
     significance_record: Dict[str, Any] = {
         "literature_id": literature_id,
@@ -250,14 +312,7 @@ def literature_moe_columns_from_record(
     }
     if excess_heat is not None:
         significance_record["excess_heat_watts"] = excess_heat
-    _copy_measured_q_fields(significance_record, record, params, results)
-    # Also restore measured Q from a prior bayesian_summary (pack round-trip).
-    prior_summary = results.get("bayesian_summary")
-    if isinstance(prior_summary, dict):
-        _copy_measured_q_fields(
-            significance_record,
-            _restore_measured_q_from_summary(prior_summary),
-        )
+    _copy_measured_q_fields(significance_record, q_probe)
     if moe_sigma_q_pairing_verified is not None:
         significance_record["moe_sigma_q_pairing_verified"] = (
             moe_sigma_q_pairing_verified
