@@ -1,0 +1,258 @@
+"""BDS-304: literature / MoE / Bayesian SQL columns + seed honesty.
+
+Alembic 003 adds first-class queryable fields. Miles instrument_precision
+stays non-discovery; EQ-OPEN remain OPEN; never lenr_proved.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+
+import pytest
+from sqlalchemy import Boolean, Float, JSON, String, Text
+
+from app.data.baseline_experiments import get_baseline_experiments
+from app.data.dataset_io import iccf27_literature_records
+from app.models.database_models import AnalyticsSnapshot, Experiment
+from app.services.literature_moe_persistence import (
+    literature_moe_columns_from_record,
+    merge_bayesian_into_results,
+)
+
+
+ALEMBIC_VERSIONS = (
+    Path(__file__).resolve().parents[2] / "alembic" / "versions"
+)
+
+
+def _load_migration(module_stem: str):
+    path = next(ALEMBIC_VERSIONS.glob(f"*{module_stem}*.py"))
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_alembic_003_revises_002_and_adds_literature_moe_columns() -> None:
+    mig_002 = _load_migration("002_theory_runs")
+    mig_003 = _load_migration("003_literature_moe_bayesian")
+    assert mig_002.revision == "002"
+    assert mig_003.revision == "003"
+    assert mig_003.down_revision == "002"
+    assert mig_002.down_revision == "001"
+
+    source = Path(mig_003.__file__).read_text(encoding="utf-8")
+    for column in (
+        "literature_id",
+        "claim_tag",
+        "citation_key",
+        "open_question_ids",
+        "sigma_q_w",
+        "moe_provenance",
+        "moe_citation_keys",
+        "s_heat",
+        "discovery_grade_eligible",
+        "bayesian_summary",
+    ):
+        assert f'"{column}"' in source or f"'{column}'" in source
+    assert "analytics_snapshots" in source
+    assert "downgrade" in source
+
+
+def test_experiment_orm_exposes_literature_moe_bayesian_columns() -> None:
+    columns = {column.name: column for column in Experiment.__table__.columns}
+    assert columns["literature_id"].type.length == 120
+    assert isinstance(columns["claim_tag"].type, String)
+    assert isinstance(columns["sigma_q_w"].type, Float)
+    assert isinstance(columns["moe_provenance"].type, String)
+    assert isinstance(columns["moe_citation_keys"].type, JSON)
+    assert isinstance(columns["moe_notes"].type, Text)
+    assert isinstance(columns["s_heat"].type, Float)
+    assert isinstance(columns["discovery_grade_eligible"].type, Boolean)
+    assert isinstance(columns["bayesian_summary"].type, JSON)
+    assert columns["discovery_grade_eligible"].nullable is False
+
+    snapshot_cols = {
+        column.name: column for column in AnalyticsSnapshot.__table__.columns
+    }
+    assert "bayesian_summary" in snapshot_cols
+
+    index_names = {index.name for index in Experiment.__table__.indexes}
+    assert "ix_experiments_lit_claim" in index_names
+    assert "ix_experiments_discovery_grade" in index_names
+
+
+def test_miles_seed_columns_instrument_precision_non_discovery() -> None:
+    miles = next(
+        row
+        for row in get_baseline_experiments()
+        if row["literature_id"] == "miles-1993"
+    )
+    columns = literature_moe_columns_from_record(miles)
+
+    assert columns["literature_id"] == "miles-1993"
+    assert columns["claim_tag"] == "EMP"
+    assert columns["citation_key"] == "miles1993"
+    assert columns["sigma_q_w"] == 0.02
+    assert (
+        columns["moe_provenance"]
+        == "literature_reported_instrument_precision"
+    )
+    assert "miles1993" in (columns["moe_citation_keys"] or [])
+    assert columns["s_heat"] == 0.52 / 0.02
+    assert columns["discovery_grade_eligible"] is False
+    summary = columns["bayesian_summary"]
+    assert summary["lenr_proved"] is False
+    assert summary["discovery_grade_eligible"] is False
+    assert all(status == "OPEN" for status in summary["eq_open_status"].values())
+
+    merged = merge_bayesian_into_results(miles.get("results"), columns)
+    assert merged["lenr_proved"] is False
+    assert merged["discovery_grade_eligible"] is False
+    assert merged["bayesian_summary"]["lenr_proved"] is False
+
+
+def test_mckubre_seed_columns_omit_fabricated_sigma_q() -> None:
+    mckubre = next(
+        row
+        for row in get_baseline_experiments()
+        if row["literature_id"] == "mckubre-sri-p13-p14-1992"
+    )
+    columns = literature_moe_columns_from_record(mckubre)
+    assert columns["sigma_q_w"] is None
+    assert columns["sigma_q_instrument_floor_w"] == 0.01
+    assert (
+        columns["moe_provenance"]
+        == "literature_reported_instrument_floor"
+    )
+    assert columns["s_heat"] is None
+    assert columns["discovery_grade_eligible"] is False
+    assert columns["bayesian_summary"]["lenr_proved"] is False
+
+
+def test_deninno_instrument_precision_columns_non_discovery() -> None:
+    deninno = next(
+        row
+        for row in get_baseline_experiments()
+        if row["literature_id"] == "deninno-tid-1995"
+    )
+    columns = literature_moe_columns_from_record(deninno)
+    assert columns["sigma_q_w"] == 0.02
+    assert (
+        columns["moe_provenance"]
+        == "literature_reported_instrument_precision"
+    )
+    assert columns["discovery_grade_eligible"] is False
+    assert all(
+        status == "OPEN"
+        for status in columns["bayesian_summary"]["eq_open_status"].values()
+    )
+
+
+def test_kasagi_iccf_columns_can_flag_discovery_without_lenr_proved() -> None:
+    """Analytics flag only — EQ-OPEN stay OPEN; never prove LENR."""
+    nicu = next(
+        row
+        for row in iccf27_literature_records()
+        if row["literature_id"] == "kasagi-nicu-radiant-2026"
+    )
+    columns = literature_moe_columns_from_record(nicu)
+    assert columns["moe_provenance"] == "literature_reported"
+    assert columns["sigma_q_w"] == 0.08
+    assert columns["discovery_grade_eligible"] is True
+    assert columns["bayesian_summary"]["lenr_proved"] is False
+    assert all(
+        status == "OPEN"
+        for status in columns["bayesian_summary"]["eq_open_status"].values()
+    )
+
+
+def test_experiment_to_dict_includes_literature_moe_fields() -> None:
+    columns = literature_moe_columns_from_record(
+        next(
+            row
+            for row in get_baseline_experiments()
+            if row["literature_id"] == "miles-1993"
+        )
+    )
+    experiment = Experiment(
+        id="00000000-0000-0000-0000-000000000001",
+        name="Miles heat-He",
+        is_baseline=True,
+        literature_id=columns["literature_id"],
+        claim_tag=columns["claim_tag"],
+        citation_key=columns["citation_key"],
+        doi=columns["doi"],
+        open_question_ids=columns["open_question_ids"],
+        sigma_q_w=columns["sigma_q_w"],
+        moe_provenance=columns["moe_provenance"],
+        moe_citation_keys=columns["moe_citation_keys"],
+        s_heat=columns["s_heat"],
+        discovery_grade_eligible=False,
+        bayesian_summary=columns["bayesian_summary"],
+    )
+    payload = experiment.to_dict()
+    assert payload["literature_id"] == "miles-1993"
+    assert payload["sigma_Q_W"] == 0.02
+    assert payload["moe_provenance"] == (
+        "literature_reported_instrument_precision"
+    )
+    assert payload["discovery_grade_eligible"] is False
+    assert payload["bayesian_summary"]["lenr_proved"] is False
+
+
+def test_alembic_003_upgrade_downgrade_on_sqlite(tmp_path) -> None:
+    """Apply 001→002→003 then downgrade 003 against isolated SQLite."""
+    pytest.importorskip("alembic")
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+    from sqlalchemy import create_engine, text
+
+    db_path = tmp_path / "bds304_alembic.db"
+    engine = create_engine(f"sqlite:///{db_path}")
+    mig_001 = _load_migration("001_initial")
+    mig_002 = _load_migration("002_theory_runs")
+    mig_003 = _load_migration("003_literature_moe_bayesian")
+
+    with engine.begin() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            mig_001.upgrade()
+            mig_002.upgrade()
+            mig_003.upgrade()
+
+        cols = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(experiments)"))
+        }
+        assert "literature_id" in cols
+        assert "sigma_q_w" in cols
+        assert "moe_provenance" in cols
+        assert "s_heat" in cols
+        assert "discovery_grade_eligible" in cols
+        assert "bayesian_summary" in cols
+        snap_cols = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(analytics_snapshots)"))
+        }
+        assert "bayesian_summary" in snap_cols
+
+        with Operations.context(MigrationContext.configure(conn)):
+            mig_003.downgrade()
+
+        cols_after = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(experiments)"))
+        }
+        assert "literature_id" not in cols_after
+        assert "sigma_q_w" not in cols_after
+        assert "bayesian_summary" not in cols_after
+        snap_after = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(analytics_snapshots)"))
+        }
+        assert "bayesian_summary" not in snap_after
+
+    engine.dispose()

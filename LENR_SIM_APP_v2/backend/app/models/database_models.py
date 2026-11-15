@@ -153,6 +153,50 @@ class Experiment(Base):
         nullable=True,
         default=dict
     )
+
+    # ==================
+    # Literature / MoE / Bayesian (Alembic 003; nullable MoE — no fabrication)
+    # ==================
+
+    literature_id: Mapped[Optional[str]] = mapped_column(
+        String(120), nullable=True, index=True
+    )
+    claim_tag: Mapped[Optional[str]] = mapped_column(
+        String(40), nullable=True, index=True
+    )
+    citation_key: Mapped[Optional[str]] = mapped_column(
+        String(120), nullable=True, index=True
+    )
+    doi: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    open_question_ids: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    sigma_q_w: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    sigma_q_statistical_w: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    sigma_q_systematic_w: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    sigma_q_instrument_floor_w: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    sigma_q_relative_fraction: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    moe_provenance: Mapped[Optional[str]] = mapped_column(
+        String(80), nullable=True, index=True
+    )
+    moe_citation_keys: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    moe_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    moe_sigma_q_pairing_verified: Mapped[Optional[bool]] = mapped_column(
+        Boolean, nullable=True
+    )
+
+    s_heat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    discovery_grade_eligible: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    bayesian_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # ==================
     # Timestamps
@@ -188,6 +232,8 @@ class Experiment(Base):
         Index('ix_experiments_type_status', 'experiment_type', 'status'),
         Index('ix_experiments_material_temp', 'material', 'temperature_k'),
         Index('ix_experiments_created_baseline', 'created_at', 'is_baseline'),
+        Index('ix_experiments_lit_claim', 'literature_id', 'claim_tag'),
+        Index('ix_experiments_discovery_grade', 'discovery_grade_eligible'),
     )
     
     def to_dict(self) -> Dict[str, Any]:
@@ -215,6 +261,23 @@ class Experiment(Base):
             "excess_heat_watts": self.excess_heat_watts,
             "duration_seconds": self.duration_seconds,
             "results": self.results_json or {},
+            "literature_id": self.literature_id,
+            "claim_tag": self.claim_tag,
+            "citation_key": self.citation_key,
+            "doi": self.doi,
+            "open_question_ids": list(self.open_question_ids or []),
+            "sigma_Q_W": self.sigma_q_w,
+            "sigma_Q_statistical_W": self.sigma_q_statistical_w,
+            "sigma_Q_systematic_W": self.sigma_q_systematic_w,
+            "sigma_Q_instrument_floor_W": self.sigma_q_instrument_floor_w,
+            "sigma_Q_relative_fraction": self.sigma_q_relative_fraction,
+            "moe_provenance": self.moe_provenance,
+            "moe_citation_keys": list(self.moe_citation_keys or []),
+            "moe_notes": self.moe_notes,
+            "moe_sigma_q_pairing_verified": self.moe_sigma_q_pairing_verified,
+            "s_heat": self.s_heat,
+            "discovery_grade_eligible": bool(self.discovery_grade_eligible),
+            "bayesian_summary": self.bayesian_summary or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -314,6 +377,9 @@ class AnalyticsSnapshot(Base):
     
     # Material distribution as JSON  
     material_distribution: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Optional Bayesian / MoE aggregate payload (Alembic 003)
+    bayesian_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps
     computed_at: Mapped[datetime] = mapped_column(
@@ -340,6 +406,7 @@ class AnalyticsSnapshot(Base):
             "total_energy_output": self.total_energy_output,
             "type_distribution": self.type_distribution or {},
             "material_distribution": self.material_distribution or {},
+            "bayesian_summary": self.bayesian_summary or {},
             "computed_at": self.computed_at.isoformat() if self.computed_at else None,
         }
 
