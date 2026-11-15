@@ -306,7 +306,7 @@ function FusionSimulationPage() {
         setSimulationId(simId);
         
         // API supplies rate scalars; particle/hotspot series remain client-schematic.
-        // FusionRateResponse field is reaction_rate_per_s (not reaction_rate).
+        // FusionRateResponse.reaction_rate_per_s is volumetric (m⁻³ s⁻¹), despite the name.
         const apiReactionRate =
           fusionResult.reaction_rate_per_s ?? fusionResult.reaction_rate ?? null;
         const schematicViz = generateFusionTimeSteps(parameters);
@@ -323,7 +323,7 @@ function FusionSimulationPage() {
         
         setSimulationData(data);
         setSuccessMessage(
-          'API rate scalars loaded. Particle/hotspot plots are schematic visualization — not experimental corroboration.',
+          'API volumetric rate (m⁻³ s⁻¹) loaded. Particle/hotspot plots are schematic visualization — not experimental corroboration.',
         );
         
       } catch (apiError) {
@@ -928,11 +928,12 @@ function FusionSimulationPage() {
           data-testid="fusion-schematic-viz-banner"
         >
           <Typography variant="body2">
-            API reaction-rate scalar
+            API volumetric rate scalar
             {simulationData.reactionRate != null
-              ? ` (${Number(simulationData.reactionRate).toExponential(2)} /s)`
+              ? ` (${Number(simulationData.reactionRate).toExponential(2)} m⁻³ s⁻¹)`
               : ''}{' '}
-            is loaded separately. The legend “Fusion Rate” and particle/hotspot stats are
+            is loaded separately (field name <code>reaction_rate_per_s</code> is volumetric,
+            not a sample-total rate). The legend “Fusion Rate” and particle/hotspot stats are
             schematic (hotspot-intensity sum) — not that API scalar and not experimental
             corroboration.
           </Typography>

@@ -133,9 +133,10 @@ function FusionVisualization({
     
     const avgEnergy = particles.length > 0 ? totalEnergy / particles.length : 0;
     
-    // Schematic UI estimate from hotspot intensities — NOT the API reaction_rate scalar
+    // Schematic UI estimate from hotspot intensities — NOT the API volumetric rate
     const totalIntensity = hotspots.reduce((sum, h) => sum + (h.intensity || 0), 0);
     const fusionRate = totalIntensity * 1e12;
+    // API field reaction_rate_per_s is volumetric (m⁻³ s⁻¹), not total reactions/s.
     const apiRate =
       simulationData?.reactionRate ??
       simulationData?.physicsResults?.reaction_rate_per_s ??

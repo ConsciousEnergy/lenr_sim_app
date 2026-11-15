@@ -363,8 +363,9 @@ function SimulationStats({ stats, simulationType = 'fusion' }) {
         )}
         {stats.apiReactionRate !== undefined && Number.isFinite(stats.apiReactionRate) && (
           <StatItem
-            label="API reaction rate"
-            value={`${stats.apiReactionRate.toExponential(2)}/s`}
+            // FusionRateResponse.reaction_rate_per_s is volumetric (m⁻³ s⁻¹), not total /s.
+            label="API volumetric rate"
+            value={`${stats.apiReactionRate.toExponential(2)} m⁻³ s⁻¹`}
           />
         )}
         {stats.temperature !== undefined && (
