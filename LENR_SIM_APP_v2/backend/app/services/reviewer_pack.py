@@ -208,10 +208,35 @@ def _stamp_model_output(parameters: Dict[str, Any], results: Dict[str, Any]) -> 
 
 
 def _experiment_fields(row: Dict[str, Any]) -> Dict[str, Any]:
+    from app.services.literature_moe_persistence import (
+        literature_moe_columns_from_record,
+        merge_bayesian_into_results,
+    )
+
     parameters, results = _stamp_model_output(
         row.get("parameters") if isinstance(row.get("parameters"), dict) else {},
         row.get("results") if isinstance(row.get("results"), dict) else {},
     )
+    moe_columns = literature_moe_columns_from_record(
+        {
+            **row,
+            "parameters": parameters,
+            "results": results,
+        }
+    )
+    results = merge_bayesian_into_results(results, moe_columns)
+    # Pack imports are model outputs — never discovery of LENR.
+    results["lenr_proved"] = False
+    moe_columns = dict(moe_columns)
+    moe_columns["discovery_grade_eligible"] = False
+    if isinstance(moe_columns.get("bayesian_summary"), dict):
+        summary = dict(moe_columns["bayesian_summary"])
+        summary["discovery_grade_eligible"] = False
+        summary["lenr_proved"] = False
+        moe_columns["bayesian_summary"] = summary
+        results["bayesian_summary"] = summary
+        results["discovery_grade_eligible"] = False
+
     fields: Dict[str, Any] = {
         "name": row.get("name") or "Imported pack row",
         "description": row.get("description"),
@@ -234,6 +259,29 @@ def _experiment_fields(row: Dict[str, Any]) -> Dict[str, Any]:
         "excess_heat_watts": row.get("excess_heat_watts"),
         "duration_seconds": row.get("duration_seconds"),
         "results_json": results,
+        "literature_id": moe_columns.get("literature_id") or row.get("literature_id"),
+        "claim_tag": moe_columns.get("claim_tag") or row.get("claim_tag"),
+        "citation_key": moe_columns.get("citation_key") or row.get("citation_key"),
+        "doi": moe_columns.get("doi") or row.get("doi"),
+        "open_question_ids": moe_columns.get("open_question_ids"),
+        "sigma_q_w": moe_columns.get("sigma_q_w"),
+        "sigma_q_statistical_w": moe_columns.get("sigma_q_statistical_w"),
+        "sigma_q_systematic_w": moe_columns.get("sigma_q_systematic_w"),
+        "sigma_q_instrument_floor_w": moe_columns.get(
+            "sigma_q_instrument_floor_w"
+        ),
+        "sigma_q_relative_fraction": moe_columns.get(
+            "sigma_q_relative_fraction"
+        ),
+        "moe_provenance": moe_columns.get("moe_provenance"),
+        "moe_citation_keys": moe_columns.get("moe_citation_keys"),
+        "moe_notes": moe_columns.get("moe_notes"),
+        "moe_sigma_q_pairing_verified": moe_columns.get(
+            "moe_sigma_q_pairing_verified"
+        ),
+        "s_heat": moe_columns.get("s_heat"),
+        "discovery_grade_eligible": False,
+        "bayesian_summary": moe_columns.get("bayesian_summary"),
     }
     created_at = _parse_dt(row.get("created_at"))
     updated_at = _parse_dt(row.get("updated_at"))

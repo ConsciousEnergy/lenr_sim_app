@@ -28,4 +28,11 @@ Optional cite-gated calorimetry MoE on EMP rows: `sigma_Q_W`,
 `S_heat = Q/σ_Q` and `discovery_grade_eligible` never close `EQ-OPEN-*` or
 set `lenr_proved` (see `app.physics_engine.calorimetry_significance`).
 
+Alembic `003` persists first-class SQL columns on `experiments`
+(`literature_id`, `claim_tag`, `citation_key`, MoE fields, `s_heat`,
+`discovery_grade_eligible`, `bayesian_summary`) plus optional
+`analytics_snapshots.bayesian_summary`. Seed / ORM wiring mirrors MoE into
+those columns without inventing σ_Q; Miles `instrument_precision` remains
+non-discovery.
+
 The full Parkhomov SQLite (~519k rows, ~161 MB) is **not** shipped.

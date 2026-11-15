@@ -29,6 +29,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import db_manager, get_database_url, Base
 from app.models.database_models import Experiment, ExperimentTimeline
 from app.data.baseline_experiments import get_baseline_experiments, get_baseline_timeline_data
+from app.services.literature_moe_persistence import (
+    literature_moe_columns_from_record,
+    merge_bayesian_into_results,
+)
 
 # Setup logging
 logging.basicConfig(
@@ -84,6 +88,11 @@ async def seed_baseline_experiments(session: AsyncSession, force: bool = False) 
     experiments_created = 0
     
     for exp_data in baseline_data:
+        moe_columns = literature_moe_columns_from_record(exp_data)
+        results_json = merge_bayesian_into_results(
+            exp_data.get('results', {}),
+            moe_columns,
+        )
         experiment = Experiment(
             id=exp_data.get('id'),
             name=exp_data.get('name'),
@@ -105,7 +114,32 @@ async def seed_baseline_experiments(session: AsyncSession, force: bool = False) 
             energy_output_kev=exp_data.get('energy_output_kev'),
             excess_heat_watts=exp_data.get('excess_heat_watts'),
             duration_seconds=exp_data.get('duration_seconds'),
-            results_json=exp_data.get('results', {}),
+            results_json=results_json,
+            literature_id=moe_columns.get('literature_id'),
+            claim_tag=moe_columns.get('claim_tag'),
+            citation_key=moe_columns.get('citation_key'),
+            doi=moe_columns.get('doi'),
+            open_question_ids=moe_columns.get('open_question_ids'),
+            sigma_q_w=moe_columns.get('sigma_q_w'),
+            sigma_q_statistical_w=moe_columns.get('sigma_q_statistical_w'),
+            sigma_q_systematic_w=moe_columns.get('sigma_q_systematic_w'),
+            sigma_q_instrument_floor_w=moe_columns.get(
+                'sigma_q_instrument_floor_w'
+            ),
+            sigma_q_relative_fraction=moe_columns.get(
+                'sigma_q_relative_fraction'
+            ),
+            moe_provenance=moe_columns.get('moe_provenance'),
+            moe_citation_keys=moe_columns.get('moe_citation_keys'),
+            moe_notes=moe_columns.get('moe_notes'),
+            moe_sigma_q_pairing_verified=moe_columns.get(
+                'moe_sigma_q_pairing_verified'
+            ),
+            s_heat=moe_columns.get('s_heat'),
+            discovery_grade_eligible=bool(
+                moe_columns.get('discovery_grade_eligible')
+            ),
+            bayesian_summary=moe_columns.get('bayesian_summary'),
         )
         
         # Set created_at if provided

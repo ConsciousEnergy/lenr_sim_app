@@ -139,12 +139,26 @@ def validate_moe_provenance(
     return {"ok": True, "reason": None}
 
 
+def _safe_float(value: Any) -> Optional[float]:
+    """Parse a finite float; invalid / non-finite → None (no raise)."""
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return number
+
+
 def resolve_measured_excess_power_w(
     record: Mapping[str, Any],
 ) -> Tuple[Optional[float], Optional[str], bool]:
     """Resolve Q for significance from a literature / baseline row.
 
     Prefers explicitly measured fields over seed-scale ``excess_heat_watts``.
+    Invalid / non-finite values are treated as missing (never raise).
 
     Returns ``(q_w, source_label, is_seed_scale)``.
     """
@@ -153,19 +167,20 @@ def resolve_measured_excess_power_w(
     bags: Tuple[Mapping[str, Any], ...] = (record, params, results)
     for key in ("literature_peak_excess_power_W", "measured_excess_power_W"):
         for bag in bags:
-            value = bag.get(key)
-            if value is not None:
-                return float(value), key, False
+            parsed = _safe_float(bag.get(key))
+            if parsed is not None:
+                return parsed, key, False
     # Prefer results.q_ex_w before parameters.*_reported so same-envelope σ pairs.
-    if results.get("q_ex_w") is not None:
-        return float(results["q_ex_w"]), "results.q_ex_w", False
+    results_q = _safe_float(results.get("q_ex_w"))
+    if results_q is not None:
+        return results_q, "results.q_ex_w", False
     for bag in bags:
-        value = bag.get("excess_heat_watts_reported")
-        if value is not None:
-            return float(value), "excess_heat_watts_reported", False
-    seed = record.get("excess_heat_watts")
+        parsed = _safe_float(bag.get("excess_heat_watts_reported"))
+        if parsed is not None:
+            return parsed, "excess_heat_watts_reported", False
+    seed = _safe_float(record.get("excess_heat_watts"))
     if seed is not None:
-        return float(seed), "excess_heat_watts", True
+        return seed, "excess_heat_watts", True
     return None, None, False
 
 
@@ -177,8 +192,10 @@ def is_sigma_q_pairing_verified(
     """True only when Q and σ_Q are an explicitly verified measurement pair.
 
     Explicit ``moe_sigma_q_pairing_verified`` wins. Otherwise, same-results
-    envelope with both ``q_ex_w`` and ``sigma_Q_W`` counts as verified.
-    Miles peak + follow-on ±0.02 without the flag stays unverified.
+    envelope with both ``q_ex_w`` and ``sigma_Q_W`` counts as verified **only
+    when the selected top-level σ_Q matches the results envelope σ** (or no
+    conflicting top-level σ is set). Miles peak + follow-on ±0.02 without the
+    flag stays unverified.
     """
     bags: Tuple[Mapping[str, Any], ...] = (
         record,
@@ -189,9 +206,13 @@ def is_sigma_q_pairing_verified(
         if "moe_sigma_q_pairing_verified" in bag:
             return bool(bag["moe_sigma_q_pairing_verified"])
     results = record.get("results") or {}
-    if q_source == "results.q_ex_w" and results.get("sigma_Q_W") is not None:
+    results_sigma = _safe_float(results.get("sigma_Q_W"))
+    if q_source != "results.q_ex_w" or results_sigma is None:
+        return False
+    selected = _safe_float(record.get("sigma_Q_W"))
+    if selected is None:
         return True
-    return False
+    return abs(selected - results_sigma) <= 1e-12
 
 
 def discovery_grade_analytics(
