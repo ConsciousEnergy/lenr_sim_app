@@ -275,12 +275,13 @@ const SimulationResults = ({
             peakReactionRate: Math.max(...updatedTimeSeries.map(d => d.reactionRate))
           };
 
-          // Local synthetic appends must keep schematic provenance so the banner stays.
+          // Local synthetic appends are always schematic — never keep API provenance
+          // that would hide the schematic-data warning while neutron traces stay fake.
           return {
             timeSeriesData: updatedTimeSeries,
             tableData: updatedTimeSeries.filter((_, i) => i % 10 === 0), // Update table data too
             statistics,
-            provenance: prevData.provenance || 'schematic_fallback',
+            provenance: 'schematic_fallback',
           };
         });
       }

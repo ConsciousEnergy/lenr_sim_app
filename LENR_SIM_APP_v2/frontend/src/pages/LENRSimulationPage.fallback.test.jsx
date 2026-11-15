@@ -59,6 +59,23 @@ describe('LENRSimulationPage schematic fallback', () => {
     expect(result.time).toBeCloseTo(1, 5);
     expect(result.timeSeriesData.time).toHaveLength(5); // 0, 0.25, 0.5, 0.75, 1
   });
+
+  test('500-point cap still spans the full requested duration', () => {
+    const result = generateFallbackResults(
+      {
+        temperature: 300,
+        loadingRatio: 0.5,
+        defectDensity: 0,
+        timeStepSize: 0.01,
+        totalSimulationTime: 100,
+      },
+      { lattice_parameters: {} },
+    );
+    expect(result.timeSeriesData.time).toHaveLength(500);
+    expect(result.timeSeriesData.time.at(-1)).toBeCloseTo(100, 5);
+    expect(result.time).toBeCloseTo(100, 5);
+    expect(result.results.warnings.join(' ')).toMatch(/Sample count capped/i);
+  });
 });
 
 describe('pickLenrReactionRate', () => {

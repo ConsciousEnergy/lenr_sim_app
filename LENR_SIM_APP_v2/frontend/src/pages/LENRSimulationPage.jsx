@@ -158,10 +158,14 @@ export function generateFallbackResults(params, config) {
     rawScreening > SCHEMATIC_ENHANCEMENT_CEILING ||
     uncappedProduct > SCHEMATIC_ENHANCEMENT_CEILING;
   
-  const dt = Math.max(Number(params.timeStepSize) || 0.1, 1e-6);
-  const totalTime = Math.max(Number(params.totalSimulationTime) || 10, dt);
-  const timeSteps = Math.max(2, Math.min(500, Math.floor(totalTime / dt) + 1));
-  const seriesDuration = (timeSteps - 1) * dt;
+  const dtRequested = Math.max(Number(params.timeStepSize) || 0.1, 1e-6);
+  const totalTime = Math.max(Number(params.totalSimulationTime) || 10, dtRequested);
+  const idealSteps = Math.floor(totalTime / dtRequested) + 1;
+  // Cap sample count for UI perf, but always span the full requested duration.
+  const timeSteps = Math.max(2, Math.min(500, idealSteps));
+  const dt = timeSteps > 1 ? totalTime / (timeSteps - 1) : totalTime;
+  const seriesDuration = totalTime;
+  const samplingDownscaled = idealSteps > timeSteps;
   
   return {
     simulation_id: `fallback-${Date.now()}`,
@@ -186,7 +190,10 @@ export function generateFallbackResults(params, config) {
         wasCapped
           ? `Enhancement capped at governance ceiling ${SCHEMATIC_ENHANCEMENT_CEILING} (not a measured gain)`
           : 'Enhancement below governance ceiling; still schematic — do not cite',
-      ],
+        samplingDownscaled
+          ? `Sample count capped at ${timeSteps} points spanning full ${totalTime}s (requested step ${dtRequested}s → effective ${dt}s)`
+          : null,
+      ].filter(Boolean),
     },
     timeSeriesData: {
       time: Array.from({ length: timeSteps }, (_, i) => i * dt),
