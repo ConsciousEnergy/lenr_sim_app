@@ -74,14 +74,15 @@ def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
     assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
 
     # Rows without published MoE must not gain fabricated sigma_Q
-    for lit_id in (
-        "fleischmann-pons-1989",
-        "spawar-cr39-2007",
-        "iwamura-cs-pr-2002",
-        "berlinguette-arpa-e-2019",
-        "parkhomov-cd-wrapped-snm14-contested",
-    ):
-        assert "sigma_Q_W" not in experiments[lit_id]
+    hydrated_ids = {
+        "miles-1993",
+        "mckubre-sri-p13-p14-1992",
+        "mckubre-high-loading-1998",
+        "deninno-tid-1995",
+    }
+    for lit_id, row in experiments.items():
+        if lit_id not in hydrated_ids:
+            assert "sigma_Q_W" not in row
 
     kasagi_rows = [
         row
