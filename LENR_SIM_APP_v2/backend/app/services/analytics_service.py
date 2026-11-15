@@ -572,33 +572,42 @@ class AnalyticsService:
             merge_bayesian_into_results,
         )
 
-        moe_columns = literature_moe_columns_from_record(
-            {
-                "literature_id": kwargs.get("literature_id"),
-                "claim_tag": kwargs.get("claim_tag"),
-                "citation_key": kwargs.get("citation_key"),
-                "doi": kwargs.get("doi"),
-                "open_question_ids": kwargs.get("open_question_ids"),
-                "excess_heat_watts": kwargs.get("excess_heat_watts"),
-                "sigma_Q_W": kwargs.get("sigma_Q_W", kwargs.get("sigma_q_w")),
-                "sigma_Q_statistical_W": kwargs.get("sigma_Q_statistical_W"),
-                "sigma_Q_systematic_W": kwargs.get("sigma_Q_systematic_W"),
-                "sigma_Q_instrument_floor_W": kwargs.get(
-                    "sigma_Q_instrument_floor_W"
-                ),
-                "sigma_Q_relative_fraction": kwargs.get(
-                    "sigma_Q_relative_fraction"
-                ),
-                "moe_provenance": kwargs.get("moe_provenance"),
-                "moe_citation_keys": kwargs.get("moe_citation_keys"),
-                "moe_notes": kwargs.get("moe_notes"),
-                "moe_sigma_q_pairing_verified": kwargs.get(
-                    "moe_sigma_q_pairing_verified"
-                ),
-                "parameters": kwargs.get("parameters") or {},
-                "results": results,
-            }
-        )
+        # Prefer parameters for MoE when top-level kwargs are absent; do not
+        # inject explicit None (that used to block parameter fallbacks).
+        moe_record: Dict[str, Any] = {
+            "excess_heat_watts": kwargs.get("excess_heat_watts"),
+            "parameters": kwargs.get("parameters") or {},
+            "results": results,
+        }
+        for key in (
+            "literature_id",
+            "claim_tag",
+            "citation_key",
+            "doi",
+            "open_question_ids",
+            "moe_provenance",
+            "moe_citation_keys",
+            "moe_notes",
+            "moe_sigma_q_pairing_verified",
+            "literature_peak_excess_power_W",
+            "measured_excess_power_W",
+            "excess_heat_watts_reported",
+        ):
+            if key in kwargs and kwargs[key] is not None:
+                moe_record[key] = kwargs[key]
+        for key, alt in (
+            ("sigma_Q_W", "sigma_q_w"),
+            ("sigma_Q_statistical_W", None),
+            ("sigma_Q_systematic_W", None),
+            ("sigma_Q_instrument_floor_W", None),
+            ("sigma_Q_relative_fraction", None),
+        ):
+            value = kwargs.get(key)
+            if value is None and alt:
+                value = kwargs.get(alt)
+            if value is not None:
+                moe_record[key] = value
+        moe_columns = literature_moe_columns_from_record(moe_record)
         # User / sim creates never claim discovery of LENR via this path.
         if not kwargs.get("is_baseline"):
             moe_columns = dict(moe_columns)

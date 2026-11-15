@@ -37,6 +37,33 @@ def _optional_str(value: Any, *, max_len: Optional[int] = None) -> Optional[str]
     return text
 
 
+def _first_present_float(*candidates: Any) -> Optional[float]:
+    """Return the first non-None float among candidates (None ≠ absent)."""
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        return _optional_float(candidate)
+    return None
+
+
+def _copy_measured_q_fields(
+    target: Dict[str, Any],
+    *bags: Mapping[str, Any],
+) -> None:
+    """Preserve measured-Q keys recognized by resolve_measured_excess_power_w."""
+    for key in (
+        "literature_peak_excess_power_W",
+        "measured_excess_power_W",
+        "excess_heat_watts_reported",
+    ):
+        if key in target and target[key] is not None:
+            continue
+        for bag in bags:
+            if key in bag and bag[key] is not None:
+                target[key] = bag[key]
+                break
+
+
 def literature_moe_columns_from_record(
     record: Mapping[str, Any],
 ) -> Dict[str, Any]:
@@ -44,6 +71,7 @@ def literature_moe_columns_from_record(
 
     Missing MoE stays ``None`` (refuse fabrication). Bayesian summary is the
     calorimetry_significance analytics payload with hard honesty locks.
+    Explicit ``None`` on the record does not block parameter fallbacks.
     """
     params = record.get("parameters") if isinstance(record.get("parameters"), dict) else {}
     results = record.get("results") if isinstance(record.get("results"), dict) else {}
@@ -71,28 +99,26 @@ def literature_moe_columns_from_record(
         else None
     )
 
-    sigma_q_w = _optional_float(
-        record.get("sigma_Q_W")
-        if "sigma_Q_W" in record
-        else params.get("sigma_Q_W")
+    sigma_q_w = _first_present_float(
+        record.get("sigma_Q_W"),
+        params.get("sigma_Q_W"),
+        results.get("sigma_Q_W"),
     )
-    sigma_q_statistical_w = _optional_float(
-        record.get("sigma_Q_statistical_W", params.get("sigma_Q_statistical_W"))
+    sigma_q_statistical_w = _first_present_float(
+        record.get("sigma_Q_statistical_W"),
+        params.get("sigma_Q_statistical_W"),
     )
-    sigma_q_systematic_w = _optional_float(
-        record.get("sigma_Q_systematic_W", params.get("sigma_Q_systematic_W"))
+    sigma_q_systematic_w = _first_present_float(
+        record.get("sigma_Q_systematic_W"),
+        params.get("sigma_Q_systematic_W"),
     )
-    sigma_q_instrument_floor_w = _optional_float(
-        record.get(
-            "sigma_Q_instrument_floor_W",
-            params.get("sigma_Q_instrument_floor_W"),
-        )
+    sigma_q_instrument_floor_w = _first_present_float(
+        record.get("sigma_Q_instrument_floor_W"),
+        params.get("sigma_Q_instrument_floor_W"),
     )
-    sigma_q_relative_fraction = _optional_float(
-        record.get(
-            "sigma_Q_relative_fraction",
-            params.get("sigma_Q_relative_fraction"),
-        )
+    sigma_q_relative_fraction = _first_present_float(
+        record.get("sigma_Q_relative_fraction"),
+        params.get("sigma_Q_relative_fraction"),
     )
     moe_provenance = _optional_str(
         record.get("moe_provenance") or params.get("moe_provenance"),
@@ -117,7 +143,7 @@ def literature_moe_columns_from_record(
         bool(pairing_raw) if pairing_raw is not None else None
     )
 
-    # Build a significance view that prefers measured Q over seed-scale watts.
+    # Preserve measured-Q fields; prefer measured Q over seed-scale watts.
     significance_record: Dict[str, Any] = {
         "literature_id": literature_id,
         "citation_key": citation_key,
@@ -131,10 +157,7 @@ def literature_moe_columns_from_record(
         "moe_citation_keys": moe_citation_keys or [],
         "moe_notes": moe_notes,
     }
-    if "literature_peak_excess_power_W" in record:
-        significance_record["literature_peak_excess_power_W"] = record[
-            "literature_peak_excess_power_W"
-        ]
+    _copy_measured_q_fields(significance_record, record, params, results)
     if moe_sigma_q_pairing_verified is not None:
         significance_record["moe_sigma_q_pairing_verified"] = (
             moe_sigma_q_pairing_verified
@@ -179,28 +202,34 @@ def merge_bayesian_into_results(
     results: Optional[Mapping[str, Any]],
     columns: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    """Mirror Bayesian / MoE analytics into results_json without claim flips."""
+    """Mirror Bayesian / MoE analytics into results_json without claim flips.
+
+    Authoritative ``s_heat`` / ``discovery_grade_eligible`` from ``columns``
+    always overwrite caller-supplied values (including null ``s_heat``).
+    """
     payload = dict(results or {})
     summary = columns.get("bayesian_summary")
     if isinstance(summary, dict):
         payload["bayesian_summary"] = dict(summary)
         payload["bayesian_summary"]["lenr_proved"] = False
-        # Keep existing lenr_proved false if present; never promote to true.
+        # Never promote lenr_proved; always force false after Bayesian merge.
+        payload["lenr_proved"] = False
+    else:
         if payload.get("lenr_proved") is True:
             payload["lenr_proved"] = False
         elif "lenr_proved" not in payload:
             payload["lenr_proved"] = False
-    if columns.get("s_heat") is not None:
-        payload.setdefault("s_heat", columns["s_heat"])
+
+    # Authoritative significance — overwrite stale/caller-supplied values.
+    payload["s_heat"] = columns.get("s_heat")
     if "discovery_grade_eligible" in columns:
-        payload.setdefault(
-            "discovery_grade_eligible",
-            bool(columns["discovery_grade_eligible"]),
+        payload["discovery_grade_eligible"] = bool(
+            columns["discovery_grade_eligible"]
         )
     if columns.get("sigma_q_w") is not None:
-        payload.setdefault("sigma_Q_W", columns["sigma_q_w"])
+        payload["sigma_Q_W"] = columns["sigma_q_w"]
     if columns.get("moe_provenance"):
-        payload.setdefault("moe_provenance", columns["moe_provenance"])
+        payload["moe_provenance"] = columns["moe_provenance"]
     if columns.get("moe_citation_keys"):
-        payload.setdefault("moe_citation_keys", columns["moe_citation_keys"])
+        payload["moe_citation_keys"] = columns["moe_citation_keys"]
     return payload

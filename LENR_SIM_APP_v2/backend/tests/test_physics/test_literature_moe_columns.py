@@ -169,6 +169,85 @@ def test_kasagi_iccf_columns_can_flag_discovery_without_lenr_proved() -> None:
     )
 
 
+def test_none_top_level_moe_falls_back_to_parameters() -> None:
+    """Explicit None on the record must not block parameter MoE values."""
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.0,
+            "sigma_Q_W": None,
+            "sigma_Q_instrument_floor_W": None,
+            "moe_provenance": None,
+            "parameters": {
+                "sigma_Q_W": 0.08,
+                "moe_provenance": "literature_reported",
+                "moe_citation_keys": ["kasagi2026"],
+                "literature_peak_excess_power_W": 1.1,
+            },
+            "moe_sigma_q_pairing_verified": True,
+        }
+    )
+    assert columns["sigma_q_w"] == 0.08
+    assert columns["moe_provenance"] == "literature_reported"
+    assert columns["s_heat"] == 1.1 / 0.08
+
+
+def test_preserves_measured_excess_power_fields() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 99.0,  # seed scale — must lose to measured
+            "measured_excess_power_W": 0.4,
+            "sigma_Q_W": 0.02,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["miles1993"],
+            "moe_sigma_q_pairing_verified": True,
+        }
+    )
+    assert columns["s_heat"] == 0.4 / 0.02
+    assert columns["bayesian_summary"]["q_source"] == "measured_excess_power_W"
+    assert columns["bayesian_summary"]["q_is_seed_scale"] is False
+
+    reported = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 99.0,
+            "excess_heat_watts_reported": 0.52,
+            "sigma_Q_W": 0.02,
+            "moe_provenance": "literature_reported_instrument_precision",
+            "moe_citation_keys": ["miles1993"],
+        }
+    )
+    assert reported["s_heat"] == 0.52 / 0.02
+    assert reported["bayesian_summary"]["q_source"] == "excess_heat_watts_reported"
+    assert reported["discovery_grade_eligible"] is False
+
+
+def test_merge_overwrites_caller_supplied_significance() -> None:
+    columns = {
+        "s_heat": None,
+        "discovery_grade_eligible": False,
+        "sigma_q_w": 0.02,
+        "moe_provenance": "literature_reported_instrument_precision",
+        "moe_citation_keys": ["miles1993"],
+        "bayesian_summary": {
+            "s_heat": None,
+            "discovery_grade_eligible": False,
+            "lenr_proved": False,
+            "eq_open_status": {"EQ-OPEN-YIELD-01": "OPEN"},
+        },
+    }
+    merged = merge_bayesian_into_results(
+        {
+            "s_heat": 999.0,
+            "discovery_grade_eligible": True,
+            "lenr_proved": True,
+        },
+        columns,
+    )
+    assert merged["s_heat"] is None
+    assert merged["discovery_grade_eligible"] is False
+    assert merged["lenr_proved"] is False
+    assert merged["bayesian_summary"]["discovery_grade_eligible"] is False
+
+
 def test_experiment_to_dict_includes_literature_moe_fields() -> None:
     columns = literature_moe_columns_from_record(
         next(
