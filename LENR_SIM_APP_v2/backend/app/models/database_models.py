@@ -238,7 +238,17 @@ class Experiment(Base):
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
-        return {
+        params = self.parameters_json or {}
+        # After Alembic 003 upgrade, SQL list columns may be NULL while
+        # parameters_json still holds the seeded lists — fall back then.
+        open_ids = self.open_question_ids
+        if open_ids is None:
+            open_ids = params.get("open_question_ids") or []
+        moe_keys = self.moe_citation_keys
+        if moe_keys is None:
+            moe_keys = params.get("moe_citation_keys") or []
+
+        payload: Dict[str, Any] = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -254,7 +264,7 @@ class Experiment(Base):
             "loading_ratio": self.loading_ratio,
             "defect_density": self.defect_density,
             "driving_frequency_khz": self.driving_frequency_khz,
-            "parameters": self.parameters_json or {},
+            "parameters": params,
             "enhancement_factor": self.enhancement_factor,
             "fusion_rate": self.fusion_rate,
             "energy_output_kev": self.energy_output_kev,
@@ -265,14 +275,14 @@ class Experiment(Base):
             "claim_tag": self.claim_tag,
             "citation_key": self.citation_key,
             "doi": self.doi,
-            "open_question_ids": list(self.open_question_ids or []),
+            "open_question_ids": list(open_ids),
             "sigma_Q_W": self.sigma_q_w,
             "sigma_Q_statistical_W": self.sigma_q_statistical_w,
             "sigma_Q_systematic_W": self.sigma_q_systematic_w,
             "sigma_Q_instrument_floor_W": self.sigma_q_instrument_floor_w,
             "sigma_Q_relative_fraction": self.sigma_q_relative_fraction,
             "moe_provenance": self.moe_provenance,
-            "moe_citation_keys": list(self.moe_citation_keys or []),
+            "moe_citation_keys": list(moe_keys),
             "moe_notes": self.moe_notes,
             "moe_sigma_q_pairing_verified": self.moe_sigma_q_pairing_verified,
             "s_heat": self.s_heat,
@@ -281,6 +291,22 @@ class Experiment(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+        # Restore measured-Q used for S_heat so pack export/re-import keeps it.
+        summary = self.bayesian_summary or {}
+        q_source = summary.get("q_source")
+        excess = summary.get("excess_power_w")
+        if (
+            q_source
+            in (
+                "literature_peak_excess_power_W",
+                "measured_excess_power_W",
+                "excess_heat_watts_reported",
+            )
+            and excess is not None
+        ):
+            payload[str(q_source)] = excess
+        return payload
+
 
 
 class ExperimentTimeline(Base):

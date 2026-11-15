@@ -220,6 +220,130 @@ def test_preserves_measured_excess_power_fields() -> None:
     assert reported["discovery_grade_eligible"] is False
 
 
+def test_results_envelope_sigma_preferred_over_parameter_sigma() -> None:
+    """Same-envelope Q+σ: do not pair results.q_ex_w with a different params σ."""
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 0.0,
+            "parameters": {"sigma_Q_W": 0.01},
+            "results": {
+                "q_ex_w": 0.4,
+                "sigma_Q_W": 0.2,
+                "moe_provenance": "literature_reported",
+                "moe_citation_keys": ["kasagi2026"],
+            },
+        }
+    )
+    assert columns["sigma_q_w"] == 0.2
+    assert columns["s_heat"] == 0.4 / 0.2  # not 0.4/0.01 = 40
+    assert columns["moe_provenance"] == "literature_reported"
+    assert columns["moe_citation_keys"] == ["kasagi2026"]
+    assert columns["bayesian_summary"]["moe_sigma_q_pairing_verified"] is True
+    # S_heat=2 < 5 → analytics flag stays false (pairing ok, bar not met)
+    assert columns["discovery_grade_eligible"] is False
+
+
+def test_mismatched_top_level_sigma_blocks_implicit_pairing() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 0.0,
+            "sigma_Q_W": 0.01,  # conflicts with results envelope
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["kasagi2026"],
+            "results": {"q_ex_w": 0.4, "sigma_Q_W": 0.2},
+        }
+    )
+    assert columns["sigma_q_w"] == 0.01
+    assert columns["s_heat"] == 0.4 / 0.01
+    assert columns["moe_sigma_q_pairing_verified"] is False
+    assert columns["discovery_grade_eligible"] is False
+
+
+def test_invalid_measured_q_treated_as_missing_not_500() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.0,
+            "parameters": {"measured_excess_power_W": "unknown"},
+            "results": {"q_ex_w": "bad"},
+            "sigma_Q_W": 0.02,
+            "moe_provenance": "literature_reported_instrument_precision",
+            "moe_citation_keys": ["miles1993"],
+        }
+    )
+    assert columns["bayesian_summary"]["q_source"] == "excess_heat_watts"
+    assert columns["s_heat"] == 1.0 / 0.02
+    assert columns["discovery_grade_eligible"] is False
+
+
+def test_non_finite_sigma_rejected() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.0,
+            "sigma_Q_W": "NaN",
+            "parameters": {"sigma_Q_W": 0.02},
+            "moe_provenance": "literature_reported_instrument_precision",
+            "moe_citation_keys": ["miles1993"],
+        }
+    )
+    assert columns["sigma_q_w"] == 0.02
+
+
+def test_measured_q_round_trip_via_results_and_to_dict() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 99.0,
+            "measured_excess_power_W": 0.4,
+            "sigma_Q_W": 0.02,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["miles1993"],
+            "moe_sigma_q_pairing_verified": True,
+        }
+    )
+    merged = merge_bayesian_into_results({}, columns)
+    assert merged["measured_excess_power_W"] == 0.4
+    reloaded = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 99.0,
+            "sigma_Q_W": 0.02,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["miles1993"],
+            "moe_sigma_q_pairing_verified": True,
+            "results": merged,
+        }
+    )
+    assert reloaded["s_heat"] == 0.4 / 0.02
+    assert reloaded["bayesian_summary"]["q_is_seed_scale"] is False
+
+    experiment = Experiment(
+        id="00000000-0000-0000-0000-000000000099",
+        name="measured-q round trip",
+        excess_heat_watts=99.0,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        discovery_grade_eligible=False,
+        bayesian_summary=columns["bayesian_summary"],
+        results_json=merged,
+    )
+    payload = experiment.to_dict()
+    assert payload["measured_excess_power_W"] == 0.4
+
+
+def test_to_dict_falls_back_to_parameter_lists_when_sql_null() -> None:
+    experiment = Experiment(
+        id="00000000-0000-0000-0000-000000000098",
+        name="upgrade null lists",
+        open_question_ids=None,
+        moe_citation_keys=None,
+        parameters_json={
+            "open_question_ids": ["EQ-OPEN-YIELD-01"],
+            "moe_citation_keys": ["miles1993"],
+        },
+    )
+    payload = experiment.to_dict()
+    assert payload["open_question_ids"] == ["EQ-OPEN-YIELD-01"]
+    assert payload["moe_citation_keys"] == ["miles1993"]
+
+
 def test_merge_overwrites_caller_supplied_significance() -> None:
     columns = {
         "s_heat": None,
