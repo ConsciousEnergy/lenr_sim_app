@@ -32,6 +32,12 @@ _RUNTIME_KEYS = (
     "excess_heat_watts",
     "duration_seconds",
     "results",
+    # Optional cite-gated calorimetry MoE (null / absent = refuse fabricated σ_Q)
+    "sigma_Q_W",
+    "sigma_Q_systematic_W",
+    "moe_provenance",
+    "moe_citation_keys",
+    "moe_notes",
 )
 
 

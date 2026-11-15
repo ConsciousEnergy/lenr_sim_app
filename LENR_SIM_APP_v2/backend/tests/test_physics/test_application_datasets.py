@@ -54,6 +54,50 @@ def test_literature_baselines_have_stable_ids_and_claim_tags() -> None:
     assert {"EMP", "null", "disputed", "contested", "speculative"} <= tagged
 
 
+def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
+    """Hydrated σ_Q must carry provenance; never invent MoE or flip claim honesty."""
+    experiments = {row["literature_id"]: row for row in get_baseline_experiments()}
+    miles = experiments["miles-1993"]
+    assert float(miles["sigma_Q_W"]) == 0.02
+    assert miles["moe_provenance"] == "literature_reported"
+    assert "miles1993" in miles["moe_citation_keys"]
+    assert miles["claim_tag"] == "EMP"
+    assert "EQ-OPEN-YIELD-01" in miles["open_question_ids"]
+
+    mckubre = experiments["mckubre-sri-p13-p14-1992"]
+    assert float(mckubre["sigma_Q_W"]) == 0.01
+    assert mckubre["moe_provenance"] == "literature_reported"
+    assert mckubre["claim_tag"] == "EMP"
+
+    deninno = experiments["deninno-tid-1995"]
+    assert float(deninno["sigma_Q_W"]) == 0.02
+    assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
+
+    # Rows without published MoE must not gain fabricated sigma_Q
+    for lit_id in (
+        "fleischmann-pons-1989",
+        "spawar-cr39-2007",
+        "iwamura-cs-pr-2002",
+        "berlinguette-arpa-e-2019",
+        "parkhomov-cd-wrapped-snm14-contested",
+    ):
+        assert "sigma_Q_W" not in experiments[lit_id]
+
+    kasagi_rows = [
+        row
+        for row in iccf27_literature_records()
+        if row["literature_id"].startswith("kasagi-")
+    ]
+    assert len(kasagi_rows) == 2
+    for row in kasagi_rows:
+        assert float(row["sigma_Q_W"]) == 0.08
+        assert row["moe_provenance"] == "literature_reported"
+        assert row["claim_tag"] == "EMP"
+
+    questions = open_question_register()["questions"]
+    assert all(row["status"] == "OPEN" for row in questions)
+
+
 def test_screening_priors_match_legacy_typical_values() -> None:
     payload = screening_priors()
     assert payload["schema"] == SCHEMA

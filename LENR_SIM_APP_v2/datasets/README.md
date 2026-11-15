@@ -9,8 +9,8 @@ simulations do not raise `claim_tier` or close `EQ-OPEN-*`.
 
 | File | Rows | Loaded by |
 |------|------|-----------|
-| `literature_baselines.v1.json` | 18 | `app.data.baseline_experiments` |
-| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 18) |
+| `literature_baselines.v1.json` | 19 | `app.data.baseline_experiments` |
+| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 19) |
 | `screening_priors.v1.json` | 9 hosts | `unified_lenr_model.screening_data` |
 | `parkhomov_curated.v1.json` | curated subset | `parkhomov_validation.py` |
 | `open_question_register.v1.json` | Q1–Q5 | campaigns / docs / Lean IR |
