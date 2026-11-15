@@ -30,8 +30,9 @@ def _bubble(
 
 
 # Designed experiment: collapse-heavy bubble-lattice cells + controls.
-# Keep count modest (UQ + ODE solve is expensive); pack builder may further
-# reduce uncertainty_samples for the pinned JSON fixture.
+# Keep count modest for CI (UQ + ODE); BDS-322 enrichment is 18 cells (≤24
+# bound in test_cavitation_collapse_preset_is_designed). Pack builder may
+# further reduce uncertainty_samples for the pinned JSON fixture.
 CAVITATION_COLLAPSE_CASES: List[Dict[str, Any]] = [
     {
         "route": "bubble_lattice",
