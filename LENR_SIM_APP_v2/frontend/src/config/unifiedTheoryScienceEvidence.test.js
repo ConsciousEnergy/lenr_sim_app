@@ -76,6 +76,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.affirmative).toBeTruthy();
       expect(row.falsification).toBeTruthy();
       expect(row.does_not_count).toBeTruthy();
+      expect(typeof row.claim_tier).toBe('string');
+      expect(row.claim_tier.length).toBeGreaterThan(0);
     });
+    const ec = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-EC-01');
+    expect(ec.claim_tier).toBe('speculative_exploratory');
+    expect(ec.citations).toEqual(expect.arrayContaining(['tennfors2013']));
+    const yieldRow = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-YIELD-01');
+    expect(yieldRow.claim_tier).toBe('empirical_lenr_correlation');
+    expect(yieldRow.citations).toEqual(expect.arrayContaining(['miles1993']));
   });
 });
