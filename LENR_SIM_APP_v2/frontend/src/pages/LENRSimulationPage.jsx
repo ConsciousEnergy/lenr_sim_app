@@ -77,6 +77,10 @@ const physicsAPI = {
 /**
  * Generate time series data from physics calculation results
  */
+/** Governance ceiling mirrored from backend MAX_ENHANCEMENT_FACTOR (not a measured gain). */
+const SCHEMATIC_ENHANCEMENT_CEILING = 1e5;
+const SCHEMATIC_FALLBACK_PROVENANCE = 'schematic_fallback';
+
 function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
   const timeSteps = params.totalSimulationTime / params.timeStepSize || 100;
   const dt = params.timeStepSize || 0.1;
@@ -88,7 +92,7 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
   
   for (let i = 0; i < timeSteps; i++) {
     const t = i * dt;
-    // Add realistic variation based on physics
+    // Illustrative variation for UI series — not measured time series
     const tempVariation = 1 + 0.05 * Math.sin(2 * Math.PI * t / 5);
     const rampUp = 1 - Math.exp(-t / 2);
     
@@ -102,24 +106,35 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     time: timePoints,
     enhancement: enhancementHistory,
     reactionRate: reactionRateHistory,
-    temperature: temperatureHistory
+    temperature: temperatureHistory,
+    provenance: 'physics_api_with_schematic_viz',
+    data_origin: 'api_scalars_with_client_time_series',
   };
 }
 
 /**
- * Generate fallback results when API is unavailable
+ * Generate fallback results when API is unavailable.
+ *
+ * Screening multiplier here is a schematic Debye-like toy, NOT Assenbaum–Rolfs
+ * f = exp(πη·Uₑ/E) and NOT a documented physical potential. Cap at the
+ * governance ceiling so unconstrained exp(20/√T) gains are never shown raw.
  */
-function generateFallbackResults(params, config) {
-  // Physics-based calculations using simplified models
-  const T = params.temperature || 300;
+export function generateFallbackResults(params, config) {
+  const T = Math.max(params.temperature || 300, 1);
   const loadingRatio = params.loadingRatio || 0.85;
   const defectDensity = params.defectDensity || 0.01;
   
-  // Simplified enhancement factor calculations
-  const screeningEnhancement = Math.exp(20 / Math.sqrt(T)); // Debye screening
+  // Toy Debye-like factor (model assumption) — not Assenbaum domain physics.
+  const rawScreening = Math.exp(20 / Math.sqrt(T));
+  const screeningEnhancement = Math.min(rawScreening, SCHEMATIC_ENHANCEMENT_CEILING);
   const loadingEnhancement = Math.pow(loadingRatio / 0.5, 2);
   const defectEnhancement = 1 + 10 * defectDensity;
-  const totalEnhancement = screeningEnhancement * loadingEnhancement * defectEnhancement;
+  const uncappedProduct =
+    screeningEnhancement * loadingEnhancement * defectEnhancement;
+  const totalEnhancement = Math.min(uncappedProduct, SCHEMATIC_ENHANCEMENT_CEILING);
+  const wasCapped =
+    rawScreening > SCHEMATIC_ENHANCEMENT_CEILING ||
+    uncappedProduct > SCHEMATIC_ENHANCEMENT_CEILING;
   
   const timeSteps = 100;
   const dt = 0.1;
@@ -128,6 +143,7 @@ function generateFallbackResults(params, config) {
     simulation_id: `fallback-${Date.now()}`,
     status: 'completed',
     parameters: params,
+    provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     results: {
       total_enhancement: totalEnhancement,
       individual_factors: {
@@ -136,7 +152,17 @@ function generateFallbackResults(params, config) {
         defect_enhancement: defectEnhancement
       },
       dominant_mechanism: screeningEnhancement > loadingEnhancement ? 'electron_screening' : 'loading_ratio',
-      warnings: ['Using local fallback model - backend API unavailable']
+      formula_claimed: false,
+      screening_model: 'schematic_debye_toy_not_assenbaum',
+      enhancement_ceiling: SCHEMATIC_ENHANCEMENT_CEILING,
+      enhancement_capped: wasCapped,
+      warnings: [
+        'schematic_fallback: backend API unavailable',
+        'Screening multiplier is an undocumented client toy (exp(20/√T)), not Assenbaum–Rolfs Uₑ potential physics',
+        wasCapped
+          ? `Enhancement capped at governance ceiling ${SCHEMATIC_ENHANCEMENT_CEILING} (not a measured gain)`
+          : 'Enhancement below governance ceiling; still schematic — do not cite',
+      ],
     },
     timeSeriesData: {
       time: Array.from({ length: timeSteps }, (_, i) => i * dt),
@@ -148,7 +174,8 @@ function generateFallbackResults(params, config) {
       ),
       temperature: Array.from({ length: timeSteps }, (_, i) =>
         T * (1 + 0.02 * Math.sin(i * dt * 0.5))
-      )
+      ),
+      provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     },
     latticeData: config.lattice_parameters
   };
@@ -329,37 +356,44 @@ function LENRSimulationPage() {
         const simId = `lenr-${Date.now()}`;
         setSimulationId(simId);
         
-        // Transform API results into visualization-compatible format
+        // API scalars + client-schematic time series for charts
         const simulationResults = {
           simulation_id: simId,
           status: 'completed',
           parameters: parameters,
+          provenance: 'physics_api_with_schematic_viz',
           results: {
             enhancement: enhancementResult,
             reactionRate: reactionRateResult,
             total_enhancement: enhancementResult.total_enhancement,
             dominant_mechanism: enhancementResult.dominant_mechanism,
             individual_factors: enhancementResult.individual_factors,
-            warnings: enhancementResult.warnings || []
+            warnings: [
+              ...(enhancementResult.warnings || []),
+              'Time-series charts are client-schematic ramps around API scalars — not measured lab traces',
+            ],
           },
-          // Generate visualization data based on real physics results
           timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, parameters),
           latticeData: simulationConfig.lattice_parameters
         };
         
         setSimulationData(simulationResults);
-        setSuccessMessage('Simulation completed using real physics calculations');
+        setSuccessMessage(
+          'API enhancement/rate scalars loaded. Time-series charts are schematic visualization — not experimental corroboration.',
+        );
         
       } catch (apiError) {
         console.warn('Real physics API unavailable, using fallback:', apiError.message);
         
-        // Fallback: generate physics-based mock data
+        // Fallback: fully schematic client synthesis (not Assenbaum / not engine)
         const simId = `lenr-fallback-${Date.now()}`;
         setSimulationId(simId);
         
         const fallbackResults = generateFallbackResults(parameters, simulationConfig);
         setSimulationData(fallbackResults);
-        setSuccessMessage('Simulation completed (using local physics model)');
+        setSuccessMessage(
+          'Backend unreachable. Schematic local fallback only — screening multiplier is an undocumented toy, not Assenbaum physics. Do not cite.',
+        );
       }
       
     } catch (err) {
@@ -831,6 +865,32 @@ function LENRSimulationPage() {
           simulation for improved physics accuracy and visualization.
         </Typography>
       </Alert>
+
+      {simulationData?.provenance === SCHEMATIC_FALLBACK_PROVENANCE && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          data-testid="lenr-schematic-fallback-banner"
+        >
+          <Typography variant="body2">
+            Provenance: <code>schematic_fallback</code> — enhancement/rate charts use a
+            capped client toy screening multiplier (not Assenbaum–Rolfs Uₑ). Not
+            laboratory excess heat and not physics-engine output.
+          </Typography>
+        </Alert>
+      )}
+      {simulationData?.provenance === 'physics_api_with_schematic_viz' && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          data-testid="lenr-schematic-viz-banner"
+        >
+          <Typography variant="body2">
+            Enhancement/rate scalars from the physics API; plotted time series are
+            schematic client ramps (model-output UI aid — not experimental traces).
+          </Typography>
+        </Alert>
+      )}
       
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>

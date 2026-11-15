@@ -1,7 +1,14 @@
 /**
  * Mock Data Utilities
- * Provides sample data for testing and development
+ * Provides sample / schematic data for testing, development, and offline UI.
+ *
+ * Honesty: nothing here is laboratory measurement or physics-engine output.
+ * Callers must surface provenance (`schematic_fallback`) so charts are never
+ * read as experimental heat, helium, or neutron corroboration.
  */
+
+/** Provenance token for client-synthesized visualization payloads. */
+export const SCHEMATIC_FALLBACK_PROVENANCE = 'schematic_fallback';
 
 /**
  * Generate mock fusion simulation data
@@ -42,7 +49,7 @@ export const mockSimulationResults = {
 };
 
 /**
- * Generate mock LENR data
+ * Generate mock LENR data (schematic only — not measured excess heat / He-4)
  */
 export const mockLENRData = {
   latticeType: 'palladium',
@@ -50,8 +57,10 @@ export const mockLENRData = {
   temperature: 350,
   pressure: 101325,
   current: 0.1, // Amperes
-  excessHeat: 12.5, // Watts
-  helium4Production: 1e10 // atoms/second
+  // Schematic model-output placeholders; never cite as laboratory measurements.
+  excessHeat: 12.5, // Watts (schematic)
+  helium4Production: 1e10, // atoms/second (schematic)
+  provenance: SCHEMATIC_FALLBACK_PROVENANCE,
 };
 
 /**
@@ -167,6 +176,7 @@ export const mockFusionSimulation = async (parameters = {}) => {
     endTime: Date.now(),
     parameters,
     timeSteps,
+    provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     results: {
       rate: 1e-12,
       crossSection: 1e-28,
@@ -218,6 +228,7 @@ export const mockLENRSimulation = async (parameters = {}) => {
     id: `lenr-sim-${Date.now()}`,
     status: 'completed',
     time: parameters?.totalSimulationTime || 10,
+    provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     lattice: {
       points: latticePoints,
       connections: connections,
@@ -227,14 +238,16 @@ export const mockLENRSimulation = async (parameters = {}) => {
       total_energy: Math.random() * 50 + 10,
       average_temperature: parameters?.temperature || 400,
       reaction_rate: Math.random() * 0.05,
+      // Schematic excess_heat placeholder — not a calorimetry measurement.
       excess_heat: Math.random() * 20
     }
   };
 };
 
 /**
- * Generate fusion simulation time steps with particles and hotspots
- * Used by FusionVisualization component
+ * Generate fusion simulation time steps with particles and hotspots.
+ * Used by FusionVisualization — schematic client synthesis only.
+ * Hotspots are illustrative markers, not measured fusion events.
  */
 export const generateFusionTimeSteps = (parameters = {}) => {
   const {
@@ -275,7 +288,7 @@ export const generateFusionTimeSteps = (parameters = {}) => {
       });
     }
 
-    // Generate hotspots (fusion events)
+    // Schematic hotspot markers (not measured fusion events)
     const numHotspots = Math.floor(3 + Math.random() * 7 * (temperature / 500));
     for (let h = 0; h < numHotspots; h++) {
       hotspots.push({
@@ -295,13 +308,15 @@ export const generateFusionTimeSteps = (parameters = {}) => {
 
   return {
     timeSteps,
+    provenance: SCHEMATIC_FALLBACK_PROVENANCE,
     metadata: {
       reactionType,
       temperature,
       loadingRatio,
       latticeDimension,
       totalParticles: numParticles,
-      totalTimeSteps: numTimeSteps
+      totalTimeSteps: numTimeSteps,
+      data_origin: 'client_schematic_visualization',
     }
   };
 };
@@ -315,5 +330,6 @@ export default {
   mockTunnelingData,
   generateMockDataStream,
   generateFusionTimeSteps,
+  SCHEMATIC_FALLBACK_PROVENANCE,
   mockDelay
 };
