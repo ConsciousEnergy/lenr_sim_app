@@ -27,7 +27,21 @@ DISCOVERY_GRADE_SIGMA = 5.0
 #: Oracle B ``null_excess_falsified`` uses SNR≥3 — exploratory, not discovery-grade.
 EXPLORATORY_NULL_FALSIFY_SNR = 3.0
 
-ALLOWED_MOE_PROVENANCE = frozenset({"literature_reported", "model_assumption"})
+ALLOWED_MOE_PROVENANCE = frozenset(
+    {
+        "literature_reported",
+        "literature_reported_instrument_precision",
+        "model_assumption",
+    }
+)
+
+#: Provenance labels that require citation keys (refuse fabricated lab MoE).
+CITED_MOE_PROVENANCE = frozenset(
+    {
+        "literature_reported",
+        "literature_reported_instrument_precision",
+    }
+)
 
 
 def combine_sigma_q_w(
@@ -100,13 +114,15 @@ def validate_moe_provenance(
             "ok": False,
             "reason": f"unknown moe_provenance={moe_provenance!r}",
         }
-    if moe_provenance == "literature_reported":
+    if moe_provenance in CITED_MOE_PROVENANCE:
         keys = [str(k) for k in (moe_citation_keys or []) if k]
         if not keys:
             return {
                 "ok": False,
-                "reason": "literature_reported sigma_Q_W requires moe_citation_keys "
-                "(refuse fabricated lab uncertainty)",
+                "reason": (
+                    f"{moe_provenance} sigma_Q_W requires moe_citation_keys "
+                    "(refuse fabricated lab uncertainty)"
+                ),
             }
     return {"ok": True, "reason": None}
 
