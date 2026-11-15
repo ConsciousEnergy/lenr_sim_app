@@ -37,8 +37,11 @@ import TeamIcon from '@mui/icons-material/Groups';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import EmailIcon from '@mui/icons-material/Email';
 // import PendingIcon from '@mui/icons-material/Pending'; // Not currently used
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { FEEDBACK_EMAIL, PUBLIC_GITHUB_MAIN } from '../config/publicLinks';
 
 // Styled Components
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -416,9 +419,20 @@ function DashboardNew() {
               <Button
                 fullWidth
                 variant="text"
-                href="mailto:diadon@conscious.energy"
+                startIcon={<GitHubIcon />}
+                href={PUBLIC_GITHUB_MAIN}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Email feedback / source access
+                Source on GitHub
+              </Button>
+              <Button
+                fullWidth
+                variant="text"
+                startIcon={<EmailIcon />}
+                href={FEEDBACK_EMAIL}
+              >
+                Email feedback
               </Button>
             </Stack>
           </Paper>

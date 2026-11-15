@@ -16,6 +16,9 @@ module.exports = {
     'node_modules/(?!@three|three)/',
   ],
   testEnvironment: 'jsdom',
+  setupFiles: [
+    '<rootDir>/src/jest.polyfills.js',
+  ],
   setupFilesAfterEnv: [
     '<rootDir>/src/setupTests.js',
   ],
