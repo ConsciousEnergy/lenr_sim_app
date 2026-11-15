@@ -127,9 +127,36 @@ def test_mckubre_seed_columns_omit_fabricated_sigma_q() -> None:
         columns["moe_provenance"]
         == "literature_reported_instrument_floor"
     )
+    assert "mckubre2008" in (columns["moe_citation_keys"] or [])
     assert columns["s_heat"] is None
     assert columns["discovery_grade_eligible"] is False
     assert columns["bayesian_summary"]["lenr_proved"] is False
+    assert columns["bayesian_summary"]["moe_provenance"] == (
+        "literature_reported_instrument_floor"
+    )
+
+
+def test_floor_only_params_preserve_provenance_without_total_sigma() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.0,
+            "parameters": {
+                "sigma_Q_instrument_floor_W": 0.01,
+                "sigma_Q_relative_fraction": 0.001,
+                "moe_provenance": "literature_reported_instrument_floor",
+                "moe_citation_keys": ["mckubre2008"],
+                "moe_notes": "floor only; not total σ_Q",
+            },
+        }
+    )
+    assert columns["sigma_q_w"] is None
+    assert columns["sigma_q_instrument_floor_w"] == 0.01
+    assert (
+        columns["moe_provenance"]
+        == "literature_reported_instrument_floor"
+    )
+    assert columns["moe_citation_keys"] == ["mckubre2008"]
+    assert columns["moe_notes"] == "floor only; not total σ_Q"
 
 
 def test_deninno_instrument_precision_columns_non_discovery() -> None:

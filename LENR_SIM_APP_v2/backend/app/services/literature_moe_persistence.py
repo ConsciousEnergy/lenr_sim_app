@@ -237,7 +237,19 @@ def literature_moe_columns_from_record(
             and abs(float(candidate) - float(sigma_q_w)) <= 1e-12
         )
 
+    def _has_component_or_floor_moe(bag: Mapping[str, Any]) -> bool:
+        return any(
+            _optional_float(bag.get(key)) is not None
+            for key in (
+                "sigma_Q_statistical_W",
+                "sigma_Q_systematic_W",
+                "sigma_Q_instrument_floor_W",
+                "sigma_Q_relative_fraction",
+            )
+        )
+
     # Provenance / citations / notes must travel with the selected σ envelope.
+    # Floor/component-only rows (no total sigma_Q_W) still keep their metadata.
     if _sigma_matches(record_sigma):
         meta_bags: tuple[Mapping[str, Any], ...] = (record, params, results)
     elif _sigma_matches(envelope_sigma):
@@ -246,6 +258,13 @@ def literature_moe_columns_from_record(
         meta_bags = (params, record)
     elif _sigma_matches(results_sigma):
         meta_bags = (results, record)
+    elif sigma_q_w is None:
+        floor_bags = [
+            bag
+            for bag in (record, params, results)
+            if _has_component_or_floor_moe(bag) or bag.get("moe_provenance")
+        ]
+        meta_bags = tuple(floor_bags) if floor_bags else (record, params)
     else:
         meta_bags = (record,)
 
