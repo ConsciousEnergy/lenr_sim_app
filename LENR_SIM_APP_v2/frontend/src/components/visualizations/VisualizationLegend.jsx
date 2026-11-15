@@ -356,7 +356,17 @@ function SimulationStats({ stats, simulationType = 'fusion' }) {
           <StatItem label="Max Energy" value={`${stats.maxEnergy.toFixed(2)} keV`} />
         )}
         {stats.fusionRate !== undefined && (
-          <StatItem label="Fusion Rate" value={`${stats.fusionRate.toExponential(2)}/s`} />
+          <StatItem
+            label={stats.fusionRateIsSchematic ? 'Fusion Rate (schematic)' : 'Fusion Rate'}
+            value={`${stats.fusionRate.toExponential(2)}/s`}
+          />
+        )}
+        {stats.apiReactionRate !== undefined && Number.isFinite(stats.apiReactionRate) && (
+          <StatItem
+            // FusionRateResponse.reaction_rate_per_s is volumetric (m⁻³ s⁻¹), not total /s.
+            label="API volumetric rate"
+            value={`${stats.apiReactionRate.toExponential(2)} m⁻³ s⁻¹`}
+          />
         )}
         {stats.temperature !== undefined && (
           <StatItem label="Temp" value={`${(stats.temperature / 1000).toFixed(1)}k K`} />
@@ -1073,6 +1083,8 @@ VisualizationLegend.propTypes = {
     avgEnergy: PropTypes.number,
     maxEnergy: PropTypes.number,
     fusionRate: PropTypes.number,
+    fusionRateIsSchematic: PropTypes.bool,
+    apiReactionRate: PropTypes.number,
     // LENR-specific stats
     loadingRatio: PropTypes.number,
     enhancementFactor: PropTypes.number,

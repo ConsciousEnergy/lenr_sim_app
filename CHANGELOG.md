@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added — EQ-OPEN-RAD-01 Lean bounds (academic; stays OPEN)
 - Lean `RadiationBounds`: `EQ-WH-FC-02` FC class bound — \(S^N/N!<10^{-11}\) for every \(S\le10^4\), \(N\ge300048\); FC ratio floor \(0<10^{11}\); derives the EQ-WH-FC-01 literals; paper §5A.2 alias `harmonic_dos_non_closure`
 - Lean `RadiationBounds`: `EQ-RAD-DET-01` detector-UL honesty flag DEF mirrors of `branching_model.py` (falsifiers only)
+- Lean `RealShim` / `RadiationBounds`: mechanize \(e^{-S}\le1\) FC bridge (`expZ_neg_le_one`, `poisson_exp_neg_le_one`, `poisson_weight_factor_mul_le`); labelled `expZ_zero` axiom twin until mathlib — math identity only; **does not** close `EQ-OPEN-RAD-01`
 - **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change
 
 ### Changed — EQ-OPEN claim-tier sync / contested-hydro honesty (academic)

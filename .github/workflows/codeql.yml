@@ -3,11 +3,10 @@ name: CodeQL
 # Static analysis for the FastAPI backend (Python) and the React/Vite frontend
 # (JavaScript/TypeScript). Results appear under Security -> Code scanning.
 #
-# GitHub code scanning is only available on public repositories or private
-# repositories with GitHub Advanced Security. The job is therefore gated on
-# repository visibility so it is a no-op until the repository is public (or
-# GHAS is enabled), instead of failing every PR with "Advanced Security must
-# be enabled". Remove the `if:` once one of those is true.
+# This repository is public. Advanced CodeQL workflow jobs below stay disabled
+# (`if: false`) because GitHub Code Scanning *default setup* is already enabled;
+# running both fails SARIF upload. Pick one: keep default setup, or disable it
+# and re-enable this workflow.
 
 on:
   push:
@@ -37,7 +36,7 @@ jobs:
     # delete this workflow OR disable default setup — pick one.
     if: false
     # Default: lenr-ci self-hosted. Fork PRs → ubuntu-latest (public-repo safe).
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('["ubuntu-latest"]') || fromJSON(vars.LENR_CI_RUNS_ON || '["self-hosted","linux","x64","lenr-ci"]') }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -55,7 +54,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -75,6 +74,6 @@ jobs:
               - '**/*.test.tsx'
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: "/language:${{ matrix.language }}"

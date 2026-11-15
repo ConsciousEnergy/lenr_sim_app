@@ -42,6 +42,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import EmailIcon from '@mui/icons-material/Email';
+import GitHubIcon from '@mui/icons-material/GitHub';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import Tooltip from '@mui/material/Tooltip';
@@ -49,6 +50,7 @@ import ReferencesSection from './theory-paper/ReferencesSection';
 import ScienceEvidenceSection from './theory-paper/ScienceEvidenceSection';
 import OpenChallengesSection from '../components/OpenChallengesSection';
 import { APP_VERSION } from '../config/version';
+import { FEEDBACK_EMAIL, PUBLIC_GITHUB_MAIN } from '../config/publicLinks';
 import { track } from '../analytics/events';
 
 function TabPanel({ children, value, index, ...other }) {
@@ -1514,18 +1516,30 @@ const TheoryPaperPage = () => {
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              The manuscript source repository is private during invited beta.
-              Use the in-app Full Paper tab, or email for manuscript / source access.
+              Source is public on GitHub.
+              Use the in-app Full Paper tab, or browse the repository.
               License text: <MuiLink href="/LICENSE">/LICENSE</MuiLink>.
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<EmailIcon />}
-              href="mailto:diadon@conscious.energy"
-              component={MuiLink}
-            >
-              Email feedback / source access
-            </Button>
+            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" useFlexGap>
+              <Button
+                variant="outlined"
+                startIcon={<GitHubIcon />}
+                href={PUBLIC_GITHUB_MAIN}
+                component={MuiLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Source on GitHub
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<EmailIcon />}
+                href={FEEDBACK_EMAIL}
+                component={MuiLink}
+              >
+                Email feedback
+              </Button>
+            </Stack>
           </Box>
         </TabPanel>
 

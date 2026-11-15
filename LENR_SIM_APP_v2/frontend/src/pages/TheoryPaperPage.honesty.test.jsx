@@ -1,28 +1,39 @@
 import { screen, fireEvent } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import TheoryPaperPage from './TheoryPaperPage';
+import { FEEDBACK_EMAIL, PUBLIC_GITHUB_MAIN } from '../config/publicLinks';
 
-describe('TheoryPaperPage honesty CTAs (invited beta)', () => {
-  it('soft-gates Corrections tab Full Paper GitHub CTA to email source access', () => {
+describe('TheoryPaperPage honesty CTAs (public repo)', () => {
+  it('points Corrections tab source CTA to the public GitHub main branch', () => {
     render(<TheoryPaperPage />);
     fireEvent.click(screen.getByRole('tab', { name: /Corrections & Improvements/i }));
 
-    expect(screen.queryByRole('link', { name: /View Full Paper on GitHub/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Full Paper on GitHub/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/private during invited beta/i)).toBeInTheDocument();
+    expect(screen.queryByText(/private during invited beta/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Source is public on GitHub/i)).toBeInTheDocument();
 
-    const emailCta = screen.getByRole('link', { name: /Email feedback \/ source access/i });
-    expect(emailCta).toHaveAttribute('href', 'mailto:diadon@conscious.energy');
+    expect(screen.getByRole('link', { name: /Source on GitHub/i })).toHaveAttribute(
+      'href',
+      PUBLIC_GITHUB_MAIN,
+    );
+    expect(screen.getByRole('link', { name: /Email feedback$/i })).toHaveAttribute(
+      'href',
+      FEEDBACK_EMAIL,
+    );
     expect(screen.getByRole('link', { name: '/LICENSE' })).toHaveAttribute('href', '/LICENSE');
   });
 
-  it('soft-gates References Full Paper GitHub CTA to email source access', () => {
+  it('points References Full Paper CTA to the public GitHub main branch', () => {
     render(<TheoryPaperPage />);
     fireEvent.click(screen.getByRole('tab', { name: /References/i }));
 
-    expect(screen.queryByRole('link', { name: /Full Paper on GitHub/i })).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Email feedback \/ source access/i }),
-    ).toHaveAttribute('href', 'mailto:diadon@conscious.energy');
+    expect(screen.queryByText(/Private repository during invited beta/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Source on GitHub/i })).toHaveAttribute(
+      'href',
+      PUBLIC_GITHUB_MAIN,
+    );
+    expect(screen.getByRole('link', { name: /Email feedback$/i })).toHaveAttribute(
+      'href',
+      FEEDBACK_EMAIL,
+    );
   });
 });

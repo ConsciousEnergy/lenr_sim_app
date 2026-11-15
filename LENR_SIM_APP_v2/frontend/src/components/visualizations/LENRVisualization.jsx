@@ -15,6 +15,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { EnergyFlowVisualizer } from './FluidDynamicsEffects';
 import { QuantumFluxEffect, ScaleBar, FluxMode } from './QuantumFluxVisualization';
 import VisualizationLegend from './VisualizationLegend';
+import { buildLenrChartData } from './lenrChartData';
 
 /**
  * LENR Visualization Component
@@ -708,49 +709,13 @@ const LENRVisualization = ({
   }, [timeSeriesData, visOptions, isSceneReady]);
   
   /**
-   * Build the time-series chart data from the summary.
-   *
-   * This interpolates a linear ramp between zero and the summary values, because
-   * the summary is all this component receives; it is a shape, not per-step data.
-   *
-   * It used to add `(Math.random() - 0.5) * ...` jitter to temperature and reaction
-   * rate. Two problems: the noise was regenerated on every render, so the chart
-   * visibly jittered whenever anything unrelated re-rendered, and synthetic noise
-   * reads as measurement scatter that no model produced.
+   * Build the time-series chart data from nested series or summary ramps.
+   * See buildLenrChartData — no aggressive toFixed that erases low-amplitude curves.
    */
-  const chartData = useMemo(() => {
-    const defaultSummary = {
-      total_energy: 50,
-      average_temperature: 400,
-      reaction_rate: 0.05
-    };
-
-    const summary = timeSeriesData?.summary || defaultSummary;
-    const totalTime = timeSeriesData?.time || 10;
-    const steps = 50;
-
-    return Array.from({ length: steps }, (_, index) => {
-      const time = index * (totalTime / (steps - 1));
-      const progress = index / (steps - 1);
-      const comparisonSummary = comparisonData?.summary;
-
-      return {
-        time: Number(time.toFixed(2)),
-        energyOutput: Number(((summary.total_energy || 50) * progress).toFixed(2)),
-        temperature: Number((summary.average_temperature || 400).toFixed(2)),
-        reactionRate: Number(((summary.reaction_rate || 0.05) * progress).toFixed(4)),
-        comparisonEnergy: comparisonSummary
-          ? Number((comparisonSummary.total_energy * progress).toFixed(2))
-          : undefined,
-        comparisonTemp: comparisonSummary
-          ? Number(comparisonSummary.average_temperature.toFixed(2))
-          : undefined,
-        comparisonRate: comparisonSummary
-          ? Number(((comparisonSummary.reaction_rate || 0.05) * progress).toFixed(4))
-          : undefined
-      };
-    });
-  }, [timeSeriesData, comparisonData]);
+  const chartData = useMemo(
+    () => buildLenrChartData(timeSeriesData, comparisonData),
+    [timeSeriesData, comparisonData],
+  );
   
   // Tab content components
   const renderTabs = () => {
@@ -1152,9 +1117,34 @@ const LENRVisualization = ({
               label={{ value: 'Time (s)', position: 'insideBottomRight', offset: -10 }} 
             />
             <YAxis 
-              label={{ value: 'Reaction Rate', angle: -90, position: 'insideLeft' }} 
+              label={{
+                value: 'Reaction rate (normalized to series max)',
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
-            <Tooltip />
+            <Tooltip
+              formatter={(value, name, props) => {
+                if (name === 'Current Simulation' || name === 'Comparison Simulation') {
+                  const abs = name === 'Comparison Simulation'
+                    ? props?.payload?.comparisonRateAbsolute
+                    : props?.payload?.reactionRateAbsolute;
+                  const max = props?.payload?.rateScaleMax;
+                  const absLabel = Number.isFinite(abs)
+                    ? `${Number(abs).toExponential(2)} /s`
+                    : 'n/a';
+                  // Curve Y is abs/max; lead with absolute so tooltip matches plotted physics.
+                  const norm = Number.isFinite(Number(value))
+                    ? Number(value).toExponential(3)
+                    : value;
+                  return [
+                    `${absLabel} (plot Y ${norm} × max ${Number(max || 0).toExponential(2)} /s)`,
+                    name,
+                  ];
+                }
+                return [value, name];
+              }}
+            />
             <Legend />
             <Line
               type="monotone"

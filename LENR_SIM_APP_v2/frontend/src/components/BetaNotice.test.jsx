@@ -1,6 +1,7 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../tests/test-utils';
 import BetaNotice from './BetaNotice';
+import { PUBLIC_GITHUB_ISSUES } from '../config/publicLinks';
 
 jest.mock('../analytics/flags', () => {
   const actual = jest.requireActual('../analytics/flags');
@@ -34,7 +35,11 @@ describe('BetaNotice', () => {
       'href',
       'mailto:diadon@conscious.energy',
     );
-    expect(screen.getByTestId('beta-banner')).toHaveTextContent(/while the repository is private/);
+    expect(screen.getByRole('link', { name: /GitHub issue/i })).toHaveAttribute(
+      'href',
+      PUBLIC_GITHUB_ISSUES,
+    );
+    expect(screen.queryByText(/repository is private/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Send beta feedback/i }),
     ).not.toBeInTheDocument();

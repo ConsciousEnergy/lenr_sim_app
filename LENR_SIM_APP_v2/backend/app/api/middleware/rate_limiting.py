@@ -5,18 +5,23 @@ Limits requests per client IP with stricter budgets for unauthenticated
 heavy-compute and persistence-write POST paths. Client IP comes from
 Traefik-aware extraction (X-Real-IP when present, else rightmost X-Forwarded-For).
 
-Budgets are process-local. Swarm replicas multiply the effective allowance until
-a shared store (Redis) or edge RL is provisioned — see ops notes.
+Default counters are process-local. Prefer Traefik file-provider path RL for
+cluster fencing. Optional ``RATE_LIMIT_BACKEND=redis`` shares FastAPI budgets
+across workers when edge RL cannot be applied — default remains memory/off.
 """
 
 from __future__ import annotations
 
 import time
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.api.middleware.rate_limit_store import (
+    RateLimitStore,
+    build_rate_limit_store,
+)
 from app.core.config import settings
 from app.security.client_ip import client_ip_from_request
 from app.utils.logging import setup_logger
@@ -67,6 +72,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         write_path_prefixes: Optional[List[str]] = None,
         whitelist_paths: Optional[list] = None,
         whitelist_ips: Optional[list] = None,
+        store: Optional[RateLimitStore] = None,
     ):
         super().__init__(app)
         self.rate_limit = rate_limit_per_minute
@@ -90,8 +96,6 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
             if write_path_prefixes is not None
             else getattr(settings, "WRITE_RATE_LIMIT_PATH_PREFIXES", _DEFAULT_WRITE_PATH_PREFIXES)
         )
-        # client_ip -> (request_count, window_start, heavy_count, write_count)
-        self.clients: Dict[str, Tuple[int, float, int, int]] = {}
         self.window_size = 60
         self.whitelist_paths = (
             whitelist_paths if whitelist_paths is not None else list(_DEFAULT_WHITELIST_PATHS)
@@ -99,12 +103,19 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         self.whitelist_ips = (
             whitelist_ips if whitelist_ips is not None else ["127.0.0.1", "::1"]
         )
+        if store is not None:
+            self.store = store
+        else:
+            backend = getattr(settings, "RATE_LIMIT_BACKEND", "memory")
+            redis_url = getattr(settings, "RATE_LIMIT_REDIS_URL", None)
+            self.store = build_rate_limit_store(backend=backend, redis_url=redis_url)
 
         logger.info(
-            "Rate limiting initialized: general=%s/min heavy=%s/min write=%s/min",
+            "Rate limiting initialized: general=%s/min heavy=%s/min write=%s/min backend=%s",
             rate_limit_per_minute,
             self.heavy_rate_limit,
             self.write_rate_limit,
+            getattr(settings, "RATE_LIMIT_BACKEND", "memory"),
         )
 
     def _path_scope(self, path: str, method: str) -> str:
@@ -135,8 +146,9 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         scope = self._path_scope(request.url.path, request.method)
         limit = self._limit_for_scope(scope)
 
-        if client_ip in self.clients:
-            requests, timestamp, heavy_count, write_count = self.clients[client_ip]
+        entry = self.store.get(client_ip)
+        if entry is not None:
+            requests, timestamp, heavy_count, write_count = entry
             if current_time - timestamp >= self.window_size:
                 requests, heavy_count, write_count, timestamp = 0, 0, 0, current_time
 
@@ -154,24 +166,34 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
                     request.url.path,
                     scope,
                 )
-                return self._rate_limit_response(request, limit=limit, scope=scope)
+                return self._rate_limit_response(
+                    request, limit=limit, scope=scope, window_start=timestamp
+                )
 
-            self.clients[client_ip] = (next_general, timestamp, next_heavy, next_write)
+            self.store.set(client_ip, (next_general, timestamp, next_heavy, next_write))
         else:
-            self.clients[client_ip] = (
-                1,
-                current_time,
-                1 if scope == "heavy" else 0,
-                1 if scope == "write" else 0,
+            self.store.set(
+                client_ip,
+                (
+                    1,
+                    current_time,
+                    1 if scope == "heavy" else 0,
+                    1 if scope == "write" else 0,
+                ),
             )
 
-        if sum(count for count, _, _, _ in self.clients.values()) % 100 == 0:
-            self._cleanup_old_entries(current_time)
+        # Periodic cleanup for in-memory backends (Redis uses key TTL).
+        if hasattr(self.store, "client_count"):
+            if getattr(self.store, "client_count") % 100 == 0:
+                self.store.cleanup(current_time, self.window_size)
 
         response = await call_next(request)
 
-        client_requests, _, heavy_used, write_used = self.clients.get(
-            client_ip, (0, current_time, 0, 0)
+        client_requests, _, heavy_used, write_used = self.store.get(client_ip) or (
+            0,
+            current_time,
+            0,
+            0,
         )
         if scope == "write":
             remaining = max(0, self.write_rate_limit - write_used)
@@ -190,20 +212,12 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
     def _get_client_ip(self, request: Request) -> str:
         return client_ip_from_request(request)
 
-    def _cleanup_old_entries(self, current_time: float) -> None:
-        expired = [
-            ip
-            for ip, (_, timestamp, _, _) in self.clients.items()
-            if current_time - timestamp >= self.window_size
-        ]
-        for ip in expired:
-            del self.clients[ip]
-
     def _rate_limit_response(
         self,
         request: Request,
         limit: Optional[int] = None,
         scope: str = "general",
+        window_start: float = 0.0,
     ) -> Response:
         from starlette.responses import JSONResponse
 
@@ -215,9 +229,10 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
             request.url.path,
             scope,
         )
-        client_ip = self._get_client_ip(request)
-        entry = self.clients.get(client_ip, (0, 0.0, 0, 0))
-        timestamp = entry[1]
+        timestamp = window_start
+        if not timestamp:
+            entry = self.store.get(self._get_client_ip(request))
+            timestamp = entry[1] if entry else 0.0
         retry_after = (
             int(self.window_size - (time.time() - timestamp)) if timestamp else self.window_size
         )

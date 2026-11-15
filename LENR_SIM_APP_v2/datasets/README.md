@@ -9,12 +9,30 @@ simulations do not raise `claim_tier` or close `EQ-OPEN-*`.
 
 | File | Rows | Loaded by |
 |------|------|-----------|
-| `literature_baselines.v1.json` | 18 | `app.data.baseline_experiments` |
-| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 18) |
+| `literature_baselines.v1.json` | 19 | `app.data.baseline_experiments` |
+| `literature_iccf27.v1.json` | 6 | `app.campaign.iccf27` (extension; does not replace the 19) |
 | `screening_priors.v1.json` | 9 hosts | `unified_lenr_model.screening_data` |
 | `parkhomov_curated.v1.json` | curated subset | `parkhomov_validation.py` |
 | `open_question_register.v1.json` | Q1–Q5 | campaigns / docs / Lean IR |
 | `testable_predictions.v1.json` | Predictions 1–10 | virtual-lab crosswalk |
 | `reviewer_packs/` | export envelopes | `export_reviewer_pack` |
+
+Optional cite-gated calorimetry MoE on EMP rows: `sigma_Q_W`,
+`sigma_Q_statistical_W`, `sigma_Q_systematic_W`,
+`sigma_Q_instrument_floor_W`, `sigma_Q_relative_fraction`,
+`moe_provenance` (`literature_reported` |
+`literature_reported_instrument_precision` |
+`literature_reported_instrument_floor` | `model_assumption`),
+`moe_citation_keys`, `moe_notes`. Refuse fabricated `literature_reported`
+σ_Q; instrument-floor rows may omit `sigma_Q_W` until Pin-scaled. Analytics
+`S_heat = Q/σ_Q` and `discovery_grade_eligible` never close `EQ-OPEN-*` or
+set `lenr_proved` (see `app.physics_engine.calorimetry_significance`).
+
+Alembic `003` persists first-class SQL columns on `experiments`
+(`literature_id`, `claim_tag`, `citation_key`, MoE fields, `s_heat`,
+`discovery_grade_eligible`, `bayesian_summary`) plus optional
+`analytics_snapshots.bayesian_summary`. Seed / ORM wiring mirrors MoE into
+those columns without inventing σ_Q; Miles `instrument_precision` remains
+non-discovery.
 
 The full Parkhomov SQLite (~519k rows, ~161 MB) is **not** shipped.

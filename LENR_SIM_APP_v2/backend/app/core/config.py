@@ -127,6 +127,11 @@ class Settings(BaseSettings):
     HEAVY_RATE_LIMIT_PER_MINUTE: int = 10
     # Persistence / storage-abuse paths (shared-sim save/share). Process-local.
     WRITE_RATE_LIMIT_PER_MINUTE: int = 3
+    # Shared FastAPI RL backend. Default memory (process-local). Set to "redis"
+    # only when Traefik edge path RL cannot fence; requires RATE_LIMIT_REDIS_URL
+    # and the optional redis package. Prefer Traefik file-provider path RL first.
+    RATE_LIMIT_BACKEND: str = "memory"
+    RATE_LIMIT_REDIS_URL: Optional[str] = None
     RATE_LIMIT_WHITELIST_IPS: List[str] = ["127.0.0.1", "::1"]
     # Prefixes matched for HEAVY_RATE_LIMIT_PER_MINUTE (mutate methods only).
     # Broad /api/physics/ + /api/multi-physics/ catch live LP-H3 paths
