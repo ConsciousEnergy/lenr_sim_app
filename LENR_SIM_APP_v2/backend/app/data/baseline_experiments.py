@@ -32,6 +32,25 @@ _RUNTIME_KEYS = (
     "excess_heat_watts",
     "duration_seconds",
     "results",
+    # Optional cite-gated calorimetry MoE (null / absent = refuse fabricated σ_Q)
+    "sigma_Q_W",
+    "sigma_Q_systematic_W",
+    "sigma_Q_instrument_floor_W",
+    "sigma_Q_relative_fraction",
+    "moe_provenance",
+    "moe_citation_keys",
+    "moe_notes",
+)
+
+# Copied into parameters_json on seed (seed_database only persists parameters/results extras).
+_MOE_PARAM_KEYS = (
+    "sigma_Q_W",
+    "sigma_Q_systematic_W",
+    "sigma_Q_instrument_floor_W",
+    "sigma_Q_relative_fraction",
+    "moe_provenance",
+    "moe_citation_keys",
+    "moe_notes",
 )
 
 
@@ -64,6 +83,9 @@ def get_baseline_experiments() -> List[Dict[str, Any]]:
             "open_question_ids",
             list(record.get("open_question_ids") or []),
         )
+        for moe_key in _MOE_PARAM_KEYS:
+            if moe_key in row and row[moe_key] is not None:
+                params.setdefault(moe_key, row[moe_key])
         row["parameters"] = params
         experiments.append(row)
     return experiments

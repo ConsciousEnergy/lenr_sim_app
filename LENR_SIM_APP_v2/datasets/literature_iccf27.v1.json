@@ -1,7 +1,7 @@
 {
   "schema": "lenr-app-dataset-v1",
   "id": "literature_iccf27.v1",
-  "disclaimer": "ICCF-27 / Sept 2026 literature extension. Does not replace the locked 18-row literature_baselines.v1.json seed set. Extra simulations do not raise claim_tier or close EQ-OPEN-*.",
+  "disclaimer": "ICCF-27 / Sept 2026 literature extension. Does not replace the locked 19-row literature_baselines.v1.json seed set. Extra simulations do not raise claim_tier or close EQ-OPEN-*.",
   "anchor_date": "2026-09-25",
   "companion_of": "literature_baselines.v1",
   "records": [
@@ -9,6 +9,7 @@
       "literature_id": "kasagi-nicu-radiant-2026",
       "citation_key": "kasagi2026",
       "doi": "10.70923/001c.163335",
+      "arxiv": "2509.13847",
       "claim_tag": "EMP",
       "reactant": "hydrogen",
       "open_question_ids": ["EQ-OPEN-YIELD-01"],
@@ -37,7 +38,12 @@
       "energy_output_kev": 40.0,
       "excess_heat_watts": 1.1,
       "duration_seconds": 774000,
-      "results": {"q_ex_w": 1.1, "spectrum_peak_eV": 0.2, "gray_body": false}
+      "sigma_Q_W": 0.08,
+      "sigma_Q_systematic_W": null,
+      "moe_provenance": "literature_reported",
+      "moe_citation_keys": ["kasagi2026"],
+      "moe_notes": "Kasagi et al. report typical uncertainty in Q_ex ~0.08 W (1σ) for radiant spectral calorimetry (JCMNS 41 / arXiv:2509.13847). EMP only; does not close EQ-OPEN-YIELD-01 or prove LENR.",
+      "results": {"q_ex_w": 1.1, "spectrum_peak_eV": 0.2, "gray_body": false, "sigma_Q_W": 0.08}
     },
     {
       "literature_id": "kasagi-ni-radiant-2026",
@@ -62,7 +68,12 @@
       "enhancement_factor": 8.0,
       "energy_output_kev": 30.0,
       "excess_heat_watts": 0.9,
-      "duration_seconds": 21600
+      "duration_seconds": 21600,
+      "sigma_Q_W": 0.08,
+      "sigma_Q_systematic_W": null,
+      "moe_provenance": "literature_reported",
+      "moe_citation_keys": ["kasagi2026"],
+      "moe_notes": "Same ~0.08 W (1σ) Q_ex uncertainty as NiCu radiant protocol (arXiv:2509.13847). EMP only; EQ-OPEN-YIELD-01 stays OPEN."
     },
     {
       "literature_id": "czerski-thermal-spike-zr-2024",
