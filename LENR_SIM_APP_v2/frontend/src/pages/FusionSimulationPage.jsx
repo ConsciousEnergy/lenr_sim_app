@@ -35,7 +35,10 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import FusionParameterControls from '../components/controls/FusionParameterControls';
 import FusionVisualization from '../components/visualizations/FusionVisualization';
-import { generateFusionTimeSteps } from '../utils/mockData';
+import {
+  generateFusionTimeSteps,
+  SCHEMATIC_FALLBACK_PROVENANCE,
+} from '../utils/mockData';
 import { analyticsApi } from '../services/analyticsApi';
 // Note: These imports are kept for future use in full implementation
 // import { useNavigate } from 'react-router-dom';
@@ -302,28 +305,44 @@ function FusionSimulationPage() {
         const simId = `fusion-${Date.now()}`;
         setSimulationId(simId);
         
-        // Transform API result and generate time series
+        // API supplies rate scalars; particle/hotspot series remain client-schematic.
+        // FusionRateResponse.reaction_rate_per_s is volumetric (m⁻³ s⁻¹), despite the name.
+        const apiReactionRate =
+          fusionResult.reaction_rate_per_s ?? fusionResult.reaction_rate ?? null;
+        const schematicViz = generateFusionTimeSteps(parameters);
         const data = {
-          ...generateFusionTimeSteps(parameters),
+          ...schematicViz,
           physicsResults: fusionResult,
-          reactionRate: fusionResult.reaction_rate,
+          reactionRate: apiReactionRate,
           powerDensity: fusionResult.power_density,
-          qValue: fusionResult.q_value
+          qValue: fusionResult.q_value,
+          rate_provenance: 'physics_api',
+          viz_provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+          provenance: 'physics_api_with_schematic_viz',
         };
         
         setSimulationData(data);
-        setSuccessMessage('Simulation completed using real physics calculations');
+        setSuccessMessage(
+          'API volumetric rate (m⁻³ s⁻¹) loaded. Particle/hotspot plots are schematic visualization — not experimental corroboration.',
+        );
         
       } catch (apiError) {
         console.warn('Real fusion API unavailable, using fallback:', apiError.message);
         
-        // Fallback to mock data generator
-        const data = generateFusionTimeSteps(parameters);
+        // Fallback: fully schematic client synthesis (not a physics-engine run)
+        const data = {
+          ...generateFusionTimeSteps(parameters),
+          rate_provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+          viz_provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+          provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+        };
         setSimulationData(data);
         
         const simId = `fusion-fallback-${Date.now()}`;
         setSimulationId(simId);
-        setSuccessMessage('Simulation completed (using local physics model)');
+        setSuccessMessage(
+          'Backend unreachable. Schematic local fallback only — not physics-engine output. Do not cite these numbers.',
+        );
       }
       
     } catch (err) {
@@ -538,12 +557,17 @@ function FusionSimulationPage() {
       // Mock loading comparison data
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Generate mock comparison data based on the config
-      const compData = generateFusionTimeSteps(selectedConfig.parameters);
+      // Schematic comparison viz only — not measured fusion series
+      const compData = {
+        ...generateFusionTimeSteps(selectedConfig.parameters),
+        provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+      };
       
       setComparisonConfig(selectedConfig);
       setComparisonData(compData);
-      setSuccessMessage('Comparison data loaded successfully');
+      setSuccessMessage(
+        'Comparison loaded from schematic client visualization — not experimental data.',
+      );
     } catch (err) {
       console.error('Loading comparison error:', err);
       setError('Failed to load comparison data: ' + (err.message || 'Unknown error'));
@@ -883,6 +907,38 @@ function FusionSimulationPage() {
           simulation for improved physics accuracy and visualization.
         </Typography>
       </Alert>
+
+      {simulationData?.provenance === SCHEMATIC_FALLBACK_PROVENANCE && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          data-testid="fusion-schematic-fallback-banner"
+        >
+          <Typography variant="body2">
+            Provenance: <code>schematic_fallback</code> — particle/hotspot plots and the
+            on-screen “Fusion Rate” (hotspot-intensity sum × 10¹²) are client-synthesized.
+            Not laboratory heat/neutron measurements and not physics-engine output.
+          </Typography>
+        </Alert>
+      )}
+      {simulationData?.provenance === 'physics_api_with_schematic_viz' && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          data-testid="fusion-schematic-viz-banner"
+        >
+          <Typography variant="body2">
+            API volumetric rate scalar
+            {simulationData.reactionRate != null
+              ? ` (${Number(simulationData.reactionRate).toExponential(2)} m⁻³ s⁻¹)`
+              : ''}{' '}
+            is loaded separately (field name <code>reaction_rate_per_s</code> is volumetric,
+            not a sample-total rate). The legend “Fusion Rate” and particle/hotspot stats are
+            schematic (hotspot-intensity sum) — not that API scalar and not experimental
+            corroboration.
+          </Typography>
+        </Alert>
+      )}
       
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>

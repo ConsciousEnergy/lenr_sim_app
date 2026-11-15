@@ -71,7 +71,14 @@ class FusionRateRequest(BaseModel):
 
 class FusionRateResponse(BaseModel):
     """Response from fusion rate calculation."""
-    reaction_rate_per_s: float
+    # Despite the field name, this is volumetric (reactions m⁻³ s⁻¹), not a sample-total rate.
+    reaction_rate_per_s: float = Field(
+        ...,
+        description=(
+            "Volumetric fusion rate in reactions m^-3 s^-1 "
+            "(legacy field name; not a sample-total rate)."
+        ),
+    )
     cross_section_barn: float
     s_factor_kev_barn: float
     mean_energy_kev: float
@@ -299,8 +306,9 @@ async def calculate_fusion_rate(request: FusionRateRequest):
         sigma_v = cross_section * 1e-28 * v_thermal * screening_enhancement  # m³/s
         
         # Reaction rate (assuming equal densities)
-        reaction_rate = 0.5 * density_per_m3**2 * sigma_v  # reactions per m³ per s
-        reaction_rate_per_s = reaction_rate  # per second
+        reaction_rate = 0.5 * density_per_m3**2 * sigma_v  # reactions m^-3 s^-1
+        # Stored in reaction_rate_per_s (legacy name); value remains volumetric.
+        reaction_rate_per_s = reaction_rate
         
         # Power density
         q_value_j = q_value * 1.602e-13  # Convert MeV to J
