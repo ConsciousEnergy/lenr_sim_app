@@ -81,9 +81,24 @@ const physicsAPI = {
 const SCHEMATIC_ENHANCEMENT_CEILING = 1e5;
 const SCHEMATIC_FALLBACK_PROVENANCE = 'schematic_fallback';
 
+/** Prefer the live API field; preserve explicit zeros (nullish, not ||). */
+export function pickLenrReactionRate(reactionRateResult) {
+  if (!reactionRateResult || typeof reactionRateResult !== 'object') return null;
+  const raw =
+    reactionRateResult.total_reaction_rate_s ??
+    reactionRateResult.reaction_rate_per_s ??
+    reactionRateResult.rate;
+  if (raw == null || Number.isNaN(Number(raw))) return null;
+  return Number(raw);
+}
+
 function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
   const timeSteps = params.totalSimulationTime / params.timeStepSize || 100;
   const dt = params.timeStepSize || 0.1;
+  // Use returned rate when present (including 0). Toy 1e10 only for missing API field.
+  const baseRate = pickLenrReactionRate(reactionRate);
+  const rateScalar = baseRate == null ? 1e10 : baseRate;
+  const usedToyDefault = baseRate == null;
   
   const timePoints = [];
   const enhancementHistory = [];
@@ -100,10 +115,10 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     enhancementHistory.push(
       Math.min(
         SCHEMATIC_ENHANCEMENT_CEILING,
-        enhancement.total_enhancement * rampUp * tempVariation,
+        (enhancement?.total_enhancement || 1) * rampUp * tempVariation,
       ),
     );
-    reactionRateHistory.push((reactionRate?.rate || 1e10) * rampUp * tempVariation);
+    reactionRateHistory.push(rateScalar * rampUp * tempVariation);
     temperatureHistory.push((params.temperature || 300) * tempVariation);
   }
   
@@ -114,6 +129,8 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     temperature: temperatureHistory,
     provenance: 'physics_api_with_schematic_viz',
     data_origin: 'api_scalars_with_client_time_series',
+    rate_units: 'reactions_per_s',
+    rate_used_toy_default: usedToyDefault,
   };
 }
 
@@ -380,6 +397,12 @@ function LENRSimulationPage() {
         
         // API scalars + client-schematic summary/time for LENRVisualization charts
         const totalEnhancement = enhancementResult.total_enhancement || 1;
+        const apiRate = pickLenrReactionRate(reactionRateResult);
+        const nestedSeries = generateTimeSeriesFromPhysics(
+          enhancementResult,
+          reactionRateResult,
+          parameters,
+        );
         const simulationResults = {
           simulation_id: simId,
           status: 'completed',
@@ -389,26 +412,30 @@ function LENRSimulationPage() {
             enhancement: enhancementResult,
             reactionRate: reactionRateResult,
             total_enhancement: totalEnhancement,
+            total_reaction_rate_s: apiRate,
             dominant_mechanism: enhancementResult.dominant_mechanism,
             individual_factors: enhancementResult.individual_factors,
             warnings: [
               ...(enhancementResult.warnings || []),
               'Chart ramps are schematic interpolations of API scalars — not measured lab traces',
-            ],
+              nestedSeries.rate_used_toy_default
+                ? 'API omitted total_reaction_rate_s; series used toy rate default 1e10'
+                : null,
+            ].filter(Boolean),
           },
-          timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, parameters),
+          timeSeriesData: nestedSeries,
           // LENRVisualization reads top-level summary/time/lattice (not nested timeSeriesData)
           time: parameters.totalSimulationTime || 10,
           lattice: simulationConfig.lattice_parameters || null,
           summary: {
             total_energy: totalEnhancement * 1e-3,
             average_temperature: parameters.temperature || 300,
-            reaction_rate: reactionRateResult?.rate
-              ? Math.min(1, Number(reactionRateResult.rate) / 1e12)
-              : Math.min(1, totalEnhancement / SCHEMATIC_ENHANCEMENT_CEILING) * 0.05,
+            // Absolute reactions/s from API (0 preserved); null only if field missing
+            reaction_rate: apiRate,
             excess_heat: null,
             provenance: 'physics_api_with_schematic_viz',
             chart_origin: 'api_scalar_schematic_ramp',
+            rate_units: 'reactions_per_s',
           },
           latticeData: simulationConfig.lattice_parameters
         };
@@ -660,24 +687,46 @@ function LENRSimulationPage() {
         
         const simId = `comparison-${Date.now()}`;
         
+        const cmpEnhancement = enhancementResult.total_enhancement || 1;
+        const cmpRate = pickLenrReactionRate(reactionRateResult);
+        const cmpSeries = generateTimeSeriesFromPhysics(
+          enhancementResult,
+          reactionRateResult,
+          selectedConfig.parameters,
+        );
         const comparisonResults = {
           simulation_id: simId,
           status: 'completed',
           parameters: selectedConfig.parameters,
+          provenance: 'physics_api_with_schematic_viz',
           results: {
             enhancement: enhancementResult,
             reactionRate: reactionRateResult,
-            total_enhancement: enhancementResult.total_enhancement,
+            total_enhancement: cmpEnhancement,
+            total_reaction_rate_s: cmpRate,
             dominant_mechanism: enhancementResult.dominant_mechanism,
             individual_factors: enhancementResult.individual_factors
           },
-          timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, selectedConfig.parameters),
+          timeSeriesData: cmpSeries,
+          time: selectedConfig.parameters.totalSimulationTime || 10,
+          lattice: simulationConfig.lattice_parameters || null,
+          summary: {
+            total_energy: cmpEnhancement * 1e-3,
+            average_temperature: selectedConfig.parameters.temperature || 300,
+            reaction_rate: cmpRate,
+            excess_heat: null,
+            provenance: 'physics_api_with_schematic_viz',
+            chart_origin: 'api_scalar_schematic_ramp',
+            rate_units: 'reactions_per_s',
+          },
           latticeData: simulationConfig.lattice_parameters
         };
         
         setComparisonConfig(selectedConfig);
         setComparisonData(comparisonResults);
-        setSuccessMessage('Comparison data loaded using real physics calculations');
+        setSuccessMessage(
+          'Comparison API scalars loaded. Chart series remain schematic interpolations — not experimental traces.',
+        );
         
       } catch (apiError) {
         console.warn('Real physics API unavailable for comparison:', apiError.message);
@@ -685,7 +734,9 @@ function LENRSimulationPage() {
         const fallbackResults = generateFallbackResults(selectedConfig.parameters, simulationConfig);
         setComparisonConfig(selectedConfig);
         setComparisonData(fallbackResults);
-        setSuccessMessage('Comparison data loaded (using local physics model)');
+        setSuccessMessage(
+          'Comparison schematic_fallback only — not Assenbaum physics and not experimental data.',
+        );
       }
     } catch (err) {
       console.error('Loading comparison error:', err);

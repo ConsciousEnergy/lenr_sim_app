@@ -138,6 +138,7 @@ function FusionVisualization({
     const fusionRate = totalIntensity * 1e12;
     const apiRate =
       simulationData?.reactionRate ??
+      simulationData?.physicsResults?.reaction_rate_per_s ??
       simulationData?.physicsResults?.reaction_rate ??
       null;
     

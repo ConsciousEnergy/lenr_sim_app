@@ -2,7 +2,10 @@
  * Honesty: LENR legacy fallback must not present unconstrained screening
  * multipliers or synthetic series as experimental corroboration.
  */
-import { generateFallbackResults } from './LENRSimulationPage';
+import {
+  generateFallbackResults,
+  pickLenrReactionRate,
+} from './LENRSimulationPage';
 
 describe('LENRSimulationPage schematic fallback', () => {
   test('labels provenance and caps toy screening enhancement', () => {
@@ -38,5 +41,18 @@ describe('LENRSimulationPage schematic fallback', () => {
     expect(result.provenance).toBe('schematic_fallback');
     expect(result.results.formula_claimed).toBe(false);
     expect(result.results.warnings.join(' ')).toMatch(/do not cite/i);
+  });
+});
+
+describe('pickLenrReactionRate', () => {
+  test('prefers total_reaction_rate_s and preserves zero', () => {
+    expect(pickLenrReactionRate({ total_reaction_rate_s: 0, rate: 99 })).toBe(0);
+    expect(pickLenrReactionRate({ total_reaction_rate_s: 1.5e4 })).toBe(1.5e4);
+  });
+
+  test('falls back to rate only when preferred fields are absent', () => {
+    expect(pickLenrReactionRate({ rate: 42 })).toBe(42);
+    expect(pickLenrReactionRate({})).toBeNull();
+    expect(pickLenrReactionRate(null)).toBeNull();
   });
 });

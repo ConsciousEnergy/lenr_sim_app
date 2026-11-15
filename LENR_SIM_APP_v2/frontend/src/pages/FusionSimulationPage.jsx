@@ -306,11 +306,14 @@ function FusionSimulationPage() {
         setSimulationId(simId);
         
         // API supplies rate scalars; particle/hotspot series remain client-schematic.
+        // FusionRateResponse field is reaction_rate_per_s (not reaction_rate).
+        const apiReactionRate =
+          fusionResult.reaction_rate_per_s ?? fusionResult.reaction_rate ?? null;
         const schematicViz = generateFusionTimeSteps(parameters);
         const data = {
           ...schematicViz,
           physicsResults: fusionResult,
-          reactionRate: fusionResult.reaction_rate,
+          reactionRate: apiReactionRate,
           powerDensity: fusionResult.power_density,
           qValue: fusionResult.q_value,
           rate_provenance: 'physics_api',

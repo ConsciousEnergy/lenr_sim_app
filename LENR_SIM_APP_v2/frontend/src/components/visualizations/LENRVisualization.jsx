@@ -720,6 +720,17 @@ const LENRVisualization = ({
    */
   const chartData = useMemo(() => {
     const nested = timeSeriesData?.timeSeriesData;
+    const cmpNested = comparisonData?.timeSeriesData;
+
+    const sampleAt = (series, index, primaryLen) => {
+      if (!series || !Array.isArray(series) || series.length === 0) return undefined;
+      if (series.length === primaryLen) return series[index];
+      // Align comparison onto primary timestamps by fractional index
+      const frac = primaryLen > 1 ? index / (primaryLen - 1) : 0;
+      const j = Math.min(series.length - 1, Math.round(frac * (series.length - 1)));
+      return series[j];
+    };
+
     // Prefer explicit nested series when the page supplies them (API/fallback paths).
     if (
       nested &&
@@ -727,9 +738,24 @@ const LENRVisualization = ({
       nested.time.length > 0 &&
       Array.isArray(nested.temperature)
     ) {
+      const primaryLen = nested.time.length;
+      const primaryRates = Array.isArray(nested.reactionRate) ? nested.reactionRate : [];
+      const cmpRates = Array.isArray(cmpNested?.reactionRate) ? cmpNested.reactionRate : [];
+      // One scale for the whole primary+comparison series (never per-sample).
+      const scaleMax = Math.max(
+        0,
+        ...primaryRates.map(Number).filter((n) => Number.isFinite(n)),
+        ...cmpRates.map(Number).filter((n) => Number.isFinite(n)),
+      );
+      const rateScale = scaleMax > 0 ? scaleMax : 1;
       const comparisonSummary = comparisonData?.summary;
+
       return nested.time.map((t, index) => {
-        const progress = nested.time.length > 1 ? index / (nested.time.length - 1) : 1;
+        const progress = primaryLen > 1 ? index / (primaryLen - 1) : 1;
+        const rawRate = Number(nested.reactionRate?.[index] ?? 0);
+        const rawCmp = cmpNested
+          ? Number(sampleAt(cmpNested.reactionRate, index, primaryLen) ?? NaN)
+          : NaN;
         return {
           time: Number(Number(t).toFixed(2)),
           energyOutput: Number(
@@ -739,21 +765,25 @@ const LENRVisualization = ({
             ).toFixed(2),
           ),
           temperature: Number((nested.temperature[index] || 0).toFixed(2)),
-          reactionRate: Number(
-            ((nested.reactionRate?.[index] ?? nested.enhancement?.[index] ?? 0) > 1
-              ? Math.min(1, (nested.reactionRate?.[index] || 0) / 1e12)
-              : (nested.reactionRate?.[index] || 0)
-            ).toFixed(4),
-          ),
-          comparisonEnergy: comparisonSummary
-            ? Number((comparisonSummary.total_energy * progress).toFixed(2))
-            : undefined,
-          comparisonTemp: comparisonSummary
-            ? Number(comparisonSummary.average_temperature.toFixed(2))
-            : undefined,
-          comparisonRate: comparisonSummary
-            ? Number(((comparisonSummary.reaction_rate || 0.05) * progress).toFixed(4))
-            : undefined,
+          // Normalized by series max so shape is preserved; absolute max in rateScaleMax
+          reactionRate: Number((rawRate / rateScale).toFixed(4)),
+          reactionRateAbsolute: rawRate,
+          rateScaleMax: rateScale,
+          comparisonEnergy: cmpNested?.enhancement
+            ? Number(((sampleAt(cmpNested.enhancement, index, primaryLen) || 0) * 1e-3).toFixed(2))
+            : comparisonSummary
+              ? Number((comparisonSummary.total_energy * progress).toFixed(2))
+              : undefined,
+          comparisonTemp: cmpNested?.temperature
+            ? Number((sampleAt(cmpNested.temperature, index, primaryLen) || 0).toFixed(2))
+            : comparisonSummary
+              ? Number(comparisonSummary.average_temperature.toFixed(2))
+              : undefined,
+          comparisonRate: cmpNested?.reactionRate
+            ? Number((rawCmp / rateScale).toFixed(4))
+            : comparisonSummary?.reaction_rate != null
+              ? Number((Number(comparisonSummary.reaction_rate) / rateScale).toFixed(4))
+              : undefined,
         };
       });
     }
@@ -767,17 +797,23 @@ const LENRVisualization = ({
     const summary = timeSeriesData?.summary || defaultSummary;
     const totalTime = timeSeriesData?.time || 10;
     const steps = 50;
+    const comparisonSummary = comparisonData?.summary;
+    // Single scale across primary + comparison summary ramps
+    const summaryRate = Number(summary.reaction_rate ?? 0.05);
+    const cmpSummaryRate = Number(comparisonSummary?.reaction_rate ?? 0);
+    const rateScale = Math.max(Math.abs(summaryRate), Math.abs(cmpSummaryRate), 1e-30);
 
     return Array.from({ length: steps }, (_, index) => {
       const time = index * (totalTime / (steps - 1));
       const progress = index / (steps - 1);
-      const comparisonSummary = comparisonData?.summary;
 
       return {
         time: Number(time.toFixed(2)),
         energyOutput: Number(((summary.total_energy || 50) * progress).toFixed(2)),
         temperature: Number((summary.average_temperature || 400).toFixed(2)),
-        reactionRate: Number(((summary.reaction_rate || 0.05) * progress).toFixed(4)),
+        reactionRate: Number(((summaryRate * progress) / rateScale).toFixed(4)),
+        reactionRateAbsolute: summaryRate * progress,
+        rateScaleMax: rateScale,
         comparisonEnergy: comparisonSummary
           ? Number((comparisonSummary.total_energy * progress).toFixed(2))
           : undefined,
@@ -785,7 +821,7 @@ const LENRVisualization = ({
           ? Number(comparisonSummary.average_temperature.toFixed(2))
           : undefined,
         comparisonRate: comparisonSummary
-          ? Number(((comparisonSummary.reaction_rate || 0.05) * progress).toFixed(4))
+          ? Number(((cmpSummaryRate * progress) / rateScale).toFixed(4))
           : undefined
       };
     });
@@ -1191,9 +1227,28 @@ const LENRVisualization = ({
               label={{ value: 'Time (s)', position: 'insideBottomRight', offset: -10 }} 
             />
             <YAxis 
-              label={{ value: 'Reaction Rate', angle: -90, position: 'insideLeft' }} 
+              label={{
+                value: 'Reaction rate (normalized to series max)',
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
-            <Tooltip />
+            <Tooltip
+              formatter={(value, name, props) => {
+                if (name === 'Current Simulation' || name === 'Comparison Simulation') {
+                  const abs = props?.payload?.reactionRateAbsolute;
+                  const max = props?.payload?.rateScaleMax;
+                  const absLabel = Number.isFinite(abs)
+                    ? `${Number(abs).toExponential(2)} /s`
+                    : `${value}`;
+                  return [
+                    `${value} (norm.; max ${Number(max || 0).toExponential(2)} /s; abs ${absLabel})`,
+                    name,
+                  ];
+                }
+                return [value, name];
+              }}
+            />
             <Legend />
             <Line
               type="monotone"
