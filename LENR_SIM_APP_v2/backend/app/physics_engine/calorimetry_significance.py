@@ -11,13 +11,17 @@ Hard honesty:
 - ``discovery_grade_eligible`` never sets ``lenr_proved``
 - never closes any ``EQ-OPEN-*``
 - refuse fabricated ``literature_reported`` σ_Q (citation required)
+- S_heat preserves sign (heat deficit cannot pass discovery)
+- instrument precision / floor MoE is exploratory only (not discovery)
+- literature adapter prefers measured Q (e.g. ``literature_peak_excess_power_W``);
+  seed-scale ``excess_heat_watts`` alone does not grant discovery
 - Oracle B null-falsify SNR≥3 remains **exploratory**, distinct from ≥5σ
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 from app.campaign.avenue_catalog import OPEN_IDS
 
@@ -37,8 +41,6 @@ ALLOWED_MOE_PROVENANCE = frozenset(
 )
 
 #: Provenance labels that require citation keys (refuse fabricated lab MoE).
-#: ``literature_reported_instrument_floor`` is metadata-only (no sigma_Q_W)
-#: until Pin-scaled uncertainty is known — still cite-gated when present.
 CITED_MOE_PROVENANCE = frozenset(
     {
         "literature_reported",
@@ -46,6 +48,10 @@ CITED_MOE_PROVENANCE = frozenset(
         "literature_reported_instrument_floor",
     }
 )
+
+#: Only measurement-specific total σ_Q may set discovery_grade_eligible.
+#: Instrument precision / floor stay exploratory.
+DISCOVERY_ELIGIBLE_PROVENANCE = frozenset({"literature_reported"})
 
 
 def combine_sigma_q_w(
@@ -80,14 +86,14 @@ def s_heat(
     excess_power_w: Optional[float],
     sigma_q_w: Optional[float],
 ) -> Optional[float]:
-    """S_heat = Q_excess / σ_Q. None when undefined or non-finite."""
+    """S_heat = Q_excess / σ_Q (signed). None when undefined or non-finite."""
     if excess_power_w is None or sigma_q_w is None:
         return None
     q = float(excess_power_w)
     sigma = float(sigma_q_w)
     if sigma <= 0.0 or not math.isfinite(sigma) or not math.isfinite(q):
         return None
-    return abs(q) / sigma
+    return q / sigma
 
 
 def _eq_open_status_open() -> Dict[str, str]:
@@ -103,7 +109,7 @@ def validate_moe_provenance(
     """Gate fabricated literature_reported MoE.
 
     Returns ``{"ok": bool, "reason": str|None}``.
-    A numeric σ_Q with ``literature_reported`` and empty citations is refused.
+    A numeric σ_Q with cited provenance and empty citations is refused.
     """
     if sigma_q_w is None:
         return {"ok": True, "reason": None}
@@ -131,6 +137,35 @@ def validate_moe_provenance(
     return {"ok": True, "reason": None}
 
 
+def resolve_measured_excess_power_w(
+    record: Mapping[str, Any],
+) -> Tuple[Optional[float], Optional[str], bool]:
+    """Resolve Q for significance from a literature / baseline row.
+
+    Prefers explicitly measured fields over seed-scale ``excess_heat_watts``.
+
+    Returns ``(q_w, source_label, is_seed_scale)``.
+    """
+    params = record.get("parameters") or {}
+    results = record.get("results") or {}
+    bags: Tuple[Mapping[str, Any], ...] = (record, params, results)
+    for key in (
+        "literature_peak_excess_power_W",
+        "measured_excess_power_W",
+        "excess_heat_watts_reported",
+    ):
+        for bag in bags:
+            value = bag.get(key)
+            if value is not None:
+                return float(value), key, False
+    if results.get("q_ex_w") is not None:
+        return float(results["q_ex_w"]), "results.q_ex_w", False
+    seed = record.get("excess_heat_watts")
+    if seed is not None:
+        return float(seed), "excess_heat_watts", True
+    return None, None, False
+
+
 def discovery_grade_analytics(
     *,
     excess_power_w: Optional[float],
@@ -141,11 +176,19 @@ def discovery_grade_analytics(
     moe_citation_keys: Optional[Sequence[str]] = None,
     moe_notes: Optional[str] = None,
     literature_id: Optional[str] = None,
+    q_source: Optional[str] = None,
+    q_is_seed_scale: bool = False,
 ) -> Dict[str, Any]:
     """Compute S_heat and discovery_grade_eligible analytics flag (RORO).
 
-    ``discovery_grade_eligible`` is True only when S_heat ≥ 5 and MoE
-    provenance validates. It does **not** prove LENR or close EQ-OPEN-*.
+    ``discovery_grade_eligible`` is True only when:
+    - S_heat ≥ 5 (signed; deficits fail)
+    - MoE provenance is ``literature_reported`` (measurement-specific total σ_Q)
+    - Q is not a simulation seed-scale anchor
+    - provenance citation gate passes
+
+    It does **not** prove LENR or close EQ-OPEN-*.
+    Instrument precision / floor may still yield exploratory S_heat.
     """
     sigma = combine_sigma_q_w(
         sigma_q_w=sigma_q_w,
@@ -161,8 +204,11 @@ def discovery_grade_analytics(
     exploratory = (
         significance is not None and significance >= EXPLORATORY_NULL_FALSIFY_SNR
     )
+    discovery_provenance_ok = moe_provenance in DISCOVERY_ELIGIBLE_PROVENANCE
     discovery = (
         provenance_gate["ok"]
+        and discovery_provenance_ok
+        and not q_is_seed_scale
         and significance is not None
         and significance >= DISCOVERY_GRADE_SIGMA
     )
@@ -171,6 +217,8 @@ def discovery_grade_analytics(
         "excess_power_w": (
             float(excess_power_w) if excess_power_w is not None else None
         ),
+        "q_source": q_source,
+        "q_is_seed_scale": bool(q_is_seed_scale),
         "sigma_q_w": sigma,
         "sigma_q_statistical_w": (
             float(sigma_q_statistical_w)
@@ -192,28 +240,32 @@ def discovery_grade_analytics(
         "moe_notes": moe_notes,
         "moe_provenance_ok": bool(provenance_gate["ok"]),
         "moe_provenance_reason": provenance_gate["reason"],
+        "discovery_provenance_ok": bool(discovery_provenance_ok),
         # Hard honesty locks — analytics flag must never flip these:
         "lenr_proved": False,
         "eq_open_status": _eq_open_status_open(),
         "honesty": (
             "discovery_grade_eligible is an analytics flag only "
-            "(S_heat≥5 with labelled MoE). It does not set lenr_proved, "
-            "does not close EQ-OPEN-*, and does not raise claim_tier. "
-            "Oracle B null_excess_falsified uses exploratory SNR≥3, "
-            "distinct from this discovery-grade bar."
+            "(signed S_heat≥5 with literature_reported measurement-specific "
+            "σ_Q and non-seed Q). Instrument precision/floor and seed-scale "
+            "Q stay exploratory. It does not set lenr_proved, does not close "
+            "EQ-OPEN-*, and does not raise claim_tier. Oracle B "
+            "null_excess_falsified uses exploratory SNR≥3, distinct from "
+            "this discovery-grade bar."
         ),
     }
 
 
 def moe_fields_from_record(record: Mapping[str, Any]) -> Dict[str, Any]:
-    """Extract optional MoE fields from a literature JSON / baseline row."""
+    """Extract MoE + measured-Q fields from a literature JSON / baseline row."""
     keys = record.get("moe_citation_keys")
     if keys is None and record.get("citation_key"):
-        # Do not auto-promote citation_key into literature_reported evidence;
-        # only surface it when moe_citation_keys is absent for display helpers.
         keys = []
+    q_w, q_source, is_seed = resolve_measured_excess_power_w(record)
     return {
-        "excess_power_w": record.get("excess_heat_watts"),
+        "excess_power_w": q_w,
+        "q_source": q_source,
+        "q_is_seed_scale": is_seed,
         "sigma_q_w": record.get("sigma_Q_W"),
         "sigma_q_statistical_w": record.get("sigma_Q_statistical_W"),
         "sigma_q_systematic_w": record.get("sigma_Q_systematic_W"),

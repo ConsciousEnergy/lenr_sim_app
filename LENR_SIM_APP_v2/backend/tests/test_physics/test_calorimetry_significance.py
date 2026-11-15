@@ -1,10 +1,9 @@
 """B1: S_heat / σ_Q MoE + discovery_grade_eligible honesty locks.
 
-MoE numeric values come from the cite-gated hydrate (PR #406 tip):
-Miles 0.02 literature_reported; De Ninno 0.02 instrument_precision;
-Kasagi 0.08 literature_reported. McKubre keeps instrument floor + 0.1% Pin
-metadata only (``sigma_Q_W`` absent until Pin-scaled uncertainty is known).
-This module only computes S_heat / discovery flags.
+MoE from cite-gated hydrate (PR #406 tip): Miles 0.02 literature_reported
+(paired with literature_peak_excess_power_W); De Ninno instrument_precision
+(exploratory only); Kasagi 0.08 + results.q_ex_w; McKubre instrument floor
+metadata only (no sigma_Q_W).
 """
 
 from __future__ import annotations
@@ -18,6 +17,7 @@ from app.data.dataset_io import (
 )
 from app.physics_engine.calorimetry_significance import (
     ALLOWED_MOE_PROVENANCE,
+    DISCOVERY_ELIGIBLE_PROVENANCE,
     DISCOVERY_GRADE_SIGMA,
     EXPLORATORY_NULL_FALSIFY_SNR,
     combine_sigma_q_w,
@@ -28,11 +28,26 @@ from app.physics_engine.calorimetry_significance import (
 )
 
 
-def test_s_heat_is_q_over_sigma() -> None:
+def test_s_heat_is_signed_q_over_sigma() -> None:
     assert s_heat(excess_power_w=1.0, sigma_q_w=0.02) == 50.0
     assert s_heat(excess_power_w=0.08, sigma_q_w=0.02) == 4.0
     assert s_heat(excess_power_w=1.0, sigma_q_w=0.0) is None
     assert s_heat(excess_power_w=None, sigma_q_w=0.1) is None
+
+
+def test_s_heat_preserves_sign_negative_q_not_discovery() -> None:
+    """Regression: heat deficit must not abs() into discovery eligibility."""
+    assert s_heat(excess_power_w=-0.1, sigma_q_w=0.02) == -5.0
+    report = discovery_grade_analytics(
+        excess_power_w=-0.1,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+    )
+    assert report["s_heat"] == -5.0
+    assert report["discovery_grade_eligible"] is False
+    assert report["exploratory_snr_eligible"] is False
+    assert report["lenr_proved"] is False
 
 
 def test_combine_sigma_q_rss_and_explicit_total() -> None:
@@ -98,17 +113,49 @@ def test_allowed_moe_provenance_includes_instrument_labels() -> None:
     assert "literature_reported_instrument_precision" in ALLOWED_MOE_PROVENANCE
     assert "literature_reported_instrument_floor" in ALLOWED_MOE_PROVENANCE
     assert "model_assumption" in ALLOWED_MOE_PROVENANCE
+    assert DISCOVERY_ELIGIBLE_PROVENANCE == frozenset({"literature_reported"})
 
 
-def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
+def test_instrument_precision_is_exploratory_not_discovery() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=5.0,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported_instrument_precision",
+        moe_citation_keys=["deninno1995"],
+    )
+    assert report["s_heat"] == 250.0
+    assert report["exploratory_snr_eligible"] is True
+    assert report["discovery_grade_eligible"] is False
+    assert report["discovery_provenance_ok"] is False
+    assert report["lenr_proved"] is False
+
+
+def test_seed_scale_q_blocks_discovery_even_with_literature_reported() -> None:
     report = discovery_grade_analytics(
         excess_power_w=1.0,
         sigma_q_w=0.02,
         moe_provenance="literature_reported",
         moe_citation_keys=["miles1993"],
-        literature_id="miles-1993",
+        q_source="excess_heat_watts",
+        q_is_seed_scale=True,
     )
     assert report["s_heat"] == 50.0
+    assert report["discovery_grade_eligible"] is False
+    assert report["q_is_seed_scale"] is True
+    assert report["lenr_proved"] is False
+
+
+def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.52,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        literature_id="miles-1993",
+        q_source="literature_peak_excess_power_W",
+        q_is_seed_scale=False,
+    )
+    assert report["s_heat"] == 26.0
     assert report["discovery_grade_eligible"] is True
     assert report["lenr_proved"] is False
     assert set(report["eq_open_status"]) == set(OPEN_IDS)
@@ -119,14 +166,14 @@ def test_discovery_grade_never_sets_lenr_proved_or_closes_eq_open() -> None:
     assert {row["id"] for row in register} == set(OPEN_IDS)
 
 
-def test_miles_uses_cite_gated_literature_reported_not_model_assumption() -> None:
+def test_miles_uses_literature_peak_not_seed_scale_q() -> None:
     miles = next(
         row for row in literature_records() if row["literature_id"] == "miles-1993"
     )
     assert miles["moe_provenance"] == "literature_reported"
     assert float(miles["sigma_Q_W"]) == 0.02
-    assert miles["sigma_Q_W"] != 0.1
-    assert "miles1993" in miles["moe_citation_keys"]
+    assert float(miles["excess_heat_watts"]) == 1.0
+    assert float(miles["parameters"]["literature_peak_excess_power_W"]) == 0.52
 
     seeded = next(
         row
@@ -137,7 +184,10 @@ def test_miles_uses_cite_gated_literature_reported_not_model_assumption() -> Non
     assert seeded["moe_provenance"] == "literature_reported"
 
     report = discovery_grade_from_literature_record(miles)
-    assert report["s_heat"] == 50.0
+    assert report["q_source"] == "literature_peak_excess_power_W"
+    assert report["q_is_seed_scale"] is False
+    assert report["excess_power_w"] == 0.52
+    assert report["s_heat"] == 26.0
     assert report["discovery_grade_eligible"] is True
     assert report["lenr_proved"] is False
     assert all(v == "OPEN" for v in report["eq_open_status"].values())
@@ -167,16 +217,16 @@ def test_mckubre_peers_have_instrument_floor_metadata_not_sigma_q() -> None:
         assert float(seeded["sigma_Q_instrument_floor_W"]) == 0.01
         assert float(seeded["parameters"]["sigma_Q_instrument_floor_W"]) == 0.01
 
-        # Floor alone must not drive discovery_grade S_heat
         report = discovery_grade_from_literature_record(mck)
         assert report["sigma_q_w"] is None
         assert report["s_heat"] is None
         assert report["discovery_grade_eligible"] is False
+        assert report["q_is_seed_scale"] is True
         assert report["lenr_proved"] is False
         assert all(v == "OPEN" for v in report["eq_open_status"].values())
 
 
-def test_deninno_instrument_precision_and_kasagi_literature_reported() -> None:
+def test_deninno_instrument_precision_exploratory_only() -> None:
     deninno = next(
         row
         for row in literature_records()
@@ -185,11 +235,16 @@ def test_deninno_instrument_precision_and_kasagi_literature_reported() -> None:
     assert float(deninno["sigma_Q_W"]) == 0.02
     assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
     den_report = discovery_grade_from_literature_record(deninno)
+    # Seed Q=5 W used only for exploratory S_heat; not discovery-grade
+    assert den_report["q_is_seed_scale"] is True
     assert den_report["s_heat"] == 250.0
-    assert den_report["discovery_grade_eligible"] is True
+    assert den_report["exploratory_snr_eligible"] is True
+    assert den_report["discovery_grade_eligible"] is False
     assert den_report["lenr_proved"] is False
     assert all(v == "OPEN" for v in den_report["eq_open_status"].values())
 
+
+def test_kasagi_uses_reported_q_ex_with_literature_reported_sigma() -> None:
     kasagi_rows = [
         row
         for row in iccf27_literature_records()
@@ -200,8 +255,19 @@ def test_deninno_instrument_precision_and_kasagi_literature_reported() -> None:
         assert float(row["sigma_Q_W"]) == 0.08
         assert row["moe_provenance"] == "literature_reported"
         report = discovery_grade_from_literature_record(row)
+        assert report["q_is_seed_scale"] is False
+        assert report["q_source"] in {
+            "results.q_ex_w",
+            "excess_heat_watts_reported",
+        }
         assert report["s_heat"] is not None
         assert report["s_heat"] >= DISCOVERY_GRADE_SIGMA
         assert report["discovery_grade_eligible"] is True
         assert report["lenr_proved"] is False
         assert all(v == "OPEN" for v in report["eq_open_status"].values())
+    nicu = next(
+        row for row in kasagi_rows if row["literature_id"] == "kasagi-nicu-radiant-2026"
+    )
+    nicu_report = discovery_grade_from_literature_record(nicu)
+    assert nicu_report["excess_power_w"] == 1.1
+    assert nicu_report["s_heat"] == 1.1 / 0.08
