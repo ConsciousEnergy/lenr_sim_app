@@ -133,9 +133,13 @@ function FusionVisualization({
     
     const avgEnergy = particles.length > 0 ? totalEnergy / particles.length : 0;
     
-    // Calculate fusion rate estimate (based on hotspot intensities)
+    // Schematic UI estimate from hotspot intensities — NOT the API reaction_rate scalar
     const totalIntensity = hotspots.reduce((sum, h) => sum + (h.intensity || 0), 0);
-    const fusionRate = totalIntensity * 1e12; // Scaled estimate
+    const fusionRate = totalIntensity * 1e12;
+    const apiRate =
+      simulationData?.reactionRate ??
+      simulationData?.physicsResults?.reaction_rate ??
+      null;
     
     return {
       particleCounts,
@@ -145,10 +149,12 @@ function FusionVisualization({
         avgEnergy,
         maxEnergy,
         fusionRate,
+        fusionRateIsSchematic: true,
+        apiReactionRate: apiRate != null ? Number(apiRate) : undefined,
         temperature: parameters?.temperature || 300,
       }
     };
-  }, [timeSteps, currentTimeIndex, parameters]);
+  }, [timeSteps, currentTimeIndex, parameters, simulationData]);
   
   const timeLabels = useMemo(() => {
     if (!simulationData?.timeSteps) return [];

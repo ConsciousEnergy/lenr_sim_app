@@ -719,6 +719,45 @@ const LENRVisualization = ({
    * reads as measurement scatter that no model produced.
    */
   const chartData = useMemo(() => {
+    const nested = timeSeriesData?.timeSeriesData;
+    // Prefer explicit nested series when the page supplies them (API/fallback paths).
+    if (
+      nested &&
+      Array.isArray(nested.time) &&
+      nested.time.length > 0 &&
+      Array.isArray(nested.temperature)
+    ) {
+      const comparisonSummary = comparisonData?.summary;
+      return nested.time.map((t, index) => {
+        const progress = nested.time.length > 1 ? index / (nested.time.length - 1) : 1;
+        return {
+          time: Number(Number(t).toFixed(2)),
+          energyOutput: Number(
+            (nested.enhancement
+              ? (nested.enhancement[index] || 0) * 1e-3
+              : (timeSeriesData?.summary?.total_energy || 50) * progress
+            ).toFixed(2),
+          ),
+          temperature: Number((nested.temperature[index] || 0).toFixed(2)),
+          reactionRate: Number(
+            ((nested.reactionRate?.[index] ?? nested.enhancement?.[index] ?? 0) > 1
+              ? Math.min(1, (nested.reactionRate?.[index] || 0) / 1e12)
+              : (nested.reactionRate?.[index] || 0)
+            ).toFixed(4),
+          ),
+          comparisonEnergy: comparisonSummary
+            ? Number((comparisonSummary.total_energy * progress).toFixed(2))
+            : undefined,
+          comparisonTemp: comparisonSummary
+            ? Number(comparisonSummary.average_temperature.toFixed(2))
+            : undefined,
+          comparisonRate: comparisonSummary
+            ? Number(((comparisonSummary.reaction_rate || 0.05) * progress).toFixed(4))
+            : undefined,
+        };
+      });
+    }
+
     const defaultSummary = {
       total_energy: 50,
       average_temperature: 400,

@@ -97,7 +97,12 @@ function generateTimeSeriesFromPhysics(enhancement, reactionRate, params) {
     const rampUp = 1 - Math.exp(-t / 2);
     
     timePoints.push(t);
-    enhancementHistory.push(enhancement.total_enhancement * rampUp * tempVariation);
+    enhancementHistory.push(
+      Math.min(
+        SCHEMATIC_ENHANCEMENT_CEILING,
+        enhancement.total_enhancement * rampUp * tempVariation,
+      ),
+    );
     reactionRateHistory.push((reactionRate?.rate || 1e10) * rampUp * tempVariation);
     temperatureHistory.push((params.temperature || 300) * tempVariation);
   }
@@ -166,16 +171,33 @@ export function generateFallbackResults(params, config) {
     },
     timeSeriesData: {
       time: Array.from({ length: timeSteps }, (_, i) => i * dt),
-      enhancement: Array.from({ length: timeSteps }, (_, i) => 
-        totalEnhancement * (1 - Math.exp(-i * dt / 2)) * (1 + 0.05 * Math.sin(i * dt))
+      enhancement: Array.from({ length: timeSteps }, (_, i) =>
+        Math.min(
+          SCHEMATIC_ENHANCEMENT_CEILING,
+          totalEnhancement * (1 - Math.exp(-i * dt / 2)) * (1 + 0.05 * Math.sin(i * dt)),
+        )
       ),
       reactionRate: Array.from({ length: timeSteps }, (_, i) =>
-        1e10 * totalEnhancement * (1 - Math.exp(-i * dt / 2))
+        1e10 * Math.min(
+          SCHEMATIC_ENHANCEMENT_CEILING,
+          totalEnhancement * (1 - Math.exp(-i * dt / 2)),
+        )
       ),
       temperature: Array.from({ length: timeSteps }, (_, i) =>
         T * (1 + 0.02 * Math.sin(i * dt * 0.5))
       ),
       provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+    },
+    // Top-level fields LENRVisualization actually reads for charts / lattice
+    time: timeSteps * dt,
+    lattice: config.lattice_parameters || null,
+    summary: {
+      total_energy: totalEnhancement * 1e-3, // schematic proxy, not calorimetry
+      average_temperature: T,
+      reaction_rate: Math.min(1, totalEnhancement / SCHEMATIC_ENHANCEMENT_CEILING) * 0.05,
+      excess_heat: null, // never invent measured excess heat
+      provenance: SCHEMATIC_FALLBACK_PROVENANCE,
+      chart_origin: 'schematic_summary_ramp',
     },
     latticeData: config.lattice_parameters
   };
@@ -356,7 +378,8 @@ function LENRSimulationPage() {
         const simId = `lenr-${Date.now()}`;
         setSimulationId(simId);
         
-        // API scalars + client-schematic time series for charts
+        // API scalars + client-schematic summary/time for LENRVisualization charts
+        const totalEnhancement = enhancementResult.total_enhancement || 1;
         const simulationResults = {
           simulation_id: simId,
           status: 'completed',
@@ -365,15 +388,28 @@ function LENRSimulationPage() {
           results: {
             enhancement: enhancementResult,
             reactionRate: reactionRateResult,
-            total_enhancement: enhancementResult.total_enhancement,
+            total_enhancement: totalEnhancement,
             dominant_mechanism: enhancementResult.dominant_mechanism,
             individual_factors: enhancementResult.individual_factors,
             warnings: [
               ...(enhancementResult.warnings || []),
-              'Time-series charts are client-schematic ramps around API scalars — not measured lab traces',
+              'Chart ramps are schematic interpolations of API scalars — not measured lab traces',
             ],
           },
           timeSeriesData: generateTimeSeriesFromPhysics(enhancementResult, reactionRateResult, parameters),
+          // LENRVisualization reads top-level summary/time/lattice (not nested timeSeriesData)
+          time: parameters.totalSimulationTime || 10,
+          lattice: simulationConfig.lattice_parameters || null,
+          summary: {
+            total_energy: totalEnhancement * 1e-3,
+            average_temperature: parameters.temperature || 300,
+            reaction_rate: reactionRateResult?.rate
+              ? Math.min(1, Number(reactionRateResult.rate) / 1e12)
+              : Math.min(1, totalEnhancement / SCHEMATIC_ENHANCEMENT_CEILING) * 0.05,
+            excess_heat: null,
+            provenance: 'physics_api_with_schematic_viz',
+            chart_origin: 'api_scalar_schematic_ramp',
+          },
           latticeData: simulationConfig.lattice_parameters
         };
         
@@ -873,9 +909,10 @@ function LENRSimulationPage() {
           data-testid="lenr-schematic-fallback-banner"
         >
           <Typography variant="body2">
-            Provenance: <code>schematic_fallback</code> — enhancement/rate charts use a
-            capped client toy screening multiplier (not Assenbaum–Rolfs Uₑ). Not
-            laboratory excess heat and not physics-engine output.
+            Provenance: <code>schematic_fallback</code> — enhancement scalar uses a capped
+            client toy (not Assenbaum–Rolfs Uₑ). Energy/temperature/rate charts are
+            schematic summary ramps driven by that scalar — not laboratory excess heat
+            and not physics-engine output.
           </Typography>
         </Alert>
       )}
@@ -886,8 +923,9 @@ function LENRSimulationPage() {
           data-testid="lenr-schematic-viz-banner"
         >
           <Typography variant="body2">
-            Enhancement/rate scalars from the physics API; plotted time series are
-            schematic client ramps (model-output UI aid — not experimental traces).
+            Enhancement/rate scalars from the physics API. Plotted Energy / Temperature /
+            Reaction Rate charts are schematic client ramps of those scalars (via{' '}
+            <code>summary</code>), not measured lab traces.
           </Typography>
         </Alert>
       )}

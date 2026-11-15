@@ -912,9 +912,9 @@ function FusionSimulationPage() {
           data-testid="fusion-schematic-fallback-banner"
         >
           <Typography variant="body2">
-            Provenance: <code>schematic_fallback</code> — particle plots and scalars are
-            client-synthesized. Not laboratory heat/neutron measurements and not
-            physics-engine output.
+            Provenance: <code>schematic_fallback</code> — particle/hotspot plots and the
+            on-screen “Fusion Rate” (hotspot-intensity sum × 10¹²) are client-synthesized.
+            Not laboratory heat/neutron measurements and not physics-engine output.
           </Typography>
         </Alert>
       )}
@@ -925,8 +925,13 @@ function FusionSimulationPage() {
           data-testid="fusion-schematic-viz-banner"
         >
           <Typography variant="body2">
-            Rate scalars from the physics API; particle/hotspot animation is schematic
-            visualization only (model output / UI aid — not experimental corroboration).
+            API reaction-rate scalar
+            {simulationData.reactionRate != null
+              ? ` (${Number(simulationData.reactionRate).toExponential(2)} /s)`
+              : ''}{' '}
+            is loaded separately. The legend “Fusion Rate” and particle/hotspot stats are
+            schematic (hotspot-intensity sum) — not that API scalar and not experimental
+            corroboration.
           </Typography>
         </Alert>
       )}

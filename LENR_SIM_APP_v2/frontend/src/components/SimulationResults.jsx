@@ -77,10 +77,19 @@ const SimulationResults = ({
   // States
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(initialData || {
-    timeSeriesData: [],
-    tableData: [],
-    statistics: {}
+  const [data, setData] = useState(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        provenance: initialData.provenance || 'schematic_fallback',
+      };
+    }
+    return {
+      timeSeriesData: [],
+      tableData: [],
+      statistics: {},
+      provenance: 'schematic_fallback',
+    };
   });
   const [isUpdating, setIsUpdating] = useState(autoUpdate);
   const [selectedVariable, setSelectedVariable] = useState('temperature');
@@ -266,10 +275,12 @@ const SimulationResults = ({
             peakReactionRate: Math.max(...updatedTimeSeries.map(d => d.reactionRate))
           };
 
+          // Local synthetic appends must keep schematic provenance so the banner stays.
           return {
             timeSeriesData: updatedTimeSeries,
             tableData: updatedTimeSeries.filter((_, i) => i % 10 === 0), // Update table data too
-            statistics
+            statistics,
+            provenance: prevData.provenance || 'schematic_fallback',
           };
         });
       }

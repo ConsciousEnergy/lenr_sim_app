@@ -21,6 +21,12 @@ describe('LENRSimulationPage schematic fallback', () => {
     expect(result.results.enhancement_capped).toBe(true);
     expect(result.results.warnings.join(' ')).toMatch(/not Assenbaum/i);
     expect(result.timeSeriesData.provenance).toBe('schematic_fallback');
+    // Modulated series must also respect the ceiling (export honesty)
+    expect(Math.max(...result.timeSeriesData.enhancement)).toBeLessThanOrEqual(1e5);
+    // LENRVisualization reads top-level summary/time
+    expect(result.summary.provenance).toBe('schematic_fallback');
+    expect(result.summary.excess_heat).toBeNull();
+    expect(result.time).toBeGreaterThan(0);
   });
 
   test('still schematic below the ceiling', () => {
