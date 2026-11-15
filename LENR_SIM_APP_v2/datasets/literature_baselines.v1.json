@@ -471,9 +471,9 @@
       "duration_seconds": 86400,
       "sigma_Q_W": 0.02,
       "sigma_Q_systematic_W": null,
-      "moe_provenance": "literature_reported",
-      "moe_citation_keys": ["miles1993"],
-      "moe_notes": "Author-stated China Lake calorimetric error ±0.020 W (Miles metal-flask / anomalous-effects follow-on; restated in NRL Dominguez summary). Miles 1993 reports peak excess ≈0.52 W (parameters.literature_peak_excess_power_W). Seed excess_heat_watts=1.0 remains the Miles module definition scale, not a single-run integral. He retention/contamination caveats apply; EQ-OPEN-YIELD-01 and EQ-OPEN-RAD-01 stay OPEN.",
+      "moe_provenance": "literature_reported_instrument_precision",
+      "moe_citation_keys": ["miles1993", "miles_calorimetric_error_followon"],
+      "moe_notes": "EXPLORATORY MoE only — not discovery-grade. ±0.020 W is the author-stated China Lake calorimetric error from Miles metal-flask / anomalous-effects follow-on (CANR MilesManomalouse.pdf; restated in NRL Dominguez summary as ±20 mW). Citation key miles_calorimetric_error_followon names that follow-on source; miles1993 (JEAC 346) reports peak excess ≈0.52 W but does not establish ±0.020 W as the total 1σ uncertainty for that paired peak episode. Do not treat S_heat=0.52/0.02 as discovery-eligible until peak+σ pairing is verified in a primary source. Seed excess_heat_watts=1.0 remains the Miles module definition scale. He retention/contamination caveats apply; EQ-OPEN-YIELD-01 and EQ-OPEN-RAD-01 stay OPEN.",
       "results": {
         "observable": "heat_helium_correlation",
         "note": "1 W is the Miles module definition scale, not a single-run calorimetry integral",

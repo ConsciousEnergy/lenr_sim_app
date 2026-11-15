@@ -68,13 +68,18 @@ def test_cite_gated_moe_fields_are_literature_reported_only() -> None:
     experiments = {row["literature_id"]: row for row in get_baseline_experiments()}
     miles = experiments["miles-1993"]
     assert float(miles["sigma_Q_W"]) == 0.02
-    assert miles["moe_provenance"] == "literature_reported"
+    # Follow-on calorimetric error — exploratory instrument precision, NOT
+    # discovery-eligible literature_reported (peak+σ pairing unverified).
+    assert miles["moe_provenance"] == "literature_reported_instrument_precision"
     assert "miles1993" in miles["moe_citation_keys"]
+    assert "miles_calorimetric_error_followon" in miles["moe_citation_keys"]
     assert miles["claim_tag"] == "EMP"
     assert "EQ-OPEN-YIELD-01" in miles["open_question_ids"]
     # Seed path persists MoE via parameters_json
     assert float(miles["parameters"]["sigma_Q_W"]) == 0.02
-    assert miles["parameters"]["moe_provenance"] == "literature_reported"
+    assert miles["parameters"]["moe_provenance"] == (
+        "literature_reported_instrument_precision"
+    )
 
     # McKubre: instrument floor only — do not publish floor as measured sigma_Q_W
     for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
