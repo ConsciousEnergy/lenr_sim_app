@@ -60,5 +60,20 @@ describe('ScienceEvidenceSection', () => {
       expect(screen.getAllByText(new RegExp(`${id}: OPEN`)).length).toBeGreaterThan(0);
     });
     expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-runway-criteria')).toHaveTextContent(
+      /Affirmative:/i,
+    );
+    expect(screen.getByTestId('science-evidence-runway-criteria')).toHaveTextContent(
+      /Falsification:/i,
+    );
+  });
+
+  test('surfaces unmet ≥5σ discovery bar and enriched campaign N', () => {
+    render(<ScienceEvidenceSection />);
+    expect(screen.getByTestId('science-evidence-5sigma')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('science-evidence-5sigma-chip')).toHaveTextContent(/not met/i);
+    expect(screen.getByTestId('science-evidence-campaign-n')).toHaveTextContent(/N=18/);
+    expect(screen.getByText(/pyyhtia-cr39-cavitation-2026/i)).toBeInTheDocument();
+    expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
   });
 });

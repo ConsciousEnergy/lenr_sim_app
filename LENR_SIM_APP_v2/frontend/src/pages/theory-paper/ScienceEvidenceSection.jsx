@@ -1,6 +1,6 @@
 /**
- * ScienceEvidenceSection — Phase E Theory Paper surfaces for campaign,
- * avenue ranking, Lean/formalization, and EQ-OPEN runway (read-only, honest).
+ * ScienceEvidenceSection — Phase E / BDS-322 Theory Paper surfaces for campaign,
+ * avenue ranking, Lean/formalization, EQ-OPEN runway, and unmet ≥5σ bar.
  */
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -21,6 +21,7 @@ import {
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
+  DISCOVERY_GRADE_BAR,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
   SCIENCE_EVIDENCE_HONESTY,
@@ -89,6 +90,13 @@ export default function ScienceEvidenceSection({ embedded = false }) {
             color="warning"
             variant="outlined"
           />
+          <Chip
+            label="≥5σ discovery: not met"
+            size="small"
+            color="warning"
+            variant="outlined"
+            data-testid="science-evidence-5sigma-chip"
+          />
         </Stack>
         <OpenIdChips ids={SCIENCE_EVIDENCE_HONESTY.open_ids} />
       </Alert>
@@ -106,6 +114,36 @@ export default function ScienceEvidenceSection({ embedded = false }) {
       <Typography variant="body2" paragraph color="text.secondary">
         {CAMPAIGN_EVIDENCE.note}
       </Typography>
+      <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+        <Chip
+          size="small"
+          variant="outlined"
+          label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
+          data-testid="science-evidence-campaign-n"
+        />
+        {CAMPAIGN_EVIDENCE.hosts.map((host) => (
+          <Chip key={host} size="small" variant="outlined" label={host} />
+        ))}
+        {CAMPAIGN_EVIDENCE.dynamics_modes.map((mode) => (
+          <Chip
+            key={mode}
+            size="small"
+            variant="outlined"
+            label={mode}
+            sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+          />
+        ))}
+        {CAMPAIGN_EVIDENCE.literature_ids.map((lid) => (
+          <Chip
+            key={lid}
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={lid}
+            sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+          />
+        ))}
+      </Stack>
       <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
         Pack: <code>{CAMPAIGN_EVIDENCE.pack_path}</code>
         <br />
@@ -121,7 +159,37 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         <MuiLink component={RouterLink} to="/unified-theory" variant="body2">
           Unified Theory simulation
         </MuiLink>
+        <MuiLink component={RouterLink} to="/analytics" variant="body2">
+          Analytics History
+        </MuiLink>
       </Stack>
+
+      <Divider sx={{ my: 2 }} />
+
+      {/* ≥5σ discovery bar (unmet) */}
+      <Typography
+        variant="subtitle1"
+        sx={{ fontWeight: 'bold' }}
+        data-testid="science-evidence-discovery-bar"
+      >
+        {DISCOVERY_GRADE_BAR.title}
+      </Typography>
+      <Alert severity="info" sx={{ my: 1 }} data-testid="science-evidence-5sigma">
+        <AlertTitle>
+          Status: <code>{DISCOVERY_GRADE_BAR.status}</code> (prefer ≥
+          {DISCOVERY_GRADE_BAR.sigma_threshold}σ)
+        </AlertTitle>
+        <Typography variant="body2" paragraph sx={{ mb: 1 }}>
+          {DISCOVERY_GRADE_BAR.note}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Heat criterion: <code>{DISCOVERY_GRADE_BAR.heat_formula}</code>. Helper:{' '}
+          <code>{DISCOVERY_GRADE_BAR.helper_module}</code>.
+        </Typography>
+        <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
+          Does not count: {DISCOVERY_GRADE_BAR.does_not_count.join('; ')}.
+        </Typography>
+      </Alert>
 
       <Divider sx={{ my: 2 }} />
 
@@ -236,6 +304,42 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         Criteria doc: <code>{EQ_OPEN_RUNWAY.doc_path}</code>
       </Typography>
       <OpenIdChips ids={EQ_OPEN_RUNWAY.open_ids} />
+      <List dense data-testid="science-evidence-runway-criteria" sx={{ mt: 1 }}>
+        {EQ_OPEN_RUNWAY.criteria.map((row) => (
+          <ListItem key={row.id} alignItems="flex-start" sx={{ py: 0.75 }}>
+            <ListItemText
+              primary={
+                <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
+                  <Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>
+                    {row.label}
+                  </Typography>
+                  <Chip
+                    label={`${row.id}: OPEN`}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 18 }}
+                  />
+                </Stack>
+              }
+              secondary={
+                <Box component="span">
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    Affirmative: {row.affirmative}
+                  </Typography>
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    Falsification: {row.falsification}
+                  </Typography>
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    Does not count: {row.does_not_count}
+                  </Typography>
+                </Box>
+              }
+              secondaryTypographyProps={{ component: 'div' }}
+            />
+          </ListItem>
+        ))}
+      </List>
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
         <MuiLink component={RouterLink} to="/docs/issue-ledger" variant="body2">
           Issue ledger

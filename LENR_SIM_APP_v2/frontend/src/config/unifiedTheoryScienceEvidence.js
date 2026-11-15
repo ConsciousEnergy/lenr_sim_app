@@ -1,13 +1,15 @@
 /**
- * Curated Theory Paper science-evidence pointers (Phase E).
+ * Curated Theory Paper science-evidence pointers (Phase E / BDS-322).
  *
  * Mirrors honesty fields from:
  *   - LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json
  *   - LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md
  *   - LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md
  *   - docs/FORMALIZATION/FORMAL_PROOF_STATUS.md
+ *   - calorimetry_significance.py (BDS-302 ≥5σ discovery bar)
  *
  * Read-only UI summary only. Never flips lenr_proved or closes EQ-OPEN-*.
+ * Never claims ≥5σ discovery without cite-gated σ_Q / verified pairing.
  */
 
 /** @type {readonly string[]} */
@@ -41,7 +43,30 @@ export const SCIENCE_EVIDENCE_HONESTY = Object.freeze({
   disclaimer:
     'Model-output and formalization bookkeeping only. Not a laboratory proof of LENR. ' +
     'Campaign packs, avenue ranking, and Lean clamp/non-closure theorems do not close EQ-OPEN-* ' +
-    'and never set lenr_proved.',
+    'and never set lenr_proved. Discovery-grade ≥5σ language requires cite-gated MoE / verified ' +
+    'significance machinery (BDS-302) and is not met by simulation runs alone.',
+});
+
+/**
+ * Paper / BDS-302 discovery bar — analytics flag criteria only; unmet for closure.
+ */
+export const DISCOVERY_GRADE_BAR = Object.freeze({
+  title: 'Discovery-grade significance bar (≥5σ)',
+  sigma_threshold: 5,
+  status: 'not_met',
+  helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py',
+  heat_formula: 'S_heat = Q_excess / σ_Q',
+  note:
+    'Prefer ≥5σ for discovery-grade calorimetry language. Oracle B null-falsify SNR≥3 is ' +
+    'exploratory only. Cite-gated σ_Q required; instrument precision/floor MoE stays exploratory; ' +
+    'verified Q↔σ_Q pairing required for discovery_grade_eligible. Campaign / avenue / Lean ' +
+    'outputs never claim 5σ discovery or flip lenr_proved.',
+  does_not_count: Object.freeze([
+    'Simulation campaign N alone',
+    'Avenue ranking informativeness scores',
+    'Lean clamp / non-closure identities',
+    'Exploratory S_heat under instrument_precision without verified pairing',
+  ]),
 });
 
 /** Campaign / reviewer-pack evidence pointers (read-only). */
@@ -52,13 +77,20 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
-  n_experiments: 10,
-  n_theory_runs: 10,
-  literature_anchor: 'Taleyarkhan-class sonofusion (contested); Pyyhtiä 2026 CR-39 cavitation confounder',
+  n_experiments: 18,
+  n_theory_runs: 18,
+  hosts: Object.freeze(['copper', 'nickel', 'palladium', 'titanium']),
+  dynamics_modes: Object.freeze(['keller_miksis', 'rayleigh_plesset']),
+  literature_ids: Object.freeze([
+    'taleyarkhan-sonofusion-2002',
+    'pyyhtia-cr39-cavitation-2026',
+  ]),
+  literature_anchor:
+    'Taleyarkhan-class sonofusion (contested); Pyyhtiä 2026 CR-39 cavitation confounder',
   hydro_label: 'modelled enhancement / contested hydro',
   note:
-    'Bubble-lattice host × loading × drive × dynamics_mode cells with include_uncertainty. ' +
-    'Model output only; does not raise empirical claim tiers. '
+    'Bubble-lattice host × loading × drive × frequency × dynamics_mode cells with include_uncertainty. ' +
+    'Model output only; does not raise empirical claim tiers or meet ≥5σ discovery-grade closure. '
     + 'Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104) is an electrolytic CR-39 '
     + 'cavitation / detector-confounder peer — not LENR-rate proof.',
 });
@@ -75,7 +107,8 @@ export const AVENUE_RANKING_SUMMARY = Object.freeze({
   preferred_pack: 'cavitation_collapse_campaign',
   non_proof:
     'Ranking is a lab-design decision aid over campaign packs + UQ/oracle layers. ' +
-    'It is not a Bayesian posterior that LENR is proved, and it never sets lenr_proved.',
+    'It is not a Bayesian posterior that LENR is proved, and it never sets lenr_proved. ' +
+    'Informativeness scores are not ≥5σ discovery claims.',
   /** Stable catalog order (oracle next_measurement priority). */
   avenues: Object.freeze([
     {
@@ -123,7 +156,8 @@ export const FORMALIZATION_STATUS = Object.freeze({
   collapse_module: 'formalization/lean/LenrFormal/CollapseBounds.lean',
   summary:
     'Lean certifies clamp algebra, identities, and non-closure implications under stated ' +
-    'definitions. It does not prove LENR occurs, and it does not discharge EQ-OPEN-* obligations.',
+    'definitions. It does not prove LENR occurs, does not discharge EQ-OPEN-* obligations, ' +
+    'and does not establish ≥5σ laboratory significance.',
   items: Object.freeze([
     {
       id: 'EQ-BBL-LIM-01',
@@ -158,15 +192,68 @@ export const FORMALIZATION_STATUS = Object.freeze({
   ]),
 });
 
-/** EQ-OPEN closure runway — criteria documented; rows still OPEN. */
+/**
+ * EQ-OPEN closure runway — draft criteria + falsifiers; every row still OPEN.
+ * Mirror of EQ_OPEN_CLOSURE_RUNWAY.md (UI summary only).
+ */
 export const EQ_OPEN_RUNWAY = Object.freeze({
   title: 'EQ-OPEN closure runway',
   doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
   status: 'OPEN',
   note:
     'Draft discharge / falsification criteria are documented for each EQ-OPEN-* row. ' +
-    'Criteria docs are linked for review; no obligation is closed in this UI.',
+    'Criteria docs are linked for review; no obligation is closed in this UI. ' +
+    'Simulation, avenue ranking, and Lean alone never discharge. Prefer ≥5σ cite-gated ' +
+    'significance where heat/yield claims underwrite closure.',
   open_ids: OPEN_EQ_IDS,
+  criteria: Object.freeze([
+    {
+      id: 'EQ-OPEN-MEV-01',
+      label: 'MeV energy-partition channel',
+      affirmative:
+        'Governed experiment/corpus zeros open MeV remainder under a named mechanism + cited bounds.',
+      falsification:
+        'Remainder stays strictly positive across the licensed domain, or the named channel is ruled out.',
+      does_not_count: 'WH partition theorems; campaign scenario tables; UI chips.',
+    },
+    {
+      id: 'EQ-OPEN-RAD-01',
+      label: 'Radiation / γ suppression',
+      affirmative:
+        'Calibrated heat+γ (or UL) with efficiency meets IR bound + lattice absorption target.',
+      falsification:
+        'Calibrated γ above licensed UL while heat stays in-band; absorption unattainable under microphysics.',
+      does_not_count:
+        'Harmonic Lean alone; UL without efficiency/coincidence; CR-39 pits (Pyyhtiä confounder).',
+    },
+    {
+      id: 'EQ-OPEN-RATE-01',
+      label: 'Lattice rate budget',
+      affirmative:
+        'Named rate_mode closes log10(N) with experimentally constrained occupancy/collective factors.',
+      falsification:
+        'All licensed paths remain below closure after capping factors at measured/literature bounds.',
+      does_not_count: 'UI BUDGET_DOES_NOT_CLOSE; free 10^6 cap assumptions; campaign grids alone.',
+    },
+    {
+      id: 'EQ-OPEN-EC-01',
+      label: 'Electron-capture energy path',
+      affirmative:
+        'Independent CM path supplies ≥0.782 MeV in the licensed material/field regime (Tennfors domain).',
+      falsification:
+        'Stated CM paths remain orders of magnitude below threshold under measured potentials/masses.',
+      does_not_count: 'UI gap-to-threshold cosmetics; ARA Widom scaffold.',
+    },
+    {
+      id: 'EQ-OPEN-YIELD-01',
+      label: 'Integrated heat–helium yield',
+      affirmative:
+        'Time-resolved heat+He with recovery efficiency closes integrated ΔN; prefer ≥5σ heat MoE where claimed.',
+      falsification:
+        'Integrated discrepancy stays in the open remainder band after efficiency corrections.',
+      does_not_count: 'Instantaneous Miles EMP band membership alone; exploratory S_heat without verified pairing.',
+    },
+  ]),
 });
 
 /**
@@ -184,5 +271,11 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     if (honesty.open_status[id] !== 'OPEN') {
       throw new Error(`Science evidence UI must keep ${id} OPEN`);
     }
+  }
+  if (DISCOVERY_GRADE_BAR.status !== 'not_met') {
+    throw new Error('Science evidence UI must keep discovery-grade ≥5σ status not_met');
+  }
+  if (EQ_OPEN_RUNWAY.status !== 'OPEN') {
+    throw new Error('Science evidence UI must keep EQ_OPEN_RUNWAY.status OPEN');
   }
 }
