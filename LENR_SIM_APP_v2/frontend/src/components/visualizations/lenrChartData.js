@@ -47,14 +47,20 @@ export function buildLenrChartData(timeSeriesData, comparisonData) {
     const primaryLen = nested.time.length;
     const primaryRates = Array.isArray(nested.reactionRate) ? nested.reactionRate : [];
     const cmpRates = Array.isArray(cmpNested?.reactionRate) ? cmpNested.reactionRate : [];
+    const comparisonSummary = comparisonData?.summary;
+    const cmpTimes = Array.isArray(cmpNested?.time) ? cmpNested.time : null;
+    // Summary-only comparison must join the shared scale (no nested rate array).
+    const summaryCmpRate =
+      !cmpTimes && comparisonSummary?.reaction_rate != null
+        ? Number(comparisonSummary.reaction_rate)
+        : NaN;
     const scaleMax = Math.max(
       0,
       ...primaryRates.map(Number).filter((n) => Number.isFinite(n)),
       ...cmpRates.map(Number).filter((n) => Number.isFinite(n)),
+      ...(Number.isFinite(summaryCmpRate) ? [Math.abs(summaryCmpRate)] : []),
     );
     const rateScale = scaleMax > 0 ? scaleMax : 1;
-    const comparisonSummary = comparisonData?.summary;
-    const cmpTimes = Array.isArray(cmpNested?.time) ? cmpNested.time : null;
 
     return nested.time.map((t, index) => {
       const progress = primaryLen > 1 ? index / (primaryLen - 1) : 1;
@@ -71,6 +77,10 @@ export function buildLenrChartData(timeSeriesData, comparisonData) {
       const energyOutput = nested.enhancement
         ? (nested.enhancement[index] || 0) * 1e-3
         : (timeSeriesData?.summary?.total_energy || 50) * progress;
+      // Summary-only comparison: curve and tooltip absolute both use the same ramp.
+      const summaryCmpAbs = Number.isFinite(summaryCmpRate)
+        ? summaryCmpRate * progress
+        : undefined;
       return {
         time: Number(t),
         energyOutput,
@@ -90,14 +100,8 @@ export function buildLenrChartData(timeSeriesData, comparisonData) {
             : undefined),
         comparisonRate: rawCmp != null
           ? rawCmp / rateScale
-          : (!cmpTimes && comparisonSummary?.reaction_rate != null
-            ? Number(comparisonSummary.reaction_rate) / rateScale
-            : undefined),
-        comparisonRateAbsolute: rawCmp != null
-          ? rawCmp
-          : (!cmpTimes && comparisonSummary?.reaction_rate != null
-            ? Number(comparisonSummary.reaction_rate) * progress
-            : undefined),
+          : (summaryCmpAbs != null ? summaryCmpAbs / rateScale : undefined),
+        comparisonRateAbsolute: rawCmp != null ? rawCmp : summaryCmpAbs,
       };
     });
   }

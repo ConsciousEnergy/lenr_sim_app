@@ -1133,8 +1133,12 @@ const LENRVisualization = ({
                   const absLabel = Number.isFinite(abs)
                     ? `${Number(abs).toExponential(2)} /s`
                     : 'n/a';
+                  // Curve Y is abs/max; lead with absolute so tooltip matches plotted physics.
+                  const norm = Number.isFinite(Number(value))
+                    ? Number(value).toExponential(3)
+                    : value;
                   return [
-                    `${value} (norm.; max ${Number(max || 0).toExponential(2)} /s; abs ${absLabel})`,
+                    `${absLabel} (plot Y ${norm} × max ${Number(max || 0).toExponential(2)} /s)`,
                     name,
                   ];
                 }

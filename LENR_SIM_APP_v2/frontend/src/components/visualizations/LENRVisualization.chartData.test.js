@@ -46,4 +46,32 @@ describe('buildLenrChartData precision', () => {
     expect(rows[0].energyOutput).toBeCloseTo(0.003, 12);
     expect(rows[0].energyOutput).not.toBe(0);
   });
+
+  test('summary-only comparison: curve matches tooltip absolute under shared scale', () => {
+    const primary = {
+      timeSeriesData: {
+        time: [0, 1],
+        temperature: [400, 400],
+        reactionRate: [1e6, 1e6],
+        enhancement: [1e3, 1e3],
+      },
+    };
+    // Larger than primary — must enter scaleMax, and progress must match abs.
+    const comparison = {
+      summary: { reaction_rate: 1e8, total_energy: 10, average_temperature: 350 },
+    };
+
+    const rows = buildLenrChartData(primary, comparison);
+    expect(rows[0].rateScaleMax).toBe(1e8);
+    expect(rows[0].comparisonRateAbsolute).toBe(0);
+    expect(rows[0].comparisonRate).toBe(0);
+    expect(rows[1].comparisonRateAbsolute).toBe(1e8);
+    expect(rows[1].comparisonRate).toBeCloseTo(1, 12);
+    // Plot = abs / scale (curve ↔ tooltip consistency)
+    expect(rows[1].comparisonRate).toBeCloseTo(
+      rows[1].comparisonRateAbsolute / rows[1].rateScaleMax,
+      12,
+    );
+    expect(rows[1].reactionRate).toBeCloseTo(1e6 / 1e8, 12);
+  });
 });
