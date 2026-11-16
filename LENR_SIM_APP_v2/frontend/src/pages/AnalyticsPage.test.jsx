@@ -274,7 +274,7 @@ describe('AnalyticsPage honest metrics', () => {
       /lenr_proved: false/i,
     );
     expect(screen.getByTestId('analytics-5b-5sigma')).toHaveTextContent(/not_met/i);
-    expect(screen.getByTestId('analytics-5b-campaign-n')).toHaveTextContent(/N=20/);
+    expect(screen.getByTestId('analytics-5b-campaign-n')).toHaveTextContent(/N=22/);
     expect(screen.getByTestId('analytics-5b-uq-samples')).toHaveTextContent(/UQ=32/);
     expect(screen.getByTestId('analytics-5b-moe-pairing')).toHaveTextContent(/unverified/);
     expect(screen.getByTestId('analytics-5b-discovery-gap')).toHaveTextContent(
