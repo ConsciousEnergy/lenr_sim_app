@@ -17,6 +17,7 @@ from app.physics_engine.calorimetry_significance import (
     discovery_grade_from_literature_record,
     resolve_measured_excess_power_w,
 )
+from app.physics_engine.discovery_grade_gap import attach_discovery_grade_envelopes
 
 _MEASURED_Q_KEYS = (
     "literature_peak_excess_power_W",
@@ -343,6 +344,8 @@ def literature_moe_columns_from_record(
         summary["eq_open_status"] = {
             key: "OPEN" for key in summary["eq_open_status"]
         }
+    # Cite-gated ≥5σ gap + honest closure envelopes for Analytics / export.
+    summary = attach_discovery_grade_envelopes(summary)
 
     return {
         "literature_id": literature_id,
@@ -367,6 +370,8 @@ def literature_moe_columns_from_record(
         "discovery_grade_eligible": bool(
             summary.get("discovery_grade_eligible")
         ),
+        "discovery_grade_gap": summary.get("discovery_grade_gap"),
+        "honest_closure": summary.get("honest_closure"),
         "bayesian_summary": summary,
     }
 
@@ -410,4 +415,24 @@ def merge_bayesian_into_results(
         payload["moe_provenance"] = columns["moe_provenance"]
     if columns.get("moe_citation_keys"):
         payload["moe_citation_keys"] = columns["moe_citation_keys"]
+
+    # Prefer envelopes already attached to bayesian_summary / columns.
+    gap = None
+    closure = None
+    if isinstance(payload.get("bayesian_summary"), dict):
+        gap = payload["bayesian_summary"].get("discovery_grade_gap")
+        closure = payload["bayesian_summary"].get("honest_closure")
+    if gap is None:
+        gap = columns.get("discovery_grade_gap")
+    if closure is None:
+        closure = columns.get("honest_closure")
+    if gap is not None:
+        payload["discovery_grade_gap"] = gap
+        if isinstance(payload.get("bayesian_summary"), dict):
+            payload["bayesian_summary"]["discovery_grade_gap"] = gap
+    if closure is not None:
+        payload["honest_closure"] = closure
+        if isinstance(payload.get("bayesian_summary"), dict):
+            payload["bayesian_summary"]["honest_closure"] = closure
+            payload["bayesian_summary"]["lenr_proved"] = False
     return payload

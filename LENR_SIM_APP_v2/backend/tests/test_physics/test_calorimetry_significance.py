@@ -28,9 +28,12 @@ from app.physics_engine.calorimetry_significance import (
     validate_moe_provenance,
 )
 from app.physics_engine.discovery_grade_gap import (
+    CLOSURE_REQUIREMENT_IDS,
     GAP_REQUIREMENT_IDS,
+    attach_discovery_grade_envelopes,
     corpus_discovery_grade_gap,
     discovery_grade_gap_bookkeeping,
+    honest_closure_bookkeeping,
 )
 
 
@@ -365,3 +368,14 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert gap["lenr_proved"] is False
     assert all(v == "OPEN" for v in gap["eq_open_status"].values())
     assert "does not set lenr_proved" in gap["honesty"]
+
+    closure = honest_closure_bookkeeping(gap)
+    assert closure["overall_status"] == "not_met"
+    assert closure["lenr_proved"] is False
+    assert set(CLOSURE_REQUIREMENT_IDS).issubset(set(closure["missing_ids"]))
+    assert all(v == "OPEN" for v in closure["eq_open_status"].values())
+
+    attached = attach_discovery_grade_envelopes(report)
+    assert attached["discovery_grade_gap"]["overall_status"] == "met"
+    assert attached["honest_closure"]["overall_status"] == "not_met"
+    assert attached["lenr_proved"] is False
