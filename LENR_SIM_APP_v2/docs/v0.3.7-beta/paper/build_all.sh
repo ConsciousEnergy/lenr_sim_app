@@ -17,8 +17,9 @@ PAPER_VENV="$PAPER/.venv-paper"
 if [[ -f "$PAPER/requirements.txt" ]]; then
   if [[ ! -x "$PAPER_VENV/bin/python" ]]; then
     python3 -m venv "$PAPER_VENV"
-    "$PAPER_VENV/bin/pip" install -q -r "$PAPER/requirements.txt"
   fi
+  # Always sync pins so existing venvs pick up requirements bumps (e.g. markdown).
+  "$PAPER_VENV/bin/pip" install -q -r "$PAPER/requirements.txt"
   export PATH="$PAPER_VENV/bin:$PATH"
 fi
 
@@ -58,3 +59,4 @@ python3 "$PAPER/verify_paper.py"
 echo "==> build_all done"
 ls -la "$PAPER"/A_Unified_Theoretical_Framework_for_LENR.{md,txt,tex,html,pdf} \
   "$PAPER"/A_Unified_Theoretical_Framework_for_LENR_submission.pdf
+
