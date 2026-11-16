@@ -35,6 +35,10 @@ from app.physics_engine.discovery_grade_gap import (
     discovery_grade_gap_bookkeeping,
     honest_closure_bookkeeping,
 )
+from app.physics_engine.sigma_distance import (
+    literature_corpus_moe_coverage,
+    quantitative_distance_to_discovery,
+)
 
 
 def test_s_heat_is_signed_q_over_sigma() -> None:
@@ -379,3 +383,84 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert attached["discovery_grade_gap"]["overall_status"] == "met"
     assert attached["honest_closure"]["overall_status"] == "not_met"
     assert attached["lenr_proved"] is False
+    assert attached["quantitative_distance"]["distance_status"] == (
+        "at_or_above_bar_gates_clear"
+    )
+    assert attached["quantitative_distance"]["arithmetic_sigma_shortfall"] == 0.0
+    assert attached["quantitative_distance"]["lenr_proved"] is False
+
+
+def test_quantitative_distance_corpus_default_undefined() -> None:
+    distance = quantitative_distance_to_discovery(None)
+    assert distance["schema"] == "lenr-sigma-distance-v1"
+    assert distance["distance_status"] == "undefined"
+    assert distance["s_heat"] is None
+    assert distance["arithmetic_sigma_shortfall"] is None
+    assert distance["lenr_proved"] is False
+    assert all(v == "OPEN" for v in distance["eq_open_status"].values())
+
+
+def test_quantitative_distance_below_bar_reports_shortfall() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.08,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    assert distance["s_heat"] == 4.0
+    assert distance["arithmetic_sigma_shortfall"] == 1.0
+    assert distance["required_sigma_q_w_for_5"] == 0.016
+    assert distance["sigma_tightening_factor_vs_5"] == 0.02 / 0.016
+    assert distance["distance_status"] == "below_bar"
+    assert distance["discovery_grade_eligible"] is False
+    assert distance["lenr_proved"] is False
+
+
+def test_quantitative_distance_miles_above_bar_gates_blocked() -> None:
+    miles = next(
+        row for row in literature_records() if row["literature_id"] == "miles-1993"
+    )
+    report = discovery_grade_from_literature_record(miles)
+    gap = discovery_grade_gap_bookkeeping(report)
+    distance = gap["quantitative_distance"]
+    assert distance["s_heat"] == 26.0
+    assert distance["arithmetic_sigma_shortfall"] == 0.0
+    assert distance["distance_status"] == "at_or_above_bar_gates_blocked"
+    assert distance["discovery_grade_eligible"] is False
+    assert distance["stat_sys_composition"]["composition_mode"] == "explicit_total"
+    assert gap["overall_status"] == "not_met"
+    assert gap["lenr_proved"] is False
+
+
+def test_quantitative_distance_rss_stat_sys_composition() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.1,
+        sigma_q_statistical_w=0.03,
+        sigma_q_systematic_w=0.04,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    assert distance["sigma_q_w"] == 0.05
+    assert distance["stat_sys_composition"]["composition_mode"] == "rss_stat_sys"
+    assert distance["stat_sys_composition"]["sigma_q_rss_w"] == 0.05
+    assert distance["s_heat"] == 2.0
+    assert distance["arithmetic_sigma_shortfall"] == 3.0
+    assert distance["distance_status"] == "below_bar"
+
+
+def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
+    coverage = literature_corpus_moe_coverage()
+    assert coverage["schema"] == "lenr-moe-coverage-v1"
+    assert coverage["n_records"] >= 20
+    assert coverage["with_sigma_q"] >= 1
+    assert coverage["with_moe_pairing_verified"] >= 1
+    assert coverage["discovery_grade_eligible_count"] >= 1
+    assert "kasagi-nicu-radiant-2026" in coverage["discovery_grade_eligible_ids"]
+    assert coverage["closes_eq_open"] is False
+    assert coverage["lenr_proved"] is False
+    assert all(v == "OPEN" for v in coverage["eq_open_status"].values())
+    assert coverage["discovery_grade_eligible_count"] < coverage["n_records"]

@@ -7,6 +7,8 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.discoveryGradeEligible).toBe(false);
     expect(envelopes.discoveryGradeGap.overall_status).toBe('not_met');
     expect(envelopes.honestClosure.overall_status).toBe('not_met');
+    expect(envelopes.quantitativeDistance.distance_status).toBe('undefined');
+    expect(envelopes.quantitativeDistance.lenr_proved).toBe(false);
     expect(envelopes.honestClosure.missing_ids).toEqual(
       expect.arrayContaining(['eq_open_discharge', 'governance_signoff']),
     );
@@ -34,6 +36,13 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
         lenr_proved: true,
         eq_open_status: { 'EQ-OPEN-YIELD-01': 'CLOSED' },
       },
+      quantitative_distance: {
+        distance_status: 'at_or_above_bar_gates_clear',
+        s_heat: 13.75,
+        arithmetic_sigma_shortfall: 0,
+        lenr_proved: true,
+        eq_open_status: { 'EQ-OPEN-YIELD-01': 'CLOSED' },
+      },
     });
     expect(envelopes.discoveryGradeEligible).toBe(true);
     expect(envelopes.discoveryGradeGap.overall_status).toBe('met');
@@ -42,5 +51,12 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.honestClosure.lenr_proved).toBe(false);
     expect(envelopes.lenrProved).toBe(false);
     expect(envelopes.honestClosure.eq_open_status['EQ-OPEN-YIELD-01']).toBe('OPEN');
+    expect(envelopes.quantitativeDistance.distance_status).toBe(
+      'at_or_above_bar_gates_clear',
+    );
+    expect(envelopes.quantitativeDistance.lenr_proved).toBe(false);
+    expect(envelopes.quantitativeDistance.eq_open_status['EQ-OPEN-YIELD-01']).toBe(
+      'OPEN',
+    );
   });
 });

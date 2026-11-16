@@ -5,11 +5,13 @@ import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
   CLOSURE_SURFACE_LINKS,
+  CORPUS_MOE_COVERAGE,
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
   OPEN_EQ_IDS,
+  QUANTITATIVE_DISTANCE_DEFAULT,
   SCIENCE_EVIDENCE_HONESTY,
   assertScienceEvidenceHonesty,
   avenuesForOpenId,
@@ -50,6 +52,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(DISCOVERY_GRADE_BAR.note).toMatch(/cite-gated/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(/campaign/i);
     expect(DISCOVERY_GRADE_BAR.gap_helper_module).toMatch(/discovery_grade_gap/);
+    expect(DISCOVERY_GRADE_BAR.distance_helper_module).toMatch(/sigma_distance/);
     expect(DISCOVERY_GRADE_MISSING.length).toBeGreaterThanOrEqual(6);
     DISCOVERY_GRADE_MISSING.forEach((req) => {
       expect(req.status).toBe('not_met');
@@ -64,6 +67,27 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
         'eq_open_discharge',
         'governance_signoff',
       ]),
+    );
+  });
+
+  test('quantitative distance + MoE coverage stay non-closure', () => {
+    expect(QUANTITATIVE_DISTANCE_DEFAULT.distance_status).toBe('undefined');
+    expect(QUANTITATIVE_DISTANCE_DEFAULT.s_heat).toBeNull();
+    expect(QUANTITATIVE_DISTANCE_DEFAULT.discovery_grade_eligible).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.closes_eq_open).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.lenr_proved).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.n_records).toBeGreaterThanOrEqual(20);
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBeLessThan(
+      CORPUS_MOE_COVERAGE.n_records,
+    );
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_ids).toEqual(
+      expect.arrayContaining(['kasagi-nicu-radiant-2026']),
+    );
+    expect(CORPUS_MOE_COVERAGE.miles_distance_status).toBe(
+      'at_or_above_bar_gates_blocked',
+    );
+    expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
+      /Arithmetic S_heat/i,
     );
   });
 
@@ -102,6 +126,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
   test('formalization distinguishes bounds from empirical closure', () => {
     expect(FORMALIZATION_STATUS.summary).toMatch(/does not prove LENR/i);
     expect(FORMALIZATION_STATUS.collapse_module).toMatch(/CollapseBounds\.lean/);
+    expect(FORMALIZATION_STATUS.calorimetry_module).toMatch(
+      /CalorimetrySignificance\.lean/,
+    );
+    expect(FORMALIZATION_STATUS.summary).toMatch(/EQ-HEAT-SIG/i);
+    const ids = FORMALIZATION_STATUS.items.map((item) => item.id);
+    expect(ids).toEqual(
+      expect.arrayContaining(['EQ-HEAT-SIG-01', 'EQ-HEAT-SIG-NC-01']),
+    );
     const kinds = FORMALIZATION_STATUS.items.map((item) => item.kind);
     expect(kinds).toEqual(
       expect.arrayContaining(['bounds', 'non-closure', 'open']),

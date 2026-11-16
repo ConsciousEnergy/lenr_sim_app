@@ -105,6 +105,15 @@ describe('ScienceEvidenceSection', () => {
     expect(
       screen.getByTestId('science-evidence-gap-req-eq_open_discharge'),
     ).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('science-evidence-gap-distance-status')).toHaveTextContent(
+      /undefined/,
+    );
+    expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
+      /closes_eq_open/,
+    );
+    expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
+      /lenr_proved/,
+    );
     expect(screen.getByTestId('science-evidence-linkage-panel')).toBeInTheDocument();
     expect(
       screen.getByTestId('science-evidence-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),
@@ -118,6 +127,8 @@ describe('ScienceEvidenceSection', () => {
     expect(screen.getByTestId('avenue-5sigma-role-calorimetry_sigma_q')).toHaveTextContent(
       /primary_heat_moe/,
     );
+    expect(screen.getByText(/Calorimetry ≥5σ analytics bar lock/i)).toBeInTheDocument();
+    expect(screen.getByText(/Heat significance non-closure/i)).toBeInTheDocument();
     expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
   });
 });
