@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — BDS-346 Lean all-five EQ-OPEN NC + concrete next lab/MoE targets (academic)
+- Lean `CalorimetrySignificance`: `discovery_grade_analytics_does_not_close_any_eq_open` + `dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr` (Q1–Q5, not Q5-only); imports OpenObligations
+- Served science evidence: `NEXT_LAB_MOE_TARGETS` (5 avenue-linked lab/MoE asks, `blocked_awaiting_lab`) + `lean_all_eq_open_nc_bound`; exhaust note points at concrete lab targets
+- Analytics / §5B EMP + EQ-OPEN linkage surfaces next lab MoE targets; soft chips stay `analytics_gates_clear`
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change; **no** `main` / Path B
+
 ### Added — BDS-344 Lean analytics≠EQ-OPEN / soft-chip lock + promote-prep optics (academic)
 - Lean `CalorimetrySignificance`: Kasagi Ni control milli-σ bar example; `instrument_floor` ⇏ discovery; `softChipIsScientificDischarge=false`; `dual_kasagi_analytics_does_not_close_eq_open_or_lenr`
 - Served science evidence: `software_honest_5sigma_runway_exhausted` + `promote_prep_recommended` + five remaining scientific blockers (no flag flips)

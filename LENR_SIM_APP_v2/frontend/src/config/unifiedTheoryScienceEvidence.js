@@ -167,10 +167,13 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   soft_chip_ne_scientific_discharge: true,
   lean_dual_kasagi_nc_bound: true,
   lean_instrument_floor_nc_bound: true,
+  /** BDS-346: DiscoveryGradeAnalytics / dual Kasagi ⇏ any of Q1–Q5 (not Q5-only). */
+  lean_all_eq_open_nc_bound: true,
   /**
-   * BDS-344: honest software ≥5σ runway on this train is exhausted for Prefer-merge
-   * code levers (Lean NC + inventory + EMP UX). Remaining work is scientific /
-   * governance — recommend promote+ship prep when humans ask (no auto main/Path B).
+   * BDS-344/BDS-346: literature MoE inventory + EMP UX Prefer-merge levers are
+   * exhausted. BDS-346 still ships Lean all-five EQ-OPEN NC + concrete next lab
+   * MoE targets. Remaining work is scientific / governance — promote+ship prep
+   * when humans ask (no auto main/Path B).
    */
   software_honest_5sigma_runway_exhausted: true,
   promote_prep_recommended: true,
@@ -187,11 +190,66 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'Only a minority of curated literature rows carry numeric σ_Q; fewer still have ' +
     'literature_reported cite-gated provenance + verified Q↔σ pairing. Never render bare ' +
     'S_heat without provenance. Clearing analytics discovery flags on Kasagi NiCu + Ni ' +
-    'control does not set lenr_proved or close EQ-OPEN-* (Lean dual_kasagi_analytics_does_not_close_eq_open_or_lenr). ' +
+    'control does not set lenr_proved or close any EQ-OPEN-* (Lean ' +
+    'dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr / ' +
+    'discovery_grade_analytics_does_not_close_any_eq_open). ' +
     'Miles / De Ninno / McKubre stay exploratory (instrument_precision / floor; Lean instrument_floor NC). ' +
-    'Soft chips: analytics_gates_clear — never “≥5σ met”. Software honest ≥5σ Prefer-merge runway ' +
-    'exhausted on this train; remaining blockers are scientific/governance — promote+ship prep next when asked.',
+    'Soft chips: analytics_gates_clear — never “≥5σ met”. Literature MoE Prefer-merge runway ' +
+    'exhausted; next scientific targets are NEXT_LAB_MOE_TARGETS — promote+ship prep when asked.',
 });
+
+/**
+ * Concrete next lab / MoE targets after software Prefer-merge exhaust (BDS-346).
+ * Decision aid only — never flips lenr_proved or closes EQ-OPEN-*.
+ * Complements snake_case remaining_scientific_blockers with avenue-linked lab asks.
+ */
+export const NEXT_LAB_MOE_TARGETS = Object.freeze([
+  Object.freeze({
+    id: 'governed_heat_he_cite_gated_moe',
+    avenue_id: 'miles_heat_helium_q',
+    eq_open_ids: Object.freeze(['EQ-OPEN-YIELD-01', 'EQ-OPEN-MEV-01']),
+    target:
+      'Governed lab simultaneous heat+He with cite-gated literature_reported σ_Q + verified ' +
+      'Q↔σ pairing underwriting YIELD (not Miles exploratory instrument_precision arithmetic)',
+    status: 'blocked_awaiting_lab',
+  }),
+  Object.freeze({
+    id: 'calorimetry_resolution_beyond_kasagi',
+    avenue_id: 'calorimetry_sigma_q',
+    eq_open_ids: Object.freeze(['EQ-OPEN-YIELD-01']),
+    target:
+      'Broader corpus beyond Kasagi 2/25: measurement-specific total σ_Q with same-results ' +
+      'envelope pairing on governed calorimetry rows (refuse Iwamura/Mizuno/Arata fabrication)',
+    status: 'blocked_awaiting_lab',
+  }),
+  Object.freeze({
+    id: 'gamma_ul_efficiency_corrected',
+    avenue_id: 'gamma_ul_23p8',
+    eq_open_ids: Object.freeze(['EQ-OPEN-RAD-01']),
+    target:
+      'Efficiency-corrected 23.8 MeV γ upper limit with coincidence / efficiency provenance ' +
+      '(not CR-39 pit counts; Pyyhtiä confounder stays detector-only)',
+    status: 'blocked_awaiting_lab',
+  }),
+  Object.freeze({
+    id: 'occupation_rate_caps_measured',
+    avenue_id: 'p4_occupation',
+    eq_open_ids: Object.freeze(['EQ-OPEN-RATE-01', 'EQ-OPEN-MEV-01']),
+    target:
+      'Measured p₄ / trap occupancy + collective caps that constrain rate_mode budgets ' +
+      '(not free 10⁶ caps or campaign grids alone)',
+    status: 'blocked_awaiting_lab',
+  }),
+  Object.freeze({
+    id: 'ec_threshold_cm_path',
+    avenue_id: 'electron_capture_threshold',
+    eq_open_ids: Object.freeze(['EQ-OPEN-EC-01']),
+    target:
+      'Independent condensed-matter path ≥0.782 MeV in Tennfors-licensed regime with cited ' +
+      'potentials/masses (deficit bookkeeping / Widom scaffold do not count)',
+    status: 'blocked_awaiting_lab',
+  }),
+]);
 
 /**
  * EMP / instrument-MoE rows that stay exploratory — structured “why not discovery”
@@ -482,8 +540,9 @@ export const FORMALIZATION_STATUS = Object.freeze({
     'Lean certifies clamp algebra, identities, and non-closure implications under stated ' +
     'definitions. It does not prove LENR occurs, does not discharge EQ-OPEN-* obligations, ' +
     'and does not establish ≥5σ laboratory significance. EQ-HEAT-SIG-01 locks the analytics ' +
-    'bar at 5σ; EQ-HEAT-SIG-NC-01 proves high arithmetic S_heat alone never closes Q5. ' +
-    'EQ-BBL-NR-01 / EQ-BBL-RP-DOM-01 are honesty / domain locks — not nature proofs. ' +
+    'bar at 5σ; EQ-HEAT-SIG-NC-01 proves DiscoveryGradeAnalytics never closes any of Q1–Q5 ' +
+    '(MEV/RAD/RATE/EC/YIELD) under open witnesses, and high arithmetic S_heat alone never ' +
+    'closes Q5. EQ-BBL-NR-01 / EQ-BBL-RP-DOM-01 are honesty / domain locks — not nature proofs. ' +
     'EQ-RATE-CAP-GAP-01 marks SPEC-input gaps, not channel evidence.',
   items: Object.freeze([
     {
@@ -526,7 +585,7 @@ export const FORMALIZATION_STATUS = Object.freeze({
       id: 'EQ-HEAT-SIG-NC-01',
       label: 'Heat significance non-closure',
       kind: 'non-closure',
-      note: 'Instrument-precision / unverified pairing ⇏ discovery; cleared analytics ⇏ lenr_proved; high S_heat ⇏ Q5 closed.',
+      note: 'Instrument-precision / floor ⇏ discovery; dual Kasagi / DiscoveryGradeAnalytics ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346).',
     },
     {
       id: 'EQ-BBL-HEAT-NC-01',
@@ -698,6 +757,11 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       'Science evidence UI must keep lean_instrument_floor_nc_bound true',
     );
   }
+  if (CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_all_eq_open_nc_bound true (BDS-346)',
+    );
+  }
   if (CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted !== true) {
     throw new Error(
       'Science evidence UI must mark software_honest_5sigma_runway_exhausted true',
@@ -713,6 +777,30 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     throw new Error(
       'Science evidence UI must list remaining_scientific_blockers (≥5 scientific/governance)',
     );
+  }
+  if (!Array.isArray(NEXT_LAB_MOE_TARGETS) || NEXT_LAB_MOE_TARGETS.length < 5) {
+    throw new Error(
+      'Science evidence UI must list NEXT_LAB_MOE_TARGETS (≥5 concrete lab/MoE asks)',
+    );
+  }
+  for (const target of NEXT_LAB_MOE_TARGETS) {
+    if (target.status !== 'blocked_awaiting_lab') {
+      throw new Error(
+        `Science evidence UI must keep NEXT_LAB_MOE_TARGETS ${target.id} blocked_awaiting_lab`,
+      );
+    }
+    if (!target.avenue_id || !Array.isArray(target.eq_open_ids) || !target.target) {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing avenue/eq_open/target`,
+      );
+    }
+    for (const oid of target.eq_open_ids) {
+      if (!OPEN_EQ_IDS.includes(oid)) {
+        throw new Error(
+          `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} unknown EQ-OPEN ${oid}`,
+        );
+      }
+    }
   }
   if (
     !Array.isArray(EMP_EXPLORATORY_WHY_NOT_DISCOVERY) ||
