@@ -95,4 +95,29 @@ describe('ScienceEvidenceSection', () => {
     expect(screen.getByText(/pyyhtia-cr39-cavitation-2026/i)).toBeInTheDocument();
     expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
   });
+
+  test('surfaces ≥5σ missing checklist and avenue↔runway linkage', () => {
+    render(<ScienceEvidenceSection />);
+    expect(screen.getByTestId('science-evidence-gap-checklist')).toHaveTextContent(/not_met/i);
+    expect(
+      screen.getByTestId('science-evidence-gap-req-cite_gated_sigma_q'),
+    ).toHaveTextContent(/not_met/i);
+    expect(
+      screen.getByTestId('science-evidence-gap-req-eq_open_discharge'),
+    ).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('science-evidence-linkage-panel')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('science-evidence-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('runway-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('runway-5sigma-EQ-OPEN-YIELD-01')).toHaveTextContent(
+      /requires_cite_gated_heat_moe_ge_5sigma/,
+    );
+    expect(screen.getByTestId('avenue-5sigma-role-calorimetry_sigma_q')).toHaveTextContent(
+      /primary_heat_moe/,
+    );
+    expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
+  });
 });
