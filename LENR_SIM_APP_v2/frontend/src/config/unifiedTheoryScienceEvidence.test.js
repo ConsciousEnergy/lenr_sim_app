@@ -134,7 +134,17 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open).toBe(true);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.soft_chip_ne_scientific_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_dual_kasagi_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_instrument_floor_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.promote_prep_recommended).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.length).toBeGreaterThanOrEqual(5);
+    expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.join(' ')).toMatch(
+      /eq_open|lenr_proved|governed_lab/i,
+    );
     expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
+    expect(CORPUS_MOE_COVERAGE.note).toMatch(/dual_kasagi_analytics_does_not_close/i);
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);

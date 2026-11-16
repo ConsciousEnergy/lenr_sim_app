@@ -124,8 +124,30 @@ export default function DiscoveryGradeGapChecklist({
             {' · '}publishable MoE pairs <code>exhausted</code> (refuse fabricated σ_Q)
           </>
         ) : null}
+        {coverage.lean_dual_kasagi_nc_bound ? (
+          <>
+            {' · '}Lean dual-Kasagi NC bound
+          </>
+        ) : null}
+        {coverage.software_honest_5sigma_runway_exhausted ? (
+          <>
+            {' · '}software honest ≥5σ Prefer-merge runway <code>exhausted</code>
+            {coverage.promote_prep_recommended ? (
+              <>
+                {' · '}promote+ship prep recommended
+              </>
+            ) : null}
+          </>
+        ) : null}
         . Soft chips: <code>analytics_gates_clear</code> ≠ EQ-OPEN /{' '}
-        <code>lenr_proved</code>.
+        <code>lenr_proved</code>
+        {coverage.soft_chip_ne_scientific_discharge ? (
+          <>
+            {' '}
+            (≠ scientific discharge)
+          </>
+        ) : null}
+        .
       </Typography>
 
       {showEmpWhyNot ? (

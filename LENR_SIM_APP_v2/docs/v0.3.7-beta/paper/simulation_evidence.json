@@ -159,7 +159,8 @@
     "BDS-322 analytics/§5B enrichment: cavitation_collapse campaign expanded to 18 designed cells (incl. Pyyhtiä lit row); UI runway criteria + unmet ≥5σ bar; EQ-OPEN-* remain OPEN; lenr_proved false",
     "BDS-323 analytics/§5B UQ deepen: cavitation_collapse N=20 + PACK_UQ_SAMPLES=32; claim_tier runway chips; MoE pairing gap UX; EQ-OPEN-* remain OPEN; lenr_proved false",
     "BDS-329 analytics/§5B EQ-OPEN-weakest cells: cavitation_collapse N=22 (EC/MEV avenue stresses) + pack discovery_grade_gap/honest_closure not_met stamps; EQ-OPEN-* remain OPEN; lenr_proved false",
-    "BDS-330/332 proofs+margins: quantitative σ distance + corpus MoE coverage envelopes; Lean EQ-HEAT-SIG-01/NC-01 + EQ-BBL-HEAT-NC-01 (collapse UQ ≠ cite-gated discovery MoE); EQ-OPEN-* remain OPEN; lenr_proved false"
+    "BDS-330/332 proofs+margins: quantitative σ distance + corpus MoE coverage envelopes; Lean EQ-HEAT-SIG-01/NC-01 + EQ-BBL-HEAT-NC-01 (collapse UQ ≠ cite-gated discovery MoE); EQ-OPEN-* remain OPEN; lenr_proved false",
+    "BDS-344 honest ≥5σ runway: Lean dual_kasagi_analytics_does_not_close_eq_open_or_lenr + instrument_floor NC + soft-chip lock; UI software_honest_5sigma_runway_exhausted + promote_prep_recommended; remaining blockers scientific/governance only; EQ-OPEN-* OPEN; lenr_proved false"
   ],
   "formats": [
     ".md",

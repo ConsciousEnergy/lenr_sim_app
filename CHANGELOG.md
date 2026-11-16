@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — BDS-344 Lean analytics≠EQ-OPEN / soft-chip lock + promote-prep optics (academic)
+- Lean `CalorimetrySignificance`: Kasagi Ni control milli-σ bar example; `instrument_floor` ⇏ discovery; `softChipIsScientificDischarge=false`; `dual_kasagi_analytics_does_not_close_eq_open_or_lenr`
+- Served science evidence: `software_honest_5sigma_runway_exhausted` + `promote_prep_recommended` + five remaining scientific blockers (no flag flips)
+- Analytics / §5B EMP panel chips surface Lean NC + runway-exhaust / promote-prep; soft chips stay `analytics_gates_clear`
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change; **no** `main` / Path B
+
 ### Added — EQ-OPEN-RATE-01 Lean cap bounds + hydro ≠ nuclear-rate lock (academic; stays OPEN)
 - Lean `RateBudget`: `EQ-RATE-CAP-NC-01` FCC-lattice D–D `trapped_state` and `EQ-RATE-CAP-NC-02` non-ULM `three_body` scenario log budgets stay negative with every engine cap saturated (DISPROVEN under caps, not nature); `OpenObligations` wraps both as ¬Q3
 - Lean `RateBudget`: `EQ-RATE-CAP-GAP-01` engine caps do **not** certify non-closure for the 25 pm TSC trap or ULM `three_body` (gap, not closure) + free-factor demand \(\le10^{-23}\)
