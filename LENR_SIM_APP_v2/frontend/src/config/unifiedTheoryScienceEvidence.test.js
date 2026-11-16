@@ -132,7 +132,11 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(FORMALIZATION_STATUS.summary).toMatch(/EQ-HEAT-SIG/i);
     const ids = FORMALIZATION_STATUS.items.map((item) => item.id);
     expect(ids).toEqual(
-      expect.arrayContaining(['EQ-HEAT-SIG-01', 'EQ-HEAT-SIG-NC-01']),
+      expect.arrayContaining([
+        'EQ-HEAT-SIG-01',
+        'EQ-HEAT-SIG-NC-01',
+        'EQ-BBL-HEAT-NC-01',
+      ]),
     );
     const kinds = FORMALIZATION_STATUS.items.map((item) => item.kind);
     expect(kinds).toEqual(

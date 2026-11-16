@@ -349,6 +349,12 @@ export const FORMALIZATION_STATUS = Object.freeze({
       note: 'Instrument-precision / unverified pairing ⇏ discovery; cleared analytics ⇏ lenr_proved; high S_heat ⇏ Q5 closed.',
     },
     {
+      id: 'EQ-BBL-HEAT-NC-01',
+      label: 'Collapse UQ ≠ cite-gated heat MoE',
+      kind: 'non-closure',
+      note: 'Collapse UQ / hydro / campaign MoE kinds never supply discovery-grade heat MoE; UQ percentiles do not close Q5.',
+    },
+    {
       id: 'EQ-WH-NONCLOSE-01',
       label: 'WH non-closure',
       kind: 'non-closure',
