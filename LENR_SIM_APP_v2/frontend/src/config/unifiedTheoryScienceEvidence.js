@@ -48,24 +48,155 @@ export const SCIENCE_EVIDENCE_HONESTY = Object.freeze({
 });
 
 /**
+ * Corpus-level BDS-302 missing gates for §5B / Analytics (always not_met here).
+ * Mirrors backend discovery_grade_gap.corpus_discovery_grade_gap().
+ */
+export const DISCOVERY_GRADE_MISSING = Object.freeze([
+  Object.freeze({
+    id: 'cite_gated_sigma_q',
+    label: 'Cite-gated literature_reported σ_Q',
+    status: 'not_met',
+    detail:
+      'Campaign / §5B rows lack measurement-specific literature_reported total σ_Q. ' +
+      'Instrument floor/precision MoE and UQ envelopes do not count.',
+  }),
+  Object.freeze({
+    id: 'moe_citations',
+    label: 'moe_citation_keys present',
+    status: 'not_met',
+    detail: 'No discovery-grade moe_citation_keys on campaign pack cells for σ_Q.',
+  }),
+  Object.freeze({
+    id: 'discovery_provenance',
+    label: 'Discovery-eligible MoE provenance',
+    status: 'not_met',
+    detail: 'Only literature_reported total σ_Q is discovery-eligible; pack MoE is absent/exploratory.',
+  }),
+  Object.freeze({
+    id: 'moe_pairing_verified',
+    label: 'moe_sigma_q_pairing_verified',
+    status: 'not_met',
+    detail:
+      'Q↔σ_Q pairing unverified on campaign/UI rows (Miles peak + follow-on ±0.02 stays exploratory).',
+  }),
+  Object.freeze({
+    id: 'non_seed_measured_q',
+    label: 'Non-seed measured Q_excess',
+    status: 'not_met',
+    detail: 'Campaign cells are model-output; seed-scale / scenario Q does not underwrite discovery.',
+  }),
+  Object.freeze({
+    id: 's_heat_ge_5',
+    label: 'S_heat ≥ 5',
+    status: 'not_met',
+    detail: 'S_heat undefined or exploratory only without cite-gated σ_Q + verified pairing.',
+  }),
+  Object.freeze({
+    id: 'eq_open_discharge',
+    label: 'EQ-OPEN-* discharge under runway',
+    status: 'not_met',
+    detail: 'All five EQ-OPEN rows remain OPEN; runway criteria are documented, not met.',
+  }),
+  Object.freeze({
+    id: 'governance_signoff',
+    label: 'Governed lab evidence + human sign-off',
+    status: 'not_met',
+    detail: 'lenr_proved stays false until governed evidence + academic-review sign-off.',
+  }),
+]);
+
+/**
  * Paper / BDS-302 discovery bar — analytics flag criteria only; unmet for closure.
  */
+/**
+ * Corpus MoE / pairing coverage snapshot (literature + ICCF27 hydrate).
+ * Mirrors backend sigma_distance.literature_corpus_moe_coverage() counts.
+ * Analytics flags on a subset of rows never imply EQ-OPEN discharge.
+ */
+export const CORPUS_MOE_COVERAGE = Object.freeze({
+  title: 'Corpus MoE / Q↔σ_Q pairing coverage',
+  helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py',
+  n_records: 25,
+  with_sigma_q: 4,
+  with_literature_reported_cite_gated: 2,
+  with_moe_pairing_verified: 1,
+  discovery_grade_eligible_count: 1,
+  discovery_grade_eligible_ids: Object.freeze(['kasagi-nicu-radiant-2026']),
+  /** Miles peak arithmetic S_heat=26 under instrument_precision — gates blocked. */
+  miles_exploratory_s_heat: 26,
+  miles_moe_provenance: 'literature_reported_instrument_precision',
+  miles_claim_tier: 'speculative_exploratory',
+  miles_pairing_verified: false,
+  miles_distance_status: 'at_or_above_bar_gates_blocked',
+  miles_banner:
+    'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery.',
+  /** Kasagi NiCu clears analytics gates; honest_closure stays not_met. */
+  kasagi_nicu_s_heat: 13.75,
+  kasagi_nicu_moe_provenance: 'literature_reported',
+  kasagi_nicu_claim_tier: 'empirical_lenr_correlation',
+  kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
+  closes_eq_open: false,
+  lenr_proved: false,
+  note:
+    'Only a minority of curated literature rows carry numeric σ_Q; fewer still have ' +
+    'literature_reported cite-gated provenance + verified Q↔σ pairing. Never render bare ' +
+    'S_heat without provenance. Clearing the analytics discovery flag on Kasagi NiCu does ' +
+    'not set lenr_proved or close EQ-OPEN-*.',
+});
+
+/**
+ * Corpus-default quantitative distance (S_heat undefined on §5B campaign surfaces).
+ * Per-row envelopes attach live distance via discovery_grade_gap.quantitative_distance.
+ */
+export const QUANTITATIVE_DISTANCE_DEFAULT = Object.freeze({
+  schema: 'lenr-sigma-distance-v1',
+  discovery_grade_threshold_sigma: 5,
+  s_heat: null,
+  moe_provenance: null,
+  moe_sigma_q_pairing_verified: false,
+  arithmetic_sigma_shortfall: null,
+  required_sigma_q_w_for_5: null,
+  sigma_tightening_factor_vs_5: null,
+  distance_status: 'undefined',
+  discovery_grade_eligible: false,
+  note:
+    'Campaign / §5B default: S_heat undefined without cite-gated Q and σ_Q. ' +
+    'Never render bare S_heat without moe_provenance / pairing. When arithmetic S_heat ≥ 5 ' +
+    'but gates stay blocked (e.g. Miles instrument_precision), distance_status is ' +
+    'at_or_above_bar_gates_blocked — still not discovery.',
+});
+
 export const DISCOVERY_GRADE_BAR = Object.freeze({
   title: 'Discovery-grade significance bar (≥5σ)',
   sigma_threshold: 5,
   status: 'not_met',
   helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py',
+  gap_helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py',
+  distance_helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py',
   heat_formula: 'S_heat = Q_excess / σ_Q',
+  /** Explicit gap vs BDS-302 discovery_grade_eligible (still unmet). */
+  moe_pairing_status: 'unverified',
+  cite_gated_sigma_q: 'required_not_met',
+  quantitative_distance: QUANTITATIVE_DISTANCE_DEFAULT,
+  corpus_moe_coverage: CORPUS_MOE_COVERAGE,
   note:
     'Prefer ≥5σ for discovery-grade calorimetry language. Oracle B null-falsify SNR≥3 is ' +
     'exploratory only. Cite-gated σ_Q required; instrument precision/floor MoE stays exploratory; ' +
     'verified Q↔σ_Q pairing required for discovery_grade_eligible. Campaign / avenue / Lean ' +
     'outputs never claim 5σ discovery or flip lenr_proved.',
+  gap_note:
+    'Gap: moe_sigma_q_pairing_verified is false on campaign/UI rows; cite-gated σ_Q is not ' +
+    'supplied for discovery_grade_eligible. More UQ samples deepen model envelopes only — ' +
+    'they do not close the ≥5σ bar. Quantitative distance defaults to undefined on corpus ' +
+    'campaign surfaces; literature hydrate may show arithmetic ≥5σ with gates blocked.',
+  missing_requirements: DISCOVERY_GRADE_MISSING,
   does_not_count: Object.freeze([
     'Simulation campaign N alone',
+    'UQ sample count / Sobol envelopes alone',
     'Avenue ranking informativeness scores',
     'Lean clamp / non-closure identities',
     'Exploratory S_heat under instrument_precision without verified pairing',
+    'Arithmetic S_heat ≥ 5 with blocked MoE gates',
   ]),
 });
 
@@ -77,22 +208,52 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
-  n_experiments: 18,
-  n_theory_runs: 18,
+  n_experiments: 22,
+  n_theory_runs: 22,
+  /** Pinned pack Sobol depth (build_cavitation_collapse_pack.PACK_UQ_SAMPLES). */
+  uq_samples: 32,
   hosts: Object.freeze(['copper', 'nickel', 'palladium', 'titanium']),
   dynamics_modes: Object.freeze(['keller_miksis', 'rayleigh_plesset']),
   literature_ids: Object.freeze([
     'taleyarkhan-sonofusion-2002',
     'pyyhtia-cr39-cavitation-2026',
   ]),
+  /** Asymmetric roles — avoid false-balance co-listing (BDS-334). */
+  literature_roles: Object.freeze([
+    Object.freeze({
+      id: 'taleyarkhan-sonofusion-2002',
+      role: 'contested_positive_claim',
+      label: 'Taleyarkhan-class sonofusion (contested positive claim)',
+    }),
+    Object.freeze({
+      id: 'pyyhtia-cr39-cavitation-2026',
+      role: 'detector_confounder_peer',
+      label: 'Pyyhtiä 2026 CR-39 cavitation (detector confounder peer)',
+    }),
+  ]),
   literature_anchor:
-    'Taleyarkhan-class sonofusion (contested); Pyyhtiä 2026 CR-39 cavitation confounder',
+    'Taleyarkhan-class = contested positive claim; Pyyhtiä 2026 = detector-confounder peer (not LENR-rate proof)',
   hydro_label: 'modelled enhancement / contested hydro',
+  densification_note:
+    'Pack N and UQ sample depth are model-grid densification only — not weight-of-numbers ' +
+    'toward ≥5σ discovery or EQ-OPEN discharge.',
+  /** Theory-score bins from pack manifest — not lab corroboration counts (BDS-334 P2). */
+  claim_tier_histogram: Object.freeze({
+    speculative_exploratory: 528,
+    empirical_lenr_correlation: 44,
+  }),
+  claim_tier_histogram_note:
+    'Pack claim_tier_histogram EMP counts are theory-score bins on model rows — not lab ' +
+    'corroboration or discovery weight. Separate from N/UQ densification chips.',
   note:
     'Bubble-lattice host × loading × drive × frequency × dynamics_mode cells with include_uncertainty. ' +
     'Model output only; does not raise empirical claim tiers or meet ≥5σ discovery-grade closure. '
+    + 'UQ sample deepen (32) widens model envelopes only — not cite-gated σ_Q / not discovery. '
+    + 'BDS-329 adds EC/MEV avenue-stress cells; pack rows stamp discovery_grade_gap + '
+    + 'honest_closure overall_status not_met. '
     + 'Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104) is an electrolytic CR-39 '
-    + 'cavitation / detector-confounder peer — not LENR-rate proof.',
+    + 'cavitation / detector-confounder peer — not LENR-rate proof. '
+    + 'N/UQ growth is densification, not discovery weight.',
 });
 
 /**
@@ -100,7 +261,7 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
  * next_measurement priority; scores are not a posterior over “LENR is true.”
  */
 export const AVENUE_RANKING_SUMMARY = Object.freeze({
-  title: 'Bayesian / UQ avenue ranking',
+  title: 'Scenario-table avenue ranking (not a posterior)',
   kind: 'scenario_table_not_posterior',
   doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md',
   claim_tier: 'speculative_exploratory',
@@ -108,56 +269,93 @@ export const AVENUE_RANKING_SUMMARY = Object.freeze({
   non_proof:
     'Ranking is a lab-design decision aid over campaign packs + UQ/oracle layers. ' +
     'It is not a Bayesian posterior that LENR is proved, and it never sets lenr_proved. ' +
-    'Informativeness scores are not ≥5σ discovery claims.',
+    'Informativeness scores are not ≥5σ discovery claims. Title leads with scenario-table ' +
+    'honesty so skimmers cannot read “Bayesian” as a lab posterior.',
+  runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
   /** Stable catalog order (oracle next_measurement priority). */
   avenues: Object.freeze([
     {
       id: 'miles_heat_helium_q',
       label: 'Simultaneous heat + He-4 (Miles Q band)',
       stresses: Object.freeze(['EQ-OPEN-MEV-01', 'EQ-OPEN-YIELD-01']),
+      five_sigma_role: 'primary_heat_yield',
     },
     {
       id: 'gamma_ul_23p8',
       label: 'Efficiency-corrected 23.8 MeV γ upper limit',
       stresses: Object.freeze(['EQ-OPEN-RAD-01']),
+      five_sigma_role: 'orthogonal_rad_ul',
     },
     {
       id: 'calorimetry_sigma_q',
       label: 'Calorimetry resolution (σ_Q / SNR)',
       stresses: Object.freeze(['EQ-OPEN-YIELD-01']),
+      five_sigma_role: 'primary_heat_moe',
     },
     {
       id: 'p4_occupation',
       label: 'p₄ occupation / trap occupancy probe',
       stresses: Object.freeze(['EQ-OPEN-MEV-01', 'EQ-OPEN-RATE-01']),
+      five_sigma_role: 'supporting_rate_mev',
     },
     {
       id: 'rate_budget_loading',
       label: 'Reaction-rate vs loading / host (rate UQ + band)',
       stresses: Object.freeze(['EQ-OPEN-RATE-01']),
+      five_sigma_role: 'supporting_rate',
     },
     {
       id: 'electron_capture_threshold',
       label: 'Electron-capture / mass-renormalization threshold',
       stresses: Object.freeze(['EQ-OPEN-EC-01']),
+      five_sigma_role: 'orthogonal_ec',
     },
     {
       id: 'cavitation_collapse_uq',
       label: 'Cavitation / collapse peak UQ (ENC bookkeeping)',
       stresses: Object.freeze(['EQ-OPEN-RATE-01', 'EQ-OPEN-MEV-01']),
+      five_sigma_role: 'model_uq_not_discovery',
     },
   ]),
 });
+
+/** Doc / route pointers linking Analytics ↔ avenue ranking ↔ EQ-OPEN runway. */
+export const CLOSURE_SURFACE_LINKS = Object.freeze({
+  title: 'Analytics ↔ avenue ranking ↔ EQ-OPEN runway',
+  note:
+    'Cross-links only. Avenue informativeness scores and runway criteria docs do not ' +
+    'discharge EQ-OPEN-* or meet ≥5σ discovery; lenr_proved stays false.',
+  analytics_route: '/analytics',
+  theory_paper_route: '/theory-paper',
+  avenue_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md',
+  runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
+  docs_reviewer_packets: '/docs/reviewer-packets',
+  docs_issue_ledger: '/docs/issue-ledger',
+});
+
+/**
+ * Avenues that stress a given EQ-OPEN id (read-only linkage helper).
+ * @param {string} openId
+ */
+export function avenuesForOpenId(openId) {
+  return AVENUE_RANKING_SUMMARY.avenues.filter((avenue) =>
+    avenue.stresses.includes(openId),
+  );
+}
 
 /** Lean / IR formalization status — bounds vs empirical closure. */
 export const FORMALIZATION_STATUS = Object.freeze({
   title: 'Formalization / Lean status',
   status_doc: 'docs/FORMALIZATION/FORMAL_PROOF_STATUS.md',
   collapse_module: 'formalization/lean/LenrFormal/CollapseBounds.lean',
+  calorimetry_module: 'formalization/lean/LenrFormal/CalorimetrySignificance.lean',
   summary:
     'Lean certifies clamp algebra, identities, and non-closure implications under stated ' +
     'definitions. It does not prove LENR occurs, does not discharge EQ-OPEN-* obligations, ' +
-    'and does not establish ≥5σ laboratory significance.',
+    'and does not establish ≥5σ laboratory significance. EQ-HEAT-SIG-01 locks the analytics ' +
+    'bar at 5σ; EQ-HEAT-SIG-NC-01 proves high arithmetic S_heat alone never closes Q5. ' +
+    'EQ-BBL-NR-01 / EQ-BBL-RP-DOM-01 are honesty / domain locks — not nature proofs. ' +
+    'EQ-RATE-CAP-GAP-01 marks SPEC-input gaps, not channel evidence.',
   items: Object.freeze([
     {
       id: 'EQ-BBL-LIM-01',
@@ -172,10 +370,46 @@ export const FORMALIZATION_STATUS = Object.freeze({
       note: 'ENG-BUBBLE-FUSION-01 scaffold ceilings + Mach×10 regime selector (definitions).',
     },
     {
+      id: 'EQ-BBL-RP-DOM-01',
+      label: 'RP domain ≠ dynamics proof',
+      kind: 'bounds',
+      note: 'Mach×10 RP/KM domain predicate only — not ODE existence or nuclear-rate validity.',
+    },
+    {
       id: 'EQ-BBL-UQ-01',
       label: 'Collapse UQ percentile keys',
       kind: 'definitions',
       note: 'Percentile keys and CR/γ tolerance percents as definitions — model bookkeeping only.',
+    },
+    {
+      id: 'EQ-BBL-NR-01',
+      label: 'Hydro ≠ nuclear-rate proof',
+      kind: 'non-closure',
+      note: 'PROVED honesty implications over AX-tagged provenance kinds; labConstrained empty in-repo.',
+    },
+    {
+      id: 'EQ-HEAT-SIG-01',
+      label: 'Calorimetry ≥5σ analytics bar lock',
+      kind: 'bounds',
+      note: 'discoveryGradeSigma=5; exploratory SNR=3; milli-σ shortfall identities — not lab proof.',
+    },
+    {
+      id: 'EQ-HEAT-SIG-NC-01',
+      label: 'Heat significance non-closure',
+      kind: 'non-closure',
+      note: 'Instrument-precision / unverified pairing ⇏ discovery; cleared analytics ⇏ lenr_proved; high S_heat ⇏ Q5 closed.',
+    },
+    {
+      id: 'EQ-BBL-HEAT-NC-01',
+      label: 'Collapse UQ ≠ cite-gated heat MoE',
+      kind: 'non-closure',
+      note: 'Collapse UQ / hydro / campaign MoE kinds never supply discovery-grade heat MoE; UQ percentiles do not close Q5.',
+    },
+    {
+      id: 'EQ-RATE-CAP-GAP-01',
+      label: '25 pm / ULM CAP-GAP (SPEC inputs)',
+      kind: 'non-closure',
+      note: 'Engine caps do not certify non-closure for 25 pm TSC / ULM three_body — SPEC-input gaps, not evidence those channels close.',
     },
     {
       id: 'EQ-WH-NONCLOSE-01',
@@ -211,6 +445,12 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
       id: 'EQ-OPEN-MEV-01',
       label: 'MeV energy-partition channel',
       claim_tier: 'speculative_exploratory',
+      related_avenues: Object.freeze([
+        'miles_heat_helium_q',
+        'p4_occupation',
+        'cavitation_collapse_uq',
+      ]),
+      five_sigma_relevance: 'supporting_partition_not_heat_moe',
       affirmative:
         'Governed experiment/corpus zeros open MeV remainder under a named mechanism + cited bounds.',
       falsification:
@@ -221,6 +461,8 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
       id: 'EQ-OPEN-RAD-01',
       label: 'Radiation / γ suppression',
       claim_tier: 'speculative_exploratory',
+      related_avenues: Object.freeze(['gamma_ul_23p8']),
+      five_sigma_relevance: 'orthogonal_to_heat_5sigma_uses_ul',
       affirmative:
         'Calibrated heat+γ (or UL) with efficiency meets IR bound + lattice absorption target.',
       falsification:
@@ -232,6 +474,12 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
       id: 'EQ-OPEN-RATE-01',
       label: 'Lattice rate budget',
       claim_tier: 'speculative_exploratory',
+      related_avenues: Object.freeze([
+        'p4_occupation',
+        'rate_budget_loading',
+        'cavitation_collapse_uq',
+      ]),
+      five_sigma_relevance: 'orthogonal_to_heat_5sigma_rate_caps',
       affirmative:
         'Named rate_mode closes log10(N) with experimentally constrained occupancy/collective factors.',
       falsification:
@@ -242,6 +490,8 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
       id: 'EQ-OPEN-EC-01',
       label: 'Electron-capture energy path',
       claim_tier: 'speculative_exploratory',
+      related_avenues: Object.freeze(['electron_capture_threshold']),
+      five_sigma_relevance: 'orthogonal_to_heat_5sigma_threshold',
       /** Sourced threshold / domain critique (AuthorYear keys). */
       citations: Object.freeze(['tennfors2013', 'widomlarsen2006']),
       affirmative:
@@ -254,6 +504,8 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
       id: 'EQ-OPEN-YIELD-01',
       label: 'Integrated heat–helium yield',
       claim_tier: 'empirical_lenr_correlation',
+      related_avenues: Object.freeze(['miles_heat_helium_q', 'calorimetry_sigma_q']),
+      five_sigma_relevance: 'requires_cite_gated_heat_moe_ge_5sigma',
       citations: Object.freeze(['miles1993']),
       affirmative:
         'Time-resolved heat+He with recovery efficiency closes integrated ΔN; prefer ≥5σ heat MoE where claimed.',
@@ -283,12 +535,50 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (DISCOVERY_GRADE_BAR.status !== 'not_met') {
     throw new Error('Science evidence UI must keep discovery-grade ≥5σ status not_met');
   }
+  if (CORPUS_MOE_COVERAGE.closes_eq_open !== false) {
+    throw new Error('Science evidence UI must keep CORPUS_MOE_COVERAGE.closes_eq_open false');
+  }
+  if (CORPUS_MOE_COVERAGE.lenr_proved !== false) {
+    throw new Error('Science evidence UI must keep CORPUS_MOE_COVERAGE.lenr_proved false');
+  }
+  if (QUANTITATIVE_DISTANCE_DEFAULT.distance_status !== 'undefined') {
+    throw new Error(
+      'Science evidence UI must keep corpus quantitative_distance status undefined',
+    );
+  }
+  if (!DISCOVERY_GRADE_BAR.missing_requirements?.length) {
+    throw new Error('Science evidence UI must list discovery-grade missing_requirements');
+  }
+  for (const req of DISCOVERY_GRADE_BAR.missing_requirements) {
+    if (req.status !== 'not_met') {
+      throw new Error(`Science evidence UI must keep gap ${req.id} status not_met`);
+    }
+  }
+  const missingIds = new Set(
+    DISCOVERY_GRADE_BAR.missing_requirements.map((req) => req.id),
+  );
+  for (const requiredId of [
+    'cite_gated_sigma_q',
+    'moe_pairing_verified',
+    's_heat_ge_5',
+    'eq_open_discharge',
+    'governance_signoff',
+  ]) {
+    if (!missingIds.has(requiredId)) {
+      throw new Error(
+        `Science evidence UI must keep corpus gap id ${requiredId} not_met`,
+      );
+    }
+  }
   if (EQ_OPEN_RUNWAY.status !== 'OPEN') {
     throw new Error('Science evidence UI must keep EQ_OPEN_RUNWAY.status OPEN');
   }
   for (const row of EQ_OPEN_RUNWAY.criteria) {
     if (!row.claim_tier || typeof row.claim_tier !== 'string') {
       throw new Error(`Science evidence runway ${row.id} must declare claim_tier`);
+    }
+    if (!Array.isArray(row.related_avenues) || row.related_avenues.length < 1) {
+      throw new Error(`Science evidence runway ${row.id} must link related_avenues`);
     }
   }
 }

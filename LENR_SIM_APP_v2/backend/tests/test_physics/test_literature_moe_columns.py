@@ -107,11 +107,18 @@ def test_miles_seed_columns_instrument_precision_non_discovery() -> None:
     assert summary["lenr_proved"] is False
     assert summary["discovery_grade_eligible"] is False
     assert all(status == "OPEN" for status in summary["eq_open_status"].values())
+    gap = columns["discovery_grade_gap"]
+    assert gap["overall_status"] == "not_met"
+    assert "moe_pairing_verified" in gap["missing_ids"]
+    assert columns["honest_closure"]["overall_status"] == "not_met"
+    assert columns["honest_closure"]["lenr_proved"] is False
 
     merged = merge_bayesian_into_results(miles.get("results"), columns)
     assert merged["lenr_proved"] is False
     assert merged["discovery_grade_eligible"] is False
     assert merged["bayesian_summary"]["lenr_proved"] is False
+    assert merged["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert merged["honest_closure"]["overall_status"] == "not_met"
 
 
 def test_mckubre_seed_columns_omit_fabricated_sigma_q() -> None:
@@ -194,6 +201,12 @@ def test_kasagi_iccf_columns_can_flag_discovery_without_lenr_proved() -> None:
         status == "OPEN"
         for status in columns["bayesian_summary"]["eq_open_status"].values()
     )
+    # Analytics gates can clear; honest closure path stays not_met.
+    assert columns["discovery_grade_gap"]["overall_status"] == "met"
+    assert columns["honest_closure"]["overall_status"] == "not_met"
+    assert "eq_open_discharge" in columns["honest_closure"]["missing_ids"]
+    assert "governance_signoff" in columns["honest_closure"]["missing_ids"]
+    assert columns["honest_closure"]["lenr_proved"] is False
 
 
 def test_none_top_level_moe_falls_back_to_parameters() -> None:
@@ -466,7 +479,69 @@ def test_merge_overwrites_caller_supplied_significance() -> None:
     assert merged["bayesian_summary"]["discovery_grade_eligible"] is False
 
 
+def test_enrich_resolves_live_q_not_stale_summary() -> None:
+    """Updated σ must pair with resolve_measured_excess_power_w Q, not stale summary."""
+    from app.services.experiment_association import enrich_experiment_dict
+
+    payload = {
+        "id": "00000000-0000-0000-0000-000000000077",
+        "name": "stale-q guard",
+        "excess_heat_watts": 1.0,
+        "parameters": {"measured_excess_power_W": 0.1},
+        "results": {},
+        "sigma_Q_W": 0.04,
+        "moe_provenance": "literature_reported",
+        "moe_citation_keys": ["x"],
+        "moe_sigma_q_pairing_verified": True,
+        "discovery_grade_eligible": False,
+        "bayesian_summary": {
+            "excess_power_w": 1.1,
+            "sigma_q_w": 0.08,
+            "s_heat": 13.75,
+            "q_source": "stale",
+            "q_is_seed_scale": False,
+            "discovery_grade_eligible": False,
+            "lenr_proved": False,
+        },
+    }
+    enriched = enrich_experiment_dict(payload)
+    summary = enriched["bayesian_summary"]
+    assert summary["excess_power_w"] == 0.1
+    assert summary["q_is_seed_scale"] is False
+    assert summary["s_heat"] == 0.1 / 0.04
+    assert enriched["lenr_proved"] is False
+
+
+def test_merge_rebuilds_gap_after_eligibility_downgrade() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.1,
+            "measured_excess_power_W": 1.1,
+            "sigma_Q_W": 0.08,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["kasagi2026"],
+            "moe_sigma_q_pairing_verified": True,
+        }
+    )
+    assert columns["discovery_grade_eligible"] is True
+    assert columns["bayesian_summary"]["discovery_grade_gap"]["overall_status"] == "met"
+
+    downgraded = dict(columns)
+    downgraded["discovery_grade_eligible"] = False
+    summary = dict(downgraded["bayesian_summary"])
+    summary["discovery_grade_eligible"] = False
+    downgraded["bayesian_summary"] = summary
+    merged = merge_bayesian_into_results({}, downgraded)
+    assert merged["discovery_grade_eligible"] is False
+    assert merged["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert merged["discovery_grade_gap"]["discovery_grade_eligible"] is False
+    assert merged["honest_closure"]["overall_status"] == "not_met"
+    assert merged["lenr_proved"] is False
+
+
 def test_experiment_to_dict_includes_literature_moe_fields() -> None:
+    from app.services.experiment_association import enrich_experiment_dict
+
     columns = literature_moe_columns_from_record(
         next(
             row
@@ -498,6 +573,52 @@ def test_experiment_to_dict_includes_literature_moe_fields() -> None:
     )
     assert payload["discovery_grade_eligible"] is False
     assert payload["bayesian_summary"]["lenr_proved"] is False
+
+    enriched = enrich_experiment_dict(payload)
+    assert enriched["lenr_proved"] is False
+    assert enriched["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert enriched["honest_closure"]["overall_status"] == "not_met"
+    assert enriched["honest_closure"]["lenr_proved"] is False
+    assert all(
+        status == "OPEN"
+        for status in enriched["honest_closure"]["eq_open_status"].values()
+    )
+
+
+def test_enrich_keeps_honest_closure_not_met_when_discovery_flag_true() -> None:
+    """Kasagi-class analytics flag must not flip lenr_proved / EQ-OPEN via export."""
+    from app.services.experiment_association import enrich_experiment_dict
+
+    columns = literature_moe_columns_from_record(
+        next(
+            row
+            for row in iccf27_literature_records()
+            if row["literature_id"] == "kasagi-nicu-radiant-2026"
+        )
+    )
+    experiment = Experiment(
+        id="00000000-0000-0000-0000-000000000042",
+        name="Kasagi NiCu",
+        is_baseline=True,
+        literature_id=columns["literature_id"],
+        claim_tag=columns["claim_tag"],
+        citation_key=columns["citation_key"],
+        sigma_q_w=columns["sigma_q_w"],
+        moe_provenance=columns["moe_provenance"],
+        moe_citation_keys=columns["moe_citation_keys"],
+        moe_sigma_q_pairing_verified=columns["moe_sigma_q_pairing_verified"],
+        s_heat=columns["s_heat"],
+        discovery_grade_eligible=True,
+        bayesian_summary=columns["bayesian_summary"],
+        excess_heat_watts=1.1,
+    )
+    enriched = enrich_experiment_dict(experiment.to_dict())
+    assert enriched["discovery_grade_eligible"] is True
+    assert enriched["discovery_grade_gap"]["overall_status"] == "met"
+    assert enriched["honest_closure"]["overall_status"] == "not_met"
+    assert enriched["lenr_proved"] is False
+    assert enriched["bayesian_summary"]["lenr_proved"] is False
+    assert "eq_open_discharge" in enriched["honest_closure"]["missing_ids"]
 
 
 def test_alembic_003_upgrade_downgrade_on_sqlite(tmp_path) -> None:

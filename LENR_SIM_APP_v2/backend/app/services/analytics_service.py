@@ -610,13 +610,22 @@ class AnalyticsService:
         moe_columns = literature_moe_columns_from_record(moe_record)
         # User / sim creates never claim discovery of LENR via this path.
         if not kwargs.get("is_baseline"):
+            from app.physics_engine.discovery_grade_gap import (
+                attach_discovery_grade_envelopes,
+            )
+
             moe_columns = dict(moe_columns)
             moe_columns["discovery_grade_eligible"] = False
-            if isinstance(moe_columns.get("bayesian_summary"), dict):
-                summary = dict(moe_columns["bayesian_summary"])
-                summary["discovery_grade_eligible"] = False
-                summary["lenr_proved"] = False
-                moe_columns["bayesian_summary"] = summary
+            summary = dict(moe_columns.get("bayesian_summary") or {})
+            summary["discovery_grade_eligible"] = False
+            summary["lenr_proved"] = False
+            # Rebuild gap/closure so a prior "met" envelope cannot persist.
+            summary = attach_discovery_grade_envelopes(summary)
+            moe_columns["bayesian_summary"] = summary
+            moe_columns["discovery_grade_gap"] = summary.get(
+                "discovery_grade_gap"
+            )
+            moe_columns["honest_closure"] = summary.get("honest_closure")
         results = merge_bayesian_into_results(results, moe_columns)
         results["lenr_proved"] = False
 
@@ -862,7 +871,7 @@ class AnalyticsService:
         result = await self.session.execute(query)
         experiments = result.scalars().all()
         
-        return [e.to_dict() for e in experiments]
+        return [enrich_experiment_dict(e.to_dict()) for e in experiments]
 
 
 # Factory function for dependency injection

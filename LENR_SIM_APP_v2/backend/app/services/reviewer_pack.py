@@ -230,12 +230,22 @@ def _experiment_fields(row: Dict[str, Any]) -> Dict[str, Any]:
     moe_columns = dict(moe_columns)
     moe_columns["discovery_grade_eligible"] = False
     if isinstance(moe_columns.get("bayesian_summary"), dict):
+        from app.physics_engine.discovery_grade_gap import (
+            attach_discovery_grade_envelopes,
+        )
+
         summary = dict(moe_columns["bayesian_summary"])
         summary["discovery_grade_eligible"] = False
         summary["lenr_proved"] = False
+        # Recompute gap after forcing non-discovery on pack cells.
+        summary = attach_discovery_grade_envelopes(summary)
         moe_columns["bayesian_summary"] = summary
+        moe_columns["discovery_grade_gap"] = summary.get("discovery_grade_gap")
+        moe_columns["honest_closure"] = summary.get("honest_closure")
         results["bayesian_summary"] = summary
         results["discovery_grade_eligible"] = False
+        results["discovery_grade_gap"] = summary.get("discovery_grade_gap")
+        results["honest_closure"] = summary.get("honest_closure")
 
     fields: Dict[str, Any] = {
         "name": row.get("name") or "Imported pack row",

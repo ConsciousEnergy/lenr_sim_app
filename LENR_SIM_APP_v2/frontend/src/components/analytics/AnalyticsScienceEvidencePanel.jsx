@@ -22,6 +22,8 @@ import {
   OPEN_EQ_IDS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import DiscoveryGradeGapChecklist from '../science/DiscoveryGradeGapChecklist';
+import EqOpenAvenueLinkage from '../science/EqOpenAvenueLinkage';
 
 export default function AnalyticsScienceEvidencePanel() {
   return (
@@ -74,8 +76,49 @@ export default function AnalyticsScienceEvidencePanel() {
         <Typography variant="body2">
           <strong>Campaign pack</strong> <code>{CAMPAIGN_EVIDENCE.preset}</code>:{' '}
           {CAMPAIGN_EVIDENCE.n_experiments} experiments / {CAMPAIGN_EVIDENCE.n_theory_runs}{' '}
-          theory runs ({CAMPAIGN_EVIDENCE.hydro_label}). Literature:{' '}
-          {CAMPAIGN_EVIDENCE.literature_anchor}.
+          theory runs · UQ samples{' '}
+          <code>{CAMPAIGN_EVIDENCE.uq_samples}</code> ({CAMPAIGN_EVIDENCE.hydro_label}).
+          Literature: {CAMPAIGN_EVIDENCE.literature_anchor}.
+        </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 0.5 }}>
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
+            data-testid="analytics-5b-campaign-n"
+          />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`UQ=${CAMPAIGN_EVIDENCE.uq_samples}`}
+            data-testid="analytics-5b-uq-samples"
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`MoE pairing: ${DISCOVERY_GRADE_BAR.moe_pairing_status}`}
+            data-testid="analytics-5b-moe-pairing"
+          />
+        </Stack>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="analytics-5b-densification-note"
+        >
+          {CAMPAIGN_EVIDENCE.densification_note}
+        </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="analytics-5b-emp-histogram-note"
+        >
+          Theory-score EMP histogram ≠ pack evidence (spec=
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram?.speculative_exploratory ?? 'n/a'}, EMP=
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram?.empirical_lenr_correlation ?? 'n/a'}).{' '}
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram_note}
         </Typography>
         <Typography variant="body2">
           <strong>Avenue ranking</strong>: <code>{AVENUE_RANKING_SUMMARY.kind}</code>,{' '}
@@ -94,9 +137,40 @@ export default function AnalyticsScienceEvidencePanel() {
           History rows and Relevance Map overlays are model outputs; they do not satisfy
           discovery-grade closure.
         </Typography>
+        <Typography variant="body2" color="text.secondary" data-testid="analytics-5b-discovery-gap">
+          {DISCOVERY_GRADE_BAR.gap_note}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          data-testid="analytics-5b-moe-coverage"
+        >
+          Corpus MoE coverage:{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_sigma_q}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} σ_Q ·{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_moe_pairing_verified}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} pairing verified ·{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_count}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} analytics discovery —{' '}
+          closes_eq_open=<code>false</code>.
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          data-testid="analytics-5b-history-envelope-note"
+        >
+          History / export rows now carry <code>discovery_grade_gap</code> and{' '}
+          <code>honest_closure</code> envelopes from the API. Row chips stay{' '}
+          <code>not_met</code> for honest closure even when an analytics discovery flag clears —
+          they never set <code>lenr_proved</code> or close EQ-OPEN-*.
+        </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      <DiscoveryGradeGapChecklist testIdPrefix="analytics-5b-gap" />
+
+      <EqOpenAvenueLinkage testIdPrefix="analytics-5b-linkage" density="compact" />
+
+      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
         <MuiLink
           component={RouterLink}
           to="/theory-paper"

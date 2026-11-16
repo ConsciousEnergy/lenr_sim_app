@@ -8,6 +8,7 @@ import LenrFormal.CollapseBounds
 import LenrFormal.Decision
 import LenrFormal.WeightHonesty
 import LenrFormal.Miles
+import LenrFormal.CalorimetrySignificance
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
@@ -75,11 +76,13 @@ def sectionModuleMap : List (String × String) :=
   , ("§3.2 / ENG-RP-KM-01 RP domain lemmas", "LenrFormal.CollapseBounds")
   , ("§3.2 hard-core compression cap (DEF)", "LenrFormal.CollapseBounds")
   , ("§3.2 hydro enhancement ≠ nuclear-rate proof (EQ-BBL-NR-01)", "LenrFormal.CollapseBounds")
+  , ("§3.2 / §5B collapse UQ ≠ cite-gated ≥5σ heat MoE (EQ-BBL-HEAT-NC-01)", "LenrFormal.CollapseBounds")
   , ("Oracle B / EQ-UQ-BF-01 algebraic BF + ExpHom cocycle", "LenrFormal.Decision")
   , ("Theory weights / EQ-WT-TIER-01 + EQ-WT-SCENARIO-01 (Approximate; ≠ lab posterior)", "LenrFormal.WeightHonesty")
 
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
+  , ("§5B / BDS-302 ≥5σ heat bar + EQ-HEAT-SIG-NC-01 (analytics ≠ closure)", "LenrFormal.CalorimetrySignificance")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
   , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")

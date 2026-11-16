@@ -27,6 +27,20 @@ from app.physics_engine.calorimetry_significance import (
     s_heat,
     validate_moe_provenance,
 )
+from app.physics_engine.discovery_grade_gap import (
+    CLOSURE_REQUIREMENT_IDS,
+    GAP_REQUIREMENT_IDS,
+    attach_discovery_grade_envelopes,
+    corpus_discovery_grade_gap,
+    discovery_grade_envelopes_from_moe_fields,
+    discovery_grade_gap_bookkeeping,
+    honest_closure_bookkeeping,
+)
+from app.physics_engine.sigma_distance import (
+    corpus_moe_coverage,
+    literature_corpus_moe_coverage,
+    quantitative_distance_to_discovery,
+)
 
 
 def test_s_heat_is_signed_q_over_sigma() -> None:
@@ -312,3 +326,213 @@ def test_kasagi_ni_control_exploratory_without_verified_pairing() -> None:
     assert report["moe_sigma_q_pairing_verified"] is False
     assert report["discovery_grade_eligible"] is False
     assert report["lenr_proved"] is False
+
+
+def test_corpus_discovery_grade_gap_lists_not_met_gates() -> None:
+    gap = corpus_discovery_grade_gap()
+    assert gap["schema"] == "lenr-discovery-grade-gap-v1"
+    assert gap["overall_status"] == "not_met"
+    assert gap["discovery_grade_eligible"] is False
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+    assert set(gap["eq_open_status"]) == set(OPEN_IDS)
+    missing_ids = set(gap["missing_ids"])
+    assert missing_ids >= set(GAP_REQUIREMENT_IDS)
+    assert all(row["status"] == "not_met" for row in gap["missing_requirements"])
+    assert "cite_gated_sigma_q" in missing_ids
+    assert "moe_pairing_verified" in missing_ids
+    assert "s_heat_ge_5" in missing_ids
+
+
+def test_gap_bookkeeping_on_miles_keeps_not_met_and_open() -> None:
+    miles = next(
+        row for row in literature_records() if row["literature_id"] == "miles-1993"
+    )
+    report = discovery_grade_from_literature_record(miles)
+    gap = discovery_grade_gap_bookkeeping(report)
+    assert gap["overall_status"] == "not_met"
+    assert gap["discovery_grade_eligible"] is False
+    assert "moe_pairing_verified" in gap["missing_ids"]
+    assert "discovery_provenance" in gap["missing_ids"]
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+
+
+def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> None:
+    """Kasagi NiCu can clear BDS-302 analytics gates; still never closes EQ-OPEN."""
+    nicu = next(
+        row
+        for row in iccf27_literature_records()
+        if row["literature_id"] == "kasagi-nicu-radiant-2026"
+    )
+    report = discovery_grade_from_literature_record(nicu)
+    assert report["discovery_grade_eligible"] is True
+    gap = discovery_grade_gap_bookkeeping(report)
+    assert gap["overall_status"] == "met"
+    assert gap["missing_ids"] == []
+    assert gap["discovery_grade_eligible"] is True
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+    assert "does not set lenr_proved" in gap["honesty"]
+
+    closure = honest_closure_bookkeeping(gap)
+    assert closure["overall_status"] == "not_met"
+    assert closure["lenr_proved"] is False
+    assert set(CLOSURE_REQUIREMENT_IDS).issubset(set(closure["missing_ids"]))
+    assert all(v == "OPEN" for v in closure["eq_open_status"].values())
+
+    attached = attach_discovery_grade_envelopes(report)
+    assert attached["discovery_grade_gap"]["overall_status"] == "met"
+    assert attached["honest_closure"]["overall_status"] == "not_met"
+    assert attached["lenr_proved"] is False
+    assert attached["quantitative_distance"]["distance_status"] == (
+        "at_or_above_bar_gates_clear"
+    )
+    assert attached["quantitative_distance"]["arithmetic_sigma_shortfall"] == 0.0
+    assert attached["quantitative_distance"]["lenr_proved"] is False
+
+
+def test_quantitative_distance_corpus_default_undefined() -> None:
+    distance = quantitative_distance_to_discovery(None)
+    assert distance["schema"] == "lenr-sigma-distance-v1"
+    assert distance["distance_status"] == "undefined"
+    assert distance["s_heat"] is None
+    assert distance["arithmetic_sigma_shortfall"] is None
+    assert distance["lenr_proved"] is False
+    assert all(v == "OPEN" for v in distance["eq_open_status"].values())
+
+
+def test_quantitative_distance_below_bar_reports_shortfall() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.08,
+        sigma_q_w=0.02,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    assert distance["s_heat"] == 4.0
+    assert distance["arithmetic_sigma_shortfall"] == 1.0
+    assert distance["required_sigma_q_w_for_5"] == 0.016
+    assert distance["sigma_tightening_factor_vs_5"] == 0.02 / 0.016
+    assert distance["distance_status"] == "below_bar"
+    assert distance["discovery_grade_eligible"] is False
+    assert distance["lenr_proved"] is False
+
+
+def test_quantitative_distance_miles_above_bar_gates_blocked() -> None:
+    miles = next(
+        row for row in literature_records() if row["literature_id"] == "miles-1993"
+    )
+    report = discovery_grade_from_literature_record(miles)
+    gap = discovery_grade_gap_bookkeeping(report)
+    distance = gap["quantitative_distance"]
+    assert distance["s_heat"] == 26.0
+    assert distance["moe_provenance"] == "literature_reported_instrument_precision"
+    assert distance["moe_sigma_q_pairing_verified"] is False
+    assert distance["arithmetic_sigma_shortfall"] == 0.0
+    assert distance["distance_status"] == "at_or_above_bar_gates_blocked"
+    assert distance["discovery_grade_eligible"] is False
+    assert distance["stat_sys_composition"]["composition_mode"] == "explicit_total"
+    assert gap["overall_status"] == "not_met"
+    assert gap["lenr_proved"] is False
+    assert "Never render bare S_heat" in distance["honesty"]
+
+
+def test_quantitative_distance_rss_stat_sys_composition() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=0.1,
+        sigma_q_statistical_w=0.03,
+        sigma_q_systematic_w=0.04,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["miles1993"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    assert distance["sigma_q_w"] == 0.05
+    assert distance["stat_sys_composition"]["composition_mode"] == "rss_stat_sys"
+    assert distance["stat_sys_composition"]["sigma_q_rss_w"] == 0.05
+    assert distance["s_heat"] == 2.0
+    assert distance["arithmetic_sigma_shortfall"] == 3.0
+    assert distance["distance_status"] == "below_bar"
+
+
+def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
+    coverage = literature_corpus_moe_coverage()
+    assert coverage["schema"] == "lenr-moe-coverage-v1"
+    assert coverage["n_records"] >= 20
+    assert coverage["with_sigma_q"] >= 1
+    assert coverage["with_moe_pairing_verified"] >= 1
+    assert coverage["discovery_grade_eligible_count"] >= 1
+    assert "kasagi-nicu-radiant-2026" in coverage["discovery_grade_eligible_ids"]
+    assert coverage["closes_eq_open"] is False
+    assert coverage["lenr_proved"] is False
+    assert all(v == "OPEN" for v in coverage["eq_open_status"].values())
+    assert coverage["discovery_grade_eligible_count"] < coverage["n_records"]
+
+
+def test_persisted_true_does_not_override_failed_gates() -> None:
+    """Stale discovery_grade_eligible=True must not clear a failed pairing gate."""
+    env = discovery_grade_envelopes_from_moe_fields(
+        excess_power_w=1.1,
+        sigma_q_w=0.08,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["kasagi2026"],
+        moe_sigma_q_pairing_verified=False,
+        discovery_grade_eligible=True,
+    )
+    assert env["discovery_grade_eligible"] is False
+    assert env["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert "moe_pairing_verified" in env["discovery_grade_gap"]["missing_ids"]
+    assert env["lenr_proved"] is False
+
+
+def test_persisted_false_still_suppresses_eligible_gates() -> None:
+    env = discovery_grade_envelopes_from_moe_fields(
+        excess_power_w=1.1,
+        sigma_q_w=0.08,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["kasagi2026"],
+        moe_sigma_q_pairing_verified=True,
+        discovery_grade_eligible=False,
+    )
+    assert env["discovery_grade_eligible"] is False
+    assert env["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert env["lenr_proved"] is False
+
+
+def test_quantitative_distance_nonfinite_metrics_normalize_to_none() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=1e-308,
+        sigma_q_w=1.0,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["x"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    required = distance["required_sigma_q_w_for_5"]
+    tightening = distance["sigma_tightening_factor_vs_5"]
+    assert required is None or (
+        isinstance(required, float) and required == required and abs(required) != float("inf")
+    )
+    assert tightening is None or (
+        isinstance(tightening, float)
+        and tightening == tightening
+        and abs(tightening) != float("inf")
+    )
+
+
+def test_cite_gated_coverage_requires_sigma_q() -> None:
+    reports = [
+        {
+            "sigma_q_w": None,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["orphan-cite"],
+            "moe_sigma_q_pairing_verified": False,
+            "discovery_grade_eligible": False,
+            "s_heat": None,
+        }
+    ]
+    coverage = corpus_moe_coverage(reports, literature_ids=["orphan"])
+    assert coverage["with_sigma_q"] == 0
+    assert coverage["with_literature_reported_cite_gated"] == 0

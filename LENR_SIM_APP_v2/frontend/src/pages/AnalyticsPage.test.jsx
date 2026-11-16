@@ -76,6 +76,39 @@ jest.mock('../services/analyticsApi', () => ({
           literatureId: 'miles-1993',
           meanFinalScore: 0.62,
           topTheoryId: 'miles_heat_helium',
+          discovery_grade_eligible: false,
+          discovery_grade_gap: {
+            overall_status: 'not_met',
+            missing_ids: ['moe_pairing_verified', 'cite_gated_sigma_q'],
+            missing_requirements: [
+              {
+                id: 'moe_pairing_verified',
+                label: 'moe_sigma_q_pairing_verified',
+                status: 'not_met',
+                detail: 'pairing unverified',
+              },
+            ],
+            lenr_proved: false,
+          },
+          honest_closure: {
+            overall_status: 'not_met',
+            missing_ids: ['eq_open_discharge', 'governance_signoff'],
+            missing_requirements: [
+              {
+                id: 'eq_open_discharge',
+                label: 'EQ-OPEN discharge',
+                status: 'not_met',
+                detail: 'all OPEN',
+              },
+              {
+                id: 'governance_signoff',
+                label: 'governance sign-off',
+                status: 'not_met',
+                detail: 'not signed',
+              },
+            ],
+            lenr_proved: false,
+          },
         },
         {
           id: 'exp-null',
@@ -241,6 +274,33 @@ describe('AnalyticsPage honest metrics', () => {
       /lenr_proved: false/i,
     );
     expect(screen.getByTestId('analytics-5b-5sigma')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('analytics-5b-campaign-n')).toHaveTextContent(/N=22/);
+    expect(screen.getByTestId('analytics-5b-uq-samples')).toHaveTextContent(/UQ=32/);
+    expect(screen.getByTestId('analytics-5b-moe-pairing')).toHaveTextContent(/unverified/);
+    expect(screen.getByTestId('analytics-5b-discovery-gap')).toHaveTextContent(
+      /moe_sigma_q_pairing_verified/i,
+    );
+    expect(screen.getByTestId('analytics-5b-history-envelope-note')).toHaveTextContent(
+      /honest_closure/i,
+    );
+    expect(screen.getByTestId('analytics-5b-gap-checklist')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(/closes_eq_open/);
+    expect(screen.getByTestId('analytics-5b-gap-distance-status')).toHaveTextContent(/undefined/);
+    expect(screen.getByTestId('analytics-5b-gap-req-cite_gated_sigma_q')).toHaveTextContent(
+      /not_met/i,
+    );
+    expect(screen.getByTestId('analytics-5b-gap-req-moe_pairing_verified')).toHaveTextContent(
+      /not_met/i,
+    );
+    expect(screen.getByTestId('analytics-5b-linkage-panel')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('analytics-5b-linkage-open-EQ-OPEN-YIELD-01'),
+    ).toHaveTextContent(/OPEN/i);
+    expect(
+      screen.getByTestId(
+        'analytics-5b-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('analytics-5b-theory-paper-link')).toHaveAttribute(
       'href',
       '/theory-paper',
@@ -270,6 +330,16 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('FAILED Unified palladium')).toBeInTheDocument();
     expect(screen.getByText('Google/ARPA-E null')).toBeInTheDocument();
+    expect(screen.getByTestId('history-gap-header')).toHaveTextContent(/≥5σ \/ closure/);
+    expect(screen.getByTestId('history-gap-exp-failed-discovery')).toHaveTextContent(
+      /analytics gates:\s*not_met/i,
+    );
+    expect(screen.getByTestId('history-gap-exp-failed-discovery')).not.toHaveTextContent(
+      /≥5σ gap:\s*met/i,
+    );
+    expect(screen.getByTestId('history-gap-exp-failed-closure')).toHaveTextContent(/not_met/i);
+    // Offline / missing-envelope rows still get corpus fallback chips.
+    expect(screen.getByTestId('history-gap-exp-null-closure')).toHaveTextContent(/not_met/i);
     expect(screen.getByTestId('association-percent-header')).toHaveTextContent(/Model association %/);
     expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/not a laboratory/);
     expect(screen.getByTestId('association-history-caption')).toHaveTextContent(/governance ceiling/);

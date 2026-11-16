@@ -26,6 +26,8 @@ import {
   FORMALIZATION_STATUS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import DiscoveryGradeGapChecklist from '../../components/science/DiscoveryGradeGapChecklist';
+import EqOpenAvenueLinkage from '../../components/science/EqOpenAvenueLinkage';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 function OpenIdChips({ ids }) {
@@ -140,6 +142,12 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
           data-testid="science-evidence-campaign-n"
         />
+        <Chip
+          size="small"
+          variant="outlined"
+          label={`UQ=${CAMPAIGN_EVIDENCE.uq_samples}`}
+          data-testid="science-evidence-uq-samples"
+        />
         {CAMPAIGN_EVIDENCE.hosts.map((host) => (
           <Chip key={host} size="small" variant="outlined" label={host} />
         ))}
@@ -152,17 +160,40 @@ export default function ScienceEvidenceSection({ embedded = false }) {
             sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
           />
         ))}
-        {CAMPAIGN_EVIDENCE.literature_ids.map((lid) => (
+        {(CAMPAIGN_EVIDENCE.literature_roles || []).map((row) => (
           <Chip
-            key={lid}
+            key={row.id}
             size="small"
             color="warning"
             variant="outlined"
-            label={lid}
-            sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+            label={`${row.role}: ${row.id}`}
+            title={row.label}
+            data-testid={`science-evidence-lit-role-${row.role}`}
+            sx={{ fontFamily: 'monospace', fontSize: '0.55rem' }}
           />
         ))}
       </Stack>
+      <Typography
+        variant="caption"
+        display="block"
+        color="text.secondary"
+        sx={{ mb: 0.5 }}
+        data-testid="science-evidence-densification-note"
+      >
+        {CAMPAIGN_EVIDENCE.densification_note}
+      </Typography>
+      <Typography
+        variant="caption"
+        display="block"
+        color="text.secondary"
+        sx={{ mb: 0.5 }}
+        data-testid="science-evidence-emp-histogram-note"
+      >
+        Theory-score histogram (not evidence chips): speculative=
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram?.speculative_exploratory ?? 'n/a'}, EMP=
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram?.empirical_lenr_correlation ?? 'n/a'}.{' '}
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram_note}
+      </Typography>
       <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
         Pack: <code>{CAMPAIGN_EVIDENCE.pack_path}</code>
         <br />
@@ -201,6 +232,25 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         <Typography variant="body2" paragraph sx={{ mb: 1 }}>
           {DISCOVERY_GRADE_BAR.note}
         </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 1 }}>
+          {DISCOVERY_GRADE_BAR.gap_note}
+        </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`MoE pairing: ${DISCOVERY_GRADE_BAR.moe_pairing_status}`}
+            data-testid="science-evidence-moe-pairing"
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`cite-gated σ_Q: ${DISCOVERY_GRADE_BAR.cite_gated_sigma_q}`}
+            data-testid="science-evidence-cite-gated-sigma"
+          />
+        </Stack>
         <Typography variant="body2" color="text.secondary">
           Heat criterion: <code>{DISCOVERY_GRADE_BAR.heat_formula}</code>. Helper:{' '}
           <code>{DISCOVERY_GRADE_BAR.helper_module}</code>.
@@ -209,6 +259,7 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           Does not count: {DISCOVERY_GRADE_BAR.does_not_count.join('; ')}.
         </Typography>
       </Alert>
+      <DiscoveryGradeGapChecklist testIdPrefix="science-evidence-gap" />
 
       <Divider sx={{ my: 2 }} />
 
@@ -252,6 +303,20 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                       }}
                     />
                   ))}
+                  {avenue.five_sigma_role && (
+                    <Chip
+                      label={avenue.five_sigma_role}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.55rem',
+                        height: 18,
+                        mt: 0.25,
+                      }}
+                      data-testid={`avenue-5sigma-role-${avenue.id}`}
+                    />
+                  )}
                 </Box>
               }
               secondaryTypographyProps={{ component: 'div' }}
@@ -259,6 +324,10 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           </ListItem>
         ))}
       </List>
+
+      <Divider sx={{ my: 2 }} />
+
+      <EqOpenAvenueLinkage testIdPrefix="science-evidence-linkage" density="full" />
 
       <Divider sx={{ my: 2 }} />
 
@@ -273,6 +342,9 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         Status: <code>{FORMALIZATION_STATUS.status_doc}</code>
         <br />
         Collapse module: <code>{FORMALIZATION_STATUS.collapse_module}</code>
+        <br />
+        Calorimetry ≥5σ module:{' '}
+        <code>{FORMALIZATION_STATUS.calorimetry_module}</code>
       </Typography>
       <List dense>
         {FORMALIZATION_STATUS.items.map((item) => (
@@ -380,6 +452,27 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                   <Typography variant="caption" display="block" color="text.secondary">
                     Does not count: {row.does_not_count}
                   </Typography>
+                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.35 }}>
+                    {(row.related_avenues || []).map((avenueId) => (
+                      <Chip
+                        key={avenueId}
+                        label={avenueId}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                        data-testid={`runway-avenue-${row.id}-${avenueId}`}
+                      />
+                    ))}
+                    {row.five_sigma_relevance && (
+                      <Chip
+                        label={row.five_sigma_relevance}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                        data-testid={`runway-5sigma-${row.id}`}
+                      />
+                    )}
+                  </Stack>
                 </Box>
               }
               secondaryTypographyProps={{ component: 'div' }}

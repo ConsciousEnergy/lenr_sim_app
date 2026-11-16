@@ -1,0 +1,23 @@
+id: EQ-HEAT-SIG-01
+latex: "S_{\\mathrm{heat}}=Q_{\\mathrm{excess}}/\\sigma_Q;\\quad \\mathrm{discoveryGradeSigma}=5;\\quad \\mathrm{exploratoryNullFalsifySNR}=3"
+symbols:
+  S_heat: "signed excess-power significance Q/σ_Q"
+  discoveryGradeSigma: "BDS-302 analytics discovery bar"
+  exploratoryNullFalsifySNR: "Oracle B null-falsify exploratory threshold"
+units: "dimensionless (σ-equivalent)"
+tag: DEF
+paper_ref: "§5B / Unified Framework statistical significance; BDS-302"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py
+citation_keys:
+  - miles1993
+lean_target: LenrFormal.CalorimetrySignificance
+lean_decls:
+  - "LenrFormal.CalorimetrySignificance.discoveryGradeSigma"
+  - "LenrFormal.CalorimetrySignificance.exploratoryNullFalsifySnr"
+  - "LenrFormal.CalorimetrySignificance.meetsDiscoveryArithmetic"
+  - "LenrFormal.CalorimetrySignificance.arithmeticShortfallMilli"
+  - "LenrFormal.CalorimetrySignificance.discovery_grade_sigma_is_five"
+  - "LenrFormal.CalorimetrySignificance.exploratory_snr_strictly_below_discovery"
+notes: "DEF / analytics-bar lock only. Integer milli-σ shortfall identities mirror Python DISCOVERY_GRADE_SIGMA=5.0. Does not certify laboratory calorimetry or flip lenr_proved."

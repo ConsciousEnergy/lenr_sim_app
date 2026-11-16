@@ -1,0 +1,24 @@
+id: EQ-HEAT-SIG-NC-01
+latex: "\\mathrm{instrumentPrecision}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}\\nRightarrow\\mathrm{lenrProved};\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
+symbols:
+  DiscoveryGradeAnalytics: "BDS-302 analytics flag (cite-gated + pairing + non-seed + S≥5)"
+  instrumentPrecision: "literature_reported_instrument_precision MoE provenance"
+  lenrProved: "global nature-proof token (stays false)"
+  q5IntegratedYieldClosed: "EQ-OPEN-YIELD-01 integrated-yield closure predicate"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§5B / BDS-302 / BDS-330; EQ-OPEN-YIELD-01 runway"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - miles1993
+  - miles_calorimetric_error_followon
+lean_target: LenrFormal.CalorimetrySignificance
+lean_decls:
+  - "LenrFormal.CalorimetrySignificance.MoeProvenance"
+  - "LenrFormal.CalorimetrySignificance.DiscoveryGradeAnalytics"
+  - "LenrFormal.CalorimetrySignificance.miles_exploratory_not_discovery_grade"
+  - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_prove_lenr"
+  - "LenrFormal.CalorimetrySignificance.high_s_heat_does_not_close_q5"
+notes: "AX honesty: Miles-class exploratory arithmetic under instrument_precision + unverified pairing is not discovery-grade. Clearing the analytics flag still does not set lenr_proved or close EQ-OPEN-YIELD-01. Complements EQ-BBL-HEAT-NC-01."

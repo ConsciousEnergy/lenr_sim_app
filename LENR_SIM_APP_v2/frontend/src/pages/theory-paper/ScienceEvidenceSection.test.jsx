@@ -89,8 +89,60 @@ describe('ScienceEvidenceSection', () => {
     render(<ScienceEvidenceSection />);
     expect(screen.getByTestId('science-evidence-5sigma')).toHaveTextContent(/not_met/i);
     expect(screen.getByTestId('science-evidence-5sigma-chip')).toHaveTextContent(/not met/i);
-    expect(screen.getByTestId('science-evidence-campaign-n')).toHaveTextContent(/N=18/);
+    expect(screen.getByTestId('science-evidence-campaign-n')).toHaveTextContent(/N=22/);
+    expect(screen.getByTestId('science-evidence-uq-samples')).toHaveTextContent(/UQ=32/);
+    expect(screen.getByTestId('science-evidence-moe-pairing')).toHaveTextContent(/unverified/);
     expect(screen.getByText(/pyyhtia-cr39-cavitation-2026/i)).toBeInTheDocument();
     expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-emp-histogram-note')).toHaveTextContent(
+      /not lab corroboration/i,
+    );
+    expect(screen.getByTestId('science-evidence-emp-histogram-note')).toHaveTextContent(
+      /EMP=44/,
+    );
+  });
+
+  test('surfaces ≥5σ missing checklist and avenue↔runway linkage', () => {
+    render(<ScienceEvidenceSection />);
+    expect(screen.getByTestId('science-evidence-gap-checklist')).toHaveTextContent(/not_met/i);
+    expect(
+      screen.getByTestId('science-evidence-gap-req-cite_gated_sigma_q'),
+    ).toHaveTextContent(/not_met/i);
+    expect(
+      screen.getByTestId('science-evidence-gap-req-eq_open_discharge'),
+    ).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('science-evidence-gap-distance-status')).toHaveTextContent(
+      /undefined/,
+    );
+    expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
+      /closes_eq_open/,
+    );
+    expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
+      /lenr_proved/,
+    );
+    expect(screen.getByTestId('science-evidence-linkage-panel')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('science-evidence-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('runway-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('runway-5sigma-EQ-OPEN-YIELD-01')).toHaveTextContent(
+      /requires_cite_gated_heat_moe_ge_5sigma/,
+    );
+    expect(screen.getByTestId('avenue-5sigma-role-calorimetry_sigma_q')).toHaveTextContent(
+      /primary_heat_moe/,
+    );
+    expect(screen.getByText(/Calorimetry ≥5σ analytics bar lock/i)).toBeInTheDocument();
+    expect(screen.getByText(/Heat significance non-closure/i)).toBeInTheDocument();
+    expect(screen.getByText(/Collapse UQ ≠ cite-gated heat MoE/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hydro ≠ nuclear-rate proof/i)).toBeInTheDocument();
+    expect(screen.getByText(/RP domain ≠ dynamics proof/i)).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-lit-role-contested_positive_claim')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-lit-role-detector_confounder_peer')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-densification-note')).toHaveTextContent(
+      /not weight-of-numbers/i,
+    );
+    expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
   });
 });
