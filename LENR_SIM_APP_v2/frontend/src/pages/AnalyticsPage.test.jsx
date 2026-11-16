@@ -284,6 +284,8 @@ describe('AnalyticsPage honest metrics', () => {
       /honest_closure/i,
     );
     expect(screen.getByTestId('analytics-5b-gap-checklist')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(/closes_eq_open/);
+    expect(screen.getByTestId('analytics-5b-gap-distance-status')).toHaveTextContent(/undefined/);
     expect(screen.getByTestId('analytics-5b-gap-req-cite_gated_sigma_q')).toHaveTextContent(
       /not_met/i,
     );

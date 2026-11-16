@@ -8,6 +8,7 @@ import LenrFormal.CollapseBounds
 import LenrFormal.Decision
 import LenrFormal.WeightHonesty
 import LenrFormal.Miles
+import LenrFormal.CalorimetrySignificance
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
@@ -80,6 +81,7 @@ def sectionModuleMap : List (String × String) :=
 
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
+  , ("§5B / BDS-302 ≥5σ heat bar + EQ-HEAT-SIG-NC-01 (analytics ≠ closure)", "LenrFormal.CalorimetrySignificance")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
   , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")

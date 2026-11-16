@@ -1,6 +1,6 @@
 /**
- * Cite-gated ≥5σ missing-requirements checklist (BDS-302).
- * Always surfaces not_met gates; never claims discovery or lenr_proved.
+ * Cite-gated ≥5σ missing-requirements checklist (BDS-302 / BDS-330).
+ * Surfaces quantitative distance + corpus MoE coverage; never claims discovery.
  */
 import React from 'react';
 import {
@@ -13,7 +13,11 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { DISCOVERY_GRADE_BAR } from '../../config/unifiedTheoryScienceEvidence';
+import {
+  CORPUS_MOE_COVERAGE,
+  DISCOVERY_GRADE_BAR,
+  QUANTITATIVE_DISTANCE_DEFAULT,
+} from '../../config/unifiedTheoryScienceEvidence';
 
 /**
  * @param {Object} props
@@ -21,6 +25,9 @@ import { DISCOVERY_GRADE_BAR } from '../../config/unifiedTheoryScienceEvidence';
  */
 export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-gap' }) {
   const missing = DISCOVERY_GRADE_BAR.missing_requirements || [];
+  const distance =
+    DISCOVERY_GRADE_BAR.quantitative_distance || QUANTITATIVE_DISTANCE_DEFAULT;
+  const coverage = DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
   return (
     <Alert
       severity="warning"
@@ -49,7 +56,54 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
           label={`missing gates: ${missing.length}`}
           data-testid={`${testIdPrefix}-missing-count`}
         />
+        <Chip
+          size="small"
+          color="warning"
+          variant="outlined"
+          label={`distance: ${distance.distance_status}`}
+          data-testid={`${testIdPrefix}-distance-status`}
+          sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+        />
       </Stack>
+
+      <Typography
+        variant="body2"
+        sx={{ mb: 0.5 }}
+        data-testid={`${testIdPrefix}-distance-block`}
+      >
+        <strong>Quantitative distance to ≥{DISCOVERY_GRADE_BAR.sigma_threshold}σ</strong>
+        {' '}(corpus / campaign default): S_heat{' '}
+        <code>{distance.s_heat == null ? 'undefined' : distance.s_heat}</code>
+        {' · '}shortfall{' '}
+        <code>
+          {distance.arithmetic_sigma_shortfall == null
+            ? 'undefined'
+            : distance.arithmetic_sigma_shortfall}
+        </code>
+        {' · '}status <code>{distance.distance_status}</code>.
+        {' '}Miles exploratory arithmetic S_heat=
+        <code>{coverage.miles_exploratory_s_heat}</code> remains{' '}
+        <code>{coverage.miles_distance_status}</code> (instrument_precision + unverified
+        pairing). Kasagi NiCu analytics S_heat=
+        <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
+        <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close EQ-OPEN-*.
+      </Typography>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 1 }}
+        data-testid={`${testIdPrefix}-moe-coverage`}
+      >
+        <strong>{coverage.title}</strong>: {coverage.with_sigma_q}/{coverage.n_records} with
+        σ_Q · {coverage.with_literature_reported_cite_gated}/{coverage.n_records} cite-gated
+        literature_reported · {coverage.with_moe_pairing_verified}/{coverage.n_records}{' '}
+        pairing verified · {coverage.discovery_grade_eligible_count}/{coverage.n_records}{' '}
+        analytics discovery_grade_eligible. closes_eq_open=
+        <code>{String(coverage.closes_eq_open)}</code>, lenr_proved=
+        <code>{String(coverage.lenr_proved)}</code>.
+      </Typography>
+
       <List dense disablePadding data-testid={`${testIdPrefix}-missing-list`}>
         {missing.map((req) => (
           <ListItem key={req.id} sx={{ py: 0.35, px: 0 }} alignItems="flex-start">
@@ -75,8 +129,9 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         ))}
       </List>
       <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1 }}>
-        Helper: <code>{DISCOVERY_GRADE_BAR.gap_helper_module}</code>. Clearing analytics gates
-        still does not set <code>lenr_proved</code> or close EQ-OPEN-*.
+        Helpers: <code>{DISCOVERY_GRADE_BAR.gap_helper_module}</code>,{' '}
+        <code>{DISCOVERY_GRADE_BAR.distance_helper_module || coverage.helper_module}</code>.
+        Clearing analytics gates still does not set <code>lenr_proved</code> or close EQ-OPEN-*.
       </Typography>
     </Alert>
   );

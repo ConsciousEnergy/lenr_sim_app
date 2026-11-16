@@ -108,16 +108,66 @@ export const DISCOVERY_GRADE_MISSING = Object.freeze([
 /**
  * Paper / BDS-302 discovery bar — analytics flag criteria only; unmet for closure.
  */
+/**
+ * Corpus MoE / pairing coverage snapshot (literature + ICCF27 hydrate).
+ * Mirrors backend sigma_distance.literature_corpus_moe_coverage() counts.
+ * Analytics flags on a subset of rows never imply EQ-OPEN discharge.
+ */
+export const CORPUS_MOE_COVERAGE = Object.freeze({
+  title: 'Corpus MoE / Q↔σ_Q pairing coverage',
+  helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py',
+  n_records: 25,
+  with_sigma_q: 4,
+  with_literature_reported_cite_gated: 2,
+  with_moe_pairing_verified: 1,
+  discovery_grade_eligible_count: 1,
+  discovery_grade_eligible_ids: Object.freeze(['kasagi-nicu-radiant-2026']),
+  /** Miles peak arithmetic S_heat=26 under instrument_precision — gates blocked. */
+  miles_exploratory_s_heat: 26,
+  miles_distance_status: 'at_or_above_bar_gates_blocked',
+  /** Kasagi NiCu clears analytics gates; honest_closure stays not_met. */
+  kasagi_nicu_s_heat: 13.75,
+  kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
+  closes_eq_open: false,
+  lenr_proved: false,
+  note:
+    'Only a minority of curated literature rows carry numeric σ_Q; fewer still have ' +
+    'literature_reported cite-gated provenance + verified Q↔σ pairing. Clearing the ' +
+    'analytics discovery flag on Kasagi NiCu does not set lenr_proved or close EQ-OPEN-*.',
+});
+
+/**
+ * Corpus-default quantitative distance (S_heat undefined on §5B campaign surfaces).
+ * Per-row envelopes attach live distance via discovery_grade_gap.quantitative_distance.
+ */
+export const QUANTITATIVE_DISTANCE_DEFAULT = Object.freeze({
+  schema: 'lenr-sigma-distance-v1',
+  discovery_grade_threshold_sigma: 5,
+  s_heat: null,
+  arithmetic_sigma_shortfall: null,
+  required_sigma_q_w_for_5: null,
+  sigma_tightening_factor_vs_5: null,
+  distance_status: 'undefined',
+  discovery_grade_eligible: false,
+  note:
+    'Campaign / §5B default: S_heat undefined without cite-gated Q and σ_Q. ' +
+    'When arithmetic S_heat ≥ 5 but gates stay blocked (e.g. Miles instrument_precision), ' +
+    'distance_status is at_or_above_bar_gates_blocked — still not discovery.',
+});
+
 export const DISCOVERY_GRADE_BAR = Object.freeze({
   title: 'Discovery-grade significance bar (≥5σ)',
   sigma_threshold: 5,
   status: 'not_met',
   helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py',
   gap_helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py',
+  distance_helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py',
   heat_formula: 'S_heat = Q_excess / σ_Q',
   /** Explicit gap vs BDS-302 discovery_grade_eligible (still unmet). */
   moe_pairing_status: 'unverified',
   cite_gated_sigma_q: 'required_not_met',
+  quantitative_distance: QUANTITATIVE_DISTANCE_DEFAULT,
+  corpus_moe_coverage: CORPUS_MOE_COVERAGE,
   note:
     'Prefer ≥5σ for discovery-grade calorimetry language. Oracle B null-falsify SNR≥3 is ' +
     'exploratory only. Cite-gated σ_Q required; instrument precision/floor MoE stays exploratory; ' +
@@ -126,7 +176,8 @@ export const DISCOVERY_GRADE_BAR = Object.freeze({
   gap_note:
     'Gap: moe_sigma_q_pairing_verified is false on campaign/UI rows; cite-gated σ_Q is not ' +
     'supplied for discovery_grade_eligible. More UQ samples deepen model envelopes only — ' +
-    'they do not close the ≥5σ bar.',
+    'they do not close the ≥5σ bar. Quantitative distance defaults to undefined on corpus ' +
+    'campaign surfaces; literature hydrate may show arithmetic ≥5σ with gates blocked.',
   missing_requirements: DISCOVERY_GRADE_MISSING,
   does_not_count: Object.freeze([
     'Simulation campaign N alone',
@@ -134,6 +185,7 @@ export const DISCOVERY_GRADE_BAR = Object.freeze({
     'Avenue ranking informativeness scores',
     'Lean clamp / non-closure identities',
     'Exploratory S_heat under instrument_precision without verified pairing',
+    'Arithmetic S_heat ≥ 5 with blocked MoE gates',
   ]),
 });
 
@@ -259,10 +311,12 @@ export const FORMALIZATION_STATUS = Object.freeze({
   title: 'Formalization / Lean status',
   status_doc: 'docs/FORMALIZATION/FORMAL_PROOF_STATUS.md',
   collapse_module: 'formalization/lean/LenrFormal/CollapseBounds.lean',
+  calorimetry_module: 'formalization/lean/LenrFormal/CalorimetrySignificance.lean',
   summary:
     'Lean certifies clamp algebra, identities, and non-closure implications under stated ' +
     'definitions. It does not prove LENR occurs, does not discharge EQ-OPEN-* obligations, ' +
-    'and does not establish ≥5σ laboratory significance.',
+    'and does not establish ≥5σ laboratory significance. EQ-HEAT-SIG-01 locks the analytics ' +
+    'bar at 5σ; EQ-HEAT-SIG-NC-01 proves high arithmetic S_heat alone never closes Q5.',
   items: Object.freeze([
     {
       id: 'EQ-BBL-LIM-01',
@@ -281,6 +335,18 @@ export const FORMALIZATION_STATUS = Object.freeze({
       label: 'Collapse UQ percentile keys',
       kind: 'definitions',
       note: 'Percentile keys and CR/γ tolerance percents as definitions — model bookkeeping only.',
+    },
+    {
+      id: 'EQ-HEAT-SIG-01',
+      label: 'Calorimetry ≥5σ analytics bar lock',
+      kind: 'bounds',
+      note: 'discoveryGradeSigma=5; exploratory SNR=3; milli-σ shortfall identities — not lab proof.',
+    },
+    {
+      id: 'EQ-HEAT-SIG-NC-01',
+      label: 'Heat significance non-closure',
+      kind: 'non-closure',
+      note: 'Instrument-precision / unverified pairing ⇏ discovery; cleared analytics ⇏ lenr_proved; high S_heat ⇏ Q5 closed.',
     },
     {
       id: 'EQ-WH-NONCLOSE-01',
@@ -405,6 +471,17 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (DISCOVERY_GRADE_BAR.status !== 'not_met') {
     throw new Error('Science evidence UI must keep discovery-grade ≥5σ status not_met');
+  }
+  if (CORPUS_MOE_COVERAGE.closes_eq_open !== false) {
+    throw new Error('Science evidence UI must keep CORPUS_MOE_COVERAGE.closes_eq_open false');
+  }
+  if (CORPUS_MOE_COVERAGE.lenr_proved !== false) {
+    throw new Error('Science evidence UI must keep CORPUS_MOE_COVERAGE.lenr_proved false');
+  }
+  if (QUANTITATIVE_DISTANCE_DEFAULT.distance_status !== 'undefined') {
+    throw new Error(
+      'Science evidence UI must keep corpus quantitative_distance status undefined',
+    );
   }
   if (!DISCOVERY_GRADE_BAR.missing_requirements?.length) {
     throw new Error('Science evidence UI must list discovery-grade missing_requirements');

@@ -7,6 +7,7 @@ import {
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
   OPEN_EQ_IDS,
+  QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
 
 /**
@@ -15,6 +16,7 @@ import {
  *   discoveryGradeEligible: boolean,
  *   discoveryGradeGap: object,
  *   honestClosure: object,
+ *   quantitativeDistance: object,
  *   lenrProved: false,
  * }}
  */
@@ -39,6 +41,12 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     results.honest_closure ||
     summary.honest_closure ||
     null;
+  const rawDistance =
+    exp.quantitative_distance ||
+    results.quantitative_distance ||
+    summary.quantitative_distance ||
+    (rawGap && typeof rawGap === 'object' ? rawGap.quantitative_distance : null) ||
+    null;
 
   const discoveryGradeGap =
     rawGap && typeof rawGap === 'object'
@@ -61,6 +69,31 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
         }
       : corpusHonestClosureFallback(discoveryGradeGap);
 
+  const quantitativeDistance =
+    rawDistance && typeof rawDistance === 'object'
+      ? {
+          ...QUANTITATIVE_DISTANCE_DEFAULT,
+          ...rawDistance,
+          discovery_grade_eligible: Boolean(rawDistance.discovery_grade_eligible),
+          lenr_proved: false,
+          eq_open_status: forceOpenStatus(rawDistance.eq_open_status),
+        }
+      : discoveryGradeGap.quantitative_distance &&
+          typeof discoveryGradeGap.quantitative_distance === 'object'
+        ? {
+            ...QUANTITATIVE_DISTANCE_DEFAULT,
+            ...discoveryGradeGap.quantitative_distance,
+            lenr_proved: false,
+            eq_open_status: forceOpenStatus(
+              discoveryGradeGap.quantitative_distance.eq_open_status,
+            ),
+          }
+        : {
+            ...QUANTITATIVE_DISTANCE_DEFAULT,
+            lenr_proved: false,
+            eq_open_status: Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN'])),
+          };
+
   const discoveryGradeEligible = Boolean(
     exp.discovery_grade_eligible ??
       results.discovery_grade_eligible ??
@@ -72,6 +105,7 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     discoveryGradeEligible,
     discoveryGradeGap,
     honestClosure,
+    quantitativeDistance,
     lenrProved: false,
   };
 }
@@ -93,6 +127,11 @@ function corpusDiscoveryGapFallback() {
     requirements: DISCOVERY_GRADE_MISSING,
     missing_requirements: DISCOVERY_GRADE_MISSING,
     missing_ids: DISCOVERY_GRADE_MISSING.map((row) => row.id),
+    quantitative_distance: {
+      ...QUANTITATIVE_DISTANCE_DEFAULT,
+      lenr_proved: false,
+      eq_open_status: Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN'])),
+    },
     lenr_proved: false,
     eq_open_status: Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN'])),
   };
