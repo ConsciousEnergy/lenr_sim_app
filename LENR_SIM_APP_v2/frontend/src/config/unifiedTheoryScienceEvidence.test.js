@@ -27,8 +27,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CAMPAIGN_EVIDENCE.pack_path).toMatch(/cavitation_collapse_campaign/);
     expect(CAMPAIGN_EVIDENCE.hydro_label).toMatch(/contested hydro/i);
     expect(CAMPAIGN_EVIDENCE.note).toMatch(/model output only/i);
-    expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(18);
+    expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(20);
     expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(CAMPAIGN_EVIDENCE.n_experiments);
+    expect(CAMPAIGN_EVIDENCE.uq_samples).toBe(32);
     expect(CAMPAIGN_EVIDENCE.literature_ids).toEqual(
       expect.arrayContaining([
         'taleyarkhan-sonofusion-2002',
@@ -40,6 +41,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
   test('discovery-grade ≥5σ bar stays not_met', () => {
     expect(DISCOVERY_GRADE_BAR.sigma_threshold).toBe(5);
     expect(DISCOVERY_GRADE_BAR.status).toBe('not_met');
+    expect(DISCOVERY_GRADE_BAR.moe_pairing_status).toBe('unverified');
+    expect(DISCOVERY_GRADE_BAR.cite_gated_sigma_q).toBe('required_not_met');
+    expect(DISCOVERY_GRADE_BAR.gap_note).toMatch(/moe_sigma_q_pairing_verified/i);
     expect(DISCOVERY_GRADE_BAR.note).toMatch(/cite-gated/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(/campaign/i);
   });
@@ -76,6 +80,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.affirmative).toBeTruthy();
       expect(row.falsification).toBeTruthy();
       expect(row.does_not_count).toBeTruthy();
+      expect(typeof row.claim_tier).toBe('string');
+      expect(row.claim_tier.length).toBeGreaterThan(0);
     });
+    const ec = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-EC-01');
+    expect(ec.claim_tier).toBe('speculative_exploratory');
+    expect(ec.citations).toEqual(expect.arrayContaining(['tennfors2013']));
+    const yieldRow = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-YIELD-01');
+    expect(yieldRow.claim_tier).toBe('empirical_lenr_correlation');
+    expect(yieldRow.citations).toEqual(expect.arrayContaining(['miles1993']));
   });
 });

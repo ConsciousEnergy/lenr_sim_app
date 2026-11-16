@@ -26,6 +26,7 @@ import {
   FORMALIZATION_STATUS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 function OpenIdChips({ ids }) {
   return (
@@ -41,6 +42,24 @@ function OpenIdChips({ ids }) {
         />
       ))}
     </Stack>
+  );
+}
+
+/** Claim-tier chip (distinct from EQ-OPEN obligation OPEN chips). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
   );
 }
 
@@ -121,6 +140,12 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           label={`N=${CAMPAIGN_EVIDENCE.n_experiments}`}
           data-testid="science-evidence-campaign-n"
         />
+        <Chip
+          size="small"
+          variant="outlined"
+          label={`UQ=${CAMPAIGN_EVIDENCE.uq_samples}`}
+          data-testid="science-evidence-uq-samples"
+        />
         {CAMPAIGN_EVIDENCE.hosts.map((host) => (
           <Chip key={host} size="small" variant="outlined" label={host} />
         ))}
@@ -182,6 +207,25 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         <Typography variant="body2" paragraph sx={{ mb: 1 }}>
           {DISCOVERY_GRADE_BAR.note}
         </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 1 }}>
+          {DISCOVERY_GRADE_BAR.gap_note}
+        </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`MoE pairing: ${DISCOVERY_GRADE_BAR.moe_pairing_status}`}
+            data-testid="science-evidence-moe-pairing"
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={`cite-gated σ_Q: ${DISCOVERY_GRADE_BAR.cite_gated_sigma_q}`}
+            data-testid="science-evidence-cite-gated-sigma"
+          />
+        </Stack>
         <Typography variant="body2" color="text.secondary">
           Heat criterion: <code>{DISCOVERY_GRADE_BAR.heat_formula}</code>. Helper:{' '}
           <code>{DISCOVERY_GRADE_BAR.helper_module}</code>.
@@ -319,14 +363,42 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                     color="warning"
                     variant="outlined"
                     sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 18 }}
+                    data-testid={`runway-obligation-${row.id}`}
+                  />
+                  <ClaimTierChip
+                    tier={row.claim_tier}
+                    testId={`runway-claim-tier-${row.id}`}
                   />
                 </Stack>
               }
               secondary={
                 <Box component="span">
-                  <Typography variant="caption" display="block" color="text.secondary">
-                    Affirmative: {row.affirmative}
-                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                    alignItems="center"
+                    sx={{ mb: 0.25 }}
+                  >
+                    <Typography variant="caption" color="text.secondary" component="span">
+                      Affirmative: {row.affirmative}
+                    </Typography>
+                    <ClaimTierChip
+                      tier={row.claim_tier}
+                      testId={`runway-affirmative-tier-${row.id}`}
+                    />
+                    {(row.citations || []).map((key) => (
+                      <Chip
+                        key={key}
+                        label={key}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 18 }}
+                        data-testid={`runway-citation-${row.id}-${key}`}
+                      />
+                    ))}
+                  </Stack>
                   <Typography variant="caption" display="block" color="text.secondary">
                     Falsification: {row.falsification}
                   </Typography>

@@ -56,13 +56,21 @@ export const DISCOVERY_GRADE_BAR = Object.freeze({
   status: 'not_met',
   helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py',
   heat_formula: 'S_heat = Q_excess / σ_Q',
+  /** Explicit gap vs BDS-302 discovery_grade_eligible (still unmet). */
+  moe_pairing_status: 'unverified',
+  cite_gated_sigma_q: 'required_not_met',
   note:
     'Prefer ≥5σ for discovery-grade calorimetry language. Oracle B null-falsify SNR≥3 is ' +
     'exploratory only. Cite-gated σ_Q required; instrument precision/floor MoE stays exploratory; ' +
     'verified Q↔σ_Q pairing required for discovery_grade_eligible. Campaign / avenue / Lean ' +
     'outputs never claim 5σ discovery or flip lenr_proved.',
+  gap_note:
+    'Gap: moe_sigma_q_pairing_verified is false on campaign/UI rows; cite-gated σ_Q is not ' +
+    'supplied for discovery_grade_eligible. More UQ samples deepen model envelopes only — ' +
+    'they do not close the ≥5σ bar.',
   does_not_count: Object.freeze([
     'Simulation campaign N alone',
+    'UQ sample count / Sobol envelopes alone',
     'Avenue ranking informativeness scores',
     'Lean clamp / non-closure identities',
     'Exploratory S_heat under instrument_precision without verified pairing',
@@ -77,8 +85,10 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
-  n_experiments: 18,
-  n_theory_runs: 18,
+  n_experiments: 20,
+  n_theory_runs: 20,
+  /** Pinned pack Sobol depth (build_cavitation_collapse_pack.PACK_UQ_SAMPLES). */
+  uq_samples: 32,
   hosts: Object.freeze(['copper', 'nickel', 'palladium', 'titanium']),
   dynamics_modes: Object.freeze(['keller_miksis', 'rayleigh_plesset']),
   literature_ids: Object.freeze([
@@ -91,6 +101,7 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
   note:
     'Bubble-lattice host × loading × drive × frequency × dynamics_mode cells with include_uncertainty. ' +
     'Model output only; does not raise empirical claim tiers or meet ≥5σ discovery-grade closure. '
+    + 'UQ sample deepen (32) widens model envelopes only — not cite-gated σ_Q / not discovery. '
     + 'Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104) is an electrolytic CR-39 '
     + 'cavitation / detector-confounder peer — not LENR-rate proof.',
 });
@@ -210,6 +221,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-MEV-01',
       label: 'MeV energy-partition channel',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Governed experiment/corpus zeros open MeV remainder under a named mechanism + cited bounds.',
       falsification:
@@ -219,6 +231,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-RAD-01',
       label: 'Radiation / γ suppression',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Calibrated heat+γ (or UL) with efficiency meets IR bound + lattice absorption target.',
       falsification:
@@ -229,6 +242,7 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-RATE-01',
       label: 'Lattice rate budget',
+      claim_tier: 'speculative_exploratory',
       affirmative:
         'Named rate_mode closes log10(N) with experimentally constrained occupancy/collective factors.',
       falsification:
@@ -238,6 +252,9 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-EC-01',
       label: 'Electron-capture energy path',
+      claim_tier: 'speculative_exploratory',
+      /** Sourced threshold / domain critique (AuthorYear keys). */
+      citations: Object.freeze(['tennfors2013', 'widomlarsen2006']),
       affirmative:
         'Independent CM path supplies ≥0.782 MeV in the licensed material/field regime (Tennfors domain).',
       falsification:
@@ -247,6 +264,8 @@ export const EQ_OPEN_RUNWAY = Object.freeze({
     {
       id: 'EQ-OPEN-YIELD-01',
       label: 'Integrated heat–helium yield',
+      claim_tier: 'empirical_lenr_correlation',
+      citations: Object.freeze(['miles1993']),
       affirmative:
         'Time-resolved heat+He with recovery efficiency closes integrated ΔN; prefer ≥5σ heat MoE where claimed.',
       falsification:
@@ -277,5 +296,10 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (EQ_OPEN_RUNWAY.status !== 'OPEN') {
     throw new Error('Science evidence UI must keep EQ_OPEN_RUNWAY.status OPEN');
+  }
+  for (const row of EQ_OPEN_RUNWAY.criteria) {
+    if (!row.claim_tier || typeof row.claim_tier !== 'string') {
+      throw new Error(`Science evidence runway ${row.id} must declare claim_tier`);
+    }
   }
 }
