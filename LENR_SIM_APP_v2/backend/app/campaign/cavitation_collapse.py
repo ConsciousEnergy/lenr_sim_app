@@ -30,7 +30,7 @@ def _bubble(
 
 
 # Designed experiment: collapse-heavy bubble-lattice cells + controls.
-# Keep count modest for CI (UQ + ODE); BDS-323 deepen is 20 cells (≤24
+# Keep count modest for CI (UQ + ODE); BDS-329 deepen is 22 cells (≤24
 # bound in test_cavitation_collapse_preset_is_designed). Pack builder pins
 # uncertainty_samples via PACK_UQ_SAMPLES for the committed JSON fixture.
 CAVITATION_COLLAPSE_CASES: List[Dict[str, Any]] = [
@@ -470,6 +470,57 @@ CAVITATION_COLLAPSE_CASES: List[Dict[str, Any]] = [
         "tag": "cav:pd_d_km_rad_uq_warm",
         "open_question_ids": ["EQ-OPEN-RAD-01", "EQ-OPEN-YIELD-01"],
         "claim_tag": "speculative",
+    },
+    # --- BDS-329: strengthen weakest EQ-OPEN avenue stresses (EC / MEV) ---
+    # Model-only; cite-gated ≥5σ / honest_closure stay not_met on pack rows.
+    {
+        "route": "bubble_lattice",
+        "temperature": 320.0,
+        "loading_ratio": 0.92,
+        "host_material": "nickel",
+        "reactant": "hydrogen",
+        "rate_mode": "two_body",
+        "use_theory_pipeline": True,
+        "include_uncertainty": True,
+        "uncertainty_samples": 32,
+        "random_seed": 39,
+        "num_cycles": 2,
+        "bubble": _bubble(
+            ambient_temperature_k=320.0,
+            driving_pressure_bar=2.2,
+            frequency_khz=22.0,
+            initial_radius_um=10.0,
+            bubble_dynamics_mode="keller_miksis",
+        ),
+        "tag": "cav:ni_h_ec_threshold_stress",
+        "avenue_stress": "electron_capture_threshold",
+        "open_question_ids": ["EQ-OPEN-EC-01", "EQ-OPEN-RATE-01"],
+        "claim_tag": "speculative",
+        "citation_key": "tennfors2013",
+    },
+    {
+        "route": "bubble_lattice",
+        "temperature": 298.0,
+        "loading_ratio": 0.97,
+        "host_material": "palladium",
+        "reactant": "deuterium",
+        "rate_mode": "two_body",
+        "use_theory_pipeline": True,
+        "include_uncertainty": True,
+        "uncertainty_samples": 32,
+        "random_seed": 40,
+        "num_cycles": 2,
+        "bubble": _bubble(
+            driving_pressure_bar=2.0,
+            frequency_khz=20.0,
+            initial_radius_um=12.0,
+            bubble_dynamics_mode="rayleigh_plesset",
+        ),
+        "tag": "cav:pd_d_mev_partition_stress",
+        "avenue_stress": "miles_heat_helium_q",
+        "open_question_ids": ["EQ-OPEN-MEV-01", "EQ-OPEN-YIELD-01", "EQ-OPEN-RATE-01"],
+        "claim_tag": "speculative",
+        "citation_key": "miles1993",
     },
 ]
 
