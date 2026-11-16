@@ -36,6 +36,7 @@
 | EQ-RATE-CAP-NC-02 | Non-ULM `three_body`, all engine caps: \(\log_{10}N\le-266<0\) ⇒ ¬Q3 | `RateBudget` / `OpenObligations` | **PROVED** (scenario / cap bound; DISPROVEN under caps; does **not** close Q3) |
 | EQ-RATE-CAP-GAP-01 | Caps do **not** certify non-closure for 25 pm TSC / ULM `three_body`; demand \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}E_{\text{enh}}\le10^{-23}\) | `RateBudget` | **PROVED** (honesty gap; not closure) |
 | EQ-BBL-NR-01 | Hydro / collapse enhancement or scenario prior in a rate scenario ⇒ not a nuclear-rate proof | `CollapseBounds` | **AX** honesty tag (does **not** close any `EQ-OPEN-*`) |
+| EQ-BBL-HEAT-NC-01 | Collapse UQ / hydro / campaign MoE kinds ⇏ discovery-grade heat MoE; UQ percentiles ⇏ Q5 closed | `CollapseBounds` | **AX** honesty tag (does **not** close EQ-OPEN-YIELD-01) |
 | EQ-COMP-03 | Illegal product of two capped engine totals \(=10^{10}\) | `Composition` | **PROVED** |
 | EQ-TSC-GEOM-01/02 | FCC \(d_{DD}\) identity; \(\neq 25\,\mathrm{pm}\) trap | `NBody` | **PROVED** |
 | EQ-TSC-Q-01 | \(47.6=2\times 23.8\) keV conversion | `NBody` | **PROVED** |

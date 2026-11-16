@@ -129,6 +129,7 @@ describe('ScienceEvidenceSection', () => {
     );
     expect(screen.getByText(/Calorimetry ≥5σ analytics bar lock/i)).toBeInTheDocument();
     expect(screen.getByText(/Heat significance non-closure/i)).toBeInTheDocument();
+    expect(screen.getByText(/Collapse UQ ≠ cite-gated heat MoE/i)).toBeInTheDocument();
     expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
   });
 });
