@@ -1,6 +1,8 @@
 /**
  * Honesty contract for Theory Paper science-evidence config (Phase E).
  */
+import fs from 'fs';
+import path from 'path';
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
@@ -47,6 +49,21 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(roles['taleyarkhan-sonofusion-2002']).toBe('contested_positive_claim');
     expect(roles['pyyhtia-cr39-cavitation-2026']).toBe('detector_confounder_peer');
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram_note).toMatch(/not lab/i);
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram.empirical_lenr_correlation).toBe(44);
+  });
+
+  test('CAMPAIGN_EVIDENCE n_* mirrors cavitation_collapse pack manifest', () => {
+    const manifestPath = path.resolve(
+      __dirname,
+      '../../../datasets/reviewer_packs/cavitation_collapse_campaign/manifest.json',
+    );
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    expect(CAMPAIGN_EVIDENCE.n_experiments).toBe(manifest.n_experiments);
+    expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(manifest.n_theory_runs);
+    expect(CAMPAIGN_EVIDENCE.preset).toBe(manifest.preset);
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram).toEqual(manifest.claim_tier_histogram);
+    expect(manifest.lenr_proved).toBe(false);
   });
 
   test('discovery-grade ≥5σ bar stays not_met', () => {

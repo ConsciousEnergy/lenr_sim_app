@@ -182,6 +182,18 @@ export default function ScienceEvidenceSection({ embedded = false }) {
       >
         {CAMPAIGN_EVIDENCE.densification_note}
       </Typography>
+      <Typography
+        variant="caption"
+        display="block"
+        color="text.secondary"
+        sx={{ mb: 0.5 }}
+        data-testid="science-evidence-emp-histogram-note"
+      >
+        Theory-score histogram (not evidence chips): speculative=
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram?.speculative_exploratory ?? 'n/a'}, EMP=
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram?.empirical_lenr_correlation ?? 'n/a'}.{' '}
+        {CAMPAIGN_EVIDENCE.claim_tier_histogram_note}
+      </Typography>
       <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
         Pack: <code>{CAMPAIGN_EVIDENCE.pack_path}</code>
         <br />

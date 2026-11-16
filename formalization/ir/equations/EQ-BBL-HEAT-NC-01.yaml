@@ -26,4 +26,4 @@ lean_decls:
   - "LenrFormal.CollapseBounds.empty_moe_bag_not_discovery"
   - "LenrFormal.CollapseBounds.reported_temperature_does_not_entail_discovery_heat_moe"
   - "LenrFormal.CollapseBounds.reported_pressure_and_compression_keep_heat_moe_open"
-notes: "AX honesty tag: collapse UQ envelopes, hydro enhancement scenarios, and campaign model-output cells never supply cite-gated discovery-grade heat MoE. Reported clamped T/P/CR do not underwrite discovery heat. UQ percentile bookkeeping does not close EQ-OPEN-YIELD-01 or set lenr_proved. Complements EQ-BBL-NR-01 (rate) and EQ-HEAT-SIG-NC-01 (calorimetry bar)."
+notes: "AX honesty tag: collapse UQ envelopes, hydro enhancement scenarios, and campaign model-output cells never supply cite-gated discovery-grade heat MoE (HeatDiscoveryProof alias of DiscoveryGradeHeatMoE). Reported clamped T/P/CR do not underwrite discovery heat. Even HeatDiscoveryProof does not close EQ-OPEN-YIELD-01 or set lenr_proved. UQ percentile bookkeeping does not close Q5. Complements EQ-BBL-NR-01 (rate) and EQ-HEAT-SIG-NC-01 (calorimetry bar)."
