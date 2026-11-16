@@ -148,6 +148,21 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'mckubre-sri-p13-p14-1992',
     'mckubre-high-loading-1998',
   ]),
+  /**
+   * BDS-343: publishable literature_reported σ_Q + verified pairing inventory is
+   * exhausted for the curated 25-row corpus (only Kasagi NiCu + Ni). Do not invent
+   * pairs for Iwamura / Mizuno / Arata / Celani / commercial Ni–H.
+   */
+  literature_moe_inventory_exhausted: true,
+  inventory_exhausted_note:
+    'No further publishable literature_reported total σ_Q + verified Q↔σ pairing rows ' +
+    'remain in the curated 25 without fabrication. Eligible analytics flags stay 2/25 ' +
+    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”.',
+  /**
+   * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
+   */
+  analytics_eligible_ne_eq_open: true,
+  analytics_eligible_ne_lenr_proved: true,
   closes_eq_open: false,
   lenr_proved: false,
   note:
@@ -157,6 +172,86 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'control does not set lenr_proved or close EQ-OPEN-*. Miles / De Ninno / McKubre stay ' +
     'exploratory (instrument_precision / floor; unverified or non-discovery provenance).',
 });
+
+/**
+ * EMP / instrument-MoE rows that stay exploratory — structured “why not discovery”
+ * reasons for Analytics / §5B runway UX (BDS-343). Soft honesty only; never flips locks.
+ */
+export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
+  Object.freeze({
+    literature_id: 'miles-1993',
+    label: 'Miles 1993 heat–He',
+    claim_type: 'EMP',
+    distance_status: 'at_or_above_bar_gates_blocked',
+    s_heat_exploratory: 26,
+    moe_provenance: 'literature_reported_instrument_precision',
+    pairing_verified: false,
+    discovery_grade_eligible: false,
+    soft_chip: 'analytics_gates_clear',
+    reasons: Object.freeze([
+      'Peak 0.52 W is not verified as the same-results envelope for follow-on ±0.020 W instrument error',
+      'moe_provenance is instrument_precision (exploratory), not literature_reported total σ_Q',
+      'moe_sigma_q_pairing_verified stays false — arithmetic S_heat=26 is gates-blocked',
+      'Instantaneous EMP band ≠ integrated YIELD discharge; EQ-OPEN-YIELD-01 stays OPEN',
+    ]),
+    honesty:
+      'Exploratory arithmetic only — not discovery; does not set lenr_proved or close EQ-OPEN-*.',
+  }),
+  Object.freeze({
+    literature_id: 'deninno-tid-1995',
+    label: 'De Ninno / ENEA Frascati flow',
+    claim_type: 'EMP',
+    distance_status: 'undefined',
+    s_heat_exploratory: null,
+    moe_provenance: 'literature_reported_instrument_precision',
+    pairing_verified: false,
+    discovery_grade_eligible: false,
+    soft_chip: 'not_met',
+    reasons: Object.freeze([
+      '20 mW is calorimeter instrument precision (0–20 W), not episode MoE for seed Q',
+      'No cite-gated literature_reported total σ_Q on a paired measured Q_excess',
+      'Seed / scenario Q does not underwrite discovery_grade_eligible',
+    ]),
+    honesty:
+      'Instrument-precision bookkeeping only — exploratory; EQ-OPEN-* remain OPEN.',
+  }),
+  Object.freeze({
+    literature_id: 'mckubre-sri-p13-p14-1992',
+    label: 'McKubre SRI P13/P14',
+    claim_type: 'EMP',
+    distance_status: 'undefined',
+    s_heat_exploratory: null,
+    moe_provenance: 'literature_reported_instrument_floor',
+    pairing_verified: false,
+    discovery_grade_eligible: false,
+    soft_chip: 'not_met',
+    reasons: Object.freeze([
+      'Design floor max(10 mW, 0.1% Pin) — sigma_Q_W absent until Pin-resolved run MoE',
+      'Instrument floor provenance is never discovery-eligible without measured pairing',
+      'Illustrative EMP anchors ≠ discovery-grade calorimetry language',
+    ]),
+    honesty:
+      'Floor-only MoE — exploratory; does not clear analytics discovery flags.',
+  }),
+  Object.freeze({
+    literature_id: 'mckubre-high-loading-1998',
+    label: 'McKubre high-loading 1998',
+    claim_type: 'EMP',
+    distance_status: 'undefined',
+    s_heat_exploratory: null,
+    moe_provenance: 'literature_reported_instrument_floor',
+    pairing_verified: false,
+    discovery_grade_eligible: false,
+    soft_chip: 'not_met',
+    reasons: Object.freeze([
+      'Same instrument-floor class as P13/P14 — no cite-gated total σ_Q',
+      'Reproducibility field scores ≠ σ_Q / S_heat discovery machinery',
+      'Refuse fabricating peak↔σ pairing from secondary notes',
+    ]),
+    honesty:
+      'Floor-only MoE — exploratory; honest_closure stays not_met.',
+  }),
+]);
 
 /**
  * Corpus-default quantitative distance (S_heat undefined on §5B campaign surfaces).
@@ -554,6 +649,39 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (CORPUS_MOE_COVERAGE.lenr_proved !== false) {
     throw new Error('Science evidence UI must keep CORPUS_MOE_COVERAGE.lenr_proved false');
+  }
+  if (CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted !== true) {
+    throw new Error(
+      'Science evidence UI must mark literature_moe_inventory_exhausted true (no fabricated pairs)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open !== true) {
+    throw new Error(
+      'Science evidence UI must keep analytics_eligible_ne_eq_open true',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved !== true) {
+    throw new Error(
+      'Science evidence UI must keep analytics_eligible_ne_lenr_proved true',
+    );
+  }
+  if (
+    !Array.isArray(EMP_EXPLORATORY_WHY_NOT_DISCOVERY) ||
+    EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length < 1
+  ) {
+    throw new Error('Science evidence UI must list EMP_EXPLORATORY_WHY_NOT_DISCOVERY rows');
+  }
+  for (const row of EMP_EXPLORATORY_WHY_NOT_DISCOVERY) {
+    if (row.discovery_grade_eligible !== false) {
+      throw new Error(
+        `Science evidence UI must keep EMP exploratory ${row.literature_id} non-discovery`,
+      );
+    }
+    if (row.soft_chip === 'met' || /≥5σ.*met/i.test(String(row.soft_chip || ''))) {
+      throw new Error(
+        `Science evidence UI must not use ≥5σ met soft chips on ${row.literature_id}`,
+      );
+    }
   }
   if (QUANTITATIVE_DISTANCE_DEFAULT.distance_status !== 'undefined') {
     throw new Error(

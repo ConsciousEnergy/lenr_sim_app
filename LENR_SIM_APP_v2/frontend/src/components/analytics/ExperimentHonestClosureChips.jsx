@@ -41,6 +41,7 @@ export default function ExperimentHonestClosureChips({
   const showExploratoryBanner =
     distanceStatus === 'at_or_above_bar_gates_blocked' ||
     (distance.s_heat != null && !envelopes.discoveryGradeEligible);
+  const empWhyNot = envelopes.empWhyNotDiscovery;
 
   return (
     <>
@@ -162,8 +163,39 @@ export default function ExperimentHonestClosureChips({
             >
               Exploratory / gates-blocked arithmetic only (e.g. Miles peak S_heat under
               instrument_precision + unverified pairing). Not discovery-grade; does not close
-              EQ-OPEN-YIELD-01 or set lenr_proved.
+              EQ-OPEN-YIELD-01 or set lenr_proved. Soft chips stay{' '}
+              <code>analytics_gates_clear</code>, never “≥5σ met”.
             </Typography>
+          ) : null}
+          {empWhyNot ? (
+            <>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, mb: 0.5 }}
+                data-testid={`${testIdPrefix}-why-not-title`}
+              >
+                Why not discovery — <code>{empWhyNot.literature_id}</code>
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                paragraph
+                data-testid={`${testIdPrefix}-why-not-honesty`}
+              >
+                {empWhyNot.honesty} Analytics eligibility ≠ EQ-OPEN /{' '}
+                <code>lenr_proved</code>.
+              </Typography>
+              <List dense data-testid={`${testIdPrefix}-why-not-list`}>
+                {empWhyNot.reasons.map((reason) => (
+                  <ListItem key={reason} sx={{ py: 0.15, px: 0 }}>
+                    <ListItemText
+                      primaryTypographyProps={{ variant: 'body2' }}
+                      primary={`• ${reason}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </>
           ) : null}
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Missing requirements

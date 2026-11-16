@@ -159,7 +159,9 @@ export default function AnalyticsScienceEvidencePanel() {
             ', ',
           )}
           ) — closes_eq_open=<code>false</code>, lenr_proved=<code>false</code>. Soft chip
-          language stays <code>analytics_gates_clear</code>, never “≥5σ met”.
+          language stays <code>analytics_gates_clear</code>, never “≥5σ met”. Publishable
+          MoE pairs <code>exhausted</code> at 2/25 — refuse fabricated σ_Q. Analytics
+          eligibility ≠ EQ-OPEN / <code>lenr_proved</code>.
         </Typography>
         <Typography
           variant="body2"

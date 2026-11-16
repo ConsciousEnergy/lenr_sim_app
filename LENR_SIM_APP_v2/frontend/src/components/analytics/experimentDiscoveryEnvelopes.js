@@ -9,6 +9,7 @@
 import {
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
+  EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
@@ -26,6 +27,52 @@ export function analyticsGateDisplayStatus(overallStatus) {
 }
 
 /**
+ * Resolve structured EMP “why not discovery” copy for a History / export row.
+ * Soft honesty only — never invents discovery eligibility.
+ *
+ * @param {object|null|undefined} exp
+ * @param {object|null|undefined} [quantitativeDistance]
+ * @returns {object|null}
+ */
+export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null) {
+  const results = exp.results && typeof exp.results === 'object' ? exp.results : {};
+  const litId =
+    exp.literature_id ||
+    results.literature_id ||
+    exp.id ||
+    results.id ||
+    null;
+  if (litId) {
+    const byId = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === litId,
+    );
+    if (byId) return byId;
+  }
+  const distance = quantitativeDistance || {};
+  const provenance =
+    distance.moe_provenance ||
+    exp.moe_provenance ||
+    results.moe_provenance ||
+    null;
+  const distanceStatus = distance.distance_status;
+  if (
+    distanceStatus === 'at_or_above_bar_gates_blocked' ||
+    (typeof provenance === 'string' &&
+      (provenance.includes('instrument_precision') ||
+        provenance.includes('instrument_floor')))
+  ) {
+    return (
+      EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+        (row) =>
+          row.moe_provenance === provenance ||
+          row.distance_status === distanceStatus,
+      ) || EMP_EXPLORATORY_WHY_NOT_DISCOVERY[0]
+    );
+  }
+  return null;
+}
+
+/**
  * @param {object|null|undefined} exp
  * @returns {{
  *   discoveryGradeEligible: boolean,
@@ -33,6 +80,7 @@ export function analyticsGateDisplayStatus(overallStatus) {
  *   honestClosure: object,
  *   quantitativeDistance: object,
  *   analyticsGateStatus: 'analytics_gates_clear'|'not_met',
+ *   empWhyNotDiscovery: object|null,
  *   lenrProved: false,
  * }}
  */
@@ -121,12 +169,15 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     discoveryGradeGap.overall_status,
   );
 
+  const empWhyNotDiscovery = resolveEmpWhyNotDiscovery(exp, quantitativeDistance);
+
   return {
     discoveryGradeEligible,
     discoveryGradeGap,
     honestClosure,
     quantitativeDistance,
     analyticsGateStatus,
+    empWhyNotDiscovery,
     lenrProved: false,
   };
 }

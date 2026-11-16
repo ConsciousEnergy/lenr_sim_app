@@ -18,12 +18,17 @@ import {
   DISCOVERY_GRADE_BAR,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
+import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
 
 /**
  * @param {Object} props
  * @param {string} [props.testIdPrefix]
+ * @param {boolean} [props.showEmpWhyNot] — surface EMP exploratory “why not discovery” (default true)
  */
-export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-gap' }) {
+export default function DiscoveryGradeGapChecklist({
+  testIdPrefix = 'discovery-gap',
+  showEmpWhyNot = true,
+}) {
   const missing = DISCOVERY_GRADE_BAR.missing_requirements || [];
   const distance =
     DISCOVERY_GRADE_BAR.quantitative_distance || QUANTITATIVE_DISTANCE_DEFAULT;
@@ -113,8 +118,19 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         pairing verified · {coverage.discovery_grade_eligible_count}/{coverage.n_records}{' '}
         analytics discovery_grade_eligible. closes_eq_open=
         <code>{String(coverage.closes_eq_open)}</code>, lenr_proved=
-        <code>{String(coverage.lenr_proved)}</code>.
+        <code>{String(coverage.lenr_proved)}</code>
+        {coverage.literature_moe_inventory_exhausted ? (
+          <>
+            {' · '}publishable MoE pairs <code>exhausted</code> (refuse fabricated σ_Q)
+          </>
+        ) : null}
+        . Soft chips: <code>analytics_gates_clear</code> ≠ EQ-OPEN /{' '}
+        <code>lenr_proved</code>.
       </Typography>
+
+      {showEmpWhyNot ? (
+        <EmpExploratoryWhyNotDiscovery testIdPrefix={`${testIdPrefix}-emp-why-not`} />
+      ) : null}
 
       <List dense disablePadding data-testid={`${testIdPrefix}-missing-list`}>
         {missing.map((req) => (
