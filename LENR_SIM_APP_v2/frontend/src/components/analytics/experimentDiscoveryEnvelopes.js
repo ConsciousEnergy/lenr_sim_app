@@ -1,0 +1,125 @@
+/**
+ * Normalize Analytics experiment discovery_grade_gap / honest_closure envelopes.
+ * Falls back to corpus static checklist when API fields are absent (offline / old rows).
+ * Never invents lenr_proved true or EQ-OPEN CLOSED.
+ */
+import {
+  DISCOVERY_GRADE_BAR,
+  DISCOVERY_GRADE_MISSING,
+  OPEN_EQ_IDS,
+} from '../../config/unifiedTheoryScienceEvidence';
+
+/**
+ * @param {object|null|undefined} exp
+ * @returns {{
+ *   discoveryGradeEligible: boolean,
+ *   discoveryGradeGap: object,
+ *   honestClosure: object,
+ *   lenrProved: false,
+ * }}
+ */
+export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
+  const results = exp.results && typeof exp.results === 'object' ? exp.results : {};
+  const summary =
+    (exp.bayesian_summary && typeof exp.bayesian_summary === 'object'
+      ? exp.bayesian_summary
+      : null) ||
+    (results.bayesian_summary && typeof results.bayesian_summary === 'object'
+      ? results.bayesian_summary
+      : {}) ||
+    {};
+
+  const rawGap =
+    exp.discovery_grade_gap ||
+    results.discovery_grade_gap ||
+    summary.discovery_grade_gap ||
+    null;
+  const rawClosure =
+    exp.honest_closure ||
+    results.honest_closure ||
+    summary.honest_closure ||
+    null;
+
+  const discoveryGradeGap =
+    rawGap && typeof rawGap === 'object'
+      ? {
+          ...rawGap,
+          overall_status: rawGap.overall_status === 'met' ? 'met' : 'not_met',
+          lenr_proved: false,
+          eq_open_status: forceOpenStatus(rawGap.eq_open_status),
+        }
+      : corpusDiscoveryGapFallback();
+
+  const honestClosure =
+    rawClosure && typeof rawClosure === 'object'
+      ? {
+          ...rawClosure,
+          // Hard honesty: UI never treats closure as met from campaign/analytics alone.
+          overall_status: 'not_met',
+          lenr_proved: false,
+          eq_open_status: forceOpenStatus(rawClosure.eq_open_status),
+        }
+      : corpusHonestClosureFallback(discoveryGradeGap);
+
+  const discoveryGradeEligible = Boolean(
+    exp.discovery_grade_eligible ??
+      results.discovery_grade_eligible ??
+      summary.discovery_grade_eligible ??
+      false,
+  );
+
+  return {
+    discoveryGradeEligible,
+    discoveryGradeGap,
+    honestClosure,
+    lenrProved: false,
+  };
+}
+
+function forceOpenStatus(statusMap) {
+  const base = Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN']));
+  if (!statusMap || typeof statusMap !== 'object') return base;
+  return { ...base, ...Object.fromEntries(
+    Object.keys(statusMap).map((id) => [id, 'OPEN']),
+  ) };
+}
+
+function corpusDiscoveryGapFallback() {
+  return {
+    schema: 'lenr-discovery-grade-gap-v1',
+    overall_status: DISCOVERY_GRADE_BAR.status,
+    discovery_grade_eligible: false,
+    discovery_grade_threshold_sigma: DISCOVERY_GRADE_BAR.sigma_threshold,
+    requirements: DISCOVERY_GRADE_MISSING,
+    missing_requirements: DISCOVERY_GRADE_MISSING,
+    missing_ids: DISCOVERY_GRADE_MISSING.map((row) => row.id),
+    lenr_proved: false,
+    eq_open_status: Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN'])),
+  };
+}
+
+function corpusHonestClosureFallback(discoveryGradeGap) {
+  const missing = [
+    ...(discoveryGradeGap.missing_requirements || []),
+    ...DISCOVERY_GRADE_MISSING.filter((row) =>
+      ['eq_open_discharge', 'governance_signoff'].includes(row.id),
+    ),
+  ];
+  // Dedupe by id while preserving order.
+  const seen = new Set();
+  const unique = [];
+  for (const row of missing) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    unique.push(row);
+  }
+  return {
+    schema: 'lenr-honest-closure-gap-v1',
+    overall_status: 'not_met',
+    discovery_grade_gap: discoveryGradeGap,
+    missing_requirements: unique,
+    missing_ids: unique.map((row) => row.id),
+    lenr_proved: false,
+    eq_open_status: Object.fromEntries(OPEN_EQ_IDS.map((id) => [id, 'OPEN'])),
+  };
+}

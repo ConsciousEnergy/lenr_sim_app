@@ -73,6 +73,8 @@ import RelevanceMap from '../components/analytics/RelevanceMap';
 import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPanels';
 import AssociationRankPanel from '../components/analytics/AssociationRankPanel';
 import AnalyticsScienceEvidencePanel from '../components/analytics/AnalyticsScienceEvidencePanel';
+import ExperimentHonestClosureChips from '../components/analytics/ExperimentHonestClosureChips';
+import { normalizeExperimentDiscoveryEnvelopes } from '../components/analytics/experimentDiscoveryEnvelopes';
 
 // Tab Panel Component
 function TabPanel({ children, value, index, ...other }) {
@@ -335,29 +337,39 @@ const AnalyticsPage = () => {
       setTemperatureData(tempDistData || []);
       
       // Transform experiments for table display
-      const transformedExperiments = (experimentsData.experiments || []).map(exp => ({
-        id: exp.id,
-        name: exp.name || 'Unnamed',
-        type: exp.type || exp.experiment_type || 'Unknown',
-        status: exp.status || 'completed',
-        material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
-        temperature: exp.temperature_k || 300,
-        pressure: exp.pressure_bar || 1,
-        enhancementFactor: exp.enhancement_factor,
-        fusionRate: exp.fusion_rate || 0,
-        energyOutput: exp.energy_output_kev,
-        excessHeatWatts: exp.excessHeatWatts ?? exp.excess_heat_watts,
-        enhancementSaturated: Boolean(exp.enhancementSaturated),
-        log10EnhancementRaw: exp.log10EnhancementRaw,
-        timestamp: exp.created_at,
-        isBaseline: exp.is_baseline || false,
-        source: exp.source || 'User Simulation',
-        sourceClass: exp.sourceClass,
-        literatureId: exp.literatureId,
-        meanFinalScore: exp.meanFinalScore,
-        topTheoryId: exp.topTheoryId,
-        parameters: exp.parameters || {},
-      }));
+      const transformedExperiments = (experimentsData.experiments || []).map(exp => {
+        const envelopes = normalizeExperimentDiscoveryEnvelopes(exp);
+        return {
+          id: exp.id,
+          name: exp.name || 'Unnamed',
+          type: exp.type || exp.experiment_type || 'Unknown',
+          status: exp.status || 'completed',
+          material: exp.material ? exp.material.charAt(0).toUpperCase() + exp.material.slice(1) : 'Unknown',
+          temperature: exp.temperature_k || 300,
+          pressure: exp.pressure_bar || 1,
+          enhancementFactor: exp.enhancement_factor,
+          fusionRate: exp.fusion_rate || 0,
+          energyOutput: exp.energy_output_kev,
+          excessHeatWatts: exp.excessHeatWatts ?? exp.excess_heat_watts,
+          enhancementSaturated: Boolean(exp.enhancementSaturated),
+          log10EnhancementRaw: exp.log10EnhancementRaw,
+          timestamp: exp.created_at,
+          isBaseline: exp.is_baseline || false,
+          source: exp.source || 'User Simulation',
+          sourceClass: exp.sourceClass,
+          literatureId: exp.literatureId,
+          meanFinalScore: exp.meanFinalScore,
+          topTheoryId: exp.topTheoryId,
+          parameters: exp.parameters || {},
+          // Preserve export envelopes for History ≥5σ / honest-closure chips.
+          discovery_grade_eligible: envelopes.discoveryGradeEligible,
+          discovery_grade_gap: envelopes.discoveryGradeGap,
+          honest_closure: envelopes.honestClosure,
+          lenr_proved: false,
+          bayesian_summary: exp.bayesian_summary || exp.results?.bayesian_summary,
+          results: exp.results || {},
+        };
+      });
       
       setSimulationHistory(transformedExperiments);
       setTotalExperiments(experimentsData.total || transformedExperiments.length);
@@ -1061,6 +1073,7 @@ const AnalyticsPage = () => {
                   </TableCell>
                   <TableCell>Top theory</TableCell>
                   <TableCell>Literature id</TableCell>
+                  <TableCell data-testid="history-gap-header">≥5σ / closure</TableCell>
                   <TableCell align="right">Energy (keV)</TableCell>
                   <TableCell align="right">Power (W)</TableCell>
                   <TableCell>Date</TableCell>
@@ -1114,6 +1127,12 @@ const AnalyticsPage = () => {
                       <TableCell align="right">{formatAssociation(row.meanFinalScore)}</TableCell>
                       <TableCell>{row.topTheoryId ? String(row.topTheoryId).replace(/_/g, ' ') : '—'}</TableCell>
                       <TableCell>{row.literatureId || '—'}</TableCell>
+                      <TableCell>
+                        <ExperimentHonestClosureChips
+                          experiment={row}
+                          testIdPrefix={`history-gap-${row.id}`}
+                        />
+                      </TableCell>
                       <TableCell align="right" data-testid="history-energy-kev">
                         {formatEnergyKev(row.energyOutput)}
                       </TableCell>
