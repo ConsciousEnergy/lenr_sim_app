@@ -43,8 +43,9 @@ theorem exploratory_snr_strictly_below_discovery :
 Integer milli-watt bookkeeping for S_heat comparison.
 `sHeatMilli = floor(1000 * Q / σ)` is supplied as a Nat input — Lean does not
 divide reals here; Python owns the float arithmetic.
+
+`abbrev` (not `def`) so `≤` Decidable instances reduce under `native_decide`.
 -/
-/-- Transparent abbrev so `≤` Decidable instances reduce under `native_decide`. -/
 abbrev meetsDiscoveryArithmetic (sHeatMilli thresholdMilli : Nat) : Prop :=
   thresholdMilli ≤ sHeatMilli
 
