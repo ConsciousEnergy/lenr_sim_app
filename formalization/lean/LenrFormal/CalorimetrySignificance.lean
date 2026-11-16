@@ -44,7 +44,8 @@ Integer milli-watt bookkeeping for S_heat comparison.
 `sHeatMilli = floor(1000 * Q / σ)` is supplied as a Nat input — Lean does not
 divide reals here; Python owns the float arithmetic.
 -/
-def meetsDiscoveryArithmetic (sHeatMilli thresholdMilli : Nat) : Prop :=
+/-- Transparent abbrev so `≤` Decidable instances reduce under `native_decide`. -/
+abbrev meetsDiscoveryArithmetic (sHeatMilli thresholdMilli : Nat) : Prop :=
   thresholdMilli ≤ sHeatMilli
 
 /-- EQ-HEAT-SIG-01: 5.000σ in milli-σ units. -/
