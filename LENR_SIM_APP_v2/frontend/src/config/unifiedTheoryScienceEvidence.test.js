@@ -1,6 +1,8 @@
 /**
  * Honesty contract for Theory Paper science-evidence config (Phase E).
  */
+import fs from 'fs';
+import path from 'path';
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
@@ -32,6 +34,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CAMPAIGN_EVIDENCE.pack_path).toMatch(/cavitation_collapse_campaign/);
     expect(CAMPAIGN_EVIDENCE.hydro_label).toMatch(/contested hydro/i);
     expect(CAMPAIGN_EVIDENCE.note).toMatch(/model output only/i);
+    expect(CAMPAIGN_EVIDENCE.densification_note).toMatch(/not weight-of-numbers/i);
     expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(22);
     expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(CAMPAIGN_EVIDENCE.n_experiments);
     expect(CAMPAIGN_EVIDENCE.uq_samples).toBe(32);
@@ -41,6 +44,26 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
         'pyyhtia-cr39-cavitation-2026',
       ]),
     );
+    const roles = Object.fromEntries(
+      CAMPAIGN_EVIDENCE.literature_roles.map((row) => [row.id, row.role]),
+    );
+    expect(roles['taleyarkhan-sonofusion-2002']).toBe('contested_positive_claim');
+    expect(roles['pyyhtia-cr39-cavitation-2026']).toBe('detector_confounder_peer');
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram_note).toMatch(/not lab/i);
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram.empirical_lenr_correlation).toBe(44);
+  });
+
+  test('CAMPAIGN_EVIDENCE n_* mirrors cavitation_collapse pack manifest', () => {
+    const manifestPath = path.resolve(
+      __dirname,
+      '../../../datasets/reviewer_packs/cavitation_collapse_campaign/manifest.json',
+    );
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    expect(CAMPAIGN_EVIDENCE.n_experiments).toBe(manifest.n_experiments);
+    expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(manifest.n_theory_runs);
+    expect(CAMPAIGN_EVIDENCE.preset).toBe(manifest.preset);
+    expect(CAMPAIGN_EVIDENCE.claim_tier_histogram).toEqual(manifest.claim_tier_histogram);
+    expect(manifest.lenr_proved).toBe(false);
   });
 
   test('discovery-grade ≥5σ bar stays not_met', () => {
@@ -86,6 +109,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.miles_distance_status).toBe(
       'at_or_above_bar_gates_blocked',
     );
+    expect(CORPUS_MOE_COVERAGE.miles_moe_provenance).toMatch(/instrument_precision/);
+    expect(CORPUS_MOE_COVERAGE.miles_pairing_verified).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/exploratory/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,
     );
@@ -93,6 +119,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {
     expect(AVENUE_RANKING_SUMMARY.kind).toBe('scenario_table_not_posterior');
+    expect(AVENUE_RANKING_SUMMARY.title).toMatch(/scenario-table/i);
+    expect(AVENUE_RANKING_SUMMARY.title).toMatch(/not a posterior/i);
+    expect(AVENUE_RANKING_SUMMARY.title).not.toMatch(/^Bayesian/i);
     expect(AVENUE_RANKING_SUMMARY.non_proof).toMatch(/not a Bayesian posterior/i);
     expect(AVENUE_RANKING_SUMMARY.non_proof).toMatch(/never sets lenr_proved/i);
     expect(AVENUE_RANKING_SUMMARY.avenues.length).toBeGreaterThanOrEqual(5);
@@ -132,7 +161,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(FORMALIZATION_STATUS.summary).toMatch(/EQ-HEAT-SIG/i);
     const ids = FORMALIZATION_STATUS.items.map((item) => item.id);
     expect(ids).toEqual(
-      expect.arrayContaining(['EQ-HEAT-SIG-01', 'EQ-HEAT-SIG-NC-01']),
+      expect.arrayContaining([
+        'EQ-HEAT-SIG-01',
+        'EQ-HEAT-SIG-NC-01',
+        'EQ-BBL-HEAT-NC-01',
+        'EQ-BBL-NR-01',
+        'EQ-BBL-RP-DOM-01',
+        'EQ-RATE-CAP-GAP-01',
+      ]),
     );
     const kinds = FORMALIZATION_STATUS.items.map((item) => item.kind);
     expect(kinds).toEqual(

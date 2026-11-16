@@ -335,4 +335,125 @@ theorem scenario_prior_does_not_entail_nuclear_rate
     ¬ NuclearRateProof factors :=
   non_lab_factor_blocks_nuclear_rate_proof h (by decide)
 
+/-! ### EQ-BBL-HEAT-NC-01 — collapse UQ / hydro ≠ cite-gated ≥5σ heat MoE -/
+
+/-- Provenance kind for a calorimetry / heat-significance MoE row. -/
+inductive HeatMoEKind where
+  /-- Collapse / cavitation UQ envelope (model output percentiles). -/
+  | collapseUqEnvelope
+  /-- Hydro enhancement / contested cavitation scenario heat. -/
+  | hydroEnhancementScenario
+  /-- Campaign pack model-output cell (not lab MoE). -/
+  | campaignModelOutput
+  /-- Cite-gated literature_reported total σ_Q with verified Q↔σ pairing. -/
+  | literatureReportedVerifiedPairing
+  deriving DecidableEq, Repr
+
+/-- UNDISCHARGED: discovery-grade heat MoE requires verified literature
+    pairing provenance. CollapseBounds never supplies that. -/
+def DiscoveryGradeHeatMoE (kinds : List HeatMoEKind) : Prop :=
+  kinds ≠ [] ∧ ∀ k ∈ kinds, k = HeatMoEKind.literatureReportedVerifiedPairing
+
+/-- Parallel naming to `NuclearRateProof`: a heat-discovery proof is exactly
+    a nonempty discovery-grade heat MoE bag. Hydro / UQ / campaign kinds never
+    inhabit it. Does **not** invent σ_Q arithmetic. -/
+def HeatDiscoveryProof (kinds : List HeatMoEKind) : Prop :=
+  DiscoveryGradeHeatMoE kinds
+
+/-- Hard honesty: nature-proof token stays false on collapse heat surfaces. -/
+def lenrProved : Bool := false
+
+theorem collapse_lenr_proved_false : lenrProved = false := rfl
+
+/-- EQ-BBL-HEAT-NC-01: a MoE bag containing collapse UQ is not discovery-grade. -/
+theorem collapse_uq_does_not_entail_discovery_heat_moe
+    {kinds : List HeatMoEKind}
+    (h : HeatMoEKind.collapseUqEnvelope ∈ kinds) :
+    ¬ DiscoveryGradeHeatMoE kinds := by
+  intro hDisc
+  have : HeatMoEKind.collapseUqEnvelope = HeatMoEKind.literatureReportedVerifiedPairing :=
+    hDisc.2 _ h
+  cases this
+
+/-- EQ-BBL-HEAT-NC-01: hydro enhancement scenarios never supply cite-gated MoE. -/
+theorem hydro_enhancement_does_not_entail_discovery_heat_moe
+    {kinds : List HeatMoEKind}
+    (h : HeatMoEKind.hydroEnhancementScenario ∈ kinds) :
+    ¬ DiscoveryGradeHeatMoE kinds := by
+  intro hDisc
+  have : HeatMoEKind.hydroEnhancementScenario =
+      HeatMoEKind.literatureReportedVerifiedPairing :=
+    hDisc.2 _ h
+  cases this
+
+/-- EQ-BBL-HEAT-NC-01: campaign model-output cells are not discovery MoE. -/
+theorem campaign_model_output_does_not_entail_discovery_heat_moe
+    {kinds : List HeatMoEKind}
+    (h : HeatMoEKind.campaignModelOutput ∈ kinds) :
+    ¬ DiscoveryGradeHeatMoE kinds := by
+  intro hDisc
+  have : HeatMoEKind.campaignModelOutput =
+      HeatMoEKind.literatureReportedVerifiedPairing :=
+    hDisc.2 _ h
+  cases this
+
+/-- EQ-BBL-HEAT-NC-01 ∘ EQ-BBL-UQ-01: UQ percentile bookkeeping does not
+    discharge EQ-OPEN-YIELD-01 (integrated yield) or set lenr_proved. -/
+def q5IntegratedYieldClosed (yieldDiscrepancy : Nat) : Prop :=
+  yieldDiscrepancy = 0
+
+theorem uq_percentiles_do_not_close_q5
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy) :
+    uqPercentiles.length = 5
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ lenrProved = false := by
+  refine ⟨uq_percentile_count, ?_, collapse_lenr_proved_false⟩
+  intro hClosed
+  unfold q5IntegratedYieldClosed at hClosed
+  exact (Nat.ne_of_gt hOpen) hClosed
+
+/-- Even a (hypothetical) discovery-grade MoE / `HeatDiscoveryProof` bag does
+    not close integrated yield or flip `lenr_proved` — analytics MoE ≠
+    EQ-OPEN-YIELD / nature proof. Aligns EQ-BBL-HEAT-NC-01 with EQ-HEAT-SIG-NC-01. -/
+theorem heat_discovery_proof_does_not_close_q5_or_lenr
+    {kinds : List HeatMoEKind}
+    (_hDisc : HeatDiscoveryProof kinds)
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy) :
+    ¬ q5IntegratedYieldClosed yieldDiscrepancy ∧ lenrProved = false := by
+  refine ⟨?_, collapse_lenr_proved_false⟩
+  intro hClosed
+  unfold q5IntegratedYieldClosed at hClosed
+  exact (Nat.ne_of_gt hOpen) hClosed
+
+/-- Empty MoE bag is not a discovery-grade heat proof. -/
+theorem empty_moe_bag_not_discovery :
+    ¬ DiscoveryGradeHeatMoE [] := by
+  intro h
+  exact (h.1) rfl
+
+/-- EQ-BBL-HEAT-NC-01: reported collapse temperature (clamped) never supplies
+    cite-gated discovery MoE by itself — hydro reporting ≠ heat discovery. -/
+theorem reported_temperature_does_not_entail_discovery_heat_moe
+    (raw_K peakMach_x10 : Nat) (isRayleighPlesset : Bool) :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.hydroEnhancementScenario]
+      ∧ reportedTemperature_K raw_K peakMach_x10 isRayleighPlesset
+          ≤ temperatureBound_K peakMach_x10 isRayleighPlesset
+      ∧ lenrProved = false := by
+  refine ⟨?_, reported_temperature_le_bound _ _ _, collapse_lenr_proved_false⟩
+  exact hydro_enhancement_does_not_entail_discovery_heat_moe (by simp)
+
+/-- EQ-BBL-HEAT-NC-01: reported pressure / compression clamps likewise do not
+    underwrite discovery-grade heat MoE. -/
+theorem reported_pressure_and_compression_keep_heat_moe_open
+    (raw_Pa raw_CR : Nat) :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.collapseUqEnvelope]
+      ∧ reportedPressure_Pa raw_Pa ≤ shockPressureCeiling_Pa
+      ∧ reportedCompressionRatio raw_CR ≤ maxCompressionRatio
+      ∧ lenrProved = false := by
+  refine ⟨?_, reported_pressure_le_shock_ceiling _, reported_compression_le_cap _,
+    collapse_lenr_proved_false⟩
+  exact collapse_uq_does_not_entail_discovery_heat_moe (by simp)
+
 end LenrFormal.CollapseBounds

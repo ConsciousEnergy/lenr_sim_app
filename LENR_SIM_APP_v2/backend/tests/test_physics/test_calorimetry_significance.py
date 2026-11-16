@@ -426,12 +426,15 @@ def test_quantitative_distance_miles_above_bar_gates_blocked() -> None:
     gap = discovery_grade_gap_bookkeeping(report)
     distance = gap["quantitative_distance"]
     assert distance["s_heat"] == 26.0
+    assert distance["moe_provenance"] == "literature_reported_instrument_precision"
+    assert distance["moe_sigma_q_pairing_verified"] is False
     assert distance["arithmetic_sigma_shortfall"] == 0.0
     assert distance["distance_status"] == "at_or_above_bar_gates_blocked"
     assert distance["discovery_grade_eligible"] is False
     assert distance["stat_sys_composition"]["composition_mode"] == "explicit_total"
     assert gap["overall_status"] == "not_met"
     assert gap["lenr_proved"] is False
+    assert "Never render bare S_heat" in distance["honesty"]
 
 
 def test_quantitative_distance_rss_stat_sys_composition() -> None:

@@ -82,9 +82,13 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         </code>
         {' · '}status <code>{distance.distance_status}</code>.
         {' '}Miles exploratory arithmetic S_heat=
-        <code>{coverage.miles_exploratory_s_heat}</code> remains{' '}
-        <code>{coverage.miles_distance_status}</code> (instrument_precision + unverified
-        pairing). Kasagi NiCu analytics S_heat=
+        <code>{coverage.miles_exploratory_s_heat}</code> (
+        <code>{coverage.miles_moe_provenance || 'literature_reported_instrument_precision'}</code>
+        , pairing=
+        <code>{String(coverage.miles_pairing_verified ?? false)}</code>) remains{' '}
+        <code>{coverage.miles_distance_status}</code>
+        {coverage.miles_banner ? <> — {coverage.miles_banner}</> : null}
+        {' '}Kasagi NiCu analytics S_heat=
         <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
         <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close EQ-OPEN-*.
       </Typography>

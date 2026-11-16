@@ -111,6 +111,10 @@ def quantitative_distance_to_discovery(
         "s_heat": float(significance) if significance is not None else None,
         "excess_power_w": float(q_w) if q_w is not None else None,
         "sigma_q_w": float(sigma) if sigma is not None else None,
+        "moe_provenance": summary.get("moe_provenance"),
+        "moe_sigma_q_pairing_verified": bool(
+            summary.get("moe_sigma_q_pairing_verified")
+        ),
         "arithmetic_sigma_shortfall": arithmetic_shortfall,
         "required_sigma_q_w_for_5": required_sigma,
         "sigma_tightening_factor_vs_5": tightening,
@@ -121,6 +125,7 @@ def quantitative_distance_to_discovery(
         "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
         "honesty": (
             "Quantitative distance to the BDS-302 ≥5σ analytics bar only. "
+            "Never render bare S_heat without moe_provenance / pairing status. "
             "Arithmetic S_heat ≥ 5 with blocked gates (instrument_precision, "
             "unverified pairing, seed-scale Q) is not discovery and never sets "
             "lenr_proved or closes EQ-OPEN-*. Clearing analytics gates still "

@@ -26,8 +26,10 @@ This is a **decision aid for lab design**, not a posterior over “LENR is true.
 | `/analytics` Overview §5B panel | Avenue ↔ EQ-OPEN linkage chips + unmet ≥5σ missing-requirements list |
 | Theory Paper §5B | Same linkage + `five_sigma_role` tags per avenue |
 | `discovery_grade_gap.py` | Cite-gated σ_Q gap bookkeeping for `calorimetry_sigma_q` / YIELD heat language |
+| `sigma_distance.py` | Quantitative shortfall to ≥5σ + corpus MoE/pairing coverage counts (analytics only) |
+| Lean `EQ-HEAT-SIG-*` / `EQ-BBL-HEAT-NC-01` | Analytics bar lock + collapse UQ ≠ cite-gated discovery MoE (non-closure) |
 
-Informativeness scores are **not** ≥5σ discovery claims. The `calorimetry_sigma_q` avenue is the primary heat-MoE stress path; clearing BDS-302 analytics gates still does not flip `lenr_proved` or close EQ-OPEN-*.
+Informativeness scores are **not** ≥5σ discovery claims. The `calorimetry_sigma_q` avenue is the primary heat-MoE stress path; clearing BDS-302 analytics gates still does not flip `lenr_proved` or close EQ-OPEN-*. See [`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md) § “Quantitative distance to ≥5σ” for distance_status vocabulary (`undefined` / `below_bar` / `at_or_above_bar_gates_blocked` / `at_or_above_bar_gates_clear`).
 
 ## Honesty contract
 

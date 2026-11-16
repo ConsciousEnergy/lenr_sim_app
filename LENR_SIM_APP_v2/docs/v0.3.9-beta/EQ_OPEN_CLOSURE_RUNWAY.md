@@ -224,16 +224,34 @@ Illustrative shape only. **Not** attested data; do not copy into production as m
 
 ---
 
+## Quantitative distance to ≥5σ (YIELD heat MoE; still unmet)
+
+Paper / BDS-302 criterion: \(S_{\mathrm{heat}} = Q_{\mathrm{excess}} / \sigma_Q\) with discovery-grade analytics requiring \(S \ge 5\), `literature_reported` measurement-specific σ_Q, verified Q↔σ pairing, and non-seed measured Q. **Clearing the analytics flag still does not close `EQ-OPEN-YIELD-01` or set `lenr_proved`.**
+
+Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_distance.py`. Lean locks: `EQ-HEAT-SIG-01` / `EQ-HEAT-SIG-NC-01` (`CalorimetrySignificance.lean`); collapse UQ ≠ discovery MoE (`EQ-BBL-HEAT-NC-01`).
+
+| Distance status | Meaning | Closure implication |
+|-----------------|---------|---------------------|
+| `undefined` | No finite Q and σ_Q pair (campaign / §5B corpus default) | Gates `not_met` |
+| `below_bar` | \(S_{\mathrm{heat}} < 5\); shortfall \(= 5 - S\) reported | Gates `not_met` |
+| `at_or_above_bar_gates_blocked` | Arithmetic \(S \ge 5\) but provenance / pairing / seed gates fail (e.g. Miles peak \(S=26\) under instrument_precision) | **Not** discovery; EQ-OPEN stays OPEN |
+| `at_or_above_bar_gates_clear` | Analytics `discovery_grade_eligible` true (e.g. Kasagi NiCu) | **Still** `honest_closure: not_met`; EQ-OPEN OPEN; `lenr_proved: false` |
+
+**Corpus MoE coverage bookkeeping** (literature + ICCF27 hydrate; counts only): minority of rows carry numeric σ_Q; fewer have cite-gated `literature_reported` + verified pairing; analytics-eligible rows **never** auto-discharge this runway. Campaign packs stamp corpus gap envelopes (`not_met`) by design — collapse UQ sample depth does not tighten cite-gated σ_Q.
+
+For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
+
 ## UI / Analytics cross-links (bookkeeping only)
 
 Reviewer surfaces that **point at** this runway without changing status:
 
 | Surface | Role |
 |---------|------|
-| `/analytics` Overview §5B panel | EQ-OPEN ↔ avenue chips + ≥5σ missing-requirements checklist (`not_met`) |
-| Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags |
+| `/analytics` Overview §5B panel | EQ-OPEN ↔ avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance |
+| Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
+| History row chips | `discovery_grade_gap` / `honest_closure` / `Δσ` distance status from export envelopes |
 | [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |
-| `discovery_grade_gap.py` | Cite-gated σ_Q / pairing gap bookkeeping (analytics flag only) |
+| `discovery_grade_gap.py` / `sigma_distance.py` | Cite-gated σ_Q / pairing gap + quantitative shortfall bookkeeping (analytics only) |
 
 Cross-links never discharge an obligation. Prefer ≥5σ cite-gated heat MoE where YIELD heat claims underwrite closure (`EQ-OPEN-YIELD-01`); RAD/RATE/EC paths stay orthogonal to the calorimetry ≥5σ bar.
 

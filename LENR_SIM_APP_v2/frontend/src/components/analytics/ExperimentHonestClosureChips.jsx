@@ -1,6 +1,7 @@
 /**
  * Compact History-row chips for discovery_grade_gap + honest_closure envelopes.
  * Closure status is always shown as not_met; never claims lenr_proved.
+ * Analytics gate clearance displays as `analytics_gates_clear` — never "≥5σ … met".
  */
 import React, { useState } from 'react';
 import {
@@ -27,7 +28,7 @@ export default function ExperimentHonestClosureChips({
 }) {
   const [open, setOpen] = useState(false);
   const envelopes = normalizeExperimentDiscoveryEnvelopes(experiment);
-  const gapStatus = envelopes.discoveryGradeGap?.overall_status || 'not_met';
+  const analyticsGateStatus = envelopes.analyticsGateStatus || 'not_met';
   const closureStatus = envelopes.honestClosure?.overall_status || 'not_met';
   const missing = envelopes.honestClosure?.missing_requirements || [];
   const distance = envelopes.quantitativeDistance || {};
@@ -36,6 +37,10 @@ export default function ExperimentHonestClosureChips({
     distance.arithmetic_sigma_shortfall == null
       ? 'n/a'
       : distance.arithmetic_sigma_shortfall;
+  const moeProvenance = distance.moe_provenance || distance.stat_sys_composition?.composition_mode;
+  const showExploratoryBanner =
+    distanceStatus === 'at_or_above_bar_gates_blocked' ||
+    (distance.s_heat != null && !envelopes.discoveryGradeEligible);
 
   return (
     <>
@@ -50,10 +55,11 @@ export default function ExperimentHonestClosureChips({
           size="small"
           color="warning"
           variant="outlined"
-          label={`≥5σ gap: ${gapStatus}`}
+          label={`analytics gates: ${analyticsGateStatus}`}
+          title="BDS-302 analytics gates only — not discovery closure, not lenr_proved, not EQ-OPEN discharge"
           onClick={() => setOpen(true)}
           data-testid={`${testIdPrefix}-discovery`}
-          sx={{ fontFamily: 'monospace', fontSize: '0.6rem', height: 20 }}
+          sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 20 }}
         />
         <Chip
           size="small"
@@ -94,19 +100,21 @@ export default function ExperimentHonestClosureChips({
         data-testid={`${testIdPrefix}-dialog`}
       >
         <DialogTitle>
-          Honest closure / ≥5σ gap — <code>not_met</code>
+          Honest closure — <code>not_met</code> · analytics gates:{' '}
+          <code>{analyticsGateStatus}</code>
         </DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" paragraph>
             Row envelopes from Analytics export. <code>lenr_proved: false</code>. EQ-OPEN-*
-            remain OPEN. Clearing cite-gated analytics gates does not discharge obligations.
+            remain OPEN. Clearing cite-gated analytics gates does not discharge obligations
+            and must never be read as “≥5σ discovery met.”
           </Typography>
           <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
             <Chip
               size="small"
               color="warning"
               variant="outlined"
-              label={`discovery_grade_gap: ${gapStatus}`}
+              label={`analytics_gates: ${analyticsGateStatus}`}
             />
             <Chip
               size="small"
@@ -131,6 +139,11 @@ export default function ExperimentHonestClosureChips({
             {distance.s_heat != null ? (
               <>
                 {' '}· S_heat=<code>{distance.s_heat}</code>
+                {moeProvenance ? (
+                  <>
+                    {' '}(<code>{String(moeProvenance)}</code>)
+                  </>
+                ) : null}
               </>
             ) : null}
             {distance.arithmetic_sigma_shortfall != null ? (
@@ -140,6 +153,18 @@ export default function ExperimentHonestClosureChips({
             ) : null}
             . Arithmetic ≥5σ with blocked MoE gates is not discovery.
           </Typography>
+          {showExploratoryBanner ? (
+            <Typography
+              variant="body2"
+              color="warning.main"
+              paragraph
+              data-testid={`${testIdPrefix}-exploratory-banner`}
+            >
+              Exploratory / gates-blocked arithmetic only (e.g. Miles peak S_heat under
+              instrument_precision + unverified pairing). Not discovery-grade; does not close
+              EQ-OPEN-YIELD-01 or set lenr_proved.
+            </Typography>
+          ) : null}
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
             Missing requirements
           </Typography>
