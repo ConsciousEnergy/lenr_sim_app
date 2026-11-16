@@ -121,6 +121,16 @@ export default function AnalyticsScienceEvidencePanel() {
         <Typography variant="body2" color="text.secondary" data-testid="analytics-5b-discovery-gap">
           {DISCOVERY_GRADE_BAR.gap_note}
         </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          data-testid="analytics-5b-history-envelope-note"
+        >
+          History / export rows now carry <code>discovery_grade_gap</code> and{' '}
+          <code>honest_closure</code> envelopes from the API. Row chips stay{' '}
+          <code>not_met</code> for honest closure even when an analytics discovery flag clears —
+          they never set <code>lenr_proved</code> or close EQ-OPEN-*.
+        </Typography>
       </Stack>
 
       <DiscoveryGradeGapChecklist testIdPrefix="analytics-5b-gap" />
