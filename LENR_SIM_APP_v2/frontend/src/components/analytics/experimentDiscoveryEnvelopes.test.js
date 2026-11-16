@@ -4,6 +4,14 @@ import {
 } from './experimentDiscoveryEnvelopes';
 
 describe('normalizeExperimentDiscoveryEnvelopes', () => {
+  test('tolerates null experiment input without throwing', () => {
+    const envelopes = normalizeExperimentDiscoveryEnvelopes(null);
+    expect(envelopes.lenrProved).toBe(false);
+    expect(envelopes.discoveryGradeEligible).toBe(false);
+    expect(envelopes.discoveryGradeGap.overall_status).toBe('not_met');
+    expect(envelopes.honestClosure.overall_status).toBe('not_met');
+  });
+
   test('falls back to corpus not_met envelopes when API fields absent', () => {
     const envelopes = normalizeExperimentDiscoveryEnvelopes({ id: 'x' });
     expect(envelopes.lenrProved).toBe(false);

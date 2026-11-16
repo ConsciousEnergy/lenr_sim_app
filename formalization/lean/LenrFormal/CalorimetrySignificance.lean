@@ -115,16 +115,18 @@ theorem instrument_precision_not_discovery_eligible :
   cases h
 
 /-- UNDISCHARGED: analytics discovery flag needs arithmetic ≥5σ **and**
-    literature_reported provenance **and** verified Q↔σ pairing **and**
-    non-seed measured Q. Still never proves LENR. -/
+    literature_reported provenance **and** nonempty moe_citation_keys **and**
+    verified Q↔σ pairing **and** non-seed measured Q. Still never proves LENR.
+    Mirrors Python cite-gated discovery_grade_eligible (citations required). -/
 def DiscoveryGradeAnalytics
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ : Bool) : Prop :=
+    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) : Prop :=
   meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli
     ∧ discoveryEligibleProvenance provenance
     ∧ pairingVerified = true
     ∧ nonSeedMeasuredQ = true
+    ∧ citationsNonempty = true
 
 /-- EQ-HEAT-SIG-NC-01: Miles-class exploratory arithmetic with instrument
     precision and unverified pairing is not a discovery-grade analytics flag. -/
@@ -133,16 +135,32 @@ theorem miles_exploratory_not_discovery_grade :
       milesPeakExploratorySHeatMilli
       MoeProvenance.literatureReportedInstrumentPrecision
       false
+      true
       true := by
   intro h
   exact instrument_precision_not_discovery_eligible h.2.1
+
+/-- Empty citation keys block the analytics discovery flag even when other
+    gates would clear (mirrors Python moe_citation_keys gate). -/
+theorem empty_citations_not_discovery_grade
+    (sHeatMilli : Nat)
+    (hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReported
+      true
+      true
+      false := by
+  intro h
+  exact Bool.noConfusion h.2.2.2.2
 
 /-- EQ-HEAT-SIG-NC-01: even a cleared analytics flag does not prove LENR. -/
 theorem discovery_grade_analytics_does_not_prove_lenr
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ : Bool) :
-    DiscoveryGradeAnalytics sHeatMilli provenance pairingVerified nonSeedMeasuredQ →
+    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) :
+    DiscoveryGradeAnalytics
+      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty →
       lenrProved = false := by
   intro _
   exact lenr_proved_false

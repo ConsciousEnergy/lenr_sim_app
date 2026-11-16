@@ -37,10 +37,12 @@ export function analyticsGateDisplayStatus(overallStatus) {
  * }}
  */
 export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
-  const results = exp.results && typeof exp.results === 'object' ? exp.results : {};
+  const safeExp = exp && typeof exp === 'object' ? exp : {};
+  const results =
+    safeExp.results && typeof safeExp.results === 'object' ? safeExp.results : {};
   const summary =
-    (exp.bayesian_summary && typeof exp.bayesian_summary === 'object'
-      ? exp.bayesian_summary
+    (safeExp.bayesian_summary && typeof safeExp.bayesian_summary === 'object'
+      ? safeExp.bayesian_summary
       : null) ||
     (results.bayesian_summary && typeof results.bayesian_summary === 'object'
       ? results.bayesian_summary
@@ -48,17 +50,17 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     {};
 
   const rawGap =
-    exp.discovery_grade_gap ||
+    safeExp.discovery_grade_gap ||
     results.discovery_grade_gap ||
     summary.discovery_grade_gap ||
     null;
   const rawClosure =
-    exp.honest_closure ||
+    safeExp.honest_closure ||
     results.honest_closure ||
     summary.honest_closure ||
     null;
   const rawDistance =
-    exp.quantitative_distance ||
+    safeExp.quantitative_distance ||
     results.quantitative_distance ||
     summary.quantitative_distance ||
     (rawGap && typeof rawGap === 'object' ? rawGap.quantitative_distance : null) ||
@@ -111,7 +113,7 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
           };
 
   const discoveryGradeEligible = Boolean(
-    exp.discovery_grade_eligible ??
+    safeExp.discovery_grade_eligible ??
       results.discovery_grade_eligible ??
       summary.discovery_grade_eligible ??
       false,

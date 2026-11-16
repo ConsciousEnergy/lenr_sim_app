@@ -15,7 +15,50 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 import { normalizeExperimentDiscoveryEnvelopes } from './experimentDiscoveryEnvelopes';
+
+/** Claim-tier chip (optics only; never upgrades honesty locks). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
+
+function resolveCalorimetryClaimTier(experiment, moeProvenance) {
+  const results =
+    experiment?.results && typeof experiment.results === 'object'
+      ? experiment.results
+      : {};
+  const summary =
+    (experiment?.bayesian_summary && typeof experiment.bayesian_summary === 'object'
+      ? experiment.bayesian_summary
+      : null) ||
+    (results.bayesian_summary && typeof results.bayesian_summary === 'object'
+      ? results.bayesian_summary
+      : {});
+  const explicit =
+    experiment?.claim_tier || results.claim_tier || summary.claim_tier || null;
+  if (explicit) return explicit;
+  if (moeProvenance === 'literature_reported_instrument_precision') {
+    return 'speculative_exploratory';
+  }
+  if (moeProvenance === 'literature_reported') {
+    return 'empirical_lenr_correlation';
+  }
+  return null;
+}
 
 /**
  * @param {Object} props
@@ -37,7 +80,12 @@ export default function ExperimentHonestClosureChips({
     distance.arithmetic_sigma_shortfall == null
       ? 'n/a'
       : distance.arithmetic_sigma_shortfall;
-  const moeProvenance = distance.moe_provenance || distance.stat_sys_composition?.composition_mode;
+  const moeProvenance =
+    distance.moe_provenance ||
+    experiment?.moe_provenance ||
+    experiment?.results?.moe_provenance ||
+    null;
+  const claimTier = resolveCalorimetryClaimTier(experiment, moeProvenance);
   const showExploratoryBanner =
     distanceStatus === 'at_or_above_bar_gates_blocked' ||
     (distance.s_heat != null && !envelopes.discoveryGradeEligible);
@@ -136,15 +184,22 @@ export default function ExperimentHonestClosureChips({
             data-testid={`${testIdPrefix}-distance-detail`}
           >
             Quantitative distance: status <code>{distanceStatus}</code>
-            {distance.s_heat != null ? (
+            {distance.s_heat != null && moeProvenance ? (
               <>
-                {' '}· S_heat=<code>{distance.s_heat}</code>
-                {moeProvenance ? (
+                {' '}· S_heat=<code>{distance.s_heat}</code>{' '}
+                (<code>{String(moeProvenance)}</code>)
+                {claimTier ? (
                   <>
-                    {' '}(<code>{String(moeProvenance)}</code>)
+                    {' '}
+                    <ClaimTierChip
+                      tier={claimTier}
+                      testId={`${testIdPrefix}-claim-tier`}
+                    />
                   </>
                 ) : null}
               </>
+            ) : distance.s_heat != null ? (
+              <> · S_heat withheld without moe_provenance</>
             ) : null}
             {distance.arithmetic_sigma_shortfall != null ? (
               <>

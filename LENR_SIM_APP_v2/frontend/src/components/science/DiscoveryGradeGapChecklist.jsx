@@ -18,6 +18,25 @@ import {
   DISCOVERY_GRADE_BAR,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric literature S_heat claims (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 /**
  * @param {Object} props
@@ -85,12 +104,24 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         <code>{coverage.miles_exploratory_s_heat}</code> (
         <code>{coverage.miles_moe_provenance || 'literature_reported_instrument_precision'}</code>
         , pairing=
-        <code>{String(coverage.miles_pairing_verified ?? false)}</code>) remains{' '}
-        <code>{coverage.miles_distance_status}</code>
+        <code>{String(coverage.miles_pairing_verified ?? false)}</code>
+        ){' '}
+        <ClaimTierChip
+          tier={coverage.miles_claim_tier || 'speculative_exploratory'}
+          testId={`${testIdPrefix}-miles-claim-tier`}
+        />{' '}
+        remains <code>{coverage.miles_distance_status}</code>
         {coverage.miles_banner ? <> — {coverage.miles_banner}</> : null}
         {' '}Kasagi NiCu analytics S_heat=
-        <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
-        <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close EQ-OPEN-*.
+        <code>{coverage.kasagi_nicu_s_heat}</code> (
+        <code>{coverage.kasagi_nicu_moe_provenance || 'literature_reported'}</code>
+        ){' '}
+        <ClaimTierChip
+          tier={coverage.kasagi_nicu_claim_tier || 'empirical_lenr_correlation'}
+          testId={`${testIdPrefix}-kasagi-claim-tier`}
+        />{' '}
+        is <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close
+        EQ-OPEN-*.
       </Typography>
 
       <Typography

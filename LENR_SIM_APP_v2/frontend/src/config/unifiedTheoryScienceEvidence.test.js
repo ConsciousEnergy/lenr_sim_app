@@ -110,8 +110,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       'at_or_above_bar_gates_blocked',
     );
     expect(CORPUS_MOE_COVERAGE.miles_moe_provenance).toMatch(/instrument_precision/);
+    expect(CORPUS_MOE_COVERAGE.miles_claim_tier).toBe('speculative_exploratory');
     expect(CORPUS_MOE_COVERAGE.miles_pairing_verified).toBe(false);
     expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/exploratory/i);
+    expect(CORPUS_MOE_COVERAGE.kasagi_nicu_moe_provenance).toBe('literature_reported');
+    expect(CORPUS_MOE_COVERAGE.kasagi_nicu_claim_tier).toBe(
+      'empirical_lenr_correlation',
+    );
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,
     );

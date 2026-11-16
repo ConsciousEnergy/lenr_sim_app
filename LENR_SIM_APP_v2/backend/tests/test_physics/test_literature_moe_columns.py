@@ -479,6 +479,66 @@ def test_merge_overwrites_caller_supplied_significance() -> None:
     assert merged["bayesian_summary"]["discovery_grade_eligible"] is False
 
 
+def test_enrich_resolves_live_q_not_stale_summary() -> None:
+    """Updated σ must pair with resolve_measured_excess_power_w Q, not stale summary."""
+    from app.services.experiment_association import enrich_experiment_dict
+
+    payload = {
+        "id": "00000000-0000-0000-0000-000000000077",
+        "name": "stale-q guard",
+        "excess_heat_watts": 1.0,
+        "parameters": {"measured_excess_power_W": 0.1},
+        "results": {},
+        "sigma_Q_W": 0.04,
+        "moe_provenance": "literature_reported",
+        "moe_citation_keys": ["x"],
+        "moe_sigma_q_pairing_verified": True,
+        "discovery_grade_eligible": False,
+        "bayesian_summary": {
+            "excess_power_w": 1.1,
+            "sigma_q_w": 0.08,
+            "s_heat": 13.75,
+            "q_source": "stale",
+            "q_is_seed_scale": False,
+            "discovery_grade_eligible": False,
+            "lenr_proved": False,
+        },
+    }
+    enriched = enrich_experiment_dict(payload)
+    summary = enriched["bayesian_summary"]
+    assert summary["excess_power_w"] == 0.1
+    assert summary["q_is_seed_scale"] is False
+    assert summary["s_heat"] == 0.1 / 0.04
+    assert enriched["lenr_proved"] is False
+
+
+def test_merge_rebuilds_gap_after_eligibility_downgrade() -> None:
+    columns = literature_moe_columns_from_record(
+        {
+            "excess_heat_watts": 1.1,
+            "measured_excess_power_W": 1.1,
+            "sigma_Q_W": 0.08,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["kasagi2026"],
+            "moe_sigma_q_pairing_verified": True,
+        }
+    )
+    assert columns["discovery_grade_eligible"] is True
+    assert columns["bayesian_summary"]["discovery_grade_gap"]["overall_status"] == "met"
+
+    downgraded = dict(columns)
+    downgraded["discovery_grade_eligible"] = False
+    summary = dict(downgraded["bayesian_summary"])
+    summary["discovery_grade_eligible"] = False
+    downgraded["bayesian_summary"] = summary
+    merged = merge_bayesian_into_results({}, downgraded)
+    assert merged["discovery_grade_eligible"] is False
+    assert merged["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert merged["discovery_grade_gap"]["discovery_grade_eligible"] is False
+    assert merged["honest_closure"]["overall_status"] == "not_met"
+    assert merged["lenr_proved"] is False
+
+
 def test_experiment_to_dict_includes_literature_moe_fields() -> None:
     from app.services.experiment_association import enrich_experiment_dict
 

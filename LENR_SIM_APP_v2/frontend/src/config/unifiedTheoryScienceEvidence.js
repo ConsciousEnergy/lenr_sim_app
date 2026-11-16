@@ -125,12 +125,15 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   /** Miles peak arithmetic S_heat=26 under instrument_precision — gates blocked. */
   miles_exploratory_s_heat: 26,
   miles_moe_provenance: 'literature_reported_instrument_precision',
+  miles_claim_tier: 'speculative_exploratory',
   miles_pairing_verified: false,
   miles_distance_status: 'at_or_above_bar_gates_blocked',
   miles_banner:
     'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery.',
   /** Kasagi NiCu clears analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
+  kasagi_nicu_moe_provenance: 'literature_reported',
+  kasagi_nicu_claim_tier: 'empirical_lenr_correlation',
   kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
   closes_eq_open: false,
   lenr_proved: false,
