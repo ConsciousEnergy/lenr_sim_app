@@ -18,6 +18,7 @@ import {
 import {
   CORPUS_MOE_COVERAGE,
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
+  NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
 
 /**
@@ -65,6 +66,12 @@ export default function EmpExploratoryWhyNotDiscovery({
             {coverage.lean_dual_kasagi_nc_bound ? (
               <>
                 {' · '}Lean <code>dual_kasagi_analytics_does_not_close_eq_open_or_lenr</code>
+              </>
+            ) : null}
+            {coverage.lean_all_eq_open_nc_bound ? (
+              <>
+                {' · '}Lean{' '}
+                <code>discovery_grade_analytics_does_not_close_any_eq_open</code>
               </>
             ) : null}
             )
@@ -120,6 +127,15 @@ export default function EmpExploratoryWhyNotDiscovery({
             sx={{ fontSize: '0.65rem' }}
           />
         ) : null}
+        {coverage.lean_all_eq_open_nc_bound ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Lean analytics ≠ any of Q1–Q5"
+            data-testid={`${testIdPrefix}-lean-all-eq-open`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
         {coverage.soft_chip_ne_scientific_discharge ? (
           <Chip
             size="small"
@@ -170,10 +186,29 @@ export default function EmpExploratoryWhyNotDiscovery({
           data-testid={`${testIdPrefix}-scientific-blockers`}
         >
           Remaining scientific blockers (no flag flips):{' '}
-          {(coverage.remaining_scientific_blockers || []).join('; ')}. Next ops
-          step when humans ask: promote+ship prep — not auto <code>main</code> /
-          Path B.
+          {(coverage.remaining_scientific_blockers || []).join('; ')}. Concrete
+          next lab/MoE targets below. Next ops step when humans ask:
+          promote+ship prep — not auto <code>main</code> / Path B.
         </Typography>
+      ) : null}
+      {NEXT_LAB_MOE_TARGETS.length > 0 ? (
+        <Stack spacing={0.5} sx={{ mb: 1 }} data-testid={`${testIdPrefix}-next-lab-targets`}>
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Next lab / MoE targets (blocked awaiting lab; no honesty flips)
+          </Typography>
+          {NEXT_LAB_MOE_TARGETS.map((row) => (
+            <Typography
+              key={row.id}
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              data-testid={`${testIdPrefix}-next-lab-${row.id}`}
+            >
+              <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
+              {row.target}
+            </Typography>
+          ))}
+        </Stack>
       ) : null}
       <List dense disablePadding data-testid={`${testIdPrefix}-list`}>
         {rows.map((row) => (

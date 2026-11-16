@@ -1,5 +1,5 @@
 id: EQ-HEAT-SIG-NC-01
-latex: "\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
+latex: "\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad \\mathrm{DiscoveryGradeAnalytics}\\nRightarrow\\bigwedge_{i=1}^{5}\\neg Q_i;\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
 symbols:
   DiscoveryGradeAnalytics: "BDS-302 analytics flag (cite-gated + pairing + non-seed + S≥5)"
   instrumentPrecision: "literature_reported_instrument_precision MoE provenance"
@@ -9,7 +9,7 @@ symbols:
   softChipIsScientificDischarge: "UI soft chip never equals scientific ≥5σ / EQ-OPEN discharge"
 units: "dimensionless (honesty / non-closure)"
 tag: AX
-paper_ref: "§5B / BDS-302 / BDS-330 / BDS-344; EQ-OPEN-YIELD-01 runway"
+paper_ref: "§5B / BDS-302 / BDS-330 / BDS-344 / BDS-346; EQ-OPEN-* runway"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
@@ -28,5 +28,7 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_prove_lenr"
   - "LenrFormal.CalorimetrySignificance.high_s_heat_does_not_close_q5"
   - "LenrFormal.CalorimetrySignificance.dual_kasagi_analytics_does_not_close_eq_open_or_lenr"
+  - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_close_any_eq_open"
+  - "LenrFormal.CalorimetrySignificance.dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr"
   - "LenrFormal.CalorimetrySignificance.soft_chip_not_scientific_discharge"
-notes: "AX honesty (BDS-344): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved or close EQ-OPEN-YIELD-01. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX."
+notes: "AX honesty (BDS-344/BDS-346): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved. BDS-346 binds DiscoveryGradeAnalytics ⇏ any of Q1–Q5 (MEV/RAD/RATE/EC/YIELD) under open witnesses — not Q5-only. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX / OpenObligations."

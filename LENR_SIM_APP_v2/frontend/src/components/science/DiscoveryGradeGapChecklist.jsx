@@ -129,6 +129,11 @@ export default function DiscoveryGradeGapChecklist({
             {' · '}Lean dual-Kasagi NC bound
           </>
         ) : null}
+        {coverage.lean_all_eq_open_nc_bound ? (
+          <>
+            {' · '}Lean analytics ≠ any of Q1–Q5
+          </>
+        ) : null}
         {coverage.software_honest_5sigma_runway_exhausted ? (
           <>
             {' · '}software honest ≥5σ Prefer-merge runway <code>exhausted</code>

@@ -23,8 +23,14 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-coverage')).toHaveTextContent(
       /dual_kasagi_analytics_does_not_close_eq_open_or_lenr/,
     );
+    expect(screen.getByTestId('emp-test-coverage')).toHaveTextContent(
+      /discovery_grade_analytics_does_not_close_any_eq_open/,
+    );
     expect(screen.getByTestId('emp-test-floor-nc-chip')).toHaveTextContent(
       /instrument_floor/i,
+    );
+    expect(screen.getByTestId('emp-test-lean-all-eq-open')).toHaveTextContent(
+      /Q1–Q5|any of Q1/i,
     );
     expect(screen.getByTestId('emp-test-soft-chip-lock')).toHaveTextContent(
       /soft chip ≠ scientific discharge/i,
@@ -41,6 +47,15 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-scientific-blockers')).toHaveTextContent(
       /governed_lab|eq_open|lenr_proved/i,
     );
+    expect(screen.getByTestId('emp-test-next-lab-targets')).toHaveTextContent(
+      /Next lab \/ MoE targets/i,
+    );
+    expect(
+      screen.getByTestId('emp-test-next-lab-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/cite-gated|YIELD/i);
+    expect(
+      screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
+    ).toHaveTextContent(/23\.8 MeV|efficiency/i);
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(
       /at_or_above_bar_gates_blocked/,
