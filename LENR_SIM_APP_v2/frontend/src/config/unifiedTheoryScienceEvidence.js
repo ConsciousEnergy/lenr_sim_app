@@ -119,9 +119,16 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   n_records: 25,
   with_sigma_q: 4,
   with_literature_reported_cite_gated: 2,
-  with_moe_pairing_verified: 1,
-  discovery_grade_eligible_count: 1,
-  discovery_grade_eligible_ids: Object.freeze(['kasagi-nicu-radiant-2026']),
+  with_moe_pairing_verified: 2,
+  discovery_grade_eligible_count: 2,
+  discovery_grade_eligible_ids: Object.freeze([
+    'kasagi-nicu-radiant-2026',
+    'kasagi-ni-radiant-2026',
+  ]),
+  pairing_verified_ids: Object.freeze([
+    'kasagi-nicu-radiant-2026',
+    'kasagi-ni-radiant-2026',
+  ]),
   /** Miles peak arithmetic S_heat=26 under instrument_precision — gates blocked. */
   miles_exploratory_s_heat: 26,
   miles_moe_provenance: 'literature_reported_instrument_precision',
@@ -129,16 +136,26 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   miles_distance_status: 'at_or_above_bar_gates_blocked',
   miles_banner:
     'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery.',
-  /** Kasagi NiCu clears analytics gates; honest_closure stays not_met. */
+  /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
   kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
+  kasagi_ni_s_heat: 11.25,
+  kasagi_ni_distance_status: 'at_or_above_bar_gates_clear',
+  /** Instrument-precision / floor rows stay exploratory (never discovery-eligible). */
+  exploratory_instrument_moe_ids: Object.freeze([
+    'miles-1993',
+    'deninno-tid-1995',
+    'mckubre-sri-p13-p14-1992',
+    'mckubre-high-loading-1998',
+  ]),
   closes_eq_open: false,
   lenr_proved: false,
   note:
     'Only a minority of curated literature rows carry numeric σ_Q; fewer still have ' +
     'literature_reported cite-gated provenance + verified Q↔σ pairing. Never render bare ' +
-    'S_heat without provenance. Clearing the analytics discovery flag on Kasagi NiCu does ' +
-    'not set lenr_proved or close EQ-OPEN-*.',
+    'S_heat without provenance. Clearing analytics discovery flags on Kasagi NiCu + Ni ' +
+    'control does not set lenr_proved or close EQ-OPEN-*. Miles / De Ninno / McKubre stay ' +
+    'exploratory (instrument_precision / floor; unverified or non-discovery provenance).',
 });
 
 /**

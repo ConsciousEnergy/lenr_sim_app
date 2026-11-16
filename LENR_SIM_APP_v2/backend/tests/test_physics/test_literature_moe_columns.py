@@ -187,26 +187,33 @@ def test_deninno_instrument_precision_columns_non_discovery() -> None:
 
 def test_kasagi_iccf_columns_can_flag_discovery_without_lenr_proved() -> None:
     """Analytics flag only — EQ-OPEN stay OPEN; never prove LENR."""
-    nicu = next(
-        row
-        for row in iccf27_literature_records()
-        if row["literature_id"] == "kasagi-nicu-radiant-2026"
-    )
-    columns = literature_moe_columns_from_record(nicu)
-    assert columns["moe_provenance"] == "literature_reported"
-    assert columns["sigma_q_w"] == 0.08
-    assert columns["discovery_grade_eligible"] is True
-    assert columns["bayesian_summary"]["lenr_proved"] is False
-    assert all(
-        status == "OPEN"
-        for status in columns["bayesian_summary"]["eq_open_status"].values()
-    )
-    # Analytics gates can clear; honest closure path stays not_met.
-    assert columns["discovery_grade_gap"]["overall_status"] == "met"
-    assert columns["honest_closure"]["overall_status"] == "not_met"
-    assert "eq_open_discharge" in columns["honest_closure"]["missing_ids"]
-    assert "governance_signoff" in columns["honest_closure"]["missing_ids"]
-    assert columns["honest_closure"]["lenr_proved"] is False
+    for lit_id, expected_q in (
+        ("kasagi-nicu-radiant-2026", 1.1),
+        ("kasagi-ni-radiant-2026", 0.9),
+    ):
+        row = next(
+            r for r in iccf27_literature_records() if r["literature_id"] == lit_id
+        )
+        columns = literature_moe_columns_from_record(row)
+        assert columns["moe_provenance"] == "literature_reported"
+        assert columns["sigma_q_w"] == 0.08
+        assert columns["moe_sigma_q_pairing_verified"] is True
+        assert columns["discovery_grade_eligible"] is True
+        assert columns["bayesian_summary"]["excess_power_w"] == expected_q
+        assert columns["bayesian_summary"]["lenr_proved"] is False
+        assert all(
+            status == "OPEN"
+            for status in columns["bayesian_summary"]["eq_open_status"].values()
+        )
+        # Analytics gates can clear; honest closure path stays not_met.
+        assert columns["discovery_grade_gap"]["overall_status"] == "met"
+        assert columns["honest_closure"]["overall_status"] == "not_met"
+        assert "eq_open_discharge" in columns["honest_closure"]["missing_ids"]
+        assert "governance_signoff" in columns["honest_closure"]["missing_ids"]
+        assert columns["honest_closure"]["lenr_proved"] is False
+        distance = columns["discovery_grade_gap"]["quantitative_distance"]
+        assert distance["distance_status"] == "at_or_above_bar_gates_clear"
+        assert distance["lenr_proved"] is False
 
 
 def test_none_top_level_moe_falls_back_to_parameters() -> None:

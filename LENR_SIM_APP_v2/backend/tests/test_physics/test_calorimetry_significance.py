@@ -3,8 +3,9 @@
 MoE from cite-gated hydrate (PR #406 tip ``0fa710e``): Miles ±0.02 is
 ``literature_reported_instrument_precision`` (follow-on calorimetric error;
 peak+σ pairing unverified → exploratory S_heat only, not discovery).
-De Ninno instrument_precision (exploratory); Kasagi 0.08 + results.q_ex_w;
-McKubre instrument floor metadata only (no sigma_Q_W).
+De Ninno instrument_precision (exploratory); Kasagi NiCu + Ni control 0.08
+with same-results ``q_ex_w`` + ``sigma_Q_W`` pairing; McKubre instrument floor
+metadata only (no sigma_Q_W).
 """
 
 from __future__ import annotations
@@ -311,19 +312,41 @@ def test_kasagi_nicu_same_results_envelope_pairing_can_discover() -> None:
     assert all(v == "OPEN" for v in report["eq_open_status"].values())
 
 
-def test_kasagi_ni_control_exploratory_without_verified_pairing() -> None:
+def test_kasagi_ni_control_same_results_envelope_pairing_can_discover() -> None:
+    """Ni control shares Kasagi radiant MoE; results envelope verifies Q↔σ pairing.
+
+    Analytics discovery_grade_eligible may clear; honesty locks stay false/OPEN.
+    """
     ni = next(
         row
         for row in iccf27_literature_records()
         if row["literature_id"] == "kasagi-ni-radiant-2026"
     )
+    assert float(ni["sigma_Q_W"]) == 0.08
+    assert ni["moe_provenance"] == "literature_reported"
+    assert float(ni["results"]["q_ex_w"]) == 0.9
+    assert float(ni["results"]["sigma_Q_W"]) == 0.08
     report = discovery_grade_from_literature_record(ni)
+    assert report["q_source"] == "results.q_ex_w"
     assert report["q_is_seed_scale"] is False
+    assert report["excess_power_w"] == 0.9
     assert report["s_heat"] == 0.9 / 0.08
     assert report["exploratory_snr_eligible"] is True
-    assert report["moe_sigma_q_pairing_verified"] is False
-    assert report["discovery_grade_eligible"] is False
+    assert report["moe_sigma_q_pairing_verified"] is True
+    assert report["discovery_grade_eligible"] is True
     assert report["lenr_proved"] is False
+    assert all(v == "OPEN" for v in report["eq_open_status"].values())
+
+    gap = discovery_grade_gap_bookkeeping(report)
+    assert gap["overall_status"] == "met"
+    assert gap["lenr_proved"] is False
+    closure = honest_closure_bookkeeping(gap)
+    assert closure["overall_status"] == "not_met"
+    assert closure["lenr_proved"] is False
+    distance = quantitative_distance_to_discovery(report)
+    assert distance["distance_status"] == "at_or_above_bar_gates_clear"
+    assert distance["arithmetic_sigma_shortfall"] == 0.0
+    assert distance["lenr_proved"] is False
 
 
 def test_corpus_discovery_grade_gap_lists_not_met_gates() -> None:
@@ -458,12 +481,56 @@ def test_quantitative_distance_rss_stat_sys_composition() -> None:
 def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
     coverage = literature_corpus_moe_coverage()
     assert coverage["schema"] == "lenr-moe-coverage-v1"
-    assert coverage["n_records"] >= 20
-    assert coverage["with_sigma_q"] >= 1
-    assert coverage["with_moe_pairing_verified"] >= 1
-    assert coverage["discovery_grade_eligible_count"] >= 1
-    assert "kasagi-nicu-radiant-2026" in coverage["discovery_grade_eligible_ids"]
+    assert coverage["n_records"] == 25
+    assert coverage["with_sigma_q"] == 4
+    assert coverage["with_literature_reported_cite_gated"] == 2
+    assert coverage["with_moe_pairing_verified"] == 2
+    assert coverage["discovery_grade_eligible_count"] == 2
+    assert set(coverage["discovery_grade_eligible_ids"]) == {
+        "kasagi-nicu-radiant-2026",
+        "kasagi-ni-radiant-2026",
+    }
+    assert set(coverage["pairing_verified_ids"]) == {
+        "kasagi-nicu-radiant-2026",
+        "kasagi-ni-radiant-2026",
+    }
     assert coverage["closes_eq_open"] is False
     assert coverage["lenr_proved"] is False
     assert all(v == "OPEN" for v in coverage["eq_open_status"].values())
     assert coverage["discovery_grade_eligible_count"] < coverage["n_records"]
+
+
+def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
+    """Instrument_precision / floor MoE never flips discovery_grade_eligible."""
+    by_id = {
+        row["literature_id"]: row
+        for row in literature_records()
+        if row["literature_id"]
+        in {
+            "miles-1993",
+            "deninno-tid-1995",
+            "mckubre-sri-p13-p14-1992",
+            "mckubre-high-loading-1998",
+        }
+    }
+    miles = discovery_grade_from_literature_record(by_id["miles-1993"])
+    assert miles["moe_provenance"] == "literature_reported_instrument_precision"
+    assert miles["moe_sigma_q_pairing_verified"] is False
+    assert miles["discovery_grade_eligible"] is False
+    assert miles["s_heat"] == 26.0
+    assert quantitative_distance_to_discovery(miles)["distance_status"] == (
+        "at_or_above_bar_gates_blocked"
+    )
+
+    deninno = discovery_grade_from_literature_record(by_id["deninno-tid-1995"])
+    assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
+    assert deninno["discovery_grade_eligible"] is False
+    assert deninno["q_is_seed_scale"] is True
+
+    for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
+        mckubre = discovery_grade_from_literature_record(by_id[lit_id])
+        assert mckubre["moe_provenance"] == "literature_reported_instrument_floor"
+        assert mckubre["sigma_q_w"] is None
+        assert mckubre["discovery_grade_eligible"] is False
+        assert mckubre["lenr_proved"] is False
+        assert all(v == "OPEN" for v in mckubre["eq_open_status"].values())
