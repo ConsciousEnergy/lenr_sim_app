@@ -412,6 +412,22 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       throw new Error(`Science evidence UI must keep gap ${req.id} status not_met`);
     }
   }
+  const missingIds = new Set(
+    DISCOVERY_GRADE_BAR.missing_requirements.map((req) => req.id),
+  );
+  for (const requiredId of [
+    'cite_gated_sigma_q',
+    'moe_pairing_verified',
+    's_heat_ge_5',
+    'eq_open_discharge',
+    'governance_signoff',
+  ]) {
+    if (!missingIds.has(requiredId)) {
+      throw new Error(
+        `Science evidence UI must keep corpus gap id ${requiredId} not_met`,
+      );
+    }
+  }
   if (EQ_OPEN_RUNWAY.status !== 'OPEN') {
     throw new Error('Science evidence UI must keep EQ_OPEN_RUNWAY.status OPEN');
   }

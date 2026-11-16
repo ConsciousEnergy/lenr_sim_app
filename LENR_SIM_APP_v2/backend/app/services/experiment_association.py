@@ -132,7 +132,64 @@ def enrich_experiment_dict(payload: Dict[str, Any]) -> Dict[str, Any]:
         if watts is None:
             watts = results.get("total_energy_watts")
         row["excessHeatWatts"] = watts
+
+    # Additive ≥5σ / honest-closure envelopes for Analytics History + export.
+    _attach_discovery_grade_envelopes_to_row(row)
     return row
+
+
+def _attach_discovery_grade_envelopes_to_row(row: Dict[str, Any]) -> None:
+    """Ensure discovery_grade_gap + honest_closure on analytics row payloads."""
+    from app.physics_engine.discovery_grade_gap import (
+        discovery_grade_envelopes_from_moe_fields,
+    )
+
+    results = row.get("results") if isinstance(row.get("results"), dict) else {}
+    summary = row.get("bayesian_summary")
+    if not isinstance(summary, dict):
+        summary = results.get("bayesian_summary") if isinstance(results, dict) else None
+    if not isinstance(summary, dict):
+        summary = {}
+
+    # Rebuild from MoE columns so older SQL rows and pack imports stay honest.
+    attached = discovery_grade_envelopes_from_moe_fields(
+        excess_power_w=(
+            summary.get("excess_power_w")
+            if summary.get("excess_power_w") is not None
+            else row.get("excess_heat_watts")
+        ),
+        sigma_q_w=row.get("sigma_Q_W"),
+        sigma_q_statistical_w=row.get("sigma_Q_statistical_W"),
+        sigma_q_systematic_w=row.get("sigma_Q_systematic_W"),
+        moe_provenance=row.get("moe_provenance"),
+        moe_citation_keys=row.get("moe_citation_keys")
+        if isinstance(row.get("moe_citation_keys"), list)
+        else None,
+        moe_sigma_q_pairing_verified=row.get("moe_sigma_q_pairing_verified"),
+        q_source=summary.get("q_source"),
+        q_is_seed_scale=bool(summary.get("q_is_seed_scale")),
+        discovery_grade_eligible=row.get("discovery_grade_eligible"),
+        s_heat=row.get("s_heat"),
+        literature_id=row.get("literature_id") or row.get("literatureId"),
+    )
+    # Preserve prior summary metadata; significance + gap envelopes win.
+    attached = {**summary, **attached, "lenr_proved": False}
+    gap = attached["discovery_grade_gap"]
+    closure = attached["honest_closure"]
+
+    row["discovery_grade_gap"] = gap
+    row["honest_closure"] = closure
+    row["bayesian_summary"] = attached
+    # Never allow export envelopes to claim LENR proof / EQ-OPEN closure.
+    row["lenr_proved"] = False
+    if isinstance(row.get("results"), dict):
+        row["results"] = {
+            **row["results"],
+            "lenr_proved": False,
+            "discovery_grade_gap": gap,
+            "honest_closure": closure,
+            "bayesian_summary": attached,
+        }
 
 
 def sort_enriched_rows(

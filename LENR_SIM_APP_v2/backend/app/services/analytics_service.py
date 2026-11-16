@@ -862,7 +862,7 @@ class AnalyticsService:
         result = await self.session.execute(query)
         experiments = result.scalars().all()
         
-        return [e.to_dict() for e in experiments]
+        return [enrich_experiment_dict(e.to_dict()) for e in experiments]
 
 
 # Factory function for dependency injection
