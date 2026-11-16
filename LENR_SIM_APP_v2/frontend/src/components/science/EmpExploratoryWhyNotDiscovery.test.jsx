@@ -1,5 +1,5 @@
 /**
- * EMP exploratory “why not discovery” panel honesty (BDS-343).
+ * EMP exploratory “why not discovery” panel honesty (BDS-343 / BDS-344).
  */
 import React from 'react';
 import { render, screen } from '../../tests/test-utils';
@@ -19,6 +19,27 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     );
     expect(screen.getByTestId('emp-test-coverage')).toHaveTextContent(
       /analytics_eligible ≠ EQ-OPEN/i,
+    );
+    expect(screen.getByTestId('emp-test-coverage')).toHaveTextContent(
+      /dual_kasagi_analytics_does_not_close_eq_open_or_lenr/,
+    );
+    expect(screen.getByTestId('emp-test-floor-nc-chip')).toHaveTextContent(
+      /instrument_floor/i,
+    );
+    expect(screen.getByTestId('emp-test-soft-chip-lock')).toHaveTextContent(
+      /soft chip ≠ scientific discharge/i,
+    );
+    expect(screen.getByTestId('emp-test-runway-exhausted-chip')).toHaveTextContent(
+      /runway exhausted/i,
+    );
+    expect(screen.getByTestId('emp-test-promote-prep-chip')).toHaveTextContent(
+      /promote\+ship prep/i,
+    );
+    expect(screen.getByTestId('emp-test-scientific-blockers')).toHaveTextContent(
+      /Remaining scientific blockers/i,
+    );
+    expect(screen.getByTestId('emp-test-scientific-blockers')).toHaveTextContent(
+      /governed_lab|eq_open|lenr_proved/i,
     );
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(

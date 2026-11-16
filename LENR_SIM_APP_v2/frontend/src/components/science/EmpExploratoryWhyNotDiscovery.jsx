@@ -1,6 +1,8 @@
 /**
- * Structured “why not discovery” for EMP / instrument-MoE exploratory rows (BDS-343).
- * Soft honesty optics only — never claims ≥5σ discovery, EQ-OPEN closure, or lenr_proved.
+ * Structured “why not discovery” for EMP / instrument-MoE exploratory rows
+ * (BDS-343 / BDS-344). Soft honesty optics only — never claims ≥5σ discovery,
+ * EQ-OPEN closure, or lenr_proved. Lean dual-Kasagi + instrument_floor NC
+ * bind analytics eligibility ≠ EQ-OPEN / lenr_proved.
  */
 import React from 'react';
 import {
@@ -53,13 +55,19 @@ export default function EmpExploratoryWhyNotDiscovery({
         </code>{' '}
         rows (
         {(coverage.discovery_grade_eligible_ids || []).join(', ')}
-        ). Soft chip language stays <code>analytics_gates_clear</code>, never
+        ).         Soft chip language stays <code>analytics_gates_clear</code>, never
         “≥5σ met”. Clearing those flags does <strong>not</strong> close EQ-OPEN-*
         or set <code>lenr_proved</code>
         {coverage.analytics_eligible_ne_eq_open ? (
           <>
             {' '}
-            (<code>analytics_eligible ≠ EQ-OPEN</code>)
+            (<code>analytics_eligible ≠ EQ-OPEN</code>
+            {coverage.lean_dual_kasagi_nc_bound ? (
+              <>
+                {' · '}Lean <code>dual_kasagi_analytics_does_not_close_eq_open_or_lenr</code>
+              </>
+            ) : null}
+            )
           </>
         ) : null}
         .
@@ -103,6 +111,44 @@ export default function EmpExploratoryWhyNotDiscovery({
           data-testid={`${testIdPrefix}-inventory-chip`}
           sx={{ fontSize: '0.65rem' }}
         />
+        {coverage.lean_instrument_floor_nc_bound ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Lean instrument_floor ⇏ discovery"
+            data-testid={`${testIdPrefix}-floor-nc-chip`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
+        {coverage.soft_chip_ne_scientific_discharge ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="soft chip ≠ scientific discharge"
+            data-testid={`${testIdPrefix}-soft-chip-lock`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
+        {coverage.software_honest_5sigma_runway_exhausted ? (
+          <Chip
+            size="small"
+            color="info"
+            variant="outlined"
+            label="software ≥5σ runway exhausted"
+            data-testid={`${testIdPrefix}-runway-exhausted-chip`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
+        {coverage.promote_prep_recommended ? (
+          <Chip
+            size="small"
+            color="info"
+            variant="outlined"
+            label="promote+ship prep recommended"
+            data-testid={`${testIdPrefix}-promote-prep-chip`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
       </Stack>
       {coverage.literature_moe_inventory_exhausted ? (
         <Typography
@@ -113,6 +159,20 @@ export default function EmpExploratoryWhyNotDiscovery({
           data-testid={`${testIdPrefix}-inventory-note`}
         >
           {coverage.inventory_exhausted_note}
+        </Typography>
+      ) : null}
+      {coverage.software_honest_5sigma_runway_exhausted ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 1 }}
+          data-testid={`${testIdPrefix}-scientific-blockers`}
+        >
+          Remaining scientific blockers (no flag flips):{' '}
+          {(coverage.remaining_scientific_blockers || []).join('; ')}. Next ops
+          step when humans ask: promote+ship prep — not auto <code>main</code> /
+          Path B.
         </Typography>
       ) : null}
       <List dense disablePadding data-testid={`${testIdPrefix}-list`}>

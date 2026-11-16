@@ -25,8 +25,8 @@
 | EQ-COMP-02 | Intra-group selection is max, not product of rivals | `Composition` | **PROVED** |
 | EQ-QDD-01 | Adopted Q = 23.8 MeV (keV scale lock) | `Miles` | **PROVED** |
 | EQ-MILES-CONV-01 | Conversion / code rate in governance band | `Miles` | **PROVED** |
-| EQ-HEAT-SIG-01 | Discovery-grade σ bar = 5; exploratory SNR = 3; milli-σ arithmetic shortfall identities | `CalorimetrySignificance` | **PROVED** (DEF / analytics bar lock; not lab proof) |
-| EQ-HEAT-SIG-NC-01 | Instrument-precision / unverified pairing ⇏ discovery analytics; cleared analytics ⇏ `lenr_proved`; high \(S_{\mathrm{heat}}\) ⇏ Q5 closed | `CalorimetrySignificance` | **PROVED** (non-closure / honesty; does **not** close EQ-OPEN-YIELD-01) |
+| EQ-HEAT-SIG-01 | Discovery-grade σ bar = 5; exploratory SNR = 3; milli-σ arithmetic shortfall identities; Kasagi NiCu + Ni control bar examples | `CalorimetrySignificance` | **PROVED** (DEF / analytics bar lock; not lab proof) |
+| EQ-HEAT-SIG-NC-01 | Instrument-precision / instrument-floor ⇏ discovery analytics; dual Kasagi cleared analytics ⇏ `lenr_proved` / Q5; soft chip ⇏ scientific discharge; high \(S_{\mathrm{heat}}\) ⇏ Q5 closed | `CalorimetrySignificance` | **PROVED** (non-closure / honesty BDS-344; does **not** close EQ-OPEN-YIELD-01) |
 | EQ-PHONON-N-01 | \(N=Q/(\hbar\omega)\) for 23.8 MeV / 50 meV | `Phonon` | **PROVED** |
 | EQ-NAIVE-GN-01 | Nat-floor of \((1/2)^n=0\) for \(n\ge 1\) | `Phonon` | **PROVED** |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |

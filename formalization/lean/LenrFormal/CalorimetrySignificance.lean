@@ -71,6 +71,13 @@ theorem kasagi_nicu_arithmetic_meets_five_sigma :
     meetsDiscoveryArithmetic kasagiNiCuSHeatMilli discoveryThresholdMilli := by
   native_decide
 
+/-- Kasagi Ni control verified-pairing example (BDS-342): 0.9 / 0.08 = 11.25σ → 11250 milli. -/
+def kasagiNiSHeatMilli : Nat := 11250
+
+theorem kasagi_ni_arithmetic_meets_five_sigma :
+    meetsDiscoveryArithmetic kasagiNiSHeatMilli discoveryThresholdMilli := by
+  native_decide
+
 /-- Below-bar example: 0.08 / 0.02 = 4σ → 4000 milli. -/
 def belowBarSHeatMilli : Nat := 4000
 
@@ -114,6 +121,13 @@ theorem instrument_precision_not_discovery_eligible :
   intro h
   cases h
 
+/-- EQ-HEAT-SIG-NC-01: McKubre-class instrument floor is never discovery-eligible. -/
+theorem instrument_floor_not_discovery_eligible :
+    ¬ discoveryEligibleProvenance
+      MoeProvenance.literatureReportedInstrumentFloor := by
+  intro h
+  cases h
+
 /-- UNDISCHARGED: analytics discovery flag needs arithmetic ≥5σ **and**
     literature_reported provenance **and** verified Q↔σ pairing **and**
     non-seed measured Q. Still never proves LENR. -/
@@ -126,6 +140,12 @@ def DiscoveryGradeAnalytics
     ∧ pairingVerified = true
     ∧ nonSeedMeasuredQ = true
 
+/-- Soft UI chip for cleared analytics gates — never “≥5σ met” scientific discharge. -/
+def softChipIsScientificDischarge : Bool := false
+
+theorem soft_chip_not_scientific_discharge :
+    softChipIsScientificDischarge = false := rfl
+
 /-- EQ-HEAT-SIG-NC-01: Miles-class exploratory arithmetic with instrument
     precision and unverified pairing is not a discovery-grade analytics flag. -/
 theorem miles_exploratory_not_discovery_grade :
@@ -136,6 +156,18 @@ theorem miles_exploratory_not_discovery_grade :
       true := by
   intro h
   exact instrument_precision_not_discovery_eligible h.2.1
+
+/-- EQ-HEAT-SIG-NC-01: instrument-floor EMP rows (McKubre) never clear analytics. -/
+theorem mckubre_instrument_floor_not_discovery_grade
+    (sHeatMilli : Nat)
+    (pairingVerified nonSeedMeasuredQ : Bool) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReportedInstrumentFloor
+      pairingVerified
+      nonSeedMeasuredQ := by
+  intro h
+  exact instrument_floor_not_discovery_eligible h.2.1
 
 /-- EQ-HEAT-SIG-NC-01: even a cleared analytics flag does not prove LENR. -/
 theorem discovery_grade_analytics_does_not_prove_lenr
@@ -168,5 +200,23 @@ theorem high_s_heat_does_not_close_q5
       ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
       ∧ lenrProved = false :=
   ⟨hArith, positive_yield_discrepancy_keeps_q5_open hOpen, lenr_proved_false⟩
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-344): even dual Kasagi NiCu + Ni analytics flags
+    (corpus 2/25 pairing) do not prove LENR or close EQ-OPEN-YIELD-01.
+    Analytics / EMP UX eligibility ≠ EQ-OPEN discharge ≠ `lenr_proved`.
+    Soft chip `analytics_gates_clear` ≠ scientific ≥5σ discharge. -/
+theorem dual_kasagi_analytics_does_not_close_eq_open_or_lenr
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy)
+    (_hNiCu : DiscoveryGradeAnalytics
+      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true)
+    (_hNi : DiscoveryGradeAnalytics
+      kasagiNiSHeatMilli MoeProvenance.literatureReported true true) :
+    lenrProved = false
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false :=
+  ⟨lenr_proved_false,
+    positive_yield_discrepancy_keeps_q5_open hOpen,
+    soft_chip_not_scientific_discharge⟩
 
 end LenrFormal.CalorimetrySignificance

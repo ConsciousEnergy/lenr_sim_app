@@ -160,17 +160,37 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”.',
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
+   * BDS-344: dual Kasagi Lean binding + instrument_floor NC + soft-chip lock.
    */
   analytics_eligible_ne_eq_open: true,
   analytics_eligible_ne_lenr_proved: true,
+  soft_chip_ne_scientific_discharge: true,
+  lean_dual_kasagi_nc_bound: true,
+  lean_instrument_floor_nc_bound: true,
+  /**
+   * BDS-344: honest software ≥5σ runway on this train is exhausted for Prefer-merge
+   * code levers (Lean NC + inventory + EMP UX). Remaining work is scientific /
+   * governance — recommend promote+ship prep when humans ask (no auto main/Path B).
+   */
+  software_honest_5sigma_runway_exhausted: true,
+  promote_prep_recommended: true,
+  remaining_scientific_blockers: Object.freeze([
+    'cite_gated_discovery_moe_on_governed_lab_rows_underwriting_yield',
+    'broader_corpus_beyond_two_kasagi_analytics_flags',
+    'all_five_eq_open_discharged_under_runway_ir_lean_ledger_governance',
+    'human_academic_review_signoff_for_lenr_proved',
+    'live_sql_hydrate_of_tip_packs_operator_cli',
+  ]),
   closes_eq_open: false,
   lenr_proved: false,
   note:
     'Only a minority of curated literature rows carry numeric σ_Q; fewer still have ' +
     'literature_reported cite-gated provenance + verified Q↔σ pairing. Never render bare ' +
     'S_heat without provenance. Clearing analytics discovery flags on Kasagi NiCu + Ni ' +
-    'control does not set lenr_proved or close EQ-OPEN-*. Miles / De Ninno / McKubre stay ' +
-    'exploratory (instrument_precision / floor; unverified or non-discovery provenance).',
+    'control does not set lenr_proved or close EQ-OPEN-* (Lean dual_kasagi_analytics_does_not_close_eq_open_or_lenr). ' +
+    'Miles / De Ninno / McKubre stay exploratory (instrument_precision / floor; Lean instrument_floor NC). ' +
+    'Soft chips: analytics_gates_clear — never “≥5σ met”. Software honest ≥5σ Prefer-merge runway ' +
+    'exhausted on this train; remaining blockers are scientific/governance — promote+ship prep next when asked.',
 });
 
 /**
@@ -663,6 +683,35 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved !== true) {
     throw new Error(
       'Science evidence UI must keep analytics_eligible_ne_lenr_proved true',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.soft_chip_ne_scientific_discharge !== true) {
+    throw new Error(
+      'Science evidence UI must keep soft_chip_ne_scientific_discharge true',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_dual_kasagi_nc_bound !== true) {
+    throw new Error('Science evidence UI must keep lean_dual_kasagi_nc_bound true');
+  }
+  if (CORPUS_MOE_COVERAGE.lean_instrument_floor_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_instrument_floor_nc_bound true',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted !== true) {
+    throw new Error(
+      'Science evidence UI must mark software_honest_5sigma_runway_exhausted true',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.promote_prep_recommended !== true) {
+    throw new Error('Science evidence UI must mark promote_prep_recommended true');
+  }
+  if (
+    !Array.isArray(CORPUS_MOE_COVERAGE.remaining_scientific_blockers) ||
+    CORPUS_MOE_COVERAGE.remaining_scientific_blockers.length < 5
+  ) {
+    throw new Error(
+      'Science evidence UI must list remaining_scientific_blockers (≥5 scientific/governance)',
     );
   }
   if (
