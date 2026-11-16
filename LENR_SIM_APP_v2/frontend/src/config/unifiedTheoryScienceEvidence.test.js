@@ -4,12 +4,15 @@
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
+  CLOSURE_SURFACE_LINKS,
   DISCOVERY_GRADE_BAR,
+  DISCOVERY_GRADE_MISSING,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
   OPEN_EQ_IDS,
   SCIENCE_EVIDENCE_HONESTY,
   assertScienceEvidenceHonesty,
+  avenuesForOpenId,
 } from './unifiedTheoryScienceEvidence';
 
 describe('unifiedTheoryScienceEvidence honesty', () => {
@@ -46,6 +49,22 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(DISCOVERY_GRADE_BAR.gap_note).toMatch(/moe_sigma_q_pairing_verified/i);
     expect(DISCOVERY_GRADE_BAR.note).toMatch(/cite-gated/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(/campaign/i);
+    expect(DISCOVERY_GRADE_BAR.gap_helper_module).toMatch(/discovery_grade_gap/);
+    expect(DISCOVERY_GRADE_MISSING.length).toBeGreaterThanOrEqual(6);
+    DISCOVERY_GRADE_MISSING.forEach((req) => {
+      expect(req.status).toBe('not_met');
+      expect(req.id).toBeTruthy();
+      expect(req.detail).toBeTruthy();
+    });
+    expect(DISCOVERY_GRADE_MISSING.map((r) => r.id)).toEqual(
+      expect.arrayContaining([
+        'cite_gated_sigma_q',
+        'moe_pairing_verified',
+        's_heat_ge_5',
+        'eq_open_discharge',
+        'governance_signoff',
+      ]),
+    );
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {
@@ -56,6 +75,26 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     AVENUE_RANKING_SUMMARY.avenues.forEach((avenue) => {
       avenue.stresses.forEach((oid) => {
         expect(OPEN_EQ_IDS).toContain(oid);
+      });
+      expect(typeof avenue.five_sigma_role).toBe('string');
+    });
+  });
+
+  test('closure linkage maps EQ-OPEN rows to avenues without claiming discharge', () => {
+    expect(CLOSURE_SURFACE_LINKS.avenue_doc_path).toMatch(/AVENUE_RANKING\.md/);
+    expect(CLOSURE_SURFACE_LINKS.runway_doc_path).toMatch(/EQ_OPEN_CLOSURE_RUNWAY\.md/);
+    expect(CLOSURE_SURFACE_LINKS.note).toMatch(/do not discharge/i);
+    const yieldAvenues = avenuesForOpenId('EQ-OPEN-YIELD-01').map((a) => a.id);
+    expect(yieldAvenues).toEqual(
+      expect.arrayContaining(['miles_heat_helium_q', 'calorimetry_sigma_q']),
+    );
+    EQ_OPEN_RUNWAY.criteria.forEach((row) => {
+      expect(row.related_avenues.length).toBeGreaterThan(0);
+      expect(row.five_sigma_relevance).toBeTruthy();
+      row.related_avenues.forEach((avenueId) => {
+        const avenue = AVENUE_RANKING_SUMMARY.avenues.find((a) => a.id === avenueId);
+        expect(avenue).toBeTruthy();
+        expect(avenue.stresses).toContain(row.id);
       });
     });
   });
@@ -82,6 +121,8 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.does_not_count).toBeTruthy();
       expect(typeof row.claim_tier).toBe('string');
       expect(row.claim_tier.length).toBeGreaterThan(0);
+      expect(Array.isArray(row.related_avenues)).toBe(true);
+      expect(row.related_avenues.length).toBeGreaterThan(0);
     });
     const ec = EQ_OPEN_RUNWAY.criteria.find((r) => r.id === 'EQ-OPEN-EC-01');
     expect(ec.claim_tier).toBe('speculative_exploratory');

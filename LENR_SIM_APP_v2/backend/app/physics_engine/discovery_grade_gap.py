@@ -1,0 +1,208 @@
+"""Structured ≥5σ discovery-grade gap bookkeeping (BDS-302).
+
+Surfaces what is **missing** for ``discovery_grade_eligible`` without ever
+flipping ``lenr_proved`` or closing ``EQ-OPEN-*``. Campaign / avenue / Lean
+outputs alone never clear these gates.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Mapping, Optional
+
+from app.campaign.avenue_catalog import OPEN_IDS
+from app.physics_engine.calorimetry_significance import (
+    DISCOVERY_ELIGIBLE_PROVENANCE,
+    DISCOVERY_GRADE_SIGMA,
+    discovery_grade_analytics,
+)
+
+#: Stable requirement ids for UI / Analytics §5B checklists.
+GAP_REQUIREMENT_IDS = (
+    "cite_gated_sigma_q",
+    "moe_citations",
+    "discovery_provenance",
+    "moe_pairing_verified",
+    "non_seed_measured_q",
+    "s_heat_ge_5",
+)
+
+
+def _requirement(
+    *,
+    requirement_id: str,
+    label: str,
+    status: str,
+    detail: str,
+) -> Dict[str, str]:
+    return {
+        "id": requirement_id,
+        "label": label,
+        "status": status,
+        "detail": detail,
+    }
+
+
+def discovery_grade_gap_bookkeeping(
+    report: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Return missing-requirements checklist for ≥5σ discovery flag (RORO).
+
+    Parameters
+    ----------
+    report:
+        Optional output of ``discovery_grade_analytics``. When ``None``,
+        returns the corpus / §5B default: every gate ``not_met`` (campaign
+        packs and UI rows do not carry cite-gated discovery MoE).
+
+    Hard honesty: ``lenr_proved`` stays False; every ``EQ-OPEN-*`` stays OPEN;
+    ``overall_status`` is ``not_met`` unless *all* BDS-302 gates pass on the
+    supplied report. Even then the payload never claims LENR proof or
+    EQ-OPEN closure.
+    """
+    if report is None:
+        summary = discovery_grade_analytics(
+            excess_power_w=None,
+            sigma_q_w=None,
+            moe_provenance=None,
+            moe_citation_keys=[],
+            moe_sigma_q_pairing_verified=False,
+        )
+    else:
+        summary = dict(report)
+
+    sigma = summary.get("sigma_q_w")
+    provenance = summary.get("moe_provenance")
+    citations = list(summary.get("moe_citation_keys") or [])
+    pairing_ok = bool(summary.get("moe_sigma_q_pairing_verified"))
+    seed = bool(summary.get("q_is_seed_scale"))
+    s_heat_value = summary.get("s_heat")
+    provenance_ok = bool(summary.get("moe_provenance_ok", True))
+    discovery_prov_ok = bool(summary.get("discovery_provenance_ok"))
+    eligible = bool(summary.get("discovery_grade_eligible"))
+
+    has_sigma = sigma is not None
+    citations_ok = bool(citations)
+    cite_gated_ok = (
+        has_sigma
+        and provenance_ok
+        and provenance in DISCOVERY_ELIGIBLE_PROVENANCE
+        and citations_ok
+    )
+    measured_q_ok = summary.get("excess_power_w") is not None and not seed
+    s_heat_ok = (
+        s_heat_value is not None
+        and float(s_heat_value) >= float(DISCOVERY_GRADE_SIGMA)
+    )
+
+    missing: List[Dict[str, str]] = []
+    requirements: List[Dict[str, str]] = []
+
+    def add(req: Dict[str, str]) -> None:
+        requirements.append(req)
+        if req["status"] != "met":
+            missing.append(req)
+
+    add(
+        _requirement(
+            requirement_id="cite_gated_sigma_q",
+            label="Cite-gated literature_reported σ_Q",
+            status="met" if cite_gated_ok else "not_met",
+            detail=(
+                "Measurement-specific total σ_Q with literature_reported provenance"
+                if cite_gated_ok
+                else "Missing cite-gated literature_reported σ_Q (instrument floor/"
+                "precision MoE and campaign UQ envelopes do not count)"
+            ),
+        )
+    )
+    add(
+        _requirement(
+            requirement_id="moe_citations",
+            label="moe_citation_keys present",
+            status="met" if citations_ok else "not_met",
+            detail=(
+                f"Citations: {', '.join(citations)}"
+                if citations
+                else "No moe_citation_keys — refuse fabricated lab uncertainty"
+            ),
+        )
+    )
+    add(
+        _requirement(
+            requirement_id="discovery_provenance",
+            label="Discovery-eligible MoE provenance",
+            status="met" if discovery_prov_ok else "not_met",
+            detail=(
+                f"moe_provenance={provenance!r}"
+                if discovery_prov_ok
+                else (
+                    f"moe_provenance={provenance!r} is exploratory; "
+                    "only literature_reported total σ_Q is discovery-eligible"
+                ),
+            ),
+        )
+    )
+    add(
+        _requirement(
+            requirement_id="moe_pairing_verified",
+            label="moe_sigma_q_pairing_verified",
+            status="met" if pairing_ok else "not_met",
+            detail=(
+                "Q↔σ_Q pairing verified"
+                if pairing_ok
+                else "Q↔σ_Q pairing unverified (Miles peak + follow-on ±0.02 stays exploratory)"
+            ),
+        )
+    )
+    add(
+        _requirement(
+            requirement_id="non_seed_measured_q",
+            label="Non-seed measured Q_excess",
+            status="met" if measured_q_ok else "not_met",
+            detail=(
+                f"q_source={summary.get('q_source')!r}"
+                if measured_q_ok
+                else "Measured Q missing or seed-scale excess_heat_watts only"
+            ),
+        )
+    )
+    add(
+        _requirement(
+            requirement_id="s_heat_ge_5",
+            label=f"S_heat ≥ {DISCOVERY_GRADE_SIGMA:g}",
+            status="met" if s_heat_ok else "not_met",
+            detail=(
+                f"S_heat={s_heat_value}"
+                if s_heat_value is not None
+                else "S_heat undefined without Q and σ_Q"
+            ),
+        )
+    )
+
+    overall = "met" if eligible and not missing else "not_met"
+    # Belt-and-suspenders: never report overall met if any gate missing.
+    if missing:
+        overall = "not_met"
+
+    return {
+        "schema": "lenr-discovery-grade-gap-v1",
+        "overall_status": overall,
+        "discovery_grade_eligible": bool(eligible),
+        "discovery_grade_threshold_sigma": DISCOVERY_GRADE_SIGMA,
+        "requirements": requirements,
+        "missing_requirements": missing,
+        "missing_ids": [row["id"] for row in missing],
+        "lenr_proved": False,
+        "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
+        "honesty": (
+            "Gap bookkeeping for the BDS-302 discovery_grade_eligible analytics "
+            "flag only. Clearing every gate here still does not set lenr_proved, "
+            "does not close EQ-OPEN-*, and does not raise claim_tier. Campaign / "
+            "avenue / Lean outputs never satisfy cite-gated discovery MoE."
+        ),
+    }
+
+
+def corpus_discovery_grade_gap() -> Dict[str, Any]:
+    """§5B / Analytics default: corpus has no discovery-grade MoE closure."""
+    return discovery_grade_gap_bookkeeping(None)

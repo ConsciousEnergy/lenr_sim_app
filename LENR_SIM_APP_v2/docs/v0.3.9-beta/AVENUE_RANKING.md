@@ -18,6 +18,17 @@ Rank which **physical-experiment avenues** look most informative next, given:
 
 This is a **decision aid for lab design**, not a posterior over “LENR is true.”
 
+### Cross-links (Analytics / §5B / runway)
+
+| Surface | Role |
+|---------|------|
+| [`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md) | Draft discharge criteria for each stressed OPEN row (still OPEN) |
+| `/analytics` Overview §5B panel | Avenue ↔ EQ-OPEN linkage chips + unmet ≥5σ missing-requirements list |
+| Theory Paper §5B | Same linkage + `five_sigma_role` tags per avenue |
+| `discovery_grade_gap.py` | Cite-gated σ_Q gap bookkeeping for `calorimetry_sigma_q` / YIELD heat language |
+
+Informativeness scores are **not** ≥5σ discovery claims. The `calorimetry_sigma_q` avenue is the primary heat-MoE stress path; clearing BDS-302 analytics gates still does not flip `lenr_proved` or close EQ-OPEN-*.
+
 ## Honesty contract
 
 | Field | Value |
