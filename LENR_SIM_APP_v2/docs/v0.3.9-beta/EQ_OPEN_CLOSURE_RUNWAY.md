@@ -224,11 +224,24 @@ Illustrative shape only. **Not** attested data; do not copy into production as m
 
 ---
 
+## UI / Analytics cross-links (bookkeeping only)
+
+Reviewer surfaces that **point at** this runway without changing status:
+
+| Surface | Role |
+|---------|------|
+| `/analytics` Overview §5B panel | EQ-OPEN ↔ avenue chips + ≥5σ missing-requirements checklist (`not_met`) |
+| Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags |
+| [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |
+| `discovery_grade_gap.py` | Cite-gated σ_Q / pairing gap bookkeeping (analytics flag only) |
+
+Cross-links never discharge an obligation. Prefer ≥5σ cite-gated heat MoE where YIELD heat claims underwrite closure (`EQ-OPEN-YIELD-01`); RAD/RATE/EC paths stay orthogonal to the calorimetry ≥5σ bar.
+
 ## Out of scope for this note
 
 - Executing closure or setting `lenr_proved: true`  
 - Inventing lab results or committing binary DAQ dumps  
-- Theory Paper frontend / UI green chips  
+- Theory Paper frontend / UI green chips that imply CLOSED  
 - Mixing Swarm / CI ops into this academic track  
 
 **Next (when evidence exists):** separate closure-candidate PR series per obligation, not an edit to this runway that quietly changes status.

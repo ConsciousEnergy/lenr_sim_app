@@ -22,6 +22,8 @@ import {
   OPEN_EQ_IDS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import DiscoveryGradeGapChecklist from '../science/DiscoveryGradeGapChecklist';
+import EqOpenAvenueLinkage from '../science/EqOpenAvenueLinkage';
 
 export default function AnalyticsScienceEvidencePanel() {
   return (
@@ -121,7 +123,11 @@ export default function AnalyticsScienceEvidencePanel() {
         </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+      <DiscoveryGradeGapChecklist testIdPrefix="analytics-5b-gap" />
+
+      <EqOpenAvenueLinkage testIdPrefix="analytics-5b-linkage" density="compact" />
+
+      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
         <MuiLink
           component={RouterLink}
           to="/theory-paper"

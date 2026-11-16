@@ -26,6 +26,8 @@ import {
   FORMALIZATION_STATUS,
   SCIENCE_EVIDENCE_HONESTY,
 } from '../../config/unifiedTheoryScienceEvidence';
+import DiscoveryGradeGapChecklist from '../../components/science/DiscoveryGradeGapChecklist';
+import EqOpenAvenueLinkage from '../../components/science/EqOpenAvenueLinkage';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 function OpenIdChips({ ids }) {
@@ -234,6 +236,7 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           Does not count: {DISCOVERY_GRADE_BAR.does_not_count.join('; ')}.
         </Typography>
       </Alert>
+      <DiscoveryGradeGapChecklist testIdPrefix="science-evidence-gap" />
 
       <Divider sx={{ my: 2 }} />
 
@@ -277,6 +280,20 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                       }}
                     />
                   ))}
+                  {avenue.five_sigma_role && (
+                    <Chip
+                      label={avenue.five_sigma_role}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.55rem',
+                        height: 18,
+                        mt: 0.25,
+                      }}
+                      data-testid={`avenue-5sigma-role-${avenue.id}`}
+                    />
+                  )}
                 </Box>
               }
               secondaryTypographyProps={{ component: 'div' }}
@@ -284,6 +301,10 @@ export default function ScienceEvidenceSection({ embedded = false }) {
           </ListItem>
         ))}
       </List>
+
+      <Divider sx={{ my: 2 }} />
+
+      <EqOpenAvenueLinkage testIdPrefix="science-evidence-linkage" density="full" />
 
       <Divider sx={{ my: 2 }} />
 
@@ -405,6 +426,27 @@ export default function ScienceEvidenceSection({ embedded = false }) {
                   <Typography variant="caption" display="block" color="text.secondary">
                     Does not count: {row.does_not_count}
                   </Typography>
+                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.35 }}>
+                    {(row.related_avenues || []).map((avenueId) => (
+                      <Chip
+                        key={avenueId}
+                        label={avenueId}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                        data-testid={`runway-avenue-${row.id}-${avenueId}`}
+                      />
+                    ))}
+                    {row.five_sigma_relevance && (
+                      <Chip
+                        label={row.five_sigma_relevance}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                        data-testid={`runway-5sigma-${row.id}`}
+                      />
+                    )}
+                  </Stack>
                 </Box>
               }
               secondaryTypographyProps={{ component: 'div' }}

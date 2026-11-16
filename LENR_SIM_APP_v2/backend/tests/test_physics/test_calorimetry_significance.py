@@ -27,6 +27,11 @@ from app.physics_engine.calorimetry_significance import (
     s_heat,
     validate_moe_provenance,
 )
+from app.physics_engine.discovery_grade_gap import (
+    GAP_REQUIREMENT_IDS,
+    corpus_discovery_grade_gap,
+    discovery_grade_gap_bookkeeping,
+)
 
 
 def test_s_heat_is_signed_q_over_sigma() -> None:
@@ -312,3 +317,51 @@ def test_kasagi_ni_control_exploratory_without_verified_pairing() -> None:
     assert report["moe_sigma_q_pairing_verified"] is False
     assert report["discovery_grade_eligible"] is False
     assert report["lenr_proved"] is False
+
+
+def test_corpus_discovery_grade_gap_lists_not_met_gates() -> None:
+    gap = corpus_discovery_grade_gap()
+    assert gap["schema"] == "lenr-discovery-grade-gap-v1"
+    assert gap["overall_status"] == "not_met"
+    assert gap["discovery_grade_eligible"] is False
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+    assert set(gap["eq_open_status"]) == set(OPEN_IDS)
+    missing_ids = set(gap["missing_ids"])
+    assert missing_ids >= set(GAP_REQUIREMENT_IDS)
+    assert all(row["status"] == "not_met" for row in gap["missing_requirements"])
+    assert "cite_gated_sigma_q" in missing_ids
+    assert "moe_pairing_verified" in missing_ids
+    assert "s_heat_ge_5" in missing_ids
+
+
+def test_gap_bookkeeping_on_miles_keeps_not_met_and_open() -> None:
+    miles = next(
+        row for row in literature_records() if row["literature_id"] == "miles-1993"
+    )
+    report = discovery_grade_from_literature_record(miles)
+    gap = discovery_grade_gap_bookkeeping(report)
+    assert gap["overall_status"] == "not_met"
+    assert gap["discovery_grade_eligible"] is False
+    assert "moe_pairing_verified" in gap["missing_ids"]
+    assert "discovery_provenance" in gap["missing_ids"]
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+
+
+def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> None:
+    """Kasagi NiCu can clear BDS-302 analytics gates; still never closes EQ-OPEN."""
+    nicu = next(
+        row
+        for row in iccf27_literature_records()
+        if row["literature_id"] == "kasagi-nicu-radiant-2026"
+    )
+    report = discovery_grade_from_literature_record(nicu)
+    assert report["discovery_grade_eligible"] is True
+    gap = discovery_grade_gap_bookkeeping(report)
+    assert gap["overall_status"] == "met"
+    assert gap["missing_ids"] == []
+    assert gap["discovery_grade_eligible"] is True
+    assert gap["lenr_proved"] is False
+    assert all(v == "OPEN" for v in gap["eq_open_status"].values())
+    assert "does not set lenr_proved" in gap["honesty"]

@@ -247,6 +247,22 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByTestId('analytics-5b-discovery-gap')).toHaveTextContent(
       /moe_sigma_q_pairing_verified/i,
     );
+    expect(screen.getByTestId('analytics-5b-gap-checklist')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('analytics-5b-gap-req-cite_gated_sigma_q')).toHaveTextContent(
+      /not_met/i,
+    );
+    expect(screen.getByTestId('analytics-5b-gap-req-moe_pairing_verified')).toHaveTextContent(
+      /not_met/i,
+    );
+    expect(screen.getByTestId('analytics-5b-linkage-panel')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('analytics-5b-linkage-open-EQ-OPEN-YIELD-01'),
+    ).toHaveTextContent(/OPEN/i);
+    expect(
+      screen.getByTestId(
+        'analytics-5b-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('analytics-5b-theory-paper-link')).toHaveAttribute(
       'href',
       '/theory-paper',
