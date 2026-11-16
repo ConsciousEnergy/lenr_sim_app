@@ -90,7 +90,15 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         {coverage.miles_banner ? <> — {coverage.miles_banner}</> : null}
         {' '}Kasagi NiCu analytics S_heat=
         <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
-        <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close EQ-OPEN-*.
+        <code>{coverage.kasagi_nicu_distance_status}</code>
+        {coverage.kasagi_ni_s_heat != null ? (
+          <>
+            {' · '}Kasagi Ni control S_heat=
+            <code>{coverage.kasagi_ni_s_heat}</code> is{' '}
+            <code>{coverage.kasagi_ni_distance_status || 'at_or_above_bar_gates_clear'}</code>
+          </>
+        ) : null}
+        {' '}— analytics flags only; still do not close EQ-OPEN-*.
       </Typography>
 
       <Typography
