@@ -109,6 +109,17 @@ export default function AnalyticsScienceEvidencePanel() {
         >
           {CAMPAIGN_EVIDENCE.densification_note}
         </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="analytics-5b-emp-histogram-note"
+        >
+          Theory-score EMP histogram ≠ pack evidence (spec=
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram?.speculative_exploratory ?? 'n/a'}, EMP=
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram?.empirical_lenr_correlation ?? 'n/a'}).{' '}
+          {CAMPAIGN_EVIDENCE.claim_tier_histogram_note}
+        </Typography>
         <Typography variant="body2">
           <strong>Avenue ranking</strong>: <code>{AVENUE_RANKING_SUMMARY.kind}</code>,{' '}
           {AVENUE_RANKING_SUMMARY.avenues.length} stress avenues, claim tier{' '}

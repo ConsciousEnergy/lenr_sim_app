@@ -354,6 +354,12 @@ inductive HeatMoEKind where
 def DiscoveryGradeHeatMoE (kinds : List HeatMoEKind) : Prop :=
   kinds ≠ [] ∧ ∀ k ∈ kinds, k = HeatMoEKind.literatureReportedVerifiedPairing
 
+/-- Parallel naming to `NuclearRateProof`: a heat-discovery proof is exactly
+    a nonempty discovery-grade heat MoE bag. Hydro / UQ / campaign kinds never
+    inhabit it. Does **not** invent σ_Q arithmetic. -/
+def HeatDiscoveryProof (kinds : List HeatMoEKind) : Prop :=
+  DiscoveryGradeHeatMoE kinds
+
 /-- Hard honesty: nature-proof token stays false on collapse heat surfaces. -/
 def lenrProved : Bool := false
 
@@ -403,6 +409,20 @@ theorem uq_percentiles_do_not_close_q5
       ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
       ∧ lenrProved = false := by
   refine ⟨uq_percentile_count, ?_, collapse_lenr_proved_false⟩
+  intro hClosed
+  unfold q5IntegratedYieldClosed at hClosed
+  exact (Nat.ne_of_gt hOpen) hClosed
+
+/-- Even a (hypothetical) discovery-grade MoE / `HeatDiscoveryProof` bag does
+    not close integrated yield or flip `lenr_proved` — analytics MoE ≠
+    EQ-OPEN-YIELD / nature proof. Aligns EQ-BBL-HEAT-NC-01 with EQ-HEAT-SIG-NC-01. -/
+theorem heat_discovery_proof_does_not_close_q5_or_lenr
+    {kinds : List HeatMoEKind}
+    (_hDisc : HeatDiscoveryProof kinds)
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy) :
+    ¬ q5IntegratedYieldClosed yieldDiscrepancy ∧ lenrProved = false := by
+  refine ⟨?_, collapse_lenr_proved_false⟩
   intro hClosed
   unfold q5IntegratedYieldClosed at hClosed
   exact (Nat.ne_of_gt hOpen) hClosed

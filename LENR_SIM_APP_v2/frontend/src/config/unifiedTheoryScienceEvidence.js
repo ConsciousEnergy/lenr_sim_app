@@ -234,6 +234,14 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
   densification_note:
     'Pack N and UQ sample depth are model-grid densification only — not weight-of-numbers ' +
     'toward ≥5σ discovery or EQ-OPEN discharge.',
+  /** Theory-score bins from pack manifest — not lab corroboration counts (BDS-334 P2). */
+  claim_tier_histogram: Object.freeze({
+    speculative_exploratory: 528,
+    empirical_lenr_correlation: 44,
+  }),
+  claim_tier_histogram_note:
+    'Pack claim_tier_histogram EMP counts are theory-score bins on model rows — not lab ' +
+    'corroboration or discovery weight. Separate from N/UQ densification chips.',
   note:
     'Bubble-lattice host × loading × drive × frequency × dynamics_mode cells with include_uncertainty. ' +
     'Model output only; does not raise empirical claim tiers or meet ≥5σ discovery-grade closure. '

@@ -94,6 +94,12 @@ describe('ScienceEvidenceSection', () => {
     expect(screen.getByTestId('science-evidence-moe-pairing')).toHaveTextContent(/unverified/);
     expect(screen.getByText(/pyyhtia-cr39-cavitation-2026/i)).toBeInTheDocument();
     expect(screen.queryByText(/lenr_proved:\s*true/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-emp-histogram-note')).toHaveTextContent(
+      /not lab corroboration/i,
+    );
+    expect(screen.getByTestId('science-evidence-emp-histogram-note')).toHaveTextContent(
+      /EMP=44/,
+    );
   });
 
   test('surfaces ≥5σ missing checklist and avenue↔runway linkage', () => {
