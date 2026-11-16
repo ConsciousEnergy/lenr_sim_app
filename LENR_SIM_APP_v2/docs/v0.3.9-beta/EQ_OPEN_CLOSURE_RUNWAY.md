@@ -239,6 +239,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Corpus MoE coverage bookkeeping** (literature + ICCF27 hydrate; counts only): minority of rows carry numeric σ_Q; fewer have cite-gated `literature_reported` + verified pairing; analytics-eligible rows **never** auto-discharge this runway. Campaign packs stamp corpus gap envelopes (`not_met`) by design — collapse UQ sample depth does not tighten cite-gated σ_Q.
 
+**Inventory lock (BDS-343):** publishable `literature_reported` total σ_Q + verified Q↔σ pairing for the curated 25-row corpus is **exhausted** at **2/25** (Kasagi NiCu + Ni radiant). Do **not** invent σ_Q / pairing for Iwamura / Mizuno / Arata / Celani / commercial Ni–H. EMP instrument-precision / floor rows (Miles, De Ninno, McKubre) stay exploratory with structured “why not discovery” reasons on Analytics / §5B. Soft chips remain `analytics_gates_clear` — never “≥5σ met”. **`discovery_grade_eligible` ≠ EQ-OPEN discharge ≠ `lenr_proved`** (Lean `discovery_grade_analytics_does_not_prove_lenr` / `HeatDiscoveryProof`).
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)

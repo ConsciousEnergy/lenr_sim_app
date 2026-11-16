@@ -10,6 +10,7 @@ import {
   CORPUS_MOE_COVERAGE,
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
+  EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
   OPEN_EQ_IDS,
@@ -130,6 +131,22 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
       expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
     );
+    expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
+    expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
+    EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
+      expect(row.discovery_grade_eligible).toBe(false);
+      expect(row.reasons.length).toBeGreaterThanOrEqual(2);
+      expect(String(row.soft_chip)).not.toMatch(/≥5σ.*met/i);
+      expect(row.soft_chip).not.toBe('met');
+    });
+    const milesWhy = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === 'miles-1993',
+    );
+    expect(milesWhy.distance_status).toBe('at_or_above_bar_gates_blocked');
+    expect(milesWhy.s_heat_exploratory).toBe(26);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,
     );

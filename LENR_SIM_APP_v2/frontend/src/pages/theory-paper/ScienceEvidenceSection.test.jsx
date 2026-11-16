@@ -120,6 +120,13 @@ describe('ScienceEvidenceSection', () => {
     expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
       /lenr_proved/,
     );
+    expect(screen.getByTestId('science-evidence-gap-moe-coverage')).toHaveTextContent(
+      /exhausted/,
+    );
+    expect(screen.getByTestId('science-evidence-gap-emp-why-not-panel')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('science-evidence-gap-emp-why-not-eligible-chip'),
+    ).toHaveTextContent(/2\/25/);
     expect(screen.getByTestId('science-evidence-linkage-panel')).toBeInTheDocument();
     expect(
       screen.getByTestId('science-evidence-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q'),

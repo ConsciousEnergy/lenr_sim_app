@@ -285,7 +285,18 @@ describe('AnalyticsPage honest metrics', () => {
     );
     expect(screen.getByTestId('analytics-5b-gap-checklist')).toHaveTextContent(/not_met/i);
     expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(/closes_eq_open/);
+    expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(/exhausted/);
+    expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(
+      /analytics eligibility/i,
+    );
     expect(screen.getByTestId('analytics-5b-gap-distance-status')).toHaveTextContent(/undefined/);
+    expect(screen.getByTestId('analytics-5b-gap-emp-why-not-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('analytics-5b-gap-emp-why-not-pairing-chip')).toHaveTextContent(
+      /2\/25/,
+    );
+    expect(screen.getByTestId('analytics-5b-gap-emp-why-not-row-miles-1993')).toHaveTextContent(
+      /exploratory|instrument_precision/i,
+    );
     expect(screen.getByTestId('analytics-5b-gap-req-cite_gated_sigma_q')).toHaveTextContent(
       /not_met/i,
     );
