@@ -160,17 +160,28 @@ export default function ScienceEvidenceSection({ embedded = false }) {
             sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
           />
         ))}
-        {CAMPAIGN_EVIDENCE.literature_ids.map((lid) => (
+        {(CAMPAIGN_EVIDENCE.literature_roles || []).map((row) => (
           <Chip
-            key={lid}
+            key={row.id}
             size="small"
             color="warning"
             variant="outlined"
-            label={lid}
-            sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+            label={`${row.role}: ${row.id}`}
+            title={row.label}
+            data-testid={`science-evidence-lit-role-${row.role}`}
+            sx={{ fontFamily: 'monospace', fontSize: '0.55rem' }}
           />
         ))}
       </Stack>
+      <Typography
+        variant="caption"
+        display="block"
+        color="text.secondary"
+        sx={{ mb: 0.5 }}
+        data-testid="science-evidence-densification-note"
+      >
+        {CAMPAIGN_EVIDENCE.densification_note}
+      </Typography>
       <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 1 }}>
         Pack: <code>{CAMPAIGN_EVIDENCE.pack_path}</code>
         <br />

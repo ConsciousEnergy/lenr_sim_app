@@ -331,7 +331,12 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByText('FAILED Unified palladium')).toBeInTheDocument();
     expect(screen.getByText('Google/ARPA-E null')).toBeInTheDocument();
     expect(screen.getByTestId('history-gap-header')).toHaveTextContent(/≥5σ \/ closure/);
-    expect(screen.getByTestId('history-gap-exp-failed-discovery')).toHaveTextContent(/not_met/i);
+    expect(screen.getByTestId('history-gap-exp-failed-discovery')).toHaveTextContent(
+      /analytics gates:\s*not_met/i,
+    );
+    expect(screen.getByTestId('history-gap-exp-failed-discovery')).not.toHaveTextContent(
+      /≥5σ gap:\s*met/i,
+    );
     expect(screen.getByTestId('history-gap-exp-failed-closure')).toHaveTextContent(/not_met/i);
     // Offline / missing-envelope rows still get corpus fallback chips.
     expect(screen.getByTestId('history-gap-exp-null-closure')).toHaveTextContent(/not_met/i);

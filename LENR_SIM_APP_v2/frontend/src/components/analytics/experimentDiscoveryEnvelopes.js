@@ -2,6 +2,9 @@
  * Normalize Analytics experiment discovery_grade_gap / honest_closure envelopes.
  * Falls back to corpus static checklist when API fields are absent (offline / old rows).
  * Never invents lenr_proved true or EQ-OPEN CLOSED.
+ *
+ * UI optics (BDS-334): never display analytics gate clearance as "≥5σ … met".
+ * Map schema `met` → display label `analytics_gates_clear`.
  */
 import {
   DISCOVERY_GRADE_BAR,
@@ -11,12 +14,25 @@ import {
 } from '../../config/unifiedTheoryScienceEvidence';
 
 /**
+ * Display label for discovery_grade_gap.overall_status.
+ * Schema may still use `met`/`not_met`; UI must not say "≥5σ gap: met".
+ * @param {string|null|undefined} overallStatus
+ * @returns {'analytics_gates_clear'|'not_met'}
+ */
+export function analyticsGateDisplayStatus(overallStatus) {
+  return overallStatus === 'met' || overallStatus === 'analytics_gates_clear'
+    ? 'analytics_gates_clear'
+    : 'not_met';
+}
+
+/**
  * @param {object|null|undefined} exp
  * @returns {{
  *   discoveryGradeEligible: boolean,
  *   discoveryGradeGap: object,
  *   honestClosure: object,
  *   quantitativeDistance: object,
+ *   analyticsGateStatus: 'analytics_gates_clear'|'not_met',
  *   lenrProved: false,
  * }}
  */
@@ -101,11 +117,16 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
       false,
   );
 
+  const analyticsGateStatus = analyticsGateDisplayStatus(
+    discoveryGradeGap.overall_status,
+  );
+
   return {
     discoveryGradeEligible,
     discoveryGradeGap,
     honestClosure,
     quantitativeDistance,
+    analyticsGateStatus,
     lenrProved: false,
   };
 }
