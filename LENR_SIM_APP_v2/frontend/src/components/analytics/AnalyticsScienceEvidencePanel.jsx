@@ -124,6 +124,20 @@ export default function AnalyticsScienceEvidencePanel() {
         <Typography
           variant="body2"
           color="text.secondary"
+          data-testid="analytics-5b-moe-coverage"
+        >
+          Corpus MoE coverage:{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_sigma_q}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} σ_Q ·{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_moe_pairing_verified}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} pairing verified ·{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_count}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} analytics discovery —{' '}
+          closes_eq_open=<code>false</code>.
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
           data-testid="analytics-5b-history-envelope-note"
         >
           History / export rows now carry <code>discovery_grade_gap</code> and{' '}

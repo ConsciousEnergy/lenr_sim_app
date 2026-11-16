@@ -8,6 +8,7 @@ import LenrFormal.Gamow
 import LenrFormal.Assenbaum
 import LenrFormal.Composition
 import LenrFormal.Miles
+import LenrFormal.CalorimetrySignificance
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody

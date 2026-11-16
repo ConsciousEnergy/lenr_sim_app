@@ -15,6 +15,7 @@ from app.physics_engine.calorimetry_significance import (
     DISCOVERY_GRADE_SIGMA,
     discovery_grade_analytics,
 )
+from app.physics_engine.sigma_distance import quantitative_distance_to_discovery
 
 #: Stable requirement ids for UI / Analytics §5B checklists.
 GAP_REQUIREMENT_IDS = (
@@ -184,6 +185,8 @@ def discovery_grade_gap_bookkeeping(
     if missing:
         overall = "not_met"
 
+    distance = quantitative_distance_to_discovery(summary)
+
     return {
         "schema": "lenr-discovery-grade-gap-v1",
         "overall_status": overall,
@@ -192,13 +195,16 @@ def discovery_grade_gap_bookkeeping(
         "requirements": requirements,
         "missing_requirements": missing,
         "missing_ids": [row["id"] for row in missing],
+        "quantitative_distance": distance,
         "lenr_proved": False,
         "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
         "honesty": (
             "Gap bookkeeping for the BDS-302 discovery_grade_eligible analytics "
             "flag only. Clearing every gate here still does not set lenr_proved, "
             "does not close EQ-OPEN-*, and does not raise claim_tier. Campaign / "
-            "avenue / Lean outputs never satisfy cite-gated discovery MoE."
+            "avenue / Lean outputs never satisfy cite-gated discovery MoE. "
+            "quantitative_distance reports arithmetic shortfall to ≥5σ without "
+            "implying discovery when gates remain blocked."
         ),
     }
 
@@ -275,6 +281,7 @@ def attach_discovery_grade_envelopes(
     closure = honest_closure_bookkeeping(gap)
     payload["discovery_grade_gap"] = gap
     payload["honest_closure"] = closure
+    payload["quantitative_distance"] = gap.get("quantitative_distance")
     payload["lenr_proved"] = False
     payload["eq_open_status"] = {oid: "OPEN" for oid in OPEN_IDS}
     return payload

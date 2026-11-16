@@ -319,6 +319,9 @@ export default function ScienceEvidenceSection({ embedded = false }) {
         Status: <code>{FORMALIZATION_STATUS.status_doc}</code>
         <br />
         Collapse module: <code>{FORMALIZATION_STATUS.collapse_module}</code>
+        <br />
+        Calorimetry ≥5σ module:{' '}
+        <code>{FORMALIZATION_STATUS.calorimetry_module}</code>
       </Typography>
       <List dense>
         {FORMALIZATION_STATUS.items.map((item) => (
