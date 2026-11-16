@@ -206,3 +206,112 @@ def discovery_grade_gap_bookkeeping(
 def corpus_discovery_grade_gap() -> Dict[str, Any]:
     """§5B / Analytics default: corpus has no discovery-grade MoE closure."""
     return discovery_grade_gap_bookkeeping(None)
+
+
+#: Closure-path gates that stay not_met until governed discharge + sign-off.
+CLOSURE_REQUIREMENT_IDS = (
+    "eq_open_discharge",
+    "governance_signoff",
+)
+
+
+def honest_closure_bookkeeping(
+    discovery_gap: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Honest LENR-proof / EQ-OPEN closure envelope (always ``not_met``).
+
+    Even when BDS-302 ``discovery_grade_eligible`` clears on a literature row,
+    this envelope keeps ``lenr_proved: false`` and every EQ-OPEN ``OPEN``.
+    """
+    gap = dict(discovery_gap) if discovery_gap is not None else corpus_discovery_grade_gap()
+    analytics_missing = list(gap.get("missing_requirements") or [])
+    closure_missing = [
+        _requirement(
+            requirement_id="eq_open_discharge",
+            label="EQ-OPEN-* discharge under runway",
+            status="not_met",
+            detail=(
+                "All five EQ-OPEN rows remain OPEN; runway criteria are "
+                "documented, not met. Analytics discovery flags do not discharge."
+            ),
+        ),
+        _requirement(
+            requirement_id="governance_signoff",
+            label="Governed lab evidence + human sign-off",
+            status="not_met",
+            detail=(
+                "lenr_proved stays false until governed evidence + "
+                "academic-review sign-off in the same series."
+            ),
+        ),
+    ]
+    missing = analytics_missing + closure_missing
+    return {
+        "schema": "lenr-honest-closure-gap-v1",
+        "overall_status": "not_met",
+        "discovery_grade_gap": gap,
+        "missing_requirements": missing,
+        "missing_ids": [row["id"] for row in missing],
+        "lenr_proved": False,
+        "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
+        "honesty": (
+            "Honest closure path for lenr_proved / EQ-OPEN-*. "
+            "discovery_grade_eligible is an analytics flag only and never "
+            "implies closure. Campaign / avenue / Lean outputs never set "
+            "lenr_proved or close EQ-OPEN-*."
+        ),
+    }
+
+
+def attach_discovery_grade_envelopes(
+    summary: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Attach ``discovery_grade_gap`` + ``honest_closure`` onto a significance summary.
+
+    Returns a new dict. Always keeps ``lenr_proved: false`` and EQ-OPEN OPEN.
+    """
+    payload = dict(summary or {})
+    gap = discovery_grade_gap_bookkeeping(payload if summary is not None else None)
+    closure = honest_closure_bookkeeping(gap)
+    payload["discovery_grade_gap"] = gap
+    payload["honest_closure"] = closure
+    payload["lenr_proved"] = False
+    payload["eq_open_status"] = {oid: "OPEN" for oid in OPEN_IDS}
+    return payload
+
+
+def discovery_grade_envelopes_from_moe_fields(
+    *,
+    excess_power_w: Optional[float] = None,
+    sigma_q_w: Optional[float] = None,
+    sigma_q_statistical_w: Optional[float] = None,
+    sigma_q_systematic_w: Optional[float] = None,
+    moe_provenance: Optional[str] = None,
+    moe_citation_keys: Optional[List[str]] = None,
+    moe_sigma_q_pairing_verified: Optional[bool] = None,
+    q_source: Optional[str] = None,
+    q_is_seed_scale: bool = False,
+    discovery_grade_eligible: Optional[bool] = None,
+    s_heat: Optional[float] = None,
+    literature_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build gap + honest_closure from MoE / Experiment column fields (RORO)."""
+    report = discovery_grade_analytics(
+        excess_power_w=excess_power_w,
+        sigma_q_w=sigma_q_w,
+        sigma_q_statistical_w=sigma_q_statistical_w,
+        sigma_q_systematic_w=sigma_q_systematic_w,
+        moe_provenance=moe_provenance,
+        moe_citation_keys=moe_citation_keys or [],
+        moe_sigma_q_pairing_verified=bool(moe_sigma_q_pairing_verified),
+        q_source=q_source,
+        q_is_seed_scale=bool(q_is_seed_scale),
+        literature_id=literature_id,
+    )
+    # Prefer persisted analytics flag when explicitly provided (pack import
+    # forces False even if arithmetic would clear).
+    if discovery_grade_eligible is not None:
+        report["discovery_grade_eligible"] = bool(discovery_grade_eligible)
+    if s_heat is not None and report.get("s_heat") is None:
+        report["s_heat"] = s_heat
+    return attach_discovery_grade_envelopes(report)
