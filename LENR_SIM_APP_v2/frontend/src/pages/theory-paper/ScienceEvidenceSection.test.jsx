@@ -130,6 +130,13 @@ describe('ScienceEvidenceSection', () => {
     expect(screen.getByText(/Calorimetry ≥5σ analytics bar lock/i)).toBeInTheDocument();
     expect(screen.getByText(/Heat significance non-closure/i)).toBeInTheDocument();
     expect(screen.getByText(/Collapse UQ ≠ cite-gated heat MoE/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hydro ≠ nuclear-rate proof/i)).toBeInTheDocument();
+    expect(screen.getByText(/RP domain ≠ dynamics proof/i)).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-lit-role-contested_positive_claim')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-lit-role-detector_confounder_peer')).toBeInTheDocument();
+    expect(screen.getByTestId('science-evidence-densification-note')).toHaveTextContent(
+      /not weight-of-numbers/i,
+    );
     expect(screen.queryByText(/EQ-OPEN-.*:\s*CLOSED/i)).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,7 @@
-import { normalizeExperimentDiscoveryEnvelopes } from './experimentDiscoveryEnvelopes';
+import {
+  analyticsGateDisplayStatus,
+  normalizeExperimentDiscoveryEnvelopes,
+} from './experimentDiscoveryEnvelopes';
 
 describe('normalizeExperimentDiscoveryEnvelopes', () => {
   test('falls back to corpus not_met envelopes when API fields absent', () => {
@@ -6,6 +9,7 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.lenrProved).toBe(false);
     expect(envelopes.discoveryGradeEligible).toBe(false);
     expect(envelopes.discoveryGradeGap.overall_status).toBe('not_met');
+    expect(envelopes.analyticsGateStatus).toBe('not_met');
     expect(envelopes.honestClosure.overall_status).toBe('not_met');
     expect(envelopes.quantitativeDistance.distance_status).toBe('undefined');
     expect(envelopes.quantitativeDistance.lenr_proved).toBe(false);
@@ -17,7 +21,9 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     ).toBe(true);
   });
 
-  test('keeps honest_closure not_met even when discovery_grade_gap is met', () => {
+  test('maps schema met → analytics_gates_clear display; keeps honest_closure not_met', () => {
+    expect(analyticsGateDisplayStatus('met')).toBe('analytics_gates_clear');
+    expect(analyticsGateDisplayStatus('not_met')).toBe('not_met');
     const envelopes = normalizeExperimentDiscoveryEnvelopes({
       discovery_grade_eligible: true,
       discovery_grade_gap: {
@@ -39,6 +45,7 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
       quantitative_distance: {
         distance_status: 'at_or_above_bar_gates_clear',
         s_heat: 13.75,
+        moe_provenance: 'literature_reported',
         arithmetic_sigma_shortfall: 0,
         lenr_proved: true,
         eq_open_status: { 'EQ-OPEN-YIELD-01': 'CLOSED' },
@@ -46,6 +53,7 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     });
     expect(envelopes.discoveryGradeEligible).toBe(true);
     expect(envelopes.discoveryGradeGap.overall_status).toBe('met');
+    expect(envelopes.analyticsGateStatus).toBe('analytics_gates_clear');
     expect(envelopes.discoveryGradeGap.lenr_proved).toBe(false);
     expect(envelopes.honestClosure.overall_status).toBe('not_met');
     expect(envelopes.honestClosure.lenr_proved).toBe(false);

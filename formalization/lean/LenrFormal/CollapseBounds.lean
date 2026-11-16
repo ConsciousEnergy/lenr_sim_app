@@ -413,4 +413,27 @@ theorem empty_moe_bag_not_discovery :
   intro h
   exact (h.1) rfl
 
+/-- EQ-BBL-HEAT-NC-01: reported collapse temperature (clamped) never supplies
+    cite-gated discovery MoE by itself — hydro reporting ≠ heat discovery. -/
+theorem reported_temperature_does_not_entail_discovery_heat_moe
+    (raw_K peakMach_x10 : Nat) (isRayleighPlesset : Bool) :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.hydroEnhancementScenario]
+      ∧ reportedTemperature_K raw_K peakMach_x10 isRayleighPlesset
+          ≤ temperatureBound_K peakMach_x10 isRayleighPlesset
+      ∧ lenrProved = false := by
+  refine ⟨?_, reported_temperature_le_bound _ _ _, collapse_lenr_proved_false⟩
+  exact hydro_enhancement_does_not_entail_discovery_heat_moe (by simp)
+
+/-- EQ-BBL-HEAT-NC-01: reported pressure / compression clamps likewise do not
+    underwrite discovery-grade heat MoE. -/
+theorem reported_pressure_and_compression_keep_heat_moe_open
+    (raw_Pa raw_CR : Nat) :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.collapseUqEnvelope]
+      ∧ reportedPressure_Pa raw_Pa ≤ shockPressureCeiling_Pa
+      ∧ reportedCompressionRatio raw_CR ≤ maxCompressionRatio
+      ∧ lenrProved = false := by
+  refine ⟨?_, reported_pressure_le_shock_ceiling _, reported_compression_le_cap _,
+    collapse_lenr_proved_false⟩
+  exact collapse_uq_does_not_entail_discovery_heat_moe (by simp)
+
 end LenrFormal.CollapseBounds

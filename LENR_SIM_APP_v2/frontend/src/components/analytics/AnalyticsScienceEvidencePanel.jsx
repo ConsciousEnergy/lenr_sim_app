@@ -101,6 +101,14 @@ export default function AnalyticsScienceEvidencePanel() {
             data-testid="analytics-5b-moe-pairing"
           />
         </Stack>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          data-testid="analytics-5b-densification-note"
+        >
+          {CAMPAIGN_EVIDENCE.densification_note}
+        </Typography>
         <Typography variant="body2">
           <strong>Avenue ranking</strong>: <code>{AVENUE_RANKING_SUMMARY.kind}</code>,{' '}
           {AVENUE_RANKING_SUMMARY.avenues.length} stress avenues, claim tier{' '}
