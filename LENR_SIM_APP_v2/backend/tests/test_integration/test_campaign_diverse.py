@@ -307,10 +307,10 @@ def test_cavitation_collapse_preset_is_designed() -> None:
 
     n = campaign_size("cavitation_collapse")
     assert n == cavitation_collapse_count()
-    # BDS-323: designed deepen to 20 cells (UQ/YIELD contrasts).
+    # BDS-329: designed deepen to 22 cells (EC/MEV avenue stresses).
     # Keep an upper bound so CI UQ cost stays bounded — not a product ceiling of 16.
     assert 8 <= n <= 24
-    assert n >= 20
+    assert n >= 22
     cases = list(iter_campaign_cases("cavitation_collapse"))
     assert all(case.get("route") == "bubble_lattice" for case in cases)
     assert all(isinstance(case.get("bubble"), dict) for case in cases)

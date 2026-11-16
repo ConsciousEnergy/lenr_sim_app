@@ -30,7 +30,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CAMPAIGN_EVIDENCE.pack_path).toMatch(/cavitation_collapse_campaign/);
     expect(CAMPAIGN_EVIDENCE.hydro_label).toMatch(/contested hydro/i);
     expect(CAMPAIGN_EVIDENCE.note).toMatch(/model output only/i);
-    expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(20);
+    expect(CAMPAIGN_EVIDENCE.n_experiments).toBeGreaterThanOrEqual(22);
     expect(CAMPAIGN_EVIDENCE.n_theory_runs).toBe(CAMPAIGN_EVIDENCE.n_experiments);
     expect(CAMPAIGN_EVIDENCE.uq_samples).toBe(32);
     expect(CAMPAIGN_EVIDENCE.literature_ids).toEqual(

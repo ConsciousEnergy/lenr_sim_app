@@ -35,12 +35,12 @@
       "preset": "cavitation_collapse",
       "path": "LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/",
       "manifest": "LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/manifest.json",
-      "n_experiments": 20,
-      "n_theory_runs": 20,
+      "n_experiments": 22,
+      "n_theory_runs": 22,
       "uq_samples": 32,
-      "pack_git_sha": "d4ce4620cbab43561f4fab9bf26ff1f11966c4b9",
+      "pack_git_sha": "43a1739cf6bc0dd9791ea8e9392b7c390d73e32e",
       "status": "on_dev",
-      "note": "Bubble-lattice host×loading×drive×frequency×dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhtiä 2026 CR-39 cavitation confounder peer (pyyhtia2026) on a dedicated experiment row. BDS-323 deepen: N=20 + UQ=32. Model output only; does not raise empirical claim tiers, meet ≥5σ discovery-grade closure, or close EQ-OPEN-*."
+      "note": "Bubble-lattice host×loading×drive×frequency×dynamics_mode cells with include_uncertainty; contested Taleyarkhan sonofusion literature anchor; Pyyhtiä 2026 CR-39 cavitation confounder peer (pyyhtia2026) on a dedicated experiment row. BDS-329 deepen: N=22 + EC/MEV avenue-stress cells; every pack row stamps discovery_grade_gap + honest_closure overall_status not_met. Model output only; does not raise empirical claim tiers, meet ≥5σ discovery-grade closure, or close EQ-OPEN-*."
     },
     {
       "preset": "detector_weak_screen",
@@ -157,7 +157,8 @@
     "2026-11-11 multidisciplinary coherence: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-coherence; §5.2 / UI claim-tier sync; no OPEN closures",
     "2026-11-11 EQ-OPEN peer-review: PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-11-eq-open-peer-review; §5A bound postures; TEX/PDF rebuilt via build_pdf.sh; no OPEN closures",
     "BDS-322 analytics/§5B enrichment: cavitation_collapse campaign expanded to 18 designed cells (incl. Pyyhtiä lit row); UI runway criteria + unmet ≥5σ bar; EQ-OPEN-* remain OPEN; lenr_proved false",
-    "BDS-323 analytics/§5B UQ deepen: cavitation_collapse N=20 + PACK_UQ_SAMPLES=32; claim_tier runway chips; MoE pairing gap UX; EQ-OPEN-* remain OPEN; lenr_proved false"
+    "BDS-323 analytics/§5B UQ deepen: cavitation_collapse N=20 + PACK_UQ_SAMPLES=32; claim_tier runway chips; MoE pairing gap UX; EQ-OPEN-* remain OPEN; lenr_proved false",
+    "BDS-329 analytics/§5B EQ-OPEN-weakest cells: cavitation_collapse N=22 (EC/MEV avenue stresses) + pack discovery_grade_gap/honest_closure not_met stamps; EQ-OPEN-* remain OPEN; lenr_proved false"
   ],
   "formats": [
     ".md",

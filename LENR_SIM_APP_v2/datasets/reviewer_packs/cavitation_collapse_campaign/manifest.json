@@ -3,16 +3,16 @@
   "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
-  "git_sha": "d4ce4620cbab43561f4fab9bf26ff1f11966c4b9",
+  "git_sha": "43a1739cf6bc0dd9791ea8e9392b7c390d73e32e",
   "preset": "cavitation_collapse",
-  "n_experiments": 20,
-  "n_theory_runs": 20,
+  "n_experiments": 22,
+  "n_theory_runs": 22,
   "claim_tier_histogram": {
-    "speculative_exploratory": 480,
-    "empirical_lenr_correlation": 40
+    "speculative_exploratory": 528,
+    "empirical_lenr_correlation": 44
   },
   "source_class_counts": {
-    "Campaign": 20
+    "Campaign": 22
   },
   "open_ids": [
     "EQ-OPEN-MEV-01",
@@ -116,5 +116,5 @@
     "pyyhtia-cr39-cavitation-2026",
     "taleyarkhan-sonofusion-2002"
   ],
-  "note": "Model-output cavitation/collapse campaign: bubble-lattice cells varying host, loading, acoustic drive, and dynamics_mode with include_uncertainty. Contested Taleyarkhan sonofusion literature anchor and Pyyhti\u00e4 2026 (pyyhtia-cr39-cavitation-2026) electrolytic CR-39 cavitation / detector-confounder peer included; not nuclear proof. Does not prove LENR; EQ-OPEN-* stay OPEN. Additional runs do not raise empirical claim tiers or meet \u22655\u03c3 discovery-grade closure."
+  "note": "Model-output cavitation/collapse campaign: bubble-lattice cells varying host, loading, acoustic drive, and dynamics_mode with include_uncertainty. Contested Taleyarkhan sonofusion literature anchor and Pyyhti\u00e4 2026 (pyyhtia-cr39-cavitation-2026) electrolytic CR-39 cavitation / detector-confounder peer included; not nuclear proof. BDS-329 adds EC/MEV avenue-stress cells; every row carries discovery_grade_gap + honest_closure envelopes with overall_status not_met (no cite-gated \u03c3_Q discovery). Does not prove LENR; EQ-OPEN-* stay OPEN. Additional runs do not raise empirical claim tiers or meet \u22655\u03c3 discovery-grade closure."
 }

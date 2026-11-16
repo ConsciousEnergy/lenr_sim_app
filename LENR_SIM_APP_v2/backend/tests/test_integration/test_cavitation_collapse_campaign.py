@@ -70,7 +70,7 @@ def test_cavitation_collapse_pack_honesty_lock() -> None:
     assert any(
         row.get("literature_id") == "pyyhtia-cr39-cavitation-2026" for row in experiments
     )
-    assert manifest["n_experiments"] >= 20
+    assert manifest["n_experiments"] >= 22
     uq_rows = [
         row
         for row in experiments
@@ -79,6 +79,27 @@ def test_cavitation_collapse_pack_honesty_lock() -> None:
         .get("n_samples")
     ]
     assert len(uq_rows) >= 5
+
+    # BDS-329: every model-output row stamps not_met gap/closure envelopes.
+    assert all(row.get("discovery_grade_eligible") is False for row in experiments)
+    assert all(row.get("lenr_proved") is False for row in experiments)
+    for row in experiments:
+        gap = row.get("discovery_grade_gap") or {}
+        closure = row.get("honest_closure") or {}
+        results = row.get("results") or {}
+        assert gap.get("overall_status") == "not_met"
+        assert closure.get("overall_status") == "not_met"
+        assert results.get("discovery_grade_gap", {}).get("overall_status") == "not_met"
+        assert results.get("honest_closure", {}).get("overall_status") == "not_met"
+        assert results.get("discovery_grade_eligible") is False
+
+    avenue_tags = {
+        (row.get("results") or {}).get("tag")
+        for row in experiments
+        if (row.get("results") or {}).get("avenue_stress")
+    }
+    assert "cav:ni_h_ec_threshold_stress" in avenue_tags
+    assert "cav:pd_d_mev_partition_stress" in avenue_tags
 
     theory_runs = [
         json.loads(line)

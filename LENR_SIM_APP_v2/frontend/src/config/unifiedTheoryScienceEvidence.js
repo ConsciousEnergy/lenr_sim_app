@@ -145,8 +145,8 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
-  n_experiments: 20,
-  n_theory_runs: 20,
+  n_experiments: 22,
+  n_theory_runs: 22,
   /** Pinned pack Sobol depth (build_cavitation_collapse_pack.PACK_UQ_SAMPLES). */
   uq_samples: 32,
   hosts: Object.freeze(['copper', 'nickel', 'palladium', 'titanium']),
@@ -162,6 +162,8 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'Bubble-lattice host × loading × drive × frequency × dynamics_mode cells with include_uncertainty. ' +
     'Model output only; does not raise empirical claim tiers or meet ≥5σ discovery-grade closure. '
     + 'UQ sample deepen (32) widens model envelopes only — not cite-gated σ_Q / not discovery. '
+    + 'BDS-329 adds EC/MEV avenue-stress cells; pack rows stamp discovery_grade_gap + '
+    + 'honest_closure overall_status not_met. '
     + 'Pyyhtiä et al. 2026 (DOI 10.1016/j.jelechem.2026.120104) is an electrolytic CR-39 '
     + 'cavitation / detector-confounder peer — not LENR-rate proof.',
 });

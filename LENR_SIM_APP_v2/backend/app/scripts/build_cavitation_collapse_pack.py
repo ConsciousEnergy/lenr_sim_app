@@ -19,6 +19,10 @@ from app.api.routes.unified_simulation import run_bubble_lattice_simulation
 from app.campaign.cavitation_collapse import iter_cavitation_collapse_cases
 from app.campaign.runner import _bubble_lattice_payload
 from app.data.dataset_io import datasets_root
+from app.physics_engine.discovery_grade_gap import (
+    corpus_discovery_grade_gap,
+    honest_closure_bookkeeping,
+)
 from app.services.reviewer_pack import PACK_SCHEMA, _git_sha, _load_invariants
 from app.services.simulation_persistence import DISCLAIMER
 
@@ -102,6 +106,9 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         body = response.model_dump() if hasattr(response, "model_dump") else dict(response)
         bubble = case.get("bubble") or {}
         summary = _collapse_summary(body)
+        # Campaign rows are model-output: gap/closure envelopes stay not_met.
+        discovery_gap = corpus_discovery_grade_gap()
+        honest_closure = honest_closure_bookkeeping(discovery_gap)
         exp = {
             "id": f"cav-collapse-{index:02d}",
             "name": f"Cavitation collapse {case.get('tag')}",
@@ -117,10 +124,18 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             "excess_heat_watts": 0.0,
             "literature_id": case.get("literature_id"),
             "claim_tag": case.get("claim_tag"),
+            "discovery_grade_eligible": False,
+            "discovery_grade_gap": discovery_gap,
+            "honest_closure": honest_closure,
+            "lenr_proved": False,
             "results": {
                 "is_model_output": True,
                 "lenr_proved": False,
+                "discovery_grade_eligible": False,
+                "discovery_grade_gap": discovery_gap,
+                "honest_closure": honest_closure,
                 "tag": case.get("tag"),
+                "avenue_stress": case.get("avenue_stress"),
                 "rate_mode": case.get("rate_mode"),
                 "route": "bubble_lattice",
                 "campaign_preset": PRESET,
@@ -215,8 +230,11 @@ def _write(experiments: List[Dict[str, Any]], runs: List[Dict[str, Any]]) -> Pat
             "include_uncertainty. Contested Taleyarkhan sonofusion literature "
             "anchor and Pyyhtiä 2026 (pyyhtia-cr39-cavitation-2026) electrolytic "
             "CR-39 cavitation / detector-confounder peer included; not nuclear "
-            "proof. Does not prove LENR; EQ-OPEN-* stay OPEN. Additional runs do "
-            "not raise empirical claim tiers or meet ≥5σ discovery-grade closure."
+            "proof. BDS-329 adds EC/MEV avenue-stress cells; every row carries "
+            "discovery_grade_gap + honest_closure envelopes with overall_status "
+            "not_met (no cite-gated σ_Q discovery). Does not prove LENR; "
+            "EQ-OPEN-* stay OPEN. Additional runs do not raise empirical claim "
+            "tiers or meet ≥5σ discovery-grade closure."
         ),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
