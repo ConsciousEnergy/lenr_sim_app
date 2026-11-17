@@ -20,6 +20,25 @@ import {
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside quantitative EMP / lab-target claims (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 /**
  * @param {Object} props
@@ -197,16 +216,24 @@ export default function EmpExploratoryWhyNotDiscovery({
             Next lab / MoE targets (blocked awaiting lab; no honesty flips)
           </Typography>
           {NEXT_LAB_MOE_TARGETS.map((row) => (
-            <Typography
+            <Stack
               key={row.id}
-              variant="caption"
-              color="text.secondary"
-              display="block"
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              flexWrap="wrap"
+              alignItems="center"
               data-testid={`${testIdPrefix}-next-lab-${row.id}`}
             >
-              <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
-              {row.target}
-            </Typography>
+              <Typography variant="caption" color="text.secondary" component="span">
+                <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
+                {row.target}
+              </Typography>
+              <ClaimTierChip
+                tier={row.claim_tier || 'speculative_exploratory'}
+                testId={`${testIdPrefix}-next-lab-tier-${row.id}`}
+              />
+            </Stack>
           ))}
         </Stack>
       ) : null}
@@ -235,6 +262,10 @@ export default function EmpExploratoryWhyNotDiscovery({
                     variant="outlined"
                     label={row.claim_type}
                     sx={{ height: 18, fontSize: '0.6rem' }}
+                  />
+                  <ClaimTierChip
+                    tier={row.claim_tier || 'speculative_exploratory'}
+                    testId={`${testIdPrefix}-claim-tier-${row.literature_id}`}
                   />
                   <Chip
                     size="small"
@@ -268,7 +299,11 @@ export default function EmpExploratoryWhyNotDiscovery({
                     {row.s_heat_exploratory != null ? (
                       <>
                         {' '}
-                        · exploratory S_heat=<code>{row.s_heat_exploratory}</code>
+                        · exploratory S_heat=<code>{row.s_heat_exploratory}</code>{' '}
+                        <ClaimTierChip
+                          tier={row.claim_tier || 'speculative_exploratory'}
+                          testId={`${testIdPrefix}-s-heat-tier-${row.literature_id}`}
+                        />
                       </>
                     ) : null}
                     {' · '}pairing=

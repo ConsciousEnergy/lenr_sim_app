@@ -19,6 +19,25 @@ import {
   EQ_OPEN_RUNWAY,
   NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric lab-target captions (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 /**
  * @param {Object} props
@@ -128,15 +147,27 @@ export default function EqOpenAvenueLinkage({
                     </Stack>
                     {!isCompact &&
                       labTargets.map((target) => (
-                        <Typography
+                        <Stack
                           key={target.id}
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
+                          direction="row"
+                          spacing={0.5}
+                          useFlexGap
+                          flexWrap="wrap"
+                          alignItems="center"
                           data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
                         >
-                          Next lab MoE: {target.target}
-                        </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            component="span"
+                          >
+                            Next lab MoE: {target.target}
+                          </Typography>
+                          <ClaimTierChip
+                            tier={target.claim_tier || 'speculative_exploratory'}
+                            testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
+                          />
+                        </Stack>
                       ))}
                   </Stack>
                 }

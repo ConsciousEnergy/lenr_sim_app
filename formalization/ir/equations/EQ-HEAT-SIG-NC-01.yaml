@@ -1,10 +1,12 @@
 id: EQ-HEAT-SIG-NC-01
-latex: "\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad \\mathrm{DiscoveryGradeAnalytics}\\nRightarrow\\bigwedge_{i=1}^{5}\\neg Q_i;\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
+latex: "\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad (\\mathrm{hQ}_{1}\\!\\ldots\\!\\mathrm{hQ}_{5})\\land\\mathrm{DiscoveryGradeAnalytics}\\Rightarrow\\bigwedge_{i=1}^{5}\\neg Q_i;\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
 symbols:
   DiscoveryGradeAnalytics: "BDS-302 analytics flag (cite-gated + pairing + non-seed + S≥5)"
   instrumentPrecision: "literature_reported_instrument_precision MoE provenance"
   instrumentFloor: "literature_reported_instrument_floor MoE provenance"
   lenrProved: "global nature-proof token (stays false)"
+  Q_i: "OpenObligations closure predicates Q1–Q5 (MEV/RAD/RATE/EC/YIELD); ¬Q_i means still OPEN"
+  hQ_1_to_hQ_5: "open-witness hypotheses required by discovery_grade_analytics_does_not_close_any_eq_open"
   q5IntegratedYieldClosed: "EQ-OPEN-YIELD-01 integrated-yield closure predicate"
   softChipIsScientificDischarge: "UI soft chip never equals scientific ≥5σ / EQ-OPEN discharge"
 units: "dimensionless (honesty / non-closure)"
@@ -31,4 +33,4 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_close_any_eq_open"
   - "LenrFormal.CalorimetrySignificance.dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr"
   - "LenrFormal.CalorimetrySignificance.soft_chip_not_scientific_discharge"
-notes: "AX honesty (BDS-344/BDS-346): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved. BDS-346 binds DiscoveryGradeAnalytics ⇏ any of Q1–Q5 (MEV/RAD/RATE/EC/YIELD) under open witnesses — not Q5-only. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX / OpenObligations."
+notes: "AX honesty (BDS-344/BDS-346): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved. BDS-346: under open witnesses hQ1–hQ5, DiscoveryGradeAnalytics ⇒ ⋀ ¬Q_i (MEV/RAD/RATE/EC/YIELD still OPEN) — not Q5-only; analytics never discharges any EQ-OPEN. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX / OpenObligations."

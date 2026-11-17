@@ -120,6 +120,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       ]),
     );
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_s_heat).toBe(11.25);
+    expect(CORPUS_MOE_COVERAGE.kasagi_ni_claim_tier).toBe(
+      'empirical_lenr_correlation',
+    );
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_distance_status).toBe(
       'at_or_above_bar_gates_clear',
     );
@@ -159,6 +162,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.status).toBe('blocked_awaiting_lab');
       expect(row.avenue_id).toBeTruthy();
       expect(row.target.length).toBeGreaterThan(20);
+      expect(row.claim_tier).toBe('speculative_exploratory');
       row.eq_open_ids.forEach((oid) => expect(OPEN_EQ_IDS).toContain(oid));
     });
     const coveredOpens = new Set(
@@ -168,6 +172,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);
+      expect(row.claim_tier).toBe('speculative_exploratory');
       expect(row.reasons.length).toBeGreaterThanOrEqual(2);
       expect(String(row.soft_chip)).not.toMatch(/≥5σ.*met/i);
       expect(row.soft_chip).not.toBe('met');

@@ -143,6 +143,8 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   kasagi_nicu_claim_tier: 'empirical_lenr_correlation',
   kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
   kasagi_ni_s_heat: 11.25,
+  kasagi_ni_moe_provenance: 'literature_reported',
+  kasagi_ni_claim_tier: 'empirical_lenr_correlation',
   kasagi_ni_distance_status: 'at_or_above_bar_gates_clear',
   /** Instrument-precision / floor rows stay exploratory (never discovery-eligible). */
   exploratory_instrument_moe_ids: Object.freeze([
@@ -214,6 +216,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Governed lab simultaneous heat+He with cite-gated literature_reported σ_Q + verified ' +
       'Q↔σ pairing underwriting YIELD (not Miles exploratory instrument_precision arithmetic)',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
   }),
   Object.freeze({
@@ -223,6 +226,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Broader corpus beyond Kasagi 2/25: measurement-specific total σ_Q with same-results ' +
       'envelope pairing on governed calorimetry rows (refuse Iwamura/Mizuno/Arata fabrication)',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
   }),
   Object.freeze({
@@ -232,6 +236,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Efficiency-corrected 23.8 MeV γ upper limit with coincidence / efficiency provenance ' +
       '(not CR-39 pit counts; Pyyhtiä confounder stays detector-only)',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
   }),
   Object.freeze({
@@ -241,6 +246,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Measured p₄ / trap occupancy + collective caps that constrain rate_mode budgets ' +
       '(not free 10⁶ caps or campaign grids alone)',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
   }),
   Object.freeze({
@@ -250,6 +256,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Independent condensed-matter path ≥0.782 MeV in Tennfors-licensed regime with cited ' +
       'potentials/masses (deficit bookkeeping / Widom scaffold do not count)',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
   }),
 ]);
@@ -263,6 +270,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'miles-1993',
     label: 'Miles 1993 heat–He',
     claim_type: 'EMP',
+    claim_tier: 'speculative_exploratory',
     distance_status: 'at_or_above_bar_gates_blocked',
     s_heat_exploratory: 26,
     moe_provenance: 'literature_reported_instrument_precision',
@@ -282,6 +290,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'deninno-tid-1995',
     label: 'De Ninno / ENEA Frascati flow',
     claim_type: 'EMP',
+    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_precision',
@@ -300,6 +309,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'mckubre-sri-p13-p14-1992',
     label: 'McKubre SRI P13/P14',
     claim_type: 'EMP',
+    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
@@ -318,6 +328,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'mckubre-high-loading-1998',
     label: 'McKubre high-loading 1998',
     claim_type: 'EMP',
+    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
@@ -797,6 +808,11 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
         `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing avenue/eq_open/target`,
       );
     }
+    if (!target.claim_tier || typeof target.claim_tier !== 'string') {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must declare claim_tier`,
+      );
+    }
     for (const oid of target.eq_open_ids) {
       if (!OPEN_EQ_IDS.includes(oid)) {
         throw new Error(
@@ -812,6 +828,11 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     throw new Error('Science evidence UI must list EMP_EXPLORATORY_WHY_NOT_DISCOVERY rows');
   }
   for (const row of EMP_EXPLORATORY_WHY_NOT_DISCOVERY) {
+    if (!row.claim_tier || typeof row.claim_tier !== 'string') {
+      throw new Error(
+        `Science evidence UI EMP exploratory ${row.literature_id} must declare claim_tier`,
+      );
+    }
     if (row.discovery_grade_eligible !== false) {
       throw new Error(
         `Science evidence UI must keep EMP exploratory ${row.literature_id} non-discovery`,

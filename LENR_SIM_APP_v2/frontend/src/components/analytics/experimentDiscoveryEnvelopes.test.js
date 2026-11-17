@@ -55,6 +55,38 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.discoveryGradeEligible).toBe(false);
   });
 
+  test('unknown experiment ID does not inherit Miles/McKubre EMP copy', () => {
+    const why = resolveEmpWhyNotDiscovery(
+      { literature_id: 'unknown-lab-row-xyz', id: 'unknown-lab-row-xyz' },
+      {
+        distance_status: 'at_or_above_bar_gates_blocked',
+        moe_provenance: 'literature_reported_instrument_precision',
+      },
+    );
+    expect(why).toBeNull();
+
+    const floorWhy = resolveEmpWhyNotDiscovery(
+      { id: 'orphan-floor-row' },
+      {
+        distance_status: 'undefined',
+        moe_provenance: 'literature_reported_instrument_floor',
+      },
+    );
+    expect(floorWhy).toBeNull();
+
+    const envelopes = normalizeExperimentDiscoveryEnvelopes({
+      literature_id: 'unknown-lab-row-xyz',
+      moe_provenance: 'literature_reported_instrument_precision',
+      quantitative_distance: {
+        distance_status: 'at_or_above_bar_gates_blocked',
+        moe_provenance: 'literature_reported_instrument_precision',
+        lenr_proved: false,
+      },
+    });
+    expect(envelopes.empWhyNotDiscovery).toBeNull();
+    expect(envelopes.lenrProved).toBe(false);
+  });
+
   test('maps schema met → analytics_gates_clear display; keeps honest_closure not_met', () => {
     expect(analyticsGateDisplayStatus('met')).toBe('analytics_gates_clear');
     expect(analyticsGateDisplayStatus('not_met')).toBe('not_met');

@@ -57,6 +57,17 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
       screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
     ).toHaveTextContent(/23\.8 MeV|efficiency/i);
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
+    expect(screen.getByTestId('emp-test-claim-tier-miles-1993')).toHaveAttribute(
+      'data-claim-tier',
+      'speculative_exploratory',
+    );
+    expect(screen.getByTestId('emp-test-s-heat-tier-miles-1993')).toHaveAttribute(
+      'data-claim-tier',
+      'speculative_exploratory',
+    );
+    expect(
+      screen.getByTestId('emp-test-next-lab-tier-gamma_ul_efficiency_corrected'),
+    ).toHaveAttribute('data-claim-tier', 'speculative_exploratory');
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(
       /at_or_above_bar_gates_blocked/,
     );

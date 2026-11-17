@@ -31,10 +31,10 @@ export function analyticsGateDisplayStatus(overallStatus) {
  * Soft honesty only — never invents discovery eligibility.
  *
  * @param {object|null|undefined} exp
- * @param {object|null|undefined} [quantitativeDistance]
+ * @param {object|null|undefined} [_quantitativeDistance] retained for call-site compat; unused
  * @returns {object|null}
  */
-export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null) {
+export function resolveEmpWhyNotDiscovery(exp = {}, _quantitativeDistance = null) {
   const safeExp = exp && typeof exp === 'object' ? exp : {};
   const results =
     safeExp.results && typeof safeExp.results === 'object' ? safeExp.results : {};
@@ -50,27 +50,8 @@ export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null)
     );
     if (byId) return byId;
   }
-  const distance = quantitativeDistance || {};
-  const provenance =
-    distance.moe_provenance ||
-    safeExp.moe_provenance ||
-    results.moe_provenance ||
-    null;
-  const distanceStatus = distance.distance_status;
-  if (
-    distanceStatus === 'at_or_above_bar_gates_blocked' ||
-    (typeof provenance === 'string' &&
-      (provenance.includes('instrument_precision') ||
-        provenance.includes('instrument_floor')))
-  ) {
-    return (
-      EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
-        (row) =>
-          row.moe_provenance === provenance ||
-          row.distance_status === distanceStatus,
-      ) || EMP_EXPLORATORY_WHY_NOT_DISCOVERY[0]
-    );
-  }
+  // Unknown / unmatched identities must not inherit Miles/McKubre-specific copy
+  // from shared provenance or distance_status alone.
   return null;
 }
 
