@@ -121,6 +121,12 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       ]),
     );
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_s_heat).toBe(11.25);
+    expect(CORPUS_MOE_COVERAGE.kasagi_nicu_s_heat).toBe(13.75);
+    expect(CORPUS_MOE_COVERAGE.locked_s_heat).toEqual({
+      'kasagi-nicu-radiant-2026': 13.75,
+      'kasagi-ni-radiant-2026': 11.25,
+      'miles-1993': 26,
+    });
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_distance_status).toBe(
       'at_or_above_bar_gates_clear',
     );
@@ -130,6 +136,24 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.miles_moe_provenance).toMatch(/instrument_precision/);
     expect(CORPUS_MOE_COVERAGE.miles_pairing_verified).toBe(false);
     expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/exploratory/i);
+    expect(CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns).toHaveLength(4);
+    CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns.forEach((row) => {
+      expect(row.sigma_Q_W).toBeNull();
+      expect(row.discovery_grade_eligible).toBe(false);
+      expect(row.decision).toBe('REFUSE_FABRICATED_SIGMA_Q');
+    });
+    expect(
+      CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns.map((r) => r.id),
+    ).toEqual(
+      expect.arrayContaining([
+        'iwamura-heat-2024',
+        'mizuno-ni-pd-airflow',
+        'arata-ds-cathode',
+        'celani-constantan',
+      ]),
+    );
+    expect(CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W).toBe(0.1);
+    expect(CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe).toBe(false);
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
       expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
     );
@@ -187,6 +211,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(milesWhy.distance_status).toBe('at_or_above_bar_gates_blocked');
     expect(milesWhy.s_heat_exploratory).toBe(26);
     expect(milesWhy.reasons.join(' ')).toMatch(/0\.52|±0\.020|±0\.04|missing discovery cite/i);
+    expect(milesWhy.reasons.join(' ')).toMatch(/0\.52\/0\.02|S_heat=26/);
     expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/JEAC 346|exploratory/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,

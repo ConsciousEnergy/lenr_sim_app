@@ -151,9 +151,9 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'mckubre-high-loading-1998',
   ]),
   /**
-   * BDS-343 / post-ship MoE hunt: publishable literature_reported σ_Q + verified
-   * pairing inventory is exhausted for the curated 25-row corpus (only Kasagi
-   * NiCu + Ni). Do not invent pairs for Iwamura / Mizuno / Arata / Celani /
+   * BDS-343 / BDS-363 / post-ship MoE hunt: publishable literature_reported σ_Q +
+   * verified pairing inventory is exhausted for the curated 25-row corpus (only
+   * Kasagi NiCu + Ni). Do not invent pairs for Iwamura / Mizuno / Arata / Celani /
    * commercial Ni–H. Celani JCMNS 29 “12±2 W” is a documented near-miss — still
    * not discovery-grade (method indetermination / raw-uncorrected episode).
    */
@@ -165,6 +165,75 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'Post-ship hunt: refuse Iwamura/Mizuno/Arata/Celani discovery σ; Miles stays exploratory.',
   post_ship_moe_gap_map:
     'docs/science/post-ship-moe-gap-map.md (store) — primary-source refuse + Celani near-miss',
+  /**
+   * Locked arithmetic S_heat = Q/σ_Q for cite-gated / exploratory rows (BDS-363).
+   * Kasagi: literature_reported + same-results envelope. Miles: instrument_precision
+   * exploratory only (gates blocked). Never invent σ for refused campaigns.
+   */
+  locked_s_heat: Object.freeze({
+    'kasagi-nicu-radiant-2026': 13.75,
+    'kasagi-ni-radiant-2026': 11.25,
+    'miles-1993': 26,
+  }),
+  /**
+   * Campaign / literature heat rows that must stay σ_Q-null / non-discovery
+   * (no peer watt total MoE usable for discovery pairing).
+   */
+  refused_fabricated_moe_campaigns: Object.freeze([
+    Object.freeze({
+      id: 'iwamura-heat-2024',
+      label: 'Iwamura 2024 nano-composite heat',
+      corpus_status: 'absent_heat_row',
+      related_literature_ids: Object.freeze([
+        'iwamura-cs-pr-2002',
+        'iwamura-sr-mo-2006',
+      ]),
+      published_peak_note:
+        'JJAP 63 037001 reports few–~9 W / 0.76 MJ without author ± / GUM total σ_Q',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'mizuno-ni-pd-airflow',
+      label: 'Mizuno Ni–Pd air-flow',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'ICCF-22 preprint claims ~250 W class excess without peer episode total σ_Q',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'arata-ds-cathode',
+      label: 'Arata DS-cathode / Pd black',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'PJAB/JJAP heat+He narrative without author calorimetric σ_Q_W; SRI %≠Arata pair',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'celani-constantan',
+      label: 'Celani Cu–Ni–Mn / constantan',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'JCMNS unstable excess up to ~16 W; no cite-gated total σ_Q for discovery pairing',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+  ]),
+  /**
+   * Avenue-ranking Miles-band oracle uses model-output σ_Q_W=0.1 (not literature MoE).
+   * S_heat arithmetic under that σ never clears discovery_grade_eligible.
+   */
+  campaign_model_output_sigma_Q_W: 0.1,
+  campaign_model_output_is_discovery_moe: false,
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
    * BDS-344: dual Kasagi Lean binding + instrument_floor NC + soft-chip lock.
@@ -407,7 +476,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     reasons: Object.freeze([
       'JEAC 346 peak 0.52 W is not a verified same-results envelope for follow-on ±0.020 W (MilesManomalouse / Dominguez)',
       'Same-paper JEAC accuracy bound ~±0.04 W / ±2% remains instrument accuracy class — not literature_reported total σ_Q',
-      'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — S_heat=26 gates-blocked',
+      'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — arithmetic S_heat=26 (=0.52/0.02) gates-blocked',
       'Missing discovery cite: measurement-specific total σ_Q_W for the paired 0.52 W peak episode in a primary source',
       'Instantaneous EMP band ≠ integrated YIELD discharge; EQ-OPEN-YIELD-01 stays OPEN',
     ]),
@@ -875,6 +944,42 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted !== true) {
     throw new Error(
       'Science evidence UI must mark literature_moe_inventory_exhausted true (no fabricated pairs)',
+    );
+  }
+  if (
+    !CORPUS_MOE_COVERAGE.locked_s_heat ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-nicu-radiant-2026'] !== 13.75 ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-ni-radiant-2026'] !== 11.25 ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['miles-1993'] !== 26
+  ) {
+    throw new Error(
+      'Science evidence UI must lock Kasagi/Miles S_heat arithmetic (13.75 / 11.25 / 26)',
+    );
+  }
+  if (
+    !Array.isArray(CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns) ||
+    CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns.length < 4
+  ) {
+    throw new Error(
+      'Science evidence UI must list refused_fabricated_moe_campaigns (Iwamura/Mizuno/Arata/Celani)',
+    );
+  }
+  for (const row of CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns) {
+    if (row.sigma_Q_W != null || row.discovery_grade_eligible !== false) {
+      throw new Error(
+        `Refused campaign ${row.id} must keep sigma_Q_W null and discovery_grade_eligible false`,
+      );
+    }
+    if (row.decision !== 'REFUSE_FABRICATED_SIGMA_Q') {
+      throw new Error(`Refused campaign ${row.id} must keep REFUSE_FABRICATED_SIGMA_Q`);
+    }
+  }
+  if (
+    CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W !== 0.1 ||
+    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false
+  ) {
+    throw new Error(
+      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery',
     );
   }
   if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open !== true) {

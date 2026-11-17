@@ -158,13 +158,21 @@ export default function AnalyticsScienceEvidencePanel() {
               {CORPUS_MOE_COVERAGE.with_moe_pairing_verified}/
               {CORPUS_MOE_COVERAGE.n_records}
             </code>{' '}
-            (Kasagi NiCu + Ni only). Soft chips stay{' '}
-            <code>analytics_gates_clear</code> — never “≥5σ met”. Miles stays exploratory
-            (instrument_precision / pairing unverified). Remaining high-P(success) software
-            levers are runway criteria UX + densified <code>NEXT_LAB_MOE_TARGETS</code>{' '}
-            acceptance / corpus-gap / DAQ maps — not inventing σ_Q. Lab MoE under those asks
-            still leaves every EQ-OPEN <strong>OPEN</strong> and{' '}
-            <code>lenr_proved: false</code> until governed discharge + sign-off.
+            (Kasagi NiCu + Ni only; locked S_heat{' '}
+            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code> /{' '}
+            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>
+            ). Soft chips stay <code>analytics_gates_clear</code> — never “≥5σ met”. Miles
+            stays exploratory (S_heat=
+            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['miles-1993']}</code> under
+            instrument_precision / pairing unverified; JEAC ±0.04 ≠ discovery pair). Iwamura
+            / Mizuno / Arata / Celani stay{' '}
+            <code>REFUSE_FABRICATED_SIGMA_Q</code>. Campaign model-output σ_Q=
+            <code>{CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W}</code> is not
+            literature MoE. Remaining high-P(success) software levers are runway criteria UX
+            + densified <code>NEXT_LAB_MOE_TARGETS</code> acceptance / corpus-gap / DAQ maps
+            — not inventing σ_Q. Lab MoE under those asks still leaves every EQ-OPEN{' '}
+            <strong>OPEN</strong> and <code>lenr_proved: false</code> until governed
+            discharge + sign-off.
           </Typography>
         </Alert>
         <Typography variant="body2" color="text.secondary">
