@@ -1,9 +1,10 @@
 /**
  * DocViewerPage — Renders markdown documentation from GET /api/docs/{slug}.
- * Supports slugs: issue-ledger, testable-predictions, reviewer-packets.
+ * Supports slugs: issue-ledger, testable-predictions, reviewer-packets,
+ * researcher-review-pack. Reviewer-packets also shows campaign pack index + download.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Box,
@@ -14,17 +15,25 @@ import {
   Alert,
   AlertTitle,
   Button,
+  Stack,
 } from '@mui/material';
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import { API_BASE_URL } from '../config/api';
 import { track } from '../analytics/events';
+import DocsSurfacesBanner from '../components/docs/DocsSurfacesBanner';
+import CampaignPackManifestIndex from '../components/docs/CampaignPackManifestIndex';
 
 const SLUG_TO_TITLE: Record<string, string> = {
   'issue-ledger': 'Issue Ledger',
   'testable-predictions': 'Testable Predictions',
-  'reviewer-packets': 'Reviewer Packets',
+  'reviewer-packets': 'Paper Reviewer Packets (A–E)',
   'researcher-review-pack': 'Researcher Review Pack',
 };
+
+const PACKET_SURFACE_SLUGS = new Set([
+  'reviewer-packets',
+  'researcher-review-pack',
+]);
 
 export default function DocViewerPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -63,6 +72,23 @@ export default function DocViewerPage() {
       });
   }, [slug]);
 
+  const handleDownload = useCallback(() => {
+    if (!content || !slug) return;
+    const filename = `${slug}.md`;
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    track.exportDownloaded({
+      surface: 'doc-viewer',
+      slug,
+      format: 'markdown',
+    });
+  }, [content, slug]);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -86,15 +112,38 @@ export default function DocViewerPage() {
   }
 
   const title = (slug && SLUG_TO_TITLE[slug]) ?? slug ?? 'Document';
+  const showPacketSurfaces = Boolean(slug && PACKET_SURFACE_SLUGS.has(slug));
+  const showPackIndex = slug === 'reviewer-packets';
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom fontWeight="bold">
         {title}
       </Typography>
-      <Button component={Link} to="/documentation" sx={{ mb: 2 }}>
-        ← Back to Documentation
-      </Button>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        useFlexGap
+        flexWrap="wrap"
+        sx={{ mb: 2 }}
+      >
+        <Button component={Link} to="/documentation">
+          ← Back to Documentation
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleDownload}
+          data-testid="doc-viewer-download"
+        >
+          Download markdown
+        </Button>
+      </Stack>
+      {showPacketSurfaces ? (
+        <DocsSurfacesBanner activeSlug={slug || ''} testIdPrefix="doc-viewer-surfaces" />
+      ) : null}
+      {showPackIndex ? (
+        <CampaignPackManifestIndex testIdPrefix="doc-viewer-packs" />
+      ) : null}
       <Paper
         elevation={1}
         sx={{
@@ -105,6 +154,7 @@ export default function DocViewerPage() {
           '& pre': { overflow: 'auto', p: 2, bgcolor: 'action.hover', borderRadius: 1 },
           '& code': { fontSize: '0.9em' },
         }}
+        data-testid="doc-viewer-markdown"
       >
         <ReactMarkdown skipHtml urlTransform={defaultUrlTransform}>
           {content}

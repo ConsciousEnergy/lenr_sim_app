@@ -197,8 +197,21 @@ export default function AnalyticsScienceEvidencePanel() {
         <MuiLink component={RouterLink} to="/docs/testable-predictions" variant="body2">
           Testable predictions
         </MuiLink>
-        <MuiLink component={RouterLink} to="/docs/reviewer-packets" variant="body2">
-          Reviewer packets
+        <MuiLink
+          component={RouterLink}
+          to="/docs/reviewer-packets"
+          variant="body2"
+          data-testid="analytics-5b-reviewer-packets-link"
+        >
+          Paper packets A–E
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to="/docs/researcher-review-pack"
+          variant="body2"
+          data-testid="analytics-5b-researcher-pack-link"
+        >
+          Researcher pack / CLI hydrate
         </MuiLink>
       </Stack>
     </Paper>

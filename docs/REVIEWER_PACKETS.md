@@ -2,6 +2,16 @@
 
 **Purpose:** Five self-contained reviewer packets for parallel verification by independent reviewers (human or AI). Each packet covers a specific domain and lists the specific claims, equations, and sections to verify. Merge results into Issue Ledger and consistency resolutions.
 
+**Do not conflate surfaces**
+
+| Surface | What it is | Where |
+|---------|------------|-------|
+| **This page — Paper packets A–E** | Markdown checklists for the Unified Theory paper | `/docs/reviewer-packets` |
+| **Campaign JSON packs** | `lenr-reviewer-pack-v1` model-output SQL hydrate/export | `LENR_SIM_APP_v2/datasets/reviewer_packs/` (read-only index on this page in-app; CLI import/export) |
+| **Researcher review pack** | Operator seed / hydrate / export how-to | `/docs/researcher-review-pack` |
+
+Honesty: `lenr_proved` stays **false**; all five `EQ-OPEN-*` stay **OPEN**. Completing a checklist or importing a campaign pack does **not** prove LENR or discharge open obligations.
+
 **Source paper:** [A Unified Theoretical Framework for Low-Energy Nuclear Reactions...](A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum,%20Nuclear,%20and%20Condensed%20Matter%20Phenomena%20(1).md)
 
 **Instructions for Reviewers:** For each item, (1) verify the claim independently, (2) flag errors with corrected values, (3) note assumptions and limitations, (4) assess simulation impact.
