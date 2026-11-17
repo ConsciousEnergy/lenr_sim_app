@@ -142,6 +142,8 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_lab_ask_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_cite_gated_ne_yield_closure).toBe(true);
     expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);
     expect(CORPUS_MOE_COVERAGE.promote_prep_recommended).toBe(true);
     expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.length).toBeGreaterThanOrEqual(5);
@@ -150,7 +152,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.note).toMatch(
-      /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close/i,
+      /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close|empty_citations_not_discovery|cite_gated_discovery_does_not_underwrite/i,
     );
     expect(NEXT_LAB_MOE_TARGETS.length).toBeGreaterThanOrEqual(5);
     NEXT_LAB_MOE_TARGETS.forEach((row) => {

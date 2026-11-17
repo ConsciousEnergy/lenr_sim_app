@@ -43,6 +43,7 @@ lake build
 | `PoissonSchrodinger` | EQ-PS-01, EQ-PS-POISSON-01, EQ-PS-SCHROD-01, EQ-PS-COUPLE-01, EQ-PS-DOM-01, EQ-PS-TOL-01, EQ-PS-NONDEPLOY-01 | Continuum PS DEF parent + discrete residual / domain / tolerance / non-deployment honesty (`ENG-ASPIRATIONAL-FEM-01`); **not** continuum FEM proof |
 | `WeakInteraction` | EQ-EC-THRESH-01, EQ-EC-GF-01, EQ-EC-SIGMA-01, EQ-EC-RATE-01, EQ-OPEN-EC-BOUND-01 | Fermi \(G_F\), \(\sigma\) envelope, Boltzmann EC bound vs `weak_interaction.py`; CM energy-budget deficit family (BOUNDED, form-DISPROVEN under AX caps); **does not** close `EQ-OPEN-EC-01` |
 
+| `CalorimetrySignificance` | EQ-HEAT-SIG-01 / EQ-HEAT-SIG-NC-01 | ≥5σ analytics bar; citationsNonempty + pairing + non-seed gates; LabAskProxies; dual Kasagi ⇏ Q1–Q5 / YIELD / `lenr_proved` |
 | `OpenObligations` | EQ-OPEN-* | Undischarged Q1–Q5 predicates; non-closure implications only |
 | `WorkingHypothesis` | EQ-WH-* | Coupled WH-ENP-01 identities; remainders; non-closure |
 | `WorkingHypothesisBounds` | EQ-WH-FC-01, EQ-WH-PART-02, EQ-WH-DICKE-N-01, EQ-WH-CAP-01, EQ-WH-NONCLOSE-02 | WH-ENP-01 v2 bounds: Poisson multi-phonon tail, general partition, Dicke count, engine-cap product; v2 non-closure |
