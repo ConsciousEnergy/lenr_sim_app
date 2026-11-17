@@ -36,6 +36,7 @@ SLUG_TO_FILENAME = {
     "testable-predictions": "TESTABLE_PREDICTIONS.md",
     "reviewer-packets": "REVIEWER_PACKETS.md",
     "researcher-review-pack": "RESEARCHER_REVIEW_PACK.md",
+    "eq-open-closure-runway": "EQ_OPEN_CLOSURE_RUNWAY.md",
 }
 
 # backend/app/served_docs — shipped inside the container with COPY backend/app
@@ -104,7 +105,7 @@ async def get_doc(slug: str) -> str:
     """
     Return raw markdown for a doc by slug.
     Slugs: issue-ledger, testable-predictions, reviewer-packets,
-    researcher-review-pack.
+    researcher-review-pack, eq-open-closure-runway.
     Returns 404 if slug unknown or file missing.
     """
     if slug not in SLUG_TO_FILENAME:

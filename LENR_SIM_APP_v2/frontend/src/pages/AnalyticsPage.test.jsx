@@ -308,10 +308,38 @@ describe('AnalyticsPage honest metrics', () => {
       screen.getByTestId('analytics-5b-linkage-open-EQ-OPEN-YIELD-01'),
     ).toHaveTextContent(/OPEN/i);
     expect(
+      screen.getByTestId('analytics-5b-linkage-affirmative-EQ-OPEN-YIELD-01'),
+    ).toHaveTextContent(/Affirmative:/i);
+    expect(
+      screen.getByTestId('analytics-5b-linkage-falsification-EQ-OPEN-YIELD-01'),
+    ).toHaveTextContent(/Falsification:/i);
+    expect(
+      screen.getByTestId('analytics-5b-linkage-does-not-count-EQ-OPEN-YIELD-01'),
+    ).toHaveTextContent(/Does not count:/i);
+    expect(screen.getByTestId('analytics-5b-linkage-criteria-not-met')).toHaveTextContent(
+      /not met/i,
+    );
+    expect(
       screen.getByTestId(
         'analytics-5b-linkage-avenue-EQ-OPEN-YIELD-01-calorimetry_sigma_q',
       ),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('analytics-5b-high-success-odds')).toHaveTextContent(
+      /cite-gated MoE pairing/i,
+    );
+    expect(screen.getByTestId('analytics-5b-high-success-odds')).toHaveTextContent(
+      /analytics_gates_clear/i,
+    );
+    expect(screen.getByTestId('analytics-5b-high-success-odds')).toHaveTextContent(
+      /never .≥5σ met/i,
+    );
+    expect(screen.getByTestId('analytics-5b-high-success-odds')).toHaveTextContent(
+      /OPEN/i,
+    );
+    expect(screen.getByTestId('analytics-5b-runway-doc-link')).toHaveAttribute(
+      'href',
+      '/docs/eq-open-closure-runway',
+    );
     expect(screen.getByTestId('analytics-5b-theory-paper-link')).toHaveAttribute(
       'href',
       '/theory-paper',
