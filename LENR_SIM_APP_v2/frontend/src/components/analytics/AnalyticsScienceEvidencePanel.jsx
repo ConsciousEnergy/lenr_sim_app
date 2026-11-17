@@ -148,11 +148,20 @@ export default function AnalyticsScienceEvidencePanel() {
           Corpus MoE coverage:{' '}
           {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_sigma_q}/
           {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} σ_Q ·{' '}
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_literature_reported_cite_gated}/
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} literature_reported ·{' '}
           {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_moe_pairing_verified}/
           {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} pairing verified ·{' '}
           {DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_count}/
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} analytics discovery —{' '}
-          closes_eq_open=<code>false</code>.
+          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} analytics discovery
+          {' '}(
+          {(DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_ids || []).join(
+            ', ',
+          )}
+          ) — closes_eq_open=<code>false</code>, lenr_proved=<code>false</code>. Soft chip
+          language stays <code>analytics_gates_clear</code>, never “≥5σ met”. Publishable
+          MoE pairs <code>exhausted</code> at 2/25 — refuse fabricated σ_Q. Analytics
+          eligibility ≠ EQ-OPEN / <code>lenr_proved</code>.
         </Typography>
         <Typography
           variant="body2"

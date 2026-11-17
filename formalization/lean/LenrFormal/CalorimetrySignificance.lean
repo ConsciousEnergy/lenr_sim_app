@@ -1,3 +1,5 @@
+import LenrFormal.OpenObligations
+
 /-!
 CalorimetrySignificance — EQ-HEAT-SIG-01 / EQ-HEAT-SIG-NC-01
 
@@ -20,6 +22,8 @@ pairing, and does **not** set `lenr_proved`.
 -/
 
 namespace LenrFormal.CalorimetrySignificance
+
+open LenrFormal.OpenObligations
 
 /-- Hard invariant: nature-proof token stays false on heat-significance surfaces. -/
 def lenrProved : Bool := false
@@ -71,6 +75,13 @@ theorem kasagi_nicu_arithmetic_meets_five_sigma :
     meetsDiscoveryArithmetic kasagiNiCuSHeatMilli discoveryThresholdMilli := by
   native_decide
 
+/-- Kasagi Ni control verified-pairing example (BDS-342): 0.9 / 0.08 = 11.25σ → 11250 milli. -/
+def kasagiNiSHeatMilli : Nat := 11250
+
+theorem kasagi_ni_arithmetic_meets_five_sigma :
+    meetsDiscoveryArithmetic kasagiNiSHeatMilli discoveryThresholdMilli := by
+  native_decide
+
 /-- Below-bar example: 0.08 / 0.02 = 4σ → 4000 milli. -/
 def belowBarSHeatMilli : Nat := 4000
 
@@ -114,6 +125,13 @@ theorem instrument_precision_not_discovery_eligible :
   intro h
   cases h
 
+/-- EQ-HEAT-SIG-NC-01: McKubre-class instrument floor is never discovery-eligible. -/
+theorem instrument_floor_not_discovery_eligible :
+    ¬ discoveryEligibleProvenance
+      MoeProvenance.literatureReportedInstrumentFloor := by
+  intro h
+  cases h
+
 /-- UNDISCHARGED: analytics discovery flag needs arithmetic ≥5σ **and**
     literature_reported provenance **and** nonempty moe_citation_keys **and**
     verified Q↔σ pairing **and** non-seed measured Q. Still never proves LENR.
@@ -127,6 +145,12 @@ def DiscoveryGradeAnalytics
     ∧ pairingVerified = true
     ∧ nonSeedMeasuredQ = true
     ∧ citationsNonempty = true
+
+/-- Soft UI chip for cleared analytics gates — never “≥5σ met” scientific discharge. -/
+def softChipIsScientificDischarge : Bool := false
+
+theorem soft_chip_not_scientific_discharge :
+    softChipIsScientificDischarge = false := rfl
 
 /-- EQ-HEAT-SIG-NC-01: Miles-class exploratory arithmetic with instrument
     precision and unverified pairing is not a discovery-grade analytics flag. -/
@@ -154,6 +178,19 @@ theorem empty_citations_not_discovery_grade
   intro h
   exact Bool.noConfusion h.2.2.2.2
 
+/-- EQ-HEAT-SIG-NC-01: instrument-floor EMP rows (McKubre) never clear analytics. -/
+theorem mckubre_instrument_floor_not_discovery_grade
+    (sHeatMilli : Nat)
+    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReportedInstrumentFloor
+      pairingVerified
+      nonSeedMeasuredQ
+      citationsNonempty := by
+  intro h
+  exact instrument_floor_not_discovery_eligible h.2.1
+
 /-- EQ-HEAT-SIG-NC-01: even a cleared analytics flag does not prove LENR. -/
 theorem discovery_grade_analytics_does_not_prove_lenr
     (sHeatMilli : Nat)
@@ -166,18 +203,8 @@ theorem discovery_grade_analytics_does_not_prove_lenr
   exact lenr_proved_false
 
 /-- EQ-HEAT-SIG-NC-01: high arithmetic S_heat never discharges EQ-OPEN-YIELD-01
-    (integrated yield) by itself — Q5 closure is a separate obligation. -/
-def q5IntegratedYieldClosed (yieldDiscrepancy : Nat) : Prop :=
-  yieldDiscrepancy = 0
-
-theorem positive_yield_discrepancy_keeps_q5_open
-    {yieldDiscrepancy : Nat}
-    (h : 0 < yieldDiscrepancy) :
-    ¬ q5IntegratedYieldClosed yieldDiscrepancy := by
-  intro hClosed
-  unfold q5IntegratedYieldClosed at hClosed
-  exact (Nat.ne_of_gt h) hClosed
-
+    (integrated yield) by itself — Q5 closure is a separate obligation.
+    Uses OpenObligations.q5IntegratedYieldClosed (no local duplicate). -/
 theorem high_s_heat_does_not_close_q5
     (sHeatMilli yieldDiscrepancy : Nat)
     (hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli)
@@ -185,6 +212,86 @@ theorem high_s_heat_does_not_close_q5
     meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli
       ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
       ∧ lenrProved = false :=
-  ⟨hArith, positive_yield_discrepancy_keeps_q5_open hOpen, lenr_proved_false⟩
+  ⟨hArith, positive_yield_discrepancy_implies_q5_not_closed hOpen, lenr_proved_false⟩
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-344): even dual Kasagi NiCu + Ni analytics flags
+    (corpus 2/25 pairing) do not prove LENR or close EQ-OPEN-YIELD-01.
+    Analytics / EMP UX eligibility ≠ EQ-OPEN discharge ≠ `lenr_proved`.
+    Soft chip `analytics_gates_clear` ≠ scientific ≥5σ discharge. -/
+theorem dual_kasagi_analytics_does_not_close_eq_open_or_lenr
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy)
+    (_hNiCu : DiscoveryGradeAnalytics
+      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true)
+    (_hNi : DiscoveryGradeAnalytics
+      kasagiNiSHeatMilli MoeProvenance.literatureReported true true true) :
+    lenrProved = false
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false :=
+  ⟨lenr_proved_false,
+    positive_yield_discrepancy_implies_q5_not_closed hOpen,
+    soft_chip_not_scientific_discharge⟩
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-346): a cleared DiscoveryGradeAnalytics flag never
+    discharges **any** of Q1–Q5 under stated open witnesses.
+    Analytics eligibility ≠ EQ-OPEN-MEV/RAD/RATE/EC/YIELD discharge ≠ `lenr_proved`.
+    Soft chip remains non-discharge. -/
+theorem discovery_grade_analytics_does_not_close_any_eq_open
+    (sHeatMilli : Nat)
+    (provenance : MoeProvenance)
+    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool)
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy)
+    (_hDisc : DiscoveryGradeAnalytics
+      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty) :
+    lenrProved = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false :=
+  ⟨lenr_proved_false,
+    positive_remainder_implies_q1_not_closed hQ1,
+    gamma_above_bound_implies_q2_not_closed hQ2,
+    negative_log_budget_implies_q3_not_closed hQ3,
+    energy_deficit_implies_q4_not_closed hQ4,
+    positive_yield_discrepancy_implies_q5_not_closed hQ5,
+    soft_chip_not_scientific_discharge⟩
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-346): dual Kasagi analytics flags still leave all
+    five EQ-OPEN predicates open under stated witnesses — strengthens the
+    BDS-344 Q5-only dual-Kasagi lock to full MEV/RAD/RATE/EC/YIELD non-closure. -/
+theorem dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy)
+    (hNiCu : DiscoveryGradeAnalytics
+      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true)
+    (_hNi : DiscoveryGradeAnalytics
+      kasagiNiSHeatMilli MoeProvenance.literatureReported true true true) :
+    lenrProved = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false :=
+  discovery_grade_analytics_does_not_close_any_eq_open
+    kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true
+    openRemainder gammaBranching gammaUpperBound
+    log10Events availableEnergy thresholdEnergy yieldDiscrepancy
+    hQ1 hQ2 hQ3 hQ4 hQ5 hNiCu
 
 end LenrFormal.CalorimetrySignificance

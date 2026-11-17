@@ -10,8 +10,10 @@ import {
   CORPUS_MOE_COVERAGE,
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
+  EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
+  NEXT_LAB_MOE_TARGETS,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
   SCIENCE_EVIDENCE_HONESTY,
@@ -103,8 +105,23 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBeLessThan(
       CORPUS_MOE_COVERAGE.n_records,
     );
+    expect(CORPUS_MOE_COVERAGE.with_moe_pairing_verified).toBe(2);
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
     expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_ids).toEqual(
-      expect.arrayContaining(['kasagi-nicu-radiant-2026']),
+      expect.arrayContaining([
+        'kasagi-nicu-radiant-2026',
+        'kasagi-ni-radiant-2026',
+      ]),
+    );
+    expect(CORPUS_MOE_COVERAGE.pairing_verified_ids).toEqual(
+      expect.arrayContaining([
+        'kasagi-nicu-radiant-2026',
+        'kasagi-ni-radiant-2026',
+      ]),
+    );
+    expect(CORPUS_MOE_COVERAGE.kasagi_ni_s_heat).toBe(11.25);
+    expect(CORPUS_MOE_COVERAGE.kasagi_ni_distance_status).toBe(
+      'at_or_above_bar_gates_clear',
     );
     expect(CORPUS_MOE_COVERAGE.miles_distance_status).toBe(
       'at_or_above_bar_gates_blocked',
@@ -117,6 +134,49 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.kasagi_nicu_claim_tier).toBe(
       'empirical_lenr_correlation',
     );
+    expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
+      expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
+    );
+    expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.soft_chip_ne_scientific_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_dual_kasagi_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_instrument_floor_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.promote_prep_recommended).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.length).toBeGreaterThanOrEqual(5);
+    expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.join(' ')).toMatch(
+      /eq_open|lenr_proved|governed_lab/i,
+    );
+    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
+    expect(CORPUS_MOE_COVERAGE.note).toMatch(
+      /does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close/i,
+    );
+    expect(NEXT_LAB_MOE_TARGETS.length).toBeGreaterThanOrEqual(5);
+    NEXT_LAB_MOE_TARGETS.forEach((row) => {
+      expect(row.status).toBe('blocked_awaiting_lab');
+      expect(row.avenue_id).toBeTruthy();
+      expect(row.target.length).toBeGreaterThan(20);
+      row.eq_open_ids.forEach((oid) => expect(OPEN_EQ_IDS).toContain(oid));
+    });
+    const coveredOpens = new Set(
+      NEXT_LAB_MOE_TARGETS.flatMap((row) => row.eq_open_ids),
+    );
+    OPEN_EQ_IDS.forEach((oid) => expect(coveredOpens.has(oid)).toBe(true));
+    expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
+    EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
+      expect(row.discovery_grade_eligible).toBe(false);
+      expect(row.reasons.length).toBeGreaterThanOrEqual(2);
+      expect(String(row.soft_chip)).not.toMatch(/≥5σ.*met/i);
+      expect(row.soft_chip).not.toBe('met');
+    });
+    const milesWhy = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === 'miles-1993',
+    );
+    expect(milesWhy.distance_status).toBe('at_or_above_bar_gates_blocked');
+    expect(milesWhy.s_heat_exploratory).toBe(26);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,
     );

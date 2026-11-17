@@ -73,7 +73,8 @@
       "sigma_Q_systematic_W": null,
       "moe_provenance": "literature_reported",
       "moe_citation_keys": ["kasagi2026"],
-      "moe_notes": "Same ~0.08 W (1σ) Q_ex uncertainty as NiCu radiant protocol (arXiv:2509.13847). EMP only; EQ-OPEN-YIELD-01 stays OPEN."
+      "moe_notes": "Same ~0.08 W (1σ) Q_ex uncertainty as NiCu radiant protocol (JCMNS 41 / arXiv:2509.13847 Fig. 5 discussion). results.q_ex_w + results.sigma_Q_W form a verified same-envelope Q↔σ_Q pair for analytics (control substrate; slightly smaller excess than NiCu). EMP only — analytics discovery_grade_eligible does not set lenr_proved or close EQ-OPEN-YIELD-01.",
+      "results": {"q_ex_w": 0.9, "sigma_Q_W": 0.08, "control_substrate": true, "gray_body": false}
     },
     {
       "literature_id": "czerski-thermal-spike-zr-2024",

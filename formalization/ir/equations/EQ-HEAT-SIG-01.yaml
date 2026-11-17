@@ -20,4 +20,6 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.arithmeticShortfallMilli"
   - "LenrFormal.CalorimetrySignificance.discovery_grade_sigma_is_five"
   - "LenrFormal.CalorimetrySignificance.exploratory_snr_strictly_below_discovery"
-notes: "DEF / analytics-bar lock only. Integer milli-σ shortfall identities mirror Python DISCOVERY_GRADE_SIGMA=5.0. Does not certify laboratory calorimetry or flip lenr_proved."
+  - "LenrFormal.CalorimetrySignificance.kasagiNiCuSHeatMilli"
+  - "LenrFormal.CalorimetrySignificance.kasagiNiSHeatMilli"
+notes: "DEF / analytics-bar lock only. Integer milli-σ shortfall identities mirror Python DISCOVERY_GRADE_SIGMA=5.0. Kasagi NiCu + Ni control arithmetic examples (BDS-342/344) are bar locks only — do not certify laboratory calorimetry or flip lenr_proved."

@@ -17,6 +17,7 @@ import {
   AVENUE_RANKING_SUMMARY,
   CLOSURE_SURFACE_LINKS,
   EQ_OPEN_RUNWAY,
+  NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
 
 /**
@@ -80,6 +81,9 @@ export default function EqOpenAvenueLinkage({
           const avenues = AVENUE_RANKING_SUMMARY.avenues.filter((avenue) =>
             (row.related_avenues || []).includes(avenue.id),
           );
+          const labTargets = NEXT_LAB_MOE_TARGETS.filter((target) =>
+            (target.eq_open_ids || []).includes(row.id),
+          );
           return (
             <ListItem key={row.id} alignItems="flex-start" sx={{ px: 0, py: 0.5 }}>
               <ListItemText
@@ -108,18 +112,32 @@ export default function EqOpenAvenueLinkage({
                   </Stack>
                 }
                 secondary={
-                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.25 }}>
-                    {avenues.map((avenue) => (
-                      <Chip
-                        key={avenue.id}
-                        size="small"
-                        variant="outlined"
-                        label={avenue.id}
-                        title={`${avenue.label} · ${avenue.five_sigma_role || ''}`}
-                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
-                        data-testid={`${testIdPrefix}-avenue-${row.id}-${avenue.id}`}
-                      />
-                    ))}
+                  <Stack spacing={0.25} sx={{ mt: 0.25 }}>
+                    <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                      {avenues.map((avenue) => (
+                        <Chip
+                          key={avenue.id}
+                          size="small"
+                          variant="outlined"
+                          label={avenue.id}
+                          title={`${avenue.label} · ${avenue.five_sigma_role || ''}`}
+                          sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                          data-testid={`${testIdPrefix}-avenue-${row.id}-${avenue.id}`}
+                        />
+                      ))}
+                    </Stack>
+                    {!isCompact &&
+                      labTargets.map((target) => (
+                        <Typography
+                          key={target.id}
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
+                        >
+                          Next lab MoE: {target.target}
+                        </Typography>
+                      ))}
                   </Stack>
                 }
                 secondaryTypographyProps={{ component: 'div' }}
