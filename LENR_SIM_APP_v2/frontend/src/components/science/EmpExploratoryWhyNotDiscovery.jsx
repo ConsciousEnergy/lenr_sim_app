@@ -20,6 +20,7 @@ import {
   CORPUS_MOE_COVERAGE,
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   NEXT_LAB_MOE_TARGETS,
+  REFUSED_FABRICATED_MOE_CAMPAIGNS,
 } from '../../config/unifiedTheoryScienceEvidence';
 
 /**
@@ -262,6 +263,49 @@ export default function EmpExploratoryWhyNotDiscovery({
                   <code>{row.daq_observables.join(', ')}</code>
                 </Typography>
               ) : null}
+            </Stack>
+          ))}
+        </Stack>
+      ) : null}
+      {REFUSED_FABRICATED_MOE_CAMPAIGNS.length > 0 ? (
+        <Stack
+          spacing={0.5}
+          sx={{ mb: 1 }}
+          data-testid={`${testIdPrefix}-refused-campaigns`}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Refused fabricated discovery MoE (primary-source hunt; counts stay 2/25)
+          </Typography>
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label="refuse Iwamura/Mizuno/Arata/Celani discovery σ"
+            data-testid={`${testIdPrefix}-refuse-chip`}
+            sx={{ fontSize: '0.65rem', alignSelf: 'flex-start' }}
+          />
+          {REFUSED_FABRICATED_MOE_CAMPAIGNS.map((row) => (
+            <Stack
+              key={row.id}
+              spacing={0.1}
+              data-testid={`${testIdPrefix}-refuse-${row.id}`}
+            >
+              <Typography variant="caption" color="text.secondary" display="block">
+                <code>{row.id}</code> · {row.label} · decision=
+                <code>{row.decision}</code>
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-refuse-missing-${row.id}`}
+              >
+                Missing: {row.missing}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Cites attempted:{' '}
+                <code>{(row.primary_cites || []).join('; ')}</code>
+              </Typography>
             </Stack>
           ))}
         </Stack>

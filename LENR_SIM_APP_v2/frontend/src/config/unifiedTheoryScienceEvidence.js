@@ -135,7 +135,9 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   miles_pairing_verified: false,
   miles_distance_status: 'at_or_above_bar_gates_blocked',
   miles_banner:
-    'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery.',
+    'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery. ' +
+    'JEAC 346 peak 0.52 W pairs with same-paper ±0.04 W accuracy bound (still exploratory); ' +
+    'follow-on ±0.020 W is cross-document — missing cite-gated total σ for discovery.',
   /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
   kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
@@ -149,15 +151,20 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'mckubre-high-loading-1998',
   ]),
   /**
-   * BDS-343: publishable literature_reported σ_Q + verified pairing inventory is
-   * exhausted for the curated 25-row corpus (only Kasagi NiCu + Ni). Do not invent
-   * pairs for Iwamura / Mizuno / Arata / Celani / commercial Ni–H.
+   * BDS-343 / post-ship MoE hunt: publishable literature_reported σ_Q + verified
+   * pairing inventory is exhausted for the curated 25-row corpus (only Kasagi
+   * NiCu + Ni). Do not invent pairs for Iwamura / Mizuno / Arata / Celani /
+   * commercial Ni–H. Celani JCMNS 29 “12±2 W” is a documented near-miss — still
+   * not discovery-grade (method indetermination / raw-uncorrected episode).
    */
   literature_moe_inventory_exhausted: true,
   inventory_exhausted_note:
     'No further publishable literature_reported total σ_Q + verified Q↔σ pairing rows ' +
     'remain in the curated 25 without fabrication. Eligible analytics flags stay 2/25 ' +
-    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”.',
+    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”. ' +
+    'Post-ship hunt: refuse Iwamura/Mizuno/Arata/Celani discovery σ; Miles stays exploratory.',
+  post_ship_moe_gap_map:
+    'docs/science/post-ship-moe-gap-map.md (store) — primary-source refuse + Celani near-miss',
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
    * BDS-344: dual Kasagi Lean binding + instrument_floor NC + soft-chip lock.
@@ -324,6 +331,68 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
  * EMP / instrument-MoE rows that stay exploratory — structured “why not discovery”
  * reasons for Analytics / §5B runway UX (BDS-343). Soft honesty only; never flips locks.
  */
+/**
+ * Campaigns where primary-source hunt found no honest discovery-grade watt MoE
+ * (post-ship MoE gap map). Soft refuse optics only — never invent σ_Q / flip eligible.
+ */
+export const REFUSED_FABRICATED_MOE_CAMPAIGNS = Object.freeze([
+  Object.freeze({
+    id: 'iwamura-heat-2024',
+    label: 'Iwamura nano-multilayer H₂ heat (2024)',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'doi:10.35848/1347-4065/ad2622',
+      'JJAP 63 037001 (2024)',
+    ]),
+    missing:
+      'Author paper publishes no ± / error bars / coverage factor on watt excess; GUM reconstructions are not author MoE',
+    honesty:
+      'Refuse fabricated σ_Q — metadata-only null σ only; does not raise discovery_grade_eligible.',
+  }),
+  Object.freeze({
+    id: 'mizuno-ni-pd-airflow',
+    label: 'Mizuno Ni–Pd air-flow',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'CANR MizunoTincreasede.pdf (ICCF-22 preprint)',
+    ]),
+    missing:
+      'No peer-reviewed episode total σ_Q on ~250 W claims; forum/secondary ~2 W bounds ≠ literature_reported',
+    honesty:
+      'Refuse fabricated σ_Q — contested heat without cite-gated discovery MoE.',
+  }),
+  Object.freeze({
+    id: 'arata-ds-cathode',
+    label: 'Arata–Zhang DS-cathode / Pd black',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'doi:10.2183/pjab.75.281',
+      'doi:10.1143/JJAP.38.L774',
+    ]),
+    missing:
+      'Author primaries state ~5–10 W narrative without σ_Q_W; SRI 9.9±1.3% is McKubre relative % — not Arata peak↔σ',
+    honesty:
+      'Refuse porting SRI % onto Arata Q as discovery MoE.',
+  }),
+  Object.freeze({
+    id: 'celani-constantan-12pm2',
+    label: 'Celani constantan (JCMNS 29 near-miss)',
+    in_curated_25: false,
+    decision: 'refuse_discovery_near_miss',
+    primary_cites: Object.freeze([
+      'doi:10.70923/001c.72494',
+      'JCMNS 29 (2019) 52–74 “12 ± 2 W”',
+    ]),
+    missing:
+      'Same-sentence 12±2 is method-indetermination class (raw uncorrected air-flow; wire-break; sibling ±1–2 W indetermination) — not literature_reported total σ for discovery',
+    honesty:
+      'Near-miss documented — refuse discovery_grade_eligible; exploratory hydrate only in a future bib-synced PR if pursued.',
+  }),
+]);
+
 export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
   Object.freeze({
     literature_id: 'miles-1993',
@@ -336,9 +405,10 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     discovery_grade_eligible: false,
     soft_chip: 'analytics_gates_clear',
     reasons: Object.freeze([
-      'Peak 0.52 W is not verified as the same-results envelope for follow-on ±0.020 W instrument error',
-      'moe_provenance is instrument_precision (exploratory), not literature_reported total σ_Q',
-      'moe_sigma_q_pairing_verified stays false — arithmetic S_heat=26 is gates-blocked',
+      'JEAC 346 peak 0.52 W is not a verified same-results envelope for follow-on ±0.020 W (MilesManomalouse / Dominguez)',
+      'Same-paper JEAC accuracy bound ~±0.04 W / ±2% remains instrument accuracy class — not literature_reported total σ_Q',
+      'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — S_heat=26 gates-blocked',
+      'Missing discovery cite: measurement-specific total σ_Q_W for the paired 0.52 W peak episode in a primary source',
       'Instantaneous EMP band ≠ integrated YIELD discharge; EQ-OPEN-YIELD-01 stays OPEN',
     ]),
     honesty:
@@ -916,6 +986,31 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     if (row.soft_chip === 'met' || /≥5σ.*met/i.test(String(row.soft_chip || ''))) {
       throw new Error(
         `Science evidence UI must not use ≥5σ met soft chips on ${row.literature_id}`,
+      );
+    }
+  }
+  if (
+    !Array.isArray(REFUSED_FABRICATED_MOE_CAMPAIGNS) ||
+    REFUSED_FABRICATED_MOE_CAMPAIGNS.length < 4
+  ) {
+    throw new Error(
+      'Science evidence UI must list REFUSED_FABRICATED_MOE_CAMPAIGNS (≥4 refuse rows)',
+    );
+  }
+  for (const row of REFUSED_FABRICATED_MOE_CAMPAIGNS) {
+    if (!row.decision || !String(row.decision).startsWith('refuse')) {
+      throw new Error(
+        `Science evidence UI must keep refused MoE campaign ${row.id} decision=refuse*`,
+      );
+    }
+    if (!row.missing || String(row.missing).length < 20) {
+      throw new Error(
+        `Science evidence UI must document missing MoE cite for refused campaign ${row.id}`,
+      );
+    }
+    if (/discovery_grade_eligible\s*[:=]\s*true/i.test(String(row.honesty || ''))) {
+      throw new Error(
+        `Science evidence UI must not claim discovery on refused MoE campaign ${row.id}`,
       );
     }
   }

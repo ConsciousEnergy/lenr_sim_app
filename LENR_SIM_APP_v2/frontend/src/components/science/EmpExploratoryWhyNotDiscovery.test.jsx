@@ -82,6 +82,18 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-honesty-miles-1993')).toHaveTextContent(
       /not discovery/i,
     );
+    expect(screen.getByTestId('emp-test-refused-campaigns')).toHaveTextContent(
+      /Refused fabricated discovery MoE/i,
+    );
+    expect(screen.getByTestId('emp-test-refuse-chip')).toHaveTextContent(
+      /Iwamura\/Mizuno\/Arata\/Celani/i,
+    );
+    expect(screen.getByTestId('emp-test-refuse-celani-constantan-12pm2')).toHaveTextContent(
+      /near_miss|12 ± 2|72494/i,
+    );
+    expect(
+      screen.getByTestId('emp-test-refuse-missing-iwamura-heat-2024'),
+    ).toHaveTextContent(/Missing:|no ±|GUM/i);
     expect(screen.getByTestId('emp-test-panel')).not.toHaveTextContent(/≥5σ gap:\s*met/i);
     expect(screen.getByTestId('emp-test-panel')).not.toHaveTextContent(/lenr_proved:\s*true/i);
   });
