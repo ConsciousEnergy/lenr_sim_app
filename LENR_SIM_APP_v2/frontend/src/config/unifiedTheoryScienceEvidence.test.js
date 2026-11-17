@@ -219,7 +219,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
   test('closure linkage maps EQ-OPEN rows to avenues without claiming discharge', () => {
     expect(CLOSURE_SURFACE_LINKS.avenue_doc_path).toMatch(/AVENUE_RANKING\.md/);
     expect(CLOSURE_SURFACE_LINKS.runway_doc_path).toMatch(/EQ_OPEN_CLOSURE_RUNWAY\.md/);
+    expect(CLOSURE_SURFACE_LINKS.docs_eq_open_runway).toBe('/docs/eq-open-closure-runway');
     expect(CLOSURE_SURFACE_LINKS.note).toMatch(/do not discharge/i);
+    expect(CLOSURE_SURFACE_LINKS.note).toMatch(/status stays OPEN/i);
     const yieldAvenues = avenuesForOpenId('EQ-OPEN-YIELD-01').map((a) => a.id);
     expect(yieldAvenues).toEqual(
       expect.arrayContaining(['miles_heat_helium_q', 'calorimetry_sigma_q']),

@@ -1,6 +1,8 @@
 /**
  * Analytics ↔ AVENUE_RANKING ↔ EQ_OPEN_CLOSURE_RUNWAY cross-links.
  * Read-only; every EQ-OPEN row stays OPEN; never claims ≥5σ discovery.
+ * BDS-354 / gap-map P3: inline Affirmative / Falsification / Does-not-count
+ * excerpts beside OPEN chips (criteria documented, not met).
  */
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -57,6 +59,23 @@ export default function EqOpenAvenueLinkage({
       <Typography variant="body2" color="text.secondary">
         {CLOSURE_SURFACE_LINKS.note}
       </Typography>
+      <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" alignItems="center">
+        <Chip
+          size="small"
+          color="warning"
+          variant="outlined"
+          label="EQ-OPEN status: OPEN"
+          sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+          data-testid={`${testIdPrefix}-status-open`}
+        />
+        <Chip
+          size="small"
+          variant="outlined"
+          label="criteria documented · not met"
+          sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+          data-testid={`${testIdPrefix}-criteria-not-met`}
+        />
+      </Stack>
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
         <MuiLink
           component={RouterLink}
@@ -73,6 +92,14 @@ export default function EqOpenAvenueLinkage({
           data-testid={`${testIdPrefix}-theory-paper`}
         >
           Theory Paper §5B
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          variant="body2"
+          data-testid={`${testIdPrefix}-runway-doc`}
+        >
+          EQ-OPEN closure runway
         </MuiLink>
         <MuiLink
           component={RouterLink}
@@ -93,6 +120,15 @@ export default function EqOpenAvenueLinkage({
         Avenue doc: <code>{CLOSURE_SURFACE_LINKS.avenue_doc_path}</code>
         <br />
         Runway doc: <code>{CLOSURE_SURFACE_LINKS.runway_doc_path}</code>
+        {' · '}
+        in-app:{' '}
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          variant="caption"
+        >
+          {CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+        </MuiLink>
       </Typography>
 
       <List dense disablePadding data-testid={`${testIdPrefix}-rows`}>
@@ -132,6 +168,30 @@ export default function EqOpenAvenueLinkage({
                 }
                 secondary={
                   <Stack spacing={0.25} sx={{ mt: 0.25 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      data-testid={`${testIdPrefix}-affirmative-${row.id}`}
+                    >
+                      Affirmative: {row.affirmative}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      data-testid={`${testIdPrefix}-falsification-${row.id}`}
+                    >
+                      Falsification: {row.falsification}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      data-testid={`${testIdPrefix}-does-not-count-${row.id}`}
+                    >
+                      Does not count: {row.does_not_count}
+                    </Typography>
                     <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
                       {avenues.map((avenue) => (
                         <Chip
