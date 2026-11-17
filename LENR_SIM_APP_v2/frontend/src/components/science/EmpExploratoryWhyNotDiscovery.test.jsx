@@ -1,5 +1,6 @@
 /**
- * EMP exploratory “why not discovery” panel honesty (BDS-343 / BDS-344).
+ * EMP exploratory “why not discovery” panel honesty
+ * (BDS-343 / BDS-344 / BDS-346 / BDS-348).
  */
 import React from 'react';
 import { render, screen } from '../../tests/test-utils';
@@ -32,6 +33,9 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-lean-all-eq-open')).toHaveTextContent(
       /Q1–Q5|any of Q1/i,
     );
+    expect(screen.getByTestId('emp-test-lean-lab-ask')).toHaveTextContent(
+      /lab-ask ≠ EQ-OPEN/i,
+    );
     expect(screen.getByTestId('emp-test-soft-chip-lock')).toHaveTextContent(
       /soft chip ≠ scientific discharge/i,
     );
@@ -50,9 +54,24 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-next-lab-targets')).toHaveTextContent(
       /Next lab \/ MoE targets/i,
     );
+    expect(screen.getByTestId('emp-test-lab-ask-ne-discharge')).toHaveTextContent(
+      /lab_ask_proxies_do_not_discharge_eq_open/,
+    );
     expect(
       screen.getByTestId('emp-test-next-lab-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/cite-gated|YIELD/i);
+    expect(
+      screen.getByTestId('emp-test-lab-acceptance-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/literature_reported.*S_heat|moe_sigma_q_pairing_verified/i);
+    expect(
+      screen.getByTestId('emp-test-corpus-gap-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/0\/25.*Miles|instrument_precision/i);
+    expect(
+      screen.getByTestId('emp-test-still-open-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/EQ-OPEN-YIELD-01|lab_ask_proxies_do_not_discharge/i);
+    expect(
+      screen.getByTestId('emp-test-daq-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/excess_power_W|sigma_Q_W|he4_atoms/);
     expect(
       screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
     ).toHaveTextContent(/23\.8 MeV|efficiency/i);

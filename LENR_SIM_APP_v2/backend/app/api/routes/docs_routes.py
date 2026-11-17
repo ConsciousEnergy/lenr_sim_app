@@ -13,14 +13,22 @@ Adding a served document takes three steps, all of them required:
 
 Note the path collision hazard: FastAPI's Swagger UI is mounted at ``/api/docs``
 and these markdown documents at ``/api/docs/{slug}``.
+
+``GET /api/docs/campaign-packs`` is a JSON index of committed campaign JSON packs
+under ``datasets/reviewer_packs/`` — distinct from paper Packet A–E markdown.
 """
 
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
+
+from app.services.campaign_pack_index import list_committed_pack_summaries
 
 router = APIRouter(prefix="/docs", tags=["Docs"])
+
+# Prefer served_docs for these slugs when the root docs/ copy is a stub/pointer.
+_PREFER_BUNDLED_SLUGS = frozenset({"researcher-review-pack"})
 
 # Slug -> filename mapping for known doc files
 SLUG_TO_FILENAME = {
@@ -28,6 +36,7 @@ SLUG_TO_FILENAME = {
     "testable-predictions": "TESTABLE_PREDICTIONS.md",
     "reviewer-packets": "REVIEWER_PACKETS.md",
     "researcher-review-pack": "RESEARCHER_REVIEW_PACK.md",
+    "eq-open-closure-runway": "EQ_OPEN_CLOSURE_RUNWAY.md",
 }
 
 # backend/app/served_docs — shipped inside the container with COPY backend/app
@@ -54,20 +63,56 @@ def _get_docs_dir() -> Path:
     return repo_docs
 
 
+def _resolve_doc_path(slug: str, filename: str) -> Path:
+    """Resolve markdown path; prefer bundled for stub-prone slugs."""
+    bundled = _BUNDLED_DOCS_DIR / filename
+    repo = _repo_root_docs_dir() / filename
+    if slug in _PREFER_BUNDLED_SLUGS and bundled.is_file():
+        return bundled
+    docs_dir = _get_docs_dir()
+    preferred = docs_dir / filename
+    if preferred.is_file():
+        return preferred
+    if bundled.is_file():
+        return bundled
+    if repo.is_file():
+        return repo
+    return preferred
+
+
+@router.get("/campaign-packs")
+async def get_campaign_pack_index() -> JSONResponse:
+    """
+    Read-only index of committed campaign JSON packs (lenr-reviewer-pack-v1).
+
+    Honesty: ``lenr_proved`` stays false; EQ-OPEN ids stay OPEN; packs are
+    model-output hydrate/export — not paper Packet A–E and not LENR proof.
+    """
+    try:
+        payload = list_committed_pack_summaries()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if payload.get("lenr_proved") is True:
+        raise HTTPException(
+            status_code=500,
+            detail="campaign pack index must keep lenr_proved false",
+        )
+    return JSONResponse(payload)
+
+
 @router.get("/{slug}", response_class=PlainTextResponse)
 async def get_doc(slug: str) -> str:
     """
     Return raw markdown for a doc by slug.
     Slugs: issue-ledger, testable-predictions, reviewer-packets,
-    researcher-review-pack.
+    researcher-review-pack, eq-open-closure-runway.
     Returns 404 if slug unknown or file missing.
     """
     if slug not in SLUG_TO_FILENAME:
         raise HTTPException(status_code=404, detail=f"Unknown doc slug: {slug}")
 
     filename = SLUG_TO_FILENAME[slug]
-    docs_dir = _get_docs_dir()
-    file_path = docs_dir / filename
+    file_path = _resolve_doc_path(slug, filename)
 
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail=f"Doc file not found: {filename}")

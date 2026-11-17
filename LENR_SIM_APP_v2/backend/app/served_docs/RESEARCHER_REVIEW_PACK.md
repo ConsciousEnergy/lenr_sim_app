@@ -1,11 +1,22 @@
-# Researcher review pack (v0.3.6-beta)
+# Researcher review pack (v0.3.9-beta)
 
 How to collect, inspect, **import**, and export **model-output** rows for other researchers.
 Extra simulations do **not** prove LENR, close `EQ-OPEN-*`, or raise `claim_tier`.
 
+**Do not conflate surfaces**
+
+| Surface | What it is | Where |
+|---------|------------|-------|
+| **Paper packets A–E** | Markdown checklists for the Unified Theory paper | `/docs/reviewer-packets` |
+| **Campaign JSON packs** | `lenr-reviewer-pack-v1` model-output SQL hydrate/export | `LENR_SIM_APP_v2/datasets/reviewer_packs/` |
+| **This page — Researcher review pack** | Operator seed / hydrate / export how-to | `/docs/researcher-review-pack` |
+
+In-app: `/docs/reviewer-packets` also renders a **read-only** campaign pack manifest index
+(`GET /api/docs/campaign-packs`) with honesty chips (`lenr_proved: false`, EQ-OPEN OPEN).
+
 ## Clone ≠ 150 Analytics rows
 
-`git pull` of `lenr_sim_app_v0.3.6-beta` ships **code** and literature JSON, not
+`git pull` of the `0.3.9-beta` train ships **code** and literature JSON, not
 the cloud agent's SQLite. App startup creates tables only.
 
 | After | Analytics Total Records | What it is |
@@ -30,10 +41,22 @@ python -m app.scripts.import_reviewer_pack --in ../datasets/reviewer_packs/q_cam
 ```
 
 Committed demo pack: `LENR_SIM_APP_v2/datasets/reviewer_packs/q_campaign_demo/`
-(150 experiments, 132 `theory_runs`, including association_screen and testbed_review). Smoke fixture N=1 remains for tests.
+(150 experiments, 132 `theory_runs`, including association_screen and testbed_review). Smoke fixture N=1 remains for tests (**fixture** — not an external-review pack).
 Do **not** git-add `reviewer_packs/local/` (export scratch).
 Do **not** write campaign or UI model outputs into `literature_baselines.v1.json`
 (cited literature only). Persist those rows in the app DB / demo pack.
+
+### Committed campaign packs (honesty-locked)
+
+| Pack dir | Role | Approx N exp / theory |
+|----------|------|------------------------|
+| `smoke/` | test fixture | 1 / 1 |
+| `q_campaign_demo/` | demo hydrate | 150 / 132 |
+| `cavitation_collapse_campaign/` | campaign | 22 / 22 |
+| `detector_weak_screen/` | campaign | 19 / 19 |
+| `iccf27_hydration/` | campaign | 11 / 11 |
+
+Every committed `manifest.json` keeps `lenr_proved: false` and all five `EQ-OPEN-*` **OPEN**.
 
 ## Commands (from `LENR_SIM_APP_v2/backend`)
 

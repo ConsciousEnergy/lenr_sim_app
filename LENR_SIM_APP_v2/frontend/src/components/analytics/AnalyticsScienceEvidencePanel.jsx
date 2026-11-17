@@ -1,6 +1,8 @@
 /**
  * Analytics Overview → Unified Theory §5B science-evidence summary.
  * Read-only honesty panel; never claims LENR proof, EQ-OPEN closure, or ≥5σ discovery.
+ * BDS-354 / gap-map P3: inline EQ-OPEN Affirmative / Falsification / Does-not-count
+ * + cite-gated high-success-odds guidance (still OPEN; no fabricated σ_Q).
  */
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -16,6 +18,8 @@ import {
 import {
   AVENUE_RANKING_SUMMARY,
   CAMPAIGN_EVIDENCE,
+  CLOSURE_SURFACE_LINKS,
+  CORPUS_MOE_COVERAGE,
   DISCOVERY_GRADE_BAR,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
@@ -130,8 +134,39 @@ export default function AnalyticsScienceEvidencePanel() {
         </Typography>
         <Typography variant="body2">
           <strong>EQ-OPEN runway</strong>: status <code>{EQ_OPEN_RUNWAY.status}</code> —{' '}
-          {EQ_OPEN_RUNWAY.note}
+          {EQ_OPEN_RUNWAY.note}{' '}
+          <MuiLink
+            component={RouterLink}
+            to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+            variant="body2"
+            data-testid="analytics-5b-runway-doc-link"
+          >
+            Open runway criteria doc
+          </MuiLink>
+          .
         </Typography>
+        <Alert
+          severity="info"
+          variant="outlined"
+          sx={{ my: 0.5 }}
+          data-testid="analytics-5b-high-success-odds"
+        >
+          <AlertTitle>High-success-odds path (honest)</AlertTitle>
+          <Typography variant="body2">
+            Cite-gated MoE pairing is exhausted at{' '}
+            <code>
+              {CORPUS_MOE_COVERAGE.with_moe_pairing_verified}/
+              {CORPUS_MOE_COVERAGE.n_records}
+            </code>{' '}
+            (Kasagi NiCu + Ni only). Soft chips stay{' '}
+            <code>analytics_gates_clear</code> — never “≥5σ met”. Miles stays exploratory
+            (instrument_precision / pairing unverified). Remaining high-P(success) software
+            levers are runway criteria UX + densified <code>NEXT_LAB_MOE_TARGETS</code>{' '}
+            acceptance / corpus-gap / DAQ maps — not inventing σ_Q. Lab MoE under those asks
+            still leaves every EQ-OPEN <strong>OPEN</strong> and{' '}
+            <code>lenr_proved: false</code> until governed discharge + sign-off.
+          </Typography>
+        </Alert>
         <Typography variant="body2" color="text.secondary">
           ≥5σ heat criterion <code>{DISCOVERY_GRADE_BAR.heat_formula}</code> (BDS-302). Campaign
           History rows and Relevance Map overlays are model outputs; they do not satisfy
@@ -188,6 +223,14 @@ export default function AnalyticsScienceEvidencePanel() {
         >
           Theory Paper §5B
         </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          variant="body2"
+          data-testid="analytics-5b-runway-footer-link"
+        >
+          EQ-OPEN closure runway
+        </MuiLink>
         <MuiLink component={RouterLink} to="/unified-theory?tab=results" variant="body2">
           Open Questions Virtual Lab
         </MuiLink>
@@ -197,8 +240,21 @@ export default function AnalyticsScienceEvidencePanel() {
         <MuiLink component={RouterLink} to="/docs/testable-predictions" variant="body2">
           Testable predictions
         </MuiLink>
-        <MuiLink component={RouterLink} to="/docs/reviewer-packets" variant="body2">
-          Reviewer packets
+        <MuiLink
+          component={RouterLink}
+          to="/docs/reviewer-packets"
+          variant="body2"
+          data-testid="analytics-5b-reviewer-packets-link"
+        >
+          Paper packets A–E
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to="/docs/researcher-review-pack"
+          variant="body2"
+          data-testid="analytics-5b-researcher-pack-link"
+        >
+          Researcher pack / CLI hydrate
         </MuiLink>
       </Stack>
     </Paper>

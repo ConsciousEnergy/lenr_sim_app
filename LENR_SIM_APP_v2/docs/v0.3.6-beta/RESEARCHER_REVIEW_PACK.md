@@ -1,4 +1,8 @@
-# Researcher review pack (v0.3.6-beta)
+# Researcher review pack (v0.3.6-beta) — historical
+
+> **Train note:** Live / tip branding is **v0.3.9-beta**. Prefer the production mirror
+> `LENR_SIM_APP_v2/backend/app/served_docs/RESEARCHER_REVIEW_PACK.md`
+> (`GET /api/docs/researcher-review-pack`). This file is kept for history.
 
 How to collect, inspect, **import**, and export **model-output** rows for other researchers.
 Extra simulations do **not** prove LENR, close `EQ-OPEN-*`, or raise `claim_tier`.
