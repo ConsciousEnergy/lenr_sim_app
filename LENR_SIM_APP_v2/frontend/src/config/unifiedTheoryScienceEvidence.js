@@ -580,11 +580,13 @@ export const CLOSURE_SURFACE_LINKS = Object.freeze({
   title: 'Analytics ↔ avenue ranking ↔ EQ-OPEN runway',
   note:
     'Cross-links only. Avenue informativeness scores and runway criteria docs do not ' +
-    'discharge EQ-OPEN-* or meet ≥5σ discovery; lenr_proved stays false.',
+    'discharge EQ-OPEN-* or meet ≥5σ discovery; lenr_proved stays false. Affirmative / ' +
+    'Falsification / Does-not-count excerpts are decision aids — status stays OPEN.',
   analytics_route: '/analytics',
   theory_paper_route: '/theory-paper',
   avenue_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md',
   runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
+  docs_eq_open_runway: '/docs/eq-open-closure-runway',
   docs_reviewer_packets: '/docs/reviewer-packets',
   docs_issue_ledger: '/docs/issue-ledger',
 });

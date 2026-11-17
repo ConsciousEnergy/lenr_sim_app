@@ -1,7 +1,8 @@
 /**
  * DocViewerPage — Renders markdown documentation from GET /api/docs/{slug}.
  * Supports slugs: issue-ledger, testable-predictions, reviewer-packets,
- * researcher-review-pack. Reviewer-packets also shows campaign pack index + download.
+ * researcher-review-pack, eq-open-closure-runway. Reviewer-packets also shows
+ * campaign pack index + download.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -28,6 +29,7 @@ const SLUG_TO_TITLE: Record<string, string> = {
   'testable-predictions': 'Testable Predictions',
   'reviewer-packets': 'Paper Reviewer Packets (A–E)',
   'researcher-review-pack': 'Researcher Review Pack',
+  'eq-open-closure-runway': 'EQ-OPEN Closure Runway',
 };
 
 const PACKET_SURFACE_SLUGS = new Set([

@@ -247,6 +247,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Lab-ask precision densification (BDS-348):** Software Prefer-merge honest ≥5σ literature-MoE runway remains **exhausted** (no fabricated σ). This loop densifies each `NEXT_LAB_MOE_TARGETS` row with measurable `lab_acceptance`, residual `still_does_not_discharge`, quantitative `corpus_gap_now`, and planned `daq_observables` (lenr-ara-daq-sample-v1 field hints). Lean adds **`LabAskProxies`** + **`lab_ask_proxies_do_not_discharge_eq_open`** / **`all_lab_asks_met_with_dual_kasagi_do_not_discharge`** — even all five asks notionally met keep Q1–Q5 open, `lenr_proved` false, and lab-ask ≠ discharge. Served UI locks `lean_lab_ask_nc_bound` + `lab_ask_met_ne_eq_open_discharge`. **Still no** honesty flag flips; **still no** auto `main` / Path B.
 
+**Analytics §5B runway criteria inline (BDS-354 / gap-map P3):** `/analytics` Overview now renders Affirmative / Falsification / Does-not-count excerpts per OPEN id beside chips (mirrors Theory Paper §5B), with cite-gated high-success-odds guidance (MoE pairing exhausted @ 2/25; soft chips only; Miles exploratory; densified `NEXT_LAB_MOE_TARGETS`). In-app DocViewer slug `/docs/eq-open-closure-runway` serves this note. **Still no** honesty flag flips; criteria remain **documented, not met**.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)
@@ -255,7 +257,8 @@ Reviewer surfaces that **point at** this runway without changing status:
 
 | Surface | Role |
 |---------|------|
-| `/analytics` Overview §5B panel | EQ-OPEN ↔ avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance |
+| `/analytics` Overview §5B panel | EQ-OPEN Affirmative / Falsification / Does-not-count excerpts (still OPEN) + avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance + high-success-odds cite-gated guidance |
+| `/docs/eq-open-closure-runway` | In-app DocViewer of this note (criteria draft only) |
 | Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
 | History row chips | `discovery_grade_gap` / `honest_closure` / `Δσ` distance status from export envelopes |
 | [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |
