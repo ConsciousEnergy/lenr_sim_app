@@ -251,6 +251,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Post-ship MoE hunt (Prefer-merge `dev` only):** Intensified primary-source watt MoE / peak↔σ hunt for Iwamura / Mizuno / Arata / Celani / Miles reaffirms inventory **exhausted at 2/25**. Analytics surfaces `REFUSED_FABRICATED_MOE_CAMPAIGNS` with cites attempted + missing MoE text. Celani *JCMNS* 29 “12 ± 2 W” (DOI `10.70923/001c.72494`) is a documented **near-miss** (method indetermination / raw-uncorrected episode) — **not** discovery-grade. Miles JEAC 346 ±0.04 W accuracy bound stays exploratory; follow-on ±0.020 W remains unpaired. **No** promote→`main` / Path B from this densification.
 
+**Packet ↔ ledger / PRED / EQ-OPEN crosswalk (BDS-359 / gap-map P4):** `/docs/reviewer-packets` renders a read-only Packet A–E → Issue Ledger **C/M/m** → legacy **IL-001…018** → PRED → EQ-OPEN map (served merge instructions fixed). Navigation only — paper FIXED/ADDRESSED ≠ OPEN discharge; mapping never sets `lenr_proved` or raises claim tiers. Prefer-merge target remains **`dev` only**; promote→`main` waits on coordinator-flagged verified finding.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)
@@ -261,6 +263,7 @@ Reviewer surfaces that **point at** this runway without changing status:
 |---------|------|
 | `/analytics` Overview §5B panel | EQ-OPEN Affirmative / Falsification / Does-not-count excerpts (still OPEN) + avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance + high-success-odds cite-gated guidance |
 | `/docs/eq-open-closure-runway` | In-app DocViewer of this note (criteria draft only) |
+| `/docs/reviewer-packets` crosswalk | Packet A–E ↔ C/M/m ↔ IL aliases ↔ PRED ↔ EQ-OPEN (still OPEN; navigation only) |
 | Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
 | History row chips | `discovery_grade_gap` / `honest_closure` / `Δσ` distance status from export envelopes |
 | [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |

@@ -8,6 +8,8 @@
 
 **Epistemic note (2026-08-26):** For Q1–Q5, ADDRESSED/FIXED means a paper section exists. It does **not** mean the formal obligation is discharged. `EQ-OPEN-*` remain `OPEN` in Lean, the virtual lab, and `open_question_register.v1.json`. Extra campaign rows are model outputs.
 
+**ID naming:** Canonical in-app IDs are severity tags (**C1… / M1… / m1…**). Legacy framework ledger IDs **IL-001…IL-018** (`docs/LENR_FRAMEWORK_ISSUE_LEDGER.md`) are aliases only — see the Packet ↔ ledger / PRED / EQ-OPEN crosswalk on `/docs/reviewer-packets`. Mapping never discharges EQ-OPEN or sets `lenr_proved`.
+
 ---
 
 ## Critical Issues

@@ -172,9 +172,10 @@ Honesty: `lenr_proved` stays **false**; all five `EQ-OPEN-*` stay **OPEN**. Comp
 
 1. Each packet reviewer works independently.
 2. Append results to a shared file or table.
-3. Cross-reference with Issue Ledger (IL-001 through IL-018).
+3. Cross-reference with the **in-app Issue Ledger** severity IDs (**C1… / M1… / m1…** on `/docs/issue-ledger`). Legacy framework aliases **IL-001…IL-018** (`docs/LENR_FRAMEWORK_ISSUE_LEDGER.md`) map to those C/M/m rows via the in-app Packet ↔ ledger / PRED / EQ-OPEN crosswalk — do not treat IL-* and C/M/m as separate open ledgers.
 4. Resolve conflicts in Consistency Resolutions document.
 5. Update Simulation Mapping if new inputs/outputs emerge.
+6. Honesty: completing a checklist or mapping a row does **not** discharge any `EQ-OPEN-*` or set `lenr_proved`. Paper FIXED/ADDRESSED ≠ formal OPEN discharge.
 
 ---
 

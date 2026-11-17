@@ -96,6 +96,12 @@ describe('DocViewerPage markdown hardening', () => {
     expect(screen.getByTestId('doc-viewer-packs-lenr-proved')).toHaveTextContent(
       'lenr_proved: false'
     );
+    expect(screen.getByTestId('doc-viewer-crosswalk-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-viewer-crosswalk-lenr-proved')).toHaveTextContent(
+      /lenr_proved: false/i
+    );
+    expect(screen.getByTestId('doc-viewer-crosswalk-eq-open')).toHaveTextContent(/OPEN/i);
+    expect(screen.getByTestId('doc-viewer-crosswalk-row-A')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('doc-viewer-download'));
     expect(createObjectURL).toHaveBeenCalled();
