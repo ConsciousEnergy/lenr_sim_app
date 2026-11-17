@@ -1,52 +1,53 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { apiClient } from '../api/client';
 import DocViewerPage from './DocViewerPage';
+
+jest.mock('../api/client', () => ({
+  apiClient: {
+    get: jest.fn(),
+  },
+}));
 
 const markdownBody = '# Hello\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))';
 
+const campaignPackPayload = {
+  schema: 'lenr-campaign-pack-index-v1',
+  lenr_proved: false,
+  eq_open_status: 'OPEN',
+  n_packs: 1,
+  disclaimer: 'Model-output packs only.',
+  packs: [
+    {
+      pack_id: 'smoke',
+      role: 'fixture',
+      fixture: true,
+      schema: 'lenr-reviewer-pack-v1',
+      preset: 'smoke',
+      n_experiments: 1,
+      n_theory_runs: 1,
+      lenr_proved: false,
+      open_ids_all_present: true,
+      open_ids: [
+        'EQ-OPEN-MEV-01',
+        'EQ-OPEN-RAD-01',
+        'EQ-OPEN-RATE-01',
+        'EQ-OPEN-EC-01',
+        'EQ-OPEN-YIELD-01',
+      ],
+      pack_path: 'LENR_SIM_APP_v2/datasets/reviewer_packs/smoke/',
+    },
+  ],
+};
+
 describe('DocViewerPage markdown hardening', () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockImplementation((url: string) => {
-      if (String(url).includes('/api/docs/campaign-packs')) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: async () => ({
-            schema: 'lenr-campaign-pack-index-v1',
-            lenr_proved: false,
-            eq_open_status: 'OPEN',
-            n_packs: 1,
-            disclaimer: 'Model-output packs only.',
-            packs: [
-              {
-                pack_id: 'smoke',
-                role: 'fixture',
-                fixture: true,
-                schema: 'lenr-reviewer-pack-v1',
-                preset: 'smoke',
-                n_experiments: 1,
-                n_theory_runs: 1,
-                lenr_proved: false,
-                open_ids_all_present: true,
-                open_ids: [
-                  'EQ-OPEN-MEV-01',
-                  'EQ-OPEN-RAD-01',
-                  'EQ-OPEN-RATE-01',
-                  'EQ-OPEN-EC-01',
-                  'EQ-OPEN-YIELD-01',
-                ],
-                pack_path: 'LENR_SIM_APP_v2/datasets/reviewer_packs/smoke/',
-              },
-            ],
-          }),
-        });
-      }
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        text: async () => markdownBody,
-      });
+    (apiClient.get as jest.Mock).mockResolvedValue({ data: campaignPackPayload });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => markdownBody,
     }) as jest.Mock;
   });
 
@@ -55,6 +56,7 @@ describe('DocViewerPage markdown hardening', () => {
   });
 
   it('renders allowlisted markdown without raw HTML sinks', async () => {
+    // Shared test-utils MemoryRouter lacks initialEntries/Routes; keep local router.
     render(
       <MemoryRouter initialEntries={['/docs/issue-ledger']}>
         <Routes>
@@ -92,6 +94,7 @@ describe('DocViewerPage markdown hardening', () => {
     await waitFor(() => {
       expect(screen.getByTestId('doc-viewer-packs-panel')).toBeInTheDocument();
     });
+    expect(apiClient.get).toHaveBeenCalledWith('/api/docs/campaign-packs');
     expect(screen.getByTestId('doc-viewer-packs-fixture-smoke')).toBeInTheDocument();
     expect(screen.getByTestId('doc-viewer-packs-lenr-proved')).toHaveTextContent(
       'lenr_proved: false'

@@ -62,13 +62,13 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     ).toHaveTextContent(/cite-gated|YIELD/i);
     expect(
       screen.getByTestId('emp-test-lab-acceptance-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/Accept when:|literature_reported|S_heat/i);
+    ).toHaveTextContent(/literature_reported.*S_heat|moe_sigma_q_pairing_verified/i);
     expect(
       screen.getByTestId('emp-test-corpus-gap-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/Corpus gap now:|0\/25|Miles/i);
+    ).toHaveTextContent(/0\/25.*Miles|instrument_precision/i);
     expect(
       screen.getByTestId('emp-test-still-open-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/Still does not discharge:|EQ-OPEN-YIELD/i);
+    ).toHaveTextContent(/EQ-OPEN-YIELD-01|lab_ask_proxies_do_not_discharge/i);
     expect(
       screen.getByTestId('emp-test-daq-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/excess_power_W|sigma_Q_W|he4_atoms/);

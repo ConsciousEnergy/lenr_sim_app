@@ -334,7 +334,7 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
     (proxies : LabAskProxies)
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ : Bool)
+    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool)
     (openRemainder gammaBranching gammaUpperBound : Nat)
     (log10Events : Int)
     (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
@@ -350,7 +350,7 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
         ∧ proxies.occupationRateCapsMeasured = true
         ∧ proxies.ecThresholdCmPath = true)
     (_hDisc : DiscoveryGradeAnalytics
-      sHeatMilli provenance pairingVerified nonSeedMeasuredQ) :
+      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty) :
     lenrProved = false
       ∧ ¬ q1MeVEnergyGapClosed openRemainder
       ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
@@ -379,7 +379,7 @@ theorem all_lab_asks_met_with_dual_kasagi_do_not_discharge
     (hQ4 : availableEnergy < thresholdEnergy)
     (hQ5 : 0 < yieldDiscrepancy)
     (hNiCu : DiscoveryGradeAnalytics
-      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true) :
+      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true) :
     lenrProved = false
       ∧ ¬ q1MeVEnergyGapClosed openRemainder
       ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
@@ -390,7 +390,7 @@ theorem all_lab_asks_met_with_dual_kasagi_do_not_discharge
       ∧ labAskMetIsEqOpenDischarge = false :=
   lab_ask_proxies_do_not_discharge_eq_open
     allLabAsksMet
-    kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true
+    kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true
     openRemainder gammaBranching gammaUpperBound
     log10Events availableEnergy thresholdEnergy yieldDiscrepancy
     hQ1 hQ2 hQ3 hQ4 hQ5

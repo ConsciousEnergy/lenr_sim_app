@@ -50,7 +50,8 @@ def _summary_from_manifest(pack_id: str, manifest: Dict[str, Any]) -> Dict[str, 
         "preset": manifest.get("preset"),
         "n_experiments": manifest.get("n_experiments"),
         "n_theory_runs": manifest.get("n_theory_runs"),
-        "lenr_proved": bool(manifest.get("lenr_proved")),
+        # Callers must only pass manifests with boolean False (see list filter).
+        "lenr_proved": False,
         "empirical_claim_tiers_raised": bool(
             manifest.get("empirical_claim_tiers_raised")
         ),
@@ -81,8 +82,8 @@ def list_committed_pack_summaries() -> Dict[str, Any]:
             continue
         if manifest.get("schema") != PACK_SCHEMA:
             continue
-        # Refuse to advertise a pack that claims proof.
-        if manifest.get("lenr_proved") is True:
+        # Advertise only when lenr_proved is the boolean False (not missing / "false").
+        if manifest.get("lenr_proved") is not False:
             continue
         packs.append(_summary_from_manifest(path.name, manifest))
 

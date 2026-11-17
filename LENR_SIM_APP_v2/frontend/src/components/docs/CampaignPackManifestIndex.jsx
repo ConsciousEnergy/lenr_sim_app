@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { API_BASE_URL } from '../../config/api';
+import { apiClient } from '../../api/client';
 
 /**
  * @param {Object} props
@@ -32,18 +32,11 @@ export default function CampaignPackManifestIndex({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.resolve()
-      .then(() => fetch(`${API_BASE_URL}/api/docs/campaign-packs`))
-      .then(async (res) => {
-        if (!res || !res.ok) {
-          throw new Error(
-            `Failed to load campaign pack index: ${res ? res.status : 'no response'}`
-          );
-        }
-        return res.json();
-      })
-      .then((data) => {
+    apiClient
+      .get('/api/docs/campaign-packs')
+      .then((res) => {
         if (cancelled) return;
+        const data = res?.data;
         if (data?.lenr_proved === true) {
           throw new Error('Refusing index with lenr_proved true');
         }
@@ -51,7 +44,10 @@ export default function CampaignPackManifestIndex({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load pack index');
+          setError(
+            err?.message ||
+              (err instanceof Error ? err.message : 'Failed to load pack index')
+          );
         }
       })
       .finally(() => {

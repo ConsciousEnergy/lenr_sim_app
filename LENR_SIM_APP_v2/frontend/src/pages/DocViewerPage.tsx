@@ -38,6 +38,7 @@ const PACKET_SURFACE_SLUGS = new Set([
 export default function DocViewerPage() {
   const { slug } = useParams<{ slug: string }>();
   const [content, setContent] = useState<string | null>(null);
+  const [contentSlug, setContentSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,9 +49,13 @@ export default function DocViewerPage() {
       return;
     }
 
+    let cancelled = false;
+    const requestSlug = slug;
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE_URL}/api/docs/${slug}`)
+    setContent(null);
+    setContentSlug(null);
+    fetch(`${API_BASE_URL}/api/docs/${requestSlug}`)
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) {
@@ -61,19 +66,25 @@ export default function DocViewerPage() {
         return res.text();
       })
       .then((text) => {
+        if (cancelled) return;
         setContent(text);
-        track.docsViewed({ slug, source: 'doc-viewer', success: true });
+        setContentSlug(requestSlug);
+        track.docsViewed({ slug: requestSlug, source: 'doc-viewer', success: true });
       })
       .catch((err) => {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Failed to load document.');
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   const handleDownload = useCallback(() => {
-    if (!content || !slug) return;
+    if (!content || !slug || contentSlug !== slug) return;
     const filename = `${slug}.md`;
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -87,7 +98,7 @@ export default function DocViewerPage() {
       slug,
       format: 'markdown',
     });
-  }, [content, slug]);
+  }, [content, contentSlug, slug]);
 
   if (loading) {
     return (
