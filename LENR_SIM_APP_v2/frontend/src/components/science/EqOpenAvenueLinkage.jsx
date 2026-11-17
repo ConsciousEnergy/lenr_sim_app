@@ -17,7 +17,27 @@ import {
   AVENUE_RANKING_SUMMARY,
   CLOSURE_SURFACE_LINKS,
   EQ_OPEN_RUNWAY,
+  NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric lab-target captions (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 /**
  * @param {Object} props
@@ -80,6 +100,9 @@ export default function EqOpenAvenueLinkage({
           const avenues = AVENUE_RANKING_SUMMARY.avenues.filter((avenue) =>
             (row.related_avenues || []).includes(avenue.id),
           );
+          const labTargets = NEXT_LAB_MOE_TARGETS.filter((target) =>
+            (target.eq_open_ids || []).includes(row.id),
+          );
           return (
             <ListItem key={row.id} alignItems="flex-start" sx={{ px: 0, py: 0.5 }}>
               <ListItemText
@@ -108,18 +131,44 @@ export default function EqOpenAvenueLinkage({
                   </Stack>
                 }
                 secondary={
-                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.25 }}>
-                    {avenues.map((avenue) => (
-                      <Chip
-                        key={avenue.id}
-                        size="small"
-                        variant="outlined"
-                        label={avenue.id}
-                        title={`${avenue.label} · ${avenue.five_sigma_role || ''}`}
-                        sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
-                        data-testid={`${testIdPrefix}-avenue-${row.id}-${avenue.id}`}
-                      />
-                    ))}
+                  <Stack spacing={0.25} sx={{ mt: 0.25 }}>
+                    <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                      {avenues.map((avenue) => (
+                        <Chip
+                          key={avenue.id}
+                          size="small"
+                          variant="outlined"
+                          label={avenue.id}
+                          title={`${avenue.label} · ${avenue.five_sigma_role || ''}`}
+                          sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                          data-testid={`${testIdPrefix}-avenue-${row.id}-${avenue.id}`}
+                        />
+                      ))}
+                    </Stack>
+                    {!isCompact &&
+                      labTargets.map((target) => (
+                        <Stack
+                          key={target.id}
+                          direction="row"
+                          spacing={0.5}
+                          useFlexGap
+                          flexWrap="wrap"
+                          alignItems="center"
+                          data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            component="span"
+                          >
+                            Next lab MoE: {target.target}
+                          </Typography>
+                          <ClaimTierChip
+                            tier={target.claim_tier || 'speculative_exploratory'}
+                            testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
+                          />
+                        </Stack>
+                      ))}
                   </Stack>
                 }
                 secondaryTypographyProps={{ component: 'div' }}

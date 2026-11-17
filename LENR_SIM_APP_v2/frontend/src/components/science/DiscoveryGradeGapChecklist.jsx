@@ -18,6 +18,7 @@ import {
   DISCOVERY_GRADE_BAR,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
+import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
 /** Claim-tier chip beside numeric literature S_heat claims (optics only). */
@@ -41,8 +42,12 @@ function ClaimTierChip({ tier, testId }) {
 /**
  * @param {Object} props
  * @param {string} [props.testIdPrefix]
+ * @param {boolean} [props.showEmpWhyNot] — surface EMP exploratory “why not discovery” (default true)
  */
-export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-gap' }) {
+export default function DiscoveryGradeGapChecklist({
+  testIdPrefix = 'discovery-gap',
+  showEmpWhyNot = true,
+}) {
   const missing = DISCOVERY_GRADE_BAR.missing_requirements || [];
   const distance =
     DISCOVERY_GRADE_BAR.quantitative_distance || QUANTITATIVE_DISTANCE_DEFAULT;
@@ -120,8 +125,22 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
           tier={coverage.kasagi_nicu_claim_tier || 'empirical_lenr_correlation'}
           testId={`${testIdPrefix}-kasagi-claim-tier`}
         />{' '}
-        is <code>{coverage.kasagi_nicu_distance_status}</code> — still does not close
-        EQ-OPEN-*.
+        is <code>{coverage.kasagi_nicu_distance_status}</code>
+        {coverage.kasagi_ni_s_heat != null ? (
+          <>
+            {' · '}Kasagi Ni control S_heat=
+            <code>{coverage.kasagi_ni_s_heat}</code> (
+            <code>{coverage.kasagi_ni_moe_provenance || 'literature_reported'}</code>
+            ){' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_ni_claim_tier || 'empirical_lenr_correlation'}
+              testId={`${testIdPrefix}-kasagi-ni-claim-tier`}
+            />{' '}
+            is{' '}
+            <code>{coverage.kasagi_ni_distance_status || 'at_or_above_bar_gates_clear'}</code>
+          </>
+        ) : null}
+        {' '}— analytics flags only; still do not close EQ-OPEN-*.
       </Typography>
 
       <Typography
@@ -136,8 +155,46 @@ export default function DiscoveryGradeGapChecklist({ testIdPrefix = 'discovery-g
         pairing verified · {coverage.discovery_grade_eligible_count}/{coverage.n_records}{' '}
         analytics discovery_grade_eligible. closes_eq_open=
         <code>{String(coverage.closes_eq_open)}</code>, lenr_proved=
-        <code>{String(coverage.lenr_proved)}</code>.
+        <code>{String(coverage.lenr_proved)}</code>
+        {coverage.literature_moe_inventory_exhausted ? (
+          <>
+            {' · '}publishable MoE pairs <code>exhausted</code> (refuse fabricated σ_Q)
+          </>
+        ) : null}
+        {coverage.lean_dual_kasagi_nc_bound ? (
+          <>
+            {' · '}Lean dual-Kasagi NC bound
+          </>
+        ) : null}
+        {coverage.lean_all_eq_open_nc_bound ? (
+          <>
+            {' · '}Lean analytics ≠ any of Q1–Q5
+          </>
+        ) : null}
+        {coverage.software_honest_5sigma_runway_exhausted ? (
+          <>
+            {' · '}software honest ≥5σ Prefer-merge runway <code>exhausted</code>
+            {coverage.promote_prep_recommended ? (
+              <>
+                {' · '}promote+ship prep recommended
+              </>
+            ) : null}
+          </>
+        ) : null}
+        . Soft chips: <code>analytics_gates_clear</code> ≠ EQ-OPEN /{' '}
+        <code>lenr_proved</code>
+        {coverage.soft_chip_ne_scientific_discharge ? (
+          <>
+            {' '}
+            (≠ scientific discharge)
+          </>
+        ) : null}
+        .
       </Typography>
+
+      {showEmpWhyNot ? (
+        <EmpExploratoryWhyNotDiscovery testIdPrefix={`${testIdPrefix}-emp-why-not`} />
+      ) : null}
 
       <List dense disablePadding data-testid={`${testIdPrefix}-missing-list`}>
         {missing.map((req) => (

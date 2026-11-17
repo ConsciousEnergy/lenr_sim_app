@@ -9,6 +9,7 @@
 import {
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
+  EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
@@ -26,6 +27,35 @@ export function analyticsGateDisplayStatus(overallStatus) {
 }
 
 /**
+ * Resolve structured EMP “why not discovery” copy for a History / export row.
+ * Soft honesty only — never invents discovery eligibility.
+ *
+ * @param {object|null|undefined} exp
+ * @param {object|null|undefined} [_quantitativeDistance] retained for call-site compat; unused
+ * @returns {object|null}
+ */
+export function resolveEmpWhyNotDiscovery(exp = {}, _quantitativeDistance = null) {
+  const safeExp = exp && typeof exp === 'object' ? exp : {};
+  const results =
+    safeExp.results && typeof safeExp.results === 'object' ? safeExp.results : {};
+  const litId =
+    safeExp.literature_id ||
+    results.literature_id ||
+    safeExp.id ||
+    results.id ||
+    null;
+  if (litId) {
+    const byId = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === litId,
+    );
+    if (byId) return byId;
+  }
+  // Unknown / unmatched identities must not inherit Miles/McKubre-specific copy
+  // from shared provenance or distance_status alone.
+  return null;
+}
+
+/**
  * @param {object|null|undefined} exp
  * @returns {{
  *   discoveryGradeEligible: boolean,
@@ -33,6 +63,7 @@ export function analyticsGateDisplayStatus(overallStatus) {
  *   honestClosure: object,
  *   quantitativeDistance: object,
  *   analyticsGateStatus: 'analytics_gates_clear'|'not_met',
+ *   empWhyNotDiscovery: object|null,
  *   lenrProved: false,
  * }}
  */
@@ -123,12 +154,18 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     discoveryGradeGap.overall_status,
   );
 
+  const empWhyNotDiscovery = resolveEmpWhyNotDiscovery(
+    safeExp,
+    quantitativeDistance,
+  );
+
   return {
     discoveryGradeEligible,
     discoveryGradeGap,
     honestClosure,
     quantitativeDistance,
     analyticsGateStatus,
+    empWhyNotDiscovery,
     lenrProved: false,
   };
 }
