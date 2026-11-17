@@ -16,6 +16,7 @@ import {
   NEXT_LAB_MOE_TARGETS,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
+  REFUSED_FABRICATED_MOE_CAMPAIGNS,
   SCIENCE_EVIDENCE_HONESTY,
   assertScienceEvidenceHonesty,
   avenuesForOpenId,
@@ -185,9 +186,36 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(milesWhy.distance_status).toBe('at_or_above_bar_gates_blocked');
     expect(milesWhy.s_heat_exploratory).toBe(26);
+    expect(milesWhy.reasons.join(' ')).toMatch(/0\.52|±0\.020|±0\.04|missing discovery cite/i);
+    expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/JEAC 346|exploratory/i);
     expect(DISCOVERY_GRADE_BAR.does_not_count.join(' ')).toMatch(
       /Arithmetic S_heat/i,
     );
+  });
+
+  test('refused fabricated MoE campaigns stay non-discovery with missing cites', () => {
+    const refused = REFUSED_FABRICATED_MOE_CAMPAIGNS;
+    expect(refused.length).toBeGreaterThanOrEqual(4);
+    const ids = refused.map((row) => row.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'iwamura-heat-2024',
+        'mizuno-ni-pd-airflow',
+        'arata-ds-cathode',
+        'celani-constantan-12pm2',
+      ]),
+    );
+    refused.forEach((row) => {
+      expect(String(row.decision)).toMatch(/^refuse/);
+      expect(row.missing.length).toBeGreaterThan(20);
+      expect(row.primary_cites.length).toBeGreaterThanOrEqual(1);
+      expect(String(row.honesty)).not.toMatch(/discovery_grade_eligible:\s*true/i);
+    });
+    const celani = refused.find((row) => row.id === 'celani-constantan-12pm2');
+    expect(celani.decision).toBe('refuse_discovery_near_miss');
+    expect(celani.primary_cites.join(' ')).toMatch(/72494|12 ± 2/);
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
+    expect(CORPUS_MOE_COVERAGE.with_moe_pairing_verified).toBe(2);
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {

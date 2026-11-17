@@ -36,12 +36,13 @@ The funding line is unconditional noise; it has nothing to do with security.
 
 ## 2. Current audit posture
 
-On tip a clean install reports **2 moderate** plus one **allowlisted high**:
+On tip a clean install reports **2 moderate** plus **allowlisted highs**:
 
 | Package | Advisories | Why not fixed |
 |---|---|---|
 | `react-router`, `react-router-dom` | GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg, GHSA-jjmj-jmhj-qwj2 (all moderate) | Fixed only in `react-router >= 7.18.0`. This is a major-version migration touching every route, deferred to its own slice. |
 | `braces` (via `micromatch` / `chokidar` / Tailwind 3 / Jest) | GHSA-vfj7-8cjw-p6xm (high) | No patched `braces` release (`first_patched_version` null). Clearing it needs Tailwind v4 / chokidar v4 (or an upstream braces fix). Allowlisted in `scripts/audit-high-gate.js` until then. |
+| `picomatch` (via Jest / Vite / Tailwind / micromatch) | GHSA-fc5q-39xc-vjpf (high, CVE-2026-112366) | ReDoS via single-branch repeated extglobs; advisory patched versions **None** (npm latest still 4.0.7). Allowlisted in `scripts/audit-high-gate.js` until upstream publishes a fix (micromatch/picomatch#194). |
 | `source-map-js` | GHSA-68fv-2mgg-jv7q (high, `<1.2.2`) | **Fixed** via `package.json` `overrides` pin `^1.2.2` (2026-10-06). |
 
 The CI gate is `node scripts/audit-high-gate.js` (high/critical, with the
