@@ -275,4 +275,107 @@ theorem dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr
     log10Events availableEnergy thresholdEnergy yieldDiscrepancy
     hQ1 hQ2 hQ3 hQ4 hQ5 hNiCu
 
+/-! ### BDS-348 — lab MoE ask receipt ≠ EQ-OPEN discharge -/
+
+/--
+UI / runway `NEXT_LAB_MOE_TARGETS` proxies (Bool bookkeeping only).
+A `true` bit means the corresponding lab ask was notionally received —
+**not** that the matching `EQ-OPEN-*` predicate closed under IR/Lean/ledger
+governance. Mirrors served science-evidence lab-ask precision densification.
+-/
+structure LabAskProxies where
+  heatHeCiteGatedMoE : Bool
+  calorimetryBeyondKasagi : Bool
+  gammaUlEfficiencyCorrected : Bool
+  occupationRateCapsMeasured : Bool
+  ecThresholdCmPath : Bool
+  deriving DecidableEq, Repr
+
+/-- Convenience: all five Prefer-merge lab asks notionally received. -/
+def allLabAsksMet : LabAskProxies :=
+  { heatHeCiteGatedMoE := true
+    calorimetryBeyondKasagi := true
+    gammaUlEfficiencyCorrected := true
+    occupationRateCapsMeasured := true
+    ecThresholdCmPath := true }
+
+/-- Lab-ask receipt never equals scientific / EQ-OPEN discharge. -/
+def labAskMetIsEqOpenDischarge : Bool := false
+
+theorem lab_ask_met_is_not_eq_open_discharge :
+    labAskMetIsEqOpenDischarge = false := rfl
+
+/--
+EQ-HEAT-SIG-NC-01 (BDS-348): even if **all five** next-lab MoE ask proxies
+are notionally met (and DiscoveryGradeAnalytics clears), open witnesses keep
+Q1–Q5 open, `lenr_proved` false, and soft chip / lab-ask ≠ discharge.
+Lab-ask precision densifies the Prefer-merge exhaust surface without inventing σ.
+-/
+theorem lab_ask_proxies_do_not_discharge_eq_open
+    (proxies : LabAskProxies)
+    (sHeatMilli : Nat)
+    (provenance : MoeProvenance)
+    (pairingVerified nonSeedMeasuredQ : Bool)
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy)
+    (_hAsks :
+      proxies.heatHeCiteGatedMoE = true
+        ∧ proxies.calorimetryBeyondKasagi = true
+        ∧ proxies.gammaUlEfficiencyCorrected = true
+        ∧ proxies.occupationRateCapsMeasured = true
+        ∧ proxies.ecThresholdCmPath = true)
+    (_hDisc : DiscoveryGradeAnalytics
+      sHeatMilli provenance pairingVerified nonSeedMeasuredQ) :
+    lenrProved = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false
+      ∧ labAskMetIsEqOpenDischarge = false :=
+  ⟨lenr_proved_false,
+    positive_remainder_implies_q1_not_closed hQ1,
+    gamma_above_bound_implies_q2_not_closed hQ2,
+    negative_log_budget_implies_q3_not_closed hQ3,
+    energy_deficit_implies_q4_not_closed hQ4,
+    positive_yield_discrepancy_implies_q5_not_closed hQ5,
+    soft_chip_not_scientific_discharge,
+    lab_ask_met_is_not_eq_open_discharge⟩
+
+/-- Instantiation: all five lab asks met + dual-Kasagi analytics still ⇏ discharge. -/
+theorem all_lab_asks_met_with_dual_kasagi_do_not_discharge
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy)
+    (hNiCu : DiscoveryGradeAnalytics
+      kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true) :
+    lenrProved = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ softChipIsScientificDischarge = false
+      ∧ labAskMetIsEqOpenDischarge = false :=
+  lab_ask_proxies_do_not_discharge_eq_open
+    allLabAsksMet
+    kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true
+    openRemainder gammaBranching gammaUpperBound
+    log10Events availableEnergy thresholdEnergy yieldDiscrepancy
+    hQ1 hQ2 hQ3 hQ4 hQ5
+    ⟨rfl, rfl, rfl, rfl, rfl⟩
+    hNiCu
+
 end LenrFormal.CalorimetrySignificance

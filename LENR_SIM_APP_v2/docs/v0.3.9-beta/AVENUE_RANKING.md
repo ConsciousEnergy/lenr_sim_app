@@ -31,7 +31,7 @@ This is a **decision aid for lab design**, not a posterior over “LENR is true.
 
 Informativeness scores are **not** ≥5σ discovery claims. The `calorimetry_sigma_q` avenue is the primary heat-MoE stress path; clearing BDS-302 analytics gates still does not flip `lenr_proved` or close EQ-OPEN-*. See [`EQ_OPEN_CLOSURE_RUNWAY.md`](./EQ_OPEN_CLOSURE_RUNWAY.md) § “Quantitative distance to ≥5σ” for distance_status vocabulary (`undefined` / `below_bar` / `at_or_above_bar_gates_blocked` / `at_or_above_bar_gates_clear`).
 
-**Next lab / MoE targets (BDS-346):** served UI `NEXT_LAB_MOE_TARGETS` maps each primary avenue to a concrete `blocked_awaiting_lab` ask (governed heat+He cite-gated MoE; broader calorimetry beyond Kasagi 2/25; efficiency-corrected 23.8 MeV γ UL; measured p₄/collective caps; Tennfors-domain EC path ≥0.782 MeV). These are decision aids only — Lean `discovery_grade_analytics_does_not_close_any_eq_open` keeps all five EQ-OPEN open even under cleared analytics.
+**Next lab / MoE targets (BDS-346 / BDS-348):** served UI `NEXT_LAB_MOE_TARGETS` maps each primary avenue to a concrete `blocked_awaiting_lab` ask (governed heat+He cite-gated MoE; broader calorimetry beyond Kasagi 2/25; efficiency-corrected 23.8 MeV γ UL; measured p₄/collective caps; Tennfors-domain EC path ≥0.782 MeV). BDS-348 densifies each row with `lab_acceptance` / `still_does_not_discharge` / `corpus_gap_now` / planned `daq_observables`. Decision aids only — Lean `discovery_grade_analytics_does_not_close_any_eq_open` and `lab_ask_proxies_do_not_discharge_eq_open` keep all five EQ-OPEN open even under cleared analytics or all five asks notionally met.
 
 ## Honesty contract
 
