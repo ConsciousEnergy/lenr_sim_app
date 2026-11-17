@@ -134,6 +134,11 @@ export default function DiscoveryGradeGapChecklist({
             {' · '}Lean analytics ≠ any of Q1–Q5
           </>
         ) : null}
+        {coverage.lean_lab_ask_nc_bound ? (
+          <>
+            {' · '}Lean lab-ask ≠ EQ-OPEN discharge
+          </>
+        ) : null}
         {coverage.software_honest_5sigma_runway_exhausted ? (
           <>
             {' · '}software honest ≥5σ Prefer-merge runway <code>exhausted</code>

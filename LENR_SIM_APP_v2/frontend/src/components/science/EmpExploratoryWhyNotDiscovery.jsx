@@ -1,8 +1,9 @@
 /**
  * Structured “why not discovery” for EMP / instrument-MoE exploratory rows
- * (BDS-343 / BDS-344). Soft honesty optics only — never claims ≥5σ discovery,
- * EQ-OPEN closure, or lenr_proved. Lean dual-Kasagi + instrument_floor NC
- * bind analytics eligibility ≠ EQ-OPEN / lenr_proved.
+ * (BDS-343 / BDS-344 / BDS-346 / BDS-348). Soft honesty optics only — never
+ * claims ≥5σ discovery, EQ-OPEN closure, or lenr_proved. Lean dual-Kasagi +
+ * instrument_floor NC + lab-ask proxies bind analytics / lab-ask receipt ≠
+ * EQ-OPEN / lenr_proved.
  */
 import React from 'react';
 import {
@@ -136,6 +137,15 @@ export default function EmpExploratoryWhyNotDiscovery({
             sx={{ fontSize: '0.65rem' }}
           />
         ) : null}
+        {coverage.lean_lab_ask_nc_bound ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Lean lab-ask ≠ EQ-OPEN discharge"
+            data-testid={`${testIdPrefix}-lean-lab-ask`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
         {coverage.soft_chip_ne_scientific_discharge ? (
           <Chip
             size="small"
@@ -192,21 +202,67 @@ export default function EmpExploratoryWhyNotDiscovery({
         </Typography>
       ) : null}
       {NEXT_LAB_MOE_TARGETS.length > 0 ? (
-        <Stack spacing={0.5} sx={{ mb: 1 }} data-testid={`${testIdPrefix}-next-lab-targets`}>
+        <Stack spacing={0.75} sx={{ mb: 1 }} data-testid={`${testIdPrefix}-next-lab-targets`}>
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            Next lab / MoE targets (blocked awaiting lab; no honesty flips)
+            Next lab / MoE targets (blocked awaiting lab; ask met ≠ EQ-OPEN discharge)
           </Typography>
-          {NEXT_LAB_MOE_TARGETS.map((row) => (
+          {coverage.lab_ask_met_ne_eq_open_discharge ? (
             <Typography
-              key={row.id}
               variant="caption"
               color="text.secondary"
               display="block"
+              data-testid={`${testIdPrefix}-lab-ask-ne-discharge`}
+            >
+              Lean <code>lab_ask_proxies_do_not_discharge_eq_open</code>: even all five
+              asks notionally met keep EQ-OPEN-* OPEN and <code>lenr_proved</code> false.
+            </Typography>
+          ) : null}
+          {NEXT_LAB_MOE_TARGETS.map((row) => (
+            <Stack
+              key={row.id}
+              spacing={0.15}
               data-testid={`${testIdPrefix}-next-lab-${row.id}`}
             >
-              <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
-              {row.target}
-            </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
+                {row.target}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-lab-acceptance-${row.id}`}
+              >
+                Accept when: {row.lab_acceptance}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-corpus-gap-${row.id}`}
+              >
+                Corpus gap now: {row.corpus_gap_now}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-still-open-${row.id}`}
+              >
+                Still does not discharge: {row.still_does_not_discharge}
+              </Typography>
+              {Array.isArray(row.daq_observables) && row.daq_observables.length > 0 ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  data-testid={`${testIdPrefix}-daq-${row.id}`}
+                >
+                  DAQ fields (planned):{' '}
+                  <code>{row.daq_observables.join(', ')}</code>
+                </Typography>
+              ) : null}
+            </Stack>
           ))}
         </Stack>
       ) : null}

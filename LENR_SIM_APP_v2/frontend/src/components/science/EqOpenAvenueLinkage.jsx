@@ -128,15 +128,49 @@ export default function EqOpenAvenueLinkage({
                     </Stack>
                     {!isCompact &&
                       labTargets.map((target) => (
-                        <Typography
+                        <Stack
                           key={target.id}
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
+                          spacing={0.1}
                           data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
                         >
-                          Next lab MoE: {target.target}
-                        </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
+                            Next lab MoE: {target.target}
+                          </Typography>
+                          {target.lab_acceptance ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-accept-${row.id}-${target.id}`}
+                            >
+                              Accept: {target.lab_acceptance}
+                            </Typography>
+                          ) : null}
+                          {target.corpus_gap_now ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-gap-${row.id}-${target.id}`}
+                            >
+                              Gap now: {target.corpus_gap_now}
+                            </Typography>
+                          ) : null}
+                          {target.still_does_not_discharge ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-still-${row.id}-${target.id}`}
+                            >
+                              Ask met ≠ discharge: {target.still_does_not_discharge}
+                            </Typography>
+                          ) : null}
+                        </Stack>
                       ))}
                   </Stack>
                 }

@@ -170,10 +170,17 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   /** BDS-346: DiscoveryGradeAnalytics / dual Kasagi ⇏ any of Q1–Q5 (not Q5-only). */
   lean_all_eq_open_nc_bound: true,
   /**
-   * BDS-344/BDS-346: literature MoE inventory + EMP UX Prefer-merge levers are
-   * exhausted. BDS-346 still ships Lean all-five EQ-OPEN NC + concrete next lab
-   * MoE targets. Remaining work is scientific / governance — promote+ship prep
-   * when humans ask (no auto main/Path B).
+   * BDS-348: LabAskProxies / all five NEXT_LAB_MOE_TARGETS notionally met ⇏
+   * EQ-OPEN discharge / lenr_proved (lab_ask_proxies_do_not_discharge_eq_open).
+   */
+  lean_lab_ask_nc_bound: true,
+  lab_ask_met_ne_eq_open_discharge: true,
+  /**
+   * BDS-344/BDS-346/BDS-348: literature MoE inventory + EMP UX Prefer-merge levers
+   * are exhausted. BDS-346 shipped Lean all-five EQ-OPEN NC + next lab targets;
+   * BDS-348 densifies lab-ask acceptance / corpus gap / DAQ field maps + Lean
+   * lab-ask≠discharge. Remaining work is scientific / governance — promote+ship
+   * prep when humans ask (no auto main/Path B).
    */
   software_honest_5sigma_runway_exhausted: true,
   promote_prep_recommended: true,
@@ -193,15 +200,21 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'control does not set lenr_proved or close any EQ-OPEN-* (Lean ' +
     'dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr / ' +
     'discovery_grade_analytics_does_not_close_any_eq_open). ' +
+    'Even all five NEXT_LAB_MOE_TARGETS notionally met still ⇏ discharge (Lean ' +
+    'lab_ask_proxies_do_not_discharge_eq_open). ' +
     'Miles / De Ninno / McKubre stay exploratory (instrument_precision / floor; Lean instrument_floor NC). ' +
     'Soft chips: analytics_gates_clear — never “≥5σ met”. Literature MoE Prefer-merge runway ' +
-    'exhausted; next scientific targets are NEXT_LAB_MOE_TARGETS — promote+ship prep when asked.',
+    'exhausted; densified lab asks stay blocked_awaiting_lab — promote+ship prep when asked.',
 });
 
 /**
- * Concrete next lab / MoE targets after software Prefer-merge exhaust (BDS-346).
+ * Concrete next lab / MoE targets after software Prefer-merge exhaust
+ * (BDS-346 inventory; BDS-348 lab-ask precision densification).
  * Decision aid only — never flips lenr_proved or closes EQ-OPEN-*.
  * Complements snake_case remaining_scientific_blockers with avenue-linked lab asks.
+ * `lab_acceptance` = measurable ask gates; `still_does_not_discharge` = residual
+ * after the ask is met; `daq_observables` maps to planned lenr-ara-daq-sample-v1
+ * public fields (non-attested sketch). Lean LabAskProxies ⇏ discharge.
  */
 export const NEXT_LAB_MOE_TARGETS = Object.freeze([
   Object.freeze({
@@ -211,7 +224,23 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Governed lab simultaneous heat+He with cite-gated literature_reported σ_Q + verified ' +
       'Q↔σ pairing underwriting YIELD (not Miles exploratory instrument_precision arithmetic)',
+    lab_acceptance:
+      'Time-resolved excess_power_W + he4_atoms_per_s (or integrated) on governed rows with ' +
+      'literature_reported total σ_Q_W, moe_sigma_q_pairing_verified=true, non-seed Q, S_heat≥5',
+    still_does_not_discharge:
+      'Integrated ΔN_4He must still close under IR/Lean + ledger/governance; analytics flag alone ' +
+      'leaves EQ-OPEN-YIELD-01 / MEV-01 OPEN (lab_ask_proxies_do_not_discharge_eq_open)',
+    corpus_gap_now:
+      '0/25 governed simultaneous heat+He cite-gated MoE underwriting YIELD; Miles stays ' +
+      'instrument_precision / pairing=false / gates_blocked',
+    daq_observables: Object.freeze([
+      'excess_power_W',
+      'sigma_Q_W',
+      'he4_atoms_per_s',
+      'he4_atoms_integrated',
+    ]),
     status: 'blocked_awaiting_lab',
+    closes_eq_open: false,
   }),
   Object.freeze({
     id: 'calorimetry_resolution_beyond_kasagi',
@@ -220,7 +249,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Broader corpus beyond Kasagi 2/25: measurement-specific total σ_Q with same-results ' +
       'envelope pairing on governed calorimetry rows (refuse Iwamura/Mizuno/Arata fabrication)',
+    lab_acceptance:
+      '≥1 additional governed calorimetry row (non-Kasagi) with literature_reported σ_Q + ' +
+      'verified Q↔σ pairing clearing discovery_grade_eligible without fabricated σ_Q',
+    still_does_not_discharge:
+      'Extra analytics-eligible rows still ≠ EQ-OPEN-YIELD discharge or lenr_proved ' +
+      '(DiscoveryGradeAnalytics ⇏ any of Q1–Q5)',
+    corpus_gap_now:
+      'pairing verified 2/25 (Kasagi NiCu + Ni only); publishable literature MoE inventory exhausted',
+    daq_observables: Object.freeze(['excess_power_W', 'sigma_Q_W']),
     status: 'blocked_awaiting_lab',
+    closes_eq_open: false,
   }),
   Object.freeze({
     id: 'gamma_ul_efficiency_corrected',
@@ -229,7 +268,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Efficiency-corrected 23.8 MeV γ upper limit with coincidence / efficiency provenance ' +
       '(not CR-39 pit counts; Pyyhtiä confounder stays detector-only)',
+    lab_acceptance:
+      'Calibrated gamma_cps / gamma_ul_log10 with efficiency_refs + coincidence geometry; ' +
+      'heat-coincident interval when claiming suppression',
+    still_does_not_discharge:
+      'UL receipt alone ≠ lattice Γ_ph/Γ_γ ≥ 10^11 target or EQ-OPEN-RAD-01 affirmative/negative ' +
+      'discharge under IR + ledger sign-off',
+    corpus_gap_now:
+      '0 curated rows with efficiency-corrected 23.8 MeV γ UL + coincidence provenance',
+    daq_observables: Object.freeze(['gamma_cps', 'gamma_ul_log10']),
     status: 'blocked_awaiting_lab',
+    closes_eq_open: false,
   }),
   Object.freeze({
     id: 'occupation_rate_caps_measured',
@@ -238,7 +287,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Measured p₄ / trap occupancy + collective caps that constrain rate_mode budgets ' +
       '(not free 10⁶ caps or campaign grids alone)',
+    lab_acceptance:
+      'Experimentally constrained n_occ / f_nuc (or equivalent) cited into named rate_mode; ' +
+      'two-body log10 N = −40 reference retained beside any closing path',
+    still_does_not_discharge:
+      'Measured caps may still leave log10(N)<0 (¬Q3) or leave MeV remainder >0 (¬Q1); ' +
+      'campaign grids / free 10⁶ caps never count',
+    corpus_gap_now:
+      '0 governed measured p₄ / collective-cap attestations; engine caps stay scenario-only',
+    daq_observables: Object.freeze([]),
     status: 'blocked_awaiting_lab',
+    closes_eq_open: false,
   }),
   Object.freeze({
     id: 'ec_threshold_cm_path',
@@ -247,7 +306,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Independent condensed-matter path ≥0.782 MeV in Tennfors-licensed regime with cited ' +
       'potentials/masses (deficit bookkeeping / Widom scaffold do not count)',
+    lab_acceptance:
+      'Cited E_available ≥ 0.782 MeV in licensed material/field regime with mass-renormalization ' +
+      'domain gates met as physical claims (not UI gap-to-threshold cosmetics)',
+    still_does_not_discharge:
+      'Threshold reachability ≠ global lenr_proved; deficit-class paths may still falsify this ' +
+      'EC-source form without closing other EQ-OPEN rows',
+    corpus_gap_now:
+      'CM budget still ≪ 0.782 MeV under stated double-layer / deficit identities; Widom scaffold ≠ path',
+    daq_observables: Object.freeze([]),
     status: 'blocked_awaiting_lab',
+    closes_eq_open: false,
   }),
 ]);
 
@@ -762,6 +831,16 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       'Science evidence UI must keep lean_all_eq_open_nc_bound true (BDS-346)',
     );
   }
+  if (CORPUS_MOE_COVERAGE.lean_lab_ask_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_lab_ask_nc_bound true (BDS-348)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge !== true) {
+    throw new Error(
+      'Science evidence UI must keep lab_ask_met_ne_eq_open_discharge true (BDS-348)',
+    );
+  }
   if (CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted !== true) {
     throw new Error(
       'Science evidence UI must mark software_honest_5sigma_runway_exhausted true',
@@ -789,9 +868,27 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
         `Science evidence UI must keep NEXT_LAB_MOE_TARGETS ${target.id} blocked_awaiting_lab`,
       );
     }
-    if (!target.avenue_id || !Array.isArray(target.eq_open_ids) || !target.target) {
+    if (target.closes_eq_open !== false) {
       throw new Error(
-        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing avenue/eq_open/target`,
+        `Science evidence UI must keep NEXT_LAB_MOE_TARGETS ${target.id} closes_eq_open false`,
+      );
+    }
+    if (
+      !target.avenue_id ||
+      !Array.isArray(target.eq_open_ids) ||
+      !target.target ||
+      !target.lab_acceptance ||
+      !target.still_does_not_discharge ||
+      !target.corpus_gap_now
+    ) {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing precision fields ` +
+          '(avenue/eq_open/target/lab_acceptance/still_does_not_discharge/corpus_gap_now)',
+      );
+    }
+    if (!Array.isArray(target.daq_observables)) {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must list daq_observables array`,
       );
     }
     for (const oid of target.eq_open_ids) {
