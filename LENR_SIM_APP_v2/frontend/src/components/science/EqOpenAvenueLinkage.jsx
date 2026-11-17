@@ -149,24 +149,58 @@ export default function EqOpenAvenueLinkage({
                       labTargets.map((target) => (
                         <Stack
                           key={target.id}
-                          direction="row"
-                          spacing={0.5}
-                          useFlexGap
-                          flexWrap="wrap"
-                          alignItems="center"
+                          spacing={0.1}
                           data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
                         >
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            component="span"
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            useFlexGap
+                            flexWrap="wrap"
+                            alignItems="center"
                           >
-                            Next lab MoE: {target.target}
-                          </Typography>
-                          <ClaimTierChip
-                            tier={target.claim_tier || 'speculative_exploratory'}
-                            testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
-                          />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              component="span"
+                            >
+                              Next lab MoE: {target.target}
+                            </Typography>
+                            <ClaimTierChip
+                              tier={target.claim_tier || 'speculative_exploratory'}
+                              testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
+                            />
+                          </Stack>
+                          {target.lab_acceptance ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-accept-${row.id}-${target.id}`}
+                            >
+                              Accept: {target.lab_acceptance}
+                            </Typography>
+                          ) : null}
+                          {target.corpus_gap_now ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-gap-${row.id}-${target.id}`}
+                            >
+                              Gap now: {target.corpus_gap_now}
+                            </Typography>
+                          ) : null}
+                          {target.still_does_not_discharge ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              data-testid={`${testIdPrefix}-lab-still-${row.id}-${target.id}`}
+                            >
+                              Ask met ≠ discharge: {target.still_does_not_discharge}
+                            </Typography>
+                          ) : null}
                         </Stack>
                       ))}
                   </Stack>

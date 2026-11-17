@@ -147,6 +147,8 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.lean_dual_kasagi_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_instrument_floor_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_lab_ask_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge).toBe(true);
     expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);
     expect(CORPUS_MOE_COVERAGE.promote_prep_recommended).toBe(true);
     expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.length).toBeGreaterThanOrEqual(5);
@@ -155,20 +157,31 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.note).toMatch(
-      /does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close/i,
+      /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close/i,
     );
     expect(NEXT_LAB_MOE_TARGETS.length).toBeGreaterThanOrEqual(5);
     NEXT_LAB_MOE_TARGETS.forEach((row) => {
       expect(row.status).toBe('blocked_awaiting_lab');
+      expect(row.closes_eq_open).toBe(false);
       expect(row.avenue_id).toBeTruthy();
       expect(row.target.length).toBeGreaterThan(20);
       expect(row.claim_tier).toBe('speculative_exploratory');
+      expect(row.lab_acceptance.length).toBeGreaterThan(20);
+      expect(row.still_does_not_discharge.length).toBeGreaterThan(20);
+      expect(row.corpus_gap_now.length).toBeGreaterThan(10);
+      expect(Array.isArray(row.daq_observables)).toBe(true);
       row.eq_open_ids.forEach((oid) => expect(OPEN_EQ_IDS).toContain(oid));
     });
     const coveredOpens = new Set(
       NEXT_LAB_MOE_TARGETS.flatMap((row) => row.eq_open_ids),
     );
     OPEN_EQ_IDS.forEach((oid) => expect(coveredOpens.has(oid)).toBe(true));
+    expect(
+      NEXT_LAB_MOE_TARGETS.find((row) => row.id === 'governed_heat_he_cite_gated_moe')
+        ?.daq_observables,
+    ).toEqual(
+      expect.arrayContaining(['excess_power_W', 'sigma_Q_W', 'he4_atoms_per_s']),
+    );
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);
