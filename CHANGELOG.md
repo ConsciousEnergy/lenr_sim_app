@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — BDS-350 P1 reviewer-packets product surface (docs/UX)
+- Disambiguate paper Packet A–E (`/docs/reviewer-packets`) vs campaign JSON packs
+  (`datasets/reviewer_packs/`) vs researcher-review-pack doc in DocViewer banner + served markdown
+- DocViewer **Download markdown** for governance docs; campaign pack read-only index via
+  `GET /api/docs/campaign-packs` with honesty chips (`lenr_proved: false`, EQ-OPEN OPEN; `smoke` fixture-labeled)
+- Researcher review pack titling bumped to **v0.3.9-beta** (served + root pointer)
+- **No** `EQ-OPEN-*` closures; **no** `lenr_proved` change; **no** fabricated σ; **no** `main` / Path B
+
 ### Added — BDS-348 lab-ask precision + Lean LabAskProxies ≠ discharge (academic)
 - Lean `CalorimetrySignificance`: `LabAskProxies` + `lab_ask_proxies_do_not_discharge_eq_open` / `all_lab_asks_met_with_dual_kasagi_do_not_discharge` — all five next-lab asks notionally met still leave Q1–Q5 open
 - Served science evidence: densify `NEXT_LAB_MOE_TARGETS` with `lab_acceptance` / `still_does_not_discharge` / `corpus_gap_now` / `daq_observables` + `lean_lab_ask_nc_bound`
