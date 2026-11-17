@@ -659,6 +659,8 @@ export const CLOSURE_SURFACE_LINKS = Object.freeze({
   docs_eq_open_runway: '/docs/eq-open-closure-runway',
   docs_reviewer_packets: '/docs/reviewer-packets',
   docs_issue_ledger: '/docs/issue-ledger',
+  docs_testable_predictions: '/docs/testable-predictions',
+  docs_researcher_review_pack: '/docs/researcher-review-pack',
 });
 
 /**

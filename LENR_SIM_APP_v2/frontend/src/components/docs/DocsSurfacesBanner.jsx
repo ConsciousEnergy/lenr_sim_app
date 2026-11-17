@@ -58,7 +58,8 @@ export default function DocsSurfacesBanner({
         <Typography variant="caption" color="text.secondary" display="block">
           Honesty: <code>lenr_proved: false</code>; all five <code>EQ-OPEN-*</code>{' '}
           stay <strong>OPEN</strong>. Extra simulations and pack N do not prove LENR
-          or discharge open obligations.
+          or discharge open obligations. On the paper-packets page, the A–E ↔ ledger /
+          PRED / EQ-OPEN crosswalk is a navigation aid only (paper FIXED ≠ CLOSED).
         </Typography>
       </Stack>
     </Alert>

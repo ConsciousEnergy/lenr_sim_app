@@ -238,6 +238,11 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CLOSURE_SURFACE_LINKS.avenue_doc_path).toMatch(/AVENUE_RANKING\.md/);
     expect(CLOSURE_SURFACE_LINKS.runway_doc_path).toMatch(/EQ_OPEN_CLOSURE_RUNWAY\.md/);
     expect(CLOSURE_SURFACE_LINKS.docs_eq_open_runway).toBe('/docs/eq-open-closure-runway');
+    expect(CLOSURE_SURFACE_LINKS.docs_reviewer_packets).toBe('/docs/reviewer-packets');
+    expect(CLOSURE_SURFACE_LINKS.docs_issue_ledger).toBe('/docs/issue-ledger');
+    expect(CLOSURE_SURFACE_LINKS.docs_testable_predictions).toBe(
+      '/docs/testable-predictions',
+    );
     expect(CLOSURE_SURFACE_LINKS.note).toMatch(/do not discharge/i);
     expect(CLOSURE_SURFACE_LINKS.note).toMatch(/status stays OPEN/i);
     const yieldAvenues = avenuesForOpenId('EQ-OPEN-YIELD-01').map((a) => a.id);

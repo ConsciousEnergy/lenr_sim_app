@@ -18,6 +18,14 @@ describe('EqOpenAvenueLinkage', () => {
       'href',
       '/docs/eq-open-closure-runway',
     );
+    expect(screen.getByTestId('link-test-reviewer-packets')).toHaveAttribute(
+      'href',
+      '/docs/reviewer-packets',
+    );
+    expect(screen.getByTestId('link-test-testable-predictions')).toHaveAttribute(
+      'href',
+      '/docs/testable-predictions',
+    );
 
     OPEN_EQ_IDS.forEach((id) => {
       expect(screen.getByTestId(`link-test-open-${id}`)).toHaveTextContent(/OPEN/i);
