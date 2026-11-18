@@ -162,6 +162,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W).toBe(0.1);
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.campaign_model_output_claim_tier).toBe(
+      'speculative_exploratory',
+    );
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
       expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
     );

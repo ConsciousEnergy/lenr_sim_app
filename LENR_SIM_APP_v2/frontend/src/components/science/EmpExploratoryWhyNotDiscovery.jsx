@@ -224,11 +224,33 @@ export default function EmpExploratoryWhyNotDiscovery({
             data-testid={`${testIdPrefix}-locked-s-heat`}
           >
             Locked S_heat arithmetic: Kasagi NiCu{' '}
-            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>, Kasagi
-            Ni <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>, Miles
-            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>. Campaign
-            model-output σ_Q=
-            <code>{coverage.campaign_model_output_sigma_Q_W}</code> is not discovery MoE.
+            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_nicu_claim_tier}
+              testId={`${testIdPrefix}-claim-tier-kasagi-nicu-s-heat`}
+            />
+            , Kasagi Ni{' '}
+            <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_ni_claim_tier}
+              testId={`${testIdPrefix}-claim-tier-kasagi-ni-s-heat`}
+            />
+            , Miles exploratory{' '}
+            <code>{coverage.locked_s_heat?.['miles-1993']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.miles_claim_tier}
+              testId={`${testIdPrefix}-claim-tier-miles-s-heat`}
+            />
+            . Campaign model-output σ_Q=
+            <code>{coverage.campaign_model_output_sigma_Q_W}</code>{' '}
+            <ClaimTierChip
+              tier={
+                coverage.campaign_model_output_claim_tier ||
+                'speculative_exploratory'
+              }
+              testId={`${testIdPrefix}-claim-tier-campaign-sigma-q`}
+            />{' '}
+            is not discovery MoE.
           </Typography>
           {coverage.refused_fabricated_moe_campaigns.map((row) => (
             <Typography

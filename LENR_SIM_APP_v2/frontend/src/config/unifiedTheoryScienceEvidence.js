@@ -238,6 +238,8 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
    * S_heat arithmetic under that σ never clears discovery_grade_eligible.
    */
   campaign_model_output_sigma_Q_W: 0.1,
+  /** Model-oracle σ_Q optics only — never literature MoE / discovery. */
+  campaign_model_output_claim_tier: 'speculative_exploratory',
   campaign_model_output_is_discovery_moe: false,
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
@@ -998,10 +1000,12 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (
     CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W !== 0.1 ||
-    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false
+    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false ||
+    CORPUS_MOE_COVERAGE.campaign_model_output_claim_tier !==
+      'speculative_exploratory'
   ) {
     throw new Error(
-      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery',
+      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery (speculative_exploratory)',
     );
   }
   if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open !== true) {
