@@ -2,8 +2,16 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import DocViewerPage from './DocViewerPage';
+import {
+  CORPUS_MOE_COVERAGE,
+  OPEN_EQ_IDS,
+  SCIENCE_EVIDENCE_HONESTY,
+} from '../config/unifiedTheoryScienceEvidence';
 
-const markdownBody = '# Hello\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))';
+const markdownBody =
+  '# Hello\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))\n\n' +
+  'Display:\n\n\\[\n\\frac{a}{b} = 2.63 \\times 10^{11}\n\\]\n\n' +
+  'Inline \\( E = mc^2 \\) here.';
 
 describe('DocViewerPage markdown hardening', () => {
   beforeEach(() => {
@@ -68,6 +76,90 @@ describe('DocViewerPage markdown hardening', () => {
     });
     expect(document.querySelector('script')).toBeNull();
     expect(screen.getByTestId('doc-viewer-download')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-viewer-print')).toBeInTheDocument();
+  });
+
+  it('renders KaTeX for Pandoc-style math on testable-predictions', async () => {
+    render(
+      <MemoryRouter initialEntries={['/docs/testable-predictions']}>
+        <Routes>
+          <Route path="/docs/:slug" element={<DocViewerPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('doc-viewer-markdown')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('.katex')).not.toBeNull();
+    });
+    expect(document.querySelector('.katex-display')).not.toBeNull();
+    // KaTeX keeps TeX in MathML annotations; assert HTML render layer exists.
+    expect(document.querySelector('.katex-html')).not.toBeNull();
+    expect(screen.getByTestId('doc-viewer-markdown').innerHTML).not.toMatch(
+      /\\\[/,
+    );
+  });
+
+  it('keeps honesty locks on math-bearing DocViewer surfaces', async () => {
+    expect(SCIENCE_EVIDENCE_HONESTY.lenr_proved).toBe(false);
+    expect(OPEN_EQ_IDS).toHaveLength(5);
+    for (const id of OPEN_EQ_IDS) {
+      expect(SCIENCE_EVIDENCE_HONESTY.open_status[id]).toBe('OPEN');
+    }
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
+    expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_ids).toEqual([
+      'kasagi-nicu-radiant-2026',
+      'kasagi-ni-radiant-2026',
+    ]);
+    expect(CORPUS_MOE_COVERAGE.n_records).toBe(25);
+    expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
+
+    render(
+      <MemoryRouter initialEntries={['/docs/testable-predictions']}>
+        <Routes>
+          <Route path="/docs/:slug" element={<DocViewerPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('doc-viewer-honesty-note')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('doc-viewer-honesty-lenr-proved')).toHaveTextContent(
+      'lenr_proved: false',
+    );
+    expect(screen.getByTestId('doc-viewer-honesty-eq-open')).toHaveTextContent(/OPEN/i);
+    expect(screen.getByTestId('doc-viewer-honesty-discovery')).toHaveTextContent(
+      /2\/25/,
+    );
+    expect(screen.getByTestId('doc-viewer-honesty-discovery')).toHaveTextContent(
+      /analytics_gates_clear/,
+    );
+    expect(screen.getByTestId('doc-viewer-honesty-discovery')).toHaveTextContent(
+      /never .*≥5σ met/i,
+    );
+  });
+
+  it('invokes window.print from the Print control', async () => {
+    const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    render(
+      <MemoryRouter initialEntries={['/docs/testable-predictions']}>
+        <Routes>
+          <Route path="/docs/:slug" element={<DocViewerPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('doc-viewer-print')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('doc-viewer-print'));
+    expect(printSpy).toHaveBeenCalledTimes(1);
+    printSpy.mockRestore();
   });
 
   it('shows surface banner, pack index, and download on reviewer-packets', async () => {
@@ -102,6 +194,8 @@ describe('DocViewerPage markdown hardening', () => {
     );
     expect(screen.getByTestId('doc-viewer-crosswalk-eq-open')).toHaveTextContent(/OPEN/i);
     expect(screen.getByTestId('doc-viewer-crosswalk-row-A')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-viewer-honesty-note')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-viewer-print')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('doc-viewer-download'));
     expect(createObjectURL).toHaveBeenCalled();
