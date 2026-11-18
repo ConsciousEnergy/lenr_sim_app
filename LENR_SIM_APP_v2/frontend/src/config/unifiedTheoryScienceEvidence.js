@@ -252,11 +252,16 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   lean_lab_ask_nc_bound: true,
   lab_ask_met_ne_eq_open_discharge: true,
   /**
-   * BDS-344/BDS-346/BDS-348: literature MoE inventory + EMP UX Prefer-merge levers
-   * are exhausted. BDS-346 shipped Lean all-five EQ-OPEN NC + next lab targets;
-   * BDS-348 densifies lab-ask acceptance / corpus gap / DAQ field maps + Lean
-   * lab-ask≠discharge. Remaining work is scientific / governance — promote+ship
-   * prep when humans ask (no auto main/Path B).
+   * BDS-362: DiscoveryGradeAnalytics requires citationsNonempty + pairingVerified
+   * + non-seed (empty citations / unverified pairing / seed-scale ⇏ discovery);
+   * cite-gated flag still ⇏ EQ-OPEN-YIELD underwriting closure.
+   */
+  lean_citations_pairing_nc_bound: true,
+  lean_cite_gated_ne_yield_closure: true,
+  /**
+   * BDS-344/BDS-346/BDS-348/BDS-362: literature MoE inventory + EMP UX Prefer-merge
+   * levers are exhausted; Lean cite/pairing/YIELD NC densified. Remaining work is
+   * scientific / governance — promote+ship prep when humans ask (no auto main/Path B).
    */
   software_honest_5sigma_runway_exhausted: true,
   promote_prep_recommended: true,
@@ -278,6 +283,9 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'discovery_grade_analytics_does_not_close_any_eq_open). ' +
     'Even all five NEXT_LAB_MOE_TARGETS notionally met still ⇏ discharge (Lean ' +
     'lab_ask_proxies_do_not_discharge_eq_open). ' +
+    'Empty citations / unverified pairing / seed-scale Q block DiscoveryGradeAnalytics ' +
+    '(empty_citations_not_discovery_grade / unverified_pairing_not_discovery_grade); ' +
+    'cite-gated discovery still ⇏ EQ-OPEN-YIELD (cite_gated_discovery_does_not_underwrite_q5_closure). ' +
     'Miles / De Ninno / McKubre stay exploratory (instrument_precision / floor; Lean instrument_floor NC). ' +
     'Soft chips: analytics_gates_clear — never “≥5σ met”. Literature MoE Prefer-merge runway ' +
     'exhausted; densified lab asks stay blocked_awaiting_lab — promote+ship prep when asked.',
@@ -797,7 +805,7 @@ export const FORMALIZATION_STATUS = Object.freeze({
       id: 'EQ-HEAT-SIG-NC-01',
       label: 'Heat significance non-closure',
       kind: 'non-closure',
-      note: 'Instrument-precision / floor ⇏ discovery; dual Kasagi / DiscoveryGradeAnalytics ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346).',
+      note: 'Empty citations / unverified pairing / seed-scale / instrument-precision / floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346/BDS-362).',
     },
     {
       id: 'EQ-BBL-HEAT-NC-01',
@@ -1018,6 +1026,16 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge !== true) {
     throw new Error(
       'Science evidence UI must keep lab_ask_met_ne_eq_open_discharge true (BDS-348)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_citations_pairing_nc_bound true (BDS-362)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_cite_gated_ne_yield_closure !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_cite_gated_ne_yield_closure true (BDS-362)',
     );
   }
   if (CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted !== true) {
