@@ -105,16 +105,28 @@ export default function EqOpenAvenueLinkage({
           component={RouterLink}
           to={CLOSURE_SURFACE_LINKS.docs_reviewer_packets}
           variant="body2"
+          data-testid={`${testIdPrefix}-reviewer-packets`}
         >
-          Reviewer packets
+          Reviewer packets (+ crosswalk)
         </MuiLink>
         <MuiLink
           component={RouterLink}
           to={CLOSURE_SURFACE_LINKS.docs_issue_ledger}
           variant="body2"
+          data-testid={`${testIdPrefix}-issue-ledger`}
         >
           Issue ledger
         </MuiLink>
+        {CLOSURE_SURFACE_LINKS.docs_testable_predictions ? (
+          <MuiLink
+            component={RouterLink}
+            to={CLOSURE_SURFACE_LINKS.docs_testable_predictions}
+            variant="body2"
+            data-testid={`${testIdPrefix}-testable-predictions`}
+          >
+            Testable predictions
+          </MuiLink>
+        ) : null}
       </Stack>
       <Typography variant="caption" color="text.secondary" display="block">
         Avenue doc: <code>{CLOSURE_SURFACE_LINKS.avenue_doc_path}</code>

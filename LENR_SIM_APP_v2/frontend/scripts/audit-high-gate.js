@@ -13,7 +13,14 @@ const { spawnSync } = require('child_process');
 // GHSA-vfj7-8cjw-p6xm — braces <=3.0.3; first_patched_version is null on the
 // registry (2026-10-02). Removing braces requires a Tailwind v4 / chokidar v4
 // migration; track separately and drop this id once braces publishes a fix.
-const ALLOWED_HIGH_GHSA = new Set(['GHSA-VFJ7-8CJW-P6XM']);
+//
+// GHSA-fc5q-39xc-vjpf — picomatch <=4.0.7 ReDoS (CVE-2026-112366); GitHub
+// advisory lists patched versions: None (npm latest still 4.0.7 as of
+// 2026-11-17). Drop once picomatch publishes a fix (upstream PR #194).
+const ALLOWED_HIGH_GHSA = new Set([
+  'GHSA-VFJ7-8CJW-P6XM',
+  'GHSA-FC5Q-39XC-VJPF',
+]);
 
 const result = spawnSync('npm', ['audit', '--json'], {
   encoding: 'utf8',

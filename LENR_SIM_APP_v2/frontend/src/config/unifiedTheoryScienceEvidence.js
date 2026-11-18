@@ -136,7 +136,9 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   miles_pairing_verified: false,
   miles_distance_status: 'at_or_above_bar_gates_blocked',
   miles_banner:
-    'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery.',
+    'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery. ' +
+    'JEAC 346 peak 0.52 W pairs with same-paper ±0.04 W accuracy bound (still exploratory); ' +
+    'follow-on ±0.020 W is cross-document — missing cite-gated total σ for discovery.',
   /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
   kasagi_nicu_moe_provenance: 'literature_reported',
@@ -154,15 +156,89 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'mckubre-high-loading-1998',
   ]),
   /**
-   * BDS-343: publishable literature_reported σ_Q + verified pairing inventory is
-   * exhausted for the curated 25-row corpus (only Kasagi NiCu + Ni). Do not invent
-   * pairs for Iwamura / Mizuno / Arata / Celani / commercial Ni–H.
+   * BDS-343 / BDS-363 / post-ship MoE hunt: publishable literature_reported σ_Q +
+   * verified pairing inventory is exhausted for the curated 25-row corpus (only
+   * Kasagi NiCu + Ni). Do not invent pairs for Iwamura / Mizuno / Arata / Celani /
+   * commercial Ni–H. Celani JCMNS 29 “12±2 W” is a documented near-miss — still
+   * not discovery-grade (method indetermination / raw-uncorrected episode).
    */
   literature_moe_inventory_exhausted: true,
   inventory_exhausted_note:
     'No further publishable literature_reported total σ_Q + verified Q↔σ pairing rows ' +
     'remain in the curated 25 without fabrication. Eligible analytics flags stay 2/25 ' +
-    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”.',
+    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”. ' +
+    'Post-ship hunt: refuse Iwamura/Mizuno/Arata/Celani discovery σ; Miles stays exploratory.',
+  post_ship_moe_gap_map:
+    'docs/science/post-ship-moe-gap-map.md (store) — primary-source refuse + Celani near-miss',
+  /**
+   * Locked arithmetic S_heat = Q/σ_Q for cite-gated / exploratory rows (BDS-363).
+   * Kasagi: literature_reported + same-results envelope. Miles: instrument_precision
+   * exploratory only (gates blocked). Never invent σ for refused campaigns.
+   */
+  locked_s_heat: Object.freeze({
+    'kasagi-nicu-radiant-2026': 13.75,
+    'kasagi-ni-radiant-2026': 11.25,
+    'miles-1993': 26,
+  }),
+  /**
+   * Campaign / literature heat rows that must stay σ_Q-null / non-discovery
+   * (no peer watt total MoE usable for discovery pairing).
+   */
+  refused_fabricated_moe_campaigns: Object.freeze([
+    Object.freeze({
+      id: 'iwamura-heat-2024',
+      label: 'Iwamura 2024 nano-composite heat',
+      corpus_status: 'absent_heat_row',
+      related_literature_ids: Object.freeze([
+        'iwamura-cs-pr-2002',
+        'iwamura-sr-mo-2006',
+      ]),
+      published_peak_note:
+        'JJAP 63 037001 reports few–~9 W / 0.76 MJ without author ± / GUM total σ_Q',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'mizuno-ni-pd-airflow',
+      label: 'Mizuno Ni–Pd air-flow',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'ICCF-22 preprint claims ~250 W class excess without peer episode total σ_Q',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'arata-ds-cathode',
+      label: 'Arata DS-cathode / Pd black',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'PJAB/JJAP heat+He narrative without author calorimetric σ_Q_W; SRI %≠Arata pair',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+    Object.freeze({
+      id: 'celani-constantan',
+      label: 'Celani Cu–Ni–Mn / constantan',
+      corpus_status: 'absent',
+      related_literature_ids: Object.freeze([]),
+      published_peak_note:
+        'JCMNS unstable excess up to ~16 W; no cite-gated total σ_Q for discovery pairing',
+      sigma_Q_W: null,
+      discovery_grade_eligible: false,
+      decision: 'REFUSE_FABRICATED_SIGMA_Q',
+    }),
+  ]),
+  /**
+   * Avenue-ranking Miles-band oracle uses model-output σ_Q_W=0.1 (not literature MoE).
+   * S_heat arithmetic under that σ never clears discovery_grade_eligible.
+   */
+  campaign_model_output_sigma_Q_W: 0.1,
+  campaign_model_output_is_discovery_moe: false,
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
    * BDS-344: dual Kasagi Lean binding + instrument_floor NC + soft-chip lock.
@@ -181,11 +257,16 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   lean_lab_ask_nc_bound: true,
   lab_ask_met_ne_eq_open_discharge: true,
   /**
-   * BDS-344/BDS-346/BDS-348: literature MoE inventory + EMP UX Prefer-merge levers
-   * are exhausted. BDS-346 shipped Lean all-five EQ-OPEN NC + next lab targets;
-   * BDS-348 densifies lab-ask acceptance / corpus gap / DAQ field maps + Lean
-   * lab-ask≠discharge. Remaining work is scientific / governance — promote+ship
-   * prep when humans ask (no auto main/Path B).
+   * BDS-362: DiscoveryGradeAnalytics requires citationsNonempty + pairingVerified
+   * + non-seed (empty citations / unverified pairing / seed-scale ⇏ discovery);
+   * cite-gated flag still ⇏ EQ-OPEN-YIELD underwriting closure.
+   */
+  lean_citations_pairing_nc_bound: true,
+  lean_cite_gated_ne_yield_closure: true,
+  /**
+   * BDS-344/BDS-346/BDS-348/BDS-362: literature MoE inventory + EMP UX Prefer-merge
+   * levers are exhausted; Lean cite/pairing/YIELD NC densified. Remaining work is
+   * scientific / governance — promote+ship prep when humans ask (no auto main/Path B).
    */
   software_honest_5sigma_runway_exhausted: true,
   promote_prep_recommended: true,
@@ -207,6 +288,9 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'discovery_grade_analytics_does_not_close_any_eq_open). ' +
     'Even all five NEXT_LAB_MOE_TARGETS notionally met still ⇏ discharge (Lean ' +
     'lab_ask_proxies_do_not_discharge_eq_open). ' +
+    'Empty citations / unverified pairing / seed-scale Q block DiscoveryGradeAnalytics ' +
+    '(empty_citations_not_discovery_grade / unverified_pairing_not_discovery_grade); ' +
+    'cite-gated discovery still ⇏ EQ-OPEN-YIELD (cite_gated_discovery_does_not_underwrite_q5_closure). ' +
     'Miles / De Ninno / McKubre stay exploratory (instrument_precision / floor; Lean instrument_floor NC). ' +
     'Soft chips: analytics_gates_clear — never “≥5σ met”. Literature MoE Prefer-merge runway ' +
     'exhausted; densified lab asks stay blocked_awaiting_lab — promote+ship prep when asked.',
@@ -334,6 +418,68 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
  * EMP / instrument-MoE rows that stay exploratory — structured “why not discovery”
  * reasons for Analytics / §5B runway UX (BDS-343). Soft honesty only; never flips locks.
  */
+/**
+ * Campaigns where primary-source hunt found no honest discovery-grade watt MoE
+ * (post-ship MoE gap map). Soft refuse optics only — never invent σ_Q / flip eligible.
+ */
+export const REFUSED_FABRICATED_MOE_CAMPAIGNS = Object.freeze([
+  Object.freeze({
+    id: 'iwamura-heat-2024',
+    label: 'Iwamura nano-multilayer H₂ heat (2024)',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'doi:10.35848/1347-4065/ad2622',
+      'JJAP 63 037001 (2024)',
+    ]),
+    missing:
+      'Author paper publishes no ± / error bars / coverage factor on watt excess; GUM reconstructions are not author MoE',
+    honesty:
+      'Refuse fabricated σ_Q — metadata-only null σ only; does not raise discovery_grade_eligible.',
+  }),
+  Object.freeze({
+    id: 'mizuno-ni-pd-airflow',
+    label: 'Mizuno Ni–Pd air-flow',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'CANR MizunoTincreasede.pdf (ICCF-22 preprint)',
+    ]),
+    missing:
+      'No peer-reviewed episode total σ_Q on ~250 W claims; forum/secondary ~2 W bounds ≠ literature_reported',
+    honesty:
+      'Refuse fabricated σ_Q — contested heat without cite-gated discovery MoE.',
+  }),
+  Object.freeze({
+    id: 'arata-ds-cathode',
+    label: 'Arata–Zhang DS-cathode / Pd black',
+    in_curated_25: false,
+    decision: 'refuse',
+    primary_cites: Object.freeze([
+      'doi:10.2183/pjab.75.281',
+      'doi:10.1143/JJAP.38.L774',
+    ]),
+    missing:
+      'Author primaries state ~5–10 W narrative without σ_Q_W; SRI 9.9±1.3% is McKubre relative % — not Arata peak↔σ',
+    honesty:
+      'Refuse porting SRI % onto Arata Q as discovery MoE.',
+  }),
+  Object.freeze({
+    id: 'celani-constantan-12pm2',
+    label: 'Celani constantan (JCMNS 29 near-miss)',
+    in_curated_25: false,
+    decision: 'refuse_discovery_near_miss',
+    primary_cites: Object.freeze([
+      'doi:10.70923/001c.72494',
+      'JCMNS 29 (2019) 52–74 “12 ± 2 W”',
+    ]),
+    missing:
+      'Same-sentence 12±2 is method-indetermination class (raw uncorrected air-flow; wire-break; sibling ±1–2 W indetermination) — not literature_reported total σ for discovery',
+    honesty:
+      'Near-miss documented — refuse discovery_grade_eligible; exploratory hydrate only in a future bib-synced PR if pursued.',
+  }),
+]);
+
 export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
   Object.freeze({
     literature_id: 'miles-1993',
@@ -347,9 +493,10 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     discovery_grade_eligible: false,
     soft_chip: 'analytics_gates_clear',
     reasons: Object.freeze([
-      'Peak 0.52 W is not verified as the same-results envelope for follow-on ±0.020 W instrument error',
-      'moe_provenance is instrument_precision (exploratory), not literature_reported total σ_Q',
-      'moe_sigma_q_pairing_verified stays false — arithmetic S_heat=26 is gates-blocked',
+      'JEAC 346 peak 0.52 W is not a verified same-results envelope for follow-on ±0.020 W (MilesManomalouse / Dominguez)',
+      'Same-paper JEAC accuracy bound ~±0.04 W / ±2% remains instrument accuracy class — not literature_reported total σ_Q',
+      'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — arithmetic S_heat=26 (=0.52/0.02) gates-blocked',
+      'Missing discovery cite: measurement-specific total σ_Q_W for the paired 0.52 W peak episode in a primary source',
       'Instantaneous EMP band ≠ integrated YIELD discharge; EQ-OPEN-YIELD-01 stays OPEN',
     ]),
     honesty:
@@ -603,6 +750,8 @@ export const CLOSURE_SURFACE_LINKS = Object.freeze({
   docs_eq_open_runway: '/docs/eq-open-closure-runway',
   docs_reviewer_packets: '/docs/reviewer-packets',
   docs_issue_ledger: '/docs/issue-ledger',
+  docs_testable_predictions: '/docs/testable-predictions',
+  docs_researcher_review_pack: '/docs/researcher-review-pack',
 });
 
 /**
@@ -670,7 +819,7 @@ export const FORMALIZATION_STATUS = Object.freeze({
       id: 'EQ-HEAT-SIG-NC-01',
       label: 'Heat significance non-closure',
       kind: 'non-closure',
-      note: 'Instrument-precision / floor ⇏ discovery; dual Kasagi / DiscoveryGradeAnalytics ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346).',
+      note: 'Empty citations / unverified pairing / seed-scale / instrument-precision / floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346/BDS-362).',
     },
     {
       id: 'EQ-BBL-HEAT-NC-01',
@@ -819,6 +968,42 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       'Science evidence UI must mark literature_moe_inventory_exhausted true (no fabricated pairs)',
     );
   }
+  if (
+    !CORPUS_MOE_COVERAGE.locked_s_heat ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-nicu-radiant-2026'] !== 13.75 ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-ni-radiant-2026'] !== 11.25 ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['miles-1993'] !== 26
+  ) {
+    throw new Error(
+      'Science evidence UI must lock Kasagi/Miles S_heat arithmetic (13.75 / 11.25 / 26)',
+    );
+  }
+  if (
+    !Array.isArray(CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns) ||
+    CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns.length < 4
+  ) {
+    throw new Error(
+      'Science evidence UI must list refused_fabricated_moe_campaigns (Iwamura/Mizuno/Arata/Celani)',
+    );
+  }
+  for (const row of CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns) {
+    if (row.sigma_Q_W != null || row.discovery_grade_eligible !== false) {
+      throw new Error(
+        `Refused campaign ${row.id} must keep sigma_Q_W null and discovery_grade_eligible false`,
+      );
+    }
+    if (row.decision !== 'REFUSE_FABRICATED_SIGMA_Q') {
+      throw new Error(`Refused campaign ${row.id} must keep REFUSE_FABRICATED_SIGMA_Q`);
+    }
+  }
+  if (
+    CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W !== 0.1 ||
+    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false
+  ) {
+    throw new Error(
+      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery',
+    );
+  }
   if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open !== true) {
     throw new Error(
       'Science evidence UI must keep analytics_eligible_ne_eq_open true',
@@ -855,6 +1040,16 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge !== true) {
     throw new Error(
       'Science evidence UI must keep lab_ask_met_ne_eq_open_discharge true (BDS-348)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_citations_pairing_nc_bound true (BDS-362)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_cite_gated_ne_yield_closure !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_cite_gated_ne_yield_closure true (BDS-362)',
     );
   }
   if (CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted !== true) {
@@ -940,6 +1135,31 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     if (row.soft_chip === 'met' || /≥5σ.*met/i.test(String(row.soft_chip || ''))) {
       throw new Error(
         `Science evidence UI must not use ≥5σ met soft chips on ${row.literature_id}`,
+      );
+    }
+  }
+  if (
+    !Array.isArray(REFUSED_FABRICATED_MOE_CAMPAIGNS) ||
+    REFUSED_FABRICATED_MOE_CAMPAIGNS.length < 4
+  ) {
+    throw new Error(
+      'Science evidence UI must list REFUSED_FABRICATED_MOE_CAMPAIGNS (≥4 refuse rows)',
+    );
+  }
+  for (const row of REFUSED_FABRICATED_MOE_CAMPAIGNS) {
+    if (!row.decision || !String(row.decision).startsWith('refuse')) {
+      throw new Error(
+        `Science evidence UI must keep refused MoE campaign ${row.id} decision=refuse*`,
+      );
+    }
+    if (!row.missing || String(row.missing).length < 20) {
+      throw new Error(
+        `Science evidence UI must document missing MoE cite for refused campaign ${row.id}`,
+      );
+    }
+    if (/discovery_grade_eligible\s*[:=]\s*true/i.test(String(row.honesty || ''))) {
+      throw new Error(
+        `Science evidence UI must not claim discovery on refused MoE campaign ${row.id}`,
       );
     }
   }

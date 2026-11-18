@@ -20,6 +20,7 @@ import {
   CORPUS_MOE_COVERAGE,
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   NEXT_LAB_MOE_TARGETS,
+  REFUSED_FABRICATED_MOE_CAMPAIGNS,
 } from '../../config/unifiedTheoryScienceEvidence';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
 
@@ -206,6 +207,43 @@ export default function EmpExploratoryWhyNotDiscovery({
           {coverage.inventory_exhausted_note}
         </Typography>
       ) : null}
+      {Array.isArray(coverage.refused_fabricated_moe_campaigns) &&
+      coverage.refused_fabricated_moe_campaigns.length > 0 ? (
+        <Stack
+          spacing={0.5}
+          sx={{ mb: 1 }}
+          data-testid={`${testIdPrefix}-refused-moe`}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Refused fabricated MoE campaigns (σ_Q stays null)
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            data-testid={`${testIdPrefix}-locked-s-heat`}
+          >
+            Locked S_heat arithmetic: Kasagi NiCu{' '}
+            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>, Kasagi
+            Ni <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>, Miles
+            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>. Campaign
+            model-output σ_Q=
+            <code>{coverage.campaign_model_output_sigma_Q_W}</code> is not discovery MoE.
+          </Typography>
+          {coverage.refused_fabricated_moe_campaigns.map((row) => (
+            <Typography
+              key={row.id}
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              data-testid={`${testIdPrefix}-refused-${row.id}`}
+            >
+              <code>{row.id}</code> ({row.label}): {row.published_peak_note} —{' '}
+              <code>{row.decision}</code>
+            </Typography>
+          ))}
+        </Stack>
+      ) : null}
       {coverage.software_honest_5sigma_runway_exhausted ? (
         <Typography
           variant="caption"
@@ -293,6 +331,49 @@ export default function EmpExploratoryWhyNotDiscovery({
                   <code>{row.daq_observables.join(', ')}</code>
                 </Typography>
               ) : null}
+            </Stack>
+          ))}
+        </Stack>
+      ) : null}
+      {REFUSED_FABRICATED_MOE_CAMPAIGNS.length > 0 ? (
+        <Stack
+          spacing={0.5}
+          sx={{ mb: 1 }}
+          data-testid={`${testIdPrefix}-refused-campaigns`}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Refused fabricated discovery MoE (primary-source hunt; counts stay 2/25)
+          </Typography>
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label="refuse Iwamura/Mizuno/Arata/Celani discovery σ"
+            data-testid={`${testIdPrefix}-refuse-chip`}
+            sx={{ fontSize: '0.65rem', alignSelf: 'flex-start' }}
+          />
+          {REFUSED_FABRICATED_MOE_CAMPAIGNS.map((row) => (
+            <Stack
+              key={row.id}
+              spacing={0.1}
+              data-testid={`${testIdPrefix}-refuse-${row.id}`}
+            >
+              <Typography variant="caption" color="text.secondary" display="block">
+                <code>{row.id}</code> · {row.label} · decision=
+                <code>{row.decision}</code>
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-refuse-missing-${row.id}`}
+              >
+                Missing: {row.missing}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Cites attempted:{' '}
+                <code>{(row.primary_cites || []).join('; ')}</code>
+              </Typography>
             </Stack>
           ))}
         </Stack>

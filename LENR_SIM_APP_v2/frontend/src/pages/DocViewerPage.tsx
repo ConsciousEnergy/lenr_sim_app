@@ -23,6 +23,7 @@ import { API_BASE_URL } from '../config/api';
 import { track } from '../analytics/events';
 import DocsSurfacesBanner from '../components/docs/DocsSurfacesBanner';
 import CampaignPackManifestIndex from '../components/docs/CampaignPackManifestIndex';
+import ReviewerPacketCrosswalk from '../components/docs/ReviewerPacketCrosswalk';
 
 const SLUG_TO_TITLE: Record<string, string> = {
   'issue-ledger': 'Issue Ledger',
@@ -156,6 +157,9 @@ export default function DocViewerPage() {
       ) : null}
       {showPackIndex ? (
         <CampaignPackManifestIndex testIdPrefix="doc-viewer-packs" />
+      ) : null}
+      {showPackIndex ? (
+        <ReviewerPacketCrosswalk testIdPrefix="doc-viewer-crosswalk" />
       ) : null}
       <Paper
         elevation={1}
