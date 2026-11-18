@@ -29,6 +29,7 @@ _DEFAULT_TAXONOMY: Dict[str, str] = {
     "schwinger_lattice": "named_theory",
     "matsumoto_enc": "named_theory",
     "shoulders_evo": "proposed_state",
+    "santilli_icnf": "named_theory",
     "hydroton": "proposed_state",
     "miles_heat_helium": "observed_output",
     "iwamura_transmutation": "experiment_env",

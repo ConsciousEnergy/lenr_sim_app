@@ -855,3 +855,68 @@ class TestCzerskiThermalSpike:
         ids = get_default_pipeline().registered_ids
         assert "czerski_thermal_spike" in ids
         assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
+
+
+class TestSantilliICNF:
+    """Santilli ICNF phenomenological stub — arc+D+C regime only."""
+
+    ICNF_CONDITIONS = {
+        **STANDARD_CONDITIONS,
+        "arc_power_kw": 36.0,
+        "deuterium_pressure_psi": 100.0,
+        "host_material": "graphite",
+        "reactant": "deuterium",
+        "trigger_mode": "arc",
+    }
+
+    def setup_method(self):
+        from app.physics_engine.theories.santilli_icnf import SantilliICNFTheory
+        self.theory = SantilliICNFTheory()
+
+    def test_protocol_and_calc(self):
+        assert_theory_protocol(self.theory)
+        contrib = self.theory.calculate(self.ICNF_CONDITIONS)
+        assert_valid_contribution(contrib)
+        assert contrib.enhancement_factor <= 1e5
+        assert contrib.theory_id == "santilli_icnf"
+        assert contrib.is_applicable is True
+        assert contrib.claim_tier == "speculative_exploratory"
+        assert contrib.evidence_class == "exploratory"
+        assert contrib.provenance.get("validation_status") == "unvalidated"
+        assert contrib.observables.get("product_N14", 0) > 0
+        assert contrib.observables.get("product_He4", 1) == 0.0
+        assert contrib.energy_output_watts == 0.0
+
+    def test_inapplicable_under_standard_pd_d(self):
+        """Default Pd/D electrolysis-only packs must stay inert."""
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.is_applicable is False
+        assert self.theory.is_applicable(STANDARD_CONDITIONS) is False
+
+    def test_inapplicable_without_carbon_electrode(self):
+        conds = {
+            **STANDARD_CONDITIONS,
+            "arc_power_kw": 36.0,
+            "reactant": "deuterium",
+            "host_material": "palladium",
+        }
+        assert self.theory.is_applicable(conds) is False
+
+    def test_claim_tier_locked_exploratory(self):
+        meta = self.theory.get_metadata()
+        assert meta.model_fidelity == "phenomenological"
+        assert meta.empirical_support == "speculative"
+        refs = " ".join(meta.references)
+        assert "kadeisvili2013" in refs
+        assert "santilli2007" in refs
+
+    def test_pipeline_registers_hadronic_group(self):
+        from app.physics_engine.theory_pipeline import (
+            THEORY_COMPOSITION_GROUPS,
+            get_default_pipeline,
+        )
+        import app.physics_engine.theory_pipeline as tp
+        tp._default_pipeline = None
+        ids = get_default_pipeline().registered_ids
+        assert "santilli_icnf" in ids
+        assert THEORY_COMPOSITION_GROUPS["santilli_icnf"] == "hadronic_synthesis"
