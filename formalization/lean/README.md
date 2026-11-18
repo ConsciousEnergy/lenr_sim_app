@@ -55,3 +55,4 @@ lake build
 - File headers state claim-tier / non-claims.
 - Speculative physics (MeV gap, TSC, Hagelstein, KG–RP) remains claim-tiered and unproved.
 - There is no `theorem lenr_occurs`. `EQ-OPEN-*` rows stay open.
+
