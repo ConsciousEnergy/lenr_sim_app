@@ -188,6 +188,43 @@ export default function EmpExploratoryWhyNotDiscovery({
           {coverage.inventory_exhausted_note}
         </Typography>
       ) : null}
+      {Array.isArray(coverage.refused_fabricated_moe_campaigns) &&
+      coverage.refused_fabricated_moe_campaigns.length > 0 ? (
+        <Stack
+          spacing={0.5}
+          sx={{ mb: 1 }}
+          data-testid={`${testIdPrefix}-refused-moe`}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Refused fabricated MoE campaigns (σ_Q stays null)
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            data-testid={`${testIdPrefix}-locked-s-heat`}
+          >
+            Locked S_heat arithmetic: Kasagi NiCu{' '}
+            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>, Kasagi
+            Ni <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>, Miles
+            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>. Campaign
+            model-output σ_Q=
+            <code>{coverage.campaign_model_output_sigma_Q_W}</code> is not discovery MoE.
+          </Typography>
+          {coverage.refused_fabricated_moe_campaigns.map((row) => (
+            <Typography
+              key={row.id}
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              data-testid={`${testIdPrefix}-refused-${row.id}`}
+            >
+              <code>{row.id}</code> ({row.label}): {row.published_peak_note} —{' '}
+              <code>{row.decision}</code>
+            </Typography>
+          ))}
+        </Stack>
+      ) : null}
       {coverage.software_honest_5sigma_runway_exhausted ? (
         <Typography
           variant="caption"

@@ -75,6 +75,16 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(
       screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
     ).toHaveTextContent(/23\.8 MeV|efficiency/i);
+    expect(screen.getByTestId('emp-test-refused-moe')).toHaveTextContent(
+      /Refused fabricated MoE/i,
+    );
+    expect(screen.getByTestId('emp-test-locked-s-heat')).toHaveTextContent(/13\.75|11\.25|26/);
+    expect(screen.getByTestId('emp-test-refused-iwamura-heat-2024')).toHaveTextContent(
+      /REFUSE_FABRICATED_SIGMA_Q/,
+    );
+    expect(screen.getByTestId('emp-test-refused-mizuno-ni-pd-airflow')).toHaveTextContent(
+      /REFUSE_FABRICATED_SIGMA_Q/,
+    );
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(
       /at_or_above_bar_gates_blocked/,
@@ -94,6 +104,7 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(
       screen.getByTestId('emp-test-refuse-missing-iwamura-heat-2024'),
     ).toHaveTextContent(/Missing:|no ±|GUM/i);
+    expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/JEAC|±0\.04|0\.04/);
     expect(screen.getByTestId('emp-test-panel')).not.toHaveTextContent(/≥5σ gap:\s*met/i);
     expect(screen.getByTestId('emp-test-panel')).not.toHaveTextContent(/lenr_proved:\s*true/i);
   });
