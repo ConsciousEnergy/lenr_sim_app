@@ -573,6 +573,53 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [kadeisvili2013] Kadeisvili, J.V., Lynch, C., Yang, Y. (2013)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Confirmations of Santilli&apos;s Intermediate Controlled Nuclear Fusion of Deuterium and Carbon
+                Into Nitrogen Without Harmful Radiations. <em>Open Physical Chemistry Journal</em>, 5, 17–27.
+                Primary source for the speculative <code>santilli_icnf</code> phenomenological stub (D+C→N arc path);
+                does not prove LENR and does not close EQ-OPEN-*.
+              </Typography>
+              <MuiLink
+                href="https://www.santilli-foundation.org/docs/ICNF-Conf-2013.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                ICNF-Conf-2013.pdf (Bentham Open)
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [santilli2007] Santilli, R.M. (2007)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                The Novel Controlled Intermediate Nuclear Fusion and its Possible Industrial Realization…
+                <em> Journal of Applied Sciences</em>, 7, 1679–1698. Related-only precursor ICNF / hadronic-reactor
+                proposal for <code>santilli_icnf</code> v1 — <strong>not modeled</strong> (magnecule dynamics out of scope).
+              </Typography>
+              <MuiLink
+                href="https://doi.org/10.3923/jas.2007.1679.1698"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem', mr: 2 }}
+              >
+                DOI: 10.3923/jas.2007.1679.1698
+              </MuiLink>
+              <MuiLink
+                href="https://scialert.net/fulltext/?doi=jas.2007.1679.1698"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                SciAlert fulltext
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [kasagi2026] Kasagi, J., Itoh, T., Shibasaki, Y., Iwamura, Y. (2026)
               </Typography>
               <Typography variant="body2" paragraph>

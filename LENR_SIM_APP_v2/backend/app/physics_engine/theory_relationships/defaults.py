@@ -277,6 +277,40 @@ def _build_default_nodes() -> List[TheoryNode]:
             ],
             material_systems=["Zr-D", "Ti-D", "Pd-D"],
         ),
+        TheoryNode(
+            theory_id="holmlid_udh",
+            theory_name="Holmlid ultra-dense H(0)/D(0)",
+            researcher="Leif Holmlid",
+            year=2013,
+            category="mechanism",
+            key_predictions=[
+                "Ultra-dense hydrogen / deuterium phases",
+                "Laser/TOF MeV particle signals",
+            ],
+            physical_properties=[
+                "coherent_quantum_states",
+                "nano_confinement",
+            ],
+            material_systems=["H(0)", "D(0)"],
+        ),
+        TheoryNode(
+            theory_id="santilli_icnf",
+            theory_name="Santilli ICNF (D+C→N, phenomenological)",
+            researcher="Santilli / Kadeisvili et al.",
+            year=2013,
+            category="mechanism",
+            key_predictions=[
+                "Arc / warm D+C→N synthesis (ICNF)",
+                "Low exterior n/γ claim",
+                "Not lattice D+D→He⁴",
+            ],
+            physical_properties=[
+                "transmutation",
+                "electromagnetic_triggering",
+                "no_dangerous_radiation",
+            ],
+            material_systems=["C-D2 arc", "graphite-D2"],
+        ),
     ]
 
 
@@ -419,6 +453,38 @@ def _build_default_edges() -> List[TheoryEdge]:
         shared_properties=["nano_confinement"],
         strength=0.6,
         description="Casimir forces may help define NAE crack geometry",
+    ))
+
+    # --- Santilli ICNF: orthogonal / distinct path vs lattice and UDH ---
+    edges.append(TheoryEdge(
+        source_id="santilli_icnf", target_id="takahashi_tsc",
+        relationship_type="orthogonal",
+        shared_properties=[],
+        strength=0.15,
+        description=(
+            "Distinct path: ICNF is arc D+C→N (hadronic framing), not lattice "
+            "multi-body D+D→He⁴ TSC"
+        ),
+    ))
+    edges.append(TheoryEdge(
+        source_id="santilli_icnf", target_id="widom_larsen",
+        relationship_type="orthogonal",
+        shared_properties=["no_dangerous_radiation"],
+        strength=0.2,
+        description=(
+            "Distinct path: ICNF is carbon-arc synthesis, not ULM-neutron "
+            "surface catalysis"
+        ),
+    ))
+    edges.append(TheoryEdge(
+        source_id="santilli_icnf", target_id="holmlid_udh",
+        relationship_type="orthogonal",
+        shared_properties=[],
+        strength=0.15,
+        description=(
+            "Distinct path: ICNF arc D+C→N vs Holmlid ultra-dense H(0)/D(0) "
+            "laser/TOF regime"
+        ),
     ))
 
     # --- Triggering theories ---

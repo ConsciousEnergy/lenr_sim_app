@@ -250,6 +250,16 @@ export const THEORY_VISUALIZATION_MAP = {
       'Accelerator ion-track thermal DD fusion. Complements screening; not an electrolytic LENR proof.',
     reference: 'Czerski et al., arXiv:2409.02112',
   },
+  santilli_icnf: {
+    vizLayer: null,
+    legendGroup: 'Hadronic synthesis',
+    has3DOverlay: false,
+    claimTier: 'speculative_exploratory',
+    displayName: 'Santilli ICNF (D+C→N, phenomenological)',
+    description:
+      'Arc / warm D+C→N ICNF stub. Speculative exploratory; not lattice D+D→He⁴; no invented rate law.',
+    reference: 'Kadeisvili et al. (2013) — kadeisvili2013; related Santilli (2007) — santilli2007',
+  },
 };
 
 /**
