@@ -22,9 +22,10 @@ alwaysApply: false
   // ❌ DON'T: paste raw LaTeX ( \frac, \times ) into JSX - it renders literally
   ```
 
-- **`ReactMarkdown` has no math plugin (`DocViewerPage.tsx`).** LaTeX in fetched markdown renders as raw text there.
-  - Do NOT assume in-app LaTeX rendering works.
-  - If a LaTeX-bearing doc must render in-app, either (a) add `remark-math` + `rehype-katex` (plus a KaTeX stylesheet) to the markdown pipeline as an explicit, reviewed change, or (b) pre-render the equations to Unicode monospace. Flag this trade-off rather than silently shipping broken math.
+- **`DocViewerPage.tsx` renders math via `remark-math` + `rehype-katex`.** Pandoc-style `\(…\)` / `\[…\]` in served markdown is normalized to `$` / `$$` before remark-math (source docs stay on the Pandoc dialect).
+  - Keep writing new served-doc math as `\( \)` / `\[ \]`.
+  - Print uses `docViewerPrint.css` + the Print control; math/print UX must not imply EQ-OPEN discharge or `lenr_proved`.
+  - Theory Paper JSX pages still use Unicode monospace — do not paste raw LaTeX into those curated views.
 
 - **Numbers inside math obey the physics bands.** Any quantitative value in an equation follows [scientific-rigor-provenance.mdc](mdc:.cursor/rules/scientific-rigor-provenance.mdc) (e.g. tunneling 10³-10⁵, Casimir -1.3 mN) and carries a citation or `model assumption` label.
 

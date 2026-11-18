@@ -2,10 +2,10 @@
  * DocViewerPage — Renders markdown documentation from GET /api/docs/{slug}.
  * Supports slugs: issue-ledger, testable-predictions, reviewer-packets,
  * researcher-review-pack, eq-open-closure-runway. Reviewer-packets also shows
- * campaign pack index + download.
+ * campaign pack index + download. Math via remark-math + rehype-katex (P2).
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Box,
@@ -19,11 +19,17 @@ import {
   Stack,
 } from '@mui/material';
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import './docViewerPrint.css';
 import { API_BASE_URL } from '../config/api';
 import { track } from '../analytics/events';
 import DocsSurfacesBanner from '../components/docs/DocsSurfacesBanner';
 import CampaignPackManifestIndex from '../components/docs/CampaignPackManifestIndex';
 import ReviewerPacketCrosswalk from '../components/docs/ReviewerPacketCrosswalk';
+import DocViewerHonestyNote from '../components/docs/DocViewerHonestyNote';
+import { normalizeMarkdownMath } from '../utils/normalizeMarkdownMath';
 
 const SLUG_TO_TITLE: Record<string, string> = {
   'issue-ledger': 'Issue Ledger',
@@ -36,6 +42,12 @@ const SLUG_TO_TITLE: Record<string, string> = {
 const PACKET_SURFACE_SLUGS = new Set([
   'reviewer-packets',
   'researcher-review-pack',
+]);
+
+const MATH_BEARING_SLUGS = new Set([
+  'testable-predictions',
+  'eq-open-closure-runway',
+  'issue-ledger',
 ]);
 
 export default function DocViewerPage() {
@@ -75,6 +87,11 @@ export default function DocViewerPage() {
       });
   }, [slug]);
 
+  const renderedMarkdown = useMemo(
+    () => (content ? normalizeMarkdownMath(content) : ''),
+    [content],
+  );
+
   const handleDownload = useCallback(() => {
     if (!content || !slug) return;
     const filename = `${slug}.md`;
@@ -91,6 +108,16 @@ export default function DocViewerPage() {
       format: 'markdown',
     });
   }, [content, slug]);
+
+  const handlePrint = useCallback(() => {
+    if (!slug) return;
+    track.exportDownloaded({
+      surface: 'doc-viewer-print',
+      slug,
+      format: 'print',
+    });
+    window.print();
+  }, [slug]);
 
   if (loading) {
     return (
@@ -117,9 +144,16 @@ export default function DocViewerPage() {
   const title = (slug && SLUG_TO_TITLE[slug]) ?? slug ?? 'Document';
   const showPacketSurfaces = Boolean(slug && PACKET_SURFACE_SLUGS.has(slug));
   const showPackIndex = slug === 'reviewer-packets';
+  const showHonestyNote = Boolean(
+    slug && (MATH_BEARING_SLUGS.has(slug) || PACKET_SURFACE_SLUGS.has(slug)),
+  );
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container
+      maxWidth="md"
+      sx={{ py: 4 }}
+      data-testid="doc-viewer-print-root"
+    >
       <Typography variant="h4" gutterBottom fontWeight="bold">
         {title}
       </Typography>
@@ -129,6 +163,7 @@ export default function DocViewerPage() {
         useFlexGap
         flexWrap="wrap"
         sx={{ mb: 2 }}
+        data-testid="doc-viewer-no-print"
       >
         <Button component={Link} to="/documentation">
           ← Back to Documentation
@@ -140,15 +175,33 @@ export default function DocViewerPage() {
         >
           Download markdown
         </Button>
+        <Button
+          variant="outlined"
+          onClick={handlePrint}
+          data-testid="doc-viewer-print"
+        >
+          Print
+        </Button>
       </Stack>
+      {showHonestyNote ? (
+        <Box data-testid="doc-viewer-no-print">
+          <DocViewerHonestyNote testIdPrefix="doc-viewer-honesty" slug={slug || ''} />
+        </Box>
+      ) : null}
       {showPacketSurfaces ? (
-        <DocsSurfacesBanner activeSlug={slug || ''} testIdPrefix="doc-viewer-surfaces" />
+        <Box data-testid="doc-viewer-no-print">
+          <DocsSurfacesBanner activeSlug={slug || ''} testIdPrefix="doc-viewer-surfaces" />
+        </Box>
       ) : null}
       {showPackIndex ? (
-        <CampaignPackManifestIndex testIdPrefix="doc-viewer-packs" />
+        <Box data-testid="doc-viewer-no-print">
+          <CampaignPackManifestIndex testIdPrefix="doc-viewer-packs" />
+        </Box>
       ) : null}
       {showPackIndex ? (
-        <ReviewerPacketCrosswalk testIdPrefix="doc-viewer-crosswalk" />
+        <Box data-testid="doc-viewer-no-print">
+          <ReviewerPacketCrosswalk testIdPrefix="doc-viewer-crosswalk" />
+        </Box>
       ) : null}
       <Paper
         elevation={1}
@@ -159,11 +212,17 @@ export default function DocViewerPage() {
           '& ul, & ol': { pl: 3, mb: 1.5 },
           '& pre': { overflow: 'auto', p: 2, bgcolor: 'action.hover', borderRadius: 1 },
           '& code': { fontSize: '0.9em' },
+          '& .katex-display': { my: 2, overflowX: 'auto' },
         }}
         data-testid="doc-viewer-markdown"
       >
-        <ReactMarkdown skipHtml urlTransform={defaultUrlTransform}>
-          {content}
+        <ReactMarkdown
+          skipHtml
+          urlTransform={defaultUrlTransform}
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+        >
+          {renderedMarkdown}
         </ReactMarkdown>
       </Paper>
     </Container>
