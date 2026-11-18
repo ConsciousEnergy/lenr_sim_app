@@ -110,6 +110,9 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "czerski_thermal_spike": "ion_track",
     # Schwinger NEAL — historical-control lattice coupling (scaffold).
     "schwinger_lattice": "historical_lattice",
+    # Santilli ICNF — arc / warm D+C→N hadronic-synthesis path (phenomenological).
+    # Distinct from lattice D+D and lattice-transmutation routes; keep isolated.
+    "santilli_icnf": "hadronic_synthesis",
 }
 
 DEFAULT_COMBINATION_RULE = "grouped_max_confidence_product"
@@ -852,6 +855,12 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(SchwingerLatticeTheory())
     except Exception:
         logger.exception("Failed to register SchwingerLatticeTheory")
+
+    try:
+        from app.physics_engine.theories.santilli_icnf import SantilliICNFTheory
+        pipeline.register(SantilliICNFTheory())
+    except Exception:
+        logger.exception("Failed to register SantilliICNFTheory")
 
     # --- Phase 1C: Extended Theories ---
 

@@ -55,6 +55,8 @@ model assumption).
 | pyyhtia2026 | doi:10.1016/j.jelechem.2026.120104 | K. Pyyhtiä et al., "Investigation of CR-39 damaging mechanisms in electrochemical environments," J. Electroanal. Chem. 1013, 120104 (2026). Electrolytic cavitation / CR-39 confounder; not LENR proof. |
 | nguyen2026 | doi:10.1038/s41586-026-10616-2 | D. Nguyen et al., "Nuclear shell structure governs short-range nucleon pairing," Nature (2026). |
 | floquetwkb2026 | doi:10.14293/PR2199.002776.v1 | "Electro-Mechanically Enhanced Lattice Confinement Fusion via Resonant THz-Driven Phonon Modulation (Floquet-WKB)" (2026). |
+| kadeisvili2013 | https://www.santilli-foundation.org/docs/ICNF-Conf-2013.pdf | J. V. Kadeisvili, C. Lynch, Y. Yang, "Confirmations of Santilli’s Intermediate Controlled Nuclear Fusion of Deuterium and Carbon Into Nitrogen Without Harmful Radiations," Open Phys. Chem. J. 5, 17–27 (2013). Primary for `santilli_icnf` stub. |
+| santilli2007 | doi:10.3923/jas.2007.1679.1698 | R. M. Santilli, "The Novel Controlled Intermediate Nuclear Fusion and its Possible Industrial Realization…," J. Appl. Sci. 7, 1679–1698 (2007). Related-only for `santilli_icnf` v1 (not modeled). |
 | casimir1948 | — | H. B. G. Casimir, Proc. K. Ned. Akad. Wet. 51, 793 (1948). |
 | lifshitz1956 | — | E. M. Lifshitz, Sov. Phys. JETP 2, 73 (1956). |
 | kim2009 | — | Y. E. Kim, Bose-Einstein condensate nuclear fusion theory (2009). |
