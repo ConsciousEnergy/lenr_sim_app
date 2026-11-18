@@ -1273,4 +1273,7 @@ These `AuthorYear` keys resolve claims in the companion app and `docs/REVIEW_202
 - **[nguyen2026]** Nguyen, T., et al. (2026). Quantum shell structure of proton–neutron pairing. *Nature*. DOI: [10.1038/s41586-026-10616-2](https://doi.org/10.1038/s41586-026-10616-2)  
 - **[floquetwkb2026]** Floquet–WKB analysis of lattice confinement fusion under a driven barrier (2026). DOI: [10.14293/PR2199.002776.v1](https://doi.org/10.14293/PR2199.002776.v1)  
 - **[parkhomov2018]** Parkhomov, A. G. (2018). Nuclear reactions in LENR: review of experimental results (LENR Academy curated subset).
+- **[kadeisvili2013]** Kadeisvili, J. V., Lynch, C., & Yang, Y. (2013). Confirmations of Santilli’s Intermediate Controlled Nuclear Fusion of Deuterium and Carbon Into Nitrogen Without Harmful Radiations. *Open Physical Chemistry Journal*, 5, 17–27. Primary source for the speculative `santilli_icnf` phenomenological stub; does **not** prove LENR.  
+  **Link:** [https://www.santilli-foundation.org/docs/ICNF-Conf-2013.pdf](https://www.santilli-foundation.org/docs/ICNF-Conf-2013.pdf)
+- **[santilli2007]** Santilli, R. M. (2007). The Novel Controlled Intermediate Nuclear Fusion and its Possible Industrial Realization…. *Journal of Applied Sciences*, 7, 1679–1698. Related-only precursor for `santilli_icnf` v1 — **not modeled**. DOI: [10.3923/jas.2007.1679.1698](https://doi.org/10.3923/jas.2007.1679.1698)
 

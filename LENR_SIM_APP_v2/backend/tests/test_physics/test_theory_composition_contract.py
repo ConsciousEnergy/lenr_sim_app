@@ -86,6 +86,9 @@ class TestCompositionGroupAssignment:
         assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
         assert THEORY_COMPOSITION_GROUPS["electron_screening"] == "screening"
 
+    def test_santilli_icnf_has_hadronic_synthesis_group(self):
+        assert THEORY_COMPOSITION_GROUPS["santilli_icnf"] == "hadronic_synthesis"
+
 
 class TestCompositionRun:
     def test_only_one_winner_per_group_contributes(self):
