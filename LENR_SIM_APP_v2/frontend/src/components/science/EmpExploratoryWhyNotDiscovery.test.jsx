@@ -57,9 +57,28 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-lab-ask-ne-discharge')).toHaveTextContent(
       /lab_ask_proxies_do_not_discharge_eq_open/,
     );
+    expect(screen.getByTestId('emp-test-daq-provenance')).toBeInTheDocument();
+    expect(screen.getByTestId('emp-test-daq-provenance-schema')).toHaveTextContent(
+      /lenr-ara-daq-sample-v1|trust_plane=daq|planned_not_attested/,
+    );
+    expect(screen.getByTestId('emp-test-blocked-awaiting-lab-chip')).toHaveTextContent(
+      /blocked_awaiting_lab/,
+    );
+    expect(screen.getByTestId('emp-test-refuse-fabricated-daq-chip')).toHaveTextContent(
+      /refuse fabricated DAQ/i,
+    );
+    expect(screen.getByTestId('emp-test-daq-lenr-proved-false')).toHaveTextContent(
+      /lenr_proved default false/,
+    );
+    expect(screen.getByTestId('emp-test-daq-provenance-honesty')).toHaveTextContent(
+      /refuse fabricated|lab_ask_proxies_do_not_discharge/i,
+    );
     expect(
       screen.getByTestId('emp-test-next-lab-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/cite-gated|YIELD/i);
+    expect(
+      screen.getByTestId('emp-test-status-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/blocked_awaiting_lab/);
     expect(
       screen.getByTestId('emp-test-lab-acceptance-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/Accept when:|literature_reported|S_heat/i);
@@ -70,8 +89,20 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
       screen.getByTestId('emp-test-still-open-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/Still does not discharge:|EQ-OPEN-YIELD/i);
     expect(
+      screen.getByTestId('emp-test-daq-meta-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/lenr-ara-daq-sample-v1|planned_not_attested|calibration=/);
+    expect(
       screen.getByTestId('emp-test-daq-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/excess_power_W|sigma_Q_W|he4_atoms/);
+    expect(
+      screen.getByTestId('emp-test-daq-gap-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/refuse fabricating/i);
+    expect(
+      screen.getByTestId('emp-test-daq-occupation_rate_caps_measured'),
+    ).toHaveTextContent(/none in sample-v1/i);
+    expect(
+      screen.getByTestId('emp-test-daq-gap-ec_threshold_cm_path'),
+    ).toHaveTextContent(/Refuse fabricating DAQ threshold/i);
     expect(
       screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
     ).toHaveTextContent(/23\.8 MeV|efficiency/i);

@@ -302,13 +302,53 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
 });
 
 /**
+ * Planned LENR-ARA DAQ sample provenance (BDS-375).
+ * Mirrors runway ingest sketch vs `lenr-ara-daq-sample-v1` — non-attested.
+ * Surfaces trust-plane split + refuse-fabricated densification for UI / Analytics.
+ * Never invents measurements; never flips EQ-OPEN / lenr_proved.
+ */
+export const DAQ_SAMPLE_PROVENANCE = Object.freeze({
+  schema_id: 'lenr-ara-daq-sample-v1',
+  sim_export_schema_id: 'lenr-run-export-v1',
+  trust_plane: 'daq',
+  ingest_status: 'planned_not_attested',
+  hub_registry_status: 'planned',
+  refuse_fabricated_samples: true,
+  lenr_proved_default: false,
+  private_extensions_stripped_required: true,
+  calibration_fields: Object.freeze([
+    'efficiency_refs',
+    'retention_caveat',
+    'citations',
+  ]),
+  public_observable_field_set: Object.freeze([
+    'excess_power_W',
+    'sigma_Q_W',
+    'he4_atoms_per_s',
+    'he4_atoms_integrated',
+    'gamma_cps',
+    'gamma_ul_log10',
+  ]),
+  honesty_note:
+    'DAQ samples stay on the LENR-ARA trust plane (separate from Sim ' +
+    'lenr-run-export-v1). Planned public fields only — refuse fabricated attested ' +
+    'measurements, refuse inventing literature_reported σ_Q from DAQ sketches, and ' +
+    'never auto-flip rate_mode / EQ-OPEN / lenr_proved. Lab-ask receipt via DAQ ≠ ' +
+    'EQ-OPEN discharge (Lean lab_ask_proxies_do_not_discharge_eq_open).',
+  runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
+  docs_route: '/docs/eq-open-closure-runway',
+});
+
+/**
  * Concrete next lab / MoE targets after software Prefer-merge exhaust
- * (BDS-346 inventory; BDS-348 lab-ask precision densification).
+ * (BDS-346 inventory; BDS-348 lab-ask precision densification; BDS-375 DAQ
+ * provenance UX densification).
  * Decision aid only — never flips lenr_proved or closes EQ-OPEN-*.
  * Complements snake_case remaining_scientific_blockers with avenue-linked lab asks.
  * `lab_acceptance` = measurable ask gates; `still_does_not_discharge` = residual
  * after the ask is met; `daq_observables` maps to planned lenr-ara-daq-sample-v1
  * public fields (non-attested sketch). Lean LabAskProxies ⇏ discharge.
+ * All rows stay `blocked_awaiting_lab` until real governed lab MoE lands.
  */
 export const NEXT_LAB_MOE_TARGETS = Object.freeze([
   Object.freeze({
@@ -333,6 +373,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'he4_atoms_per_s',
       'he4_atoms_integrated',
     ]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze([
+      'efficiency_refs',
+      'retention_caveat',
+      'citations',
+    ]),
+    daq_gap_note:
+      'Heat+He observables are sketched on sample-v1 but no attested public export exists; ' +
+      'refuse fabricating σ_Q / He rates from this UI.',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -354,6 +405,13 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'pairing verified 2/26 (Kasagi NiCu + Ni only); Celani exploratory hydrate does not flip discovery; ' +
       'publishable literature_reported MoE inventory exhausted',
     daq_observables: Object.freeze(['excess_power_W', 'sigma_Q_W']),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['efficiency_refs', 'citations']),
+    daq_gap_note:
+      'Calorimetry σ_Q on sample-v1 stays planned; refuse inventing literature_reported discovery ' +
+      'σ beyond Kasagi (Celani exploratory ≠ discovery).',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -373,6 +431,13 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       '0 curated rows with efficiency-corrected 23.8 MeV γ UL + coincidence provenance',
     daq_observables: Object.freeze(['gamma_cps', 'gamma_ul_log10']),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['efficiency_refs', 'citations']),
+    daq_gap_note:
+      'γ UL fields are sketched; efficiency + coincidence provenance still missing — refuse ' +
+      'fabricating detector ULs as RAD discharge.',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -392,6 +457,14 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       '0 governed measured p₄ / collective-cap attestations; engine caps stay scenario-only',
     daq_observables: Object.freeze([]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['citations']),
+    daq_gap_note:
+      'n_occ / f_nuc are not in sample-v1 public observables — occupation/rate caps are ' +
+      'theory-domain attestations, not calorimetry/γ sample fields. Refuse fabricating DAQ ' +
+      'occupation numbers.',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -411,6 +484,13 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       'CM budget still ≪ 0.782 MeV under stated double-layer / deficit identities; Widom scaffold ≠ path',
     daq_observables: Object.freeze([]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['citations']),
+    daq_gap_note:
+      'E_available / mass-renormalization domain gates are condensed-matter path claims, not ' +
+      'instrument sample observables in sample-v1. Refuse fabricating DAQ threshold numbers.',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -1098,6 +1178,19 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       'Science evidence UI must list remaining_scientific_blockers (≥5 scientific/governance)',
     );
   }
+  if (
+    !DAQ_SAMPLE_PROVENANCE ||
+    DAQ_SAMPLE_PROVENANCE.schema_id !== 'lenr-ara-daq-sample-v1' ||
+    DAQ_SAMPLE_PROVENANCE.trust_plane !== 'daq' ||
+    DAQ_SAMPLE_PROVENANCE.ingest_status !== 'planned_not_attested' ||
+    DAQ_SAMPLE_PROVENANCE.refuse_fabricated_samples !== true ||
+    DAQ_SAMPLE_PROVENANCE.lenr_proved_default !== false ||
+    DAQ_SAMPLE_PROVENANCE.private_extensions_stripped_required !== true
+  ) {
+    throw new Error(
+      'Science evidence UI must lock DAQ_SAMPLE_PROVENANCE (sample-v1 / daq / planned / refuse / lenr_proved false)',
+    );
+  }
   if (!Array.isArray(NEXT_LAB_MOE_TARGETS) || NEXT_LAB_MOE_TARGETS.length < 5) {
     throw new Error(
       'Science evidence UI must list NEXT_LAB_MOE_TARGETS (≥5 concrete lab/MoE asks)',
@@ -1131,6 +1224,26 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       throw new Error(
         `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must list daq_observables array`,
       );
+    }
+    if (
+      target.daq_schema !== DAQ_SAMPLE_PROVENANCE.schema_id ||
+      target.daq_trust_plane !== DAQ_SAMPLE_PROVENANCE.trust_plane ||
+      target.daq_ingest_status !== DAQ_SAMPLE_PROVENANCE.ingest_status ||
+      !Array.isArray(target.daq_calibration_required) ||
+      !target.daq_gap_note
+    ) {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing DAQ provenance densification ` +
+          '(daq_schema/trust_plane/ingest_status/calibration_required/daq_gap_note)',
+      );
+    }
+    for (const field of target.daq_observables) {
+      if (!DAQ_SAMPLE_PROVENANCE.public_observable_field_set.includes(field)) {
+        throw new Error(
+          `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} daq_observable ` +
+            `${field} not in sample-v1 public field set (refuse inventing fields)`,
+        );
+      }
     }
     for (const oid of target.eq_open_ids) {
       if (!OPEN_EQ_IDS.includes(oid)) {

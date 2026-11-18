@@ -251,6 +251,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Post-ship MoE hunt + BDS-360 Celani exploratory hydrate (Prefer-merge `dev` only):** Intensified primary-source watt MoE / peak↔σ hunt for Iwamura / Mizuno / Arata / Celani / Miles reaffirms **discovery** inventory **exhausted at 2/26** (Kasagi NiCu + Ni only). Celani *JCMNS* 29 “12 ± 2 W” (DOI `10.70923/001c.72494`) is now an **exploratory** `literature_reported_instrument_precision` companion (`celani-constantan-2019`; arithmetic S_heat=6 gates-blocked) — still **not** discovery-grade. Miles JEAC 346 ±0.04 W accuracy bound stays exploratory; follow-on ±0.020 W remains unpaired. Analytics surfaces `REFUSED_FABRICATED_MOE_CAMPAIGNS` with cites attempted + missing discovery MoE text. **No** promote→`main` / Path B from this densification.
 
+**Lab MoE / DAQ provenance densification (BDS-375):** After Celani exploratory hydrate (#449) discovery stays **2/26** Kasagi-only. This Prefer-merge densifies `NEXT_LAB_MOE_TARGETS` + Analytics/§5B UX with explicit `DAQ_SAMPLE_PROVENANCE` (`lenr-ara-daq-sample-v1`, trust_plane=`daq`, ingest=`planned_not_attested`, refuse fabricated samples, `lenr_proved` default false) and per-ask `blocked_awaiting_lab` chips + calibration / `daq_gap_note` (RATE/EC have **no** sample-v1 observables — refuse inventing occupation/threshold DAQ numbers). **Still no** honesty flag flips; **still no** auto `main` / Path B; live Path B share remains on `main` @ `:9702a45`.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)

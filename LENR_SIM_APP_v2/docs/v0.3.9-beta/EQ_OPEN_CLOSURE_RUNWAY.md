@@ -253,6 +253,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Packet ↔ ledger / PRED / EQ-OPEN crosswalk (BDS-359 / gap-map P4):** `/docs/reviewer-packets` renders a read-only Packet A–E → Issue Ledger **C/M/m** → legacy **IL-001…018** → PRED → EQ-OPEN map (served merge instructions fixed). Navigation only — paper FIXED/ADDRESSED ≠ OPEN discharge; mapping never sets `lenr_proved` or raises claim tiers. Prefer-merge target remains **`dev` only**; promote→`main` waits on coordinator-flagged verified finding.
 
+**Lab MoE / DAQ provenance densification (BDS-375):** After Celani exploratory hydrate (#449) discovery stays **2/26** Kasagi-only. This Prefer-merge densifies `NEXT_LAB_MOE_TARGETS` + Analytics/§5B UX with explicit `DAQ_SAMPLE_PROVENANCE` (`lenr-ara-daq-sample-v1`, trust_plane=`daq`, ingest=`planned_not_attested`, refuse fabricated samples, `lenr_proved` default false) and per-ask `blocked_awaiting_lab` chips + calibration / `daq_gap_note` (RATE/EC have **no** sample-v1 observables — refuse inventing occupation/threshold DAQ numbers). **Still no** honesty flag flips; **still no** auto `main` / Path B; live Path B share remains on `main` @ `:9702a45`.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)
