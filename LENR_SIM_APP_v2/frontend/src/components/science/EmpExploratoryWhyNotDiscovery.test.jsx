@@ -7,11 +7,11 @@ import { render, screen } from '../../tests/test-utils';
 import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
 
 describe('EmpExploratoryWhyNotDiscovery', () => {
-  test('surfaces 2/25 coverage and Miles exploratory reasons without ≥5σ met', () => {
+  test('surfaces 2/26 coverage and Miles exploratory reasons without ≥5σ met', () => {
     render(<EmpExploratoryWhyNotDiscovery testIdPrefix="emp-test" />);
     expect(screen.getByTestId('emp-test-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('emp-test-pairing-chip')).toHaveTextContent(/2\/25/);
-    expect(screen.getByTestId('emp-test-eligible-chip')).toHaveTextContent(/2\/25/);
+    expect(screen.getByTestId('emp-test-pairing-chip')).toHaveTextContent(/2\/26/);
+    expect(screen.getByTestId('emp-test-eligible-chip')).toHaveTextContent(/2\/26/);
     expect(screen.getByTestId('emp-test-inventory-chip')).toHaveTextContent(
       /inventory exhausted/i,
     );
@@ -65,7 +65,7 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     ).toHaveTextContent(/Accept when:|literature_reported|S_heat/i);
     expect(
       screen.getByTestId('emp-test-corpus-gap-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/Corpus gap now:|0\/25|Miles/i);
+    ).toHaveTextContent(/Corpus gap now:|0\/26|Miles/i);
     expect(
       screen.getByTestId('emp-test-still-open-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/Still does not discharge:|EQ-OPEN-YIELD/i);
@@ -78,7 +78,9 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-refused-moe')).toHaveTextContent(
       /Refused fabricated MoE/i,
     );
-    expect(screen.getByTestId('emp-test-locked-s-heat')).toHaveTextContent(/13\.75|11\.25|26/);
+    expect(screen.getByTestId('emp-test-locked-s-heat')).toHaveTextContent(
+      /13\.75|11\.25|26|6/,
+    );
     expect(screen.getByTestId('emp-test-refused-iwamura-heat-2024')).toHaveTextContent(
       /REFUSE_FABRICATED_SIGMA_Q/,
     );
@@ -86,6 +88,12 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
       /REFUSE_FABRICATED_SIGMA_Q/,
     );
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
+    expect(screen.getByTestId('emp-test-row-celani-constantan-2019')).toHaveTextContent(
+      /Celani|12±2|12 ± 2/i,
+    );
+    expect(screen.getByTestId('emp-test-distance-celani-constantan-2019')).toHaveTextContent(
+      /at_or_above_bar_gates_blocked/,
+    );
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(
       /at_or_above_bar_gates_blocked/,
     );

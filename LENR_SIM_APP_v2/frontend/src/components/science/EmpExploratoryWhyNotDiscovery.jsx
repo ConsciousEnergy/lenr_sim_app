@@ -207,8 +207,9 @@ export default function EmpExploratoryWhyNotDiscovery({
             Locked S_heat arithmetic: Kasagi NiCu{' '}
             <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>, Kasagi
             Ni <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>, Miles
-            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>. Campaign
-            model-output σ_Q=
+            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>, Celani
+            exploratory <code>{coverage.locked_s_heat?.['celani-constantan-2019']}</code>.
+            Campaign model-output σ_Q=
             <code>{coverage.campaign_model_output_sigma_Q_W}</code> is not discovery MoE.
           </Typography>
           {coverage.refused_fabricated_moe_campaigns.map((row) => (
@@ -311,7 +312,7 @@ export default function EmpExploratoryWhyNotDiscovery({
           data-testid={`${testIdPrefix}-refused-campaigns`}
         >
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            Refused fabricated discovery MoE (primary-source hunt; counts stay 2/25)
+            Refused fabricated discovery MoE (primary-source hunt; eligible stays 2/26)
           </Typography>
           <Chip
             size="small"

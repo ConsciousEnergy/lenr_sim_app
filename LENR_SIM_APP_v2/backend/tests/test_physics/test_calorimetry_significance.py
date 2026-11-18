@@ -481,8 +481,8 @@ def test_quantitative_distance_rss_stat_sys_composition() -> None:
 def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
     coverage = literature_corpus_moe_coverage()
     assert coverage["schema"] == "lenr-moe-coverage-v1"
-    assert coverage["n_records"] == 25
-    assert coverage["with_sigma_q"] == 4
+    assert coverage["n_records"] == 26
+    assert coverage["with_sigma_q"] == 5
     assert coverage["with_literature_reported_cite_gated"] == 2
     assert coverage["with_moe_pairing_verified"] == 2
     assert coverage["discovery_grade_eligible_count"] == 2
@@ -498,6 +498,7 @@ def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
     assert coverage["lenr_proved"] is False
     assert all(v == "OPEN" for v in coverage["eq_open_status"].values())
     assert coverage["discovery_grade_eligible_count"] < coverage["n_records"]
+    assert "exploratory_moe" in coverage["source"]
 
 
 def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
@@ -519,6 +520,37 @@ def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
     assert miles["discovery_grade_eligible"] is False
     assert miles["s_heat"] == 26.0
     assert quantitative_distance_to_discovery(miles)["distance_status"] == (
+        "at_or_above_bar_gates_blocked"
+    )
+
+
+def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
+    """Celani JCMNS 29 12±2 is exploratory instrument_precision — not discovery."""
+    from app.data.dataset_io import exploratory_moe_literature_records
+
+    celani = next(
+        row
+        for row in exploratory_moe_literature_records()
+        if row["literature_id"] == "celani-constantan-2019"
+    )
+    assert float(celani["sigma_Q_W"]) == 2.0
+    assert float(celani["parameters"]["literature_peak_excess_power_W"]) == 12.0
+    assert celani["moe_provenance"] == "literature_reported_instrument_precision"
+    assert celani.get("moe_sigma_q_pairing_verified") is False
+    assert "celani2019" in celani["moe_citation_keys"]
+
+    report = discovery_grade_from_literature_record(celani)
+    assert report["q_source"] == "literature_peak_excess_power_W"
+    assert report["q_is_seed_scale"] is False
+    assert report["excess_power_w"] == 12.0
+    assert report["s_heat"] == 6.0
+    assert report["moe_provenance"] == "literature_reported_instrument_precision"
+    assert report["discovery_provenance_ok"] is False
+    assert report["moe_sigma_q_pairing_verified"] is False
+    assert report["discovery_grade_eligible"] is False
+    assert report["lenr_proved"] is False
+    assert all(v == "OPEN" for v in report["eq_open_status"].values())
+    assert quantitative_distance_to_discovery(report)["distance_status"] == (
         "at_or_above_bar_gates_blocked"
     )
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from app.data.baseline_experiments import get_baseline_experiments
 from app.data.dataset_io import (
     SCHEMA,
+    exploratory_moe_literature_records,
     iccf27_literature_records,
     literature_records,
     open_question_register,
@@ -221,3 +222,22 @@ def test_iccf27_extension_does_not_mutate_locked_baselines() -> None:
     hylenr = next(row for row in records if row["literature_id"] == "hylenr-tamu-phase1-2026")
     assert hylenr["claim_tag"] == "contested"
     assert literature_records()[0]["literature_id"] != "kasagi-nicu-radiant-2026"
+
+
+def test_celani_exploratory_moe_companion_stays_non_baseline() -> None:
+    """BDS-360: Celani exploratory hydrate does not mutate locked 19 baselines."""
+    records = exploratory_moe_literature_records()
+    assert len(records) >= 1
+    celani = next(
+        row for row in records if row["literature_id"] == "celani-constantan-2019"
+    )
+    assert celani["claim_tag"] == "contested"
+    assert celani["citation_key"] == "celani2019"
+    assert celani["doi"] == "10.70923/001c.72494"
+    assert celani["moe_provenance"] == "literature_reported_instrument_precision"
+    assert float(celani["sigma_Q_W"]) == 2.0
+    assert celani.get("moe_sigma_q_pairing_verified") is False
+    assert len(literature_records()) == 19
+    assert all(
+        row["literature_id"] != "celani-constantan-2019" for row in literature_records()
+    )
