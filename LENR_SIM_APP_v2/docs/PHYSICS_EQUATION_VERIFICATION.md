@@ -1112,6 +1112,24 @@ Y(D3+) / Y(D2+) ≈ 1.5   (Zakopane / ICCF-27 2026 talk)
 
 ---
 
+## 14. Calorimetry significance (BDS-302 / BDS-363)
+
+### 14.1 Heat significance ratio
+
+\[ S_{\mathrm{heat}} = Q_{\mathrm{excess}} / \sigma_Q \]
+
+**Status:** 📖 REFERENCE (paper statistical-significance definition; analytics bar S≥5)
+**Code:** `s_heat()` / `DISCOVERY_GRADE_SIGMA = 5.0` (file: `physics_engine/calorimetry_significance.py`)
+**Independent check (2026-11-17):** Exact Decimal arithmetic (WolframAlpha MCP unavailable in this agent environment):
+- Kasagi NiCu: `1.1 / 0.08 = 13.75` (cite-gated `literature_reported`, pairing verified)
+- Kasagi Ni control: `0.9 / 0.08 = 11.25` (same)
+- Miles exploratory: `0.52 / 0.02 = 26` (`instrument_precision`, pairing unverified → gates blocked)
+- RSS composition: `√(0.03² + 0.04²) = 0.05`
+**Honesty:** `discovery_grade_eligible` is an analytics flag only; never sets `lenr_proved` or closes EQ-OPEN-*. Campaign / avenue model-output σ_Q (e.g. `0.1` W in Miles-band oracle) is **not** literature MoE. Iwamura / Mizuno / Arata / Celani stay `REFUSE_FABRICATED_SIGMA_Q` (null σ).
+**Reference:** Unified Framework § statistical significance; Kasagi JCMNS 41 / arXiv:2509.13847 (`kasagi2026`); Miles JEAC 346 DOI `10.1016/0022-0728(93)85006-4`
+
+---
+
 ## 11. Recommendations
 
 1. Use CODATA 2018 constants (current implementation ✅)

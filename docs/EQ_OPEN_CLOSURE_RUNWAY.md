@@ -249,6 +249,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Analytics §5B runway criteria inline (BDS-354 / gap-map P3):** `/analytics` Overview now renders Affirmative / Falsification / Does-not-count excerpts per OPEN id beside chips (mirrors Theory Paper §5B), with cite-gated high-success-odds guidance (MoE pairing exhausted @ 2/25; soft chips only; Miles exploratory; densified `NEXT_LAB_MOE_TARGETS`). In-app DocViewer slug `/docs/eq-open-closure-runway` serves this note. **Still no** honesty flag flips; criteria remain **documented, not met**.
 
+**Post-ship MoE hunt (Prefer-merge `dev` only):** Intensified primary-source watt MoE / peak↔σ hunt for Iwamura / Mizuno / Arata / Celani / Miles reaffirms inventory **exhausted at 2/25**. Analytics surfaces `REFUSED_FABRICATED_MOE_CAMPAIGNS` with cites attempted + missing MoE text. Celani *JCMNS* 29 “12 ± 2 W” (DOI `10.70923/001c.72494`) is a documented **near-miss** (method indetermination / raw-uncorrected episode) — **not** discovery-grade. Miles JEAC 346 ±0.04 W accuracy bound stays exploratory; follow-on ±0.020 W remains unpaired. **No** promote→`main` / Path B from this densification.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)

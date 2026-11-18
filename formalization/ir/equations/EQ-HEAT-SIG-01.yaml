@@ -22,4 +22,4 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.exploratory_snr_strictly_below_discovery"
   - "LenrFormal.CalorimetrySignificance.kasagiNiCuSHeatMilli"
   - "LenrFormal.CalorimetrySignificance.kasagiNiSHeatMilli"
-notes: "DEF / analytics-bar lock only. Integer milli-σ shortfall identities mirror Python DISCOVERY_GRADE_SIGMA=5.0. Kasagi NiCu + Ni control arithmetic examples (BDS-342/344) are bar locks only — do not certify laboratory calorimetry or flip lenr_proved."
+notes: "DEF / analytics-bar lock only. Integer milli-σ shortfall identities mirror Python DISCOVERY_GRADE_SIGMA=5.0. Kasagi NiCu + Ni control arithmetic examples (BDS-342/344) are bar locks only — do not certify laboratory calorimetry or flip lenr_proved. DiscoveryGradeAnalytics (EQ-HEAT-SIG-NC-01) additionally requires nonempty moe_citation_keys + verified pairing + non-seed Q (BDS-362)."

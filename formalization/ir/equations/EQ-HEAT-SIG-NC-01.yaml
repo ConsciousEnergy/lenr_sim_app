@@ -1,7 +1,10 @@
 id: EQ-HEAT-SIG-NC-01
-latex: "\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad (\\mathrm{hQ}_{1}\\!\\ldots\\!\\mathrm{hQ}_{5})\\land\\mathrm{DiscoveryGradeAnalytics}\\Rightarrow\\bigwedge_{i=1}^{5}\\neg Q_i;\\quad \\mathrm{LabAskProxies}^{\\wedge 5}\\nRightarrow\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed"
+latex: "\\neg\\mathrm{citationsNonempty}\\lor\\neg\\mathrm{pairingVerified}\\lor\\mathrm{seedScale}\\lor\\mathrm{instrumentPrecision}\\lor\\mathrm{instrumentFloor}\\Rightarrow\\neg\\,\\mathrm{DiscoveryGradeAnalytics};\\quad \\mathrm{DiscoveryGradeAnalytics}^{\\times 2}\\nRightarrow\\mathrm{lenrProved};\\quad (\\mathrm{hQ}_{1}\\!\\ldots\\!\\mathrm{hQ}_{5})\\land\\mathrm{DiscoveryGradeAnalytics}\\Rightarrow\\bigwedge_{i=1}^{5}\\neg Q_i;\\quad \\mathrm{LabAskProxies}^{\\wedge 5}\\nRightarrow\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad S_{\\mathrm{heat}}\\ge 5\\nRightarrow q5IntegratedYieldClosed;\\quad \\mathrm{DiscoveryGradeAnalytics}\\nRightarrow q5IntegratedYieldClosed"
 symbols:
-  DiscoveryGradeAnalytics: "BDS-302 analytics flag (cite-gated + pairing + non-seed + S≥5)"
+  DiscoveryGradeAnalytics: "BDS-302 analytics flag (cite-gated + nonempty citations + pairing + non-seed + S≥5)"
+  citationsNonempty: "moe_citation_keys nonempty (refuse fabricated lab uncertainty)"
+  pairingVerified: "moe_sigma_q_pairing_verified / same-results Q↔σ envelope"
+  seedScale: "simulation seed-scale Q (not measured peak)"
   instrumentPrecision: "literature_reported_instrument_precision MoE provenance"
   instrumentFloor: "literature_reported_instrument_floor MoE provenance"
   LabAskProxies: "NEXT_LAB_MOE_TARGETS Bool proxies (ask receipt ≠ discharge)"
@@ -13,7 +16,7 @@ symbols:
   softChipIsScientificDischarge: "UI soft chip never equals scientific ≥5σ / EQ-OPEN discharge"
 units: "dimensionless (honesty / non-closure)"
 tag: AX
-paper_ref: "§5B / BDS-302 / BDS-330 / BDS-344 / BDS-346 / BDS-348; EQ-OPEN-* runway"
+paper_ref: "§5B / BDS-302 / BDS-330 / BDS-344 / BDS-346 / BDS-348 / BDS-362; EQ-OPEN-* runway"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
@@ -29,8 +32,12 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.miles_exploratory_not_discovery_grade"
   - "LenrFormal.CalorimetrySignificance.instrument_floor_not_discovery_eligible"
   - "LenrFormal.CalorimetrySignificance.mckubre_instrument_floor_not_discovery_grade"
+  - "LenrFormal.CalorimetrySignificance.empty_citations_not_discovery_grade"
+  - "LenrFormal.CalorimetrySignificance.unverified_pairing_not_discovery_grade"
+  - "LenrFormal.CalorimetrySignificance.seed_scale_q_not_discovery_grade"
   - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_prove_lenr"
   - "LenrFormal.CalorimetrySignificance.high_s_heat_does_not_close_q5"
+  - "LenrFormal.CalorimetrySignificance.cite_gated_discovery_does_not_underwrite_q5_closure"
   - "LenrFormal.CalorimetrySignificance.dual_kasagi_analytics_does_not_close_eq_open_or_lenr"
   - "LenrFormal.CalorimetrySignificance.discovery_grade_analytics_does_not_close_any_eq_open"
   - "LenrFormal.CalorimetrySignificance.dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr"
@@ -39,4 +46,4 @@ lean_decls:
   - "LenrFormal.CalorimetrySignificance.lab_ask_met_is_not_eq_open_discharge"
   - "LenrFormal.CalorimetrySignificance.lab_ask_proxies_do_not_discharge_eq_open"
   - "LenrFormal.CalorimetrySignificance.all_lab_asks_met_with_dual_kasagi_do_not_discharge"
-notes: "AX honesty (BDS-344/BDS-346/BDS-348): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved. BDS-346: under open witnesses hQ1–hQ5, DiscoveryGradeAnalytics ⇒ ⋀ ¬Q_i (MEV/RAD/RATE/EC/YIELD still OPEN) — not Q5-only; analytics never discharges any EQ-OPEN. BDS-348 binds LabAskProxies (all five NEXT_LAB_MOE_TARGETS notionally met) ⇏ EQ-OPEN discharge / lenr_proved. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX / OpenObligations."
+notes: "AX honesty (BDS-344/BDS-346/BDS-348/BDS-362): Miles instrument_precision and McKubre instrument_floor EMP rows are not discovery-grade. BDS-362 binds nonempty citations + verified pairing + non-seed as required DiscoveryGradeAnalytics conjuncts (Lean↔Python cite refuse); empty citations / unverified pairing / seed-scale Q alone block discovery underwriting; cite-gated DiscoveryGradeAnalytics still ⇏ EQ-OPEN-YIELD-01. Even dual Kasagi NiCu + Ni cleared analytics flags (corpus 2/25) do not set lenr_proved. BDS-346: under open witnesses hQ1–hQ5, DiscoveryGradeAnalytics ⇒ ⋀ ¬Q_i (MEV/RAD/RATE/EC/YIELD still OPEN) — not Q5-only; analytics never discharges any EQ-OPEN. BDS-348 binds LabAskProxies ⇏ EQ-OPEN discharge / lenr_proved. Soft chip analytics_gates_clear ≠ scientific ≥5σ discharge. Complements EQ-BBL-HEAT-NC-01 / EMP UX / OpenObligations."

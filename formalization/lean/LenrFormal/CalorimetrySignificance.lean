@@ -13,12 +13,12 @@ discharges any `EQ-OPEN-*`.
 
 Mirrors
 `LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py`
-(`DISCOVERY_GRADE_SIGMA = 5.0`) and
-`sigma_distance.py` quantitative shortfall bookkeeping.
+(`DISCOVERY_GRADE_SIGMA = 5.0`, nonempty `moe_citation_keys`, verified
+Q↔σ pairing) and `sigma_distance.py` quantitative shortfall bookkeeping.
 
 **Claim tier:** Approximate analytics-bar DEF / non-closure only.
-Does **not** certify laboratory calorimetry, does **not** verify Q↔σ_Q
-pairing, and does **not** set `lenr_proved`.
+Does **not** certify laboratory calorimetry, does **not** invent
+citations or σ_Q, and does **not** set `lenr_proved`.
 -/
 
 namespace LenrFormal.CalorimetrySignificance
@@ -133,18 +133,19 @@ theorem instrument_floor_not_discovery_eligible :
   cases h
 
 /-- UNDISCHARGED: analytics discovery flag needs arithmetic ≥5σ **and**
-    literature_reported provenance **and** nonempty moe_citation_keys **and**
+    literature_reported provenance **and** nonempty citations **and**
     verified Q↔σ pairing **and** non-seed measured Q. Still never proves LENR.
-    Mirrors Python cite-gated discovery_grade_eligible (citations required). -/
+    Mirrors Python ``discovery_grade_analytics`` + ``validate_moe_provenance``
+    (empty ``moe_citation_keys`` refuses fabricated lab uncertainty). -/
 def DiscoveryGradeAnalytics
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) : Prop :=
+    (citationsNonempty pairingVerified nonSeedMeasuredQ : Bool) : Prop :=
   meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli
     ∧ discoveryEligibleProvenance provenance
+    ∧ citationsNonempty = true
     ∧ pairingVerified = true
     ∧ nonSeedMeasuredQ = true
-    ∧ citationsNonempty = true
 
 /-- Soft UI chip for cleared analytics gates — never “≥5σ met” scientific discharge. -/
 def softChipIsScientificDischarge : Bool := false
@@ -158,17 +159,62 @@ theorem miles_exploratory_not_discovery_grade :
     ¬ DiscoveryGradeAnalytics
       milesPeakExploratorySHeatMilli
       MoeProvenance.literatureReportedInstrumentPrecision
-      false
       true
+      false
       true := by
   intro h
   exact instrument_precision_not_discovery_eligible h.2.1
 
-/-- Empty citation keys block the analytics discovery flag even when other
-    gates would clear (mirrors Python moe_citation_keys gate). -/
+/-- EQ-HEAT-SIG-NC-01: instrument-floor EMP rows (McKubre) never clear analytics. -/
+theorem mckubre_instrument_floor_not_discovery_grade
+    (sHeatMilli : Nat)
+    (citationsNonempty pairingVerified nonSeedMeasuredQ : Bool) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReportedInstrumentFloor
+      citationsNonempty
+      pairingVerified
+      nonSeedMeasuredQ := by
+  intro h
+  exact instrument_floor_not_discovery_eligible h.2.1
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-362): empty ``moe_citation_keys`` blocks discovery
+    underwriting even when arithmetic ≥5σ, literature_reported, pairing, and
+    non-seed Q would otherwise clear. Aligns Lean with Python citation refuse. -/
 theorem empty_citations_not_discovery_grade
     (sHeatMilli : Nat)
-    (hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli) :
+    (_hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReported
+      false
+      true
+      true := by
+  intro h
+  have hCite : false = true := h.2.2.1
+  cases hCite
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-362): unverified Q↔σ pairing blocks discovery
+    underwriting even with nonempty citations + literature_reported + ≥5σ +
+    non-seed Q (Miles peak + follow-on ±0.02 class). -/
+theorem unverified_pairing_not_discovery_grade
+    (sHeatMilli : Nat)
+    (_hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli) :
+    ¬ DiscoveryGradeAnalytics
+      sHeatMilli
+      MoeProvenance.literatureReported
+      true
+      false
+      true := by
+  intro h
+  have hPair : false = true := h.2.2.2.1
+  cases hPair
+
+/-- EQ-HEAT-SIG-NC-01 (BDS-362): seed-scale Q blocks discovery underwriting
+    even when citations + pairing + literature_reported + ≥5σ clear. -/
+theorem seed_scale_q_not_discovery_grade
+    (sHeatMilli : Nat)
+    (_hArith : meetsDiscoveryArithmetic sHeatMilli discoveryThresholdMilli) :
     ¬ DiscoveryGradeAnalytics
       sHeatMilli
       MoeProvenance.literatureReported
@@ -176,28 +222,16 @@ theorem empty_citations_not_discovery_grade
       true
       false := by
   intro h
-  exact Bool.noConfusion h.2.2.2.2
-
-/-- EQ-HEAT-SIG-NC-01: instrument-floor EMP rows (McKubre) never clear analytics. -/
-theorem mckubre_instrument_floor_not_discovery_grade
-    (sHeatMilli : Nat)
-    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) :
-    ¬ DiscoveryGradeAnalytics
-      sHeatMilli
-      MoeProvenance.literatureReportedInstrumentFloor
-      pairingVerified
-      nonSeedMeasuredQ
-      citationsNonempty := by
-  intro h
-  exact instrument_floor_not_discovery_eligible h.2.1
+  have hSeed : false = true := h.2.2.2.2
+  cases hSeed
 
 /-- EQ-HEAT-SIG-NC-01: even a cleared analytics flag does not prove LENR. -/
 theorem discovery_grade_analytics_does_not_prove_lenr
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool) :
+    (citationsNonempty pairingVerified nonSeedMeasuredQ : Bool) :
     DiscoveryGradeAnalytics
-      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty →
+      sHeatMilli provenance citationsNonempty pairingVerified nonSeedMeasuredQ →
       lenrProved = false := by
   intro _
   exact lenr_proved_false
@@ -214,10 +248,26 @@ theorem high_s_heat_does_not_close_q5
       ∧ lenrProved = false :=
   ⟨hArith, positive_yield_discrepancy_implies_q5_not_closed hOpen, lenr_proved_false⟩
 
+/-- EQ-HEAT-SIG-NC-01 (BDS-362): cite-gated discovery underwriting (citations
+    nonempty + verified pairing + literature_reported + ≥5σ + non-seed) still
+    does **not** discharge EQ-OPEN-YIELD-01. Strengthens ≥5σ/MoE underwriting
+    honesty without claiming heat+He integrated closure. -/
+theorem cite_gated_discovery_does_not_underwrite_q5_closure
+    (sHeatMilli yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy)
+    (_hDisc : DiscoveryGradeAnalytics
+      sHeatMilli MoeProvenance.literatureReported true true true) :
+    ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ lenrProved = false
+      ∧ softChipIsScientificDischarge = false :=
+  ⟨positive_yield_discrepancy_implies_q5_not_closed hOpen,
+    lenr_proved_false,
+    soft_chip_not_scientific_discharge⟩
+
 /-- EQ-HEAT-SIG-NC-01 (BDS-344): even dual Kasagi NiCu + Ni analytics flags
-    (corpus 2/25 pairing) do not prove LENR or close EQ-OPEN-YIELD-01.
-    Analytics / EMP UX eligibility ≠ EQ-OPEN discharge ≠ `lenr_proved`.
-    Soft chip `analytics_gates_clear` ≠ scientific ≥5σ discharge. -/
+    (corpus 2/25 pairing; nonempty citations) do not prove LENR or close
+    EQ-OPEN-YIELD-01. Analytics / EMP UX eligibility ≠ EQ-OPEN discharge ≠
+    `lenr_proved`. Soft chip `analytics_gates_clear` ≠ scientific ≥5σ discharge. -/
 theorem dual_kasagi_analytics_does_not_close_eq_open_or_lenr
     (yieldDiscrepancy : Nat)
     (hOpen : 0 < yieldDiscrepancy)
@@ -239,7 +289,7 @@ theorem dual_kasagi_analytics_does_not_close_eq_open_or_lenr
 theorem discovery_grade_analytics_does_not_close_any_eq_open
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool)
+    (citationsNonempty pairingVerified nonSeedMeasuredQ : Bool)
     (openRemainder gammaBranching gammaUpperBound : Nat)
     (log10Events : Int)
     (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
@@ -249,7 +299,7 @@ theorem discovery_grade_analytics_does_not_close_any_eq_open
     (hQ4 : availableEnergy < thresholdEnergy)
     (hQ5 : 0 < yieldDiscrepancy)
     (_hDisc : DiscoveryGradeAnalytics
-      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty) :
+      sHeatMilli provenance citationsNonempty pairingVerified nonSeedMeasuredQ) :
     lenrProved = false
       ∧ ¬ q1MeVEnergyGapClosed openRemainder
       ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
@@ -334,7 +384,7 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
     (proxies : LabAskProxies)
     (sHeatMilli : Nat)
     (provenance : MoeProvenance)
-    (pairingVerified nonSeedMeasuredQ citationsNonempty : Bool)
+    (citationsNonempty pairingVerified nonSeedMeasuredQ : Bool)
     (openRemainder gammaBranching gammaUpperBound : Nat)
     (log10Events : Int)
     (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
@@ -350,7 +400,7 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
         ∧ proxies.occupationRateCapsMeasured = true
         ∧ proxies.ecThresholdCmPath = true)
     (_hDisc : DiscoveryGradeAnalytics
-      sHeatMilli provenance pairingVerified nonSeedMeasuredQ citationsNonempty) :
+      sHeatMilli provenance citationsNonempty pairingVerified nonSeedMeasuredQ) :
     lenrProved = false
       ∧ ¬ q1MeVEnergyGapClosed openRemainder
       ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound

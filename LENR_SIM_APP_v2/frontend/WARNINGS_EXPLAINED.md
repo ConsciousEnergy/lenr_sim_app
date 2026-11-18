@@ -18,11 +18,11 @@ line and an audit summary afterwards:
 262 packages are looking for funding
   run `npm fund` for details
 
-2 moderate severity vulnerabilities
+… severity vulnerabilities
 ```
 
-Those lines come from npm, not from Vite. The next lines are the ones that tell
-you the dev server actually started:
+Those lines come from npm, not from Vite (counts drift with the lockfile). The
+next lines are the ones that tell you the dev server actually started:
 
 ```text
 > lenr-sim-frontend@0.3.6-beta start
@@ -36,12 +36,17 @@ The funding line is unconditional noise; it has nothing to do with security.
 
 ## 2. Current audit posture
 
-On tip a clean install reports **2 moderate** plus one **allowlisted high**:
+On tip a clean install reports **0 moderate** plus **allowlisted highs**
+(transitive tree noise under Jest / Tailwind / micromatch). Lockfile pins
+`react-router` / `react-router-dom` at **7.18.5**, which clears
+GHSA-wrjc-x8rr-h8h6 / GHSA-337j-9hxr-rhxg / GHSA-jjmj-jmhj-qwj2 — no deferred
+router migration remains for those advisories.
 
 | Package | Advisories | Why not fixed |
 |---|---|---|
-| `react-router`, `react-router-dom` | GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg, GHSA-jjmj-jmhj-qwj2 (all moderate) | Fixed only in `react-router >= 7.18.0`. This is a major-version migration touching every route, deferred to its own slice. |
+| `react-router`, `react-router-dom` | (none on tip) | Cleared at lockfile **7.18.5** (was moderate under `<7.18.0`). |
 | `braces` (via `micromatch` / `chokidar` / Tailwind 3 / Jest) | GHSA-vfj7-8cjw-p6xm (high) | No patched `braces` release (`first_patched_version` null). Clearing it needs Tailwind v4 / chokidar v4 (or an upstream braces fix). Allowlisted in `scripts/audit-high-gate.js` until then. |
+| `picomatch` (via Jest / Vite / Tailwind / micromatch) | GHSA-fc5q-39xc-vjpf (high, CVE-2026-112366) | ReDoS via single-branch repeated extglobs; advisory patched versions **None** (npm latest still 4.0.7). Allowlisted in `scripts/audit-high-gate.js` until upstream publishes a fix (micromatch/picomatch#194). |
 | `source-map-js` | GHSA-68fv-2mgg-jv7q (high, `<1.2.2`) | **Fixed** via `package.json` `overrides` pin `^1.2.2` (2026-10-06). |
 
 The CI gate is `node scripts/audit-high-gate.js` (high/critical, with the
@@ -51,15 +56,15 @@ explicit allowlist above). Read it by exit code, never through a pipe:
 node scripts/audit-high-gate.js > /dev/null 2>&1; echo "gate exit: $?"
 ```
 
-Exposure from the residual moderates is limited: both advisories need an
-attacker-influenced navigation target, and this app builds routes from a static
-table with no user-supplied redirect parameters and no SSR hydration.
+No residual router moderates remain on tip. Allowlisted highs are transitive
+dev-tooling (`braces` / `picomatch`) with no production SSR redirect surface.
 
-### If you see high vulnerabilities
+### If you see unexpected highs / moderates outside the allowlist
 
-You are on a stale lockfile or a stale `node_modules`. The "8 vulnerabilities
-(4 moderate, 4 high)" signature specifically matches a tree from before the
-`brace-expansion`, `fast-uri`, `nanoid` and `js-yaml` bumps:
+You are on a stale lockfile or a stale `node_modules`. Historical signatures
+(e.g. "8 vulnerabilities (4 moderate, 4 high)" or "2 moderate" with
+pre-7.18 router) match trees from before the `brace-expansion`, `fast-uri`,
+`nanoid`, `js-yaml`, and router bumps:
 
 ```bat
 git pull origin development
