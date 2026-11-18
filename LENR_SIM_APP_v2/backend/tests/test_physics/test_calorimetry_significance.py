@@ -523,6 +523,19 @@ def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
         "at_or_above_bar_gates_blocked"
     )
 
+    deninno = discovery_grade_from_literature_record(by_id["deninno-tid-1995"])
+    assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
+    assert deninno["discovery_grade_eligible"] is False
+    assert deninno["q_is_seed_scale"] is True
+
+    for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
+        mckubre = discovery_grade_from_literature_record(by_id[lit_id])
+        assert mckubre["moe_provenance"] == "literature_reported_instrument_floor"
+        assert mckubre["sigma_q_w"] is None
+        assert mckubre["discovery_grade_eligible"] is False
+        assert mckubre["lenr_proved"] is False
+        assert all(v == "OPEN" for v in mckubre["eq_open_status"].values())
+
 
 def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
     """Celani JCMNS 29 12±2 is exploratory instrument_precision — not discovery."""
@@ -553,16 +566,3 @@ def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
     assert quantitative_distance_to_discovery(report)["distance_status"] == (
         "at_or_above_bar_gates_blocked"
     )
-
-    deninno = discovery_grade_from_literature_record(by_id["deninno-tid-1995"])
-    assert deninno["moe_provenance"] == "literature_reported_instrument_precision"
-    assert deninno["discovery_grade_eligible"] is False
-    assert deninno["q_is_seed_scale"] is True
-
-    for lit_id in ("mckubre-sri-p13-p14-1992", "mckubre-high-loading-1998"):
-        mckubre = discovery_grade_from_literature_record(by_id[lit_id])
-        assert mckubre["moe_provenance"] == "literature_reported_instrument_floor"
-        assert mckubre["sigma_q_w"] is None
-        assert mckubre["discovery_grade_eligible"] is False
-        assert mckubre["lenr_proved"] is False
-        assert all(v == "OPEN" for v in mckubre["eq_open_status"].values())

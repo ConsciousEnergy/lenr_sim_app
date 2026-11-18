@@ -114,7 +114,7 @@ describe('DocViewerPage markdown hardening', () => {
       'kasagi-nicu-radiant-2026',
       'kasagi-ni-radiant-2026',
     ]);
-    expect(CORPUS_MOE_COVERAGE.n_records).toBe(25);
+    expect(CORPUS_MOE_COVERAGE.n_records).toBe(26);
     expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
 
     render(
@@ -133,7 +133,7 @@ describe('DocViewerPage markdown hardening', () => {
     );
     expect(screen.getByTestId('doc-viewer-honesty-eq-open')).toHaveTextContent(/OPEN/i);
     expect(screen.getByTestId('doc-viewer-honesty-discovery')).toHaveTextContent(
-      /2\/25/,
+      /2\/26/,
     );
     expect(screen.getByTestId('doc-viewer-honesty-discovery')).toHaveTextContent(
       /analytics_gates_clear/,
