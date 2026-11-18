@@ -632,6 +632,18 @@ export default function ReferencesSection() {
 
             <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                [celani2019] Celani, F. et al. (2019)
+              </Typography>
+              <Typography variant="body2" paragraph>
+                Steps to Identify Main Parameters for AHE Generation in Sub-micrometric Materials: Measurements by Isoperibolic and Air-flow Calorimetry. <em>Journal of Condensed Matter Nuclear Science</em>, 29, 52–74. Exploratory MoE only (12 ± 2 W near-miss; instrument_precision / indetermination class) — not discovery-grade.
+              </Typography>
+              <MuiLink href="https://doi.org/10.70923/001c.72494" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
+                DOI: 10.70923/001c.72494
+              </MuiLink>
+            </ListItem>
+
+            <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                 [czerski2022] Czerski, K. et al. (2022)
               </Typography>
               <Typography variant="body2" paragraph>

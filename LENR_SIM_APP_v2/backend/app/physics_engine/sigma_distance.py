@@ -216,15 +216,17 @@ def corpus_moe_coverage(
 
 
 def literature_corpus_moe_coverage() -> Dict[str, Any]:
-    """Scan curated literature + ICCF27 rows for MoE coverage (read-only)."""
-    from app.data.dataset_io import iccf27_literature_records, literature_records
+    """Scan curated literature + ICCF27 + exploratory MoE rows (read-only)."""
+    from app.data.dataset_io import curated_literature_corpus_records
     from app.physics_engine.calorimetry_significance import (
         discovery_grade_from_literature_record,
     )
 
-    rows = list(literature_records()) + list(iccf27_literature_records())
+    rows = curated_literature_corpus_records()
     reports = [discovery_grade_from_literature_record(row) for row in rows]
     lit_ids = [row.get("literature_id") for row in rows]
     coverage = corpus_moe_coverage(reports, literature_ids=lit_ids)
-    coverage["source"] = "literature_records+iccf27_literature_records"
+    coverage["source"] = (
+        "literature_records+iccf27_literature_records+exploratory_moe_literature_records"
+    )
     return coverage

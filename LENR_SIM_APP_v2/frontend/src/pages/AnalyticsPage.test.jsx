@@ -292,7 +292,7 @@ describe('AnalyticsPage honest metrics', () => {
     expect(screen.getByTestId('analytics-5b-gap-distance-status')).toHaveTextContent(/undefined/);
     expect(screen.getByTestId('analytics-5b-gap-emp-why-not-panel')).toBeInTheDocument();
     expect(screen.getByTestId('analytics-5b-gap-emp-why-not-pairing-chip')).toHaveTextContent(
-      /2\/25/,
+      /2\/26/,
     );
     expect(screen.getByTestId('analytics-5b-gap-emp-why-not-row-miles-1993')).toHaveTextContent(
       /exploratory|instrument_precision/i,

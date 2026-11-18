@@ -122,10 +122,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_s_heat).toBe(11.25);
     expect(CORPUS_MOE_COVERAGE.kasagi_nicu_s_heat).toBe(13.75);
+    expect(CORPUS_MOE_COVERAGE.n_records).toBe(26);
+    expect(CORPUS_MOE_COVERAGE.with_sigma_q).toBe(5);
     expect(CORPUS_MOE_COVERAGE.locked_s_heat).toEqual({
       'kasagi-nicu-radiant-2026': 13.75,
       'kasagi-ni-radiant-2026': 11.25,
       'miles-1993': 26,
+      'celani-constantan-2019': 6,
     });
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_distance_status).toBe(
       'at_or_above_bar_gates_clear',
@@ -155,9 +158,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W).toBe(0.1);
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe).toBe(false);
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
-      expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
+      expect.arrayContaining([
+        'miles-1993',
+        'deninno-tid-1995',
+        'celani-constantan-2019',
+      ]),
     );
     expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/26|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open).toBe(true);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved).toBe(true);
     expect(CORPUS_MOE_COVERAGE.soft_chip_ne_scientific_discharge).toBe(true);
@@ -174,7 +182,6 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.join(' ')).toMatch(
       /eq_open|lenr_proved|governed_lab/i,
     );
-    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.note).toMatch(
       /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close|empty_citations_not_discovery|cite_gated_discovery_does_not_underwrite/i,
     );
@@ -240,9 +247,18 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     });
     const celani = refused.find((row) => row.id === 'celani-constantan-12pm2');
     expect(celani.decision).toBe('refuse_discovery_near_miss');
+    expect(celani.in_curated_25).toBe(true);
+    expect(celani.literature_id).toBe('celani-constantan-2019');
     expect(celani.primary_cites.join(' ')).toMatch(/72494|12 ± 2/);
+    expect(celani.honesty).toMatch(/exploratory hydrate|instrument_precision/i);
     expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
     expect(CORPUS_MOE_COVERAGE.with_moe_pairing_verified).toBe(2);
+    const celaniWhy = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === 'celani-constantan-2019',
+    );
+    expect(celaniWhy.s_heat_exploratory).toBe(6);
+    expect(celaniWhy.discovery_grade_eligible).toBe(false);
+    expect(celaniWhy.pairing_verified).toBe(false);
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {
