@@ -51,6 +51,7 @@
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative cocycle / reciprocal / swap identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 | EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
+| EQ-YIELD-MILES-EMP-NC-01 | Miles EMP ~2× heat/He kinds ⇏ `IntegratedYieldDischarge`; \(f=2\in[1,3]\) ⇏ Q5 / `lenr_proved` (BDS-395) | `OpenQuestionBounds` | **PROVED** honesty implications over **AX**-tagged Miles EMP kinds (does **not** close EQ-OPEN-YIELD-01; ≠ EQ-YIELD-EFF-NC-01) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); \(e^{-S}\le1\) bridge; ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
