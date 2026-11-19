@@ -85,6 +85,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5B / BDS-302 ≥5σ heat bar + EQ-HEAT-SIG-NC-01 (citations/pairing/YIELD NC)", "LenrFormal.CalorimetrySignificance")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
+  , ("§5A.1 WH / phonon→nuclear channel ⇏ constrained |M|² (EQ-MEV-MATRIX-NC-01 / BDS-396)", "LenrFormal.WorkingHypothesis")
   , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")
   , ("§5A.2 CR-39 / track-etch ⇏ γ-suppression proof (EQ-RAD-CR39-NC-01 / BDS-394)", "LenrFormal.RadiationBounds")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")

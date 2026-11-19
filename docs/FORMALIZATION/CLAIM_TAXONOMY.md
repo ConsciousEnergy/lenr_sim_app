@@ -82,6 +82,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-HUANG-EMP-01 | Huang et al. water-cavitation COP / \(^{22}\)Ne MS claims (contested; *Sci. Rep.* 14, 214) | — | timeline + gap doc only (not a TheoryModule) | huang2024; Fomitchev-Zamilov 2024-05-29 critique | contested `EMP` | no Lean |
 | EQ-CM-BUDGET-01 | Condensed-matter budget capped ~10–100 eV/atom without MeV channel | IL-017 | guardrails | governance | `AX` | `WeakInteraction.lean` cap defs (hypothesis input to EQ-OPEN-EC-BOUND-01) |
 | EQ-OPEN-MEV-01 | MeV energy gap (phonon→nuclear) unsolved | §5A.1 | MEV_GAP_HYPOTHESIS | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-MEV-01.yaml` (undischarged) |
+| EQ-MEV-MATRIX-NC-01 | Named WH / phonon→nuclear channel labels + unconstrained \|M\|² / Bernoulli occupation ⇏ `ConstrainedMevMatrixDischarge`; ⇏ Q1 / `lenr_proved` (BDS-396) | §5A.1 | `open_questions.py` | hagelstein2025 | `AX` | `WorkingHypothesis.lean` / `EQ-MEV-MATRIX-NC-01.yaml` (does **not** close Q1; ≠ EQ-MEV-LABEL-NC-01) |
 | EQ-OPEN-RAD-01 | Radiation suppression / no prompt γ | §5A.2 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RAD-01.yaml` (undischarged) |
 | EQ-OPEN-RATE-01 | Rate closure with single-pair enhancements | §5A.3 | two_body vs trapped_state | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RATE-01.yaml` (undischarged) |
 | EQ-OPEN-EC-01 | No convincing condensed-matter path to \(E_e>0.782\,\mathrm{MeV}\) | §5A.4 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-EC-01.yaml` (undischarged) |

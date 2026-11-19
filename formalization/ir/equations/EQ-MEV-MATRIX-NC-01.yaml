@@ -1,0 +1,32 @@
+id: EQ-MEV-MATRIX-NC-01
+latex: "\\mathrm{PhononNuclearChannelLabel}\\land\\mathrm{unconstrained}\\,|M|^2\\land\\mathrm{Bernoulli}\\,P_{\\mathrm{occ}}\\nRightarrow\\mathrm{ConstrainedMevMatrixDischarge};\\quad\\nRightarrow q_1\\mathrm{MeVEnergyGapClosed}"
+symbols:
+  PhononNuclearChannelLabel: "Named WH / phonon→nuclear channel (ENP, FC, Dicke clamp, Hagelstein)"
+  MatrixElementEvidenceKind: "unconstrained channel label / unconstrained |M|² / constrained |M|²"
+  OccupationEvidenceKind: "Bernoulli stand-in / labeled occupation tag / constrained P_occ"
+  ConstrainedMevMatrixDischarge: "bag of constrained |M|² ∧ constrained occupation only"
+  matrixElementSqMilli: "unconstrained Nat |M|² bookkeeping proxy (milli units)"
+units: "dimensionless (provenance tag / milli |M|² proxy)"
+tag: AX
+paper_ref: "§5A.1 / BDS-396 / hagelstein2025"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_1
+lean_target: LenrFormal.WorkingHypothesis
+lean_decls:
+  - "LenrFormal.WorkingHypothesis.PhononNuclearChannelLabel"
+  - "LenrFormal.WorkingHypothesis.MatrixElementEvidenceKind"
+  - "LenrFormal.WorkingHypothesis.OccupationEvidenceKind"
+  - "LenrFormal.WorkingHypothesis.ConstrainedMevMatrixDischarge"
+  - "LenrFormal.WorkingHypothesis.engineWhMatrixStand"
+  - "LenrFormal.WorkingHypothesis.unconstrained_channel_label_does_not_entail_matrix_discharge"
+  - "LenrFormal.WorkingHypothesis.unconstrained_magnitude_sq_does_not_entail_matrix_discharge"
+  - "LenrFormal.WorkingHypothesis.bernoulli_occupation_does_not_entail_matrix_discharge"
+  - "LenrFormal.WorkingHypothesis.engine_wh_matrix_stand_keeps_mev_open"
+  - "LenrFormal.WorkingHypothesis.named_phonon_nuclear_channels_keep_mev_open"
+  - "LenrFormal.WorkingHypothesis.unconstrained_matrix_sq_does_not_close_q1"
+  - "LenrFormal.WorkingHypothesis.constrained_matrix_discharge_does_not_flip_lenr"
+notes: "AX honesty (BDS-396): named WH / phonon→nuclear channel labels and unconstrained |M|² / Bernoulli occupation bookkeeping never supply ConstrainedMevMatrixDischarge and never close EQ-OPEN-MEV-01 / flip lenr_proved. Densifies EQ-OPEN-MEV-01 still_missing (constrained phonon-nuclear matrix element + occupation) on the WorkingHypothesis surface. Distinct from EQ-MEV-LABEL-NC-01 (MeVGapHypothesis eligibility on OpenQuestionBounds). Complements EQ-WH-MEV-CAP-01 (remainder floor under caps) and EQ-WH-NONCLOSE-01. EQ-OPEN-MEV-01 stays OPEN."
