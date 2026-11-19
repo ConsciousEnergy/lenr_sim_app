@@ -116,8 +116,8 @@ export const DISCOVERY_GRADE_MISSING = Object.freeze([
 export const CORPUS_MOE_COVERAGE = Object.freeze({
   title: 'Corpus MoE / Q↔σ_Q pairing coverage',
   helper_module: 'LENR_SIM_APP_v2/backend/app/physics_engine/sigma_distance.py',
-  n_records: 25,
-  with_sigma_q: 4,
+  n_records: 26,
+  with_sigma_q: 5,
   with_literature_reported_cite_gated: 2,
   with_moe_pairing_verified: 2,
   discovery_grade_eligible_count: 2,
@@ -139,6 +139,11 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'Miles S_heat=26 is exploratory arithmetic only (instrument_precision + unverified pairing) — not discovery. ' +
     'JEAC 346 peak 0.52 W pairs with same-paper ±0.04 W accuracy bound (still exploratory); ' +
     'follow-on ±0.020 W is cross-document — missing cite-gated total σ for discovery.',
+  /** Celani JCMNS 29 12±2 exploratory arithmetic S_heat=6 — gates blocked. */
+  celani_exploratory_s_heat: 6,
+  celani_moe_provenance: 'literature_reported_instrument_precision',
+  celani_pairing_verified: false,
+  celani_distance_status: 'at_or_above_bar_gates_blocked',
   /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
   kasagi_nicu_moe_provenance: 'literature_reported',
@@ -154,35 +159,40 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     'deninno-tid-1995',
     'mckubre-sri-p13-p14-1992',
     'mckubre-high-loading-1998',
+    'celani-constantan-2019',
   ]),
   /**
-   * BDS-343 / BDS-363 / post-ship MoE hunt: publishable literature_reported σ_Q +
-   * verified pairing inventory is exhausted for the curated 25-row corpus (only
-   * Kasagi NiCu + Ni). Do not invent pairs for Iwamura / Mizuno / Arata / Celani /
-   * commercial Ni–H. Celani JCMNS 29 “12±2 W” is a documented near-miss — still
-   * not discovery-grade (method indetermination / raw-uncorrected episode).
+   * BDS-343 / BDS-360 / BDS-363: publishable literature_reported σ_Q + verified
+   * pairing inventory remains exhausted (only Kasagi NiCu + Ni). Celani JCMNS 29
+   * “12±2 W” is now an exploratory instrument_precision companion (corpus 26) —
+   * still not discovery-grade (method indetermination / raw-uncorrected episode).
+   * Do not invent discovery pairs for Iwamura / Mizuno / Arata / commercial Ni–H.
    */
   literature_moe_inventory_exhausted: true,
   inventory_exhausted_note:
     'No further publishable literature_reported total σ_Q + verified Q↔σ pairing rows ' +
-    'remain in the curated 25 without fabrication. Eligible analytics flags stay 2/25 ' +
-    '(Kasagi NiCu + Ni). Soft chip language: analytics_gates_clear — never “≥5σ met”. ' +
-    'Post-ship hunt: refuse Iwamura/Mizuno/Arata/Celani discovery σ; Miles stays exploratory.',
+    'remain without fabrication. Eligible analytics flags stay 2/26 ' +
+    '(Kasagi NiCu + Ni). Celani 12±2 is exploratory instrument_precision only. Soft chip ' +
+    'language: analytics_gates_clear — never “≥5σ met”. Refuse Iwamura/Mizuno/Arata ' +
+    'discovery σ; Miles + Celani stay exploratory.',
   post_ship_moe_gap_map:
-    'docs/science/post-ship-moe-gap-map.md (store) — primary-source refuse + Celani near-miss',
+    'docs/science/post-ship-moe-gap-map.md + bds360-corpus-beyond-kasagi.md (store)',
   /**
    * Locked arithmetic S_heat = Q/σ_Q for cite-gated / exploratory rows (BDS-363).
-   * Kasagi: literature_reported + same-results envelope. Miles: instrument_precision
-   * exploratory only (gates blocked). Never invent σ for refused campaigns.
+   * Kasagi: literature_reported + same-results envelope. Miles / Celani:
+   * instrument_precision exploratory only (gates blocked). Never invent discovery σ.
    */
   locked_s_heat: Object.freeze({
     'kasagi-nicu-radiant-2026': 13.75,
     'kasagi-ni-radiant-2026': 11.25,
     'miles-1993': 26,
+    'celani-constantan-2019': 6,
   }),
   /**
-   * Campaign / literature heat rows that must stay σ_Q-null / non-discovery
-   * (no peer watt total MoE usable for discovery pairing).
+   * Campaign / literature heat rows that must stay non-discovery for watt MoE
+   * (no peer literature_reported total σ usable for discovery pairing).
+   * Celani exploratory σ lives on the companion row — refuse object keeps
+   * discovery σ_Q_W null.
    */
   refused_fabricated_moe_campaigns: Object.freeze([
     Object.freeze({
@@ -224,10 +234,10 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
     Object.freeze({
       id: 'celani-constantan',
       label: 'Celani Cu–Ni–Mn / constantan',
-      corpus_status: 'absent',
-      related_literature_ids: Object.freeze([]),
+      corpus_status: 'exploratory_hydrated_instrument_precision',
+      related_literature_ids: Object.freeze(['celani-constantan-2019']),
       published_peak_note:
-        'JCMNS unstable excess up to ~16 W; no cite-gated total σ_Q for discovery pairing',
+        'JCMNS 29 12±2 W exploratory hydrate (instrument_precision); discovery σ still refused',
       sigma_Q_W: null,
       discovery_grade_eligible: false,
       decision: 'REFUSE_FABRICATED_SIGMA_Q',
@@ -258,6 +268,17 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
    */
   lean_lab_ask_nc_bound: true,
   lab_ask_met_ne_eq_open_discharge: true,
+  /**
+   * Celani JCMNS 29 exploratory hydrate Lean NC (instrument_precision S_heat=6
+   * ⇏ DiscoveryGradeAnalytics; corpus discovery stays Kasagi 2/26).
+   */
+  lean_celani_exploratory_nc_bound: true,
+  /**
+   * BDS-375: planned lenr-ara-daq-sample-v1 ingest ⇏ EQ-OPEN discharge /
+   * lenr_proved (daq_sample_planned_is_not_eq_open_discharge).
+   */
+  lean_daq_planned_ne_discharge: true,
+  daq_sample_ingest_planned_not_attested: true,
   /**
    * BDS-362: DiscoveryGradeAnalytics requires citationsNonempty + pairingVerified
    * + non-seed (empty citations / unverified pairing / seed-scale ⇏ discovery);
@@ -299,13 +320,53 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
 });
 
 /**
+ * Planned LENR-ARA DAQ sample provenance (BDS-375).
+ * Mirrors runway ingest sketch vs `lenr-ara-daq-sample-v1` — non-attested.
+ * Surfaces trust-plane split + refuse-fabricated densification for UI / Analytics.
+ * Never invents measurements; never flips EQ-OPEN / lenr_proved.
+ */
+export const DAQ_SAMPLE_PROVENANCE = Object.freeze({
+  schema_id: 'lenr-ara-daq-sample-v1',
+  sim_export_schema_id: 'lenr-run-export-v1',
+  trust_plane: 'daq',
+  ingest_status: 'planned_not_attested',
+  hub_registry_status: 'planned',
+  refuse_fabricated_samples: true,
+  lenr_proved_default: false,
+  private_extensions_stripped_required: true,
+  calibration_fields: Object.freeze([
+    'efficiency_refs',
+    'retention_caveat',
+    'citations',
+  ]),
+  public_observable_field_set: Object.freeze([
+    'excess_power_W',
+    'sigma_Q_W',
+    'he4_atoms_per_s',
+    'he4_atoms_integrated',
+    'gamma_cps',
+    'gamma_ul_log10',
+  ]),
+  honesty_note:
+    'DAQ samples stay on the LENR-ARA trust plane (separate from Sim ' +
+    'lenr-run-export-v1). Planned public fields only — refuse fabricated attested ' +
+    'measurements, refuse inventing literature_reported σ_Q from DAQ sketches, and ' +
+    'never auto-flip rate_mode / EQ-OPEN / lenr_proved. Lab-ask receipt via DAQ ≠ ' +
+    'EQ-OPEN discharge (Lean lab_ask_proxies_do_not_discharge_eq_open).',
+  runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
+  docs_route: '/docs/eq-open-closure-runway',
+});
+
+/**
  * Concrete next lab / MoE targets after software Prefer-merge exhaust
- * (BDS-346 inventory; BDS-348 lab-ask precision densification).
+ * (BDS-346 inventory; BDS-348 lab-ask precision densification; BDS-375 DAQ
+ * provenance UX densification).
  * Decision aid only — never flips lenr_proved or closes EQ-OPEN-*.
  * Complements snake_case remaining_scientific_blockers with avenue-linked lab asks.
  * `lab_acceptance` = measurable ask gates; `still_does_not_discharge` = residual
  * after the ask is met; `daq_observables` maps to planned lenr-ara-daq-sample-v1
  * public fields (non-attested sketch). Lean LabAskProxies ⇏ discharge.
+ * All rows stay `blocked_awaiting_lab` until real governed lab MoE lands.
  */
 export const NEXT_LAB_MOE_TARGETS = Object.freeze([
   Object.freeze({
@@ -315,7 +376,6 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Governed lab simultaneous heat+He with cite-gated literature_reported σ_Q + verified ' +
       'Q↔σ pairing underwriting YIELD (not Miles exploratory instrument_precision arithmetic)',
-    claim_tier: 'speculative_exploratory',
     lab_acceptance:
       'Time-resolved excess_power_W + he4_atoms_per_s (or integrated) on governed rows with ' +
       'literature_reported total σ_Q_W, moe_sigma_q_pairing_verified=true, non-seed Q, S_heat≥5',
@@ -323,7 +383,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'Integrated ΔN_4He must still close under IR/Lean + ledger/governance; analytics flag alone ' +
       'leaves EQ-OPEN-YIELD-01 / MEV-01 OPEN (lab_ask_proxies_do_not_discharge_eq_open)',
     corpus_gap_now:
-      '0/25 governed simultaneous heat+He cite-gated MoE underwriting YIELD; Miles stays ' +
+      '0/26 governed simultaneous heat+He cite-gated MoE underwriting YIELD; Miles stays ' +
       'instrument_precision / pairing=false / gates_blocked',
     daq_observables: Object.freeze([
       'excess_power_W',
@@ -331,6 +391,18 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'he4_atoms_per_s',
       'he4_atoms_integrated',
     ]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze([
+      'efficiency_refs',
+      'retention_caveat',
+      'citations',
+    ]),
+    daq_gap_note:
+      'Heat+He observables are sketched on sample-v1 but no attested public export exists; ' +
+      'refuse fabricating σ_Q / He rates from this UI.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -339,9 +411,9 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     avenue_id: 'calorimetry_sigma_q',
     eq_open_ids: Object.freeze(['EQ-OPEN-YIELD-01']),
     target:
-      'Broader corpus beyond Kasagi 2/25: measurement-specific total σ_Q with same-results ' +
-      'envelope pairing on governed calorimetry rows (refuse Iwamura/Mizuno/Arata fabrication)',
-    claim_tier: 'speculative_exploratory',
+      'Broader corpus beyond Kasagi 2/26: measurement-specific total σ_Q with same-results ' +
+      'envelope pairing on governed calorimetry rows (refuse Iwamura/Mizuno/Arata fabrication; ' +
+      'Celani exploratory instrument_precision ≠ discovery)',
     lab_acceptance:
       '≥1 additional governed calorimetry row (non-Kasagi) with literature_reported σ_Q + ' +
       'verified Q↔σ pairing clearing discovery_grade_eligible without fabricated σ_Q',
@@ -349,8 +421,17 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'Extra analytics-eligible rows still ≠ EQ-OPEN-YIELD discharge or lenr_proved ' +
       '(DiscoveryGradeAnalytics ⇏ any of Q1–Q5)',
     corpus_gap_now:
-      'pairing verified 2/25 (Kasagi NiCu + Ni only); publishable literature MoE inventory exhausted',
+      'pairing verified 2/26 (Kasagi NiCu + Ni only); Celani exploratory hydrate does not flip discovery; ' +
+      'publishable literature_reported MoE inventory exhausted',
     daq_observables: Object.freeze(['excess_power_W', 'sigma_Q_W']),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['efficiency_refs', 'citations']),
+    daq_gap_note:
+      'Calorimetry σ_Q on sample-v1 stays planned; refuse inventing literature_reported discovery ' +
+      'σ beyond Kasagi (Celani exploratory ≠ discovery).',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -361,7 +442,6 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Efficiency-corrected 23.8 MeV γ upper limit with coincidence / efficiency provenance ' +
       '(not CR-39 pit counts; Pyyhtiä confounder stays detector-only)',
-    claim_tier: 'speculative_exploratory',
     lab_acceptance:
       'Calibrated gamma_cps / gamma_ul_log10 with efficiency_refs + coincidence geometry; ' +
       'heat-coincident interval when claiming suppression',
@@ -371,6 +451,14 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       '0 curated rows with efficiency-corrected 23.8 MeV γ UL + coincidence provenance',
     daq_observables: Object.freeze(['gamma_cps', 'gamma_ul_log10']),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['efficiency_refs', 'citations']),
+    daq_gap_note:
+      'γ UL fields are sketched; efficiency + coincidence provenance still missing — refuse ' +
+      'fabricating detector ULs as RAD discharge.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -381,7 +469,6 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Measured p₄ / trap occupancy + collective caps that constrain rate_mode budgets ' +
       '(not free 10⁶ caps or campaign grids alone)',
-    claim_tier: 'speculative_exploratory',
     lab_acceptance:
       'Experimentally constrained n_occ / f_nuc (or equivalent) cited into named rate_mode; ' +
       'two-body log10 N = −40 reference retained beside any closing path',
@@ -391,6 +478,15 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       '0 governed measured p₄ / collective-cap attestations; engine caps stay scenario-only',
     daq_observables: Object.freeze([]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['citations']),
+    daq_gap_note:
+      'n_occ / f_nuc are not in sample-v1 public observables — occupation/rate caps are ' +
+      'theory-domain attestations, not calorimetry/γ sample fields. Refuse fabricating DAQ ' +
+      'occupation numbers.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -401,7 +497,6 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     target:
       'Independent condensed-matter path ≥0.782 MeV in Tennfors-licensed regime with cited ' +
       'potentials/masses (deficit bookkeeping / Widom scaffold do not count)',
-    claim_tier: 'speculative_exploratory',
     lab_acceptance:
       'Cited E_available ≥ 0.782 MeV in licensed material/field regime with mass-renormalization ' +
       'domain gates met as physical claims (not UI gap-to-threshold cosmetics)',
@@ -411,6 +506,14 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     corpus_gap_now:
       'CM budget still ≪ 0.782 MeV under stated double-layer / deficit identities; Widom scaffold ≠ path',
     daq_observables: Object.freeze([]),
+    daq_schema: 'lenr-ara-daq-sample-v1',
+    daq_trust_plane: 'daq',
+    daq_ingest_status: 'planned_not_attested',
+    daq_calibration_required: Object.freeze(['citations']),
+    daq_gap_note:
+      'E_available / mass-renormalization domain gates are condensed-matter path claims, not ' +
+      'instrument sample observables in sample-v1. Refuse fabricating DAQ threshold numbers.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -469,7 +572,8 @@ export const REFUSED_FABRICATED_MOE_CAMPAIGNS = Object.freeze([
   Object.freeze({
     id: 'celani-constantan-12pm2',
     label: 'Celani constantan (JCMNS 29 near-miss)',
-    in_curated_25: false,
+    in_curated_25: true,
+    literature_id: 'celani-constantan-2019',
     decision: 'refuse_discovery_near_miss',
     primary_cites: Object.freeze([
       'doi:10.70923/001c.72494',
@@ -478,7 +582,7 @@ export const REFUSED_FABRICATED_MOE_CAMPAIGNS = Object.freeze([
     missing:
       'Same-sentence 12±2 is method-indetermination class (raw uncorrected air-flow; wire-break; sibling ±1–2 W indetermination) — not literature_reported total σ for discovery',
     honesty:
-      'Near-miss documented — refuse discovery_grade_eligible; exploratory hydrate only in a future bib-synced PR if pursued.',
+      'Exploratory hydrate landed (instrument_precision; pairing=false; S_heat=6 gates-blocked) — still refuse discovery_grade_eligible.',
   }),
 ]);
 
@@ -487,11 +591,11 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'miles-1993',
     label: 'Miles 1993 heat–He',
     claim_type: 'EMP',
-    claim_tier: 'speculative_exploratory',
     distance_status: 'at_or_above_bar_gates_blocked',
     s_heat_exploratory: 26,
     moe_provenance: 'literature_reported_instrument_precision',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'analytics_gates_clear',
     reasons: Object.freeze([
@@ -508,11 +612,11 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'deninno-tid-1995',
     label: 'De Ninno / ENEA Frascati flow',
     claim_type: 'EMP',
-    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_precision',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -527,11 +631,11 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'mckubre-sri-p13-p14-1992',
     label: 'McKubre SRI P13/P14',
     claim_type: 'EMP',
-    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -546,11 +650,11 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     literature_id: 'mckubre-high-loading-1998',
     label: 'McKubre high-loading 1998',
     claim_type: 'EMP',
-    claim_tier: 'speculative_exploratory',
     distance_status: 'undefined',
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -560,6 +664,27 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     ]),
     honesty:
       'Floor-only MoE — exploratory; honest_closure stays not_met.',
+  }),
+  Object.freeze({
+    literature_id: 'celani-constantan-2019',
+    label: 'Celani constantan JCMNS 29 (12±2)',
+    claim_type: 'contested',
+    distance_status: 'at_or_above_bar_gates_blocked',
+    s_heat_exploratory: 6,
+    moe_provenance: 'literature_reported_instrument_precision',
+    pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
+    discovery_grade_eligible: false,
+    soft_chip: 'analytics_gates_clear',
+    reasons: Object.freeze([
+      'JCMNS 29 DOI 10.70923/001c.72494 same-sentence “AHE was over 12 ± 2 W” is method-indetermination / raw uncorrected air-flow — not literature_reported total σ_Q',
+      'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — arithmetic S_heat=6 (=12/2) gates-blocked',
+      'Wire broke within ~1 day; sibling JCMNS 19 indetermination ±1–2 W; MFMP replication flags calorimetry concerns',
+      'Stable 6–7 W Xe–D2 episode lacks published ± — do not invent discovery MoE from that branch',
+      'EQ-OPEN-YIELD-01 stays OPEN; discovery_grade_eligible stays false',
+    ]),
+    honesty:
+      'Exploratory near-miss hydrate only — not discovery; does not set lenr_proved or close EQ-OPEN-*.',
   }),
 ]);
 
@@ -821,7 +946,11 @@ export const FORMALIZATION_STATUS = Object.freeze({
       id: 'EQ-HEAT-SIG-NC-01',
       label: 'Heat significance non-closure',
       kind: 'non-closure',
-      note: 'Empty citations / unverified pairing / seed-scale / instrument-precision / floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346/BDS-362).',
+      note:
+        'Empty citations / unverified pairing / seed-scale / Miles+Celani instrument-precision / ' +
+        'floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of ' +
+        'Q1–Q5 or lenr_proved; LabAskProxies + planned DAQ sample-v1 ⇏ discharge ' +
+        '(BDS-346/BDS-360/BDS-362/BDS-375).',
     },
     {
       id: 'EQ-BBL-HEAT-NC-01',
@@ -974,10 +1103,21 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     !CORPUS_MOE_COVERAGE.locked_s_heat ||
     CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-nicu-radiant-2026'] !== 13.75 ||
     CORPUS_MOE_COVERAGE.locked_s_heat['kasagi-ni-radiant-2026'] !== 11.25 ||
-    CORPUS_MOE_COVERAGE.locked_s_heat['miles-1993'] !== 26
+    CORPUS_MOE_COVERAGE.locked_s_heat['miles-1993'] !== 26 ||
+    CORPUS_MOE_COVERAGE.locked_s_heat['celani-constantan-2019'] !== 6
   ) {
     throw new Error(
-      'Science evidence UI must lock Kasagi/Miles S_heat arithmetic (13.75 / 11.25 / 26)',
+      'Science evidence UI must lock Kasagi/Miles/Celani S_heat arithmetic (13.75 / 11.25 / 26 / 6)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.n_records !== 26 || CORPUS_MOE_COVERAGE.with_sigma_q !== 5) {
+    throw new Error(
+      'Science evidence UI must keep corpus coverage at 26 records / 5 with σ_Q after Celani exploratory hydrate',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.discovery_grade_eligible_count !== 2) {
+    throw new Error(
+      'Science evidence UI must keep discovery_grade_eligible_count at 2 (Kasagi only)',
     );
   }
   if (
@@ -1000,12 +1140,10 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   }
   if (
     CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W !== 0.1 ||
-    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false ||
-    CORPUS_MOE_COVERAGE.campaign_model_output_claim_tier !==
-      'speculative_exploratory'
+    CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe !== false
   ) {
     throw new Error(
-      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery (speculative_exploratory)',
+      'Science evidence UI must keep campaign model-output σ_Q=0.1 non-discovery',
     );
   }
   if (CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open !== true) {
@@ -1046,6 +1184,19 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
       'Science evidence UI must keep lab_ask_met_ne_eq_open_discharge true (BDS-348)',
     );
   }
+  if (CORPUS_MOE_COVERAGE.lean_celani_exploratory_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_celani_exploratory_nc_bound true (Celani exploratory NC)',
+    );
+  }
+  if (
+    CORPUS_MOE_COVERAGE.lean_daq_planned_ne_discharge !== true ||
+    CORPUS_MOE_COVERAGE.daq_sample_ingest_planned_not_attested !== true
+  ) {
+    throw new Error(
+      'Science evidence UI must keep lean_daq_planned_ne_discharge + planned_not_attested true (BDS-375)',
+    );
+  }
   if (CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound !== true) {
     throw new Error(
       'Science evidence UI must keep lean_citations_pairing_nc_bound true (BDS-362)',
@@ -1070,6 +1221,19 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   ) {
     throw new Error(
       'Science evidence UI must list remaining_scientific_blockers (≥5 scientific/governance)',
+    );
+  }
+  if (
+    !DAQ_SAMPLE_PROVENANCE ||
+    DAQ_SAMPLE_PROVENANCE.schema_id !== 'lenr-ara-daq-sample-v1' ||
+    DAQ_SAMPLE_PROVENANCE.trust_plane !== 'daq' ||
+    DAQ_SAMPLE_PROVENANCE.ingest_status !== 'planned_not_attested' ||
+    DAQ_SAMPLE_PROVENANCE.refuse_fabricated_samples !== true ||
+    DAQ_SAMPLE_PROVENANCE.lenr_proved_default !== false ||
+    DAQ_SAMPLE_PROVENANCE.private_extensions_stripped_required !== true
+  ) {
+    throw new Error(
+      'Science evidence UI must lock DAQ_SAMPLE_PROVENANCE (sample-v1 / daq / planned / refuse / lenr_proved false)',
     );
   }
   if (!Array.isArray(NEXT_LAB_MOE_TARGETS) || NEXT_LAB_MOE_TARGETS.length < 5) {
@@ -1111,6 +1275,26 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
         `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must declare claim_tier`,
       );
     }
+    if (
+      target.daq_schema !== DAQ_SAMPLE_PROVENANCE.schema_id ||
+      target.daq_trust_plane !== DAQ_SAMPLE_PROVENANCE.trust_plane ||
+      target.daq_ingest_status !== DAQ_SAMPLE_PROVENANCE.ingest_status ||
+      !Array.isArray(target.daq_calibration_required) ||
+      !target.daq_gap_note
+    ) {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} missing DAQ provenance densification ` +
+          '(daq_schema/trust_plane/ingest_status/calibration_required/daq_gap_note)',
+      );
+    }
+    for (const field of target.daq_observables) {
+      if (!DAQ_SAMPLE_PROVENANCE.public_observable_field_set.includes(field)) {
+        throw new Error(
+          `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} daq_observable ` +
+            `${field} not in sample-v1 public field set (refuse inventing fields)`,
+        );
+      }
+    }
     for (const oid of target.eq_open_ids) {
       if (!OPEN_EQ_IDS.includes(oid)) {
         throw new Error(
@@ -1126,11 +1310,6 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     throw new Error('Science evidence UI must list EMP_EXPLORATORY_WHY_NOT_DISCOVERY rows');
   }
   for (const row of EMP_EXPLORATORY_WHY_NOT_DISCOVERY) {
-    if (!row.claim_tier || typeof row.claim_tier !== 'string') {
-      throw new Error(
-        `Science evidence UI EMP exploratory ${row.literature_id} must declare claim_tier`,
-      );
-    }
     if (row.discovery_grade_eligible !== false) {
       throw new Error(
         `Science evidence UI must keep EMP exploratory ${row.literature_id} non-discovery`,

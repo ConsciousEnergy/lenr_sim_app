@@ -1,0 +1,25 @@
+id: EQ-EC-UI-NC-01
+latex: "\\mathrm{uiGapCosmetic}\\land\\neg\\mathrm{Eligible}\\nRightarrow q_4\\mathrm{ElectronCaptureSourceClosed};\\quad \\mathrm{condensedMatterPathToThreshold}=\\mathrm{false}"
+symbols:
+  EcPathUnderwrite: "availableEnergy + massRenormDomainGatesMet + independentMeasurement + uiCosmeticOnly"
+  Eligible: "independentMeasurement ∧ massRenormDomainGatesMet ∧ ¬uiCosmeticOnly ∧ E≥threshold"
+  uiGapCosmetic: "default UI / scaffold posture (cosmetic gap, no measurement)"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§5A.4 EQ-OPEN-EC-01; EQ_OPEN_CLOSURE_RUNWAY affirmative discharge; ARA P1 Widom scaffold"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - tennfors2013
+  - paper_5A_4
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.EcPathUnderwrite"
+  - "LenrFormal.WeakInteraction.EcPathUnderwrite.Eligible"
+  - "LenrFormal.WeakInteraction.uiGapCosmetic"
+  - "LenrFormal.WeakInteraction.ui_gap_cosmetic_not_Eligible"
+  - "LenrFormal.WeakInteraction.ineligible_ec_path_does_not_close_q4"
+  - "LenrFormal.WeakInteraction.ui_gap_cosmetic_does_not_close_q4"
+  - "LenrFormal.WeakInteraction.ui_cosmetic_keeps_no_cm_path"
+notes: "AX honesty: EQ-OPEN-EC-01 affirmative discharge needs independent measurement (or governed theory+data) of available electron energy ≥ 0.782 MeV with mass-renormalization domain gates met as physical claims. UI gap-to-threshold cosmetics and ARA P1 Widom scaffold alone stay ineligible (uiGapCosmetic). Complements EQ-OPEN-EC-BOUND-01 / EQ-EC-THRESH-01. EQ-OPEN-EC-01 stays OPEN; condensedMatterPathToThreshold and lenr_proved stay false."

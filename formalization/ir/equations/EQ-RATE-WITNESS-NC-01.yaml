@@ -1,0 +1,30 @@
+id: EQ-RATE-WITNESS-NC-01
+latex: "\\mathrm{plannedAraDaqOccupancy}\\lor\\mathrm{freeCollectiveCap}1\\mathrm{e}6\\nRightarrow\\mathrm{FreeCapRateClosure};\\quad\\nRightarrow q_3\\mathrm{RateBudgetClosed}"
+symbols:
+  RateWitnessEvidenceKind: "planned ARA DAQ occupancy/collective input / free 1e6 cap / unconstrained Nat / experimentally constrained collective"
+  FreeCapRateClosure: "bag of experimentally constrained collective factor only"
+  plannedAraDaqOccupancyInput: "planned ARA DAQ occupancy field as witness input only"
+  freeCollectiveCap1e6: "engine collective clamp C_lin ≤ 1e6 (not experimental constraint)"
+  experimentallyConstrainedCollective: "EQ-OPEN-RATE-01 still_missing"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§5A.3 / BDS-399 / BDS-375"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - takahashi2016
+  - paper_5A_3
+lean_target: LenrFormal.RateBudget
+lean_decls:
+  - "LenrFormal.RateBudget.RateWitnessEvidenceKind"
+  - "LenrFormal.RateBudget.FreeCapRateClosure"
+  - "LenrFormal.RateBudget.planned_ara_daq_occupancy_does_not_entail_free_cap_closure"
+  - "LenrFormal.RateBudget.planned_ara_daq_collective_does_not_entail_free_cap_closure"
+  - "LenrFormal.RateBudget.free_collective_cap_does_not_entail_free_cap_closure"
+  - "LenrFormal.RateBudget.unconstrained_nat_witness_does_not_entail_free_cap_closure"
+  - "LenrFormal.RateBudget.planned_ara_daq_with_free_cap_keeps_rate_open"
+  - "LenrFormal.RateBudget.unconstrained_witness_with_free_cap_keeps_rate_open"
+  - "LenrFormal.RateBudget.planned_daq_witness_inputs_do_not_close_two_body_rate"
+  - "LenrFormal.RateBudget.free_cap_rate_closure_does_not_flip_lenr"
+notes: "AX honesty (BDS-399): planned/ARA DAQ occupancy and collective fields are inputs under witness only — never FreeCapRateClosure of EQ-OPEN-RATE-01 / flip lenr_proved. Densifies EQ-OPEN-RATE-01 still_missing (experimentally constrained collective, not free 1e6 cap). Distinct from EQ-RATE-DAQ-OCC-NC-01 (RateOccupancyUnderwrite eligibility / sample-v1 exposes-no-observables). OpenObligations twins: free_cap_rate_closure_does_not_close_q3 / planned_ara_daq_witness_does_not_close_q3. Complements EQ-RATE-2B-NC-01 / EQ-RATE-CAP-*. EQ-OPEN-RATE-01 stays OPEN."

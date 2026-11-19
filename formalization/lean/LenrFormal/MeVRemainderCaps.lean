@@ -1,7 +1,8 @@
 import LenrFormal.WorkingHypothesisBounds
 
 /-!
-MeVRemainderCaps — EQ-WH-MEV-CAP-01: positive Q1 remainder floor under engine caps.
+MeVRemainderCaps — EQ-WH-MEV-CAP-01: positive Q1 remainder floor under engine caps /
+EQ-MEV-COLLAPSE-NC-01: collapse / bubble hydro ⇏ MeV remainder allocator.
 
 **BOUNDED, not CLOSED.** EQ-OPEN-MEV-01 stays OPEN. Licensed channel
 allocations (phonon, γ, recoil) are capped per channel; if the caps sum below
@@ -10,7 +11,10 @@ allocations (phonon, γ, recoil) are capped per channel; if the caps sum below
 weight floor), γ ≤ ⌈Q·BR_γ⌉ (stated branching input), recoil = 0
 (`branching_model.recoil_mev`). Collapse / ENC hydro channels never allocate
 the MeV nuclear remainder. No nuclear matrix element is supplied or assumed.
-There is no theorem lenr_occurs.
+
+EQ-MEV-COLLAPSE-NC-01 (BDS-401): collapse hydrodynamics / bubble-collapse heat
+never inhabit a MeV remainder allocator discharge. Distinct from
+EQ-MEV-LABEL-NC-01 and EQ-MEV-MATRIX-NC-01. There is no theorem lenr_occurs.
 -/
 
 namespace LenrFormal.MeVRemainderCaps
@@ -196,7 +200,12 @@ theorem gamma_route_closure_fails_q2
     (Nat.lt_of_lt_of_le hUpper
       (q1_closure_under_engine_caps_forces_gamma_route gammaBranchingMilli hCaps hClosed))
 
-/-! ### Collapse / ENC hydro do not allocate the MeV nuclear remainder -/
+/-! ### Collapse / ENC hydro do not allocate the MeV nuclear remainder
+
+EQ-MEV-COLLAPSE-NC-01 (BDS-401) densifies the honesty already used by
+EQ-WH-MEV-CAP-01: collapse hydrodynamics / bubble-collapse heat never allocate
+the MeV nuclear remainder and never close Q1.
+-/
 
 inductive EnergyChannel
   | phonon
@@ -241,5 +250,133 @@ theorem hydro_claims_keep_q1_open
       (openRemainderWithHydro qDD_He4_keV a collapseClaimKeV encClaimKeV) := by
   rw [hydro_claims_do_not_change_remainder]
   exact (engine_licensed_channels_leave_positive_remainder gammaBranchingMilli hBr hCaps).2.2
+
+/-! ### EQ-MEV-COLLAPSE-NC-01 — collapse / bubble hydro ⇏ MeV remainder allocator (BDS-401)
+
+EQ-OPEN-MEV-01 still_missing is a constrained phonon→nuclear matrix element
+and occupation. Collapse hydrodynamics and bubble-collapse heat are scenario
+factors (CollapseBounds), not MeV remainder allocators.
+
+Distinct from EQ-MEV-LABEL-NC-01 (MeVGapHypothesis eligibility) and
+EQ-MEV-MATRIX-NC-01 (matrix/occupation evidence kinds on WorkingHypothesis).
+-/
+
+/-- Provenance kind for claimed MeV remainder allocators. -/
+inductive MevAllocatorEvidenceKind where
+  /-- Collapse hydrodynamics heat claim (CollapseBounds / bubble scenario). -/
+  | collapseHydrodynamicsHeat
+  /-- Bubble-collapse heat claim treated as nuclear-scale remainder allocation. -/
+  | bubbleCollapseHeatClaim
+  /-- ENC hydro heat claim (CollapseBounds ENC path). -/
+  | encHydroHeatClaim
+  /-- Constrained phonon→nuclear matrix + occupation (EQ-OPEN-MEV-01 still_missing). -/
+  | constrainedPhononNuclearMatrix
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: MeV remainder allocator discharge requires constrained
+    phonon→nuclear matrix provenance. Collapse / bubble / ENC hydro never
+    inhabit it. -/
+def MevRemainderAllocatorDischarge
+    (kinds : List MevAllocatorEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds, k = MevAllocatorEvidenceKind.constrainedPhononNuclearMatrix
+
+/-- Hard honesty: collapse hydrodynamics never allocate MeV remainder. -/
+def collapseHydroIsMevAllocator : Bool := false
+
+theorem collapse_hydro_is_not_mev_allocator :
+    collapseHydroIsMevAllocator = false := rfl
+
+/-- Bubble-collapse heat likewise never is a MeV remainder allocator. -/
+def bubbleCollapseHeatIsMevAllocator : Bool := false
+
+theorem bubble_collapse_heat_is_not_mev_allocator :
+    bubbleCollapseHeatIsMevAllocator = false := rfl
+
+/-- Nature-proof token stays false on MEV / collapse surfaces. -/
+def mevCollapseLenrProved : Bool := false
+
+theorem mev_collapse_lenr_proved_false : mevCollapseLenrProved = false := rfl
+
+/-- EQ-MEV-COLLAPSE-NC-01: collapse hydrodynamics heat ⇏ MeV allocator discharge. -/
+theorem collapse_hydro_does_not_entail_mev_allocator_discharge
+    {kinds : List MevAllocatorEvidenceKind}
+    (h : MevAllocatorEvidenceKind.collapseHydrodynamicsHeat ∈ kinds) :
+    ¬ MevRemainderAllocatorDischarge kinds := by
+  intro hDisc
+  have : MevAllocatorEvidenceKind.collapseHydrodynamicsHeat =
+      MevAllocatorEvidenceKind.constrainedPhononNuclearMatrix :=
+    hDisc.2 _ h
+  cases this
+
+/-- Bubble-collapse heat claim likewise never underwrites allocator discharge. -/
+theorem bubble_collapse_heat_does_not_entail_mev_allocator_discharge
+    {kinds : List MevAllocatorEvidenceKind}
+    (h : MevAllocatorEvidenceKind.bubbleCollapseHeatClaim ∈ kinds) :
+    ¬ MevRemainderAllocatorDischarge kinds := by
+  intro hDisc
+  have : MevAllocatorEvidenceKind.bubbleCollapseHeatClaim =
+      MevAllocatorEvidenceKind.constrainedPhononNuclearMatrix :=
+    hDisc.2 _ h
+  cases this
+
+/-- ENC hydro heat claim likewise never underwrites allocator discharge. -/
+theorem enc_hydro_does_not_entail_mev_allocator_discharge
+    {kinds : List MevAllocatorEvidenceKind}
+    (h : MevAllocatorEvidenceKind.encHydroHeatClaim ∈ kinds) :
+    ¬ MevRemainderAllocatorDischarge kinds := by
+  intro hDisc
+  have : MevAllocatorEvidenceKind.encHydroHeatClaim =
+      MevAllocatorEvidenceKind.constrainedPhononNuclearMatrix :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: collapse + bubble + ENC hydro keep allocator / Q1 open. -/
+theorem collapse_bubble_enc_hydro_keep_mev_open
+    (gammaBranchingMilli : Nat) (hBr : gammaBranchingMilli ≤ 998)
+    {a : LicensedAllocation} (hCaps : WithinCaps a (engineCaps gammaBranchingMilli))
+    (collapseClaimKeV encClaimKeV : Nat) :
+    ¬ MevRemainderAllocatorDischarge
+        [MevAllocatorEvidenceKind.collapseHydrodynamicsHeat,
+          MevAllocatorEvidenceKind.bubbleCollapseHeatClaim,
+          MevAllocatorEvidenceKind.encHydroHeatClaim]
+      ∧ collapseHydroIsMevAllocator = false
+      ∧ bubbleCollapseHeatIsMevAllocator = false
+      ∧ ¬ q1MeVEnergyGapClosed
+          (openRemainderWithHydro qDD_He4_keV a collapseClaimKeV encClaimKeV)
+      ∧ mevCollapseLenrProved = false := by
+  refine ⟨?_, collapse_hydro_is_not_mev_allocator,
+    bubble_collapse_heat_is_not_mev_allocator,
+    hydro_claims_keep_q1_open gammaBranchingMilli hBr hCaps collapseClaimKeV
+      encClaimKeV,
+    mev_collapse_lenr_proved_false⟩
+  exact collapse_hydro_does_not_entail_mev_allocator_discharge (by simp)
+
+/-- EQ-MEV-COLLAPSE-NC-01 ∘ EQ-OPEN-MEV-01: arbitrary collapse / bubble heat
+    claims allocate 0 keV and never close Q1 under engine caps. -/
+theorem collapse_hydro_does_not_close_q1
+    (collapseClaimKeV : Nat)
+    (gammaBranchingMilli : Nat) (hBr : gammaBranchingMilli ≤ 998)
+    {a : LicensedAllocation} (hCaps : WithinCaps a (engineCaps gammaBranchingMilli)) :
+    nuclearAllocationKeV .collapseHydro collapseClaimKeV = 0
+      ∧ ¬ MevRemainderAllocatorDischarge
+          [MevAllocatorEvidenceKind.collapseHydrodynamicsHeat,
+            MevAllocatorEvidenceKind.bubbleCollapseHeatClaim]
+      ∧ ¬ q1MeVEnergyGapClosed
+          (openRemainderWithHydro qDD_He4_keV a collapseClaimKeV 0)
+      ∧ collapseHydroIsMevAllocator = false
+      ∧ mevCollapseLenrProved = false := by
+  refine ⟨rfl, ?_,
+    hydro_claims_keep_q1_open gammaBranchingMilli hBr hCaps collapseClaimKeV 0,
+    collapse_hydro_is_not_mev_allocator, mev_collapse_lenr_proved_false⟩
+  exact collapse_hydro_does_not_entail_mev_allocator_discharge (by simp)
+
+/-- Even a (hypothetical) constrained-matrix allocator bag does not flip
+    `lenr_proved`. -/
+theorem mev_remainder_allocator_discharge_does_not_flip_lenr
+    {kinds : List MevAllocatorEvidenceKind}
+    (_h : MevRemainderAllocatorDischarge kinds) :
+    mevCollapseLenrProved = false :=
+  mev_collapse_lenr_proved_false
 
 end LenrFormal.MeVRemainderCaps

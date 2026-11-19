@@ -92,6 +92,8 @@ class ShouldersEVOTheory:
                 "nuclear_rate_law": "not_implemented_no_invented_author_rate",
                 "cluster_charge_q": "exploratory_free_parameter",
                 "observer_geometry": geom,
+                "energy_output_watts": "stub_zero_until_cite_gated_calorimetry",
+                "claimed_mass_defect_mev": "none_no_author_mev_label",
             },
             free_or_fitted_parameters=[
                 {"name": "cluster_charge_q", "kind": "free", "source": "simulator"},
@@ -109,6 +111,9 @@ class ShouldersEVOTheory:
             provenance={
                 "implementation_role": "phenomenological_stub",
                 "no_invented_rate_law": True,
+                "lenr_proved": False,
+                "eq_open_closed": False,
+                "discovery_moe": False,
                 "p1_rebuild_status": "started_scaffold",
                 "p1_rebuild_targets": [
                     "phenomenological_branch_network",

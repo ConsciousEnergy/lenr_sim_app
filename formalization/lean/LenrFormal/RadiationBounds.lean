@@ -2,8 +2,11 @@ import LenrFormal.WorkingHypothesisBounds
 import LenrFormal.RealShim
 
 /-!
-RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound) and EQ-RAD-DET-01
-(detector-UL honesty flag mirrors) for paper §5A.2 / EQ-OPEN-RAD-01.
+RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound), EQ-RAD-DET-01
+(detector-UL honesty flag mirrors), EQ-RAD-EFF-NC-01 (bare UL without
+efficiency/geometry ⇏ Q2), and EQ-RAD-COINC-NC-01 (bare UL without
+efficiency/geometry/time-coincidence ⇏ γ BR discharge) for paper §5A.2 /
+EQ-OPEN-RAD-01.
 
 EQ-WH-FC-02 universalises EQ-WH-FC-01: for every Huang–Rhys factor on the
 licensed scan domain and every phonon order above a stated floor, the
@@ -20,6 +23,15 @@ EQ-RAD-DET-01 mirrors `branching_model.py` detector flags as Bool defs. They
 are interpretation falsifiers (`detector_ul_not_proof`), not measured
 branching. CR-39 pits under electrolytic cavitation (pyyhtia2026) are a
 detector confounder, not an input here; collapse hydro is not γ suppression.
+
+EQ-RAD-CR39-NC-01 (BDS-394) densifies that honesty: CR-39 / track-etch
+confounder evidence kinds never inhabit a γ-suppression proof bag and never
+discharge EQ-OPEN-RAD-01 / flip `lenr_proved`.
+
+EQ-RAD-COINC-NC-01 (BDS-398) densifies bare detector UL without
+efficiency / geometry / time-coincidence provenance: those kinds never
+inhabit `GammaBrDischarge` and never close Q2. Distinct from EQ-RAD-EFF-NC-01
+(`DetectorUlProvenance` eligibility) and EQ-RAD-CR39-NC-01 (track-etch).
 
 BOUNDED / class-DISPROVEN only. EQ-OPEN-RAD-01 stays OPEN.
 There is no theorem lenr_occurs.
@@ -277,6 +289,238 @@ theorem fc_class_trips_sub_unity_ul (S N ul : Nat) (hS : S ≤ sGridMax)
     decide_eq_true_eq]
   exact ⟨by decide, hul⟩
 
+/-! ### EQ-RAD-CR39-NC-01 — CR-39 / track-etch ⇏ γ-suppression proof (BDS-394) -/
+
+/-- Provenance kind for CR-39 / track-etch detector evidence on RAD surfaces. -/
+inductive TrackEtchEvidenceKind where
+  /-- Electrolytic HER nanobubble cavitation CR-39 pits (pyyhtia2026 confounder). -/
+  | cr39PitUnderElectrolyticCavitation
+  /-- SPAWAR / Mosier-Boss-class pit=nuclear claim (contested interpretation). -/
+  | spaWarClassPitEqualsNuclear
+  /-- Shallow polymer pit morphology (vs deep α tracks). -/
+  | shallowPolymerPit
+  /-- Cite-gated calibrated γ BR ≤ efficiency-corrected UL under stated geometry. -/
+  | calibratedGammaBrUl
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: a γ-suppression proof bag requires calibrated BR_γ UL
+    provenance. Track-etch confounders never supply that. -/
+def GammaSuppressionProof (kinds : List TrackEtchEvidenceKind) : Prop :=
+  kinds ≠ [] ∧ ∀ k ∈ kinds, k = TrackEtchEvidenceKind.calibratedGammaBrUl
+
+/-- Hard honesty: nature-proof token stays false on RAD / CR-39 surfaces. -/
+def lenrProved : Bool := false
+
+theorem rad_lenr_proved_false : lenrProved = false := rfl
+
+/-- Cite key mirror for the Pyyhtiä 2026 CR-39 cavitation confounder. -/
+def cr39ConfounderCitationKey : String := "pyyhtia2026"
+
+theorem cr39_confounder_citation_key_value :
+    cr39ConfounderCitationKey = "pyyhtia2026" := rfl
+
+/-- CR-39 / track-etch pits are never themselves a γ-suppression proof. -/
+def cr39TrackEtchIsGammaSuppressionProof : Bool := false
+
+theorem cr39_track_etch_is_not_gamma_suppression_proof :
+    cr39TrackEtchIsGammaSuppressionProof = false := rfl
+
+/-- CR-39 confounder evidence never equals EQ-OPEN-RAD-01 discharge. -/
+def cr39ConfounderClosesEqOpenRad : Bool := false
+
+theorem cr39_confounder_does_not_close_eq_open_rad :
+    cr39ConfounderClosesEqOpenRad = false := rfl
+
+/-- EQ-RAD-CR39-NC-01: a bag containing electrolytic CR-39 pits is not a
+    γ-suppression proof. -/
+theorem cr39_pit_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- EQ-RAD-CR39-NC-01: SPAWAR-class pit=nuclear claims likewise never inhabit
+    a γ-suppression proof bag. -/
+theorem spa_war_pit_claim_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- EQ-RAD-CR39-NC-01: shallow polymer pits (morphology confounder) ⇏ proof. -/
+theorem shallow_polymer_pit_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.shallowPolymerPit ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.shallowPolymerPit =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- Instantiation: CR-39 confounder bag alone keeps RAD open / `lenr_proved` false. -/
+theorem cr39_confounder_alone_keeps_rad_open :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation]
+      ∧ cr39TrackEtchIsGammaSuppressionProof = false
+      ∧ cr39ConfounderClosesEqOpenRad = false
+      ∧ cr39ConfounderCitationKey = "pyyhtia2026"
+      ∧ lenrProved = false := by
+  refine ⟨?_, cr39_track_etch_is_not_gamma_suppression_proof,
+    cr39_confounder_does_not_close_eq_open_rad,
+    cr39_confounder_citation_key_value, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-- Mixed confounder bag (CR-39 + SPAWAR-class claim) still ⇏ γ-suppression. -/
+theorem cr39_with_spa_war_claim_keeps_rad_open :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation,
+          TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear]
+      ∧ lenrProved = false := by
+  refine ⟨?_, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-- Even a (hypothetical) calibrated-UL γ-suppression proof bag does not flip
+    `lenr_proved` and does not by itself invent measured lattice Γ_ph/Γ_γ. -/
+theorem gamma_suppression_proof_does_not_flip_lenr
+    {kinds : List TrackEtchEvidenceKind}
+    (_h : GammaSuppressionProof kinds) :
+    lenrProved = false
+      ∧ cr39ConfounderClosesEqOpenRad = false :=
+  ⟨rad_lenr_proved_false, cr39_confounder_does_not_close_eq_open_rad⟩
+
+/-- EQ-RAD-CR39-NC-01 ∘ EQ-OPEN-RAD-01: CR-39 confounder evidence does not
+    discharge Q2 under open γ branching (branching above UL). -/
+theorem cr39_confounder_does_not_discharge_q2
+    (gammaBranching upperBound : Nat)
+    (hOpen : upperBound < gammaBranching) :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation]
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching upperBound
+      ∧ cr39TrackEtchIsGammaSuppressionProof = false
+      ∧ cr39ConfounderClosesEqOpenRad = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, gamma_above_bound_implies_q2_not_closed hOpen,
+    cr39_track_etch_is_not_gamma_suppression_proof,
+    cr39_confounder_does_not_close_eq_open_rad, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-! ### EQ-RAD-COINC-NC-01 — bare UL without coincidence provenance ⇏ γ BR (BDS-398)
+
+EQ-OPEN-RAD-01 affirmative discharge needs time-correlated heat + γ with
+calibrated efficiency and documented geometry. Bare detector UL ingest,
+efficiency-only, or geometry-only provenance never inhabit that witness.
+
+Distinct from EQ-RAD-EFF-NC-01 (`DetectorUlProvenance` eligibility flags) and
+EQ-RAD-CR39-NC-01 (`TrackEtchEvidenceKind` / `GammaSuppressionProof`): this
+densifies **coincidence / γ-BR discharge evidence kinds**.
+-/
+
+/-- Provenance kind for detector UL / coincidence surfaces on RAD. -/
+inductive RadCoincidenceEvidenceKind where
+  /-- Bare detector γ UL ingest with no efficiency/geometry/coincidence. -/
+  | bareDetectorUl
+  /-- Efficiency-calibrated UL without documented geometry or time coincidence. -/
+  | efficiencyCalibratedOnly
+  /-- Geometry-documented UL without efficiency calibration or time coincidence. -/
+  | geometryDocumentedOnly
+  /-- Time-correlated heat+γ with calibrated efficiency and documented geometry. -/
+  | timeCoincidenceHeatGamma
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: γ BR discharge requires time-coincidence heat+γ provenance.
+    Bare UL / partial efficiency / geometry alone never inhabit it. -/
+def GammaBrDischarge (kinds : List RadCoincidenceEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds, k = RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma
+
+/-- Hard honesty: bare detector UL is never itself γ BR discharge. -/
+def bareDetectorUlIsGammaBrDischarge : Bool := false
+
+theorem bare_detector_ul_is_not_gamma_br_discharge :
+    bareDetectorUlIsGammaBrDischarge = false := rfl
+
+/-- EQ-RAD-COINC-NC-01: a bag containing bare detector UL is not γ BR discharge. -/
+theorem bare_detector_ul_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.bareDetectorUl ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.bareDetectorUl =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Efficiency-only provenance likewise never underwrites γ BR discharge. -/
+theorem efficiency_only_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.efficiencyCalibratedOnly ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.efficiencyCalibratedOnly =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Geometry-only provenance likewise never underwrites γ BR discharge. -/
+theorem geometry_only_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.geometryDocumentedOnly ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.geometryDocumentedOnly =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: bare UL alone keeps RAD open / `lenr_proved` false. -/
+theorem bare_detector_ul_alone_keeps_rad_open :
+    ¬ GammaBrDischarge [RadCoincidenceEvidenceKind.bareDetectorUl]
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- Mixed bag: bare UL + efficiency-only + geometry-only still ⇏ discharge. -/
+theorem bare_ul_with_partial_provenance_keeps_rad_open :
+    ¬ GammaBrDischarge
+        [RadCoincidenceEvidenceKind.bareDetectorUl,
+          RadCoincidenceEvidenceKind.efficiencyCalibratedOnly,
+          RadCoincidenceEvidenceKind.geometryDocumentedOnly]
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- EQ-RAD-COINC-NC-01 ∘ EQ-OPEN-RAD-01: bare UL without time-coincidence
+    never closes Q2 under open γ branching. -/
+theorem bare_ul_without_coincidence_does_not_close_q2
+    (gammaBranching upperBound : Nat)
+    (hOpen : upperBound < gammaBranching) :
+    ¬ GammaBrDischarge [RadCoincidenceEvidenceKind.bareDetectorUl]
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching upperBound
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, gamma_above_bound_implies_q2_not_closed hOpen,
+    bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- Even a (hypothetical) time-coincidence γ BR discharge bag does not flip
+    `lenr_proved`. -/
+theorem gamma_br_discharge_does_not_flip_lenr
+    {kinds : List RadCoincidenceEvidenceKind}
+    (_h : GammaBrDischarge kinds) :
+    lenrProved = false :=
+  rad_lenr_proved_false
+
 /-! ### Paper §5A.2 alias -/
 
 /-- Paper §5A.2 `HarmonicDosNonClosure`: harmonic DOS (EQ-WH-BOUND-01) and the
@@ -294,5 +538,56 @@ theorem harmonic_dos_non_closure :
     fun S N ul hS hN hul =>
       gamma_above_bound_implies_q2_not_closed
         (by rw [fc_gamma_branching_full S N hS hN]; exact hul)⟩
+
+/-! ### EQ-RAD-EFF-NC-01 — detector UL without efficiency/geometry ⇏ Q2
+
+Affirmative EQ-OPEN-RAD-01 underwriting needs time-correlated heat + γ with
+**calibrated efficiency and geometry**. A bare detector UL (or UL flag) without
+those provenance conjuncts does not underwrite Q2. -/
+
+/-- Detector γ-UL provenance for RAD-01 underwriting. -/
+structure DetectorUlProvenance where
+  ulMilli : Nat
+  efficiencyCalibrated : Bool
+  geometryDocumented : Bool
+  heatCoincidence : Bool
+
+/-- Eligible only with calibrated efficiency, documented geometry, and heat coincidence. -/
+def DetectorUlProvenance.Eligible (p : DetectorUlProvenance) : Prop :=
+  p.efficiencyCalibrated = true ∧
+    p.geometryDocumented = true ∧
+    p.heatCoincidence = true ∧
+    0 < p.ulMilli
+
+/-- Bare UL ingest (no efficiency / geometry / coincidence). -/
+def bareDetectorUl (ulMilli : Nat) : DetectorUlProvenance :=
+  { ulMilli := ulMilli
+    efficiencyCalibrated := false
+    geometryDocumented := false
+    heatCoincidence := false }
+
+theorem bare_detector_ul_not_Eligible (ulMilli : Nat) :
+    ¬ (bareDetectorUl ulMilli).Eligible := by
+  intro h
+  unfold DetectorUlProvenance.Eligible bareDetectorUl at h
+  exact Bool.noConfusion h.1
+
+/-- EQ-RAD-DET-01 UL flag under a bare (ineligible) UL does not close Q2. -/
+theorem ineligible_detector_ul_does_not_close_q2
+    (p : DetectorUlProvenance)
+    (h : ¬ p.Eligible)
+    (gammaBranching : Nat) :
+    ¬ (p.Eligible ∧ q2RadiationSuppressionClosed gammaBranching p.ulMilli) := by
+  intro ⟨he, _⟩
+  exact h he
+
+theorem bare_detector_ul_does_not_close_q2
+    (ulMilli gammaBranching : Nat) :
+    ¬ ((bareDetectorUl ulMilli).Eligible ∧
+        q2RadiationSuppressionClosed gammaBranching ulMilli) :=
+  ineligible_detector_ul_does_not_close_q2
+    (bareDetectorUl ulMilli)
+    (bare_detector_ul_not_Eligible ulMilli)
+    gammaBranching
 
 end LenrFormal.RadiationBounds

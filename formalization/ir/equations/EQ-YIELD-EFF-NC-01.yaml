@@ -1,0 +1,23 @@
+id: EQ-YIELD-EFF-NC-01
+latex: "\\neg\\mathrm{Eligible}(\\mathrm{HeYieldEfficiencyProvenance})\\nRightarrow q_5\\mathrm{IntegratedYieldClosed};\\quad \\mathrm{MilesEMP}\\nRightarrow\\mathrm{efficiencyProvenance}"
+symbols:
+  HeYieldEfficiencyProvenance: "retention/collection efficiency + calibration + simultaneous heat+He flags"
+  Eligible: "calibrated ∧ simultaneousHeatHe ∧ retention>0 ∧ collection>0"
+  milesEmpLacksEfficiencyProvenance: "instantaneous Miles EMP posture with zero efficiency provenance"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§5A.5 EQ-OPEN-YIELD-01; EQ_OPEN_CLOSURE_RUNWAY affirmative discharge"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+lean_target: LenrFormal.YieldAccounting
+lean_decls:
+  - "LenrFormal.YieldAccounting.HeYieldEfficiencyProvenance"
+  - "LenrFormal.YieldAccounting.HeYieldEfficiencyProvenance.Eligible"
+  - "LenrFormal.YieldAccounting.milesEmpLacksEfficiencyProvenance"
+  - "LenrFormal.YieldAccounting.miles_emp_lacks_efficiency_not_Eligible"
+  - "LenrFormal.YieldAccounting.expected_yield_bookkeeping_keeps_miles_emp_ineligible"
+notes: "AX honesty: EQ-OPEN-YIELD-01 affirmative discharge needs time-resolved simultaneous calorimetry + He with retention/collection efficiency provenance. Instantaneous Miles EMP band membership and EQ-YIELD-ACCT-01 expected-yield bookkeeping supply none of that. OpenQuestionBounds twins: ineligible_he_efficiency_does_not_close_q5 / miles_emp_without_efficiency_does_not_close_q5. Complements EQ-OPEN-YIELD-NC-01 / EQ-HEAT-SIG-NC-01. EQ-OPEN-YIELD-01 stays OPEN; lenr_proved stays false."

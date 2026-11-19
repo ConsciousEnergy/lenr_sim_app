@@ -1,0 +1,29 @@
+id: EQ-YIELD-SIMULT-NC-01
+latex: "\\mathrm{nonSimultaneousHeCalo}\\lor\\mathrm{efficiencyLessHeCalo}\\nRightarrow\\mathrm{SimultaneousPairedYieldDischarge};\\quad\\nRightarrow q_5\\mathrm{IntegratedYieldClosed}"
+symbols:
+  HeCaloPairingEvidenceKind: "non-simultaneous / efficiency-less / sequential / calibrated simultaneous He+calorimetry"
+  SimultaneousPairedYieldDischarge: "bag of calibrated simultaneous He+calo only"
+  nonSimultaneousHeCaloPairing: "He and calorimetry in different campaigns / non-overlapping windows"
+  efficiencyLessHeCaloPairing: "He+heat without retention/collection efficiency"
+  calibratedSimultaneousHeCalo: "cite-gated time-resolved simultaneous heat+He with calibrated efficiencies"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§5A.5 / BDS-400 / miles1993"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+lean_target: LenrFormal.YieldAccounting
+lean_decls:
+  - "LenrFormal.YieldAccounting.HeCaloPairingEvidenceKind"
+  - "LenrFormal.YieldAccounting.SimultaneousPairedYieldDischarge"
+  - "LenrFormal.YieldAccounting.non_simultaneous_pairing_does_not_entail_paired_yield_discharge"
+  - "LenrFormal.YieldAccounting.efficiency_less_pairing_does_not_entail_paired_yield_discharge"
+  - "LenrFormal.YieldAccounting.sequential_pairing_does_not_entail_paired_yield_discharge"
+  - "LenrFormal.YieldAccounting.non_simultaneous_with_efficiency_less_keeps_yield_open"
+  - "LenrFormal.YieldAccounting.sequential_with_efficiency_less_keeps_yield_open"
+  - "LenrFormal.YieldAccounting.simultaneous_paired_yield_discharge_does_not_flip_lenr"
+notes: "AX honesty (BDS-400): non-simultaneous or efficiency-less He+calorimetry pairing never supplies SimultaneousPairedYieldDischarge and never closes EQ-OPEN-YIELD-01 / flips lenr_proved. Densifies EQ-OPEN-YIELD-01 still_missing (time-resolved simultaneous heat + He). Distinct from EQ-YIELD-EFF-NC-01 (HeYieldEfficiencyProvenance eligibility) and EQ-YIELD-MILES-EMP-NC-01 (Miles EMP kinds / IntegratedYieldDischarge). OpenQuestionBounds twins: non_simultaneous_he_calo_does_not_close_q5 / efficiency_less_he_calo_does_not_close_q5 / non_simultaneous_efficiency_less_do_not_close_q5. EQ-OPEN-YIELD-01 stays OPEN."

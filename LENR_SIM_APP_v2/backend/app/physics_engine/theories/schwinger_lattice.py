@@ -116,6 +116,9 @@ class SchwingerLatticeTheory:
                 "nuclear_rate_law": "not_implemented_no_invented_author_rate",
                 "hd_sensitivity_index": "simulator_qualitative_parameterization",
                 "lattice_coherence_label": coherence,
+                "energy_output_watts": "stub_zero_until_cite_gated_calorimetry",
+                "h_fraction_in_d2o": "exploratory_free_parameter",
+                "claimed_mass_defect_mev": "none_no_author_mev_label",
             },
             free_or_fitted_parameters=[
                 {
@@ -145,6 +148,9 @@ class SchwingerLatticeTheory:
             provenance={
                 "implementation_role": "historical_control_scaffold",
                 "no_invented_rate_law": True,
+                "lenr_proved": False,
+                "eq_open_closed": False,
+                "discovery_moe": False,
                 "control_role": "",
                 "hd_critical_experiment": True,
                 "p1_rebuild_status": "not_started",

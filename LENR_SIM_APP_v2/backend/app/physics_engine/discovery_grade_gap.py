@@ -260,11 +260,74 @@ def honest_closure_bookkeeping(
         "missing_ids": [row["id"] for row in missing],
         "lenr_proved": False,
         "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
+        # BDS-375 / UTF History parity: planned DAQ sample-v1 never attests
+        # measurements and never discharges EQ-OPEN / lenr_proved.
+        "daq_sample_provenance": {
+            "schema_id": "lenr-ara-daq-sample-v1",
+            "trust_plane": "daq",
+            "ingest_status": "planned_not_attested",
+            "refuse_fabricated_samples": True,
+            "lenr_proved_default": False,
+            "closes_eq_open": False,
+            # EQ-RATE-DAQ-OCC-NC-01 twin: sample-v1 has no n_occ / f_nuc fields.
+            "exposes_occupancy_observables": False,
+            "rate_occupancy_underwrite_eligible": False,
+            "lean_rate_daq_occ_nc_bound": "EQ-RATE-DAQ-OCC-NC-01",
+        },
+        # EQ-YIELD-EFF-NC-01 twin: Miles EMP / expected yield ≠ efficiency provenance.
+        "he_yield_efficiency_provenance": {
+            "retention_efficiency_calibrated": False,
+            "collection_efficiency_calibrated": False,
+            "simultaneous_heat_he": False,
+            "eligible_for_q5_underwrite": False,
+            "miles_emp_alone_closes_q5": False,
+            "lean_yield_eff_nc_bound": "EQ-YIELD-EFF-NC-01",
+        },
+        # EQ-RAD-EFF-NC-01 twin: bare γ UL without efficiency/geometry ⇏ Q2.
+        "detector_ul_provenance": {
+            "efficiency_calibrated": False,
+            "geometry_documented": False,
+            "heat_coincidence": False,
+            "eligible_for_q2_underwrite": False,
+            "bare_ul_closes_q2": False,
+            "lean_rad_eff_nc_bound": "EQ-RAD-EFF-NC-01",
+        },
+        # EQ-MEV-LABEL-NC-01 twin: named WH labels ≠ constrained |M|² / occupation.
+        "mev_channel_provenance": {
+            "named_hypotheses_are_labels_only": True,
+            "matrix_element_constrained": False,
+            "occupation_constrained": False,
+            "eligible_for_q1_underwrite": False,
+            "labeled_hypothesis_closes_q1": False,
+            "lean_mev_label_nc_bound": "EQ-MEV-LABEL-NC-01",
+        },
+        # EQ-EC-UI-NC-01 twin: UI gap cosmetics ≠ independent EC path measurement.
+        "ec_path_provenance": {
+            "ui_cosmetic_only": True,
+            "independent_measurement": False,
+            "mass_renorm_domain_gates_met": False,
+            "eligible_for_q4_underwrite": False,
+            "ui_gap_closes_q4": False,
+            "lean_ec_ui_nc_bound": "EQ-EC-UI-NC-01",
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
             "implies closure. Campaign / avenue / Lean outputs never set "
-            "lenr_proved or close EQ-OPEN-*."
+            "lenr_proved or close EQ-OPEN-*. Planned lenr-ara-daq-sample-v1 "
+            "ingest stays non-attested and never discharges obligations. "
+            "Planned DAQ occupancy/collective Nat pairs stay ineligible for "
+            "EQ-OPEN-RATE-01 underwriting (EQ-RATE-DAQ-OCC-NC-01). "
+            "Miles EMP / expected-yield bookkeeping without retention/"
+            "collection efficiency provenance never closes EQ-OPEN-YIELD-01 "
+            "(EQ-YIELD-EFF-NC-01). "
+            "Bare detector γ UL without efficiency/geometry/heat-coincidence "
+            "never closes EQ-OPEN-RAD-01 (EQ-RAD-EFF-NC-01). "
+            "Named Hagelstein/Dicke/BEC labels without constrained matrix "
+            "element + occupation never close EQ-OPEN-MEV-01 "
+            "(EQ-MEV-LABEL-NC-01). "
+            "UI gap-to-threshold cosmetics / Widom scaffold without independent "
+            "measurement never close EQ-OPEN-EC-01 (EQ-EC-UI-NC-01)."
         ),
     }
 

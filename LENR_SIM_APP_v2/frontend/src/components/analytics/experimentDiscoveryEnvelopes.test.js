@@ -23,12 +23,27 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.quantitativeDistance.distance_status).toBe('undefined');
     expect(envelopes.quantitativeDistance.lenr_proved).toBe(false);
     expect(envelopes.empWhyNotDiscovery).toBeNull();
+    expect(envelopes.daqSampleProvenance.schema_id).toBe('lenr-ara-daq-sample-v1');
+    expect(envelopes.daqSampleProvenance.ingest_status).toBe('planned_not_attested');
+    expect(envelopes.daqSampleProvenance.closes_eq_open).toBe(false);
+    expect(envelopes.honestClosure.daq_sample_provenance.ingest_status).toBe(
+      'planned_not_attested',
+    );
     expect(envelopes.honestClosure.missing_ids).toEqual(
       expect.arrayContaining(['eq_open_discharge', 'governance_signoff']),
     );
     expect(
       Object.values(envelopes.honestClosure.eq_open_status).every((v) => v === 'OPEN'),
     ).toBe(true);
+  });
+
+  test('resolves Celani EMP why-not-discovery without inventing eligibility', () => {
+    const why = resolveEmpWhyNotDiscovery({ literature_id: 'celani-constantan-2019' });
+    expect(why).not.toBeNull();
+    expect(why.discovery_grade_eligible).toBe(false);
+    expect(why.distance_status).toBe('at_or_above_bar_gates_blocked');
+    expect(why.s_heat_exploratory).toBe(6);
+    expect(why.moe_provenance).toMatch(/instrument_precision/);
   });
 
   test('resolves Miles EMP why-not-discovery without inventing eligibility', () => {

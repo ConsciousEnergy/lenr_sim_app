@@ -1,0 +1,38 @@
+id: EQ-MEV-COLLAPSE-NC-01
+latex: "\\mathrm{collapseHydrodynamicsHeat}\\lor\\mathrm{bubbleCollapseHeatClaim}\\lor\\mathrm{encHydroHeatClaim}\\nRightarrow\\mathrm{MevRemainderAllocatorDischarge};\\quad\\nRightarrow q_1\\mathrm{MeVEnergyGapClosed}"
+symbols:
+  MevAllocatorEvidenceKind: "collapse hydro / bubble-collapse heat / ENC hydro / constrained phonon→nuclear matrix"
+  MevRemainderAllocatorDischarge: "bag of constrainedPhononNuclearMatrix only"
+  collapseHydroIsMevAllocator: "false — CollapseBounds hydro never allocate MeV remainder"
+  bubbleCollapseHeatIsMevAllocator: "false — bubble-collapse heat never allocate MeV remainder"
+  allocatesMeVRemainder: "collapseHydro / encHydro → false; phonon/γ/recoil → true"
+units: "dimensionless (provenance tag) / keV Nat for hydro claims"
+tag: AX
+paper_ref: "§5A.1 / BDS-401 / hagelstein2025"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_1
+lean_target: LenrFormal.MeVRemainderCaps
+lean_decls:
+  - "LenrFormal.MeVRemainderCaps.MevAllocatorEvidenceKind"
+  - "LenrFormal.MeVRemainderCaps.MevRemainderAllocatorDischarge"
+  - "LenrFormal.MeVRemainderCaps.collapseHydroIsMevAllocator"
+  - "LenrFormal.MeVRemainderCaps.bubbleCollapseHeatIsMevAllocator"
+  - "LenrFormal.MeVRemainderCaps.mevCollapseLenrProved"
+  - "LenrFormal.MeVRemainderCaps.collapse_hydro_is_not_mev_allocator"
+  - "LenrFormal.MeVRemainderCaps.bubble_collapse_heat_is_not_mev_allocator"
+  - "LenrFormal.MeVRemainderCaps.mev_collapse_lenr_proved_false"
+  - "LenrFormal.MeVRemainderCaps.collapse_hydro_does_not_entail_mev_allocator_discharge"
+  - "LenrFormal.MeVRemainderCaps.bubble_collapse_heat_does_not_entail_mev_allocator_discharge"
+  - "LenrFormal.MeVRemainderCaps.enc_hydro_does_not_entail_mev_allocator_discharge"
+  - "LenrFormal.MeVRemainderCaps.collapse_bubble_enc_hydro_keep_mev_open"
+  - "LenrFormal.MeVRemainderCaps.collapse_hydro_does_not_close_q1"
+  - "LenrFormal.MeVRemainderCaps.mev_remainder_allocator_discharge_does_not_flip_lenr"
+  - "LenrFormal.MeVRemainderCaps.allocatesMeVRemainder"
+  - "LenrFormal.MeVRemainderCaps.hydro_channels_allocate_zero"
+  - "LenrFormal.MeVRemainderCaps.hydro_claims_do_not_change_remainder"
+  - "LenrFormal.MeVRemainderCaps.hydro_claims_keep_q1_open"
+notes: "AX honesty (BDS-401): collapse hydrodynamics / bubble-collapse heat / ENC hydro never inhabit MevRemainderAllocatorDischarge and never close EQ-OPEN-MEV-01 / flip lenr_proved. Densifies the hydro≠allocator honesty already used by EQ-WH-MEV-CAP-01 into an evidence-kind NC on MeVRemainderCaps. Distinct from EQ-MEV-LABEL-NC-01 (MeVGapHypothesis eligibility) and EQ-MEV-MATRIX-NC-01 (matrix/occupation kinds on WorkingHypothesis). EQ-OPEN-MEV-01 stays OPEN; constrained phonon→nuclear matrix remains still_missing."

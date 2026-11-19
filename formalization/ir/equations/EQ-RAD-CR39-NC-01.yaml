@@ -1,0 +1,30 @@
+id: EQ-RAD-CR39-NC-01
+latex: "\\mathrm{cr39Pit}\\in K \\Rightarrow \\neg\\,\\mathrm{GammaSuppressionProof}(K);\\quad \\mathrm{GammaSuppressionProof}(K) \\iff K\\neq\\emptyset\\wedge\\forall k\\in K,\\ k=\\mathrm{calibratedGammaBrUl}"
+symbols:
+  K: "provenance kinds of track-etch / CR-39 detector evidence on a RAD row"
+  cr39Pit: "electrolytic HER nanobubble cavitation CR-39 pit (pyyhtia2026 confounder)"
+  spaWarClassPitEqualsNuclear: "SPAWAR / Mosier-Boss-class pit=nuclear claim"
+  shallowPolymerPit: "shallow polymer pit morphology vs deep alpha tracks"
+  calibratedGammaBrUl: "cite-gated calibrated gamma BR <= efficiency-corrected UL under stated geometry"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§5A.2 / BDS-394 / pyyhtia2026"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+  - LENR_SIM_APP_v2/docs/v0.3.7-beta/PHYSICS_MATURITY_LEDGER.md
+citation_keys:
+  - pyyhtia2026
+  - paper_5A_2
+lean_target: LenrFormal.RadiationBounds
+lean_decls:
+  - "LenrFormal.RadiationBounds.TrackEtchEvidenceKind"
+  - "LenrFormal.RadiationBounds.GammaSuppressionProof"
+  - "LenrFormal.RadiationBounds.cr39ConfounderCitationKey"
+  - "LenrFormal.RadiationBounds.cr39_pit_does_not_entail_gamma_suppression_proof"
+  - "LenrFormal.RadiationBounds.spa_war_pit_claim_does_not_entail_gamma_suppression_proof"
+  - "LenrFormal.RadiationBounds.shallow_polymer_pit_does_not_entail_gamma_suppression_proof"
+  - "LenrFormal.RadiationBounds.cr39_confounder_alone_keeps_rad_open"
+  - "LenrFormal.RadiationBounds.cr39_with_spa_war_claim_keeps_rad_open"
+  - "LenrFormal.RadiationBounds.gamma_suppression_proof_does_not_flip_lenr"
+  - "LenrFormal.RadiationBounds.cr39_confounder_does_not_discharge_q2"
+notes: "AX honesty (BDS-394): CR-39 / track-etch confounder evidence (pyyhtia2026 electrolytic cavitation pits; SPAWAR-class pit=nuclear claims; shallow polymer pits) never supplies cite-gated calibrated gamma BR UL proof and never discharges EQ-OPEN-RAD-01 or flips lenr_proved. Complements EQ-RAD-DET-01 detector-flag DEFs and EQ-WH-FC-02 class bounds. Distinct from EQ-RAD-EFF-NC-01 (bare UL efficiency provenance)."

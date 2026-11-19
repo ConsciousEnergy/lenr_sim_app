@@ -7,11 +7,11 @@ import { render, screen } from '../../tests/test-utils';
 import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
 
 describe('EmpExploratoryWhyNotDiscovery', () => {
-  test('surfaces 2/25 coverage and Miles exploratory reasons without ≥5σ met', () => {
+  test('surfaces 2/26 coverage and Miles exploratory reasons without ≥5σ met', () => {
     render(<EmpExploratoryWhyNotDiscovery testIdPrefix="emp-test" />);
     expect(screen.getByTestId('emp-test-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('emp-test-pairing-chip')).toHaveTextContent(/2\/25/);
-    expect(screen.getByTestId('emp-test-eligible-chip')).toHaveTextContent(/2\/25/);
+    expect(screen.getByTestId('emp-test-pairing-chip')).toHaveTextContent(/2\/26/);
+    expect(screen.getByTestId('emp-test-eligible-chip')).toHaveTextContent(/2\/26/);
     expect(screen.getByTestId('emp-test-inventory-chip')).toHaveTextContent(
       /inventory exhausted/i,
     );
@@ -36,6 +36,12 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-lean-lab-ask')).toHaveTextContent(
       /lab-ask ≠ EQ-OPEN/i,
     );
+    expect(screen.getByTestId('emp-test-lean-celani')).toHaveTextContent(
+      /Celani exploratory/i,
+    );
+    expect(screen.getByTestId('emp-test-lean-daq')).toHaveTextContent(
+      /DAQ planned ≠ EQ-OPEN/i,
+    );
     expect(screen.getByTestId('emp-test-soft-chip-lock')).toHaveTextContent(
       /soft chip ≠ scientific discharge/i,
     );
@@ -57,28 +63,61 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-lab-ask-ne-discharge')).toHaveTextContent(
       /lab_ask_proxies_do_not_discharge_eq_open/,
     );
+    expect(screen.getByTestId('emp-test-daq-provenance')).toBeInTheDocument();
+    expect(screen.getByTestId('emp-test-daq-provenance-schema')).toHaveTextContent(
+      /lenr-ara-daq-sample-v1|trust_plane=daq|planned_not_attested/,
+    );
+    expect(screen.getByTestId('emp-test-blocked-awaiting-lab-chip')).toHaveTextContent(
+      /blocked_awaiting_lab/,
+    );
+    expect(screen.getByTestId('emp-test-refuse-fabricated-daq-chip')).toHaveTextContent(
+      /refuse fabricated DAQ/i,
+    );
+    expect(screen.getByTestId('emp-test-daq-lenr-proved-false')).toHaveTextContent(
+      /lenr_proved default false/,
+    );
+    expect(screen.getByTestId('emp-test-daq-provenance-honesty')).toHaveTextContent(
+      /refuse fabricated|lab_ask_proxies_do_not_discharge/i,
+    );
     expect(
       screen.getByTestId('emp-test-next-lab-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/cite-gated|YIELD/i);
     expect(
+      screen.getByTestId('emp-test-status-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/blocked_awaiting_lab/);
+    expect(
       screen.getByTestId('emp-test-lab-acceptance-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/literature_reported.*S_heat|moe_sigma_q_pairing_verified/i);
+    ).toHaveTextContent(/Accept when:|literature_reported|S_heat/i);
     expect(
       screen.getByTestId('emp-test-corpus-gap-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/0\/25.*Miles|instrument_precision/i);
+    ).toHaveTextContent(/Corpus gap now:|0\/26|Miles/i);
     expect(
       screen.getByTestId('emp-test-still-open-governed_heat_he_cite_gated_moe'),
-    ).toHaveTextContent(/EQ-OPEN-YIELD-01|lab_ask_proxies_do_not_discharge/i);
+    ).toHaveTextContent(/Still does not discharge:|EQ-OPEN-YIELD/i);
+    expect(
+      screen.getByTestId('emp-test-daq-meta-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/lenr-ara-daq-sample-v1|planned_not_attested|calibration=/);
     expect(
       screen.getByTestId('emp-test-daq-governed_heat_he_cite_gated_moe'),
     ).toHaveTextContent(/excess_power_W|sigma_Q_W|he4_atoms/);
+    expect(
+      screen.getByTestId('emp-test-daq-gap-governed_heat_he_cite_gated_moe'),
+    ).toHaveTextContent(/refuse fabricating/i);
+    expect(
+      screen.getByTestId('emp-test-daq-occupation_rate_caps_measured'),
+    ).toHaveTextContent(/none in sample-v1/i);
+    expect(
+      screen.getByTestId('emp-test-daq-gap-ec_threshold_cm_path'),
+    ).toHaveTextContent(/Refuse fabricating DAQ threshold/i);
     expect(
       screen.getByTestId('emp-test-next-lab-gamma_ul_efficiency_corrected'),
     ).toHaveTextContent(/23\.8 MeV|efficiency/i);
     expect(screen.getByTestId('emp-test-refused-moe')).toHaveTextContent(
       /Refused fabricated MoE/i,
     );
-    expect(screen.getByTestId('emp-test-locked-s-heat')).toHaveTextContent(/13\.75|11\.25|26/);
+    expect(screen.getByTestId('emp-test-locked-s-heat')).toHaveTextContent(
+      /13\.75|11\.25|26|6/,
+    );
     expect(screen.getByTestId('emp-test-refused-iwamura-heat-2024')).toHaveTextContent(
       /REFUSE_FABRICATED_SIGMA_Q/,
     );
@@ -86,17 +125,12 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
       /REFUSE_FABRICATED_SIGMA_Q/,
     );
     expect(screen.getByTestId('emp-test-row-miles-1993')).toHaveTextContent(/Miles/i);
-    expect(screen.getByTestId('emp-test-claim-tier-miles-1993')).toHaveAttribute(
-      'data-claim-tier',
-      'speculative_exploratory',
+    expect(screen.getByTestId('emp-test-row-celani-constantan-2019')).toHaveTextContent(
+      /Celani|12±2|12 ± 2/i,
     );
-    expect(screen.getByTestId('emp-test-s-heat-tier-miles-1993')).toHaveAttribute(
-      'data-claim-tier',
-      'speculative_exploratory',
+    expect(screen.getByTestId('emp-test-distance-celani-constantan-2019')).toHaveTextContent(
+      /at_or_above_bar_gates_blocked/,
     );
-    expect(
-      screen.getByTestId('emp-test-next-lab-tier-gamma_ul_efficiency_corrected'),
-    ).toHaveAttribute('data-claim-tier', 'speculative_exploratory');
     expect(screen.getByTestId('emp-test-distance-miles-1993')).toHaveTextContent(
       /at_or_above_bar_gates_blocked/,
     );

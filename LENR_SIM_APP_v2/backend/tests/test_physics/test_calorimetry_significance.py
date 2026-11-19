@@ -403,6 +403,32 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert closure["lenr_proved"] is False
     assert set(CLOSURE_REQUIREMENT_IDS).issubset(set(closure["missing_ids"]))
     assert all(v == "OPEN" for v in closure["eq_open_status"].values())
+    # EQ-RATE-DAQ-OCC-NC-01 Python twin: planned sample-v1 has no occupancy fields.
+    daq = closure["daq_sample_provenance"]
+    assert daq["exposes_occupancy_observables"] is False
+    assert daq["rate_occupancy_underwrite_eligible"] is False
+    assert daq["lean_rate_daq_occ_nc_bound"] == "EQ-RATE-DAQ-OCC-NC-01"
+    assert daq["closes_eq_open"] is False
+    # EQ-YIELD-EFF-NC-01 Python twin: Miles EMP alone lacks efficiency provenance.
+    he_eff = closure["he_yield_efficiency_provenance"]
+    assert he_eff["eligible_for_q5_underwrite"] is False
+    assert he_eff["miles_emp_alone_closes_q5"] is False
+    assert he_eff["lean_yield_eff_nc_bound"] == "EQ-YIELD-EFF-NC-01"
+    # EQ-RAD-EFF-NC-01 Python twin: bare UL lacks efficiency/geometry provenance.
+    rad = closure["detector_ul_provenance"]
+    assert rad["eligible_for_q2_underwrite"] is False
+    assert rad["bare_ul_closes_q2"] is False
+    assert rad["lean_rad_eff_nc_bound"] == "EQ-RAD-EFF-NC-01"
+    # EQ-MEV-LABEL-NC-01 Python twin: named WH labels lack constrained |M|².
+    mev = closure["mev_channel_provenance"]
+    assert mev["eligible_for_q1_underwrite"] is False
+    assert mev["labeled_hypothesis_closes_q1"] is False
+    assert mev["lean_mev_label_nc_bound"] == "EQ-MEV-LABEL-NC-01"
+    # EQ-EC-UI-NC-01 Python twin: UI cosmetics lack independent EC measurement.
+    ec = closure["ec_path_provenance"]
+    assert ec["eligible_for_q4_underwrite"] is False
+    assert ec["ui_gap_closes_q4"] is False
+    assert ec["lean_ec_ui_nc_bound"] == "EQ-EC-UI-NC-01"
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"
@@ -483,8 +509,8 @@ def test_quantitative_distance_rss_stat_sys_composition() -> None:
 def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
     coverage = literature_corpus_moe_coverage()
     assert coverage["schema"] == "lenr-moe-coverage-v1"
-    assert coverage["n_records"] == 25
-    assert coverage["with_sigma_q"] == 4
+    assert coverage["n_records"] == 26
+    assert coverage["with_sigma_q"] == 5
     assert coverage["with_literature_reported_cite_gated"] == 2
     assert coverage["with_moe_pairing_verified"] == 2
     assert coverage["discovery_grade_eligible_count"] == 2
@@ -500,6 +526,7 @@ def test_literature_corpus_moe_coverage_keeps_honesty_locks() -> None:
     assert coverage["lenr_proved"] is False
     assert all(v == "OPEN" for v in coverage["eq_open_status"].values())
     assert coverage["discovery_grade_eligible_count"] < coverage["n_records"]
+    assert "exploratory_moe" in coverage["source"]
 
 
 def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
@@ -603,3 +630,35 @@ def test_cite_gated_coverage_requires_sigma_q() -> None:
     coverage = corpus_moe_coverage(reports, literature_ids=["orphan"])
     assert coverage["with_sigma_q"] == 0
     assert coverage["with_literature_reported_cite_gated"] == 0
+
+
+def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
+    """Celani JCMNS 29 12±2 is exploratory instrument_precision — not discovery."""
+    from app.data.dataset_io import exploratory_moe_literature_records
+
+    celani = next(
+        row
+        for row in exploratory_moe_literature_records()
+        if row["literature_id"] == "celani-constantan-2019"
+    )
+    assert float(celani["sigma_Q_W"]) == 2.0
+    assert float(celani["parameters"]["literature_peak_excess_power_W"]) == 12.0
+    assert celani["moe_provenance"] == "literature_reported_instrument_precision"
+    assert celani.get("moe_sigma_q_pairing_verified") is False
+    assert "celani2019" in celani["moe_citation_keys"]
+
+    report = discovery_grade_from_literature_record(celani)
+    assert report["q_source"] == "literature_peak_excess_power_W"
+    assert report["q_is_seed_scale"] is False
+    assert report["excess_power_w"] == 12.0
+    assert report["s_heat"] == 6.0
+    assert report["moe_provenance"] == "literature_reported_instrument_precision"
+    assert report["discovery_provenance_ok"] is False
+    assert report["moe_sigma_q_pairing_verified"] is False
+    assert report["discovery_grade_eligible"] is False
+    assert report["lenr_proved"] is False
+    assert all(v == "OPEN" for v in report["eq_open_status"].values())
+    assert quantitative_distance_to_discovery(report)["distance_status"] == (
+        "at_or_above_bar_gates_blocked"
+    )
+

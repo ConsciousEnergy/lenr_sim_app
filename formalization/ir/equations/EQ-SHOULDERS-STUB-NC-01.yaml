@@ -1,0 +1,28 @@
+id: EQ-SHOULDERS-STUB-NC-01
+latex: "\\mathrm{shoulders\\_evo}\\land\\neg\\mathrm{inventedRate}\\land E_{\\mathrm{mW}}=0\\land\\neg\\mathrm{discoveryMoe}\\land\\mathrm{claimedMassDefect}=0\\nRightarrow\\mathrm{lenrProved}\\lor\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad \\mathrm{cluster\\_charge\\_q}_{\\mathrm{free}}\\nRightarrow\\mathrm{wattage}"
+symbols:
+  shoulders_evo: "Shoulders EVO / charge-cluster P0 phenomenological registry stub"
+  inventedRate: "hasInventedRateLaw (must stay false)"
+  discoveryMoe: "discovery-grade MoE underwrite flag"
+  cluster_charge_q_free: "exploratory free simulator parameter (not a rate/wattage driver)"
+  lenrProved: "global nature-proof token (stays false)"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§2 theories / ENG-THEORY-PIPELINE-01; Shoulders EVO P0 stub; EQ-OPEN-* runway"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/shoulders_evo.py
+  - LENR_SIM_APP_v2/frontend/public/models/shoulders_evo.html
+citation_keys:
+  - shoulders1991
+  - shoulders1996
+lean_target: LenrFormal.TheoryStubHonesty
+lean_decls:
+  - "LenrFormal.TheoryStubHonesty.shouldersEvoStub"
+  - "LenrFormal.TheoryStubHonesty.shoulders_stub_has_no_invented_rate"
+  - "LenrFormal.TheoryStubHonesty.shoulders_stub_zero_watts"
+  - "LenrFormal.TheoryStubHonesty.shoulders_stub_not_discovery_moe"
+  - "LenrFormal.TheoryStubHonesty.shoulders_stub_no_mev_label"
+  - "LenrFormal.TheoryStubHonesty.shoulders_free_param_not_wattage_driver"
+  - "LenrFormal.TheoryStubHonesty.shoulders_evo_free_param_not_wattage"
+  - "LenrFormal.TheoryStubHonesty.shoulders_evo_stub_does_not_discharge_eq_open"
+notes: "AX honesty: shoulders_evo P0 is a phenomenological registry stub (EVO / charge-cluster labels only; no invented nuclear rate). Exploratory cluster_charge_q is a free simulator parameter — never a wattage or fusion-rate driver. Stub applicability ⇏ discovery MoE, ⇏ lenr_proved, ⇏ any EQ-OPEN-* discharge. Instantiates EQ-THEORY-STUB-NC-01 for Shoulders; complements Santilli ICNF stub."

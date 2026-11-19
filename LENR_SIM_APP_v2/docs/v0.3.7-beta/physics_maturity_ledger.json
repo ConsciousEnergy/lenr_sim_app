@@ -218,6 +218,25 @@
       "beta_label": "reference",
       "priority": "P1",
       "rd_next": "Keep EQ-OPEN-EC-01 OPEN; no Widom SPEC promotion; lenr_proved false"
+    },
+    {
+      "id": "ENG-SANTILLI-ICNF-01",
+      "module_path": "backend/app/physics_engine/theories/santilli_icnf.py",
+      "ui_surface": "theory_methods",
+      "claim_tier": "speculative_exploratory",
+      "model_fidelity": "phenomenological",
+      "empirical_support": "speculative",
+      "maturity_axes_note": "Registry stub only: regime guards + cite-gated labels; no invented hadronic rate; claimed mass-defect MeV is label not wattage",
+      "proof_status": {
+        "analytical": "stub_honesty",
+        "numerical": "zero_watts_regime_guards",
+        "lean": "eq_theory_stub_nc_01_proved"
+      },
+      "artifacts": ["md", "json", "lean"],
+      "beta_label": "speculative",
+      "priority": "P2",
+      "rd_next": "Keep stub; refuse fabricated MoE; magnecule / Lie-admissible deferred; EQ-OPEN-* stay OPEN; lenr_proved false",
+      "citations": ["kadeisvili2013", "santilli2007"]
     }
   ]
 }

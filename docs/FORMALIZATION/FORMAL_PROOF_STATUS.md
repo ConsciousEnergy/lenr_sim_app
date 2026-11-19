@@ -27,6 +27,10 @@
 | EQ-MILES-CONV-01 | Conversion / code rate in governance band | `Miles` | **PROVED** |
 | EQ-HEAT-SIG-01 | Discovery-grade σ bar = 5; exploratory SNR = 3; milli-σ arithmetic shortfall identities; Kasagi NiCu + Ni control bar examples | `CalorimetrySignificance` | **PROVED** (DEF / analytics bar lock; not lab proof) |
 | EQ-HEAT-SIG-NC-01 | Empty citations / unverified pairing / seed-scale Q / instrument-precision / instrument-floor ⇏ discovery analytics; cite-gated `DiscoveryGradeAnalytics` ⇏ Q5; dual Kasagi / `DiscoveryGradeAnalytics` ⇏ `lenr_proved` / **any of Q1–Q5**; `LabAskProxies` ⇏ EQ-OPEN discharge; soft chip ⇏ scientific discharge | `CalorimetrySignificance` | **PROVED** (non-closure / honesty BDS-344/BDS-346/BDS-348/BDS-362; does **not** close any `EQ-OPEN-*`) |
+| EQ-THEORY-STUB-NC-01 | Phenomenological theory stub (no invented rate; zero watts; no discovery MoE; author mass-defect **label** only) ⇏ `lenr_proved` / any of Q1–Q5; Santilli ICNF v1 instantiation (`kadeisvili2013`) | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
+| EQ-SHOULDERS-STUB-NC-01 | Shoulders EVO P0 stub (no invented rate; zero watts; no discovery MoE; free `cluster_charge_q` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
+| EQ-HOLMLID-STUB-NC-01 | Holmlid UDH P0 stub (≠ Kim BECNF; no invented rate; zero watts; free `internuclear_pm` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
+| EQ-SCHWINGER-STUB-NC-01 | Schwinger NEAL P0 scaffold (no invented rate; zero watts; free `h_fraction_in_d2o` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
 | EQ-PHONON-N-01 | \(N=Q/(\hbar\omega)\) for 23.8 MeV / 50 meV | `Phonon` | **PROVED** |
 | EQ-NAIVE-GN-01 | Nat-floor of \((1/2)^n=0\) for \(n\ge 1\) | `Phonon` | **PROVED** |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |
@@ -35,8 +39,10 @@
 | EQ-RATE-CAP-NC-01 | FCC-lattice D–D `trapped_state`, all engine caps: \(\log_{10}N\le-15<0\) ⇒ ¬Q3 | `RateBudget` / `OpenObligations` | **PROVED** (scenario / cap bound; DISPROVEN under caps; does **not** close Q3) |
 | EQ-RATE-CAP-NC-02 | Non-ULM `three_body`, all engine caps: \(\log_{10}N\le-266<0\) ⇒ ¬Q3 | `RateBudget` / `OpenObligations` | **PROVED** (scenario / cap bound; DISPROVEN under caps; does **not** close Q3) |
 | EQ-RATE-CAP-GAP-01 | Caps do **not** certify non-closure for 25 pm TSC / ULM `three_body`; demand \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}E_{\text{enh}}\le10^{-23}\) | `RateBudget` | **PROVED** honesty **gap** over **SPEC** inputs (25 pm / ULM) — **not** evidence those channels close; does **not** close Q3 |
+| EQ-RATE-DAQ-OCC-NC-01 | Planned DAQ sample-v1 has no occupancy observables; ineligible `RateOccupancyUnderwrite` ⇏ Q3 / EQ-OPEN-RATE-01 (Nat `would_close_if` ≠ experimental constraint) | `RateBudget` / `OpenObligations` | **PROVED** (non-closure / honesty; does **not** close Q3) |
+| EQ-RATE-WITNESS-NC-01 | Planned/ARA DAQ occupancy/collective witness inputs + free \(10^{6}\) cap ⇏ `FreeCapRateClosure`; ⇏ Q3 / `lenr_proved` (BDS-399) | `RateBudget` / `OpenObligations` | **PROVED** honesty implications over **AX**-tagged witness kinds (does **not** close EQ-OPEN-RATE-01; ≠ EQ-RATE-DAQ-OCC-NC-01) |
 | EQ-BBL-NR-01 | Hydro / collapse enhancement or scenario prior in a rate scenario ⇒ not a nuclear-rate proof | `CollapseBounds` | **PROVED** honesty implications over **AX**-tagged provenance kinds (IR `tag: AX` for the provenance contract; does **not** close any `EQ-OPEN-*`) |
-| EQ-BBL-HEAT-NC-01 | Collapse UQ / hydro / campaign MoE kinds ⇏ discovery-grade heat MoE (`HeatDiscoveryProof`); reported T/P/CR ⇏ discovery; even `HeatDiscoveryProof` ⇏ Q5 / `lenr_proved`; UQ percentiles ⇏ Q5 closed | `CollapseBounds` | **PROVED** honesty implications over **AX**-tagged heat-MoE kinds (does **not** close EQ-OPEN-YIELD-01; aligns with EQ-HEAT-SIG-NC-01) |
+| EQ-BBL-HEAT-NC-01 | Collapse UQ / hydro / campaign / planned DAQ sample-v1 MoE kinds ⇏ discovery-grade heat MoE (`HeatDiscoveryProof`); BDS-384 schema `lenr-ara-daq-sample-v1` ↔ `HeatMoEKind.daqPlannedSketch` binding ⇏ discovery / Q5 / `lenr_proved`; reported T/P/CR ⇏ discovery; even `HeatDiscoveryProof` ⇏ Q5 / `lenr_proved`; UQ percentiles ⇏ Q5 closed | `CollapseBounds` | **PROVED** honesty implications over **AX**-tagged heat-MoE kinds (does **not** close EQ-OPEN-YIELD-01; aligns with EQ-HEAT-SIG-NC-01) |
 | EQ-COMP-03 | Illegal product of two capped engine totals \(=10^{10}\) | `Composition` | **PROVED** |
 | EQ-TSC-GEOM-01/02 | FCC \(d_{DD}\) identity; \(\neq 25\,\mathrm{pm}\) trap | `NBody` | **PROVED** |
 | EQ-TSC-Q-01 | \(47.6=2\times 23.8\) keV conversion | `NBody` | **PROVED** |
@@ -51,9 +57,16 @@
 | EQ-UQ-BF-01 | Approximate Bayes factor from log-evidence difference; algebraic self/antisymm/cocycle + ExpHom multiplicative cocycle / reciprocal / swap identities | `Decision` | **DEF** + algebraic **THM** (not empirical) |
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 | EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
+| EQ-YIELD-MILES-EMP-NC-01 | Miles EMP ~2× heat/He kinds ⇏ `IntegratedYieldDischarge`; \(f=2\in[1,3]\) ⇏ Q5 / `lenr_proved` (BDS-395) | `OpenQuestionBounds` | **PROVED** honesty implications over **AX**-tagged Miles EMP kinds (does **not** close EQ-OPEN-YIELD-01; ≠ EQ-YIELD-EFF-NC-01) |
+| EQ-YIELD-EFF-NC-01 | Missing retention/collection efficiency provenance (Miles EMP alone) ⇏ Q5 / EQ-OPEN-YIELD-01 | `YieldAccounting` / `OpenQuestionBounds` | **PROVED** (non-closure / honesty; does **not** close Q5) |
+| EQ-YIELD-SIMULT-NC-01 | Non-simultaneous / efficiency-less He+calorimetry pairing ⇏ `SimultaneousPairedYieldDischarge`; ⇏ Q5 / `lenr_proved` (BDS-400) | `YieldAccounting` / `OpenQuestionBounds` | **PROVED** honesty implications over **AX**-tagged pairing kinds (does **not** close EQ-OPEN-YIELD-01; ≠ EFF / ≠ Miles EMP) |
+| EQ-RAD-EFF-NC-01 | Bare detector UL without efficiency/geometry/heat-coincidence provenance ⇏ Q2 / EQ-OPEN-RAD-01 | `RadiationBounds` | **PROVED** (non-closure / honesty; does **not** close Q2) |
+| EQ-MEV-LABEL-NC-01 | Named Hagelstein/Dicke/BEC labels without constrained matrix element + occupation ⇏ Q1 / EQ-OPEN-MEV-01 | `OpenQuestionBounds` | **PROVED** (non-closure / honesty; does **not** close Q1) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); \(e^{-S}\le1\) bridge; ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
+| EQ-RAD-CR39-NC-01 | CR-39 / track-etch confounder kinds ⇏ `GammaSuppressionProof`; confounder bag ⇏ Q2 / `lenr_proved` (BDS-394; pyyhtia2026) | `RadiationBounds` | **PROVED** honesty implications over **AX**-tagged track-etch kinds (does **not** close EQ-OPEN-RAD-01) |
+| EQ-RAD-COINC-NC-01 | Bare detector UL without efficiency/geometry/time-coincidence ⇏ `GammaBrDischarge`; ⇏ Q2 / `lenr_proved` (BDS-398) | `RadiationBounds` | **PROVED** honesty implications over **AX**-tagged coincidence kinds (does **not** close EQ-OPEN-RAD-01; ≠ EQ-RAD-EFF-NC-01) |
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |
@@ -65,6 +78,8 @@
 | EQ-WH-CAP-01 | Capped \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}\) product bound; demand above cap unmet | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q3) |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds do not discharge Q1–Q3 OPEN predicates | `WorkingHypothesisBounds` | **PROVED** (does **not** close) |
 | EQ-WH-MEV-CAP-01 | Engine-capped licensed channels leave remainder \(\ge R_{\min}>0\) (\(\mathrm{BR}_\gamma\le0.998\)); \(\gamma\)-route closure fails Q2; collapse/ENC hydro allocate 0 | `MeVRemainderCaps` | **PROVED** (bound; EQ-OPEN-MEV-01 stays **OPEN**) |
+| EQ-MEV-COLLAPSE-NC-01 | Collapse / bubble / ENC hydro heat ⇏ `MevRemainderAllocatorDischarge`; ⇏ Q1 / `lenr_proved` (BDS-401) | `MeVRemainderCaps` | **PROVED** honesty implications over **AX**-tagged hydro allocator kinds (does **not** close EQ-OPEN-MEV-01; ≠ EQ-MEV-LABEL-NC-01; ≠ EQ-MEV-MATRIX-NC-01) |
+| EQ-MEV-MATRIX-NC-01 | WH / phonon→nuclear channel labels + unconstrained \|M\|² / Bernoulli \(P_{\mathrm{occ}}\) ⇏ `ConstrainedMevMatrixDischarge`; ⇏ Q1 / `lenr_proved` (BDS-396) | `WorkingHypothesis` | **PROVED** honesty implications over **AX**-tagged matrix/occupation kinds (does **not** close EQ-OPEN-MEV-01; ≠ EQ-MEV-LABEL-NC-01) |
 | EQ-PS-COUPLE-01 | Coupling residual \(\max(r_P,r_S)=0\) iff both residuals vanish; positive residual ⇒ not self-consistent | `PoissonSchrodinger` | **PROVED** (residual algebra only; aspirational; does **not** deploy FEM) |
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |
 | EQ-PS-NONDEPLOY-01 | `publicBetaDeployed=false`; `lenrProved=false` | `PoissonSchrodinger` | **PROVED** (honesty invariant; does **not** close OPEN) |
@@ -74,6 +89,8 @@
 | EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
 | EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
 | EQ-OPEN-EC-BOUND-01 | \(E\le\) cap \(<0.782\,\mathrm{MeV}\Rightarrow\neg Q_4\) for 0.1–1 eV double-layer, 26 meV \(k_BT\), and 10–100 eV/atom caps; closing needs \(\ge 7820\) concentrated budgets; Q4 not refuted outright | `WeakInteraction` | **BOUNDED** (form-DISPROVEN under AX caps; does **not** close Q4) |
+| EQ-EC-ENERGY-NC-01 | UI cosmetics / unlicensed mass-renorm ⇏ `MeasuredEcEnergyDischarge`; ⇏ Q4 / `lenr_proved` (BDS-397) | `WeakInteraction` | **PROVED** honesty implications over **AX**-tagged available-energy kinds (does **not** close EQ-OPEN-EC-01; ≠ EQ-EC-UI-NC-01) |
+| EQ-EC-UI-NC-01 | UI gap-to-threshold cosmetics / scaffold without independent measurement ⇏ Q4 / EQ-OPEN-EC-01 | `WeakInteraction` | **PROVED** (non-closure / honesty; does **not** close Q4) |
 
 
 ## Definitions mechanized in this pass (not nature theorems)
@@ -104,6 +121,7 @@
 | EQ-WT-SCENARIO-01 | `WeightHonesty` | `scenario_table_not_posterior` + `lenr_proved=false`; high `final_score` ⇏ nature proof |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
 | EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
+| EQ-YIELD-EFF-NC-01 | `YieldAccounting` / `OpenQuestionBounds` | Retention/collection efficiency provenance required; Miles EMP alone ⇏ Q5 |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
 | EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 

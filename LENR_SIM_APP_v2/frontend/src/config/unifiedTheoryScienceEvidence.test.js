@@ -13,6 +13,7 @@ import {
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
+  DAQ_SAMPLE_PROVENANCE,
   NEXT_LAB_MOE_TARGETS,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
@@ -125,10 +126,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       'empirical_lenr_correlation',
     );
     expect(CORPUS_MOE_COVERAGE.kasagi_nicu_s_heat).toBe(13.75);
+    expect(CORPUS_MOE_COVERAGE.n_records).toBe(26);
+    expect(CORPUS_MOE_COVERAGE.with_sigma_q).toBe(5);
     expect(CORPUS_MOE_COVERAGE.locked_s_heat).toEqual({
       'kasagi-nicu-radiant-2026': 13.75,
       'kasagi-ni-radiant-2026': 11.25,
       'miles-1993': 26,
+      'celani-constantan-2019': 6,
     });
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_distance_status).toBe(
       'at_or_above_bar_gates_clear',
@@ -166,9 +170,14 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       'speculative_exploratory',
     );
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
-      expect.arrayContaining(['miles-1993', 'deninno-tid-1995']),
+      expect.arrayContaining([
+        'miles-1993',
+        'deninno-tid-1995',
+        'celani-constantan-2019',
+      ]),
     );
     expect(CORPUS_MOE_COVERAGE.literature_moe_inventory_exhausted).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/26|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_eq_open).toBe(true);
     expect(CORPUS_MOE_COVERAGE.analytics_eligible_ne_lenr_proved).toBe(true);
     expect(CORPUS_MOE_COVERAGE.soft_chip_ne_scientific_discharge).toBe(true);
@@ -177,6 +186,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_lab_ask_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_celani_exploratory_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_daq_planned_ne_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.daq_sample_ingest_planned_not_attested).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_cite_gated_ne_yield_closure).toBe(true);
     expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);
@@ -185,9 +197,18 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.remaining_scientific_blockers.join(' ')).toMatch(
       /eq_open|lenr_proved|governed_lab/i,
     );
-    expect(CORPUS_MOE_COVERAGE.inventory_exhausted_note).toMatch(/2\/25|exhausted/i);
     expect(CORPUS_MOE_COVERAGE.note).toMatch(
       /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close|empty_citations_not_discovery|cite_gated_discovery_does_not_underwrite/i,
+    );
+    expect(DAQ_SAMPLE_PROVENANCE.schema_id).toBe('lenr-ara-daq-sample-v1');
+    expect(DAQ_SAMPLE_PROVENANCE.sim_export_schema_id).toBe('lenr-run-export-v1');
+    expect(DAQ_SAMPLE_PROVENANCE.trust_plane).toBe('daq');
+    expect(DAQ_SAMPLE_PROVENANCE.ingest_status).toBe('planned_not_attested');
+    expect(DAQ_SAMPLE_PROVENANCE.refuse_fabricated_samples).toBe(true);
+    expect(DAQ_SAMPLE_PROVENANCE.lenr_proved_default).toBe(false);
+    expect(DAQ_SAMPLE_PROVENANCE.private_extensions_stripped_required).toBe(true);
+    expect(DAQ_SAMPLE_PROVENANCE.honesty_note).toMatch(
+      /refuse fabricated|lab_ask_proxies_do_not_discharge/i,
     );
     expect(NEXT_LAB_MOE_TARGETS.length).toBeGreaterThanOrEqual(5);
     NEXT_LAB_MOE_TARGETS.forEach((row) => {
@@ -200,6 +221,15 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.still_does_not_discharge.length).toBeGreaterThan(20);
       expect(row.corpus_gap_now.length).toBeGreaterThan(10);
       expect(Array.isArray(row.daq_observables)).toBe(true);
+      expect(row.daq_schema).toBe(DAQ_SAMPLE_PROVENANCE.schema_id);
+      expect(row.daq_trust_plane).toBe('daq');
+      expect(row.daq_ingest_status).toBe('planned_not_attested');
+      expect(Array.isArray(row.daq_calibration_required)).toBe(true);
+      expect(row.daq_gap_note.length).toBeGreaterThan(20);
+      expect(row.daq_gap_note).toMatch(/refuse|planned|not in sample-v1/i);
+      row.daq_observables.forEach((field) => {
+        expect(DAQ_SAMPLE_PROVENANCE.public_observable_field_set).toContain(field);
+      });
       row.eq_open_ids.forEach((oid) => expect(OPEN_EQ_IDS).toContain(oid));
     });
     const coveredOpens = new Set(
@@ -212,6 +242,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     ).toEqual(
       expect.arrayContaining(['excess_power_W', 'sigma_Q_W', 'he4_atoms_per_s']),
     );
+    expect(
+      NEXT_LAB_MOE_TARGETS.find((row) => row.id === 'occupation_rate_caps_measured')
+        ?.daq_observables,
+    ).toEqual([]);
+    expect(
+      NEXT_LAB_MOE_TARGETS.find((row) => row.id === 'ec_threshold_cm_path')?.daq_gap_note,
+    ).toMatch(/not instrument sample|Refuse fabricating/i);
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);
@@ -253,9 +290,18 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     });
     const celani = refused.find((row) => row.id === 'celani-constantan-12pm2');
     expect(celani.decision).toBe('refuse_discovery_near_miss');
+    expect(celani.in_curated_25).toBe(true);
+    expect(celani.literature_id).toBe('celani-constantan-2019');
     expect(celani.primary_cites.join(' ')).toMatch(/72494|12 ± 2/);
+    expect(celani.honesty).toMatch(/exploratory hydrate|instrument_precision/i);
     expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
     expect(CORPUS_MOE_COVERAGE.with_moe_pairing_verified).toBe(2);
+    const celaniWhy = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
+      (row) => row.literature_id === 'celani-constantan-2019',
+    );
+    expect(celaniWhy.s_heat_exploratory).toBe(6);
+    expect(celaniWhy.discovery_grade_eligible).toBe(false);
+    expect(celaniWhy.pairing_verified).toBe(false);
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {
