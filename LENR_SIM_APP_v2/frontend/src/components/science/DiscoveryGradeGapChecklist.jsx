@@ -22,6 +22,25 @@ import {
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
 import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric literature S_heat claims (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 function freezeCorpusCoverage() {
   return DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
@@ -111,8 +130,13 @@ export default function DiscoveryGradeGapChecklist({
         <code>{coverage.miles_exploratory_s_heat}</code> (
         <code>{coverage.miles_moe_provenance || 'literature_reported_instrument_precision'}</code>
         , pairing=
-        <code>{String(coverage.miles_pairing_verified ?? false)}</code>) remains{' '}
-        <code>{coverage.miles_distance_status}</code>
+        <code>{String(coverage.miles_pairing_verified ?? false)}</code>
+        ){' '}
+        <ClaimTierChip
+          tier={coverage.miles_claim_tier || 'speculative_exploratory'}
+          testId={`${testIdPrefix}-miles-claim-tier`}
+        />{' '}
+        remains <code>{coverage.miles_distance_status}</code>
         {coverage.miles_banner ? <> — {coverage.miles_banner}</> : null}
         {coverage.celani_exploratory_s_heat != null ? (
           <>
@@ -123,7 +147,13 @@ export default function DiscoveryGradeGapChecklist({
                 'literature_reported_instrument_precision'}
             </code>
             , pairing=
-            <code>{String(coverage.celani_pairing_verified ?? false)}</code>) remains{' '}
+            <code>{String(coverage.celani_pairing_verified ?? false)}</code>
+            ){' '}
+            <ClaimTierChip
+              tier={coverage.celani_claim_tier || 'speculative_exploratory'}
+              testId={`${testIdPrefix}-celani-claim-tier`}
+            />{' '}
+            remains{' '}
             <code>
               {coverage.celani_distance_status || 'at_or_above_bar_gates_blocked'}
             </code>
@@ -133,12 +163,25 @@ export default function DiscoveryGradeGapChecklist({
           </>
         ) : null}
         {' '}Kasagi NiCu analytics S_heat=
-        <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
-        <code>{coverage.kasagi_nicu_distance_status}</code>
+        <code>{coverage.kasagi_nicu_s_heat}</code> (
+        <code>{coverage.kasagi_nicu_moe_provenance || 'literature_reported'}</code>
+        ){' '}
+        <ClaimTierChip
+          tier={coverage.kasagi_nicu_claim_tier || 'empirical_lenr_correlation'}
+          testId={`${testIdPrefix}-kasagi-claim-tier`}
+        />{' '}
+        is <code>{coverage.kasagi_nicu_distance_status}</code>
         {coverage.kasagi_ni_s_heat != null ? (
           <>
             {' · '}Kasagi Ni control S_heat=
-            <code>{coverage.kasagi_ni_s_heat}</code> is{' '}
+            <code>{coverage.kasagi_ni_s_heat}</code> (
+            <code>{coverage.kasagi_ni_moe_provenance || 'literature_reported'}</code>
+            ){' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_ni_claim_tier || 'empirical_lenr_correlation'}
+              testId={`${testIdPrefix}-kasagi-ni-claim-tier`}
+            />{' '}
+            is{' '}
             <code>{coverage.kasagi_ni_distance_status || 'at_or_above_bar_gates_clear'}</code>
           </>
         ) : null}
