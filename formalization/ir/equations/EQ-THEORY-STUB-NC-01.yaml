@@ -1,0 +1,29 @@
+id: EQ-THEORY-STUB-NC-01
+latex: "\\mathrm{PhenomenologicalTheoryStub}\\land\\neg\\mathrm{inventedRate}\\land E_{\\mathrm{mW}}=0\\land\\neg\\mathrm{discoveryMoe}\\nRightarrow\\mathrm{lenrProved}\\lor\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad \\mathrm{claimedMassDefect}_{\\mathrm{label}}\\nRightarrow\\mathrm{wattage}"
+symbols:
+  PhenomenologicalTheoryStub: "Registry stub contribution (Bool/Nat honesty fields)"
+  inventedRate: "hasInventedRateLaw (must stay false for stubs)"
+  discoveryMoe: "discovery-grade MoE underwrite flag"
+  claimedMassDefect_label: "author-claimed mass-defect milli-MeV label (not wattage driver)"
+  lenrProved: "global nature-proof token (stays false)"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§2 theories / ENG-THEORY-PIPELINE-01; Santilli ICNF v1 stub; EQ-OPEN-* runway"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/santilli_icnf.py
+  - LENR_SIM_APP_v2/frontend/public/models/santilli_icnf.html
+citation_keys:
+  - kadeisvili2013
+  - santilli2007
+lean_target: LenrFormal.TheoryStubHonesty
+lean_decls:
+  - "LenrFormal.TheoryStubHonesty.PhenomenologicalTheoryStub"
+  - "LenrFormal.TheoryStubHonesty.santilliIcnfStub"
+  - "LenrFormal.TheoryStubHonesty.santilli_stub_has_no_invented_rate"
+  - "LenrFormal.TheoryStubHonesty.santilli_stub_zero_watts"
+  - "LenrFormal.TheoryStubHonesty.santilli_stub_not_discovery_moe"
+  - "LenrFormal.TheoryStubHonesty.claimed_mass_defect_label_is_not_wattage_driver"
+  - "LenrFormal.TheoryStubHonesty.santilli_claimed_mev_label_not_wattage"
+  - "LenrFormal.TheoryStubHonesty.phenomenological_stub_does_not_discharge_eq_open"
+  - "LenrFormal.TheoryStubHonesty.santilli_icnf_stub_does_not_discharge_eq_open"
+notes: "AX honesty: santilli_icnf v1 is a phenomenological registry stub (arc+D+C regime; no invented Lie-admissible / magnecule rate). Author-claimed ~10.339 MeV/event is a label only — never a wattage driver. Stub applicability ⇏ discovery MoE, ⇏ lenr_proved, ⇏ any EQ-OPEN-* discharge. Complements EQ-HEAT-SIG-NC-01 / EQ-BBL-NR-01 / OpenObligations. Related santilli2007 remains cite-only."

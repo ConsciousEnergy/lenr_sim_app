@@ -27,6 +27,7 @@
 | EQ-MILES-CONV-01 | Conversion / code rate in governance band | `Miles` | **PROVED** |
 | EQ-HEAT-SIG-01 | Discovery-grade σ bar = 5; exploratory SNR = 3; milli-σ arithmetic shortfall identities; Kasagi NiCu + Ni control bar examples | `CalorimetrySignificance` | **PROVED** (DEF / analytics bar lock; not lab proof) |
 | EQ-HEAT-SIG-NC-01 | Empty citations / unverified pairing / seed-scale Q / instrument-precision / instrument-floor ⇏ discovery analytics; cite-gated `DiscoveryGradeAnalytics` ⇏ Q5; dual Kasagi / `DiscoveryGradeAnalytics` ⇏ `lenr_proved` / **any of Q1–Q5**; `LabAskProxies` ⇏ EQ-OPEN discharge; soft chip ⇏ scientific discharge | `CalorimetrySignificance` | **PROVED** (non-closure / honesty BDS-344/BDS-346/BDS-348/BDS-362; does **not** close any `EQ-OPEN-*`) |
+| EQ-THEORY-STUB-NC-01 | Phenomenological theory stub (no invented rate; zero watts; no discovery MoE; author mass-defect **label** only) ⇏ `lenr_proved` / any of Q1–Q5; Santilli ICNF v1 instantiation (`kadeisvili2013`) | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
 | EQ-PHONON-N-01 | \(N=Q/(\hbar\omega)\) for 23.8 MeV / 50 meV | `Phonon` | **PROVED** |
 | EQ-NAIVE-GN-01 | Nat-floor of \((1/2)^n=0\) for \(n\ge 1\) | `Phonon` | **PROVED** |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |
