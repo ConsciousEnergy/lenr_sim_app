@@ -25,6 +25,52 @@ inductive MeVGapHypothesis where
   | dickeSuperradiance
   | becCoherence
 
+/-! ### EQ-MEV-LABEL-NC-01 — named WH labels ⇏ Q1
+
+Affirmative EQ-OPEN-MEV-01 needs a constrained phonon→nuclear matrix element
+and occupation probability. Named Hagelstein / Dicke / BEC hypotheses are
+**labels only** until those witnesses are experimentally constrained. -/
+
+/-- Q1 channel underwrite: hypothesis label plus constraint flags. -/
+structure MeVChannelUnderwrite where
+  hypothesis : MeVGapHypothesis
+  matrixElementConstrained : Bool
+  occupationConstrained : Bool
+
+/-- Eligible only when both matrix element and occupation are constrained. -/
+def MeVChannelUnderwrite.Eligible (u : MeVChannelUnderwrite) : Prop :=
+  u.matrixElementConstrained = true ∧ u.occupationConstrained = true
+
+/-- Label-only posture (no constrained |M|² / occupation). -/
+def labeledHypothesisOnly (h : MeVGapHypothesis) : MeVChannelUnderwrite :=
+  { hypothesis := h
+    matrixElementConstrained := false
+    occupationConstrained := false }
+
+theorem labeled_hypothesis_not_Eligible (h : MeVGapHypothesis) :
+    ¬ (labeledHypothesisOnly h).Eligible := by
+  intro he
+  unfold MeVChannelUnderwrite.Eligible labeledHypothesisOnly at he
+  exact Bool.noConfusion he.1
+
+/-- Ineligible label-only channel ⇏ Q1 closed. -/
+theorem ineligible_mev_channel_does_not_close_q1
+    (u : MeVChannelUnderwrite)
+    (h : ¬ u.Eligible)
+    (openRemainder : Nat) :
+    ¬ (u.Eligible ∧ q1MeVEnergyGapClosed openRemainder) := by
+  intro ⟨he, _⟩
+  exact h he
+
+theorem labeled_hypothesis_does_not_close_q1
+    (h : MeVGapHypothesis)
+    (openRemainder : Nat) :
+    ¬ ((labeledHypothesisOnly h).Eligible ∧ q1MeVEnergyGapClosed openRemainder) :=
+  ineligible_mev_channel_does_not_close_q1
+    (labeledHypothesisOnly h)
+    (labeled_hypothesis_not_Eligible h)
+    openRemainder
+
 /-- Q1 would close if the unallocated remainder is identically zero. -/
 def q1WouldCloseIf (openRemainder : Nat) : Prop :=
   q1MeVEnergyGapClosed openRemainder

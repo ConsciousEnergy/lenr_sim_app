@@ -1,0 +1,24 @@
+id: EQ-MEV-LABEL-NC-01
+latex: "\\mathrm{MeVGapHypothesis}\\land\\neg\\mathrm{matrixElementConstrained}\\land\\neg\\mathrm{occupationConstrained}\\nRightarrow q_1\\mathrm{MeVEnergyGapClosed}"
+symbols:
+  MeVGapHypothesis: "Named Hagelstein / Dicke / BEC label (not a theorem of nature)"
+  MeVChannelUnderwrite: "hypothesis + matrixElementConstrained + occupationConstrained"
+  Eligible: "matrixElementConstrained ∧ occupationConstrained"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§5A.1 EQ-OPEN-MEV-01; EQ_OPEN_CLOSURE_RUNWAY affirmative discharge"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - hagelstein2025
+  - paper_5A_1
+lean_target: LenrFormal.OpenQuestionBounds
+lean_decls:
+  - "LenrFormal.OpenQuestionBounds.MeVChannelUnderwrite"
+  - "LenrFormal.OpenQuestionBounds.MeVChannelUnderwrite.Eligible"
+  - "LenrFormal.OpenQuestionBounds.labeledHypothesisOnly"
+  - "LenrFormal.OpenQuestionBounds.labeled_hypothesis_not_Eligible"
+  - "LenrFormal.OpenQuestionBounds.ineligible_mev_channel_does_not_close_q1"
+  - "LenrFormal.OpenQuestionBounds.labeled_hypothesis_does_not_close_q1"
+notes: "AX honesty: EQ-OPEN-MEV-01 still_missing is constrained phonon-nuclear matrix element and occupation probability. Named MeVGapHypothesis constructors are labels only — labeledHypothesisOnly stays ineligible and does not close Q1. Complements EQ-WH-MEV-CAP-01 (remainder floor under caps). EQ-OPEN-MEV-01 stays OPEN; lenr_proved stays false."
