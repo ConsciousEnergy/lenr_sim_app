@@ -7,12 +7,36 @@
  * Map schema `met` → display label `analytics_gates_clear`.
  */
 import {
+  DAQ_SAMPLE_PROVENANCE,
   DISCOVERY_GRADE_BAR,
   DISCOVERY_GRADE_MISSING,
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
 } from '../../config/unifiedTheoryScienceEvidence';
+
+/**
+ * Planned DAQ sample provenance stamped onto History / export envelopes.
+ * Soft honesty only — never invents attested measurements or EQ-OPEN discharge.
+ * @returns {Readonly<{
+ *   schema_id: string,
+ *   trust_plane: string,
+ *   ingest_status: string,
+ *   refuse_fabricated_samples: boolean,
+ *   lenr_proved_default: false,
+ *   closes_eq_open: false,
+ * }>}
+ */
+export function plannedDaqSampleProvenanceEnvelope() {
+  return Object.freeze({
+    schema_id: DAQ_SAMPLE_PROVENANCE.schema_id,
+    trust_plane: DAQ_SAMPLE_PROVENANCE.trust_plane,
+    ingest_status: DAQ_SAMPLE_PROVENANCE.ingest_status,
+    refuse_fabricated_samples: true,
+    lenr_proved_default: false,
+    closes_eq_open: false,
+  });
+}
 
 /**
  * Display label for discovery_grade_gap.overall_status.
@@ -81,6 +105,7 @@ export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null)
  *   quantitativeDistance: object,
  *   analyticsGateStatus: 'analytics_gates_clear'|'not_met',
  *   empWhyNotDiscovery: object|null,
+ *   daqSampleProvenance: object,
  *   lenrProved: false,
  * }}
  */
@@ -171,6 +196,21 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
 
   const empWhyNotDiscovery = resolveEmpWhyNotDiscovery(exp, quantitativeDistance);
 
+  const daqSampleProvenance = plannedDaqSampleProvenanceEnvelope();
+  // Stamp planned DAQ provenance onto closure envelope (never attested / never discharge).
+  if (honestClosure && typeof honestClosure === 'object') {
+    honestClosure.daq_sample_provenance = {
+      ...(honestClosure.daq_sample_provenance &&
+      typeof honestClosure.daq_sample_provenance === 'object'
+        ? honestClosure.daq_sample_provenance
+        : {}),
+      ...daqSampleProvenance,
+      ingest_status: DAQ_SAMPLE_PROVENANCE.ingest_status,
+      closes_eq_open: false,
+      lenr_proved_default: false,
+    };
+  }
+
   return {
     discoveryGradeEligible,
     discoveryGradeGap,
@@ -178,6 +218,7 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     quantitativeDistance,
     analyticsGateStatus,
     empWhyNotDiscovery,
+    daqSampleProvenance,
     lenrProved: false,
   };
 }

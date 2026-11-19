@@ -93,6 +93,24 @@ export default function DiscoveryGradeGapChecklist({
         <code>{String(coverage.miles_pairing_verified ?? false)}</code>) remains{' '}
         <code>{coverage.miles_distance_status}</code>
         {coverage.miles_banner ? <> — {coverage.miles_banner}</> : null}
+        {coverage.celani_exploratory_s_heat != null ? (
+          <>
+            {' '}Celani exploratory arithmetic S_heat=
+            <code>{coverage.celani_exploratory_s_heat}</code> (
+            <code>
+              {coverage.celani_moe_provenance ||
+                'literature_reported_instrument_precision'}
+            </code>
+            , pairing=
+            <code>{String(coverage.celani_pairing_verified ?? false)}</code>) remains{' '}
+            <code>
+              {coverage.celani_distance_status || 'at_or_above_bar_gates_blocked'}
+            </code>
+            {' '}— Lean{' '}
+            <code>celani_exploratory_not_discovery_grade</code>
+            {coverage.lean_celani_exploratory_nc_bound ? ' bound' : ''}.
+          </>
+        ) : null}
         {' '}Kasagi NiCu analytics S_heat=
         <code>{coverage.kasagi_nicu_s_heat}</code> is{' '}
         <code>{coverage.kasagi_nicu_distance_status}</code>
@@ -104,6 +122,17 @@ export default function DiscoveryGradeGapChecklist({
           </>
         ) : null}
         {' '}— analytics flags only; still do not close EQ-OPEN-*.
+        {' '}DAQ sample ingest stays{' '}
+        <code>
+          {coverage.daq_sample_ingest_planned_not_attested
+            ? 'planned_not_attested'
+            : 'unknown'}
+        </code>
+        {' '}(<code>lenr-ara-daq-sample-v1</code>
+        {coverage.lean_daq_planned_ne_discharge
+          ? '; Lean DAQ planned ≠ EQ-OPEN discharge'
+          : ''}
+        ).
       </Typography>
 
       <Typography

@@ -260,11 +260,22 @@ def honest_closure_bookkeeping(
         "missing_ids": [row["id"] for row in missing],
         "lenr_proved": False,
         "eq_open_status": {oid: "OPEN" for oid in OPEN_IDS},
+        # BDS-375 / UTF History parity: planned DAQ sample-v1 never attests
+        # measurements and never discharges EQ-OPEN / lenr_proved.
+        "daq_sample_provenance": {
+            "schema_id": "lenr-ara-daq-sample-v1",
+            "trust_plane": "daq",
+            "ingest_status": "planned_not_attested",
+            "refuse_fabricated_samples": True,
+            "lenr_proved_default": False,
+            "closes_eq_open": False,
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
             "implies closure. Campaign / avenue / Lean outputs never set "
-            "lenr_proved or close EQ-OPEN-*."
+            "lenr_proved or close EQ-OPEN-*. Planned lenr-ara-daq-sample-v1 "
+            "ingest stays non-attested and never discharges obligations."
         ),
     }
 
