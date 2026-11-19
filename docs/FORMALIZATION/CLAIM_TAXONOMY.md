@@ -38,7 +38,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 |----|---------------|-------|------|------------------|-----|-----------|
 | EQ-RYD-01 | \(E_n = -13.6\,\mathrm{eV}/n_{\mathrm{prin}}^2\); at \(n=10\), \(E=-0.136\,\mathrm{eV}\) | §2.1 | `physics/rydberg_matter.py` | hydrogen Rydberg (CODATA) | `THM` | `Rydberg.lean` / `rydberg.yaml` |
 | EQ-OVERLAP-01 | \(P_{\mathrm{overlap}} \approx (r_0/a)^3 e^{-2r_0/a}\) | §2.2 | `constants.py` `NUCLEAR_RADIUS_*` | model construct | `DEF` | `Overlap.lean` / `EQ-OVERLAP-01.yaml` |
-| EQ-OVERLAP-02 | Ensemble \(N_{\mathrm{atoms}} \times f_{\mathrm{attempt}} \times P\) is an **upper-bound count**, not a nuclear rate | §2.2 | `proton_phase_model.py` | model assumption | `AX` | `Overlap.lean` / `EQ-OVERLAP-02.yaml` |
+| EQ-OVERLAP-02 | Ensemble \(R_{\mathrm{overlap\_count}} = N_{\mathrm{sites}}\, f_{\mathrm{attempt}}\, P_{\mathrm{overlap}}\) is an **upper-bound count** \([\mathrm{s^{-1}}]\), not a nuclear rate | §2.2 | `proton_phase_model.py` | model assumption | `AX` | `Overlap.lean` / `EQ-OVERLAP-02.yaml` |
 | EQ-FIELD-01 | \(E_{\mathrm{field}}=\Delta V/d\) (e.g. \(0.1\,\mathrm{V}/1\,\mathrm{nm}=10^8\,\mathrm{V/m}\)) | §2.3 | double-layer / QED paths | [23],[33] | `THM` | algebraic |
 | EQ-EC-THRESH-01 | \(p+e^-\to n+\nu_e\) threshold \(\Delta E\approx 0.782\,\mathrm{MeV}\) | §2.4 | `weak_interaction.py` | CODATA mass defect | `THM` | `WeakInteraction.lean` / `EQ-EC-THRESH-01.yaml` |
 | EQ-EC-GF-01 | Fermi \(G_F\approx 1.166\times 10^{-5}\,\mathrm{GeV}^{-2}\) (×10⁸ Nat lock) | §2.4 | `weak_interaction.py` | PDG | `THM` | `WeakInteraction.lean` / `EQ-EC-GF-01.yaml` |

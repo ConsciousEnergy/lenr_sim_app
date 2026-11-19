@@ -3,8 +3,8 @@ Overlap — EQ-OVERLAP-01 / EQ-OVERLAP-02 bookkeeping (paper §2.2).
 
 Halo / interface electron–nucleus overlap is a **model construct**.
 The paper form \(P_{\mathrm{overlap}}\approx(r_0/a)^3 e^{-2r_0/a}\) and the
-ensemble product \(N_{\mathrm{atoms}}\,f_{\mathrm{attempt}}\,P\) are
-upper-bound counting arguments, **not** nuclear rates.
+ensemble product \(R_{\mathrm{overlap\_count}}=N_{\mathrm{sites}}\,f_{\mathrm{attempt}}\,P\)
+are upper-bound counting arguments, **not** nuclear rates.
 
 **Claim tier:** DEF / AX honesty only.
 Does **not** prove electron capture, LENR, or discharge any `EQ-OPEN-*`.
@@ -63,7 +63,7 @@ theorem orbital_scale_pos : 0 < orbitalScale_pm := by native_decide
 
 /-! ### EQ-OVERLAP-02 — ensemble product is an upper-bound count, not a rate -/
 
-/-- Kind tag for the macroscopic product \(N_{\mathrm{atoms}} f_{\mathrm{attempt}} P\). -/
+/-- Kind tag for the macroscopic product \(N_{\mathrm{sites}} f_{\mathrm{attempt}} P\). -/
 inductive OverlapProductKind where
   | upperBoundCount
   | nuclearRate
