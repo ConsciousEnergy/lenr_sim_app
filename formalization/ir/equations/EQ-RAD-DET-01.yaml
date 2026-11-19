@@ -38,4 +38,4 @@ code_symbols:
   MODERATOR_NULL_THERMAL_CEILING:
     path: LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
     symbol: MODERATOR_NULL_THERMAL_CEILING
-notes: "Bool mirrors of branching_model.py detector flags (detector_ul_not_proof). They falsify assumed-scenario branching or a thermal-neutron reading; they supply no measured BR_gamma and do not discharge EQ-OPEN-RAD-01. CR-39 pits under electrolytic cavitation (pyyhtia2026) are a detector confounder peer, not an input; densified by EQ-RAD-CR39-NC-01 (BDS-394). Collapse hydro is not gamma-suppression proof."
+notes: "Bool mirrors of branching_model.py detector flags (detector_ul_not_proof). They falsify assumed-scenario branching or a thermal-neutron reading; they supply no measured BR_gamma and do not discharge EQ-OPEN-RAD-01. CR-39 pits under electrolytic cavitation (pyyhtia2026) are a detector confounder peer, not an input; densified by EQ-RAD-CR39-NC-01 (BDS-394). Bare UL without coincidence provenance densified by EQ-RAD-COINC-NC-01 (BDS-398; ≠ EQ-RAD-EFF-NC-01). Collapse hydro is not gamma-suppression proof."

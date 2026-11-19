@@ -91,6 +91,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")
   , ("§5A.2 CR-39 / track-etch ⇏ γ-suppression proof (EQ-RAD-CR39-NC-01 / BDS-394)", "LenrFormal.RadiationBounds")
   , ("§5A.2 bare UL without efficiency ⇏ Q2 (EQ-RAD-EFF-NC-01)", "LenrFormal.RadiationBounds")
+  , ("§5A.2 bare UL without coincidence ⇏ γ BR (EQ-RAD-COINC-NC-01 / BDS-398)", "LenrFormal.RadiationBounds")
   , ("§5A Q3 rate budget", "LenrFormal.RateBudget")
   , ("§5A.3 Q3 scenario cap bounds / gaps (EQ-RATE-CAP-*)", "LenrFormal.RateBudget")
   , ("§5A.3 planned DAQ occupancy ⇏ Q3 (EQ-RATE-DAQ-OCC-NC-01)", "LenrFormal.RateBudget")
