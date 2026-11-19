@@ -3,8 +3,10 @@
  * Read-only honesty panel; never claims LENR proof, EQ-OPEN closure, or ≥5σ discovery.
  * BDS-354 / gap-map P3: inline EQ-OPEN Affirmative / Falsification / Does-not-count
  * + cite-gated high-success-odds guidance (still OPEN; no fabricated σ_Q).
+ * Live corpus MoE counts hydrate from GET /api/analytics/literature-corpus-moe-coverage
+ * with SPA CORPUS_MOE_COVERAGE freeze as offline / honesty-fail fallback.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
@@ -28,8 +30,37 @@ import {
 } from '../../config/unifiedTheoryScienceEvidence';
 import DiscoveryGradeGapChecklist from '../science/DiscoveryGradeGapChecklist';
 import EqOpenAvenueLinkage from '../science/EqOpenAvenueLinkage';
+import { fetchLiteratureCorpusMoeCoverage } from './fetchLiteratureCorpusMoeCoverage';
+
+function freezeCorpusCoverage() {
+  return DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
+}
 
 export default function AnalyticsScienceEvidencePanel() {
+  const [corpusCoverage, setCorpusCoverage] = useState(freezeCorpusCoverage);
+  const [coverageSource, setCoverageSource] = useState('spa_freeze');
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    fetchLiteratureCorpusMoeCoverage({ signal: controller.signal }).then((live) => {
+      if (cancelled || !live) return;
+      setCorpusCoverage({
+        ...freezeCorpusCoverage(),
+        ...live,
+        // Keep SPA locked S_heat / refuse rows when live payload is counts-only.
+        locked_s_heat: freezeCorpusCoverage().locked_s_heat,
+        closes_eq_open: false,
+        lenr_proved: false,
+      });
+      setCoverageSource('live_api');
+    });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
   return (
     <Paper sx={{ p: 2, mb: 2 }} data-testid="analytics-science-evidence-panel">
       <Typography variant="h6" gutterBottom>
@@ -38,7 +69,7 @@ export default function AnalyticsScienceEvidencePanel() {
       <Typography variant="body2" color="text.secondary" paragraph>
         Research pointers for campaign packs, avenue ranking, Lean formalization, and the
         EQ-OPEN closure runway. This panel summarizes Theory Paper section 5B for Analytics
-        reviewers; it does not hydrate live SQL or prove LENR.
+        reviewers; live corpus MoE counts are read-only bookkeeping and never prove LENR.
       </Typography>
 
       <Alert severity="warning" sx={{ mb: 1.5 }} data-testid="analytics-5b-honesty">
@@ -155,15 +186,15 @@ export default function AnalyticsScienceEvidencePanel() {
           <Typography variant="body2">
             Cite-gated MoE pairing is exhausted at{' '}
             <code>
-              {CORPUS_MOE_COVERAGE.with_moe_pairing_verified}/
-              {CORPUS_MOE_COVERAGE.n_records}
+              {corpusCoverage.with_moe_pairing_verified}/
+              {corpusCoverage.n_records}
             </code>{' '}
             (Kasagi NiCu + Ni only; locked S_heat{' '}
-            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code> /{' '}
-            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>
+            <code>{corpusCoverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code> /{' '}
+            <code>{corpusCoverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>
             ). Soft chips stay <code>analytics_gates_clear</code> — never “≥5σ met”. Miles
             stays exploratory (S_heat=
-            <code>{CORPUS_MOE_COVERAGE.locked_s_heat?.['miles-1993']}</code> under
+            <code>{corpusCoverage.locked_s_heat?.['miles-1993']}</code> under
             instrument_precision / pairing unverified; JEAC ±0.04 ≠ discovery pair). Iwamura
             / Mizuno / Arata / Celani stay{' '}
             <code>REFUSE_FABRICATED_SIGMA_Q</code>. Campaign model-output σ_Q=
@@ -183,22 +214,32 @@ export default function AnalyticsScienceEvidencePanel() {
         <Typography variant="body2" color="text.secondary" data-testid="analytics-5b-discovery-gap">
           {DISCOVERY_GRADE_BAR.gap_note}
         </Typography>
+        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 0.5 }}>
+          <Chip
+            size="small"
+            variant="outlined"
+            color={coverageSource === 'live_api' ? 'success' : 'default'}
+            label={`MoE coverage source: ${coverageSource}`}
+            data-testid="analytics-5b-moe-coverage-source"
+            sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+          />
+        </Stack>
         <Typography
           variant="body2"
           color="text.secondary"
           data-testid="analytics-5b-moe-coverage"
         >
           Corpus MoE coverage:{' '}
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_sigma_q}/
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} σ_Q ·{' '}
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_literature_reported_cite_gated}/
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} literature_reported ·{' '}
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.with_moe_pairing_verified}/
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} pairing verified ·{' '}
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_count}/
-          {DISCOVERY_GRADE_BAR.corpus_moe_coverage.n_records} analytics discovery
+          {corpusCoverage.with_sigma_q}/
+          {corpusCoverage.n_records} σ_Q ·{' '}
+          {corpusCoverage.with_literature_reported_cite_gated}/
+          {corpusCoverage.n_records} literature_reported ·{' '}
+          {corpusCoverage.with_moe_pairing_verified}/
+          {corpusCoverage.n_records} pairing verified ·{' '}
+          {corpusCoverage.discovery_grade_eligible_count}/
+          {corpusCoverage.n_records} analytics discovery
           {' '}(
-          {(DISCOVERY_GRADE_BAR.corpus_moe_coverage.discovery_grade_eligible_ids || []).join(
+          {(corpusCoverage.discovery_grade_eligible_ids || []).join(
             ', ',
           )}
           ) — closes_eq_open=<code>false</code>, lenr_proved=<code>false</code>. Soft chip
