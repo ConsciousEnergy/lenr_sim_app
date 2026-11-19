@@ -79,6 +79,7 @@
 | EQ-EC-SIGMA-01 | \(\sigma(1\,\mathrm{MeV})\lesssim 10^{-47}\,\mathrm{m}^2\) envelope; \(\sigma\propto E^2\) mono | `WeakInteraction` | **PROVED** (envelope + mono; Python ~\(10^{-48}\)) |
 | EQ-EC-RATE-01 | Room-T Boltzmann exponent \(\ge 3\times 10^{4}\) ⇒ thermal EC negligible | `WeakInteraction` | **PROVED** (bound; does **not** close Q4) |
 | EQ-OPEN-EC-BOUND-01 | \(E\le\) cap \(<0.782\,\mathrm{MeV}\Rightarrow\neg Q_4\) for 0.1–1 eV double-layer, 26 meV \(k_BT\), and 10–100 eV/atom caps; closing needs \(\ge 7820\) concentrated budgets; Q4 not refuted outright | `WeakInteraction` | **BOUNDED** (form-DISPROVEN under AX caps; does **not** close Q4) |
+| EQ-EC-ENERGY-NC-01 | UI cosmetics / unlicensed mass-renorm ⇏ `MeasuredEcEnergyDischarge`; ⇏ Q4 / `lenr_proved` (BDS-397) | `WeakInteraction` | **PROVED** honesty implications over **AX**-tagged available-energy kinds (does **not** close EQ-OPEN-EC-01; ≠ EQ-EC-UI-NC-01) |
 
 
 ## Definitions mechanized in this pass (not nature theorems)
