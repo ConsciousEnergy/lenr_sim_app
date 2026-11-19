@@ -417,6 +417,11 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert rad["eligible_for_q2_underwrite"] is False
     assert rad["bare_ul_closes_q2"] is False
     assert rad["lean_rad_eff_nc_bound"] == "EQ-RAD-EFF-NC-01"
+    # EQ-MEV-LABEL-NC-01 Python twin: named WH labels lack constrained |M|².
+    mev = closure["mev_channel_provenance"]
+    assert mev["eligible_for_q1_underwrite"] is False
+    assert mev["labeled_hypothesis_closes_q1"] is False
+    assert mev["lean_mev_label_nc_bound"] == "EQ-MEV-LABEL-NC-01"
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"

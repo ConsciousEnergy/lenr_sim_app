@@ -292,6 +292,15 @@ def honest_closure_bookkeeping(
             "bare_ul_closes_q2": False,
             "lean_rad_eff_nc_bound": "EQ-RAD-EFF-NC-01",
         },
+        # EQ-MEV-LABEL-NC-01 twin: named WH labels ≠ constrained |M|² / occupation.
+        "mev_channel_provenance": {
+            "named_hypotheses_are_labels_only": True,
+            "matrix_element_constrained": False,
+            "occupation_constrained": False,
+            "eligible_for_q1_underwrite": False,
+            "labeled_hypothesis_closes_q1": False,
+            "lean_mev_label_nc_bound": "EQ-MEV-LABEL-NC-01",
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
@@ -304,7 +313,10 @@ def honest_closure_bookkeeping(
             "collection efficiency provenance never closes EQ-OPEN-YIELD-01 "
             "(EQ-YIELD-EFF-NC-01). "
             "Bare detector γ UL without efficiency/geometry/heat-coincidence "
-            "never closes EQ-OPEN-RAD-01 (EQ-RAD-EFF-NC-01)."
+            "never closes EQ-OPEN-RAD-01 (EQ-RAD-EFF-NC-01). "
+            "Named Hagelstein/Dicke/BEC labels without constrained matrix "
+            "element + occupation never close EQ-OPEN-MEV-01 "
+            "(EQ-MEV-LABEL-NC-01)."
         ),
     }
 
