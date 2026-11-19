@@ -1,10 +1,10 @@
 id: EQ-OVERLAP-02
-latex: "R_{\\mathrm{overlap\\ count}} = N_{\\mathrm{atoms}} f_{\\mathrm{attempt}} P_{\\mathrm{overlap}}\\quad\\text{(upper-bound count, not }R_{\\mathrm{rate}}\\text{)}"
+latex: "R_{\\mathrm{overlap\\_count}} = N_{\\mathrm{sites}} f_{\\mathrm{attempt}} P_{\\mathrm{overlap}}\\quad[\\mathrm{s^{-1}}]\\quad\\text{(upper-bound count, not }R_{\\mathrm{rate}}\\text{)}"
 symbols:
-  N_atoms: "macroscopic atom count (~10^23 order-of-magnitude)"
-  f_attempt: "attempt frequency (model input)"
-  P_overlap: "single-site overlap probability (EQ-OVERLAP-01)"
-  R_overlap_count: "ensemble upper-bound count of overlap events"
+  N_sites: "dimensionless local electron–nucleus site count (or n_sites V with V stated; not bare density)"
+  f_attempt: "attempt frequency (model assumption; electronic/phonon scale or symbolic)"
+  P_overlap: "single-site overlap probability (EQ-OVERLAP-01; same band as §2.2 derivation, or alternate worked example)"
+  R_overlap_count: "ensemble upper-bound count of local overlap opportunities (IL-015); not R_rate"
 units: "s^{-1} (count rate stand-in; not a nuclear reaction rate)"
 tag: AX
 paper_ref: "§2.2"
@@ -18,4 +18,4 @@ lean_decls:
   - "LenrFormal.Overlap.ensemble_product_is_upper_bound_count"
   - "LenrFormal.Overlap.ensemble_product_not_nuclear_rate"
   - "LenrFormal.Overlap.lenr_proved_false"
-notes: "AX honesty: the macroscopic product is an upper-bound counting argument. Interpreting it as a nuclear rate requires an unspecified matrix element (MATH_AUDIT F-05). Does not discharge any EQ-OPEN-*."
+notes: "AX honesty: the macroscopic product is an upper-bound counting argument of local e–nucleus overlap opportunities—not n×P 'every atom with every atom', not R_rate. Interpreting it as a nuclear rate requires an unspecified matrix element (MATH_AUDIT F-05). Does not discharge any EQ-OPEN-*."

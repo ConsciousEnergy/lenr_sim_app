@@ -111,11 +111,20 @@ This paper aims to:
     
     This is consistent with an alternate fm-scale overlap estimate in the same framework, which uses \( \sim 1 \) fm scales and obtains \( P \sim 10^{-10} \) to \( 10^{-12} \) per event (the difference reflecting different assumptions about the effective wavefunction amplitude at the nucleus).
     
-    **Ensemble scaling (order-of-magnitude only).** Individually, \( P_{\text{overlap}} \sim 10^{-16} \) (or \( 10^{-10} \)–\( 10^{-12} \) under alternate nuclear-radius assumptions) is negligible. Multiplying by macroscopic atom counts (\( \sim 10^{23} \)) and high attempt frequencies does **not** by itself establish nuclear reaction rates: most "overlap events" are not reaction events, and the conversion factor is precisely the unknown matrix element under test. The following product is therefore an **upper-bound counting argument**, not a predicted LENR rate:
+    **Ensemble scaling (order-of-magnitude only).** Individually, \( P_{\text{overlap}} \sim 10^{-16} \) (or \( 10^{-10} \)–\( 10^{-12} \) under alternate nuclear-radius assumptions) is negligible. Multiplying by macroscopic site counts and attempt frequencies does **not** by itself establish nuclear reaction rates: most "overlap events" are not reaction events, and the conversion factor is precisely the unknown matrix element under test. The following product is therefore an **upper-bound counting argument**, not a predicted LENR rate (\( R_{\text{rate}} \)):
     
     \[
-    R_{\text{overlap}} \sim 10^{23} \times 10^{12} \times 10^{-12} \sim 10^{23} \text{ potential overlap events per second}
+    R_{\mathrm{overlap\_count}} = N_{\text{sites}}\, f_{\text{attempt}}\, P_{\text{overlap}}
+    \quad [\mathrm{s^{-1}}],
     \]
+    
+    where \( N_{\text{sites}} \) is a **dimensionless site count** of local electron–nucleus pairs (or \( n_{\text{sites}} V \) with volume \( V \) stated—never a bare number density), \( f_{\text{attempt}} \) is a **model assumption** for the electronic/phonon attempt scale (illustrative order \( \sim 10^{12}\,\mathrm{s^{-1}} \), or left symbolic), and \( P_{\text{overlap}} \) uses the **same** numerical band as the preceding derivation. Worked example with \( N_{\text{sites}} \sim 10^{23} \), \( f_{\text{attempt}} \sim 10^{12}\,\mathrm{s^{-1}} \), and derived \( P_{\text{overlap}} \approx 8.5\times 10^{-16} \):
+    
+    \[
+    R_{\mathrm{overlap\_count}} \sim 10^{23} \times 10^{12} \times 8.5\times 10^{-16} \sim 10^{20}\,\mathrm{s^{-1}}.
+    \]
+    
+    An alternate worked example that substitutes the alternate fm-scale band \( P \sim 10^{-12} \) (instead of the derived \( 8.5\times 10^{-16} \)) yields \( R_{\mathrm{overlap\_count}} \sim 10^{23}\,\mathrm{s^{-1}} \). This construction counts potential **local** electron–nucleus overlap opportunities; it is **not** \( n \times P \) “every atom with every atom,” and it is **not** \( R_{\text{rate}} \). Formal bookkeeping: IR `EQ-OVERLAP-02.yaml` / Lean `Overlap.lean` (IL-015 symbol `R_overlap_count`).
     
     This large statistical ensemble is a key feature distinguishing condensed matter nuclear processes from few-body scattering experiments.
 
