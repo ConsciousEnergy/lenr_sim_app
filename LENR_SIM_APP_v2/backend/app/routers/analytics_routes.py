@@ -583,6 +583,31 @@ async def get_theory_graph():
     return graph.to_dict()
 
 
+@router.get("/literature-corpus-moe-coverage")
+async def get_literature_corpus_moe_coverage():
+    """
+    Read-only cite-gated corpus MoE / Q↔σ_Q pairing coverage snapshot.
+
+    Live mirror of ``literature_corpus_moe_coverage()`` for Analytics §5B.
+    Counts only — never fabricates σ_Q, never sets ``lenr_proved``, never
+    closes EQ-OPEN-*. SPA freeze in ``unifiedTheoryScienceEvidence.js``
+    remains the offline fallback.
+    """
+    from app.physics_engine.sigma_distance import literature_corpus_moe_coverage
+
+    try:
+        coverage = await run_in_threadpool(literature_corpus_moe_coverage)
+    except Exception as exc:
+        logger.exception("literature-corpus-moe-coverage unavailable")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    # Defense in depth: honesty locks stay absolute on the wire.
+    coverage["closes_eq_open"] = False
+    coverage["lenr_proved"] = False
+    coverage["live_endpoint"] = "GET /api/analytics/literature-corpus-moe-coverage"
+    return to_json_safe(coverage)
+
+
 @router.get("/theory-run-history")
 async def get_theory_run_history(
     session_id: Optional[str] = Query(None),
