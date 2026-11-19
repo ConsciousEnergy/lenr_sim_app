@@ -6,10 +6,12 @@ symbols:
   hydroEnhancementScenario: "contested hydro / cavitation scenario heat"
   campaignModelOutput: "reviewer-pack campaign cell (model output)"
   daqPlannedSketch: "planned lenr-ara-daq-sample-v1 sketch / planned_not_attested ingest (BDS-375)"
+  daqSampleV1SchemaId: "lenr-ara-daq-sample-v1 export/ingest schema id (BDS-384)"
+  daqSampleV1HeatMoEKind: "canonical HeatMoEKind for sample-v1 (= daqPlannedSketch)"
   literatureReportedVerifiedPairing: "cite-gated literature_reported σ_Q with verified Q↔σ pairing"
 units: "dimensionless (provenance tag)"
 tag: AX
-paper_ref: "§3.2, §5B / BDS-302 / BDS-330 / BDS-375"
+paper_ref: "§3.2, §5B / BDS-302 / BDS-330 / BDS-375 / BDS-384"
 code_refs:
   - LENR_SIM_APP_v2/backend/app/physics_engine/collapse_uq.py
   - LENR_SIM_APP_v2/backend/app/physics_engine/calorimetry_significance.py
@@ -25,8 +27,15 @@ lean_decls:
   - "LenrFormal.CollapseBounds.campaign_model_output_does_not_entail_discovery_heat_moe"
   - "LenrFormal.CollapseBounds.daq_planned_sketch_does_not_entail_discovery_heat_moe"
   - "LenrFormal.CollapseBounds.daq_planned_sketch_alone_keeps_heat_moe_open"
+  - "LenrFormal.CollapseBounds.daqSampleV1SchemaId"
+  - "LenrFormal.CollapseBounds.daqSampleV1HeatMoEKind"
+  - "LenrFormal.CollapseBounds.daq_sample_v1_schema_maps_to_planned_sketch_kind"
+  - "LenrFormal.CollapseBounds.daq_sample_v1_bound_to_heat_moe_keeps_open"
+  - "LenrFormal.CollapseBounds.daq_sample_v1_schema_alone_keeps_heat_moe_open"
+  - "LenrFormal.CollapseBounds.daq_planned_sketch_with_collapse_uq_keeps_heat_moe_open"
+  - "LenrFormal.CollapseBounds.daq_sample_v1_bound_does_not_close_q5"
   - "LenrFormal.CollapseBounds.uq_percentiles_do_not_close_q5"
   - "LenrFormal.CollapseBounds.empty_moe_bag_not_discovery"
   - "LenrFormal.CollapseBounds.reported_temperature_does_not_entail_discovery_heat_moe"
   - "LenrFormal.CollapseBounds.reported_pressure_and_compression_keep_heat_moe_open"
-notes: "AX honesty tag: collapse UQ envelopes, hydro enhancement scenarios, campaign model-output cells, and planned DAQ sample-v1 sketches (planned_not_attested) never supply cite-gated discovery-grade heat MoE (HeatDiscoveryProof alias of DiscoveryGradeHeatMoE). Reported clamped T/P/CR do not underwrite discovery heat. Even HeatDiscoveryProof does not close EQ-OPEN-YIELD-01 or set lenr_proved. UQ percentile bookkeeping does not close Q5. Complements EQ-BBL-NR-01 (rate) and EQ-HEAT-SIG-NC-01 (calorimetry / LabAskProxies / DAQ Bool plane)."
+notes: "AX honesty tag: collapse UQ envelopes, hydro enhancement scenarios, campaign model-output cells, and planned DAQ sample-v1 sketches (planned_not_attested) never supply cite-gated discovery-grade heat MoE (HeatDiscoveryProof alias of DiscoveryGradeHeatMoE). BDS-384 binds schema id lenr-ara-daq-sample-v1 → HeatMoEKind.daqPlannedSketch with planned_not_attested / ≠ EQ-OPEN discharge Bools and mixed UQ bags still NC. Reported clamped T/P/CR do not underwrite discovery heat. Even HeatDiscoveryProof does not close EQ-OPEN-YIELD-01 or set lenr_proved. UQ percentile bookkeeping does not close Q5. Complements EQ-BBL-NR-01 (rate) and EQ-HEAT-SIG-NC-01 (calorimetry / LabAskProxies / DAQ Bool plane)."
