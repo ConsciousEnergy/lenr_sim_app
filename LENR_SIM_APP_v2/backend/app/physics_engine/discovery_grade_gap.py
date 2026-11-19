@@ -274,6 +274,15 @@ def honest_closure_bookkeeping(
             "rate_occupancy_underwrite_eligible": False,
             "lean_rate_daq_occ_nc_bound": "EQ-RATE-DAQ-OCC-NC-01",
         },
+        # EQ-YIELD-EFF-NC-01 twin: Miles EMP / expected yield ≠ efficiency provenance.
+        "he_yield_efficiency_provenance": {
+            "retention_efficiency_calibrated": False,
+            "collection_efficiency_calibrated": False,
+            "simultaneous_heat_he": False,
+            "eligible_for_q5_underwrite": False,
+            "miles_emp_alone_closes_q5": False,
+            "lean_yield_eff_nc_bound": "EQ-YIELD-EFF-NC-01",
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
@@ -281,7 +290,10 @@ def honest_closure_bookkeeping(
             "lenr_proved or close EQ-OPEN-*. Planned lenr-ara-daq-sample-v1 "
             "ingest stays non-attested and never discharges obligations. "
             "Planned DAQ occupancy/collective Nat pairs stay ineligible for "
-            "EQ-OPEN-RATE-01 underwriting (EQ-RATE-DAQ-OCC-NC-01)."
+            "EQ-OPEN-RATE-01 underwriting (EQ-RATE-DAQ-OCC-NC-01). "
+            "Miles EMP / expected-yield bookkeeping without retention/"
+            "collection efficiency provenance never closes EQ-OPEN-YIELD-01 "
+            "(EQ-YIELD-EFF-NC-01)."
         ),
     }
 

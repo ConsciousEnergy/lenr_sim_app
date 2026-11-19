@@ -3,6 +3,7 @@ import LenrFormal.Branching
 import LenrFormal.RateBudget
 import LenrFormal.NBody
 import LenrFormal.WeakInteraction
+import LenrFormal.YieldAccounting
 
 /-!
 OpenQuestionBounds — would-close-if bookkeeping for paper §5A.
@@ -256,5 +257,28 @@ theorem integrated_yield_discharge_does_not_flip_lenr
     lenrProved = false
       ∧ milesEmpIsIntegratedYieldDischarge = false :=
   ⟨yield_lenr_proved_false, miles_emp_is_not_integrated_yield_discharge⟩
+
+/-! ### EQ-YIELD-EFF-NC-01 — retention/collection efficiency ⇏ Q5 -/
+
+open LenrFormal.YieldAccounting
+
+/-- EQ-YIELD-EFF-NC-01: ineligible efficiency provenance ⇏ Q5 closed. -/
+theorem ineligible_he_efficiency_does_not_close_q5
+    (p : HeYieldEfficiencyProvenance)
+    (h : ¬ p.Eligible)
+    (integratedRemainder : Nat) :
+    ¬ (p.Eligible ∧ q5IntegratedYieldClosed integratedRemainder) := by
+  intro ⟨he, _⟩
+  exact h he
+
+/-- Miles EMP without retention/collection efficiency never closes Q5. -/
+theorem miles_emp_without_efficiency_does_not_close_q5
+    (integratedRemainder : Nat) :
+    ¬ (milesEmpLacksEfficiencyProvenance.Eligible ∧
+        q5IntegratedYieldClosed integratedRemainder) :=
+  ineligible_he_efficiency_does_not_close_q5
+    milesEmpLacksEfficiencyProvenance
+    miles_emp_lacks_efficiency_not_Eligible
+    integratedRemainder
 
 end LenrFormal.OpenQuestionBounds
