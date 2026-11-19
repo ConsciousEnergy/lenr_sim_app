@@ -345,6 +345,9 @@ inductive HeatMoEKind where
   | hydroEnhancementScenario
   /-- Campaign pack model-output cell (not lab MoE). -/
   | campaignModelOutput
+  /-- Planned `lenr-ara-daq-sample-v1` sketch / UI densification (BDS-375);
+      `planned_not_attested` — never discovery MoE. -/
+  | daqPlannedSketch
   /-- Cite-gated literature_reported total σ_Q with verified Q↔σ pairing. -/
   | literatureReportedVerifiedPairing
   deriving DecidableEq, Repr
@@ -396,6 +399,28 @@ theorem campaign_model_output_does_not_entail_discovery_heat_moe
       HeatMoEKind.literatureReportedVerifiedPairing :=
     hDisc.2 _ h
   cases this
+
+/-- EQ-BBL-HEAT-NC-01 (BDS-375 follow-on): planned DAQ sample-v1 sketch /
+    `planned_not_attested` ingest never supplies cite-gated discovery MoE. -/
+theorem daq_planned_sketch_does_not_entail_discovery_heat_moe
+    {kinds : List HeatMoEKind}
+    (h : HeatMoEKind.daqPlannedSketch ∈ kinds) :
+    ¬ DiscoveryGradeHeatMoE kinds := by
+  intro hDisc
+  have : HeatMoEKind.daqPlannedSketch =
+      HeatMoEKind.literatureReportedVerifiedPairing :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: a bag that is only the planned DAQ sketch stays non-discovery
+    and keeps `lenr_proved` false (UI densification ≠ attestation). -/
+theorem daq_planned_sketch_alone_keeps_heat_moe_open :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.daqPlannedSketch]
+      ∧ ¬ HeatDiscoveryProof [HeatMoEKind.daqPlannedSketch]
+      ∧ lenrProved = false := by
+  refine ⟨?_, ?_, collapse_lenr_proved_false⟩
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
 
 /-- EQ-BBL-HEAT-NC-01 ∘ EQ-BBL-UQ-01: UQ percentile bookkeeping does not
     discharge EQ-OPEN-YIELD-01 (integrated yield) or set lenr_proved. -/
