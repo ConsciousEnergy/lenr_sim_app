@@ -283,6 +283,15 @@ def honest_closure_bookkeeping(
             "miles_emp_alone_closes_q5": False,
             "lean_yield_eff_nc_bound": "EQ-YIELD-EFF-NC-01",
         },
+        # EQ-RAD-EFF-NC-01 twin: bare γ UL without efficiency/geometry ⇏ Q2.
+        "detector_ul_provenance": {
+            "efficiency_calibrated": False,
+            "geometry_documented": False,
+            "heat_coincidence": False,
+            "eligible_for_q2_underwrite": False,
+            "bare_ul_closes_q2": False,
+            "lean_rad_eff_nc_bound": "EQ-RAD-EFF-NC-01",
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
@@ -293,7 +302,9 @@ def honest_closure_bookkeeping(
             "EQ-OPEN-RATE-01 underwriting (EQ-RATE-DAQ-OCC-NC-01). "
             "Miles EMP / expected-yield bookkeeping without retention/"
             "collection efficiency provenance never closes EQ-OPEN-YIELD-01 "
-            "(EQ-YIELD-EFF-NC-01)."
+            "(EQ-YIELD-EFF-NC-01). "
+            "Bare detector γ UL without efficiency/geometry/heat-coincidence "
+            "never closes EQ-OPEN-RAD-01 (EQ-RAD-EFF-NC-01)."
         ),
     }
 

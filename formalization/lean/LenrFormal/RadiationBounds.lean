@@ -2,8 +2,9 @@ import LenrFormal.WorkingHypothesisBounds
 import LenrFormal.RealShim
 
 /-!
-RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound) and EQ-RAD-DET-01
-(detector-UL honesty flag mirrors) for paper §5A.2 / EQ-OPEN-RAD-01.
+RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound), EQ-RAD-DET-01
+(detector-UL honesty flag mirrors), and EQ-RAD-EFF-NC-01 (bare UL without
+efficiency/geometry ⇏ Q2) for paper §5A.2 / EQ-OPEN-RAD-01.
 
 EQ-WH-FC-02 universalises EQ-WH-FC-01: for every Huang–Rhys factor on the
 licensed scan domain and every phonon order above a stated floor, the
@@ -422,5 +423,56 @@ theorem harmonic_dos_non_closure :
     fun S N ul hS hN hul =>
       gamma_above_bound_implies_q2_not_closed
         (by rw [fc_gamma_branching_full S N hS hN]; exact hul)⟩
+
+/-! ### EQ-RAD-EFF-NC-01 — detector UL without efficiency/geometry ⇏ Q2
+
+Affirmative EQ-OPEN-RAD-01 underwriting needs time-correlated heat + γ with
+**calibrated efficiency and geometry**. A bare detector UL (or UL flag) without
+those provenance conjuncts does not underwrite Q2. -/
+
+/-- Detector γ-UL provenance for RAD-01 underwriting. -/
+structure DetectorUlProvenance where
+  ulMilli : Nat
+  efficiencyCalibrated : Bool
+  geometryDocumented : Bool
+  heatCoincidence : Bool
+
+/-- Eligible only with calibrated efficiency, documented geometry, and heat coincidence. -/
+def DetectorUlProvenance.Eligible (p : DetectorUlProvenance) : Prop :=
+  p.efficiencyCalibrated = true ∧
+    p.geometryDocumented = true ∧
+    p.heatCoincidence = true ∧
+    0 < p.ulMilli
+
+/-- Bare UL ingest (no efficiency / geometry / coincidence). -/
+def bareDetectorUl (ulMilli : Nat) : DetectorUlProvenance :=
+  { ulMilli := ulMilli
+    efficiencyCalibrated := false
+    geometryDocumented := false
+    heatCoincidence := false }
+
+theorem bare_detector_ul_not_Eligible (ulMilli : Nat) :
+    ¬ (bareDetectorUl ulMilli).Eligible := by
+  intro h
+  unfold DetectorUlProvenance.Eligible bareDetectorUl at h
+  exact Bool.noConfusion h.1
+
+/-- EQ-RAD-DET-01 UL flag under a bare (ineligible) UL does not close Q2. -/
+theorem ineligible_detector_ul_does_not_close_q2
+    (p : DetectorUlProvenance)
+    (h : ¬ p.Eligible)
+    (gammaBranching : Nat) :
+    ¬ (p.Eligible ∧ q2RadiationSuppressionClosed gammaBranching p.ulMilli) := by
+  intro ⟨he, _⟩
+  exact h he
+
+theorem bare_detector_ul_does_not_close_q2
+    (ulMilli gammaBranching : Nat) :
+    ¬ ((bareDetectorUl ulMilli).Eligible ∧
+        q2RadiationSuppressionClosed gammaBranching ulMilli) :=
+  ineligible_detector_ul_does_not_close_q2
+    (bareDetectorUl ulMilli)
+    (bare_detector_ul_not_Eligible ulMilli)
+    gammaBranching
 
 end LenrFormal.RadiationBounds
