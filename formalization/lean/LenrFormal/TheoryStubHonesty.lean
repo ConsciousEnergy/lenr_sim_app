@@ -3,13 +3,15 @@ import LenrFormal.OpenObligations
 /-!
 TheoryStubHonesty — phenomenological theory stubs ⇏ EQ-OPEN / discovery / `lenr_proved`.
 
-Locks the `santilli_icnf` v1 registry stub (and the same pattern for any
-phenomenological stub): regime-gated applicability + author-claimed mass-defect
-**labels** never invent a hadronic rate law, never emit discovery-grade MoE,
-never set `lenr_proved`, and never discharge Q1–Q5 under open witnesses.
+Locks the `santilli_icnf` v1 and `shoulders_evo` P0 registry stubs (and the
+same pattern for any phenomenological stub): regime-gated applicability +
+author-claimed mass-defect **labels** (or free exploratory params) never invent
+a nuclear rate law, never emit discovery-grade MoE, never set `lenr_proved`,
+and never discharge Q1–Q5 under open witnesses.
 
-Primary cite (Python module / UI): Kadeisvili, Lynch & Yang (2013) —
-`kadeisvili2013`. Related `santilli2007` is cite-only (magnecule not modeled).
+Primary cites: Kadeisvili, Lynch & Yang (2013) — `kadeisvili2013` (Santilli);
+Shoulders (1991/1996) phenomenological EVO reports. Related `santilli2007` is
+cite-only (magnecule not modeled).
 
 **Claim tier:** AX honesty / non-closure bookkeeping only. Does **not** prove
 LENR occurs. Does **not** close any `EQ-OPEN-*`.
@@ -168,6 +170,93 @@ theorem santilli_icnf_stub_does_not_discharge_eq_open
     santilli_stub_not_discovery_moe
     santilli_stub_contribution_not_lenr_proved
     santilli_stub_contribution_eq_open_not_closed
+    hQ1 hQ2 hQ3 hQ4 hQ5
+
+/--
+Shoulders EVO / charge-cluster P0 phenomenological stub:
+no invented rate, zero watts, no discovery MoE, no author MeV mass-defect label
+(`claimedMassDefectMilliMeV = 0`). Exploratory `cluster_charge_q` stays a free
+simulator parameter — never a wattage / fusion-rate driver.
+-/
+def shouldersEvoStub : PhenomenologicalTheoryStub :=
+  { theoryId := "shoulders_evo"
+    hasInventedRateLaw := false
+    energyOutputMilliWatts := 0
+    discoveryMoe := false
+    claimedMassDefectMilliMeV := 0
+    contributionLenrProved := false
+    contributionEqOpenClosed := false }
+
+theorem shoulders_stub_id :
+    shouldersEvoStub.theoryId = "shoulders_evo" := rfl
+
+theorem shoulders_stub_has_no_invented_rate :
+    shouldersEvoStub.hasInventedRateLaw = false := rfl
+
+theorem shoulders_stub_zero_watts :
+    shouldersEvoStub.energyOutputMilliWatts = 0 := rfl
+
+theorem shoulders_stub_not_discovery_moe :
+    shouldersEvoStub.discoveryMoe = false := rfl
+
+theorem shoulders_stub_no_mev_label :
+    shouldersEvoStub.claimedMassDefectMilliMeV = 0 := rfl
+
+theorem shoulders_stub_contribution_not_lenr_proved :
+    shouldersEvoStub.contributionLenrProved = false := rfl
+
+theorem shoulders_stub_contribution_eq_open_not_closed :
+    shouldersEvoStub.contributionEqOpenClosed = false := rfl
+
+/--
+EQ-SHOULDERS-STUB-NC-01: exploratory free params (e.g. cluster charge scale)
+never underwrite stub wattage when energy stays locked at 0.
+-/
+theorem shoulders_free_param_not_wattage_driver
+    (s : PhenomenologicalTheoryStub)
+    (hId : s.theoryId = "shoulders_evo")
+    (hWatts : s.energyOutputMilliWatts = 0)
+    (_hFreeParamPresent : True) :
+    s.energyOutputMilliWatts = 0 ∧ s.theoryId = "shoulders_evo" :=
+  ⟨hWatts, hId⟩
+
+theorem shoulders_evo_free_param_not_wattage :
+    shouldersEvoStub.energyOutputMilliWatts = 0
+      ∧ shouldersEvoStub.theoryId = "shoulders_evo" :=
+  shoulders_free_param_not_wattage_driver
+    shouldersEvoStub shoulders_stub_id shoulders_stub_zero_watts trivial
+
+/-- Shoulders EVO stub instantiation of EQ-THEORY-STUB-NC-01 / EQ-SHOULDERS-STUB-NC-01. -/
+theorem shoulders_evo_stub_does_not_discharge_eq_open
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy) :
+    lenrProved = false
+      ∧ shouldersEvoStub.hasInventedRateLaw = false
+      ∧ shouldersEvoStub.energyOutputMilliWatts = 0
+      ∧ shouldersEvoStub.discoveryMoe = false
+      ∧ shouldersEvoStub.contributionLenrProved = false
+      ∧ shouldersEvoStub.contributionEqOpenClosed = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy :=
+  phenomenological_stub_does_not_discharge_eq_open
+    shouldersEvoStub
+    openRemainder gammaBranching gammaUpperBound
+    log10Events
+    availableEnergy thresholdEnergy yieldDiscrepancy
+    shoulders_stub_has_no_invented_rate
+    shoulders_stub_zero_watts
+    shoulders_stub_not_discovery_moe
+    shoulders_stub_contribution_not_lenr_proved
+    shoulders_stub_contribution_eq_open_not_closed
     hQ1 hQ2 hQ3 hQ4 hQ5
 
 end LenrFormal.TheoryStubHonesty
