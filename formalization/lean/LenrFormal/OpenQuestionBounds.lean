@@ -147,4 +147,114 @@ theorem miles_band_does_not_imply_q5_closed :
     (hAll milesInstantaneousBandLo integratedYieldDiscrepancyLo
       ⟨Nat.le_refl _, by decide⟩)
 
+/-! ### EQ-YIELD-MILES-EMP-NC-01 — Miles EMP ~2× heat/He ⇏ integrated yield (BDS-395) -/
+
+/-- Canonical ~2× instantaneous Miles EMP heat/He factor (inside [1,3] band). -/
+def milesEmpApproxTwoFactor : Nat := 2
+
+theorem miles_emp_approx_two_in_band :
+    q5InstantaneousMilesInBand milesEmpApproxTwoFactor := by
+  unfold milesEmpApproxTwoFactor q5InstantaneousMilesInBand
+    milesInstantaneousBandLo milesInstantaneousBandHi
+  exact ⟨by decide, by decide⟩
+
+/-- Provenance kind for Miles heat/He EMP vs integrated yield surfaces. -/
+inductive MilesEmpEvidenceKind where
+  /-- Instantaneous Miles EMP heat↔He correlation band (~2×; miles1993). -/
+  | instantaneousHeatHeBand
+  /-- Duty-cycle expected-yield bookkeeping (EQ-YIELD-ACCT-01; no observed ΔN). -/
+  | expectedDutyCycleBookkeeping
+  /-- Cite-gated time-resolved simultaneous heat+He with calibrated efficiencies. -/
+  | calibratedSimultaneousIntegratedYield
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: integrated ⁴He/heat yield discharge requires calibrated
+    simultaneous integrated provenance. Instantaneous Miles EMP never inhabits it. -/
+def IntegratedYieldDischarge (kinds : List MilesEmpEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds, k = MilesEmpEvidenceKind.calibratedSimultaneousIntegratedYield
+
+/-- Hard honesty: nature-proof token stays false on YIELD / Miles EMP surfaces. -/
+def lenrProved : Bool := false
+
+theorem yield_lenr_proved_false : lenrProved = false := rfl
+
+/-- Instantaneous Miles EMP ~2× is never itself integrated-yield discharge. -/
+def milesEmpIsIntegratedYieldDischarge : Bool := false
+
+theorem miles_emp_is_not_integrated_yield_discharge :
+    milesEmpIsIntegratedYieldDischarge = false := rfl
+
+/-- EQ-YIELD-MILES-EMP-NC-01: a bag containing instantaneous Miles EMP heat/He
+    band evidence is not integrated-yield discharge. -/
+theorem miles_emp_band_does_not_entail_integrated_yield_discharge
+    {kinds : List MilesEmpEvidenceKind}
+    (h : MilesEmpEvidenceKind.instantaneousHeatHeBand ∈ kinds) :
+    ¬ IntegratedYieldDischarge kinds := by
+  intro hDisc
+  have : MilesEmpEvidenceKind.instantaneousHeatHeBand =
+      MilesEmpEvidenceKind.calibratedSimultaneousIntegratedYield :=
+    hDisc.2 _ h
+  cases this
+
+/-- Expected-yield duty bookkeeping likewise never underwrites discharge. -/
+theorem expected_duty_bookkeeping_does_not_entail_integrated_yield_discharge
+    {kinds : List MilesEmpEvidenceKind}
+    (h : MilesEmpEvidenceKind.expectedDutyCycleBookkeeping ∈ kinds) :
+    ¬ IntegratedYieldDischarge kinds := by
+  intro hDisc
+  have : MilesEmpEvidenceKind.expectedDutyCycleBookkeeping =
+      MilesEmpEvidenceKind.calibratedSimultaneousIntegratedYield :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: Miles EMP ~2× alone keeps Q5 open / `lenr_proved` false. -/
+theorem miles_emp_approx_two_alone_keeps_yield_open :
+    q5InstantaneousMilesInBand milesEmpApproxTwoFactor
+      ∧ ¬ IntegratedYieldDischarge
+          [MilesEmpEvidenceKind.instantaneousHeatHeBand]
+      ∧ milesEmpIsIntegratedYieldDischarge = false
+      ∧ ¬ q5IntegratedYieldClosed integratedYieldDiscrepancyLo
+      ∧ lenrProved = false := by
+  refine ⟨miles_emp_approx_two_in_band, ?_,
+    miles_emp_is_not_integrated_yield_discharge, ?_, yield_lenr_proved_false⟩
+  · exact miles_emp_band_does_not_entail_integrated_yield_discharge (by simp)
+  · exact q5_integrated_band_remainder_not_closed q5_integrated_band_lo_in_band
+
+/-- Mixed bag: Miles EMP band + expected-yield bookkeeping still ⇏ discharge. -/
+theorem miles_emp_with_expected_bookkeeping_keeps_yield_open :
+    ¬ IntegratedYieldDischarge
+        [MilesEmpEvidenceKind.instantaneousHeatHeBand,
+          MilesEmpEvidenceKind.expectedDutyCycleBookkeeping]
+      ∧ ¬ q5IntegratedYieldClosed integratedYieldDiscrepancyLo
+      ∧ lenrProved = false := by
+  refine ⟨?_, q5_integrated_band_remainder_not_closed q5_integrated_band_lo_in_band,
+    yield_lenr_proved_false⟩
+  exact miles_emp_band_does_not_entail_integrated_yield_discharge (by simp)
+
+/-- EQ-YIELD-MILES-EMP-NC-01 ∘ EQ-OPEN-YIELD-01: ~2× Miles EMP factor never
+    closes Q5 for any integrated remainder in the open DEF band. -/
+theorem miles_emp_approx_two_does_not_close_q5
+    {integratedRemainder : Nat}
+    (hBand : q5IntegratedRemainderInBand integratedRemainder) :
+    q5InstantaneousMilesInBand milesEmpApproxTwoFactor
+      ∧ ¬ IntegratedYieldDischarge
+          [MilesEmpEvidenceKind.instantaneousHeatHeBand]
+      ∧ ¬ q5IntegratedYieldClosed integratedRemainder
+      ∧ milesEmpIsIntegratedYieldDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨miles_emp_approx_two_in_band, ?_,
+    q5_integrated_band_remainder_not_closed hBand,
+    miles_emp_is_not_integrated_yield_discharge, yield_lenr_proved_false⟩
+  exact miles_emp_band_does_not_entail_integrated_yield_discharge (by simp)
+
+/-- Even a (hypothetical) calibrated integrated-yield discharge bag does not
+    flip `lenr_proved`. Distinct from EQ-YIELD-EFF-NC-01 (efficiency provenance). -/
+theorem integrated_yield_discharge_does_not_flip_lenr
+    {kinds : List MilesEmpEvidenceKind}
+    (_h : IntegratedYieldDischarge kinds) :
+    lenrProved = false
+      ∧ milesEmpIsIntegratedYieldDischarge = false :=
+  ⟨yield_lenr_proved_false, miles_emp_is_not_integrated_yield_discharge⟩
+
 end LenrFormal.OpenQuestionBounds
