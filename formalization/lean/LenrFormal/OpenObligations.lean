@@ -107,4 +107,25 @@ theorem positive_yield_discrepancy_implies_q5_not_closed
   unfold q5IntegratedYieldClosed at hClosed
   exact (Nat.ne_of_gt h) hClosed
 
+/-- EQ-RATE-DAQ-OCC-NC-01: ineligible planned-DAQ occupancy witness ⇏ Q3 closed,
+    even beside an arbitrary log10Events argument. EQ-OPEN-RATE-01 stays OPEN. -/
+theorem ineligible_daq_occupancy_does_not_close_q3
+    (u : RateOccupancyUnderwrite)
+    (h : ¬ u.Eligible)
+    (log10Events : Int) :
+    ¬ (u.Eligible ∧ q3RateBudgetClosed log10Events) := by
+  intro ⟨he, _⟩
+  exact h he
+
+/-- Planned sample-v1 occupancy sketch never closes Q3. -/
+theorem planned_daq_occupancy_does_not_close_q3
+    (nOcc fNuc : Nat)
+    (log10Events : Int) :
+    ¬ ((plannedDaqRateOccupancy nOcc fNuc).Eligible ∧
+        q3RateBudgetClosed log10Events) :=
+  ineligible_daq_occupancy_does_not_close_q3
+    (plannedDaqRateOccupancy nOcc fNuc)
+    (planned_daq_rate_occupancy_not_Eligible nOcc fNuc)
+    log10Events
+
 end LenrFormal.OpenObligations

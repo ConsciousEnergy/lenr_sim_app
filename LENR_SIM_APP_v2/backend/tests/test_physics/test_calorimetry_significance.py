@@ -401,6 +401,12 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert closure["lenr_proved"] is False
     assert set(CLOSURE_REQUIREMENT_IDS).issubset(set(closure["missing_ids"]))
     assert all(v == "OPEN" for v in closure["eq_open_status"].values())
+    # EQ-RATE-DAQ-OCC-NC-01 Python twin: planned sample-v1 has no occupancy fields.
+    daq = closure["daq_sample_provenance"]
+    assert daq["exposes_occupancy_observables"] is False
+    assert daq["rate_occupancy_underwrite_eligible"] is False
+    assert daq["lean_rate_daq_occ_nc_bound"] == "EQ-RATE-DAQ-OCC-NC-01"
+    assert daq["closes_eq_open"] is False
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"

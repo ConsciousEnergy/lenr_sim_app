@@ -4,7 +4,8 @@ import LenrFormal.NBody
 
 /-!
 RateBudget — EQ-RATE-2B-NC-01 / EQ-RATE-COND-01 / EQ-RATE-REPLACE-01 /
-EQ-RATE-CAP-NC-01 / EQ-RATE-CAP-NC-02 / EQ-RATE-CAP-GAP-01
+EQ-RATE-CAP-NC-01 / EQ-RATE-CAP-NC-02 / EQ-RATE-CAP-GAP-01 /
+EQ-RATE-DAQ-OCC-NC-01
 
 Paper §5A.3 bookkeeping: log10 N_events = 23+12+5-80 = -40 < 0.
 Would-close-if: if n_occ ≥ n0 and f ≥ f0 then n*f ≥ n0*f0.
@@ -15,7 +16,10 @@ EQ-RATE-CAP-*: integer log10 event budgets for the `trapped_state` and
 of nature. Non-closure is proved only where every engine cap still leaves the
 budget negative; where the caps admit a nonnegative budget, that is proved as
 a gap (caps do not certify non-closure), never as closure.
-EQ-OPEN-RATE-01 stays OPEN.
+
+EQ-RATE-DAQ-OCC-NC-01: planned `lenr-ara-daq-sample-v1` exposes no occupancy /
+collective observables; unconstrained Nat pairs stay ineligible for RATE-01
+underwriting. EQ-OPEN-RATE-01 stays OPEN.
 -/
 
 namespace LenrFormal.RateBudget
@@ -301,5 +305,55 @@ theorem cap_gaps_are_not_nuclear_rate_proofs :
     three_body_ulm_caps_do_not_certify_non_closure,
     scenario_prior_does_not_entail_nuclear_rate (List.Mem.head _),
     hydro_enhancement_does_not_entail_nuclear_rate (List.Mem.head _)⟩
+
+/-! ### EQ-RATE-DAQ-OCC-NC-01 — planned DAQ occupancy ⇏ RATE-01
+
+Affirmative EQ-OPEN-RATE-01 underwriting needs **experimentally constrained**
+\(n_{\mathrm{occ}}\) / \(f_{\mathrm{nuc}}\) (not free \(10^{6}\) caps). Planned
+`lenr-ara-daq-sample-v1` exposes **no** occupancy / collective observables
+(BDS-375); refuse inventing those DAQ numbers. Free Nat product bookkeeping
+(`would_close_if`) under an ineligible witness never flips eligibility. -/
+
+/-- RATE occupancy underwrite witness: both flags must be true for eligibility. -/
+structure RateOccupancyUnderwrite where
+  nOcc : Nat
+  fNuc : Nat
+  experimentallyConstrained : Bool
+  daqSchemaAttested : Bool
+
+/-- Eligible only when lab/corpus constrains both factors **and** the DAQ
+    schema export is attested (not planned_not_attested). -/
+def RateOccupancyUnderwrite.Eligible (u : RateOccupancyUnderwrite) : Prop :=
+  u.experimentallyConstrained = true ∧ u.daqSchemaAttested = true
+
+/-- BDS-375: sample-v1 has no occupation / collective DAQ fields. -/
+def daqSampleV1ExposesOccupancyObservables : Bool := false
+
+theorem daq_sample_v1_has_no_occupancy_observables :
+    daqSampleV1ExposesOccupancyObservables = false :=
+  rfl
+
+/-- Planned sample-v1 sketch: always ineligible (unconstrained + unattested). -/
+def plannedDaqRateOccupancy (nOcc fNuc : Nat) : RateOccupancyUnderwrite :=
+  { nOcc := nOcc
+    fNuc := fNuc
+    experimentallyConstrained := false
+    daqSchemaAttested := false }
+
+theorem planned_daq_rate_occupancy_not_Eligible (nOcc fNuc : Nat) :
+    ¬ (plannedDaqRateOccupancy nOcc fNuc).Eligible := by
+  intro h
+  unfold RateOccupancyUnderwrite.Eligible plannedDaqRateOccupancy at h
+  exact Bool.noConfusion h.1
+
+/-- EQ-RATE-COND-01 product bound under an ineligible DAQ witness does not
+    flip eligibility (Nat bookkeeping ≠ experimental constraint). -/
+theorem unconstrained_occupancy_product_keeps_ineligible
+    (u : RateOccupancyUnderwrite)
+    (h : ¬ u.Eligible)
+    (n0 f0 : Nat)
+    (_bound : n0 * f0 ≤ rateProduct u.nOcc u.fNuc) :
+    ¬ u.Eligible :=
+  h
 
 end LenrFormal.RateBudget

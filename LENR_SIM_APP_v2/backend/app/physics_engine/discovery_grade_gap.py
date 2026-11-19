@@ -269,13 +269,19 @@ def honest_closure_bookkeeping(
             "refuse_fabricated_samples": True,
             "lenr_proved_default": False,
             "closes_eq_open": False,
+            # EQ-RATE-DAQ-OCC-NC-01 twin: sample-v1 has no n_occ / f_nuc fields.
+            "exposes_occupancy_observables": False,
+            "rate_occupancy_underwrite_eligible": False,
+            "lean_rate_daq_occ_nc_bound": "EQ-RATE-DAQ-OCC-NC-01",
         },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
             "implies closure. Campaign / avenue / Lean outputs never set "
             "lenr_proved or close EQ-OPEN-*. Planned lenr-ara-daq-sample-v1 "
-            "ingest stays non-attested and never discharges obligations."
+            "ingest stays non-attested and never discharges obligations. "
+            "Planned DAQ occupancy/collective Nat pairs stay ineligible for "
+            "EQ-OPEN-RATE-01 underwriting (EQ-RATE-DAQ-OCC-NC-01)."
         ),
     }
 
