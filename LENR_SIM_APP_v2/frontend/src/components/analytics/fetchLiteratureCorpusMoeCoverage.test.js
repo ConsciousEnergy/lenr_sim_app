@@ -66,14 +66,9 @@ describe('fetchLiteratureCorpusMoeCoverage honesty', () => {
   });
 
   test('returns null when no fetch implementation is available', async () => {
-    const original = globalThis.fetch;
-    // Simulate Jest/Node without a global fetch (AnalyticsPage mounts panel).
-    // eslint-disable-next-line no-undefined
-    globalThis.fetch = undefined;
-    try {
-      await expect(fetchLiteratureCorpusMoeCoverage()).resolves.toBeNull();
-    } finally {
-      globalThis.fetch = original;
-    }
+    // Explicit null fetchImpl simulates Jest/Node without ambient fetch.
+    await expect(
+      fetchLiteratureCorpusMoeCoverage({ fetchImpl: null }),
+    ).resolves.toBeNull();
   });
 });
