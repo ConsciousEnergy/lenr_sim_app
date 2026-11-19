@@ -1,9 +1,10 @@
 /**
  * Structured “why not discovery” for EMP / instrument-MoE exploratory rows
- * (BDS-343 / BDS-344 / BDS-346 / BDS-348). Soft honesty optics only — never
- * claims ≥5σ discovery, EQ-OPEN closure, or lenr_proved. Lean dual-Kasagi +
+ * (BDS-343 / BDS-344 / BDS-346 / BDS-348 / BDS-375). Soft honesty optics only —
+ * never claims ≥5σ discovery, EQ-OPEN closure, or lenr_proved. Lean dual-Kasagi +
  * instrument_floor NC + lab-ask proxies bind analytics / lab-ask receipt ≠
- * EQ-OPEN / lenr_proved.
+ * EQ-OPEN / lenr_proved. BDS-375 densifies DAQ sample-v1 provenance +
+ * blocked_awaiting_lab clarity (refuse fabricated DAQ densification).
  */
 import React from 'react';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@mui/material';
 import {
   CORPUS_MOE_COVERAGE,
+  DAQ_SAMPLE_PROVENANCE,
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   NEXT_LAB_MOE_TARGETS,
   REFUSED_FABRICATED_MOE_CAMPAIGNS,
@@ -256,14 +258,88 @@ export default function EmpExploratoryWhyNotDiscovery({
               asks notionally met keep EQ-OPEN-* OPEN and <code>lenr_proved</code> false.
             </Typography>
           ) : null}
+          <Stack
+            spacing={0.25}
+            sx={{ mb: 0.25 }}
+            data-testid={`${testIdPrefix}-daq-provenance`}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              data-testid={`${testIdPrefix}-daq-provenance-schema`}
+            >
+              DAQ provenance:{' '}
+              <code>{DAQ_SAMPLE_PROVENANCE.schema_id}</code> · trust_plane=
+              <code>{DAQ_SAMPLE_PROVENANCE.trust_plane}</code> · ingest=
+              <code>{DAQ_SAMPLE_PROVENANCE.ingest_status}</code> · Sim export stays{' '}
+              <code>{DAQ_SAMPLE_PROVENANCE.sim_export_schema_id}</code>
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              flexWrap="wrap"
+              data-testid={`${testIdPrefix}-daq-provenance-chips`}
+            >
+              <Chip
+                size="small"
+                color="warning"
+                variant="outlined"
+                label="blocked_awaiting_lab"
+                data-testid={`${testIdPrefix}-blocked-awaiting-lab-chip`}
+                sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label="refuse fabricated DAQ samples"
+                data-testid={`${testIdPrefix}-refuse-fabricated-daq-chip`}
+                sx={{ fontSize: '0.65rem' }}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label="lenr_proved default false"
+                data-testid={`${testIdPrefix}-daq-lenr-proved-false`}
+                sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+              />
+            </Stack>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              data-testid={`${testIdPrefix}-daq-provenance-honesty`}
+            >
+              {DAQ_SAMPLE_PROVENANCE.honesty_note}
+            </Typography>
+          </Stack>
           {NEXT_LAB_MOE_TARGETS.map((row) => (
             <Stack
               key={row.id}
               spacing={0.15}
               data-testid={`${testIdPrefix}-next-lab-${row.id}`}
             >
+              <Stack
+                direction="row"
+                spacing={0.5}
+                useFlexGap
+                flexWrap="wrap"
+                alignItems="center"
+              >
+                <Typography variant="caption" color="text.secondary" component="span">
+                  <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}
+                </Typography>
+                <Chip
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  label={row.status}
+                  data-testid={`${testIdPrefix}-status-${row.id}`}
+                  sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                />
+              </Stack>
               <Typography variant="caption" color="text.secondary" display="block">
-                <code>{row.avenue_id}</code> → {row.eq_open_ids.join(', ')}:{' '}
                 {row.target}
               </Typography>
               <Typography
@@ -290,6 +366,24 @@ export default function EmpExploratoryWhyNotDiscovery({
               >
                 Still does not discharge: {row.still_does_not_discharge}
               </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                data-testid={`${testIdPrefix}-daq-meta-${row.id}`}
+              >
+                DAQ: schema=<code>{row.daq_schema}</code> · plane=
+                <code>{row.daq_trust_plane}</code> · ingest=
+                <code>{row.daq_ingest_status}</code>
+                {Array.isArray(row.daq_calibration_required) &&
+                row.daq_calibration_required.length > 0 ? (
+                  <>
+                    {' '}
+                    · calibration=
+                    <code>{row.daq_calibration_required.join(', ')}</code>
+                  </>
+                ) : null}
+              </Typography>
               {Array.isArray(row.daq_observables) && row.daq_observables.length > 0 ? (
                 <Typography
                   variant="caption"
@@ -299,6 +393,25 @@ export default function EmpExploratoryWhyNotDiscovery({
                 >
                   DAQ fields (planned):{' '}
                   <code>{row.daq_observables.join(', ')}</code>
+                </Typography>
+              ) : (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  data-testid={`${testIdPrefix}-daq-${row.id}`}
+                >
+                  DAQ fields (planned): <code>none in sample-v1 public set</code>
+                </Typography>
+              )}
+              {row.daq_gap_note ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  data-testid={`${testIdPrefix}-daq-gap-${row.id}`}
+                >
+                  DAQ gap: {row.daq_gap_note}
                 </Typography>
               ) : null}
             </Stack>

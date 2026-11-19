@@ -18,6 +18,7 @@ import {
 import {
   AVENUE_RANKING_SUMMARY,
   CLOSURE_SURFACE_LINKS,
+  DAQ_SAMPLE_PROVENANCE,
   EQ_OPEN_RUNWAY,
   NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
@@ -205,12 +206,39 @@ export default function EqOpenAvenueLinkage({
                           spacing={0.1}
                           data-testid={`${testIdPrefix}-lab-target-${row.id}-${target.id}`}
                         >
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            useFlexGap
+                            flexWrap="wrap"
+                            alignItems="center"
+                          >
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              component="span"
+                            >
+                              Next lab MoE:
+                            </Typography>
+                            <Chip
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              label={target.status || 'blocked_awaiting_lab'}
+                              data-testid={`${testIdPrefix}-lab-status-${row.id}-${target.id}`}
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontSize: '0.55rem',
+                                height: 18,
+                              }}
+                            />
+                          </Stack>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             display="block"
                           >
-                            Next lab MoE: {target.target}
+                            {target.target}
                           </Typography>
                           {target.lab_acceptance ? (
                             <Typography
@@ -242,6 +270,23 @@ export default function EqOpenAvenueLinkage({
                               Ask met ≠ discharge: {target.still_does_not_discharge}
                             </Typography>
                           ) : null}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                            data-testid={`${testIdPrefix}-lab-daq-${row.id}-${target.id}`}
+                          >
+                            DAQ:{' '}
+                            <code>
+                              {target.daq_schema || DAQ_SAMPLE_PROVENANCE.schema_id}
+                            </code>
+                            {' · '}
+                            {Array.isArray(target.daq_observables) &&
+                            target.daq_observables.length > 0
+                              ? target.daq_observables.join(', ')
+                              : 'no sample-v1 observables'}
+                            {target.daq_gap_note ? ` · ${target.daq_gap_note}` : ''}
+                          </Typography>
                         </Stack>
                       ))}
                   </Stack>

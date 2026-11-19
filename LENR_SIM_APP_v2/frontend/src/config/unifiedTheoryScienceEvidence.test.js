@@ -13,6 +13,7 @@ import {
   EMP_EXPLORATORY_WHY_NOT_DISCOVERY,
   EQ_OPEN_RUNWAY,
   FORMALIZATION_STATUS,
+  DAQ_SAMPLE_PROVENANCE,
   NEXT_LAB_MOE_TARGETS,
   OPEN_EQ_IDS,
   QUANTITATIVE_DISTANCE_DEFAULT,
@@ -185,6 +186,16 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.note).toMatch(
       /lab_ask_proxies_do_not_discharge|does_not_close_any_eq_open|dual_kasagi_analytics_does_not_close|empty_citations_not_discovery|cite_gated_discovery_does_not_underwrite/i,
     );
+    expect(DAQ_SAMPLE_PROVENANCE.schema_id).toBe('lenr-ara-daq-sample-v1');
+    expect(DAQ_SAMPLE_PROVENANCE.sim_export_schema_id).toBe('lenr-run-export-v1');
+    expect(DAQ_SAMPLE_PROVENANCE.trust_plane).toBe('daq');
+    expect(DAQ_SAMPLE_PROVENANCE.ingest_status).toBe('planned_not_attested');
+    expect(DAQ_SAMPLE_PROVENANCE.refuse_fabricated_samples).toBe(true);
+    expect(DAQ_SAMPLE_PROVENANCE.lenr_proved_default).toBe(false);
+    expect(DAQ_SAMPLE_PROVENANCE.private_extensions_stripped_required).toBe(true);
+    expect(DAQ_SAMPLE_PROVENANCE.honesty_note).toMatch(
+      /refuse fabricated|lab_ask_proxies_do_not_discharge/i,
+    );
     expect(NEXT_LAB_MOE_TARGETS.length).toBeGreaterThanOrEqual(5);
     NEXT_LAB_MOE_TARGETS.forEach((row) => {
       expect(row.status).toBe('blocked_awaiting_lab');
@@ -195,6 +206,15 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.still_does_not_discharge.length).toBeGreaterThan(20);
       expect(row.corpus_gap_now.length).toBeGreaterThan(10);
       expect(Array.isArray(row.daq_observables)).toBe(true);
+      expect(row.daq_schema).toBe(DAQ_SAMPLE_PROVENANCE.schema_id);
+      expect(row.daq_trust_plane).toBe('daq');
+      expect(row.daq_ingest_status).toBe('planned_not_attested');
+      expect(Array.isArray(row.daq_calibration_required)).toBe(true);
+      expect(row.daq_gap_note.length).toBeGreaterThan(20);
+      expect(row.daq_gap_note).toMatch(/refuse|planned|not in sample-v1/i);
+      row.daq_observables.forEach((field) => {
+        expect(DAQ_SAMPLE_PROVENANCE.public_observable_field_set).toContain(field);
+      });
       row.eq_open_ids.forEach((oid) => expect(OPEN_EQ_IDS).toContain(oid));
     });
     const coveredOpens = new Set(
@@ -207,6 +227,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     ).toEqual(
       expect.arrayContaining(['excess_power_W', 'sigma_Q_W', 'he4_atoms_per_s']),
     );
+    expect(
+      NEXT_LAB_MOE_TARGETS.find((row) => row.id === 'occupation_rate_caps_measured')
+        ?.daq_observables,
+    ).toEqual([]);
+    expect(
+      NEXT_LAB_MOE_TARGETS.find((row) => row.id === 'ec_threshold_cm_path')?.daq_gap_note,
+    ).toMatch(/not instrument sample|Refuse fabricating/i);
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);
