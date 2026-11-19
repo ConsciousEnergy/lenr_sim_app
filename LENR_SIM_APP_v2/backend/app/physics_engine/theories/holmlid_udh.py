@@ -123,6 +123,8 @@ class HolmlidUDHTheory:
                 "internuclear_pm": "exploratory_free_parameter",
                 "tof_scale_us": "simulator_approximation",
                 "nuclear_rate_law": "not_implemented_use_source_paper_benchmark",
+                "energy_output_watts": "stub_zero_until_cite_gated_calorimetry",
+                "claimed_mass_defect_mev": "none_no_author_mev_label",
             },
             free_or_fitted_parameters=[
                 {"name": "internuclear_pm", "kind": "free", "source": "simulator"},
@@ -140,7 +142,11 @@ class HolmlidUDHTheory:
                 "Magnetic deflection / charged vs neutral fractions must match selected source geometry.",
             ],
             provenance={
-                "implementation_role": "phenomenological_state_module",
+                "implementation_role": "phenomenological_stub",
+                "no_invented_rate_law": True,
+                "lenr_proved": False,
+                "eq_open_closed": False,
+                "discovery_moe": False,
                 "not_kim_becnf": True,
                 "entrance_channel": "ultra_dense_hydrogen_laser_stimulation",
             },

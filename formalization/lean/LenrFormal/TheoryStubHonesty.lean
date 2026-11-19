@@ -3,15 +3,15 @@ import LenrFormal.OpenObligations
 /-!
 TheoryStubHonesty — phenomenological theory stubs ⇏ EQ-OPEN / discovery / `lenr_proved`.
 
-Locks the `santilli_icnf` v1 and `shoulders_evo` P0 registry stubs (and the
-same pattern for any phenomenological stub): regime-gated applicability +
-author-claimed mass-defect **labels** (or free exploratory params) never invent
-a nuclear rate law, never emit discovery-grade MoE, never set `lenr_proved`,
-and never discharge Q1–Q5 under open witnesses.
+Locks the `santilli_icnf` v1, `shoulders_evo` P0, and `holmlid_udh` P0
+registry stubs (and the same pattern for any phenomenological stub):
+regime-gated applicability + author-claimed mass-defect **labels** (or free
+exploratory params) never invent a nuclear rate law, never emit discovery-grade
+MoE, never set `lenr_proved`, and never discharge Q1–Q5 under open witnesses.
 
 Primary cites: Kadeisvili, Lynch & Yang (2013) — `kadeisvili2013` (Santilli);
-Shoulders (1991/1996) phenomenological EVO reports. Related `santilli2007` is
-cite-only (magnecule not modeled).
+Shoulders (1991/1996) EVO reports; Holmlid arXiv:1302.2781 / 1508.01332
+(`holmlid_udh` ≠ `kim_bec`). Related `santilli2007` is cite-only.
 
 **Claim tier:** AX honesty / non-closure bookkeeping only. Does **not** prove
 LENR occurs. Does **not** close any `EQ-OPEN-*`.
@@ -257,6 +257,92 @@ theorem shoulders_evo_stub_does_not_discharge_eq_open
     shoulders_stub_not_discovery_moe
     shoulders_stub_contribution_not_lenr_proved
     shoulders_stub_contribution_eq_open_not_closed
+    hQ1 hQ2 hQ3 hQ4 hQ5
+
+/--
+Holmlid ultra-dense H(0)/D(0) P0 phenomenological stub (≠ Kim BECNF):
+no invented rate, zero watts, no discovery MoE, no author MeV mass-defect
+label. Exploratory `internuclear_pm` / TOF placeholders never drive wattage.
+-/
+def holmlidUdhStub : PhenomenologicalTheoryStub :=
+  { theoryId := "holmlid_udh"
+    hasInventedRateLaw := false
+    energyOutputMilliWatts := 0
+    discoveryMoe := false
+    claimedMassDefectMilliMeV := 0
+    contributionLenrProved := false
+    contributionEqOpenClosed := false }
+
+theorem holmlid_stub_id :
+    holmlidUdhStub.theoryId = "holmlid_udh" := rfl
+
+theorem holmlid_stub_has_no_invented_rate :
+    holmlidUdhStub.hasInventedRateLaw = false := rfl
+
+theorem holmlid_stub_zero_watts :
+    holmlidUdhStub.energyOutputMilliWatts = 0 := rfl
+
+theorem holmlid_stub_not_discovery_moe :
+    holmlidUdhStub.discoveryMoe = false := rfl
+
+theorem holmlid_stub_no_mev_label :
+    holmlidUdhStub.claimedMassDefectMilliMeV = 0 := rfl
+
+theorem holmlid_stub_contribution_not_lenr_proved :
+    holmlidUdhStub.contributionLenrProved = false := rfl
+
+theorem holmlid_stub_contribution_eq_open_not_closed :
+    holmlidUdhStub.contributionEqOpenClosed = false := rfl
+
+/--
+EQ-HOLMLID-STUB-NC-01: ultra-dense H(0)/D(0) state / TOF free params
+never underwrite stub wattage when energy stays locked at 0; ≠ Kim BECNF.
+-/
+theorem holmlid_free_param_not_wattage_driver
+    (s : PhenomenologicalTheoryStub)
+    (hId : s.theoryId = "holmlid_udh")
+    (hWatts : s.energyOutputMilliWatts = 0)
+    (_hNotKimBec : True) :
+    s.energyOutputMilliWatts = 0 ∧ s.theoryId = "holmlid_udh" :=
+  ⟨hWatts, hId⟩
+
+theorem holmlid_udh_free_param_not_wattage :
+    holmlidUdhStub.energyOutputMilliWatts = 0
+      ∧ holmlidUdhStub.theoryId = "holmlid_udh" :=
+  holmlid_free_param_not_wattage_driver
+    holmlidUdhStub holmlid_stub_id holmlid_stub_zero_watts trivial
+
+/-- Holmlid UDH stub instantiation of EQ-THEORY-STUB-NC-01 / EQ-HOLMLID-STUB-NC-01. -/
+theorem holmlid_udh_stub_does_not_discharge_eq_open
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy) :
+    lenrProved = false
+      ∧ holmlidUdhStub.hasInventedRateLaw = false
+      ∧ holmlidUdhStub.energyOutputMilliWatts = 0
+      ∧ holmlidUdhStub.discoveryMoe = false
+      ∧ holmlidUdhStub.contributionLenrProved = false
+      ∧ holmlidUdhStub.contributionEqOpenClosed = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy :=
+  phenomenological_stub_does_not_discharge_eq_open
+    holmlidUdhStub
+    openRemainder gammaBranching gammaUpperBound
+    log10Events
+    availableEnergy thresholdEnergy yieldDiscrepancy
+    holmlid_stub_has_no_invented_rate
+    holmlid_stub_zero_watts
+    holmlid_stub_not_discovery_moe
+    holmlid_stub_contribution_not_lenr_proved
+    holmlid_stub_contribution_eq_open_not_closed
     hQ1 hQ2 hQ3 hQ4 hQ5
 
 end LenrFormal.TheoryStubHonesty
