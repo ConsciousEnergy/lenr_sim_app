@@ -87,6 +87,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§2 / ENG-SANTILLI-ICNF-01 stub ⇏ EQ-OPEN (EQ-THEORY-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§2 / Shoulders EVO P0 stub ⇏ EQ-OPEN (EQ-SHOULDERS-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§2 / Holmlid UDH P0 stub ≠ Kim BEC ⇏ EQ-OPEN (EQ-HOLMLID-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
+  , ("§2 / Schwinger NEAL P0 scaffold ⇏ EQ-OPEN (EQ-SCHWINGER-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
   , ("§5A.1 collapse / bubble hydro ⇏ MeV remainder allocator (EQ-MEV-COLLAPSE-NC-01 / BDS-401)", "LenrFormal.MeVRemainderCaps")
