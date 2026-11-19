@@ -77,6 +77,7 @@
 | EQ-WH-CAP-01 | Capped \(P_{\text{occ}}f_{\text{nuc}}C_{\text{lin}}\) product bound; demand above cap unmet | `WorkingHypothesisBounds` | **PROVED** (bound; does **not** close Q3) |
 | EQ-WH-NONCLOSE-02 | WH v2 bounds do not discharge Q1–Q3 OPEN predicates | `WorkingHypothesisBounds` | **PROVED** (does **not** close) |
 | EQ-WH-MEV-CAP-01 | Engine-capped licensed channels leave remainder \(\ge R_{\min}>0\) (\(\mathrm{BR}_\gamma\le0.998\)); \(\gamma\)-route closure fails Q2; collapse/ENC hydro allocate 0 | `MeVRemainderCaps` | **PROVED** (bound; EQ-OPEN-MEV-01 stays **OPEN**) |
+| EQ-MEV-COLLAPSE-NC-01 | Collapse / bubble / ENC hydro heat ⇏ `MevRemainderAllocatorDischarge`; ⇏ Q1 / `lenr_proved` (BDS-401) | `MeVRemainderCaps` | **PROVED** honesty implications over **AX**-tagged hydro allocator kinds (does **not** close EQ-OPEN-MEV-01; ≠ EQ-MEV-LABEL-NC-01; ≠ EQ-MEV-MATRIX-NC-01) |
 | EQ-MEV-MATRIX-NC-01 | WH / phonon→nuclear channel labels + unconstrained \|M\|² / Bernoulli \(P_{\mathrm{occ}}\) ⇏ `ConstrainedMevMatrixDischarge`; ⇏ Q1 / `lenr_proved` (BDS-396) | `WorkingHypothesis` | **PROVED** honesty implications over **AX**-tagged matrix/occupation kinds (does **not** close EQ-OPEN-MEV-01; ≠ EQ-MEV-LABEL-NC-01) |
 | EQ-PS-COUPLE-01 | Coupling residual \(\max(r_P,r_S)=0\) iff both residuals vanish; positive residual ⇒ not self-consistent | `PoissonSchrodinger` | **PROVED** (residual algebra only; aspirational; does **not** deploy FEM) |
 | EQ-PS-DOM-01 | Zero permittivity ⇒ Poisson formula not claimed | `PoissonSchrodinger` | **PROVED** (domain) |

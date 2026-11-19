@@ -89,6 +89,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§2 / Holmlid UDH P0 stub ≠ Kim BEC ⇏ EQ-OPEN (EQ-HOLMLID-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
+  , ("§5A.1 collapse / bubble hydro ⇏ MeV remainder allocator (EQ-MEV-COLLAPSE-NC-01 / BDS-401)", "LenrFormal.MeVRemainderCaps")
   , ("§5A.1 WH / phonon→nuclear channel ⇏ constrained |M|² (EQ-MEV-MATRIX-NC-01 / BDS-396)", "LenrFormal.WorkingHypothesis")
   , ("§5A.1 named WH labels ⇏ Q1 (EQ-MEV-LABEL-NC-01)", "LenrFormal.OpenQuestionBounds")
   , ("§5A.2 harmonic / FC class bound + detector-UL DEF (EQ-WH-FC-02; harmonic_dos_non_closure)", "LenrFormal.RadiationBounds")
