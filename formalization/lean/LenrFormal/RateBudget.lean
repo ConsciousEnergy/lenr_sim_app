@@ -5,7 +5,7 @@ import LenrFormal.NBody
 /-!
 RateBudget — EQ-RATE-2B-NC-01 / EQ-RATE-COND-01 / EQ-RATE-REPLACE-01 /
 EQ-RATE-CAP-NC-01 / EQ-RATE-CAP-NC-02 / EQ-RATE-CAP-GAP-01 /
-EQ-RATE-DAQ-OCC-NC-01
+EQ-RATE-DAQ-OCC-NC-01 / EQ-RATE-WITNESS-NC-01
 
 Paper §5A.3 bookkeeping: log10 N_events = 23+12+5-80 = -40 < 0.
 Would-close-if: if n_occ ≥ n0 and f ≥ f0 then n*f ≥ n0*f0.
@@ -19,7 +19,12 @@ a gap (caps do not certify non-closure), never as closure.
 
 EQ-RATE-DAQ-OCC-NC-01: planned `lenr-ara-daq-sample-v1` exposes no occupancy /
 collective observables; unconstrained Nat pairs stay ineligible for RATE-01
-underwriting. EQ-OPEN-RATE-01 stays OPEN.
+underwriting.
+
+EQ-RATE-WITNESS-NC-01 (BDS-399): planned/ARA DAQ occupancy and collective
+fields are **inputs under witness only** — never free-cap closure of
+EQ-OPEN-RATE-01. Distinct from EQ-RATE-DAQ-OCC-NC-01 (eligibility underwrite).
+EQ-OPEN-RATE-01 stays OPEN.
 -/
 
 namespace LenrFormal.RateBudget
@@ -355,5 +360,150 @@ theorem unconstrained_occupancy_product_keeps_ineligible
     (_bound : n0 * f0 ≤ rateProduct u.nOcc u.fNuc) :
     ¬ u.Eligible :=
   h
+
+/-! ### EQ-RATE-WITNESS-NC-01 — witness-only inputs ⇏ free-cap RATE closure (BDS-399)
+
+EQ-OPEN-RATE-01 `still_missing` is an experimentally constrained collective
+factor (not a free \(10^{6}\) cap). Planned/ARA DAQ occupancy and collective
+fields are **inputs under witness only** — they never inhabit free-cap
+closure of Q3.
+
+Distinct from EQ-RATE-DAQ-OCC-NC-01 (`RateOccupancyUnderwrite` eligibility /
+sample-v1 exposes-no-observables): this densifies **witness-input /
+free-cap evidence kinds**.
+-/
+
+/-- Provenance kind for RATE occupancy / collective witness surfaces. -/
+inductive RateWitnessEvidenceKind where
+  /-- Planned ARA DAQ occupancy field treated as a witness input only. -/
+  | plannedAraDaqOccupancyInput
+  /-- Planned ARA DAQ collective field treated as a witness input only. -/
+  | plannedAraDaqCollectiveInput
+  /-- Free engine collective clamp \(C_{\mathrm{lin}}\le 10^{6}\) (EQ-COLL-LIN-01). -/
+  | freeCollectiveCap1e6
+  /-- Unconstrained Nat witness input (would-close-if bookkeeping). -/
+  | unconstrainedNatWitnessInput
+  /-- Experimentally constrained collective factor (EQ-OPEN-RATE-01 still_missing). -/
+  | experimentallyConstrainedCollective
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: free-cap RATE closure requires experimentally constrained
+    collective provenance. Planned/ARA DAQ witness inputs and free \(10^{6}\)
+    caps never inhabit it. -/
+def FreeCapRateClosure (kinds : List RateWitnessEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds,
+      k = RateWitnessEvidenceKind.experimentallyConstrainedCollective
+
+/-- Hard honesty: planned ARA DAQ occupancy is never free-cap RATE closure. -/
+def plannedAraDaqIsFreeCapRateClosure : Bool := false
+
+theorem planned_ara_daq_is_not_free_cap_rate_closure :
+    plannedAraDaqIsFreeCapRateClosure = false := rfl
+
+/-- Free \(10^{6}\) collective cap likewise never is free-cap RATE closure
+    in the sense of discharging the OPEN obligation (cap ≠ experiment). -/
+def freeCollectiveCapIsExperimentalConstraint : Bool := false
+
+theorem free_collective_cap_is_not_experimental_constraint :
+    freeCollectiveCapIsExperimentalConstraint = false := rfl
+
+/-- Nature-proof token stays false on RATE / witness surfaces. -/
+def rateWitnessLenrProved : Bool := false
+
+theorem rate_witness_lenr_proved_false : rateWitnessLenrProved = false := rfl
+
+/-- EQ-RATE-WITNESS-NC-01: a bag containing planned ARA DAQ occupancy input
+    is not free-cap RATE closure. -/
+theorem planned_ara_daq_occupancy_does_not_entail_free_cap_closure
+    {kinds : List RateWitnessEvidenceKind}
+    (h : RateWitnessEvidenceKind.plannedAraDaqOccupancyInput ∈ kinds) :
+    ¬ FreeCapRateClosure kinds := by
+  intro hDisc
+  have : RateWitnessEvidenceKind.plannedAraDaqOccupancyInput =
+      RateWitnessEvidenceKind.experimentallyConstrainedCollective :=
+    hDisc.2 _ h
+  cases this
+
+/-- Planned ARA DAQ collective input likewise never underwrites free-cap closure. -/
+theorem planned_ara_daq_collective_does_not_entail_free_cap_closure
+    {kinds : List RateWitnessEvidenceKind}
+    (h : RateWitnessEvidenceKind.plannedAraDaqCollectiveInput ∈ kinds) :
+    ¬ FreeCapRateClosure kinds := by
+  intro hDisc
+  have : RateWitnessEvidenceKind.plannedAraDaqCollectiveInput =
+      RateWitnessEvidenceKind.experimentallyConstrainedCollective :=
+    hDisc.2 _ h
+  cases this
+
+/-- Free \(10^{6}\) collective cap likewise never underwrites free-cap closure. -/
+theorem free_collective_cap_does_not_entail_free_cap_closure
+    {kinds : List RateWitnessEvidenceKind}
+    (h : RateWitnessEvidenceKind.freeCollectiveCap1e6 ∈ kinds) :
+    ¬ FreeCapRateClosure kinds := by
+  intro hDisc
+  have : RateWitnessEvidenceKind.freeCollectiveCap1e6 =
+      RateWitnessEvidenceKind.experimentallyConstrainedCollective :=
+    hDisc.2 _ h
+  cases this
+
+/-- Unconstrained Nat witness input likewise never underwrites free-cap closure. -/
+theorem unconstrained_nat_witness_does_not_entail_free_cap_closure
+    {kinds : List RateWitnessEvidenceKind}
+    (h : RateWitnessEvidenceKind.unconstrainedNatWitnessInput ∈ kinds) :
+    ¬ FreeCapRateClosure kinds := by
+  intro hDisc
+  have : RateWitnessEvidenceKind.unconstrainedNatWitnessInput =
+      RateWitnessEvidenceKind.experimentallyConstrainedCollective :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: planned ARA DAQ occupancy + free \(10^{6}\) cap keep RATE
+    open / `lenr_proved` false. -/
+theorem planned_ara_daq_with_free_cap_keeps_rate_open :
+    ¬ FreeCapRateClosure
+        [RateWitnessEvidenceKind.plannedAraDaqOccupancyInput,
+          RateWitnessEvidenceKind.plannedAraDaqCollectiveInput,
+          RateWitnessEvidenceKind.freeCollectiveCap1e6]
+      ∧ plannedAraDaqIsFreeCapRateClosure = false
+      ∧ freeCollectiveCapIsExperimentalConstraint = false
+      ∧ log10NEvents < 0
+      ∧ rateWitnessLenrProved = false := by
+  refine ⟨?_, planned_ara_daq_is_not_free_cap_rate_closure,
+    free_collective_cap_is_not_experimental_constraint,
+    two_body_budget_does_not_close, rate_witness_lenr_proved_false⟩
+  exact planned_ara_daq_occupancy_does_not_entail_free_cap_closure (by simp)
+
+/-- Mixed bag: unconstrained Nat witness + free cap still ⇏ free-cap closure. -/
+theorem unconstrained_witness_with_free_cap_keeps_rate_open :
+    ¬ FreeCapRateClosure
+        [RateWitnessEvidenceKind.unconstrainedNatWitnessInput,
+          RateWitnessEvidenceKind.freeCollectiveCap1e6]
+      ∧ log10NEvents < 0
+      ∧ rateWitnessLenrProved = false := by
+  refine ⟨?_, two_body_budget_does_not_close, rate_witness_lenr_proved_false⟩
+  exact free_collective_cap_does_not_entail_free_cap_closure (by simp)
+
+/-- EQ-RATE-WITNESS-NC-01 ∘ EQ-OPEN-RATE-01: planned/ARA DAQ witness inputs
+    and free collective caps never close the two-body RATE budget. -/
+theorem planned_daq_witness_inputs_do_not_close_two_body_rate :
+    ¬ FreeCapRateClosure
+        [RateWitnessEvidenceKind.plannedAraDaqOccupancyInput,
+          RateWitnessEvidenceKind.freeCollectiveCap1e6]
+      ∧ log10NEvents = (-40 : Int)
+      ∧ log10NEvents < 0
+      ∧ plannedAraDaqIsFreeCapRateClosure = false
+      ∧ rateWitnessLenrProved = false := by
+  refine ⟨?_, two_body_log10_value, two_body_budget_does_not_close,
+    planned_ara_daq_is_not_free_cap_rate_closure, rate_witness_lenr_proved_false⟩
+  exact planned_ara_daq_occupancy_does_not_entail_free_cap_closure (by simp)
+
+/-- Even a (hypothetical) experimentally constrained collective bag does not
+    flip `lenr_proved`. -/
+theorem free_cap_rate_closure_does_not_flip_lenr
+    {kinds : List RateWitnessEvidenceKind}
+    (_h : FreeCapRateClosure kinds) :
+    rateWitnessLenrProved = false :=
+  rate_witness_lenr_proved_false
 
 end LenrFormal.RateBudget
