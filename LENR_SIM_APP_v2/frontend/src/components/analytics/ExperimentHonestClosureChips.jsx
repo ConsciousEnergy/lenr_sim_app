@@ -91,6 +91,17 @@ export default function ExperimentHonestClosureChips({
             sx={{ fontSize: '0.55rem', height: 20 }}
           />
         )}
+        {envelopes.daqSampleProvenance ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`DAQ: ${envelopes.daqSampleProvenance.ingest_status || 'planned_not_attested'}`}
+            title={`${envelopes.daqSampleProvenance.schema_id || 'lenr-ara-daq-sample-v1'} · trust_plane=${envelopes.daqSampleProvenance.trust_plane || 'daq'} · refuse fabricated samples · never EQ-OPEN discharge`}
+            onClick={() => setOpen(true)}
+            data-testid={`${testIdPrefix}-daq`}
+            sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 20 }}
+          />
+        ) : null}
       </Stack>
 
       <Dialog
@@ -161,10 +172,25 @@ export default function ExperimentHonestClosureChips({
               paragraph
               data-testid={`${testIdPrefix}-exploratory-banner`}
             >
-              Exploratory / gates-blocked arithmetic only (e.g. Miles peak S_heat under
-              instrument_precision + unverified pairing). Not discovery-grade; does not close
-              EQ-OPEN-YIELD-01 or set lenr_proved. Soft chips stay{' '}
+              Exploratory / gates-blocked arithmetic only (e.g. Miles peak S_heat=26 or Celani
+              S_heat=6 under instrument_precision + unverified pairing). Not discovery-grade;
+              does not close EQ-OPEN-YIELD-01 or set lenr_proved. Soft chips stay{' '}
               <code>analytics_gates_clear</code>, never “≥5σ met”.
+            </Typography>
+          ) : null}
+          {envelopes.daqSampleProvenance ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              paragraph
+              data-testid={`${testIdPrefix}-daq-detail`}
+            >
+              DAQ provenance: schema=
+              <code>{envelopes.daqSampleProvenance.schema_id}</code> · trust_plane=
+              <code>{envelopes.daqSampleProvenance.trust_plane}</code> · ingest=
+              <code>{envelopes.daqSampleProvenance.ingest_status}</code>. Planned / non-attested
+              sample-v1 fields never invent measurements and never discharge EQ-OPEN-* /
+              <code>lenr_proved</code>.
             </Typography>
           ) : null}
           {empWhyNot ? (
