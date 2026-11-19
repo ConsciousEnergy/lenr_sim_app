@@ -54,6 +54,7 @@
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); \(e^{-S}\le1\) bridge; ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
+| EQ-RAD-CR39-NC-01 | CR-39 / track-etch confounder kinds ⇏ `GammaSuppressionProof`; confounder bag ⇏ Q2 / `lenr_proved` (BDS-394; pyyhtia2026) | `RadiationBounds` | **PROVED** honesty implications over **AX**-tagged track-etch kinds (does **not** close EQ-OPEN-RAD-01) |
 | EQ-WH-DICKE-01 | Paper domain does not license Dicke \(N^2\); engine stays linear \(C\) | `WorkingHypothesis` | **PROVED** (constraint; composed with EQ-COLL-LIN-01) |
 | EQ-WH-STOP-01 | \(2\times 23.8=47.6\) MeV; stopping \(\neq\gamma\) | `WorkingHypothesis` | **PROVED** (does **not** close Q1) |
 | EQ-WH-NONCLOSE-01 | WH does not discharge Q1–Q3 OPEN predicates | `WorkingHypothesis` | **PROVED** (non-closure) |

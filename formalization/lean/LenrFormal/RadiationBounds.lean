@@ -21,6 +21,10 @@ are interpretation falsifiers (`detector_ul_not_proof`), not measured
 branching. CR-39 pits under electrolytic cavitation (pyyhtia2026) are a
 detector confounder, not an input here; collapse hydro is not γ suppression.
 
+EQ-RAD-CR39-NC-01 (BDS-394) densifies that honesty: CR-39 / track-etch
+confounder evidence kinds never inhabit a γ-suppression proof bag and never
+discharge EQ-OPEN-RAD-01 / flip `lenr_proved`.
+
 BOUNDED / class-DISPROVEN only. EQ-OPEN-RAD-01 stays OPEN.
 There is no theorem lenr_occurs.
 -/
@@ -276,6 +280,130 @@ theorem fc_class_trips_sub_unity_ul (S N ul : Nat) (hS : S ≤ sGridMax)
   simp only [branchingInconsistentWithUl, fc_gamma_branching_full S N hS hN,
     decide_eq_true_eq]
   exact ⟨by decide, hul⟩
+
+/-! ### EQ-RAD-CR39-NC-01 — CR-39 / track-etch ⇏ γ-suppression proof (BDS-394) -/
+
+/-- Provenance kind for CR-39 / track-etch detector evidence on RAD surfaces. -/
+inductive TrackEtchEvidenceKind where
+  /-- Electrolytic HER nanobubble cavitation CR-39 pits (pyyhtia2026 confounder). -/
+  | cr39PitUnderElectrolyticCavitation
+  /-- SPAWAR / Mosier-Boss-class pit=nuclear claim (contested interpretation). -/
+  | spaWarClassPitEqualsNuclear
+  /-- Shallow polymer pit morphology (vs deep α tracks). -/
+  | shallowPolymerPit
+  /-- Cite-gated calibrated γ BR ≤ efficiency-corrected UL under stated geometry. -/
+  | calibratedGammaBrUl
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: a γ-suppression proof bag requires calibrated BR_γ UL
+    provenance. Track-etch confounders never supply that. -/
+def GammaSuppressionProof (kinds : List TrackEtchEvidenceKind) : Prop :=
+  kinds ≠ [] ∧ ∀ k ∈ kinds, k = TrackEtchEvidenceKind.calibratedGammaBrUl
+
+/-- Hard honesty: nature-proof token stays false on RAD / CR-39 surfaces. -/
+def lenrProved : Bool := false
+
+theorem rad_lenr_proved_false : lenrProved = false := rfl
+
+/-- Cite key mirror for the Pyyhtiä 2026 CR-39 cavitation confounder. -/
+def cr39ConfounderCitationKey : String := "pyyhtia2026"
+
+theorem cr39_confounder_citation_key_value :
+    cr39ConfounderCitationKey = "pyyhtia2026" := rfl
+
+/-- CR-39 / track-etch pits are never themselves a γ-suppression proof. -/
+def cr39TrackEtchIsGammaSuppressionProof : Bool := false
+
+theorem cr39_track_etch_is_not_gamma_suppression_proof :
+    cr39TrackEtchIsGammaSuppressionProof = false := rfl
+
+/-- CR-39 confounder evidence never equals EQ-OPEN-RAD-01 discharge. -/
+def cr39ConfounderClosesEqOpenRad : Bool := false
+
+theorem cr39_confounder_does_not_close_eq_open_rad :
+    cr39ConfounderClosesEqOpenRad = false := rfl
+
+/-- EQ-RAD-CR39-NC-01: a bag containing electrolytic CR-39 pits is not a
+    γ-suppression proof. -/
+theorem cr39_pit_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- EQ-RAD-CR39-NC-01: SPAWAR-class pit=nuclear claims likewise never inhabit
+    a γ-suppression proof bag. -/
+theorem spa_war_pit_claim_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- EQ-RAD-CR39-NC-01: shallow polymer pits (morphology confounder) ⇏ proof. -/
+theorem shallow_polymer_pit_does_not_entail_gamma_suppression_proof
+    {kinds : List TrackEtchEvidenceKind}
+    (h : TrackEtchEvidenceKind.shallowPolymerPit ∈ kinds) :
+    ¬ GammaSuppressionProof kinds := by
+  intro hProof
+  have : TrackEtchEvidenceKind.shallowPolymerPit =
+      TrackEtchEvidenceKind.calibratedGammaBrUl :=
+    hProof.2 _ h
+  cases this
+
+/-- Instantiation: CR-39 confounder bag alone keeps RAD open / `lenr_proved` false. -/
+theorem cr39_confounder_alone_keeps_rad_open :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation]
+      ∧ cr39TrackEtchIsGammaSuppressionProof = false
+      ∧ cr39ConfounderClosesEqOpenRad = false
+      ∧ cr39ConfounderCitationKey = "pyyhtia2026"
+      ∧ lenrProved = false := by
+  refine ⟨?_, cr39_track_etch_is_not_gamma_suppression_proof,
+    cr39_confounder_does_not_close_eq_open_rad,
+    cr39_confounder_citation_key_value, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-- Mixed confounder bag (CR-39 + SPAWAR-class claim) still ⇏ γ-suppression. -/
+theorem cr39_with_spa_war_claim_keeps_rad_open :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation,
+          TrackEtchEvidenceKind.spaWarClassPitEqualsNuclear]
+      ∧ lenrProved = false := by
+  refine ⟨?_, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-- Even a (hypothetical) calibrated-UL γ-suppression proof bag does not flip
+    `lenr_proved` and does not by itself invent measured lattice Γ_ph/Γ_γ. -/
+theorem gamma_suppression_proof_does_not_flip_lenr
+    {kinds : List TrackEtchEvidenceKind}
+    (_h : GammaSuppressionProof kinds) :
+    lenrProved = false
+      ∧ cr39ConfounderClosesEqOpenRad = false :=
+  ⟨rad_lenr_proved_false, cr39_confounder_does_not_close_eq_open_rad⟩
+
+/-- EQ-RAD-CR39-NC-01 ∘ EQ-OPEN-RAD-01: CR-39 confounder evidence does not
+    discharge Q2 under open γ branching (branching above UL). -/
+theorem cr39_confounder_does_not_discharge_q2
+    (gammaBranching upperBound : Nat)
+    (hOpen : upperBound < gammaBranching) :
+    ¬ GammaSuppressionProof
+        [TrackEtchEvidenceKind.cr39PitUnderElectrolyticCavitation]
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching upperBound
+      ∧ cr39TrackEtchIsGammaSuppressionProof = false
+      ∧ cr39ConfounderClosesEqOpenRad = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, gamma_above_bound_implies_q2_not_closed hOpen,
+    cr39_track_etch_is_not_gamma_suppression_proof,
+    cr39_confounder_does_not_close_eq_open_rad, rad_lenr_proved_false⟩
+  exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
 
 /-! ### Paper §5A.2 alias -/
 
