@@ -3,8 +3,10 @@ import LenrFormal.RealShim
 
 /-!
 RadiationBounds — EQ-WH-FC-02 (Franck–Condon class bound), EQ-RAD-DET-01
-(detector-UL honesty flag mirrors), and EQ-RAD-EFF-NC-01 (bare UL without
-efficiency/geometry ⇏ Q2) for paper §5A.2 / EQ-OPEN-RAD-01.
+(detector-UL honesty flag mirrors), EQ-RAD-EFF-NC-01 (bare UL without
+efficiency/geometry ⇏ Q2), and EQ-RAD-COINC-NC-01 (bare UL without
+efficiency/geometry/time-coincidence ⇏ γ BR discharge) for paper §5A.2 /
+EQ-OPEN-RAD-01.
 
 EQ-WH-FC-02 universalises EQ-WH-FC-01: for every Huang–Rhys factor on the
 licensed scan domain and every phonon order above a stated floor, the
@@ -25,6 +27,11 @@ detector confounder, not an input here; collapse hydro is not γ suppression.
 EQ-RAD-CR39-NC-01 (BDS-394) densifies that honesty: CR-39 / track-etch
 confounder evidence kinds never inhabit a γ-suppression proof bag and never
 discharge EQ-OPEN-RAD-01 / flip `lenr_proved`.
+
+EQ-RAD-COINC-NC-01 (BDS-398) densifies bare detector UL without
+efficiency / geometry / time-coincidence provenance: those kinds never
+inhabit `GammaBrDischarge` and never close Q2. Distinct from EQ-RAD-EFF-NC-01
+(`DetectorUlProvenance` eligibility) and EQ-RAD-CR39-NC-01 (track-etch).
 
 BOUNDED / class-DISPROVEN only. EQ-OPEN-RAD-01 stays OPEN.
 There is no theorem lenr_occurs.
@@ -405,6 +412,114 @@ theorem cr39_confounder_does_not_discharge_q2
     cr39_track_etch_is_not_gamma_suppression_proof,
     cr39_confounder_does_not_close_eq_open_rad, rad_lenr_proved_false⟩
   exact cr39_pit_does_not_entail_gamma_suppression_proof (by simp)
+
+/-! ### EQ-RAD-COINC-NC-01 — bare UL without coincidence provenance ⇏ γ BR (BDS-398)
+
+EQ-OPEN-RAD-01 affirmative discharge needs time-correlated heat + γ with
+calibrated efficiency and documented geometry. Bare detector UL ingest,
+efficiency-only, or geometry-only provenance never inhabit that witness.
+
+Distinct from EQ-RAD-EFF-NC-01 (`DetectorUlProvenance` eligibility flags) and
+EQ-RAD-CR39-NC-01 (`TrackEtchEvidenceKind` / `GammaSuppressionProof`): this
+densifies **coincidence / γ-BR discharge evidence kinds**.
+-/
+
+/-- Provenance kind for detector UL / coincidence surfaces on RAD. -/
+inductive RadCoincidenceEvidenceKind where
+  /-- Bare detector γ UL ingest with no efficiency/geometry/coincidence. -/
+  | bareDetectorUl
+  /-- Efficiency-calibrated UL without documented geometry or time coincidence. -/
+  | efficiencyCalibratedOnly
+  /-- Geometry-documented UL without efficiency calibration or time coincidence. -/
+  | geometryDocumentedOnly
+  /-- Time-correlated heat+γ with calibrated efficiency and documented geometry. -/
+  | timeCoincidenceHeatGamma
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: γ BR discharge requires time-coincidence heat+γ provenance.
+    Bare UL / partial efficiency / geometry alone never inhabit it. -/
+def GammaBrDischarge (kinds : List RadCoincidenceEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds, k = RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma
+
+/-- Hard honesty: bare detector UL is never itself γ BR discharge. -/
+def bareDetectorUlIsGammaBrDischarge : Bool := false
+
+theorem bare_detector_ul_is_not_gamma_br_discharge :
+    bareDetectorUlIsGammaBrDischarge = false := rfl
+
+/-- EQ-RAD-COINC-NC-01: a bag containing bare detector UL is not γ BR discharge. -/
+theorem bare_detector_ul_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.bareDetectorUl ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.bareDetectorUl =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Efficiency-only provenance likewise never underwrites γ BR discharge. -/
+theorem efficiency_only_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.efficiencyCalibratedOnly ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.efficiencyCalibratedOnly =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Geometry-only provenance likewise never underwrites γ BR discharge. -/
+theorem geometry_only_does_not_entail_gamma_br_discharge
+    {kinds : List RadCoincidenceEvidenceKind}
+    (h : RadCoincidenceEvidenceKind.geometryDocumentedOnly ∈ kinds) :
+    ¬ GammaBrDischarge kinds := by
+  intro hDisc
+  have : RadCoincidenceEvidenceKind.geometryDocumentedOnly =
+      RadCoincidenceEvidenceKind.timeCoincidenceHeatGamma :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: bare UL alone keeps RAD open / `lenr_proved` false. -/
+theorem bare_detector_ul_alone_keeps_rad_open :
+    ¬ GammaBrDischarge [RadCoincidenceEvidenceKind.bareDetectorUl]
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- Mixed bag: bare UL + efficiency-only + geometry-only still ⇏ discharge. -/
+theorem bare_ul_with_partial_provenance_keeps_rad_open :
+    ¬ GammaBrDischarge
+        [RadCoincidenceEvidenceKind.bareDetectorUl,
+          RadCoincidenceEvidenceKind.efficiencyCalibratedOnly,
+          RadCoincidenceEvidenceKind.geometryDocumentedOnly]
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- EQ-RAD-COINC-NC-01 ∘ EQ-OPEN-RAD-01: bare UL without time-coincidence
+    never closes Q2 under open γ branching. -/
+theorem bare_ul_without_coincidence_does_not_close_q2
+    (gammaBranching upperBound : Nat)
+    (hOpen : upperBound < gammaBranching) :
+    ¬ GammaBrDischarge [RadCoincidenceEvidenceKind.bareDetectorUl]
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching upperBound
+      ∧ bareDetectorUlIsGammaBrDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, gamma_above_bound_implies_q2_not_closed hOpen,
+    bare_detector_ul_is_not_gamma_br_discharge, rad_lenr_proved_false⟩
+  exact bare_detector_ul_does_not_entail_gamma_br_discharge (by simp)
+
+/-- Even a (hypothetical) time-coincidence γ BR discharge bag does not flip
+    `lenr_proved`. -/
+theorem gamma_br_discharge_does_not_flip_lenr
+    {kinds : List RadCoincidenceEvidenceKind}
+    (_h : GammaBrDischarge kinds) :
+    lenrProved = false :=
+  rad_lenr_proved_false
 
 /-! ### Paper §5A.2 alias -/
 
