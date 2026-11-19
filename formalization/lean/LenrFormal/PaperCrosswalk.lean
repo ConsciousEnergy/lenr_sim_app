@@ -99,6 +99,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5A.3 witness-only DAQ/collective ⇏ free-cap RATE (EQ-RATE-WITNESS-NC-01 / BDS-399)", "LenrFormal.RateBudget")
   , ("§5A.4 Q4 EC CM-budget bounds (EQ-OPEN-EC-BOUND-01; BOUNDED / form-DISPROVEN)", "LenrFormal.WeakInteraction")
   , ("§5A.4 UI cosmetics / unlicensed mass-renorm ⇏ measured Eₑ (EQ-EC-ENERGY-NC-01 / BDS-397)", "LenrFormal.WeakInteraction")
+  , ("§5A.4 UI/scaffold cosmetics ⇏ Q4 (EQ-EC-UI-NC-01)", "LenrFormal.WeakInteraction")
   , ("§5A.5 Q5 instantaneous ≠ integrated (EQ-OPEN-YIELD-NC-01)", "LenrFormal.OpenQuestionBounds")
   , ("§5A.5 Miles EMP ~2× ⇏ integrated yield discharge (EQ-YIELD-MILES-EMP-NC-01 / BDS-395)", "LenrFormal.OpenQuestionBounds")
   , ("§5A.5 expected-yield duty bookkeeping (EQ-YIELD-ACCT-01)", "LenrFormal.YieldAccounting")

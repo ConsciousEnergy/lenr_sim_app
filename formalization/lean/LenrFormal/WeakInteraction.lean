@@ -2,7 +2,7 @@ import LenrFormal.OpenObligations
 
 /-!
 WeakInteraction — EQ-EC-THRESH-01 / EQ-EC-GF-01 / EQ-EC-SIGMA-01 / EQ-EC-RATE-01
-/ EQ-OPEN-EC-BOUND-01 / EQ-EC-ENERGY-NC-01
+/ EQ-OPEN-EC-BOUND-01 / EQ-EC-ENERGY-NC-01 / EQ-EC-UI-NC-01
 
 Integer-scaled Fermi \(G_F\), weak \(\sigma\) magnitude envelope, and thermal
 Boltzmann EC-rate bounds matching
@@ -12,6 +12,8 @@ condensed-matter energy-budget deficit family for Q4.
 EQ-EC-ENERGY-NC-01 (BDS-397): UI cosmetics / unlicensed mass-renormalization
 domain claims never inhabit measured available-electron-energy ≥ 0.782 MeV
 discharge. Distinct from EQ-EC-UI-NC-01 (eligibility underwrite).
+EQ-EC-UI-NC-01: UI gap-to-threshold cosmetics / scaffold alone stay ineligible
+for EQ-OPEN-EC-01 underwriting.
 
 **Claim tier:** mathematical bookkeeping only.
 These identities do **not** discharge `EQ-OPEN-EC-01`, do **not** prove a
@@ -375,5 +377,57 @@ theorem measured_ec_energy_discharge_does_not_flip_lenr
     (_h : MeasuredEcEnergyDischarge kinds) :
     lenrProved = false :=
   lenr_proved_false
+
+/-! ### EQ-EC-UI-NC-01 — UI / scaffold cosmetics ⇏ Q4
+
+Affirmative EQ-OPEN-EC-01 needs an independent measurement (or governed
+theory+data package) of available electron energy ≥ threshold with mass-
+renormalization domain gates met as **physical claims**. UI gap-to-threshold
+cosmetics and ARA P1 Widom scaffold alone stay ineligible. -/
+
+/-- EC path underwrite witness for Q4. -/
+structure EcPathUnderwrite where
+  availableEnergy_meV : Nat
+  massRenormDomainGatesMet : Bool
+  independentMeasurement : Bool
+  uiCosmeticOnly : Bool
+
+/-- Eligible only with independent measurement, domain gates, non-cosmetic,
+    and available energy ≥ threshold. -/
+def EcPathUnderwrite.Eligible (u : EcPathUnderwrite) : Prop :=
+  u.independentMeasurement = true ∧
+    u.massRenormDomainGatesMet = true ∧
+    u.uiCosmeticOnly = false ∧
+    threshold_meV ≤ u.availableEnergy_meV
+
+/-- Default UI / scaffold posture: cosmetic gap display, no measurement. -/
+def uiGapCosmetic : EcPathUnderwrite :=
+  { availableEnergy_meV := 0
+    massRenormDomainGatesMet := false
+    independentMeasurement := false
+    uiCosmeticOnly := true }
+
+theorem ui_gap_cosmetic_not_Eligible : ¬ uiGapCosmetic.Eligible := by
+  intro h
+  unfold EcPathUnderwrite.Eligible uiGapCosmetic at h
+  exact Bool.noConfusion h.1
+
+/-- Ineligible UI/scaffold witness ⇏ Q4 closed. -/
+theorem ineligible_ec_path_does_not_close_q4
+    (u : EcPathUnderwrite)
+    (h : ¬ u.Eligible) :
+    ¬ (u.Eligible ∧ q4ElectronCaptureSourceClosed u.availableEnergy_meV threshold_meV) := by
+  intro ⟨he, _⟩
+  exact h he
+
+theorem ui_gap_cosmetic_does_not_close_q4 :
+    ¬ (uiGapCosmetic.Eligible ∧
+        q4ElectronCaptureSourceClosed uiGapCosmetic.availableEnergy_meV threshold_meV) :=
+  ineligible_ec_path_does_not_close_q4 uiGapCosmetic ui_gap_cosmetic_not_Eligible
+
+/-- condensedMatterPathToThreshold stays false alongside UI cosmetic ineligibility. -/
+theorem ui_cosmetic_keeps_no_cm_path :
+    ¬ uiGapCosmetic.Eligible ∧ condensedMatterPathToThreshold = false :=
+  ⟨ui_gap_cosmetic_not_Eligible, no_condensed_matter_path_claimed⟩
 
 end LenrFormal.WeakInteraction

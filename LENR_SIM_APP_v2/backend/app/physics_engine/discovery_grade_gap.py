@@ -301,6 +301,15 @@ def honest_closure_bookkeeping(
             "labeled_hypothesis_closes_q1": False,
             "lean_mev_label_nc_bound": "EQ-MEV-LABEL-NC-01",
         },
+        # EQ-EC-UI-NC-01 twin: UI gap cosmetics ≠ independent EC path measurement.
+        "ec_path_provenance": {
+            "ui_cosmetic_only": True,
+            "independent_measurement": False,
+            "mass_renorm_domain_gates_met": False,
+            "eligible_for_q4_underwrite": False,
+            "ui_gap_closes_q4": False,
+            "lean_ec_ui_nc_bound": "EQ-EC-UI-NC-01",
+        },
         "honesty": (
             "Honest closure path for lenr_proved / EQ-OPEN-*. "
             "discovery_grade_eligible is an analytics flag only and never "
@@ -316,7 +325,9 @@ def honest_closure_bookkeeping(
             "never closes EQ-OPEN-RAD-01 (EQ-RAD-EFF-NC-01). "
             "Named Hagelstein/Dicke/BEC labels without constrained matrix "
             "element + occupation never close EQ-OPEN-MEV-01 "
-            "(EQ-MEV-LABEL-NC-01)."
+            "(EQ-MEV-LABEL-NC-01). "
+            "UI gap-to-threshold cosmetics / Widom scaffold without independent "
+            "measurement never close EQ-OPEN-EC-01 (EQ-EC-UI-NC-01)."
         ),
     }
 

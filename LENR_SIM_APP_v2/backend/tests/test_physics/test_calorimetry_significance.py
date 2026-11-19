@@ -422,6 +422,11 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert mev["eligible_for_q1_underwrite"] is False
     assert mev["labeled_hypothesis_closes_q1"] is False
     assert mev["lean_mev_label_nc_bound"] == "EQ-MEV-LABEL-NC-01"
+    # EQ-EC-UI-NC-01 Python twin: UI cosmetics lack independent EC measurement.
+    ec = closure["ec_path_provenance"]
+    assert ec["eligible_for_q4_underwrite"] is False
+    assert ec["ui_gap_closes_q4"] is False
+    assert ec["lean_ec_ui_nc_bound"] == "EQ-EC-UI-NC-01"
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"
