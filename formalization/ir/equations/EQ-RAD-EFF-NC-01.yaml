@@ -1,0 +1,24 @@
+id: EQ-RAD-EFF-NC-01
+latex: "\\neg\\mathrm{Eligible}(\\mathrm{DetectorUlProvenance})\\nRightarrow q_2\\mathrm{RadiationSuppressionClosed};\\quad \\mathrm{bareUL}\\nRightarrow\\mathrm{efficiencyGeometry}"
+symbols:
+  DetectorUlProvenance: "γ UL milli + efficiency/geometry/heat-coincidence flags"
+  Eligible: "efficiencyCalibrated ∧ geometryDocumented ∧ heatCoincidence ∧ ul>0"
+  bareDetectorUl: "UL ingest with no efficiency/geometry/coincidence"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§5A.2 EQ-OPEN-RAD-01; EQ_OPEN_CLOSURE_RUNWAY affirmative discharge"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+citation_keys:
+  - miles1993
+  - paper_5A_2
+lean_target: LenrFormal.RadiationBounds
+lean_decls:
+  - "LenrFormal.RadiationBounds.DetectorUlProvenance"
+  - "LenrFormal.RadiationBounds.DetectorUlProvenance.Eligible"
+  - "LenrFormal.RadiationBounds.bareDetectorUl"
+  - "LenrFormal.RadiationBounds.bare_detector_ul_not_Eligible"
+  - "LenrFormal.RadiationBounds.ineligible_detector_ul_does_not_close_q2"
+  - "LenrFormal.RadiationBounds.bare_detector_ul_does_not_close_q2"
+notes: "AX honesty: EQ-OPEN-RAD-01 affirmative discharge needs time-correlated heat + γ with calibrated efficiency and documented geometry. Bare detector UL ingest / EQ-RAD-DET-01 flags alone do not underwrite Q2. Complements EQ-WH-FC-02 / EQ-RAD-DET-01. EQ-OPEN-RAD-01 stays OPEN; lenr_proved stays false."

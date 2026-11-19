@@ -55,6 +55,7 @@
 | EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
 | EQ-YIELD-MILES-EMP-NC-01 | Miles EMP ~2× heat/He kinds ⇏ `IntegratedYieldDischarge`; \(f=2\in[1,3]\) ⇏ Q5 / `lenr_proved` (BDS-395) | `OpenQuestionBounds` | **PROVED** honesty implications over **AX**-tagged Miles EMP kinds (does **not** close EQ-OPEN-YIELD-01; ≠ EQ-YIELD-EFF-NC-01) |
 | EQ-YIELD-EFF-NC-01 | Missing retention/collection efficiency provenance (Miles EMP alone) ⇏ Q5 / EQ-OPEN-YIELD-01 | `YieldAccounting` / `OpenQuestionBounds` | **PROVED** (non-closure / honesty; does **not** close Q5) |
+| EQ-RAD-EFF-NC-01 | Bare detector UL without efficiency/geometry/heat-coincidence provenance ⇏ Q2 / EQ-OPEN-RAD-01 | `RadiationBounds` | **PROVED** (non-closure / honesty; does **not** close Q2) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); \(e^{-S}\le1\) bridge; ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |

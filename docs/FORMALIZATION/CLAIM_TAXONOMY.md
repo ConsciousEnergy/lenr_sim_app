@@ -84,6 +84,7 @@ Overloaded paper symbols map to distinct IR / Lean names:
 | EQ-OPEN-MEV-01 | MeV energy gap (phonon→nuclear) unsolved | §5A.1 | MEV_GAP_HYPOTHESIS | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-MEV-01.yaml` (undischarged) |
 | EQ-MEV-MATRIX-NC-01 | Named WH / phonon→nuclear channel labels + unconstrained \|M\|² / Bernoulli occupation ⇏ `ConstrainedMevMatrixDischarge`; ⇏ Q1 / `lenr_proved` (BDS-396) | §5A.1 | `open_questions.py` | hagelstein2025 | `AX` | `WorkingHypothesis.lean` / `EQ-MEV-MATRIX-NC-01.yaml` (does **not** close Q1; ≠ EQ-MEV-LABEL-NC-01) |
 | EQ-OPEN-RAD-01 | Radiation suppression / no prompt γ | §5A.2 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RAD-01.yaml` (undischarged) |
+| EQ-RAD-EFF-NC-01 | Bare detector UL without efficiency/geometry/heat-coincidence provenance ⇏ Q2 / EQ-OPEN-RAD-01 | §5A.2 | `many_body/branching_model.py`, `discovery_grade_gap.py` | miles1993 | `AX` | `RadiationBounds.lean` / `EQ-RAD-EFF-NC-01.yaml` |
 | EQ-OPEN-RATE-01 | Rate closure with single-pair enhancements | §5A.3 | two_body vs trapped_state | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-RATE-01.yaml` (undischarged) |
 | EQ-OPEN-EC-01 | No convincing condensed-matter path to \(E_e>0.782\,\mathrm{MeV}\) | §5A.4 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-EC-01.yaml` (undischarged) |
 | EQ-OPEN-YIELD-01 | Integrated He yield vs heat duty-cycle discrepancy | §5A.5 | — | OPEN | `OPEN` | `OpenObligations.lean` / `EQ-OPEN-YIELD-01.yaml` (undischarged) |

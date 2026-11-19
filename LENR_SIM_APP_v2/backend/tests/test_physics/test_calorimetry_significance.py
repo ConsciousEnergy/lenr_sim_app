@@ -412,6 +412,11 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert he_eff["eligible_for_q5_underwrite"] is False
     assert he_eff["miles_emp_alone_closes_q5"] is False
     assert he_eff["lean_yield_eff_nc_bound"] == "EQ-YIELD-EFF-NC-01"
+    # EQ-RAD-EFF-NC-01 Python twin: bare UL lacks efficiency/geometry provenance.
+    rad = closure["detector_ul_provenance"]
+    assert rad["eligible_for_q2_underwrite"] is False
+    assert rad["bare_ul_closes_q2"] is False
+    assert rad["lean_rad_eff_nc_bound"] == "EQ-RAD-EFF-NC-01"
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"
