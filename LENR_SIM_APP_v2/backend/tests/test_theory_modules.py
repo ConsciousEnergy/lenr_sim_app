@@ -886,6 +886,18 @@ class TestSantilliICNF:
         assert contrib.observables.get("product_N14", 0) > 0
         assert contrib.observables.get("product_He4", 1) == 0.0
         assert contrib.energy_output_watts == 0.0
+        # EQ-THEORY-STUB-NC-01 Python twin: stub ⇏ discovery / proof / EQ-OPEN
+        assert contrib.provenance.get("lenr_proved") is False
+        assert contrib.provenance.get("eq_open_closed") is False
+        assert contrib.provenance.get("discovery_moe") is False
+        assert contrib.provenance.get("no_invented_rate_law") is True
+        assert contrib.provenance.get("implementation_role") == "phenomenological_stub"
+        approx = contrib.author_equations_vs_simulator_approximations or {}
+        assert approx.get("nuclear_rate_law") == "not_implemented_no_invented_hadronic_rate"
+        assert approx.get("energy_output_watts") == "stub_zero_until_cite_gated_calorimetry"
+        assert approx.get("claimed_mass_defect_mev") == (
+            "author_claim_label_only_model_assumption"
+        )
 
     def test_inapplicable_under_standard_pd_d(self):
         """Default Pd/D electrolysis-only packs must stay inert."""

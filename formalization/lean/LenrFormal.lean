@@ -9,6 +9,7 @@ import LenrFormal.Assenbaum
 import LenrFormal.Composition
 import LenrFormal.Miles
 import LenrFormal.CalorimetrySignificance
+import LenrFormal.TheoryStubHonesty
 import LenrFormal.Phonon
 import LenrFormal.RateBudget
 import LenrFormal.NBody
