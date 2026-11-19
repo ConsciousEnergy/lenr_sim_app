@@ -327,4 +327,54 @@ theorem miles_emp_without_efficiency_does_not_close_q5
     miles_emp_lacks_efficiency_not_Eligible
     integratedRemainder
 
+/-! ### EQ-YIELD-SIMULT-NC-01 — non-simultaneous / efficiency-less pairing ⇏ Q5 (BDS-400) -/
+
+/-- EQ-YIELD-SIMULT-NC-01: non-simultaneous / efficiency-less pairing bag
+    ⇏ Q5 closed. Distinct from EQ-YIELD-EFF-NC-01 / EQ-YIELD-MILES-EMP-NC-01. -/
+theorem non_simultaneous_pairing_does_not_close_q5
+    {kinds : List HeCaloPairingEvidenceKind}
+    (h : ¬ SimultaneousPairedYieldDischarge kinds)
+    (integratedRemainder : Nat) :
+    ¬ (SimultaneousPairedYieldDischarge kinds ∧
+        q5IntegratedYieldClosed integratedRemainder) := by
+  intro ⟨hd, _⟩
+  exact h hd
+
+/-- Non-simultaneous He+calo pairing never closes Q5. -/
+theorem non_simultaneous_he_calo_does_not_close_q5
+    (integratedRemainder : Nat) :
+    ¬ (SimultaneousPairedYieldDischarge
+          [HeCaloPairingEvidenceKind.nonSimultaneousHeCaloPairing] ∧
+        q5IntegratedYieldClosed integratedRemainder) :=
+  non_simultaneous_pairing_does_not_close_q5
+    (non_simultaneous_pairing_does_not_entail_paired_yield_discharge (by simp))
+    integratedRemainder
+
+/-- Efficiency-less He+calo pairing never closes Q5. -/
+theorem efficiency_less_he_calo_does_not_close_q5
+    (integratedRemainder : Nat) :
+    ¬ (SimultaneousPairedYieldDischarge
+          [HeCaloPairingEvidenceKind.efficiencyLessHeCaloPairing] ∧
+        q5IntegratedYieldClosed integratedRemainder) :=
+  non_simultaneous_pairing_does_not_close_q5
+    (efficiency_less_pairing_does_not_entail_paired_yield_discharge (by simp))
+    integratedRemainder
+
+/-- EQ-YIELD-SIMULT-NC-01 ∘ EQ-OPEN-YIELD-01: non-simultaneous + efficiency-less
+    pairing never closes Q5 for any integrated remainder in the open DEF band. -/
+theorem non_simultaneous_efficiency_less_do_not_close_q5
+    {integratedRemainder : Nat}
+    (hBand : q5IntegratedRemainderInBand integratedRemainder) :
+    ¬ SimultaneousPairedYieldDischarge
+        [HeCaloPairingEvidenceKind.nonSimultaneousHeCaloPairing,
+          HeCaloPairingEvidenceKind.efficiencyLessHeCaloPairing]
+      ∧ ¬ q5IntegratedYieldClosed integratedRemainder
+      ∧ nonSimultaneousIsPairedYieldDischarge = false
+      ∧ efficiencyLessIsPairedYieldDischarge = false
+      ∧ yieldSimultLenrProved = false := by
+  refine ⟨?_, q5_integrated_band_remainder_not_closed hBand,
+    non_simultaneous_is_not_paired_yield_discharge,
+    efficiency_less_is_not_paired_yield_discharge, yield_simult_lenr_proved_false⟩
+  exact non_simultaneous_pairing_does_not_entail_paired_yield_discharge (by simp)
+
 end LenrFormal.OpenQuestionBounds

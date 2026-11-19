@@ -104,6 +104,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5A.5 Miles EMP ~2× ⇏ integrated yield discharge (EQ-YIELD-MILES-EMP-NC-01 / BDS-395)", "LenrFormal.OpenQuestionBounds")
   , ("§5A.5 expected-yield duty bookkeeping (EQ-YIELD-ACCT-01)", "LenrFormal.YieldAccounting")
   , ("§5A.5 efficiency provenance ⇏ Q5 (EQ-YIELD-EFF-NC-01)", "LenrFormal.YieldAccounting")
+  , ("§5A.5 non-simultaneous / efficiency-less pairing ⇏ Q5 (EQ-YIELD-SIMULT-NC-01 / BDS-400)", "LenrFormal.YieldAccounting")
   , ("§5A n-body / TSC geometry / FGR bookkeeping", "LenrFormal.NBody")
   , ("§5A HE negative control", "LenrFormal.ScaleQED")
   , ("§5A WH-ENP-01", "LenrFormal.WorkingHypothesis")
