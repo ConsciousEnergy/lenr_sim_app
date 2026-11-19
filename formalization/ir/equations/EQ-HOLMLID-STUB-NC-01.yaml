@@ -1,0 +1,28 @@
+id: EQ-HOLMLID-STUB-NC-01
+latex: "\\mathrm{holmlid\\_udh}\\land\\neg\\mathrm{inventedRate}\\land E_{\\mathrm{mW}}=0\\land\\neg\\mathrm{discoveryMoe}\\land\\mathrm{claimedMassDefect}=0\\nRightarrow\\mathrm{lenrProved}\\lor\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad \\mathrm{internuclear\\_pm}_{\\mathrm{free}}\\nRightarrow\\mathrm{wattage};\\quad \\mathrm{holmlid\\_udh}\\neq\\mathrm{kim\\_bec}"
+symbols:
+  holmlid_udh: "Holmlid ultra-dense H(0)/D(0) P0 phenomenological state module"
+  inventedRate: "hasInventedRateLaw (must stay false)"
+  discoveryMoe: "discovery-grade MoE underwrite flag"
+  internuclear_pm_free: "exploratory free simulator parameter (not a rate/wattage driver)"
+  kim_bec: "Kim BECNF module (distinct; must not be conflated)"
+  lenrProved: "global nature-proof token (stays false)"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§2 theories / ENG-THEORY-PIPELINE-01; Holmlid UDH P0 stub; EQ-OPEN-* runway"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/holmlid_udh.py
+citation_keys:
+  - holmlid2013
+  - holmlid2015
+lean_target: LenrFormal.TheoryStubHonesty
+lean_decls:
+  - "LenrFormal.TheoryStubHonesty.holmlidUdhStub"
+  - "LenrFormal.TheoryStubHonesty.holmlid_stub_has_no_invented_rate"
+  - "LenrFormal.TheoryStubHonesty.holmlid_stub_zero_watts"
+  - "LenrFormal.TheoryStubHonesty.holmlid_stub_not_discovery_moe"
+  - "LenrFormal.TheoryStubHonesty.holmlid_stub_no_mev_label"
+  - "LenrFormal.TheoryStubHonesty.holmlid_free_param_not_wattage_driver"
+  - "LenrFormal.TheoryStubHonesty.holmlid_udh_free_param_not_wattage"
+  - "LenrFormal.TheoryStubHonesty.holmlid_udh_stub_does_not_discharge_eq_open"
+notes: "AX honesty: holmlid_udh P0 is a phenomenological ultra-dense H(0)/D(0) state module (TOF / laser regime flags only; no invented nuclear rate). Distinct from kim_bec (Kim BECNF). Exploratory internuclear_pm / TOF placeholders never drive wattage. Stub applicability ⇏ discovery MoE, ⇏ lenr_proved, ⇏ any EQ-OPEN-* discharge. Instantiates EQ-THEORY-STUB-NC-01 for Holmlid."
