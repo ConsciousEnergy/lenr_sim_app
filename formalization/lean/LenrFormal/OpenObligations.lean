@@ -128,4 +128,25 @@ theorem planned_daq_occupancy_does_not_close_q3
     (planned_daq_rate_occupancy_not_Eligible nOcc fNuc)
     log10Events
 
+/-- EQ-RATE-WITNESS-NC-01: free-cap RATE closure bag ⇏ Q3 closed (BDS-399).
+    Distinct from EQ-RATE-DAQ-OCC-NC-01 eligibility twins above. -/
+theorem free_cap_rate_closure_does_not_close_q3
+    {kinds : List RateWitnessEvidenceKind}
+    (h : ¬ FreeCapRateClosure kinds)
+    (log10Events : Int) :
+    ¬ (FreeCapRateClosure kinds ∧ q3RateBudgetClosed log10Events) := by
+  intro ⟨hc, _⟩
+  exact h hc
+
+/-- Planned ARA DAQ occupancy witness input never closes Q3 via free-cap closure. -/
+theorem planned_ara_daq_witness_does_not_close_q3
+    (log10Events : Int) :
+    ¬ (FreeCapRateClosure
+          [RateWitnessEvidenceKind.plannedAraDaqOccupancyInput,
+            RateWitnessEvidenceKind.freeCollectiveCap1e6] ∧
+        q3RateBudgetClosed log10Events) :=
+  free_cap_rate_closure_does_not_close_q3
+    (planned_ara_daq_occupancy_does_not_entail_free_cap_closure (by simp))
+    log10Events
+
 end LenrFormal.OpenObligations
