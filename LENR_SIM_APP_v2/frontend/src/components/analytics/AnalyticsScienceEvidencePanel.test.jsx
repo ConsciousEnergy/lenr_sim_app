@@ -45,5 +45,12 @@ describe('AnalyticsScienceEvidencePanel live MoE coverage', () => {
     expect(screen.getByTestId('analytics-5b-moe-coverage')).toHaveTextContent(
       'closes_eq_open',
     );
+    // Gap checklist receives the same live hydrate (not SPA-only).
+    await waitFor(() => {
+      expect(screen.getByTestId('analytics-5b-gap-moe-coverage-source')).toHaveTextContent(
+        'live_api',
+      );
+    });
+    expect(screen.getByTestId('analytics-5b-gap-moe-coverage')).toHaveTextContent('2/26');
   });
 });

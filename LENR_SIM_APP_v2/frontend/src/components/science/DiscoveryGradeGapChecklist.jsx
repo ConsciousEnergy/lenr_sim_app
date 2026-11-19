@@ -1,6 +1,9 @@
 /**
  * Cite-gated ≥5σ missing-requirements checklist (BDS-302 / BDS-330).
  * Surfaces quantitative distance + corpus MoE coverage; never claims discovery.
+ * Optional `corpusMoeCoverage` lets Analytics §5B pass live
+ * GET /api/analytics/literature-corpus-moe-coverage counts; SPA freeze remains
+ * the default for Theory Paper and offline callers.
  */
 import React from 'react';
 import {
@@ -20,19 +23,37 @@ import {
 } from '../../config/unifiedTheoryScienceEvidence';
 import EmpExploratoryWhyNotDiscovery from './EmpExploratoryWhyNotDiscovery';
 
+function freezeCorpusCoverage() {
+  return DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
+}
+
 /**
  * @param {Object} props
  * @param {string} [props.testIdPrefix]
  * @param {boolean} [props.showEmpWhyNot] — surface EMP exploratory “why not discovery” (default true)
+ * @param {Object} [props.corpusMoeCoverage] — live or merged coverage row (counts-only OK)
+ * @param {string} [props.coverageSource] — `live_api` | `spa_freeze` (display only)
  */
 export default function DiscoveryGradeGapChecklist({
   testIdPrefix = 'discovery-gap',
   showEmpWhyNot = true,
+  corpusMoeCoverage = null,
+  coverageSource = 'spa_freeze',
 }) {
   const missing = DISCOVERY_GRADE_BAR.missing_requirements || [];
   const distance =
     DISCOVERY_GRADE_BAR.quantitative_distance || QUANTITATIVE_DISTANCE_DEFAULT;
-  const coverage = DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
+  const freeze = freezeCorpusCoverage();
+  // Live counts overlay freeze; keep SPA locked S_heat / refuse rows when live is counts-only.
+  const coverage = corpusMoeCoverage
+    ? {
+        ...freeze,
+        ...corpusMoeCoverage,
+        locked_s_heat: freeze.locked_s_heat,
+        closes_eq_open: false,
+        lenr_proved: false,
+      }
+    : freeze;
   return (
     <Alert
       severity="warning"
@@ -135,19 +156,30 @@ export default function DiscoveryGradeGapChecklist({
         ).
       </Typography>
 
+      <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mb: 0.5 }}>
+        <Chip
+          size="small"
+          variant="outlined"
+          color={coverageSource === 'live_api' ? 'success' : 'default'}
+          label={`MoE coverage source: ${coverageSource}`}
+          data-testid={`${testIdPrefix}-moe-coverage-source`}
+          sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
+        />
+      </Stack>
       <Typography
         variant="body2"
         color="text.secondary"
         sx={{ mb: 1 }}
         data-testid={`${testIdPrefix}-moe-coverage`}
       >
-        <strong>{coverage.title}</strong>: {coverage.with_sigma_q}/{coverage.n_records} with
+        <strong>{coverage.title || 'Corpus MoE coverage'}</strong>:{' '}
+        {coverage.with_sigma_q}/{coverage.n_records} with
         σ_Q · {coverage.with_literature_reported_cite_gated}/{coverage.n_records} cite-gated
         literature_reported · {coverage.with_moe_pairing_verified}/{coverage.n_records}{' '}
         pairing verified · {coverage.discovery_grade_eligible_count}/{coverage.n_records}{' '}
         analytics discovery_grade_eligible. closes_eq_open=
-        <code>{String(coverage.closes_eq_open)}</code>, lenr_proved=
-        <code>{String(coverage.lenr_proved)}</code>
+        <code>{String(Boolean(coverage.closes_eq_open))}</code>, lenr_proved=
+        <code>{String(Boolean(coverage.lenr_proved))}</code>
         {coverage.literature_moe_inventory_exhausted ? (
           <>
             {' · '}publishable MoE pairs <code>exhausted</code> (refuse fabricated σ_Q)

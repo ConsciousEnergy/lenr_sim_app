@@ -259,7 +259,11 @@ export default function AnalyticsScienceEvidencePanel() {
         </Typography>
       </Stack>
 
-      <DiscoveryGradeGapChecklist testIdPrefix="analytics-5b-gap" />
+      <DiscoveryGradeGapChecklist
+        testIdPrefix="analytics-5b-gap"
+        corpusMoeCoverage={corpusCoverage}
+        coverageSource={coverageSource}
+      />
 
       <EqOpenAvenueLinkage testIdPrefix="analytics-5b-linkage" density="compact" />
 
