@@ -31,6 +31,25 @@ import {
 import DiscoveryGradeGapChecklist from '../science/DiscoveryGradeGapChecklist';
 import EqOpenAvenueLinkage from '../science/EqOpenAvenueLinkage';
 import { fetchLiteratureCorpusMoeCoverage } from './fetchLiteratureCorpusMoeCoverage';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric MoE / S_heat claims (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18, mx: 0.25, verticalAlign: 'middle' }}
+    />
+  );
+}
 
 function freezeCorpusCoverage() {
   return DISCOVERY_GRADE_BAR.corpus_moe_coverage || CORPUS_MOE_COVERAGE;
@@ -190,16 +209,44 @@ export default function AnalyticsScienceEvidencePanel() {
               {corpusCoverage.n_records}
             </code>{' '}
             (Kasagi NiCu + Ni only; locked S_heat{' '}
-            <code>{corpusCoverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code> /{' '}
-            <code>{corpusCoverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>
+            <code>{corpusCoverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={
+                corpusCoverage.kasagi_nicu_claim_tier ||
+                CORPUS_MOE_COVERAGE.kasagi_nicu_claim_tier
+              }
+              testId="analytics-5b-claim-tier-kasagi-nicu-s-heat"
+            />{' '}
+            /{' '}
+            <code>{corpusCoverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={
+                corpusCoverage.kasagi_ni_claim_tier ||
+                CORPUS_MOE_COVERAGE.kasagi_ni_claim_tier
+              }
+              testId="analytics-5b-claim-tier-kasagi-ni-s-heat"
+            />
             ). Soft chips stay <code>analytics_gates_clear</code> — never “≥5σ met”. Miles
             stays exploratory (S_heat=
-            <code>{corpusCoverage.locked_s_heat?.['miles-1993']}</code> under
-            instrument_precision / pairing unverified; JEAC ±0.04 ≠ discovery pair). Iwamura
-            / Mizuno / Arata / Celani stay{' '}
+            <code>{corpusCoverage.locked_s_heat?.['miles-1993']}</code>{' '}
+            <ClaimTierChip
+              tier={
+                corpusCoverage.miles_claim_tier || CORPUS_MOE_COVERAGE.miles_claim_tier
+              }
+              testId="analytics-5b-claim-tier-miles-s-heat"
+            />{' '}
+            under instrument_precision / pairing unverified; JEAC ±0.04 ≠ discovery pair).
+            Iwamura / Mizuno / Arata / Celani stay{' '}
             <code>REFUSE_FABRICATED_SIGMA_Q</code>. Campaign model-output σ_Q=
-            <code>{CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W}</code> is not
-            literature MoE. Remaining high-P(success) software levers are runway criteria UX
+            <code>{CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W}</code>{' '}
+            <ClaimTierChip
+              tier={
+                CORPUS_MOE_COVERAGE.campaign_model_output_claim_tier ||
+                'speculative_exploratory'
+              }
+              testId="analytics-5b-claim-tier-campaign-sigma-q"
+            />{' '}
+            is not literature MoE. Remaining high-P(success) software levers are runway criteria UX
             + densified <code>NEXT_LAB_MOE_TARGETS</code> acceptance / corpus-gap / DAQ maps
             — not inventing σ_Q. Lab MoE under those asks still leaves every EQ-OPEN{' '}
             <strong>OPEN</strong> and <code>lenr_proved: false</code> until governed
@@ -244,8 +291,12 @@ export default function AnalyticsScienceEvidencePanel() {
           )}
           ) — closes_eq_open=<code>false</code>, lenr_proved=<code>false</code>. Soft chip
           language stays <code>analytics_gates_clear</code>, never “≥5σ met”. Publishable
-          MoE pairs <code>exhausted</code> at 2/26 — refuse fabricated σ_Q. Analytics
-          eligibility ≠ EQ-OPEN / <code>lenr_proved</code>.
+          MoE pairs <code>exhausted</code> at{' '}
+          <code>
+            {corpusCoverage.with_moe_pairing_verified}/{corpusCoverage.n_records}
+          </code>{' '}
+          — refuse fabricated σ_Q. Analytics eligibility ≠ EQ-OPEN /{' '}
+          <code>lenr_proved</code>.
         </Typography>
         <Typography
           variant="body2"

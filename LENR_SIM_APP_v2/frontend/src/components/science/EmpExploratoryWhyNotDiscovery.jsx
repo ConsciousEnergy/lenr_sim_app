@@ -24,6 +24,25 @@ import {
   NEXT_LAB_MOE_TARGETS,
   REFUSED_FABRICATED_MOE_CAMPAIGNS,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside quantitative EMP / lab-target claims (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
 
 /**
  * @param {Object} props
@@ -225,12 +244,39 @@ export default function EmpExploratoryWhyNotDiscovery({
             data-testid={`${testIdPrefix}-locked-s-heat`}
           >
             Locked S_heat arithmetic: Kasagi NiCu{' '}
-            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>, Kasagi
-            Ni <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>, Miles
-            exploratory <code>{coverage.locked_s_heat?.['miles-1993']}</code>, Celani
-            exploratory <code>{coverage.locked_s_heat?.['celani-constantan-2019']}</code>.
-            Campaign model-output σ_Q=
-            <code>{coverage.campaign_model_output_sigma_Q_W}</code> is not discovery MoE.
+            <code>{coverage.locked_s_heat?.['kasagi-nicu-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_nicu_claim_tier || 'empirical_lenr_correlation'}
+              testId={`${testIdPrefix}-claim-tier-kasagi-nicu-s-heat`}
+            />
+            , Kasagi Ni{' '}
+            <code>{coverage.locked_s_heat?.['kasagi-ni-radiant-2026']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.kasagi_ni_claim_tier || 'empirical_lenr_correlation'}
+              testId={`${testIdPrefix}-claim-tier-kasagi-ni-s-heat`}
+            />
+            , Miles exploratory{' '}
+            <code>{coverage.locked_s_heat?.['miles-1993']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.miles_claim_tier || 'speculative_exploratory'}
+              testId={`${testIdPrefix}-claim-tier-miles-s-heat`}
+            />
+            , Celani exploratory{' '}
+            <code>{coverage.locked_s_heat?.['celani-constantan-2019']}</code>{' '}
+            <ClaimTierChip
+              tier={coverage.celani_claim_tier || 'speculative_exploratory'}
+              testId={`${testIdPrefix}-claim-tier-celani-s-heat`}
+            />
+            . Campaign model-output σ_Q=
+            <code>{coverage.campaign_model_output_sigma_Q_W}</code>{' '}
+            <ClaimTierChip
+              tier={
+                coverage.campaign_model_output_claim_tier ||
+                'speculative_exploratory'
+              }
+              testId={`${testIdPrefix}-claim-tier-campaign-sigma-q`}
+            />{' '}
+            is not discovery MoE.
           </Typography>
           {coverage.refused_fabricated_moe_campaigns.map((row) => (
             <Typography
@@ -355,6 +401,10 @@ export default function EmpExploratoryWhyNotDiscovery({
                   label={row.status}
                   data-testid={`${testIdPrefix}-status-${row.id}`}
                   sx={{ fontFamily: 'monospace', fontSize: '0.55rem', height: 18 }}
+                />
+                <ClaimTierChip
+                  tier={row.claim_tier || 'speculative_exploratory'}
+                  testId={`${testIdPrefix}-next-lab-tier-${row.id}`}
                 />
               </Stack>
               <Typography variant="caption" color="text.secondary" display="block">
@@ -505,6 +555,10 @@ export default function EmpExploratoryWhyNotDiscovery({
                     label={row.claim_type}
                     sx={{ height: 18, fontSize: '0.6rem' }}
                   />
+                  <ClaimTierChip
+                    tier={row.claim_tier || 'speculative_exploratory'}
+                    testId={`${testIdPrefix}-claim-tier-${row.literature_id}`}
+                  />
                   <Chip
                     size="small"
                     color="warning"
@@ -537,7 +591,11 @@ export default function EmpExploratoryWhyNotDiscovery({
                     {row.s_heat_exploratory != null ? (
                       <>
                         {' '}
-                        · exploratory S_heat=<code>{row.s_heat_exploratory}</code>
+                        · exploratory S_heat=<code>{row.s_heat_exploratory}</code>{' '}
+                        <ClaimTierChip
+                          tier={row.claim_tier || 'speculative_exploratory'}
+                          testId={`${testIdPrefix}-s-heat-tier-${row.literature_id}`}
+                        />
                       </>
                     ) : null}
                     {' · '}pairing=

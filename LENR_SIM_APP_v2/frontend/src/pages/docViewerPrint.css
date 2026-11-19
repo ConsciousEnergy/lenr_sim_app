@@ -1,6 +1,8 @@
-/* DocViewer print surface — hide chrome; keep math + markdown readable. */
+/* DocViewer print surface — hide chrome only while a viewer root is mounted.
+ * Gate on :has(doc-viewer-print-root) so navigating away does not blank
+ * normal browser print of other routes. */
 @media print {
-  body * {
+  body:has([data-testid='doc-viewer-print-root']) * {
     visibility: hidden !important;
   }
 

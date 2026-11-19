@@ -118,7 +118,7 @@ This paper aims to:
     \quad [\mathrm{s^{-1}}],
     \]
     
-    where \( N_{\text{sites}} \) is a **dimensionless site count** of local electron–nucleus pairs (or \( n_{\text{sites}} V \) with volume \( V \) stated—never a bare number density), \( f_{\text{attempt}} \) is a **model assumption** for the electronic/phonon attempt scale (illustrative order \( \sim 10^{12}\,\mathrm{s^{-1}} \), or left symbolic), and \( P_{\text{overlap}} \) uses the **same** numerical band as the preceding derivation. Worked example with \( N_{\text{sites}} \sim 10^{23} \), \( f_{\text{attempt}} \sim 10^{12}\,\mathrm{s^{-1}} \), and derived \( P_{\text{overlap}} \approx 8.5\times 10^{-16} \):
+    where \( N_{\text{sites}} \) is a **dimensionless site count** of local electron–nucleus pairs (or \( n_{\text{sites}} V \) with volume \( V \) stated—never a bare number density), \( f_{\text{attempt}} \) is a **model assumption** for the electronic/phonon attempt scale (illustrative order \( \sim 10^{12}\,\mathrm{s^{-1}} \), or left symbolic), and \( P_{\text{overlap}} \) uses the **same** numerical band as the preceding derivation. Worked example with illustrative **model-assumption** \( N_{\text{sites}} \sim 10^{23} \) (not a measured inventory), \( f_{\text{attempt}} \sim 10^{12}\,\mathrm{s^{-1}} \), and derived \( P_{\text{overlap}} \approx 8.5\times 10^{-16} \):
     
     \[
     R_{\mathrm{overlap\_count}} \sim 10^{23} \times 10^{12} \times 8.5\times 10^{-16} \sim 10^{20}\,\mathrm{s^{-1}}.

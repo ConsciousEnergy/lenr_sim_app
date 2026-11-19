@@ -132,6 +132,7 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   /** Miles peak arithmetic S_heat=26 under instrument_precision — gates blocked. */
   miles_exploratory_s_heat: 26,
   miles_moe_provenance: 'literature_reported_instrument_precision',
+  miles_claim_tier: 'speculative_exploratory',
   miles_pairing_verified: false,
   miles_distance_status: 'at_or_above_bar_gates_blocked',
   miles_banner:
@@ -141,12 +142,17 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   /** Celani JCMNS 29 12±2 exploratory arithmetic S_heat=6 — gates blocked. */
   celani_exploratory_s_heat: 6,
   celani_moe_provenance: 'literature_reported_instrument_precision',
+  celani_claim_tier: 'speculative_exploratory',
   celani_pairing_verified: false,
   celani_distance_status: 'at_or_above_bar_gates_blocked',
   /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */
   kasagi_nicu_s_heat: 13.75,
+  kasagi_nicu_moe_provenance: 'literature_reported',
+  kasagi_nicu_claim_tier: 'empirical_lenr_correlation',
   kasagi_nicu_distance_status: 'at_or_above_bar_gates_clear',
   kasagi_ni_s_heat: 11.25,
+  kasagi_ni_moe_provenance: 'literature_reported',
+  kasagi_ni_claim_tier: 'empirical_lenr_correlation',
   kasagi_ni_distance_status: 'at_or_above_bar_gates_clear',
   /** Instrument-precision / floor rows stay exploratory (never discovery-eligible). */
   exploratory_instrument_moe_ids: Object.freeze([
@@ -243,6 +249,8 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
    * S_heat arithmetic under that σ never clears discovery_grade_eligible.
    */
   campaign_model_output_sigma_Q_W: 0.1,
+  /** Model-oracle σ_Q optics only — never literature MoE / discovery. */
+  campaign_model_output_claim_tier: 'speculative_exploratory',
   campaign_model_output_is_discovery_moe: false,
   /**
    * Analytics eligibility ≠ EQ-OPEN / lenr_proved (Lean EQ-HEAT-SIG-NC-01 + HeatDiscoveryProof).
@@ -395,6 +403,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     daq_gap_note:
       'Heat+He observables are sketched on sample-v1 but no attested public export exists; ' +
       'refuse fabricating σ_Q / He rates from this UI.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -423,6 +432,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     daq_gap_note:
       'Calorimetry σ_Q on sample-v1 stays planned; refuse inventing literature_reported discovery ' +
       'σ beyond Kasagi (Celani exploratory ≠ discovery).',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -449,6 +459,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     daq_gap_note:
       'γ UL fields are sketched; efficiency + coincidence provenance still missing — refuse ' +
       'fabricating detector ULs as RAD discharge.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -476,6 +487,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
       'n_occ / f_nuc are not in sample-v1 public observables — occupation/rate caps are ' +
       'theory-domain attestations, not calorimetry/γ sample fields. Refuse fabricating DAQ ' +
       'occupation numbers.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -502,6 +514,7 @@ export const NEXT_LAB_MOE_TARGETS = Object.freeze([
     daq_gap_note:
       'E_available / mass-renormalization domain gates are condensed-matter path claims, not ' +
       'instrument sample observables in sample-v1. Refuse fabricating DAQ threshold numbers.',
+    claim_tier: 'speculative_exploratory',
     status: 'blocked_awaiting_lab',
     closes_eq_open: false,
   }),
@@ -1251,6 +1264,11 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     if (!Array.isArray(target.daq_observables)) {
       throw new Error(
         `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must list daq_observables array`,
+      );
+    }
+    if (!target.claim_tier || typeof target.claim_tier !== 'string') {
+      throw new Error(
+        `Science evidence UI NEXT_LAB_MOE_TARGETS ${target.id} must declare claim_tier`,
       );
     }
     if (
