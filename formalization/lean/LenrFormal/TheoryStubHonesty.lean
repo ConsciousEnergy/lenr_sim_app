@@ -3,15 +3,17 @@ import LenrFormal.OpenObligations
 /-!
 TheoryStubHonesty — phenomenological theory stubs ⇏ EQ-OPEN / discovery / `lenr_proved`.
 
-Locks the `santilli_icnf` v1, `shoulders_evo` P0, and `holmlid_udh` P0
-registry stubs (and the same pattern for any phenomenological stub):
-regime-gated applicability + author-claimed mass-defect **labels** (or free
-exploratory params) never invent a nuclear rate law, never emit discovery-grade
-MoE, never set `lenr_proved`, and never discharge Q1–Q5 under open witnesses.
+Locks the `santilli_icnf` v1, `shoulders_evo` P0, `holmlid_udh` P0, and
+`schwinger_lattice` P0 registry stubs (and the same pattern for any
+phenomenological stub): regime-gated applicability + author-claimed mass-defect
+**labels** (or free exploratory params) never invent a nuclear rate law, never
+emit discovery-grade MoE, never set `lenr_proved`, and never discharge Q1–Q5
+under open witnesses.
 
 Primary cites: Kadeisvili, Lynch & Yang (2013) — `kadeisvili2013` (Santilli);
 Shoulders (1991/1996) EVO reports; Holmlid arXiv:1302.2781 / 1508.01332
-(`holmlid_udh` ≠ `kim_bec`). Related `santilli2007` is cite-only.
+(`holmlid_udh` ≠ `kim_bec`); Schwinger Cold Fusion / NEAL LENR-CANR PDFs
+(historical-control scaffold). Related `santilli2007` is cite-only.
 
 **Claim tier:** AX honesty / non-closure bookkeeping only. Does **not** prove
 LENR occurs. Does **not** close any `EQ-OPEN-*`.
@@ -343,6 +345,92 @@ theorem holmlid_udh_stub_does_not_discharge_eq_open
     holmlid_stub_not_discovery_moe
     holmlid_stub_contribution_not_lenr_proved
     holmlid_stub_contribution_eq_open_not_closed
+    hQ1 hQ2 hQ3 hQ4 hQ5
+
+/--
+Schwinger NEAL P0 historical-control scaffold:
+no invented rate, zero watts, no discovery MoE, no author MeV mass-defect
+label. Exploratory `h_fraction_in_d2o` / HD-sensitivity index never drive wattage.
+-/
+def schwingerLatticeStub : PhenomenologicalTheoryStub :=
+  { theoryId := "schwinger_lattice"
+    hasInventedRateLaw := false
+    energyOutputMilliWatts := 0
+    discoveryMoe := false
+    claimedMassDefectMilliMeV := 0
+    contributionLenrProved := false
+    contributionEqOpenClosed := false }
+
+theorem schwinger_stub_id :
+    schwingerLatticeStub.theoryId = "schwinger_lattice" := rfl
+
+theorem schwinger_stub_has_no_invented_rate :
+    schwingerLatticeStub.hasInventedRateLaw = false := rfl
+
+theorem schwinger_stub_zero_watts :
+    schwingerLatticeStub.energyOutputMilliWatts = 0 := rfl
+
+theorem schwinger_stub_not_discovery_moe :
+    schwingerLatticeStub.discoveryMoe = false := rfl
+
+theorem schwinger_stub_no_mev_label :
+    schwingerLatticeStub.claimedMassDefectMilliMeV = 0 := rfl
+
+theorem schwinger_stub_contribution_not_lenr_proved :
+    schwingerLatticeStub.contributionLenrProved = false := rfl
+
+theorem schwinger_stub_contribution_eq_open_not_closed :
+    schwingerLatticeStub.contributionEqOpenClosed = false := rfl
+
+/--
+EQ-SCHWINGER-STUB-NC-01: HD admixture / lattice-coherence free params
+never underwrite stub wattage when energy stays locked at 0.
+-/
+theorem schwinger_free_param_not_wattage_driver
+    (s : PhenomenologicalTheoryStub)
+    (hId : s.theoryId = "schwinger_lattice")
+    (hWatts : s.energyOutputMilliWatts = 0)
+    (_hHdKnobPresent : True) :
+    s.energyOutputMilliWatts = 0 ∧ s.theoryId = "schwinger_lattice" :=
+  ⟨hWatts, hId⟩
+
+theorem schwinger_lattice_free_param_not_wattage :
+    schwingerLatticeStub.energyOutputMilliWatts = 0
+      ∧ schwingerLatticeStub.theoryId = "schwinger_lattice" :=
+  schwinger_free_param_not_wattage_driver
+    schwingerLatticeStub schwinger_stub_id schwinger_stub_zero_watts trivial
+
+/-- Schwinger NEAL stub instantiation of EQ-THEORY-STUB-NC-01 / EQ-SCHWINGER-STUB-NC-01. -/
+theorem schwinger_lattice_stub_does_not_discharge_eq_open
+    (openRemainder gammaBranching gammaUpperBound : Nat)
+    (log10Events : Int)
+    (availableEnergy thresholdEnergy yieldDiscrepancy : Nat)
+    (hQ1 : 0 < openRemainder)
+    (hQ2 : gammaUpperBound < gammaBranching)
+    (hQ3 : log10Events < 0)
+    (hQ4 : availableEnergy < thresholdEnergy)
+    (hQ5 : 0 < yieldDiscrepancy) :
+    lenrProved = false
+      ∧ schwingerLatticeStub.hasInventedRateLaw = false
+      ∧ schwingerLatticeStub.energyOutputMilliWatts = 0
+      ∧ schwingerLatticeStub.discoveryMoe = false
+      ∧ schwingerLatticeStub.contributionLenrProved = false
+      ∧ schwingerLatticeStub.contributionEqOpenClosed = false
+      ∧ ¬ q1MeVEnergyGapClosed openRemainder
+      ∧ ¬ q2RadiationSuppressionClosed gammaBranching gammaUpperBound
+      ∧ ¬ q3RateBudgetClosed log10Events
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy :=
+  phenomenological_stub_does_not_discharge_eq_open
+    schwingerLatticeStub
+    openRemainder gammaBranching gammaUpperBound
+    log10Events
+    availableEnergy thresholdEnergy yieldDiscrepancy
+    schwinger_stub_has_no_invented_rate
+    schwinger_stub_zero_watts
+    schwinger_stub_not_discovery_moe
+    schwinger_stub_contribution_not_lenr_proved
+    schwinger_stub_contribution_eq_open_not_closed
     hQ1 hQ2 hQ3 hQ4 hQ5
 
 end LenrFormal.TheoryStubHonesty

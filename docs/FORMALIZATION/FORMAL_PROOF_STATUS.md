@@ -30,6 +30,7 @@
 | EQ-THEORY-STUB-NC-01 | Phenomenological theory stub (no invented rate; zero watts; no discovery MoE; author mass-defect **label** only) ⇏ `lenr_proved` / any of Q1–Q5; Santilli ICNF v1 instantiation (`kadeisvili2013`) | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
 | EQ-SHOULDERS-STUB-NC-01 | Shoulders EVO P0 stub (no invented rate; zero watts; no discovery MoE; free `cluster_charge_q` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
 | EQ-HOLMLID-STUB-NC-01 | Holmlid UDH P0 stub (≠ Kim BECNF; no invented rate; zero watts; free `internuclear_pm` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
+| EQ-SCHWINGER-STUB-NC-01 | Schwinger NEAL P0 scaffold (no invented rate; zero watts; free `h_fraction_in_d2o` ⇏ wattage) ⇏ `lenr_proved` / any of Q1–Q5 | `TheoryStubHonesty` | **PROVED** (non-closure / honesty; does **not** close any `EQ-OPEN-*`) |
 | EQ-PHONON-N-01 | \(N=Q/(\hbar\omega)\) for 23.8 MeV / 50 meV | `Phonon` | **PROVED** |
 | EQ-NAIVE-GN-01 | Nat-floor of \((1/2)^n=0\) for \(n\ge 1\) | `Phonon` | **PROVED** |
 | EQ-RATE-2B-NC-01 | Two-body \(\log_{10}N_{\mathrm{events}}=-40<0\) | `RateBudget` | **PROVED** |
