@@ -1,0 +1,31 @@
+/* DocViewer print surface — hide chrome; keep math + markdown readable. */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  [data-testid='doc-viewer-print-root'],
+  [data-testid='doc-viewer-print-root'] * {
+    visibility: visible !important;
+  }
+
+  [data-testid='doc-viewer-print-root'] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  [data-testid='doc-viewer-no-print'] {
+    display: none !important;
+  }
+
+  [data-testid='doc-viewer-markdown'] {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .katex-display {
+    break-inside: avoid;
+  }
+}

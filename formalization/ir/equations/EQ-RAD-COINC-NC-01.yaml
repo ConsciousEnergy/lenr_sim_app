@@ -1,0 +1,28 @@
+id: EQ-RAD-COINC-NC-01
+latex: "\\mathrm{bareDetectorUl}\\lor\\mathrm{efficiencyOnly}\\lor\\mathrm{geometryOnly}\\nRightarrow\\mathrm{GammaBrDischarge};\\quad\\nRightarrow q_2\\mathrm{RadiationSuppressionClosed}"
+symbols:
+  RadCoincidenceEvidenceKind: "bare UL / efficiency-only / geometry-only / time-coincidence heat+γ"
+  GammaBrDischarge: "bag of time-correlated heat+γ with calibrated efficiency and documented geometry only"
+  bareDetectorUl: "detector γ UL ingest with no efficiency/geometry/coincidence"
+  timeCoincidenceHeatGamma: "time-correlated heat+γ with calibrated efficiency and documented geometry"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§5A.2 / BDS-398 / miles1993"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/many_body/branching_model.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - miles1993
+  - paper_5A_2
+lean_target: LenrFormal.RadiationBounds
+lean_decls:
+  - "LenrFormal.RadiationBounds.RadCoincidenceEvidenceKind"
+  - "LenrFormal.RadiationBounds.GammaBrDischarge"
+  - "LenrFormal.RadiationBounds.bare_detector_ul_does_not_entail_gamma_br_discharge"
+  - "LenrFormal.RadiationBounds.efficiency_only_does_not_entail_gamma_br_discharge"
+  - "LenrFormal.RadiationBounds.geometry_only_does_not_entail_gamma_br_discharge"
+  - "LenrFormal.RadiationBounds.bare_detector_ul_alone_keeps_rad_open"
+  - "LenrFormal.RadiationBounds.bare_ul_with_partial_provenance_keeps_rad_open"
+  - "LenrFormal.RadiationBounds.bare_ul_without_coincidence_does_not_close_q2"
+  - "LenrFormal.RadiationBounds.gamma_br_discharge_does_not_flip_lenr"
+notes: "AX honesty (BDS-398): bare detector UL without efficiency/geometry/time-coincidence provenance never supplies GammaBrDischarge and never closes EQ-OPEN-RAD-01 / flips lenr_proved. Densifies EQ-OPEN-RAD-01 still_missing on coincidence / γ-BR evidence kinds. Distinct from EQ-RAD-EFF-NC-01 (DetectorUlProvenance eligibility) and EQ-RAD-CR39-NC-01 (track-etch confounders). Complements EQ-RAD-DET-01 / EQ-WH-FC-02. EQ-OPEN-RAD-01 stays OPEN."

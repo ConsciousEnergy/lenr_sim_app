@@ -1,0 +1,31 @@
+id: EQ-EC-ENERGY-NC-01
+latex: "\\mathrm{uiGapCosmetic}\\lor\\mathrm{unlicensedMassRenorm}\\nRightarrow\\mathrm{MeasuredEcEnergyDischarge};\\quad\\nRightarrow q_4\\mathrm{ElectronCaptureSourceClosed}"
+symbols:
+  EcAvailableEnergyEvidenceKind: "UI cosmetics / unlicensed mass-renorm / sub-threshold CM budget / measured ≥0.782 MeV"
+  MeasuredEcEnergyDischarge: "bag of measured available-electron-energy ≥ threshold only"
+  uiGapCosmetic: "default UI / scaffold gap-to-threshold cosmetics (no measurement)"
+  unlicensedMassRenormDomainClaim: "Widom–Larsen mass-renormalization domain claim without physical gates (EQ-WL-MASS-01 SPEC)"
+  measuredAvailableElectronGeThreshold: "measured available electron energy ≥ 0.782 MeV"
+units: "dimensionless (provenance tag)"
+tag: AX
+paper_ref: "§5A.4 / BDS-397 / widomlarsen2006"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_questions.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - widomlarsen2006
+  - tennfors2013
+  - paper_5A_4
+lean_target: LenrFormal.WeakInteraction
+lean_decls:
+  - "LenrFormal.WeakInteraction.EcAvailableEnergyEvidenceKind"
+  - "LenrFormal.WeakInteraction.MeasuredEcEnergyDischarge"
+  - "LenrFormal.WeakInteraction.ui_gap_cosmetic_does_not_entail_measured_ec_energy"
+  - "LenrFormal.WeakInteraction.unlicensed_mass_renorm_does_not_entail_measured_ec_energy"
+  - "LenrFormal.WeakInteraction.subthreshold_cm_budget_does_not_entail_measured_ec_energy"
+  - "LenrFormal.WeakInteraction.ui_cosmetic_alone_keeps_ec_open"
+  - "LenrFormal.WeakInteraction.ui_cosmetic_with_unlicensed_mass_renorm_keeps_ec_open"
+  - "LenrFormal.WeakInteraction.ui_cosmetic_and_unlicensed_mass_renorm_do_not_close_q4"
+  - "LenrFormal.WeakInteraction.measured_ec_energy_discharge_does_not_flip_lenr"
+notes: "AX honesty (BDS-397): UI gap-to-threshold cosmetics and unlicensed Widom–Larsen mass-renormalization domain claims never supply MeasuredEcEnergyDischarge and never close EQ-OPEN-EC-01 / flip lenr_proved. Densifies EQ-OPEN-EC-01 still_missing (condensed-matter path to E > 0.782 MeV) on available-energy evidence kinds. Distinct from EQ-EC-UI-NC-01 (EcPathUnderwrite eligibility). Complements EQ-OPEN-EC-BOUND-01 / EQ-EC-THRESH-01. EQ-OPEN-EC-01 stays OPEN; condensedMatterPathToThreshold and lenr_proved stay false."

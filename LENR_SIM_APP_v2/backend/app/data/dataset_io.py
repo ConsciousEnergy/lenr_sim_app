@@ -76,11 +76,33 @@ def literature_iccf27() -> Dict[str, Any]:
     return load_dataset("literature_iccf27.v1.json")
 
 
+@lru_cache(maxsize=8)
+def literature_exploratory_moe() -> Dict[str, Any]:
+    return load_dataset("literature_exploratory_moe.v1.json")
+
+
 def iccf27_literature_records() -> List[Dict[str, Any]]:
     records = literature_iccf27().get("records") or []
     if not isinstance(records, list):
         raise ValueError("literature_iccf27.v1.json records must be a list")
     return records
+
+
+def exploratory_moe_literature_records() -> List[Dict[str, Any]]:
+    """Exploratory instrument-precision companions (never discovery-grade)."""
+    records = literature_exploratory_moe().get("records") or []
+    if not isinstance(records, list):
+        raise ValueError("literature_exploratory_moe.v1.json records must be a list")
+    return records
+
+
+def curated_literature_corpus_records() -> List[Dict[str, Any]]:
+    """Locked baselines + ICCF-27 + exploratory MoE companions (governed corpus)."""
+    return (
+        list(literature_records())
+        + list(iccf27_literature_records())
+        + list(exploratory_moe_literature_records())
+    )
 
 
 def literature_records() -> List[Dict[str, Any]]:

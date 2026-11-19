@@ -68,6 +68,15 @@ theorem miles_peak_arithmetic_meets_five_sigma :
       milesPeakExploratorySHeatMilli discoveryThresholdMilli := by
   native_decide
 
+/-- Celani JCMNS 29 exploratory arithmetic: 12 / 2 = 6σ → 6000 milli
+    (instrument_precision companion; discovery inventory stays Kasagi 2/26). -/
+def celaniPeakExploratorySHeatMilli : Nat := 6000
+
+theorem celani_peak_arithmetic_meets_five_sigma :
+    meetsDiscoveryArithmetic
+      celaniPeakExploratorySHeatMilli discoveryThresholdMilli := by
+  native_decide
+
 /-- Kasagi NiCu verified-pairing example: 1.1 / 0.08 = 13.75σ → 13750 milli. -/
 def kasagiNiCuSHeatMilli : Nat := 13750
 
@@ -158,6 +167,19 @@ theorem soft_chip_not_scientific_discharge :
 theorem miles_exploratory_not_discovery_grade :
     ¬ DiscoveryGradeAnalytics
       milesPeakExploratorySHeatMilli
+      MoeProvenance.literatureReportedInstrumentPrecision
+      true
+      false
+      true := by
+  intro h
+  exact instrument_precision_not_discovery_eligible h.2.1
+
+/-- EQ-HEAT-SIG-NC-01: Celani JCMNS 29 “12 ± 2 W” exploratory hydrate
+    (instrument_precision + unverified pairing; S_heat=6) is not discovery-grade.
+    Corpus discovery stays Kasagi-only 2/26 — refuse fabricating discovery σ. -/
+theorem celani_exploratory_not_discovery_grade :
+    ¬ DiscoveryGradeAnalytics
+      celaniPeakExploratorySHeatMilli
       MoeProvenance.literatureReportedInstrumentPrecision
       true
       false
@@ -374,11 +396,25 @@ def labAskMetIsEqOpenDischarge : Bool := false
 theorem lab_ask_met_is_not_eq_open_discharge :
     labAskMetIsEqOpenDischarge = false := rfl
 
+/-- BDS-375: planned `lenr-ara-daq-sample-v1` ingest stays non-attested.
+    Sketch / UI densification never equals EQ-OPEN discharge or `lenr_proved`. -/
+def daqSampleIngestPlannedNotAttested : Bool := true
+
+theorem daq_sample_ingest_is_planned_not_attested :
+    daqSampleIngestPlannedNotAttested = true := rfl
+
+/-- Planned DAQ sample export never equals scientific / EQ-OPEN discharge. -/
+def daqSamplePlannedIsEqOpenDischarge : Bool := false
+
+theorem daq_sample_planned_is_not_eq_open_discharge :
+    daqSamplePlannedIsEqOpenDischarge = false := rfl
+
 /--
-EQ-HEAT-SIG-NC-01 (BDS-348): even if **all five** next-lab MoE ask proxies
-are notionally met (and DiscoveryGradeAnalytics clears), open witnesses keep
-Q1–Q5 open, `lenr_proved` false, and soft chip / lab-ask ≠ discharge.
-Lab-ask precision densifies the Prefer-merge exhaust surface without inventing σ.
+EQ-HEAT-SIG-NC-01 (BDS-348 + BDS-375 follow-on): even if **all five** next-lab
+MoE ask proxies are notionally met (and DiscoveryGradeAnalytics clears), and
+even when DAQ sample-v1 ingest is marked planned_not_attested, open witnesses
+keep Q1–Q5 open, `lenr_proved` false, and soft chip / lab-ask / DAQ ≠ discharge.
+Lab-ask + DAQ provenance densify Prefer-merge honesty without inventing σ.
 -/
 theorem lab_ask_proxies_do_not_discharge_eq_open
     (proxies : LabAskProxies)
@@ -408,7 +444,9 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
       ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
       ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
       ∧ softChipIsScientificDischarge = false
-      ∧ labAskMetIsEqOpenDischarge = false :=
+      ∧ labAskMetIsEqOpenDischarge = false
+      ∧ daqSampleIngestPlannedNotAttested = true
+      ∧ daqSamplePlannedIsEqOpenDischarge = false :=
   ⟨lenr_proved_false,
     positive_remainder_implies_q1_not_closed hQ1,
     gamma_above_bound_implies_q2_not_closed hQ2,
@@ -416,9 +454,12 @@ theorem lab_ask_proxies_do_not_discharge_eq_open
     energy_deficit_implies_q4_not_closed hQ4,
     positive_yield_discrepancy_implies_q5_not_closed hQ5,
     soft_chip_not_scientific_discharge,
-    lab_ask_met_is_not_eq_open_discharge⟩
+    lab_ask_met_is_not_eq_open_discharge,
+    daq_sample_ingest_is_planned_not_attested,
+    daq_sample_planned_is_not_eq_open_discharge⟩
 
-/-- Instantiation: all five lab asks met + dual-Kasagi analytics still ⇏ discharge. -/
+/-- Instantiation: all five lab asks met + dual-Kasagi analytics still ⇏ discharge
+    (DAQ sample-v1 stays planned_not_attested; still ≠ EQ-OPEN discharge). -/
 theorem all_lab_asks_met_with_dual_kasagi_do_not_discharge
     (openRemainder gammaBranching gammaUpperBound : Nat)
     (log10Events : Int)
@@ -437,7 +478,9 @@ theorem all_lab_asks_met_with_dual_kasagi_do_not_discharge
       ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy thresholdEnergy
       ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
       ∧ softChipIsScientificDischarge = false
-      ∧ labAskMetIsEqOpenDischarge = false :=
+      ∧ labAskMetIsEqOpenDischarge = false
+      ∧ daqSampleIngestPlannedNotAttested = true
+      ∧ daqSamplePlannedIsEqOpenDischarge = false :=
   lab_ask_proxies_do_not_discharge_eq_open
     allLabAsksMet
     kasagiNiCuSHeatMilli MoeProvenance.literatureReported true true true

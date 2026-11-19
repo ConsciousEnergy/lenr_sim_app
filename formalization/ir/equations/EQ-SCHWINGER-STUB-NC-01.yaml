@@ -1,0 +1,27 @@
+id: EQ-SCHWINGER-STUB-NC-01
+latex: "\\mathrm{schwinger\\_lattice}\\land\\neg\\mathrm{inventedRate}\\land E_{\\mathrm{mW}}=0\\land\\neg\\mathrm{discoveryMoe}\\land\\mathrm{claimedMassDefect}=0\\nRightarrow\\mathrm{lenrProved}\\lor\\mathrm{EQ\\text{-}OPEN}\\,\\mathrm{discharge};\\quad h_{\\mathrm{frac}}^{\\mathrm{free}}\\nRightarrow\\mathrm{wattage}"
+symbols:
+  schwinger_lattice: "Schwinger NEAL P0 historical-control scaffold"
+  inventedRate: "hasInventedRateLaw (must stay false)"
+  discoveryMoe: "discovery-grade MoE underwrite flag"
+  h_frac_free: "exploratory H fraction in D2O / HD-sensitivity index (not a rate/wattage driver)"
+  lenrProved: "global nature-proof token (stays false)"
+units: "dimensionless (honesty / non-closure)"
+tag: AX
+paper_ref: "§2 theories / ENG-THEORY-PIPELINE-01; Schwinger NEAL P0 scaffold; EQ-OPEN-* runway"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/theories/schwinger_lattice.py
+citation_keys:
+  - schwinger_cold_fusion
+  - schwinger_neal
+lean_target: LenrFormal.TheoryStubHonesty
+lean_decls:
+  - "LenrFormal.TheoryStubHonesty.schwingerLatticeStub"
+  - "LenrFormal.TheoryStubHonesty.schwinger_stub_has_no_invented_rate"
+  - "LenrFormal.TheoryStubHonesty.schwinger_stub_zero_watts"
+  - "LenrFormal.TheoryStubHonesty.schwinger_stub_not_discovery_moe"
+  - "LenrFormal.TheoryStubHonesty.schwinger_stub_no_mev_label"
+  - "LenrFormal.TheoryStubHonesty.schwinger_free_param_not_wattage_driver"
+  - "LenrFormal.TheoryStubHonesty.schwinger_lattice_free_param_not_wattage"
+  - "LenrFormal.TheoryStubHonesty.schwinger_lattice_stub_does_not_discharge_eq_open"
+notes: "AX honesty: schwinger_lattice P0 is a historical-control scaffold (Schwinger Cold Fusion / NEAL; HD admixture sensitivity only; no invented nuclear rate). Exploratory h_fraction_in_d2o / lattice_coherence_label never drive wattage. Stub applicability ⇏ discovery MoE, ⇏ lenr_proved, ⇏ any EQ-OPEN-* discharge. Instantiates EQ-THEORY-STUB-NC-01 for Schwinger."

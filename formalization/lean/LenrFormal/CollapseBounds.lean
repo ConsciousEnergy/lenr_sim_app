@@ -345,6 +345,9 @@ inductive HeatMoEKind where
   | hydroEnhancementScenario
   /-- Campaign pack model-output cell (not lab MoE). -/
   | campaignModelOutput
+  /-- Planned `lenr-ara-daq-sample-v1` sketch / UI densification (BDS-375);
+      `planned_not_attested` — never discovery MoE. -/
+  | daqPlannedSketch
   /-- Cite-gated literature_reported total σ_Q with verified Q↔σ pairing. -/
   | literatureReportedVerifiedPairing
   deriving DecidableEq, Repr
@@ -397,6 +400,102 @@ theorem campaign_model_output_does_not_entail_discovery_heat_moe
     hDisc.2 _ h
   cases this
 
+/-- EQ-BBL-HEAT-NC-01 (BDS-375 follow-on): planned DAQ sample-v1 sketch /
+    `planned_not_attested` ingest never supplies cite-gated discovery MoE. -/
+theorem daq_planned_sketch_does_not_entail_discovery_heat_moe
+    {kinds : List HeatMoEKind}
+    (h : HeatMoEKind.daqPlannedSketch ∈ kinds) :
+    ¬ DiscoveryGradeHeatMoE kinds := by
+  intro hDisc
+  have : HeatMoEKind.daqPlannedSketch =
+      HeatMoEKind.literatureReportedVerifiedPairing :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: a bag that is only the planned DAQ sketch stays non-discovery
+    and keeps `lenr_proved` false (UI densification ≠ attestation). -/
+theorem daq_planned_sketch_alone_keeps_heat_moe_open :
+    ¬ DiscoveryGradeHeatMoE [HeatMoEKind.daqPlannedSketch]
+      ∧ ¬ HeatDiscoveryProof [HeatMoEKind.daqPlannedSketch]
+      ∧ lenrProved = false := by
+  refine ⟨?_, ?_, collapse_lenr_proved_false⟩
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
+
+/-! ### BDS-384 — planned DAQ sample-v1 ↔ HeatMoEKind binding (still NC) -/
+
+/-- Export / ingest schema id for planned ARA DAQ sample (BDS-375 / BDS-384).
+    Bookkeeping mirror only — not a lab attestation. -/
+def daqSampleV1SchemaId : String := "lenr-ara-daq-sample-v1"
+
+theorem daq_sample_v1_schema_id_value :
+    daqSampleV1SchemaId = "lenr-ara-daq-sample-v1" := rfl
+
+/-- Canonical heat-MoE kind for that schema: always the planned sketch. -/
+def daqSampleV1HeatMoEKind : HeatMoEKind := HeatMoEKind.daqPlannedSketch
+
+theorem daq_sample_v1_schema_maps_to_planned_sketch_kind :
+    daqSampleV1HeatMoEKind = HeatMoEKind.daqPlannedSketch := rfl
+
+/-- Mirrors `CalorimetrySignificance.daqSampleIngestPlannedNotAttested`. -/
+def daqSampleV1PlannedNotAttested : Bool := true
+
+theorem daq_sample_v1_planned_not_attested :
+    daqSampleV1PlannedNotAttested = true := rfl
+
+/-- Mirrors `CalorimetrySignificance.daqSamplePlannedIsEqOpenDischarge`. -/
+def daqSampleV1IsEqOpenDischarge : Bool := false
+
+theorem daq_sample_v1_is_not_eq_open_discharge :
+    daqSampleV1IsEqOpenDischarge = false := rfl
+
+/-- EQ-BBL-HEAT-NC-01 (BDS-384): schema-bound planned sample-v1 +
+    `HeatMoEKind.daqPlannedSketch` membership never underwrites discovery MoE,
+    never equals EQ-OPEN discharge, and keeps `lenr_proved` false. -/
+theorem daq_sample_v1_bound_to_heat_moe_keeps_open
+    {kinds : List HeatMoEKind}
+    (hKind : HeatMoEKind.daqPlannedSketch ∈ kinds)
+    (_hSchema : daqSampleV1HeatMoEKind = HeatMoEKind.daqPlannedSketch) :
+    daqSampleV1SchemaId = "lenr-ara-daq-sample-v1"
+      ∧ daqSampleV1PlannedNotAttested = true
+      ∧ daqSampleV1IsEqOpenDischarge = false
+      ∧ ¬ DiscoveryGradeHeatMoE kinds
+      ∧ ¬ HeatDiscoveryProof kinds
+      ∧ lenrProved = false := by
+  refine ⟨daq_sample_v1_schema_id_value, daq_sample_v1_planned_not_attested,
+    daq_sample_v1_is_not_eq_open_discharge, ?_, ?_, collapse_lenr_proved_false⟩
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe hKind
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe hKind
+
+/-- Instantiation: sample-v1 schema alone (singleton planned-sketch bag) stays open. -/
+theorem daq_sample_v1_schema_alone_keeps_heat_moe_open :
+    daqSampleV1HeatMoEKind = HeatMoEKind.daqPlannedSketch
+      ∧ ¬ DiscoveryGradeHeatMoE [daqSampleV1HeatMoEKind]
+      ∧ ¬ HeatDiscoveryProof [daqSampleV1HeatMoEKind]
+      ∧ daqSampleV1PlannedNotAttested = true
+      ∧ daqSampleV1IsEqOpenDischarge = false
+      ∧ lenrProved = false := by
+  refine ⟨daq_sample_v1_schema_maps_to_planned_sketch_kind, ?_, ?_,
+    daq_sample_v1_planned_not_attested, daq_sample_v1_is_not_eq_open_discharge,
+    collapse_lenr_proved_false⟩
+  · simpa [daqSampleV1HeatMoEKind] using
+      daq_planned_sketch_does_not_entail_discovery_heat_moe
+        (kinds := [HeatMoEKind.daqPlannedSketch]) (by simp)
+  · simpa [daqSampleV1HeatMoEKind] using
+      daq_planned_sketch_does_not_entail_discovery_heat_moe
+        (kinds := [HeatMoEKind.daqPlannedSketch]) (by simp)
+
+/-- Mixed non-literature bag: planned DAQ sketch + collapse UQ still ⇏ discovery. -/
+theorem daq_planned_sketch_with_collapse_uq_keeps_heat_moe_open :
+    ¬ DiscoveryGradeHeatMoE
+        [HeatMoEKind.daqPlannedSketch, HeatMoEKind.collapseUqEnvelope]
+      ∧ ¬ HeatDiscoveryProof
+        [HeatMoEKind.daqPlannedSketch, HeatMoEKind.collapseUqEnvelope]
+      ∧ lenrProved = false := by
+  refine ⟨?_, ?_, collapse_lenr_proved_false⟩
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
+  · exact daq_planned_sketch_does_not_entail_discovery_heat_moe (by simp)
+
 /-- EQ-BBL-HEAT-NC-01 ∘ EQ-BBL-UQ-01: UQ percentile bookkeeping does not
     discharge EQ-OPEN-YIELD-01 (integrated yield) or set lenr_proved. -/
 def q5IntegratedYieldClosed (yieldDiscrepancy : Nat) : Prop :=
@@ -412,6 +511,25 @@ theorem uq_percentiles_do_not_close_q5
   intro hClosed
   unfold q5IntegratedYieldClosed at hClosed
   exact (Nat.ne_of_gt hOpen) hClosed
+
+/-- BDS-384: planned sample-v1 / HeatMoE binding does not close EQ-OPEN-YIELD-01. -/
+theorem daq_sample_v1_bound_does_not_close_q5
+    (yieldDiscrepancy : Nat)
+    (hOpen : 0 < yieldDiscrepancy) :
+    daqSampleV1SchemaId = "lenr-ara-daq-sample-v1"
+      ∧ daqSampleV1PlannedNotAttested = true
+      ∧ daqSampleV1IsEqOpenDischarge = false
+      ∧ ¬ DiscoveryGradeHeatMoE [daqSampleV1HeatMoEKind]
+      ∧ ¬ q5IntegratedYieldClosed yieldDiscrepancy
+      ∧ lenrProved = false := by
+  refine ⟨daq_sample_v1_schema_id_value, daq_sample_v1_planned_not_attested,
+    daq_sample_v1_is_not_eq_open_discharge, ?_, ?_, collapse_lenr_proved_false⟩
+  · simpa [daqSampleV1HeatMoEKind] using
+      daq_planned_sketch_does_not_entail_discovery_heat_moe
+        (kinds := [HeatMoEKind.daqPlannedSketch]) (by simp)
+  · intro hClosed
+    unfold q5IntegratedYieldClosed at hClosed
+    exact (Nat.ne_of_gt hOpen) hClosed
 
 /-- Even a (hypothetical) discovery-grade MoE / `HeatDiscoveryProof` bag does
     not close integrated yield or flip `lenr_proved` — analytics MoE ≠

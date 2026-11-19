@@ -1,0 +1,31 @@
+id: EQ-YIELD-MILES-EMP-NC-01
+latex: "\\mathrm{MilesEMP}_{\\sim 2\\times}\\in K \\Rightarrow \\neg\\,\\mathrm{IntegratedYieldDischarge}(K);\\quad f=2\\in[1,3]\\nRightarrow q_5\\mathrm{IntegratedYieldClosed}"
+symbols:
+  K: "provenance kinds of Miles heat/He EMP vs integrated yield evidence"
+  instantaneousHeatHeBand: "instantaneous Miles EMP heat↔He correlation band (~2×; miles1993)"
+  expectedDutyCycleBookkeeping: "EQ-YIELD-ACCT-01 expected yield (no observed ΔN_He)"
+  calibratedSimultaneousIntegratedYield: "cite-gated simultaneous heat+He with calibrated efficiencies"
+  milesEmpApproxTwoFactor: "canonical integer factor 2 inside the [1,3] EMP band"
+units: "dimensionless (provenance tag / EMP factor)"
+tag: AX
+paper_ref: "§5A.5 / BDS-395 / miles1993"
+code_refs:
+  - LENR_SIM_APP_v2/backend/app/physics_engine/open_question_details.py
+  - LENR_SIM_APP_v2/backend/app/physics_engine/discovery_grade_gap.py
+citation_keys:
+  - miles1993
+  - mckubre2008
+  - paper_5A_5
+lean_target: LenrFormal.OpenQuestionBounds
+lean_decls:
+  - "LenrFormal.OpenQuestionBounds.milesEmpApproxTwoFactor"
+  - "LenrFormal.OpenQuestionBounds.MilesEmpEvidenceKind"
+  - "LenrFormal.OpenQuestionBounds.IntegratedYieldDischarge"
+  - "LenrFormal.OpenQuestionBounds.miles_emp_approx_two_in_band"
+  - "LenrFormal.OpenQuestionBounds.miles_emp_band_does_not_entail_integrated_yield_discharge"
+  - "LenrFormal.OpenQuestionBounds.expected_duty_bookkeeping_does_not_entail_integrated_yield_discharge"
+  - "LenrFormal.OpenQuestionBounds.miles_emp_approx_two_alone_keeps_yield_open"
+  - "LenrFormal.OpenQuestionBounds.miles_emp_with_expected_bookkeeping_keeps_yield_open"
+  - "LenrFormal.OpenQuestionBounds.miles_emp_approx_two_does_not_close_q5"
+  - "LenrFormal.OpenQuestionBounds.integrated_yield_discharge_does_not_flip_lenr"
+notes: "AX honesty (BDS-395): instantaneous Miles EMP ~2× heat/He band membership (and expected-yield duty bookkeeping) never supplies IntegratedYieldDischarge and never closes EQ-OPEN-YIELD-01 / flips lenr_proved. Densifies EQ-OPEN-YIELD-NC-01 with explicit ~2× factor and provenance kinds. Distinct from EQ-YIELD-EFF-NC-01 (retention/collection efficiency provenance). EQ-OPEN-YIELD-01 stays OPEN."

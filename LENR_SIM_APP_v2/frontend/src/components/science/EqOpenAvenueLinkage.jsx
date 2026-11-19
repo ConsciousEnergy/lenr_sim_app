@@ -18,28 +18,10 @@ import {
 import {
   AVENUE_RANKING_SUMMARY,
   CLOSURE_SURFACE_LINKS,
+  DAQ_SAMPLE_PROVENANCE,
   EQ_OPEN_RUNWAY,
   NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
-import { CLAIM_TIERS } from '../../utils/theoryGovernance';
-
-/** Claim-tier chip beside numeric lab-target captions (optics only). */
-function ClaimTierChip({ tier, testId }) {
-  if (!tier) return null;
-  const info = CLAIM_TIERS[tier];
-  return (
-    <Chip
-      label={info?.label || String(tier).replace(/_/g, ' ')}
-      title={info?.description || tier}
-      color={info?.color || 'default'}
-      size="small"
-      variant="outlined"
-      data-testid={testId}
-      data-claim-tier={tier}
-      sx={{ fontSize: '0.65rem', height: 18 }}
-    />
-  );
-}
 
 /**
  * @param {Object} props
@@ -236,13 +218,28 @@ export default function EqOpenAvenueLinkage({
                               color="text.secondary"
                               component="span"
                             >
-                              Next lab MoE: {target.target}
+                              Next lab MoE:
                             </Typography>
-                            <ClaimTierChip
-                              tier={target.claim_tier || 'speculative_exploratory'}
-                              testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
+                            <Chip
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              label={target.status || 'blocked_awaiting_lab'}
+                              data-testid={`${testIdPrefix}-lab-status-${row.id}-${target.id}`}
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontSize: '0.55rem',
+                                height: 18,
+                              }}
                             />
                           </Stack>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
+                            {target.target}
+                          </Typography>
                           {target.lab_acceptance ? (
                             <Typography
                               variant="caption"
@@ -273,6 +270,23 @@ export default function EqOpenAvenueLinkage({
                               Ask met ≠ discharge: {target.still_does_not_discharge}
                             </Typography>
                           ) : null}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                            data-testid={`${testIdPrefix}-lab-daq-${row.id}-${target.id}`}
+                          >
+                            DAQ:{' '}
+                            <code>
+                              {target.daq_schema || DAQ_SAMPLE_PROVENANCE.schema_id}
+                            </code>
+                            {' · '}
+                            {Array.isArray(target.daq_observables) &&
+                            target.daq_observables.length > 0
+                              ? target.daq_observables.join(', ')
+                              : 'no sample-v1 observables'}
+                            {target.daq_gap_note ? ` · ${target.daq_gap_note}` : ''}
+                          </Typography>
                         </Stack>
                       ))}
                   </Stack>

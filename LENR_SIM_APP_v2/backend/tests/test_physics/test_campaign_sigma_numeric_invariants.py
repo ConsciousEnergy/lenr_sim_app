@@ -136,13 +136,36 @@ def test_iwamura_rows_have_null_sigma_and_stay_ineligible() -> None:
         )
 
 
-def test_mizuno_arata_celani_absent_from_curated_corpus() -> None:
-    ids = {
+def test_mizuno_arata_absent_celani_exploratory_only() -> None:
+    """Mizuno/Arata stay absent; Celani may exist as exploratory companion only."""
+    from app.data.dataset_io import (
+        curated_literature_corpus_records,
+        exploratory_moe_literature_records,
+    )
+
+    baseline_iccf_ids = {
         row["literature_id"]
         for row in list(literature_records()) + list(iccf27_literature_records())
     }
-    for needle in ("mizuno", "arata", "celani"):
-        assert not any(needle in lid.lower() for lid in ids)
+    for needle in ("mizuno", "arata"):
+        assert not any(needle in lid.lower() for lid in baseline_iccf_ids)
+    assert not any("celani" in lid.lower() for lid in baseline_iccf_ids)
+
+    exploratory = exploratory_moe_literature_records()
+    assert any(
+        row["literature_id"] == "celani-constantan-2019" for row in exploratory
+    )
+    celani = next(
+        row
+        for row in curated_literature_corpus_records()
+        if row["literature_id"] == "celani-constantan-2019"
+    )
+    assert celani["moe_provenance"] == "literature_reported_instrument_precision"
+    assert celani.get("moe_sigma_q_pairing_verified") is False
+    report = discovery_grade_from_literature_record(celani)
+    assert report["discovery_grade_eligible"] is False
+    assert report["s_heat"] == 6.0
+    assert report["lenr_proved"] is False
 
 
 def test_refused_fabricated_moe_ids_documented() -> None:
@@ -174,10 +197,10 @@ def test_campaign_model_output_sigma_is_not_discovery_moe() -> None:
     assert all(v == "OPEN" for v in model["eq_open_status"].values())
 
 
-def test_corpus_coverage_counts_unchanged_at_two_eligible() -> None:
+def test_corpus_coverage_counts_two_eligible_after_celani_exploratory() -> None:
     coverage = literature_corpus_moe_coverage()
-    assert coverage["n_records"] == 25
-    assert coverage["with_sigma_q"] == 4
+    assert coverage["n_records"] == 26
+    assert coverage["with_sigma_q"] == 5
     assert coverage["with_literature_reported_cite_gated"] == 2
     assert coverage["with_moe_pairing_verified"] == 2
     assert coverage["discovery_grade_eligible_count"] == 2

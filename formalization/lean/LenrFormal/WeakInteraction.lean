@@ -2,12 +2,18 @@ import LenrFormal.OpenObligations
 
 /-!
 WeakInteraction — EQ-EC-THRESH-01 / EQ-EC-GF-01 / EQ-EC-SIGMA-01 / EQ-EC-RATE-01
-/ EQ-OPEN-EC-BOUND-01
+/ EQ-OPEN-EC-BOUND-01 / EQ-EC-ENERGY-NC-01 / EQ-EC-UI-NC-01
 
 Integer-scaled Fermi \(G_F\), weak \(\sigma\) magnitude envelope, and thermal
 Boltzmann EC-rate bounds matching
 `LENR_SIM_APP_v2/backend/app/physics/weak_interaction.py`, plus the
 condensed-matter energy-budget deficit family for Q4.
+
+EQ-EC-ENERGY-NC-01 (BDS-397): UI cosmetics / unlicensed mass-renormalization
+domain claims never inhabit measured available-electron-energy ≥ 0.782 MeV
+discharge. Distinct from EQ-EC-UI-NC-01 (eligibility underwrite).
+EQ-EC-UI-NC-01: UI gap-to-threshold cosmetics / scaffold alone stay ineligible
+for EQ-OPEN-EC-01 underwriting.
 
 **Claim tier:** mathematical bookkeeping only.
 These identities do **not** discharge `EQ-OPEN-EC-01`, do **not** prove a
@@ -237,5 +243,191 @@ theorem q4_not_refuted_outright :
 theorem ec_bounds_keep_honesty_locks :
     condensedMatterPathToThreshold = false ∧ lenrProved = false :=
   ⟨no_condensed_matter_path_claimed, lenr_proved_false⟩
+
+/-! ### EQ-EC-ENERGY-NC-01 — UI cosmetics / unlicensed mass-renorm ⇏ measured Eₑ (BDS-397)
+
+EQ-OPEN-EC-01 affirmative discharge needs measured available electron energy
+≥ 0.782 MeV (or governed theory+data) with mass-renormalization domain gates
+met as physical claims. UI gap-to-threshold cosmetics and unlicensed
+Widom–Larsen mass-renorm domain claims never inhabit that witness.
+
+Distinct from EQ-EC-UI-NC-01 (`EcPathUnderwrite` eligibility on the same
+module): this densifies **available-energy evidence kinds** rather than the
+UI/scaffold eligibility structure.
+-/
+
+/-- Provenance kind for available-electron-energy / EC-path evidence. -/
+inductive EcAvailableEnergyEvidenceKind where
+  /-- Default UI / scaffold gap-to-threshold cosmetics (no measurement). -/
+  | uiGapCosmetic
+  /-- Unlicensed Widom–Larsen mass-renormalization domain claim (EQ-WL-MASS-01 SPEC). -/
+  | unlicensedMassRenormDomainClaim
+  /-- Double-layer / CM budget bookkeeping below threshold (EQ-OPEN-EC-BOUND-01). -/
+  | subThresholdCmBudgetBookkeeping
+  /-- Measured available electron energy ≥ 0.782 MeV (EQ-OPEN-EC-01 still_missing). -/
+  | measuredAvailableElectronGeThreshold
+  deriving DecidableEq, Repr
+
+/-- UNDISHARGED: Q4 available-energy discharge requires measured
+    ≥-threshold electron energy. UI cosmetics and unlicensed mass-renorm
+    never inhabit it. -/
+def MeasuredEcEnergyDischarge (kinds : List EcAvailableEnergyEvidenceKind) : Prop :=
+  kinds ≠ [] ∧
+    ∀ k ∈ kinds,
+      k = EcAvailableEnergyEvidenceKind.measuredAvailableElectronGeThreshold
+
+/-- Hard honesty: UI cosmetics are never themselves measured EC energy discharge. -/
+def uiCosmeticIsMeasuredEcEnergy : Bool := false
+
+theorem ui_cosmetic_is_not_measured_ec_energy :
+    uiCosmeticIsMeasuredEcEnergy = false := rfl
+
+/-- Unlicensed mass-renorm domain claims likewise never are measured discharge. -/
+def unlicensedMassRenormIsMeasuredEcEnergy : Bool := false
+
+theorem unlicensed_mass_renorm_is_not_measured_ec_energy :
+    unlicensedMassRenormIsMeasuredEcEnergy = false := rfl
+
+/-- EQ-EC-ENERGY-NC-01: a bag containing UI gap cosmetics is not measured
+    available-electron-energy discharge. -/
+theorem ui_gap_cosmetic_does_not_entail_measured_ec_energy
+    {kinds : List EcAvailableEnergyEvidenceKind}
+    (h : EcAvailableEnergyEvidenceKind.uiGapCosmetic ∈ kinds) :
+    ¬ MeasuredEcEnergyDischarge kinds := by
+  intro hDisc
+  have : EcAvailableEnergyEvidenceKind.uiGapCosmetic =
+      EcAvailableEnergyEvidenceKind.measuredAvailableElectronGeThreshold :=
+    hDisc.2 _ h
+  cases this
+
+/-- Unlicensed mass-renorm domain claims likewise never underwrite discharge. -/
+theorem unlicensed_mass_renorm_does_not_entail_measured_ec_energy
+    {kinds : List EcAvailableEnergyEvidenceKind}
+    (h : EcAvailableEnergyEvidenceKind.unlicensedMassRenormDomainClaim ∈ kinds) :
+    ¬ MeasuredEcEnergyDischarge kinds := by
+  intro hDisc
+  have : EcAvailableEnergyEvidenceKind.unlicensedMassRenormDomainClaim =
+      EcAvailableEnergyEvidenceKind.measuredAvailableElectronGeThreshold :=
+    hDisc.2 _ h
+  cases this
+
+/-- Sub-threshold CM budget bookkeeping likewise never underwrites discharge. -/
+theorem subthreshold_cm_budget_does_not_entail_measured_ec_energy
+    {kinds : List EcAvailableEnergyEvidenceKind}
+    (h : EcAvailableEnergyEvidenceKind.subThresholdCmBudgetBookkeeping ∈ kinds) :
+    ¬ MeasuredEcEnergyDischarge kinds := by
+  intro hDisc
+  have : EcAvailableEnergyEvidenceKind.subThresholdCmBudgetBookkeeping =
+      EcAvailableEnergyEvidenceKind.measuredAvailableElectronGeThreshold :=
+    hDisc.2 _ h
+  cases this
+
+/-- Instantiation: UI cosmetics alone keep Q4 open / honesty locks false. -/
+theorem ui_cosmetic_alone_keeps_ec_open :
+    ¬ MeasuredEcEnergyDischarge
+        [EcAvailableEnergyEvidenceKind.uiGapCosmetic]
+      ∧ uiCosmeticIsMeasuredEcEnergy = false
+      ∧ ¬ q4ElectronCaptureSourceClosed doubleLayerLo_meV threshold_meV
+      ∧ condensedMatterPathToThreshold = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, ui_cosmetic_is_not_measured_ec_energy, ?_,
+    no_condensed_matter_path_claimed, lenr_proved_false⟩
+  · exact ui_gap_cosmetic_does_not_entail_measured_ec_energy (by simp)
+  · exact double_layer_band_does_not_close
+      (Nat.le_trans (Nat.le_refl _) double_layer_band_ordered)
+
+/-- Mixed bag: UI cosmetics + unlicensed mass-renorm still ⇏ measured discharge. -/
+theorem ui_cosmetic_with_unlicensed_mass_renorm_keeps_ec_open :
+    ¬ MeasuredEcEnergyDischarge
+        [EcAvailableEnergyEvidenceKind.uiGapCosmetic,
+          EcAvailableEnergyEvidenceKind.unlicensedMassRenormDomainClaim]
+      ∧ unlicensedMassRenormIsMeasuredEcEnergy = false
+      ∧ ¬ q4ElectronCaptureSourceClosed cmBudgetHi_meV threshold_meV
+      ∧ condensedMatterPathToThreshold = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, unlicensed_mass_renorm_is_not_measured_ec_energy,
+    cm_budget_does_not_close (Nat.le_refl _),
+    no_condensed_matter_path_claimed, lenr_proved_false⟩
+  exact ui_gap_cosmetic_does_not_entail_measured_ec_energy (by simp)
+
+/-- EQ-EC-ENERGY-NC-01 ∘ EQ-OPEN-EC-01: UI cosmetics / unlicensed mass-renorm
+    never close Q4 for any available energy in the CM-budget / double-layer
+    form. -/
+theorem ui_cosmetic_and_unlicensed_mass_renorm_do_not_close_q4
+    {availableEnergy : Nat}
+    (hCap : availableEnergy ≤ cmBudgetHi_meV) :
+    ¬ MeasuredEcEnergyDischarge
+        [EcAvailableEnergyEvidenceKind.uiGapCosmetic,
+          EcAvailableEnergyEvidenceKind.unlicensedMassRenormDomainClaim]
+      ∧ ¬ q4ElectronCaptureSourceClosed availableEnergy threshold_meV
+      ∧ uiCosmeticIsMeasuredEcEnergy = false
+      ∧ unlicensedMassRenormIsMeasuredEcEnergy = false
+      ∧ condensedMatterPathToThreshold = false
+      ∧ lenrProved = false := by
+  refine ⟨?_, cm_budget_does_not_close hCap,
+    ui_cosmetic_is_not_measured_ec_energy,
+    unlicensed_mass_renorm_is_not_measured_ec_energy,
+    no_condensed_matter_path_claimed, lenr_proved_false⟩
+  exact unlicensed_mass_renorm_does_not_entail_measured_ec_energy (by simp)
+
+/-- Measured discharge (when present) still does not flip `lenr_proved` —
+    occurrence is not proved by bookkeeping eligibility alone. -/
+theorem measured_ec_energy_discharge_does_not_flip_lenr
+    {kinds : List EcAvailableEnergyEvidenceKind}
+    (_h : MeasuredEcEnergyDischarge kinds) :
+    lenrProved = false :=
+  lenr_proved_false
+
+/-! ### EQ-EC-UI-NC-01 — UI / scaffold cosmetics ⇏ Q4
+
+Affirmative EQ-OPEN-EC-01 needs an independent measurement (or governed
+theory+data package) of available electron energy ≥ threshold with mass-
+renormalization domain gates met as **physical claims**. UI gap-to-threshold
+cosmetics and ARA P1 Widom scaffold alone stay ineligible. -/
+
+/-- EC path underwrite witness for Q4. -/
+structure EcPathUnderwrite where
+  availableEnergy_meV : Nat
+  massRenormDomainGatesMet : Bool
+  independentMeasurement : Bool
+  uiCosmeticOnly : Bool
+
+/-- Eligible only with independent measurement, domain gates, non-cosmetic,
+    and available energy ≥ threshold. -/
+def EcPathUnderwrite.Eligible (u : EcPathUnderwrite) : Prop :=
+  u.independentMeasurement = true ∧
+    u.massRenormDomainGatesMet = true ∧
+    u.uiCosmeticOnly = false ∧
+    threshold_meV ≤ u.availableEnergy_meV
+
+/-- Default UI / scaffold posture: cosmetic gap display, no measurement. -/
+def uiGapCosmetic : EcPathUnderwrite :=
+  { availableEnergy_meV := 0
+    massRenormDomainGatesMet := false
+    independentMeasurement := false
+    uiCosmeticOnly := true }
+
+theorem ui_gap_cosmetic_not_Eligible : ¬ uiGapCosmetic.Eligible := by
+  intro h
+  unfold EcPathUnderwrite.Eligible uiGapCosmetic at h
+  exact Bool.noConfusion h.1
+
+/-- Ineligible UI/scaffold witness ⇏ Q4 closed. -/
+theorem ineligible_ec_path_does_not_close_q4
+    (u : EcPathUnderwrite)
+    (h : ¬ u.Eligible) :
+    ¬ (u.Eligible ∧ q4ElectronCaptureSourceClosed u.availableEnergy_meV threshold_meV) := by
+  intro ⟨he, _⟩
+  exact h he
+
+theorem ui_gap_cosmetic_does_not_close_q4 :
+    ¬ (uiGapCosmetic.Eligible ∧
+        q4ElectronCaptureSourceClosed uiGapCosmetic.availableEnergy_meV threshold_meV) :=
+  ineligible_ec_path_does_not_close_q4 uiGapCosmetic ui_gap_cosmetic_not_Eligible
+
+/-- condensedMatterPathToThreshold stays false alongside UI cosmetic ineligibility. -/
+theorem ui_cosmetic_keeps_no_cm_path :
+    ¬ uiGapCosmetic.Eligible ∧ condensedMatterPathToThreshold = false :=
+  ⟨ui_gap_cosmetic_not_Eligible, no_condensed_matter_path_claimed⟩
 
 end LenrFormal.WeakInteraction
