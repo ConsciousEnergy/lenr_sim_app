@@ -85,6 +85,7 @@ def sectionModuleMap : List (String × String) :=
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
   , ("§5B / BDS-302 ≥5σ heat bar + EQ-HEAT-SIG-NC-01 (citations/pairing/YIELD NC)", "LenrFormal.CalorimetrySignificance")
   , ("§2 / ENG-SANTILLI-ICNF-01 stub ⇏ EQ-OPEN (EQ-THEORY-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
+  , ("§2 / Shoulders EVO P0 stub ⇏ EQ-OPEN (EQ-SHOULDERS-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§5A / phonon order", "LenrFormal.Phonon")
   , ("§5A.1 Q1 MeV remainder caps (EQ-WH-MEV-CAP-01; BOUNDED, OPEN)", "LenrFormal.MeVRemainderCaps")
   , ("§5A.1 WH / phonon→nuclear channel ⇏ constrained |M|² (EQ-MEV-MATRIX-NC-01 / BDS-396)", "LenrFormal.WorkingHypothesis")
