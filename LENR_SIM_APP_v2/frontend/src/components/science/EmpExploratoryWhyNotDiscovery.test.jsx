@@ -36,6 +36,12 @@ describe('EmpExploratoryWhyNotDiscovery', () => {
     expect(screen.getByTestId('emp-test-lean-lab-ask')).toHaveTextContent(
       /lab-ask ≠ EQ-OPEN/i,
     );
+    expect(screen.getByTestId('emp-test-lean-celani')).toHaveTextContent(
+      /Celani exploratory/i,
+    );
+    expect(screen.getByTestId('emp-test-lean-daq')).toHaveTextContent(
+      /DAQ planned ≠ EQ-OPEN/i,
+    );
     expect(screen.getByTestId('emp-test-soft-chip-lock')).toHaveTextContent(
       /soft chip ≠ scientific discharge/i,
     );

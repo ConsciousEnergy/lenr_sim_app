@@ -175,6 +175,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CORPUS_MOE_COVERAGE.lean_all_eq_open_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_lab_ask_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_celani_exploratory_nc_bound).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.lean_daq_planned_ne_discharge).toBe(true);
+    expect(CORPUS_MOE_COVERAGE.daq_sample_ingest_planned_not_attested).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound).toBe(true);
     expect(CORPUS_MOE_COVERAGE.lean_cite_gated_ne_yield_closure).toBe(true);
     expect(CORPUS_MOE_COVERAGE.software_honest_5sigma_runway_exhausted).toBe(true);

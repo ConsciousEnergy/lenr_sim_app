@@ -262,6 +262,17 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   lean_lab_ask_nc_bound: true,
   lab_ask_met_ne_eq_open_discharge: true,
   /**
+   * Celani JCMNS 29 exploratory hydrate Lean NC (instrument_precision S_heat=6
+   * ⇏ DiscoveryGradeAnalytics; corpus discovery stays Kasagi 2/26).
+   */
+  lean_celani_exploratory_nc_bound: true,
+  /**
+   * BDS-375: planned lenr-ara-daq-sample-v1 ingest ⇏ EQ-OPEN discharge /
+   * lenr_proved (daq_sample_planned_is_not_eq_open_discharge).
+   */
+  lean_daq_planned_ne_discharge: true,
+  daq_sample_ingest_planned_not_attested: true,
+  /**
    * BDS-362: DiscoveryGradeAnalytics requires citationsNonempty + pairingVerified
    * + non-seed (empty citations / unverified pairing / seed-scale ⇏ discovery);
    * cite-gated flag still ⇏ EQ-OPEN-YIELD underwriting closure.
@@ -918,7 +929,11 @@ export const FORMALIZATION_STATUS = Object.freeze({
       id: 'EQ-HEAT-SIG-NC-01',
       label: 'Heat significance non-closure',
       kind: 'non-closure',
-      note: 'Empty citations / unverified pairing / seed-scale / instrument-precision / floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of Q1–Q5 or lenr_proved; soft chip ⇏ discharge (BDS-346/BDS-362).',
+      note:
+        'Empty citations / unverified pairing / seed-scale / Miles+Celani instrument-precision / ' +
+        'floor ⇏ discovery; cite-gated DiscoveryGradeAnalytics ⇏ YIELD; dual Kasagi ⇏ any of ' +
+        'Q1–Q5 or lenr_proved; LabAskProxies + planned DAQ sample-v1 ⇏ discharge ' +
+        '(BDS-346/BDS-360/BDS-362/BDS-375).',
     },
     {
       id: 'EQ-BBL-HEAT-NC-01',
@@ -1150,6 +1165,19 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CORPUS_MOE_COVERAGE.lab_ask_met_ne_eq_open_discharge !== true) {
     throw new Error(
       'Science evidence UI must keep lab_ask_met_ne_eq_open_discharge true (BDS-348)',
+    );
+  }
+  if (CORPUS_MOE_COVERAGE.lean_celani_exploratory_nc_bound !== true) {
+    throw new Error(
+      'Science evidence UI must keep lean_celani_exploratory_nc_bound true (Celani exploratory NC)',
+    );
+  }
+  if (
+    CORPUS_MOE_COVERAGE.lean_daq_planned_ne_discharge !== true ||
+    CORPUS_MOE_COVERAGE.daq_sample_ingest_planned_not_attested !== true
+  ) {
+    throw new Error(
+      'Science evidence UI must keep lean_daq_planned_ne_discharge + planned_not_attested true (BDS-375)',
     );
   }
   if (CORPUS_MOE_COVERAGE.lean_citations_pairing_nc_bound !== true) {

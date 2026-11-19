@@ -773,3 +773,54 @@ def test_weight_honesty_locks_agree_with_lean() -> None:
         '"scenario_table_not_posterior"'
     )
     assert _lean_definition_rhs(lean_path, "lenrProved") == "false"
+
+
+def test_calorimetry_significance_exploratory_milli_anchors_agree_with_lean() -> None:
+    """Miles / Celani / Kasagi milli-σ Lean anchors match Python locked S_heat × 1000."""
+    lean_path = LEAN_DIR / "CalorimetrySignificance.lean"
+    assert lean_path.is_file()
+
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="discoveryGradeSigma",
+        lean_value=_evaluate_lean_integer(lean_path, "discoveryGradeSigma"),
+        python_symbol="DISCOVERY_GRADE_SIGMA",
+        python_value=5,
+        expected_value=5,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="milesPeakExploratorySHeatMilli",
+        lean_value=_evaluate_lean_integer(lean_path, "milesPeakExploratorySHeatMilli"),
+        python_symbol="0.52/0.02*1000",
+        python_value=26000,
+        expected_value=26000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="celaniPeakExploratorySHeatMilli",
+        lean_value=_evaluate_lean_integer(lean_path, "celaniPeakExploratorySHeatMilli"),
+        python_symbol="12/2*1000",
+        python_value=6000,
+        expected_value=6000,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="kasagiNiCuSHeatMilli",
+        lean_value=_evaluate_lean_integer(lean_path, "kasagiNiCuSHeatMilli"),
+        python_symbol="1.1/0.08*1000",
+        python_value=13750,
+        expected_value=13750,
+    )
+    _assert_agreement(
+        lean_path=lean_path,
+        lean_symbol="kasagiNiSHeatMilli",
+        lean_value=_evaluate_lean_integer(lean_path, "kasagiNiSHeatMilli"),
+        python_symbol="0.9/0.08*1000",
+        python_value=11250,
+        expected_value=11250,
+    )
+    assert _lean_definition_rhs(lean_path, "lenrProved") == "false"
+    assert _lean_definition_rhs(lean_path, "daqSampleIngestPlannedNotAttested") == "true"
+    assert _lean_definition_rhs(lean_path, "daqSamplePlannedIsEqOpenDischarge") == "false"
+    assert _lean_definition_rhs(lean_path, "labAskMetIsEqOpenDischarge") == "false"

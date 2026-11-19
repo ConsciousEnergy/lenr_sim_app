@@ -255,6 +255,8 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Lab MoE / DAQ provenance densification (BDS-375):** After Celani exploratory hydrate (#449) discovery stays **2/26** Kasagi-only. This Prefer-merge densifies `NEXT_LAB_MOE_TARGETS` + Analytics/§5B UX with explicit `DAQ_SAMPLE_PROVENANCE` (`lenr-ara-daq-sample-v1`, trust_plane=`daq`, ingest=`planned_not_attested`, refuse fabricated samples, `lenr_proved` default false) and per-ask `blocked_awaiting_lab` chips + calibration / `daq_gap_note` (RATE/EC have **no** sample-v1 observables — refuse inventing occupation/threshold DAQ numbers). **Still no** honesty flag flips; **still no** auto `main` / Path B; live Path B share remains on `main` @ `:9702a45`.
 
+**Celani + DAQ Lean NC densification (UTF Prefer-merge):** `CalorimetrySignificance` now locks Celani exploratory milli-σ (`celaniPeakExploratorySHeatMilli=6000` for \(S=12/2=6\)) with `celani_exploratory_not_discovery_grade` (instrument_precision ⇏ DiscoveryGradeAnalytics) and binds planned `lenr-ara-daq-sample-v1` ingest (`daqSampleIngestPlannedNotAttested`) ⇏ EQ-OPEN discharge alongside LabAskProxies. UI surfaces `lean_celani_exploratory_nc_bound` + `lean_daq_planned_ne_discharge`. Discovery stays **2/26** Kasagi-only. **Still no** honesty flag flips; **still no** auto `main` / Path B.
+
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
 ## UI / Analytics cross-links (bookkeeping only)
