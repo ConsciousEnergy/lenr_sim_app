@@ -50,7 +50,13 @@ export function isHonestLiteratureCorpusMoeCoverage(payload) {
  * @returns {Promise<LiteratureCorpusMoeCoverage | null>}
  */
 export async function fetchLiteratureCorpusMoeCoverage(opts = {}) {
-  const fetchImpl = opts.fetchImpl || fetch;
+  // Jest / Node without a global fetch must not throw — SPA freeze is the fallback.
+  const fetchImpl =
+    opts.fetchImpl ||
+    (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function'
+      ? globalThis.fetch.bind(globalThis)
+      : null);
+  if (!fetchImpl) return null;
   const url = `${API_BASE_URL}${LITERATURE_CORPUS_MOE_COVERAGE_PATH}`;
   try {
     const response = await fetchImpl(url, {
