@@ -54,6 +54,7 @@
 | EQ-OPEN-EC-DEFICIT-01 | 0.1 eV vs 0.782 MeV millielectronvolt deficit (\(\sim 10^7\)) | `OpenQuestionBounds` | **PROVED** (stated numbers; does **not** close Q4) |
 | EQ-OPEN-YIELD-NC-01 | Miles instantaneous band membership \(\not\Rightarrow\) `q5IntegratedYieldClosed`; integrated-band remainder ⇒ Q5 not closed | `OpenQuestionBounds` | **PROVED** (honesty lock; does **not** close Q5) |
 | EQ-YIELD-MILES-EMP-NC-01 | Miles EMP ~2× heat/He kinds ⇏ `IntegratedYieldDischarge`; \(f=2\in[1,3]\) ⇏ Q5 / `lenr_proved` (BDS-395) | `OpenQuestionBounds` | **PROVED** honesty implications over **AX**-tagged Miles EMP kinds (does **not** close EQ-OPEN-YIELD-01; ≠ EQ-YIELD-EFF-NC-01) |
+| EQ-YIELD-EFF-NC-01 | Missing retention/collection efficiency provenance (Miles EMP alone) ⇏ Q5 / EQ-OPEN-YIELD-01 | `YieldAccounting` / `OpenQuestionBounds` | **PROVED** (non-closure / honesty; does **not** close Q5) |
 | EQ-WH-PART-01 | Derived + remainder = 23.8 MeV; remainder > 0; + FGR still leaves Q1/Q3 open | `WorkingHypothesis` | **PROVED** (does **not** close Q1/Q3) |
 | EQ-WH-BOUND-01 | Harmonic \(\Gamma_{\mathrm{ph}}/\Gamma_\gamma=0<10^{11}\) | `WorkingHypothesis` | **PROVED** (does **not** close Q2) |
 | EQ-WH-FC-02 | FC class: \(S^N/N!<10^{-11}\) for all \(S\le10^{4}\), \(N\ge300048\); \(e^{-S}\le1\) bridge; ratio floor \(0<10^{11}\); γ branching full; alias `harmonic_dos_non_closure` | `RadiationBounds` | **PROVED** (class bound; does **not** close Q2) |
@@ -109,6 +110,7 @@
 | EQ-WT-SCENARIO-01 | `WeightHonesty` | `scenario_table_not_posterior` + `lenr_proved=false`; high `final_score` ⇏ nature proof |
 | EQ-OPEN-YIELD-BAND-01 | `OpenQuestionBounds` | Instantaneous Miles EMP band vs integrated 100–\(10^4\) remainder |
 | EQ-YIELD-ACCT-01 | `YieldAccounting` | Expected He-4 yield duty-cycle bookkeeping (no observed yield input) |
+| EQ-YIELD-EFF-NC-01 | `YieldAccounting` / `OpenQuestionBounds` | Retention/collection efficiency provenance required; Miles EMP alone ⇏ Q5 |
 | EQ-WH-ENP-01 | `WorkingHypothesis` | Coupled WH ledger (geometry, occupation, operator) |
 | EQ-WH-FLOOR-01 | `WorkingHypothesis` | Floor identity \(R_{\mathrm{mode}}\ge R_{\mathrm{obs}}\) |
 

@@ -407,6 +407,11 @@ def test_gap_bookkeeping_clears_analytics_gates_without_closing_eq_open() -> Non
     assert daq["rate_occupancy_underwrite_eligible"] is False
     assert daq["lean_rate_daq_occ_nc_bound"] == "EQ-RATE-DAQ-OCC-NC-01"
     assert daq["closes_eq_open"] is False
+    # EQ-YIELD-EFF-NC-01 Python twin: Miles EMP alone lacks efficiency provenance.
+    he_eff = closure["he_yield_efficiency_provenance"]
+    assert he_eff["eligible_for_q5_underwrite"] is False
+    assert he_eff["miles_emp_alone_closes_q5"] is False
+    assert he_eff["lean_yield_eff_nc_bound"] == "EQ-YIELD-EFF-NC-01"
 
     attached = attach_discovery_grade_envelopes(report)
     assert attached["discovery_grade_gap"]["overall_status"] == "met"
