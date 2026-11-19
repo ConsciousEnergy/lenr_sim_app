@@ -149,6 +149,24 @@ export default function EmpExploratoryWhyNotDiscovery({
             sx={{ fontSize: '0.65rem' }}
           />
         ) : null}
+        {coverage.lean_celani_exploratory_nc_bound ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Lean Celani exploratory ⇏ discovery"
+            data-testid={`${testIdPrefix}-lean-celani`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
+        {coverage.lean_daq_planned_ne_discharge ? (
+          <Chip
+            size="small"
+            variant="outlined"
+            label="Lean DAQ planned ≠ EQ-OPEN discharge"
+            data-testid={`${testIdPrefix}-lean-daq`}
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ) : null}
         {coverage.soft_chip_ne_scientific_discharge ? (
           <Chip
             size="small"
