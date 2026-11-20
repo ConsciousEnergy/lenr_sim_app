@@ -82,6 +82,7 @@ export default function ExperimentHonestClosureChips({
       : distance.arithmetic_sigma_shortfall;
   const moeProvenance =
     distance.moe_provenance ||
+    distance.stat_sys_composition?.composition_mode ||
     experiment?.moe_provenance ||
     experiment?.results?.moe_provenance ||
     null;
@@ -228,7 +229,12 @@ export default function ExperimentHonestClosureChips({
               data-testid={`${testIdPrefix}-exploratory-banner`}
             >
               Exploratory / gates-blocked arithmetic only (e.g. Miles peak S_heat=26 or Celani
-              S_heat=6 under instrument_precision + unverified pairing). Not discovery-grade;
+              S_heat=6{' '}
+              <ClaimTierChip
+                tier="speculative_exploratory"
+                testId={`${testIdPrefix}-celani-claim-tier`}
+              />{' '}
+              under instrument_precision + unverified pairing). Not discovery-grade;
               does not close EQ-OPEN-YIELD-01 or set lenr_proved. Soft chips stay{' '}
               <code>analytics_gates_clear</code>, never “≥5σ met”.
             </Typography>

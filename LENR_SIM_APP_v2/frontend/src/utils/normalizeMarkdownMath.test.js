@@ -12,6 +12,29 @@ describe('normalizeMarkdownMath', () => {
     expect(out).not.toMatch(/\\\(/);
   });
 
+  test('leaves fenced and inline code examples unchanged', () => {
+    const src =
+      'Prose \\(a\\).\n\n' +
+      'Inline code `\\(x\\)` stays literal.\n\n' +
+      '```md\n\\[\ny = 1\n\\]\n```\n';
+    const out = normalizeMarkdownMath(src);
+    expect(out).toContain('$a$');
+    expect(out).toContain('`\\(x\\)`');
+    expect(out).toContain('```md\n\\[\ny = 1\n\\]\n```');
+  });
+
+  test('preserves blockquote / list prefixes on display math', () => {
+    const quoted = '> \\[x=1\\]';
+    const listed = '- \\[y=2\\]';
+    expect(normalizeMarkdownMath(quoted)).toBe('> $$\n> x=1\n> $$');
+    expect(normalizeMarkdownMath(listed)).toBe('- $$\n- y=2\n- $$');
+  });
+
+  test('allows soft line breaks inside inline math', () => {
+    const src = 'Value \\(a +\nb\\) here.';
+    expect(normalizeMarkdownMath(src)).toContain('$a +\nb$');
+  });
+
   test('returns empty string for non-string input', () => {
     expect(normalizeMarkdownMath(null)).toBe('');
     expect(normalizeMarkdownMath(undefined)).toBe('');

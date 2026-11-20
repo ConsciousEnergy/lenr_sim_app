@@ -147,7 +147,13 @@ export default function DiscoveryGradeGapChecklist({
                 'literature_reported_instrument_precision'}
             </code>
             , pairing=
-            <code>{String(coverage.celani_pairing_verified ?? false)}</code>) remains{' '}
+            <code>{String(coverage.celani_pairing_verified ?? false)}</code>
+            ){' '}
+            <ClaimTierChip
+              tier={coverage.celani_claim_tier || 'speculative_exploratory'}
+              testId={`${testIdPrefix}-celani-claim-tier`}
+            />{' '}
+            remains{' '}
             <code>
               {coverage.celani_distance_status || 'at_or_above_bar_gates_blocked'}
             </code>

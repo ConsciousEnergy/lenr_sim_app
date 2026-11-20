@@ -22,6 +22,26 @@ import {
   EQ_OPEN_RUNWAY,
   NEXT_LAB_MOE_TARGETS,
 } from '../../config/unifiedTheoryScienceEvidence';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+/** Claim-tier chip beside numeric lab-target captions (optics only). */
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18 }}
+    />
+  );
+}
+
 
 /**
  * @param {Object} props
@@ -231,6 +251,10 @@ export default function EqOpenAvenueLinkage({
                                 fontSize: '0.55rem',
                                 height: 18,
                               }}
+                            />
+                            <ClaimTierChip
+                              tier={target.claim_tier || 'speculative_exploratory'}
+                              testId={`${testIdPrefix}-lab-tier-${row.id}-${target.id}`}
                             />
                           </Stack>
                           <Typography
