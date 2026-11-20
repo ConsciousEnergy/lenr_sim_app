@@ -2,13 +2,40 @@
  * ReferencesSection - LENR Theory Paper references list
  */
 import React from 'react';
-import { Typography, Box, List, ListItem, Divider, Alert, AlertTitle } from '@mui/material';
+import {
+  Typography,
+  Box,
+  List,
+  ListItem,
+  Divider,
+  Alert,
+  AlertTitle,
+  Chip,
+} from '@mui/material';
 import { Link as MuiLink } from '@mui/material';
 import {
   FEEDBACK_EMAIL,
   PUBLIC_GITHUB_MAIN,
   PUBLIC_GITHUB_REPO_LABEL,
 } from '../../config/publicLinks';
+import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+
+function ClaimTierChip({ tier, testId }) {
+  if (!tier) return null;
+  const info = CLAIM_TIERS[tier];
+  return (
+    <Chip
+      label={info?.label || String(tier).replace(/_/g, ' ')}
+      title={info?.description || tier}
+      color={info?.color || 'default'}
+      size="small"
+      variant="outlined"
+      data-testid={testId}
+      data-claim-tier={tier}
+      sx={{ fontSize: '0.65rem', height: 18, ml: 0.5, verticalAlign: 'middle' }}
+    />
+  );
+}
 
 export default function ReferencesSection() {
   return (<><Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
@@ -635,7 +662,12 @@ export default function ReferencesSection() {
                 [celani2019] Celani, F. et al. (2019)
               </Typography>
               <Typography variant="body2" paragraph>
-                Steps to Identify Main Parameters for AHE Generation in Sub-micrometric Materials: Measurements by Isoperibolic and Air-flow Calorimetry. <em>Journal of Condensed Matter Nuclear Science</em>, 29, 52–74. Exploratory MoE only (12 ± 2 W near-miss; instrument_precision / indetermination class) — not discovery-grade.
+                Steps to Identify Main Parameters for AHE Generation in Sub-micrometric Materials: Measurements by Isoperibolic and Air-flow Calorimetry. <em>Journal of Condensed Matter Nuclear Science</em>, 29, 52–74. Exploratory MoE only (12 ± 2 W near-miss; instrument_precision / indetermination class){' '}
+                <ClaimTierChip
+                  tier="speculative_exploratory"
+                  testId="references-celani-claim-tier"
+                />{' '}
+                — not discovery-grade.
               </Typography>
               <MuiLink href="https://doi.org/10.70923/001c.72494" target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
                 DOI: 10.70923/001c.72494

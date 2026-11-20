@@ -142,6 +142,7 @@ export const CORPUS_MOE_COVERAGE = Object.freeze({
   /** Celani JCMNS 29 12±2 exploratory arithmetic S_heat=6 — gates blocked. */
   celani_exploratory_s_heat: 6,
   celani_moe_provenance: 'literature_reported_instrument_precision',
+  celani_claim_tier: 'speculative_exploratory',
   celani_pairing_verified: false,
   celani_distance_status: 'at_or_above_bar_gates_blocked',
   /** Kasagi NiCu + Ni control clear analytics gates; honest_closure stays not_met. */

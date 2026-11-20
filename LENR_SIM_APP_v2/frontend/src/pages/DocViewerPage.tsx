@@ -195,7 +195,13 @@ export default function DocViewerPage() {
         </Button>
       </Stack>
       {showHonestyNote ? (
-        <Box data-testid="doc-viewer-no-print">
+        // Keep honesty locks printable on testable-predictions (OPEN / lenr_proved:false).
+        // Other honesty surfaces stay chrome-only (no-print).
+        <Box
+          data-testid={
+            slug === 'testable-predictions' ? undefined : 'doc-viewer-no-print'
+          }
+        >
           <DocViewerHonestyNote testIdPrefix="doc-viewer-honesty" slug={slug || ''} />
         </Box>
       ) : null}

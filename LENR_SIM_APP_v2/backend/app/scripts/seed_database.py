@@ -29,9 +29,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import db_manager, get_database_url, Base
 from app.models.database_models import Experiment, ExperimentTimeline
 from app.data.baseline_experiments import get_baseline_experiments, get_baseline_timeline_data
+from app.data.dataset_io import iccf27_literature_records, stable_baseline_id
 from app.services.literature_moe_persistence import (
     literature_moe_columns_from_record,
     merge_bayesian_into_results,
+)
+
+# Cite-gated ICCF-27 Kasagi pair — corpus MoE only; not part of the locked 19 baselines.
+CITE_GATED_KASAGI_IDS = (
+    "kasagi-nicu-radiant-2026",
+    "kasagi-ni-radiant-2026",
 )
 
 # Setup logging
@@ -219,7 +226,111 @@ async def hydrate_demo_pack(session: AsyncSession) -> dict:
     return await import_pack_rows(session, pack_dir)
 
 
-async def main(force: bool = False, skip_timeline: bool = False, hydrate_demo: bool = False):
+async def seed_cite_gated_kasagi_moe(
+    session: AsyncSession,
+    force: bool = False,
+) -> int:
+    """Seed cite-gated Kasagi pair into Experiment SQL with real corpus MoE.
+
+    Uses ``literature_moe_columns_from_record`` only — never invents σ_Q.
+    Rows are **not** locked baselines (``is_baseline=False``). Analytics
+    ``discovery_grade_eligible`` may be true; ``lenr_proved`` stays false.
+    """
+    by_id = {
+        str(row["literature_id"]): row
+        for row in iccf27_literature_records()
+        if row.get("literature_id")
+    }
+    created = 0
+    for lit_id in CITE_GATED_KASAGI_IDS:
+        record = by_id.get(lit_id)
+        if record is None:
+            raise RuntimeError(f"cite-gated Kasagi missing from ICCF-27 corpus: {lit_id}")
+        exp_id = stable_baseline_id(lit_id)
+        existing = (
+            await session.execute(select(Experiment).where(Experiment.id == exp_id))
+        ).scalar_one_or_none()
+        if existing is not None and not force:
+            logger.info("Kasagi MoE row already present for %s — skip", lit_id)
+            continue
+        if existing is not None and force:
+            await session.delete(existing)
+            await session.flush()
+
+        moe_columns = literature_moe_columns_from_record(record)
+        if moe_columns.get("moe_provenance") != "literature_reported":
+            raise RuntimeError(f"{lit_id} MoE provenance is not literature_reported")
+        if moe_columns.get("sigma_q_w") != 0.08:
+            raise RuntimeError(f"{lit_id} unexpected sigma_q_w={moe_columns.get('sigma_q_w')}")
+        results_json = merge_bayesian_into_results(
+            record.get("results") or {},
+            moe_columns,
+        )
+        results_json["lenr_proved"] = False
+        results_json["is_model_output"] = False
+        results_json["seed_source"] = "literature_iccf27.v1_cite_gated"
+
+        experiment = Experiment(
+            id=exp_id,
+            name=record.get("name") or lit_id,
+            description=record.get("description"),
+            experiment_type=record.get("experiment_type", "lenr"),
+            status=record.get("status", "completed"),
+            is_baseline=False,
+            source=record.get("source"),
+            source_url=record.get("source_url"),
+            material=record.get("material", "nickel"),
+            temperature_k=record.get("temperature_k", 1100.0),
+            pressure_bar=record.get("pressure_bar", 0.003),
+            loading_ratio=record.get("loading_ratio"),
+            parameters_json=record.get("parameters") or {},
+            enhancement_factor=record.get("enhancement_factor"),
+            energy_output_kev=record.get("energy_output_kev"),
+            excess_heat_watts=record.get("excess_heat_watts"),
+            duration_seconds=record.get("duration_seconds"),
+            results_json=results_json,
+            literature_id=moe_columns.get("literature_id"),
+            claim_tag=moe_columns.get("claim_tag"),
+            citation_key=moe_columns.get("citation_key"),
+            doi=moe_columns.get("doi"),
+            open_question_ids=moe_columns.get("open_question_ids"),
+            sigma_q_w=moe_columns.get("sigma_q_w"),
+            sigma_q_statistical_w=moe_columns.get("sigma_q_statistical_w"),
+            sigma_q_systematic_w=moe_columns.get("sigma_q_systematic_w"),
+            sigma_q_instrument_floor_w=moe_columns.get("sigma_q_instrument_floor_w"),
+            sigma_q_relative_fraction=moe_columns.get("sigma_q_relative_fraction"),
+            moe_provenance=moe_columns.get("moe_provenance"),
+            moe_citation_keys=moe_columns.get("moe_citation_keys"),
+            moe_notes=moe_columns.get("moe_notes"),
+            moe_sigma_q_pairing_verified=moe_columns.get(
+                "moe_sigma_q_pairing_verified"
+            ),
+            s_heat=moe_columns.get("s_heat"),
+            discovery_grade_eligible=bool(
+                moe_columns.get("discovery_grade_eligible")
+            ),
+            bayesian_summary=moe_columns.get("bayesian_summary"),
+        )
+        session.add(experiment)
+        created += 1
+        logger.info(
+            "Seeded cite-gated Kasagi MoE %s (S_heat=%s, discovery=%s)",
+            lit_id,
+            moe_columns.get("s_heat"),
+            moe_columns.get("discovery_grade_eligible"),
+        )
+
+    if created:
+        await session.commit()
+    return created
+
+
+async def main(
+    force: bool = False,
+    skip_timeline: bool = False,
+    hydrate_demo: bool = False,
+    seed_kasagi_moe: bool = True,
+):
     """
     Main seeding function.
     
@@ -227,6 +338,7 @@ async def main(force: bool = False, skip_timeline: bool = False, hydrate_demo: b
         force: If True, re-seed even if data exists
         skip_timeline: If True, skip timeline data seeding
         hydrate_demo: If True, import q_campaign_demo after baselines
+        seed_kasagi_moe: If True (default), seed cite-gated Kasagi MoE rows
     """
     logger.info("Starting database seeding...")
     
@@ -251,6 +363,10 @@ async def main(force: bool = False, skip_timeline: bool = False, hydrate_demo: b
         else:
             timeline_points = 0
 
+        kasagi_seeded = 0
+        if seed_kasagi_moe:
+            kasagi_seeded = await seed_cite_gated_kasagi_moe(session, force=force)
+
         pack_summary = None
         if hydrate_demo:
             pack_summary = await hydrate_demo_pack(session)
@@ -262,6 +378,7 @@ async def main(force: bool = False, skip_timeline: bool = False, hydrate_demo: b
     logger.info("Seeding Summary:")
     logger.info(f"  Baseline experiments seeded: {experiments_seeded}")
     logger.info(f"  Timeline points seeded: {timeline_points}")
+    logger.info(f"  Cite-gated Kasagi MoE seeded: {kasagi_seeded}")
     if pack_summary:
         logger.info(
             "  Demo pack experiments: %s inserted / %s updated",
@@ -296,6 +413,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Import datasets/reviewer_packs/q_campaign_demo after seeding (model outputs, 150 experiments / 132 theory_runs)",
     )
+    parser.add_argument(
+        "--skip-kasagi-moe",
+        action="store_true",
+        help="Skip cite-gated Kasagi MoE seed (default: seed both Kasagi rows from literature_iccf27)",
+    )
     
     args = parser.parse_args()
     
@@ -303,4 +425,5 @@ if __name__ == "__main__":
         force=args.force,
         skip_timeline=args.skip_timeline,
         hydrate_demo=args.hydrate_demo,
+        seed_kasagi_moe=not args.skip_kasagi_moe,
     ))

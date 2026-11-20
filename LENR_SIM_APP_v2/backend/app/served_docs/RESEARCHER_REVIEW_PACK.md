@@ -54,7 +54,8 @@ Do **not** write campaign or UI model outputs into `literature_baselines.v1.json
 | `q_campaign_demo/` | demo hydrate | 150 / 132 |
 | `cavitation_collapse_campaign/` | campaign | 22 / 22 |
 | `detector_weak_screen/` | campaign | 19 / 19 |
-| `iccf27_hydration/` | campaign | 11 / 11 |
+| `iccf27_hydration/` | campaign | 14 / 14 |
+| `celani_exploratory_moe/` | campaign | 1 / 0 |
 
 Every committed `manifest.json` keeps `lenr_proved: false` and all five `EQ-OPEN-*` **OPEN**.
 
