@@ -32,6 +32,7 @@ PACK_ROLES: Dict[str, str] = {
     "cavitation_collapse_campaign": "campaign",
     "detector_weak_screen": "campaign",
     "iccf27_hydration": "campaign",
+    "celani_exploratory_moe": "campaign",
 }
 
 

@@ -3,16 +3,16 @@
   "disclaimer": "Model output only. Not a laboratory experiment. Additional runs do not raise empirical claim tiers or close EQ-OPEN-*.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
-  "git_sha": "545801eb7f0e8a089c62c036e754cee5f239c254",
+  "git_sha": "b8b38c317550f802d29e2f3e5c7a225089d1dfe1",
   "preset": "iccf27_hydration",
-  "n_experiments": 11,
-  "n_theory_runs": 11,
+  "n_experiments": 14,
+  "n_theory_runs": 14,
   "claim_tier_histogram": {
-    "speculative_exploratory": 253,
-    "empirical_lenr_correlation": 22
+    "speculative_exploratory": 334,
+    "empirical_lenr_correlation": 28
   },
   "source_class_counts": {
-    "Campaign": 11
+    "Campaign": 14
   },
   "open_ids": [
     "EQ-OPEN-MEV-01",
@@ -110,5 +110,17 @@
     "silicon_carbide",
     "zirconium"
   ],
-  "note": "Model-output hydration of Pd/Ni plus graphite/SiC UQ cells and selected ICCF-27 literature anchors. Does not replace q_campaign_demo."
+  "literature_ids": [
+    "czerski-thermal-spike-tipd-2026",
+    "czerski-thermal-spike-zr-2024",
+    "hylenr-tamu-phase1-2026",
+    "kasagi-ni-radiant-2026",
+    "kasagi-nicu-radiant-2026",
+    "valat-heat-bursts-pd-2026"
+  ],
+  "cite_gated_moe_ids": [
+    "kasagi-ni-radiant-2026",
+    "kasagi-nicu-radiant-2026"
+  ],
+  "note": "Model-output hydration of Pd/Ni plus graphite/SiC UQ cells and ICCF-27 literature anchors. Cite-gated Kasagi MoE (\u03c3_Q=0.08, literature_reported) is copied from literature_iccf27.v1 \u2014 never invented. Null-\u03c3 companions stay null-\u03c3. Does not replace q_campaign_demo. Does not prove LENR."
 }
