@@ -125,6 +125,15 @@ def test_iccf27_hydration_pack_stays_open_and_does_not_replace_demo() -> None:
     assert "graphite" in hosts
     assert "silicon_carbide" in hosts
     assert "Baseline" not in (manifest.get("source_class_counts") or {})
+    lit_ids = {
+        json.loads(line).get("literature_id")
+        for line in experiments
+        if line.strip()
+    }
+    assert "kasagi-nicu-radiant-2026" in lit_ids
+    assert "kasagi-ni-radiant-2026" in lit_ids
+    assert "czerski-thermal-spike-tipd-2026" in lit_ids
+    assert "valat-heat-bursts-pd-2026" in lit_ids
 
 
 def test_import_smoke_pack_is_idempotent_and_stays_unproved(tmp_path: Path) -> None:
