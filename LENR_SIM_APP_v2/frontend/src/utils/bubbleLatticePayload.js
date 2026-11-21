@@ -8,6 +8,7 @@
  */
 
 import { resolveElectrolyteSpecies } from './theoryConditions';
+import { buildSpacetimeSampleBuffer } from './spacetimeSampleBuffer';
 
 /**
  * @param {object} parameters UI parameter bag from UnifiedTheoryPage presets.
@@ -143,6 +144,10 @@ export function framesToStreamPreview(frames) {
     electrolyte_multiplier: frame.enhancement_breakdown?.electrolyte || 1,
   }));
 
+  const spacetime_sample_buffer = buildSpacetimeSampleBuffer(timeline, {
+    source: 'bubble_lattice_stream',
+  });
+
   return {
     source: 'bubble_lattice_stream',
     peak_conditions: {
@@ -153,6 +158,7 @@ export function framesToStreamPreview(frames) {
     },
     proton_phases: latest.proton_distribution || {},
     enhancement_timeline: timeline,
+    spacetime_sample_buffer,
     collapse_results: {
       min_radius_um: Math.min(...frames.map((f) => Number(f.radius_um) || Infinity)),
       max_temperature_k: Math.max(...frames.map((f) => Number(f.temperature_k) || 0)),

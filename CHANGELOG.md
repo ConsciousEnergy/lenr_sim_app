@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Compose share on `main` stays **v0.3.8-beta** until the cutover window.
 - Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
 
+### Added — BDS-431 HIP-06 4D viz engine-sample player (VIZ-01…03)
+- Scrubbable dual-clock timeline on UnifiedBubbleLatticeVisualization (physical μs · visual s)
+- Additive `spacetime_sample_buffer` (`lenr-spacetime-sample-v1`) + optional `viz_channels` on `/bubble-lattice`
+- VizChannelBinding schema + claim-tier HUD chips (refuse bare quantitative numbers; melt/P_* stay gap)
+- Markers remain **`0.3.9-beta`**; **no** EQ-OPEN close; **no** `lenr_proved`; **no** fabricated σ_Q; **no** VIZ-12+ melt; **no** Path B
+
 ### Added — BDS-350 P1 reviewer-packets product surface (docs/UX)
 - Disambiguate paper Packet A–E (`/docs/reviewer-packets`) vs campaign JSON packs
   (`datasets/reviewer_packs/`) vs researcher-review-pack doc in DocViewer banner + served markdown

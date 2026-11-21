@@ -1261,6 +1261,21 @@ class BubbleLatticeResponse(BaseModel):
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
+    spacetime_sample_buffer: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive compact spacetime sample buffer (R, T, E, enhancement, "
+            "optional occupancy) for the 3D viz engine-sample player "
+            "(lenr-spacetime-sample-v1). Does not invent host-melt channels."
+        ),
+    )
+    viz_channels: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive optional viz channel map for HUD bindings (VIZ-03). "
+            "Melt / P_* heating modes stay null until Prefer-merged."
+        ),
+    )
     collapse_trajectory: Dict[str, Any] = Field(
         default_factory=dict,
         description=(
@@ -1754,6 +1769,32 @@ def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleL
                 "electric_field_v_m": sanitize_float(instant["conditions"]["electric_field"], 0.0),
                 "pressure_bar": sanitize_float(pressure_pa / 1e5, 1.0),
             })
+
+        # Compact spacetime buffer for UBLV scrub/player (HIP-06 / VIZ-02).
+        # Additive; failure must not break the core bubble-lattice response.
+        spacetime_sample_buffer: Dict[str, Any] = {}
+        viz_channels: Dict[str, Any] = {}
+        try:
+            from app.physics_engine.spacetime_sample_buffer import (
+                build_spacetime_sample_buffer,
+                build_viz_channels_from_sample,
+            )
+
+            spacetime_sample_buffer = build_spacetime_sample_buffer(
+                timeline, source="enhancement_timeline"
+            )
+            peak_sample = None
+            samples = spacetime_sample_buffer.get("samples") or []
+            if samples:
+                peak_sample = max(
+                    samples,
+                    key=lambda s: float(s.get("enhancement") or 0.0),
+                )
+            viz_channels = build_viz_channels_from_sample(peak_sample)
+        except Exception:
+            logger.exception(
+                "Spacetime sample buffer build failed; continuing without it"
+            )
         
         # Opt-in Sobol intervals for the collapse observables and mechanisms.
         # Non-fatal by construction: a UQ failure must not break the core response.
@@ -1861,6 +1902,8 @@ def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleL
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
+            spacetime_sample_buffer=spacetime_sample_buffer,
+            viz_channels=viz_channels,
             # Additive: the integrated collapse curve behind the peak conditions.
             collapse_trajectory=model.get_collapse_trajectory(),
             collapse_uncertainty=collapse_uncertainty,

@@ -197,3 +197,11 @@ def test_existing_bubble_lattice_contract_is_unchanged() -> None:
     assert "physics_governed" in prediction
     assert "claim_tier_display" in prediction
     assert prediction["claim_tier_display"]["total"] <= 1e5
+
+    # HIP-06 additive spacetime buffer + viz_channels (never invent melt / P_*).
+    buffer = data.get("spacetime_sample_buffer") or {}
+    assert buffer.get("schema") == "lenr-spacetime-sample-v1"
+    assert buffer.get("sample_count", 0) >= 1
+    viz_channels = data.get("viz_channels") or {}
+    assert viz_channels.get("host.phase_fraction_liquid") is None
+    assert viz_channels.get("heat.P_joule") is None

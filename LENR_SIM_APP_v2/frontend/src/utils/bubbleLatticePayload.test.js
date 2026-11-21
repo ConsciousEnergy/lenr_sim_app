@@ -103,5 +103,7 @@ describe('framesToStreamPreview', () => {
     expect(preview.enhancement_timeline).toHaveLength(2);
     expect(preview.collapse_results.min_radius_um).toBe(1.5);
     expect(preview.peak_conditions.enhancement_factor).toBe(1e5);
+    expect(preview.spacetime_sample_buffer.schema).toBe('lenr-spacetime-sample-v1');
+    expect(preview.spacetime_sample_buffer.sample_count).toBe(2);
   });
 });
