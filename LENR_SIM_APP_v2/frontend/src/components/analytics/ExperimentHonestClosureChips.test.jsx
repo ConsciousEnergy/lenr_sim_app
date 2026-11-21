@@ -111,4 +111,73 @@ describe('ExperimentHonestClosureChips', () => {
       /analytics_gates_clear/i,
     );
   });
+
+  test('does not treat composition_mode as moe_provenance; withholds S_heat without provenance', async () => {
+    render(
+      <ExperimentHonestClosureChips
+        experiment={{
+          discovery_grade_eligible: false,
+          discovery_grade_gap: { overall_status: 'not_met', missing_ids: [], lenr_proved: false },
+          honest_closure: {
+            overall_status: 'not_met',
+            missing_ids: ['moe_pairing_verified'],
+            missing_requirements: [
+              { id: 'moe_pairing_verified', label: 'pairing', status: 'not_met' },
+            ],
+            lenr_proved: false,
+          },
+          quantitative_distance: {
+            distance_status: 'undefined',
+            s_heat: 12,
+            // composition_mode must NOT substitute for missing moe_provenance
+            stat_sys_composition: { composition_mode: 'explicit_total' },
+            arithmetic_sigma_shortfall: null,
+            discovery_grade_eligible: false,
+            lenr_proved: false,
+          },
+        }}
+        testIdPrefix="comp-mode"
+      />,
+    );
+    fireEvent.click(screen.getByTestId('comp-mode-discovery'));
+    const detail = await screen.findByTestId('comp-mode-distance-detail');
+    expect(detail).toHaveTextContent(/S_heat withheld without moe_provenance/i);
+    expect(detail).toHaveTextContent(/σ composition:\s*explicit_total|composition=.*explicit_total/i);
+    expect(detail).not.toHaveTextContent(/S_heat=\s*12.*explicit_total/);
+  });
+
+  test('keeps claim-tier chip when S_heat is shown with real moe_provenance', async () => {
+    render(
+      <ExperimentHonestClosureChips
+        experiment={{
+          discovery_grade_eligible: false,
+          discovery_grade_gap: { overall_status: 'not_met', missing_ids: [], lenr_proved: false },
+          honest_closure: {
+            overall_status: 'not_met',
+            missing_ids: [],
+            missing_requirements: [],
+            lenr_proved: false,
+          },
+          quantitative_distance: {
+            distance_status: 'at_or_above_bar_gates_blocked',
+            s_heat: 26,
+            moe_provenance: 'literature_reported_instrument_precision',
+            stat_sys_composition: { composition_mode: 'explicit_total' },
+            arithmetic_sigma_shortfall: 0,
+            discovery_grade_eligible: false,
+            lenr_proved: false,
+          },
+        }}
+        testIdPrefix="prov-tier"
+      />,
+    );
+    fireEvent.click(screen.getByTestId('prov-tier-discovery'));
+    expect(await screen.findByTestId('prov-tier-claim-tier')).toBeInTheDocument();
+    expect(screen.getByTestId('prov-tier-distance-detail')).toHaveTextContent(
+      /literature_reported_instrument_precision/,
+    );
+    expect(screen.getByTestId('prov-tier-distance-detail')).toHaveTextContent(
+      /composition=.*explicit_total/,
+    );
+  });
 });
