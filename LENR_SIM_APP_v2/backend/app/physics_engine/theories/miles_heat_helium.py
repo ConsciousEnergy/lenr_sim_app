@@ -16,6 +16,11 @@ Physics:
     other theories' predictions are consistent with the Miles correlation.
     It also provides its own estimate of the reaction rate from excess heat.
 
+    HIP-04 / ENG-HS-04: excess heat uses an **explicit scale switch** —
+    definition seed 1.0 W vs JEAC 346 literature peak 0.52 W — so operators
+    never confuse seed scale with episode Q. Literature peak stays
+    exploratory (pairing unverified); no discovery upgrade.
+
 References
 ----------
 [1] Miles, M. H. et al. (1993). "Correlation of excess power and helium
@@ -37,6 +42,12 @@ from typing import Any, Dict, Optional
 
 from scipy import constants as const
 
+from app.physics_engine.miles_heat_scale import (
+    MILES_DEFINITION_SCALE_W,
+    MILES_LITERATURE_PEAK_W,
+    MODULE_CLAIM_TIER,
+    resolve_miles_excess_heat,
+)
 from app.physics_engine.theory_protocol import TheoryContribution, TheoryMetadata
 
 logger = logging.getLogger(__name__)
@@ -66,15 +77,29 @@ class MilesHeatHeliumTheory:
         return (
             "Quantitative correlation: 1 W excess heat = 2.6×10^11 He-4/s, "
             "corresponding to 23.8 MeV per fusion event. Independently confirmed "
-            "by Gozzi, Bockris, Arata, De Ninno, and McKubre."
+            "by Gozzi, Bockris, Arata, De Ninno, and McKubre. Excess-heat scale "
+            f"is explicit: definition {MILES_DEFINITION_SCALE_W} W vs literature "
+            f"peak {MILES_LITERATURE_PEAK_W} W (no silent switch)."
         )
 
     @property
     def configurable_parameters(self) -> Dict[str, Any]:
         return {
+            "excess_heat_scale": {
+                "default": "definition",
+                "description": (
+                    "Explicit watt scale: 'definition' (1.0 W seed) or "
+                    "'literature_peak' (0.52 W JEAC 346). Never silent."
+                ),
+                "options": ["definition", "literature_peak"],
+            },
             "excess_heat_W": {
-                "default": 1.0,
-                "description": "Measured excess heat in watts",
+                "default": MILES_DEFINITION_SCALE_W,
+                "description": (
+                    "Measured / selected excess heat in watts. When omitted, "
+                    "resolved from excess_heat_scale (definition 1.0 W or "
+                    "literature peak 0.52 W)."
+                ),
             },
             "helium_detection_efficiency": {
                 "default": 0.5,
@@ -98,7 +123,8 @@ class MilesHeatHeliumTheory:
         config = config or {}
         T = conditions.get("temperature", 300.0)
         loading = conditions.get("loading_ratio", 0.9)
-        excess_heat = config.get("excess_heat_W", conditions.get("excess_heat_W", 1.0))
+        scale = resolve_miles_excess_heat(config=config, conditions=conditions)
+        excess_heat = float(scale["excess_heat_W"])
         det_eff = config.get("helium_detection_efficiency", 0.5)
         diff_frac = config.get("diffusion_fraction", 0.5)
 
@@ -128,6 +154,11 @@ class MilesHeatHeliumTheory:
             validation_flags.append(
                 f"energy_per_event {energy_per_event_MeV:.1f} MeV deviates from "
                 f"expected {Q_VALUE_MEV} +/- 0.5 MeV"
+            )
+        if scale["q_is_seed_scale"]:
+            validation_flags.append(
+                "excess_heat uses definition seed scale 1.0 W — not JEAC 346 "
+                "literature peak 0.52 W"
             )
 
         # Enhancement is 1.0 (this is a validation model, not enhancement)
@@ -159,21 +190,47 @@ class MilesHeatHeliumTheory:
                 "product_He4": 1.0,
                 "product_neutrons": 0.0,
                 "product_gamma": 0.0,
+                # HIP-04 / ENG-HS-04 scale honesty stamps
+                "excess_heat_scale": scale["excess_heat_scale"],
+                "q_is_seed_scale": scale["q_is_seed_scale"],
+                "q_source": scale["q_source"],
+                "heat_scale_claim_tier": scale["heat_scale_claim_tier"],
+                "literature_peak_excess_power_W": scale[
+                    "literature_peak_excess_power_W"
+                ],
+                "definition_scale_W": scale["definition_scale_W"],
+                "moe_sigma_q_pairing_verified": False,
+                "discovery_grade_eligible": False,
+                "scale_resolution_source": scale["scale_resolution_source"],
+                "scale_note": scale["note"],
             },
             parameters_used={
                 "temperature": T,
                 "loading_ratio": loading,
                 "excess_heat_W": excess_heat,
+                "excess_heat_scale": scale["excess_heat_scale"],
                 "helium_detection_efficiency": det_eff,
                 "diffusion_fraction": diff_frac,
             },
             is_applicable=True,
             confidence=confidence,
+            claim_tier=MODULE_CLAIM_TIER,
+            evidence_class="partial",
+            provenance={
+                "source": "miles_heat_helium",
+                "validation_status": "empirical_correlation_scale_stamped",
+                "model_version": "hip04-eng-hs-04",
+                "excess_heat_scale": scale["excess_heat_scale"],
+                "q_is_seed_scale": scale["q_is_seed_scale"],
+                "heat_scale_claim_tier": scale["heat_scale_claim_tier"],
+                "not_discovery_claim": True,
+                "lenr_proved": False,
+            },
             references=[
-                "Miles M.H. et al. (1993) J. Electroanal. Chem. 346, 99",
-                "Miles M.H. (2000) Proc. ICCF-8, 105",
-                "McKubre M.C.H. (1998) Proc. ICCF-7",
-                "Bush B.F. et al. (1991) J. Electroanal. Chem. 304, 271",
+                "Miles M.H. et al. (1993) J. Electroanal. Chem. 346, 99 — miles1993",
+                "Miles M.H. (2000) Proc. ICCF-8, 105 — miles2000",
+                "McKubre M.C.H. (1998) Proc. ICCF-7 — mckubre1998",
+                "Bush B.F. et al. (1991) J. Electroanal. Chem. 304, 271 — bush1991",
             ],
         )
 
@@ -184,9 +241,11 @@ class MilesHeatHeliumTheory:
             description=self.description,
             configurable_parameters=self.configurable_parameters,
             references=[
-                "Miles M.H. et al. (1993) J. Electroanal. Chem. 346, 99",
-                "Miles M.H. (2000) Proc. ICCF-8, 105",
-                "McKubre M.C.H. (1998) Proc. ICCF-7",
+                "Miles M.H. et al. (1993) J. Electroanal. Chem. 346, 99 — miles1993",
+                "Miles M.H. (2000) Proc. ICCF-8, 105 — miles2000",
+                "McKubre M.C.H. (1998) Proc. ICCF-7 — mckubre1998",
             ],
             category="measurement",
+            empirical_support="partial",
+            model_fidelity="approximate",
         )

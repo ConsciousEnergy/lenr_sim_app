@@ -128,7 +128,17 @@ async def persist_unified_simulation(
         results=_compact_results(
             experiment_type="unified_theory",
             response=resp,
-            extra={"enhancement_saturation": saturation},
+            extra={
+                "enhancement_saturation": saturation,
+                "success_odds_margins": (
+                    (resp.get("analytics_transparency") or {}).get(
+                        "success_odds_margins"
+                    )
+                ),
+                "miles_heat_scale": (
+                    (resp.get("analytics_transparency") or {}).get("miles_heat_scale")
+                ),
+            },
         ),
         pipeline_result=pipeline_result,
         session_id=session_id,

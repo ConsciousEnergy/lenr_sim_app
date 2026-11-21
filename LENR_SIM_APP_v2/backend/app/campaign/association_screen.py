@@ -3,6 +3,9 @@
 Anchors: Miles 1993, one Pd-D heat cell (McKubre SRI), ARPA-E null.
 T in {280, 300, 350} K and loading in {0.85, 0.95}. Pipeline on.
 Model output only. Does not prove LENR. EQ-OPEN-* stay OPEN.
+
+HIP-04: Miles cells request the explicit ``literature_peak`` excess-heat
+scale (0.52 W) so module output is not silently the 1.0 W definition seed.
 """
 
 from __future__ import annotations
@@ -18,6 +21,13 @@ ANCHOR_LITERATURE_IDS: Tuple[str, ...] = (
 )
 TEMPERATURES: Tuple[float, ...] = (280.0, 300.0, 350.0)
 LOADING_RATIOS: Tuple[float, ...] = (0.85, 0.95)
+
+# Explicit Miles scale for association_screen (ENG-HS-04) — never silent 1.0 W.
+_MILES_LITERATURE_PEAK_CONFIG: Dict[str, Dict[str, Any]] = {
+    "miles_heat_helium": {
+        "excess_heat_scale": "literature_peak",
+    },
+}
 
 
 def _records_by_id() -> Dict[str, Dict[str, Any]]:
@@ -38,7 +48,7 @@ def iter_association_screen_cases() -> Iterator[Dict[str, Any]]:
         open_ids = list(record.get("open_question_ids") or [])
         for temperature in TEMPERATURES:
             for loading in LOADING_RATIOS:
-                yield {
+                case: Dict[str, Any] = {
                     "temperature": float(temperature),
                     "loading_ratio": float(loading),
                     "host_material": host,
@@ -55,6 +65,9 @@ def iter_association_screen_cases() -> Iterator[Dict[str, Any]]:
                     "open_question_ids": open_ids,
                     "campaign_preset": "association_screen",
                 }
+                if literature_id == "miles-1993":
+                    case["theory_configs"] = dict(_MILES_LITERATURE_PEAK_CONFIG)
+                yield case
 
 
 def association_screen_count() -> int:
