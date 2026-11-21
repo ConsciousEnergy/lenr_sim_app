@@ -37,6 +37,7 @@ from scipy import constants as const
 
 from app.physics_engine.theory_protocol import TheoryContribution, TheoryMetadata
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.heating_mode import is_photonic_stimulation, resolve_heating_mode
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +94,17 @@ class LettsLaserTheory:
         }
 
     def is_applicable(self, conditions: Dict[str, float]) -> bool:
+        """Arm only under explicit photonic / Letts laser stimulation.
+
+        ENG-HS-03: default electrolytic / radiant / resistive regimes must not
+        inherit dual-laser watts. Pass ``letts_laser=1``, ``heating_mode=photonic``,
+        or ``P_photonic>0`` in conditions to enable.
+        """
         T = conditions.get("temperature", 0)
         loading = conditions.get("loading_ratio", 0)
-        return T > 0 and loading > 0
+        if not (T > 0 and loading > 0):
+            return False
+        return is_photonic_stimulation(conditions)
 
     def calculate(
         self,
@@ -107,7 +116,13 @@ class LettsLaserTheory:
         loading = conditions.get("loading_ratio", 0.9)
 
         if not self.is_applicable(conditions):
-            return self._neutral("Temperature or loading is zero")
+            mode = resolve_heating_mode(conditions)
+            if T <= 0 or loading <= 0:
+                return self._neutral("Temperature or loading is zero")
+            return self._neutral(
+                f"Photonic/Letts gate closed (heating_mode={mode}); "
+                "arm letts_laser or heating_mode=photonic"
+            )
 
         lambda_nm = config.get("laser_wavelength_nm", RESONANCE_WAVELENGTH_NM)
         P_laser_mW = config.get("laser_power_mW", 30.0)

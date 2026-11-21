@@ -195,8 +195,24 @@ class ElectrolyteConfig(BaseModel):
 
 class StimulationConfig(BaseModel):
     """Optional stimulation gates for when/how virtual lab (never auto-flips rate_mode)."""
-    letts_laser: bool = Field(default=False)
+    letts_laser: bool = Field(
+        default=False,
+        description="Arm Letts dual-laser / photonic path (ENG-HS-03). Off by default.",
+    )
     acoustic_drive: bool = Field(default=False)
+    heating_mode: Optional[str] = Field(
+        default=None,
+        description="Optional joule|resistive|photonic|radiant override (HIP-01).",
+    )
+    p_joule_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Electrolytic joule drive watts (P_joule)."
+    )
+    p_resistive_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Resistive/gaseous heater watts (P_resistive)."
+    )
+    p_photonic_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Absorbed laser watts (P_photonic)."
+    )
 
 
 class SimulationRequest(BaseModel):
@@ -475,6 +491,20 @@ def _compute_unified_simulation(request: SimulationRequest):
         config.use_theory_pipeline = request.use_theory_pipeline
         config.enabled_theories = request.enabled_theories
         config.theory_configs = request.theory_configs
+        stim = request.stimulation
+        if stim is not None:
+            config.letts_laser = bool(stim.letts_laser)
+            config.acoustic_drive = bool(stim.acoustic_drive)
+            if stim.heating_mode:
+                config.heating_mode = str(stim.heating_mode).strip().lower()
+            config.p_joule_watts = stim.p_joule_watts
+            config.p_resistive_watts = stim.p_resistive_watts
+            config.p_photonic_watts = stim.p_photonic_watts
+            # Explicit photonic watts also arm the Letts gate when mode unset.
+            if stim.p_photonic_watts is not None and float(stim.p_photonic_watts) > 0.0:
+                config.letts_laser = True
+                if not config.heating_mode:
+                    config.heating_mode = "photonic"
         electrolyte_diagnostics = build_electrolyte_diagnostics(
             electrolyte_family=config.electrolyte_family,
             electrolyte_species=config.electrolyte_species,
@@ -555,6 +585,16 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "enabled_theories": config.enabled_theories or [],
                 "electrolyte_species_family_consistent": electrolyte_diagnostics["species_family_consistent"],
                 "electrolyte_support_level": electrolyte_diagnostics["support_level"],
+                "heating_mode": result.observables_bridge.get("coupled_heat_he", {}).get(
+                    "heating_mode"
+                )
+                or result.observables_bridge.get("excess_heat", {}).get("heating_mode"),
+                "coupled_heat_he_bridged": bool(
+                    result.observables_bridge.get("coupled_heat_he", {}).get("bridged")
+                ),
+                "heat_he_honesty_class": result.observables_bridge.get("excess_heat", {}).get(
+                    "honesty_class", "model_output"
+                ),
             },
             analytics_transparency={
                 "model_version": settings.APP_VERSION,
@@ -562,6 +602,9 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "electrolyte_species": config.electrolyte_species,
                 "electrolyte_molarity_mol_l": float(config.electrolyte_molarity_mol_l),
                 "electrolyte_diagnostics": electrolyte_diagnostics,
+                "is_model_output": True,
+                "coupled_heat_he": result.observables_bridge.get("coupled_heat_he", {}),
+                "lenr_proved": False,
             },
             uncertainty_interval=result.uncertainty_interval,
             falsification_conditions=result.falsification_conditions,

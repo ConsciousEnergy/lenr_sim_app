@@ -23,6 +23,7 @@ from app.physics_engine.theory_protocol import (
     TheoryModule,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR, MILES_HEAT_HELIUM_RATE
+from app.physics_engine.heating_mode import resolve_heating_mode
 from app.physics_engine.scientific_guardrails import (
     build_confidence_breakdown,
     build_falsification_conditions,
@@ -227,6 +228,7 @@ class TheoryPipelineResult:
             "observables_bridge": build_observables_bridge(
                 total_energy_watts=self.total_energy_watts,
                 expected_he4_rate_per_s=expected_he4_rate,
+                heating_mode=resolve_heating_mode(self.conditions),
             ),
             "analytics_transparency": {
                 "confidence_weights": to_json_safe(

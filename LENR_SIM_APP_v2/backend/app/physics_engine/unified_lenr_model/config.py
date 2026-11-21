@@ -193,6 +193,13 @@ class SimulationConfig:
     molecular_beam_species: Optional[str] = None
     h2_absorb_pressure_pa: Optional[float] = None
     radiant_calorimetry: bool = False
+    # HIP-01 stimulation / heating-mode gates (additive; default off).
+    letts_laser: bool = False
+    acoustic_drive: bool = False
+    heating_mode: Optional[str] = None
+    p_joule_watts: Optional[float] = None
+    p_resistive_watts: Optional[float] = None
+    p_photonic_watts: Optional[float] = None
 
 
 @dataclass
