@@ -225,12 +225,15 @@ def test_testbed_review_is_designed_not_cartesian() -> None:
 
     n = campaign_size("testbed_review")
     assert n == testbed_review_count()
-    assert 24 <= n <= 30
     cases = list(iter_campaign_cases("testbed_review"))
     assert len(cases) == n
     isolated = [case for case in cases if case.get("enabled_theories")]
     literature = [case for case in cases if not case.get("enabled_theories")]
     registered = set(get_default_pipeline().registered_ids)
+    # Designed: one isolated cell per registered theory + literature anchors.
+    # Upper bound tracks registry growth (e.g. HIP-05 kasagi_radiant → 31).
+    assert n == len(registered) + len(ANCHOR_LITERATURE_IDS)
+    assert 24 <= n <= 40
     isolated_ids = {case["enabled_theories"][0] for case in isolated}
     assert isolated_ids == registered
     assert {case["literature_id"] for case in literature} == set(ANCHOR_LITERATURE_IDS)
