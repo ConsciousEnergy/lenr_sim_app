@@ -133,6 +133,20 @@ def enrich_experiment_dict(payload: Dict[str, Any]) -> Dict[str, Any]:
             watts = results.get("total_energy_watts")
         row["excessHeatWatts"] = watts
 
+    # HIP-04 additive success-odds margins (non-saturating discrimination).
+    transparency = results.get("analytics_transparency") or {}
+    margins = results.get("success_odds_margins") or transparency.get(
+        "success_odds_margins"
+    )
+    if "successOddsMargins" not in row and isinstance(margins, dict):
+        row["successOddsMargins"] = margins
+        row["discriminationScore"] = margins.get("discrimination_score")
+    miles_scale = results.get("miles_heat_scale") or transparency.get(
+        "miles_heat_scale"
+    )
+    if "milesHeatScale" not in row and isinstance(miles_scale, dict):
+        row["milesHeatScale"] = miles_scale
+
     # Additive ≥5σ / honest-closure envelopes for Analytics History + export.
     _attach_discovery_grade_envelopes_to_row(row)
     return row

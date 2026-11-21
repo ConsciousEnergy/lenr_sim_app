@@ -32,6 +32,58 @@ from app.physics_engine.parkhomov_validation import (
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 from app.physics_engine.bubble_mechanism_composition import build_prediction_report
 from app.physics_engine.enhancement_saturation import build_saturation_report
+from app.physics_engine.miles_heat_scale import scale_summary_from_contribution_observables
+from app.physics_engine.success_odds_margins import build_success_odds_margins
+
+
+def _hip04_transparency_fields(
+    *,
+    request: "SimulationRequest",
+    result: Any,
+    model: Any,
+) -> Dict[str, Any]:
+    """Additive HIP-04 Miles scale + non-saturating margin stamps."""
+    pipeline = getattr(model, "last_pipeline_result", None) or getattr(
+        model, "_last_pipeline_result", None
+    )
+    miles_scale: Dict[str, Any] = {}
+    if pipeline is not None:
+        for contrib in getattr(pipeline, "contributions", None) or []:
+            if getattr(contrib, "theory_id", "") != "miles_heat_helium":
+                continue
+            miles_scale = scale_summary_from_contribution_observables(
+                getattr(contrib, "observables", None) or {}
+            )
+            miles_scale["module_energy_output_watts"] = float(
+                getattr(contrib, "energy_output_watts", 0.0) or 0.0
+            )
+            miles_scale["claim_tier"] = getattr(
+                contrib, "claim_tier", "empirical_lenr_correlation"
+            )
+            break
+
+    enhancement_total = float(getattr(result, "total_enhancement", 0.0) or 0.0)
+    log10_raw = None
+    is_saturated = None
+    if enhancement_total > 0:
+        log10_raw = math.log10(enhancement_total)
+        is_saturated = enhancement_total >= MAX_ENHANCEMENT_FACTOR * (1.0 - 1e-9)
+
+    margins = build_success_odds_margins(
+        reaction_rate=float(getattr(result, "reaction_rate", 0.0) or 0.0),
+        helium4_rate=float(getattr(result, "helium4_rate", 0.0) or 0.0),
+        excess_heat_watts=float(getattr(result, "excess_heat_watts", 0.0) or 0.0),
+        loading_ratio=float(request.lattice.loading_ratio),
+        enhancement_factor=enhancement_total,
+        log10_enhancement_raw=log10_raw,
+        enhancement_is_saturated=is_saturated,
+        literature_id=getattr(request, "literature_id", None),
+        confidence=float(getattr(result, "confidence", 0.0) or 0.0),
+    )
+    return {
+        "miles_heat_scale": miles_scale,
+        "success_odds_margins": margins,
+    }
 
 
 def _finalize_enhancement_breakdown(
@@ -559,6 +611,11 @@ def _compute_unified_simulation(request: SimulationRequest):
             route_mode=route_mode,
         )
 
+        hip04_fields = _hip04_transparency_fields(
+            request=request,
+            result=result,
+            model=model,
+        )
         response = SimulationResponse(
             success=True,
             enhancement={
@@ -595,6 +652,7 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "heat_he_honesty_class": result.observables_bridge.get("excess_heat", {}).get(
                     "honesty_class", "model_output"
                 ),
+                "miles_heat_scale": hip04_fields.get("miles_heat_scale"),
             },
             analytics_transparency={
                 "model_version": settings.APP_VERSION,
@@ -605,6 +663,7 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "is_model_output": True,
                 "coupled_heat_he": result.observables_bridge.get("coupled_heat_he", {}),
                 "lenr_proved": False,
+                **hip04_fields,
             },
             uncertainty_interval=result.uncertainty_interval,
             falsification_conditions=result.falsification_conditions,

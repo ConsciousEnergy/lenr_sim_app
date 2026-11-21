@@ -211,6 +211,33 @@ class TheoryPipelineResult:
                 "display_model_version": getattr(c, "display_model_version", "") or "",
             }
             per_theory.append(enrich_contribution_dict(row, control_role=control_role))
+        miles_contrib = next(
+            (c for c in self.contributions if c.theory_id == "miles_heat_helium"),
+            None,
+        )
+        miles_obs = (miles_contrib.observables if miles_contrib else None) or {}
+        miles_validation: Dict[str, Any] = {
+            "expected_he4_rate_per_s": expected_he4_rate,
+            "rate_constant": MILES_HEAT_HELIUM_RATE,
+            "note": (
+                "He/W rate uses Miles correlation (≈2.6e11 He-4/s per W). "
+                "Module excess-heat watts use an explicit scale switch "
+                "(definition 1.0 W vs literature peak 0.52 W); see "
+                "per_theory miles_heat_helium observables.excess_heat_scale."
+            ),
+        }
+        if miles_contrib is not None:
+            miles_validation.update(
+                {
+                    "excess_heat_scale": miles_obs.get("excess_heat_scale"),
+                    "q_is_seed_scale": miles_obs.get("q_is_seed_scale"),
+                    "heat_scale_claim_tier": miles_obs.get("heat_scale_claim_tier"),
+                    "module_energy_output_watts": float(miles_contrib.energy_output_watts),
+                    "literature_peak_excess_power_W": miles_obs.get(
+                        "literature_peak_excess_power_W"
+                    ),
+                }
+            )
         payload = {
             "combined_enhancement": float(self.combined_enhancement),
             "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
@@ -219,11 +246,7 @@ class TheoryPipelineResult:
             "enabled_theories": self.enabled_theories,
             "contract_version": f"v{settings.APP_VERSION}-science-gate-1",
             "validation": {
-                "miles_heat_helium": {
-                    "expected_he4_rate_per_s": expected_he4_rate,
-                    "rate_constant": MILES_HEAT_HELIUM_RATE,
-                    "note": "1 W excess heat = 2.6e11 He-4/s (Miles 1993)",
-                },
+                "miles_heat_helium": miles_validation,
             },
             "observables_bridge": build_observables_bridge(
                 total_energy_watts=self.total_energy_watts,
