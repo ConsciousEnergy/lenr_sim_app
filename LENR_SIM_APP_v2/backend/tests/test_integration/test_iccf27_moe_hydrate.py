@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.data.dataset_io import datasets_root
 from app.scripts.build_iccf27_hydration_pack import (
     CITE_GATED_KASAGI_IDS,
+    STABLE_ICCF_PACK_SLOT,
     WANTED_ICCF_IDS,
     apply_corpus_moe_overlay,
 )
@@ -40,6 +41,57 @@ def test_iccf27_hydration_covers_wanted_literature_ids() -> None:
     lit_ids = {row.get("literature_id") for row in experiments if row.get("literature_id")}
     assert WANTED_ICCF_IDS <= lit_ids
     assert CITE_GATED_KASAGI_IDS <= lit_ids
+
+
+def test_iccf27_stable_pack_slots_preserve_pre479_identities() -> None:
+    """hyd-10/11 stay Czerski-Zr / HyLENR; Kasagi-Ni takes a distinct slot."""
+    experiments = _load_iccf27_experiments()
+    by_id = {row["id"]: row for row in experiments}
+    assert by_id["iccf27-hyd-10"]["literature_id"] == "czerski-thermal-spike-zr-2024"
+    assert by_id["iccf27-hyd-11"]["literature_id"] == "hylenr-tamu-phase1-2026"
+    assert by_id["iccf27-hyd-09"]["literature_id"] == "kasagi-nicu-radiant-2026"
+    assert by_id["iccf27-hyd-12"]["literature_id"] == "kasagi-ni-radiant-2026"
+    for lit_id, slot in STABLE_ICCF_PACK_SLOT.items():
+        row = by_id[f"iccf27-hyd-{slot:02d}"]
+        assert row["literature_id"] == lit_id
+    # No duplicate literature_id → pack id collisions.
+    lit_rows = [r for r in experiments if r.get("literature_id")]
+    assert len({r["literature_id"] for r in lit_rows}) == len(lit_rows)
+    assert len({r["id"] for r in experiments}) == len(experiments)
+
+
+def test_iccf27_theory_runs_serialize_importer_temperature_and_loading() -> None:
+    """Importer reads temperature_k/loading_ratio/conditions — not theory_scores alone."""
+    root = datasets_root() / "reviewer_packs" / "iccf27_hydration"
+    experiments = {
+        row["id"]: row
+        for row in (
+            json.loads(line)
+            for line in (root / "experiments.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    }
+    runs = [
+        json.loads(line)
+        for line in (root / "theory_runs.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert runs
+    for run in runs:
+        assert "temperature_k" in run
+        assert "loading_ratio" in run
+        assert isinstance(run.get("conditions"), dict)
+        exp = experiments[run["experiment_id"]]
+        expected_t = min(max(float(exp["temperature_k"]), 1.0), 2000.0)
+        expected_l = min(max(float(exp.get("loading_ratio") or 0.9), 0.0), 1.0)
+        assert run["temperature_k"] == expected_t
+        assert run["loading_ratio"] == expected_l
+        assert run["conditions"]["temperature"] == expected_t
+        assert run["conditions"]["loading_ratio"] == expected_l
+        # Czerski-Zr experiment L=1.8 must clamp to 1.0 for TheoryRunRequest.
+        if exp.get("literature_id") == "czerski-thermal-spike-zr-2024":
+            assert float(exp["loading_ratio"]) == 1.8
+            assert run["loading_ratio"] == 1.0
 
 
 def test_iccf27_kasagi_dual_moe_envelope_from_corpus() -> None:

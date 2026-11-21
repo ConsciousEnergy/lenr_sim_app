@@ -23,11 +23,26 @@ describe('normalizeMarkdownMath', () => {
     expect(out).toContain('```md\n\\[\ny = 1\n\\]\n```');
   });
 
-  test('preserves blockquote / list prefixes on display math', () => {
+  test('preserves blockquote prefixes on every display-math line', () => {
     const quoted = '> \\[x=1\\]';
-    const listed = '- \\[y=2\\]';
     expect(normalizeMarkdownMath(quoted)).toBe('> $$\n> x=1\n> $$');
-    expect(normalizeMarkdownMath(listed)).toBe('- $$\n- y=2\n- $$');
+  });
+
+  test('list markers only on opening $$; body/close indented to content column', () => {
+    const listed = '- \\[y=2\\]';
+    expect(normalizeMarkdownMath(listed)).toBe('- $$\n  y=2\n  $$');
+  });
+
+  test('strips nested quote markers from multiline blockquote math bodies', () => {
+    const src = '> \\[\n> E = mc^2\n> \\]';
+    expect(normalizeMarkdownMath(src)).toBe('> $$\n> E = mc^2\n> $$');
+  });
+
+  test('emits display math after mid-line prose', () => {
+    const src = 'See ratio: \\[a/b\\] next.';
+    const out = normalizeMarkdownMath(src);
+    expect(out).toBe('See ratio:\n$$\na/b\n$$ next.');
+    expect(out).not.toMatch(/\\\[/);
   });
 
   test('allows soft line breaks inside inline math', () => {
