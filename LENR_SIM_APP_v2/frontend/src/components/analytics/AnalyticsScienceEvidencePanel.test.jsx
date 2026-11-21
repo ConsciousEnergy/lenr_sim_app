@@ -52,5 +52,13 @@ describe('AnalyticsScienceEvidencePanel live MoE coverage', () => {
       );
     });
     expect(screen.getByTestId('analytics-5b-gap-moe-coverage')).toHaveTextContent('2/26');
+    expect(screen.getByTestId('analytics-5b-lab-experiments-link')).toHaveAttribute(
+      'href',
+      '/lab-experiments',
+    );
+    expect(screen.getByTestId('analytics-5b-next-lab-hub-link')).toHaveAttribute(
+      'href',
+      '/lab-experiments#next-lab',
+    );
   });
 });

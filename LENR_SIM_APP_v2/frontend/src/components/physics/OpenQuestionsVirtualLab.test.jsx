@@ -131,6 +131,22 @@ const ANCHORED_OQ = {
 };
 
 describe('OpenQuestionsVirtualLab', () => {
+  test('cross-links Laboratory Experiments / NEXT_LAB / runway (HIP-03 LAB-03)', () => {
+    render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
+    expect(screen.getByTestId('virtual-lab-lab-experiments-link')).toHaveAttribute(
+      'href',
+      '/lab-experiments',
+    );
+    expect(screen.getByTestId('virtual-lab-next-lab-link')).toHaveAttribute(
+      'href',
+      '/lab-experiments#next-lab',
+    );
+    expect(screen.getByTestId('virtual-lab-runway-link')).toHaveAttribute(
+      'href',
+      '/docs/eq-open-closure-runway',
+    );
+  });
+
   test('prints when/how header and two-body does not close', () => {
     render(<OpenQuestionsVirtualLab openQuestions={TWO_BODY_OQ} />);
     expect(screen.getByText(/When and how under named conditions/i)).toBeInTheDocument();

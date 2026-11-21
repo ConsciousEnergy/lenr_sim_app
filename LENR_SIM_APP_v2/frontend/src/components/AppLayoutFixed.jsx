@@ -38,6 +38,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import BiotechIcon from '@mui/icons-material/Biotech';
 import InfoIcon from '@mui/icons-material/Info';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 // User profile icons removed - app is open access without authentication
@@ -186,6 +187,12 @@ const menuItems = [
         title: 'Overview',
         path: '/documentation',
         icon: <MenuBookIcon />
+      },
+      {
+        id: 'lab-experiments',
+        title: 'Laboratory Experiments',
+        path: '/lab-experiments',
+        icon: <BiotechIcon />
       },
       {
         id: 'theory-paper',
