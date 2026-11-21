@@ -31,7 +31,7 @@ import {
 } from '../config/publicLinks';
 
 /** Manuscript chip on Theory Paper — aligned to live app train for public visitors. */
-const MANUSCRIPT_REVISION_LABEL = `v${APP_VERSION} (revised 2026-11-11)`;
+const MANUSCRIPT_REVISION_LABEL = `v${APP_VERSION} (revised 2026-11-21, HIP-08 honesty fold-in)`;
 
 const AboutPage = () => {
   return (

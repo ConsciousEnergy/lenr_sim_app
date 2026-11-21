@@ -32,7 +32,9 @@ describe('AboutPage honesty copy', () => {
     render(<AboutPage />);
     const versionMap = screen.getByText(/Version map:/i);
     expect(versionMap).toHaveTextContent(APP_VERSION);
-    expect(versionMap).toHaveTextContent(`v${APP_VERSION} (revised 2026-11-11)`);
+    expect(versionMap).toHaveTextContent(
+      `v${APP_VERSION} (revised 2026-11-21, HIP-08 honesty fold-in)`,
+    );
   });
 
   it('discloses invited-beta science-copy limitations', () => {

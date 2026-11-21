@@ -40,7 +40,7 @@ There is no `theorem lenr_occurs`. Hydro enhancement ≠ nuclear-rate proof (`EQ
 namespace LenrFormal.PaperCrosswalk
 
 /-- Paper revision tag for this crosswalk. -/
-def paperRevision : String := "v0.3.7-beta-2026-11-11-eq-open-peer-review"
+def paperRevision : String := "v0.3.7-beta-2026-11-21-hip08-honesty-fold-in"
 
 /-- Companion manuscript path (repo-relative). -/
 def canonicalPaperPath : String :=
@@ -84,7 +84,8 @@ def sectionModuleMap : List (String × String) :=
   , ("§5.1 Miles Q-value", "LenrFormal.Miles")
   , ("§5.2 reported nuclear-product correlations (contested EMP)", "LenrFormal.Miles")
   , ("§5B / BDS-302 ≥5σ heat bar + EQ-HEAT-SIG-NC-01 (citations/pairing/YIELD NC)", "LenrFormal.CalorimetrySignificance")
-  , ("§2 / ENG-SANTILLI-ICNF-01 stub ⇏ EQ-OPEN (EQ-THEORY-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
+  , ("§5A.6 Lab Ask / NEXT_LAB proxies met ⇏ EQ-OPEN (LabAskProxies / BDS-348)", "LenrFormal.CalorimetrySignificance")
+  , ("§3.9 / §2 ENG-SANTILLI-ICNF-01 stub ⇏ EQ-OPEN (EQ-THEORY-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§2 / Shoulders EVO P0 stub ⇏ EQ-OPEN (EQ-SHOULDERS-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§2 / Holmlid UDH P0 stub ≠ Kim BEC ⇏ EQ-OPEN (EQ-HOLMLID-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
   , ("§2 / Schwinger NEAL P0 scaffold ⇏ EQ-OPEN (EQ-SCHWINGER-STUB-NC-01)", "LenrFormal.TheoryStubHonesty")
