@@ -251,11 +251,15 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 **Post-ship MoE hunt + BDS-360 Celani exploratory hydrate (Prefer-merge `dev` only):** Intensified primary-source watt MoE / peak↔σ hunt for Iwamura / Mizuno / Arata / Celani / Miles reaffirms **discovery** inventory **exhausted at 2/26** (Kasagi NiCu + Ni only). Celani *JCMNS* 29 “12 ± 2 W” (DOI `10.70923/001c.72494`) is now an **exploratory** `literature_reported_instrument_precision` companion (`celani-constantan-2019`; arithmetic S_heat=6 gates-blocked) — still **not** discovery-grade. Miles JEAC 346 ±0.04 W accuracy bound stays exploratory; follow-on ±0.020 W remains unpaired. Analytics surfaces `REFUSED_FABRICATED_MOE_CAMPAIGNS` with cites attempted + missing discovery MoE text. **No** promote→`main` / Path B from this densification.
 
+**Packet ↔ ledger / PRED / EQ-OPEN crosswalk (BDS-359 / gap-map P4):** `/docs/reviewer-packets` renders a read-only Packet A–E → Issue Ledger **C/M/m** → legacy **IL-001…018** → PRED → EQ-OPEN map (served merge instructions fixed). Navigation only — paper FIXED/ADDRESSED ≠ OPEN discharge; mapping never sets `lenr_proved` or raises claim tiers. Prefer-merge target remains **`dev` only**; promote→`main` waits on coordinator-flagged verified finding.
+
 **Lab MoE / DAQ provenance densification (BDS-375):** After Celani exploratory hydrate (#449) discovery stays **2/26** Kasagi-only. This Prefer-merge densifies `NEXT_LAB_MOE_TARGETS` + Analytics/§5B UX with explicit `DAQ_SAMPLE_PROVENANCE` (`lenr-ara-daq-sample-v1`, trust_plane=`daq`, ingest=`planned_not_attested`, refuse fabricated samples, `lenr_proved` default false) and per-ask `blocked_awaiting_lab` chips + calibration / `daq_gap_note` (RATE/EC have **no** sample-v1 observables — refuse inventing occupation/threshold DAQ numbers). **Still no** honesty flag flips; **still no** auto `main` / Path B; live Path B share remains on `main` @ `:9702a45`.
 
 **Celani + DAQ Lean NC densification (UTF Prefer-merge):** `CalorimetrySignificance` now locks Celani exploratory milli-σ (`celaniPeakExploratorySHeatMilli=6000` for \(S=12/2=6\)) with `celani_exploratory_not_discovery_grade` (instrument_precision ⇏ DiscoveryGradeAnalytics) and binds planned `lenr-ara-daq-sample-v1` ingest (`daqSampleIngestPlannedNotAttested`) ⇏ EQ-OPEN discharge alongside LabAskProxies. UI surfaces `lean_celani_exploratory_nc_bound` + `lean_daq_planned_ne_discharge`. Discovery stays **2/26** Kasagi-only. **Still no** honesty flag flips; **still no** auto `main` / Path B.
 
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
+
+**HIP-08 paper + Lab path densify (LAB-07 companion, Prefer-merge `dev` only):** Unified Theory manuscript §5A.6 + Theory Paper UI now point operators at the first-class **Laboratory Experiments** hub (`/lab-experiments`) for NEXT_LAB checklist, discharge walkthrough, and positive-results path. Manuscript §3.9 records heating-mode taxonomy + liquid-phase **ON HOLD** (no melt Prefer-merge). Lean `PaperCrosswalk` / `LabAskProxies` bind ask met ⇏ EQ-OPEN. **Still no** honesty flag flips; **still no** auto `main` / Path B; markers stay **0.3.9-beta**.
 
 ## UI / Analytics cross-links (bookkeeping only)
 
@@ -263,9 +267,11 @@ Reviewer surfaces that **point at** this runway without changing status:
 
 | Surface | Role |
 |---------|------|
+| `/lab-experiments` | HIP-03 Laboratory Experiments hub — NEXT_LAB checklist + Affirmative/Falsification/Does-not-count + positive-results path (ask met ≠ discharge) |
 | `/analytics` Overview §5B panel | EQ-OPEN Affirmative / Falsification / Does-not-count excerpts (still OPEN) + avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance + high-success-odds cite-gated guidance |
 | `/docs/eq-open-closure-runway` | In-app DocViewer of this note (criteria draft only) |
-| Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
+| `/docs/reviewer-packets` crosswalk | Packet A–E ↔ C/M/m ↔ IL aliases ↔ PRED ↔ EQ-OPEN (still OPEN; navigation only) |
+| Theory Paper §5A.6 / §5B | Lab Ask path + runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
 | History row chips | `discovery_grade_gap` / `honest_closure` / `Δσ` distance status from export envelopes |
 | [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |
 | `discovery_grade_gap.py` / `sigma_distance.py` | Cite-gated σ_Q / pairing gap + quantitative shortfall bookkeeping (analytics only) |

@@ -181,8 +181,27 @@ describe('TheoryPaperPage', () => {
       /0\.3\.9-beta/,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
-      /v0\.3\.9-beta \(revised 2026-11-11\)/,
+      /v0\.3\.9-beta \(revised 2026-11-21, HIP-08 honesty fold-in\)/,
     );
+    expect(screen.getByTestId('manuscript-liquid-phase-hold-chip')).toHaveTextContent(
+      /Liquid-phase ON HOLD/,
+    );
+  });
+
+  test('HIP-08 mirrors §3.9 hold + §5A.6 Lab Ask path', () => {
+    render(<TheoryPaperPage />);
+    fireEvent.click(screen.getByText(/3\. Computational Methods/i));
+    expect(screen.getByTestId('theory-paper-methods-heating-hold')).toHaveTextContent(
+      /Liquid-phase TheoryModules|ON HOLD/i,
+    );
+    expect(screen.getByTestId('theory-paper-methods-heating-hold')).toHaveTextContent(
+      /excess heat/i,
+    );
+    fireEvent.click(screen.getByText(/5A\. Open Theoretical Challenges/i));
+    expect(screen.getByTestId('theory-paper-lab-ask-path')).toHaveTextContent(
+      /Lab Ask met ≠ EQ-OPEN discharge/i,
+    );
+    expect(screen.getByTestId('theory-paper-next-lab-cta')).toBeInTheDocument();
   });
 
   test('Section 4.2 Typical Results are labelled literature reports', () => {

@@ -2,6 +2,8 @@
 
 **Purpose.** Academic archival pack for *A Unified Theoretical and Mathematical Framework for Low-Energy Nuclear Reactions (LENR)* in five formats, aligned with companion-software simulation evidence and Lean/IR mathematical modeling.
 
+**2026-11-21 HIP-08 multi-format honesty fold-in.** Canonical MD + pack twins rebuilt via `build_all.sh` + `verify_paper.py` (ALL CHECKS PASSED). Added §3.9 (heating-mode taxonomy \(P_{\mathrm{joule}}\)/\(P_{\mathrm{resistive}}\)/\(P_{\mathrm{photonic}}\); excess heat ≠ melt; Pd/Ni \(T_m\)+\(f_L\) speculative future-work; liquid-phase **ON HOLD**; viz fidelity) and §5A.6 (Laboratory Experiments / Lab Ask / NEXT_LAB densify; ask met ⇏ EQ-OPEN). `santilli_icnf` remains `speculative_exploratory`. Lean `PaperCrosswalk` `paperRevision=v0.3.7-beta-2026-11-21-hip08-honesty-fold-in` + LabAskProxies row; pack Lean mirrored from formalization. `simulation_evidence.json` / Theory Paper UI / About revision chip / served_docs companions synced. XeLaTeX `academic.latex` gains ≥ / ≤ / ⇏ unicode maps. Still **no** OPEN closures; `lenr_proved` false; bands unchanged; **no** speculative→EMP; markers stay **0.3.9-beta**; no Path B / promote.
+
 | Format | Path |
 |--------|------|
 | Markdown | [`A_Unified_Theoretical_Framework_for_LENR.md`](./A_Unified_Theoretical_Framework_for_LENR.md) (synced from [`docs/A_Unified_Theoretical_Framework_for_LENR.md`](../../../../docs/A_Unified_Theoretical_Framework_for_LENR.md)) |

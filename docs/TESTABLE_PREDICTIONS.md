@@ -162,7 +162,13 @@
 | 4 | EQ-OPEN-MEV-01 | `q_mev_gap.energy_partition_mev.open_remainder` | Partition sums without OPEN remainder |
 | 5 | EQ-WHEN-DUTY-01 | `when.duty_cycle_s` | Integrated yield vs duty-cycle mismatch |
 
+## Laboratory Experiments / NEXT_LAB path (HIP-03 / HIP-08 LAB-07)
+
+First-class operator hub: **`/lab-experiments`** (NEXT_LAB checklist, Affirmative / Falsification / Does-not-count, positive-results path). Manuscript densify: Unified Theory §5A.6. Runway: `/docs/eq-open-closure-runway`.
+
+Five NEXT_LAB asks remain `blocked_awaiting_lab` with `closes_eq_open: false`. **Lab Ask met ≠ EQ-OPEN discharge** (Lean `LabAskProxies`). Soft analytics clear ≠ discovery. Do not invent discovery-grade σ_Q beyond the exhausted Kasagi 2/26 inventory. Liquid-phase / melt-regime lab asks stay **ON HOLD**.
+
 ---
 
-*Generated: 2026-02-15*
+*Generated: 2026-02-15; densified 2026-11-21 (HIP-08 LAB-07)*
 *Source: Consolidated Mathematical Review Plan (76bcec90)*

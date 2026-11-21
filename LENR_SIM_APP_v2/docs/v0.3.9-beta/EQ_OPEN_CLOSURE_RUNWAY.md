@@ -259,16 +259,19 @@ Helpers (code): `calorimetry_significance.py`, `discovery_grade_gap.py`, `sigma_
 
 For `EQ-OPEN-YIELD-01`, prefer time-resolved heat+He **and** cite-gated heat MoE ≥5σ where heat underwrites closure. Instantaneous Miles EMP band membership and exploratory \(S_{\mathrm{heat}}\) alone **do not count**.
 
+**HIP-08 paper + Lab path densify (LAB-07 companion, Prefer-merge `dev` only):** Unified Theory manuscript §5A.6 + Theory Paper UI now point operators at the first-class **Laboratory Experiments** hub (`/lab-experiments`) for NEXT_LAB checklist, discharge walkthrough, and positive-results path. Manuscript §3.9 records heating-mode taxonomy + liquid-phase **ON HOLD** (no melt Prefer-merge). Lean `PaperCrosswalk` / `LabAskProxies` bind ask met ⇏ EQ-OPEN. **Still no** honesty flag flips; **still no** auto `main` / Path B; markers stay **0.3.9-beta**.
+
 ## UI / Analytics cross-links (bookkeeping only)
 
 Reviewer surfaces that **point at** this runway without changing status:
 
 | Surface | Role |
 |---------|------|
+| `/lab-experiments` | HIP-03 Laboratory Experiments hub — NEXT_LAB checklist + Affirmative/Falsification/Does-not-count + positive-results path (ask met ≠ discharge) |
 | `/analytics` Overview §5B panel | EQ-OPEN Affirmative / Falsification / Does-not-count excerpts (still OPEN) + avenue chips + ≥5σ missing-requirements checklist (`not_met`) + MoE coverage / Δσ distance + high-success-odds cite-gated guidance |
 | `/docs/eq-open-closure-runway` | In-app DocViewer of this note (criteria draft only) |
 | `/docs/reviewer-packets` crosswalk | Packet A–E ↔ C/M/m ↔ IL aliases ↔ PRED ↔ EQ-OPEN (still OPEN; navigation only) |
-| Theory Paper §5B | Runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
+| Theory Paper §5A.6 / §5B | Lab Ask path + runway criteria + related avenue ids + five_sigma_relevance tags + quantitative distance block |
 | History row chips | `discovery_grade_gap` / `honest_closure` / `Δσ` distance status from export envelopes |
 | [`AVENUE_RANKING.md`](./AVENUE_RANKING.md) | Lab-design stress map into these OPEN rows |
 | `discovery_grade_gap.py` / `sigma_distance.py` | Cite-gated σ_Q / pairing gap + quantitative shortfall bookkeeping (analytics only) |

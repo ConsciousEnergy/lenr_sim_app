@@ -748,6 +748,10 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
+  /** Mirrors simulation_evidence.json paper_revision (HIP-08). */
+  paper_revision: '2026-11-21-hip08-honesty-fold-in',
+  liquid_phase_status: 'ON_HOLD',
+  lab_ask_met_closes_eq_open: false,
   n_experiments: 22,
   n_theory_runs: 22,
   /** Pinned pack Sobol depth (build_cavitation_collapse_pack.PACK_UQ_SAMPLES). */
@@ -1450,6 +1454,21 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
   if (CLOSURE_SURFACE_LINKS.lab_experiments_route !== '/lab-experiments') {
     throw new Error(
       'Science evidence UI must expose HIP-03 lab_experiments_route=/lab-experiments',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.paper_revision !== '2026-11-21-hip08-honesty-fold-in') {
+    throw new Error(
+      'Science evidence UI must mirror HIP-08 simulation_evidence paper_revision',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.liquid_phase_status !== 'ON_HOLD') {
+    throw new Error(
+      'Science evidence UI must keep liquid_phase_status ON_HOLD (HIP-08)',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.lab_ask_met_closes_eq_open !== false) {
+    throw new Error(
+      'Science evidence UI must keep lab_ask_met_closes_eq_open false',
     );
   }
   if (

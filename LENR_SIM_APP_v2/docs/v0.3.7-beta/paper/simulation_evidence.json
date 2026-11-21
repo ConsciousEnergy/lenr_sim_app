@@ -1,13 +1,15 @@
 {
   "schema": "lenr-paper-simulation-evidence-v1",
   "train": "v0.3.7-beta",
-  "paper_revision": "2026-11-11-eq-open-peer-review",
-  "prior_paper_revision": "2026-11-11-multidisciplinary-coherence",
+  "paper_revision": "2026-11-21-hip08-honesty-fold-in",
+  "prior_paper_revision": "2026-11-11-eq-open-peer-review",
   "canonical_paper": "docs/A_Unified_Theoretical_Framework_for_LENR.md",
   "paper_pack": "LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/",
-  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhtiä et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR.",
+  "disclaimer": "Model output and framework manuscript only. Not a laboratory experiment. Pack sync does not raise empirical claim tiers or close EQ-OPEN-*. Cavitation-collapse labelled modelled enhancement / contested hydro. Pyyhtiä et al. 2026 (pyyhtia2026) cited as electrolytic CR-39 cavitation / detector-confounder peer beside Taleyarkhan/Mulnix/SPAWAR; does not prove LENR. HIP-08: heating-mode taxonomy + liquid-phase ON HOLD + Lab Ask densification are claim-tiered software honesty only — no speculative→EMP upgrades.",
   "lenr_proved": false,
   "empirical_claim_tiers_raised": false,
+  "liquid_phase_status": "ON_HOLD",
+  "lab_ask_met_closes_eq_open": false,
   "open_ids": [
     "EQ-OPEN-MEV-01",
     "EQ-OPEN-RAD-01",
@@ -137,6 +139,11 @@
   ],
   "ws_pack_pending": [],
   "manuscript_refresh": {
+    "id": "theory_paper_hip08_honesty_fold_in",
+    "date": "2026-11-21",
+    "note": "HIP-08 PAPER-01…07: §3.9 heating-mode / host-phase ON HOLD / viz fidelity; §5A.6 Lab Ask / NEXT_LAB path; Santilli speculative_exploratory; PaperCrosswalk paperRevision=v0.3.7-beta-2026-11-21-hip08-honesty-fold-in; multi-format rebuild; no speculative→EMP; EQ-OPEN-* OPEN; lenr_proved false"
+  },
+  "prior_manuscript_refresh": {
     "id": "theory_paper_eq_open_peer_review",
     "date": "2026-11-11",
     "note": "EQ-OPEN Lean bounds peer-review language in Part 1 MD/TXT/TEX/PDF + PaperCrosswalk; all EQ-OPEN-* OPEN; lenr_proved false; hydro≠nuclear"
@@ -163,7 +170,9 @@
     "BDS-344 honest ≥5σ runway: Lean dual_kasagi_analytics_does_not_close_eq_open_or_lenr + instrument_floor NC + soft-chip lock; UI software_honest_5sigma_runway_exhausted + promote_prep_recommended; remaining blockers scientific/governance only; EQ-OPEN-* OPEN; lenr_proved false",
     "BDS-346 all-five EQ-OPEN NC + next lab MoE targets: Lean discovery_grade_analytics_does_not_close_any_eq_open / dual_kasagi_analytics_does_not_close_any_eq_open_or_lenr; UI NEXT_LAB_MOE_TARGETS (blocked_awaiting_lab) + lean_all_eq_open_nc_bound; EQ-OPEN-* OPEN; lenr_proved false",
     "BDS-348 lab-ask precision: Lean LabAskProxies / lab_ask_proxies_do_not_discharge_eq_open; densified NEXT_LAB_MOE_TARGETS (lab_acceptance / still_does_not_discharge / corpus_gap_now / daq_observables) + lean_lab_ask_nc_bound; EQ-OPEN-* OPEN; lenr_proved false; no fabricated σ",
-    "BDS-359 packet crosswalk: Packet A–E ↔ Issue Ledger C/M/m ↔ legacy IL-001…018 ↔ PRED ↔ EQ-OPEN navigation on /docs/reviewer-packets; paper FIXED ≠ discharge; EQ-OPEN-* OPEN; lenr_proved false; Prefer-merge to dev only"
+    "BDS-359 packet crosswalk: Packet A–E ↔ Issue Ledger C/M/m ↔ legacy IL-001…018 ↔ PRED ↔ EQ-OPEN navigation on /docs/reviewer-packets; paper FIXED ≠ discharge; EQ-OPEN-* OPEN; lenr_proved false; Prefer-merge to dev only",
+    "HIP-08 (2026-11-21): paper multi-format honesty fold-in — P_joule/P_resistive/P_photonic taxonomy; excess heat ≠ melt; Pd/Ni Tm+f_L speculative future-work; liquid-phase ON HOLD; Lab Ask/NEXT_LAB §5A.6 densify (ask met ⇏ discharge); santilli_icnf speculative_exploratory; Lean LabAskProxies crosswalk row; markers stay 0.3.9-beta; EQ-OPEN-* OPEN; lenr_proved false",
+    "HIP-03 (2026-11-21): Laboratory Experiments hub /lab-experiments Prefer-merged (#486); LAB-07 companion densified via HIP-08 paper + served_docs"
   ],
   "formats": [
     ".md",
