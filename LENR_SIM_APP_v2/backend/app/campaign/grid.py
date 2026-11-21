@@ -125,6 +125,15 @@ PRESETS: Dict[str, Dict[str, List[Any]]] = {
         "rate_modes": ["two_body"],
         "use_theory_pipeline": [True],
     },
+    # Celani constantan wire / air-flow protocol (ENG-HS-06). Designed, not cartesian.
+    "celani_constantan": {
+        "temperatures": [900.0],
+        "loading_ratios": [0.50],
+        "materials": ["constantan"],
+        "reactants": ["deuterium"],
+        "rate_modes": ["two_body"],
+        "use_theory_pipeline": [True],
+    },
     # Designed cavitation / collapse–heavy grid (not a cartesian). Axes unused.
     "cavitation_collapse": {
         "temperatures": [298.0],
@@ -303,6 +312,11 @@ def iter_campaign_cases(preset: str) -> Iterator[Dict[str, Any]]:
 
         yield from iter_carbon_silicate_uq_cases()
         return
+    if preset == "celani_constantan":
+        from app.campaign.celani_constantan import iter_celani_constantan_cases
+
+        yield from iter_celani_constantan_cases()
+        return
     if preset == "cavitation_collapse":
         from app.campaign.cavitation_collapse import iter_cavitation_collapse_cases
 
@@ -352,6 +366,10 @@ def campaign_size(preset: str) -> int:
         from app.campaign.carbon_silicate import carbon_silicate_uq_count
 
         return carbon_silicate_uq_count()
+    if preset == "celani_constantan":
+        from app.campaign.celani_constantan import celani_constantan_count
+
+        return celani_constantan_count()
     if preset == "cavitation_collapse":
         from app.campaign.cavitation_collapse import cavitation_collapse_count
 
@@ -527,6 +545,15 @@ def describe_preset(preset: str) -> Mapping[str, Any]:
         payload["note"] = (
             "Pd/Ni plus graphite/SiC UQ cells for probabilistic outcomes. "
             "Model output only. Does not prove LENR."
+        )
+    if preset == "celani_constantan":
+        from app.campaign.celani_constantan import celani_constantan_count
+
+        payload["n_celani_cells"] = celani_constantan_count()
+        payload["note"] = (
+            "Celani Cu55Ni44Mn1 constantan wire / air-flow protocol cells "
+            "(ENG-HS-06). Cite-gated exploratory instrument_precision metadata "
+            "only — refuse discovery σ; EQ-OPEN-* stay OPEN; lenr_proved false."
         )
     if preset == "cavitation_collapse":
         from app.campaign.cavitation_collapse import cavitation_collapse_count

@@ -205,6 +205,16 @@ export const THEORY_VISUALIZATION_MAP = {
     description: 'Excess heat vs 4He production correlation. Scalar only.',
     reference: 'Miles et al. (1993)',
   },
+  kasagi_radiant: {
+    vizLayer: null,
+    legendGroup: 'Radiant BREMS Calorimetry',
+    has3DOverlay: false,
+    claimTier: 'speculative_exploratory',
+    displayName: 'Kasagi Radiant BREMS Calorimetry',
+    description:
+      'Radiant-spectrum / BREMS heat pathway for Ni–H / NiCu multilayer desorption. Model output only; not discovery MoE.',
+    reference: 'Kasagi et al. (2026) — kasagi2026',
+  },
   hydroton: {
     vizLayer: null,
     legendGroup: 'Hydroton',

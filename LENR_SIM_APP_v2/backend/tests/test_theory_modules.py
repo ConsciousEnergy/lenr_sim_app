@@ -864,6 +864,42 @@ class TestCzerskiThermalSpike:
         assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
 
 
+class TestKasagiRadiant:
+    """HIP-05 / ENG-HS-07 radiant BREMS pathway."""
+
+    RADIANT = {
+        **STANDARD_CONDITIONS,
+        "temperature": 1100.0,
+        "loading_ratio": 0.40,
+        "host_material": "nickel",
+        "radiant_calorimetry": 1.0,
+        "h2_absorb_pressure_pa": 250.0,
+        "multilayer_stack": "6x(Cu 3.8 nm / Ni 20 nm)",
+        "heating_mode": "radiant",
+    }
+
+    def setup_method(self):
+        from app.physics_engine.theories.kasagi_radiant import KasagiRadiantTheory
+        self.theory = KasagiRadiantTheory()
+
+    def test_protocol_and_radiant_path(self):
+        assert_theory_protocol(self.theory)
+        contrib = self.theory.calculate(self.RADIANT)
+        assert_valid_contribution(contrib)
+        assert contrib.is_applicable is True
+        assert contrib.theory_id == "kasagi_radiant"
+        assert contrib.energy_output_watts > 0.5
+        assert contrib.claim_tier == "speculative_exploratory"
+        assert contrib.observables.get("not_discovery_moe") is True
+        assert contrib.provenance.get("honesty_class") == "model_output"
+        assert contrib.provenance.get("lenr_proved") is False
+
+    def test_inactive_on_electrolytic_default(self):
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.is_applicable is False
+        assert contrib.energy_output_watts == 0.0
+
+
 class TestSantilliICNF:
     """Santilli ICNF phenomenological stub — arc+D+C regime only."""
 

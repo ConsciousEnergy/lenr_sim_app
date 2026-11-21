@@ -112,7 +112,22 @@ class MilesHeatHeliumTheory:
         }
 
     def is_applicable(self, conditions: Dict[str, float]) -> bool:
-        # Always applicable if there's excess heat to validate
+        # ENG-HS-07: electrolytic Miles seed must not drive radiant BREMS cells.
+        from app.physics_engine.heating_mode import resolve_heating_mode
+
+        def _truthy(value: Any) -> bool:
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return value != 0
+            if isinstance(value, str):
+                return value.strip().lower() in {"1", "true", "yes", "on"}
+            return bool(value)
+
+        if _truthy(conditions.get("radiant_calorimetry")):
+            return False
+        if resolve_heating_mode(conditions) == "radiant":
+            return False
         return True
 
     def calculate(
@@ -121,6 +136,26 @@ class MilesHeatHeliumTheory:
         config: Optional[Dict[str, Any]] = None,
     ) -> TheoryContribution:
         config = config or {}
+        if not self.is_applicable(conditions):
+            return TheoryContribution(
+                theory_id=self.theory_id,
+                theory_name=self.theory_name,
+                enhancement_factor=1.0,
+                reaction_rate_modifier=1.0,
+                energy_output_watts=0.0,
+                observables={
+                    "inapplicable_reason": (
+                        "Miles electrolytic seed gated off under radiant BREMS "
+                        "(ENG-HS-07 / HIP-05)"
+                    ),
+                },
+                parameters_used={},
+                is_applicable=False,
+                confidence=0.0,
+                references=[
+                    "Miles M.H. et al. (1993) J. Electroanal. Chem. 346, 99",
+                ],
+            )
         T = conditions.get("temperature", 300.0)
         loading = conditions.get("loading_ratio", 0.9)
         scale = resolve_miles_excess_heat(config=config, conditions=conditions)

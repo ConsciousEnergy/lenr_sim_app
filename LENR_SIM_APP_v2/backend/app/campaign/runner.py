@@ -48,6 +48,8 @@ def _simulate_payload(
     }
     if "electric_field" in case:
         environmental["electric_field"] = case["electric_field"]
+    if case.get("pressure") is not None:
+        environmental["pressure"] = float(case["pressure"])
     lattice: Dict[str, Any] = {
         "loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)
     }
