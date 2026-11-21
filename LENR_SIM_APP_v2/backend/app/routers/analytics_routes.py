@@ -608,6 +608,29 @@ async def get_literature_corpus_moe_coverage():
     return to_json_safe(coverage)
 
 
+@router.get("/s-heat-ladder")
+async def get_s_heat_ladder():
+    """
+    HIP-02 S_heat / σ ladder + ENG-HS-08 ranked-regime hygiene.
+
+    High-success ranking excludes seed-scale Q and non-``literature_reported``
+    MoE so raw S_heat cannot outrank cite-gated Kasagi. Never invents σ_Q,
+    never sets ``lenr_proved``, never closes EQ-OPEN-*.
+    """
+    from app.physics_engine.ranked_regime_hygiene import literature_s_heat_ladder
+
+    try:
+        ladder = await run_in_threadpool(literature_s_heat_ladder)
+    except Exception as exc:
+        logger.exception("s-heat-ladder unavailable")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    ladder["closes_eq_open"] = False
+    ladder["lenr_proved"] = False
+    ladder["live_endpoint"] = "GET /api/analytics/s-heat-ladder"
+    return to_json_safe(ladder)
+
+
 @router.get("/theory-run-history")
 async def get_theory_run_history(
     session_id: Optional[str] = Query(None),
