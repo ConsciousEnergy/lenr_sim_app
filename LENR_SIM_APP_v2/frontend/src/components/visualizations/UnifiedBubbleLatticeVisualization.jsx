@@ -86,6 +86,7 @@ const _COLLAPSE_PHASES = {
 const UX_TIME_SCALE = VISUAL_CYCLE_SCALE;
 
 const HOST_MATERIAL_COLORS = {
+  constantan: 0xb87333,
   palladium: 0x8b8b8b,
   nickel: 0x4682b4,
   titanium: 0x7f8c8d,

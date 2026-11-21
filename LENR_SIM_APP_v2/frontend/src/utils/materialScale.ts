@@ -47,6 +47,19 @@ const MATERIAL_SCALE_TABLE: Record<string, MaterialScaleDefinition> = {
     latticeConstantM: 3.61e-10,
     atomicRadiusM: 1.28e-10,
   },
+  // Celani Cu55Ni44Mn1 constantan host (ENG-HS-06); FCC between Cu/Ni.
+  constantan: {
+    key: 'constantan',
+    label: 'Constantan',
+    structure: 'fcc',
+    latticeConstantM: 3.58e-10,
+    atomicRadiusM: 1.26e-10,
+  },
+};
+
+const MATERIAL_ALIASES: Record<string, string> = {
+  constantan_cu55ni44mn1: 'constantan',
+  cu55ni44mn1: 'constantan',
 };
 
 const DEFAULT_MATERIAL_KEY = 'palladium';
@@ -64,7 +77,8 @@ export const getNearestNeighborDistanceM = (
 };
 
 export const getMaterialScale = (material?: string): MaterialScale => {
-  const key = normalizeMaterialKey(material);
+  const raw = normalizeMaterialKey(material);
+  const key = MATERIAL_ALIASES[raw] || raw;
   const base = MATERIAL_SCALE_TABLE[key] || MATERIAL_SCALE_TABLE[DEFAULT_MATERIAL_KEY];
   return {
     ...base,

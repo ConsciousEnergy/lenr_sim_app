@@ -52,4 +52,15 @@ describe('materialScale utilities', () => {
     expect(palladiumDescriptor.note).toContain('a=3.89');
     expect(nickelDescriptor.metersPerUnit).not.toBe(palladiumDescriptor.metersPerUnit);
   });
+
+  it('resolves Celani constantan host aliases (ENG-HS-06)', () => {
+    const constantan = getMaterialScale('constantan');
+    const alias = getMaterialScale('constantan_Cu55Ni44Mn1');
+    const nickel = getMaterialScale('nickel');
+
+    expect(constantan.key).toBe('constantan');
+    expect(constantan.latticeConstantM).toBeCloseTo(3.58e-10, 16);
+    expect(alias.latticeConstantM).toBe(constantan.latticeConstantM);
+    expect(constantan.latticeConstantM).not.toBe(nickel.latticeConstantM);
+  });
 });

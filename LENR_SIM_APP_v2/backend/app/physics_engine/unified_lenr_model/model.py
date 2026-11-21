@@ -71,6 +71,8 @@ class UnifiedLENRModel:
                 self.config.acoustic_drive,
                 self.config.heating_mode,
                 self.config.radiant_calorimetry,
+                self.config.multilayer_stack,
+                self.config.h2_absorb_pressure_pa,
                 self.config.p_joule_watts,
                 self.config.p_resistive_watts,
                 self.config.p_photonic_watts,
@@ -211,6 +213,12 @@ class UnifiedLENRModel:
         if self.config.h2_absorb_pressure_pa is not None:
             conditions["h2_absorb_pressure_pa"] = float(self.config.h2_absorb_pressure_pa)
         conditions["radiant_calorimetry"] = 1.0 if self.config.radiant_calorimetry else 0.0
+        if self.config.multilayer_stack:
+            conditions["multilayer_stack"] = str(self.config.multilayer_stack)
+        if self.config.desorption_heater_voltage_v is not None:
+            conditions["desorption_heater_voltage_v"] = float(
+                self.config.desorption_heater_voltage_v
+            )
         conditions["letts_laser"] = 1.0 if self.config.letts_laser else 0.0
         conditions["acoustic_drive"] = 1.0 if self.config.acoustic_drive else 0.0
         if self.config.heating_mode:

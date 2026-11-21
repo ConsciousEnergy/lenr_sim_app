@@ -272,6 +272,8 @@ def test_iccf27_and_carbon_silicate_presets_are_designed() -> None:
     )
     assert kasagi["host_material"] == "nickel"
     assert kasagi["radiant_calorimetry"] is True
+    assert kasagi.get("multilayer_stack")
+    assert kasagi.get("stimulation", {}).get("heating_mode") == "radiant"
     czerski = next(
         case
         for case in iccf_cases
@@ -300,6 +302,25 @@ def test_iccf27_and_carbon_silicate_presets_are_designed() -> None:
     assert "pmap:zr_d_beam" in map_tags
     described_map = describe_preset("parameter_map_grid")
     assert "Does not prove LENR" in described_map["note"]
+
+
+def test_celani_constantan_preset_is_designed() -> None:
+    from app.campaign.celani_constantan import celani_constantan_count
+
+    n = campaign_size("celani_constantan")
+    assert n == celani_constantan_count()
+    assert 2 <= n <= 8
+    cases = list(iter_campaign_cases("celani_constantan"))
+    assert any(case["host_material"] == "constantan" for case in cases)
+    celani = next(
+        case
+        for case in cases
+        if case.get("literature_id") == "celani-constantan-2019"
+    )
+    assert celani["discovery_refuse"] == "REFUSE_FABRICATED_SIGMA_Q"
+    assert celani["moe_provenance"] == "literature_reported_instrument_precision"
+    described = describe_preset("celani_constantan")
+    assert "Does not prove LENR" in described["note"] or "lenr_proved false" in described["note"]
 
 
 def test_cavitation_collapse_preset_is_designed() -> None:

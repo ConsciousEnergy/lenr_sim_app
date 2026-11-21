@@ -171,7 +171,8 @@ class MaterialConfig(BaseModel):
     host_material: str = Field(
         default="palladium",
         description="Host material: palladium, nickel, titanium, lithium, "
-        "graphite, silicon_carbide, zirconium, or custom (generic fallback)",
+        "graphite, silicon_carbide, zirconium, constantan, or custom "
+        "(generic fallback)",
     )
     reactant: str = Field(default="deuterium", description="Reactant: deuterium, hydrogen")
 
@@ -522,7 +523,9 @@ def _compute_unified_simulation(request: SimulationRequest):
         config.molecular_beam_species = request.lattice.molecular_beam_species
         config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
         config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
-        
+        config.multilayer_stack = request.lattice.multilayer_stack
+        config.desorption_heater_voltage_v = request.lattice.desorption_heater_voltage_v
+
         # Set quantum effect toggles
         config.enable_screening = request.quantum_effects.enable_screening
         config.enable_qed = request.quantum_effects.enable_qed
@@ -938,6 +941,8 @@ def build_bubble_rate_engine_block(
         config.molecular_beam_species = request.lattice.molecular_beam_species
         config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
         config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
+        config.multilayer_stack = request.lattice.multilayer_stack
+        config.desorption_heater_voltage_v = request.lattice.desorption_heater_voltage_v
 
         tunneling_probability = float(
             calculate_tunneling_probability(config, max(float(peak_enhancement), 1.0))

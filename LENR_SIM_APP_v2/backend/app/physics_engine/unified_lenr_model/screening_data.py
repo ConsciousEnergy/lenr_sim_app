@@ -100,6 +100,10 @@ def get_screening_potential_range(material: str) -> ScreeningPotentialRange:
         "sic": "silicon_carbide",
         "zr": "zirconium",
         "zrd2": "zirconium",
+        # Celani constantan → Ni-class prior (ENG-HS-06); never invents discovery σ.
+        "constantan": "nickel",
+        "constantan_cu55ni44mn1": "nickel",
+        "cu55ni44mn1": "nickel",
     }
     key = aliases.get(key, key)
     return MEASURED_SCREENING_POTENTIAL_EV.get(

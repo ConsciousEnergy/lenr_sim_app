@@ -311,6 +311,24 @@ def _build_default_nodes() -> List[TheoryNode]:
             ],
             material_systems=["C-D2 arc", "graphite-D2"],
         ),
+        TheoryNode(
+            theory_id="kasagi_radiant",
+            theory_name="Kasagi Radiant BREMS Calorimetry",
+            researcher="Kasagi et al.",
+            year=2026,
+            category="measurement",
+            key_predictions=[
+                "Radiant/BREMS spectral Q_ex ~1.1 W (NiCu)",
+                "Pure-Ni control ~0.9 W",
+                "Multilayer + H2 absorb pressure coupled",
+            ],
+            physical_properties=[
+                "radiant_calorimetry",
+                "brems_spectrum",
+                "multilayer_desorption",
+            ],
+            material_systems=["Ni-H", "NiCu multilayer-H"],
+        ),
     ]
 
 
@@ -510,6 +528,26 @@ def _build_default_edges() -> List[TheoryEdge]:
         shared_properties=["he4_production"],
         strength=0.8,
         description="TSC predicts He-4 consistent with Miles correlation",
+    ))
+    edges.append(TheoryEdge(
+        source_id="kasagi_radiant", target_id="piantelli_ni_h",
+        relationship_type="related_host_regime",
+        shared_properties=["ni_h_host", "elevated_temperature"],
+        strength=0.45,
+        description=(
+            "Both address Ni–H elevated-T regimes; Kasagi is radiant BREMS "
+            "calorimetry, Piantelli is gaseous thermal activation — distinct pathways."
+        ),
+    ))
+    edges.append(TheoryEdge(
+        source_id="kasagi_radiant", target_id="miles_heat_helium",
+        relationship_type="distinct_calorimetry_pathway",
+        shared_properties=["excess_heat_observable"],
+        strength=0.4,
+        description=(
+            "Both are calorimetry correlations; Miles is electrolytic Pd–D seed, "
+            "Kasagi is radiant BREMS Ni–H / multilayer — ENG-HS-07 keeps them gated apart."
+        ),
     ))
     edges.append(TheoryEdge(
         source_id="miles_heat_helium", target_id="hagelstein_phonon",

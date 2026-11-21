@@ -100,6 +100,10 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "miles_heat_helium": "empirical_correlation",
     "letts_laser": "empirical_correlation",
     "piantelli_ni_h": "empirical_correlation",
+    # Kasagi radiant BREMS / spectral calorimetry (HIP-05 / ENG-HS-07).
+    # Own group so multilayer/pressure-coupled heat is not collapsed into
+    # electrolytic Miles / Piantelli seed energy.
+    "kasagi_radiant": "radiant_calorimetry",
     # Thermodynamic framing, not an independent enhancement channel.
     "non_equilibrium_thermo": "thermodynamic_framing",
     # v0.3.6-beta: stellar-scaling context line is isolated in its own
@@ -836,6 +840,12 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(MilesHeatHeliumTheory())
     except Exception:
         logger.exception("Failed to register MilesHeatHeliumTheory")
+
+    try:
+        from app.physics_engine.theories.kasagi_radiant import KasagiRadiantTheory
+        pipeline.register(KasagiRadiantTheory())
+    except Exception:
+        logger.exception("Failed to register KasagiRadiantTheory")
 
     # --- Phase 1B: Complementary Theories ---
 

@@ -94,7 +94,10 @@ def test_simulate_radiant_kasagi_not_letts_dominated() -> None:
                 "grain_size": 1e-6,
                 "surface_roughness": 1e-8,
                 "radiant_calorimetry": True,
+                "h2_absorb_pressure_pa": 250.0,
+                "multilayer_stack": "6x(Cu 3.8 nm / Ni 20 nm)",
             },
+            "stimulation": {"heating_mode": "radiant"},
             "use_theory_pipeline": True,
             "time_steps": 20,
             "total_time": 1.0,
@@ -106,3 +109,35 @@ def test_simulate_radiant_kasagi_not_letts_dominated() -> None:
     assert float(data["observables"]["excess_heat_watts"]) < 5.0
     assert data["validation"]["heating_mode"] == "radiant"
     assert data["observables_bridge"]["coupled_heat_he"]["letts_gated_off_non_laser"] is True
+    assert data["observables_bridge"]["excess_heat"]["honesty_class"] == "model_output"
+
+
+def test_simulate_celani_constantan_host_model_output() -> None:
+    resp = _client().post(
+        "/api/unified/simulate",
+        json={
+            "material": {"host_material": "constantan", "reactant": "deuterium"},
+            "environmental": {
+                "temperature": 900.0,
+                "pressure": 101325.0,
+                "electric_field": 1e6,
+            },
+            "lattice": {
+                "loading_ratio": 0.5,
+                "defect_density": 1e16,
+                "grain_size": 50e-9,
+                "surface_roughness": 5e-9,
+            },
+            "stimulation": {"heating_mode": "resistive", "p_resistive_watts": 90.0},
+            "use_theory_pipeline": True,
+            "time_steps": 20,
+            "total_time": 1.0,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["observables_bridge"]["excess_heat"]["honesty_class"] == "model_output"
+    assert data["observables_bridge"]["excess_heat"]["lenr_proved"] is False
+    assert data["analytics_transparency"]["lenr_proved"] is False
+    assert data["validation"]["heating_mode"] == "resistive"
