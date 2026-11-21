@@ -52,7 +52,8 @@ const teamMembers = [
 const contributors = [
   { name: 'Diadon Acs with Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
   { name: 'Physics Contributors', contributions: 'Theoretical Framework', avatar: 'PC' },
-  { name: 'Research Community', contributions: 'Bug Reports & Features', avatar: 'RC' }
+  { name: 'Research Community', contributions: 'Bug Reports & Features', avatar: 'RC' },
+  { name: 'Bryan Chris White', contributions: 'Infrastructure Guidance', avatar: 'BW' },
 ];
 
 // Project info
@@ -188,7 +189,7 @@ const TeamPage = () => {
       
       <Grid container spacing={3} sx={{ mb: 6 }}>
         {contributors.map((contributor, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <Avatar 
                 sx={{ 
