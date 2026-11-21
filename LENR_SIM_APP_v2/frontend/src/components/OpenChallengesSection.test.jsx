@@ -35,6 +35,14 @@ describe('OpenChallengesSection', () => {
   test('renders companion documents links', () => {
     render(<OpenChallengesSection />);
     expect(screen.getByText('Companion Documents')).toBeInTheDocument();
+    expect(screen.getByTestId('open-challenges-lab-experiments-link')).toHaveAttribute(
+      'href',
+      '/lab-experiments',
+    );
+    expect(screen.getByTestId('open-challenges-runway-link')).toHaveAttribute(
+      'href',
+      '/docs/eq-open-closure-runway',
+    );
   });
 
   test('renders honesty chips without claiming proof or closure', () => {

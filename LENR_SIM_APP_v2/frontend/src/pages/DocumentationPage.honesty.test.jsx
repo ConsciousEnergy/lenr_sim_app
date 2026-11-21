@@ -27,4 +27,13 @@ describe('DocumentationPage honesty CTAs (public beta)', () => {
     expect(screen.queryByText(/Open Swagger UI/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Public source on GitHub/i)).toBeInTheDocument();
   });
+
+  it('exposes Laboratory Experiments hero CTA (HIP-03 LAB-01)', () => {
+    render(<DocumentationPage />);
+    expect(screen.getByTestId('docs-lab-experiments-hero')).toBeInTheDocument();
+    expect(screen.getByTestId('docs-lab-experiments-cta')).toHaveTextContent(
+      /Open Laboratory Experiments hub/i,
+    );
+    expect(screen.getByText(/ask met ≠ EQ-OPEN discharge/i)).toBeInTheDocument();
+  });
 });
