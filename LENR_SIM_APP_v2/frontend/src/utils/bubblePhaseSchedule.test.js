@@ -4,6 +4,7 @@ import {
   VISUAL_CYCLE_SCALE,
   anchorCycleFraction,
   formatCycleTimeChip,
+  formatDualClockAtFraction,
   minimumFractionFromTimeline,
   normalizePhaseName,
   phaseFromCycleFraction,
@@ -121,5 +122,13 @@ describe('bubblePhaseSchedule', () => {
     expect(physicalPeriodMicroseconds(20)).toBeCloseTo(50, 5);
     expect(visualCycleSeconds(20)).toBeCloseTo(2.5, 5);
     expect(formatCycleTimeChip(20)).toBe('50 μs · ~2.5s vis');
+  });
+
+  test('dual-clock scrub readout scales physical μs and visual s with fraction', () => {
+    const mid = formatDualClockAtFraction(20, 0.5);
+    expect(mid.physicalUs).toBeCloseTo(25, 5);
+    expect(mid.visualS).toBeCloseTo(1.25, 5);
+    expect(mid.label).toContain('μs');
+    expect(mid.label).toContain('vis');
   });
 });

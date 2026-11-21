@@ -166,6 +166,32 @@ export function formatCycleTimeChip(frequencyKhz) {
 }
 
 /**
+ * Dual-clock readout at a visual cycle fraction (scrubber playhead).
+ * Physical μs uses the acoustic period; visual s uses VISUAL_CYCLE_SCALE.
+ *
+ * @param {number} frequencyKhz
+ * @param {number} visualCycleFraction 0–1 on the visual schedule
+ * @returns {{ physicalUs: number, visualS: number, label: string, periodLabel: string }}
+ */
+export function formatDualClockAtFraction(frequencyKhz, visualCycleFraction) {
+  const frac = wrapCycleFraction(visualCycleFraction);
+  const periodUs = physicalPeriodMicroseconds(frequencyKhz);
+  const cycleS = visualCycleSeconds(frequencyKhz);
+  const physicalUs = periodUs * frac;
+  const visualS = cycleS * frac;
+  const physLabel =
+    physicalUs >= 10 ? `${physicalUs.toFixed(1)} μs` : `${physicalUs.toFixed(2)} μs`;
+  const visLabel =
+    visualS >= 1 ? `${visualS.toFixed(2)} s vis` : `${(visualS * 1000).toFixed(0)} ms vis`;
+  return {
+    physicalUs,
+    visualS,
+    label: `${physLabel} · ${visLabel}`,
+    periodLabel: formatCycleTimeChip(frequencyKhz),
+  };
+}
+
+/**
  * Progress within the current phase using an API timeline.
  * Falls back to the canonical cycle schedule when needed.
  */
