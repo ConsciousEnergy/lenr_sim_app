@@ -355,21 +355,28 @@ class TestLettsLaser:
     def setup_method(self):
         from app.physics_engine.theories.letts_laser import LettsLaserTheory
         self.theory = LettsLaserTheory()
+        # ENG-HS-03: photonic arm required; defaults stay gated off.
+        self.laser_conditions = {**STANDARD_CONDITIONS, "letts_laser": 1.0}
 
     def test_protocol_compliance(self):
         assert_theory_protocol(self.theory)
 
     def test_at_resonance(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS, {"laser_wavelength_nm": 682.0})
+        r = self.theory.calculate(self.laser_conditions, {"laser_wavelength_nm": 682.0})
         assert r.observables.get("spectral_response", 0) > 0.9
 
     def test_off_resonance(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS, {"laser_wavelength_nm": 500.0})
+        r = self.theory.calculate(self.laser_conditions, {"laser_wavelength_nm": 500.0})
         assert r.observables.get("spectral_response", 0) < 0.1
 
     def test_excess_heat(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS)
+        r = self.theory.calculate(self.laser_conditions)
         assert r.energy_output_watts > 0
+
+    def test_gated_off_without_photonic_arm(self):
+        r = self.theory.calculate(STANDARD_CONDITIONS)
+        assert r.is_applicable is False
+        assert r.energy_output_watts == 0.0
 
 
 # =====================================================
