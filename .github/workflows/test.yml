@@ -126,6 +126,10 @@ jobs:
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
+    # Fresh cache: lenr-ci github-runner cannot sudo apt; poisoned home
+    # matplotlib fontlists have caused DejaVu savefig flakes on tip pushes.
+    env:
+      MPLCONFIGDIR: ${{ runner.temp }}/mpl-config
     strategy:
       matrix:
         # PRs: 3.12 only (matches Dockerfile.backend). Push/main + dispatch:
@@ -148,26 +152,30 @@ jobs:
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
 
-    # Self-hosted lenr-ci has intermittently lacked DejaVu Sans; matplotlib Agg
-    # then fails test_unified_theory savefig (ValueError / fonttools noise) and
-    # can cascade into coverage html teardown. Install fonts + rebuild cache.
+    # No sudo: runner user cannot apt-get ("I'm afraid I can't do that").
+    # Register matplotlib's bundled DejaVu TTFs into a fresh MPLCONFIGDIR.
+    # pytest also registers them via LENR_SIM_APP_v2/backend/conftest.py.
     - name: Ensure DejaVu fonts for matplotlib
       run: |
         set -euo pipefail
-        if command -v apt-get >/dev/null 2>&1; then
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends fonts-dejavu-core fontconfig
-          sudo fc-cache -f || true
-        fi
+        mkdir -p "${MPLCONFIGDIR}"
         python - <<'PY'
         from pathlib import Path
         import matplotlib as mpl
         from matplotlib import font_manager
         from matplotlib.font_manager import FontProperties, findfont
-        # Drop stale fontlist cache so a newly installed DejaVu is visible.
-        for stale in Path(mpl.get_cachedir()).glob("fontlist-*.json"):
+
+        cache = Path(mpl.get_cachedir())
+        cache.mkdir(parents=True, exist_ok=True)
+        for stale in cache.glob("fontlist-*.json"):
             stale.unlink(missing_ok=True)
+
+        ttf_dir = Path(mpl.get_data_path()) / "fonts" / "ttf"
+        bundled = ttf_dir / "DejaVuSans.ttf"
+        assert bundled.is_file(), f"matplotlib missing bundled DejaVu at {bundled}"
         font_manager.fontManager = font_manager.FontManager()
+        for ttf in sorted(ttf_dir.glob("DejaVu*.ttf")):
+            font_manager.fontManager.addfont(str(ttf))
         path = findfont(FontProperties(family="DejaVu Sans"), fallback_to_default=False)
         print(f"matplotlib DejaVu Sans OK -> {path}")
         PY

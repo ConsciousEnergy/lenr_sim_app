@@ -20,6 +20,20 @@ from pathlib import Path
 # Use non-interactive backend for matplotlib (must be before importing pyplot)
 import matplotlib
 matplotlib.use('Agg')
+# Prefer matplotlib's bundled DejaVu (lenr-ci has no sudo for system fonts).
+try:
+    from matplotlib import font_manager as _font_manager
+    _ttf_dir = Path(matplotlib.get_data_path()) / "fonts" / "ttf"
+    if (_ttf_dir / "DejaVuSans.ttf").is_file():
+        for _ttf in sorted(_ttf_dir.glob("DejaVu*.ttf")):
+            try:
+                _font_manager.fontManager.addfont(str(_ttf))
+            except (OSError, RuntimeError, ValueError):
+                pass
+        matplotlib.rcParams["font.family"] = "sans-serif"
+        matplotlib.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+except Exception:  # noqa: BLE001 - plotting must not block physics asserts
+    pass
 import matplotlib.pyplot as plt
 
 # Add the parent directory to the path so we can import the app modules
