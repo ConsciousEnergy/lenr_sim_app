@@ -26,14 +26,20 @@ describe('TeamPage honesty CTAs (public beta)', () => {
     expect(donations).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('links Bryan Chris White contributor card to his website', () => {
+  it('shows Bryan Chris White as a highlighted guidance note under the contributor grid', () => {
     render(<TeamPage />);
-    const bryanCard = screen.getByRole('link', { name: /Bryan Chris White website/i });
-    expect(bryanCard).toHaveAttribute('href', 'https://bryanchriswhite.com/');
-    expect(bryanCard).toHaveAttribute('target', '_blank');
-    expect(bryanCard).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(screen.getByText('Infrastructure Guidance')).toBeInTheDocument();
-    // Sibling contributor cards stay unlinked (name text only, not anchors)
+    const note = screen.getByTestId('bryan-guidance-note');
+    expect(note).toHaveTextContent('Bryan Chris White');
+    expect(note).toHaveTextContent('Infrastructure / Stack Guidance');
+    // Not a peer card in the contributor grid
+    expect(screen.getByText('Diadon Acs with Conscious Energy').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
+    expect(screen.getByText('Physics Contributors').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
+    expect(screen.getByText('Research Community').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
+    const bryanSite = screen.getByRole('link', { name: /Bryan Chris White website/i });
+    expect(bryanSite).toHaveAttribute('href', 'https://bryanchriswhite.com/');
+    expect(bryanSite).toHaveAttribute('target', '_blank');
+    expect(bryanSite).toHaveAttribute('rel', 'noopener noreferrer');
+    // Contributor peer cards stay unlinked
     expect(screen.getByText('Diadon Acs with Conscious Energy').closest('a')).toBeNull();
     expect(screen.getByText('Physics Contributors').closest('a')).toBeNull();
     expect(screen.getByText('Research Community').closest('a')).toBeNull();
