@@ -15,8 +15,17 @@ cd "$PAPER"
 
 PAPER_VENV="$PAPER/.venv-paper"
 if [[ -f "$PAPER/requirements.txt" ]]; then
+  # markdown==3.8.1 requires Python ≥3.9; fail fast before pip / venv sync.
+  if ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)'; then
+    echo "Paper build requires Python ≥3.9 (markdown==3.8.1); found $(python3 -V)" >&2
+    exit 1
+  fi
   if [[ ! -x "$PAPER_VENV/bin/python" ]]; then
     python3 -m venv "$PAPER_VENV"
+  fi
+  if ! "$PAPER_VENV/bin/python" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)'; then
+    echo "Paper venv at $PAPER_VENV is Python <3.9; recreate with python3≥3.9" >&2
+    exit 1
   fi
   # Always sync pins so existing venvs pick up requirements bumps (e.g. markdown).
   "$PAPER_VENV/bin/pip" install -q -r "$PAPER/requirements.txt"

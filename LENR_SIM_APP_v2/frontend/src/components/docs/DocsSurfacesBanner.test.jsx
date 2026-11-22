@@ -1,15 +1,10 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen } from '../../tests/test-utils';
 import DocsSurfacesBanner from './DocsSurfacesBanner';
 
 describe('DocsSurfacesBanner', () => {
   test('disambiguates three pack surfaces with honesty lock', () => {
-    render(
-      <MemoryRouter>
-        <DocsSurfacesBanner activeSlug="reviewer-packets" />
-      </MemoryRouter>
-    );
+    render(<DocsSurfacesBanner activeSlug="reviewer-packets" />);
     expect(screen.getByTestId('docs-surfaces-banner')).toBeInTheDocument();
     expect(screen.getByText(/Paper packets A–E/i)).toBeInTheDocument();
     expect(screen.getByText(/Campaign JSON packs/i)).toBeInTheDocument();

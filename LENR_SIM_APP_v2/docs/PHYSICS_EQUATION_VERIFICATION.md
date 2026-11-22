@@ -1115,9 +1115,9 @@ Y(D3+) / Y(D2+) ≈ 1.5   (Zakopane / ICCF-27 2026 talk)
 ## 14. Calorimetry significance (BDS-302 / BDS-363)
 
 ### 14.1 Heat significance ratio
-```
-S_heat = Q_excess / σ_Q
-```
+
+\[ S_{\mathrm{heat}} = Q_{\mathrm{excess}} / \sigma_Q \]
+
 **Status:** 📖 REFERENCE (paper statistical-significance definition; analytics bar S≥5)
 **Code:** `s_heat()` / `DISCOVERY_GRADE_SIGMA = 5.0` (file: `physics_engine/calorimetry_significance.py`)
 **Independent check (2026-11-17):** Exact Decimal arithmetic (WolframAlpha MCP unavailable in this agent environment):

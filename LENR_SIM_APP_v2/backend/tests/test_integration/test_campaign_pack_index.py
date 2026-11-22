@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.services.campaign_pack_index import (
@@ -32,6 +35,54 @@ def test_list_committed_pack_summaries_honesty() -> None:
         if pack["pack_id"] in FIXTURE_PACK_IDS:
             assert pack["fixture"] is True
             assert pack["role"] == "fixture"
+
+
+def test_string_lenr_proved_false_not_advertised(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Non-boolean lenr_proved (e.g. string \"false\") must not be advertised."""
+    bad = tmp_path / "string_false_pack"
+    bad.mkdir()
+    (bad / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "lenr-reviewer-pack-v1",
+                "preset": "string_false_pack",
+                "n_experiments": 1,
+                "n_theory_runs": 1,
+                "lenr_proved": "false",
+                "open_ids": list(REQUIRED_OPEN_IDS),
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "app.services.campaign_pack_index._pack_root", lambda: tmp_path
+    )
+    payload = list_committed_pack_summaries()
+    assert payload["packs"] == []
+    assert payload["lenr_proved"] is False
+
+
+def test_missing_lenr_proved_not_advertised(tmp_path: Path, monkeypatch) -> None:
+    missing = tmp_path / "missing_proof_flag"
+    missing.mkdir()
+    (missing / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "lenr-reviewer-pack-v1",
+                "preset": "missing_proof_flag",
+                "n_experiments": 1,
+                "n_theory_runs": 1,
+                "open_ids": list(REQUIRED_OPEN_IDS),
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "app.services.campaign_pack_index._pack_root", lambda: tmp_path
+    )
+    assert list_committed_pack_summaries()["packs"] == []
 
 
 def test_campaign_packs_api_endpoint() -> None:

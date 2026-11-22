@@ -1,2 +1,3 @@
 # Paper pack build (build_branded.py). Pin for reproducible CI.
+# Requires Python ≥3.9 (markdown 3.8.1); build_all.sh enforces this before pip.
 markdown==3.8.1

@@ -154,24 +154,70 @@ def enrich_experiment_dict(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 def _attach_discovery_grade_envelopes_to_row(row: Dict[str, Any]) -> None:
     """Ensure discovery_grade_gap + honest_closure on analytics row payloads."""
+    from app.physics_engine.calorimetry_significance import (
+        resolve_measured_excess_power_w,
+    )
     from app.physics_engine.discovery_grade_gap import (
         discovery_grade_envelopes_from_moe_fields,
     )
 
     results = row.get("results") if isinstance(row.get("results"), dict) else {}
+    parameters = (
+        row.get("parameters") if isinstance(row.get("parameters"), dict) else {}
+    )
     summary = row.get("bayesian_summary")
     if not isinstance(summary, dict):
         summary = results.get("bayesian_summary") if isinstance(results, dict) else None
     if not isinstance(summary, dict):
         summary = {}
 
+    # Resolve Q + seed flag together from the live row. Never pair a stale
+    # bayesian_summary.excess_power_w with an updated row sigma_Q_W.
+    q_probe: Dict[str, Any] = {
+        "excess_heat_watts": row.get("excess_heat_watts"),
+        "parameters": dict(parameters),
+        "results": dict(results),
+    }
+    for key in (
+        "literature_peak_excess_power_W",
+        "measured_excess_power_W",
+        "excess_heat_watts_reported",
+    ):
+        if row.get(key) is not None:
+            q_probe[key] = row[key]
+        elif results.get(key) is not None:
+            q_probe[key] = results[key]
+
+    # When σ still matches the summary envelope, restore missing measured-Q
+    # slots (e.g. results.q_ex_w) so baselines round-trip. If σ was updated
+    # independently, skip summary Q entirely — resolve live fields only.
+    row_sigma = row.get("sigma_Q_W")
+    summary_sigma = summary.get("sigma_q_w")
+    sigma_matches_summary = True
+    try:
+        if row_sigma is not None and summary_sigma is not None:
+            sigma_matches_summary = abs(float(row_sigma) - float(summary_sigma)) <= 1e-12
+    except (TypeError, ValueError):
+        sigma_matches_summary = False
+    if sigma_matches_summary:
+        summary_q = summary.get("excess_power_w")
+        summary_q_source = summary.get("q_source")
+        if summary_q is not None and summary_q_source == "results.q_ex_w":
+            if q_probe["results"].get("q_ex_w") is None:
+                q_probe["results"]["q_ex_w"] = summary_q
+        elif summary_q is not None and summary_q_source in (
+            "literature_peak_excess_power_W",
+            "measured_excess_power_W",
+            "excess_heat_watts_reported",
+        ):
+            if q_probe.get(summary_q_source) is None:
+                q_probe[str(summary_q_source)] = summary_q
+
+    q_w, q_source, q_is_seed = resolve_measured_excess_power_w(q_probe)
+
     # Rebuild from MoE columns so older SQL rows and pack imports stay honest.
     attached = discovery_grade_envelopes_from_moe_fields(
-        excess_power_w=(
-            summary.get("excess_power_w")
-            if summary.get("excess_power_w") is not None
-            else row.get("excess_heat_watts")
-        ),
+        excess_power_w=q_w,
         sigma_q_w=row.get("sigma_Q_W"),
         sigma_q_statistical_w=row.get("sigma_Q_statistical_W"),
         sigma_q_systematic_w=row.get("sigma_Q_systematic_W"),
@@ -180,10 +226,10 @@ def _attach_discovery_grade_envelopes_to_row(row: Dict[str, Any]) -> None:
         if isinstance(row.get("moe_citation_keys"), list)
         else None,
         moe_sigma_q_pairing_verified=row.get("moe_sigma_q_pairing_verified"),
-        q_source=summary.get("q_source"),
-        q_is_seed_scale=bool(summary.get("q_is_seed_scale")),
+        q_source=q_source,
+        q_is_seed_scale=bool(q_is_seed),
         discovery_grade_eligible=row.get("discovery_grade_eligible"),
-        s_heat=row.get("s_heat"),
+        s_heat=row.get("s_heat") if q_w is None else None,
         literature_id=row.get("literature_id") or row.get("literatureId"),
     )
     # Preserve prior summary metadata; significance + gap envelopes win.

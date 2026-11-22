@@ -33,10 +33,12 @@ from app.physics_engine.discovery_grade_gap import (
     GAP_REQUIREMENT_IDS,
     attach_discovery_grade_envelopes,
     corpus_discovery_grade_gap,
+    discovery_grade_envelopes_from_moe_fields,
     discovery_grade_gap_bookkeeping,
     honest_closure_bookkeeping,
 )
 from app.physics_engine.sigma_distance import (
+    corpus_moe_coverage,
     literature_corpus_moe_coverage,
     quantitative_distance_to_discovery,
 )
@@ -563,6 +565,73 @@ def test_miles_deninno_mckubre_stay_exploratory_not_discovery() -> None:
         assert all(v == "OPEN" for v in mckubre["eq_open_status"].values())
 
 
+def test_persisted_true_does_not_override_failed_gates() -> None:
+    """Stale discovery_grade_eligible=True must not clear a failed pairing gate."""
+    env = discovery_grade_envelopes_from_moe_fields(
+        excess_power_w=1.1,
+        sigma_q_w=0.08,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["kasagi2026"],
+        moe_sigma_q_pairing_verified=False,
+        discovery_grade_eligible=True,
+    )
+    assert env["discovery_grade_eligible"] is False
+    assert env["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert "moe_pairing_verified" in env["discovery_grade_gap"]["missing_ids"]
+    assert env["lenr_proved"] is False
+
+
+def test_persisted_false_still_suppresses_eligible_gates() -> None:
+    env = discovery_grade_envelopes_from_moe_fields(
+        excess_power_w=1.1,
+        sigma_q_w=0.08,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["kasagi2026"],
+        moe_sigma_q_pairing_verified=True,
+        discovery_grade_eligible=False,
+    )
+    assert env["discovery_grade_eligible"] is False
+    assert env["discovery_grade_gap"]["overall_status"] == "not_met"
+    assert env["lenr_proved"] is False
+
+
+def test_quantitative_distance_nonfinite_metrics_normalize_to_none() -> None:
+    report = discovery_grade_analytics(
+        excess_power_w=1e-308,
+        sigma_q_w=1.0,
+        moe_provenance="literature_reported",
+        moe_citation_keys=["x"],
+        moe_sigma_q_pairing_verified=True,
+    )
+    distance = quantitative_distance_to_discovery(report)
+    required = distance["required_sigma_q_w_for_5"]
+    tightening = distance["sigma_tightening_factor_vs_5"]
+    assert required is None or (
+        isinstance(required, float) and required == required and abs(required) != float("inf")
+    )
+    assert tightening is None or (
+        isinstance(tightening, float)
+        and tightening == tightening
+        and abs(tightening) != float("inf")
+    )
+
+
+def test_cite_gated_coverage_requires_sigma_q() -> None:
+    reports = [
+        {
+            "sigma_q_w": None,
+            "moe_provenance": "literature_reported",
+            "moe_citation_keys": ["orphan-cite"],
+            "moe_sigma_q_pairing_verified": False,
+            "discovery_grade_eligible": False,
+            "s_heat": None,
+        }
+    ]
+    coverage = corpus_moe_coverage(reports, literature_ids=["orphan"])
+    assert coverage["with_sigma_q"] == 0
+    assert coverage["with_literature_reported_cite_gated"] == 0
+
+
 def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
     """Celani JCMNS 29 12±2 is exploratory instrument_precision — not discovery."""
     from app.data.dataset_io import exploratory_moe_literature_records
@@ -592,3 +661,4 @@ def test_celani_exploratory_hydrate_stays_non_discovery() -> None:
     assert quantitative_distance_to_discovery(report)["distance_status"] == (
         "at_or_above_bar_gates_blocked"
     )
+

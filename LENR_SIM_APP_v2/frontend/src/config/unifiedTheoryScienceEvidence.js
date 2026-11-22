@@ -596,6 +596,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     s_heat_exploratory: 26,
     moe_provenance: 'literature_reported_instrument_precision',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'analytics_gates_clear',
     reasons: Object.freeze([
@@ -616,6 +617,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_precision',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -634,6 +636,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -652,6 +655,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     s_heat_exploratory: null,
     moe_provenance: 'literature_reported_instrument_floor',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'not_met',
     reasons: Object.freeze([
@@ -670,6 +674,7 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     s_heat_exploratory: 6,
     moe_provenance: 'literature_reported_instrument_precision',
     pairing_verified: false,
+    claim_tier: 'speculative_exploratory',
     discovery_grade_eligible: false,
     soft_chip: 'analytics_gates_clear',
     reasons: Object.freeze([

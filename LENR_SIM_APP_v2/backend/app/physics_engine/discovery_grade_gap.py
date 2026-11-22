@@ -139,7 +139,7 @@ def discovery_grade_gap_bookkeeping(
                 else (
                     f"moe_provenance={provenance!r} is exploratory; "
                     "only literature_reported total σ_Q is discovery-eligible"
-                ),
+                )
             ),
         )
     )
@@ -378,10 +378,10 @@ def discovery_grade_envelopes_from_moe_fields(
         q_is_seed_scale=bool(q_is_seed_scale),
         literature_id=literature_id,
     )
-    # Prefer persisted analytics flag when explicitly provided (pack import
-    # forces False even if arithmetic would clear).
-    if discovery_grade_eligible is not None:
-        report["discovery_grade_eligible"] = bool(discovery_grade_eligible)
+    # Persisted False may suppress eligibility (pack / non-baseline create).
+    # Persisted True must never override calculated False when gates fail.
+    if discovery_grade_eligible is False:
+        report["discovery_grade_eligible"] = False
     if s_heat is not None and report.get("s_heat") is None:
         report["s_heat"] = s_heat
     return attach_discovery_grade_envelopes(report)
