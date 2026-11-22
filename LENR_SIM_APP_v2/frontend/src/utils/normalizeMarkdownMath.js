@@ -40,22 +40,60 @@ export function normalizeMarkdownMath(markdown) {
 }
 
 /**
+ * Strip leaked blockquote / list markers from captured display-math body lines.
+ * @param {string} body
+ * @returns {string}
+ */
+function stripContainerMarkersFromBody(body) {
+  return String(body)
+    .split('\n')
+    .map((line) =>
+      line
+        .replace(/^[ \t]*(?:>[ \t]*)+/, '')
+        .replace(/^[ \t]*(?:[-*+]|\d+\.)[ \t]+/, ''),
+    )
+    .join('\n')
+    .trim();
+}
+
+/**
  * @param {string} text
  * @returns {string}
  */
 function rewriteProseMath(text) {
-  // Display math first. Capture an optional quote/list prefix on the opening line
-  // so converted $$ blocks stay inside the same Markdown container.
+  // Match \[…\] with same-line lead-in so container prefixes are consumed.
+  // Allows display math after prose (emits a separate $$ block).
   let next = text.replace(
-    /(^|\n)([ \t]*(?:>[ \t]*|[-*+][ \t]+|\d+\.[ \t]+)?)\\\[([\s\S]+?)\\\]/g,
-    (full, lead, prefix, expr) => {
-      const body = String(expr).trim();
-      const containerPrefix = prefix || '';
-      if (containerPrefix) {
-        const lines = ['$$', body, '$$'].map((line) => `${containerPrefix}${line}`);
+    /(^|\n)([^\n]*?)\\\[([\s\S]+?)\\\]/g,
+    (full, lead, before, expr) => {
+      const body = stripContainerMarkersFromBody(expr);
+      const quoteOnly = before.match(/^([ \t]*(?:>[ \t]*)+)$/);
+      const listOnly = before.match(/^([ \t]*)([-*+]|\d+\.)([ \t]+)$/);
+
+      if (quoteOnly) {
+        const prefix = quoteOnly[1];
+        const lines = ['$$', ...body.split('\n'), '$$'].map(
+          (line) => `${prefix}${line}`,
+        );
         return `${lead}${lines.join('\n')}`;
       }
-      return `${lead}\n$$\n${body}\n$$\n`;
+
+      if (listOnly) {
+        const openPrefix = listOnly[0];
+        const bodyIndent = ' '.repeat(openPrefix.length);
+        const bodyLines = body.split('\n');
+        const lines = [
+          `${openPrefix}$$`,
+          ...bodyLines.map((line) => `${bodyIndent}${line}`),
+          `${bodyIndent}$$`,
+        ];
+        return `${lead}${lines.join('\n')}`;
+      }
+
+      // Prose (or empty) before \[…\] — keep prose, emit a separate display block.
+      const prose = before.replace(/[ \t]+$/, '');
+      const prosePart = prose.length > 0 ? `${prose}\n` : '';
+      return `${lead}${prosePart}$$\n${body}\n$$`;
     },
   );
 

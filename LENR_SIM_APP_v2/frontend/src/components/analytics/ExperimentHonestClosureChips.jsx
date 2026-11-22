@@ -80,11 +80,16 @@ export default function ExperimentHonestClosureChips({
     distance.arithmetic_sigma_shortfall == null
       ? 'n/a'
       : distance.arithmetic_sigma_shortfall;
+  // composition_mode is σ composition bookkeeping — never MoE provenance.
   const moeProvenance =
     distance.moe_provenance ||
-    distance.stat_sys_composition?.composition_mode ||
     experiment?.moe_provenance ||
     experiment?.results?.moe_provenance ||
+    experiment?.bayesian_summary?.moe_provenance ||
+    null;
+  const compositionMode =
+    distance.stat_sys_composition?.composition_mode ||
+    experiment?.stat_sys_composition?.composition_mode ||
     null;
   const claimTier = resolveCalorimetryClaimTier(experiment, moeProvenance);
   const showExploratoryBanner =
@@ -213,6 +218,11 @@ export default function ExperimentHonestClosureChips({
               </>
             ) : distance.s_heat != null ? (
               <> · S_heat withheld without moe_provenance</>
+            ) : null}
+            {compositionMode ? (
+              <>
+                {' '}· σ composition=<code>{String(compositionMode)}</code>
+              </>
             ) : null}
             {distance.arithmetic_sigma_shortfall != null ? (
               <>

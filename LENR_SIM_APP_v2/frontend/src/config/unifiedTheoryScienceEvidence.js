@@ -753,6 +753,10 @@ export const CAMPAIGN_EVIDENCE = Object.freeze({
     'LENR_SIM_APP_v2/datasets/reviewer_packs/cavitation_collapse_campaign/',
   simulation_evidence_path:
     'LENR_SIM_APP_v2/docs/v0.3.7-beta/paper/simulation_evidence.json',
+  /** Mirrors simulation_evidence.json paper_revision (HIP-08). */
+  paper_revision: '2026-11-21-hip08-honesty-fold-in',
+  liquid_phase_status: 'ON_HOLD',
+  lab_ask_met_closes_eq_open: false,
   n_experiments: 22,
   n_theory_runs: 22,
   /** Pinned pack Sobol depth (build_cavitation_collapse_pack.PACK_UQ_SAMPLES). */
@@ -873,6 +877,12 @@ export const CLOSURE_SURFACE_LINKS = Object.freeze({
     'Falsification / Does-not-count excerpts are decision aids — status stays OPEN.',
   analytics_route: '/analytics',
   theory_paper_route: '/theory-paper',
+  /** HIP-03 first-class Laboratory Experiments hub (LAB-01…05). */
+  lab_experiments_route: '/lab-experiments',
+  lab_experiments_next_lab: '/lab-experiments#next-lab',
+  lab_experiments_discharge: '/lab-experiments#discharge',
+  lab_experiments_positive_results: '/lab-experiments#positive-results',
+  virtual_lab_route: '/unified-theory?tab=results',
   avenue_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/AVENUE_RANKING.md',
   runway_doc_path: 'LENR_SIM_APP_v2/docs/v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md',
   docs_eq_open_runway: '/docs/eq-open-closure-runway',
@@ -880,6 +890,65 @@ export const CLOSURE_SURFACE_LINKS = Object.freeze({
   docs_issue_ledger: '/docs/issue-ledger',
   docs_testable_predictions: '/docs/testable-predictions',
   docs_researcher_review_pack: '/docs/researcher-review-pack',
+});
+
+/**
+ * HIP-03 / LAB-05 — positive-results operator path (decision aid only).
+ * Maps measurable governed-lab steps to NEXT_LAB asks without inventing σ_Q.
+ * Ask met ≠ EQ-OPEN discharge (Lean LabAskProxies).
+ */
+export const POSITIVE_RESULTS_OPERATOR_PATH = Object.freeze({
+  title: 'Positive-results operator path',
+  honesty_lock:
+    'Governed positive evidence underwrites Lab Ask acceptance criteria only. Soft analytics ' +
+    'clear ≠ discovery ≠ EQ-OPEN closed. Never invent σ_Q; refuse Iwamura / Mizuno / Arata / ' +
+    'Celani discovery MoE beyond exhausted Kasagi 2/26 inventory.',
+  lab_ask_met_ne_eq_open_discharge: true,
+  closes_eq_open: false,
+  lenr_proved: false,
+  refuse_fabricated_sigma_q: true,
+  steps: Object.freeze([
+    Object.freeze({
+      id: 'heat_he_governed',
+      label: 'Governed simultaneous heat + He',
+      next_lab_id: 'governed_heat_he_cite_gated_moe',
+      operator_action:
+        'Acquire time-resolved excess_power_W + He-4 rates on a governed cell with ' +
+        'cite-gated literature_reported σ_Q_W and verified Q↔σ pairing (S_heat≥5, non-seed).',
+      do_not:
+        'Do not invent σ_Q from instrument floors, Miles exploratory arithmetic, or campaign model-output 0.1 W.',
+      still_open_after:
+        'EQ-OPEN-YIELD-01 / MEV-01 stay OPEN until IR + Lean + ledger + governance discharge.',
+    }),
+    Object.freeze({
+      id: 'calorimetry_beyond_kasagi',
+      label: 'Calorimetry beyond Kasagi 2/26',
+      next_lab_id: 'calorimetry_resolution_beyond_kasagi',
+      operator_action:
+        'Land ≥1 additional non-Kasagi governed calorimetry row with literature_reported σ_Q + ' +
+        'verified pairing that clears discovery_grade_eligible without fabricated MoE.',
+      do_not:
+        'Do not promote Celani exploratory instrument_precision or refuse-list campaigns to discovery σ.',
+      still_open_after:
+        'Extra analytics-eligible rows still leave EQ-OPEN-YIELD-01 OPEN and lenr_proved false.',
+    }),
+    Object.freeze({
+      id: 'gamma_ul_efficiency',
+      label: 'Efficiency-corrected γ upper limit',
+      next_lab_id: 'gamma_ul_efficiency_corrected',
+      operator_action:
+        'Publish calibrated gamma_cps / gamma_ul_log10 with efficiency_refs + coincidence geometry; ' +
+        'prefer heat-coincident intervals when claiming suppression.',
+      do_not:
+        'Do not treat CR-39 pits or UL without efficiency/coincidence as RAD discharge.',
+      still_open_after:
+        'UL receipt alone ≠ EQ-OPEN-RAD-01 affirmative/negative discharge under IR + ledger sign-off.',
+    }),
+  ]),
+  next_honest_step_after_asks_met:
+    'Even if all five NEXT_LAB asks are notionally met: keep EQ-OPEN-* OPEN and lenr_proved false; ' +
+    'run Affirmative / Falsification / Does-not-count under the runway; ship IR + Lean + ledger + ' +
+    'governance Prefer-merges only after human academic sign-off.',
 });
 
 /**
@@ -1385,6 +1454,60 @@ export function assertScienceEvidenceHonesty(honesty = SCIENCE_EVIDENCE_HONESTY)
     }
     if (!Array.isArray(row.related_avenues) || row.related_avenues.length < 1) {
       throw new Error(`Science evidence runway ${row.id} must link related_avenues`);
+    }
+  }
+  if (CLOSURE_SURFACE_LINKS.lab_experiments_route !== '/lab-experiments') {
+    throw new Error(
+      'Science evidence UI must expose HIP-03 lab_experiments_route=/lab-experiments',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.paper_revision !== '2026-11-21-hip08-honesty-fold-in') {
+    throw new Error(
+      'Science evidence UI must mirror HIP-08 simulation_evidence paper_revision',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.liquid_phase_status !== 'ON_HOLD') {
+    throw new Error(
+      'Science evidence UI must keep liquid_phase_status ON_HOLD (HIP-08)',
+    );
+  }
+  if (CAMPAIGN_EVIDENCE.lab_ask_met_closes_eq_open !== false) {
+    throw new Error(
+      'Science evidence UI must keep lab_ask_met_closes_eq_open false',
+    );
+  }
+  if (
+    POSITIVE_RESULTS_OPERATOR_PATH.closes_eq_open !== false ||
+    POSITIVE_RESULTS_OPERATOR_PATH.lenr_proved !== false ||
+    POSITIVE_RESULTS_OPERATOR_PATH.refuse_fabricated_sigma_q !== true ||
+    POSITIVE_RESULTS_OPERATOR_PATH.lab_ask_met_ne_eq_open_discharge !== true
+  ) {
+    throw new Error(
+      'Science evidence UI must keep POSITIVE_RESULTS_OPERATOR_PATH honesty locks',
+    );
+  }
+  if (
+    !Array.isArray(POSITIVE_RESULTS_OPERATOR_PATH.steps) ||
+    POSITIVE_RESULTS_OPERATOR_PATH.steps.length < 3
+  ) {
+    throw new Error(
+      'Science evidence UI must list ≥3 POSITIVE_RESULTS_OPERATOR_PATH steps',
+    );
+  }
+  for (const step of POSITIVE_RESULTS_OPERATOR_PATH.steps) {
+    const ask = NEXT_LAB_MOE_TARGETS.find((row) => row.id === step.next_lab_id);
+    if (!ask) {
+      throw new Error(
+        `POSITIVE_RESULTS step ${step.id} must map to a NEXT_LAB_MOE_TARGETS id`,
+      );
+    }
+    if (!step.do_not || !/σ_Q|sigma_Q|fabricat/i.test(step.do_not + step.operator_action)) {
+      // heat+He / calorimetry must refuse fabrication; γ step refuses CR-39 / UL without efficiency
+      if (!step.do_not || String(step.do_not).length < 20) {
+        throw new Error(
+          `POSITIVE_RESULTS step ${step.id} must document a concrete do_not refuse`,
+        );
+      }
     }
   }
 }

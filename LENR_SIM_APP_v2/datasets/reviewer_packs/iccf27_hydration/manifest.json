@@ -97,7 +97,7 @@
       {
         "id": "INV-CONTRACT-VERSION",
         "field": "contract_version",
-        "equals": "v0.3.9-beta-science-gate-1"
+        "equals": "v0.4.0-beta-science-gate-1"
       }
     ]
   },
@@ -122,5 +122,5 @@
     "kasagi-ni-radiant-2026",
     "kasagi-nicu-radiant-2026"
   ],
-  "note": "Model-output hydration of Pd/Ni plus graphite/SiC UQ cells and ICCF-27 literature anchors. Cite-gated Kasagi MoE (\u03c3_Q=0.08, literature_reported) is copied from literature_iccf27.v1 \u2014 never invented. Null-\u03c3 companions stay null-\u03c3. Does not replace q_campaign_demo. Does not prove LENR."
+  "note": "Model-output hydration of Pd/Ni plus graphite/SiC UQ cells and ICCF-27 literature anchors. Stable pack slots: hyd-10=Czerski-Zr, hyd-11=HyLENR (pre-#479 identities); Kasagi-Ni=hyd-12. Cite-gated Kasagi MoE (\u03c3_Q=0.08, literature_reported) is copied from literature_iccf27.v1 \u2014 never invented. Theory runs serialize clamped temperature_k/loading_ratio/conditions for importer fidelity. Null-\u03c3 companions stay null-\u03c3. Does not replace q_campaign_demo. Does not prove LENR."
 }

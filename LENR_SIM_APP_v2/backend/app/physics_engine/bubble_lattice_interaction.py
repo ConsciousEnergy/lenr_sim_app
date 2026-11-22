@@ -258,9 +258,25 @@ class LatticeParameters:
                 "screening_potential": 120.0,   # eV (Czerski UHV Zr)
                 "bulk_modulus": 9.10e10,        # Pa
             },
+            # Celani Cu55Ni44Mn1 constantan — alloy model assumptions (ENG-HS-06).
+            "constantan": {
+                "lattice_constant": 3.58e-10,   # m (FCC between Cu/Ni)
+                "electron_density": 8.4e28,     # m^-3
+                "debye_temperature": 410.0,     # K
+                "work_function": 4.85,          # eV
+                "fermi_energy": 7.0,            # eV (model assumption)
+                "screening_potential": 450.0,   # eV (Ni-class prior; not discovery σ)
+                "bulk_modulus": 1.60e11,        # Pa (model assumption)
+            },
         }
         mat_key = (material or "").strip().lower()
-        aliases = {"carbon": "graphite", "sic": "silicon_carbide", "zr": "zirconium"}
+        aliases = {
+            "carbon": "graphite",
+            "sic": "silicon_carbide",
+            "zr": "zirconium",
+            "constantan_cu55ni44mn1": "constantan",
+            "cu55ni44mn1": "constantan",
+        }
         mat_key = aliases.get(mat_key, mat_key)
         if mat_key in material_data:
             data = material_data[mat_key].copy()

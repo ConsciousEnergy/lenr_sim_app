@@ -32,6 +32,7 @@ const UnifiedTheoryPage = lazy(() => import('./pages/UnifiedTheoryPage'));
 const TheoryPage = lazy(() => import('./pages/TheoryPage'));
 const TheoryPaperPage = lazy(() => import('./pages/TheoryPaperPage'));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const LaboratoryExperimentsPage = lazy(() => import('./pages/LaboratoryExperimentsPage'));
 const DocViewerPage = lazy(() => import('./pages/DocViewerPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const AdvancedAnalysisPage = lazy(() => import('./pages/AdvancedAnalysisPage'));
@@ -246,6 +247,13 @@ const AppContent = () => {
               <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
                 <Suspense fallback={<LoadingFallback />}>
                   <DocumentationPage />
+                </Suspense>
+              </AppLayoutFixed>
+            } />
+            <Route path="/lab-experiments" element={
+              <AppLayoutFixed darkMode={isDarkMode} toggleDarkMode={toggleTheme}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <LaboratoryExperimentsPage />
                 </Suspense>
               </AppLayoutFixed>
             } />

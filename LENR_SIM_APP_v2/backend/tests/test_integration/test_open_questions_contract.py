@@ -2,6 +2,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import settings
+
+EXPECTED_CONTRACT_VERSION = f"v{settings.APP_VERSION}-science-gate-1"
+
 
 def _client() -> TestClient:
     from app.main import app
@@ -93,7 +97,7 @@ def test_simulate_default_is_additive_and_does_not_close() -> None:
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
-    assert data["contract_version"] == "v0.3.9-beta-science-gate-1"
+    assert data["contract_version"] == EXPECTED_CONTRACT_VERSION
     assert data["validation"]["route_mode"] == "legacy_unified_model"
     assert "use_theory_pipeline" not in _base_payload()
     assert data["reaction_rate_engine"]["rate"]["mode"] == "two_body"
@@ -178,7 +182,7 @@ def test_pipeline_run_includes_open_questions_and_keeps_not_combinable() -> None
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["contract_version"] == "v0.3.9-beta-science-gate-1"
+    assert data["contract_version"] == EXPECTED_CONTRACT_VERSION
     assert "bubble_lattice.peak_conditions.enhancement_factor" in data[
         "composition_provenance"
     ]["not_combinable_with"]

@@ -56,6 +56,18 @@ CITE_GATED_KASAGI_IDS: Set[str] = {
     "kasagi-ni-radiant-2026",
 }
 
+# Stable pack slots for ICCF literature cells.
+# Preserve pre-#479 identities: hyd-10 = Czerski-Zr, hyd-11 = HyLENR.
+# Kasagi-Ni / tipd / Valat take distinct slots — never reuse 10/11 for new lit.
+STABLE_ICCF_PACK_SLOT: Dict[str, int] = {
+    "kasagi-nicu-radiant-2026": 9,
+    "czerski-thermal-spike-zr-2024": 10,
+    "hylenr-tamu-phase1-2026": 11,
+    "kasagi-ni-radiant-2026": 12,
+    "czerski-thermal-spike-tipd-2026": 13,
+    "valat-heat-bursts-pd-2026": 14,
+}
+
 
 def _iccf27_by_id() -> Dict[str, Dict[str, Any]]:
     return {
@@ -152,11 +164,47 @@ def apply_corpus_moe_overlay(
     return out
 
 
+def _pack_slot_for_case(case: Dict[str, Any], fallback_index: int) -> int:
+    """Stable ICCF slots; UQ cells keep sequential 1..N indices."""
+    lit_id = case.get("literature_id")
+    if lit_id and str(lit_id) in STABLE_ICCF_PACK_SLOT:
+        return STABLE_ICCF_PACK_SLOT[str(lit_id)]
+    return fallback_index
+
+
+def _clamped_theory_inputs(case: Dict[str, Any]) -> Dict[str, Any]:
+    """Importer-compatible TheoryRunRequest conditions (clamped), not raw experiment L."""
+    temperature = min(max(float(case["temperature"]), 1.0), 2000.0)
+    loading = min(max(float(case.get("loading_ratio") or 0.9), 0.0), 1.0)
+    conditions: Dict[str, Any] = {
+        "temperature": temperature,
+        "loading_ratio": loading,
+        "host_material": case.get("host_material"),
+    }
+    if case.get("beam_energy_kev") is not None:
+        conditions["beam_energy_kev"] = case.get("beam_energy_kev")
+    if case.get("molecular_beam_species") is not None:
+        conditions["molecular_beam_species"] = case.get("molecular_beam_species")
+    return {
+        "temperature_k": temperature,
+        "loading_ratio": loading,
+        "conditions": conditions,
+    }
+
+
 async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     experiments: List[Dict[str, Any]] = []
     theory_runs: List[Dict[str, Any]] = []
     corpus_by_id = _iccf27_by_id()
+    used_slots: Set[int] = set()
     for index, case in enumerate(_cells(), start=1):
+        pack_slot = _pack_slot_for_case(case, index)
+        if pack_slot in used_slots:
+            raise RuntimeError(
+                f"ICCF pack slot collision at iccf27-hyd-{pack_slot:02d} "
+                f"(literature_id={case.get('literature_id')!r})"
+            )
+        used_slots.add(pack_slot)
         request = _simulate_payload(case, "iccf27_hydration", "carbon_silicate_uq")
         request.time_steps = 10
         request.total_time = 1.0
@@ -169,7 +217,7 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         observables = body.get("observables") if isinstance(body.get("observables"), dict) else {}
         uq = ((body.get("reaction_rate_engine") or {}).get("uncertainty") or {})
         exp = {
-            "id": f"iccf27-hyd-{index:02d}",
+            "id": f"iccf27-hyd-{pack_slot:02d}",
             "name": f"ICCF27 hydration {case.get('tag')}",
             "type": "unified_theory",
             "status": "completed",
@@ -200,16 +248,10 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         }
         exp = apply_corpus_moe_overlay(exp, corpus_by_id=corpus_by_id)
         experiments.append(exp)
-        loading = min(max(float(case.get("loading_ratio") or 0.9), 0.0), 1.0)
+        theory_inputs = _clamped_theory_inputs(case)
         theory_body = await run_theories(
             TheoryRunRequest(
-                conditions=TheoryConditions(
-                    temperature=min(max(float(case["temperature"]), 1.0), 2000.0),
-                    loading_ratio=loading,
-                    host_material=case.get("host_material"),
-                    beam_energy_kev=case.get("beam_energy_kev"),
-                    molecular_beam_species=case.get("molecular_beam_species"),
-                ),
+                conditions=TheoryConditions(**theory_inputs["conditions"]),
                 enabled_theories=list(case["enabled_theories"]) if case.get("enabled_theories") else None,
             )
         )
@@ -221,11 +263,16 @@ async def _run() -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         }
         if scores:
             theory_runs.append({
-                "id": f"iccf27-hyd-run-{index:02d}",
+                "id": f"iccf27-hyd-run-{pack_slot:02d}",
                 "experiment_id": exp["id"],
+                "temperature_k": theory_inputs["temperature_k"],
+                "loading_ratio": theory_inputs["loading_ratio"],
+                "conditions": theory_inputs["conditions"],
                 "theory_scores": scores,
                 "is_empirical_confidence": False,
             })
+    experiments.sort(key=lambda row: str(row.get("id") or ""))
+    theory_runs.sort(key=lambda row: str(row.get("id") or ""))
     return experiments, theory_runs
 
 
@@ -267,9 +314,12 @@ def _write(experiments: List[Dict[str, Any]], runs: List[Dict[str, Any]]) -> Pat
         "cite_gated_moe_ids": sorted(CITE_GATED_KASAGI_IDS & set(lit_ids)),
         "note": (
             "Model-output hydration of Pd/Ni plus graphite/SiC UQ cells and "
-            "ICCF-27 literature anchors. Cite-gated Kasagi MoE (σ_Q=0.08, "
-            "literature_reported) is copied from literature_iccf27.v1 — never "
-            "invented. Null-σ companions stay null-σ. Does not replace "
+            "ICCF-27 literature anchors. Stable pack slots: hyd-10=Czerski-Zr, "
+            "hyd-11=HyLENR (pre-#479 identities); Kasagi-Ni=hyd-12. Cite-gated "
+            "Kasagi MoE (σ_Q=0.08, literature_reported) is copied from "
+            "literature_iccf27.v1 — never invented. Theory runs serialize "
+            "clamped temperature_k/loading_ratio/conditions for importer "
+            "fidelity. Null-σ companions stay null-σ. Does not replace "
             "q_campaign_demo. Does not prove LENR."
         ),
     }

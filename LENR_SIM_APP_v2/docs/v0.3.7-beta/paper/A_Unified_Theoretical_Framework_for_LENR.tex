@@ -25,6 +25,9 @@
 \newunicodechar{ν}{\ensuremath{\nu}}
 \newunicodechar{κ}{\ensuremath{\kappa}}
 \newunicodechar{≠}{\ensuremath{\neq}}
+\newunicodechar{≥}{\ensuremath{\ge}}
+\newunicodechar{≤}{\ensuremath{\le}}
+\newunicodechar{⇏}{\ensuremath{\nRightarrow}}
 \newunicodechar{∝}{\ensuremath{\propto}}
 \newunicodechar{⁻}{\textsuperscript{-}}
 \newunicodechar{⁰}{\textsuperscript{0}}
@@ -72,11 +75,11 @@
 \title{A Unified Theoretical and Mathematical Framework for Low-Energy
 Nuclear Reactions (LENR)\\\large\textit{Coupling is all you need}}
 \author{Diadon Acs (lead, Conscious Energies)}
-\date{2026-02-14 (revised 2026-11-12, unified single-document structure
-/ companion software 0.3.9-beta;~prior 2026-11-11 EQ-OPEN peer-review
-refresh;~2026-11-11 multidisciplinary coherence;~2026-11-10 Pyyhtiä
-CR-39 cite + WS findings;~2026-11-05 honesty sync;~2026-09-25,
-v0.3.7-beta)}
+\date{2026-02-14 (revised 2026-11-21, HIP-08 paper honesty fold-in /
+companion software 0.3.9-beta;~prior 2026-11-12 unified single-document
+structure;~2026-11-11 EQ-OPEN peer-review refresh;~2026-11-11
+multidisciplinary coherence;~2026-11-10 Pyyhtiä CR-39 cite + WS
+findings;~2026-11-05 honesty sync;~2026-09-25, v0.3.7-beta)}
 
 \begin{document}
 \maketitle
@@ -355,8 +358,9 @@ Section 5.1 rather than asserted from {[}12{]}.)
   a \textbf{model assumption} for the electronic/phonon attempt scale
   (illustrative order \(\sim 10^{12}\,\mathrm{s^{-1}}\), or left
   symbolic), and \(P_{\text{overlap}}\) uses the \textbf{same} numerical
-  band as the preceding derivation. Worked example with
-  \(N_{\text{sites}} \sim 10^{23}\),
+  band as the preceding derivation. Worked example with illustrative
+  \textbf{model-assumption} \(N_{\text{sites}} \sim 10^{23}\) (not a
+  measured inventory),
   \(f_{\text{attempt}} \sim 10^{12}\,\mathrm{s^{-1}}\), and derived
   \(P_{\text{overlap}} \approx 8.5\times 10^{-16}\):
 
@@ -1536,7 +1540,77 @@ multi-format pack provenance file (\texttt{PROVENANCE.md}).
   (\texttt{model\_fidelity}, \texttt{empirical\_support},
   \texttt{claim\_tier}) remain independent
   ({\ttfamily PHYSICS\_\allowbreak{}MATURITY\_\allowbreak{}LEDGER.\allowbreak{}md}).
+\item
+  \textbf{Santilli ICNF stub (\texttt{santilli\_icnf}):} Companion
+  software registers a phenomenological Intermediate Controlled Nuclear
+  Fusion stub keyed to \texttt{{[}kadeisvili2013{]}} / related-only
+  \texttt{{[}santilli2007{]}}. Claim tier remains
+  \textbf{{\ttfamily speculative\_\allowbreak{}exploratory}}. Lean
+  \texttt{TheoryStubHonesty} / {\ttfamily EQ-\allowbreak{}THEORY-\allowbreak{}STUB-\allowbreak{}NC-\allowbreak{}01} bind stub
+  presence ⇏ EQ-OPEN discharge. The bibliography keys do \textbf{not}
+  raise empirical claim tiers or prove LENR.
 \end{enumerate}
+
+\hypertarget{heating-mode-taxonomy-host-phase-hold-and-viz-fidelity-software-honesty}{%
+\subsubsection{3.9 Heating-mode taxonomy, host-phase hold, and viz
+fidelity (software
+honesty)}\label{heating-mode-taxonomy-host-phase-hold-and-viz-fidelity-software-honesty}}
+
+\textbf{Claim tier:} engineering / software-status documentation ---
+\textbf{not} empirical LENR validation, \textbf{not} host-melt proof.
+
+Companion LENR\_SIM distinguishes three \textbf{engineering heat-input
+modes} that must not collapse into one generic ``joule'' knob:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Electrolytic ---} \(P_{\mathrm{joule}}\): \(I^{2}R\) along the
+  electrode / electrolyte current path.\\
+\item
+  \textbf{Gaseous ---} \(P_{\mathrm{resistive}}\): separate ohmic heater
+  / filament / hot-wire.\\
+\item
+  \textbf{Laser ---} \(P_{\mathrm{photonic}}\): absorbed laser power
+  (absorptance \(\times\) incident power).
+\end{enumerate}
+
+\textbf{Excess heat ≠ melt switch.} Pipeline / unified
+\texttt{excess\_heat\_watts} (and related modelled heat outputs) are
+\textbf{observables or model outputs}, not a free host-phase gate. Local
+solid→liquid response, when eventually modeled, must couple
+mode-specific \(P_{\mathrm{in}}\) to temperature and enthalpy fraction
+\(f_L\) under cited \(T_m\) --- never ``turn melt on because excess heat
+is nonzero.''
+
+\textbf{Host metallic melt / liquid-phase (ON HOLD).} Literature melting
+points Pd \(T_m = 1828\,\mathrm{K}\) and Ni \(T_m = 1728\,\mathrm{K}\)
+(RSC/CRC-class cites in the v0.4.0 research packs) plus latent-heat /
+enthalpy liquid fraction \(f_L\) are recorded as \textbf{speculative
+materials future-work}. Live \texttt{MaterialProperties} schemas do
+\textbf{not} yet gate on \(T_m\); no \texttt{liquid\_phase\_pd} /
+\texttt{liquid\_phase\_ni} TheoryModules and no melt-morph viz ship in
+the \textbf{0.3.9-beta} train (parked for a later 0.4.1-class
+candidate). Pd and Ni remain \textbf{hard-split} hosts (never one
+blended Pd/Ni melt theory). Until unheld, UI may show heating-mode
+\textbf{gap chips} only.
+
+\textbf{4D / spacetime viz fidelity.} The Unified Bubble Lattice
+Visualization is evolving toward a \textbf{player of engine samples in
+time} (scrubbable dual clock; channel bindings with claim-tier /
+fidelity chips). Quantitative channels must carry provenance
+(\texttt{solver} / \texttt{interpolated} / \texttt{schematic});
+schematic overlays (cosmetic MHD, illustrative solute clouds,
+cavitation-damage glyphs) must not be read as nuclear proof. Bare HUD
+numbers without claim-tier chips are refused by product honesty rules.
+
+\textbf{RH / theta-lift (aspirational only).} Number-theoretic /
+automorphic metaphors (Riemann Hypothesis / theta-lift language) are
+\textbf{out of product discovery scoring} for this train. If used in
+appendices or research notes, they remain aspirational mathematical
+formalism --- never MoE / σ\_Q sources, never EQ-OPEN discharge paths,
+never \texttt{lenr\_proved} flips.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
@@ -2455,6 +2529,60 @@ He-assay efficiency/retention provenance yielding integrated
 \(\Delta N_{^4\mathrm{He}}=0\) shortfall (or equivalent licensed
 discharge); instantaneous band membership provably does not count.
 
+\hypertarget{a.6-laboratory-experiments-path-lab-ask-next_lab}{%
+\subsubsection{5A.6 Laboratory Experiments path (Lab Ask /
+NEXT\_LAB)}\label{a.6-laboratory-experiments-path-lab-ask-next_lab}}
+
+\textbf{Claim tier:} experimental-path guidance / bookkeeping ---
+\textbf{not} EQ-OPEN discharge and \textbf{not} \texttt{lenr\_proved}.
+
+The companion app now surfaces a first-class \textbf{Laboratory
+Experiments} hub (\texttt{/lab-experiments}) that gathers the previously
+fragmented Virtual Lab ↔ Analytics NEXT\_LAB ↔ runway ↔
+TESTABLE\_PREDICTIONS path (HIP-03). Five concrete NEXT\_LAB MoE asks
+remain status {\ttfamily blocked\_\allowbreak{}awaiting\_\allowbreak{}lab} with
+{\ttfamily closes\_\allowbreak{}eq\_\allowbreak{}open:\allowbreak{}\ false}:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Governed simultaneous heat+\(^4\mathrm{He}\) cite-gated MoE → YIELD /
+  MEV\\
+\item
+  Calorimetry resolution beyond the Kasagi 2/26 discovery inventory →
+  YIELD\\
+\item
+  Efficiency-corrected γ upper limit (coincidence) → RAD\\
+\item
+  Measured occupation / rate caps → RATE / MEV\\
+\item
+  Electron-capture threshold CM path (≥0.782 MeV) → EC
+\end{enumerate}
+
+Each ask carries measurable \texttt{lab\_acceptance}, residual
+{\ttfamily still\_\allowbreak{}does\_\allowbreak{}not\_\allowbreak{}discharge}, quantitative
+\texttt{corpus\_gap\_now}, and planned \texttt{daq\_observables} (ARA
+sample-v1 is {\ttfamily planned\_\allowbreak{}not\_\allowbreak{}attested}; empty RATE/EC observables
+correctly \textbf{refuse fabrication}). Affirmative / Falsification /
+Does-not-count criteria stay documented on the EQ-OPEN closure runway;
+soft analytics clear ≠ discovery.
+
+\textbf{Lab Ask met ≠ EQ-OPEN closed.} Lean \texttt{LabAskProxies}
+({\ttfamily lab\_\allowbreak{}ask\_\allowbreak{}proxies\_\allowbreak{}do\_\allowbreak{}not\_\allowbreak{}discharge\_\allowbreak{}eq\_\allowbreak{}open},
+{\ttfamily all\_\allowbreak{}lab\_\allowbreak{}asks\_\allowbreak{}met\_\allowbreak{}with\_\allowbreak{}dual\_\allowbreak{}kasagi\_\allowbreak{}do\_\allowbreak{}not\_\allowbreak{}discharge})
+bind that even all five asks notionally met keep Q1--Q5 OPEN and
+\texttt{lenr\_proved} false. Positive governed evidence underwrites
+\textbf{acceptance criteria} only; academic discharge still requires
+IR/Lean/ledger/governance series + human sign-off. Do \textbf{not}
+invent discovery-grade σ\_Q beyond the exhausted Kasagi 2/26 inventory.
+
+Draft criteria and instrument sketches:
+{\ttfamily docs/\allowbreak{}EQ\_\allowbreak{}OPEN\_\allowbreak{}CLOSURE\_\allowbreak{}RUNWAY.\allowbreak{}md} (served as
+{\ttfamily /\allowbreak{}docs/\allowbreak{}eq-\allowbreak{}open-\allowbreak{}closure-\allowbreak{}runway}). Predictions table:
+{\ttfamily docs/\allowbreak{}TESTABLE\_\allowbreak{}PREDICTIONS.\allowbreak{}md}. Live checklist UI:
+{\ttfamily /\allowbreak{}lab-\allowbreak{}experiments\#next-\allowbreak{}lab}.
+
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \hypertarget{conclusion}{%
@@ -2482,11 +2610,18 @@ remain disputed and are not treated as validation of the framework.
   physics, non-linear effects, and real-time electron--phonon coupling
   under explicit claim tiers (modelled vs aspirational).\\
 \item
-  \textbf{Independent Falsification Campaigns:} Expand simultaneous
-  heat--helium / detector campaigns and PRED falsifiers so OPEN
-  obligations can be closed or rejected on evidence---not scaled toward
-  commercial viability (energetic/practical freedom remains a permanent
-  non-goal).\\
+  \textbf{Independent Falsification Campaigns:} Execute the Laboratory
+  Experiments / NEXT\_LAB asks (§5A.6)---simultaneous heat--helium,
+  calorimetry beyond Kasagi, efficiency-corrected γ UL, occupation/rate
+  caps, EC threshold path---so OPEN obligations can be closed or
+  rejected on evidence. Lab Ask met still ⇏ discharge.
+  Energetic/practical freedom remains a permanent non-goal.\\
+\item
+  \textbf{Host-phase materials research (ON HOLD for product):} If later
+  unheld, model local \(f_L\) under \(P_{\mathrm{joule}}\) /
+  \(P_{\mathrm{resistive}}\) / \(P_{\mathrm{photonic}}\) with cited
+  Pd/Ni \(T_m\), as separate Pd vs Ni simulations---never a blended melt
+  theory, never EQ-OPEN closure from melt modeling (§3.9).\\
 \item
   \textbf{Interdisciplinary Collaboration:} Encourage a synergy of
   nuclear engineers, condensed matter physicists, chemists,
@@ -2529,11 +2664,12 @@ Poisson--Schrödinger continuum DEF
 equation intermediate representation (\texttt{formalization/ir/}) links
 paper statements, Python literals, Wolfram numeric checks, and Lean
 targets. Lean non-closure / bound language (WH-ENP-01, OpenObligations,
-OpenQuestionBounds) remains the honesty floor: \texttt{lenr\_proved}
-stays false and every \texttt{EQ-OPEN-*} stays OPEN until a later
-evidence-backed closure PR. Theorem names that mention ``closure'' prove
-non-closure or contrapositives under stated caps/classes; none
-discharges an obligation.
+OpenQuestionBounds, \texttt{LabAskProxies}) remains the honesty floor:
+\texttt{lenr\_proved} stays false and every \texttt{EQ-OPEN-*} stays
+OPEN until a later evidence-backed closure PR. Lab Ask / NEXT\_LAB
+proxies met do \textbf{not} discharge obligations (§5A.6). Theorem names
+that mention ``closure'' prove non-closure or contrapositives under
+stated caps/classes; none discharges an obligation.
 
 \textbf{Multi-format paper pack (companion software train 0.3.9-beta;
 paper pack path v0.3.7-beta).} Academic archival copies of this

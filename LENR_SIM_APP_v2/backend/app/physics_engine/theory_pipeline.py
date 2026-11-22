@@ -23,6 +23,7 @@ from app.physics_engine.theory_protocol import (
     TheoryModule,
 )
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR, MILES_HEAT_HELIUM_RATE
+from app.physics_engine.heating_mode import resolve_heating_mode
 from app.physics_engine.scientific_guardrails import (
     build_confidence_breakdown,
     build_falsification_conditions,
@@ -99,6 +100,10 @@ THEORY_COMPOSITION_GROUPS: Dict[str, str] = {
     "miles_heat_helium": "empirical_correlation",
     "letts_laser": "empirical_correlation",
     "piantelli_ni_h": "empirical_correlation",
+    # Kasagi radiant BREMS / spectral calorimetry (HIP-05 / ENG-HS-07).
+    # Own group so multilayer/pressure-coupled heat is not collapsed into
+    # electrolytic Miles / Piantelli seed energy.
+    "kasagi_radiant": "radiant_calorimetry",
     # Thermodynamic framing, not an independent enhancement channel.
     "non_equilibrium_thermo": "thermodynamic_framing",
     # v0.3.6-beta: stellar-scaling context line is isolated in its own
@@ -210,6 +215,33 @@ class TheoryPipelineResult:
                 "display_model_version": getattr(c, "display_model_version", "") or "",
             }
             per_theory.append(enrich_contribution_dict(row, control_role=control_role))
+        miles_contrib = next(
+            (c for c in self.contributions if c.theory_id == "miles_heat_helium"),
+            None,
+        )
+        miles_obs = (miles_contrib.observables if miles_contrib else None) or {}
+        miles_validation: Dict[str, Any] = {
+            "expected_he4_rate_per_s": expected_he4_rate,
+            "rate_constant": MILES_HEAT_HELIUM_RATE,
+            "note": (
+                "He/W rate uses Miles correlation (≈2.6e11 He-4/s per W). "
+                "Module excess-heat watts use an explicit scale switch "
+                "(definition 1.0 W vs literature peak 0.52 W); see "
+                "per_theory miles_heat_helium observables.excess_heat_scale."
+            ),
+        }
+        if miles_contrib is not None:
+            miles_validation.update(
+                {
+                    "excess_heat_scale": miles_obs.get("excess_heat_scale"),
+                    "q_is_seed_scale": miles_obs.get("q_is_seed_scale"),
+                    "heat_scale_claim_tier": miles_obs.get("heat_scale_claim_tier"),
+                    "module_energy_output_watts": float(miles_contrib.energy_output_watts),
+                    "literature_peak_excess_power_W": miles_obs.get(
+                        "literature_peak_excess_power_W"
+                    ),
+                }
+            )
         payload = {
             "combined_enhancement": float(self.combined_enhancement),
             "combined_reaction_rate_modifier": float(self.combined_reaction_rate_modifier),
@@ -218,15 +250,12 @@ class TheoryPipelineResult:
             "enabled_theories": self.enabled_theories,
             "contract_version": f"v{settings.APP_VERSION}-science-gate-1",
             "validation": {
-                "miles_heat_helium": {
-                    "expected_he4_rate_per_s": expected_he4_rate,
-                    "rate_constant": MILES_HEAT_HELIUM_RATE,
-                    "note": "1 W excess heat = 2.6e11 He-4/s (Miles 1993)",
-                },
+                "miles_heat_helium": miles_validation,
             },
             "observables_bridge": build_observables_bridge(
                 total_energy_watts=self.total_energy_watts,
                 expected_he4_rate_per_s=expected_he4_rate,
+                heating_mode=resolve_heating_mode(self.conditions),
             ),
             "analytics_transparency": {
                 "confidence_weights": to_json_safe(
@@ -811,6 +840,12 @@ def get_default_pipeline() -> TheoryPipeline:
         pipeline.register(MilesHeatHeliumTheory())
     except Exception:
         logger.exception("Failed to register MilesHeatHeliumTheory")
+
+    try:
+        from app.physics_engine.theories.kasagi_radiant import KasagiRadiantTheory
+        pipeline.register(KasagiRadiantTheory())
+    except Exception:
+        logger.exception("Failed to register KasagiRadiantTheory")
 
     # --- Phase 1B: Complementary Theories ---
 

@@ -74,6 +74,7 @@ import ReviewerAnalyticsPanels from '../components/analytics/ReviewerAnalyticsPa
 import AssociationRankPanel from '../components/analytics/AssociationRankPanel';
 import AnalyticsScienceEvidencePanel from '../components/analytics/AnalyticsScienceEvidencePanel';
 import ExperimentHonestClosureChips from '../components/analytics/ExperimentHonestClosureChips';
+import SHeatLadderPanel from '../components/analytics/SHeatLadderPanel';
 import { normalizeExperimentDiscoveryEnvelopes } from '../components/analytics/experimentDiscoveryEnvelopes';
 
 // Tab Panel Component
@@ -854,6 +855,7 @@ const AnalyticsPage = () => {
           They also do not meet the ≥5σ discovery-grade bar (cite-gated σ_Q / BDS-302).
         </Alert>
         <AnalyticsScienceEvidencePanel />
+        <SHeatLadderPanel />
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Stack spacing={2}>

@@ -7,6 +7,8 @@ import time
 from typing import Dict, Any, Optional, List, Tuple
 
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
+from app.physics_engine.coupled_heat_he import couple_pipeline_heat_he
+from app.physics_engine.heating_mode import resolve_heating_mode
 from app.physics_engine.scientific_guardrails import (
     build_observables_bridge,
     build_uncertainty_interval,
@@ -65,6 +67,15 @@ class UnifiedLENRModel:
                 self.config.electrolyte_family,
                 self.config.electrolyte_species,
                 round(self.config.electrolyte_molarity_mol_l, 4),
+                self.config.letts_laser,
+                self.config.acoustic_drive,
+                self.config.heating_mode,
+                self.config.radiant_calorimetry,
+                self.config.multilayer_stack,
+                self.config.h2_absorb_pressure_pa,
+                self.config.p_joule_watts,
+                self.config.p_resistive_watts,
+                self.config.p_photonic_watts,
             )
             self._cache_key = str(hash(key_parts))
         return self._cache_key
@@ -93,9 +104,32 @@ class UnifiedLENRModel:
             total_enhancement,
             screening_energy_keV=screening_kev,
         )
-        excess_heat = self._calculate_excess_heat(reaction_rate)
-        helium4_rate = self._calculate_helium4_rate(reaction_rate)
-        neutron_rate = self._calculate_neutron_rate(reaction_rate)
+        volumetric_heat = self._calculate_excess_heat(reaction_rate)
+        volumetric_he4 = self._calculate_helium4_rate(reaction_rate)
+        volumetric_neutron = self._calculate_neutron_rate(reaction_rate)
+        heating_mode = self._resolve_heating_mode()
+        pipeline_energy = None
+        letts_applicable = None
+        if (
+            self.config.use_theory_pipeline
+            and self._last_pipeline_result is not None
+        ):
+            pipeline_energy = float(self._last_pipeline_result.total_energy_watts)
+            letts_applicable = any(
+                getattr(c, "theory_id", "") == "letts_laser" and bool(c.is_applicable)
+                for c in (self._last_pipeline_result.contributions or [])
+            )
+        coupled = couple_pipeline_heat_he(
+            pipeline_total_energy_watts=pipeline_energy,
+            volumetric_excess_heat_watts=volumetric_heat,
+            volumetric_helium4_rate=volumetric_he4,
+            volumetric_neutron_rate=volumetric_neutron,
+            heating_mode=heating_mode,
+            letts_applicable=letts_applicable,
+        )
+        excess_heat = float(coupled["excess_heat_watts"])
+        helium4_rate = float(coupled["helium4_rate"])
+        neutron_rate = float(coupled["neutron_rate"])
         time_points, heat_output, enhancement_history = self._generate_time_series(
             excess_heat, total_enhancement)
         confidence = self._calculate_confidence(thresholds, enhancements_list)
@@ -104,10 +138,13 @@ class UnifiedLENRModel:
         falsification_conditions = [
             "Invalid if excess_heat_watts does not remain within the uncertainty-supported regime.",
             "Invalid if electrolyte parameters are outside validated range without confidence penalty.",
+            "Coupled heat/He is model_output only; never treat as discovery-grade or EQ-OPEN discharge.",
         ]
         observables_bridge = build_observables_bridge(
             total_energy_watts=excess_heat,
             expected_he4_rate_per_s=helium4_rate,
+            heating_mode=heating_mode,
+            coupled_heat_he=coupled["bridge"],
         )
         return UnifiedSimulationResult(
             total_enhancement=total_enhancement,
@@ -176,6 +213,22 @@ class UnifiedLENRModel:
         if self.config.h2_absorb_pressure_pa is not None:
             conditions["h2_absorb_pressure_pa"] = float(self.config.h2_absorb_pressure_pa)
         conditions["radiant_calorimetry"] = 1.0 if self.config.radiant_calorimetry else 0.0
+        if self.config.multilayer_stack:
+            conditions["multilayer_stack"] = str(self.config.multilayer_stack)
+        if self.config.desorption_heater_voltage_v is not None:
+            conditions["desorption_heater_voltage_v"] = float(
+                self.config.desorption_heater_voltage_v
+            )
+        conditions["letts_laser"] = 1.0 if self.config.letts_laser else 0.0
+        conditions["acoustic_drive"] = 1.0 if self.config.acoustic_drive else 0.0
+        if self.config.heating_mode:
+            conditions["heating_mode"] = self.config.heating_mode
+        if self.config.p_joule_watts is not None:
+            conditions["P_joule"] = float(self.config.p_joule_watts)
+        if self.config.p_resistive_watts is not None:
+            conditions["P_resistive"] = float(self.config.p_resistive_watts)
+        if self.config.p_photonic_watts is not None:
+            conditions["P_photonic"] = float(self.config.p_photonic_watts)
         pipeline_result = pipeline.run(
             conditions=conditions,
             enabled_theories=self.config.enabled_theories,
@@ -235,6 +288,22 @@ class UnifiedLENRModel:
             self.config.electrolyte_molarity_mol_l,
             self.config.electrolyte_species,
         )
+
+    def _resolve_heating_mode(self) -> str:
+        """Resolve joule / resistive / photonic / radiant from config + flags."""
+        bag: Dict[str, Any] = {
+            "letts_laser": self.config.letts_laser,
+            "radiant_calorimetry": self.config.radiant_calorimetry,
+        }
+        if self.config.heating_mode:
+            bag["heating_mode"] = self.config.heating_mode
+        if self.config.p_joule_watts is not None:
+            bag["P_joule"] = float(self.config.p_joule_watts)
+        if self.config.p_resistive_watts is not None:
+            bag["P_resistive"] = float(self.config.p_resistive_watts)
+        if self.config.p_photonic_watts is not None:
+            bag["P_photonic"] = float(self.config.p_photonic_watts)
+        return resolve_heating_mode(bag)
 
     def _check_thresholds(self) -> Dict[str, bool]:
         return {

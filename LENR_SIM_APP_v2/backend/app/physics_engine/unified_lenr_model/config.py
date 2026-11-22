@@ -16,18 +16,26 @@ N_REF_M3 = 1e28
 
 def get_material_work_function(material_name: str) -> float:
     """Work function in eV. Lithium ~2.9 eV. Generic fallback 5.0 eV."""
+    key = (material_name or "").strip().lower()
+    aliases = {
+        "carbon": "graphite",
+        "constantan_cu55ni44mn1": "constantan",
+        "cu55ni44mn1": "constantan",
+    }
+    key = aliases.get(key, key)
     lookup = {
         "palladium": 5.12,
         "nickel": 5.15,
         "titanium": 4.33,
         "lithium": 2.9,
         "graphite": 4.6,  # polycrystalline graphite; CRC handbook
-        "carbon": 4.6,
         "silicon_carbide": 4.6,  # 4H/3C-SiC typical; model assumption band
         "zirconium": 4.05,
         "iridium": 5.27,
+        # Cu55Ni44Mn1 alloy — model assumption mid Cu/Ni Wf (Celani host class).
+        "constantan": 4.85,
     }
-    return lookup.get((material_name or "").strip().lower(), 5.0)
+    return lookup.get(key, 5.0)
 
 
 def get_double_layer_potential(material, electron_density: float, T: float) -> float:
@@ -111,10 +119,34 @@ class MaterialProperties:
             electron_density=4.3e28)
 
     @classmethod
+    def constantan(cls) -> "MaterialProperties":
+        """Celani-class Cu55Ni44Mn1 constantan wire host (ENG-HS-06).
+
+        Lattice / Debye / n_e are alloy model assumptions between Cu and Ni
+        FCC tables — cite-gated metadata host class only; never a discovery σ
+        source. See Celani et al. JCMNS 29 (2019) — celani2019.
+        """
+        return cls(
+            name="Constantan",
+            atomic_number=29,  # Cu-dominant Z effective (model assumption)
+            atomic_mass=63.5,  # composition-weighted Cu55Ni44Mn1 (model assumption)
+            lattice_constant=3.58e-10,  # FCC between Cu 3.61 Å and Ni 3.52 Å
+            debye_temperature=410.0,  # between Cu ~343 K and Ni ~450 K
+            work_function=4.85,
+            electron_density=8.4e28,  # between Cu ~8.5e28 and Ni 9.1e28
+        )
+
+    @classmethod
     def from_name(cls, material_name: str) -> "MaterialProperties":
         """Resolve a host key to cited properties; unknown names use generic()."""
         key = (material_name or "palladium").strip().lower()
-        aliases = {"carbon": "graphite", "sic": "silicon_carbide", "zr": "zirconium"}
+        aliases = {
+            "carbon": "graphite",
+            "sic": "silicon_carbide",
+            "zr": "zirconium",
+            "constantan_cu55ni44mn1": "constantan",
+            "cu55ni44mn1": "constantan",
+        }
         key = aliases.get(key, key)
         factories = {
             "palladium": cls.palladium,
@@ -124,6 +156,7 @@ class MaterialProperties:
             "graphite": cls.graphite,
             "silicon_carbide": cls.silicon_carbide,
             "zirconium": cls.zirconium,
+            "constantan": cls.constantan,
         }
         factory = factories.get(key)
         if factory is not None:
@@ -193,6 +226,15 @@ class SimulationConfig:
     molecular_beam_species: Optional[str] = None
     h2_absorb_pressure_pa: Optional[float] = None
     radiant_calorimetry: bool = False
+    multilayer_stack: Optional[str] = None
+    desorption_heater_voltage_v: Optional[float] = None
+    # HIP-01 stimulation / heating-mode gates (additive; default off).
+    letts_laser: bool = False
+    acoustic_drive: bool = False
+    heating_mode: Optional[str] = None
+    p_joule_watts: Optional[float] = None
+    p_resistive_watts: Optional[float] = None
+    p_photonic_watts: Optional[float] = None
 
 
 @dataclass

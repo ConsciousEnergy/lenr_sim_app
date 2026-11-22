@@ -62,6 +62,9 @@ def iter_iccf27_grid_cases() -> Iterator[Dict[str, Any]]:
             case["h2_absorb_pressure_pa"] = float(params["h2_absorb_pressure_pa"])
         if params.get("radiant_calorimetry"):
             case["radiant_calorimetry"] = True
+            case["stimulation"] = {"heating_mode": "radiant"}
+        if params.get("multilayer_stack"):
+            case["multilayer_stack"] = str(params["multilayer_stack"])
         if params.get("actual_host"):
             case["host_material"] = str(params["actual_host"])
         yield case

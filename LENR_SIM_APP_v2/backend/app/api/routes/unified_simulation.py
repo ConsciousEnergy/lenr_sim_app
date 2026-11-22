@@ -32,6 +32,58 @@ from app.physics_engine.parkhomov_validation import (
 from app.physics_engine.constants import MAX_ENHANCEMENT_FACTOR
 from app.physics_engine.bubble_mechanism_composition import build_prediction_report
 from app.physics_engine.enhancement_saturation import build_saturation_report
+from app.physics_engine.miles_heat_scale import scale_summary_from_contribution_observables
+from app.physics_engine.success_odds_margins import build_success_odds_margins
+
+
+def _hip04_transparency_fields(
+    *,
+    request: "SimulationRequest",
+    result: Any,
+    model: Any,
+) -> Dict[str, Any]:
+    """Additive HIP-04 Miles scale + non-saturating margin stamps."""
+    pipeline = getattr(model, "last_pipeline_result", None) or getattr(
+        model, "_last_pipeline_result", None
+    )
+    miles_scale: Dict[str, Any] = {}
+    if pipeline is not None:
+        for contrib in getattr(pipeline, "contributions", None) or []:
+            if getattr(contrib, "theory_id", "") != "miles_heat_helium":
+                continue
+            miles_scale = scale_summary_from_contribution_observables(
+                getattr(contrib, "observables", None) or {}
+            )
+            miles_scale["module_energy_output_watts"] = float(
+                getattr(contrib, "energy_output_watts", 0.0) or 0.0
+            )
+            miles_scale["claim_tier"] = getattr(
+                contrib, "claim_tier", "empirical_lenr_correlation"
+            )
+            break
+
+    enhancement_total = float(getattr(result, "total_enhancement", 0.0) or 0.0)
+    log10_raw = None
+    is_saturated = None
+    if enhancement_total > 0:
+        log10_raw = math.log10(enhancement_total)
+        is_saturated = enhancement_total >= MAX_ENHANCEMENT_FACTOR * (1.0 - 1e-9)
+
+    margins = build_success_odds_margins(
+        reaction_rate=float(getattr(result, "reaction_rate", 0.0) or 0.0),
+        helium4_rate=float(getattr(result, "helium4_rate", 0.0) or 0.0),
+        excess_heat_watts=float(getattr(result, "excess_heat_watts", 0.0) or 0.0),
+        loading_ratio=float(request.lattice.loading_ratio),
+        enhancement_factor=enhancement_total,
+        log10_enhancement_raw=log10_raw,
+        enhancement_is_saturated=is_saturated,
+        literature_id=getattr(request, "literature_id", None),
+        confidence=float(getattr(result, "confidence", 0.0) or 0.0),
+    )
+    return {
+        "miles_heat_scale": miles_scale,
+        "success_odds_margins": margins,
+    }
 
 
 def _finalize_enhancement_breakdown(
@@ -119,7 +171,8 @@ class MaterialConfig(BaseModel):
     host_material: str = Field(
         default="palladium",
         description="Host material: palladium, nickel, titanium, lithium, "
-        "graphite, silicon_carbide, zirconium, or custom (generic fallback)",
+        "graphite, silicon_carbide, zirconium, constantan, or custom "
+        "(generic fallback)",
     )
     reactant: str = Field(default="deuterium", description="Reactant: deuterium, hydrogen")
 
@@ -195,8 +248,24 @@ class ElectrolyteConfig(BaseModel):
 
 class StimulationConfig(BaseModel):
     """Optional stimulation gates for when/how virtual lab (never auto-flips rate_mode)."""
-    letts_laser: bool = Field(default=False)
+    letts_laser: bool = Field(
+        default=False,
+        description="Arm Letts dual-laser / photonic path (ENG-HS-03). Off by default.",
+    )
     acoustic_drive: bool = Field(default=False)
+    heating_mode: Optional[str] = Field(
+        default=None,
+        description="Optional joule|resistive|photonic|radiant override (HIP-01).",
+    )
+    p_joule_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Electrolytic joule drive watts (P_joule)."
+    )
+    p_resistive_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Resistive/gaseous heater watts (P_resistive)."
+    )
+    p_photonic_watts: Optional[float] = Field(
+        default=None, ge=0.0, description="Absorbed laser watts (P_photonic)."
+    )
 
 
 class SimulationRequest(BaseModel):
@@ -454,7 +523,9 @@ def _compute_unified_simulation(request: SimulationRequest):
         config.molecular_beam_species = request.lattice.molecular_beam_species
         config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
         config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
-        
+        config.multilayer_stack = request.lattice.multilayer_stack
+        config.desorption_heater_voltage_v = request.lattice.desorption_heater_voltage_v
+
         # Set quantum effect toggles
         config.enable_screening = request.quantum_effects.enable_screening
         config.enable_qed = request.quantum_effects.enable_qed
@@ -475,6 +546,20 @@ def _compute_unified_simulation(request: SimulationRequest):
         config.use_theory_pipeline = request.use_theory_pipeline
         config.enabled_theories = request.enabled_theories
         config.theory_configs = request.theory_configs
+        stim = request.stimulation
+        if stim is not None:
+            config.letts_laser = bool(stim.letts_laser)
+            config.acoustic_drive = bool(stim.acoustic_drive)
+            if stim.heating_mode:
+                config.heating_mode = str(stim.heating_mode).strip().lower()
+            config.p_joule_watts = stim.p_joule_watts
+            config.p_resistive_watts = stim.p_resistive_watts
+            config.p_photonic_watts = stim.p_photonic_watts
+            # Explicit photonic watts also arm the Letts gate when mode unset.
+            if stim.p_photonic_watts is not None and float(stim.p_photonic_watts) > 0.0:
+                config.letts_laser = True
+                if not config.heating_mode:
+                    config.heating_mode = "photonic"
         electrolyte_diagnostics = build_electrolyte_diagnostics(
             electrolyte_family=config.electrolyte_family,
             electrolyte_species=config.electrolyte_species,
@@ -529,6 +614,11 @@ def _compute_unified_simulation(request: SimulationRequest):
             route_mode=route_mode,
         )
 
+        hip04_fields = _hip04_transparency_fields(
+            request=request,
+            result=result,
+            model=model,
+        )
         response = SimulationResponse(
             success=True,
             enhancement={
@@ -555,6 +645,17 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "enabled_theories": config.enabled_theories or [],
                 "electrolyte_species_family_consistent": electrolyte_diagnostics["species_family_consistent"],
                 "electrolyte_support_level": electrolyte_diagnostics["support_level"],
+                "heating_mode": result.observables_bridge.get("coupled_heat_he", {}).get(
+                    "heating_mode"
+                )
+                or result.observables_bridge.get("excess_heat", {}).get("heating_mode"),
+                "coupled_heat_he_bridged": bool(
+                    result.observables_bridge.get("coupled_heat_he", {}).get("bridged")
+                ),
+                "heat_he_honesty_class": result.observables_bridge.get("excess_heat", {}).get(
+                    "honesty_class", "model_output"
+                ),
+                "miles_heat_scale": hip04_fields.get("miles_heat_scale"),
             },
             analytics_transparency={
                 "model_version": settings.APP_VERSION,
@@ -562,6 +663,10 @@ def _compute_unified_simulation(request: SimulationRequest):
                 "electrolyte_species": config.electrolyte_species,
                 "electrolyte_molarity_mol_l": float(config.electrolyte_molarity_mol_l),
                 "electrolyte_diagnostics": electrolyte_diagnostics,
+                "is_model_output": True,
+                "coupled_heat_he": result.observables_bridge.get("coupled_heat_he", {}),
+                "lenr_proved": False,
+                **hip04_fields,
             },
             uncertainty_interval=result.uncertainty_interval,
             falsification_conditions=result.falsification_conditions,
@@ -836,6 +941,8 @@ def build_bubble_rate_engine_block(
         config.molecular_beam_species = request.lattice.molecular_beam_species
         config.h2_absorb_pressure_pa = request.lattice.h2_absorb_pressure_pa
         config.radiant_calorimetry = bool(request.lattice.radiant_calorimetry)
+        config.multilayer_stack = request.lattice.multilayer_stack
+        config.desorption_heater_voltage_v = request.lattice.desorption_heater_voltage_v
 
         tunneling_probability = float(
             calculate_tunneling_probability(config, max(float(peak_enhancement), 1.0))
@@ -1261,6 +1368,21 @@ class BubbleLatticeResponse(BaseModel):
     collapse_results: Dict[str, Any]
     proton_phases: Dict[str, float]
     enhancement_timeline: List[Dict[str, Any]]
+    spacetime_sample_buffer: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive compact spacetime sample buffer (R, T, E, enhancement, "
+            "optional occupancy) for the 3D viz engine-sample player "
+            "(lenr-spacetime-sample-v1). Does not invent host-melt channels."
+        ),
+    )
+    viz_channels: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additive optional viz channel map for HUD bindings (VIZ-03). "
+            "Melt / P_* heating modes stay null until Prefer-merged."
+        ),
+    )
     collapse_trajectory: Dict[str, Any] = Field(
         default_factory=dict,
         description=(
@@ -1754,6 +1876,32 @@ def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleL
                 "electric_field_v_m": sanitize_float(instant["conditions"]["electric_field"], 0.0),
                 "pressure_bar": sanitize_float(pressure_pa / 1e5, 1.0),
             })
+
+        # Compact spacetime buffer for UBLV scrub/player (HIP-06 / VIZ-02).
+        # Additive; failure must not break the core bubble-lattice response.
+        spacetime_sample_buffer: Dict[str, Any] = {}
+        viz_channels: Dict[str, Any] = {}
+        try:
+            from app.physics_engine.spacetime_sample_buffer import (
+                build_spacetime_sample_buffer,
+                build_viz_channels_from_sample,
+            )
+
+            spacetime_sample_buffer = build_spacetime_sample_buffer(
+                timeline, source="enhancement_timeline"
+            )
+            peak_sample = None
+            samples = spacetime_sample_buffer.get("samples") or []
+            if samples:
+                peak_sample = max(
+                    samples,
+                    key=lambda s: float(s.get("enhancement") or 0.0),
+                )
+            viz_channels = build_viz_channels_from_sample(peak_sample)
+        except Exception:
+            logger.exception(
+                "Spacetime sample buffer build failed; continuing without it"
+            )
         
         # Opt-in Sobol intervals for the collapse observables and mechanisms.
         # Non-fatal by construction: a UQ failure must not break the core response.
@@ -1861,6 +2009,8 @@ def _compute_bubble_lattice_simulation(request: BubbleLatticeRequest) -> BubbleL
             },
             proton_phases=corrected_proton_phases,
             enhancement_timeline=timeline,
+            spacetime_sample_buffer=spacetime_sample_buffer,
+            viz_channels=viz_channels,
             # Additive: the integrated collapse curve behind the peak conditions.
             collapse_trajectory=model.get_collapse_trajectory(),
             collapse_uncertainty=collapse_uncertainty,

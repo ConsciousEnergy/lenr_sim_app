@@ -12,6 +12,8 @@
 
 Honesty: `lenr_proved` stays **false**; all five `EQ-OPEN-*` stay **OPEN**. Completing a checklist or importing a campaign pack does **not** prove LENR or discharge open obligations.
 
+**Laboratory Experiments path (HIP-08 / LAB-07):** After paper review, operators should use `/lab-experiments` (NEXT_LAB checklist) and `/docs/eq-open-closure-runway` for the five concrete lab/MoE asks. Meeting a Lab Ask still **does not** discharge EQ-OPEN (Lean `LabAskProxies`). Manuscript §5A.6 + Theory Paper UI mirror this path.
+
 **Source paper:** [A Unified Theoretical Framework for Low-Energy Nuclear Reactions...](A%20Unified%20Theoretical%20Framework%20for%20Low-Energy%20Nuclear%20Reactions_%20Integrating%20Quantum,%20Nuclear,%20and%20Condensed%20Matter%20Phenomena%20(1).md)
 
 **Instructions for Reviewers:** For each item, (1) verify the claim independently, (2) flag errors with corrected values, (3) note assumptions and limitations, (4) assess simulation impact.

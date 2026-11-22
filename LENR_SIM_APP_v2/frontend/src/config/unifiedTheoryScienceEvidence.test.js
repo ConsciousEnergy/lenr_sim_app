@@ -16,6 +16,7 @@ import {
   DAQ_SAMPLE_PROVENANCE,
   NEXT_LAB_MOE_TARGETS,
   OPEN_EQ_IDS,
+  POSITIVE_RESULTS_OPERATOR_PATH,
   QUANTITATIVE_DISTANCE_DEFAULT,
   REFUSED_FABRICATED_MOE_CAMPAIGNS,
   SCIENCE_EVIDENCE_HONESTY,
@@ -329,6 +330,11 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(CLOSURE_SURFACE_LINKS.docs_testable_predictions).toBe(
       '/docs/testable-predictions',
     );
+    expect(CLOSURE_SURFACE_LINKS.lab_experiments_route).toBe('/lab-experiments');
+    expect(CLOSURE_SURFACE_LINKS.lab_experiments_next_lab).toBe(
+      '/lab-experiments#next-lab',
+    );
+    expect(CLOSURE_SURFACE_LINKS.virtual_lab_route).toMatch(/unified-theory/);
     expect(CLOSURE_SURFACE_LINKS.note).toMatch(/do not discharge/i);
     expect(CLOSURE_SURFACE_LINKS.note).toMatch(/status stays OPEN/i);
     const yieldAvenues = avenuesForOpenId('EQ-OPEN-YIELD-01').map((a) => a.id);
@@ -344,6 +350,22 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
         expect(avenue.stresses).toContain(row.id);
       });
     });
+  });
+
+  test('HIP-03 positive-results operator path refuses fabricated σ_Q', () => {
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.closes_eq_open).toBe(false);
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.lenr_proved).toBe(false);
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.refuse_fabricated_sigma_q).toBe(true);
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.lab_ask_met_ne_eq_open_discharge).toBe(true);
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.steps.length).toBeGreaterThanOrEqual(3);
+    POSITIVE_RESULTS_OPERATOR_PATH.steps.forEach((step) => {
+      expect(NEXT_LAB_MOE_TARGETS.some((row) => row.id === step.next_lab_id)).toBe(true);
+      expect(step.do_not.length).toBeGreaterThan(20);
+      expect(step.still_open_after).toMatch(/OPEN|lenr_proved/i);
+    });
+    expect(POSITIVE_RESULTS_OPERATOR_PATH.next_honest_step_after_asks_met).toMatch(
+      /lab_ask|NEXT_LAB|OPEN/i,
+    );
   });
 
   test('formalization distinguishes bounds from empirical closure', () => {

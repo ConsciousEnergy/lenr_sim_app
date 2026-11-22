@@ -71,6 +71,13 @@ describe('AppLayoutFixed documentation nav', () => {
     expect(screen.getByRole('link', { name: /Theory Paper/i })).toHaveAttribute('href', '/theory-paper');
     expect(screen.getByRole('link', { name: /Theory Guide/i })).toHaveAttribute('href', '/theory');
   });
+
+  it('exposes Laboratory Experiments under Documentation (HIP-03 LAB-01)', async () => {
+    renderLayout('/');
+    fireEvent.click(screen.getByRole('button', { name: /Documentation/i }));
+    const lab = await screen.findByRole('link', { name: /Laboratory Experiments/i });
+    expect(lab).toHaveAttribute('href', '/lab-experiments');
+  });
 });
 
 describe('AppLayoutFixed scroll UX', () => {

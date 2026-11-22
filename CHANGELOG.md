@@ -8,9 +8,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Public Swarm cutover remains gated on `CONFIRM_SWARM_0_3_9=I_CUTOVER_0_3_9`.
-  Compose share on `main` stays **v0.3.8-beta** until the cutover window.
-- Cutover train markers are **`0.3.9-beta`** (SPA + API on Traefik; Pages optional).
+- Post-`0.4.0-beta` tip work lands here. Live share rolls via Path B after promote
+  lands on `main` (sibling ship task). Revert path = Swarm **v0.3.9-beta**.
+
+## [v0.4.0-beta] - 2026-11-21
+
+Controlled promote of tip-`dev` HIP Prefer-merge train → `main` with four-surface
+marker bump **`0.3.9-beta` → `0.4.0-beta`**. Revert path: live Swarm **v0.3.9-beta**.
+
+### Honesty locks (binding)
+- `lenr_proved` remains **false**
+- All `EQ-OPEN-*` remain **OPEN** (MEV / RAD / RATE / EC / YIELD)
+- No fabricated σ_Q / discovery MoE (Celani discovery σ refused; cite-gated only)
+- Metallic liquid-phase Pd/Ni + melt viz **OUT** — parked for `v0.4.1-beta` (or later)
+- RH / theta-lift **OUT** — parked as aspirational math / paper appendix only
+- HIP-09 Swarm staging cutover + HIP-10 ARA live ingest **deferred** (no `CONFIRM_SWARM_*`)
+
+### Added — HIP-01…HIP-08 Prefer-merge summary (tip-`dev` @ `bbc380d`)
+- **HIP-01** (#481): Unified heat/He bridge + Letts mode-gate (ENG-HS-01/02/03); coupled `model_output` path
+- **HIP-02** (#484): S_heat / σ ladder UI + ranked-regime hygiene (ENG-HS-08); claim-tier chips; seed-scale demotion
+- **HIP-03** (#486): Laboratory Experiments first-class path + NEXT_LAB honesty hub (LAB-01…05); ask met ⇏ EQ-OPEN discharge
+- **HIP-04** (#485): Miles scale honesty + non-saturating margins (ENG-HS-04/05)
+- **HIP-05** (#487): Celani constantan host + Kasagi radiant path (ENG-HS-06/07); `REFUSE_FABRICATED_SIGMA_Q`
+- **HIP-06** (#483 / BDS-431): 4D viz scrubber + spacetime sample buffer + claim-tier HUD (VIZ-01…03; **not** VIZ-12+ melt)
+- **HIP-07** (#482): CodeRabbit hygiene from #480 onto tip-`dev` (Kasagi pairing optics explicitly deferred)
+- **HIP-08** (#488): Paper multi-format honesty fold-in (PAPER-01…07)
+
+### Added — Contributors
+- **Bryan Chris White** thanked on the Contributors grid (#489)
+
+### Changed — Version markers
+- Four surfaces → **`0.4.0-beta`**: `config.py` `APP_VERSION`, frontend `package.json`,
+  `version.js`, `Dockerfile.backend` `BUILD_VERSION`
+
+### Added — BDS-431 HIP-06 4D viz engine-sample player (VIZ-01…03)
+- Scrubbable dual-clock timeline on UnifiedBubbleLatticeVisualization (physical μs · visual s)
+- Additive `spacetime_sample_buffer` (`lenr-spacetime-sample-v1`) + optional `viz_channels` on `/bubble-lattice`
+- VizChannelBinding schema + claim-tier HUD chips (refuse bare quantitative numbers; melt/P_* stay gap)
+- **No** EQ-OPEN close; **no** `lenr_proved`; **no** fabricated σ_Q; **no** VIZ-12+ melt
 
 ### Added — BDS-350 P1 reviewer-packets product surface (docs/UX)
 - Disambiguate paper Packet A–E (`/docs/reviewer-packets`) vs campaign JSON packs

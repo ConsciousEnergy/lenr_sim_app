@@ -120,7 +120,7 @@ const TheoryPaperPage = () => {
                 variant="outlined"
               />
               <Chip
-                label={`Date: 2026-02-14 (revised 2026-11-11, v${APP_VERSION})`}
+                label={`Date: 2026-02-14 (revised 2026-11-21, v${APP_VERSION})`}
                 size="small"
                 variant="outlined"
                 data-testid="manuscript-revision-chip"
@@ -133,14 +133,23 @@ const TheoryPaperPage = () => {
             <Chip label="Speculative/Exploratory" size="small" color="default" variant="outlined" />
             <Chip label="Modelled / Contested Hydro" size="small" color="info" variant="outlined" />
             <Chip label="Aspirational" size="small" color="default" variant="outlined" />
+            <Chip
+              label="Liquid-phase ON HOLD"
+              size="small"
+              color="default"
+              variant="outlined"
+              data-testid="manuscript-liquid-phase-hold-chip"
+            />
           </Stack>
 
           <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }} data-testid="app-manuscript-version-map">
             <AlertTitle><strong>App / manuscript version map</strong></AlertTitle>
             <Typography variant="body2">
               Hosted application build: <strong>{APP_VERSION}</strong>. This manuscript revision
-              label is <strong>v{APP_VERSION} (revised 2026-11-11)</strong> — cite the build and
-              revision date when reporting results.
+              label is <strong>v{APP_VERSION} (revised 2026-11-21, HIP-08 honesty fold-in)</strong> —
+              cite the build and revision date when reporting results. Markers are{' '}
+              <strong>{APP_VERSION}</strong>; no speculative→EMP upgrades; all{' '}
+              <code>EQ-OPEN-*</code> remain OPEN; <code>lenr_proved</code> stays false.
             </Typography>
           </Alert>
 
@@ -795,6 +804,33 @@ const TheoryPaperPage = () => {
                 </Typography>
               </Alert>
 
+              <Alert severity="info" sx={{ mt: 2 }} data-testid="theory-paper-methods-heating-hold">
+                <AlertTitle>
+                  <strong>3.9 Heating modes / host-phase hold / viz fidelity</strong>
+                  {' '}
+                  <Chip
+                    label="Speculative/Exploratory"
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontSize: '0.65rem', height: 18, ml: 0.5 }}
+                  />
+                </AlertTitle>
+                <Typography variant="body2" paragraph>
+                  Engineering heat inputs stay split as P_joule (electrolytic), P_resistive (gaseous),
+                  and P_photonic (laser) — never one generic joule knob. Excess heat ≠ host-melt switch.
+                  Pd T_m = 1828 K and Ni T_m = 1728 K plus local enthalpy liquid fraction f_L are
+                  future-work materials notes only; metallic liquid-phase TheoryModules and melt viz
+                  remain <strong>ON HOLD</strong> (out of 0.3.9 / 0.4.0). 4D viz evolves as an
+                  engine-sample player with quantitative vs schematic fidelity chips — no bare HUD
+                  nuclear claims. RH / theta-lift language, if present, is aspirational math only.
+                </Typography>
+                <Typography variant="body2">
+                  <code>santilli_icnf</code> stays <code>speculative_exploratory</code> (keys{' '}
+                  <code>kadeisvili2013</code> / related-only <code>santilli2007</code>); stub presence
+                  does not discharge EQ-OPEN-*.
+                </Typography>
+              </Alert>
+
               <Alert severity="info" sx={{ mt: 2 }}>
                 <AlertTitle><strong>Non-Equilibrium Thermodynamics</strong> <AutoFixHighIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /></AlertTitle>
                 <Typography variant="body2">
@@ -1055,6 +1091,53 @@ const TheoryPaperPage = () => {
             </AccordionSummary>
             <AccordionDetails>
               <OpenChallengesSection embedded />
+              <Alert
+                severity="info"
+                sx={{ mt: 2 }}
+                data-testid="theory-paper-lab-ask-path"
+              >
+                <AlertTitle>
+                  <strong>5A.6 Laboratory Experiments path (Lab Ask / NEXT_LAB)</strong>
+                </AlertTitle>
+                <Typography variant="body2" paragraph>
+                  First-class hub at{' '}
+                  <MuiLink component={RouterLink} to="/lab-experiments">
+                    /lab-experiments
+                  </MuiLink>
+                  {' '}gathers NEXT_LAB checklist, Affirmative / Falsification / Does-not-count
+                  walkthrough, and positive-results operator path. Five asks stay{' '}
+                  <code>blocked_awaiting_lab</code> with <code>closes_eq_open: false</code>. Lab Ask
+                  met ≠ EQ-OPEN discharge (Lean <code>LabAskProxies</code>). Soft analytics clear ≠
+                  discovery; refuse fabricated σ_Q beyond Kasagi 2/26.
+                </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <Button
+                    component={RouterLink}
+                    to="/lab-experiments#next-lab"
+                    size="small"
+                    variant="outlined"
+                    data-testid="theory-paper-next-lab-cta"
+                  >
+                    NEXT_LAB checklist
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/docs/eq-open-closure-runway"
+                    size="small"
+                    variant="text"
+                  >
+                    EQ-OPEN runway
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/docs/testable-predictions"
+                    size="small"
+                    variant="text"
+                  >
+                    TESTABLE_PREDICTIONS
+                  </Button>
+                </Stack>
+              </Alert>
             </AccordionDetails>
           </Accordion>
 
@@ -1294,6 +1377,7 @@ const TheoryPaperPage = () => {
                       ['2.8 Tunneling', 'quantum_tunneling', '/unified-theory'],
                       ['Null control', 'null_recombination', '/unified-theory'],
                       ['Shoulders EVO (pheno)', 'shoulders_evo', '/unified-theory'],
+                      ['Santilli ICNF (pheno stub)', 'santilli_icnf (speculative_exploratory)', '/unified-theory'],
                       ['6.1 Takahashi TSC', 'takahashi_tsc', '/unified-theory'],
                       ['6.2 Hagelstein Phonon', 'hagelstein_phonon', '/unified-theory'],
                       ['6.3 Vysotskii CCS', 'vysotskii_ccs', '/unified-theory'],

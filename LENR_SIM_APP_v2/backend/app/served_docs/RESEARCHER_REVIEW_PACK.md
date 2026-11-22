@@ -1,4 +1,4 @@
-# Researcher review pack (v0.3.9-beta)
+# Researcher review pack (v0.4.0-beta)
 
 How to collect, inspect, **import**, and export **model-output** rows for other researchers.
 Extra simulations do **not** prove LENR, close `EQ-OPEN-*`, or raise `claim_tier`.
@@ -16,7 +16,7 @@ In-app: `/docs/reviewer-packets` also renders a **read-only** campaign pack mani
 
 ## Clone ≠ 150 Analytics rows
 
-`git pull` of the `0.3.9-beta` train ships **code** and literature JSON, not
+`git pull` of the `0.4.0-beta` train ships **code** and literature JSON, not
 the cloud agent's SQLite. App startup creates tables only.
 
 | After | Analytics Total Records | What it is |

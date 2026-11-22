@@ -252,6 +252,39 @@ const DocumentationPage = () => {
           </Grid>
         </Grid>
 
+        {/* HIP-03: first-class Laboratory Experiments path (LAB-01). */}
+        <Paper sx={{ p: 3, mb: 3 }} variant="outlined" data-testid="docs-lab-experiments-hero">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <SchoolIcon color="secondary" />
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Laboratory Experiments
+            </Typography>
+            <Chip
+              size="small"
+              color="warning"
+              variant="outlined"
+              label="ask met ≠ EQ-OPEN discharge"
+              sx={{ fontSize: '0.65rem' }}
+            />
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            NEXT_LAB checklist, Affirmative / Falsification / Does-not-count walkthrough, and
+            positive-results operator path — without inventing σ_Q or closing EQ-OPEN-*.
+          </Typography>
+          <Button
+            variant="contained"
+            size="medium"
+            startIcon={<RocketLaunchIcon />}
+            onClick={() => {
+              track.docsViewed({ slug: 'lab-experiments', surface: 'documentation_page' });
+              navigate('/lab-experiments');
+            }}
+            data-testid="docs-lab-experiments-cta"
+          >
+            Open Laboratory Experiments hub
+          </Button>
+        </Paper>
+
         {/* Scientific governance documents.
             These are served as markdown by GET /api/docs/{slug} and rendered by
             DocViewerPage, but nothing linked to them, so the route was

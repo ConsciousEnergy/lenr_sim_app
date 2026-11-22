@@ -20,7 +20,11 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
-import { CAMPAIGN_EVIDENCE, OPEN_EQ_IDS } from '../config/unifiedTheoryScienceEvidence';
+import {
+  CAMPAIGN_EVIDENCE,
+  CLOSURE_SURFACE_LINKS,
+  OPEN_EQ_IDS,
+} from '../config/unifiedTheoryScienceEvidence';
 
 /**
  * @param {Object} props
@@ -130,6 +134,24 @@ const OpenChallengesSection = ({ embedded = false }) => {
       <AlertTitle>Companion Documents</AlertTitle>
       <Typography variant="body2" component="span">
         See{' '}
+        <MuiLink
+          href={CLOSURE_SURFACE_LINKS.lab_experiments_route}
+          component={Link}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_route}
+          data-testid="open-challenges-lab-experiments-link"
+        >
+          Laboratory Experiments hub
+        </MuiLink>
+        {' '}(NEXT_LAB checklist + discharge walkthrough),{' '}
+        <MuiLink
+          href={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          component={Link}
+          to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          data-testid="open-challenges-runway-link"
+        >
+          EQ-OPEN closure runway
+        </MuiLink>
+        ,{' '}
         <MuiLink href="/docs/issue-ledger" component={Link} to="/docs/issue-ledger">
           ISSUE_LEDGER
         </MuiLink>
@@ -155,7 +177,8 @@ const OpenChallengesSection = ({ embedded = false }) => {
         simulations are model outputs; they do not close these questions.
         Campaign / avenue-ranking / Lean / EQ-OPEN runway pointers live in Theory
         Paper section <strong>5B. Science Evidence</strong> (still{' '}
-        <code>lenr_proved: false</code>; all <code>EQ-OPEN-*</code> OPEN).
+        <code>lenr_proved: false</code>; all <code>EQ-OPEN-*</code> OPEN). Lab Ask
+        met ≠ EQ-OPEN discharge.
       </Typography>
     </Alert>
   </Wrapper>

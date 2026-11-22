@@ -321,6 +321,22 @@ export default function AnalyticsScienceEvidencePanel() {
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
         <MuiLink
           component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_route}
+          variant="body2"
+          data-testid="analytics-5b-lab-experiments-link"
+        >
+          Laboratory Experiments hub
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_next_lab}
+          variant="body2"
+          data-testid="analytics-5b-next-lab-hub-link"
+        >
+          NEXT_LAB checklist
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
           to="/theory-paper"
           variant="body2"
           data-testid="analytics-5b-theory-paper-link"
@@ -335,7 +351,12 @@ export default function AnalyticsScienceEvidencePanel() {
         >
           EQ-OPEN closure runway
         </MuiLink>
-        <MuiLink component={RouterLink} to="/unified-theory?tab=results" variant="body2">
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.virtual_lab_route}
+          variant="body2"
+          data-testid="analytics-5b-virtual-lab-link"
+        >
           Open Questions Virtual Lab
         </MuiLink>
         <MuiLink component={RouterLink} to="/docs/issue-ledger" variant="body2">

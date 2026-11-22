@@ -2,11 +2,13 @@
  * OpenQuestionsVirtualLab — when/how under named conditions and data.
  */
 import React, { Suspense, lazy, useCallback, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
   Box,
   Chip,
   Divider,
+  Link as MuiLink,
   Paper,
   Stack,
   Tab,
@@ -25,6 +27,7 @@ import OpenQuestionsWorkingHypothesis from './OpenQuestionsWorkingHypothesis';
 import OpenQuestionsScenarioControls from './OpenQuestionsScenarioControls';
 import TscClusterSceneUnavailable from './TscClusterSceneFallback';
 import { CLAIM_TIERS } from '../../utils/theoryGovernance';
+import { CLOSURE_SURFACE_LINKS } from '../../config/unifiedTheoryScienceEvidence';
 import EngineMaturityBadge from '../EngineMaturityBadge';
 
 // three / @react-three ship in their own chunk; only load them when a WH with
@@ -373,7 +376,50 @@ export default function OpenQuestionsVirtualLab({ simulationData, openQuestions 
       <Typography variant="h6" gutterBottom>Open questions virtual lab</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         When and how under named conditions and data. Not a nature theorem. Not LENR_PROVED.
+        Model when/how exploration is distinct from corpus NEXT_LAB MoE asks — Lab Ask met ≠
+        EQ-OPEN discharge.
       </Typography>
+      <Stack
+        direction="row"
+        spacing={1}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 1.5 }}
+        data-testid="virtual-lab-lab-ask-links"
+      >
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_route}
+          variant="body2"
+          data-testid="virtual-lab-lab-experiments-link"
+        >
+          Laboratory Experiments hub
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_next_lab}
+          variant="body2"
+          data-testid="virtual-lab-next-lab-link"
+        >
+          NEXT_LAB checklist
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.docs_eq_open_runway}
+          variant="body2"
+          data-testid="virtual-lab-runway-link"
+        >
+          EQ-OPEN closure runway
+        </MuiLink>
+        <MuiLink
+          component={RouterLink}
+          to={CLOSURE_SURFACE_LINKS.lab_experiments_discharge}
+          variant="body2"
+          data-testid="virtual-lab-discharge-link"
+        >
+          Discharge walkthrough
+        </MuiLink>
+      </Stack>
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
         <EngineMaturityBadge engineId="EQ-OPEN-MEV-01" />
         <EngineMaturityBadge engineId="EQ-OPEN-RATE-01" />

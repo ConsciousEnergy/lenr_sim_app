@@ -355,21 +355,28 @@ class TestLettsLaser:
     def setup_method(self):
         from app.physics_engine.theories.letts_laser import LettsLaserTheory
         self.theory = LettsLaserTheory()
+        # ENG-HS-03: photonic arm required; defaults stay gated off.
+        self.laser_conditions = {**STANDARD_CONDITIONS, "letts_laser": 1.0}
 
     def test_protocol_compliance(self):
         assert_theory_protocol(self.theory)
 
     def test_at_resonance(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS, {"laser_wavelength_nm": 682.0})
+        r = self.theory.calculate(self.laser_conditions, {"laser_wavelength_nm": 682.0})
         assert r.observables.get("spectral_response", 0) > 0.9
 
     def test_off_resonance(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS, {"laser_wavelength_nm": 500.0})
+        r = self.theory.calculate(self.laser_conditions, {"laser_wavelength_nm": 500.0})
         assert r.observables.get("spectral_response", 0) < 0.1
 
     def test_excess_heat(self):
-        r = self.theory.calculate(STANDARD_CONDITIONS)
+        r = self.theory.calculate(self.laser_conditions)
         assert r.energy_output_watts > 0
+
+    def test_gated_off_without_photonic_arm(self):
+        r = self.theory.calculate(STANDARD_CONDITIONS)
+        assert r.is_applicable is False
+        assert r.energy_output_watts == 0.0
 
 
 # =====================================================
@@ -855,6 +862,42 @@ class TestCzerskiThermalSpike:
         ids = get_default_pipeline().registered_ids
         assert "czerski_thermal_spike" in ids
         assert THEORY_COMPOSITION_GROUPS["czerski_thermal_spike"] == "ion_track"
+
+
+class TestKasagiRadiant:
+    """HIP-05 / ENG-HS-07 radiant BREMS pathway."""
+
+    RADIANT = {
+        **STANDARD_CONDITIONS,
+        "temperature": 1100.0,
+        "loading_ratio": 0.40,
+        "host_material": "nickel",
+        "radiant_calorimetry": 1.0,
+        "h2_absorb_pressure_pa": 250.0,
+        "multilayer_stack": "6x(Cu 3.8 nm / Ni 20 nm)",
+        "heating_mode": "radiant",
+    }
+
+    def setup_method(self):
+        from app.physics_engine.theories.kasagi_radiant import KasagiRadiantTheory
+        self.theory = KasagiRadiantTheory()
+
+    def test_protocol_and_radiant_path(self):
+        assert_theory_protocol(self.theory)
+        contrib = self.theory.calculate(self.RADIANT)
+        assert_valid_contribution(contrib)
+        assert contrib.is_applicable is True
+        assert contrib.theory_id == "kasagi_radiant"
+        assert contrib.energy_output_watts > 0.5
+        assert contrib.claim_tier == "speculative_exploratory"
+        assert contrib.observables.get("not_discovery_moe") is True
+        assert contrib.provenance.get("honesty_class") == "model_output"
+        assert contrib.provenance.get("lenr_proved") is False
+
+    def test_inactive_on_electrolytic_default(self):
+        contrib = self.theory.calculate(STANDARD_CONDITIONS)
+        assert contrib.is_applicable is False
+        assert contrib.energy_output_watts == 0.0
 
 
 class TestSantilliICNF:

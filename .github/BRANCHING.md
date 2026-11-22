@@ -4,27 +4,28 @@ This repository uses **two long-lived branches** aligned to version trains:
 
 | Branch | `APP_VERSION` | Purpose |
 |--------|---------------|---------|
-| `main` | `0.3.9-beta` | Live public Swarm release line (Traefik SPA + API). Protected. Tagged with `v0.3.9-beta`. |
-| `dev` | `0.3.9-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
+| `main` | `0.4.0-beta` | Public Swarm release line (Traefik SPA + API). Protected. Revert = Swarm `v0.3.9-beta`. |
+| `dev` | `0.4.0-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
 
 Releases remain annotated `v*` tags (normally cut from `main` when a train
 ships). Short-lived topic branches are deleted on squash-merge.
 
 Adopted October 2026 for the v0.3.7 / v0.3.8 split; Compose promote of
 **v0.3.8-beta** landed on `main` without Swarm cutover. Public Swarm
-**v0.3.9-beta** cutover landed **2026-10-31** — both trains now mark
-`0.3.9-beta`. Prior pure trunk-only policy (September 2026 / PR #161) still
-applies to feature lifetime and squash merges; only the long-lived set grew to
-include `dev`. Old version-named release branches remain as `archive/*` tags
-only.
+**v0.3.9-beta** cutover landed **2026-10-31**. Controlled **`0.4.0-beta`**
+promote (HIP Prefer-merge train + marker bump) lands tip-`dev` → `main` with
+revert path Swarm **v0.3.9-beta**. Prior pure trunk-only policy (September 2026 /
+PR #161) still applies to feature lifetime and squash merges; only the
+long-lived set grew to include `dev`. Old version-named release branches remain
+as `archive/*` tags only.
 
 ## Branches
 
 | Branch | Lifetime | Purpose |
 |--------|----------|---------|
-| `main` | permanent | v0.3.9-beta Swarm release / ship line |
-| `dev` | permanent | v0.3.9-beta integration; default base for new work |
-| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.3.9 hotfixes only); squash-merged; auto-deleted |
+| `main` | permanent | v0.4.0-beta Swarm release / ship line (revert v0.3.9-beta) |
+| `dev` | permanent | v0.4.0-beta integration; default base for new work |
+| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.4.0 hotfixes only); squash-merged; auto-deleted |
 | `consciousenergy/<topic>-<id>` | days | Same as above (Cursor agents) |
 | `dependabot/**` | days | Automated dependency PRs against **`dev`** |
 | `release/X.Y` | only while a hotfix is open | Created **from a tag** when a fix must ship against an older release. Forward-port to `main` and `dev`, then delete |
@@ -33,7 +34,7 @@ Naming rules: lowercase, hyphen-separated, no version numbers in feature
 branch names (the version lives in the four `APP_VERSION` markers, not in git
 refs).
 
-## Day-to-day flow (both trains `0.3.9-beta`)
+## Day-to-day flow (both trains `0.4.0-beta`)
 
 ```mermaid
 gitGraph
@@ -54,11 +55,13 @@ gitGraph
    also `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-**0.3.9 Swarm hotfixes:** branch from `main` (or `v0.3.9-beta`), PR into
-`main`, then cherry-pick / forward-port to `dev`.
+**0.4.0 Swarm hotfixes:** branch from `main` (or `v0.4.0-beta`), PR into
+`main`, then cherry-pick / forward-port to `dev`. Revert path for live share
+remains Swarm **v0.3.9-beta** images/tag until a later train.
 
 **Promote next train → public:** when ready, open a controlled PR `dev` → `main`
-(markers already bumped on `dev`), then tag on `main` after merge. Do **not**
+(markers already bumped on `dev`), then tag on `main` after merge. Prefer
+**merge commit** (not squash) for promote/Path B PRs (see #480). Do **not**
 continuously merge `dev` into `main`. Do **not** re-arm public Swarm apply
 without a new announced window + confirm.
 

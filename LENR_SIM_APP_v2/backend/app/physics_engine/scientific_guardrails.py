@@ -223,6 +223,10 @@ def build_observables_bridge(
     neutron_cps_ul: Optional[float] = None,
     neutron_efficiency: Optional[float] = None,
     neutron_live_time_s: Optional[float] = None,
+    honesty_class: str = "model_output",
+    claim_tier: str = "model_output_hypothetical",
+    heating_mode: Optional[str] = None,
+    coupled_heat_he: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Canonical observable map with explicit units and provenance class.
@@ -230,6 +234,9 @@ def build_observables_bridge(
     ``neutron_rate_bound`` shares the γ UL honesty class
     (``detector_ul_not_proof``): efficiency-corrected bookkeeping only,
     never neutron proof or EQ-OPEN discharge.
+
+    Heat/He entries are stamped ``model_output`` by default (HIP-01): predictive
+    bridge for ranking / Lab Ask, not a discovery claim upgrade.
     """
     from app.physics_engine.many_body.branching_model import (
         DETECTOR_UL_HONESTY_CLASS,
@@ -241,16 +248,27 @@ def build_observables_bridge(
         neutron_efficiency=neutron_efficiency,
         live_time_s=neutron_live_time_s,
     )
-    return {
+    heat_he_honesty = {
+        "honesty_class": honesty_class,
+        "claim_tier": claim_tier,
+        "is_model_output": True,
+        "not_discovery_claim": True,
+        "lenr_proved": False,
+    }
+    if heating_mode is not None:
+        heat_he_honesty["heating_mode"] = heating_mode
+    payload: Dict[str, Any] = {
         "excess_heat": {
             "value": float(total_energy_watts),
             "unit": "W",
             "type": "predicted",
+            **heat_he_honesty,
         },
         "helium4_rate": {
             "value": float(expected_he4_rate_per_s),
             "unit": "atoms/s",
             "type": "predicted_proxy",
+            **heat_he_honesty,
         },
         "neutron_rate_bound": neutron_bound,
         "gamma_rate_bound": {
@@ -271,6 +289,9 @@ def build_observables_bridge(
             "type": "indicator",
         },
     }
+    if coupled_heat_he is not None:
+        payload["coupled_heat_he"] = coupled_heat_he
+    return payload
 
 
 def get_electrolyte_evidence_weight(electrolyte_family: str) -> float:

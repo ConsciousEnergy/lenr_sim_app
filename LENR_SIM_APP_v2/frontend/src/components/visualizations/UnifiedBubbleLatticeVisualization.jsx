@@ -17,13 +17,10 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { 
-  Box, Typography, Paper, FormGroup, FormControlLabel, Switch, 
-  IconButton, Tooltip, Slider, Chip, Stack
+import {
+  Box, Typography, Paper, FormGroup, FormControlLabel, Switch,
+  IconButton, Tooltip, Chip, Stack
 } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
@@ -39,8 +36,13 @@ import {
   phaseProgressInCycle,
   phaseSegment,
   timelineOnVisualClock,
+  visualTimeToTimelineTime,
   VISUAL_CYCLE_SCALE,
 } from '../../utils/bubblePhaseSchedule';
+import {
+  resolveSpacetimeSampleBuffer,
+  sampleSpacetimeBuffer,
+} from '../../utils/spacetimeSampleBuffer';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -48,6 +50,8 @@ import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
 import { ScaleBar } from './QuantumFluxVisualization';
 // Import VisualizationLegend for comprehensive display
 import VisualizationLegend from './VisualizationLegend';
+import BubbleLatticeTimelineControls from './BubbleLatticeTimelineControls';
+import VizHudReadouts from './VizHudReadouts';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -82,6 +86,7 @@ const _COLLAPSE_PHASES = {
 const UX_TIME_SCALE = VISUAL_CYCLE_SCALE;
 
 const HOST_MATERIAL_COLORS = {
+  constantan: 0xb87333,
   palladium: 0x8b8b8b,
   nickel: 0x4682b4,
   titanium: 0x7f8c8d,
@@ -317,6 +322,7 @@ const UnifiedBubbleLatticeVisualization = ({
   simulationData = null,
   streamLatest = null,
   streamStatus = 'idle',
+  streamFrames = null,
   onPhaseChange = () => {},
   onCollapseEvent = () => {},
   width = '100%',
@@ -386,7 +392,9 @@ const UnifiedBubbleLatticeVisualization = ({
     compressionRatio: 1.0,
     fieldStrength: 0,
     temperature: 300,
-    pressure: 101325
+    pressure: 101325,
+    radiusUm: null,
+    sampleSource: 'local_fallback',
   });
   
   // Visualization toggles
@@ -426,6 +434,21 @@ const UnifiedBubbleLatticeVisualization = ({
   const currentPhaseRef = useRef('EXPANSION'); // Ref to avoid stale closure in animation loop
   const updateAnimationRef = useRef(null); // Ref to hold animation function without triggering re-init
   const flowReversalRef = useRef({ timer: 0, isReversed: false });
+  // Scrub while paused: force one render pass without advancing the clock.
+  const forceRenderRef = useRef(false);
+  const isPlayingRef = useRef(true);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  const spacetimeBuffer = useMemo(
+    () => resolveSpacetimeSampleBuffer(simulationData, streamFrames),
+    [simulationData, streamFrames],
+  );
+  const spacetimeBufferRef = useRef(spacetimeBuffer);
+  useEffect(() => {
+    spacetimeBufferRef.current = spacetimeBuffer;
+  }, [spacetimeBuffer]);
   
   // Extract parameters with defaults
   const {
@@ -1786,82 +1809,123 @@ const UnifiedBubbleLatticeVisualization = ({
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
       try {
-    if (!isPlaying) return;
-    
+    const live = streamLatestRef.current;
+    const liveActive = streamStatusRef.current === 'streaming' && live;
+    const forceRender = forceRenderRef.current;
+    if (forceRender) forceRenderRef.current = false;
+
+    // While paused (and not scrubbing / not live), skip the physics update.
+    if (!isPlayingRef.current && !forceRender && !liveActive) return;
+
     const speed = animationSpeedRef.current;
     // Apply UX_TIME_SCALE to slow down the physics for visual observation
     // cycleDuration is now in seconds, adjusted for human perception
     const cycleDuration = (1 / frequency) / UX_TIME_SCALE; // seconds per visual cycle
-    
-    normalizedTimeRef.current += (deltaTime * speed) / cycleDuration;
-    if (normalizedTimeRef.current >= 1) {
-      normalizedTimeRef.current = 0;
-      setCollapseCount(prev => prev + 1);
-      onCollapseEvent();
-      
-      // Reset rebound nuclear products for new cycle
-      if (effectsGroupRef.current) {
-        const reboundNuclear = effectsGroupRef.current.getObjectByName('ReboundNuclearEvent');
-        if (reboundNuclear) {
-          let primaryIndex = 0;
-          reboundNuclear.children.forEach((child) => {
-            if (child.name && child.name.startsWith('PrimaryProduct')) {
-              // Reset primary products to lattice surface
-              const angle = (primaryIndex / 8) * Math.PI * 2;
-              const radius = 0.3 + Math.random() * 0.2;
-              child.position.set(
-                radius * Math.cos(angle),
-                -5,
-                radius * Math.sin(angle)
-              );
-              child.userData.lifetime = 0;
-              child.visible = false;
-              child.userData.fissionReady = Math.random() < 0.3; // Reset fission probability
-              
-              // Reset velocity direction
-              const elevation = (Math.random() - 0.5) * Math.PI / 4;
-              child.userData.direction = new THREE.Vector3(
-                Math.sin(elevation) * Math.cos(angle),
-                Math.cos(elevation),
-                Math.sin(elevation) * Math.sin(angle)
-              ).normalize();
-              child.userData.velocity = child.userData.direction.clone().multiplyScalar(0.1 + Math.random() * 0.1);
-              
-              primaryIndex++;
-            } else if (child.name && child.name.startsWith('SecondaryProduct')) {
-              child.visible = false;
-              child.userData.lifetime = 0;
-              child.position.set(0, -5, 0);
-            }
-          });
+
+    // Advance the visual clock only when playing and not live-stream locked.
+    if (isPlayingRef.current && !liveActive) {
+      normalizedTimeRef.current += (deltaTime * speed) / cycleDuration;
+      if (normalizedTimeRef.current >= 1) {
+        normalizedTimeRef.current = 0;
+        setCollapseCount(prev => prev + 1);
+        onCollapseEvent();
+
+        // Reset rebound nuclear products for new cycle
+        if (effectsGroupRef.current) {
+          const reboundNuclear = effectsGroupRef.current.getObjectByName('ReboundNuclearEvent');
+          if (reboundNuclear) {
+            let primaryIndex = 0;
+            reboundNuclear.children.forEach((child) => {
+              if (child.name && child.name.startsWith('PrimaryProduct')) {
+                // Reset primary products to lattice surface
+                const angle = (primaryIndex / 8) * Math.PI * 2;
+                const radius = 0.3 + Math.random() * 0.2;
+                child.position.set(
+                  radius * Math.cos(angle),
+                  -5,
+                  radius * Math.sin(angle)
+                );
+                child.userData.lifetime = 0;
+                child.visible = false;
+                child.userData.fissionReady = Math.random() < 0.3; // Reset fission probability
+
+                // Reset velocity direction
+                const elevation = (Math.random() - 0.5) * Math.PI / 4;
+                child.userData.direction = new THREE.Vector3(
+                  Math.sin(elevation) * Math.cos(angle),
+                  Math.cos(elevation),
+                  Math.sin(elevation) * Math.sin(angle)
+                ).normalize();
+                child.userData.velocity = child.userData.direction.clone().multiplyScalar(0.1 + Math.random() * 0.1);
+
+                primaryIndex++;
+              } else if (child.name && child.name.startsWith('SecondaryProduct')) {
+                child.visible = false;
+                child.userData.lifetime = 0;
+                child.position.set(0, -5, 0);
+              }
+            });
+          }
         }
       }
     }
-    
+
     const normalizedTime = normalizedTimeRef.current;
     setCycleProgress(normalizedTime);
-    
+
     const baseRadius = initialBubbleRadius;
-    
-    // Try to use API simulation data if available, otherwise use local calculations.
-    // Backend timelines are on the acoustic clock with MINIMUM labelled at the
-    // physical min radius; remap onto the visual schedule so Progress 70–80%
-    // is MINIMUM and the bubble is actually smallest then.
+
+    // Prefer compact spacetime sample buffer (engine-authored 4D samples).
+    // Visual clock → acoustic normalized_time for buffer lookup.
+    const buffer = spacetimeBufferRef.current;
+    const acousticTime = buffer
+      ? visualTimeToTimelineTime(
+        normalizedTime,
+        simulationData?.enhancement_timeline || buffer.samples,
+      )
+      : normalizedTime;
+    const bufferSample = buffer
+      ? sampleSpacetimeBuffer(buffer, acousticTime)
+      : null;
+
+    // Fallback: remap acoustic enhancement_timeline onto the visual schedule.
     const visualTimeline = timelineOnVisualClock(simulationData?.enhancement_timeline);
-    const apiData = visualTimeline.length
+    const apiData = !bufferSample && visualTimeline.length
       ? interpolateFromAPITimeline(visualTimeline, normalizedTime)
       : null;
-    
-    // Track whether we're using API data (only update state if changed)
-    const nowUsingAPI = !!apiData;
+
+    // Track whether we're using API / engine samples (only update state if changed)
+    const nowUsingAPI = !!(bufferSample || apiData);
     if (nowUsingAPI !== usingAPIDataRef.current) {
       setUsingAPIData(nowUsingAPI);
       usingAPIDataRef.current = nowUsingAPI;
     }
-    
+
     let radius, phase, compressionRatio, fieldStrength, temperature, pressure, enhancements;
-    
-    if (apiData) {
+    let sampleSource = 'local_fallback';
+
+    if (bufferSample) {
+      sampleSource = bufferSample.source || 'solver';
+      radius = typeof bufferSample.radius_um === 'number'
+        ? bufferSample.radius_um
+        : baseRadius;
+      phase = phaseFromCycleFraction(normalizedTime);
+      fieldStrength = bufferSample.electric_field_v_m ?? 0;
+      temperature = bufferSample.temperature_k ?? 300;
+      compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
+      pressure = 101325 * Math.pow(compressionRatio, 4.2);
+      enhancements = {
+        total: bufferSample.enhancement || 1.0,
+        screening: 1.0,
+        qed: 1.0,
+        casimir: 1.0,
+        rydberg: 1.0,
+        compression: 1.0,
+        phonon: 1.0,
+        loading: 1.0,
+      };
+    } else if (apiData) {
+      sampleSource = 'interpolated';
       // Use API physics data for R(t) / T / E; phase names follow the visual
       // clock so Expansion → Collapse → Minimum → Rebound match HUD progress.
       radius = baseRadius * apiData.radius_factor;
@@ -1870,7 +1934,7 @@ const UnifiedBubbleLatticeVisualization = ({
       temperature = apiData.temperature_k ?? apiData.temperature;
       compressionRatio = baseRadius / Math.max(radius, baseRadius * 0.1);
       pressure = 101325 * Math.pow(compressionRatio, 4.2); // Approximate
-      
+
       // Safely access enhancement_breakdown with fallback defaults
       const breakdown = apiData.enhancement_breakdown || {};
       enhancements = {
@@ -1885,6 +1949,7 @@ const UnifiedBubbleLatticeVisualization = ({
       };
     } else {
       // Fall back to local physics calculations
+      sampleSource = 'local_fallback';
       const localPhysics = calculateBubbleRadius(normalizedTime, baseRadius);
       radius = localPhysics.radius;
       phase = normalizePhaseName(localPhysics.phase);
@@ -1892,15 +1957,14 @@ const UnifiedBubbleLatticeVisualization = ({
       fieldStrength = localPhysics.fieldStrength;
       temperature = localPhysics.temperature;
       pressure = localPhysics.pressure;
-      
+
       enhancements = calculateEnhancementFactors(compressionRatio, fieldStrength, temperature, pressure);
     }
-    
+
     // Live WebSocket frames drive R(t)/phase while streaming (otherwise the
     // 3D scene keeps its own RAF clock and Live Stream looks like a no-op).
-    const live = streamLatestRef.current;
-    const liveActive = streamStatusRef.current === 'streaming' && live;
     if (liveActive) {
+      sampleSource = 'solver';
       if (typeof live.normalized_time === 'number' && Number.isFinite(live.normalized_time)) {
         normalizedTimeRef.current = Math.min(1, Math.max(0, live.normalized_time));
       }
@@ -1929,9 +1993,16 @@ const UnifiedBubbleLatticeVisualization = ({
     }
 
     bubbleRadiusRef.current = radius;
-    
-    // Update physics data state
-    setPhysicsData({ compressionRatio, fieldStrength, temperature, pressure });
+
+    // Update physics data state (includes sample provenance for claim-tier HUD)
+    setPhysicsData({
+      compressionRatio,
+      fieldStrength,
+      temperature,
+      pressure,
+      radiusUm: radius,
+      sampleSource,
+    });
     
     // Set enhancement data
     setCurrentEnhancement(enhancements.total);
@@ -2751,11 +2822,11 @@ const UnifiedBubbleLatticeVisualization = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    isPlaying, frequency, initialBubbleRadius, simulationData, setUsingAPIData,
+    frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits
-  ]); // Note: currentPhase removed - using currentPhaseRef to avoid scene re-initialization
+  ]); // Note: currentPhase / isPlaying removed - using refs to avoid scene re-initialization
 
   // Store updateAnimation in ref to avoid triggering scene re-initialization
   useEffect(() => {
@@ -3250,7 +3321,7 @@ const UnifiedBubbleLatticeVisualization = ({
           />
         )}
         
-        {/* Phase indicator - bottom */}
+        {/* Phase + claim-tier HUD — no bare quantitative numbers (VIZ-03) */}
         <Paper
           elevation={3}
           sx={{
@@ -3263,16 +3334,16 @@ const UnifiedBubbleLatticeVisualization = ({
             p: 1,
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
-            flexWrap: 'wrap'
+            gap: 1.5,
+            flexWrap: 'wrap',
+            maxWidth: '95%',
           }}
         >
-          {/* Data source indicator */}
-          <Tooltip title={usingAPIData ? 'Using real physics calculations from backend API' : 'Using local fallback calculations (limited accuracy)'}>
-            <Chip 
-              label={usingAPIData ? 'API Physics' : 'Local Calc'} 
+          <Tooltip title={usingAPIData ? 'Playing engine samples / API timeline' : 'Local RAF fallback (schematic; limited accuracy)'}>
+            <Chip
+              label={usingAPIData ? 'Engine samples' : 'Local Calc'}
               size="small"
-              sx={{ 
+              sx={{
                 bgcolor: usingAPIData ? 'rgba(46, 125, 50, 0.9)' : 'rgba(237, 108, 2, 0.9)',
                 color: 'white',
                 fontWeight: 'bold',
@@ -3280,38 +3351,44 @@ const UnifiedBubbleLatticeVisualization = ({
               }}
             />
           </Tooltip>
-          <Chip 
-            label={currentPhase} 
-            color={getPhaseColor(currentPhase)} 
-            size="small" 
+          <Chip
+            label={currentPhase}
+            color={getPhaseColor(currentPhase)}
+            size="small"
+            data-testid="ublv-phase-chip"
           />
           <Typography variant="caption" color="white">
-            Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}% · {currentPhase}
+            Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
           </Typography>
-          <Chip 
-            label={`Enhancement: ${currentEnhancement.toExponential(2)}`}
-            size="small"
-            color="primary"
-            sx={{ bgcolor: 'rgba(25, 118, 210, 0.8)' }}
-          />
-          <Chip 
-            label={`Compression: ${physicsData.compressionRatio.toFixed(1)}x`}
-            size="small"
-            color="secondary"
-            sx={{ bgcolor: 'rgba(156, 39, 176, 0.8)' }}
-          />
-          <Chip 
-            label={`T: ${physicsData.temperature.toFixed(0)} K`}
-            size="small"
-            sx={{ 
-              bgcolor: physicsData.temperature > 1000 ? 'rgba(244, 67, 54, 0.8)' : 'rgba(76, 175, 80, 0.8)',
-              color: 'white'
-            }}
-          />
-          <Chip 
-            label={`E: ${(physicsData.fieldStrength / 1e8).toFixed(1)}×10⁸ V/m`}
-            size="small"
-            sx={{ bgcolor: 'rgba(255, 152, 0, 0.8)', color: 'white' }}
+          <VizHudReadouts
+            showHeldGaps={false}
+            channels={[
+              {
+                channel_id: 'enhancement.claim_tier_display',
+                value: currentEnhancement,
+                source: physicsData.sampleSource,
+              },
+              {
+                channel_id: 'collapse.compression_ratio',
+                value: physicsData.compressionRatio,
+                source: physicsData.sampleSource,
+              },
+              {
+                channel_id: 'collapse.temperature_k',
+                value: physicsData.temperature,
+                source: physicsData.sampleSource,
+              },
+              {
+                channel_id: 'collapse.electric_field_v_m',
+                value: physicsData.fieldStrength,
+                source: physicsData.sampleSource,
+              },
+              {
+                channel_id: 'bubble.radius_um',
+                value: physicsData.radiusUm,
+                source: physicsData.sampleSource,
+              },
+            ]}
           />
         </Paper>
         
@@ -3366,56 +3443,61 @@ const UnifiedBubbleLatticeVisualization = ({
         </Paper>
       </Box>
       
-      {/* Playback controls */}
-      <Paper sx={{ mt: 1, p: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => setIsPlaying(!isPlaying)}>
-            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton onClick={() => { normalizedTimeRef.current = 0; setCollapseCount(0); }}>
-            <RestartAltIcon />
-          </IconButton>
-          
-          <Box sx={{ flex: 1, mx: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Animation Speed ({(animationSpeed * 100).toFixed(0)}%)
-              {streamStatus === 'streaming' ? ' · live stream driving scene' : ''}
-            </Typography>
-            <Slider
-              value={animationSpeed}
-              onChange={(_, val) => setAnimationSpeed(val)}
-              min={0.05}
-              max={1.0}
-              step={0.01}
-              marks={[
-                { value: 0.1, label: '0.1x' },
-                { value: 0.45, label: '0.45x' },
-                { value: 1.0, label: '1x' }
-              ]}
+      {/* Scrubbable dual-clock timeline (VIZ-01) + engine-sample player (VIZ-02) */}
+      <BubbleLatticeTimelineControls
+        isPlaying={isPlaying}
+        onPlayPause={() => setIsPlaying((prev) => !prev)}
+        onRestart={() => {
+          normalizedTimeRef.current = 0;
+          setCycleProgress(0);
+          setCollapseCount(0);
+          forceRenderRef.current = true;
+          setIsPlaying(false);
+        }}
+        onStepBackward={() => {
+          const next = Math.max(0, normalizedTimeRef.current - 0.02);
+          normalizedTimeRef.current = next;
+          setCycleProgress(next);
+          forceRenderRef.current = true;
+          setIsPlaying(false);
+        }}
+        onStepForward={() => {
+          const next = Math.min(1, normalizedTimeRef.current + 0.02);
+          normalizedTimeRef.current = next;
+          setCycleProgress(next);
+          forceRenderRef.current = true;
+          setIsPlaying(false);
+        }}
+        cycleFraction={cycleProgress}
+        onScrub={(val) => {
+          const next = Math.min(1, Math.max(0, Number(val) || 0));
+          normalizedTimeRef.current = next;
+          setCycleProgress(next);
+          forceRenderRef.current = true;
+          setIsPlaying(false);
+        }}
+        animationSpeed={animationSpeed}
+        onSpeedChange={setAnimationSpeed}
+        frequencyKhz={frequency}
+        streamLocked={streamStatus === 'streaming'}
+        bufferSampleCount={spacetimeBuffer?.sample_count || 0}
+      >
+        {/* Proton state legend */}
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {Object.entries(PROTON_STATES).map(([key, state]) => (
+            <Chip
+              key={key}
+              label={state.name}
               size="small"
-              valueLabelDisplay="auto"
-              valueLabelFormat={(v) => `${v}x`}
-              disabled={streamStatus === 'streaming'}
+              sx={{
+                bgcolor: `#${state.color.toString(16).padStart(6, '0')}`,
+                color: key === 'FREE' || key === 'SCREENED' ? 'black' : 'white',
+                fontSize: '0.65rem'
+              }}
             />
-          </Box>
-          
-          {/* Proton state legend */}
-          <Stack direction="row" spacing={1}>
-            {Object.entries(PROTON_STATES).map(([key, state]) => (
-              <Chip
-                key={key}
-                label={state.name}
-                size="small"
-                sx={{
-                  bgcolor: `#${state.color.toString(16).padStart(6, '0')}`,
-                  color: key === 'FREE' || key === 'SCREENED' ? 'black' : 'white',
-                  fontSize: '0.65rem'
-                }}
-              />
-            ))}
-          </Stack>
-        </Box>
-      </Paper>
+          ))}
+        </Stack>
+      </BubbleLatticeTimelineControls>
     </Box>
   );
 };
@@ -3433,6 +3515,7 @@ UnifiedBubbleLatticeVisualization.propTypes = {
   simulationData: PropTypes.object,
   streamLatest: PropTypes.object,
   streamStatus: PropTypes.string,
+  streamFrames: PropTypes.array,
   onPhaseChange: PropTypes.func,
   onCollapseEvent: PropTypes.func,
   width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

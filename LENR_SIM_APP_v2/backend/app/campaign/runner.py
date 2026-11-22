@@ -48,6 +48,8 @@ def _simulate_payload(
     }
     if "electric_field" in case:
         environmental["electric_field"] = case["electric_field"]
+    if case.get("pressure") is not None:
+        environmental["pressure"] = float(case["pressure"])
     lattice: Dict[str, Any] = {
         "loading_ratio": min(max(float(case["loading_ratio"]), 0.0), 2.0)
     }
@@ -79,6 +81,8 @@ def _simulate_payload(
     )
     if case.get("enabled_theories"):
         kwargs["enabled_theories"] = list(case["enabled_theories"])
+    if case.get("theory_configs"):
+        kwargs["theory_configs"] = dict(case["theory_configs"])
     if case.get("electrolyte_family"):
         kwargs["electrolyte"] = {"family": case["electrolyte_family"]}
     if case.get("include_uncertainty"):
