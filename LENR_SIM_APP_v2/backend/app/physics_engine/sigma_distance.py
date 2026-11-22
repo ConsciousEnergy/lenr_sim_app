@@ -76,8 +76,17 @@ def quantitative_distance_to_discovery(
         and math.isfinite(float(q_w))
     ):
         required_sigma = float(q_w) / threshold
-        if sigma is not None and float(sigma) > 0.0 and required_sigma > 0.0:
+        if not math.isfinite(required_sigma):
+            required_sigma = None
+        if (
+            required_sigma is not None
+            and sigma is not None
+            and float(sigma) > 0.0
+            and required_sigma > 0.0
+        ):
             tightening = float(sigma) / required_sigma
+            if not math.isfinite(tightening):
+                tightening = None
 
     stat = summary.get("sigma_q_statistical_w")
     syst = summary.get("sigma_q_systematic_w")
@@ -166,7 +175,12 @@ def corpus_moe_coverage(
             with_sigma += 1
         provenance = report.get("moe_provenance")
         citations = list(report.get("moe_citation_keys") or [])
-        if provenance == "literature_reported" and citations:
+        has_sigma = (
+            report.get("sigma_q_w") is not None
+            or distance.get("sigma_q_w") is not None
+        )
+        # Cite-gated MoE coverage requires usable σ_Q, not provenance alone.
+        if provenance == "literature_reported" and citations and has_sigma:
             with_cite_gated += 1
         if report.get("moe_sigma_q_pairing_verified"):
             with_pairing += 1

@@ -55,15 +55,17 @@ export function analyticsGateDisplayStatus(overallStatus) {
  * Soft honesty only — never invents discovery eligibility.
  *
  * @param {object|null|undefined} exp
- * @param {object|null|undefined} [quantitativeDistance]
+ * @param {object|null|undefined} [_quantitativeDistance] retained for call-site compat; unused
  * @returns {object|null}
  */
-export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null) {
-  const results = exp.results && typeof exp.results === 'object' ? exp.results : {};
+export function resolveEmpWhyNotDiscovery(exp = {}, _quantitativeDistance = null) {
+  const safeExp = exp && typeof exp === 'object' ? exp : {};
+  const results =
+    safeExp.results && typeof safeExp.results === 'object' ? safeExp.results : {};
   const litId =
-    exp.literature_id ||
+    safeExp.literature_id ||
     results.literature_id ||
-    exp.id ||
+    safeExp.id ||
     results.id ||
     null;
   if (litId) {
@@ -72,27 +74,8 @@ export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null)
     );
     if (byId) return byId;
   }
-  const distance = quantitativeDistance || {};
-  const provenance =
-    distance.moe_provenance ||
-    exp.moe_provenance ||
-    results.moe_provenance ||
-    null;
-  const distanceStatus = distance.distance_status;
-  if (
-    distanceStatus === 'at_or_above_bar_gates_blocked' ||
-    (typeof provenance === 'string' &&
-      (provenance.includes('instrument_precision') ||
-        provenance.includes('instrument_floor')))
-  ) {
-    return (
-      EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
-        (row) =>
-          row.moe_provenance === provenance ||
-          row.distance_status === distanceStatus,
-      ) || EMP_EXPLORATORY_WHY_NOT_DISCOVERY[0]
-    );
-  }
+  // Unknown / unmatched identities must not inherit Miles/McKubre-specific copy
+  // from shared provenance or distance_status alone.
   return null;
 }
 
@@ -110,10 +93,12 @@ export function resolveEmpWhyNotDiscovery(exp = {}, quantitativeDistance = null)
  * }}
  */
 export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
-  const results = exp.results && typeof exp.results === 'object' ? exp.results : {};
+  const safeExp = exp && typeof exp === 'object' ? exp : {};
+  const results =
+    safeExp.results && typeof safeExp.results === 'object' ? safeExp.results : {};
   const summary =
-    (exp.bayesian_summary && typeof exp.bayesian_summary === 'object'
-      ? exp.bayesian_summary
+    (safeExp.bayesian_summary && typeof safeExp.bayesian_summary === 'object'
+      ? safeExp.bayesian_summary
       : null) ||
     (results.bayesian_summary && typeof results.bayesian_summary === 'object'
       ? results.bayesian_summary
@@ -121,17 +106,17 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     {};
 
   const rawGap =
-    exp.discovery_grade_gap ||
+    safeExp.discovery_grade_gap ||
     results.discovery_grade_gap ||
     summary.discovery_grade_gap ||
     null;
   const rawClosure =
-    exp.honest_closure ||
+    safeExp.honest_closure ||
     results.honest_closure ||
     summary.honest_closure ||
     null;
   const rawDistance =
-    exp.quantitative_distance ||
+    safeExp.quantitative_distance ||
     results.quantitative_distance ||
     summary.quantitative_distance ||
     (rawGap && typeof rawGap === 'object' ? rawGap.quantitative_distance : null) ||
@@ -184,7 +169,7 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
           };
 
   const discoveryGradeEligible = Boolean(
-    exp.discovery_grade_eligible ??
+    safeExp.discovery_grade_eligible ??
       results.discovery_grade_eligible ??
       summary.discovery_grade_eligible ??
       false,
@@ -194,7 +179,10 @@ export function normalizeExperimentDiscoveryEnvelopes(exp = {}) {
     discoveryGradeGap.overall_status,
   );
 
-  const empWhyNotDiscovery = resolveEmpWhyNotDiscovery(exp, quantitativeDistance);
+  const empWhyNotDiscovery = resolveEmpWhyNotDiscovery(
+    safeExp,
+    quantitativeDistance,
+  );
 
   const daqSampleProvenance = plannedDaqSampleProvenanceEnvelope();
   // Stamp planned DAQ provenance onto closure envelope (never attested / never discharge).

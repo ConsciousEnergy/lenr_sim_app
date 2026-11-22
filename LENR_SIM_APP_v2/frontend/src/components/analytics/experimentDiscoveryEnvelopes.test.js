@@ -5,6 +5,14 @@ import {
 } from './experimentDiscoveryEnvelopes';
 
 describe('normalizeExperimentDiscoveryEnvelopes', () => {
+  test('tolerates null experiment input without throwing', () => {
+    const envelopes = normalizeExperimentDiscoveryEnvelopes(null);
+    expect(envelopes.lenrProved).toBe(false);
+    expect(envelopes.discoveryGradeEligible).toBe(false);
+    expect(envelopes.discoveryGradeGap.overall_status).toBe('not_met');
+    expect(envelopes.honestClosure.overall_status).toBe('not_met');
+  });
+
   test('falls back to corpus not_met envelopes when API fields absent', () => {
     const envelopes = normalizeExperimentDiscoveryEnvelopes({ id: 'x' });
     expect(envelopes.lenrProved).toBe(false);
@@ -60,6 +68,38 @@ describe('normalizeExperimentDiscoveryEnvelopes', () => {
     expect(envelopes.empWhyNotDiscovery.literature_id).toBe('miles-1993');
     expect(envelopes.empWhyNotDiscovery.discovery_grade_eligible).toBe(false);
     expect(envelopes.discoveryGradeEligible).toBe(false);
+  });
+
+  test('unknown experiment ID does not inherit Miles/McKubre EMP copy', () => {
+    const why = resolveEmpWhyNotDiscovery(
+      { literature_id: 'unknown-lab-row-xyz', id: 'unknown-lab-row-xyz' },
+      {
+        distance_status: 'at_or_above_bar_gates_blocked',
+        moe_provenance: 'literature_reported_instrument_precision',
+      },
+    );
+    expect(why).toBeNull();
+
+    const floorWhy = resolveEmpWhyNotDiscovery(
+      { id: 'orphan-floor-row' },
+      {
+        distance_status: 'undefined',
+        moe_provenance: 'literature_reported_instrument_floor',
+      },
+    );
+    expect(floorWhy).toBeNull();
+
+    const envelopes = normalizeExperimentDiscoveryEnvelopes({
+      literature_id: 'unknown-lab-row-xyz',
+      moe_provenance: 'literature_reported_instrument_precision',
+      quantitative_distance: {
+        distance_status: 'at_or_above_bar_gates_blocked',
+        moe_provenance: 'literature_reported_instrument_precision',
+        lenr_proved: false,
+      },
+    });
+    expect(envelopes.empWhyNotDiscovery).toBeNull();
+    expect(envelopes.lenrProved).toBe(false);
   });
 
   test('maps schema met → analytics_gates_clear display; keeps honest_closure not_met', () => {

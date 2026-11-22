@@ -123,6 +123,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       ]),
     );
     expect(CORPUS_MOE_COVERAGE.kasagi_ni_s_heat).toBe(11.25);
+    expect(CORPUS_MOE_COVERAGE.kasagi_ni_claim_tier).toBe(
+      'empirical_lenr_correlation',
+    );
     expect(CORPUS_MOE_COVERAGE.kasagi_nicu_s_heat).toBe(13.75);
     expect(CORPUS_MOE_COVERAGE.n_records).toBe(26);
     expect(CORPUS_MOE_COVERAGE.with_sigma_q).toBe(5);
@@ -139,8 +142,13 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       'at_or_above_bar_gates_blocked',
     );
     expect(CORPUS_MOE_COVERAGE.miles_moe_provenance).toMatch(/instrument_precision/);
+    expect(CORPUS_MOE_COVERAGE.miles_claim_tier).toBe('speculative_exploratory');
     expect(CORPUS_MOE_COVERAGE.miles_pairing_verified).toBe(false);
     expect(CORPUS_MOE_COVERAGE.miles_banner).toMatch(/exploratory/i);
+    expect(CORPUS_MOE_COVERAGE.kasagi_nicu_moe_provenance).toBe('literature_reported');
+    expect(CORPUS_MOE_COVERAGE.kasagi_nicu_claim_tier).toBe(
+      'empirical_lenr_correlation',
+    );
     expect(CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns).toHaveLength(4);
     CORPUS_MOE_COVERAGE.refused_fabricated_moe_campaigns.forEach((row) => {
       expect(row.sigma_Q_W).toBeNull();
@@ -159,6 +167,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     );
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_sigma_Q_W).toBe(0.1);
     expect(CORPUS_MOE_COVERAGE.campaign_model_output_is_discovery_moe).toBe(false);
+    expect(CORPUS_MOE_COVERAGE.campaign_model_output_claim_tier).toBe(
+      'speculative_exploratory',
+    );
     expect(CORPUS_MOE_COVERAGE.exploratory_instrument_moe_ids).toEqual(
       expect.arrayContaining([
         'miles-1993',
@@ -206,6 +217,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
       expect(row.closes_eq_open).toBe(false);
       expect(row.avenue_id).toBeTruthy();
       expect(row.target.length).toBeGreaterThan(20);
+      expect(row.claim_tier).toBe('speculative_exploratory');
       expect(row.lab_acceptance.length).toBeGreaterThan(20);
       expect(row.still_does_not_discharge.length).toBeGreaterThan(20);
       expect(row.corpus_gap_now.length).toBeGreaterThan(10);
@@ -241,6 +253,7 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(EMP_EXPLORATORY_WHY_NOT_DISCOVERY.length).toBeGreaterThanOrEqual(4);
     EMP_EXPLORATORY_WHY_NOT_DISCOVERY.forEach((row) => {
       expect(row.discovery_grade_eligible).toBe(false);
+      expect(row.claim_tier).toBe('speculative_exploratory');
       expect(row.reasons.length).toBeGreaterThanOrEqual(2);
       expect(String(row.soft_chip)).not.toMatch(/≥5σ.*met/i);
       expect(row.soft_chip).not.toBe('met');

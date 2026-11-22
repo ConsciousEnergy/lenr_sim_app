@@ -417,11 +417,26 @@ def merge_bayesian_into_results(
         payload["moe_citation_keys"] = columns["moe_citation_keys"]
 
     # Prefer envelopes already attached to bayesian_summary / columns.
+    # After an eligibility downgrade, rebuild so a stale "met" gap cannot persist.
     gap = None
     closure = None
-    if isinstance(payload.get("bayesian_summary"), dict):
-        gap = payload["bayesian_summary"].get("discovery_grade_gap")
-        closure = payload["bayesian_summary"].get("honest_closure")
+    summary_payload = payload.get("bayesian_summary")
+    eligible_flag = (
+        bool(columns["discovery_grade_eligible"])
+        if "discovery_grade_eligible" in columns
+        else None
+    )
+    if isinstance(summary_payload, dict) and eligible_flag is False:
+        rebuilt = dict(summary_payload)
+        rebuilt["discovery_grade_eligible"] = False
+        rebuilt["lenr_proved"] = False
+        rebuilt = attach_discovery_grade_envelopes(rebuilt)
+        payload["bayesian_summary"] = rebuilt
+        gap = rebuilt.get("discovery_grade_gap")
+        closure = rebuilt.get("honest_closure")
+    elif isinstance(summary_payload, dict):
+        gap = summary_payload.get("discovery_grade_gap")
+        closure = summary_payload.get("honest_closure")
     if gap is None:
         gap = columns.get("discovery_grade_gap")
     if closure is None:
