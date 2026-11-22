@@ -148,6 +148,30 @@ jobs:
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
 
+    # Self-hosted lenr-ci has intermittently lacked DejaVu Sans; matplotlib Agg
+    # then fails test_unified_theory savefig (ValueError / fonttools noise) and
+    # can cascade into coverage html teardown. Install fonts + rebuild cache.
+    - name: Ensure DejaVu fonts for matplotlib
+      run: |
+        set -euo pipefail
+        if command -v apt-get >/dev/null 2>&1; then
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-dejavu-core fontconfig
+          sudo fc-cache -f || true
+        fi
+        python - <<'PY'
+        from pathlib import Path
+        import matplotlib as mpl
+        from matplotlib import font_manager
+        from matplotlib.font_manager import FontProperties, findfont
+        # Drop stale fontlist cache so a newly installed DejaVu is visible.
+        for stale in Path(mpl.get_cachedir()).glob("fontlist-*.json"):
+            stale.unlink(missing_ok=True)
+        font_manager.fontManager = font_manager.FontManager()
+        path = findfont(FontProperties(family="DejaVu Sans"), fallback_to_default=False)
+        print(f"matplotlib DejaVu Sans OK -> {path}")
+        PY
+
     - name: Backend dependency audit
       # Residual-risk policy: fail on any new/fixable advisory, but tolerate the
       # documented, out-of-beta-scope transitive residuals below (see
@@ -165,9 +189,17 @@ jobs:
           --ignore-vuln PYSEC-2025-226
 
     - name: Run unit tests
+      # Clear pytest.ini addopts so CI does not also emit --cov-report=html
+      # (broken coverage htmlfiles on the runner caused INTERNALERROR after font fails).
       run: |
         cd LENR_SIM_APP_v2/backend
-        python -m pytest tests/ app/tests/ --cov=app --cov-report=xml -v
+        python -m pytest tests/ app/tests/ \
+          -o addopts= \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --cov-config=tests/.coveragerc \
+          -v
 
     - name: Run integration tests
       run: |
