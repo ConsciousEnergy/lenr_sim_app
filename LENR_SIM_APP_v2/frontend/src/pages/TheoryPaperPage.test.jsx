@@ -7,6 +7,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '../tests/test-utils';
 import TheoryPaperPage from './TheoryPaperPage';
+import { APP_VERSION } from '../config/version';
 
 describe('TheoryPaperPage', () => {
   test('renders page header with unified framework title', () => {
@@ -174,14 +175,15 @@ describe('TheoryPaperPage', () => {
 
   test('shows app/manuscript version map aligned to the live train', () => {
     render(<TheoryPaperPage />);
+    const versionEscaped = APP_VERSION.replace(/\./g, '\\.');
     expect(screen.getByTestId('manuscript-revision-chip')).toHaveTextContent(
-      /v0\.3\.9-beta/,
+      new RegExp(`v${versionEscaped}`),
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
-      /0\.3\.9-beta/,
+      APP_VERSION,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
-      /v0\.3\.9-beta \(revised 2026-11-21, HIP-08 honesty fold-in\)/,
+      `v${APP_VERSION} (revised 2026-11-21, HIP-08 honesty fold-in)`,
     );
     expect(screen.getByTestId('manuscript-liquid-phase-hold-chip')).toHaveTextContent(
       /Liquid-phase ON HOLD/,

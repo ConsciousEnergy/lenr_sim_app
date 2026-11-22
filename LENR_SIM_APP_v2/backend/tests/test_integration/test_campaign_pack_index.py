@@ -107,10 +107,10 @@ def test_researcher_review_pack_doc_is_039_branded() -> None:
         resp = client.get("/api/docs/researcher-review-pack")
         assert resp.status_code == 200
         text = resp.text
-        assert "v0.3.9-beta" in text
+        assert "v0.4.0-beta" in text
         assert "Do not conflate surfaces" in text
         # Prefer bundled 0.3.9 copy over root stub / historical 0.3.6 title as H1.
-        assert text.lstrip().startswith("# Researcher review pack (v0.3.9-beta)")
+        assert text.lstrip().startswith("# Researcher review pack (v0.4.0-beta)")
 
 
 def test_reviewer_packets_doc_disambiguates_surfaces() -> None:

@@ -147,8 +147,8 @@ const TheoryPaperPage = () => {
             <Typography variant="body2">
               Hosted application build: <strong>{APP_VERSION}</strong>. This manuscript revision
               label is <strong>v{APP_VERSION} (revised 2026-11-21, HIP-08 honesty fold-in)</strong> —
-              cite the build and revision date when reporting results. Markers stay{' '}
-              <strong>0.3.9-beta</strong>; no speculative→EMP upgrades; all{' '}
+              cite the build and revision date when reporting results. Markers are{' '}
+              <strong>{APP_VERSION}</strong>; no speculative→EMP upgrades; all{' '}
               <code>EQ-OPEN-*</code> remain OPEN; <code>lenr_proved</code> stays false.
             </Typography>
           </Alert>
