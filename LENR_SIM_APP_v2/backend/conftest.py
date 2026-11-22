@@ -31,7 +31,8 @@ def _ensure_matplotlib_dejavu() -> None:
         except OSError:
             pass
 
-    font_manager.fontManager = font_manager.FontManager()
+    # Keep the import-time FontManager singleton; replacing it leaves
+    # module-level findfont / MathText bound to the old manager.
     for ttf in sorted(ttf_dir.glob("DejaVu*.ttf")):
         try:
             font_manager.fontManager.addfont(str(ttf))
