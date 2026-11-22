@@ -126,10 +126,6 @@ jobs:
     if: needs.detect-changes.outputs.run_all == 'true' || needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
-    # Fresh cache: lenr-ci github-runner cannot sudo apt; poisoned home
-    # matplotlib fontlists have caused DejaVu savefig flakes on tip pushes.
-    env:
-      MPLCONFIGDIR: ${{ runner.temp }}/mpl-config
     strategy:
       matrix:
         # PRs: 3.12 only (matches Dockerfile.backend). Push/main + dispatch:
@@ -152,12 +148,14 @@ jobs:
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
 
-    # No sudo: runner user cannot apt-get ("I'm afraid I can't do that").
-    # Register matplotlib's bundled DejaVu TTFs into a fresh MPLCONFIGDIR.
-    # pytest also registers them via LENR_SIM_APP_v2/backend/conftest.py.
+    # No sudo apt. Job-level env cannot use runner.*; export MPLCONFIGDIR
+    # via GITHUB_ENV so pytest steps share a fresh matplotlib font cache.
+    # Register bundled DejaVu; pytest mirrors via backend/conftest.py.
     - name: Ensure DejaVu fonts for matplotlib
       run: |
         set -euo pipefail
+        echo "MPLCONFIGDIR=${RUNNER_TEMP}/mpl-config" >> "$GITHUB_ENV"
+        export MPLCONFIGDIR="${RUNNER_TEMP}/mpl-config"
         mkdir -p "${MPLCONFIGDIR}"
         python - <<'PY'
         from pathlib import Path
@@ -173,7 +171,7 @@ jobs:
         ttf_dir = Path(mpl.get_data_path()) / "fonts" / "ttf"
         bundled = ttf_dir / "DejaVuSans.ttf"
         assert bundled.is_file(), f"matplotlib missing bundled DejaVu at {bundled}"
-        font_manager.fontManager = font_manager.FontManager()
+        # Keep the import-time FontManager singleton; replace breaks findfont.
         for ttf in sorted(ttf_dir.glob("DejaVu*.ttf")):
             font_manager.fontManager.addfont(str(ttf))
         path = findfont(FontProperties(family="DejaVu Sans"), fallback_to_default=False)
