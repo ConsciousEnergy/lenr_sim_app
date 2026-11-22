@@ -48,12 +48,17 @@ const teamMembers = [
   }
 ];
 
-// Contributor data
+// Contributor data (optional href links only where Diadon requested an outbound site)
 const contributors = [
   { name: 'Diadon Acs with Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
   { name: 'Physics Contributors', contributions: 'Theoretical Framework', avatar: 'PC' },
   { name: 'Research Community', contributions: 'Bug Reports & Features', avatar: 'RC' },
-  { name: 'Bryan Chris White', contributions: 'Infrastructure Guidance', avatar: 'BW' },
+  {
+    name: 'Bryan Chris White',
+    contributions: 'Infrastructure Guidance',
+    avatar: 'BW',
+    href: 'https://bryanchriswhite.com/',
+  },
 ];
 
 // Project info
@@ -188,29 +193,66 @@ const TeamPage = () => {
       </Typography>
       
       <Grid container spacing={3} sx={{ mb: 6 }}>
-        {contributors.map((contributor, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
-              <Avatar 
-                sx={{ 
-                  width: 60, 
-                  height: 60, 
-                  mx: 'auto', 
-                  mb: 2,
-                  bgcolor: theme.palette.secondary.main
+        {contributors.map((contributor, index) => {
+          const hasHref = Boolean(contributor.href);
+          return (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+              <Paper
+                component={hasHref ? 'a' : 'div'}
+                {...(hasHref
+                  ? {
+                      href: contributor.href,
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                      'aria-label': `${contributor.name} website`,
+                    }
+                  : {})}
+                sx={{
+                  p: 3,
+                  textAlign: 'center',
+                  height: '100%',
+                  ...(hasHref
+                    ? {
+                        display: 'block',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                        transition: theme.transitions.create(['box-shadow', 'background-color'], {
+                          duration: theme.transitions.duration.shorter,
+                        }),
+                        '&:hover': {
+                          boxShadow: theme.shadows[3],
+                          bgcolor: alpha(theme.palette.secondary.main, 0.04),
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${theme.palette.primary.main}`,
+                          outlineOffset: 2,
+                        },
+                      }
+                    : {}),
                 }}
               >
-                {contributor.avatar}
-              </Avatar>
-              <Typography variant="h6" gutterBottom>
-                {contributor.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {contributor.contributions}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
+                <Avatar
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    mx: 'auto',
+                    mb: 2,
+                    bgcolor: theme.palette.secondary.main,
+                  }}
+                >
+                  {contributor.avatar}
+                </Avatar>
+                <Typography variant="h6" gutterBottom>
+                  {contributor.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {contributor.contributions}
+                </Typography>
+              </Paper>
+            </Grid>
+          );
+        })}
       </Grid>
       
       {/* Project Info */}
