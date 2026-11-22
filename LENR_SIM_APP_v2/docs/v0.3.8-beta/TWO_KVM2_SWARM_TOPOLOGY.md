@@ -269,6 +269,14 @@ Swarm/Ansible/Traefik/Terraform/Cloudflare. UMLENR docs should **link** these
 runbooks rather than forking conflicting topologies. ARA gets its own trust
 boundary (private network / separate VPS), consuming shared **schemas** only.
 
+**Program hub staging (later rows):** UMLENR is the encompassing program hub
+(Sim + LENR-ARA + DAQ + later Purple TUI) — not a renamed sim README. Public
+status: hub **In Development**; ARA/DAQ **Coming soon**. Soft-archive legacy
+UMLENR before thin docs `main`. See
+[`../program/UMLENR_GOAL1_HUB_PACK/SCOPE_AND_MATURITY.md`](../program/UMLENR_GOAL1_HUB_PACK/SCOPE_AND_MATURITY.md),
+[`../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md`](../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md),
+and [`../program/UMLENR_GOAL1_HUB_PACK/HUB_STAGING_RUNBOOK.md`](../program/UMLENR_GOAL1_HUB_PACK/HUB_STAGING_RUNBOOK.md).
+
 ---
 
 ## 8. Suggested learning lab (one sitting, no cutover)

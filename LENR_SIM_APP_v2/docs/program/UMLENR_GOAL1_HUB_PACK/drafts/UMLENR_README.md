@@ -1,8 +1,15 @@
 <!--
+  PROGRAM HUB README (not a renamed sim-app README).
+  UMLENR is the encompassing program / LENR surface.
+  LENR Sim App is one child product among several.
+
   Apply before publishing to UMLENR (see APPLY_TO_UMLENR.md):
     {{GITHUB_OWNER}}  -> GitHub owner login
     {{PROGRAM_BRAND}} -> program brand display name (two words)
     {{PROGRAM_SITE}}  -> https:// + program apex domain
+
+  Do not open a sim-app-style PR into UMLENR; publish this as the public hub README
+  when write access exists.
 -->
 
 <p align="center">
@@ -12,7 +19,8 @@
 <h1 align="center">UMLENR</h1>
 
 <p align="center">
-  <strong>Utilizing Machine Learning &amp; Modeling for LENR / LANR</strong> — the public program hub for {{PROGRAM_BRAND}}’s open-science suite: agentic research tooling, the LENR Simulation Application, and (later) lab DAQ.
+  <strong>Utilizing Machine Learning &amp; Modeling for LENR / LANR</strong><br />
+  Public <strong>program hub</strong> for {{PROGRAM_BRAND}} — an encompassing open-science effort spanning agentic research, simulation, and laboratory DAQ.
 </p>
 
 <p align="center">
@@ -22,137 +30,126 @@
   <a href="{{PROGRAM_SITE}}"><img src="https://img.shields.io/badge/site-program%20home-185f97?style=flat-square" alt="Program site" /></a>
 </p>
 
-> **Epistemic honesty.** Program software produces **model output** and research tooling — not laboratory proof that LENR occurs. Scientific open obligations (`EQ-OPEN-*`) stay **OPEN** in the simulation ledgers. Do not treat UI numbers or agent summaries as experimental measurements.
+> **Epistemic honesty.** This program builds research tooling and models. It does **not** prove that LENR occurs in nature. Simulation numbers are model output; agent summaries are not lab measurements. Scientific open obligations (`EQ-OPEN-*`) stay **OPEN** in the simulation ledgers.
 
-**At a glance:** public program hub · **In Development** · GPL-3.0 · simulation app **v0.4.0-beta** · LENR-ARA / DAQ **Coming soon**
-
----
-
-## Table of contents
-
-- [Purpose](#purpose)
-- [Program suite](#program-suite)
-- [LENR Simulation Application (v0.4.0-beta)](#lenr-simulation-application-v040-beta)
-- [Later goals (not cutover gates)](#later-goals-not-cutover-gates)
-- [History and archive](#history-and-archive)
-- [Roadmap](#roadmap)
-- [Limitations](#limitations)
-- [Cite this work](#cite-this-work)
-- [Contribute / License](#contribute--license)
+**At a glance:** **In Development** program hub · GPL-3.0 · four pillars below · child products keep their own repos
 
 ---
 
-## Purpose
+## What UMLENR is
 
-**UMLENR** is the public **umbrella hub** for the {{PROGRAM_BRAND}} program. Child products keep their own repositories and release cadences. This hub owns shared narrative, schemas, registries, and release manifests — not a dump of unfinished private application trees.
+**UMLENR is larger than any single application.** It is the public umbrella for the {{PROGRAM_BRAND}} LENR program: shared narrative, schemas, registries, release manifests, and pointers into child products.
 
-| You can… | You should not… |
-|----------|-----------------|
-| Learn the program scope and status | Expect private DAQ credentials or unfinished product source here |
-| Follow the simulation app via its public repo and live beta | Treat hub docs as closing scientific `EQ-OPEN-*` items |
-| Track later goals (Purple TUI, ARA↔Sim, DAQ data) | Assume later goals are cutover or release blockers |
-| Read archived historical UMLENR materials | Confuse legacy AutoGPT / Math_Sim trees with current Sim |
+| This hub owns | Child products own |
+|---------------|-------------------|
+| Program story and status | Their source trees and release cadences |
+| Shared schema ids and trust-plane policy | Runtime deploy, science ledgers, DAQ hardware |
+| Roadmap links (Project 6) | Day-to-day engineering in their repos |
 
-**Primary audiences:** CMNS / LENR-adjacent researchers, open-source contributors, and collaborators following this multi-repo program.
-
----
-
-## Program suite
-
-| Pillar | Status | Where |
-|--------|--------|--------|
-| **Program hub (this repo)** | **In Development** | `{{GITHUB_OWNER}}/UMLENR` — docs, schemas, registries |
-| **LENR Simulation Application** | Public · research preview **v0.4.0-beta** | `{{GITHUB_OWNER}}/lenr_sim_app` · live beta at lenr-sim-beta on the program domain |
-| **LENR-ARA** (agentic lab assistant) | **Coming soon** | Private product path — not merged into this hub yet |
-| **LENR-ARA DAQ software** | **Coming soon** | Separate trust plane (CI ≠ deploy ≠ runtime ≠ DAQ) |
-| **Operator TUI** | Near-term: D-Force (`d4s`); **later:** [Purple](https://github.com/erickochen/purple) | Optional day-2 ops aids — **not** cutover gates |
-
-Private application source and DAQ credentials are **not** published here until each product passes a written public-disclosure gate.
+Private or unfinished product trees are **not** merged here until each passes a public-disclosure gate. Status on this page: **In Development**.
 
 ---
 
-## LENR Simulation Application (v0.4.0-beta)
+## Program pillars
 
-Confirmed from the simulation repository version markers (`APP_VERSION` / frontend `version` / `BUILD_VERSION`): **0.4.0-beta**.
+| Pillar | Role in the program | Status |
+|--------|---------------------|--------|
+| **LENR Simulation Application** | Comparative CMNS/LENR modeling workbench (claim-tiered engines, exports, theory companion) | Public research preview **v0.4.0-beta** — one product under this program, not the whole program |
+| **LENR-ARA** | Agentic lab / research assistant lineage (next-gen product) | **Coming soon** (private until ready) |
+| **LENR-ARA DAQ** | Laboratory data acquisition software and sanitized sample contracts | **Coming soon** — separate trust plane (CI ≠ deploy ≠ runtime ≠ DAQ) |
+| **Operator tooling** | Day-2 ops for program hosts (SSH / containers / Swarm) | Near-term optional D-Force (`d4s`); **later** [Purple](https://github.com/erickochen/purple) TUI — **not** a cutover gate |
 
-The sim app is the most developed product in this suite today: claim-tiered physics engines, interactive 3D views, `lenr-run-export-v1` exports, and a companion theoretical framework — with explicit honesty that **model ≠ measurement**.
-
-- **Repository:** `{{GITHUB_OWNER}}/lenr_sim_app` (public)
-- **Live research preview:** `https://lenr-sim-beta.` + program apex domain
-- **Template / deep README:** use the sim app root `README.md` for modules, demos, local quick start, and citation details
-- **License:** GNU GPL-3.0 (same program-wide policy)
-
-Hub docs **link** sim runbooks and contracts; they do not fork conflicting inventories into UMLENR.
-
----
-
-## Later goals (not cutover gates)
-
-These are locked program directions. They do **not** block Swarm/share cutover or this hub’s docs baseline.
-
-1. **Purple TUI** — Adopt [erickochen/purple](https://github.com/erickochen/purple) as the later program operator workstation (SSH fleet, containers over SSH, MCP for agents). Near-term Swarm/Compose browsing may still use D-Force (`d4s`). Purple is **optional** and **not** a cutover dependency.
-2. **Connect LENR-ARA ↔ Simulation Application** — Product integration (e.g. Research Mode / shared export contracts such as `lenr-run-export-v1`) after the sim train is stable. Private ARA remains private until ready.
-3. **LENR-ARA DAQ data** — Ingest sanitized DAQ samples via a hub-registered schema (planned `lenr-ara-daq-sample-v1`). DAQ hosts and secrets stay on a separate trust plane — never co-tenant with CI or the public sim database.
+```text
+                    UMLENR (this hub)
+                   /       |        \
+          LENR Sim App   LENR-ARA    DAQ software
+         (public beta)  (Coming soon) (Coming soon)
+                   \       |        /
+              later: Purple operator TUI
+```
 
 ---
 
-## History and archive
+## LENR Simulation Application (one pillar)
 
-Earlier UMLENR trees (Py Sims, `LENR_ARA_GPT`, `LENR_Math_Sim`, training datasets) are **historical research inventory**. Prefer soft-archive branches/tags (e.g. `archive/legacy-main`) over deleting history.
+The simulation application is the most mature **child** today. It is **not** synonymous with UMLENR.
 
-Conference / theory artifacts are archived as **PDF** when available (for example the unified theory PDF already in-tree). A placeholder PowerPoint stub is **not** restored when a PDF is present.
+- **Version (confirmed markers):** `0.4.0-beta`
+- **Public repo:** `{{GITHUB_OWNER}}/lenr_sim_app`
+- **Live research preview:** `lenr-sim-beta` on the program domain
+- **Deep product README / demos / local quick start:** see that repository’s root README — do not duplicate a full sim onboarding wall here
+- **License:** GNU GPL-3.0
+
+Hub docs **link** sim contracts (e.g. `lenr-run-export-v1`) and honesty ledgers; they do not replace them.
+
+---
+
+## LENR-ARA and DAQ (Coming soon)
+
+**LENR-ARA** continues the program’s agentic research thread (historical public lineage includes earlier AutoGPT / Crew-style experiments under archived UMLENR trees). The next-generation product stays private until release-ready — listed here as **Coming soon**, without private clone URLs.
+
+**DAQ software** will capture lab instrumentation data on a **separate trust plane**. Public surfaces will only ever see sanitized schemas (planned hub id: `lenr-ara-daq-sample-v1`). DAQ credentials must never land on CI runners or the public sim database.
+
+---
+
+## Later goals (locked — not cutover gates)
+
+These directions are intentional. They do **not** block sim Swarm/share cutover or this hub’s docs baseline.
+
+1. **Purple TUI** — [erickochen/purple](https://github.com/erickochen/purple) as the later program-wide operator workstation (SSH fleet, containers over SSH, MCP). Optional; not required for cutover.
+2. **Connect LENR-ARA ↔ Simulation Application** — product integration (e.g. Research Mode / shared export contracts) after the sim train is stable.
+3. **Ingest LENR-ARA DAQ data** — sanitized samples via hub-registered schema only.
+
+---
+
+## History
+
+Earlier UMLENR trees (Py Sims, `LENR_ARA_GPT`, `LENR_Math_Sim`, training datasets) are **historical research inventory**. Prefer soft-archive branches (e.g. `archive/legacy-main`) over silent deletion. Conference materials are kept as **PDF** when available; placeholder PowerPoint stubs are not restored when a PDF exists.
 
 ---
 
 ## Roadmap
 
-Track program work on GitHub Project **Project 6** under the {{GITHUB_OWNER}} user projects board.
+Program tracking: GitHub **Project 6** under `{{GITHUB_OWNER}}`.
 
-Suggested epic themes: hub staging · sim release train · LENR-ARA (Coming soon) · DAQ trust plane · Purple evaluation · public-disclosure checklist.
+Suggested themes: hub staging · sim release train · LENR-ARA · DAQ trust plane · Purple evaluation · public-disclosure checklist.
 
 ---
 
 ## Limitations
 
-- Hub status is **In Development** — schemas and registries grow over time.
-- LENR-ARA and DAQ remain **Coming soon**; do not expect private clone URLs or DAQ data on this public README.
-- Scientific claim maturity lives in the sim ledgers (`PHYSICS_MATURITY_LEDGER`, `PROOF_MATRIX`, `GOALS`) — this hub does not close `EQ-OPEN-*`.
-- Later goals (Purple, ARA↔Sim, DAQ) are **not** infrastructure cutover gates.
+- Hub is **In Development** — registries and schemas grow over time.
+- LENR-ARA and DAQ remain **Coming soon**.
+- This README is a **program map**, not the simulation product manual.
+- Scientific claim maturity lives in the sim ledgers — this hub does not close `EQ-OPEN-*`.
 
 ---
 
-## Cite this work
+## Cite
 
-If you use the **simulation application**, cite that software version and the unified theory companion (see the sim app README “Cite this work” section).
-
-**Program hub:** {{PROGRAM_BRAND}}. *UMLENR* — public program hub (In Development). Repository: `{{GITHUB_OWNER}}/UMLENR`.
+Cite **child products** with their own versions. For the hub:
 
 ```bibtex
 @software{umlenr_hub,
   author       = {{{PROGRAM_BRAND}}},
-  title        = {UMLENR — program hub},
+  title        = {UMLENR — program hub for LENR / LANR open science},
   year         = {2026},
   howpublished = {GitHub repository — \texttt{{{GITHUB_OWNER}}/UMLENR}},
-  note         = {In Development; umbrella docs/schemas for the LENR suite.}
-}
-@software{lenr_sim_app_040,
-  author       = {{{PROGRAM_BRAND}}},
-  title        = {LENR Simulation Application},
-  year         = {2026},
-  version      = {0.4.0-beta},
-  howpublished = {GitHub repository — \texttt{{{GITHUB_OWNER}}/lenr\_sim\_app}},
-  note         = {Research preview; model output is not laboratory data.}
+  note         = {In Development; umbrella for simulation, agentic research, and DAQ.}
 }
 ```
+
+Simulation software citations belong with `{{GITHUB_OWNER}}/lenr_sim_app` (see that README).
 
 ---
 
 ## Contribute / License
 
-- **Program / hub docs:** PRs against this repository’s default branch once the docs-first hub lands.
-- **Simulation application:** contributions on **`dev`** by default — see the sim app `CONTRIBUTING.md`.
-- **Feedback:** program maintainer email on {{PROGRAM_SITE}}
+- **Program / hub:** docs and schema PRs against this repository once the docs-first hub lands.
+- **Simulation application:** contributions on that product’s `dev` branch — see its `CONTRIBUTING.md`.
+- **LENR-ARA / DAQ:** private until public; do not expect contribution paths here yet.
+- **Feedback:** program maintainer contact on {{PROGRAM_SITE}}
 
-**License:** [GNU GPL-3.0](LICENSE) across the program suite (hub, simulation application, and future public LENR-ARA surfaces). Third-party dependencies keep their own licenses.
+**License:** [GNU GPL-3.0](LICENSE) across the program suite (hub, simulation application, and future public LENR-ARA / DAQ surfaces). Third-party dependencies keep their own licenses.
 
 **Site:** {{PROGRAM_SITE}}

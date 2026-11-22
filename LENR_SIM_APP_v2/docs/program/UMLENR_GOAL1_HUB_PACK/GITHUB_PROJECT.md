@@ -20,11 +20,17 @@ Track Goal 1 as an epic with these issues (suggested titles):
 
 | Track | Home | Note |
 |-------|------|------|
-| LENR-Sim Compose public beta | `lenr_sim_app` | Keep healthy; ship tip via Compose handoff |
+| LENR-Sim public research preview | `lenr_sim_app` | Child pillar; markers 0.4.0-beta |
 | Staging Swarm credentials | Operator laptop | Untracked tfvars / inventory |
-| LENR-ARA low-cost DAQ | Private | Separate VPS later |
+| LENR-ARA (Coming soon) | Private | Path TBD; separate trust plane |
+| LENR-ARA DAQ + `lenr-ara-daq-sample-v1` | Private | Later; see `LATER_GOALS.md` |
+| Purple TUI evaluation | Operator laptop | Not a cutover gate; see `LATER_GOALS.md` |
+| Connect LENR-ARA ↔ Sim | Post-stabilization | Research Mode / export contracts |
+| Soft-archive legacy UMLENR | UMLENR | `archive/legacy-main`; PDF not pptx |
 | Proteus refresh | After Goal 1 | Manifest alignment |
 | Astro headless site | After DNS phase plan | Pages on `app.` / staging host first |
+
+Full paste list: [`PROJECT_6_SEED.md`](PROJECT_6_SEED.md).
 
 ## Agent constraint
 

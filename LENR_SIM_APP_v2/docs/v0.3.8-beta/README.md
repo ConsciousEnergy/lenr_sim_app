@@ -34,6 +34,9 @@ duplicating long tables in the root README.
 | [`D4S_DFORCE_OPERATOR.md`](D4S_DFORCE_OPERATOR.md) | Optional D-Force (`d4s`) TUI — k9s-like Swarm/Compose ops (not a cutover gate) |
 | [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md) | Hands-on file walkthrough + CLI visualization + security checklist |
 | [`../program/UMLENR_GOAL1_HUB_PACK/`](../program/UMLENR_GOAL1_HUB_PACK/README.md) | Portable Goal 1 pack for UMLENR hub PR (copy into `UMLENR`) |
+| [`../program/UMLENR_GOAL1_HUB_PACK/SCOPE_AND_MATURITY.md`](../program/UMLENR_GOAL1_HUB_PACK/SCOPE_AND_MATURITY.md) | Three-repo matrix; In Development / Coming soon |
+| [`../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md`](../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md) | Purple TUI / ARA↔Sim / DAQ (not cutover gates) |
+| [`../program/UMLENR_GOAL1_HUB_PACK/HUB_STAGING_RUNBOOK.md`](../program/UMLENR_GOAL1_HUB_PACK/HUB_STAGING_RUNBOOK.md) | Soft-archive + stage public hub README |
 | [`DUAL_KVM2_SWARM_READINESS.md`](DUAL_KVM2_SWARM_READINESS.md) | Dual-KVM2 inventory + component matrix |
 | [`PR_AND_BRANCH_HYGIENE.md`](PR_AND_BRANCH_HYGIENE.md) | Open PR merge order; agents prepare, humans merge |
 | [`STAGING_SWARM_DRY_RUN.md`](STAGING_SWARM_DRY_RUN.md) | Local/remote dry-run helper + evidence |

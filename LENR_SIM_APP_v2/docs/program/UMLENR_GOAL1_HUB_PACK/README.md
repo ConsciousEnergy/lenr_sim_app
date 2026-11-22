@@ -1,16 +1,16 @@
 # UMLENR Goal 1 — docs-first program hub pack
 
-**Status:** portable scaffold for a PR against
-[`ConsciousEnergy/UMLENR`](https://github.com/ConsciousEnergy/UMLENR) `main`  
-**Intent:** make the public UMLENR repo the umbrella hub for the Conscious
-Energy program (shared docs, schemas, registries, release manifests) while
-LENR-Sim remains the **reference implementation** for Swarm / Ansible /
-Traefik / Terraform / Cloudflare.
+**Status:** portable scaffold for a PR against `{{GITHUB_OWNER}}/UMLENR` `main`  
+**Intent:** make the public UMLENR repo the **encompassing program hub** (shared
+docs, schemas, registries, release manifests). The LENR Simulation Application
+is **one pillar** among Sim, LENR-ARA, DAQ, and later operator tooling — not the
+whole program. Sim remains the **reference implementation** for Swarm / Ansible
+/ Traefik / Terraform / Cloudflare runbooks.
 
 This pack lives in `lenr_sim_app` so agents and operators can review it before
 opening the UMLENR PR. The cloud-agent GitHub token for this workspace has
 **read-only** access to UMLENR (cannot fork/push). Open the hub PR from an
-account with write access (copy this directory into UMLENR as `docs/program/`).
+account with write access (see [`HUB_STAGING_RUNBOOK.md`](HUB_STAGING_RUNBOOK.md)).
 
 ---
 
@@ -18,37 +18,27 @@ account with write access (copy this directory into UMLENR as `docs/program/`).
 
 | Track | Near-term | Later |
 |-------|-----------|-------|
-| **UMLENR hub** | Goal 1 docs baseline PR + GitHub Project tracking | Registries + release manifests consumed by children |
-| **LENR-Sim** (`lenr_sim_app`) | Compose public beta; Swarm cutover under confirm gates | Traefik `api.` + Pages `app.` |
-| **LENR-ARA** (private DAQ) | Low-cost path; separate trust plane | Shared schemas from hub only |
+| **UMLENR hub** | **In Development** — docs-first README + Goal 1 pack; [Project 6](https://github.com/users/{{GITHUB_OWNER}}/projects/6) | Registries + manifests consumed by children |
+| **LENR-Sim** (`lenr_sim_app`) | Public research preview **v0.4.0-beta** (one pillar) | Deeper ARA coupling |
+| **LENR-ARA** | **Coming soon** (private) | Connect to Sim; agentic refresh |
+| **DAQ** | **Coming soon** — separate trust plane | `lenr-ara-daq-sample-v1` sanitized samples |
+| **Operator TUI** | Optional D-Force (`d4s`) | [Purple](https://github.com/erickochen/purple) (not a cutover gate) |
 | **Project Proteus** | Refresh after hub baseline | Align release manifests |
-| **conscious.energy** | Apex stays WordPress.com (phase 1) | Headless: WP.com CMS → Astro on Cloudflare Pages |
+| **Program site** | Apex stays WordPress.com (phase 1) | Headless Astro on Pages |
 | **DNS** | Phased move to Cloudflare | Apex last; `api.` DNS-only |
 
 ---
 
 ## How to open the UMLENR PR (human operator)
 
-```bash
-git clone https://github.com/ConsciousEnergy/UMLENR.git
-cd UMLENR
-git checkout -b docs/goal1-program-hub
+See [`HUB_STAGING_RUNBOOK.md`](HUB_STAGING_RUNBOOK.md) and
+[`drafts/APPLY_TO_UMLENR.md`](drafts/APPLY_TO_UMLENR.md). Soft-archive first,
+then stage docs-first `main` with the **program hub** README (not a renamed sim
+README).
 
-# Copy pack contents into the umbrella repo
-mkdir -p docs/program
-cp -R /path/to/lenr_sim_app/LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/* \
-      docs/program/
+Suggested PR title: `docs(program): Goal 1 docs-first program hub baseline`
 
-# Optional: point root README at docs/program/README.md (hub index)
-git add docs/program
-git commit -m "docs(program): Goal 1 docs-first hub baseline"
-git push -u origin docs/goal1-program-hub
-# Open PR against UMLENR main; track in GitHub Project "Conscious Energy program"
-```
-
-Suggested PR title: `docs(program): Goal 1 docs-first hub baseline`
-
-Suggested Project board columns: `Backlog` → `In progress` → `Blocked (creds/VPS)` → `Done`
+Suggested Project board columns: `Backlog` → `Ready` → `In progress` → `Blocked` → `Done`
 
 ---
 
@@ -57,6 +47,11 @@ Suggested Project board columns: `Backlog` → `In progress` → `Blocked (creds
 | Path | Purpose |
 |------|---------|
 | [`PROGRAM_CHARTER.md`](PROGRAM_CHARTER.md) | Umbrella scope, child repos, non-goals |
+| [`SCOPE_AND_MATURITY.md`](SCOPE_AND_MATURITY.md) | Three-repo matrix; In Development / Coming soon |
+| [`LATER_GOALS.md`](LATER_GOALS.md) | Purple / ARA↔Sim / DAQ ladder (not cutover gates) |
+| [`ENGINEERING_PRACTICES.md`](ENGINEERING_PRACTICES.md) | Program-wide practices; GPL-3.0 |
+| [`HUB_STAGING_RUNBOOK.md`](HUB_STAGING_RUNBOOK.md) | Soft-archive + hub stage steps |
+| [`PROJECT_6_SEED.md`](PROJECT_6_SEED.md) | Paste-ready Project 6 issues |
 | [`INFRA_ALIGNMENT.md`](INFRA_ALIGNMENT.md) | Pointers to LENR-Sim Swarm/CF runbooks (no fork) |
 | [`TRUST_PLANES.md`](TRUST_PLANES.md) | CI ≠ deploy ≠ DAQ security model |
 | [`DNS_PHASES.md`](DNS_PHASES.md) | Cloudflare migration phases |
@@ -64,6 +59,8 @@ Suggested Project board columns: `Backlog` → `In progress` → `Blocked (creds
 | [`schemas/README.md`](schemas/README.md) | Shared schema ownership rules |
 | [`release/manifest.example.yml`](release/manifest.example.yml) | Release manifest stub |
 | [`GITHUB_PROJECT.md`](GITHUB_PROJECT.md) | Goal 1 tracking checklist |
+| [`drafts/UMLENR_README.md`](drafts/UMLENR_README.md) | Program-hub README draft |
+| [`drafts/APPLY_TO_UMLENR.md`](drafts/APPLY_TO_UMLENR.md) | Human apply + placeholder substitution |
 
 ---
 
