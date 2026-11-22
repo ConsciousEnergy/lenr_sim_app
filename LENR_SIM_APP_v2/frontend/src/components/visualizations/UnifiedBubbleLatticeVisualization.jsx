@@ -43,6 +43,7 @@ import {
   resolveSpacetimeSampleBuffer,
   sampleSpacetimeBuffer,
 } from '../../utils/spacetimeSampleBuffer';
+import { applyGroupVisibility } from '../../utils/applyGroupVisibility';
 
 // Import fluid dynamics effects for vortex visualization
 import { VortexField, PlasmaVortexEffect } from './FluidDynamicsEffects';
@@ -2906,6 +2907,22 @@ const UnifiedBubbleLatticeVisualization = ({
     createRydbergOrbitals(scene);
     createHaloElectrons(scene);
     createScaleBar(scene);
+
+    // Host-material switches remount this effect without changing layer toggle
+    // state, so the visibility useEffect does not re-run. Three defaults groups
+    // to visible=true — reseed from current toggles (#408 purple Rydberg ghost).
+    applyGroupVisibility(latticeGroupRef.current, showLattice);
+    applyGroupVisibility(bubbleGroupRef.current, showBubble);
+    applyGroupVisibility(protonGroupRef.current, showProtons);
+    applyGroupVisibility(fieldGroupRef.current, showFieldLines);
+    applyGroupVisibility(vortexGroupRef.current, showVortices);
+    applyGroupVisibility(
+      boundaryVisualGroupRef.current,
+      showLattice && showBoundaryPlane
+    );
+    applyGroupVisibility(casimirFieldRef.current, showCasimir);
+    applyGroupVisibility(rydbergOrbitalsRef.current, showRydberg);
+    applyGroupVisibility(haloElectronsRef.current, showHalo);
 
     // Animation loop - uses ref to avoid re-initialization when animation function changes.
     // Prime the timer so the first frame delta is one frame, matching Clock's
