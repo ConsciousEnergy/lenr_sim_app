@@ -175,9 +175,8 @@ describe('TheoryPaperPage', () => {
 
   test('shows app/manuscript version map aligned to the live train', () => {
     render(<TheoryPaperPage />);
-    const versionEscaped = APP_VERSION.replace(/\./g, '\\.');
     expect(screen.getByTestId('manuscript-revision-chip')).toHaveTextContent(
-      new RegExp(`v${versionEscaped}`),
+      `v${APP_VERSION}`,
     );
     expect(screen.getByTestId('app-manuscript-version-map')).toHaveTextContent(
       APP_VERSION,
