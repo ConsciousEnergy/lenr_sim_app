@@ -1,4 +1,4 @@
-# Agent and contributor current truth (live = v0.3.9-beta Swarm; `dev`/`main` markers match)
+# Agent and contributor current truth (train = v0.4.0-beta; live share rolls via Path B after promote; revert = Swarm v0.3.9-beta)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
@@ -6,8 +6,8 @@ Short map for humans and Cursor agents. Prefer this over stale trackers.
 
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
-| `main` | **`0.3.9-beta`** | Live public Swarm release line (Traefik SPA + API); ship / hotfix |
-| `dev` | **`0.3.9-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
+| `main` | **`0.4.0-beta`** | Public Swarm release line (Traefik SPA + API); ship / hotfix; revert = Swarm v0.3.9-beta |
+| `dev` | **`0.4.0-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
 
 Four markers (must match within a branch):
 
@@ -23,11 +23,11 @@ Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 | Surface | Meaning |
 |---------|---------|
-| `https://api.conscious.energy` | Public Swarm API (Traefik on share manager `1280333` / `185.211.4.66`). Version **0.3.9-beta**. |
+| `https://api.conscious.energy` | Public Swarm API (Traefik on share manager `1280333` / `185.211.4.66`). Rolls to **0.4.0-beta** after Path B ship; revert = **0.3.9-beta**. |
 | `https://lenr-sim-beta.conscious.energy` | Same-origin Traefik SPA + API on the Swarm share host (Compose stack retired; keep Compose rollback tag/images ≥1 release). See [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md). |
 | `https://app.conscious.energy` | Cloudflare Pages SPA → API at `api.conscious.energy` (split-origin; apex/`www` stay WordPress). |
-| `main` | Release line matching live Swarm; ship via Ansible / SSH — **not** auto from bare push. |
-| `dev` | Integration tip (`0.3.9-beta` markers); **never** auto-deployed by `deploy.yml`. |
+| `main` | Release line matching Swarm train (`0.4.0-beta` after promote); ship via Ansible / SSH — **not** auto from bare push. |
+| `dev` | Integration tip (`0.4.0-beta` markers); **never** auto-deployed by `deploy.yml`. |
 
 Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
 (runner `lenr-ci-1`, labels `self-hosted,linux,x64,lenr-ci`). Share must keep
@@ -69,7 +69,7 @@ Do **not** close any `EQ-OPEN-*`.
 
 ## Dense PRs
 
-Short-lived branches → squash to **`dev`** (default) or `main` (0.3.9 hotfix).
+Short-lived branches → squash to **`dev`** (default) or `main` (0.4.0 hotfix).
 Prefer **one topic per PR**.
 
 - **CI / ops / onboarding** PRs: workflows, runner runbook, cutover docs — this track.
