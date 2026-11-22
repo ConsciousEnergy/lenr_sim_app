@@ -148,6 +148,36 @@ jobs:
         pip install -r LENR_SIM_APP_v2/backend/requirements.txt
         pip install pytest pytest-cov pytest-benchmark memory_profiler psutil matplotlib numpy scipy pip-audit
 
+    # No sudo apt. Job-level env cannot use runner.*; export MPLCONFIGDIR
+    # via GITHUB_ENV so pytest steps share a fresh matplotlib font cache.
+    # Register bundled DejaVu; pytest mirrors via backend/conftest.py.
+    - name: Ensure DejaVu fonts for matplotlib
+      run: |
+        set -euo pipefail
+        echo "MPLCONFIGDIR=${RUNNER_TEMP}/mpl-config" >> "$GITHUB_ENV"
+        export MPLCONFIGDIR="${RUNNER_TEMP}/mpl-config"
+        mkdir -p "${MPLCONFIGDIR}"
+        python - <<'PY'
+        from pathlib import Path
+        import matplotlib as mpl
+        from matplotlib import font_manager
+        from matplotlib.font_manager import FontProperties, findfont
+
+        cache = Path(mpl.get_cachedir())
+        cache.mkdir(parents=True, exist_ok=True)
+        for stale in cache.glob("fontlist-*.json"):
+            stale.unlink(missing_ok=True)
+
+        ttf_dir = Path(mpl.get_data_path()) / "fonts" / "ttf"
+        bundled = ttf_dir / "DejaVuSans.ttf"
+        assert bundled.is_file(), f"matplotlib missing bundled DejaVu at {bundled}"
+        # Keep the import-time FontManager singleton; replace breaks findfont.
+        for ttf in sorted(ttf_dir.glob("DejaVu*.ttf")):
+            font_manager.fontManager.addfont(str(ttf))
+        path = findfont(FontProperties(family="DejaVu Sans"), fallback_to_default=False)
+        print(f"matplotlib DejaVu Sans OK -> {path}")
+        PY
+
     - name: Backend dependency audit
       # Residual-risk policy: fail on any new/fixable advisory, but tolerate the
       # documented, out-of-beta-scope transitive residuals below (see
@@ -165,9 +195,17 @@ jobs:
           --ignore-vuln PYSEC-2025-226
 
     - name: Run unit tests
+      # Clear pytest.ini addopts so CI does not also emit --cov-report=html
+      # (broken coverage htmlfiles on the runner caused INTERNALERROR after font fails).
       run: |
         cd LENR_SIM_APP_v2/backend
-        python -m pytest tests/ app/tests/ --cov=app --cov-report=xml -v
+        python -m pytest tests/ app/tests/ \
+          -o addopts= \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --cov-config=tests/.coveragerc \
+          -v
 
     - name: Run integration tests
       run: |
