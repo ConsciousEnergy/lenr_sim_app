@@ -25,4 +25,17 @@ describe('TeamPage honesty CTAs (public beta)', () => {
     expect(donations).toHaveAttribute('target', '_blank');
     expect(donations).toHaveAttribute('rel', 'noopener noreferrer');
   });
+
+  it('links Bryan Chris White contributor card to his website', () => {
+    render(<TeamPage />);
+    const bryanCard = screen.getByRole('link', { name: /Bryan Chris White website/i });
+    expect(bryanCard).toHaveAttribute('href', 'https://bryanchriswhite.com/');
+    expect(bryanCard).toHaveAttribute('target', '_blank');
+    expect(bryanCard).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.getByText('Infrastructure Guidance')).toBeInTheDocument();
+    // Sibling contributor cards stay unlinked (name text only, not anchors)
+    expect(screen.getByText('Diadon Acs with Conscious Energy').closest('a')).toBeNull();
+    expect(screen.getByText('Physics Contributors').closest('a')).toBeNull();
+    expect(screen.getByText('Research Community').closest('a')).toBeNull();
+  });
 });
