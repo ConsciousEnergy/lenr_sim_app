@@ -41,3 +41,10 @@ narrative, schemas, registries, and release manifests.
 | Swarm / Traefik / Terraform apply | `lenr_sim_app` ops + confirm strings |
 | Scientific claim maturity | LENR-Sim ledger / proof matrix PRs |
 | DAQ hardware & private data | LENR-ARA owners (never CI runners) |
+
+## Status language (public hub)
+
+- Hub / program: **In Development**
+- LENR-Sim: public research preview (child product — not the whole program)
+- LENR-ARA + DAQ: **Coming soon** (no private clone URLs on the public hub README)
+- See [`SCOPE_AND_MATURITY.md`](SCOPE_AND_MATURITY.md)
