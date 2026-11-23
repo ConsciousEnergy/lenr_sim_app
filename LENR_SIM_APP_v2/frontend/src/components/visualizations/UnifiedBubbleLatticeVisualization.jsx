@@ -26,6 +26,7 @@ import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import HomeIcon from '@mui/icons-material/Home';
 // CycloneIcon reserved for future vortex toggle UI
 import {
+  clampBubbleRadiusFactor,
   getBubbleDisplayScale,
   getBubbleScaleFromPhase,
 } from '../../utils/bubbleVisualScale';
@@ -53,6 +54,7 @@ import { ScaleBar } from './QuantumFluxVisualization';
 import VisualizationLegend from './VisualizationLegend';
 import BubbleLatticeTimelineControls from './BubbleLatticeTimelineControls';
 import VizHudReadouts from './VizHudReadouts';
+import { buildCollapseHudChannels } from '../../utils/vizChannelBindings';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -445,6 +447,13 @@ const UnifiedBubbleLatticeVisualization = ({
   const spacetimeBuffer = useMemo(
     () => resolveSpacetimeSampleBuffer(simulationData, streamFrames),
     [simulationData, streamFrames],
+  );
+  // VIZ-05 — Mach / solver (+ ceiling meta) from collapse_results; R/T stay scrub-live below.
+  const collapseHud = useMemo(
+    () => buildCollapseHudChannels(simulationData?.collapse_results, {
+      sampleSource: usingAPIData ? 'solver' : 'local_fallback',
+    }),
+    [simulationData?.collapse_results, usingAPIData],
   );
   const spacetimeBufferRef = useRef(spacetimeBuffer);
   useEffect(() => {
@@ -3379,6 +3388,7 @@ const UnifiedBubbleLatticeVisualization = ({
           </Typography>
           <VizHudReadouts
             showHeldGaps={false}
+            collapseMeta={collapseHud.meta}
             channels={[
               {
                 channel_id: 'enhancement.claim_tier_display',
@@ -3391,6 +3401,12 @@ const UnifiedBubbleLatticeVisualization = ({
                 source: physicsData.sampleSource,
               },
               {
+                // Live scrub R (VIZ-01/02); collapse peak R available via collapseHud when needed
+                channel_id: 'bubble.radius_um',
+                value: physicsData.radiusUm,
+                source: physicsData.sampleSource,
+              },
+              {
                 channel_id: 'collapse.temperature_k',
                 value: physicsData.temperature,
                 source: physicsData.sampleSource,
@@ -3400,11 +3416,11 @@ const UnifiedBubbleLatticeVisualization = ({
                 value: physicsData.fieldStrength,
                 source: physicsData.sampleSource,
               },
-              {
-                channel_id: 'bubble.radius_um',
-                value: physicsData.radiusUm,
-                source: physicsData.sampleSource,
-              },
+              // VIZ-05 — Mach + solver mode from collapse_results (gap when absent)
+              ...collapseHud.channels.filter((ch) => (
+                ch.channel_id === 'collapse.peak_mach'
+                || ch.channel_id === 'collapse.solver'
+              )),
             ]}
           />
         </Paper>

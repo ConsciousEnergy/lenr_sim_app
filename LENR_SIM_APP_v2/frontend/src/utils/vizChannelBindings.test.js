@@ -1,5 +1,6 @@
 import {
   BUBBLE_LATTICE_VIZ_CHANNELS,
+  buildCollapseHudChannels,
   buildVizChannelsFromFrame,
   listGapChannels,
   resolveHudReadout,
@@ -61,5 +62,47 @@ describe('vizChannelBindings', () => {
     expect(channels['host.phase_fraction_liquid']).toBeNull();
     expect(channels['heat.P_photonic']).toBeNull();
     expect(BUBBLE_LATTICE_VIZ_CHANNELS['bubble.phase']).toBeTruthy();
+  });
+
+  test('VIZ-05 collapse HUD builds R/T/Mach/solver with ceiling meta', () => {
+    const { channels, meta } = buildCollapseHudChannels({
+      min_radius_um: 0.8,
+      max_temperature_k: 2e6,
+      bubble_dynamics: {
+        peak_mach: 0.12,
+        bounds_solver_used: 'keller_miksis',
+        km_auto_selected: true,
+        compressibility_regime: 'weakly_compressible',
+      },
+      limits: {
+        temperature_k: {
+          ceiling: 2e6,
+          is_saturated: true,
+          value_raw: 4.5e6,
+        },
+      },
+    });
+    const ids = channels.map((c) => c.channel_id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'bubble.radius_um',
+        'collapse.temperature_k',
+        'collapse.peak_mach',
+        'collapse.solver',
+      ]),
+    );
+    expect(meta.temperature_at_ceiling).toBe(true);
+    expect(meta.km_auto_selected).toBe(true);
+    expect(BUBBLE_LATTICE_VIZ_CHANNELS['collapse.peak_mach']).toBeTruthy();
+    expect(BUBBLE_LATTICE_VIZ_CHANNELS['collapse.solver']).toBeTruthy();
+    expect(
+      resolveHudReadout({ channel_id: 'collapse.solver', value: 'rayleigh_plesset' }).display,
+    ).toMatch(/Rayleigh–Plesset/);
+  });
+
+  test('VIZ-05 collapse HUD returns empty when collapse_results absent', () => {
+    const { channels, meta } = buildCollapseHudChannels(null);
+    expect(channels).toEqual([]);
+    expect(meta.temperature_at_ceiling).toBe(false);
   });
 });
