@@ -59,7 +59,9 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'MHDFlowGroup',
     legendGroup: 'MHD Flow',
     has3DOverlay: true,
-    fidelity: 'quantitative',
+    // Schematic: UBLV uses phase-selected vortex speeds / illustrative Lorentz arrows,
+    // including local-fallback paths — not solver field outputs.
+    fidelity: 'schematic',
     displayName: 'Bubble-MHD Confinement',
     description:
       'Rayleigh-Plesset + MHD Z-pinch staging. Renders Hartmann boundary layers + Lorentz force arrows.',
@@ -69,7 +71,8 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'CasimirFieldGroup',
     legendGroup: 'Casimir Geometry',
     has3DOverlay: true,
-    fidelity: 'quantitative',
+    // Schematic: compression-based illustrative Casimir effects, not solver vacuum fields.
+    fidelity: 'schematic',
     displayName: 'Casimir Confinement',
     description:
       'Vacuum-fluctuation confinement between lattice voids; Lifshitz correction for real metals.',
