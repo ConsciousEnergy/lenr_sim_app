@@ -449,11 +449,14 @@ const UnifiedBubbleLatticeVisualization = ({
     [simulationData, streamFrames],
   );
   // VIZ-05 — Mach / solver (+ ceiling meta) from collapse_results; R/T stay scrub-live below.
+  // Prefer validation.route_mode so local_fallback timelines with buffers are not labeled solver.
   const collapseHud = useMemo(
     () => buildCollapseHudChannels(simulationData?.collapse_results, {
-      sampleSource: usingAPIData ? 'solver' : 'local_fallback',
+      sampleSource: simulationData?.validation?.route_mode === 'local_fallback'
+        ? 'local_fallback'
+        : (usingAPIData ? 'solver' : 'local_fallback'),
     }),
-    [simulationData?.collapse_results, usingAPIData],
+    [simulationData?.collapse_results, simulationData?.validation?.route_mode, usingAPIData],
   );
   const spacetimeBufferRef = useRef(spacetimeBuffer);
   useEffect(() => {
