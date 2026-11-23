@@ -100,6 +100,14 @@ ALLOW_API_DNS_GAP=1 \
 - Product analytics remain **PostHog**; infra SLOs remain **Grafana/Prometheus**.
   Closing `EQ-OPEN-*` via a TUI is forbidden.
 
+## Later: Purple (program operator TUI)
+
+Near-term Swarm/Compose browsing stays on D-Force (`d4s`) as documented above.
+**Later** the program may adopt [Purple](https://github.com/erickochen/purple)
+(SSH fleet, containers over SSH, MCP) as the broader operator workstation.
+Purple is **optional** and **not** a cutover gate. Sequencing:
+[`../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md`](../program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md).
+
 ## Related docs
 
 - [`SWARM_OPERATOR_LAB.md`](SWARM_OPERATOR_LAB.md) — file walkthrough without live cutover

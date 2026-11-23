@@ -44,8 +44,12 @@ Dual KVM2 topology + operator lab — see
 [`D4S_DFORCE_OPERATOR.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/D4S_DFORCE_OPERATOR.md)
 (optional D-Force/`d4s` Swarm TUI), and
 [`DUAL_KVM2_SWARM_READINESS.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/DUAL_KVM2_SWARM_READINESS.md).
-UMLENR Goal 1 pack (portable hub PR):
+UMLENR Goal 1 pack (portable hub PR — program hub, not a renamed sim README):
 [`docs/program/UMLENR_GOAL1_HUB_PACK/`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/README.md).
+Scope matrix / later goals (Purple, ARA↔Sim, DAQ):
+[`SCOPE_AND_MATURITY.md`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/SCOPE_AND_MATURITY.md),
+[`LATER_GOALS.md`](LENR_SIM_APP_v2/docs/program/UMLENR_GOAL1_HUB_PACK/LATER_GOALS.md).
+Purple is **not** a cutover gate (D-Force remains near-term optional TUI).
 Docs map: [`docs/v0.3.8-beta/README.md`](LENR_SIM_APP_v2/docs/v0.3.8-beta/README.md).
 
 Workflows default to `["self-hosted","linux","x64","lenr-ci"]` when

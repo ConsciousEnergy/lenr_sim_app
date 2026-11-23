@@ -2,7 +2,7 @@
 # Consumed by humans and future release tooling. Keep YAML additive.
 
 version: 1
-updated: "2026-10-04"
+updated: "2026-11-22"
 owner_org: ConsciousEnergy
 
 repos:
@@ -11,7 +11,8 @@ repos:
     role: program_hub
     visibility: public
     trust_plane: docs
-    notes: "Umbrella docs, schemas, registries, release manifests"
+    status: in_development
+    notes: "Encompassing program hub; docs, schemas, registries, release manifests"
 
   - id: lenr-sim
     github: ConsciousEnergy/lenr_sim_app
@@ -19,15 +20,18 @@ repos:
     visibility: public
     trust_plane: runtime
     infra_reference: true
+    status: public_research_preview
+    app_version: "0.4.0-beta"
     live_compose_url: "https://lenr-sim-beta.conscious.energy"
-    notes: "Reference Swarm/Ansible/Traefik/Terraform/Cloudflare stack"
+    notes: "One program pillar; reference Swarm/Ansible/Traefik/Terraform/Cloudflare stack"
 
   - id: lenr-ara
     github: null  # early/private LENR_ARA; org path in operator registry only
     role: private_daq
     visibility: private
     trust_plane: daq
-    notes: "Low-cost DAQ; never co-tenant with lenr-ci or public Sim DB; schemas only via hub"
+    status: coming_soon
+    notes: "Coming soon; agentic + DAQ; never co-tenant with lenr-ci or public Sim DB; schemas only via hub"
 
   - id: project-proteus
     github: null  # refresh after hub baseline
