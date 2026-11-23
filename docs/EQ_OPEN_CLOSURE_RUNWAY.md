@@ -145,10 +145,22 @@ Operator-owned LENR-ARA / private DAQ sketch for radiation honesty under
 | Element | Intent | Honesty lock |
 |---------|--------|--------------|
 | **Near counter** | SNM-14 / ³He (or equivalent) at working distance from the active volume | Count rate alone ≠ neutron proof |
-| **Far counter** | Same detector class at a larger baseline (Klimov-style geometry) | Differential isolates local vs room / cosmic background |
+| **Far counter** | Same detector class at a larger baseline (Klimov-style geometry; `klimov2020` instrument cite) | Differential isolates local vs room / cosmic background — **geometry sketch only** |
 | **Cd differential** | Bare vs Cd-wrapped on the near counter (background drop ~10× when reading true slow-n) | Cd-wrap is a **calibration / interpretation** observable; high rate under Cd is a falsifier of “thermal neutron” interpretation, not proof of a ν agent |
 | **γ / soft-X companion** | Hard-γ UL + soft-X channel when claimed | Soft-X∧¬hard-γ ∧ Cd-high → `BRANCHING_INCONSISTENT_WITH_NEUTRON_INTERPRETATION` (scenario diagnostic only) |
 | **Dual-counter coincidence** | Optional AND/OR timing between near and far | EMI / pulse-shape confounders stay first-class covariates |
+
+**Klimov-style geometry ≠ TheoryModule (`klimov2020` instrument cite only).**
+“Far counter / dual-baseline” language nods to Klimov, Belov & Tolkunov,
+*J. Phys. Conf. Ser.* **1698** (2020) 012034 — multi-detector / baseline radiation
+registration on a plasma-vortex experimental setup. That cite keys an
+**instrument-plan / falsifier sketch** under `EQ-OPEN-RAD-01` / `EQ-OPEN-RATE-01`.
+It is **not** a `klimov_*` TheoryModule, not a CMNS / TheoryPaper authored section,
+not a viz-map layer, and **not** a rebrand of adjacent MHD modules
+(`bubble_mhd_confinement`, `stellar_scaling_mhd`). Citing detector geometry alone
+does **not** discharge either OPEN obligation and never flips `lenr_proved`.
+Plasma / discharge product TheoryModules stay **parked** pending a separate Phase A
+research assessment + explicit go.
 
 Parkhomov detector-gas ν/ν̄ hypotheses stay **SPEC curated storytelling**
 (`parkhomov_curated` `detector_gas_speculative` rows; `feeds_production_rate=false`)
