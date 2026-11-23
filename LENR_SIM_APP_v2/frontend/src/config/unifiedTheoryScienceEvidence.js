@@ -579,11 +579,12 @@ export const REFUSED_FABRICATED_MOE_CAMPAIGNS = Object.freeze([
     primary_cites: Object.freeze([
       'doi:10.70923/001c.72494',
       'JCMNS 29 (2019) 52–74 “12 ± 2 W”',
+      'doi:10.70923/001c.72341 (MFMP/Greenyer replication concern — valat2015)',
     ]),
     missing:
-      'Same-sentence 12±2 is method-indetermination class (raw uncorrected air-flow; wire-break; sibling ±1–2 W indetermination) — not literature_reported total σ for discovery',
+      'Same-sentence 12±2 is method-indetermination class (raw uncorrected air-flow; wire-break; sibling ±1–2 W indetermination; MFMP calorimetry concerns) — not literature_reported total σ for discovery',
     honesty:
-      'Exploratory hydrate landed (instrument_precision; pairing=false; S_heat=6 gates-blocked) — still refuse discovery_grade_eligible.',
+      'Exploratory hydrate landed (instrument_precision; pairing=false; S_heat=6 gates-blocked). MFMP/Greenyer DOI 10.70923/001c.72341 lowers confidence only — still refuse discovery_grade_eligible; no greenyer_*/mfmp_* TheoryModule.',
   }),
 ]);
 
@@ -680,12 +681,13 @@ export const EMP_EXPLORATORY_WHY_NOT_DISCOVERY = Object.freeze([
     reasons: Object.freeze([
       'JCMNS 29 DOI 10.70923/001c.72494 same-sentence “AHE was over 12 ± 2 W” is method-indetermination / raw uncorrected air-flow — not literature_reported total σ_Q',
       'moe_provenance is instrument_precision (exploratory); moe_sigma_q_pairing_verified stays false — arithmetic S_heat=6 (=12/2) gates-blocked',
-      'Wire broke within ~1 day; sibling JCMNS 19 indetermination ±1–2 W; MFMP replication flags calorimetry concerns',
+      'Wire broke within ~1 day; sibling JCMNS 19 indetermination ±1–2 W',
+      'MFMP / Greenyer replication honesty (Valat, Hunt & Greenyer, JCMNS 15 (2015) DOI 10.70923/001c.72341 — valat2015): calorimetry-method concerns lower confidence only — never raise claim_tier / pairing / discovery_grade_eligible; no greenyer_* / mfmp_* TheoryModule',
       'Stable 6–7 W Xe–D2 episode lacks published ± — do not invent discovery MoE from that branch',
       'EQ-OPEN-YIELD-01 stays OPEN; discovery_grade_eligible stays false',
     ]),
     honesty:
-      'Exploratory near-miss hydrate only — not discovery; does not set lenr_proved or close EQ-OPEN-*.',
+      'Exploratory near-miss hydrate only — not discovery; MFMP/Greenyer concerns lower confidence; does not set lenr_proved or close EQ-OPEN-*.',
   }),
 ]);
 

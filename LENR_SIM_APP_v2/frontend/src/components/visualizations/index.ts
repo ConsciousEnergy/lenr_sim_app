@@ -15,6 +15,8 @@ export { default as LENRVisualization } from './LENRVisualization';
 export { default as FusionVisualization } from './FusionVisualization';
 export { default as UnifiedBubbleLatticeVisualization } from './UnifiedBubbleLatticeVisualization';
 export { default as VisualizationLegend } from './VisualizationLegend';
+export { default as FidelityLegendSplit } from './FidelityLegendSplit';
+export { default as VizHudReadouts } from './VizHudReadouts';
 export { QuantumFluxEffect, ScaleBar, FluxMode } from './QuantumFluxVisualization';
 
 // For better organization, we import and re-export the ReactionConfigurationManager from the reactions directory

@@ -1,6 +1,7 @@
 /**
- * Claim-tier HUD readouts for UnifiedBubbleLatticeVisualization (VIZ-03).
+ * Claim-tier HUD readouts for UnifiedBubbleLatticeVisualization (VIZ-03 / VIZ-05).
  * Refuses bare quantitative numbers — every value chip carries a claim-tier.
+ * VIZ-05: optional ceiling / KM-auto badges for collapse observables.
  */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -30,8 +31,9 @@ TierChip.propTypes = {
  * @param {object} props
  * @param {Array<{ channel_id: string, value: number|string|null, source?: string }>} props.channels
  * @param {boolean} [props.showHeldGaps]
+ * @param {{ temperature_at_ceiling?: boolean, temperature_ceiling_k?: number|null, temperature_value_raw?: number|null, km_auto_selected?: boolean, compressibility_regime?: string|null }} [props.collapseMeta]
  */
-export default function VizHudReadouts({ channels, showHeldGaps = true }) {
+export default function VizHudReadouts({ channels, showHeldGaps = true, collapseMeta = null }) {
   const readouts = (channels || [])
     .map((ch) => resolveHudReadout(ch))
     .filter(Boolean);
@@ -43,6 +45,18 @@ export default function VizHudReadouts({ channels, showHeldGaps = true }) {
     : [];
 
   if (readouts.length === 0 && gaps.length === 0) return null;
+
+  const ceilingTooltip = collapseMeta?.temperature_at_ceiling
+    ? `Clamped to the ${
+      collapseMeta.temperature_ceiling_k != null
+        ? Number(collapseMeta.temperature_ceiling_k).toExponential(1)
+        : 'regime'
+    } K reporting ceiling${
+      collapseMeta.temperature_value_raw != null
+        ? `; adiabatic closed form gives ${Number(collapseMeta.temperature_value_raw).toExponential(1)} K`
+        : ''
+    }. Honesty label only — not a claim-tier raise.`
+    : '';
 
   return (
     <Stack
@@ -77,6 +91,36 @@ export default function VizHudReadouts({ channels, showHeldGaps = true }) {
               />
             )}
             <TierChip readout={r} />
+            {r.channel_id === 'collapse.temperature_k' && collapseMeta?.temperature_at_ceiling && (
+              <Tooltip title={ceilingTooltip}>
+                <Chip
+                  label="AT CEILING"
+                  size="small"
+                  color="warning"
+                  data-testid="viz-hud-temp-ceiling"
+                  sx={{ fontSize: '0.55rem', height: 18 }}
+                />
+              </Tooltip>
+            )}
+            {r.channel_id === 'collapse.solver' && collapseMeta?.km_auto_selected && (
+              <Chip
+                label="KM auto"
+                size="small"
+                color="info"
+                variant="outlined"
+                data-testid="viz-hud-km-auto"
+                sx={{ fontSize: '0.55rem', height: 18, color: 'white', borderColor: 'rgba(255,255,255,0.4)' }}
+              />
+            )}
+            {r.channel_id === 'collapse.peak_mach' && collapseMeta?.compressibility_regime && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.55rem' }}
+                data-testid="viz-hud-mach-regime"
+              >
+                {collapseMeta.compressibility_regime}
+              </Typography>
+            )}
           </Box>
         </Tooltip>
       ))}
@@ -106,4 +150,11 @@ VizHudReadouts.propTypes = {
     source: PropTypes.string,
   })),
   showHeldGaps: PropTypes.bool,
+  collapseMeta: PropTypes.shape({
+    temperature_at_ceiling: PropTypes.bool,
+    temperature_ceiling_k: PropTypes.number,
+    temperature_value_raw: PropTypes.number,
+    km_auto_selected: PropTypes.bool,
+    compressibility_regime: PropTypes.string,
+  }),
 };

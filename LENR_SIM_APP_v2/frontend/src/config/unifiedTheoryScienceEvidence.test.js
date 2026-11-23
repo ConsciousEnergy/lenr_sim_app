@@ -294,7 +294,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(celani.in_curated_25).toBe(true);
     expect(celani.literature_id).toBe('celani-constantan-2019');
     expect(celani.primary_cites.join(' ')).toMatch(/72494|12 ± 2/);
+    expect(celani.primary_cites.join(' ')).toMatch(/72341|valat2015/);
     expect(celani.honesty).toMatch(/exploratory hydrate|instrument_precision/i);
+    expect(celani.honesty).toMatch(/lower.*confidence|72341/i);
     expect(CORPUS_MOE_COVERAGE.discovery_grade_eligible_count).toBe(2);
     expect(CORPUS_MOE_COVERAGE.with_moe_pairing_verified).toBe(2);
     const celaniWhy = EMP_EXPLORATORY_WHY_NOT_DISCOVERY.find(
@@ -303,6 +305,9 @@ describe('unifiedTheoryScienceEvidence honesty', () => {
     expect(celaniWhy.s_heat_exploratory).toBe(6);
     expect(celaniWhy.discovery_grade_eligible).toBe(false);
     expect(celaniWhy.pairing_verified).toBe(false);
+    expect(celaniWhy.reasons.join(' ')).toMatch(/10\.70923\/001c\.72341|valat2015/);
+    expect(celaniWhy.reasons.join(' ')).toMatch(/lower confidence/i);
+    expect(celaniWhy.honesty).toMatch(/lower confidence/i);
   });
 
   test('avenue ranking uses non-proof language and OPEN stress chips', () => {

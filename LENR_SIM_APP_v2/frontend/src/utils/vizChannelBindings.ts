@@ -133,6 +133,33 @@ export const BUBBLE_LATTICE_VIZ_CHANNELS: Record<string, VizChannelBinding> = {
     null_policy: 'schematic_fallback',
     label: 'Compression',
   },
+  // VIZ-05 — collapse-observable HUD (Mach + solver mode from collapse_results)
+  'collapse.peak_mach': {
+    channel_id: 'collapse.peak_mach',
+    observable_path: '$.collapse_results.bubble_dynamics.peak_mach',
+    unit: 'Mach',
+    fidelity: 'quantitative',
+    claim_tier: 'empirical_lenr_correlation',
+    provenance: {
+      source: 'bubble_dynamics_ode',
+      validation_status: 'model_output',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Mach',
+  },
+  'collapse.solver': {
+    channel_id: 'collapse.solver',
+    observable_path: '$.collapse_results.bubble_dynamics.bounds_solver_used',
+    unit: 'label',
+    fidelity: 'quantitative',
+    claim_tier: 'established_reference',
+    provenance: {
+      source: 'bubble_dynamics_ode',
+      validation_status: 'solver_mode',
+    },
+    null_policy: 'schematic_fallback',
+    label: 'Solver',
+  },
   'proton.regime': {
     channel_id: 'proton.regime',
     observable_path: '$.proton_phases',
@@ -220,11 +247,20 @@ export type HudReadout =
     }
   | null;
 
+const SOLVER_LABELS: Record<string, string> = {
+  rayleigh_plesset: 'Rayleigh–Plesset',
+  keller_miksis: 'Keller–Miksis',
+};
+
 function formatHudValue(value: number | string, unit: string): string {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') {
+    if (unit === 'label' && SOLVER_LABELS[value]) return SOLVER_LABELS[value];
+    return value;
+  }
   if (!Number.isFinite(value)) return '—';
   if (unit === 'K') return `${value.toFixed(0)} K`;
   if (unit === 'μm') return `${value.toPrecision(3)} μm`;
+  if (unit === 'Mach') return value.toFixed(3);
   if (unit === 'V/m') {
     const scaled = value / 1e8;
     return `${scaled.toFixed(1)}×10⁸ V/m`;
@@ -232,6 +268,95 @@ function formatHudValue(value: number | string, unit: string): string {
   if (unit === '1' && Math.abs(value) >= 100) return value.toExponential(2);
   if (unit === '1') return value.toFixed(2);
   return `${value}`;
+}
+
+export type CollapseHudMeta = {
+  temperature_at_ceiling: boolean;
+  temperature_ceiling_k: number | null;
+  temperature_value_raw: number | null;
+  compressibility_regime: string | null;
+  km_auto_selected: boolean;
+};
+
+/**
+ * Build VIZ-05 collapse-observable HUD channel requests from `collapse_results`.
+ * Returns R / T / Mach / solver chips when present; never invents melt values.
+ */
+export function buildCollapseHudChannels(
+  collapseResults: Record<string, unknown> | null | undefined,
+  opts?: { sampleSource?: HudReadoutRequest['source'] },
+): { channels: HudReadoutRequest[]; meta: CollapseHudMeta } {
+  const source = opts?.sampleSource || 'solver';
+  const emptyMeta: CollapseHudMeta = {
+    temperature_at_ceiling: false,
+    temperature_ceiling_k: null,
+    temperature_value_raw: null,
+    compressibility_regime: null,
+    km_auto_selected: false,
+  };
+  if (!collapseResults || typeof collapseResults !== 'object') {
+    return { channels: [], meta: emptyMeta };
+  }
+
+  const dynamics =
+    (collapseResults.bubble_dynamics as Record<string, unknown> | undefined) || {};
+  const limits =
+    (collapseResults.limits as Record<string, unknown> | undefined) || {};
+  const tempLimit =
+    (limits.temperature_k as Record<string, unknown> | undefined) || {};
+
+  const solverRaw =
+    (typeof dynamics.bounds_solver_used === 'string' && dynamics.bounds_solver_used) ||
+    (typeof dynamics.solver === 'string' && dynamics.solver) ||
+    (typeof dynamics.mode === 'string' && dynamics.mode) ||
+    null;
+
+  const channels: HudReadoutRequest[] = [];
+
+  if (typeof collapseResults.min_radius_um === 'number') {
+    channels.push({
+      channel_id: 'bubble.radius_um',
+      value: collapseResults.min_radius_um as number,
+      source,
+    });
+  }
+  if (typeof collapseResults.max_temperature_k === 'number') {
+    channels.push({
+      channel_id: 'collapse.temperature_k',
+      value: collapseResults.max_temperature_k as number,
+      source,
+    });
+  }
+  if (typeof dynamics.peak_mach === 'number') {
+    channels.push({
+      channel_id: 'collapse.peak_mach',
+      value: dynamics.peak_mach as number,
+      source,
+    });
+  }
+  if (solverRaw) {
+    channels.push({
+      channel_id: 'collapse.solver',
+      value: solverRaw,
+      source,
+    });
+  }
+
+  return {
+    channels,
+    meta: {
+      temperature_at_ceiling: Boolean(tempLimit.is_saturated),
+      temperature_ceiling_k:
+        typeof tempLimit.ceiling === 'number' ? (tempLimit.ceiling as number) : null,
+      temperature_value_raw:
+        typeof tempLimit.value_raw === 'number' ? (tempLimit.value_raw as number) : null,
+      compressibility_regime:
+        typeof dynamics.compressibility_regime === 'string'
+          ? (dynamics.compressibility_regime as string)
+          : null,
+      km_auto_selected: Boolean(dynamics.km_auto_selected),
+    },
+  };
 }
 
 /**

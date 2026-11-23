@@ -27,6 +27,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import BlurOnIcon from '@mui/icons-material/BlurOn';
+import FidelityLegendSplit from './FidelityLegendSplit';
 
 // Particle type definitions for Fusion (plasma-scale)
 const FUSION_PARTICLE_TYPES = {
@@ -589,6 +590,7 @@ function VisualizationLegend({
   onToggleCollapse,
   variant = 'overlay', // 'overlay' | 'panel' | 'side-drawer'
   simulationType = 'fusion', // 'lenr' | 'fusion'
+  showFidelitySplit = true, // VIZ-04 Quantitative vs Schematic
 }) {
   const theme = useTheme();
   const isLightMode = theme.palette.mode === 'light';
@@ -718,6 +720,14 @@ function VisualizationLegend({
                 borderRadius: '3px',
               },
             }}>
+              {/* VIZ-04 fidelity split (LENR / UBLV) */}
+              {showFidelitySplit && simulationType === 'lenr' && (
+                <>
+                  <FidelityLegendSplit compact />
+                  <Divider sx={{ my: 1.5 }} />
+                </>
+              )}
+
               {/* Particle Types Section */}
               {showParticles && (
                 <Box sx={{ mb: 2 }}>
@@ -900,6 +910,14 @@ function VisualizationLegend({
             borderRadius: '3px',
           },
         }}>
+          {/* VIZ-04 fidelity split (LENR / UBLV) */}
+          {showFidelitySplit && simulationType === 'lenr' && (
+            <>
+              <FidelityLegendSplit compact />
+              <Divider sx={{ my: 1.5 }} />
+            </>
+          )}
+
           {/* Particle Types Section */}
           {showParticles && (
             <Box sx={{ mb: 2 }}>
@@ -950,7 +968,7 @@ function VisualizationLegend({
                     sx={{ 
                       width: 16, 
                       height: 16, 
-                      borderRadius: '50%', 
+                      borderRadius: '50%',
                       bgcolor: simulationType === 'lenr' ? '#ff4500' : '#ffaa00',
                       boxShadow: simulationType === 'lenr' ? '0 0 8px #ff4500' : '0 0 8px #ffaa00',
                     }} 
@@ -1133,6 +1151,7 @@ VisualizationLegend.propTypes = {
   onToggleCollapse: PropTypes.func,
   variant: PropTypes.oneOf(['overlay', 'panel', 'side-drawer']),
   simulationType: PropTypes.oneOf(['lenr', 'fusion']),
+  showFidelitySplit: PropTypes.bool,
 };
 
 export default VisualizationLegend;
