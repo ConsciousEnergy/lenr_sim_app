@@ -5,6 +5,7 @@
  * representation (3D overlay layer + legend group + label copy).
  *
  * Added as part of v0.3.6-beta refactor (plan §2A).
+ * VIZ-04: every entry carries `fidelity` for Quantitative vs Schematic legend split.
  *
  * Each entry describes:
  *   - vizLayer       : name of the Three.js group in UnifiedBubbleLatticeVisualization
@@ -12,6 +13,9 @@
  *                      enhancement statistic, not a dedicated 3D overlay)
  *   - legendGroup    : category label used to group rows in VisualizationLegend
  *   - has3DOverlay   : boolean convenience flag for UI toggles
+ *   - fidelity       : 'quantitative' | 'schematic' | 'indirect'
+ *                      (Quantitative · from solver vs Schematic · illustrative;
+ *                      Indirect · via other channels for colour/indirect influence)
  *   - displayName    : human-readable label for the legend / tooltips
  *   - description    : short (<160 chars) physics blurb shown in tooltip
  *   - reference      : canonical citation string
@@ -21,12 +25,21 @@
  * `theory_id: null` so the legend can still render them as heuristic visuals.
  */
 
+/** @typedef {'quantitative' | 'schematic' | 'indirect'} VizMapFidelity */
+
+export const VIZ_FIDELITY_LABELS = Object.freeze({
+  quantitative: 'Quantitative · from solver',
+  schematic: 'Schematic · illustrative',
+  indirect: 'Indirect · via other channels',
+});
+
 export const THEORY_VISUALIZATION_MAP = {
   electron_screening: {
     vizLayer: 'ProtonPhaseGroup',
     legendGroup: 'Screening',
     has3DOverlay: true,
     indirect: true, // influences proton colour via screening enhancement
+    fidelity: 'indirect',
     displayName: 'Electron Screening',
     description:
       'Debye/Thomas-Fermi screening lowers Coulomb barrier; rendered indirectly via proton phase colours.',
@@ -36,6 +49,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'QED',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Coherent QED (Preparata)',
     description:
       'Del Giudice / Preparata coherent EM domains; contributes scalar enhancement only, no dedicated overlay.',
@@ -45,6 +59,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'MHDFlowGroup',
     legendGroup: 'MHD Flow',
     has3DOverlay: true,
+    fidelity: 'quantitative',
     displayName: 'Bubble-MHD Confinement',
     description:
       'Rayleigh-Plesset + MHD Z-pinch staging. Renders Hartmann boundary layers + Lorentz force arrows.',
@@ -54,6 +69,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'CasimirFieldGroup',
     legendGroup: 'Casimir Geometry',
     has3DOverlay: true,
+    fidelity: 'quantitative',
     displayName: 'Casimir Confinement',
     description:
       'Vacuum-fluctuation confinement between lattice voids; Lifshitz correction for real metals.',
@@ -63,6 +79,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Tunneling',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Quantum Tunneling (Gamow/WKB)',
     description:
       'Base Gamow/WKB tunneling probability; scalar enhancement only. Reported via U/t Fermi-Hubbard ratio.',
@@ -72,6 +89,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Phonon Transfer',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Hagelstein Phonon-Nuclear',
     description:
       'Phonon-nuclear coupling for energy transfer to lattice. Future overlay: phonon wavefronts.',
@@ -81,6 +99,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Coherence',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Kim Bose-Einstein Condensate (BECNF)',
     description:
       'Yeong Kim BECNF — deuteron BEC in nano-grains. Distinct from Holmlid H(0)/D(0).',
@@ -90,6 +109,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Ultra-dense H',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Holmlid ultra-dense H(0)/D(0)',
     description:
       'Phenomenological H(0)/D(0) + laser/TOF regime flags. Not a generic BEC Tc model.',
@@ -99,6 +119,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Transmutation',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Matsumoto ENC (phenomenological)',
     description:
       'Electro-nuclear collapse / itonic clusters — phenomenological labels; no invented author rate law.',
@@ -108,6 +129,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Transmutation',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Shoulders EVO / charge clusters (phenomenological)',
     description:
       'Registry stub for EVOs / charge clusters. No invented nuclear rate law; P1 branch networks queued.',
@@ -117,6 +139,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Null controls',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Null: chemical recombination',
     description:
       'Non-nuclear heat/artifact control under the same experiment inputs. Not LENR.',
@@ -126,6 +149,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Weak Interaction',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Widom-Larsen Ultra-Low-Momentum Neutrons',
     description:
       'Heavy-electron-mediated weak capture producing ULMN. Scalar-only contribution.',
@@ -135,6 +159,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'NAE Sites',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Nuclear Active Environment (Storms)',
     description: 'Statistical NAE site density. Scalar only; NAE sites implicit in lattice lattice.',
     reference: 'Storms (2007, 2014)',
@@ -143,6 +168,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'TSC',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Takahashi 4D Tetrahedral Symmetric Condensate',
     description:
       '4D-tetrahedron symmetric condensate for multi-body fusion. Scalar enhancement only. 4H/TSC WS (protium Weak-Strong) is cited literature, not a separate theory_id.',
@@ -152,6 +178,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Coherent Correlated States',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Vysotskii Coherent Correlated States',
     description:
       'Non-stationary quantum states with enhanced tunneling. Scalar contribution.',
@@ -161,6 +188,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Ion Band States',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Chubb Ion-Band States',
     description: 'Bloch-wave ion-band states in Pd. Scalar-only contribution.',
     reference: 'Chubb & Chubb (1991)',
@@ -169,6 +197,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Transmutation',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Iwamura Transmutation',
     description: 'Ba->Sm, Cs->Pr multi-nucleon transfer in Pd/CaO/Pd sandwich. Scalar only.',
     reference: 'Iwamura et al., Jpn. J. Appl. Phys. (2002)',
@@ -177,6 +206,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Ni-H Reactions',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Piantelli Ni-H',
     description: 'Ni-H reactions with H1-like intermediate. Scalar contribution; requires alkali.',
     reference: 'Piantelli (2010)',
@@ -185,6 +215,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Nanor',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Swartz Nanor',
     description: 'ZrO2-PdD Nanor device phenomenology. Scalar only.',
     reference: 'Swartz (2015)',
@@ -193,6 +224,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Laser Triggering',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Letts Laser Triggering',
     description: 'Dual-laser surface plasmon triggering. Scalar only.',
     reference: 'Letts & Hagelstein (2009)',
@@ -201,6 +233,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Heat/Helium Correlation',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Miles Heat-Helium Correlation',
     description: 'Excess heat vs 4He production correlation. Scalar only.',
     reference: 'Miles et al. (1993)',
@@ -210,6 +243,7 @@ export const THEORY_VISUALIZATION_MAP = {
     legendGroup: 'Radiant BREMS Calorimetry',
     has3DOverlay: false,
     claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
     displayName: 'Kasagi Radiant BREMS Calorimetry',
     description:
       'Radiant-spectrum / BREMS heat pathway for Ni–H / NiCu multilayer desorption. Model output only; not discovery MoE.',
@@ -219,6 +253,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Hydroton',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Hydroton (Storms)',
     description: 'Linear H/D chain Coulomb-analog cluster. Scalar only.',
     reference: 'Storms (2014)',
@@ -227,6 +262,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Non-Equilibrium',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Non-Equilibrium Thermodynamics',
     description: 'Prigogine-style dissipative structures. Scalar only.',
     reference: 'Prigogine (1977)',
@@ -235,6 +271,7 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: null,
     legendGroup: 'Phonon (Legacy)',
     has3DOverlay: false,
+    fidelity: 'schematic',
     displayName: 'Phonon Coupling (Legacy)',
     description: 'Legacy phonon-coupling module kept for backwards compatibility.',
     reference: 'Internal (deprecated - see hagelstein_phonon)',
@@ -244,6 +281,7 @@ export const THEORY_VISUALIZATION_MAP = {
     legendGroup: 'MHD Flow',
     has3DOverlay: false,
     indirect: true,
+    fidelity: 'indirect',
     claimTier: 'cross_regime_extrapolation',
     displayName: 'Stellar-Scaling MHD (context line)',
     description:
@@ -255,6 +293,7 @@ export const THEORY_VISUALIZATION_MAP = {
     legendGroup: 'Ion tracks',
     has3DOverlay: false,
     claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
     displayName: 'Czerski thermal spike (ion tracks)',
     description:
       'Accelerator ion-track thermal DD fusion. Complements screening; not an electrolytic LENR proof.',
@@ -265,6 +304,7 @@ export const THEORY_VISUALIZATION_MAP = {
     legendGroup: 'Hadronic synthesis',
     has3DOverlay: false,
     claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
     displayName: 'Santilli ICNF (D+C→N, phenomenological)',
     description:
       'Arc / warm D+C→N ICNF stub. Speculative exploratory; not lattice D+D→He⁴; no invented rate law.',
@@ -281,6 +321,7 @@ export const HEURISTIC_OVERLAYS = {
     vizLayer: 'RydbergOrbitalGroup',
     legendGroup: 'Orbital Visualization',
     has3DOverlay: true,
+    fidelity: 'schematic',
     displayName: 'Rydberg Orbitals',
     description:
       'Visualization-only model (no dedicated backend theory). Illustrates high-n orbital sketches at lattice sites.',
@@ -290,6 +331,7 @@ export const HEURISTIC_OVERLAYS = {
     vizLayer: 'HaloElectronGroup',
     legendGroup: 'Orbital Visualization',
     has3DOverlay: true,
+    fidelity: 'schematic',
     displayName: 'Halo Electrons',
     description:
       'Visualization-only cloud scaled by screening enhancement. Not a standalone theory.',
@@ -300,12 +342,28 @@ export const HEURISTIC_OVERLAYS = {
     legendGroup: 'Cavitation Diagnostics',
     has3DOverlay: false,
     claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
     displayName: 'KG-RP harmonic locking',
     description:
       'Speculative cavitation diagnostic (Mulnix KG-RP): collapse-vs-drive locking ratio and detuning. Diagnostic overlay, not a rate driver.',
     reference: 'Mulnix (2026) doi:10.5281/zenodo.19079074; Pyyhtiä et al. (2026) doi:10.1016/j.jelechem.2026.120104 (CR-39 cavitation confounder)',
   },
 };
+
+const VALID_FIDELITIES = new Set(['quantitative', 'schematic', 'indirect']);
+
+/**
+ * Resolve fidelity for a map entry. Prefer explicit `fidelity`; fall back from
+ * legacy `indirect` flag; default schematic (never invent quantitative).
+ * @param {object|null|undefined} entry
+ * @returns {VizMapFidelity}
+ */
+export function resolveVizMapFidelity(entry) {
+  if (!entry || typeof entry !== 'object') return 'schematic';
+  if (VALID_FIDELITIES.has(entry.fidelity)) return entry.fidelity;
+  if (entry.indirect) return 'indirect';
+  return 'schematic';
+}
 
 /** Resolve the viz-map entry for a given theory_id (safely). */
 export function getTheoryViz(theoryId) {
@@ -322,6 +380,49 @@ export function getTheoriesWith3DOverlay() {
 /** Return the list of overlay layers that are purely heuristic. */
 export function getHeuristicOverlays() {
   return Object.entries(HEURISTIC_OVERLAYS).map(([id, entry]) => ({ id, ...entry }));
+}
+
+/**
+ * Overlay-relevant legend rows for the VIZ-04 fidelity split.
+ * Includes 3D theory overlays + heuristic overlays (not scalar-only map rows).
+ * @returns {Array<{ id: string, displayName: string, fidelity: VizMapFidelity, legendGroup: string, description: string, reference: string, source: 'theory'|'heuristic' }>}
+ */
+export function getFidelityLegendEntries() {
+  const theoryRows = Object.entries(THEORY_VISUALIZATION_MAP)
+    .filter(([, entry]) => entry.has3DOverlay || entry.indirect)
+    .map(([id, entry]) => ({
+      id,
+      displayName: entry.displayName,
+      fidelity: resolveVizMapFidelity(entry),
+      legendGroup: entry.legendGroup,
+      description: entry.description,
+      reference: entry.reference,
+      source: 'theory',
+    }));
+
+  const heuristicRows = Object.entries(HEURISTIC_OVERLAYS).map(([id, entry]) => ({
+    id,
+    displayName: entry.displayName,
+    fidelity: resolveVizMapFidelity(entry),
+    legendGroup: entry.legendGroup,
+    description: entry.description,
+    reference: entry.reference,
+    source: 'heuristic',
+  }));
+
+  return [...theoryRows, ...heuristicRows];
+}
+
+/**
+ * Group fidelity legend entries into Quantitative / Schematic / Indirect buckets.
+ * @returns {{ quantitative: object[], schematic: object[], indirect: object[] }}
+ */
+export function groupFidelityLegendEntries() {
+  const groups = { quantitative: [], schematic: [], indirect: [] };
+  for (const row of getFidelityLegendEntries()) {
+    groups[row.fidelity].push(row);
+  }
+  return groups;
 }
 
 export default THEORY_VISUALIZATION_MAP;
