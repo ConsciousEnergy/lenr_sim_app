@@ -237,6 +237,11 @@ def test_celani_exploratory_moe_companion_stays_non_baseline() -> None:
     assert celani["moe_provenance"] == "literature_reported_instrument_precision"
     assert float(celani["sigma_Q_W"]) == 2.0
     assert celani.get("moe_sigma_q_pairing_verified") is False
+    notes = str(celani.get("moe_notes") or "")
+    assert "10.70923/001c.72341" in notes
+    assert "valat2015" in notes
+    assert "lower confidence" in notes
+    assert "greenyer_*" in notes or "mfmp_*" in notes
     assert len(literature_records()) == 19
     assert all(
         row["literature_id"] != "celani-constantan-2019" for row in literature_records()

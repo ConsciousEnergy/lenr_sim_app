@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post-`0.4.0-beta` tip work lands here. Live share rolls via Path B after promote
   lands on `main` (sibling ship task). Revert path = Swarm **v0.3.9-beta**.
 
+### Changed — Honesty / docs (Klimov + Greenyer/MFMP)
+- Klimov-style dual-counter geometry in `EQ_OPEN_CLOSURE_RUNWAY` cite-keyed
+  (`klimov2020`) with explicit **geometry ≠ TheoryModule** lock (no `klimov_*`
+  module; MHD modules not rebranded; EQ-OPEN / `lenr_proved` unchanged).
+- Celani exploratory MoE + science-evidence surfaces stabilize MFMP / Greenyer
+  replication DOI `10.70923/001c.72341` (`valat2015`) — concerns **lower**
+  confidence only; no `greenyer_*` / `mfmp_*` TheoryModule.
+
 ## [v0.4.0-beta] - 2026-11-21
 
 Controlled promote of tip-`dev` HIP Prefer-merge train → `main` with four-surface
