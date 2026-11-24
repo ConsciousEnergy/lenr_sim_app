@@ -125,7 +125,10 @@ export default function VizHudReadouts({ channels, showHeldGaps = true, collapse
         </Tooltip>
       ))}
       {gaps.map((g) => (
-        <Tooltip key={`gap-${g.channel_id}`} title="Held until liquid-phase Prefer-merge; not inventing values">
+        <Tooltip
+          key={`gap-${g.channel_id}`}
+          title="Liquid-phase TheoryModules pending — gap chip; not inventing f_L / P_*"
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Chip
               label={`${g.label}: gap`}
@@ -134,7 +137,7 @@ export default function VizHudReadouts({ channels, showHeldGaps = true, collapse
               sx={{ bgcolor: 'rgba(80, 80, 80, 0.85)', color: 'white', fontSize: '0.6rem' }}
             />
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.55rem' }}>
-              held
+              gap
             </Typography>
           </Box>
         </Tooltip>

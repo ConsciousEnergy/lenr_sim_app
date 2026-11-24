@@ -55,6 +55,11 @@ import VisualizationLegend from './VisualizationLegend';
 import BubbleLatticeTimelineControls from './BubbleLatticeTimelineControls';
 import VizHudReadouts from './VizHudReadouts';
 import { buildCollapseHudChannels } from '../../utils/vizChannelBindings';
+import {
+  extractLiquidPhaseChannels,
+  resolveHostMeltMeta,
+  resolveLiquidPhaseOverlayState,
+} from '../../utils/liquidPhaseViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -364,6 +369,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const fieldGroupRef = useRef(null);
   const effectsGroupRef = useRef(null);
   const boundaryVisualGroupRef = useRef(null);
+  const liquidPhaseGroupRef = useRef(null);
   
   // Vortex/fluid dynamics refs
   const vortexGroupRef = useRef(null);
@@ -464,6 +470,7 @@ const UnifiedBubbleLatticeVisualization = ({
     }),
     [simulationData?.collapse_results, simulationData?.validation?.route_mode, usingAPIData],
   );
+
   const spacetimeBufferRef = useRef(spacetimeBuffer);
   useEffect(() => {
     spacetimeBufferRef.current = spacetimeBuffer;
@@ -510,6 +517,23 @@ const UnifiedBubbleLatticeVisualization = ({
   const latticeScaleDescriptor = useMemo(
     () => buildLatticeScaleDescriptor({ material: hostMaterial, latticeSpacingVisUnits }),
     [hostMaterial, latticeSpacingVisUnits],
+  );
+
+  // VIZ-07 / VIZ-12 — never invent f_L / P_* from ambient T or excess heat.
+  const liquidPhaseChannels = useMemo(
+    () => extractLiquidPhaseChannels(simulationData),
+    [simulationData],
+  );
+  const hostMeltMeta = useMemo(
+    () => resolveHostMeltMeta(hostMaterial),
+    [hostMaterial],
+  );
+  const liquidPhaseOverlayState = useMemo(
+    () => resolveLiquidPhaseOverlayState({
+      hostMaterial,
+      phaseFractionLiquid: liquidPhaseChannels.phaseFractionLiquid,
+    }),
+    [hostMaterial, liquidPhaseChannels.phaseFractionLiquid],
   );
 
   const latticeBaselineLengthVisUnits = useMemo(
@@ -707,6 +731,45 @@ const UnifiedBubbleLatticeVisualization = ({
     
     return latticeGroup;
   }, [hostMaterial, hostAtomRadiusVisUnits, latticeSize, latticeSpacingVisUnits, loadingRatio]);
+
+  /**
+   * VIZ-12 scaffold — local liquid film group (Pd XOR Ni).
+   * Hidden (gap) until engine supplies finite f_L; never invents melt from T.
+   */
+  const createLiquidPhaseOverlay = useCallback((scene) => {
+    const group = new THREE.Group();
+    group.name = 'LiquidPhaseGroup';
+    group.visible = false;
+    group.userData = {
+      mode: 'gap',
+      claim_tier: 'speculative_exploratory',
+      fidelity: 'schematic',
+    };
+
+    const hostColor = HOST_MATERIAL_COLORS[hostMaterial] || 0x888888;
+    const filmGeometry = new THREE.SphereGeometry(1, 24, 16);
+    const filmMaterial = new THREE.MeshPhongMaterial({
+      color: hostColor,
+      emissive: hostColor,
+      emissiveIntensity: 0.35,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+      shininess: 120,
+      specular: 0xffffff,
+    });
+    const film = new THREE.Mesh(filmGeometry, filmMaterial);
+    film.name = 'LiquidPhaseFilm';
+    film.scale.set(1.2, 0.22, 1.2);
+    const latticeSurfaceY =
+      PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    film.position.set(0, latticeSurfaceY + 0.15, 0);
+    group.add(film);
+
+    scene.add(group);
+    liquidPhaseGroupRef.current = group;
+    return group;
+  }, [hostMaterial]);
 
   // Create bubble with double-layer shell
   // Physics: bubble nucleates at surface cavities within boundary layer
@@ -2931,6 +2994,7 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Create scene elements
     createLattice(scene);
+    createLiquidPhaseOverlay(scene);
     createBubble(scene);
     createProtons(scene);
     createFieldVisualization(scene);
@@ -3036,8 +3100,35 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit, isMobile, qualitySettings]);
+  }, [createLattice, createLiquidPhaseOverlay, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit, isMobile, qualitySettings]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
+
+  // VIZ-12 — apply overlay state without inventing melt when f_L is absent.
+  useEffect(() => {
+    const group = liquidPhaseGroupRef.current;
+    if (!group) return;
+    const film = group.getObjectByName('LiquidPhaseFilm');
+    const state = liquidPhaseOverlayState;
+    group.userData = {
+      mode: state.mode,
+      claim_tier: state.claimTier,
+      fidelity: state.fidelity,
+      hostKey: state.hostKey,
+      phaseFractionLiquid: state.phaseFractionLiquid,
+      message: state.message,
+    };
+    if (state.mode !== 'schematic_film' || !film) {
+      group.visible = false;
+      return;
+    }
+    const scale = 0.8 + 1.4 * state.filmScale;
+    film.scale.set(scale, 0.18 + 0.2 * state.filmScale, scale);
+    if (film.material) {
+      film.material.opacity = 0.2 + 0.45 * state.filmScale;
+      film.material.emissiveIntensity = 0.25 + 0.5 * state.filmScale;
+    }
+    group.visible = showLattice;
+  }, [liquidPhaseOverlayState, showLattice]);
 
   // Update visibility based on toggles - immediate update with force refresh
   useEffect(() => {
@@ -3411,6 +3502,9 @@ const UnifiedBubbleLatticeVisualization = ({
             onToggleCollapse={setLegendCollapsed}
             variant="side-drawer"
             simulationType="lenr"
+            hostMaterial={hostMaterial}
+            liquidPhaseHeat={liquidPhaseChannels.heat}
+            liquidPhaseFraction={liquidPhaseChannels.phaseFractionLiquid}
           />
         )}
         
@@ -3450,10 +3544,29 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small"
             data-testid="ublv-phase-chip"
           />
+          <Tooltip title={hostMeltMeta.citeNote}>
+            <Chip
+              label={
+                hostMeltMeta.meltingPointK != null
+                  ? `${hostMeltMeta.displayName} T_m ${hostMeltMeta.meltingPointK} K`
+                  : 'Melt viz: Pd/Ni only'
+              }
+              size="small"
+              data-testid="ublv-host-tm-chip"
+              data-host-key={hostMeltMeta.hostKey}
+              sx={{
+                bgcolor: 'rgba(33, 150, 243, 0.75)',
+                color: 'white',
+                fontSize: '0.6rem',
+              }}
+            />
+          </Tooltip>
           <Typography variant="caption" color="white">
             Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
           </Typography>
           <VizHudReadouts
+            // Melt / P_* included in channels below (value or gap). Avoid
+            // showHeldGaps duplication with listGapChannels().
             showHeldGaps={false}
             collapseMeta={collapseHud.meta}
             channels={[
@@ -3488,6 +3601,27 @@ const UnifiedBubbleLatticeVisualization = ({
                 ch.channel_id === 'collapse.peak_mach'
                 || ch.channel_id === 'collapse.solver'
               )),
+              // VIZ-07 / VIZ-12 — engine values only; null → gap chips (no invent)
+              {
+                channel_id: 'host.phase_fraction_liquid',
+                value: liquidPhaseChannels.phaseFractionLiquid,
+                source: liquidPhaseChannels.phaseFractionLiquid == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_joule',
+                value: liquidPhaseChannels.heat.P_joule,
+                source: liquidPhaseChannels.heat.P_joule == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_resistive',
+                value: liquidPhaseChannels.heat.P_resistive,
+                source: liquidPhaseChannels.heat.P_resistive == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_photonic',
+                value: liquidPhaseChannels.heat.P_photonic,
+                source: liquidPhaseChannels.heat.P_photonic == null ? undefined : 'solver',
+              },
             ]}
           />
         </Paper>

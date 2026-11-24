@@ -40,7 +40,16 @@ describe('theoryVisualizationMap fidelity (VIZ-04)', () => {
     expect(groups.schematic.some((r) => r.id === 'bubble_mhd_confinement')).toBe(true);
     expect(groups.schematic.some((r) => r.id === 'casimir_confinement')).toBe(true);
     expect(groups.schematic.some((r) => r.id === 'rydberg_orbitals')).toBe(true);
+    expect(groups.schematic.some((r) => r.id === 'liquid_phase_host_film')).toBe(true);
     expect(groups.indirect.some((r) => r.id === 'electron_screening')).toBe(true);
+  });
+
+  test('VIZ-07/12 liquid-phase heuristics stay schematic (no TheoryModule invent)', () => {
+    expect(HEURISTIC_OVERLAYS.heating_mode_glyphs.fidelity).toBe('schematic');
+    expect(HEURISTIC_OVERLAYS.liquid_phase_host_film.vizLayer).toBe('LiquidPhaseGroup');
+    expect(HEURISTIC_OVERLAYS.liquid_phase_host_film.has3DOverlay).toBe(true);
+    expect(THEORY_VISUALIZATION_MAP.liquid_phase_pd).toBeUndefined();
+    expect(THEORY_VISUALIZATION_MAP.liquid_phase_ni).toBeUndefined();
   });
 
   test('fidelity legend entries never invent quantitative for heuristics', () => {

@@ -44,4 +44,21 @@ describe('VizHudReadouts collapse observables (VIZ-05)', () => {
     );
     expect(screen.getByTestId('viz-hud-gap-collapse.peak_mach')).toHaveTextContent(/no sample/);
   });
+
+  test('VIZ-07 melt / P_* nulls render gap chips (no invent)', () => {
+    render(
+      <VizHudReadouts
+        showHeldGaps={false}
+        channels={[
+          { channel_id: 'host.phase_fraction_liquid', value: null },
+          { channel_id: 'heat.P_joule', value: null },
+          { channel_id: 'heat.P_resistive', value: null },
+          { channel_id: 'heat.P_photonic', value: null },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('viz-hud-gap-host.phase_fraction_liquid')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-hud-gap-heat.P_joule')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-hud-gap-heat.P_photonic')).toBeInTheDocument();
+  });
 });
