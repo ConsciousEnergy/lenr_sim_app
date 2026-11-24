@@ -146,7 +146,10 @@ export default function VisualizationPanel({
             width: '100%',
             minWidth: 0,
             minHeight: canvasHeight,
-            overflow: 'hidden',
+            // Keep horizontal containment from M1, but allow vertical overflow so
+            // the #409 M4 sticky scrubber is not clipped under this shell.
+            overflowX: 'hidden',
+            overflowY: 'visible',
             position: 'relative',
           }}
         >
