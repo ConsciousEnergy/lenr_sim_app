@@ -444,8 +444,11 @@ const BubbleFusionVisualizer = ({
                 ? `${Number(physicsData.collapse_results.compression_ratio).toFixed(1)}×`
                 : 'N/A'}
             </Typography>
-            <Typography variant="body2">
-              <strong>Collapse Time:</strong> {physicsData.collapse_results.collapse_time_ns?.toFixed(1) ?? 'N/A'} ns
+            <Typography variant="body2" data-testid="bubble-fusion-collapse-time">
+              <strong>Collapse time</strong> (instant of minimum radius in the ODE run):{' '}
+              {physicsData.collapse_results.collapse_time_ns != null
+                ? `${Number(physicsData.collapse_results.collapse_time_ns).toFixed(1)} ns (${(Number(physicsData.collapse_results.collapse_time_ns) / 1000).toFixed(2)} μs)`
+                : 'N/A'}
             </Typography>
             <Typography variant="body2">
               <strong>Peak Velocity:</strong>{' '}
