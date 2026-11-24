@@ -17,8 +17,29 @@ export class UnifiedTheoryPage {
     await this.page.goto('/unified-theory');
   }
 
+  async gotoVisualization() {
+    await this.page.goto('/unified-theory?tab=visualization');
+  }
+
   async gotoTestbed() {
     await this.page.goto('/unified-theory?tab=testbed');
+  }
+
+  /** #409 M5 — 3D Visual tab canvas + VIZ-01 scrubber. */
+  visualizationCanvas() {
+    return this.page.locator('canvas').first();
+  }
+
+  timelineControls() {
+    return this.page.getByTestId('bubble-lattice-timeline-controls');
+  }
+
+  scrubber() {
+    return this.page.getByTestId('ublv-scrubber');
+  }
+
+  mobileTierChip() {
+    return this.page.getByTestId('ublv-mobile-tier-chip');
   }
 
   /** Fills simulationResult. Does NOT populate the Theory Summary tab. */
