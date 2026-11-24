@@ -60,6 +60,15 @@ import {
   resolveHostMeltMeta,
   resolveLiquidPhaseOverlayState,
 } from '../../utils/liquidPhaseViz';
+import {
+  DYNAMIC_LATTICE_BUFFER_USAGE,
+  DYNAMIC_LATTICE_FIDELITY,
+  applyDynamicLatticeInstances,
+  buildLatticeRestSites,
+  interstitialOffsetFromSite,
+  resolveExclusiveHostColor,
+  resolveLatticePick,
+} from '../../utils/dynamicLattice';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -98,6 +107,7 @@ const CAMERA_PRESET = {
   mobile: { position: [11, 4.5, 13], fov: 52, target: [0, -2, 0] },
 };
 
+/** @deprecated Prefer resolveExclusiveHostColor (VIZ-06) — kept for non-lattice overlays. */
 const HOST_MATERIAL_COLORS = {
   constantan: 0xb87333,
   palladium: 0x8b8b8b,
@@ -393,6 +403,9 @@ const UnifiedBubbleLatticeVisualization = ({
   const [usingAPIData, setUsingAPIData] = useState(false); // Tracks if visualization uses API physics data
   const usingAPIDataRef = useRef(false); // Ref to track previous value and avoid unnecessary state updates
   
+  // VIZ-06 — pickable host instance readout (schematic; not nuclear proof)
+  const [pickedLatticeSite, setPickedLatticeSite] = useState(null);
+
   // Physics state for real-time display
   const [currentEnhancement, setCurrentEnhancement] = useState(1.0);
   const [enhancementBreakdown, setEnhancementBreakdown] = useState({
@@ -548,14 +561,22 @@ const UnifiedBubbleLatticeVisualization = ({
     
     const dimension = latticeSize;
     const spacing = latticeSpacingVisUnits;
-    const offset = (dimension - 1) * spacing / 2;
-    
-    // Host atom material (Pd/Ni color)
-    const hostColor = HOST_MATERIAL_COLORS[hostMaterial] || 0x696969;
+
+    // VIZ-06 — exclusive host color + DynamicDraw rest sites (schematic loading tint).
+    const hostColorMeta = resolveExclusiveHostColor(hostMaterial);
+    const hostColor = hostColorMeta.hex;
+    const restSites = buildLatticeRestSites({
+      dimension,
+      spacing,
+      yOffset: PHYSICS_CONFIG.LATTICE_Y_OFFSET,
+      loadingRatio,
+      seed: dimension * 17 + Math.round(loadingRatio * 1000),
+    });
     
     const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 16, 16);
+    // vertexColors off — per-instance colors via InstancedMesh.instanceColor
     const hostMaterial3D = new THREE.MeshPhongMaterial({
-      color: hostColor,
+      color: 0xffffff,
       shininess: 100,
       specular: 0x444444
     });
@@ -577,61 +598,69 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.4 
     });
     
-    const points = [];
+    const points = restSites.map((site) => new THREE.Vector3(site.x, site.y, site.z));
     const connections = [];
-    let pointIndex = 0;
-
-    // Lattice atoms are static: they never move or change material individually,
-    // only toggle visibility as a group. One Mesh per atom therefore cost one draw
-    // call each (dimension^3 host atoms plus up to as many hydrogens). InstancedMesh
-    // draws all of them in a single call.
-    const hostCount = dimension * dimension * dimension;
-    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
-    hostAtoms.name = 'LatticeHostAtoms';
-    hostAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
-
-    // Hydrogen occupancy is stochastic, so positions are collected first and the
-    // instanced mesh is sized to the actual count.
     const hydrogenPositions = [];
     const instanceTransform = new THREE.Object3D();
+    const scratchColor = new THREE.Color();
 
-    // Create FCC-like lattice
-    for (let x = 0; x < dimension; x++) {
-      for (let y = 0; y < dimension; y++) {
-        for (let z = 0; z < dimension; z++) {
-          const posX = x * spacing - offset;
-          // Use physics-based lattice Y offset
-          const posY = y * spacing - offset + PHYSICS_CONFIG.LATTICE_Y_OFFSET;
-          const posZ = z * spacing - offset;
-
-          instanceTransform.position.set(posX, posY, posZ);
-          instanceTransform.updateMatrix();
-          hostAtoms.setMatrixAt(pointIndex, instanceTransform.matrix);
-
-          // Add hydrogen at interstitial sites based on loading ratio
-          if (Math.random() < loadingRatio) {
-            const hOffset = spacing * 0.25;
-            hydrogenPositions.push([
-              posX + (Math.random() - 0.5) * hOffset,
-              posY + (Math.random() - 0.5) * hOffset,
-              posZ + (Math.random() - 0.5) * hOffset,
-            ]);
-          }
-          
-          points.push(new THREE.Vector3(posX, posY, posZ));
-          
-          // Create bonds to neighbors
-          if (x > 0) connections.push([pointIndex, pointIndex - dimension * dimension]);
-          if (y > 0) connections.push([pointIndex, pointIndex - dimension]);
-          if (z > 0) connections.push([pointIndex, pointIndex - 1]);
-          
-          pointIndex++;
-        }
-      }
+    // VIZ-06: InstancedMesh + DynamicDrawUsage so per-instance matrix/color
+    // can update for loading tint and future schematic displacement (VIZ-09).
+    const hostCount = restSites.length;
+    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
+    hostAtoms.name = 'LatticeHostAtoms';
+    hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    // Allocate instanceColor buffer (required before setColorAt).
+    if (!hostAtoms.instanceColor) {
+      hostAtoms.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(hostCount * 3),
+        3,
+      );
     }
+    hostAtoms.instanceColor.setUsage(THREE.DynamicDrawUsage);
+
+    applyDynamicLatticeInstances({
+      sites: restSites,
+      hostHex: hostColor,
+      markMatrixDynamic: () => {
+        hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      },
+      markColorDynamic: () => {
+        hostAtoms.instanceColor?.setUsage(THREE.DynamicDrawUsage);
+      },
+      setMatrixAt: (index, elements) => {
+        const m = new THREE.Matrix4();
+        m.fromArray(elements);
+        hostAtoms.setMatrixAt(index, m);
+      },
+      setColorAt: (index, rgb) => {
+        scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+        hostAtoms.setColorAt(index, scratchColor);
+      },
+    });
+
+    restSites.forEach((site) => {
+      if (site.occupied) {
+        hydrogenPositions.push(interstitialOffsetFromSite(site, spacing));
+      }
+      // Bonds to -x / -y / -z neighbors (same topology as prior static lattice).
+      if (site.ix > 0) connections.push([site.index, site.index - dimension * dimension]);
+      if (site.iy > 0) connections.push([site.index, site.index - dimension]);
+      if (site.iz > 0) connections.push([site.index, site.index - 1]);
+    });
 
     hostAtoms.instanceMatrix.needsUpdate = true;
+    if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
     hostAtoms.computeBoundingSphere();
+    hostAtoms.userData = {
+      viz: 'VIZ-06',
+      bufferUsage: DYNAMIC_LATTICE_BUFFER_USAGE,
+      fidelity: DYNAMIC_LATTICE_FIDELITY,
+      hostKey: hostColorMeta.hostKey,
+      exclusiveHost: hostColorMeta.exclusive,
+      restSites,
+      pickable: true,
+    };
     latticeGroup.add(hostAtoms);
 
     if (hydrogenPositions.length > 0) {
@@ -641,6 +670,7 @@ const UnifiedBubbleLatticeVisualization = ({
         hydrogenPositions.length,
       );
       hydrogenAtoms.name = 'LatticeHydrogenAtoms';
+      // H cloud stays StaticDraw — trajectories would be VIZ-10 Points path.
       hydrogenAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
       hydrogenPositions.forEach(([hx, hy, hz], index) => {
         instanceTransform.position.set(hx, hy, hz);
@@ -649,7 +679,12 @@ const UnifiedBubbleLatticeVisualization = ({
       });
       hydrogenAtoms.instanceMatrix.needsUpdate = true;
       hydrogenAtoms.computeBoundingSphere();
-      hydrogenAtoms.userData = { type: 'hydrogen', state: 'FREE' };
+      hydrogenAtoms.userData = {
+        type: 'hydrogen',
+        state: 'FREE',
+        fidelity: DYNAMIC_LATTICE_FIDELITY,
+        note: 'Schematic interstitial from loading mask (not flux trajectories)',
+      };
       latticeGroup.add(hydrogenAtoms);
     }
 
@@ -3079,9 +3114,50 @@ const UnifiedBubbleLatticeVisualization = ({
       : null;
     resizeObserver?.observe(containerRef.current);
     window.addEventListener('resize', handleResize);
+
+    // VIZ-06 — pick host InstancedMesh on click (ignore orbit drags).
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    let pointerDown = null;
+    const onPointerDown = (event) => {
+      pointerDown = { x: event.clientX, y: event.clientY };
+    };
+    const onPointerUp = (event) => {
+      if (!pointerDown) return;
+      const dx = event.clientX - pointerDown.x;
+      const dy = event.clientY - pointerDown.y;
+      pointerDown = null;
+      if ((dx * dx + dy * dy) > 16) return; // drag — leave OrbitControls alone
+      const canvas = renderer.domElement;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointerNdc, camera);
+      const hostAtoms = latticeGroupRef.current?.getObjectByName('LatticeHostAtoms');
+      if (!hostAtoms || !hostAtoms.visible) {
+        setPickedLatticeSite(null);
+        return;
+      }
+      const hits = raycaster.intersectObject(hostAtoms, false);
+      if (!hits.length) {
+        setPickedLatticeSite(null);
+        return;
+      }
+      const pick = resolveLatticePick({
+        instanceId: hits[0].instanceId,
+        sites: hostAtoms.userData?.restSites || [],
+        hostKey: hostAtoms.userData?.hostKey || 'unknown',
+      });
+      setPickedLatticeSite(pick);
+    };
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
     
     // Cleanup
     return () => {
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
       resizeObserver?.disconnect();
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(frameIdRef.current);
@@ -3561,6 +3637,23 @@ const UnifiedBubbleLatticeVisualization = ({
               }}
             />
           </Tooltip>
+          {pickedLatticeSite && (
+            <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
+              <Chip
+                label={pickedLatticeSite.label}
+                size="small"
+                data-testid="ublv-lattice-pick-chip"
+                data-instance-id={pickedLatticeSite.instanceId}
+                data-fidelity={pickedLatticeSite.fidelity}
+                onDelete={() => setPickedLatticeSite(null)}
+                sx={{
+                  bgcolor: 'rgba(120, 144, 156, 0.9)',
+                  color: 'white',
+                  fontSize: '0.6rem',
+                }}
+              />
+            </Tooltip>
+          )}
           <Typography variant="caption" color="white">
             Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
           </Typography>

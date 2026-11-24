@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Tip-`dev` train markers are **`0.4.1-beta`**. tip-`main` / live share remain
-  **`0.4.0-beta`** until Diadon Approves the promote PR and Path B ships.
+- Tip-`dev` train markers are **`0.4.1-beta`**. Live share rolled tip-`dev`
+  Path B packs train (`bbad63c`); tip-`main` promote still Diadon Approve.
   Revert path = Swarm **v0.3.9-beta**. Honesty locks unchanged
   (`lenr_proved` false; all `EQ-OPEN-*` OPEN; no Kasagi flip).
+
+### Added
+- **VIZ-06** DynamicDraw InstancedMesh host lattice: per-instance matrix/color
+  path, schematic loading tint, pickable host sites, exclusive Pd/Ni colors
+  (prerequisite for VIZ-08/09). **No** liquid TheoryModules; **no** EQ-OPEN close.
 
 ## [v0.4.1-beta] - 2026-11-23
 

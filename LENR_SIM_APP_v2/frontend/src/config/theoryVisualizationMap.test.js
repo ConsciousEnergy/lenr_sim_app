@@ -41,7 +41,16 @@ describe('theoryVisualizationMap fidelity (VIZ-04)', () => {
     expect(groups.schematic.some((r) => r.id === 'casimir_confinement')).toBe(true);
     expect(groups.schematic.some((r) => r.id === 'rydberg_orbitals')).toBe(true);
     expect(groups.schematic.some((r) => r.id === 'liquid_phase_host_film')).toBe(true);
+    expect(groups.schematic.some((r) => r.id === 'dynamic_lattice_host')).toBe(true);
     expect(groups.indirect.some((r) => r.id === 'electron_screening')).toBe(true);
+  });
+
+  test('VIZ-06 dynamic lattice heuristic stays schematic (exclusive hosts)', () => {
+    expect(HEURISTIC_OVERLAYS.dynamic_lattice_host.fidelity).toBe('schematic');
+    expect(HEURISTIC_OVERLAYS.dynamic_lattice_host.vizLayer).toBe('LatticeGroup');
+    expect(HEURISTIC_OVERLAYS.dynamic_lattice_host.has3DOverlay).toBe(true);
+    const groups = groupFidelityLegendEntries();
+    expect(groups.schematic.some((r) => r.id === 'dynamic_lattice_host')).toBe(true);
   });
 
   test('VIZ-07/12 liquid-phase heuristics stay schematic (no TheoryModule invent)', () => {
