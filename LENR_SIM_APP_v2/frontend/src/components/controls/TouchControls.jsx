@@ -101,6 +101,8 @@ function TouchControls({
   zoomSensitivity = 1.0,
   rotateSensitivity = 1.0,
   enabled = true,
+  /** When true, single-finger drag maps to rotate only (OrbitControls handoff on mobile). */
+  singleFingerRotatesOnly = false,
 }) {
   // Touch state tracking
   const touchStateRef = useRef(TouchState.IDLE);
@@ -182,13 +184,17 @@ function TouchControls({
         setCurrentGesture('pan');
         
         // Call pan callback
-        if (onPan) {
-          onPan(deltaX * rotateSensitivity, deltaY * rotateSensitivity);
-        }
-        
-        // Call rotate callback (for 3D rotation)
-        if (onRotate) {
-          onRotate(deltaX * 0.01 * rotateSensitivity, deltaY * 0.01 * rotateSensitivity);
+        if (singleFingerRotatesOnly) {
+          if (onRotate) {
+            onRotate(deltaX * 0.01 * rotateSensitivity, deltaY * 0.01 * rotateSensitivity);
+          }
+        } else {
+          if (onPan) {
+            onPan(deltaX * rotateSensitivity, deltaY * rotateSensitivity);
+          }
+          if (onRotate) {
+            onRotate(deltaX * 0.01 * rotateSensitivity, deltaY * 0.01 * rotateSensitivity);
+          }
         }
       }
       
@@ -241,7 +247,7 @@ function TouchControls({
     
     // Prevent default to stop scrolling
     e.preventDefault();
-  }, [enabled, onPan, onRotate, onZoom, zoomSensitivity, rotateSensitivity]);
+  }, [enabled, onPan, onRotate, onZoom, zoomSensitivity, rotateSensitivity, singleFingerRotatesOnly]);
 
   /**
    * Handle touch end
@@ -543,14 +549,26 @@ export function useTouchGestures(containerRef, options = {}) {
   return { gesture, isTouching, isTouchDevice: isTouchDevice() };
 }
 
+/** Issue #409 — phone-class layout breakpoint (matches product-arm M1). */
+export const MOBILE_VISUAL_MAX_WIDTH_PX = 430;
+
 /**
- * Utility: Check if device is mobile
+ * Utility: narrow viewport (phone layout), independent of UA.
+ */
+export function isCompactVisualViewport() {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= MOBILE_VISUAL_MAX_WIDTH_PX;
+}
+
+/**
+ * Utility: mobile UA and/or compact viewport (CI mobile profile).
  */
 export function isMobileDevice() {
   if (typeof window === 'undefined') return false;
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
+  return uaMobile || isCompactVisualViewport();
 }
 
 /**
@@ -572,10 +590,13 @@ export function getRecommendedQualitySettings() {
     particleCount: isMobile ? 15 : 30,
     shadowsEnabled: !isMobile,
     antialias: !isMobile,
-    pixelRatio: isMobile ? Math.min(pixelRatio, 1.5) : pixelRatio,
+    pixelRatio: isMobile ? Math.min(pixelRatio, 1.25) : pixelRatio,
     maxFPS: isMobile ? 30 : 60,
     useSimplifiedShaders: isMobile,
     vortexVisualizationEnabled: !isMobile,
+    vortexParticleCount: isMobile ? 36 : 200,
+    skipOptionalQuantumLayers: isMobile,
+    simplifiedFieldLines: isMobile,
   };
 }
 
