@@ -105,4 +105,24 @@ describe('vizChannelBindings', () => {
     expect(channels).toEqual([]);
     expect(meta.temperature_at_ceiling).toBe(false);
   });
+
+  test('VIZ-05 collapse HUD stamps local_fallback sampleSource (route honesty)', () => {
+    const { channels } = buildCollapseHudChannels(
+      {
+        min_radius_um: 0.5,
+        max_temperature_k: 1200,
+        bubble_dynamics: { peak_mach: 0.05, bounds_solver_used: 'rayleigh_plesset' },
+      },
+      { sampleSource: 'local_fallback' },
+    );
+    expect(channels.length).toBeGreaterThan(0);
+    expect(channels.every((c) => c.source === 'local_fallback')).toBe(true);
+    expect(
+      resolveHudReadout({
+        channel_id: 'collapse.solver',
+        value: 'rayleigh_plesset',
+        source: 'local_fallback',
+      }).claim_tier,
+    ).toBe('speculative_exploratory');
+  });
 });

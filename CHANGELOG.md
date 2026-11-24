@@ -8,16 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Post-`0.4.0-beta` tip work lands here. Live share rolls via Path B after promote
-  lands on `main` (sibling ship task). Revert path = Swarm **v0.3.9-beta**.
+- Tip-`main` and tip-`dev` markers are **`0.4.1-beta`** after the promote.
+  Live share (`api.` / `lenr-sim-beta`) stays **`0.4.0-beta`** until Path B ships.
+  Revert path = Swarm **v0.3.9-beta**. Honesty locks unchanged
+  (`lenr_proved` false; all `EQ-OPEN-*` OPEN; no Kasagi flip).
 
-### Changed — Honesty / docs (Klimov + Greenyer/MFMP)
-- Klimov-style dual-counter geometry in `EQ_OPEN_CLOSURE_RUNWAY` cite-keyed
-  (`klimov2020`) with explicit **geometry ≠ TheoryModule** lock (no `klimov_*`
-  module; MHD modules not rebranded; EQ-OPEN / `lenr_proved` unchanged).
-- Celani exploratory MoE + science-evidence surfaces stabilize MFMP / Greenyer
-  replication DOI `10.70923/001c.72341` (`valat2015`) — concerns **lower**
-  confidence only; no `greenyer_*` / `mfmp_*` TheoryModule.
+## [v0.4.1-beta] - 2026-11-23
+
+Controlled four-marker bump + promote tip-`dev` → `main`: **`0.4.0-beta` → `0.4.1-beta`**.
+Live share stays **0.4.0-beta** until Path B (Diadon arms ship after Approve).
+
+### Changed
+- Four version markers (`config.py`, `package.json`, `version.js`,
+  `Dockerfile.backend`) → **`0.4.1-beta`**
+- Contract / campaign / e2e pins aligned to `v0.4.1-beta-science-gate-1`
+- AGENTS.md / BRANCHING.md train tables (tip-`main`/`dev` = 0.4.1-beta; live = 0.4.0-beta until Path B)
+
+### Honesty locks (binding)
+- `lenr_proved` remains **false**
+- All `EQ-OPEN-*` remain **OPEN**
+- No fabricated σ_Q; Kasagi pairing optics stay **A keep**
+- No Path B / `CONFIRM_SWARM_*` from this bump alone
+
+### Included from tip-`dev` (already Prefer-merged; promote carries)
+- Klimov-style dual-counter geometry honesty (`klimov2020`; geometry ≠ TheoryModule)
+- MFMP / Greenyer Celani replication honesty (`valat2015`)
+- Viz honesty #506/#507 (`sampleSource` local_fallback; empty Quantitative chip)
 
 ## [v0.4.0-beta] - 2026-11-21
 

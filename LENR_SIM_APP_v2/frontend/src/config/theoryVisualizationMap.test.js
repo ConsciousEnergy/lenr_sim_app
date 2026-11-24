@@ -35,9 +35,10 @@ describe('theoryVisualizationMap fidelity (VIZ-04)', () => {
     expect(VIZ_FIDELITY_LABELS.quantitative).toMatch(/Quantitative/);
     expect(VIZ_FIDELITY_LABELS.schematic).toMatch(/Schematic/);
     const groups = groupFidelityLegendEntries();
-    expect(groups.quantitative.length).toBeGreaterThan(0);
+    // MHD / Casimir overlays are schematic (illustrative UBLV paths, not solver fields).
     expect(groups.schematic.length).toBeGreaterThan(0);
-    expect(groups.quantitative.some((r) => r.id === 'bubble_mhd_confinement')).toBe(true);
+    expect(groups.schematic.some((r) => r.id === 'bubble_mhd_confinement')).toBe(true);
+    expect(groups.schematic.some((r) => r.id === 'casimir_confinement')).toBe(true);
     expect(groups.schematic.some((r) => r.id === 'rydberg_orbitals')).toBe(true);
     expect(groups.indirect.some((r) => r.id === 'electron_screening')).toBe(true);
   });
