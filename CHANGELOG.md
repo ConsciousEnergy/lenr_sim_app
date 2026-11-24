@@ -8,21 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Tip-`main` and tip-`dev` markers are **`0.4.1-beta`** after the promote.
-  Live share (`api.` / `lenr-sim-beta`) stays **`0.4.0-beta`** until Path B ships.
-  Revert path = Swarm **v0.3.9-beta**. Honesty locks unchanged
-  (`lenr_proved` false; all `EQ-OPEN-*` OPEN; no Kasagi flip).
+- Tip-`main` and tip-`dev` markers are **`0.4.1-beta`** after this promote
+  (#512–#515 + prior tip-`dev` honesty). Live share (`api.` /
+  `lenr-sim-beta`) **already** runs tip-`dev` Path B packs train @
+  **`bbad63c`** (`0.4.1-beta`; #512/#513/#514) — this PR is tip-`main`
+  catch-up only; **no** Path B from this promote. Tip-`dev` tip `#515`
+  (`824b72f`) is ahead of live. Revert path = Swarm **v0.3.9-beta**.
+  Honesty locks unchanged (`lenr_proved` false; all `EQ-OPEN-*` OPEN;
+  no Kasagi flip).
+
+### Added
+- **VIZ-06** DynamicDraw InstancedMesh host lattice: per-instance matrix/color
+  path, schematic loading tint, pickable host sites, exclusive Pd/Ni colors
+  (prerequisite for VIZ-08/09). **No** liquid TheoryModules; **no** EQ-OPEN close.
 
 ## [v0.4.1-beta] - 2026-11-23
 
 Controlled four-marker bump + promote tip-`dev` → `main`: **`0.4.0-beta` → `0.4.1-beta`**.
-Live share stays **0.4.0-beta** until Path B (Diadon arms ship after Approve).
+Live share later Path-B shipped tip-`dev` packs train (`bbad63c`) — see Unreleased.
 
 ### Changed
 - Four version markers (`config.py`, `package.json`, `version.js`,
   `Dockerfile.backend`) → **`0.4.1-beta`**
 - Contract / campaign / e2e pins aligned to `v0.4.1-beta-science-gate-1`
-- AGENTS.md / BRANCHING.md train tables (tip-`main`/`dev` = 0.4.1-beta; live = 0.4.0-beta until Path B)
+- AGENTS.md / BRANCHING.md train tables (tip-`main`/`dev` = 0.4.1-beta; live = tip-`dev` packs)
 
 ### Honesty locks (binding)
 - `lenr_proved` remains **false**

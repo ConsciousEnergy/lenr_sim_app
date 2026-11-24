@@ -351,6 +351,41 @@ export const HEURISTIC_OVERLAYS = {
       'Speculative cavitation diagnostic (Mulnix KG-RP): collapse-vs-drive locking ratio and detuning. Diagnostic overlay, not a rate driver.',
     reference: 'Mulnix (2026) doi:10.5281/zenodo.19079074; Pyyhtiä et al. (2026) doi:10.1016/j.jelechem.2026.120104 (CR-39 cavitation confounder)',
   },
+  // VIZ-06 — DynamicDraw InstancedMesh host lattice (schematic loading tint / pickable).
+  dynamic_lattice_host: {
+    vizLayer: 'LatticeGroup',
+    legendGroup: 'Host lattice',
+    has3DOverlay: true,
+    claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
+    displayName: 'DynamicDraw host lattice (pickable)',
+    description:
+      'Per-instance matrix/color path for loading tint and future schematic displacement. Pd/Ni colors exclusive; occupancy tint is schematic unless engine exports site occupancy.',
+    reference: 'VIZ-06 InstancedMesh DynamicDraw; prerequisite for VIZ-08/09',
+  },
+  // VIZ-07 / VIZ-12 scaffold — heuristic until liquid_phase_pd / liquid_phase_ni TheoryModules land.
+  heating_mode_glyphs: {
+    vizLayer: null,
+    legendGroup: 'Heating modes',
+    has3DOverlay: false,
+    claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
+    displayName: 'Heating-mode gap glyphs (P_joule / P_resistive / P_photonic)',
+    description:
+      'UX trinity placeholders with gap chips. Never invent power; TheoryModules still pending.',
+    reference: 'Liquid-phase research packs (Pd/Ni heating regimes); VIZ-07',
+  },
+  liquid_phase_host_film: {
+    vizLayer: 'LiquidPhaseGroup',
+    legendGroup: 'Host melt (local film)',
+    has3DOverlay: true,
+    claimTier: 'speculative_exploratory',
+    fidelity: 'schematic',
+    displayName: 'Host liquid-fraction film (Pd XOR Ni)',
+    description:
+      'Local film/pool morph when engine supplies f_L; gap otherwise. Never blended Pd/Ni; not bulk melt proof.',
+    reference: 'Liquid-phase research packs; VIZ-12 scaffold',
+  },
 };
 
 const VALID_FIDELITIES = new Set(['quantitative', 'schematic', 'indirect']);

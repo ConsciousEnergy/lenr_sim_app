@@ -45,6 +45,13 @@ except ImportError as e:
     print(f"Warning: Could not import docs_router: {e}")
     docs_router = None
 
+# Import UMLENR benchmark pack router (P1–P6 honesty-gated zip)
+try:
+    from .api.routes.benchmark_packs import router as benchmark_packs_router
+except ImportError as e:
+    print(f"Warning: Could not import benchmark_packs_router: {e}")
+    benchmark_packs_router = None
+
 # Import database manager (v0.2.3-beta)
 from .core.database import db_manager, get_database_url
 
@@ -423,6 +430,18 @@ if docs_router:
         app_logger.info("Docs router included successfully")
     except Exception as e:
         app_logger.error(f"Failed to include docs router: {e}")
+
+# UMLENR benchmark packs (P1–P6 zip; model output ≠ lab)
+if benchmark_packs_router:
+    try:
+        app.include_router(
+            benchmark_packs_router,
+            prefix="/api",
+            tags=["Benchmark Packs"],
+        )
+        app_logger.info("Benchmark packs router included successfully")
+    except Exception as e:
+        app_logger.error(f"Failed to include benchmark packs router: {e}")
 
 # Unified simulation router
 if unified_simulation_router:

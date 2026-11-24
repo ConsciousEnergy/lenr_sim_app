@@ -55,6 +55,20 @@ import VisualizationLegend from './VisualizationLegend';
 import BubbleLatticeTimelineControls from './BubbleLatticeTimelineControls';
 import VizHudReadouts from './VizHudReadouts';
 import { buildCollapseHudChannels } from '../../utils/vizChannelBindings';
+import {
+  extractLiquidPhaseChannels,
+  resolveHostMeltMeta,
+  resolveLiquidPhaseOverlayState,
+} from '../../utils/liquidPhaseViz';
+import {
+  DYNAMIC_LATTICE_BUFFER_USAGE,
+  DYNAMIC_LATTICE_FIDELITY,
+  applyDynamicLatticeInstances,
+  buildLatticeRestSites,
+  interstitialOffsetFromSite,
+  resolveExclusiveHostColor,
+  resolveLatticePick,
+} from '../../utils/dynamicLattice';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -88,6 +102,12 @@ const _COLLAPSE_PHASES = {
 // VISUAL_CYCLE_SCALE maps that onto ~2.5 s per on-screen cycle at 20 kHz (50,000×).
 const UX_TIME_SCALE = VISUAL_CYCLE_SCALE;
 
+const CAMERA_PRESET = {
+  desktop: { position: [12, 5, 12], fov: 60, target: [0, -2, 0] },
+  mobile: { position: [11, 4.5, 13], fov: 52, target: [0, -2, 0] },
+};
+
+/** @deprecated Prefer resolveExclusiveHostColor (VIZ-06) — kept for non-lattice overlays. */
 const HOST_MATERIAL_COLORS = {
   constantan: 0xb87333,
   palladium: 0x8b8b8b,
@@ -359,6 +379,7 @@ const UnifiedBubbleLatticeVisualization = ({
   const fieldGroupRef = useRef(null);
   const effectsGroupRef = useRef(null);
   const boundaryVisualGroupRef = useRef(null);
+  const liquidPhaseGroupRef = useRef(null);
   
   // Vortex/fluid dynamics refs
   const vortexGroupRef = useRef(null);
@@ -382,6 +403,9 @@ const UnifiedBubbleLatticeVisualization = ({
   const [usingAPIData, setUsingAPIData] = useState(false); // Tracks if visualization uses API physics data
   const usingAPIDataRef = useRef(false); // Ref to track previous value and avoid unnecessary state updates
   
+  // VIZ-06 — pickable host instance readout (schematic; not nuclear proof)
+  const [pickedLatticeSite, setPickedLatticeSite] = useState(null);
+
   // Physics state for real-time display
   const [currentEnhancement, setCurrentEnhancement] = useState(1.0);
   const [enhancementBreakdown, setEnhancementBreakdown] = useState({
@@ -405,17 +429,18 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
-  const [showVortices, setShowVortices] = useState(true);
+  // Mobile optimization state (v0.2.2-beta / #409 M2–M3)
+  const [isMobile] = useState(() => isMobileDevice());
+  const [qualitySettings] = useState(() => getRecommendedQualitySettings());
+  const [showVortices, setShowVortices] = useState(
+    () => getRecommendedQualitySettings().vortexVisualizationEnabled
+  );
   const [showBoundaryPlane, setShowBoundaryPlane] = useState(false);
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
-  
-  // Mobile optimization state (v0.2.2-beta)
-  const [isMobile] = useState(() => isMobileDevice());
-  const [qualitySettings] = useState(() => getRecommendedQualitySettings());
+  const [legendCollapsed, setLegendCollapsed] = useState(() => isMobileDevice());
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   // Default ~0.45x so a visual cycle is clearly moving (0.1x felt like a stuck video).
@@ -458,6 +483,7 @@ const UnifiedBubbleLatticeVisualization = ({
     }),
     [simulationData?.collapse_results, simulationData?.validation?.route_mode, usingAPIData],
   );
+
   const spacetimeBufferRef = useRef(spacetimeBuffer);
   useEffect(() => {
     spacetimeBufferRef.current = spacetimeBuffer;
@@ -506,6 +532,23 @@ const UnifiedBubbleLatticeVisualization = ({
     [hostMaterial, latticeSpacingVisUnits],
   );
 
+  // VIZ-07 / VIZ-12 — never invent f_L / P_* from ambient T or excess heat.
+  const liquidPhaseChannels = useMemo(
+    () => extractLiquidPhaseChannels(simulationData),
+    [simulationData],
+  );
+  const hostMeltMeta = useMemo(
+    () => resolveHostMeltMeta(hostMaterial),
+    [hostMaterial],
+  );
+  const liquidPhaseOverlayState = useMemo(
+    () => resolveLiquidPhaseOverlayState({
+      hostMaterial,
+      phaseFractionLiquid: liquidPhaseChannels.phaseFractionLiquid,
+    }),
+    [hostMaterial, liquidPhaseChannels.phaseFractionLiquid],
+  );
+
   const latticeBaselineLengthVisUnits = useMemo(
     () => Math.max(4, Math.round(5e-9 / Math.max(latticeMetersPerVisUnit, 1e-15))),
     [latticeMetersPerVisUnit],
@@ -518,14 +561,22 @@ const UnifiedBubbleLatticeVisualization = ({
     
     const dimension = latticeSize;
     const spacing = latticeSpacingVisUnits;
-    const offset = (dimension - 1) * spacing / 2;
-    
-    // Host atom material (Pd/Ni color)
-    const hostColor = HOST_MATERIAL_COLORS[hostMaterial] || 0x696969;
+
+    // VIZ-06 — exclusive host color + DynamicDraw rest sites (schematic loading tint).
+    const hostColorMeta = resolveExclusiveHostColor(hostMaterial);
+    const hostColor = hostColorMeta.hex;
+    const restSites = buildLatticeRestSites({
+      dimension,
+      spacing,
+      yOffset: PHYSICS_CONFIG.LATTICE_Y_OFFSET,
+      loadingRatio,
+      seed: dimension * 17 + Math.round(loadingRatio * 1000),
+    });
     
     const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 16, 16);
+    // vertexColors off — per-instance colors via InstancedMesh.instanceColor
     const hostMaterial3D = new THREE.MeshPhongMaterial({
-      color: hostColor,
+      color: 0xffffff,
       shininess: 100,
       specular: 0x444444
     });
@@ -547,61 +598,69 @@ const UnifiedBubbleLatticeVisualization = ({
       opacity: 0.4 
     });
     
-    const points = [];
+    const points = restSites.map((site) => new THREE.Vector3(site.x, site.y, site.z));
     const connections = [];
-    let pointIndex = 0;
-
-    // Lattice atoms are static: they never move or change material individually,
-    // only toggle visibility as a group. One Mesh per atom therefore cost one draw
-    // call each (dimension^3 host atoms plus up to as many hydrogens). InstancedMesh
-    // draws all of them in a single call.
-    const hostCount = dimension * dimension * dimension;
-    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
-    hostAtoms.name = 'LatticeHostAtoms';
-    hostAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
-
-    // Hydrogen occupancy is stochastic, so positions are collected first and the
-    // instanced mesh is sized to the actual count.
     const hydrogenPositions = [];
     const instanceTransform = new THREE.Object3D();
+    const scratchColor = new THREE.Color();
 
-    // Create FCC-like lattice
-    for (let x = 0; x < dimension; x++) {
-      for (let y = 0; y < dimension; y++) {
-        for (let z = 0; z < dimension; z++) {
-          const posX = x * spacing - offset;
-          // Use physics-based lattice Y offset
-          const posY = y * spacing - offset + PHYSICS_CONFIG.LATTICE_Y_OFFSET;
-          const posZ = z * spacing - offset;
-
-          instanceTransform.position.set(posX, posY, posZ);
-          instanceTransform.updateMatrix();
-          hostAtoms.setMatrixAt(pointIndex, instanceTransform.matrix);
-
-          // Add hydrogen at interstitial sites based on loading ratio
-          if (Math.random() < loadingRatio) {
-            const hOffset = spacing * 0.25;
-            hydrogenPositions.push([
-              posX + (Math.random() - 0.5) * hOffset,
-              posY + (Math.random() - 0.5) * hOffset,
-              posZ + (Math.random() - 0.5) * hOffset,
-            ]);
-          }
-          
-          points.push(new THREE.Vector3(posX, posY, posZ));
-          
-          // Create bonds to neighbors
-          if (x > 0) connections.push([pointIndex, pointIndex - dimension * dimension]);
-          if (y > 0) connections.push([pointIndex, pointIndex - dimension]);
-          if (z > 0) connections.push([pointIndex, pointIndex - 1]);
-          
-          pointIndex++;
-        }
-      }
+    // VIZ-06: InstancedMesh + DynamicDrawUsage so per-instance matrix/color
+    // can update for loading tint and future schematic displacement (VIZ-09).
+    const hostCount = restSites.length;
+    const hostAtoms = new THREE.InstancedMesh(hostGeometry, hostMaterial3D, hostCount);
+    hostAtoms.name = 'LatticeHostAtoms';
+    hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    // Allocate instanceColor buffer (required before setColorAt).
+    if (!hostAtoms.instanceColor) {
+      hostAtoms.instanceColor = new THREE.InstancedBufferAttribute(
+        new Float32Array(hostCount * 3),
+        3,
+      );
     }
+    hostAtoms.instanceColor.setUsage(THREE.DynamicDrawUsage);
+
+    applyDynamicLatticeInstances({
+      sites: restSites,
+      hostHex: hostColor,
+      markMatrixDynamic: () => {
+        hostAtoms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      },
+      markColorDynamic: () => {
+        hostAtoms.instanceColor?.setUsage(THREE.DynamicDrawUsage);
+      },
+      setMatrixAt: (index, elements) => {
+        const m = new THREE.Matrix4();
+        m.fromArray(elements);
+        hostAtoms.setMatrixAt(index, m);
+      },
+      setColorAt: (index, rgb) => {
+        scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+        hostAtoms.setColorAt(index, scratchColor);
+      },
+    });
+
+    restSites.forEach((site) => {
+      if (site.occupied) {
+        hydrogenPositions.push(interstitialOffsetFromSite(site, spacing));
+      }
+      // Bonds to -x / -y / -z neighbors (same topology as prior static lattice).
+      if (site.ix > 0) connections.push([site.index, site.index - dimension * dimension]);
+      if (site.iy > 0) connections.push([site.index, site.index - dimension]);
+      if (site.iz > 0) connections.push([site.index, site.index - 1]);
+    });
 
     hostAtoms.instanceMatrix.needsUpdate = true;
+    if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
     hostAtoms.computeBoundingSphere();
+    hostAtoms.userData = {
+      viz: 'VIZ-06',
+      bufferUsage: DYNAMIC_LATTICE_BUFFER_USAGE,
+      fidelity: DYNAMIC_LATTICE_FIDELITY,
+      hostKey: hostColorMeta.hostKey,
+      exclusiveHost: hostColorMeta.exclusive,
+      restSites,
+      pickable: true,
+    };
     latticeGroup.add(hostAtoms);
 
     if (hydrogenPositions.length > 0) {
@@ -611,6 +670,7 @@ const UnifiedBubbleLatticeVisualization = ({
         hydrogenPositions.length,
       );
       hydrogenAtoms.name = 'LatticeHydrogenAtoms';
+      // H cloud stays StaticDraw — trajectories would be VIZ-10 Points path.
       hydrogenAtoms.instanceMatrix.setUsage(THREE.StaticDrawUsage);
       hydrogenPositions.forEach(([hx, hy, hz], index) => {
         instanceTransform.position.set(hx, hy, hz);
@@ -619,7 +679,12 @@ const UnifiedBubbleLatticeVisualization = ({
       });
       hydrogenAtoms.instanceMatrix.needsUpdate = true;
       hydrogenAtoms.computeBoundingSphere();
-      hydrogenAtoms.userData = { type: 'hydrogen', state: 'FREE' };
+      hydrogenAtoms.userData = {
+        type: 'hydrogen',
+        state: 'FREE',
+        fidelity: DYNAMIC_LATTICE_FIDELITY,
+        note: 'Schematic interstitial from loading mask (not flux trajectories)',
+      };
       latticeGroup.add(hydrogenAtoms);
     }
 
@@ -701,6 +766,45 @@ const UnifiedBubbleLatticeVisualization = ({
     
     return latticeGroup;
   }, [hostMaterial, hostAtomRadiusVisUnits, latticeSize, latticeSpacingVisUnits, loadingRatio]);
+
+  /**
+   * VIZ-12 scaffold — local liquid film group (Pd XOR Ni).
+   * Hidden (gap) until engine supplies finite f_L; never invents melt from T.
+   */
+  const createLiquidPhaseOverlay = useCallback((scene) => {
+    const group = new THREE.Group();
+    group.name = 'LiquidPhaseGroup';
+    group.visible = false;
+    group.userData = {
+      mode: 'gap',
+      claim_tier: 'speculative_exploratory',
+      fidelity: 'schematic',
+    };
+
+    const hostColor = HOST_MATERIAL_COLORS[hostMaterial] || 0x888888;
+    const filmGeometry = new THREE.SphereGeometry(1, 24, 16);
+    const filmMaterial = new THREE.MeshPhongMaterial({
+      color: hostColor,
+      emissive: hostColor,
+      emissiveIntensity: 0.35,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+      shininess: 120,
+      specular: 0xffffff,
+    });
+    const film = new THREE.Mesh(filmGeometry, filmMaterial);
+    film.name = 'LiquidPhaseFilm';
+    film.scale.set(1.2, 0.22, 1.2);
+    const latticeSurfaceY =
+      PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    film.position.set(0, latticeSurfaceY + 0.15, 0);
+    group.add(film);
+
+    scene.add(group);
+    liquidPhaseGroupRef.current = group;
+    return group;
+  }, [hostMaterial]);
 
   // Create bubble with double-layer shell
   // Physics: bubble nucleates at surface cavities within boundary layer
@@ -1294,11 +1398,18 @@ const UnifiedBubbleLatticeVisualization = ({
     
     const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     vortexGroup.position.set(0, latticeY + 0.3, 0); // Nucleation site so rotation spins in place
+
+    if (!qualitySettings.vortexVisualizationEnabled) {
+      vortexGroup.visible = false;
+      scene.add(vortexGroup);
+      vortexGroupRef.current = vortexGroup;
+      return vortexGroup;
+    }
     
     try {
     // Create plasma vortex effect - particle-based MHD flow
     const plasmaVortex = new PlasmaVortexEffect({
-      particleCount: 200,
+      particleCount: qualitySettings.vortexParticleCount ?? 200,
       vortexStrength: 1.0,
       radialSpeed: 0.25,
       verticalSpeed: 0.4,
@@ -1344,7 +1455,7 @@ const UnifiedBubbleLatticeVisualization = ({
     vortexGroupRef.current = vortexGroup;
     
     return vortexGroup;
-  }, []);
+  }, [qualitySettings]);
 
   // Create Casimir effect field visualization
   // F_Casimir = -π²ℏc/(240) * A/d⁴
@@ -2878,11 +2989,14 @@ const UnifiedBubbleLatticeVisualization = ({
     pointLight.position.set(0, 2, 0);
     scene.add(pointLight);
     
-    // Camera
-    const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
-    const camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
-    camera.position.set(12, 5, 12);
-    camera.lookAt(0, -2, 0);
+    // Camera — mobile preset for narrow aspect (#409 M2)
+    const camPreset = isMobile ? CAMERA_PRESET.mobile : CAMERA_PRESET.desktop;
+    const containerWidth = Math.max(containerRef.current.clientWidth, 1);
+    const containerHeight = Math.max(containerRef.current.clientHeight, 1);
+    const aspect = containerWidth / containerHeight;
+    const camera = new THREE.PerspectiveCamera(camPreset.fov, aspect, 0.1, 1000);
+    camera.position.set(...camPreset.position);
+    camera.lookAt(...camPreset.target);
     cameraRef.current = camera;
     
     // Renderer (v0.2.2-beta: mobile-optimized settings)
@@ -2901,23 +3015,31 @@ const UnifiedBubbleLatticeVisualization = ({
     renderer.shadowMap.enabled = qualitySettings.shadowsEnabled;
     rendererRef.current = renderer;
 
-    // Controls
+    // Controls — touch gestures owned by TouchControls on mobile (#409 M2)
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.target.set(0, -2, 0);
+    controls.target.set(...camPreset.target);
+    if (isMobile) {
+      controls.enableRotate = false;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+    }
     controlsRef.current = controls;
     
     // Create scene elements
     createLattice(scene);
+    createLiquidPhaseOverlay(scene);
     createBubble(scene);
     createProtons(scene);
     createFieldVisualization(scene);
     createEffects(scene);
     createVortexFlow(scene);
     createCasimirField(scene);
-    createRydbergOrbitals(scene);
-    createHaloElectrons(scene);
+    if (!qualitySettings.skipOptionalQuantumLayers) {
+      createRydbergOrbitals(scene);
+      createHaloElectrons(scene);
+    }
     createScaleBar(scene);
 
     // Host-material switches remount this effect without changing layer toggle
@@ -2940,8 +3062,15 @@ const UnifiedBubbleLatticeVisualization = ({
     // Prime the timer so the first frame delta is one frame, matching Clock's
     // first getDelta() which returned 0.
     timerRef.current.update();
+    const minFrameMs = 1000 / (qualitySettings.maxFPS || 60);
+    let lastRenderMs = 0;
     const animate = (timestamp) => {
       frameIdRef.current = requestAnimationFrame(animate);
+
+      if (timestamp - lastRenderMs < minFrameMs) {
+        return;
+      }
+      lastRenderMs = timestamp;
 
       timerRef.current.update(timestamp);
       const deltaTime = timerRef.current.getDelta();
@@ -2968,21 +3097,68 @@ const UnifiedBubbleLatticeVisualization = ({
     
     animate();
     
-    // Handle resize
+    // Handle resize — guard zero-size containers (#409 M1)
     const handleResize = () => {
       if (!containerRef.current) return;
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
+      const width = Math.max(containerRef.current.clientWidth, 1);
+      const height = Math.max(containerRef.current.clientHeight, 1);
       
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
     };
-    
+
+    handleResize();
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleResize)
+      : null;
+    resizeObserver?.observe(containerRef.current);
     window.addEventListener('resize', handleResize);
+
+    // VIZ-06 — pick host InstancedMesh on click (ignore orbit drags).
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    let pointerDown = null;
+    const onPointerDown = (event) => {
+      pointerDown = { x: event.clientX, y: event.clientY };
+    };
+    const onPointerUp = (event) => {
+      if (!pointerDown) return;
+      const dx = event.clientX - pointerDown.x;
+      const dy = event.clientY - pointerDown.y;
+      pointerDown = null;
+      if ((dx * dx + dy * dy) > 16) return; // drag — leave OrbitControls alone
+      const canvas = renderer.domElement;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointerNdc, camera);
+      const hostAtoms = latticeGroupRef.current?.getObjectByName('LatticeHostAtoms');
+      if (!hostAtoms || !hostAtoms.visible) {
+        setPickedLatticeSite(null);
+        return;
+      }
+      const hits = raycaster.intersectObject(hostAtoms, false);
+      if (!hits.length) {
+        setPickedLatticeSite(null);
+        return;
+      }
+      const pick = resolveLatticePick({
+        instanceId: hits[0].instanceId,
+        sites: hostAtoms.userData?.restSites || [],
+        hostKey: hostAtoms.userData?.hostKey || 'unknown',
+      });
+      setPickedLatticeSite(pick);
+    };
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
     
     // Cleanup
     return () => {
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(frameIdRef.current);
       
@@ -3000,8 +3176,35 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit]);
+  }, [createLattice, createLiquidPhaseOverlay, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit, isMobile, qualitySettings]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
+
+  // VIZ-12 — apply overlay state without inventing melt when f_L is absent.
+  useEffect(() => {
+    const group = liquidPhaseGroupRef.current;
+    if (!group) return;
+    const film = group.getObjectByName('LiquidPhaseFilm');
+    const state = liquidPhaseOverlayState;
+    group.userData = {
+      mode: state.mode,
+      claim_tier: state.claimTier,
+      fidelity: state.fidelity,
+      hostKey: state.hostKey,
+      phaseFractionLiquid: state.phaseFractionLiquid,
+      message: state.message,
+    };
+    if (state.mode !== 'schematic_film' || !film) {
+      group.visible = false;
+      return;
+    }
+    const scale = 0.8 + 1.4 * state.filmScale;
+    film.scale.set(scale, 0.18 + 0.2 * state.filmScale, scale);
+    if (film.material) {
+      film.material.opacity = 0.2 + 0.45 * state.filmScale;
+      film.material.emissiveIntensity = 0.25 + 0.5 * state.filmScale;
+    }
+    group.visible = showLattice;
+  }, [liquidPhaseOverlayState, showLattice]);
 
   // Update visibility based on toggles - immediate update with force refresh
   useEffect(() => {
@@ -3129,6 +3332,15 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
+  const resetCameraToPreset = useCallback(() => {
+    const camPreset = isMobile ? CAMERA_PRESET.mobile : CAMERA_PRESET.desktop;
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(...camPreset.position);
+      controlsRef.current.target.set(...camPreset.target);
+      controlsRef.current.update();
+    }
+  }, [isMobile]);
+
   const handleZoomIn = () => {
     if (cameraRef.current) {
       cameraRef.current.position.multiplyScalar(0.8);
@@ -3142,10 +3354,7 @@ const UnifiedBubbleLatticeVisualization = ({
   };
   
   const handleResetView = () => {
-    if (cameraRef.current && controlsRef.current) {
-      cameraRef.current.position.set(12, 5, 12);
-      controlsRef.current.target.set(0, -2, 0);
-    }
+    resetCameraToPreset();
   };
 
   // Phase indicator color
@@ -3167,15 +3376,25 @@ const UnifiedBubbleLatticeVisualization = ({
         sx={{
           width: '100%',
           height: height,
+          minHeight: isMobile ? 280 : height,
           position: 'relative',
           borderRadius: 1,
           overflow: 'hidden',
-          bgcolor: '#0a0a1a'
+          bgcolor: '#0a0a1a',
+          touchAction: isMobile ? 'none' : 'auto',
         }}
       >
-        <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+        <canvas
+          ref={canvasRef}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: '100%',
+            touchAction: isMobile ? 'none' : 'auto',
+          }}
+        />
         
-        {/* Mobile touch controls (v0.2.2-beta) */}
+        {/* Mobile touch controls (v0.2.2-beta / #409 M2) */}
         <TouchControls
           containerRef={containerRef}
           onZoom={(delta) => {
@@ -3192,25 +3411,37 @@ const UnifiedBubbleLatticeVisualization = ({
               controlsRef.current.rotateUp(deltaY);
             }
           }}
-          onReset={() => {
-            if (cameraRef.current && controlsRef.current) {
-              cameraRef.current.position.set(12, 5, 12);
-              controlsRef.current.target.set(0, -2, 0);
-              controlsRef.current.update();
-            }
-          }}
+          onReset={resetCameraToPreset}
           showHints={isMobile}
           showControls={isMobile}
-          enabled={true}
+          enabled={isMobile}
+          singleFingerRotatesOnly
         />
         
+        {isMobile && (
+          <Chip
+            size="small"
+            label="Mobile simplified scene"
+            sx={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              zIndex: 6,
+              bgcolor: 'rgba(30, 30, 50, 0.92)',
+              color: 'white',
+              fontSize: '0.65rem',
+            }}
+            data-testid="ublv-mobile-tier-chip"
+          />
+        )}
+
         {/* Right-side control stack: layer toggles + desktop zoom controls */}
         <Box
           sx={{
             position: 'absolute',
             top: 10,
             right: 10,
-            display: 'flex',
+            display: { xs: 'none', sm: 'flex' },
             flexDirection: 'column',
             alignItems: 'flex-end',
             gap: 1,
@@ -3347,6 +3578,9 @@ const UnifiedBubbleLatticeVisualization = ({
             onToggleCollapse={setLegendCollapsed}
             variant="side-drawer"
             simulationType="lenr"
+            hostMaterial={hostMaterial}
+            liquidPhaseHeat={liquidPhaseChannels.heat}
+            liquidPhaseFraction={liquidPhaseChannels.phaseFractionLiquid}
           />
         )}
         
@@ -3386,10 +3620,46 @@ const UnifiedBubbleLatticeVisualization = ({
             size="small"
             data-testid="ublv-phase-chip"
           />
+          <Tooltip title={hostMeltMeta.citeNote}>
+            <Chip
+              label={
+                hostMeltMeta.meltingPointK != null
+                  ? `${hostMeltMeta.displayName} T_m ${hostMeltMeta.meltingPointK} K`
+                  : 'Melt viz: Pd/Ni only'
+              }
+              size="small"
+              data-testid="ublv-host-tm-chip"
+              data-host-key={hostMeltMeta.hostKey}
+              sx={{
+                bgcolor: 'rgba(33, 150, 243, 0.75)',
+                color: 'white',
+                fontSize: '0.6rem',
+              }}
+            />
+          </Tooltip>
+          {pickedLatticeSite && (
+            <Tooltip title="VIZ-06 schematic pick — lattice index only; not nuclear proof">
+              <Chip
+                label={pickedLatticeSite.label}
+                size="small"
+                data-testid="ublv-lattice-pick-chip"
+                data-instance-id={pickedLatticeSite.instanceId}
+                data-fidelity={pickedLatticeSite.fidelity}
+                onDelete={() => setPickedLatticeSite(null)}
+                sx={{
+                  bgcolor: 'rgba(120, 144, 156, 0.9)',
+                  color: 'white',
+                  fontSize: '0.6rem',
+                }}
+              />
+            </Tooltip>
+          )}
           <Typography variant="caption" color="white">
             Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
           </Typography>
           <VizHudReadouts
+            // Melt / P_* included in channels below (value or gap). Avoid
+            // showHeldGaps duplication with listGapChannels().
             showHeldGaps={false}
             collapseMeta={collapseHud.meta}
             channels={[
@@ -3424,6 +3694,27 @@ const UnifiedBubbleLatticeVisualization = ({
                 ch.channel_id === 'collapse.peak_mach'
                 || ch.channel_id === 'collapse.solver'
               )),
+              // VIZ-07 / VIZ-12 — engine values only; null → gap chips (no invent)
+              {
+                channel_id: 'host.phase_fraction_liquid',
+                value: liquidPhaseChannels.phaseFractionLiquid,
+                source: liquidPhaseChannels.phaseFractionLiquid == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_joule',
+                value: liquidPhaseChannels.heat.P_joule,
+                source: liquidPhaseChannels.heat.P_joule == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_resistive',
+                value: liquidPhaseChannels.heat.P_resistive,
+                source: liquidPhaseChannels.heat.P_resistive == null ? undefined : 'solver',
+              },
+              {
+                channel_id: 'heat.P_photonic',
+                value: liquidPhaseChannels.heat.P_photonic,
+                source: liquidPhaseChannels.heat.P_photonic == null ? undefined : 'solver',
+              },
             ]}
           />
         </Paper>

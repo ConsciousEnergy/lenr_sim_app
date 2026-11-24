@@ -14,6 +14,8 @@
 | Schema id | Owner repo | Status | Notes |
 |-----------|------------|--------|-------|
 | `lenr-run-export-v1` | `lenr_sim_app` | live | Simulation run export envelope |
+| `umlenr-benchmark-pack-v1` | `lenr_sim_app` | live | P1–P6 inventory zip + PROVENANCE; wraps atomic `lenr-run-export-v1` — see [`../../v0.4.1-beta/UMLENR_BENCHMARK_PACK_DOWNLOAD.md`](../../v0.4.1-beta/UMLENR_BENCHMARK_PACK_DOWNLOAD.md) |
+| `umlenr-benchmark-pack-provenance-v1` | `lenr_sim_app` | live | Pack-level honesty / inventory block inside the zip |
 | `umlenr-release-manifest-v1` | `UMLENR` (this hub) | stub | See `../release/manifest.example.yml` |
 | `lenr-ara-daq-sample-v1` | LENR-ARA (private) | planned (**later** — not a Goal 1 blocker) | Public fields only in hub later; ingest sketch in [`../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md`](../../v0.3.9-beta/EQ_OPEN_CLOSURE_RUNWAY.md) (does not close EQ-OPEN-*) |
 

@@ -37,8 +37,9 @@ export type VizChannelBinding = {
 export const VIZ_CHANNEL_SCHEMA = 'lenr-viz-channel-binding-v1' as const;
 
 /**
- * Default bubble-lattice HUD channels (shippable under liquid-phase hold).
- * Melt / P_* heating modes stay gap chips until unheld Prefer-merges.
+ * Default bubble-lattice HUD channels.
+ * Melt / P_* heating modes stay gap chips until TheoryModules supply values
+ * (VIZ-07 glyphs + VIZ-12 film scaffold refuse invented numbers).
  */
 export const BUBBLE_LATTICE_VIZ_CHANNELS: Record<string, VizChannelBinding> = {
   'bubble.cycle_fraction': {
@@ -173,7 +174,7 @@ export const BUBBLE_LATTICE_VIZ_CHANNELS: Record<string, VizChannelBinding> = {
     null_policy: 'schematic_fallback',
     label: 'Proton regime',
   },
-  // Held melt / heating-mode channels — gap until liquid-phase Prefer-merge.
+  // Melt / heating-mode channels — gap until liquid_phase_* TheoryModules export values.
   'host.phase_fraction_liquid': {
     channel_id: 'host.phase_fraction_liquid',
     observable_path: '$.host.phase_fraction_liquid',

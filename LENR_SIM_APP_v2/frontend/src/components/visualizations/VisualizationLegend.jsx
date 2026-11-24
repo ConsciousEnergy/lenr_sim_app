@@ -28,6 +28,7 @@ import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import BlurOnIcon from '@mui/icons-material/BlurOn';
 import FidelityLegendSplit from './FidelityLegendSplit';
+import HeatingModeGapGlyphs from './HeatingModeGapGlyphs';
 
 // Particle type definitions for Fusion (plasma-scale)
 const FUSION_PARTICLE_TYPES = {
@@ -591,6 +592,10 @@ function VisualizationLegend({
   variant = 'overlay', // 'overlay' | 'panel' | 'side-drawer'
   simulationType = 'fusion', // 'lenr' | 'fusion'
   showFidelitySplit = true, // VIZ-04 Quantitative vs Schematic
+  showHeatingModeGlyphs = true, // VIZ-07 heating-mode / melt gap glyphs
+  hostMaterial = 'palladium',
+  liquidPhaseHeat = null,
+  liquidPhaseFraction = null,
 }) {
   const theme = useTheme();
   const isLightMode = theme.palette.mode === 'light';
@@ -724,6 +729,19 @@ function VisualizationLegend({
               {showFidelitySplit && simulationType === 'lenr' && (
                 <>
                   <FidelityLegendSplit compact />
+                  <Divider sx={{ my: 1.5 }} />
+                </>
+              )}
+
+              {/* VIZ-07 heating-mode gap glyphs + host T_m / f_L */}
+              {showHeatingModeGlyphs && simulationType === 'lenr' && (
+                <>
+                  <HeatingModeGapGlyphs
+                    compact
+                    hostMaterial={hostMaterial}
+                    heat={liquidPhaseHeat}
+                    phaseFractionLiquid={liquidPhaseFraction}
+                  />
                   <Divider sx={{ my: 1.5 }} />
                 </>
               )}
@@ -914,6 +932,19 @@ function VisualizationLegend({
           {showFidelitySplit && simulationType === 'lenr' && (
             <>
               <FidelityLegendSplit compact />
+              <Divider sx={{ my: 1.5 }} />
+            </>
+          )}
+
+          {/* VIZ-07 heating-mode gap glyphs + host T_m / f_L */}
+          {showHeatingModeGlyphs && simulationType === 'lenr' && (
+            <>
+              <HeatingModeGapGlyphs
+                compact
+                hostMaterial={hostMaterial}
+                heat={liquidPhaseHeat}
+                phaseFractionLiquid={liquidPhaseFraction}
+              />
               <Divider sx={{ my: 1.5 }} />
             </>
           )}
@@ -1152,6 +1183,14 @@ VisualizationLegend.propTypes = {
   variant: PropTypes.oneOf(['overlay', 'panel', 'side-drawer']),
   simulationType: PropTypes.oneOf(['lenr', 'fusion']),
   showFidelitySplit: PropTypes.bool,
+  showHeatingModeGlyphs: PropTypes.bool,
+  hostMaterial: PropTypes.string,
+  liquidPhaseHeat: PropTypes.shape({
+    P_joule: PropTypes.number,
+    P_resistive: PropTypes.number,
+    P_photonic: PropTypes.number,
+  }),
+  liquidPhaseFraction: PropTypes.number,
 };
 
 export default VisualizationLegend;
