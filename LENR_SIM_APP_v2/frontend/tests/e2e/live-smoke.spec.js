@@ -5,7 +5,7 @@ const live = process.env.LIVE_BASE_URL;
  * Expected API/SPA version string. Defaults to the current Compose share train
  * so `LIVE_BASE_URL=https://lenr-sim-beta.conscious.energy npm run e2e:live`
  * keeps working without edits. Override for staging/cutover:
- *   EXPECT_VERSION=0.4.0-beta LIVE_BASE_URL=https://app-staging.conscious.energy …
+ *   EXPECT_VERSION=0.4.1-beta LIVE_BASE_URL=https://app-staging.conscious.energy …
  */
 const expectVersion = process.env.EXPECT_VERSION || '0.3.8-beta';
 
