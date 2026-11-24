@@ -20,10 +20,13 @@ under ``datasets/reviewer_packs/`` — distinct from paper Packet A–E markdown
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
-from app.services.campaign_pack_index import list_committed_pack_summaries
+from app.services.campaign_pack_index import (
+    build_campaign_pack_zip,
+    list_committed_pack_summaries,
+)
 
 router = APIRouter(prefix="/docs", tags=["Docs"])
 
@@ -98,6 +101,26 @@ async def get_campaign_pack_index() -> JSONResponse:
             detail="campaign pack index must keep lenr_proved false",
         )
     return JSONResponse(payload)
+
+
+@router.get("/campaign-packs/{pack_id}/download")
+async def download_campaign_pack(pack_id: str, request: Request) -> Response:
+    """Zip download of a committed campaign JSON pack (model output only)."""
+    # request reserved for future IP budgeting parity with benchmark packs
+    _ = request
+    try:
+        data = build_campaign_pack_zip(pack_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(
+        content=data,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{pack_id}.zip"',
+            "X-LENR-Proved": "false",
+            "X-EQ-Open-Status": "OPEN",
+        },
+    )
 
 
 @router.get("/{slug}", response_class=PlainTextResponse)
