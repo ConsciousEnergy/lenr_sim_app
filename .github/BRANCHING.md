@@ -5,7 +5,7 @@ This repository uses **two long-lived branches** aligned to version trains:
 | Branch | `APP_VERSION` | Purpose |
 |--------|---------------|---------|
 | `main` | `0.4.0-beta` | Public Swarm release line (Traefik SPA + API). Protected. Revert = Swarm `v0.3.9-beta`. |
-| `dev` | `0.4.0-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
+| `dev` | `0.4.1-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
 
 Releases remain annotated `v*` tags (normally cut from `main` when a train
 ships). Short-lived topic branches are deleted on squash-merge.
@@ -24,7 +24,7 @@ as `archive/*` tags only.
 | Branch | Lifetime | Purpose |
 |--------|----------|---------|
 | `main` | permanent | v0.4.0-beta Swarm release / ship line (revert v0.3.9-beta) |
-| `dev` | permanent | v0.4.0-beta integration; default base for new work |
+| `dev` | permanent | v0.4.1-beta integration; default base for new work |
 | `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.4.0 hotfixes only); squash-merged; auto-deleted |
 | `consciousenergy/<topic>-<id>` | days | Same as above (Cursor agents) |
 | `dependabot/**` | days | Automated dependency PRs against **`dev`** |
@@ -34,7 +34,7 @@ Naming rules: lowercase, hyphen-separated, no version numbers in feature
 branch names (the version lives in the four `APP_VERSION` markers, not in git
 refs).
 
-## Day-to-day flow (both trains `0.4.0-beta`)
+## Day-to-day flow (`main` = `0.4.0-beta` live; `dev` = `0.4.1-beta` tip)
 
 ```mermaid
 gitGraph
