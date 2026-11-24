@@ -16,7 +16,8 @@ import {
   IconButton,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Alert,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -37,6 +38,9 @@ const PARAMETER_DESCRIPTIONS = {
   timeStepNs: 'Time step for simulation (ns)',
   totalSimulationTimeUs: 'Total simulation time (μs)',
 };
+
+/** Fixed on POST /api/physics/bubble-fusion until the API accepts a duration contract. */
+export const BUBBLE_FUSION_ENGINE_NUM_CYCLES = 2;
 
 const DEFAULT_VALUES = {
   // Bubble parameters
@@ -371,6 +375,18 @@ const BubbleFusionParameterControls = ({
           <Typography variant="subtitle1">Simulation Parameters</Typography>
         </AccordionSummary>
         <AccordionDetails id="simulation-params-content">
+          <Alert
+            severity="info"
+            variant="outlined"
+            sx={{ mb: 2, py: 0.25 }}
+            data-testid="bubble-fusion-sim-window-honesty"
+          >
+            <Typography variant="caption" component="div">
+              The engine integrates <strong>{BUBBLE_FUSION_ENGINE_NUM_CYCLES} acoustic cycles</strong>{' '}
+              (≈{(BUBBLE_FUSION_ENGINE_NUM_CYCLES * 1000) / (params.frequency || 20)}&nbsp;μs at{' '}
+              {params.frequency || 20}&nbsp;kHz). Sliders below are not sent to the API yet.
+            </Typography>
+          </Alert>
           {renderParameterSlider('timeStepSize', 0.01, 10, 0.01, 'ns')}
           {renderParameterSlider('totalSimulationTime', 0.1, 10, 0.1, 'μs')}
         </AccordionDetails>
