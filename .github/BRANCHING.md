@@ -4,7 +4,7 @@ This repository uses **two long-lived branches** aligned to version trains:
 
 | Branch | `APP_VERSION` | Purpose |
 |--------|---------------|---------|
-| `main` | `0.4.0-beta` | Public Swarm release line (Traefik SPA + API). Protected. Revert = Swarm `v0.3.9-beta`. |
+| `main` | `0.4.1-beta` | Public Swarm release line (Traefik SPA + API). Protected. Live already on tip-`dev` packs train `0.4.1-beta` (`bbad63c`). Revert = Swarm `v0.3.9-beta`. |
 | `dev` | `0.4.1-beta` | Integration tip; **never** auto-deployed by `deploy.yml`. Default PR base. |
 
 Releases remain annotated `v*` tags (normally cut from `main` when a train
@@ -23,9 +23,9 @@ as `archive/*` tags only.
 
 | Branch | Lifetime | Purpose |
 |--------|----------|---------|
-| `main` | permanent | v0.4.0-beta Swarm release / ship line (revert v0.3.9-beta) |
+| `main` | permanent | v0.4.1-beta Swarm release / ship line (live tip-dev packs `bbad63c`; revert v0.3.9-beta) |
 | `dev` | permanent | v0.4.1-beta integration; default base for new work |
-| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.4.0 hotfixes only); squash-merged; auto-deleted |
+| `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>` | days | One change each; PR against **`dev`** (or `main` for 0.4.1 hotfixes only); squash-merged; auto-deleted |
 | `consciousenergy/<topic>-<id>` | days | Same as above (Cursor agents) |
 | `dependabot/**` | days | Automated dependency PRs against **`dev`** |
 | `release/X.Y` | only while a hotfix is open | Created **from a tag** when a fix must ship against an older release. Forward-port to `main` and `dev`, then delete |
@@ -34,7 +34,7 @@ Naming rules: lowercase, hyphen-separated, no version numbers in feature
 branch names (the version lives in the four `APP_VERSION` markers, not in git
 refs).
 
-## Day-to-day flow (`main` = `0.4.0-beta` live; `dev` = `0.4.1-beta` tip)
+## Day-to-day flow (`main` / `dev` markers = `0.4.1-beta`; live share = tip-`dev` packs `0.4.1-beta` @ `bbad63c`)
 
 ```mermaid
 gitGraph
@@ -55,9 +55,10 @@ gitGraph
    also `Secret scan`, `Dependency Review`.
 4. Review, then **Squash and merge**. The head branch is deleted automatically.
 
-**0.4.0 Swarm hotfixes:** branch from `main` (or `v0.4.0-beta`), PR into
-`main`, then cherry-pick / forward-port to `dev`. Revert path for live share
-remains Swarm **v0.3.9-beta** images/tag until a later train.
+**0.4.1 Swarm hotfixes:** branch from `main` (or `v0.4.1-beta`), PR into
+`main`, then cherry-pick / forward-port to `dev`. Live share already runs tip-`dev`
+packs train **`0.4.1-beta`** (`bbad63c`); revert path remains Swarm **v0.3.9-beta**
+images/tag.
 
 **Promote next train → public:** when ready, open a controlled PR `dev` → `main`
 (markers already bumped on `dev`), then tag on `main` after merge. Prefer
