@@ -39,8 +39,9 @@ export default function DocsSurfacesBanner({
         <Typography variant="body2">
           <strong>Campaign JSON packs</strong> —{' '}
           <code>lenr-reviewer-pack-v1</code> model-output SQL hydrate/export under{' '}
-          <code>datasets/reviewer_packs/</code> (index below on the paper-packets
-          page). CLI import/export only; not paper checklists.
+          <code>datasets/reviewer_packs/</code> (index + honesty-gated zip download
+          below on the paper-packets page). Also UMLENR{' '}
+          <code>umlenr-benchmark-pack-v1</code> P1–P6 zip. Not paper checklists.
         </Typography>
         <Typography variant="body2">
           <strong>Researcher review pack</strong>

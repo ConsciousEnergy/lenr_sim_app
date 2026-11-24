@@ -32,7 +32,7 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  Switch
+  Switch,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -54,7 +54,6 @@ import IconButton from '@mui/material/IconButton';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../services/analyticsApi';
 import TheoryDocumentationPanel from '../components/physics/TheoryDocumentationPanel';
-const VisualizationPanel = lazy(() => import('../components/unified-theory/VisualizationPanel'));
 import EnhancementTimelinePanel from '../components/unified-theory/EnhancementTimelinePanel';
 import ProtonPhasesPanel from '../components/unified-theory/ProtonPhasesPanel';
 import ResultsPanel from '../components/unified-theory/ResultsPanel';
@@ -78,9 +77,20 @@ import {
   schematicFallbackMessage,
 } from '../utils/apiUserFacingError';
 import { attachTestbedScoresToResults } from '../utils/theoryTestbedScores';
+import { apiClient } from '../api/client';
+import ExportHonestyModal from '../components/ExportHonestyModal';
+import { downloadBlob } from '../utils/downloadBlob';
+import {
+  BENCHMARK_PACK_DOWNLOAD_PATH,
+  BENCHMARK_PACK_ID,
+  UNIFIED_EXPORT_ENDPOINT,
+  buildUnifiedExportPayload,
+} from '../utils/unifiedExportPayload';
+
+const VisualizationPanel = lazy(() => import('../components/unified-theory/VisualizationPanel'));
 
 const BUBBLE_LATTICE_ENDPOINT = '/api/unified/bubble-lattice';
-const UNIFIED_SIMULATE_ENDPOINT = '/api/unified/simulate';
+const _UNIFIED_SIMULATE_ENDPOINT = '/api/unified/simulate';
 
 // System presets
 const SYSTEM_PRESETS = {
@@ -530,6 +540,9 @@ function UnifiedTheoryPage() {
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [currentPhase, setCurrentPhase] = useState('EXPANSION');
   const [isSaving, setIsSaving] = useState(false);
+  const [honestyOpen, setHonestyOpen] = useState(false);
+  const [honestyKind, setHonestyKind] = useState(null); // 'export-json' | 'benchmark-pack'
+  const [honestyBusy, setHonestyBusy] = useState(false);
   const maintenanceHideRun = useMaintenanceHideRun();
   const derivedState = deriveSimulationHeadlineState({ simulationData, theoryResult });
   const streamPayload = React.useMemo(
@@ -1003,54 +1016,121 @@ function UnifiedTheoryPage() {
     setActiveTab(newValue);
   };
 
-  // Export simulation results as JSON
-  const exportAsJSON = useCallback(() => {
-    if (!simulationData) {
+  const openExportHonesty = useCallback((kind) => {
+    if (kind === 'export-json' && !simulationData) {
       setAlertMessage('No simulation data to export. Run a simulation first.');
       setAlertSeverity('warning');
       setAlertOpen(true);
       return;
     }
-    
-    const exportData = {
-      schema_version: 'lenr-run-export-v1',
-      exported_at: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      simulation_parameters: parameters,
-      system_preset: selectedSystem,
-      // Reproducibility/provenance: the exact rate-engine controls used for the
-      // run, surfaced at top level so an exported file is self-describing.
-      reaction_rate_controls: {
-        rate_mode: rateMode,
-        include_uncertainty: includeUncertainty,
-        uncertainty_samples: uncertaintySamples,
-        random_seed: randomSeed === '' || randomSeed === null ? null : Number(randomSeed),
-      },
-      reaction_rate_engine: simulationData.reaction_rate_engine || {},
-      route_mode: simulationData.validation?.route_mode || 'unknown',
-      results: simulationData,
-    };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lenr_simulation_${selectedSystem}_${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    track.exportDownloaded({
-      schema_version: 'lenr-run-export-v1',
-      format: 'json',
-      route_mode: simulationData.validation?.route_mode || 'unknown',
-      success: true,
-    });
-    
-    setAlertMessage('Simulation data exported successfully');
-    setAlertSeverity('success');
-    setAlertOpen(true);
-  }, [simulationData, parameters, selectedSystem, rateMode, includeUncertainty, uncertaintySamples, randomSeed]);
+    setHonestyKind(kind);
+    setHonestyOpen(true);
+  }, [simulationData]);
+
+  // Server-backed lenr-run-export-v1 (POST /api/unified/export) — not client-only labeling.
+  const exportAsJSON = useCallback(async () => {
+    setHonestyBusy(true);
+    try {
+      const payload = buildUnifiedExportPayload(parameters, {
+        rateMode,
+        includeUncertainty,
+        uncertaintySamples,
+        randomSeed,
+      });
+      const res = await apiClient.post(UNIFIED_EXPORT_ENDPOINT, payload, {
+        timeout: 120000,
+      });
+      const exportData = res?.data;
+      if (!exportData || exportData.schema_version !== 'lenr-run-export-v1') {
+        throw new Error('Server export missing schema_version lenr-run-export-v1');
+      }
+      if (exportData.lenr_proved === true) {
+        throw new Error('Refusing export with lenr_proved true');
+      }
+      downloadBlob(
+        JSON.stringify(exportData, null, 2),
+        `lenr_simulation_${selectedSystem}_${Date.now()}.json`,
+        'application/json',
+      );
+      track.exportDownloaded({
+        schema_version: 'lenr-run-export-v1',
+        format: 'json',
+        route_mode: 'server_export',
+        success: true,
+      });
+      setAlertMessage(
+        'Server export downloaded (lenr-run-export-v1). Model output ≠ laboratory proof.',
+      );
+      setAlertSeverity('success');
+      setAlertOpen(true);
+      setHonestyOpen(false);
+      setHonestyKind(null);
+    } catch (err) {
+      track.exportDownloaded({
+        schema_version: 'lenr-run-export-v1',
+        format: 'json',
+        route_mode: 'server_export',
+        success: false,
+      });
+      setAlertMessage(
+        `Server export failed: ${err?.message || 'unknown error'}. CSV timeline export remains available locally.`,
+      );
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      setHonestyOpen(false);
+    } finally {
+      setHonestyBusy(false);
+    }
+  }, [
+    parameters,
+    selectedSystem,
+    rateMode,
+    includeUncertainty,
+    uncertaintySamples,
+    randomSeed,
+  ]);
+
+  const downloadBenchmarkPack = useCallback(async () => {
+    setHonestyBusy(true);
+    try {
+      const res = await apiClient.get(BENCHMARK_PACK_DOWNLOAD_PATH, {
+        responseType: 'blob',
+        timeout: 60000,
+      });
+      downloadBlob(res.data, `${BENCHMARK_PACK_ID}.zip`, 'application/zip');
+      track.exportDownloaded({
+        schema_version: 'umlenr-benchmark-pack-v1',
+        format: 'zip',
+        pack_id: BENCHMARK_PACK_ID,
+        success: true,
+      });
+      setAlertMessage(
+        'UMLENR P1–P6 benchmark pack downloaded. Simulation ≠ lab; EQ-OPEN stay OPEN.',
+      );
+      setAlertSeverity('success');
+      setAlertOpen(true);
+      setHonestyOpen(false);
+      setHonestyKind(null);
+    } catch (err) {
+      track.exportDownloaded({
+        schema_version: 'umlenr-benchmark-pack-v1',
+        format: 'zip',
+        success: false,
+      });
+      setAlertMessage(`Benchmark pack download failed: ${err?.message || 'unknown error'}`);
+      setAlertSeverity('error');
+      setAlertOpen(true);
+      setHonestyOpen(false);
+    } finally {
+      setHonestyBusy(false);
+    }
+  }, []);
+
+  const confirmHonestyDownload = useCallback(() => {
+    if (honestyKind === 'export-json') return exportAsJSON();
+    if (honestyKind === 'benchmark-pack') return downloadBenchmarkPack();
+    return undefined;
+  }, [honestyKind, exportAsJSON, downloadBenchmarkPack]);
 
   // Export simulation results as CSV
   const exportAsCSV = useCallback(() => {
@@ -1734,17 +1814,18 @@ function UnifiedTheoryPage() {
               </Button>
             )}
 
-            {/* Export buttons */}
+            {/* Export buttons — JSON uses POST /api/unified/export after honesty gate */}
             <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Tooltip title="Download simulation results as JSON">
+              <Tooltip title="Server lenr-run-export-v1 via POST /api/unified/export (honesty gated)">
                 <span style={{ flex: 1, minWidth: 80 }}>
                   <Button
                     variant="outlined"
                     size="small"
                     startIcon={<DownloadIcon />}
-                    onClick={exportAsJSON}
-                    disabled={!simulationData}
+                    onClick={() => openExportHonesty('export-json')}
+                    disabled={!simulationData || honestyBusy}
                     fullWidth
+                    data-testid="unified-export-json"
                   >
                     JSON
                   </Button>
@@ -1787,6 +1868,23 @@ function UnifiedTheoryPage() {
                 </Button>
               </Tooltip>
             </Box>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              fullWidth
+              startIcon={<DownloadIcon />}
+              onClick={() => openExportHonesty('benchmark-pack')}
+              disabled={honestyBusy}
+              sx={{ mt: 1 }}
+              data-testid="unified-benchmark-pack-download"
+            >
+              P1–P6 benchmark pack (zip)
+            </Button>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              JSON = server <code>lenr-run-export-v1</code>. Pack ={' '}
+              <code>umlenr-benchmark-pack-v1</code>. Model ≠ lab; EQ-OPEN stay OPEN.
+            </Typography>
 
             {/* Live status */}
             <Paper sx={{ p: 1.5, mt: 2, bgcolor: 'action.hover' }}>
@@ -1958,6 +2056,25 @@ function UnifiedTheoryPage() {
         open={glossaryOpen}
         onClose={() => setGlossaryOpen(false)}
         initialAnchor="claim"
+      />
+
+      <ExportHonestyModal
+        open={honestyOpen}
+        onClose={() => {
+          if (!honestyBusy) {
+            setHonestyOpen(false);
+            setHonestyKind(null);
+          }
+        }}
+        onConfirm={confirmHonestyDownload}
+        confirming={honestyBusy}
+        title={
+          honestyKind === 'benchmark-pack'
+            ? 'Download UMLENR P1–P6 benchmark pack'
+            : 'Download server lenr-run-export-v1'
+        }
+        confirmLabel={honestyKind === 'benchmark-pack' ? 'Download zip' : 'Download JSON'}
+        testIdPrefix="unified-export-honesty"
       />
 
       <Snackbar open={alertOpen} autoHideDuration={4000} onClose={() => setAlertOpen(false)}>

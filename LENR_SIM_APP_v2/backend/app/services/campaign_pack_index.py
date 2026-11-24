@@ -6,9 +6,11 @@ Distinct from paper Packet A–E markdown at ``/docs/reviewer-packets``.
 
 from __future__ import annotations
 
+import io
 import json
+import zipfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from app.data.dataset_io import datasets_root
 
@@ -106,3 +108,57 @@ def list_committed_pack_summaries() -> Dict[str, Any]:
         "n_packs": len(packs),
         "packs": packs,
     }
+
+
+# Files allowed inside a campaign pack zip (deny traversal / unexpected paths).
+_ALLOWED_PACK_SUFFIXES: Set[str] = {".json", ".jsonl", ".md", ".txt", ".csv"}
+
+
+def build_campaign_pack_zip(pack_id: str) -> bytes:
+    """Zip a committed reviewer pack directory for honesty-gated download.
+
+    Only packs advertised by ``list_committed_pack_summaries`` (boolean
+    ``lenr_proved is False``) are downloadable.
+    """
+    if not pack_id or "/" in pack_id or "\\" in pack_id or ".." in pack_id:
+        raise FileNotFoundError(f"Invalid campaign pack id: {pack_id!r}")
+
+    summaries = list_committed_pack_summaries()
+    known = {p["pack_id"] for p in summaries.get("packs") or []}
+    if pack_id not in known:
+        raise FileNotFoundError(f"Unknown or unpublished campaign pack: {pack_id}")
+
+    pack_dir = _pack_root() / pack_id
+    if not pack_dir.is_dir():
+        raise FileNotFoundError(f"Campaign pack directory missing: {pack_id}")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(pack_dir.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in _ALLOWED_PACK_SUFFIXES:
+                continue
+            rel = path.relative_to(pack_dir)
+            # Refuse path escape even if rglob somehow yields odd names.
+            if ".." in rel.parts:
+                continue
+            arcname = f"{pack_id}/{rel.as_posix()}"
+            zf.write(path, arcname=arcname)
+        # Stamp a download honesty sidecar (does not alter on-disk manifest).
+        honesty = {
+            "schema": "lenr-campaign-pack-download-v1",
+            "pack_id": pack_id,
+            "lenr_proved": False,
+            "eq_open_status": "OPEN",
+            "required_open_ids": list(REQUIRED_OPEN_IDS),
+            "disclaimer": (
+                "Campaign JSON pack download is model-output hydrate/export only. "
+                "Not laboratory proof; EQ-OPEN-* stay OPEN."
+            ),
+        }
+        zf.writestr(
+            f"{pack_id}/DOWNLOAD_PROVENANCE.json",
+            json.dumps(honesty, indent=2, sort_keys=True).encode("utf-8"),
+        )
+    return buf.getvalue()

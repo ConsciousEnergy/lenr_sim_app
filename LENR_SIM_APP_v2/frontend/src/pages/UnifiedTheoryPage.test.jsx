@@ -33,6 +33,22 @@ jest.mock('../services/analyticsApi', () => ({
   analyticsApi: { saveExperiment: jest.fn().mockResolvedValue({ id: 'test-id' }), saveFailedRun: jest.fn().mockResolvedValue({ id: 'failed-id' }) },
 }));
 
+jest.mock('../api/client', () => ({
+  apiClient: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+}));
+
+jest.mock('../analytics/events', () => ({
+  track: {
+    exportDownloaded: jest.fn(),
+    simulationCompleted: jest.fn(),
+    clientError: jest.fn(),
+    simulationStarted: jest.fn(),
+  },
+}));
+
 // Mock ErrorBoundary to render children
 jest.mock('../components/ErrorBoundary', () => ({ children }) => children);
 
@@ -394,5 +410,52 @@ describe('UnifiedTheoryPage collapse uncertainty', () => {
       expect(screen.getByText(/Collapse Results/i)).toBeInTheDocument();
     });
     expect(screen.queryByText('Collapse Uncertainty')).not.toBeInTheDocument();
+  });
+});
+
+describe('UnifiedTheoryPage server export honesty gate', () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        collapse_results: {
+          max_temperature_k: 300,
+          compression_ratio: 2,
+          min_radius_um: 1,
+          max_pressure_bar: 100,
+        },
+        proton_phases: { FREE: 0.5, SCREENED: 0.3, CAPTURE_READY: 0.15, NUCLEAR: 0.05 },
+        enhancement_timeline: [
+          { normalized_time: 0, phase: 'EXPANSION', enhancement: 1, radius_factor: 1, temperature: 300 },
+        ],
+        peak_conditions: { enhancement_factor: 1 },
+      }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  test('JSON export opens honesty modal instead of inventing client schema', async () => {
+    render(<UnifiedTheoryPage />);
+    fireEvent.click(screen.getByRole('button', { name: /Run Physics Simulation/i }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(screen.getByTestId('unified-export-json')).not.toBeDisabled();
+    });
+    fireEvent.click(screen.getByTestId('unified-export-json'));
+    expect(screen.getByTestId('unified-export-honesty-dialog')).toBeInTheDocument();
+    expect(screen.getByTestId('unified-export-honesty-confirm')).toBeDisabled();
+  });
+
+  test('benchmark pack button opens honesty modal', async () => {
+    render(<UnifiedTheoryPage />);
+    fireEvent.click(screen.getByTestId('unified-benchmark-pack-download'));
+    expect(screen.getByTestId('unified-export-honesty-dialog')).toBeInTheDocument();
   });
 });
