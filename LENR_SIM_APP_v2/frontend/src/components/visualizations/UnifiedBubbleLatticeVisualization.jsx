@@ -88,6 +88,11 @@ const _COLLAPSE_PHASES = {
 // VISUAL_CYCLE_SCALE maps that onto ~2.5 s per on-screen cycle at 20 kHz (50,000×).
 const UX_TIME_SCALE = VISUAL_CYCLE_SCALE;
 
+const CAMERA_PRESET = {
+  desktop: { position: [12, 5, 12], fov: 60, target: [0, -2, 0] },
+  mobile: { position: [11, 4.5, 13], fov: 52, target: [0, -2, 0] },
+};
+
 const HOST_MATERIAL_COLORS = {
   constantan: 0xb87333,
   palladium: 0x8b8b8b,
@@ -405,17 +410,18 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
-  const [showVortices, setShowVortices] = useState(true);
+  // Mobile optimization state (v0.2.2-beta / #409 M2–M3)
+  const [isMobile] = useState(() => isMobileDevice());
+  const [qualitySettings] = useState(() => getRecommendedQualitySettings());
+  const [showVortices, setShowVortices] = useState(
+    () => getRecommendedQualitySettings().vortexVisualizationEnabled
+  );
   const [showBoundaryPlane, setShowBoundaryPlane] = useState(false);
   const [showCasimir, setShowCasimir] = useState(false);
   const [showRydberg, setShowRydberg] = useState(false);
   const [showHalo, setShowHalo] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
-  
-  // Mobile optimization state (v0.2.2-beta)
-  const [isMobile] = useState(() => isMobileDevice());
-  const [qualitySettings] = useState(() => getRecommendedQualitySettings());
+  const [legendCollapsed, setLegendCollapsed] = useState(() => isMobileDevice());
   
   // Animation parameters - use refs for values that change frequently to avoid re-renders
   // Default ~0.45x so a visual cycle is clearly moving (0.1x felt like a stuck video).
@@ -1294,11 +1300,18 @@ const UnifiedBubbleLatticeVisualization = ({
     
     const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     vortexGroup.position.set(0, latticeY + 0.3, 0); // Nucleation site so rotation spins in place
+
+    if (!qualitySettings.vortexVisualizationEnabled) {
+      vortexGroup.visible = false;
+      scene.add(vortexGroup);
+      vortexGroupRef.current = vortexGroup;
+      return vortexGroup;
+    }
     
     try {
     // Create plasma vortex effect - particle-based MHD flow
     const plasmaVortex = new PlasmaVortexEffect({
-      particleCount: 200,
+      particleCount: qualitySettings.vortexParticleCount ?? 200,
       vortexStrength: 1.0,
       radialSpeed: 0.25,
       verticalSpeed: 0.4,
@@ -1344,7 +1357,7 @@ const UnifiedBubbleLatticeVisualization = ({
     vortexGroupRef.current = vortexGroup;
     
     return vortexGroup;
-  }, []);
+  }, [qualitySettings]);
 
   // Create Casimir effect field visualization
   // F_Casimir = -π²ℏc/(240) * A/d⁴
@@ -2878,11 +2891,14 @@ const UnifiedBubbleLatticeVisualization = ({
     pointLight.position.set(0, 2, 0);
     scene.add(pointLight);
     
-    // Camera
-    const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
-    const camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
-    camera.position.set(12, 5, 12);
-    camera.lookAt(0, -2, 0);
+    // Camera — mobile preset for narrow aspect (#409 M2)
+    const camPreset = isMobile ? CAMERA_PRESET.mobile : CAMERA_PRESET.desktop;
+    const containerWidth = Math.max(containerRef.current.clientWidth, 1);
+    const containerHeight = Math.max(containerRef.current.clientHeight, 1);
+    const aspect = containerWidth / containerHeight;
+    const camera = new THREE.PerspectiveCamera(camPreset.fov, aspect, 0.1, 1000);
+    camera.position.set(...camPreset.position);
+    camera.lookAt(...camPreset.target);
     cameraRef.current = camera;
     
     // Renderer (v0.2.2-beta: mobile-optimized settings)
@@ -2901,11 +2917,16 @@ const UnifiedBubbleLatticeVisualization = ({
     renderer.shadowMap.enabled = qualitySettings.shadowsEnabled;
     rendererRef.current = renderer;
 
-    // Controls
+    // Controls — touch gestures owned by TouchControls on mobile (#409 M2)
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.target.set(0, -2, 0);
+    controls.target.set(...camPreset.target);
+    if (isMobile) {
+      controls.enableRotate = false;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+    }
     controlsRef.current = controls;
     
     // Create scene elements
@@ -2916,8 +2937,10 @@ const UnifiedBubbleLatticeVisualization = ({
     createEffects(scene);
     createVortexFlow(scene);
     createCasimirField(scene);
-    createRydbergOrbitals(scene);
-    createHaloElectrons(scene);
+    if (!qualitySettings.skipOptionalQuantumLayers) {
+      createRydbergOrbitals(scene);
+      createHaloElectrons(scene);
+    }
     createScaleBar(scene);
 
     // Host-material switches remount this effect without changing layer toggle
@@ -2940,8 +2963,15 @@ const UnifiedBubbleLatticeVisualization = ({
     // Prime the timer so the first frame delta is one frame, matching Clock's
     // first getDelta() which returned 0.
     timerRef.current.update();
+    const minFrameMs = 1000 / (qualitySettings.maxFPS || 60);
+    let lastRenderMs = 0;
     const animate = (timestamp) => {
       frameIdRef.current = requestAnimationFrame(animate);
+
+      if (timestamp - lastRenderMs < minFrameMs) {
+        return;
+      }
+      lastRenderMs = timestamp;
 
       timerRef.current.update(timestamp);
       const deltaTime = timerRef.current.getDelta();
@@ -2968,21 +2998,27 @@ const UnifiedBubbleLatticeVisualization = ({
     
     animate();
     
-    // Handle resize
+    // Handle resize — guard zero-size containers (#409 M1)
     const handleResize = () => {
       if (!containerRef.current) return;
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
+      const width = Math.max(containerRef.current.clientWidth, 1);
+      const height = Math.max(containerRef.current.clientHeight, 1);
       
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
     };
-    
+
+    handleResize();
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(handleResize)
+      : null;
+    resizeObserver?.observe(containerRef.current);
     window.addEventListener('resize', handleResize);
     
     // Cleanup
     return () => {
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(frameIdRef.current);
       
@@ -3000,7 +3036,7 @@ const UnifiedBubbleLatticeVisualization = ({
       renderer.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit]);
+  }, [createLattice, createBubble, createProtons, createFieldVisualization, createEffects, createVortexFlow, createCasimirField, createRydbergOrbitals, createHaloElectrons, createScaleBar, latticeMetersPerVisUnit, isMobile, qualitySettings]);
   // Note: updateAnimation removed from deps - using updateAnimationRef to prevent camera reset on cycle change
 
   // Update visibility based on toggles - immediate update with force refresh
@@ -3129,6 +3165,15 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
+  const resetCameraToPreset = useCallback(() => {
+    const camPreset = isMobile ? CAMERA_PRESET.mobile : CAMERA_PRESET.desktop;
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(...camPreset.position);
+      controlsRef.current.target.set(...camPreset.target);
+      controlsRef.current.update();
+    }
+  }, [isMobile]);
+
   const handleZoomIn = () => {
     if (cameraRef.current) {
       cameraRef.current.position.multiplyScalar(0.8);
@@ -3142,10 +3187,7 @@ const UnifiedBubbleLatticeVisualization = ({
   };
   
   const handleResetView = () => {
-    if (cameraRef.current && controlsRef.current) {
-      cameraRef.current.position.set(12, 5, 12);
-      controlsRef.current.target.set(0, -2, 0);
-    }
+    resetCameraToPreset();
   };
 
   // Phase indicator color
@@ -3167,15 +3209,25 @@ const UnifiedBubbleLatticeVisualization = ({
         sx={{
           width: '100%',
           height: height,
+          minHeight: isMobile ? 280 : height,
           position: 'relative',
           borderRadius: 1,
           overflow: 'hidden',
-          bgcolor: '#0a0a1a'
+          bgcolor: '#0a0a1a',
+          touchAction: isMobile ? 'none' : 'auto',
         }}
       >
-        <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+        <canvas
+          ref={canvasRef}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: '100%',
+            touchAction: isMobile ? 'none' : 'auto',
+          }}
+        />
         
-        {/* Mobile touch controls (v0.2.2-beta) */}
+        {/* Mobile touch controls (v0.2.2-beta / #409 M2) */}
         <TouchControls
           containerRef={containerRef}
           onZoom={(delta) => {
@@ -3192,25 +3244,37 @@ const UnifiedBubbleLatticeVisualization = ({
               controlsRef.current.rotateUp(deltaY);
             }
           }}
-          onReset={() => {
-            if (cameraRef.current && controlsRef.current) {
-              cameraRef.current.position.set(12, 5, 12);
-              controlsRef.current.target.set(0, -2, 0);
-              controlsRef.current.update();
-            }
-          }}
+          onReset={resetCameraToPreset}
           showHints={isMobile}
           showControls={isMobile}
-          enabled={true}
+          enabled={isMobile}
+          singleFingerRotatesOnly
         />
         
+        {isMobile && (
+          <Chip
+            size="small"
+            label="Mobile simplified scene"
+            sx={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              zIndex: 6,
+              bgcolor: 'rgba(30, 30, 50, 0.92)',
+              color: 'white',
+              fontSize: '0.65rem',
+            }}
+            data-testid="ublv-mobile-tier-chip"
+          />
+        )}
+
         {/* Right-side control stack: layer toggles + desktop zoom controls */}
         <Box
           sx={{
             position: 'absolute',
             top: 10,
             right: 10,
-            display: 'flex',
+            display: { xs: 'none', sm: 'flex' },
             flexDirection: 'column',
             alignItems: 'flex-end',
             gap: 1,
