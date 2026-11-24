@@ -8,21 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Notes
-- Tip-`dev` train markers are **`0.4.1-beta`**. tip-`main` / live share remain
-  **`0.4.0-beta`** until Diadon Approves the promote PR and Path B ships.
+- Tip-`main` and tip-`dev` markers are **`0.4.1-beta`** after the promote.
+  Live share (`api.` / `lenr-sim-beta`) stays **`0.4.0-beta`** until Path B ships.
   Revert path = Swarm **v0.3.9-beta**. Honesty locks unchanged
   (`lenr_proved` false; all `EQ-OPEN-*` OPEN; no Kasagi flip).
 
 ## [v0.4.1-beta] - 2026-11-23
 
-Controlled four-marker bump on tip-`dev`: **`0.4.0-beta` → `0.4.1-beta`**.
-Promote tip-`dev` → `main` is Diadon Approve only; Path B only after Approve.
+Controlled four-marker bump + promote tip-`dev` → `main`: **`0.4.0-beta` → `0.4.1-beta`**.
+Live share stays **0.4.0-beta** until Path B (Diadon arms ship after Approve).
 
 ### Changed
 - Four version markers (`config.py`, `package.json`, `version.js`,
   `Dockerfile.backend`) → **`0.4.1-beta`**
 - Contract / campaign / e2e pins aligned to `v0.4.1-beta-science-gate-1`
-- AGENTS.md / BRANCHING.md tip-`dev` train tables
+- AGENTS.md / BRANCHING.md train tables (tip-`main`/`dev` = 0.4.1-beta; live = 0.4.0-beta until Path B)
 
 ### Honesty locks (binding)
 - `lenr_proved` remains **false**
