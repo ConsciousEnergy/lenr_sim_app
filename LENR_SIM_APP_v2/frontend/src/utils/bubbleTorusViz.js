@@ -18,6 +18,48 @@ export const BUBBLE_VIZ_TEMP_FLOOR_K = 300;
 export const BUBBLE_VIZ_TEMP_HOT_K = 8000;
 
 /**
+ * Seat bubble center so the underside nests on the lattice / working-material
+ * boundary (heterogeneous nucleation), instead of floating free above it.
+ *
+ * @param {object} args
+ * @param {number} args.latticeSurfaceY - top of host lattice in vis units
+ * @param {number} args.displayScale - MainBubble visual radius (geom r=1 × scale)
+ * @param {string} [args.phase]
+ * @param {number} [args.phaseProgress] - 0..1 within phase
+ * @param {number} [args.nestPenetration] - fraction of radius sunk into surface
+ * @returns {number} world Y for BubbleGroup
+ */
+export function getLatticeBoundBubbleY({
+  latticeSurfaceY,
+  displayScale,
+  phase = 'EXPANSION',
+  phaseProgress = 0,
+  nestPenetration = 0.12,
+} = {}) {
+  const surface = Number.isFinite(latticeSurfaceY) ? latticeSurfaceY : 0;
+  const radius = Math.max(Number(displayScale) || 0.15, 0.05);
+  const progress = Math.min(1, Math.max(0, Number(phaseProgress) || 0));
+
+  // Deeper nest during collapse / minimum (driven into surface cavities).
+  let nest = nestPenetration;
+  if (phase === 'COLLAPSE') nest = nestPenetration + 0.1 * progress;
+  if (phase === 'MINIMUM') nest = Math.max(nestPenetration, 0.22);
+  if (phase === 'REBOUND') nest = nestPenetration + 0.05 * (1 - progress);
+  nest = Math.min(0.35, Math.max(0.05, nest));
+
+  // Center above surface by (1 - nest) * radius → underside contacts lattice.
+  let y = surface + radius * (1 - nest);
+
+  // Tiny buoyancy lift only late in expansion — still contact-dominated, not free float.
+  if (phase === 'EXPANSION' && progress > 0.55) {
+    const lift = ((progress - 0.55) / 0.45) * radius * 0.08;
+    y += lift;
+  }
+
+  return y;
+}
+
+/**
  * Map temperature_k → shell tint / emissive for bubble & torus (viz only).
  * Returns { color, emissive, emissiveIntensity, roughness, opacityBoost }.
  */

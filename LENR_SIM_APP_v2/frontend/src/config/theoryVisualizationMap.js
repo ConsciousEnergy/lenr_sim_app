@@ -89,13 +89,13 @@ export const THEORY_VISUALIZATION_MAP = {
     reference: 'Gamow (1928); Bojovic et al., Nature (2026)',
   },
   hagelstein_phonon: {
-    vizLayer: null,
+    vizLayer: 'LatticeHostAtoms',
     legendGroup: 'Phonon Transfer',
-    has3DOverlay: false,
+    has3DOverlay: true,
     fidelity: 'schematic',
     displayName: 'Hagelstein Phonon-Nuclear',
     description:
-      'Phonon-nuclear coupling for energy transfer to lattice. Future overlay: phonon wavefronts.',
+      'Phonon-nuclear coupling for energy transfer to lattice. UBLV schematic: host-atom jitter from temperature_k / compression / enhancement_breakdown.phonon — not mode eigenvectors or MD. Continuum phonon wavefronts parked.',
     reference: 'Hagelstein & Chaudhary (2015)',
   },
   kim_bec: {

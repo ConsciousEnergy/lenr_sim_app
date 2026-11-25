@@ -88,7 +88,13 @@ import {
   createInnerLayerMaterial,
   createJetMaterial,
   createTorusPlasmaMaterial,
+  getLatticeBoundBubbleY,
 } from '../../utils/bubbleTorusViz';
+import {
+  ElectronMigrationCloud,
+  buildPhononJitterDisplacements,
+  phononJitterAmplitude,
+} from '../../utils/phononElectronViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -203,31 +209,19 @@ const PHYSICS_CONFIG = {
 // Helper function to convert physics meters to visualization units
 const _physicsToVis = (meters) => meters / PHYSICS_CONFIG.METERS_PER_VIS_UNIT;
 
-// Helper to get bubble Y position based on physics phase
-// NEW: Bubble stays closer to surface, grows in place, then collapses
-const getBubbleYFromPhase = (phase, progress = 0) => {
-  const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-  const distances = PHYSICS_CONFIG.PHASE_DISTANCES;
-  
-  switch (phase) {
-    case 'EXPANSION':
-      // Bubble grows while staying relatively close to surface
-      // Small vertical lift as buoyancy starts to act on growing bubble
-      return latticeY + distances.MINIMUM + (distances.EXPANSION - distances.MINIMUM) * progress;
-    case 'COLLAPSE':
-      // Acoustic/EM forcing drives bubble back toward surface
-      return latticeY + distances.EXPANSION - (distances.EXPANSION - distances.MINIMUM) * progress;
-    case 'MINIMUM':
-      // Bubble collapsed at/near surface - maximum compression
-      // This is where LENR reactions occur
-      return latticeY + distances.MINIMUM;
-    case 'REBOUND':
-      // Energy release causes slight expansion; next cycle restarts as Expansion
-      return latticeY + distances.MINIMUM + (distances.REBOUND - distances.MINIMUM) * progress;
-    default:
-      // Legacy RECOVERY (and unknown labels) behave like Expansion restart
-      return latticeY + distances.MINIMUM;
-  }
+/**
+ * Bubble Y: nest underside on lattice surface (scale-aware).
+ * Prefer getLatticeBoundBubbleY; keep legacy PHASE_DISTANCES only as fallback docs.
+ */
+const getBubbleYFromPhase = (phase, progress = 0, displayScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION) => {
+  const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+  return getLatticeBoundBubbleY({
+    latticeSurfaceY,
+    displayScale,
+    phase,
+    phaseProgress: progress,
+    nestPenetration: 0.14,
+  });
 };
 
 // Bubble scale helpers live in utils/bubbleVisualScale.js so oversized
@@ -409,6 +403,9 @@ const UnifiedBubbleLatticeVisualization = ({
   const plasmaVortexRef = useRef(null);
   // Soft cloud + ribbon companion for ProtonPhaseGroup (schematic wave look; not CFD)
   const protonWaveCompanionRef = useRef(null);
+  // Schematic phonon jitter + e⁻ soft-flow (no MD / continuum solvers)
+  const electronMigrationRef = useRef(null);
+  const phononTimeRef = useRef(0);
   
   // Theoretical mechanism visualization refs
   const casimirFieldRef = useRef(null);
@@ -609,29 +606,32 @@ const UnifiedBubbleLatticeVisualization = ({
       seed: dimension * 17 + Math.round(loadingRatio * 1000),
     });
     
-    const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 16, 16);
+    const hostGeometry = new THREE.SphereGeometry(hostAtomRadiusVisUnits, 20, 20);
     // vertexColors off — per-instance colors via InstancedMesh.instanceColor
-    const hostMaterial3D = new THREE.MeshPhongMaterial({
+    // Metallic host look (presentation; Pd/Ni exclusive colors still via setColorAt)
+    const hostMaterial3D = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      shininess: 100,
-      specular: 0x444444
+      metalness: 0.85,
+      roughness: 0.28,
+      envMapIntensity: 1.0,
     });
     
-    // Hydrogen atom material
+    // Hydrogen / solute atoms — slightly softer emissive beads
     const hydrogenRadius = Math.max(0.06, hostAtomRadiusVisUnits * 0.5);
-    const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 12, 12);
-    const hydrogenMaterial = new THREE.MeshPhongMaterial({
-      color: 0x32cd32,
-      emissive: 0x0a3a0a,
-      emissiveIntensity: 0.3,
-      shininess: 80
+    const hydrogenGeometry = new THREE.SphereGeometry(hydrogenRadius, 14, 14);
+    const hydrogenMaterial = new THREE.MeshStandardMaterial({
+      color: 0x5ee0a0,
+      emissive: 0x0a3a1a,
+      emissiveIntensity: 0.35,
+      metalness: 0.15,
+      roughness: 0.35,
     });
     
     // Bond material
     const bondMaterial = new THREE.LineBasicMaterial({ 
-      color: 0x444444, 
+      color: 0x667788, 
       transparent: true, 
-      opacity: 0.4 
+      opacity: 0.35 
     });
     
     const points = restSites.map((site) => new THREE.Vector3(site.x, site.y, site.z));
@@ -693,6 +693,7 @@ const UnifiedBubbleLatticeVisualization = ({
       bufferUsage: DYNAMIC_LATTICE_BUFFER_USAGE,
       fidelity: DYNAMIC_LATTICE_FIDELITY,
       hostKey: hostColorMeta.hostKey,
+      hostHex: hostColor,
       exclusiveHost: hostColorMeta.exclusive,
       restSites,
       pickable: true,
@@ -854,12 +855,16 @@ const UnifiedBubbleLatticeVisualization = ({
     };
     // Start at nucleation site - very close to lattice surface
     // This reflects physics: heterogeneous nucleation occurs AT surface cavities
-    const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-    const initialY = latticeY + PHYSICS_CONFIG.PHASE_DISTANCES.MINIMUM;
-    bubbleGroup.position.set(0, initialY, 0);
-    
-    // Start with small scale (nucleation size)
+    const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    // Start with small scale (nucleation size) — seated on lattice boundary
     const initialScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION;
+    const initialY = getLatticeBoundBubbleY({
+      latticeSurfaceY,
+      displayScale: initialScale,
+      phase: 'MINIMUM',
+      nestPenetration: 0.16,
+    });
+    bubbleGroup.position.set(0, initialY, 0);
     const geos = createBubbleTorusGeometries();
     
     // Interior gas volume — clearcoat glass-like, kept translucent so shells read
@@ -1120,12 +1125,25 @@ const UnifiedBubbleLatticeVisualization = ({
       fieldGroup.add(proxy);
       energyPoints.userData.proxies.push(proxy);
     }
+
+    // Soft e⁻ migration cloud along field channels (schematic; not continuum transport)
+    electronMigrationRef.current?.dispose?.();
+    const electronCloud = new ElectronMigrationCloud({
+      count: isMobile ? 20 : 40,
+      lineCount,
+      size: 0.18,
+      colorHex: 0x7aeeff,
+    });
+    const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+    electronCloud.update({ latticeY: latticeSurfaceY });
+    fieldGroup.add(electronCloud.getGroup());
+    electronMigrationRef.current = electronCloud;
     
     scene.add(fieldGroup);
     fieldGroupRef.current = fieldGroup;
     
     return fieldGroup;
-  }, []);
+  }, [isMobile]);
 
   // Create fractal child product emissions from nuclear events (recursive helper function)
   // This creates branching fractal structures representing particle emissions
@@ -2340,9 +2358,10 @@ const UnifiedBubbleLatticeVisualization = ({
       }
       
       // ========================================================================
-      // HETEROGENEOUS NUCLEATION — keep bubble attached near the lattice surface
+      // HETEROGENEOUS NUCLEATION — nest bubble underside on lattice boundary
+      // (scale-aware; not a free-floating center offset)
       // ========================================================================
-      bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress);
+      bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress, displayScale);
 
       // Temperature tint from engine/API samples (temperature_k / collapse path).
       // local_fallback chip already covers schematic RAF when samples absent.
@@ -2359,6 +2378,47 @@ const UnifiedBubbleLatticeVisualization = ({
       if (warmFill && tint) {
         warmFill.intensity = 0.25 + tint.heatNorm * 1.1;
         warmFill.color.copy(tint.emissive);
+      }
+    }
+
+    // ========================================================================
+    // PHONON LATTICE JITTER (schematic) — amplitude from T / compression /
+    // enhancement_breakdown.phonon when present. Not MD / mode eigenvectors.
+    // ========================================================================
+    if (showLattice && latticeGroupRef.current) {
+      const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
+      const restSites = hostAtoms?.userData?.restSites;
+      if (hostAtoms && restSites?.length) {
+        phononTimeRef.current += deltaTime;
+        const amp = phononJitterAmplitude({
+          phononFactor: enhancements?.phonon ?? 1,
+          temperatureK: temperature,
+          compressionRatio,
+        });
+        const displacements = buildPhononJitterDisplacements(restSites, {
+          time: phononTimeRef.current,
+          amplitude: amp,
+          frequency: 4.2 + Math.min(2, Math.log10(Math.max(enhancements?.phonon || 1, 1))),
+        });
+        const scratchColor = new THREE.Color();
+        applyDynamicLatticeInstances({
+          sites: restSites,
+          displacements,
+          hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
+          setMatrixAt: (index, elements) => {
+            const m = new THREE.Matrix4();
+            m.fromArray(elements);
+            hostAtoms.setMatrixAt(index, m);
+          },
+          setColorAt: hostAtoms.instanceColor
+            ? (index, rgb) => {
+              scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+              hostAtoms.setColorAt(index, scratchColor);
+            }
+            : undefined,
+        });
+        hostAtoms.instanceMatrix.needsUpdate = true;
+        if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
       }
     }
     
@@ -2645,6 +2705,17 @@ const UnifiedBubbleLatticeVisualization = ({
           ? 0.95
           : (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.85 : 0.4;
       }
+
+      // Electron migration soft-flow along E / enhancement channels (schematic)
+      const latticeYForE = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
+      electronMigrationRef.current?.update?.({
+        electricFieldVPerM: fieldStrength,
+        enhancement: enhancements?.total ?? 1,
+        reversed: phase === 'REBOUND',
+        latticeY: latticeYForE,
+      });
+      const eMigGroup = electronMigrationRef.current?.getGroup?.();
+      if (eMigGroup) eMigGroup.visible = showFieldLines;
     }
     
     // Update effects
@@ -3046,7 +3117,7 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices, showCasimir, showRydberg, showHalo,
+    showBubble, showProtons, showFieldLines, showVortices, showLattice, showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits
   ]); // Note: currentPhase / isPlaying removed - using refs to avoid scene re-initialization
 
@@ -3268,6 +3339,8 @@ const UnifiedBubbleLatticeVisualization = ({
       protonWaveCompanionRef.current = null;
       plasmaVortexRef.current?.dispose?.();
       plasmaVortexRef.current = null;
+      electronMigrationRef.current?.dispose?.();
+      electronMigrationRef.current = null;
       
       // Dispose geometries and materials
       scene.traverse((object) => {
@@ -3815,6 +3888,30 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-wave-viz-chip"
                   sx={{
                     bgcolor: 'rgba(0, 150, 180, 0.85)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Lattice atom jitter from temperature_k / compression / enhancement_breakdown.phonon samples. Not phonon eigenvectors or MD — continuum modes parked.">
+                <Chip
+                  label="Phonon · schematic"
+                  size="small"
+                  data-testid="ublv-phonon-viz-chip"
+                  sx={{
+                    bgcolor: 'rgba(156, 120, 60, 0.9)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Soft charge-flow along E / enhancement channels. Not continuum electron transport or flux trajectories — honesty schematic.">
+                <Chip
+                  label="e⁻ mig · schematic"
+                  size="small"
+                  data-testid="ublv-electron-mig-chip"
+                  sx={{
+                    bgcolor: 'rgba(60, 140, 180, 0.9)',
                     color: 'white',
                     fontSize: '0.6rem',
                   }}
