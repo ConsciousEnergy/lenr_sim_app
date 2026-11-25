@@ -95,6 +95,9 @@ import {
   buildPhononJitterDisplacements,
   phononJitterAmplitude,
 } from '../../utils/phononElectronViz';
+import {
+  resolveCavitationForceViz,
+} from '../../utils/cavitationForceViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -117,11 +120,12 @@ const PROTON_STATES = {
 // Bubble collapse phases (used for animation timing reference)
 // Canonical order: Expansion → Collapse → Minimum → Rebound → repeat
 // eslint-disable-next-line no-unused-vars
+// Durations mirror PHASE_SCHEDULE (short collapse/min for torus pacing).
 const _COLLAPSE_PHASES = {
-  EXPANSION: { name: 'Expansion', duration: 0.45 },
-  COLLAPSE: { name: 'Collapse', duration: 0.25 },
-  MINIMUM: { name: 'Minimum', duration: 0.10 },
-  REBOUND: { name: 'Rebound', duration: 0.20 },
+  EXPANSION: { name: 'Expansion', duration: 0.90 },
+  COLLAPSE: { name: 'Collapse', duration: 0.055 },
+  MINIMUM: { name: 'Minimum', duration: 0.02 },
+  REBOUND: { name: 'Rebound', duration: 0.025 },
 };
 
 // UX Time Scale: Slow down the physics animation for user comprehension
@@ -406,6 +410,13 @@ const UnifiedBubbleLatticeVisualization = ({
   // Schematic phonon jitter + e⁻ soft-flow (no MD / continuum solvers)
   const electronMigrationRef = useRef(null);
   const phononTimeRef = useRef(0);
+  const cavitationForcesRef = useRef({
+    kinetic: 0.2,
+    vorticity: 0.3,
+    flux: 0.25,
+    phononScale: 1,
+    softPlasmaFlash: 0.15,
+  });
   
   // Theoretical mechanism visualization refs
   const casimirFieldRef = useRef(null);
@@ -2208,6 +2219,21 @@ const UnifiedBubbleLatticeVisualization = ({
     // Set enhancement data
     setCurrentEnhancement(enhancements.total);
     setEnhancementBreakdown(enhancements);
+
+    // Cavitation-localized schematic intensities from existing samples (nm presentation)
+    const radiusFactor = radius / Math.max(baseRadius, 1e-12);
+    const cavitationForces = resolveCavitationForceViz({
+      compressionRatio,
+      radiusFactor,
+      phase,
+      electricFieldVPerM: fieldStrength,
+      enhancement: enhancements?.total ?? 1,
+      phononFactor: enhancements?.phonon ?? 1,
+      temperatureK: temperature,
+      loadingRatio,
+    });
+    // Stash on ref so nested blocks can read without reordering large animation body
+    cavitationForcesRef.current = cavitationForces;
     
     // Use ref to track phase changes to avoid stale closure
     if (phase !== currentPhaseRef.current) {
@@ -2241,7 +2267,6 @@ const UnifiedBubbleLatticeVisualization = ({
       // Prefer timeline segment progress when API data is driving the mesh.
       const clockForPhase = liveActive ? normalizedTimeRef.current : normalizedTime;
       const phaseProgress = phaseProgressInCycle(clockForPhase);
-      const radiusFactor = radius / Math.max(baseRadius, 1e-12);
       // While live-streaming, map R/R0 directly so the mesh visibly tracks the
       // WS frames (phase-envelope blending can hide collapse against a stale RAF clock).
       const displayScale = liveActive
@@ -2268,14 +2293,13 @@ const UnifiedBubbleLatticeVisualization = ({
         if (torus) torus.visible = false;
         if (jet) jet.visible = false;
       } else if (phase === 'COLLAPSE') {
-        // Show torus formation (bubble collapsing into torus shape)
+        // Flash torus morph — COLLAPSE is a tiny visual fraction (ns–µs peer pacing)
         const collapseProgress = phaseProgress;
-        const torusProgress = Math.min(1, collapseProgress * 2); // Torus appears halfway through collapse
+        const torusProgress = Math.min(1, Math.pow(collapseProgress, 0.4) * 2.2);
         
         if (bubble && showBubble) {
-          // Fade out ghost interior as torus appears
-          bubble.visible = torusProgress < 0.7;
-          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.5));
+          bubble.visible = torusProgress < 0.45;
+          bubble.scale.setScalar(displayScale * (1 - torusProgress * 0.6));
           const baseOpacity = bubble.userData.baseOpacity ?? 0.1;
           bubble.material.opacity = baseOpacity * (1 - torusProgress);
         } else if (bubble) {
@@ -2283,35 +2307,36 @@ const UnifiedBubbleLatticeVisualization = ({
         }
         
         if (torus) {
-          // Bound to Double-layer bubble layer toggle (was leaking when Layers → Bubble off)
-          torus.visible = showBubble && torusProgress > 0.1;
-          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.5);
-          const tubeRadius = torus.userData.baseTubeRadius * (1 - collapseProgress * 0.6);
+          // Bound to Double-layer bubble layer toggle (dies when Layers → Bubble off)
+          torus.visible = showBubble && torusProgress > 0.04 && torusProgress < 0.98;
+          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.65);
+          const tubeRadius = torus.userData.baseTubeRadius * (1 - collapseProgress * 0.75);
           const scaleFactor = torusRadius / torus.userData.baseRadius;
           torus.scale.setScalar(scaleFactor);
           torus.scale.y = tubeRadius / torus.userData.baseTubeRadius;
-          torus.material.opacity = 0.6 + collapseProgress * 0.3;
+          torus.material.opacity = 0.55 + collapseProgress * 0.4;
           if (torus.material.emissiveIntensity !== undefined) {
-            torus.material.emissiveIntensity = 0.8 + collapseProgress * 1.2;
+            torus.material.emissiveIntensity = 0.9 + collapseProgress * 1.4;
           }
         }
         if (jet) jet.visible = false;
       } else if (phase === 'MINIMUM' || phase === 'REBOUND') {
-        // Show focused jet (torus collapses into focused jet)
+        // Brief jet flash at min-R; dies with Double-layer off
         const minStart = phaseSegment('MINIMUM').start;
         const minWidth = Math.max(phaseSegment('MINIMUM').end - minStart, 1e-12);
         const jetProgress = phase === 'MINIMUM'
-          ? 1.0
+          ? Math.min(1, phaseProgress * 1.8)
           : Math.max(0, 1 - (normalizedTime - minStart) / minWidth);
         
         if (bubble) bubble.visible = false; // Always hide bubble during minimum/rebound
         if (torus) {
-          torus.visible = showBubble && jetProgress < 0.8;
+          torus.visible = showBubble && phase === 'MINIMUM' && jetProgress < 0.55;
           torus.material.opacity = 0.8 * (1 - jetProgress);
         }
         
         if (jet) {
-          jet.visible = showBubble && jetProgress > 0.1;
+          // Short jet flash only — dies with Double-layer off and after min-R flash
+          jet.visible = showBubble && jetProgress > 0.08 && jetProgress < 0.92;
           const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4);
           const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0);
           jet.scale.set(jetRadius / jet.userData.baseRadius, jetHeight / jet.userData.baseHeight, jetRadius / jet.userData.baseRadius);
@@ -2321,6 +2346,9 @@ const UnifiedBubbleLatticeVisualization = ({
           }
           jet.position.set(0, 0, 0);
         }
+      } else {
+        if (torus) torus.visible = false;
+        if (jet) jet.visible = false;
       }
       
       // Ionic double-layer: buildup during expansion → intensified at collapse/cavitation.
@@ -2390,13 +2418,12 @@ const UnifiedBubbleLatticeVisualization = ({
       const restSites = hostAtoms?.userData?.restSites;
       if (hostAtoms && restSites?.length) {
         phononTimeRef.current += deltaTime;
-        // Slightly stronger jitter near cavitation (collapse/minimum) for readability
-        const phaseBoost = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 1.35 : 1;
+        const forces = cavitationForcesRef.current;
         const amp = phononJitterAmplitude({
           phononFactor: enhancements?.phonon ?? 1,
           temperatureK: temperature,
           compressionRatio,
-        }) * phaseBoost;
+        }) * (forces?.phononScale ?? 1);
         const displacements = buildPhononJitterDisplacements(restSites, {
           time: phononTimeRef.current,
           amplitude: amp,
@@ -2732,9 +2759,9 @@ const UnifiedBubbleLatticeVisualization = ({
 
       if (softPos) softPos.needsUpdate = true;
       if (energySoft?.material) {
-        energySoft.material.opacity = phase === 'REBOUND'
-          ? 0.5
-          : (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.42 : 0.28;
+        // Soft field cloud rides expansion lightly; peak with soft-plasma flash near min-R
+        const flash = cavitationForcesRef.current?.softPlasmaFlash ?? 0.2;
+        energySoft.material.opacity = 0.12 + flash * 0.38;
       }
     }
 
@@ -2742,9 +2769,10 @@ const UnifiedBubbleLatticeVisualization = ({
     {
       const latticeYForE = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
       if (showElectronMig) {
+        const fluxBoost = cavitationForcesRef.current?.flux ?? 0.3;
         electronMigrationRef.current?.update?.({
-          electricFieldVPerM: fieldStrength,
-          enhancement: enhancements?.total ?? 1,
+          electricFieldVPerM: fieldStrength * (0.6 + fluxBoost),
+          enhancement: (enhancements?.total ?? 1) * (0.7 + fluxBoost),
           reversed: phase === 'REBOUND',
           latticeY: latticeYForE,
         });
@@ -2759,172 +2787,25 @@ const UnifiedBubbleLatticeVisualization = ({
       const reboundNuclear = effectsGroupRef.current.getObjectByName('ReboundNuclearEvent');
       const shockwave = effectsGroupRef.current.getObjectByName('Shockwave');
       
-      // Fractal nuclear emissions during minimum phase (from bubble collapse)
-      if (phase === 'MINIMUM') {
-        if (nuclearEmissions) {
-          nuclearEmissions.visible = true;
-          
-          // Animate fractal emissions - pulse and expand
-          const emissionIntensity = 1.0;
-          const time = Date.now() * 0.001; // Slower animation
-          
-          // Recursively animate all children in the fractal structure
-          nuclearEmissions.traverse((child) => {
-            if (child.isMesh) {
-              if (child.name && child.name.startsWith('NuclearCore')) {
-                // Pulse the core (tiny nuclear event point)
-                if (!child.userData.pulsePhase) child.userData.pulsePhase = Math.random() * Math.PI * 2;
-                const pulse = Math.sin(time * 10 + child.userData.pulsePhase) * 0.2 + 1.0;
-                child.scale.setScalar(pulse);
-                child.material.emissiveIntensity = 2.0 * emissionIntensity;
-                child.material.opacity = emissionIntensity;
-              } else {
-                // Animate branches and particles
-                const depth = child.userData.depth !== undefined ? child.userData.depth : 0;
-                const pulsePhase = child.userData.pulsePhase !== undefined ? child.userData.pulsePhase : Math.random() * Math.PI * 2;
-                
-                // Pulse animation (slower for deeper branches)
-                const pulseSpeed = 5 - depth * 1.5;
-                const pulse = Math.sin(time * pulseSpeed + pulsePhase) * 0.15 + 1.0;
-                
-                // Scale based on type (cylinder branches vs sphere particles)
-                if (child.geometry.type === 'CylinderGeometry') {
-                  child.scale.y = pulse;
-                  child.scale.x = pulse * 0.8;
-                  child.scale.z = pulse * 0.8;
-                } else if (child.geometry.type === 'SphereGeometry') {
-                  child.scale.setScalar(pulse);
-                }
-                
-                // Fade based on depth and intensity
-                const baseOpacity = child.geometry.type === 'CylinderGeometry' ? 0.8 : 0.9;
-                child.material.opacity = (baseOpacity - depth * 0.15) * emissionIntensity;
-                
-                if (child.material.emissiveIntensity !== undefined) {
-                  child.material.emissiveIntensity = (1.0 - depth * 0.2) * emissionIntensity;
-                }
-              }
-            }
-          });
-        }
-      } else {
-        if (nuclearEmissions) nuclearEmissions.visible = false;
-      }
-      
-      // Rebound nuclear event: fusion > fission cascade with reversed energy flow
-      // This occurs when torus hits lattice and rebounds
-      if (phase === 'REBOUND') {
-        if (reboundNuclear) {
-          reboundNuclear.visible = true;
-          
-          // Calculate rebound progress (0 to 1 during rebound phase)
-          const reboundStart = phaseSegment('REBOUND').start;
-          const reboundWidth = Math.max(phaseSegment('REBOUND').end - reboundStart, 1e-12);
-          const reboundProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / reboundWidth));
-          
-          // Primary fusion products emit from lattice (reversed energy flow)
-          reboundNuclear.children.forEach((child, _index) => {
-            if (child.name && child.name.startsWith('PrimaryProduct')) {
-              // Update primary products
-              child.userData.lifetime += deltaTime;
-              
-              // Emit outward from lattice (reversed direction)
-              if (reboundProgress > 0.1 && child.userData.lifetime < child.userData.maxLifetime) {
-                child.visible = true;
-                
-                // Move outward from lattice (reversed energy flow)
-                const speed = 2.0 * reboundProgress; // Faster as rebound progresses
-                child.position.add(child.userData.velocity.clone().multiplyScalar(speed * deltaTime));
-                
-                // Fade out over lifetime
-                const lifetimeRatio = child.userData.lifetime / child.userData.maxLifetime;
-                child.material.opacity = 0.9 * (1 - lifetimeRatio);
-                
-                // Pulse based on energy
-                const pulse = Math.sin(Date.now() * 0.01 * child.userData.energy) * 0.2 + 1.0;
-                child.scale.setScalar(pulse);
-                
-                // Check if this product should undergo fission
-                if (child.userData.fissionReady && reboundProgress > 0.5 && lifetimeRatio > 0.3) {
-                  // Trigger fission: create secondary products
-                  const secondaryProducts = reboundNuclear.children.filter(c => 
-                    c.name && c.name.startsWith('SecondaryProduct') && !c.visible
-                  );
-                  
-                  // Emit 2-3 secondary products from this location
-                  const numFission = Math.min(2 + Math.floor(Math.random() * 2), secondaryProducts.length);
-                  for (let i = 0; i < numFission; i++) {
-                    const secondary = secondaryProducts[i];
-                    if (secondary) {
-                      secondary.visible = true;
-                      secondary.position.copy(child.position);
-                      
-                      // Random direction (fission fragments)
-                      const fissionAngle = Math.random() * Math.PI * 2;
-                      const fissionElevation = (Math.random() - 0.5) * Math.PI / 3;
-                      secondary.userData.direction = new THREE.Vector3(
-                        Math.sin(fissionElevation) * Math.cos(fissionAngle),
-                        Math.cos(fissionElevation),
-                        Math.sin(fissionElevation) * Math.sin(fissionAngle)
-                      ).normalize();
-                      
-                      secondary.userData.velocity = secondary.userData.direction.clone().multiplyScalar(
-                        0.15 + Math.random() * 0.1
-                      );
-                      secondary.userData.lifetime = 0;
-                    }
-                  }
-                  
-                  // Hide primary product after fission
-                  child.visible = false;
-                  child.userData.fissionReady = false;
-                }
-              } else if (child.userData.lifetime >= child.userData.maxLifetime) {
-                child.visible = false;
-              }
-            } else if (child.name && child.name.startsWith('SecondaryProduct') && child.visible) {
-              // Update secondary fission products
-              child.userData.lifetime += deltaTime;
-              
-              if (child.userData.lifetime < child.userData.maxLifetime) {
-                // Move outward (fission fragments)
-                const speed = 1.5;
-                child.position.add(child.userData.velocity.clone().multiplyScalar(speed * deltaTime));
-                
-                // Fade out
-                const lifetimeRatio = child.userData.lifetime / child.userData.maxLifetime;
-                child.material.opacity = 0.8 * (1 - lifetimeRatio);
-                
-                // Smaller pulse
-                const pulse = Math.sin(Date.now() * 0.015 * child.userData.energy) * 0.15 + 1.0;
-                child.scale.setScalar(pulse);
-              } else {
-                child.visible = false;
-              }
-            }
-          });
-        }
-        
-        // Shockwave during rebound (expanding from lattice)
-        if (shockwave) {
-          const reboundStart = phaseSegment('REBOUND').start;
-          const reboundWidth = Math.max(phaseSegment('REBOUND').end - reboundStart, 1e-12);
-          const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / reboundWidth));
-          // Shockwave emanates from lattice surface (nucleation site)
-          shockwave.position.y = PHYSICS_CONFIG.LATTICE_Y_OFFSET;
-          shockwave.material.opacity = 0.8 * (1 - shockProgress);
-          shockwave.scale.setScalar(1 + shockProgress * 8); // Expand outward
-        }
-      } else {
-        // Hide rebound nuclear event in other phases
-        if (reboundNuclear) reboundNuclear.visible = false;
-        if (shockwave) {
-          shockwave.material.opacity = 0;
-          // Reset shockwave position for next cycle
-          if (phase === 'EXPANSION') {
-            shockwave.position.set(0, -3, 0);
-            shockwave.scale.setScalar(1);
-          }
+      // Soft plasma = Flannigan–Suslick optical/plasma peer only. Keep legacy
+      // "nuclear emissions" / fusion–fission mesh groups OFF — never imply
+      // lenr_proved or close EQ-OPEN from this viz.
+      if (nuclearEmissions) nuclearEmissions.visible = false;
+      if (reboundNuclear) reboundNuclear.visible = false;
+
+      // Hydro shockwave flash on rebound (aspherical collapse peer — not nuclear)
+      if (phase === 'REBOUND' && shockwave) {
+        const reboundStart = phaseSegment('REBOUND').start;
+        const reboundWidth = Math.max(phaseSegment('REBOUND').end - reboundStart, 1e-12);
+        const shockProgress = Math.min(1, Math.max(0, (normalizedTime - reboundStart) / reboundWidth));
+        shockwave.position.y = PHYSICS_CONFIG.LATTICE_Y_OFFSET;
+        shockwave.material.opacity = 0.8 * (1 - shockProgress);
+        shockwave.scale.setScalar(1 + shockProgress * 8);
+      } else if (shockwave) {
+        shockwave.material.opacity = 0;
+        if (phase === 'EXPANSION') {
+          shockwave.position.set(0, -3, 0);
+          shockwave.scale.setScalar(1);
         }
       }
       
@@ -2954,37 +2835,40 @@ const UnifiedBubbleLatticeVisualization = ({
       let coreHeightOffset = 0.3;
       
       // Narrative: double-layer ion/e⁻ buildup → MHD vortex → cavitation (collapse/min)
+      // Scale by schematic vorticity from compression × E × enhancement samples.
+      const vort = cavitationForcesRef.current?.vorticity ?? 0.4;
+      const kin = cavitationForcesRef.current?.kinetic ?? 0.3;
       switch (phase) {
         case 'EXPANSION':
-          vortexIntensity = 0.55; // Building sheath / MHD swirl (readable, soft)
+          vortexIntensity = 0.45 + vort * 0.35;
           flowDirection = -0.45;
-          rotationSpeed = 1.05;
-          radialOscillationSpeed = 0.75;
-          verticalOscillationSpeed = 0.5;
+          rotationSpeed = 0.95 + vort * 0.35;
+          radialOscillationSpeed = 0.65 + vort * 0.25;
+          verticalOscillationSpeed = 0.45 + kin * 0.2;
           coreHeightOffset = 0.45;
           break;
         case 'COLLAPSE':
-          vortexIntensity = 1.45; // Cavitation draw-in — clearest MHD beat
-          flowDirection = 2.5;
-          rotationSpeed = 2.8;
-          radialOscillationSpeed = 1.6;
-          verticalOscillationSpeed = 1.15;
+          vortexIntensity = 1.15 + vort * 0.7 + kin * 0.35;
+          flowDirection = 2.3 + kin * 0.6;
+          rotationSpeed = 2.4 + vort * 0.9;
+          radialOscillationSpeed = 1.4 + kin * 0.5;
+          verticalOscillationSpeed = 1.0 + kin * 0.35;
           coreHeightOffset = 0.22;
           break;
         case 'MINIMUM':
-          vortexIntensity = 1.85; // Peak cavitation core
-          flowDirection = 0.7;
-          rotationSpeed = 3.5;
-          radialOscillationSpeed = 2.2;
-          verticalOscillationSpeed = 1.6;
+          vortexIntensity = 1.5 + vort * 0.7 + kin * 0.45;
+          flowDirection = 0.65 + kin * 0.2;
+          rotationSpeed = 3.1 + vort * 0.8;
+          radialOscillationSpeed = 1.9 + kin * 0.5;
+          verticalOscillationSpeed = 1.4 + kin * 0.4;
           coreHeightOffset = 0.18;
           break;
         case 'REBOUND':
-            vortexIntensity = 1.5;
-            flowDirection = -2.4; // Reversal burst from lattice
-            rotationSpeed = 3.4;
-            radialOscillationSpeed = 2.4;
-            verticalOscillationSpeed = 1.25;
+            vortexIntensity = 1.2 + vort * 0.55;
+            flowDirection = -2.2 - kin * 0.5;
+            rotationSpeed = 3.0 + vort * 0.6;
+            radialOscillationSpeed = 2.1 + kin * 0.4;
+            verticalOscillationSpeed = 1.15 + kin * 0.3;
             coreHeightOffset = 0.35;
           break;
         default:
@@ -3004,12 +2888,15 @@ const UnifiedBubbleLatticeVisualization = ({
           const baseAngular = 0.45 + vortexIntensity * (1 + ((plasmaVortexRef.current.radius - particle.userData.r) / Math.max(plasmaVortexRef.current.radius, 0.1)));
           particle.userData.angularVelocity = baseAngular * flowDirection;
         }
-        // Soft glow driven by existing enhancement samples (presentation only — not CFD).
+        // Soft plasma Points: peak near min-R flash. Flannigan–Suslick optical/plasma
+        // peer only — not fusion, not EQ-OPEN discharge, not lenr_proved.
         if (typeof plasmaVortexRef.current.setEnhancementGlow === 'function') {
-          const baseGlow = enhancementGlowFactor(enhancements?.total ?? 1);
-          const cavitationBoost = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 1.25 : 1;
+          const baseGlow = enhancementGlowFactor(enhancements?.total ?? 1) * 0.35;
+          const flash = cavitationForcesRef.current?.softPlasmaFlash ?? 0.15;
+          const forceGlow = flash * (0.55 + (cavitationForcesRef.current?.vorticity ?? 0.3) * 0.35
+            + (cavitationForcesRef.current?.kinetic ?? 0.2) * 0.25);
           plasmaVortexRef.current.setEnhancementGlow(
-            Math.min(1, baseGlow * cavitationBoost),
+            Math.min(1, Math.max(0.08, baseGlow + forceGlow)),
           );
         }
         plasmaVortexRef.current.update(deltaTime * rotationSpeed);
@@ -3725,8 +3612,8 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showPhonon} onChange={(e) => setShowPhonon(e.target.checked)} size="small" data-testid="ublv-layer-phonon" />}
                     label={
-                      <Tooltip title="Host-atom jitter from T / compression / phonon enhancement — schematic, not MD">
-                        <Typography variant="caption" color="white">Phonon (schematic)</Typography>
+                      <Tooltip title="Schematic lattice modes / contested phonon–heat hypothesis (dual-laser failed independent replication). Not MD; never 'highly reproducible'.">
+                        <Typography variant="caption" color="white">Phonon (schematic / contested)</Typography>
                       </Tooltip>
                     }
                   />
@@ -3737,7 +3624,7 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" data-testid="ublv-layer-bubble" />}
                     label={
-                      <Tooltip title="Ionic double-layer + torus/jet morph during collapse/cavitation">
+                      <Tooltip title="Ionic double-layer + brief torus/jet flash at collapse (ns–µs peer pacing). Torus/jet die when this layer is off. Hydro morphology — not a sustained nuclear burn.">
                         <Typography variant="caption" color="white">Double-layer / torus</Typography>
                       </Tooltip>
                     }
@@ -3753,16 +3640,16 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showElectronMig} onChange={(e) => setShowElectronMig(e.target.checked)} size="small" data-testid="ublv-layer-emig" />}
                     label={
-                      <Tooltip title="Soft charge-flow along E / enhancement — schematic, not continuum transport">
-                        <Typography variant="caption" color="white">e⁻ migration</Typography>
+                      <Tooltip title="Schematic / contested charge-flow motif along E. Not continuum transport; does not close EQ-OPEN-EC-01; never 'highly reproducible'.">
+                        <Typography variant="caption" color="white">e⁻ migration (schematic / contested)</Typography>
                       </Tooltip>
                     }
                   />
                   <FormControlLabel
                     control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" data-testid="ublv-layer-mhd" />}
                     label={
-                      <Tooltip title="MHD vortex / soft plasma from double-layer buildup → cavitation. Schematic — not CFD.">
-                        <Typography variant="caption" color="white">MHD / vortex → cavitation</Typography>
+                      <Tooltip title="Hydro-honest swirl → cavity storytelling (vortex/torus peers). Soft plasma = Flannigan–Suslick optical/plasma peer — not CFD, not fusion, not TheoryModule.">
+                        <Typography variant="caption" color="white">MHD / vortex → cavitation (hydro)</Typography>
                       </Tooltip>
                     }
                   />
@@ -3969,9 +3856,9 @@ const UnifiedBubbleLatticeVisualization = ({
                 size="small"
                 data-testid="ublv-phase-chip"
               />
-              <Tooltip title="Soft Points + ribbon trails — presentation only. Not Navier–Stokes CFD; does not flip lenr_proved or close EQ-OPEN.">
+              <Tooltip title="Soft Points peak near min-R. Peer: Flannigan–Suslick SBSL plasma (optical / n_e). Plasma ≠ fusion; does not flip lenr_proved or close EQ-OPEN.">
                 <Chip
-                  label="Wave look · schematic"
+                  label="Soft plasma · Flannigan–Suslick peer"
                   size="small"
                   data-testid="ublv-wave-viz-chip"
                   sx={{
@@ -3981,9 +3868,9 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
-              <Tooltip title="Lattice atom jitter from temperature_k / compression / enhancement_breakdown.phonon samples. Not phonon eigenvectors or MD — continuum modes parked.">
+              <Tooltip title="Schematic lattice modes; dual-laser phonon→heat stays contested (failed independent replication). Not MD; never 'highly reproducible'.">
                 <Chip
-                  label="Phonon · schematic"
+                  label="Phonon · schematic / contested"
                   size="small"
                   data-testid="ublv-phonon-viz-chip"
                   sx={{
@@ -3993,13 +3880,25 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
-              <Tooltip title="Soft charge-flow along E / enhancement channels. Not continuum electron transport or flux trajectories — honesty schematic.">
+              <Tooltip title="Schematic / contested charge-flow. Not continuum transport; EQ-OPEN-EC-01 stays OPEN; never 'highly reproducible'.">
                 <Chip
-                  label="e⁻ mig · schematic"
+                  label="e⁻ mig · schematic / contested"
                   size="small"
                   data-testid="ublv-electron-mig-chip"
                   sx={{
                     bgcolor: 'rgba(60, 140, 180, 0.9)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Hydro-honest flux / vorticity / MHD→cavitation cues from existing samples. Schematic viz — not CFD/MD proof or TheoryModule discharge.">
+                <Chip
+                  label="MHD→cavitation · hydro schematic"
+                  size="small"
+                  data-testid="ublv-cavitation-force-chip"
+                  sx={{
+                    bgcolor: 'rgba(120, 70, 90, 0.9)',
                     color: 'white',
                     fontSize: '0.6rem',
                   }}

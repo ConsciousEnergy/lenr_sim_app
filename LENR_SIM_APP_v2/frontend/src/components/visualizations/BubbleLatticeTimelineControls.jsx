@@ -124,11 +124,19 @@ export default function BubbleLatticeTimelineControls({
       <Typography variant="caption" color="text.secondary">
         Scrub cycle ({(cycleFraction * 100).toFixed(0)}%)
       </Typography>
-      <Tooltip title="Physical acoustic time · remapped visual time">
+      <Tooltip title="t_phys: acoustic period fraction (collapse flash ≪ period). t_visual: remapped scrub via VISUAL_CYCLE_SCALE — never real-time collapse.">
         <Chip
           size="small"
-          label={dual.label}
-          data-testid="ublv-dual-clock"
+          label={`t_phys ${dual.label.split(' · ')[0]}`}
+          data-testid="ublv-t-phys"
+          sx={{ fontSize: '0.65rem', height: 20 }}
+        />
+      </Tooltip>
+      <Tooltip title="Remapped visual clock for human-readable scrub. Torus/jet dwell is a flash fraction — not a sustained burn.">
+        <Chip
+          size="small"
+          label={`t_visual ${dual.label.split(' · ')[1] || dual.label}`}
+          data-testid="ublv-t-visual"
           sx={{ fontSize: '0.65rem', height: 20 }}
         />
       </Tooltip>
@@ -138,6 +146,12 @@ export default function BubbleLatticeTimelineControls({
         label={formatCycleTimeChip(frequencyKhz)}
         data-testid="ublv-period-chip"
         sx={{ fontSize: '0.6rem', height: 20 }}
+      />
+      <Chip
+        size="small"
+        label={dual.label}
+        data-testid="ublv-dual-clock"
+        sx={{ display: 'none' }}
       />
       {bufferSampleCount > 0 && (
         <Chip

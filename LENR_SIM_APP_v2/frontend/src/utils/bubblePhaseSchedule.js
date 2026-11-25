@@ -7,14 +7,20 @@
  * Backend timelines store ``normalized_time`` on the acoustic / RP clock, but
  * label MINIMUM via ``anchor_cycle_fraction`` so the true min-radius sample
  * sits in the MINIMUM segment. The 3D viz remaps that timeline onto the
- * visual schedule (MINIMUM at 70–80%) with ``timelineOnVisualClock``.
+ * visual schedule with ``timelineOnVisualClock``.
+ *
+ * Collapse + minimum are a tiny fraction of the visual cycle so torus/jet
+ * reads as a ns–µs flash (SCBL ~3–20 ns; µm nanobubbles <200 ns peers) —
+ * presentation pacing inside remapped t_visual, not lab-time fidelity and
+ * not a sustained nuclear burn. Acoustic RP samples still map via
+ * ``anchor_cycle_fraction``.
  */
 
 export const PHASE_SCHEDULE = [
-  { name: 'EXPANSION', start: 0.0, end: 0.45 },
-  { name: 'COLLAPSE', start: 0.45, end: 0.7 },
-  { name: 'MINIMUM', start: 0.7, end: 0.8 },
-  { name: 'REBOUND', start: 0.8, end: 1.0 },
+  { name: 'EXPANSION', start: 0.0, end: 0.90 },
+  { name: 'COLLAPSE', start: 0.90, end: 0.955 },
+  { name: 'MINIMUM', start: 0.955, end: 0.975 },
+  { name: 'REBOUND', start: 0.975, end: 1.0 },
 ];
 
 export const CANONICAL_PHASES = PHASE_SCHEDULE.map((entry) => entry.name);

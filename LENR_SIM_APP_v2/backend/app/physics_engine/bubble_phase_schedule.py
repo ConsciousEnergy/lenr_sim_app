@@ -17,11 +17,14 @@ from __future__ import annotations
 from typing import List, Tuple
 
 # (name, start_inclusive, end_exclusive) fractions of one acoustic / visual cycle.
+# Collapse+minimum are a flash fraction of the remapped visual cycle (SCBL /
+# nanobubble peers are ns–µs) so torus/jet does not scrub like a sustained
+# burn; acoustic RP samples still anchor to MINIMUM_CENTER.
 PHASE_SCHEDULE: Tuple[Tuple[str, float, float], ...] = (
-    ("EXPANSION", 0.00, 0.45),
-    ("COLLAPSE", 0.45, 0.70),
-    ("MINIMUM", 0.70, 0.80),
-    ("REBOUND", 0.80, 1.00),
+    ("EXPANSION", 0.00, 0.90),
+    ("COLLAPSE", 0.90, 0.955),
+    ("MINIMUM", 0.955, 0.975),
+    ("REBOUND", 0.975, 1.00),
 )
 
 CANONICAL_PHASES = ("EXPANSION", "COLLAPSE", "MINIMUM", "REBOUND")

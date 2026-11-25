@@ -20,8 +20,9 @@ import {
 describe('bubblePhaseSchedule', () => {
   test('walks Expansion → Collapse → Minimum → Rebound then repeats', () => {
     const sequence = [];
-    for (let i = 0; i < 40; i += 1) {
-      const phase = phaseFromCycleFraction(i / 40);
+    // Dense walk — MINIMUM is only ~2% of the flash schedule
+    for (let i = 0; i < 200; i += 1) {
+      const phase = phaseFromCycleFraction(i / 200);
       if (!sequence.length || sequence[sequence.length - 1] !== phase) {
         sequence.push(phase);
       }
@@ -35,20 +36,29 @@ describe('bubblePhaseSchedule', () => {
 
   test('phase progress is within the active segment', () => {
     expect(phaseProgressInCycle(0.0)).toBeCloseTo(0, 5);
-    expect(phaseProgressInCycle(0.225)).toBeCloseTo(0.5, 5); // mid expansion
-    expect(phaseFromCycleFraction(0.75)).toBe('MINIMUM');
+    expect(phaseProgressInCycle(0.45)).toBeCloseTo(0.5, 5); // mid expansion (0–0.90)
+    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+  });
+
+  test('collapse+minimum are a flash fraction of the visual cycle', () => {
+    expect(phaseFromCycleFraction(0.89)).toBe('EXPANSION');
+    expect(phaseFromCycleFraction(0.92)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+    expect(phaseFromCycleFraction(0.99)).toBe('REBOUND');
+    // COLLAPSE+MINIMUM ≈ 7.5% of cycle — ns–µs peer pacing, not long scrub burn
+    expect(MINIMUM_CENTER).toBeCloseTo(0.965, 5);
   });
 
   test('timeline progress uses the contiguous API phase segment', () => {
     const timeline = [
       { normalized_time: 0.0, phase: 'EXPANSION' },
       { normalized_time: 0.2, phase: 'EXPANSION' },
-      { normalized_time: 0.45, phase: 'COLLAPSE' },
-      { normalized_time: 0.6, phase: 'COLLAPSE' },
-      { normalized_time: 0.7, phase: 'MINIMUM' },
+      { normalized_time: 0.90, phase: 'COLLAPSE' },
+      { normalized_time: 0.93, phase: 'COLLAPSE' },
+      { normalized_time: 0.96, phase: 'MINIMUM' },
     ];
     expect(phaseProgressFromTimeline(timeline, 0.1, 'EXPANSION')).toBeCloseTo(0.5, 5);
-    expect(phaseProgressFromTimeline(timeline, 0.525, 'COLLAPSE')).toBeCloseTo(0.5, 5);
+    expect(phaseProgressFromTimeline(timeline, 0.915, 'COLLAPSE')).toBeCloseTo(0.5, 5);
     expect(CANONICAL_PHASES).toContain('REBOUND');
   });
 
@@ -92,11 +102,11 @@ describe('bubblePhaseSchedule', () => {
     };
 
     expect(phaseFromCycleFraction(0.20)).toBe('EXPANSION');
-    expect(phaseFromCycleFraction(0.55)).toBe('COLLAPSE');
-    expect(phaseFromCycleFraction(0.75)).toBe('MINIMUM');
-    expect(phaseFromCycleFraction(0.90)).toBe('REBOUND');
-    expect(radiusAt(0.75)).toBeLessThan(radiusAt(0.20));
-    expect(radiusAt(0.75)).toBeLessThan(radiusAt(0.90));
+    expect(phaseFromCycleFraction(0.92)).toBe('COLLAPSE');
+    expect(phaseFromCycleFraction(0.965)).toBe('MINIMUM');
+    expect(phaseFromCycleFraction(0.99)).toBe('REBOUND');
+    expect(radiusAt(MINIMUM_CENTER)).toBeLessThan(radiusAt(0.20));
+    expect(radiusAt(MINIMUM_CENTER)).toBeLessThan(radiusAt(0.99));
   });
 
   test('visual viz clock looks up the acoustic min-radius sample at MINIMUM', () => {
@@ -108,7 +118,6 @@ describe('bubblePhaseSchedule', () => {
     ];
     expect(minimumFractionFromTimeline(timeline)).toBeCloseTo(0.22, 5);
     expect(visualTimeToTimelineTime(MINIMUM_CENTER, timeline)).toBeCloseTo(0.22, 5);
-    expect(visualTimeToTimelineTime(0.75, timeline)).toBeCloseTo(0.22, 5);
     const remapped = timelineOnVisualClock(timeline);
     const minSample = remapped.reduce((best, entry) => (
       entry.radius_factor < best.radius_factor ? entry : best

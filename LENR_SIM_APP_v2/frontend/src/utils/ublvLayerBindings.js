@@ -11,7 +11,7 @@ export const UBLV_LAYER_BINDINGS = Object.freeze([
   },
   {
     id: 'phonon',
-    label: 'Phonon (schematic)',
+    label: 'Phonon (schematic / contested)',
     targets: ['LatticeHostAtoms.displacements'],
     requires: ['lattice'],
   },
@@ -32,12 +32,12 @@ export const UBLV_LAYER_BINDINGS = Object.freeze([
   },
   {
     id: 'emig',
-    label: 'e⁻ migration',
+    label: 'e⁻ migration (schematic / contested)',
     targets: ['ElectronMigrationGroup'],
   },
   {
     id: 'mhd',
-    label: 'MHD / vortex → cavitation',
+    label: 'MHD / vortex → cavitation (hydro)',
     targets: ['MHDFlowGroup', 'plasmaVortex', 'PlasmaSoftCloud'],
   },
 ]);
