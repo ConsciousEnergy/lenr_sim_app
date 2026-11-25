@@ -1,4 +1,4 @@
-# Agent and contributor current truth (tip-dev train = v0.4.1-beta; tip-main / live = v0.4.0-beta until promote + Path B; revert = Swarm v0.3.9-beta)
+# Agent and contributor current truth (tip-main / tip-dev markers = v0.4.1-beta; live share = tip-dev Path B packs train @ bbad63c / 0.4.1-beta; revert = Swarm v0.3.9-beta)
 
 Short map for humans and Cursor agents. Prefer this over stale trackers.
 
@@ -6,7 +6,7 @@ Short map for humans and Cursor agents. Prefer this over stale trackers.
 
 | Branch | Markers must be | Role |
 |--------|-----------------|------|
-| `main` | **`0.4.0-beta`** | Public Swarm release line (Traefik SPA + API); ship / hotfix; revert = Swarm v0.3.9-beta |
+| `main` | **`0.4.1-beta`** | Public Swarm release line (Traefik SPA + API); ship / hotfix; live already on tip-`dev` packs train **`0.4.1-beta`** (`bbad63c`); revert = Swarm v0.3.9-beta |
 | `dev` | **`0.4.1-beta`** | Integration tip; **never** auto-deployed by `deploy.yml` |
 
 Four markers (must match within a branch):
@@ -23,10 +23,10 @@ Branching policy: [`.github/BRANCHING.md`](.github/BRANCHING.md).
 
 | Surface | Meaning |
 |---------|---------|
-| `https://api.conscious.energy` | Public Swarm API (Traefik on share manager `1280333` / `185.211.4.66`). Rolls to **0.4.0-beta** after Path B ship; revert = **0.3.9-beta**. |
+| `https://api.conscious.energy` | Public Swarm API (Traefik on share manager `1280333` / `185.211.4.66`). Live **`0.4.1-beta`** (Path B tip-`dev` packs @ `bbad63c`); revert = **0.3.9-beta**. |
 | `https://lenr-sim-beta.conscious.energy` | Same-origin Traefik SPA + API on the Swarm share host (Compose stack retired; keep Compose rollback tag/images ≥1 release). See [`LIVE_SHARE_STATUS.md`](LENR_SIM_APP_v2/docs/v0.3.7-beta/LIVE_SHARE_STATUS.md). |
 | `https://app.conscious.energy` | Cloudflare Pages SPA → API at `api.conscious.energy` (split-origin; apex/`www` stay WordPress). |
-| `main` | Release line matching Swarm train (`0.4.0-beta` after promote); ship via Ansible / SSH — **not** auto from bare push. |
+| `main` | Tip markers **0.4.1-beta** after packs-train promote (#512–#515); live already on tip-`dev` packs (`bbad63c`); ship via Ansible / SSH — **not** auto from bare push. |
 | `dev` | Integration tip (`0.4.1-beta` markers); **never** auto-deployed by `deploy.yml`. |
 
 Self-hosted CI **online:** dedicated Hostinger KVM2 `2012566` / `45.93.100.251`
