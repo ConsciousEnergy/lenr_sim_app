@@ -74,6 +74,12 @@ import {
   resolveExclusiveHostColor,
   resolveLatticePick,
 } from '../../utils/dynamicLattice';
+import {
+  ProtonWaveCompanion,
+  enhancementGlowFactor,
+  createSoftDiscTexture,
+  createSoftPointsMaterial,
+} from '../../utils/waveParticleViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -392,6 +398,8 @@ const UnifiedBubbleLatticeVisualization = ({
   const vortexFieldRef = useRef(null);
   const energyFlowRef = useRef(null);
   const plasmaVortexRef = useRef(null);
+  // Soft cloud + ribbon companion for ProtonPhaseGroup (schematic wave look; not CFD)
+  const protonWaveCompanionRef = useRef(null);
   
   // Theoretical mechanism visualization refs
   const casimirFieldRef = useRef(null);
@@ -979,14 +987,15 @@ const UnifiedBubbleLatticeVisualization = ({
 
   // Create H2/D2 particles that follow MHD fluid dynamics
   // Physics: Ionized hydrogen/deuterium in electrolytic bubble boundary layer
-  // These particles swirl around the bubble following MHD flow patterns
+  // These particles swirl around the bubble following MHD flow patterns.
+  // Visual look: soft Points cloud + ribbon trails (schematic; not CFD).
   const createProtons = useCallback((scene) => {
     const protonGroup = new THREE.Group();
     protonGroup.name = 'ProtonPhaseGroup';
     
     // More, smaller particles for MHD fluid visualization
     const protonCount = 60; // More particles for fluid-like appearance
-    const protonGeometry = new THREE.SphereGeometry(0.05, 6, 6); // Smaller H2/D2 particles
+    const protonGeometry = new THREE.SphereGeometry(0.035, 6, 6); // Tiny state cores; soft cloud carries the look
     
     for (let i = 0; i < protonCount; i++) {
       // Start with FREE state (ionized H2/D2 in solution)
@@ -995,7 +1004,10 @@ const UnifiedBubbleLatticeVisualization = ({
         color: state.color,
         emissive: state.emissive,
         emissiveIntensity: state.emissiveIntensity,
-        shininess: 60
+        shininess: 60,
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false,
       });
       
       const proton = new THREE.Mesh(protonGeometry, protonMaterial);
@@ -1047,6 +1059,17 @@ const UnifiedBubbleLatticeVisualization = ({
     
     scene.add(protonGroup);
     protonGroupRef.current = protonGroup;
+
+    // Soft wave companion (additive Points + ribbons) — presentation only
+    protonWaveCompanionRef.current?.dispose?.();
+    const waveCompanion = new ProtonWaveCompanion({
+      particleCount: protonCount,
+      trailLength: 14,
+      coreSize: 0.26,
+      trailColor: 0xff8a3d,
+    });
+    scene.add(waveCompanion.getGroup());
+    protonWaveCompanionRef.current = waveCompanion;
     
     return protonGroup;
   }, []);
@@ -1084,23 +1107,42 @@ const UnifiedBubbleLatticeVisualization = ({
       fieldGroup.add(line);
     }
     
-    // Energy flow particles
-    const particleGeometry = new THREE.SphereGeometry(0.05, 6, 6);
-    const particleMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      transparent: true,
-      opacity: 0.8
+    // Energy flow particles — soft Points (wave look); kinematics still per-proxy Object3D
+    const energyCount = 20;
+    const softMap = createSoftDiscTexture();
+    const energyPositions = new Float32Array(energyCount * 3);
+    const energyColors = new Float32Array(energyCount * 3);
+    const energyColor = new THREE.Color(0xffee66);
+    for (let i = 0; i < energyCount; i += 1) {
+      energyColors[i * 3] = energyColor.r;
+      energyColors[i * 3 + 1] = energyColor.g;
+      energyColors[i * 3 + 2] = energyColor.b;
+    }
+    const energyGeometry = new THREE.BufferGeometry();
+    energyGeometry.setAttribute('position', new THREE.BufferAttribute(energyPositions, 3));
+    energyGeometry.setAttribute('color', new THREE.BufferAttribute(energyColors, 3));
+    const energyMaterial = createSoftPointsMaterial({
+      color: 0xffffff,
+      size: 0.28,
+      opacity: 0.85,
+      map: softMap,
     });
-    
-    for (let i = 0; i < 20; i++) {
-      const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
-      particle.userData = {
+    const energyPoints = new THREE.Points(energyGeometry, energyMaterial);
+    energyPoints.name = 'EnergySoftCloud';
+    energyPoints.userData = { proxies: [] };
+    fieldGroup.add(energyPoints);
+
+    for (let i = 0; i < energyCount; i++) {
+      const proxy = new THREE.Object3D();
+      proxy.userData = {
         t: Math.random(),
         speed: 0.02 + Math.random() * 0.02,
-        lineIndex: Math.floor(Math.random() * lineCount)
+        lineIndex: Math.floor(Math.random() * lineCount),
+        softIndex: i,
       };
-      particle.name = `EnergyParticle${i}`;
-      fieldGroup.add(particle);
+      proxy.name = `EnergyParticle${i}`;
+      fieldGroup.add(proxy);
+      energyPoints.userData.proxies.push(proxy);
     }
     
     scene.add(fieldGroup);
@@ -1652,6 +1694,7 @@ const UnifiedBubbleLatticeVisualization = ({
 
   // Delocalized interface-electron cloud visualization (formerly "halo electrons")
   // Paper §2.2: P_overlap ≈ (r₀/a)³ exp(-2r₀/a) ≈ 8.5×10⁻¹⁶ (not ~10⁻³)
+  // Soft Points probability cloud — artistic particle count; not quantitative overlap proof.
   const createHaloElectrons = useCallback((scene) => {
     const haloGroup = new THREE.Group();
     haloGroup.name = 'HaloElectronsGroup';
@@ -1660,8 +1703,7 @@ const UnifiedBubbleLatticeVisualization = ({
     // Quantitative overlap is ~10⁻¹⁶ per the paper; particle count here is artistic
     const protonCount = 20; // Number of protons to show halo electrons for
     const cloudParticleCount = 150; // Particles per cloud
-    
-    const particleGeometry = new THREE.SphereGeometry(0.03, 6, 6);
+    const softMap = createSoftDiscTexture();
     
     for (let i = 0; i < protonCount; i++) {
       const cloudGroup = new THREE.Group();
@@ -1676,14 +1718,10 @@ const UnifiedBubbleLatticeVisualization = ({
       
       // Create probability cloud (larger than normal electron cloud)
       const cloudRadius = 0.4; // Extended halo radius
-      const particleMaterial = new THREE.MeshStandardMaterial({
-        color: 0x00ffff,
-        transparent: true,
-        opacity: 0.4,
-        emissive: 0x00ffff,
-        emissiveIntensity: 0.3
-      });
-      
+      const positions = [];
+      const colors = [];
+      const cloudColor = new THREE.Color(0x00ffff);
+
       for (let j = 0; j < cloudParticleCount; j++) {
         // Spherical distribution with exponential falloff (halo probability distribution)
         const r = cloudRadius * Math.sqrt(Math.random()); // Uniform in volume
@@ -1695,18 +1733,29 @@ const UnifiedBubbleLatticeVisualization = ({
         const probability = Math.exp(-2 * r / a);
         if (Math.random() > probability) continue; // Skip low-probability regions
         
-        const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
-        particle.position.set(
+        positions.push(
           basePos.x + r * Math.sin(phi) * Math.cos(theta),
           basePos.y + r * Math.sin(phi) * Math.sin(theta),
-          basePos.z + r * Math.cos(phi)
+          basePos.z + r * Math.cos(phi),
         );
-        particle.userData = { 
-          basePosition: particle.position.clone(),
-          probability,
-          r
-        };
-        cloudGroup.add(particle);
+        const fade = 0.35 + probability * 0.65;
+        colors.push(cloudColor.r * fade, cloudColor.g * fade, cloudColor.b * fade);
+      }
+
+      if (positions.length >= 3) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        const material = createSoftPointsMaterial({
+          color: 0xffffff,
+          size: 0.18,
+          opacity: 0.7,
+          map: softMap,
+        });
+        const softCloud = new THREE.Points(geometry, material);
+        softCloud.name = `HaloSoftCloud${i}`;
+        softCloud.userData = { basePosition: basePos.clone(), source: 'schematic_visualization' };
+        cloudGroup.add(softCloud);
       }
       
       // Add nucleus indicator (small bright sphere)
@@ -2534,11 +2583,23 @@ const UnifiedBubbleLatticeVisualization = ({
           }
         }
       });
+
+      // Soft wave companion: ribbon trails + additive cloud from mesh cores
+      const waveGlow = enhancementGlowFactor(enhancements?.total ?? 1);
+      protonWaveCompanionRef.current?.syncFromMeshes?.(
+        protonGroupRef.current.children,
+        { glow: waveGlow, hideMeshCores: true },
+      );
+      if (protonWaveCompanionRef.current?.getGroup) {
+        protonWaveCompanionRef.current.getGroup().visible = showProtons;
+      }
     }
     
     // Update field lines
     if (fieldGroupRef.current && showFieldLines) {
       const fieldIntensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 1 : 0.3;
+      const energySoft = fieldGroupRef.current.getObjectByName('EnergySoftCloud');
+      const softPos = energySoft?.geometry?.attributes?.position;
       
       fieldGroupRef.current.children.forEach((child) => {
         if (child.name.startsWith('FieldLine')) {
@@ -2566,12 +2627,23 @@ const UnifiedBubbleLatticeVisualization = ({
               -5 + t * 7, // From lattice upward (reversed)
               lineRadius * Math.sin(angle)
             );
-            child.material.opacity = 0.9; // Bright during rebound
-          } else {
-          child.material.opacity = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.8 : 0.3;
+          }
+
+          const softIndex = child.userData.softIndex;
+          if (softPos && Number.isInteger(softIndex)) {
+            softPos.array[softIndex * 3] = child.position.x;
+            softPos.array[softIndex * 3 + 1] = child.position.y;
+            softPos.array[softIndex * 3 + 2] = child.position.z;
           }
         }
       });
+
+      if (softPos) softPos.needsUpdate = true;
+      if (energySoft?.material) {
+        energySoft.material.opacity = phase === 'REBOUND'
+          ? 0.95
+          : (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.85 : 0.4;
+      }
     }
     
     // Update effects
@@ -2823,6 +2895,12 @@ const UnifiedBubbleLatticeVisualization = ({
           if (!particle?.userData) continue;
           const baseAngular = 0.45 + vortexIntensity * (1 + ((plasmaVortexRef.current.radius - particle.userData.r) / Math.max(plasmaVortexRef.current.radius, 0.1)));
           particle.userData.angularVelocity = baseAngular * flowDirection;
+        }
+        // Soft glow driven by existing enhancement samples (presentation only — not CFD).
+        if (typeof plasmaVortexRef.current.setEnhancementGlow === 'function') {
+          plasmaVortexRef.current.setEnhancementGlow(
+            enhancementGlowFactor(enhancements?.total ?? 1),
+          );
         }
         plasmaVortexRef.current.update(deltaTime * rotationSpeed);
           } catch (err) {
@@ -3180,6 +3258,11 @@ const UnifiedBubbleLatticeVisualization = ({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(frameIdRef.current);
+
+      protonWaveCompanionRef.current?.dispose?.();
+      protonWaveCompanionRef.current = null;
+      plasmaVortexRef.current?.dispose?.();
+      plasmaVortexRef.current = null;
       
       // Dispose geometries and materials
       scene.traverse((object) => {
@@ -3510,9 +3593,13 @@ const UnifiedBubbleLatticeVisualization = ({
                     label={<Typography variant="caption" color="white">Fields</Typography>}
                   />
                   <FormControlLabel
-                    control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
-                    label={<Typography variant="caption" color="white">MHD Flow</Typography>}
-                  />
+                control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
+                label={
+                  <Tooltip title="Schematic wave-particle look — not CFD / Navier–Stokes; no fluid proof">
+                    <Typography variant="caption" color="white">MHD Flow (schematic)</Typography>
+                  </Tooltip>
+                }
+              />
                   <FormControlLabel
                     control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
                     label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
@@ -3716,6 +3803,18 @@ const UnifiedBubbleLatticeVisualization = ({
                 size="small"
                 data-testid="ublv-phase-chip"
               />
+              <Tooltip title="Soft Points + ribbon trails — presentation only. Not Navier–Stokes CFD; does not flip lenr_proved or close EQ-OPEN.">
+                <Chip
+                  label="Wave look · schematic"
+                  size="small"
+                  data-testid="ublv-wave-viz-chip"
+                  sx={{
+                    bgcolor: 'rgba(0, 150, 180, 0.85)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
               <Tooltip title={hostMeltMeta.citeNote}>
                 <Chip
                   label={

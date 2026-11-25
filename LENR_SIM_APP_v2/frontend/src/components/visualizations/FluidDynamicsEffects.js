@@ -3,15 +3,26 @@
  * 
  * Implements fluid dynamics-inspired visualization effects for particle simulations.
  * Based on concepts from vortex particle flow maps and incompressible flow simulation.
+ *
+ * HONESTY: These helpers are presentation / schematic motion cues. They are NOT a
+ * Navier–Stokes, SPH, or continuum CFD solver and must not be cited as fluid proof.
  * 
  * Key features:
  * - Vortex field generation for swirling particle motion
  * - Streamline/flow line visualization
  * - Particle trail effects
+ * - Soft Points + ribbon wave look (PlasmaVortexEffect)
  * - Energy flow mapping
  */
 
 import * as THREE from 'three';
+import {
+  createSoftDiscTexture,
+  createSoftPointsMaterial,
+  WaveRibbonTrailSystem,
+  WAVE_PARTICLE_FIDELITY,
+  WAVE_PARTICLE_SOURCE,
+} from '../../utils/waveParticleViz';
 
 /**
  * Creates a vortex field effect that adds swirling motion to particles
@@ -418,7 +429,8 @@ export class EnergyFlowVisualizer {
 }
 
 /**
- * Creates a swirling plasma effect using instanced particles
+ * Creates a swirling plasma / wave-particle effect using soft Points + ribbon trails.
+ * Schematic presentation only — not continuum CFD.
  */
 export class PlasmaVortexEffect {
   constructor(options = {}) {
@@ -428,51 +440,95 @@ export class PlasmaVortexEffect {
     this.verticalSpeed = options.verticalSpeed || 0.3;
     this.radius = options.radius || 3;
     this.height = options.height || 2;
+    this.pointSize = options.pointSize || 0.32;
+    this.trailLength = options.trailLength || 10;
+    this.glow = options.glow ?? 0.55;
     this.group = new THREE.Group();
     this.group.name = 'plasmaVortex';
+    this.group.userData = {
+      fidelity: WAVE_PARTICLE_FIDELITY,
+      source: WAVE_PARTICLE_SOURCE,
+    };
+    /** @type {{ position: THREE.Vector3, userData: object, material: { color: THREE.Color } }[]} */
     this.particles = [];
     this.time = 0;
+    this._softMap = null;
+    this._points = null;
+    this._positions = null;
+    this._colors = null;
+    this._trails = null;
+    this._scratchSamples = [];
   }
 
   initialize() {
-    // Clear existing
     while (this.group.children.length > 0) {
       const child = this.group.children[0];
-      child.geometry?.dispose();
-      child.material?.dispose();
+      child.geometry?.dispose?.();
+      child.material?.dispose?.();
       this.group.remove(child);
     }
     this.particles = [];
+    this._trails?.dispose?.();
+    this._softMap?.dispose?.();
 
-    const geometry = new THREE.SphereGeometry(0.03, 6, 6);
-    
-    for (let i = 0; i < this.particleCount; i++) {
-      // Random initial position in cylindrical coordinates
+    const n = this.particleCount;
+    this._positions = new Float32Array(n * 3);
+    this._colors = new Float32Array(n * 3);
+    this._softMap = createSoftDiscTexture();
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(this._positions, 3).setUsage(THREE.DynamicDrawUsage),
+    );
+    geometry.setAttribute(
+      'color',
+      new THREE.BufferAttribute(this._colors, 3).setUsage(THREE.DynamicDrawUsage),
+    );
+
+    const material = createSoftPointsMaterial({
+      color: 0xffffff,
+      size: this.pointSize,
+      opacity: 0.85,
+      map: this._softMap,
+    });
+
+    this._points = new THREE.Points(geometry, material);
+    this._points.name = 'PlasmaSoftCloud';
+    this.group.add(this._points);
+
+    this._trails = new WaveRibbonTrailSystem({
+      particleCount: n,
+      trailLength: this.trailLength,
+      colorHex: 0xff6a2a,
+      opacity: 0.45,
+    });
+    this.group.add(this._trails.getGroup());
+
+    for (let i = 0; i < n; i += 1) {
       const theta = Math.random() * Math.PI * 2;
       const r = Math.random() * this.radius;
       const y = (Math.random() - 0.5) * this.height;
-      
-      const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color().setHSL(0.55 + Math.random() * 0.15, 1, 0.5 + Math.random() * 0.3),
-        transparent: true,
-        opacity: 0.7
-      });
-      
-      const particle = new THREE.Mesh(geometry, material);
-      
-      particle.userData = {
-        theta,
-        r,
-        y,
-        baseY: y,
-        angularVelocity: this.vortexStrength * (1 + (this.radius - r) / this.radius),
-        radialPhase: Math.random() * Math.PI * 2
+      const color = new THREE.Color().setHSL(0.55 + Math.random() * 0.15, 1, 0.55);
+
+      const particle = {
+        position: new THREE.Vector3(),
+        material: { color },
+        userData: {
+          theta,
+          r,
+          y,
+          baseY: y,
+          angularVelocity: this.vortexStrength * (1 + (this.radius - r) / this.radius),
+          radialPhase: Math.random() * Math.PI * 2,
+        },
       };
-      
+
       this.updateParticlePosition(particle);
       this.particles.push(particle);
-      this.group.add(particle);
     }
+
+    this._writeBuffers();
   }
 
   updateParticlePosition(particle) {
@@ -480,39 +536,69 @@ export class PlasmaVortexEffect {
     particle.position.set(
       r * Math.cos(theta),
       y,
-      r * Math.sin(theta)
+      r * Math.sin(theta),
     );
+  }
+
+  _writeBuffers() {
+    this._scratchSamples.length = 0;
+    for (let i = 0; i < this.particles.length; i += 1) {
+      const particle = this.particles[i];
+      const { x, y, z } = particle.position;
+      this._positions[i * 3] = x;
+      this._positions[i * 3 + 1] = y;
+      this._positions[i * 3 + 2] = z;
+      this._colors[i * 3] = particle.material.color.r;
+      this._colors[i * 3 + 1] = particle.material.color.g;
+      this._colors[i * 3 + 2] = particle.material.color.b;
+      this._scratchSamples.push(particle.position);
+    }
+    if (this._points) {
+      this._points.geometry.attributes.position.needsUpdate = true;
+      this._points.geometry.attributes.color.needsUpdate = true;
+      this._points.material.size = this.pointSize * (0.85 + this.glow * 0.35);
+      this._points.material.opacity = Math.min(0.95, 0.55 + this.glow * 0.4);
+    }
+    this._trails?.updateFromSamples(this._scratchSamples, this.glow);
   }
 
   update(deltaTime = 0.016) {
     this.time += deltaTime;
-    
+
     for (const particle of this.particles) {
       const data = particle.userData;
-      
-      // Rotate around vortex axis
+
       data.theta += data.angularVelocity * deltaTime;
-      
-      // Radial pulsation
+
       const radialPulse = Math.sin(this.time * this.radialSpeed + data.radialPhase) * 0.2;
       const currentR = data.r * (1 + radialPulse);
-      
-      // Vertical oscillation
+
       const verticalOscillation = Math.sin(this.time * this.verticalSpeed + data.radialPhase) * 0.3;
       data.y = data.baseY + verticalOscillation;
-      
-      // Update position
+
       particle.position.set(
         currentR * Math.cos(data.theta),
         data.y,
-        currentR * Math.sin(data.theta)
+        currentR * Math.sin(data.theta),
       );
-      
-      // Update color based on height (hotter at center)
-      const heightFactor = 1 - Math.abs(data.y) / this.height;
-      const hue = 0.0 + heightFactor * 0.1; // red to yellow
-      particle.material.color.setHSL(hue, 1, 0.5 + heightFactor * 0.3);
+
+      // Warm core / cool rim — presentation color only
+      const heightFactor = 1 - Math.abs(data.y) / Math.max(this.height, 1e-6);
+      const radialFactor = 1 - currentR / Math.max(this.radius, 1e-6);
+      const hue = 0.08 - heightFactor * 0.06 + (1 - radialFactor) * 0.45;
+      particle.material.color.setHSL(
+        Math.max(0, Math.min(0.6, hue)),
+        0.95,
+        0.45 + heightFactor * 0.35,
+      );
     }
+
+    this._writeBuffers();
+  }
+
+  /** Optional: drive soft glow from existing enhancement samples (viz only). */
+  setEnhancementGlow(glow) {
+    if (Number.isFinite(glow)) this.glow = glow;
   }
 
   getGroup() {
@@ -520,11 +606,15 @@ export class PlasmaVortexEffect {
   }
 
   dispose() {
+    this._trails?.dispose?.();
+    this._trails = null;
+    if (this._points) {
+      this._points.geometry.dispose();
+      this._points.material.dispose();
+    }
+    this._softMap?.dispose?.();
     while (this.group.children.length > 0) {
-      const child = this.group.children[0];
-      child.geometry?.dispose();
-      child.material?.dispose();
-      this.group.remove(child);
+      this.group.remove(this.group.children[0]);
     }
     this.particles = [];
   }

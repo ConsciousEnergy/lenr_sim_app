@@ -59,13 +59,13 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'MHDFlowGroup',
     legendGroup: 'MHD Flow',
     has3DOverlay: true,
-    // Schematic: UBLV uses phase-selected vortex speeds / illustrative Lorentz arrows,
-    // including local-fallback paths — not solver field outputs.
+    // Schematic: UBLV uses phase-selected vortex speeds / soft Points + ribbon wave look,
+    // including local-fallback paths — not solver field outputs or continuum CFD.
     fidelity: 'schematic',
     displayName: 'Bubble-MHD Confinement',
     description:
-      'Rayleigh-Plesset + MHD Z-pinch staging. Renders Hartmann boundary layers + Lorentz force arrows.',
-    reference: 'COMSOL Hartmann benchmark; OpenFOAM mhdFoam',
+      'Schematic MHD / wave-particle presentation (soft Points + ribbons). Phase-staged swirl only — not Navier–Stokes CFD or fluid proof.',
+    reference: 'COMSOL Hartmann benchmark; OpenFOAM mhdFoam (context only; overlay is schematic)',
   },
   casimir_confinement: {
     vizLayer: 'CasimirFieldGroup',
