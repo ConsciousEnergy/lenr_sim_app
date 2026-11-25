@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UBLV wave-particle preview (schematic)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #050812; overflow: hidden; font-family: system-ui, sans-serif; }
+    #c { width: 100%; height: 100%; display: block; }
+    #badge {
+      position: absolute; left: 12px; bottom: 12px; color: #cfefff;
+      background: rgba(10,20,40,0.75); padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; max-width: 420px; line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="badge">
+    Soft Points + plasma bloom + ribbon trails + staggered dual-core wake<br/>
+    Schematic presentation only — not CFD / PBF / Navier–Stokes · glow look inspired by plasma-ball / streamer viz
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    /**
+     * Standalone visual preview for Diadon review of #521 wave look.
+     * Mirrors PlasmaVortexEffect street-inspired soft blobs (no app chrome).
+     */
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('c');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x050812);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(4.2, 2.8, 5.5);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 0.4, 0);
+    controls.update();
+
+    scene.add(new THREE.AmbientLight(0x6688aa, 0.6));
+    const key = new THREE.DirectionalLight(0xffe6cc, 0.9);
+    key.position.set(3, 5, 2);
+    scene.add(key);
+
+    // Lattice stand-ins
+    const hostMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, metalness: 0.7, roughness: 0.35 });
+    const hostGeo = new THREE.SphereGeometry(0.12, 16, 16);
+    for (let x = -1; x <= 1; x++) {
+      for (let z = -1; z <= 1; z++) {
+        const m = new THREE.Mesh(hostGeo, hostMat);
+        m.position.set(x * 0.55, -0.9, z * 0.55);
+        scene.add(m);
+      }
+    }
+
+    function softTexture(size = 96) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.35, 'rgba(255,255,255,0.55)');
+      g.addColorStop(0.7, 'rgba(255,255,255,0.12)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const N = 420;
+    const map = softTexture();
+    const pos = new Float32Array(N * 3);
+    const col = new Float32Array(N * 3);
+    const bloomPos = new Float32Array(N * 3);
+    const bloomCol = new Float32Array(N * 3);
+    const particles = [];
+    const radius = 2.1;
+    const height = 3.6;
+    const sep = 0.95;
+
+    for (let i = 0; i < N; i++) {
+      const lane = i % 2 === 0 ? 1 : -1;
+      particles.push({
+        theta: Math.random() * Math.PI * 2,
+        r: 0.15 + Math.random() * radius * 0.55,
+        stream: Math.random() * height,
+        lane,
+        ang: lane * (0.9 + Math.random() * 0.8),
+        phase: Math.random() * Math.PI * 2,
+        shed: (i / N) * Math.PI * 2,
+        color: new THREE.Color(),
+      });
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 0.5, map, transparent: true, depthWrite: false, opacity: 0.95,
+      blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true,
+    });
+    scene.add(new THREE.Points(geo, mat));
+
+    const bgeo = new THREE.BufferGeometry();
+    bgeo.setAttribute('position', new THREE.BufferAttribute(bloomPos, 3));
+    bgeo.setAttribute('color', new THREE.BufferAttribute(bloomCol, 3));
+    const bmat = new THREE.PointsMaterial({
+      size: 1.15, map, transparent: true, depthWrite: false, opacity: 0.42,
+      blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true,
+    });
+    scene.add(new THREE.Points(bgeo, bmat));
+
+    // Soft plasma fill light (presentation; not a physics field)
+    const plasmaGlow = new THREE.PointLight(0x66ddff, 1.4, 8, 2);
+    plasmaGlow.position.set(0, 0.6, 0);
+    scene.add(plasmaGlow);
+    const warmGlow = new THREE.PointLight(0xff8844, 0.9, 7, 2);
+    warmGlow.position.set(0.4, 1.2, 0.2);
+    scene.add(warmGlow);
+
+    // Ribbon subset
+    const trailN = 120;
+    const trailLen = 14;
+    const histories = Array.from({ length: trailN }, () => []);
+    const tPos = new Float32Array(trailN * (trailLen - 1) * 2 * 3);
+    const tCol = new Float32Array(trailN * (trailLen - 1) * 2 * 3);
+    const tGeo = new THREE.BufferGeometry();
+    tGeo.setAttribute('position', new THREE.BufferAttribute(tPos, 3));
+    tGeo.setAttribute('color', new THREE.BufferAttribute(tCol, 3));
+    tGeo.setDrawRange(0, 0);
+    scene.add(new THREE.LineSegments(tGeo, new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.55,
+      depthWrite: false, blending: THREE.AdditiveBlending,
+    })));
+
+    let t = 0;
+    function frame(now) {
+      const dt = Math.min(0.033, (now - (frame._last || now)) / 1000) || 0.016;
+      frame._last = now;
+      t += dt;
+      const stride = Math.max(1, Math.floor(N / trailN));
+      let trailWrite = 0;
+      let trailIdx = 0;
+
+      for (let i = 0; i < N; i++) {
+        const p = particles[i];
+        p.theta += p.ang * dt;
+        const radialPulse = Math.sin(t * 0.28 + p.phase) * 0.18;
+        const r = p.r * (1 + radialPulse);
+        const shed = Math.sin(t * 1.25 + p.shed) * 0.35;
+        p.stream = (p.stream + dt * 0.62) % (height * 1.4);
+        const y = p.stream + shed * p.lane - height * 0.35;
+        const cx = p.lane * sep * 0.5;
+        const x = cx + r * Math.cos(p.theta);
+        const z = r * Math.sin(p.theta) * 0.7 + shed * 0.15;
+        pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+        bloomPos[i * 3] = x; bloomPos[i * 3 + 1] = y; bloomPos[i * 3 + 2] = z;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 3.2 + p.shed);
+        const laneHue = p.lane > 0 ? 0.05 : 0.55;
+        p.color.setHSL(laneHue, 0.9, Math.min(0.92, 0.48 + pulse * 0.28));
+        col[i * 3] = p.color.r; col[i * 3 + 1] = p.color.g; col[i * 3 + 2] = p.color.b;
+        bloomCol[i * 3] = p.color.r * 0.35 + 0.2;
+        bloomCol[i * 3 + 1] = p.color.g * 0.45 + 0.3;
+        bloomCol[i * 3 + 2] = Math.min(1, p.color.b * 0.3 + 0.7);
+
+        if (i % stride === 0 && trailIdx < trailN) {
+          const hist = histories[trailIdx];
+          hist.push({ x, y, z });
+          while (hist.length > trailLen) hist.shift();
+          for (let s = 1; s < hist.length; s++) {
+            const a = hist[s - 1];
+            const b = hist[s];
+            const f0 = (s - 1) / (trailLen - 1);
+            const f1 = s / (trailLen - 1);
+            tPos[trailWrite * 3] = a.x; tPos[trailWrite * 3 + 1] = a.y; tPos[trailWrite * 3 + 2] = a.z;
+            tCol[trailWrite * 3] = p.color.r * f0; tCol[trailWrite * 3 + 1] = p.color.g * f0; tCol[trailWrite * 3 + 2] = p.color.b * f0;
+            trailWrite++;
+            tPos[trailWrite * 3] = b.x; tPos[trailWrite * 3 + 1] = b.y; tPos[trailWrite * 3 + 2] = b.z;
+            tCol[trailWrite * 3] = p.color.r * f1; tCol[trailWrite * 3 + 1] = p.color.g * f1; tCol[trailWrite * 3 + 2] = p.color.b * f1;
+            trailWrite++;
+          }
+          trailIdx++;
+        }
+      }
+
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.color.needsUpdate = true;
+      bgeo.attributes.position.needsUpdate = true;
+      bgeo.attributes.color.needsUpdate = true;
+      tGeo.setDrawRange(0, trailWrite);
+      tGeo.attributes.position.needsUpdate = true;
+      tGeo.attributes.color.needsUpdate = true;
+      plasmaGlow.intensity = 1.1 + 0.5 * Math.sin(t * 2.4);
+      warmGlow.intensity = 0.7 + 0.4 * Math.sin(t * 2.1 + 1.2);
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>

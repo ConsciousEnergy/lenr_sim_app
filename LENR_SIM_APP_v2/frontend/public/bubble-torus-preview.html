@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UBLV bubble + torus preview (schematic)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #050812; overflow: hidden; font-family: system-ui, sans-serif; }
+    #c { width: 100%; height: 100%; display: block; }
+    #badge {
+      position: absolute; left: 12px; bottom: 12px; color: #cfefff;
+      background: rgba(10,20,40,0.78); padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; max-width: 460px; line-height: 1.4;
+    }
+    #phase {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(20,40,70,0.85); padding: 6px 14px;
+      border-radius: 16px; font-size: 13px; letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="phase">EXPANSION · Local Calc (schematic)</div>
+  <div id="badge">
+    Clearcoat bubble shells + plasma torus → jet (presentation)<br/>
+    Tint follows temperature_k-style heatNorm · not CFD · chip local_fallback when schematic
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('c');
+    const phaseEl = document.getElementById('phase');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x050812);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(3.6, 2.4, 4.8);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 0.2, 0);
+    controls.update();
+
+    scene.add(new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.45));
+    scene.add(new THREE.AmbientLight(0xdde8ff, 0.3));
+    const key = new THREE.DirectionalLight(0xfff5e8, 0.95);
+    key.position.set(4, 6, 3);
+    scene.add(key);
+
+    // Lattice stand-ins
+    const hostMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, metalness: 0.7, roughness: 0.35 });
+    const hostGeo = new THREE.SphereGeometry(0.14, 20, 20);
+    for (let x = -1; x <= 1; x++) {
+      for (let z = -1; z <= 1; z++) {
+        const m = new THREE.Mesh(hostGeo, hostMat);
+        m.position.set(x * 0.55, -1.05, z * 0.55);
+        scene.add(m);
+      }
+    }
+
+    const group = new THREE.Group();
+    group.position.set(0, -0.35, 0);
+    scene.add(group);
+
+    function gasMat(op = 0.22) {
+      return new THREE.MeshPhysicalMaterial({
+        color: 0xb8e8ff, metalness: 0.02, roughness: 0.12, clearcoat: 1,
+        clearcoatRoughness: 0.04, transparent: true, opacity: op, depthWrite: false,
+        emissive: new THREE.Color(0x226688), emissiveIntensity: 0.15,
+      });
+    }
+    function shellMat(color, op, em) {
+      return new THREE.MeshPhysicalMaterial({
+        color, metalness: 0.05, roughness: 0.2, clearcoat: 0.85, transparent: true,
+        opacity: op, depthWrite: false, side: THREE.DoubleSide,
+        emissive: new THREE.Color(em), emissiveIntensity: 0.35,
+      });
+    }
+    function torusMat() {
+      return new THREE.MeshPhysicalMaterial({
+        color: 0xff9955, metalness: 0.15, roughness: 0.22, clearcoat: 0.7,
+        transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide,
+        emissive: new THREE.Color(0xff5500), emissiveIntensity: 1.1,
+      });
+    }
+
+    const bubble = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), gasMat(0.22));
+    bubble.name = 'MainBubble';
+    group.add(bubble);
+    const outer = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 48), shellMat(0x66f0ff, 0.38, 0x00ccff));
+    group.add(outer);
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.92, 48, 36), shellMat(0xff8844, 0.26, 0xff6622));
+    group.add(inner);
+    const torus = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.38, 32, 96), torusMat());
+    torus.rotation.x = Math.PI / 2;
+    torus.visible = false;
+    group.add(torus);
+    const jet = new THREE.Mesh(
+      new THREE.ConeGeometry(0.28, 3.6, 32, 1, true),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xffee88, transparent: true, opacity: 0.88, depthWrite: false,
+        side: THREE.DoubleSide, emissive: new THREE.Color(0xffcc44), emissiveIntensity: 1.6,
+      }),
+    );
+    jet.rotation.x = Math.PI;
+    jet.visible = false;
+    group.add(jet);
+
+    const light = new THREE.PointLight(0xb8e8ff, 0.9, 10, 2);
+    light.position.set(0.6, 0.8, 1.2);
+    group.add(light);
+    const warm = new THREE.PointLight(0xff9966, 0.4, 8, 2);
+    warm.position.set(-0.8, 0.4, -0.6);
+    group.add(warm);
+
+    function tint(tempK) {
+      const t = Math.min(1, Math.max(0, (tempK - 300) / 7700));
+      const color = new THREE.Color().setHSL(0.55 - t * 0.48, 0.75 - t * 0.35, 0.48 + t * 0.35);
+      const emissive = new THREE.Color().setHSL(0.08 + (1 - t) * 0.45, 0.9, 0.25 + t * 0.45);
+      const ei = 0.12 + t * 1.6;
+      for (const m of [bubble, outer, torus, jet]) {
+        m.material.color.copy(color);
+        m.material.emissive.copy(emissive);
+        m.material.emissiveIntensity = ei * (m === torus || m === jet ? 1.35 : 1);
+      }
+      light.intensity = 0.55 + t * 1.4;
+      light.color.copy(color);
+      warm.intensity = 0.25 + t * 1.1;
+      return t;
+    }
+
+    // Cycle: Expansion → Collapse (torus) → Minimum/jet → Rebound → Expansion
+    let t0 = performance.now();
+    const CYCLE = 8.0; // seconds visual cycle
+
+    function frame(now) {
+      const elapsed = (now - t0) / 1000;
+      const u = (elapsed % CYCLE) / CYCLE;
+      let phase = 'EXPANSION';
+      let scale = 0.35 + u * 1.1;
+      let temp = 320 + u * 400;
+
+      bubble.visible = true;
+      outer.visible = true;
+      inner.visible = true;
+      torus.visible = false;
+      jet.visible = false;
+
+      if (u < 0.42) {
+        phase = 'EXPANSION';
+        scale = 0.35 + (u / 0.42) * 1.15;
+        temp = 300 + (u / 0.42) * 500;
+      } else if (u < 0.62) {
+        phase = 'COLLAPSE';
+        const p = (u - 0.42) / 0.2;
+        scale = 1.5 * (1 - p * 0.55);
+        temp = 800 + p * 4500;
+        bubble.visible = p < 0.7;
+        bubble.material.opacity = 0.22 * (1 - p);
+        torus.visible = p > 0.1;
+        const ts = 1 - p * 0.45;
+        torus.scale.set(ts, 0.7 + (1 - p) * 0.5, ts);
+        torus.material.opacity = 0.6 + p * 0.3;
+      } else if (u < 0.78) {
+        phase = 'MINIMUM';
+        const p = (u - 0.62) / 0.16;
+        scale = 0.45;
+        temp = 5500 + p * 2000;
+        bubble.visible = false;
+        outer.visible = p < 0.4;
+        inner.visible = p < 0.4;
+        torus.visible = p < 0.8;
+        torus.material.opacity = 0.8 * (1 - p);
+        jet.visible = p > 0.1;
+        jet.scale.set(1 - p * 0.3, 1 + p * 1.8, 1 - p * 0.3);
+      } else {
+        phase = 'REBOUND';
+        const p = (u - 0.78) / 0.22;
+        scale = 0.45 + p * 0.5;
+        temp = 5000 * (1 - p) + 400;
+        bubble.visible = p > 0.35;
+        bubble.material.opacity = 0.22 * Math.min(1, (p - 0.35) / 0.4);
+        outer.visible = true;
+        inner.visible = true;
+        jet.visible = p < 0.55;
+        jet.material.opacity = 0.85 * (1 - p);
+      }
+
+      bubble.scale.setScalar(scale);
+      outer.scale.setScalar(scale * 1.12);
+      inner.scale.setScalar(scale * 0.92);
+      tint(temp);
+      const source = 'Local Calc (schematic)';
+      phaseEl.textContent = `${phase} · ${source} · T≈${Math.round(temp)} K (viz tint)`;
+
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>

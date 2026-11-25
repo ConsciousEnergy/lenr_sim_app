@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UBLV lattice-bound + phonon / e⁻ migration (schematic)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #050812; overflow: hidden; font-family: system-ui, sans-serif; }
+    #c { width: 100%; height: 100%; display: block; }
+    #badge {
+      position: absolute; left: 12px; bottom: 12px; color: #cfefff;
+      background: rgba(10,20,40,0.78); padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; max-width: 520px; line-height: 1.4;
+    }
+    #phase {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(20,40,70,0.85); padding: 6px 14px;
+      border-radius: 16px; font-size: 13px; letter-spacing: 0.04em;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+    }
+    .chip {
+      background: rgba(156,120,60,0.9); padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    }
+    .chip.e { background: rgba(60,140,180,0.9); }
+    .chip.nest { background: rgba(80,120,90,0.9); }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="phase">
+    <span id="phaseLabel">EXPANSION</span>
+    <span class="chip nest">Lattice-bound nest</span>
+    <span class="chip">Phonon · schematic</span>
+    <span class="chip e">e⁻ mig · schematic</span>
+  </div>
+  <div id="badge">
+    Bubble underside nests on metallic host lattice · phonon jitter from T/compression · soft e⁻ flow along E channels<br/>
+    Not MD / continuum transport / mode eigenvectors · Local Calc presentation
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('c');
+    const phaseLabel = document.getElementById('phaseLabel');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x050812);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(3.2, 1.6, 4.2);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, -0.4, 0);
+    controls.update();
+
+    scene.add(new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.5));
+    scene.add(new THREE.AmbientLight(0xdde8ff, 0.28));
+    const key = new THREE.DirectionalLight(0xfff5e8, 1.0);
+    key.position.set(4, 6, 3);
+    scene.add(key);
+
+    const SURFACE_Y = -1.05;
+    const hostMat = new THREE.MeshStandardMaterial({ color: 0x9a9aa8, metalness: 0.88, roughness: 0.28 });
+    const hostGeo = new THREE.SphereGeometry(0.13, 20, 20);
+    const hosts = [];
+    const rest = [];
+    for (let x = -2; x <= 2; x++) {
+      for (let z = -2; z <= 2; z++) {
+        const m = new THREE.Mesh(hostGeo, hostMat.clone());
+        const px = x * 0.48;
+        const pz = z * 0.48;
+        m.position.set(px, SURFACE_Y, pz);
+        scene.add(m);
+        hosts.push(m);
+        rest.push({ x: px, y: SURFACE_Y, z: pz, ix: x + 2, iy: 0, iz: z + 2 });
+      }
+    }
+
+    function nestY(scale, phase, progress) {
+      let nest = 0.14;
+      if (phase === 'COLLAPSE') nest = 0.14 + 0.1 * progress;
+      if (phase === 'MINIMUM') nest = 0.22;
+      if (phase === 'REBOUND') nest = 0.14 + 0.05 * (1 - progress);
+      nest = Math.min(0.35, Math.max(0.05, nest));
+      let y = SURFACE_Y + scale * (1 - nest);
+      if (phase === 'EXPANSION' && progress > 0.55) {
+        y += ((progress - 0.55) / 0.45) * scale * 0.08;
+      }
+      return y;
+    }
+
+    function softMap(size = 64) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.35, 'rgba(180,230,255,0.7)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      const tex = new THREE.CanvasTexture(c);
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    const bubbleGroup = new THREE.Group();
+    scene.add(bubbleGroup);
+    const gas = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 48, 48),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xb8e8ff, metalness: 0.02, roughness: 0.12, clearcoat: 1,
+        clearcoatRoughness: 0.04, transparent: true, opacity: 0.28, depthWrite: false,
+      }),
+    );
+    const shell = new THREE.Mesh(
+      new THREE.SphereGeometry(1.08, 48, 48),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x66ccee, metalness: 0.05, roughness: 0.2, clearcoat: 0.9,
+        transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide,
+      }),
+    );
+    bubbleGroup.add(gas, shell);
+
+    const eCount = 36;
+    const ePos = new Float32Array(eCount * 3);
+    const eCol = new Float32Array(eCount * 3);
+    for (let i = 0; i < eCount; i++) {
+      eCol[i * 3] = 0.48; eCol[i * 3 + 1] = 0.93; eCol[i * 3 + 2] = 1;
+    }
+    const eGeo = new THREE.BufferGeometry();
+    eGeo.setAttribute('position', new THREE.BufferAttribute(ePos, 3));
+    eGeo.setAttribute('color', new THREE.BufferAttribute(eCol, 3));
+    const eMat = new THREE.PointsMaterial({
+      size: 0.18, map: softMap(), transparent: true, opacity: 0.75,
+      depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+    });
+    const ePoints = new THREE.Points(eGeo, eMat);
+    scene.add(ePoints);
+    const eProxies = Array.from({ length: eCount }, (_, i) => ({
+      t: Math.random(),
+      speed: 0.012 + Math.random() * 0.02,
+      line: i % 12,
+    }));
+
+    const phases = ['EXPANSION', 'COLLAPSE', 'MINIMUM', 'REBOUND'];
+    const dur = [4.5, 2.5, 1.2, 2.0];
+    let phaseIdx = 0;
+    let phaseT = 0;
+    let clock = 0;
+
+    function animate(t) {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, (t - (animate._last || t)) / 1000);
+      animate._last = t;
+      clock += dt;
+      phaseT += dt;
+      if (phaseT > dur[phaseIdx]) {
+        phaseT = 0;
+        phaseIdx = (phaseIdx + 1) % phases.length;
+      }
+      const phase = phases[phaseIdx];
+      const progress = phaseT / dur[phaseIdx];
+      phaseLabel.textContent = phase;
+
+      let scale = 0.35;
+      if (phase === 'EXPANSION') scale = 0.25 + progress * 0.7;
+      if (phase === 'COLLAPSE') scale = 0.95 - progress * 0.75;
+      if (phase === 'MINIMUM') scale = 0.18;
+      if (phase === 'REBOUND') scale = 0.2 + progress * 0.25;
+      bubbleGroup.scale.setScalar(scale);
+      bubbleGroup.position.y = nestY(scale, phase, progress);
+
+      // Phonon jitter — amp rises in collapse/minimum (hotter / compressed)
+      const amp = phase === 'MINIMUM' || phase === 'COLLAPSE' ? 0.035 : 0.012;
+      hosts.forEach((m, i) => {
+        const site = rest[i];
+        const phaseOff = i * 0.73 + site.ix * 0.4;
+        m.position.x = site.x + amp * Math.sin(clock * 4.5 + phaseOff);
+        m.position.y = site.y + amp * 0.65 * Math.cos(clock * 5.3 + phaseOff * 1.3);
+        m.position.z = site.z + amp * 0.85 * Math.sin(clock * 4.1 + phaseOff * 0.8);
+      });
+
+      // Soft e⁻ migration
+      const reversed = phase === 'REBOUND';
+      const speedScale = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 2.2 : 1.0;
+      for (let i = 0; i < eCount; i++) {
+        const p = eProxies[i];
+        p.t += p.speed * speedScale * (reversed ? -1 : 1);
+        if (p.t > 1) p.t -= 1;
+        if (p.t < 0) p.t += 1;
+        const angle = (p.line / 12) * Math.PI * 2;
+        const lineR = 1.2 * (1 - p.t * 0.28);
+        const y = reversed
+          ? SURFACE_Y + p.t * 2.8
+          : bubbleGroup.position.y - p.t * (bubbleGroup.position.y - SURFACE_Y);
+        ePos[i * 3] = lineR * Math.cos(angle);
+        ePos[i * 3 + 1] = y;
+        ePos[i * 3 + 2] = lineR * Math.sin(angle);
+      }
+      eGeo.attributes.position.needsUpdate = true;
+      eMat.opacity = phase === 'MINIMUM' ? 0.9 : 0.55;
+
+      const heat = phase === 'MINIMUM' ? 1 : phase === 'COLLAPSE' ? 0.6 + progress * 0.4 : 0.2;
+      gas.material.emissive = new THREE.Color().setHSL(0.55 - heat * 0.45, 0.7, 0.4 + heat * 0.3);
+      gas.material.emissiveIntensity = 0.2 + heat * 1.2;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>

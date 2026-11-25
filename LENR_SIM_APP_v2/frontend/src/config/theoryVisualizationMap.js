@@ -59,13 +59,13 @@ export const THEORY_VISUALIZATION_MAP = {
     vizLayer: 'MHDFlowGroup',
     legendGroup: 'MHD Flow',
     has3DOverlay: true,
-    // Schematic: UBLV uses phase-selected vortex speeds / illustrative Lorentz arrows,
-    // including local-fallback paths — not solver field outputs.
+    // Schematic: UBLV uses phase-selected vortex speeds / soft Points + ribbon wave look,
+    // including local-fallback paths — not solver field outputs or continuum CFD.
     fidelity: 'schematic',
     displayName: 'Bubble-MHD Confinement',
     description:
-      'Rayleigh-Plesset + MHD Z-pinch staging. Renders Hartmann boundary layers + Lorentz force arrows.',
-    reference: 'COMSOL Hartmann benchmark; OpenFOAM mhdFoam',
+      'Schematic MHD / wave-particle presentation (soft Points + ribbons). Phase-staged swirl only — not Navier–Stokes CFD or fluid proof.',
+    reference: 'COMSOL Hartmann benchmark; OpenFOAM mhdFoam (context only; overlay is schematic)',
   },
   casimir_confinement: {
     vizLayer: 'CasimirFieldGroup',
@@ -89,13 +89,13 @@ export const THEORY_VISUALIZATION_MAP = {
     reference: 'Gamow (1928); Bojovic et al., Nature (2026)',
   },
   hagelstein_phonon: {
-    vizLayer: null,
+    vizLayer: 'LatticeHostAtoms',
     legendGroup: 'Phonon Transfer',
-    has3DOverlay: false,
+    has3DOverlay: true,
     fidelity: 'schematic',
     displayName: 'Hagelstein Phonon-Nuclear',
     description:
-      'Phonon-nuclear coupling for energy transfer to lattice. Future overlay: phonon wavefronts.',
+      'Phonon-nuclear coupling for energy transfer to lattice. UBLV schematic: acoustic+optical standing waves on material-size lattice from temperature_k / compression / enhancement_breakdown.phonon — not mode eigenvectors or MD. Continuum phonon wavefronts parked; contested dual-laser heat claims stay contested.',
     reference: 'Hagelstein & Chaudhary (2015)',
   },
   kim_bec: {

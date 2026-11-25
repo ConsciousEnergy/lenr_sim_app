@@ -61,4 +61,32 @@ describe('VizHudReadouts collapse observables (VIZ-05)', () => {
     expect(screen.getByTestId('viz-hud-gap-heat.P_joule')).toBeInTheDocument();
     expect(screen.getByTestId('viz-hud-gap-heat.P_photonic')).toBeInTheDocument();
   });
+
+  test('gates Speculative tier spam on Local Calc; shows engine banner for solver', () => {
+    const { rerender } = render(
+      <VizHudReadouts
+        showHeldGaps={false}
+        channels={[
+          { channel_id: 'bubble.radius_um', value: 10, source: 'local_fallback' },
+          { channel_id: 'collapse.temperature_k', value: 300, source: 'local_fallback' },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('viz-hud-local-schematic-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('viz-hud-tier-bubble.radius_um')).not.toBeInTheDocument();
+
+    rerender(
+      <VizHudReadouts
+        showHeldGaps={false}
+        channels={[
+          { channel_id: 'bubble.radius_um', value: 1.2, source: 'solver' },
+          { channel_id: 'collapse.temperature_k', value: 2000, source: 'solver' },
+          { channel_id: 'collapse.solver', value: 'keller_miksis', source: 'solver' },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('viz-hud-source-engine')).toBeInTheDocument();
+    expect(screen.queryByTestId('viz-hud-local-schematic-banner')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-hud-tier-collapse.solver')).toBeInTheDocument();
+  });
 });
