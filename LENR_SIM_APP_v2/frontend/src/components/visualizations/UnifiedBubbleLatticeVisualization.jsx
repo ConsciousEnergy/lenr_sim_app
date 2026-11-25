@@ -59,6 +59,7 @@ import { ScaleBar } from './QuantumFluxVisualization';
 import VisualizationLegend from './VisualizationLegend';
 import BubbleLatticeTimelineControls from './BubbleLatticeTimelineControls';
 import VizHudReadouts from './VizHudReadouts';
+import EnhancementBreakdownDrawer from './EnhancementBreakdownDrawer';
 import { buildCollapseHudChannels } from '../../utils/vizChannelBindings';
 import {
   extractLiquidPhaseChannels,
@@ -4047,6 +4048,14 @@ const UnifiedBubbleLatticeVisualization = ({
             alignItems: 'center',
             maxWidth: '95%',
             zIndex: 5,
+            // Narrow viewports: keep metrics under Enhancement stack (no overlap).
+            '@media (max-width: 480px)': {
+              left: 10,
+              right: 10,
+              transform: 'none',
+              maxWidth: 'none',
+              bottom: 10,
+            },
           }}
           data-testid="ublv-metrics-drawer"
         >
@@ -4319,110 +4328,13 @@ const UnifiedBubbleLatticeVisualization = ({
           </Tooltip>
         </Box>
         
-        {/* Enhancement breakdown - bottom right; collapses down, minimized by default */}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 10,
-            right: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            zIndex: 5,
-            minWidth: enhancementCollapsed ? 160 : 200,
-          }}
-          data-testid="ublv-enhancement-drawer"
-        >
-          <Collapse in={!enhancementCollapsed} timeout={280}>
-            <Paper
-              elevation={3}
-              id="ublv-enhancement-panel"
-              data-testid="ublv-enhancement-panel"
-              sx={{
-                bgcolor: 'rgba(20, 20, 40, 0.9)',
-                borderRadius: '8px 8px 0 0',
-                p: 1,
-                minWidth: 200,
-              }}
-            >
-              <Typography variant="caption" color="white" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
-                Enhancement Breakdown
-              </Typography>
-              <Stack spacing={0.3}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Screening:</Typography>
-                  <Typography variant="caption" color="#00ffff" sx={{ fontSize: '0.65rem' }}>
-                    {enhancementBreakdown.screening.toExponential(1)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>QED:</Typography>
-                  <Typography variant="caption" color="#ffff00" sx={{ fontSize: '0.65rem' }}>
-                    {enhancementBreakdown.qed.toExponential(1)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Casimir:</Typography>
-                  <Typography variant="caption" color="#ff8800" sx={{ fontSize: '0.65rem' }}>
-                    {enhancementBreakdown.casimir.toExponential(1)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Rydberg:</Typography>
-                  <Typography variant="caption" color="#ff00ff" sx={{ fontSize: '0.65rem' }}>
-                    {enhancementBreakdown.rydberg.toExponential(1)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="white" sx={{ fontSize: '0.65rem' }}>Compression:</Typography>
-                  <Typography variant="caption" color="#00ff88" sx={{ fontSize: '0.65rem' }}>
-                    {enhancementBreakdown.compression.toExponential(1)}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-          </Collapse>
-          <Tooltip title={enhancementCollapsed ? 'Expand enhancement breakdown' : 'Collapse enhancement breakdown'} placement="top">
-            <Paper
-              elevation={3}
-              component="button"
-              type="button"
-              onClick={() => setEnhancementCollapsed((prev) => !prev)}
-              aria-expanded={!enhancementCollapsed}
-              aria-controls="ublv-enhancement-panel"
-              aria-label={enhancementCollapsed ? 'Expand Enhancement Breakdown panel' : 'Collapse Enhancement Breakdown panel'}
-              data-testid="ublv-enhancement-toggle"
-              sx={{
-                bgcolor: 'rgba(20, 20, 40, 0.95)',
-                color: 'white',
-                cursor: 'pointer',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                px: 1.5,
-                py: 0.5,
-                borderRadius: enhancementCollapsed ? 1 : '0 0 8px 8px',
-                minWidth: 160,
-                '&:hover': { bgcolor: 'rgba(30, 30, 55, 1)' },
-                transition: 'background-color 0.2s ease',
-              }}
-            >
-              {enhancementCollapsed ? (
-                <>
-                  <ExpandLessIcon sx={{ fontSize: 16 }} />
-                  <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.65rem' }}>
-                    Enhancement
-                  </Typography>
-                  <ExpandLessIcon sx={{ fontSize: 16 }} />
-                </>
-              ) : (
-                <ExpandMoreIcon sx={{ fontSize: 18 }} />
-              )}
-            </Paper>
-          </Tooltip>
-        </Box>
+        {/* Enhancement breakdown — claim-tier channel stack; engine-bound when samples exist */}
+        <EnhancementBreakdownDrawer
+          breakdown={enhancementBreakdown}
+          sampleSource={physicsData.sampleSource || 'local_fallback'}
+          collapsed={enhancementCollapsed}
+          onToggle={() => setEnhancementCollapsed((prev) => !prev)}
+        />
       </Box>
       
       {/* Scrubbable dual-clock timeline (VIZ-01) + engine-sample player (VIZ-02) */}
