@@ -644,6 +644,8 @@ const UnifiedBubbleLatticeVisualization = ({
       metalness: 0.85,
       roughness: 0.28,
       envMapIntensity: 1.0,
+      // Required for InstancedMesh.instanceColor / phonon mode tint
+      vertexColors: true,
     });
     
     // Hydrogen / solute atoms — slightly softer emissive beads
@@ -2063,6 +2065,111 @@ const UnifiedBubbleLatticeVisualization = ({
     });
   }, []);
 
+  /**
+   * Phonon standing waves keep ticking even while the bubble clock is paused,
+   * so material-size acoustic/optical modes stay unmistakable on the HSE canvas.
+   */
+  const tickPhononStandingWaves = useCallback((deltaTime, {
+    temperatureK = 300,
+    compressionRatio = 1,
+    phononFactor = 1,
+  } = {}) => {
+    if (!showLattice || !showPhonon || !latticeGroupRef.current) {
+      const ribbon = latticeGroupRef.current?.getObjectByName('PhononWaveguideRibbon');
+      if (ribbon) ribbon.visible = false;
+      return;
+    }
+    const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
+    const restSites = hostAtoms?.userData?.restSites;
+    if (!hostAtoms || !restSites?.length) return;
+
+    phononTimeRef.current += Math.max(deltaTime, 1 / 60);
+    const forces = cavitationForcesRef.current;
+    const mix = phononModeMix({ phononFactor });
+    const meltSoft = meltProximityNorm({
+      temperatureK,
+      meltingPointK: hostMeltMeta?.meltingPointK,
+    });
+    const wgNorm = waveguideEnvelopeNorm({ loadingRatio, phononFactor });
+    // Floor so material-size standing waves stay unmistakable even at low
+    // phonon-factor samples (presentation floor — still schematic / contested).
+    const amp = Math.max(
+      0.14,
+      phononJitterAmplitude({
+        phononFactor,
+        temperatureK,
+        compressionRatio,
+      }) * (forces?.phononScale ?? 1),
+    );
+    const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(restSites, {
+      time: phononTimeRef.current,
+      amplitude: amp,
+      acousticWeight: mix.acousticWeight,
+      opticalWeight: mix.opticalWeight,
+      acousticFreq: 2.4 + Math.min(1.2, Math.log10(Math.max(phononFactor, 1)) * 0.35),
+      opticalFreq: 6.5 + Math.min(2.5, Math.log10(Math.max(phononFactor, 1)) * 0.55),
+      waveguideNorm: wgNorm,
+      meltSoftening: meltSoft,
+    });
+    const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
+    const scratchColor = new THREE.Color();
+    applyDynamicLatticeInstances({
+      sites: restSites,
+      displacements,
+      hostHex,
+      setMatrixAt: (index, elements) => {
+        const m = new THREE.Matrix4();
+        m.fromArray(elements);
+        hostAtoms.setMatrixAt(index, m);
+      },
+      setColorAt: hostAtoms.instanceColor
+        ? (index) => {
+          const base = occupancyTintRgb(hostHex, restSites[index]?.occupied);
+          const tinted = phononModeTintRgb(base, modeEnergy[index] || 0, mix.opticalWeight);
+          scratchColor.setRGB(tinted.r, tinted.g, tinted.b);
+          hostAtoms.setColorAt(index, scratchColor);
+        }
+        : undefined,
+    });
+    hostAtoms.instanceMatrix.needsUpdate = true;
+    if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
+
+    const bonds = latticeGroupRef.current.getObjectByName('LatticeBonds');
+    const pairs = bonds?.userData?.bondPairs;
+    const bondPos = bonds?.geometry?.attributes?.position;
+    if (pairs?.length && bondPos?.array) {
+      const arr = bondPos.array;
+      for (let b = 0; b < pairs.length; b += 1) {
+        const [ia, ib] = pairs[b];
+        const sa = restSites[ia];
+        const sb = restSites[ib];
+        const da = displacements[ia] || { x: 0, y: 0, z: 0 };
+        const db = displacements[ib] || { x: 0, y: 0, z: 0 };
+        const base = b * 6;
+        arr[base] = sa.x + da.x;
+        arr[base + 1] = sa.y + da.y;
+        arr[base + 2] = sa.z + da.z;
+        arr[base + 3] = sb.x + db.x;
+        arr[base + 4] = sb.y + db.y;
+        arr[base + 5] = sb.z + db.z;
+      }
+      bondPos.needsUpdate = true;
+    }
+
+    const waveguideRibbon = latticeGroupRef.current.getObjectByName('PhononWaveguideRibbon');
+    if (waveguideRibbon?.material) {
+      waveguideRibbon.visible = true;
+      const pulse = 0.5 + 0.5 * Math.sin(phononTimeRef.current * 3.1);
+      waveguideRibbon.material.opacity = 0.35 + wgNorm * 0.55 * pulse + meltSoft * 0.2;
+    }
+
+    if (canvasRef.current?.dataset) {
+      canvasRef.current.dataset.phononAmp = amp.toFixed(3);
+      const meanE = modeEnergy.reduce((s, e) => s + e, 0) / Math.max(modeEnergy.length, 1);
+      canvasRef.current.dataset.phononEnergy = meanE.toFixed(3);
+    }
+  }, [showLattice, showPhonon, hostMeltMeta, loadingRatio]);
+
   // Animation update function
   const updateAnimation = useCallback((deltaTime) => {
       try {
@@ -2071,8 +2178,16 @@ const UnifiedBubbleLatticeVisualization = ({
     const forceRender = forceRenderRef.current;
     if (forceRender) forceRenderRef.current = false;
 
-    // While paused (and not scrubbing / not live), skip the physics update.
-    if (!isPlayingRef.current && !forceRender && !liveActive) return;
+    // While paused (and not scrubbing / not live), still tick phonon modes so
+    // standing waves remain visible; skip the rest of the physics clock.
+    if (!isPlayingRef.current && !forceRender && !liveActive) {
+      tickPhononStandingWaves(deltaTime, {
+        temperatureK: physicsData.temperature,
+        compressionRatio: physicsData.compressionRatio,
+        phononFactor: enhancementBreakdown?.phonon ?? 1,
+      });
+      return;
+    }
 
     const speed = animationSpeedRef.current;
     // Apply UX_TIME_SCALE to slow down the physics for visual observation
@@ -2522,102 +2637,16 @@ const UnifiedBubbleLatticeVisualization = ({
       }
     }
 
-    // ========================================================================
-    // PHONON STANDING WAVES (schematic / contested) — Layers → Phonon (+ Lattice).
-    // Acoustic (long-λ in-phase) + optical (short-λ antiphase) across material size.
-    // Amplitude from enhancement_breakdown.phonon / T / compression; never MD modes.
-    // ========================================================================
-    const waveguideRibbon = latticeGroupRef.current?.getObjectByName('PhononWaveguideRibbon');
-    if (showLattice && showPhonon && latticeGroupRef.current) {
-      const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
-      const restSites = hostAtoms?.userData?.restSites;
-      if (hostAtoms && restSites?.length) {
-        phononTimeRef.current += deltaTime;
-        const forces = cavitationForcesRef.current;
-        const phononFactor = enhancements?.phonon ?? 1;
-        const mix = phononModeMix({ phononFactor });
-        const meltSoft = meltProximityNorm({
-          temperatureK: temperature,
-          meltingPointK: hostMeltMeta?.meltingPointK,
-        });
-        const wgNorm = waveguideEnvelopeNorm({
-          loadingRatio,
-          phononFactor,
-        });
-        const amp = phononJitterAmplitude({
-          phononFactor,
-          temperatureK: temperature,
-          compressionRatio,
-        }) * (forces?.phononScale ?? 1);
-        const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(restSites, {
-          time: phononTimeRef.current,
-          amplitude: amp,
-          acousticWeight: mix.acousticWeight,
-          opticalWeight: mix.opticalWeight,
-          acousticFreq: 2.4 + Math.min(1.2, Math.log10(Math.max(phononFactor, 1)) * 0.35),
-          opticalFreq: 6.5 + Math.min(2.5, Math.log10(Math.max(phononFactor, 1)) * 0.55),
-          waveguideNorm: wgNorm,
-          meltSoftening: meltSoft,
-        });
-        const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
-        const scratchColor = new THREE.Color();
-        applyDynamicLatticeInstances({
-          sites: restSites,
-          displacements,
-          hostHex,
-          setMatrixAt: (index, elements) => {
-            const m = new THREE.Matrix4();
-            m.fromArray(elements);
-            hostAtoms.setMatrixAt(index, m);
-          },
-          setColorAt: hostAtoms.instanceColor
-            ? (index, _rgb) => {
-              const base = occupancyTintRgb(hostHex, restSites[index]?.occupied);
-              const tinted = phononModeTintRgb(base, modeEnergy[index] || 0, mix.opticalWeight);
-              scratchColor.setRGB(tinted.r, tinted.g, tinted.b);
-              hostAtoms.setColorAt(index, scratchColor);
-            }
-            : undefined,
-        });
-        hostAtoms.instanceMatrix.needsUpdate = true;
-        if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
-
-        // Stretch lattice bonds with standing-wave displacements (readable mode cue)
-        const bonds = latticeGroupRef.current.getObjectByName('LatticeBonds');
-        const bondPos = bonds?.geometry?.attributes?.position;
-        if (bondPos?.array && restSites.length) {
-          const arr = bondPos.array;
-          // Each bond segment stored as start+end (6 floats); rebuild from displaced sites
-          // when userData.bondPairs is present (set at create time), else skip.
-          const pairs = bonds.userData?.bondPairs;
-          if (pairs?.length) {
-            for (let b = 0; b < pairs.length; b += 1) {
-              const [ia, ib] = pairs[b];
-              const sa = restSites[ia];
-              const sb = restSites[ib];
-              const da = displacements[ia] || { x: 0, y: 0, z: 0 };
-              const db = displacements[ib] || { x: 0, y: 0, z: 0 };
-              const base = b * 6;
-              arr[base] = sa.x + da.x;
-              arr[base + 1] = sa.y + da.y;
-              arr[base + 2] = sa.z + da.z;
-              arr[base + 3] = sb.x + db.x;
-              arr[base + 4] = sb.y + db.y;
-              arr[base + 5] = sb.z + db.z;
-            }
-            bondPos.needsUpdate = true;
-          }
-        }
-
-        if (waveguideRibbon?.material) {
-          waveguideRibbon.visible = true;
-          const pulse = 0.5 + 0.5 * Math.sin(phononTimeRef.current * 3.1);
-          waveguideRibbon.material.opacity = 0.28 + wgNorm * 0.5 * pulse
-            + meltSoft * 0.2;
-        }
-      }
+    // Phonon standing waves (also ticks while paused — see tickPhononStandingWaves)
+    if (showLattice && showPhonon) {
+      tickPhononStandingWaves(deltaTime, {
+        temperatureK: temperature,
+        compressionRatio,
+        phononFactor: enhancements?.phonon ?? 1,
+      });
     } else if (showLattice && !showPhonon && latticeGroupRef.current) {
       // Rest lattices when Phonon layer off (no residual standing-wave pose)
+      const waveguideRibbon = latticeGroupRef.current.getObjectByName('PhononWaveguideRibbon');
       if (waveguideRibbon) waveguideRibbon.visible = false;
       const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
       const restSites = hostAtoms?.userData?.restSites;
@@ -3242,7 +3271,8 @@ const UnifiedBubbleLatticeVisualization = ({
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
     showCasimir, showRydberg, showHalo,
-    latticeSpacingVisUnits, hostMeltMeta, loadingRatio,
+    latticeSpacingVisUnits, hostMeltMeta, loadingRatio, tickPhononStandingWaves,
+    physicsData.temperature, physicsData.compressionRatio, enhancementBreakdown,
   ]); // Note: currentPhase / isPlaying removed - using refs to avoid scene re-initialization
 
   // Store updateAnimation in ref to avoid triggering scene re-initialization
