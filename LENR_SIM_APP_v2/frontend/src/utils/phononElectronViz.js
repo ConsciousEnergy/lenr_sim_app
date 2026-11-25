@@ -40,7 +40,7 @@ export function phononJitterAmplitude({
   phononFactor = 1,
   temperatureK = 300,
   compressionRatio = 1,
-  maxAmp = 0.16,
+  maxAmp = 0.32,
 } = {}) {
   const phonon = Math.max(1, finiteOr(phononFactor, 1));
   const temp = finiteOr(temperatureK, 300);
@@ -48,8 +48,9 @@ export function phononJitterAmplitude({
   const phononTerm = Math.log10(phonon) / 2; // ~0 at 1, ~1 at 100
   const tempTerm = clamp01((temp - 300) / 5000);
   const compTerm = clamp01(Math.log10(comp + 1) / 2);
-  const raw = 0.028 + 0.055 * phononTerm + 0.035 * tempTerm + 0.04 * compTerm;
-  return Math.min(maxAmp, Math.max(0.022, raw));
+  // Large enough that material-size standing waves read on HSE canvas stills.
+  const raw = 0.06 + 0.1 * phononTerm + 0.06 * tempTerm + 0.07 * compTerm;
+  return Math.min(maxAmp, Math.max(0.05, raw));
 }
 
 /**

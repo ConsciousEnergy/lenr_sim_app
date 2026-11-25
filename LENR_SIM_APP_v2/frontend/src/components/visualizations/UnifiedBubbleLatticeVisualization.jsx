@@ -782,6 +782,7 @@ const UnifiedBubbleLatticeVisualization = ({
       bondGeometry.setAttribute('position', new THREE.BufferAttribute(bondVertices, 3));
       const bonds = new THREE.LineSegments(bondGeometry, bondMaterial);
       bonds.name = 'LatticeBonds';
+      bonds.userData = { bondPairs: connections.slice() };
       latticeGroup.add(bonds);
     }
     
@@ -2581,11 +2582,38 @@ const UnifiedBubbleLatticeVisualization = ({
         hostAtoms.instanceMatrix.needsUpdate = true;
         if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
 
+        // Stretch lattice bonds with standing-wave displacements (readable mode cue)
+        const bonds = latticeGroupRef.current.getObjectByName('LatticeBonds');
+        const bondPos = bonds?.geometry?.attributes?.position;
+        if (bondPos?.array && restSites.length) {
+          const arr = bondPos.array;
+          // Each bond segment stored as start+end (6 floats); rebuild from displaced sites
+          // when userData.bondPairs is present (set at create time), else skip.
+          const pairs = bonds.userData?.bondPairs;
+          if (pairs?.length) {
+            for (let b = 0; b < pairs.length; b += 1) {
+              const [ia, ib] = pairs[b];
+              const sa = restSites[ia];
+              const sb = restSites[ib];
+              const da = displacements[ia] || { x: 0, y: 0, z: 0 };
+              const db = displacements[ib] || { x: 0, y: 0, z: 0 };
+              const base = b * 6;
+              arr[base] = sa.x + da.x;
+              arr[base + 1] = sa.y + da.y;
+              arr[base + 2] = sa.z + da.z;
+              arr[base + 3] = sb.x + db.x;
+              arr[base + 4] = sb.y + db.y;
+              arr[base + 5] = sb.z + db.z;
+            }
+            bondPos.needsUpdate = true;
+          }
+        }
+
         if (waveguideRibbon?.material) {
           waveguideRibbon.visible = true;
           const pulse = 0.5 + 0.5 * Math.sin(phononTimeRef.current * 3.1);
-          waveguideRibbon.material.opacity = 0.2 + wgNorm * 0.45 * pulse
-            + meltSoft * 0.15;
+          waveguideRibbon.material.opacity = 0.28 + wgNorm * 0.5 * pulse
+            + meltSoft * 0.2;
         }
       }
     } else if (showLattice && !showPhonon && latticeGroupRef.current) {
@@ -2613,6 +2641,25 @@ const UnifiedBubbleLatticeVisualization = ({
         });
         hostAtoms.instanceMatrix.needsUpdate = true;
         if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
+        const bonds = latticeGroupRef.current.getObjectByName('LatticeBonds');
+        const pairs = bonds?.userData?.bondPairs;
+        const bondPos = bonds?.geometry?.attributes?.position;
+        if (pairs?.length && bondPos?.array) {
+          const arr = bondPos.array;
+          for (let b = 0; b < pairs.length; b += 1) {
+            const [ia, ib] = pairs[b];
+            const sa = restSites[ia];
+            const sb = restSites[ib];
+            const base = b * 6;
+            arr[base] = sa.x;
+            arr[base + 1] = sa.y;
+            arr[base + 2] = sa.z;
+            arr[base + 3] = sb.x;
+            arr[base + 4] = sb.y;
+            arr[base + 5] = sb.z;
+          }
+          bondPos.needsUpdate = true;
+        }
       }
     }
     

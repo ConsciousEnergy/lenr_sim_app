@@ -37,8 +37,8 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
       compressionRatio: 20,
     });
     expect(hot).toBeGreaterThan(cold);
-    expect(hot).toBeLessThanOrEqual(0.16);
-    expect(cold).toBeGreaterThanOrEqual(0.022);
+    expect(hot).toBeLessThanOrEqual(0.32);
+    expect(cold).toBeGreaterThanOrEqual(0.05);
   });
 
   test('phononModeMix shifts toward optical as phonon factor rises', () => {
