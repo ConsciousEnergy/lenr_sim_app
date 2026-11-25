@@ -32,15 +32,16 @@ describe('TeamPage honesty CTAs (public beta)', () => {
     expect(note).toHaveTextContent('Bryan Chris White');
     expect(note).toHaveTextContent('Infrastructure / Stack Guidance');
     // Not a peer card in the contributor grid
-    expect(screen.getByText('Diadon Acs with Conscious Energy').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
+    expect(screen.getByText('Diadon Acs').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
     expect(screen.getByText('Physics Contributors').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
     expect(screen.getByText('Research Community').closest('[data-testid="bryan-guidance-note"]')).toBeNull();
+    expect(screen.getByText('Conscious Energy · Project Lead & Development')).toBeInTheDocument();
     const bryanSite = screen.getByRole('link', { name: /Bryan Chris White website/i });
     expect(bryanSite).toHaveAttribute('href', 'https://bryanchriswhite.com/');
     expect(bryanSite).toHaveAttribute('target', '_blank');
     expect(bryanSite).toHaveAttribute('rel', 'noopener noreferrer');
     // Contributor peer cards stay unlinked
-    expect(screen.getByText('Diadon Acs with Conscious Energy').closest('a')).toBeNull();
+    expect(screen.getByText('Diadon Acs').closest('a')).toBeNull();
     expect(screen.getByText('Physics Contributors').closest('a')).toBeNull();
     expect(screen.getByText('Research Community').closest('a')).toBeNull();
   });

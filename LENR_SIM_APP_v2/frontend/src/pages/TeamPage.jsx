@@ -50,7 +50,7 @@ const teamMembers = [
 
 // Contributor data (peer cards; special acknowledgements live below the grid)
 const contributors = [
-  { name: 'Diadon Acs with Conscious Energy', contributions: 'Project Lead & Development', avatar: 'CE' },
+  { name: 'Diadon Acs', contributions: 'Conscious Energy · Project Lead & Development', avatar: 'CE' },
   { name: 'Physics Contributors', contributions: 'Theoretical Framework', avatar: 'PC' },
   { name: 'Research Community', contributions: 'Bug Reports & Features', avatar: 'RC' },
 ];
