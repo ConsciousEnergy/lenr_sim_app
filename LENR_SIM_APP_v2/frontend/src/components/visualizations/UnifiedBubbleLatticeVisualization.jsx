@@ -80,6 +80,15 @@ import {
   createSoftDiscTexture,
   createSoftPointsMaterial,
 } from '../../utils/waveParticleViz';
+import {
+  applyBubbleTemperatureTint,
+  createBubbleGasMaterial,
+  createBubbleTorusGeometries,
+  createDoubleLayerMaterial,
+  createInnerLayerMaterial,
+  createJetMaterial,
+  createTorusPlasmaMaterial,
+} from '../../utils/bubbleTorusViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
 import TouchControls, { isMobileDevice, getRecommendedQualitySettings } from '../controls/TouchControls';
 import { track } from '../../analytics/events';
@@ -833,12 +842,16 @@ const UnifiedBubbleLatticeVisualization = ({
     return group;
   }, [hostMaterial]);
 
-  // Create bubble with double-layer shell
-  // Physics: bubble nucleates at surface cavities within boundary layer
-  // Bubble starts very small at the lattice surface and grows while attached
+  // Create bubble with double-layer shell + collapse torus
+  // Materials: MeshPhysical clearcoat / emissive (presentation realism).
+  // Tint binds to temperature_k / collapse_results when samples available.
   const createBubble = useCallback((scene) => {
     const bubbleGroup = new THREE.Group();
     bubbleGroup.name = 'BubbleGroup';
+    bubbleGroup.userData = {
+      fidelity: 'schematic',
+      source: 'schematic_visualization',
+    };
     // Start at nucleation site - very close to lattice surface
     // This reflects physics: heterogeneous nucleation occurs AT surface cavities
     const latticeY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
@@ -847,97 +860,56 @@ const UnifiedBubbleLatticeVisualization = ({
     
     // Start with small scale (nucleation size)
     const initialScale = PHYSICS_CONFIG.BUBBLE_SCALE.NUCLEATION;
+    const geos = createBubbleTorusGeometries();
     
-    // Interior gas volume — kept nearly transparent so the ionic double-layer
-    // shells remain the primary visual. A filled opaque MainBubble was covering
-    // the developed double-layer dynamics.
-    const bubbleGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const bubbleMaterial = new THREE.MeshPhongMaterial({
-      color: 0xaaddff,
-      transparent: true,
-      opacity: 0.1,
-      shininess: 80,
-      specular: 0xffffff,
-      depthWrite: false,
-      side: THREE.FrontSide,
-    });
-    const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
+    // Interior gas volume — clearcoat glass-like, kept translucent so shells read
+    const bubbleMaterial = createBubbleGasMaterial({ opacity: 0.2 });
+    const bubble = new THREE.Mesh(geos.gas, bubbleMaterial);
     bubble.name = 'MainBubble';
     bubble.renderOrder = 1;
     bubble.userData = { 
       geometryType: 'sphere', // 'sphere', 'torus', 'jet'
-      baseGeometry: bubbleGeometry,
-      baseOpacity: 0.1,
+      baseGeometry: geos.gas,
+      baseOpacity: 0.2,
     };
-    // Start with nucleation scale (small bubble at surface)
     bubble.scale.setScalar(initialScale);
     bubbleGroup.add(bubble);
     
-    // Torus geometry for collapse phase (torus-to-jet formation)
-    // Torus represents the bubble collapsing into a ring/donut shape before jet formation
-    // Make torus larger and more visible - scale relative to bubble size
-    const torusGeometry = new THREE.TorusGeometry(1.5, 0.8, 16, 32);
-    const torusMaterial = new THREE.MeshPhongMaterial({
-      color: 0xff8844,
-      transparent: true,
-      opacity: 0.8,
-      emissive: 0xff4400,
-      emissiveIntensity: 1.0,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+    // Torus for collapse phase (torus-to-jet) — smoother plasma ring
+    const torusMaterial = createTorusPlasmaMaterial({ opacity: 0.82 });
+    const torus = new THREE.Mesh(geos.torus, torusMaterial);
     torus.name = 'TorusFormation';
-    torus.visible = false; // Hidden initially, shown during collapse
-    torus.rotation.x = Math.PI / 2; // Rotate to horizontal (XZ plane) - ring around Y axis
+    torus.visible = false;
+    torus.rotation.x = Math.PI / 2;
     torus.renderOrder = 3;
-    torus.userData = { baseRadius: 1.5, baseTubeRadius: 0.8 };
+    torus.userData = { baseRadius: 1.15, baseTubeRadius: 0.38 };
     bubbleGroup.add(torus);
     
-    // Jet geometry for focused jet formation (during minimum/rebound)
-    // Visible energy jet during bubble collapse toward lattice
-    const jetGeometry = new THREE.ConeGeometry(0.3, 4, 16, 1, true);
-    const jetMaterial = new THREE.MeshPhongMaterial({
-      color: 0xffff00,
-      transparent: true,
-      opacity: 0.9,
-      emissive: 0xffff00,
-      emissiveIntensity: 2.0,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    const jet = new THREE.Mesh(jetGeometry, jetMaterial);
+    // Focused jet during minimum/rebound
+    const jetMaterial = createJetMaterial({ opacity: 0.88 });
+    const jet = new THREE.Mesh(geos.jet, jetMaterial);
     jet.name = 'FocusedJet';
-    jet.visible = false; // Hidden initially, shown during minimum/rebound
-    jet.rotation.x = Math.PI; // Point downward
+    jet.visible = false;
+    jet.rotation.x = Math.PI;
     jet.renderOrder = 3;
-    jet.userData = { baseRadius: 0.3, baseHeight: 4 };
+    jet.userData = { baseRadius: 0.28, baseHeight: 3.6 };
     bubbleGroup.add(jet);
     
     // Ionic double-layer shell (outer) — primary bubble visual
-    const doubleLayerGeometry = new THREE.SphereGeometry(1.12, 48, 48);
-    const doubleLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00e8ff,
-      transparent: true,
-      opacity: 0.32,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      wireframe: false,
-    });
-    const doubleLayer = new THREE.Mesh(doubleLayerGeometry, doubleLayerMaterial);
+    const doubleLayer = new THREE.Mesh(geos.doubleLayer, createDoubleLayerMaterial({ opacity: 0.38 }));
     doubleLayer.name = 'DoubleLayer';
     doubleLayer.renderOrder = 2;
-    doubleLayer.scale.setScalar(initialScale); // Start small at nucleation
-    doubleLayer.userData = { baseOpacity: 0.32 };
+    doubleLayer.scale.setScalar(initialScale);
+    doubleLayer.userData = { baseOpacity: 0.38 };
     bubbleGroup.add(doubleLayer);
 
-    // Outer wire rim so the double-layer stays readable without filling the view
+    // Subtle wire rim for silhouette readability
     const doubleLayerWire = new THREE.Mesh(
-      new THREE.SphereGeometry(1.13, 24, 16),
+      geos.doubleLayerWire,
       new THREE.MeshBasicMaterial({
-        color: 0x66ffff,
+        color: 0xaaffff,
         transparent: true,
-        opacity: 0.45,
+        opacity: 0.28,
         wireframe: true,
         depthWrite: false,
       }),
@@ -948,29 +920,32 @@ const UnifiedBubbleLatticeVisualization = ({
     bubbleGroup.add(doubleLayerWire);
     
     // Inner charge layer
-    const innerLayerGeometry = new THREE.SphereGeometry(0.92, 32, 32);
-    const innerLayerMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff7722,
-      transparent: true,
-      opacity: 0.22,
-      side: THREE.FrontSide,
-      depthWrite: false,
-    });
-    const innerLayer = new THREE.Mesh(innerLayerGeometry, innerLayerMaterial);
+    const innerLayer = new THREE.Mesh(geos.innerLayer, createInnerLayerMaterial({ opacity: 0.26 }));
     innerLayer.name = 'InnerLayer';
     innerLayer.renderOrder = 2;
-    innerLayer.scale.setScalar(initialScale); // Start small at nucleation
-    innerLayer.userData = { baseOpacity: 0.22 };
+    innerLayer.scale.setScalar(initialScale);
+    innerLayer.userData = { baseOpacity: 0.26 };
     bubbleGroup.add(innerLayer);
+
+    // Soft local light so clearcoat shells catch highlights (presentation)
+    const bubbleLight = new THREE.PointLight(0xb8e8ff, 0.85, 10, 2);
+    bubbleLight.name = 'BubbleKeyLight';
+    bubbleLight.position.set(0.6, 0.8, 1.2);
+    bubbleGroup.add(bubbleLight);
+    const warmFill = new THREE.PointLight(0xff9966, 0.35, 8, 2);
+    warmFill.name = 'BubbleWarmFill';
+    warmFill.position.set(-0.8, 0.4, -0.6);
+    bubbleGroup.add(warmFill);
     
     // Pressure wave rings
     for (let i = 0; i < 3; i++) {
-      const ringGeometry = new THREE.RingGeometry(1.2 + i * 0.5, 1.3 + i * 0.5, 32);
+      const ringGeometry = new THREE.RingGeometry(1.2 + i * 0.5, 1.32 + i * 0.5, 64);
       const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0x4488ff,
+        color: 0x66aaff,
         transparent: true,
-        opacity: 0.1,
-        side: THREE.DoubleSide
+        opacity: 0.12,
+        side: THREE.DoubleSide,
+        depthWrite: false,
       });
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
       ring.rotation.x = Math.PI / 2;
@@ -2368,6 +2343,23 @@ const UnifiedBubbleLatticeVisualization = ({
       // HETEROGENEOUS NUCLEATION — keep bubble attached near the lattice surface
       // ========================================================================
       bubbleGroupRef.current.position.y = getBubbleYFromPhase(phase, phaseProgress);
+
+      // Temperature tint from engine/API samples (temperature_k / collapse path).
+      // local_fallback chip already covers schematic RAF when samples absent.
+      const tint = applyBubbleTemperatureTint(
+        bubbleGroupRef.current,
+        physicsData.temperature ?? temperature,
+      );
+      const bubbleKey = bubbleGroupRef.current.getObjectByName('BubbleKeyLight');
+      if (bubbleKey && tint) {
+        bubbleKey.intensity = 0.55 + tint.heatNorm * 1.4;
+        bubbleKey.color.copy(tint.color);
+      }
+      const warmFill = bubbleGroupRef.current.getObjectByName('BubbleWarmFill');
+      if (warmFill && tint) {
+        warmFill.intensity = 0.25 + tint.heatNorm * 1.1;
+        warmFill.color.copy(tint.emissive);
+      }
     }
     
     // Update H2/D2 particles with MHD fluid dynamics (v0.2.3)
@@ -3084,10 +3076,14 @@ const UnifiedBubbleLatticeVisualization = ({
     sceneRef.current = scene;
     
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xdde8ff, 0.35);
     scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0x88aacc, 0x2a1810, 0.4);
+    hemiLight.name = 'VizHemisphereLight';
+    scene.add(hemiLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xfff5e8, 0.95);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
     
