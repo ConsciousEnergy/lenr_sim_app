@@ -1064,8 +1064,9 @@ const UnifiedBubbleLatticeVisualization = ({
     protonWaveCompanionRef.current?.dispose?.();
     const waveCompanion = new ProtonWaveCompanion({
       particleCount: protonCount,
-      trailLength: 14,
-      coreSize: 0.26,
+      trailLength: 18,
+      coreSize: 0.34,
+      bloomSize: 0.75,
       trailColor: 0xff8a3d,
     });
     scene.add(waveCompanion.getGroup());
@@ -1468,14 +1469,22 @@ const UnifiedBubbleLatticeVisualization = ({
     }
     
     try {
-    // Create plasma vortex effect - particle-based MHD flow
+    // Soft Points + bloom + staggered dual-core wake (vortex-street–inspired look).
+    // Presentation only — not CFD / PBF / WebGPU fluid solvers.
     const plasmaVortex = new PlasmaVortexEffect({
-      particleCount: qualitySettings.vortexParticleCount ?? 200,
-      vortexStrength: 1.0,
-      radialSpeed: 0.25,
+      particleCount: qualitySettings.vortexParticleCount ?? 420,
+      vortexStrength: 1.15,
+      radialSpeed: 0.28,
       verticalSpeed: 0.4,
-      radius: 2.0,
-      height: 3.5
+      radius: 2.15,
+      height: 3.8,
+      pointSize: 0.44,
+      bloomSize: 0.95,
+      trailLength: 16,
+      streetEnabled: true,
+      streetSeparation: 0.95,
+      streetStreamSpeed: 0.62,
+      streetShedRate: 1.25,
     });
     plasmaVortex.initialize();
     plasmaVortex.getGroup().position.set(0, 0, 0); // Parent group handles world position

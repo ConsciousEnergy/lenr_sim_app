@@ -594,7 +594,8 @@ export function getRecommendedQualitySettings() {
     maxFPS: isMobile ? 30 : 60,
     useSimplifiedShaders: isMobile,
     vortexVisualizationEnabled: !isMobile,
-    vortexParticleCount: isMobile ? 36 : 200,
+    // Denser soft-fluid look on desktop; keep mobile light (schematic, not CFD).
+    vortexParticleCount: isMobile ? 48 : 420,
     skipOptionalQuantumLayers: isMobile,
     simplifiedFieldLines: isMobile,
   };

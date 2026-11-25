@@ -430,7 +430,8 @@ export class EnergyFlowVisualizer {
 
 /**
  * Creates a swirling plasma / wave-particle effect using soft Points + ribbon trails.
- * Schematic presentation only — not continuum CFD.
+ * Optional staggered dual-core wake (Kármán-street–inspired look only).
+ * Schematic presentation only — not continuum CFD / PBF / WebGPU fluids.
  */
 export class PlasmaVortexEffect {
   constructor(options = {}) {
@@ -440,22 +441,32 @@ export class PlasmaVortexEffect {
     this.verticalSpeed = options.verticalSpeed || 0.3;
     this.radius = options.radius || 3;
     this.height = options.height || 2;
-    this.pointSize = options.pointSize || 0.32;
-    this.trailLength = options.trailLength || 10;
-    this.glow = options.glow ?? 0.55;
+    this.pointSize = options.pointSize || 0.5;
+    this.bloomSize = options.bloomSize || 1.1;
+    this.trailLength = options.trailLength || 14;
+    this.glow = options.glow ?? 0.65;
+    // Schematic vortex-street dual cores (presentation; not Re-accurate shedding)
+    this.streetEnabled = options.streetEnabled !== false;
+    this.streetSeparation = options.streetSeparation ?? 0.85;
+    this.streetStreamSpeed = options.streetStreamSpeed ?? 0.55;
+    this.streetShedRate = options.streetShedRate ?? 1.1;
     this.group = new THREE.Group();
     this.group.name = 'plasmaVortex';
     this.group.userData = {
       fidelity: WAVE_PARTICLE_FIDELITY,
       source: WAVE_PARTICLE_SOURCE,
+      streetInspired: true,
     };
     /** @type {{ position: THREE.Vector3, userData: object, material: { color: THREE.Color } }[]} */
     this.particles = [];
     this.time = 0;
     this._softMap = null;
     this._points = null;
+    this._bloom = null;
     this._positions = null;
     this._colors = null;
+    this._bloomPositions = null;
+    this._bloomColors = null;
     this._trails = null;
     this._scratchSamples = [];
   }
@@ -474,7 +485,9 @@ export class PlasmaVortexEffect {
     const n = this.particleCount;
     this._positions = new Float32Array(n * 3);
     this._colors = new Float32Array(n * 3);
-    this._softMap = createSoftDiscTexture();
+    this._bloomPositions = new Float32Array(n * 3);
+    this._bloomColors = new Float32Array(n * 3);
+    this._softMap = createSoftDiscTexture(96);
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
@@ -489,7 +502,7 @@ export class PlasmaVortexEffect {
     const material = createSoftPointsMaterial({
       color: 0xffffff,
       size: this.pointSize,
-      opacity: 0.85,
+      opacity: 0.88,
       map: this._softMap,
     });
 
@@ -497,19 +510,42 @@ export class PlasmaVortexEffect {
     this._points.name = 'PlasmaSoftCloud';
     this.group.add(this._points);
 
+    const bloomGeom = new THREE.BufferGeometry();
+    bloomGeom.setAttribute(
+      'position',
+      new THREE.BufferAttribute(this._bloomPositions, 3).setUsage(THREE.DynamicDrawUsage),
+    );
+    bloomGeom.setAttribute(
+      'color',
+      new THREE.BufferAttribute(this._bloomColors, 3).setUsage(THREE.DynamicDrawUsage),
+    );
+    const bloomMat = createSoftPointsMaterial({
+      color: 0xffffff,
+      size: this.bloomSize,
+      opacity: 0.32,
+      map: this._softMap,
+    });
+    this._bloom = new THREE.Points(bloomGeom, bloomMat);
+    this._bloom.name = 'PlasmaSoftBloom';
+    this.group.add(this._bloom);
+
+    // Trail a subset for density without line explosion
+    const trailCount = Math.min(n, Math.max(48, Math.floor(n * 0.45)));
+    this._trailStride = Math.max(1, Math.floor(n / trailCount));
     this._trails = new WaveRibbonTrailSystem({
-      particleCount: n,
+      particleCount: trailCount,
       trailLength: this.trailLength,
       colorHex: 0xff6a2a,
-      opacity: 0.45,
+      opacity: 0.5,
     });
     this.group.add(this._trails.getGroup());
 
     for (let i = 0; i < n; i += 1) {
+      const lane = i % 2 === 0 ? 1 : -1; // staggered street lanes
       const theta = Math.random() * Math.PI * 2;
-      const r = Math.random() * this.radius;
-      const y = (Math.random() - 0.5) * this.height;
-      const color = new THREE.Color().setHSL(0.55 + Math.random() * 0.15, 1, 0.55);
+      const r = 0.15 + Math.random() * this.radius * 0.55;
+      const stream = Math.random() * this.height;
+      const color = new THREE.Color().setHSL(0.55 + Math.random() * 0.12, 1, 0.55);
 
       const particle = {
         position: new THREE.Vector3(),
@@ -517,10 +553,14 @@ export class PlasmaVortexEffect {
         userData: {
           theta,
           r,
-          y,
-          baseY: y,
-          angularVelocity: this.vortexStrength * (1 + (this.radius - r) / this.radius),
+          y: stream,
+          baseY: stream,
+          lane,
+          stream,
+          angularVelocity:
+            lane * this.vortexStrength * (0.7 + (this.radius - r) / Math.max(this.radius, 1e-6)),
           radialPhase: Math.random() * Math.PI * 2,
+          shedPhase: (i / n) * Math.PI * 2,
         },
       };
 
@@ -532,7 +572,16 @@ export class PlasmaVortexEffect {
   }
 
   updateParticlePosition(particle) {
-    const { theta, r, y } = particle.userData;
+    const { theta, r, y, lane = 1 } = particle.userData;
+    if (this.streetEnabled) {
+      const cx = lane * this.streetSeparation * 0.5;
+      particle.position.set(
+        cx + r * Math.cos(theta),
+        y,
+        r * Math.sin(theta) * 0.65,
+      );
+      return;
+    }
     particle.position.set(
       r * Math.cos(theta),
       y,
@@ -548,16 +597,30 @@ export class PlasmaVortexEffect {
       this._positions[i * 3] = x;
       this._positions[i * 3 + 1] = y;
       this._positions[i * 3 + 2] = z;
+      this._bloomPositions[i * 3] = x;
+      this._bloomPositions[i * 3 + 1] = y;
+      this._bloomPositions[i * 3 + 2] = z;
       this._colors[i * 3] = particle.material.color.r;
       this._colors[i * 3 + 1] = particle.material.color.g;
       this._colors[i * 3 + 2] = particle.material.color.b;
-      this._scratchSamples.push(particle.position);
+      this._bloomColors[i * 3] = particle.material.color.r * 0.4 + 0.15;
+      this._bloomColors[i * 3 + 1] = particle.material.color.g * 0.5 + 0.25;
+      this._bloomColors[i * 3 + 2] = Math.min(1, particle.material.color.b * 0.35 + 0.6);
+      if (i % this._trailStride === 0) {
+        this._scratchSamples.push(particle.position);
+      }
     }
     if (this._points) {
       this._points.geometry.attributes.position.needsUpdate = true;
       this._points.geometry.attributes.color.needsUpdate = true;
-      this._points.material.size = this.pointSize * (0.85 + this.glow * 0.35);
-      this._points.material.opacity = Math.min(0.95, 0.55 + this.glow * 0.4);
+      this._points.material.size = this.pointSize * (0.9 + this.glow * 0.4);
+      this._points.material.opacity = Math.min(0.95, 0.58 + this.glow * 0.35);
+    }
+    if (this._bloom) {
+      this._bloom.geometry.attributes.position.needsUpdate = true;
+      this._bloom.geometry.attributes.color.needsUpdate = true;
+      this._bloom.material.size = this.bloomSize * (0.85 + this.glow * 0.45);
+      this._bloom.material.opacity = Math.min(0.5, 0.2 + this.glow * 0.28);
     }
     this._trails?.updateFromSamples(this._scratchSamples, this.glow);
   }
@@ -570,26 +633,44 @@ export class PlasmaVortexEffect {
 
       data.theta += data.angularVelocity * deltaTime;
 
-      const radialPulse = Math.sin(this.time * this.radialSpeed + data.radialPhase) * 0.2;
+      const radialPulse = Math.sin(this.time * this.radialSpeed + data.radialPhase) * 0.18;
       const currentR = data.r * (1 + radialPulse);
+      data._currentR = currentR;
 
-      const verticalOscillation = Math.sin(this.time * this.verticalSpeed + data.radialPhase) * 0.3;
-      data.y = data.baseY + verticalOscillation;
+      if (this.streetEnabled) {
+        // Streamwise advection + staggered shed offset (looks like a vortex street wake)
+        const shed = Math.sin(this.time * this.streetShedRate + data.shedPhase) * 0.35;
+        data.stream = (data.stream + deltaTime * this.streetStreamSpeed * (0.7 + this.glow))
+          % Math.max(this.height * 1.4, 1);
+        data.y = data.stream + shed * data.lane;
+        const cx = data.lane * this.streetSeparation * 0.5;
+        particle.position.set(
+          cx + currentR * Math.cos(data.theta),
+          data.y - this.height * 0.35,
+          currentR * Math.sin(data.theta) * 0.7 + shed * 0.15,
+        );
+      } else {
+        const verticalOscillation = Math.sin(this.time * this.verticalSpeed + data.radialPhase) * 0.3;
+        data.y = data.baseY + verticalOscillation;
+        particle.position.set(
+          currentR * Math.cos(data.theta),
+          data.y,
+          currentR * Math.sin(data.theta),
+        );
+      }
 
-      particle.position.set(
-        currentR * Math.cos(data.theta),
-        data.y,
-        currentR * Math.sin(data.theta),
-      );
-
-      // Warm core / cool rim — presentation color only
+      // Plasma-globe / streamer feel (mysimulator.uk plasma category look) — viz only
       const heightFactor = 1 - Math.abs(data.y) / Math.max(this.height, 1e-6);
       const radialFactor = 1 - currentR / Math.max(this.radius, 1e-6);
-      const hue = 0.08 - heightFactor * 0.06 + (1 - radialFactor) * 0.45;
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 3.2 + data.shedPhase);
+      // Warm streamer lane vs cool ion lane; pulse lifts lightness toward white-hot cores
+      const laneHue = data.lane > 0 ? 0.05 : 0.55;
+      const hue = laneHue + (1 - radialFactor) * 0.08 - heightFactor * 0.03;
+      const lightness = 0.42 + heightFactor * 0.28 + pulse * 0.22 * this.glow;
       particle.material.color.setHSL(
-        Math.max(0, Math.min(0.6, hue)),
-        0.95,
-        0.45 + heightFactor * 0.35,
+        Math.max(0, Math.min(0.7, hue)),
+        0.85 + pulse * 0.1,
+        Math.min(0.92, lightness),
       );
     }
 
@@ -611,6 +692,10 @@ export class PlasmaVortexEffect {
     if (this._points) {
       this._points.geometry.dispose();
       this._points.material.dispose();
+    }
+    if (this._bloom) {
+      this._bloom.geometry.dispose();
+      this._bloom.material.dispose();
     }
     this._softMap?.dispose?.();
     while (this.group.children.length > 0) {

@@ -56,7 +56,7 @@ describe('waveParticleViz (schematic soft Points + ribbons)', () => {
     trails.dispose();
   });
 
-  test('ProtonWaveCompanion syncs mesh positions into soft cloud', () => {
+  test('ProtonWaveCompanion syncs mesh positions into soft cloud + bloom', () => {
     const companion = new ProtonWaveCompanion({ particleCount: 3, trailLength: 6 });
     const meshes = [0, 1, 2].map((i) => {
       const mesh = new THREE.Mesh(
@@ -69,6 +69,7 @@ describe('waveParticleViz (schematic soft Points + ribbons)', () => {
     companion.syncFromMeshes(meshes, { glow: 0.7, hideMeshCores: true });
     expect(companion.cloud.positions[0]).toBe(0);
     expect(companion.cloud.positions[3]).toBe(1);
+    expect(companion.bloom.positions[3]).toBe(1);
     expect(meshes[0].material.opacity).toBeLessThan(0.5);
     companion.dispose();
   });

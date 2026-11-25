@@ -3,7 +3,11 @@
  *
  * Presentation-only helpers for soft / wave-like particle rendering in UBLV.
  * Motions and glow may follow existing engine enhancement / phase samples, but
- * this module does NOT implement Navier–Stokes, SPH, or any CFD solver.
+ * this module does NOT implement Navier–Stokes, SPH, PBF, or any CFD solver.
+ *
+ * Visual inspiration (look only — not coupled solvers):
+ * - Soft overlapping Points / ribbons (three.js particle-fluid showcases)
+ * - Staggered dual-core wake reminiscent of Kármán vortex streets (schematic)
  *
  * Honesty: schematic_visualization — never proof of LENR / fluid dynamics fidelity.
  */
@@ -257,8 +261,9 @@ export class WaveRibbonTrailSystem {
 export class ProtonWaveCompanion {
   constructor({
     particleCount = 60,
-    trailLength = 14,
-    coreSize = 0.22,
+    trailLength = 18,
+    coreSize = 0.34,
+    bloomSize = 0.72,
     trailColor = 0xff8a3d,
   } = {}) {
     this.group = new THREE.Group();
@@ -268,20 +273,30 @@ export class ProtonWaveCompanion {
       source: WAVE_PARTICLE_SOURCE,
     };
 
+    // Dense soft core + larger bloom layer (three-fluid-fx–style soft blobs; viz only)
     this.cloud = createSoftParticleCloud({
       count: particleCount,
       colorHex: 0xff8a3d,
       size: coreSize,
-      opacity: 0.9,
+      opacity: 0.92,
     });
     this.cloud.points.name = 'ProtonSoftCloud';
     this.group.add(this.cloud.points);
+
+    this.bloom = createSoftParticleCloud({
+      count: particleCount,
+      colorHex: 0x66e0ff,
+      size: bloomSize,
+      opacity: 0.35,
+    });
+    this.bloom.points.name = 'ProtonSoftBloom';
+    this.group.add(this.bloom.points);
 
     this.trails = new WaveRibbonTrailSystem({
       particleCount,
       trailLength,
       colorHex: trailColor,
-      opacity: 0.5,
+      opacity: 0.58,
     });
     this.group.add(this.trails.getGroup());
 
@@ -306,16 +321,23 @@ export class ProtonWaveCompanion {
       this.cloud.positions[i * 3] = x;
       this.cloud.positions[i * 3 + 1] = y;
       this.cloud.positions[i * 3 + 2] = z;
+      this.bloom.positions[i * 3] = x;
+      this.bloom.positions[i * 3 + 1] = y;
+      this.bloom.positions[i * 3 + 2] = z;
 
       if (mesh.material?.color) {
         this.cloud.colors[i * 3] = mesh.material.color.r;
         this.cloud.colors[i * 3 + 1] = mesh.material.color.g;
         this.cloud.colors[i * 3 + 2] = mesh.material.color.b;
+        // Cooler bloom fringe for fluid-sheet read
+        this.bloom.colors[i * 3] = mesh.material.color.r * 0.45 + 0.2;
+        this.bloom.colors[i * 3 + 1] = mesh.material.color.g * 0.55 + 0.35;
+        this.bloom.colors[i * 3 + 2] = Math.min(1, mesh.material.color.b * 0.4 + 0.65);
       }
 
       if (hideMeshCores && mesh.material) {
         mesh.material.transparent = true;
-        mesh.material.opacity = 0.15;
+        mesh.material.opacity = 0.08;
         mesh.material.depthWrite = false;
       }
 
@@ -324,13 +346,18 @@ export class ProtonWaveCompanion {
 
     this.cloud.geometry.attributes.position.needsUpdate = true;
     this.cloud.geometry.attributes.color.needsUpdate = true;
-    this.cloud.material.opacity = Math.min(0.95, 0.45 + glow * 0.5);
-    this.cloud.material.size = 0.18 + glow * 0.22;
+    this.bloom.geometry.attributes.position.needsUpdate = true;
+    this.bloom.geometry.attributes.color.needsUpdate = true;
+    this.cloud.material.opacity = Math.min(0.95, 0.5 + glow * 0.45);
+    this.cloud.material.size = 0.28 + glow * 0.28;
+    this.bloom.material.opacity = Math.min(0.55, 0.22 + glow * 0.28);
+    this.bloom.material.size = 0.55 + glow * 0.45;
     this.trails.updateFromSamples(this._scratch, glow);
   }
 
   dispose() {
     this.cloud.dispose();
+    this.bloom.dispose();
     this.trails.dispose();
   }
 }
