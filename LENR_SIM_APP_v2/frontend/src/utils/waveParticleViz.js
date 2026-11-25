@@ -30,9 +30,10 @@ export function createSoftDiscTexture(size = 64) {
 
   const half = size / 2;
   const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
-  gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.35, 'rgba(255,255,255,0.55)');
-  gradient.addColorStop(0.7, 'rgba(255,255,255,0.12)');
+  // Softer core so additive stacks do not paint opaque white over the lattice.
+  gradient.addColorStop(0, 'rgba(255,255,255,0.72)');
+  gradient.addColorStop(0.28, 'rgba(255,255,255,0.32)');
+  gradient.addColorStop(0.58, 'rgba(255,255,255,0.1)');
   gradient.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
@@ -60,7 +61,7 @@ export function enhancementGlowFactor(enhancement, {
 export function createSoftPointsMaterial({
   color = 0x00e5ff,
   size = 0.28,
-  opacity = 0.85,
+  opacity = 0.45,
   map = null,
   depthWrite = false,
 } = {}) {
@@ -192,7 +193,7 @@ export class WaveRibbonTrailSystem {
    */
   updateFromSamples(samples, glow = 0.6) {
     const g = Number.isFinite(glow) ? glow : 0.6;
-    this.material.opacity = Math.min(0.95, this.opacity * (0.55 + g * 0.7));
+    this.material.opacity = Math.min(0.5, this.opacity * (0.45 + g * 0.45));
 
     let write = 0;
     const n = Math.min(this.particleCount, samples?.length || 0);
@@ -273,12 +274,12 @@ export class ProtonWaveCompanion {
       source: WAVE_PARTICLE_SOURCE,
     };
 
-    // Dense soft core + larger bloom layer (three-fluid-fx–style soft blobs; viz only)
+    // Soft core + bloom — translucent so lattice host atoms remain readable
     this.cloud = createSoftParticleCloud({
       count: particleCount,
       colorHex: 0xff8a3d,
       size: coreSize,
-      opacity: 0.92,
+      opacity: 0.42,
     });
     this.cloud.points.name = 'ProtonSoftCloud';
     this.group.add(this.cloud.points);
@@ -287,7 +288,7 @@ export class ProtonWaveCompanion {
       count: particleCount,
       colorHex: 0x66e0ff,
       size: bloomSize,
-      opacity: 0.35,
+      opacity: 0.18,
     });
     this.bloom.points.name = 'ProtonSoftBloom';
     this.group.add(this.bloom.points);
@@ -296,7 +297,7 @@ export class ProtonWaveCompanion {
       particleCount,
       trailLength,
       colorHex: trailColor,
-      opacity: 0.58,
+      opacity: 0.32,
     });
     this.group.add(this.trails.getGroup());
 
@@ -348,11 +349,12 @@ export class ProtonWaveCompanion {
     this.cloud.geometry.attributes.color.needsUpdate = true;
     this.bloom.geometry.attributes.position.needsUpdate = true;
     this.bloom.geometry.attributes.color.needsUpdate = true;
-    this.cloud.material.opacity = Math.min(0.95, 0.5 + glow * 0.45);
-    this.cloud.material.size = 0.28 + glow * 0.28;
-    this.bloom.material.opacity = Math.min(0.55, 0.22 + glow * 0.28);
-    this.bloom.material.size = 0.55 + glow * 0.45;
-    this.trails.updateFromSamples(this._scratch, glow);
+    // Cap opacity so additive Points never paint opaque orange over lattice / MHD.
+    this.cloud.material.opacity = Math.min(0.38, 0.18 + glow * 0.16);
+    this.cloud.material.size = 0.18 + glow * 0.12;
+    this.bloom.material.opacity = Math.min(0.2, 0.08 + glow * 0.1);
+    this.bloom.material.size = 0.36 + glow * 0.22;
+    this.trails.updateFromSamples(this._scratch, glow * 0.55);
   }
 
   dispose() {

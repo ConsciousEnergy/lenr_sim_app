@@ -5,7 +5,8 @@
  */
 export const UBLV_OVERLAY_CHROME_DEFAULTS = Object.freeze({
   legendCollapsed: true,
-  layersCollapsed: true,
+  // Open so MHD / phonon / e⁻ mig toggles are discoverable on first visit
+  layersCollapsed: false,
   metricsCollapsed: true,
   enhancementCollapsed: true,
 });

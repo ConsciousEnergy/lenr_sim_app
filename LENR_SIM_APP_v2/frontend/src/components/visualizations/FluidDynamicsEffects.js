@@ -441,10 +441,10 @@ export class PlasmaVortexEffect {
     this.verticalSpeed = options.verticalSpeed || 0.3;
     this.radius = options.radius || 3;
     this.height = options.height || 2;
-    this.pointSize = options.pointSize || 0.5;
-    this.bloomSize = options.bloomSize || 1.1;
+    this.pointSize = options.pointSize || 0.28;
+    this.bloomSize = options.bloomSize || 0.55;
     this.trailLength = options.trailLength || 14;
-    this.glow = options.glow ?? 0.65;
+    this.glow = options.glow ?? 0.45;
     // Schematic vortex-street dual cores (presentation; not Re-accurate shedding)
     this.streetEnabled = options.streetEnabled !== false;
     this.streetSeparation = options.streetSeparation ?? 0.85;
@@ -502,7 +502,7 @@ export class PlasmaVortexEffect {
     const material = createSoftPointsMaterial({
       color: 0xffffff,
       size: this.pointSize,
-      opacity: 0.88,
+      opacity: 0.38,
       map: this._softMap,
     });
 
@@ -522,7 +522,7 @@ export class PlasmaVortexEffect {
     const bloomMat = createSoftPointsMaterial({
       color: 0xffffff,
       size: this.bloomSize,
-      opacity: 0.32,
+      opacity: 0.14,
       map: this._softMap,
     });
     this._bloom = new THREE.Points(bloomGeom, bloomMat);
@@ -530,13 +530,13 @@ export class PlasmaVortexEffect {
     this.group.add(this._bloom);
 
     // Trail a subset for density without line explosion
-    const trailCount = Math.min(n, Math.max(48, Math.floor(n * 0.45)));
+    const trailCount = Math.min(n, Math.max(32, Math.floor(n * 0.28)));
     this._trailStride = Math.max(1, Math.floor(n / trailCount));
     this._trails = new WaveRibbonTrailSystem({
       particleCount: trailCount,
       trailLength: this.trailLength,
       colorHex: 0xff6a2a,
-      opacity: 0.5,
+      opacity: 0.28,
     });
     this.group.add(this._trails.getGroup());
 
@@ -613,16 +613,17 @@ export class PlasmaVortexEffect {
     if (this._points) {
       this._points.geometry.attributes.position.needsUpdate = true;
       this._points.geometry.attributes.color.needsUpdate = true;
-      this._points.material.size = this.pointSize * (0.9 + this.glow * 0.4);
-      this._points.material.opacity = Math.min(0.95, 0.58 + this.glow * 0.35);
+      this._points.material.size = this.pointSize * (0.85 + this.glow * 0.25);
+      // Soft translucent — readable MHD streamers without opaque lattice cover.
+      this._points.material.opacity = Math.min(0.52, 0.26 + this.glow * 0.22);
     }
     if (this._bloom) {
       this._bloom.geometry.attributes.position.needsUpdate = true;
       this._bloom.geometry.attributes.color.needsUpdate = true;
-      this._bloom.material.size = this.bloomSize * (0.85 + this.glow * 0.45);
-      this._bloom.material.opacity = Math.min(0.5, 0.2 + this.glow * 0.28);
+      this._bloom.material.size = this.bloomSize * (0.8 + this.glow * 0.3);
+      this._bloom.material.opacity = Math.min(0.26, 0.1 + this.glow * 0.14);
     }
-    this._trails?.updateFromSamples(this._scratchSamples, this.glow);
+    this._trails?.updateFromSamples(this._scratchSamples, this.glow * 0.7);
   }
 
   update(deltaTime = 0.016) {
@@ -659,18 +660,18 @@ export class PlasmaVortexEffect {
         );
       }
 
-      // Plasma-globe / streamer feel (mysimulator.uk plasma category look) — viz only
+      // Plasma-globe / streamer feel — cooler, less white-hot so lattice stays readable
       const heightFactor = 1 - Math.abs(data.y) / Math.max(this.height, 1e-6);
       const radialFactor = 1 - currentR / Math.max(this.radius, 1e-6);
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 3.2 + data.shedPhase);
-      // Warm streamer lane vs cool ion lane; pulse lifts lightness toward white-hot cores
+      // Warm streamer lane vs cool ion lane; avoid near-white cores (opaque stack)
       const laneHue = data.lane > 0 ? 0.05 : 0.55;
       const hue = laneHue + (1 - radialFactor) * 0.08 - heightFactor * 0.03;
-      const lightness = 0.42 + heightFactor * 0.28 + pulse * 0.22 * this.glow;
+      const lightness = 0.32 + heightFactor * 0.18 + pulse * 0.12 * this.glow;
       particle.material.color.setHSL(
         Math.max(0, Math.min(0.7, hue)),
-        0.85 + pulse * 0.1,
-        Math.min(0.92, lightness),
+        0.78 + pulse * 0.08,
+        Math.min(0.62, lightness),
       );
     }
 

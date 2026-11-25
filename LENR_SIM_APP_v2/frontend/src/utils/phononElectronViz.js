@@ -102,7 +102,7 @@ export class ElectronMigrationCloud {
     this._material = createSoftPointsMaterial({
       color: 0xffffff,
       size,
-      opacity: 0.75,
+      opacity: 0.4,
       map: this._map,
     });
     this._points = new THREE.Points(geometry, this._material);
@@ -141,8 +141,8 @@ export class ElectronMigrationCloud {
     const enh = Number.isFinite(enhancement) ? enhancement : 1;
     const enhNorm = Math.min(1, Math.log10(Math.max(enh, 1)) / 6);
     const speedScale = 0.6 + eNorm * 1.8 + enhNorm * 0.8;
-    this._material.opacity = Math.min(0.9, 0.35 + eNorm * 0.4 + enhNorm * 0.25);
-    this._material.size = 0.14 + eNorm * 0.16;
+    this._material.opacity = Math.min(0.48, 0.22 + eNorm * 0.18 + enhNorm * 0.12);
+    this._material.size = 0.12 + eNorm * 0.1;
 
     for (let i = 0; i < this.count; i += 1) {
       const p = this._proxies[i];

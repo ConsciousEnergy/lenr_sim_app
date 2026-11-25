@@ -449,9 +449,13 @@ const UnifiedBubbleLatticeVisualization = ({
   const [showBubble, setShowBubble] = useState(true);
   const [showProtons, setShowProtons] = useState(true);
   const [showFieldLines, setShowFieldLines] = useState(true);
+  // Schematic phonon jitter + e⁻ soft-flow — dedicated layer toggles
+  const [showPhonon, setShowPhonon] = useState(true);
+  const [showElectronMig, setShowElectronMig] = useState(true);
   // Mobile optimization state (v0.2.2-beta / #409 M2–M3)
   const [isMobile] = useState(() => isMobileDevice());
   const [qualitySettings] = useState(() => getRecommendedQualitySettings());
+  // MHD / vortex ON by default (desktop) — primary cavitation narrative
   const [showVortices, setShowVortices] = useState(
     () => getRecommendedQualitySettings().vortexVisualizationEnabled
   );
@@ -1044,9 +1048,9 @@ const UnifiedBubbleLatticeVisualization = ({
     protonWaveCompanionRef.current?.dispose?.();
     const waveCompanion = new ProtonWaveCompanion({
       particleCount: protonCount,
-      trailLength: 18,
-      coreSize: 0.34,
-      bloomSize: 0.75,
+      trailLength: 14,
+      coreSize: 0.22,
+      bloomSize: 0.48,
       trailColor: 0xff8a3d,
     });
     scene.add(waveCompanion.getGroup());
@@ -1104,8 +1108,8 @@ const UnifiedBubbleLatticeVisualization = ({
     energyGeometry.setAttribute('color', new THREE.BufferAttribute(energyColors, 3));
     const energyMaterial = createSoftPointsMaterial({
       color: 0xffffff,
-      size: 0.28,
-      opacity: 0.85,
+      size: 0.2,
+      opacity: 0.42,
       map: softMap,
     });
     const energyPoints = new THREE.Points(energyGeometry, energyMaterial);
@@ -1126,21 +1130,22 @@ const UnifiedBubbleLatticeVisualization = ({
       energyPoints.userData.proxies.push(proxy);
     }
 
-    // Soft e⁻ migration cloud along field channels (schematic; not continuum transport)
+    scene.add(fieldGroup);
+    fieldGroupRef.current = fieldGroup;
+
+    // Soft e⁻ migration as its own scene group so Fields toggle does not hide it
     electronMigrationRef.current?.dispose?.();
     const electronCloud = new ElectronMigrationCloud({
-      count: isMobile ? 20 : 40,
+      count: isMobile ? 16 : 28,
       lineCount,
-      size: 0.18,
+      size: 0.14,
       colorHex: 0x7aeeff,
     });
     const latticeSurfaceY = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
     electronCloud.update({ latticeY: latticeSurfaceY });
-    fieldGroup.add(electronCloud.getGroup());
+    electronCloud.getGroup().visible = true;
+    scene.add(electronCloud.getGroup());
     electronMigrationRef.current = electronCloud;
-    
-    scene.add(fieldGroup);
-    fieldGroupRef.current = fieldGroup;
     
     return fieldGroup;
   }, [isMobile]);
@@ -1464,20 +1469,22 @@ const UnifiedBubbleLatticeVisualization = ({
     try {
     // Soft Points + bloom + staggered dual-core wake (vortex-street–inspired look).
     // Presentation only — not CFD / PBF / WebGPU fluid solvers.
+    // Soft translucent plasma — lattice must remain readable through the column.
     const plasmaVortex = new PlasmaVortexEffect({
-      particleCount: qualitySettings.vortexParticleCount ?? 420,
-      vortexStrength: 1.15,
+      particleCount: qualitySettings.vortexParticleCount ?? 180,
+      vortexStrength: 1.05,
       radialSpeed: 0.28,
       verticalSpeed: 0.4,
-      radius: 2.15,
-      height: 3.8,
-      pointSize: 0.44,
-      bloomSize: 0.95,
-      trailLength: 16,
+      radius: 2.0,
+      height: 3.4,
+      pointSize: 0.26,
+      bloomSize: 0.52,
+      trailLength: 12,
       streetEnabled: true,
       streetSeparation: 0.95,
-      streetStreamSpeed: 0.62,
-      streetShedRate: 1.25,
+      streetStreamSpeed: 0.58,
+      streetShedRate: 1.15,
+      glow: 0.4,
     });
     plasmaVortex.initialize();
     plasmaVortex.getGroup().position.set(0, 0, 0); // Parent group handles world position
@@ -1750,8 +1757,8 @@ const UnifiedBubbleLatticeVisualization = ({
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         const material = createSoftPointsMaterial({
           color: 0xffffff,
-          size: 0.18,
-          opacity: 0.7,
+          size: 0.14,
+          opacity: 0.35,
           map: softMap,
         });
         const softCloud = new THREE.Points(geometry, material);
@@ -2276,18 +2283,13 @@ const UnifiedBubbleLatticeVisualization = ({
         }
         
         if (torus) {
-          // Make torus visible earlier and more prominently
-          torus.visible = torusProgress > 0.1; // Show earlier (10% instead of 30%)
-          // Torus contracts and intensifies during collapse
-          // Start larger and contract more dramatically
-          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.5); // Less contraction to keep visible
+          // Bound to Double-layer bubble layer toggle (was leaking when Layers → Bubble off)
+          torus.visible = showBubble && torusProgress > 0.1;
+          const torusRadius = torus.userData.baseRadius * (1 - collapseProgress * 0.5);
           const tubeRadius = torus.userData.baseTubeRadius * (1 - collapseProgress * 0.6);
-          // Scale uniformly but adjust for radius changes
           const scaleFactor = torusRadius / torus.userData.baseRadius;
           torus.scale.setScalar(scaleFactor);
-          // Adjust tube radius by scaling Y (thickness of torus ring)
           torus.scale.y = tubeRadius / torus.userData.baseTubeRadius;
-          // Increase opacity and emissive for better visibility
           torus.material.opacity = 0.6 + collapseProgress * 0.3;
           if (torus.material.emissiveIntensity !== undefined) {
             torus.material.emissiveIntensity = 0.8 + collapseProgress * 1.2;
@@ -2304,39 +2306,37 @@ const UnifiedBubbleLatticeVisualization = ({
         
         if (bubble) bubble.visible = false; // Always hide bubble during minimum/rebound
         if (torus) {
-          // Fade out torus as jet forms
-          torus.visible = jetProgress < 0.8;
+          torus.visible = showBubble && jetProgress < 0.8;
           torus.material.opacity = 0.8 * (1 - jetProgress);
         }
         
         if (jet) {
-          // Visible jet during bubble collapse toward lattice
-          jet.visible = jetProgress > 0.1; // Show early in the phase
-          // Jet intensifies and extends during minimum (focused jet formation)
+          jet.visible = showBubble && jetProgress > 0.1;
           const jetRadius = jet.userData.baseRadius * (1 - jetProgress * 0.4);
           const jetHeight = jet.userData.baseHeight * (1 + jetProgress * 2.0);
           jet.scale.set(jetRadius / jet.userData.baseRadius, jetHeight / jet.userData.baseHeight, jetRadius / jet.userData.baseRadius);
-          // Bright opacity during collapse
           jet.material.opacity = 0.8 + jetProgress * 0.2;
           if (jet.material.emissiveIntensity !== undefined) {
             jet.material.emissiveIntensity = 1.5 + jetProgress * 2.5;
           }
-          // Position jet at bubble center, extending downward
-          jet.position.set(0, 0, 0); // Relative to bubbleGroup
+          jet.position.set(0, 0, 0);
         }
       }
       
-      // Double / inner shells are the primary bubble visual (ionic double-layer).
+      // Ionic double-layer: buildup during expansion → intensified at collapse/cavitation.
       if (doubleLayer) {
         doubleLayer.scale.setScalar(displayScale * 1.12);
         const base = doubleLayer.userData.baseOpacity ?? 0.32;
-        const intensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.2 : base;
+        let intensity = base + 0.08; // ion/electron sheath readable in expansion
+        if (phase === 'COLLAPSE') intensity = base + 0.28;
+        if (phase === 'MINIMUM') intensity = base + 0.35;
+        if (phase === 'REBOUND') intensity = base + 0.12;
         doubleLayer.material.opacity = intensity;
         doubleLayer.visible = showBubble;
       }
       if (doubleLayerWire) {
         doubleLayerWire.scale.setScalar(displayScale * 1.13);
-        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.65 : 0.45;
+        doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.75 : 0.5;
         doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
@@ -2382,19 +2382,21 @@ const UnifiedBubbleLatticeVisualization = ({
     }
 
     // ========================================================================
-    // PHONON LATTICE JITTER (schematic) — amplitude from T / compression /
-    // enhancement_breakdown.phonon when present. Not MD / mode eigenvectors.
+    // PHONON LATTICE JITTER (schematic) — gated by Layers → Phonon (+ Lattice).
+    // Amplitude from T / compression / enhancement_breakdown.phonon.
     // ========================================================================
-    if (showLattice && latticeGroupRef.current) {
+    if (showLattice && showPhonon && latticeGroupRef.current) {
       const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
       const restSites = hostAtoms?.userData?.restSites;
       if (hostAtoms && restSites?.length) {
         phononTimeRef.current += deltaTime;
+        // Slightly stronger jitter near cavitation (collapse/minimum) for readability
+        const phaseBoost = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 1.35 : 1;
         const amp = phononJitterAmplitude({
           phononFactor: enhancements?.phonon ?? 1,
           temperatureK: temperature,
           compressionRatio,
-        });
+        }) * phaseBoost;
         const displacements = buildPhononJitterDisplacements(restSites, {
           time: phononTimeRef.current,
           amplitude: amp,
@@ -2404,6 +2406,31 @@ const UnifiedBubbleLatticeVisualization = ({
         applyDynamicLatticeInstances({
           sites: restSites,
           displacements,
+          hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
+          setMatrixAt: (index, elements) => {
+            const m = new THREE.Matrix4();
+            m.fromArray(elements);
+            hostAtoms.setMatrixAt(index, m);
+          },
+          setColorAt: hostAtoms.instanceColor
+            ? (index, rgb) => {
+              scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+              hostAtoms.setColorAt(index, scratchColor);
+            }
+            : undefined,
+        });
+        hostAtoms.instanceMatrix.needsUpdate = true;
+        if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
+      }
+    } else if (showLattice && !showPhonon && latticeGroupRef.current) {
+      // Rest lattices when Phonon layer off (no residual jitter pose)
+      const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
+      const restSites = hostAtoms?.userData?.restSites;
+      if (hostAtoms && restSites?.length) {
+        const scratchColor = new THREE.Color();
+        applyDynamicLatticeInstances({
+          sites: restSites,
+          displacements: null,
           hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
           setMatrixAt: (index, elements) => {
             const m = new THREE.Matrix4();
@@ -2645,8 +2672,10 @@ const UnifiedBubbleLatticeVisualization = ({
         }
       });
 
-      // Soft wave companion: ribbon trails + additive cloud from mesh cores
-      const waveGlow = enhancementGlowFactor(enhancements?.total ?? 1);
+      // Soft wave companion — dimmed vs MHD so vortex/cavitation stays the hero
+      const waveGlow = enhancementGlowFactor(enhancements?.total ?? 1) * (
+        (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.55 : 0.75
+      );
       protonWaveCompanionRef.current?.syncFromMeshes?.(
         protonGroupRef.current.children,
         { glow: waveGlow, hideMeshCores: true },
@@ -2654,6 +2683,8 @@ const UnifiedBubbleLatticeVisualization = ({
       if (protonWaveCompanionRef.current?.getGroup) {
         protonWaveCompanionRef.current.getGroup().visible = showProtons;
       }
+    } else if (protonWaveCompanionRef.current?.getGroup) {
+      protonWaveCompanionRef.current.getGroup().visible = false;
     }
     
     // Update field lines
@@ -2702,20 +2733,24 @@ const UnifiedBubbleLatticeVisualization = ({
       if (softPos) softPos.needsUpdate = true;
       if (energySoft?.material) {
         energySoft.material.opacity = phase === 'REBOUND'
-          ? 0.95
-          : (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.85 : 0.4;
+          ? 0.5
+          : (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 0.42 : 0.28;
       }
+    }
 
-      // Electron migration soft-flow along E / enhancement channels (schematic)
+    // Electron migration — independent of Fields layer (own toggle)
+    {
       const latticeYForE = PHYSICS_CONFIG.LATTICE_Y_OFFSET + PHYSICS_CONFIG.LATTICE_SURFACE_OFFSET;
-      electronMigrationRef.current?.update?.({
-        electricFieldVPerM: fieldStrength,
-        enhancement: enhancements?.total ?? 1,
-        reversed: phase === 'REBOUND',
-        latticeY: latticeYForE,
-      });
+      if (showElectronMig) {
+        electronMigrationRef.current?.update?.({
+          electricFieldVPerM: fieldStrength,
+          enhancement: enhancements?.total ?? 1,
+          reversed: phase === 'REBOUND',
+          latticeY: latticeYForE,
+        });
+      }
       const eMigGroup = electronMigrationRef.current?.getGroup?.();
-      if (eMigGroup) eMigGroup.visible = showFieldLines;
+      if (eMigGroup) eMigGroup.visible = showElectronMig;
     }
     
     // Update effects
@@ -2918,37 +2953,38 @@ const UnifiedBubbleLatticeVisualization = ({
       let verticalOscillationSpeed = 0.5;
       let coreHeightOffset = 0.3;
       
+      // Narrative: double-layer ion/e⁻ buildup → MHD vortex → cavitation (collapse/min)
       switch (phase) {
         case 'EXPANSION':
-          vortexIntensity = 0.35;
-          flowDirection = -0.35; // Slow outward advection
-          rotationSpeed = 0.8;
-          radialOscillationSpeed = 0.6;
-          verticalOscillationSpeed = 0.4;
+          vortexIntensity = 0.55; // Building sheath / MHD swirl (readable, soft)
+          flowDirection = -0.45;
+          rotationSpeed = 1.05;
+          radialOscillationSpeed = 0.75;
+          verticalOscillationSpeed = 0.5;
           coreHeightOffset = 0.45;
           break;
         case 'COLLAPSE':
-          vortexIntensity = 1.1;
-          flowDirection = 2.2; // Strong inward acceleration
-          rotationSpeed = 2.4;
-          radialOscillationSpeed = 1.4;
-          verticalOscillationSpeed = 1.0;
-          coreHeightOffset = 0.25;
+          vortexIntensity = 1.45; // Cavitation draw-in — clearest MHD beat
+          flowDirection = 2.5;
+          rotationSpeed = 2.8;
+          radialOscillationSpeed = 1.6;
+          verticalOscillationSpeed = 1.15;
+          coreHeightOffset = 0.22;
           break;
         case 'MINIMUM':
-          vortexIntensity = 1.6;
-          flowDirection = 0.6; // Compact high-vorticity core
-          rotationSpeed = 3.2;
-          radialOscillationSpeed = 2.0;
-          verticalOscillationSpeed = 1.5;
-          coreHeightOffset = 0.2;
+          vortexIntensity = 1.85; // Peak cavitation core
+          flowDirection = 0.7;
+          rotationSpeed = 3.5;
+          radialOscillationSpeed = 2.2;
+          verticalOscillationSpeed = 1.6;
+          coreHeightOffset = 0.18;
           break;
         case 'REBOUND':
-            vortexIntensity = 1.35;
-            flowDirection = -2.2; // Reversal burst from lattice
-            rotationSpeed = 3.3;
-            radialOscillationSpeed = 2.3;
-            verticalOscillationSpeed = 1.2;
+            vortexIntensity = 1.5;
+            flowDirection = -2.4; // Reversal burst from lattice
+            rotationSpeed = 3.4;
+            radialOscillationSpeed = 2.4;
+            verticalOscillationSpeed = 1.25;
             coreHeightOffset = 0.35;
           break;
         default:
@@ -2970,8 +3006,10 @@ const UnifiedBubbleLatticeVisualization = ({
         }
         // Soft glow driven by existing enhancement samples (presentation only — not CFD).
         if (typeof plasmaVortexRef.current.setEnhancementGlow === 'function') {
+          const baseGlow = enhancementGlowFactor(enhancements?.total ?? 1);
+          const cavitationBoost = (phase === 'COLLAPSE' || phase === 'MINIMUM') ? 1.25 : 1;
           plasmaVortexRef.current.setEnhancementGlow(
-            enhancementGlowFactor(enhancements?.total ?? 1),
+            Math.min(1, baseGlow * cavitationBoost),
           );
         }
         plasmaVortexRef.current.update(deltaTime * rotationSpeed);
@@ -3117,7 +3155,8 @@ const UnifiedBubbleLatticeVisualization = ({
   }, [
     frequency, initialBubbleRadius, simulationData, setUsingAPIData,
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
-    showBubble, showProtons, showFieldLines, showVortices, showLattice, showCasimir, showRydberg, showHalo,
+    showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
+    showCasimir, showRydberg, showHalo,
     latticeSpacingVisUnits
   ]); // Note: currentPhase / isPlaying removed - using refs to avoid scene re-initialization
 
@@ -3223,6 +3262,14 @@ const UnifiedBubbleLatticeVisualization = ({
     applyGroupVisibility(protonGroupRef.current, showProtons);
     applyGroupVisibility(fieldGroupRef.current, showFieldLines);
     applyGroupVisibility(vortexGroupRef.current, showVortices);
+    applyGroupVisibility(
+      electronMigrationRef.current?.getGroup?.(),
+      showElectronMig,
+    );
+    applyGroupVisibility(
+      protonWaveCompanionRef.current?.getGroup?.(),
+      showProtons,
+    );
     applyGroupVisibility(
       boundaryVisualGroupRef.current,
       showLattice && showBoundaryPlane
@@ -3412,9 +3459,10 @@ const UnifiedBubbleLatticeVisualization = ({
       if (bubbleGroupRef.current) {
         bubbleGroupRef.current.visible = showBubble;
         bubbleGroupRef.current.traverse((child) => {
-          // Don't override visibility for torus and jet - they're controlled by phase-based animation
+          // Torus/jet: force hide when Bubble off; when on, animation owns phase visibility
           if (child.name === 'TorusFormation' || child.name === 'FocusedJet') {
-            return; // Skip torus and jet - let animation loop control their visibility
+            if (!showBubble) child.visible = false;
+            return;
           }
           if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
             child.visible = showBubble;
@@ -3429,11 +3477,31 @@ const UnifiedBubbleLatticeVisualization = ({
           }
         });
       }
+      // Proton soft wave companion lives outside ProtonPhaseGroup
+      if (protonWaveCompanionRef.current?.getGroup) {
+        const waveGroup = protonWaveCompanionRef.current.getGroup();
+        waveGroup.visible = showProtons;
+        waveGroup.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showProtons;
+          }
+        });
+      }
       if (fieldGroupRef.current) {
         fieldGroupRef.current.visible = showFieldLines;
         fieldGroupRef.current.traverse((child) => {
           if (child.isMesh || child.isLine || child.isPoints) {
             child.visible = showFieldLines;
+          }
+        });
+      }
+      // e⁻ migration is a sibling scene group (not under Fields)
+      if (electronMigrationRef.current?.getGroup) {
+        const eGroup = electronMigrationRef.current.getGroup();
+        eGroup.visible = showElectronMig;
+        eGroup.traverse((child) => {
+          if (child.isMesh || child.isLine || child.isPoints || child.isGroup) {
+            child.visible = showElectronMig;
           }
         });
       }
@@ -3509,7 +3577,7 @@ const UnifiedBubbleLatticeVisualization = ({
     const timeoutId = setTimeout(updateVisibility, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [showLattice, showBubble, showProtons, showFieldLines, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
+  }, [showLattice, showBubble, showProtons, showFieldLines, showElectronMig, showVortices, showBoundaryPlane, showCasimir, showRydberg, showHalo]);
 
   // Camera controls
   const resetCameraToPreset = useCallback(() => {
@@ -3651,33 +3719,53 @@ const UnifiedBubbleLatticeVisualization = ({
               >
                 <FormGroup>
                   <FormControlLabel
-                    control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" />}
+                    control={<Switch checked={showLattice} onChange={(e) => setShowLattice(e.target.checked)} size="small" data-testid="ublv-layer-lattice" />}
                     label={<Typography variant="caption" color="white">Lattice</Typography>}
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showPhonon} onChange={(e) => setShowPhonon(e.target.checked)} size="small" data-testid="ublv-layer-phonon" />}
+                    label={
+                      <Tooltip title="Host-atom jitter from T / compression / phonon enhancement — schematic, not MD">
+                        <Typography variant="caption" color="white">Phonon (schematic)</Typography>
+                      </Tooltip>
+                    }
                   />
                   <FormControlLabel
                     control={<Switch checked={showBoundaryPlane} onChange={(e) => setShowBoundaryPlane(e.target.checked)} size="small" color="primary" />}
                     label={<Typography variant="caption" color="white">Boundary Plane (Debug)</Typography>}
                   />
                   <FormControlLabel
-                    control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" />}
-                    label={<Typography variant="caption" color="white">Double-layer bubble</Typography>}
+                    control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" data-testid="ublv-layer-bubble" />}
+                    label={
+                      <Tooltip title="Ionic double-layer + torus/jet morph during collapse/cavitation">
+                        <Typography variant="caption" color="white">Double-layer / torus</Typography>
+                      </Tooltip>
+                    }
                   />
                   <FormControlLabel
-                    control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" />}
+                    control={<Switch checked={showProtons} onChange={(e) => setShowProtons(e.target.checked)} size="small" color="warning" data-testid="ublv-layer-protons" />}
                     label={<Typography variant="caption" color="white">Protons</Typography>}
                   />
                   <FormControlLabel
-                    control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" />}
-                    label={<Typography variant="caption" color="white">Fields</Typography>}
+                    control={<Switch checked={showFieldLines} onChange={(e) => setShowFieldLines(e.target.checked)} size="small" color="secondary" data-testid="ublv-layer-fields" />}
+                    label={<Typography variant="caption" color="white">Field lines</Typography>}
                   />
                   <FormControlLabel
-                control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" />}
-                label={
-                  <Tooltip title="Schematic wave-particle look — not CFD / Navier–Stokes; no fluid proof">
-                    <Typography variant="caption" color="white">MHD Flow (schematic)</Typography>
-                  </Tooltip>
-                }
-              />
+                    control={<Switch checked={showElectronMig} onChange={(e) => setShowElectronMig(e.target.checked)} size="small" data-testid="ublv-layer-emig" />}
+                    label={
+                      <Tooltip title="Soft charge-flow along E / enhancement — schematic, not continuum transport">
+                        <Typography variant="caption" color="white">e⁻ migration</Typography>
+                      </Tooltip>
+                    }
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={showVortices} onChange={(e) => setShowVortices(e.target.checked)} size="small" color="success" data-testid="ublv-layer-mhd" />}
+                    label={
+                      <Tooltip title="MHD vortex / soft plasma from double-layer buildup → cavitation. Schematic — not CFD.">
+                        <Typography variant="caption" color="white">MHD / vortex → cavitation</Typography>
+                      </Tooltip>
+                    }
+                  />
                   <FormControlLabel
                     control={<Switch checked={showCasimir} onChange={(e) => setShowCasimir(e.target.checked)} size="small" sx={{ color: '#ff8800' }} />}
                     label={<Typography variant="caption" color="white">Casimir Geometry</Typography>}
