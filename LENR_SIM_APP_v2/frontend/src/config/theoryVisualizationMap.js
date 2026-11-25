@@ -95,7 +95,7 @@ export const THEORY_VISUALIZATION_MAP = {
     fidelity: 'schematic',
     displayName: 'Hagelstein Phonon-Nuclear',
     description:
-      'Phonon-nuclear coupling for energy transfer to lattice. UBLV schematic: host-atom jitter from temperature_k / compression / enhancement_breakdown.phonon — not mode eigenvectors or MD. Continuum phonon wavefronts parked.',
+      'Phonon-nuclear coupling for energy transfer to lattice. UBLV schematic: acoustic+optical standing waves on material-size lattice from temperature_k / compression / enhancement_breakdown.phonon — not mode eigenvectors or MD. Continuum phonon wavefronts parked; contested dual-laser heat claims stay contested.',
     reference: 'Hagelstein & Chaudhary (2015)',
   },
   kim_bec: {

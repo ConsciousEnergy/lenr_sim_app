@@ -14,5 +14,6 @@ describe('ublvLayerBindings', () => {
     expect(layerOwnsObjectName('emig', 'ElectronMigrationGroup')).toBe(true);
     expect(layerOwnsObjectName('fields', 'ElectronMigrationGroup')).toBe(false);
     expect(layerOwnsObjectName('mhd', 'PlasmaSoftCloud')).toBe(true);
+    expect(layerOwnsObjectName('phonon', 'PhononWaveguideRibbon')).toBe(true);
   });
 });

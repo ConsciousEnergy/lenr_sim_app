@@ -11,8 +11,8 @@ export const UBLV_LAYER_BINDINGS = Object.freeze([
   },
   {
     id: 'phonon',
-    label: 'Phonon (schematic / contested)',
-    targets: ['LatticeHostAtoms.displacements'],
+    label: 'Phonon acoustic+optical (schematic / contested)',
+    targets: ['LatticeHostAtoms.displacements', 'PhononWaveguideRibbon'],
     requires: ['lattice'],
   },
   {

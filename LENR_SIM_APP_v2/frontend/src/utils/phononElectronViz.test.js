@@ -1,19 +1,28 @@
 /**
- * Phonon jitter + electron migration — schematic presentation only.
+ * Phonon standing-wave + electron migration — schematic presentation only.
  */
 import {
   PHONON_ELECTRON_FIDELITY,
   PHONON_ELECTRON_SOURCE,
+  PHONON_CLAIM_TAG,
   phononJitterAmplitude,
+  phononModeMix,
+  meltProximityNorm,
+  waveguideEnvelopeNorm,
   buildPhononJitterDisplacements,
+  buildPhononStandingWaveDisplacements,
+  phononModeTintRgb,
+  createPhononWaveguideRibbon,
   ElectronMigrationCloud,
 } from './phononElectronViz';
 import { getLatticeBoundBubbleY } from './bubbleTorusViz';
+import { occupancyTintRgb } from './dynamicLattice';
 
 describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
-  test('honesty tags stay schematic', () => {
+  test('honesty tags stay schematic / contested', () => {
     expect(PHONON_ELECTRON_FIDELITY).toBe('schematic');
     expect(PHONON_ELECTRON_SOURCE).toBe('schematic_visualization');
+    expect(PHONON_CLAIM_TAG).toMatch(/contested/i);
   });
 
   test('phononJitterAmplitude grows with phonon / T / compression but stays capped', () => {
@@ -28,22 +37,101 @@ describe('phononElectronViz (schematic lattice motion + e⁻ flow)', () => {
       compressionRatio: 20,
     });
     expect(hot).toBeGreaterThan(cold);
-    expect(hot).toBeLessThanOrEqual(0.045);
-    expect(cold).toBeGreaterThanOrEqual(0.004);
+    expect(hot).toBeLessThanOrEqual(0.16);
+    expect(cold).toBeGreaterThanOrEqual(0.022);
   });
 
-  test('buildPhononJitterDisplacements returns per-site xyz', () => {
+  test('phononModeMix shifts toward optical as phonon factor rises', () => {
+    const low = phononModeMix({ phononFactor: 1 });
+    const high = phononModeMix({ phononFactor: 100 });
+    expect(high.opticalWeight).toBeGreaterThan(low.opticalWeight);
+    expect(low.acousticWeight + low.opticalWeight).toBeCloseTo(1, 5);
+  });
+
+  test('meltProximityNorm never invents melt without T_m; softens near literature T_m', () => {
+    expect(meltProximityNorm({ temperatureK: 1500 })).toBe(0);
+    expect(meltProximityNorm({ temperatureK: 300, meltingPointK: 1828 })).toBe(0);
+    const near = meltProximityNorm({ temperatureK: 1700, meltingPointK: 1828 });
+    expect(near).toBeGreaterThan(0.5);
+    expect(near).toBeLessThanOrEqual(1);
+  });
+
+  test('waveguideEnvelopeNorm responds to loading + phonon', () => {
+    const low = waveguideEnvelopeNorm({ loadingRatio: 0.2, phononFactor: 1 });
+    const high = waveguideEnvelopeNorm({ loadingRatio: 0.95, phononFactor: 80 });
+    expect(high).toBeGreaterThan(low);
+  });
+
+  test('standing-wave displacements are spatially coherent (acoustic in-phase cue)', () => {
+    const sites = [];
+    for (let ix = 0; ix < 4; ix += 1) {
+      for (let iy = 0; iy < 4; iy += 1) {
+        sites.push({ x: ix, y: iy, z: 0, ix, iy, iz: 0 });
+      }
+    }
+    const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(sites, {
+      time: 0.4,
+      amplitude: 0.1,
+      acousticWeight: 1,
+      opticalWeight: 0,
+    });
+    expect(displacements).toHaveLength(16);
+    expect(modeEnergy).toHaveLength(16);
+    // Corner (0,0) acoustic sin(0)=0 → near-rest; mid-edge has larger |x|
+    const corner = Math.abs(displacements[0].x);
+    const mid = Math.abs(displacements[sites.findIndex((s) => s.ix === 2 && s.iy === 2)].x);
+    expect(mid).toBeGreaterThan(corner);
+  });
+
+  test('optical mode antiphases nearest neighbors', () => {
     const sites = [
       { x: 0, y: 0, z: 0, ix: 0, iy: 0, iz: 0 },
       { x: 1, y: 0, z: 0, ix: 1, iy: 0, iz: 0 },
     ];
-    const d0 = buildPhononJitterDisplacements(sites, { time: 0.1, amplitude: 0.02 });
+    const { displacements } = buildPhononStandingWaveDisplacements(sites, {
+      time: 0.22,
+      amplitude: 0.12,
+      acousticWeight: 0,
+      opticalWeight: 1,
+      opticalFreq: 7.2,
+    });
+    // Opposite stagger → product of x displacements is negative (antiphase)
+    expect(displacements[0].x * displacements[1].x).toBeLessThan(0);
+  });
+
+  test('buildPhononJitterDisplacements returns per-site xyz (standing-wave backed)', () => {
+    const sites = [
+      { x: 0, y: 0, z: 0, ix: 0, iy: 0, iz: 0 },
+      { x: 1, y: 0, z: 0, ix: 1, iy: 0, iz: 0 },
+    ];
+    const d0 = buildPhononJitterDisplacements(sites, {
+      time: 0.1,
+      amplitude: 0.08,
+      phononFactor: 10,
+    });
     expect(d0).toHaveLength(2);
     expect(Number.isFinite(d0[0].x)).toBe(true);
-    expect(Number.isFinite(d0[1].y)).toBe(true);
-    const d1 = buildPhononJitterDisplacements(sites, { time: 0.5, amplitude: 0.02 });
-    // Motion changes with time (not static rest)
+    const d1 = buildPhononJitterDisplacements(sites, {
+      time: 0.5,
+      amplitude: 0.08,
+      phononFactor: 10,
+    });
     expect(d0[0].x !== d1[0].x || d0[0].y !== d1[0].y).toBe(true);
+  });
+
+  test('phononModeTintRgb lifts warm channels with mode energy', () => {
+    const base = occupancyTintRgb(0x8b8b8b, true);
+    const tinted = phononModeTintRgb(base, 0.9, 0.7);
+    expect(tinted.r).toBeGreaterThan(base.r);
+  });
+
+  test('createPhononWaveguideRibbon tags schematic waveguide claim', () => {
+    const ribbon = createPhononWaveguideRibbon({ span: 4 });
+    expect(ribbon.name).toBe('PhononWaveguideRibbon');
+    expect(ribbon.userData.claim).toBe('catalyst_waveguide_schematic');
+    expect(ribbon.userData.fidelity).toBe('schematic');
+    ribbon.geometry.dispose();
+    ribbon.material.dispose();
   });
 
   test('ElectronMigrationCloud tags fidelity and updates positions', () => {
@@ -72,7 +160,6 @@ describe('getLatticeBoundBubbleY (nest on lattice)', () => {
       phase: 'MINIMUM',
       nestPenetration: 0.14,
     });
-    // Center = surface + radius * (1 - nest) → underside below or at surface contact
     expect(y).toBeGreaterThan(surface);
     expect(y).toBeLessThan(surface + scale);
   });

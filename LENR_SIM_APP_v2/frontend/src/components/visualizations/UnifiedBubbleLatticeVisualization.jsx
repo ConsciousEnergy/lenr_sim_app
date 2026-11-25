@@ -71,6 +71,7 @@ import {
   applyDynamicLatticeInstances,
   buildLatticeRestSites,
   interstitialOffsetFromSite,
+  occupancyTintRgb,
   resolveExclusiveHostColor,
   resolveLatticePick,
 } from '../../utils/dynamicLattice';
@@ -93,8 +94,13 @@ import {
 } from '../../utils/bubbleTorusViz';
 import {
   ElectronMigrationCloud,
-  buildPhononJitterDisplacements,
+  buildPhononStandingWaveDisplacements,
+  createPhononWaveguideRibbon,
+  meltProximityNorm,
   phononJitterAmplitude,
+  phononModeMix,
+  phononModeTintRgb,
+  waveguideEnvelopeNorm,
 } from '../../utils/phononElectronViz';
 import {
   fieldLineOpacityFromE,
@@ -723,6 +729,14 @@ const UnifiedBubbleLatticeVisualization = ({
       pickable: true,
     };
     latticeGroup.add(hostAtoms);
+
+    // Catalyst-as-waveguide ribbon (schematic) — opacity driven when Phonon ON
+    const waveguide = createPhononWaveguideRibbon({
+      span: dimension * spacing,
+      y: PHYSICS_CONFIG.LATTICE_Y_OFFSET,
+    });
+    waveguide.visible = true;
+    latticeGroup.add(waveguide);
 
     if (hydrogenPositions.length > 0) {
       const hydrogenAtoms = new THREE.InstancedMesh(
@@ -2508,47 +2522,75 @@ const UnifiedBubbleLatticeVisualization = ({
     }
 
     // ========================================================================
-    // PHONON LATTICE JITTER (schematic) — gated by Layers → Phonon (+ Lattice).
-    // Amplitude from T / compression / enhancement_breakdown.phonon.
+    // PHONON STANDING WAVES (schematic / contested) — Layers → Phonon (+ Lattice).
+    // Acoustic (long-λ in-phase) + optical (short-λ antiphase) across material size.
+    // Amplitude from enhancement_breakdown.phonon / T / compression; never MD modes.
     // ========================================================================
+    const waveguideRibbon = latticeGroupRef.current?.getObjectByName('PhononWaveguideRibbon');
     if (showLattice && showPhonon && latticeGroupRef.current) {
       const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
       const restSites = hostAtoms?.userData?.restSites;
       if (hostAtoms && restSites?.length) {
         phononTimeRef.current += deltaTime;
         const forces = cavitationForcesRef.current;
+        const phononFactor = enhancements?.phonon ?? 1;
+        const mix = phononModeMix({ phononFactor });
+        const meltSoft = meltProximityNorm({
+          temperatureK: temperature,
+          meltingPointK: hostMeltMeta?.meltingPointK,
+        });
+        const wgNorm = waveguideEnvelopeNorm({
+          loadingRatio,
+          phononFactor,
+        });
         const amp = phononJitterAmplitude({
-          phononFactor: enhancements?.phonon ?? 1,
+          phononFactor,
           temperatureK: temperature,
           compressionRatio,
         }) * (forces?.phononScale ?? 1);
-        const displacements = buildPhononJitterDisplacements(restSites, {
+        const { displacements, modeEnergy } = buildPhononStandingWaveDisplacements(restSites, {
           time: phononTimeRef.current,
           amplitude: amp,
-          frequency: 4.2 + Math.min(2, Math.log10(Math.max(enhancements?.phonon || 1, 1))),
+          acousticWeight: mix.acousticWeight,
+          opticalWeight: mix.opticalWeight,
+          acousticFreq: 2.4 + Math.min(1.2, Math.log10(Math.max(phononFactor, 1)) * 0.35),
+          opticalFreq: 6.5 + Math.min(2.5, Math.log10(Math.max(phononFactor, 1)) * 0.55),
+          waveguideNorm: wgNorm,
+          meltSoftening: meltSoft,
         });
+        const hostHex = hostAtoms.userData?.hostHex ?? 0x8b8b8b;
         const scratchColor = new THREE.Color();
         applyDynamicLatticeInstances({
           sites: restSites,
           displacements,
-          hostHex: hostAtoms.userData?.hostHex ?? 0x8b8b8b,
+          hostHex,
           setMatrixAt: (index, elements) => {
             const m = new THREE.Matrix4();
             m.fromArray(elements);
             hostAtoms.setMatrixAt(index, m);
           },
           setColorAt: hostAtoms.instanceColor
-            ? (index, rgb) => {
-              scratchColor.setRGB(rgb.r, rgb.g, rgb.b);
+            ? (index, _rgb) => {
+              const base = occupancyTintRgb(hostHex, restSites[index]?.occupied);
+              const tinted = phononModeTintRgb(base, modeEnergy[index] || 0, mix.opticalWeight);
+              scratchColor.setRGB(tinted.r, tinted.g, tinted.b);
               hostAtoms.setColorAt(index, scratchColor);
             }
             : undefined,
         });
         hostAtoms.instanceMatrix.needsUpdate = true;
         if (hostAtoms.instanceColor) hostAtoms.instanceColor.needsUpdate = true;
+
+        if (waveguideRibbon?.material) {
+          waveguideRibbon.visible = true;
+          const pulse = 0.5 + 0.5 * Math.sin(phononTimeRef.current * 3.1);
+          waveguideRibbon.material.opacity = 0.2 + wgNorm * 0.45 * pulse
+            + meltSoft * 0.15;
+        }
       }
     } else if (showLattice && !showPhonon && latticeGroupRef.current) {
-      // Rest lattices when Phonon layer off (no residual jitter pose)
+      // Rest lattices when Phonon layer off (no residual standing-wave pose)
+      if (waveguideRibbon) waveguideRibbon.visible = false;
       const hostAtoms = latticeGroupRef.current.getObjectByName('LatticeHostAtoms');
       const restSites = hostAtoms?.userData?.restSites;
       if (hostAtoms && restSites?.length) {
@@ -3153,7 +3195,7 @@ const UnifiedBubbleLatticeVisualization = ({
     calculateBubbleRadius, calculateEnhancementFactors, updateProtonStates, onPhaseChange, onCollapseEvent,
     showBubble, showProtons, showFieldLines, showVortices, showLattice, showPhonon, showElectronMig,
     showCasimir, showRydberg, showHalo,
-    latticeSpacingVisUnits
+    latticeSpacingVisUnits, hostMeltMeta, loadingRatio,
   ]); // Note: currentPhase / isPlaying removed - using refs to avoid scene re-initialization
 
   // Store updateAnimation in ref to avoid triggering scene re-initialization
@@ -3722,7 +3764,7 @@ const UnifiedBubbleLatticeVisualization = ({
                     control={<Switch checked={showPhonon} onChange={(e) => setShowPhonon(e.target.checked)} size="small" data-testid="ublv-layer-phonon" />}
                     label={
                       <Tooltip title="Schematic lattice modes / contested phonon–heat hypothesis (dual-laser failed independent replication). Not MD; never 'highly reproducible'.">
-                        <Typography variant="caption" color="white">Phonon (schematic / contested)</Typography>
+                        <Typography variant="caption" color="white">Phonon acoustic+optical (schematic / contested)</Typography>
                       </Tooltip>
                     }
                   />
@@ -3977,13 +4019,37 @@ const UnifiedBubbleLatticeVisualization = ({
                   }}
                 />
               </Tooltip>
-              <Tooltip title="Schematic lattice modes; dual-laser phonon→heat stays contested (failed independent replication). Not MD; never 'highly reproducible'.">
+              <Tooltip title="Acoustic + optical standing waves across material-size lattice from enhancement_breakdown.phonon / T / compression. Schematic modes — not MD eigenvectors. Dual-laser phonon→heat stays contested; never 'highly reproducible'.">
                 <Chip
-                  label="Phonon · schematic / contested"
+                  label="Phonon · acoustic+optical standing (contested)"
                   size="small"
                   data-testid="ublv-phonon-viz-chip"
                   sx={{
                     bgcolor: 'rgba(156, 120, 60, 0.9)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Catalyst-as-waveguide ribbon along host axis — schematic from loading_ratio × phonon samples. Not a verified LENR waveguide; ionized chem env remains electrolyte-label honest.">
+                <Chip
+                  label="Waveguide · catalyst schematic"
+                  size="small"
+                  data-testid="ublv-waveguide-chip"
+                  sx={{
+                    bgcolor: 'rgba(180, 140, 50, 0.9)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Near literature T_m softening cue only (cite-backed Pd/Ni). Does NOT invent f_L or melt morph; contribute-vs-diffuse reaction framing stays exploratory until TheoryModules export liquid fraction. EQ-OPEN / lenr_proved untouched.">
+                <Chip
+                  label="Near T_m · schematic (not f_L)"
+                  size="small"
+                  data-testid="ublv-melt-proximity-chip"
+                  sx={{
+                    bgcolor: 'rgba(120, 90, 60, 0.9)',
                     color: 'white',
                     fontSize: '0.6rem',
                   }}

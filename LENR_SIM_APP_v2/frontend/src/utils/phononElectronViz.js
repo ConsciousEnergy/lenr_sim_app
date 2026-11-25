@@ -1,12 +1,14 @@
 /**
  * phononElectronViz.js
  *
- * Schematic phonon lattice jitter + electron migration soft-flow for UBLV.
- * Amplitude / speed bind to existing samples:
- *   enhancement_breakdown.phonon, temperature_k, radius/compression, electric_field_v_m
+ * Schematic phonon lattice motion + electron migration soft-flow for UBLV.
+ * Amplitude / mix bind to existing samples:
+ *   enhancement_breakdown.phonon, temperature_k, radius/compression, electric_field_v_m,
+ *   loading_ratio, literature T_m (cite-only — never invents f_L)
  *
- * Does NOT solve phonon modes, MD, or continuum electron transport.
- * Honesty: schematic_visualization — chip as such in HUD.
+ * Standing-wave cue (acoustic + optical) spans the material-size lattice —
+ * NOT exported eigenvectors, MD, or continuum transport.
+ * Honesty: schematic_visualization / contested — chip as such in HUD.
  */
 
 import * as THREE from 'three';
@@ -19,50 +21,243 @@ import {
 
 export const PHONON_ELECTRON_FIDELITY = 'schematic';
 export const PHONON_ELECTRON_SOURCE = 'schematic_visualization';
+export const PHONON_CLAIM_TAG = 'schematic / contested';
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function finiteOr(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 
 /**
  * Map phonon enhancement + T + compression → jitter amplitude (vis units).
- * Caps keep motion subtle (presentation, not MD).
+ * Raised so standing-wave lattice modes read clearly on HSE canvas.
  */
 export function phononJitterAmplitude({
   phononFactor = 1,
   temperatureK = 300,
   compressionRatio = 1,
-  maxAmp = 0.045,
+  maxAmp = 0.16,
 } = {}) {
-  const phonon = Number.isFinite(phononFactor) ? Math.max(1, phononFactor) : 1;
-  const temp = Number.isFinite(temperatureK) ? temperatureK : 300;
-  const comp = Number.isFinite(compressionRatio) ? Math.max(1, compressionRatio) : 1;
+  const phonon = Math.max(1, finiteOr(phononFactor, 1));
+  const temp = finiteOr(temperatureK, 300);
+  const comp = Math.max(1, finiteOr(compressionRatio, 1));
   const phononTerm = Math.log10(phonon) / 2; // ~0 at 1, ~1 at 100
-  const tempTerm = Math.min(1, Math.max(0, (temp - 300) / 5000));
-  const compTerm = Math.min(1, Math.log10(comp + 1) / 2);
-  const raw = 0.008 + 0.02 * phononTerm + 0.012 * tempTerm + 0.015 * compTerm;
-  return Math.min(maxAmp, Math.max(0.004, raw));
+  const tempTerm = clamp01((temp - 300) / 5000);
+  const compTerm = clamp01(Math.log10(comp + 1) / 2);
+  const raw = 0.028 + 0.055 * phononTerm + 0.035 * tempTerm + 0.04 * compTerm;
+  return Math.min(maxAmp, Math.max(0.022, raw));
 }
 
 /**
- * Build per-site displacement array for InstancedMesh (schematic phonon).
- * Phase varies by site index for a wave-like look — not exported eigenvectors.
+ * Acoustic vs optical mix from engine phonon factor (presentation weights).
+ * Higher phonon enhancement → more optical (short-λ out-of-phase) share.
+ */
+export function phononModeMix({ phononFactor = 1 } = {}) {
+  const phonon = Math.max(1, finiteOr(phononFactor, 1));
+  const opticalShare = clamp01(0.28 + Math.log10(phonon) / 3.2);
+  return {
+    acousticWeight: 1 - opticalShare,
+    opticalWeight: opticalShare,
+  };
+}
+
+/**
+ * Literature T_m proximity (0..1) — softening cue only.
+ * Does NOT invent phase_fraction_liquid / melt morph.
+ */
+export function meltProximityNorm({
+  temperatureK = 300,
+  meltingPointK = null,
+} = {}) {
+  const tm = finiteOr(meltingPointK, NaN);
+  if (!Number.isFinite(tm) || tm <= 0) return 0;
+  const t = finiteOr(temperatureK, 300);
+  // Soften in the last ~25% below T_m; still solid lattice unless f_L supplied.
+  const start = tm * 0.75;
+  return clamp01((t - start) / Math.max(tm - start, 1));
+}
+
+/**
+ * Catalyst-as-waveguide envelope from loading + phonon samples (schematic).
+ * Preferential axis amplitude — not a verified LENR waveguide claim.
+ */
+export function waveguideEnvelopeNorm({
+  loadingRatio = 0.5,
+  phononFactor = 1,
+} = {}) {
+  const load = clamp01(finiteOr(loadingRatio, 0.5));
+  const phonon = Math.max(1, finiteOr(phononFactor, 1));
+  const phononTerm = clamp01(Math.log10(phonon) / 2.5);
+  return clamp01(0.2 + load * 0.45 + phononTerm * 0.4);
+}
+
+/**
+ * Infer lattice index extents from rest sites (material-size standing wave).
+ */
+export function latticeIndexExtents(sites) {
+  if (!sites?.length) {
+    return { maxIx: 1, maxIy: 1, maxIz: 1 };
+  }
+  let maxIx = 0;
+  let maxIy = 0;
+  let maxIz = 0;
+  for (const site of sites) {
+    maxIx = Math.max(maxIx, site.ix || 0);
+    maxIy = Math.max(maxIy, site.iy || 0);
+    maxIz = Math.max(maxIz, site.iz || 0);
+  }
+  return {
+    maxIx: Math.max(1, maxIx),
+    maxIy: Math.max(1, maxIy),
+    maxIz: Math.max(1, maxIz),
+  };
+}
+
+/**
+ * Material-size standing-wave displacements (acoustic + optical).
+ *
+ * Acoustic: long-λ — neighbors largely in phase across the lattice span.
+ * Optical: short-λ — nearest neighbors out of phase ((-1)^(ix+iy+iz)).
+ *
+ * Returns { displacements, modeEnergy } where modeEnergy[i] ∈ [0,1] for tint.
+ */
+export function buildPhononStandingWaveDisplacements(sites, {
+  time = 0,
+  amplitude = 0.08,
+  acousticWeight = 0.55,
+  opticalWeight = 0.45,
+  acousticFreq = 2.6,
+  opticalFreq = 7.2,
+  waveguideNorm = 0.4,
+  meltSoftening = 0,
+} = {}) {
+  if (!sites?.length) return { displacements: [], modeEnergy: [] };
+
+  const amp = Math.max(0, finiteOr(amplitude, 0.08)) * (1 + meltSoftening * 0.55);
+  const aw = Math.max(0, finiteOr(acousticWeight, 0.55));
+  const ow = Math.max(0, finiteOr(opticalWeight, 0.45));
+  const t = finiteOr(time, 0);
+  const wg = clamp01(finiteOr(waveguideNorm, 0.4));
+  const { maxIx, maxIy, maxIz } = latticeIndexExtents(sites);
+
+  // Fundamental standing wave across material span (k = π / N).
+  const kx = Math.PI / maxIx;
+  const ky = Math.PI / maxIy;
+  const kz = Math.PI / Math.max(maxIz, 1);
+
+  const displacements = [];
+  const modeEnergy = [];
+
+  for (let i = 0; i < sites.length; i += 1) {
+    const site = sites[i];
+    const ix = site.ix || 0;
+    const iy = site.iy || 0;
+    const iz = site.iz || 0;
+
+    // Acoustic standing wave — in-phase envelope on lattice axes
+    const acousticEnv = Math.sin(kx * ix) * Math.sin(ky * iy + 0.15)
+      * (maxIz > 0 ? Math.sin(kz * iz + 0.08) : 1);
+    const acousticOsc = Math.sin(t * acousticFreq);
+    const acoustic = acousticEnv * acousticOsc;
+
+    // Optical — staggered nearest-neighbor antiphase
+    const stagger = ((ix + iy + iz) % 2 === 0) ? 1 : -1;
+    const opticalOsc = Math.sin(t * opticalFreq + ix * 0.2);
+    const optical = stagger * opticalOsc
+      * (0.55 + 0.45 * Math.abs(Math.sin(kx * ix * 2)));
+
+    const mix = aw * acoustic + ow * optical;
+    // Waveguide preference along x (catalyst host axis schematic)
+    const xAmp = amp * (1 + wg * 0.55);
+    const yAmp = amp * (0.85 + meltSoftening * 0.25);
+    const zAmp = amp * (0.75 + wg * 0.2);
+
+    const dx = xAmp * mix;
+    const dy = yAmp * (aw * acousticEnv * Math.cos(t * acousticFreq * 0.92)
+      + ow * optical * 0.7);
+    const dz = zAmp * (aw * Math.sin(kz * iz) * acousticOsc * 0.65
+      + ow * optical * 0.55);
+
+    displacements.push({ x: dx, y: dy, z: dz });
+    modeEnergy.push(clamp01(Math.abs(mix) * 0.65 + Math.abs(optical) * ow * 0.45));
+  }
+
+  return { displacements, modeEnergy };
+}
+
+/**
+ * Legacy jitter API — now delegates to standing-wave builder for a visible
+ * material-size mode cue (still schematic / contested).
  */
 export function buildPhononJitterDisplacements(sites, {
   time = 0,
-  amplitude = 0.02,
+  amplitude = 0.08,
   frequency = 4.5,
+  phononFactor = 1,
+  waveguideNorm = 0.4,
+  meltSoftening = 0,
 } = {}) {
-  if (!sites?.length) return [];
-  const amp = Number.isFinite(amplitude) ? amplitude : 0.02;
-  const freq = Number.isFinite(frequency) ? frequency : 4.5;
-  const t = Number.isFinite(time) ? time : 0;
-  return sites.map((site, i) => {
-    const phase = i * 0.73 + (site.ix || 0) * 0.4 + (site.iy || 0) * 0.55;
-    const wobble = Math.sin(t * freq + phase);
-    const wobble2 = Math.cos(t * freq * 1.17 + phase * 1.3);
-    return {
-      x: amp * wobble,
-      y: amp * 0.65 * wobble2,
-      z: amp * 0.85 * Math.sin(t * freq * 0.91 + phase * 0.8),
-    };
+  const mix = phononModeMix({ phononFactor });
+  const { displacements } = buildPhononStandingWaveDisplacements(sites, {
+    time,
+    amplitude,
+    acousticWeight: mix.acousticWeight,
+    opticalWeight: mix.opticalWeight,
+    acousticFreq: Math.max(1.8, finiteOr(frequency, 4.5) * 0.55),
+    opticalFreq: Math.max(4.5, finiteOr(frequency, 4.5) * 1.45),
+    waveguideNorm,
+    meltSoftening,
   });
+  return displacements;
+}
+
+/**
+ * Blend occupancy RGB with phonon mode energy (warm optical pulse).
+ */
+export function phononModeTintRgb(baseRgb, modeEnergy = 0, opticalWeight = 0.4) {
+  const e = clamp01(modeEnergy);
+  const ow = clamp01(opticalWeight);
+  return {
+    r: Math.min(1, baseRgb.r * (1 - e * 0.25) + e * (0.55 + ow * 0.35)),
+    g: Math.min(1, baseRgb.g * (1 - e * 0.15) + e * (0.35 + (1 - ow) * 0.25)),
+    b: Math.min(1, baseRgb.b * (1 - e * 0.2) + e * (0.75 - ow * 0.35)),
+  };
+}
+
+/**
+ * Soft axial waveguide ribbon along host lattice (catalyst-as-waveguide cue).
+ * Schematic only — not a verified LENR waveguide.
+ */
+export function createPhononWaveguideRibbon({
+  span = 4,
+  y = 0,
+  colorHex = 0xffcc66,
+} = {}) {
+  const half = Math.max(1, span) * 0.55;
+  const positions = new Float32Array([
+    -half, y, 0,
+    half, y, 0,
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.LineBasicMaterial({
+    color: colorHex,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false,
+  });
+  const line = new THREE.Line(geometry, material);
+  line.name = 'PhononWaveguideRibbon';
+  line.userData = {
+    fidelity: PHONON_ELECTRON_FIDELITY,
+    source: PHONON_ELECTRON_SOURCE,
+    claim: 'catalyst_waveguide_schematic',
+  };
+  return line;
 }
 
 /**
