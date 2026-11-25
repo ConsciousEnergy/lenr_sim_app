@@ -6,6 +6,8 @@ import {
   fluxNorm,
   phononResponseScale,
   softPlasmaFlashNorm,
+  machCompressibilityCue,
+  fieldLineOpacityFromE,
   resolveCavitationForceViz,
 } from './cavitationForceViz';
 
@@ -76,5 +78,26 @@ describe('cavitationForceViz (schematic, existing samples only)', () => {
     expect(bundle.phononScale).toBeGreaterThan(0.7);
     expect(bundle.softPlasmaFlash).toBeGreaterThan(0.3);
     expect(bundle.fidelity).toBe('schematic');
+  });
+
+  test('machCompressibilityCue stays silent without peak_mach', () => {
+    expect(machCompressibilityCue({}).ringBoost).toBe(0);
+    expect(machCompressibilityCue({ peakMach: null }).ringBoost).toBe(0);
+    const withMach = machCompressibilityCue({
+      peakMach: 0.15,
+      compressibilityRegime: 'weakly_compressible',
+    });
+    expect(withMach.ringBoost).toBeGreaterThan(0);
+    expect(withMach.ringBoost).toBeLessThanOrEqual(1);
+  });
+
+  test('fieldLineOpacityFromE prefers engine E; local_fallback stays baseline', () => {
+    expect(fieldLineOpacityFromE({ sampleSource: 'local_fallback' })).toBe(1);
+    const engine = fieldLineOpacityFromE({
+      electricFieldVPerM: 1e10,
+      sampleSource: 'solver',
+    });
+    expect(engine).toBeGreaterThan(0.45);
+    expect(engine).toBeLessThanOrEqual(1.15);
   });
 });

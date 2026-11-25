@@ -89,6 +89,7 @@ import {
   createJetMaterial,
   createTorusPlasmaMaterial,
   getLatticeBoundBubbleY,
+  temperatureToBubbleTint,
 } from '../../utils/bubbleTorusViz';
 import {
   ElectronMigrationCloud,
@@ -96,6 +97,8 @@ import {
   phononJitterAmplitude,
 } from '../../utils/phononElectronViz';
 import {
+  fieldLineOpacityFromE,
+  machCompressibilityCue,
   resolveCavitationForceViz,
 } from '../../utils/cavitationForceViz';
 // Import TouchControls for mobile optimization (v0.2.2-beta)
@@ -531,6 +534,12 @@ const UnifiedBubbleLatticeVisualization = ({
     }),
     [simulationData?.collapse_results, simulationData?.validation?.route_mode, usingAPIData],
   );
+  const collapseHudRef = useRef(collapseHud);
+  useEffect(() => {
+    collapseHudRef.current = collapseHud;
+  }, [collapseHud]);
+  // Rolling R(t) samples for the faint radius-history trail (engine or scrub-live).
+  const radiusHistoryRef = useRef([]);
 
   const spacetimeBufferRef = useRef(spacetimeBuffer);
   useEffect(() => {
@@ -957,7 +966,7 @@ const UnifiedBubbleLatticeVisualization = ({
     warmFill.position.set(-0.8, 0.4, -0.6);
     bubbleGroup.add(warmFill);
     
-    // Pressure wave rings
+    // Pressure wave rings — opacity later boosted by engine peak_mach (EMP)
     for (let i = 0; i < 3; i++) {
       const ringGeometry = new THREE.RingGeometry(1.2 + i * 0.5, 1.32 + i * 0.5, 64);
       const ringMaterial = new THREE.MeshBasicMaterial({
@@ -973,6 +982,27 @@ const UnifiedBubbleLatticeVisualization = ({
       ring.userData = { baseRadius: 1.2 + i * 0.5, phase: i * 0.3 };
       bubbleGroup.add(ring);
     }
+
+    // Faint R(t) history trail from spacetime / scrub radius (EMP when engine-bound)
+    const histCount = 48;
+    const histPositions = new Float32Array(histCount * 3);
+    const histGeom = new THREE.BufferGeometry();
+    histGeom.setAttribute(
+      'position',
+      new THREE.BufferAttribute(histPositions, 3).setUsage(THREE.DynamicDrawUsage),
+    );
+    const histLine = new THREE.Line(
+      histGeom,
+      new THREE.LineBasicMaterial({
+        color: 0x7ec8ff,
+        transparent: true,
+        opacity: 0.28,
+        depthWrite: false,
+      }),
+    );
+    histLine.name = 'RadiusHistoryTrail';
+    histLine.frustumCulled = false;
+    bubbleGroup.add(histLine);
     
     scene.add(bubbleGroup);
     bubbleGroupRef.current = bubbleGroup;
@@ -2405,15 +2435,52 @@ const UnifiedBubbleLatticeVisualization = ({
         innerLayer.visible = showBubble;
       }
       
-      // Update pressure rings — anchored to the display bubble, not unbounded growth
+      // Update pressure rings — Mach cue from collapse_results.peak_mach when present
+      const machCh = collapseHudRef.current?.channels?.find(
+        (ch) => ch.channel_id === 'collapse.peak_mach',
+      );
+      const machCue = machCompressibilityCue({
+        peakMach: typeof machCh?.value === 'number' ? machCh.value : null,
+        compressibilityRegime: collapseHudRef.current?.meta?.compressibility_regime,
+      });
       for (let i = 0; i < 3; i++) {
         const ring = bubbleGroupRef.current.getObjectByName(`PressureRing${i}`);
         if (ring) {
           const ringPhase = (normalizedTime + ring.userData.phase) % 1;
-          ring.scale.setScalar(displayScale * (1 + ringPhase * 0.6));
-          ring.material.opacity = Math.max(0, 0.2 - ringPhase * 0.2);
+          ring.scale.setScalar(displayScale * (1 + ringPhase * 0.6) * (1 + machCue.ringBoost * 0.15));
+          ring.material.opacity = Math.max(
+            0,
+            (0.2 - ringPhase * 0.2) * (1 + machCue.ringBoost * 1.4),
+          );
+          if (machCue.ringBoost > 0.05) {
+            ring.material.color.setHSL(0.55 - machCue.ringBoost * 0.25, 0.75, 0.55);
+          }
           if (!showBubble) ring.visible = false;
         }
+      }
+
+      // R(t) trail — rolling displayScale samples (prefer engine radius when bound)
+      const hist = radiusHistoryRef.current;
+      hist.push(displayScale);
+      if (hist.length > 48) hist.shift();
+      const trail = bubbleGroupRef.current.getObjectByName('RadiusHistoryTrail');
+      if (trail?.geometry?.attributes?.position) {
+        const arr = trail.geometry.attributes.position.array;
+        const n = hist.length;
+        for (let i = 0; i < 48; i++) {
+          const r = hist[Math.min(i, n - 1)] || displayScale;
+          const a = (i / 48) * Math.PI * 2;
+          arr[i * 3] = Math.cos(a) * r * 1.05;
+          arr[i * 3 + 1] = 0;
+          arr[i * 3 + 2] = Math.sin(a) * r * 1.05;
+        }
+        trail.geometry.attributes.position.needsUpdate = true;
+        trail.geometry.setDrawRange(0, Math.max(2, n));
+        trail.visible = showBubble;
+        trail.material.opacity = sampleSource === 'solver'
+          || sampleSource === 'interpolated'
+          ? 0.38
+          : 0.18;
       }
       
       // ========================================================================
@@ -2745,15 +2812,19 @@ const UnifiedBubbleLatticeVisualization = ({
       protonWaveCompanionRef.current.getGroup().visible = false;
     }
     
-    // Update field lines
+    // Update field lines — engine E gates opacity when solver/interpolated samples exist
     if (fieldGroupRef.current && showFieldLines) {
       const fieldIntensity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 1 : 0.3;
+      const eGate = fieldLineOpacityFromE({
+        electricFieldVPerM: fieldStrength,
+        sampleSource,
+      });
       const energySoft = fieldGroupRef.current.getObjectByName('EnergySoftCloud');
       const softPos = energySoft?.geometry?.attributes?.position;
       
       fieldGroupRef.current.children.forEach((child) => {
         if (child.name.startsWith('FieldLine')) {
-          child.material.opacity = 0.3 * fieldIntensity;
+          child.material.opacity = 0.3 * fieldIntensity * eGate;
         } else if (child.name.startsWith('EnergyParticle')) {
           // Animate particles along field lines
           child.userData.t += child.userData.speed * (1 + fieldIntensity);
@@ -2921,6 +2992,7 @@ const UnifiedBubbleLatticeVisualization = ({
         }
         // Soft plasma Points: peak near min-R flash. Flannigan–Suslick optical/plasma
         // peer only — not fusion, not EQ-OPEN discharge, not lenr_proved.
+        // Tint heatNorm from temperature_k when samples exist.
         if (typeof plasmaVortexRef.current.setEnhancementGlow === 'function') {
           const baseGlow = enhancementGlowFactor(enhancements?.total ?? 1) * 0.35;
           const flash = cavitationForcesRef.current?.softPlasmaFlash ?? 0.15;
@@ -2928,6 +3000,12 @@ const UnifiedBubbleLatticeVisualization = ({
             + (cavitationForcesRef.current?.kinetic ?? 0.2) * 0.25);
           plasmaVortexRef.current.setEnhancementGlow(
             Math.min(1, Math.max(0.08, baseGlow + forceGlow)),
+          );
+        }
+        if (typeof plasmaVortexRef.current.setSoftPlasmaHeat === 'function') {
+          const heatTint = temperatureToBubbleTint(temperature);
+          plasmaVortexRef.current.setSoftPlasmaHeat(
+            (heatTint?.heatNorm ?? 0) * (0.35 + (cavitationForcesRef.current?.softPlasmaFlash ?? 0.15)),
           );
         }
         plasmaVortexRef.current.update(deltaTime * rotationSpeed);

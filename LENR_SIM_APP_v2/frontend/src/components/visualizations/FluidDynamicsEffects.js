@@ -660,18 +660,21 @@ export class PlasmaVortexEffect {
         );
       }
 
-      // Plasma-globe / streamer feel — cooler, less white-hot so lattice stays readable
+      // Plasma-globe / streamer feel — cooler, less white-hot so lattice stays readable.
+      // heatNorm (from temperature_k) shifts cool ion lanes toward warm optical peer.
       const heightFactor = 1 - Math.abs(data.y) / Math.max(this.height, 1e-6);
       const radialFactor = 1 - currentR / Math.max(this.radius, 1e-6);
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 3.2 + data.shedPhase);
-      // Warm streamer lane vs cool ion lane; avoid near-white cores (opaque stack)
+      const heat = Number.isFinite(this.heatNorm) ? this.heatNorm : 0;
+      // Warm streamer lane vs cool ion lane; heat pulls both toward warm/white peer tint
       const laneHue = data.lane > 0 ? 0.05 : 0.55;
-      const hue = laneHue + (1 - radialFactor) * 0.08 - heightFactor * 0.03;
-      const lightness = 0.32 + heightFactor * 0.18 + pulse * 0.12 * this.glow;
+      const hue = (laneHue * (1 - heat * 0.55) + 0.06 * heat)
+        + (1 - radialFactor) * 0.08 - heightFactor * 0.03;
+      const lightness = 0.32 + heightFactor * 0.18 + pulse * 0.12 * this.glow + heat * 0.12;
       particle.material.color.setHSL(
         Math.max(0, Math.min(0.7, hue)),
-        0.78 + pulse * 0.08,
-        Math.min(0.62, lightness),
+        0.78 + pulse * 0.08 - heat * 0.2,
+        Math.min(0.68, lightness),
       );
     }
 
@@ -681,6 +684,15 @@ export class PlasmaVortexEffect {
   /** Optional: drive soft glow from existing enhancement samples (viz only). */
   setEnhancementGlow(glow) {
     if (Number.isFinite(glow)) this.glow = glow;
+  }
+
+  /**
+   * Optional heatNorm 0..1 from temperature_k / bubble tint (Flannigan–Suslick peer).
+   * Does not invent fusion; presentation mapping only.
+   */
+  setSoftPlasmaHeat(heatNorm) {
+    if (!Number.isFinite(heatNorm)) return;
+    this.heatNorm = Math.min(1, Math.max(0, heatNorm));
   }
 
   getGroup() {

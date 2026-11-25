@@ -115,6 +115,46 @@ export function softPlasmaFlashNorm({
 }
 
 /**
+ * Mach / compressibility cue for pressure-ring presentation (EMP model output).
+ * Binds collapse_results.bubble_dynamics.peak_mach (+ optional regime string).
+ * Returns 0 when Mach is absent — never invents a solver Mach.
+ */
+export function machCompressibilityCue({
+  peakMach = null,
+  compressibilityRegime = null,
+} = {}) {
+  if (!Number.isFinite(peakMach) || peakMach < 0) {
+    return { ringBoost: 0, regimeBoost: 1 };
+  }
+  // Typical RP/KM peak Mach for µm cavitation is ≪ 1; log-scale for viz.
+  const machNorm = clamp01(Math.log10(peakMach + 1) / Math.log10(2));
+  let regimeBoost = 1;
+  const regime = typeof compressibilityRegime === 'string'
+    ? compressibilityRegime.toLowerCase()
+    : '';
+  if (regime.includes('weakly')) regimeBoost = 1.15;
+  if (regime.includes('strongly') || regime.includes('highly')) regimeBoost = 1.35;
+  return {
+    ringBoost: clamp01(machNorm * regimeBoost),
+    regimeBoost,
+  };
+}
+
+/**
+ * Field-line opacity scale from engine electric_field_v_m (exploratory DL).
+ * local_fallback callers should pass null → returns baseline 1 (schematic).
+ */
+export function fieldLineOpacityFromE({
+  electricFieldVPerM = null,
+  sampleSource = 'local_fallback',
+} = {}) {
+  const isEngine = sampleSource === 'solver' || sampleSource === 'interpolated';
+  if (!isEngine || !Number.isFinite(electricFieldVPerM)) return 1;
+  const eNorm = clamp01(Math.log10(Math.abs(electricFieldVPerM) + 1) / 12);
+  return 0.45 + eNorm * 0.7;
+}
+
+/**
  * Bundle used by UBLV animation — one call site for cavitation-localized cues.
  */
 export function resolveCavitationForceViz({
