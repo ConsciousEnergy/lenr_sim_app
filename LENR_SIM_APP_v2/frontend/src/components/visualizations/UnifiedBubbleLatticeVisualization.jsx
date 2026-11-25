@@ -3942,23 +3942,28 @@ const UnifiedBubbleLatticeVisualization = ({
                 Cycle {collapseCount} · {(cycleProgress * 100).toFixed(0)}%
               </Typography>
               <VizHudReadouts
-                // Melt / P_* included in channels below (value or gap). Avoid
-                // showHeldGaps duplication with listGapChannels().
+                // Prefer engine/API-bound fields. Omit null melt/P_* (no Speculative gap spam).
+                // showHeldGaps off — gaps only when TheoryModules export values.
                 showHeldGaps={false}
                 collapseMeta={collapseHud.meta}
                 channels={[
-                  {
-                    channel_id: 'enhancement.claim_tier_display',
-                    value: currentEnhancement,
-                    source: physicsData.sampleSource,
-                  },
+                  // Enhancement is exploratory — only when engine/API samples exist (not Local Calc invent).
+                  ...((physicsData.sampleSource === 'solver'
+                    || physicsData.sampleSource === 'interpolated')
+                    && Number.isFinite(currentEnhancement)
+                    ? [{
+                      channel_id: 'enhancement.claim_tier_display',
+                      value: currentEnhancement,
+                      source: physicsData.sampleSource,
+                    }]
+                    : []),
                   {
                     channel_id: 'collapse.compression_ratio',
                     value: physicsData.compressionRatio,
                     source: physicsData.sampleSource,
                   },
                   {
-                    // Live scrub R (VIZ-01/02); collapse peak R available via collapseHud when needed
+                    // Live scrub R (VIZ-01/02); prefer spacetime / timeline samples over Local Calc
                     channel_id: 'bubble.radius_um',
                     value: physicsData.radiusUm,
                     source: physicsData.sampleSource,
@@ -3968,37 +3973,42 @@ const UnifiedBubbleLatticeVisualization = ({
                     value: physicsData.temperature,
                     source: physicsData.sampleSource,
                   },
-                  {
-                    channel_id: 'collapse.electric_field_v_m',
-                    value: physicsData.fieldStrength,
-                    source: physicsData.sampleSource,
-                  },
-                  // VIZ-05 — Mach + solver mode from collapse_results (gap when absent)
+                  // E is still exploratory (double-layer model) — show only when engine-bound
+                  ...((physicsData.sampleSource === 'solver'
+                    || physicsData.sampleSource === 'interpolated')
+                    && Number.isFinite(physicsData.fieldStrength)
+                    ? [{
+                      channel_id: 'collapse.electric_field_v_m',
+                      value: physicsData.fieldStrength,
+                      source: physicsData.sampleSource,
+                    }]
+                    : []),
+                  // VIZ-05 — Mach + solver mode from collapse_results (engine only)
                   ...collapseHud.channels.filter((ch) => (
                     ch.channel_id === 'collapse.peak_mach'
                     || ch.channel_id === 'collapse.solver'
                   )),
-                  // VIZ-07 / VIZ-12 — engine values only; null → gap chips (no invent)
-                  {
+                  // VIZ-07 / VIZ-12 — only when engine supplies finite values (no invent / no gap spam)
+                  ...(Number.isFinite(liquidPhaseChannels.phaseFractionLiquid) ? [{
                     channel_id: 'host.phase_fraction_liquid',
                     value: liquidPhaseChannels.phaseFractionLiquid,
-                    source: liquidPhaseChannels.phaseFractionLiquid == null ? undefined : 'solver',
-                  },
-                  {
+                    source: 'solver',
+                  }] : []),
+                  ...(Number.isFinite(liquidPhaseChannels.heat.P_joule) ? [{
                     channel_id: 'heat.P_joule',
                     value: liquidPhaseChannels.heat.P_joule,
-                    source: liquidPhaseChannels.heat.P_joule == null ? undefined : 'solver',
-                  },
-                  {
+                    source: 'solver',
+                  }] : []),
+                  ...(Number.isFinite(liquidPhaseChannels.heat.P_resistive) ? [{
                     channel_id: 'heat.P_resistive',
                     value: liquidPhaseChannels.heat.P_resistive,
-                    source: liquidPhaseChannels.heat.P_resistive == null ? undefined : 'solver',
-                  },
-                  {
+                    source: 'solver',
+                  }] : []),
+                  ...(Number.isFinite(liquidPhaseChannels.heat.P_photonic) ? [{
                     channel_id: 'heat.P_photonic',
                     value: liquidPhaseChannels.heat.P_photonic,
-                    source: liquidPhaseChannels.heat.P_photonic == null ? undefined : 'solver',
-                  },
+                    source: 'solver',
+                  }] : []),
                 ]}
               />
             </Paper>
