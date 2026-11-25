@@ -17,8 +17,8 @@ export const UBLV_LAYER_BINDINGS = Object.freeze([
   },
   {
     id: 'bubble',
-    label: 'Double-layer / torus',
-    targets: ['BubbleGroup', 'MainBubble', 'DoubleLayer', 'TorusFormation', 'FocusedJet'],
+    label: 'Double-layer / torus (ionic)',
+    targets: ['BubbleGroup', 'MainBubble', 'DoubleLayer', 'DoubleLayerWire', 'InnerLayer', 'TorusFormation', 'FocusedJet'],
   },
   {
     id: 'protons',

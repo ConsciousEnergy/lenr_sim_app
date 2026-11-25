@@ -2352,23 +2352,54 @@ const UnifiedBubbleLatticeVisualization = ({
       }
       
       // Ionic double-layer: buildup during expansion → intensified at collapse/cavitation.
+      // Paper-safe hydro pinch cue (aspherical collapse peer) — NOT Benjamin–Feir claim,
+      // NOT H-absorption/nuclear, NOT EQ-OPEN closure. Dies with Double-layer off.
+      const pinchAmt = (() => {
+        if (phase === 'COLLAPSE') return 0.1 + phaseProgress * 0.55;
+        if (phase === 'MINIMUM') return 0.72;
+        if (phase === 'REBOUND') return Math.max(0, 0.45 * (1 - phaseProgress));
+        return 0;
+      })();
+      // Mild azimuthal surface modulation (schematic morphology only).
+      const surfMod = pinchAmt > 0
+        ? 1 + 0.04 * Math.sin(normalizedTime * Math.PI * 8) * pinchAmt
+        : 1;
       if (doubleLayer) {
-        doubleLayer.scale.setScalar(displayScale * 1.12);
+        const s = displayScale * 1.12;
+        // Radial pinch + slight axial stretch — ionic sheath morphology, hydro schematic
+        doubleLayer.scale.set(
+          s * (1 - pinchAmt * 0.28) * surfMod,
+          s * (1 + pinchAmt * 0.18),
+          s * (1 - pinchAmt * 0.28) / surfMod,
+        );
         const base = doubleLayer.userData.baseOpacity ?? 0.32;
         let intensity = base + 0.08; // ion/electron sheath readable in expansion
         if (phase === 'COLLAPSE') intensity = base + 0.28;
         if (phase === 'MINIMUM') intensity = base + 0.35;
         if (phase === 'REBOUND') intensity = base + 0.12;
         doubleLayer.material.opacity = intensity;
+        if (doubleLayer.material.emissiveIntensity !== undefined) {
+          doubleLayer.material.emissiveIntensity = 0.35 + pinchAmt * 0.55;
+        }
         doubleLayer.visible = showBubble;
       }
       if (doubleLayerWire) {
-        doubleLayerWire.scale.setScalar(displayScale * 1.13);
+        const sw = displayScale * 1.13;
+        doubleLayerWire.scale.set(
+          sw * (1 - pinchAmt * 0.28) * surfMod,
+          sw * (1 + pinchAmt * 0.18),
+          sw * (1 - pinchAmt * 0.28) / surfMod,
+        );
         doubleLayerWire.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? 0.75 : 0.5;
         doubleLayerWire.visible = showBubble && phase !== 'MINIMUM';
       }
       if (innerLayer) {
-        innerLayer.scale.setScalar(displayScale * 0.92);
+        const si = displayScale * 0.92;
+        innerLayer.scale.set(
+          si * (1 - pinchAmt * 0.22),
+          si * (1 + pinchAmt * 0.12),
+          si * (1 - pinchAmt * 0.22),
+        );
         const base = innerLayer.userData.baseOpacity ?? 0.22;
         innerLayer.material.opacity = phase === 'COLLAPSE' || phase === 'MINIMUM' ? base + 0.15 : base;
         innerLayer.visible = showBubble;
@@ -3624,8 +3655,8 @@ const UnifiedBubbleLatticeVisualization = ({
                   <FormControlLabel
                     control={<Switch checked={showBubble} onChange={(e) => setShowBubble(e.target.checked)} size="small" color="info" data-testid="ublv-layer-bubble" />}
                     label={
-                      <Tooltip title="Ionic double-layer + brief torus/jet flash at collapse (ns–µs peer pacing). Torus/jet die when this layer is off. Hydro morphology — not a sustained nuclear burn.">
-                        <Typography variant="caption" color="white">Double-layer / torus</Typography>
+                      <Tooltip title="Ionic double-layer sheath + brief torus/jet flash + mild pinch/surface-mod at collapse (hydro schematic). Torus/jet/pinch die when this layer is off. Not Benjamin–Feir proof; not nuclear burn.">
+                        <Typography variant="caption" color="white">Double-layer / torus (ionic)</Typography>
                       </Tooltip>
                     }
                   />
@@ -3899,6 +3930,18 @@ const UnifiedBubbleLatticeVisualization = ({
                   data-testid="ublv-cavitation-force-chip"
                   sx={{
                     bgcolor: 'rgba(120, 70, 90, 0.9)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Ionic double-layer pinch / mild surface modulation at collapse — hydro morphology peer under Double-layer toggle. Not Benjamin–Feir confirmation; not H-absorption nuclear step; EQ-OPEN untouched.">
+                <Chip
+                  label="Ionic DL pinch · hydro schematic"
+                  size="small"
+                  data-testid="ublv-ionic-dl-pinch-chip"
+                  sx={{
+                    bgcolor: 'rgba(40, 120, 140, 0.9)',
                     color: 'white',
                     fontSize: '0.6rem',
                   }}
